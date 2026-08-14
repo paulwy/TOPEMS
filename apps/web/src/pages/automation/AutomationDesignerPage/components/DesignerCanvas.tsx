@@ -21,6 +21,7 @@ import {
   type DesignerNodeItem,
 } from '../shared';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import { useTranslation } from 'react-i18next';
 
 export interface DesignerCanvasProps {
   nodes: DesignerNodeItem[];
@@ -63,6 +64,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
   onZoomFit,
   onZoomReset,
 }) => {
+  const { t } = useTranslation('automation');
   return (
     <Paper
       ref={canvasViewportRef}
@@ -255,7 +257,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
             <ZoomOutIcon size={18} />
           </IconButton>
         </Tooltip>
-        <Tooltip title='适配视图'>
+        <Tooltip title={t('automation.designer_canvas.k0')}>
           <IconButton
             size='small'
             onClick={onZoomFit}
@@ -264,7 +266,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
             <FitIcon size={18} />
           </IconButton>
         </Tooltip>
-        <Tooltip title='重置 (100%)'>
+        <Tooltip title={t('automation.designer_canvas.100_1')}>
           <IconButton
             size='small'
             onClick={onZoomReset}

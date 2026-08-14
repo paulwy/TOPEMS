@@ -10,6 +10,8 @@ import {
   Chip,
 } from '@mui/material';
 import type { Employee } from '@/api/hrm';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 interface EmployeeDetailDialogProps {
   open: boolean;
@@ -24,9 +26,9 @@ const STATUS_COLOR_MAP: Record<string, 'success' | 'default' | 'warning' | 'erro
 };
 
 const STATUS_LABEL_MAP: Record<string, string> = {
-  active: '在职',
-  inactive: '离职',
-  leave: '请假',
+  active: i18n.t('hrm.employee_detail_dialog.k0'),
+  inactive: i18n.t('hrm.employee_detail_dialog.k1'),
+  leave: i18n.t('hrm.employee_detail_dialog.k2'),
 };
 
 const EmployeeDetailDialog: React.FC<EmployeeDetailDialogProps> = ({ open, onClose, employee }) => (
@@ -36,7 +38,7 @@ const EmployeeDetailDialog: React.FC<EmployeeDetailDialogProps> = ({ open, onClo
     maxWidth='sm'
     fullWidth
   >
-    <DialogTitle>员工详情</DialogTitle>
+    <DialogTitle>{i18n.t('hrm.employee_detail_dialog.k3')}</DialogTitle>
     <DialogContent>
       {employee && (
         <Box sx={{ display: 'grid', gridTemplateColumns: 2, gap: 2, pt: 1 }}>
@@ -132,7 +134,7 @@ const EmployeeDetailDialog: React.FC<EmployeeDetailDialogProps> = ({ open, onClo
       )}
     </DialogContent>
     <DialogActions>
-      <Button onClick={onClose}>关闭</Button>
+      <Button onClick={onClose}>{i18n.t('hrm.employee_detail_dialog.k4')}</Button>
     </DialogActions>
   </Dialog>
 );

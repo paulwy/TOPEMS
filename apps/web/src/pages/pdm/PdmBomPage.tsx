@@ -8,14 +8,16 @@ import { pdmApi, type BomItem, type Product, type CreateBomItemRequest } from '@
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { useTranslation } from 'react-i18next';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 export default function PdmBomPage() {
+  const { t } = useTranslation('pdm');
   const queryClient = useQueryClient();
   const [selectedProduct, setSelectedProduct] = useState<string>('');
 
-  const { data: products = [], isPending: productsLoading} = useQuery<Product[]>({
+  const { data: products = [], isPending: productsLoading } = useQuery<Product[]>({
     queryKey: QUERY_KEYS.PDM.PRODUCTS,
     queryFn: async (): Promise<Product[]> => {
       const response = await pdmApi.listProducts();
@@ -81,11 +83,12 @@ export default function PdmBomPage() {
         };
         requestData.total_price = (requestData.quantity || 0) * (requestData.unit_price || 0);
         const response = await pdmApi.createBomItem(requestData);
-        if (!response.success) throw new Error(response.message || '创建失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS ,
-  exact: false,
-  refetchType: 'active',
-});
+        if (!response.success) throw new Error(response.message || t('pdm.pdm_bom_page.k0'));
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PDM.BOM_ITEMS,
+          exact: false,
+          refetchType: 'active',
+        });
         return (response.data ?? {}) as BomItem;
       },
       update: async (id, data) => {
@@ -104,20 +107,22 @@ export default function PdmBomPage() {
           requestData.total_price = requestData.quantity * requestData.unit_price;
         }
         const response = await pdmApi.updateBomItem(id, requestData);
-        if (!response.success) throw new Error(response.message || '更新失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS ,
-  exact: false,
-  refetchType: 'active',
-});
+        if (!response.success) throw new Error(response.message || t('pdm.pdm_bom_page.k1'));
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PDM.BOM_ITEMS,
+          exact: false,
+          refetchType: 'active',
+        });
         return (response.data ?? {}) as BomItem;
       },
       delete: async (id) => {
         const response = await pdmApi.deleteBomItem(id);
-        if (!response.success) throw new Error(response.message || '删除失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS ,
-  exact: false,
-  refetchType: 'active',
-});
+        if (!response.success) throw new Error(response.message || t('pdm.pdm_bom_page.k2'));
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PDM.BOM_ITEMS,
+          exact: false,
+          refetchType: 'active',
+        });
       },
     }),
     [queryClient, selectedProduct]
@@ -139,10 +144,10 @@ export default function PdmBomPage() {
         <Box>
           <Box sx={{ mb: 2 }}>
             <FormControl sx={{ minWidth: 250 }}>
-              <InputLabel>选择产品</InputLabel>
+              <InputLabel>{t('pdm.pdm_bom_page.k3')}</InputLabel>
               <Select
                 value={selectedProduct}
-                label='选择产品'
+                label={t('pdm.pdm_bom_page.k4')}
                 onChange={(e) => setSelectedProduct(e.target.value)}
               >
                 {products.map((p: Product) => (

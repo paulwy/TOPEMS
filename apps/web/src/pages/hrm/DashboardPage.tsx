@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserPlus, GraduationCap, Award, ArrowRight } from 'lucide-react';
 import {
@@ -24,6 +24,7 @@ import { HRM_PATHS } from '@/modules/hrm/config';
 
 import { useTranslation } from 'react-i18next';
 import { LazyChart } from '@/components/charts';
+import i18n from '@/i18n';
 
 export const DashboardPage: React.FC = () => {
   const { t } = useTranslation();
@@ -42,8 +43,9 @@ export const DashboardPage: React.FC = () => {
       }
       return { total: 0, items: [] as Employee[] };
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const departmentsQuery = useQuery({
     queryKey: QUERY_KEYS.HRM.DEPARTMENTS,
@@ -54,8 +56,9 @@ export const DashboardPage: React.FC = () => {
       }
       return [] as Department[];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const coursesQuery = useQuery({
     queryKey: [...QUERY_KEYS.HRM.TRAINING, 'courses'],
@@ -66,8 +69,9 @@ export const DashboardPage: React.FC = () => {
       }
       return 0;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const reviewsQuery = useQuery({
     queryKey: QUERY_KEYS.HRM.PERFORMANCE,
@@ -78,8 +82,9 @@ export const DashboardPage: React.FC = () => {
       }
       return 0;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const attendanceQuery = useQuery({
     queryKey: QUERY_KEYS.HRM.ATTENDANCE,
@@ -90,8 +95,9 @@ export const DashboardPage: React.FC = () => {
       }
       return [] as AttendanceRecord[];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();
@@ -202,38 +208,38 @@ export const DashboardPage: React.FC = () => {
     () => [
       {
         id: 'total-employees',
-        title: t('hrm.dashboard_page.text_97e957'),
+        title: i18n.t('hrm.dashboard_page.text_97e957'),
         value: String(statsData.totalEmployees),
         icon: <Users size={24} />,
         change: 12,
-        changeLabel: t('hrm.dashboard_page.last_week'),
+        changeLabel: i18n.t('hrm.dashboard_page.last_week'),
         color: 'primary',
       },
       {
         id: 'new-hires',
-        title: t('hrm.dashboard_page.this_month'),
+        title: i18n.t('hrm.dashboard_page.this_month'),
         value: String(statsData.newHires),
         icon: <UserPlus size={24} />,
         change: 3,
-        changeLabel: t('hrm.dashboard_page.last_week'),
+        changeLabel: i18n.t('hrm.dashboard_page.last_week'),
         color: 'success',
       },
       {
         id: 'training',
-        title: t('hrm.dashboard_page.text_07cb67'),
+        title: i18n.t('hrm.dashboard_page.text_07cb67'),
         value: String(statsData.trainingCourses),
         icon: <GraduationCap size={24} />,
         change: 5,
-        changeLabel: t('hrm.dashboard_page.last_week'),
+        changeLabel: i18n.t('hrm.dashboard_page.last_week'),
         color: 'info',
       },
       {
         id: 'performance',
-        title: t('hrm.dashboard_page.text_5ad4ab'),
+        title: i18n.t('hrm.dashboard_page.text_5ad4ab'),
         value: String(statsData.performanceReviews),
         icon: <Award size={24} />,
         change: 45,
-        changeLabel: t('hrm.dashboard_page.last_week'),
+        changeLabel: i18n.t('hrm.dashboard_page.last_week'),
         color: 'warning',
       },
     ],
@@ -244,9 +250,10 @@ export const DashboardPage: React.FC = () => {
     () => [
       {
         id: 'overview',
-        title: t('hrm.dashboard_page.text_699d70'),
+        title: i18n.t('hrm.dashboard_page.text_699d70'),
         chart: (
-          <LazyChart type='bar'
+          <LazyChart
+            type='bar'
             data={chartData.departmentDistribution}
             xKey='name'
             yKey='value'
@@ -257,9 +264,10 @@ export const DashboardPage: React.FC = () => {
       },
       {
         id: 'trend',
-        title: t('hrm.dashboard_page.text_b3b5dc'),
+        title: i18n.t('hrm.dashboard_page.text_b3b5dc'),
         chart: (
-          <LazyChart type='line'
+          <LazyChart
+            type='line'
             data={chartData.monthlyTrend}
             xKey='name'
             yKey='value'
@@ -270,8 +278,13 @@ export const DashboardPage: React.FC = () => {
       },
       {
         id: 'distribution',
-        title: t('hrm.dashboard_page.status'),
-        chart: <LazyChart type='pie' data={chartData.statusDistribution} />,
+        title: i18n.t('hrm.dashboard_page.status'),
+        chart: (
+          <LazyChart
+            type='pie'
+            data={chartData.statusDistribution}
+          />
+        ),
         height: 300,
         type: 'pie',
       },
@@ -283,25 +296,25 @@ export const DashboardPage: React.FC = () => {
     () => [
       {
         id: 'new-employee',
-        label: t('hrm.dashboard_page.add'),
+        label: i18n.t('hrm.dashboard_page.add'),
         icon: <ArrowRight size={18} />,
         onClick: () => navigate(HRM_PATHS.employeeCreate),
       },
       {
         id: 'recruitment',
-        label: t('hrm.dashboard_page.text_b4f20d'),
+        label: i18n.t('hrm.dashboard_page.text_b4f20d'),
         icon: <ArrowRight size={18} />,
         onClick: () => navigate(HRM_PATHS.recruitment),
       },
       {
         id: 'training-plan',
-        label: t('hrm.dashboard_page.plan'),
+        label: i18n.t('hrm.dashboard_page.plan'),
         icon: <ArrowRight size={18} />,
         onClick: () => navigate(HRM_PATHS.training),
       },
       {
         id: 'performance-review',
-        label: t('hrm.dashboard_page.text_5ad4ab'),
+        label: i18n.t('hrm.dashboard_page.text_5ad4ab'),
         icon: <ArrowRight size={18} />,
         onClick: () => navigate(HRM_PATHS.performance),
       },

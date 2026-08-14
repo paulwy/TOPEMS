@@ -19,6 +19,8 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { INTEGRATION_PATHS } from '@/modules/integration/config';
 import { integrationConnectionSchema } from '@/schemas/integration';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 interface IntegrationConnection {
   id: string;
@@ -39,28 +41,28 @@ const renderStatsCards = (rows: Record<string, unknown>[]) => {
   const stats = [
     {
       id: 'total',
-      title: '总连接数',
+      title: i18n.t('integration.integration_connections_page.k0'),
       value: connections.length,
       icon: <Plug size={20} />,
       color: 'primary' as const,
     },
     {
       id: 'active',
-      title: '活跃连接',
+      title: i18n.t('integration.integration_connections_page.k1'),
       value: connections.filter((c) => c.status === 'active').length,
       icon: <Cloud size={20} />,
       color: 'success' as const,
     },
     {
       id: 'inactive',
-      title: '停用连接',
+      title: i18n.t('integration.integration_connections_page.k2'),
       value: connections.filter((c) => c.status === 'inactive').length,
       icon: <Database size={20} />,
       color: 'default' as const,
     },
     {
       id: 'errors',
-      title: '异常连接',
+      title: i18n.t('integration.integration_connections_page.k3'),
       value: connections.filter((c) => c.status === 'error').length,
       icon: <Plug size={20} />,
       color: 'error' as const,
@@ -121,6 +123,7 @@ const renderStatsCards = (rows: Record<string, unknown>[]) => {
 };
 
 export const IntegrationConnectionsPage: React.FC = () => {
+  const { t } = useTranslation('integration');
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
@@ -129,18 +132,20 @@ export const IntegrationConnectionsPage: React.FC = () => {
       try {
         // 测试连接占位调用（原页面同样为空实现）
         addNotification({
-          title: '测试成功',
+          title: t('integration.integration_connections_page.k4'),
           message: `连接「${connection.name}」测试通过`,
           type: 'success',
         });
-        void queryClient.invalidateQueries({ queryKey: CRUD_QUERY_KEY ,
-  exact: false,
-  refetchType: 'active',
-});
+        void queryClient.invalidateQueries({
+          queryKey: CRUD_QUERY_KEY,
+          exact: false,
+          refetchType: 'active',
+        });
       } catch (err) {
         addNotification({
-          title: '测试失败',
-          message: err instanceof Error ? err.message : '连接测试失败',
+          title: t('integration.integration_connections_page.k5'),
+          message:
+            err instanceof Error ? err.message : t('integration.integration_connections_page.k6'),
           type: 'error',
         });
       }
@@ -167,24 +172,24 @@ export const IntegrationConnectionsPage: React.FC = () => {
           description: (data.description as string) ?? '',
         } as IntegrationConnection;
         addNotification({
-          title: '成功',
-          message: '连接创建成功',
+          title: t('integration.integration_connections_page.k7'),
+          message: t('integration.integration_connections_page.k8'),
           type: 'success',
         });
         return conn;
       },
       update: async (_id, data) => {
         addNotification({
-          title: '成功',
-          message: '连接更新成功',
+          title: t('integration.integration_connections_page.k9'),
+          message: t('integration.integration_connections_page.k10'),
           type: 'success',
         });
         return data as IntegrationConnection;
       },
       delete: async () => {
         addNotification({
-          title: '成功',
-          message: '连接删除成功',
+          title: t('integration.integration_connections_page.k11'),
+          message: t('integration.integration_connections_page.k12'),
           type: 'success',
         });
       },
@@ -195,7 +200,7 @@ export const IntegrationConnectionsPage: React.FC = () => {
   const customRowActions = useMemo<RowAction[]>(
     () => [
       {
-        label: '测试',
+        label: t('integration.integration_connections_page.k13'),
         icon: <TestTube size={16} />,
         onClick: (row) => {
           void handleTest(row as unknown as IntegrationConnection);
@@ -217,7 +222,10 @@ export const IntegrationConnectionsPage: React.FC = () => {
         apiAdapter={apiAdapter}
         customRowActions={customRowActions}
         headerContent={renderStatsCards}
-        breadcrumbs={[{ label: '集成' }, { label: '连接管理' }]}
+        breadcrumbs={[
+          { label: t('integration.integration_connections_page.k15') },
+          { label: t('integration.integration_connections_page.k14') },
+        ]}
       />
     </PageContainer>
   );

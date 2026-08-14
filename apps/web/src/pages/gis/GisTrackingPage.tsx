@@ -31,11 +31,13 @@ import { gisApi } from '@/api/gis';
 import type { DevicePoint, DeviceLocationRecord } from '@/api/gis';
 import { designTokens } from '@/theme/tokens';
 
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 export const GisTrackingPage: React.FC = () => {
+  const { t } = useTranslation('gis');
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [selectedDevice, setSelectedDevice] = useState('');
@@ -53,12 +55,13 @@ export const GisTrackingPage: React.FC = () => {
       if (res.success && res.data) {
         return res.data.items || [];
       }
-      throw new Error('加载设备列表失败');
+      throw new Error(t('gis.gis_tracking_page.k0'));
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
 
-  const { data: trackHistory = [], isPending: trackLoading} = useQuery<DeviceLocationRecord[]>({
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
+
+  const { data: trackHistory = [], isPending: trackLoading } = useQuery<DeviceLocationRecord[]>({
     queryKey: QUERY_KEYS.GIS.DEVICE_TRACK(selectedDevice || 'none'),
     queryFn: async () => {
       if (!selectedDevice) return [];
@@ -66,16 +69,17 @@ export const GisTrackingPage: React.FC = () => {
       if (res.success && res.data) {
         return res.data.items || [];
       }
-      throw new Error('加载轨迹数据失败');
+      throw new Error(t('gis.gis_tracking_page.k1'));
     },
     enabled: !!selectedDevice,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const error = devicesError
     ? devicesError instanceof Error
       ? devicesError.message
-      : '加载设备列表失败'
+      : t('gis.gis_tracking_page.k2')
     : '';
 
   // Auto-select first device when devices load
@@ -106,10 +110,10 @@ export const GisTrackingPage: React.FC = () => {
 
   const getStatusLabel = (status: string) => {
     const s = status?.toLowerCase();
-    if (s?.includes('active') || s === 'online') return '在线';
-    if (s === 'moving') return '移动中';
-    if (s?.includes('inactive') || s === 'offline') return '离线';
-    return status || '未知';
+    if (s?.includes('active') || s === 'online') return t('gis.gis_tracking_page.k3');
+    if (s === 'moving') return t('gis.gis_tracking_page.k4');
+    if (s?.includes('inactive') || s === 'offline') return t('gis.gis_tracking_page.k5');
+    return status || t('gis.gis_tracking_page.k6');
   };
 
   const getMarkerType = (status: string): 'device' | 'storage' | 'warning' | 'custom' => {
@@ -161,7 +165,11 @@ export const GisTrackingPage: React.FC = () => {
 
   const handleSearch = useCallback(
     (query: string) => {
-      addNotification({ title: '搜索', message: `搜索设备: ${query}`, type: 'info' });
+      addNotification({
+        title: t('gis.gis_tracking_page.k7'),
+        message: `搜索设备: ${query}`,
+        type: 'info',
+      });
     },
     [addNotification]
   );
@@ -170,8 +178,8 @@ export const GisTrackingPage: React.FC = () => {
     (playing: boolean) => {
       setIsPlaying(playing);
       addNotification({
-        title: '轨迹回放',
-        message: playing ? '开始回放' : '暂停回放',
+        title: t('gis.gis_tracking_page.k8'),
+        message: playing ? t('gis.gis_tracking_page.k10') : t('gis.gis_tracking_page.k9'),
         type: 'info',
       });
     },
@@ -188,8 +196,8 @@ export const GisTrackingPage: React.FC = () => {
     const newPlaying = !isPlaying;
     setIsPlaying(newPlaying);
     addNotification({
-      title: '轨迹回放',
-      message: newPlaying ? '开始回放' : '暂停回放',
+      title: t('gis.gis_tracking_page.k11'),
+      message: newPlaying ? t('gis.gis_tracking_page.k13') : t('gis.gis_tracking_page.k12'),
       type: 'info',
     });
   }, [isPlaying, addNotification]);
@@ -197,7 +205,11 @@ export const GisTrackingPage: React.FC = () => {
   const handleReset = useCallback(() => {
     setIsPlaying(false);
     setPlaybackSpeed(1);
-    addNotification({ title: '重置', message: '轨迹已重置', type: 'info' });
+    addNotification({
+      title: t('gis.gis_tracking_page.k15'),
+      message: t('gis.gis_tracking_page.k14'),
+      type: 'info',
+    });
   }, [addNotification]);
 
   if (loading) {
@@ -210,8 +222,8 @@ export const GisTrackingPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='轨迹追踪'
-      subtitle='查看设备历史轨迹，支持回放和时间筛选'
+      title={t('gis.gis_tracking_page.k16')}
+      subtitle={t('gis.gis_tracking_page.k17')}
       maxWidth='xl'
       headerProps={{
         pageIcon: <Map style={{ width: 20, height: 20 }} />,
@@ -277,16 +289,16 @@ export const GisTrackingPage: React.FC = () => {
         >
           <Grid size={{ xs: 12, lg: 3 }}>
             <Card>
-              <CardHeader title='选择设备' />
+              <CardHeader title={t('gis.gis_tracking_page.k18')} />
               <CardContent>
                 <FormControl fullWidth>
-                  <InputLabel id='device-select-label'>设备</InputLabel>
+                  <InputLabel id='device-select-label'>{t('gis.gis_tracking_page.k19')}</InputLabel>
                   <Select
                     labelId='device-select-label'
                     value={selectedDevice}
                     onChange={(e) => handleDeviceChange(e.target.value)}
                     sx={{ minHeight: 48 }}
-                    label='设备'
+                    label={t('gis.gis_tracking_page.k20')}
                   >
                     {devices.map((device) => (
                       <MenuItem
@@ -389,7 +401,7 @@ export const GisTrackingPage: React.FC = () => {
         >
           <Grid size={{ xs: 12, lg: 7 }}>
             <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              <CardHeader title='轨迹地图' />
+              <CardHeader title={t('gis.gis_tracking_page.k21')} />
               <CardContent sx={{ flex: 1, p: 0 }}>
                 {trackLoading ? (
                   <Box
@@ -422,7 +434,7 @@ export const GisTrackingPage: React.FC = () => {
             </Card>
 
             <Card sx={{ mt: 3 }}>
-              <CardHeader title='播放控制' />
+              <CardHeader title={t('gis.gis_tracking_page.k22')} />
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <Box sx={{ flex: 1 }}>
@@ -448,7 +460,7 @@ export const GisTrackingPage: React.FC = () => {
 
           <Grid size={{ xs: 12, lg: 5 }}>
             <Card>
-              <CardHeader title='轨迹历史' />
+              <CardHeader title={t('gis.gis_tracking_page.k23')} />
               <CardContent>
                 {trackLoading ? (
                   <Box
@@ -461,11 +473,11 @@ export const GisTrackingPage: React.FC = () => {
                     <Table size='small'>
                       <TableHead>
                         <TableRow>
-                          <TableCell>时间</TableCell>
-                          <TableCell>经度</TableCell>
-                          <TableCell>纬度</TableCell>
-                          <TableCell>速度</TableCell>
-                          <TableCell>精度</TableCell>
+                          <TableCell>{t('gis.gis_tracking_page.k24')}</TableCell>
+                          <TableCell>{t('gis.gis_tracking_page.k25')}</TableCell>
+                          <TableCell>{t('gis.gis_tracking_page.k26')}</TableCell>
+                          <TableCell>{t('gis.gis_tracking_page.k27')}</TableCell>
+                          <TableCell>{t('gis.gis_tracking_page.k28')}</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -507,7 +519,7 @@ export const GisTrackingPage: React.FC = () => {
             </Card>
 
             <Card sx={{ mt: 3 }}>
-              <CardHeader title='设备信息' />
+              <CardHeader title={t('gis.gis_tracking_page.k29')} />
               <CardContent>
                 {selectedDeviceData && (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

@@ -6,6 +6,8 @@ import { scmApi } from '@/api/scm';
 import type { InventoryTurnoverStat } from '@/api/scm';
 import { inventoryTurnoverSchema } from '@/schemas/scm';
 import { useNotificationStore } from '@/store';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const apiAdapter: CrudApiAdapter<InventoryTurnoverStat> = {
   list: async (params) => {
@@ -19,17 +21,18 @@ const apiAdapter: CrudApiAdapter<InventoryTurnoverStat> = {
     return { data: [], total: 0 };
   },
   create: async () => {
-    throw new Error('库存周转数据为只读，不支持创建');
+    throw new Error(i18n.t('scm.scm_inventory_turnover_page.k0'));
   },
   update: async () => {
-    throw new Error('库存周转数据为只读，不支持编辑');
+    throw new Error(i18n.t('scm.scm_inventory_turnover_page.k1'));
   },
   delete: async () => {
-    throw new Error('库存周转数据为只读，不支持删除');
+    throw new Error(i18n.t('scm.scm_inventory_turnover_page.k2'));
   },
 };
 
 const HeaderActions: React.FC = () => {
+  const { t } = useTranslation('scm');
   const addNotification = useNotificationStore((state) => state.addNotification);
   return (
     <Stack
@@ -42,7 +45,11 @@ const HeaderActions: React.FC = () => {
         size='small'
         startIcon={<Download size={16} />}
         onClick={() =>
-          addNotification({ title: '导出', message: '库存周转报表导出中...', type: 'info' })
+          addNotification({
+            title: t('scm.scm_inventory_turnover_page.k3'),
+            message: '库存周转报表导出中...',
+            type: 'info',
+          })
         }
       >
         导出报表
@@ -52,7 +59,11 @@ const HeaderActions: React.FC = () => {
         size='small'
         startIcon={<TrendingUp size={16} />}
         onClick={() =>
-          addNotification({ title: '趋势', message: '正在加载周转趋势分析...', type: 'info' })
+          addNotification({
+            title: t('scm.scm_inventory_turnover_page.k4'),
+            message: '正在加载周转趋势分析...',
+            type: 'info',
+          })
         }
       >
         趋势分析
@@ -62,14 +73,15 @@ const HeaderActions: React.FC = () => {
 };
 
 const ScmInventoryTurnoverPage: React.FC = () => {
+  const { t } = useTranslation('scm');
   return (
     <CrudPage
       schema={inventoryTurnoverSchema}
       apiAdapter={apiAdapter}
       breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
+        { label: t('scm.scm_inventory_turnover_page.k5'), href: '/dashboard' },
         { label: 'SCM' },
-        { label: '库存周转分析' },
+        { label: t('scm.scm_inventory_turnover_page.k6') },
       ]}
       headerContent={<HeaderActions />}
     />

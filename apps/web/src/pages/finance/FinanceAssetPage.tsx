@@ -39,6 +39,7 @@ import { FINANCE_PATHS } from '@/modules/finance/config';
 import { useNotificationStore } from '@/store';
 import { useTranslation } from 'react-i18next';
 import { apiLogger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 const FinanceAssetPage: React.FC = () => {
   const { t } = useTranslation();
@@ -77,7 +78,7 @@ const FinanceAssetPage: React.FC = () => {
         const payload = { ...(data as Partial<Account>), category: 'asset' as const };
         const response = await accountApi.create(payload);
         if (!response.success) {
-          throw new Error(response.message || '创建资产科目失败');
+          throw new Error(response.message || t('finance.finance_asset_page.k0'));
         }
         addNotification({
           title: t('finance.finance_asset_page.success'),
@@ -89,7 +90,7 @@ const FinanceAssetPage: React.FC = () => {
       update: async (id, data) => {
         const response = await accountApi.update(String(id), data as Partial<Account>);
         if (!response.success) {
-          throw new Error(response.message || '更新资产科目失败');
+          throw new Error(response.message || t('finance.finance_asset_page.k1'));
         }
         addNotification({
           title: t('finance.finance_asset_page.success'),
@@ -101,7 +102,7 @@ const FinanceAssetPage: React.FC = () => {
       delete: async (id) => {
         const response = await accountApi.delete(String(id));
         if (!response.success) {
-          throw new Error(response.message || '删除资产科目失败');
+          throw new Error(response.message || t('finance.finance_asset_page.k2'));
         }
         addNotification({
           title: t('finance.finance_asset_page.success'),
@@ -195,13 +196,13 @@ const FinanceAssetPage: React.FC = () => {
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
-        label: t('finance.finance_asset_page.text_bca84a'),
+        label: i18n.t('finance.finance_asset_page.text_bca84a'),
         icon: <Calculator sx={{ width: 16, height: 16 }} />,
         color: 'success',
         onClick: (row) => setDepreciationTarget(row as unknown as Account),
       },
       {
-        label: t('finance.finance_asset_page.inactive'),
+        label: i18n.t('finance.finance_asset_page.inactive'),
         icon: <AlertTriangle sx={{ width: 16, height: 16 }} />,
         color: 'warning',
         onClick: (row) => setDisableTarget(row as unknown as Account),
@@ -351,7 +352,7 @@ const FinanceAssetPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>计提折旧</DialogTitle>
+        <DialogTitle>{t('finance.finance_asset_page.k3')}</DialogTitle>
         <DialogContent>
           {depreciationTarget && (
             <Stack
@@ -417,7 +418,9 @@ const FinanceAssetPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDepreciationTarget(null)}>取消</Button>
+          <Button onClick={() => setDepreciationTarget(null)}>
+            {t('finance.finance_asset_page.k4')}
+          </Button>
           <Button
             variant='contained'
             color='success'

@@ -11,6 +11,7 @@ import type {
   CreatePriceComparisonRequest,
   UpdatePriceComparisonRequest,
 } from '@/api/scm';
+import { useTranslation } from 'react-i18next';
 
 const apiAdapter = createCrudPageAdapter<
   PriceComparison,
@@ -19,6 +20,7 @@ const apiAdapter = createCrudPageAdapter<
 >(scmApi.priceComparisons);
 
 const ScmPriceComparisonPage: React.FC = () => {
+  const { t } = useTranslation('scm');
   const schema = useMemo(
     () => ({
       ...priceComparisonSchema,
@@ -27,7 +29,7 @@ const ScmPriceComparisonPage: React.FC = () => {
         onExport: async () => {
           // 占位：实际导出逻辑可在此实现
         },
-        fileName: '询价比价',
+        fileName: t('scm.scm_price_comparison_page.k0'),
       },
     }),
     []
@@ -37,7 +39,7 @@ const ScmPriceComparisonPage: React.FC = () => {
     <CrudPage
       schema={schema}
       apiAdapter={apiAdapter as CrudApiAdapter}
-      breadcrumbs={[{ label: 'SCM' }, { label: '询价比价' }]}
+      breadcrumbs={[{ label: 'SCM' }, { label: t('scm.scm_price_comparison_page.k1') }]}
     />
   );
 };

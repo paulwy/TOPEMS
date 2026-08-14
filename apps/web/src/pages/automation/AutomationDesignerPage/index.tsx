@@ -7,14 +7,16 @@ import { DesignerCanvas } from './components/DesignerCanvas';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { NodeEditDialog } from './components/NodeEditDialog';
 import { useAutomationDesigner } from './useAutomationDesigner';
+import { useTranslation } from 'react-i18next';
 
 export const AutomationDesignerPage: React.FC = () => {
+  const { t } = useTranslation('automation');
   const s = useAutomationDesigner();
 
   const showCanvasLayout = s.selectedRuleId && !s.loading && s.mode === 'canvas';
 
   return (
-    <PageContainer title='自动化设计器'>
+    <PageContainer title={t('automation.index.k0')}>
       <Box sx={{ p: 3 }}>
         <DesignerToolbar
           mode={s.mode}

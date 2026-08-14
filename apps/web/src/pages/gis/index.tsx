@@ -34,8 +34,9 @@ import type {
   BusinessLocation,
 } from '../../api/gis';
 import { designTokens } from '@/theme/tokens';
+import { useTranslation } from 'react-i18next';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 type TabType =
   | 'map'
@@ -47,6 +48,7 @@ type TabType =
   | 'businessLocations';
 
 const GisContent: React.FC = () => {
+  const { t } = useTranslation('gis');
   const { state, loadAllData } = useGis();
   const [activeTab, setActiveTab] = useState<TabType>('map');
   const [notification, setNotification] = useState<{
@@ -71,19 +73,19 @@ const GisContent: React.FC = () => {
   };
 
   const tabs: Array<{ id: TabType; label: string; icon: React.ReactNode }> = [
-    { id: 'map', label: '地图视图', icon: <Map size={18} /> },
-    { id: 'devicePoints', label: '设备点位', icon: <MapPin size={18} /> },
-    { id: 'pipelines', label: '管线管理', icon: <ArrowRight size={18} /> },
+    { id: 'map', label: t('gis.index.k0'), icon: <Map size={18} /> },
+    { id: 'devicePoints', label: t('gis.index.k1'), icon: <MapPin size={18} /> },
+    { id: 'pipelines', label: t('gis.index.k2'), icon: <ArrowRight size={18} /> },
     {
       id: 'storageLocations',
-      label: '仓储位置',
+      label: t('gis.index.k3'),
       icon: <Warehouse size={18} />,
     },
-    { id: 'evidenceRecords', label: '现场取证', icon: <Camera size={18} /> },
-    { id: 'factoryMaps', label: '厂区地图', icon: <Map size={18} /> },
+    { id: 'evidenceRecords', label: t('gis.index.k4'), icon: <Camera size={18} /> },
+    { id: 'factoryMaps', label: t('gis.index.k5'), icon: <Map size={18} /> },
     {
       id: 'businessLocations',
-      label: '业务位置',
+      label: t('gis.index.k6'),
       icon: <Building2 size={18} />,
     },
   ];
@@ -91,11 +93,11 @@ const GisContent: React.FC = () => {
   const getStatusStyle = (status: string) => {
     if (!status) return { bgcolor: 'grey.100', color: 'grey.600' };
     const s = status.toLowerCase();
-    if (s.includes('active') || s.includes('启用'))
+    if (s.includes('active') || s.includes(t('gis.index.k7')))
       return { bgcolor: 'success.lighter', color: 'success.700' };
-    if (s.includes('pending') || s.includes('待处理'))
+    if (s.includes('pending') || s.includes(t('gis.index.k8')))
       return { bgcolor: 'warning.light', color: 'warning.700' };
-    if (s.includes('inactive') || s.includes('禁用'))
+    if (s.includes('inactive') || s.includes(t('gis.index.k9')))
       return { bgcolor: 'error.lighter', color: 'error.darker' };
     return { bgcolor: 'grey.100', color: 'grey.600' };
   };
@@ -115,7 +117,7 @@ const GisContent: React.FC = () => {
     if (data.length === 0) {
       return (
         <Box sx={{ textAlign: 'center', py: 6 }}>
-          <Typography color='text.secondary'>暂无数据</Typography>
+          <Typography color='text.secondary'>{t('gis.index.k10')}</Typography>
         </Box>
       );
     }
@@ -613,7 +615,9 @@ const GisContent: React.FC = () => {
                   textTransform: 'none',
                 }}
               >
-                <Typography sx={{ fontSize: '0.875rem', fontWeight: 500 }}>刷新数据</Typography>
+                <Typography sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                  {t('gis.index.k11')}
+                </Typography>
               </Button>
             </Stack>
           </Stack>

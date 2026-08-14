@@ -13,7 +13,6 @@ vi.mock('@/api/lowcode', () => ({
   LowcodeDashboardStats: {},
 }));
 
-
 vi.mock('@/components/common', () => ({
   PageContainer: ({ children, title }: { children: React.ReactNode; title: string }) => (
     <div data-testid='page-container'>

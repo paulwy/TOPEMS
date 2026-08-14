@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Box, IconButton, Typography, Chip } from '@mui/material';
 import { Building2, Users, ChevronDown, ChevronRight } from 'lucide-react';
 import type { TreeViewComponentProps, TreeNode } from '../types';
+import { useTranslation } from 'react-i18next';
 
 const TreeViewComponent: React.FC<TreeViewComponentProps> = ({ data, selectedId, onSelect }) => {
+  const { t } = useTranslation('hrm');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const toggleExpand = (id: string) => {
@@ -47,7 +49,7 @@ const TreeViewComponent: React.FC<TreeViewComponentProps> = ({ data, selectedId,
             <IconButton
               size='small'
               sx={{ p: 0.25 }}
-              aria-label='展开'
+              aria-label={t('hrm.tree_view_component.k0')}
             >
               {isExpanded ? (
                 <ChevronDown sx={{ width: 16, height: 16 }} />

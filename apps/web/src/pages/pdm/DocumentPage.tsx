@@ -45,8 +45,10 @@ import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const baseAdapter = createCrudPageAdapter<Document, CreateDocumentRequest>({
   list: documentApi.list,
@@ -57,6 +59,7 @@ const baseAdapter = createCrudPageAdapter<Document, CreateDocumentRequest>({
 
 const statusColorMap: Record<string, { bg: string; color: string }> = {
   draft: { bg: 'grey.100', color: 'text.secondary' },
+
   review: { bg: 'warning.lighter', color: 'warning.dark' },
   approved: { bg: 'info.lighter', color: 'info.dark' },
   published: { bg: 'success.lighter', color: 'success.dark' },
@@ -64,20 +67,20 @@ const statusColorMap: Record<string, { bg: string; color: string }> = {
 };
 
 const statusLabelMap: Record<string, string> = {
-  draft: '草稿',
-  review: '审核中',
-  approved: '已批准',
-  published: '已发布',
-  archived: '已归档',
+  draft: i18n.t('pdm.document_page.k0'),
+  review: i18n.t('pdm.document_page.k1'),
+  approved: i18n.t('pdm.document_page.k2'),
+  published: i18n.t('pdm.document_page.k3'),
+  archived: i18n.t('pdm.document_page.k4'),
 };
 
 const typeLabelMap: Record<string, string> = {
-  specification: '规格书',
-  manual: '手册',
-  drawing: '图纸',
-  report: '报告',
-  procedure: '程序文件',
-  other: '其他',
+  specification: i18n.t('pdm.document_page.k5'),
+  manual: i18n.t('pdm.document_page.k6'),
+  drawing: i18n.t('pdm.document_page.k7'),
+  report: i18n.t('pdm.document_page.k8'),
+  procedure: i18n.t('pdm.document_page.k9'),
+  other: i18n.t('pdm.document_page.k10'),
 };
 
 function extractListData(response: unknown): Document[] {
@@ -95,6 +98,7 @@ function extractListData(response: unknown): Document[] {
 }
 
 export const DocumentPage: React.FC = () => {
+  const { t } = useTranslation('pdm');
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
@@ -134,34 +138,52 @@ export const DocumentPage: React.FC = () => {
   const publishMutation = useMutation({
     mutationFn: (id: string) => documentApi.updateStatus(id, 'published'),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '文档已发布', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS ,
-  exact: false,
-  refetchType: 'active',
-});
+      addNotification({
+        title: t('pdm.document_page.k12'),
+        message: t('pdm.document_page.k11'),
+        type: 'success',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.PDM.DOCUMENTS,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
-      addNotification({ title: '错误', message: '发布失败', type: 'error' });
+      addNotification({
+        title: t('pdm.document_page.k14'),
+        message: t('pdm.document_page.k13'),
+        type: 'error',
+      });
     },
   });
 
   const approveMutation = useMutation({
     mutationFn: (id: string) => documentApi.updateStatus(id, 'approved'),
     onSuccess: () => {
-      addNotification({ title: '成功', message: '文档已批准', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS ,
-  exact: false,
-  refetchType: 'active',
-});
+      addNotification({
+        title: t('pdm.document_page.k16'),
+        message: t('pdm.document_page.k15'),
+        type: 'success',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.PDM.DOCUMENTS,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
-      addNotification({ title: '错误', message: '批准失败', type: 'error' });
+      addNotification({
+        title: t('pdm.document_page.k18'),
+        message: t('pdm.document_page.k17'),
+        type: 'error',
+      });
     },
   });
 
   const customRowActions = [
     {
-      label: '查看版本',
+      label: t('pdm.document_page.k19'),
       icon: <History size={16} />,
       color: 'info' as const,
       onClick: (row: Record<string, unknown>) => {
@@ -171,23 +193,31 @@ export const DocumentPage: React.FC = () => {
       },
     },
     {
-      label: '预览',
+      label: t('pdm.document_page.k20'),
       icon: <Eye size={16} />,
       color: 'primary' as const,
       onClick: (_row: Record<string, unknown>) => {
-        addNotification({ title: '提示', message: '预览功能开发中', type: 'info' });
+        addNotification({
+          title: t('pdm.document_page.k22'),
+          message: t('pdm.document_page.k21'),
+          type: 'info',
+        });
       },
     },
     {
-      label: '下载',
+      label: t('pdm.document_page.k23'),
       icon: <Download size={16} />,
       color: 'success' as const,
       onClick: (_row: Record<string, unknown>) => {
-        addNotification({ title: '提示', message: '下载功能开发中', type: 'info' });
+        addNotification({
+          title: t('pdm.document_page.k25'),
+          message: t('pdm.document_page.k24'),
+          type: 'info',
+        });
       },
     },
     {
-      label: '批准',
+      label: t('pdm.document_page.k26'),
       icon: <CheckCircle size={16} />,
       color: 'success' as const,
       onClick: (row: Record<string, unknown>) => {
@@ -200,7 +230,7 @@ export const DocumentPage: React.FC = () => {
       },
     },
     {
-      label: '发布',
+      label: t('pdm.document_page.k27'),
       icon: <Upload size={16} />,
       color: 'primary' as const,
       onClick: (row: Record<string, unknown>) => {
@@ -463,7 +493,7 @@ export const DocumentPage: React.FC = () => {
       <CrudPage
         schema={documentSchema}
         apiAdapter={baseAdapter}
-        breadcrumbs={[{ label: 'PDM' }, { label: '文档管理' }]}
+        breadcrumbs={[{ label: 'PDM' }, { label: t('pdm.document_page.k28') }]}
         headerContent={headerContent}
         detailContent={detailContent}
         detailMaxWidth='lg'
@@ -479,7 +509,9 @@ export const DocumentPage: React.FC = () => {
         <DialogTitle>版本历史 - {selectedDoc?.name || ''}</DialogTitle>
         <DialogContent dividers>
           {versions.length === 0 ? (
-            <Box sx={{ py: 4, textAlign: 'center', color: 'text.secondary' }}>暂无版本历史</Box>
+            <Box sx={{ py: 4, textAlign: 'center', color: 'text.secondary' }}>
+              {t('pdm.document_page.k29')}
+            </Box>
           ) : (
             <List>
               {versions.map((version, index) => (
@@ -488,18 +520,18 @@ export const DocumentPage: React.FC = () => {
                   divider={index < versions.length - 1}
                   secondaryAction={
                     <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Tooltip title='下载'>
+                      <Tooltip title={t('pdm.document_page.k30')}>
                         <IconButton
                           size='small'
-                          aria-label='下载'
+                          aria-label={t('pdm.document_page.k31')}
                         >
                           <Download size={16} />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title='预览'>
+                      <Tooltip title={t('pdm.document_page.k32')}>
                         <IconButton
                           size='small'
-                          aria-label='查看'
+                          aria-label={t('pdm.document_page.k33')}
                         >
                           <Eye size={16} />
                         </IconButton>
@@ -524,7 +556,7 @@ export const DocumentPage: React.FC = () => {
                         </Typography>
                         {index === 0 && (
                           <Chip
-                            label='当前版本'
+                            label={t('pdm.document_page.k34')}
                             size='small'
                             sx={{
                               backgroundColor: 'success.lighter',
@@ -542,7 +574,9 @@ export const DocumentPage: React.FC = () => {
                           variant='caption'
                           sx={{ color: 'text.secondary', display: 'block' }}
                         >
-                          {version.changes.join(', ') || version.description || '无变更说明'}
+                          {version.changes.join(', ') ||
+                            version.description ||
+                            t('pdm.document_page.k35')}
                         </Typography>
                         <Typography
                           variant='caption'
@@ -561,12 +595,16 @@ export const DocumentPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setVersionDialogOpen(false)}>关闭</Button>
+          <Button onClick={() => setVersionDialogOpen(false)}>{t('pdm.document_page.k36')}</Button>
           <Button
             variant='outlined'
             startIcon={<Plus size={16} />}
             onClick={() => {
-              addNotification({ title: '提示', message: '上传新版本功能开发中', type: 'info' });
+              addNotification({
+                title: t('pdm.document_page.k38'),
+                message: t('pdm.document_page.k37'),
+                type: 'info',
+              });
             }}
           >
             上传新版本
@@ -580,7 +618,7 @@ export const DocumentPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>上传文档</DialogTitle>
+        <DialogTitle>{t('pdm.document_page.k39')}</DialogTitle>
         <DialogContent>
           <Box
             sx={{
@@ -597,7 +635,11 @@ export const DocumentPage: React.FC = () => {
               },
             }}
             onClick={() => {
-              addNotification({ title: '提示', message: '文件上传功能开发中', type: 'info' });
+              addNotification({
+                title: t('pdm.document_page.k41'),
+                message: t('pdm.document_page.k40'),
+                type: 'info',
+              });
             }}
           >
             <Upload
@@ -613,7 +655,7 @@ export const DocumentPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setUploadDialogOpen(false)}>取消</Button>
+          <Button onClick={() => setUploadDialogOpen(false)}>{t('pdm.document_page.k42')}</Button>
           <Button
             variant='contained'
             disabled

@@ -30,16 +30,18 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { approvalConfigApi } from '@/api/finance/approvalConfig';
 import type { ApprovalConfig, ApprovalNode } from '@/api/finance/approvalConfig';
 import { approvalConfigSchema } from '@/schemas/finance';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const approverTypeLabels: Record<string, string> = {
-  role: '角色审批',
-  user: '指定用户',
+  role: i18n.t('finance.finance_approval_config_page.k0'),
+  user: i18n.t('finance.finance_approval_config_page.k1'),
 };
 
 const approvalTypeLabels: Record<string, string> = {
-  single: '单人审批',
-  multiple: '多人审批',
-  any: '任意一人审批',
+  single: i18n.t('finance.finance_approval_config_page.k2'),
+  multiple: i18n.t('finance.finance_approval_config_page.k3'),
+  any: i18n.t('finance.finance_approval_config_page.k4'),
 };
 
 // ── API 适配器 ──
@@ -86,7 +88,8 @@ const apiAdapter: CrudApiAdapter<ApprovalConfig> = {
       isActive: data.isActive !== false,
       nodes: [],
     });
-    if (!res.success) throw new Error(res.message || '创建失败');
+    if (!res.success)
+      throw new Error(res.message || i18n.t('finance.finance_approval_config_page.k5'));
     return res.data as ApprovalConfig;
   },
   update: async (id, data) => {
@@ -105,17 +108,20 @@ const apiAdapter: CrudApiAdapter<ApprovalConfig> = {
       isActive: data.isActive !== false,
       nodes: existingNodes,
     });
-    if (!res.success) throw new Error(res.message || '更新失败');
+    if (!res.success)
+      throw new Error(res.message || i18n.t('finance.finance_approval_config_page.k6'));
     return res.data as ApprovalConfig;
   },
   delete: async (id) => {
     const res = await approvalConfigApi.delete(id);
-    if (!res.success) throw new Error(res.message || '删除失败');
+    if (!res.success)
+      throw new Error(res.message || i18n.t('finance.finance_approval_config_page.k7'));
   },
 };
 
 // ── 节点列表渲染（详情视图中使用） ──
 function NodesTable({ nodes }: { nodes: ApprovalNode[] }) {
+  const { t } = useTranslation('finance');
   if (!nodes || nodes.length === 0) {
     return (
       <Paper sx={{ p: 3, textAlign: 'center', bgcolor: 'grey.50' }}>
@@ -134,10 +140,18 @@ function NodesTable({ nodes }: { nodes: ApprovalNode[] }) {
       <Table size='small'>
         <TableHead>
           <TableRow sx={{ bgcolor: 'grey.50' }}>
-            <TableCell sx={{ fontWeight: 600 }}>层级</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>节点名称</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>审批人类型</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>审批方式</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>
+              {t('finance.finance_approval_config_page.k8')}
+            </TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>
+              {t('finance.finance_approval_config_page.k9')}
+            </TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>
+              {t('finance.finance_approval_config_page.k10')}
+            </TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>
+              {t('finance.finance_approval_config_page.k11')}
+            </TableCell>
             <TableCell
               align='center'
               sx={{ fontWeight: 600 }}
@@ -170,7 +184,11 @@ function NodesTable({ nodes }: { nodes: ApprovalNode[] }) {
               <TableCell align='center'>
                 <Chip
                   size='small'
-                  label={node.isActive ? '启用' : '停用'}
+                  label={
+                    node.isActive
+                      ? t('finance.finance_approval_config_page.k13')
+                      : t('finance.finance_approval_config_page.k12')
+                  }
                   color={node.isActive ? 'success' : 'default'}
                 />
               </TableCell>
@@ -184,6 +202,7 @@ function NodesTable({ nodes }: { nodes: ApprovalNode[] }) {
 
 // ── 主页面 ──
 export const FinanceApprovalConfigPage: React.FC = () => {
+  const { t } = useTranslation('finance');
   const detailContent = React.useCallback((row: Record<string, unknown>) => {
     const config = row as unknown as ApprovalConfig;
     const nodes = config.nodes || [];
@@ -213,7 +232,10 @@ export const FinanceApprovalConfigPage: React.FC = () => {
       apiAdapter={apiAdapter}
       detailContent={detailContent}
       detailMaxWidth='lg'
-      breadcrumbs={[{ label: '财务管理' }, { label: '审批配置' }]}
+      breadcrumbs={[
+        { label: t('finance.finance_approval_config_page.k15') },
+        { label: t('finance.finance_approval_config_page.k14') },
+      ]}
     />
   );
 };

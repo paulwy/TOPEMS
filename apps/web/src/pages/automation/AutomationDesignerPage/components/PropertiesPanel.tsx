@@ -13,6 +13,8 @@ import {
 } from '@mui/material';
 import { Copy as DuplicateIcon, Trash2 as DeleteIcon } from 'lucide-react';
 import { NODE_TYPE_COLOR, NODE_TYPE_LABEL, type DesignerNodeItem } from '../shared';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 export interface PropertiesPanelProps {
   selectedNode: DesignerNodeItem | null;
@@ -39,6 +41,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   onApplyConfig,
   onToggleNextNode,
 }) => {
+  const { t } = useTranslation('automation');
   return (
     <Paper
       variant='outlined'
@@ -61,17 +64,17 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               <IconButton
                 size='small'
                 onClick={() => onDuplicateNode(selectedNode.id)}
-                aria-label='复制'
+                aria-label={i18n.t('automation.properties_panel.k0')}
               >
                 <DuplicateIcon size={18} />
               </IconButton>
             </Tooltip>
-            <Tooltip title='删除节点 (Delete)'>
+            <Tooltip title={i18n.t('automation.properties_panel.delete_1')}>
               <IconButton
                 size='small'
                 color='error'
                 onClick={() => onDeleteNode(selectedNode.id)}
-                aria-label='删除'
+                aria-label={i18n.t('automation.properties_panel.k2')}
               >
                 <DeleteIcon size={18} />
               </IconButton>
@@ -107,7 +110,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             />
           </Box>
           <TextField
-            label='节点名称'
+            label={t('automation.properties_panel.k3')}
             value={selectedNode.name}
             onChange={(e) => onUpdateNodeName(selectedNode.id, e.target.value)}
             size='small'
@@ -227,7 +230,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
         </Stack>
       ) : (
         <Box sx={{ textAlign: 'center', mt: 4 }}>
-          <Typography color='text.secondary'>点击画布中的节点查看并编辑属性</Typography>
+          <Typography color='text.secondary'>{t('automation.properties_panel.k4')}</Typography>
         </Box>
       )}
     </Paper>

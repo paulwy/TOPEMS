@@ -24,8 +24,10 @@ import { Plus as AddIcon, Trash2 as DeleteOutlineIcon, Eye as VisibilityIcon } f
 import { lowcodeFormsApi } from '@/api/lowcode';
 import type { LowcodeForm } from '@/api/lowcode';
 import { PageContainer } from '@/components/common';
+import { useTranslation } from 'react-i18next';
 
 export const FormListPage: React.FC = () => {
+  const { t } = useTranslation('lowcode');
   const [forms, setForms] = useState<LowcodeForm[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +48,7 @@ export const FormListPage: React.FC = () => {
       const res = await lowcodeFormsApi.list({ page: 1, pageSize: 100 });
       setForms(res.data?.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载表单失败');
+      setError(err instanceof Error ? err.message : t('lowcode.form_list_page.k0'));
     } finally {
       setLoading(false);
     }
@@ -70,7 +72,7 @@ export const FormListPage: React.FC = () => {
       setCreateForm({ app_id: '', code: '', name: '', description: '' });
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '创建表单失败');
+      setError(err instanceof Error ? err.message : t('lowcode.form_list_page.k1'));
     } finally {
       setCreating(false);
     }
@@ -81,7 +83,7 @@ export const FormListPage: React.FC = () => {
       await lowcodeFormsApi.remove(id);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '删除表单失败');
+      setError(err instanceof Error ? err.message : t('lowcode.form_list_page.k2'));
     }
   };
 
@@ -90,7 +92,7 @@ export const FormListPage: React.FC = () => {
       const res = await lowcodeFormsApi.preview(id);
       setPreviewForm(res.data ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '预览表单失败');
+      setError(err instanceof Error ? err.message : t('lowcode.form_list_page.k3'));
     }
   };
 
@@ -99,19 +101,19 @@ export const FormListPage: React.FC = () => {
       await lowcodeFormsApi.publish(id);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '发布表单失败');
+      setError(err instanceof Error ? err.message : t('lowcode.form_list_page.k4'));
     }
   };
 
   return (
-    <PageContainer title='表单列表'>
+    <PageContainer title={t('lowcode.form_list_page.k5')}>
       <Box sx={{ p: 3 }}>
         <Stack
           direction='row'
           spacing={2}
           sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
         >
-          <Typography variant='h5'>表单列表</Typography>
+          <Typography variant='h5'>{t('lowcode.form_list_page.k6')}</Typography>
           <Button
             variant='contained'
             startIcon={<AddIcon />}
@@ -143,12 +145,12 @@ export const FormListPage: React.FC = () => {
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell>表单名称</TableCell>
-                  <TableCell>编码</TableCell>
-                  <TableCell>字段数</TableCell>
-                  <TableCell>状态</TableCell>
-                  <TableCell>版本</TableCell>
-                  <TableCell align='right'>操作</TableCell>
+                  <TableCell>{t('lowcode.form_list_page.k7')}</TableCell>
+                  <TableCell>{t('lowcode.form_list_page.k8')}</TableCell>
+                  <TableCell>{t('lowcode.form_list_page.k9')}</TableCell>
+                  <TableCell>{t('lowcode.form_list_page.k10')}</TableCell>
+                  <TableCell>{t('lowcode.form_list_page.k11')}</TableCell>
+                  <TableCell align='right'>{t('lowcode.form_list_page.k12')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -179,8 +181,8 @@ export const FormListPage: React.FC = () => {
                         <IconButton
                           size='small'
                           onClick={() => handlePreview(f.id)}
-                          aria-label='预览'
-                          title='预览'
+                          aria-label={t('lowcode.form_list_page.k13')}
+                          title={t('lowcode.form_list_page.k14')}
                         >
                           <VisibilityIcon size={18} />
                         </IconButton>
@@ -188,8 +190,8 @@ export const FormListPage: React.FC = () => {
                           size='small'
                           color='success'
                           onClick={() => handlePublish(f.id)}
-                          aria-label='发布'
-                          title='发布'
+                          aria-label={t('lowcode.form_list_page.k15')}
+                          title={t('lowcode.form_list_page.k16')}
                         >
                           <AddIcon size={18} />
                         </IconButton>
@@ -197,7 +199,7 @@ export const FormListPage: React.FC = () => {
                           size='small'
                           color='error'
                           onClick={() => handleDelete(f.id)}
-                          aria-label='删除'
+                          aria-label={t('lowcode.form_list_page.k17')}
                         >
                           <DeleteOutlineIcon size={18} />
                         </IconButton>
@@ -216,36 +218,36 @@ export const FormListPage: React.FC = () => {
           maxWidth='sm'
           fullWidth
         >
-          <DialogTitle>新建表单</DialogTitle>
+          <DialogTitle>{t('lowcode.form_list_page.k18')}</DialogTitle>
           <DialogContent>
             <Stack
               spacing={2}
               sx={{ mt: 1 }}
             >
               <TextField
-                label='所属应用 ID'
+                label={t('lowcode.form_list_page.id_19')}
                 value={createForm.app_id}
                 onChange={(e) => setCreateForm({ ...createForm, app_id: e.target.value })}
                 fullWidth
                 required
               />
               <TextField
-                label='表单编码'
+                label={t('lowcode.form_list_page.k20')}
                 value={createForm.code}
                 onChange={(e) => setCreateForm({ ...createForm, code: e.target.value })}
                 fullWidth
                 required
-                helperText='应用内唯一'
+                helperText={t('lowcode.form_list_page.k21')}
               />
               <TextField
-                label='表单名称'
+                label={t('lowcode.form_list_page.k22')}
                 value={createForm.name}
                 onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
                 fullWidth
                 required
               />
               <TextField
-                label='描述'
+                label={t('lowcode.form_list_page.k23')}
                 value={createForm.description}
                 onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                 fullWidth
@@ -255,13 +257,13 @@ export const FormListPage: React.FC = () => {
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setCreateOpen(false)}>取消</Button>
+            <Button onClick={() => setCreateOpen(false)}>{t('lowcode.form_list_page.k24')}</Button>
             <Button
               onClick={handleCreate}
               variant='contained'
               disabled={creating || !createForm.app_id || !createForm.code || !createForm.name}
             >
-              {creating ? '创建中…' : '创建'}
+              {creating ? '创建中…' : t('lowcode.form_list_page.k25')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -283,7 +285,7 @@ export const FormListPage: React.FC = () => {
             </Paper>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setPreviewForm(null)}>关闭</Button>
+            <Button onClick={() => setPreviewForm(null)}>{t('lowcode.form_list_page.k26')}</Button>
           </DialogActions>
         </Dialog>
       </Box>

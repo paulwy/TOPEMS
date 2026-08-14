@@ -31,17 +31,20 @@ import { SCM_PATHS } from '@/modules/scm/config';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { LazyChart } from '@/components/charts';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const barData = [
-  { name: '供应商A', value: 35 },
-  { name: '供应商B', value: 28 },
-  { name: '供应商C', value: 22 },
-  { name: '供应商D', value: 15 },
+  { name: i18n.t('scm.dashboard_page.a_0'), value: 35 },
+
+  { name: i18n.t('scm.dashboard_page.b_1'), value: 28 },
+  { name: i18n.t('scm.dashboard_page.c_2'), value: 22 },
+  { name: i18n.t('scm.dashboard_page.d_3'), value: 15 },
 ];
 const pieData = [
-  { name: '原材料', value: 50 },
-  { name: '配件', value: 30 },
-  { name: '设备', value: 20 },
+  { name: i18n.t('scm.dashboard_page.k4'), value: 50 },
+  { name: i18n.t('scm.dashboard_page.k5'), value: 30 },
+  { name: i18n.t('scm.dashboard_page.k6'), value: 20 },
 ];
 const lineData = [
   { name: '1周', value: 8 },
@@ -53,9 +56,10 @@ const lineData = [
 ];
 
 export const DashboardPage: React.FC = () => {
+  const { t } = useTranslation('scm');
   const navigate = useNavigate();
 
-  const { data: overview, isPending: overviewLoading} = useQuery({
+  const { data: overview, isPending: overviewLoading } = useQuery({
     queryKey: QUERY_KEYS.SCM.OVERVIEW,
     queryFn: async () => {
       const response = await scmApi.supplyChainDashboard.overview();
@@ -79,7 +83,7 @@ export const DashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { isPending: mrpLoading} = useQuery({
+  const { isPending: mrpLoading } = useQuery({
     queryKey: QUERY_KEYS.SCM.MRP_PLANS,
     queryFn: async () => {
       const response = await scmApi.mrpPlans.list({ page: 1, pageSize: 5 });
@@ -91,7 +95,7 @@ export const DashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { isPending: inspectionLoading} = useQuery({
+  const { isPending: inspectionLoading } = useQuery({
     queryKey: QUERY_KEYS.SCM.INCOMING_INSPECTIONS,
     queryFn: async () => {
       const response = await scmApi.incomingInspections.list({ page: 1, pageSize: 5 });
@@ -103,7 +107,7 @@ export const DashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { isPending: inventoryLoading} = useQuery({
+  const { isPending: inventoryLoading } = useQuery({
     queryKey: QUERY_KEYS.SCM.INVENTORY_TURNOVER,
     queryFn: async () => {
       const response = await scmApi.inventoryTurnover.list({ page: 1, pageSize: 5 });
@@ -115,7 +119,7 @@ export const DashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { isPending: priceLoading} = useQuery({
+  const { isPending: priceLoading } = useQuery({
     queryKey: QUERY_KEYS.SCM.PRICE_COMPARISONS,
     queryFn: async () => {
       const response = await scmApi.priceComparisons.list({ page: 1, pageSize: 5 });
@@ -132,87 +136,87 @@ export const DashboardPage: React.FC = () => {
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();
-    if (hour < 12) return '上午好';
-    if (hour < 18) return '下午好';
-    return '晚上好';
+    if (hour < 12) return t('scm.dashboard_page.k7');
+    if (hour < 18) return t('scm.dashboard_page.k8');
+    return t('scm.dashboard_page.k9');
   };
 
   const stats: StatCard[] = useMemo(
     () => [
       {
         id: 'suppliers',
-        title: '供应商',
+        title: i18n.t('scm.dashboard_page.k10'),
         value: overview?.active_suppliers?.toString() || '128',
         icon: <Users size={24} />,
         change: overview?.total_suppliers
           ? Math.round((overview.active_suppliers / overview.total_suppliers) * 100)
           : 5,
-        changeLabel: '活跃占比',
+        changeLabel: i18n.t('scm.dashboard_page.k11'),
         color: 'primary',
       },
       {
         id: 'orders',
-        title: '采购订单',
+        title: i18n.t('scm.dashboard_page.k12'),
         value: overview?.pending_orders?.toString() || '45',
         icon: <ShoppingCart size={24} />,
         change: overview?.total_purchase_orders
           ? Math.round((overview.pending_orders / overview.total_purchase_orders) * 100)
           : 8,
-        changeLabel: '待处理',
+        changeLabel: i18n.t('scm.dashboard_page.k13'),
         color: 'success',
       },
       {
         id: 'turnover',
-        title: '库存周转率',
+        title: i18n.t('scm.dashboard_page.k14'),
         value: overview?.inventory_turnover_rate?.toFixed(1) || '4.2',
         icon: <RefreshCw size={24} />,
         change: 0.3,
-        changeLabel: '较上周期',
+        changeLabel: i18n.t('scm.dashboard_page.k15'),
         color: 'info',
       },
       {
         id: 'quality',
-        title: '质检合格率',
+        title: i18n.t('scm.dashboard_page.k16'),
         value: `${overview?.quality_pass_rate || 0}%`,
         icon: <ClipboardCheck size={24} />,
         change: overview?.quality_pass_rate ? Math.round(overview.quality_pass_rate) : 5,
-        changeLabel: '本月',
+        changeLabel: i18n.t('scm.dashboard_page.k17'),
         color: 'warning',
       },
       {
         id: 'delivery',
-        title: '准时交付率',
+        title: i18n.t('scm.dashboard_page.k18'),
         value: `${overview?.on_time_delivery_rate || 0}%`,
         icon: <Truck size={24} />,
         change: overview?.on_time_delivery_rate ? Math.round(overview.on_time_delivery_rate) : 3,
-        changeLabel: '本月',
+        changeLabel: i18n.t('scm.dashboard_page.k19'),
         color: 'success',
       },
       {
         id: 'completion',
-        title: '订单完成率',
+        title: t('scm.dashboard_page.k20'),
         value: `${overview?.order_completion_rate || 0}%`,
         icon: <TrendingUp size={24} />,
         change: overview?.order_completion_rate ? Math.round(overview.order_completion_rate) : 2,
-        changeLabel: '本月',
+        changeLabel: t('scm.dashboard_page.k21'),
         color: 'primary',
       },
       {
         id: 'pendingInspection',
-        title: '待检验',
+        title: t('scm.dashboard_page.k22'),
         value: overview?.pending_inspection_count?.toString() || '0',
         icon: <Package size={24} />,
         change: 0,
-        changeLabel: '今日',
+        changeLabel: t('scm.dashboard_page.k23'),
         color: 'error',
       },
       {
         id: 'monthAmount',
-        title: '本月采购额',
+        title: t('scm.dashboard_page.k24'),
         value: `¥${(overview?.total_amount_month || 0).toLocaleString()}`,
         icon: <DollarSign size={24} />,
         change: 12,
-        changeLabel: '较上月',
+        changeLabel: t('scm.dashboard_page.k25'),
         color: 'info',
       },
     ],
@@ -223,9 +227,10 @@ export const DashboardPage: React.FC = () => {
     () => [
       {
         id: 'purchase-volume',
-        title: '供应商采购量',
+        title: i18n.t('scm.dashboard_page.k26'),
         chart: (
-          <LazyChart type='bar'
+          <LazyChart
+            type='bar'
             data={barData}
             xKey='name'
             yKey='value'
@@ -236,9 +241,10 @@ export const DashboardPage: React.FC = () => {
       },
       {
         id: 'weekly-trend',
-        title: '每周采购趋势',
+        title: i18n.t('scm.dashboard_page.k27'),
         chart: (
-          <LazyChart type='line'
+          <LazyChart
+            type='line'
             data={lineData}
             xKey='name'
             yKey='value'
@@ -249,8 +255,13 @@ export const DashboardPage: React.FC = () => {
       },
       {
         id: 'purchase-type',
-        title: '采购类型分布',
-        chart: <LazyChart type='pie' data={pieData} />,
+        title: i18n.t('scm.dashboard_page.k28'),
+        chart: (
+          <LazyChart
+            type='pie'
+            data={pieData}
+          />
+        ),
         height: 300,
         type: 'pie',
       },
@@ -262,7 +273,7 @@ export const DashboardPage: React.FC = () => {
     () => [
       {
         id: 'new-supplier',
-        label: '新增供应商',
+        label: i18n.t('scm.dashboard_page.k29'),
         icon: <ArrowRight size={18} />,
         onClick: () => navigate(SCM_PATHS.suppliers),
       },
@@ -280,7 +291,7 @@ export const DashboardPage: React.FC = () => {
         stats={stats}
         charts={charts}
         quickActions={quickActions}
-        quickActionsTitle='快捷操作'
+        quickActionsTitle={t('scm.dashboard_page.k30')}
         loading={loading}
       />
     </PageContainer>

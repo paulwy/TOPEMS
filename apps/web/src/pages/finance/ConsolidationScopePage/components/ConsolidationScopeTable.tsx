@@ -7,7 +7,7 @@ import { DataTable } from '@/components/common/DataTable';
 import type { ConsolidationScope, ConsolidationCompany } from '@/types/consolidation';
 import { designTokens } from '@/theme/tokens';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 // Helper to convert tailwind color class to sx
 const getChipSx = (colorClass: string): object => {

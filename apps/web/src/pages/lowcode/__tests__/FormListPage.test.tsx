@@ -31,8 +31,22 @@ vi.mock('@/components/common', () => ({
 }));
 
 const forms = [
-  { id: 'f1', app_id: 'crm', name: '客户登记表单', code: 'customer_registry', status: 'published', updated_at: '2026-08-10' },
-  { id: 'f2', app_id: 'crm', name: '拜访记录', code: 'visit_log', status: 'draft', updated_at: '2026-08-11' },
+  {
+    id: 'f1',
+    app_id: 'crm',
+    name: '客户登记表单',
+    code: 'customer_registry',
+    status: 'published',
+    updated_at: '2026-08-10',
+  },
+  {
+    id: 'f2',
+    app_id: 'crm',
+    name: '拜访记录',
+    code: 'visit_log',
+    status: 'draft',
+    updated_at: '2026-08-11',
+  },
 ];
 
 describe('FormListPage', () => {
@@ -42,7 +56,11 @@ describe('FormListPage', () => {
 
   it('shows loading while fetching', async () => {
     let resolvePromise: ((v: any) => void) | undefined;
-    mockList.mockReturnValue(new Promise((res) => { resolvePromise = res; }));
+    mockList.mockReturnValue(
+      new Promise((res) => {
+        resolvePromise = res;
+      })
+    );
 
     renderWithProviders(<FormListPage />);
 

@@ -4,6 +4,7 @@ import { Database, FileText, Globe, Share2, LayoutGrid } from 'lucide-react';
 import { lowcodeApi } from '@/api/lowcode';
 import type { LowcodeDashboardStats } from '@/api/lowcode';
 import { PageContainer } from '@/components/common';
+import { useTranslation } from 'react-i18next';
 
 interface StatCardProps {
   label: string;
@@ -38,6 +39,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, icon, color }) => (
 );
 
 export const LowCodeHomePage: React.FC = () => {
+  const { t } = useTranslation('lowcode');
   const [stats, setStats] = useState<LowcodeDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +56,7 @@ export const LowCodeHomePage: React.FC = () => {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : '加载统计数据失败');
+          setError(err instanceof Error ? err.message : t('lowcode.low_code_home_page.k0'));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -68,7 +70,7 @@ export const LowCodeHomePage: React.FC = () => {
 
   if (loading) {
     return (
-      <PageContainer title='低代码概览'>
+      <PageContainer title={t('lowcode.low_code_home_page.k1')}>
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress />
         </Box>
@@ -77,7 +79,7 @@ export const LowCodeHomePage: React.FC = () => {
   }
 
   return (
-    <PageContainer title='低代码概览'>
+    <PageContainer title={t('lowcode.low_code_home_page.k2')}>
       <Box sx={{ p: 3 }}>
         <Typography
           variant='h5'
@@ -99,7 +101,7 @@ export const LowCodeHomePage: React.FC = () => {
         >
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <StatCard
-              label='应用总数'
+              label={t('lowcode.low_code_home_page.k3')}
               value={stats?.total_apps ?? 0}
               icon={<LayoutGrid size={22} />}
               color='primary.main'
@@ -107,7 +109,7 @@ export const LowCodeHomePage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <StatCard
-              label='已发布应用'
+              label={t('lowcode.low_code_home_page.k4')}
               value={stats?.published_apps ?? 0}
               icon={<LayoutGrid size={22} />}
               color='success.main'
@@ -115,7 +117,7 @@ export const LowCodeHomePage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <StatCard
-              label='数据模型'
+              label={t('lowcode.low_code_home_page.k5')}
               value={stats?.total_data_models ?? 0}
               icon={<Database size={22} />}
               color='info.main'
@@ -123,7 +125,7 @@ export const LowCodeHomePage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <StatCard
-              label='数据源'
+              label={t('lowcode.low_code_home_page.k6')}
               value={stats?.total_data_sources ?? 0}
               icon={<Database size={22} />}
               color='warning.main'
@@ -131,7 +133,7 @@ export const LowCodeHomePage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <StatCard
-              label='表单'
+              label={t('lowcode.low_code_home_page.k7')}
               value={stats?.total_forms ?? 0}
               icon={<FileText size={22} />}
               color='secondary.main'
@@ -139,7 +141,7 @@ export const LowCodeHomePage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <StatCard
-              label='页面'
+              label={t('lowcode.low_code_home_page.k8')}
               value={stats?.total_pages ?? 0}
               icon={<Globe size={22} />}
               color='primary.main'
@@ -147,7 +149,7 @@ export const LowCodeHomePage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <StatCard
-              label='工作流'
+              label={t('lowcode.low_code_home_page.k9')}
               value={stats?.total_workflows ?? 0}
               icon={<Share2 size={22} />}
               color='info.main'
@@ -155,7 +157,7 @@ export const LowCodeHomePage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <StatCard
-              label='近 7 天活跃'
+              label={t('lowcode.low_code_home_page.7_10')}
               value={stats?.recent_active_apps ?? 0}
               icon={<LayoutGrid size={22} />}
               color='success.main'

@@ -30,10 +30,9 @@ import { apiLogger } from '@/utils/logger';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '@/utils/date';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface TabConfig {
   id: string;
@@ -105,10 +104,11 @@ const VoucherDetailPage: React.FC = () => {
         message: t('finance.voucher_detail_page.delete_success'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.FINANCE_VOUCHERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.FINANCE_VOUCHERS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       navigate(FINANCE_PATHS.vouchers);
     },
     onError: (err: unknown) => {
@@ -134,10 +134,11 @@ const VoucherDetailPage: React.FC = () => {
         message: t('finance.voucher_detail_page.success_1'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.FINANCE_VOUCHER_2_BASE, id] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [...QUERY_KEYS.AD_HOC.FINANCE_VOUCHER_2_BASE, id],
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
       apiLogger.error(t('finance.voucher_detail_page.fail'), err);
@@ -162,10 +163,11 @@ const VoucherDetailPage: React.FC = () => {
         message: t('finance.voucher_detail_page.success_2'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.FINANCE_VOUCHER_2_BASE, id] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [...QUERY_KEYS.AD_HOC.FINANCE_VOUCHER_2_BASE, id],
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
       apiLogger.error(t('finance.voucher_detail_page.fail_3'), err);
@@ -520,10 +522,18 @@ const VoucherDetailPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: 'grey.100' }}>
-                <TableCell sx={{ fontWeight: 600, width: 80 }}>行号</TableCell>
-                <TableCell sx={{ fontWeight: 600, width: 150 }}>科目代码</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>科目名称</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>摘要</TableCell>
+                <TableCell sx={{ fontWeight: 600, width: 80 }}>
+                  {t('finance.voucher_detail_page.k0')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, width: 150 }}>
+                  {t('finance.voucher_detail_page.k1')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('finance.voucher_detail_page.k2')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('finance.voucher_detail_page.k3')}
+                </TableCell>
                 <TableCell sx={{ fontWeight: 600, width: 150, textAlign: 'right' }}>
                   借方金额
                 </TableCell>
@@ -763,7 +773,12 @@ const VoucherDetailPage: React.FC = () => {
     <DetailPageTemplate
       title={voucherNumber}
       subtitle={`期间: ${voucher.period}`}
-      detailItemName={voucher?.voucher_no || voucher?.voucher_number || voucher?.id || '凭证详情'}
+      detailItemName={
+        voucher?.voucher_no ||
+        voucher?.voucher_number ||
+        voucher?.id ||
+        t('finance.voucher_detail_page.k4')
+      }
       breadcrumbs={[
         { label: t('finance.voucher_detail_page.home'), href: '/dashboard' },
         { label: t('finance.voucher_detail_page.text_b8fe8d'), href: '/finance' },

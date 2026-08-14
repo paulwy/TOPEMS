@@ -16,6 +16,8 @@ import type {
   MrpMaterialSummaryQueryParams,
 } from '@/api/scm';
 import { useNotificationStore } from '@/store';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const apiAdapter: CrudApiAdapter<MrpSuggestion> = {
   list: async (params) => {
@@ -51,13 +53,13 @@ const summaryApiAdapter: CrudApiAdapter<MrpMaterialSummary> = {
     return { data: [], total: 0 };
   },
   create: async () => {
-    throw new Error('物料汇总不支持创建');
+    throw new Error(i18n.t('scm.mrp_suggestion_page.k0'));
   },
   update: async () => {
-    throw new Error('物料汇总不支持编辑');
+    throw new Error(i18n.t('scm.mrp_suggestion_page.k1'));
   },
   delete: async () => {
-    throw new Error('物料汇总不支持删除');
+    throw new Error(i18n.t('scm.mrp_suggestion_page.k2'));
   },
 };
 
@@ -80,6 +82,7 @@ interface PendingAction {
 }
 
 const MrpSuggestionPage: React.FC = () => {
+  const { t } = useTranslation('scm');
   const [searchParams] = useSearchParams();
   const planId = searchParams.get('plan_id') || '';
   const { addNotification } = useNotificationStore();
@@ -91,48 +94,48 @@ const MrpSuggestionPage: React.FC = () => {
       batchActions: [
         {
           key: 'confirm',
-          label: '批量确认',
+          label: i18n.t('scm.mrp_suggestion_page.k3'),
           icon: <CheckCircle size={14} />,
           color: 'success' as const,
           onClick: (ids: string[]) => {
             addNotification({
               type: 'success',
-              title: '确认成功',
+              title: i18n.t('scm.mrp_suggestion_page.k4'),
               message: `已确认 ${ids.length} 条建议`,
             });
           },
           confirm: true,
-          confirmMessage: '确定要确认选中的建议吗？',
+          confirmMessage: i18n.t('scm.mrp_suggestion_page.k5'),
         },
         {
           key: 'generatePurchase',
-          label: '批量生成采购单',
+          label: i18n.t('scm.mrp_suggestion_page.k6'),
           icon: <ShoppingCart size={14} />,
           color: 'primary' as const,
           onClick: (ids: string[]) => {
             addNotification({
               type: 'success',
-              title: '生成成功',
+              title: i18n.t('scm.mrp_suggestion_page.k7'),
               message: `已生成 ${ids.length} 条采购单`,
             });
           },
           confirm: true,
-          confirmMessage: '确定要生成选中的采购单吗？',
+          confirmMessage: i18n.t('scm.mrp_suggestion_page.k8'),
         },
         {
           key: 'generateProduction',
-          label: '批量生成工单',
+          label: i18n.t('scm.mrp_suggestion_page.k9'),
           icon: <Factory size={14} />,
           color: 'success' as const,
           onClick: (ids: string[]) => {
             addNotification({
               type: 'success',
-              title: '生成成功',
+              title: i18n.t('scm.mrp_suggestion_page.k10'),
               message: `已生成 ${ids.length} 条工单`,
             });
           },
           confirm: true,
-          confirmMessage: '确定要生成选中的工单吗？',
+          confirmMessage: i18n.t('scm.mrp_suggestion_page.k11'),
         },
       ],
     }),
@@ -141,13 +144,13 @@ const MrpSuggestionPage: React.FC = () => {
 
   const handleConfirm = (suggestion: MrpSuggestion) => {
     setPendingAction({
-      title: '确认建议',
-      message: `确定要确认这条${suggestion.suggestion_type === 'purchase' ? '采购' : '生产'}建议吗？`,
+      title: t('scm.mrp_suggestion_page.k12'),
+      message: `确定要确认这条${suggestion.suggestion_type === 'purchase' ? t('scm.mrp_suggestion_page.k14') : t('scm.mrp_suggestion_page.k13')}建议吗？`,
       onConfirm: () => {
         addNotification({
           type: 'success',
-          title: '确认成功',
-          message: '建议已确认',
+          title: t('scm.mrp_suggestion_page.k15'),
+          message: t('scm.mrp_suggestion_page.k16'),
         });
       },
     });
@@ -155,13 +158,13 @@ const MrpSuggestionPage: React.FC = () => {
 
   const handleReject = (suggestion: MrpSuggestion) => {
     setPendingAction({
-      title: '拒绝建议',
-      message: `确定要拒绝这条${suggestion.suggestion_type === 'purchase' ? '采购' : '生产'}建议吗？`,
+      title: t('scm.mrp_suggestion_page.k17'),
+      message: `确定要拒绝这条${suggestion.suggestion_type === 'purchase' ? t('scm.mrp_suggestion_page.k19') : t('scm.mrp_suggestion_page.k18')}建议吗？`,
       onConfirm: () => {
         addNotification({
           type: 'success',
-          title: '已拒绝',
-          message: '建议已拒绝',
+          title: t('scm.mrp_suggestion_page.k20'),
+          message: t('scm.mrp_suggestion_page.k21'),
         });
       },
       danger: true,
@@ -170,13 +173,13 @@ const MrpSuggestionPage: React.FC = () => {
 
   const handleGeneratePurchaseOrder = (_suggestion: MrpSuggestion) => {
     setPendingAction({
-      title: '生成采购单',
-      message: '确定要根据这条采购建议生成采购单吗？',
+      title: t('scm.mrp_suggestion_page.k22'),
+      message: t('scm.mrp_suggestion_page.k23'),
       onConfirm: () => {
         addNotification({
           type: 'success',
-          title: '生成成功',
-          message: '采购单已生成',
+          title: t('scm.mrp_suggestion_page.k24'),
+          message: t('scm.mrp_suggestion_page.k25'),
         });
       },
     });
@@ -184,13 +187,13 @@ const MrpSuggestionPage: React.FC = () => {
 
   const handleGenerateProductionOrder = (_suggestion: MrpSuggestion) => {
     setPendingAction({
-      title: '生成工单',
-      message: '确定要根据这条生产建议生成工单吗？',
+      title: t('scm.mrp_suggestion_page.k26'),
+      message: t('scm.mrp_suggestion_page.k27'),
       onConfirm: () => {
         addNotification({
           type: 'success',
-          title: '生成成功',
-          message: '工单已生成',
+          title: t('scm.mrp_suggestion_page.k28'),
+          message: t('scm.mrp_suggestion_page.k29'),
         });
       },
     });
@@ -199,7 +202,7 @@ const MrpSuggestionPage: React.FC = () => {
   const customRowActions: RowAction<MrpSuggestion>[] = [
     {
       key: 'confirm',
-      label: '确认',
+      label: t('scm.mrp_suggestion_page.k30'),
       icon: <Check size={14} />,
       color: 'success',
       show: (row) => row.status === 'pending',
@@ -207,7 +210,7 @@ const MrpSuggestionPage: React.FC = () => {
     },
     {
       key: 'reject',
-      label: '拒绝',
+      label: t('scm.mrp_suggestion_page.k31'),
       icon: <X size={14} />,
       color: 'error',
       show: (row) => row.status === 'pending',
@@ -215,7 +218,7 @@ const MrpSuggestionPage: React.FC = () => {
     },
     {
       key: 'generatePurchase',
-      label: '生成采购单',
+      label: t('scm.mrp_suggestion_page.k32'),
       icon: <ShoppingCart size={14} />,
       color: 'primary',
       show: (row) => row.status === 'confirmed' && row.suggestion_type === 'purchase',
@@ -223,7 +226,7 @@ const MrpSuggestionPage: React.FC = () => {
     },
     {
       key: 'generateProduction',
-      label: '生成工单',
+      label: t('scm.mrp_suggestion_page.k33'),
       icon: <Factory size={14} />,
       color: 'success',
       show: (row) => row.status === 'confirmed' && row.suggestion_type === 'production',
@@ -232,10 +235,10 @@ const MrpSuggestionPage: React.FC = () => {
   ];
 
   const tabs: CrudTab[] = [
-    { id: 'list', label: '建议列表', content: null },
+    { id: 'list', label: t('scm.mrp_suggestion_page.k34'), content: null },
     {
       id: 'summary',
-      label: '物料汇总',
+      label: t('scm.mrp_suggestion_page.k35'),
       content: <MrpMaterialSummaryTab planId={planId || undefined} />,
     },
   ];

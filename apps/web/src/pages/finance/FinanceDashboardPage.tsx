@@ -15,20 +15,26 @@ import {
   Target,
 } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
-import type { StatCardConfig, ChartConfig, ChartCard, RecentItem, QuickAction } from '@/components/templates/DashboardTemplate';
+import type {
+  StatCardConfig,
+  ChartConfig,
+  ChartCard,
+  RecentItem,
+  QuickAction,
+} from '@/components/templates/DashboardTemplate';
 import { PageContainer } from '@/components/common';
 import { useTranslation } from 'react-i18next';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const FinanceDashboardPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const { data: statsData, isPending: loading} = useQuery<FinanceDashboardStats | null>({
+  const { data: statsData, isPending: loading } = useQuery<FinanceDashboardStats | null>({
     queryKey: QUERY_KEYS.AD_HOC.FINANCE_DASHBOARD_BASE,
     queryFn: async () => {
       const response = await financeApi.getDashboard();
@@ -179,42 +185,42 @@ const FinanceDashboardPage: React.FC = () => {
     () => [
       {
         id: 'voucher-manage',
-        label: t('finance.finance_dashboard_page.text_161d77'),
+        label: i18n.t('finance.finance_dashboard_page.text_161d77'),
         icon: <FileText size={20} />,
         onClick: () => navigate(FINANCE_PATHS.vouchers),
         color: ct.primary.dark,
       },
       {
         id: 'ledger-manage',
-        label: t('finance.finance_dashboard_page.text_3c213e'),
+        label: i18n.t('finance.finance_dashboard_page.text_3c213e'),
         icon: <BookOpen size={20} />,
         onClick: () => navigate(FINANCE_PATHS.ledger),
         color: ct.purple[700],
       },
       {
         id: 'receivable-manage',
-        label: t('finance.finance_dashboard_page.text_96b3e0'),
+        label: i18n.t('finance.finance_dashboard_page.text_96b3e0'),
         icon: <TrendingUp size={20} />,
         onClick: () => navigate(FINANCE_PATHS.receivablePayable),
         color: ct.success[700],
       },
       {
         id: 'payable-manage',
-        label: t('finance.finance_dashboard_page.text_171e25'),
+        label: i18n.t('finance.finance_dashboard_page.text_171e25'),
         icon: <TrendingDown size={20} />,
         onClick: () => navigate(FINANCE_PATHS.receivablePayable),
         color: ct.orange[600],
       },
       {
         id: 'report',
-        label: t('finance.finance_dashboard_page.text_fc00f3'),
+        label: i18n.t('finance.finance_dashboard_page.text_fc00f3'),
         icon: <BarChart3 size={20} />,
         onClick: () => navigate(FINANCE_PATHS.reports),
         color: ct.teal[700],
       },
       {
         id: 'budget-manage',
-        label: t('finance.finance_dashboard_page.text_a6b2fe'),
+        label: i18n.t('finance.finance_dashboard_page.text_a6b2fe'),
         icon: <Target size={20} />,
         onClick: () => navigate(FINANCE_PATHS.budget),
         color: ct.error[700],

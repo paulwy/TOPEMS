@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { z } from 'zod';
 import { User, Mail, MapPin, Briefcase } from 'lucide-react';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
@@ -20,11 +20,12 @@ import { HRM_PATHS } from '@/modules/hrm/config';
 import { logger } from '@/utils/logger';
 
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const employeeSchema = z.object({
-  name: z.string().min(1, '姓名不能为空'),
-  employee_no: z.string().min(1, '工号不能为空'),
-  email: z.string().email('请输入有效的邮箱地址').optional(),
+  name: z.string().min(1, i18n.t('hrm.hrm_employee_edit_page.k0')),
+  employee_no: z.string().min(1, i18n.t('hrm.hrm_employee_edit_page.k1')),
+  email: z.string().email(i18n.t('hrm.hrm_employee_edit_page.k2')).optional(),
   phone: z.string().optional(),
   gender: z.enum(['male', 'female']).default('male'),
   birth_date: z.string().optional(),
@@ -59,8 +60,9 @@ const HrmEmployeeEditPage: React.FC = () => {
       }
       return res.data;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const departmentsQuery = useQuery<Department[]>({
     queryKey: QUERY_KEYS.HRM.DEPARTMENTS,
@@ -71,8 +73,9 @@ const HrmEmployeeEditPage: React.FC = () => {
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const positionsQuery = useQuery<Position[]>({
     queryKey: QUERY_KEYS.HRM.POSITION,
@@ -83,8 +86,9 @@ const HrmEmployeeEditPage: React.FC = () => {
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const employee = employeeQuery.data ?? null;
   const departments = departmentsQuery.data || [];
@@ -104,15 +108,17 @@ const HrmEmployeeEditPage: React.FC = () => {
     },
     onSuccess: () => {
       success(t('hrm.hrm_employee_edit_page.update_1'));
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.EMPLOYEES ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.HRM.EMPLOYEES,
+        exact: false,
+        refetchType: 'active',
+      });
       if (id) {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.EMPLOYEE(id) ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.HRM.EMPLOYEE(id),
+          exact: false,
+          refetchType: 'active',
+        });
         navigate(HRM_PATHS.employeeDetail.replace(':id', id));
       }
     },

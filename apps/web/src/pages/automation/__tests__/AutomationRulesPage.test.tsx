@@ -37,8 +37,24 @@ vi.mock('@/components/common', () => ({
 }));
 
 const rules = [
-  { id: 'rule-001', name: '每日库存同步', code: 'daily_inv_sync', status: 'enabled', trigger: { type: 'schedule' }, action: { type: 'http' }, last_run_at: '2026-08-12 10:00:00' },
-  { id: 'rule-002', name: '新客户跟进提醒', code: 'followup_remind', status: 'disabled', trigger: { type: 'record_create' }, action: { type: 'notification' }, last_run_at: null },
+  {
+    id: 'rule-001',
+    name: '每日库存同步',
+    code: 'daily_inv_sync',
+    status: 'enabled',
+    trigger: { type: 'schedule' },
+    action: { type: 'http' },
+    last_run_at: '2026-08-12 10:00:00',
+  },
+  {
+    id: 'rule-002',
+    name: '新客户跟进提醒',
+    code: 'followup_remind',
+    status: 'disabled',
+    trigger: { type: 'record_create' },
+    action: { type: 'notification' },
+    last_run_at: null,
+  },
 ];
 
 describe('AutomationRulesPage', () => {
@@ -48,7 +64,11 @@ describe('AutomationRulesPage', () => {
 
   it('shows loading', async () => {
     let resolvePromise: ((v: any) => void) | undefined;
-    mockList.mockReturnValue(new Promise((res) => { resolvePromise = res; }));
+    mockList.mockReturnValue(
+      new Promise((res) => {
+        resolvePromise = res;
+      })
+    );
 
     renderWithProviders(<AutomationRulesPage />);
 

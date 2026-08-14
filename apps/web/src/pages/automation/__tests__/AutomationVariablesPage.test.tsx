@@ -30,8 +30,22 @@ vi.mock('@/components/common', () => ({
 }));
 
 const variables = [
-  { key: 'api_endpoint', value: 'https://api.example.com', scope: 'global', rule_id: '', description: 'API 基础地址', updated_at: '2026-08-10' },
-  { key: 'smtp_password', value: '******', scope: 'rule', rule_id: 'rule-001', description: 'SMTP 密码', updated_at: '2026-08-11' },
+  {
+    key: 'api_endpoint',
+    value: 'https://api.example.com',
+    scope: 'global',
+    rule_id: '',
+    description: 'API 基础地址',
+    updated_at: '2026-08-10',
+  },
+  {
+    key: 'smtp_password',
+    value: '******',
+    scope: 'rule',
+    rule_id: 'rule-001',
+    description: 'SMTP 密码',
+    updated_at: '2026-08-11',
+  },
 ];
 
 describe('AutomationVariablesPage', () => {
@@ -41,7 +55,11 @@ describe('AutomationVariablesPage', () => {
 
   it('shows loading', async () => {
     let resolvePromise: ((v: any) => void) | undefined;
-    mockList.mockReturnValue(new Promise((res) => { resolvePromise = res; }));
+    mockList.mockReturnValue(
+      new Promise((res) => {
+        resolvePromise = res;
+      })
+    );
 
     renderWithProviders(<AutomationVariablesPage />);
 

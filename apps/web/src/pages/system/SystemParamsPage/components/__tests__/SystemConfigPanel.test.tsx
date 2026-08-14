@@ -76,9 +76,7 @@ describe('SystemConfigPanel', () => {
     expect(textboxes.length).toBeGreaterThanOrEqual(4);
 
     expect(screen.getByDisplayValue('TOPEMS 企业管理系统')).toBeInTheDocument();
-    expect(
-      screen.getByDisplayValue('Enterprise Management System')
-    ).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Enterprise Management System')).toBeInTheDocument();
   });
 
   it('renders timezone and language selects with options', () => {
@@ -95,12 +93,8 @@ describe('SystemConfigPanel', () => {
     expect(comboboxes.length).toBe(2);
 
     fireEvent.mouseDown(comboboxes[0]);
-    expect(
-      screen.getByRole('option', { name: /亚洲\/上海/ })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('option', { name: /欧洲\/伦敦/ })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /亚洲\/上海/ })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /欧洲\/伦敦/ })).toBeInTheDocument();
   });
 
   it('calls setSystemConfig when site name text field changes', () => {

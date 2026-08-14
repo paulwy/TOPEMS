@@ -43,10 +43,10 @@ import VoucherImportModal from './components/VoucherImportModal';
 import VoucherDetailModal from './components/VoucherDetailModal';
 import ConfirmDialogs from './components/ConfirmDialogs';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 // ============ 科目 Tab 面板（嵌套 CrudPage） ============
 
@@ -60,6 +60,7 @@ interface SubjectCrudPanelProps {
 }
 
 const SubjectCrudPanel: React.FC<SubjectCrudPanelProps> = ({ statCards }) => {
+  const { t } = useTranslation('finance');
   const apiAdapter = useMemo(() => createCrudPageAdapter(accountingSubjectApi), []);
   const headerContent = useMemo(
     () => (
@@ -76,7 +77,11 @@ const SubjectCrudPanel: React.FC<SubjectCrudPanelProps> = ({ statCards }) => {
       schema={accountingSubjectSchema}
       apiAdapter={apiAdapter}
       headerContent={headerContent}
-      breadcrumbs={[{ label: '财务' }, { label: '凭证管理' }, { label: '会计科目' }]}
+      breadcrumbs={[
+        { label: t('finance.index.k2') },
+        { label: t('finance.index.k1') },
+        { label: t('finance.index.k0') },
+      ]}
     />
   );
 };
@@ -144,10 +149,11 @@ const FinanceVoucherPage: React.FC = () => {
     `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
 
   const refreshVouchers = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.FINANCE_VOUCHER_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.FINANCE_VOUCHER_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
   };
 
   // ── 凭证操作 ──
@@ -478,25 +484,25 @@ const FinanceVoucherPage: React.FC = () => {
   const voucherStatCards = useMemo(
     () => [
       {
-        title: t('finance.finance_voucher_page_index.text_551f4c'),
+        title: i18n.t('finance.finance_voucher_page_index.text_551f4c'),
         value: allVouchers.length,
         icon: <FileText size={24} />,
         color: 'primary' as const,
       },
       {
-        title: t('finance.finance_voucher_page_index.approved'),
+        title: i18n.t('finance.finance_voucher_page_index.approved'),
         value: allVouchers.filter((v) => v.status === 'approved' || v.status === 'posted').length,
         icon: <FileCheck size={24} />,
         color: 'success' as const,
       },
       {
-        title: t('finance.finance_voucher_page_index.pending_review'),
+        title: i18n.t('finance.finance_voucher_page_index.pending_review'),
         value: allVouchers.filter((v) => v.status === 'pending').length,
         icon: <Clock size={24} />,
         color: 'warning' as const,
       },
       {
-        title: t('finance.finance_voucher_page_index.amount'),
+        title: i18n.t('finance.finance_voucher_page_index.amount'),
         value: formatCurrency(allVouchers.reduce((sum, v) => sum + v.total_debit, 0)),
         icon: <DollarSign size={24} />,
         color: 'secondary' as const,
@@ -509,25 +515,25 @@ const FinanceVoucherPage: React.FC = () => {
   const subjectStatCards = useMemo(
     () => [
       {
-        title: t('finance.finance_voucher_page_index.text_3eb8d3'),
+        title: i18n.t('finance.finance_voucher_page_index.text_3eb8d3'),
         value: subjects.length,
         icon: <Building2 size={24} />,
         color: 'primary' as const,
       },
       {
-        title: t('finance.finance_voucher_page_index.active'),
+        title: i18n.t('finance.finance_voucher_page_index.active'),
         value: subjects.filter((s) => s.status === 'active').length,
         icon: <FileCheck size={24} />,
         color: 'success' as const,
       },
       {
-        title: t('finance.finance_voucher_page_index.text_6772b0'),
+        title: i18n.t('finance.finance_voucher_page_index.text_6772b0'),
         value: subjects.filter((s) => s.level === 1).length,
         icon: <DollarSign size={24} />,
         color: 'warning' as const,
       },
       {
-        title: t('finance.finance_voucher_page_index.text_07d5bc'),
+        title: i18n.t('finance.finance_voucher_page_index.text_07d5bc'),
         value: subjects.filter((s) => s.is_cash_flow).length,
         icon: <Clock size={24} />,
         color: 'info' as const,
@@ -551,7 +557,7 @@ const FinanceVoucherPage: React.FC = () => {
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
-        label: t('finance.finance_voucher_page_index.view_detail'),
+        label: i18n.t('finance.finance_voucher_page_index.view_detail'),
         icon: <Eye size={16} />,
         onClick: (row: Record<string, unknown>) => {
           const voucher = row as unknown as FinancialVoucher;
@@ -561,7 +567,7 @@ const FinanceVoucherPage: React.FC = () => {
         },
       },
       {
-        label: t('finance.finance_voucher_page_index.edit'),
+        label: i18n.t('finance.finance_voucher_page_index.edit'),
         icon: <Edit size={16} />,
         color: 'primary',
         onClick: (row: Record<string, unknown>) => {
@@ -579,7 +585,7 @@ const FinanceVoucherPage: React.FC = () => {
         },
       },
       {
-        label: t('finance.finance_voucher_page_index.approved'),
+        label: i18n.t('finance.finance_voucher_page_index.approved'),
         icon: <Check size={16} />,
         color: 'success',
         onClick: (row: Record<string, unknown>) => handleAudit(String(row.id)),
@@ -587,7 +593,7 @@ const FinanceVoucherPage: React.FC = () => {
           row.status !== 'approved' && row.status !== 'posted',
       },
       {
-        label: t('finance.finance_voucher_page_index.pending_review'),
+        label: i18n.t('finance.finance_voucher_page_index.pending_review'),
         icon: <RefreshCw size={16} />,
         color: 'warning',
         onClick: (row: Record<string, unknown>) => handleUnaudit(String(row.id)),
@@ -595,7 +601,7 @@ const FinanceVoucherPage: React.FC = () => {
           row.status === 'approved' || row.status === 'posted',
       },
       {
-        label: t('finance.finance_voucher_page_index.delete_1'),
+        label: i18n.t('finance.finance_voucher_page_index.delete_1'),
         icon: <Trash2 size={16} />,
         color: 'error',
         onClick: (row: Record<string, unknown>) => handleDelete(String(row.id)),
@@ -635,13 +641,13 @@ const FinanceVoucherPage: React.FC = () => {
     () => [
       {
         id: 'vouchers',
-        label: t('finance.finance_voucher_page_index.text_755348'),
+        label: i18n.t('finance.finance_voucher_page_index.text_755348'),
         icon: <FileText size={16} />,
         content: null,
       },
       {
         id: 'subjects',
-        label: t('finance.finance_voucher_page_index.text_d64865'),
+        label: i18n.t('finance.finance_voucher_page_index.text_d64865'),
         icon: <Building2 size={16} />,
         content: <SubjectCrudPanel statCards={subjectStatCards} />,
       },

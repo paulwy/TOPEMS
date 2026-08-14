@@ -10,8 +10,10 @@ import type { SystemConfig, CacheConfig, LogConfig } from '@/api/system/types';
 import SystemConfigPanel from './components/SystemConfigPanel';
 import CacheConfigPanel from './components/CacheConfigPanel';
 import LogConfigPanel from './components/LogConfigPanel';
+import { useTranslation } from 'react-i18next';
 
 const SystemParamsPage: React.FC = () => {
+  const { t } = useTranslation('system');
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
@@ -220,19 +222,20 @@ const SystemParamsPage: React.FC = () => {
     mutationFn: (data: typeof systemConfig) => systemParamsApi.updateSystemConfig(data),
     onSuccess: () => {
       addNotification({
-        title: '成功',
-        message: '系统配置已更新',
+        title: t('system.index.k0'),
+        message: t('system.index.k1'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.CONFIG ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.SYSTEM.CONFIG,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
       addNotification({
-        title: '错误',
-        message: '更新系统配置失败',
+        title: t('system.index.k2'),
+        message: t('system.index.k3'),
         type: 'error',
       });
     },
@@ -242,19 +245,20 @@ const SystemParamsPage: React.FC = () => {
     mutationFn: (data: typeof cacheConfig) => systemParamsApi.updateCacheConfig(data),
     onSuccess: () => {
       addNotification({
-        title: '成功',
-        message: '缓存配置已更新',
+        title: t('system.index.k4'),
+        message: t('system.index.k5'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.CACHE_CONFIG ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.SYSTEM.CACHE_CONFIG,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
       addNotification({
-        title: '错误',
-        message: '更新缓存配置失败',
+        title: t('system.index.k6'),
+        message: t('system.index.k7'),
         type: 'error',
       });
     },
@@ -264,19 +268,20 @@ const SystemParamsPage: React.FC = () => {
     mutationFn: (data: typeof logConfig) => systemParamsApi.updateLogConfig(data),
     onSuccess: () => {
       addNotification({
-        title: '成功',
-        message: '日志配置已更新',
+        title: t('system.index.k8'),
+        message: t('system.index.k9'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.LOG_CONFIG ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.SYSTEM.LOG_CONFIG,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
       addNotification({
-        title: '错误',
-        message: '更新日志配置失败',
+        title: t('system.index.k10'),
+        message: t('system.index.k11'),
         type: 'error',
       });
     },
@@ -286,19 +291,20 @@ const SystemParamsPage: React.FC = () => {
     mutationFn: () => systemParamsApi.clearCache(),
     onSuccess: () => {
       addNotification({
-        title: '成功',
-        message: '缓存已清除',
+        title: t('system.index.k12'),
+        message: t('system.index.k13'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.CACHE_STATS ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.SYSTEM.CACHE_STATS,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
       addNotification({
-        title: '错误',
-        message: '清除缓存失败',
+        title: t('system.index.k14'),
+        message: t('system.index.k15'),
         type: 'error',
       });
     },
@@ -321,22 +327,26 @@ const SystemParamsPage: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.CONFIG ,
-  exact: false,
-  refetchType: 'active',
-});
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.CACHE_CONFIG ,
-  exact: false,
-  refetchType: 'active',
-});
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.LOG_CONFIG ,
-  exact: false,
-  refetchType: 'active',
-});
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.CACHE_STATS ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.SYSTEM.CONFIG,
+      exact: false,
+      refetchType: 'active',
+    });
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.SYSTEM.CACHE_CONFIG,
+      exact: false,
+      refetchType: 'active',
+    });
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.SYSTEM.LOG_CONFIG,
+      exact: false,
+      refetchType: 'active',
+    });
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.SYSTEM.CACHE_STATS,
+      exact: false,
+      refetchType: 'active',
+    });
   };
 
   const loading =
@@ -344,13 +354,13 @@ const SystemParamsPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='系统参数管理'
-      subtitle='管理系统配置、缓存和日志参数'
+      title={t('system.index.k16')}
+      subtitle={t('system.index.k17')}
       maxWidth='xl'
       headerProps={{
         actions: [
           {
-            label: '刷新',
+            label: t('system.index.k18'),
             icon: <RefreshCw size={16} />,
             onClick: handleRefresh,
             variant: 'outlined',
@@ -372,15 +382,15 @@ const SystemParamsPage: React.FC = () => {
           >
             <Tab
               icon={<Settings size={18} />}
-              label='系统配置'
+              label={t('system.index.k19')}
             />
             <Tab
               icon={<Database size={18} />}
-              label='缓存管理'
+              label={t('system.index.k20')}
             />
             <Tab
               icon={<FileText size={18} />}
-              label='日志配置'
+              label={t('system.index.k21')}
             />
           </Tabs>
 

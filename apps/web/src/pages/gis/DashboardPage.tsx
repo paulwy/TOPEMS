@@ -10,8 +10,9 @@ import { gisApi } from '@/api/gis';
 import type { GisStatistics } from '@/api/gis';
 import { LazyChart } from '@/components/charts';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const iconMap: Record<string, React.ReactNode> = {
   FileText: <FileText size={24} />,
@@ -23,15 +24,16 @@ const iconMap: Record<string, React.ReactNode> = {
 
 const getGreeting = (): string => {
   const hour = new Date().getHours();
-  if (hour < 12) return '上午好';
-  if (hour < 18) return '下午好';
-  return '晚上好';
+  if (hour < 12) return i18n.t('gis.dashboard_page.k0');
+  if (hour < 18) return i18n.t('gis.dashboard_page.k1');
+  return i18n.t('gis.dashboard_page.k2');
 };
 
 export const DashboardPage: React.FC = () => {
+  const { t } = useTranslation('gis');
   const navigate = useNavigate();
 
-  const { data: statistics, isPending: loading} = useQuery<GisStatistics | null>({
+  const { data: statistics, isPending: loading } = useQuery<GisStatistics | null>({
     queryKey: QUERY_KEYS.AD_HOC.GIS_DASHBOARD_BASE,
     queryFn: async () => {
       const response = await gisApi.getStatistics();
@@ -48,7 +50,7 @@ export const DashboardPage: React.FC = () => {
     return [
       {
         id: 'layer-count',
-        title: '工厂地图',
+        title: i18n.t('gis.dashboard_page.k3'),
         value: statistics.factory_maps.toString(),
         icon: iconMap.Layers,
         change: 0,
@@ -57,7 +59,7 @@ export const DashboardPage: React.FC = () => {
       },
       {
         id: 'location-data',
-        title: '设备点位',
+        title: i18n.t('gis.dashboard_page.k4'),
         value: statistics.device_points.toLocaleString(),
         icon: iconMap.MapPin,
         change: 0,
@@ -66,7 +68,7 @@ export const DashboardPage: React.FC = () => {
       },
       {
         id: 'storage-locations',
-        title: '存储位置',
+        title: i18n.t('gis.dashboard_page.k5'),
         value: statistics.storage_locations.toLocaleString(),
         icon: iconMap.Activity,
         change: 0,
@@ -75,7 +77,7 @@ export const DashboardPage: React.FC = () => {
       },
       {
         id: 'map-services',
-        title: '活跃设备',
+        title: i18n.t('gis.dashboard_page.k6'),
         value: statistics.active_devices.toString(),
         icon: iconMap.Globe,
         change: 0,
@@ -88,11 +90,11 @@ export const DashboardPage: React.FC = () => {
   const charts: ChartCard[] = useMemo(() => {
     if (!statistics) return [];
     const barData = [
-      { name: '设备点位', value: statistics.device_points },
-      { name: '管线', value: statistics.pipelines },
-      { name: '存储位置', value: statistics.storage_locations },
-      { name: '业务位置', value: statistics.business_locations },
-      { name: '工厂地图', value: statistics.factory_maps },
+      { name: i18n.t('gis.dashboard_page.k7'), value: statistics.device_points },
+      { name: i18n.t('gis.dashboard_page.k8'), value: statistics.pipelines },
+      { name: i18n.t('gis.dashboard_page.k9'), value: statistics.storage_locations },
+      { name: i18n.t('gis.dashboard_page.k10'), value: statistics.business_locations },
+      { name: i18n.t('gis.dashboard_page.k11'), value: statistics.factory_maps },
     ];
     const lineData = [
       { name: 'Q1', value: statistics.active_devices * 100 },
@@ -103,9 +105,10 @@ export const DashboardPage: React.FC = () => {
     return [
       {
         id: 'city-data-distribution',
-        title: '数据分布',
+        title: i18n.t('gis.dashboard_page.k12'),
         chart: (
-          <LazyChart type='bar'
+          <LazyChart
+            type='bar'
             data={barData}
             xKey='name'
             yKey='value'
@@ -115,9 +118,10 @@ export const DashboardPage: React.FC = () => {
       },
       {
         id: 'quarterly-data-trend',
-        title: '季度数据趋势',
+        title: i18n.t('gis.dashboard_page.k13'),
         chart: (
-          <LazyChart type='line'
+          <LazyChart
+            type='line'
             data={lineData}
             xKey='name'
             yKey='value'
@@ -131,7 +135,7 @@ export const DashboardPage: React.FC = () => {
   const quickActions: QuickAction[] = [
     {
       id: 'view-map',
-      label: '查看地图',
+      label: t('gis.dashboard_page.k14'),
       icon: <ArrowRight size={18} />,
       onClick: () => navigate(GIS_PATHS.map),
     },
@@ -139,7 +143,7 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='地理信息系统'
+      title={t('gis.dashboard_page.k15')}
       subtitle={`${getGreeting()}，地图视图与空间分析`}
       padding={false}
       maxWidth={false}
@@ -150,7 +154,7 @@ export const DashboardPage: React.FC = () => {
         stats={stats}
         charts={charts}
         quickActions={quickActions}
-        quickActionsTitle='快捷操作'
+        quickActionsTitle={t('gis.dashboard_page.k16')}
         loading={loading}
       />
     </PageContainer>

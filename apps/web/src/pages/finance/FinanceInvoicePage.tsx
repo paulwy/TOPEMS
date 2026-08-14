@@ -2,6 +2,7 @@ import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { invoiceSchema } from '@/schemas/finance';
 import { financeApi } from '@/api/finance';
+import { useTranslation } from 'react-i18next';
 
 const apiAdapter = createCrudPageAdapter({
   list: (params?: Record<string, unknown>) =>
@@ -19,11 +20,15 @@ const apiAdapter = createCrudPageAdapter({
 });
 
 export default function FinanceInvoicePage() {
+  const { t } = useTranslation('finance');
   return (
     <CrudPage
       schema={invoiceSchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: '财务' }, { label: '发票管理' }]}
+      breadcrumbs={[
+        { label: t('finance.finance_invoice_page.k1') },
+        { label: t('finance.finance_invoice_page.k0') },
+      ]}
     />
   );
 }

@@ -19,6 +19,8 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { INTEGRATION_PATHS } from '@/modules/integration/config';
 import { integrationEventSchema } from '@/schemas/integration';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 interface IntegrationEvent {
   id: string;
@@ -37,28 +39,28 @@ const renderStatsCards = (rows: Record<string, unknown>[]) => {
   const stats = [
     {
       id: 'total',
-      title: '今日事件',
+      title: i18n.t('integration.integration_events_page.k0'),
       value: events.length,
       icon: <Activity size={20} />,
       color: 'primary' as const,
     },
     {
       id: 'success',
-      title: '同步成功',
+      title: i18n.t('integration.integration_events_page.k1'),
       value: events.filter((e) => e.status === 'success').length,
       icon: <CheckCircle2 size={20} />,
       color: 'success' as const,
     },
     {
       id: 'failed',
-      title: '同步失败',
+      title: i18n.t('integration.integration_events_page.k2'),
       value: events.filter((e) => e.status === 'failed').length,
       icon: <AlertCircle size={20} />,
       color: 'error' as const,
     },
     {
       id: 'warning',
-      title: '同步警告',
+      title: i18n.t('integration.integration_events_page.k3'),
       value: events.filter((e) => e.event_type === 'warning').length,
       icon: <AlertTriangle size={20} />,
       color: 'warning' as const,
@@ -119,6 +121,7 @@ const renderStatsCards = (rows: Record<string, unknown>[]) => {
 };
 
 export const IntegrationEventsPage: React.FC = () => {
+  const { t } = useTranslation('integration');
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
@@ -127,18 +130,19 @@ export const IntegrationEventsPage: React.FC = () => {
       try {
         // 重试任务占位调用（原页面同样为空实现）
         addNotification({
-          title: '成功',
-          message: '重试任务已提交',
+          title: t('integration.integration_events_page.k4'),
+          message: t('integration.integration_events_page.k5'),
           type: 'success',
         });
-        void queryClient.invalidateQueries({ queryKey: CRUD_QUERY_KEY ,
-  exact: false,
-  refetchType: 'active',
-});
+        void queryClient.invalidateQueries({
+          queryKey: CRUD_QUERY_KEY,
+          exact: false,
+          refetchType: 'active',
+        });
       } catch (err) {
         addNotification({
-          title: '失败',
-          message: err instanceof Error ? err.message : '重试任务提交失败',
+          title: t('integration.integration_events_page.k6'),
+          message: err instanceof Error ? err.message : t('integration.integration_events_page.k7'),
           type: 'error',
         });
       }
@@ -162,7 +166,7 @@ export const IntegrationEventsPage: React.FC = () => {
   const customRowActions = useMemo<RowAction[]>(
     () => [
       {
-        label: '重试',
+        label: t('integration.integration_events_page.k8'),
         icon: <RotateCcw size={16} />,
         show: (row) => row.status === 'failed',
         onClick: (row) => {
@@ -185,7 +189,10 @@ export const IntegrationEventsPage: React.FC = () => {
         apiAdapter={apiAdapter}
         customRowActions={customRowActions}
         headerContent={renderStatsCards}
-        breadcrumbs={[{ label: '集成' }, { label: '事件日志' }]}
+        breadcrumbs={[
+          { label: t('integration.integration_events_page.k10') },
+          { label: t('integration.integration_events_page.k9') },
+        ]}
       />
     </PageContainer>
   );

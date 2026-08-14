@@ -29,9 +29,30 @@ vi.mock('@/components/common', () => ({
 }));
 
 const apps = [
-  { id: 'a1', name: 'CRM 客户管理', code: 'crm', status: 'published', version: 3, updated_at: '2026-08-10 14:22' },
-  { id: 'a2', name: '库存盘点', code: 'inventory', status: 'draft', version: 1, updated_at: '2026-08-11 09:05' },
-  { id: 'a3', name: '报销申请', code: 'expense', status: 'published', version: 5, updated_at: '2026-08-12 16:40' },
+  {
+    id: 'a1',
+    name: 'CRM 客户管理',
+    code: 'crm',
+    status: 'published',
+    version: 3,
+    updated_at: '2026-08-10 14:22',
+  },
+  {
+    id: 'a2',
+    name: '库存盘点',
+    code: 'inventory',
+    status: 'draft',
+    version: 1,
+    updated_at: '2026-08-11 09:05',
+  },
+  {
+    id: 'a3',
+    name: '报销申请',
+    code: 'expense',
+    status: 'published',
+    version: 5,
+    updated_at: '2026-08-12 16:40',
+  },
 ];
 
 describe('AppListPage', () => {
@@ -41,7 +62,11 @@ describe('AppListPage', () => {
 
   it('renders loading spinner while fetching', async () => {
     let resolvePromise: ((v: any) => void) | undefined;
-    mockList.mockReturnValue(new Promise((res) => { resolvePromise = res; }));
+    mockList.mockReturnValue(
+      new Promise((res) => {
+        resolvePromise = res;
+      })
+    );
 
     renderWithProviders(<AppListPage />);
 

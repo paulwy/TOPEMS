@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import {
   Box,
   Typography,
@@ -21,8 +21,9 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const HrmContractDetailPage: React.FC = () => {
   const { t } = useTranslation();
@@ -63,8 +64,9 @@ const HrmContractDetailPage: React.FC = () => {
         remark: contractData.contract.remark || '',
       };
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const contract = contractQuery.data ?? null;
   const loading = contractQuery.isLoading;
@@ -248,19 +250,25 @@ const HrmContractDetailPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同编号</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('hrm.hrm_contract_detail_page.k0')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5, fontFamily: 'monospace' }}>
               {contract.contractNo || '-'}
             </Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同类型</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('hrm.hrm_contract_detail_page.k1')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5 }}>
               {getContractTypeLabel(contract.contract_type || '')}
             </Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同名称</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('hrm.hrm_contract_detail_page.k2')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5 }}>{contract.contract_name || '-'}</Typography>
           </Box>
         </Box>
@@ -279,27 +287,39 @@ const HrmContractDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同开始日期</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_contract_detail_page.k3')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(contract.start_date)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同结束日期</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_contract_detail_page.k4')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(contract.end_date)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>试用期</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_contract_detail_page.k5')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{contract.probation_period || 0} 个月</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>试用期结束日期</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_contract_detail_page.k6')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(contract.probation_end_date)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>工作地点</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_contract_detail_page.k7')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{contract.work_location || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>薪资类型</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_contract_detail_page.k8')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{getSalaryTypeLabel(contract.salary_type || '')}</Typography>
         </Box>
       </Box>
@@ -317,7 +337,9 @@ const HrmContractDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>基本工资</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_contract_detail_page.k9')}
+          </InputLabel>
           <Typography
             variant='h6'
             sx={{ mt: 0.5, color: 'primary.main' }}
@@ -326,11 +348,15 @@ const HrmContractDetailPage: React.FC = () => {
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>货币类型</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_contract_detail_page.k10')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{contract.currency || 'CNY'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>备注</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_contract_detail_page.k11')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{contract.remark || '-'}</Typography>
         </Box>
       </Box>
@@ -371,11 +397,11 @@ const HrmContractDetailPage: React.FC = () => {
       tags: [getContractTypeLabel(contract?.contract_type || '')],
       stats: [
         {
-          label: t('hrm.hrm_contract_detail_page.text_2ed392'),
+          label: i18n.t('hrm.hrm_contract_detail_page.text_2ed392'),
           value: contract?.employee_name || '-',
         },
         {
-          label: t('hrm.hrm_contract_detail_page.status'),
+          label: i18n.t('hrm.hrm_contract_detail_page.status'),
           value: getStatusConfig(contract?.status || '').label,
         },
       ],
@@ -392,7 +418,10 @@ const HrmContractDetailPage: React.FC = () => {
         title=''
         subtitle=''
         detailItemName={
-          contract?.contract_name || contract?.contractNo || contract?.id || '合同详情'
+          contract?.contract_name ||
+          contract?.contractNo ||
+          contract?.id ||
+          t('hrm.hrm_contract_detail_page.k12')
         }
         backHref={HRM_PATHS.contracts}
         loading={loading}
@@ -415,7 +444,7 @@ const HrmContractDetailPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>确认续签</DialogTitle>
+        <DialogTitle>{t('hrm.hrm_contract_detail_page.k13')}</DialogTitle>
         <DialogContent>
           <Typography variant='body1'>
             确定要为 <strong>{contract?.employee_name}</strong> 的合同进行续签吗？
@@ -436,7 +465,9 @@ const HrmContractDetailPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowRenewDialog(false)}>取消</Button>
+          <Button onClick={() => setShowRenewDialog(false)}>
+            {t('hrm.hrm_contract_detail_page.k14')}
+          </Button>
           <Button
             onClick={handleRenew}
             color='primary'

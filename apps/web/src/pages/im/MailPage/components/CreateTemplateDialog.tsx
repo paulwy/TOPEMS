@@ -13,6 +13,8 @@ import {
   Typography,
 } from '@mui/material';
 import { TEMPLATE_CATEGORIES } from '@/api/mail';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 interface TemplateForm {
   code: string;
@@ -42,13 +44,14 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
   handleCreateTemplate,
   resetTemplateForm,
 }) => {
+  const { t } = useTranslation('im');
   return (
     <Dialog
       open={open}
       onClose={onClose}
     >
       <DialogContent sx={{ maxWidth: 600 }}>
-        <DialogTitle>创建邮件模板</DialogTitle>
+        <DialogTitle>{i18n.t('im.create_template_dialog.k0')}</DialogTitle>
         <Typography
           variant='body2'
           color='text.secondary'
@@ -91,7 +94,9 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
               />
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='template-description'>描述</InputLabel>
+              <InputLabel htmlFor='template-description'>
+                {t('im.create_template_dialog.k1')}
+              </InputLabel>
               <TextField
                 id='template-description'
                 value={templateForm.description}
@@ -101,12 +106,14 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
                     description: e.target.value,
                   }))
                 }
-                placeholder='简要描述此模板的用途'
+                placeholder={t('im.create_template_dialog.k2')}
                 size='small'
               />
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='template-category'>分类</InputLabel>
+              <InputLabel htmlFor='template-category'>
+                {t('im.create_template_dialog.k3')}
+              </InputLabel>
               <FormControl
                 size='small'
                 sx={{ width: '100%' }}
@@ -139,7 +146,7 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
               </FormControl>
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='template-tags'>标签</InputLabel>
+              <InputLabel htmlFor='template-tags'>{t('im.create_template_dialog.k4')}</InputLabel>
               <TextField
                 id='template-tags'
                 value={templateForm.tags}
@@ -149,7 +156,7 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
                     tags: e.target.value,
                   }))
                 }
-                placeholder='多个标签用逗号分隔'
+                placeholder={t('im.create_template_dialog.k5')}
                 size='small'
               />
             </Box>
@@ -249,7 +256,7 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
             >
               取消
             </Button>
-            <Button type='submit'>创建模板</Button>
+            <Button type='submit'>{t('im.create_template_dialog.k6')}</Button>
           </DialogActions>
         </form>
       </DialogContent>

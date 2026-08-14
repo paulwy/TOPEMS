@@ -9,6 +9,7 @@ import {
   TextField,
 } from '@mui/material';
 import type { DesignerNodeItem } from '../shared';
+import { useTranslation } from 'react-i18next';
 
 export interface NodeEditDialogProps {
   node: DesignerNodeItem | null;
@@ -17,6 +18,7 @@ export interface NodeEditDialogProps {
 }
 
 export const NodeEditDialog: React.FC<NodeEditDialogProps> = ({ node, onClose, onSave }) => {
+  const { t } = useTranslation('automation');
   const [name, setName] = useState('');
   const [configText, setConfigText] = useState('{}');
   const [nextNodes, setNextNodes] = useState('');
@@ -58,20 +60,20 @@ export const NodeEditDialog: React.FC<NodeEditDialogProps> = ({ node, onClose, o
       maxWidth='sm'
       fullWidth
     >
-      <DialogTitle>编辑节点</DialogTitle>
+      <DialogTitle>{t('automation.node_edit_dialog.k0')}</DialogTitle>
       <DialogContent>
         <Stack
           spacing={2}
           sx={{ mt: 1 }}
         >
           <TextField
-            label='节点名称'
+            label={t('automation.node_edit_dialog.k1')}
             value={name}
             onChange={(e) => setName(e.target.value)}
             fullWidth
           />
           <TextField
-            label='节点配置（JSON）'
+            label={t('automation.node_edit_dialog.json_2')}
             value={configText}
             onChange={(e) => setConfigText(e.target.value)}
             fullWidth
@@ -79,16 +81,16 @@ export const NodeEditDialog: React.FC<NodeEditDialogProps> = ({ node, onClose, o
             rows={6}
           />
           <TextField
-            label='下游节点 ID（逗号分隔）'
+            label={t('automation.node_edit_dialog.id_3')}
             value={nextNodes}
             onChange={(e) => setNextNodes(e.target.value)}
             fullWidth
-            helperText='多个节点用英文逗号分隔'
+            helperText={t('automation.node_edit_dialog.k4')}
           />
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>取消</Button>
+        <Button onClick={onClose}>{t('automation.node_edit_dialog.k5')}</Button>
         <Button
           onClick={handleSave}
           variant='contained'

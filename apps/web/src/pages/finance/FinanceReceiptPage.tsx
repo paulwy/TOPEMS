@@ -3,6 +3,7 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { receiptSchema } from '@/schemas/finance';
 import { financeApi } from '@/api/finance';
 import type { ApiResponse, CollectionRecord } from '@/types/finance';
+import { useTranslation } from 'react-i18next';
 
 const apiAdapter = createCrudPageAdapter({
   list: (params?: Record<string, unknown>) => financeApi.receivablePayable.listCollections(params),
@@ -19,11 +20,15 @@ const apiAdapter = createCrudPageAdapter({
 });
 
 export default function FinanceReceiptPage() {
+  const { t } = useTranslation('finance');
   return (
     <CrudPage
       schema={receiptSchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: '财务' }, { label: '收款管理' }]}
+      breadcrumbs={[
+        { label: t('finance.finance_receipt_page.k1') },
+        { label: t('finance.finance_receipt_page.k0') },
+      ]}
     />
   );
 }

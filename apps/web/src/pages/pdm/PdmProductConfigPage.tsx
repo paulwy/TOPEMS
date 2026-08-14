@@ -10,8 +10,10 @@ import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { pdmApi, type ProductConfig } from '@/api/pdm';
 import { productConfigSchema } from '@/schemas/pdm/productConfig';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface FlatProductConfig {
   id: string;
@@ -74,7 +76,7 @@ const apiAdapter: CrudApiAdapter = {
     if (response.success && response.data) {
       return flattenConfig(response.data) as unknown as Record<string, unknown>;
     }
-    throw new Error('创建失败');
+    throw new Error(i18n.t('pdm.pdm_product_config_page.k0'));
   },
   update: async (id, data) => {
     const response = await pdmApi.updateProductConfig(
@@ -84,12 +86,12 @@ const apiAdapter: CrudApiAdapter = {
     if (response.success && response.data) {
       return flattenConfig(response.data) as unknown as Record<string, unknown>;
     }
-    throw new Error('更新失败');
+    throw new Error(i18n.t('pdm.pdm_product_config_page.k1'));
   },
   delete: async (id) => {
     const response = await pdmApi.deleteProductConfig(id);
     if (!response.success) {
-      throw new Error('删除失败');
+      throw new Error(i18n.t('pdm.pdm_product_config_page.k2'));
     }
   },
 };
@@ -110,17 +112,18 @@ function getStatusColor(status: string): 'success' | 'warning' | 'error' | 'defa
 function getStatusLabel(status: string): string {
   switch (status) {
     case 'active':
-      return '启用';
+      return i18n.t('pdm.pdm_product_config_page.k3');
     case 'draft':
-      return '草稿';
+      return i18n.t('pdm.pdm_product_config_page.k4');
     case 'archived':
-      return '归档';
+      return i18n.t('pdm.pdm_product_config_page.k5');
     default:
       return status;
   }
 }
 
 export const PdmProductConfigPage: React.FC = () => {
+  const { t } = useTranslation('pdm');
   const { data: configs = [] } = useQuery<FlatProductConfig[]>({
     queryKey: QUERY_KEYS.PDM.PRODUCT_CONFIGS,
     queryFn: async (): Promise<FlatProductConfig[]> => {
@@ -147,11 +150,11 @@ export const PdmProductConfigPage: React.FC = () => {
 
   const customColumns: ColumnDef[] = useMemo(
     () => [
-      { id: 'name', label: '配置名称', minWidth: 140 },
-      { id: 'code', label: '配置编码', minWidth: 120 },
+      { id: 'name', label: i18n.t('pdm.pdm_product_config_page.k6'), minWidth: 140 },
+      { id: 'code', label: i18n.t('pdm.pdm_product_config_page.k7'), minWidth: 120 },
       {
         id: 'attributes',
-        label: '属性',
+        label: i18n.t('pdm.pdm_product_config_page.k8'),
         minWidth: 180,
         render: (row) => (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
@@ -166,7 +169,7 @@ export const PdmProductConfigPage: React.FC = () => {
       },
       {
         id: 'options',
-        label: '选项',
+        label: i18n.t('pdm.pdm_product_config_page.k9'),
         minWidth: 160,
         render: (row) => (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -183,7 +186,7 @@ export const PdmProductConfigPage: React.FC = () => {
       },
       {
         id: 'status',
-        label: '状态',
+        label: i18n.t('pdm.pdm_product_config_page.k10'),
         minWidth: 100,
         align: 'center',
         render: (row) => (
@@ -206,10 +209,30 @@ export const PdmProductConfigPage: React.FC = () => {
         sx={{ mb: 2 }}
       >
         {[
-          { label: '配置总数', value: stats.total, icon: <Settings size={20} />, color: 'primary' },
-          { label: '启用配置', value: stats.active, icon: <Zap size={20} />, color: 'success' },
-          { label: '草稿配置', value: stats.draft, icon: <Package size={20} />, color: 'warning' },
-          { label: '归档配置', value: stats.archived, icon: <Shield size={20} />, color: 'error' },
+          {
+            label: t('pdm.pdm_product_config_page.k11'),
+            value: stats.total,
+            icon: <Settings size={20} />,
+            color: 'primary',
+          },
+          {
+            label: t('pdm.pdm_product_config_page.k12'),
+            value: stats.active,
+            icon: <Zap size={20} />,
+            color: 'success',
+          },
+          {
+            label: t('pdm.pdm_product_config_page.k13'),
+            value: stats.draft,
+            icon: <Package size={20} />,
+            color: 'warning',
+          },
+          {
+            label: t('pdm.pdm_product_config_page.k14'),
+            value: stats.archived,
+            icon: <Shield size={20} />,
+            color: 'error',
+          },
         ].map((stat) => (
           <Grid
             size={{ xs: 6, sm: 3 }}
@@ -255,7 +278,7 @@ export const PdmProductConfigPage: React.FC = () => {
         schema={productConfigSchema}
         apiAdapter={apiAdapter}
         customColumns={customColumns}
-        breadcrumbs={[{ label: 'PDM' }, { label: '产品配置' }]}
+        breadcrumbs={[{ label: 'PDM' }, { label: t('pdm.pdm_product_config_page.k15') }]}
         headerContent={headerContent}
       />
     </PageContainer>

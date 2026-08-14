@@ -30,6 +30,7 @@ import {
 import { lowcodeWorkflowsApi } from '@/api/lowcode';
 import type { LowcodeWorkflow, LowcodeWorkflowTriggerType } from '@/api/lowcode';
 import { PageContainer } from '@/components/common';
+import { useTranslation } from 'react-i18next';
 
 const TRIGGER_TYPES: LowcodeWorkflowTriggerType[] = [
   'manual',
@@ -40,6 +41,7 @@ const TRIGGER_TYPES: LowcodeWorkflowTriggerType[] = [
 ];
 
 export const WorkflowConfigPage: React.FC = () => {
+  const { t } = useTranslation('lowcode');
   const [workflows, setWorkflows] = useState<LowcodeWorkflow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +62,7 @@ export const WorkflowConfigPage: React.FC = () => {
       const res = await lowcodeWorkflowsApi.list({ page: 1, pageSize: 100 });
       setWorkflows(res.data?.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载工作流失败');
+      setError(err instanceof Error ? err.message : t('lowcode.workflow_config_page.k0'));
     } finally {
       setLoading(false);
     }
@@ -85,7 +87,7 @@ export const WorkflowConfigPage: React.FC = () => {
       setCreateForm({ app_id: '', code: '', name: '', triggerType: 'manual', description: '' });
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '创建工作流失败');
+      setError(err instanceof Error ? err.message : t('lowcode.workflow_config_page.k1'));
     } finally {
       setCreating(false);
     }
@@ -96,7 +98,7 @@ export const WorkflowConfigPage: React.FC = () => {
       await lowcodeWorkflowsApi.remove(id);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '删除工作流失败');
+      setError(err instanceof Error ? err.message : t('lowcode.workflow_config_page.k2'));
     }
   };
 
@@ -109,19 +111,19 @@ export const WorkflowConfigPage: React.FC = () => {
       }
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '切换状态失败');
+      setError(err instanceof Error ? err.message : t('lowcode.workflow_config_page.k3'));
     }
   };
 
   return (
-    <PageContainer title='流程配置'>
+    <PageContainer title={t('lowcode.workflow_config_page.k4')}>
       <Box sx={{ p: 3 }}>
         <Stack
           direction='row'
           spacing={2}
           sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
         >
-          <Typography variant='h5'>流程配置</Typography>
+          <Typography variant='h5'>{t('lowcode.workflow_config_page.k5')}</Typography>
           <Button
             variant='contained'
             startIcon={<AddIcon />}
@@ -162,12 +164,12 @@ export const WorkflowConfigPage: React.FC = () => {
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell>名称</TableCell>
-                  <TableCell>编码</TableCell>
-                  <TableCell>触发器</TableCell>
-                  <TableCell>节点数</TableCell>
-                  <TableCell>状态</TableCell>
-                  <TableCell align='right'>操作</TableCell>
+                  <TableCell>{t('lowcode.workflow_config_page.k6')}</TableCell>
+                  <TableCell>{t('lowcode.workflow_config_page.k7')}</TableCell>
+                  <TableCell>{t('lowcode.workflow_config_page.k8')}</TableCell>
+                  <TableCell>{t('lowcode.workflow_config_page.k9')}</TableCell>
+                  <TableCell>{t('lowcode.workflow_config_page.k10')}</TableCell>
+                  <TableCell align='right'>{t('lowcode.workflow_config_page.k11')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -199,8 +201,16 @@ export const WorkflowConfigPage: React.FC = () => {
                           size='small'
                           color={w.status === 'enabled' ? 'error' : 'success'}
                           onClick={() => handleToggle(w)}
-                          aria-label={w.status === 'enabled' ? '禁用' : '启用'}
-                          title={w.status === 'enabled' ? '禁用' : '启用'}
+                          aria-label={
+                            w.status === 'enabled'
+                              ? t('lowcode.workflow_config_page.k13')
+                              : t('lowcode.workflow_config_page.k12')
+                          }
+                          title={
+                            w.status === 'enabled'
+                              ? t('lowcode.workflow_config_page.k15')
+                              : t('lowcode.workflow_config_page.k14')
+                          }
                         >
                           {w.status === 'enabled' ? (
                             <StopIcon size={18} />
@@ -212,7 +222,7 @@ export const WorkflowConfigPage: React.FC = () => {
                           size='small'
                           color='error'
                           onClick={() => handleDelete(w.id)}
-                          aria-label='删除'
+                          aria-label={t('lowcode.workflow_config_page.k16')}
                         >
                           <DeleteOutlineIcon size={18} />
                         </IconButton>
@@ -231,36 +241,36 @@ export const WorkflowConfigPage: React.FC = () => {
           maxWidth='sm'
           fullWidth
         >
-          <DialogTitle>新建工作流</DialogTitle>
+          <DialogTitle>{t('lowcode.workflow_config_page.k17')}</DialogTitle>
           <DialogContent>
             <Stack
               spacing={2}
               sx={{ mt: 1 }}
             >
               <TextField
-                label='所属应用 ID'
+                label={t('lowcode.workflow_config_page.id_18')}
                 value={createForm.app_id}
                 onChange={(e) => setCreateForm({ ...createForm, app_id: e.target.value })}
                 fullWidth
                 required
               />
               <TextField
-                label='工作流编码'
+                label={t('lowcode.workflow_config_page.k19')}
                 value={createForm.code}
                 onChange={(e) => setCreateForm({ ...createForm, code: e.target.value })}
                 fullWidth
                 required
-                helperText='应用内唯一'
+                helperText={t('lowcode.workflow_config_page.k20')}
               />
               <TextField
-                label='工作流名称'
+                label={t('lowcode.workflow_config_page.k21')}
                 value={createForm.name}
                 onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
                 fullWidth
                 required
               />
               <TextField
-                label='触发器类型'
+                label={t('lowcode.workflow_config_page.k22')}
                 value={createForm.triggerType}
                 onChange={(e) =>
                   setCreateForm({
@@ -281,7 +291,7 @@ export const WorkflowConfigPage: React.FC = () => {
                 ))}
               </TextField>
               <TextField
-                label='描述'
+                label={t('lowcode.workflow_config_page.k23')}
                 value={createForm.description}
                 onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                 fullWidth
@@ -291,13 +301,15 @@ export const WorkflowConfigPage: React.FC = () => {
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setCreateOpen(false)}>取消</Button>
+            <Button onClick={() => setCreateOpen(false)}>
+              {t('lowcode.workflow_config_page.k24')}
+            </Button>
             <Button
               onClick={handleCreate}
               variant='contained'
               disabled={creating || !createForm.app_id || !createForm.code || !createForm.name}
             >
-              {creating ? '创建中…' : '创建'}
+              {creating ? '创建中…' : t('lowcode.workflow_config_page.k25')}
             </Button>
           </DialogActions>
         </Dialog>

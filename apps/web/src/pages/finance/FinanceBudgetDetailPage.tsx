@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
 import { FINANCE_PATHS } from '@/modules/finance/config';
 import {
@@ -32,8 +32,9 @@ import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/compon
 import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface BudgetItem {
   id: string;
@@ -140,8 +141,9 @@ const FinanceBudgetDetailPage: React.FC = () => {
         updatedAt: budgetData.updated_at,
       };
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const budget = budgetQuery.data ?? null;
   const loading = budgetQuery.isLoading;
@@ -283,23 +285,33 @@ const FinanceBudgetDetailPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>预算编号</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('finance.finance_budget_detail_page.k0')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5, fontFamily: 'monospace' }}>{budget.code}</Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>预算类型</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('finance.finance_budget_detail_page.k1')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5 }}>{getBudgetTypeName(budget.type)}</Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>所属年度</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('finance.finance_budget_detail_page.k2')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5 }}>{budget.fiscalYear}年度</Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>所属部门</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('finance.finance_budget_detail_page.k3')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5 }}>{budget.department}</Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>预算状态</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('finance.finance_budget_detail_page.k4')}
+            </InputLabel>
             <Box sx={{ mt: 0.5 }}>
               <Chip
                 label={statusConfig.label}
@@ -309,7 +321,9 @@ const FinanceBudgetDetailPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>预算ID</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('finance.finance_budget_detail_page.id_5')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}>
               {budget.id.substring(0, 8)}...
             </Typography>
@@ -343,13 +357,19 @@ const FinanceBudgetDetailPage: React.FC = () => {
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell>科目名称</TableCell>
-                <TableCell>科目类别</TableCell>
-                <TableCell align='right'>预算金额</TableCell>
-                <TableCell align='right'>已使用</TableCell>
-                <TableCell align='right'>剩余</TableCell>
-                <TableCell>执行进度</TableCell>
-                <TableCell>状态</TableCell>
+                <TableCell>{i18n.t('finance.finance_budget_detail_page.k6')}</TableCell>
+                <TableCell>{i18n.t('finance.finance_budget_detail_page.k7')}</TableCell>
+                <TableCell align='right'>
+                  {i18n.t('finance.finance_budget_detail_page.k8')}
+                </TableCell>
+                <TableCell align='right'>
+                  {i18n.t('finance.finance_budget_detail_page.k9')}
+                </TableCell>
+                <TableCell align='right'>
+                  {i18n.t('finance.finance_budget_detail_page.k10')}
+                </TableCell>
+                <TableCell>{i18n.t('finance.finance_budget_detail_page.k11')}</TableCell>
+                <TableCell>{i18n.t('finance.finance_budget_detail_page.k12')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -557,15 +577,15 @@ const FinanceBudgetDetailPage: React.FC = () => {
       tags: [budget?.fiscalYear ? `${budget.fiscalYear}年度` : ''],
       stats: [
         {
-          label: t('finance.finance_budget_detail_page.text_b91eb1'),
+          label: i18n.t('finance.finance_budget_detail_page.text_b91eb1'),
           value: budget ? formatCurrency(budget.totalBudget) : '-',
         },
         {
-          label: t('finance.finance_budget_detail_page.text_b59b00'),
+          label: i18n.t('finance.finance_budget_detail_page.text_b59b00'),
           value: budget ? formatCurrency(budget.usedAmount) : '-',
         },
         {
-          label: t('finance.finance_budget_detail_page.text_41d8b2'),
+          label: i18n.t('finance.finance_budget_detail_page.text_41d8b2'),
           value: budget ? `${budget.usageRate}%` : '-',
         },
       ],
@@ -581,7 +601,9 @@ const FinanceBudgetDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={budget?.name || budget?.code || budget?.id || '预算详情'}
+        detailItemName={
+          budget?.name || budget?.code || budget?.id || t('finance.finance_budget_detail_page.k13')
+        }
         backHref={FINANCE_PATHS.budget}
         loading={loading}
         error={errorMessage}
@@ -674,7 +696,9 @@ const FinanceBudgetDetailPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowAnalysis(false)}>关闭</Button>
+          <Button onClick={() => setShowAnalysis(false)}>
+            {t('finance.finance_budget_detail_page.k14')}
+          </Button>
         </DialogActions>
       </Dialog>
     </PageContainer>

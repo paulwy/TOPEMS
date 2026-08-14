@@ -32,8 +32,26 @@ vi.mock('@/components/common', () => ({
 }));
 
 const workflows = [
-  { id: 'w1', app_id: 'crm', name: '客户自动分配', code: 'auto_assign', trigger: { type: 'record_create' }, nodes: [{ id: 'n1' }, { id: 'n2' }], status: 'enabled', updated_at: '2026-08-10' },
-  { id: 'w2', app_id: 'crm', name: '回款提醒', code: 'payment_remind', trigger: { type: 'schedule' }, nodes: [{ id: 'n1' }], status: 'disabled', updated_at: '2026-08-11' },
+  {
+    id: 'w1',
+    app_id: 'crm',
+    name: '客户自动分配',
+    code: 'auto_assign',
+    trigger: { type: 'record_create' },
+    nodes: [{ id: 'n1' }, { id: 'n2' }],
+    status: 'enabled',
+    updated_at: '2026-08-10',
+  },
+  {
+    id: 'w2',
+    app_id: 'crm',
+    name: '回款提醒',
+    code: 'payment_remind',
+    trigger: { type: 'schedule' },
+    nodes: [{ id: 'n1' }],
+    status: 'disabled',
+    updated_at: '2026-08-11',
+  },
 ];
 
 describe('WorkflowConfigPage', () => {
@@ -43,7 +61,11 @@ describe('WorkflowConfigPage', () => {
 
   it('shows loading', async () => {
     let resolvePromise: ((v: any) => void) | undefined;
-    mockList.mockReturnValue(new Promise((res) => { resolvePromise = res; }));
+    mockList.mockReturnValue(
+      new Promise((res) => {
+        resolvePromise = res;
+      })
+    );
 
     renderWithProviders(<WorkflowConfigPage />);
 

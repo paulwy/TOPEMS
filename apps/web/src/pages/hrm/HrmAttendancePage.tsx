@@ -25,9 +25,9 @@ import { attendanceApi, leaveApi } from '@/api/hrm';
 import type { AttendanceRecord, LeaveRequest } from '@/api/hrm';
 import { apiLogger } from '@/utils/logger';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import i18n from '@/i18n';
 
 const attendanceAdapter = createCrudPageAdapter(attendanceApi);
 const leaveAdapter = createCrudPageAdapter(leaveApi);
@@ -61,10 +61,11 @@ const HrmAttendancePage: React.FC = () => {
             : t('hrm.hrm_attendance_page.text_81233d'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.HRM_LEAVES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.HRM_LEAVES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
       addNotification({
@@ -102,7 +103,7 @@ const HrmAttendancePage: React.FC = () => {
     () => [
       {
         key: 'approve',
-        label: t('hrm.hrm_attendance_page.text_7a712b'),
+        label: i18n.t('hrm.hrm_attendance_page.text_7a712b'),
         icon: <Check size={16} />,
         color: 'success',
         show: (row: Record<string, unknown>) => (row.status as string) === 'pending',
@@ -110,7 +111,7 @@ const HrmAttendancePage: React.FC = () => {
       },
       {
         key: 'reject',
-        label: t('hrm.hrm_attendance_page.text_7173f8'),
+        label: i18n.t('hrm.hrm_attendance_page.text_7173f8'),
         icon: <X size={16} />,
         color: 'error',
         divider: true,
@@ -129,7 +130,7 @@ const HrmAttendancePage: React.FC = () => {
   const handleExport = useCallback(() => {
     addNotification({
       title: t('hrm.hrm_attendance_page.success'),
-      message: '导出功能触发',
+      message: t('hrm.hrm_attendance_page.k0'),
       type: 'info',
     });
   }, [addNotification, t]);
@@ -146,7 +147,7 @@ const HrmAttendancePage: React.FC = () => {
       <CrudPage
         schema={attendanceSchema}
         apiAdapter={attendanceAdapter}
-        breadcrumbs={[{ label: 'HRM' }, { label: '考勤管理' }]}
+        breadcrumbs={[{ label: 'HRM' }, { label: t('hrm.hrm_attendance_page.k1') }]}
         extraQueryParams={{ date: selectedDate }}
         headerContent={
           <Box
@@ -180,24 +181,24 @@ const HrmAttendancePage: React.FC = () => {
         tabs={[
           {
             id: 'records',
-            label: '考勤记录',
+            label: t('hrm.hrm_attendance_page.k2'),
             content: null,
           },
           {
             id: 'leaves',
-            label: '请假申请',
+            label: t('hrm.hrm_attendance_page.k3'),
             content: (
               <CrudPage
                 schema={leaveSchema}
                 apiAdapter={leaveAdapter}
-                breadcrumbs={[{ label: 'HRM' }, { label: '请假申请' }]}
+                breadcrumbs={[{ label: 'HRM' }, { label: t('hrm.hrm_attendance_page.k4') }]}
                 customRowActions={leaveCustomRowActions}
               />
             ),
           },
           {
             id: 'statistics',
-            label: '考勤统计',
+            label: t('hrm.hrm_attendance_page.k5'),
             content: statisticsContent,
           },
         ]}
@@ -317,7 +318,7 @@ const StatisticsChips: React.FC<{ selectedDate: string }> = ({ selectedDate }) =
 const StatisticsContent: React.FC<{ selectedDate: string }> = ({ selectedDate }) => {
   const { t } = useTranslation();
 
-  const { data: records = [], isPending} = useQuery({
+  const { data: records = [], isPending } = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.HRM_ATTENDANCE_RECORDS_BASE, selectedDate],
     queryFn: async () => {
       const res = await attendanceApi.list({ date: selectedDate, pagesize: 100 });
@@ -350,9 +351,7 @@ const StatisticsContent: React.FC<{ selectedDate: string }> = ({ selectedDate })
     const avgWorkHours =
       records.length > 0
         ? Math.round(
-            (records.reduce((sum, r) => sum + (r.work_hours || 0), 0) /
-              records.length) *
-              10
+            (records.reduce((sum, r) => sum + (r.work_hours || 0), 0) / records.length) * 10
           ) / 10
         : 0;
     const pendingLeaves = leaves.filter((l) => l.status === 'pending').length;

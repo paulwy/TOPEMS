@@ -43,8 +43,10 @@ import {
 } from '@/components/templates';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 type SyncStatus = 'success' | 'syncing' | 'error' | 'pending';
 
@@ -70,7 +72,7 @@ interface SyncLog {
 const MOCK_SYNC_TASKS: SyncTask[] = [
   {
     id: 'sync-001',
-    name: '用户数据同步',
+    name: i18n.t('integration.integration_erp_overview_page.k0'),
     type: 'IAM',
     status: 'success',
     lastSyncTime: '2024-01-15 14:30:00',
@@ -78,7 +80,7 @@ const MOCK_SYNC_TASKS: SyncTask[] = [
   },
   {
     id: 'sync-002',
-    name: '库存数据同步',
+    name: i18n.t('integration.integration_erp_overview_page.k1'),
     type: 'WMS',
     status: 'syncing',
     lastSyncTime: '2024-01-15 14:25:00',
@@ -87,7 +89,7 @@ const MOCK_SYNC_TASKS: SyncTask[] = [
   },
   {
     id: 'sync-003',
-    name: '订单数据同步',
+    name: i18n.t('integration.integration_erp_overview_page.k2'),
     type: 'ERP',
     status: 'success',
     lastSyncTime: '2024-01-15 14:20:00',
@@ -95,7 +97,7 @@ const MOCK_SYNC_TASKS: SyncTask[] = [
   },
   {
     id: 'sync-004',
-    name: '财务数据同步',
+    name: i18n.t('integration.integration_erp_overview_page.k3'),
     type: 'FIN',
     status: 'error',
     lastSyncTime: '2024-01-15 14:15:00',
@@ -103,7 +105,7 @@ const MOCK_SYNC_TASKS: SyncTask[] = [
   },
   {
     id: 'sync-005',
-    name: '客户数据同步',
+    name: i18n.t('integration.integration_erp_overview_page.k4'),
     type: 'CRM',
     status: 'pending',
     lastSyncTime: '-',
@@ -114,41 +116,41 @@ const MOCK_SYNC_TASKS: SyncTask[] = [
 const MOCK_SYNC_LOGS: SyncLog[] = [
   {
     id: 'log-001',
-    action: '数据同步完成',
-    module: '用户管理',
-    user: '系统',
+    action: i18n.t('integration.integration_erp_overview_page.k5'),
+    module: i18n.t('integration.integration_erp_overview_page.k6'),
+    user: i18n.t('integration.integration_erp_overview_page.k7'),
     time: '14:30:00',
     status: 'success',
   },
   {
     id: 'log-002',
-    action: '同步失败',
-    module: '财务管理',
-    user: '系统',
+    action: i18n.t('integration.integration_erp_overview_page.k8'),
+    module: i18n.t('integration.integration_erp_overview_page.k9'),
+    user: i18n.t('integration.integration_erp_overview_page.k10'),
     time: '14:15:00',
     status: 'error',
   },
   {
     id: 'log-003',
-    action: '开始同步',
-    module: '库存管理',
-    user: '系统',
+    action: i18n.t('integration.integration_erp_overview_page.k11'),
+    module: i18n.t('integration.integration_erp_overview_page.k12'),
+    user: i18n.t('integration.integration_erp_overview_page.k13'),
     time: '14:25:00',
     status: 'success',
   },
   {
     id: 'log-004',
-    action: '数据同步完成',
-    module: '订单管理',
-    user: '系统',
+    action: i18n.t('integration.integration_erp_overview_page.k14'),
+    module: i18n.t('integration.integration_erp_overview_page.k15'),
+    user: i18n.t('integration.integration_erp_overview_page.k16'),
     time: '14:20:00',
     status: 'success',
   },
   {
     id: 'log-005',
-    action: '数据同步完成',
-    module: '客户管理',
-    user: '系统',
+    action: i18n.t('integration.integration_erp_overview_page.k17'),
+    module: i18n.t('integration.integration_erp_overview_page.k18'),
+    user: i18n.t('integration.integration_erp_overview_page.k19'),
     time: '14:10:00',
     status: 'success',
   },
@@ -190,10 +192,10 @@ const getStatusIcon = (status: SyncStatus) => {
 
 const getStatusLabel = (status: SyncStatus) => {
   const labels: Record<SyncStatus, string> = {
-    success: '成功',
-    syncing: '同步中',
-    error: '失败',
-    pending: '待执行',
+    success: i18n.t('integration.integration_erp_overview_page.k20'),
+    syncing: i18n.t('integration.integration_erp_overview_page.k21'),
+    error: i18n.t('integration.integration_erp_overview_page.k22'),
+    pending: i18n.t('integration.integration_erp_overview_page.k23'),
   };
   return labels[status];
 };
@@ -209,44 +211,45 @@ const getStatusColor = (status: SyncStatus) => {
 };
 
 export const IntegrationErpOverviewPage: React.FC = () => {
+  const { t } = useTranslation('integration');
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const stats: StatCard[] = useMemo(
     () => [
       {
         id: 'total-syncs',
-        title: '同步任务',
+        title: i18n.t('integration.integration_erp_overview_page.k24'),
         value: '12',
         icon: <GitMerge size={20} />,
         change: 2,
-        changeLabel: '较上周',
+        changeLabel: i18n.t('integration.integration_erp_overview_page.k25'),
         color: 'primary',
       },
       {
         id: 'success-rate',
-        title: '成功率',
+        title: i18n.t('integration.integration_erp_overview_page.k26'),
         value: '96.5%',
         icon: <TrendingUp size={20} />,
         change: 1.2,
-        changeLabel: '较上周',
+        changeLabel: i18n.t('integration.integration_erp_overview_page.k27'),
         color: 'success',
       },
       {
         id: 'total-records',
-        title: '同步记录',
+        title: i18n.t('integration.integration_erp_overview_page.k28'),
         value: '12,580',
         icon: <Database size={20} />,
         change: 1250,
-        changeLabel: '较上周',
+        changeLabel: i18n.t('integration.integration_erp_overview_page.k29'),
         color: 'info',
       },
       {
         id: 'errors',
-        title: '错误数',
+        title: i18n.t('integration.integration_erp_overview_page.k30'),
         value: '3',
         icon: <AlertCircle size={20} />,
         change: -2,
-        changeLabel: '较上周',
+        changeLabel: i18n.t('integration.integration_erp_overview_page.k31'),
         color: 'error',
       },
     ],
@@ -257,34 +260,34 @@ export const IntegrationErpOverviewPage: React.FC = () => {
     () => [
       {
         id: 'new-sync',
-        label: '新建同步',
+        label: i18n.t('integration.integration_erp_overview_page.k32'),
         icon: <RefreshCw size={20} />,
         onClick: () =>
           addNotification({
-            title: '新建同步任务',
-            message: '创建新的数据同步任务',
+            title: i18n.t('integration.integration_erp_overview_page.k33'),
+            message: i18n.t('integration.integration_erp_overview_page.k34'),
             type: 'info',
           }),
       },
       {
         id: 'view-logs',
-        label: '查看日志',
+        label: i18n.t('integration.integration_erp_overview_page.k35'),
         icon: <Clock size={20} />,
         onClick: () =>
           addNotification({
-            title: '同步日志',
-            message: '查看所有同步操作日志',
+            title: i18n.t('integration.integration_erp_overview_page.k36'),
+            message: i18n.t('integration.integration_erp_overview_page.k37'),
             type: 'info',
           }),
       },
       {
         id: 'settings',
-        label: '同步设置',
+        label: i18n.t('integration.integration_erp_overview_page.k38'),
         icon: <Settings size={20} />,
         onClick: () =>
           addNotification({
-            title: '同步设置',
-            message: '配置ERP同步参数',
+            title: i18n.t('integration.integration_erp_overview_page.k39'),
+            message: i18n.t('integration.integration_erp_overview_page.erp_40'),
             type: 'info',
           }),
       },
@@ -387,7 +390,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
   return (
     <PageContainer
       title='ERP 集成概览'
-      subtitle='管理 ERP 系统数据同步'
+      subtitle={t('integration.integration_erp_overview_page.erp_41')}
     >
       <DashboardTemplate
         title='ERP 集成概览'
@@ -421,8 +424,8 @@ export const IntegrationErpOverviewPage: React.FC = () => {
               startIcon={<RefreshCw size={14} />}
               onClick={() =>
                 addNotification({
-                  title: '刷新同步任务',
-                  message: '正在刷新同步任务列表',
+                  title: t('integration.integration_erp_overview_page.k42'),
+                  message: t('integration.integration_erp_overview_page.k43'),
                   type: 'info',
                 })
               }
@@ -452,11 +455,13 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Database size={16} />
-                    <Typography variant='body2'>主数据库</Typography>
+                    <Typography variant='body2'>
+                      {t('integration.integration_erp_overview_page.k44')}
+                    </Typography>
                   </Box>
                   <Chip
                     size='small'
-                    label='已连接'
+                    label={t('integration.integration_erp_overview_page.k45')}
                     color='success'
                   />
                 </Box>
@@ -465,11 +470,13 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <GitMerge size={16} />
-                    <Typography variant='body2'>实时同步服务</Typography>
+                    <Typography variant='body2'>
+                      {t('integration.integration_erp_overview_page.k46')}
+                    </Typography>
                   </Box>
                   <Chip
                     size='small'
-                    label='运行中'
+                    label={t('integration.integration_erp_overview_page.k47')}
                     color='success'
                   />
                 </Box>
@@ -478,11 +485,13 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Bell size={16} />
-                    <Typography variant='body2'>告警服务</Typography>
+                    <Typography variant='body2'>
+                      {t('integration.integration_erp_overview_page.k48')}
+                    </Typography>
                   </Box>
                   <Chip
                     size='small'
-                    label='正常'
+                    label={t('integration.integration_erp_overview_page.k49')}
                     color='success'
                   />
                 </Box>

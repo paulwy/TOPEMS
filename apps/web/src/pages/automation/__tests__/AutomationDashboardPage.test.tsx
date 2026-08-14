@@ -42,14 +42,46 @@ const stats = {
     { date: '2026-08-08', total: 156, success: 142, failed: 14 },
   ],
   recent_runs: [
-    { id: 'r1', rule_id: 'rule-001', rule_name: '每日库存同步', trigger_type: 'schedule', status: 'success', started_at: '10:00:02', duration_ms: 280 },
-    { id: 'r2', rule_id: 'rule-002', rule_name: '邮件发送', trigger_type: 'manual', status: 'failed', started_at: '10:05:11', duration_ms: 9999 },
+    {
+      id: 'r1',
+      rule_id: 'rule-001',
+      rule_name: '每日库存同步',
+      trigger_type: 'schedule',
+      status: 'success',
+      started_at: '10:00:02',
+      duration_ms: 280,
+    },
+    {
+      id: 'r2',
+      rule_id: 'rule-002',
+      rule_name: '邮件发送',
+      trigger_type: 'manual',
+      status: 'failed',
+      started_at: '10:05:11',
+      duration_ms: 9999,
+    },
   ],
 };
 
 const recent = [
-  { id: 'r1', rule_id: 'rule-001', rule_name: '每日库存同步', trigger_type: 'schedule', status: 'success', started_at: '10:00:02', duration_ms: 280 },
-  { id: 'r2', rule_id: 'rule-002', rule_name: '邮件发送', trigger_type: 'manual', status: 'failed', started_at: '10:05:11', duration_ms: 9999 },
+  {
+    id: 'r1',
+    rule_id: 'rule-001',
+    rule_name: '每日库存同步',
+    trigger_type: 'schedule',
+    status: 'success',
+    started_at: '10:00:02',
+    duration_ms: 280,
+  },
+  {
+    id: 'r2',
+    rule_id: 'rule-002',
+    rule_name: '邮件发送',
+    trigger_type: 'manual',
+    status: 'failed',
+    started_at: '10:05:11',
+    duration_ms: 9999,
+  },
 ];
 
 describe('AutomationDashboardPage', () => {
@@ -60,7 +92,11 @@ describe('AutomationDashboardPage', () => {
 
   it('shows loading spinner', async () => {
     let resolvePromise: ((v: any) => void) | undefined;
-    mockGetStats.mockReturnValue(new Promise((res) => { resolvePromise = res; }));
+    mockGetStats.mockReturnValue(
+      new Promise((res) => {
+        resolvePromise = res;
+      })
+    );
 
     renderWithProviders(<AutomationDashboardPage />);
 

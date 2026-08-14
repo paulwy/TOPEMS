@@ -34,8 +34,10 @@ import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const baseAdapter = createCrudPageAdapter<BomVersion, CreateBomVersionRequest>({
   list: bomApi.listVersions,
@@ -46,16 +48,17 @@ const baseAdapter = createCrudPageAdapter<BomVersion, CreateBomVersionRequest>({
 
 const statusColorMap: Record<string, { bg: string; color: string }> = {
   draft: { bg: 'grey.100', color: 'text.secondary' },
+
   active: { bg: 'success.lighter', color: 'success.dark' },
   archived: { bg: 'grey.100', color: 'text.secondary' },
   superseded: { bg: 'warning.lighter', color: 'warning.dark' },
 };
 
 const statusLabelMap: Record<string, string> = {
-  draft: '草稿',
-  active: '激活',
-  archived: '归档',
-  superseded: '替代',
+  draft: i18n.t('pdm.bom_page.k0'),
+  active: i18n.t('pdm.bom_page.k1'),
+  archived: i18n.t('pdm.bom_page.k2'),
+  superseded: i18n.t('pdm.bom_page.k3'),
 };
 
 function extractListData(response: unknown): BomVersion[] {
@@ -73,6 +76,7 @@ function extractListData(response: unknown): BomVersion[] {
 }
 
 export const BomPage: React.FC = () => {
+  const { t } = useTranslation('pdm');
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
@@ -113,28 +117,38 @@ export const BomPage: React.FC = () => {
   const activateVersionMutation = useMutation({
     mutationFn: (id: string) => bomApi.activateVersion(id),
     onSuccess: () => {
-      addNotification({ title: '成功', message: 'BOM版本已激活', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_VERSIONS ,
-  exact: false,
-  refetchType: 'active',
-});
+      addNotification({ title: t('pdm.bom_page.k4'), message: 'BOM版本已激活', type: 'success' });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.PDM.BOM_VERSIONS,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
-      addNotification({ title: '错误', message: '激活失败', type: 'error' });
+      addNotification({
+        title: t('pdm.bom_page.k6'),
+        message: t('pdm.bom_page.k5'),
+        type: 'error',
+      });
     },
   });
 
   const archiveVersionMutation = useMutation({
     mutationFn: (id: string) => bomApi.archiveVersion(id),
     onSuccess: () => {
-      addNotification({ title: '成功', message: 'BOM版本已归档', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_VERSIONS ,
-  exact: false,
-  refetchType: 'active',
-});
+      addNotification({ title: t('pdm.bom_page.k7'), message: 'BOM版本已归档', type: 'success' });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.PDM.BOM_VERSIONS,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
-      addNotification({ title: '错误', message: '归档失败', type: 'error' });
+      addNotification({
+        title: t('pdm.bom_page.k9'),
+        message: t('pdm.bom_page.k8'),
+        type: 'error',
+      });
     },
   });
 
@@ -142,15 +156,14 @@ export const BomPage: React.FC = () => {
     mutationFn: ({ versionA, versionB }: { versionA: string; versionB: string }) =>
       bomApi.compareVersions(versionA, versionB),
     onSuccess: (response) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.PDM.BOM_VERSIONS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.PDM.BOM_VERSIONS,
+        exact: false,
+        refetchType: 'active',
+      });
       if (response.success && response.data) {
         addNotification({
-          title: '对比完成',
+          title: t('pdm.bom_page.k10'),
           message: `发现差异：新增 ${response.data.differences.addeditems.length} 项，移除 ${response.data.differences.removeditems.length} 项，修改 ${response.data.differences.modifieditems.length} 项`,
           type: 'success',
         });
@@ -158,13 +171,17 @@ export const BomPage: React.FC = () => {
       setCompareDialogOpen(false);
     },
     onError: () => {
-      addNotification({ title: '错误', message: '对比失败', type: 'error' });
+      addNotification({
+        title: t('pdm.bom_page.k12'),
+        message: t('pdm.bom_page.k11'),
+        type: 'error',
+      });
     },
   });
 
   const customRowActions = [
     {
-      label: '查看物料',
+      label: t('pdm.bom_page.k13'),
       icon: <Package size={16} />,
       color: 'primary' as const,
       onClick: (row: Record<string, unknown>) => {
@@ -173,7 +190,7 @@ export const BomPage: React.FC = () => {
       },
     },
     {
-      label: '激活',
+      label: t('pdm.bom_page.k14'),
       icon: <CheckCircle size={16} />,
       color: 'success' as const,
       onClick: (row: Record<string, unknown>) => {
@@ -186,7 +203,7 @@ export const BomPage: React.FC = () => {
       },
     },
     {
-      label: '归档',
+      label: t('pdm.bom_page.k15'),
       icon: <Archive size={16} />,
       color: 'warning' as const,
       onClick: (row: Record<string, unknown>) => {
@@ -452,7 +469,11 @@ export const BomPage: React.FC = () => {
 
   const handleCompare = () => {
     if (!compareVersionA || !compareVersionB) {
-      addNotification({ title: '提示', message: '请选择两个版本进行对比', type: 'warning' });
+      addNotification({
+        title: t('pdm.bom_page.k17'),
+        message: t('pdm.bom_page.k16'),
+        type: 'warning',
+      });
       return;
     }
     compareVersionsMutation.mutate({ versionA: compareVersionA, versionB: compareVersionB });
@@ -475,7 +496,7 @@ export const BomPage: React.FC = () => {
           customColumns={[
             {
               id: 'level',
-              label: '层级',
+              label: t('pdm.bom_page.k18'),
               render: (row: Record<string, unknown>) =>
                 `第 ${(row as unknown as BomItem).level} 层`,
             },
@@ -487,7 +508,7 @@ export const BomPage: React.FC = () => {
             size={48}
             style={{ marginBottom: 16, opacity: 0.5 }}
           />
-          <Typography>请先选择一个BOM版本查看物料</Typography>
+          <Typography>{t('pdm.bom_page.bom_19')}</Typography>
         </Box>
       )}
     </Box>
@@ -499,7 +520,7 @@ export const BomPage: React.FC = () => {
         size={48}
         style={{ marginBottom: 16, opacity: 0.5 }}
       />
-      <Box>选择两个BOM版本进行对比，查看差异</Box>
+      <Box>{t('pdm.bom_page.bom_20')}</Box>
       <Button
         variant='contained'
         startIcon={<GitCompare size={16} />}
@@ -559,10 +580,10 @@ export const BomPage: React.FC = () => {
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
             <FormControl fullWidth>
-              <InputLabel>选择版本A</InputLabel>
+              <InputLabel>{t('pdm.bom_page.a_21')}</InputLabel>
               <Select
                 value={compareVersionA}
-                label='选择版本A'
+                label={t('pdm.bom_page.a_22')}
                 onChange={(e) => setCompareVersionA(e.target.value)}
               >
                 {versions.map((v) => (
@@ -576,10 +597,10 @@ export const BomPage: React.FC = () => {
               </Select>
             </FormControl>
             <FormControl fullWidth>
-              <InputLabel>选择版本B</InputLabel>
+              <InputLabel>{t('pdm.bom_page.b_23')}</InputLabel>
               <Select
                 value={compareVersionB}
-                label='选择版本B'
+                label={t('pdm.bom_page.b_24')}
                 onChange={(e) => setCompareVersionB(e.target.value)}
               >
                 {versions.map((v) => (
@@ -595,7 +616,7 @@ export const BomPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCompareDialogOpen(false)}>取消</Button>
+          <Button onClick={() => setCompareDialogOpen(false)}>{t('pdm.bom_page.k25')}</Button>
           <Button
             variant='contained'
             onClick={handleCompare}

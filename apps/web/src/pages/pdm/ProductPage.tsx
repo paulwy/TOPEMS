@@ -8,10 +8,12 @@ import { pdmApi, type Product } from '@/api/pdm';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { useTranslation } from 'react-i18next';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 export default function ProductPage() {
+  const { t } = useTranslation('pdm');
   const queryClient = useQueryClient();
 
   const apiAdapter = useMemo<CrudApiAdapter<Product>>(
@@ -43,11 +45,12 @@ export default function ProductPage() {
         const response = await pdmApi.createProduct(
           data as Parameters<typeof pdmApi.createProduct>[0]
         );
-        if (!response.success) throw new Error(response.message || '创建失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS ,
-  exact: false,
-  refetchType: 'active',
-});
+        if (!response.success) throw new Error(response.message || t('pdm.product_page.k0'));
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PDM.PRODUCTS,
+          exact: false,
+          refetchType: 'active',
+        });
         return (response.data ?? {}) as Product;
       },
       update: async (id, data) => {
@@ -55,20 +58,22 @@ export default function ProductPage() {
           id,
           data as Parameters<typeof pdmApi.updateProduct>[1]
         );
-        if (!response.success) throw new Error(response.message || '更新失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS ,
-  exact: false,
-  refetchType: 'active',
-});
+        if (!response.success) throw new Error(response.message || t('pdm.product_page.k1'));
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PDM.PRODUCTS,
+          exact: false,
+          refetchType: 'active',
+        });
         return (response.data ?? {}) as Product;
       },
       delete: async (id) => {
         const response = await pdmApi.deleteProduct(id);
-        if (!response.success) throw new Error(response.message || '删除失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS ,
-  exact: false,
-  refetchType: 'active',
-});
+        if (!response.success) throw new Error(response.message || t('pdm.product_page.k2'));
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PDM.PRODUCTS,
+          exact: false,
+          refetchType: 'active',
+        });
       },
     }),
     [queryClient]
@@ -159,7 +164,7 @@ export default function ProductPage() {
       <CrudPage
         schema={productSchema}
         apiAdapter={apiAdapter}
-        breadcrumbs={[{ label: 'PDM' }, { label: '产品管理' }]}
+        breadcrumbs={[{ label: 'PDM' }, { label: t('pdm.product_page.k3') }]}
         headerContent={headerContent}
       />
     </PageContainer>

@@ -20,10 +20,10 @@ import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 import { LazyChart } from '@/components/charts';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const HrmOverviewPage: React.FC = () => {
   const { t } = useTranslation();
@@ -40,52 +40,52 @@ const HrmOverviewPage: React.FC = () => {
     () => [
       {
         id: 'total-employees',
-        title: t('hrm.hrm_overview_page.text_97e957'),
+        title: i18n.t('hrm.hrm_overview_page.text_97e957'),
         value: '256',
         icon: <Users size={24} />,
         change: 12,
-        changeLabel: t('hrm.hrm_overview_page.last_month'),
+        changeLabel: i18n.t('hrm.hrm_overview_page.last_month'),
         color: 'primary',
       },
       {
         id: 'new-hires',
-        title: t('hrm.hrm_overview_page.this_month'),
+        title: i18n.t('hrm.hrm_overview_page.this_month'),
         value: '8',
         icon: <UserPlus size={24} />,
         change: 3,
-        changeLabel: t('hrm.hrm_overview_page.last_month'),
+        changeLabel: i18n.t('hrm.hrm_overview_page.last_month'),
         color: 'success',
       },
       {
         id: 'attendance-exception',
-        title: t('hrm.hrm_overview_page.abnormal'),
+        title: i18n.t('hrm.hrm_overview_page.abnormal'),
         value: '15',
         icon: <Clock size={24} />,
         change: -5,
-        changeLabel: t('hrm.hrm_overview_page.last_month'),
+        changeLabel: i18n.t('hrm.hrm_overview_page.last_month'),
         color: 'error',
       },
       {
         id: 'pending-leave',
-        title: t('hrm.hrm_overview_page.text_7c3c05'),
+        title: i18n.t('hrm.hrm_overview_page.text_7c3c05'),
         value: '6',
         icon: <Calendar size={24} />,
         change: 2,
-        changeLabel: t('hrm.hrm_overview_page.pending'),
+        changeLabel: i18n.t('hrm.hrm_overview_page.pending'),
         color: 'warning',
       },
       {
         id: 'avg-performance',
-        title: t('hrm.hrm_overview_page.text_d8ddb8'),
+        title: i18n.t('hrm.hrm_overview_page.text_d8ddb8'),
         value: '85.3',
         icon: <Award size={24} />,
         change: 3.2,
-        changeLabel: t('hrm.hrm_overview_page.last_month'),
+        changeLabel: i18n.t('hrm.hrm_overview_page.last_month'),
         color: 'info',
       },
       {
         id: 'training-complete',
-        title: t('hrm.hrm_overview_page.completed'),
+        title: i18n.t('hrm.hrm_overview_page.completed'),
         value: '78%',
         icon: <GraduationCap size={24} />,
         change: 8,
@@ -126,9 +126,10 @@ const HrmOverviewPage: React.FC = () => {
     () => [
       {
         id: 'department-distribution',
-        title: t('hrm.hrm_overview_page.text_a2487e'),
+        title: i18n.t('hrm.hrm_overview_page.text_a2487e'),
         chart: (
-          <LazyChart type='bar'
+          <LazyChart
+            type='bar'
             data={departmentData}
             xKey='name'
             yKey='value'
@@ -138,9 +139,10 @@ const HrmOverviewPage: React.FC = () => {
       },
       {
         id: 'hire-trend',
-        title: t('hrm.hrm_overview_page.text_0b2824'),
+        title: i18n.t('hrm.hrm_overview_page.text_0b2824'),
         chart: (
-          <LazyChart type='line'
+          <LazyChart
+            type='line'
             data={monthlyTrendData}
             xKey='name'
             yKey='value'
@@ -150,8 +152,13 @@ const HrmOverviewPage: React.FC = () => {
       },
       {
         id: 'performance-distribution',
-        title: t('hrm.hrm_overview_page.text_5890cb'),
-        chart: <LazyChart type='pie' data={performanceData} />,
+        title: i18n.t('hrm.hrm_overview_page.text_5890cb'),
+        chart: (
+          <LazyChart
+            type='pie'
+            data={performanceData}
+          />
+        ),
         height: 300,
       },
     ],
@@ -162,42 +169,42 @@ const HrmOverviewPage: React.FC = () => {
     () => [
       {
         id: 'employee-manage',
-        label: t('hrm.hrm_overview_page.text_b33603'),
+        label: i18n.t('hrm.hrm_overview_page.text_b33603'),
         icon: <Users size={20} />,
         onClick: () => navigate(HRM_PATHS.employees),
         color: ct.primary.dark,
       },
       {
         id: 'attendance-manage',
-        label: t('hrm.hrm_overview_page.text_2a2338'),
+        label: i18n.t('hrm.hrm_overview_page.text_2a2338'),
         icon: <Clock size={20} />,
         onClick: () => navigate(HRM_PATHS.attendance),
         color: ct.secondary[700],
       },
       {
         id: 'leave-manage',
-        label: t('hrm.hrm_overview_page.text_f2b75f'),
+        label: i18n.t('hrm.hrm_overview_page.text_f2b75f'),
         icon: <Calendar size={20} />,
         onClick: () => navigate(HRM_PATHS.leave),
         color: ct.success[700],
       },
       {
         id: 'salary-manage',
-        label: t('hrm.hrm_overview_page.text_bf8ab5'),
+        label: i18n.t('hrm.hrm_overview_page.text_bf8ab5'),
         icon: <DollarSign size={20} />,
         onClick: () => navigate(HRM_PATHS.payroll),
         color: ct.warning[600],
       },
       {
         id: 'performance-review',
-        label: t('hrm.hrm_overview_page.text_5ad4ab'),
+        label: i18n.t('hrm.hrm_overview_page.text_5ad4ab'),
         icon: <Award size={20} />,
         onClick: () => navigate(HRM_PATHS.performance),
         color: ct.success[700],
       },
       {
         id: 'recruitment',
-        label: t('hrm.hrm_overview_page.text_b4f20d'),
+        label: i18n.t('hrm.hrm_overview_page.text_b4f20d'),
         icon: <Briefcase size={20} />,
         onClick: () => navigate(HRM_PATHS.recruitment),
         color: ct.error[700],
@@ -210,18 +217,18 @@ const HrmOverviewPage: React.FC = () => {
     () => [
       {
         id: 'leave1',
-        title: t('hrm.hrm_overview_page.text_3f1c1f'),
-        description: t('hrm.hrm_overview_page.text_16737a'),
+        title: i18n.t('hrm.hrm_overview_page.text_3f1c1f'),
+        description: i18n.t('hrm.hrm_overview_page.text_16737a'),
         time: '2026-06-29 09:30',
         icon: <Calendar size={18} />,
         status: 'warning',
-        tags: [{ label: t('hrm.hrm_overview_page.text_b0bf01'), color: ct.warning[600] }],
+        tags: [{ label: i18n.t('hrm.hrm_overview_page.text_b0bf01'), color: ct.warning[600] }],
         onClick: () => navigate(HRM_PATHS.leave),
       },
       {
         id: 'emp1',
-        title: t('hrm.hrm_overview_page.text_729463'),
-        description: t('hrm.hrm_overview_page.text_3d1fda'),
+        title: i18n.t('hrm.hrm_overview_page.text_729463'),
+        description: i18n.t('hrm.hrm_overview_page.text_3d1fda'),
         time: '2026-06-29 08:00',
         icon: <UserPlus size={18} />,
         status: 'success',
@@ -229,8 +236,8 @@ const HrmOverviewPage: React.FC = () => {
       },
       {
         id: 'att1',
-        title: t('hrm.hrm_overview_page.abnormal_1'),
-        description: t('hrm.hrm_overview_page.text_f127db'),
+        title: i18n.t('hrm.hrm_overview_page.abnormal_1'),
+        description: i18n.t('hrm.hrm_overview_page.text_f127db'),
         time: '2026-06-28 17:30',
         icon: <Clock size={18} />,
         status: 'error',
@@ -238,8 +245,8 @@ const HrmOverviewPage: React.FC = () => {
       },
       {
         id: 'perf1',
-        title: t('hrm.hrm_overview_page.completed_1'),
-        description: t('hrm.hrm_overview_page.submit'),
+        title: i18n.t('hrm.hrm_overview_page.completed_1'),
+        description: i18n.t('hrm.hrm_overview_page.submit'),
         time: '2026-06-28 16:00',
         icon: <Award size={18} />,
         status: 'success',
@@ -247,12 +254,12 @@ const HrmOverviewPage: React.FC = () => {
       },
       {
         id: 'train1',
-        title: t('hrm.hrm_overview_page.text_2a2606'),
-        description: t('hrm.hrm_overview_page.completed_2'),
+        title: i18n.t('hrm.hrm_overview_page.text_2a2606'),
+        description: i18n.t('hrm.hrm_overview_page.completed_2'),
         time: '2026-06-27 15:00',
         icon: <GraduationCap size={18} />,
         status: 'info',
-        tags: [{ label: t('hrm.hrm_overview_page.in_progress'), color: ct.primary.dark }],
+        tags: [{ label: i18n.t('hrm.hrm_overview_page.in_progress'), color: ct.primary.dark }],
         onClick: () => navigate(HRM_PATHS.training),
       },
     ],

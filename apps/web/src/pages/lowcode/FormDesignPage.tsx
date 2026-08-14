@@ -4,8 +4,10 @@ import { useSearchParams } from 'react-router-dom';
 import { lowcodeFormsApi } from '@/api/lowcode';
 import type { LowcodeForm, UpdateLowcodeFormRequest } from '@/api/lowcode';
 import { PageContainer } from '@/components/common';
+import { useTranslation } from 'react-i18next';
 
 export const FormDesignPage: React.FC = () => {
+  const { t } = useTranslation('lowcode');
   const [searchParams, setSearchParams] = useSearchParams();
   const formId = searchParams.get('form_id') || '';
 
@@ -28,7 +30,8 @@ export const FormDesignPage: React.FC = () => {
           setDraft(JSON.stringify(res.data.fields ?? [], null, 2));
         }
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : '加载表单失败');
+        if (!cancelled)
+          setError(err instanceof Error ? err.message : t('lowcode.form_design_page.k0'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -58,7 +61,7 @@ export const FormDesignPage: React.FC = () => {
         setDraft(JSON.stringify(res.data.fields ?? [], null, 2));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '保存表单失败');
+      setError(err instanceof Error ? err.message : t('lowcode.form_design_page.k1'));
     } finally {
       setSaving(false);
     }
@@ -66,7 +69,7 @@ export const FormDesignPage: React.FC = () => {
 
   if (!formId) {
     return (
-      <PageContainer title='表单设计'>
+      <PageContainer title={t('lowcode.form_design_page.k2')}>
         <Box sx={{ p: 3 }}>
           <Typography color='text.secondary'>
             请在 URL 上携带 ?form_id=xxx 以设计具体表单。
@@ -78,7 +81,7 @@ export const FormDesignPage: React.FC = () => {
 
   if (loading) {
     return (
-      <PageContainer title='表单设计'>
+      <PageContainer title={t('lowcode.form_design_page.k3')}>
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress />
         </Box>
@@ -87,7 +90,7 @@ export const FormDesignPage: React.FC = () => {
   }
 
   return (
-    <PageContainer title='表单设计'>
+    <PageContainer title={t('lowcode.form_design_page.k4')}>
       <Box sx={{ p: 3 }}>
         <Stack
           direction='row'
@@ -100,7 +103,7 @@ export const FormDesignPage: React.FC = () => {
             onClick={handleSave}
             disabled={saving || !form}
           >
-            {saving ? '保存中…' : '保存字段定义'}
+            {saving ? '保存中…' : t('lowcode.form_design_page.k5')}
           </Button>
         </Stack>
 
@@ -120,7 +123,7 @@ export const FormDesignPage: React.FC = () => {
           sx={{ mb: 1 }}
         >
           当前以 JSON 形式编辑表单字段（V1 占位，可视化拖拽设计器见 V65）。
-          {form && ` 绑定数据模型：${form.data_model_id ?? '无'}`}
+          {form && ` 绑定数据模型：${form.data_model_id ?? t('lowcode.form_design_page.k6')}`}
         </Typography>
 
         <Paper

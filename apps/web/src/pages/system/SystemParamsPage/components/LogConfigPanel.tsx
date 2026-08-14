@@ -17,6 +17,8 @@ import {
   Chip,
 } from '@mui/material';
 import { Grid } from '@/components/common';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 interface LogConfigType {
   level: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
@@ -44,6 +46,7 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
   onSave,
   isSaving,
 }) => {
+  const { t } = useTranslation('system');
   return (
     <Box sx={{ mt: 2 }}>
       <Card sx={{ mb: 3 }}>
@@ -91,10 +94,10 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
               sm={6}
             >
               <FormControl fullWidth>
-                <InputLabel>日志级别</InputLabel>
+                <InputLabel>{i18n.t('system.log_config_panel.k0')}</InputLabel>
                 <Select
                   value={logConfig.level}
-                  label='日志级别'
+                  label={t('system.log_config_panel.k1')}
                   onChange={(e) =>
                     setLogConfig((prev) => ({
                       ...prev,
@@ -116,10 +119,10 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
               sm={6}
             >
               <FormControl fullWidth>
-                <InputLabel>日志格式</InputLabel>
+                <InputLabel>{t('system.log_config_panel.k2')}</InputLabel>
                 <Select
                   value={logConfig.format}
-                  label='日志格式'
+                  label={t('system.log_config_panel.k3')}
                   onChange={(e) =>
                     setLogConfig((prev) => ({
                       ...prev,
@@ -128,7 +131,7 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
                   }
                 >
                   <MenuItem value='json'>JSON</MenuItem>
-                  <MenuItem value='text'>文本</MenuItem>
+                  <MenuItem value='text'>{t('system.log_config_panel.k4')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -137,10 +140,10 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
               sm={6}
             >
               <FormControl fullWidth>
-                <InputLabel>输出方式</InputLabel>
+                <InputLabel>{t('system.log_config_panel.k5')}</InputLabel>
                 <Select
                   value={logConfig.output}
-                  label='输出方式'
+                  label={t('system.log_config_panel.k6')}
                   onChange={(e) =>
                     setLogConfig((prev) => ({
                       ...prev,
@@ -148,9 +151,9 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
                     }))
                   }
                 >
-                  <MenuItem value='console'>仅控制台</MenuItem>
-                  <MenuItem value='file'>仅文件</MenuItem>
-                  <MenuItem value='both'>控制台和文件</MenuItem>
+                  <MenuItem value='console'>{t('system.log_config_panel.k7')}</MenuItem>
+                  <MenuItem value='file'>{t('system.log_config_panel.k8')}</MenuItem>
+                  <MenuItem value='both'>{t('system.log_config_panel.k9')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -170,7 +173,7 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
                     }
                   />
                 }
-                label='记录到数据库'
+                label={t('system.log_config_panel.k10')}
               />
             </Grid>
           </Grid>
@@ -229,7 +232,11 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
                   <span>
                     文件输出
                     <Chip
-                      label={logConfig.output === 'console' ? '已禁用' : '已启用'}
+                      label={
+                        logConfig.output === 'console'
+                          ? t('system.log_config_panel.k12')
+                          : t('system.log_config_panel.k11')
+                      }
                       size='small'
                       sx={{ ml: 2 }}
                       color={logConfig.output === 'console' ? 'default' : 'success'}
@@ -244,7 +251,7 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
             >
               <TextField
                 fullWidth
-                label='日志文件路径'
+                label={t('system.log_config_panel.k13')}
                 value={logConfig.file_path}
                 onChange={(e) =>
                   setLogConfig((prev) => ({
@@ -262,7 +269,7 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
             >
               <TextField
                 fullWidth
-                label='单文件最大大小(MB)'
+                label={t('system.log_config_panel.mb_14')}
                 type='number'
                 value={logConfig.max_file_size_mb}
                 onChange={(e) =>
@@ -280,7 +287,7 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
             >
               <TextField
                 fullWidth
-                label='保留文件数量'
+                label={t('system.log_config_panel.k15')}
                 type='number'
                 value={logConfig.max_files}
                 onChange={(e) =>
@@ -352,7 +359,7 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
                     }
                   />
                 }
-                label='控制台输出'
+                label={t('system.log_config_panel.k16')}
               />
             </Grid>
             <Grid
@@ -371,13 +378,13 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
                     }
                   />
                 }
-                label='远程日志'
+                label={t('system.log_config_panel.k17')}
               />
             </Grid>
             <Grid xs={12}>
               <TextField
                 fullWidth
-                label='远程日志URL'
+                label={t('system.log_config_panel.url_18')}
                 value={logConfig.remote_logging_url}
                 onChange={(e) =>
                   setLogConfig((prev) => ({
@@ -400,7 +407,7 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
           onClick={onSave}
           disabled={isSaving}
         >
-          {isSaving ? '保存中...' : '保存配置'}
+          {isSaving ? '保存中...' : t('system.log_config_panel.k19')}
         </Button>
       </Box>
     </Box>

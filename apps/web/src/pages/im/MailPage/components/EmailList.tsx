@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import type { Email } from '@/api/mail';
 import { STATUS_OPTIONS, PRIORITY_OPTIONS } from '@/api/mail';
+import { useTranslation } from 'react-i18next';
 
 interface EmailListProps {
   searchQuery: string;
@@ -80,6 +81,7 @@ const EmailList: React.FC<EmailListProps> = ({
   getStatusBadge,
   getPriorityBadge,
 }) => {
+  const { t } = useTranslation('im');
   const theme = useTheme();
 
   return (
@@ -117,16 +119,16 @@ const EmailList: React.FC<EmailListProps> = ({
           size='small'
           sx={{ minWidth: 120 }}
         >
-          <InputLabel>状态</InputLabel>
+          <InputLabel>{t('im.email_list.k0')}</InputLabel>
           <Select
             value={statusFilter || 'all'}
-            label='状态'
+            label={t('im.email_list.k1')}
             onChange={(e) => {
               setStatusFilter(e.target.value === 'all' ? '' : e.target.value);
               setCurrentPage(1);
             }}
           >
-            <MenuItem value='all'>全部</MenuItem>
+            <MenuItem value='all'>{t('im.email_list.k2')}</MenuItem>
             {STATUS_OPTIONS.map((opt) => (
               <MenuItem
                 key={opt.value}
@@ -141,16 +143,16 @@ const EmailList: React.FC<EmailListProps> = ({
           size='small'
           sx={{ minWidth: 120 }}
         >
-          <InputLabel>优先级</InputLabel>
+          <InputLabel>{t('im.email_list.k3')}</InputLabel>
           <Select
             value={priorityFilter || 'all'}
-            label='优先级'
+            label={t('im.email_list.k4')}
             onChange={(e) => {
               setPriorityFilter(e.target.value === 'all' ? '' : e.target.value);
               setCurrentPage(1);
             }}
           >
-            <MenuItem value='all'>全部</MenuItem>
+            <MenuItem value='all'>{t('im.email_list.k5')}</MenuItem>
             {PRIORITY_OPTIONS.map((opt) => (
               <MenuItem
                 key={opt.value}
@@ -233,7 +235,7 @@ const EmailList: React.FC<EmailListProps> = ({
                 color='text.disabled'
                 style={{ margin: '0 auto 12px' }}
               />
-              <Typography sx={{ color: 'grey.500' }}>暂无邮件记录</Typography>
+              <Typography sx={{ color: 'grey.500' }}>{t('im.email_list.k6')}</Typography>
             </Box>
           ) : (
             <Box sx={{ overflowX: 'auto' }}>
@@ -480,7 +482,7 @@ const EmailList: React.FC<EmailListProps> = ({
                             variant='text'
                             size='small'
                             onClick={() => copyToClipboard(email.id, `email-${email.id}`)}
-                            title='复制ID'
+                            title={t('im.email_list.id_7')}
                           >
                             {copiedId === `email-${email.id}` ? (
                               <Check
@@ -495,7 +497,7 @@ const EmailList: React.FC<EmailListProps> = ({
                             variant='text'
                             size='small'
                             onClick={() => openEmailDetail(email)}
-                            title='查看详情'
+                            title={t('im.email_list.k8')}
                           >
                             <Eye size={16} />
                           </Button>
@@ -508,7 +510,7 @@ const EmailList: React.FC<EmailListProps> = ({
                                 color: 'success.main',
                                 '&:hover': { color: 'success.dark' },
                               }}
-                              title='重新发送'
+                              title={t('im.email_list.k9')}
                             >
                               <RefreshCw size={16} />
                             </Button>
@@ -521,7 +523,7 @@ const EmailList: React.FC<EmailListProps> = ({
                               '&:hover': { color: 'error.dark' },
                             }}
                             onClick={() => openDeleteEmailDialog(email.id)}
-                            title='删除'
+                            title={t('im.email_list.k10')}
                           >
                             <Trash2 size={16} />
                           </Button>
@@ -556,7 +558,7 @@ const EmailList: React.FC<EmailListProps> = ({
                 size='small'
                 onClick={handlePrevPage}
                 disabled={currentPage === 1}
-                aria-label='上一页'
+                aria-label={t('im.email_list.k11')}
               >
                 <ChevronLeft size={16} />
               </Button>

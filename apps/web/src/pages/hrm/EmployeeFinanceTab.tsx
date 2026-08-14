@@ -38,7 +38,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
   const { t } = useTranslation();
   const { data, isLoading, error } = useEmployeeFinanceInfo(employeeId);
   const theme = useTheme();
-  const ct= designTokens.colors;
+  const ct = designTokens.colors;
   const updateFinanceInfo = useUpdateEmployeeFinanceInfo();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -140,7 +140,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant='h6'>财务信息</Typography>
+          <Typography variant='h6'>{t('hrm.employee_finance_tab.k0')}</Typography>
           {hasFinanceInfo && (
             <Chip
               label={
@@ -199,7 +199,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
           title={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Banknote style={{ width: 20, height: 20, color: theme.palette.primary.dark }} />
-              <Typography variant='subtitle1'>银行账户信息</Typography>
+              <Typography variant='subtitle1'>{t('hrm.employee_finance_tab.k1')}</Typography>
             </Box>
           }
         />
@@ -212,7 +212,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
             }}
           >
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>开户银行</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>
+                {t('hrm.employee_finance_tab.k2')}
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   value={editData.bank_name || ''}
@@ -229,7 +231,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               )}
             </Box>
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>银行卡号</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>
+                {t('hrm.employee_finance_tab.k3')}
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   value={editData.bank_card_number || ''}
@@ -251,7 +255,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               )}
             </Box>
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>支行名称</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>
+                {t('hrm.employee_finance_tab.k4')}
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   value={editData.bank_branch || ''}
@@ -283,7 +289,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
           title={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <DollarSign style={{ width: 20, height: 20, color: theme.palette.success.dark }} />
-              <Typography variant='subtitle1'>薪资设置</Typography>
+              <Typography variant='subtitle1'>{t('hrm.employee_finance_tab.k5')}</Typography>
             </Box>
           }
         />
@@ -296,7 +302,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
             }}
           >
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>基本工资</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>
+                {t('hrm.employee_finance_tab.k6')}
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   type='number'
@@ -318,7 +326,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               )}
             </Box>
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>岗位工资</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>
+                {t('hrm.employee_finance_tab.k7')}
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   type='number'
@@ -340,7 +350,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               )}
             </Box>
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>技能工资</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>
+                {t('hrm.employee_finance_tab.k8')}
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   type='number'
@@ -407,7 +419,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
           title={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Shield style={{ width: 20, height: 20, color: ct.warning[600] }} />
-              <Typography variant='subtitle1'>社保公积金</Typography>
+              <Typography variant='subtitle1'>{t('hrm.employee_finance_tab.k9')}</Typography>
             </Box>
           }
         />
@@ -420,7 +432,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
             }}
           >
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>社保基数</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>
+                {t('hrm.employee_finance_tab.k10')}
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   type='number'
@@ -442,7 +456,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               )}
             </Box>
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>社保比例</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>
+                {t('hrm.employee_finance_tab.k11')}
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   type='number'
@@ -465,7 +481,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               )}
             </Box>
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>公积金基数</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>
+                {t('hrm.employee_finance_tab.k12')}
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   type='number'
@@ -487,7 +505,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               )}
             </Box>
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>公积金比例</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>
+                {t('hrm.employee_finance_tab.k13')}
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   type='number'
@@ -587,7 +607,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
           title={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <DollarSign style={{ width: 20, height: 20, color: theme.palette.secondary.dark }} />
-              <Typography variant='subtitle1'>费用归属</Typography>
+              <Typography variant='subtitle1'>{t('hrm.employee_finance_tab.k14')}</Typography>
             </Box>
           }
         />
@@ -600,7 +620,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
             }}
           >
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>成本中心</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>
+                {t('hrm.employee_finance_tab.k15')}
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   value={editData.cost_center_id || ''}
@@ -617,7 +639,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               )}
             </Box>
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>费用科目</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>
+                {t('hrm.employee_finance_tab.k16')}
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   value={editData.expense_account_id || ''}
@@ -654,7 +678,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
           title={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Shield style={{ width: 20, height: 20, color: theme.palette.error.dark }} />
-              <Typography variant='subtitle1'>税务信息</Typography>
+              <Typography variant='subtitle1'>{t('hrm.employee_finance_tab.k17')}</Typography>
             </Box>
           }
         />
@@ -667,7 +691,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
             }}
           >
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>纳税人识别号</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>
+                {t('hrm.employee_finance_tab.k18')}
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   value={editData.tax_id || ''}
@@ -684,7 +710,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               )}
             </Box>
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>专项附加扣除</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: 'text.secondary' }}>
+                {t('hrm.employee_finance_tab.k19')}
+              </FormLabel>
               {isEditing ? (
                 <FormControl
                   fullWidth
@@ -700,10 +728,10 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                       })
                     }
                   >
-                    <MenuItem value='0'>无扣除</MenuItem>
-                    <MenuItem value='1'>一孩扣除</MenuItem>
-                    <MenuItem value='2'>两孩扣除</MenuItem>
-                    <MenuItem value='3'>三孩扣除</MenuItem>
+                    <MenuItem value='0'>{t('hrm.employee_finance_tab.k20')}</MenuItem>
+                    <MenuItem value='1'>{t('hrm.employee_finance_tab.k21')}</MenuItem>
+                    <MenuItem value='2'>{t('hrm.employee_finance_tab.k22')}</MenuItem>
+                    <MenuItem value='3'>{t('hrm.employee_finance_tab.k23')}</MenuItem>
                   </Select>
                 </FormControl>
               ) : (

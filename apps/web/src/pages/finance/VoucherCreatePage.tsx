@@ -21,7 +21,7 @@ import {
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Plus, Trash2, Calculator, AlertCircle } from 'lucide-react';
 import { FormPageTemplate } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -78,8 +78,9 @@ const VoucherCreatePage: React.FC = () => {
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const subjects = subjectsQuery.data || [];
 
@@ -221,10 +222,11 @@ const VoucherCreatePage: React.FC = () => {
         message: t('finance.voucher_create_page.create_1'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.VOUCHERS ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.FINANCE.VOUCHERS,
+        exact: false,
+        refetchType: 'active',
+      });
       navigate(FINANCE_PATHS.vouchers);
     },
     onError: (err: Error) => {
@@ -389,16 +391,24 @@ const VoucherCreatePage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: 'grey.100' }}>
-                <TableCell sx={{ fontWeight: 600, width: 80 }}>行号</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>会计科目</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>摘要</TableCell>
+                <TableCell sx={{ fontWeight: 600, width: 80 }}>
+                  {t('finance.voucher_create_page.k0')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('finance.voucher_create_page.k1')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('finance.voucher_create_page.k2')}
+                </TableCell>
                 <TableCell sx={{ fontWeight: 600, width: 180, textAlign: 'right' }}>
                   借方金额
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, width: 180, textAlign: 'right' }}>
                   贷方金额
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, width: 80 }}>操作</TableCell>
+                <TableCell sx={{ fontWeight: 600, width: 80 }}>
+                  {t('finance.voucher_create_page.k3')}
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -507,7 +517,7 @@ const VoucherCreatePage: React.FC = () => {
                       color='error'
                       onClick={() => removeVoucherItem(index)}
                       disabled={voucherItems.length <= 1}
-                      aria-label='删除'
+                      aria-label={t('finance.voucher_create_page.k4')}
                     >
                       <Trash2 size={16} />
                     </IconButton>
@@ -586,7 +596,8 @@ const VoucherCreatePage: React.FC = () => {
             sx={{ mt: 2 }}
           >
             <Typography variant='body2'>
-              <strong>借贷平衡</strong> - 借方合计 = 贷方合计 = {formatCurrency(totalDebit)}
+              <strong>{t('finance.voucher_create_page.k5')}</strong> - 借方合计 = 贷方合计 ={' '}
+              {formatCurrency(totalDebit)}
             </Typography>
           </Alert>
         )}

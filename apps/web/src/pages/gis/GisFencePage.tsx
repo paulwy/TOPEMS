@@ -50,8 +50,10 @@ import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface FenceData {
   id: string;
@@ -70,7 +72,7 @@ interface FenceData {
 const MOCK_FENCES: FenceData[] = [
   {
     id: 'F001',
-    name: '仓库区域',
+    name: i18n.t('gis.gis_fence_page.k0'),
     type: 'polygon',
     coordinates: '39.9042, 116.4074',
     alertOnEnter: true,
@@ -82,7 +84,7 @@ const MOCK_FENCES: FenceData[] = [
   },
   {
     id: 'F002',
-    name: '危险区域 A',
+    name: i18n.t('gis.gis_fence_page.a_1'),
     type: 'circle',
     radius: 50,
     coordinates: '39.9142, 116.4174',
@@ -95,7 +97,7 @@ const MOCK_FENCES: FenceData[] = [
   },
   {
     id: 'F003',
-    name: '办公区域',
+    name: i18n.t('gis.gis_fence_page.k2'),
     type: 'rectangle',
     coordinates: '39.9242, 116.4274',
     alertOnEnter: false,
@@ -107,7 +109,7 @@ const MOCK_FENCES: FenceData[] = [
   },
   {
     id: 'F004',
-    name: '测试区域',
+    name: i18n.t('gis.gis_fence_page.k3'),
     type: 'circle',
     radius: 30,
     coordinates: '39.8942, 116.3974',
@@ -120,6 +122,7 @@ const MOCK_FENCES: FenceData[] = [
 ];
 
 export const GisFencePage: React.FC = () => {
+  const { t } = useTranslation('gis');
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
@@ -137,10 +140,11 @@ export const GisFencePage: React.FC = () => {
       if (res.success && res.data) {
         return res.data.items || [];
       }
-      throw new Error(res.message || '加载地图标记失败');
+      throw new Error(res.message || t('gis.gis_fence_page.k4'));
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const { data: fences = MOCK_FENCES } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.GIS_FENCES_BASE,
@@ -166,10 +170,18 @@ export const GisFencePage: React.FC = () => {
       if (context?.previousFences) {
         queryClient.setQueryData(['gis-fences'], context.previousFences);
       }
-      addNotification({ title: '删除失败', message: '删除围栏失败', type: 'error' });
+      addNotification({
+        title: t('gis.gis_fence_page.k6'),
+        message: t('gis.gis_fence_page.k5'),
+        type: 'error',
+      });
     },
     onSuccess: () => {
-      addNotification({ title: '成功', message: '围栏删除成功', type: 'success' });
+      addNotification({
+        title: t('gis.gis_fence_page.k8'),
+        message: t('gis.gis_fence_page.k7'),
+        type: 'success',
+      });
     },
   });
 
@@ -179,11 +191,11 @@ export const GisFencePage: React.FC = () => {
   const getTypeLabel = (type: string) => {
     switch (type) {
       case 'circle':
-        return '圆形';
+        return t('gis.gis_fence_page.k9');
       case 'polygon':
-        return '多边形';
+        return t('gis.gis_fence_page.k10');
       case 'rectangle':
-        return '矩形';
+        return t('gis.gis_fence_page.k11');
       default:
         return type;
     }
@@ -234,7 +246,7 @@ export const GisFencePage: React.FC = () => {
           {fence.alertOnEnter && (
             <Chip
               size='small'
-              label='进入告警'
+              label={t('gis.gis_fence_page.k12')}
               color='warning'
               sx={{ mt: 0.5 }}
             />
@@ -242,7 +254,7 @@ export const GisFencePage: React.FC = () => {
           {fence.alertOnExit && (
             <Chip
               size='small'
-              label='离开告警'
+              label={t('gis.gis_fence_page.k13')}
               color='info'
               sx={{ mt: 0.5, ml: 0.5 }}
             />
@@ -277,28 +289,28 @@ export const GisFencePage: React.FC = () => {
   const stats = [
     {
       id: 'total',
-      title: '围栏总数',
+      title: t('gis.gis_fence_page.k14'),
       value: fences.length,
       icon: <Shield style={{ width: 24, height: 24 }} />,
       color: 'primary',
     },
     {
       id: 'active',
-      title: '激活围栏',
+      title: t('gis.gis_fence_page.k15'),
       value: fences.filter((f) => f.status === 'active').length,
       icon: <CheckCircle style={{ width: 24, height: 24 }} />,
       color: 'success',
     },
     {
       id: 'triggered',
-      title: '今日触发',
+      title: t('gis.gis_fence_page.k16'),
       value: '45',
       icon: <AlertTriangle style={{ width: 24, height: 24 }} />,
       color: 'warning',
     },
     {
       id: 'pending',
-      title: '待处理告警',
+      title: t('gis.gis_fence_page.k17'),
       value: '3',
       icon: <Clock style={{ width: 24, height: 24 }} />,
       color: 'error',
@@ -308,14 +320,22 @@ export const GisFencePage: React.FC = () => {
   const handleSearch = useCallback(
     (query: string) => {
       setSearchTerm(query);
-      addNotification({ title: '搜索', message: `搜索: ${query}`, type: 'info' });
+      addNotification({
+        title: t('gis.gis_fence_page.k18'),
+        message: `搜索: ${query}`,
+        type: 'info',
+      });
     },
     [addNotification]
   );
 
   const handleFenceClick = useCallback(
     (fence: GeoFence) => {
-      addNotification({ title: '围栏详情', message: `选中: ${fence.name}`, type: 'info' });
+      addNotification({
+        title: t('gis.gis_fence_page.k19'),
+        message: `选中: ${fence.name}`,
+        type: 'info',
+      });
     },
     [addNotification]
   );
@@ -325,10 +345,11 @@ export const GisFencePage: React.FC = () => {
   }, []);
 
   const handleSaveFence = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.GIS_FENCES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.GIS_FENCES_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
     setOpenDialog(false);
   }, [queryClient]);
 
@@ -340,14 +361,16 @@ export const GisFencePage: React.FC = () => {
   );
 
   const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.GIS_MAP_MARKERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.GIS_FENCES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.GIS_MAP_MARKERS_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.GIS_FENCES_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
   }, [queryClient]);
 
   const filteredFences = useMemo(
@@ -365,8 +388,8 @@ export const GisFencePage: React.FC = () => {
 
   return (
     <PageContainer
-      title='地理围栏管理'
-      subtitle='定义和管理地理围栏区域，设置进出告警规则'
+      title={t('gis.gis_fence_page.k20')}
+      subtitle={t('gis.gis_fence_page.k21')}
       maxWidth='xl'
     >
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -459,7 +482,7 @@ export const GisFencePage: React.FC = () => {
           <Grid size={{ xs: 12, lg: 8 }}>
             <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               <CardHeader
-                title='围栏列表'
+                title={t('gis.gis_fence_page.k22')}
                 action={
                   <TextField
                     placeholder='搜索围栏...'
@@ -485,13 +508,13 @@ export const GisFencePage: React.FC = () => {
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>围栏名称</TableCell>
-                        <TableCell>类型</TableCell>
-                        <TableCell>坐标</TableCell>
-                        <TableCell>告警规则</TableCell>
-                        <TableCell>触发次数</TableCell>
-                        <TableCell>状态</TableCell>
-                        <TableCell>操作</TableCell>
+                        <TableCell>{t('gis.gis_fence_page.k23')}</TableCell>
+                        <TableCell>{t('gis.gis_fence_page.k24')}</TableCell>
+                        <TableCell>{t('gis.gis_fence_page.k25')}</TableCell>
+                        <TableCell>{t('gis.gis_fence_page.k26')}</TableCell>
+                        <TableCell>{t('gis.gis_fence_page.k27')}</TableCell>
+                        <TableCell>{t('gis.gis_fence_page.k28')}</TableCell>
+                        <TableCell>{t('gis.gis_fence_page.k29')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -526,14 +549,14 @@ export const GisFencePage: React.FC = () => {
                               {fence.alertOnEnter && (
                                 <Chip
                                   size='small'
-                                  label='进入告警'
+                                  label={t('gis.gis_fence_page.k30')}
                                   color='warning'
                                 />
                               )}
                               {fence.alertOnExit && (
                                 <Chip
                                   size='small'
-                                  label='离开告警'
+                                  label={t('gis.gis_fence_page.k31')}
                                   color='info'
                                 />
                               )}
@@ -543,7 +566,11 @@ export const GisFencePage: React.FC = () => {
                           <TableCell>
                             <Chip
                               size='small'
-                              label={fence.status === 'active' ? '激活' : '停用'}
+                              label={
+                                fence.status === 'active'
+                                  ? t('gis.gis_fence_page.k33')
+                                  : t('gis.gis_fence_page.k32')
+                              }
                               color={fence.status === 'active' ? 'success' : 'default'}
                             />
                           </TableCell>
@@ -551,7 +578,7 @@ export const GisFencePage: React.FC = () => {
                             <Box sx={{ display: 'flex', gap: 1 }}>
                               <IconButton
                                 size='small'
-                                aria-label='编辑'
+                                aria-label={t('gis.gis_fence_page.k34')}
                               >
                                 <Edit size={16} />
                               </IconButton>
@@ -559,7 +586,7 @@ export const GisFencePage: React.FC = () => {
                                 size='small'
                                 color='error'
                                 onClick={() => handleDeleteFence(fence.id)}
-                                aria-label='删除'
+                                aria-label={t('gis.gis_fence_page.k35')}
                               >
                                 <Delete size={16} />
                               </IconButton>
@@ -576,7 +603,7 @@ export const GisFencePage: React.FC = () => {
 
           <Grid size={{ xs: 12, lg: 4 }}>
             <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              <CardHeader title='地图预览' />
+              <CardHeader title={t('gis.gis_fence_page.k36')} />
               <CardContent sx={{ flex: 1, p: 0 }}>
                 <GisMapTemplate
                   initialCenter={[39.9042, 116.4074]}
@@ -592,26 +619,26 @@ export const GisFencePage: React.FC = () => {
             </Card>
 
             <Card sx={{ mt: 3 }}>
-              <CardHeader title='最近告警' />
+              <CardHeader title={t('gis.gis_fence_page.k37')} />
               <CardContent>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {[
                     {
                       time: '14:30',
-                      location: '仓库区域',
-                      type: '进入',
+                      location: t('gis.gis_fence_page.k38'),
+                      type: t('gis.gis_fence_page.k39'),
                       device: '设备 #003',
                     },
                     {
                       time: '13:20',
-                      location: '危险区域 A',
-                      type: '进入',
+                      location: t('gis.gis_fence_page.a_40'),
+                      type: t('gis.gis_fence_page.k41'),
                       device: '设备 #005',
                     },
                     {
                       time: '12:00',
-                      location: '办公区域',
-                      type: '离开',
+                      location: t('gis.gis_fence_page.k42'),
+                      type: t('gis.gis_fence_page.k43'),
                       device: '人员 #012',
                     },
                   ].map((alert, idx) => (
@@ -620,7 +647,8 @@ export const GisFencePage: React.FC = () => {
                       sx={{
                         p: 2,
                         borderRadius: 1,
-                        backgroundColor: alert.type === '进入' ? 'warning.50' : 'info.50',
+                        backgroundColor:
+                          alert.type === t('gis.gis_fence_page.k44') ? 'warning.50' : 'info.50',
                       }}
                     >
                       <Box
@@ -639,8 +667,12 @@ export const GisFencePage: React.FC = () => {
                         </Typography>
                         <Chip
                           size='small'
-                          label={alert.type === '进入' ? '进入' : '离开'}
-                          color={alert.type === '进入' ? 'warning' : 'info'}
+                          label={
+                            alert.type === t('gis.gis_fence_page.k46')
+                              ? t('gis.gis_fence_page.k47')
+                              : t('gis.gis_fence_page.k45')
+                          }
+                          color={alert.type === t('gis.gis_fence_page.k48') ? 'warning' : 'info'}
                         />
                       </Box>
                       <Typography
@@ -661,34 +693,34 @@ export const GisFencePage: React.FC = () => {
           open={openDialog}
           onClose={() => setOpenDialog(false)}
         >
-          <DialogTitle>创建地理围栏</DialogTitle>
+          <DialogTitle>{t('gis.gis_fence_page.k49')}</DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
               <TextField
-                label='围栏名称'
-                placeholder='输入围栏名称'
+                label={t('gis.gis_fence_page.k50')}
+                placeholder={t('gis.gis_fence_page.k51')}
                 fullWidth
               />
               <FormControl fullWidth>
-                <InputLabel>围栏类型</InputLabel>
+                <InputLabel>{t('gis.gis_fence_page.k52')}</InputLabel>
                 <Select
                   defaultValue='circle'
-                  label='围栏类型'
+                  label={t('gis.gis_fence_page.k53')}
                 >
-                  <MenuItem value='circle'>圆形</MenuItem>
-                  <MenuItem value='polygon'>多边形</MenuItem>
-                  <MenuItem value='rectangle'>矩形</MenuItem>
+                  <MenuItem value='circle'>{t('gis.gis_fence_page.k54')}</MenuItem>
+                  <MenuItem value='polygon'>{t('gis.gis_fence_page.k55')}</MenuItem>
+                  <MenuItem value='rectangle'>{t('gis.gis_fence_page.k56')}</MenuItem>
                 </Select>
               </FormControl>
               <TextField
-                label='中心坐标'
+                label={t('gis.gis_fence_page.k57')}
                 placeholder='如: 39.9042, 116.4074'
                 fullWidth
               />
               <TextField
-                label='半径 (米)'
+                label={t('gis.gis_fence_page.k58')}
                 type='number'
-                placeholder='仅圆形围栏需要'
+                placeholder={t('gis.gis_fence_page.k59')}
                 fullWidth
               />
               <Typography
@@ -700,17 +732,17 @@ export const GisFencePage: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 4 }}>
                 <FormControlLabel
                   control={<Checkbox defaultChecked />}
-                  label='进入时告警'
+                  label={t('gis.gis_fence_page.k60')}
                 />
                 <FormControlLabel
                   control={<Checkbox defaultChecked />}
-                  label='离开时告警'
+                  label={t('gis.gis_fence_page.k61')}
                 />
               </Box>
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenDialog(false)}>取消</Button>
+            <Button onClick={() => setOpenDialog(false)}>{t('gis.gis_fence_page.k62')}</Button>
             <Button
               variant='contained'
               onClick={handleSaveFence}

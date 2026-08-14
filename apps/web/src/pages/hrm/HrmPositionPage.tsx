@@ -6,12 +6,13 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { positionSchema } from '@/schemas/hrm';
 import { positionApi, departmentApi, type Department } from '@/api/hrm';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
 
 const apiAdapter = createCrudPageAdapter(positionApi);
 
 export default function HrmPositionPage() {
+  const { t } = useTranslation('hrm');
   const { data: departmentsData } = useQuery<{ items: Department[] }>({
     queryKey: QUERY_KEYS.AD_HOC.HRM_DEPARTMENTS_2_BASE,
     queryFn: async () => {
@@ -30,7 +31,7 @@ export default function HrmPositionPage() {
   const customColumns: ColumnDef[] = [
     {
       id: 'name',
-      label: '岗位名称',
+      label: t('hrm.hrm_position_page.k0'),
       width: 160,
       sortable: true,
       render: (row: Record<string, unknown>) => (
@@ -54,7 +55,7 @@ export default function HrmPositionPage() {
     },
     {
       id: 'department_id',
-      label: '所属部门',
+      label: t('hrm.hrm_position_page.k1'),
       width: 140,
       render: (row: Record<string, unknown>) => (
         <Typography
@@ -67,7 +68,7 @@ export default function HrmPositionPage() {
     },
     {
       id: 'level',
-      label: '岗位级别',
+      label: t('hrm.hrm_position_page.k2'),
       width: 100,
       render: (row: Record<string, unknown>) => (
         <Typography
@@ -80,7 +81,7 @@ export default function HrmPositionPage() {
     },
     {
       id: 'min_salary',
-      label: '最低薪资',
+      label: t('hrm.hrm_position_page.k3'),
       width: 100,
       render: (row: Record<string, unknown>) => (
         <Typography
@@ -93,7 +94,7 @@ export default function HrmPositionPage() {
     },
     {
       id: 'max_salary',
-      label: '最高薪资',
+      label: t('hrm.hrm_position_page.k4'),
       width: 100,
       render: (row: Record<string, unknown>) => (
         <Typography
@@ -106,7 +107,7 @@ export default function HrmPositionPage() {
     },
     {
       id: 'employee_count',
-      label: '在岗人数',
+      label: t('hrm.hrm_position_page.k5'),
       width: 100,
       render: (row: Record<string, unknown>) => (
         <Typography
@@ -119,7 +120,7 @@ export default function HrmPositionPage() {
     },
     {
       id: 'status',
-      label: '状态',
+      label: t('hrm.hrm_position_page.k6'),
       width: 100,
     },
   ];
@@ -129,7 +130,10 @@ export default function HrmPositionPage() {
       schema={positionSchema}
       apiAdapter={apiAdapter}
       customColumns={customColumns}
-      breadcrumbs={[{ label: '人力资源', href: '/hrm' }, { label: '岗位管理' }]}
+      breadcrumbs={[
+        { label: t('hrm.hrm_position_page.k8'), href: '/hrm' },
+        { label: t('hrm.hrm_position_page.k7') },
+      ]}
     />
   );
 }

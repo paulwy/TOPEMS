@@ -30,9 +30,39 @@ vi.mock('@/components/common', () => ({
 }));
 
 const runs = [
-  { id: 'run-001', rule_id: 'rule-001', rule_name: '每日库存同步', trigger_type: 'schedule', status: 'success', started_at: '2026-08-12 10:00:02', finished_at: '2026-08-12 10:00:03', duration_ms: 280, retry_count: 0 },
-  { id: 'run-002', rule_id: 'rule-002', rule_name: '邮件发送', trigger_type: 'manual', status: 'failed', started_at: '2026-08-12 10:05:11', finished_at: '2026-08-12 10:05:12', duration_ms: 9999, retry_count: 2 },
-  { id: 'run-003', rule_id: 'rule-003', rule_name: '数据备份', trigger_type: 'schedule', status: 'running', started_at: '2026-08-12 10:10:00', finished_at: null, duration_ms: 0, retry_count: 0 },
+  {
+    id: 'run-001',
+    rule_id: 'rule-001',
+    rule_name: '每日库存同步',
+    trigger_type: 'schedule',
+    status: 'success',
+    started_at: '2026-08-12 10:00:02',
+    finished_at: '2026-08-12 10:00:03',
+    duration_ms: 280,
+    retry_count: 0,
+  },
+  {
+    id: 'run-002',
+    rule_id: 'rule-002',
+    rule_name: '邮件发送',
+    trigger_type: 'manual',
+    status: 'failed',
+    started_at: '2026-08-12 10:05:11',
+    finished_at: '2026-08-12 10:05:12',
+    duration_ms: 9999,
+    retry_count: 2,
+  },
+  {
+    id: 'run-003',
+    rule_id: 'rule-003',
+    rule_name: '数据备份',
+    trigger_type: 'schedule',
+    status: 'running',
+    started_at: '2026-08-12 10:10:00',
+    finished_at: null,
+    duration_ms: 0,
+    retry_count: 0,
+  },
 ];
 
 describe('AutomationRunsPage', () => {
@@ -42,7 +72,11 @@ describe('AutomationRunsPage', () => {
 
   it('shows loading', async () => {
     let resolvePromise: ((v: any) => void) | undefined;
-    mockList.mockReturnValue(new Promise((res) => { resolvePromise = res; }));
+    mockList.mockReturnValue(
+      new Promise((res) => {
+        resolvePromise = res;
+      })
+    );
 
     renderWithProviders(<AutomationRunsPage />);
 
@@ -75,7 +109,13 @@ describe('AutomationRunsPage', () => {
   it('opens detail dialog with run info', async () => {
     mockList.mockResolvedValue({ data: { items: runs } });
     mockGet.mockResolvedValue({
-      data: { id: 'run-002', rule_name: '邮件发送', status: 'failed', error: 'SMTP 连接超时', logs: ['...'] },
+      data: {
+        id: 'run-002',
+        rule_name: '邮件发送',
+        status: 'failed',
+        error: 'SMTP 连接超时',
+        logs: ['...'],
+      },
     });
 
     renderWithProviders(<AutomationRunsPage />);

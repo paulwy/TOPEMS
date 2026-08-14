@@ -55,10 +55,11 @@ export default function HrmContractPage() {
       if (result.code === 0) {
         showNotification('success', t('hrm.hrm_contract_page.submit'));
         setRenewModalVisible(false);
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.CONTRACT ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.HRM.CONTRACT,
+          exact: false,
+          refetchType: 'active',
+        });
       } else {
         showNotification('error', result.message || t('hrm.hrm_contract_page.submit_1'));
       }
@@ -137,10 +138,10 @@ export default function HrmContractPage() {
             label={t('hrm.hrm_contract_page.type_2')}
             value={renewFormState.renewal_type}
             options={[
-              { value: 'regular', label: '常规续签' },
-              { value: 'promotion', label: '升职续签' },
-              { value: 'demotion', label: '降职续签' },
-              { value: 'transfer', label: '调岗续签' },
+              { value: 'regular', label: t('hrm.hrm_contract_page.k0') },
+              { value: 'promotion', label: t('hrm.hrm_contract_page.k1') },
+              { value: 'demotion', label: t('hrm.hrm_contract_page.k2') },
+              { value: 'transfer', label: t('hrm.hrm_contract_page.k3') },
             ]}
             onChange={(value) =>
               setRenewFormState((s) => ({ ...s, renewal_type: value as string }))

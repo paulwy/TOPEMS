@@ -29,6 +29,7 @@ import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
 
 interface IntegrationConfig {
   id: string;
@@ -71,6 +72,7 @@ const MOCK_CONFIGS: IntegrationConfig[] = [
 ];
 
 export const IntegrationSettingsPage: React.FC = () => {
+  const { t } = useTranslation('integration');
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [configs, setConfigs] = useState<IntegrationConfig[]>(MOCK_CONFIGS);
@@ -96,22 +98,21 @@ export const IntegrationSettingsPage: React.FC = () => {
       return config;
     },
     onSuccess: (config) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.INTEGRATION.CONNECTORS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.INTEGRATION.CONNECTORS,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
-        title: '连接测试成功',
+        title: t('integration.integration_settings_page.k0'),
         message: `成功连接到「${config.name}」系统`,
         type: 'success',
       });
     },
     onError: (_err: unknown) => {
       addNotification({
-        title: '连接测试失败',
-        message: extractErrorMessage(_err, '无法连接到目标系统'),
+        title: t('integration.integration_settings_page.k1'),
+        message: extractErrorMessage(_err, t('integration.integration_settings_page.k2')),
         type: 'error',
       });
     },
@@ -125,22 +126,21 @@ export const IntegrationSettingsPage: React.FC = () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.INTEGRATION.CONNECTORS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.INTEGRATION.CONNECTORS,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
-        title: '保存成功',
-        message: '全局设置已保存',
+        title: t('integration.integration_settings_page.k3'),
+        message: t('integration.integration_settings_page.k4'),
         type: 'success',
       });
     },
     onError: (_err: unknown) => {
       addNotification({
-        title: '保存失败',
-        message: extractErrorMessage(_err, '保存设置失败'),
+        title: t('integration.integration_settings_page.k5'),
+        message: extractErrorMessage(_err, t('integration.integration_settings_page.k6')),
         type: 'error',
       });
     },
@@ -157,8 +157,8 @@ export const IntegrationSettingsPage: React.FC = () => {
   const handleToggleConfig = (config: IntegrationConfig) => {
     setConfigs((prev) => prev.map((c) => (c.id === config.id ? { ...c, enabled: !c.enabled } : c)));
     addNotification({
-      title: '配置更新',
-      message: `「${config.name}」已${config.enabled ? '停用' : '启用'}`,
+      title: t('integration.integration_settings_page.k7'),
+      message: `「${config.name}」已${config.enabled ? t('integration.integration_settings_page.k9') : t('integration.integration_settings_page.k8')}`,
       type: 'success',
     });
   };
@@ -168,7 +168,7 @@ export const IntegrationSettingsPage: React.FC = () => {
   };
 
   const generalSection = {
-    title: '全局同步设置',
+    title: t('integration.integration_settings_page.k10'),
     icon: <RefreshCw size={20} />,
     children: (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -182,7 +182,7 @@ export const IntegrationSettingsPage: React.FC = () => {
                 }
               />
             }
-            label='启用自动同步'
+            label={t('integration.integration_settings_page.k11')}
           />
           <Typography
             variant='caption'
@@ -195,7 +195,7 @@ export const IntegrationSettingsPage: React.FC = () => {
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <TextField
-            label='同步间隔'
+            label={t('integration.integration_settings_page.k12')}
             type='number'
             size='small'
             value={globalSettings.syncInterval}
@@ -206,12 +206,18 @@ export const IntegrationSettingsPage: React.FC = () => {
               }))
             }
             slotProps={{
-              input: { endAdornment: <Typography color='text.secondary'>分钟</Typography> },
+              input: {
+                endAdornment: (
+                  <Typography color='text.secondary'>
+                    {t('integration.integration_settings_page.k13')}
+                  </Typography>
+                ),
+              },
             }}
             sx={{ width: 150 }}
           />
           <TextField
-            label='最大并发数'
+            label={t('integration.integration_settings_page.k14')}
             type='number'
             size='small'
             value={globalSettings.maxConcurrentSyncs}
@@ -227,7 +233,7 @@ export const IntegrationSettingsPage: React.FC = () => {
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <TextField
-            label='默认超时时间'
+            label={t('integration.integration_settings_page.k15')}
             type='number'
             size='small'
             value={globalSettings.defaultTimeout / 1000}
@@ -243,7 +249,7 @@ export const IntegrationSettingsPage: React.FC = () => {
             sx={{ width: 150 }}
           />
           <TextField
-            label='日志保留天数'
+            label={t('integration.integration_settings_page.k16')}
             type='number'
             size='small'
             value={globalSettings.logRetentionDays}
@@ -270,7 +276,7 @@ export const IntegrationSettingsPage: React.FC = () => {
                 }
               />
             }
-            label='启用失败重试'
+            label={t('integration.integration_settings_page.k17')}
           />
         </Box>
 
@@ -284,7 +290,7 @@ export const IntegrationSettingsPage: React.FC = () => {
                 }
               />
             }
-            label='启用详细日志'
+            label={t('integration.integration_settings_page.k18')}
           />
         </Box>
 
@@ -311,7 +317,7 @@ export const IntegrationSettingsPage: React.FC = () => {
   };
 
   const notificationSection = {
-    title: '通知设置',
+    title: t('integration.integration_settings_page.k19'),
     icon: <Bell size={20} />,
     children: (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -328,7 +334,7 @@ export const IntegrationSettingsPage: React.FC = () => {
                 }
               />
             }
-            label='启用同步通知'
+            label={t('integration.integration_settings_page.k20')}
           />
         </Box>
 
@@ -342,7 +348,7 @@ export const IntegrationSettingsPage: React.FC = () => {
                 }
               />
             }
-            label='同步失败时通知'
+            label={t('integration.integration_settings_page.k21')}
           />
         </Box>
 
@@ -356,7 +362,7 @@ export const IntegrationSettingsPage: React.FC = () => {
                 }
               />
             }
-            label='同步成功时通知'
+            label={t('integration.integration_settings_page.k22')}
           />
         </Box>
 
@@ -377,7 +383,7 @@ export const IntegrationSettingsPage: React.FC = () => {
   };
 
   const connectionsSection = {
-    title: '系统连接配置',
+    title: t('integration.integration_settings_page.k23'),
     icon: <Globe size={20} />,
     children: (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -404,7 +410,11 @@ export const IntegrationSettingsPage: React.FC = () => {
                   </Typography>
                   <Chip
                     size='small'
-                    label={config.enabled ? '启用' : '停用'}
+                    label={
+                      config.enabled
+                        ? t('integration.integration_settings_page.k25')
+                        : t('integration.integration_settings_page.k24')
+                    }
                     color={config.enabled ? 'success' : 'default'}
                   />
                 </Box>
@@ -453,7 +463,7 @@ export const IntegrationSettingsPage: React.FC = () => {
                   <TextField
                     fullWidth
                     size='small'
-                    label='认证方式'
+                    label={t('integration.integration_settings_page.k26')}
                     value={
                       config.authType === 'apikey'
                         ? 'API Key'
@@ -477,7 +487,7 @@ export const IntegrationSettingsPage: React.FC = () => {
                   <TextField
                     fullWidth
                     size='small'
-                    label='重试次数'
+                    label={t('integration.integration_settings_page.k27')}
                     value={config.retryCount}
                     disabled
                     slotProps={{
@@ -495,7 +505,7 @@ export const IntegrationSettingsPage: React.FC = () => {
                   <TextField
                     fullWidth
                     size='small'
-                    label='超时时间'
+                    label={t('integration.integration_settings_page.k28')}
                     value={`${config.timeout / 1000}s`}
                     disabled
                     slotProps={{
@@ -519,8 +529,8 @@ export const IntegrationSettingsPage: React.FC = () => {
           startIcon={<Plus size={16} />}
           onClick={() =>
             addNotification({
-              title: '添加连接',
-              message: '添加新的系统连接配置',
+              title: t('integration.integration_settings_page.k29'),
+              message: t('integration.integration_settings_page.k30'),
               type: 'info',
             })
           }
@@ -534,8 +544,8 @@ export const IntegrationSettingsPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='集成设置'
-      subtitle='配置集成平台全局设置和系统连接'
+      title={t('integration.integration_settings_page.k31')}
+      subtitle={t('integration.integration_settings_page.k32')}
     >
       <Alert
         severity='info'

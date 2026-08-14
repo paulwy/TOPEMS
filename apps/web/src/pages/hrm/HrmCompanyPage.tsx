@@ -19,12 +19,14 @@ import { designTokens } from '@/theme/tokens';
 import { companyApi, departmentApi, employeeApi, type Company } from '@/api/hrm';
 import { companySchema } from '@/schemas/hrm';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const HrmCompanyPage: React.FC = () => {
+  const { t } = useTranslation('hrm');
   const { addNotification } = useNotificationStore();
 
   const { data: departments = [] } = useQuery({
@@ -65,25 +67,37 @@ const HrmCompanyPage: React.FC = () => {
       create: async (data) => {
         const res = await companyApi.create(data as Partial<Company>);
         if (res.success && res.data) {
-          addNotification({ title: '成功', message: '公司创建成功', type: 'success' });
+          addNotification({
+            title: t('hrm.hrm_company_page.k1'),
+            message: t('hrm.hrm_company_page.k0'),
+            type: 'success',
+          });
           return res.data as Company;
         }
-        throw new Error(res.message || '创建失败');
+        throw new Error(res.message || t('hrm.hrm_company_page.k2'));
       },
       update: async (id, data) => {
         const res = await companyApi.update(id, data as Partial<Company>);
         if (res.success && res.data) {
-          addNotification({ title: '成功', message: '公司更新成功', type: 'success' });
+          addNotification({
+            title: t('hrm.hrm_company_page.k4'),
+            message: t('hrm.hrm_company_page.k3'),
+            type: 'success',
+          });
           return res.data as Company;
         }
-        throw new Error(res.message || '更新失败');
+        throw new Error(res.message || t('hrm.hrm_company_page.k5'));
       },
       delete: async (id) => {
         const res = await companyApi.delete(id);
         if (res.success) {
-          addNotification({ title: '成功', message: '公司删除成功', type: 'success' });
+          addNotification({
+            title: t('hrm.hrm_company_page.k7'),
+            message: t('hrm.hrm_company_page.k6'),
+            type: 'success',
+          });
         } else {
-          throw new Error(res.message || '删除失败');
+          throw new Error(res.message || t('hrm.hrm_company_page.k8'));
         }
       },
     }),
@@ -94,7 +108,7 @@ const HrmCompanyPage: React.FC = () => {
     () => [
       {
         key: 'view-detail',
-        label: '查看详情',
+        label: i18n.t('hrm.hrm_company_page.k9'),
         icon: <Building size={16} />,
         color: 'primary',
       },
@@ -221,10 +235,10 @@ const HrmCompanyPage: React.FC = () => {
                 color={company.status === 'active' ? 'success' : 'default'}
                 label={
                   company.status === 'active'
-                    ? '启用'
+                    ? t('hrm.hrm_company_page.k10')
                     : company.status === 'inactive'
-                      ? '禁用'
-                      : '归档'
+                      ? t('hrm.hrm_company_page.k11')
+                      : t('hrm.hrm_company_page.k12')
                 }
                 variant='outlined'
               />
@@ -402,7 +416,11 @@ const HrmCompanyPage: React.FC = () => {
                       <Chip
                         size='small'
                         variant={dept.status === 'active' ? 'filled' : 'outlined'}
-                        label={dept.status === 'active' ? '启用' : '禁用'}
+                        label={
+                          dept.status === 'active'
+                            ? t('hrm.hrm_company_page.k14')
+                            : t('hrm.hrm_company_page.k13')
+                        }
                       />
                     </Box>
                   ))}
@@ -419,8 +437,8 @@ const HrmCompanyPage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
-      title='公司管理'
-      subtitle='管理企业公司信息，包括公司名称、注册号、税号、联系方式等'
+      title={t('hrm.hrm_company_page.k15')}
+      subtitle={t('hrm.hrm_company_page.k16')}
       autoTitle
       autoBreadcrumbs
       headerProps={{

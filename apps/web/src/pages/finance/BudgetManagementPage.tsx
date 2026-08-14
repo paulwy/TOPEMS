@@ -35,8 +35,8 @@ import { useNotificationStore } from '@/store';
 import { useTranslation } from 'react-i18next';
 import type { EntitySchema, BatchActionConfig } from '@/schema';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 const BudgetManagementPage: React.FC = () => {
   const { t } = useTranslation();
@@ -194,18 +194,18 @@ const BudgetManagementPage: React.FC = () => {
     () => [
       {
         key: 'update_status',
-        label: t('finance.budget_management_page.update_6'),
+        label: i18n.t('finance.budget_management_page.update_6'),
         icon: <Settings sx={{ width: 16, height: 16 }} />,
         onClick: (ids: string[]) => handleBatchUpdateStatus(ids),
       },
       {
         key: 'batch_delete',
-        label: t('finance.budget_management_page.batch_delete_2'),
+        label: i18n.t('finance.budget_management_page.batch_delete_2'),
         icon: <Trash2 sx={{ width: 16, height: 16 }} />,
         color: 'error',
         onClick: (ids: string[]) => handleBatchDelete(ids),
         confirm: true,
-        confirmMessage: t('finance.budget_management_page.confirm_1'),
+        confirmMessage: i18n.t('finance.budget_management_page.confirm_1'),
       },
     ],
     [t, handleBatchUpdateStatus, handleBatchDelete]
@@ -335,11 +335,11 @@ const BudgetManagementPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>批量更新状态</DialogTitle>
+        <DialogTitle>{t('finance.budget_management_page.k0')}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box>
-              <FormLabel htmlFor='batch_status'>选择新状态</FormLabel>
+              <FormLabel htmlFor='batch_status'>{t('finance.budget_management_page.k1')}</FormLabel>
               <FormControl
                 size='small'
                 fullWidth
@@ -355,9 +355,9 @@ const BudgetManagementPage: React.FC = () => {
                   >
                     请选择状态
                   </MenuItem>
-                  <MenuItem value='active'>进行中</MenuItem>
-                  <MenuItem value='frozen'>已冻结</MenuItem>
-                  <MenuItem value='exhausted'>已耗尽</MenuItem>
+                  <MenuItem value='active'>{t('finance.budget_management_page.k2')}</MenuItem>
+                  <MenuItem value='frozen'>{t('finance.budget_management_page.k3')}</MenuItem>
+                  <MenuItem value='exhausted'>{t('finance.budget_management_page.k4')}</MenuItem>
                 </Select>
               </FormControl>
             </Box>

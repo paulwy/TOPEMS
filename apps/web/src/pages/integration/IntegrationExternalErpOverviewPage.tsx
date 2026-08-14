@@ -5,6 +5,8 @@ import { Settings, Database, Cloud, Zap, CheckCircle, AlertCircle } from 'lucide
 import { useErpConnections } from '@/hooks/useExternalErp';
 import { PageContainer } from '@/components/common';
 import { INTEGRATION_PATHS } from '@/modules/integration/config';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 interface ErpConnection {
   id: string;
@@ -20,12 +22,12 @@ interface ErpConnection {
 
 const ERP_TYPE_CONFIG: Record<string, { name: string; logo: string; color: string }> = {
   kingdee: {
-    name: '金蝶K/3',
+    name: i18n.t('integration.integration_external_erp_overview_page.k3_0'),
     logo: 'K',
     color: 'primary.main',
   },
   yonyou: {
-    name: '用友U8',
+    name: i18n.t('integration.integration_external_erp_overview_page.u8_1'),
     logo: 'Y',
     color: 'warning.main',
   },
@@ -41,24 +43,25 @@ const STATUS_CONFIG: Record<
   { label: string; color: 'success' | 'default' | 'error' | 'warning' }
 > = {
   connected: {
-    label: '已连接',
+    label: i18n.t('integration.integration_external_erp_overview_page.k2'),
     color: 'success',
   },
   disconnected: {
-    label: '未连接',
+    label: i18n.t('integration.integration_external_erp_overview_page.k3'),
     color: 'default',
   },
   error: {
-    label: '连接错误',
+    label: i18n.t('integration.integration_external_erp_overview_page.k4'),
     color: 'error',
   },
   syncing: {
-    label: '同步中',
+    label: i18n.t('integration.integration_external_erp_overview_page.k5'),
     color: 'warning',
   },
 };
 
 const IntegrationExternalErpOverviewPage: React.FC = () => {
+  const { t } = useTranslation('integration');
   const navigate = useNavigate();
   const { data: connectionsData } = useErpConnections();
 
@@ -360,16 +363,16 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                               color='text.secondary'
                             >
                               {conn.sync_direction === 'bidirectional'
-                                ? '双向同步'
+                                ? t('integration.integration_external_erp_overview_page.k6')
                                 : conn.sync_direction === 'import'
-                                  ? '导入'
-                                  : '导出'}
+                                  ? t('integration.integration_external_erp_overview_page.k7')
+                                  : t('integration.integration_external_erp_overview_page.k8')}
                               {' / '}
                               {conn.sync_mode === 'realtime'
-                                ? '实时'
+                                ? t('integration.integration_external_erp_overview_page.k9')
                                 : conn.sync_mode === 'scheduled'
-                                  ? '定时'
-                                  : '手动'}
+                                  ? t('integration.integration_external_erp_overview_page.k10')
+                                  : t('integration.integration_external_erp_overview_page.k11')}
                             </Typography>
                           </Box>
                           <Chip
@@ -568,11 +571,11 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                   spacing={1}
                 >
                   <Chip
-                    label='金蝶K/3'
+                    label={t('integration.integration_external_erp_overview_page.k3_12')}
                     size='small'
                   />
                   <Chip
-                    label='用友U8'
+                    label={t('integration.integration_external_erp_overview_page.u8_13')}
                     size='small'
                   />
                   <Chip
@@ -593,15 +596,15 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                   spacing={1}
                 >
                   <Chip
-                    label='实时同步'
+                    label={t('integration.integration_external_erp_overview_page.k14')}
                     size='small'
                   />
                   <Chip
-                    label='定时同步'
+                    label={t('integration.integration_external_erp_overview_page.k15')}
                     size='small'
                   />
                   <Chip
-                    label='手动同步'
+                    label={t('integration.integration_external_erp_overview_page.k16')}
                     size='small'
                   />
                 </Stack>
@@ -618,15 +621,15 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                   spacing={1}
                 >
                   <Chip
-                    label='双向同步'
+                    label={t('integration.integration_external_erp_overview_page.k17')}
                     size='small'
                   />
                   <Chip
-                    label='仅导入'
+                    label={t('integration.integration_external_erp_overview_page.k18')}
                     size='small'
                   />
                   <Chip
-                    label='仅导出'
+                    label={t('integration.integration_external_erp_overview_page.k19')}
                     size='small'
                   />
                 </Stack>

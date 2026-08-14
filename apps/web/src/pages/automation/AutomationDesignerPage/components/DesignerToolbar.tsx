@@ -32,6 +32,8 @@ import {
   type DesignerMode,
   type DesignerNodeItem,
 } from '../shared';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 export interface DesignerToolbarProps {
   mode: DesignerMode;
@@ -78,6 +80,7 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
   onAddNode,
   onDeleteNode,
 }) => {
+  const { t } = useTranslation('automation');
   return (
     <>
       <Stack
@@ -96,7 +99,7 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
           spacing={2}
           sx={{ alignItems: 'center' }}
         >
-          <Typography variant='h5'>可视化编排</Typography>
+          <Typography variant='h5'>{i18n.t('automation.designer_toolbar.k0')}</Typography>
           <ToggleButtonGroup
             value={mode}
             exclusive
@@ -138,7 +141,7 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
             size='small'
             disabled={!selectedRuleId || validating || nodes.length === 0}
           >
-            {validating ? '预览中…' : '预览'}
+            {validating ? '预览中…' : t('automation.designer_toolbar.k1')}
           </Button>
           <Button
             startIcon={<ClearIcon />}
@@ -156,7 +159,7 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
             variant='contained'
             disabled={!selectedRuleId || saving || nodes.length === 0}
           >
-            {saving ? '保存中…' : '保存'}
+            {saving ? '保存中…' : t('automation.designer_toolbar.k2')}
           </Button>
         </Stack>
       </Stack>
@@ -178,14 +181,14 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
       >
         <TextField
           select
-          label='选择规则'
+          label={t('automation.designer_toolbar.k3')}
           value={selectedRuleId}
           onChange={(e) => setSelectedRuleId(e.target.value)}
           size='small'
           sx={{ minWidth: 300 }}
         >
           <MenuItem value=''>
-            <em>请选择</em>
+            <em>{t('automation.designer_toolbar.k4')}</em>
           </MenuItem>
           {rules.map((r) => (
             <MenuItem
@@ -217,7 +220,7 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
             sx={{ alignItems: 'center', mb: 0.5 }}
           >
             <AlertIcon size={16} />
-            <Typography variant='subtitle2'>校验结果</Typography>
+            <Typography variant='subtitle2'>{t('automation.designer_toolbar.k5')}</Typography>
           </Stack>
           {validationErrors.map((e, idx) => (
             <Typography
@@ -241,7 +244,7 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
           variant='outlined'
           sx={{ p: 4, textAlign: 'center' }}
         >
-          <Typography color='text.secondary'>请先选择一个规则以加载或创建画布</Typography>
+          <Typography color='text.secondary'>{t('automation.designer_toolbar.k6')}</Typography>
         </Paper>
       ) : mode === 'form' ? (
         <Box>
@@ -322,7 +325,7 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
                       size='small'
                       color='error'
                       onClick={() => onDeleteNode(node.id)}
-                      aria-label='删除'
+                      aria-label={t('automation.designer_toolbar.k7')}
                     >
                       <DeleteIcon size={18} />
                     </IconButton>

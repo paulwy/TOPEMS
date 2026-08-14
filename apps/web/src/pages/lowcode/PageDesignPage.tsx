@@ -4,8 +4,10 @@ import { useSearchParams } from 'react-router-dom';
 import { lowcodePagesApi } from '@/api/lowcode';
 import type { LowcodePage, UpdateLowcodePageRequest } from '@/api/lowcode';
 import { PageContainer } from '@/components/common';
+import { useTranslation } from 'react-i18next';
 
 export const PageDesignPage: React.FC = () => {
+  const { t } = useTranslation('lowcode');
   const [searchParams, setSearchParams] = useSearchParams();
   const pageId = searchParams.get('page_id') || '';
 
@@ -28,7 +30,8 @@ export const PageDesignPage: React.FC = () => {
           setDraft(JSON.stringify(res.data.components ?? [], null, 2));
         }
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : '加载页面失败');
+        if (!cancelled)
+          setError(err instanceof Error ? err.message : t('lowcode.page_design_page.k0'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -58,7 +61,7 @@ export const PageDesignPage: React.FC = () => {
         setDraft(JSON.stringify(res.data.components ?? [], null, 2));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '保存页面失败');
+      setError(err instanceof Error ? err.message : t('lowcode.page_design_page.k1'));
     } finally {
       setSaving(false);
     }
@@ -66,7 +69,7 @@ export const PageDesignPage: React.FC = () => {
 
   if (!pageId) {
     return (
-      <PageContainer title='页面设计'>
+      <PageContainer title={t('lowcode.page_design_page.k2')}>
         <Box sx={{ p: 3 }}>
           <Typography color='text.secondary'>
             请在 URL 上携带 ?page_id=xxx 以设计具体页面。
@@ -78,7 +81,7 @@ export const PageDesignPage: React.FC = () => {
 
   if (loading) {
     return (
-      <PageContainer title='页面设计'>
+      <PageContainer title={t('lowcode.page_design_page.k3')}>
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress />
         </Box>
@@ -87,7 +90,7 @@ export const PageDesignPage: React.FC = () => {
   }
 
   return (
-    <PageContainer title='页面设计'>
+    <PageContainer title={t('lowcode.page_design_page.k4')}>
       <Box sx={{ p: 3 }}>
         <Stack
           direction='row'
@@ -100,7 +103,7 @@ export const PageDesignPage: React.FC = () => {
             onClick={handleSave}
             disabled={saving || !page}
           >
-            {saving ? '保存中…' : '保存组件树'}
+            {saving ? '保存中…' : t('lowcode.page_design_page.k5')}
           </Button>
         </Stack>
 

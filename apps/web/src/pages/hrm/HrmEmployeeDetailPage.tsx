@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Box, Typography, InputLabel, Avatar } from '@mui/material';
 import { User, Briefcase } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -13,8 +13,9 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const HrmEmployeeDetailPage: React.FC = () => {
   const { t } = useTranslation();
@@ -36,8 +37,9 @@ const HrmEmployeeDetailPage: React.FC = () => {
       }
       return res.data;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const employee = employeeQuery.data ?? null;
   const loading = employeeQuery.isLoading;
@@ -150,13 +152,17 @@ const HrmEmployeeDetailPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>员工编号</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('hrm.hrm_employee_detail_page.k0')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5, fontFamily: 'monospace' }}>
               {employee.employee_no}
             </Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>身份证号</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('hrm.hrm_employee_detail_page.k1')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5, fontFamily: 'monospace' }}>
               {employee.id_number
                 ? `${employee.id_number.slice(0, 4)}****${employee.id_number.slice(-4)}`
@@ -164,19 +170,27 @@ const HrmEmployeeDetailPage: React.FC = () => {
             </Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>出生日期</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('hrm.hrm_employee_detail_page.k2')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5 }}>{formatDate(employee.birth_date)}</Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>联系电话</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('hrm.hrm_employee_detail_page.k3')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5 }}>{employee.phone || '-'}</Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>邮箱</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('hrm.hrm_employee_detail_page.k4')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5 }}>{employee.email || '-'}</Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>学历</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t('hrm.hrm_employee_detail_page.k5')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5 }}>{getEducationLabel(employee.education || '')}</Typography>
           </Box>
         </Box>
@@ -195,43 +209,61 @@ const HrmEmployeeDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>入职日期</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_employee_detail_page.k6')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(employee.hire_date)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>转正日期</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_employee_detail_page.k7')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(employee.regular_date)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>试用期</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_employee_detail_page.k8')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{employee.probation_period || 3} 个月</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>所属部门</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_employee_detail_page.k9')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{employee.department_name || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>职位</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_employee_detail_page.k10')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{employee.position || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>岗位等级</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_employee_detail_page.k11')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{employee.joblevel || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>工作地点</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_employee_detail_page.k12')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{employee.work_location || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>汇报对象</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_employee_detail_page.k13')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{employee.report_to_name || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>员工类型</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_employee_detail_page.k14')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>
             {employee.employee_type === 'full_time'
-              ? t('hrm.hrm_employee_detail_page.text_63f85b')
-              : t('hrm.hrm_employee_detail_page.text_7c4f46')}
+              ? i18n.t('hrm.hrm_employee_detail_page.text_63f85b')
+              : i18n.t('hrm.hrm_employee_detail_page.text_7c4f46')}
           </Typography>
         </Box>
       </Box>
@@ -249,27 +281,39 @@ const HrmEmployeeDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>紧急联系人</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_employee_detail_page.k15')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{employee.emergency_contact || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>紧急联系人电话</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_employee_detail_page.k16')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{employee.emergency_phone || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>与员工关系</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_employee_detail_page.k17')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{employee.emergency_relation || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>家庭地址</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_employee_detail_page.k18')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{employee.address || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>户口所在地</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_employee_detail_page.k19')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{employee.hukou_location || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>备注</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('hrm.hrm_employee_detail_page.k20')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{employee.remark || '-'}</Typography>
         </Box>
       </Box>
@@ -309,9 +353,12 @@ const HrmEmployeeDetailPage: React.FC = () => {
       subtitle: employee?.employee_no || undefined,
       tags: [employee?.department_name || ''],
       stats: [
-        { label: t('hrm.hrm_employee_detail_page.text_b652de'), value: employee?.position || '-' },
         {
-          label: t('hrm.hrm_employee_detail_page.status'),
+          label: i18n.t('hrm.hrm_employee_detail_page.text_b652de'),
+          value: employee?.position || '-',
+        },
+        {
+          label: i18n.t('hrm.hrm_employee_detail_page.status'),
           value: getStatusConfig(employee?.status || '').label,
         },
       ],
@@ -327,7 +374,12 @@ const HrmEmployeeDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={employee?.name || employee?.employee_no || employee?.id || '员工详情'}
+        detailItemName={
+          employee?.name ||
+          employee?.employee_no ||
+          employee?.id ||
+          t('hrm.hrm_employee_detail_page.k21')
+        }
         backHref={HRM_PATHS.employees}
         loading={loading}
         error={errorMessage}

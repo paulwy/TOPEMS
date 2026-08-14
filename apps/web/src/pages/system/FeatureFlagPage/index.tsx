@@ -19,10 +19,11 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { useFeatureFlagStore } from '@/store/featureFlagStore';
+import { useTranslation } from 'react-i18next';
 
 const FeatureFlagPage: React.FC = () => {
-  const { flags, loading, error, fetchFlags, updateFlag, refreshFlag } =
-    useFeatureFlagStore();
+  const { t } = useTranslation('system');
+  const { flags, loading, error, fetchFlags, updateFlag, refreshFlag } = useFeatureFlagStore();
   const [togglingKey, setTogglingKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -47,25 +48,48 @@ const FeatureFlagPage: React.FC = () => {
   const getStateChip = (state: string) => {
     switch (state) {
       case 'Enabled':
-        return <Chip label='开启' color='success' size='small' />;
+        return (
+          <Chip
+            label={t('system.index.k0')}
+            color='success'
+            size='small'
+          />
+        );
       case 'Disabled':
-        return <Chip label='关闭' color='default' size='small' />;
+        return (
+          <Chip
+            label={t('system.index.k1')}
+            color='default'
+            size='small'
+          />
+        );
       case 'Conditional':
-        return <Chip label='条件开启' color='warning' size='small' />;
+        return (
+          <Chip
+            label={t('system.index.k2')}
+            color='warning'
+            size='small'
+          />
+        );
       default:
-        return <Chip label={state} size='small' />;
+        return (
+          <Chip
+            label={state}
+            size='small'
+          />
+        );
     }
   };
 
   return (
     <PageContainer
-      title='特性开关管理'
-      subtitle='管理系统 Feature Flag，控制功能开启/关闭'
+      title={t('system.index.k3')}
+      subtitle={t('system.index.k4')}
       maxWidth='lg'
       headerProps={{
         actions: [
           {
-            label: '刷新',
+            label: t('system.index.k5'),
             icon: <RefreshCw size={16} />,
             onClick: handleRefreshAll,
             variant: 'outlined',
@@ -74,7 +98,11 @@ const FeatureFlagPage: React.FC = () => {
       }}
     >
       {error && (
-        <Alert severity='error' sx={{ mb: 2 }} icon={<AlertCircle />}>
+        <Alert
+          severity='error'
+          sx={{ mb: 2 }}
+          icon={<AlertCircle />}
+        >
           {error}
         </Alert>
       )}
@@ -84,21 +112,30 @@ const FeatureFlagPage: React.FC = () => {
           <CircularProgress size={48} />
         </Box>
       ) : (
-        <TableContainer component={Paper} variant='outlined'>
+        <TableContainer
+          component={Paper}
+          variant='outlined'
+        >
           <Table>
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 600, width: '25%' }}>Key</TableCell>
-                <TableCell sx={{ fontWeight: 600, width: '20%' }}>名称</TableCell>
-                <TableCell sx={{ fontWeight: 600, width: '15%' }}>状态</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>描述</TableCell>
-                <TableCell sx={{ fontWeight: 600, width: '120px' }}>操作</TableCell>
+                <TableCell sx={{ fontWeight: 600, width: '20%' }}>{t('system.index.k6')}</TableCell>
+                <TableCell sx={{ fontWeight: 600, width: '15%' }}>{t('system.index.k7')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('system.index.k8')}</TableCell>
+                <TableCell sx={{ fontWeight: 600, width: '120px' }}>
+                  {t('system.index.k9')}
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {flags.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align='center' sx={{ py: 6 }}>
+                  <TableCell
+                    colSpan={5}
+                    align='center'
+                    sx={{ py: 6 }}
+                  >
                     <Typography color='text.secondary'>
                       暂无 Feature Flag，等待后端注册或刷新
                     </Typography>
@@ -106,7 +143,10 @@ const FeatureFlagPage: React.FC = () => {
                 </TableRow>
               ) : (
                 flags.map((flag) => (
-                  <TableRow key={flag.key} hover>
+                  <TableRow
+                    key={flag.key}
+                    hover
+                  >
                     <TableCell>
                       <Typography
                         variant='body2'
@@ -125,7 +165,10 @@ const FeatureFlagPage: React.FC = () => {
                     <TableCell>{getStateChip(flag.state)}</TableCell>
                     <TableCell>
                       {flag.description || (
-                        <Typography variant='body2' color='text.secondary'>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
                           -
                         </Typography>
                       )}
@@ -138,7 +181,7 @@ const FeatureFlagPage: React.FC = () => {
                           disabled={togglingKey === flag.key}
                           onChange={() => handleToggle(flag.key, flag.state)}
                         />
-                        <Tooltip title='刷新'>
+                        <Tooltip title={t('system.index.k10')}>
                           <IconButton
                             size='small'
                             onClick={() => handleRefresh(flag.key)}
@@ -159,7 +202,10 @@ const FeatureFlagPage: React.FC = () => {
 
       <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
         <Power size={14} />
-        <Typography variant='body2' color='text.secondary'>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+        >
           共 {flags.length} 个 Feature Flag · In-Memory 存储（重启后重置）
         </Typography>
       </Box>

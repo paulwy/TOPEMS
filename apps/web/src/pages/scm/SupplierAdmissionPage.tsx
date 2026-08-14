@@ -19,6 +19,7 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
 
 const apiAdapter = createCrudPageAdapter<
   SupplierAdmission,
@@ -34,38 +35,39 @@ interface PendingAction {
 }
 
 const SupplierAdmissionPage: React.FC = () => {
+  const { t } = useTranslation('scm');
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
 
   const invalidateAdmissions = () =>
-    queryClient.invalidateQueries({ queryKey: [supplierAdmissionSchema.entity] ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: [supplierAdmissionSchema.entity],
+      exact: false,
+      refetchType: 'active',
+    });
 
   const submitMutation = useMutation({
     mutationFn: (id: string) => scmApi.supplierAdmissions.submit(id),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.SCM.OVERVIEW,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.SCM.OVERVIEW,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAdmissions();
       addNotification({
         type: 'success',
-        title: '提交成功',
-        message: '供应商准入已提交审核',
+        title: t('scm.supplier_admission_page.k0'),
+        message: t('scm.supplier_admission_page.k1'),
       });
     },
     onError: (err: unknown) => {
       apiLogger.error('提交失败:', err);
       addNotification({
         type: 'error',
-        title: '提交失败',
-        message: '提交供应商准入失败',
+        title: t('scm.supplier_admission_page.k2'),
+        message: t('scm.supplier_admission_page.k3'),
       });
     },
   });
@@ -73,25 +75,24 @@ const SupplierAdmissionPage: React.FC = () => {
   const approveMutation = useMutation({
     mutationFn: (id: string) => scmApi.supplierAdmissions.approve(id),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.SCM.OVERVIEW,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.SCM.OVERVIEW,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAdmissions();
       addNotification({
         type: 'success',
-        title: '已通过',
-        message: '供应商准入已通过',
+        title: t('scm.supplier_admission_page.k4'),
+        message: t('scm.supplier_admission_page.k5'),
       });
     },
     onError: (err: unknown) => {
       apiLogger.error('操作失败:', err);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '通过供应商准入失败',
+        title: t('scm.supplier_admission_page.k6'),
+        message: t('scm.supplier_admission_page.k7'),
       });
     },
   });
@@ -99,25 +100,24 @@ const SupplierAdmissionPage: React.FC = () => {
   const rejectMutation = useMutation({
     mutationFn: (id: string) => scmApi.supplierAdmissions.reject(id),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.SCM.OVERVIEW,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.SCM.OVERVIEW,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAdmissions();
       addNotification({
         type: 'success',
-        title: '已拒绝',
-        message: '供应商准入已拒绝',
+        title: t('scm.supplier_admission_page.k8'),
+        message: t('scm.supplier_admission_page.k9'),
       });
     },
     onError: (err: unknown) => {
       apiLogger.error('操作失败:', err);
       addNotification({
         type: 'error',
-        title: '操作失败',
-        message: '拒绝供应商准入失败',
+        title: t('scm.supplier_admission_page.k10'),
+        message: t('scm.supplier_admission_page.k11'),
       });
     },
   });
@@ -125,25 +125,24 @@ const SupplierAdmissionPage: React.FC = () => {
   const activateMutation = useMutation({
     mutationFn: (id: string) => scmApi.supplierAdmissions.activateSupplier(id),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.SCM.OVERVIEW,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.SCM.OVERVIEW,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAdmissions();
       addNotification({
         type: 'success',
-        title: '准入成功',
-        message: '供应商已正式准入',
+        title: t('scm.supplier_admission_page.k12'),
+        message: t('scm.supplier_admission_page.k13'),
       });
     },
     onError: (err: unknown) => {
       apiLogger.error('准入失败:', err);
       addNotification({
         type: 'error',
-        title: '准入失败',
-        message: '供应商准入失败',
+        title: t('scm.supplier_admission_page.k14'),
+        message: t('scm.supplier_admission_page.k15'),
       });
     },
   });
@@ -151,13 +150,13 @@ const SupplierAdmissionPage: React.FC = () => {
   const customRowActions: RowAction<SupplierAdmission>[] = [
     {
       key: 'submit',
-      label: '提交',
+      label: t('scm.supplier_admission_page.k16'),
       icon: <Send size={14} />,
       color: 'primary',
       show: (row) => row.status === 'draft',
       onClick: (row) => {
         setPendingAction({
-          title: '确认提交',
+          title: t('scm.supplier_admission_page.k17'),
           message: `确定要提交供应商准入 "${row.admission_no}" 审核吗？`,
           onConfirm: () => submitMutation.mutate(row.id),
         });
@@ -165,13 +164,13 @@ const SupplierAdmissionPage: React.FC = () => {
     },
     {
       key: 'approve',
-      label: '通过',
+      label: t('scm.supplier_admission_page.k18'),
       icon: <Check size={14} />,
       color: 'success',
       show: (row) => row.status === 'pending',
       onClick: (row) => {
         setPendingAction({
-          title: '确认通过',
+          title: t('scm.supplier_admission_page.k19'),
           message: `确定要通过供应商准入 "${row.admission_no}" 吗？`,
           onConfirm: () => approveMutation.mutate(row.id),
         });
@@ -179,13 +178,13 @@ const SupplierAdmissionPage: React.FC = () => {
     },
     {
       key: 'reject',
-      label: '拒绝',
+      label: t('scm.supplier_admission_page.k20'),
       icon: <XCircle size={14} />,
       color: 'error',
       show: (row) => row.status === 'pending',
       onClick: (row) => {
         setPendingAction({
-          title: '确认拒绝',
+          title: t('scm.supplier_admission_page.k21'),
           message: `确定要拒绝供应商准入 "${row.admission_no}" 吗？`,
           onConfirm: () => rejectMutation.mutate(row.id),
           danger: true,
@@ -194,13 +193,13 @@ const SupplierAdmissionPage: React.FC = () => {
     },
     {
       key: 'activate',
-      label: '准入',
+      label: t('scm.supplier_admission_page.k22'),
       icon: <UserCheck size={14} />,
       color: 'success',
       show: (row) => row.status === 'approved',
       onClick: (row) => {
         setPendingAction({
-          title: '确认准入',
+          title: t('scm.supplier_admission_page.k23'),
           message: `确定要将供应商 "${row.supplier_name}" 正式准入吗？`,
           onConfirm: () => activateMutation.mutate(row.id),
         });
@@ -214,7 +213,7 @@ const SupplierAdmissionPage: React.FC = () => {
         schema={supplierAdmissionSchema}
         apiAdapter={apiAdapter as CrudApiAdapter}
         customRowActions={customRowActions as unknown as RowAction<Record<string, unknown>>[]}
-        breadcrumbs={[{ label: 'SCM' }, { label: '供应商准入管理' }]}
+        breadcrumbs={[{ label: 'SCM' }, { label: t('scm.supplier_admission_page.k24') }]}
       />
 
       <ConfirmDialog

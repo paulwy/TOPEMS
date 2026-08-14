@@ -9,10 +9,11 @@ import { FileText, Calculator, Wallet, TrendingUp, TrendingDown } from 'lucide-r
 import { designTokens } from '@/theme/tokens';
 import type { Account } from '@/types/finance';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const ledgerApiAdapter: CrudApiAdapter = {
   list: async (params) => {
@@ -40,21 +41,24 @@ const ledgerApiAdapter: CrudApiAdapter = {
   },
   create: async (data) => {
     const response = await accountApi.create(data as Partial<Account>);
-    if (!response.success || !response.data) throw new Error('创建科目失败');
+    if (!response.success || !response.data)
+      throw new Error(i18n.t('finance.finance_ledger_page.k0'));
     return response.data as unknown as Record<string, unknown>;
   },
   update: async (id, data) => {
     const response = await accountApi.update(id, data as Partial<Account>);
-    if (!response.success || !response.data) throw new Error('更新科目失败');
+    if (!response.success || !response.data)
+      throw new Error(i18n.t('finance.finance_ledger_page.k1'));
     return response.data as unknown as Record<string, unknown>;
   },
   delete: async (id) => {
     const response = await accountApi.delete(id);
-    if (!response.success) throw new Error('删除科目失败');
+    if (!response.success) throw new Error(i18n.t('finance.finance_ledger_page.k2'));
   },
 };
 
 const LedgerStats: React.FC = () => {
+  const { t } = useTranslation('finance');
   const { data: accounts = [] } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.FINANCE_LEDGER_STATS_BASE,
     queryFn: async () => {
@@ -82,35 +86,35 @@ const LedgerStats: React.FC = () => {
 
   const statCards = [
     {
-      label: '科目总数',
+      label: t('finance.finance_ledger_page.k3'),
       value: stats.total,
       color: ct.purple[500],
       bgColor: 'secondary.light',
       icon: <Calculator sx={{ width: 20, height: 20 }} />,
     },
     {
-      label: '资产类',
+      label: t('finance.finance_ledger_page.k4'),
       value: stats.asset,
       color: 'info.dark',
       bgColor: 'info.lighter',
       icon: <Wallet sx={{ width: 20, height: 20 }} />,
     },
     {
-      label: '负债类',
+      label: t('finance.finance_ledger_page.k5'),
       value: stats.liability,
       color: 'error.dark',
       bgColor: 'error.lighter',
       icon: <TrendingUp sx={{ width: 20, height: 20 }} />,
     },
     {
-      label: '权益类',
+      label: t('finance.finance_ledger_page.k6'),
       value: stats.equity,
       color: 'success.dark',
       bgColor: 'success.lighter',
       icon: <TrendingDown sx={{ width: 20, height: 20 }} />,
     },
     {
-      label: '损益类',
+      label: t('finance.finance_ledger_page.k7'),
       value: stats.expenseIncome,
       color: 'warning.dark',
       bgColor: 'warning.lighter',
@@ -167,11 +171,15 @@ const LedgerStats: React.FC = () => {
 };
 
 const FinanceLedgerPage: React.FC = () => {
+  const { t } = useTranslation('finance');
   return (
     <CrudPage
       schema={ledgerSchema}
       apiAdapter={ledgerApiAdapter}
-      breadcrumbs={[{ label: '财务管理' }, { label: '总账管理' }]}
+      breadcrumbs={[
+        { label: t('finance.finance_ledger_page.k9') },
+        { label: t('finance.finance_ledger_page.k8') },
+      ]}
       headerContent={<LedgerStats />}
     />
   );

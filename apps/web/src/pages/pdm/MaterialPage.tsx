@@ -8,10 +8,12 @@ import { pdmApi, type Material } from '@/api/pdm';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { useTranslation } from 'react-i18next';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 export default function MaterialPage() {
+  const { t } = useTranslation('pdm');
   const queryClient = useQueryClient();
 
   const apiAdapter = useMemo<CrudApiAdapter<Record<string, unknown>>>(
@@ -62,11 +64,12 @@ export default function MaterialPage() {
         const response = await pdmApi.createMaterial(
           data as unknown as Parameters<typeof pdmApi.createMaterial>[0]
         );
-        if (!response.success) throw new Error(response.message || '创建失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS ,
-  exact: false,
-  refetchType: 'active',
-});
+        if (!response.success) throw new Error(response.message || t('pdm.material_page.k0'));
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PDM.MATERIALS,
+          exact: false,
+          refetchType: 'active',
+        });
         return (response.data ?? {}) as unknown as Record<string, unknown>;
       },
       update: async (id, data) => {
@@ -74,20 +77,22 @@ export default function MaterialPage() {
           id,
           data as unknown as Parameters<typeof pdmApi.updateMaterial>[1]
         );
-        if (!response.success) throw new Error(response.message || '更新失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS ,
-  exact: false,
-  refetchType: 'active',
-});
+        if (!response.success) throw new Error(response.message || t('pdm.material_page.k1'));
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PDM.MATERIALS,
+          exact: false,
+          refetchType: 'active',
+        });
         return (response.data ?? {}) as unknown as Record<string, unknown>;
       },
       delete: async (id) => {
         const response = await pdmApi.deleteMaterial(id);
-        if (!response.success) throw new Error(response.message || '删除失败');
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS ,
-  exact: false,
-  refetchType: 'active',
-});
+        if (!response.success) throw new Error(response.message || t('pdm.material_page.k2'));
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PDM.MATERIALS,
+          exact: false,
+          refetchType: 'active',
+        });
       },
     }),
     [queryClient]
@@ -175,8 +180,8 @@ export default function MaterialPage() {
 
   return (
     <PageContainer
-      title='物料管理'
-      subtitle='管理生产所需的原材料、辅助材料等物料'
+      title={t('pdm.material_page.k3')}
+      subtitle={t('pdm.material_page.k4')}
       headerProps={{
         pageIcon: <Layers style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
@@ -185,7 +190,7 @@ export default function MaterialPage() {
       <CrudPage
         schema={materialSchema}
         apiAdapter={apiAdapter}
-        breadcrumbs={[{ label: 'PDM' }, { label: '物料管理' }]}
+        breadcrumbs={[{ label: 'PDM' }, { label: t('pdm.material_page.k5') }]}
         headerContent={headerContent}
       />
     </PageContainer>

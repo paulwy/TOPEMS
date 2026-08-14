@@ -16,6 +16,8 @@ import {
   CardHeader,
 } from '@mui/material';
 import { Grid } from '@/components/common';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 interface SystemConfigType {
   site_name: string;
@@ -52,6 +54,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
   onSave,
   isSaving,
 }) => {
+  const { t } = useTranslation('system');
   return (
     <Box sx={{ mt: 2 }}>
       <Card sx={{ mb: 3 }}>
@@ -100,7 +103,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
             >
               <TextField
                 fullWidth
-                label='站点名称'
+                label={i18n.t('system.system_config_panel.k0')}
                 value={systemConfig.site_name}
                 onChange={(e) =>
                   setSystemConfig((prev) => ({
@@ -108,7 +111,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                     site_name: e.target.value,
                   }))
                 }
-                placeholder='输入站点名称'
+                placeholder={t('system.system_config_panel.k1')}
               />
             </Grid>
             <Grid
@@ -117,7 +120,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
             >
               <TextField
                 fullWidth
-                label='站点描述'
+                label={t('system.system_config_panel.k2')}
                 value={systemConfig.site_description}
                 onChange={(e) =>
                   setSystemConfig((prev) => ({
@@ -125,7 +128,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                     site_description: e.target.value,
                   }))
                 }
-                placeholder='输入站点描述'
+                placeholder={t('system.system_config_panel.k3')}
               />
             </Grid>
             <Grid
@@ -212,7 +215,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
             >
               <TextField
                 fullWidth
-                label='主色调'
+                label={t('system.system_config_panel.k4')}
                 value={systemConfig.primary_color}
                 onChange={(e) =>
                   setSystemConfig((prev) => ({
@@ -229,7 +232,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
             >
               <TextField
                 fullWidth
-                label='次色调'
+                label={t('system.system_config_panel.k5')}
                 value={systemConfig.secondary_color}
                 onChange={(e) =>
                   setSystemConfig((prev) => ({
@@ -245,10 +248,10 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
               sm={6}
             >
               <FormControl fullWidth>
-                <InputLabel>时区</InputLabel>
+                <InputLabel>{t('system.system_config_panel.k6')}</InputLabel>
                 <Select
                   value={systemConfig.timezone}
-                  label='时区'
+                  label={t('system.system_config_panel.k7')}
                   onChange={(e) =>
                     setSystemConfig((prev) => ({
                       ...prev,
@@ -269,10 +272,10 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
               sm={6}
             >
               <FormControl fullWidth>
-                <InputLabel>语言</InputLabel>
+                <InputLabel>{t('system.system_config_panel.k8')}</InputLabel>
                 <Select
                   value={systemConfig.language}
-                  label='语言'
+                  label={t('system.system_config_panel.k9')}
                   onChange={(e) =>
                     setSystemConfig((prev) => ({
                       ...prev,
@@ -280,10 +283,10 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                     }))
                   }
                 >
-                  <MenuItem value='zh-CN'>中文 (简体)</MenuItem>
-                  <MenuItem value='zh-TW'>中文 (繁体)</MenuItem>
+                  <MenuItem value='zh-CN'>{t('system.system_config_panel.k10')}</MenuItem>
+                  <MenuItem value='zh-TW'>{t('system.system_config_panel.k11')}</MenuItem>
                   <MenuItem value='en-US'>English</MenuItem>
-                  <MenuItem value='ja-JP'>日本語</MenuItem>
+                  <MenuItem value='ja-JP'>{t('system.system_config_panel.k12')}</MenuItem>
                   <MenuItem value='ko-KR'>한국어</MenuItem>
                 </Select>
               </FormControl>
@@ -348,7 +351,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                     }
                   />
                 }
-                label='允许用户注册'
+                label={t('system.system_config_panel.k13')}
               />
             </Grid>
             <Grid
@@ -367,7 +370,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                     }
                   />
                 }
-                label='启用单点登录'
+                label={t('system.system_config_panel.k14')}
               />
             </Grid>
             <Grid
@@ -376,7 +379,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
             >
               <TextField
                 fullWidth
-                label='默认角色'
+                label={t('system.system_config_panel.k15')}
                 value={systemConfig.default_role}
                 onChange={(e) =>
                   setSystemConfig((prev) => ({
@@ -393,7 +396,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
             >
               <TextField
                 fullWidth
-                label='会话超时(分钟)'
+                label={t('system.system_config_panel.k16')}
                 type='number'
                 value={systemConfig.session_timeout_minutes}
                 onChange={(e) =>
@@ -410,7 +413,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
             >
               <TextField
                 fullWidth
-                label='密码最小长度'
+                label={t('system.system_config_panel.k17')}
                 type='number'
                 value={systemConfig.password_min_length}
                 onChange={(e) =>
@@ -427,7 +430,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
             >
               <TextField
                 fullWidth
-                label='最大上传大小(MB)'
+                label={t('system.system_config_panel.mb_18')}
                 type='number'
                 value={systemConfig.max_upload_size}
                 onChange={(e) =>
@@ -458,7 +461,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                       }
                     />
                   }
-                  label='需要大写字母'
+                  label={t('system.system_config_panel.k19')}
                 />
                 <FormControlLabel
                   control={
@@ -472,7 +475,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                       }
                     />
                   }
-                  label='需要小写字母'
+                  label={t('system.system_config_panel.k20')}
                 />
                 <FormControlLabel
                   control={
@@ -486,7 +489,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                       }
                     />
                   }
-                  label='需要数字'
+                  label={t('system.system_config_panel.k21')}
                 />
                 <FormControlLabel
                   control={
@@ -500,7 +503,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                       }
                     />
                   }
-                  label='需要特殊字符'
+                  label={t('system.system_config_panel.k22')}
                 />
               </Box>
             </Grid>
@@ -515,7 +518,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
           onClick={onSave}
           disabled={isSaving}
         >
-          {isSaving ? '保存中...' : '保存配置'}
+          {isSaving ? '保存中...' : t('system.system_config_panel.k23')}
         </Button>
       </Box>
     </Box>

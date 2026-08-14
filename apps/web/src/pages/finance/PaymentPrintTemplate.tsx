@@ -204,7 +204,14 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
         </Box>
 
         {payment.bankName && payment.bankAccountNo && (
-          <Box sx={{ border: `1px solid ${designTokens.colors.grey['300']}`, borderRadius: 'md', padding: 2, mb: 4 }}>
+          <Box
+            sx={{
+              border: `1px solid ${designTokens.colors.grey['300']}`,
+              borderRadius: 'md',
+              padding: 2,
+              mb: 4,
+            }}
+          >
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
@@ -235,7 +242,14 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
         )}
 
         {(payment.actualPaymentDate || payment.bankTransactionNo || payment.executedBy) && (
-          <Box sx={{ border: `1px solid ${designTokens.colors.grey['300']}`, borderRadius: 'md', padding: 2, mb: 4 }}>
+          <Box
+            sx={{
+              border: `1px solid ${designTokens.colors.grey['300']}`,
+              borderRadius: 'md',
+              padding: 2,
+              mb: 4,
+            }}
+          >
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
@@ -294,13 +308,13 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'surface.100' }}>
                     <TableCell sx={{ width: 40 }}>#</TableCell>
-                    <TableCell>发票号</TableCell>
-                    <TableCell align='right'>应付金额</TableCell>
-                    <TableCell align='right'>本次付款</TableCell>
-                    <TableCell align='right'>已核销金额</TableCell>
-                    <TableCell align='right'>剩余金额</TableCell>
-                    <TableCell>核销状态</TableCell>
-                    <TableCell>备注</TableCell>
+                    <TableCell>{t('finance.payment_print_template.k0')}</TableCell>
+                    <TableCell align='right'>{t('finance.payment_print_template.k1')}</TableCell>
+                    <TableCell align='right'>{t('finance.payment_print_template.k2')}</TableCell>
+                    <TableCell align='right'>{t('finance.payment_print_template.k3')}</TableCell>
+                    <TableCell align='right'>{t('finance.payment_print_template.k4')}</TableCell>
+                    <TableCell>{t('finance.payment_print_template.k5')}</TableCell>
+                    <TableCell>{t('finance.payment_print_template.k6')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -391,7 +405,13 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
               >
                 制单：
               </Typography>
-              <Box sx={{ height: '40px', borderBottom: `1px solid ${designTokens.colors.grey['300']}`, mt: 1 }} />
+              <Box
+                sx={{
+                  height: '40px',
+                  borderBottom: `1px solid ${designTokens.colors.grey['300']}`,
+                  mt: 1,
+                }}
+              />
             </Box>
             <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
               <Typography
@@ -400,7 +420,13 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
               >
                 审核：
               </Typography>
-              <Box sx={{ height: '40px', borderBottom: `1px solid ${designTokens.colors.grey['300']}`, mt: 1 }} />
+              <Box
+                sx={{
+                  height: '40px',
+                  borderBottom: `1px solid ${designTokens.colors.grey['300']}`,
+                  mt: 1,
+                }}
+              />
             </Box>
             <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
               <Typography
@@ -409,7 +435,13 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
               >
                 审批：
               </Typography>
-              <Box sx={{ height: '40px', borderBottom: `1px solid ${designTokens.colors.grey['300']}`, mt: 1 }} />
+              <Box
+                sx={{
+                  height: '40px',
+                  borderBottom: `1px solid ${designTokens.colors.grey['300']}`,
+                  mt: 1,
+                }}
+              />
             </Box>
           </Box>
         </Box>

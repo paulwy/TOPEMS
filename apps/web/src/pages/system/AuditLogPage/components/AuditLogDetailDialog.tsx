@@ -46,7 +46,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
         </Box>
         <IconButton
           onClick={onClose}
-          aria-label='关闭'
+          aria-label={t('system.audit_log_detail_dialog.k0')}
         >
           <X size={20} />
         </IconButton>

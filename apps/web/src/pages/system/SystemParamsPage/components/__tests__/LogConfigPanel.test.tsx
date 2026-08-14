@@ -126,9 +126,12 @@ describe('LogConfigPanel', () => {
 
     const fileInputs = Array.from(
       document.querySelectorAll('input[type="text"], input[type="number"]')
-    ).filter((el) => el.parentElement?.textContent?.includes('日志文件路径') ||
-      el.parentElement?.textContent?.includes('单文件最大大小') ||
-      el.parentElement?.textContent?.includes('保留文件数量'));
+    ).filter(
+      (el) =>
+        el.parentElement?.textContent?.includes('日志文件路径') ||
+        el.parentElement?.textContent?.includes('单文件最大大小') ||
+        el.parentElement?.textContent?.includes('保留文件数量')
+    );
 
     expect(fileInputs.length).toBe(3);
     fileInputs.forEach((el) => expect(el).toBeDisabled());
@@ -173,9 +176,9 @@ describe('LogConfigPanel', () => {
       />
     );
 
-    const remoteUrlInput = Array.from(
-      document.querySelectorAll('input[type="text"]')
-    ).find((el) => el.parentElement?.textContent?.includes('远程日志URL'));
+    const remoteUrlInput = Array.from(document.querySelectorAll('input[type="text"]')).find((el) =>
+      el.parentElement?.textContent?.includes('远程日志URL')
+    );
 
     expect(remoteUrlInput).toBeDefined();
     expect(remoteUrlInput).toBeDisabled();
