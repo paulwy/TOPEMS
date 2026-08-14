@@ -43,6 +43,7 @@ import { useTranslation } from 'react-i18next';
 import { PageContainer, Grid } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -85,11 +86,11 @@ const summaryResult = `本文档是一份企业员工手册，主要内容包括
 
 const keyPoints = [
   '公司实行双休制，工作时间为周一至周五 9:00-18:00',
-  '试用期一般为3个月，表现优秀可申请提前转正',
-  '员工每年享有5-15天带薪年假，根据工龄递增',
-  '公司提供五险一金、年度体检、节日福利等',
-  '保密协议为必备签署文件，违反者将承担法律责任',
-  '绩效考核分为季度考核和年度考核，与晋升调薪挂钩',
+  i18n.t('ai.ai_document_analysis_page.k0'),
+  i18n.t('ai.ai_document_analysis_page.k1'),
+  i18n.t('ai.ai_document_analysis_page.k2'),
+  i18n.t('ai.ai_document_analysis_page.k3'),
+  i18n.t('ai.ai_document_analysis_page.k4'),
 ];
 
 export const AiDocumentAnalysisPage: React.FC = () => {
@@ -108,17 +109,17 @@ export const AiDocumentAnalysisPage: React.FC = () => {
   const [copied, setCopied] = useState(false);
 
   const steps = [
-    t('ai.document_analysis.step.upload'),
-    t('ai.document_analysis.step.parse'),
-    t('ai.document_analysis.step.analyze'),
-    t('ai.document_analysis.step.generate'),
+    i18n.t('ai.document_analysis.step.upload'),
+    i18n.t('ai.document_analysis.step.parse'),
+    i18n.t('ai.document_analysis.step.analyze'),
+    i18n.t('ai.document_analysis.step.generate'),
   ];
 
   const handleAnalyze = useCallback(() => {
     if (!selectedDocument && !uploadedFile) {
       addNotification({
-        title: t('ai.document_analysis.message.notice'),
-        message: t('ai.document_analysis.message.select_document'),
+        title: i18n.t('ai.document_analysis.message.notice'),
+        message: i18n.t('ai.document_analysis.message.select_document'),
         type: 'warning',
       });
       return;
@@ -135,8 +136,8 @@ export const AiDocumentAnalysisPage: React.FC = () => {
           setAnalyzing(false);
           setAnalysisComplete(true);
           addNotification({
-            title: t('ai.document_analysis.message.analysis_complete'),
-            message: t('ai.document_analysis.message.analysis_complete_body'),
+            title: i18n.t('ai.document_analysis.message.analysis_complete'),
+            message: i18n.t('ai.document_analysis.message.analysis_complete_body'),
             type: 'success',
           });
           return 3;
@@ -149,7 +150,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
   const handleAskQuestion = () => {
     if (!question.trim()) return;
 
-    const answer = t('ai.document_analysis.mock.qa_answer', { question });
+    const answer = i18n.t('ai.document_analysis.mock.qa_answer', { question });
     setQaHistory((prev) => [...prev, { q: question, a: answer }]);
     setQuestion('');
   };
@@ -159,8 +160,8 @@ export const AiDocumentAnalysisPage: React.FC = () => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     addNotification({
-      title: t('ai.document_analysis.message.copied'),
-      message: t('ai.document_analysis.message.copied_body'),
+      title: i18n.t('ai.document_analysis.message.copied'),
+      message: i18n.t('ai.document_analysis.message.copied_body'),
       type: 'success',
     });
   };
@@ -179,35 +180,35 @@ export const AiDocumentAnalysisPage: React.FC = () => {
   const tabConfig = [
     {
       id: 'summary' as AnalysisTab,
-      label: t('ai.document_analysis.tab.summary'),
+      label: i18n.t('ai.document_analysis.tab.summary'),
       icon: <FileText size={18} />,
     },
     {
       id: 'translate' as AnalysisTab,
-      label: t('ai.document_analysis.tab.translate'),
+      label: i18n.t('ai.document_analysis.tab.translate'),
       icon: <Languages size={18} />,
     },
     {
       id: 'qa' as AnalysisTab,
-      label: t('ai.document_analysis.tab.qa'),
+      label: i18n.t('ai.document_analysis.tab.qa'),
       icon: <MessageSquare size={18} />,
     },
     {
       id: 'extract' as AnalysisTab,
-      label: t('ai.document_analysis.tab.extract'),
+      label: i18n.t('ai.document_analysis.tab.extract'),
       icon: <FileSearch size={18} />,
     },
     {
       id: 'ocr' as AnalysisTab,
-      label: t('ai.document_analysis.tab.ocr'),
+      label: i18n.t('ai.document_analysis.tab.ocr'),
       icon: <BookOpen size={18} />,
     },
   ];
 
   return (
     <PageContainer
-      title={t('ai.document_analysis.title')}
-      subtitle={t('ai.document_analysis.subtitle')}
+      title={i18n.t('ai.document_analysis.title')}
+      subtitle={i18n.t('ai.document_analysis.subtitle')}
       padding={false}
       maxWidth={false}
       headerProps={{
@@ -231,7 +232,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                {t('ai.document_analysis.label.select_document')}
+                {i18n.t('ai.document_analysis.label.select_document')}
               </Typography>
               <Box
                 sx={{
@@ -267,13 +268,13 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                   style={{ margin: '0 auto 8px', color: ct.grey[400] }}
                 />
                 <Typography variant='body2'>
-                  {t('ai.document_analysis.label.click_upload')}
+                  {i18n.t('ai.document_analysis.label.click_upload')}
                 </Typography>
                 <Typography
                   variant='caption'
                   color='text.secondary'
                 >
-                  {t('ai.document_analysis.label.support_format')}
+                  {i18n.t('ai.document_analysis.label.support_format')}
                 </Typography>
               </Box>
 
@@ -323,8 +324,8 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                 disabled={analyzing || (!selectedDocument && !uploadedFile)}
               >
                 {analyzing
-                  ? t('ai.document_analysis.button.analyzing')
-                  : t('ai.document_analysis.button.start_analysis')}
+                  ? i18n.t('ai.document_analysis.button.analyzing')
+                  : i18n.t('ai.document_analysis.button.start_analysis')}
               </Button>
             </Paper>
 
@@ -333,7 +334,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                {t('ai.document_analysis.label.recent_documents')}
+                {i18n.t('ai.document_analysis.label.recent_documents')}
               </Typography>
               <List disablePadding>
                 {recentDocuments.map((doc) => (
@@ -443,7 +444,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                       variant='body2'
                       color='text.secondary'
                     >
-                      {t('ai.document_analysis.message.processing')}
+                      {i18n.t('ai.document_analysis.message.processing')}
                     </Typography>
                   </Box>
                 </Box>
@@ -460,13 +461,13 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                     variant='h6'
                     sx={{ mb: 1 }}
                   >
-                    {t('ai.document_analysis.message.select_to_start')}
+                    {i18n.t('ai.document_analysis.message.select_to_start')}
                   </Typography>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    {t('ai.document_analysis.message.supported_features')}
+                    {i18n.t('ai.document_analysis.message.supported_features')}
                   </Typography>
                 </Box>
               )}
@@ -489,7 +490,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                           variant='h6'
                           sx={{ fontWeight: 600 }}
                         >
-                          {t('ai.document_analysis.tab.summary')}
+                          {i18n.t('ai.document_analysis.tab.summary')}
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 1 }}>
                           <Button
@@ -498,7 +499,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                             startIcon={<RefreshCw size={16} />}
                             onClick={handleAnalyze}
                           >
-                            {t('ai.document_analysis.button.regenerate')}
+                            {i18n.t('ai.document_analysis.button.regenerate')}
                           </Button>
                           <Button
                             size='small'
@@ -507,8 +508,8 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                             onClick={() => handleCopy(summaryResult)}
                           >
                             {copied
-                              ? t('ai.document_analysis.button.copied')
-                              : t('ai.document_analysis.button.copy')}
+                              ? i18n.t('ai.document_analysis.button.copied')
+                              : i18n.t('ai.document_analysis.button.copy')}
                           </Button>
                         </Box>
                       </Box>
@@ -530,7 +531,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                         variant='subtitle1'
                         sx={{ fontWeight: 600, mb: 2 }}
                       >
-                        {t('ai.document_analysis.label.key_points')}
+                        {i18n.t('ai.document_analysis.label.key_points')}
                       </Typography>
                       <List disablePadding>
                         {keyPoints.map((point, index) => (
@@ -566,7 +567,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                           variant='h6'
                           sx={{ fontWeight: 600 }}
                         >
-                          {t('ai.document_analysis.tab.translate')}
+                          {i18n.t('ai.document_analysis.tab.translate')}
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                           <FormControl
@@ -574,28 +575,28 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                             sx={{ width: 150 }}
                           >
                             <InputLabel id='translate-target-label'>
-                              {t('ai.document_analysis.label.target_language')}
+                              {i18n.t('ai.document_analysis.label.target_language')}
                             </InputLabel>
                             <Select
                               labelId='translate-target-label'
                               value={translateTarget}
-                              label={t('ai.document_analysis.label.target_language')}
+                              label={i18n.t('ai.document_analysis.label.target_language')}
                               onChange={(e) => setTranslateTarget(e.target.value)}
                             >
                               <MenuItem value='en'>
-                                {t('ai.document_analysis.language.english')}
+                                {i18n.t('ai.document_analysis.language.english')}
                               </MenuItem>
                               <MenuItem value='ja'>
-                                {t('ai.document_analysis.language.japanese')}
+                                {i18n.t('ai.document_analysis.language.japanese')}
                               </MenuItem>
                               <MenuItem value='ko'>
-                                {t('ai.document_analysis.language.korean')}
+                                {i18n.t('ai.document_analysis.language.korean')}
                               </MenuItem>
                               <MenuItem value='fr'>
-                                {t('ai.document_analysis.language.french')}
+                                {i18n.t('ai.document_analysis.language.french')}
                               </MenuItem>
                               <MenuItem value='de'>
-                                {t('ai.document_analysis.language.german')}
+                                {i18n.t('ai.document_analysis.language.german')}
                               </MenuItem>
                             </Select>
                           </FormControl>
@@ -605,7 +606,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                             startIcon={<Languages size={16} />}
                             onClick={handleTranslate}
                           >
-                            {t('ai.document_analysis.button.start_translate')}
+                            {i18n.t('ai.document_analysis.button.start_translate')}
                           </Button>
                         </Box>
                       </Box>
@@ -621,7 +622,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                                 startIcon={<Copy size={16} />}
                                 onClick={() => handleCopy(translatedText)}
                               >
-                                {t('ai.document_analysis.button.copy')}
+                                {i18n.t('ai.document_analysis.button.copy')}
                               </Button>
                             </Box>
                             <Typography
@@ -641,7 +642,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                               variant='body2'
                               color='text.secondary'
                             >
-                              {t('ai.document_analysis.message.select_language')}
+                              {i18n.t('ai.document_analysis.message.select_language')}
                             </Typography>
                           </Box>
                         )}
@@ -656,7 +657,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                         variant='h6'
                         sx={{ fontWeight: 600, mb: 3 }}
                       >
-                        {t('ai.document_analysis.tab.qa')}
+                        {i18n.t('ai.document_analysis.tab.qa')}
                       </Typography>
 
                       <Box sx={{ mb: 3 }}>
@@ -664,7 +665,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                           fullWidth
                           multiline
                           rows={2}
-                          placeholder={t('ai.document_analysis.placeholder.qa_input')}
+                          placeholder={i18n.t('ai.document_analysis.placeholder.qa_input')}
                           value={question}
                           onChange={(e) => setQuestion(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleAskQuestion()}
@@ -677,7 +678,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                             onClick={handleAskQuestion}
                             disabled={!question.trim()}
                           >
-                            {t('ai.document_analysis.button.ask')}
+                            {i18n.t('ai.document_analysis.button.ask')}
                           </Button>
                         </Box>
                       </Box>
@@ -694,7 +695,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                             variant='body2'
                             color='text.secondary'
                           >
-                            {t('ai.document_analysis.message.empty_qa')}
+                            {i18n.t('ai.document_analysis.message.empty_qa')}
                           </Typography>
                         </Box>
                       ) : (
@@ -754,19 +755,19 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                         variant='h6'
                         sx={{ fontWeight: 600, mb: 3 }}
                       >
-                        {t('ai.document_analysis.tab.extract')}
+                        {i18n.t('ai.document_analysis.tab.extract')}
                       </Typography>
                       <Grid
                         container
                         spacing={2}
                       >
                         {[
-                          t('ai.document_analysis.extract.date'),
-                          t('ai.document_analysis.extract.person'),
-                          t('ai.document_analysis.extract.organization'),
-                          t('ai.document_analysis.extract.location'),
-                          t('ai.document_analysis.extract.keyword'),
-                          t('ai.document_analysis.extract.amount'),
+                          i18n.t('ai.document_analysis.extract.date'),
+                          i18n.t('ai.document_analysis.extract.person'),
+                          i18n.t('ai.document_analysis.extract.organization'),
+                          i18n.t('ai.document_analysis.extract.location'),
+                          i18n.t('ai.document_analysis.extract.keyword'),
+                          i18n.t('ai.document_analysis.extract.amount'),
                         ].map((type) => (
                           <Grid
                             item
@@ -788,17 +789,17 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                                 </Typography>
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                                   <Chip
-                                    label={t('ai.document_analysis.extract.sample_1')}
+                                    label={i18n.t('ai.document_analysis.extract.sample_1')}
                                     size='small'
                                     variant='outlined'
                                   />
                                   <Chip
-                                    label={t('ai.document_analysis.extract.sample_2')}
+                                    label={i18n.t('ai.document_analysis.extract.sample_2')}
                                     size='small'
                                     variant='outlined'
                                   />
                                   <Chip
-                                    label={t('ai.document_analysis.extract.sample_3')}
+                                    label={i18n.t('ai.document_analysis.extract.sample_3')}
                                     size='small'
                                     variant='outlined'
                                   />
@@ -818,22 +819,22 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                         variant='h6'
                         sx={{ fontWeight: 600, mb: 3 }}
                       >
-                        {t('ai.document_analysis.ocr.title')}
+                        {i18n.t('ai.document_analysis.ocr.title')}
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
                         <Chip
                           icon={<CheckCircle2 size={14} />}
-                          label={t('ai.document_analysis.ocr.recognition_complete')}
+                          label={i18n.t('ai.document_analysis.ocr.recognition_complete')}
                           color='success'
                           size='small'
                         />
                         <Chip
-                          label={t('ai.document_analysis.ocr.total_pages')}
+                          label={i18n.t('ai.document_analysis.ocr.total_pages')}
                           size='small'
                           variant='outlined'
                         />
                         <Chip
-                          label={t('ai.document_analysis.ocr.confidence')}
+                          label={i18n.t('ai.document_analysis.ocr.confidence')}
                           size='small'
                           variant='outlined'
                         />

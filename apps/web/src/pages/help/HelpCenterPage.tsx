@@ -38,52 +38,53 @@ import { apiLogger } from '@/utils/logger';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 const HELP_CATEGORIES = [
   {
     id: 'getting-started',
-    title: '快速入门',
-    description: '新用户必读，快速了解系统基础功能',
+    title: i18n.t('help.help_center_page.k0'),
+    description: i18n.t('help.help_center_page.k1'),
     icon: Rocket,
     color: 'primary',
     count: 5,
-    items: ['系统登录与注册', '首页功能概览', '个人信息设置', '角色权限说明', '快捷键指南'],
+    items: [i18n.t('help.help_center_page.k6'), i18n.t('help.help_center_page.k5'), i18n.t('help.help_center_page.k4'), i18n.t('help.help_center_page.k3'), i18n.t('help.help_center_page.k2')],
   },
   {
     id: 'hrm',
-    title: '人力资源',
-    description: '员工管理、考勤、休假等HR相关功能',
+    title: i18n.t('help.help_center_page.k7'),
+    description: i18n.t('help.help_center_page.hr_8'),
     icon: Users,
     color: 'success',
     count: 8,
-    items: ['员工入职流程', '考勤打卡指南', '请假申请流程', '薪资查询', '绩效评估'],
+    items: [i18n.t('help.help_center_page.k13'), i18n.t('help.help_center_page.k12'), i18n.t('help.help_center_page.k11'), i18n.t('help.help_center_page.k10'), i18n.t('help.help_center_page.k9')],
   },
   {
     id: 'finance',
-    title: '财务管理',
-    description: '凭证、报表、预算等财务相关功能',
+    title: i18n.t('help.help_center_page.k14'),
+    description: i18n.t('help.help_center_page.k15'),
     icon: FileText,
     color: 'warning',
     count: 12,
-    items: ['凭证录入', '报表生成', '预算管理', '费用报销', '应收应付'],
+    items: [i18n.t('help.help_center_page.k20'), i18n.t('help.help_center_page.k19'), i18n.t('help.help_center_page.k18'), i18n.t('help.help_center_page.k17'), i18n.t('help.help_center_page.k16')],
   },
   {
     id: 'workflow',
-    title: '审批流程',
-    description: '流程设计、审批操作、委托设置',
+    title: i18n.t('help.help_center_page.k21'),
+    description: i18n.t('help.help_center_page.k22'),
     icon: Clock,
     color: 'info',
     count: 6,
-    items: ['新建审批流程', '审批操作指南', '流程委托', '流程监控', '审批统计'],
+    items: [i18n.t('help.help_center_page.k27'), i18n.t('help.help_center_page.k26'), i18n.t('help.help_center_page.k25'), i18n.t('help.help_center_page.k24'), i18n.t('help.help_center_page.k23')],
   },
   {
     id: 'security',
-    title: '安全与权限',
-    description: '数据安全、权限管理、审计日志',
+    title: i18n.t('help.help_center_page.k28'),
+    description: i18n.t('help.help_center_page.k29'),
     icon: Shield,
     color: 'error',
     count: 4,
-    items: ['密码安全', '权限申请', '审计日志', '数据备份'],
+    items: [i18n.t('help.help_center_page.k33'), i18n.t('help.help_center_page.k32'), i18n.t('help.help_center_page.k31'), i18n.t('help.help_center_page.k30')],
   },
   {
     id: 'ai',
@@ -92,14 +93,14 @@ const HELP_CATEGORIES = [
     icon: MessageCircle,
     color: 'secondary',
     count: 3,
-    items: ['AI问答使用', '文档分析', '代码生成'],
+    items: ['AI问答使用', i18n.t('help.help_center_page.k35'), i18n.t('help.help_center_page.k34')],
   },
 ];
 
 const LATEST_UPDATES = [
-  { id: '1', title: '新增移动端审批功能', date: '2024-12-15', type: 'new' },
-  { id: '2', title: '优化报表导出性能', date: '2024-12-14', type: 'update' },
-  { id: '3', title: '修复考勤统计bug', date: '2024-12-13', type: 'fix' },
+  { id: '1', title: i18n.t('help.help_center_page.k36'), date: '2024-12-15', type: 'new' },
+  { id: '2', title: i18n.t('help.help_center_page.k37'), date: '2024-12-14', type: 'update' },
+  { id: '3', title: i18n.t('help.help_center_page.bug_38'), date: '2024-12-13', type: 'fix' },
 ];
 
 export const HelpCenterPage: React.FC = () => {
@@ -140,8 +141,8 @@ export const HelpCenterPage: React.FC = () => {
       apiLogger.error('获取FAQ列表失败:', faqsQuery.error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载FAQ列表',
+        title: i18n.t('help.help_center_page.k39'),
+        message: i18n.t('help.help_center_page.faq_40'),
       });
     }
   }, [faqsQuery.isError, faqsQuery.error, apiLogger, addNotification]);
@@ -151,8 +152,8 @@ export const HelpCenterPage: React.FC = () => {
       apiLogger.error('获取指南列表失败:', guidesQuery.error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载指南列表',
+        title: i18n.t('help.help_center_page.k41'),
+        message: i18n.t('help.help_center_page.k42'),
       });
     }
   }, [guidesQuery.isError, guidesQuery.error, apiLogger, addNotification]);
@@ -175,9 +176,9 @@ export const HelpCenterPage: React.FC = () => {
 
   const getTypeChip = (type: string) => {
     const typeMap: Record<string, { label: string; color: string }> = {
-      new: { label: '新功能', color: 'success' },
-      update: { label: '优化', color: 'primary' },
-      fix: { label: '修复', color: 'warning' },
+      new: { label: i18n.t('help.help_center_page.k43'), color: 'success' },
+      update: { label: i18n.t('help.help_center_page.k44'), color: 'primary' },
+      fix: { label: i18n.t('help.help_center_page.k45'), color: 'warning' },
     };
     return typeMap[type] || typeMap.update;
   };

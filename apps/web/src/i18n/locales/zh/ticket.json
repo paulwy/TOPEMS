@@ -55,5 +55,8 @@
   },
   "breadcrumb": {
     "home": "首页"
-  }
+  },
+  "ticket.dashboard_page.k0": "工单中心概览",
+  "ticket.dashboard_page.k1": "工单中心数据概览",
+  "ticket.dashboard_page.k2": "快捷操作"
 }

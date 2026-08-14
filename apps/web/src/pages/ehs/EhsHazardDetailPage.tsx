@@ -421,7 +421,7 @@ const EhsHazardDetailPage: React.FC = () => {
               sx={{ fontSize: 48, color: 'warning.600' }}
             />
             <Box>
-              <Typography sx={{ color: 'warning.600', fontSize: 14 }}>风险等级</Typography>
+              <Typography sx={{ color: 'warning.600', fontSize: 14 }}>{t('ehs.ehs_hazard_detail_page.k0')}</Typography>
               <Typography
                 sx={{
                   fontSize: 24,
@@ -443,13 +443,13 @@ const EhsHazardDetailPage: React.FC = () => {
 
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
           <Box>
-            <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>分类</Typography>
+            <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>{t('ehs.ehs_hazard_detail_page.k1')}</Typography>
             <Typography sx={{ color: 'text.primary', mt: 0.5 }}>
               {hazard.category || '-'}
             </Typography>
           </Box>
           <Box>
-            <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>位置</Typography>
+            <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>{t('ehs.ehs_hazard_detail_page.k2')}</Typography>
             <Typography sx={{ color: 'text.primary', mt: 0.5 }}>
               <Box
                 component={MapPin}
@@ -462,7 +462,7 @@ const EhsHazardDetailPage: React.FC = () => {
 
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5 }}>
           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
-            <Typography sx={{ color: 'error.dark', fontSize: 12 }}>严重程度</Typography>
+            <Typography sx={{ color: 'error.dark', fontSize: 12 }}>{t('ehs.ehs_hazard_detail_page.k3')}</Typography>
             <Typography sx={{ fontWeight: 500, color: 'error.darker', mt: 0.5 }}>
               {hazard.severity === 'high'
                 ? t('ehs.ehs_hazard_detail_page.text_4296d7')
@@ -472,7 +472,7 @@ const EhsHazardDetailPage: React.FC = () => {
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.lighter', borderRadius: 1 }}>
-            <Typography sx={{ color: ct.yellow[600], fontSize: 12 }}>暴露频率</Typography>
+            <Typography sx={{ color: ct.yellow[600], fontSize: 12 }}>{t('ehs.ehs_hazard_detail_page.k4')}</Typography>
             <Typography sx={{ fontWeight: 500, color: ct.yellow[700], mt: 0.5 }}>
               {hazard.exposure === 'high'
                 ? t('ehs.ehs_hazard_detail_page.text_4296d7')
@@ -482,7 +482,7 @@ const EhsHazardDetailPage: React.FC = () => {
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
-            <Typography sx={{ color: 'primary.dark', fontSize: 12 }}>发生概率</Typography>
+            <Typography sx={{ color: 'primary.dark', fontSize: 12 }}>{t('ehs.ehs_hazard_detail_page.k5')}</Typography>
             <Typography sx={{ fontWeight: 500, color: 'primary.dark', mt: 0.5 }}>
               {hazard.likelihood === 'high'
                 ? t('ehs.ehs_hazard_detail_page.text_4296d7')
@@ -494,7 +494,7 @@ const EhsHazardDetailPage: React.FC = () => {
         </Box>
 
         <Box sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
-          <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>描述</Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>{t('ehs.ehs_hazard_detail_page.k6')}</Typography>
           <Typography sx={{ color: 'text.primary', mt: 0.5, fontSize: 14, lineHeight: 1.6 }}>
             {hazard.description || t('ehs.ehs_hazard_detail_page.description_1')}
           </Typography>
@@ -532,7 +532,7 @@ const EhsHazardDetailPage: React.FC = () => {
               component={AlertTriangle}
               sx={{ fontSize: 64, color: 'grey.400', mx: 'auto', mb: 2 }}
             />
-            <Typography>暂无风险评估记录</Typography>
+            <Typography>{t('ehs.ehs_hazard_detail_page.k7')}</Typography>
           </Box>
         )}
       </Box>
@@ -568,7 +568,7 @@ const EhsHazardDetailPage: React.FC = () => {
               component={Shield}
               sx={{ fontSize: 64, color: 'grey.400', mx: 'auto', mb: 2 }}
             />
-            <Typography>暂无控制措施</Typography>
+            <Typography>{t('ehs.ehs_hazard_detail_page.k8')}</Typography>
             <Button
               variant='outlined'
               size='small'
@@ -649,7 +649,7 @@ const EhsHazardDetailPage: React.FC = () => {
     >
       <DetailPageTemplate
         title=''
-        detailItemName={hazard?.name || hazard?.id || '隐患详情'}
+        detailItemName={hazard?.name || hazard?.id || t('ehs.ehs_hazard_detail_page.k9')}
         backHref={EHS_PATHS.hazard}
         loading={loading}
         error={errorMessage}
@@ -672,7 +672,7 @@ const EhsHazardDetailPage: React.FC = () => {
         maxWidth='lg'
         fullWidth
       >
-        <DialogTitle>编辑危险源</DialogTitle>
+        <DialogTitle>{t('ehs.ehs_hazard_detail_page.k10')}</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box>
@@ -740,7 +740,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   fullWidth
                   size='small'
                 >
-                  <InputLabel>严重程度</InputLabel>
+                  <InputLabel>{t('ehs.ehs_hazard_detail_page.k11')}</InputLabel>
                   <Select
                     value={formData.severity}
                     label={t('ehs.ehs_hazard_detail_page.text_08fe50')}
@@ -768,7 +768,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   fullWidth
                   size='small'
                 >
-                  <InputLabel>暴露频率</InputLabel>
+                  <InputLabel>{t('ehs.ehs_hazard_detail_page.k12')}</InputLabel>
                   <Select
                     value={formData.exposure}
                     label={t('ehs.ehs_hazard_detail_page.text_f83966')}
@@ -796,7 +796,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   fullWidth
                   size='small'
                 >
-                  <InputLabel>发生概率</InputLabel>
+                  <InputLabel>{t('ehs.ehs_hazard_detail_page.k13')}</InputLabel>
                   <Select
                     value={formData.likelihood}
                     label={t('ehs.ehs_hazard_detail_page.text_d7fbe9')}
@@ -825,7 +825,7 @@ const EhsHazardDetailPage: React.FC = () => {
                 fullWidth
                 size='small'
               >
-                <InputLabel>状态</InputLabel>
+                <InputLabel>{t('ehs.ehs_hazard_detail_page.k14')}</InputLabel>
                 <Select
                   value={formData.status}
                   label={t('ehs.ehs_hazard_detail_page.status')}
@@ -836,10 +836,10 @@ const EhsHazardDetailPage: React.FC = () => {
                     }))
                   }
                 >
-                  <MenuItem value='active'>活动中</MenuItem>
-                  <MenuItem value='controlled'>已控制</MenuItem>
-                  <MenuItem value='eliminated'>已消除</MenuItem>
-                  <MenuItem value='archived'>已归档</MenuItem>
+                  <MenuItem value='active'>{t('ehs.ehs_hazard_detail_page.k15')}</MenuItem>
+                  <MenuItem value='controlled'>{t('ehs.ehs_hazard_detail_page.k16')}</MenuItem>
+                  <MenuItem value='eliminated'>{t('ehs.ehs_hazard_detail_page.k17')}</MenuItem>
+                  <MenuItem value='archived'>{t('ehs.ehs_hazard_detail_page.k18')}</MenuItem>
                 </Select>
               </FormControl>
             </Box>
@@ -886,7 +886,7 @@ const EhsHazardDetailPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>添加控制措施</DialogTitle>
+        <DialogTitle>{t('ehs.ehs_hazard_detail_page.k19')}</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box>
@@ -900,7 +900,7 @@ const EhsHazardDetailPage: React.FC = () => {
                 fullWidth
                 size='small'
               >
-                <InputLabel>措施类型</InputLabel>
+                <InputLabel>{t('ehs.ehs_hazard_detail_page.k20')}</InputLabel>
                 <Select
                   value={controlFormData.measure_type}
                   label={t('ehs.ehs_hazard_detail_page.type')}
@@ -911,9 +911,9 @@ const EhsHazardDetailPage: React.FC = () => {
                     }))
                   }
                 >
-                  <MenuItem value='engineering'>工程控制</MenuItem>
-                  <MenuItem value='administrative'>管理控制</MenuItem>
-                  <MenuItem value='ppe'>个人防护</MenuItem>
+                  <MenuItem value='engineering'>{t('ehs.ehs_hazard_detail_page.k21')}</MenuItem>
+                  <MenuItem value='administrative'>{t('ehs.ehs_hazard_detail_page.k22')}</MenuItem>
+                  <MenuItem value='ppe'>{t('ehs.ehs_hazard_detail_page.k23')}</MenuItem>
                 </Select>
               </FormControl>
             </Box>

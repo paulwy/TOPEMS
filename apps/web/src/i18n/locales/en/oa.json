@@ -11,5 +11,12 @@
   "submit": "Submit",
   "approve": "Approve",
   "reject": "Reject",
-  "forward": "Forward"
+  "forward": "Forward",
+  "oa.announcement_page.k0": "公告通知",
+  "oa.dashboard_page.k0": "办公自动化概览",
+  "oa.dashboard_page.k1": "办公自动化数据概览",
+  "oa.dashboard_page.k2": "快捷操作",
+  "oa.document_management_page.k0": "公文管理",
+  "oa.meeting_management_page.k0": "会议管理",
+  "oa.vehicle_management_page.k0": "车辆管理"
 }

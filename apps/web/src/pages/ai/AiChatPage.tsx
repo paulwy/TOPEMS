@@ -49,6 +49,7 @@ import { useTranslation } from 'react-i18next';
 import { PageContainer } from '@/components/common';
 import { AI_PATHS } from '@/modules/ai/config';
 import { useNotificationStore } from '@/store';
+import i18n from '@/i18n';
 
 interface Message {
   id: string;
@@ -69,14 +70,14 @@ interface ChatSession {
 const mockSessions: ChatSession[] = [
   {
     id: '1',
-    title: '系统架构优化建议',
+    title: i18n.t('ai.ai_chat_page.k0'),
     messages: [],
     timestamp: new Date(Date.now() - 300000),
     type: 'qa',
   },
   {
     id: '2',
-    title: '用户手册摘要',
+    title: i18n.t('ai.ai_chat_page.k1'),
     messages: [],
     timestamp: new Date(Date.now() - 1800000),
     type: 'summary',
@@ -90,7 +91,7 @@ const mockSessions: ChatSession[] = [
   },
   {
     id: '4',
-    title: '数据分析报告',
+    title: i18n.t('ai.ai_chat_page.k2'),
     messages: [],
     timestamp: new Date(Date.now() - 7200000),
     type: 'general',
@@ -101,7 +102,7 @@ const mockMessages: Message[] = [
   {
     id: '1',
     role: 'user',
-    content: '帮我分析一下这个系统架构有什么优化建议？',
+    content: i18n.t('ai.ai_chat_page.k3'),
     timestamp: new Date(Date.now() - 300000),
     type: 'qa',
   },
@@ -116,7 +117,7 @@ const mockMessages: Message[] = [
   {
     id: '3',
     role: 'user',
-    content: '请详细说明微服务架构拆分的方案',
+    content: i18n.t('ai.ai_chat_page.k4'),
     timestamp: new Date(Date.now() - 60000),
     type: 'qa',
   },
@@ -197,16 +198,16 @@ export const AiChatPage: React.FC = () => {
       let responseContent = '';
       switch (activeTab) {
         case 'qa':
-          responseContent = t('ai.chat.response.qa');
+          responseContent = i18n.t('ai.chat.response.qa');
           break;
         case 'summary':
-          responseContent = t('ai.chat.response.summary');
+          responseContent = i18n.t('ai.chat.response.summary');
           break;
         case 'code':
-          responseContent = t('ai.chat.response.code');
+          responseContent = i18n.t('ai.chat.response.code');
           break;
         default:
-          responseContent = t('ai.chat.response.default');
+          responseContent = i18n.t('ai.chat.response.default');
       }
 
       const assistantMessage: Message = {
@@ -219,8 +220,8 @@ export const AiChatPage: React.FC = () => {
       setMessages((prev) => [...prev, assistantMessage]);
       setIsTyping(false);
       addNotification({
-        title: t('ai.chat.message.sent_title'),
-        message: t('ai.chat.message.ai_replied'),
+        title: i18n.t('ai.chat.message.sent_title'),
+        message: i18n.t('ai.chat.message.ai_replied'),
         type: 'success',
       });
     }, 1500);
@@ -238,8 +239,8 @@ export const AiChatPage: React.FC = () => {
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
     addNotification({
-      title: t('ai.chat.message.copy_success_title'),
-      message: t('ai.chat.message.copy_success_body'),
+      title: i18n.t('ai.chat.message.copy_success_title'),
+      message: i18n.t('ai.chat.message.copy_success_body'),
       type: 'success',
     });
   };
@@ -247,7 +248,7 @@ export const AiChatPage: React.FC = () => {
   const handleNewChat = () => {
     const newSession: ChatSession = {
       id: String(Date.now()),
-      title: t('ai.chat.session.new_title'),
+      title: i18n.t('ai.chat.session.new_title'),
       messages: [],
       timestamp: new Date(),
       type: activeTab,
@@ -256,8 +257,8 @@ export const AiChatPage: React.FC = () => {
     setSelectedSessionId(newSession.id);
     setMessages([]);
     addNotification({
-      title: t('ai.chat.message.new_session_title'),
-      message: t('ai.chat.message.session_created'),
+      title: i18n.t('ai.chat.message.new_session_title'),
+      message: i18n.t('ai.chat.message.session_created'),
       type: 'info',
     });
   };
@@ -282,8 +283,8 @@ export const AiChatPage: React.FC = () => {
       }
     }
     addNotification({
-      title: t('ai.chat.message.delete_session_title'),
-      message: t('ai.chat.message.session_deleted'),
+      title: i18n.t('ai.chat.message.delete_session_title'),
+      message: i18n.t('ai.chat.message.session_deleted'),
       type: 'info',
     });
   };
@@ -298,8 +299,8 @@ export const AiChatPage: React.FC = () => {
     if (file) {
       setDocFile(file);
       addNotification({
-        title: t('ai.chat.message.file_upload_title'),
-        message: t('ai.chat.dialog.file_selected', { name: file.name }),
+        title: i18n.t('ai.chat.message.file_upload_title'),
+        message: i18n.t('ai.chat.dialog.file_selected', { name: file.name }),
         type: 'info',
       });
     }
@@ -309,10 +310,10 @@ export const AiChatPage: React.FC = () => {
     if (!docFile) return;
     setDocUploadDialog(false);
     setActiveTab('summary');
-    setInputValue(t('ai.chat.message.summary_prompt'));
+    setInputValue(i18n.t('ai.chat.message.summary_prompt'));
     addNotification({
-      title: t('ai.chat.message.start_summary_title'),
-      message: t('ai.chat.message.analyzing_document'),
+      title: i18n.t('ai.chat.message.start_summary_title'),
+      message: i18n.t('ai.chat.message.analyzing_document'),
       type: 'info',
     });
   };
@@ -324,10 +325,10 @@ export const AiChatPage: React.FC = () => {
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return t('ai.chat.time.just_now');
-    if (minutes < 60) return t('ai.chat.time.minutes_ago', { count: minutes });
-    if (hours < 24) return t('ai.chat.time.hours_ago', { count: hours });
-    if (days < 7) return t('ai.chat.time.days_ago', { count: days });
+    if (minutes < 1) return i18n.t('ai.chat.time.just_now');
+    if (minutes < 60) return i18n.t('ai.chat.time.minutes_ago', { count: minutes });
+    if (hours < 24) return i18n.t('ai.chat.time.hours_ago', { count: hours });
+    if (days < 7) return i18n.t('ai.chat.time.days_ago', { count: days });
     return date.toLocaleDateString();
   };
 
@@ -360,7 +361,7 @@ export const AiChatPage: React.FC = () => {
                 startIcon={<Plus size={16} />}
                 onClick={handleNewChat}
               >
-                {t('ai.chat.action.new_chat')}
+                {i18n.t('ai.chat.action.new_chat')}
               </Button>
             </Box>
 
@@ -370,16 +371,16 @@ export const AiChatPage: React.FC = () => {
                 color='text.secondary'
                 sx={{ mb: 1, display: 'block' }}
               >
-                {t('ai.chat.sidebar.mode')}
+                {i18n.t('ai.chat.sidebar.mode')}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                 {[
-                  { id: 'qa', label: t('ai.chat.mode.qa'), icon: <Lightbulb size={14} /> },
-                  { id: 'summary', label: t('ai.chat.mode.summary'), icon: <FileText size={14} /> },
-                  { id: 'code', label: t('ai.chat.mode.code'), icon: <Code size={14} /> },
+                  { id: 'qa', label: i18n.t('ai.chat.mode.qa'), icon: <Lightbulb size={14} /> },
+                  { id: 'summary', label: i18n.t('ai.chat.mode.summary'), icon: <FileText size={14} /> },
+                  { id: 'code', label: i18n.t('ai.chat.mode.code'), icon: <Code size={14} /> },
                   {
                     id: 'general',
-                    label: t('ai.chat.mode.general'),
+                    label: i18n.t('ai.chat.mode.general'),
                     icon: <MessageSquare size={14} />,
                   },
                 ].map((tab) => (
@@ -447,7 +448,7 @@ export const AiChatPage: React.FC = () => {
                         handleDeleteSession(session.id);
                       }}
                       sx={{ p: 0.5 }}
-                      aria-label='关闭'
+                      aria-label={i18n.t('ai.ai_chat_page.k5')}
                     >
                       <X size={14} />
                     </IconButton>
@@ -475,7 +476,7 @@ export const AiChatPage: React.FC = () => {
                 color='text.secondary'
                 sx={{ mb: 1, display: 'block' }}
               >
-                {t('ai.chat.sidebar.quick_prompts')}
+                {i18n.t('ai.chat.sidebar.quick_prompts')}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                 {quickPrompts.map((prompt) => (
@@ -512,7 +513,7 @@ export const AiChatPage: React.FC = () => {
                 size='small'
                 onClick={() => setShowSidebar(!showSidebar)}
                 sx={{ display: { md: 'none' } }}
-                aria-label='展开'
+                aria-label={i18n.t('ai.ai_chat_page.k6')}
               >
                 <ChevronRight size={20} />
               </IconButton>
@@ -521,7 +522,7 @@ export const AiChatPage: React.FC = () => {
                 color='primary.main'
               />
               <Typography variant='h6'>
-                {selectedSession?.title || t('ai.chat.title.default')}
+                {selectedSession?.title || i18n.t('ai.chat.title.default')}
               </Typography>
               {selectedSession && (
                 <Chip
@@ -536,21 +537,21 @@ export const AiChatPage: React.FC = () => {
                 size='small'
                 sx={{ minWidth: 150 }}
               >
-                <InputLabel>{t('ai.chat.field.model')}</InputLabel>
+                <InputLabel>{i18n.t('ai.chat.field.model')}</InputLabel>
                 <Select
                   value={selectedModel}
-                  label={t('ai.chat.field.model')}
+                  label={i18n.t('ai.chat.field.model')}
                   onChange={(e) => setSelectedModel(e.target.value)}
                 >
                   <MenuItem value='gpt-4'>GPT-4</MenuItem>
                   <MenuItem value='gpt-3.5'>GPT-3.5</MenuItem>
                   <MenuItem value='claude'>Claude</MenuItem>
-                  <MenuItem value='ERNIE'>{t('ai.chat.model.ernie')}</MenuItem>
+                  <MenuItem value='ERNIE'>{i18n.t('ai.chat.model.ernie')}</MenuItem>
                 </Select>
               </FormControl>
               <IconButton
                 onClick={handleNewChat}
-                aria-label={t('ai.chat.action.new_chat')}
+                aria-label={i18n.t('ai.chat.action.new_chat')}
               >
                 <RefreshCw size={20} />
               </IconButton>
@@ -572,19 +573,19 @@ export const AiChatPage: React.FC = () => {
               }}
             >
               <Tab
-                label={t('ai.chat.mode.qa')}
+                label={i18n.t('ai.chat.mode.qa')}
                 value='qa'
               />
               <Tab
-                label={t('ai.chat.mode.summary')}
+                label={i18n.t('ai.chat.mode.summary')}
                 value='summary'
               />
               <Tab
-                label={t('ai.chat.mode.code')}
+                label={i18n.t('ai.chat.mode.code')}
                 value='code'
               />
               <Tab
-                label={t('ai.chat.mode.general')}
+                label={i18n.t('ai.chat.mode.general')}
                 value='general'
               />
             </Tabs>
@@ -606,7 +607,7 @@ export const AiChatPage: React.FC = () => {
                       variant='body2'
                       sx={{ fontWeight: 500 }}
                     >
-                      {msg.role === 'user' ? t('ai.chat.role.user') : t('ai.chat.role.assistant')}
+                      {msg.role === 'user' ? i18n.t('ai.chat.role.user') : i18n.t('ai.chat.role.assistant')}
                     </Typography>
                     <Typography
                       variant='caption'
@@ -625,7 +626,7 @@ export const AiChatPage: React.FC = () => {
                     <IconButton
                       size='small'
                       onClick={() => handleCopy(msg.content, msg.id)}
-                      aria-label={t('ai.chat.action.copy_message')}
+                      aria-label={i18n.t('ai.chat.action.copy_message')}
                     >
                       {copiedId === msg.id ? (
                         <Check
@@ -700,7 +701,7 @@ export const AiChatPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    {t('ai.chat.status.typing')}
+                    {i18n.t('ai.chat.status.typing')}
                   </Typography>
                 </Paper>
               </Box>
@@ -715,13 +716,13 @@ export const AiChatPage: React.FC = () => {
                   variant='h6'
                   sx={{ mb: 2 }}
                 >
-                  {t('ai.chat.empty.start_title')}
+                  {i18n.t('ai.chat.empty.start_title')}
                 </Typography>
                 <Typography
                   variant='body2'
                   color='text.secondary'
                 >
-                  {t('ai.chat.empty.start_subtitle')}
+                  {i18n.t('ai.chat.empty.start_subtitle')}
                 </Typography>
               </Box>
             )}
@@ -736,10 +737,10 @@ export const AiChatPage: React.FC = () => {
                   size='small'
                   sx={{ width: 200 }}
                 >
-                  <InputLabel>{t('ai.chat.field.code_language')}</InputLabel>
+                  <InputLabel>{i18n.t('ai.chat.field.code_language')}</InputLabel>
                   <Select
                     value={codeLanguage}
-                    label={t('ai.chat.field.code_language')}
+                    label={i18n.t('ai.chat.field.code_language')}
                     onChange={(e) => setCodeLanguage(e.target.value)}
                   >
                     <MenuItem value='typescript'>TypeScript</MenuItem>
@@ -762,7 +763,7 @@ export const AiChatPage: React.FC = () => {
                     startIcon={<FileText size={16} />}
                     onClick={() => setDocUploadDialog(true)}
                   >
-                    {t('ai.chat.action.upload_document')}
+                    {i18n.t('ai.chat.action.upload_document')}
                   </Button>
                 )}
               </Box>
@@ -772,12 +773,12 @@ export const AiChatPage: React.FC = () => {
                 maxRows={4}
                 placeholder={
                   activeTab === 'qa'
-                    ? t('ai.chat.placeholder.qa')
+                    ? i18n.t('ai.chat.placeholder.qa')
                     : activeTab === 'summary'
-                      ? t('ai.chat.placeholder.summary')
+                      ? i18n.t('ai.chat.placeholder.summary')
                       : activeTab === 'code'
-                        ? t('ai.chat.placeholder.code')
-                        : t('ai.chat.placeholder.general')
+                        ? i18n.t('ai.chat.placeholder.code')
+                        : i18n.t('ai.chat.placeholder.general')
                 }
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
@@ -797,7 +798,7 @@ export const AiChatPage: React.FC = () => {
               color='text.secondary'
               sx={{ mt: 1, display: 'block' }}
             >
-              {t('ai.chat.disclaimer_bottom')}
+              {i18n.t('ai.chat.disclaimer_bottom')}
             </Typography>
           </Box>
         </Box>
@@ -810,7 +811,7 @@ export const AiChatPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{t('ai.chat.dialog.upload_title')}</DialogTitle>
+        <DialogTitle>{i18n.t('ai.chat.dialog.upload_title')}</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <input
@@ -830,8 +831,8 @@ export const AiChatPage: React.FC = () => {
               <FileText size={24} />
               <Typography sx={{ ml: 2 }}>
                 {docFile
-                  ? t('ai.chat.dialog.file_selected', { name: docFile.name })
-                  : t('ai.chat.dialog.click_to_select')}
+                  ? i18n.t('ai.chat.dialog.file_selected', { name: docFile.name })
+                  : i18n.t('ai.chat.dialog.click_to_select')}
               </Typography>
             </Button>
             <Typography
@@ -839,18 +840,18 @@ export const AiChatPage: React.FC = () => {
               color='text.secondary'
               sx={{ mt: 2, display: 'block' }}
             >
-              {t('ai.chat.dialog.supported_formats')}
+              {i18n.t('ai.chat.dialog.supported_formats')}
             </Typography>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDocUploadDialog(false)}>{t('ai.chat.action.cancel')}</Button>
+          <Button onClick={() => setDocUploadDialog(false)}>{i18n.t('ai.chat.action.cancel')}</Button>
           <Button
             variant='contained'
             onClick={handleStartSummary}
             disabled={!docFile}
           >
-            {t('ai.chat.action.start_summary')}
+            {i18n.t('ai.chat.action.start_summary')}
           </Button>
         </DialogActions>
       </Dialog>

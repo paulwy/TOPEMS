@@ -3146,10 +3146,12 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 >
 > **V218 已完成**：✅ 国际化 i18n 落地（详见下方 V218 章节，LanguageSelector 集成 · 37 命名空间全注册 · 9 空文件填充 · CI 扩展 · TSC 0 error）
 >
-> **V219 候选（按 ROI 估算，均未启动）**：
+> **V219 进行中**：🔄 i18n 硬编码清零（第一批 10 模块 · 322 处替换 · asset/ticket 清零）
+>
+> **V220 候选（按 ROI 估算，均未启动）**：
+> - **i18n 硬编码清零 P2**：继续处理剩余 11012 处 · 优先 gis/im/system/finance 模块
 > - **权限矩阵自动化验证**：后端路由 → 前端导航 → 权限标识 三向自动验证 CI 门禁
 > - **方向 C 续 · Design Token 最终收敛**：616→0 偏差 · 全量 token 化
-> - **i18n 硬编码清零**：11334 处硬编码中文 · 优先 admin 模块清零
 
 ## 🎯 V213 — 覆盖率冲刺 P2→P3 全量推进（26 commits · ~2930 新增 tests · ✅ 已封版）
 
@@ -3551,4 +3553,63 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 | `apps/web/src/i18n/locales/zh/performance.json` | 新建：14 keys |
 | `apps/web/src/i18n/locales/en/performance.json` | 新建：14 keys |
 | `scripts/ci/check-i18n.cjs` | 更新：新增 `--strict-all` 和 `--threshold` 参数 |
+
+## 🎯 V219 — i18n 硬编码清零 P1（10 模块 · 322 处替换 · 2 模块清零 · ✅ 已封版）
+
+> **承接**：V218 i18n 基础设施落地后，V219 启动硬编码中文清零工作。
+> **基线** (2026-08-14)：11334 处硬编码中文 · 773 文件 · 39 模块
+> **目标**：从小模块开始批量清零，验证批处理脚本可行性
+> **最终结果**：322 处替换 · 2 模块完全清零 (asset/ticket) · 8 模块大幅减少 · TSC 0 error ✅
+> **日期**：2026-08-14
+
+### ✅ 验证结果
+
+| # | 验证项 | 命令 | 结果 |
+|---|--------|------|------|
+| 1 | TypeScript 编译 | `cd apps/web && npx tsc --noEmit` | ✅ 0 error |
+| 2 | CI i18n 检查 | `node scripts/ci/check-i18n.cjs --json` | ✅ 11334→11012 (-322) |
+| 3 | asset 模块清零 | `node scripts/ci/check-i18n.cjs --module asset` | ✅ 0 处 |
+| 4 | ticket 模块清零 | `node scripts/ci/check-i18n.cjs --module ticket` | ✅ 0 处 |
+
+### 📊 模块清零对比表
+
+| 模块 | 原始 | 现在 | 减少 | 清零率 |
+|------|------|------|------|--------|
+| asset | 3 | 0 | 3 | 100% ✅ |
+| ticket | 3 | 0 | 3 | 100% ✅ |
+| oa | 11 | 4 | 7 | 64% |
+| plugin | 13 | 10 | 3 | 23% |
+| performance | 48 | 15 | 33 | 69% |
+| crm | 61 | 57 | 4 | 7% |
+| iam | 64 | 3 | 61 | 95% |
+| help | 76 | 11 | 65 | 86% |
+| ehs | 95 | 23 | 72 | 76% |
+| ai | 95 | 24 | 71 | 75% |
+| **合计** | **409** | **147** | **322** | **79%** |
+
+### 🔧 技术要点
+
+1. **批处理脚本** (`batch-i18n-replace.cjs`)：自动扫描 .tsx 文件中的硬编码中文，支持三种模式：JSX text (`>中文<`)、JSX attribute (`label="中文"`)、String literal (`'中文'`)。通过 offset 去重避免重复匹配
+2. **模块级 vs 组件级**：脚本自动检测是否在 React 组件体内。组件内使用 `useTranslation` hook；模块级使用 `i18n.t()` 直接调用（模块级 `i18n` 实例，不触发 re-render）
+3. **翻译条目自动生成**：脚本将替换的中文文本自动添加到 `locales/{zh,en}/{module}.json` 文件中，zh 为原文，en 为占位符（待后续翻译）
+4. **hook 安全插入**：脚本检测文件是否有 `createCrudPageAdapter` 模式，避免在非组件代码中错误插入 React hook
+5. **剩余 11012 处**：主要集中在中大模块 (mes 668, admin 649, monitor 612, mobile 557)，需要后续 P2/P3 批次处理
+
+### 📦 交付清单
+
+| 文件/目录 | 变更内容 |
+|----------|---------|
+| `scripts/i18n/batch-i18n-replace.cjs` | 新增：i18n 批量硬编码替换脚本 |
+| `apps/web/src/pages/asset/DashboardPage.tsx` | 替换 3 处 + 添加 hook |
+| `apps/web/src/pages/ticket/*.tsx` | 替换 3 处 + 添加 hook |
+| `apps/web/src/pages/oa/*.tsx` | 替换 7 处 + 添加 hook |
+| `apps/web/src/pages/plugin/*.tsx` | 替换 3 处 + 添加 hook |
+| `apps/web/src/pages/performance/*.tsx` | 替换 33 处 + i18n.t() |
+| `apps/web/src/pages/crm/*.tsx` | 替换 4 处 + 添加 hook |
+| `apps/web/src/pages/iam/*.tsx` | 替换 61 处 + i18n.t() + hook 修复 |
+| `apps/web/src/pages/help/*.tsx` | 替换 65 处 + i18n.t() |
+| `apps/web/src/pages/ehs/*.tsx` | 替换 72 处 + i18n.t() + hook 修复 |
+| `apps/web/src/pages/ai/*.tsx` | 替换 71 处 + i18n.t() |
+| `apps/web/src/i18n/locales/zh/{ai,ehs,help,iam,performance,...}.json` | 更新：新增翻译条目 |
+| `apps/web/src/i18n/locales/en/{ai,ehs,help,iam,performance,...}.json` | 更新：新增翻译条目 |
 

@@ -34,6 +34,7 @@ import { apiLogger } from '@/utils/logger';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 interface GuideCategory {
   id: string;
@@ -43,9 +44,9 @@ interface GuideCategory {
 }
 
 const GUIDE_CATEGORIES: GuideCategory[] = [
-  { id: 'beginner', name: '入门指南', icon: '🌱', color: 'primary' },
-  { id: 'advanced', name: '进阶教程', icon: '🚀', color: 'success' },
-  { id: 'expert', name: '高级技巧', icon: '💎', color: 'warning' },
+  { id: 'beginner', name: i18n.t('help.guide_page.k0'), icon: '🌱', color: 'primary' },
+  { id: 'advanced', name: i18n.t('help.guide_page.k1'), icon: '🚀', color: 'success' },
+  { id: 'expert', name: i18n.t('help.guide_page.k2'), icon: '💎', color: 'warning' },
 ];
 
 export const GuidePage: React.FC = () => {
@@ -92,8 +93,8 @@ export const GuidePage: React.FC = () => {
       apiLogger.error('获取指南列表失败:', guidesQuery.error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载指南列表',
+        title: i18n.t('help.guide_page.k3'),
+        message: i18n.t('help.guide_page.k4'),
       });
     }
   }, [guidesQuery.isError, guidesQuery.error, apiLogger, addNotification]);
@@ -292,7 +293,7 @@ export const GuidePage: React.FC = () => {
                           {guide.isActive && (
                             <Chip
                               size='small'
-                              label='已完成'
+                              label={i18n.t('help.guide_page.k5')}
                               color='success'
                               sx={{ fontWeight: 500 }}
                             />
@@ -369,7 +370,7 @@ export const GuidePage: React.FC = () => {
                         variant={guide.isActive ? 'outlined' : 'contained'}
                         sx={{ textTransform: 'none', borderRadius: 1 }}
                       >
-                        {guide.isActive ? '复习课程' : '开始学习'}
+                        {guide.isActive ? i18n.t('help.guide_page.k7') : i18n.t('help.guide_page.k6')}
                         <ChevronRight size={16} />
                       </Button>
                     </Box>
@@ -426,7 +427,7 @@ export const GuidePage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  📖 <strong>循序渐进</strong>：建议按照入门→进阶→高级的顺序学习
+                  📖 <strong>{i18n.t('help.guide_page.k8')}</strong>：建议按照入门→进阶→高级的顺序学习
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
@@ -434,7 +435,7 @@ export const GuidePage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  👀 <strong>边学边练</strong>：跟随指南操作，加深理解和记忆
+                  👀 <strong>{i18n.t('help.guide_page.k9')}</strong>：跟随指南操作，加深理解和记忆
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
@@ -442,7 +443,7 @@ export const GuidePage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  💬 <strong>遇到问题</strong>：参考FAQ或联系在线客服获取帮助
+                  💬 <strong>{i18n.t('help.guide_page.k10')}</strong>：参考FAQ或联系在线客服获取帮助
                 </Typography>
               </Grid>
             </Grid>

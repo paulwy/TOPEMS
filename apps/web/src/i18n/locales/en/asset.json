@@ -192,5 +192,8 @@
   "transfer_page.ast_005_01": "AST-005 - Air Conditioner-01",
   "transfer_page.ast_006_01": "AST-006 - Office Desk-01",
   "transfer_page.ast_007_01": "AST-007 - Laptop-01",
-  "transfer_page.ast_008_01": "AST-008 - Surveillance Camera-01"
+  "transfer_page.ast_008_01": "AST-008 - Surveillance Camera-01",
+  "asset.dashboard_page.k0": "资产管理概览",
+  "asset.dashboard_page.k1": "资产管理数据概览",
+  "asset.dashboard_page.k2": "快捷操作"
 }

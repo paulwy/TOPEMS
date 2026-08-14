@@ -690,7 +690,7 @@ const CustomerDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={customer?.name || customer?.code || '客户详情'}
+        detailItemName={customer?.name || customer?.code || t('crm.customer_detail_page.k0')}
         backHref={CRM_PATHS.customers}
         loading={loading}
         onEdit={() => {}}

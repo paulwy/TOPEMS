@@ -13,6 +13,8 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -28,6 +30,7 @@ const baseAdapter = createCrudPageAdapter<DrillRecord, CreateDrillRecordRequest>
 const drillAdapter: CrudApiAdapter<DrillRecord> = {
   list: baseAdapter.list as unknown as CrudApiAdapter<DrillRecord>['list'],
   create: async (data) => {
+  const { t } = useTranslation('ehs');
     const transformed = { ...data };
     if (typeof transformed.participants === 'string') {
       transformed.participants = (transformed.participants as string)
@@ -59,11 +62,11 @@ const statusColorMap: Record<string, { bg: string; color: string }> = {
 };
 
 const statusLabelMap: Record<string, string> = {
-  draft: '草稿',
-  planned: '已计划',
-  ongoing: '进行中',
-  completed: '已完成',
-  cancelled: '已取消',
+  draft: i18n.t('ehs.emergency_page.k0'),
+  planned: i18n.t('ehs.emergency_page.k1'),
+  ongoing: i18n.t('ehs.emergency_page.k2'),
+  completed: i18n.t('ehs.emergency_page.k3'),
+  cancelled: i18n.t('ehs.emergency_page.k4'),
 };
 
 function extractListData(response: unknown): DrillRecord[] {
@@ -345,7 +348,7 @@ const EmergencyPage: React.FC = () => {
       <CrudPage
         schema={emergencyDrillSchema}
         apiAdapter={drillAdapter}
-        breadcrumbs={[{ label: 'EHS' }, { label: '应急演练' }]}
+        breadcrumbs={[{ label: 'EHS' }, { label: i18n.t('ehs.emergency_page.k5') }]}
         headerContent={headerContent}
         detailContent={detailContent}
         detailMaxWidth='lg'

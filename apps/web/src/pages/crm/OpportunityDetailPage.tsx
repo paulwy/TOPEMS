@@ -320,7 +320,7 @@ const OpportunityDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={opportunity?.name || opportunity?.id || '商机详情'}
+        detailItemName={opportunity?.name || opportunity?.id || t('crm.opportunity_detail_page.k0')}
         backHref={CRM_PATHS.opportunities}
         loading={loading}
         error={errorMessage}

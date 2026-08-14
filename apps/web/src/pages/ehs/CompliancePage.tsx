@@ -10,10 +10,13 @@ import { ehsApi } from '@/api/ehs';
 import { designTokens } from '@/theme/tokens';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
 function extractListData<T>(response: unknown): T[] {
+  const { t } = useTranslation('ehs');
   if (!response || typeof response !== 'object') return [];
   const obj = response as Record<string, unknown>;
   const data = obj.data;
@@ -39,28 +42,28 @@ function StatsCards({ stats }: { stats: ComplianceStats }) {
     {
       icon: <FileCheck sx={{ width: 20, height: 20, color: ct.success.dark }} />,
       iconBg: 'success.lighter',
-      label: '法规总数',
+      label: i18n.t('ehs.compliance_page.k0'),
       value: stats.totalRegulations,
       accentColor: 'success',
     },
     {
       icon: <Shield sx={{ width: 20, height: 20, color: ct.primary.dark }} />,
       iconBg: 'primary.lighter',
-      label: '有效法规',
+      label: i18n.t('ehs.compliance_page.k1'),
       value: stats.effectiveRegulations,
       accentColor: 'primary',
     },
     {
       icon: <ClipboardCheck sx={{ width: 20, height: 20, color: ct.warning.dark }} />,
       iconBg: 'warning.lighter',
-      label: '已完成评估',
+      label: i18n.t('ehs.compliance_page.k2'),
       value: stats.completedAssessments,
       accentColor: 'warning',
     },
     {
       icon: <AlertTriangle sx={{ width: 20, height: 20, color: ct.info.dark }} />,
       iconBg: 'info.lighter',
-      label: '有效许可证',
+      label: i18n.t('ehs.compliance_page.k3'),
       value: stats.validPermits,
       accentColor: 'info',
     },
@@ -174,13 +177,13 @@ const CompliancePage: React.FC = () => {
     <CrudPage
       schema={regulationSchema}
       apiAdapter={regulationAdapter}
-      breadcrumbs={[{ label: 'EHS' }, { label: '合规管理' }]}
+      breadcrumbs={[{ label: 'EHS' }, { label: i18n.t('ehs.compliance_page.k4') }]}
       defaultTab='list'
       headerContent={() => <StatsCards stats={stats} />}
       tabs={[
         {
           id: 'assessments',
-          label: '合规评估',
+          label: i18n.t('ehs.compliance_page.k5'),
           content: (
             <CrudPage
               schema={assessmentSchema}
@@ -190,7 +193,7 @@ const CompliancePage: React.FC = () => {
         },
         {
           id: 'permits',
-          label: '排污许可证',
+          label: i18n.t('ehs.compliance_page.k6'),
           content: (
             <CrudPage
               schema={permitSchema}

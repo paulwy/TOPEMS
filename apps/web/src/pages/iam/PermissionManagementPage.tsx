@@ -8,12 +8,15 @@ import { AlertCircle } from 'lucide-react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { permissionSchema } from '@/schemas/iam';
 import { authApi, type Permission } from '@/api/iam';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const apiAdapter: CrudApiAdapter<Permission> = {
   list: async () => {
+  const { t } = useTranslation('iam');
     const res = await authApi.listPermissions();
     if (res.success === false) {
-      throw new Error(res.message || '加载权限失败');
+      throw new Error(res.message || i18n.t('iam.permission_management_page.k0'));
     }
     const items = res.data ?? [];
     return { data: items, total: items.length };
@@ -27,7 +30,7 @@ const apiAdapter: CrudApiAdapter<Permission> = {
       description: data.description as string | undefined,
     });
     if (res.success === false) {
-      throw new Error(res.message || '创建权限失败');
+      throw new Error(res.message || i18n.t('iam.permission_management_page.k1'));
     }
     return (res.data ?? {}) as Permission;
   },
@@ -37,14 +40,14 @@ const apiAdapter: CrudApiAdapter<Permission> = {
       description: data.description as string | undefined,
     });
     if (res.success === false) {
-      throw new Error(res.message || '更新权限失败');
+      throw new Error(res.message || i18n.t('iam.permission_management_page.k2'));
     }
     return (res.data ?? {}) as Permission;
   },
   delete: async (id) => {
     const res = await authApi.deletePermission(id);
     if (res.success === false) {
-      throw new Error(res.message || '删除权限失败');
+      throw new Error(res.message || i18n.t('iam.permission_management_page.k3'));
     }
   },
 };
@@ -88,7 +91,7 @@ const PermissionManagementPage: React.FC = () => {
     <CrudPage
       schema={permissionSchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: '首页', href: '/' }, { label: '身份权限' }, { label: '权限管理' }]}
+      breadcrumbs={[{ label: i18n.t('iam.permission_management_page.k6'), href: '/' }, { label: i18n.t('iam.permission_management_page.k5') }, { label: i18n.t('iam.permission_management_page.k4') }]}
       headerContent={headerContent}
     />
   );

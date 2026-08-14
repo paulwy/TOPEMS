@@ -31,6 +31,7 @@ import { useTranslation } from 'react-i18next';
 import { PageContainer, Grid } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -44,7 +45,7 @@ const sampleDocuments = [
   },
   {
     id: 'doc-002',
-    title: '财务报表生成指南',
+    title: i18n.t('ai.ai_knowledge_base_page.k0'),
     type: 'guide',
     size: '1.1 MB',
     updatedAt: '2024-01-08',
@@ -67,18 +68,18 @@ const sampleDocuments = [
 
 const sampleAnswers = [
   {
-    question: '如何创建财务凭证？',
+    question: i18n.t('ai.ai_knowledge_base_page.k1'),
     answer:
       '创建财务凭证的步骤如下：\n\n1. 登录 ERP 系统，进入财务模块\n2. 点击「凭证管理」->「新建凭证」\n3. 选择凭证类型（记账凭证、收款凭证、付款凭证等）\n4. 填写凭证日期和凭证号\n5. 添加会计分录，包括科目、借方金额、贷方金额\n6. 录入凭证摘要\n7. 保存并审核凭证\n8. 审核通过后进行记账操作\n\n注意：凭证借贷必须平衡，且需要有对应的原始单据。',
     sources: [
       { title: 'ERP 系统操作手册', similarity: 0.92 },
-      { title: '财务报表生成指南', similarity: 0.85 },
+      { title: i18n.t('ai.ai_knowledge_base_page.k2'), similarity: 0.85 },
     ],
     confidence: 0.95,
   },
 ];
 
-const sampleFollowUp = ['如何查询已记账的凭证？', '凭证审核流程是什么？', '如何修改已审核的凭证？'];
+const sampleFollowUp = [i18n.t('ai.ai_knowledge_base_page.k5'), i18n.t('ai.ai_knowledge_base_page.k4'), i18n.t('ai.ai_knowledge_base_page.k3')];
 
 type ChatMessage = {
   id: string;
@@ -102,8 +103,8 @@ export const AiKnowledgeBasePage: React.FC = () => {
   const handleSendQuery = useCallback(async () => {
     if (!query.trim()) {
       addNotification({
-        title: t('ai.knowledge_base.message.notice'),
-        message: t('ai.knowledge_base.message.input_question'),
+        title: i18n.t('ai.knowledge_base.message.notice'),
+        message: i18n.t('ai.knowledge_base.message.input_question'),
         type: 'warning',
       });
       return;
@@ -142,8 +143,8 @@ export const AiKnowledgeBasePage: React.FC = () => {
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     addNotification({
-      title: t('ai.knowledge_base.message.copied'),
-      message: t('ai.knowledge_base.message.copied_body'),
+      title: i18n.t('ai.knowledge_base.message.copied'),
+      message: i18n.t('ai.knowledge_base.message.copied_body'),
       type: 'success',
     });
   };
@@ -184,20 +185,20 @@ export const AiKnowledgeBasePage: React.FC = () => {
   const getTypeLabel = (type: string) => {
     switch (type) {
       case 'manual':
-        return t('ai.knowledge_base.type.manual');
+        return i18n.t('ai.knowledge_base.type.manual');
       case 'guide':
-        return t('ai.knowledge_base.type.guide');
+        return i18n.t('ai.knowledge_base.type.guide');
       case 'process':
-        return t('ai.knowledge_base.type.process');
+        return i18n.t('ai.knowledge_base.type.process');
       default:
-        return t('ai.knowledge_base.type.document');
+        return i18n.t('ai.knowledge_base.type.document');
     }
   };
 
   return (
     <PageContainer
-      title={t('ai.knowledge_base.title')}
-      subtitle={t('ai.knowledge_base.subtitle')}
+      title={i18n.t('ai.knowledge_base.title')}
+      subtitle={i18n.t('ai.knowledge_base.subtitle')}
       padding={false}
       maxWidth={false}
       headerProps={{
@@ -220,14 +221,14 @@ export const AiKnowledgeBasePage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                {t('ai.knowledge_base.label.document_library')}
+                {i18n.t('ai.knowledge_base.label.document_library')}
               </Typography>
 
               <Box sx={{ mb: 2 }}>
                 <TextField
                   fullWidth
                   size='small'
-                  placeholder={t('ai.knowledge_base.label.search_document')}
+                  placeholder={i18n.t('ai.knowledge_base.label.search_document')}
                   slotProps={{
                     input: {
                       startAdornment: (
@@ -243,7 +244,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
                   {['all', 'manual', 'guide', 'process'].map((type) => (
                     <Chip
                       key={type}
-                      label={type === 'all' ? t('ai.knowledge_base.label.all') : getTypeLabel(type)}
+                      label={type === 'all' ? i18n.t('ai.knowledge_base.label.all') : getTypeLabel(type)}
                       size='small'
                       variant={filterType === type ? 'filled' : 'outlined'}
                       onClick={() => setFilterType(type)}
@@ -270,7 +271,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
                     <ListItemIcon>{getTypeIcon(doc.type)}</ListItemIcon>
                     <ListItemText
                       primary={doc.title}
-                      secondary={`${doc.size} · ${t('ai.knowledge_base.label.updated_at')} ${doc.updatedAt}`}
+                      secondary={`${doc.size} · ${i18n.t('ai.knowledge_base.label.updated_at')} ${doc.updatedAt}`}
                     />
                   </ListItemButton>
                 ))}
@@ -283,7 +284,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
                     color='text.secondary'
                     sx={{ mb: 1 }}
                   >
-                    {t('ai.knowledge_base.label.selected_docs', { count: selectedDocs.length })}
+                    {i18n.t('ai.knowledge_base.label.selected_docs', { count: selectedDocs.length })}
                   </Typography>
                   <Button
                     fullWidth
@@ -291,7 +292,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
                     variant='outlined'
                     onClick={() => setSelectedDocs([])}
                   >
-                    {t('ai.knowledge_base.label.clear_selection')}
+                    {i18n.t('ai.knowledge_base.label.clear_selection')}
                   </Button>
                 </Box>
               )}
@@ -321,12 +322,12 @@ export const AiKnowledgeBasePage: React.FC = () => {
                       size={18}
                       style={{ color: ct.yellow[500] }}
                     />
-                    {t('ai.knowledge_base.label.smart_qa')}
+                    {i18n.t('ai.knowledge_base.label.smart_qa')}
                   </Box>
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <Chip
-                    label={t('ai.knowledge_base.label.knowledge_base')}
+                    label={i18n.t('ai.knowledge_base.label.knowledge_base')}
                     size='small'
                     color='primary'
                     variant='outlined'
@@ -361,19 +362,19 @@ export const AiKnowledgeBasePage: React.FC = () => {
                       variant='body1'
                       color='text.secondary'
                     >
-                      {t('ai.knowledge_base.message.welcome')}
+                      {i18n.t('ai.knowledge_base.message.welcome')}
                     </Typography>
                     <Typography
                       variant='body2'
                       color='text.secondary'
                     >
-                      {t('ai.knowledge_base.message.welcome_desc')}
+                      {i18n.t('ai.knowledge_base.message.welcome_desc')}
                     </Typography>
                     <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
                       {[
-                        t('ai.knowledge_base.mock.q_1'),
-                        t('ai.knowledge_base.example.q_2'),
-                        t('ai.knowledge_base.example.q_3'),
+                        i18n.t('ai.knowledge_base.mock.q_1'),
+                        i18n.t('ai.knowledge_base.example.q_2'),
+                        i18n.t('ai.knowledge_base.example.q_3'),
                       ].map((example) => (
                         <Chip
                           key={example}
@@ -426,7 +427,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
                                 variant='body2'
                                 color='text.secondary'
                               >
-                                {t('ai.knowledge_base.label.reference_source')}：
+                                {i18n.t('ai.knowledge_base.label.reference_source')}：
                               </Typography>
                               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
                                 {msg.sources.map((source, idx) => (
@@ -443,7 +444,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
                           {msg.confidence !== undefined && (
                             <Box sx={{ mt: 1 }}>
                               <Chip
-                                label={`${t('ai.knowledge_base.label.confidence')}: ${Math.round(msg.confidence * 100)}%`}
+                                label={`${i18n.t('ai.knowledge_base.label.confidence')}: ${Math.round(msg.confidence * 100)}%`}
                                 size='small'
                                 color={msg.confidence >= 0.8 ? 'success' : 'warning'}
                                 variant='outlined'
@@ -468,7 +469,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
               <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
                 <TextField
                   fullWidth
-                  placeholder={t('ai.knowledge_base.label.input_question')}
+                  placeholder={i18n.t('ai.knowledge_base.label.input_question')}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendQuery()}
@@ -490,8 +491,8 @@ export const AiKnowledgeBasePage: React.FC = () => {
                   }
                 >
                   {searching
-                    ? t('ai.knowledge_base.button.searching')
-                    : t('ai.knowledge_base.button.ask')}
+                    ? i18n.t('ai.knowledge_base.button.searching')
+                    : i18n.t('ai.knowledge_base.button.ask')}
                 </Button>
               </Box>
 
@@ -502,7 +503,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
                     color='text.secondary'
                     sx={{ mb: 1 }}
                   >
-                    {t('ai.knowledge_base.label.related_questions')}：
+                    {i18n.t('ai.knowledge_base.label.related_questions')}：
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     {sampleFollowUp.map((question) => (
