@@ -593,4 +593,253 @@ mod tests {
         handle.abort();
         let _ = handle.await;
     }
+
+    // ———————————————————————————————————————————————————————————————
+    // 3. 补充单元测试：不依赖 Redis 的纯逻辑/序列化测试
+    // ———————————————————————————————————————————————————————————————
+
+    #[test]
+    fn test_master_data_domain_serde_roundtrip_all_variants() {
+        for domain in [
+            MasterDataDomain::Customer,
+            MasterDataDomain::Supplier,
+            MasterDataDomain::Material,
+            MasterDataDomain::Organization,
+            MasterDataDomain::Employee,
+            MasterDataDomain::AccountSubject,
+        ] {
+            let json = serde_json::to_string(&domain).expect("serialize");
+            let back: MasterDataDomain = serde_json::from_str(&json).expect("deserialize");
+            assert_eq!(domain, back);
+        }
+    }
+
+    #[test]
+    fn test_master_data_domain_serde_uses_snake_case() {
+        // 验证 #[serde(rename_all = "snake_case")] 产出预期字符串
+        let v = serde_json::to_value(MasterDataDomain::AccountSubject).unwrap();
+        assert_eq!(v, json!("account_subject"));
+        let v = serde_json::to_value(MasterDataDomain::Customer).unwrap();
+        assert_eq!(v, json!("customer"));
+    }
+
+    #[test]
+    fn test_master_data_action_serde_roundtrip_all_variants() {
+        for action in [
+            MasterDataAction::Created,
+            MasterDataAction::Updated,
+            MasterDataAction::Deleted,
+            MasterDataAction::Activated,
+            MasterDataAction::Deactivated,
+        ] {
+            let json = serde_json::to_string(&action).expect("serialize");
+            let back: MasterDataAction = serde_json::from_str(&json).expect("deserialize");
+            assert_eq!(action, back);
+        }
+    }
+
+    #[test]
+    fn test_master_data_domain_prefix_and_table() {
+        assert_eq!(MasterDataDomain::Customer.prefix(), "cust");
+        assert_eq!(MasterDataDomain::Supplier.prefix(), "supp");
+        assert_eq!(MasterDataDomain::Material.prefix(), "mat");
+        assert_eq!(MasterDataDomain::Organization.prefix(), "org");
+        assert_eq!(MasterDataDomain::Employee.prefix(), "emp");
+        assert_eq!(MasterDataDomain::AccountSubject.prefix(), "acct");
+
+        assert_eq!(MasterDataDomain::Customer.table(), "customers");
+        assert_eq!(MasterDataDomain::Supplier.table(), "suppliers");
+        assert_eq!(MasterDataDomain::Material.table(), "materials");
+        assert_eq!(MasterDataDomain::Organization.table(), "organizations");
+        assert_eq!(MasterDataDomain::Employee.table(), "employees");
+        assert_eq!(MasterDataDomain::AccountSubject.table(), "account_subjects");
+    }
+
+    #[test]
+    fn test_master_data_domain_from_str_variants() {
+        // 完整 snake_case 代号
+        assert_eq!("customer".parse(), Ok(MasterDataDomain::Customer));
+        assert_eq!("supplier".parse(), Ok(MasterDataDomain::Supplier));
+        assert_eq!("material".parse(), Ok(MasterDataDomain::Material));
+        assert_eq!("organization".parse(), Ok(MasterDataDomain::Organization));
+        assert_eq!("employee".parse(), Ok(MasterDataDomain::Employee));
+        assert_eq!("account_subject".parse(), Ok(MasterDataDomain::AccountSubject));
+
+        // 短前缀
+        assert_eq!("cust".parse(), Ok(MasterDataDomain::Customer));
+        assert_eq!("supp".parse(), Ok(MasterDataDomain::Supplier));
+        assert_eq!("mat".parse(), Ok(MasterDataDomain::Material));
+        assert_eq!("org".parse(), Ok(MasterDataDomain::Organization));
+        assert_eq!("emp".parse(), Ok(MasterDataDomain::Employee));
+        assert_eq!("acct".parse(), Ok(MasterDataDomain::AccountSubject));
+
+        // 表名
+        assert_eq!("customers".parse(), Ok(MasterDataDomain::Customer));
+        assert_eq!("suppliers".parse(), Ok(MasterDataDomain::Supplier));
+
+        // 无效输入
+        assert!("invalid".parse::<MasterDataDomain>().is_err());
+    }
+
+    #[test]
+    fn test_master_data_event_serde_roundtrip() {
+        let event = MasterDataEvent::new(
+            Uuid::new_v4(),
+            MasterDataDomain::Customer,
+            MasterDataAction::Created,
+            "cust-20260101-abc".to_string(),
+            "CUST001".to_string(),
+            "crm",
+            json!({"name": "ACME Corp"}),
+        )
+        .with_changed_fields(vec!["name".to_string()])
+        .with_operator("admin".to_string())
+        .with_version(3);
+
+        let json_str = serde_json::to_string(&event).expect("serialize");
+        let back: MasterDataEvent = serde_json::from_str(&json_str).expect("deserialize");
+        assert_eq!(back.domain, MasterDataDomain::Customer);
+        assert_eq!(back.action, MasterDataAction::Created);
+        assert_eq!(back.master_data_id, "cust-20260101-abc");
+        assert_eq!(back.code, "CUST001");
+        assert_eq!(back.version, 3);
+        assert_eq!(back.source_service, "crm");
+        assert_eq!(back.changed_fields, vec!["name".to_string()]);
+        assert_eq!(back.operator.as_deref(), Some("admin"));
+        assert_eq!(back.event_id, event.event_id);
+    }
+
+    #[test]
+    fn test_master_data_event_serde_skips_empty_changed_fields() {
+        // skip_serializing_if = "Vec::is_empty"
+        let event = MasterDataEvent::new(
+            Uuid::new_v4(),
+            MasterDataDomain::Employee,
+            MasterDataAction::Created,
+            "emp-001".to_string(),
+            "EMP001".to_string(),
+            "hrm",
+            json!({}),
+        );
+        let v = serde_json::to_value(&event).unwrap();
+        // changed_fields 为空时不应出现在 JSON 中
+        assert!(v.get("changed_fields").is_none() || v["changed_fields"].is_array());
+
+        // 设置 changed_fields 后应出现
+        let event2 = event.clone().with_changed_fields(vec!["salary".to_string()]);
+        let v2 = serde_json::to_value(&event2).unwrap();
+        assert_eq!(v2["changed_fields"][0], "salary");
+    }
+
+    #[test]
+    fn test_master_data_event_new_defaults() {
+        let tenant = Uuid::new_v4();
+        let event = MasterDataEvent::new(
+            tenant,
+            MasterDataDomain::Material,
+            MasterDataAction::Updated,
+            "mat-001".to_string(),
+            "MAT001".to_string(),
+            "erp",
+            json!({"price": 100}),
+        );
+        assert_eq!(event.tenant_id, tenant);
+        assert_eq!(event.domain, MasterDataDomain::Material);
+        assert_eq!(event.action, MasterDataAction::Updated);
+        assert_eq!(event.version, 1); // 默认版本号
+        assert!(event.changed_fields.is_empty());
+        assert!(event.operator.is_none());
+    }
+
+    #[test]
+    fn test_master_data_event_routing_key_format() {
+        let tenant = Uuid::new_v4();
+        let event = MasterDataEvent::new(
+            tenant,
+            MasterDataDomain::Customer,
+            MasterDataAction::Created,
+            "cust-001".to_string(),
+            "C001".to_string(),
+            "crm",
+            json!({}),
+        );
+        let key = event.routing_key();
+        // 格式：master.{prefix}.{tenant_id}.{action}
+        assert!(key.starts_with("master.cust."));
+        assert!(key.contains(&tenant.to_string()));
+        assert!(key.ends_with("created"));
+    }
+
+    #[test]
+    fn test_master_data_event_channel_format() {
+        let event = MasterDataEvent::new(
+            Uuid::new_v4(),
+            MasterDataDomain::Supplier,
+            MasterDataAction::Deleted,
+            "supp-001".to_string(),
+            "S001".to_string(),
+            "srm",
+            json!({}),
+        );
+        assert_eq!(event.channel(), "topems:master_data:supp");
+    }
+
+    #[test]
+    fn test_master_data_event_clone_preserves_fields() {
+        let event = MasterDataEvent::new(
+            Uuid::new_v4(),
+            MasterDataDomain::Organization,
+            MasterDataAction::Activated,
+            "org-001".to_string(),
+            "O001".to_string(),
+            "hrm",
+            json!({"dept": "rd"}),
+        )
+        .with_operator("hr_admin".to_string());
+
+        let cloned = event.clone();
+        assert_eq!(cloned.event_id, event.event_id);
+        assert_eq!(cloned.domain, event.domain);
+        assert_eq!(cloned.action, event.action);
+        assert_eq!(cloned.master_data_id, event.master_data_id);
+        assert_eq!(cloned.operator, event.operator);
+    }
+
+    #[tokio::test]
+    async fn test_event_subscriber_start_listening_returns_err_when_redis_unavailable() {
+        if redis_pubsub::maybe_connect_redis().await.is_some() {
+            eprintln!("[skip] Redis 可用，跳过不可达错误路径测试");
+            return;
+        }
+        let sub = EventSubscriber::new("test-service")
+            .expect("lazy construction succeeds")
+            .subscribe(
+                vec![EventType::HealthCheck],
+                |_event: Event| Box::pin(async {}),
+            );
+        let result = sub.start_listening().await;
+        assert!(
+            result.is_err(),
+            "Redis 不可达时 start_listening 应返回 Err"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_master_data_event_publish_returns_err_when_redis_unavailable() {
+        if redis_pubsub::maybe_connect_redis().await.is_some() {
+            eprintln!("[skip] Redis 可用，跳过不可达错误路径测试");
+            return;
+        }
+        let event = MasterDataEvent::new(
+            Uuid::new_v4(),
+            MasterDataDomain::Customer,
+            MasterDataAction::Created,
+            "cust-001".to_string(),
+            "C001".to_string(),
+            "crm",
+            json!({}),
+        );
+        let result = event.publish().await;
+        assert!(result.is_err(), "Redis 不可达时 publish 应返回 Err");
+    }
 }

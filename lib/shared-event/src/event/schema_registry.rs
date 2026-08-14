@@ -470,4 +470,274 @@ mod tests {
         registry2.import_all(exported).unwrap();
         assert!(registry2.get("user.created").is_some());
     }
+
+    #[test]
+    fn test_event_schema_serde_roundtrip() {
+        let now = Utc::now();
+        let schema = EventSchema {
+            event_type: "test.event".to_string(),
+            schema_id: Uuid::new_v4(),
+            json_schema: json!({"type": "object"}),
+            description: "测试事件".to_string(),
+            payload_example: Some(json!({"key": "value"})),
+            created_at: now,
+            updated_at: now,
+        };
+        let json_str = serde_json::to_string(&schema).expect("serialize");
+        let back: EventSchema = serde_json::from_str(&json_str).expect("deserialize");
+        assert_eq!(back.event_type, "test.event");
+        assert_eq!(back.schema_id, schema.schema_id);
+        assert_eq!(back.description, "测试事件");
+        assert!(back.payload_example.is_some());
+        assert_eq!(back.created_at, now);
+        assert_eq!(back.updated_at, now);
+    }
+
+    #[test]
+    fn test_event_schema_serde_roundtrip_without_example() {
+        let schema = EventSchema {
+            event_type: "no.example".to_string(),
+            schema_id: Uuid::new_v4(),
+            json_schema: json!({"type": "string"}),
+            description: "无示例".to_string(),
+            payload_example: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let v = serde_json::to_value(&schema).unwrap();
+        assert_eq!(v["payload_example"], json!(null));
+        let back: EventSchema = serde_json::from_value(v).unwrap();
+        assert!(back.payload_example.is_none());
+    }
+
+    #[test]
+    fn test_event_schema_clone_preserves_fields() {
+        let schema = EventSchema {
+            event_type: "clone.test".to_string(),
+            schema_id: Uuid::new_v4(),
+            json_schema: json!({"type": "boolean"}),
+            description: "clone".to_string(),
+            payload_example: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let cloned = schema.clone();
+        assert_eq!(cloned.event_type, schema.event_type);
+        assert_eq!(cloned.schema_id, schema.schema_id);
+        assert_eq!(cloned.description, schema.description);
+    }
+
+    #[test]
+    fn test_validation_result_ok_and_fail() {
+        let ok = ValidationResult::ok();
+        assert!(ok.valid);
+        assert!(ok.errors.is_empty());
+
+        let fail = ValidationResult::fail("something wrong");
+        assert!(!fail.valid);
+        assert_eq!(fail.errors.len(), 1);
+        assert_eq!(fail.errors[0], "something wrong");
+    }
+
+    #[test]
+    fn test_validation_result_add_error() {
+        let mut result = ValidationResult::ok();
+        assert!(result.valid);
+        result.add_error("first error");
+        assert!(!result.valid);
+        assert_eq!(result.errors.len(), 1);
+        result.add_error("second error");
+        assert_eq!(result.errors.len(), 2);
+        assert_eq!(result.errors[1], "second error");
+    }
+
+    #[test]
+    fn test_validation_result_clone() {
+        let mut result = ValidationResult::ok();
+        result.add_error("err1");
+        let cloned = result.clone();
+        assert!(!cloned.valid);
+        assert_eq!(cloned.errors.len(), 1);
+        assert_eq!(cloned.errors[0], "err1");
+    }
+
+    #[test]
+    fn test_schema_registry_default_is_empty() {
+        let registry = SchemaRegistry::default();
+        assert_eq!(registry.count(), 0);
+        assert!(registry.list_all().is_empty());
+    }
+
+    #[test]
+    fn test_schema_registry_set_example_success() {
+        let registry = SchemaRegistry::new();
+        registry
+            .register("user.created", sample_schema(), "desc")
+            .unwrap();
+        let result = registry.set_example("user.created", json!({"name": "Alice"}));
+        assert!(result.is_ok());
+        let schema = registry.get("user.created").unwrap();
+        assert!(schema.payload_example.is_some());
+    }
+
+    #[test]
+    fn test_schema_registry_set_example_unregistered_returns_error() {
+        let registry = SchemaRegistry::new();
+        let result = registry.set_example("nonexistent", json!({}));
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            EventError::InvalidEventType(s) => assert_eq!(s, "nonexistent"),
+            other => panic!("Expected InvalidEventType, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_schema_registry_list_all_is_sorted() {
+        let registry = SchemaRegistry::new();
+        registry.register("c.event", json!({}), "c").unwrap();
+        registry.register("a.event", json!({}), "a").unwrap();
+        registry.register("b.event", json!({}), "b").unwrap();
+        let list = registry.list_all();
+        assert_eq!(list.len(), 3);
+        assert_eq!(list[0].event_type, "a.event");
+        assert_eq!(list[1].event_type, "b.event");
+        assert_eq!(list[2].event_type, "c.event");
+    }
+
+    #[test]
+    fn test_schema_registry_remove_existing() {
+        let registry = SchemaRegistry::new();
+        registry.register("to.remove", json!({}), "desc").unwrap();
+        assert_eq!(registry.count(), 1);
+        let removed = registry.remove("to.remove").unwrap();
+        assert!(removed.is_some());
+        assert_eq!(removed.unwrap().event_type, "to.remove");
+        assert_eq!(registry.count(), 0);
+        assert!(registry.get("to.remove").is_none());
+    }
+
+    #[test]
+    fn test_schema_registry_remove_nonexistent_returns_none() {
+        let registry = SchemaRegistry::new();
+        let result = registry.remove("nonexistent").unwrap();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_schema_registry_export_all_empty() {
+        let registry = SchemaRegistry::new();
+        let exported = registry.export_all();
+        assert!(exported.is_array());
+        assert_eq!(exported.as_array().unwrap().len(), 0);
+    }
+
+    #[test]
+    fn test_schema_registry_import_all_invalid_data_returns_err() {
+        let registry = SchemaRegistry::new();
+        let result = registry.import_all(json!("not an array"));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_schema_registry_get_nonexistent_returns_none() {
+        let registry = SchemaRegistry::new();
+        assert!(registry.get("nonexistent").is_none());
+    }
+
+    #[test]
+    fn test_validate_against_schema_array_items() {
+        let schema = json!({
+            "type": "array",
+            "items": { "type": "integer", "minimum": 0 }
+        });
+        let valid = json!([1, 2, 3]);
+        let result = validate_against_schema(&valid, &schema);
+        assert!(result.valid, "errors: {:?}", result.errors);
+
+        let invalid = json!([1, -2, 3]);
+        let result = validate_against_schema(&invalid, &schema);
+        assert!(!result.valid);
+        assert!(result.errors.iter().any(|e| e.contains("数组元素[1]")));
+    }
+
+    #[test]
+    fn test_validate_against_schema_enum_constraint() {
+        let schema = json!({
+            "type": "string",
+            "enum": ["active", "inactive", "pending"]
+        });
+        let valid = json!("active");
+        assert!(validate_against_schema(&valid, &schema).valid);
+
+        let invalid = json!("unknown");
+        let result = validate_against_schema(&invalid, &schema);
+        assert!(!result.valid);
+        assert!(result.errors.iter().any(|e| e.contains("enum")));
+    }
+
+    #[test]
+    fn test_validate_against_schema_string_max_length() {
+        let schema = json!({
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 5
+        });
+        assert!(validate_against_schema(&json!("abc"), &schema).valid);
+        assert!(!validate_against_schema(&json!("a"), &schema).valid);
+        assert!(!validate_against_schema(&json!("abcdef"), &schema).valid);
+    }
+
+    #[test]
+    fn test_validate_against_schema_number_maximum() {
+        let schema = json!({
+            "type": "number",
+            "minimum": 10,
+            "maximum": 100
+        });
+        assert!(validate_against_schema(&json!(50), &schema).valid);
+        assert!(!validate_against_schema(&json!(5), &schema).valid);
+        assert!(!validate_against_schema(&json!(101), &schema).valid);
+    }
+
+    #[test]
+    fn test_validate_against_schema_additional_properties_false() {
+        let schema = json!({
+            "type": "object",
+            "properties": {
+                "name": { "type": "string" }
+            },
+            "additionalProperties": false
+        });
+        let valid = json!({"name": "Alice"});
+        assert!(validate_against_schema(&valid, &schema).valid);
+
+        let invalid = json!({"name": "Alice", "extra": "field"});
+        let result = validate_against_schema(&invalid, &schema);
+        assert!(!result.valid);
+        assert!(result.errors.iter().any(|e| e.contains("额外字段")));
+    }
+
+    #[test]
+    fn test_json_type_of_all_variants() {
+        assert_eq!(json_type_of(&json!(null)), "null");
+        assert_eq!(json_type_of(&json!(true)), "boolean");
+        assert_eq!(json_type_of(&json!(42)), "integer");
+        assert_eq!(json_type_of(&json!(42u64)), "integer");
+        assert_eq!(json_type_of(&json!(3.14)), "number");
+        assert_eq!(json_type_of(&json!("hello")), "string");
+        assert_eq!(json_type_of(&json!([1, 2])), "array");
+        assert_eq!(json_type_of(&json!({"k": "v"})), "object");
+    }
+
+    #[test]
+    fn test_check_type_number_accepts_integer() {
+        // "number" 类型应接受 integer（特例）
+        assert!(check_type(&json!(42), &json!("number")).is_ok());
+        assert!(check_type(&json!(3.14), &json!("number")).is_ok());
+        // "integer" 类型不接受浮点数
+        assert!(check_type(&json!(42), &json!("integer")).is_ok());
+        assert!(check_type(&json!(3.14), &json!("integer")).is_err());
+        // 类型不匹配
+        assert!(check_type(&json!("str"), &json!("integer")).is_err());
+    }
 }

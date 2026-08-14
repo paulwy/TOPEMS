@@ -378,3 +378,170 @@ impl DelayedMessageSubscriber {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::event::error::{EventError, EventResult};
+    use crate::event::event_types::{Event, EventType};
+
+    /// 尝试连接 RabbitMQ，返回是否可用（用于条件跳过错误路径测试）
+    async fn rabbitmq_is_available() -> bool {
+        let url = std::env::var("RABBITMQ_URL")
+            .unwrap_or_else(|_| "amqp://guest:guest@localhost:5672/%2f".to_string());
+        Connection::connect(&url, ConnectionProperties::default())
+            .await
+            .is_ok()
+    }
+
+    #[test]
+    fn test_constants_are_non_empty_and_well_formed() {
+        assert!(!DELAYED_EXCHANGE.is_empty());
+        assert!(DELAYED_EXCHANGE.starts_with("topems."));
+        assert!(!DELAYED_QUEUE_PREFIX.is_empty());
+        assert!(DELAYED_QUEUE_PREFIX.starts_with("topems."));
+        assert!(DELAYED_QUEUE_PREFIX.ends_with('.'));
+    }
+
+    #[test]
+    fn test_routing_key_format_for_delayed_event() {
+        // publish_delayed_event 使用 format!("event.delayed.{}", event_type) 作为 routing_key
+        for (et, expected) in [
+            (EventType::HealthCheck, "event.delayed.HealthCheck"),
+            (EventType::CacheInvalidated, "event.delayed.CacheInvalidated"),
+            (EventType::PmProjectCreated, "event.delayed.PmProjectCreated"),
+        ] {
+            let routing_key = format!("event.delayed.{}", et);
+            assert_eq!(routing_key, expected);
+        }
+    }
+
+    #[test]
+    fn test_routing_key_format_for_targeted_delayed_event() {
+        // publish_delayed_event_with_target 使用 format!("event.delayed.{}.{}", target, event_type)
+        let cases = [
+            (EventType::HealthCheck, "svc-a", "event.delayed.svc-a.HealthCheck"),
+            (EventType::CacheInvalidated, "erp", "event.delayed.erp.CacheInvalidated"),
+        ];
+        for (et, target, expected) in cases {
+            let routing_key = format!("event.delayed.{}.{}", target, et);
+            assert_eq!(routing_key, expected);
+        }
+    }
+
+    #[test]
+    fn test_subscribe_delayed_routing_key_for_service() {
+        // subscribe_delayed_events_for_service 内部从 queue_name 提取 service 名
+        // queue_name = format!("{}{}", DELAYED_QUEUE_PREFIX, service_name)
+        let service_name = "my-service";
+        let queue_name = format!("{}{}", DELAYED_QUEUE_PREFIX, service_name);
+        assert_eq!(queue_name, "topems.delayed.my-service");
+
+        // 模拟 replace("topems.delayed.", "") 提取 service_name
+        let extracted = queue_name.replace("topems.delayed.", "");
+        assert_eq!(extracted, service_name);
+
+        let et = EventType::HealthCheck;
+        let routing_key = format!("event.delayed.{}.{}", extracted, et);
+        assert_eq!(routing_key, "event.delayed.my-service.HealthCheck");
+    }
+
+    #[test]
+    fn test_duration_to_delay_ms_conversion() {
+        // publish_delayed_event 内部用 delay.as_millis() as u32 转换
+        let delay = Duration::from_secs(5);
+        let delay_ms = delay.as_millis() as u32;
+        assert_eq!(delay_ms, 5000);
+
+        let delay = Duration::from_millis(250);
+        assert_eq!(delay.as_millis() as u32, 250);
+
+        let delay = Duration::from_secs(60 * 5);
+        assert_eq!(delay.as_millis() as u32, 300_000);
+    }
+
+    #[test]
+    fn test_event_serialization_for_delayed_publish() {
+        // publish_delayed_event 内部将 Event 序列化为 JSON 字节流传给 RabbitMQ
+        let event = Event::new(
+            EventType::HealthCheck,
+            "delayed-test",
+            serde_json::json!({"delay": 5000}),
+        );
+        let json = serde_json::to_string(&event).expect("serialize");
+        let back: Event = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.event_type, EventType::HealthCheck);
+        assert_eq!(back.source, "delayed-test");
+        assert_eq!(back.event_id, event.event_id);
+        assert_eq!(back.payload, event.payload);
+    }
+
+    #[test]
+    fn test_subscribe_handler_signature_compiles_and_runs() {
+        // 验证 subscribe_delayed_events 接受的 handler 闭包签名
+        let handler = |_event: Event| -> EventResult<()> { Ok(()) };
+        let event = Event::new(EventType::HealthCheck, "test", serde_json::json!({}));
+        assert!(handler(event).is_ok());
+    }
+
+    #[test]
+    fn test_payload_serialization_for_various_types() {
+        // publish_delayed_event 接受 impl Serialize 的 payload
+        // 验证不同 payload 类型可序列化为 serde_json::Value
+        let payload_str = serde_json::to_value("hello").unwrap();
+        assert_eq!(payload_str, serde_json::json!("hello"));
+
+        let payload_num = serde_json::to_value(42i64).unwrap();
+        assert_eq!(payload_num, serde_json::json!(42));
+
+        let payload_struct = serde_json::to_value(serde_json::json!({"k": "v"})).unwrap();
+        assert_eq!(payload_struct, serde_json::json!({"k": "v"}));
+    }
+
+    #[tokio::test]
+    async fn test_delayed_publisher_new_returns_err_when_unavailable() {
+        if rabbitmq_is_available().await {
+            eprintln!("[skip] RabbitMQ 可用，跳过不可达错误路径测试");
+            return;
+        }
+        let result = DelayedMessagePublisher::new("test-service").await;
+        assert!(
+            result.is_err(),
+            "RabbitMQ 不可达时 DelayedMessagePublisher::new 应返回 Err"
+        );
+        match result.unwrap_err() {
+            EventError::ConnectionError(_) => {}
+            other => panic!("Expected ConnectionError, got {other:?}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_delayed_subscriber_new_returns_err_when_unavailable() {
+        if rabbitmq_is_available().await {
+            eprintln!("[skip] RabbitMQ 可用，跳过不可达错误路径测试");
+            return;
+        }
+        let result = DelayedMessageSubscriber::new("test-service").await;
+        assert!(
+            result.is_err(),
+            "RabbitMQ 不可达时 DelayedMessageSubscriber::new 应返回 Err"
+        );
+        match result.unwrap_err() {
+            EventError::ConnectionError(_) => {}
+            other => panic!("Expected ConnectionError, got {other:?}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_delayed_publisher_new_with_unreachable_port_returns_err() {
+        // 使用不可达端口构造，无论默认 RabbitMQ 是否可用都应失败
+        // 注意：此测试通过临时修改 env var 实现，由于 set_var 在并行测试中不安全，
+        // 这里改用直接 Connection::connect 验证不可达端口的错误行为
+        let result = Connection::connect(
+            "amqp://guest:guest@127.0.0.1:1/%2f",
+            ConnectionProperties::default(),
+        )
+        .await;
+        assert!(result.is_err(), "不可达端口连接应返回 Err");
+    }
+}

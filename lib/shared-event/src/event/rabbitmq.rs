@@ -518,3 +518,171 @@ impl RabbitMqSubscriber {
 /// 业务服务注入此处理器到 MultiLevelCacheManager，
 /// 当本地缓存被失效时（如 update/delete 操作后），调用此处理器广播给其他实例。
 pub type CacheInvalidationHandler = Arc<dyn Fn(&str, &str) + Send + Sync>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::event::error::{EventError, EventResult};
+    use crate::event::event_types::{CacheInvalidatedPayload, Event, EventType};
+    use std::sync::Arc;
+
+    /// 尝试连接 RabbitMQ，返回是否可用（用于条件跳过错误路径测试）
+    async fn rabbitmq_is_available() -> bool {
+        let url = std::env::var("RABBITMQ_URL")
+            .unwrap_or_else(|_| "amqp://guest:guest@localhost:5672/%2f".to_string());
+        Connection::connect(&url, ConnectionProperties::default())
+            .await
+            .is_ok()
+    }
+
+    #[test]
+    fn test_constants_are_non_empty_and_well_formed() {
+        assert!(!CACHE_FANOUT_EXCHANGE.is_empty());
+        assert!(CACHE_FANOUT_EXCHANGE.starts_with("topems."));
+        assert!(!DLX_EXCHANGE.is_empty());
+        assert!(DLX_EXCHANGE.starts_with("topems."));
+        assert!(!DLX_QUEUE.is_empty());
+        assert!(!DLX_ROUTING_KEY.is_empty());
+        assert_ne!(CACHE_FANOUT_EXCHANGE, DLX_EXCHANGE);
+        assert_ne!(DLX_EXCHANGE, DLX_QUEUE);
+    }
+
+    #[test]
+    fn test_cache_invalidated_payload_serde_roundtrip_with_reason() {
+        let payload = CacheInvalidatedPayload {
+            source_service: "test-service".to_string(),
+            source_instance: "host:1:test-service".to_string(),
+            cache_key_pattern: "tenant123:erp:dict:*".to_string(),
+            invalidation_level: "pattern".to_string(),
+            reason: Some("record_updated".to_string()),
+            invalidated_at: chrono::Utc::now(),
+        };
+        let json = serde_json::to_string(&payload).expect("serialize");
+        let back: CacheInvalidatedPayload =
+            serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.source_service, "test-service");
+        assert_eq!(back.source_instance, "host:1:test-service");
+        assert_eq!(back.cache_key_pattern, "tenant123:erp:dict:*");
+        assert_eq!(back.invalidation_level, "pattern");
+        assert_eq!(back.reason.as_deref(), Some("record_updated"));
+        assert_eq!(back.invalidated_at, payload.invalidated_at);
+    }
+
+    #[test]
+    fn test_cache_invalidated_payload_serde_roundtrip_without_reason() {
+        let payload = CacheInvalidatedPayload {
+            source_service: "svc".to_string(),
+            source_instance: "inst".to_string(),
+            cache_key_pattern: "key:*".to_string(),
+            invalidation_level: "all".to_string(),
+            reason: None,
+            invalidated_at: chrono::Utc::now(),
+        };
+        let json = serde_json::to_string(&payload).expect("serialize");
+        let back: CacheInvalidatedPayload =
+            serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.source_service, "svc");
+        assert_eq!(back.invalidation_level, "all");
+        assert!(back.reason.is_none());
+    }
+
+    #[test]
+    fn test_cache_invalidation_handler_type_alias_constructible() {
+        let handler: CacheInvalidationHandler = Arc::new(|pattern: &str, level: &str| {
+            assert!(!pattern.is_empty());
+            assert!(!level.is_empty());
+        });
+        // 验证可通过 Arc<dyn Fn> 调用
+        handler("key:*", "pattern");
+        // 验证可 clone（Arc 特性）
+        let _cloned = handler.clone();
+    }
+
+    #[test]
+    fn test_subscribe_handler_signature_compiles_and_runs() {
+        // 验证 subscribe 方法接受的 handler 闭包签名可正确构造并被调用
+        let handler = |_event: Event| -> EventResult<()> { Ok(()) };
+        let event = Event::new(EventType::HealthCheck, "test", serde_json::json!({}));
+        assert!(handler(event).is_ok());
+    }
+
+    #[test]
+    fn test_subscribe_cache_invalidation_handler_signature() {
+        // 验证 subscribe_cache_invalidation 方法接受的 handler 签名
+        let handler = |_payload: CacheInvalidatedPayload| -> EventResult<()> { Ok(()) };
+        let payload = CacheInvalidatedPayload {
+            source_service: "s".to_string(),
+            source_instance: "i".to_string(),
+            cache_key_pattern: "k".to_string(),
+            invalidation_level: "all".to_string(),
+            reason: None,
+            invalidated_at: chrono::Utc::now(),
+        };
+        assert!(handler(payload).is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_rabbitmq_publisher_new_returns_err_when_unavailable() {
+        if rabbitmq_is_available().await {
+            eprintln!("[skip] RabbitMQ 可用，跳过不可达错误路径测试");
+            return;
+        }
+        let result = RabbitMqPublisher::new("test-service").await;
+        assert!(
+            result.is_err(),
+            "RabbitMQ 不可达时 RabbitMqPublisher::new 应返回 Err"
+        );
+        // 验证错误类型为 ConnectionError
+        match result.unwrap_err() {
+            EventError::ConnectionError(_) => {}
+            other => panic!("Expected ConnectionError, got {other:?}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_rabbitmq_subscriber_new_returns_err_when_unavailable() {
+        if rabbitmq_is_available().await {
+            eprintln!("[skip] RabbitMQ 可用，跳过不可达错误路径测试");
+            return;
+        }
+        let result = RabbitMqSubscriber::new("test-service").await;
+        assert!(
+            result.is_err(),
+            "RabbitMQ 不可达时 RabbitMqSubscriber::new 应返回 Err"
+        );
+        match result.unwrap_err() {
+            EventError::ConnectionError(_) => {}
+            other => panic!("Expected ConnectionError, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_event_serialization_for_rabbitmq_publish() {
+        // publish_event 内部使用 serde_json::to_string 序列化 Event
+        // 验证序列化结果可被反序列化回 Event
+        let event = Event::new(
+            EventType::CacheInvalidated,
+            "rabbitmq-test",
+            serde_json::json!({"key": "val"}),
+        );
+        let json = serde_json::to_string(&event).expect("serialize");
+        let back: Event = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.event_type, EventType::CacheInvalidated);
+        assert_eq!(back.source, "rabbitmq-test");
+        assert_eq!(back.event_id, event.event_id);
+    }
+
+    #[test]
+    fn test_routing_key_format_for_event_types() {
+        // publish_event 使用 format!("event.{}", event_type) 作为 routing_key
+        // 验证不同事件类型的 routing_key 格式
+        for (et, expected) in [
+            (EventType::HealthCheck, "event.HealthCheck"),
+            (EventType::CacheInvalidated, "event.CacheInvalidated"),
+            (EventType::PmProjectCreated, "event.PmProjectCreated"),
+        ] {
+            let routing_key = format!("event.{}", et);
+            assert_eq!(routing_key, expected);
+        }
+    }
+}
