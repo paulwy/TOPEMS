@@ -109,3 +109,52 @@ impl AnalysisApi {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn any_uuid() -> Uuid {
+        Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    }
+
+    fn sample_claims(tenant_id: Option<String>) -> Claims {
+        Claims {
+            sub: "00000000-0000-0000-0000-000000000001".into(),
+            username: "tester".into(),
+            role: "user".into(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id,
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    #[test]
+    fn test_get_tenant_id_with_valid_id() {
+        let claims = sample_claims(Some(any_uuid().to_string()));
+        let tid = get_tenant_id(&claims);
+        assert_eq!(tid, any_uuid());
+    }
+
+    #[test]
+    fn test_get_tenant_id_with_none_returns_nil() {
+        let claims = sample_claims(None);
+        let tid = get_tenant_id(&claims);
+        assert_eq!(tid, Uuid::nil());
+    }
+
+    #[test]
+    fn test_get_tenant_id_with_invalid_returns_nil() {
+        let claims = sample_claims(Some("invalid-uuid".to_string()));
+        let tid = get_tenant_id(&claims);
+        assert_eq!(tid, Uuid::nil());
+    }
+}

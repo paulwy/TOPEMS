@@ -184,3 +184,78 @@ impl MultimodalApi {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── ImageQualityRequest ──
+
+    #[test]
+    fn test_image_quality_request_deserialize() {
+        let req: ImageQualityRequest =
+            serde_json::from_str("{\"image_base64\":\"iVBORw0KGgo=\"}").unwrap();
+        assert_eq!(req.image_base64, "iVBORw0KGgo=");
+    }
+
+    #[test]
+    fn test_image_quality_request_empty_base64() {
+        let req: ImageQualityRequest = serde_json::from_str("{\"image_base64\":\"\"}").unwrap();
+        assert!(req.image_base64.is_empty());
+    }
+
+    #[test]
+    fn test_image_quality_request_debug() {
+        let req = ImageQualityRequest {
+            image_base64: "abc".into(),
+        };
+        let debug_str = format!("{:?}", req);
+        assert!(debug_str.contains("ImageQualityRequest"));
+    }
+
+    // ── ChartAnalysisRequest ──
+
+    #[test]
+    fn test_chart_analysis_request_deserialize() {
+        let req: ChartAnalysisRequest =
+            serde_json::from_str("{\"image_base64\":\"base64data==\"}").unwrap();
+        assert_eq!(req.image_base64, "base64data==");
+    }
+
+    #[test]
+    fn test_chart_analysis_request_deserialize_long() {
+        let req: ChartAnalysisRequest =
+            serde_json::from_str("{\"image_base64\":\"verylongbase64stringdata==\"}").unwrap();
+        assert_eq!(req.image_base64, "verylongbase64stringdata==");
+    }
+
+    // ── ImageCompareRequest ──
+
+    #[test]
+    fn test_image_compare_request_deserialize() {
+        let req: ImageCompareRequest =
+            serde_json::from_str("{\"image1_base64\":\"img1==\",\"image2_base64\":\"img2==\"}")
+                .unwrap();
+        assert_eq!(req.image1_base64, "img1==");
+        assert_eq!(req.image2_base64, "img2==");
+    }
+
+    #[test]
+    fn test_image_compare_request_both_empty() {
+        let req: ImageCompareRequest =
+            serde_json::from_str("{\"image1_base64\":\"\",\"image2_base64\":\"\"}").unwrap();
+        assert!(req.image1_base64.is_empty());
+        assert!(req.image2_base64.is_empty());
+    }
+
+    #[test]
+    fn test_image_compare_request_debug() {
+        let req = ImageCompareRequest {
+            image1_base64: "a".into(),
+            image2_base64: "b".into(),
+        };
+        let debug_str = format!("{:?}", req);
+        assert!(debug_str.contains("ImageCompareRequest"));
+        assert!(debug_str.contains("image1_base64"));
+    }
+}

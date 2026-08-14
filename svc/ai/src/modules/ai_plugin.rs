@@ -224,3 +224,143 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_permission() -> Permission {
+        Permission {
+            code: "ai:read".into(),
+            name: "读取".into(),
+            description: "读取权限".into(),
+        }
+    }
+
+    // ── Permission serde ──
+
+    #[test]
+    fn test_permission_serde_roundtrip() {
+        let p = sample_permission();
+        let json = serde_json::to_string(&p).unwrap();
+        let back: Permission = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.code, "ai:read");
+        assert_eq!(back.name, "读取");
+    }
+
+    #[test]
+    fn test_permission_clone_eq() {
+        let p1 = sample_permission();
+        let p2 = p1.clone();
+        assert_eq!(p1.code, p2.code);
+    }
+
+    #[test]
+    fn test_permission_debug_format() {
+        let p = sample_permission();
+        let s = format!("{:?}", p);
+        assert!(s.contains("ai:read"));
+    }
+
+    // ── PluginHealth ──
+
+    #[test]
+    fn test_plugin_health_serde_roundtrip() {
+        let h = PluginHealth {
+            status: "healthy".into(),
+            database: true,
+            vector_service: false,
+        };
+        let json = serde_json::to_string(&h).unwrap();
+        let back: PluginHealth = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.status, "healthy");
+        assert!(back.database);
+        assert!(!back.vector_service);
+    }
+
+    #[test]
+    fn test_plugin_health_clone() {
+        let h1 = PluginHealth {
+            status: "degraded".into(),
+            database: false,
+            vector_service: false,
+        };
+        let h2 = h1.clone();
+        assert_eq!(h1.status, h2.status);
+    }
+
+    // ── PluginInfo serde ──
+
+    #[test]
+    fn test_plugin_info_serde_roundtrip() {
+        let info = PluginInfo {
+            code: "ai".into(),
+            name: "AI".into(),
+            version: "1.0.0".into(),
+            description: "desc".into(),
+            author: "TOPEMS".into(),
+            category: "other".into(),
+            plugin_type: "ai".into(),
+            runtime_url: "http://localhost:8013".into(),
+            permissions: vec![sample_permission()],
+            dependencies: vec!["core".into()],
+            navigation_config: Some(serde_json::json!([{"code": "ai-search"}])),
+        };
+        let json = serde_json::to_string(&info).unwrap();
+        let back: PluginInfo = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.code, "ai");
+        assert_eq!(back.permissions.len(), 1);
+        assert_eq!(back.dependencies, vec!["core".to_string()]);
+        assert!(back.navigation_config.is_some());
+    }
+
+    #[test]
+    fn test_plugin_info_default_empty_deps() {
+        // 默认 dependencies 为 vec![] （由 #[serde(default)] 处理）
+        let json = r#"{
+            "code":"x","name":"x","version":"0","description":"",
+            "author":"","category":"","plugin_type":"","runtime_url":"",
+            "permissions":[]
+        }"#;
+        let info: PluginInfo = serde_json::from_str(json).unwrap();
+        assert!(info.dependencies.is_empty());
+        assert!(info.navigation_config.is_none());
+    }
+
+    #[test]
+    fn test_plugin_info_clone() {
+        let info = PluginInfo {
+            code: "ai".into(),
+            name: "AI".into(),
+            version: "1".into(),
+            description: String::new(),
+            author: String::new(),
+            category: String::new(),
+            plugin_type: String::new(),
+            runtime_url: String::new(),
+            permissions: vec![],
+            dependencies: vec![],
+            navigation_config: None,
+        };
+        let cloned = info.clone();
+        assert_eq!(cloned.code, info.code);
+    }
+
+    // ── get_plugin_info handler ──
+
+    #[tokio::test]
+    async fn test_get_plugin_info_returns_response() {
+        // 直接调用 handler（不依赖 State）
+        let resp = get_plugin_info().await;
+        let body = resp.0.data.expect("plugin info should be present");
+        assert_eq!(body.code, "ai");
+        assert!(!body.permissions.is_empty());
+    }
+
+    // ── create_routes ──
+
+    #[test]
+    fn test_create_routes_returns_router() {
+        let _router = create_routes();
+    }
+}

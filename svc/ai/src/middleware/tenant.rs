@@ -76,4 +76,75 @@ mod tests {
         assert_eq!(ctx.tenant_id, tenant_id);
         assert_eq!(ctx.user_id, user_id);
     }
+
+    #[test]
+    fn test_tenant_context_with_nil_uuids() {
+        let ctx = TenantContext {
+            tenant_id: Uuid::nil(),
+            user_id: Uuid::nil(),
+        };
+        assert_eq!(ctx.tenant_id, Uuid::nil());
+        assert_eq!(ctx.user_id, Uuid::nil());
+    }
+
+    #[test]
+    fn test_extract_tenant_id() {
+        let tenant_id = Uuid::new_v4();
+        let ctx = TenantContext {
+            tenant_id,
+            user_id: Uuid::new_v4(),
+        };
+        assert_eq!(extract_tenant_id(&ctx), tenant_id);
+    }
+
+    #[test]
+    fn test_extract_tenant_id_nil() {
+        let ctx = TenantContext {
+            tenant_id: Uuid::nil(),
+            user_id: Uuid::new_v4(),
+        };
+        assert_eq!(extract_tenant_id(&ctx), Uuid::nil());
+    }
+
+    #[test]
+    fn test_tenant_context_clone() {
+        let ctx = TenantContext {
+            tenant_id: Uuid::new_v4(),
+            user_id: Uuid::new_v4(),
+        };
+        let cloned = ctx.clone();
+        assert_eq!(cloned.tenant_id, ctx.tenant_id);
+        assert_eq!(cloned.user_id, ctx.user_id);
+    }
+
+    #[test]
+    fn test_tenant_context_debug() {
+        let ctx = TenantContext {
+            tenant_id: Uuid::nil(),
+            user_id: Uuid::nil(),
+        };
+        let debug_str = format!("{:?}", ctx);
+        assert!(debug_str.contains("TenantContext"));
+    }
+
+    #[test]
+    fn test_tenant_context_into_extension() {
+        let ctx = TenantContext {
+            tenant_id: Uuid::new_v4(),
+            user_id: Uuid::new_v4(),
+        };
+        let extension = ctx.into_extension();
+        // Extension wraps the value; just verify it was created
+        let _ = extension;
+    }
+
+    #[test]
+    fn test_tenant_request_struct() {
+        let ctx = TenantContext {
+            tenant_id: Uuid::new_v4(),
+            user_id: Uuid::new_v4(),
+        };
+        let req = TenantRequest { ctx: ctx.clone() };
+        assert_eq!(req.ctx.tenant_id, ctx.tenant_id);
+    }
 }

@@ -71,3 +71,87 @@ pub async fn vector_search(query: &str, top_k: usize) -> Vec<(VectorEmbedding, f
         Vec::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cosine_similarity_identical_vectors() {
+        let v = vec![1.0, 2.0, 3.0];
+        let sim = cosine_similarity(&v, &v);
+        assert!((sim - 1.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_cosine_similarity_orthogonal_vectors() {
+        let a = vec![1.0, 0.0];
+        let b = vec![0.0, 1.0];
+        let sim = cosine_similarity(&a, &b);
+        assert!(sim.abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_cosine_similarity_opposite_vectors() {
+        let a = vec![1.0, 1.0];
+        let b = vec![-1.0, -1.0];
+        let sim = cosine_similarity(&a, &b);
+        assert!((sim - (-1.0)).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_cosine_similarity_empty_vectors() {
+        let a: Vec<f32> = vec![];
+        let b: Vec<f32> = vec![];
+        assert_eq!(cosine_similarity(&a, &b), 0.0);
+    }
+
+    #[test]
+    fn test_cosine_similarity_different_lengths() {
+        let a = vec![1.0, 2.0];
+        let b = vec![1.0, 2.0, 3.0];
+        assert_eq!(cosine_similarity(&a, &b), 0.0);
+    }
+
+    #[test]
+    fn test_cosine_similarity_zero_vectors() {
+        let a = vec![0.0, 0.0, 0.0];
+        let b = vec![1.0, 2.0, 3.0];
+        assert_eq!(cosine_similarity(&a, &b), 0.0);
+    }
+
+    #[test]
+    fn test_cosine_similarity_partial_similarity() {
+        let a = vec![1.0, 0.0, 0.0];
+        let b = vec![1.0, 1.0, 0.0];
+        let sim = cosine_similarity(&a, &b);
+        // cos(45°) = 1/√2 ≈ 0.7071
+        assert!((sim - (1.0 / 2.0_f64.sqrt())).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_cosine_similarity_negative_values() {
+        let a = vec![-1.0, 2.0, -3.0];
+        let b = vec![-1.0, 2.0, -3.0];
+        let sim = cosine_similarity(&a, &b);
+        assert!((sim - 1.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_cosine_similarity_single_element() {
+        let a = vec![5.0_f32];
+        let b = vec![5.0_f32];
+        let sim = cosine_similarity(&a, &b);
+        assert!((sim - 1.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_cosine_similarity_known_value() {
+        let a = vec![1.0, 2.0, 3.0];
+        let b = vec![4.0, 5.0, 6.0];
+        let sim = cosine_similarity(&a, &b);
+        // dot = 4+10+18 = 32; |a|=√14, |b|=√77
+        let expected = 32.0 / (14.0_f64.sqrt() * 77.0_f64.sqrt());
+        assert!((sim - expected).abs() < 1e-6);
+    }
+}

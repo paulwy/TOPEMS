@@ -750,3 +750,174 @@ impl RecommendationService {
         Ok(enhanced_items)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn any_uuid() -> Uuid {
+        Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    }
+
+    // ── RecommendationRequest ──
+
+    #[test]
+    fn test_recommendation_request_serde_roundtrip() {
+        let req = RecommendationRequest {
+            user_id: Some(any_uuid()),
+            tenant_id: any_uuid(),
+            context: serde_json::json!({"query": "rust"}),
+            recommendation_type: "documents".into(),
+            top_k: Some(10),
+            filters: Some(serde_json::json!({"category": "tech"})),
+        };
+        let json = serde_json::to_string(&req).unwrap();
+        let back: RecommendationRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.recommendation_type, "documents");
+        assert_eq!(back.top_k, Some(10));
+        assert!(back.user_id.is_some());
+    }
+
+    #[test]
+    fn test_recommendation_request_minimal() {
+        let req: RecommendationRequest = serde_json::from_str(
+            "{\"tenant_id\":\"00000000-0000-0000-0000-000000000001\",\"context\":{},\"recommendation_type\":\"general\"}",
+        )
+        .unwrap();
+        assert!(req.user_id.is_none());
+        assert!(req.top_k.is_none());
+        assert!(req.filters.is_none());
+    }
+
+    // ── RecommendationItem ──
+
+    #[test]
+    fn test_recommendation_item_serde_roundtrip() {
+        let item = RecommendationItem {
+            id: "doc-1".into(),
+            title: "Rust 入门".into(),
+            description: Some("Rust 基础教程".into()),
+            item_type: "document".into(),
+            score: 0.92,
+            metadata: Some(serde_json::json!({"category": "programming"})),
+        };
+        let json = serde_json::to_string(&item).unwrap();
+        let back: RecommendationItem = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "doc-1");
+        assert!((back.score - 0.92).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_recommendation_item_minimal() {
+        let item = RecommendationItem {
+            id: "x".into(),
+            title: "t".into(),
+            description: None,
+            item_type: "type".into(),
+            score: 0.0,
+            metadata: None,
+        };
+        let json = serde_json::to_string(&item).unwrap();
+        let back: RecommendationItem = serde_json::from_str(&json).unwrap();
+        assert!(back.description.is_none());
+        assert!(back.metadata.is_none());
+    }
+
+    #[test]
+    fn test_recommendation_item_clone() {
+        let item = RecommendationItem {
+            id: "a".into(),
+            title: "b".into(),
+            description: Some("c".into()),
+            item_type: "d".into(),
+            score: 1.0,
+            metadata: None,
+        };
+        let cloned = item.clone();
+        assert_eq!(cloned.id, item.id);
+        assert_eq!(cloned.score, item.score);
+    }
+
+    // ── RecommendationResponse ──
+
+    #[test]
+    fn test_recommendation_response_serde_roundtrip() {
+        let resp = RecommendationResponse {
+            items: vec![RecommendationItem {
+                id: "1".into(),
+                title: "推荐1".into(),
+                description: None,
+                item_type: "doc".into(),
+                score: 0.9,
+                metadata: None,
+            }],
+            recommendation_type: "documents".into(),
+            total_found: 1,
+            model: "TOPEMS-AI".into(),
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        let back: RecommendationResponse = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.items.len(), 1);
+        assert_eq!(back.total_found, 1);
+        assert_eq!(back.model, "TOPEMS-AI");
+    }
+
+    #[test]
+    fn test_recommendation_response_empty() {
+        let resp = RecommendationResponse {
+            items: vec![],
+            recommendation_type: "general".into(),
+            total_found: 0,
+            model: "TOPEMS-AI".into(),
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        let back: RecommendationResponse = serde_json::from_str(&json).unwrap();
+        assert!(back.items.is_empty());
+    }
+
+    // ── UserProfile ──
+
+    #[test]
+    fn test_user_profile_serde_roundtrip() {
+        let profile = UserProfile {
+            user_id: any_uuid(),
+            preferences: serde_json::json!({"interests": ["tech", "business"]}),
+            recent_interactions: vec![serde_json::json!({"action": "view"})],
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        };
+        let json = serde_json::to_string(&profile).unwrap();
+        let back: UserProfile = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.user_id, any_uuid());
+        assert_eq!(back.recent_interactions.len(), 1);
+    }
+
+    #[test]
+    fn test_user_profile_empty_preferences() {
+        let profile = UserProfile {
+            user_id: any_uuid(),
+            preferences: serde_json::json!({}),
+            recent_interactions: vec![],
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        };
+        let json = serde_json::to_string(&profile).unwrap();
+        let back: UserProfile = serde_json::from_str(&json).unwrap();
+        assert!(back.recent_interactions.is_empty());
+    }
+
+    #[test]
+    fn test_user_profile_clone_debug() {
+        let profile = UserProfile {
+            user_id: any_uuid(),
+            preferences: serde_json::json!({}),
+            recent_interactions: vec![],
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        };
+        let cloned = profile.clone();
+        assert_eq!(cloned.user_id, profile.user_id);
+        let debug_str = format!("{:?}", profile);
+        assert!(debug_str.contains("UserProfile"));
+    }
+}

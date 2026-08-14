@@ -139,3 +139,142 @@ pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::
     run_schema_defense(pool, SERVICE_SCHEMA, TABLE_DEFS, SERVICE_TAG).await?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_service_schema_is_ai() {
+        assert_eq!(SERVICE_SCHEMA, "ai");
+    }
+
+    #[test]
+    fn test_service_tag_is_ai() {
+        assert_eq!(SERVICE_TAG, "ai");
+    }
+
+    #[test]
+    fn test_table_defs_has_four_tables() {
+        assert_eq!(TABLE_DEFS.len(), 4, "should have exactly 4 tables");
+    }
+
+    #[test]
+    fn test_table_defs_contains_expected_tables() {
+        let table_names: Vec<&str> = TABLE_DEFS.iter().map(|(name, _)| *name).collect();
+        assert!(table_names.contains(&"documents"));
+        assert!(table_names.contains(&"document_chunks"));
+        assert!(table_names.contains(&"qa_history"));
+        assert!(table_names.contains(&"analysis_results"));
+    }
+
+    #[test]
+    fn test_documents_table_has_tenant_id() {
+        let documents_def = TABLE_DEFS
+            .iter()
+            .find(|(name, _)| *name == "documents")
+            .expect("documents table should exist");
+        let col_names: Vec<&str> = documents_def.1.iter().map(|(col, _)| *col).collect();
+        assert!(col_names.contains(&"tenant_id"));
+        assert!(col_names.contains(&"title"));
+        assert!(col_names.contains(&"status"));
+    }
+
+    #[test]
+    fn test_document_chunks_table_has_embedding() {
+        let chunks_def = TABLE_DEFS
+            .iter()
+            .find(|(name, _)| *name == "document_chunks")
+            .expect("document_chunks table should exist");
+        let col_names: Vec<&str> = chunks_def.1.iter().map(|(col, _)| *col).collect();
+        assert!(col_names.contains(&"embedding"));
+        assert!(col_names.contains(&"content"));
+        assert!(col_names.contains(&"chunk_index"));
+    }
+
+    #[test]
+    fn test_qa_history_table_has_question_and_answer() {
+        let qa_def = TABLE_DEFS
+            .iter()
+            .find(|(name, _)| *name == "qa_history")
+            .expect("qa_history table should exist");
+        let col_names: Vec<&str> = qa_def.1.iter().map(|(col, _)| *col).collect();
+        assert!(col_names.contains(&"question"));
+        assert!(col_names.contains(&"answer"));
+        assert!(col_names.contains(&"feedback"));
+    }
+
+    #[test]
+    fn test_analysis_results_table_has_analysis_type() {
+        let analysis_def = TABLE_DEFS
+            .iter()
+            .find(|(name, _)| *name == "analysis_results")
+            .expect("analysis_results table should exist");
+        let col_names: Vec<&str> = analysis_def.1.iter().map(|(col, _)| *col).collect();
+        assert!(col_names.contains(&"analysis_type"));
+        assert!(col_names.contains(&"input_text"));
+        assert!(col_names.contains(&"result"));
+    }
+
+    #[test]
+    fn test_all_tables_have_tenant_id() {
+        for (table_name, cols) in TABLE_DEFS.iter() {
+            let col_names: Vec<&str> = cols.iter().map(|(col, _)| *col).collect();
+            assert!(
+                col_names.contains(&"tenant_id"),
+                "table '{}' should have tenant_id column",
+                table_name
+            );
+        }
+    }
+
+    #[test]
+    fn test_all_tables_have_organization_id() {
+        for (table_name, cols) in TABLE_DEFS.iter() {
+            let col_names: Vec<&str> = cols.iter().map(|(col, _)| *col).collect();
+            assert!(
+                col_names.contains(&"organization_id"),
+                "table '{}' should have organization_id column",
+                table_name
+            );
+        }
+    }
+
+    #[test]
+    fn test_all_tables_have_created_at() {
+        for (table_name, cols) in TABLE_DEFS.iter() {
+            let col_names: Vec<&str> = cols.iter().map(|(col, _)| *col).collect();
+            assert!(
+                col_names.contains(&"created_at"),
+                "table '{}' should have created_at column",
+                table_name
+            );
+        }
+    }
+
+    #[test]
+    fn test_all_tables_have_deleted_at() {
+        for (table_name, cols) in TABLE_DEFS.iter() {
+            let col_names: Vec<&str> = cols.iter().map(|(col, _)| *col).collect();
+            assert!(
+                col_names.contains(&"deleted_at"),
+                "table '{}' should have deleted_at column",
+                table_name
+            );
+        }
+    }
+
+    #[test]
+    fn test_column_types_are_non_empty() {
+        for (table_name, cols) in TABLE_DEFS.iter() {
+            for (col_name, col_type) in cols.iter() {
+                assert!(
+                    !col_type.is_empty(),
+                    "column '{}' in table '{}' has empty type",
+                    col_name,
+                    table_name
+                );
+            }
+        }
+    }
+}

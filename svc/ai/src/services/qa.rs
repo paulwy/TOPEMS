@@ -1010,3 +1010,98 @@ pub struct IntentResult {
     pub intent: String,
     pub entities: Vec<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── QuestionType ──
+
+    #[test]
+    fn test_question_type_serde_all_variants() {
+        let variants = vec![
+            QuestionType::Factual,
+            QuestionType::Procedural,
+            QuestionType::Analytical,
+            QuestionType::Advisory,
+            QuestionType::Confirmation,
+            QuestionType::Comparative,
+            QuestionType::Predictive,
+            QuestionType::Diagnostic,
+            QuestionType::Definition,
+            QuestionType::Unknown,
+        ];
+        for v in &variants {
+            let json = serde_json::to_string(v).unwrap();
+            let back: QuestionType = serde_json::from_str(&json).unwrap();
+            assert_eq!(format!("{:?}", back), format!("{:?}", v));
+        }
+    }
+
+    #[test]
+    fn test_question_type_clone_debug() {
+        let qt = QuestionType::Factual;
+        let cloned = qt.clone();
+        let debug_str = format!("{:?}", qt);
+        assert!(debug_str.contains("Factual"));
+        assert_eq!(format!("{:?}", cloned), format!("{:?}", qt));
+    }
+
+    // ── StructuredAnswer ──
+
+    #[test]
+    fn test_structured_answer_serde_roundtrip() {
+        let sa = StructuredAnswer {
+            answer: "答案是…".into(),
+            question_type: QuestionType::Factual,
+            confidence: 0.85,
+            sources: vec!["doc1".into(), "doc2".into()],
+            follow_up_questions: vec!["后续问题1".into()],
+        };
+        let json = serde_json::to_string(&sa).unwrap();
+        let back: StructuredAnswer = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.answer, "答案是…");
+        assert_eq!(back.sources.len(), 2);
+        assert_eq!(back.follow_up_questions.len(), 1);
+    }
+
+    #[test]
+    fn test_structured_answer_empty_collections() {
+        let sa = StructuredAnswer {
+            answer: "n/a".into(),
+            question_type: QuestionType::Unknown,
+            confidence: 0.0,
+            sources: vec![],
+            follow_up_questions: vec![],
+        };
+        let json = serde_json::to_string(&sa).unwrap();
+        let back: StructuredAnswer = serde_json::from_str(&json).unwrap();
+        assert!(back.sources.is_empty());
+        assert!(back.follow_up_questions.is_empty());
+    }
+
+    // ── IntentResult ──
+
+    #[test]
+    fn test_intent_result_serde_roundtrip() {
+        let ir = IntentResult {
+            intent: "查询订单".into(),
+            entities: vec!["订单号".into(), "日期".into()],
+        };
+        let json = serde_json::to_string(&ir).unwrap();
+        let back: IntentResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.intent, "查询订单");
+        assert_eq!(back.entities.len(), 2);
+    }
+
+    #[test]
+    fn test_intent_result_empty_entities() {
+        let ir = IntentResult {
+            intent: "unknown".into(),
+            entities: vec![],
+        };
+        let json = serde_json::to_string(&ir).unwrap();
+        let back: IntentResult = serde_json::from_str(&json).unwrap();
+        assert!(back.entities.is_empty());
+    }
+}

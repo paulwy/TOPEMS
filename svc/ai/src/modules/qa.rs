@@ -416,3 +416,249 @@ impl QaApi {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use topems_shared_auth::auth::Claims;
+
+    fn any_uuid() -> Uuid {
+        Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    }
+
+    fn sample_claims(tenant_id: Option<String>) -> Claims {
+        Claims {
+            sub: "00000000-0000-0000-0000-000000000001".into(),
+            username: "tester".into(),
+            role: "user".into(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id,
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    // ── get_tenant_id ──
+
+    #[test]
+    fn test_get_tenant_id_with_valid_id() {
+        let claims = sample_claims(Some(any_uuid().to_string()));
+        let tid = get_tenant_id(&claims);
+        assert_eq!(tid, any_uuid());
+    }
+
+    #[test]
+    fn test_get_tenant_id_with_none_returns_nil() {
+        let claims = sample_claims(None);
+        let tid = get_tenant_id(&claims);
+        assert_eq!(tid, Uuid::nil());
+    }
+
+    #[test]
+    fn test_get_tenant_id_with_invalid_returns_nil() {
+        let claims = sample_claims(Some("not-a-uuid".to_string()));
+        let tid = get_tenant_id(&claims);
+        assert_eq!(tid, Uuid::nil());
+    }
+
+    // ── AskStructuredRequest ──
+
+    #[test]
+    fn test_ask_structured_request_serde_roundtrip() {
+        let req = AskStructuredRequest {
+            question: "什么是 RAG?".into(),
+            document_ids: Some(vec![any_uuid(), any_uuid()]),
+            top_k: Some(5),
+        };
+        let json = serde_json::to_string(&req).unwrap();
+        let back: AskStructuredRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.question, "什么是 RAG?");
+        assert_eq!(back.top_k, Some(5));
+        assert_eq!(back.document_ids.as_ref().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn test_ask_structured_request_minimal() {
+        let req: AskStructuredRequest = serde_json::from_str("{\"question\":\"hello\"}").unwrap();
+        assert_eq!(req.question, "hello");
+        assert!(req.document_ids.is_none());
+        assert!(req.top_k.is_none());
+    }
+
+    // ── AskStructuredResponse ──
+
+    #[test]
+    fn test_ask_structured_response_serde_roundtrip() {
+        let resp = AskStructuredResponse {
+            answer: "答案是…".into(),
+            question_type: "Factual".into(),
+            confidence: 0.88,
+            sources: vec!["doc1".into(), "doc2".into()],
+            follow_up_questions: vec!["后续1".into()],
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        let back: AskStructuredResponse = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.answer, "答案是…");
+        assert_eq!(back.question_type, "Factual");
+        assert_eq!(back.sources.len(), 2);
+        assert_eq!(back.follow_up_questions.len(), 1);
+    }
+
+    #[test]
+    fn test_ask_structured_response_empty_collections() {
+        let resp = AskStructuredResponse {
+            answer: "n/a".into(),
+            question_type: "Unknown".into(),
+            confidence: 0.0,
+            sources: vec![],
+            follow_up_questions: vec![],
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        let back: AskStructuredResponse = serde_json::from_str(&json).unwrap();
+        assert!(back.sources.is_empty());
+        assert!(back.follow_up_questions.is_empty());
+    }
+
+    // ── AskWithConversationRequest ──
+
+    #[test]
+    fn test_ask_with_conversation_request_serde_roundtrip() {
+        let req = AskWithConversationRequest {
+            question: "继续".into(),
+            history: vec![
+                HistoryItem {
+                    question: "q1".into(),
+                    answer: "a1".into(),
+                },
+                HistoryItem {
+                    question: "q2".into(),
+                    answer: "a2".into(),
+                },
+            ],
+            document_ids: Some(vec![any_uuid()]),
+            top_k: Some(3),
+        };
+        let json = serde_json::to_string(&req).unwrap();
+        let back: AskWithConversationRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.history.len(), 2);
+        assert_eq!(back.history[0].question, "q1");
+        assert_eq!(back.history[1].answer, "a2");
+    }
+
+    #[test]
+    fn test_ask_with_conversation_request_empty_history() {
+        let req: AskWithConversationRequest =
+            serde_json::from_str("{\"question\":\"q\",\"history\":[]}").unwrap();
+        assert!(req.history.is_empty());
+        assert!(req.document_ids.is_none());
+    }
+
+    // ── HistoryItem ──
+
+    #[test]
+    fn test_history_item_serde_roundtrip() {
+        let item = HistoryItem {
+            question: "什么是 ERP?".into(),
+            answer: "ERP 是企业资源计划".into(),
+        };
+        let json = serde_json::to_string(&item).unwrap();
+        let back: HistoryItem = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.question, "什么是 ERP?");
+        assert_eq!(back.answer, "ERP 是企业资源计划");
+    }
+
+    // ── ClassifyRequest ──
+
+    #[test]
+    fn test_classify_request_serde_roundtrip() {
+        let req = ClassifyRequest {
+            question: "如何安装?".into(),
+        };
+        let json = serde_json::to_string(&req).unwrap();
+        let back: ClassifyRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.question, "如何安装?");
+    }
+
+    // ── ClassifyResponse ──
+
+    #[test]
+    fn test_classify_response_serde_roundtrip() {
+        let resp = ClassifyResponse {
+            question_type: "Procedural".into(),
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        let back: ClassifyResponse = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.question_type, "Procedural");
+    }
+
+    // ── QaHistoryQuery ──
+
+    #[test]
+    fn test_qa_history_query_deserialize_full() {
+        let json = "{\"page\":2,\"page_size\":10,\"query\":\"search term\"}";
+        let back: QaHistoryQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(back.page, Some(2));
+        assert_eq!(back.page_size, Some(10));
+        assert_eq!(back.query.as_deref(), Some("search term"));
+    }
+
+    #[test]
+    fn test_qa_history_query_empty() {
+        let q: QaHistoryQuery = serde_json::from_str("{}").unwrap();
+        assert!(q.page.is_none());
+        assert!(q.page_size.is_none());
+        assert!(q.query.is_none());
+    }
+
+    #[test]
+    fn test_qa_history_query_clone_debug() {
+        let q = QaHistoryQuery {
+            page: Some(1),
+            page_size: None,
+            query: Some("abc".into()),
+        };
+        let cloned = q.clone();
+        assert_eq!(cloned.page, q.page);
+        let debug_str = format!("{:?}", q);
+        assert!(debug_str.contains("QaHistoryQuery"));
+    }
+
+    // ── BatchDeleteRequest ──
+
+    #[test]
+    fn test_batch_delete_request_serde_roundtrip() {
+        let req = BatchDeleteRequest {
+            ids: vec![any_uuid(), any_uuid(), any_uuid()],
+        };
+        let json = serde_json::to_string(&req).unwrap();
+        let back: BatchDeleteRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.ids.len(), 3);
+    }
+
+    #[test]
+    fn test_batch_delete_request_empty() {
+        let req: BatchDeleteRequest = serde_json::from_str("{\"ids\":[]}").unwrap();
+        assert!(req.ids.is_empty());
+    }
+
+    // ── BatchDeleteResponse ──
+
+    #[test]
+    fn test_batch_delete_response_serde_roundtrip() {
+        let resp = BatchDeleteResponse {
+            deleted_count: 5,
+            message: "成功删除 5 条记录".into(),
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        let back: BatchDeleteResponse = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.deleted_count, 5);
+        assert_eq!(back.message, "成功删除 5 条记录");
+    }
+}

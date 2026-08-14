@@ -299,3 +299,104 @@ pub async fn index_all_documents() {
         tracing::info!("✅ 向量库索引完成，共 {} 个向量", vector_count);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_split_into_chunks_short_content() {
+        let content = "hello world";
+        let chunks = split_into_chunks(content, 512, 128);
+        assert_eq!(chunks.len(), 1);
+        assert_eq!(chunks[0], "hello world");
+    }
+
+    #[test]
+    fn test_split_into_chunks_empty_content() {
+        let chunks = split_into_chunks("", 512, 128);
+        assert_eq!(chunks.len(), 1);
+        assert_eq!(chunks[0], "");
+    }
+
+    #[test]
+    fn test_split_into_chunks_exact_chunk_size() {
+        let content: String = "a".repeat(10);
+        let chunks = split_into_chunks(&content, 10, 0);
+        assert_eq!(chunks.len(), 1);
+    }
+
+    #[test]
+    fn test_split_into_chunks_multiple_chunks() {
+        let content: String = "abcdefghij".repeat(10); // 100 chars
+        let chunks = split_into_chunks(&content, 30, 10);
+        assert!(chunks.len() > 1);
+        // Each chunk (except possibly last) should be <= 30 chars
+        for chunk in &chunks[..chunks.len() - 1] {
+            assert!(chunk.chars().count() <= 30);
+        }
+    }
+
+    #[test]
+    fn test_split_into_chunks_no_overlap() {
+        let content: String = "abcdefghij".repeat(5); // 50 chars
+        let chunks = split_into_chunks(&content, 10, 0);
+        assert!(chunks.len() >= 5);
+        for chunk in &chunks {
+            assert!(chunk.chars().count() <= 10);
+        }
+    }
+
+    #[test]
+    fn test_split_into_chunks_with_overlap() {
+        let content: String = "abcdefghij".repeat(5); // 50 chars
+        let chunks_no_overlap = split_into_chunks(&content, 10, 0);
+        let chunks_with_overlap = split_into_chunks(&content, 10, 3);
+        // With overlap, we should get more or equal chunks
+        assert!(chunks_with_overlap.len() >= chunks_no_overlap.len());
+    }
+
+    #[test]
+    fn test_split_into_chunks_unicode_content() {
+        let content = "你好世界测试文本".to_string(); // 8 chars
+        let chunks = split_into_chunks(&content, 3, 0);
+        assert!(chunks.len() >= 2);
+        // Verify all characters are preserved
+        let combined: String = chunks.concat();
+        assert_eq!(combined, content);
+    }
+
+    #[test]
+    fn test_split_into_chunks_single_char() {
+        let chunks = split_into_chunks("x", 512, 128);
+        assert_eq!(chunks.len(), 1);
+        assert_eq!(chunks[0], "x");
+    }
+
+    #[test]
+    fn test_split_into_chunks_preserves_content() {
+        let content: String = "abcdefghijklmnopqrstuvwxyz".to_string();
+        let chunks = split_into_chunks(&content, 10, 3);
+        let combined: String = chunks.concat();
+        // With overlap, combined will have duplicated chars; verify every original char is present
+        for ch in content.chars() {
+            assert!(
+                combined.contains(ch),
+                "char '{}' should be present in combined chunks",
+                ch
+            );
+        }
+        // First chunk should start at the beginning of content
+        assert!(combined.starts_with("abcdefghij"));
+        // Last chunk should end at the end of content
+        assert!(combined.ends_with("vwxyz"));
+    }
+
+    #[test]
+    fn test_split_into_chunks_chunk_size_larger_than_content() {
+        let content = "short";
+        let chunks = split_into_chunks(content, 1000, 100);
+        assert_eq!(chunks.len(), 1);
+        assert_eq!(chunks[0], "short");
+    }
+}
