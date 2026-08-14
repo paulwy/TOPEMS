@@ -1,0 +1,446 @@
+{
+  "generated_at": "2026-08-14T02:31:16.106Z",
+  "mode": "apply",
+  "scanned_files": 2679,
+  "changed_files": 116,
+  "total_replaced": 795,
+  "by_rule": {
+    "hex-6": 763,
+    "hex-3": 14,
+    "rgba-approx": 18
+  },
+  "top_20_files": [
+    {
+      "file": "apps/web/src/ai/agent/v54-agent-panel.tsx",
+      "replacements": 45
+    },
+    {
+      "file": "apps/web/src/ai/security/v59-security-panel.tsx",
+      "replacements": 40
+    },
+    {
+      "file": "apps/web/src/ai/automation/v57-automation-panel.tsx",
+      "replacements": 30
+    },
+    {
+      "file": "apps/web/src/intelligent-ops/v56-ops-panel.tsx",
+      "replacements": 30
+    },
+    {
+      "file": "apps/web/src/ai/governance/v57-governance-panel.tsx",
+      "replacements": 29
+    },
+    {
+      "file": "apps/web/src/ai/evolution/v58-evolution-panel.tsx",
+      "replacements": 28
+    },
+    {
+      "file": "apps/web/src/design-system/tokens/v51-tokens.ts",
+      "replacements": 28
+    },
+    {
+      "file": "apps/web/src/ai/native/v54-native-panel.tsx",
+      "replacements": 25
+    },
+    {
+      "file": "apps/web/src/ai/ethics/v60-ethics-panel.tsx",
+      "replacements": 24
+    },
+    {
+      "file": "apps/web/src/ai/review/v56-review-panel.tsx",
+      "replacements": 21
+    },
+    {
+      "file": "apps/web/src/ai/ux/v58-ux-panel.tsx",
+      "replacements": 21
+    },
+    {
+      "file": "apps/web/src/microfrontend/runtime/RuntimeDashboard.tsx",
+      "replacements": 21
+    },
+    {
+      "file": "apps/web/src/fullstack-automation/V55AutomationPanel.tsx",
+      "replacements": 20
+    },
+    {
+      "file": "apps/web/src/microfrontend/ai-ops/AIOpsPanel.tsx",
+      "replacements": 20
+    },
+    {
+      "file": "apps/web/src/theme/presets.ts",
+      "replacements": 20
+    },
+    {
+      "file": "apps/web/src/microfrontend/governance/DependencyGovernance.tsx",
+      "replacements": 16
+    },
+    {
+      "file": "apps/web/src/components/charts/chartTheme.ts",
+      "replacements": 14
+    },
+    {
+      "file": "apps/web/src/pages/mes/analytics/MesEnergyCostPage.tsx",
+      "replacements": 14
+    },
+    {
+      "file": "apps/web/src/pages/performance/PerformanceTestPage.tsx",
+      "replacements": 14
+    },
+    {
+      "file": "apps/web/src/dev-platform/v53-platform-console.tsx",
+      "replacements": 13
+    }
+  ],
+  "samples": [
+    {
+      "file": "apps/web/src/ai/agent/v54-agent-panel.tsx",
+      "line": 122,
+      "from": "#10b981",
+      "to": "colors.success.dark",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/agent/v54-agent-panel.tsx",
+      "line": 123,
+      "from": "#ef4444",
+      "to": "colors.error.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/automation/v57-automation-panel.tsx",
+      "line": 257,
+      "from": "#10b981",
+      "to": "colors.success.dark",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/automation/v57-automation-panel.tsx",
+      "line": 265,
+      "from": "#059669",
+      "to": "colors.success.dark",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/copilot/v55-copilot-panel.tsx",
+      "line": 682,
+      "from": "#10b981",
+      "to": "colors.success.dark",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/copilot/v55-copilot-panel.tsx",
+      "line": 682,
+      "from": "#f59e0b",
+      "to": "colors.warning.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/devex/v59-devex-panel.tsx",
+      "line": 145,
+      "from": "#8b5cf6",
+      "to": "colors.secondary.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/devex/v59-devex-panel.tsx",
+      "line": 146,
+      "from": "#8b5cf6",
+      "to": "colors.secondary.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/enhancement/v53-ai-panel.tsx",
+      "line": 575,
+      "from": "#8b5cf6",
+      "to": "colors.secondary.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/enhancement/v53-ai-panel.tsx",
+      "line": 577,
+      "from": "#10b981",
+      "to": "colors.success.dark",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/ethics/v60-ethics-panel.tsx",
+      "line": 67,
+      "from": "#dc2626",
+      "to": "colors.error.dark",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/ethics/v60-ethics-panel.tsx",
+      "line": 69,
+      "from": "#d97706",
+      "to": "colors.warning.dark",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/evolution/v58-evolution-panel.tsx",
+      "line": 75,
+      "from": "#10b981",
+      "to": "colors.success.dark",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/evolution/v58-evolution-panel.tsx",
+      "line": 76,
+      "from": "#f59e0b",
+      "to": "colors.warning.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/governance/v57-governance-panel.tsx",
+      "line": 88,
+      "from": "#3b82f6",
+      "to": "colors.primary.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/governance/v57-governance-panel.tsx",
+      "line": 89,
+      "from": "#f59e0b",
+      "to": "colors.warning.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/native/v54-native-panel.tsx",
+      "line": 281,
+      "from": "#6366f1",
+      "to": "colors.secondary.dark",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/native/v54-native-panel.tsx",
+      "line": 317,
+      "from": "#3b82f6",
+      "to": "colors.primary.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/quality/v60-quality-panel.tsx",
+      "line": 84,
+      "from": "#10b981",
+      "to": "colors.success.dark",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/quality/v60-quality-panel.tsx",
+      "line": 85,
+      "from": "#f59e0b",
+      "to": "colors.warning.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/review/v56-review-panel.tsx",
+      "line": 116,
+      "from": "#ef4444",
+      "to": "colors.error.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/review/v56-review-panel.tsx",
+      "line": 117,
+      "from": "#f59e0b",
+      "to": "colors.warning.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/security/v59-security-panel.tsx",
+      "line": 76,
+      "from": "#dc2626",
+      "to": "colors.error.dark",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/security/v59-security-panel.tsx",
+      "line": 78,
+      "from": "#d97706",
+      "to": "colors.warning.dark",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/ux/v58-ux-panel.tsx",
+      "line": 395,
+      "from": "#0891b2",
+      "to": "colors.cyan.600",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/ai/ux/v58-ux-panel.tsx",
+      "line": 454,
+      "from": "#10b981",
+      "to": "colors.success.dark",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/api/addressbook/tag.ts",
+      "line": 63,
+      "from": "#EF4444",
+      "to": "colors.error.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/api/addressbook/tag.ts",
+      "line": 68,
+      "from": "#3B82F6",
+      "to": "colors.primary.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/ai/AIAnomalyAssistant.tsx",
+      "line": 123,
+      "from": "#ef4444",
+      "to": "colors.error.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/ai/AIAnomalyAssistant.tsx",
+      "line": 123,
+      "from": "#3b82f6",
+      "to": "colors.primary.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/ai/AIReportAssistant.tsx",
+      "line": 188,
+      "from": "#3b82f6",
+      "to": "colors.primary.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/ai/AIReportAssistant.tsx",
+      "line": 188,
+      "from": "#10b981",
+      "to": "colors.success.dark",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/bff/BffErrorBoundary.tsx",
+      "line": 352,
+      "from": "#d32f2f",
+      "to": "colors.error.dark",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/bff/BffErrorBoundary.tsx",
+      "line": 595,
+      "from": "#d32f2f",
+      "to": "colors.error.dark",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/bff/BffFallback.tsx",
+      "line": 195,
+      "from": "#d32f2f",
+      "to": "colors.error.dark",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/bi/ChartAnnotations.tsx",
+      "line": 38,
+      "from": "#EC4899",
+      "to": "colors.pink.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/bi/ChartLibrary.tsx",
+      "line": 59,
+      "from": "#ec4899",
+      "to": "colors.pink.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/bi/MetricCard.tsx",
+      "line": 152,
+      "from": "#EF4444",
+      "to": "colors.error.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/bi/StatsChart.bar.tsx",
+      "line": 33,
+      "from": "#ec4899",
+      "to": "colors.pink.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/bi/StatsChart.pie.tsx",
+      "line": 22,
+      "from": "#ec4899",
+      "to": "colors.pink.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/charts/CustomTooltip.tsx",
+      "line": 28,
+      "from": "#E2E8F0",
+      "to": "colors.border.default",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/charts/CustomTooltip.tsx",
+      "line": 30,
+      "from": "#E2E8F0",
+      "to": "colors.border.default",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/charts/PieChart.tsx",
+      "line": 18,
+      "from": "#EC4899",
+      "to": "colors.pink.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/charts/chartTheme.ts",
+      "line": 23,
+      "from": "#3b82f6",
+      "to": "colors.primary.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/charts/chartTheme.ts",
+      "line": 25,
+      "from": "#f59e0b",
+      "to": "colors.warning.main",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/common/EmptyState.tsx",
+      "line": 58,
+      "from": "rgba(0,0,0,0.1)",
+      "to": "colors.cyber.glass.bgLight",
+      "rule": "rgba-approx"
+    },
+    {
+      "file": "apps/web/src/components/common/FormDrawer.tsx",
+      "line": 119,
+      "from": "#1976d2",
+      "to": "colors.primary.dark",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/common/MuiStatCard.tsx",
+      "line": 73,
+      "from": "#0891b2",
+      "to": "colors.cyan.600",
+      "rule": "hex-6"
+    },
+    {
+      "file": "apps/web/src/components/common/QuickSearch.tsx",
+      "line": 571,
+      "from": "#000",
+      "to": "colors.grey.950",
+      "rule": "hex-3"
+    },
+    {
+      "file": "apps/web/src/components/common/QuickSearch.tsx",
+      "line": 573,
+      "from": "#000",
+      "to": "colors.grey.950",
+      "rule": "hex-3"
+    }
+  ]
+}
