@@ -59,3 +59,227 @@ pub struct UpdateExpenseRequest {
     pub status: Option<String>,
     pub approved_by: Option<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn now() -> DateTime<Utc> {
+        Utc::now()
+    }
+
+    fn uid() -> Uuid {
+        Uuid::parse_str("123e4567-e89b-12d3-a456-426614174000").unwrap()
+    }
+
+    fn sample_date() -> NaiveDate {
+        NaiveDate::from_ymd_opt(2024, 6, 15).unwrap()
+    }
+
+    // ---- ProjectExpense ----
+
+    fn sample_expense() -> ProjectExpense {
+        ProjectExpense {
+            id: uid(),
+            project_id: uid(),
+            phase_id: Some(uid()),
+            expense_type: "material".to_string(),
+            category: Some("raw".to_string()),
+            subcategory: Some("steel".to_string()),
+            description: Some("钢材采购".to_string()),
+            amount: 50_000.0,
+            currency: Some("CNY".to_string()),
+            incurred_date: sample_date(),
+            reported_date: Some(sample_date()),
+            paid_date: Some(sample_date()),
+            budget_item_id: Some(uid()),
+            resource_id: Some(uid()),
+            expense_ref_id: Some("EXP-001".to_string()),
+            status: Some("approved".to_string()),
+            approval_workflow_id: Some(uid()),
+            attachment_ids: Some(vec![uid(), uid()]),
+            created_by: Some("u1".to_string()),
+            approved_by: Some("boss".to_string()),
+            created_at: now(),
+            updated_at: now(),
+        }
+    }
+
+    #[test]
+    fn test_project_expense_serde_roundtrip() {
+        let e = sample_expense();
+        let s = serde_json::to_string(&e).unwrap();
+        let back: ProjectExpense = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.id, e.id);
+        assert_eq!(back.expense_type, e.expense_type);
+        assert_eq!(back.amount, e.amount);
+        assert_eq!(back.attachment_ids, e.attachment_ids);
+    }
+
+    #[test]
+    fn test_project_expense_clone_preserves_fields() {
+        let e = sample_expense();
+        let c = e.clone();
+        assert_eq!(c.id, e.id);
+        assert_eq!(c.amount, e.amount);
+        assert_eq!(c.attachment_ids, e.attachment_ids);
+    }
+
+    #[test]
+    fn test_project_expense_with_none_optional() {
+        let e = ProjectExpense {
+            id: uid(),
+            project_id: uid(),
+            phase_id: None,
+            expense_type: "labor".to_string(),
+            category: None,
+            subcategory: None,
+            description: None,
+            amount: 0.0,
+            currency: None,
+            incurred_date: sample_date(),
+            reported_date: None,
+            paid_date: None,
+            budget_item_id: None,
+            resource_id: None,
+            expense_ref_id: None,
+            status: None,
+            approval_workflow_id: None,
+            attachment_ids: None,
+            created_by: None,
+            approved_by: None,
+            created_at: now(),
+            updated_at: now(),
+        };
+        let s = serde_json::to_string(&e).unwrap();
+        let back: ProjectExpense = serde_json::from_str(&s).unwrap();
+        assert!(back.phase_id.is_none());
+        assert!(back.attachment_ids.is_none());
+    }
+
+    #[test]
+    fn test_project_expense_empty_attachments_roundtrip() {
+        let mut e = sample_expense();
+        e.attachment_ids = Some(vec![]);
+        let s = serde_json::to_string(&e).unwrap();
+        let back: ProjectExpense = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.attachment_ids.as_ref().unwrap().len(), 0);
+    }
+
+    #[test]
+    fn test_project_expense_negative_amount_roundtrip() {
+        let mut e = sample_expense();
+        e.amount = -100.0;
+        let s = serde_json::to_string(&e).unwrap();
+        let back: ProjectExpense = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.amount, -100.0);
+    }
+
+    #[test]
+    fn test_project_expense_multi_attachments_roundtrip() {
+        let mut e = sample_expense();
+        e.attachment_ids = Some(vec![uid(); 5]);
+        let s = serde_json::to_string(&e).unwrap();
+        let back: ProjectExpense = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.attachment_ids.as_ref().unwrap().len(), 5);
+    }
+
+    // ---- CreateExpenseRequest ----
+
+    #[test]
+    fn test_create_expense_request_roundtrip() {
+        let r = CreateExpenseRequest {
+            phase_id: Some(uid()),
+            expense_type: "equipment".to_string(),
+            category: Some("c".to_string()),
+            subcategory: Some("sc".to_string()),
+            description: Some("d".to_string()),
+            amount: 12_345.67,
+            currency: Some("USD".to_string()),
+            incurred_date: sample_date(),
+            budget_item_id: Some(uid()),
+            resource_id: Some(uid()),
+            expense_ref_id: Some("REF".to_string()),
+            approval_workflow_id: Some(uid()),
+            attachment_ids: Some(vec![uid()]),
+            created_by: Some("u".to_string()),
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: CreateExpenseRequest = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.expense_type, r.expense_type);
+        assert_eq!(back.amount, r.amount);
+        assert_eq!(back.attachment_ids, r.attachment_ids);
+    }
+
+    #[test]
+    fn test_create_expense_request_minimal() {
+        let r = CreateExpenseRequest {
+            phase_id: None,
+            expense_type: "misc".to_string(),
+            category: None,
+            subcategory: None,
+            description: None,
+            amount: 0.0,
+            currency: None,
+            incurred_date: sample_date(),
+            budget_item_id: None,
+            resource_id: None,
+            expense_ref_id: None,
+            approval_workflow_id: None,
+            attachment_ids: None,
+            created_by: None,
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: CreateExpenseRequest = serde_json::from_str(&s).unwrap();
+        assert!(back.phase_id.is_none());
+        assert!(back.attachment_ids.is_none());
+    }
+
+    // ---- UpdateExpenseRequest ----
+
+    #[test]
+    fn test_update_expense_request_all_none() {
+        let r = UpdateExpenseRequest {
+            expense_type: None,
+            category: None,
+            subcategory: None,
+            description: None,
+            amount: None,
+            paid_date: None,
+            status: None,
+            approved_by: None,
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: UpdateExpenseRequest = serde_json::from_str(&s).unwrap();
+        assert!(back.expense_type.is_none());
+        assert!(back.amount.is_none());
+    }
+
+    #[test]
+    fn test_update_expense_request_with_values() {
+        let r = UpdateExpenseRequest {
+            expense_type: Some("travel".to_string()),
+            category: Some("c".to_string()),
+            subcategory: Some("sc".to_string()),
+            description: Some("d".to_string()),
+            amount: Some(999.99),
+            paid_date: Some(sample_date()),
+            status: Some("paid".to_string()),
+            approved_by: Some("a".to_string()),
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: UpdateExpenseRequest = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.expense_type, r.expense_type);
+        assert_eq!(back.amount, r.amount);
+        assert_eq!(back.paid_date, r.paid_date);
+    }
+
+    #[test]
+    fn test_project_expense_naive_date_roundtrip() {
+        let mut e = sample_expense();
+        e.incurred_date = NaiveDate::from_ymd_opt(2020, 12, 31).unwrap();
+        let s = serde_json::to_string(&e).unwrap();
+        let back: ProjectExpense = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.incurred_date, e.incurred_date);
+    }
+}

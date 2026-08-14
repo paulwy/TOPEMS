@@ -106,3 +106,408 @@ pub struct CreateSettlementAdjustmentRequest {
     pub supporting_documents: Option<serde_json::Value>,
     pub created_by: Option<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn now() -> DateTime<Utc> {
+        Utc::now()
+    }
+
+    fn uid() -> Uuid {
+        Uuid::parse_str("123e4567-e89b-12d3-a456-426614174000").unwrap()
+    }
+
+    // ---- Settlement ----
+
+    fn sample_settlement() -> Settlement {
+        Settlement {
+            id: uid(),
+            project_id: uid(),
+            settlement_code: Some("STL-001".to_string()),
+            settlement_name: "月度结算".to_string(),
+            settlement_type: "monthly".to_string(),
+            status: "draft".to_string(),
+            budget_amount: Some(100_000.0),
+            actual_amount: Some(95_000.0),
+            variance_amount: Some(-5_000.0),
+            variance_percent: Some(-5.0),
+            settlement_period_start: Some(now()),
+            settlement_period_end: Some(now()),
+            description: Some("d".to_string()),
+            created_by: Some("admin".to_string()),
+            approved_by: Some("manager".to_string()),
+            approved_at: Some(now()),
+            created_at: now(),
+            updated_at: now(),
+        }
+    }
+
+    #[test]
+    fn test_settlement_serde_roundtrip() {
+        let s = sample_settlement();
+        let ser = serde_json::to_string(&s).unwrap();
+        let back: Settlement = serde_json::from_str(&ser).unwrap();
+        assert_eq!(back.id, s.id);
+        assert_eq!(back.settlement_name, s.settlement_name);
+        assert_eq!(back.settlement_type, s.settlement_type);
+        assert_eq!(back.status, s.status);
+        assert_eq!(back.budget_amount, s.budget_amount);
+        assert_eq!(back.actual_amount, s.actual_amount);
+        assert_eq!(back.variance_percent, s.variance_percent);
+    }
+
+    #[test]
+    fn test_settlement_with_none_optional() {
+        let s = Settlement {
+            id: uid(),
+            project_id: uid(),
+            settlement_code: None,
+            settlement_name: "n".to_string(),
+            settlement_type: "final".to_string(),
+            status: "draft".to_string(),
+            budget_amount: None,
+            actual_amount: None,
+            variance_amount: None,
+            variance_percent: None,
+            settlement_period_start: None,
+            settlement_period_end: None,
+            description: None,
+            created_by: None,
+            approved_by: None,
+            approved_at: None,
+            created_at: now(),
+            updated_at: now(),
+        };
+        let ser = serde_json::to_string(&s).unwrap();
+        let back: Settlement = serde_json::from_str(&ser).unwrap();
+        assert!(back.settlement_code.is_none());
+        assert!(back.budget_amount.is_none());
+        assert!(back.approved_by.is_none());
+    }
+
+    #[test]
+    fn test_settlement_approved_status_roundtrip() {
+        let mut s = sample_settlement();
+        s.status = "approved".to_string();
+        let ser = serde_json::to_string(&s).unwrap();
+        let back: Settlement = serde_json::from_str(&ser).unwrap();
+        assert_eq!(back.status, "approved");
+    }
+
+    #[test]
+    fn test_settlement_negative_variance_roundtrip() {
+        let mut s = sample_settlement();
+        s.variance_amount = Some(-15_000.0);
+        s.variance_percent = Some(-15.0);
+        let ser = serde_json::to_string(&s).unwrap();
+        let back: Settlement = serde_json::from_str(&ser).unwrap();
+        assert_eq!(back.variance_amount, Some(-15_000.0));
+        assert_eq!(back.variance_percent, Some(-15.0));
+    }
+
+    // ---- CreateSettlementRequest ----
+
+    #[test]
+    fn test_create_settlement_request_roundtrip() {
+        let r = CreateSettlementRequest {
+            settlement_code: Some("STL-002".to_string()),
+            settlement_name: "新结算".to_string(),
+            settlement_type: "quarterly".to_string(),
+            settlement_period_start: Some("2026-01-01".to_string()),
+            settlement_period_end: Some("2026-03-31".to_string()),
+            description: Some("d".to_string()),
+            created_by: Some("u".to_string()),
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: CreateSettlementRequest = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.settlement_name, r.settlement_name);
+        assert_eq!(back.settlement_type, r.settlement_type);
+    }
+
+    #[test]
+    fn test_create_settlement_request_minimal() {
+        let r = CreateSettlementRequest {
+            settlement_code: None,
+            settlement_name: "n".to_string(),
+            settlement_type: "final".to_string(),
+            settlement_period_start: None,
+            settlement_period_end: None,
+            description: None,
+            created_by: None,
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: CreateSettlementRequest = serde_json::from_str(&s).unwrap();
+        assert!(back.settlement_code.is_none());
+        assert!(back.description.is_none());
+    }
+
+    // ---- UpdateSettlementRequest ----
+
+    #[test]
+    fn test_update_settlement_request_all_none() {
+        let r = UpdateSettlementRequest {
+            settlement_name: None,
+            status: None,
+            actual_amount: None,
+            description: None,
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: UpdateSettlementRequest = serde_json::from_str(&s).unwrap();
+        assert!(back.settlement_name.is_none());
+        assert!(back.actual_amount.is_none());
+    }
+
+    #[test]
+    fn test_update_settlement_request_with_values() {
+        let r = UpdateSettlementRequest {
+            settlement_name: Some("updated".to_string()),
+            status: Some("approved".to_string()),
+            actual_amount: Some(99_000.0),
+            description: Some("d".to_string()),
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: UpdateSettlementRequest = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.settlement_name, r.settlement_name);
+        assert_eq!(back.actual_amount, r.actual_amount);
+    }
+
+    // ---- SettlementItem ----
+
+    fn sample_item() -> SettlementItem {
+        SettlementItem {
+            id: uid(),
+            settlement_id: uid(),
+            item_code: Some("SI-001".to_string()),
+            item_name: "人力成本".to_string(),
+            category: Some("labor".to_string()),
+            budget_amount: 50_000.0,
+            actual_amount: 48_000.0,
+            variance_amount: -2_000.0,
+            variance_percent: Some(-4.0),
+            description: Some("d".to_string()),
+            expense_ref_id: Some("exp-001".to_string()),
+            contract_ref_id: Some("con-001".to_string()),
+            created_at: now(),
+            updated_at: now(),
+        }
+    }
+
+    #[test]
+    fn test_settlement_item_serde_roundtrip() {
+        let i = sample_item();
+        let s = serde_json::to_string(&i).unwrap();
+        let back: SettlementItem = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.id, i.id);
+        assert_eq!(back.item_name, i.item_name);
+        assert_eq!(back.budget_amount, i.budget_amount);
+        assert_eq!(back.actual_amount, i.actual_amount);
+        assert_eq!(back.variance_amount, i.variance_amount);
+        assert_eq!(back.variance_percent, i.variance_percent);
+    }
+
+    #[test]
+    fn test_settlement_item_with_none_optional() {
+        let i = SettlementItem {
+            id: uid(),
+            settlement_id: uid(),
+            item_code: None,
+            item_name: "n".to_string(),
+            category: None,
+            budget_amount: 0.0,
+            actual_amount: 0.0,
+            variance_amount: 0.0,
+            variance_percent: None,
+            description: None,
+            expense_ref_id: None,
+            contract_ref_id: None,
+            created_at: now(),
+            updated_at: now(),
+        };
+        let s = serde_json::to_string(&i).unwrap();
+        let back: SettlementItem = serde_json::from_str(&s).unwrap();
+        assert!(back.item_code.is_none());
+        assert!(back.variance_percent.is_none());
+    }
+
+    #[test]
+    fn test_settlement_item_positive_variance_roundtrip() {
+        let mut i = sample_item();
+        i.variance_amount = 3_000.0;
+        i.variance_percent = Some(6.0);
+        let s = serde_json::to_string(&i).unwrap();
+        let back: SettlementItem = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.variance_amount, 3_000.0);
+        assert_eq!(back.variance_percent, Some(6.0));
+    }
+
+    // ---- CreateSettlementItemRequest ----
+
+    #[test]
+    fn test_create_settlement_item_request_roundtrip() {
+        let r = CreateSettlementItemRequest {
+            item_code: Some("SI-002".to_string()),
+            item_name: "材料费".to_string(),
+            category: Some("material".to_string()),
+            budget_amount: 30_000.0,
+            actual_amount: 28_000.0,
+            description: Some("d".to_string()),
+            expense_ref_id: Some("e1".to_string()),
+            contract_ref_id: None,
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: CreateSettlementItemRequest = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.item_name, r.item_name);
+        assert_eq!(back.budget_amount, r.budget_amount);
+        assert_eq!(back.actual_amount, r.actual_amount);
+    }
+
+    #[test]
+    fn test_create_settlement_item_request_minimal() {
+        let r = CreateSettlementItemRequest {
+            item_code: None,
+            item_name: "n".to_string(),
+            category: None,
+            budget_amount: 0.0,
+            actual_amount: 0.0,
+            description: None,
+            expense_ref_id: None,
+            contract_ref_id: None,
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: CreateSettlementItemRequest = serde_json::from_str(&s).unwrap();
+        assert!(back.item_code.is_none());
+        assert!(back.category.is_none());
+    }
+
+    // ---- UpdateSettlementItemRequest ----
+
+    #[test]
+    fn test_update_settlement_item_request_all_none() {
+        let r = UpdateSettlementItemRequest {
+            item_name: None,
+            category: None,
+            actual_amount: None,
+            description: None,
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: UpdateSettlementItemRequest = serde_json::from_str(&s).unwrap();
+        assert!(back.item_name.is_none());
+        assert!(back.actual_amount.is_none());
+    }
+
+    #[test]
+    fn test_update_settlement_item_request_with_values() {
+        let r = UpdateSettlementItemRequest {
+            item_name: Some("updated".to_string()),
+            category: Some("other".to_string()),
+            actual_amount: Some(35_000.0),
+            description: Some("d".to_string()),
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: UpdateSettlementItemRequest = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.item_name, r.item_name);
+        assert_eq!(back.actual_amount, r.actual_amount);
+    }
+
+    // ---- SettlementAdjustment ----
+
+    #[test]
+    fn test_settlement_adjustment_serde_roundtrip() {
+        let a = SettlementAdjustment {
+            id: uid(),
+            settlement_id: uid(),
+            adjustment_type: "increase".to_string(),
+            adjustment_code: Some("ADJ-001".to_string()),
+            description: Some("增加预算".to_string()),
+            amount: 5_000.0,
+            reason: Some("材料涨价".to_string()),
+            supporting_documents: Some(serde_json::json!(["doc1.pdf", "doc2.pdf"])),
+            created_by: Some("admin".to_string()),
+            created_at: now(),
+        };
+        let s = serde_json::to_string(&a).unwrap();
+        let back: SettlementAdjustment = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.id, a.id);
+        assert_eq!(back.adjustment_type, a.adjustment_type);
+        assert_eq!(back.amount, a.amount);
+        assert_eq!(back.supporting_documents, a.supporting_documents);
+    }
+
+    #[test]
+    fn test_settlement_adjustment_with_none_optional() {
+        let a = SettlementAdjustment {
+            id: uid(),
+            settlement_id: uid(),
+            adjustment_type: "decrease".to_string(),
+            adjustment_code: None,
+            description: None,
+            amount: -2_000.0,
+            reason: None,
+            supporting_documents: None,
+            created_by: None,
+            created_at: now(),
+        };
+        let s = serde_json::to_string(&a).unwrap();
+        let back: SettlementAdjustment = serde_json::from_str(&s).unwrap();
+        assert!(back.adjustment_code.is_none());
+        assert!(back.supporting_documents.is_none());
+    }
+
+    #[test]
+    fn test_settlement_adjustment_negative_amount_roundtrip() {
+        let a = SettlementAdjustment {
+            id: uid(),
+            settlement_id: uid(),
+            adjustment_type: "decrease".to_string(),
+            adjustment_code: Some("ADJ-002".to_string()),
+            description: Some("减少预算".to_string()),
+            amount: -3_000.0,
+            reason: Some("节约成本".to_string()),
+            supporting_documents: None,
+            created_by: Some("u".to_string()),
+            created_at: now(),
+        };
+        let s = serde_json::to_string(&a).unwrap();
+        let back: SettlementAdjustment = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.amount, -3_000.0);
+    }
+
+    // ---- CreateSettlementAdjustmentRequest ----
+
+    #[test]
+    fn test_create_settlement_adjustment_request_roundtrip() {
+        let r = CreateSettlementAdjustmentRequest {
+            adjustment_type: "increase".to_string(),
+            adjustment_code: Some("ADJ-003".to_string()),
+            description: Some("d".to_string()),
+            amount: 10_000.0,
+            reason: Some("新增需求".to_string()),
+            supporting_documents: Some(serde_json::json!(["doc.pdf"])),
+            created_by: Some("u".to_string()),
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: CreateSettlementAdjustmentRequest = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.adjustment_type, r.adjustment_type);
+        assert_eq!(back.amount, r.amount);
+        assert_eq!(back.supporting_documents, r.supporting_documents);
+    }
+
+    #[test]
+    fn test_create_settlement_adjustment_request_minimal() {
+        let r = CreateSettlementAdjustmentRequest {
+            adjustment_type: "decrease".to_string(),
+            adjustment_code: None,
+            description: None,
+            amount: -1_000.0,
+            reason: None,
+            supporting_documents: None,
+            created_by: None,
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: CreateSettlementAdjustmentRequest = serde_json::from_str(&s).unwrap();
+        assert!(back.adjustment_code.is_none());
+        assert!(back.reason.is_none());
+    }
+}
