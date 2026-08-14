@@ -132,3 +132,175 @@ pub fn has_wms_permission(claims: &Claims, action: &str) -> bool {
         || claims.has_permission("wms:admin")
         || claims.has_permission("all")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use uuid::Uuid;
+
+    #[test]
+    fn wms_permission_warehouse_read_maps_to_read_action() {
+        let p = WmsPermission::WarehouseRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Wms);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn wms_permission_warehouse_write_maps_to_write_action() {
+        let p = WmsPermission::WarehouseWrite.to_shared();
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn wms_permission_inventory_read_write_mapping() {
+        assert_eq!(
+            WmsPermission::InventoryRead.to_shared().action,
+            PermissionAction::Read
+        );
+        assert_eq!(
+            WmsPermission::InventoryWrite.to_shared().action,
+            PermissionAction::Write
+        );
+    }
+
+    #[test]
+    fn wms_permission_inbound_approve_maps_to_admin() {
+        assert_eq!(
+            WmsPermission::InboundApprove.to_shared().action,
+            PermissionAction::Admin
+        );
+    }
+
+    #[test]
+    fn wms_permission_outbound_approve_maps_to_admin() {
+        assert_eq!(
+            WmsPermission::OutboundApprove.to_shared().action,
+            PermissionAction::Admin
+        );
+    }
+
+    #[test]
+    fn wms_permission_all_approve_variants_are_admin() {
+        assert_eq!(
+            WmsPermission::StockTakeApprove.to_shared().action,
+            PermissionAction::Admin
+        );
+        assert_eq!(
+            WmsPermission::TransferApprove.to_shared().action,
+            PermissionAction::Admin
+        );
+        assert_eq!(
+            WmsPermission::All.to_shared().action,
+            PermissionAction::Admin
+        );
+    }
+
+    #[test]
+    fn wms_permission_all_variants_use_wms_module() {
+        let variants = [
+            WmsPermission::WarehouseRead,
+            WmsPermission::WarehouseWrite,
+            WmsPermission::InventoryRead,
+            WmsPermission::InventoryWrite,
+            WmsPermission::InboundRead,
+            WmsPermission::InboundWrite,
+            WmsPermission::OutboundRead,
+            WmsPermission::OutboundWrite,
+            WmsPermission::StockTakeRead,
+            WmsPermission::StockTakeWrite,
+            WmsPermission::TransferRead,
+            WmsPermission::TransferWrite,
+            WmsPermission::WavePickRead,
+            WmsPermission::WavePickWrite,
+            WmsPermission::MovementRead,
+            WmsPermission::MovementWrite,
+            WmsPermission::DashboardRead,
+            WmsPermission::InboundApprove,
+            WmsPermission::OutboundApprove,
+            WmsPermission::StockTakeApprove,
+            WmsPermission::TransferApprove,
+            WmsPermission::All,
+        ];
+        for v in &variants {
+            assert_eq!(v.to_shared().module, ModuleCode::Wms);
+        }
+    }
+
+    #[test]
+    fn wms_permission_display_does_not_panic() {
+        // Display delegates to to_shared(); ensure it produces a non-empty string.
+        let s = WmsPermission::WarehouseRead.to_string();
+        assert!(!s.is_empty());
+        let s2 = WmsPermission::All.to_string();
+        assert!(!s2.is_empty());
+    }
+
+    #[test]
+    fn wms_permission_equality() {
+        assert_eq!(WmsPermission::WarehouseRead, WmsPermission::WarehouseRead);
+        assert_ne!(WmsPermission::WarehouseRead, WmsPermission::WarehouseWrite);
+        assert_eq!(WmsPermission::All, WmsPermission::All);
+    }
+
+    fn make_claims(is_superuser: bool, permissions: Vec<&str>) -> Claims {
+        Claims {
+            sub: Uuid::new_v4().to_string(),
+            username: "tester".into(),
+            role: "admin".into(),
+            roles: vec![],
+            permissions: permissions.into_iter().map(String::from).collect(),
+            is_superuser,
+            exp: 9999999999,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: Some(Uuid::new_v4().to_string()),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    #[test]
+    fn has_wms_permission_superuser_always_true() {
+        let claims = make_claims(true, vec![]);
+        assert!(has_wms_permission(&claims, "read"));
+        assert!(has_wms_permission(&claims, "write"));
+        assert!(has_wms_permission(&claims, "anything"));
+    }
+
+    #[test]
+    fn has_wms_permission_with_exact_permission() {
+        let claims = make_claims(false, vec!["wms:read"]);
+        assert!(has_wms_permission(&claims, "read"));
+        assert!(!has_wms_permission(&claims, "write"));
+    }
+
+    #[test]
+    fn has_wms_permission_with_admin_permission() {
+        let claims = make_claims(false, vec!["wms:admin"]);
+        assert!(has_wms_permission(&claims, "read"));
+        assert!(has_wms_permission(&claims, "write"));
+        assert!(has_wms_permission(&claims, "approve"));
+    }
+
+    #[test]
+    fn has_wms_permission_with_all_permission() {
+        let claims = make_claims(false, vec!["all"]);
+        assert!(has_wms_permission(&claims, "read"));
+        assert!(has_wms_permission(&claims, "write"));
+    }
+
+    #[test]
+    fn has_wms_permission_no_permissions_returns_false() {
+        let claims = make_claims(false, vec![]);
+        assert!(!has_wms_permission(&claims, "read"));
+        assert!(!has_wms_permission(&claims, "write"));
+    }
+
+    #[test]
+    fn has_wms_permission_unrelated_permission_returns_false() {
+        let claims = make_claims(false, vec!["other:read"]);
+        assert!(!has_wms_permission(&claims, "read"));
+    }
+}
