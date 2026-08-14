@@ -207,7 +207,13 @@ export const IntegrationMappingsPage: React.FC = () => {
         );
         addNotification({
           title: t('integration.integration_mappings_page.k14'),
-          message: `映射规则「${mapping.name}」已${mapping.status === 'active' ? t('integration.integration_mappings_page.k16') : t('integration.integration_mappings_page.k15')}`,
+          message: i18n.t('integration.integration_mappings_page.r1', {
+            v1: mapping.name,
+            v2:
+              mapping.status === 'active'
+                ? t('integration.integration_mappings_page.k16')
+                : t('integration.integration_mappings_page.k15'),
+          }),
           type: 'success',
         });
       } catch (err) {

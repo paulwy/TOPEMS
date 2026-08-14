@@ -391,7 +391,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
               variant='body2'
               color='text.secondary'
             >
-              备注：{payment.remark}
+              {t('finance.payment_print_template.r1', { v1: payment.remark })}
             </Typography>
           </Box>
         )}

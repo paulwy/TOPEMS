@@ -1465,5 +1465,15 @@
   "hrm.hrm_payroll_page.e2": "工资发放状态",
   "hrm.hrm_payroll_page.e4": "个税计算器",
   "hrm.hrm_payroll_page.e5": "计算",
-  "hrm.hrm_salary_adjustment_page.e1": "查看 {{v1}} 的调薪详情"
+  "hrm.hrm_salary_adjustment_page.e1": "查看 {{v1}} 的调薪详情",
+  "hrm.hrm_company_page.r1": "编码:",
+  "hrm.hrm_contract_detail_page.r1": "当前合同： {{v1}}",
+  "hrm.hrm_contract_detail_page.r2": "到期日期： {{v1}}",
+  "hrm.hrm_employee_detail_page.r1": "当前职位： {{v1}}",
+  "hrm.hrm_employee_detail_page.r2": "当前部门： {{v1}}",
+  "hrm.hrm_employee_page_components_employee_form_dialog.r1": "所属公司 *",
+  "hrm.setting_attendance_rule_page.r1": "考勤规则相关配置参数（页面建设中…）",
+  "hrm.setting_payroll_template_page.r1": "薪资模板相关配置参数（页面建设中…）",
+  "hrm.setting_recruitment_flow_page.r1": "招聘流程相关配置参数（页面建设中…）",
+  "hrm.setting_training_plan_page.r1": "培训计划相关配置参数（页面建设中…）"
 }

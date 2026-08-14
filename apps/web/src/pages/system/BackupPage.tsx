@@ -503,19 +503,23 @@ const BackupPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  类型：{getBackupTypeLabel(selectedBackup.backup_type)}
+                  {t('system.backup_page.r1', {
+                    v1: getBackupTypeLabel(selectedBackup.backup_type),
+                  })}
                 </Typography>
                 <Typography
                   variant='body2'
                   color='text.secondary'
                 >
-                  大小：{formatFileSize(selectedBackup.file_size || 0)}
+                  {t('system.backup_page.r2', {
+                    v1: formatFileSize(selectedBackup.file_size || 0),
+                  })}
                 </Typography>
                 <Typography
                   variant='body2'
                   color='text.secondary'
                 >
-                  创建时间：{formatDateTime(selectedBackup.created_at)}
+                  {t('system.backup_page.r3', { v1: formatDateTime(selectedBackup.created_at) })}
                 </Typography>
               </Box>
               <Alert

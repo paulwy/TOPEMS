@@ -304,5 +304,7 @@
   "integration.integration_settings_page.e10": "集成平台负责管理系统间的数据同步和API集成。请确保各子系统连接配置正确，并定期检查同步任务的执行状态。",
   "integration.integration_settings_page.e11": "全局同步设置",
   "integration.integration_settings_page.e12": "通知设置",
-  "integration.integration_settings_page.e13": "系统连接配置"
+  "integration.integration_settings_page.e13": "系统连接配置",
+  "integration.integration_mappings_page.r1": "映射规则「{{v1}}」已{{v2}}",
+  "integration.integration_settings_page.r1": "「{{v1}}」已{{v2}}"
 }

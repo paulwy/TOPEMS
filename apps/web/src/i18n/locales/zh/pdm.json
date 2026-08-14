@@ -304,5 +304,11 @@
   "pdm.pdm_stats_page.e3": "进行中 {{v1}}",
   "pdm.product_page.e1": "产品总数",
   "pdm.product_page.e2": "活跃产品",
-  "pdm.product_page.e3": "草稿产品"
+  "pdm.product_page.e3": "草稿产品",
+  "pdm.bom_page.r1": "物料清单 - {{v1}}",
+  "pdm.document_page.r1": "版本历史 - {{v1}}",
+  "pdm.setting_bom_template_page.r1": "BOM模板相关配置参数（页面建设中…）",
+  "pdm.setting_category_rule_page.r1": "分类规则相关配置参数（页面建设中…）",
+  "pdm.setting_change_template_page.r1": "变更模板相关配置参数（页面建设中…）",
+  "pdm.setting_doc_approval_flow_page.r1": "文档审批流相关配置参数（页面建设中…）"
 }

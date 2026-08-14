@@ -320,7 +320,7 @@ export const PageListPage: React.FC = () => {
                 !createForm.route_path
               }
             >
-              {creating ? '创建中…' : t('lowcode.page_list_page.k27')}
+              {creating ? t('lowcode.app_list_page.r1') : t('lowcode.page_list_page.k27')}
             </Button>
           </DialogActions>
         </Dialog>

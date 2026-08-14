@@ -140,7 +140,9 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
             )}
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='send-subject'>主题 *</InputLabel>
+              <InputLabel htmlFor='send-subject'>
+                {t('im.mail_page_components_send_email_dialog.r1')}
+              </InputLabel>
               <TextField
                 id='send-subject'
                 value={sendForm.subject}
@@ -157,7 +159,9 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
             </Box>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='send-to'>收件人 *</InputLabel>
+              <InputLabel htmlFor='send-to'>
+                {t('im.mail_page_components_send_email_dialog.r2')}
+              </InputLabel>
               <TextField
                 id='send-to'
                 value={sendForm.to_addresses}
@@ -215,7 +219,9 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
                   justifyContent: 'space-between',
                 }}
               >
-                <InputLabel htmlFor='send-body'>邮件内容 *</InputLabel>
+                <InputLabel htmlFor='send-body'>
+                  {t('im.mail_page_components_send_email_dialog.r3')}
+                </InputLabel>
                 <FormControl
                   size='small'
                   sx={{ minWidth: 100 }}

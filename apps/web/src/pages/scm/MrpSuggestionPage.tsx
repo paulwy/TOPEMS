@@ -145,7 +145,12 @@ const MrpSuggestionPage: React.FC = () => {
   const handleConfirm = (suggestion: MrpSuggestion) => {
     setPendingAction({
       title: t('scm.mrp_suggestion_page.k12'),
-      message: `确定要确认这条${suggestion.suggestion_type === 'purchase' ? t('scm.mrp_suggestion_page.k14') : t('scm.mrp_suggestion_page.k13')}建议吗？`,
+      message: i18n.t('scm.mrp_suggestion_page.r1', {
+        v1:
+          suggestion.suggestion_type === 'purchase'
+            ? t('scm.mrp_suggestion_page.k14')
+            : t('scm.mrp_suggestion_page.k13'),
+      }),
       onConfirm: () => {
         addNotification({
           type: 'success',
@@ -159,7 +164,12 @@ const MrpSuggestionPage: React.FC = () => {
   const handleReject = (suggestion: MrpSuggestion) => {
     setPendingAction({
       title: t('scm.mrp_suggestion_page.k17'),
-      message: `确定要拒绝这条${suggestion.suggestion_type === 'purchase' ? t('scm.mrp_suggestion_page.k19') : t('scm.mrp_suggestion_page.k18')}建议吗？`,
+      message: i18n.t('scm.mrp_suggestion_page.r2', {
+        v1:
+          suggestion.suggestion_type === 'purchase'
+            ? t('scm.mrp_suggestion_page.k19')
+            : t('scm.mrp_suggestion_page.k18'),
+      }),
       onConfirm: () => {
         addNotification({
           type: 'success',

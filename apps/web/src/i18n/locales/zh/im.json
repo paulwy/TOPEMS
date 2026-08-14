@@ -212,5 +212,15 @@
   "im.mail_page_hooks.e5": "成功重发 {{v1}} / {{v2}} 条邮件",
   "im.mail_page_index.e1": "邮件管理",
   "im.mail_page_index.e2": "管理邮件发送和邮件模板",
-  "im.mail_page_index.e4": "创建模板"
+  "im.mail_page_index.e4": "创建模板",
+  "im.mail_page_components_create_template_dialog.r1": "模板编码 *",
+  "im.mail_page_components_create_template_dialog.r2": "模板名称 *",
+  "im.mail_page_components_create_template_dialog.r3": "主题模板 *",
+  "im.mail_page_components_create_template_dialog.r4": "正文模板 *",
+  "im.mail_page_components_create_template_dialog.r5": "在模板中使用 {{v1}}",
+  "im.mail_page_components_email_list.r1": "已选择 {{v1}} 条记录",
+  "im.mail_page_components_email_list.r2": "共 {{v1}} 条记录",
+  "im.mail_page_components_send_email_dialog.r1": "主题 *",
+  "im.mail_page_components_send_email_dialog.r2": "收件人 *",
+  "im.mail_page_components_send_email_dialog.r3": "邮件内容 *"
 }

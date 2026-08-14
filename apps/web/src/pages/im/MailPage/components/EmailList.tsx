@@ -184,7 +184,7 @@ const EmailList: React.FC<EmailListProps> = ({
                 variant='body2'
                 sx={{ color: 'blue.700' }}
               >
-                已选择 {selectedEmails.length} 条记录
+                {t('im.mail_page_components_email_list.r1', { v1: selectedEmails.length })}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Button
@@ -550,7 +550,7 @@ const EmailList: React.FC<EmailListProps> = ({
               variant='body2'
               sx={{ color: 'grey.500' }}
             >
-              共 {totalEmails} 条记录
+              {t('im.mail_page_components_email_list.r2', { v1: totalEmails })}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Button

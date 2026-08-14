@@ -264,5 +264,11 @@
   "scm.supplier_admission_page.e1": "确定要提交供应商准入 \" {{v1}} \" 审核吗？",
   "scm.supplier_admission_page.e2": "确定要通过供应商准入 \" {{v1}} \" 吗？",
   "scm.supplier_admission_page.e3": "确定要拒绝供应商准入 \" {{v1}} \" 吗？",
-  "scm.supplier_admission_page.e4": "确定要将供应商 \" {{v1}} \" 正式准入吗？"
+  "scm.supplier_admission_page.e4": "确定要将供应商 \" {{v1}} \" 正式准入吗？",
+  "scm.mrp_suggestion_page.r1": "确定要确认这条{{v1}}建议吗？",
+  "scm.mrp_suggestion_page.r2": "确定要拒绝这条{{v1}}建议吗？",
+  "scm.setting_purchase_threshold_page.r1": "采购阈值相关配置参数（页面建设中…）",
+  "scm.setting_quota_template_page.r1": "配额模板相关配置参数（页面建设中…）",
+  "scm.setting_sourcing_strategy_page.r1": "寻源策略相关配置参数（页面建设中…）",
+  "scm.setting_supplier_tier_page.r1": "供应商分层相关配置参数（页面建设中…）"
 }

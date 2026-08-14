@@ -263,7 +263,7 @@ export const FormListPage: React.FC = () => {
               variant='contained'
               disabled={creating || !createForm.app_id || !createForm.code || !createForm.name}
             >
-              {creating ? '创建中…' : t('lowcode.form_list_page.k25')}
+              {creating ? t('lowcode.app_list_page.r1') : t('lowcode.form_list_page.k25')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -274,7 +274,7 @@ export const FormListPage: React.FC = () => {
           maxWidth='md'
           fullWidth
         >
-          <DialogTitle>表单预览 · {previewForm?.name}</DialogTitle>
+          <DialogTitle>{t('lowcode.form_list_page.r2', { v1: previewForm?.name })}</DialogTitle>
           <DialogContent>
             <Paper
               variant='outlined'

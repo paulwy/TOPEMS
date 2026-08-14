@@ -373,7 +373,7 @@ export default function OpeningBalancePage() {
                 <TableCell sx={{ width: 120 }}>{t('finance.opening_balance_page.k10')}</TableCell>
                 <TableCell>{t('finance.opening_balance_page.k11')}</TableCell>
                 <TableCell sx={{ width: 100 }}>{t('finance.opening_balance_page.k12')}</TableCell>
-                <TableCell align='right'>期初余额（借/贷）</TableCell>
+                <TableCell align='right'>{t('finance.opening_balance_page.r1')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

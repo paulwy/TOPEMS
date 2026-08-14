@@ -56,7 +56,7 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
             size='small'
             fullWidth
           >
-            <InputLabel>所属公司 *</InputLabel>
+            <InputLabel>{t('hrm.hrm_employee_page_components_employee_form_dialog.r1')}</InputLabel>
             <Select
               value={(formData as { org_id?: string })?.org_id || ''}
               label={i18n.t('hrm.hrm_employee_page_components__employee_form_dialog.text_c3846b')}

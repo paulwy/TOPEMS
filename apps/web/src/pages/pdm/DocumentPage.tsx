@@ -506,7 +506,7 @@ export const DocumentPage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>版本历史 - {selectedDoc?.name || ''}</DialogTitle>
+        <DialogTitle>{t('pdm.document_page.r1', { v1: selectedDoc?.name || '' })}</DialogTitle>
         <DialogContent dividers>
           {versions.length === 0 ? (
             <Box sx={{ py: 4, textAlign: 'center', color: 'text.secondary' }}>

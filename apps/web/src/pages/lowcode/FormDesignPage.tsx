@@ -103,7 +103,7 @@ export const FormDesignPage: React.FC = () => {
             onClick={handleSave}
             disabled={saving || !form}
           >
-            {saving ? '保存中…' : t('lowcode.form_design_page.k5')}
+            {saving ? t('lowcode.app_management_page.r1') : t('lowcode.form_design_page.k5')}
           </Button>
         </Stack>
 
@@ -147,7 +147,7 @@ export const FormDesignPage: React.FC = () => {
           variant='caption'
           color='text.secondary'
         >
-          提示：清空 form_id 可返回选择器 ·{' '}
+          {t('lowcode.form_design_page.r2', { v1: ' ' })}
           <Button
             size='small'
             onClick={() => {

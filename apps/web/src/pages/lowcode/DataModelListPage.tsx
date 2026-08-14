@@ -234,7 +234,7 @@ export const DataModelListPage: React.FC = () => {
                 creating || !createForm.app_id || !createForm.model_name || !createForm.label
               }
             >
-              {creating ? '创建中…' : t('lowcode.data_model_list_page.k21')}
+              {creating ? t('lowcode.app_list_page.r1') : t('lowcode.data_model_list_page.k21')}
             </Button>
           </DialogActions>
         </Dialog>

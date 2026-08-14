@@ -206,7 +206,7 @@ const FeatureFlagPage: React.FC = () => {
           variant='body2'
           color='text.secondary'
         >
-          共 {flags.length} 个 Feature Flag · In-Memory 存储（重启后重置）
+          {t('system.feature_flag_page_index.r1', { v1: flags.length })}
         </Typography>
       </Box>
     </PageContainer>
