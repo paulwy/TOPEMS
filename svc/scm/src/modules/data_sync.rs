@@ -1381,3 +1381,131 @@ async fn record_sync_log(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roundtrip<T: serde::Serialize + for<'de> serde::Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn roundtrip_purchase_to_inbound_request() {
+        roundtrip(&PurchaseToInboundRequest {
+            purchase_order_id: "PO-001".to_string(),
+            warehouse_id: Some("WH-01".to_string()),
+            remarks: None,
+        });
+    }
+
+    #[test]
+    fn roundtrip_sync_result() {
+        roundtrip(&SyncResult {
+            success: true,
+            message: "ok".to_string(),
+            purchase_order_id: Some(Uuid::new_v4()),
+            inbound_order_id: None,
+            inbound_order_number: None,
+        });
+    }
+
+    #[test]
+    fn roundtrip_sync_supplier_request() {
+        roundtrip(&SyncSupplierRequest {
+            supplier_id: "SUP-01".to_string(),
+        });
+    }
+
+    #[test]
+    fn roundtrip_retry_failed_request() {
+        roundtrip(&RetryFailedRequest {
+            sync_type: Some("purchase".to_string()),
+            max_retries: Some(3),
+        });
+    }
+
+    #[test]
+    fn roundtrip_sync_statistics() {
+        roundtrip(&SyncStatistics {
+            total_syncs: 10,
+            success_count: 8,
+            failed_count: 2,
+            pending_count: 1,
+            in_progress_count: 0,
+            retry_needed_count: 1,
+        });
+    }
+
+    #[test]
+    fn roundtrip_batch_sync_result() {
+        let err = SyncErrorDetail {
+            source_id: "1".to_string(),
+            source_code: Some("C-1".to_string()),
+            error: "boom".to_string(),
+        };
+        roundtrip(&BatchSyncResult {
+            total_count: 5,
+            success_count: 4,
+            failed_count: 1,
+            retry_count: 0,
+            errors: vec![err],
+        });
+    }
+
+    #[test]
+    fn roundtrip_sync_error_detail() {
+        roundtrip(&SyncErrorDetail {
+            source_id: "s1".to_string(),
+            source_code: None,
+            error: "e".to_string(),
+        });
+    }
+
+    #[test]
+    fn roundtrip_sync_logs_request() {
+        roundtrip(&SyncLogsRequest {
+            sync_type: Some("purchase".to_string()),
+            status: None,
+            source_module: Some("scm".to_string()),
+            page: Some(1),
+            page_size: Some(20),
+        });
+    }
+
+    #[test]
+    fn roundtrip_consistency_check_result() {
+        let det = InconsistencyDetail {
+            source_id: "1".to_string(),
+            source_code: Some("C".to_string()),
+            target_id: Some("T-1".to_string()),
+            target_code: None,
+            inconsistency_type: "missing".to_string(),
+            description: "x".to_string(),
+        };
+        roundtrip(&ConsistencyCheckResult {
+            check_type: "po-io".to_string(),
+            total_records: 100,
+            consistent_count: 99,
+            inconsistent_count: 1,
+            details: vec![det],
+        });
+    }
+
+    #[test]
+    fn roundtrip_inconsistency_detail() {
+        roundtrip(&InconsistencyDetail {
+            source_id: "s1".to_string(),
+            source_code: None,
+            target_id: None,
+            target_code: Some("T".to_string()),
+            inconsistency_type: "diff".to_string(),
+            description: "d".to_string(),
+        });
+    }
+}

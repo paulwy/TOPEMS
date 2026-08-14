@@ -1285,3 +1285,75 @@ async fn rollback_opportunity(
 
     response
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roundtrip<T: serde::Serialize + for<'de> serde::Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn roundtrip_funnel_stage() {
+        roundtrip(&FunnelStage {
+            stage: "lead".to_string(),
+            stage_label: "商机".to_string(),
+            count: 5,
+            total_value: Some(10000.0),
+            avg_probability: Some(0.6),
+        });
+    }
+
+    #[test]
+    fn roundtrip_opportunity_stats() {
+        roundtrip(&OpportunityStats {
+            total_count: 10,
+            total_value: Some(50000.0),
+            weighted_value: Some(25000.0),
+            won_count: 3,
+            won_value: Some(15000.0),
+            lost_count: 1,
+            lost_value: Some(2000.0),
+        });
+    }
+
+    #[test]
+    fn roundtrip_stage_transition() {
+        roundtrip(&StageTransition {
+            from_stage: "lead".to_string(),
+            to_stage: "qualified".to_string(),
+            count: 2,
+        });
+    }
+
+    #[test]
+    fn roundtrip_opportunity_forecast() {
+        roundtrip(&OpportunityForecast {
+            forecast_month: "2026-09".to_string(),
+            forecast_value: 100000.0,
+            opportunity_count: 8,
+            avg_probability: 0.7,
+        });
+    }
+
+    #[test]
+    fn roundtrip_advance_opportunity_request() {
+        roundtrip(&AdvanceOpportunityRequest {
+            note: Some("推进中".to_string()),
+        });
+    }
+
+    #[test]
+    fn roundtrip_rollback_opportunity_request() {
+        roundtrip(&RollbackOpportunityRequest {
+            note: Some("需要补充资料".to_string()),
+            reason: Some("客户反馈".to_string()),
+        });
+    }
+}

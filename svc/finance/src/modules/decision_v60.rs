@@ -2143,3 +2143,164 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::post(resume_task_handler),
         )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Serialize, Deserialize};
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn rq_decision_scenario_type() { roundtrip(&DecisionScenarioType::Investment); }
+    #[test]
+    fn rq_decision_status() { roundtrip(&DecisionStatus::Draft); }
+    #[test]
+    fn rq_objective_type() { roundtrip(&ObjectiveType::Maximize); }
+    #[test]
+    fn rq_alert_condition() { roundtrip(&AlertCondition::Above); }
+    #[test]
+    fn rq_alert_severity() { roundtrip(&AlertSeverity::Low); }
+    #[test]
+    fn rq_alert_status() { roundtrip(&AlertStatus::Active); }
+    #[test]
+    fn rq_alert_channel_type() { roundtrip(&AlertChannelType::Email); }
+    #[test]
+    fn rq_schedule_task_type() { roundtrip(&ScheduleTaskType::Recurring); }
+    #[test]
+    fn rq_schedule_task_status() { roundtrip(&ScheduleTaskStatus::Pending); }
+    #[test]
+    fn rq_schedule_execution_status() { roundtrip(&ScheduleExecutionStatus::Pending); }
+
+    #[test]
+    fn rq_decision_scenario() {
+        roundtrip(&DecisionScenario {
+            id: Uuid::new_v4(),
+            name: "n".to_string(),
+            scenario_type: "investment".to_string(),
+            parameters: None,
+            objectives: None,
+            constraints: None,
+            status: "draft".to_string(),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        });
+    }
+
+    #[test]
+    fn rq_decision_result() {
+        roundtrip(&DecisionResult {
+            id: Uuid::new_v4(),
+            scenario_id: Uuid::new_v4(),
+            recommended_action: "a".to_string(),
+            alternatives: None,
+            expected_impact: None,
+            risk_level: "low".to_string(),
+            confidence: 0.5,
+            decided_at: chrono::Utc::now(),
+        });
+    }
+
+    #[test]
+    fn rq_objective_struct() {
+        roundtrip(&Objective {
+            id: "i".to_string(),
+            name: "n".to_string(),
+            weight: 1.0,
+            objective_type: "maximize".to_string(),
+            target_value: None,
+        });
+    }
+
+    #[test]
+    fn rq_decision_alternative() {
+        roundtrip(&DecisionAlternative {
+            action: "a".to_string(),
+            score: 0.5,
+            reasoning: "r".to_string(),
+        });
+    }
+
+    #[test]
+    fn rq_alert_rule() {
+        roundtrip(&AlertRule {
+            id: Uuid::new_v4(),
+            name: "n".to_string(),
+            metric_name: "m".to_string(),
+            condition: "above".to_string(),
+            threshold: 0.0,
+            severity: "medium".to_string(),
+            enabled: true,
+        });
+    }
+
+    #[test]
+    fn rq_alert_v60() {
+        roundtrip(&AlertV60 {
+            id: Uuid::new_v4(),
+            rule_id: Uuid::new_v4(),
+            metric_name: "m".to_string(),
+            current_value: 0.0,
+            threshold: 0.0,
+            severity: "medium".to_string(),
+            status: "active".to_string(),
+            created_at: chrono::Utc::now(),
+        });
+    }
+
+    #[test]
+    fn rq_alert_channel() {
+        roundtrip(&AlertChannel {
+            id: Uuid::new_v4(),
+            name: "n".to_string(),
+            channel_type: "email".to_string(),
+            config: None,
+            enabled: true,
+        });
+    }
+
+    #[test]
+    fn rq_schedule_task() {
+        roundtrip(&ScheduleTask {
+            id: Uuid::new_v4(),
+            name: "n".to_string(),
+            task_type: "recurring".to_string(),
+            cron_expression: None,
+            action: None,
+            priority: 5,
+            status: "pending".to_string(),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        });
+    }
+
+    #[test]
+    fn rq_schedule_execution() {
+        roundtrip(&ScheduleExecution {
+            id: Uuid::new_v4(),
+            task_id: Uuid::new_v4(),
+            scheduled_at: None,
+            started_at: None,
+            completed_at: None,
+            duration_ms: None,
+            status: "pending".to_string(),
+            output: None,
+        });
+    }
+
+    #[test]
+    fn rq_schedule_dependency() {
+        roundtrip(&ScheduleDependency {
+            id: Uuid::new_v4(),
+            task_id: Uuid::new_v4(),
+            depends_on: Uuid::new_v4(),
+            condition: None,
+        });
+    }
+}

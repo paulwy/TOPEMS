@@ -1015,3 +1015,170 @@ async fn complete_interview(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use bigdecimal::BigDecimal;
+    use chrono::{DateTime, Utc};
+
+    fn roundtrip<T: serde::Serialize + for<'de> serde::Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    fn dec(n: i64) -> BigDecimal {
+        BigDecimal::from(n)
+    }
+
+    fn dt() -> DateTime<Utc> {
+        Utc::now()
+    }
+
+    #[test]
+    fn roundtrip_job_opening() {
+        roundtrip(&JobOpening {
+            id: Uuid::new_v4(),
+            title: "后端工程师".to_string(),
+            code: Some("HR-001".to_string()),
+            department_id: None,
+            position_id: None,
+            employment_type: Some("全职".to_string()),
+            location: Some("北京".to_string()),
+            description: None,
+            requirements: None,
+            salary_min: Some(dec(20000)),
+            salary_max: Some(dec(40000)),
+            status: "open".to_string(),
+            publish_date: Some(dt()),
+            close_date: None,
+            created_at: dt(),
+            updated_at: dt(),
+        });
+    }
+
+    #[test]
+    fn roundtrip_candidate() {
+        roundtrip(&Candidate {
+            id: Uuid::new_v4(),
+            name: "张三".to_string(),
+            email: Some("z@x.com".to_string()),
+            phone: None,
+            position_id: None,
+            job_opening_id: None,
+            resume_path: None,
+            source: Some("LinkedIn".to_string()),
+            status: "applied".to_string(),
+            created_at: dt(),
+            updated_at: dt(),
+        });
+    }
+
+    #[test]
+    fn roundtrip_interview() {
+        roundtrip(&Interview {
+            id: Uuid::new_v4(),
+            candidate_id: Uuid::new_v4(),
+            interviewer_id: None,
+            round: 1,
+            scheduled_at: Some(dt()),
+            actual_at: None,
+            duration_minutes: 60,
+            status: "scheduled".to_string(),
+            result: None,
+            notes: None,
+            score: None,
+            created_at: dt(),
+            updated_at: dt(),
+        });
+    }
+
+    #[test]
+    fn roundtrip_create_job_opening_request() {
+        roundtrip(&CreateJobOpeningRequest {
+            title: "前端工程师".to_string(),
+            code: None,
+            department_id: None,
+            position_id: None,
+            employment_type: None,
+            location: None,
+            description: None,
+            requirements: None,
+            salary_min: None,
+            salary_max: None,
+        });
+    }
+
+    #[test]
+    fn roundtrip_update_job_opening_request() {
+        roundtrip(&UpdateJobOpeningRequest {
+            title: None,
+            code: Some("HR-002".to_string()),
+            department_id: None,
+            position_id: None,
+            employment_type: None,
+            location: None,
+            description: None,
+            requirements: None,
+            salary_min: None,
+            salary_max: None,
+        });
+    }
+
+    #[test]
+    fn roundtrip_create_candidate_request() {
+        roundtrip(&CreateCandidateRequest {
+            name: "李四".to_string(),
+            email: Some("l@x.com".to_string()),
+            phone: None,
+            position_id: None,
+            job_opening_id: None,
+            resume_path: None,
+            source: None,
+        });
+    }
+
+    #[test]
+    fn roundtrip_update_candidate_request() {
+        roundtrip(&UpdateCandidateRequest {
+            name: None,
+            email: None,
+            phone: None,
+            position_id: None,
+            job_opening_id: None,
+            resume_path: None,
+            source: None,
+            status: Some("interview".to_string()),
+        });
+    }
+
+    #[test]
+    fn roundtrip_create_interview_request() {
+        roundtrip(&CreateInterviewRequest {
+            candidate_id: Uuid::new_v4(),
+            interviewer_id: None,
+            round: Some(1),
+            scheduled_at: Some(dt()),
+            duration_minutes: Some(60),
+        });
+    }
+
+    #[test]
+    fn roundtrip_update_interview_request() {
+        roundtrip(&UpdateInterviewRequest {
+            interviewer_id: Some(Uuid::new_v4()),
+            round: None,
+            scheduled_at: None,
+            actual_at: None,
+            duration_minutes: None,
+            status: Some("completed".to_string()),
+            result: Some("passed".to_string()),
+            notes: Some("表现良好".to_string()),
+            score: Some(dec(85)),
+        });
+    }
+}

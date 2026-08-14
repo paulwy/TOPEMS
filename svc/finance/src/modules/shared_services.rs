@@ -1251,3 +1251,275 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::post(generate_settlements_handler),
         )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Serialize, Deserialize};
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn rq_service_center_type() {
+        roundtrip(&ServiceCenterType::Finance);
+    }
+
+    #[test]
+    fn rq_service_quality_level() {
+        roundtrip(&ServiceQualityLevel::Excellent);
+    }
+
+    #[test]
+    fn rq_service_center_item() {
+        roundtrip(&ServiceCenterItem {
+            service_center_id: Uuid::new_v4(),
+            center_code: "c".to_string(),
+            center_name: "n".to_string(),
+            center_type: ServiceCenterType::Finance,
+            total_cost: Decimal::from(0),
+            allocated_cost: Decimal::from(0),
+            unallocated_cost: Decimal::from(0),
+            service_count: 0,
+            avg_service_cost: Decimal::from(0),
+            headcount: 0,
+            cost_per_fte: Decimal::from(0),
+            quality_score: Decimal::from(0),
+            quality_level: ServiceQualityLevel::Excellent,
+        });
+    }
+
+    #[test]
+    fn rq_service_performance() {
+        roundtrip(&ServicePerformance {
+            service_center_id: Uuid::new_v4(),
+            center_name: "n".to_string(),
+            response_time_avg: Decimal::from(0),
+            resolution_rate: Decimal::from(0),
+            customer_satisfaction: Decimal::from(0),
+            error_rate: Decimal::from(0),
+            cost_efficiency: Decimal::from(0),
+            productivity_index: Decimal::from(0),
+            sla_compliance: Decimal::from(0),
+            benchmark_comparison: Decimal::from(0),
+        });
+    }
+
+    #[test]
+    fn rq_service_utilization() {
+        roundtrip(&ServiceUtilization {
+            service_center_id: Uuid::new_v4(),
+            center_name: "n".to_string(),
+            capacity_hours: Decimal::from(0),
+            utilized_hours: Decimal::from(0),
+            utilization_rate: Decimal::from(0),
+            idle_hours: Decimal::from(0),
+            overtime_hours: Decimal::from(0),
+            peak_utilization: Decimal::from(0),
+            avg_utilization: Decimal::from(0),
+        });
+    }
+
+    #[test]
+    fn rq_service_center_report() {
+        roundtrip(&ServiceCenterReport {
+            report_id: Uuid::new_v4(),
+            period: "p".to_string(),
+            total_cost: Decimal::from(0),
+            total_allocated_cost: Decimal::from(0),
+            total_service_count: 0,
+            avg_cost_per_service: Decimal::from(0),
+            overall_quality_score: Decimal::from(0),
+            center_count: 0,
+            items: vec![],
+        });
+    }
+
+    #[test]
+    fn rq_allocation_method() {
+        roundtrip(&AllocationMethod::Direct);
+    }
+
+    #[test]
+    fn rq_allocation_basis() {
+        roundtrip(&AllocationBasis::Headcount);
+    }
+
+    #[test]
+    fn rq_cost_allocation_item() {
+        roundtrip(&CostAllocationItem {
+            allocation_id: Uuid::new_v4(),
+            source_center_id: Uuid::new_v4(),
+            source_center_name: "s".to_string(),
+            target_center_id: Uuid::new_v4(),
+            target_center_name: "t".to_string(),
+            allocation_method: AllocationMethod::Direct,
+            allocation_basis: AllocationBasis::Headcount,
+            original_cost: Decimal::from(0),
+            allocated_amount: Decimal::from(0),
+            allocation_rate: Decimal::from(0),
+            allocation_ratio: Decimal::from(0),
+            period: "p".to_string(),
+        });
+    }
+
+    #[test]
+    fn rq_cost_allocation_summary() {
+        roundtrip(&CostAllocationSummary {
+            target_center_id: Uuid::new_v4(),
+            target_center_name: "n".to_string(),
+            direct_cost: Decimal::from(0),
+            allocated_cost: Decimal::from(0),
+            total_cost: Decimal::from(0),
+            allocation_count: 0,
+            avg_allocation: Decimal::from(0),
+        });
+    }
+
+    #[test]
+    fn rq_cost_allocation_breakdown() {
+        roundtrip(&CostAllocationBreakdown {
+            source_center: "s".to_string(),
+            target_centers: std::collections::HashMap::new(),
+            total_allocated: Decimal::from(0),
+            allocation_method: AllocationMethod::Direct,
+        });
+    }
+
+    #[test]
+    fn rq_calculate_allocation_request() {
+        roundtrip(&CalculateAllocationRequest {
+            period: "p".to_string(),
+            method: AllocationMethod::Direct,
+            basis: AllocationBasis::Headcount,
+            source_centers: vec![],
+        });
+    }
+
+    #[test]
+    fn rq_calculate_allocation_result() {
+        roundtrip(&CalculateAllocationResult {
+            calculation_id: Uuid::new_v4(),
+            period: "p".to_string(),
+            method: AllocationMethod::Direct,
+            basis: AllocationBasis::Headcount,
+            total_allocated: Decimal::from(0),
+            items: vec![],
+            summaries: vec![],
+        });
+    }
+
+    #[test]
+    fn rq_pricing_strategy() {
+        roundtrip(&PricingStrategy::CostPlus);
+    }
+
+    #[test]
+    fn rq_policy_status() {
+        roundtrip(&PolicyStatus::Draft);
+    }
+
+    #[test]
+    fn rq_pricing_policy() {
+        roundtrip(&PricingPolicy {
+            policy_id: Uuid::new_v4(),
+            policy_code: "c".to_string(),
+            policy_name: "n".to_string(),
+            service_type: "t".to_string(),
+            pricing_strategy: PricingStrategy::CostPlus,
+            base_cost: Decimal::from(0),
+            markup_rate: Decimal::from(0),
+            transfer_price: Decimal::from(0),
+            currency: "CNY".to_string(),
+            effective_from: chrono::Utc::now(),
+            effective_to: None,
+            status: PolicyStatus::Draft,
+            description: None,
+        });
+    }
+
+    #[test]
+    fn rq_internal_settlement() {
+        roundtrip(&InternalSettlement {
+            settlement_id: Uuid::new_v4(),
+            settlement_no: "n".to_string(),
+            period: "p".to_string(),
+            provider_id: Uuid::new_v4(),
+            provider_name: "pn".to_string(),
+            receiver_id: Uuid::new_v4(),
+            receiver_name: "rn".to_string(),
+            service_type: "t".to_string(),
+            service_quantity: Decimal::from(0),
+            unit_price: Decimal::from(0),
+            total_amount: Decimal::from(0),
+            policy_id: Uuid::new_v4(),
+            settlement_date: chrono::Utc::now(),
+            status: "s".to_string(),
+        });
+    }
+
+    #[test]
+    fn rq_settlement_summary() {
+        roundtrip(&SettlementSummary {
+            provider_id: Uuid::new_v4(),
+            provider_name: "n".to_string(),
+            total_revenue: Decimal::from(0),
+            settlement_count: 0,
+            avg_settlement: Decimal::from(0),
+            by_receiver: std::collections::HashMap::new(),
+        });
+    }
+
+    #[test]
+    fn rq_create_pricing_policy_request() {
+        roundtrip(&CreatePricingPolicyRequest {
+            policy_code: "c".to_string(),
+            policy_name: "n".to_string(),
+            service_type: "t".to_string(),
+            pricing_strategy: PricingStrategy::CostPlus,
+            base_cost: Decimal::from(0),
+            markup_rate: Decimal::from(0),
+            currency: None,
+            effective_from: None,
+            effective_to: None,
+            description: None,
+        });
+    }
+
+    #[test]
+    fn rq_update_pricing_policy_request() {
+        roundtrip(&UpdatePricingPolicyRequest {
+            policy_name: None,
+            base_cost: None,
+            markup_rate: None,
+            effective_to: None,
+            status: None,
+            description: None,
+        });
+    }
+
+    #[test]
+    fn rq_generate_settlement_request() {
+        roundtrip(&GenerateSettlementRequest {
+            period: "p".to_string(),
+            provider_ids: None,
+        });
+    }
+
+    #[test]
+    fn rq_generate_settlement_result() {
+        roundtrip(&GenerateSettlementResult {
+            generation_id: Uuid::new_v4(),
+            period: "p".to_string(),
+            total_settlements: 0,
+            total_amount: Decimal::from(0),
+            settlements: vec![],
+            summaries: vec![],
+        });
+    }
+}
