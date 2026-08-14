@@ -1,1 +1,22 @@
-{}
+{
+  "title": "Workflow",
+  "workflow_designer": "Workflow Designer",
+  "my_approvals": "My Approvals",
+  "workflow_list": "Workflow List",
+  "workflow_instance": "Workflow Instance",
+  "approval": "Approval",
+  "submit": "Submit",
+  "approve": "Approve",
+  "reject": "Reject",
+  "delegate": "Delegate",
+  "draft": "Draft",
+  "pending": "Pending",
+  "approved": "Approved",
+  "rejected": "Rejected",
+  "cancelled": "Cancelled",
+  "total_instances": "Total Instances",
+  "pending_count": "Pending Approvals",
+  "completed_count": "Completed",
+  "create_workflow": "Create Workflow",
+  "design_workflow": "Design Workflow"
+}

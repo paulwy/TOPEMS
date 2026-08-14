@@ -1,1 +1,15 @@
-{}
+{
+  "title": "Office Automation",
+  "announcements": "Announcements",
+  "meetings": "Meetings",
+  "documents": "Documents",
+  "tasks": "Tasks",
+  "calendar": "Calendar",
+  "contacts": "Contacts",
+  "workflow": "Workflow",
+  "create": "Create",
+  "submit": "Submit",
+  "approve": "Approve",
+  "reject": "Reject",
+  "forward": "Forward"
+}

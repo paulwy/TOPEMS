@@ -6,6 +6,7 @@ import { HeaderSearch } from './HeaderSearch';
 import { HeaderNotifications } from './HeaderNotifications';
 import { HeaderUserMenu } from './HeaderUserMenu';
 import { HeaderBreadcrumbs } from './HeaderBreadcrumbs';
+import LanguageSelector from '@/components/LanguageSelector';
 
 export interface AppHeaderProps {
   mobileMenuOpen?: boolean;
@@ -84,6 +85,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           {rightActions || (
             <>
               <HeaderNotifications />
+              <LanguageSelector />
               <HeaderUserMenu />
               {MobileNavComponent && onMobileMenuOpen && onMobileMenuClose && (
                 <MobileNavComponent

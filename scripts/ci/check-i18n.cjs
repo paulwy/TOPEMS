@@ -7,14 +7,16 @@
 // 3. CI 门禁：admin 模块硬编码中文必须为 0
 //
 // 用法：
-//   node scripts/ci/check-i18n.cjs                 # 全量检查，输出 top 20
-//   node scripts/ci/check-i18n.cjs --json          # 输出 JSON 格式
-//   node scripts/ci/check-i18n.cjs --strict        # 严格模式：admin 模块 > 0 则 exit 1
-//   node scripts/ci/check-i18n.cjs --module admin  # 仅检查指定模块
+//   node scripts/ci/check-i18n.cjs                   # 全量检查，输出 top 20
+//   node scripts/ci/check-i18n.cjs --json            # 输出 JSON 格式
+//   node scripts/ci/check-i18n.cjs --strict          # 严格模式：admin 模块 > 0 则 exit 1
+//   node scripts/ci/check-i18n.cjs --strict-all      # 全模块严格模式：任意模块 > 0 则 exit 1
+//   node scripts/ci/check-i18n.cjs --module admin     # 仅检查指定模块
+//   node scripts/ci/check-i18n.cjs --threshold 5     # 允许每模块最多 N 处硬编码
 //
 // 退出码：
 //   0 = 通过
-//   1 = 严格模式下 admin 模块存在硬编码中文
+//   1 = 严格模式下存在硬编码中文超标
 
 const fs = require('fs');
 const path = require('path');
@@ -26,8 +28,11 @@ const PAGES_DIR = path.join(WEB_ROOT, 'pages');
 const args = process.argv.slice(2);
 const jsonMode = args.includes('--json');
 const strictMode = args.includes('--strict');
+const strictAllMode = args.includes('--strict-all');
 const moduleIdx = args.indexOf('--module');
 const targetModule = moduleIdx !== -1 && args[moduleIdx + 1] ? args[moduleIdx + 1] : null;
+const thresholdIdx = args.indexOf('--threshold');
+const perModuleThreshold = thresholdIdx !== -1 && args[thresholdIdx + 1] ? parseInt(args[thresholdIdx + 1], 10) : 0;
 
 // 中文字符正则（CJK 统一表意文字 + 扩展 A + 兼容表意文字）
 const CHINESE_RE = /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/;
@@ -188,7 +193,10 @@ function main() {
     console.log(`  扫描文件数: ${files.length}`);
     console.log(`  硬编码中文总数: ${totalCount}`);
     console.log(`  admin 模块硬编码: ${adminCount}`);
-    console.log(`  严格模式: ${strictMode ? '开启' : '关闭'}`);
+    console.log(`  严格模式: ${strictMode ? '开启 (admin)' : strictAllMode ? '开启 (全模块)' : '关闭'}`);
+    if (perModuleThreshold > 0) {
+      console.log(`  每模块阈值: ${perModuleThreshold}`);
+    }
     console.log('');
 
     console.log('模块分布:');
@@ -215,6 +223,22 @@ function main() {
   if (strictMode && adminCount > 0) {
     console.error(`\n❌ admin 模块存在 ${adminCount} 处硬编码中文，需清零`);
     process.exit(1);
+  }
+
+  // 全模块严格模式：任意模块 > 阈值则失败
+  if (strictAllMode) {
+    const failingModules = Object.entries(moduleStats).filter(([name, stats]) => {
+      const limit = perModuleThreshold > 0 ? perModuleThreshold : 0;
+      return stats.count > limit;
+    });
+    if (failingModules.length > 0) {
+      console.error(`\n❌ ${failingModules.length} 个模块硬编码中文超标:`);
+      failingModules.forEach(([name, stats]) => {
+        const limit = perModuleThreshold > 0 ? perModuleThreshold : 0;
+        console.error(`   ${name}: ${stats.count} 处 (阈值 ${limit})`);
+      });
+      process.exit(1);
+    }
   }
 }
 

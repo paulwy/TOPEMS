@@ -3144,10 +3144,12 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 >
 > **V217 已完成**：✅ 方向 D · MF 虚拟模块可观测性埋点（详见下方 V217 章节，12 lifecycle hooks · 10 error types · 24 unit tests · TSC 0 error）
 >
-> **V218 候选（按 ROI 估算，均未启动）**：
-> - **国际化 i18n 落地**：统一 `i18next` 接入 · 中/英双语资源文件
+> **V218 已完成**：✅ 国际化 i18n 落地（详见下方 V218 章节，LanguageSelector 集成 · 37 命名空间全注册 · 9 空文件填充 · CI 扩展 · TSC 0 error）
+>
+> **V219 候选（按 ROI 估算，均未启动）**：
 > - **权限矩阵自动化验证**：后端路由 → 前端导航 → 权限标识 三向自动验证 CI 门禁
 > - **方向 C 续 · Design Token 最终收敛**：616→0 偏差 · 全量 token 化
+> - **i18n 硬编码清零**：11334 处硬编码中文 · 优先 admin 模块清零
 
 ## 🎯 V213 — 覆盖率冲刺 P2→P3 全量推进（26 commits · ~2930 新增 tests · ✅ 已封版）
 
@@ -3488,4 +3490,65 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 | `apps/web/src/main.tsx` | 更新：在顶部添加 `initMFObservability()` 调用 |
 | `apps/web/vitest.config.ts` | 更新：unit project include 新增 `src/microfrontend/**/__tests__/**` |
 | `tests/e2e/tests/mf/mf-observability.spec.ts` | 新增：5 个 E2E 测试套件覆盖 MF 可观测性场景 |
+
+## 🎯 V218 — 国际化 i18n 落地（LanguageSelector 集成 · 37 命名空间全注册 · CI 扩展 · ✅ 已封版）
+
+> **承接**：V217 MF 可观测性埋点完成后，V218 转向国际化基础设施落地。
+> **基线** (2026-08-14)：i18next 已配置但 LanguageSelector 未渲染 · 37 命名空间仅加载 8 个 · 9 个翻译文件为空 · CI 仅检查 admin 模块
+> **目标**：统一 i18next 接入 · 中/英双语资源文件全量注册 · 语言切换 UI 可用 · CI 门禁扩展
+> **最终结果**：LanguageSelector 集成到 AppHeader · 37 命名空间全注册 · 9 空文件填充 · CI 支持 --strict-all --threshold · TSC 0 error ✅
+> **日期**：2026-08-14
+
+### ✅ 验证结果
+
+| # | 验证项 | 命令 | 结果 |
+|---|--------|------|------|
+| 1 | TypeScript 编译 | `cd apps/web && npx tsc --noEmit` | ✅ 0 error |
+| 2 | CI i18n 检查 | `node scripts/ci/check-i18n.cjs` | ✅ 脚本正常运行 |
+| 3 | strict-all 模式 | `node scripts/ci/check-i18n.cjs --strict-all --threshold 500` | ✅ 正确识别 6 个超标模块 |
+| 4 | 命名空间文件计数 | `ls apps/web/src/i18n/locales/en/*.json \| wc -l` | ✅ 37 个 |
+
+### 📊 交付矩阵
+
+| 层级 | 组件 | 变更内容 |
+|------|------|---------|
+| **L1 语言切换 UI** | `AppHeader.tsx` | 导入并渲染 `LanguageSelector` 组件，放在 HeaderNotifications 和 HeaderUserMenu 之间 |
+| **L2 命名空间注册** | `i18n/index.ts` | 重写为动态加载全部 37 个命名空间（原仅 8 个）· 添加 `languageChanged` 监听更新 `document.dir` |
+| **L3 空文件填充** | `locales/{en,zh}/*.json` × 18 | 5 个从主翻译提取（hrm 140 keys / ehs 41 / pdm 20 / system 17 / workflow 20）· 4 个新建（lowcode 14 / notification 14 / oa 13 / performance 14） |
+| **L4 LTR/RTL 管理** | `i18n/index.ts` | `updateDocumentDirection()` 设置 `document.documentElement.lang` 和 `dir` 属性 · `languageChanged` 事件触发 |
+| **L5 CI 门禁扩展** | `scripts/ci/check-i18n.cjs` | 新增 `--strict-all`（全模块严格模式）和 `--threshold N`（每模块允许阈值）参数 |
+
+### 🔧 技术要点
+
+1. **LanguageSelector 集成**：组件早已存在于 `components/LanguageSelector.tsx` 但从未被导入渲染。V218 将其集成到 `AppHeader` 右侧操作区，用户可通过 Globe 图标在中文/英文间切换，语言偏好持久化到 `localStorage`
+2. **命名空间动态加载**：定义 `ALL_NAMESPACES` 数组（37 个），`schema` 静态导入（同步可用），其余通过 `Promise.all` 并行动态 `import()` 后 `addResourceBundle` 注册。`partialBundledLanguages: true` 允许延迟加载
+3. **空文件处理策略**：已在主翻译文件中有内容的模块（hrm/ehs/pdm/system/workflow）从主文件提取对应 section 写入命名空间文件；不在主文件中的模块（lowcode/notification/oa/performance）创建基本翻译结构
+4. **CI 门禁分级**：`--strict` 仅检查 admin 模块（向后兼容）；`--strict-all` 检查全部模块；`--threshold N` 设置每模块允许的最大硬编码数。当前基线：11334 处硬编码 · 773 文件 · 26 模块
+5. **文档方向管理**：`updateDocumentDirection()` 在语言切换时设置 `document.documentElement.dir` 为 `ltr`（zh/en）或 `rtl`（ar/he/fa），为未来 RTL 语言支持做准备
+
+### 📦 交付清单
+
+| 文件/目录 | 变更内容 |
+|----------|---------|
+| `apps/web/src/components/layout/AppHeader/AppHeader.tsx` | 更新：导入并渲染 `LanguageSelector` |
+| `apps/web/src/i18n/index.ts` | 重写：37 命名空间全注册 · 动态加载 · LTR/RTL 管理 |
+| `apps/web/src/i18n/locales/zh/hrm.json` | 填充：140 keys（从主翻译提取） |
+| `apps/web/src/i18n/locales/en/hrm.json` | 填充：140 keys |
+| `apps/web/src/i18n/locales/zh/ehs.json` | 填充：41 keys |
+| `apps/web/src/i18n/locales/en/ehs.json` | 填充：41 keys |
+| `apps/web/src/i18n/locales/zh/pdm.json` | 填充：20 keys |
+| `apps/web/src/i18n/locales/en/pdm.json` | 填充：20 keys |
+| `apps/web/src/i18n/locales/zh/system.json` | 填充：17 keys |
+| `apps/web/src/i18n/locales/en/system.json` | 填充：17 keys |
+| `apps/web/src/i18n/locales/zh/workflow.json` | 填充：20 keys |
+| `apps/web/src/i18n/locales/en/workflow.json` | 填充：20 keys |
+| `apps/web/src/i18n/locales/zh/lowcode.json` | 新建：14 keys |
+| `apps/web/src/i18n/locales/en/lowcode.json` | 新建：14 keys |
+| `apps/web/src/i18n/locales/zh/notification.json` | 新建：14 keys |
+| `apps/web/src/i18n/locales/en/notification.json` | 新建：14 keys |
+| `apps/web/src/i18n/locales/zh/oa.json` | 新建：13 keys |
+| `apps/web/src/i18n/locales/en/oa.json` | 新建：13 keys |
+| `apps/web/src/i18n/locales/zh/performance.json` | 新建：14 keys |
+| `apps/web/src/i18n/locales/en/performance.json` | 新建：14 keys |
+| `scripts/ci/check-i18n.cjs` | 更新：新增 `--strict-all` 和 `--threshold` 参数 |
 
