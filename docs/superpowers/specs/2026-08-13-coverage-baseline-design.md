@@ -226,3 +226,44 @@ coverage-baseline-full: ## 全 workspace + apps/web 覆盖率基线
 2. 前端 TS 按模块（api/pages/components）分批次提升到 20%
 3. CI nightly 自动运行基线 + 存档报告到 S3/Artifact
 4. Codecov 或 Coveralls 集成，PR 上显示 diff
+
+---
+
+## 13. 实施实测结果（2026-08-15 补录）
+
+> V203 P0-3.1 基线工具链完整落地后，直接驱动了两轮覆盖率冲刺（V203 P1 + P5），实测 Region 覆盖从 ~13% 基线 → 45.84%。
+
+### 13.1 基线工具落地验证
+
+| 验收项 | 标准 | 实测 | 结果 |
+|:------|:-----|:-----|:----:|
+| A1 bash 语法 | `bash -n` exit 0 | ✅ 通过 | ✅ |
+| A2 python 编译 | `py_compile` exit 0 | ✅ 通过 | ✅ |
+| A3 help 列出 flags | 15+ flags | ✅ 全列出 | ✅ |
+| A5 Rust 行覆盖区间 | 11%–15% 基线 | 初跑 ~13% | ✅ |
+| A6 阈值门禁 | `--fail-under 100` → 1, `--fail-under 0` → 0 | ✅ | ✅ |
+| A7 SKIPPED 不阻塞 | 不存在 crate → 表尾记录 | ✅ | ✅ |
+| A8 make 入口 | `make help \| grep coverage` | ✅ 2 目标 | ✅ |
+
+### 13.2 冲刺实测数据
+
+| 阶段 | 策略 | 新增测试 | 覆盖文件 | Region Δ |
+|------|------|----------|----------|----------|
+| V203 P1 | 18 crate 纯函数提取 × 10% | ~1,000+ | 80+ | 13% → ~30% |
+| V203 P5 Round 1 | serde derive roundtrip 批量 + mock 架构 | 147 | 22 | 43.19% → 45.53% |
+| V203 P5 Round 2 | finance+portal zero-coverage + handlers | 88 | 21 | 45.53% → **45.84%** |
+
+### 13.3 关键发现
+
+1. **serde roundtrip 是拉覆盖率最高 ROI 的路径**：`Serialize`/`Deserialize` derive 密集的 0-test 文件，一条 `roundtrip(&struct)` 即可覆盖构造 → JSON 序列化 → 反序列化 → 字段校验，单文件 region 覆盖率从 0% 跃升至 40–80%。
+2. **业务逻辑测试需要 mock 注入**：handlers.rs 里直接 `let client = AiFormAssistantClient::new()` 无法隔离测试；trait 化 + `impl AiFormAssistant for MockAssistant` 后，handlers.rs 从 0% → 91.46%。
+3. **磁盘空间管理是长跑约束**：cargo llvm-cov 的 `.profraw` + `.profdata` + `llvm-cov export` JSON 会迅速膨胀到 10–20 GB；每 3–5 个 crate 清一次 `target/llvm-cov-target` + `target/llvm-cov-profdata` 可避免 ENOSPC。
+
+### 13.4 下一步建议（替代原 §12）
+
+| 优先级 | 方向 | 预期 Δ |
+|--------|------|--------|
+| P0 | finance V54-V60 handlers 业务逻辑 + mock（risk/settlement/tax） | +0.5–1.0pp |
+| P1 | portal GraphQL resolver 业务 handler | +0.3–0.5pp |
+| P1 | erp crate（27.91% region，13,348 行）纯函数提取 | +0.5pp |
+| P2 | CI nightly：`make coverage-baseline` → artifact 存档 | 自动化 |
