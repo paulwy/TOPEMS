@@ -1653,4 +1653,733 @@ mod tests {
         assert!(diffs[0].contains("name:"));
         assert!(diffs[0].contains(" -> alice"));
     }
+
+    // ---------- parse_segment ----------
+
+    #[test]
+    fn test_parse_segment_leading_digits() {
+        let (n, rest) = parse_segment("123abc");
+        assert_eq!(n, Some(123));
+        assert_eq!(rest, "abc");
+    }
+
+    #[test]
+    fn test_parse_segment_all_digits() {
+        let (n, rest) = parse_segment("456");
+        assert_eq!(n, Some(456));
+        assert_eq!(rest, "");
+    }
+
+    #[test]
+    fn test_parse_segment_no_digits() {
+        let (n, rest) = parse_segment("abc123");
+        assert_eq!(n, None);
+        assert_eq!(rest, "abc123");
+    }
+
+    #[test]
+    fn test_parse_segment_empty_string() {
+        let (n, rest) = parse_segment("");
+        assert_eq!(n, None);
+        assert_eq!(rest, "");
+    }
+
+    #[test]
+    fn test_parse_segment_single_digit() {
+        let (n, rest) = parse_segment("7.0.0");
+        assert_eq!(n, Some(7));
+        assert_eq!(rest, ".0.0");
+    }
+
+    #[test]
+    fn test_parse_segment_large_number() {
+        let (n, _rest) = parse_segment("9999999999");
+        assert_eq!(n, Some(9999999999));
+    }
+
+    #[test]
+    fn test_parse_segment_zero() {
+        let (n, rest) = parse_segment("0.1.0");
+        assert_eq!(n, Some(0));
+        assert_eq!(rest, ".1.0");
+    }
+
+    // ---------- all_remaining_zero ----------
+
+    #[test]
+    fn test_all_remaining_zero_empty() {
+        assert!(all_remaining_zero(""));
+    }
+
+    #[test]
+    fn test_all_remaining_zero_single_zero() {
+        assert!(all_remaining_zero("0"));
+    }
+
+    #[test]
+    fn test_all_remaining_zero_multiple_zeros() {
+        assert!(all_remaining_zero("0.0.0"));
+    }
+
+    #[test]
+    fn test_all_remaining_zero_with_dot_prefix() {
+        assert!(all_remaining_zero(".0.0"));
+    }
+
+    #[test]
+    fn test_all_remaining_zero_non_zero() {
+        assert!(!all_remaining_zero("1.0.0"));
+        assert!(!all_remaining_zero("0.1"));
+    }
+
+    #[test]
+    fn test_all_remaining_zero_non_numeric() {
+        // 非数字段忽略，视为相等
+        assert!(all_remaining_zero("-beta"));
+    }
+
+    #[test]
+    fn test_all_remaining_zero_mixed() {
+        // 0 后跟非数字段
+        assert!(all_remaining_zero("0-beta"));
+    }
+
+    // ---------- audit_event_type_from_str ----------
+
+    #[test]
+    fn test_audit_event_type_from_str_read() {
+        assert_eq!(audit_event_type_from_str("read"), AuditEventType::Read);
+    }
+
+    #[test]
+    fn test_audit_event_type_from_str_update() {
+        assert_eq!(audit_event_type_from_str("update"), AuditEventType::Update);
+    }
+
+    #[test]
+    fn test_audit_event_type_from_str_delete() {
+        assert_eq!(audit_event_type_from_str("delete"), AuditEventType::Delete);
+    }
+
+    #[test]
+    fn test_audit_event_type_from_str_export() {
+        assert_eq!(audit_event_type_from_str("export"), AuditEventType::Export);
+    }
+
+    #[test]
+    fn test_audit_event_type_from_str_import() {
+        assert_eq!(audit_event_type_from_str("import"), AuditEventType::Import);
+    }
+
+    #[test]
+    fn test_audit_event_type_from_str_create_default() {
+        assert_eq!(audit_event_type_from_str("create"), AuditEventType::Create);
+        assert_eq!(audit_event_type_from_str("unknown"), AuditEventType::Create);
+        assert_eq!(audit_event_type_from_str(""), AuditEventType::Create);
+    }
+
+    // ---------- audit_category_from_str ----------
+
+    #[test]
+    fn test_audit_category_from_str_modification() {
+        assert_eq!(
+            audit_category_from_str("modification"),
+            AuditEventCategory::Modification
+        );
+    }
+
+    #[test]
+    fn test_audit_category_from_str_administration() {
+        assert_eq!(
+            audit_category_from_str("administration"),
+            AuditEventCategory::Administration
+        );
+    }
+
+    #[test]
+    fn test_audit_category_from_str_security() {
+        assert_eq!(
+            audit_category_from_str("security"),
+            AuditEventCategory::Security
+        );
+    }
+
+    #[test]
+    fn test_audit_category_from_str_data_access_default() {
+        assert_eq!(
+            audit_category_from_str("data_access"),
+            AuditEventCategory::DataAccess
+        );
+        assert_eq!(
+            audit_category_from_str("unknown"),
+            AuditEventCategory::DataAccess
+        );
+        assert_eq!(audit_category_from_str(""), AuditEventCategory::DataAccess);
+    }
+
+    // ---------- permission_action_from_str ----------
+
+    #[test]
+    fn test_permission_action_from_str_write() {
+        assert_eq!(permission_action_from_str("write"), PermissionAction::Write);
+    }
+
+    #[test]
+    fn test_permission_action_from_str_delete() {
+        assert_eq!(
+            permission_action_from_str("delete"),
+            PermissionAction::Delete
+        );
+    }
+
+    #[test]
+    fn test_permission_action_from_str_admin() {
+        assert_eq!(permission_action_from_str("admin"), PermissionAction::Admin);
+    }
+
+    #[test]
+    fn test_permission_action_from_str_read_default() {
+        assert_eq!(permission_action_from_str("read"), PermissionAction::Read);
+        assert_eq!(
+            permission_action_from_str("unknown"),
+            PermissionAction::Read
+        );
+        assert_eq!(permission_action_from_str(""), PermissionAction::Read);
+    }
+
+    // ---------- branch_type_from_str ----------
+
+    #[test]
+    fn test_branch_type_from_str_feature() {
+        assert_eq!(branch_type_from_str("feature"), BranchType::Feature);
+    }
+
+    #[test]
+    fn test_branch_type_from_str_release() {
+        assert_eq!(branch_type_from_str("release"), BranchType::Release);
+    }
+
+    #[test]
+    fn test_branch_type_from_str_hotfix() {
+        assert_eq!(branch_type_from_str("hotfix"), BranchType::Hotfix);
+    }
+
+    #[test]
+    fn test_branch_type_from_str_main_default() {
+        assert_eq!(branch_type_from_str("main"), BranchType::Main);
+        assert_eq!(branch_type_from_str("unknown"), BranchType::Main);
+        assert_eq!(branch_type_from_str(""), BranchType::Main);
+    }
+
+    // ---------- compute_hash ----------
+
+    #[test]
+    fn test_compute_hash_deterministic() {
+        let data = serde_json::json!({"name": "test", "value": 123});
+        let h1 = compute_hash(&data);
+        let h2 = compute_hash(&data);
+        assert_eq!(h1, h2);
+    }
+
+    #[test]
+    fn test_compute_hash_different_data_different_hash() {
+        let a = serde_json::json!({"name": "alice"});
+        let b = serde_json::json!({"name": "bob"});
+        assert_ne!(compute_hash(&a), compute_hash(&b));
+    }
+
+    #[test]
+    fn test_compute_hash_empty_object() {
+        let h = compute_hash(&serde_json::json!({}));
+        assert!(!h.is_empty());
+    }
+
+    #[test]
+    fn test_compute_hash_is_hex_string() {
+        let h = compute_hash(&serde_json::json!({"k": "v"}));
+        assert!(h.chars().all(|c| c.is_ascii_hexdigit()));
+    }
+
+    #[test]
+    fn test_compute_hash_null() {
+        let h = compute_hash(&serde_json::Value::Null);
+        assert!(!h.is_empty());
+    }
+
+    // ---------- generate_version ----------
+
+    #[test]
+    fn test_generate_version_empty_snapshots() {
+        let snapshots: Vec<VersionSnapshot> = vec![];
+        let v = generate_version(&snapshots, "customer", "C001");
+        assert_eq!(v, "v1.0.0");
+    }
+
+    #[test]
+    fn test_generate_version_increments_max() {
+        let snapshots = vec![VersionSnapshot {
+            id: "s1".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: "C001".to_string(),
+            version: "v3".to_string(),
+            data: serde_json::json!({}),
+            hash: "h".to_string(),
+            created_by: "u".to_string(),
+            created_at: "t".to_string(),
+            comment: "".to_string(),
+        }];
+        let v = generate_version(&snapshots, "customer", "C001");
+        assert_eq!(v, "v4.0.0");
+    }
+
+    #[test]
+    fn test_generate_version_different_entity() {
+        let snapshots = vec![VersionSnapshot {
+            id: "s1".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: "C001".to_string(),
+            version: "v5.0.0".to_string(),
+            data: serde_json::json!({}),
+            hash: "h".to_string(),
+            created_by: "u".to_string(),
+            created_at: "t".to_string(),
+            comment: "".to_string(),
+        }];
+        // 不同实体应从 v1 开始
+        let v = generate_version(&snapshots, "supplier", "S001");
+        assert_eq!(v, "v1.0.0");
+    }
+
+    #[test]
+    fn test_generate_version_ignores_non_numeric_versions() {
+        let snapshots = vec![VersionSnapshot {
+            id: "s1".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: "C001".to_string(),
+            version: "vabc.0.0".to_string(),
+            data: serde_json::json!({}),
+            hash: "h".to_string(),
+            created_by: "u".to_string(),
+            created_at: "t".to_string(),
+            comment: "".to_string(),
+        }];
+        // 非数字版本被忽略，从 v1 开始
+        let v = generate_version(&snapshots, "customer", "C001");
+        assert_eq!(v, "v1.0.0");
+    }
+
+    #[test]
+    fn test_generate_version_multiple_snapshots() {
+        let make_snap = |ver: &str| VersionSnapshot {
+            id: format!("s-{}", ver),
+            entity_type: "customer".to_string(),
+            entity_id: "C001".to_string(),
+            version: ver.to_string(),
+            data: serde_json::json!({}),
+            hash: "h".to_string(),
+            created_by: "u".to_string(),
+            created_at: "t".to_string(),
+            comment: "".to_string(),
+        };
+        let snapshots = vec![make_snap("v1"), make_snap("v2"), make_snap("v5")];
+        let v = generate_version(&snapshots, "customer", "C001");
+        assert_eq!(v, "v6.0.0");
+    }
+
+    // ---------- compute_diff ----------
+
+    #[test]
+    fn test_compute_diff_identical_objects() {
+        let a = serde_json::json!({"name": "alice", "age": 30});
+        let b = serde_json::json!({"name": "alice", "age": 30});
+        let diff = compute_diff(&a, &b);
+        assert!(diff.added_fields.is_empty());
+        assert!(diff.removed_fields.is_empty());
+        assert!(diff.changed_fields.is_empty());
+    }
+
+    #[test]
+    fn test_compute_diff_added_field() {
+        let a = serde_json::json!({"name": "alice"});
+        let b = serde_json::json!({"name": "alice", "email": "a@b.com"});
+        let diff = compute_diff(&a, &b);
+        assert_eq!(diff.added_fields, vec!["email"]);
+        assert!(diff.removed_fields.is_empty());
+        assert!(diff.changed_fields.is_empty());
+    }
+
+    #[test]
+    fn test_compute_diff_removed_field() {
+        let a = serde_json::json!({"name": "alice", "email": "a@b.com"});
+        let b = serde_json::json!({"name": "alice"});
+        let diff = compute_diff(&a, &b);
+        assert!(diff.added_fields.is_empty());
+        assert_eq!(diff.removed_fields, vec!["email"]);
+        assert!(diff.changed_fields.is_empty());
+    }
+
+    #[test]
+    fn test_compute_diff_changed_field() {
+        let a = serde_json::json!({"name": "alice"});
+        let b = serde_json::json!({"name": "bob"});
+        let diff = compute_diff(&a, &b);
+        assert!(diff.added_fields.is_empty());
+        assert!(diff.removed_fields.is_empty());
+        assert_eq!(diff.changed_fields, vec!["name"]);
+    }
+
+    #[test]
+    fn test_compute_diff_all_three_changes() {
+        let a = serde_json::json!({"k1": "v1", "k2": "old", "k3": "removed"});
+        let b = serde_json::json!({"k1": "v1", "k2": "new", "k4": "added"});
+        let diff = compute_diff(&a, &b);
+        assert_eq!(diff.added_fields, vec!["k4"]);
+        assert_eq!(diff.removed_fields, vec!["k3"]);
+        assert_eq!(diff.changed_fields, vec!["k2"]);
+    }
+
+    #[test]
+    fn test_compute_diff_empty_objects() {
+        let a = serde_json::json!({});
+        let b = serde_json::json!({});
+        let diff = compute_diff(&a, &b);
+        assert!(diff.added_fields.is_empty());
+        assert!(diff.removed_fields.is_empty());
+        assert!(diff.changed_fields.is_empty());
+    }
+
+    #[test]
+    fn test_compute_diff_non_object_inputs() {
+        let a = serde_json::json!([1, 2, 3]);
+        let b = serde_json::json!([1, 2, 3]);
+        let diff = compute_diff(&a, &b);
+        // 非对象输入不产生 diff
+        assert!(diff.added_fields.is_empty());
+        assert!(diff.removed_fields.is_empty());
+        assert!(diff.changed_fields.is_empty());
+    }
+
+    #[test]
+    fn test_compute_diff_returns_empty_versions() {
+        // compute_diff 内部不设置 from_version/to_version
+        let a = serde_json::json!({"k": "v"});
+        let b = serde_json::json!({"k": "v2"});
+        let diff = compute_diff(&a, &b);
+        assert_eq!(diff.from_version, "");
+        assert_eq!(diff.to_version, "");
+    }
+
+    // ---------- 枚举 serde 往返 ----------
+
+    #[test]
+    fn test_branch_type_serde_roundtrip() {
+        for v in [
+            BranchType::Main,
+            BranchType::Feature,
+            BranchType::Release,
+            BranchType::Hotfix,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: BranchType = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_audit_event_type_serde_roundtrip() {
+        for v in [
+            AuditEventType::Create,
+            AuditEventType::Read,
+            AuditEventType::Update,
+            AuditEventType::Delete,
+            AuditEventType::Export,
+            AuditEventType::Import,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: AuditEventType = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_audit_event_category_serde_roundtrip() {
+        for v in [
+            AuditEventCategory::DataAccess,
+            AuditEventCategory::Modification,
+            AuditEventCategory::Administration,
+            AuditEventCategory::Security,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: AuditEventCategory = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_permission_action_serde_roundtrip() {
+        for v in [
+            PermissionAction::Read,
+            PermissionAction::Write,
+            PermissionAction::Delete,
+            PermissionAction::Admin,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: PermissionAction = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_branch_type_serde_snake_case() {
+        assert_eq!(
+            serde_json::to_string(&BranchType::Main).unwrap(),
+            "\"main\""
+        );
+        assert_eq!(
+            serde_json::to_string(&BranchType::Hotfix).unwrap(),
+            "\"hotfix\""
+        );
+    }
+
+    #[test]
+    fn test_audit_event_type_serde_snake_case() {
+        assert_eq!(
+            serde_json::to_string(&AuditEventType::Create).unwrap(),
+            "\"create\""
+        );
+        assert_eq!(
+            serde_json::to_string(&AuditEventType::Export).unwrap(),
+            "\"export\""
+        );
+    }
+
+    // ---------- 结构体 serde 往返 ----------
+
+    #[test]
+    fn test_version_snapshot_serde_roundtrip() {
+        let s = VersionSnapshot {
+            id: "snap-1".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: "C001".to_string(),
+            version: "v1.0.0".to_string(),
+            data: serde_json::json!({"name": "alice"}),
+            hash: "abc123".to_string(),
+            created_by: "admin".to_string(),
+            created_at: "2024-01-01T00:00:00Z".to_string(),
+            comment: "初始版本".to_string(),
+        };
+        let json = serde_json::to_string(&s).unwrap();
+        let back: VersionSnapshot = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "snap-1");
+        assert_eq!(back.version, "v1.0.0");
+        assert_eq!(back.hash, "abc123");
+    }
+
+    #[test]
+    fn test_version_diff_serde_roundtrip() {
+        let d = VersionDiff {
+            from_version: "v1.0.0".to_string(),
+            to_version: "v2.0.0".to_string(),
+            added_fields: vec!["email".to_string()],
+            removed_fields: vec!["phone".to_string()],
+            changed_fields: vec!["name".to_string()],
+        };
+        let json = serde_json::to_string(&d).unwrap();
+        let back: VersionDiff = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.from_version, "v1.0.0");
+        assert_eq!(back.added_fields.len(), 1);
+        assert_eq!(back.removed_fields.len(), 1);
+    }
+
+    #[test]
+    fn test_version_branch_serde_roundtrip() {
+        let b = VersionBranch {
+            id: "br-1".to_string(),
+            name: "feature/x".to_string(),
+            branch_type: BranchType::Feature,
+            parent_branch: Some("main".to_string()),
+            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_by: "admin".to_string(),
+            merged_at: None,
+            merged_by: None,
+            status: "active".to_string(),
+        };
+        let json = serde_json::to_string(&b).unwrap();
+        let back: VersionBranch = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "br-1");
+        assert_eq!(back.branch_type, BranchType::Feature);
+        assert!(back.merged_at.is_none());
+    }
+
+    #[test]
+    fn test_audit_event_serde_roundtrip() {
+        let e = AuditEvent {
+            id: "ae-1".to_string(),
+            event_type: AuditEventType::Update,
+            category: AuditEventCategory::Modification,
+            entity_type: "customer".to_string(),
+            entity_id: "C001".to_string(),
+            user_id: "admin".to_string(),
+            old_value: Some(serde_json::json!({"k": "old"})),
+            new_value: Some(serde_json::json!({"k": "new"})),
+            ip_address: "127.0.0.1".to_string(),
+            timestamp: "2024-01-01T00:00:00Z".to_string(),
+            session_id: "sess-1".to_string(),
+        };
+        let json = serde_json::to_string(&e).unwrap();
+        let back: AuditEvent = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "ae-1");
+        assert_eq!(back.event_type, AuditEventType::Update);
+        assert!(back.old_value.is_some());
+    }
+
+    #[test]
+    fn test_audit_export_log_serde_roundtrip() {
+        let l = AuditExportLog {
+            id: "el-1".to_string(),
+            user_id: "admin".to_string(),
+            export_type: "json".to_string(),
+            record_count: 100,
+            exported_at: "2024-01-01T00:00:00Z".to_string(),
+            ip_address: "127.0.0.1".to_string(),
+        };
+        let json = serde_json::to_string(&l).unwrap();
+        let back: AuditExportLog = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "el-1");
+        assert_eq!(back.record_count, 100);
+    }
+
+    #[test]
+    fn test_data_permission_serde_roundtrip() {
+        let p = DataPermission {
+            id: "dp-1".to_string(),
+            role_id: "role-1".to_string(),
+            resource_type: "customer".to_string(),
+            resource_id: "*".to_string(),
+            action: PermissionAction::Read,
+            condition: Some(serde_json::json!({"tenant": "t1"})),
+            inherited: false,
+        };
+        let json = serde_json::to_string(&p).unwrap();
+        let back: DataPermission = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "dp-1");
+        assert_eq!(back.action, PermissionAction::Read);
+        assert!(!back.inherited);
+    }
+
+    #[test]
+    fn test_permission_role_serde_roundtrip() {
+        let r = PermissionRole {
+            id: "role-1".to_string(),
+            name: "admin".to_string(),
+            description: "管理员".to_string(),
+            inherited_from: None,
+            created_at: "2024-01-01T00:00:00Z".to_string(),
+        };
+        let json = serde_json::to_string(&r).unwrap();
+        let back: PermissionRole = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "role-1");
+        assert_eq!(back.name, "admin");
+    }
+
+    #[test]
+    fn test_user_role_assignment_serde_roundtrip() {
+        let a = UserRoleAssignment {
+            id: "ua-1".to_string(),
+            user_id: "user-001".to_string(),
+            role_id: "role-1".to_string(),
+            assigned_at: "2024-01-01T00:00:00Z".to_string(),
+        };
+        let json = serde_json::to_string(&a).unwrap();
+        let back: UserRoleAssignment = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "ua-1");
+        assert_eq!(back.user_id, "user-001");
+    }
+
+    // ---------- Clone/Eq trait ----------
+
+    #[test]
+    fn test_branch_type_clone_eq() {
+        assert_eq!(BranchType::Main, BranchType::Main);
+        assert_ne!(BranchType::Main, BranchType::Feature);
+        let cloned = BranchType::Release.clone();
+        assert_eq!(cloned, BranchType::Release);
+    }
+
+    #[test]
+    fn test_audit_event_type_clone_eq() {
+        assert_eq!(AuditEventType::Create, AuditEventType::Create);
+        assert_ne!(AuditEventType::Create, AuditEventType::Delete);
+    }
+
+    #[test]
+    fn test_audit_event_category_clone_eq() {
+        assert_eq!(
+            AuditEventCategory::DataAccess,
+            AuditEventCategory::DataAccess
+        );
+        assert_ne!(AuditEventCategory::DataAccess, AuditEventCategory::Security);
+    }
+
+    #[test]
+    fn test_permission_action_clone_eq() {
+        assert_eq!(PermissionAction::Read, PermissionAction::Read);
+        assert_ne!(PermissionAction::Read, PermissionAction::Write);
+    }
+
+    #[test]
+    fn test_version_snapshot_clone() {
+        let s = VersionSnapshot {
+            id: "snap-1".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: "C001".to_string(),
+            version: "v1.0.0".to_string(),
+            data: serde_json::json!({"k": "v"}),
+            hash: "h".to_string(),
+            created_by: "u".to_string(),
+            created_at: "t".to_string(),
+            comment: "c".to_string(),
+        };
+        let cloned = s.clone();
+        assert_eq!(cloned.id, s.id);
+        assert_eq!(cloned.version, s.version);
+    }
+
+    #[test]
+    fn test_version_branch_clone() {
+        let b = VersionBranch {
+            id: "br-1".to_string(),
+            name: "main".to_string(),
+            branch_type: BranchType::Main,
+            parent_branch: None,
+            created_at: "t".to_string(),
+            created_by: "u".to_string(),
+            merged_at: None,
+            merged_by: None,
+            status: "active".to_string(),
+        };
+        let cloned = b.clone();
+        assert_eq!(cloned.id, b.id);
+        assert_eq!(cloned.branch_type, b.branch_type);
+    }
+
+    #[test]
+    fn test_audit_event_clone() {
+        let e = AuditEvent {
+            id: "ae-1".to_string(),
+            event_type: AuditEventType::Create,
+            category: AuditEventCategory::Modification,
+            entity_type: "customer".to_string(),
+            entity_id: "C001".to_string(),
+            user_id: "admin".to_string(),
+            old_value: None,
+            new_value: None,
+            ip_address: "127.0.0.1".to_string(),
+            timestamp: "t".to_string(),
+            session_id: "s".to_string(),
+        };
+        let cloned = e.clone();
+        assert_eq!(cloned.id, e.id);
+        assert_eq!(cloned.event_type, e.event_type);
+    }
 }

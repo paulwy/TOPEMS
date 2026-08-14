@@ -1370,3 +1370,484 @@ pub async fn rollback_propagation(
         Err(e) => Json(ApiResponse::error(404, &e)),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---------- edge_type_from_str ----------
+
+    #[test]
+    fn test_edge_type_from_str_transforms() {
+        assert_eq!(edge_type_from_str("transforms"), EdgeType::Transforms);
+    }
+
+    #[test]
+    fn test_edge_type_from_str_depends_on() {
+        assert_eq!(edge_type_from_str("depends_on"), EdgeType::DependsOn);
+    }
+
+    #[test]
+    fn test_edge_type_from_str_implements() {
+        assert_eq!(edge_type_from_str("implements"), EdgeType::Implements);
+    }
+
+    #[test]
+    fn test_edge_type_from_str_derives_from_default() {
+        assert_eq!(edge_type_from_str("derives_from"), EdgeType::DerivesFrom);
+        assert_eq!(edge_type_from_str("unknown"), EdgeType::DerivesFrom);
+        assert_eq!(edge_type_from_str(""), EdgeType::DerivesFrom);
+    }
+
+    // ---------- change_type_from_str ----------
+
+    #[test]
+    fn test_change_type_from_str_update() {
+        assert_eq!(change_type_from_str("update"), ChangeType::Update);
+    }
+
+    #[test]
+    fn test_change_type_from_str_delete() {
+        assert_eq!(change_type_from_str("delete"), ChangeType::Delete);
+    }
+
+    #[test]
+    fn test_change_type_from_str_rename() {
+        assert_eq!(change_type_from_str("rename"), ChangeType::Rename);
+    }
+
+    #[test]
+    fn test_change_type_from_str_merge() {
+        assert_eq!(change_type_from_str("merge"), ChangeType::Merge);
+    }
+
+    #[test]
+    fn test_change_type_from_str_create_default() {
+        assert_eq!(change_type_from_str("create"), ChangeType::Create);
+        assert_eq!(change_type_from_str("unknown"), ChangeType::Create);
+    }
+
+    // ---------- propagation_action_from_str ----------
+
+    #[test]
+    fn test_propagation_action_from_str_sync_notify() {
+        assert_eq!(
+            propagation_action_from_str("sync_notify"),
+            PropagationAction::SyncNotify
+        );
+    }
+
+    #[test]
+    fn test_propagation_action_from_str_reject() {
+        assert_eq!(
+            propagation_action_from_str("reject"),
+            PropagationAction::Reject
+        );
+    }
+
+    #[test]
+    fn test_propagation_action_from_str_transform() {
+        assert_eq!(
+            propagation_action_from_str("transform"),
+            PropagationAction::Transform
+        );
+    }
+
+    #[test]
+    fn test_propagation_action_from_str_cascade_update_default() {
+        assert_eq!(
+            propagation_action_from_str("cascade_update"),
+            PropagationAction::CascadeUpdate
+        );
+        assert_eq!(
+            propagation_action_from_str("unknown"),
+            PropagationAction::CascadeUpdate
+        );
+    }
+
+    // ---------- compute_risk_level ----------
+
+    #[test]
+    fn test_compute_risk_level_low() {
+        // 0 直接 + 4 间接 = 4 -> Low
+        assert_eq!(compute_risk_level(0, 4), RiskLevel::Low);
+        // 0 直接 + 0 间接 = 0 -> Low
+        assert_eq!(compute_risk_level(0, 0), RiskLevel::Low);
+    }
+
+    #[test]
+    fn test_compute_risk_level_medium() {
+        // 1 直接 + 3 间接 = 2 + 3 = 5 -> Medium
+        assert_eq!(compute_risk_level(1, 3), RiskLevel::Medium);
+        // 2 直接 + 2 间接 = 4 + 2 = 6 -> Medium
+        assert_eq!(compute_risk_level(2, 2), RiskLevel::Medium);
+        // 0 直接 + 9 间接 = 9 -> Medium (临界值上界)
+        assert_eq!(compute_risk_level(0, 9), RiskLevel::Medium);
+    }
+
+    #[test]
+    fn test_compute_risk_level_high() {
+        // 3 直接 + 4 间接 = 6 + 4 = 10 -> High
+        assert_eq!(compute_risk_level(3, 4), RiskLevel::High);
+        // 5 直接 + 0 间接 = 10 -> High (临界值下界)
+        assert_eq!(compute_risk_level(5, 0), RiskLevel::High);
+        // 0 直接 + 10 间接 = 10 -> High
+        assert_eq!(compute_risk_level(0, 10), RiskLevel::High);
+        // 9 直接 + 1 间接 = 18 + 1 = 19 -> High (临界值上界)
+        assert_eq!(compute_risk_level(9, 1), RiskLevel::High);
+    }
+
+    #[test]
+    fn test_compute_risk_level_critical() {
+        // 10 直接 + 0 间接 = 20 -> Critical
+        assert_eq!(compute_risk_level(10, 0), RiskLevel::Critical);
+        // 5 直接 + 10 间接 = 10 + 10 = 20 -> Critical
+        assert_eq!(compute_risk_level(5, 10), RiskLevel::Critical);
+        // 100 直接 + 0 间接 = 200 -> Critical
+        assert_eq!(compute_risk_level(100, 0), RiskLevel::Critical);
+    }
+
+    // ---------- generate_recommendations ----------
+
+    fn make_service(name: &str, impact_type: &str) -> AffectedService {
+        AffectedService {
+            service_name: name.to_string(),
+            impact_type: impact_type.to_string(),
+            severity: "high".to_string(),
+        }
+    }
+
+    #[test]
+    fn test_generate_recommendations_critical() {
+        let recs = generate_recommendations(&RiskLevel::Critical, &[]);
+        assert!(recs.iter().any(|r| r.contains("应急")));
+        assert!(recs.iter().any(|r| r.contains("回归测试")));
+        assert_eq!(recs.len(), 2);
+    }
+
+    #[test]
+    fn test_generate_recommendations_high() {
+        let recs = generate_recommendations(&RiskLevel::High, &[]);
+        assert!(recs.iter().any(|r| r.contains("通知受影响")));
+        assert!(recs.iter().any(|r| r.contains("集成测试")));
+        assert_eq!(recs.len(), 2);
+    }
+
+    #[test]
+    fn test_generate_recommendations_medium() {
+        let recs = generate_recommendations(&RiskLevel::Medium, &[]);
+        assert!(recs.iter().any(|r| r.contains("业务低峰期")));
+        assert_eq!(recs.len(), 1);
+    }
+
+    #[test]
+    fn test_generate_recommendations_low() {
+        let recs = generate_recommendations(&RiskLevel::Low, &[]);
+        assert!(recs.iter().any(|r| r.contains("正常流程")));
+        assert_eq!(recs.len(), 1);
+    }
+
+    #[test]
+    fn test_generate_recommendations_includes_service_lines() {
+        let services = vec![
+            make_service("order-svc", "update"),
+            make_service("report-svc", "delete"),
+        ];
+        let recs = generate_recommendations(&RiskLevel::Low, &services);
+        // 1 base + 2 service lines
+        assert_eq!(recs.len(), 3);
+        assert!(recs.iter().any(|r| r.contains("order-svc")));
+        assert!(recs.iter().any(|r| r.contains("report-svc")));
+    }
+
+    #[test]
+    fn test_generate_recommendations_empty_services_critical() {
+        let recs = generate_recommendations(&RiskLevel::Critical, &[]);
+        assert_eq!(recs.len(), 2);
+    }
+
+    // ---------- 枚举 serde 往返 ----------
+
+    #[test]
+    fn test_edge_type_serde_roundtrip() {
+        for v in [
+            EdgeType::DerivesFrom,
+            EdgeType::Transforms,
+            EdgeType::DependsOn,
+            EdgeType::Implements,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: EdgeType = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_change_type_serde_roundtrip() {
+        for v in [
+            ChangeType::Create,
+            ChangeType::Update,
+            ChangeType::Delete,
+            ChangeType::Rename,
+            ChangeType::Merge,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: ChangeType = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_risk_level_serde_roundtrip() {
+        for v in [
+            RiskLevel::Low,
+            RiskLevel::Medium,
+            RiskLevel::High,
+            RiskLevel::Critical,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: RiskLevel = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_propagation_action_serde_roundtrip() {
+        for v in [
+            PropagationAction::CascadeUpdate,
+            PropagationAction::SyncNotify,
+            PropagationAction::Reject,
+            PropagationAction::Transform,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: PropagationAction = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    // ---------- 结构体 serde 往返 ----------
+
+    #[test]
+    fn test_lineage_node_serde_roundtrip() {
+        let node = LineageNode {
+            id: "n-1".to_string(),
+            entity_type: "source_system".to_string(),
+            entity_id: "SAP".to_string(),
+            name: "SAP".to_string(),
+            description: Some("desc".to_string()),
+            created_at: "2024-01-01T00:00:00Z".to_string(),
+        };
+        let json = serde_json::to_string(&node).unwrap();
+        let back: LineageNode = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "n-1");
+        assert_eq!(back.entity_id, "SAP");
+        assert!(back.description.is_some());
+    }
+
+    #[test]
+    fn test_lineage_edge_serde_roundtrip() {
+        let edge = LineageEdge {
+            id: "e-1".to_string(),
+            from_node_id: "n-1".to_string(),
+            to_node_id: "n-2".to_string(),
+            edge_type: EdgeType::DerivesFrom,
+            transformation_description: Some("desc".to_string()),
+        };
+        let json = serde_json::to_string(&edge).unwrap();
+        let back: LineageEdge = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "e-1");
+        assert_eq!(back.edge_type, EdgeType::DerivesFrom);
+    }
+
+    #[test]
+    fn test_lineage_graph_serde_roundtrip() {
+        let graph = LineageGraph {
+            nodes: vec![],
+            edges: vec![],
+            version: 5,
+            last_updated: "2024-01-01T00:00:00Z".to_string(),
+        };
+        let json = serde_json::to_string(&graph).unwrap();
+        let back: LineageGraph = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.version, 5);
+    }
+
+    #[test]
+    fn test_impact_analysis_request_serde_roundtrip() {
+        let req = ImpactAnalysisRequest {
+            target_entity_id: "E001".to_string(),
+            analysis_depth: Some(5),
+            change_type: ChangeType::Update,
+            include_chain_reactions: Some(true),
+        };
+        let json = serde_json::to_string(&req).unwrap();
+        let back: ImpactAnalysisRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.target_entity_id, "E001");
+        assert_eq!(back.change_type, ChangeType::Update);
+    }
+
+    #[test]
+    fn test_affected_node_serde_roundtrip() {
+        let n = AffectedNode {
+            node_id: "n-1".to_string(),
+            entity_type: "mdm_entity".to_string(),
+            entity_id: "E001".to_string(),
+            name: "name".to_string(),
+            is_direct: true,
+            dependency_depth: 1,
+        };
+        let json = serde_json::to_string(&n).unwrap();
+        let back: AffectedNode = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.node_id, "n-1");
+        assert!(back.is_direct);
+    }
+
+    #[test]
+    fn test_affected_service_serde_roundtrip() {
+        let s = AffectedService {
+            service_name: "order-svc".to_string(),
+            impact_type: "update".to_string(),
+            severity: "high".to_string(),
+        };
+        let json = serde_json::to_string(&s).unwrap();
+        let back: AffectedService = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.service_name, "order-svc");
+    }
+
+    #[test]
+    fn test_chain_reaction_serde_roundtrip() {
+        let cr = ChainReaction {
+            step: 2,
+            trigger_node_id: "n-1".to_string(),
+            affected_node_id: "n-2".to_string(),
+            propagation_path: vec!["n-1".to_string(), "n-2".to_string()],
+        };
+        let json = serde_json::to_string(&cr).unwrap();
+        let back: ChainReaction = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.step, 2);
+        assert_eq!(back.propagation_path.len(), 2);
+    }
+
+    #[test]
+    fn test_impact_analysis_result_serde_roundtrip() {
+        let target = LineageNode {
+            id: "n-1".to_string(),
+            entity_type: "mdm_entity".to_string(),
+            entity_id: "E001".to_string(),
+            name: "name".to_string(),
+            description: None,
+            created_at: "2024-01-01T00:00:00Z".to_string(),
+        };
+        let r = ImpactAnalysisResult {
+            id: "ia-1".to_string(),
+            target_node: target,
+            affected_nodes: vec![],
+            affected_services: vec![],
+            risk_level: RiskLevel::Low,
+            chain_reactions: vec![],
+            recommendations: vec!["rec".to_string()],
+            analyzed_at: "2024-01-01T00:00:00Z".to_string(),
+        };
+        let json = serde_json::to_string(&r).unwrap();
+        let back: ImpactAnalysisResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "ia-1");
+        assert_eq!(back.risk_level, RiskLevel::Low);
+        assert_eq!(back.recommendations.len(), 1);
+    }
+
+    #[test]
+    fn test_impact_simulation_serde_roundtrip() {
+        let s = ImpactSimulation {
+            id: "sim-1".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: "C001".to_string(),
+            simulated_change: ChangeType::Update,
+            affected_scope: serde_json::json!({"count": 5}),
+            risk_assessment: "low_risk".to_string(),
+            simulation_timestamp: "2024-01-01T00:00:00Z".to_string(),
+        };
+        let json = serde_json::to_string(&s).unwrap();
+        let back: ImpactSimulation = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "sim-1");
+        assert_eq!(back.simulated_change, ChangeType::Update);
+    }
+
+    #[test]
+    fn test_change_event_serde_roundtrip() {
+        let e = ChangeEvent {
+            id: "ce-1".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: "C001".to_string(),
+            change_type: ChangeType::Create,
+            old_value: None,
+            new_value: Some(serde_json::json!({"k": "v"})),
+            triggered_at: "2024-01-01T00:00:00Z".to_string(),
+        };
+        let json = serde_json::to_string(&e).unwrap();
+        let back: ChangeEvent = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "ce-1");
+        assert!(back.new_value.is_some());
+    }
+
+    #[test]
+    fn test_propagation_rule_serde_roundtrip() {
+        let r = PropagationRule {
+            id: "pr-1".to_string(),
+            source_entity_type: "customer".to_string(),
+            target_entity_type: "order".to_string(),
+            condition: "code_changed".to_string(),
+            action: PropagationAction::CascadeUpdate,
+        };
+        let json = serde_json::to_string(&r).unwrap();
+        let back: PropagationRule = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "pr-1");
+        assert_eq!(back.action, PropagationAction::CascadeUpdate);
+    }
+
+    #[test]
+    fn test_propagation_log_serde_roundtrip() {
+        let l = PropagationLog {
+            id: "pl-1".to_string(),
+            change_event_id: "ce-1".to_string(),
+            rule_id: "pr-1".to_string(),
+            source_entity_id: "C001".to_string(),
+            target_entity_id: "order:*".to_string(),
+            action: PropagationAction::SyncNotify,
+            status: "propagated".to_string(),
+            propagated_at: "2024-01-01T00:00:00Z".to_string(),
+            rollback_id: None,
+        };
+        let json = serde_json::to_string(&l).unwrap();
+        let back: PropagationLog = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "pl-1");
+        assert!(back.rollback_id.is_none());
+    }
+
+    // ---------- Clone/Eq trait ----------
+
+    #[test]
+    fn test_lineage_node_clone_eq() {
+        let n = LineageNode {
+            id: "n-1".to_string(),
+            entity_type: "et".to_string(),
+            entity_id: "eid".to_string(),
+            name: "n".to_string(),
+            description: None,
+            created_at: "t".to_string(),
+        };
+        let cloned = n.clone();
+        assert_eq!(n.id, cloned.id);
+    }
+
+    #[test]
+    fn test_edge_type_eq() {
+        assert_eq!(EdgeType::DerivesFrom, EdgeType::DerivesFrom);
+        assert_ne!(EdgeType::DerivesFrom, EdgeType::Transforms);
+    }
+
+    #[test]
+    fn test_risk_level_eq() {
+        assert_eq!(RiskLevel::Critical, RiskLevel::Critical);
+        assert_ne!(RiskLevel::Critical, RiskLevel::Low);
+    }
+}

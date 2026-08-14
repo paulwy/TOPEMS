@@ -1520,4 +1520,401 @@ mod tests {
         let c = calculate_usage_cost(500, 1.0, -1000);
         assert!((c - 0.5).abs() < 0.01, "got {}", c);
     }
+
+    // ---------- tier_from_str ----------
+
+    #[test]
+    fn test_tier_from_str_basic() {
+        assert_eq!(tier_from_str("basic"), ProductTier::Basic);
+    }
+
+    #[test]
+    fn test_tier_from_str_professional() {
+        assert_eq!(tier_from_str("professional"), ProductTier::Professional);
+    }
+
+    #[test]
+    fn test_tier_from_str_enterprise() {
+        assert_eq!(tier_from_str("enterprise"), ProductTier::Enterprise);
+    }
+
+    #[test]
+    fn test_tier_from_str_unlimited() {
+        assert_eq!(tier_from_str("unlimited"), ProductTier::Unlimited);
+    }
+
+    #[test]
+    fn test_tier_from_str_free_default() {
+        assert_eq!(tier_from_str("free"), ProductTier::Free);
+        assert_eq!(tier_from_str("unknown"), ProductTier::Free);
+        assert_eq!(tier_from_str(""), ProductTier::Free);
+    }
+
+    // ---------- product_tier_to_string ----------
+
+    #[test]
+    fn test_product_tier_to_string_free() {
+        assert_eq!(product_tier_to_string(&ProductTier::Free), "free");
+    }
+
+    #[test]
+    fn test_product_tier_to_string_basic() {
+        assert_eq!(product_tier_to_string(&ProductTier::Basic), "basic");
+    }
+
+    #[test]
+    fn test_product_tier_to_string_professional() {
+        assert_eq!(
+            product_tier_to_string(&ProductTier::Professional),
+            "professional"
+        );
+    }
+
+    #[test]
+    fn test_product_tier_to_string_enterprise() {
+        assert_eq!(
+            product_tier_to_string(&ProductTier::Enterprise),
+            "enterprise"
+        );
+    }
+
+    #[test]
+    fn test_product_tier_to_string_unlimited() {
+        assert_eq!(product_tier_to_string(&ProductTier::Unlimited), "unlimited");
+    }
+
+    #[test]
+    fn test_tier_roundtrip_all_variants() {
+        for t in [
+            ProductTier::Free,
+            ProductTier::Basic,
+            ProductTier::Professional,
+            ProductTier::Enterprise,
+            ProductTier::Unlimited,
+        ] {
+            let s = product_tier_to_string(&t);
+            let back = tier_from_str(&s);
+            assert_eq!(t, back);
+        }
+    }
+
+    // ---------- 枚举 serde 往返 ----------
+
+    #[test]
+    fn test_product_tier_serde_roundtrip() {
+        for v in [
+            ProductTier::Free,
+            ProductTier::Basic,
+            ProductTier::Professional,
+            ProductTier::Enterprise,
+            ProductTier::Unlimited,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: ProductTier = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_subscription_status_serde_roundtrip() {
+        for v in [
+            SubscriptionStatus::Active,
+            SubscriptionStatus::Expired,
+            SubscriptionStatus::Cancelled,
+            SubscriptionStatus::Pending,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: SubscriptionStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_billing_status_serde_roundtrip() {
+        for v in [
+            BillingStatus::Pending,
+            BillingStatus::Invoiced,
+            BillingStatus::Paid,
+            BillingStatus::Overdue,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: BillingStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_sla_metric_serde_roundtrip() {
+        for v in [
+            SLAMetric::Availability,
+            SLAMetric::Latency,
+            SLAMetric::ErrorRate,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: SLAMetric = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_sla_incident_type_serde_roundtrip() {
+        for v in [
+            SLAIncidentType::Downtime,
+            SLAIncidentType::DegradedPerformance,
+            SLAIncidentType::DataLoss,
+            SLAIncidentType::SecurityBreach,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: SLAIncidentType = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_incident_status_serde_roundtrip() {
+        for v in [
+            IncidentStatus::Open,
+            IncidentStatus::Investigating,
+            IncidentStatus::Resolved,
+            IncidentStatus::Closed,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: IncidentStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_impact_severity_serde_roundtrip() {
+        for v in [
+            ImpactSeverity::Low,
+            ImpactSeverity::Medium,
+            ImpactSeverity::High,
+            ImpactSeverity::Critical,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: ImpactSeverity = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    // ---------- 结构体 serde 往返 ----------
+
+    #[test]
+    fn test_api_product_serde_roundtrip() {
+        let p = APIProduct {
+            id: "prod-1".to_string(),
+            name: "Basic".to_string(),
+            tier: ProductTier::Basic,
+            rate_limit_per_min: 100,
+            rate_limit_per_day: 50000,
+            features: vec!["basic_access".to_string()],
+            price_monthly: 99.0,
+            active: true,
+        };
+        let json = serde_json::to_string(&p).unwrap();
+        let back: APIProduct = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "prod-1");
+        assert_eq!(back.tier, ProductTier::Basic);
+        assert!(back.active);
+    }
+
+    #[test]
+    fn test_subscription_serde_roundtrip() {
+        let s = Subscription {
+            id: "sub-1".to_string(),
+            api_product_id: "prod-1".to_string(),
+            tenant_id: "t-1".to_string(),
+            tier: ProductTier::Professional,
+            starts_at: "2024-01-01T00:00:00Z".to_string(),
+            expires_at: "2024-02-01T00:00:00Z".to_string(),
+            status: SubscriptionStatus::Active,
+        };
+        let json = serde_json::to_string(&s).unwrap();
+        let back: Subscription = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "sub-1");
+        assert_eq!(back.tier, ProductTier::Professional);
+    }
+
+    #[test]
+    fn test_usage_record_serde_roundtrip() {
+        let r = UsageRecord {
+            id: "ur-1".to_string(),
+            tenant_id: "t-1".to_string(),
+            api_product_id: "p-1".to_string(),
+            endpoint: "/api/v1/data".to_string(),
+            requests: 1000,
+            errors: 10,
+            data_transferred: 5.5,
+            recorded_at: "2024-01-01T00:00:00Z".to_string(),
+        };
+        let json = serde_json::to_string(&r).unwrap();
+        let back: UsageRecord = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "ur-1");
+        assert_eq!(back.requests, 1000);
+    }
+
+    #[test]
+    fn test_usage_summary_serde_roundtrip() {
+        let s = UsageSummary {
+            total_requests: 10000,
+            total_errors: 50,
+            total_data_mb: 500.0,
+            error_rate: 0.5,
+        };
+        let json = serde_json::to_string(&s).unwrap();
+        let back: UsageSummary = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.total_requests, 10000);
+        assert!((back.error_rate - 0.5).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_billing_record_serde_roundtrip() {
+        let r = BillingRecord {
+            id: "br-1".to_string(),
+            tenant_id: "t-1".to_string(),
+            period_start: "2024-01-01".to_string(),
+            period_end: "2024-01-31".to_string(),
+            tier: ProductTier::Enterprise,
+            usage_summary: UsageSummary {
+                total_requests: 100,
+                total_errors: 0,
+                total_data_mb: 10.0,
+                error_rate: 0.0,
+            },
+            total_amount: 999.0,
+            status: BillingStatus::Paid,
+        };
+        let json = serde_json::to_string(&r).unwrap();
+        let back: BillingRecord = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "br-1");
+        assert_eq!(back.status, BillingStatus::Paid);
+    }
+
+    #[test]
+    fn test_rate_card_serde_roundtrip() {
+        let r = RateCard {
+            id: "rc-1".to_string(),
+            tier: ProductTier::Basic,
+            cost_per_request: 0.001,
+            cost_per_mb: 0.05,
+            overage_multiplier: 1.5,
+            currency: "CNY".to_string(),
+        };
+        let json = serde_json::to_string(&r).unwrap();
+        let back: RateCard = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "rc-1");
+        assert_eq!(back.currency, "CNY");
+    }
+
+    #[test]
+    fn test_sla_config_serde_roundtrip() {
+        let c = SLAConfig {
+            id: "cfg-1".to_string(),
+            metric: SLAMetric::Availability,
+            target_value: 99.9,
+            unit: "%".to_string(),
+            penalty_per_min: 10.0,
+            measurement_window: 60,
+        };
+        let json = serde_json::to_string(&c).unwrap();
+        let back: SLAConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "cfg-1");
+        assert_eq!(back.metric, SLAMetric::Availability);
+    }
+
+    #[test]
+    fn test_sla_measurement_serde_roundtrip() {
+        let m = SLAMeasurement {
+            id: "m-1".to_string(),
+            config_id: "cfg-1".to_string(),
+            tenant_id: "t-1".to_string(),
+            measured_value: 99.95,
+            target_value: 99.9,
+            met: true,
+            measured_at: "2024-01-01T00:00:00Z".to_string(),
+            window_start: "2024-01-01T00:00:00Z".to_string(),
+            window_end: "2024-01-01T01:00:00Z".to_string(),
+        };
+        let json = serde_json::to_string(&m).unwrap();
+        let back: SLAMeasurement = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "m-1");
+        assert!(back.met);
+    }
+
+    #[test]
+    fn test_sla_incident_serde_roundtrip() {
+        let i = SLAIncident {
+            id: "inc-1".to_string(),
+            config_id: "cfg-1".to_string(),
+            tenant_id: "t-1".to_string(),
+            incident_type: SLAIncidentType::Downtime,
+            duration_min: 30,
+            impact_severity: ImpactSeverity::High,
+            compensation_amount: 500.0,
+            status: IncidentStatus::Resolved,
+        };
+        let json = serde_json::to_string(&i).unwrap();
+        let back: SLAIncident = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "inc-1");
+        assert_eq!(back.incident_type, SLAIncidentType::Downtime);
+    }
+
+    // ---------- Clone/Eq trait ----------
+
+    #[test]
+    fn test_product_tier_clone_eq() {
+        assert_eq!(ProductTier::Free, ProductTier::Free);
+        assert_ne!(ProductTier::Free, ProductTier::Basic);
+    }
+
+    #[test]
+    fn test_subscription_status_clone_eq() {
+        assert_eq!(SubscriptionStatus::Active, SubscriptionStatus::Active);
+        assert_ne!(SubscriptionStatus::Active, SubscriptionStatus::Expired);
+    }
+
+    #[test]
+    fn test_billing_status_clone_eq() {
+        assert_eq!(BillingStatus::Paid, BillingStatus::Paid);
+        assert_ne!(BillingStatus::Paid, BillingStatus::Overdue);
+    }
+
+    #[test]
+    fn test_impact_severity_clone_eq() {
+        assert_eq!(ImpactSeverity::Critical, ImpactSeverity::Critical);
+        assert_ne!(ImpactSeverity::Critical, ImpactSeverity::Low);
+    }
+
+    #[test]
+    fn test_api_product_clone() {
+        let p = APIProduct {
+            id: "p1".to_string(),
+            name: "test".to_string(),
+            tier: ProductTier::Free,
+            rate_limit_per_min: 10,
+            rate_limit_per_day: 100,
+            features: vec![],
+            price_monthly: 0.0,
+            active: true,
+        };
+        let cloned = p.clone();
+        assert_eq!(cloned.id, p.id);
+        assert_eq!(cloned.tier, p.tier);
+    }
+
+    #[test]
+    fn test_sla_config_clone() {
+        let c = SLAConfig {
+            id: "c1".to_string(),
+            metric: SLAMetric::Latency,
+            target_value: 200.0,
+            unit: "ms".to_string(),
+            penalty_per_min: 5.0,
+            measurement_window: 60,
+        };
+        let cloned = c.clone();
+        assert_eq!(cloned.id, c.id);
+        assert_eq!(cloned.metric, c.metric);
+    }
 }

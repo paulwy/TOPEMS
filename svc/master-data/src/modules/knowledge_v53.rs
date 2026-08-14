@@ -1585,3 +1585,449 @@ pub async fn get_asset_stats(State(_state): State<AppState>) -> Json<ApiResponse
     let stats = AssetCatalogManager::get_asset_stats().await;
     Json(ApiResponse::success(stats, "资产统计"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---------- relation_type_from_str ----------
+
+    #[test]
+    fn test_relation_type_from_str_part_of() {
+        assert_eq!(relation_type_from_str("part_of"), KGRelationType::PartOf);
+    }
+
+    #[test]
+    fn test_relation_type_from_str_depends_on() {
+        assert_eq!(
+            relation_type_from_str("depends_on"),
+            KGRelationType::DependsOn
+        );
+    }
+
+    #[test]
+    fn test_relation_type_from_str_similar_to() {
+        assert_eq!(
+            relation_type_from_str("similar_to"),
+            KGRelationType::SimilarTo
+        );
+    }
+
+    #[test]
+    fn test_relation_type_from_str_derived_from() {
+        assert_eq!(
+            relation_type_from_str("derived_from"),
+            KGRelationType::DerivedFrom
+        );
+    }
+
+    #[test]
+    fn test_relation_type_from_str_belongs_to_default() {
+        assert_eq!(
+            relation_type_from_str("belongs_to"),
+            KGRelationType::BelongsTo
+        );
+        assert_eq!(relation_type_from_str("unknown"), KGRelationType::BelongsTo);
+        assert_eq!(relation_type_from_str(""), KGRelationType::BelongsTo);
+    }
+
+    // ---------- node_type_from_str ----------
+
+    #[test]
+    fn test_node_type_from_str_concept() {
+        assert_eq!(node_type_from_str("concept"), KGNodeType::Concept);
+    }
+
+    #[test]
+    fn test_node_type_from_str_attribute() {
+        assert_eq!(node_type_from_str("attribute"), KGNodeType::Attribute);
+    }
+
+    #[test]
+    fn test_node_type_from_str_relation() {
+        assert_eq!(node_type_from_str("relation"), KGNodeType::Relation);
+    }
+
+    #[test]
+    fn test_node_type_from_str_entity_default() {
+        assert_eq!(node_type_from_str("entity"), KGNodeType::Entity);
+        assert_eq!(node_type_from_str("xxx"), KGNodeType::Entity);
+        assert_eq!(node_type_from_str(""), KGNodeType::Entity);
+    }
+
+    // ---------- asset_type_from_str ----------
+
+    #[test]
+    fn test_asset_type_from_str_attribute() {
+        assert_eq!(asset_type_from_str("attribute"), AssetType::Attribute);
+    }
+
+    #[test]
+    fn test_asset_type_from_str_relation() {
+        assert_eq!(asset_type_from_str("relation"), AssetType::Relation);
+    }
+
+    #[test]
+    fn test_asset_type_from_str_dataset() {
+        assert_eq!(asset_type_from_str("dataset"), AssetType::Dataset);
+    }
+
+    #[test]
+    fn test_asset_type_from_str_entity_default() {
+        assert_eq!(asset_type_from_str("entity"), AssetType::Entity);
+        assert_eq!(asset_type_from_str("xxx"), AssetType::Entity);
+    }
+
+    // ---------- cosine_similarity ----------
+
+    #[test]
+    fn test_cosine_similarity_identical_vectors() {
+        let v = vec![1.0, 2.0, 3.0];
+        let sim = cosine_similarity(&v, &v);
+        assert!((sim - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_cosine_similarity_orthogonal_vectors() {
+        let a = vec![1.0, 0.0];
+        let b = vec![0.0, 1.0];
+        let sim = cosine_similarity(&a, &b);
+        assert!(sim.abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_cosine_similarity_empty_returns_zero() {
+        assert_eq!(cosine_similarity(&[], &[1.0]), 0.0);
+        assert_eq!(cosine_similarity(&[1.0], &[]), 0.0);
+        assert_eq!(cosine_similarity(&[], &[]), 0.0);
+    }
+
+    #[test]
+    fn test_cosine_similarity_zero_norm_returns_zero() {
+        let a = vec![0.0, 0.0];
+        let b = vec![1.0, 1.0];
+        assert_eq!(cosine_similarity(&a, &b), 0.0);
+    }
+
+    #[test]
+    fn test_cosine_similarity_opposite_vectors() {
+        let a = vec![1.0, 1.0];
+        let b = vec![-1.0, -1.0];
+        let sim = cosine_similarity(&a, &b);
+        assert!((sim + 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_cosine_similarity_known_value() {
+        // a = [1,0,0], b = [1,1,0] -> dot=1, |a|=1, |b|=sqrt(2)
+        // sim = 1/sqrt(2) ≈ 0.7071
+        let a = vec![1.0, 0.0, 0.0];
+        let b = vec![1.0, 1.0, 0.0];
+        let sim = cosine_similarity(&a, &b);
+        let expected = 1.0 / 2.0_f64.sqrt();
+        assert!((sim - expected).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_cosine_similarity_different_lengths() {
+        // 长度不一致：zip 会以较短的为准
+        let a = vec![1.0, 2.0, 3.0];
+        let b = vec![1.0, 2.0];
+        let sim = cosine_similarity(&a, &b);
+        // dot = 1*1 + 2*2 = 5
+        // |a| (前2维) = sqrt(1+4) = sqrt(5)；实际计算使用 a 完整向量 -> sqrt(1+4+9)=sqrt(14)
+        // |b| = sqrt(5)
+        // sim = 5 / (sqrt(14)*sqrt(5))
+        let expected = 5.0 / (14.0_f64.sqrt() * 5.0_f64.sqrt());
+        assert!((sim - expected).abs() < 1e-9);
+    }
+
+    // ---------- jaccard_similarity ----------
+
+    #[test]
+    fn test_jaccard_similarity_identical() {
+        let a = vec![1, 2, 3];
+        let b = vec![1, 2, 3];
+        let sim = jaccard_similarity(&a, &b);
+        assert!((sim - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_jaccard_similarity_disjoint() {
+        let a = vec![1, 2];
+        let b = vec![3, 4];
+        let sim = jaccard_similarity(&a, &b);
+        assert!(sim.abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_jaccard_similarity_empty() {
+        let a: Vec<i32> = vec![];
+        let b: Vec<i32> = vec![];
+        assert_eq!(jaccard_similarity(&a, &b), 0.0);
+    }
+
+    #[test]
+    fn test_jaccard_similarity_half_overlap() {
+        let a = vec![1, 2, 3, 4];
+        let b = vec![1, 2, 5, 6];
+        // intersection = {1,2} -> 2; union = {1,2,3,4,5,6} -> 6
+        let sim = jaccard_similarity(&a, &b);
+        assert!((sim - 2.0 / 6.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_jaccard_similarity_with_duplicates() {
+        // 集合语义：重复元素被去重
+        let a = vec![1, 1, 2];
+        let b = vec![1, 2, 2];
+        let sim = jaccard_similarity(&a, &b);
+        assert!((sim - 1.0).abs() < 1e-9);
+    }
+
+    // ---------- 枚举 serde 往返 ----------
+
+    #[test]
+    fn test_kg_node_type_serde_roundtrip() {
+        for v in [
+            KGNodeType::Entity,
+            KGNodeType::Concept,
+            KGNodeType::Attribute,
+            KGNodeType::Relation,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: KGNodeType = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_kg_relation_type_serde_roundtrip() {
+        for v in [
+            KGRelationType::BelongsTo,
+            KGRelationType::PartOf,
+            KGRelationType::DependsOn,
+            KGRelationType::SimilarTo,
+            KGRelationType::DerivedFrom,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: KGRelationType = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_recommendation_source_serde_roundtrip() {
+        for v in [
+            RecommendationSource::Collaborative,
+            RecommendationSource::Content,
+            RecommendationSource::KnowledgeGraph,
+            RecommendationSource::Hybrid,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: RecommendationSource = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    #[test]
+    fn test_asset_type_serde_roundtrip() {
+        for v in [
+            AssetType::Entity,
+            AssetType::Attribute,
+            AssetType::Relation,
+            AssetType::Dataset,
+        ] {
+            let json = serde_json::to_string(&v).unwrap();
+            let back: AssetType = serde_json::from_str(&json).unwrap();
+            assert_eq!(v, back);
+        }
+    }
+
+    // ---------- 结构体 serde 往返 ----------
+
+    #[test]
+    fn test_kg_node_serde_roundtrip() {
+        let node = KGNode {
+            id: "n-1".to_string(),
+            label: "Customer".to_string(),
+            r#type: KGNodeType::Entity,
+            properties: serde_json::json!({"k": "v"}),
+            embeddings: vec![0.1, 0.2],
+            created_at: "2024-01-01T00:00:00Z".to_string(),
+        };
+        let json = serde_json::to_string(&node).unwrap();
+        let back: KGNode = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "n-1");
+        assert_eq!(back.r#type, KGNodeType::Entity);
+        assert_eq!(back.embeddings.len(), 2);
+    }
+
+    #[test]
+    fn test_kg_node_serde_preserves_type_field() {
+        let node = KGNode {
+            id: "n".to_string(),
+            label: "L".to_string(),
+            r#type: KGNodeType::Concept,
+            properties: serde_json::json!({}),
+            embeddings: vec![],
+            created_at: "t".to_string(),
+        };
+        let json = serde_json::to_string(&node).unwrap();
+        assert!(json.contains("\"type\":\"concept\""));
+    }
+
+    #[test]
+    fn test_kg_edge_serde_roundtrip() {
+        let edge = KGEdge {
+            id: "e-1".to_string(),
+            source_id: "n-1".to_string(),
+            target_id: "n-2".to_string(),
+            relation_type: KGRelationType::DependsOn,
+            weight: 0.8,
+            confidence: 0.9,
+        };
+        let json = serde_json::to_string(&edge).unwrap();
+        let back: KGEdge = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "e-1");
+        assert_eq!(back.relation_type, KGRelationType::DependsOn);
+        assert!((back.weight - 0.8).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_knowledge_graph_serde_roundtrip() {
+        let g = KnowledgeGraph {
+            nodes: vec![],
+            edges: vec![],
+            version: 3,
+            last_updated: "2024-01-01T00:00:00Z".to_string(),
+        };
+        let json = serde_json::to_string(&g).unwrap();
+        let back: KnowledgeGraph = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.version, 3);
+    }
+
+    #[test]
+    fn test_recommendation_serde_roundtrip() {
+        let r = Recommendation {
+            id: "r-1".to_string(),
+            target_id: "u-1".to_string(),
+            item_id: "i-1".to_string(),
+            score: 0.95,
+            reason: serde_json::json!({"k": "v"}),
+            source: RecommendationSource::Hybrid,
+        };
+        let json = serde_json::to_string(&r).unwrap();
+        let back: Recommendation = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "r-1");
+        assert_eq!(back.source, RecommendationSource::Hybrid);
+    }
+
+    #[test]
+    fn test_interaction_record_serde_roundtrip() {
+        let i = InteractionRecord {
+            id: "i-1".to_string(),
+            user_id: "u-1".to_string(),
+            item_id: "a-1".to_string(),
+            interaction_type: "view".to_string(),
+            timestamp: "2024-01-01T00:00:00Z".to_string(),
+        };
+        let json = serde_json::to_string(&i).unwrap();
+        let back: InteractionRecord = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "i-1");
+        assert_eq!(back.interaction_type, "view");
+    }
+
+    #[test]
+    fn test_data_asset_serde_roundtrip() {
+        let a = DataAsset {
+            id: "a-1".to_string(),
+            name: "Customer Master".to_string(),
+            asset_type: AssetType::Entity,
+            description: "desc".to_string(),
+            owner: "team".to_string(),
+            domain: "customer".to_string(),
+            tags: vec!["customer".to_string()],
+            lineage_summary: serde_json::json!({}),
+            quality_score: 0.9,
+            access_level: "restricted".to_string(),
+            updated_at: "2024-01-01T00:00:00Z".to_string(),
+        };
+        let json = serde_json::to_string(&a).unwrap();
+        let back: DataAsset = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "a-1");
+        assert_eq!(back.asset_type, AssetType::Entity);
+        assert!((back.quality_score - 0.9).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_asset_category_serde_roundtrip() {
+        let c = AssetCategory {
+            id: "cat-1".to_string(),
+            name: "实体".to_string(),
+            parent_id: None,
+            asset_count: 5,
+        };
+        let json = serde_json::to_string(&c).unwrap();
+        let back: AssetCategory = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.id, "cat-1");
+        assert!(back.parent_id.is_none());
+        assert_eq!(back.asset_count, 5);
+    }
+
+    #[test]
+    fn test_asset_catalog_serde_roundtrip() {
+        let c = AssetCatalog {
+            assets: vec![],
+            categories: vec![],
+            search_index: HashMap::new(),
+        };
+        let json = serde_json::to_string(&c).unwrap();
+        let back: AssetCatalog = serde_json::from_str(&json).unwrap();
+        assert!(back.assets.is_empty());
+    }
+
+    #[test]
+    fn test_asset_stats_serde_roundtrip() {
+        let s = AssetStats {
+            total_assets: 10,
+            by_type: HashMap::new(),
+            by_domain: HashMap::new(),
+            avg_quality_score: 0.85,
+            recent_updates: 3,
+        };
+        let json = serde_json::to_string(&s).unwrap();
+        let back: AssetStats = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.total_assets, 10);
+        assert_eq!(back.recent_updates, 3);
+    }
+
+    // ---------- Clone/Eq ----------
+
+    #[test]
+    fn test_kg_node_clone_eq() {
+        let n = KGNode {
+            id: "n".to_string(),
+            label: "L".to_string(),
+            r#type: KGNodeType::Entity,
+            properties: serde_json::json!({}),
+            embeddings: vec![],
+            created_at: "t".to_string(),
+        };
+        let cloned = n.clone();
+        assert_eq!(n.id, cloned.id);
+        assert_eq!(n.r#type, cloned.r#type);
+    }
+
+    #[test]
+    fn test_kg_node_type_eq() {
+        assert_eq!(KGNodeType::Entity, KGNodeType::Entity);
+        assert_ne!(KGNodeType::Entity, KGNodeType::Concept);
+    }
+
+    #[test]
+    fn test_asset_type_eq() {
+        assert_eq!(AssetType::Dataset, AssetType::Dataset);
+        assert_ne!(AssetType::Dataset, AssetType::Entity);
+    }
+}

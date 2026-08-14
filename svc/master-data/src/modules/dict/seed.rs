@@ -955,3 +955,353 @@ fn get_system_dict_definitions() -> Vec<DictTypeDef> {
         ),
     ]
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashSet;
+
+    fn collect_all_codes(defs: &[DictTypeDef]) -> Vec<String> {
+        defs.iter()
+            .flat_map(|(code, _, items)| {
+                std::iter::once(code.to_string()).chain(items.iter().map(|(c, _, _)| c.to_string()))
+            })
+            .collect()
+    }
+
+    // ---------- get_system_dict_definitions 基础断言 ----------
+
+    #[test]
+    fn test_system_dict_definitions_not_empty() {
+        let defs = get_system_dict_definitions();
+        assert!(!defs.is_empty(), "系统字典定义不应为空");
+    }
+
+    #[test]
+    fn test_system_dict_definitions_returns_known_count() {
+        // 当前实现共 70 个字典类型；此处只校验下限，避免每次新增都改测试
+        let defs = get_system_dict_definitions();
+        assert!(defs.len() >= 60, "系统字典定义数量异常: {}", defs.len());
+    }
+
+    #[test]
+    fn test_each_dict_type_has_non_empty_code() {
+        let defs = get_system_dict_definitions();
+        for (code, _, _) in &defs {
+            assert!(!code.is_empty(), "字典类型 code 不能为空");
+        }
+    }
+
+    #[test]
+    fn test_each_dict_type_has_non_empty_name() {
+        let defs = get_system_dict_definitions();
+        for (_, name, _) in &defs {
+            assert!(!name.is_empty(), "字典类型 name 不能为空");
+        }
+    }
+
+    #[test]
+    fn test_each_dict_type_has_items() {
+        let defs = get_system_dict_definitions();
+        for (code, _, items) in &defs {
+            assert!(
+                !items.is_empty(),
+                "字典类型 {} 必须至少包含一个字典项",
+                code
+            );
+        }
+    }
+
+    #[test]
+    fn test_dict_type_codes_unique() {
+        let defs = get_system_dict_definitions();
+        let codes: Vec<&str> = defs.iter().map(|(c, _, _)| *c).collect();
+        let set: HashSet<&str> = codes.iter().copied().collect();
+        assert_eq!(codes.len(), set.len(), "字典类型 code 必须唯一");
+    }
+
+    #[test]
+    fn test_dict_item_codes_unique_within_type() {
+        let defs = get_system_dict_definitions();
+        for (type_code, _, items) in &defs {
+            let codes: Vec<&str> = items.iter().map(|(c, _, _)| *c).collect();
+            let set: HashSet<&str> = codes.iter().copied().collect();
+            assert_eq!(
+                codes.len(),
+                set.len(),
+                "字典类型 {} 内的字典项 code 必须唯一",
+                type_code
+            );
+        }
+    }
+
+    #[test]
+    fn test_dict_item_codes_non_empty() {
+        let defs = get_system_dict_definitions();
+        for (type_code, _, items) in &defs {
+            for (code, _, _) in items.iter() {
+                assert!(
+                    !code.is_empty(),
+                    "字典类型 {} 内的字典项 code 不能为空",
+                    type_code
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_dict_item_names_non_empty() {
+        let defs = get_system_dict_definitions();
+        for (type_code, _, items) in &defs {
+            for (code, name, _) in items.iter() {
+                assert!(
+                    !name.is_empty(),
+                    "字典类型 {} 内字典项 {} 的 name 不能为空",
+                    type_code,
+                    code
+                );
+            }
+        }
+    }
+
+    // ---------- 验证关键字典类型存在 ----------
+
+    #[test]
+    fn test_common_status_dict_present() {
+        let defs = get_system_dict_definitions();
+        let has = defs.iter().any(|(c, _, _)| *c == "common_status");
+        assert!(has, "应包含 common_status 字典类型");
+    }
+
+    #[test]
+    fn test_gender_dict_present() {
+        let defs = get_system_dict_definitions();
+        let has = defs.iter().any(|(c, _, _)| *c == "gender");
+        assert!(has, "应包含 gender 字典类型");
+    }
+
+    #[test]
+    fn test_boolean_dict_present() {
+        let defs = get_system_dict_definitions();
+        let has = defs.iter().any(|(c, _, _)| *c == "boolean");
+        assert!(has, "应包含 boolean 字典类型");
+    }
+
+    #[test]
+    fn test_currency_dict_present() {
+        let defs = get_system_dict_definitions();
+        let has = defs.iter().any(|(c, _, _)| *c == "currency");
+        assert!(has, "应包含 currency 字典类型");
+    }
+
+    #[test]
+    fn test_log_level_dict_present() {
+        let defs = get_system_dict_definitions();
+        let has = defs.iter().any(|(c, _, _)| *c == "log_level");
+        assert!(has, "应包含 log_level 字典类型");
+    }
+
+    #[test]
+    fn test_plugin_status_dict_present() {
+        let defs = get_system_dict_definitions();
+        let has = defs.iter().any(|(c, _, _)| *c == "plugin_status");
+        assert!(has, "应包含 plugin_status 字典类型");
+    }
+
+    #[test]
+    fn test_auth_method_dict_present() {
+        let defs = get_system_dict_definitions();
+        let has = defs.iter().any(|(c, _, _)| *c == "auth_method");
+        assert!(has, "应包含 auth_method 字典类型");
+    }
+
+    #[test]
+    fn test_encryption_algorithm_dict_present() {
+        let defs = get_system_dict_definitions();
+        let has = defs.iter().any(|(c, _, _)| *c == "encryption_algorithm");
+        assert!(has, "应包含 encryption_algorithm 字典类型");
+    }
+
+    // ---------- 验证关键字典项内容 ----------
+
+    #[test]
+    fn test_common_status_contains_active_and_inactive() {
+        let defs = get_system_dict_definitions();
+        let entry = defs
+            .iter()
+            .find(|(c, _, _)| *c == "common_status")
+            .expect("common_status 应存在");
+        let codes: Vec<&str> = entry.2.iter().map(|(c, _, _)| *c).collect();
+        assert!(codes.contains(&"active"), "common_status 应包含 active");
+        assert!(codes.contains(&"inactive"), "common_status 应包含 inactive");
+    }
+
+    #[test]
+    fn test_gender_has_three_items() {
+        let defs = get_system_dict_definitions();
+        let entry = defs
+            .iter()
+            .find(|(c, _, _)| *c == "gender")
+            .expect("gender 应存在");
+        assert_eq!(entry.2.len(), 3, "gender 字典项应为 3 个");
+    }
+
+    #[test]
+    fn test_boolean_yes_no_values() {
+        let defs = get_system_dict_definitions();
+        let entry = defs
+            .iter()
+            .find(|(c, _, _)| *c == "boolean")
+            .expect("boolean 应存在");
+        let yes = entry
+            .2
+            .iter()
+            .find(|(c, _, _)| *c == "yes")
+            .expect("boolean 应包含 yes");
+        assert_eq!(yes.2, Some("true"));
+        let no = entry
+            .2
+            .iter()
+            .find(|(c, _, _)| *c == "no")
+            .expect("boolean 应包含 no");
+        assert_eq!(no.2, Some("false"));
+    }
+
+    #[test]
+    fn test_currency_contains_cny_and_usd() {
+        let defs = get_system_dict_definitions();
+        let entry = defs
+            .iter()
+            .find(|(c, _, _)| *c == "currency")
+            .expect("currency 应存在");
+        let codes: Vec<&str> = entry.2.iter().map(|(c, _, _)| *c).collect();
+        assert!(codes.contains(&"CNY"), "currency 应包含 CNY");
+        assert!(codes.contains(&"USD"), "currency 应包含 USD");
+    }
+
+    #[test]
+    fn test_log_level_contains_all_levels() {
+        let defs = get_system_dict_definitions();
+        let entry = defs
+            .iter()
+            .find(|(c, _, _)| *c == "log_level")
+            .expect("log_level 应存在");
+        let codes: Vec<&str> = entry.2.iter().map(|(c, _, _)| *c).collect();
+        for expected in &["debug", "info", "warn", "error", "fatal"] {
+            assert!(codes.contains(expected), "log_level 应包含 {}", expected);
+        }
+    }
+
+    #[test]
+    fn test_tax_rate_values_are_decimal_strings() {
+        let defs = get_system_dict_definitions();
+        let entry = defs
+            .iter()
+            .find(|(c, _, _)| *c == "tax_rate")
+            .expect("tax_rate 应存在");
+        for (_, _, value) in entry.2 {
+            let v = value.expect("tax_rate 的 value 不应为 None");
+            assert!(
+                v.parse::<f64>().is_ok(),
+                "tax_rate value 应为合法小数: {}",
+                v
+            );
+        }
+    }
+
+    #[test]
+    fn test_language_dict_contains_zh_cn() {
+        let defs = get_system_dict_definitions();
+        let entry = defs
+            .iter()
+            .find(|(c, _, _)| *c == "language")
+            .expect("language 应存在");
+        let codes: Vec<&str> = entry.2.iter().map(|(c, _, _)| *c).collect();
+        assert!(codes.contains(&"zh_CN"), "language 应包含 zh_CN");
+    }
+
+    #[test]
+    fn test_timezone_dict_contains_asia_shanghai() {
+        let defs = get_system_dict_definitions();
+        let entry = defs
+            .iter()
+            .find(|(c, _, _)| *c == "timezone")
+            .expect("timezone 应存在");
+        let codes: Vec<&str> = entry.2.iter().map(|(c, _, _)| *c).collect();
+        assert!(
+            codes.contains(&"Asia/Shanghai"),
+            "timezone 应包含 Asia/Shanghai"
+        );
+    }
+
+    #[test]
+    fn test_priority_dict_has_four_levels() {
+        let defs = get_system_dict_definitions();
+        let entry = defs
+            .iter()
+            .find(|(c, _, _)| *c == "priority")
+            .expect("priority 应存在");
+        assert_eq!(entry.2.len(), 4, "priority 字典项应为 4 个");
+        let codes: Vec<&str> = entry.2.iter().map(|(c, _, _)| *c).collect();
+        for expected in &["urgent", "high", "medium", "low"] {
+            assert!(codes.contains(expected), "priority 应包含 {}", expected);
+        }
+    }
+
+    #[test]
+    fn test_approval_status_has_five_states() {
+        let defs = get_system_dict_definitions();
+        let entry = defs
+            .iter()
+            .find(|(c, _, _)| *c == "approval_status")
+            .expect("approval_status 应存在");
+        assert_eq!(entry.2.len(), 5, "approval_status 字典项应为 5 个");
+    }
+
+    // ---------- 类型别名与签名验证 ----------
+
+    #[test]
+    fn test_dict_item_def_tuple_layout() {
+        let defs = get_system_dict_definitions();
+        let first = defs.first().expect("至少应有一个字典类型");
+        let (_, _, items) = first;
+        let first_item = items.first().expect("字典类型应至少有一个字典项");
+        // 仅断言 tuple 字段数量；编译期已保证类型
+        let _: &str = first_item.0;
+        let _: &str = first_item.1;
+        let _: &Option<&str> = &first_item.2;
+    }
+
+    #[test]
+    fn test_dict_type_def_tuple_layout() {
+        let defs = get_system_dict_definitions();
+        let first = defs.first().expect("至少应有一个字典类型");
+        let _: &str = first.0;
+        let _: &str = first.1;
+        let _: &&[DictItemDef] = &first.2;
+    }
+
+    #[test]
+    fn test_all_codes_are_ascii() {
+        // 字典 code 应为 ASCII；中文名不在限制范围内
+        let defs = get_system_dict_definitions();
+        for (code, _, items) in &defs {
+            assert!(code.is_ascii(), "字典类型 code 应为 ASCII: {}", code);
+            for (item_code, _, _) in items.iter() {
+                assert!(
+                    item_code.is_ascii(),
+                    "字典项 code 应为 ASCII: {}",
+                    item_code
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_collect_all_codes_helper() {
+        let defs = get_system_dict_definitions();
+        let codes = collect_all_codes(&defs);
+        // 至少应包含 60 个类型 + 大量字典项
+        assert!(codes.len() > 60, "collect_all_codes 返回数量异常");
+    }
+}
