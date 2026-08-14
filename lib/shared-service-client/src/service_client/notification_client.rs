@@ -180,3 +180,301 @@ impl NotificationSvcClient {
             .await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    fn sample_dt() -> chrono::DateTime<chrono::Utc> {
+        "2024-01-01T00:00:00Z".parse().unwrap()
+    }
+
+    // ========== Notification serde tests ==========
+
+    #[test]
+    fn notification_serde_roundtrip_full() {
+        let original = Notification {
+            id: "notif-001".to_string(),
+            user_id: "user-001".to_string(),
+            notification_type: "alert".to_string(),
+            title: "Test Notification".to_string(),
+            content: "This is a test".to_string(),
+            data: Some(serde_json::json!({"key": "value"})),
+            is_read: false,
+            priority: 1,
+            link_url: Some("/dashboard".to_string()),
+            created_at: sample_dt(),
+            read_at: Some(sample_dt()),
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let deserialized: Notification = serde_json::from_str(&json).unwrap();
+        let val1 = serde_json::to_value(&original).unwrap();
+        let val2 = serde_json::to_value(&deserialized).unwrap();
+        assert_eq!(val1, val2);
+    }
+
+    #[test]
+    fn notification_serde_roundtrip_with_none_fields() {
+        let original = Notification {
+            id: "notif-002".to_string(),
+            user_id: "user-002".to_string(),
+            notification_type: "info".to_string(),
+            title: "Info".to_string(),
+            content: "Content".to_string(),
+            data: None,
+            is_read: true,
+            priority: 0,
+            link_url: None,
+            created_at: sample_dt(),
+            read_at: None,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let deserialized: Notification = serde_json::from_str(&json).unwrap();
+        let val1 = serde_json::to_value(&original).unwrap();
+        let val2 = serde_json::to_value(&deserialized).unwrap();
+        assert_eq!(val1, val2);
+    }
+
+    #[test]
+    fn notification_serde_default_fields_when_missing() {
+        let json = r#"{
+            "id": "n3",
+            "user_id": "u3",
+            "notification_type": "alert",
+            "title": "T",
+            "content": "C",
+            "is_read": false,
+            "priority": 5,
+            "created_at": "2024-01-01T00:00:00Z"
+        }"#;
+        let notif: Notification = serde_json::from_str(json).unwrap();
+        assert!(notif.data.is_none());
+        assert!(notif.link_url.is_none());
+        assert!(notif.read_at.is_none());
+    }
+
+    #[test]
+    fn notification_deserialize_from_json() {
+        let json = r#"{
+            "id": "notif-100",
+            "user_id": "user-100",
+            "notification_type": "warning",
+            "title": "Warning",
+            "content": "Warning content",
+            "data": {"level": "high"},
+            "is_read": false,
+            "priority": 2,
+            "link_url": "/warnings/1",
+            "created_at": "2024-06-01T12:00:00Z",
+            "read_at": null
+        }"#;
+        let notif: Notification = serde_json::from_str(json).unwrap();
+        assert_eq!(notif.id, "notif-100");
+        assert_eq!(notif.notification_type, "warning");
+        assert!(!notif.is_read);
+        assert_eq!(notif.priority, 2);
+        assert!(notif.data.is_some());
+        assert!(notif.read_at.is_none());
+    }
+
+    // ========== NotificationListResponse serde tests ==========
+
+    #[test]
+    fn notification_list_response_serde_roundtrip() {
+        let original = NotificationListResponse {
+            notifications: vec![],
+            total: 0,
+            page: 1,
+            pagesize: 20,
+            unread_count: 0,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let deserialized: NotificationListResponse = serde_json::from_str(&json).unwrap();
+        let val1 = serde_json::to_value(&original).unwrap();
+        let val2 = serde_json::to_value(&deserialized).unwrap();
+        assert_eq!(val1, val2);
+    }
+
+    #[test]
+    fn notification_list_response_serde_roundtrip_with_items() {
+        let notif = Notification {
+            id: "n1".to_string(),
+            user_id: "u1".to_string(),
+            notification_type: "info".to_string(),
+            title: "Title".to_string(),
+            content: "Body".to_string(),
+            data: None,
+            is_read: false,
+            priority: 0,
+            link_url: None,
+            created_at: sample_dt(),
+            read_at: None,
+        };
+        let original = NotificationListResponse {
+            notifications: vec![notif],
+            total: 1,
+            page: 1,
+            pagesize: 10,
+            unread_count: 1,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let deserialized: NotificationListResponse = serde_json::from_str(&json).unwrap();
+        let val1 = serde_json::to_value(&original).unwrap();
+        let val2 = serde_json::to_value(&deserialized).unwrap();
+        assert_eq!(val1, val2);
+    }
+
+    // ========== NotificationStats serde tests ==========
+
+    #[test]
+    fn notification_stats_serde_roundtrip_empty() {
+        let original = NotificationStats {
+            total: 0,
+            unread: 0,
+            by_type: HashMap::new(),
+            by_priority: HashMap::new(),
+            total_notifications: 0,
+            notifications_by_type: HashMap::new(),
+            notifications_by_day: HashMap::new(),
+            unread_notifications: 0,
+            read_notifications: 0,
+            archived_notifications: 0,
+            generated_at: sample_dt(),
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let deserialized: NotificationStats = serde_json::from_str(&json).unwrap();
+        let val1 = serde_json::to_value(&original).unwrap();
+        let val2 = serde_json::to_value(&deserialized).unwrap();
+        assert_eq!(val1, val2);
+    }
+
+    #[test]
+    fn notification_stats_serde_roundtrip_populated() {
+        let mut by_type = HashMap::new();
+        by_type.insert("alert".to_string(), 10);
+        by_type.insert("info".to_string(), 20);
+        let mut by_priority = HashMap::new();
+        by_priority.insert(1, 5);
+        by_priority.insert(2, 25);
+        let mut by_day = HashMap::new();
+        by_day.insert("2024-01-01".to_string(), 3);
+        by_day.insert("2024-01-02".to_string(), 7);
+
+        let original = NotificationStats {
+            total: 30,
+            unread: 10,
+            by_type,
+            by_priority,
+            total_notifications: 30,
+            notifications_by_type: HashMap::new(),
+            notifications_by_day: by_day,
+            unread_notifications: 10,
+            read_notifications: 15,
+            archived_notifications: 5,
+            generated_at: sample_dt(),
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let deserialized: NotificationStats = serde_json::from_str(&json).unwrap();
+        let val1 = serde_json::to_value(&original).unwrap();
+        let val2 = serde_json::to_value(&deserialized).unwrap();
+        assert_eq!(val1, val2);
+    }
+
+    // ========== CreateNotificationRequest serde tests ==========
+
+    #[test]
+    fn create_notification_request_serde_roundtrip_full() {
+        let original = CreateNotificationRequest {
+            title: "New Alert".to_string(),
+            content: "Alert content".to_string(),
+            notification_type: Some("alert".to_string()),
+            data: Some(serde_json::json!({"level": "high"})),
+            priority: Some(3),
+            link_url: Some("/alerts/1".to_string()),
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let deserialized: CreateNotificationRequest = serde_json::from_str(&json).unwrap();
+        let val1 = serde_json::to_value(&original).unwrap();
+        let val2 = serde_json::to_value(&deserialized).unwrap();
+        assert_eq!(val1, val2);
+    }
+
+    #[test]
+    fn create_notification_request_serde_roundtrip_minimal() {
+        let original = CreateNotificationRequest {
+            title: "Title".to_string(),
+            content: "Content".to_string(),
+            notification_type: None,
+            data: None,
+            priority: None,
+            link_url: None,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let deserialized: CreateNotificationRequest = serde_json::from_str(&json).unwrap();
+        let val1 = serde_json::to_value(&original).unwrap();
+        let val2 = serde_json::to_value(&deserialized).unwrap();
+        assert_eq!(val1, val2);
+    }
+
+    #[test]
+    fn create_notification_request_serde_default_fields_when_missing() {
+        let json = r#"{
+            "title": "T",
+            "content": "C"
+        }"#;
+        let req: CreateNotificationRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.title, "T");
+        assert_eq!(req.content, "C");
+        assert!(req.notification_type.is_none());
+        assert!(req.data.is_none());
+        assert!(req.priority.is_none());
+        assert!(req.link_url.is_none());
+    }
+
+    // ========== NotificationSvcClient construction tests ==========
+
+    #[test]
+    fn notification_client_new_succeeds() {
+        let client = NotificationSvcClient::new("http://localhost:8084");
+        assert!(client.is_ok());
+    }
+
+    #[test]
+    fn notification_client_new_with_empty_url_fails() {
+        let result = NotificationSvcClient::new("");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn notification_client_from_env_succeeds() {
+        let client = NotificationSvcClient::from_env();
+        assert!(client.is_ok());
+    }
+
+    #[test]
+    fn notification_client_set_auth_token_does_not_panic() {
+        let mut client = NotificationSvcClient::new("http://localhost:8084").unwrap();
+        client.set_auth_token("token-abc");
+    }
+
+    #[test]
+    fn notification_client_with_auth_token_returns_self() {
+        let client = NotificationSvcClient::new("http://localhost:8084").unwrap();
+        let _client = client.with_auth_token("token-xyz");
+    }
+
+    #[test]
+    fn notification_client_add_header_does_not_panic() {
+        let mut client = NotificationSvcClient::new("http://localhost:8084").unwrap();
+        client.add_header("X-Tenant-Id", "tenant-001");
+    }
+
+    #[tokio::test]
+    async fn notification_client_get_health_unreachable_returns_false() {
+        let client = NotificationSvcClient::new("http://127.0.0.1:1").unwrap();
+        let result = client.get_health().await;
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), false);
+    }
+}
