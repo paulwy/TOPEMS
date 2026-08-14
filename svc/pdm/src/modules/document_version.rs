@@ -817,3 +817,159 @@ async fn next_version_number(state: &AppState, tenant_id: Uuid, document_id: Uui
     .unwrap_or(0);
     format!("{}.0", count + 1)
 }
+
+#[cfg(test)]
+mod handler_tests {
+    use super::*;
+
+    fn make_claims(tenant_id: Option<&str>) -> Claims {
+        Claims {
+            sub: "user-1".to_string(),
+            username: "tester".to_string(),
+            role: "admin".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 9999999999,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: tenant_id.map(|s| s.to_string()),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_claims() {
+        let claims = make_claims(Some("550e8400-e29b-41d4-a716-446655440000"));
+        let headers = axum::http::HeaderMap::new();
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(
+            tid,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_header() {
+        let claims = make_claims(None);
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            "x-tenant-id",
+            "550e8400-e29b-41d4-a716-446655440050".parse().unwrap(),
+        );
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(
+            tid,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440050").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_get_tenant_id_fallback_v4() {
+        let claims = make_claims(None);
+        let headers = axum::http::HeaderMap::new();
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(tid.get_version(), Some(uuid::Version::Random));
+    }
+
+    #[test]
+    fn test_create_routes_builds_without_panic() {
+        let router = create_routes();
+        let _ = router.clone();
+    }
+
+    #[test]
+    fn test_document_version_serde_roundtrip() {
+        let now = Utc::now();
+        let v = DocumentVersion {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            document_id: Uuid::new_v4(),
+            document_type: Some("spec".to_string()),
+            version_number: "1.0".to_string(),
+            title: "标题".to_string(),
+            description: Some("d".to_string()),
+            status: "draft".to_string(),
+            file_url: Some("/p".to_string()),
+            filesize: Some(2048),
+            file_type: Some("pdf".to_string()),
+            changes: vec!["init".to_string(), "edit".to_string()],
+            created_by: "u1".to_string(),
+            created_by_name: Some("张三".to_string()),
+            reviewed_by: None,
+            approved_by: None,
+            published_at: None,
+            created_at: now,
+            updated_at: Some(now),
+        };
+        let json = serde_json::to_string(&v).unwrap();
+        // document_type 通过 rename 序列化为 "type"
+        assert!(json.contains("\"type\":\"spec\""));
+        assert!(!json.contains("\"document_type\""));
+        let decoded: DocumentVersion = serde_json::from_str(&json).unwrap();
+        assert_eq!(decoded.version_number, "1.0");
+        assert_eq!(decoded.changes.len(), 2);
+        assert_eq!(decoded.document_type, Some("spec".to_string()));
+    }
+
+    #[test]
+    fn test_document_version_serde_minimal() {
+        let now = Utc::now();
+        let json = format!(
+            r#"{{"id":"{}","tenant_id":"{}","document_id":"{}","version_number":"2.0","title":"t","status":"draft","changes":[],"created_by":"sys","created_at":"{}"}}"#,
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            now.to_rfc3339()
+        );
+        let v: DocumentVersion = serde_json::from_str(&json).unwrap();
+        assert_eq!(v.title, "t");
+        assert!(v.document_type.is_none());
+        assert!(v.filesize.is_none());
+        assert!(v.published_at.is_none());
+        assert!(v.changes.is_empty());
+    }
+
+    #[test]
+    fn test_create_document_version_request_deserialize() {
+        let json = r#"{"version_number":"3.0","title":"新版本","description":"d","changes":["a","b"],"created_by":"u"}"#;
+        let req: CreateDocumentVersionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.version_number, "3.0");
+        assert_eq!(req.title, "新版本");
+        assert_eq!(req.changes.as_deref().unwrap().len(), 2);
+        assert_eq!(req.created_by, Some("u".to_string()));
+    }
+
+    #[test]
+    fn test_create_document_version_request_optional_fields() {
+        let json = r#"{"version_number":"4.0","title":"t"}"#;
+        let req: CreateDocumentVersionRequest = serde_json::from_str(json).unwrap();
+        assert!(req.changes.is_none());
+        assert!(req.filesize.is_none());
+        assert!(req.document_id.is_none());
+    }
+
+    #[test]
+    fn test_update_document_version_request_all_none() {
+        let json = r#"{}"#;
+        let req: UpdateDocumentVersionRequest = serde_json::from_str(json).unwrap();
+        assert!(req.version_number.is_none());
+        assert!(req.status.is_none());
+        assert!(req.changes.is_none());
+        assert!(req.reviewed_by.is_none());
+    }
+
+    #[test]
+    fn test_update_document_version_request_with_values() {
+        let json =
+            r#"{"status":"published","reviewed_by":"r1","approved_by":"a1","changes":["x"]}"#;
+        let req: UpdateDocumentVersionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.status, Some("published".to_string()));
+        assert_eq!(req.reviewed_by, Some("r1".to_string()));
+        assert_eq!(req.approved_by, Some("a1".to_string()));
+        assert_eq!(req.changes.as_deref().unwrap(), &["x".to_string()]);
+    }
+}

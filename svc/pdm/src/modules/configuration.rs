@@ -361,3 +361,162 @@ pub async fn delete_configuration(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_claims(tenant_id: Option<&str>) -> Claims {
+        Claims {
+            sub: "user-1".to_string(),
+            username: "tester".to_string(),
+            role: "admin".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 9999999999,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: tenant_id.map(|s| s.to_string()),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_claims() {
+        let claims = make_claims(Some("550e8400-e29b-41d4-a716-446655440000"));
+        let headers = axum::http::HeaderMap::new();
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(
+            tid,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_header() {
+        let claims = make_claims(None);
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            "x-tenant-id",
+            "550e8400-e29b-41d4-a716-446655440060".parse().unwrap(),
+        );
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(
+            tid,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440060").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_get_tenant_id_fallback_v4() {
+        let claims = make_claims(None);
+        let headers = axum::http::HeaderMap::new();
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(tid.get_version(), Some(uuid::Version::Random));
+    }
+
+    #[test]
+    fn test_create_routes_builds_without_panic() {
+        let router = create_routes();
+        let _ = router.clone();
+    }
+
+    #[test]
+    fn test_configuration_serde_roundtrip() {
+        let now = Utc::now();
+        let c = Configuration {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            config_no: "C-001".to_string(),
+            name: "配置A".to_string(),
+            description: Some("desc".to_string()),
+            product_id: Some(Uuid::new_v4()),
+            config_items: serde_json::json!(["item1", "item2"]),
+            status: "active".to_string(),
+            created_by: Some("u1".to_string()),
+            created_at: now,
+            updated_at: now,
+        };
+        let json = serde_json::to_string(&c).unwrap();
+        let decoded: Configuration = serde_json::from_str(&json).unwrap();
+        assert_eq!(decoded.config_no, "C-001");
+        assert_eq!(decoded.name, "配置A");
+        assert_eq!(decoded.status, "active");
+        assert_eq!(decoded.config_items, serde_json::json!(["item1", "item2"]));
+    }
+
+    #[test]
+    fn test_configuration_serde_none_optionals() {
+        let now = Utc::now();
+        let c = Configuration {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            config_no: "C-002".to_string(),
+            name: "裸配置".to_string(),
+            description: None,
+            product_id: None,
+            config_items: serde_json::json!([]),
+            status: "draft".to_string(),
+            created_by: None,
+            created_at: now,
+            updated_at: now,
+        };
+        let json = serde_json::to_string(&c).unwrap();
+        assert!(json.contains("\"description\":null"));
+        assert!(json.contains("\"product_id\":null"));
+        let decoded: Configuration = serde_json::from_str(&json).unwrap();
+        assert!(decoded.product_id.is_none());
+        assert!(decoded.created_by.is_none());
+    }
+
+    #[test]
+    fn test_create_configuration_request_deserialize() {
+        let json = r#"{"config_no":"C-100","name":"n","description":"d","product_id":"550e8400-e29b-41d4-a716-446655440061","config_items":["a","b"],"created_by":"u"}"#;
+        let req: CreateConfigurationRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.config_no, "C-100");
+        assert_eq!(req.config_items, vec!["a", "b"]);
+        assert!(req.product_id.is_some());
+        assert_eq!(req.created_by, Some("u".to_string()));
+    }
+
+    #[test]
+    fn test_create_configuration_request_minimal() {
+        let json = r#"{"config_no":"C-101","name":"n","config_items":[]}"#;
+        let req: CreateConfigurationRequest = serde_json::from_str(json).unwrap();
+        assert!(req.description.is_none());
+        assert!(req.product_id.is_none());
+        assert!(req.config_items.is_empty());
+    }
+
+    #[test]
+    fn test_update_configuration_request_all_none() {
+        let json = r#"{}"#;
+        let req: UpdateConfigurationRequest = serde_json::from_str(json).unwrap();
+        assert!(req.config_no.is_none());
+        assert!(req.name.is_none());
+        assert!(req.status.is_none());
+        assert!(req.config_items.is_none());
+    }
+
+    #[test]
+    fn test_configuration_query_defaults() {
+        let json = r#"{}"#;
+        let q: ConfigurationQuery = serde_json::from_str(json).unwrap();
+        assert!(q.page.is_none());
+        assert!(q.product_id.is_none());
+    }
+
+    #[test]
+    fn test_configuration_query_with_filters() {
+        let json = r#"{"page":2,"page_size":15,"search":"c","status":"active","product_id":"550e8400-e29b-41d4-a716-446655440062"}"#;
+        let q: ConfigurationQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(q.page, Some(2));
+        assert_eq!(q.page_size, Some(15));
+        assert_eq!(q.search.as_deref(), Some("c"));
+        assert!(q.product_id.is_some());
+    }
+}

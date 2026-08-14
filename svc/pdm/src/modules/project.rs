@@ -742,3 +742,204 @@ pub async fn delete_phase(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_claims(tenant_id: Option<&str>) -> Claims {
+        Claims {
+            sub: "user-1".to_string(),
+            username: "tester".to_string(),
+            role: "admin".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 9999999999,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: tenant_id.map(|s| s.to_string()),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_claims() {
+        let claims = make_claims(Some("550e8400-e29b-41d4-a716-446655440000"));
+        let headers = axum::http::HeaderMap::new();
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(
+            tid,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_header() {
+        let claims = make_claims(None);
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            "x-tenant-id",
+            "550e8400-e29b-41d4-a716-446655440070".parse().unwrap(),
+        );
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(
+            tid,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440070").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_get_tenant_id_fallback_v4() {
+        let claims = make_claims(None);
+        let headers = axum::http::HeaderMap::new();
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(tid.get_version(), Some(uuid::Version::Random));
+    }
+
+    #[test]
+    fn test_create_routes_builds_without_panic() {
+        let router = create_routes();
+        let _ = router.clone();
+    }
+
+    #[test]
+    fn test_pdm_project_serde_roundtrip() {
+        let now = Utc::now();
+        let p = PdmProject {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            project_no: "PRJ-001".to_string(),
+            name: "项目A".to_string(),
+            description: Some("d".to_string()),
+            status: "active".to_string(),
+            phase: "design".to_string(),
+            start_date: Some(now),
+            end_date: None,
+            manager_id: Some("m1".to_string()),
+            manager_name: Some("经理".to_string()),
+            budget: Some(10000.5),
+            progress: Some(50),
+            member_count: Some(3),
+            created_by: Some("u1".to_string()),
+            created_at: now,
+            updated_at: Some(now),
+        };
+        let json = serde_json::to_string(&p).unwrap();
+        let decoded: PdmProject = serde_json::from_str(&json).unwrap();
+        assert_eq!(decoded.project_no, "PRJ-001");
+        assert_eq!(decoded.status, "active");
+        assert_eq!(decoded.phase, "design");
+        assert_eq!(decoded.budget, Some(10000.5));
+        assert_eq!(decoded.progress, Some(50));
+        assert_eq!(decoded.member_count, Some(3));
+    }
+
+    #[test]
+    fn test_create_pdm_project_request_deserialize() {
+        let json = r#"{"project_no":"PRJ-1","name":"n","status":"active","phase":"p","budget":5000.0,"progress":10}"#;
+        let req: CreatePdmProjectRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.project_no, "PRJ-1");
+        assert_eq!(req.budget, Some(5000.0));
+        assert_eq!(req.progress, Some(10));
+        assert_eq!(req.phase, Some("p".to_string()));
+    }
+
+    #[test]
+    fn test_update_pdm_project_request_all_none() {
+        let json = r#"{}"#;
+        let req: UpdatePdmProjectRequest = serde_json::from_str(json).unwrap();
+        assert!(req.name.is_none());
+        assert!(req.budget.is_none());
+        assert!(req.progress.is_none());
+    }
+
+    #[test]
+    fn test_project_query_defaults() {
+        let json = r#"{}"#;
+        let q: ProjectQuery = serde_json::from_str(json).unwrap();
+        assert!(q.search.is_none());
+        assert!(q.status.is_none());
+        assert!(q.phase.is_none());
+    }
+
+    #[test]
+    fn test_update_project_status_request() {
+        let json = r#"{"status":"completed"}"#;
+        let req: UpdateProjectStatusRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.status, "completed");
+    }
+
+    #[test]
+    fn test_update_project_phase_request() {
+        let json = r#"{"phase":"testing"}"#;
+        let req: UpdateProjectPhaseRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.phase, "testing");
+    }
+
+    #[test]
+    fn test_project_member_serde_roundtrip() {
+        let now = Utc::now();
+        let m = ProjectMember {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            project_id: Uuid::new_v4(),
+            user_id: "u1".to_string(),
+            user_name: Some("张三".to_string()),
+            user_email: Some("z@x.com".to_string()),
+            role: "leader".to_string(),
+            joined_at: now,
+            updated_at: None,
+        };
+        let json = serde_json::to_string(&m).unwrap();
+        let decoded: ProjectMember = serde_json::from_str(&json).unwrap();
+        assert_eq!(decoded.user_id, "u1");
+        assert_eq!(decoded.role, "leader");
+        assert_eq!(decoded.user_email, Some("z@x.com".to_string()));
+    }
+
+    #[test]
+    fn test_add_project_member_request_deserialize() {
+        let json = r#"{"user_id":"u2","user_name":"李四","role":"member"}"#;
+        let req: AddProjectMemberRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.user_id, "u2");
+        assert_eq!(req.role, "member");
+        assert!(req.user_email.is_none());
+    }
+
+    #[test]
+    fn test_project_phase_serde_roundtrip() {
+        let now = Utc::now();
+        let ph = ProjectPhase {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            project_id: Uuid::new_v4(),
+            phase: "design".to_string(),
+            name: "设计阶段".to_string(),
+            description: Some("d".to_string()),
+            start_date: Some(now),
+            end_date: None,
+            status: "active".to_string(),
+            deliverables: Some(vec!["doc1".to_string(), "doc2".to_string()]),
+            created_at: now,
+            updated_at: Some(now),
+        };
+        let json = serde_json::to_string(&ph).unwrap();
+        let decoded: ProjectPhase = serde_json::from_str(&json).unwrap();
+        assert_eq!(decoded.phase, "design");
+        assert_eq!(decoded.name, "设计阶段");
+        assert_eq!(decoded.deliverables.as_deref().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn test_create_project_phase_request_deserialize() {
+        let json = r#"{"phase":"p","name":"n","deliverables":["a"]}"#;
+        let req: CreateProjectPhaseRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.phase, "p");
+        assert_eq!(req.deliverables.as_deref().unwrap(), &["a".to_string()]);
+        assert!(req.status.is_none());
+    }
+}

@@ -353,3 +353,163 @@ pub async fn delete_batch(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::str::FromStr;
+
+    fn make_claims(tenant_id: Option<&str>) -> Claims {
+        Claims {
+            sub: "user-1".to_string(),
+            username: "tester".to_string(),
+            role: "admin".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 9999999999,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: tenant_id.map(|s| s.to_string()),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_claims() {
+        let claims = make_claims(Some("550e8400-e29b-41d4-a716-446655440000"));
+        let headers = axum::http::HeaderMap::new();
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(
+            tid,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_header() {
+        let claims = make_claims(None);
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            "x-tenant-id",
+            "550e8400-e29b-41d4-a716-446655440080".parse().unwrap(),
+        );
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(
+            tid,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440080").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_get_tenant_id_fallback_v4() {
+        let claims = make_claims(None);
+        let headers = axum::http::HeaderMap::new();
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(tid.get_version(), Some(uuid::Version::Random));
+    }
+
+    #[test]
+    fn test_create_routes_builds_without_panic() {
+        let router = create_routes();
+        let _ = router.clone();
+    }
+
+    #[test]
+    fn test_production_batch_serde_roundtrip() {
+        let now = Utc::now();
+        let b = ProductionBatch {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            batch_no: "B-001".to_string(),
+            product_id: Some(Uuid::new_v4()),
+            product_name: Some("产品A".to_string()),
+            quantity: Some(BigDecimal::from_str("100.50").unwrap()),
+            unit: Some("个".to_string()),
+            start_date: Some(now),
+            end_date: None,
+            status: "running".to_string(),
+            notes: Some("备注".to_string()),
+            created_at: now,
+            updated_at: now,
+        };
+        let json = serde_json::to_string(&b).unwrap();
+        let decoded: ProductionBatch = serde_json::from_str(&json).unwrap();
+        assert_eq!(decoded.batch_no, "B-001");
+        assert_eq!(decoded.status, "running");
+        assert_eq!(decoded.unit, Some("个".to_string()));
+        assert!(decoded.quantity.is_some());
+    }
+
+    #[test]
+    fn test_production_batch_serde_none_optionals() {
+        let now = Utc::now();
+        let b = ProductionBatch {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            batch_no: "B-002".to_string(),
+            product_id: None,
+            product_name: None,
+            quantity: None,
+            unit: None,
+            start_date: None,
+            end_date: None,
+            status: "draft".to_string(),
+            notes: None,
+            created_at: now,
+            updated_at: now,
+        };
+        let json = serde_json::to_string(&b).unwrap();
+        assert!(json.contains("\"quantity\":null"));
+        assert!(json.contains("\"product_id\":null"));
+        let decoded: ProductionBatch = serde_json::from_str(&json).unwrap();
+        assert!(decoded.notes.is_none());
+    }
+
+    #[test]
+    fn test_create_batch_request_deserialize_with_bigdecimal() {
+        let json = r#"{"batch_no":"B-100","product_name":"P","quantity":"250","unit":"kg","status":"active"}"#;
+        let req: CreateBatchRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.batch_no, "B-100");
+        assert_eq!(req.unit, Some("kg".to_string()));
+        assert!(req.quantity.is_some());
+        assert_eq!(req.status, Some("active".to_string()));
+    }
+
+    #[test]
+    fn test_create_batch_request_minimal() {
+        let json = r#"{"batch_no":"B-101"}"#;
+        let req: CreateBatchRequest = serde_json::from_str(json).unwrap();
+        assert!(req.quantity.is_none());
+        assert!(req.product_id.is_none());
+    }
+
+    #[test]
+    fn test_update_batch_request_all_none() {
+        let json = r#"{}"#;
+        let req: UpdateBatchRequest = serde_json::from_str(json).unwrap();
+        assert!(req.batch_no.is_none());
+        assert!(req.status.is_none());
+        assert!(req.quantity.is_none());
+    }
+
+    #[test]
+    fn test_batch_query_defaults() {
+        let json = r#"{}"#;
+        let q: BatchQuery = serde_json::from_str(json).unwrap();
+        assert!(q.page.is_none());
+        assert!(q.product_id.is_none());
+    }
+
+    #[test]
+    fn test_batch_query_with_filters() {
+        let json = r#"{"page":1,"page_size":10,"search":"B","status":"running","product_id":"550e8400-e29b-41d4-a716-446655440081"}"#;
+        let q: BatchQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(q.page, Some(1));
+        assert_eq!(q.search.as_deref(), Some("B"));
+        assert!(q.product_id.is_some());
+    }
+}

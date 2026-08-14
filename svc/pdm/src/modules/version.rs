@@ -350,3 +350,161 @@ pub async fn delete_version(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_claims(tenant_id: Option<&str>) -> Claims {
+        Claims {
+            sub: "user-1".to_string(),
+            username: "tester".to_string(),
+            role: "admin".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 9999999999,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: tenant_id.map(|s| s.to_string()),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_claims() {
+        let claims = make_claims(Some("550e8400-e29b-41d4-a716-446655440000"));
+        let headers = axum::http::HeaderMap::new();
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(
+            tid,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_header() {
+        let claims = make_claims(None);
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            "x-tenant-id",
+            "550e8400-e29b-41d4-a716-446655440040".parse().unwrap(),
+        );
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(
+            tid,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440040").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_get_tenant_id_fallback_v4() {
+        let claims = make_claims(None);
+        let headers = axum::http::HeaderMap::new();
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(tid.get_version(), Some(uuid::Version::Random));
+    }
+
+    #[test]
+    fn test_create_routes_builds_without_panic() {
+        let router = create_routes();
+        let _ = router.clone();
+    }
+
+    #[test]
+    fn test_version_serde_roundtrip() {
+        let now = Utc::now();
+        let v = Version {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            version_no: "V-001".to_string(),
+            target_type: "product".to_string(),
+            target_id: Uuid::new_v4(),
+            target_name: Some("产品A".to_string()),
+            version_label: "1.0.0".to_string(),
+            description: Some("初始版本".to_string()),
+            status: "draft".to_string(),
+            created_by: Some("u1".to_string()),
+            created_at: now,
+            updated_at: now,
+        };
+        let json = serde_json::to_string(&v).unwrap();
+        let decoded: Version = serde_json::from_str(&json).unwrap();
+        assert_eq!(decoded.version_no, "V-001");
+        assert_eq!(decoded.target_type, "product");
+        assert_eq!(decoded.version_label, "1.0.0");
+        assert_eq!(decoded.status, "draft");
+    }
+
+    #[test]
+    fn test_version_serde_none_optionals() {
+        let now = Utc::now();
+        let v = Version {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            version_no: "V-002".to_string(),
+            target_type: "material".to_string(),
+            target_id: Uuid::new_v4(),
+            target_name: None,
+            version_label: "0.1.0".to_string(),
+            description: None,
+            status: "draft".to_string(),
+            created_by: None,
+            created_at: now,
+            updated_at: now,
+        };
+        let json = serde_json::to_string(&v).unwrap();
+        assert!(json.contains("\"target_name\":null"));
+        assert!(json.contains("\"created_by\":null"));
+        let decoded: Version = serde_json::from_str(&json).unwrap();
+        assert!(decoded.description.is_none());
+    }
+
+    #[test]
+    fn test_create_version_request_deserialize() {
+        let json = r#"{"version_no":"V1","target_type":"product","target_id":"550e8400-e29b-41d4-a716-446655440041","target_name":"n","version_label":"1.0","description":"d","created_by":"u"}"#;
+        let req: CreateVersionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.version_no, "V1");
+        assert_eq!(req.target_type, "product");
+        assert_eq!(req.version_label, "1.0");
+        assert_eq!(req.created_by, Some("u".to_string()));
+    }
+
+    #[test]
+    fn test_create_version_request_minimal() {
+        let json = r#"{"version_no":"V2","target_type":"t","target_id":"550e8400-e29b-41d4-a716-446655440042","version_label":"l"}"#;
+        let req: CreateVersionRequest = serde_json::from_str(json).unwrap();
+        assert!(req.target_name.is_none());
+        assert!(req.description.is_none());
+    }
+
+    #[test]
+    fn test_update_version_request_all_none() {
+        let json = r#"{}"#;
+        let req: UpdateVersionRequest = serde_json::from_str(json).unwrap();
+        assert!(req.version_no.is_none());
+        assert!(req.status.is_none());
+        assert!(req.target_id.is_none());
+    }
+
+    #[test]
+    fn test_version_query_defaults() {
+        let json = r#"{}"#;
+        let q: VersionQuery = serde_json::from_str(json).unwrap();
+        assert!(q.page.is_none());
+        assert!(q.target_type.is_none());
+        assert!(q.target_id.is_none());
+    }
+
+    #[test]
+    fn test_version_query_with_filters() {
+        let json = r#"{"page":3,"page_size":25,"search":"v","status":"draft","target_type":"product","target_id":"550e8400-e29b-41d4-a716-446655440043"}"#;
+        let q: VersionQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(q.page, Some(3));
+        assert_eq!(q.target_type.as_deref(), Some("product"));
+        assert!(q.target_id.is_some());
+    }
+}
