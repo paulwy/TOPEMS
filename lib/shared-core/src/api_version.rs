@@ -504,4 +504,295 @@ mod tests {
     fn a4_default_group2_panic_on_unknown() {
         let _ = default_group2_config("nonexist-svc-xyz");
     }
+
+    // ===== 新增：serde 往返 / 构造 / 路径分析测试 =====
+
+    #[test]
+    fn test_api_version_info_serde_roundtrip() {
+        let v = ApiVersionInfo {
+            version: "v1".to_string(),
+            latest: true,
+            deprecated: false,
+            sunset_date: Some("2025-01-01".to_string()),
+        };
+        let json = serde_json::to_string(&v).unwrap();
+        let back: ApiVersionInfo = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.version, "v1");
+        assert!(back.latest);
+        assert!(!back.deprecated);
+        assert_eq!(back.sunset_date, Some("2025-01-01".to_string()));
+    }
+
+    #[test]
+    fn test_api_info_serde_roundtrip() {
+        let info = ApiInfo {
+            service_name: "svc".to_string(),
+            versions: vec![ApiVersionInfo {
+                version: "v2".to_string(),
+                latest: false,
+                deprecated: true,
+                sunset_date: None,
+            }],
+            latest_version: "v1".to_string(),
+        };
+        let json = serde_json::to_string(&info).unwrap();
+        let back: ApiInfo = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.service_name, "svc");
+        assert_eq!(back.versions.len(), 1);
+        assert_eq!(back.latest_version, "v1");
+        assert!(back.versions[0].deprecated);
+    }
+
+    #[test]
+    fn test_api_info_clone_independence() {
+        let info = create_api_info("svc");
+        let cloned = info.clone();
+        assert_eq!(info.service_name, cloned.service_name);
+        assert_eq!(info.versions.len(), cloned.versions.len());
+        assert_eq!(info.latest_version, cloned.latest_version);
+    }
+
+    #[test]
+    fn test_route_compat_config_new() {
+        let cfg = RouteCompatConfig::new("svc", "/api/core/svc", &[("a", "b")]);
+        assert_eq!(cfg.svc, "svc");
+        assert_eq!(cfg.internal_base, "/api/core/svc");
+        assert_eq!(cfg.shortcuts.len(), 1);
+        assert_eq!(cfg.shortcuts[0], ("a", "b"));
+    }
+
+    #[test]
+    fn test_analyze_group2_path_new_path() {
+        let cfg = RouteCompatConfig::new("hrm", "/api/core/hrm", &[]);
+        let (is_legacy, rewrite) = analyze_group2_path("/api/hrm/employees", &cfg);
+        assert!(!is_legacy);
+        assert_eq!(rewrite, None);
+    }
+
+    #[test]
+    fn test_analyze_group2_path_core_legacy() {
+        let cfg = RouteCompatConfig::new("hrm", "/api/core/hrm", &[]);
+        let (is_legacy, rewrite) =
+            analyze_group2_path("/api/core/hrm/employees", &cfg);
+        assert!(is_legacy);
+        assert_eq!(rewrite, Some("/api/core/hrm/employees".to_string()));
+    }
+
+    #[test]
+    fn test_analyze_group2_path_v1_legacy() {
+        let cfg = RouteCompatConfig::new("hrm", "/api/core/hrm", &[]);
+        let (is_legacy, rewrite) =
+            analyze_group2_path("/api/hrm/v1/employees", &cfg);
+        assert!(is_legacy);
+        assert_eq!(rewrite, Some("/api/core/hrm/employees".to_string()));
+    }
+
+    #[test]
+    fn test_analyze_group2_path_shortcut() {
+        let cfg = RouteCompatConfig::new(
+            "hrm",
+            "/api/core/hrm",
+            &[("employees", "employees")],
+        );
+        let (is_legacy, rewrite) =
+            analyze_group2_path("/api/v1/employees/123", &cfg);
+        assert!(is_legacy);
+        assert_eq!(
+            rewrite,
+            Some("/api/core/hrm/employees/123".to_string())
+        );
+    }
+
+    #[test]
+    fn test_analyze_group2_path_unmatched() {
+        let cfg = RouteCompatConfig::new("hrm", "/api/core/hrm", &[]);
+        let (is_legacy, rewrite) = analyze_group2_path("/totally/unrelated", &cfg);
+        assert!(!is_legacy);
+        assert_eq!(rewrite, None);
+    }
+
+    #[test]
+    fn test_analyze_group1_path_new() {
+        let cfg = Group1CompatConfig {
+            modules: &["iam"],
+            shortcuts: &[],
+        };
+        let (is_legacy, rewrite) =
+            analyze_group1_path("/api/core/iam/users", &cfg);
+        assert!(!is_legacy);
+        assert_eq!(rewrite, None);
+    }
+
+    #[test]
+    fn test_analyze_group1_path_legacy_v1() {
+        let cfg = Group1CompatConfig {
+            modules: &["iam"],
+            shortcuts: &[],
+        };
+        let (is_legacy, rewrite) =
+            analyze_group1_path("/api/core/iam/v1/users", &cfg);
+        assert!(is_legacy);
+        assert_eq!(rewrite, Some("/api/core/iam/users".to_string()));
+    }
+
+    #[test]
+    fn test_analyze_group1_path_shortcut() {
+        let cfg = Group1CompatConfig {
+            modules: &["iam"],
+            shortcuts: &[("auth", "iam", "auth")],
+        };
+        let (is_legacy, rewrite) =
+            analyze_group1_path("/api/v1/auth/login", &cfg);
+        assert!(is_legacy);
+        assert_eq!(
+            rewrite,
+            Some("/api/core/iam/auth/login".to_string())
+        );
+    }
+
+    #[test]
+    fn test_default_group2_config_multiple_services() {
+        for svc in &["erp", "finance", "doc", "ai", "pm", "crm"] {
+            let cfg = default_group2_config(svc);
+            assert_eq!(cfg.svc, *svc);
+            assert!(cfg.internal_base.starts_with("/api/core/"));
+        }
+    }
+
+    // ===== 新增：路由 / 中间件集成测试 =====
+
+    #[tokio::test]
+    async fn test_versioned_router_nests_under_prefix() {
+        use axum::body::Body;
+        use tower::ServiceExt;
+
+        let inner = Router::new().route("/ping", get(|| async { "pong" }));
+        let app = versioned_router("v1", inner);
+        let resp = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/ping")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), axum::http::StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_default_versioned_router_supports_both_prefixes() {
+        use axum::body::Body;
+        use tower::ServiceExt;
+
+        let inner = Router::new().route("/ping", get(|| async { "pong" }));
+        let app = default_versioned_router(inner);
+        let resp = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/ping")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), axum::http::StatusCode::OK);
+        let resp2 = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/ping")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(resp2.status(), axum::http::StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_deprecation_middleware_adds_headers() {
+        use axum::body::Body;
+        use tower::ServiceExt;
+
+        let app: Router = Router::new()
+            .route("/", get(|| async { "ok" }))
+            .layer(axum::middleware::from_fn(deprecation_middleware));
+        let resp = app
+            .oneshot(
+                Request::builder()
+                    .uri("/")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), axum::http::StatusCode::OK);
+        assert_eq!(
+            resp.headers().get("Deprecation").unwrap(),
+            "true"
+        );
+        assert!(resp
+            .headers()
+            .get("Warning")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .contains("299"));
+    }
+
+    #[tokio::test]
+    async fn test_register_routes_with_legacy_alias() {
+        use axum::body::Body;
+        use tower::ServiceExt;
+
+        let inner = Router::new().route("/ping", get(|| async { "pong" }));
+        let base = Router::new();
+        let app = register_routes_with_legacy_alias(base, "/new", &["/old"], inner);
+        let resp = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/new/ping")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), axum::http::StatusCode::OK);
+        let resp2 = app
+            .oneshot(
+                Request::builder()
+                    .uri("/old/ping")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(resp2.status(), axum::http::StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_group2_compat_middleware_legacy_adds_deprecation() {
+        use axum::body::Body;
+        use tower::ServiceExt;
+
+        async fn ok_handler() -> &'static str {
+            "ok"
+        }
+        let inner = Router::new().fallback(ok_handler);
+        let cfg = RouteCompatConfig::new("hrm", "/api/core/hrm", &[]);
+        let app = wrap_group2_router(inner, cfg);
+        let resp = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/core/hrm/v1/employees")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), axum::http::StatusCode::OK);
+        assert!(resp.headers().contains_key("Deprecation"));
+    }
 }

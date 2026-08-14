@@ -477,4 +477,350 @@ mod tests {
         assert!(!constant_time_eq(b"abc123", b"abc124"));
         assert!(!constant_time_eq(b"abc", b"abcd"));
     }
+
+    // ===== 新增：配置/枚举/签名边界测试 =====
+
+    #[test]
+    fn test_request_signature_config_defaults() {
+        let cfg = RequestSignatureConfig::new("my-secret");
+        assert_eq!(cfg.secret, "my-secret");
+        assert_eq!(cfg.timestamp_tolerance_secs, 300);
+        assert!(cfg.nonce_enabled);
+        assert!(cfg.signed_headers.contains(&"x-timestamp".to_string()));
+        assert!(cfg.signed_headers.contains(&"x-nonce".to_string()));
+    }
+
+    #[test]
+    fn test_request_signature_config_clone() {
+        let cfg = RequestSignatureConfig::new("secret");
+        let cloned = cfg.clone();
+        assert_eq!(cfg.secret, cloned.secret);
+        assert_eq!(
+            cfg.timestamp_tolerance_secs,
+            cloned.timestamp_tolerance_secs
+        );
+        assert_eq!(cfg.nonce_enabled, cloned.nonce_enabled);
+    }
+
+    #[test]
+    fn test_signature_verification_enum_equality() {
+        assert_eq!(
+            SignatureVerification::Valid,
+            SignatureVerification::Valid
+        );
+        assert_eq!(
+            SignatureVerification::MissingHeader("x".into()),
+            SignatureVerification::MissingHeader("x".into())
+        );
+        assert_ne!(
+            SignatureVerification::MissingHeader("x".into()),
+            SignatureVerification::MissingHeader("y".into())
+        );
+        assert_eq!(
+            SignatureVerification::TimestampExpired { skew_secs: 10 },
+            SignatureVerification::TimestampExpired { skew_secs: 10 }
+        );
+        assert_ne!(
+            SignatureVerification::Valid,
+            SignatureVerification::SignatureMismatch
+        );
+    }
+
+    #[test]
+    fn test_signature_verification_invalid_timestamp_format() {
+        let config = RequestSignatureConfig::new("secret");
+        let mut headers = HeaderMap::new();
+        headers.insert("x-timestamp", HeaderValue::from_str("not-a-number").unwrap());
+        let result = verify_request_signature("GET", "/x", b"", &headers, &config);
+        assert_eq!(result, SignatureVerification::InvalidTimestamp);
+    }
+
+    #[test]
+    fn test_signature_verification_missing_nonce() {
+        let config = RequestSignatureConfig::new("secret");
+        let mut headers = HeaderMap::new();
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+        headers.insert("x-timestamp", HeaderValue::from(now));
+        let result = verify_request_signature("GET", "/x", b"", &headers, &config);
+        assert_eq!(
+            result,
+            SignatureVerification::MissingHeader("X-Nonce".to_string())
+        );
+    }
+
+    #[test]
+    fn test_signature_verification_missing_signature() {
+        let config = RequestSignatureConfig::new("secret");
+        let mut headers = HeaderMap::new();
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+        headers.insert("x-timestamp", HeaderValue::from(now));
+        headers.insert("x-nonce", HeaderValue::from_str("nonce").unwrap());
+        let result = verify_request_signature("GET", "/x", b"", &headers, &config);
+        assert_eq!(
+            result,
+            SignatureVerification::MissingHeader("X-Signature".to_string())
+        );
+    }
+
+    #[test]
+    fn test_signature_verification_mismatch() {
+        let secret = "real-secret";
+        let config = RequestSignatureConfig::new(secret);
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+        let mut headers = HeaderMap::new();
+        headers.insert("x-timestamp", HeaderValue::from(now));
+        headers.insert("x-nonce", HeaderValue::from_str("nonce").unwrap());
+        headers.insert("x-signature", HeaderValue::from_str("deadbeef").unwrap());
+        let result = verify_request_signature("GET", "/x", b"", &headers, &config);
+        assert_eq!(result, SignatureVerification::SignatureMismatch);
+    }
+
+    #[test]
+    fn test_signature_verification_empty_body_valid() {
+        let secret = "s";
+        let config = RequestSignatureConfig::new(secret);
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+        let nonce = "n1";
+        let sig = generate_request_signature("POST", "/p", b"", now, nonce, secret);
+        let mut headers = HeaderMap::new();
+        headers.insert("x-timestamp", HeaderValue::from(now));
+        headers.insert("x-nonce", HeaderValue::from_str(nonce).unwrap());
+        headers.insert("x-signature", HeaderValue::from_str(&sig).unwrap());
+        let result = verify_request_signature("POST", "/p", b"", &headers, &config);
+        assert_eq!(result, SignatureVerification::Valid);
+    }
+
+    #[test]
+    fn test_generate_signature_deterministic() {
+        let s1 = generate_request_signature("GET", "/a", b"body", 100, "n", "secret");
+        let s2 = generate_request_signature("GET", "/a", b"body", 100, "n", "secret");
+        assert_eq!(s1, s2);
+    }
+
+    #[test]
+    fn test_generate_signature_differs_by_secret() {
+        let s1 = generate_request_signature("GET", "/a", b"body", 100, "n", "secret1");
+        let s2 = generate_request_signature("GET", "/a", b"body", 100, "n", "secret2");
+        assert_ne!(s1, s2);
+    }
+
+    #[test]
+    fn test_generate_signature_differs_by_method() {
+        let s1 = generate_request_signature("GET", "/a", b"body", 100, "n", "secret");
+        let s2 = generate_request_signature("POST", "/a", b"body", 100, "n", "secret");
+        assert_ne!(s1, s2);
+    }
+
+    #[test]
+    fn test_constant_time_eq_empty_and_single() {
+        assert!(constant_time_eq(b"", b""));
+        assert!(!constant_time_eq(b"", b"a"));
+        assert!(constant_time_eq(b"a", b"a"));
+        assert!(!constant_time_eq(b"a", b"b"));
+    }
+
+    #[test]
+    fn test_audit_context_anonymous_no_headers() {
+        let req = Request::builder()
+            .method("GET")
+            .uri("/")
+            .body(Body::empty())
+            .unwrap();
+        let ctx = extract_audit_context(&req);
+        assert_eq!(ctx.actor, "anonymous");
+        assert_eq!(ctx.ip_address, "unknown");
+        assert_eq!(ctx.user_agent, "");
+        assert_eq!(ctx.trace_id, None);
+        assert_eq!(ctx.method, "GET");
+        assert_eq!(ctx.path, "/");
+    }
+
+    #[test]
+    fn test_audit_context_bearer_token_actor() {
+        let req = Request::builder()
+            .method("GET")
+            .uri("/")
+            .header("authorization", "Bearer abcd1234efgh5678")
+            .body(Body::empty())
+            .unwrap();
+        let ctx = extract_audit_context(&req);
+        assert_eq!(ctx.actor, "token:abcd1234");
+    }
+
+    #[test]
+    fn test_audit_context_x_real_ip() {
+        let req = Request::builder()
+            .method("GET")
+            .uri("/")
+            .header("x-real-ip", "10.0.0.5")
+            .body(Body::empty())
+            .unwrap();
+        let ctx = extract_audit_context(&req);
+        assert_eq!(ctx.ip_address, "10.0.0.5");
+    }
+
+    #[test]
+    fn test_audit_context_traceid_short_traceparent() {
+        // traceparent 没有足够分段（无 '-' 分隔）→ None
+        let req = Request::builder()
+            .method("GET")
+            .uri("/")
+            .header("traceparent", "singleword")
+            .body(Body::empty())
+            .unwrap();
+        let ctx = extract_audit_context(&req);
+        assert_eq!(ctx.trace_id, None);
+    }
+
+    #[test]
+    fn test_audit_context_serde_roundtrip() {
+        let ctx = AuditContext {
+            actor: "user-1".to_string(),
+            ip_address: "1.2.3.4".to_string(),
+            user_agent: "ua".to_string(),
+            trace_id: Some("tid".to_string()),
+            method: "POST".to_string(),
+            path: "/x".to_string(),
+            timestamp: Utc::now(),
+        };
+        let json = serde_json::to_string(&ctx).unwrap();
+        let back: AuditContext = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.actor, ctx.actor);
+        assert_eq!(back.ip_address, ctx.ip_address);
+        assert_eq!(back.trace_id, ctx.trace_id);
+        assert_eq!(back.method, ctx.method);
+    }
+
+    #[test]
+    fn test_signature_error_response_statuses() {
+        assert_eq!(
+            signature_error_response(SignatureVerification::Valid).status(),
+            StatusCode::OK
+        );
+        assert_eq!(
+            signature_error_response(SignatureVerification::SignatureMismatch).status(),
+            StatusCode::UNAUTHORIZED
+        );
+        assert_eq!(
+            signature_error_response(SignatureVerification::InvalidTimestamp).status(),
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(
+            signature_error_response(SignatureVerification::MissingHeader("x".into()))
+                .status(),
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(
+            signature_error_response(SignatureVerification::TimestampExpired {
+                skew_secs: 999
+            })
+            .status(),
+            StatusCode::REQUEST_TIMEOUT
+        );
+    }
+
+    // ===== 新增：ETag 中间件集成测试 =====
+
+    #[tokio::test]
+    async fn test_etag_middleware_sets_etag_on_200() {
+        use axum::{routing::get, Router};
+        use tower::ServiceExt;
+
+        async fn handler() -> &'static str {
+            "hello world"
+        }
+        let app: Router = Router::new()
+            .route("/", get(handler))
+            .layer(axum::middleware::from_fn(etag_middleware));
+        let resp = app
+            .oneshot(
+                Request::builder()
+                    .uri("/")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), StatusCode::OK);
+        assert!(resp.headers().contains_key("etag"));
+    }
+
+    #[tokio::test]
+    async fn test_etag_middleware_returns_304_on_match() {
+        use axum::{routing::get, Router};
+        use tower::ServiceExt;
+
+        async fn handler() -> &'static str {
+            "hello world"
+        }
+        let app: Router = Router::new()
+            .route("/", get(handler))
+            .layer(axum::middleware::from_fn(etag_middleware));
+        let resp = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        let etag = resp
+            .headers()
+            .get("etag")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
+
+        let resp2 = app
+            .oneshot(
+                Request::builder()
+                    .uri("/")
+                    .header("if-none-match", &etag)
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(resp2.status(), StatusCode::NOT_MODIFIED);
+    }
+
+    #[tokio::test]
+    async fn test_etag_middleware_skips_non_200() {
+        use axum::routing::get;
+        use axum::Router;
+        use tower::ServiceExt;
+
+        async fn handler() -> (StatusCode, &'static str) {
+            (StatusCode::NOT_FOUND, "nope")
+        }
+        let app: Router = Router::new()
+            .route("/", get(handler))
+            .layer(axum::middleware::from_fn(etag_middleware));
+        let resp = app
+            .oneshot(
+                Request::builder()
+                    .uri("/")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+        assert!(!resp.headers().contains_key("etag"));
+    }
 }
