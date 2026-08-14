@@ -62,7 +62,7 @@ pub struct LedgerQueryParams {
     period: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct AccountBalanceQueryParams {
     account_ids: Option<Vec<Uuid>>,
     period: String,

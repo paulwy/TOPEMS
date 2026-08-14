@@ -116,7 +116,7 @@ pub fn check_annual_leave_balance(
 
 // ============ 查询参数 ============
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct LeaveRequestQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -191,6 +191,16 @@ pub fn create_routes() -> Router<ApiState> {
 
 // ============ Handler ============
 
+#[utoipa::path(
+    get,
+    path = "/erp/leave-request/list-leave-requests",
+    tag = "LeaveRequest",
+    operation_id = "list_leave_requests",
+    params(LeaveRequestQueryParams),
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
 pub async fn list_leave_requests(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

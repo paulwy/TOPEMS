@@ -246,7 +246,7 @@ pub fn error_value(code: u16, message: &str) -> serde_json::Value {
     })
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::IntoParams)]
 pub struct PaginationParams {
     pub page: Option<i64>,
     #[serde(alias = "pagesize")]

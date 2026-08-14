@@ -472,6 +472,8 @@ pub struct VehicleRequest {
         crate::modules::consolidation::company_relations::delete_company_relation,
         crate::modules::consolidation::company_relations::get_company_financial_data,
         crate::modules::consolidation::company_relations::get_company_tree,
+        // Leave Request
+        crate::modules::leave_request::list_leave_requests,
     ),
     components(
         schemas(
@@ -517,6 +519,7 @@ pub struct VehicleRequest {
         (name = "Dict", description = "数据字典接口"),
         (name = "Master Data", description = "主数据管理接口"),
         (name = "Consolidation", description = "合并报表接口"),
+        (name = "LeaveRequest", description = "请假申请接口"),
         (name = "ERP-System-Compat", description = "ERP system/admin compatibility OpenAPI endpoints"),
     ),
     info(
