@@ -182,7 +182,7 @@ const V54PanelHeader: React.FC<{ status: AIPlatformStatus; onClose: () => void }
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)',
+      background: `linear-gradient(135deg, ${designTokens.colors.primary.main} 0%, ${designTokens.colors.primary.dark} 50%, ${designTokens.colors.secondary.main} 100%)`,
       color: 'common.white',
     }}
   >
@@ -407,7 +407,7 @@ const DashboardTab: React.FC<{
                             label={`${(route.avg_confidence * 100).toFixed(0)}%`}
                             size='small'
                             sx={{
-                              bgcolor: route.avg_confidence > 0.7 ? '#d1fae5' : '#fef3c7',
+                              bgcolor: route.avg_confidence > 0.7 ? 'colors.success.100' : 'colors.warning.100',
                               color: route.avg_confidence > 0.7 ? '#065f46' : '#92400e',
                               fontWeight: 600,
                             }}
@@ -450,8 +450,8 @@ const DashboardTab: React.FC<{
                       sx={{
                         fontSize: 10,
                         height: 18,
-                        bgcolor: cap.enabled ? '#d1fae5' : '#fef2f2',
-                        color: cap.enabled ? '#065f46' : '#991b1b',
+                        bgcolor: cap.enabled ? 'colors.success.100' : 'colors.error.50',
+                        color: cap.enabled ? '#065f46' : 'colors.error.800',
                       }}
                     />
                   </Box>
@@ -621,7 +621,7 @@ const CapabilitiesTab: React.FC = () => {
                     width: 36,
                     height: 36,
                     borderRadius: 2,
-                    bgcolor: cap.enabled ? '#d1fae5' : '#fef2f2',
+                    bgcolor: cap.enabled ? 'colors.success.100' : 'colors.error.50',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -677,7 +677,7 @@ const CapabilitiesTab: React.FC = () => {
                   sx={{
                     fontSize: 10,
                     height: 18,
-                    bgcolor: cap.status === 'active' ? '#d1fae5' : '#fef3c7',
+                    bgcolor: cap.status === 'active' ? 'colors.success.100' : 'colors.warning.100',
                     color: cap.status === 'active' ? '#065f46' : '#92400e',
                   }}
                 />
@@ -814,7 +814,7 @@ const RouterTab: React.FC = () => {
                     p: 2,
                     mb: 2,
                     borderRadius: 2,
-                    border: '2px solid #10b981',
+                    border: `2px solid ${designTokens.colors.success.dark}`,
                     background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
                   }}
                 >
@@ -977,7 +977,7 @@ const RouterTab: React.FC = () => {
                           sx={{
                             fontSize: 10,
                             height: 18,
-                            bgcolor: perf.avg_latency_ms < 200 ? '#d1fae5' : '#fef3c7',
+                            bgcolor: perf.avg_latency_ms < 200 ? 'colors.success.100' : 'colors.warning.100',
                             color: perf.avg_latency_ms < 200 ? '#065f46' : '#92400e',
                           }}
                         />
@@ -1418,7 +1418,7 @@ const AdaptiveUITab: React.FC<{
                         sx={{
                           fontSize: 10,
                           height: 18,
-                          bgcolor: mod.priority === 'high' ? '#d1fae5' : '#fef3c7',
+                          bgcolor: mod.priority === 'high' ? 'colors.success.100' : 'colors.warning.100',
                           color: mod.priority === 'high' ? '#065f46' : '#92400e',
                         }}
                       />
@@ -1743,8 +1743,8 @@ const SettingsTab: React.FC = () => {
                 label={status.initialized ? '已初始化' : '未初始化'}
                 size='small'
                 sx={{
-                  bgcolor: status.initialized ? '#d1fae5' : '#fef2f2',
-                  color: status.initialized ? '#065f46' : '#991b1b',
+                  bgcolor: status.initialized ? 'colors.success.100' : 'colors.error.50',
+                  color: status.initialized ? '#065f46' : 'colors.error.800',
                   fontWeight: 600,
                 }}
               />

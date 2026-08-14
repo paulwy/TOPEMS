@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { MessageSquare, Phone } from 'lucide-react';
 import { useAuth } from '@/hooks';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { designTokens } from '@topems/tokens';
 
 // ── Mock Data ──────────────────────────────────────────────
 
@@ -81,11 +82,11 @@ const priorityColor = (priority: 'urgent' | 'warning' | 'normal') => {
 // ── Helper: gradient color mapping for avatars ────────────
 
 const gradientMap: Record<string, string> = {
-  primary: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-  secondary: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
-  success: 'linear-gradient(135deg, #22c55e, #16a34a)',
-  warning: 'linear-gradient(135deg, #f59e0b, #d97706)',
-  info: 'linear-gradient(135deg, #06b6d4, #0891b2)',
+  primary: `linear-gradient(135deg, ${designTokens.colors.primary.main}, ${designTokens.colors.primary.dark})`,
+  secondary: `linear-gradient(135deg, ${designTokens.colors.secondary.main}, ${designTokens.colors.primary.dark})`,
+  success: `linear-gradient(135deg, ${designTokens.colors.success.main}, ${designTokens.colors.success.dark})`,
+  warning: `linear-gradient(135deg, ${designTokens.colors.warning.main}, ${designTokens.colors.warning.dark})`,
+  info: `linear-gradient(135deg, ${designTokens.colors.cyan['500']}, #0891b2)`,
 };
 
 // ── Components ──────────────────────────────────────────────
@@ -115,7 +116,7 @@ const PersonalInfoCard: React.FC = () => {
           sx={{
             width: 48,
             height: 48,
-            background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+            background: `linear-gradient(135deg, ${designTokens.colors.primary.main}, ${designTokens.colors.secondary.main})`,
             color: 'common.white',
             fontWeight: 600,
             fontSize: '1.1rem',
@@ -176,7 +177,7 @@ const CompactHero: React.FC = () => {
       className='dashboard-hero'
       sx={{
         position: 'relative',
-        background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)',
+        background: `linear-gradient(135deg, ${designTokens.colors.primary.main} 0%, ${designTokens.colors.primary.dark} 50%, ${designTokens.colors.secondary.main} 100%)`,
         borderRadius: 3,
         p: 2.5,
         color: 'common.white',

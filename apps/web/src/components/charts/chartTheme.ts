@@ -22,29 +22,29 @@ export enum ChartType {
 export const BIChartColors = {
   series: [
     designTokens.colors.primary.main, // Blue (primary.main)
-    '#22c55e', // Emerald (success.main)
+    'colors.success.main', // Emerald (success.main)
     designTokens.colors.warning.main, // Amber (warning.main)
     designTokens.colors.error.main, // Red (error.main)
     designTokens.colors.secondary.main, // Violet
-    '#06B6D4', // Cyan
+    'colors.cyan.500', // Cyan
     designTokens.colors.pink.main, // Pink
     '#84CC16', // Lime
   ],
   dark: {
     series: [
-      '#60a5fa', // Blue (lighter for dark bg)
+      'colors.primary.400', // Blue (lighter for dark bg)
       '#4ade80', // Emerald
       '#fbbf24', // Amber
       '#f87171', // Red
-      '#a78bfa', // Violet
-      '#22d3ee', // Cyan
-      '#f472b6', // Pink
+      'colors.secondary.light', // Violet
+      'colors.cyan.400', // Cyan
+      'colors.pink.400', // Pink
       '#a3e635', // Lime
     ],
     grid: '#334155',
     text: '#94A3B8',
     background: 'common.white',
-    border: '#475569',
+    border: 'colors.grey.600',
   },
   // 赛博朋克霓虹色板 — 高饱和度发光色，适配深空背景
   cyberpunk: {
@@ -66,7 +66,7 @@ export const BIChartColors = {
   neutral: {
     grid: designTokens.colors.border.default,
     gridDark: '#334155',
-    text: '#64748B',
+    text: 'colors.grey.500',
     textDark: '#94A3B8',
     background: 'common.white',
     backgroundDark: 'common.white',
@@ -74,21 +74,21 @@ export const BIChartColors = {
   // Primary palette (kept for backward-compatible reference)
   primary: {
     blue: designTokens.colors.primary.main,
-    cyan: '#06B6D4',
+    cyan: 'colors.cyan.500',
     indigo: designTokens.colors.secondary.dark,
   },
   // Semantic colors
   semantic: {
-    success: '#22c55e',
+    success: 'colors.success.main',
     warning: designTokens.colors.warning.main,
     error: designTokens.colors.error.main,
-    info: '#0EA5E9',
+    info: 'colors.info.main',
   },
   // Gradient definitions
   gradients: {
-    blue: [designTokens.colors.primary.main, '#06B6D4'],
-    emerald: ['#22c55e', '#14B8A6'],
-    violet: [designTokens.colors.secondary.main, '#A855F7'],
+    blue: [designTokens.colors.primary.main, 'colors.cyan.500'],
+    emerald: ['colors.success.main', 'colors.teal.500'],
+    violet: [designTokens.colors.secondary.main, 'colors.purple.500'],
     rose: ['#F43F5E', '#FB7185'],
     amber: [designTokens.colors.warning.main, '#FBBF24'],
   },
@@ -106,7 +106,7 @@ export const getContrastingColor = (hexColor: string): string => {
   const g = parseInt(hexColor.slice(3, 5), 16);
   const b = parseInt(hexColor.slice(5, 7), 16);
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5 ? '#1E293B' : 'white';
+  return luminance > 0.5 ? 'colors.grey.800' : 'white';
 };
 
 /** Create gradient ID for SVG defs */
@@ -167,7 +167,7 @@ export const useChartTheme = (): ChartThemeColors => {
     gridColor: isDark ? BIChartColors.neutral.gridDark : BIChartColors.neutral.grid,
     textColor: isDark ? BIChartColors.neutral.textDark : BIChartColors.neutral.text,
     tooltipBg: isDark ? BIChartColors.neutral.backgroundDark : BIChartColors.neutral.background,
-    borderColor: isDark ? '#475569' : designTokens.colors.border.default,
+    borderColor: isDark ? 'colors.grey.600' : designTokens.colors.border.default,
     primary: theme.palette.primary.main,
     secondary: theme.palette.secondary.main,
     success: theme.palette.success.main,

@@ -211,7 +211,7 @@ export const V51Card: React.FC<V51CardProps> = ({
       <CardContent
         sx={{
           padding: 2.5,
-          '&:last-child': { paddingBottom: '20px' },
+          '&:last-child': { paddingBottom: 5 },
           ...contentSx,
         }}
       >
@@ -1343,9 +1343,9 @@ export const V51Badge: React.FC<V51BadgeProps> = ({
 }) => {
   const colors = variantColorMap[variant];
 
-  const sizeConfig: Record<V51BadgeSize, { px: string; fontSize: string; height: number }> = {
-    sm: { px: '6px', fontSize: v51DesignTokens.typography.fontSize['2xs'], height: 18 },
-    md: { px: '8px', fontSize: v51DesignTokens.typography.fontSize.xs, height: 22 },
+  const sizeConfig: Record<V51BadgeSize, { px: number | string; fontSize: string; height: number }> = {
+    sm: { px: 1.5, fontSize: v51DesignTokens.typography.fontSize['2xs'], height: 18 },
+    md: { px: 2, fontSize: v51DesignTokens.typography.fontSize.xs, height: 22 },
     lg: { px: '10px 12px', fontSize: v51DesignTokens.typography.fontSize.sm, height: 28 },
   };
 

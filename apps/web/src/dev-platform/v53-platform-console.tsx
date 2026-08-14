@@ -295,7 +295,7 @@ const V53ConsoleHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      bgcolor: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
+      bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark} 0%, ${designTokens.colors.secondary.main} 50%, ${designTokens.colors.pink['500']} 100%)`,
       color: 'common.white',
     }}
   >
@@ -377,7 +377,7 @@ const DashboardTab: React.FC<{
             title='插件总数'
             value={marketStats.totalPlugins}
             icon={<Blocks size={24} />}
-            color='#14b8a6'
+            color={`${designTokens.colors.teal['500']}`}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -385,7 +385,7 @@ const DashboardTab: React.FC<{
             title='健康项目'
             value={`${healthyProjects}/${platformStats.totalProjects || 0}`}
             icon={<Shield size={24} />}
-            color='#22c55e'
+            color={`${designTokens.colors.success.main}`}
           />
         </Grid>
 
@@ -516,7 +516,7 @@ const DashboardTab: React.FC<{
                   icon={
                     <Download
                       size={16}
-                      color='#14b8a6'
+                      color={`${designTokens.colors.teal['500']}`}
                     />
                   }
                   label='可更新插件'
@@ -536,7 +536,7 @@ const DashboardTab: React.FC<{
                   icon={
                     <Shield
                       size={16}
-                      color='#22c55e'
+                      color={`${designTokens.colors.success.main}`}
                     />
                   }
                   label='认证插件'
@@ -573,7 +573,7 @@ const DashboardTab: React.FC<{
                       {run.status === 'success' ? (
                         <CheckCircle2
                           size={18}
-                          color='#22c55e'
+                          color={`${designTokens.colors.success.main}`}
                         />
                       ) : run.status === 'failed' ? (
                         <XCircle
@@ -779,8 +779,8 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
           startIcon={<Plus size={18} />}
           onClick={() => setShowCreate(true)}
           sx={{
-            bgcolor: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+            bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main})`,
+            background: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main})`,
           }}
         >
           创建项目
@@ -1420,7 +1420,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
                     icon={
                       <GitBranch
                         size={16}
-                        color='#14b8a6'
+                        color={`${designTokens.colors.teal['500']}`}
                       />
                     }
                     label='版本'
@@ -1552,7 +1552,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
                           {installed && (
                             <CheckCircle2
                               size={18}
-                              color='#22c55e'
+                              color={`${designTokens.colors.success.main}`}
                             />
                           )}
                         </Box>
@@ -2098,7 +2098,7 @@ const StageTimeline: React.FC<{ stage: PipelineStage; index: number }> = ({ stag
         {stage.status === 'success' && (
           <CheckCircle2
             size={14}
-            color='#22c55e'
+            color={`${designTokens.colors.success.main}`}
           />
         )}
         {stage.status === 'failed' && (

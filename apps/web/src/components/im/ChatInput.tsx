@@ -196,7 +196,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             style={{
               width: 16,
               height: 16,
-              borderRadius: '9999px',
+              borderRadius: 'full',
               border: '2px solid grey.200',
               borderTopColor: theme.palette.primary.light,
               animation: 'spin 1s linear infinite',

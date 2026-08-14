@@ -438,7 +438,7 @@ export function getCostLevelColor(level: CostLevel): string {
   const colors: Record<CostLevel, string> = {
     low: designTokens.colors.success.dark,
     medium: designTokens.colors.warning.main,
-    high: '#f97316',
+    high: 'colors.orange.500',
     critical: designTokens.colors.error.main,
   };
   return colors[level];

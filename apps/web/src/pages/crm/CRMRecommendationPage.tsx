@@ -319,7 +319,7 @@ const CRMRecommendationPage: React.FC = () => {
       label: t('crm.recommendation.col_cross_sell') || '交叉销售',
       sublabel: t('crm.recommendation.col_cross_sell_sub') || '关联产品推荐',
       icon: <ShoppingCart size={20} color='white' />,
-      gradient: ['#2563eb', '#1d4ed8'],
+      gradient: ['colors.primary.dark', 'colors.primary.700'],
       data: mockRec.crossSell,
     },
     {
@@ -327,7 +327,7 @@ const CRMRecommendationPage: React.FC = () => {
       label: t('crm.recommendation.col_upsell') || '向上销售',
       sublabel: t('crm.recommendation.col_upsell_sub') || '升级方案机会',
       icon: <TrendingUp size={20} color='white' />,
-      gradient: ['#16a34a', '#15803d'],
+      gradient: ['colors.success.dark', '#15803d'],
       data: mockRec.upsell,
     },
     {

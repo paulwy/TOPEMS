@@ -350,7 +350,7 @@ export const DefaultBffErrorFallback: React.FC<BffErrorBoundaryFallbackProps> = 
           <Box
             sx={{
               fontSize: 22,
-              color: color === 'error' ? designTokens.colors.error.dark : color === 'warning' ? '#ed6c02' : '#0288d1',
+              color: color === 'error' ? designTokens.colors.error.dark : color === 'warning' ? 'colors.orange.700' : '#0288d1',
             }}
           >
             {React.createElement(Icon)}

@@ -62,15 +62,15 @@ export interface TagColor {
 
 export const PRESET_TAG_COLORS: TagColor[] = [
   { name: '红色', hex: designTokens.colors.error.main },
-  { name: '橙色', hex: '#F97316' },
+  { name: '橙色', hex: 'colors.orange.500' },
   { name: '黄色', hex: '#EAB308' },
-  { name: '绿色', hex: '#22C55E' },
-  { name: '青色', hex: '#06B6D4' },
+  { name: '绿色', hex: 'colors.success.main' },
+  { name: '青色', hex: 'colors.cyan.500' },
   { name: '蓝色', hex: designTokens.colors.primary.main },
   { name: '紫色', hex: designTokens.colors.secondary.main },
   { name: '粉色', hex: designTokens.colors.pink.main },
   { name: '灰色', hex: 'colors.grey.500' },
-  { name: '黑色', hex: '#1F2937' },
+  { name: '黑色', hex: 'colors.grey.800' },
 ];
 
 export const addressbookTagApi = {

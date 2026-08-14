@@ -100,7 +100,7 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
                 py: 0.5,
                 bgcolor: 'primary.light',
                 color: 'primary.dark',
-                borderRadius: '9999px',
+                borderRadius: 'full',
                 fontSize: '0.75rem',
                 fontWeight: 500,
               }}

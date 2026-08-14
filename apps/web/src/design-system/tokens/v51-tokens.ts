@@ -263,7 +263,7 @@ export const v51Typography = {
 
 export const v51Spacing = {
   none: 0,
-  px: '1px',
+  px: 0.25,
   xs: '4px',
   sm: '8px',
   md: '12px',

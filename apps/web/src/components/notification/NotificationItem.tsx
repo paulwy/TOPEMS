@@ -19,7 +19,7 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
           style={{
             width: 40,
             height: 40,
-            borderRadius: '9999px',
+            borderRadius: 'full',
             backgroundColor: 'primary.100',
             display: 'flex',
             alignItems: 'center',
@@ -57,7 +57,7 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
           style={{
             width: 40,
             height: 40,
-            borderRadius: '9999px',
+            borderRadius: 'full',
             backgroundColor: 'secondary.100',
             display: 'flex',
             alignItems: 'center',
@@ -85,7 +85,7 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
           style={{
             width: 40,
             height: 40,
-            borderRadius: '9999px',
+            borderRadius: 'full',
             backgroundColor: 'error.lighter',
             display: 'flex',
             alignItems: 'center',
@@ -117,7 +117,7 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
           style={{
             width: 40,
             height: 40,
-            borderRadius: '9999px',
+            borderRadius: 'full',
             backgroundColor: 'warning.100',
             display: 'flex',
             alignItems: 'center',
@@ -145,7 +145,7 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
           style={{
             width: 40,
             height: 40,
-            borderRadius: '9999px',
+            borderRadius: 'full',
             backgroundColor: 'success.lighter',
             display: 'flex',
             alignItems: 'center',
@@ -177,7 +177,7 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
           style={{
             width: 40,
             height: 40,
-            borderRadius: '9999px',
+            borderRadius: 'full',
             backgroundColor: 'surface.100',
             display: 'flex',
             alignItems: 'center',
@@ -332,7 +332,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
                   width: 8,
                   height: 8,
                   backgroundColor: theme.palette.primary.main,
-                  borderRadius: '9999px',
+                  borderRadius: 'full',
                   flexShrink: 0,
                   marginTop: 6,
                 }}

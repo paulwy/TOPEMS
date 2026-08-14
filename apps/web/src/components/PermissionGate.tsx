@@ -31,7 +31,7 @@ export const PermissionGate: React.FC<PermissionGateProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '8px',
+          padding: 2,
         }}
       >
         <Loader2
@@ -102,7 +102,7 @@ export const RoleGate: React.FC<RoleGateProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '8px',
+          padding: 2,
         }}
       >
         <Loader2
@@ -173,7 +173,7 @@ export const ModuleGate: React.FC<ModuleGateProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '8px',
+          padding: 2,
         }}
       >
         <Loader2
@@ -247,7 +247,7 @@ export const AdminGate: React.FC<AdminGateProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '8px',
+          padding: 2,
         }}
       >
         <Loader2
@@ -303,7 +303,7 @@ export const SuperuserGate: React.FC<SuperuserGateProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '8px',
+          padding: 2,
         }}
       >
         <Loader2
@@ -414,17 +414,17 @@ export const PermissionBadge: React.FC<PermissionBadgeProps> = ({ permission, si
   const sizeStyles = {
     sm: {
       fontSize: '12px',
-      paddingLeft: '6px',
-      paddingRight: '6px',
-      paddingTop: '2px',
-      paddingBottom: '2px',
+      paddingLeft: 1.5,
+      paddingRight: 1.5,
+      paddingTop: 0.5,
+      paddingBottom: 0.5,
     },
     md: {
       fontSize: '14px',
-      paddingLeft: '8px',
-      paddingRight: '8px',
-      paddingTop: '4px',
-      paddingBottom: '4px',
+      paddingLeft: 2,
+      paddingRight: 2,
+      paddingTop: 1,
+      paddingBottom: 1,
     },
   };
 
@@ -433,7 +433,7 @@ export const PermissionBadge: React.FC<PermissionBadgeProps> = ({ permission, si
       style={{
         backgroundColor: colorStyle.bg,
         color: colorStyle.text,
-        borderRadius: '4px',
+        borderRadius: 'xs',
         fontWeight: 500,
         ...sizeStyles[size],
       }}

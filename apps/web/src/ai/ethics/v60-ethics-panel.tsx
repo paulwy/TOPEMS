@@ -66,9 +66,9 @@ const SAMPLE_MODEL_ID = 'v60-ethics-demo-model';
 
 const SEVERITY_COLORS: Record<BiasSeverity, string> = {
   critical: designTokens.colors.error.dark,
-  high: '#ea580c',
+  high: `${designTokens.colors.orange['600']}`,
   medium: designTokens.colors.warning.dark,
-  low: '#2563eb',
+  low: `${designTokens.colors.primary.dark}`,
   info: 'colors.grey.500',
 };
 
@@ -237,8 +237,8 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'linear-gradient(135deg, #059669, #0d9488, #0891b2)',
-            bgcolor: 'linear-gradient(135deg, #059669, #0d9488, #0891b2)',
+            background: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']}, #0891b2)`,
+            bgcolor: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']}, #0891b2)`,
             color: 'common.white',
           }}
         >
@@ -1337,7 +1337,7 @@ const ExplainabilityTab: React.FC<{
               >
                 <Target
                   size={18}
-                  color='#f97316'
+                  color={`${designTokens.colors.orange['500']}`}
                 />
                 <Typography
                   variant='subtitle2'

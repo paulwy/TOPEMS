@@ -112,7 +112,7 @@ export const AreaChart: React.FC<AreaChartProps> = ({
           />
           {showLegend && (
             <Legend
-              wrapperStyle={{ paddingTop: '20px' }}
+              wrapperStyle={{ paddingTop: 5 }}
               iconType='circle'
               iconSize={8}
               formatter={(value: string) => (

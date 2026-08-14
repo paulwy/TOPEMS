@@ -29,7 +29,7 @@ export interface StatsChartBarProps {
 const defaultColors = [
   'primary.light',
   'secondary.main',
-  '#a855f7',
+  'colors.purple.500',
   '#d946ef',
   designTokens.colors.pink.main,
   '#f43f5e',
@@ -48,8 +48,8 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
       <div
         style={{
           backgroundColor: 'common.white',
-          padding: '12px',
-          borderRadius: '8px',
+          padding: 3,
+          borderRadius: 'md',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
           border: '1px solid border.default',
         }}
@@ -81,9 +81,9 @@ export const StatsChartBarImpl: React.FC<StatsChartBarProps> = ({
     <div
       style={{
         backgroundColor: 'common.white',
-        borderRadius: '12px',
+        borderRadius: 'lg',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-        padding: '24px',
+        padding: 6,
       }}
     >
       <h3
@@ -91,7 +91,7 @@ export const StatsChartBarImpl: React.FC<StatsChartBarProps> = ({
           fontSize: '18px',
           fontWeight: 600,
           color: 'grey.900',
-          marginBottom: '16px',
+          marginBottom: 4,
         }}
       >
         {title}

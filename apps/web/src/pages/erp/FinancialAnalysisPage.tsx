@@ -369,7 +369,7 @@ const FinancialAnalysisPage: React.FC = () => {
               <th
                 style={{
                   borderBottom: `2px solid ${ct.grey[200]}`,
-                  padding: '8px',
+                  padding: 2,
                   textAlign: 'left',
                   fontWeight: 600,
                 }}
@@ -379,7 +379,7 @@ const FinancialAnalysisPage: React.FC = () => {
               <th
                 style={{
                   borderBottom: `2px solid ${ct.grey[200]}`,
-                  padding: '8px',
+                  padding: 2,
                   textAlign: 'right',
                   fontWeight: 600,
                 }}
@@ -394,13 +394,13 @@ const FinancialAnalysisPage: React.FC = () => {
                 key={key}
                 style={{ backgroundColor: index % 2 === 0 ? designTokens.colors.background.paper : ct.grey[50] }}
               >
-                <td style={{ borderBottom: `1px solid ${ct.grey[100]}`, padding: '8px' }}>
+                <td style={{ borderBottom: `1px solid ${ct.grey[100]}`, padding: 2 }}>
                   {key.replace(/_/g, ' ')}
                 </td>
                 <td
                   style={{
                     borderBottom: `1px solid ${ct.grey[100]}`,
-                    padding: '8px',
+                    padding: 2,
                     textAlign: 'right',
                   }}
                 >

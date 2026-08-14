@@ -204,7 +204,7 @@ const V53PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      bgcolor: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #3b82f6 100%)',
+      bgcolor: `linear-gradient(135deg, ${designTokens.colors.secondary.main} 0%, ${designTokens.colors.primary.dark} 50%, ${designTokens.colors.primary.main} 100%)`,
       color: 'common.white',
     }}
   >
@@ -574,15 +574,15 @@ const CodeCompletionTab: React.FC = () => {
 const getKindColor = (kind: CompletionKind): string => {
   const colors: Record<CompletionKind, string> = {
     snippet: designTokens.colors.secondary.main,
-    property: '#06b6d4',
+    property: `${designTokens.colors.cyan['500']}`,
     function: designTokens.colors.success.dark,
     import: designTokens.colors.warning.main,
     keyword: designTokens.colors.error.main,
     variable: designTokens.colors.secondary.dark,
     type: designTokens.colors.primary.main,
-    'snippet-placeholder': '#a855f7',
+    'snippet-placeholder': `${designTokens.colors.purple['500']}`,
   };
-  return colors[kind] ?? '#64748b';
+  return colors[kind] ?? `${designTokens.colors.grey['500']}`;
 };
 
 const TestGeneratorTab: React.FC = () => {
@@ -1309,7 +1309,7 @@ const AIChatTab: React.FC = () => {
                 borderRadius: 2,
                 bgcolor: msg.role === 'user' ? designTokens.colors.secondary.dark : designTokens.colors.background.paper,
                 color: msg.role === 'user' ? 'white' : 'inherit',
-                border: msg.role === 'assistant' ? '1px solid #e2e8f0' : 'none',
+                border: msg.role === 'assistant' ? `1px solid ${designTokens.colors.grey['200']}` : 'none',
               }}
             >
               <Typography
@@ -1329,7 +1329,7 @@ const AIChatTab: React.FC = () => {
           <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
             <Paper
               elevation={1}
-              sx={{ p: 2, borderRadius: 2, bgcolor: 'common.white', border: '1px solid #e2e8f0' }}
+              sx={{ p: 2, borderRadius: 2, bgcolor: 'common.white', border: `1px solid ${designTokens.colors.grey['200']}` }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Loader2

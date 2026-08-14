@@ -90,7 +90,7 @@ export default function WmsOrderFulfillmentPage() {
                 dataKey='onTimeRate'
                 name='准时履约率 %'
                 cornerRadius={8}
-                background={{ fill: '#f3f4f6' }}
+                background={{ fill: 'colors.grey.100' }}
               />
               <Legend
                 iconSize={10}

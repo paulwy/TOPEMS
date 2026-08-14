@@ -40,7 +40,7 @@ import { BIChartColors } from '@/components/charts/chartTheme';
 import MetricCard from './AiAssistantMetricCard';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
-const DEFAULT_PIE_COLORS = [...BIChartColors.series, '#06B6D4', designTokens.colors.pink.main];
+const DEFAULT_PIE_COLORS = [...BIChartColors.series, 'colors.cyan.500', designTokens.colors.pink.main];
 
 export interface AiAssistantReportTabProps {
   reportQuery: string;

@@ -181,7 +181,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
             zIndex: 50,
             width: '384px',
             backgroundColor: 'common.white',
-            borderRadius: '12px',
+            borderRadius: 'lg',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
             border: '1px solid grey.200',
             overflow: 'hidden',
@@ -193,7 +193,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '16px',
+              padding: 4,
               borderBottom: '1px solid grey.100',
             }}
           >
@@ -211,8 +211,8 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                padding: '4px',
-                borderRadius: '4px',
+                padding: 1,
+                borderRadius: 'xs',
               }}
             >
               <X className='w-5 h-5 text-gray-400' />
@@ -221,7 +221,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
 
           <div
             className='p-4'
-            style={{ padding: '16px' }}
+            style={{ padding: 4 }}
           >
             <div
               className='flex items-center justify-center mb-4 p-4 rounded-xl'
@@ -229,10 +229,10 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginBottom: '16px',
-                padding: '16px',
+                marginBottom: 4,
+                padding: 4,
                 background: 'linear-gradient(to bottom right, #e0e7ff, #f0fdf4)',
-                borderRadius: '12px',
+                borderRadius: 'lg',
               }}
             >
               <div className='text-center'>
@@ -243,7 +243,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                     fontWeight: 700,
                     color:
                       getScoreColor() === 'text-green-500'
-                        ? '#16a34a'
+                        ? 'colors.success.dark'
                         : getScoreColor() === 'text-yellow-500'
                           ? '#ca8a04'
                           : 'error.700',
@@ -259,10 +259,10 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
               <div
                 className='mb-4 p-3 rounded-lg'
                 style={{
-                  marginBottom: '16px',
-                  padding: '12px',
+                  marginBottom: 4,
+                  padding: 3,
                   backgroundColor: 'warning.100',
-                  borderRadius: '8px',
+                  borderRadius: 'md',
                 }}
               >
                 <div className='flex items-center gap-2 text-amber-800 text-sm'>
@@ -277,8 +277,8 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: '12px',
-                marginBottom: '16px',
+                gap: 3,
+                marginBottom: 4,
               }}
             >
               <div className='p-3 bg-gray-50 rounded-lg'>
@@ -321,10 +321,10 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '8px',
+                  gap: 2,
                   maxHeight: '256px',
                   overflowY: 'auto',
-                  marginBottom: '16px',
+                  marginBottom: 4,
                 }}
               >
                 {stats.entries.map((entry, index) => (
@@ -335,9 +335,9 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '8px',
+                      padding: 2,
                       backgroundColor: 'grey.50',
-                      borderRadius: '8px',
+                      borderRadius: 'md',
                     }}
                   >
                     <div className='flex items-center gap-2 flex-1 min-w-0'>
@@ -363,7 +363,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
             <div
               className='pt-3 border-t border-gray-100'
               style={{
-                paddingTop: '12px',
+                paddingTop: 3,
                 borderTop: '1px solid grey.100',
               }}
             >
@@ -374,7 +374,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                     className='flex-1 bg-blue-500 rounded-full'
                     style={{
                       height: '8px',
-                      borderRadius: '9999px',
+                      borderRadius: 'full',
                       width: `${(stats.jsSize / stats.totalSize) * 100}%`,
                     }}
                     title={`JS: ${formatSize(stats.jsSize)}`}
@@ -385,7 +385,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                     className='flex-1 bg-purple-500 rounded-full'
                     style={{
                       height: '8px',
-                      borderRadius: '9999px',
+                      borderRadius: 'full',
                       width: `${(stats.cssSize / stats.totalSize) * 100}%`,
                     }}
                     title={`CSS: ${formatSize(stats.cssSize)}`}
@@ -396,7 +396,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                     className='flex-1 bg-green-500 rounded-full'
                     style={{
                       height: '8px',
-                      borderRadius: '9999px',
+                      borderRadius: 'full',
                       width: `${(stats.imgSize / stats.totalSize) * 100}%`,
                     }}
                     title={`Images: ${formatSize(stats.imgSize)}`}
@@ -407,7 +407,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                     className='flex-1 bg-orange-500 rounded-full'
                     style={{
                       height: '8px',
-                      borderRadius: '9999px',
+                      borderRadius: 'full',
                       width: `${(stats.fontSize / stats.totalSize) * 100}%`,
                     }}
                     title={`Fonts: ${formatSize(stats.fontSize)}`}
@@ -454,7 +454,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
           zIndex: 40,
           width: '56px',
           height: '56px',
-          borderRadius: '9999px',
+          borderRadius: 'full',
           boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
           display: 'flex',
           alignItems: 'center',

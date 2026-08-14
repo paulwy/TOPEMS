@@ -245,8 +245,8 @@ export const V58UXPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'linear-gradient(135deg, #06b6d4, #0891b2, #0e7490)',
-            bgcolor: 'linear-gradient(135deg, #06b6d4, #0891b2, #0e7490)',
+            background: `linear-gradient(135deg, ${designTokens.colors.cyan['500']}, #0891b2, #0e7490)`,
+            bgcolor: `linear-gradient(135deg, ${designTokens.colors.cyan['500']}, #0891b2, #0e7490)`,
             color: 'common.white',
           }}
         >
@@ -513,7 +513,7 @@ const RecommendationsTab: React.FC<{
             >
               <Flame
                 size={18}
-                color='#f97316'
+                color={`${designTokens.colors.orange['500']}`}
               />
               <Typography
                 variant='subtitle2'

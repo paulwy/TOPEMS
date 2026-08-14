@@ -104,7 +104,7 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
       );
     }
 
-    const chartColors = [designTokens.colors.secondary.dark, '#f97316', designTokens.colors.success.dark, designTokens.colors.error.main, designTokens.colors.secondary.main];
+    const chartColors = [designTokens.colors.secondary.dark, 'colors.orange.500', designTokens.colors.success.dark, designTokens.colors.error.main, designTokens.colors.secondary.main];
 
     return (
       <Paper sx={{ p: 3, borderRadius: 1 }}>

@@ -905,7 +905,7 @@ const LintTab: React.FC<{ onRunLint: () => void; lintResult: string }> = ({
               {check.pass ? (
                 <CheckCircle
                   size={16}
-                  color='#16a34a'
+                  color='colors.success.dark'
                 />
               ) : (
                 <Eye

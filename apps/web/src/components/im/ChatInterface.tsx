@@ -474,7 +474,7 @@ export const ChatInterface: React.FC = () => {
                 style={{
                   width: 8,
                   height: 8,
-                  borderRadius: '9999px',
+                  borderRadius: 'full',
                   backgroundColor: isConnected
                     ? theme.palette.success.dark
                     : theme.palette.error.main,
@@ -568,7 +568,7 @@ export const ChatInterface: React.FC = () => {
                   style={{
                     width: 32,
                     height: 32,
-                    borderRadius: '9999px',
+                    borderRadius: 'full',
                     border: '4px solid primary.main',
                     borderTopColor: 'transparent',
                     animation: 'spin 1s linear infinite',

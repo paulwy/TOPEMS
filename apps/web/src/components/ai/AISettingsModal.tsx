@@ -136,7 +136,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
       <div
         style={{
           backgroundColor: 'common.white',
-          borderRadius: '12px',
+          borderRadius: 'lg',
           width: '100%',
           maxWidth: '1024px',
           maxHeight: '90vh',
@@ -150,7 +150,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
           style={{
             background: 'linear-gradient(to right, secondary.dark, primary.dark)',
             color: 'common.white',
-            padding: '24px',
+            padding: 6,
           }}
         >
           <div
@@ -160,15 +160,15 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
               justifyContent: 'space-between',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
               <Settings sx={{ width: 24, height: 24 }} />
               <h2 style={{ fontSize: '24px', fontWeight: 700 }}>AI 设置</h2>
             </div>
             <button
               onClick={onClose}
               style={{
-                padding: '8px',
-                borderRadius: '8px',
+                padding: 2,
+                borderRadius: 'md',
                 border: 'none',
                 background: 'action.disabledBackground',
                 cursor: 'pointer',
@@ -178,7 +178,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
               <X sx={{ width: 24, height: 24 }} />
             </button>
           </div>
-          <p style={{ color: 'secondary.200', fontSize: '14px', marginTop: '8px' }}>
+          <p style={{ color: 'secondary.200', fontSize: '14px', marginTop: 2 }}>
             配置 AI 助手的行为和参数
           </p>
         </div>
@@ -188,14 +188,14 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: '24px',
+            padding: 6,
             display: 'flex',
             flexDirection: 'column',
-            gap: '24px',
+            gap: 6,
           }}
         >
           {/* Model Settings */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <h3
               style={{
                 fontSize: '18px',
@@ -220,7 +220,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: '16px',
+                gap: 4,
               }}
             >
               <div>
@@ -231,7 +231,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                     fontSize: '14px',
                     fontWeight: 500,
                     color: theme.palette.grey[700],
-                    marginBottom: '8px',
+                    marginBottom: 2,
                   }}
                 >
                   AI 模型
@@ -244,7 +244,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                     width: '100%',
                     padding: '8px 16px',
                     border: '1px solid grey.200',
-                    borderRadius: '8px',
+                    borderRadius: 'md',
                     fontSize: '14px',
                     outline: 'none',
                   }}
@@ -259,7 +259,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   style={{
                     fontSize: '12px',
                     color: theme.palette.text.secondary,
-                    marginTop: '4px',
+                    marginTop: 1,
                   }}
                 >
                   选择用于生成回答的AI模型
@@ -274,7 +274,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                     fontSize: '14px',
                     fontWeight: 500,
                     color: theme.palette.grey[700],
-                    marginBottom: '8px',
+                    marginBottom: 2,
                   }}
                 >
                   响应长度
@@ -292,7 +292,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                     width: '100%',
                     padding: '8px 16px',
                     border: '1px solid grey.200',
-                    borderRadius: '8px',
+                    borderRadius: 'md',
                     fontSize: '14px',
                     outline: 'none',
                   }}
@@ -305,7 +305,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   style={{
                     fontSize: '12px',
                     color: theme.palette.text.secondary,
-                    marginTop: '4px',
+                    marginTop: 1,
                   }}
                 >
                   控制回答的详细程度
@@ -315,7 +315,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
           </div>
 
           {/* Generation Parameters */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <h3
               style={{
                 fontSize: '18px',
@@ -340,7 +340,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: '16px',
+                gap: 4,
               }}
             >
               <div>
@@ -351,7 +351,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                     fontSize: '14px',
                     fontWeight: 500,
                     color: theme.palette.grey[700],
-                    marginBottom: '8px',
+                    marginBottom: 2,
                   }}
                 >
                   Temperature (创造性) <span style={{ color: theme.palette.error.dark }}>*</span>
@@ -360,7 +360,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '8px',
+                    gap: 2,
                   }}
                 >
                   <input
@@ -398,7 +398,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                     style={{
                       color: theme.palette.error.dark,
                       fontSize: '12px',
-                      marginTop: '4px',
+                      marginTop: 1,
                       display: 'flex',
                       alignItems: 'center',
                     }}
@@ -417,7 +417,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                     fontSize: '14px',
                     fontWeight: 500,
                     color: theme.palette.grey[700],
-                    marginBottom: '8px',
+                    marginBottom: 2,
                   }}
                 >
                   Max Tokens (最大令牌数) <span style={{ color: theme.palette.error.dark }}>*</span>
@@ -439,7 +439,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                     width: '100%',
                     padding: '8px 16px',
                     border: errors.maxTokens ? '1px solid error.dark' : '1px solid grey.200',
-                    borderRadius: '8px',
+                    borderRadius: 'md',
                     fontSize: '14px',
                     outline: 'none',
                   }}
@@ -449,7 +449,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                     style={{
                       color: theme.palette.error.dark,
                       fontSize: '12px',
-                      marginTop: '4px',
+                      marginTop: 1,
                       display: 'flex',
                       alignItems: 'center',
                     }}
@@ -462,7 +462,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   style={{
                     fontSize: '12px',
                     color: theme.palette.text.secondary,
-                    marginTop: '4px',
+                    marginTop: 1,
                   }}
                 >
                   控制单次回答的最大长度
@@ -472,7 +472,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
           </div>
 
           {/* System Prompt */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <h3
               style={{
                 fontSize: '18px',
@@ -508,7 +508,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   width: '100%',
                   padding: '8px 16px',
                   border: errors.systemPrompt ? '1px solid error.dark' : '1px solid grey.200',
-                  borderRadius: '8px',
+                  borderRadius: 'md',
                   fontSize: '14px',
                   outline: 'none',
                   resize: 'vertical',
@@ -520,7 +520,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   style={{
                     color: theme.palette.error.dark,
                     fontSize: '12px',
-                    marginTop: '4px',
+                    marginTop: 1,
                     display: 'flex',
                     alignItems: 'center',
                   }}
@@ -530,7 +530,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 </p>
               )}
               <p
-                style={{ fontSize: '12px', color: theme.palette.text.secondary, marginTop: '4px' }}
+                style={{ fontSize: '12px', color: theme.palette.text.secondary, marginTop: 1 }}
               >
                 定义AI助手的基本角色、知识范围和回答风格
               </p>
@@ -538,7 +538,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
           </div>
 
           {/* Knowledge Base Settings */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <h3
               style={{
                 fontSize: '18px',
@@ -559,15 +559,15 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
               知识库配置
             </h3>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '16px',
+                  padding: 4,
                   backgroundColor: theme.palette.grey[50],
-                  borderRadius: '8px',
+                  borderRadius: 'md',
                 }}
               >
                 <div style={{ flex: 1 }}>
@@ -603,7 +603,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                       width: '44px',
                       height: '24px',
                       backgroundColor: theme.palette.grey[200],
-                      borderRadius: '9999px',
+                      borderRadius: 'full',
                       position: 'relative',
                       transition: 'background-color 0.2s',
                     }}
@@ -617,7 +617,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                         width: '20px',
                         height: '20px',
                         backgroundColor: 'common.white',
-                        borderRadius: '9999px',
+                        borderRadius: 'full',
                         transition: 'left 0.2s',
                         boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
                       }}
@@ -631,7 +631,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: '16px',
+                    gap: 4,
                   }}
                 >
                   <div>
@@ -642,7 +642,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                         fontSize: '14px',
                         fontWeight: 500,
                         color: theme.palette.grey[700],
-                        marginBottom: '8px',
+                        marginBottom: 2,
                       }}
                     >
                       相似度阈值 <span style={{ color: theme.palette.error.dark }}>*</span>
@@ -651,7 +651,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                       style={{
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '8px',
+                        gap: 2,
                       }}
                     >
                       <input
@@ -689,7 +689,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                         style={{
                           color: theme.palette.error.dark,
                           fontSize: '12px',
-                          marginTop: '4px',
+                          marginTop: 1,
                           display: 'flex',
                           alignItems: 'center',
                         }}
@@ -702,7 +702,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                       style={{
                         fontSize: '12px',
                         color: theme.palette.text.secondary,
-                        marginTop: '4px',
+                        marginTop: 1,
                       }}
                     >
                       控制知识匹配的严格程度
@@ -717,7 +717,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                         fontSize: '14px',
                         fontWeight: 500,
                         color: theme.palette.grey[700],
-                        marginBottom: '8px',
+                        marginBottom: 2,
                       }}
                     >
                       最大上下文消息数
@@ -738,7 +738,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                         width: '100%',
                         padding: '8px 16px',
                         border: '1px solid grey.200',
-                        borderRadius: '8px',
+                        borderRadius: 'md',
                         fontSize: '14px',
                         outline: 'none',
                       }}
@@ -747,7 +747,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                       style={{
                         fontSize: '12px',
                         color: theme.palette.text.secondary,
-                        marginTop: '4px',
+                        marginTop: 1,
                       }}
                     >
                       用于理解对话历史的最多消息数
@@ -770,11 +770,11 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
           {saved && (
             <div
               style={{
-                marginBottom: '12px',
-                padding: '12px',
+                marginBottom: 3,
+                padding: 3,
                 backgroundColor: theme.palette.success.light,
                 border: '1px solid #bbf7d0',
-                borderRadius: '8px',
+                borderRadius: 'md',
                 display: 'flex',
                 alignItems: 'center',
                 color: 'success.700',
@@ -788,11 +788,11 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
           {errors.save && (
             <div
               style={{
-                marginBottom: '12px',
-                padding: '12px',
+                marginBottom: 3,
+                padding: 3,
                 backgroundColor: theme.palette.error.light,
                 border: '1px solid #fecaca',
-                borderRadius: '8px',
+                borderRadius: 'md',
                 display: 'flex',
                 alignItems: 'center',
                 color: 'error.darker',
@@ -826,14 +826,14 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
               <RotateCcw sx={{ width: 16, height: 16, marginRight: 1 }} />
               恢复默认
             </button>
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: 3 }}>
               <button
                 onClick={onClose}
                 style={{
                   padding: '8px 24px',
                   border: '1px solid grey.300',
                   color: theme.palette.grey[700],
-                  borderRadius: '8px',
+                  borderRadius: 'md',
                   cursor: 'pointer',
                   background: 'common.white',
                   transition: 'background-color 0.2s',
@@ -849,7 +849,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   padding: '8px 24px',
                   backgroundColor: theme.palette.secondary.dark,
                   color: 'common.white',
-                  borderRadius: '8px',
+                  borderRadius: 'md',
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'background-color 0.2s',

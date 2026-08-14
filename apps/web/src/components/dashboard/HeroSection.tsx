@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { Sparkles, ChevronRight, Activity } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { designTokens } from '@topems/tokens';
 
 export const HeroSection: React.FC = () => {
   const { user } = useAuth();
@@ -17,7 +18,7 @@ export const HeroSection: React.FC = () => {
     <Box sx={{ mb: 8 }}>
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+          background: `linear-gradient(135deg, ${designTokens.colors.grey['800']} 0%, #0f172a 100%)`,
           borderRadius: 3,
           p: { xs: 4, md: 8 },
           position: 'relative',
@@ -51,7 +52,7 @@ export const HeroSection: React.FC = () => {
                 width: 10,
                 height: 10,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #60a5fa, secondary.light)',
+                background: `linear-gradient(135deg, ${designTokens.colors.primary['400']}, secondary.light)`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

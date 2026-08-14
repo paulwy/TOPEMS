@@ -834,7 +834,7 @@ export const createCustomTheme = (): Theme => {
           root: {
             padding: '16px 20px',
             '&:last-child': {
-              paddingBottom: '16px',
+              paddingBottom: 4,
             },
           },
         },

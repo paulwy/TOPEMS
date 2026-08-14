@@ -411,7 +411,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               fullWidth
               onClick={() => setHeatmapMode('density')}
               sx={{
-                padding: '6px',
+                padding: 1.5,
                 borderRadius: 1,
                 textAlign: 'left',
                 backgroundColor: heatmapMode === 'density' ? 'error.lighter' : 'transparent',
@@ -428,7 +428,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               fullWidth
               onClick={() => setHeatmapMode('status')}
               sx={{
-                padding: '6px',
+                padding: 1.5,
                 borderRadius: 1,
                 textAlign: 'left',
                 backgroundColor: heatmapMode === 'status' ? 'error.lighter' : 'transparent',

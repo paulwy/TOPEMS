@@ -87,7 +87,7 @@ const EXPERIMENT_STATUS_COLORS: Record<string, string> = {
 
 const SEVERITY_COLORS: Record<SecuritySeverity, string> = {
   Critical: designTokens.colors.error.main,
-  High: '#f97316',
+  High: 'colors.orange.500',
   Medium: designTokens.colors.warning.main,
   Low: designTokens.colors.primary.main,
   Info: 'colors.grey.500',
@@ -398,7 +398,7 @@ const V58PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #3b82f6 100%)',
+      background: `linear-gradient(135deg, ${designTokens.colors.secondary.main} 0%, ${designTokens.colors.primary.dark} 50%, ${designTokens.colors.primary.main} 100%)`,
       color: 'common.white',
     }}
   >
@@ -568,7 +568,7 @@ const ModelsTab: React.FC<{
                       border: '1px solid',
                       borderColor: selectedModelId === model.id ? designTokens.colors.secondary.main : 'divider',
                       borderRadius: 1,
-                      bgcolor: selectedModelId === model.id ? '#f5f3ff' : 'white',
+                      bgcolor: selectedModelId === model.id ? 'colors.secondary.50' : 'white',
                       cursor: 'pointer',
                     }}
                     onClick={() => onSelect(model.id)}
@@ -695,7 +695,7 @@ const ModelsTab: React.FC<{
                                   height: 24,
                                   cursor: 'pointer',
                                   bgcolor: compareIds.includes(v.id) ? designTokens.colors.secondary.main : 'transparent',
-                                  border: '1px solid #8b5cf6',
+                                  border: `1px solid ${designTokens.colors.secondary.main}`,
                                 }}
                               />
                             </TableCell>
@@ -853,8 +853,8 @@ const ModelsTab: React.FC<{
                                     label={`${k}: ${result.metricDeltas[k] > 0 ? '+' : ''}${result.metricDeltas[k].toFixed(3)}`}
                                     size='small'
                                     sx={{
-                                      bgcolor: result.metricDeltas[k] > 0 ? '#d1fae5' : '#fef2f2',
-                                      color: result.metricDeltas[k] > 0 ? '#065f46' : '#991b1b',
+                                      bgcolor: result.metricDeltas[k] > 0 ? 'colors.success.100' : 'colors.error.50',
+                                      color: result.metricDeltas[k] > 0 ? '#065f46' : 'colors.error.800',
                                       fontSize: 10,
                                     }}
                                   />
@@ -1035,7 +1035,7 @@ const ExperimentsTab: React.FC<{
                     border: '1px solid',
                     borderColor: selectedExpId === exp.id ? designTokens.colors.success.dark : 'divider',
                     borderRadius: 1,
-                    bgcolor: selectedExpId === exp.id ? '#f0fdf4' : 'white',
+                    bgcolor: selectedExpId === exp.id ? 'colors.success.50' : 'white',
                     cursor: 'pointer',
                   }}
                   onClick={() => onSelect(exp.id)}
@@ -1551,7 +1551,7 @@ const ThreatsTab: React.FC<{
   const getSeverityIcon = (severity: string) => {
     const colors: Record<string, string> = {
       Critical: designTokens.colors.error.main,
-      High: '#f97316',
+      High: 'colors.orange.500',
       Medium: designTokens.colors.warning.main,
       Low: designTokens.colors.primary.main,
     };
@@ -1725,7 +1725,7 @@ const ThreatsTab: React.FC<{
                   border: '1px solid',
                   borderColor: expandedThreat === threat.id ? designTokens.colors.secondary.main : 'divider',
                   borderRadius: 1,
-                  bgcolor: expandedThreat === threat.id ? '#f5f3ff' : 'white',
+                  bgcolor: expandedThreat === threat.id ? 'colors.secondary.50' : 'white',
                 }}
               >
                 <ListItem

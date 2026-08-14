@@ -33,6 +33,7 @@ import type { DevicePoint, DeviceLocationRecord, TrackQueryParams } from '../../
 import { gisApi } from '../../api/gis';
 import { logger } from '@/utils/logger';
 import L from 'leaflet';
+import { designTokens } from '@topems/tokens';
 import 'leaflet/dist/leaflet.css';
 
 interface DeviceTrackPanelProps {
@@ -176,7 +177,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
             justifyContent: 'space-between',
             px: 4,
             py: 3,
-            background: 'linear-gradient(to right, #9333ea, primary.dark)',
+            background: `linear-gradient(to right, ${designTokens.colors.purple['600']}, primary.dark)`,
             color: 'common.white',
           }}
         >
@@ -711,7 +712,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
           justifyContent: 'space-between',
           px: 4,
           py: 3,
-          background: 'linear-gradient(to right, #9333ea, primary.dark)',
+          background: `linear-gradient(to right, ${designTokens.colors.purple['600']}, primary.dark)`,
           color: 'common.white',
         }}
       >

@@ -55,14 +55,14 @@ export interface ChartConfig {
 const defaultColors = [
   'primary.light',
   'secondary.main',
-  '#a855f7',
+  'colors.purple.500',
   '#d946ef',
   designTokens.colors.pink.main,
   '#f43f5e',
-  '#f97316',
+  'colors.orange.500',
   'warning.main',
   'success.dark',
-  '#14b8a6',
+  'colors.teal.500',
 ];
 
 const CHART_WIDTH = 400;
@@ -82,14 +82,14 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
         style={{
           backgroundColor: 'common.white',
           padding: '12px 16px',
-          borderRadius: '8px',
+          borderRadius: 'md',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
           border: '1px solid border.default',
           minWidth: '120px',
         }}
       >
         <p
-          style={{ fontWeight: 600, color: 'var(--mui-palette-text-primary)', marginBottom: '8px' }}
+          style={{ fontWeight: 600, color: 'var(--mui-palette-text-primary)', marginBottom: 2 }}
         >
           {payload[0].name}
         </p>
@@ -275,9 +275,9 @@ export const ChartComponent: React.FC<ChartConfig> = ({
       <div
         style={{
           backgroundColor: 'common.white',
-          borderRadius: '12px',
+          borderRadius: 'lg',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-          padding: '24px',
+          padding: 6,
           minHeight: '200px',
           display: 'flex',
           flexDirection: 'column',
@@ -291,7 +291,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
               fontSize: '18px',
               fontWeight: 600,
               color: 'grey.900',
-              marginBottom: '16px',
+              marginBottom: 4,
             }}
           >
             {title}
@@ -326,7 +326,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
               y2='16'
             />
           </svg>
-          <p style={{ marginTop: '8px' }}>暂无数据</p>
+          <p style={{ marginTop: 2 }}>暂无数据</p>
         </div>
       </div>
     );
@@ -666,9 +666,9 @@ export const ChartComponent: React.FC<ChartConfig> = ({
     <div
       style={{
         backgroundColor: 'common.white',
-        borderRadius: '12px',
+        borderRadius: 'lg',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-        padding: '24px',
+        padding: 6,
       }}
     >
       {title && (
@@ -677,7 +677,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
             fontSize: '18px',
             fontWeight: 600,
             color: 'grey.900',
-            marginBottom: '16px',
+            marginBottom: 4,
           }}
         >
           {title}

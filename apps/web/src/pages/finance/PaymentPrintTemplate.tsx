@@ -204,7 +204,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
         </Box>
 
         {payment.bankName && payment.bankAccountNo && (
-          <Box sx={{ border: '1px solid #e0e0e0', borderRadius: '8px', padding: 2, mb: 4 }}>
+          <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 'md', padding: 2, mb: 4 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
@@ -235,7 +235,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
         )}
 
         {(payment.actualPaymentDate || payment.bankTransactionNo || payment.executedBy) && (
-          <Box sx={{ border: '1px solid #e0e0e0', borderRadius: '8px', padding: 2, mb: 4 }}>
+          <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 'md', padding: 2, mb: 4 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
@@ -372,7 +372,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
         </Box>
 
         {payment.remark && (
-          <Box sx={{ mt: 4, p: 2, bgcolor: 'surface.50', borderRadius: '4px' }}>
+          <Box sx={{ mt: 4, p: 2, bgcolor: 'surface.50', borderRadius: 'xs' }}>
             <Typography
               variant='body2'
               color='text.secondary'

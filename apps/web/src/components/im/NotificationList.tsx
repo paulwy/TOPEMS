@@ -163,7 +163,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: '9999px',
+                borderRadius: 'full',
                 border: '4px solid primary.light',
                 borderTopColor: 'transparent',
                 animation: 'spin 1s linear infinite',

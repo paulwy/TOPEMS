@@ -314,11 +314,11 @@ export const DynamicRouter: React.FC = () => {
 
   if (Object.keys(errors).length > 0) {
     return (
-      <div style={{ padding: '20px' }}>
+      <div style={{ padding: 5 }}>
         {Object.entries(errors).map(([path, message]) => (
           <div
             key={path}
-            style={{ color: 'error.main', marginBottom: '10px' }}
+            style={{ color: 'error.main', marginBottom: 2.5 }}
           >
             {path}: {message}
           </div>

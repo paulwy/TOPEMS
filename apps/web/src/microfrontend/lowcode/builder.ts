@@ -49,7 +49,7 @@ export interface ComponentNode {
   name?: string;
   props: Record<string, unknown>;
   children: ComponentNode[];
-  style: Record<string, string>;
+  style: Record<string, string | number>;
   events: EventBinding[];
   data_binding?: DataSourceBinding;
   responsive?: ResponsiveStyle;
@@ -134,7 +134,7 @@ export interface ComponentDefinition {
   category: ComponentCategory;
   icon: string;
   default_props: Record<string, unknown>;
-  default_style: Record<string, string>;
+  default_style: Record<string, string | number>;
   prop_schema: PropSchema[];
   is_container: boolean;
   description: string;
@@ -176,7 +176,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
     category: ComponentCategory.LAYOUT,
     icon: 'square',
     default_props: {},
-    default_style: { display: 'flex', flexDirection: 'column', padding: '16px', gap: '12px' },
+    default_style: { display: 'flex', flexDirection: 'column', padding: 4, gap: 3 },
     prop_schema: [
       {
         key: 'direction',
@@ -255,8 +255,8 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
     default_props: { title: '卡片标题', bordered: true },
     default_style: {
       background: 'common.white',
-      borderRadius: '8px',
-      padding: '16px',
+      borderRadius: 'md',
+      padding: 4,
       boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
     },
     prop_schema: [
@@ -855,7 +855,7 @@ export class LowCodeBuilder {
       type: string;
       parentId?: string;
       props?: Record<string, unknown>;
-      style?: Record<string, string>;
+      style?: Record<string, string | number>;
       name?: string;
     },
     index?: number
@@ -1012,7 +1012,7 @@ export class LowCodeBuilder {
     return true;
   }
 
-  updateStyle(pageId: string, componentId: string, style: Record<string, string>): boolean {
+  updateStyle(pageId: string, componentId: string, style: Record<string, string | number>): boolean {
     const page = this.pages.get(pageId);
     if (!page) return false;
     const node = this.findComponent(page.components, componentId);
@@ -1028,7 +1028,7 @@ export class LowCodeBuilder {
     pageId: string,
     componentId: string,
     breakpoint: 'mobile' | 'tablet' | 'desktop',
-    style: Record<string, string>
+    style: Record<string, string | number>
   ): boolean {
     const page = this.pages.get(pageId);
     if (!page) return false;

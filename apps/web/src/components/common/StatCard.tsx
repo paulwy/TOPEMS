@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { useTouchFeedback } from '@/hooks/useTouchFeedback';
 import { useCountUp, countUpEasings } from '@/hooks/useCountUp';
+import { designTokens } from '@topems/tokens';
 
 // ============ 类型定义 ============
 
@@ -208,31 +209,31 @@ const COLOR_MAP: Record<string, { bg: string; gradient: string; light: string; m
   },
   purple: {
     bg: 'secondary.main',
-    gradient: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
+    gradient: `linear-gradient(135deg, ${designTokens.colors.secondary.main}, ${designTokens.colors.secondary.dark})`,
     light: 'secondary.lightest',
     main: 'secondary.main',
   },
   blue: {
     bg: 'primary.main',
-    gradient: 'linear-gradient(135deg, #3B82F6, #2563EB)',
+    gradient: `linear-gradient(135deg, ${designTokens.colors.primary.main}, ${designTokens.colors.primary.dark})`,
     light: 'primary.lightest',
     main: 'primary.main',
   },
   orange: {
     bg: 'warning.main',
-    gradient: 'linear-gradient(135deg, #F59E0B, #D97706)',
+    gradient: `linear-gradient(135deg, ${designTokens.colors.warning.main}, ${designTokens.colors.warning.dark})`,
     light: 'warning.lightest',
     main: 'warning.main',
   },
   red: {
     bg: 'error.main',
-    gradient: 'linear-gradient(135deg, error.main, #DC2626)',
+    gradient: `linear-gradient(135deg, error.main, ${designTokens.colors.error.dark})`,
     light: 'error.lightest',
     main: 'error.main',
   },
   cyan: {
     bg: 'info.main',
-    gradient: 'linear-gradient(135deg, #06B6D4, #0891B2)',
+    gradient: `linear-gradient(135deg, ${designTokens.colors.cyan['500']}, #0891B2)`,
     light: 'info.lightest',
     main: 'info.main',
   },

@@ -279,7 +279,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                     style={{
                       width: 40,
                       height: 40,
-                      borderRadius: '9999px',
+                      borderRadius: 'full',
                       backgroundColor: theme.palette.secondary.light,
                       display: 'flex',
                       alignItems: 'center',
@@ -308,7 +308,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                     onClick={() => handleAcceptFriend(friend)}
                     style={{
                       padding: 6,
-                      borderRadius: '9999px',
+                      borderRadius: 'full',
                       backgroundColor: 'success.lighter',
                       color: theme.palette.success.dark,
                       border: 'none',
@@ -322,7 +322,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                     onClick={() => handleRejectFriend(friend)}
                     style={{
                       padding: 6,
-                      borderRadius: '9999px',
+                      borderRadius: 'full',
                       backgroundColor: 'error.lighter',
                       color: theme.palette.error.dark,
                       border: 'none',
@@ -376,7 +376,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                         style={{
                           width: 40,
                           height: 40,
-                          borderRadius: '9999px',
+                          borderRadius: 'full',
                           backgroundColor: theme.palette.secondary.light,
                           display: 'flex',
                           alignItems: 'center',
@@ -396,7 +396,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                             width: 12,
                             height: 12,
                             backgroundColor: theme.palette.success.dark,
-                            borderRadius: '9999px',
+                            borderRadius: 'full',
                             border: '2px solid white',
                           }}
                         ></span>
@@ -429,7 +429,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                     }}
                     style={{
                       padding: 6,
-                      borderRadius: '9999px',
+                      borderRadius: 'full',
                       backgroundColor: 'transparent',
                       border: 'none',
                       cursor: 'pointer',
@@ -526,7 +526,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                       style={{
                         width: 40,
                         height: 40,
-                        borderRadius: '9999px',
+                        borderRadius: 'full',
                         backgroundColor: theme.palette.grey[100],
                         display: 'flex',
                         alignItems: 'center',

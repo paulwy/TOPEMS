@@ -209,7 +209,7 @@ const EnergyManagementPage: React.FC = () => {
                   >
                     <Card
                       sx={{
-                        borderLeft: `4px solid ${item.status === 'normal' ? '#22c55e' : item.status === 'warning' ? designTokens.colors.warning.main : designTokens.colors.error.main}`,
+                        borderLeft: `4px solid ${item.status === 'normal' ? 'colors.success.main' : item.status === 'warning' ? designTokens.colors.warning.main : designTokens.colors.error.main}`,
                       }}
                     >
                       <CardContent>

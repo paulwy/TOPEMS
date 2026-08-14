@@ -371,7 +371,7 @@ const V55PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      background: 'linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899)',
+      background: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main}, ${designTokens.colors.pink['500']})`,
       color: 'common.white',
     }}
   >
@@ -443,7 +443,7 @@ const PipelinesTab: React.FC<{
           icon={<Play size={20} />}
           label='运行中'
           value={stats.running}
-          color='#0ea5e9'
+          color={`${designTokens.colors.info.main}`}
         />
       </Grid>
       <Grid size={{ xs: 6, md: 3 }}>
@@ -813,7 +813,7 @@ const DeploymentsTab: React.FC<{
           icon={<Rocket size={20} />}
           label='进行中'
           value={stats.active}
-          color='#0ea5e9'
+          color={`${designTokens.colors.info.main}`}
         />
       </Grid>
       <Grid size={{ xs: 4, md: 4 }}>
@@ -1011,7 +1011,7 @@ const DeploymentsTab: React.FC<{
           <Grid size={{ xs: 12, md: 4 }}>
             <PolicyCard
               icon={<Activity size={24} />}
-              color='#0ea5e9'
+              color={`${designTokens.colors.info.main}`}
               title='金丝雀发布'
               description='逐步将流量切换到新版本，小范围验证后全量发布，降低风险'
             />
@@ -1050,7 +1050,7 @@ const RollbacksTab: React.FC<{
             icon={<Shield size={20} />}
             label='自动回滚'
             value={autoEnabled ? '启用' : '禁用'}
-            color={autoEnabled ? designTokens.colors.success.dark : '#9ca3af'}
+            color={autoEnabled ? designTokens.colors.success.dark : `${designTokens.colors.grey['400']}`}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -1078,7 +1078,7 @@ const RollbacksTab: React.FC<{
                 ? `${Math.round(events[0].rollback_duration_ms / 1000)}s`
                 : '—'
             }
-            color='#0ea5e9'
+            color={`${designTokens.colors.info.main}`}
           />
         </Grid>
       </Grid>
@@ -2091,7 +2091,7 @@ const HealthStatusDot: React.FC<{ status: HealthCheckStatus }> = ({ status }) =>
     healthy: designTokens.colors.success.dark,
     unhealthy: designTokens.colors.error.main,
     degraded: designTokens.colors.warning.main,
-    unknown: '#9ca3af',
+    unknown: `${designTokens.colors.grey['400']}`,
   };
   return (
     <Box

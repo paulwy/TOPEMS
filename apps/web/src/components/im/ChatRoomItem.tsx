@@ -139,7 +139,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
             style={{
               width: 40,
               height: 40,
-              borderRadius: '9999px',
+              borderRadius: 'full',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -158,7 +158,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
                 width: 14,
                 height: 14,
                 backgroundColor: theme.palette.success.dark,
-                borderRadius: '9999px',
+                borderRadius: 'full',
                 border: '2px solid white',
               }}
             />
@@ -236,7 +236,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
                         width: 6,
                         height: 6,
                         backgroundColor: theme.palette.success.dark,
-                        borderRadius: '9999px',
+                        borderRadius: 'full',
                       }}
                     />
                   )}

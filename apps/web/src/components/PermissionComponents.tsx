@@ -93,7 +93,7 @@ export const RequirePermission: React.FC<RequirePermissionProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '16px',
+          padding: 4,
         }}
       >
         <div
@@ -178,7 +178,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               margin: 'auto',
-              marginBottom: '16px',
+              marginBottom: 4,
             }}
           ></div>
           <p style={{ color: 'grey.500' }}>加载中...</p>
@@ -233,17 +233,17 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
       <div
         style={{
           textAlign: 'center',
-          padding: '24px',
+          padding: 6,
           backgroundColor: 'common.white',
-          borderRadius: '12px',
+          borderRadius: 'lg',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
         }}
       >
-        <div style={{ fontSize: '64px', marginBottom: '16px' }}>🔒</div>
-        <h2 style={{ fontSize: '24px', fontWeight: 700, color: 'grey.800', marginBottom: '8px' }}>
+        <div style={{ fontSize: '64px', marginBottom: 4 }}>🔒</div>
+        <h2 style={{ fontSize: '24px', fontWeight: 700, color: 'grey.800', marginBottom: 2 }}>
           权限不足
         </h2>
-        <p style={{ color: 'grey.500', marginBottom: '16px' }}>
+        <p style={{ color: 'grey.500', marginBottom: 4 }}>
           您没有访问此页面的权限。请联系管理员获取相应权限。
         </p>
         <button
@@ -252,7 +252,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
             padding: '10px 24px',
             backgroundColor: 'primary.main',
             color: 'common.white',
-            borderRadius: '8px',
+            borderRadius: 'md',
             border: 'none',
             cursor: 'pointer',
             fontSize: '14px',
@@ -303,17 +303,17 @@ export const ModulePermissionGuard: React.FC<ModulePermissionGuardProps> = ({
       return <>{fallbackComponent}</>;
     }
     return (
-      <div style={{ padding: '24px' }}>
+      <div style={{ padding: 6 }}>
         <div
           style={{
             backgroundColor: 'warning.100',
             border: '1px solid #fbbf24',
-            borderRadius: '8px',
-            padding: '16px',
+            borderRadius: 'md',
+            padding: 4,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-            <div style={{ flexShrink: 0, marginRight: '12px' }}>
+            <div style={{ flexShrink: 0, marginRight: 3 }}>
               <svg
                 style={{ height: 20, width: 20, color: 'warning.600' }}
                 viewBox='0 0 20 20'
@@ -328,7 +328,7 @@ export const ModulePermissionGuard: React.FC<ModulePermissionGuardProps> = ({
             </div>
             <div>
               <h3 style={{ fontSize: '14px', fontWeight: 500, color: 'warning.800' }}>权限提示</h3>
-              <div style={{ marginTop: '8px', fontSize: '14px', color: 'warning.800' }}>
+              <div style={{ marginTop: 2, fontSize: '14px', color: 'warning.800' }}>
                 <p>
                   您没有访问 {module} 模块的 {action} 权限。
                 </p>

@@ -155,7 +155,7 @@ export default function MesDeliveryAnalyticsPage() {
               <Tooltip />
               <Legend />
               <Bar dataKey="min" stackId="box" fill="#bbf7d0" name="最小" />
-              <Bar dataKey="q1" stackId="box" fill="#86efac" name="Q1" />
+              <Bar dataKey="q1" stackId="box" fill='colors.success.light' name="Q1" />
               <Bar dataKey="median" stackId="box" fill={designTokens.colors.success.dark} name="中位" />
               <Bar dataKey="q3" stackId="box" fill="#34d399" name="Q3" />
               <Bar dataKey="max" stackId="box" fill={designTokens.colors.success.dark} name="最大" />

@@ -71,7 +71,7 @@ export const dictTypeFields: SchemaField[] = [
           style: {
             display: 'inline-block',
             padding: '2px 8px',
-            borderRadius: '12px',
+            borderRadius: 'lg',
             fontSize: '12px',
             fontWeight: 500,
             backgroundColor: 'var(--color-primary-lighter, #e3f2fd)',
@@ -104,7 +104,7 @@ export const dictTypeFields: SchemaField[] = [
           style: {
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '4px',
+            gap: 1,
           },
         },
         React.createElement('span', {
@@ -265,7 +265,7 @@ export const dictItemFields: SchemaField[] = [
         hasParent
           ? React.createElement(
               'span',
-              { style: { color: 'text.disabled', marginRight: '4px' } },
+              { style: { color: 'text.disabled', marginRight: 1 } },
               '└─'
             )
           : null,
@@ -299,7 +299,7 @@ export const dictItemFields: SchemaField[] = [
       return React.createElement(
         'span',
         {
-          style: { display: 'flex', alignItems: 'center', gap: '4px' },
+          style: { display: 'flex', alignItems: 'center', gap: 1 },
         },
         React.createElement('span', {
           style: {

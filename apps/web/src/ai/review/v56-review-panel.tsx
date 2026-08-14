@@ -296,7 +296,7 @@ const V56PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #3b82f6 100%)',
+      background: `linear-gradient(135deg, ${designTokens.colors.secondary.main} 0%, ${designTokens.colors.primary.dark} 50%, ${designTokens.colors.primary.main} 100%)`,
       color: 'common.white',
     }}
   >
@@ -505,8 +505,8 @@ const OverviewTab: React.FC<{
                   label={`${sev}: ${count}`}
                   size='small'
                   sx={{
-                    bgcolor: count > 0 ? '#fef2f2' : '#f3f4f6',
-                    color: count > 0 ? '#991b1b' : 'colors.grey.500',
+                    bgcolor: count > 0 ? 'colors.error.50' : 'colors.grey.100',
+                    color: count > 0 ? 'colors.error.800' : 'colors.grey.500',
                     fontWeight: 600,
                     fontSize: 11,
                   }}
@@ -724,8 +724,8 @@ const CodeReviewTab: React.FC<{ result: ReviewResult }> = ({ result }) => {
             label={`${result.issues.length} 个问题`}
             size='small'
             sx={{
-              bgcolor: result.passed ? '#d1fae5' : '#fef2f2',
-              color: result.passed ? '#065f46' : '#991b1b',
+              bgcolor: result.passed ? 'colors.success.100' : 'colors.error.50',
+              color: result.passed ? '#065f46' : 'colors.error.800',
               fontWeight: 600,
             }}
           />
@@ -838,11 +838,11 @@ const SecurityTab: React.FC<{ result: ScanResult }> = ({ result }) => {
       case 'critical':
         return designTokens.colors.error.dark;
       case 'high':
-        return '#ea580c';
+        return 'colors.orange.600';
       case 'medium':
         return designTokens.colors.warning.dark;
       case 'low':
-        return '#2563eb';
+        return 'colors.primary.dark';
       default:
         return 'colors.grey.500';
     }
@@ -870,8 +870,8 @@ const SecurityTab: React.FC<{ result: ScanResult }> = ({ result }) => {
             label={`${result.findings.length} 个发现`}
             size='small'
             sx={{
-              bgcolor: result.passed ? '#d1fae5' : '#fef2f2',
-              color: result.passed ? '#065f46' : '#991b1b',
+              bgcolor: result.passed ? 'colors.success.100' : 'colors.error.50',
+              color: result.passed ? '#065f46' : 'colors.error.800',
               fontWeight: 600,
             }}
           />
@@ -975,8 +975,8 @@ const PerformanceTab: React.FC<{ result: AuditResult }> = ({ result }) => {
             label={result.optimized ? '已优化' : '待优化'}
             size='small'
             sx={{
-              bgcolor: result.optimized ? '#d1fae5' : '#fef2f2',
-              color: result.optimized ? '#065f46' : '#991b1b',
+              bgcolor: result.optimized ? 'colors.success.100' : 'colors.error.50',
+              color: result.optimized ? '#065f46' : 'colors.error.800',
               fontWeight: 600,
             }}
           />
@@ -1070,13 +1070,13 @@ const PerformanceTab: React.FC<{ result: AuditResult }> = ({ result }) => {
                           height: 18,
                           bgcolor:
                             finding.impact === 'high'
-                              ? '#fef2f2'
+                              ? 'colors.error.50'
                               : finding.impact === 'medium'
                                 ? '#fffbeb'
                                 : '#eff6ff',
                           color:
                             finding.impact === 'high'
-                              ? '#991b1b'
+                              ? 'colors.error.800'
                               : finding.impact === 'medium'
                                 ? '#92400e'
                                 : '#1e40af',

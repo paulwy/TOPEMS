@@ -29,7 +29,7 @@ interface DocumentRow {
 }
 
 const getFileIcon = (type: string) => {
-  const color = TYPE_COLORS[type] || '#9ca3af';
+  const color = TYPE_COLORS[type] || 'colors.grey.400';
   switch (type) {
     case 'pdf':
       return (
@@ -164,7 +164,7 @@ export const documentSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) => {
         const doc = row as unknown as DocumentRow;
         const type = doc.content_type ? getFileType(doc.content_type) : 'pdf';
-        const color = TYPE_COLORS[type] || '#9ca3af';
+        const color = TYPE_COLORS[type] || 'colors.grey.400';
         const label = TYPE_LABELS[type] || type;
         return (
           <Chip

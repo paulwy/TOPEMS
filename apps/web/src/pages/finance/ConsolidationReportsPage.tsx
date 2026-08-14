@@ -517,7 +517,7 @@ export default function ConsolidationReportsPage() {
                       <th
                         style={{
                           textAlign: 'left',
-                          padding: '12px',
+                          padding: 3,
                           fontWeight: 600,
                           backgroundColor: ct.background.default,
                         }}
@@ -527,7 +527,7 @@ export default function ConsolidationReportsPage() {
                       <th
                         style={{
                           textAlign: 'right',
-                          padding: '12px',
+                          padding: 3,
                           fontWeight: 600,
                           backgroundColor: ct.background.default,
                         }}
@@ -537,7 +537,7 @@ export default function ConsolidationReportsPage() {
                       <th
                         style={{
                           textAlign: 'right',
-                          padding: '12px',
+                          padding: 3,
                           fontWeight: 600,
                           backgroundColor: ct.background.default,
                         }}
@@ -547,7 +547,7 @@ export default function ConsolidationReportsPage() {
                       <th
                         style={{
                           textAlign: 'right',
-                          padding: '12px',
+                          padding: 3,
                           fontWeight: 600,
                           backgroundColor: ct.background.default,
                         }}
@@ -557,7 +557,7 @@ export default function ConsolidationReportsPage() {
                       <th
                         style={{
                           textAlign: 'right',
-                          padding: '12px',
+                          padding: 3,
                           fontWeight: 600,
                           backgroundColor: ct.background.default,
                         }}
@@ -576,7 +576,7 @@ export default function ConsolidationReportsPage() {
                         <tr key={line.id}>
                           <td
                             style={{
-                              padding: '12px',
+                              padding: 3,
                               borderBottom: '1px solid',
                               paddingLeft: `${(line.itemlevel ?? 0) * 16 + 12}px`,
                             }}
@@ -586,7 +586,7 @@ export default function ConsolidationReportsPage() {
                           <td
                             style={{
                               textAlign: 'right',
-                              padding: '12px',
+                              padding: 3,
                               borderBottom: '1px solid',
                               fontFamily: 'monospace',
                             }}
@@ -596,7 +596,7 @@ export default function ConsolidationReportsPage() {
                           <td
                             style={{
                               textAlign: 'right',
-                              padding: '12px',
+                              padding: 3,
                               borderBottom: '1px solid',
                               fontFamily: 'monospace',
                               color: 'grey.500',
@@ -607,7 +607,7 @@ export default function ConsolidationReportsPage() {
                           <td
                             style={{
                               textAlign: 'right',
-                              padding: '12px',
+                              padding: 3,
                               borderBottom: '1px solid',
                               fontFamily: 'monospace',
                               color: change >= 0 ? 'success.main' : 'error.main',
@@ -618,7 +618,7 @@ export default function ConsolidationReportsPage() {
                           <td
                             style={{
                               textAlign: 'right',
-                              padding: '12px',
+                              padding: 3,
                               borderBottom: '1px solid',
                               fontFamily: 'monospace',
                               color: changeRate >= 0 ? 'success.main' : 'error.main',

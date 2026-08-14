@@ -284,7 +284,7 @@ const PerformanceTestPage: React.FC = () => {
     {
       label: '加载时间',
       value: loadTime ? `${loadTime.toFixed(2)}ms` : '测量中...',
-      color: loadTime && loadTime < 100 ? '#16a34a' : designTokens.colors.warning.dark,
+      color: loadTime && loadTime < 100 ? `${designTokens.colors.success.dark}` : designTokens.colors.warning.dark,
       bgColor: loadTime && loadTime < 100 ? '#dcfce7' : '#fef3c7',
       description: '页面首屏加载耗时',
     },
@@ -292,7 +292,7 @@ const PerformanceTestPage: React.FC = () => {
       label: '最大内容绘制',
       value: lcpTime ? `${lcpTime.toFixed(2)}ms` : '测量中...',
       color:
-        lcpTime && lcpTime < 2500 ? '#16a34a' : lcpTime && lcpTime < 4000 ? designTokens.colors.warning.dark : designTokens.colors.error.dark,
+        lcpTime && lcpTime < 2500 ? `${designTokens.colors.success.dark}` : lcpTime && lcpTime < 4000 ? designTokens.colors.warning.dark : designTokens.colors.error.dark,
       bgColor:
         lcpTime && lcpTime < 2500 ? '#dcfce7' : lcpTime && lcpTime < 4000 ? '#fef3c7' : '#fee2e2',
       description: 'Largest Contentful Paint (LCP)',
@@ -301,7 +301,7 @@ const PerformanceTestPage: React.FC = () => {
       label: '可交互时间',
       value: ttiTime ? `${ttiTime.toFixed(2)}ms` : '测量中...',
       color:
-        ttiTime && ttiTime < 3800 ? '#16a34a' : ttiTime && ttiTime < 7300 ? designTokens.colors.warning.dark : designTokens.colors.error.dark,
+        ttiTime && ttiTime < 3800 ? `${designTokens.colors.success.dark}` : ttiTime && ttiTime < 7300 ? designTokens.colors.warning.dark : designTokens.colors.error.dark,
       bgColor:
         ttiTime && ttiTime < 3800 ? '#dcfce7' : ttiTime && ttiTime < 7300 ? '#fef3c7' : '#fee2e2',
       description: 'Time to Interactive (TTI)',
@@ -310,7 +310,7 @@ const PerformanceTestPage: React.FC = () => {
       label: '首次输入延迟',
       value: fidTime ? `${fidTime.toFixed(2)}ms` : '等待输入...',
       color:
-        fidTime && fidTime < 100 ? '#16a34a' : fidTime && fidTime < 300 ? designTokens.colors.warning.dark : designTokens.colors.error.dark,
+        fidTime && fidTime < 100 ? `${designTokens.colors.success.dark}` : fidTime && fidTime < 300 ? designTokens.colors.warning.dark : designTokens.colors.error.dark,
       bgColor:
         fidTime && fidTime < 100 ? '#dcfce7' : fidTime && fidTime < 300 ? '#fef3c7' : '#fee2e2',
       description: 'First Input Delay (FID)',
@@ -320,7 +320,7 @@ const PerformanceTestPage: React.FC = () => {
       value: clsScore !== null ? clsScore.toFixed(2) : '测量中...',
       color:
         clsScore !== null && clsScore < 0.1
-          ? '#16a34a'
+          ? `${designTokens.colors.success.dark}`
           : clsScore !== null && clsScore < 0.25
             ? designTokens.colors.warning.dark
             : designTokens.colors.error.dark,
@@ -335,21 +335,21 @@ const PerformanceTestPage: React.FC = () => {
     {
       label: '首屏绘制',
       value: firstPaint ? `${firstPaint.toFixed(2)}ms` : '测量中...',
-      color: firstPaint && firstPaint < 1000 ? '#16a34a' : designTokens.colors.warning.dark,
+      color: firstPaint && firstPaint < 1000 ? `${designTokens.colors.success.dark}` : designTokens.colors.warning.dark,
       bgColor: firstPaint && firstPaint < 1000 ? '#dcfce7' : '#fef3c7',
       description: 'First Paint (FP)',
     },
     {
       label: '内容绘制',
       value: firstContentfulPaint ? `${firstContentfulPaint.toFixed(2)}ms` : '测量中...',
-      color: firstContentfulPaint && firstContentfulPaint < 1500 ? '#16a34a' : designTokens.colors.warning.dark,
+      color: firstContentfulPaint && firstContentfulPaint < 1500 ? `${designTokens.colors.success.dark}` : designTokens.colors.warning.dark,
       bgColor: firstContentfulPaint && firstContentfulPaint < 1500 ? '#dcfce7' : '#fef3c7',
       description: 'First Contentful Paint (FCP)',
     },
     {
       label: '导航耗时',
       value: navigationTime ? `${navigationTime.toFixed(2)}ms` : '测量中...',
-      color: navigationTime && navigationTime < 2000 ? '#16a34a' : designTokens.colors.warning.dark,
+      color: navigationTime && navigationTime < 2000 ? `${designTokens.colors.success.dark}` : designTokens.colors.warning.dark,
       bgColor: navigationTime && navigationTime < 2000 ? '#dcfce7' : '#fef3c7',
       description: '从导航开始到页面完全加载',
     },
@@ -363,14 +363,14 @@ const PerformanceTestPage: React.FC = () => {
     {
       label: '平均渲染',
       value: avgRenderTime ? `${avgRenderTime.toFixed(2)}ms` : 'N/A',
-      color: avgRenderTime && avgRenderTime < 16 ? '#16a34a' : designTokens.colors.warning.dark,
+      color: avgRenderTime && avgRenderTime < 16 ? `${designTokens.colors.success.dark}` : designTokens.colors.warning.dark,
       bgColor: avgRenderTime && avgRenderTime < 16 ? '#dcfce7' : '#fef3c7',
       description: '两次渲染间隔平均时间',
     },
     {
       label: 'DOM加载',
       value: domContentLoaded ? `${domContentLoaded.toFixed(2)}ms` : '测量中...',
-      color: domContentLoaded && domContentLoaded < 1000 ? '#16a34a' : designTokens.colors.warning.dark,
+      color: domContentLoaded && domContentLoaded < 1000 ? `${designTokens.colors.success.dark}` : designTokens.colors.warning.dark,
       bgColor: domContentLoaded && domContentLoaded < 1000 ? '#dcfce7' : '#fef3c7',
       description: 'DOM Content Loaded',
     },
@@ -408,7 +408,7 @@ const PerformanceTestPage: React.FC = () => {
     <div
       style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%)',
+        background: `linear-gradient(135deg, #1e3a8a 0%, ${designTokens.colors.primary.main} 50%, ${designTokens.colors.primary['400']} 100%)`,
         padding: '2rem',
         animation: 'fadeIn 0.5s ease-out',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -625,7 +625,7 @@ const PerformanceTestPage: React.FC = () => {
                 onClick={() => window.location.reload()}
                 style={{
                   padding: '0.75rem 1.5rem',
-                  background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+                  background: `linear-gradient(135deg, #1e3a8a 0%, ${designTokens.colors.primary.main} 100%)`,
                   color: 'common.white',
                   border: 'none',
                   borderRadius: '8px',
@@ -647,7 +647,7 @@ const PerformanceTestPage: React.FC = () => {
                   padding: '0.75rem 1.5rem',
                   background: 'common.white',
                   color: 'primary.500',
-                  border: '1px solid #3b82f6',
+                  border: `1px solid ${designTokens.colors.primary.main}`,
                   borderRadius: '8px',
                   fontWeight: 600,
                   cursor: 'pointer',

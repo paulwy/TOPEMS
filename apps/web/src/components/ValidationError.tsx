@@ -16,10 +16,10 @@ export const FieldError: React.FC<FieldErrorProps> = ({ error, showIcon = true }
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '4px',
+        gap: 1,
         color: theme.palette.error.dark,
         fontSize: '14px',
-        marginTop: '4px',
+        marginTop: 1,
       }}
     >
       {showIcon && <AlertCircle sx={{ width: 16, height: 16 }} />}
@@ -47,20 +47,20 @@ export const FormError: React.FC<FormErrorProps> = ({ errors, fields = [] }) => 
       style={{
         backgroundColor: theme.palette.error.light,
         border: '1px solid #fecaca',
-        borderRadius: '8px',
-        padding: '16px',
-        marginBottom: '16px',
+        borderRadius: 'md',
+        padding: 4,
+        marginBottom: 4,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-        <AlertCircle sx={{ width: 20, height: 20, color: 'error.dark', marginTop: '2px' }} />
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 3 }}>
+        <AlertCircle sx={{ width: 20, height: 20, color: 'error.dark', marginTop: 0.5 }} />
         <div style={{ flex: 1 }}>
           <h4
             style={{
               fontSize: '14px',
               fontWeight: 500,
               color: 'error.800',
-              marginBottom: '4px',
+              marginBottom: 1,
             }}
           >
             请修正以下错误：
@@ -71,7 +71,7 @@ export const FormError: React.FC<FormErrorProps> = ({ errors, fields = [] }) => 
               color: 'error.darker',
               display: 'flex',
               flexDirection: 'column',
-              gap: '4px',
+              gap: 1,
             }}
           >
             {errorList.map((error, index) => (
@@ -80,7 +80,7 @@ export const FormError: React.FC<FormErrorProps> = ({ errors, fields = [] }) => 
                 style={{
                   display: 'flex',
                   alignItems: 'flex-start',
-                  gap: '8px',
+                  gap: 2,
                 }}
               >
                 <span
@@ -88,8 +88,8 @@ export const FormError: React.FC<FormErrorProps> = ({ errors, fields = [] }) => 
                     width: '4px',
                     height: '4px',
                     backgroundColor: theme.palette.error.dark,
-                    borderRadius: '9999px',
-                    marginTop: '8px',
+                    borderRadius: 'full',
+                    marginTop: 2,
                     flexShrink: 0,
                   }}
                 ></span>
@@ -110,27 +110,27 @@ interface ValidationHintProps {
 
 export const ValidationHint: React.FC<ValidationHintProps> = ({ field, rules }) => {
   return (
-    <div style={{ fontSize: '12px', color: 'var(--mui-palette-text-secondary)', marginTop: '4px' }}>
+    <div style={{ fontSize: '12px', color: 'var(--mui-palette-text-secondary)', marginTop: 1 }}>
       <span style={{ fontWeight: 500 }}>{field}要求：</span>
       <ul
         style={{
-          marginTop: '4px',
+          marginTop: 1,
           display: 'flex',
           flexDirection: 'column',
-          gap: '2px',
+          gap: 0.5,
         }}
       >
         {rules.map((rule, index) => (
           <li
             key={index}
-            style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <span
               style={{
                 width: '4px',
                 height: '4px',
                 backgroundColor: 'grey.400',
-                borderRadius: '9999px',
+                borderRadius: 'full',
               }}
             ></span>
             <span>{rule}</span>
@@ -210,10 +210,10 @@ export const InlineValidation: React.FC<InlineValidationProps> = ({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '4px',
+        gap: 1,
         color: theme.palette.error.dark,
         fontSize: '14px',
-        marginTop: '4px',
+        marginTop: 1,
       }}
     >
       <AlertCircle sx={{ width: 16, height: 16 }} />
@@ -234,20 +234,20 @@ export const SuccessMessage: React.FC<SuccessMessageProps> = ({ message, onClose
       style={{
         backgroundColor: theme.palette.success.light,
         border: '1px solid #bbf7d0',
-        borderRadius: '8px',
-        padding: '16px',
+        borderRadius: 'md',
+        padding: 4,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
         <div
           style={{
             width: '32px',
             height: '32px',
             backgroundColor: 'success.lighter',
-            borderRadius: '9999px',
+            borderRadius: 'full',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -277,7 +277,7 @@ export const SuccessMessage: React.FC<SuccessMessageProps> = ({ message, onClose
             border: 'none',
             cursor: 'pointer',
             color: theme.palette.success.dark,
-            padding: '4px',
+            padding: 1,
           }}
         >
           <X sx={{ width: 20, height: 20 }} />

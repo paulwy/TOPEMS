@@ -331,7 +331,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: '9999px',
+                borderRadius: 'full',
                 border: '2px solid grey.200',
                 borderTopColor: theme.palette.primary.dark,
                 animation: 'spin 1s linear infinite',
