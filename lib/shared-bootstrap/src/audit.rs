@@ -384,3 +384,688 @@ pub async fn log_audit_event_with_id(
         tracing::error!("记录审计日志失败: {}", e);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::http::HeaderMap;
+    use chrono::Utc;
+    use serde_json::json;
+    use sqlx::postgres::PgPoolOptions;
+    use std::time::Duration;
+
+    // ===== AuditLog 序列化/反序列化测试 =====
+
+    #[test]
+    fn test_audit_log_serde_roundtrip_full() {
+        let log = AuditLog {
+            id: Uuid::new_v4(),
+            action: "create".to_string(),
+            entity_type: Some("customer".to_string()),
+            entity_id: Some(Uuid::new_v4()),
+            entity_ids: Some(json!([1, 2, 3])),
+            user_id: Some("user-123".to_string()),
+            user_name: Some("Alice".to_string()),
+            request_details: Some(json!({"key": "value"})),
+            response_details: Some(json!({"code": 200})),
+            status: "success".to_string(),
+            error_message: None,
+            ip_address: Some("127.0.0.1".to_string()),
+            user_agent: Some("Mozilla/5.0".to_string()),
+            created_at: Utc::now(),
+        };
+        let serialized = serde_json::to_string(&log).unwrap();
+        let deserialized: AuditLog = serde_json::from_str(&serialized).unwrap();
+        // AuditLog 未派生 PartialEq，通过再次序列化后比较字符串
+        let reserialized = serde_json::to_string(&deserialized).unwrap();
+        assert_eq!(serialized, reserialized);
+    }
+
+    #[test]
+    fn test_audit_log_serde_roundtrip_minimal() {
+        let log = AuditLog {
+            id: Uuid::new_v4(),
+            action: "delete".to_string(),
+            entity_type: None,
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            status: "success".to_string(),
+            error_message: None,
+            ip_address: None,
+            user_agent: None,
+            created_at: Utc::now(),
+        };
+        let serialized = serde_json::to_string(&log).unwrap();
+        let deserialized: AuditLog = serde_json::from_str(&serialized).unwrap();
+        let reserialized = serde_json::to_string(&deserialized).unwrap();
+        assert_eq!(serialized, reserialized);
+    }
+
+    #[test]
+    fn test_audit_log_serde_roundtrip_with_error() {
+        let log = AuditLog {
+            id: Uuid::new_v4(),
+            action: "create".to_string(),
+            entity_type: Some("order".to_string()),
+            entity_id: Some(Uuid::new_v4()),
+            entity_ids: None,
+            user_id: Some("u1".to_string()),
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            status: "failed".to_string(),
+            error_message: Some("DB timeout".to_string()),
+            ip_address: None,
+            user_agent: None,
+            created_at: Utc::now(),
+        };
+        let serialized = serde_json::to_string(&log).unwrap();
+        let deserialized: AuditLog = serde_json::from_str(&serialized).unwrap();
+        let reserialized = serde_json::to_string(&deserialized).unwrap();
+        assert_eq!(serialized, reserialized);
+    }
+
+    #[test]
+    fn test_audit_log_deserialize_from_json() {
+        let id = Uuid::new_v4();
+        let entity_id = Uuid::new_v4();
+        let json_str = format!(
+            r#"{{
+                "id": "{}",
+                "action": "update",
+                "entity_type": "order",
+                "entity_id": "{}",
+                "entity_ids": null,
+                "user_id": "u1",
+                "user_name": "Bob",
+                "request_details": {{"foo": "bar"}},
+                "response_details": null,
+                "status": "success",
+                "error_message": null,
+                "ip_address": "10.0.0.1",
+                "user_agent": "curl/8.0",
+                "created_at": "2026-01-15T10:30:00Z"
+            }}"#,
+            id, entity_id
+        );
+        let log: AuditLog = serde_json::from_str(&json_str).unwrap();
+        assert_eq!(log.id, id);
+        assert_eq!(log.action, "update");
+        assert_eq!(log.entity_type.as_deref(), Some("order"));
+        assert_eq!(log.entity_id, Some(entity_id));
+        assert_eq!(log.entity_ids, None);
+        assert_eq!(log.user_id.as_deref(), Some("u1"));
+        assert_eq!(log.user_name.as_deref(), Some("Bob"));
+        assert_eq!(log.status, "success");
+        assert_eq!(log.error_message, None);
+        assert_eq!(log.ip_address.as_deref(), Some("10.0.0.1"));
+        assert_eq!(log.user_agent.as_deref(), Some("curl/8.0"));
+    }
+
+    #[test]
+    fn test_audit_log_field_names_are_snake_case() {
+        let log = AuditLog {
+            id: Uuid::new_v4(),
+            action: "a".to_string(),
+            entity_type: None,
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            status: "s".to_string(),
+            error_message: None,
+            ip_address: None,
+            user_agent: None,
+            created_at: Utc::now(),
+        };
+        let json = serde_json::to_value(&log).unwrap();
+        let obj = json.as_object().unwrap();
+        // 验证 snake_case 字段名
+        for key in [
+            "id",
+            "action",
+            "entity_type",
+            "entity_id",
+            "entity_ids",
+            "user_id",
+            "user_name",
+            "request_details",
+            "response_details",
+            "status",
+            "error_message",
+            "ip_address",
+            "user_agent",
+            "created_at",
+        ] {
+            assert!(obj.contains_key(key), "缺失字段: {}", key);
+        }
+        // 验证不存在 camelCase 字段
+        assert!(!obj.contains_key("entityType"));
+        assert!(!obj.contains_key("userId"));
+        assert!(!obj.contains_key("createdAt"));
+        assert!(!obj.contains_key("errorMessage"));
+        assert!(!obj.contains_key("ipAddress"));
+        assert!(!obj.contains_key("userAgent"));
+    }
+
+    #[test]
+    fn test_audit_log_clone_preserves_data() {
+        let log = AuditLog {
+            id: Uuid::new_v4(),
+            action: "create".to_string(),
+            entity_type: Some("t".to_string()),
+            entity_id: Some(Uuid::new_v4()),
+            entity_ids: Some(json!([1, 2])),
+            user_id: Some("u".to_string()),
+            user_name: Some("n".to_string()),
+            request_details: Some(json!({})),
+            response_details: Some(json!({"r": 1})),
+            status: "success".to_string(),
+            error_message: Some("err".to_string()),
+            ip_address: Some("ip".to_string()),
+            user_agent: Some("ua".to_string()),
+            created_at: Utc::now(),
+        };
+        let cloned = log.clone();
+        assert_eq!(log.id, cloned.id);
+        assert_eq!(log.action, cloned.action);
+        assert_eq!(log.entity_type, cloned.entity_type);
+        assert_eq!(log.entity_id, cloned.entity_id);
+        assert_eq!(log.status, cloned.status);
+    }
+
+    #[test]
+    fn test_audit_log_option_fields_serialize_as_null() {
+        let log = AuditLog {
+            id: Uuid::new_v4(),
+            action: "a".to_string(),
+            entity_type: None,
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            status: "s".to_string(),
+            error_message: None,
+            ip_address: None,
+            user_agent: None,
+            created_at: Utc::now(),
+        };
+        let json = serde_json::to_value(&log).unwrap();
+        assert!(json["entity_type"].is_null());
+        assert!(json["entity_id"].is_null());
+        assert!(json["entity_ids"].is_null());
+        assert!(json["user_id"].is_null());
+        assert!(json["user_name"].is_null());
+        assert!(json["request_details"].is_null());
+        assert!(json["response_details"].is_null());
+        assert!(json["error_message"].is_null());
+        assert!(json["ip_address"].is_null());
+        assert!(json["user_agent"].is_null());
+    }
+
+    // ===== ListAuditLogsQuery 反序列化测试 =====
+
+    #[test]
+    fn test_list_query_deserialize_empty() {
+        let query: ListAuditLogsQuery = serde_json::from_str("{}").unwrap();
+        assert!(query.action.is_none());
+        assert!(query.entity_type.is_none());
+        assert!(query.user_id.is_none());
+        assert!(query.status.is_none());
+        assert!(query.start_date.is_none());
+        assert!(query.end_date.is_none());
+        assert!(query.page.is_none());
+        assert!(query.page_size.is_none());
+    }
+
+    #[test]
+    fn test_list_query_deserialize_full() {
+        let json_str = r#"{
+            "action": "create",
+            "entity_type": "customer",
+            "user_id": "u1",
+            "status": "success",
+            "start_date": "2026-01-01",
+            "end_date": "2026-12-31",
+            "page": 1,
+            "page_size": 50
+        }"#;
+        let query: ListAuditLogsQuery = serde_json::from_str(json_str).unwrap();
+        assert_eq!(query.action.as_deref(), Some("create"));
+        assert_eq!(query.entity_type.as_deref(), Some("customer"));
+        assert_eq!(query.user_id.as_deref(), Some("u1"));
+        assert_eq!(query.status.as_deref(), Some("success"));
+        assert_eq!(query.start_date.as_deref(), Some("2026-01-01"));
+        assert_eq!(query.end_date.as_deref(), Some("2026-12-31"));
+        assert_eq!(query.page, Some(1));
+        assert_eq!(query.page_size, Some(50));
+    }
+
+    #[test]
+    fn test_list_query_field_name_is_page_size_not_pagesize() {
+        // 标准字段为 page_size（带下划线），非 pagesize
+        let json_str = r#"{"page_size": 100}"#;
+        let query: ListAuditLogsQuery = serde_json::from_str(json_str).unwrap();
+        assert_eq!(query.page_size, Some(100));
+    }
+
+    #[test]
+    fn test_list_query_does_not_accept_pagesize_alias() {
+        // pagesize（无下划线）不应反序列化到 page_size 字段
+        let json_str = r#"{"pagesize": 100}"#;
+        let query: ListAuditLogsQuery = serde_json::from_str(json_str).unwrap();
+        assert_eq!(query.page_size, None);
+    }
+
+    #[test]
+    fn test_list_query_deserialize_partial() {
+        let json_str = r#"{"action": "delete", "page": 2}"#;
+        let query: ListAuditLogsQuery = serde_json::from_str(json_str).unwrap();
+        assert_eq!(query.action.as_deref(), Some("delete"));
+        assert_eq!(query.page, Some(2));
+        assert!(query.entity_type.is_none());
+        assert!(query.page_size.is_none());
+    }
+
+    #[test]
+    fn test_list_query_deserialize_negative_page() {
+        // i64 允许负值，handler 中用 .max(1) 钳制
+        let json_str = r#"{"page": -5}"#;
+        let query: ListAuditLogsQuery = serde_json::from_str(json_str).unwrap();
+        assert_eq!(query.page, Some(-5));
+    }
+
+    #[test]
+    fn test_list_query_default_page_is_none() {
+        let query: ListAuditLogsQuery = serde_json::from_str("{}").unwrap();
+        assert!(query.page.is_none());
+        // handler: params.page.unwrap_or(1).max(1) => 1
+    }
+
+    #[test]
+    fn test_list_query_default_page_size_is_none() {
+        let query: ListAuditLogsQuery = serde_json::from_str("{}").unwrap();
+        assert!(query.page_size.is_none());
+        // handler: params.page_size.unwrap_or(20).min(100) => 20
+    }
+
+    // ===== AuditEventParams 构造与 Clone 测试 =====
+
+    #[test]
+    fn test_audit_event_params_construction_full() {
+        let params = AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: Some(Uuid::new_v4()),
+            entity_ids: Some(json!([1, 2, 3])),
+            user_id: Some("u1".to_string()),
+            user_name: Some("Alice".to_string()),
+            request_details: Some(json!({"method": "POST"})),
+            response_details: Some(json!({"id": 42})),
+            status: "success".to_string(),
+            error_message: None,
+        };
+        assert_eq!(params.action, "create");
+        assert_eq!(params.entity_type, "customer");
+        assert!(params.entity_id.is_some());
+        assert!(params.entity_ids.is_some());
+        assert_eq!(params.user_id.as_deref(), Some("u1"));
+        assert_eq!(params.user_name.as_deref(), Some("Alice"));
+        assert_eq!(params.status, "success");
+        assert!(params.error_message.is_none());
+    }
+
+    #[test]
+    fn test_audit_event_params_construction_minimal() {
+        let params = AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "session".to_string(),
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            status: "success".to_string(),
+            error_message: None,
+        };
+        assert_eq!(params.action, "delete");
+        assert_eq!(params.entity_type, "session");
+        assert!(params.entity_id.is_none());
+        assert!(params.entity_ids.is_none());
+        assert!(params.user_id.is_none());
+        assert!(params.request_details.is_none());
+    }
+
+    #[test]
+    fn test_audit_event_params_with_error() {
+        let params = AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "order".to_string(),
+            entity_id: None,
+            entity_ids: None,
+            user_id: Some("u1".to_string()),
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            status: "failed".to_string(),
+            error_message: Some("Database timeout".to_string()),
+        };
+        assert_eq!(params.status, "failed");
+        assert_eq!(params.error_message.as_deref(), Some("Database timeout"));
+    }
+
+    #[test]
+    fn test_audit_event_params_clone_preserves_data() {
+        let params = AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: Some(Uuid::new_v4()),
+            entity_ids: Some(json!([1, 2])),
+            user_id: Some("u1".to_string()),
+            user_name: Some("Alice".to_string()),
+            request_details: Some(json!({})),
+            response_details: None,
+            status: "success".to_string(),
+            error_message: None,
+        };
+        let cloned = params.clone();
+        assert_eq!(cloned.action, params.action);
+        assert_eq!(cloned.entity_type, params.entity_type);
+        assert_eq!(cloned.entity_id, params.entity_id);
+        assert_eq!(cloned.entity_ids, params.entity_ids);
+        assert_eq!(cloned.user_id, params.user_id);
+        assert_eq!(cloned.status, params.status);
+        assert_eq!(cloned.error_message, params.error_message);
+    }
+
+    // ===== create_routes 工厂函数测试 =====
+
+    #[test]
+    fn test_create_routes_returns_router_with_unqualified_table() {
+        // 验证工厂函数能编译并返回 Router，不 panic
+        // 使用 PgPool 作为状态类型（PgPool: FromRef<PgPool> 自反实现）
+        let router: Router<PgPool> = create_routes("audit_logs");
+        let _ = router;
+    }
+
+    #[test]
+    fn test_create_routes_with_schema_qualified_table() {
+        let router: Router<PgPool> = create_routes("plugin_crm.audit_logs");
+        let _ = router;
+    }
+
+    #[test]
+    fn test_create_routes_with_public_schema() {
+        let router: Router<PgPool> = create_routes("public.audit_logs");
+        let _ = router;
+    }
+
+    #[test]
+    fn test_create_routes_with_rs_schema() {
+        let router: Router<PgPool> = create_routes("rs.audit_logs");
+        let _ = router;
+    }
+
+    // ===== 异步函数错误处理测试（使用不可达的 lazy pool）=====
+    // 验证 DB 不可达时函数不 panic、不传播错误
+
+    fn make_lazy_pool() -> PgPool {
+        PgPoolOptions::new()
+            .acquire_timeout(Duration::from_millis(100))
+            .connect_lazy("postgres://u:p@127.0.0.1:1/db")
+            .expect("lazy pool 构建不应失败")
+    }
+
+    #[tokio::test]
+    async fn test_log_audit_event_does_not_panic_on_db_error() {
+        let pool = make_lazy_pool();
+        let mut headers = HeaderMap::new();
+        headers.insert("x-forwarded-for", "127.0.0.1".parse().unwrap());
+        headers.insert("user-agent", "test-agent/1.0".parse().unwrap());
+
+        let params = AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: Some(Uuid::new_v4()),
+            entity_ids: None,
+            user_id: Some("u1".to_string()),
+            user_name: Some("Alice".to_string()),
+            request_details: Some(json!({})),
+            response_details: None,
+            status: "success".to_string(),
+            error_message: None,
+        };
+
+        // DB 不可达但函数不应 panic
+        log_audit_event("test.audit_logs", &pool, params, &headers).await;
+    }
+
+    #[tokio::test]
+    async fn test_log_audit_event_with_empty_headers() {
+        let pool = make_lazy_pool();
+        let headers = HeaderMap::new();
+
+        let params = AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            status: "success".to_string(),
+            error_message: None,
+        };
+
+        log_audit_event("test.audit_logs", &pool, params, &headers).await;
+    }
+
+    #[tokio::test]
+    async fn test_log_audit_event_with_x_real_ip_fallback() {
+        let pool = make_lazy_pool();
+        let mut headers = HeaderMap::new();
+        // 无 x-forwarded-for，仅有 x-real-ip
+        headers.insert("x-real-ip", "192.168.1.1".parse().unwrap());
+        headers.insert("user-agent", "test".parse().unwrap());
+
+        let params = AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "order".to_string(),
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            status: "success".to_string(),
+            error_message: None,
+        };
+
+        log_audit_event("test.audit_logs", &pool, params, &headers).await;
+    }
+
+    #[tokio::test]
+    async fn test_log_audit_event_with_no_ip_no_ua() {
+        let pool = make_lazy_pool();
+        let mut headers = HeaderMap::new();
+        // 仅 user-agent，无 IP 头
+        headers.insert("user-agent", "curl/8.0".parse().unwrap());
+
+        let params = AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "session".to_string(),
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            status: "success".to_string(),
+            error_message: None,
+        };
+
+        log_audit_event("test.audit_logs", &pool, params, &headers).await;
+    }
+
+    #[tokio::test]
+    async fn test_log_audit_event_with_error_status() {
+        let pool = make_lazy_pool();
+        let headers = HeaderMap::new();
+
+        let params = AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "order".to_string(),
+            entity_id: None,
+            entity_ids: None,
+            user_id: Some("u1".to_string()),
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            status: "failed".to_string(),
+            error_message: Some("Validation failed".to_string()),
+        };
+
+        log_audit_event("test.audit_logs", &pool, params, &headers).await;
+    }
+
+    // ===== log_audit_event_with_id 测试 =====
+
+    #[tokio::test]
+    async fn test_log_audit_event_with_id_does_not_panic_on_db_error() {
+        let pool = make_lazy_pool();
+        let mut headers = HeaderMap::new();
+        headers.insert("x-forwarded-for", "10.0.0.1".parse().unwrap());
+
+        let params = AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: Some(Uuid::new_v4()),
+            entity_ids: None,
+            user_id: Some("u1".to_string()),
+            user_name: Some("Bob".to_string()),
+            request_details: None,
+            response_details: None,
+            status: "success".to_string(),
+            error_message: None,
+        };
+
+        log_audit_event_with_id("test.audit_logs", &pool, params, &headers).await;
+    }
+
+    #[tokio::test]
+    async fn test_log_audit_event_with_id_empty_headers() {
+        let pool = make_lazy_pool();
+        let headers = HeaderMap::new();
+
+        let params = AuditEventParams {
+            action: "delete".to_string(),
+            entity_type: "session".to_string(),
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            status: "success".to_string(),
+            error_message: None,
+        };
+
+        log_audit_event_with_id("test.audit_logs", &pool, params, &headers).await;
+    }
+
+    // ===== list_audit_logs_inner 私有函数测试 =====
+
+    #[tokio::test]
+    async fn test_list_audit_logs_inner_returns_error_on_db_failure() {
+        let pool = make_lazy_pool();
+        let params = ListAuditLogsQuery {
+            action: None,
+            entity_type: None,
+            user_id: None,
+            status: None,
+            start_date: None,
+            end_date: None,
+            page: None,
+            page_size: None,
+        };
+
+        let response = list_audit_logs_inner("test.audit_logs", pool, params).await;
+        let value = serde_json::to_value(&response.0).unwrap();
+        // DB 不可达时应返回 500 错误
+        let code = value.get("code").and_then(|v| v.as_u64());
+        assert_eq!(code, Some(500));
+        assert_eq!(value["success"], false);
+    }
+
+    #[tokio::test]
+    async fn test_list_audit_logs_inner_with_all_filters() {
+        let pool = make_lazy_pool();
+        let params = ListAuditLogsQuery {
+            action: Some("create".to_string()),
+            entity_type: Some("customer".to_string()),
+            user_id: Some("u1".to_string()),
+            status: Some("success".to_string()),
+            start_date: Some("2026-01-01".to_string()),
+            end_date: Some("2026-12-31".to_string()),
+            page: Some(1),
+            page_size: Some(20),
+        };
+
+        let response = list_audit_logs_inner("test.audit_logs", pool, params).await;
+        let value = serde_json::to_value(&response.0).unwrap();
+        let code = value.get("code").and_then(|v| v.as_u64());
+        assert_eq!(code, Some(500));
+    }
+
+    // ===== get_audit_log_inner 私有函数测试 =====
+
+    #[tokio::test]
+    async fn test_get_audit_log_inner_returns_error_on_db_failure() {
+        let pool = make_lazy_pool();
+        let id = Uuid::new_v4();
+
+        let response = get_audit_log_inner("test.audit_logs", pool, id).await;
+        let value = serde_json::to_value(&response.0).unwrap();
+        let code = value.get("code").and_then(|v| v.as_u64());
+        assert_eq!(code, Some(500));
+        assert_eq!(value["success"], false);
+    }
+
+    // ===== HeaderMap IP 提取逻辑测试 =====
+    // log_audit_event 中的 IP 提取优先级：x-forwarded-for > x-real-ip > None
+    // 通过构造不同 header 组合验证函数不 panic
+
+    #[tokio::test]
+    async fn test_log_audit_event_x_forwarded_for_takes_priority() {
+        let pool = make_lazy_pool();
+        let mut headers = HeaderMap::new();
+        // 两个 IP 头都存在，x-forwarded-for 应优先
+        headers.insert("x-forwarded-for", "1.2.3.4".parse().unwrap());
+        headers.insert("x-real-ip", "5.6.7.8".parse().unwrap());
+
+        let params = AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "t".to_string(),
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            status: "success".to_string(),
+            error_message: None,
+        };
+
+        log_audit_event("test.audit_logs", &pool, params, &headers).await;
+    }
+}
