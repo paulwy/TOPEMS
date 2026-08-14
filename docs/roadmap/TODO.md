@@ -3142,10 +3142,12 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 >
 > **V216 已完成**：✅ 前端 E2E 测试矩阵扩面（详见下方 V216 章节，23→32 spec · +9 新增 · TSC 0 error）
 >
-> **V217 候选（按 ROI 估算，均未启动）**：
-> - **方向 D · MF 虚拟模块可观测性埋点**：在 `@module-federation/runtime` 钩子中埋点，捕获 `loadShare` 失败堆栈、Content-Type 缺失、chunk 404，并通过 logger + 全局 toast 实时告警
+> **V217 已完成**：✅ 方向 D · MF 虚拟模块可观测性埋点（详见下方 V217 章节，12 lifecycle hooks · 10 error types · 24 unit tests · TSC 0 error）
+>
+> **V218 候选（按 ROI 估算，均未启动）**：
 > - **国际化 i18n 落地**：统一 `i18next` 接入 · 中/英双语资源文件
 > - **权限矩阵自动化验证**：后端路由 → 前端导航 → 权限标识 三向自动验证 CI 门禁
+> - **方向 C 续 · Design Token 最终收敛**：616→0 偏差 · 全量 token 化
 
 ## 🎯 V213 — 覆盖率冲刺 P2→P3 全量推进（26 commits · ~2930 新增 tests · ✅ 已封版）
 
@@ -3436,4 +3438,54 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 3. **清理模式**：创建类 API 测试在创建后立即调用 `apiDelete()` 清理测试数据，避免污染
 4. **复用模式**：所有 spec 遵循 `01-dashboard / 02-list / 03-create` 三件套模式，与现有 HRM/QMS/SRM 结构一致
 5. **API_PATHS 扩展**：新增 26 个端点路径常量，覆盖 MES(8)、CRM(6)、HRM(8)、QMS(2)、SRM(2)，同时修复 QMS/SRM 预存路径缺失错误
+
+## 🎯 V217 — 方向 D · MF 虚拟模块可观测性埋点（12 hooks · 10 error types · 24 unit tests · ✅ 已封版）
+
+> **承接**：V216 E2E 测试矩阵扩面完成后，V217 转向 MF 运行时可观测性埋点。
+> **基线** (2026-08-14)：MF 运行时无生命周期钩子埋点 · 错误仅通过 RemoteErrorBoundary 捕获 · 无实时告警
+> **目标**：在 `@module-federation/runtime` 钩子中埋点，捕获 `loadShare` 失败堆栈、Content-Type 缺失、chunk 404，并通过 logger + 全局 toast 实时告警
+> **最终结果**：12 lifecycle hooks · 10 error types · 24 unit tests · 1 E2E spec · TSC 0 error ✅
+> **日期**：2026-08-14
+
+### ✅ 验证结果
+
+| # | 验证项 | 命令 | 结果 |
+|---|--------|------|------|
+| 1 | TypeScript 编译 | `cd apps/web && npx tsc --noEmit` | ✅ 0 error |
+| 2 | 单元测试 | `cd apps/web && npx vitest run --project unit src/microfrontend/observability/__tests__/mf-error-classifier.test.ts` | ✅ 24/24 passed |
+| 3 | 依赖安装 | `pnpm install --filter topems-portal` | ✅ @module-federation/runtime@2.8.0 |
+
+### 📊 交付矩阵
+
+| 层级 | 组件 | 内容 |
+|------|------|------|
+| **L1 错误分类** | `mf-error-classifier.ts` | 10 种错误类型 (chunk_404 / content_type_missing / loadShare_failure / loadRemote_failure / remote_entry_error / init_container_error / script_load_error / fetch_error / timeout / unknown) · 3 级严重度 (critical / warning / info) · HTTP 状态提取 · chunk URL 提取 · Content-Type 提取 |
+| **L2 运行时插件** | `mf-runtime-plugin.ts` | 12 个 lifecycle hooks (errorLoadShare / errorLoadRemote / loadEntryError / afterLoadEntry / afterLoadRemote / fetch / createScript / beforeLoadShare / afterLoadShare / beforeRequest / beforeInitContainer / initContainer / afterInitRemote / afterExecuteFactory) · 错误路由到 errorTracker + logger + notificationStore |
+| **L3 初始化** | `main.tsx` | `initMFObservability()` 在任何远程模块加载前调用 `registerGlobalPlugins()` |
+| **L4 导出** | `observability/index.ts` + `microfrontend/index.ts` | 新增 7 个函数 + 3 个类型导出 |
+| **L5 单元测试** | `mf-error-classifier.test.ts` | 24 个测试覆盖分类逻辑 · 严重度 · 用户消息 · toast 显示策略 · 去重抑制 |
+| **L6 E2E 测试** | `mf/mf-observability.spec.ts` | 5 个测试套件覆盖插件初始化 · 模块加载失败 · toast 告警 · 去重 · DevTools 面板 |
+
+### 🔧 技术要点
+
+1. **registerGlobalPlugins API**：使用 `@module-federation/runtime` 的 `registerGlobalPlugins()` 在全局 MF 实例创建前注册插件，所有后续创建的 `ModuleFederation` 实例自动继承这些钩子
+2. **fetch 钩子拦截**：在 `fetch` 钩子中包装原生 `fetch`，检测 HTTP 状态码和 Content-Type 异常（如返回 text/html 而非 application/javascript），实现请求级可观测性
+3. **错误去重**：10 秒窗口内同类型 + 同模块的重复错误超过 2 次时自动抑制 toast，避免告警风暴
+4. **错误恢复感知**：`afterLoadRemote` 和 `afterLoadEntry` 钩子检查 `recovered` 字段，仅在未恢复时告警
+5. **stats API**：`getMFErrorStats()` 提供按类型/模块聚合的错误统计，供 ObservabilityPanel 展示
+6. **加载计时**：`beforeLoadShare` / `beforeRequest` 记录起始时间戳，`afterLoadShare` 计算加载耗时
+
+### 📦 交付清单
+
+| 文件/目录 | 变更内容 |
+|----------|---------|
+| `apps/web/package.json` | 新增 `@module-federation/runtime@^2.8.0` 依赖 |
+| `apps/web/src/microfrontend/observability/mf-error-classifier.ts` | 新增：MF 运行时错误分类器（10 种错误类型 · 3 级严重度 · HTTP 状态/URL/Content-Type 提取） |
+| `apps/web/src/microfrontend/observability/mf-runtime-plugin.ts` | 新增：MF 运行时可观测性插件（12 lifecycle hooks · 错误路由 · toast 告警 · stats API） |
+| `apps/web/src/microfrontend/observability/__tests__/mf-error-classifier.test.ts` | 新增：24 个单元测试覆盖分类逻辑 |
+| `apps/web/src/microfrontend/observability/index.ts` | 更新：新增 MF 可观测性导出 |
+| `apps/web/src/microfrontend/index.ts` | 更新：新增 7 函数 + 3 类型导出 |
+| `apps/web/src/main.tsx` | 更新：在顶部添加 `initMFObservability()` 调用 |
+| `apps/web/vitest.config.ts` | 更新：unit project include 新增 `src/microfrontend/**/__tests__/**` |
+| `tests/e2e/tests/mf/mf-observability.spec.ts` | 新增：5 个 E2E 测试套件覆盖 MF 可观测性场景 |
 

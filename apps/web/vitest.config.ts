@@ -224,6 +224,7 @@ export default defineConfig({
             'src/schemas/__tests__/**/*.{test,spec}.{ts,tsx}',
             'src/schema/__tests__/**/*.{test,spec}.{ts,tsx}',
             'src/common/__tests__/**/*.{test,spec}.{ts,tsx}',
+            'src/microfrontend/**/__tests__/**/*.{test,spec}.{ts,tsx}',
             'tests/**/*.{test,spec}.{ts,tsx}',
             'src/__tests__/unit/**/*.{test,spec}.{ts,tsx}',
           ],

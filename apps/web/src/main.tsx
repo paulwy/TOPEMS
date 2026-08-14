@@ -7,6 +7,10 @@ import { logger } from '@/utils/logger';
 import { applySecurityHeaders } from '@/config/security';
 import { logPerformanceMetrics } from '@/utils/performance';
 import { initPWA } from '@/lib/pwa';
+import { initMFObservability } from './microfrontend/observability';
+
+// V217: 在任何远程模块加载前注册 MF 运行时可观测性插件
+initMFObservability();
 
 applySecurityHeaders();
 
