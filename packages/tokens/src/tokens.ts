@@ -242,6 +242,84 @@ export const designTokens = {
       light: '#f472b6',
       dark: '#db2777',
     },
+
+    // ─── Cyber 霓虹色系 · V212-C1 扩展 ────────────────
+    // 赛博朋克风荧光色板，为 AI 面板 / 实时看板 / 状态徽标提供统一入口
+    neon: {
+      cyan: {
+        50: '#ecfeff',
+        100: '#cffafe',
+        200: '#a5f3fc',
+        300: '#22d3ee',
+        400: '#06b6d4',
+        500: '#0891b2',
+        glow: 'rgba(34, 211, 238, 0.55)',
+      },
+      magenta: {
+        50: '#fdf4ff',
+        100: '#fae8ff',
+        200: '#f5d0fe',
+        300: '#e879f9',
+        400: '#d946ef',
+        500: '#c026d3',
+        glow: 'rgba(232, 121, 249, 0.55)',
+      },
+      yellow: {
+        50: '#fefce8',
+        100: '#fef9c3',
+        200: '#fef08a',
+        300: '#fde047',
+        400: '#facc15',
+        500: '#eab308',
+        glow: 'rgba(253, 224, 71, 0.55)',
+      },
+      lime: {
+        300: '#bef264',
+        400: '#a3e635',
+        500: '#84cc16',
+        glow: 'rgba(190, 242, 100, 0.5)',
+      },
+      red: {
+        300: '#fb7185',
+        400: '#f43f5e',
+        500: '#e11d48',
+        glow: 'rgba(244, 63, 94, 0.5)',
+      },
+    },
+
+    // Cyber 玻璃态 & 金属底调色板
+    cyber: {
+      /** 深色玻璃底色 */
+      glass: {
+        bg: 'rgba(15, 23, 42, 0.65)',
+        bgHeavy: 'rgba(15, 23, 42, 0.82)',
+        bgLight: 'rgba(255, 255, 255, 0.06)',
+        border: 'rgba(148, 163, 184, 0.22)',
+        divider: 'rgba(148, 163, 184, 0.18)',
+      },
+      /** 网格 / 等距底纹背景 */
+      grid: {
+        line: 'rgba(148, 163, 184, 0.12)',
+        lineHeavy: 'rgba(59, 130, 246, 0.25)',
+        accentCross: 'rgba(34, 211, 238, 0.20)',
+      },
+      /** 金属渐变高光 */
+      metal: {
+        topLight: 'rgba(255, 255, 255, 0.10)',
+        bottomShadow: 'rgba(0, 0, 0, 0.55)',
+      },
+      /** Cyber 渐变背景用 */
+      gradients: {
+        aurora:
+          'linear-gradient(135deg, rgba(168, 85, 247, 0.18), rgba(34, 211, 238, 0.18) 45%, rgba(232, 121, 249, 0.14))',
+        sunset:
+          'linear-gradient(135deg, rgba(244, 63, 94, 0.22), rgba(251, 146, 60, 0.20))',
+        ocean:
+          'linear-gradient(135deg, rgba(6, 182, 212, 0.20), rgba(37, 99, 235, 0.22))',
+        tech:
+          'linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(59, 130, 246, 0.18))',
+      },
+    },
   },
 
   spacing: {
@@ -292,6 +370,38 @@ export const designTokens = {
     float: '0 25px 50px -12px rgb(0 0 0 / 0.3)',
     '3xl': '0 35px 60px -15px rgb(0 0 0 / 0.45)',
     inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.15)',
+  },
+
+  // ─── Cyber 霓虹发光阴影 · V212-C1 扩展 ─────────────
+  neonShadows: {
+    none: 'none',
+    /** 青色 Neon 辉光 · AI 成功态 / 健康态 */
+    cyan: {
+      sm: '0 0 12px rgba(34, 211, 238, 0.35)',
+      md: '0 0 22px rgba(34, 211, 238, 0.50), 0 0 6px rgba(34, 211, 238, 0.65)',
+      lg: '0 0 36px rgba(34, 211, 238, 0.55), 0 0 10px rgba(34, 211, 238, 0.70)',
+    },
+    /** 品红 Neon 辉光 · AI 智能态 / 强调态 */
+    magenta: {
+      sm: '0 0 12px rgba(232, 121, 249, 0.35)',
+      md: '0 0 22px rgba(232, 121, 249, 0.50), 0 0 6px rgba(232, 121, 249, 0.65)',
+      lg: '0 0 36px rgba(232, 121, 249, 0.55), 0 0 10px rgba(232, 121, 249, 0.70)',
+    },
+    /** 黄色 Neon 辉光 · 警告 / 运行中态 */
+    yellow: {
+      sm: '0 0 12px rgba(253, 224, 71, 0.35)',
+      md: '0 0 22px rgba(253, 224, 71, 0.50), 0 0 6px rgba(253, 224, 71, 0.65)',
+    },
+    /** 绿色 Neon 辉光 · 在线 / 成功态 */
+    green: {
+      sm: '0 0 10px rgba(190, 242, 100, 0.45)',
+      md: '0 0 20px rgba(190, 242, 100, 0.55)',
+    },
+    /** 红色 Neon 辉光 · 错误 / 离线态 */
+    red: {
+      sm: '0 0 10px rgba(244, 63, 94, 0.45)',
+      md: '0 0 20px rgba(244, 63, 94, 0.60)',
+    },
   },
 
   motion: {
@@ -738,6 +848,59 @@ export const semanticTokens = {
       fontSize: designTokens.typography.fontSize.sm,
       gap: 8,
     },
+  },
+
+  // ─── Cyber 风格语义层 · V212-C1 扩展 ─────────────────
+  // 为 AI 面板 / 实时看板 / 状态徽标等赛博视觉组件提供统一入口
+  cyber: {
+    /** AI 状态徽标 · 颜色语义 */
+    status: {
+      online: designTokens.colors.neon.lime[400],
+      offline: designTokens.colors.neon.red[400],
+      running: designTokens.colors.neon.cyan[300],
+      warning: designTokens.colors.neon.yellow[300],
+      error: designTokens.colors.neon.red[400],
+      success: designTokens.colors.neon.lime[400],
+      ai: designTokens.colors.neon.magenta[300],
+    },
+    /** AI 状态徽标 · 辉光阴影（使用 neonShadows.*） */
+    statusGlow: {
+      online: designTokens.neonShadows.green.md,
+      offline: designTokens.neonShadows.red.md,
+      running: designTokens.neonShadows.cyan.sm,
+      warning: designTokens.neonShadows.yellow.sm,
+      error: designTokens.neonShadows.red.md,
+      success: designTokens.neonShadows.green.md,
+      ai: designTokens.neonShadows.magenta.md,
+    },
+    /** 玻璃态面板容器样式值 */
+    panel: {
+      bg: designTokens.colors.cyber.glass.bg,
+      bgHeavy: designTokens.colors.cyber.glass.bgHeavy,
+      border: `1px solid ${designTokens.colors.cyber.glass.border}`,
+      borderRadius: designTokens.borderRadius.lg,
+      backdropFilter: 'blur(14px) saturate(140%)',
+      padding: '20px',
+      gap: '16px',
+    },
+    /** AI 对话气泡 */
+    chatBubble: {
+      user: {
+        bg: designTokens.colors.cyber.gradients.ocean,
+        text: '#ffffff',
+        padding: '12px 16px',
+        radius: designTokens.borderRadius.lg,
+      },
+      ai: {
+        bg: designTokens.colors.cyber.gradients.aurora,
+        text: '#ffffff',
+        padding: '12px 16px',
+        radius: designTokens.borderRadius.lg,
+        glow: designTokens.neonShadows.magenta.sm,
+      },
+    },
+    /** 主背景渐变（Dashboard / AI 大屏） */
+    heroBackground: designTokens.colors.cyber.gradients.aurora,
   },
 
 } as const;
