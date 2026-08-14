@@ -1955,4 +1955,397 @@ mod tests {
         assert_eq!(redis.host, "localhost");
         assert_eq!(redis.port, 6379);
     }
+
+    // ===== 第五批补充测试 =====
+
+    // ---------- Config (async) 补充 ----------
+    #[tokio::test]
+    async fn config_load_unknown_env_falls_back_to_devenv() {
+        let _g = ENV_LOCK.lock().unwrap();
+        std::env::set_var("APP_ENV", "staging");
+        let cfg = Config::load().await.expect("load fallback ok");
+        // 未知 env 走 _ => DevEnv 分支，但 Config.env 字段保留实际值
+        assert_eq!(cfg.env(), "staging");
+        assert!(!cfg.is_development());
+        assert!(!cfg.is_production());
+        assert!(!cfg.is_test());
+        // envy 将 APP_ENV 读入 DevEnv.app_env 字段，因此值为 "staging"
+        let app = cfg.get().await;
+        assert_eq!(app.app_env, "staging");
+        std::env::remove_var("APP_ENV");
+    }
+
+    #[tokio::test]
+    async fn config_get_returns_independent_clone() {
+        let _g = ENV_LOCK.lock().unwrap();
+        std::env::remove_var("APP_ENV");
+        let cfg = Config::load().await.expect("load ok");
+        let app1 = cfg.get().await;
+        let app2 = cfg.get().await;
+        assert_eq!(app1.app_env, app2.app_env);
+        assert_eq!(app1.database.host, app2.database.host);
+        assert_eq!(app1.server.port, app2.server.port);
+    }
+
+    #[tokio::test]
+    async fn config_get_redis_returns_configured() {
+        let _g = ENV_LOCK.lock().unwrap();
+        std::env::remove_var("APP_ENV");
+        let cfg = Config::load().await.expect("load ok");
+        let redis = cfg.get_redis().await;
+        assert_eq!(redis.host, "localhost");
+        assert_eq!(redis.port, 6379);
+        assert_eq!(redis.db, 0);
+        assert_eq!(redis.pool_max_size, 5);
+        assert!(redis.password.is_none());
+    }
+
+    #[tokio::test]
+    async fn config_get_auth_secret_fields() {
+        let _g = ENV_LOCK.lock().unwrap();
+        std::env::remove_var("APP_ENV");
+        let cfg = Config::load().await.expect("load ok");
+        let auth = cfg.get_auth().await;
+        assert_eq!(auth.jwt_secret, "dev-jwt-secret-key-not-for-production-use");
+        assert_eq!(auth.jwt_refresh_secret, "dev-refresh-secret-key-not-for-production");
+        assert_eq!(auth.session_secret, "dev-session-secret-not-for-production");
+        assert_eq!(auth.jwt_expiry_hours, 24);
+        assert_eq!(auth.jwt_refresh_expiry_days, 7);
+    }
+
+    #[tokio::test]
+    async fn config_get_server_returns_configured() {
+        let _g = ENV_LOCK.lock().unwrap();
+        std::env::remove_var("APP_ENV");
+        let cfg = Config::load().await.expect("load ok");
+        let server = cfg.get_server().await;
+        assert_eq!(server.host, "localhost");
+        assert_eq!(server.port, 8000);
+        assert!(server.cors_credentials);
+        assert!(!server.rate_limit_enabled);
+        assert_eq!(server.rate_limit_requests, 1000);
+        assert_eq!(server.rate_limit_window_secs, 60);
+    }
+
+    // ---------- From<DevEnv> 边界 ----------
+    #[test]
+    fn from_devenv_redis_password_some_preserved() {
+        let mut env = build_devenv();
+        env.redis_password = Some("dev-redis-secret".to_string());
+        let cfg: AppConfig = env.into();
+        assert_eq!(cfg.redis.password, Some("dev-redis-secret".to_string()));
+    }
+
+    #[test]
+    fn from_devenv_redis_password_none_preserved() {
+        let mut env = build_devenv();
+        env.redis_password = None;
+        let cfg: AppConfig = env.into();
+        assert_eq!(cfg.redis.password, None);
+    }
+
+    #[test]
+    fn from_devenv_cors_methods_split_correctly() {
+        let env = build_devenv();
+        let cfg: AppConfig = env.into();
+        assert_eq!(cfg.server.cors_methods.len(), 6);
+        assert!(cfg.server.cors_methods.contains(&"GET".to_string()));
+        assert!(cfg.server.cors_methods.contains(&"OPTIONS".to_string()));
+        assert!(cfg.server.cors_methods.contains(&"PATCH".to_string()));
+    }
+
+    #[test]
+    fn from_devenv_allowed_file_types_split_correctly() {
+        let cfg: AppConfig = build_devenv().into();
+        assert_eq!(cfg.storage.allowed_file_types.len(), 13);
+        assert!(cfg.storage.allowed_file_types.contains(&"pdf".to_string()));
+        assert!(cfg.storage.allowed_file_types.contains(&"md".to_string()));
+        assert!(cfg.storage.allowed_file_types.contains(&"zip".to_string()));
+    }
+
+    #[test]
+    fn from_devenv_empty_allowed_file_types_produces_single_empty() {
+        let mut env = build_devenv();
+        env.allowed_file_types = "".to_string();
+        let cfg: AppConfig = env.into();
+        // "".split(',') 产生 [""]
+        assert_eq!(cfg.storage.allowed_file_types.len(), 1);
+        assert_eq!(cfg.storage.allowed_file_types[0], "");
+    }
+
+    #[test]
+    fn from_devenv_single_allowed_file_type() {
+        let mut env = build_devenv();
+        env.allowed_file_types = "pdf".to_string();
+        let cfg: AppConfig = env.into();
+        assert_eq!(cfg.storage.allowed_file_types.len(), 1);
+        assert_eq!(cfg.storage.allowed_file_types[0], "pdf");
+    }
+
+    #[test]
+    fn from_devenv_preserves_all_ai_fields() {
+        let cfg: AppConfig = build_devenv().into();
+        assert_eq!(cfg.ai.ollama_base_url, "http://localhost:11434");
+        assert_eq!(cfg.ai.ollama_model, "qwen2.5:7b-instruct");
+        assert_eq!(cfg.ai.ollama_timeout, 60);
+        assert_eq!(cfg.ai.rag_chunk_size, 500);
+        assert_eq!(cfg.ai.rag_chunk_overlap, 50);
+        assert_eq!(cfg.ai.rag_max_results, 3);
+    }
+
+    #[test]
+    fn from_devenv_preserves_all_mail_fields() {
+        let cfg: AppConfig = build_devenv().into();
+        assert_eq!(cfg.mail.smtp_host, "localhost");
+        assert_eq!(cfg.mail.smtp_port, 1025);
+        assert_eq!(cfg.mail.smtp_user, "");
+        assert_eq!(cfg.mail.smtp_password, "");
+        assert_eq!(cfg.mail.smtp_from, "topems@localhost");
+        assert_eq!(cfg.mail.smtp_from_name, "TOPEMS");
+        assert!(!cfg.mail.smtp_use_tls);
+    }
+
+    // ---------- From<TestEnv> 边界 ----------
+    #[test]
+    fn from_testenv_redis_password_some_preserved() {
+        let mut env = build_testenv();
+        env.redis_password = Some("test-redis-secret".to_string());
+        let cfg: AppConfig = env.into();
+        assert_eq!(cfg.redis.password, Some("test-redis-secret".to_string()));
+    }
+
+    #[test]
+    fn from_testenv_cors_methods_split_correctly() {
+        let cfg: AppConfig = build_testenv().into();
+        assert_eq!(cfg.server.cors_methods.len(), 6);
+        assert!(cfg.server.cors_methods.contains(&"POST".to_string()));
+        assert!(cfg.server.cors_methods.contains(&"DELETE".to_string()));
+    }
+
+    #[test]
+    fn from_testenv_preserves_all_logging_fields() {
+        let cfg: AppConfig = build_testenv().into();
+        assert_eq!(cfg.logging.level, "warn");
+        assert_eq!(cfg.logging.format, "pretty");
+        assert!(!cfg.logging.file_enabled);
+        assert_eq!(cfg.logging.file_path, "./logs/app.log");
+        assert_eq!(cfg.logging.max_size, 50);
+        assert_eq!(cfg.logging.max_files, 5);
+    }
+
+    // ---------- From<ProductionEnv> 边界 ----------
+    #[test]
+    fn from_productionenv_redis_password_none_preserved() {
+        let mut env = build_productionenv();
+        env.redis_password = None;
+        let cfg: AppConfig = env.into();
+        assert_eq!(cfg.redis.password, None);
+    }
+
+    #[test]
+    fn from_productionenv_cors_methods_split_correctly() {
+        let cfg: AppConfig = build_productionenv().into();
+        assert_eq!(cfg.server.cors_methods.len(), 6);
+        assert!(cfg.server.cors_methods.contains(&"GET".to_string()));
+    }
+
+    #[test]
+    fn from_productionenv_allowed_file_types_split_correctly() {
+        let cfg: AppConfig = build_productionenv().into();
+        assert!(cfg.storage.allowed_file_types.contains(&"jpg".to_string()));
+        assert!(cfg.storage.allowed_file_types.contains(&"pdf".to_string()));
+        assert!(cfg.storage.allowed_file_types.contains(&"md".to_string()));
+    }
+
+    #[test]
+    fn from_productionenv_multi_cors_origins_split() {
+        let mut env = build_productionenv();
+        env.cors_origins = "https://a.com,https://b.com,https://c.com".to_string();
+        let cfg: AppConfig = env.into();
+        assert_eq!(cfg.server.cors_origins.len(), 3);
+        assert!(cfg.server.cors_origins.contains(&"https://b.com".to_string()));
+        assert!(cfg.server.cors_origins.contains(&"https://c.com".to_string()));
+    }
+
+    #[test]
+    fn from_productionenv_preserves_all_database_fields() {
+        let cfg: AppConfig = build_productionenv().into();
+        assert_eq!(cfg.database.url, "postgres://prod/db");
+        assert_eq!(cfg.database.host, "localhost");
+        assert_eq!(cfg.database.port, 5432);
+        assert_eq!(cfg.database.name, "topems_prod");
+        assert_eq!(cfg.database.user, "topems");
+        assert_eq!(cfg.database.password, "prod_secret");
+        assert_eq!(cfg.database.pool_max_size, 20);
+        assert_eq!(cfg.database.pool_min_size, 5);
+        assert_eq!(cfg.database.connect_timeout, 15);
+        assert_eq!(cfg.database.idle_timeout, 600);
+    }
+
+    // ---------- Clone 测试补充 ----------
+    #[test]
+    fn redis_config_clone_preserves_all_fields() {
+        let c = build_redis_config();
+        let c2 = c.clone();
+        assert_eq!(c2.url, c.url);
+        assert_eq!(c2.host, c.host);
+        assert_eq!(c2.port, c.port);
+        assert_eq!(c2.password, c.password);
+        assert_eq!(c2.db, c.db);
+        assert_eq!(c2.pool_max_size, c.pool_max_size);
+    }
+
+    #[test]
+    fn storage_config_clone_preserves_all_fields() {
+        let c = build_storage_config();
+        let c2 = c.clone();
+        assert_eq!(c2.upload_dir, c.upload_dir);
+        assert_eq!(c2.upload_max_size, c.upload_max_size);
+        assert_eq!(c2.allowed_file_types, c.allowed_file_types);
+        assert_eq!(c2.storage_provider, c.storage_provider);
+    }
+
+    #[test]
+    fn mail_config_clone_preserves_all_fields() {
+        let c = build_mail_config();
+        let c2 = c.clone();
+        assert_eq!(c2.smtp_host, c.smtp_host);
+        assert_eq!(c2.smtp_port, c.smtp_port);
+        assert_eq!(c2.smtp_user, c.smtp_user);
+        assert_eq!(c2.smtp_password, c.smtp_password);
+        assert_eq!(c2.smtp_from, c.smtp_from);
+        assert_eq!(c2.smtp_from_name, c.smtp_from_name);
+        assert_eq!(c2.smtp_use_tls, c.smtp_use_tls);
+    }
+
+    #[test]
+    fn ai_config_clone_preserves_all_fields() {
+        let c = build_ai_config();
+        let c2 = c.clone();
+        assert_eq!(c2.ollama_base_url, c.ollama_base_url);
+        assert_eq!(c2.ollama_model, c.ollama_model);
+        assert_eq!(c2.ollama_timeout, c.ollama_timeout);
+        assert_eq!(c2.rag_chunk_size, c.rag_chunk_size);
+        assert_eq!(c2.rag_chunk_overlap, c.rag_chunk_overlap);
+        assert_eq!(c2.rag_max_results, c.rag_max_results);
+    }
+
+    #[test]
+    fn logging_config_clone_preserves_all_fields() {
+        let c = build_logging_config();
+        let c2 = c.clone();
+        assert_eq!(c2.level, c.level);
+        assert_eq!(c2.format, c.format);
+        assert_eq!(c2.file_enabled, c.file_enabled);
+        assert_eq!(c2.file_path, c.file_path);
+        assert_eq!(c2.max_size, c.max_size);
+        assert_eq!(c2.max_files, c.max_files);
+    }
+
+    // ---------- Debug derive 测试 ----------
+    #[test]
+    fn database_config_debug_format_contains_fields() {
+        let c = build_database_config();
+        let debug = format!("{:?}", c);
+        assert!(debug.contains("DatabaseConfig"));
+        assert!(debug.contains("dbhost"));
+        assert!(debug.contains("dbname"));
+        assert!(debug.contains("dbuser"));
+    }
+
+    #[test]
+    fn app_config_debug_format_contains_app_env() {
+        let cfg: AppConfig = build_devenv().into();
+        let debug = format!("{:?}", cfg);
+        assert!(debug.contains("AppConfig"));
+        assert!(debug.contains("development"));
+        assert!(debug.contains("localhost"));
+    }
+
+    // ---------- AppConfig 自定义值 roundtrip ----------
+    #[test]
+    fn app_config_serde_json_custom_values_roundtrip() {
+        let cfg = AppConfig {
+            app_env: "custom".to_string(),
+            database: DatabaseConfig {
+                url: "postgres://custom".to_string(),
+                host: "custom-host".to_string(),
+                port: 9999,
+                name: "custom_db".to_string(),
+                user: "custom_user".to_string(),
+                password: "custom_pw".to_string(),
+                pool_max_size: 99,
+                pool_min_size: 11,
+                connect_timeout: 77,
+                idle_timeout: 888,
+            },
+            auth: build_auth_config(),
+            server: build_server_config(),
+            redis: build_redis_config(),
+            cache: CacheConfig::default(),
+            storage: build_storage_config(),
+            mail: build_mail_config(),
+            ai: build_ai_config(),
+            logging: build_logging_config(),
+        };
+        let json = serde_json::to_string(&cfg).expect("serialize");
+        let back: AppConfig = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.app_env, "custom");
+        assert_eq!(back.database.host, "custom-host");
+        assert_eq!(back.database.port, 9999);
+        assert_eq!(back.database.pool_max_size, 99);
+        assert_eq!(back.database.connect_timeout, 77);
+        assert_eq!(back.auth.jwt_secret, "jwt-secret-value");
+        assert_eq!(back.server.port, 9000);
+        assert_eq!(back.redis.password, Some("secret".to_string()));
+        assert_eq!(back.storage.storage_provider, "s3");
+        assert_eq!(back.ai.ollama_timeout, 120);
+        assert_eq!(back.logging.format, "json");
+    }
+
+    // ---------- CacheConfig 自定义值 ----------
+    #[test]
+    fn cache_config_custom_values_serde_roundtrip() {
+        let c = CacheConfig {
+            prefix: "custom:".to_string(),
+            default_ttl: 120,
+            memory_cache_size: 5000,
+            eviction_policy: "FIFO".to_string(),
+            write_through: true,
+            enable_multi_level: false,
+            l1_ttl: 10,
+            l2_ttl: 100,
+            enable_cache_warming: false,
+            warming_concurrency: 8,
+            stats_interval: 30,
+        };
+        let json = serde_json::to_string(&c).expect("serialize");
+        let back: CacheConfig = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.prefix, "custom:");
+        assert_eq!(back.default_ttl, 120);
+        assert_eq!(back.memory_cache_size, 5000);
+        assert_eq!(back.eviction_policy, "FIFO");
+        assert!(back.write_through);
+        assert!(!back.enable_multi_level);
+        assert_eq!(back.l1_ttl, 10);
+        assert_eq!(back.l2_ttl, 100);
+        assert!(!back.enable_cache_warming);
+        assert_eq!(back.warming_concurrency, 8);
+        assert_eq!(back.stats_interval, 30);
+    }
+
+    // ---------- default_* 剩余覆盖 ----------
+    #[test]
+    fn default_functions_remaining_coverage() {
+        assert_eq!(default_test_jwt_secret(), "test-jwt-secret-key-for-testing-only-32chars");
+        assert_eq!(default_test_jwt_refresh_secret(), "test-refresh-secret-for-testing-only");
+        assert_eq!(default_test_session_secret(), "test-session-secret-for-testing-only");
+        assert_eq!(default_test_server_port(), 8000);
+        assert_eq!(default_test_cors_origins(), "http://localhost:3000");
+        assert_eq!(default_log_file_path(), "./logs/app.log");
+        assert_eq!(default_log_max_size(), 50);
+        assert_eq!(default_log_max_files(), 5);
+        assert!(!default_log_file_enabled());
+        assert_eq!(default_log_format(), "pretty");
+    }
 }

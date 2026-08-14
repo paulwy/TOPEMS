@@ -829,4 +829,334 @@ mod tests {
         let te: TopemsError = io.into();
         assert!(matches!(te, TopemsError::PermissionDenied { required: _ }));
     }
+
+    // ===== 第五批补充测试 =====
+    use axum::response::IntoResponse;
+
+    // ---------- Display 各变体 ----------
+    #[test]
+    fn display_database_connection_contains_message() {
+        let e = TopemsError::DatabaseConnection("conn failed".to_string());
+        assert_eq!(e.to_string(), "数据库连接失败: conn failed");
+    }
+
+    #[test]
+    fn display_database_query_contains_message() {
+        let e = TopemsError::DatabaseQuery("select error".to_string());
+        assert_eq!(e.to_string(), "数据库查询失败: select error");
+    }
+
+    #[test]
+    fn display_authentication_failed_contains_message() {
+        let e = TopemsError::AuthenticationFailed("bad token".to_string());
+        assert_eq!(e.to_string(), "认证失败: bad token");
+    }
+
+    #[test]
+    fn display_permission_denied_contains_required() {
+        let e = TopemsError::PermissionDenied {
+            required: "admin".to_string(),
+        };
+        assert_eq!(e.to_string(), "权限不足: 需要 admin 权限");
+    }
+
+    #[test]
+    fn display_invalid_token_is_static_message() {
+        let e = TopemsError::InvalidToken;
+        assert_eq!(e.to_string(), "Token 无效或已过期");
+    }
+
+    #[test]
+    fn display_unauthorized_is_static_message() {
+        let e = TopemsError::Unauthorized;
+        assert_eq!(e.to_string(), "用户未登录");
+    }
+
+    #[test]
+    fn display_config_load_contains_message() {
+        let e = TopemsError::ConfigLoad("file missing".to_string());
+        assert_eq!(e.to_string(), "配置加载失败: file missing");
+    }
+
+    #[test]
+    fn display_validation_failed_contains_message() {
+        let e = TopemsError::ValidationFailed("field required".to_string());
+        assert_eq!(e.to_string(), "数据验证失败: field required");
+    }
+
+    #[test]
+    fn display_resource_not_found_contains_message() {
+        let e = TopemsError::ResourceNotFound("user 42".to_string());
+        assert_eq!(e.to_string(), "资源不存在: user 42");
+    }
+
+    #[test]
+    fn display_resource_already_exists_contains_message() {
+        let e = TopemsError::ResourceAlreadyExists("email".to_string());
+        assert_eq!(e.to_string(), "资源已存在: email");
+    }
+
+    #[test]
+    fn display_request_timeout_is_static_message() {
+        let e = TopemsError::RequestTimeout;
+        assert_eq!(e.to_string(), "请求超时");
+    }
+
+    #[test]
+    fn display_service_error_contains_status_and_message() {
+        let e = TopemsError::ServiceError {
+            status_code: 502,
+            message: "bad gateway".to_string(),
+        };
+        assert_eq!(e.to_string(), "服务错误: 502 - bad gateway");
+    }
+
+    #[test]
+    fn display_invalid_url_contains_message() {
+        let e = TopemsError::InvalidUrl("not a url".to_string());
+        assert_eq!(e.to_string(), "无效的URL: not a url");
+    }
+
+    #[test]
+    fn display_business_logic_contains_message() {
+        let e = TopemsError::BusinessLogic("cannot delete".to_string());
+        assert_eq!(e.to_string(), "业务逻辑错误: cannot delete");
+    }
+
+    #[test]
+    fn display_file_not_found_contains_message() {
+        let e = TopemsError::FileNotFound("/tmp/x".to_string());
+        assert_eq!(e.to_string(), "文件不存在: /tmp/x");
+    }
+
+    // ---------- IntoResponse HTTP 状态码映射 ----------
+    #[test]
+    fn into_response_database_connection_returns_500() {
+        let e = TopemsError::DatabaseConnection("x".to_string());
+        let resp = e.into_response();
+        assert_eq!(resp.status().as_u16(), 500);
+    }
+
+    #[test]
+    fn into_response_database_record_not_found_returns_404() {
+        let e = TopemsError::DatabaseRecordNotFound("rec".to_string());
+        let resp = e.into_response();
+        assert_eq!(resp.status().as_u16(), 404);
+    }
+
+    #[test]
+    fn into_response_authentication_failed_returns_401() {
+        let e = TopemsError::AuthenticationFailed("x".to_string());
+        let resp = e.into_response();
+        assert_eq!(resp.status().as_u16(), 401);
+    }
+
+    #[test]
+    fn into_response_invalid_token_returns_401() {
+        let resp = TopemsError::InvalidToken.into_response();
+        assert_eq!(resp.status().as_u16(), 401);
+    }
+
+    #[test]
+    fn into_response_unauthorized_returns_401() {
+        let resp = TopemsError::Unauthorized.into_response();
+        assert_eq!(resp.status().as_u16(), 401);
+    }
+
+    #[test]
+    fn into_response_permission_denied_returns_403() {
+        let e = TopemsError::PermissionDenied {
+            required: "admin".to_string(),
+        };
+        let resp = e.into_response();
+        assert_eq!(resp.status().as_u16(), 403);
+    }
+
+    #[test]
+    fn into_response_config_validation_returns_400() {
+        let e = TopemsError::ConfigValidation("bad".to_string());
+        let resp = e.into_response();
+        assert_eq!(resp.status().as_u16(), 400);
+    }
+
+    #[test]
+    fn into_response_validation_failed_returns_400() {
+        let e = TopemsError::ValidationFailed("bad".to_string());
+        let resp = e.into_response();
+        assert_eq!(resp.status().as_u16(), 400);
+    }
+
+    #[test]
+    fn into_response_resource_not_found_returns_404() {
+        let e = TopemsError::ResourceNotFound("x".to_string());
+        let resp = e.into_response();
+        assert_eq!(resp.status().as_u16(), 404);
+    }
+
+    #[test]
+    fn into_response_resource_already_exists_returns_409() {
+        let e = TopemsError::ResourceAlreadyExists("x".to_string());
+        let resp = e.into_response();
+        assert_eq!(resp.status().as_u16(), 409);
+    }
+
+    #[test]
+    fn into_response_operation_not_allowed_returns_403() {
+        let e = TopemsError::OperationNotAllowed("x".to_string());
+        let resp = e.into_response();
+        assert_eq!(resp.status().as_u16(), 403);
+    }
+
+    #[test]
+    fn into_response_request_timeout_returns_408() {
+        let resp = TopemsError::RequestTimeout.into_response();
+        assert_eq!(resp.status().as_u16(), 408);
+    }
+
+    #[test]
+    fn into_response_service_unavailable_returns_503() {
+        let e = TopemsError::ServiceUnavailable("x".to_string());
+        let resp = e.into_response();
+        assert_eq!(resp.status().as_u16(), 503);
+    }
+
+    #[test]
+    fn into_response_service_error_custom_status() {
+        let e = TopemsError::ServiceError {
+            status_code: 422,
+            message: "unprocessable".to_string(),
+        };
+        let resp = e.into_response();
+        assert_eq!(resp.status().as_u16(), 422);
+    }
+
+    #[test]
+    fn into_response_service_error_invalid_status_falls_back_to_500() {
+        let e = TopemsError::ServiceError {
+            status_code: 99,
+            message: "invalid".to_string(),
+        };
+        let resp = e.into_response();
+        assert_eq!(resp.status().as_u16(), 500);
+    }
+
+    #[test]
+    fn into_response_file_not_found_returns_404() {
+        let e = TopemsError::FileNotFound("/tmp/missing".to_string());
+        let resp = e.into_response();
+        assert_eq!(resp.status().as_u16(), 404);
+    }
+
+    #[test]
+    fn into_response_invalid_url_returns_400() {
+        let e = TopemsError::InvalidUrl("bad".to_string());
+        let resp = e.into_response();
+        assert_eq!(resp.status().as_u16(), 400);
+    }
+
+    #[test]
+    fn into_response_env_var_not_set_returns_500() {
+        let e = TopemsError::EnvVarNotSet("MY_VAR".to_string());
+        let resp = e.into_response();
+        assert_eq!(resp.status().as_u16(), 500);
+    }
+
+    // ---------- From<sqlx::Error> 转换 ----------
+    #[test]
+    fn from_sqlx_pool_timed_out_maps_to_database_connection() {
+        let sqlx_err = sqlx::Error::PoolTimedOut;
+        let te: TopemsError = sqlx_err.into();
+        assert!(matches!(te, TopemsError::DatabaseConnection(_)));
+    }
+
+    #[test]
+    fn from_sqlx_pool_closed_maps_to_database_connection() {
+        let sqlx_err = sqlx::Error::PoolClosed;
+        let te: TopemsError = sqlx_err.into();
+        assert!(matches!(te, TopemsError::DatabaseConnection(_)));
+    }
+
+    #[test]
+    fn from_sqlx_io_error_maps_to_database_connection() {
+        let io = std::io::Error::new(std::io::ErrorKind::ConnectionRefused, "refused");
+        let sqlx_err = sqlx::Error::Io(io);
+        let te: TopemsError = sqlx_err.into();
+        assert!(matches!(te, TopemsError::DatabaseConnection(_)));
+    }
+
+    // ---------- From<std::io::Error> 其他类型 ----------
+    #[test]
+    fn from_io_other_error_kind_maps_to_file_operation() {
+        let io = std::io::Error::new(std::io::ErrorKind::ConnectionRefused, "refused");
+        let te: TopemsError = io.into();
+        assert!(matches!(te, TopemsError::FileOperation(_)));
+    }
+
+    #[test]
+    fn from_io_already_exists_maps_to_file_operation() {
+        let io = std::io::Error::new(std::io::ErrorKind::AlreadyExists, "exists");
+        let te: TopemsError = io.into();
+        assert!(matches!(te, TopemsError::FileOperation(_)));
+    }
+
+    // ---------- From<serde_json::Error> 转换 ----------
+    #[test]
+    fn from_serde_json_error_maps_to_serialization() {
+        let json_err = serde_json::from_str::<String>("not valid json").unwrap_err();
+        let te: TopemsError = json_err.into();
+        assert!(matches!(te, TopemsError::Serialization(_)));
+    }
+
+    // ---------- ErrorContext Ok 透传 ----------
+    #[test]
+    fn error_context_ok_result_passes_through() {
+        let result: StdResult<i32, &str> = Ok(42);
+        let enhanced = result.with_context("should not fire");
+        assert_eq!(enhanced.unwrap(), 42);
+    }
+
+    #[test]
+    fn error_context_detail_ok_result_passes_through() {
+        let result: StdResult<i32, &str> = Ok(99);
+        let enhanced = result.with_detail_context("CTX", "detail");
+        assert_eq!(enhanced.unwrap(), 99);
+    }
+
+    // ---------- ErrorLogger log_and_return ----------
+    #[test]
+    fn error_logger_log_and_return_returns_err() {
+        let err = TopemsError::Internal("log test".to_string());
+        let result: Result<()> = ErrorLogger::log_and_return(err);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn error_logger_log_error_does_not_panic() {
+        // 验证 log_error 对各种变体不 panic
+        ErrorLogger::log_error(&TopemsError::DatabaseConnection("x".to_string()));
+        ErrorLogger::log_error(&TopemsError::AuthenticationFailed("x".to_string()));
+        ErrorLogger::log_error(&TopemsError::PermissionDenied {
+            required: "x".to_string(),
+        });
+        ErrorLogger::log_error(&TopemsError::ValidationFailed("x".to_string()));
+        ErrorLogger::log_error(&TopemsError::Internal("x".to_string()));
+        ErrorLogger::log_error(&TopemsError::Unknown("x".to_string()));
+    }
+
+    // ---------- SafeErrorHandler 补充 ----------
+    #[test]
+    fn safe_parse_u64_success_and_failure() {
+        let ok = SafeErrorHandler::safe_parse::<u64>("18446744073709551615", "u64");
+        assert_eq!(ok.unwrap(), u64::MAX);
+
+        let err = SafeErrorHandler::safe_parse::<u64>("not a number", "u64");
+        assert!(err.is_err());
+    }
+
+    #[test]
+    fn safe_unwrap_option_with_value_returns_value() {
+        let val: Option<String> = Some("hello".to_string());
+        let r = SafeErrorHandler::safe_unwrap_option(val, "missing");
+        assert_eq!(r.unwrap(), "hello");
+    }
 }
