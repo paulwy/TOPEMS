@@ -1525,3 +1525,38 @@ pub async fn check_order_feasibility(
         _ => Json(ApiResponse::error(500, "可行性检查失败")),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde::de::DeserializeOwned;
+
+    fn roundtrip<T: Serialize + DeserializeOwned>(val: &T) {
+        let s1 = serde_json::to_string(val).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&s1).unwrap();
+        let val2: T = serde_json::from_str(&s1).unwrap();
+        let s2 = serde_json::to_string(&val2).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&s2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_schedule_strategy_roundtrip() {
+        roundtrip(&ScheduleStrategy::Forward);
+        roundtrip(&ScheduleStrategy::Backward);
+        roundtrip(&ScheduleStrategy::Bidirectional);
+        roundtrip(&ScheduleStrategy::BottleneckDriven);
+    }
+
+    #[test]
+    fn test_optimization_weights_roundtrip() {
+        let w = OptimizationWeights {
+            minimize_makespan: 0.3,
+            minimize_tardiness: 0.4,
+            maximize_utilization: 0.2,
+            minimize_idle_time: 0.1,
+        };
+        roundtrip(&w);
+    }
+}

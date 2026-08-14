@@ -190,3 +190,62 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+    use serde::de::DeserializeOwned;
+
+    fn roundtrip<T: Serialize + DeserializeOwned>(val: &T) {
+        let s1 = serde_json::to_string(val).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&s1).unwrap();
+        let val2: T = serde_json::from_str(&s1).unwrap();
+        let s2 = serde_json::to_string(&val2).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&s2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_permission_def_roundtrip() {
+        let p = PermissionDef {
+            code: "mes:order:read".to_string(),
+            name: "查看生产订单".to_string(),
+            resource_type: "production_order".to_string(),
+            action: "read".to_string(),
+        };
+        roundtrip(&p);
+    }
+
+    #[test]
+    fn test_plugin_info_roundtrip_some() {
+        let info = PluginInfo {
+            code: "mes".to_string(),
+            name: "制造执行系统".to_string(),
+            version: "1.0.0".to_string(),
+            description: "MES 模块".to_string(),
+            permissions: vec![],
+            runtime_url: "http://localhost:8030".to_string(),
+            dependencies: vec!["topems-shared".to_string()],
+            navigation_config: Some(serde_json::json!({"items": []})),
+            category: Some("manufacturing".to_string()),
+        };
+        roundtrip(&info);
+    }
+
+    #[test]
+    fn test_plugin_info_roundtrip_none() {
+        let info = PluginInfo {
+            code: "mes".to_string(),
+            name: "制造执行系统".to_string(),
+            version: "1.0.0".to_string(),
+            description: "MES 模块".to_string(),
+            permissions: vec![],
+            runtime_url: "http://localhost:8030".to_string(),
+            dependencies: vec![],
+            navigation_config: None,
+            category: None,
+        };
+        roundtrip(&info);
+    }
+}

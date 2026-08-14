@@ -120,3 +120,92 @@ impl Default for UpdateInteractionRequest {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::de::DeserializeOwned;
+
+    fn uid() -> Uuid {
+        Uuid::new_v4()
+    }
+    fn now() -> DateTime<Utc> {
+        Utc::now()
+    }
+
+    fn roundtrip<T: Serialize + DeserializeOwned>(value: &T) {
+        let json = serde_json::to_value(value).expect("serialize to Value");
+        let restored: T = serde_json::from_value(json.clone()).expect("deserialize from Value");
+        let json2 = serde_json::to_value(&restored).expect("re-serialize");
+        assert_eq!(json, json2);
+    }
+
+    #[test]
+    fn interaction_roundtrip_full() {
+        let r = Interaction {
+            id: uid(),
+            tenant_id: uid(),
+            customer_id: Some(uid()),
+            contact_id: Some(uid()),
+            type_: "call".into(),
+            subject: Some("合同续签".into()),
+            content: Some("讨论年度合同细节".into()),
+            scheduled_at: Some(now()),
+            completed_at: Some(now()),
+            status: "completed".into(),
+            notes: Some("客户非常满意".into()),
+            created_at: now(),
+            updated_at: now(),
+            deleted_at: None,
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn interaction_roundtrip_minimal() {
+        let r = Interaction::default();
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn create_interaction_request_roundtrip_full() {
+        let r = CreateInteractionRequest {
+            customer_id: Some(uid()),
+            contact_id: Some(uid()),
+            type_: "email".into(),
+            subject: Some("报价跟进".into()),
+            content: Some("发送新报价".into()),
+            scheduled_at: Some(now()),
+            notes: Some("优先处理".into()),
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn create_interaction_request_roundtrip_minimal() {
+        let r = CreateInteractionRequest::default();
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn update_interaction_request_roundtrip_full() {
+        let r = UpdateInteractionRequest {
+            customer_id: Some(uid()),
+            contact_id: Some(uid()),
+            type_: Some("meeting".into()),
+            subject: Some("Q4 策略".into()),
+            content: Some("季度复盘".into()),
+            scheduled_at: Some(now()),
+            completed_at: Some(now()),
+            status: Some("completed".into()),
+            notes: Some("纪要已发送".into()),
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn update_interaction_request_roundtrip_none() {
+        let r = UpdateInteractionRequest::default();
+        roundtrip(&r);
+    }
+}

@@ -394,3 +394,61 @@ fn generate_csv(logs: &[AuditLog]) -> String {
         Err(_) => String::from("ID,操作,实体类型,实体ID,用户ID,用户名,状态,错误信息,IP地址,创建时间,请求详情,响应详情\n"),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T>(value: &T)
+    where
+        T: Serialize + for<'de> Deserialize<'de>,
+    {
+        let s1 = serde_json::to_string(value).expect("serialize to string");
+        let v1: serde_json::Value = serde_json::from_str(&s1).expect("string -> Value");
+        let s2 = serde_json::to_string(&v1).expect("Value -> string");
+        let v2: serde_json::Value = serde_json::from_str(&s2).expect("roundtrip string -> Value");
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_audit_log_roundtrip() {
+        let log = AuditLog {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            action: "sample.create".to_string(),
+            entity_type: Some("Sample".to_string()),
+            entity_id: Some(Uuid::new_v4()),
+            entity_ids: Some(serde_json::json!([Uuid::new_v4().to_string()])),
+            user_id: Some("user-001".to_string()),
+            user_name: Some("张三".to_string()),
+            request_details: Some(serde_json::json!({"sample_no": "S-2026-001", "weight": 10.5})),
+            response_details: Some(serde_json::json!({"status": "created"})),
+            status: "success".to_string(),
+            error_message: None,
+            ip_address: Some("192.168.1.100".to_string()),
+            user_agent: Some("Mozilla/5.0".to_string()),
+            created_at: Utc::now(),
+        };
+        roundtrip(&log);
+
+        let minimal = AuditLog {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            action: "system.startup".to_string(),
+            entity_type: None,
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            status: "success".to_string(),
+            error_message: None,
+            ip_address: None,
+            user_agent: None,
+            created_at: Utc::now(),
+        };
+        roundtrip(&minimal);
+    }
+}

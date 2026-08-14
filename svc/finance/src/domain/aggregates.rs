@@ -115,3 +115,215 @@ impl PayableAggregate {
         self.payable.amount - self.payable.settled_amount
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    fn now() -> chrono::DateTime<chrono::Utc> { chrono::Utc::now() }
+    fn ymd(y: i32, m: u32, d: u32) -> chrono::NaiveDate {
+        chrono::NaiveDate::from_ymd_opt(y, m, d).unwrap()
+    }
+
+    fn make_voucher_line(voucher_id: &str, debit: Option<f64>, credit: Option<f64>) -> VoucherLine {
+        VoucherLine {
+            id: format!("{}-line1", voucher_id),
+            voucher_id: voucher_id.to_string(),
+            account_code: "1001".into(), account_name: "现金".into(),
+            summary: "测试".into(),
+            debit_amount: debit, credit_amount: credit,
+            auxiliary_items: serde_json::json!({}),
+        }
+    }
+
+    fn make_voucher_aggregate(
+        status: VoucherStatus, debit: f64, credit: f64, lines: Vec<VoucherLine>,
+    ) -> VoucherAggregate {
+        VoucherAggregate {
+            id: "v1".into(), voucher_no: "V-001".into(),
+            voucher_date: ymd(2025, 6, 1), voucher_type: "journal".into(),
+            status, summary: "测试凭证".into(), attachment_count: 0,
+            created_by: "alice".into(), created_at: now(),
+            posted_at: None, lines, total_debit: debit, total_credit: credit,
+        }
+    }
+
+    fn make_receivable() -> Receivable {
+        Receivable {
+            id: "r1".into(), receivable_no: "AR-001".into(),
+            customer_id: "c1".into(), customer_name: "ABC".into(),
+            amount: 5000.0, settled_amount: 0.0,
+            status: SettlementStatus::Unsettled,
+            billing_date: ymd(2025, 6, 1), due_date: ymd(2025, 6, 30),
+            created_at: now(),
+        }
+    }
+
+    fn make_payable() -> Payable {
+        Payable {
+            id: "p1".into(), payable_no: "AP-001".into(),
+            supplier_id: "s1".into(), supplier_name: "XYZ".into(),
+            amount: 3000.0, settled_amount: 0.0,
+            status: SettlementStatus::Unsettled,
+            billing_date: ymd(2025, 5, 15), due_date: ymd(2025, 7, 15),
+            created_at: now(),
+        }
+    }
+
+    // ===== roundtrip =====
+
+    #[test] fn rt_voucher_aggregate() {
+        roundtrip(&make_voucher_aggregate(VoucherStatus::Draft, 100.0, 100.0, vec![]));
+    }
+    #[test] fn rt_voucher_aggregate_with_lines() {
+        roundtrip(&make_voucher_aggregate(
+            VoucherStatus::Approved, 500.0, 500.0,
+            vec![make_voucher_line("v1", Some(500.0), None), make_voucher_line("v1", None, Some(500.0))],
+        ));
+    }
+    #[test] fn rt_receivable_aggregate() {
+        roundtrip(&ReceivableAggregate {
+            receivable: make_receivable(), collections: vec![], aging_buckets: vec![],
+        });
+    }
+    #[test] fn rt_payable_aggregate() {
+        roundtrip(&PayableAggregate {
+            payable: make_payable(), payments: vec![], aging_buckets: vec![],
+        });
+    }
+
+    // ===== VoucherAggregate business logic =====
+
+    #[test] fn test_voucher_post_ok() {
+        let mut v = make_voucher_aggregate(VoucherStatus::Approved, 500.0, 500.0, vec![]);
+        assert!(v.is_balanced());
+        assert_eq!(v.post(), Ok(()));
+        assert_eq!(v.status, VoucherStatus::Posted);
+        assert!(v.posted_at.is_some());
+    }
+
+    #[test] fn test_voucher_post_not_approved() {
+        let mut v = make_voucher_aggregate(VoucherStatus::Draft, 500.0, 500.0, vec![]);
+        assert!(v.post().is_err());
+    }
+
+    #[test] fn test_voucher_post_unbalanced() {
+        let mut v = make_voucher_aggregate(VoucherStatus::Approved, 500.0, 400.0, vec![]);
+        assert!(!v.is_balanced());
+        assert!(v.post().is_err());
+    }
+
+    #[test] fn test_voucher_reverse_ok() {
+        let mut v = make_voucher_aggregate(VoucherStatus::Posted, 500.0, 500.0, vec![]);
+        assert_eq!(v.reverse(), Ok(()));
+        assert_eq!(v.status, VoucherStatus::Reversed);
+    }
+
+    #[test] fn test_voucher_reverse_not_posted() {
+        let mut v = make_voucher_aggregate(VoucherStatus::Draft, 500.0, 500.0, vec![]);
+        assert!(v.reverse().is_err());
+    }
+
+    #[test] fn test_voucher_add_line_updates_totals() {
+        let mut v = make_voucher_aggregate(VoucherStatus::Draft, 0.0, 0.0, vec![]);
+        v.add_line(make_voucher_line("v1", Some(300.0), None));
+        v.add_line(make_voucher_line("v1", None, Some(300.0)));
+        assert_eq!(v.total_debit, 300.0);
+        assert_eq!(v.total_credit, 300.0);
+        assert!(v.is_balanced());
+        assert_eq!(v.lines.len(), 2);
+        assert_eq!(v.lines[0].voucher_id, "v1");
+    }
+
+    // ===== ReceivableAggregate =====
+
+    #[test] fn test_receivable_settle_full() {
+        let mut a = ReceivableAggregate {
+            receivable: make_receivable(), collections: vec![], aging_buckets: vec![],
+        };
+        let collection = CollectionRecord {
+            id: "col1".into(), collection_no: "COL-001".into(),
+            customer_id: "c1".into(), amount: 5000.0,
+            collection_date: ymd(2025, 6, 15),
+            payment_method: "bank".into(), bank_account: None,
+            status: SettlementStatus::Settled,
+        };
+        assert_eq!(a.settle(collection), Ok(()));
+        assert_eq!(a.receivable.settled_amount, 5000.0);
+        assert_eq!(a.receivable.status, SettlementStatus::Settled);
+        assert_eq!(a.remaining_amount(), 0.0);
+        assert_eq!(a.collections.len(), 1);
+    }
+
+    #[test] fn test_receivable_settle_partial() {
+        let mut a = ReceivableAggregate {
+            receivable: make_receivable(), collections: vec![], aging_buckets: vec![],
+        };
+        let collection = CollectionRecord {
+            id: "col1".into(), collection_no: "COL-001".into(),
+            customer_id: "c1".into(), amount: 2000.0,
+            collection_date: ymd(2025, 6, 15),
+            payment_method: "bank".into(), bank_account: None,
+            status: SettlementStatus::PartiallySettled,
+        };
+        a.settle(collection).unwrap();
+        assert_eq!(a.receivable.status, SettlementStatus::PartiallySettled);
+        assert_eq!(a.remaining_amount(), 3000.0);
+    }
+
+    #[test] fn test_receivable_settle_wrong_customer() {
+        let mut a = ReceivableAggregate {
+            receivable: make_receivable(), collections: vec![], aging_buckets: vec![],
+        };
+        let bad = CollectionRecord {
+            id: "col1".into(), collection_no: "COL-001".into(),
+            customer_id: "WRONG".into(), amount: 5000.0,
+            collection_date: ymd(2025, 6, 15),
+            payment_method: "bank".into(), bank_account: None,
+            status: SettlementStatus::Unsettled,
+        };
+        assert!(a.settle(bad).is_err());
+    }
+
+    // ===== PayableAggregate =====
+
+    #[test] fn test_payable_settle_full() {
+        let mut a = PayableAggregate {
+            payable: make_payable(), payments: vec![], aging_buckets: vec![],
+        };
+        let payment = PaymentRecord {
+            id: "pay1".into(), payment_no: "PAY-001".into(),
+            supplier_id: "s1".into(), amount: 3000.0,
+            payment_date: ymd(2025, 6, 20),
+            payment_method: "check".into(), bank_account: None,
+            status: SettlementStatus::Settled,
+        };
+        a.settle(payment).unwrap();
+        assert_eq!(a.payable.status, SettlementStatus::Settled);
+        assert_eq!(a.remaining_amount(), 0.0);
+    }
+
+    #[test] fn test_payable_settle_wrong_supplier() {
+        let mut a = PayableAggregate {
+            payable: make_payable(), payments: vec![], aging_buckets: vec![],
+        };
+        let bad = PaymentRecord {
+            id: "pay1".into(), payment_no: "PAY-001".into(),
+            supplier_id: "WRONG".into(), amount: 3000.0,
+            payment_date: ymd(2025, 6, 20),
+            payment_method: "check".into(), bank_account: None,
+            status: SettlementStatus::Unsettled,
+        };
+        assert!(a.settle(bad).is_err());
+    }
+}

@@ -106,3 +106,73 @@ pub struct AgingCalculatedEvent {
     pub buckets: Vec<AgingBucket>,
     pub occurred_at: chrono::DateTime<chrono::Utc>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    fn now() -> chrono::DateTime<chrono::Utc> { chrono::Utc::now() }
+
+    #[test] fn rt_voucher_created_event() {
+        roundtrip(&VoucherCreatedEvent {
+            voucher_id: "v1".into(), voucher_no: "V-001".into(), voucher_type: "journal".into(),
+            total_amount: 100.0, created_by: "alice".into(), occurred_at: now(),
+        });
+    }
+    #[test] fn rt_voucher_posted_event() {
+        roundtrip(&VoucherPostedEvent { voucher_id: "v1".into(), voucher_no: "V-001".into(), posted_by: "bob".into(), occurred_at: now() });
+    }
+    #[test] fn rt_voucher_reversed_event() {
+        roundtrip(&VoucherReversedEvent { voucher_id: "v1".into(), voucher_no: "V-001".into(), reversed_by: "charlie".into(), reason: "error".into(), occurred_at: now() });
+    }
+    #[test] fn rt_receivable_created_event() {
+        roundtrip(&ReceivableCreatedEvent { receivable_id: "r1".into(), receivable_no: "AR-001".into(), customer_id: "c1".into(), amount: 5000.0, occurred_at: now() });
+    }
+    #[test] fn rt_receivable_settled_event() {
+        roundtrip(&ReceivableSettledEvent { receivable_id: "r1".into(), collection_id: "col1".into(), settled_amount: 5000.0, remaining_amount: 0.0, occurred_at: now() });
+    }
+    #[test] fn rt_payable_created_event() {
+        roundtrip(&PayableCreatedEvent { payable_id: "p1".into(), payable_no: "AP-001".into(), supplier_id: "s1".into(), amount: 3000.0, occurred_at: now() });
+    }
+    #[test] fn rt_payable_settled_event() {
+        roundtrip(&PayableSettledEvent { payable_id: "p1".into(), payment_id: "pay1".into(), settled_amount: 1500.0, remaining_amount: 1500.0, occurred_at: now() });
+    }
+    #[test] fn rt_collection_received_event() {
+        roundtrip(&CollectionReceivedEvent { collection_id: "col1".into(), collection_no: "COL-001".into(), customer_id: "c1".into(), amount: 5000.0, occurred_at: now() });
+    }
+    #[test] fn rt_payment_made_event() {
+        roundtrip(&PaymentMadeEvent { payment_id: "pay1".into(), payment_no: "PAY-001".into(), supplier_id: "s1".into(), amount: 1500.0, occurred_at: now() });
+    }
+    #[test] fn rt_aging_calculated_event() {
+        roundtrip(&AgingCalculatedEvent {
+            entity_type: "receivable".into(), total_amount: 10000.0,
+            buckets: vec![
+                AgingBucket { label: "0-30天".into(), min_days: 0, max_days: Some(30), amount: 6000.0 },
+                AgingBucket { label: "31-90天".into(), min_days: 31, max_days: Some(90), amount: 3000.0 },
+                AgingBucket { label: "90+天".into(), min_days: 91, max_days: None, amount: 1000.0 },
+            ],
+            occurred_at: now(),
+        });
+    }
+    #[test] fn rt_domain_event_voucher_created_variant() {
+        roundtrip(&FinanceDomainEvent::VoucherCreated(VoucherCreatedEvent {
+            voucher_id: "v1".into(), voucher_no: "V-001".into(), voucher_type: "journal".into(),
+            total_amount: 100.0, created_by: "alice".into(), occurred_at: now(),
+        }));
+    }
+    #[test] fn rt_domain_event_aging_variant() {
+        roundtrip(&FinanceDomainEvent::AgingCalculated(AgingCalculatedEvent {
+            entity_type: "payable".into(), total_amount: 5000.0, buckets: vec![], occurred_at: now(),
+        }));
+    }
+}
