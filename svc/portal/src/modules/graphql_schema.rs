@@ -26409,4 +26409,74 @@ mod tests {
             synced_at: None, retry_count: 0, error: None,
         }));
     }
+
+    // ===== 剩余 10 个未覆盖的 derive roundtrip =====
+
+    #[test] fn enum_rt_cache_tier() {
+        for v in [CacheTier::None, CacheTier::ShortLived, CacheTier::MediumLived, CacheTier::LongLived] {
+            assert!(roundtrip(&v));
+        }
+    }
+    #[test] fn struct_rt_realtime_stream_update_data() {
+        assert!(roundtrip(&RealtimeStreamUpdateData {
+            update_id: "u1".into(), stream_type: StreamUpdateTypeGql::Insert,
+            entity_type: "User".into(), entity_id: "1".into(),
+            changed_fields: vec![], old_values: j("{}"), new_values: j("{}"),
+            timestamp: chrono::Utc::now(), sequence_number: 1,
+        }));
+    }
+    #[test] fn struct_rt_stream_snapshot_data() {
+        assert!(roundtrip(&StreamSnapshotData {
+            snapshot_id: "s1".into(), entity_type: "User".into(),
+            sequence_number: 1, data: j("{}"), created_at: chrono::Utc::now(),
+        }));
+    }
+    #[test] fn struct_rt_incremental_update_data() {
+        assert!(roundtrip(&IncrementalUpdateData {
+            update_id: "u1".into(), entity_type: "User".into(), entity_id: "1".into(),
+            version: 2, delta: j("{}"), base_version: 1,
+            timestamp: chrono::Utc::now(), applied: true, valid: true,
+        }));
+    }
+    #[test] fn struct_rt_sync_session_data() {
+        assert!(roundtrip(&SyncSessionData {
+            session_id: "s1".into(), client_id: "c".into(),
+            last_sync_version: 0, current_version: 5, pending_updates: 2,
+            sync_state: SyncStateGql::InSync,
+            started_at: chrono::Utc::now(), last_sync_at: None,
+        }));
+    }
+    #[test] fn struct_rt_sync_conflict_data() {
+        assert!(roundtrip(&SyncConflictData {
+            conflict_id: "c1".into(), entity_type: "User".into(), entity_id: "1".into(),
+            client_version: 1, server_version: 2, conflict_fields: vec![],
+            resolution_strategy: ConflictResolutionStrategyGql::ServerWins, resolved: false,
+        }));
+    }
+    #[test] fn struct_rt_trust_context_gql() {
+        assert!(roundtrip(&TrustContextGql {
+            client_id: "c".into(), user_id: None, device_id: None,
+            ip_address: "127.0.0.1".into(), geo_location: None, device_fingerprint: None,
+            trust_level: TrustLevelGql::MediumTrust, risk_score: 10,
+            verification_factors: vec![], assessed_at: "2025-01-01".into(),
+        }));
+    }
+    #[test] fn struct_rt_risk_factor() {
+        assert!(roundtrip(&RiskFactor {
+            factor_type: "geo".into(), severity: "low".into(),
+            description: "ok".into(), weight: 1,
+        }));
+    }
+    #[test] fn struct_rt_permission_condition() {
+        assert!(roundtrip(&PermissionCondition {
+            field: "role".into(), operator: "eq".into(), value: "admin".into(),
+        }));
+    }
+    #[test] fn struct_rt_offline_mutation_data() {
+        assert!(roundtrip(&OfflineMutationData {
+            mutation_id: "m1".into(), operation: "mutation".into(), variables: "{}".into(),
+            status: MutationStatusGql::Pending, created_at: chrono::Utc::now(),
+            synced_at: None, retry_count: 0, error: None,
+        }));
+    }
 }

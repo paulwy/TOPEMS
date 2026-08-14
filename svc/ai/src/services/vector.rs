@@ -605,3 +605,81 @@ impl From<DocumentChunkRow> for DocumentChunk {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Serialize, Deserialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_document_roundtrip() {
+        let item = Document {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            title: "t".into(),
+            filename: "f".into(),
+            file_path: None,
+            file_size: None,
+            mime_type: None,
+            content_hash: None,
+            category: None,
+            tags: None,
+            description: None,
+            status: "pending".into(),
+            error_message: None,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        };
+        roundtrip(&item);
+    }
+
+    #[test]
+    fn test_document_chunk_roundtrip() {
+        let item = DocumentChunk {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            document_id: Uuid::new_v4(),
+            chunk_index: 0,
+            content: "c".into(),
+            metadata: serde_json::json!({}),
+            created_at: chrono::Utc::now(),
+        };
+        roundtrip(&item);
+    }
+
+    #[test]
+    fn test_vector_embedding_roundtrip() {
+        let item = VectorEmbedding {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            document_id: Uuid::new_v4(),
+            chunk_id: Uuid::new_v4(),
+            chunk_index: 0,
+            content: "c".into(),
+            embedding: vec![0.1, 0.2, 0.3],
+            created_at: chrono::Utc::now(),
+        };
+        roundtrip(&item);
+    }
+
+    #[test]
+    fn test_search_result_roundtrip() {
+        let item = SearchResult {
+            document_id: Uuid::new_v4(),
+            chunk_id: Uuid::new_v4(),
+            content: "c".into(),
+            similarity: 0.95,
+            document_title: None,
+        };
+        roundtrip(&item);
+    }
+}

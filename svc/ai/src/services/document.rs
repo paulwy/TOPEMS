@@ -1191,3 +1191,45 @@ pub struct DocumentQAQuestion {
     pub document_ids: Option<Vec<Uuid>>,
     pub top_k: Option<usize>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Serialize, Deserialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_document_qa_source_roundtrip() {
+        let item = DocumentQASource {
+            document_id: Uuid::new_v4(),
+            document_title: "t".into(),
+            chunk_content: "c".into(),
+            similarity: 0.95,
+        };
+        roundtrip(&item);
+    }
+
+    #[test]
+    fn test_document_qa_answer_roundtrip() {
+        let item = DocumentQAAnswer {
+            answer: "a".into(),
+            confidence: 0.8,
+            sources: vec![DocumentQASource {
+                document_id: Uuid::new_v4(),
+                document_title: "t".into(),
+                chunk_content: "c".into(),
+                similarity: 0.9,
+            }],
+            follow_up_questions: vec!["q1".into()],
+        };
+        roundtrip(&item);
+    }
+}
