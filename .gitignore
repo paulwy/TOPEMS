@@ -235,3 +235,4 @@ apps/web/dist/*.bak
 # V68.1-2 流水线临时产物
 scripts/v68-1-2/.run/
 tmp/
+.sqlx/
