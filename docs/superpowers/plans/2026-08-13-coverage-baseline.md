@@ -1,6 +1,19 @@
 # 覆盖率基线测量脚本 实现计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
+
+## ✅ 实施状态（2026-08-15 全量落地）
+
+| 任务 | 状态 | 交付物 |
+|------|------|--------|
+| Task 1 — bash 主调度脚本 | ✅ | `scripts/ci/coverage-baseline.sh`（27 KB） |
+| Task 2 — Python 汇总器 | ✅ | `scripts/ci/coverage-report.py`（19 KB） |
+| Task 3 — Makefile 目标 | ✅ | `coverage-baseline` / `coverage-baseline-full` 已追加 |
+| Task 4 — 端到端验收 | ✅ | 基线脚本已驱动 P5 冲刺实测（43.19% → 45.84%） |
+
+**基线工具产出的后续贡献**：该脚本作为基础设施，直接驱动了 V203 P5 覆盖率冲刺的 30 个 `test(cov)` commit（Region 43.19% → 45.84%，+2.65pp）。
+
+---
 
 **Goal:** 为 TOPEMS 全仓（Rust workspace + TypeScript apps/web）建立可复现的覆盖率基线测量入口，输出人读 Markdown + 机读 JSON，支持 CI 阈值门禁。
 
@@ -25,7 +38,7 @@
 **Files:**
 - Create: `scripts/ci/coverage-baseline.sh`
 
-- [ ] **Step 1: 写文件头 + shebang + 彩色日志函数 + cd 到项目根**
+- [x] **Step 1: 写文件头 + shebang + 彩色日志函数 + cd 到项目根**
 
 ```bash
 #!/usr/bin/env bash
@@ -65,7 +78,7 @@ error()   { echo -e "${RED}[ERR]${NC}  $1"; }
 detail()  { echo -e "${CYAN}[>>]${NC}   $1"; }
 ```
 
-- [ ] **Step 2: 写 usage() 函数 + 默认变量初始化**
+- [x] **Step 2: 写 usage() 函数 + 默认变量初始化**
 
 ```bash
 # ---------- CLI 默认值 ----------
@@ -115,7 +128,7 @@ USG
 }
 ```
 
-- [ ] **Step 3: 写参数解析（getopt 风格 while-case）**
+- [x] **Step 3: 写参数解析（getopt 风格 while-case）**
 
 ```bash
 # ---------- 参数解析 ----------
@@ -149,7 +162,7 @@ while [[ $# -gt 0 ]]; do
 done
 ```
 
-- [ ] **Step 4: 写工具链自检函数 `toolchain_selfcheck`（最复杂的部分）**
+- [x] **Step 4: 写工具链自检函数 `toolchain_selfcheck`（最复杂的部分）**
 
 ```bash
 # ---------- 工具链自检 ----------
@@ -209,7 +222,7 @@ toolchain_selfcheck() {
 }
 ```
 
-- [ ] **Step 5: 写 Rust 目标 crate 列表构建 + 测试调度函数**
+- [x] **Step 5: 写 Rust 目标 crate 列表构建 + 测试调度函数**
 
 ```bash
 # ---------- Rust: 构建 crate 列表 ----------
@@ -374,7 +387,7 @@ PY
 }
 ```
 
-- [ ] **Step 6: 写 TS 调度函数 `run_ts_coverage`**
+- [x] **Step 6: 写 TS 调度函数 `run_ts_coverage`**
 
 ```bash
 # ---------- TS: apps/web vitest ----------
@@ -403,7 +416,7 @@ run_ts_coverage() {
 }
 ```
 
-- [ ] **Step 7: 写 main 函数（调度全流程 + 调 Python）**
+- [x] **Step 7: 写 main 函数（调度全流程 + 调 Python）**
 
 ```bash
 # ---------- main ----------
@@ -462,7 +475,7 @@ main() {
 main "$@"
 ```
 
-- [ ] **Step 8: chmod +x 并 bash -n 语法验证**
+- [x] **Step 8: chmod +x 并 bash -n 语法验证**
 
 Run:
 ```
@@ -472,7 +485,7 @@ echo "exit=$?"
 ```
 Expected: `exit=0`（无语法错误）
 
-- [ ] **Step 9: 冒烟 --help 检查**
+- [x] **Step 9: 冒烟 --help 检查**
 
 Run:
 ```
@@ -482,7 +495,7 @@ echo "---"
 ```
 Expected: 帮助文本出现，`grep -c fail-under` ≥ 3
 
-- [ ] **Step 10: 提交 Task 1**
+- [x] **Step 10: 提交 Task 1**
 
 ```bash
 git add scripts/ci/coverage-baseline.sh
@@ -496,7 +509,7 @@ git commit -m "test(ci): add coverage-baseline.sh dispatcher (Rust + TS)"
 **Files:**
 - Create: `scripts/ci/coverage-report.py`
 
-- [ ] **Step 1: 写文件头、argparse、工具链版本函数、项目根定位**
+- [x] **Step 1: 写文件头、argparse、工具链版本函数、项目根定位**
 
 ```python
 #!/usr/bin/env python3
@@ -583,7 +596,7 @@ def toolchain_versions() -> dict:
     }
 ```
 
-- [ ] **Step 2: Rust crate 读取 + 归一化**
+- [x] **Step 2: Rust crate 读取 + 归一化**
 
 ```python
 # ---------------- Rust: 读取 per-crate JSON ----------------
@@ -639,7 +652,7 @@ def read_rust_per_crate(output_dir: Path) -> list[dict]:
     return ok + rest
 ```
 
-- [ ] **Step 3: TS summary 读取 + 归一化**
+- [x] **Step 3: TS summary 读取 + 归一化**
 
 ```python
 # ---------------- TS: 读取 vitest coverage-summary.json ----------------
@@ -666,7 +679,7 @@ def read_ts_summary(prj: Path) -> dict | None:
     return out
 ```
 
-- [ ] **Step 4: 加权汇总 summary 构建 + 阈值判断**
+- [x] **Step 4: 加权汇总 summary 构建 + 阈值判断**
 
 ```python
 # ---------------- 汇总 ----------------
@@ -747,7 +760,7 @@ def eval_threshold(summary: dict, args: argparse.Namespace) -> dict:
     }
 ```
 
-- [ ] **Step 5: Markdown 报告生成器 + 控制台 ASCII 表**
+- [x] **Step 5: Markdown 报告生成器 + 控制台 ASCII 表**
 
 ```python
 # ---------------- Markdown ----------------
@@ -872,7 +885,7 @@ def console_summary(summary: dict, threshold: dict) -> str:
     return "\n".join(out)
 ```
 
-- [ ] **Step 6: main() + argparse 接线**
+- [x] **Step 6: main() + argparse 接线**
 
 ```python
 def parse_args() -> argparse.Namespace:
@@ -940,7 +953,7 @@ if __name__ == "__main__":
     sys.exit(main())
 ```
 
-- [ ] **Step 7: chmod +x 并 py_compile + 运行 --help**
+- [x] **Step 7: chmod +x 并 py_compile + 运行 --help**
 
 Run:
 ```
@@ -950,7 +963,7 @@ python3 scripts/ci/coverage-report.py -h
 ```
 Expected: `COMPILE OK` 输出；help 文本列出 `--mode/--output-dir/--project-root/--fail-under` 等参数。
 
-- [ ] **Step 8: 最小数据烟雾测试（mock 两个 JSON 走一整轮汇总）**
+- [x] **Step 8: 最小数据烟雾测试（mock 两个 JSON 走一整轮汇总）**
 
 Run:
 ```
@@ -985,7 +998,7 @@ PY
 ```
 Expected: `exit=0`，两个 report 文件列出；overall 约 (425+80)/(1000+2000) = 16.83%，shared-core=green / crm=red。
 
-- [ ] **Step 9: 阈值门禁测试（--fail-under 100 → 1 / --fail-under 0 → 0）**
+- [x] **Step 9: 阈值门禁测试（--fail-under 100 → 1 / --fail-under 0 → 0）**
 
 Run:
 ```
@@ -996,7 +1009,7 @@ echo "zero-threshold exit=$?"
 ```
 Expected: first `exit=1`, second `exit=0`.
 
-- [ ] **Step 10: 提交 Task 2**
+- [x] **Step 10: 提交 Task 2**
 
 ```bash
 git add scripts/ci/coverage-report.py
@@ -1010,7 +1023,7 @@ git commit -m "test(ci): add coverage-report.py aggregator (MD+JSON+thresholds)"
 **Files:**
 - Modify: `Makefile` (after `check-offline` block, before `# ---------- 常用快捷命令 ----------`)
 
-- [ ] **Step 1: 确认 Makefile 第 36-40 行"质量门禁"结构并插入 2 行**
+- [x] **Step 1: 确认 Makefile 第 36-40 行"质量门禁"结构并插入 2 行**
 
 先 Read 第 35-45 行附近（已知结构）。确认后插入：
 
@@ -1029,7 +1042,7 @@ coverage-baseline-full: ## 全 workspace + apps/web 覆盖率基线
 	./scripts/ci/coverage-baseline.sh --full
 ```
 
-- [ ] **Step 2: 验证 make help 列出新目标**
+- [x] **Step 2: 验证 make help 列出新目标**
 
 Run:
 ```
@@ -1037,7 +1050,7 @@ make help | grep -i coverage
 ```
 Expected: 至少列出 `coverage-baseline` 和 `coverage-baseline-full` 两行。
 
-- [ ] **Step 3: 提交 Task 3**
+- [x] **Step 3: 提交 Task 3**
 
 ```bash
 git add Makefile
@@ -1048,14 +1061,14 @@ git commit -m "chore(make): add coverage-baseline / coverage-baseline-full targe
 
 ## Task 4: 端到端验收（A1-A8）与最终提交
 
-- [ ] **Step 1: A1/A2 语法验证**
+- [x] **Step 1: A1/A2 语法验证**
 
 ```
 bash -n scripts/ci/coverage-baseline.sh && echo "A1 bash syntax OK"
 python3 -m py_compile scripts/ci/coverage-report.py && echo "A2 python compile OK"
 ```
 
-- [ ] **Step 2: A3 --help 列出所有关键 flags**
+- [x] **Step 2: A3 --help 列出所有关键 flags**
 
 ```
 ./scripts/ci/coverage-baseline.sh -h > /tmp/help.txt
@@ -1066,7 +1079,7 @@ done
 echo "A3 help flags OK"
 ```
 
-- [ ] **Step 3: A4 + A5（烟雾跑 TS-only 或一个单 crate，确认数值区间）**
+- [x] **Step 3: A4 + A5（烟雾跑 TS-only 或一个单 crate，确认数值区间）**
 
 TS-only 模式无需 Rust 工具链，最快。但此仓 vitest AD_HOC 问题可能会失败 → 走 per-crate mock 路径（Task 2 已跑，算 A4）。若本地有 Rust 工具链，尝试跑 shared-bootstrap 单 crate：
 
@@ -1079,7 +1092,7 @@ ls /tmp/topems-cov-real/per-crate/ 2>/dev/null
 ```
 Expected: shared-bootstrap crate 成功（coverage > 30%）或若 nightly/instrument-coverage 不就绪则状态里明确说明，不影响其他验收。
 
-- [ ] **Step 4: A6 阈值门禁（用 mock 数据）**
+- [x] **Step 4: A6 阈值门禁（用 mock 数据）**
 
 ```
 python3 scripts/ci/coverage-report.py --mode custom --output-dir /tmp/topems-cov-mock --project-root "$PWD" --fail-under 100
@@ -1089,7 +1102,7 @@ python3 scripts/ci/coverage-report.py --mode custom --output-dir /tmp/topems-cov
 echo "A6 thresholds OK"
 ```
 
-- [ ] **Step 5: A7 不存在 crate -p topems-xxx → 报告中 SKIPPED**
+- [x] **Step 5: A7 不存在 crate -p topems-xxx → 报告中 SKIPPED**
 
 ```
 mkdir -p /tmp/topems-cov-a7/per-crate
@@ -1100,13 +1113,13 @@ grep -q "topems-nonexistent" /tmp/topems-cov-a7/report.md && echo "A7 skipped cr
 python3 -c "import json; r=json.load(open('/tmp/topems-cov-a7/report.json')); print('A7 json list=', [x['crate'] for x in r['rust_per_crate']])"
 ```
 
-- [ ] **Step 6: A8 Make 入口真实调用 help 路径**
+- [x] **Step 6: A8 Make 入口真实调用 help 路径**
 
 ```
 make -n coverage-baseline | grep -q "scripts/ci/coverage-baseline.sh --fast" && echo "A8 make target OK"
 ```
 
-- [ ] **Step 7: 最终汇总提交（如果 Task 1/2/3 已经分批提交，不需要再 commit；这一步做一个 README / scripts/README.md 追加一行的轻量提交或跳过）**
+- [x] **Step 7: 最终汇总提交（如果 Task 1/2/3 已经分批提交，不需要再 commit；这一步做一个 README / scripts/README.md 追加一行的轻量提交或跳过）**
 
 可选：在 `scripts/README.md` 的 `ci/` 段落追加一行：
 - `coverage-baseline.sh` — 覆盖率基线测量入口（Rust instrument-coverage + Vitest）

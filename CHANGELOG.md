@@ -8,13 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- 
+- **Rust 测试覆盖率基线工具链（V203 P0-3.1 落地）**：
+  - `scripts/ci/coverage-baseline.sh`（27 KB）— bash 主调度：Rust `cargo test -Z instrument-coverage` + llvm-profdata/llvm-cov、TypeScript `pnpm vitest --coverage`、15+ CLI flags（`--fast`/`--full`/`--rust`/`--ts`/`-p`/`--fail-under` 等）、工具链自检与降级、per-crate JSON 产出
+  - `scripts/ci/coverage-report.py`（19 KB）— Python 汇总器：读取 per-crate JSON + vitest summary、**按行数加权汇总**（非简单均值）、red/yellow/green 三级 tier、`--fail-under` 阈值门禁、Markdown + JSON + 控制台 ASCII 三输出
+- **P5 覆盖率冲刺：Region 43.19% → 45.84%（+2.65pp）**
+  - 30 个 `test(cov)` 系列 commit、282 个文件变更、+62,150 行测试代码
+  - 策略：`Serialize`/`Deserialize` derive 密集 + 0-test 文件批量 roundtrip + 纯函数边界测试
+  - 覆盖 crate：shared-core / shared-event / shared-observability / ai / erp / wms / crm / hrm / pdm / qms / lims / ehs / communication / master-data / scm / pm / mobile / finance / portal / unified-core / migration-sdk / plugin-registry 等 20+ crate
+  - 代表性：finance domain 5 个文件 +72 tests、portal models +306 roundtrip、ai_form handlers.rs 从 0% → 91.46%
+- **AI Form 模块接入**：`feat(ai): 接入 ai_form 模块 + 补齐 form_assistant 核心类型`
+- **Mock 可测试架构**：AiFormAssistant trait 化注入，移除 handlers.rs 对 concrete client 的硬耦合
 
 ### Changed
-- 
+- **finance + portal 两大 crate Region 显著提升**：finance 14.53% → 17.58%（+3.05pp，16 文件 +60 tests）、portal 23.83% → 24.52%（+0.69pp，5 文件 +28 tests）
+- **ai_form handlers.rs 可测试性重构**：从直接实例化 client 改为 trait-based 注入，单测 0% → 91.46%（`refactor(ai): 引入 mock 可测试架构`）
 
 ### Fixed
-- 
+- `.sqlx/` 目录缓存文件误提交风险：根目录 `.gitignore` 新增 pattern（`chore(gitignore)`）
+- MES 数据库 schema refactor 后 97 个编译错误清零（`fix(mes): resolve 97 compile errors`）
 
 ---
 
