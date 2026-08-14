@@ -192,7 +192,7 @@ const DetailsPanel: React.FC<{
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0.75rem 1rem',
-          background: 'linear-gradient(to right, #06b6d4, primary.main)',
+          background: `linear-gradient(to right, ${designTokens.colors.cyan['500']}, primary.main)`,
         }}
       >
         <h3 style={{ fontWeight: 600, color: 'common.white', margin: 0 }}>详情信息</h3>

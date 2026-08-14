@@ -26,11 +26,11 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
   if (!active || !payload || payload.length === 0) return null;
 
   const bgColor = isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)';
-  const borderColor = isDark ? '#475569' : designTokens.colors.border.default;
-  const labelColor = isDark ? '#94A3B8' : '#64748B';
+  const borderColor = isDark ? 'colors.grey.600' : designTokens.colors.border.default;
+  const labelColor = isDark ? '#94A3B8' : 'colors.grey.500';
   const labelBorder = isDark ? '#334155' : designTokens.colors.border.default;
-  const nameColor = isDark ? '#CBD5E1' : '#475569';
-  const valueColor = isDark ? '#F1F5F9' : '#1E293B';
+  const nameColor = isDark ? '#CBD5E1' : 'colors.grey.600';
+  const valueColor = isDark ? 'colors.grey.100' : 'colors.grey.800';
 
   return (
     <Box

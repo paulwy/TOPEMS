@@ -24,13 +24,13 @@ export const CustomTooltipPolar: React.FC<CustomTooltipProps> = ({ active, paylo
         style={{
           backgroundColor: 'common.white',
           padding: '12px 16px',
-          borderRadius: '8px',
+          borderRadius: 'md',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
           border: '1px solid border.default',
           minWidth: '120px',
         }}
       >
-        <p style={{ fontWeight: 600, color: 'var(--mui-palette-text-primary)', marginBottom: '8px' }}>
+        <p style={{ fontWeight: 600, color: 'var(--mui-palette-text-primary)', marginBottom: 2 }}>
           {payload[0].name}
         </p>
         {payload.map((item, index) => (

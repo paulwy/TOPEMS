@@ -89,7 +89,7 @@ const METRIC_ICONS: Record<ScalingMetric, React.ReactNode> = {
 
 const SEVERITY_COLORS: Record<IncidentSeverity, string> = {
   Critical: designTokens.colors.error.main,
-  High: '#f97316',
+  High: `${designTokens.colors.orange['500']}`,
   Medium: designTokens.colors.warning.main,
   Low: designTokens.colors.primary.main,
   Info: 'colors.grey.500',
@@ -109,7 +109,7 @@ const REPAIR_STATUS_COLORS: Record<string, string> = {
   Completed: designTokens.colors.success.dark,
   Failed: designTokens.colors.error.main,
   RolledBack: 'colors.grey.500',
-  Draft: '#9ca3af',
+  Draft: `${designTokens.colors.grey['400']}`,
   Active: designTokens.colors.success.dark,
   Paused: designTokens.colors.warning.main,
   Archived: 'colors.grey.500',
@@ -455,7 +455,7 @@ const V56PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      background: 'linear-gradient(135deg, #f97316 0%, #ea580c 50%, #dc2626 100%)',
+      background: `linear-gradient(135deg, ${designTokens.colors.orange['500']} 0%, ${designTokens.colors.orange['600']} 50%, ${designTokens.colors.error.dark} 100%)`,
       color: 'common.white',
     }}
   >
@@ -642,7 +642,7 @@ const ScalingTab: React.FC<{
                       borderRadius: 2,
                       bgcolor: percent > 90 ? '#fecaca' : percent > 70 ? '#fed7aa' : '#d1fae5',
                       '& .MuiLinearProgress-bar': {
-                        bgcolor: percent > 90 ? designTokens.colors.error.dark : percent > 70 ? '#f97316' : designTokens.colors.success.dark,
+                        bgcolor: percent > 90 ? designTokens.colors.error.dark : percent > 70 ? `${designTokens.colors.orange['500']}` : designTokens.colors.success.dark,
                       },
                     }}
                   />
@@ -888,7 +888,7 @@ const RCATab: React.FC<{
                   sx={{
                     mb: 1,
                     border: '1px solid',
-                    borderColor: selectedIncident === incident.id ? '#f97316' : 'divider',
+                    borderColor: selectedIncident === incident.id ? `${designTokens.colors.orange['500']}` : 'divider',
                     borderRadius: 1,
                     bgcolor: selectedIncident === incident.id ? '#fff7ed' : 'white',
                     cursor: 'pointer',
@@ -1386,7 +1386,7 @@ const TimelineTab: React.FC<{
   }, [incidents, scalingHistory, repairHistory]);
 
   const categoryColors: Record<string, string> = {
-    事件: '#f97316',
+    事件: `${designTokens.colors.orange['500']}`,
     扩缩容: designTokens.colors.success.dark,
     修复: designTokens.colors.secondary.main,
   };

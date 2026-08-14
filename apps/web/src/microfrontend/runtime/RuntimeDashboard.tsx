@@ -97,7 +97,7 @@ interface RuntimeDashboardProps {
 type TabType = 'loader' | 'framework' | 'design' | 'lifecycle';
 
 const statusColors: Record<ModuleLoadStatus, string> = {
-  [ModuleLoadStatus.UNLOADED]: '#64748b',
+  [ModuleLoadStatus.UNLOADED]: 'colors.grey.500',
   [ModuleLoadStatus.LOADING]: designTokens.colors.warning.main,
   [ModuleLoadStatus.LOADED]: designTokens.colors.success.dark,
   [ModuleLoadStatus.FAILED]: designTokens.colors.error.main,
@@ -111,14 +111,14 @@ const statusLabels: Record<ModuleLoadStatus, string> = {
 };
 
 const lifecycleStateColors: Record<LifecycleState, string> = {
-  [LifecycleState.REGISTERED]: '#64748b',
+  [LifecycleState.REGISTERED]: 'colors.grey.500',
   [LifecycleState.PRELOADING]: designTokens.colors.warning.main,
   [LifecycleState.LOADED]: designTokens.colors.primary.main,
   [LifecycleState.MOUNTING]: designTokens.colors.secondary.main,
   [LifecycleState.MOUNTED]: designTokens.colors.success.dark,
-  [LifecycleState.UPDATING]: '#06b6d4',
+  [LifecycleState.UPDATING]: 'colors.cyan.500',
   [LifecycleState.ERROR]: designTokens.colors.error.main,
-  [LifecycleState.UNMOUNTING]: '#f97316',
+  [LifecycleState.UNMOUNTING]: 'colors.orange.500',
   [LifecycleState.UNMOUNTED]: '#94a3b8',
 };
 
@@ -139,7 +139,7 @@ const frameworkColors: Record<FrameworkType, string> = {
   [FrameworkType.VUE]: '#42b883',
   [FrameworkType.ANGULAR]: '#dd0031',
   [FrameworkType.SVELTE]: '#ff3e00',
-  [FrameworkType.VANILLA]: '#64748b',
+  [FrameworkType.VANILLA]: 'colors.grey.500',
 };
 
 const frameworkLabels: Record<FrameworkType, string> = {
@@ -934,7 +934,7 @@ const DesignSystemTab: React.FC = () => {
             label='设计令牌总数'
             value={tokens.length}
             icon={<PaletteIcon size={20} />}
-            color='#7c3aed'
+            color='colors.secondary.dark'
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -950,7 +950,7 @@ const DesignSystemTab: React.FC = () => {
             label='当前主题'
             value={theme.mode === 'dark' ? '暗色' : '亮色'}
             icon={theme.mode === 'dark' ? <MoonIcon size={20} /> : <SunIcon size={20} />}
-            color={theme.mode === 'dark' ? '#1e293b' : designTokens.colors.warning.main}
+            color={theme.mode === 'dark' ? 'colors.grey.800' : designTokens.colors.warning.main}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>

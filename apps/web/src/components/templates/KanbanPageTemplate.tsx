@@ -486,7 +486,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                 fontSize: '0.6rem',
                 bgcolor:
                   tag.color ||
-                  (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'grey.100'),
+                  (theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.100'),
                 color: tag.color || (theme.palette.mode === 'dark' ? 'grey.400' : 'grey.700'),
               }}
             />
@@ -516,7 +516,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
               sx={{
                 width: '100%',
                 height: 4,
-                bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'grey.200',
+                bgcolor: theme.palette.mode === 'dark' ? 'glass.topLight' : 'grey.200',
                 borderRadius: 2,
                 overflow: 'hidden',
               }}

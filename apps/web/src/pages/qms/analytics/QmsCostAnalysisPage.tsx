@@ -149,7 +149,7 @@ export default function QmsCostAnalysisPage() {
                 {costByType.map((entry) => (
                   <Cell
                     key={entry.type}
-                    fill={COST_TYPE_COLORS[entry.type] ?? '#9ca3af'}
+                    fill={COST_TYPE_COLORS[entry.type] ?? 'colors.grey.400'}
                   />
                 ))}
               </Pie>

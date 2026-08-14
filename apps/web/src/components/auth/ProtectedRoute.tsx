@@ -45,7 +45,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               border: '4px solid',
               borderColor: 'primary.main',
               borderBottom: '4px solid transparent',
-              borderRadius: '9999px',
+              borderRadius: 'full',
               animation: 'spin 1s linear infinite',
               margin: 'auto',
               marginBottom: 2,
@@ -215,7 +215,7 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
             backgroundColor: 'warning.lighter',
             border: '1px solid',
             borderColor: 'warning.light',
-            borderRadius: '8px',
+            borderRadius: 'md',
             padding: 2,
           }}
         >

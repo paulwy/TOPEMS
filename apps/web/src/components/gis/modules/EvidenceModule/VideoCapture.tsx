@@ -237,7 +237,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                   bgcolor: 'error.main',
                   px: 12,
                   py: 4,
-                  borderRadius: '9999px',
+                  borderRadius: 'full',
                 }}
               >
                 <Box
@@ -245,7 +245,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                     width: 8,
                     height: 8,
                     bgcolor: 'common.white',
-                    borderRadius: '9999px',
+                    borderRadius: 'full',
                     animation: 'pulse 1.5s infinite',
                   }}
                 />
@@ -264,7 +264,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 bgcolor: 'action.active',
                 px: 12,
                 py: 4,
-                borderRadius: '9999px',
+                borderRadius: 'full',
                 color: 'common.white',
                 fontFamily: 'monospace',
               }}
@@ -287,7 +287,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 onClick={switchCamera}
                 disabled={isRecording}
                 sx={{
-                  borderRadius: '9999px',
+                  borderRadius: 'full',
                   bgcolor: isRecording ? 'rgba(31,41,55,0.5)' : 'colors.cyber.glass.divider',
                   color: isRecording ? 'text.secondary' : 'white',
                   '&:hover': {
@@ -349,7 +349,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
             <IconButton
               onClick={onCancel}
               sx={{
-                borderRadius: '9999px',
+                borderRadius: 'full',
                 bgcolor: 'action.active',
                 color: 'common.white',
                 '&:hover': { bgcolor: 'action.active' },
@@ -377,7 +377,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
             sx={{
               p: 16,
               bgcolor: 'error.main',
-              borderRadius: '9999px',
+              borderRadius: 'full',
               color: 'common.white',
               '&:hover': { bgcolor: 'error.dark' },
             }}
@@ -394,7 +394,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
               sx={{
                 p: 12,
                 bgcolor: 'grey.700',
-                borderRadius: '9999px',
+                borderRadius: 'full',
                 color: 'common.white',
                 mx: 8,
                 '&:hover': { bgcolor: 'text.secondary' },
@@ -408,7 +408,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
               sx={{
                 p: 16,
                 bgcolor: 'error.main',
-                borderRadius: '9999px',
+                borderRadius: 'full',
                 color: 'common.white',
                 mx: 8,
                 '&:hover': { bgcolor: 'error.dark' },

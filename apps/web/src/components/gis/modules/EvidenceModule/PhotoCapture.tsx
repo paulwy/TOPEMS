@@ -198,7 +198,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
           <IconButton
             onClick={onCancel}
             sx={{
-              borderRadius: '9999px',
+              borderRadius: 'full',
               bgcolor: 'action.active',
               color: 'common.white',
               '&:hover': { bgcolor: 'action.active' },
@@ -211,7 +211,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
             <IconButton
               onClick={toggleFlash}
               sx={{
-                borderRadius: '9999px',
+                borderRadius: 'full',
                 bgcolor: flashOn ? 'warning.main' : 'colors.cyber.glass.divider',
                 color: 'common.white',
                 '&:hover': { bgcolor: flashOn ? 'warning.main' : 'rgba(0,0,0,0.7)' },
@@ -223,7 +223,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
             <IconButton
               onClick={switchCamera}
               sx={{
-                borderRadius: '9999px',
+                borderRadius: 'full',
                 bgcolor: 'action.active',
                 color: 'common.white',
                 '&:hover': { bgcolor: 'action.active' },
@@ -250,7 +250,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
           disabled={isCapturing}
           sx={{
             p: 16,
-            borderRadius: '9999px',
+            borderRadius: 'full',
             bgcolor: isCapturing ? 'text.secondary' : 'white',
             color: isCapturing ? 'text.disabled' : 'grey.800',
             '&:hover': { bgcolor: isCapturing ? 'text.secondary' : 'grey.200' },

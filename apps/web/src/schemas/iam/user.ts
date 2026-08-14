@@ -59,7 +59,7 @@ export const userSchema: EntitySchema = {
             style: {
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
+              gap: 2,
             },
           },
           React.createElement(
@@ -145,7 +145,7 @@ export const userSchema: EntitySchema = {
               style: {
                 display: 'inline-block',
                 padding: '2px 8px',
-                borderRadius: '12px',
+                borderRadius: 'lg',
                 fontSize: '12px',
                 fontWeight: 500,
                 backgroundColor: '#primary.lighter',

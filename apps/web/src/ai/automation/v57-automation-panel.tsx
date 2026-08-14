@@ -148,7 +148,7 @@ const V57PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      background: 'linear-gradient(135deg, #10b981, #059669, #0d9488)',
+      background: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']})`,
       color: 'common.white',
     }}
   >
@@ -279,7 +279,7 @@ const TestsTab: React.FC = () => {
             icon={<Activity size={20} />}
             label='行覆盖率'
             value={coverage ? `${coverage.line_coverage.toFixed(1)}%` : '—'}
-            color='#0ea5e9'
+            color={`${designTokens.colors.info.main}`}
           />
         </Grid>
       </Grid>
@@ -549,7 +549,7 @@ const TestsTab: React.FC = () => {
               <CoverageGauge
                 label='分支覆盖率'
                 value={coverage.branch_coverage}
-                color='#0ea5e9'
+                color={`${designTokens.colors.info.main}`}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -635,7 +635,7 @@ const CITab: React.FC = () => {
             icon={<Activity size={20} />}
             label='运行中'
             value={stats.running}
-            color='#0ea5e9'
+            color={`${designTokens.colors.info.main}`}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -1224,7 +1224,7 @@ const TrendsTab: React.FC = () => {
             icon={<Gauge size={20} />}
             label='CI 平均耗时'
             value={`${Math.round(ciStats.avg_duration_ms / 100) / 10}s`}
-            color='#0ea5e9'
+            color={`${designTokens.colors.info.main}`}
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -1386,7 +1386,7 @@ const TrendChart: React.FC<{ data: TrendPoint[]; criteria: GateCriteria | null }
                 x={4}
                 y={y + 4}
                 fontSize={10}
-                fill='#9ca3af'
+                fill={`${designTokens.colors.grey['400']}`}
               >
                 {val.toFixed(1)}
               </text>
@@ -1439,7 +1439,7 @@ const TrendChart: React.FC<{ data: TrendPoint[]; criteria: GateCriteria | null }
               x={getX(i)}
               y={chartHeight - 10}
               fontSize={9}
-              fill='#9ca3af'
+              fill={`${designTokens.colors.grey['400']}`}
               textAnchor='middle'
             >
               {new Date(d.timestamp).toLocaleDateString()}
@@ -1958,7 +1958,7 @@ const GateTypeIcon: React.FC<{ type: GateType }> = ({ type }) => {
     coverage: (
       <TestTube
         size={14}
-        color='#0ea5e9'
+        color={`${designTokens.colors.info.main}`}
       />
     ),
     bundle: (

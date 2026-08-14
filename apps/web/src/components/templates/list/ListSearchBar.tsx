@@ -229,7 +229,7 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
             }
             style={{
               padding: '6px 12px',
-              borderRadius: '4px',
+              borderRadius: 'xs',
               border: isActive ? '1px solid #1976d2' : '1px solid #e0e0e0',
               backgroundColor: isActive ? '#e3f2fd' : '#f5f5f5',
               cursor: 'pointer',

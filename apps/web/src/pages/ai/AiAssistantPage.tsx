@@ -76,7 +76,7 @@ const TAB_CONFIG: { value: TabValue; label: string; icon: React.ReactNode }[] = 
   { value: 'knowledge', label: 'assistant.tab.knowledge', icon: <BookOpen size={18} /> },
 ];
 
-const DEFAULT_PIE_COLORS = [...BIChartColors.series, '#06B6D4', designTokens.colors.pink.main];
+const DEFAULT_PIE_COLORS = [...BIChartColors.series, 'colors.cyan.500', designTokens.colors.pink.main];
 
 const getSeverityColor = (severity: string) => {
   switch (severity) {

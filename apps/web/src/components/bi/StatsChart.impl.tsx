@@ -22,9 +22,9 @@ const EmptyFallback: React.FC<{ title?: string }> = ({ title }) => (
   <div
     style={{
       backgroundColor: 'common.white',
-      borderRadius: '12px',
+      borderRadius: 'lg',
       boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-      padding: '24px',
+      padding: 6,
     }}
   >
     <h3
@@ -32,7 +32,7 @@ const EmptyFallback: React.FC<{ title?: string }> = ({ title }) => (
         fontSize: '18px',
         fontWeight: 600,
         color: 'grey.900',
-        marginBottom: '16px',
+        marginBottom: 4,
       }}
     >
       {title}

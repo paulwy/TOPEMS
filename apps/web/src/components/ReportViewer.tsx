@@ -64,13 +64,13 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 50,
-        padding: '16px',
+        padding: 4,
       }}
     >
       <div
         style={{
           backgroundColor: 'common.white',
-          borderRadius: '12px',
+          borderRadius: 'lg',
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
           width: '100%',
           maxWidth: '1024px',
@@ -83,7 +83,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
         {/* Header */}
         <div
           style={{
-            padding: '24px',
+            padding: 6,
             borderBottom: '1px solid border.default',
             background: 'linear-gradient(to right, primary.light, #eef2ff)',
           }}
@@ -110,7 +110,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                   style={{
                     fontSize: '14px',
                     color: 'grey.600',
-                    marginTop: '4px',
+                    marginTop: 1,
                   }}
                 >
                   {report.config.description}
@@ -120,8 +120,8 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '16px',
-                  marginTop: '12px',
+                  gap: 4,
+                  marginTop: 3,
                   fontSize: '14px',
                   color: theme.palette.grey[600],
                 }}
@@ -139,9 +139,9 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
             <button
               onClick={onClose}
               style={{
-                padding: '8px',
+                padding: 2,
                 color: 'grey.400',
-                borderRadius: '8px',
+                borderRadius: 'md',
                 border: 'none',
                 background: 'transparent',
                 cursor: 'pointer',
@@ -154,12 +154,12 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
         </div>
 
         {/* Table */}
-        <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
+        <div style={{ flex: 1, overflow: 'auto', padding: 6 }}>
           <div
             style={{
               overflowX: 'auto',
               border: '1px solid border.default',
-              borderRadius: '8px',
+              borderRadius: 'md',
             }}
           >
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -198,7 +198,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                         style={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '4px',
+                          gap: 1,
                         }}
                       >
                         <span>{column}</span>
@@ -269,7 +269,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
         {/* Pagination */}
         <div
           style={{
-            padding: '16px',
+            padding: 4,
             borderTop: '1px solid border.default',
             backgroundColor: 'var(--mui-palette-grey-50)',
           }}
@@ -281,7 +281,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
               justifyContent: 'space-between',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <span style={{ fontSize: '14px', color: 'grey.600' }}>每页显示</span>
               <select
                 value={pageSize}
@@ -292,7 +292,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 style={{
                   padding: '4px 8px',
                   border: '1px solid border.default',
-                  borderRadius: '6px',
+                  borderRadius: 'sm',
                   fontSize: '14px',
                 }}
               >
@@ -304,7 +304,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
               <span style={{ fontSize: '14px', color: 'grey.600' }}>条</span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <span style={{ fontSize: '14px', color: 'grey.600' }}>
                 显示 {startIndex + 1}-{Math.min(endIndex, report.row_count)} 共 {report.row_count}
               </span>
@@ -312,9 +312,9 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 onClick={() => setCurrentPage(currentPage - 1)}
                 disabled={currentPage === 1}
                 style={{
-                  padding: '8px',
+                  padding: 2,
                   color: 'grey.600',
-                  borderRadius: '6px',
+                  borderRadius: 'sm',
                   border: 'none',
                   background: 'transparent',
                   cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
@@ -330,9 +330,9 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 onClick={() => setCurrentPage(currentPage + 1)}
                 disabled={currentPage === totalPages}
                 style={{
-                  padding: '8px',
+                  padding: 2,
                   color: 'grey.600',
-                  borderRadius: '6px',
+                  borderRadius: 'sm',
                   border: 'none',
                   background: 'transparent',
                   cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',

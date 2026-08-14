@@ -393,7 +393,7 @@ const LimsSampleDetailPage: React.FC = () => {
                   contentStyle={{
                     backgroundColor: 'common.white',
                     border: '1px solid border.default',
-                    borderRadius: '8px',
+                    borderRadius: 'md',
                   }}
                 />
                 <Bar

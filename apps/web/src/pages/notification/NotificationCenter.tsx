@@ -302,7 +302,7 @@ const NotificationCenter: React.FC = () => {
               style={{
                 width: '100%',
                 padding: '12px 16px 12px 48px',
-                borderRadius: '12px',
+                borderRadius: 'lg',
                 border: '1px solid',
                 borderColor: 'action.hover',
                 fontSize: '14px',
@@ -340,9 +340,9 @@ const NotificationCenter: React.FC = () => {
               }}
               style={{
                 padding: '8px 16px',
-                borderRadius: '20px',
+                borderRadius: '2xl',
                 border: 'none',
-                backgroundColor: activeFilter === filter ? ct.primary.main : 'rgba(0,0,0,0.04)',
+                backgroundColor: activeFilter === filter ? ct.primary.main : 'colors.action.hover',
                 color: activeFilter === filter ? designTokens.colors.background.paper : 'inherit',
                 fontSize: '13px',
                 cursor: 'pointer',
@@ -427,7 +427,7 @@ const NotificationCenter: React.FC = () => {
                     disabled={bulkMarkAsReadMutation.isPending}
                     style={{
                       padding: '8px 16px',
-                      borderRadius: '8px',
+                      borderRadius: 'md',
                       border: '1px solid',
                       borderColor: ct.primary.main,
                       color: ct.primary.main,
@@ -441,7 +441,7 @@ const NotificationCenter: React.FC = () => {
                     disabled={bulkDeleteMutation.isPending}
                     style={{
                       padding: '8px 16px',
-                      borderRadius: '8px',
+                      borderRadius: 'md',
                       backgroundColor: ct.error.main,
                       color: 'common.white',
                       border: 'none',
@@ -501,7 +501,7 @@ const NotificationCenter: React.FC = () => {
               disabled={page === 1}
               style={{
                 padding: '8px 12px',
-                borderRadius: '8px',
+                borderRadius: 'md',
                 border: '1px solid',
                 borderColor: 'divider',
                 cursor: page === 1 ? 'not-allowed' : 'pointer',
@@ -514,7 +514,7 @@ const NotificationCenter: React.FC = () => {
               disabled={page === totalPages}
               style={{
                 padding: '8px 12px',
-                borderRadius: '8px',
+                borderRadius: 'md',
                 border: '1px solid',
                 borderColor: 'divider',
                 cursor: page === totalPages ? 'not-allowed' : 'pointer',
@@ -540,7 +540,7 @@ const NotificationCenter: React.FC = () => {
           onClick={handleMarkAllAsRead}
           disabled={markAllAsReadMutation.isPending}
           style={{
-            padding: '12px',
+            padding: 3,
             borderRadius: '50%',
             backgroundColor: ct.primary.main,
             color: 'common.white',
@@ -554,7 +554,7 @@ const NotificationCenter: React.FC = () => {
         <button
           onClick={() => setShowSettings(true)}
           style={{
-            padding: '12px',
+            padding: 3,
             borderRadius: '50%',
             backgroundColor: 'background.paper',
             color: 'inherit',

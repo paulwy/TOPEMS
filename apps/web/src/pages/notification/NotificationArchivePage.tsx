@@ -273,7 +273,7 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose
                 display: 'inline-flex',
                 width: 44,
                 height: 24,
-                borderRadius: '12px',
+                borderRadius: 'lg',
                 alignItems: 'center',
                 bgcolor: formData.enabled ? 'primary.main' : 'grey.300',
                 cursor: 'pointer',

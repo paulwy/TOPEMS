@@ -322,7 +322,7 @@ const V54PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      background: 'linear-gradient(135deg, #10b981 0%, #059669 50%, #0d9488 100%)',
+      background: `linear-gradient(135deg, ${designTokens.colors.success.dark} 0%, ${designTokens.colors.success.dark} 50%, ${designTokens.colors.teal['600']} 100%)`,
       color: 'common.white',
     }}
   >
@@ -511,7 +511,7 @@ const ConversationTab: React.FC<{
                 borderRadius: 2,
                 bgcolor: msg.role === 'user' ? designTokens.colors.success.dark : 'white',
                 color: msg.role === 'user' ? 'white' : 'inherit',
-                border: msg.role === 'assistant' ? '1px solid #e2e8f0' : 'none',
+                border: msg.role === 'assistant' ? `1px solid ${designTokens.colors.grey['200']}` : 'none',
               }}
             >
               <Typography
@@ -530,7 +530,7 @@ const ConversationTab: React.FC<{
           <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
             <Paper
               elevation={1}
-              sx={{ p: 2, borderRadius: 2, bgcolor: 'common.white', border: '1px solid #e2e8f0' }}
+              sx={{ p: 2, borderRadius: 2, bgcolor: 'common.white', border: `1px solid ${designTokens.colors.grey['200']}` }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Loader2
@@ -1281,7 +1281,7 @@ const WorkflowDetail: React.FC<{
       case 'failed':
         return designTokens.colors.error.main;
       case 'skipped':
-        return '#9ca3af';
+        return `${designTokens.colors.grey['400']}`;
       default:
         return 'colors.grey.500';
     }
@@ -1684,7 +1684,7 @@ const EntityItem: React.FC<{ entity: Entity }> = ({ entity }) => {
     date: designTokens.colors.warning.main,
     number: designTokens.colors.error.main,
     product: designTokens.colors.pink.main,
-    action: '#06b6d4',
+    action: `${designTokens.colors.cyan['500']}`,
   };
 
   return (

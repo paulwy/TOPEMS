@@ -38,7 +38,7 @@ const METHOD_COLORS: Record<ForecastMethod, string> = {
   moving_average: designTokens.colors.primary.dark,
   weighted_moving_average: '#9c27b0',
   exponential_smoothing: designTokens.colors.success.dark,
-  linear_regression: '#ed6c02',
+  linear_regression: 'colors.orange.700',
 };
 
 const CrmForecastAlgorithmPage: React.FC = () => {
@@ -454,7 +454,7 @@ const CrmForecastAlgorithmPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <Trophy
                   size={20}
-                  color='#ed6c02'
+                  color='colors.orange.700'
                 />
                 <Typography
                   variant='subtitle2'

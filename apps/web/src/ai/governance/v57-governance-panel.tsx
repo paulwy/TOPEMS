@@ -94,16 +94,16 @@ const REGULATION_COLORS: Record<Regulation, string> = {
 
 const SEVERITY_COLORS: Record<Severity, string> = {
   critical: designTokens.colors.error.dark,
-  high: '#ea580c',
+  high: `${designTokens.colors.orange['600']}`,
   medium: designTokens.colors.warning.dark,
-  low: '#2563eb',
+  low: `${designTokens.colors.primary.dark}`,
 };
 
 const RISK_LEVEL_COLORS: Record<RiskLevel, string> = {
   critical: designTokens.colors.error.dark,
-  high: '#ea580c',
+  high: `${designTokens.colors.orange['600']}`,
   medium: designTokens.colors.warning.dark,
-  low: '#2563eb',
+  low: `${designTokens.colors.primary.dark}`,
 };
 
 const CATEGORY_COLORS: Record<RiskCategory, string> = {
@@ -451,7 +451,7 @@ const V57PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      background: 'linear-gradient(135deg, #10b981 0%, #0d9488 50%, #0891b2 100%)',
+      background: `linear-gradient(135deg, ${designTokens.colors.success.dark} 0%, ${designTokens.colors.teal['600']} 50%, #0891b2 100%)`,
       color: 'common.white',
     }}
   >
@@ -534,7 +534,7 @@ const ComplianceTab: React.FC<{
   const getScoreColor = (score: number) => {
     if (score >= 90) return designTokens.colors.success.dark;
     if (score >= 75) return designTokens.colors.warning.main;
-    if (score >= 50) return '#ea580c';
+    if (score >= 50) return `${designTokens.colors.orange['600']}`;
     return designTokens.colors.error.dark;
   };
 
@@ -817,7 +817,7 @@ const RiskTab: React.FC<{
   const getScoreColor = (score: number) => {
     if (score <= 25) return designTokens.colors.success.dark;
     if (score <= 50) return designTokens.colors.warning.main;
-    if (score <= 75) return '#ea580c';
+    if (score <= 75) return `${designTokens.colors.orange['600']}`;
     return designTokens.colors.error.dark;
   };
 

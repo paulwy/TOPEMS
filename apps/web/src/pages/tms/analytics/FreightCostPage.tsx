@@ -120,7 +120,7 @@ export default function FreightCostPage() {
                 outerRadius={100}
               >
                 {costData.map((entry) => (
-                  <Cell key={entry.type} fill={COST_COLORS[entry.type] ?? '#9ca3af'} />
+                  <Cell key={entry.type} fill={COST_COLORS[entry.type] ?? 'colors.grey.400'} />
                 ))}
               </Pie>
               <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
@@ -140,7 +140,7 @@ export default function FreightCostPage() {
               <Legend />
               <Bar dataKey='amount' name='成本' fill={designTokens.colors.secondary.dark} barSize={28}>
                 {costData.map((entry) => (
-                  <Cell key={entry.type} fill={COST_COLORS[entry.type] ?? '#9ca3af'} />
+                  <Cell key={entry.type} fill={COST_COLORS[entry.type] ?? 'colors.grey.400'} />
                 ))}
               </Bar>
             </BarChart>

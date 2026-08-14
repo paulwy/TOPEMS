@@ -106,11 +106,11 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
 
   const getModuleColor = (module: string) => {
     const colors: Record<string, string> = {
-      RS: '#f97316',
+      RS: 'colors.orange.500',
       LIMS: 'primary.main',
       QMS: 'success.dark',
       EHS: 'error.main',
-      SRM: '#a855f7',
+      SRM: 'colors.purple.500',
       PDM: 'primary.light',
     };
     return colors[module] || 'text.secondary';
@@ -213,7 +213,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                 style={{
                   width: 32,
                   height: 32,
-                  borderRadius: '9999px',
+                  borderRadius: 'full',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -249,7 +249,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                 style={{
                   width: 32,
                   height: 32,
-                  borderRadius: '9999px',
+                  borderRadius: 'full',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -285,7 +285,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                 style={{
                   width: 32,
                   height: 32,
-                  borderRadius: '9999px',
+                  borderRadius: 'full',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

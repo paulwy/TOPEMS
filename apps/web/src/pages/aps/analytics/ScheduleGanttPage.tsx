@@ -34,7 +34,7 @@ const STATUS_COLORS: Record<string, string> = {
   completed: designTokens.colors.success.dark,
   running: designTokens.colors.primary.main,
   released: designTokens.colors.warning.main,
-  pending: '#9ca3af',
+  pending: 'colors.grey.400',
   cancelled: designTokens.colors.error.main,
 };
 
@@ -127,7 +127,7 @@ export default function ScheduleGanttPage() {
                 <Bar
                   key={`bar-${index}`}
                   dataKey='duration'
-                  fill={STATUS_COLORS[entry.status] ?? '#9ca3af'}
+                  fill={STATUS_COLORS[entry.status] ?? 'colors.grey.400'}
                 />
               ))}
             </Bar>

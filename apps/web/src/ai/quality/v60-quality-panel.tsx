@@ -87,7 +87,7 @@ const QUALITY_COLORS = {
   error: designTokens.colors.error.main,
   info: designTokens.colors.primary.main,
   primary: designTokens.colors.secondary.dark,
-  gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899)',
+  gradient: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main}, ${designTokens.colors.pink['500']})`,
 };
 
 export const V60QualityPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {

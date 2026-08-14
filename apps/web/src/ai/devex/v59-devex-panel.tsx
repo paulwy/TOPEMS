@@ -98,8 +98,8 @@ export const V59DevExPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =>
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899)',
-            bgcolor: 'linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899)',
+            background: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main}, ${designTokens.colors.pink['500']})`,
+            bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main}, ${designTokens.colors.pink['500']})`,
             color: 'common.white',
           }}
         >
@@ -989,7 +989,7 @@ const PerformanceLiveGraph: React.FC = () => {
                 {trend.length > 1 && (
                   <polyline
                     fill='none'
-                    stroke='#06b6d4'
+                    stroke={`${designTokens.colors.cyan['500']}`}
                     strokeWidth='2'
                     points={trend
                       .map((p, i) => {

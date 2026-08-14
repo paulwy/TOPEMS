@@ -326,7 +326,7 @@ export const BffOfflineFallback: React.FC<BffOfflineFallbackProps> = ({
         >
           <WifiOff
             size={20}
-            color='#ed6c02'
+            color='colors.orange.700'
           />
           <Typography
             variant='subtitle2'

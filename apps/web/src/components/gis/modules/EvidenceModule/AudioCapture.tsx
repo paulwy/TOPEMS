@@ -229,7 +229,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
               sx={{
                 p: 16,
                 bgcolor: 'error.main',
-                borderRadius: '9999px',
+                borderRadius: 'full',
                 color: 'common.white',
                 '&:hover': { bgcolor: 'error.dark' },
               }}
@@ -246,7 +246,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                 sx={{
                   p: 12,
                   bgcolor: 'grey.700',
-                  borderRadius: '9999px',
+                  borderRadius: 'full',
                   color: 'common.white',
                   '&:hover': { bgcolor: 'text.secondary' },
                 }}
@@ -259,7 +259,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                 sx={{
                   p: 16,
                   bgcolor: 'error.main',
-                  borderRadius: '9999px',
+                  borderRadius: 'full',
                   color: 'common.white',
                   '&:hover': { bgcolor: 'error.dark' },
                 }}

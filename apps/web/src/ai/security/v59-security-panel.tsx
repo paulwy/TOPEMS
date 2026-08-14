@@ -75,9 +75,9 @@ type PanelTab = 'audit' | 'robustness' | 'privacy' | 'summary';
 
 const SEVERITY_COLORS: Record<AuditSeverity, string> = {
   critical: designTokens.colors.error.dark,
-  high: '#ea580c',
+  high: `${designTokens.colors.orange['600']}`,
   medium: designTokens.colors.warning.dark,
-  low: '#2563eb',
+  low: `${designTokens.colors.primary.dark}`,
   info: 'colors.grey.500',
 };
 
@@ -212,8 +212,8 @@ export const V59SecurityPanel: React.FC<{ onClose: () => void }> = ({ onClose })
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'linear-gradient(135deg, #dc2626, #ea580c, #d97706)',
-            bgcolor: 'linear-gradient(135deg, #dc2626, #ea580c, #d97706)',
+            background: `linear-gradient(135deg, ${designTokens.colors.error.dark}, ${designTokens.colors.orange['600']}, ${designTokens.colors.warning.dark})`,
+            bgcolor: `linear-gradient(135deg, ${designTokens.colors.error.dark}, ${designTokens.colors.orange['600']}, ${designTokens.colors.warning.dark})`,
             color: 'common.white',
           }}
         >
@@ -775,7 +775,7 @@ const RobustnessTab: React.FC<{
           >
             <Target
               size={18}
-              color='#ea580c'
+              color={`${designTokens.colors.orange['600']}`}
             />
             <Typography
               variant='subtitle2'
@@ -797,7 +797,7 @@ const RobustnessTab: React.FC<{
                   variant='outlined'
                   sx={{
                     p: 1.5,
-                    borderColor: selectedVector?.id === v.id ? '#ea580c' : 'divider',
+                    borderColor: selectedVector?.id === v.id ? `${designTokens.colors.orange['600']}` : 'divider',
                     borderWidth: selectedVector?.id === v.id ? 2 : 1,
                     cursor: 'pointer',
                   }}
@@ -1374,7 +1374,7 @@ const PrivacyTab: React.FC<{
                     : leakageRisk.risk_level === 'medium'
                       ? designTokens.colors.warning.main
                       : leakageRisk.risk_level === 'high'
-                        ? '#ea580c'
+                        ? `${designTokens.colors.orange['600']}`
                         : designTokens.colors.error.dark
                 }
               />

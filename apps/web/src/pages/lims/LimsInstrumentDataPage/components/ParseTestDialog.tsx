@@ -94,11 +94,11 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
                   minRows={20}
                   style={{
                     width: '100%',
-                    padding: '8px',
+                    padding: 2,
                     fontFamily: 'monospace',
                     fontSize: '12px',
                     border: `1px solid ${ct.grey[300]}`,
-                    borderRadius: '4px',
+                    borderRadius: 'xs',
                   }}
                   value={formatJson(parseTestData.raw_data)}
                   onChange={(e) =>

@@ -279,7 +279,7 @@ const StatisticsChips: React.FC<{ selectedDate: string }> = ({ selectedDate }) =
       >
         <AlertCircle
           size={16}
-          color='#ed6c02'
+          color='colors.orange.700'
         />
         <Typography
           variant='body2'

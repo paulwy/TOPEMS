@@ -101,7 +101,7 @@ const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) =
         alignItems: 'flex-start',
         gap: 1.5,
         padding: '12px 16px',
-        borderRadius: '8px',
+        borderRadius: 'md',
         border: '1px solid',
         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
         transition: 'all 0.3s ease',

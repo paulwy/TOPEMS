@@ -61,7 +61,7 @@ export interface CanvasComponent {
   position: { x: number; y: number; width: number; height: number };
   dataBinding?: DataBindingConfig;
   children: CanvasComponent[];
-  style: Record<string, string>;
+  style: Record<string, string | number>;
   visibility: {
     hidden: boolean;
     locked: boolean;
@@ -274,7 +274,7 @@ const DEFAULT_THEME: ThemeConfig = {
     xl: '32px',
     xxl: '48px',
   },
-  borderRadius: '8px',
+  borderRadius: 'md',
   shadows: ['none', '0 1px 3px rgba(0,0,0,0.12)', '0 4px 12px rgba(0,0,0,0.15)'],
   mode: 'light',
 };
@@ -309,7 +309,7 @@ const PRESET_TEMPLATES: TemplateDefinition[] = [
         props: { direction: 'column', gap: 16 },
         position: { x: 0, y: 0, width: 1200, height: 800 },
         children: [],
-        style: { padding: '24px' },
+        style: { padding: 6 },
         visibility: { hidden: false, locked: false },
       },
     ],
@@ -590,7 +590,7 @@ export class LowCodeBuilder {
   updateComponentStyle(
     pageId: string,
     componentId: string,
-    style: Record<string, string>
+    style: Record<string, string | number>
   ): boolean {
     const page = this.pages.get(pageId);
     if (!page) return false;

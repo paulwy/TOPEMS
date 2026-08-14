@@ -227,7 +227,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               textTransform: 'none',
             }}
           >
-            <Box sx={{ p: 12, bgcolor: 'primary.lightest', borderRadius: '9999px' }}>
+            <Box sx={{ p: 12, bgcolor: 'primary.lightest', borderRadius: 'full' }}>
               <Camera
                 size={24}
                 sx={{ color: 'primary.dark' }}
@@ -254,7 +254,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               textTransform: 'none',
             }}
           >
-            <Box sx={{ p: 12, bgcolor: 'success.lighter', borderRadius: '9999px' }}>
+            <Box sx={{ p: 12, bgcolor: 'success.lighter', borderRadius: 'full' }}>
               <Mic
                 size={24}
                 style={{ color: theme.palette.success.dark }}
@@ -281,7 +281,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               textTransform: 'none',
             }}
           >
-            <Box sx={{ p: 12, bgcolor: 'secondary.lightest', borderRadius: '9999px' }}>
+            <Box sx={{ p: 12, bgcolor: 'secondary.lightest', borderRadius: 'full' }}>
               <Video
                 size={24}
                 sx={{ color: 'secondary.dark' }}

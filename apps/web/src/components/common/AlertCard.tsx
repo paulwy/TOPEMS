@@ -186,21 +186,21 @@ const SIZE_STYLES = {
     iconSize: 16,
     titleSize: '0.875rem',
     messageSize: '0.75rem',
-    gap: '8px',
+    gap: 2,
   },
   md: {
     padding: '12px 16px',
     iconSize: 20,
     titleSize: '0.875rem',
     messageSize: '0.875rem',
-    gap: '12px',
+    gap: 3,
   },
   lg: {
     padding: '16px 20px',
     iconSize: 24,
     titleSize: '1rem',
     messageSize: '1rem',
-    gap: '16px',
+    gap: 4,
   },
 };
 

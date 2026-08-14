@@ -10,7 +10,7 @@ import { designTokens, semanticTokens } from '@topems/tokens';
  * - 主题变更实时广播到所有微前端模块
  *
  * @example
- * designSystemManager.registerToken({ name: 'primary', value: '#7c3aed', type: TokenType.COLOR, category: 'color' });
+ * designSystemManager.registerToken({ name: 'primary', value: `${designTokens.colors.secondary.dark}`, type: TokenType.COLOR, category: 'color' });
  * designSystemManager.setTheme({ mode: 'dark', primary_color: '#5b21b6' });
  * designSystemManager.syncToCssVariables();
  */
@@ -90,14 +90,14 @@ export const PRESET_TOKENS: DesignToken[] = [
   // ---- 颜色（主色） ----
   {
     name: 'primary',
-    value: '#7c3aed',
+    value: `${designTokens.colors.secondary.dark}`,
     type: TokenType.COLOR,
     category: 'color',
     description: '品牌主色',
   },
   {
     name: 'primary-light',
-    value: '#a78bfa',
+    value: `${designTokens.colors.secondary.light}`,
     type: TokenType.COLOR,
     category: 'color',
     description: '主色浅色',
@@ -111,7 +111,7 @@ export const PRESET_TOKENS: DesignToken[] = [
   },
   {
     name: 'secondary',
-    value: '#06b6d4',
+    value: `${designTokens.colors.cyan['500']}`,
     type: TokenType.COLOR,
     category: 'color',
     description: '品牌辅色',
@@ -192,7 +192,7 @@ export const PRESET_TOKENS: DesignToken[] = [
   },
   {
     name: 'gray-400',
-    value: '#9ca3af',
+    value: `${designTokens.colors.grey['400']}`,
     type: TokenType.COLOR,
     category: 'color',
     description: '灰阶 400',
@@ -271,7 +271,7 @@ export const PRESET_TOKENS: DesignToken[] = [
   },
   {
     name: 'text-disabled',
-    value: '#9ca3af',
+    value: `${designTokens.colors.grey['400']}`,
     type: TokenType.COLOR,
     category: 'color',
     description: '禁用文字色',
@@ -604,7 +604,7 @@ export const LIGHT_THEME: ThemeConfig = {
   text_colors: {
     primary: '#111827',
     secondary: 'colors.grey.500',
-    disabled: '#9ca3af',
+    disabled: `${designTokens.colors.grey['400']}`,
   },
   component_overrides: {},
 };
@@ -617,7 +617,7 @@ export const DARK_THEME: ThemeConfig = {
   background: 'grey.900',
   text_colors: {
     primary: '#f9fafb',
-    secondary: '#9ca3af',
+    secondary: `${designTokens.colors.grey['400']}`,
     disabled: '#4b5563',
   },
   component_overrides: {},

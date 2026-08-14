@@ -641,7 +641,7 @@ const V55PanelHeader: React.FC<{ onClose: () => void; indexed: boolean }> = ({
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #3b82f6 100%)',
+      background: `linear-gradient(135deg, ${designTokens.colors.secondary.main} 0%, ${designTokens.colors.primary.dark} 50%, ${designTokens.colors.primary.main} 100%)`,
       color: 'common.white',
     }}
   >
@@ -1721,7 +1721,7 @@ const QATab: React.FC<{
                 borderRadius: 2,
                 bgcolor: msg.role === 'user' ? designTokens.colors.secondary.main : 'white',
                 color: msg.role === 'user' ? 'white' : 'inherit',
-                border: msg.role === 'assistant' ? '1px solid #e2e8f0' : 'none',
+                border: msg.role === 'assistant' ? `1px solid ${designTokens.colors.grey['200']}` : 'none',
               }}
             >
               <Typography
@@ -1738,7 +1738,7 @@ const QATab: React.FC<{
           <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
             <Paper
               elevation={1}
-              sx={{ p: 2, borderRadius: 2, bgcolor: 'common.white', border: '1px solid #e2e8f0' }}
+              sx={{ p: 2, borderRadius: 2, bgcolor: 'common.white', border: `1px solid ${designTokens.colors.grey['200']}` }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CircularProgress size={14} />

@@ -15,6 +15,7 @@ import { NotificationBell } from '../notification';
 import { ModeToggle } from '../theme/ModeToggle';
 import { useAuth } from '../../hooks/useAuth';
 import { useRole } from '../../hooks/useRole';
+import { designTokens } from '@topems/tokens';
 
 interface DashboardHeaderProps {
   onLogout?: () => void;
@@ -95,7 +96,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                   sx={{
                     fontSize: '1.25rem',
                     fontWeight: 700,
-                    background: 'linear-gradient(90deg, #60a5fa 0%, secondary.light 100%)',
+                    background: `linear-gradient(90deg, ${designTokens.colors.primary['400']} 0%, secondary.light 100%)`,
                     backgroundClip: 'text',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',

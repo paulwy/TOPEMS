@@ -48,6 +48,7 @@ import { V60QualityPanel } from '@/ai/quality';
 // V60.0 AI 伦理
 import { V60EthicsPanel } from '@/ai/ethics';
 import V47IntegrationPanel from './V47IntegrationPanel';
+import { designTokens } from '@topems/tokens';
 
 const MicroFrontendDevTools: React.FC = () => {
   const { t } = useTranslation();
@@ -450,12 +451,12 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV53Platform(true)}
             sx={{
-              bgcolor: 'linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899)',
-              background: 'linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899)',
+              bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main}, ${designTokens.colors.pink['500']})`,
+              background: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main}, ${designTokens.colors.pink['500']})`,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
-              '&:hover': { bgcolor: 'linear-gradient(135deg, #4f46e5, #7c3aed, #db2777)' },
+              '&:hover': { bgcolor: `linear-gradient(135deg, #4f46e5, ${designTokens.colors.secondary.dark}, #db2777)` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -482,12 +483,12 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV54Native(true)}
             sx={{
-              background: 'linear-gradient(135deg, #3b82f6, #6366f1, #8b5cf6)',
-              bgcolor: 'linear-gradient(135deg, #3b82f6, #6366f1, #8b5cf6)',
+              background: `linear-gradient(135deg, ${designTokens.colors.primary.main}, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main})`,
+              bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.main}, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main})`,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4)',
-              '&:hover': { bgcolor: 'linear-gradient(135deg, #2563eb, #4f46e5, #7c3aed)' },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, #4f46e5, ${designTokens.colors.secondary.dark})` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -514,12 +515,12 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV54Agent(true)}
             sx={{
-              background: 'linear-gradient(135deg, #10b981, #059669, #0d9488)',
-              bgcolor: 'linear-gradient(135deg, #10b981, #059669, #0d9488)',
+              background: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']})`,
+              bgcolor: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']})`,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
-              '&:hover': { bgcolor: 'linear-gradient(135deg, #059669, #047857, #0f766e)' },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.success.dark}, #047857, #0f766e)` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -546,12 +547,12 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV55Copilot(true)}
             sx={{
-              background: 'linear-gradient(135deg, #8b5cf6, #6366f1, #3b82f6)',
-              bgcolor: 'linear-gradient(135deg, #8b5cf6, #6366f1, #3b82f6)',
+              background: `linear-gradient(135deg, ${designTokens.colors.secondary.main}, ${designTokens.colors.primary.dark}, ${designTokens.colors.primary.main})`,
+              bgcolor: `linear-gradient(135deg, ${designTokens.colors.secondary.main}, ${designTokens.colors.primary.dark}, ${designTokens.colors.primary.main})`,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)',
-              '&:hover': { bgcolor: 'linear-gradient(135deg, #7c3aed, #4f46e5, #2563eb)' },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.secondary.dark}, #4f46e5, ${designTokens.colors.primary.dark})` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -578,12 +579,12 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV55Automation(true)}
             sx={{
-              background: 'linear-gradient(135deg, #f59e0b, #8b5cf6, #ec4899)',
-              bgcolor: 'linear-gradient(135deg, #f59e0b, #8b5cf6, #ec4899)',
+              background: `linear-gradient(135deg, ${designTokens.colors.warning.main}, ${designTokens.colors.secondary.main}, ${designTokens.colors.pink['500']})`,
+              bgcolor: `linear-gradient(135deg, ${designTokens.colors.warning.main}, ${designTokens.colors.secondary.main}, ${designTokens.colors.pink['500']})`,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
-              '&:hover': { bgcolor: 'linear-gradient(135deg, #d97706, #7c3aed, #db2777)' },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.warning.dark}, ${designTokens.colors.secondary.dark}, #db2777)` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -610,12 +611,12 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV56Ops(true)}
             sx={{
-              background: 'linear-gradient(135deg, #f97316, #dc2626, #7c3aed)',
-              bgcolor: 'linear-gradient(135deg, #f97316, #dc2626, #7c3aed)',
+              background: `linear-gradient(135deg, ${designTokens.colors.orange['500']}, ${designTokens.colors.error.dark}, ${designTokens.colors.secondary.dark})`,
+              bgcolor: `linear-gradient(135deg, ${designTokens.colors.orange['500']}, ${designTokens.colors.error.dark}, ${designTokens.colors.secondary.dark})`,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(249, 115, 22, 0.4)',
-              '&:hover': { bgcolor: 'linear-gradient(135deg, #ea580c, #b91c1c, #6d28d9)' },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.orange['600']}, #b91c1c, #6d28d9)` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -642,12 +643,12 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV56Review(true)}
             sx={{
-              background: 'linear-gradient(135deg, #0ea5e9, #6366f1, #8b5cf6)',
-              bgcolor: 'linear-gradient(135deg, #0ea5e9, #6366f1, #8b5cf6)',
+              background: `linear-gradient(135deg, ${designTokens.colors.info.main}, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main})`,
+              bgcolor: `linear-gradient(135deg, ${designTokens.colors.info.main}, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main})`,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(14, 165, 233, 0.4)',
-              '&:hover': { bgcolor: 'linear-gradient(135deg, #0284c7, #4f46e5, #7c3aed)' },
+              '&:hover': { bgcolor: `linear-gradient(135deg, #0284c7, #4f46e5, ${designTokens.colors.secondary.dark})` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -674,12 +675,12 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV57Governance(true)}
             sx={{
-              background: 'linear-gradient(135deg, #10b981, #0d9488, #0891b2)',
-              bgcolor: 'linear-gradient(135deg, #10b981, #0d9488, #0891b2)',
+              background: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']}, #0891b2)`,
+              bgcolor: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']}, #0891b2)`,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
-              '&:hover': { bgcolor: 'linear-gradient(135deg, #059669, #0f766e, #0e7490)' },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.success.dark}, #0f766e, #0e7490)` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -706,12 +707,12 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV57Automation(true)}
             sx={{
-              background: 'linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7)',
-              bgcolor: 'linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7)',
+              background: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main}, ${designTokens.colors.purple['500']})`,
+              bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main}, ${designTokens.colors.purple['500']})`,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)',
-              '&:hover': { bgcolor: 'linear-gradient(135deg, #4f46e5, #7c3aed, #9333ea)' },
+              '&:hover': { bgcolor: `linear-gradient(135deg, #4f46e5, ${designTokens.colors.secondary.dark}, ${designTokens.colors.purple['600']})` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -738,8 +739,8 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV58UX(true)}
             sx={{
-              background: 'linear-gradient(135deg, #06b6d4, #0891b2, #0e7490)',
-              bgcolor: 'linear-gradient(135deg, #06b6d4, #0891b2, #0e7490)',
+              background: `linear-gradient(135deg, ${designTokens.colors.cyan['500']}, #0891b2, #0e7490)`,
+              bgcolor: `linear-gradient(135deg, ${designTokens.colors.cyan['500']}, #0891b2, #0e7490)`,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(6, 182, 212, 0.4)',
@@ -770,12 +771,12 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV58Evolution(true)}
             sx={{
-              background: 'linear-gradient(135deg, #8b5cf6, #6366f1, #3b82f6)',
-              bgcolor: 'linear-gradient(135deg, #8b5cf6, #6366f1, #3b82f6)',
+              background: `linear-gradient(135deg, ${designTokens.colors.secondary.main}, ${designTokens.colors.primary.dark}, ${designTokens.colors.primary.main})`,
+              bgcolor: `linear-gradient(135deg, ${designTokens.colors.secondary.main}, ${designTokens.colors.primary.dark}, ${designTokens.colors.primary.main})`,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)',
-              '&:hover': { bgcolor: 'linear-gradient(135deg, #7c3aed, #4f46e5, #2563eb)' },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.secondary.dark}, #4f46e5, ${designTokens.colors.primary.dark})` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -802,12 +803,12 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV59DevEx(true)}
             sx={{
-              background: 'linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899)',
-              bgcolor: 'linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899)',
+              background: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main}, ${designTokens.colors.pink['500']})`,
+              bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main}, ${designTokens.colors.pink['500']})`,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
-              '&:hover': { bgcolor: 'linear-gradient(135deg, #4f46e5, #7c3aed, #db2777)' },
+              '&:hover': { bgcolor: `linear-gradient(135deg, #4f46e5, ${designTokens.colors.secondary.dark}, #db2777)` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -834,8 +835,8 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV59Security(true)}
             sx={{
-              background: 'linear-gradient(135deg, #dc2626, #ea580c, #d97706)',
-              bgcolor: 'linear-gradient(135deg, #dc2626, #ea580c, #d97706)',
+              background: `linear-gradient(135deg, ${designTokens.colors.error.dark}, ${designTokens.colors.orange['600']}, ${designTokens.colors.warning.dark})`,
+              bgcolor: `linear-gradient(135deg, ${designTokens.colors.error.dark}, ${designTokens.colors.orange['600']}, ${designTokens.colors.warning.dark})`,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(220, 38, 38, 0.4)',
@@ -866,8 +867,8 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV60Ethics(true)}
             sx={{
-              background: 'linear-gradient(135deg, #059669, #0d9488, #0891b2)',
-              bgcolor: 'linear-gradient(135deg, #059669, #0d9488, #0891b2)',
+              background: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']}, #0891b2)`,
+              bgcolor: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']}, #0891b2)`,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(5, 150, 105, 0.4)',
@@ -898,12 +899,12 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV60Quality(true)}
             sx={{
-              background: 'linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899)',
-              bgcolor: 'linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899)',
+              background: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main}, ${designTokens.colors.pink['500']})`,
+              bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.main}, ${designTokens.colors.pink['500']})`,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
-              '&:hover': { bgcolor: 'linear-gradient(135deg, #4f46e5, #7c3aed, #db2777)' },
+              '&:hover': { bgcolor: `linear-gradient(135deg, #4f46e5, ${designTokens.colors.secondary.dark}, #db2777)` },
               minWidth: 'auto',
               px: 2,
             }}

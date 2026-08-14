@@ -372,15 +372,15 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: 'grey.100',
-            padding: '16px',
+            padding: 4,
           }}
         >
           <div
             style={{
               backgroundColor: 'common.white',
-              borderRadius: '12px',
+              borderRadius: 'lg',
               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-              padding: '32px',
+              padding: 8,
               maxWidth: '600px',
               width: '100%',
               textAlign: 'center',
@@ -392,7 +392,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 width: '64px',
                 height: '64px',
                 backgroundColor: 'error.light',
-                borderRadius: '9999px',
+                borderRadius: 'full',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -408,14 +408,14 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 fontSize: '20px',
                 fontWeight: 700,
                 color: 'text.primary',
-                marginBottom: '8px',
+                marginBottom: 2,
               }}
             >
               {friendlyMessage.title}
             </h2>
 
             {/* 错误描述 */}
-            <p style={{ color: 'text.secondary', marginBottom: '16px' }}>
+            <p style={{ color: 'text.secondary', marginBottom: 4 }}>
               {error?.message ? (
                 <span title={error.message}>{friendlyMessage.description}</span>
               ) : (
@@ -425,19 +425,19 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
             {/* 技术详情区域 */}
             {(showDetails || process.env.NODE_ENV !== 'production') && error && errorInfo && (
-              <div style={{ marginBottom: '24px' }}>
+              <div style={{ marginBottom: 6 }}>
                 <button
                   onClick={this.handleToggleDetails}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '8px',
+                    gap: 2,
                     width: '100%',
-                    padding: '12px',
+                    padding: 3,
                     backgroundColor: 'grey.100',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: 'md',
                     cursor: 'pointer',
                     color: 'text.secondary',
                     fontSize: '14px',
@@ -453,8 +453,8 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                     style={{
                       backgroundColor: 'grey.800',
                       color: 'grey.50',
-                      borderRadius: '8px',
-                      padding: '16px',
+                      borderRadius: 'md',
+                      padding: 4,
                       textAlign: 'left',
                       maxHeight: '300px',
                       overflowY: 'auto',
@@ -464,8 +464,8 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px',
-                        marginBottom: '12px',
+                        gap: 2,
+                        marginBottom: 3,
                       }}
                     >
                       <Code2 style={{ width: 16, height: 16 }} />
@@ -473,12 +473,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                     </div>
 
                     {/* 错误信息 */}
-                    <div style={{ marginBottom: '12px' }}>
+                    <div style={{ marginBottom: 3 }}>
                       <div
                         style={{
                           fontSize: '12px',
                           color: 'text.disabled',
-                          marginBottom: '4px',
+                          marginBottom: 1,
                         }}
                       >
                         错误信息
@@ -489,12 +489,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                     </div>
 
                     {/* 错误类型 */}
-                    <div style={{ marginBottom: '12px' }}>
+                    <div style={{ marginBottom: 3 }}>
                       <div
                         style={{
                           fontSize: '12px',
                           color: 'text.disabled',
-                          marginBottom: '4px',
+                          marginBottom: 1,
                         }}
                       >
                         错误类型
@@ -505,12 +505,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                     </div>
 
                     {/* 错误级别 */}
-                    <div style={{ marginBottom: '12px' }}>
+                    <div style={{ marginBottom: 3 }}>
                       <div
                         style={{
                           fontSize: '12px',
                           color: 'text.disabled',
-                          marginBottom: '4px',
+                          marginBottom: 1,
                         }}
                       >
                         错误级别
@@ -520,12 +520,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
                     {/* 错误时间 */}
                     {errorReport && (
-                      <div style={{ marginBottom: '12px' }}>
+                      <div style={{ marginBottom: 3 }}>
                         <div
                           style={{
                             fontSize: '12px',
                             color: 'text.disabled',
-                            marginBottom: '4px',
+                            marginBottom: 1,
                           }}
                         >
                           发生时间
@@ -538,12 +538,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
                     {/* 用户代理 */}
                     {errorReport && (
-                      <div style={{ marginBottom: '12px' }}>
+                      <div style={{ marginBottom: 3 }}>
                         <div
                           style={{
                             fontSize: '12px',
                             color: 'text.disabled',
-                            marginBottom: '4px',
+                            marginBottom: 1,
                           }}
                         >
                           浏览器信息
@@ -562,12 +562,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
                     {/* React 版本 */}
                     {errorReport?.reactVersion && (
-                      <div style={{ marginBottom: '12px' }}>
+                      <div style={{ marginBottom: 3 }}>
                         <div
                           style={{
                             fontSize: '12px',
                             color: 'text.disabled',
-                            marginBottom: '4px',
+                            marginBottom: 1,
                           }}
                         >
                           React 版本
@@ -584,7 +584,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                         style={{
                           fontSize: '12px',
                           color: 'text.disabled',
-                          marginBottom: '4px',
+                          marginBottom: 1,
                         }}
                       >
                         组件栈
@@ -610,7 +610,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
               style={{
                 display: 'flex',
                 flexWrap: 'wrap',
-                gap: '12px',
+                gap: 3,
                 justifyContent: 'center',
               }}
             >
@@ -624,7 +624,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                     padding: '12px 20px',
                     backgroundColor: 'primary.dark',
                     color: 'common.white',
-                    borderRadius: '8px',
+                    borderRadius: 'md',
                     border: 'none',
                     cursor: 'pointer',
                     transition: 'background-color 0.2s',
@@ -646,7 +646,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                   padding: '12px 20px',
                   backgroundColor: 'grey.200',
                   color: 'text.primary',
-                  borderRadius: '8px',
+                  borderRadius: 'md',
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'background-color 0.2s',
@@ -667,7 +667,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                   padding: '12px 20px',
                   backgroundColor: 'grey.200',
                   color: 'text.primary',
-                  borderRadius: '8px',
+                  borderRadius: 'md',
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'background-color 0.2s',
@@ -688,7 +688,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                   padding: '12px 20px',
                   backgroundColor: 'grey.200',
                   color: 'text.primary',
-                  borderRadius: '8px',
+                  borderRadius: 'md',
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'background-color 0.2s',
@@ -711,7 +711,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                     padding: '12px 20px',
                     backgroundColor: this.state.isReporting ? 'grey.400' : 'warning.main',
                     color: 'common.white',
-                    borderRadius: '8px',
+                    borderRadius: 'md',
                     border: 'none',
                     cursor: this.state.isReporting ? 'not-allowed' : 'pointer',
                     transition: 'background-color 0.2s',
@@ -733,7 +733,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                     padding: '12px 20px',
                     backgroundColor: 'success.light',
                     color: 'success.main',
-                    borderRadius: '8px',
+                    borderRadius: 'md',
                     fontWeight: 500,
                     fontSize: '14px',
                   }}
@@ -858,7 +858,7 @@ const DefaultLoading: React.FC = () => (
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '32px',
+      padding: 8,
       color: 'text.secondary',
     }}
   >

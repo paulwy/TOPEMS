@@ -136,24 +136,24 @@ export interface MetricCardProps {
 const colorMap: Record<string, { bg: string; gradient: string }> = {
   green: {
     bg: 'success.main',
-    gradient: 'linear-gradient(135deg, #22C55E, #16A34A)',
+    gradient: `linear-gradient(135deg, ${designTokens.colors.success.main}, ${designTokens.colors.success.dark})`,
   },
   purple: {
     bg: 'secondary.main',
-    gradient: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
+    gradient: `linear-gradient(135deg, ${designTokens.colors.secondary.main}, ${designTokens.colors.secondary.dark})`,
   },
   blue: {
     bg: 'primary.main',
-    gradient: 'linear-gradient(135deg, #3B82F6, #2563EB)',
+    gradient: `linear-gradient(135deg, ${designTokens.colors.primary.main}, ${designTokens.colors.primary.dark})`,
   },
   orange: {
     bg: 'warning.main',
-    gradient: 'linear-gradient(135deg, #F59E0B, #D97706)',
+    gradient: `linear-gradient(135deg, ${designTokens.colors.warning.main}, ${designTokens.colors.warning.dark})`,
   },
-  red: { bg: designTokens.colors.error.main, gradient: 'linear-gradient(135deg, #EF4444, #DC2626)' },
+  red: { bg: designTokens.colors.error.main, gradient: `linear-gradient(135deg, ${designTokens.colors.error.main}, ${designTokens.colors.error.dark})` },
   cyan: {
-    bg: '#06B6D4',
-    gradient: 'linear-gradient(135deg, #06B6D4, #0891B2)',
+    bg: `${designTokens.colors.cyan['500']}`,
+    gradient: `linear-gradient(135deg, ${designTokens.colors.cyan['500']}, #0891B2)`,
   },
 };
 
@@ -234,7 +234,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
   const getTrendColor = () => {
     if (!computedTrend || computedTrend === 'neutral' || computedTrend === 'stable')
-      return '#64748B';
+      return `${designTokens.colors.grey['500']}`;
     return computedTrend === 'up' ? 'success.main' : 'error.main';
   };
 
@@ -272,7 +272,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
   const getSparklineColor = () => {
     if (!computedTrend || computedTrend === 'neutral' || computedTrend === 'stable')
-      return '#64748B';
+      return `${designTokens.colors.grey['500']}`;
     return computedTrend === 'up' ? 'success.main' : 'error.main';
   };
 

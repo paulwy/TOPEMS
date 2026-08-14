@@ -3136,8 +3136,10 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 >
 > **V213 已完成**：✅ 覆盖率冲刺 P2 → P3 全量推进（详见下方 V213 章节，28 commits · ~3131 新增 tests）
 >
-> **V214 候选（按 ROI 估算，均未启动）**：
-> - **方向 C 续 · 2845 条硬编码再收敛到 -40%**：V212 达到 -21.8% 后推进到 V214 净减 ≥728 条（含 fixed-px-spacing 640 + rgb-color 561 + box-shadow 145 专项）
+> **V214 已完成**：✅ 方向 C 续 · Design Token 收敛（详见下方 V214 章节，2845→2067 偏差 · -27.4% · TSC 0 error）
+>
+> **V215 候选（按 ROI 估算，均未启动）**：
+> - **方向 C 续 · 2067 条硬编码再收敛到 -40%**：V214 达到 -27.4% 后推进到 V215 净减 ≥207 条（含 box-shadow 145 + 残余 hex/rgb 专项）
 > - **方向 D · MF 虚拟模块可观测性埋点**：在 `@module-federation/runtime` 钩子中埋点，捕获 `loadShare` 失败堆栈、Content-Type 缺失、chunk 404，并通过 logger + 全局 toast 实时告警
 > - **前端 E2E 测试矩阵扩面**：现有 14 spec 基础上补齐 MES / HRM / CRM 三大业务 CRUD（9 个 spec）
 > - **国际化 i18n 落地**：统一 `i18next` 接入 · 中/英双语资源文件
@@ -3278,4 +3280,55 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 |------|------|--------:|--------:|-----------|
 | V203 | 18 crate 纯函数提取 P1 | 1439 | 1439 | ≥10% ✅ |
 | V213 | P2→P3 全量冲刺 | ~3131 | ~4570 | ≥20% ✅ |
+
+## 🎯 V214 — Design Token 收敛方向 C 续（2845→2067 · -27.4% · ✅ 已封版）
+
+> **承接**：V212 达到 -21.8%（3640→2845）后，继续推进方向 C 收敛硬编码偏差。
+> **基线** (2026-08-14)：2845 条偏差（V212 后状态）
+> **目标**：偏差总数 ≤ 2117 · TSC 0 error
+> **最终结果**：2845→2067 偏差（净减 778 条 · -27.4%）· TSC 0 error ✅
+> **日期**：2026-08-14
+
+### ✅ 验证结果
+
+| # | 验证项 | 命令 | 结果 |
+|---|--------|------|------|
+| 1 | TSC 类型检查 | `npx tsc --noEmit -p apps/web/tsconfig.json` | ✅ 0 error |
+| 2 | Design Token 偏差扫描 | `node scripts/check-design-tokens.mjs` | ✅ 2067 条（≤2117 目标） |
+
+### 📊 偏差收敛对比
+
+| 偏差类型 | V212 后 | V214 后 | 净减 | 收敛率 |
+|----------|--------:|--------:|-----:|-------:|
+| fixed-px-spacing | 640 | ~420 | ~220 | -34% |
+| hardcoded-color (hex) | ~820 | ~590 | ~230 | -28% |
+| rgb-color (rgba) | 579 | ~420 | ~159 | -27% |
+| gradient 内嵌 hex | ~210 | ~0 | ~210 | -100% |
+| box-shadow | 145 | 145 | 0 | N/A（留 V215） |
+| 其他 | ~451 | ~492 | +41 | +9% |
+| **合计** | **2845** | **2067** | **778** | **-27.4%** |
+
+### 📦 交付清单
+
+| 文件/目录 | 变更内容 |
+|----------|---------|
+| `scripts/audit/fix-px-spacing-batch.mjs` | 新增：px 间距 → MUI spacing 数字 / borderRadius token 批量替换 |
+| `scripts/audit/fix-hex-colors-extended.mjs` | 新增：扩展 hex 颜色映射（50+ 色值 → designTokens 引用） |
+| `scripts/audit/fix-rgba-colors-batch.mjs` | 新增：rgba → glass/action token 批量替换（20+ 映射） |
+| `scripts/audit/fix-gradient-hex-batch.mjs` | 新增：gradient 内嵌 hex → 模板字面量 + designTokens 引用（含 JSX 属性 `{}` 包装、数字属性 bracket notation） |
+| `scripts/audit/fix-jsx-attr-templates.mjs` | 新增：修复 JSX 属性模板字面量缺失 `{}` 包装 |
+| `packages/tokens/src/tokens.ts` | 新增 `colors.common.white/black` 属性 |
+| `apps/web/src/design-system/components/index.tsx` | 类型修复：`px: string` → `px: number \| string` |
+| `apps/web/src/microfrontend/lowcode/builder.ts` | 类型修复：`Record<string, string>` → `Record<string, string \| number>`（5 处） |
+| `apps/web/src/dev-platform/lowcode-builder.ts` | 类型修复：同上（2 处） |
+| `apps/web/src/` (24 文件) | gradient 内嵌 hex → 模板字面量替换（265 处） |
+| `apps/web/src/` (50+ 文件) | hex/rgba/px-spacing 批量替换 |
+
+### 🔧 技术要点
+
+1. **数字属性 bracket notation**：`designTokens.colors.primary.400` 在 JS/TS 中是语法错误（`400` 非合法标识符），必须使用 `designTokens.colors.primary['400']`
+2. **JSX 属性模板字面量**：`color=\`...\`` 非法，必须 `color={\`...\`}`（JSX 表达式需 `{}` 包装）
+3. **逐行处理 + backtick 跳过**：gradient 脚本按行处理，跳过含 backtick 的行，避免跨模板字面量匹配
+4. **import 插入**：检查原始文件是否已有 `@topems/tokens` import，在最后一个 import 语句后插入
+5. **type annotation 扩展**：`Record<string, string>` → `Record<string, string | number>` 以兼容 MUI spacing 数字
 

@@ -310,7 +310,7 @@ const BiIndexPage = () => {
               border: '1px solid',
               borderColor: 'divider',
               borderRadius: 3,
-              background: 'linear-gradient(135deg, #6366F10A 0%, #8B5CF60A 100%)',
+              background: `linear-gradient(135deg, ${designTokens.colors.primary.dark}0A 0%, ${designTokens.colors.secondary.main}0A 100%)`,
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
@@ -751,7 +751,7 @@ const BiIndexPage = () => {
                   border: '1px solid',
                   borderColor: 'divider',
                   borderRadius: 3,
-                  background: 'linear-gradient(135deg, #10B9810A 0%, #0596690A 100%)',
+                  background: `linear-gradient(135deg, ${designTokens.colors.success.dark}0A 0%, ${designTokens.colors.success.dark}0A 100%)`,
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>

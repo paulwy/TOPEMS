@@ -126,12 +126,12 @@ const ExportButton: React.FC<ExportButtonProps> = ({
       disabled={disabled || exporting}
       style={{
         padding: '8px 16px',
-        borderRadius: '8px',
+        borderRadius: 'md',
         fontWeight: 500,
         transition: 'all 0.2s',
         display: 'flex',
         alignItems: 'center',
-        gap: '8px',
+        gap: 2,
         backgroundColor: disabled
           ? theme.palette.grey[400]
           : exportComplete

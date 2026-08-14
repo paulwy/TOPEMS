@@ -643,7 +643,7 @@ ${content
                 style={{
                   flex: 1,
                   width: '100%',
-                  padding: '16px',
+                  padding: 4,
                   border: 'none',
                   outline: 'none',
                   resize: 'none',
@@ -704,7 +704,7 @@ ${content
                             style={{
                               backgroundColor: 'var(--mui-palette-action-hover)',
                               padding: '0.2rem 0.4rem',
-                              borderRadius: '4px',
+                              borderRadius: 'xs',
                               fontFamily: 'monospace',
                             }}
                             {...props}

@@ -15,7 +15,7 @@ const DEFAULT_COLORS = [
   'warning.main', // Amber (warning)
   'error.main', // Red (error)
   'secondary.main', // Violet
-  '#06B6D4', // Cyan
+  'colors.cyan.500', // Cyan
   designTokens.colors.pink.main, // Pink
   '#84CC16', // Lime
 ];

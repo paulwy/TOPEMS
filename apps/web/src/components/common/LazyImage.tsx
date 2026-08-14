@@ -25,7 +25,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: '4px',
+        borderRadius: 'xs',
       }}
     >
       <svg

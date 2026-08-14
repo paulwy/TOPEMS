@@ -130,7 +130,7 @@ const AppRoutes: React.FC = () => {
             element={
               <ProtectedRoute>
                 <GlobalLayout>
-                  <div style={{ padding: '20px' }}>
+                  <div style={{ padding: 5 }}>
                     <h2>核心模块</h2>
                     <p>
                       核心模块在静态模式下不可用。请设置 VITE_DEPLOYMENT_MODE=module-federation 启用

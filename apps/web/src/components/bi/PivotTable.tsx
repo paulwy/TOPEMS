@@ -163,9 +163,9 @@ export const PivotTable: React.FC<PivotConfig> = ({
       <div
         style={{
           backgroundColor: 'common.white',
-          borderRadius: '12px',
+          borderRadius: 'lg',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-          padding: '24px',
+          padding: 6,
           minHeight: '200px',
           display: 'flex',
           flexDirection: 'column',
@@ -179,7 +179,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
               fontSize: '18px',
               fontWeight: 600,
               color: theme.palette.grey[900],
-              marginBottom: '16px',
+              marginBottom: 4,
             }}
           >
             {title}
@@ -214,7 +214,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
               y2='16'
             />
           </svg>
-          <p style={{ marginTop: '8px' }}>暂无数据</p>
+          <p style={{ marginTop: 2 }}>暂无数据</p>
         </div>
       </div>
     );
@@ -224,9 +224,9 @@ export const PivotTable: React.FC<PivotConfig> = ({
     <div
       style={{
         backgroundColor: 'common.white',
-        borderRadius: '12px',
+        borderRadius: 'lg',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-        padding: '24px',
+        padding: 6,
       }}
     >
       <div
@@ -234,7 +234,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '16px',
+          marginBottom: 4,
         }}
       >
         <h3
@@ -365,8 +365,8 @@ export const PivotTable: React.FC<PivotConfig> = ({
       {showFilters && (
         <div
           style={{
-            marginBottom: '16px',
-            padding: '12px',
+            marginBottom: 4,
+            padding: 3,
             backgroundColor: theme.palette.grey[50],
             borderRadius: 8,
             border: '1px solid border.default',
@@ -536,7 +536,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                       {sortConfig?.key === row && (
                         <span
                           style={{
-                            marginLeft: '8px',
+                            marginLeft: 2,
                             color: theme.palette.primary.light,
                             fontSize: 12,
                           }}
@@ -637,7 +637,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
       </div>
       <div
         style={{
-          marginTop: '12px',
+          marginTop: 3,
           fontSize: '13px',
           color: 'grey.400',
           textAlign: 'right',

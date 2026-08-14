@@ -36,7 +36,7 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
         border: '1px solid rgba(255, 255, 255, 0.05)',
         boxShadow: isHovered ? 20 : 10,
         transform: isHovered ? 'scale(1.02)' : 'scale(1)',
-        borderColor: isHovered ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+        borderColor: isHovered ? 'glass.topLight' : 'rgba(255, 255, 255, 0.05)',
         '&:hover .top-bar': {
           transform: 'scaleX(1)',
         },

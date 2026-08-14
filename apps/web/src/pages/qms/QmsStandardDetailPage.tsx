@@ -584,8 +584,8 @@ const QmsStandardDetailPage: React.FC = () => {
                   onChange={(e) => setFormData((prev) => ({ ...prev, status: e.target.value }))}
                   style={{
                     width: '100%',
-                    padding: '8px',
-                    borderRadius: '8px',
+                    padding: 2,
+                    borderRadius: 'md',
                     border: '1px solid border.default',
                   }}
                 >
@@ -644,8 +644,8 @@ const QmsStandardDetailPage: React.FC = () => {
                 placeholder='请输入标准描述...'
                 style={{
                   width: '100%',
-                  padding: '12px',
-                  borderRadius: '6px',
+                  padding: 3,
+                  borderRadius: 'sm',
                   border: '1px solid border.default',
                   resize: 'none',
                   height: '96px',
@@ -714,8 +714,8 @@ const QmsStandardDetailPage: React.FC = () => {
                 placeholder='请描述本次版本变更的内容...'
                 style={{
                   width: '100%',
-                  padding: '12px',
-                  borderRadius: '6px',
+                  padding: 3,
+                  borderRadius: 'sm',
                   border: '1px solid border.default',
                   resize: 'none',
                   height: '96px',

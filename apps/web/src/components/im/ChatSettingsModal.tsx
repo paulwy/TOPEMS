@@ -62,7 +62,7 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
             onClick={onClose}
             style={{
               padding: 4,
-              borderRadius: '9999px',
+              borderRadius: 'full',
               backgroundColor: 'transparent',
               border: 'none',
               cursor: 'pointer',
@@ -87,7 +87,7 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
               style={{
                 width: 48,
                 height: 48,
-                borderRadius: '9999px',
+                borderRadius: 'full',
                 backgroundColor: 'secondary.light',
                 display: 'flex',
                 alignItems: 'center',

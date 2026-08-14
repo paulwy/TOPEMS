@@ -268,7 +268,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             label='今日错误数'
             value={totalErrors}
             icon={<AlertIcon size={24} />}
-            color='#c62828'
+            color='colors.error.800'
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
@@ -587,7 +587,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             label='错误类型'
             value={errorStats?.totalErrorTypes || 0}
             icon={<XCircleIcon size={24} />}
-            color='#c62828'
+            color='colors.error.800'
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>

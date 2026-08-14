@@ -173,13 +173,13 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 50,
-        padding: '16px',
+        padding: 4,
       }}
     >
       <div
         style={{
           backgroundColor: 'common.white',
-          borderRadius: '12px',
+          borderRadius: 'lg',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           width: '100%',
           maxWidth: '1024px',
@@ -194,11 +194,11 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '16px',
+            padding: 4,
             borderBottom: '1px solid grey.200',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
             <FileText sx={{ width: 24, height: 24, color: 'primary.dark' }} />
             <h2
               style={{
@@ -216,8 +216,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           <button
             onClick={onClose}
             style={{
-              padding: '8px',
-              borderRadius: '8px',
+              padding: 2,
+              borderRadius: 'md',
               border: 'none',
               background: 'transparent',
               cursor: 'pointer',
@@ -285,14 +285,14 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                   marginBottom: 1.5,
                 }}
               />
-              <p style={{ color: theme.palette.error.dark, marginBottom: '16px' }}>{error}</p>
+              <p style={{ color: theme.palette.error.dark, marginBottom: 4 }}>{error}</p>
               <button
                 onClick={onClose}
                 style={{
                   padding: '8px 16px',
                   backgroundColor: theme.palette.grey[200],
                   color: theme.palette.grey[700],
-                  borderRadius: '8px',
+                  borderRadius: 'md',
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'background-color 0.2s',
@@ -306,14 +306,14 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           {/* 容器始终渲染和显示 */}
           <div
             ref={containerRef}
-            style={{ padding: '16px', minHeight: '80vh' }}
+            style={{ padding: 4, minHeight: '80vh' }}
           />
         </div>
 
         {/* 底部操作栏 */}
         <div
           style={{
-            padding: '16px',
+            padding: 4,
             borderTop: '1px solid grey.200',
             backgroundColor: theme.palette.grey[50],
           }}
@@ -325,7 +325,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
               padding: '8px 16px',
               backgroundColor: theme.palette.grey[200],
               color: theme.palette.grey[700],
-              borderRadius: '8px',
+              borderRadius: 'md',
               border: 'none',
               cursor: 'pointer',
               transition: 'background-color 0.2s',

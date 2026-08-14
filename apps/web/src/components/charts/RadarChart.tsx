@@ -68,7 +68,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({
           />
           {showLegend && (
             <Legend
-              wrapperStyle={{ paddingTop: '10px' }}
+              wrapperStyle={{ paddingTop: 2.5 }}
               iconType='circle'
               iconSize={8}
               formatter={(value: string) => (

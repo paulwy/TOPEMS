@@ -783,7 +783,7 @@ const LicenseCompliancePanel: React.FC = () => {
             sx={{
               p: 2,
               borderRadius: 2,
-              bgcolor: licenseCheck.compliant ? '#10b98115' : '#ef444415',
+              bgcolor: licenseCheck.compliant ? `${designTokens.colors.success.dark}15` : `${designTokens.colors.error.main}15`,
               color: licenseCheck.compliant ? designTokens.colors.success.dark : designTokens.colors.error.main,
             }}
           >
@@ -830,7 +830,7 @@ const LicenseCompliancePanel: React.FC = () => {
               sx={{ py: 1.5 }}
             >
               <Avatar
-                sx={{ width: 40, height: 40, mr: 2, bgcolor: hasIssue ? '#f59e0b20' : '#10b98120' }}
+                sx={{ width: 40, height: 40, mr: 2, bgcolor: hasIssue ? `${designTokens.colors.warning.main}20` : `${designTokens.colors.success.dark}20` }}
               >
                 <PackageIcon
                   size={20}

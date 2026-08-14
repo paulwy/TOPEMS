@@ -30,13 +30,13 @@ const annotationTypes = [
     id: 'note',
     label: '注释',
     icon: MessageSquare,
-    colors: ['primary.main', 'secondary.main', '#06B6D4'],
+    colors: ['primary.main', 'secondary.main', 'colors.cyan.500'],
   },
   {
     id: 'tag',
     label: '标签',
     icon: Tag,
-    colors: [designTokens.colors.pink.main, '#14B8A6', '#84CC16'],
+    colors: [designTokens.colors.pink.main, 'colors.teal.500', '#84CC16'],
   },
 ];
 
@@ -158,7 +158,7 @@ export function ChartAnnotations({
                     }}
                     onMouseEnter={(e) => {
                       if (selectedType !== type.id)
-                        e.currentTarget.style.backgroundColor = '#F1F5F9';
+                        e.currentTarget.style.backgroundColor = 'colors.grey.100';
                     }}
                     onMouseLeave={(e) => {
                       if (selectedType !== type.id)
