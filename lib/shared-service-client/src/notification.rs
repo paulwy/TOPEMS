@@ -216,7 +216,8 @@ impl NotificationServiceClient {
                 self.base_url
             ))
             .json(&req)
-            .with_trace().send()
+            .with_trace()
+            .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
@@ -243,7 +244,8 @@ impl NotificationServiceClient {
                 self.base_url
             ))
             .json(&req)
-            .with_trace().send()
+            .with_trace()
+            .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
@@ -268,7 +270,8 @@ impl NotificationServiceClient {
                 self.base_url
             ))
             .json(&req)
-            .with_trace().send()
+            .with_trace()
+            .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
@@ -291,7 +294,8 @@ impl NotificationServiceClient {
                 "{}/api/core/notification/notifications/stats",
                 self.base_url
             ))
-            .with_trace().send()
+            .with_trace()
+            .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
@@ -314,7 +318,8 @@ impl NotificationServiceClient {
                 "{}/api/core/notification/notifications/stats/me",
                 self.base_url
             ))
-            .with_trace().send()
+            .with_trace()
+            .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
@@ -337,7 +342,8 @@ impl NotificationServiceClient {
                 "{}/api/core/notification/notifications/archive/config",
                 self.base_url
             ))
-            .with_trace().send()
+            .with_trace()
+            .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
@@ -361,7 +367,8 @@ impl NotificationServiceClient {
                 self.base_url
             ))
             .json(&config)
-            .with_trace().send()
+            .with_trace()
+            .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
@@ -384,7 +391,8 @@ impl NotificationServiceClient {
                 "{}/api/core/notification/notifications/archive/run",
                 self.base_url
             ))
-            .with_trace().send()
+            .with_trace()
+            .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
@@ -414,7 +422,8 @@ impl NotificationServiceClient {
         let response = self
             .client
             .get(url)
-            .with_trace().send()
+            .with_trace()
+            .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
@@ -437,7 +446,8 @@ impl NotificationServiceClient {
                 "{}/api/core/notification/notifications/{}",
                 self.base_url, id
             ))
-            .with_trace().send()
+            .with_trace()
+            .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
@@ -459,7 +469,8 @@ impl NotificationServiceClient {
                 "{}/api/core/notification/notifications/{}/read",
                 self.base_url, id
             ))
-            .with_trace().send()
+            .with_trace()
+            .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
@@ -481,7 +492,8 @@ impl NotificationServiceClient {
                 "{}/api/core/notification/notifications/read-all",
                 self.base_url
             ))
-            .with_trace().send()
+            .with_trace()
+            .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
@@ -514,7 +526,8 @@ impl NotificationServiceClient {
                 "{}/api/core/notification/notifications/{}",
                 self.base_url, id
             ))
-            .with_trace().send()
+            .with_trace()
+            .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
@@ -547,7 +560,8 @@ impl NotificationServiceClient {
                 "{}/api/core/notification/notifications/unread",
                 self.base_url
             ))
-            .with_trace().send()
+            .with_trace()
+            .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
@@ -569,7 +583,8 @@ impl NotificationServiceClient {
                 "{}/api/core/notification/notifications/unread-count",
                 self.base_url
             ))
-            .with_trace().send()
+            .with_trace()
+            .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
@@ -592,7 +607,8 @@ impl NotificationServiceClient {
                 self.base_url
             ))
             .json(&BulkOperationRequest { ids: ids.to_vec() })
-            .with_trace().send()
+            .with_trace()
+            .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 
@@ -615,7 +631,8 @@ impl NotificationServiceClient {
                 self.base_url
             ))
             .json(&BulkOperationRequest { ids: ids.to_vec() })
-            .with_trace().send()
+            .with_trace()
+            .send()
             .await
             .map_err(|e| TopemsError::Internal(format!("Failed to send request: {}", e)))?;
 

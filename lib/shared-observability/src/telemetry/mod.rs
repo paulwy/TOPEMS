@@ -15,8 +15,8 @@ pub mod middleware;
 
 pub use business_spans::*;
 pub use config::*;
-pub use middleware::{inject_trace_into_reqwest, TelemetryExt, TracedRequestExt};
 pub use middleware::*;
+pub use middleware::{inject_trace_into_reqwest, TelemetryExt, TracedRequestExt};
 
 use opentelemetry::{global, trace::TracerProvider, KeyValue};
 use opentelemetry_sdk::{

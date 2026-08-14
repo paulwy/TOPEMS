@@ -24,7 +24,10 @@ pub fn create_routes() -> Router<AppState> {
 
     // --- Marketplace (read-only) ---
     let marketplace_read = Router::new()
-        .route("/plugin/marketplace", get(marketplace::get_marketplace_summary))
+        .route(
+            "/plugin/marketplace",
+            get(marketplace::get_marketplace_summary),
+        )
         .route("/plugin/marketplace/list", get(marketplace::list_plugins))
         .route(
             "/plugin/marketplace/categories",
@@ -47,7 +50,10 @@ pub fn create_routes() -> Router<AppState> {
             "/plugin/runtime/list",
             get(runtime::list_plugins_with_status),
         )
-        .route("/plugin/runtime/{code}/status", get(runtime::get_plugin_status))
+        .route(
+            "/plugin/runtime/{code}/status",
+            get(runtime::get_plugin_status),
+        )
         .route(
             "/plugin/runtime/{code}/register",
             post(runtime::register_plugin),
@@ -235,7 +241,10 @@ pub fn create_routes() -> Router<AppState> {
 
     // --- Simple API (compatibility shim) ---
     let simple_api_routes = Router::new()
-        .route("/plugins/installed", get(simple_api::list_installed_plugins))
+        .route(
+            "/plugins/installed",
+            get(simple_api::list_installed_plugins),
+        )
         .route(
             "/plugins/tenant-installed",
             get(simple_api::list_tenant_installed_plugins),

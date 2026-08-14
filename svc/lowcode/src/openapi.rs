@@ -13,14 +13,8 @@ use utoipa::OpenApi;
         version = "0.1.0",
         description = "低代码平台 API（占位，待立项实现）"
     ),
-    paths(
-        health,
-        list_apps,
-        create_app,
-        get_designer_schema,
-    ),
-    tags(
-    )
+    paths(health, list_apps, create_app, get_designer_schema,),
+    tags()
 )]
 pub struct ApiDoc;
 

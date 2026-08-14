@@ -227,7 +227,11 @@ pub async fn install_plugin(
         match serde_json::from_value(deps_json.clone()) {
             Ok(d) => d,
             Err(e) => {
-                tracing::warn!("[Plugin] Failed to deserialize dependencies for {}: {}", plugin.code, e);
+                tracing::warn!(
+                    "[Plugin] Failed to deserialize dependencies for {}: {}",
+                    plugin.code,
+                    e
+                );
                 Vec::new()
             }
         }

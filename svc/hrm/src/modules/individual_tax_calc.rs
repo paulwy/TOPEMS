@@ -52,8 +52,6 @@ fn bd(s: &str) -> BigDecimal {
     BigDecimal::from_str(s).unwrap_or_default()
 }
 
-
-
 /// 在给定档位表中计算税额（通用）
 fn tax_by_brackets(taxable_yuan: &BigDecimal, brackets: &[(i64, u32, i64)]) -> BigDecimal {
     let income_i64 = match taxable_yuan.to_i64() {
