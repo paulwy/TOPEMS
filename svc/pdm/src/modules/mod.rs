@@ -14,6 +14,7 @@ pub mod production_process;
 pub mod production_statistics;
 pub mod production_step;
 pub mod project;
+pub mod state_machine;
 pub mod version;
 pub mod version_logic;
 pub mod workflow;

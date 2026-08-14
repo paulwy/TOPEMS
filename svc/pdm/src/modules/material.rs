@@ -457,3 +457,159 @@ pub async fn delete_material(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_claims(tenant_id: Option<&str>) -> Claims {
+        Claims {
+            sub: "user-1".to_string(),
+            username: "tester".to_string(),
+            role: "admin".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 9999999999,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: tenant_id.map(|s| s.to_string()),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_claims() {
+        let claims = make_claims(Some("550e8400-e29b-41d4-a716-446655440000"));
+        let headers = axum::http::HeaderMap::new();
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(
+            tid,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_header() {
+        let claims = make_claims(None);
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            "x-tenant-id",
+            "550e8400-e29b-41d4-a716-446655440010".parse().unwrap(),
+        );
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(
+            tid,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440010").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_get_tenant_id_fallback_new_uuid() {
+        let claims = make_claims(None);
+        let headers = axum::http::HeaderMap::new();
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(tid.get_version(), Some(uuid::Version::Random));
+    }
+
+    #[test]
+    fn test_get_tenant_id_invalid_in_claims_uses_header() {
+        let claims = make_claims(Some("garbage"));
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            "x-tenant-id",
+            "550e8400-e29b-41d4-a716-446655440011".parse().unwrap(),
+        );
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(
+            tid,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440011").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_create_routes_builds_without_panic() {
+        let router = create_routes();
+        let _ = router.clone();
+    }
+
+    #[test]
+    fn test_material_serde_roundtrip() {
+        let now = chrono::Utc::now();
+        let m = Material {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            material_no: "M-001".to_string(),
+            name: "钢材".to_string(),
+            spec: Some("Φ10".to_string()),
+            unit: Some("kg".to_string()),
+            status: "active".to_string(),
+            created_at: now,
+            updated_at: now,
+        };
+        let json = serde_json::to_string(&m).unwrap();
+        let decoded: Material = serde_json::from_str(&json).unwrap();
+        assert_eq!(decoded.material_no, "M-001");
+        assert_eq!(decoded.name, "钢材");
+        assert_eq!(decoded.spec, Some("Φ10".to_string()));
+        assert_eq!(decoded.unit, Some("kg".to_string()));
+    }
+
+    #[test]
+    fn test_material_serde_none_fields() {
+        let now = chrono::Utc::now();
+        let m = Material {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            material_no: "M-002".to_string(),
+            name: "裸物料".to_string(),
+            spec: None,
+            unit: None,
+            status: "draft".to_string(),
+            created_at: now,
+            updated_at: now,
+        };
+        let json = serde_json::to_string(&m).unwrap();
+        assert!(json.contains("\"spec\":null"));
+        assert!(json.contains("\"unit\":null"));
+    }
+
+    #[test]
+    fn test_create_material_request_deserialize() {
+        let json =
+            r#"{"material_no":"M-100","name":"物料","spec":"S","unit":"个","status":"active"}"#;
+        let req: CreateMaterialRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.material_no, "M-100");
+        assert_eq!(req.unit, Some("个".to_string()));
+        assert_eq!(req.status, Some("active".to_string()));
+    }
+
+    #[test]
+    fn test_create_material_request_minimal() {
+        let json = r#"{"material_no":"M-101","name":"x"}"#;
+        let req: CreateMaterialRequest = serde_json::from_str(json).unwrap();
+        assert!(req.spec.is_none());
+        assert!(req.status.is_none());
+    }
+
+    #[test]
+    fn test_update_material_request_all_none() {
+        let json = r#"{}"#;
+        let req: UpdateMaterialRequest = serde_json::from_str(json).unwrap();
+        assert!(req.material_no.is_none());
+        assert!(req.name.is_none());
+        assert!(req.status.is_none());
+    }
+
+    #[test]
+    fn test_material_query_deserialize() {
+        let json = r#"{"page":1,"page_size":50,"search":"钢","status":"active"}"#;
+        let q: MaterialQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(q.page, Some(1));
+        assert_eq!(q.page_size, Some(50));
+        assert_eq!(q.search.as_deref(), Some("钢"));
+    }
+}

@@ -319,3 +319,174 @@ pub async fn delete_product(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_claims(tenant_id: Option<&str>) -> Claims {
+        Claims {
+            sub: "user-1".to_string(),
+            username: "tester".to_string(),
+            role: "admin".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 9999999999,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: tenant_id.map(|s| s.to_string()),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_claims() {
+        let claims = make_claims(Some("550e8400-e29b-41d4-a716-446655440000"));
+        let headers = axum::http::HeaderMap::new();
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(
+            tid,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_header_when_claims_missing() {
+        let claims = make_claims(None);
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            "x-tenant-id",
+            "550e8400-e29b-41d4-a716-446655440001".parse().unwrap(),
+        );
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(
+            tid,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440001").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_get_tenant_id_invalid_claims_falls_back_to_header() {
+        let claims = make_claims(Some("not-a-uuid"));
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            "x-tenant-id",
+            "550e8400-e29b-41d4-a716-446655440002".parse().unwrap(),
+        );
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(
+            tid,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440002").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_get_tenant_id_fallback_generates_uuid() {
+        // 当 claims 和 header 都没有合法 tenant_id 时，应生成一个新的 v4 UUID
+        let claims = make_claims(None);
+        let headers = axum::http::HeaderMap::new();
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(tid.get_version(), Some(uuid::Version::Random));
+    }
+
+    #[test]
+    fn test_create_routes_builds_without_panic() {
+        let router = create_routes();
+        // Router 实现了 Clone，确保能正常克隆
+        let _cloned = router.clone();
+    }
+
+    #[test]
+    fn test_product_serde_roundtrip() {
+        let now = Utc::now();
+        let p = Product {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            product_no: "P-001".to_string(),
+            name: "测试产品".to_string(),
+            description: Some("描述".to_string()),
+            version: Some("1.0.0".to_string()),
+            status: "active".to_string(),
+            created_at: now,
+            updated_at: now,
+        };
+        let json = serde_json::to_string(&p).unwrap();
+        let decoded: Product = serde_json::from_str(&json).unwrap();
+        assert_eq!(decoded.product_no, "P-001");
+        assert_eq!(decoded.name, "测试产品");
+        assert_eq!(decoded.status, "active");
+        assert_eq!(decoded.version, Some("1.0.0".to_string()));
+    }
+
+    #[test]
+    fn test_product_serde_with_none_fields() {
+        let now = Utc::now();
+        let p = Product {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            product_no: "P-002".to_string(),
+            name: "最小产品".to_string(),
+            description: None,
+            version: None,
+            status: "draft".to_string(),
+            created_at: now,
+            updated_at: now,
+        };
+        let json = serde_json::to_string(&p).unwrap();
+        assert!(json.contains("\"description\":null"));
+        assert!(json.contains("\"version\":null"));
+        let decoded: Product = serde_json::from_str(&json).unwrap();
+        assert!(decoded.description.is_none());
+        assert!(decoded.version.is_none());
+    }
+
+    #[test]
+    fn test_create_product_request_deserialize() {
+        let json = r#"{"product_no":"P-100","name":"新产品","description":"d","version":"v1","status":"active"}"#;
+        let req: CreateProductRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.product_no, "P-100");
+        assert_eq!(req.name, "新产品");
+        assert_eq!(req.status, Some("active".to_string()));
+    }
+
+    #[test]
+    fn test_create_product_request_optional_status() {
+        let json = r#"{"product_no":"P-101","name":"x"}"#;
+        let req: CreateProductRequest = serde_json::from_str(json).unwrap();
+        assert!(req.status.is_none());
+        assert!(req.description.is_none());
+    }
+
+    #[test]
+    fn test_update_product_request_all_none() {
+        let json = r#"{}"#;
+        let req: UpdateProductRequest = serde_json::from_str(json).unwrap();
+        assert!(req.product_no.is_none());
+        assert!(req.name.is_none());
+        assert!(req.status.is_none());
+    }
+
+    #[test]
+    fn test_product_query_deserialize_defaults() {
+        let json = r#"{}"#;
+        let q: ProductQuery = serde_json::from_str(json).unwrap();
+        assert!(q.page.is_none());
+        assert!(q.page_size.is_none());
+        assert!(q.search.is_none());
+        assert!(q.status.is_none());
+    }
+
+    #[test]
+    fn test_product_query_with_values() {
+        let json = r#"{"page":2,"page_size":20,"search":"abc","status":"active"}"#;
+        let q: ProductQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(q.page, Some(2));
+        assert_eq!(q.page_size, Some(20));
+        assert_eq!(q.search.as_deref(), Some("abc"));
+        assert_eq!(q.status.as_deref(), Some("active"));
+    }
+}

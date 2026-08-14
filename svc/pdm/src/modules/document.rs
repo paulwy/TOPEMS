@@ -852,3 +852,216 @@ pub async fn list_pending_documents(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_claims(tenant_id: Option<&str>) -> Claims {
+        Claims {
+            sub: "user-1".to_string(),
+            username: "tester".to_string(),
+            role: "admin".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 9999999999,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: tenant_id.map(|s| s.to_string()),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_claims() {
+        let claims = make_claims(Some("550e8400-e29b-41d4-a716-446655440000"));
+        let headers = axum::http::HeaderMap::new();
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(
+            tid,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_header_fallback() {
+        let claims = make_claims(None);
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            "x-tenant-id",
+            "550e8400-e29b-41d4-a716-446655440020".parse().unwrap(),
+        );
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(
+            tid,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440020").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_get_tenant_id_fallback_generates_v4() {
+        let claims = make_claims(None);
+        let headers = axum::http::HeaderMap::new();
+        let tid = get_tenant_id(&claims, &headers);
+        assert_eq!(tid.get_version(), Some(uuid::Version::Random));
+    }
+
+    #[test]
+    fn test_create_routes_builds_without_panic() {
+        let router = create_routes();
+        let _ = router.clone();
+    }
+
+    #[test]
+    fn test_document_serde_roundtrip() {
+        let now = Utc::now();
+        let d = Document {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            document_no: "DOC-001".to_string(),
+            name: "设计文档".to_string(),
+            description: Some("desc".to_string()),
+            document_type: Some("spec".to_string()),
+            file_path: Some("/tmp/a.pdf".to_string()),
+            file_size: Some(1024),
+            version: Some("1.0".to_string()),
+            status: "active".to_string(),
+            created_by: Some("u1".to_string()),
+            created_at: now,
+            updated_at: now,
+        };
+        let json = serde_json::to_string(&d).unwrap();
+        let decoded: Document = serde_json::from_str(&json).unwrap();
+        assert_eq!(decoded.document_no, "DOC-001");
+        assert_eq!(decoded.name, "设计文档");
+        assert_eq!(decoded.file_size, Some(1024));
+        assert_eq!(decoded.document_type, Some("spec".to_string()));
+    }
+
+    #[test]
+    fn test_document_serde_none_optionals() {
+        let now = Utc::now();
+        let d = Document {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            document_no: "DOC-002".to_string(),
+            name: "最小".to_string(),
+            description: None,
+            document_type: None,
+            file_path: None,
+            file_size: None,
+            version: None,
+            status: "draft".to_string(),
+            created_by: None,
+            created_at: now,
+            updated_at: now,
+        };
+        let json = serde_json::to_string(&d).unwrap();
+        assert!(json.contains("\"file_size\":null"));
+        assert!(json.contains("\"version\":null"));
+        let decoded: Document = serde_json::from_str(&json).unwrap();
+        assert!(decoded.created_by.is_none());
+    }
+
+    #[test]
+    fn test_create_document_request_deserialize() {
+        let json = r#"{"document_no":"D1","name":"n","description":"d","document_type":"t","file_path":"/p","file_size":10,"version":"v","status":"s","created_by":"u"}"#;
+        let req: CreateDocumentRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.document_no, "D1");
+        assert_eq!(req.file_size, Some(10));
+        assert_eq!(req.created_by, Some("u".to_string()));
+    }
+
+    #[test]
+    fn test_create_document_request_minimal() {
+        let json = r#"{"document_no":"D2","name":"n2"}"#;
+        let req: CreateDocumentRequest = serde_json::from_str(json).unwrap();
+        assert!(req.file_size.is_none());
+        assert!(req.status.is_none());
+    }
+
+    #[test]
+    fn test_update_document_request_all_none() {
+        let json = r#"{}"#;
+        let req: UpdateDocumentRequest = serde_json::from_str(json).unwrap();
+        assert!(req.name.is_none());
+        assert!(req.status.is_none());
+        assert!(req.file_size.is_none());
+    }
+
+    #[test]
+    fn test_list_documents_query_defaults() {
+        let json = r#"{}"#;
+        let q: ListDocumentsQuery = serde_json::from_str(json).unwrap();
+        assert!(q.page.is_none());
+        assert!(q.status.is_none());
+    }
+
+    #[test]
+    fn test_document_search_request_renamed_type_field() {
+        // document_type 通过 #[serde(rename = "type")] 反序列化
+        let json = r#"{"type":"manual","keyword":"abc","pagesize":15}"#;
+        let req: DocumentSearchRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.document_type, Some("manual".to_string()));
+        assert_eq!(req.keyword, Some("abc".to_string()));
+        assert_eq!(req.pagesize, Some(15));
+    }
+
+    #[test]
+    fn test_document_search_request_all_none() {
+        let json = r#"{}"#;
+        let req: DocumentSearchRequest = serde_json::from_str(json).unwrap();
+        assert!(req.keyword.is_none());
+        assert!(req.document_type.is_none());
+        assert!(req.date_from.is_none());
+    }
+
+    #[test]
+    fn test_update_document_status_request() {
+        let json = r#"{"status":"approved"}"#;
+        let req: UpdateDocumentStatusRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.status, "approved");
+    }
+
+    #[test]
+    fn test_workflow_step_serde_roundtrip() {
+        let step = WorkflowStep {
+            step_name: "审核".to_string(),
+            step_type: "approval".to_string(),
+            assignee_type: "user".to_string(),
+            assignees: vec!["u1".to_string(), "u2".to_string()],
+            required_approval: Some(2),
+            timeout_days: Some(5),
+        };
+        let json = serde_json::to_string(&step).unwrap();
+        let decoded: WorkflowStep = serde_json::from_str(&json).unwrap();
+        assert_eq!(decoded.step_name, "审核");
+        assert_eq!(decoded.assignees.len(), 2);
+        assert_eq!(decoded.required_approval, Some(2));
+        assert_eq!(decoded.timeout_days, Some(5));
+    }
+
+    #[test]
+    fn test_workflow_step_optional_fields_none() {
+        let json = r#"{"step_name":"s","step_type":"t","assignee_type":"a","assignees":[]}"#;
+        let step: WorkflowStep = serde_json::from_str(json).unwrap();
+        assert!(step.required_approval.is_none());
+        assert!(step.timeout_days.is_none());
+        assert!(step.assignees.is_empty());
+    }
+
+    #[test]
+    fn test_start_document_approval_request_deserialize() {
+        let json = r#"{"workflow_id":"550e8400-e29b-41d4-a716-446655440030","created_by":"alice"}"#;
+        let req: StartDocumentApprovalRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.created_by, "alice");
+        assert_eq!(
+            req.workflow_id,
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440030").unwrap()
+        );
+    }
+}
