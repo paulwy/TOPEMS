@@ -1307,4 +1307,23 @@ mod tests {
         assert_eq!(get_default_port("mes"), 8030);
         assert_eq!(get_default_port("unknown-xyz"), 8080);
     }
+
+    // ---------- AppConfig validate 补充 ----------
+
+    #[test]
+    fn app_config_validate_service_empty_name_errors() {
+        let c = AppConfig {
+            service: ServiceConfig {
+                name: "".to_string(),
+                port: 8000,
+                ..Default::default()
+            },
+            database: DatabaseConfig::default(),
+            redis: None,
+            jwt: JwtConfig::default(),
+            ai: None,
+            cache: CacheConfig::default(),
+        };
+        assert!(c.validate().is_err());
+    }
 }

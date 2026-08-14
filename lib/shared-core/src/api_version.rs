@@ -775,4 +775,46 @@ mod tests {
         assert_eq!(resp.status(), axum::http::StatusCode::OK);
         assert!(resp.headers().contains_key("Deprecation"));
     }
+
+    // ===== analyze_group1_path 补充：unmatched 场景 =====
+
+    #[test]
+    fn test_analyze_group1_path_unmatched_returns_false() {
+        let cfg = Group1CompatConfig {
+            modules: &["iam"],
+            shortcuts: &[("auth", "iam", "auth")],
+        };
+        let (is_legacy, rewrite) = analyze_group1_path("/totally/unknown/path", &cfg);
+        assert!(!is_legacy);
+        assert_eq!(rewrite, None);
+    }
+
+    // ===== wrap_group1_router + analyze_group1_path legacy v1 =====
+
+    #[tokio::test]
+    async fn test_group1_compat_middleware_legacy_v1_adds_deprecation() {
+        use axum::body::Body;
+        use tower::ServiceExt;
+
+        async fn ok_handler() -> &'static str {
+            "ok"
+        }
+        let inner = Router::new().fallback(ok_handler);
+        let cfg = Group1CompatConfig {
+            modules: &["iam"],
+            shortcuts: &[],
+        };
+        let app = wrap_group1_router(inner, cfg);
+        let resp = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/core/iam/v1/users")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), axum::http::StatusCode::OK);
+        assert!(resp.headers().contains_key("Deprecation"));
+    }
 }
