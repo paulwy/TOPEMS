@@ -141,7 +141,9 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
             size='small'
             disabled={!selectedRuleId || validating || nodes.length === 0}
           >
-            {validating ? '预览中…' : t('automation.designer_toolbar.k1')}
+            {validating
+              ? t('automation.automation_designer_page_components_designer_toolbar.r1')
+              : t('automation.designer_toolbar.k1')}
           </Button>
           <Button
             startIcon={<ClearIcon />}
@@ -159,7 +161,9 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
             variant='contained'
             disabled={!selectedRuleId || saving || nodes.length === 0}
           >
-            {saving ? '保存中…' : t('automation.designer_toolbar.k2')}
+            {saving
+              ? t('automation.automation_designer_page_components_designer_toolbar.r2')
+              : t('automation.designer_toolbar.k2')}
           </Button>
         </Stack>
       </Stack>

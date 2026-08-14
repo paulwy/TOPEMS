@@ -227,5 +227,11 @@
   "lowcode.workflow_config_page.e1": "新建工作流",
   "lowcode.workflow_config_page.e2": "低代码应用内嵌工作流（表单提交/定时/事件触发）。 与 BPM 审批流程（workflow",
   "lowcode.workflow_config_page.e3": "模块）不同——本表用于数据/系统自动化。",
-  "lowcode.workflow_config_page.e4": "暂无工作流"
+  "lowcode.workflow_config_page.e4": "暂无工作流",
+  "lowcode.app_list_page.r1": "创建中…",
+  "lowcode.app_management_page.r1": "保存中…",
+  "lowcode.data_source_page.r1": "主机/库",
+  "lowcode.form_design_page.r2": "提示：清空 form_id 可返回选择器 · {{v1}}",
+  "lowcode.form_list_page.r2": "表单预览 · {{v1}}",
+  "lowcode.page_design_page.r2": "提示：清空 page_id 可返回选择器 · {{v1}}"
 }

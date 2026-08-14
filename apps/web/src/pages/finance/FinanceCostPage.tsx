@@ -267,7 +267,7 @@ const FinanceCostPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>成本分析 - {analysisTarget?.name}</DialogTitle>
+        <DialogTitle>{t('finance.finance_cost_page.r1', { v1: analysisTarget?.name })}</DialogTitle>
         <DialogContent>
           {analysisTarget && (
             <Stack

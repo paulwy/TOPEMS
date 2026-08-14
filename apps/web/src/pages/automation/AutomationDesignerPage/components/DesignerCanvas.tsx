@@ -239,7 +239,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
           zIndex: 10,
         }}
       >
-        <Tooltip title='放大 (Ctrl+滚轮)'>
+        <Tooltip title={t('automation.automation_designer_page_components_designer_canvas.r1')}>
           <IconButton
             size='small'
             onClick={onZoomIn}
@@ -248,7 +248,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
             <ZoomInIcon size={18} />
           </IconButton>
         </Tooltip>
-        <Tooltip title='缩小 (Ctrl+滚轮)'>
+        <Tooltip title={t('automation.automation_designer_page_components_designer_canvas.r2')}>
           <IconButton
             size='small'
             onClick={onZoomOut}

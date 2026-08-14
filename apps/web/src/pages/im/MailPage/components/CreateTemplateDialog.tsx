@@ -62,7 +62,9 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
         <form onSubmit={handleCreateTemplate}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='template-code'>模板编码 *</InputLabel>
+              <InputLabel htmlFor='template-code'>
+                {t('im.mail_page_components_create_template_dialog.r1')}
+              </InputLabel>
               <TextField
                 id='template-code'
                 value={templateForm.code}
@@ -78,7 +80,9 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
               />
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='template-name'>模板名称 *</InputLabel>
+              <InputLabel htmlFor='template-name'>
+                {t('im.mail_page_components_create_template_dialog.r2')}
+              </InputLabel>
               <TextField
                 id='template-name'
                 value={templateForm.name}
@@ -161,7 +165,9 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
               />
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='template-subject'>主题模板 *</InputLabel>
+              <InputLabel htmlFor='template-subject'>
+                {t('im.mail_page_components_create_template_dialog.r3')}
+              </InputLabel>
               <TextField
                 id='template-subject'
                 value={templateForm.subject_template}
@@ -177,7 +183,9 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
               />
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='template-body'>正文模板 *</InputLabel>
+              <InputLabel htmlFor='template-body'>
+                {t('im.mail_page_components_create_template_dialog.r4')}
+              </InputLabel>
               <TextField
                 id='template-body'
                 value={templateForm.body_template}
@@ -229,7 +237,7 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
                 variant='body2'
                 color='info.dark'
               >
-                在模板中使用{' '}
+                {t('im.mail_page_components_create_template_dialog.r5', { v1: ' ' })}
                 <Box
                   component='code'
                   sx={{

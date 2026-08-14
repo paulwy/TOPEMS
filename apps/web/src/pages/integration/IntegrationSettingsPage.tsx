@@ -159,7 +159,12 @@ export const IntegrationSettingsPage: React.FC = () => {
     setConfigs((prev) => prev.map((c) => (c.id === config.id ? { ...c, enabled: !c.enabled } : c)));
     addNotification({
       title: t('integration.integration_settings_page.k7'),
-      message: `「${config.name}」已${config.enabled ? t('integration.integration_settings_page.k9') : t('integration.integration_settings_page.k8')}`,
+      message: i18n.t('integration.integration_settings_page.r1', {
+        v1: config.name,
+        v2: config.enabled
+          ? t('integration.integration_settings_page.k9')
+          : t('integration.integration_settings_page.k8'),
+      }),
       type: 'success',
     });
   };

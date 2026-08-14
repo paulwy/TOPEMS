@@ -187,5 +187,11 @@
   "system.system_params_page_components_system_config_panel.e4": "主题颜色和界面设置",
   "system.system_params_page_components_system_config_panel.e5": "安全配置",
   "system.system_params_page_components_system_config_panel.e6": "用户认证和密码策略",
-  "system.system_params_page_components_system_config_panel.e7": "密码复杂度要求"
+  "system.system_params_page_components_system_config_panel.e7": "密码复杂度要求",
+  "system.backup_page.r1": "类型： {{v1}}",
+  "system.backup_page.r2": "大小： {{v1}}",
+  "system.backup_page.r3": "创建时间： {{v1}}",
+  "system.feature_flag_page_index.r1": "共 {{v1}} 个 Feature Flag · In-Memory 存储（重启后重置）",
+  "system.system_params_page_components_system_config_panel.r1": "美洲/纽约 (UTC-5)",
+  "system.system_params_page_components_system_config_panel.r2": "美洲/洛杉矶 (UTC-8)"
 }

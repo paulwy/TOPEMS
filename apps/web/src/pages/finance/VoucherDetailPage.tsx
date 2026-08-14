@@ -492,7 +492,7 @@ const VoucherDetailPage: React.FC = () => {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              借方合计:{' '}
+              {t('finance.voucher_detail_page.r1')}{' '}
               <Typography
                 component='span'
                 sx={{ fontWeight: 600, color: 'error.main' }}
@@ -504,7 +504,7 @@ const VoucherDetailPage: React.FC = () => {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              贷方合计:{' '}
+              {t('finance.voucher_detail_page.r2')}{' '}
               <Typography
                 component='span'
                 sx={{ fontWeight: 600, color: 'success.main' }}

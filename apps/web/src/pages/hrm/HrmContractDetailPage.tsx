@@ -452,13 +452,13 @@ const HrmContractDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              当前合同：{contract?.contractNo}
+              {t('hrm.hrm_contract_detail_page.r1', { v1: contract?.contractNo })}
             </Typography>
             <Typography
               variant='body2'
               color='text.secondary'
             >
-              到期日期：{formatDate(contract?.end_date)}
+              {t('hrm.hrm_contract_detail_page.r2', { v1: formatDate(contract?.end_date) })}
             </Typography>
           </Box>
         </DialogContent>

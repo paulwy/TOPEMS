@@ -494,7 +494,9 @@ export const BomPage: React.FC = () => {
               variant='subtitle1'
               sx={{ fontWeight: 600 }}
             >
-              物料清单 - {versions.find((v) => v.id === selectedVersionId)?.name || ''}
+              {t('pdm.bom_page.r1', {
+                v1: versions.find((v) => v.id === selectedVersionId)?.name || '',
+              })}
             </Typography>
           }
           customColumns={[

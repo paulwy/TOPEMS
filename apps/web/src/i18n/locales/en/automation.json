@@ -184,5 +184,13 @@
   "automation.automation_runs_page.e3": "错误信息",
   "automation.automation_variables_page.e1": "新建变量",
   "automation.automation_variables_page.e2": "值",
-  "automation.automation_variables_page.e3": "暂无变量"
+  "automation.automation_variables_page.e3": "暂无变量",
+  "automation.automation_designer_page_components_designer_canvas.r1": "放大 (Ctrl+滚轮)",
+  "automation.automation_designer_page_components_designer_canvas.r2": "缩小 (Ctrl+滚轮)",
+  "automation.automation_designer_page_components_designer_toolbar.r1": "预览中…",
+  "automation.automation_designer_page_components_designer_toolbar.r2": "保存中…",
+  "automation.automation_rules_page.r1": "运行/成功/失败",
+  "automation.automation_rules_page.r2": "创建中…",
+  "automation.automation_runs_page.r1": "开始： {{v1}}",
+  "automation.automation_runs_page.r2": "结束： {{v1}}"
 }

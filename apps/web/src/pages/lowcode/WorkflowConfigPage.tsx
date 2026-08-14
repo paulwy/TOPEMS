@@ -309,7 +309,7 @@ export const WorkflowConfigPage: React.FC = () => {
               variant='contained'
               disabled={creating || !createForm.app_id || !createForm.code || !createForm.name}
             >
-              {creating ? '创建中…' : t('lowcode.workflow_config_page.k25')}
+              {creating ? t('lowcode.app_list_page.r1') : t('lowcode.workflow_config_page.k25')}
             </Button>
           </DialogActions>
         </Dialog>

@@ -229,7 +229,7 @@ export const AppListPage: React.FC = () => {
               variant='contained'
               disabled={creating || !createForm.name || !createForm.code}
             >
-              {creating ? '创建中…' : t('lowcode.app_list_page.k22')}
+              {creating ? t('lowcode.app_list_page.r1') : t('lowcode.app_list_page.k22')}
             </Button>
           </DialogActions>
         </Dialog>

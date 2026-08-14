@@ -3,6 +3,7 @@ import { Settings } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { SettingsPageTemplate } from '@/components/templates';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 export const ChangeTemplatePage: React.FC = () => {
   const { t } = useTranslation('pdm');
@@ -15,7 +16,7 @@ export const ChangeTemplatePage: React.FC = () => {
     >
       <SettingsPageTemplate
         title={t('pdm.change_template_page.k2')}
-        description='变更模板相关配置参数（页面建设中…）'
+        description={i18n.t('pdm.setting_change_template_page.r1')}
         icon={<Settings size={24} />}
         sections={[]}
         actions={[]}

@@ -144,13 +144,13 @@ export const GisTrackingPage: React.FC = () => {
           variant='body2'
           color='text.secondary'
         >
-          状态: {getStatusLabel(device.status)}
+          {t('gis.gis_tracking_page.r1')} {getStatusLabel(device.status)}
         </Typography>
         <Typography
           variant='body2'
           color='text.secondary'
         >
-          类型: {device.device_type}
+          {t('gis.gis_fence_page.r1')} {device.device_type}
         </Typography>
       </Box>
     ),

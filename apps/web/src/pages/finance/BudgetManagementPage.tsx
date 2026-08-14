@@ -371,7 +371,7 @@ const BudgetManagementPage: React.FC = () => {
               variant='body2'
               sx={{ color: 'grey.500' }}
             >
-              将批量更新{' '}
+              {t('finance.budget_management_page.r1', { v1: ' ' })}
               <Box
                 component='span'
                 sx={{ fontWeight: 600 }}

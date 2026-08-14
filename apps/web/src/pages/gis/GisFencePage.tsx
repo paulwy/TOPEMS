@@ -235,13 +235,13 @@ export const GisFencePage: React.FC = () => {
             variant='body2'
             color='text.secondary'
           >
-            类型: {getTypeLabel(fence.type)}
+            {t('gis.gis_fence_page.r1')} {getTypeLabel(fence.type)}
           </Typography>
           <Typography
             variant='body2'
             color='text.secondary'
           >
-            触发次数: {fence.triggerCount}
+            {t('gis.gis_fence_page.r2')} {fence.triggerCount}
           </Typography>
           {fence.alertOnEnter && (
             <Chip
@@ -279,7 +279,7 @@ export const GisFencePage: React.FC = () => {
             variant='body2'
             color='text.secondary'
           >
-            类型: {marker.marker_type}
+            {t('gis.gis_fence_page.r1')} {marker.marker_type}
           </Typography>
         </Box>
       ),

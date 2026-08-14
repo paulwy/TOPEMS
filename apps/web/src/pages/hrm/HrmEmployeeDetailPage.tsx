@@ -415,13 +415,13 @@ const HrmEmployeeDetailPage: React.FC = () => {
             variant='body2'
             color='text.secondary'
           >
-            当前职位：{employee?.position}
+            {t('hrm.hrm_employee_detail_page.r1', { v1: employee?.position })}
           </Typography>
           <Typography
             variant='body2'
             color='text.secondary'
           >
-            当前部门：{employee?.department_name}
+            {t('hrm.hrm_employee_detail_page.r2', { v1: employee?.department_name })}
           </Typography>
         </Box>
       </Dialog>

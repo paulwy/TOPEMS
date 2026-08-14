@@ -233,7 +233,7 @@ export const AutomationRulesPage: React.FC = () => {
                   <TableCell>{t('automation.automation_rules_page.k13')}</TableCell>
                   <TableCell>{t('automation.automation_rules_page.k14')}</TableCell>
                   <TableCell>{t('automation.automation_rules_page.k15')}</TableCell>
-                  <TableCell>运行/成功/失败</TableCell>
+                  <TableCell>{t('automation.automation_rules_page.r1')}</TableCell>
                   <TableCell>{t('automation.automation_rules_page.k16')}</TableCell>
                   <TableCell align='right'>{t('automation.automation_rules_page.k17')}</TableCell>
                 </TableRow>
@@ -421,7 +421,9 @@ export const AutomationRulesPage: React.FC = () => {
               variant='contained'
               disabled={creating || !createForm.name || !createForm.code}
             >
-              {creating ? '创建中…' : t('automation.automation_rules_page.k38')}
+              {creating
+                ? t('automation.automation_rules_page.r2')
+                : t('automation.automation_rules_page.k38')}
             </Button>
           </DialogActions>
         </Dialog>

@@ -3,6 +3,7 @@ import { Settings } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { SettingsPageTemplate } from '@/components/templates';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 export const PurchaseThresholdPage: React.FC = () => {
   const { t } = useTranslation('scm');
@@ -15,7 +16,7 @@ export const PurchaseThresholdPage: React.FC = () => {
     >
       <SettingsPageTemplate
         title={t('scm.purchase_threshold_page.k2')}
-        description='采购阈值相关配置参数（页面建设中…）'
+        description={i18n.t('scm.setting_purchase_threshold_page.r1')}
         icon={<Settings size={24} />}
         sections={[]}
         actions={[]}

@@ -161,7 +161,7 @@ export const DataSourcePage: React.FC = () => {
                 <TableRow>
                   <TableCell>{t('lowcode.data_source_page.k6')}</TableCell>
                   <TableCell>{t('lowcode.data_source_page.k7')}</TableCell>
-                  <TableCell>主机/库</TableCell>
+                  <TableCell>{t('lowcode.data_source_page.r1')}</TableCell>
                   <TableCell>{t('lowcode.data_source_page.k8')}</TableCell>
                   <TableCell align='right'>{t('lowcode.data_source_page.k9')}</TableCell>
                 </TableRow>
@@ -341,7 +341,7 @@ export const DataSourcePage: React.FC = () => {
               variant='contained'
               disabled={creating || !createForm.app_id || !createForm.name}
             >
-              {creating ? '创建中…' : t('lowcode.data_source_page.k24')}
+              {creating ? t('lowcode.app_list_page.r1') : t('lowcode.data_source_page.k24')}
             </Button>
           </DialogActions>
         </Dialog>

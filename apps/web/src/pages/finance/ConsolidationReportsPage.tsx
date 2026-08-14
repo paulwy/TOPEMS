@@ -694,7 +694,7 @@ export default function ConsolidationReportsPage() {
         <DialogContent>
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <FormControl fullWidth>
-              <InputLabel>合并范围 *</InputLabel>
+              <InputLabel>{t('finance.consolidation_reports_page.r1')}</InputLabel>
               <Select
                 value={generateFormData.scope_id}
                 label={t('finance.consolidation_reports_page.text_2ae758')}
@@ -714,7 +714,7 @@ export default function ConsolidationReportsPage() {
               </Select>
             </FormControl>
             <FormControl fullWidth>
-              <InputLabel>报表类型 *</InputLabel>
+              <InputLabel>{t('finance.consolidation_reports_page.r2')}</InputLabel>
               <Select
                 value={generateFormData.report_type}
                 label={t('finance.consolidation_reports_page.type')}

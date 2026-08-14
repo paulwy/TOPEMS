@@ -262,8 +262,12 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                   <MenuItem value='Asia/Shanghai'>亚洲/上海 (UTC+8)</MenuItem>
                   <MenuItem value='Asia/Tokyo'>亚洲/东京 (UTC+9)</MenuItem>
                   <MenuItem value='Europe/London'>欧洲/伦敦 (UTC+0)</MenuItem>
-                  <MenuItem value='America/New_York'>美洲/纽约 (UTC-5)</MenuItem>
-                  <MenuItem value='America/Los_Angeles'>美洲/洛杉矶 (UTC-8)</MenuItem>
+                  <MenuItem value='America/New_York'>
+                    {t('system.system_params_page_components_system_config_panel.r1')}
+                  </MenuItem>
+                  <MenuItem value='America/Los_Angeles'>
+                    {t('system.system_params_page_components_system_config_panel.r2')}
+                  </MenuItem>
                 </Select>
               </FormControl>
             </Grid>

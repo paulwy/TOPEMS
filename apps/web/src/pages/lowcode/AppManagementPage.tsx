@@ -6,6 +6,7 @@ import { lowcodeAppsApi } from '@/api/lowcode';
 import type { LowcodeApp } from '@/api/lowcode';
 import { PageContainer } from '@/components/common';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 export const AppManagementPage: React.FC = () => {
   const { t } = useTranslation('lowcode');
@@ -164,7 +165,9 @@ export const AppManagementPage: React.FC = () => {
                 onClick={handleUpdate}
                 disabled={saving}
               >
-                {saving ? '保存中…' : t('lowcode.app_management_page.k13')}
+                {saving
+                  ? i18n.t('lowcode.app_management_page.r1')
+                  : t('lowcode.app_management_page.k13')}
               </Button>
               {app.status === 'published' ? (
                 <Button

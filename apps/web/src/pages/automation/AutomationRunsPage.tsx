@@ -256,9 +256,9 @@ export const AutomationRunsPage: React.FC = () => {
                     {t('automation.automation_runs_page.k29')}
                   </Typography>
                   <Typography variant='body2'>
-                    开始：{detailRun.started_at}
+                    {t('automation.automation_runs_page.r1', { v1: detailRun.started_at })}
                     <br />
-                    结束：{detailRun.finished_at ?? '-'}
+                    {t('automation.automation_runs_page.r2', { v1: detailRun.finished_at ?? '-' })}
                     <br />
                     耗时：{detailRun.duration_ms ? `${detailRun.duration_ms}ms` : '-'}
                   </Typography>

@@ -409,7 +409,7 @@ const HrmCompanyPage: React.FC = () => {
                             variant='caption'
                             color='text.secondary'
                           >
-                            编码: {dept.code}
+                            {t('hrm.hrm_company_page.r1')} {dept.code}
                           </Typography>
                         )}
                       </Box>

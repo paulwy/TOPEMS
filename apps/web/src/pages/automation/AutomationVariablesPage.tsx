@@ -376,7 +376,9 @@ export const AutomationVariablesPage: React.FC = () => {
                 creating || !createForm.key || (createForm.scope === 'rule' && !createForm.rule_id)
               }
             >
-              {creating ? '创建中…' : t('automation.automation_variables_page.k37')}
+              {creating
+                ? t('automation.automation_rules_page.r2')
+                : t('automation.automation_variables_page.k37')}
             </Button>
           </DialogActions>
         </Dialog>

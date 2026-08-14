@@ -685,5 +685,13 @@
   "finance.voucher_detail_page.e20": "操作日志",
   "finance.voucher_detail_page.e21": "凭证创建",
   "finance.voucher_detail_page.e22": "凭证审核",
-  "finance.voucher_detail_page.e23": "凭证记账"
+  "finance.voucher_detail_page.e23": "凭证记账",
+  "finance.budget_management_page.r1": "将批量更新 {{v1}}",
+  "finance.consolidation_reports_page.r1": "合并范围 *",
+  "finance.consolidation_reports_page.r2": "报表类型 *",
+  "finance.finance_cost_page.r1": "成本分析 - {{v1}}",
+  "finance.opening_balance_page.r1": "期初余额（借/贷）",
+  "finance.payment_print_template.r1": "备注： {{v1}}",
+  "finance.voucher_detail_page.r1": "借方合计:",
+  "finance.voucher_detail_page.r2": "贷方合计:"
 }

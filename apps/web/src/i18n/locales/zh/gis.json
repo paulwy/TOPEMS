@@ -334,5 +334,8 @@
   "gis.index.e30": "仓储位置",
   "gis.index.e31": "现场取证",
   "gis.index.e32": "厂区地图",
-  "gis.index.e33": "业务位置"
+  "gis.index.e33": "业务位置",
+  "gis.gis_fence_page.r1": "类型:",
+  "gis.gis_fence_page.r2": "触发次数:",
+  "gis.gis_tracking_page.r1": "状态:"
 }
