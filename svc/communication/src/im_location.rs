@@ -896,4 +896,218 @@ mod tests {
         let coords = json!({"lat": "30", "lng": 120.0});
         assert_eq!(parse_coordinates(&coords), None);
     }
+
+    // ===== 结构体 serde 往返 / 构造测试 =====
+
+    fn uid() -> Uuid {
+        Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
+    }
+
+    #[test]
+    fn test_location_message_serde_roundtrip() {
+        let msg = LocationMessage {
+            id: uid(),
+            chat_id: uid(),
+            sender_id: uid(),
+            sender_name: Some("alice".to_string()),
+            location_type: "point".to_string(),
+            coordinates: json!({"lat": 30.0, "lng": 120.0}),
+            address: Some("addr".to_string()),
+            place_name: None,
+            place_id: None,
+            gis_location_id: None,
+            gis_location_code: None,
+            gis_map_id: None,
+            gis_map_name: None,
+            map_provider: "osm".to_string(),
+            static_map_url: None,
+            map_zoom: 15,
+            map_bearing: None,
+            map_tilt: None,
+            poi_types: None,
+            description: None,
+            created_at: chrono::Utc::now(),
+        };
+        let v = serde_json::to_value(&msg).unwrap();
+        let back: LocationMessage = serde_json::from_value(v).unwrap();
+        assert_eq!(back.location_type, "point");
+        assert_eq!(back.map_zoom, 15);
+        assert_eq!(back.sender_name.as_deref(), Some("alice"));
+    }
+
+    #[test]
+    fn test_im_geofence_serde_roundtrip() {
+        let gf = ImGeofence {
+            id: uid(),
+            name: "fence1".to_string(),
+            description: None,
+            chat_id: uid(),
+            creator_id: uid(),
+            creator_name: None,
+            shape_type: "circle".to_string(),
+            coordinates: json!({"lat": 1.0, "lng": 2.0}),
+            radius: Some(5.0),
+            event_types: json!(["enter"]),
+            status: "active".to_string(),
+            trigger_cooldown: 300,
+            notify_channels: json!(["notification"]),
+            notify_users: json!([]),
+            gis_fence_id: None,
+            start_at: None,
+            end_at: None,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        };
+        let v = serde_json::to_value(&gf).unwrap();
+        let back: ImGeofence = serde_json::from_value(v.clone()).unwrap();
+        assert_eq!(back.name, "fence1");
+        assert_eq!(back.radius, Some(5.0));
+        assert_eq!(back.status, "active");
+        // clone 独立性
+        let cloned = gf.clone();
+        assert_eq!(cloned.shape_type, gf.shape_type);
+    }
+
+    #[test]
+    fn test_send_location_request_deserialize() {
+        let json = json!({
+            "chat_id": uid(),
+            "location_type": "point",
+            "coordinates": {"lat": 1.0, "lng": 2.0},
+            "place_name": "p",
+            "place_id": null,
+            "gis_location_id": null,
+            "gis_map_id": null,
+            "address": null,
+            "description": null,
+            "map_provider": "amap",
+            "static_map": true
+        });
+        let req: SendLocationRequest = serde_json::from_value(json).unwrap();
+        assert_eq!(req.location_type, "point");
+        assert_eq!(req.map_provider.as_deref(), Some("amap"));
+        assert_eq!(req.static_map, Some(true));
+    }
+
+    #[test]
+    fn test_create_im_geofence_request_deserialize_minimal() {
+        let json = json!({
+            "name": "n",
+            "chat_id": uid(),
+            "shape_type": "circle",
+            "coordinates": {"lat": 1.0, "lng": 2.0}
+        });
+        let req: CreateImGeofenceRequest = serde_json::from_value(json).unwrap();
+        assert_eq!(req.name, "n");
+        assert!(req.radius.is_none());
+        assert!(req.event_types.is_none());
+        assert!(req.trigger_cooldown.is_none());
+    }
+
+    #[test]
+    fn test_update_im_geofence_request_all_none() {
+        let req: UpdateImGeofenceRequest = serde_json::from_value(json!({})).unwrap();
+        assert!(req.name.is_none());
+        assert!(req.coordinates.is_none());
+        assert!(req.status.is_none());
+    }
+
+    #[test]
+    fn test_geofence_query_deserialize_all_none() {
+        let req: GeofenceQuery = serde_json::from_value(json!({})).unwrap();
+        assert!(req.chat_id.is_none());
+        assert!(req.status.is_none());
+        assert!(req.shape_type.is_none());
+    }
+
+    #[test]
+    fn test_geofence_query_deserialize_full() {
+        let json = json!({
+            "chat_id": "550e8400-e29b-41d4-a716-446655440000",
+            "status": "active",
+            "shape_type": "circle"
+        });
+        let req: GeofenceQuery = serde_json::from_value(json).unwrap();
+        assert_eq!(req.status.as_deref(), Some("active"));
+        assert_eq!(req.shape_type.as_deref(), Some("circle"));
+    }
+
+    #[test]
+    fn test_unified_poi_result_serialize() {
+        let item = UnifiedPoiItem {
+            id: "x".to_string(),
+            name: "n".to_string(),
+            category: "c".to_string(),
+            coordinates: json!({"lat": 1.0, "lng": 2.0}),
+            address: Some("a".to_string()),
+            map_provider: "gis".to_string(),
+            gis_location_id: Some(uid()),
+        };
+        let result = UnifiedPoiResult {
+            items: vec![item],
+            gis_results_count: 1,
+            third_party_results_count: 0,
+            total: 1,
+            providers_used: vec!["gis".to_string()],
+        };
+        let v = serde_json::to_value(&result).unwrap();
+        assert_eq!(v["total"], 1);
+        assert_eq!(v["items"][0]["id"], "x");
+        assert_eq!(v["providers_used"][0], "gis");
+    }
+
+    #[test]
+    fn test_geofence_sync_result_serialize() {
+        let gf = ImGeofence {
+            id: uid(),
+            name: "n".to_string(),
+            description: None,
+            chat_id: uid(),
+            creator_id: uid(),
+            creator_name: None,
+            shape_type: "circle".to_string(),
+            coordinates: json!({}),
+            radius: None,
+            event_types: json!([]),
+            status: "active".to_string(),
+            trigger_cooldown: 0,
+            notify_channels: json!([]),
+            notify_users: json!([]),
+            gis_fence_id: None,
+            start_at: None,
+            end_at: None,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        };
+        let r = GeofenceSyncResult {
+            geofence: gf,
+            gis_sync_status: "synced".to_string(),
+            gis_fence_id: Some(uid()),
+            gis_error: None,
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        assert_eq!(v["gis_sync_status"], "synced");
+        assert!(v["gis_fence_id"].is_string());
+    }
+
+    #[test]
+    fn test_search_poi_request_deserialize() {
+        let json = json!({
+            "keyword": "coffee",
+            "coordinates": {"lat": 1.0, "lng": 2.0},
+            "radius": 3.0,
+            "include_gis": true,
+            "gis_types": ["cafe"]
+        });
+        let req: SearchPoiRequest = serde_json::from_value(json).unwrap();
+        assert_eq!(req.keyword, "coffee");
+        assert_eq!(req.radius, Some(3.0));
+        assert_eq!(req.include_gis, Some(true));
+    }
+
+    #[test]
+    fn test_create_location_routes_builds() {
+        // 确保 Router 能正常构建（不 panic）
+        let _router = create_location_routes();
+    }
 }

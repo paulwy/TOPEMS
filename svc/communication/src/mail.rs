@@ -1673,4 +1673,249 @@ mod tests {
         let expected_inner = base64_encode(subject.as_bytes());
         assert_eq!(encoded, format!("=?UTF-8?B?{}?=", expected_inner));
     }
+
+    // ===== EmailQueueStatus / 队列 / mailer / handlebars 测试 =====
+
+    #[test]
+    fn test_email_queue_status_to_string_all_variants() {
+        assert_eq!(EmailQueueStatus::Pending.to_string(), "pending");
+        assert_eq!(EmailQueueStatus::Sending.to_string(), "sending");
+        assert_eq!(EmailQueueStatus::Sent.to_string(), "sent");
+        assert_eq!(EmailQueueStatus::Failed.to_string(), "failed");
+    }
+
+    #[test]
+    fn test_email_queue_status_eq() {
+        assert_eq!(EmailQueueStatus::Pending, EmailQueueStatus::Pending);
+        assert_ne!(EmailQueueStatus::Sent, EmailQueueStatus::Failed);
+    }
+
+    #[test]
+    fn test_queued_email_clone_and_debug() {
+        let q = QueuedEmail {
+            id: "qid".to_string(),
+            from: "a@b.com".to_string(),
+            to: "c@d.com".to_string(),
+            subject: "s".to_string(),
+            body: "b".to_string(),
+            html_body: None,
+            cc: None,
+            bcc: None,
+            attempts: 0,
+            max_attempts: 3,
+            created_at: chrono::Utc::now(),
+            status: EmailQueueStatus::Pending,
+        };
+        let cloned = q.clone();
+        assert_eq!(cloned.id, "qid");
+        assert_eq!(cloned.status, EmailQueueStatus::Pending);
+        let dbg = format!("{:?}", q);
+        assert!(dbg.contains("QueuedEmail"));
+    }
+
+    #[tokio::test]
+    async fn test_queue_email_returns_id_and_stats_has_keys() {
+        let id = queue_email(
+            "from@x.com".to_string(),
+            "to@x.com".to_string(),
+            "subject".to_string(),
+            "body".to_string(),
+            None,
+            None,
+            None,
+        );
+        assert!(!id.is_empty());
+        // 队列中应能查到该条目
+        let status = get_queue_status(&id);
+        assert!(status.is_some());
+        let stats = get_queue_stats();
+        assert!(stats["total"].as_u64().is_some());
+        assert!(stats["pending"].as_u64().is_some());
+        assert!(stats["sent"].as_u64().is_some());
+    }
+
+    #[test]
+    fn test_get_queue_status_unknown_returns_none() {
+        assert!(get_queue_status("nonexistent-id-xyz").is_none());
+    }
+
+    #[test]
+    fn test_get_queue_stats_structure() {
+        let stats = get_queue_stats();
+        // 确保所有键存在
+        for key in ["pending", "sending", "sent", "failed", "total"] {
+            assert!(stats.get(key).is_some(), "missing key {}", key);
+        }
+    }
+
+    #[test]
+    fn test_build_message_valid_addresses() {
+        let msg = build_message(
+            "from@example.com",
+            "to@example.com",
+            "Subject",
+            "Body text",
+            None,
+            None,
+            None,
+        );
+        assert!(msg.is_ok());
+        let m = msg.unwrap();
+        // lettre Message 可格式化为字节流，确保含 Subject 头
+        let formatted = m.formatted();
+        let as_str = String::from_utf8_lossy(&formatted);
+        assert!(as_str.contains("Subject"));
+    }
+
+    #[test]
+    fn test_build_message_with_cc_and_bcc() {
+        let cc = vec!["cc1@x.com".to_string(), "cc2@x.com".to_string()];
+        let bcc = vec!["bcc@x.com".to_string()];
+        let msg = build_message(
+            "from@example.com",
+            "to@example.com",
+            "S",
+            "B",
+            Some("<b>html</b>"),
+            Some(&cc),
+            Some(&bcc),
+        );
+        assert!(msg.is_ok());
+    }
+
+    #[test]
+    fn test_build_message_invalid_from_returns_err() {
+        let msg = build_message("not-an-email", "to@example.com", "S", "B", None, None, None);
+        assert!(msg.is_err());
+        assert!(msg.unwrap_err().contains("Invalid from email"));
+    }
+
+    #[test]
+    fn test_build_message_invalid_to_returns_err() {
+        let msg = build_message("from@example.com", "bad-to", "S", "B", None, None, None);
+        assert!(msg.is_err());
+        assert!(msg.unwrap_err().contains("Invalid to email"));
+    }
+
+    #[test]
+    fn test_build_message_invalid_cc_returns_err() {
+        let cc = vec!["bad-cc".to_string()];
+        let msg = build_message(
+            "from@example.com",
+            "to@example.com",
+            "S",
+            "B",
+            None,
+            Some(&cc),
+            None,
+        );
+        assert!(msg.is_err());
+    }
+
+    // env var 测试用静态 Mutex 串行化，避免并行污染
+    static ENV_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    #[test]
+    fn test_create_mailer_localhost_without_password_ok() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        std::env::set_var("SMTP_HOST", "localhost");
+        std::env::set_var("SMTP_PORT", "2525");
+        std::env::remove_var("SMTP_PASSWORD");
+        std::env::set_var("SMTP_TLS", "none");
+        let result = create_mailer();
+        assert!(result.is_ok(), "localhost 模式应允许无密码");
+        let _ = std::env::var("SMTP_HOST"); // 触发使用
+    }
+
+    #[test]
+    fn test_create_mailer_remote_without_password_err() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        std::env::set_var("SMTP_HOST", "smtp.remote.example");
+        std::env::set_var("SMTP_PORT", "587");
+        std::env::remove_var("SMTP_PASSWORD");
+        let result = create_mailer();
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("SMTP_PASSWORD"));
+    }
+
+    #[test]
+    fn test_create_mailer_remote_with_password_ok() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        std::env::set_var("SMTP_HOST", "smtp.remote.example");
+        std::env::set_var("SMTP_PORT", "465");
+        std::env::set_var("SMTP_PASSWORD", "secret");
+        std::env::set_var("SMTP_TLS", "tls");
+        let result = create_mailer();
+        assert!(result.is_ok());
+        std::env::remove_var("SMTP_PASSWORD");
+    }
+
+    #[test]
+    fn test_create_mailer_invalid_port_falls_back() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        std::env::set_var("SMTP_HOST", "localhost");
+        std::env::set_var("SMTP_PORT", "not-a-number");
+        std::env::remove_var("SMTP_PASSWORD");
+        std::env::set_var("SMTP_TLS", "starttls");
+        // 端口非法 → 回退 587，localhost 模式应成功
+        let result = create_mailer();
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_send_email_with_lettre_localhost_preview() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        std::env::set_var("SMTP_HOST", "localhost");
+        std::env::set_var("SMTP_PORT", "587");
+        // localhost + 587 → 预览模式，直接返回 Ok
+        let result = send_email_with_lettre(
+            "from@example.com",
+            "to@example.com",
+            "Preview Subject",
+            "Preview Body",
+            None,
+            None,
+            None,
+        );
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_send_notification_email_localhost_preview() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        std::env::set_var("SMTP_HOST", "localhost");
+        std::env::set_var("SMTP_PORT", "587");
+        let result = send_notification_email("to@example.com", "subj", "body").await;
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_handlebars_render_template_success() {
+        use handlebars::Handlebars;
+        let hb = Handlebars::new();
+        let tmpl = "Hello {{name}}, you have {{count}} messages";
+        let vars = serde_json::json!({"name": "Alice", "count": 3});
+        let rendered = hb.render_template(tmpl, &vars).unwrap();
+        assert_eq!(rendered, "Hello Alice, you have 3 messages");
+    }
+
+    #[test]
+    fn test_handlebars_render_template_missing_var_leaves_empty() {
+        use handlebars::Handlebars;
+        let hb = Handlebars::new();
+        let tmpl = "Hello {{name}}";
+        let vars = serde_json::json!({});
+        // handlebars 默认对缺失变量渲染为空字符串
+        let rendered = hb.render_template(tmpl, &vars).unwrap();
+        assert_eq!(rendered, "Hello ");
+    }
+
+    #[test]
+    fn test_handlebars_render_template_invalid_syntax_err() {
+        use handlebars::Handlebars;
+        let hb = Handlebars::new();
+        let tmpl = "Hello {{#if name}}"; // 未闭合块
+        let vars = serde_json::json!({"name": "x"});
+        assert!(hb.render_template(tmpl, &vars).is_err());
+    }
 }
