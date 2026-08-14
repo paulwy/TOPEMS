@@ -83,12 +83,21 @@ export {
 // ==================== 性能监控 ====================
 export { microFrontendPerf, type ModuleLoadMetrics } from './performance';
 
-// ==================== 可观测性体系（V40.0） ====================
+// ==================== 可观测性体系（V40.0 + V217 MF 运行时埋点） ====================
 export {
   modulePerformanceMetrics,
   errorTracker,
   userBehaviorAnalytics,
   ObservabilityPanel,
+  initMFObservability,
+  getMFErrorEvents,
+  getMFErrorStats,
+  clearMFErrorEvents,
+  mfObservabilityPlugin,
+  classifyMFError,
+  getUserMessage,
+  shouldShowToast,
+  shouldSuppressToast,
   type ModulePerformanceMetrics,
   type ResourceLoadDetail,
   type TrackedError,
@@ -98,6 +107,9 @@ export {
   type ModuleAction,
   type ModuleVisitStats,
   type NavigationPath,
+  type MFErrorType,
+  type MFErrorSeverity,
+  type MFErrorEvent,
 } from './observability';
 
 // ==================== 远程模块加载器 ====================

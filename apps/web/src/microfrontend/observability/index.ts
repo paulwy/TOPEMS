@@ -20,3 +20,22 @@ export {
 } from './user-behavior-analytics';
 
 export { ObservabilityPanel } from './ObservabilityPanel';
+
+// V217: MF 运行时可观测性埋点
+export {
+  initMFObservability,
+  getMFErrorEvents,
+  getMFErrorStats,
+  clearMFErrorEvents,
+  mfObservabilityPlugin,
+} from './mf-runtime-plugin';
+
+export {
+  classifyMFError,
+  getUserMessage,
+  shouldShowToast,
+  shouldSuppressToast,
+  type MFErrorType,
+  type MFErrorSeverity,
+  type MFErrorEvent,
+} from './mf-error-classifier';
