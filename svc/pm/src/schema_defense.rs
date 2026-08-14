@@ -340,3 +340,139 @@ pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::
     run_schema_defense(pool, SERVICE_SCHEMA, TABLE_DEFS, SERVICE_TAG).await?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashSet;
+
+    #[test]
+    fn test_service_schema_is_pm() {
+        assert_eq!(SERVICE_SCHEMA, "pm");
+    }
+
+    #[test]
+    fn test_service_tag_is_pm() {
+        assert_eq!(SERVICE_TAG, "pm");
+    }
+
+    #[test]
+    fn test_table_defs_not_empty() {
+        assert!(!TABLE_DEFS.is_empty());
+        assert!(TABLE_DEFS.len() >= 17);
+    }
+
+    #[test]
+    fn test_no_duplicate_table_names() {
+        let mut seen = HashSet::new();
+        for (tbl, _) in TABLE_DEFS {
+            assert!(seen.insert(*tbl), "duplicate table name: {}", tbl);
+        }
+    }
+
+    #[test]
+    fn test_every_table_has_tenant_id() {
+        for (tbl, cols) in TABLE_DEFS {
+            let has_tenant = cols.iter().any(|(c, _)| *c == "tenant_id");
+            assert!(has_tenant, "table {} missing tenant_id", tbl);
+        }
+    }
+
+    #[test]
+    fn test_every_table_has_created_at() {
+        for (tbl, cols) in TABLE_DEFS {
+            let has = cols.iter().any(|(c, _)| *c == "created_at");
+            assert!(has, "table {} missing created_at", tbl);
+        }
+    }
+
+    #[test]
+    fn test_every_table_has_updated_at() {
+        // notifications is an insert-only table (no updated_at); all others must have it
+        for (tbl, cols) in TABLE_DEFS {
+            if *tbl == "notifications" {
+                continue;
+            }
+            let has = cols.iter().any(|(c, _)| *c == "updated_at");
+            assert!(has, "table {} missing updated_at", tbl);
+        }
+    }
+
+    #[test]
+    fn test_no_duplicate_columns_within_table() {
+        for (tbl, cols) in TABLE_DEFS {
+            let mut seen = HashSet::new();
+            for (col, _) in *cols {
+                assert!(
+                    seen.insert(*col),
+                    "table {} has duplicate column {}",
+                    tbl,
+                    col
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_no_table_named_id_only() {
+        // id is auto-appended by verify stage, so no table should list "id" as a column
+        for (tbl, cols) in TABLE_DEFS {
+            let has_id = cols.iter().any(|(c, _)| *c == "id");
+            assert!(
+                !has_id,
+                "table {} should not define id column (auto-appended)",
+                tbl
+            );
+        }
+    }
+
+    #[test]
+    fn test_projects_table_has_expected_columns() {
+        let (tbl, cols) = TABLE_DEFS.iter().find(|(t, _)| *t == "projects").unwrap();
+        assert_eq!(*tbl, "projects");
+        let names: Vec<&str> = cols.iter().map(|(c, _)| *c).collect();
+        assert!(names.contains(&"name"));
+        assert!(names.contains(&"code"));
+        assert!(names.contains(&"status"));
+        assert!(names.contains(&"tenant_id"));
+    }
+
+    #[test]
+    fn test_column_types_are_nonempty() {
+        for (tbl, cols) in TABLE_DEFS {
+            for (col, ty) in *cols {
+                assert!(
+                    !ty.is_empty(),
+                    "table {} column {} has empty type",
+                    tbl,
+                    col
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_notification_table_optional_project_id() {
+        let (_, cols) = TABLE_DEFS
+            .iter()
+            .find(|(t, _)| *t == "notifications")
+            .unwrap();
+        let ty = cols
+            .iter()
+            .find(|(c, _)| *c == "project_id")
+            .map(|(_, t)| *t);
+        assert!(ty.is_some());
+        assert!(ty.unwrap().starts_with("UUID"));
+    }
+
+    #[test]
+    fn test_budgets_table_has_currency_default() {
+        let (_, cols) = TABLE_DEFS.iter().find(|(t, _)| *t == "budgets").unwrap();
+        let ty = cols
+            .iter()
+            .find(|(c, _)| *c == "currency")
+            .map(|(_, t)| *t)
+            .unwrap();
+        assert!(ty.contains("DEFAULT 'CNY'"));
+    }
+}

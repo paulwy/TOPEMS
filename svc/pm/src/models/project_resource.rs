@@ -45,3 +45,173 @@ pub struct UpdateResourceRequest {
     pub actual_cost: Option<f64>,
     pub status: Option<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn now() -> DateTime<Utc> {
+        Utc::now()
+    }
+
+    fn uid() -> Uuid {
+        Uuid::parse_str("123e4567-e89b-12d3-a456-426614174000").unwrap()
+    }
+
+    // ---- ProjectResource ----
+
+    fn sample_resource() -> ProjectResource {
+        ProjectResource {
+            id: uid(),
+            project_id: uid(),
+            resource_type: "human".to_string(),
+            resource_id: uid(),
+            resource_service: Some("iam".to_string()),
+            role: Some("engineer".to_string()),
+            start_date: Some(now()),
+            end_date: Some(now()),
+            allocation_percent: Some(80),
+            actual_hours: Some(120),
+            actual_cost: Some(15_000.0),
+            status: Some("active".to_string()),
+            created_by: Some("admin".to_string()),
+            created_at: now(),
+            updated_at: now(),
+        }
+    }
+
+    #[test]
+    fn test_project_resource_serde_roundtrip() {
+        let r = sample_resource();
+        let s = serde_json::to_string(&r).unwrap();
+        let back: ProjectResource = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.id, r.id);
+        assert_eq!(back.resource_type, r.resource_type);
+        assert_eq!(back.allocation_percent, r.allocation_percent);
+        assert_eq!(back.actual_cost, r.actual_cost);
+    }
+
+    #[test]
+    fn test_project_resource_clone_preserves_fields() {
+        let r = sample_resource();
+        let c = r.clone();
+        assert_eq!(c.id, r.id);
+        assert_eq!(c.resource_type, r.resource_type);
+    }
+
+    #[test]
+    fn test_project_resource_with_none_optional() {
+        let r = ProjectResource {
+            id: uid(),
+            project_id: uid(),
+            resource_type: "equipment".to_string(),
+            resource_id: uid(),
+            resource_service: None,
+            role: None,
+            start_date: None,
+            end_date: None,
+            allocation_percent: None,
+            actual_hours: None,
+            actual_cost: None,
+            status: None,
+            created_by: None,
+            created_at: now(),
+            updated_at: now(),
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: ProjectResource = serde_json::from_str(&s).unwrap();
+        assert!(back.role.is_none());
+        assert!(back.allocation_percent.is_none());
+    }
+
+    #[test]
+    fn test_project_resource_zero_allocation_roundtrip() {
+        let mut r = sample_resource();
+        r.allocation_percent = Some(0);
+        let s = serde_json::to_string(&r).unwrap();
+        let back: ProjectResource = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.allocation_percent, Some(0));
+    }
+
+    #[test]
+    fn test_project_resource_full_allocation_roundtrip() {
+        let mut r = sample_resource();
+        r.allocation_percent = Some(100);
+        let s = serde_json::to_string(&r).unwrap();
+        let back: ProjectResource = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.allocation_percent, Some(100));
+    }
+
+    // ---- CreateResourceRequest ----
+
+    #[test]
+    fn test_create_resource_request_roundtrip() {
+        let r = CreateResourceRequest {
+            resource_type: "human".to_string(),
+            resource_id: uid(),
+            resource_service: Some("iam".to_string()),
+            role: Some("manager".to_string()),
+            start_date: Some(now()),
+            end_date: Some(now()),
+            allocation_percent: Some(50),
+            created_by: Some("u".to_string()),
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: CreateResourceRequest = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.resource_type, r.resource_type);
+        assert_eq!(back.allocation_percent, r.allocation_percent);
+    }
+
+    #[test]
+    fn test_create_resource_request_minimal() {
+        let r = CreateResourceRequest {
+            resource_type: "tool".to_string(),
+            resource_id: uid(),
+            resource_service: None,
+            role: None,
+            start_date: None,
+            end_date: None,
+            allocation_percent: None,
+            created_by: None,
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: CreateResourceRequest = serde_json::from_str(&s).unwrap();
+        assert!(back.role.is_none());
+    }
+
+    // ---- UpdateResourceRequest ----
+
+    #[test]
+    fn test_update_resource_request_all_none() {
+        let r = UpdateResourceRequest {
+            role: None,
+            start_date: None,
+            end_date: None,
+            allocation_percent: None,
+            actual_hours: None,
+            actual_cost: None,
+            status: None,
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: UpdateResourceRequest = serde_json::from_str(&s).unwrap();
+        assert!(back.role.is_none());
+        assert!(back.actual_cost.is_none());
+    }
+
+    #[test]
+    fn test_update_resource_request_with_values() {
+        let r = UpdateResourceRequest {
+            role: Some("lead".to_string()),
+            start_date: Some(now()),
+            end_date: Some(now()),
+            allocation_percent: Some(100),
+            actual_hours: Some(200),
+            actual_cost: Some(25_000.0),
+            status: Some("completed".to_string()),
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let back: UpdateResourceRequest = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.role, r.role);
+        assert_eq!(back.allocation_percent, r.allocation_percent);
+    }
+}

@@ -725,4 +725,224 @@ mod tests {
     fn test_completion_clamps_overflow() {
         assert_eq!(project_completion_pct(15, 10), 100.0);
     }
+
+    // ---- Response struct serialization tests ----
+
+    fn uid() -> Uuid {
+        Uuid::parse_str("123e4567-e89b-12d3-a456-426614174000").unwrap()
+    }
+
+    fn now() -> chrono::DateTime<Utc> {
+        Utc::now()
+    }
+
+    fn sample_project() -> Project {
+        Project {
+            id: uid(),
+            name: "测试项目".to_string(),
+            code: "TEST-001".to_string(),
+            description: Some("d".to_string()),
+            project_type: "internal".to_string(),
+            status: "active".to_string(),
+            leader: Some("leader".to_string()),
+            start_date: Some(now()),
+            end_date: Some(now()),
+            budget: Some(rust_decimal::Decimal::from(100_000)),
+            progress: 50,
+            project_config: Some(serde_json::json!({"key": "value"})),
+            benefit_target: Some(serde_json::json!({"target": 200000})),
+            risk_level: Some("medium".to_string()),
+            priority: Some(1),
+            tags: Some(vec!["urgent".to_string()]),
+            parent_id: None,
+            workspace_id: None,
+            created_by: Some("admin".to_string()),
+            created_at: now(),
+            updated_at: now(),
+        }
+    }
+
+    #[test]
+    fn test_project_query_deserialize() {
+        let json = r#"{"project_type":"internal","status":"active","page":1,"page_size":20}"#;
+        let q: ProjectQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(q.project_type, Some("internal".to_string()));
+        assert_eq!(q.status, Some("active".to_string()));
+        assert_eq!(q.page, Some(1));
+        assert_eq!(q.page_size, Some(20));
+    }
+
+    #[test]
+    fn test_project_query_deserialize_all_none() {
+        let json = r#"{}"#;
+        let q: ProjectQuery = serde_json::from_str(json).unwrap();
+        assert!(q.project_type.is_none());
+        assert!(q.status.is_none());
+        assert!(q.page.is_none());
+        assert!(q.page_size.is_none());
+    }
+
+    #[test]
+    fn test_project_list_response_serialization() {
+        let p = sample_project();
+        let resp = ProjectListResponse {
+            projects: vec![p.clone()],
+            total: 1,
+            page: 1,
+            page_size: 20,
+        };
+        let s = serde_json::to_string(&resp).unwrap();
+        let v: serde_json::Value = serde_json::from_str(&s).unwrap();
+        assert_eq!(v["total"], 1);
+        assert_eq!(v["page"], 1);
+        assert_eq!(v["page_size"], 20);
+        assert_eq!(v["projects"][0]["name"], "测试项目");
+    }
+
+    #[test]
+    fn test_project_list_response_empty() {
+        let resp = ProjectListResponse {
+            projects: vec![],
+            total: 0,
+            page: 1,
+            page_size: 20,
+        };
+        let s = serde_json::to_string(&resp).unwrap();
+        let v: serde_json::Value = serde_json::from_str(&s).unwrap();
+        assert_eq!(v["total"], 0);
+        assert!(v["projects"].as_array().unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_gantt_phase_serialization() {
+        let g = GanttPhase {
+            id: uid(),
+            name: "设计阶段".to_string(),
+            project_id: uid(),
+            start_date: Some(now()),
+            end_date: Some(now()),
+            progress: 75,
+            status: "in_progress".to_string(),
+            predecessor_ids: vec![uid(), uid()],
+        };
+        let s = serde_json::to_string(&g).unwrap();
+        let v: serde_json::Value = serde_json::from_str(&s).unwrap();
+        assert_eq!(v["name"], "设计阶段");
+        assert_eq!(v["progress"], 75);
+        assert_eq!(v["predecessor_ids"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn test_gantt_phase_no_dates() {
+        let g = GanttPhase {
+            id: uid(),
+            name: "n".to_string(),
+            project_id: uid(),
+            start_date: None,
+            end_date: None,
+            progress: 0,
+            status: "pending".to_string(),
+            predecessor_ids: vec![],
+        };
+        let s = serde_json::to_string(&g).unwrap();
+        let v: serde_json::Value = serde_json::from_str(&s).unwrap();
+        assert!(v["start_date"].is_null());
+        assert!(v["end_date"].is_null());
+        assert_eq!(v["predecessor_ids"].as_array().unwrap().len(), 0);
+    }
+
+    #[test]
+    fn test_gantt_milestone_serialization() {
+        let m = GanttMilestone {
+            id: uid(),
+            name: "里程碑1".to_string(),
+            project_id: uid(),
+            date: now(),
+            status: "completed".to_string(),
+        };
+        let s = serde_json::to_string(&m).unwrap();
+        let v: serde_json::Value = serde_json::from_str(&s).unwrap();
+        assert_eq!(v["name"], "里程碑1");
+        assert_eq!(v["status"], "completed");
+    }
+
+    #[test]
+    fn test_gantt_resource_serialization() {
+        let r = GanttResource {
+            id: uid(),
+            resource_type: "human".to_string(),
+            name: "张三".to_string(),
+            assignments: vec![serde_json::json!({"phase": "p1"})],
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let v: serde_json::Value = serde_json::from_str(&s).unwrap();
+        assert_eq!(v["resource_type"], "human");
+        assert_eq!(v["name"], "张三");
+        assert_eq!(v["assignments"].as_array().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn test_gantt_resource_empty_assignments() {
+        let r = GanttResource {
+            id: uid(),
+            resource_type: "equipment".to_string(),
+            name: "n".to_string(),
+            assignments: vec![],
+        };
+        let s = serde_json::to_string(&r).unwrap();
+        let v: serde_json::Value = serde_json::from_str(&s).unwrap();
+        assert!(v["assignments"].as_array().unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_project_gantt_response_serialization() {
+        let resp = ProjectGanttResponse {
+            phases: vec![GanttPhase {
+                id: uid(),
+                name: "p1".to_string(),
+                project_id: uid(),
+                start_date: None,
+                end_date: None,
+                progress: 50,
+                status: "active".to_string(),
+                predecessor_ids: vec![],
+            }],
+            milestones: vec![GanttMilestone {
+                id: uid(),
+                name: "m1".to_string(),
+                project_id: uid(),
+                date: now(),
+                status: "pending".to_string(),
+            }],
+            resources: vec![],
+        };
+        let s = serde_json::to_string(&resp).unwrap();
+        let v: serde_json::Value = serde_json::from_str(&s).unwrap();
+        assert_eq!(v["phases"].as_array().unwrap().len(), 1);
+        assert_eq!(v["milestones"].as_array().unwrap().len(), 1);
+        assert!(v["resources"].as_array().unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_project_dashboard_response_serialization() {
+        let p = sample_project();
+        let resp = ProjectDashboardResponse {
+            project: p,
+            progress: serde_json::json!({"planned": 50, "actual": 60}),
+            budget: serde_json::json!({"total": 100000, "spent": 50000}),
+            members: vec![serde_json::json!({"user_id": "u1", "role": "manager"})],
+            equipment: vec![],
+            benefits: serde_json::json!({"cpi": 1.2, "roi": 0.15}),
+            risks: vec![serde_json::json!({"level": "high"})],
+        };
+        let s = serde_json::to_string(&resp).unwrap();
+        let v: serde_json::Value = serde_json::from_str(&s).unwrap();
+        assert_eq!(v["project"]["name"], "测试项目");
+        assert_eq!(v["progress"]["planned"], 50);
+        assert_eq!(v["budget"]["total"], 100000);
+        assert_eq!(v["members"].as_array().unwrap().len(), 1);
+        assert!(v["equipment"].as_array().unwrap().is_empty());
+        assert_eq!(v["benefits"]["cpi"], 1.2);
+        assert_eq!(v["risks"].as_array().unwrap().len(), 1);
+    }
 }
