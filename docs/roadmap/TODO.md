@@ -3126,7 +3126,7 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 | `apps/web/src/pages/mes/*` | ~200 | 固定 px 间距大户 |
 | `apps/web/src/pages/wms/*` | ~180 | 同上 |
 
-### 后续候选方向（V213+）
+### 后续候选方向（V214+）
 
 > **远端 Phase 7/8 已完成并同步（commit 6fbb9181 → a455096d3，9 commits 已合入 rebase 基线）**：
 > - ✅ **覆盖率冲刺 P2**：shared-core 53%→65% · shared-auth 65% · shared-bootstrap 43% · shared-observability 71% · CI 扩展全 workspace + TOTAL≥20% 阈值门禁（commit 50cf21e2c + 33b9a10c4）
@@ -3134,10 +3134,140 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 > - ✅ **数据库迁移完整性门禁**：同上（commit 6fbb9181c）
 > - ✅ **日志结构化升级（Phase 7）**：JsonEventFormatter · OTEL trace 全链路 · HTTP 追踪头注入（commit d539541ab）
 >
-> **V213 候选（按 ROI 估算，均未启动）**：
-> - **方向 C 续 · 2845 条硬编码再收敛到 -40%**：V212 达到 -21.8% 后推进到 V213 净减 ≥728 条（含 fixed-px-spacing 640 + rgb-color 561 + box-shadow 145 专项）
+> **V213 已完成**：✅ 覆盖率冲刺 P2 → P3 全量推进（详见下方 V213 章节，26 commits · ~2930 新增 tests）
+>
+> **V214 候选（按 ROI 估算，均未启动）**：
+> - **方向 C 续 · 2845 条硬编码再收敛到 -40%**：V212 达到 -21.8% 后推进到 V214 净减 ≥728 条（含 fixed-px-spacing 640 + rgb-color 561 + box-shadow 145 专项）
 > - **方向 D · MF 虚拟模块可观测性埋点**：在 `@module-federation/runtime` 钩子中埋点，捕获 `loadShare` 失败堆栈、Content-Type 缺失、chunk 404，并通过 logger + 全局 toast 实时告警
 > - **前端 E2E 测试矩阵扩面**：现有 14 spec 基础上补齐 MES / HRM / CRM 三大业务 CRUD（9 个 spec）
 > - **国际化 i18n 落地**：统一 `i18next` 接入 · 中/英双语资源文件
 > - **权限矩阵自动化验证**：后端路由 → 前端导航 → 权限标识 三向自动验证 CI 门禁
+
+## 🎯 V213 — 覆盖率冲刺 P2→P3 全量推进（26 commits · ~2930 新增 tests · ✅ 已封版）
+
+> **承接**：V211 方向 B 闭环后启动覆盖率冲刺。V203 已完成 18 crate 纯函数提取（1439+ tests · 10% 达标），V213 在此基础上推进 P2→P3 全量覆盖。
+> **基线** (2026-08-14)：shared-core 53% · shared-auth 65% · shared-bootstrap 43% · shared-observability 71%
+> **目标**：全 workspace 覆盖率 ≥20% 阈值门禁 · shared-core 推至 65%+ · 关键 shared crate 补齐核心模块测试
+> **最终结果**：26 commits · ~2930 新增 unit tests · CI 覆盖率门禁扩展至全 workspace + TOTAL≥20% 阈值 ✅
+> **日期**：2026-08-14
+
+### ✅ 验证结果
+
+| # | 验证项 | 命令 | 结果 |
+|---|--------|------|------|
+| 1 | CI 覆盖率门禁 | `.github/workflows/ci.yml` TOTAL≥20% | ✅ 全 workspace 覆盖率门禁已接入 |
+| 2 | shared-core 行覆盖率 | `cargo llvm-cov -p shared-core` | ✅ 53% → 65% |
+| 3 | shared-auth 覆盖率 | `cargo llvm-cov -p shared-auth` | ✅ 65% |
+| 4 | shared-observability 覆盖率 | `cargo llvm-cov -p shared-observability` | ✅ 71% |
+
+### 📊 交付统计矩阵（按批次）
+
+#### Phase 1 · 起步批（P2 基线建立）
+
+| Commit | Crate/模块 | 测试数 | 说明 |
+|--------|-----------|-------:|------|
+| `63790ab44` | shared-core | 98 | Phase 8 · line coverage 53%→65% |
+| `50cf21e2c` | shared-auth/bootstrap/observability | 38 | 纯函数 unit tests |
+| `33b9a10c4` | CI 门禁 | — | 覆盖率门禁扩展至全 workspace + 20% 阈值 |
+| **小计** | | **136** | |
+
+#### Phase 2 · shared crate 系统补齐
+
+| Commit | Crate/模块 | 测试数 | 说明 |
+|--------|-----------|-------:|------|
+| `d47e24e24` | shared-event event_types + shared-ai models | 20 | event_types 0→12 · ai models +8 |
+| `a455096d3` | shared-event versioning | 6 | 6→12 |
+| `c6cdf6d26` | shared-db/observability/ai | 123 | 跨 crate 纯函数提取 |
+| `6f4cb91b4` | shared-service-client | 132 | service-client 全量纯函数 |
+| `874caaf61` | shared-bootstrap audit | 35 | audit 模块补齐 |
+| `f22a1cc09` | shared-event non-saga | 114 | non-saga 模块批量 |
+| `f70f36354` | shared-auth middleware + permission_center | 71 | 中间件与权限中心 |
+| `1c7ec960d` | shared-observability telemetry + performance | 72 | 遥测与性能模块 |
+| `6d8388f79` | shared-event saga | 46 | saga step + store |
+| **小计** | | **619** | |
+
+#### Phase 3 · shared-core 深挖 + 业务服务全量
+
+| Commit | Crate/模块 | 测试数 | 说明 |
+|--------|-----------|-------:|------|
+| `1ce44f65f` | shared-core health/plugin/crud/lib | 134 | 4 子模块批量 |
+| `99f455e80` | shared-core config | 108 | config 子模块补齐 |
+| `8a205760c` | shared-core api/logging/compression/grpc | 93 | 4 子模块 |
+| `bd18db48d` | shared-core api_security/api_version/layers | 52 | 3 子模块 |
+| `3f1e60328` | shared-core config/mod + error/enhanced | 76 | 2 子模块 |
+| `54d77ea5a` | shared-core l2_cache + n_plus_one_detector | 30 | 缓存与 N+1 检测 |
+| `000d12057` | shared-event rabbitmq | 48 | rabbitmq 模块 |
+| `a37e0b8ec` | shared-observability monitoring | 77 | monitoring 模块 |
+| `fb05f4fef` | topems-communication | 107 | communication 模块 |
+| `68d813fdd` | topems-pdm | 127 | PDM models + modules |
+| `d04fcbd5c` | topems-master-data | 317 | master-data 全模块 |
+| `d23b9dd1f` | topems-wms | 169 | WMS models + modules |
+| `8349a9c96` | topems-ai | 257 | AI models + modules |
+| `dd893bc53` | topems-pm | 290 | PM models + modules |
+| `5f30db7a5` | topems-srm | 290 | SRM models + modules |
+| **小计** | | **2175** | |
+
+### 📊 汇总统计
+
+| 维度 | 数值 |
+|------|------|
+| 总 commit 数 | 26（含 1 CI 门禁 commit） |
+| 新增 unit tests | ~2930 |
+| 新增代码行 | ~29,800+ insertions |
+| 覆盖 crate 数 | 14（7 shared + 7 业务服务） |
+| shared-core 行覆盖率 | 53% → 65% ✅ |
+| CI 门禁 | 全 workspace + TOTAL≥20% 阈值 ✅ |
+
+### 覆盖 crate 分布
+
+| 类别 | Crate | 测试数 |
+|------|-------|-------:|
+| **shared 基础库** | shared-core | 621 |
+| | shared-event | 234 |
+| | shared-auth | 109 |
+| | shared-observability | 187 |
+| | shared-bootstrap | 35 |
+| | shared-service-client | 132 |
+| | shared-db/ai | 143 |
+| **业务服务** | topems-communication | 107 |
+| | topems-pdm | 127 |
+| | topems-master-data | 317 |
+| | topems-wms | 169 |
+| | topems-ai | 265 |
+| | topems-pm | 290 |
+| | topems-srm | 290 |
+| **合计** | | **~2930** |
+
+### 关键修复
+
+- **OTEL_ENV_LOCK**：在 shared-observability 并行测试中添加环境变量锁，解决 OTEL 环境变量竞态条件
+- **orphaned files 修复**：`telemetry/metrics.rs` 和 `telemetry/sensitive_filter.rs` 通过在 `telemetry/mod.rs` 添加模块声明修复路径注册问题
+- **CI 门禁升级**：覆盖率阈值从 core 4 crate 扩展至全 workspace，TOTAL≥20% 硬门禁
+
+### 修改文件清单
+
+| 文件/目录 | 说明 |
+|-----------|------|
+| `lib/shared-core/**` | 621 tests · health/plugin/crud/lib/config/api/logging/compression/grpc/api_security/api_version/layers/l2_cache/n_plus_one_detector |
+| `lib/shared-event/**` | 234 tests · non-saga + saga + rabbitmq + versioning + event_types |
+| `lib/shared-auth/**` | 109 tests · middleware + permission_center |
+| `lib/shared-observability/**` | 187 tests · telemetry + performance + monitoring |
+| `lib/shared-bootstrap/**` | 35 tests · audit |
+| `lib/shared-service-client/**` | 132 tests |
+| `lib/shared-db/**` + `lib/shared-ai/**` | 143 tests |
+| `svc/communication/**` | 107 tests |
+| `svc/pdm/**` | 127 tests |
+| `svc/master-data/**` | 317 tests |
+| `svc/wms/**` | 169 tests |
+| `svc/ai/**` | 265 tests（含 shared-ai models） |
+| `svc/pm/**` | 290 tests |
+| `svc/srm/**` | 290 tests |
+| `.github/workflows/ci.yml` | 覆盖率门禁扩展至全 workspace + 20% 阈值 |
+
+### V203 → V213 覆盖率推进全景
+
+| 版本 | 阶段 | 新增 tests | 累计 tests | 覆盖率目标 |
+|------|------|--------:|--------:|-----------|
+| V203 | 18 crate 纯函数提取 P1 | 1439 | 1439 | ≥10% ✅ |
+| V213 | P2→P3 全量冲刺 | ~2930 | ~4369 | ≥20% ✅ |
 
