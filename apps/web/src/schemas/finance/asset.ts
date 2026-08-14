@@ -1,5 +1,6 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import { designTokens } from '@topems/tokens';
 
 export const assetSchema: EntitySchema = {
   entity: 'finance_asset',
@@ -23,7 +24,7 @@ export const assetSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) =>
         React.createElement(
           'span',
-          { style: { fontWeight: 600, color: 'var(--color-success-main, #2e7d32)' } },
+          { style: { fontWeight: 600, color: `var(--color-success-main, ${designTokens.colors.success.dark})` } },
           String(row.code || '')
         ),
       validation: [{ type: 'maxLength', value: 50 }],
@@ -60,8 +61,8 @@ export const assetSchema: EntitySchema = {
               borderRadius: 12,
               fontSize: 12,
               fontWeight: 500,
-              backgroundColor: 'var(--color-primary-lighter, #e3f2fd)',
-              color: 'var(--color-primary-main, #1976d2)',
+              backgroundColor: `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`,
+              color: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
             },
           },
           row.category === 'asset' ? '资产类' : String(row.category || '')
@@ -86,8 +87,8 @@ export const assetSchema: EntitySchema = {
         const label = direction === 'debit' ? '借方' : direction === 'credit' ? '贷方' : direction;
         const color =
           direction === 'debit'
-            ? 'var(--color-primary-main, #1976d2)'
-            : 'var(--color-error-main, #c62828)';
+            ? `var(--color-primary-main, ${designTokens.colors.primary.dark})`
+            : `var(--color-error-main, ${designTokens.colors.error['800']})`;
         return React.createElement(
           'span',
           {
@@ -138,7 +139,7 @@ export const assetSchema: EntitySchema = {
             style: {
               fontWeight: 700,
               color: hasChildren
-                ? 'var(--color-success-main, #2e7d32)'
+                ? `var(--color-success-main, ${designTokens.colors.success.dark})`
                 : 'var(--color-text-secondary, rgba(0,0,0,0.6))',
             },
           },

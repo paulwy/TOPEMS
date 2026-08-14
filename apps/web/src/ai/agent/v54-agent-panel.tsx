@@ -185,7 +185,7 @@ const V54AgentPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           bgcolor: 'background.paper',
           borderRadius: 3,
           overflow: 'hidden',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
+          boxShadow: designTokens.darkShadows['3xl'],
           display: 'flex',
           flexDirection: 'column',
           border: '1px solid rgba(16, 185, 129, 0.2)',
@@ -894,7 +894,7 @@ const StepItem: React.FC<{ step: TaskStep; index: number }> = ({ step, index }) 
           step.status === 'completed'
             ? 'colors.success.50'
             : step.status === 'failed'
-              ? '#fef2f2'
+              ? 'colors.error.50'
               : '#f9fafb',
         borderRadius: 1,
         border: '1px solid',
@@ -902,8 +902,8 @@ const StepItem: React.FC<{ step: TaskStep; index: number }> = ({ step, index }) 
           step.status === 'completed'
             ? '#a7f3d0'
             : step.status === 'failed'
-              ? '#fecaca'
-              : '#e5e7eb',
+              ? designTokens.colors.error['200']
+              : designTokens.colors.grey['200'],
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -960,19 +960,19 @@ const EventLog: React.FC<{ events: AgentEvent[] }> = ({ events }) => (
                       fontSize: 10,
                       height: 18,
                       bgcolor: event.type.includes('completed')
-                        ? '#d1fae5'
+                        ? 'colors.success.100'
                         : event.type.includes('failed')
-                          ? '#fef2f2'
+                          ? 'colors.error.50'
                           : event.type.includes('started')
-                            ? '#dbeafe'
-                            : '#f3f4f6',
+                            ? 'colors.primary.100'
+                            : 'colors.grey.100',
                       color: event.type.includes('completed')
-                        ? '#065f46'
+                        ? 'colors.success.dark'
                         : event.type.includes('failed')
-                          ? '#991b1b'
+                          ? 'colors.error.800'
                           : event.type.includes('started')
-                            ? '#1e40af'
-                            : '#374151',
+                            ? designTokens.colors.primary['800']
+                            : 'colors.grey.700',
                     }}
                   />
                 </TableCell>
@@ -1623,10 +1623,10 @@ const ContextTab: React.FC<{
                             height: 18,
                             bgcolor:
                               msg.role === 'user'
-                                ? '#dbeafe'
+                                ? 'colors.primary.100'
                                 : msg.role === 'assistant'
-                                  ? '#d1fae5'
-                                  : '#f3f4f6',
+                                  ? 'colors.success.100'
+                                  : 'colors.grey.100',
                           }}
                         />
                       </TableCell>

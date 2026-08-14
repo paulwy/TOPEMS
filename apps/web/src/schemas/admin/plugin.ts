@@ -8,6 +8,7 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
+import { designTokens } from '@topems/tokens';
 
 const PLUGIN_TYPE_LABELS: Record<string, string> = {
   core: '核心插件',
@@ -100,9 +101,9 @@ export const pluginSchema: EntitySchema = {
                     padding: '2px 6px',
                     borderRadius: 12,
                     fontSize: 11,
-                    backgroundColor: 'var(--color-success-lighter, #e8f5e9)',
-                    color: 'var(--color-success-main, #2e7d32)',
-                    border: '1px solid var(--color-success-main, #2e7d32)',
+                    backgroundColor: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
+                    color: `var(--color-success-main, ${designTokens.colors.success.dark})`,
+                    border: `1px solid var(--color-success-main, ${designTokens.colors.success.dark})`,
                   },
                 },
                 latestVersion
@@ -153,12 +154,12 @@ export const pluginSchema: EntitySchema = {
         const label = RUNTIME_STATUS_LABELS[status] || status;
         const color = RUNTIME_STATUS_COLORS[status] || 'warning';
         const colorMap: Record<string, string> = {
-          success: 'var(--color-success-main, #2e7d32)',
-          error: 'var(--color-error-main, #c62828)',
+          success: `var(--color-success-main, ${designTokens.colors.success.dark})`,
+          error: `var(--color-error-main, ${designTokens.colors.error['800']})`,
           warning: 'var(--color-warning-main, #ed6c02)',
         };
         const bgColorMap: Record<string, string> = {
-          success: 'var(--color-success-lighter, #e8f5e9)',
+          success: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
           error: 'var(--color-error-lighter, #ffebee)',
           warning: 'var(--color-warning-lighter, #fff3e0)',
         };

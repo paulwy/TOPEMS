@@ -140,7 +140,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
   }, [graph]);
 
   const getNodeColor = (level: number) => {
-    const colors = [designTokens.colors.primary.dark, '#388e3c', '#f57c00', '#c2185b', '#7b1fa2'];
+    const colors = [designTokens.colors.primary.dark, '#388e3c', 'colors.orange.700', '#c2185b', designTokens.colors.purple['700']];
     return colors[level % colors.length];
   };
 
@@ -276,7 +276,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
 
 const ConflictItem: React.FC<{ conflict: DependencyConflict }> = ({ conflict }) => {
   const severityColors: Record<ConflictSeverity, string> = {
-    low: '#94a3b8',
+    low: designTokens.colors.grey['400'],
     medium: designTokens.colors.warning.main,
     high: designTokens.colors.error.main,
     critical: designTokens.colors.error.dark,

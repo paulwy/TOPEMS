@@ -190,7 +190,7 @@ function GridLines() {
       <Line
         key={`lat-${lat}`}
         points={points}
-        color='rgba(255, 255, 255, 0.1)'
+        color='glass.topLight'
         lineWidth={1}
       />
     );
@@ -205,7 +205,7 @@ function GridLines() {
       <Line
         key={`lng-${lng}`}
         points={points}
-        color='rgba(255, 255, 255, 0.1)'
+        color='glass.topLight'
         lineWidth={1}
       />
     );

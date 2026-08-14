@@ -139,7 +139,7 @@ export const StatCard: React.FC<StatCardProps> = ({
             <Typography
               variant='body2'
               sx={{
-                color: gradient ? 'rgba(255,255,255,0.8)' : 'text.secondary',
+                color: gradient ? 'glass.topLight' : 'text.secondary',
                 mb: 1,
                 fontWeight: 500,
               }}
@@ -177,7 +177,7 @@ export const StatCard: React.FC<StatCardProps> = ({
                     <Typography
                       variant='body2'
                       sx={{
-                        color: gradient ? 'rgba(255,255,255,0.7)' : 'text.secondary',
+                        color: gradient ? 'glass.topLight' : 'text.secondary',
                       }}
                     >
                       {unit}
@@ -223,7 +223,7 @@ export const StatCard: React.FC<StatCardProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 bgcolor: gradient
-                  ? 'rgba(255,255,255,0.2)'
+                  ? 'glass.topLight'
                   : customGradient
                     ? undefined
                     : `${colors.main}15`,

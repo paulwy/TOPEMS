@@ -5,7 +5,7 @@ const useSkeletonSx = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   return {
-    bg: isDark ? 'rgba(255, 255, 255, 0.04)' : 'background.paper',
+    bg: isDark ? 'glass.bgLight' : 'background.paper',
     border: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.06)',
     shadow: isDark ? '0 4px 24px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.1)',
     subtleBorder: isDark ? 'glass.bgLight' : 'colors.action.hover',

@@ -4,6 +4,7 @@ import { X as XIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { edgeRenderer, faas, onDemandLoader } from '@/microfrontend';
 import PanelCard from './PanelCard';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const V47IntegrationPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const { t } = useTranslation();
@@ -75,7 +76,7 @@ const V47IntegrationPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           bgcolor: 'background.paper',
           borderRadius: 2,
           overflow: 'hidden',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          boxShadow: designTokens.darkShadows.xl,
         }}
         onClick={(e) => e.stopPropagation()}
       >

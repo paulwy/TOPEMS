@@ -532,7 +532,7 @@ const MapView: React.FC<MapViewProps> = ({
             left: 128,
             backgroundColor: 'common.white',
             borderRadius: 2,
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            boxShadow: designTokens.shadows.md,
             padding: '8px 16px',
           }}
         >
@@ -584,7 +584,7 @@ const MapView: React.FC<MapViewProps> = ({
             padding: 1,
             backgroundColor: 'common.white',
             borderRadius: 2,
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            boxShadow: designTokens.shadows.md,
             '&:hover': {
               backgroundColor: 'grey.50',
             },
@@ -603,7 +603,7 @@ const MapView: React.FC<MapViewProps> = ({
             padding: 1,
             backgroundColor: 'common.white',
             borderRadius: 2,
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            boxShadow: designTokens.shadows.md,
             '&:hover': {
               backgroundColor: 'grey.50',
             },
@@ -658,7 +658,7 @@ const MapView: React.FC<MapViewProps> = ({
             sx={{
               backgroundColor: 'common.white',
               borderRadius: 3,
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              boxShadow: designTokens.shadows['2xl'],
               width: '90%',
               maxWidth: '1024px',
               height: '80%',
@@ -696,7 +696,7 @@ const MapView: React.FC<MapViewProps> = ({
             sx={{
               backgroundColor: 'common.white',
               borderRadius: 3,
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              boxShadow: designTokens.shadows['2xl'],
               width: '95%',
               maxWidth: '1536px',
               height: '90%',

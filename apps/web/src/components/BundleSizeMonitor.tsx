@@ -9,6 +9,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { logger } from '@/utils/logger';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface BundleEntry {
   name: string;
@@ -182,7 +183,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
             width: '384px',
             backgroundColor: 'common.white',
             borderRadius: 'lg',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            boxShadow: designTokens.shadows['2xl'],
             border: '1px solid grey.200',
             overflow: 'hidden',
           }}
@@ -455,12 +456,12 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
           width: '56px',
           height: '56px',
           borderRadius: 'full',
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+          boxShadow: designTokens.shadows.lg,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           transition: 'all 0.2s',
-          backgroundColor: hasWarning ? 'error.700' : '#4f46e5',
+          backgroundColor: hasWarning ? 'error.700' : 'colors.primary.dark',
           color: 'common.white',
           border: 'none',
           cursor: 'pointer',

@@ -34,7 +34,7 @@ export const BIChartColors = {
     series: [
       'colors.primary.400', // Blue (lighter for dark bg)
       '#4ade80', // Emerald
-      '#fbbf24', // Amber
+      'colors.warning.400', // Amber
       '#f87171', // Red
       'colors.secondary.light', // Violet
       'colors.cyan.400', // Cyan
@@ -42,7 +42,7 @@ export const BIChartColors = {
       '#a3e635', // Lime
     ],
     grid: '#334155',
-    text: '#94A3B8',
+    text: designTokens.colors.grey['400'],
     background: 'common.white',
     border: 'colors.grey.600',
   },
@@ -67,7 +67,7 @@ export const BIChartColors = {
     grid: designTokens.colors.border.default,
     gridDark: '#334155',
     text: 'colors.grey.500',
-    textDark: '#94A3B8',
+    textDark: designTokens.colors.grey['400'],
     background: 'common.white',
     backgroundDark: 'common.white',
   },
@@ -90,7 +90,7 @@ export const BIChartColors = {
     emerald: ['colors.success.main', 'colors.teal.500'],
     violet: [designTokens.colors.secondary.main, 'colors.purple.500'],
     rose: ['#F43F5E', '#FB7185'],
-    amber: [designTokens.colors.warning.main, '#FBBF24'],
+    amber: [designTokens.colors.warning.main, 'colors.warning.400'],
   },
 } as const;
 

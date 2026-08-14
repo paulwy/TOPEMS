@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTheme } from '@mui/material';
 import { X, ChevronLeft, ChevronRight, FileText, Columns, Rows3 } from 'lucide-react';
 import type { ReportData } from '@/api/report';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface ReportViewerProps {
   report: ReportData;
@@ -71,7 +72,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
         style={{
           backgroundColor: 'common.white',
           borderRadius: 'lg',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+          boxShadow: designTokens.shadows.xl,
           width: '100%',
           maxWidth: '1024px',
           maxHeight: '95vh',

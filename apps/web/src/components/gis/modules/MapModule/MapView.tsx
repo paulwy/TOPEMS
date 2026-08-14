@@ -207,7 +207,7 @@ const DetailsPanel: React.FC<{
             cursor: 'pointer',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+            e.currentTarget.style.backgroundColor = 'glass.topLight';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = 'transparent';
@@ -1148,7 +1148,7 @@ const MapView: React.FC<MapViewProps> = ({
             style={{
               backgroundColor: 'common.white',
               borderRadius: '0.75rem',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              boxShadow: designTokens.shadows['2xl'],
               width: '90%',
               maxWidth: '1024px',
               height: '80%',
@@ -1188,7 +1188,7 @@ const MapView: React.FC<MapViewProps> = ({
             style={{
               backgroundColor: 'common.white',
               borderRadius: '0.75rem',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              boxShadow: designTokens.shadows['2xl'],
               width: '95%',
               maxWidth: '1152px',
               height: '90%',

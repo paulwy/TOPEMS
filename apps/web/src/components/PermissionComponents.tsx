@@ -2,6 +2,7 @@ import type { ReactNode, ComponentType } from 'react';
 import React from 'react';
 import { usePermission } from '../hooks/usePermission';
 import { useAuth } from '../hooks/useAuth';
+import { designTokens } from '@topems/tokens';
 
 export interface WithPermissionOptions {
   requiredPermission?: string;
@@ -236,7 +237,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
           padding: 6,
           backgroundColor: 'common.white',
           borderRadius: 'lg',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          boxShadow: designTokens.shadows.md,
         }}
       >
         <div style={{ fontSize: '64px', marginBottom: 4 }}>🔒</div>
@@ -307,7 +308,7 @@ export const ModulePermissionGuard: React.FC<ModulePermissionGuardProps> = ({
         <div
           style={{
             backgroundColor: 'warning.100',
-            border: '1px solid #fbbf24',
+            border: `1px solid ${designTokens.colors.warning['400']}`,
             borderRadius: 'md',
             padding: 4,
           }}

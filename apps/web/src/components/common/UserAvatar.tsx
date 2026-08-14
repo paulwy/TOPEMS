@@ -53,12 +53,12 @@ const getInitialsFromEmail = (email: string): string => {
 };
 
 const fallbackColors = [
-  { bg: '#E3F2FD', fg: '#1565C0' },
-  { bg: '#F3E5F5', fg: '#7B1FA2' },
-  { bg: '#E8F5E9', fg: designTokens.colors.success.dark },
-  { bg: '#FFF3E0', fg: '#E65100' },
+  { bg: 'colors.primary.50', fg: 'colors.primary.dark' },
+  { bg: '#F3E5F5', fg: designTokens.colors.purple['700'] },
+  { bg: 'colors.success.50', fg: designTokens.colors.success.dark },
+  { bg: designTokens.colors.warning['50'], fg: '#E65100' },
   { bg: '#FCE4EC', fg: '#C2185B' },
-  { bg: '#E0F7FA', fg: '#00838F' },
+  { bg: '#E0F7FA', fg: designTokens.colors.teal['700'] },
   { bg: '#FFF8E1', fg: '#F57F17' },
   { bg: '#F1F8E9', fg: '#558B2F' },
 ];
@@ -99,7 +99,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
     colorKey = email.trim().toLowerCase();
   }
 
-  const palette = colorKey ? getColorForKey(colorKey) : { bg: '#E0E0E0', fg: '#757575' };
+  const palette = colorKey ? getColorForKey(colorKey) : { bg: 'colors.grey.300', fg: designTokens.colors.grey['600'] };
   const tooltipText = alt || name || email || '';
   const fontSize = getFontSize(size);
 

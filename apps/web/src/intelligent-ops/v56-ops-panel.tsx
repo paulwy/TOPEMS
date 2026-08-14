@@ -233,7 +233,7 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           bgcolor: 'background.paper',
           borderRadius: 3,
           overflow: 'hidden',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
+          boxShadow: designTokens.darkShadows['3xl'],
           display: 'flex',
           flexDirection: 'column',
           border: '1px solid rgba(249, 115, 22, 0.2)',
@@ -640,7 +640,7 @@ const ScalingTab: React.FC<{
                     sx={{
                       height: 6,
                       borderRadius: 2,
-                      bgcolor: percent > 90 ? '#fecaca' : percent > 70 ? '#fed7aa' : '#d1fae5',
+                      bgcolor: percent > 90 ? designTokens.colors.error['200'] : percent > 70 ? '#fed7aa' : 'colors.success.100',
                       '& .MuiLinearProgress-bar': {
                         bgcolor: percent > 90 ? designTokens.colors.error.dark : percent > 70 ? `${designTokens.colors.orange['500']}` : designTokens.colors.success.dark,
                       },
@@ -712,8 +712,8 @@ const ScalingTab: React.FC<{
                           sx={{
                             fontSize: 10,
                             height: 20,
-                            bgcolor: action.direction === 'ScaleUp' ? '#d1fae5' : '#dbeafe',
-                            color: action.direction === 'ScaleUp' ? '#065f46' : '#1e40af',
+                            bgcolor: action.direction === 'ScaleUp' ? 'colors.success.100' : 'colors.primary.100',
+                            color: action.direction === 'ScaleUp' ? 'colors.success.dark' : designTokens.colors.primary['800'],
                           }}
                         />
                       </TableCell>
@@ -812,10 +812,10 @@ const RCATab: React.FC<{
       Closed: 'colors.grey.500',
     };
     const bgColors: Record<string, string> = {
-      Open: '#fef2f2',
+      Open: 'colors.error.50',
       Investigating: '#fffbeb',
       Resolved: 'colors.success.50',
-      Closed: '#f3f4f6',
+      Closed: 'colors.grey.100',
     };
     return (
       <Chip
@@ -1020,8 +1020,8 @@ const RCATab: React.FC<{
                       sx={{
                         fontSize: 10,
                         height: 20,
-                        bgcolor: cause.confidence > 0.7 ? '#d1fae5' : '#fef3c7',
-                        color: cause.confidence > 0.7 ? '#065f46' : '#92400e',
+                        bgcolor: cause.confidence > 0.7 ? 'colors.success.100' : 'colors.warning.100',
+                        color: cause.confidence > 0.7 ? 'colors.success.dark' : 'colors.orange.800',
                       }}
                     />
                   </Box>

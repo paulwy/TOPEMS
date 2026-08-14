@@ -4,6 +4,7 @@
 
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import { designTokens } from '@topems/tokens';
 
 const MAINTENANCE_TYPE_OPTIONS = [
   { value: 'routine', label: '日常维护' },
@@ -18,16 +19,16 @@ const renderBadge = (
   color: 'primary' | 'error' | 'success' | 'info' | 'warning' | 'default'
 ) => {
   const colorMap: Record<string, string> = {
-    primary: 'var(--color-primary-main, #1976d2)',
-    success: 'var(--color-success-main, #2e7d32)',
-    error: 'var(--color-error-main, #c62828)',
+    primary: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
+    success: `var(--color-success-main, ${designTokens.colors.success.dark})`,
+    error: `var(--color-error-main, ${designTokens.colors.error['800']})`,
     info: 'var(--color-info-main, #0288d1)',
     warning: 'var(--color-warning-main, #ed6c02)',
     default: 'var(--color-text-secondary, rgba(0,0,0,0.6))',
   };
   const bgColorMap: Record<string, string> = {
-    primary: 'var(--color-primary-lighter, #e3f2fd)',
-    success: 'var(--color-success-lighter, #e8f5e9)',
+    primary: `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`,
+    success: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
     error: 'var(--color-error-lighter, #ffebee)',
     info: 'var(--color-info-lighter, #e1f5fe)',
     warning: 'var(--color-warning-lighter, #fff3e0)',

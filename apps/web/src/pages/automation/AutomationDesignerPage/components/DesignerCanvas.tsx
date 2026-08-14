@@ -74,7 +74,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
         height: 600,
         overflow: 'auto',
         bgcolor: 'grey.50',
-        backgroundImage: 'radial-gradient(circle, #e0e0e0 1px, transparent 1px)',
+        backgroundImage: `radial-gradient(circle, ${designTokens.colors.grey['300']} 1px, transparent 1px)`,
         backgroundSize: `${20 * canvasZoom}px ${20 * canvasZoom}px`,
       }}
     >
@@ -115,7 +115,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
               >
                 <polygon
                   points='0 0, 10 3.5, 0 7'
-                  fill='#9e9e9e'
+                  fill='colors.grey.500'
                 />
               </marker>
             </defs>
@@ -125,7 +125,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
                 <path
                   key={edge.id}
                   d={path}
-                  stroke='#9e9e9e'
+                  stroke='colors.grey.500'
                   strokeWidth={2}
                   fill='none'
                   markerEnd='url(#dag-arrowhead)'
@@ -310,7 +310,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
                   y1={sy}
                   x2={tx}
                   y2={ty}
-                  stroke='#bdbdbd'
+                  stroke={designTokens.colors.grey['400']}
                   strokeWidth={6}
                 />
               );
@@ -325,7 +325,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
                   width={NODE_WIDTH}
                   height={NODE_HEIGHT}
                   rx={8}
-                  fill={isSelected ? designTokens.colors.primary.dark : '#9e9e9e'}
+                  fill={isSelected ? designTokens.colors.primary.dark : 'colors.grey.500'}
                 />
               );
             })}

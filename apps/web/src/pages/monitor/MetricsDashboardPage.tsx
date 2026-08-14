@@ -117,7 +117,7 @@ const MiniLineChart: React.FC<{
             y1={targetY}
             x2={width - padding.right}
             y2={targetY}
-            stroke='#ff9800'
+            stroke={designTokens.colors.warning.main}
             strokeWidth='0.6'
             strokeDasharray='2,2'
           />

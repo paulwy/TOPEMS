@@ -19,6 +19,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { designTokens } from '@topems/tokens';
 
 // ==================== 类型定义 ====================
 
@@ -315,7 +316,7 @@ export class AngularAdapter implements FrameworkAdapter {
           `<li><strong>{{ ${k} }}</strong>: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}</li>`
       )
       .join('');
-    return `<div data-framework="angular" style="padding:12px;border:1px solid #dd0031;border-radius:6px;">
+    return `<div data-framework="angular" style="padding:12px;border:1px solid ${designTokens.colors.error['600']};border-radius:6px;">
       <strong>[Angular 模拟组件]</strong>
       <ul style="margin:8px 0 0;padding-left:20px;">${entries || '<li>(无属性)</li>'}</ul>
     </div>`;
@@ -393,10 +394,10 @@ export class SvelteAdapter implements FrameworkAdapter {
     const entries = Object.entries(props)
       .map(
         ([k, v]) =>
-          `<span style="display:inline-block;margin:2px 6px;padding:2px 8px;background:#ff3e00;color:white;border-radius:3px;">${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>`
+          `<span style="display:inline-block;margin:2px 6px;padding:2px 8px;background:${designTokens.colors.error['600']};color:white;border-radius:3px;">${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>`
       )
       .join('');
-    return `<div data-framework="svelte" style="padding:12px;border:1px solid #ff3e00;border-radius:6px;">
+    return `<div data-framework="svelte" style="padding:12px;border:1px solid ${designTokens.colors.error['600']};border-radius:6px;">
       <strong>[Svelte 模拟组件]</strong><br/>${entries || '<span style="color:#999;">(无属性)</span>'}
     </div>`;
   }

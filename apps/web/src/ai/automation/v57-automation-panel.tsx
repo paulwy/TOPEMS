@@ -109,7 +109,7 @@ export const V57AutomationPanel: React.FC<{ onClose: () => void }> = ({ onClose 
           bgcolor: 'background.paper',
           borderRadius: 2,
           overflow: 'hidden',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          boxShadow: designTokens.darkShadows.xl,
           display: 'flex',
           flexDirection: 'column',
           border: '1px solid rgba(16, 185, 129, 0.2)',
@@ -1379,7 +1379,7 @@ const TrendChart: React.FC<{ data: TrendPoint[]; criteria: GateCriteria | null }
                 y1={y}
                 x2={chartWidth - padding}
                 y2={y}
-                stroke='#e5e7eb'
+                stroke={designTokens.colors.grey['200']}
                 strokeWidth={1}
               />
               <text
@@ -1587,7 +1587,7 @@ const GenerateTestDialog: React.FC<{
           borderRadius: 2,
           p: 3,
           width: 400,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          boxShadow: designTokens.darkShadows.xl,
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -1664,7 +1664,7 @@ const ConfigPipelineDialog: React.FC<{
           borderRadius: 2,
           p: 3,
           width: 450,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          boxShadow: designTokens.darkShadows.xl,
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -1768,7 +1768,7 @@ const OverrideDialog: React.FC<{
           borderRadius: 2,
           p: 3,
           width: 450,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          boxShadow: designTokens.darkShadows.xl,
         }}
         onClick={(e) => e.stopPropagation()}
       >

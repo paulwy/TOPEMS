@@ -45,6 +45,7 @@ import {
 } from './smart-debugger';
 import { performanceAnalyzer, type PerformanceReport } from './performance-analyzer';
 import { codeCompletion, type CompletionItem, type Snippet } from './code-completion';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export const V51DevExPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [activeTab, setActiveTab] = React.useState('modules');
@@ -73,7 +74,7 @@ export const V51DevExPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =>
           bgcolor: 'background.paper',
           borderRadius: 2,
           overflow: 'hidden',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          boxShadow: designTokens.darkShadows.xl,
           display: 'flex',
           flexDirection: 'column',
         }}

@@ -4,6 +4,7 @@ import { X, FileText, Loader2, CheckCircle } from 'lucide-react';
 import type { ReportType, ReportTypeInfo, CreateReportRequest } from '@/api/report';
 import { reportApi } from '@/api/report';
 import { logger } from '@/utils/logger';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface ReportBuilderProps {
   onClose: () => void;
@@ -155,7 +156,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
         style={{
           backgroundColor: 'common.white',
           borderRadius: 12,
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          boxShadow: designTokens.shadows['2xl'],
           width: '100%',
           maxWidth: 1024,
           maxHeight: '90vh',

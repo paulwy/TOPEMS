@@ -25,7 +25,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
         width: '320px',
         backgroundColor: 'common.white',
         borderRadius: 3,
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+        boxShadow: designTokens.shadows.xl,
         overflow: 'hidden',
         border: '1px solid grey.200',
       }}

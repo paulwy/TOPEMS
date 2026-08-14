@@ -156,7 +156,7 @@ const SecurityScoreGauge: React.FC<{ score: number }> = ({ score }) => {
           cy='100'
           r='80'
           fill='none'
-          stroke='#e5e7eb'
+          stroke={designTokens.colors.grey['200']}
           strokeWidth='12'
         />
         <circle

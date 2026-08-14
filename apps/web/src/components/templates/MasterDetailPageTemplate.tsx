@@ -522,7 +522,7 @@ export function MasterDetailPageTemplate<T>({
                         disabled={action.disabled?.(item)}
                         sx={{
                           color: isSelected
-                            ? 'rgba(255,255,255,0.8)'
+                            ? 'glass.topLight'
                             : `${action.color || 'primary'}.main`,
                           '&:hover': {
                             color: isSelected ? designTokens.colors.background.paper : `${action.color || 'primary'}.dark`,
@@ -576,7 +576,7 @@ export function MasterDetailPageTemplate<T>({
             {secondaryColumn && (
               <Typography
                 variant='caption'
-                sx={{ color: isSelected ? 'rgba(255,255,255,0.7)' : 'text.secondary' }}
+                sx={{ color: isSelected ? 'glass.topLight' : 'text.secondary' }}
               >
                 {secondaryColumn.render
                   ? // V64 防御：render(value, item) 空值兜底 + try/catch 失败回退原始值

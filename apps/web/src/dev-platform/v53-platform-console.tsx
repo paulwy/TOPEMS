@@ -118,17 +118,17 @@ const ENV_LABELS: Record<EnvironmentName, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  drafting: '#9e9e9e',
+  drafting: 'colors.grey.500',
   development: '#2196f3',
-  building: '#ff9800',
-  testing: '#9c27b0',
+  building: designTokens.colors.warning.main,
+  testing: designTokens.colors.purple['500'],
   staging: '#00bcd4',
-  production: '#4caf50',
+  production: designTokens.colors.success.main,
   archived: '#616161',
-  pending: '#9e9e9e',
+  pending: 'colors.grey.500',
   running: '#2196f3',
-  success: '#4caf50',
-  failed: '#f44336',
+  success: designTokens.colors.success.main,
+  failed: 'colors.error.main',
   cancelled: '#616161',
 };
 
@@ -203,7 +203,7 @@ const V53PlatformConsole: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           bgcolor: 'background.paper',
           borderRadius: 3,
           overflow: 'hidden',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
+          boxShadow: designTokens.darkShadows['3xl'],
           display: 'flex',
           flexDirection: 'column',
           border: '1px solid rgba(99, 102, 241, 0.2)',
@@ -796,7 +796,7 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
             <Paper sx={{ p: 6, textAlign: 'center', bgcolor: 'grey.50' }}>
               <Rocket
                 size={48}
-                color='#9e9e9e'
+                color='colors.grey.500'
               />
               <Typography
                 variant='h6'
@@ -875,7 +875,7 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
                         label={project.status}
                         size='small'
                         sx={{
-                          bgcolor: STATUS_COLORS[project.status] || '#9e9e9e',
+                          bgcolor: STATUS_COLORS[project.status] || 'colors.grey.500',
                           color: 'common.white',
                           height: 22,
                         }}
@@ -1879,7 +1879,7 @@ const PipelinesTab: React.FC<{
                                       width: 10,
                                       height: 10,
                                       borderRadius: '50%',
-                                      bgcolor: STATUS_COLORS[stage.status] || '#9e9e9e',
+                                      bgcolor: STATUS_COLORS[stage.status] || 'colors.grey.500',
                                     }}
                                   />
                                 </Tooltip>
@@ -2068,7 +2068,7 @@ const StageTimeline: React.FC<{ stage: PipelineStage; index: number }> = ({ stag
           width: 20,
           height: 20,
           borderRadius: '50%',
-          bgcolor: STATUS_COLORS[stage.status] || '#9e9e9e',
+          bgcolor: STATUS_COLORS[stage.status] || 'colors.grey.500',
           color: 'common.white',
           display: 'flex',
           alignItems: 'center',
@@ -2172,7 +2172,7 @@ const ActivityTab: React.FC<{
       time: new Date(r.startedAt).toLocaleString(),
       type: 'pipeline',
       message: `流水线 ${r.pipelineId} ${r.status}`,
-      color: STATUS_COLORS[r.status] || '#9e9e9e',
+      color: STATUS_COLORS[r.status] || 'colors.grey.500',
     });
   });
 

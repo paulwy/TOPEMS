@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { ReportData, ExportFormat } from '@/api/report';
 import { logger } from '@/utils/logger';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface ExportModalProps {
   report: ReportData;
@@ -191,7 +192,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
         sx={{
           backgroundColor: 'common.white',
           borderRadius: '0.75rem',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          boxShadow: designTokens.shadows['2xl'],
           width: '100%',
           maxWidth: 768,
         }}

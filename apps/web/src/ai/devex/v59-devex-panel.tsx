@@ -86,7 +86,7 @@ export const V59DevExPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =>
           bgcolor: 'background.paper',
           borderRadius: 2,
           overflow: 'hidden',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          boxShadow: designTokens.darkShadows.xl,
           display: 'flex',
           flexDirection: 'column',
         }}

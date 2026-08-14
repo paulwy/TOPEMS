@@ -651,9 +651,9 @@ export function GisMapTemplate({
   const getMarkerIcon = (type: string = 'custom') => {
     const colors: Record<string, string> = {
       device: designTokens.colors.primary.dark,
-      storage: '#4caf50',
-      warning: '#f44336',
-      custom: '#ff9800',
+      storage: designTokens.colors.success.main,
+      warning: 'colors.error.main',
+      custom: designTokens.colors.warning.main,
     };
     const color = colors[type] || colors.custom;
     return L.divIcon({
@@ -710,8 +710,8 @@ export function GisMapTemplate({
                 <LeafletCircle
                   center={fence.position}
                   radius={fence.radius}
-                  color={fence.color || '#f44336'}
-                  fillColor={fence.color || '#f44336'}
+                  color={fence.color || 'colors.error.main'}
+                  fillColor={fence.color || 'colors.error.main'}
                   fillOpacity={0.2}
                   eventHandlers={{ click: () => onFenceClick?.(fence) }}
                 />
@@ -719,8 +719,8 @@ export function GisMapTemplate({
               {(fence.type === 'polygon' || fence.type === 'rectangle') && fence.coordinates && (
                 <Polygon
                   positions={fence.coordinates as L.LatLngExpression[]}
-                  color={fence.color || '#f44336'}
-                  fillColor={fence.color || '#f44336'}
+                  color={fence.color || 'colors.error.main'}
+                  fillColor={fence.color || 'colors.error.main'}
                   fillOpacity={0.2}
                   eventHandlers={{ click: () => onFenceClick?.(fence) }}
                 />
@@ -742,7 +742,7 @@ export function GisMapTemplate({
             position={trackPoints[currentTrackIndex].position}
             icon={L.divIcon({
               className: 'track-marker',
-              html: `<div style="width: 30px; height: 30px; background: #1976d2; border-radius: 50%; border: 4px solid white; box-shadow: 0 0 10px rgba(25,118,210,0.5); animation: pulse 1s infinite;"></div>`,
+              html: `<div style="width: 30px; height: 30px; background: ${designTokens.colors.primary.dark}; border-radius: 50%; border: 4px solid white; box-shadow: 0 0 10px rgba(25,118,210,0.5); animation: pulse 1s infinite;"></div>`,
               iconSize: [30, 30],
               iconAnchor: [15, 15],
             })}

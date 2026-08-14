@@ -19,6 +19,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { ServiceStatusCard } from './ServiceStatusCard';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface ServiceStatusMonitorProps {
   serviceStatuses?: Record<string, boolean>;
@@ -335,7 +336,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
         backgroundColor: 'common.white',
         borderRadius: 3,
         padding: 3,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        boxShadow: designTokens.shadows.sm,
       }}
     >
       <Box

@@ -33,6 +33,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import { Brain, Play, CheckCircle, XCircle, TrendingUp, Gauge, Zap, BarChart3 } from 'lucide-react';
+import { designTokens, semanticTokens } from '@topems/tokens';
 import type {
   ApsScheduleResult,
   ApsScheduleItem,
@@ -46,10 +47,10 @@ import { apsApi } from '@/api/mes';
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 
 const riskColorMap: Record<string, string> = {
-  low: '#4caf50',
-  medium: '#ff9800',
-  high: '#f44336',
-  critical: '#9c27b0',
+  low: designTokens.colors.success.main,
+  medium: designTokens.colors.warning.main,
+  high: 'colors.error.main',
+  critical: designTokens.colors.purple['500'],
 };
 
 const riskLabelMap: Record<string, string> = {

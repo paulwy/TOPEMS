@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface LazyImageProps {
   src: string;
@@ -33,7 +34,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
         height='40'
         viewBox='0 0 24 24'
         fill='none'
-        stroke='#cbd5e1'
+        stroke={designTokens.colors.grey['300']}
         strokeWidth='1.5'
       >
         <rect
@@ -49,7 +50,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
           cx='8.5'
           cy='8.5'
           r='1.5'
-          fill='#cbd5e1'
+          fill={designTokens.colors.grey['300']}
         />
         <polyline
           points='21 15 16 10 5 21'

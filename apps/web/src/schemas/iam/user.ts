@@ -10,6 +10,7 @@ import { authApi } from '@/api/iam';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { designTokens } from '@topems/tokens';
 
 /**
  * 加载角色列表（动态选项）
@@ -69,7 +70,7 @@ export const userSchema: EntitySchema = {
                 width: 32,
                 height: 32,
                 borderRadius: '50%',
-                backgroundColor: 'var(--color-primary-main, #1976d2)',
+                backgroundColor: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
                 color: 'common.white',
                 display: 'flex',
                 alignItems: 'center',

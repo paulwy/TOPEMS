@@ -5,6 +5,7 @@ import type { Friend, ContactGroup } from '../../api/im';
 import { imApi } from '../../api/im';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface ContactListProps {
   onSelectContact?: (friend: Friend) => void;
@@ -448,7 +449,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                         marginTop: 4,
                         backgroundColor: 'common.white',
                         borderRadius: 8,
-                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                        boxShadow: designTokens.shadows.lg,
                         border: '1px solid grey.200',
                         padding: 4,
                         zIndex: 10,

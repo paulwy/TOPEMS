@@ -46,6 +46,7 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { PageContainer } from '@/components/common';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const SEVERITY_CONFIG = {
   critical: { color: 'error' as const, icon: <AlertCircle size={16} />, label: '严重' },
@@ -202,21 +203,21 @@ const AnomalyDetectionPage: React.FC = () => {
         return (
           <TrendingUp
             size={14}
-            color='#f44336'
+            color='colors.error.main'
           />
         );
       case 'falling':
         return (
           <TrendingDown
             size={14}
-            color='#4caf50'
+            color={designTokens.colors.success.main}
           />
         );
       default:
         return (
           <Minus
             size={14}
-            color='#9e9e9e'
+            color='colors.grey.500'
           />
         );
     }
@@ -287,7 +288,7 @@ const AnomalyDetectionPage: React.FC = () => {
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <AlertCircle
-                      color='#f44336'
+                      color='colors.error.main'
                       size={20}
                     />
                     <Typography
@@ -309,7 +310,7 @@ const AnomalyDetectionPage: React.FC = () => {
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <AlertTriangle
-                      color='#ff9800'
+                      color={designTokens.colors.warning.main}
                       size={20}
                     />
                     <Typography
@@ -353,7 +354,7 @@ const AnomalyDetectionPage: React.FC = () => {
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <Activity
-                      color='#9c27b0'
+                      color={designTokens.colors.purple['500']}
                       size={20}
                     />
                     <Typography

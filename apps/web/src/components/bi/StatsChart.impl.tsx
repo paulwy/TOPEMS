@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import type { ChartData } from '../charts/AreaChart';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export interface StatsChartProps {
   type: 'bar' | 'pie' | 'line';
@@ -23,7 +24,7 @@ const EmptyFallback: React.FC<{ title?: string }> = ({ title }) => (
     style={{
       backgroundColor: 'common.white',
       borderRadius: 'lg',
-      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+      boxShadow: designTokens.shadows.sm,
       padding: 6,
     }}
   >

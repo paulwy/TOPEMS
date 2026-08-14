@@ -83,7 +83,7 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
           backgroundColor: 'common.white',
           padding: '12px 16px',
           borderRadius: 'md',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
+          boxShadow: designTokens.shadows.md,
           border: '1px solid border.default',
           minWidth: '120px',
         }}
@@ -276,7 +276,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
         style={{
           backgroundColor: 'common.white',
           borderRadius: 'lg',
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+          boxShadow: designTokens.shadows.sm,
           padding: 6,
           minHeight: '200px',
           display: 'flex',
@@ -667,7 +667,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
       style={{
         backgroundColor: 'common.white',
         borderRadius: 'lg',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+        boxShadow: designTokens.shadows.sm,
         padding: 6,
       }}
     >

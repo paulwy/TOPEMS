@@ -18,7 +18,7 @@ export const HeroSection: React.FC = () => {
     <Box sx={{ mb: 8 }}>
       <Box
         sx={{
-          background: `linear-gradient(135deg, ${designTokens.colors.grey['800']} 0%, #0f172a 100%)`,
+          background: `linear-gradient(135deg, ${designTokens.colors.grey['800']} 0%, ${designTokens.colors.common.black} 100%)`,
           borderRadius: 3,
           p: { xs: 4, md: 8 },
           position: 'relative',

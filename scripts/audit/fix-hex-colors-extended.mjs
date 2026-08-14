@@ -117,6 +117,27 @@ const HEX_MAP = {
   // white / black
   '#ffffff': 'colors.common.white',
   '#000000': 'colors.common.black',
+  // Material Design legacy colors
+  '#1976d2': 'colors.primary.dark',
+  '#1565c0': 'colors.primary.dark',
+  '#4f46e5': 'colors.primary.dark',
+  '#065f46': 'colors.success.dark',
+  '#2e7d32': 'colors.success.dark',
+  '#f44336': 'colors.error.main',
+  '#f57c00': 'colors.orange.700',
+  '#92400e': 'colors.orange.800',
+  '#fbbf24': 'colors.warning.400',
+  '#e0e0e0': 'colors.grey.300',
+  '#9e9e9e': 'colors.grey.500',
+  '#0f172a': 'colors.grey.900',
+  '#e3f2fd': 'colors.primary.50',
+  '#e8f5e9': 'colors.success.50',
+  '#d1fae5': 'colors.success.100',
+  '#dcfce7': 'colors.success.100',
+  '#fef3c7': 'colors.warning.100',
+  '#374151': 'colors.grey.700',
+  '#db2777': 'colors.pink.600',
+  '#c62828': 'colors.error.800',
 };
 
 let totalReplacements = 0;

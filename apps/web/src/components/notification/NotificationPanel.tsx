@@ -9,6 +9,7 @@ import { logger } from '@/utils/logger';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { useAuthStore } from '@/store/authStore';
 import { useNotificationWebSocket } from '@/hooks/useNotificationWebSocket';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface NotificationPanelProps {
   onClose: () => void;
@@ -137,7 +138,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
         width: 384,
         backgroundColor: 'common.white',
         borderRadius: 8,
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        boxShadow: designTokens.shadows['2xl'],
         border: '1px solid grey.200',
         zIndex: 50,
       }}

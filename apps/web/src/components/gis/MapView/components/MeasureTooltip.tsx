@@ -1,5 +1,6 @@
 import React from 'react';
 import { Paper } from '@mui/material';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const MeasureTooltip: React.FC<{
   position: [number, number];
@@ -14,7 +15,7 @@ const MeasureTooltip: React.FC<{
         fontSize: '0.75rem',
         padding: '4px 8px',
         borderRadius: 1,
-        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+        boxShadow: designTokens.shadows.lg,
         pointerEvents: 'none',
         zIndex: 50,
         left: position[1] + 10,

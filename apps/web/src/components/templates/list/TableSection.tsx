@@ -176,7 +176,7 @@ export function TableSection<T>({
   const { t } = useTranslation();
   const muiTheme = useTheme();
   const theme = (themeProp ?? muiTheme) as Theme;
-  const stickyBg = theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50';
+  const stickyBg = theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.50';
 
   const hasRowActions = !!(resolvedRowActions && resolvedRowActions.length > 0);
   const colSpanExtra =
@@ -398,7 +398,7 @@ export function TableSection<T>({
             sx={{
               '&:nth-of-type(even)': striped ? { bgcolor: 'action.hover' } : {},
               '&:hover': {
-                bgcolor: theme.palette.mode === 'dark' ? 'rgba(59,130,246,0.08)' : 'primary.50',
+                bgcolor: theme.palette.mode === 'dark' ? 'glass.line' : 'primary.50',
                 transition: (theme) =>
                   theme.transitions.create(['background-color'], { duration: 150 }),
               },

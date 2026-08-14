@@ -1,3 +1,4 @@
+import { designTokens, semanticTokens } from '@topems/tokens';
 /**
  * V47.0 微前端平台终局 — 低代码搭建引擎
  *
@@ -257,7 +258,7 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
       background: 'common.white',
       borderRadius: 'md',
       padding: 4,
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      boxShadow: designTokens.shadows.sm,
     },
     prop_schema: [
       { key: 'title', label: '标题', type: 'string', default: '卡片标题', group: '内容' },

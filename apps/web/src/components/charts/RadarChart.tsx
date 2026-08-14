@@ -12,6 +12,7 @@ import {
 } from './_vendors/recharts-polar';
 import { useChartTheme, getChartColor } from './chartTheme';
 import type { ChartData } from './AreaChart';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface RadarChartProps {
   data: ChartData[];
@@ -63,7 +64,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({
               backgroundColor: chartTheme.tooltipBg,
               border: `1px solid ${chartTheme.borderColor}`,
               borderRadius: 8,
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              boxShadow: designTokens.shadows.md,
             }}
           />
           {showLegend && (

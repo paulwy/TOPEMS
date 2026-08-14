@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useTheme } from '@mui/material';
 import { Search, Filter, RefreshCw, Download, ChevronDown, ChevronUp } from 'lucide-react';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export interface PivotData {
   [key: string]: string | number | boolean;
@@ -164,7 +165,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
         style={{
           backgroundColor: 'common.white',
           borderRadius: 'lg',
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+          boxShadow: designTokens.shadows.sm,
           padding: 6,
           minHeight: '200px',
           display: 'flex',
@@ -225,7 +226,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
       style={{
         backgroundColor: 'common.white',
         borderRadius: 'lg',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+        boxShadow: designTokens.shadows.sm,
         padding: 6,
       }}
     >

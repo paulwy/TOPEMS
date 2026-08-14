@@ -86,7 +86,7 @@ const gradientMap: Record<string, string> = {
   secondary: `linear-gradient(135deg, ${designTokens.colors.secondary.main}, ${designTokens.colors.primary.dark})`,
   success: `linear-gradient(135deg, ${designTokens.colors.success.main}, ${designTokens.colors.success.dark})`,
   warning: `linear-gradient(135deg, ${designTokens.colors.warning.main}, ${designTokens.colors.warning.dark})`,
-  info: `linear-gradient(135deg, ${designTokens.colors.cyan['500']}, #0891b2)`,
+  info: `linear-gradient(135deg, ${designTokens.colors.cyan['500']}, ${designTokens.colors.cyan['600']})`,
 };
 
 // ── Components ──────────────────────────────────────────────

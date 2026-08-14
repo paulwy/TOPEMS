@@ -2694,7 +2694,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
               position: 'sticky',
               left: 0,
               zIndex: 2,
-              bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50',
+              bgcolor: theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.50',
             }}
           >
             <Checkbox
@@ -2714,7 +2714,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
               position: 'sticky',
               left: 0,
               zIndex: 2,
-              bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50',
+              bgcolor: theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.50',
             }}
           >
             <Checkbox
@@ -2731,7 +2731,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
               position: selectable ? 'sticky' : 'relative',
               left: selectable ? 48 : 0,
               zIndex: 2,
-              bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50',
+              bgcolor: theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.50',
             }}
           >
             #
@@ -2767,7 +2767,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
                 left: column.fixed === 'left' ? leftPos : undefined,
                 right: column.fixed === 'right' ? rightPos : undefined,
                 zIndex: isFixed ? 2 : 1,
-                bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50',
+                bgcolor: theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.50',
               }}
             >
               <Box
@@ -2985,7 +2985,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
             sx={{
               '&:nth-of-type(even)': striped ? { bgcolor: 'action.hover' } : {},
               '&:hover': {
-                bgcolor: theme.palette.mode === 'dark' ? 'rgba(59,130,246,0.08)' : 'primary.50',
+                bgcolor: theme.palette.mode === 'dark' ? 'glass.line' : 'primary.50',
                 transition: 'background-color 150ms ease',
               },
               '&.Mui-selected': {
@@ -3267,7 +3267,7 @@ export function ListPageTemplate<T extends { id?: string | number }>({
     return (
       <TableRow
         sx={{
-          bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50',
+          bgcolor: theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.50',
           fontWeight: 600,
         }}
       >

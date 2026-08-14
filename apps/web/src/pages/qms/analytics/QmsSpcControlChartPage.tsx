@@ -152,7 +152,7 @@ export default function QmsSpcControlChartPage() {
                     cy={cy}
                     r={4}
                     fill={payload?.isOOC ? designTokens.colors.error.main : designTokens.colors.secondary.dark}
-                    stroke={payload?.isOOC ? '#b91c1c' : '#4338ca'}
+                    stroke={payload?.isOOC ? designTokens.colors.error['800'] : '#4338ca'}
                     strokeWidth={1}
                   />
                 );

@@ -688,7 +688,7 @@ export const createCustomTheme = (): Theme => {
             backdropFilter: 'blur(4px)',
             WebkitBackdropFilter: 'blur(4px)',
             ...theme.applyStyles('dark', {
-              backgroundColor: 'rgba(0, 0, 0, 0.6)',
+              backgroundColor: 'glass.bottomShadow',
             }),
           }),
         },

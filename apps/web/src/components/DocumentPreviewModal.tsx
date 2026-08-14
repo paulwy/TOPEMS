@@ -3,6 +3,7 @@ import { useTheme } from '@mui/material';
 import { X, FileText, AlertCircle, Loader2 } from 'lucide-react';
 import { docApi } from '../api/doc';
 import { logger } from '@/utils/logger';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface DocumentPreviewModalProps {
   isOpen: boolean;
@@ -180,7 +181,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
         style={{
           backgroundColor: 'common.white',
           borderRadius: 'lg',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          boxShadow: designTokens.shadows['2xl'],
           width: '100%',
           maxWidth: '1024px',
           maxHeight: '90vh',

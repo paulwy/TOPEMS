@@ -198,7 +198,7 @@ const V56ReviewPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           bgcolor: 'background.paper',
           borderRadius: 3,
           overflow: 'hidden',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
+          boxShadow: designTokens.darkShadows['3xl'],
           display: 'flex',
           flexDirection: 'column',
           border: '1px solid rgba(139, 92, 246, 0.2)',
@@ -725,7 +725,7 @@ const CodeReviewTab: React.FC<{ result: ReviewResult }> = ({ result }) => {
             size='small'
             sx={{
               bgcolor: result.passed ? 'colors.success.100' : 'colors.error.50',
-              color: result.passed ? '#065f46' : 'colors.error.800',
+              color: result.passed ? 'colors.success.dark' : 'colors.error.800',
               fontWeight: 600,
             }}
           />
@@ -871,7 +871,7 @@ const SecurityTab: React.FC<{ result: ScanResult }> = ({ result }) => {
             size='small'
             sx={{
               bgcolor: result.passed ? 'colors.success.100' : 'colors.error.50',
-              color: result.passed ? '#065f46' : 'colors.error.800',
+              color: result.passed ? 'colors.success.dark' : 'colors.error.800',
               fontWeight: 600,
             }}
           />
@@ -976,7 +976,7 @@ const PerformanceTab: React.FC<{ result: AuditResult }> = ({ result }) => {
             size='small'
             sx={{
               bgcolor: result.optimized ? 'colors.success.100' : 'colors.error.50',
-              color: result.optimized ? '#065f46' : 'colors.error.800',
+              color: result.optimized ? 'colors.success.dark' : 'colors.error.800',
               fontWeight: 600,
             }}
           />
@@ -1078,8 +1078,8 @@ const PerformanceTab: React.FC<{ result: AuditResult }> = ({ result }) => {
                             finding.impact === 'high'
                               ? 'colors.error.800'
                               : finding.impact === 'medium'
-                                ? '#92400e'
-                                : '#1e40af',
+                                ? 'colors.orange.800'
+                                : designTokens.colors.primary['800'],
                           fontWeight: 600,
                         }}
                       />

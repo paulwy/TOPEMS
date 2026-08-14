@@ -132,7 +132,7 @@ const V54NativePanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           bgcolor: 'background.paper',
           borderRadius: 3,
           overflow: 'hidden',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
+          boxShadow: designTokens.darkShadows['3xl'],
           display: 'flex',
           flexDirection: 'column',
           border: '1px solid rgba(59, 130, 246, 0.2)',
@@ -283,7 +283,7 @@ const TabBar: React.FC<{ activeTab: TabId; onChange: (tab: TabId) => void }> = (
           color: activeTab === tab.id ? 'white' : 'text.secondary',
           fontWeight: activeTab === tab.id ? 600 : 400,
           '&:hover': {
-            bgcolor: activeTab === tab.id ? '#4f46e5' : 'action.hover',
+            bgcolor: activeTab === tab.id ? 'colors.primary.dark' : 'action.hover',
           },
         }}
       >
@@ -408,7 +408,7 @@ const DashboardTab: React.FC<{
                             size='small'
                             sx={{
                               bgcolor: route.avg_confidence > 0.7 ? 'colors.success.100' : 'colors.warning.100',
-                              color: route.avg_confidence > 0.7 ? '#065f46' : '#92400e',
+                              color: route.avg_confidence > 0.7 ? 'colors.success.dark' : 'colors.orange.800',
                               fontWeight: 600,
                             }}
                           />
@@ -451,7 +451,7 @@ const DashboardTab: React.FC<{
                         fontSize: 10,
                         height: 18,
                         bgcolor: cap.enabled ? 'colors.success.100' : 'colors.error.50',
-                        color: cap.enabled ? '#065f46' : 'colors.error.800',
+                        color: cap.enabled ? 'colors.success.dark' : 'colors.error.800',
                       }}
                     />
                   </Box>
@@ -678,7 +678,7 @@ const CapabilitiesTab: React.FC = () => {
                     fontSize: 10,
                     height: 18,
                     bgcolor: cap.status === 'active' ? 'colors.success.100' : 'colors.warning.100',
-                    color: cap.status === 'active' ? '#065f46' : '#92400e',
+                    color: cap.status === 'active' ? 'colors.success.dark' : 'colors.orange.800',
                   }}
                 />
                 <Typography
@@ -815,7 +815,7 @@ const RouterTab: React.FC = () => {
                     mb: 2,
                     borderRadius: 2,
                     border: `2px solid ${designTokens.colors.success.dark}`,
-                    background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+                    background: `linear-gradient(135deg, ${designTokens.colors.success['50']} 0%, ${designTokens.colors.success['100']} 100%)`,
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -978,7 +978,7 @@ const RouterTab: React.FC = () => {
                             fontSize: 10,
                             height: 18,
                             bgcolor: perf.avg_latency_ms < 200 ? 'colors.success.100' : 'colors.warning.100',
-                            color: perf.avg_latency_ms < 200 ? '#065f46' : '#92400e',
+                            color: perf.avg_latency_ms < 200 ? 'colors.success.dark' : 'colors.orange.800',
                           }}
                         />
                       </TableCell>
@@ -1338,7 +1338,7 @@ const AdaptiveUITab: React.FC<{
                   sx={{
                     p: 2,
                     borderRadius: 2,
-                    background: 'linear-gradient(135deg, #eff6ff 0%, #ede9fe 100%)',
+                    background: `linear-gradient(135deg, ${designTokens.colors.primary['50']} 0%, ${designTokens.colors.secondary['100']} 100%)`,
                     mb: 2,
                   }}
                 >
@@ -1419,7 +1419,7 @@ const AdaptiveUITab: React.FC<{
                           fontSize: 10,
                           height: 18,
                           bgcolor: mod.priority === 'high' ? 'colors.success.100' : 'colors.warning.100',
-                          color: mod.priority === 'high' ? '#065f46' : '#92400e',
+                          color: mod.priority === 'high' ? 'colors.success.dark' : 'colors.orange.800',
                         }}
                       />
                     </ListItem>
@@ -1744,7 +1744,7 @@ const SettingsTab: React.FC = () => {
                 size='small'
                 sx={{
                   bgcolor: status.initialized ? 'colors.success.100' : 'colors.error.50',
-                  color: status.initialized ? '#065f46' : 'colors.error.800',
+                  color: status.initialized ? 'colors.success.dark' : 'colors.error.800',
                   fontWeight: 600,
                 }}
               />

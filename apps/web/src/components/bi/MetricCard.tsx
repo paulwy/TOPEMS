@@ -153,7 +153,7 @@ const colorMap: Record<string, { bg: string; gradient: string }> = {
   red: { bg: designTokens.colors.error.main, gradient: `linear-gradient(135deg, ${designTokens.colors.error.main}, ${designTokens.colors.error.dark})` },
   cyan: {
     bg: `${designTokens.colors.cyan['500']}`,
-    gradient: `linear-gradient(135deg, ${designTokens.colors.cyan['500']}, #0891B2)`,
+    gradient: `linear-gradient(135deg, ${designTokens.colors.cyan['500']}, ${designTokens.colors.cyan['600']})`,
   },
 };
 
@@ -458,10 +458,10 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 justifyContent: 'center',
                 backgroundColor:
                   computedTrend === 'up'
-                    ? '#DCFCE7'
+                    ? 'colors.success.100'
                     : computedTrend === 'down'
                       ? 'error.100'
-                      : '#F1F5F9',
+                      : 'colors.grey.100',
                 transition: 'all 0.3s',
                 transform: isHovered ? 'scale(1.1)' : 'scale(1)',
               }}
