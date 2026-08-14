@@ -12,6 +12,7 @@ pub mod order_item;
 pub mod outbound_order;
 pub mod serial_number;
 pub mod stock_take;
+pub mod transfer;
 pub mod transfer_order;
 pub mod warehouse;
 pub mod wave_pick;

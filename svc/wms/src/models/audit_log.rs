@@ -95,3 +95,140 @@ pub async fn log_approval_event(
     .await?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+
+    fn sample_audit_log() -> AuditLog {
+        AuditLog {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            action: "create".into(),
+            entity_type: "warehouse".into(),
+            entity_id: Some(Uuid::new_v4()),
+            entity_ids: Some(serde_json::json!([1, 2, 3])),
+            user_id: Some("user-1".into()),
+            user_name: Some("Alice".into()),
+            request_details: Some(serde_json::json!({"method": "POST"})),
+            response_details: Some(serde_json::json!({"status": 200})),
+            status: "success".into(),
+            error_message: None,
+            ip_address: Some("127.0.0.1".into()),
+            user_agent: Some("test-agent".into()),
+            created_at: Utc::now(),
+        }
+    }
+
+    #[test]
+    fn audit_log_serde_roundtrip() {
+        let log = sample_audit_log();
+        let v = serde_json::to_value(&log).unwrap();
+        let back: AuditLog = serde_json::from_value(v.clone()).unwrap();
+        let v2 = serde_json::to_value(&back).unwrap();
+        assert_eq!(v, v2);
+    }
+
+    #[test]
+    fn audit_log_serde_all_none_optionals() {
+        let log = AuditLog {
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            error_message: Some("failed".into()),
+            ip_address: None,
+            user_agent: None,
+            ..sample_audit_log()
+        };
+        let v = serde_json::to_value(&log).unwrap();
+        let back: AuditLog = serde_json::from_value(v.clone()).unwrap();
+        let v2 = serde_json::to_value(&back).unwrap();
+        assert_eq!(v, v2);
+        assert!(back.entity_id.is_none());
+        assert!(back.request_details.is_none());
+    }
+
+    #[test]
+    fn audit_log_clone_preserves_action() {
+        let log = sample_audit_log();
+        let c = log.clone();
+        assert_eq!(log.action, c.action);
+        assert_eq!(log.entity_type, c.entity_type);
+    }
+
+    #[test]
+    fn create_audit_log_request_serde_roundtrip() {
+        let req = CreateAuditLogRequest {
+            action: "update".into(),
+            entity_type: "inventory".into(),
+            entity_id: Some(Uuid::new_v4()),
+            entity_ids: None,
+            user_id: Some("user-2".into()),
+            user_name: Some("Bob".into()),
+            request_details: Some(serde_json::json!({"path": "/api/inventory"})),
+            response_details: None,
+            status: "success".into(),
+            error_message: None,
+            ip_address: Some("10.0.0.1".into()),
+            user_agent: None,
+        };
+        let v = serde_json::to_value(&req).unwrap();
+        let back: CreateAuditLogRequest = serde_json::from_value(v.clone()).unwrap();
+        let v2 = serde_json::to_value(&back).unwrap();
+        assert_eq!(v, v2);
+    }
+
+    #[test]
+    fn audit_log_query_serde_roundtrip() {
+        let q = AuditLogQuery {
+            action: Some("delete".into()),
+            entity_type: Some("batch".into()),
+            user_id: Some("user-3".into()),
+            status: Some("error".into()),
+            start_date: Some(Utc::now()),
+            end_date: Some(Utc::now()),
+            page: Some(1),
+            page_size: Some(20),
+        };
+        let v = serde_json::to_value(&q).unwrap();
+        let back: AuditLogQuery = serde_json::from_value(v.clone()).unwrap();
+        let v2 = serde_json::to_value(&back).unwrap();
+        assert_eq!(v, v2);
+    }
+
+    #[test]
+    fn audit_log_query_all_none() {
+        let q = AuditLogQuery {
+            action: None,
+            entity_type: None,
+            user_id: None,
+            status: None,
+            start_date: None,
+            end_date: None,
+            page: None,
+            page_size: None,
+        };
+        let v = serde_json::to_value(&q).unwrap();
+        let back: AuditLogQuery = serde_json::from_value(v).unwrap();
+        assert!(back.action.is_none());
+        assert!(back.page.is_none());
+    }
+
+    #[test]
+    fn audit_log_json_value_field_preserved() {
+        let log = AuditLog {
+            request_details: Some(serde_json::json!({"nested": {"key": "value"}})),
+            ..sample_audit_log()
+        };
+        let v = serde_json::to_value(&log).unwrap();
+        let back: AuditLog = serde_json::from_value(v).unwrap();
+        assert_eq!(
+            back.request_details,
+            Some(serde_json::json!({"nested": {"key": "value"}}))
+        );
+    }
+}
