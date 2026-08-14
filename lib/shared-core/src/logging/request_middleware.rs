@@ -74,18 +74,16 @@ pub async fn request_context_middleware(mut request: Request, next: Next) -> Res
     }
 
     if let Ok(val) = HeaderValue::from_str(&request_id) {
-        response.headers_mut().insert(
-            HeaderName::from_static("x-request-id"),
-            val,
-        );
+        response
+            .headers_mut()
+            .insert(HeaderName::from_static("x-request-id"), val);
     }
 
     if let Some(trace_id) = &trace_context.trace_id {
         if let Ok(val) = HeaderValue::from_str(trace_id) {
-            response.headers_mut().insert(
-                HeaderName::from_static("x-trace-id"),
-                val,
-            );
+            response
+                .headers_mut()
+                .insert(HeaderName::from_static("x-trace-id"), val);
         }
     }
 
