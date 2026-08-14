@@ -50,7 +50,7 @@ const VoucherImportModal: React.FC<VoucherImportModalProps> = ({ open, onClose, 
             variant='body2'
             sx={{ color: 'blue.800' }}
           >
-            请将用友U8系统导出的凭证数据粘贴到下方文本框中。支持JSON格式数据导入。
+            {t('finance.finance_voucher_page_components_voucher_import_modal.e1')}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>

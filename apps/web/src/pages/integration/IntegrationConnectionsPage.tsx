@@ -133,7 +133,7 @@ export const IntegrationConnectionsPage: React.FC = () => {
         // 测试连接占位调用（原页面同样为空实现）
         addNotification({
           title: t('integration.integration_connections_page.k4'),
-          message: `连接「${connection.name}」测试通过`,
+          message: i18n.t('integration.integration_connections_page.e1', { v1: connection.name }),
           type: 'success',
         });
         void queryClient.invalidateQueries({

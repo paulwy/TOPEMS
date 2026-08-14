@@ -137,7 +137,7 @@ const FeatureFlagPage: React.FC = () => {
                     sx={{ py: 6 }}
                   >
                     <Typography color='text.secondary'>
-                      暂无 Feature Flag，等待后端注册或刷新
+                      {t('system.feature_flag_page_index.e1')}
                     </Typography>
                   </TableCell>
                 </TableRow>

@@ -8,6 +8,7 @@ import type { RowAction } from '@/components/templates/list/types';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { salaryAdjustmentSchema } from '@/schemas/hrm';
 import { salaryAdjustmentApi, type SalaryAdjustment } from '@/api/hrm';
+import i18n from '@/i18n';
 
 const salaryAdjustmentAdapter = createCrudPageAdapter(salaryAdjustmentApi);
 
@@ -46,7 +47,7 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
         addNotification({
           type: 'info',
           title: t('hrm.hrm_salary_adjustment_page.detail', '详情'),
-          message: `查看 ${row.employee_name} 的调薪详情`,
+          message: i18n.t('hrm.hrm_salary_adjustment_page.e1', { v1: row.employee_name }),
         });
       },
     },

@@ -121,7 +121,7 @@ export const AutomationDashboardPage: React.FC = () => {
           variant='h5'
           sx={{ mb: 3 }}
         >
-          自动化总览
+          {t('automation.automation_dashboard_page.e1')}
         </Typography>
         {error && (
           <Alert
@@ -212,7 +212,7 @@ export const AutomationDashboardPage: React.FC = () => {
               variant='subtitle1'
               sx={{ mb: 1 }}
             >
-              近 7 天运行趋势
+              {t('automation.automation_dashboard_page.e2')}
             </Typography>
             <TableContainer>
               <Table size='small'>
@@ -264,7 +264,7 @@ export const AutomationDashboardPage: React.FC = () => {
               variant='subtitle1'
               sx={{ mb: 1 }}
             >
-              最近运行
+              {t('automation.automation_dashboard_page.e3')}
             </Typography>
             <TableContainer>
               <Table size='small'>

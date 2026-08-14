@@ -194,7 +194,7 @@ const EmailList: React.FC<EmailListProps> = ({
                   sx={{ gap: 1 }}
                 >
                   <RefreshCw size={16} />
-                  批量重发
+                  {t('im.mail_page_components_email_list.e1')}
                 </Button>
                 <Button
                   variant='contained'
@@ -203,7 +203,7 @@ const EmailList: React.FC<EmailListProps> = ({
                   sx={{ gap: 1 }}
                 >
                   <Trash2 size={16} />
-                  批量删除
+                  {t('im.mail_page_components_email_list.e2')}
                 </Button>
               </Box>
             </Box>
@@ -288,7 +288,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         color: 'grey.500',
                       }}
                     >
-                      主题
+                      {t('im.mail_page_components_email_list.e3')}
                     </Box>
                     <Box
                       component='th'
@@ -301,7 +301,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         color: 'grey.500',
                       }}
                     >
-                      收件人
+                      {t('im.mail_page_components_email_detail_dialog.e2')}
                     </Box>
                     <Box
                       component='th'
@@ -314,7 +314,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         color: 'grey.500',
                       }}
                     >
-                      发件人
+                      {t('im.mail_page_components_email_detail_dialog.e1')}
                     </Box>
                     <Box
                       component='th'
@@ -327,7 +327,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         color: 'grey.500',
                       }}
                     >
-                      状态
+                      {t('im.mail_page_components_email_list.e6')}
                     </Box>
                     <Box
                       component='th'
@@ -340,7 +340,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         color: 'grey.500',
                       }}
                     >
-                      优先级
+                      {t('im.mail_page_components_email_detail_dialog.e5')}
                     </Box>
                     <Box
                       component='th'
@@ -353,7 +353,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         color: 'grey.500',
                       }}
                     >
-                      创建时间
+                      {t('im.mail_page_components_email_detail_dialog.e6')}
                     </Box>
                     <Box
                       component='th'
@@ -366,7 +366,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         color: 'grey.500',
                       }}
                     >
-                      操作
+                      {t('im.mail_page_components_email_list.e9')}
                     </Box>
                   </Box>
                 </Box>

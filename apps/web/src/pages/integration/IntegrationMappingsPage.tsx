@@ -281,7 +281,7 @@ export const IntegrationMappingsPage: React.FC = () => {
         };
         addNotification({
           title: t('integration.integration_mappings_page.k23'),
-          message: `已创建映射规则「${mapping.name}」`,
+          message: i18n.t('integration.integration_mappings_page.e1', { v1: mapping.name }),
           type: 'success',
         });
         return mapping;

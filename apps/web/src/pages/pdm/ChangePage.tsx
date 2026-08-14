@@ -197,7 +197,7 @@ export const ChangePage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
               >
-                变更单总数
+                {t('pdm.change_page.e1')}
               </Typography>
               <Typography
                 variant='h5'
@@ -230,7 +230,7 @@ export const ChangePage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
               >
-                待审批
+                {t('pdm.change_page.e2')}
               </Typography>
               <Typography
                 variant='h5'
@@ -263,7 +263,7 @@ export const ChangePage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
               >
-                已批准
+                {t('pdm.change_page.e3')}
               </Typography>
               <Typography
                 variant='h5'
@@ -296,7 +296,7 @@ export const ChangePage: React.FC = () => {
                 variant='body2'
                 sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
               >
-                已实施
+                {t('pdm.change_page.e4')}
               </Typography>
               <Typography
                 variant='h5'
@@ -333,7 +333,7 @@ export const ChangePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            变更单号
+            {t('pdm.change_page.e5')}
           </Box>
           <Box sx={{ fontWeight: 500 }}>{change.change_no}</Box>
         </Box>
@@ -342,7 +342,7 @@ export const ChangePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            申请日期
+            {t('pdm.change_page.e6')}
           </Box>
           <Box>
             {change.apply_date ? new Date(change.apply_date).toLocaleDateString('zh-CN') : '-'}
@@ -353,7 +353,7 @@ export const ChangePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            变更标题
+            {t('pdm.change_page.e7')}
           </Box>
           <Box>{change.title}</Box>
         </Box>
@@ -362,7 +362,7 @@ export const ChangePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            变更类型
+            {t('pdm.change_page.e8')}
           </Box>
           <Box>{change.type}</Box>
         </Box>
@@ -371,7 +371,7 @@ export const ChangePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            优先级
+            {t('pdm.change_page.e9')}
           </Box>
           <Box>{change.priority}</Box>
         </Box>
@@ -380,7 +380,7 @@ export const ChangePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            申请人
+            {t('pdm.change_page.e10')}
           </Box>
           <Box>{change.applicant_name || change.applicant || '-'}</Box>
         </Box>
@@ -389,7 +389,7 @@ export const ChangePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            状态
+            {t('pdm.bom_page.e6')}
           </Box>
           <Box sx={{ mt: 0.5 }}>
             <Chip
@@ -409,7 +409,7 @@ export const ChangePage: React.FC = () => {
               component='span'
               sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
             >
-              审批人
+              {t('pdm.change_page.e12')}
             </Box>
             <Box>{change.approved_by}</Box>
           </Box>
@@ -420,7 +420,7 @@ export const ChangePage: React.FC = () => {
               component='span'
               sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
             >
-              审批日期
+              {t('pdm.change_page.e13')}
             </Box>
             <Box>{new Date(change.approved_date).toLocaleDateString('zh-CN')}</Box>
           </Box>
@@ -430,7 +430,7 @@ export const ChangePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            变更原因
+            {t('pdm.change_page.e14')}
           </Box>
           <Box>{change.reason || '-'}</Box>
         </Box>
@@ -439,7 +439,7 @@ export const ChangePage: React.FC = () => {
             component='span'
             sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
           >
-            变更描述
+            {t('pdm.change_page.e15')}
           </Box>
           <Box>{change.description || '-'}</Box>
         </Box>
@@ -449,7 +449,7 @@ export const ChangePage: React.FC = () => {
               component='span'
               sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
             >
-              影响分析
+              {t('pdm.change_page.e16')}
             </Box>
             <Box>{change.impact_analysis}</Box>
           </Box>
@@ -460,7 +460,7 @@ export const ChangePage: React.FC = () => {
               component='span'
               sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
             >
-              备注
+              {t('pdm.change_page.e17')}
             </Box>
             <Box>{change.remarks}</Box>
           </Box>

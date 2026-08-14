@@ -137,7 +137,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    名称
+                    {t('gis.index.e1')}
                   </th>
                   <th
                     style={{
@@ -147,7 +147,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    类型
+                    {t('gis.index.e2')}
                   </th>
                   <th
                     style={{
@@ -157,7 +157,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    坐标
+                    {t('gis.index.e3')}
                   </th>
                   <th
                     style={{
@@ -167,7 +167,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    状态
+                    {t('gis.index.e4')}
                   </th>
                 </>
               )}
@@ -181,7 +181,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    名称
+                    {t('gis.index.e1')}
                   </th>
                   <th
                     style={{
@@ -191,7 +191,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    类型
+                    {t('gis.index.e2')}
                   </th>
                   <th
                     style={{
@@ -201,7 +201,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    起点
+                    {t('gis.index.e7')}
                   </th>
                   <th
                     style={{
@@ -211,7 +211,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    终点
+                    {t('gis.index.e8')}
                   </th>
                   <th
                     style={{
@@ -221,7 +221,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    状态
+                    {t('gis.index.e4')}
                   </th>
                 </>
               )}
@@ -235,7 +235,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    名称
+                    {t('gis.index.e1')}
                   </th>
                   <th
                     style={{
@@ -245,7 +245,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    类型
+                    {t('gis.index.e2')}
                   </th>
                   <th
                     style={{
@@ -255,7 +255,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    容量
+                    {t('gis.index.e12')}
                   </th>
                   <th
                     style={{
@@ -265,7 +265,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    坐标
+                    {t('gis.index.e3')}
                   </th>
                 </>
               )}
@@ -279,7 +279,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    标题
+                    {t('gis.index.e14')}
                   </th>
                   <th
                     style={{
@@ -289,7 +289,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    类型
+                    {t('gis.index.e2')}
                   </th>
                   <th
                     style={{
@@ -299,7 +299,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    记录人
+                    {t('gis.index.e16')}
                   </th>
                   <th
                     style={{
@@ -309,7 +309,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    时间
+                    {t('gis.index.e17')}
                   </th>
                 </>
               )}
@@ -323,7 +323,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    名称
+                    {t('gis.index.e1')}
                   </th>
                   <th
                     style={{
@@ -333,7 +333,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    编号
+                    {t('gis.index.e19')}
                   </th>
                   <th
                     style={{
@@ -343,7 +343,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    类型
+                    {t('gis.index.e2')}
                   </th>
                   <th
                     style={{
@@ -353,7 +353,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    创建时间
+                    {t('gis.index.e21')}
                   </th>
                 </>
               )}
@@ -367,7 +367,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    名称
+                    {t('gis.index.e1')}
                   </th>
                   <th
                     style={{
@@ -377,7 +377,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    类型
+                    {t('gis.index.e2')}
                   </th>
                   <th
                     style={{
@@ -387,7 +387,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    地址
+                    {t('gis.index.e24')}
                   </th>
                   <th
                     style={{
@@ -397,7 +397,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    联系人
+                    {t('gis.index.e25')}
                   </th>
                   <th
                     style={{
@@ -407,7 +407,7 @@ const GisContent: React.FC = () => {
                       color: 'grey.700',
                     }}
                   >
-                    状态
+                    {t('gis.index.e4')}
                   </th>
                 </>
               )}
@@ -588,9 +588,7 @@ const GisContent: React.FC = () => {
                 >
                   GIS地图
                 </Typography>
-                <Typography color='text.secondary'>
-                  管理设备点位、管线、仓储位置、现场取证、厂区地图和业务位置
-                </Typography>
+                <Typography color='text.secondary'>{t('gis.index.e27')}</Typography>
               </Box>
             </Stack>
             <Stack
@@ -702,7 +700,7 @@ const GisContent: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    设备点位
+                    {t('gis.index.e28')}
                   </Typography>
                 </Box>
               </Box>
@@ -744,7 +742,7 @@ const GisContent: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    管线管理
+                    {t('gis.index.e29')}
                   </Typography>
                 </Box>
               </Box>
@@ -786,7 +784,7 @@ const GisContent: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    仓储位置
+                    {t('gis.index.e30')}
                   </Typography>
                 </Box>
               </Box>
@@ -828,7 +826,7 @@ const GisContent: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    现场取证
+                    {t('gis.index.e31')}
                   </Typography>
                 </Box>
               </Box>
@@ -870,7 +868,7 @@ const GisContent: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    厂区地图
+                    {t('gis.index.e32')}
                   </Typography>
                 </Box>
               </Box>
@@ -912,7 +910,7 @@ const GisContent: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary' }}
                   >
-                    业务位置
+                    {t('gis.index.e33')}
                   </Typography>
                 </Box>
               </Box>

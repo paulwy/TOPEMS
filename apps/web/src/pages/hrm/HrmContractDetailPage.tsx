@@ -49,9 +49,7 @@ const HrmContractDetailPage: React.FC = () => {
         ...contractData.contract,
         employee_name: employeeRes.data?.name || contractData.contract.employee_name || '',
         employee_no: employeeRes.data?.employee_no || contractData.contract.employee_no || '',
-        contract_name:
-          contractData.contract.contract_name ||
-          `${employeeRes.data?.name || contractData.contract.employee_name || ''}劳动合同`,
+        contract_name: contractData.contract.contract_name || t('hrm.hrm_contract_detail_page.e1'),
         department: employeeRes.data?.department_name || contractData.contract.department || '',
         position: employeeRes.data?.position || contractData.contract.position || '',
         probation_period: contractData.contract.probation_period || 0,
@@ -199,14 +197,14 @@ const HrmContractDetailPage: React.FC = () => {
               sx={{ fontWeight: 'medium' }}
             >
               {daysRemaining < 0
-                ? `合同已过期 ${Math.abs(daysRemaining)} 天`
+                ? t('hrm.hrm_contract_detail_page.e2', { v1: Math.abs(daysRemaining) })
                 : daysRemaining === 0
                   ? t('hrm.hrm_contract_detail_page.today')
                   : daysRemaining < 30
-                    ? `合同将在 ${daysRemaining} 天后到期，请及时处理续签`
+                    ? t('hrm.hrm_contract_detail_page.e3', { v1: daysRemaining })
                     : daysRemaining < 90
-                      ? `合同将在 ${daysRemaining} 天后到期`
-                      : `合同有效期剩余 ${daysRemaining} 天`}
+                      ? t('hrm.hrm_contract_detail_page.e4', { v1: daysRemaining })
+                      : t('hrm.hrm_contract_detail_page.e5', { v1: daysRemaining })}
             </Typography>
           </Box>
         )}
@@ -472,7 +470,7 @@ const HrmContractDetailPage: React.FC = () => {
             onClick={handleRenew}
             color='primary'
           >
-            确认续签
+            {t('hrm.hrm_contract_detail_page.e6')}
           </Button>
         </DialogActions>
       </Dialog>

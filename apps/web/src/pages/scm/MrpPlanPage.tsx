@@ -8,6 +8,7 @@ import {
   Box,
   Alert,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Calculator, Eye } from 'lucide-react';
 
@@ -93,7 +94,7 @@ const MrpPlanPage: React.FC = () => {
   const handleCalculate = (plan: MrpPlan) => {
     setPendingAction({
       title: t('scm.mrp_plan_page.k2'),
-      message: `确定要对MRP计划 "${plan.plan_name}" 进行MRP运算吗？`,
+      message: i18n.t('scm.mrp_plan_page.e1', { v1: plan.plan_name }),
       onConfirm: () => calculateMutation.mutate(plan.id),
     });
   };
@@ -200,7 +201,7 @@ const MrpPlanPage: React.FC = () => {
               }
             }}
           >
-            查看建议详情
+            {t('scm.mrp_plan_page.e2')}
           </Button>
         </DialogActions>
       </Dialog>

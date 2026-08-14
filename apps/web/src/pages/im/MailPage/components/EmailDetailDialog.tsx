@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { AlertCircle } from 'lucide-react';
 import type { Email } from '@/api/mail';
+import i18n from '@/i18n';
 
 interface EmailDetailDialogProps {
   open: boolean;
@@ -46,7 +47,7 @@ const EmailDetailDialog: React.FC<EmailDetailDialogProps> = ({
                   variant='body2'
                   color='text.secondary'
                 >
-                  发件人
+                  {i18n.t('im.mail_page_components_email_detail_dialog.e1')}
                 </Typography>
                 <Typography sx={{ fontWeight: 500 }}>{selectedEmail.from_address}</Typography>
               </Box>
@@ -57,7 +58,7 @@ const EmailDetailDialog: React.FC<EmailDetailDialogProps> = ({
                 variant='body2'
                 color='text.secondary'
               >
-                收件人
+                {i18n.t('im.mail_page_components_email_detail_dialog.e2')}
               </Typography>
               <Typography>
                 {Array.isArray(selectedEmail.to_addresses)
@@ -71,7 +72,7 @@ const EmailDetailDialog: React.FC<EmailDetailDialogProps> = ({
                   variant='body2'
                   color='text.secondary'
                 >
-                  抄送
+                  {i18n.t('im.mail_page_components_email_detail_dialog.e3')}
                 </Typography>
                 <Typography>
                   {Array.isArray(selectedEmail.cc_addresses)
@@ -86,7 +87,7 @@ const EmailDetailDialog: React.FC<EmailDetailDialogProps> = ({
                   variant='body2'
                   color='text.secondary'
                 >
-                  密送
+                  {i18n.t('im.mail_page_components_email_detail_dialog.e4')}
                 </Typography>
                 <Typography>
                   {Array.isArray(selectedEmail.bcc_addresses)
@@ -100,7 +101,7 @@ const EmailDetailDialog: React.FC<EmailDetailDialogProps> = ({
                 variant='body2'
                 color='text.secondary'
               >
-                优先级
+                {i18n.t('im.mail_page_components_email_detail_dialog.e5')}
               </Typography>
               {getPriorityBadge(selectedEmail.priority)}
             </Box>
@@ -109,7 +110,7 @@ const EmailDetailDialog: React.FC<EmailDetailDialogProps> = ({
                 variant='body2'
                 color='text.secondary'
               >
-                创建时间
+                {i18n.t('im.mail_page_components_email_detail_dialog.e6')}
               </Typography>
               <Typography>{new Date(selectedEmail.created_at).toLocaleString('zh-CN')}</Typography>
             </Box>
@@ -119,7 +120,7 @@ const EmailDetailDialog: React.FC<EmailDetailDialogProps> = ({
                   variant='body2'
                   color='text.secondary'
                 >
-                  发送时间
+                  {i18n.t('im.mail_page_components_email_detail_dialog.e7')}
                 </Typography>
                 <Typography>{new Date(selectedEmail.sent_at).toLocaleString('zh-CN')}</Typography>
               </Box>
@@ -143,7 +144,7 @@ const EmailDetailDialog: React.FC<EmailDetailDialogProps> = ({
                   }}
                 >
                   <AlertCircle size={16} />
-                  发送失败
+                  {i18n.t('im.mail_page_components_email_detail_dialog.e8')}
                 </Box>
                 <Typography
                   variant='body2'
@@ -158,7 +159,7 @@ const EmailDetailDialog: React.FC<EmailDetailDialogProps> = ({
                 variant='body2'
                 color='text.secondary'
               >
-                邮件内容
+                {i18n.t('im.mail_page_components_email_detail_dialog.e9')}
               </Typography>
               <Box
                 component='pre'
@@ -183,7 +184,7 @@ const EmailDetailDialog: React.FC<EmailDetailDialogProps> = ({
             variant='contained'
             onClick={onClose}
           >
-            关闭
+            {i18n.t('im.mail_page_components_email_detail_dialog.e10')}
           </Button>
         </DialogActions>
       </DialogContent>

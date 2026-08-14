@@ -133,7 +133,7 @@ export const DataSourcePage: React.FC = () => {
             startIcon={<AddIcon />}
             onClick={() => setCreateOpen(true)}
           >
-            新建数据源
+            {t('lowcode.data_source_page.e1')}
           </Button>
         </Stack>
 
@@ -173,7 +173,7 @@ export const DataSourcePage: React.FC = () => {
                       colSpan={5}
                       align='center'
                     >
-                      暂无数据源
+                      {t('lowcode.data_source_page.e2')}
                     </TableCell>
                   </TableRow>
                 ) : (

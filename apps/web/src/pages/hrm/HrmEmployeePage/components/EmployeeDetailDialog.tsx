@@ -47,7 +47,7 @@ const EmployeeDetailDialog: React.FC<EmployeeDetailDialogProps> = ({ open, onClo
               variant='caption'
               color='text.secondary'
             >
-              员工姓名
+              {i18n.t('hrm.hrm_employee_page_components_employee_detail_dialog.e1')}
             </Typography>
             <Typography
               variant='body2'
@@ -61,7 +61,7 @@ const EmployeeDetailDialog: React.FC<EmployeeDetailDialogProps> = ({ open, onClo
               variant='caption'
               color='text.secondary'
             >
-              工号
+              {i18n.t('hrm.hrm_employee_page_components_employee_detail_dialog.e2')}
             </Typography>
             <Typography
               variant='body2'
@@ -75,7 +75,7 @@ const EmployeeDetailDialog: React.FC<EmployeeDetailDialogProps> = ({ open, onClo
               variant='caption'
               color='text.secondary'
             >
-              邮箱
+              {i18n.t('hrm.hrm_employee_page_components_employee_detail_dialog.e3')}
             </Typography>
             <Typography variant='body2'>{employee.email || '-'}</Typography>
           </Box>
@@ -84,7 +84,7 @@ const EmployeeDetailDialog: React.FC<EmployeeDetailDialogProps> = ({ open, onClo
               variant='caption'
               color='text.secondary'
             >
-              电话
+              {i18n.t('hrm.hrm_employee_page_components_employee_detail_dialog.e4')}
             </Typography>
             <Typography variant='body2'>{employee.phone || '-'}</Typography>
           </Box>
@@ -93,7 +93,7 @@ const EmployeeDetailDialog: React.FC<EmployeeDetailDialogProps> = ({ open, onClo
               variant='caption'
               color='text.secondary'
             >
-              部门
+              {i18n.t('hrm.hrm_employee_page_components_employee_detail_dialog.e5')}
             </Typography>
             <Typography variant='body2'>{employee.department_name || '-'}</Typography>
           </Box>
@@ -102,7 +102,7 @@ const EmployeeDetailDialog: React.FC<EmployeeDetailDialogProps> = ({ open, onClo
               variant='caption'
               color='text.secondary'
             >
-              职位
+              {i18n.t('hrm.hrm_employee_page_components_employee_detail_dialog.e6')}
             </Typography>
             <Typography variant='body2'>{employee.position || '-'}</Typography>
           </Box>
@@ -111,7 +111,7 @@ const EmployeeDetailDialog: React.FC<EmployeeDetailDialogProps> = ({ open, onClo
               variant='caption'
               color='text.secondary'
             >
-              入职日期
+              {i18n.t('hrm.hrm_employee_page_components_employee_detail_dialog.e7')}
             </Typography>
             <Typography variant='body2'>{employee.hire_date || '-'}</Typography>
           </Box>
@@ -120,7 +120,7 @@ const EmployeeDetailDialog: React.FC<EmployeeDetailDialogProps> = ({ open, onClo
               variant='caption'
               color='text.secondary'
             >
-              状态
+              {i18n.t('hrm.hrm_employee_page_components_employee_detail_dialog.e8')}
             </Typography>
             <Box sx={{ mt: 0.5 }}>
               <Chip

@@ -12,6 +12,7 @@ import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const apiAdapter = createCrudPageAdapter(scmApi.deliveryAppointments);
 
@@ -100,11 +101,12 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
           message: successMessage,
         });
       } catch (err) {
-        apiLogger.error(`${action}失败:`, err);
+        apiLogger.error(t('scm.scm_delivery_appointment_page.e1'), err);
         addNotification({
           type: 'error',
-          title: `${action}失败`,
-          message: err instanceof Error ? err.message : `${action}失败`,
+          title: t('scm.scm_delivery_appointment_page.e2'),
+          message:
+            err instanceof Error ? err.message : i18n.t('scm.scm_delivery_appointment_page.e2'),
         });
       }
     },
@@ -120,7 +122,11 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
         show: (row) => row.status === 'pending',
         onClick: (row) => {
           const apt = row as unknown as SupplierDeliveryAppointment;
-          if (window.confirm(`确定要审批通过预约 "${apt.appointment_no}" 吗？`)) {
+          if (
+            window.confirm(
+              i18n.t('scm.scm_delivery_appointment_page.e4', { v1: apt.appointment_no })
+            )
+          ) {
             void runStatusAction(
               t('scm.scm_delivery_appointment_page.k5'),
               apt,
@@ -140,7 +146,11 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
         show: (row) => row.status === 'pending',
         onClick: (row) => {
           const apt = row as unknown as SupplierDeliveryAppointment;
-          if (window.confirm(`确定要驳回预约 "${apt.appointment_no}" 吗？`)) {
+          if (
+            window.confirm(
+              i18n.t('scm.scm_delivery_appointment_page.e5', { v1: apt.appointment_no })
+            )
+          ) {
             void runStatusAction(
               t('scm.scm_delivery_appointment_page.k9'),
               apt,
@@ -160,7 +170,11 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
         show: (row) => row.status === 'approved',
         onClick: (row) => {
           const apt = row as unknown as SupplierDeliveryAppointment;
-          if (window.confirm(`确定要确认预约 "${apt.appointment_no}" 已到货吗？`)) {
+          if (
+            window.confirm(
+              i18n.t('scm.scm_delivery_appointment_page.e6', { v1: apt.appointment_no })
+            )
+          ) {
             void runStatusAction(
               t('scm.scm_delivery_appointment_page.k13'),
               apt,
@@ -180,7 +194,11 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
         show: (row) => row.status === 'arrived',
         onClick: (row) => {
           const apt = row as unknown as SupplierDeliveryAppointment;
-          if (window.confirm(`确定要将预约 "${apt.appointment_no}" 标记为已完成吗？`)) {
+          if (
+            window.confirm(
+              i18n.t('scm.scm_delivery_appointment_page.e7', { v1: apt.appointment_no })
+            )
+          ) {
             void runStatusAction(
               t('scm.scm_delivery_appointment_page.k17'),
               apt,
@@ -200,7 +218,11 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
         show: (row) => row.status === 'pending' || row.status === 'approved',
         onClick: (row) => {
           const apt = row as unknown as SupplierDeliveryAppointment;
-          if (window.confirm(`确定要取消预约 "${apt.appointment_no}" 吗？`)) {
+          if (
+            window.confirm(
+              i18n.t('scm.scm_delivery_appointment_page.e8', { v1: apt.appointment_no })
+            )
+          ) {
             void runStatusAction(
               t('scm.scm_delivery_appointment_page.k21'),
               apt,

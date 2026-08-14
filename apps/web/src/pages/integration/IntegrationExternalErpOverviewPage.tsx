@@ -108,7 +108,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              管理和配置与外部ERP系统的连接，包括金蝶、用友、SAP等
+              {t('integration.integration_external_erp_overview_page.e1')}
             </Typography>
           </Box>
           <Button
@@ -117,7 +117,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
             onClick={() => navigate(INTEGRATION_PATHS.externalErp)}
             sx={{ bgcolor: 'secondary.main', '&:hover': { bgcolor: 'secondary.dark' } }}
           >
-            管理连接
+            {t('integration.integration_external_erp_overview_page.e2')}
           </Button>
         </Stack>
 
@@ -140,7 +140,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'grey.500' }}
                   >
-                    总连接数
+                    {t('integration.integration_external_erp_overview_page.e3')}
                   </Typography>
                   <Typography
                     variant='h4'
@@ -180,7 +180,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'grey.500' }}
                   >
-                    已连接
+                    {t('integration.integration_external_erp_overview_page.e4')}
                   </Typography>
                   <Typography
                     variant='h4'
@@ -220,7 +220,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'grey.500' }}
                   >
-                    已启用
+                    {t('integration.integration_external_erp_overview_page.e5')}
                   </Typography>
                   <Typography
                     variant='h4'
@@ -260,7 +260,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'grey.500' }}
                   >
-                    未连接
+                    {t('integration.integration_external_erp_overview_page.e6')}
                   </Typography>
                   <Typography
                     variant='h4'
@@ -331,7 +331,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                       <Cloud size={20} /> {config.name}
                     </Typography>
                     <Chip
-                      label={`${conns.length} 个连接`}
+                      label={t('integration.integration_external_erp_overview_page.e7')}
                       size='small'
                     />
                   </Stack>
@@ -392,7 +392,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                     onClick={() => navigate(INTEGRATION_PATHS.externalErp)}
                     sx={{ mt: 2 }}
                   >
-                    管理连接
+                    {t('integration.integration_external_erp_overview_page.e2')}
                   </Button>
                 </CardContent>
               </Card>
@@ -433,7 +433,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    连接金蝶K/3 WMS Cloud系统，实现数据同步
+                    {t('integration.integration_external_erp_overview_page.e9')}
                   </Typography>
                   <Button
                     size='small'
@@ -441,7 +441,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                     startIcon={<Settings size={14} />}
                     sx={{ mt: 2, bgcolor: 'primary.dark' }}
                   >
-                    管理连接
+                    {t('integration.integration_external_erp_overview_page.e2')}
                   </Button>
                 </CardContent>
               </Card>
@@ -478,7 +478,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    连接用友U8或NC系统，实现财务数据同步
+                    {t('integration.integration_external_erp_overview_page.e11')}
                   </Typography>
                   <Button
                     size='small'
@@ -486,7 +486,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                     startIcon={<Settings size={14} />}
                     sx={{ mt: 2, bgcolor: 'warning.600' }}
                   >
-                    管理连接
+                    {t('integration.integration_external_erp_overview_page.e2')}
                   </Button>
                 </CardContent>
               </Card>
@@ -523,7 +523,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    连接SAP S/4HANA系统，实现业务数据集成
+                    {t('integration.integration_external_erp_overview_page.e13')}
                   </Typography>
                   <Button
                     size='small'
@@ -531,7 +531,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                     startIcon={<Settings size={14} />}
                     sx={{ mt: 2, bgcolor: 'success.dark' }}
                   >
-                    管理连接
+                    {t('integration.integration_external_erp_overview_page.e2')}
                   </Button>
                 </CardContent>
               </Card>
@@ -551,8 +551,8 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              管理和配置与外部ERP系统的连接，包括金蝶、用友、SAP等。支持数据映射、同步配置和实时监控。
-              详细信息请访问外部ERP连接页面。
+              {t('integration.integration_external_erp_overview_page.e15')}
+              {t('integration.integration_external_erp_overview_page.e16')}
             </Typography>
 
             <Stack
@@ -564,7 +564,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                   variant='body2'
                   sx={{ fontWeight: 500 }}
                 >
-                  支持的ERP系统
+                  {t('integration.integration_external_erp_overview_page.e17')}
                 </Typography>
                 <Stack
                   direction='row'
@@ -589,7 +589,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                   variant='body2'
                   sx={{ fontWeight: 500 }}
                 >
-                  同步方式
+                  {t('integration.integration_external_erp_overview_page.e18')}
                 </Typography>
                 <Stack
                   direction='row'
@@ -614,7 +614,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                   variant='body2'
                   sx={{ fontWeight: 500 }}
                 >
-                  同步方向
+                  {t('integration.integration_external_erp_overview_page.e19')}
                 </Typography>
                 <Stack
                   direction='row'

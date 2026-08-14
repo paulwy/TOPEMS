@@ -26,7 +26,7 @@ export const NodeLibrary: React.FC<NodeLibraryProps> = ({
         variant='subtitle2'
         sx={{ mb: 1 }}
       >
-        节点类型
+        {t('automation.automation_designer_page_components_node_library.e1')}
       </Typography>
       <Divider sx={{ mb: 1 }} />
       <Stack spacing={1}>

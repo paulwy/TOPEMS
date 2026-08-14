@@ -135,8 +135,8 @@ const HrmEmployeeDetailPage: React.FC = () => {
                 variant='outlined'
               />
               <StatusBadge
-                status={`${calculateWorkYears()}年工龄`}
-                label={`${calculateWorkYears()}年工龄`}
+                status={t('hrm.hrm_employee_detail_page.e1')}
+                label={t('hrm.hrm_employee_detail_page.e1')}
                 color='default'
                 variant='outlined'
               />

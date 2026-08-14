@@ -15,6 +15,7 @@ import type {
   CreateSupplierAdmissionRequest,
   UpdateSupplierAdmissionRequest,
 } from '@/api/scm';
+import i18n from '@/i18n';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
@@ -157,7 +158,7 @@ const SupplierAdmissionPage: React.FC = () => {
       onClick: (row) => {
         setPendingAction({
           title: t('scm.supplier_admission_page.k17'),
-          message: `确定要提交供应商准入 "${row.admission_no}" 审核吗？`,
+          message: i18n.t('scm.supplier_admission_page.e1', { v1: row.admission_no }),
           onConfirm: () => submitMutation.mutate(row.id),
         });
       },
@@ -171,7 +172,7 @@ const SupplierAdmissionPage: React.FC = () => {
       onClick: (row) => {
         setPendingAction({
           title: t('scm.supplier_admission_page.k19'),
-          message: `确定要通过供应商准入 "${row.admission_no}" 吗？`,
+          message: i18n.t('scm.supplier_admission_page.e2', { v1: row.admission_no }),
           onConfirm: () => approveMutation.mutate(row.id),
         });
       },
@@ -185,7 +186,7 @@ const SupplierAdmissionPage: React.FC = () => {
       onClick: (row) => {
         setPendingAction({
           title: t('scm.supplier_admission_page.k21'),
-          message: `确定要拒绝供应商准入 "${row.admission_no}" 吗？`,
+          message: i18n.t('scm.supplier_admission_page.e3', { v1: row.admission_no }),
           onConfirm: () => rejectMutation.mutate(row.id),
           danger: true,
         });
@@ -200,7 +201,7 @@ const SupplierAdmissionPage: React.FC = () => {
       onClick: (row) => {
         setPendingAction({
           title: t('scm.supplier_admission_page.k23'),
-          message: `确定要将供应商 "${row.supplier_name}" 正式准入吗？`,
+          message: i18n.t('scm.supplier_admission_page.e4', { v1: row.supplier_name }),
           onConfirm: () => activateMutation.mutate(row.id),
         });
       },

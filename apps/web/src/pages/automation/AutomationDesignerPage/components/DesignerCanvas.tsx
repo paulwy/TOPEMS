@@ -189,7 +189,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
                       variant='caption'
                       color='warning.main'
                     >
-                      未保存
+                      {t('automation.automation_designer_page_components_designer_canvas.e1')}
                     </Typography>
                   )}
                 </Stack>
@@ -216,7 +216,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
                 color='text.secondary'
                 sx={{ mt: 1 }}
               >
-                画布为空，从左侧拖拽节点类型到此处
+                {t('automation.automation_designer_page_components_designer_canvas.e2')}
               </Typography>
             </Box>
           )}
@@ -346,7 +346,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
             variant='caption'
             sx={{ display: 'block', textAlign: 'center', lineHeight: 1, fontSize: 9 }}
           >
-            缩略图
+            {t('automation.automation_designer_page_components_designer_canvas.e3')}
           </Typography>
         </Paper>
       )}

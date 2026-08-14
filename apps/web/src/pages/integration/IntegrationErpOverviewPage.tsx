@@ -415,7 +415,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600 }}
               >
-                同步任务
+                {t('integration.integration_erp_overview_page.e1')}
               </Typography>
             </Box>
             <Button
@@ -430,7 +430,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                 })
               }
             >
-              刷新
+              {t('integration.integration_erp_overview_page.e2')}
             </Button>
           </Box>
           <Divider sx={{ mb: 1 }} />
@@ -506,7 +506,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                同步统计
+                {t('integration.integration_erp_overview_page.e3')}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>
@@ -521,7 +521,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                       variant='caption'
                       color='text.secondary'
                     >
-                      今日同步
+                      {t('integration.integration_erp_overview_page.e4')}
                     </Typography>
                   </Box>
                 </Box>
@@ -537,7 +537,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                       variant='caption'
                       color='text.secondary'
                     >
-                      平均延迟
+                      {t('integration.integration_erp_overview_page.e5')}
                     </Typography>
                   </Box>
                 </Box>
@@ -553,7 +553,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                       variant='caption'
                       color='text.secondary'
                     >
-                      可用率
+                      {t('integration.integration_erp_overview_page.e6')}
                     </Typography>
                   </Box>
                 </Box>
@@ -569,7 +569,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                       variant='caption'
                       color='text.secondary'
                     >
-                      活跃连接
+                      {t('integration.integration_erp_overview_page.e7')}
                     </Typography>
                   </Box>
                 </Box>

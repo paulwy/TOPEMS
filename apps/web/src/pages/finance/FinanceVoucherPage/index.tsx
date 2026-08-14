@@ -269,13 +269,16 @@ const FinanceVoucherPage: React.FC = () => {
       if (successCount === selectedIds.length) {
         addNotification({
           title: t('finance.finance_voucher_page_index.success'),
-          message: `批量删除成功，共 ${successCount} 条记录`,
+          message: i18n.t('finance.finance_voucher_page_index.e1', { v1: successCount }),
           type: 'success',
         });
       } else {
         addNotification({
           title: t('finance.finance_voucher_page_index.success_1'),
-          message: `成功删除 ${successCount} 条，失败 ${selectedIds.length - successCount} 条`,
+          message: i18n.t('finance.finance_voucher_page_index.e2', {
+            v1: successCount,
+            v2: selectedIds.length - successCount,
+          }),
           type: 'warning',
         });
       }
@@ -306,13 +309,16 @@ const FinanceVoucherPage: React.FC = () => {
       if (successCount === ids.length) {
         addNotification({
           title: t('finance.finance_voucher_page_index.success'),
-          message: `批量审核成功，共 ${successCount} 条记录`,
+          message: i18n.t('finance.finance_voucher_page_index.e3', { v1: successCount }),
           type: 'success',
         });
       } else {
         addNotification({
           title: t('finance.finance_voucher_page_index.success_1'),
-          message: `成功审核 ${successCount} 条，失败 ${ids.length - successCount} 条`,
+          message: i18n.t('finance.finance_voucher_page_index.e4', {
+            v1: successCount,
+            v2: ids.length - successCount,
+          }),
           type: 'warning',
         });
       }
@@ -390,13 +396,16 @@ const FinanceVoucherPage: React.FC = () => {
       if (failedCount === 0) {
         addNotification({
           title: t('finance.finance_voucher_page_index.success'),
-          message: `成功导入${successCount}张凭证`,
+          message: i18n.t('finance.finance_voucher_page_index.e5', { v1: successCount }),
           type: 'success',
         });
       } else {
         addNotification({
           title: t('finance.finance_voucher_page_index.success_1'),
-          message: `成功导入${successCount}张，失败${failedCount}张`,
+          message: i18n.t('finance.finance_voucher_page_index.e6', {
+            v1: successCount,
+            v2: failedCount,
+          }),
           type: 'warning',
         });
         errors?.forEach((err: unknown) =>
@@ -701,13 +710,13 @@ const FinanceVoucherPage: React.FC = () => {
                   }}
                 >
                   <FileText sx={{ width: 28, height: 28, mr: 1.5, color: 'indigo.600' }} />
-                  财务凭证管理
+                  {t('finance.finance_voucher_page_index.e7')}
                 </Typography>
                 <Typography
                   variant='body2'
                   sx={{ mt: 0.5, color: 'text.secondary' }}
                 >
-                  管理财务凭证、会计科目，支持用友凭证导入
+                  {t('finance.finance_voucher_page_index.e8')}
                 </Typography>
               </Box>
             </Box>

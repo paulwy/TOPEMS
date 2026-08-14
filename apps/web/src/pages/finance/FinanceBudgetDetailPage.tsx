@@ -127,7 +127,10 @@ const FinanceBudgetDetailPage: React.FC = () => {
       return {
         id: budgetData.id,
         code: `BUD-${budgetData.fiscal_year}-${budgetData.id.slice(-3).toUpperCase()}`,
-        name: `${budgetData.fiscal_year}年度${getBudgetTypeName(budgetData.budget_type || '')}`,
+        name: t('finance.finance_budget_detail_page.e1', {
+          v1: budgetData.fiscal_year,
+          v2: getBudgetTypeName(budgetData.budget_type || ''),
+        }),
         type: budgetData.budget_type || '',
         fiscalYear: budgetData.fiscal_year || '',
         department: '-',
@@ -224,7 +227,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              总预算
+              {t('finance.finance_budget_detail_page.e2')}
             </Typography>
           </Box>
           <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 3, textAlign: 'center' }}>
@@ -239,7 +242,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              已使用
+              {t('finance.finance_budget_detail_page.e3')}
             </Typography>
           </Box>
           <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 3, textAlign: 'center' }}>
@@ -254,7 +257,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              剩余预算
+              {t('finance.finance_budget_detail_page.e4')}
             </Typography>
           </Box>
           <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 3, textAlign: 'center' }}>
@@ -342,10 +345,10 @@ const FinanceBudgetDetailPage: React.FC = () => {
             variant='subtitle1'
             sx={{ fontWeight: 600 }}
           >
-            预算科目明细
+            {t('finance.finance_budget_detail_page.e5')}
           </Typography>
           <Chip
-            label={`共 ${budget.items.length} 个科目`}
+            label={t('finance.finance_budget_detail_page.e6', { v1: budget.items.length })}
             size='small'
             variant='outlined'
           />
@@ -458,7 +461,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              时间进度
+              {t('finance.finance_budget_detail_page.e7')}
             </Typography>
             <Typography
               variant='body2'
@@ -477,7 +480,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
             color='text.secondary'
             sx={{ mt: 1, display: 'block' }}
           >
-            已过半年，预算执行正常
+            {t('finance.finance_budget_detail_page.e8')}
           </Typography>
         </Box>
         <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
@@ -486,7 +489,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              预算执行
+              {t('finance.finance_budget_detail_page.e9')}
             </Typography>
             <Typography
               variant='body2'
@@ -517,7 +520,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              预测年底剩余
+              {t('finance.finance_budget_detail_page.e10')}
             </Typography>
             <Typography
               variant='body2'
@@ -536,7 +539,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
             color='text.secondary'
             sx={{ mt: 1, display: 'block' }}
           >
-            预计年末有结余
+            {t('finance.finance_budget_detail_page.e11')}
           </Typography>
         </Box>
       </Box>
@@ -574,7 +577,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
       ),
       title: budget?.name,
       subtitle: budget?.code || undefined,
-      tags: [budget?.fiscalYear ? `${budget.fiscalYear}年度` : ''],
+      tags: [budget?.fiscalYear ? t('finance.finance_budget_detail_page.e12') : ''],
       stats: [
         {
           label: i18n.t('finance.finance_budget_detail_page.text_b91eb1'),
@@ -628,7 +631,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
           <PieChart sx={{ width: 20, height: 20, mr: 1 }} />
-          预算执行分析
+          {t('finance.finance_budget_detail_page.e13')}
         </DialogTitle>
         <DialogContent>
           <Box
@@ -645,13 +648,13 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 'bold' }}
               >
-                执行提醒
+                {t('finance.finance_budget_detail_page.e14')}
               </Typography>
               <Typography
                 variant='body2'
                 sx={{ mt: 1 }}
               >
-                当前预算使用率
+                {t('finance.finance_budget_detail_page.e15')}
                 {budget?.usageRate && budget.usageRate >= 80
                   ? t('finance.finance_budget_detail_page.text_6233c5')
                   : t('finance.finance_budget_detail_page.normal')}
@@ -664,13 +667,13 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 'bold' }}
               >
-                正向指标
+                {t('finance.finance_budget_detail_page.e16')}
               </Typography>
               <Typography
                 variant='body2'
                 sx={{ mt: 1 }}
               >
-                预算执行情况良好，剩余预算充足。
+                {t('finance.finance_budget_detail_page.e17')}
               </Typography>
             </Box>
           </Box>
@@ -678,7 +681,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
             variant='subtitle2'
             sx={{ fontWeight: 'bold', mb: 2 }}
           >
-            调整建议
+            {t('finance.finance_budget_detail_page.e18')}
           </Typography>
           <Box
             component='ul'

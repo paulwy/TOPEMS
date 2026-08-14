@@ -50,7 +50,7 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
       <DialogContent sx={{ maxWidth: 720 }}>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <SendIcon size={20} />
-          发送邮件
+          {t('im.mail_page_components_send_email_dialog.e1')}
         </DialogTitle>
         <form onSubmit={handleSendEmail}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
@@ -103,7 +103,7 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
                       value=''
                       disabled
                     >
-                      选择邮件模板
+                      {t('im.mail_page_components_send_email_dialog.e2')}
                     </MenuItem>
                     {templates.map((t) => (
                       <MenuItem
@@ -261,7 +261,7 @@ const SendEmailDialog: React.FC<SendEmailDialogProps> = ({
                 resetSendForm();
               }}
             >
-              取消
+              {t('im.mail_page_components_create_template_dialog.e5')}
             </Button>
             <Button type='submit'>{t('im.send_email_dialog.k14')}</Button>
           </DialogActions>

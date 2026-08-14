@@ -50,7 +50,7 @@ export const PageDesignPage: React.FC = () => {
     try {
       parsedComponents = JSON.parse(draft);
     } catch (e) {
-      setError(`组件树 JSON 解析失败：${e instanceof Error ? e.message : ''}`);
+      setError(t('lowcode.page_design_page.e1', { v1: e instanceof Error ? e.message : '' }));
       setSaving(false);
       return;
     }
@@ -122,8 +122,8 @@ export const PageDesignPage: React.FC = () => {
           color='text.secondary'
           sx={{ mb: 1 }}
         >
-          当前以 JSON 形式编辑页面组件树（V1 占位，可视化拖拽设计器见 V65）。
-          {page && ` 类型：${page.type} · 路由：${page.route_path}`}
+          {t('lowcode.page_design_page.e2')}
+          {page && t('lowcode.page_design_page.e3', { v1: page.type, v2: page.route_path })}
         </Typography>
 
         <Paper
@@ -155,7 +155,7 @@ export const PageDesignPage: React.FC = () => {
               setSearchParams(searchParams);
             }}
           >
-            清除选择
+            {t('lowcode.form_design_page.e3')}
           </Button>
         </Typography>
       </Box>

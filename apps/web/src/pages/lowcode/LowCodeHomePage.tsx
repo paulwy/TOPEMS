@@ -85,7 +85,7 @@ export const LowCodeHomePage: React.FC = () => {
           variant='h5'
           sx={{ mb: 3 }}
         >
-          低代码平台概览
+          {t('lowcode.low_code_home_page.e1')}
         </Typography>
         {error && (
           <Alert

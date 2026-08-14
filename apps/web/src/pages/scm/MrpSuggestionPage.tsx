@@ -101,7 +101,7 @@ const MrpSuggestionPage: React.FC = () => {
             addNotification({
               type: 'success',
               title: i18n.t('scm.mrp_suggestion_page.k4'),
-              message: `已确认 ${ids.length} 条建议`,
+              message: i18n.t('scm.mrp_suggestion_page.e1', { v1: ids.length }),
             });
           },
           confirm: true,
@@ -116,7 +116,7 @@ const MrpSuggestionPage: React.FC = () => {
             addNotification({
               type: 'success',
               title: i18n.t('scm.mrp_suggestion_page.k7'),
-              message: `已生成 ${ids.length} 条采购单`,
+              message: i18n.t('scm.mrp_suggestion_page.e2', { v1: ids.length }),
             });
           },
           confirm: true,
@@ -131,7 +131,7 @@ const MrpSuggestionPage: React.FC = () => {
             addNotification({
               type: 'success',
               title: i18n.t('scm.mrp_suggestion_page.k10'),
-              message: `已生成 ${ids.length} 条工单`,
+              message: i18n.t('scm.mrp_suggestion_page.e3', { v1: ids.length }),
             });
           },
           confirm: true,

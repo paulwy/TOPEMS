@@ -22,6 +22,7 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { MapPin, Play, Pause, RotateCcw, User, Truck, AlertCircle, Map } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { GisMapTemplate, type MapMarker, type TrackPoint } from '@/components/templates';
@@ -167,7 +168,7 @@ export const GisTrackingPage: React.FC = () => {
     (query: string) => {
       addNotification({
         title: t('gis.gis_tracking_page.k7'),
-        message: `搜索设备: ${query}`,
+        message: i18n.t('gis.gis_tracking_page.e1', { v1: query }),
         type: 'info',
       });
     },
@@ -244,13 +245,13 @@ export const GisTrackingPage: React.FC = () => {
               variant='h4'
               sx={{ fontWeight: 'bold', mb: 1 }}
             >
-              轨迹追踪
+              {t('gis.gis_tracking_page.e2')}
             </Typography>
             <Typography
               variant='body2'
               color='text.secondary'
             >
-              实时追踪设备位置，查看历史轨迹
+              {t('gis.gis_tracking_page.e3')}
             </Typography>
           </div>
           <Box sx={{ display: 'flex', gap: 2 }}>
@@ -340,7 +341,7 @@ export const GisTrackingPage: React.FC = () => {
                       color='text.secondary'
                       sx={{ mb: 2 }}
                     >
-                      当前状态
+                      {t('gis.gis_tracking_page.e4')}
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       <Chip
@@ -360,7 +361,7 @@ export const GisTrackingPage: React.FC = () => {
                       color='text.secondary'
                       sx={{ mb: 2 }}
                     >
-                      设备类型
+                      {t('gis.gis_tracking_page.e5')}
                     </Typography>
                     <Typography
                       variant='h5'
@@ -379,7 +380,7 @@ export const GisTrackingPage: React.FC = () => {
                       color='text.secondary'
                       sx={{ mb: 2 }}
                     >
-                      最后更新
+                      {t('gis.gis_tracking_page.e6')}
                     </Typography>
                     <Typography
                       variant='body1'
@@ -506,7 +507,7 @@ export const GisTrackingPage: React.FC = () => {
                                 variant='body2'
                                 color='text.secondary'
                               >
-                                暂无轨迹数据
+                                {t('gis.gis_tracking_page.e7')}
                               </Typography>
                             </TableCell>
                           </TableRow>
@@ -534,7 +535,7 @@ export const GisTrackingPage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        设备名称
+                        {t('gis.gis_tracking_page.e8')}
                       </Typography>
                       <Typography
                         variant='body1'
@@ -554,7 +555,7 @@ export const GisTrackingPage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        设备类型
+                        {t('gis.gis_tracking_page.e5')}
                       </Typography>
                       <Typography
                         variant='body1'
@@ -574,7 +575,7 @@ export const GisTrackingPage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        最后更新
+                        {t('gis.gis_tracking_page.e6')}
                       </Typography>
                       <Typography
                         variant='body1'
@@ -594,7 +595,7 @@ export const GisTrackingPage: React.FC = () => {
                         variant='body2'
                         color='text.secondary'
                       >
-                        当前位置
+                        {t('gis.gis_tracking_page.e11')}
                       </Typography>
                       <Typography
                         variant='body1'

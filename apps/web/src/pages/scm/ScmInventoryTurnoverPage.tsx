@@ -52,7 +52,7 @@ const HeaderActions: React.FC = () => {
           })
         }
       >
-        导出报表
+        {t('scm.scm_inventory_turnover_page.e1')}
       </Button>
       <Button
         variant='outlined'
@@ -66,7 +66,7 @@ const HeaderActions: React.FC = () => {
           })
         }
       >
-        趋势分析
+        {t('scm.scm_inventory_turnover_page.e2')}
       </Button>
     </Stack>
   );

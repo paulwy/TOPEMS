@@ -132,7 +132,7 @@ export default function MaterialPage() {
             variant='body2'
             sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 1 }}
           >
-            物料种类
+            {t('pdm.material_page.e1')}
           </Typography>
           <Typography sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>{stats.total} 种</Typography>
         </Box>
@@ -149,7 +149,7 @@ export default function MaterialPage() {
             variant='body2'
             sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 1 }}
           >
-            库存总量
+            {t('pdm.material_page.e2')}
           </Typography>
           <Typography sx={{ fontWeight: 'bold', fontSize: '1.5rem', color: 'primary.main' }}>
             {stats.totalInventory} 件
@@ -168,7 +168,7 @@ export default function MaterialPage() {
             variant='body2'
             sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 1 }}
           >
-            库存总值
+            {t('pdm.material_page.e3')}
           </Typography>
           <Typography sx={{ fontWeight: 'bold', fontSize: '1.5rem', color: 'success.main' }}>
             ¥ {stats.totalValue.toLocaleString()}

@@ -96,7 +96,7 @@ export default function PdmFormulaPage() {
             variant='body2'
             sx={{ color: 'slate.600' }}
           >
-            配方总数
+            {t('pdm.pdm_formula_page.e1')}
           </Typography>
           <Typography
             variant='h5'
@@ -110,7 +110,7 @@ export default function PdmFormulaPage() {
             variant='body2'
             sx={{ color: 'slate.600' }}
           >
-            已启用
+            {t('pdm.pdm_formula_page.e2')}
           </Typography>
           <Typography
             variant='h5'
@@ -124,7 +124,7 @@ export default function PdmFormulaPage() {
             variant='body2'
             sx={{ color: 'slate.600' }}
           >
-            草稿
+            {t('pdm.pdm_formula_page.e3')}
           </Typography>
           <Typography
             variant='h5'
@@ -138,7 +138,7 @@ export default function PdmFormulaPage() {
             variant='body2'
             sx={{ color: 'slate.600' }}
           >
-            已批准
+            {t('pdm.change_page.e3')}
           </Typography>
           <Typography
             variant='h5'

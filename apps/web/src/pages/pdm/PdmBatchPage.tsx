@@ -92,7 +92,7 @@ export default function PdmBatchPage() {
             variant='body2'
             sx={{ color: 'slate.600' }}
           >
-            批次总数
+            {t('pdm.pdm_batch_page.e1')}
           </Typography>
           <Typography
             variant='h5'
@@ -106,7 +106,7 @@ export default function PdmBatchPage() {
             variant='body2'
             sx={{ color: 'slate.600' }}
           >
-            规划中
+            {t('pdm.pdm_batch_page.e2')}
           </Typography>
           <Typography
             variant='h5'
@@ -120,7 +120,7 @@ export default function PdmBatchPage() {
             variant='body2'
             sx={{ color: 'slate.600' }}
           >
-            进行中
+            {t('pdm.pdm_batch_page.e3')}
           </Typography>
           <Typography
             variant='h5'
@@ -134,7 +134,7 @@ export default function PdmBatchPage() {
             variant='body2'
             sx={{ color: 'slate.600' }}
           >
-            已完成
+            {t('pdm.pdm_batch_page.e4')}
           </Typography>
           <Typography
             variant='h5'

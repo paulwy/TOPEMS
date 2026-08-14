@@ -226,13 +226,13 @@ const FinanceCostPage: React.FC = () => {
                   >
                     <TrendingUp size={28} />
                   </Box>
-                  成本管理
+                  {t('finance.finance_cost_page.e1')}
                 </Typography>
                 <Typography
                   variant='body2'
                   color='text.secondary'
                 >
-                  管理成本中心预算和实际成本，分析成本差异
+                  {t('finance.finance_cost_page.e2')}
                 </Typography>
               </Box>
             </Stack>
@@ -245,7 +245,7 @@ const FinanceCostPage: React.FC = () => {
                 startIcon={<Download size={20} />}
                 onClick={handleExport}
               >
-                导出报表
+                {t('finance.finance_cost_page.e3')}
               </Button>
             </Stack>
           </Stack>
@@ -286,7 +286,7 @@ const FinanceCostPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    科目编码
+                    {t('finance.finance_asset_page.e7')}
                   </Typography>
                   <Typography
                     variant='body1'
@@ -300,7 +300,7 @@ const FinanceCostPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    成本项目
+                    {t('finance.finance_cost_page.e5')}
                   </Typography>
                   <Typography
                     variant='body1'
@@ -315,7 +315,7 @@ const FinanceCostPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  借方余额
+                  {t('finance.finance_cost_page.e6')}
                 </Typography>
                 <Typography
                   variant='h6'
@@ -339,7 +339,7 @@ const FinanceCostPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    本期借方发生
+                    {t('finance.finance_cost_page.e7')}
                   </Typography>
                   <Typography
                     variant='body1'
@@ -356,7 +356,7 @@ const FinanceCostPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    本期贷方发生
+                    {t('finance.finance_cost_page.e8')}
                   </Typography>
                   <Typography
                     variant='body1'
@@ -375,7 +375,7 @@ const FinanceCostPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    备注
+                    {t('finance.finance_cost_page.e9')}
                   </Typography>
                   <Typography
                     variant='body1'

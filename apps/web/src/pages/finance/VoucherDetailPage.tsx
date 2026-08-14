@@ -250,13 +250,13 @@ const VoucherDetailPage: React.FC = () => {
             variant='h6'
             color='text.secondary'
           >
-            凭证不存在
+            {t('finance.voucher_detail_page.e1')}
           </Typography>
           <Button
             onClick={() => navigate(FINANCE_PATHS.vouchers)}
             sx={{ mt: 2 }}
           >
-            返回列表
+            {t('finance.voucher_detail_page.e2')}
           </Button>
         </Box>
       </Box>
@@ -268,7 +268,7 @@ const VoucherDetailPage: React.FC = () => {
   const infoCard = {
     avatar: <FileText size={32} />,
     title: voucherNumber,
-    subtitle: `期间: ${voucher.period}`,
+    subtitle: t('finance.voucher_detail_page.e3', { v1: voucher.period }),
     tags: [getStatusBadge(voucher.status)] as unknown as string[],
     stats: [
       {
@@ -289,7 +289,7 @@ const VoucherDetailPage: React.FC = () => {
           variant='h6'
           sx={{ fontWeight: 600, mb: 3 }}
         >
-          基本信息
+          {t('finance.voucher_create_page.e1')}
         </Typography>
         <Box
           sx={{
@@ -307,7 +307,7 @@ const VoucherDetailPage: React.FC = () => {
               variant='caption'
               color='text.secondary'
             >
-              凭证编号
+              {t('finance.finance_voucher_page_components_voucher_detail_modal.e1')}
             </Typography>
             <Typography
               variant='body1'
@@ -321,7 +321,7 @@ const VoucherDetailPage: React.FC = () => {
               variant='caption'
               color='text.secondary'
             >
-              凭证日期
+              {t('finance.finance_voucher_page_components_voucher_detail_modal.e2')}
             </Typography>
             <Typography variant='body1'>{formatDate(voucher.voucher_date)}</Typography>
           </Box>
@@ -330,7 +330,7 @@ const VoucherDetailPage: React.FC = () => {
               variant='caption'
               color='text.secondary'
             >
-              会计期间
+              {t('finance.voucher_detail_page.e7')}
             </Typography>
             <Typography variant='body1'>{voucher.period}</Typography>
           </Box>
@@ -339,7 +339,7 @@ const VoucherDetailPage: React.FC = () => {
               variant='caption'
               color='text.secondary'
             >
-              附件数量
+              {t('finance.voucher_detail_page.e8')}
             </Typography>
             <Typography variant='body1'>{voucher.attachment_count || 0} 个</Typography>
           </Box>
@@ -348,7 +348,7 @@ const VoucherDetailPage: React.FC = () => {
               variant='caption'
               color='text.secondary'
             >
-              凭证状态
+              {t('finance.voucher_detail_page.e9')}
             </Typography>
             <Box sx={{ mt: 0.5 }}>{getStatusBadge(voucher.status)}</Box>
           </Box>
@@ -357,7 +357,7 @@ const VoucherDetailPage: React.FC = () => {
               variant='caption'
               color='text.secondary'
             >
-              凭证摘要
+              {t('finance.voucher_detail_page.e10')}
             </Typography>
             <Typography variant='body1'>{voucher.summary || '-'}</Typography>
           </Box>
@@ -369,7 +369,7 @@ const VoucherDetailPage: React.FC = () => {
           variant='h6'
           sx={{ fontWeight: 600, mb: 3 }}
         >
-          人员信息
+          {t('finance.voucher_detail_page.e11')}
         </Typography>
         <Box
           sx={{
@@ -397,7 +397,7 @@ const VoucherDetailPage: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                制单人
+                {t('finance.finance_voucher_page_components_voucher_detail_modal.e6')}
               </Typography>
               <Typography
                 variant='body1'
@@ -426,7 +426,7 @@ const VoucherDetailPage: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                审核人
+                {t('finance.finance_voucher_page_components_voucher_detail_modal.e7')}
               </Typography>
               <Typography
                 variant='body1'
@@ -455,7 +455,7 @@ const VoucherDetailPage: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                记账人
+                {t('finance.voucher_detail_page.e14')}
               </Typography>
               <Typography
                 variant='body1'
@@ -485,7 +485,7 @@ const VoucherDetailPage: React.FC = () => {
             variant='h6'
             sx={{ fontWeight: 600 }}
           >
-            凭证明细
+            {t('finance.finance_voucher_page_components_voucher_detail_modal.e8')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Typography
@@ -535,10 +535,10 @@ const VoucherDetailPage: React.FC = () => {
                   {t('finance.voucher_detail_page.k3')}
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, width: 150, textAlign: 'right' }}>
-                  借方金额
+                  {t('finance.voucher_create_page.e4')}
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, width: 150, textAlign: 'right' }}>
-                  贷方金额
+                  {t('finance.voucher_create_page.e5')}
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -594,7 +594,7 @@ const VoucherDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              借方合计
+              {t('finance.finance_voucher_page_components_voucher_detail_modal.e9')}
             </Typography>
             <Typography
               variant='h6'
@@ -608,7 +608,7 @@ const VoucherDetailPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              贷方合计
+              {t('finance.finance_voucher_page_components_voucher_detail_modal.e10')}
             </Typography>
             <Typography
               variant='h6'
@@ -629,7 +629,7 @@ const VoucherDetailPage: React.FC = () => {
           variant='h6'
           sx={{ fontWeight: 600, mb: 3 }}
         >
-          操作日志
+          {t('finance.voucher_detail_page.e20')}
         </Typography>
         <Stack spacing={2}>
           <Box
@@ -660,7 +660,7 @@ const VoucherDetailPage: React.FC = () => {
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                凭证创建
+                {t('finance.voucher_detail_page.e21')}
               </Typography>
               <Typography
                 variant='caption'
@@ -700,7 +700,7 @@ const VoucherDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ fontWeight: 500 }}
                 >
-                  凭证审核
+                  {t('finance.voucher_detail_page.e22')}
                 </Typography>
                 <Typography
                   variant='caption'
@@ -741,7 +741,7 @@ const VoucherDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ fontWeight: 500 }}
                 >
-                  凭证记账
+                  {t('finance.voucher_detail_page.e23')}
                 </Typography>
                 <Typography
                   variant='caption'
@@ -772,7 +772,7 @@ const VoucherDetailPage: React.FC = () => {
   return (
     <DetailPageTemplate
       title={voucherNumber}
-      subtitle={`期间: ${voucher.period}`}
+      subtitle={t('finance.voucher_detail_page.e3', { v1: voucher.period })}
       detailItemName={
         voucher?.voucher_no ||
         voucher?.voucher_number ||

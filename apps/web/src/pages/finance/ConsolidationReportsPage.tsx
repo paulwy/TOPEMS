@@ -316,7 +316,13 @@ export default function ConsolidationReportsPage() {
           report_type: REPORT_TYPE_CONFIG[report.report_type]?.name || report.report_type,
           scope_name: report.scope_name,
           period: report.period,
-          company_count: `${report.company_count}家${report.eliminated_company_count > 0 ? ` (抵消${report.eliminated_company_count}家)` : ''}`,
+          company_count: i18n.t('finance.consolidation_reports_page.e1', {
+            v1: report.company_count,
+            v2:
+              report.eliminated_company_count > 0
+                ? ` (抵消${report.eliminated_company_count}家)`
+                : '',
+          }),
           total_assets: report.total_assets
             ? `¥${report.total_assets.toLocaleString('zh-CN')}`
             : '-',
@@ -395,7 +401,7 @@ export default function ConsolidationReportsPage() {
         onClick={handleOpenGenerateModal}
       >
         <Plus sx={{ width: 16, height: 16, marginRight: 8 }} />
-        生成合并报表
+        {t('finance.consolidation_reports_page.e3')}
       </Button>
     </Box>
   );
@@ -462,7 +468,7 @@ export default function ConsolidationReportsPage() {
                     variant='body2'
                     color='text.secondary'
                   >
-                    资产总计
+                    {t('finance.consolidation_reports_page.e4')}
                   </Typography>
                   <Typography
                     variant='h6'
@@ -477,7 +483,7 @@ export default function ConsolidationReportsPage() {
                       variant='body2'
                       color='text.secondary'
                     >
-                      负债合计
+                      {t('finance.consolidation_reports_page.e5')}
                     </Typography>
                     <Typography
                       variant='h6'
@@ -493,7 +499,7 @@ export default function ConsolidationReportsPage() {
                       variant='body2'
                       color='text.secondary'
                     >
-                      所有者权益
+                      {t('finance.consolidation_reports_page.e6')}
                     </Typography>
                     <Typography
                       variant='h6'
@@ -509,7 +515,7 @@ export default function ConsolidationReportsPage() {
                       variant='body2'
                       color='text.secondary'
                     >
-                      净利润
+                      {t('finance.consolidation_reports_page.e7')}
                     </Typography>
                     <Typography
                       variant='h6'
@@ -539,7 +545,7 @@ export default function ConsolidationReportsPage() {
                           backgroundColor: ct.background.default,
                         }}
                       >
-                        项目
+                        {t('finance.consolidation_reports_page.e8')}
                       </th>
                       <th
                         style={{
@@ -549,7 +555,7 @@ export default function ConsolidationReportsPage() {
                           backgroundColor: ct.background.default,
                         }}
                       >
-                        本期金额
+                        {t('finance.consolidation_reports_page.e9')}
                       </th>
                       <th
                         style={{
@@ -559,7 +565,7 @@ export default function ConsolidationReportsPage() {
                           backgroundColor: ct.background.default,
                         }}
                       >
-                        上期金额
+                        {t('finance.consolidation_reports_page.e10')}
                       </th>
                       <th
                         style={{
@@ -569,7 +575,7 @@ export default function ConsolidationReportsPage() {
                           backgroundColor: ct.background.default,
                         }}
                       >
-                        变动
+                        {t('finance.consolidation_reports_page.e11')}
                       </th>
                       <th
                         style={{
@@ -579,7 +585,7 @@ export default function ConsolidationReportsPage() {
                           backgroundColor: ct.background.default,
                         }}
                       >
-                        变动率
+                        {t('finance.consolidation_reports_page.e12')}
                       </th>
                     </tr>
                   </thead>
@@ -656,19 +662,19 @@ export default function ConsolidationReportsPage() {
               selectedReport.status === 'completed' && (
                 <Button onClick={() => approveReport.mutate(selectedReport.id)}>
                   <Check style={{ width: 16, height: 16, marginRight: 8 }} />
-                  审批通过
+                  {t('finance.consolidation_reports_page.e13')}
                 </Button>
               )}
             {selectedReport.approval_status === 'approved' &&
               selectedReport.status === 'completed' && (
                 <Button onClick={() => publishReport.mutate(selectedReport.id)}>
                   <Send style={{ width: 16, height: 16, marginRight: 8 }} />
-                  发布
+                  {t('finance.consolidation_reports_page.e14')}
                 </Button>
               )}
             <Button variant='outlined'>
               <Download style={{ width: 16, height: 16, marginRight: 8 }} />
-              导出Excel
+              {t('finance.consolidation_reports_page.e15')}
             </Button>
             <Button onClick={() => setShowDetail(false)}>
               {t('finance.consolidation_reports_page.k16')}
@@ -742,7 +748,7 @@ export default function ConsolidationReportsPage() {
               color='text.secondary'
               sx={{ mt: 2 }}
             >
-              生成报表可能需要几分钟时间，系统将在后台处理。
+              {t('finance.consolidation_reports_page.e16')}
             </Typography>
           </Box>
         </DialogContent>
@@ -751,7 +757,7 @@ export default function ConsolidationReportsPage() {
             variant='outlined'
             onClick={() => setShowGenerateModal(false)}
           >
-            取消
+            {t('finance.budget_management_page.e7')}
           </Button>
           <Button
             variant='contained'

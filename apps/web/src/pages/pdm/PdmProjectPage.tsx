@@ -302,7 +302,7 @@ const PdmProjectPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            项目总数
+            {t('pdm.pdm_project_page.e1')}
           </Typography>
           <Typography
             variant='h5'
@@ -316,7 +316,7 @@ const PdmProjectPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            进行中
+            {t('pdm.pdm_batch_page.e3')}
           </Typography>
           <Typography
             variant='h5'
@@ -330,7 +330,7 @@ const PdmProjectPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            规划中
+            {t('pdm.pdm_batch_page.e2')}
           </Typography>
           <Typography
             variant='h5'
@@ -442,7 +442,7 @@ const PdmProjectPage: React.FC = () => {
               variant='h6'
               sx={{ mb: 2 }}
             >
-              项目阶段
+              {t('pdm.pdm_project_page.e4')}
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {phases.map((phase) => (

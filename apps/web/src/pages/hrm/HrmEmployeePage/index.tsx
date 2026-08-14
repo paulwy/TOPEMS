@@ -129,7 +129,7 @@ const HrmEmployeePage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            员工总数
+            {t('hrm.hrm_employee_page_index.e1')}
           </Typography>
           <Typography
             variant='h5'
@@ -143,7 +143,7 @@ const HrmEmployeePage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            在职员工
+            {t('hrm.hrm_employee_page_index.e2')}
           </Typography>
           <Typography
             variant='h5'
@@ -157,7 +157,7 @@ const HrmEmployeePage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            离职员工
+            {t('hrm.hrm_employee_page_index.e3')}
           </Typography>
           <Typography
             variant='h5'
@@ -171,7 +171,7 @@ const HrmEmployeePage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            在职率
+            {t('hrm.hrm_employee_page_index.e4')}
           </Typography>
           <Typography
             variant='h5'

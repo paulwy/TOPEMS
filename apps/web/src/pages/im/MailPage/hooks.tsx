@@ -271,18 +271,18 @@ export function useMailPage() {
     } else {
       const { valid, invalidEmails } = validateEmailList(sendForm.to_addresses);
       if (!valid) {
-        errors.to_addresses = `无效的邮箱地址: ${invalidEmails.join(', ')}`;
+        errors.to_addresses = i18n.t('im.mail_page_hooks.e1', { v1: invalidEmails.join(', ') });
       }
     }
 
     if (sendForm.cc_addresses && !validateEmailList(sendForm.cc_addresses).valid) {
       const { invalidEmails } = validateEmailList(sendForm.cc_addresses);
-      errors.cc_addresses = `无效的抄送邮箱: ${invalidEmails.join(', ')}`;
+      errors.cc_addresses = i18n.t('im.mail_page_hooks.e2', { v1: invalidEmails.join(', ') });
     }
 
     if (sendForm.bcc_addresses && !validateEmailList(sendForm.bcc_addresses).valid) {
       const { invalidEmails } = validateEmailList(sendForm.bcc_addresses);
-      errors.bcc_addresses = `无效的密送邮箱: ${invalidEmails.join(', ')}`;
+      errors.bcc_addresses = i18n.t('im.mail_page_hooks.e3', { v1: invalidEmails.join(', ') });
     }
 
     if (!sendForm.body.trim()) {
@@ -462,7 +462,7 @@ export function useMailPage() {
     onSuccess: (result) => {
       addNotification({
         title: i18n.t('im.hooks.k29'),
-        message: `成功删除 ${result.successCount}/${result.total} 条记录`,
+        message: i18n.t('im.mail_page_hooks.e4', { v1: result.successCount, v2: result.total }),
         type: result.successCount === result.total ? 'success' : 'warning',
       });
       setSelectedEmails([]);
@@ -486,7 +486,7 @@ export function useMailPage() {
         const result = res.data;
         addNotification({
           title: i18n.t('im.hooks.k30'),
-          message: `成功重发 ${result.success}/${result.total} 条邮件`,
+          message: i18n.t('im.mail_page_hooks.e5', { v1: result.success, v2: result.total }),
           type: result.success === result.total ? 'success' : 'warning',
         });
       } else {

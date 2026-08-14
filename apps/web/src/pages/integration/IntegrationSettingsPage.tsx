@@ -21,6 +21,7 @@ import {
   Chip,
   Alert,
 } from '@mui/material';
+import i18n from '@/i18n';
 import { Save, RefreshCw, Plus, TestTube, Bell, Clock, Key, Globe } from 'lucide-react';
 
 import { PageContainer } from '@/components/common';
@@ -105,7 +106,7 @@ export const IntegrationSettingsPage: React.FC = () => {
       });
       addNotification({
         title: t('integration.integration_settings_page.k0'),
-        message: `成功连接到「${config.name}」系统`,
+        message: i18n.t('integration.integration_settings_page.e1', { v1: config.name }),
         type: 'success',
       });
     },
@@ -189,7 +190,7 @@ export const IntegrationSettingsPage: React.FC = () => {
             color='text.secondary'
             sx={{ ml: 6 }}
           >
-            开启后系统将按设定间隔自动执行数据同步任务
+            {t('integration.integration_settings_page.e2')}
           </Typography>
         </Box>
 
@@ -244,7 +245,13 @@ export const IntegrationSettingsPage: React.FC = () => {
               }))
             }
             slotProps={{
-              input: { endAdornment: <Typography color='text.secondary'>秒</Typography> },
+              input: {
+                endAdornment: (
+                  <Typography color='text.secondary'>
+                    {t('integration.integration_settings_page.e3')}
+                  </Typography>
+                ),
+              },
             }}
             sx={{ width: 150 }}
           />
@@ -260,7 +267,13 @@ export const IntegrationSettingsPage: React.FC = () => {
               }))
             }
             slotProps={{
-              input: { endAdornment: <Typography color='text.secondary'>天</Typography> },
+              input: {
+                endAdornment: (
+                  <Typography color='text.secondary'>
+                    {t('integration.integration_settings_page.e4')}
+                  </Typography>
+                ),
+              },
             }}
             sx={{ width: 150 }}
           />
@@ -301,7 +314,7 @@ export const IntegrationSettingsPage: React.FC = () => {
             variant='outlined'
             onClick={() => setGlobalSettings(MOCK_CONFIGS[0] && globalSettings)}
           >
-            重置
+            {t('integration.integration_settings_page.e5')}
           </Button>
           <Button
             variant='contained'
@@ -309,7 +322,7 @@ export const IntegrationSettingsPage: React.FC = () => {
             onClick={handleSaveGlobalSettings}
             disabled={loading}
           >
-            保存设置
+            {t('integration.integration_settings_page.e6')}
           </Button>
         </Box>
       </Box>
@@ -375,7 +388,7 @@ export const IntegrationSettingsPage: React.FC = () => {
             onClick={handleSaveGlobalSettings}
             disabled={loading}
           >
-            保存设置
+            {t('integration.integration_settings_page.e6')}
           </Button>
         </Box>
       </Box>
@@ -425,7 +438,7 @@ export const IntegrationSettingsPage: React.FC = () => {
                     startIcon={<TestTube size={14} />}
                     onClick={() => handleTestConnection(config)}
                   >
-                    测试
+                    {t('integration.integration_settings_page.e8')}
                   </Button>
                   <FormControlLabel
                     control={
@@ -536,7 +549,7 @@ export const IntegrationSettingsPage: React.FC = () => {
           }
           sx={{ mt: 1 }}
         >
-          添加连接
+          {t('integration.integration_settings_page.e9')}
         </Button>
       </Box>
     ),
@@ -551,7 +564,7 @@ export const IntegrationSettingsPage: React.FC = () => {
         severity='info'
         sx={{ mb: 3 }}
       >
-        集成平台负责管理系统间的数据同步和API集成。请确保各子系统连接配置正确，并定期检查同步任务的执行状态。
+        {t('integration.integration_settings_page.e10')}
       </Alert>
 
       <Card
@@ -565,7 +578,7 @@ export const IntegrationSettingsPage: React.FC = () => {
               variant='subtitle1'
               sx={{ fontWeight: 600 }}
             >
-              全局同步设置
+              {t('integration.integration_settings_page.e11')}
             </Typography>
           </Box>
           {generalSection.children}
@@ -583,7 +596,7 @@ export const IntegrationSettingsPage: React.FC = () => {
               variant='subtitle1'
               sx={{ fontWeight: 600 }}
             >
-              通知设置
+              {t('integration.integration_settings_page.e12')}
             </Typography>
           </Box>
           {notificationSection.children}
@@ -598,7 +611,7 @@ export const IntegrationSettingsPage: React.FC = () => {
               variant='subtitle1'
               sx={{ fontWeight: 600 }}
             >
-              系统连接配置
+              {t('integration.integration_settings_page.e13')}
             </Typography>
           </Box>
           {connectionsSection.children}

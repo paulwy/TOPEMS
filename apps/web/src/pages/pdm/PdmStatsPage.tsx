@@ -192,7 +192,7 @@ const PdmStatsPage: React.FC = () => {
       value: stats.totalProcesses,
       icon: <Factory sx={{ width: 24, height: 24 }} />,
       gradient: [ct.teal.main, ct.teal.dark] as [string, string],
-      description: `启用 ${stats.activeProcesses}`,
+      description: t('pdm.pdm_stats_page.e1', { v1: stats.activeProcesses }),
       trend: { value: 0, direction: 'neutral' as const },
     },
     {
@@ -209,7 +209,7 @@ const PdmStatsPage: React.FC = () => {
       value: stats.totalFormulas,
       icon: <Package sx={{ width: 24, height: 24 }} />,
       gradient: ['warning.main', ct.warning.dark] as [string, string],
-      description: `活跃 ${stats.activeFormulas}`,
+      description: t('pdm.pdm_stats_page.e2', { v1: stats.activeFormulas }),
       trend: { value: 0, direction: 'neutral' as const },
     },
     {
@@ -218,7 +218,7 @@ const PdmStatsPage: React.FC = () => {
       value: stats.totalBatches,
       icon: <Activity sx={{ width: 24, height: 24 }} />,
       gradient: [ct.secondary[400], ct.secondary[600]] as [string, string],
-      description: `进行中 ${stats.inProgressBatches}`,
+      description: t('pdm.pdm_stats_page.e3', { v1: stats.inProgressBatches }),
       trend: { value: 0, direction: 'neutral' as const },
     },
     {

@@ -144,7 +144,7 @@ export const DashboardPage: React.FC = () => {
   return (
     <PageContainer
       title={t('gis.dashboard_page.k15')}
-      subtitle={`${getGreeting()}，地图视图与空间分析`}
+      subtitle={t('gis.dashboard_page.e1')}
       padding={false}
       maxWidth={false}
     >

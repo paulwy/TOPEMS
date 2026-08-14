@@ -209,7 +209,7 @@ const TaxHeader: React.FC = () => {
     {
       id: 'pending',
       title: t('finance.finance_tax_page.text_ee8231'),
-      value: `${pendingCount} 笔`,
+      value: t('finance.finance_tax_page.e1'),
       color: 'warning',
       icon: <Clock size={24} />,
     },
@@ -372,7 +372,7 @@ const FinanceTaxPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    税种
+                    {t('finance.finance_tax_page.e2')}
                   </Typography>
                   <Typography
                     variant='body1'
@@ -386,7 +386,7 @@ const FinanceTaxPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    申报期间
+                    {t('finance.finance_tax_page.e3')}
                   </Typography>
                   <Typography
                     variant='body1'
@@ -408,7 +408,7 @@ const FinanceTaxPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    应税收入
+                    {t('finance.finance_tax_page.e4')}
                   </Typography>
                   <Typography
                     variant='h6'
@@ -422,7 +422,7 @@ const FinanceTaxPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    税率
+                    {t('finance.finance_tax_page.e5')}
                   </Typography>
                   <Typography
                     variant='h6'
@@ -444,7 +444,7 @@ const FinanceTaxPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  申报税额
+                  {t('finance.finance_tax_page.e6')}
                 </Typography>
                 <Typography
                   variant='h4'
@@ -465,7 +465,7 @@ const FinanceTaxPage: React.FC = () => {
             color='success'
             onClick={confirmDeclare}
           >
-            确认申报
+            {t('finance.finance_tax_page.e7')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -496,7 +496,7 @@ const FinanceTaxPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    税种
+                    {t('finance.finance_tax_page.e2')}
                   </Typography>
                   <Typography
                     variant='body1'
@@ -510,7 +510,7 @@ const FinanceTaxPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    申报期间
+                    {t('finance.finance_tax_page.e3')}
                   </Typography>
                   <Typography
                     variant='body1'
@@ -532,7 +532,7 @@ const FinanceTaxPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    已缴税额
+                    {t('finance.finance_tax_page.e10')}
                   </Typography>
                   <Typography
                     variant='h6'
@@ -546,7 +546,7 @@ const FinanceTaxPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    欠税金额
+                    {t('finance.finance_tax_page.e11')}
                   </Typography>
                   <Typography
                     variant='h6'
@@ -568,7 +568,7 @@ const FinanceTaxPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  本次缴纳金额
+                  {t('finance.finance_tax_page.e12')}
                 </Typography>
                 <Typography
                   variant='h4'
@@ -587,7 +587,7 @@ const FinanceTaxPage: React.FC = () => {
             color='warning'
             onClick={confirmPay}
           >
-            确认缴纳
+            {t('finance.finance_tax_page.e13')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -618,7 +618,7 @@ const FinanceTaxPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    税种
+                    {t('finance.finance_tax_page.e2')}
                   </Typography>
                   <Typography
                     variant='body1'
@@ -632,7 +632,7 @@ const FinanceTaxPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    申报期间
+                    {t('finance.finance_tax_page.e3')}
                   </Typography>
                   <Typography
                     variant='body1'
@@ -654,7 +654,7 @@ const FinanceTaxPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    应税收入
+                    {t('finance.finance_tax_page.e4')}
                   </Typography>
                   <Typography
                     variant='h6'
@@ -668,7 +668,7 @@ const FinanceTaxPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    税率
+                    {t('finance.finance_tax_page.e5')}
                   </Typography>
                   <Typography
                     variant='h6'
@@ -682,7 +682,7 @@ const FinanceTaxPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    已缴税额
+                    {t('finance.finance_tax_page.e10')}
                   </Typography>
                   <Typography
                     variant='h6'
@@ -697,15 +697,21 @@ const FinanceTaxPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  税务分析
+                  {t('finance.finance_tax_page.e19')}
                 </Typography>
                 <Typography
                   variant='body1'
                   sx={{ mt: 1 }}
                 >
                   {selectedTax.owed_amount > 0
-                    ? `该纳税人本期应缴纳税额 ¥${selectedTax.tax_amount.toLocaleString()}，已缴纳 ¥${selectedTax.paid_amount.toLocaleString()}，尚欠税款 ¥${selectedTax.owed_amount.toLocaleString()}，需要在规定期限内完成缴纳。`
-                    : `该纳税人本期应缴纳税额 ¥${selectedTax.tax_amount.toLocaleString()}，已全部缴纳完毕，税务合规。`}
+                    ? t('finance.finance_tax_page.e20', {
+                        v1: selectedTax.tax_amount.toLocaleString(),
+                        v2: selectedTax.paid_amount.toLocaleString(),
+                        v3: selectedTax.owed_amount.toLocaleString(),
+                      })
+                    : t('finance.finance_tax_page.e21', {
+                        v1: selectedTax.tax_amount.toLocaleString(),
+                      })}
                 </Typography>
               </MuiBox>
             </Stack>

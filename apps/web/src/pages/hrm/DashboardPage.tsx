@@ -325,7 +325,7 @@ export const DashboardPage: React.FC = () => {
   return (
     <PageContainer
       title={t('hrm.dashboard_page.text_695be5')}
-      subtitle={`${getGreeting()}，员工管理与绩效考核`}
+      subtitle={t('hrm.dashboard_page.e1')}
       padding={false}
       maxWidth={false}
       autoTitle

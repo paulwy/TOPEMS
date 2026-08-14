@@ -50,7 +50,7 @@ export const FormDesignPage: React.FC = () => {
     try {
       parsedFields = JSON.parse(draft);
     } catch (e) {
-      setError(`字段 JSON 解析失败：${e instanceof Error ? e.message : ''}`);
+      setError(t('lowcode.form_design_page.e1', { v1: e instanceof Error ? e.message : '' }));
       setSaving(false);
       return;
     }
@@ -122,7 +122,7 @@ export const FormDesignPage: React.FC = () => {
           color='text.secondary'
           sx={{ mb: 1 }}
         >
-          当前以 JSON 形式编辑表单字段（V1 占位，可视化拖拽设计器见 V65）。
+          {t('lowcode.form_design_page.e2')}
           {form && ` 绑定数据模型：${form.data_model_id ?? t('lowcode.form_design_page.k6')}`}
         </Typography>
 
@@ -155,7 +155,7 @@ export const FormDesignPage: React.FC = () => {
               setSearchParams(searchParams);
             }}
           >
-            清除选择
+            {t('lowcode.form_design_page.e3')}
           </Button>
         </Typography>
       </Box>

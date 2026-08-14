@@ -276,7 +276,7 @@ const VoucherCreatePage: React.FC = () => {
           variant='h6'
           sx={{ fontWeight: 600, mb: 3 }}
         >
-          基本信息
+          {t('finance.voucher_create_page.e1')}
         </Typography>
         <Box
           sx={{
@@ -362,7 +362,7 @@ const VoucherCreatePage: React.FC = () => {
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              凭证明细
+              {t('finance.finance_voucher_page_components_voucher_detail_modal.e8')}
             </Typography>
             {!isBalanced && totalDebit > 0 && (
               <Chip
@@ -380,7 +380,7 @@ const VoucherCreatePage: React.FC = () => {
             startIcon={<Plus size={16} />}
             onClick={addVoucherItem}
           >
-            添加分录
+            {t('finance.voucher_create_page.e3')}
           </Button>
         </Box>
 
@@ -401,10 +401,10 @@ const VoucherCreatePage: React.FC = () => {
                   {t('finance.voucher_create_page.k2')}
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, width: 180, textAlign: 'right' }}>
-                  借方金额
+                  {t('finance.voucher_create_page.e4')}
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, width: 180, textAlign: 'right' }}>
-                  贷方金额
+                  {t('finance.voucher_create_page.e5')}
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, width: 80 }}>
                   {t('finance.voucher_create_page.k3')}
@@ -544,7 +544,7 @@ const VoucherCreatePage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              借方合计
+              {t('finance.finance_voucher_page_components_voucher_detail_modal.e9')}
             </Typography>
             <Typography
               variant='h6'
@@ -561,7 +561,7 @@ const VoucherCreatePage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              贷方合计
+              {t('finance.finance_voucher_page_components_voucher_detail_modal.e10')}
             </Typography>
             <Typography
               variant='h6'

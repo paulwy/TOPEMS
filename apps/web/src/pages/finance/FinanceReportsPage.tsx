@@ -339,7 +339,7 @@ const FinanceReportsPage: React.FC = () => {
         size='small'
         startIcon={<Download size={16} />}
       >
-        导出
+        {t('finance.finance_asset_page.e5')}
       </Button>
     </Box>
   );

@@ -57,7 +57,7 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
           color='text.secondary'
           sx={{ mb: 2 }}
         >
-          创建新的邮件模板，支持变量替换
+          {t('im.mail_page_components_create_template_dialog.e1')}
         </Typography>
         <form onSubmit={handleCreateTemplate}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
@@ -132,7 +132,7 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
                     value=''
                     disabled
                   >
-                    选择分类
+                    {t('im.mail_page_components_create_template_dialog.e2')}
                   </MenuItem>
                   {TEMPLATE_CATEGORIES.map((cat) => (
                     <MenuItem
@@ -223,7 +223,7 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500, color: 'info.dark', mb: 1 }}
               >
-                变量使用说明
+                {t('im.mail_page_components_create_template_dialog.e3')}
               </Typography>
               <Typography
                 variant='body2'
@@ -241,7 +241,7 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
                 >
                   {'{{变量名}}'}
                 </Box>{' '}
-                格式的变量，发送邮件时传入数据即可替换。
+                {t('im.mail_page_components_create_template_dialog.e4')}
               </Typography>
             </Box>
           </Box>
@@ -254,7 +254,7 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
                 resetTemplateForm();
               }}
             >
-              取消
+              {t('im.mail_page_components_create_template_dialog.e5')}
             </Button>
             <Button type='submit'>{t('im.create_template_dialog.k6')}</Button>
           </DialogActions>
