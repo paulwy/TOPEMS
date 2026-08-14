@@ -134,3 +134,123 @@ pub fn require_tenant_status(
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::{body::Body, http::Request, routing::get, Router};
+    use tower::ServiceExt;
+
+    const TENANT_ID: &str = "123e4567-e89b-12d3-a456-426614174000";
+    const USER_ID: &str = "123e4567-e89b-12d3-a456-426614174001";
+
+    fn make_claims(tenant_id: Option<&str>, user_id: &str, is_superuser: bool) -> Claims {
+        Claims {
+            sub: user_id.to_string(),
+            username: "tester".to_string(),
+            role: "user".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser,
+            exp: 9999999999,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: tenant_id.map(|s| s.to_string()),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    fn build_req(claims: Option<Claims>) -> Request<Body> {
+        let mut req = Request::builder()
+            .uri("/x")
+            .body(Body::empty())
+            .unwrap();
+        if let Some(c) = claims {
+            req.extensions_mut().insert(c);
+        }
+        req
+    }
+
+    async fn send_require_tenant_status(claims: Option<Claims>) -> StatusCode {
+        let app = Router::new()
+            .route("/protected", get(|| async { "ok" }))
+            .layer(axum::middleware::from_fn(require_tenant_status("active")));
+        let mut req = Request::builder()
+            .uri("/protected")
+            .body(Body::empty())
+            .unwrap();
+        if let Some(c) = claims {
+            req.extensions_mut().insert(c);
+        }
+        app.oneshot(req).await.expect("infallible").status()
+    }
+
+    // ===== TenantContext::from_request =====
+    #[test]
+    fn test_tenant_context_none_without_claims() {
+        let req = build_req(None);
+        assert!(TenantContext::from_request(&req).is_none());
+    }
+
+    #[test]
+    fn test_tenant_context_none_when_tenant_id_missing() {
+        let req = build_req(Some(make_claims(None, USER_ID, false)));
+        assert!(TenantContext::from_request(&req).is_none());
+    }
+
+    #[test]
+    fn test_tenant_context_none_for_invalid_user_id() {
+        // sub 不是合法 UUID
+        let req = build_req(Some(make_claims(Some(TENANT_ID), "not-a-uuid", false)));
+        assert!(TenantContext::from_request(&req).is_none());
+    }
+
+    #[test]
+    fn test_tenant_context_none_for_invalid_tenant_id() {
+        let req = build_req(Some(make_claims(Some("garbage"), USER_ID, false)));
+        assert!(TenantContext::from_request(&req).is_none());
+    }
+
+    #[test]
+    fn test_tenant_context_parses_valid_ids() {
+        let req = build_req(Some(make_claims(Some(TENANT_ID), USER_ID, false)));
+        let ctx = TenantContext::from_request(&req).expect("some");
+        assert_eq!(ctx.tenant_id.to_string(), TENANT_ID);
+        assert_eq!(ctx.user_id.to_string(), USER_ID);
+    }
+
+    #[test]
+    fn test_tenant_context_clone_preserves_ids() {
+        let ctx = TenantContext {
+            tenant_id: Uuid::parse_str(TENANT_ID).unwrap(),
+            user_id: Uuid::parse_str(USER_ID).unwrap(),
+        };
+        let cloned = ctx.clone();
+        assert_eq!(ctx.tenant_id, cloned.tenant_id);
+        assert_eq!(ctx.user_id, cloned.user_id);
+    }
+
+    // ===== require_tenant_status =====
+    #[tokio::test]
+    async fn test_require_tenant_status_unauthorized_without_claims() {
+        let status = send_require_tenant_status(None).await;
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn test_require_tenant_status_ok_for_superuser() {
+        let claims = make_claims(Some(TENANT_ID), USER_ID, true);
+        let status = send_require_tenant_status(Some(claims)).await;
+        assert_eq!(status, StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_require_tenant_status_ok_for_normal_user() {
+        let claims = make_claims(Some(TENANT_ID), USER_ID, false);
+        let status = send_require_tenant_status(Some(claims)).await;
+        assert_eq!(status, StatusCode::OK);
+    }
+}

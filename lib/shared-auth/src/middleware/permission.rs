@@ -226,3 +226,187 @@ pub fn require_all_permissions(
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::{body::Body, http::Request, routing::get, Router};
+    use tower::ServiceExt;
+
+    fn make_claims(perms: &[&str], is_superuser: bool, roles: &[&str]) -> Claims {
+        Claims {
+            sub: "123e4567-e89b-12d3-a456-426614174000".to_string(),
+            username: "tester".to_string(),
+            role: "user".to_string(),
+            roles: roles.iter().map(|s| s.to_string()).collect(),
+            permissions: perms.iter().map(|s| s.to_string()).collect(),
+            is_superuser,
+            exp: 9999999999,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    fn build_app<F>(mw: F) -> Router
+    where
+        F: Fn(Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
+            + Clone
+            + Send
+            + Sync
+            + 'static,
+    {
+        Router::new()
+            .route("/protected", get(|| async { "ok" }))
+            .layer(axum::middleware::from_fn(mw))
+    }
+
+    async fn send<F>(mw: F, claims: Option<Claims>) -> StatusCode
+    where
+        F: Fn(Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
+            + Clone
+            + Send
+            + Sync
+            + 'static,
+    {
+        let app = build_app(mw);
+        let mut req = Request::builder()
+            .uri("/protected")
+            .body(Body::empty())
+            .unwrap();
+        if let Some(c) = claims {
+            req.extensions_mut().insert(c);
+        }
+        app.oneshot(req).await.expect("infallible").status()
+    }
+
+    fn build_req(claims: Option<Claims>) -> Request<Body> {
+        let mut req = Request::builder()
+            .uri("/x")
+            .body(Body::empty())
+            .unwrap();
+        if let Some(c) = claims {
+            req.extensions_mut().insert(c);
+        }
+        req
+    }
+
+    // ===== extract_claims =====
+    #[test]
+    fn test_extract_claims_none_when_missing() {
+        let req = build_req(None);
+        assert!(extract_claims(&req).is_none());
+    }
+
+    #[test]
+    fn test_extract_claims_some_when_present() {
+        let req = build_req(Some(make_claims(&["p"], false, &[])));
+        let c = extract_claims(&req);
+        assert!(c.is_some());
+        assert_eq!(c.unwrap().username, "tester");
+    }
+
+    // ===== require_permission =====
+    #[tokio::test]
+    async fn test_require_permission_unauthorized_without_claims() {
+        let status = send(require_permission("iam:users_read"), None).await;
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn test_require_permission_forbidden_when_missing() {
+        let claims = make_claims(&["other:perm"], false, &[]);
+        let status = send(require_permission("iam:users_read"), Some(claims)).await;
+        assert_eq!(status, StatusCode::FORBIDDEN);
+    }
+
+    #[tokio::test]
+    async fn test_require_permission_ok_when_has() {
+        let claims = make_claims(&["iam:users_read"], false, &[]);
+        let status = send(require_permission("iam:users_read"), Some(claims)).await;
+        assert_eq!(status, StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_require_permission_ok_for_superuser() {
+        let claims = make_claims(&[], true, &[]);
+        let status = send(require_permission("iam:anything"), Some(claims)).await;
+        assert_eq!(status, StatusCode::OK);
+    }
+
+    // ===== require_role =====
+    #[tokio::test]
+    async fn test_require_role_unauthorized_without_claims() {
+        let status = send(require_role("admin"), None).await;
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn test_require_role_forbidden_when_missing() {
+        let claims = make_claims(&[], false, &["user"]);
+        let status = send(require_role("admin"), Some(claims)).await;
+        assert_eq!(status, StatusCode::FORBIDDEN);
+    }
+
+    #[tokio::test]
+    async fn test_require_role_ok_when_has() {
+        let claims = make_claims(&[], false, &["admin"]);
+        let status = send(require_role("admin"), Some(claims)).await;
+        assert_eq!(status, StatusCode::OK);
+    }
+
+    // ===== require_superuser =====
+    #[tokio::test]
+    async fn test_require_superuser_unauthorized_without_claims() {
+        let status = send(require_superuser(), None).await;
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn test_require_superuser_forbidden_for_normal_user() {
+        let claims = make_claims(&[], false, &[]);
+        let status = send(require_superuser(), Some(claims)).await;
+        assert_eq!(status, StatusCode::FORBIDDEN);
+    }
+
+    #[tokio::test]
+    async fn test_require_superuser_ok_for_superuser() {
+        let claims = make_claims(&[], true, &[]);
+        let status = send(require_superuser(), Some(claims)).await;
+        assert_eq!(status, StatusCode::OK);
+    }
+
+    // ===== require_any_permission =====
+    #[tokio::test]
+    async fn test_require_any_permission_forbidden_when_none_match() {
+        let claims = make_claims(&["a", "b"], false, &[]);
+        let status = send(require_any_permission(&["x", "y"]), Some(claims)).await;
+        assert_eq!(status, StatusCode::FORBIDDEN);
+    }
+
+    #[tokio::test]
+    async fn test_require_any_permission_ok_when_one_matches() {
+        let claims = make_claims(&["a", "b"], false, &[]);
+        let status = send(require_any_permission(&["x", "b"]), Some(claims)).await;
+        assert_eq!(status, StatusCode::OK);
+    }
+
+    // ===== require_all_permissions =====
+    #[tokio::test]
+    async fn test_require_all_permissions_forbidden_on_partial_match() {
+        let claims = make_claims(&["a", "b"], false, &[]);
+        let status = send(require_all_permissions(&["a", "b", "c"]), Some(claims)).await;
+        assert_eq!(status, StatusCode::FORBIDDEN);
+    }
+
+    #[tokio::test]
+    async fn test_require_all_permissions_ok_when_all_match() {
+        let claims = make_claims(&["a", "b", "c"], false, &[]);
+        let status = send(require_all_permissions(&["a", "b", "c"]), Some(claims)).await;
+        assert_eq!(status, StatusCode::OK);
+    }
+}

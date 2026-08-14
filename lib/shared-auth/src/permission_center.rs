@@ -288,3 +288,188 @@ pub fn check_permission_with_scope(
 
     false
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::permission::{PermissionScope, ResourcePermission};
+
+    // ===== PermissionCenterClient::new =====
+    #[test]
+    fn test_client_new_initializes_empty_cache() {
+        let client = PermissionCenterClient::new("test-svc");
+        let stats = client.cache().stats();
+        assert_eq!(stats.total_permissions, 0);
+        assert_eq!(stats.total_modules, 0);
+    }
+
+    #[test]
+    fn test_client_cache_returns_arc_handle() {
+        let client = PermissionCenterClient::new("svc");
+        let cache1 = client.cache();
+        let cache2 = client.cache();
+        // 同一 Arc 引用
+        assert!(std::sync::Arc::ptr_eq(cache1, cache2));
+    }
+
+    #[test]
+    fn test_client_cache_is_shared_reference() {
+        let client = PermissionCenterClient::new("svc");
+        let cache = client.cache().clone();
+        // 在 clone 上写入，应反映到 client.cache()
+        cache.upsert(crate::permission::PermissionMetadata {
+            code: "test:read".to_string(),
+            module: "test".to_string(),
+            resource: "*".to_string(),
+            action: "read".to_string(),
+            scope: "all".to_string(),
+            name: "Test".to_string(),
+            description: None,
+            is_builtin: false,
+        });
+        assert_eq!(client.cache().stats().total_permissions, 1);
+    }
+
+    // ===== initialize (本地内置权限加载) =====
+    #[tokio::test]
+    async fn test_initialize_loads_builtin_permissions() {
+        let client = PermissionCenterClient::new("svc");
+        let result = client.initialize().await;
+        assert!(result.is_ok(), "initialize should succeed");
+        let stats = client.cache().stats();
+        // 内置权限应非空（21 个模块 * 4 动作 + 1 个 workflow:approve = 85）
+        assert!(stats.total_permissions > 0, "builtin permissions loaded");
+        assert!(stats.total_modules > 0);
+        assert!(stats.last_updated.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_initialize_idempotent_reload() {
+        let client = PermissionCenterClient::new("svc");
+        client.initialize().await.unwrap();
+        let count1 = client.cache().stats().total_permissions;
+
+        // 再次初始化应替换而非追加
+        client.initialize().await.unwrap();
+        let count2 = client.cache().stats().total_permissions;
+        assert_eq!(count1, count2, "re-init should replace not append");
+    }
+
+    // ===== fetch_from_iam (不可达地址 → fallback) =====
+    #[tokio::test]
+    async fn test_fetch_from_iam_unreachable_falls_back_to_builtin() {
+        let client = PermissionCenterClient::new("svc");
+        // 不可达地址（端口 1 通常被拒绝/超时）
+        let result = client.fetch_from_iam("http://127.0.0.1:1").await;
+        assert!(result.is_ok(), "should fall back to builtin on fetch failure");
+        let stats = client.cache().stats();
+        assert!(stats.total_permissions > 0, "fallback should load builtin");
+    }
+
+    // ===== build_builtin_permissions =====
+    #[test]
+    fn test_build_builtin_permissions_includes_iam_read() {
+        let client = PermissionCenterClient::new("svc");
+        let perms = client.build_builtin_permissions();
+        assert!(!perms.is_empty());
+        // 应包含 iam 模块的权限
+        let has_iam = perms.iter().any(|p| p.module == "iam");
+        assert!(has_iam);
+        // 所有内置权限应标记 is_builtin=true
+        assert!(perms.iter().all(|p| p.is_builtin));
+    }
+
+    #[test]
+    fn test_build_builtin_permissions_code_format() {
+        let client = PermissionCenterClient::new("svc");
+        let perms = client.build_builtin_permissions();
+        let first = perms.first().expect("non-empty");
+        // code 格式为 module:action:all
+        assert!(first.code.contains(":all"));
+        let parts: Vec<&str> = first.code.split(':').collect();
+        assert_eq!(parts.len(), 3);
+    }
+
+    // ===== check_permission_with_scope =====
+    #[test]
+    fn test_check_permission_with_scope_superuser_bypass() {
+        let required = ResourcePermission::new(
+            crate::permission::ModuleCode::Iam,
+            "users".to_string(),
+            crate::permission::PermissionAction::Read,
+        );
+        let user_perms = vec!["superuser".to_string()];
+        assert!(check_permission_with_scope(&user_perms, &required));
+    }
+
+    #[test]
+    fn test_check_permission_with_scope_exact_match_allows() {
+        let required = ResourcePermission::new(
+            crate::permission::ModuleCode::Iam,
+            "users".to_string(),
+            crate::permission::PermissionAction::Read,
+        );
+        let user_perms = vec!["iam:users:read:all".to_string()];
+        assert!(check_permission_with_scope(&user_perms, &required));
+    }
+
+    #[test]
+    fn test_check_permission_with_scope_admin_implies_read() {
+        let required = ResourcePermission::new(
+            crate::permission::ModuleCode::Iam,
+            "users".to_string(),
+            crate::permission::PermissionAction::Read,
+        );
+        // admin + All 应蕴含 read + All
+        let user_perms = vec!["iam:users:admin:all".to_string()];
+        assert!(check_permission_with_scope(&user_perms, &required));
+    }
+
+    #[test]
+    fn test_check_permission_with_scope_different_resource_denies() {
+        let required = ResourcePermission::new(
+            crate::permission::ModuleCode::Iam,
+            "users".to_string(),
+            crate::permission::PermissionAction::Read,
+        );
+        let user_perms = vec!["iam:roles:read:all".to_string()];
+        assert!(!check_permission_with_scope(&user_perms, &required));
+    }
+
+    #[test]
+    fn test_check_permission_with_scope_insufficient_scope_denies() {
+        // 用户拥有 self scope，但要求 all scope
+        let required = ResourcePermission::with_scope(
+            crate::permission::ModuleCode::Iam,
+            "users".to_string(),
+            crate::permission::PermissionAction::Read,
+            PermissionScope::All,
+        );
+        let user_perms = vec!["iam:users:read:self".to_string()];
+        // self 不蕴含 all
+        assert!(!check_permission_with_scope(&user_perms, &required));
+    }
+
+    #[test]
+    fn test_check_permission_with_scope_invalid_string_ignored() {
+        let required = ResourcePermission::new(
+            crate::permission::ModuleCode::Iam,
+            "users".to_string(),
+            crate::permission::PermissionAction::Read,
+        );
+        // 无效的权限字符串应被忽略，不报错
+        let user_perms = vec!["garbage".to_string(), "iam:users:read:all".to_string()];
+        assert!(check_permission_with_scope(&user_perms, &required));
+    }
+
+    #[test]
+    fn test_check_permission_with_scope_empty_perms_denies() {
+        let required = ResourcePermission::new(
+            crate::permission::ModuleCode::Iam,
+            "users".to_string(),
+            crate::permission::PermissionAction::Read,
+        );
+        let user_perms: Vec<String> = vec![];
+        assert!(!check_permission_with_scope(&user_perms, &required));
+    }
+}
