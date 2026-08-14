@@ -538,4 +538,246 @@ mod tests {
     fn test_format_im_message_empty_content() {
         assert_eq!(format_im_message("Alice", "", 100), "Alice: ");
     }
+
+    // ===== axum handler 桩实现测试（用 lazy pool 直接调用） =====
+
+    fn lazy_pool() -> PgPool {
+        use sqlx::postgres::PgPoolOptions;
+        PgPoolOptions::new()
+            .connect_lazy("postgres://nobody:nobody@127.0.0.1:1/none")
+            .expect("lazy pool")
+    }
+
+    #[tokio::test]
+    async fn test_list_rooms_stub() {
+        let res = list_rooms(State(lazy_pool())).await;
+        assert_eq!(res.0["success"], true);
+        assert_eq!(res.0["data"].as_array().unwrap().len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_create_room_stub() {
+        let res = create_room(State(lazy_pool()), Json(serde_json::json!({"name": "r"}))).await;
+        assert_eq!(res.0["success"], true);
+        assert_eq!(res.0["message"], "create_room success");
+    }
+
+    #[tokio::test]
+    async fn test_get_room_stub() {
+        let res = get_room(State(lazy_pool()), Path("room-1".to_string())).await;
+        assert_eq!(res.0["success"], true);
+        assert_eq!(res.0["message"], "get_room success");
+    }
+
+    #[tokio::test]
+    async fn test_get_messages_stub() {
+        let res = get_messages(State(lazy_pool()), Path("room-1".to_string())).await;
+        assert_eq!(res.0["success"], true);
+        assert!(res.0["data"].is_array());
+    }
+
+    #[tokio::test]
+    async fn test_send_message_stub() {
+        let res = send_message(
+            State(lazy_pool()),
+            Path("room-1".to_string()),
+            Json(serde_json::json!({"content": "hi"})),
+        )
+        .await;
+        assert_eq!(res.0["success"], true);
+    }
+
+    #[tokio::test]
+    async fn test_list_contacts_stub() {
+        let res = list_contacts(State(lazy_pool())).await;
+        assert_eq!(res.0["success"], true);
+        assert_eq!(res.0["message"], "list_contacts success");
+    }
+
+    #[tokio::test]
+    async fn test_add_contact_stub() {
+        let res = add_contact(
+            State(lazy_pool()),
+            Json(serde_json::json!({"user_id": "u1"})),
+        )
+        .await;
+        assert_eq!(res.0["success"], true);
+    }
+
+    #[tokio::test]
+    async fn test_get_online_status_stub() {
+        let res = get_online_status(State(lazy_pool()), Path("user-1".to_string())).await;
+        assert_eq!(res.0["success"], true);
+        assert_eq!(res.0["data"]["online"], false);
+    }
+
+    #[tokio::test]
+    async fn test_update_room_stub() {
+        let res = update_room(
+            State(lazy_pool()),
+            Path("room-1".to_string()),
+            Json(serde_json::json!({"name": "new"})),
+        )
+        .await;
+        assert_eq!(res.0["success"], true);
+    }
+
+    #[tokio::test]
+    async fn test_delete_room_stub() {
+        let res = delete_room(State(lazy_pool()), Path("room-1".to_string())).await;
+        assert_eq!(res.0["success"], true);
+        assert_eq!(res.0["message"], "delete_room success");
+    }
+
+    #[tokio::test]
+    async fn test_list_members_stub() {
+        let res = list_members(State(lazy_pool()), Path("room-1".to_string())).await;
+        assert_eq!(res.0["success"], true);
+        assert!(res.0["data"].is_array());
+    }
+
+    #[tokio::test]
+    async fn test_add_and_remove_member_stub() {
+        let pool = lazy_pool();
+        let add_res = add_member(
+            State(pool.clone()),
+            Path("room-1".to_string()),
+            Json(serde_json::json!({"user_id": "u1"})),
+        )
+        .await;
+        assert_eq!(add_res.0["success"], true);
+        let rm_res = remove_member(
+            State(pool),
+            Path("room-1".to_string()),
+            Json(serde_json::json!({"user_id": "u1"})),
+        )
+        .await;
+        assert_eq!(rm_res.0["success"], true);
+    }
+
+    #[tokio::test]
+    async fn test_update_and_delete_message_stub() {
+        let pool = lazy_pool();
+        let upd = update_message(
+            State(pool.clone()),
+            Path("msg-1".to_string()),
+            Json(serde_json::json!({"content": "edited"})),
+        )
+        .await;
+        assert_eq!(upd.0["success"], true);
+        let del = delete_message(State(pool), Path("msg-1".to_string())).await;
+        assert_eq!(del.0["success"], true);
+    }
+
+    #[tokio::test]
+    async fn test_mark_messages_read_stub() {
+        let res = mark_messages_read(State(lazy_pool()), Path("room-1".to_string())).await;
+        assert_eq!(res.0["success"], true);
+    }
+
+    #[tokio::test]
+    async fn test_list_im_notifications_stub() {
+        let res = list_im_notifications(State(lazy_pool()), Path("user-1".to_string())).await;
+        assert_eq!(res.0["success"], true);
+        assert!(res.0["data"].is_array());
+    }
+
+    #[tokio::test]
+    async fn test_project_groups_stubs() {
+        let pool = lazy_pool();
+        let list = list_project_groups(State(pool.clone())).await;
+        assert_eq!(list.0["success"], true);
+        let create =
+            create_project_group(State(pool), Json(serde_json::json!({"name": "g"}))).await;
+        assert_eq!(create.0["success"], true);
+    }
+
+    #[tokio::test]
+    async fn test_contact_groups_crud_stubs() {
+        let pool = lazy_pool();
+        assert_eq!(
+            list_contact_groups(State(pool.clone())).await.0["success"],
+            true
+        );
+        assert_eq!(
+            create_contact_group(State(pool.clone()), Json(serde_json::json!({"n": 1})))
+                .await
+                .0["success"],
+            true
+        );
+        assert_eq!(
+            update_contact_group(
+                State(pool.clone()),
+                Path("g1".to_string()),
+                Json(serde_json::json!({"name": "x"}))
+            )
+            .await
+            .0["success"],
+            true
+        );
+        assert_eq!(
+            delete_contact_group(State(pool), Path("g1".to_string()))
+                .await
+                .0["success"],
+            true
+        );
+    }
+
+    #[tokio::test]
+    async fn test_mute_and_pin_room_stubs() {
+        let pool = lazy_pool();
+        let mute = mute_room(
+            State(pool.clone()),
+            Path("room-1".to_string()),
+            Json(serde_json::json!({"muted": true})),
+        )
+        .await;
+        assert_eq!(mute.0["success"], true);
+        let pin = pin_message(
+            State(pool),
+            Path("room-1".to_string()),
+            Json(serde_json::json!({"msg_id": "m1"})),
+        )
+        .await;
+        assert_eq!(pin.0["success"], true);
+    }
+
+    #[tokio::test]
+    async fn test_search_rooms_and_messages_stubs() {
+        let pool = lazy_pool();
+        assert_eq!(search_rooms(State(pool.clone())).await.0["success"], true);
+        assert_eq!(
+            search_messages(State(pool), Path("room-1".to_string()))
+                .await
+                .0["success"],
+            true
+        );
+    }
+
+    #[tokio::test]
+    async fn test_contact_get_remove_update_stubs() {
+        let pool = lazy_pool();
+        assert_eq!(
+            get_contact(State(pool.clone()), Path("c1".to_string()))
+                .await
+                .0["success"],
+            true
+        );
+        assert_eq!(
+            remove_contact(State(pool.clone()), Path("c1".to_string()))
+                .await
+                .0["success"],
+            true
+        );
+        assert_eq!(
+            update_contact(
+                State(pool),
+                Path("c1".to_string()),
+                Json(serde_json::json!({"name": "x"}))
+            )
+            .await
+            .0["success"],
+            true
+        );
+    }
 }

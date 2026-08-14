@@ -191,3 +191,105 @@ pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::
         .await?;
     Ok(())
 }
+
+/// 仅测试用：暴露 TABLE_DEFS 供单元测试断言结构
+#[cfg(test)]
+pub(crate) fn table_defs_for_test(
+) -> &'static [(&'static str, &'static [(&'static str, &'static str)])] {
+    TABLE_DEFS
+}
+
+/// 仅测试用：暴露 SERVICE_SCHEMA
+#[cfg(test)]
+pub(crate) fn service_schema_for_test() -> &'static str {
+    SERVICE_SCHEMA
+}
+
+/// 仅测试用：暴露 SERVICE_TAG
+#[cfg(test)]
+pub(crate) fn service_tag_for_test() -> &'static str {
+    SERVICE_TAG
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_service_constants() {
+        assert_eq!(service_schema_for_test(), "public");
+        assert_eq!(service_tag_for_test(), "communication");
+    }
+
+    #[test]
+    fn test_table_defs_count_is_nine() {
+        assert_eq!(table_defs_for_test().len(), 9);
+    }
+
+    #[test]
+    fn test_table_defs_names_known() {
+        let names: Vec<&str> = table_defs_for_test().iter().map(|(n, _)| *n).collect();
+        assert!(names.contains(&"core_notifications"));
+        assert!(names.contains(&"core_notification_templates"));
+        assert!(names.contains(&"core_chat_rooms"));
+        assert!(names.contains(&"core_chat_members"));
+        assert!(names.contains(&"core_chat_messages"));
+        assert!(names.contains(&"core_emails"));
+        assert!(names.contains(&"core_email_templates"));
+        assert!(names.contains(&"core_location_messages"));
+        assert!(names.contains(&"core_geofences"));
+    }
+
+    #[test]
+    fn test_each_table_has_nonempty_columns() {
+        for (name, cols) in table_defs_for_test() {
+            assert!(!cols.is_empty(), "table {} should have columns", name);
+        }
+    }
+
+    #[test]
+    fn test_core_notifications_has_expected_columns() {
+        let notif = table_defs_for_test()
+            .iter()
+            .find(|(n, _)| *n == "core_notifications")
+            .expect("core_notifications present");
+        let col_names: Vec<&str> = notif.1.iter().map(|(c, _)| *c).collect();
+        assert!(col_names.contains(&"user_id"));
+        assert!(col_names.contains(&"title"));
+        assert!(col_names.contains(&"is_read"));
+        assert!(col_names.contains(&"priority"));
+        assert!(col_names.contains(&"deleted_at"));
+    }
+
+    #[test]
+    fn test_core_emails_has_expected_columns() {
+        let emails = table_defs_for_test()
+            .iter()
+            .find(|(n, _)| *n == "core_emails")
+            .expect("core_emails present");
+        let col_names: Vec<&str> = emails.1.iter().map(|(c, _)| *c).collect();
+        assert!(col_names.contains(&"from_email"));
+        assert!(col_names.contains(&"to_email"));
+        assert!(col_names.contains(&"subject"));
+        assert!(col_names.contains(&"is_read"));
+    }
+
+    #[test]
+    fn test_table_names_unique() {
+        let names: Vec<&str> = table_defs_for_test().iter().map(|(n, _)| *n).collect();
+        let mut sorted = names.clone();
+        sorted.sort();
+        sorted.dedup();
+        assert_eq!(sorted.len(), names.len(), "table names should be unique");
+    }
+
+    #[test]
+    fn test_column_ddl_nonempty() {
+        for (name, cols) in table_defs_for_test() {
+            for (col, ddl) in *cols {
+                assert!(!ddl.is_empty(), "table {} col {} has empty DDL", name, col);
+                assert!(!col.is_empty(), "table {} has empty column name", name);
+            }
+        }
+    }
+}

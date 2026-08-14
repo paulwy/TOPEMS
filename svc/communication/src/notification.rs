@@ -2028,4 +2028,220 @@ mod tests {
         let result = truncate_notification_title("hello", 0);
         assert_eq!(result, "…");
     }
+
+    // ===== NotificationPriority 枚举 trait / axum handler 测试 =====
+
+    #[test]
+    fn test_notification_priority_eq_variants() {
+        assert_eq!(NotificationPriority::Low, NotificationPriority::Low);
+        assert_ne!(NotificationPriority::Low, NotificationPriority::Normal);
+        assert_ne!(NotificationPriority::High, NotificationPriority::Urgent);
+    }
+
+    #[test]
+    fn test_notification_priority_clone() {
+        let p = NotificationPriority::High;
+        let cloned = p.clone();
+        assert_eq!(p, cloned);
+    }
+
+    #[test]
+    fn test_notification_priority_debug_format() {
+        let s = format!("{:?}", NotificationPriority::Urgent);
+        assert_eq!(s, "Urgent");
+        let s = format!("{:?}", NotificationPriority::Normal);
+        assert_eq!(s, "Normal");
+        let s = format!("{:?}", NotificationPriority::Low);
+        assert_eq!(s, "Low");
+        let s = format!("{:?}", NotificationPriority::High);
+        assert_eq!(s, "High");
+    }
+
+    #[test]
+    fn test_classify_priority_returns_all_variants() {
+        // 确保每个变体都至少被命中一次
+        let variants = [
+            NotificationPriority::Urgent,
+            NotificationPriority::High,
+            NotificationPriority::Low,
+            NotificationPriority::Normal,
+        ];
+        let got = [
+            classify_notification_priority("urgent"),
+            classify_notification_priority("high"),
+            classify_notification_priority("low"),
+            classify_notification_priority("normal"),
+        ];
+        for (v, g) in variants.iter().zip(got.iter()) {
+            assert_eq!(v, g);
+        }
+    }
+
+    fn sample_claims() -> Claims {
+        Claims {
+            sub: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+            username: "tester".to_string(),
+            role: "user".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 9999999999,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    fn lazy_pool() -> PgPool {
+        use sqlx::postgres::PgPoolOptions;
+        // 极短的 acquire_timeout 让 DB 错误路径快速失败，避免测试卡在连接超时
+        PgPoolOptions::new()
+            .acquire_timeout(std::time::Duration::from_millis(50))
+            .connect_lazy("postgres://nobody:nobody@127.0.0.1:1/none")
+            .expect("lazy pool")
+    }
+
+    #[tokio::test]
+    async fn test_get_archive_config_returns_defaults() {
+        let pool = lazy_pool();
+        let claims = sample_claims();
+        let res = get_archive_config(State(pool), Extension(claims)).await;
+        let v = res.0;
+        assert_eq!(v["success"], true);
+        assert_eq!(v["data"]["enabled"], false);
+        assert_eq!(v["data"]["retention_days"], 90);
+        assert_eq!(v["data"]["auto_archive_days"], 30);
+        assert_eq!(v["code"], 0);
+    }
+
+    #[tokio::test]
+    async fn test_update_archive_config_echoes_back() {
+        let pool = lazy_pool();
+        let claims = sample_claims();
+        let cfg = ArchiveConfig {
+            enabled: true,
+            retention_days: 7,
+            auto_archive_enabled: true,
+            auto_archive_interval_days: 2,
+            auto_archive_days: 3,
+        };
+        let res = update_archive_config(State(pool), Extension(claims), Json(cfg)).await;
+        let v = res.0;
+        assert_eq!(v["success"], true);
+        assert_eq!(v["data"]["enabled"], true);
+        assert_eq!(v["data"]["retention_days"], 7);
+        assert_eq!(v["data"]["auto_archive_days"], 3);
+        assert_eq!(v["code"], 0);
+    }
+
+    #[tokio::test]
+    async fn test_run_auto_archive_forbidden_without_permission() {
+        let pool = lazy_pool();
+        let claims = sample_claims(); // is_superuser=false, 无权限
+        let res = run_auto_archive(State(pool), Extension(claims)).await;
+        let v = res.0;
+        assert_eq!(v["success"], false);
+        assert_eq!(v["code"], 403);
+    }
+
+    #[tokio::test]
+    async fn test_run_auto_archive_superuser_hits_db_error() {
+        let pool = lazy_pool();
+        let mut claims = sample_claims();
+        claims.is_superuser = true;
+        // 不可达 DB → query 失败 → unwrap_or(0)，但仍返回 success:true
+        let res = run_auto_archive(State(pool), Extension(claims)).await;
+        let v = res.0;
+        assert_eq!(v["success"], true);
+        assert_eq!(v["data"]["archived_count"], 0);
+    }
+
+    #[tokio::test]
+    async fn test_send_notification_forbidden_without_permission() {
+        let pool = lazy_pool();
+        let claims = sample_claims(); // 无 notification:write 权限
+        let req = SendNotificationRequest {
+            user_id: Uuid::new_v4(),
+            title: "t".to_string(),
+            content: None,
+            notification_type: None,
+            priority: None,
+            data: None,
+            send_email: None,
+        };
+        let res = send_notification(State(pool), Extension(claims), Json(req)).await;
+        let v = res.0;
+        assert_eq!(v["success"], false);
+        assert_eq!(v["code"], 403);
+    }
+
+    #[tokio::test]
+    async fn test_broadcast_notification_forbidden_without_permission() {
+        let pool = lazy_pool();
+        let claims = sample_claims();
+        let req = BroadcastNotificationRequest {
+            user_ids: vec![Uuid::new_v4()],
+            title: "t".to_string(),
+            content: None,
+            notification_type: None,
+            priority: None,
+            data: None,
+            send_email: None,
+        };
+        let res = broadcast_notification(State(pool), Extension(claims), Json(req)).await;
+        let v = res.0;
+        assert_eq!(v["success"], false);
+        assert_eq!(v["code"], 403);
+    }
+
+    #[tokio::test]
+    async fn test_create_notification_invalid_body() {
+        let pool = lazy_pool();
+        let claims = sample_claims();
+        // 缺少 user_id → 反序列化失败
+        let bad = serde_json::json!({"title": "t"});
+        let res = create_notification(State(pool), Extension(claims), Json(bad)).await;
+        let v = res.0;
+        assert_eq!(v["success"], false);
+    }
+
+    #[tokio::test]
+    async fn test_bulk_mark_read_empty_ids_short_circuits() {
+        let pool = lazy_pool();
+        let mut claims = sample_claims();
+        claims.sub = "550e8400-e29b-41d4-a716-446655440000".to_string();
+        let res = bulk_mark_read(
+            State(pool),
+            Extension(claims),
+            Json(BulkIdsRequest {
+                notification_ids: vec![],
+            }),
+        )
+        .await;
+        let v = res.0;
+        assert_eq!(v["success"], true);
+        assert_eq!(v["data"]["updated_count"], 0);
+    }
+
+    #[tokio::test]
+    async fn test_bulk_delete_empty_ids_short_circuits() {
+        let pool = lazy_pool();
+        let mut claims = sample_claims();
+        claims.sub = "550e8400-e29b-41d4-a716-446655440000".to_string();
+        let res = bulk_delete(
+            State(pool),
+            Extension(claims),
+            Json(BulkIdsRequest {
+                notification_ids: vec![],
+            }),
+        )
+        .await;
+        let v = res.0;
+        assert_eq!(v["success"], true);
+        assert_eq!(v["data"]["deleted_count"], 0);
+    }
 }

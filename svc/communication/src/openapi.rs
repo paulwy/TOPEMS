@@ -31,3 +31,52 @@ use utoipa::OpenApi;
     )
 )]
 pub struct CommunicationApiDoc;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use utoipa::OpenApi;
+
+    #[test]
+    fn test_openapi_generates_valid_document() {
+        let doc = CommunicationApiDoc::openapi();
+        let json = serde_json::to_value(&doc).expect("openapi must serialize");
+        assert_eq!(json["openapi"], "3.0.3");
+        assert_eq!(json["info"]["title"], "TOPEMS Communication API");
+        assert_eq!(json["info"]["version"], "1.0.0");
+    }
+
+    #[test]
+    fn test_openapi_contains_expected_tags() {
+        let doc = CommunicationApiDoc::openapi();
+        let json = serde_json::to_value(&doc).unwrap();
+        let tags = json["tags"].as_array().expect("tags should be array");
+        let names: Vec<&str> = tags
+            .iter()
+            .map(|t| t["name"].as_str().unwrap_or_default())
+            .collect();
+        assert!(names.contains(&"notification"));
+        assert!(names.contains(&"email"));
+        assert!(names.contains(&"sms"));
+        assert!(names.contains(&"wechat"));
+    }
+
+    #[test]
+    fn test_openapi_contains_notification_and_mail_paths() {
+        let doc = CommunicationApiDoc::openapi();
+        let json = serde_json::to_value(&doc).unwrap();
+        let paths = json["paths"].as_object().expect("paths should be object");
+        assert!(paths.contains_key("/notify/send"));
+        assert!(paths.contains_key("/notification/notifications"));
+        assert!(paths.contains_key("/mail/emails"));
+        assert!(paths.contains_key("/im/rooms"));
+    }
+
+    #[test]
+    fn test_openapi_info_description_present() {
+        let doc = CommunicationApiDoc::openapi();
+        let json = serde_json::to_value(&doc).unwrap();
+        let desc = json["info"]["description"].as_str().unwrap_or_default();
+        assert!(desc.contains("通讯渠道"));
+    }
+}
