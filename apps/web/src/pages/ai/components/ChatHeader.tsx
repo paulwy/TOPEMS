@@ -56,7 +56,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
             size='small'
             onClick={onToggleSidebar}
             sx={{ display: { md: 'none' } }}
-            aria-label='展开'
+            aria-label={t('ai.chat_header.k0')}
           >
             <ChevronRight size={20} />
           </IconButton>

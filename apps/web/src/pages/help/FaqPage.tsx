@@ -26,6 +26,7 @@ import { apiLogger } from '@/utils/logger';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 interface FaqCategories {
   id: string;
@@ -34,12 +35,12 @@ interface FaqCategories {
 }
 
 const FaqCategories: FaqCategories[] = [
-  { id: 'all', name: '全部', icon: '📋' },
-  { id: 'account', name: '账户相关', icon: '👤' },
-  { id: 'workflow', name: '审批流程', icon: '📝' },
-  { id: 'hrm', name: '人力资源', icon: '👥' },
-  { id: 'finance', name: '财务管理', icon: '💰' },
-  { id: 'system', name: '系统设置', icon: '⚙️' },
+  { id: 'all', name: i18n.t('help.faq_page.k0'), icon: '📋' },
+  { id: 'account', name: i18n.t('help.faq_page.k1'), icon: '👤' },
+  { id: 'workflow', name: i18n.t('help.faq_page.k2'), icon: '📝' },
+  { id: 'hrm', name: i18n.t('help.faq_page.k3'), icon: '👥' },
+  { id: 'finance', name: i18n.t('help.faq_page.k4'), icon: '💰' },
+  { id: 'system', name: i18n.t('help.faq_page.k5'), icon: '⚙️' },
 ];
 
 const debounce = <T extends (...args: unknown[]) => void>(func: T, delay: number): T => {
@@ -96,8 +97,8 @@ export const FaqPage: React.FC = () => {
       apiLogger.error('获取FAQ列表失败:', faqsQuery.error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载FAQ列表',
+        title: i18n.t('help.faq_page.k6'),
+        message: i18n.t('help.faq_page.faq_7'),
       });
     }
   }, [faqsQuery.isError, faqsQuery.error, apiLogger, addNotification]);

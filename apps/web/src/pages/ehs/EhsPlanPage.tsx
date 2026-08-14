@@ -2,6 +2,8 @@ import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { planSchema } from '@/schemas/ehs';
 import { ehsApi } from '@/api/ehs';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const apiAdapter = createCrudPageAdapter({
   list: ehsApi.listPlans,
@@ -15,7 +17,7 @@ export default function EhsPlanPage() {
     <CrudPage
       schema={planSchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: 'EHS' }, { label: '安全计划' }]}
+      breadcrumbs={[{ label: 'EHS' }, { label: i18n.t('ehs.ehs_plan_page.k0') }]}
     />
   );
 }

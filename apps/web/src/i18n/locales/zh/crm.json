@@ -594,5 +594,9 @@
       "msg_load_fail": "无法加载销售漏斗数据",
       "title_load_fail": "加载失败"
     }
-  }
+  },
+  "crm.contact_detail_page.k0": "联系人详情",
+  "crm.customer_detail_page.k0": "客户详情",
+  "crm.opportunity_detail_page.k0": "商机详情",
+  "crm.return_detail_page.k0": "退货详情"
 }

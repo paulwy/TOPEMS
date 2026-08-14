@@ -14,6 +14,8 @@ import { designTokens } from '@/theme/tokens';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -28,6 +30,7 @@ const baseAdapter = createCrudPageAdapter<SafetyIssue, CreateSafetyIssueRequest>
 
 const safetyIssueAdapter: CrudApiAdapter<SafetyIssue> = {
   list: async (params) => {
+  const { t } = useTranslation('ehs');
     const response = await ehsApi.listSafetyIssues({
       page: params?.page,
       pagesize: params?.pageSize,
@@ -35,7 +38,7 @@ const safetyIssueAdapter: CrudApiAdapter<SafetyIssue> = {
       status: params?.status as string | undefined,
     });
     if (!response.success) {
-      throw new Error('加载隐患列表失败');
+      throw new Error(i18n.t('ehs.ehs_hazard_page.k0'));
     }
     const data = response.data;
     return {
@@ -226,7 +229,7 @@ const EhsHazardPage: React.FC = () => {
       <CrudPage
         schema={safetyIssueSchema}
         apiAdapter={safetyIssueAdapter}
-        breadcrumbs={[{ label: 'EHS' }, { label: '隐患管理' }]}
+        breadcrumbs={[{ label: 'EHS' }, { label: i18n.t('ehs.ehs_hazard_page.k1') }]}
         headerContent={headerContent}
       />
     </PageContainer>

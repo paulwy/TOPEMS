@@ -42,6 +42,8 @@ import { DataTable } from '@/components/common/DataTable';
 import type { CompanyRelation, CompanyTreeNode, CompanyRelationType } from '@/types/consolidation';
 import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 // 关系类型配置
 const RELATION_TYPE_CONFIG: Record<
@@ -51,22 +53,22 @@ const RELATION_TYPE_CONFIG: Record<
     color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
   }
 > = {
-  parent: { label: '母公司', color: 'primary' },
-  subsidiary: { label: '子公司', color: 'success' },
-  associate: { label: '联营公司', color: 'warning' },
-  joint_venture: { label: '合营公司', color: 'secondary' },
-  branch: { label: '分公司', color: 'default' },
+  parent: { label: i18n.t('iam.company_structure_page.k0'), color: 'primary' },
+  subsidiary: { label: i18n.t('iam.company_structure_page.k1'), color: 'success' },
+  associate: { label: i18n.t('iam.company_structure_page.k2'), color: 'warning' },
+  joint_venture: { label: i18n.t('iam.company_structure_page.k3'), color: 'secondary' },
+  branch: { label: i18n.t('iam.company_structure_page.k4'), color: 'default' },
 };
 
 // 状态配置
 const STATUS_CONFIG = {
   active: {
-    label: '生效',
+    label: i18n.t('iam.company_structure_page.k5'),
     color: 'success' as const,
     icon: CheckCircle,
   },
   inactive: {
-    label: '失效',
+    label: i18n.t('iam.company_structure_page.k6'),
     color: 'default' as const,
     icon: XCircle,
   },
@@ -79,6 +81,7 @@ const TreeNodeComponent: React.FC<{
   expandedNodes: Set<string>;
   onToggle: (id: string) => void;
 }> = ({ node, level, expandedNodes, onToggle }) => {
+  const { t } = useTranslation('iam');
   const hasChildren = node.children && node.children.length > 0;
   const isExpanded = expandedNodes.has(node.id);
 
@@ -116,7 +119,7 @@ const TreeNodeComponent: React.FC<{
         </Typography>
         {node.is_parent && (
           <Chip
-            label='母公司'
+            label={t('iam.company_structure_page.k7')}
             color='primary'
             size='small'
           />
@@ -153,6 +156,7 @@ const TreeNodeComponent: React.FC<{
 };
 
 export default function CompanyStructurePage() {
+  const { t } = useTranslation('iam');
   // 状态
   const [searchKeyword, setSearchKeyword] = useState('');
   const [activeTab, setActiveTab] = useState(0);
@@ -202,8 +206,8 @@ export default function CompanyStructurePage() {
   // 处理删除关系
   const handleDeleteRelation = (relationId: string) => {
     openConfirmDialog({
-      title: '确认删除',
-      message: '确定要删除此公司关系吗？',
+      title: t('iam.company_structure_page.k8'),
+      message: t('iam.company_structure_page.k9'),
       danger: true,
       onConfirm: () => {
         deleteRelation.mutate(relationId);
@@ -215,7 +219,7 @@ export default function CompanyStructurePage() {
   const relationColumns: ColumnDef<CompanyRelation>[] = [
     {
       id: 'parent_company',
-      header: '母公司',
+      header: t('iam.company_structure_page.k10'),
       accessorKey: 'parent_company_name',
       cell: ({ row }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -232,7 +236,7 @@ export default function CompanyStructurePage() {
     },
     {
       id: 'relation_type',
-      header: '关系类型',
+      header: t('iam.company_structure_page.k11'),
       accessorKey: 'relation_type',
       cell: ({ row }) => {
         const relationType = row.getValue<string>('relation_type');
@@ -251,7 +255,7 @@ export default function CompanyStructurePage() {
     },
     {
       id: 'child_company',
-      header: '子公司',
+      header: t('iam.company_structure_page.k12'),
       accessorKey: 'child_company_name',
       cell: ({ row }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -268,7 +272,7 @@ export default function CompanyStructurePage() {
     },
     {
       id: 'ownership_percentage',
-      header: '持股比例',
+      header: t('iam.company_structure_page.k13'),
       accessorKey: 'ownership_percentage',
       cell: ({ row }) => (
         <Typography sx={{ fontFamily: 'monospace' }}>
@@ -278,7 +282,7 @@ export default function CompanyStructurePage() {
     },
     {
       id: 'control_percentage',
-      header: '控制比例',
+      header: t('iam.company_structure_page.k14'),
       accessorKey: 'control_percentage',
       cell: ({ row }) => (
         <Typography sx={{ fontFamily: 'monospace' }}>
@@ -288,13 +292,13 @@ export default function CompanyStructurePage() {
     },
     {
       id: 'effective_date',
-      header: '生效日期',
+      header: t('iam.company_structure_page.k15'),
       accessorKey: 'effective_date',
       cell: ({ row }) => <Typography variant='body2'>{row.getValue('effective_date')}</Typography>,
     },
     {
       id: 'status',
-      header: '状态',
+      header: t('iam.company_structure_page.k16'),
       accessorKey: 'status',
       cell: ({ row }) => {
         const status = row.getValue<string>('status');
@@ -313,7 +317,7 @@ export default function CompanyStructurePage() {
     },
     {
       id: 'actions',
-      header: '操作',
+      header: t('iam.company_structure_page.k17'),
       cell: ({ row }) => (
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
@@ -330,8 +334,8 @@ export default function CompanyStructurePage() {
 
   return (
     <PageContainer
-      title='公司架构管理'
-      subtitle='管理母子公司关系，用于多公司合并报表'
+      title={t('iam.company_structure_page.k18')}
+      subtitle={t('iam.company_structure_page.k19')}
       maxWidth='xl'
     >
       {/* 搜索栏 */}
@@ -358,7 +362,7 @@ export default function CompanyStructurePage() {
                 sx={{ pl: 4, width: '100%' }}
               />
             </Box>
-            <Button variant='outlined'>高级搜索</Button>
+            <Button variant='outlined'>{t('iam.company_structure_page.k20')}</Button>
           </Box>
         </CardContent>
       </Card>
@@ -371,12 +375,12 @@ export default function CompanyStructurePage() {
             onChange={(_, newValue) => setActiveTab(newValue)}
           >
             <Tab
-              label='架构视图'
+              label={t('iam.company_structure_page.k21')}
               icon={<Network sx={{ width: 16, height: 16 }} />}
               iconPosition='start'
             />
             <Tab
-              label='关系列表'
+              label={t('iam.company_structure_page.k22')}
               icon={<Users sx={{ width: 16, height: 16 }} />}
               iconPosition='start'
             />
@@ -481,15 +485,15 @@ export default function CompanyStructurePage() {
           <Box sx={{ display: 'flex', gap: 1.5 }}>
             <AlertCircle sx={{ width: 20, height: 20, color: 'info.main' }} />
             <Box>
-              <Typography sx={{ fontWeight: 'medium', color: 'info.dark' }}>使用提示</Typography>
+              <Typography sx={{ fontWeight: 'medium', color: 'info.dark' }}>{t('iam.company_structure_page.k23')}</Typography>
               <Box
                 component='ul'
                 sx={{ mt: 1, pl: 2, color: 'info.dark' }}
               >
-                <li>公司架构用于多公司合并报表的抵消计算</li>
-                <li>持股比例决定少数股东权益和归属母公司净利润的计算</li>
-                <li>联营公司和合营公司采用权益法核算</li>
-                <li>添加公司关系后可到合并范围管理中配置抵消规则</li>
+                <li>{t('iam.company_structure_page.k24')}</li>
+                <li>{t('iam.company_structure_page.k25')}</li>
+                <li>{t('iam.company_structure_page.k26')}</li>
+                <li>{t('iam.company_structure_page.k27')}</li>
               </Box>
             </Box>
           </Box>

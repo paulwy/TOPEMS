@@ -49,6 +49,7 @@ import { PageContainer, Grid } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { LazyChart } from '@/components/charts';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -76,10 +77,10 @@ const mockModels: AIModel[] = [
     name: 'GPT-4',
     provider: 'OpenAI',
     type: 'chat',
-    description: '最先进的大语言模型，适合复杂任务',
+    description: i18n.t('ai.ai_model_settings_page.k0'),
     status: 'active',
     max_tokens: 8192,
-    capabilities: ['对话', '推理', '代码', '分析'],
+    capabilities: [i18n.t('ai.ai_model_settings_page.k4'), i18n.t('ai.ai_model_settings_page.k3'), i18n.t('ai.ai_model_settings_page.k2'), i18n.t('ai.ai_model_settings_page.k1')],
     pricing: { input_per_1k: 0.03, output_per_1k: 0.06 },
     is_default: true,
   },
@@ -88,10 +89,10 @@ const mockModels: AIModel[] = [
     name: 'GPT-3.5 Turbo',
     provider: 'OpenAI',
     type: 'chat',
-    description: '快速高效的聊天模型，性价比高',
+    description: i18n.t('ai.ai_model_settings_page.k5'),
     status: 'active',
     max_tokens: 16384,
-    capabilities: ['对话', '摘要', '翻译'],
+    capabilities: [i18n.t('ai.ai_model_settings_page.k8'), i18n.t('ai.ai_model_settings_page.k7'), i18n.t('ai.ai_model_settings_page.k6')],
     pricing: { input_per_1k: 0.0015, output_per_1k: 0.002 },
     is_default: false,
   },
@@ -103,31 +104,31 @@ const mockModels: AIModel[] = [
     description: 'Anthropic最强大的模型，擅长写作和分析',
     status: 'active',
     max_tokens: 200000,
-    capabilities: ['对话', '写作', '分析', '长文本'],
+    capabilities: [i18n.t('ai.ai_model_settings_page.k12'), i18n.t('ai.ai_model_settings_page.k11'), i18n.t('ai.ai_model_settings_page.k10'), i18n.t('ai.ai_model_settings_page.k9')],
     pricing: { input_per_1k: 0.015, output_per_1k: 0.075 },
     is_default: false,
   },
   {
     id: 'ernie-4.0',
     name: '文心一言 4.0',
-    provider: '百度',
+    provider: i18n.t('ai.ai_model_settings_page.k13'),
     type: 'chat',
-    description: '百度自研大模型，中文理解能力强',
+    description: i18n.t('ai.ai_model_settings_page.k14'),
     status: 'active',
     max_tokens: 8192,
-    capabilities: ['对话', '创作', '理解'],
+    capabilities: [i18n.t('ai.ai_model_settings_page.k17'), i18n.t('ai.ai_model_settings_page.k16'), i18n.t('ai.ai_model_settings_page.k15')],
     pricing: { input_per_1k: 0.008, output_per_1k: 0.008 },
     is_default: false,
   },
   {
     id: 'qwen-max',
-    name: '通义千问 Max',
-    provider: '阿里',
+    name: i18n.t('ai.ai_model_settings_page.max_18'),
+    provider: i18n.t('ai.ai_model_settings_page.k19'),
     type: 'chat',
-    description: '阿里达摩院大模型，支持多轮对话',
+    description: i18n.t('ai.ai_model_settings_page.k20'),
     status: 'active',
     max_tokens: 32768,
-    capabilities: ['对话', '创作', '代码'],
+    capabilities: [i18n.t('ai.ai_model_settings_page.k23'), i18n.t('ai.ai_model_settings_page.k22'), i18n.t('ai.ai_model_settings_page.k21')],
     pricing: { input_per_1k: 0.004, output_per_1k: 0.008 },
     is_default: false,
   },
@@ -136,10 +137,10 @@ const mockModels: AIModel[] = [
     name: 'Text Embedding 3 Large',
     provider: 'OpenAI',
     type: 'embedding',
-    description: '高质量文本向量化模型',
+    description: i18n.t('ai.ai_model_settings_page.k24'),
     status: 'active',
     max_tokens: 8192,
-    capabilities: ['向量化', '语义搜索'],
+    capabilities: [i18n.t('ai.ai_model_settings_page.k26'), i18n.t('ai.ai_model_settings_page.k25')],
     pricing: { input_per_1k: 0.00013, output_per_1k: 0 },
     is_default: false,
   },
@@ -159,24 +160,24 @@ const modelUsageData = [
   { name: 'GPT-4', value: 35 },
   { name: 'GPT-3.5', value: 40 },
   { name: 'Claude', value: 15 },
-  { name: '文心一言', value: 6 },
-  { name: '通义千问', value: 4 },
+  { name: i18n.t('ai.ai_model_settings_page.k27'), value: 6 },
+  { name: i18n.t('ai.ai_model_settings_page.k28'), value: 4 },
 ];
 
 const getStatusConfig = (status: AIModel['status'], t: (key: string) => string) => {
   const configs = {
     active: {
-      label: t('ai.model_settings.status.active'),
+      label: i18n.t('ai.model_settings.status.active'),
       color: 'success' as const,
       icon: <CheckCircle2 size={14} />,
     },
     inactive: {
-      label: t('ai.model_settings.status.inactive'),
+      label: i18n.t('ai.model_settings.status.inactive'),
       color: 'default' as const,
       icon: <Clock size={14} />,
     },
     maintenance: {
-      label: t('ai.model_settings.status.maintenance'),
+      label: i18n.t('ai.model_settings.status.maintenance'),
       color: 'warning' as const,
       icon: <AlertCircle size={14} />,
     },
@@ -193,7 +194,7 @@ export const AiModelSettingsPage: React.FC = () => {
   const [maxTokens, setMaxTokens] = useState(2048);
   const [topP, setTopP] = useState(1);
   const [systemPrompt, setSystemPrompt] = useState(
-    '你是一位专业的AI助手，请用中文回答用户的问题。回答要准确、简洁、有帮助。'
+    i18n.t('ai.ai_model_settings_page.k29')
   );
   const [saving, setSaving] = useState(false);
 
@@ -202,8 +203,8 @@ export const AiModelSettingsPage: React.FC = () => {
     setTimeout(() => {
       setSaving(false);
       addNotification({
-        title: t('ai.model_settings.message.save_success_title'),
-        message: t('ai.model_settings.message.save_success_body'),
+        title: i18n.t('ai.model_settings.message.save_success_title'),
+        message: i18n.t('ai.model_settings.message.save_success_body'),
         type: 'success',
       });
     }, 1000);
@@ -218,30 +219,30 @@ export const AiModelSettingsPage: React.FC = () => {
   const tabConfig = [
     {
       id: 'models' as SettingsTab,
-      label: t('ai.model_settings.tab.models'),
+      label: i18n.t('ai.model_settings.tab.models'),
       icon: <Cpu size={18} />,
     },
     {
       id: 'config' as SettingsTab,
-      label: t('ai.model_settings.tab.config'),
+      label: i18n.t('ai.model_settings.tab.config'),
       icon: <Settings size={18} />,
     },
     {
       id: 'usage' as SettingsTab,
-      label: t('ai.model_settings.tab.usage'),
+      label: i18n.t('ai.model_settings.tab.usage'),
       icon: <BarChart3 size={18} />,
     },
     {
       id: 'api' as SettingsTab,
-      label: t('ai.model_settings.tab.api'),
+      label: i18n.t('ai.model_settings.tab.api'),
       icon: <Database size={18} />,
     },
   ];
 
   return (
     <PageContainer
-      title={t('ai.model_settings.title')}
-      subtitle={t('ai.model_settings.subtitle')}
+      title={i18n.t('ai.model_settings.title')}
+      subtitle={i18n.t('ai.model_settings.subtitle')}
       padding={false}
       maxWidth={false}
       headerProps={{
@@ -345,7 +346,7 @@ export const AiModelSettingsPage: React.FC = () => {
                               {model.name}
                               {model.is_default && (
                                 <Chip
-                                  label={t('ai.model_settings.label.default')}
+                                  label={i18n.t('ai.model_settings.label.default')}
                                   size='small'
                                   color='primary'
                                   sx={{ ml: 1, height: 20 }}
@@ -394,7 +395,7 @@ export const AiModelSettingsPage: React.FC = () => {
                                 variant='caption'
                                 color='text.secondary'
                               >
-                                {t('ai.model_settings.label.max_token')}
+                                {i18n.t('ai.model_settings.label.max_token')}
                               </Typography>
                               <Typography
                                 variant='body2'
@@ -411,7 +412,7 @@ export const AiModelSettingsPage: React.FC = () => {
                                 variant='caption'
                                 color='text.secondary'
                               >
-                                {t('ai.model_settings.label.input_price')}
+                                {i18n.t('ai.model_settings.label.input_price')}
                               </Typography>
                               <Typography
                                 variant='body2'
@@ -448,7 +449,7 @@ export const AiModelSettingsPage: React.FC = () => {
                       variant='h6'
                       sx={{ fontWeight: 600, mb: 2 }}
                     >
-                      {t('ai.model_settings.label.current_model')}
+                      {i18n.t('ai.model_settings.label.current_model')}
                       {selectedModel.name}
                     </Typography>
                     <Divider sx={{ mb: 3 }} />
@@ -459,7 +460,7 @@ export const AiModelSettingsPage: React.FC = () => {
                           variant='body2'
                           sx={{ fontWeight: 500 }}
                         >
-                          {t('ai.model_settings.param.temperature')}
+                          {i18n.t('ai.model_settings.param.temperature')}
                         </Typography>
                         <Typography
                           variant='body2'
@@ -481,7 +482,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         variant='caption'
                         color='text.secondary'
                       >
-                        {t('ai.model_settings.param.temperature_desc')}
+                        {i18n.t('ai.model_settings.param.temperature_desc')}
                       </Typography>
                     </Box>
 
@@ -491,7 +492,7 @@ export const AiModelSettingsPage: React.FC = () => {
                           variant='body2'
                           sx={{ fontWeight: 500 }}
                         >
-                          {t('ai.model_settings.param.max_tokens')}
+                          {i18n.t('ai.model_settings.param.max_tokens')}
                         </Typography>
                         <Typography
                           variant='body2'
@@ -513,7 +514,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         variant='caption'
                         color='text.secondary'
                       >
-                        {t('ai.model_settings.param.max_tokens_desc')}
+                        {i18n.t('ai.model_settings.param.max_tokens_desc')}
                       </Typography>
                     </Box>
 
@@ -523,7 +524,7 @@ export const AiModelSettingsPage: React.FC = () => {
                           variant='body2'
                           sx={{ fontWeight: 500 }}
                         >
-                          {t('ai.model_settings.param.top_p')}
+                          {i18n.t('ai.model_settings.param.top_p')}
                         </Typography>
                         <Typography
                           variant='body2'
@@ -545,7 +546,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         variant='caption'
                         color='text.secondary'
                       >
-                        {t('ai.model_settings.param.top_p_desc')}
+                        {i18n.t('ai.model_settings.param.top_p_desc')}
                       </Typography>
                     </Box>
 
@@ -554,7 +555,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         variant='body2'
                         sx={{ fontWeight: 500, mb: 1 }}
                       >
-                        {t('ai.model_settings.param.system_prompt')}
+                        {i18n.t('ai.model_settings.param.system_prompt')}
                       </Typography>
                       <TextField
                         fullWidth
@@ -562,7 +563,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         rows={4}
                         value={systemPrompt}
                         onChange={(e) => setSystemPrompt(e.target.value)}
-                        placeholder={t('ai.model_settings.placeholder.system_prompt')}
+                        placeholder={i18n.t('ai.model_settings.placeholder.system_prompt')}
                       />
                     </Box>
 
@@ -571,7 +572,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         variant='outlined'
                         startIcon={<RefreshCw size={16} />}
                       >
-                        {t('ai.model_settings.action.reset_default')}
+                        {i18n.t('ai.model_settings.action.reset_default')}
                       </Button>
                       <Button
                         variant='contained'
@@ -589,8 +590,8 @@ export const AiModelSettingsPage: React.FC = () => {
                         disabled={saving}
                       >
                         {saving
-                          ? t('ai.model_settings.status.saving')
-                          : t('ai.model_settings.action.save_config')}
+                          ? i18n.t('ai.model_settings.status.saving')
+                          : i18n.t('ai.model_settings.action.save_config')}
                       </Button>
                     </Box>
                   </Paper>
@@ -609,7 +610,7 @@ export const AiModelSettingsPage: React.FC = () => {
                       variant='subtitle1'
                       sx={{ fontWeight: 600, mb: 2 }}
                     >
-                      {t('ai.model_settings.label.other_settings')}
+                      {i18n.t('ai.model_settings.label.other_settings')}
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
 
@@ -619,8 +620,8 @@ export const AiModelSettingsPage: React.FC = () => {
                           <Server size={18} />
                         </ListItemIcon>
                         <ListItemText
-                          primary={t('ai.model_settings.setting.stream')}
-                          secondary={t('ai.model_settings.setting.stream_desc')}
+                          primary={i18n.t('ai.model_settings.setting.stream')}
+                          secondary={i18n.t('ai.model_settings.setting.stream_desc')}
                         />
                         <Switch defaultChecked />
                       </ListItem>
@@ -629,8 +630,8 @@ export const AiModelSettingsPage: React.FC = () => {
                           <Activity size={18} />
                         </ListItemIcon>
                         <ListItemText
-                          primary={t('ai.model_settings.setting.history')}
-                          secondary={t('ai.model_settings.setting.history_desc')}
+                          primary={i18n.t('ai.model_settings.setting.history')}
+                          secondary={i18n.t('ai.model_settings.setting.history_desc')}
                         />
                         <Switch defaultChecked />
                       </ListItem>
@@ -639,8 +640,8 @@ export const AiModelSettingsPage: React.FC = () => {
                           <Zap size={18} />
                         </ListItemIcon>
                         <ListItemText
-                          primary={t('ai.model_settings.setting.retry')}
-                          secondary={t('ai.model_settings.setting.retry_desc')}
+                          primary={i18n.t('ai.model_settings.setting.retry')}
+                          secondary={i18n.t('ai.model_settings.setting.retry_desc')}
                         />
                         <Switch defaultChecked />
                       </ListItem>
@@ -680,7 +681,7 @@ export const AiModelSettingsPage: React.FC = () => {
                             variant='body2'
                             color='text.secondary'
                           >
-                            {t('ai.model_settings.usage.total_tokens')}
+                            {i18n.t('ai.model_settings.usage.total_tokens')}
                           </Typography>
                         </Box>
                       </Box>
@@ -707,7 +708,7 @@ export const AiModelSettingsPage: React.FC = () => {
                             variant='body2'
                             color='text.secondary'
                           >
-                            {t('ai.model_settings.usage.total_requests')}
+                            {i18n.t('ai.model_settings.usage.total_requests')}
                           </Typography>
                         </Box>
                       </Box>
@@ -734,7 +735,7 @@ export const AiModelSettingsPage: React.FC = () => {
                             variant='body2'
                             color='text.secondary'
                           >
-                            {t('ai.model_settings.usage.total_cost')}
+                            {i18n.t('ai.model_settings.usage.total_cost')}
                           </Typography>
                         </Box>
                       </Box>
@@ -759,7 +760,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         variant='subtitle1'
                         sx={{ fontWeight: 600, mb: 2 }}
                       >
-                        {t('ai.model_settings.usage.trend_7days')}
+                        {i18n.t('ai.model_settings.usage.trend_7days')}
                       </Typography>
                       <Box sx={{ height: 300 }}>
                         <LazyChart type='line'
@@ -783,7 +784,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         variant='subtitle1'
                         sx={{ fontWeight: 600, mb: 2 }}
                       >
-                        {t('ai.model_settings.usage.model_ratio')}
+                        {i18n.t('ai.model_settings.usage.model_ratio')}
                       </Typography>
                       <Box sx={{ height: 300 }}>
                         <LazyChart type='pie' data={modelUsageData} />
@@ -802,21 +803,21 @@ export const AiModelSettingsPage: React.FC = () => {
                         variant='subtitle1'
                         sx={{ fontWeight: 600 }}
                       >
-                        {t('ai.model_settings.usage.daily_detail')}
+                        {i18n.t('ai.model_settings.usage.daily_detail')}
                       </Typography>
                     </Box>
                     <TableContainer>
                       <Table size='small'>
                         <TableHead>
                           <TableRow>
-                            <TableCell>{t('ai.model_settings.table.date')}</TableCell>
+                            <TableCell>{i18n.t('ai.model_settings.table.date')}</TableCell>
                             <TableCell align='right'>
-                              {t('ai.model_settings.table.requests')}
+                              {i18n.t('ai.model_settings.table.requests')}
                             </TableCell>
                             <TableCell align='right'>
-                              {t('ai.model_settings.table.tokens')}
+                              {i18n.t('ai.model_settings.table.tokens')}
                             </TableCell>
-                            <TableCell align='right'>{t('ai.model_settings.table.cost')}</TableCell>
+                            <TableCell align='right'>{i18n.t('ai.model_settings.table.cost')}</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -855,14 +856,14 @@ export const AiModelSettingsPage: React.FC = () => {
                       variant='subtitle1'
                       sx={{ fontWeight: 600 }}
                     >
-                      {t('ai.model_settings.api.key_management')}
+                      {i18n.t('ai.model_settings.api.key_management')}
                     </Typography>
                     <Button
                       variant='contained'
                       startIcon={<Edit3 size={16} />}
                       size='small'
                     >
-                      {t('ai.model_settings.api.add_key')}
+                      {i18n.t('ai.model_settings.api.add_key')}
                     </Button>
                   </Box>
                   <Divider sx={{ mb: 2 }} />
@@ -871,20 +872,20 @@ export const AiModelSettingsPage: React.FC = () => {
                     <Table size='small'>
                       <TableHead>
                         <TableRow>
-                          <TableCell>{t('ai.model_settings.api.table.name')}</TableCell>
-                          <TableCell>{t('ai.model_settings.api.table.key')}</TableCell>
-                          <TableCell>{t('ai.model_settings.api.table.provider')}</TableCell>
-                          <TableCell>{t('ai.model_settings.api.table.status')}</TableCell>
-                          <TableCell>{t('ai.model_settings.api.table.created')}</TableCell>
+                          <TableCell>{i18n.t('ai.model_settings.api.table.name')}</TableCell>
+                          <TableCell>{i18n.t('ai.model_settings.api.table.key')}</TableCell>
+                          <TableCell>{i18n.t('ai.model_settings.api.table.provider')}</TableCell>
+                          <TableCell>{i18n.t('ai.model_settings.api.table.status')}</TableCell>
+                          <TableCell>{i18n.t('ai.model_settings.api.table.created')}</TableCell>
                           <TableCell align='right'>
-                            {t('ai.model_settings.api.table.actions')}
+                            {i18n.t('ai.model_settings.api.table.actions')}
                           </TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         <TableRow>
                           <TableCell sx={{ fontWeight: 500 }}>
-                            {t('ai.model_settings.api.key_production')}
+                            {i18n.t('ai.model_settings.api.key_production')}
                           </TableCell>
                           <TableCell>
                             <code>sk-****************************</code>
@@ -892,7 +893,7 @@ export const AiModelSettingsPage: React.FC = () => {
                           <TableCell>OpenAI</TableCell>
                           <TableCell>
                             <Chip
-                              label={t('ai.model_settings.api.status_enabled')}
+                              label={i18n.t('ai.model_settings.api.status_enabled')}
                               size='small'
                               color='success'
                               sx={{ height: 22 }}
@@ -902,7 +903,7 @@ export const AiModelSettingsPage: React.FC = () => {
                           <TableCell align='right'>
                             <IconButton
                               size='small'
-                              aria-label={t('ai.model_settings.api.action.edit')}
+                              aria-label={i18n.t('ai.model_settings.api.action.edit')}
                             >
                               <Edit3 size={16} />
                             </IconButton>
@@ -910,7 +911,7 @@ export const AiModelSettingsPage: React.FC = () => {
                         </TableRow>
                         <TableRow>
                           <TableCell sx={{ fontWeight: 500 }}>
-                            {t('ai.model_settings.api.key_backup')}
+                            {i18n.t('ai.model_settings.api.key_backup')}
                           </TableCell>
                           <TableCell>
                             <code>sk-****************************</code>
@@ -918,7 +919,7 @@ export const AiModelSettingsPage: React.FC = () => {
                           <TableCell>OpenAI</TableCell>
                           <TableCell>
                             <Chip
-                              label={t('ai.model_settings.api.status_enabled')}
+                              label={i18n.t('ai.model_settings.api.status_enabled')}
                               size='small'
                               color='success'
                               sx={{ height: 22 }}
@@ -928,7 +929,7 @@ export const AiModelSettingsPage: React.FC = () => {
                           <TableCell align='right'>
                             <IconButton
                               size='small'
-                              aria-label={t('ai.model_settings.api.action.edit')}
+                              aria-label={i18n.t('ai.model_settings.api.action.edit')}
                             >
                               <Edit3 size={16} />
                             </IconButton>
@@ -936,15 +937,15 @@ export const AiModelSettingsPage: React.FC = () => {
                         </TableRow>
                         <TableRow>
                           <TableCell sx={{ fontWeight: 500 }}>
-                            {t('ai.model_settings.api.key_ernie')}
+                            {i18n.t('ai.model_settings.api.key_ernie')}
                           </TableCell>
                           <TableCell>
                             <code>xx-****************************</code>
                           </TableCell>
-                          <TableCell>{t('ai.model_settings.provider.baidu')}</TableCell>
+                          <TableCell>{i18n.t('ai.model_settings.provider.baidu')}</TableCell>
                           <TableCell>
                             <Chip
-                              label={t('ai.model_settings.api.status_enabled')}
+                              label={i18n.t('ai.model_settings.api.status_enabled')}
                               size='small'
                               color='success'
                               sx={{ height: 22 }}
@@ -954,7 +955,7 @@ export const AiModelSettingsPage: React.FC = () => {
                           <TableCell align='right'>
                             <IconButton
                               size='small'
-                              aria-label={t('ai.model_settings.api.action.edit')}
+                              aria-label={i18n.t('ai.model_settings.api.action.edit')}
                             >
                               <Edit3 size={16} />
                             </IconButton>
@@ -973,7 +974,7 @@ export const AiModelSettingsPage: React.FC = () => {
                     variant='subtitle1'
                     sx={{ fontWeight: 600, mb: 2 }}
                   >
-                    {t('ai.model_settings.api.usage_tips')}
+                    {i18n.t('ai.model_settings.api.usage_tips')}
                   </Typography>
                   <List disablePadding>
                     <ListItem sx={{ px: 0, py: 1 }}>
@@ -986,7 +987,7 @@ export const AiModelSettingsPage: React.FC = () => {
                       <ListItemText
                         primary={
                           <Typography variant='body2'>
-                            {t('ai.model_settings.api.tip_keep_safe')}
+                            {i18n.t('ai.model_settings.api.tip_keep_safe')}
                           </Typography>
                         }
                       />
@@ -1001,7 +1002,7 @@ export const AiModelSettingsPage: React.FC = () => {
                       <ListItemText
                         primary={
                           <Typography variant='body2'>
-                            {t('ai.model_settings.api.tip_rotate_keys')}
+                            {i18n.t('ai.model_settings.api.tip_rotate_keys')}
                           </Typography>
                         }
                       />
@@ -1016,7 +1017,7 @@ export const AiModelSettingsPage: React.FC = () => {
                       <ListItemText
                         primary={
                           <Typography variant='body2'>
-                            {t('ai.model_settings.api.tip_multi_env')}
+                            {i18n.t('ai.model_settings.api.tip_multi_env')}
                           </Typography>
                         }
                       />

@@ -663,7 +663,7 @@ const ReturnDetailPage: React.FC = () => {
 
         <DetailPageTemplate
           title={record?.return_no || ''}
-          detailItemName={record?.return_no || record?.id || '退货详情'}
+          detailItemName={record?.return_no || record?.id || t('crm.return_detail_page.k0')}
           backHref={CRM_PATHS.returns}
           loading={loading}
           error={returnQuery.isError ? t('crm.returnDetail.error_load') : undefined}

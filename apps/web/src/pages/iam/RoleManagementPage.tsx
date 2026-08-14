@@ -22,12 +22,15 @@ import { extractErrorMessage } from '@/utils/errors';
 import { apiLogger } from '@/utils/logger';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const roleApiAdapter: CrudApiAdapter = {
   list: async () => {
+  const { t } = useTranslation('iam');
     const response = await authApi.listRoles();
     if (!response.success) {
-      throw new Error(response.message || '加载角色失败');
+      throw new Error(response.message || i18n.t('iam.role_management_page.k0'));
     }
     const data = response.data ?? [];
     return {
@@ -41,7 +44,7 @@ const roleApiAdapter: CrudApiAdapter = {
       description: data.description ? String(data.description) : undefined,
     });
     if (!response.success) {
-      throw new Error(response.message || '创建角色失败');
+      throw new Error(response.message || i18n.t('iam.role_management_page.k1'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
@@ -51,14 +54,14 @@ const roleApiAdapter: CrudApiAdapter = {
       description: data.description ? String(data.description) : undefined,
     });
     if (!response.success) {
-      throw new Error(response.message || '更新角色失败');
+      throw new Error(response.message || i18n.t('iam.role_management_page.k2'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
   delete: async (id) => {
     const response = await authApi.deleteRole(id);
     if (!response.success) {
-      throw new Error(response.message || '删除角色失败');
+      throw new Error(response.message || i18n.t('iam.role_management_page.k3'));
     }
   },
 };
@@ -76,7 +79,7 @@ const RoleManagementPage: React.FC = () => {
     queryFn: async () => {
       const res = await authApi.listPermissions();
       if (!res.success) {
-        throw new Error(res.message || '加载权限失败');
+        throw new Error(res.message || i18n.t('iam.role_management_page.k4'));
       }
       return res.data ?? [];
     },
@@ -89,7 +92,7 @@ const RoleManagementPage: React.FC = () => {
       if (!selectedRole) return [];
       const res = await authApi.getRolePermissions(selectedRole.id);
       if (!res.success) {
-        throw new Error(res.message || '加载角色权限失败');
+        throw new Error(res.message || i18n.t('iam.role_management_page.k5'));
       }
       return res.data ?? [];
     },
@@ -107,14 +110,14 @@ const RoleManagementPage: React.FC = () => {
     mutationFn: async ({ roleId, permissionId }: { roleId: string; permissionId: string }) => {
       const res = await authApi.addRolePermission(roleId, permissionId);
       if (!res.success) {
-        throw new Error(res.message || '添加权限失败');
+        throw new Error(res.message || i18n.t('iam.role_management_page.k6'));
       }
       return res.data;
     },
     onSuccess: (_data, { roleId }) => {
       addNotification({
-        title: '成功',
-        message: '权限添加成功',
+        title: i18n.t('iam.role_management_page.k7'),
+        message: i18n.t('iam.role_management_page.k8'),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.IAM_ROLE_PERMISSIONS_BASE, roleId] ,
@@ -125,8 +128,8 @@ const RoleManagementPage: React.FC = () => {
     onError: (err: unknown) => {
       apiLogger.error('添加权限失败:', err);
       addNotification({
-        title: '失败',
-        message: extractErrorMessage(err, '添加权限失败'),
+        title: i18n.t('iam.role_management_page.k9'),
+        message: extractErrorMessage(err, i18n.t('iam.role_management_page.k10')),
         type: 'error',
       });
     },
@@ -136,14 +139,14 @@ const RoleManagementPage: React.FC = () => {
     mutationFn: async ({ roleId, permissionId }: { roleId: string; permissionId: string }) => {
       const res = await authApi.removeRolePermission(roleId, permissionId);
       if (!res.success) {
-        throw new Error(res.message || '移除权限失败');
+        throw new Error(res.message || i18n.t('iam.role_management_page.k11'));
       }
       return res.data;
     },
     onSuccess: (_data, { roleId }) => {
       addNotification({
-        title: '成功',
-        message: '权限移除成功',
+        title: i18n.t('iam.role_management_page.k12'),
+        message: i18n.t('iam.role_management_page.k13'),
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.IAM_ROLE_PERMISSIONS_BASE, roleId] ,
@@ -154,8 +157,8 @@ const RoleManagementPage: React.FC = () => {
     onError: (err: unknown) => {
       apiLogger.error('移除权限失败:', err);
       addNotification({
-        title: '失败',
-        message: extractErrorMessage(err, '移除权限失败'),
+        title: i18n.t('iam.role_management_page.k14'),
+        message: extractErrorMessage(err, i18n.t('iam.role_management_page.k15')),
         type: 'error',
       });
     },
@@ -181,10 +184,10 @@ const RoleManagementPage: React.FC = () => {
       <CrudPage
         schema={roleSchema}
         apiAdapter={roleApiAdapter}
-        breadcrumbs={[{ label: 'IAM' }, { label: '角色管理' }]}
+        breadcrumbs={[{ label: 'IAM' }, { label: i18n.t('iam.role_management_page.k16') }]}
         customRowActions={[
           {
-            label: '管理权限',
+            label: i18n.t('iam.role_management_page.k17'),
             icon: <Key size={16} />,
             onClick: (row) => handleOpenPermissions(row),
           },
@@ -270,7 +273,7 @@ const RoleManagementPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setPermissionsDialogOpen(false)}>关闭</Button>
+          <Button onClick={() => setPermissionsDialogOpen(false)}>{i18n.t('iam.role_management_page.k18')}</Button>
         </DialogActions>
       </Dialog>
     </>

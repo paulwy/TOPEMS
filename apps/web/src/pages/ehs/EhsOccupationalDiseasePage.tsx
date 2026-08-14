@@ -17,6 +17,7 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -49,11 +50,11 @@ const statusColorMap: Record<string, { bg: string; color: string }> = {
 };
 
 const statusLabelMap: Record<string, string> = {
-  suspected: '疑似',
-  confirmed: '确诊',
-  recovered: '康复',
-  chronic: '慢性',
-  deceased: '死亡',
+  suspected: i18n.t('ehs.ehs_occupational_disease_page.k0'),
+  confirmed: i18n.t('ehs.ehs_occupational_disease_page.k1'),
+  recovered: i18n.t('ehs.ehs_occupational_disease_page.k2'),
+  chronic: i18n.t('ehs.ehs_occupational_disease_page.k3'),
+  deceased: i18n.t('ehs.ehs_occupational_disease_page.k4'),
 };
 
 const severityColorMap: Record<string, { bg: string; color: string }> = {
@@ -64,10 +65,10 @@ const severityColorMap: Record<string, { bg: string; color: string }> = {
 };
 
 const severityLabelMap: Record<string, string> = {
-  mild: '轻度',
-  moderate: '中度',
-  severe: '重度',
-  fatal: '极重度',
+  mild: i18n.t('ehs.ehs_occupational_disease_page.k5'),
+  moderate: i18n.t('ehs.ehs_occupational_disease_page.k6'),
+  severe: i18n.t('ehs.ehs_occupational_disease_page.k7'),
+  fatal: i18n.t('ehs.ehs_occupational_disease_page.k8'),
 };
 
 function extractListData(response: unknown): OccupationalDiseaseCase[] {
@@ -421,7 +422,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
       <CrudPage
         schema={occupationalDiseaseSchema}
         apiAdapter={occupationalDiseaseAdapter}
-        breadcrumbs={[{ label: 'EHS' }, { label: '职业病管理' }]}
+        breadcrumbs={[{ label: 'EHS' }, { label: i18n.t('ehs.ehs_occupational_disease_page.k9') }]}
         headerContent={headerContent}
         detailContent={detailContent}
         detailMaxWidth='md'

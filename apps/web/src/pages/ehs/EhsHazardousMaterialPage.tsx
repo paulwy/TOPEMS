@@ -130,7 +130,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
     return {
       total: allMaterials.length,
       expiring: allMaterials.filter(isExpiring).length,
-      severe: allMaterials.filter((m) => m.danger_level === '一级' || m.danger_level === '二级')
+      severe: allMaterials.filter((m) => m.danger_level === t('ehs.ehs_hazardous_material_page.k1') || m.danger_level === t('ehs.ehs_hazardous_material_page.k0'))
         .length,
       thisMonth: allMaterials.filter((m) => {
         if (!m.created_at) return false;
@@ -160,7 +160,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
         setMsdsData(null);
       }
     } catch (err: unknown) {
-      apiLogger.error('加载MSDS失败', err);
+      apiLogger.error(t('ehs.ehs_hazardous_material_page.msds_2'), err);
       addNotification({
         title: t('ehs.ehs_hazardous_material_page.error'),
         message: t('ehs.ehs_hazardous_material_page.fail_1'),
@@ -360,11 +360,11 @@ const EhsHazardousMaterialPage: React.FC = () => {
               </Box>
             </Box>
           ) : (
-            <Box sx={{ textAlign: 'center', py: 6, color: 'slate.500' }}>暂无MSDS数据</Box>
+            <Box sx={{ textAlign: 'center', py: 6, color: 'slate.500' }}>{t('ehs.ehs_hazardous_material_page.msds_3')}</Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowMSDSModal(false)}>关闭</Button>
+          <Button onClick={() => setShowMSDSModal(false)}>{t('ehs.ehs_hazardous_material_page.k4')}</Button>
         </DialogActions>
       </Dialog>
     </PageContainer>

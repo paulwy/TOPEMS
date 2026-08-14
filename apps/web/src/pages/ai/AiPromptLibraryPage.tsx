@@ -51,6 +51,7 @@ import { useTranslation } from 'react-i18next';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
@@ -73,8 +74,8 @@ interface PromptTemplate {
 const mockPrompts: PromptTemplate[] = [
   {
     id: '1',
-    name: '专业邮件写作',
-    description: '根据主题和要点生成专业的商务邮件',
+    name: i18n.t('ai.ai_prompt_library_page.k0'),
+    description: i18n.t('ai.ai_prompt_library_page.k1'),
     category: 'writing',
     content:
       '你是一位专业的商务助理。请根据以下信息撰写一封专业的邮件：\n\n主题：{subject}\n收件人：{recipient}\n要点：{key_points}\n\n要求：\n1. 语气专业、礼貌\n2. 结构清晰，重点突出\n3. 结尾包含行动号召',
@@ -83,12 +84,12 @@ const mockPrompts: PromptTemplate[] = [
     is_favorite: true,
     created_at: '2024-01-15',
     updated_at: '2024-06-20',
-    created_by: '张三',
+    created_by: i18n.t('ai.ai_prompt_library_page.k2'),
   },
   {
     id: '2',
-    name: '代码审查助手',
-    description: '对代码进行全面审查并给出改进建议',
+    name: i18n.t('ai.ai_prompt_library_page.k3'),
+    description: i18n.t('ai.ai_prompt_library_page.k4'),
     category: 'code',
     content:
       '你是一位资深代码审查专家。请审查以下代码：\n\n```{language}\n{code}\n```\n\n请从以下方面进行审查：\n1. 代码质量和可读性\n2. 潜在的Bug和安全问题\n3. 性能优化建议\n4. 最佳实践建议\n\n请按优先级排序你的建议。',
@@ -97,12 +98,12 @@ const mockPrompts: PromptTemplate[] = [
     is_favorite: true,
     created_at: '2024-02-10',
     updated_at: '2024-06-18',
-    created_by: '李四',
+    created_by: i18n.t('ai.ai_prompt_library_page.k5'),
   },
   {
     id: '3',
-    name: '数据分析报告',
-    description: '根据数据生成专业的分析报告',
+    name: i18n.t('ai.ai_prompt_library_page.k6'),
+    description: i18n.t('ai.ai_prompt_library_page.k7'),
     category: 'analysis',
     content:
       '你是一位数据分析师。请根据以下数据分析并生成报告：\n\n数据：{data}\n\n分析维度：\n1. 总体趋势\n2. 关键指标\n3. 异常发现\n4. 建议措施\n\n请以清晰、专业的方式呈现你的分析。',
@@ -111,12 +112,12 @@ const mockPrompts: PromptTemplate[] = [
     is_favorite: false,
     created_at: '2024-03-05',
     updated_at: '2024-06-15',
-    created_by: '王五',
+    created_by: i18n.t('ai.ai_prompt_library_page.k8'),
   },
   {
     id: '4',
-    name: '会议纪要生成',
-    description: '根据会议记录生成结构化纪要',
+    name: i18n.t('ai.ai_prompt_library_page.k9'),
+    description: i18n.t('ai.ai_prompt_library_page.k10'),
     category: 'business',
     content:
       '请根据以下会议内容生成结构化的会议纪要：\n\n会议内容：{meeting_content}\n\n请包含以下部分：\n1. 会议基本信息\n2. 讨论要点\n3. 决议事项\n4. 行动项（含负责人和截止时间）\n5. 待跟进问题',
@@ -125,12 +126,12 @@ const mockPrompts: PromptTemplate[] = [
     is_favorite: false,
     created_at: '2024-01-20',
     updated_at: '2024-06-22',
-    created_by: '赵六',
+    created_by: i18n.t('ai.ai_prompt_library_page.k11'),
   },
   {
     id: '5',
-    name: '营销文案创作',
-    description: '创作吸引人的营销推广文案',
+    name: i18n.t('ai.ai_prompt_library_page.k12'),
+    description: i18n.t('ai.ai_prompt_library_page.k13'),
     category: 'creative',
     content:
       '你是一位创意营销专家。请为以下产品/活动创作营销文案：\n\n产品/活动：{product}\n目标受众：{target_audience}\n核心卖点：{selling_points}\n\n要求：\n1. 标题吸引人\n2. 突出核心价值\n3. 有号召力的行动号召\n4. 字数控制在200字以内',
@@ -139,12 +140,12 @@ const mockPrompts: PromptTemplate[] = [
     is_favorite: true,
     created_at: '2024-02-28',
     updated_at: '2024-06-10',
-    created_by: '钱七',
+    created_by: i18n.t('ai.ai_prompt_library_page.k14'),
   },
   {
     id: '6',
     name: 'SQL查询生成',
-    description: '根据需求描述生成SQL查询语句',
+    description: i18n.t('ai.ai_prompt_library_page.sql_15'),
     category: 'code',
     content:
       '你是一位SQL专家。请根据以下需求生成SQL查询：\n\n需求：{requirement}\n表结构：{table_structure}\n\n请提供：\n1. 优化后的SQL语句\n2. 查询说明\n3. 性能优化建议（如果有）',
@@ -153,7 +154,7 @@ const mockPrompts: PromptTemplate[] = [
     is_favorite: false,
     created_at: '2024-03-15',
     updated_at: '2024-06-05',
-    created_by: '孙八',
+    created_by: i18n.t('ai.ai_prompt_library_page.k16'),
   },
 ];
 
@@ -297,8 +298,8 @@ export const AiPromptLibraryPage: React.FC = () => {
     if (generatedResult) {
       navigator.clipboard.writeText(generatedResult);
       addNotification({
-        title: t('ai.prompt_library.message.copied_title'),
-        message: t('ai.prompt_library.message.result_copied'),
+        title: i18n.t('ai.prompt_library.message.copied_title'),
+        message: i18n.t('ai.prompt_library.message.result_copied'),
         type: 'success',
       });
     }
@@ -307,8 +308,8 @@ export const AiPromptLibraryPage: React.FC = () => {
   const handleCopyPrompt = (content: string) => {
     navigator.clipboard.writeText(content);
     addNotification({
-      title: t('ai.prompt_library.message.copied_title'),
-      message: t('ai.prompt_library.message.prompt_copied'),
+      title: i18n.t('ai.prompt_library.message.copied_title'),
+      message: i18n.t('ai.prompt_library.message.prompt_copied'),
       type: 'success',
     });
   };
@@ -317,8 +318,8 @@ export const AiPromptLibraryPage: React.FC = () => {
     toggleFavoriteMutation.mutate(id, {
       onSuccess: () => {
         addNotification({
-          title: t('ai.prompt_library.message.favorite_title'),
-          message: t('ai.prompt_library.message.favorite_updated'),
+          title: i18n.t('ai.prompt_library.message.favorite_title'),
+          message: i18n.t('ai.prompt_library.message.favorite_updated'),
           type: 'success',
         });
       },
@@ -327,8 +328,8 @@ export const AiPromptLibraryPage: React.FC = () => {
 
   return (
     <PageContainer
-      title={t('ai.prompt_library.title')}
-      subtitle={t('ai.prompt_library.subtitle')}
+      title={i18n.t('ai.prompt_library.title')}
+      subtitle={i18n.t('ai.prompt_library.subtitle')}
       padding={false}
       maxWidth={false}
       headerProps={{
@@ -353,7 +354,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 1, color: 'text.secondary' }}
                 >
-                  {t('ai.prompt_library.label.category')}
+                  {i18n.t('ai.prompt_library.label.category')}
                 </Typography>
                 <List
                   disablePadding
@@ -403,7 +404,7 @@ export const AiPromptLibraryPage: React.FC = () => {
               <Box>
                 <Chip
                   icon={<Star size={14} />}
-                  label={t('ai.prompt_library.label.favorites_only')}
+                  label={i18n.t('ai.prompt_library.label.favorites_only')}
                   variant={showFavoritesOnly ? 'filled' : 'outlined'}
                   color={showFavoritesOnly ? 'warning' : 'default'}
                   onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
@@ -436,12 +437,12 @@ export const AiPromptLibraryPage: React.FC = () => {
                   sx={{ minHeight: 36, '& .MuiTab-root': { minHeight: 36, py: 0.5 } }}
                 >
                   <Tab
-                    label={t('ai.prompt_library.view.all_templates')}
+                    label={i18n.t('ai.prompt_library.view.all_templates')}
                     value='all'
                     sx={{ textTransform: 'none' }}
                   />
                   <Tab
-                    label={t('ai.prompt_library.view.my_templates')}
+                    label={i18n.t('ai.prompt_library.view.my_templates')}
                     value='mine'
                     sx={{ textTransform: 'none' }}
                   />
@@ -450,7 +451,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <TextField
                     size='small'
-                    placeholder={t('ai.prompt_library.placeholder.search')}
+                    placeholder={i18n.t('ai.prompt_library.placeholder.search')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     slotProps={{
@@ -471,13 +472,13 @@ export const AiPromptLibraryPage: React.FC = () => {
                     size='small'
                     onClick={() => {
                       addNotification({
-                        title: t('ai.prompt_library.button.new_template'),
-                        message: t('ai.prompt_library.message.coming_soon'),
+                        title: i18n.t('ai.prompt_library.button.new_template'),
+                        message: i18n.t('ai.prompt_library.message.coming_soon'),
                         type: 'info',
                       });
                     }}
                   >
-                    {t('ai.prompt_library.button.new_template')}
+                    {i18n.t('ai.prompt_library.button.new_template')}
                   </Button>
                 </Box>
               </Box>
@@ -545,7 +546,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                                   e.stopPropagation();
                                   handleToggleFavorite(prompt.id);
                                 }}
-                                aria-label='收藏'
+                                aria-label={i18n.t('ai.ai_prompt_library_page.k17')}
                               >
                                 <Star
                                   size={18}
@@ -606,7 +607,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                                 sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
                               >
                                 <ThumbsUp size={12} />
-                                {t('ai.prompt_library.label.usage_count', {
+                                {i18n.t('ai.prompt_library.label.usage_count', {
                                   count: prompt.usage_count,
                                 })}
                               </Typography>
@@ -617,7 +618,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                                     e.stopPropagation();
                                     handleCopyPrompt(prompt.content);
                                   }}
-                                  aria-label='复制'
+                                  aria-label={i18n.t('ai.ai_prompt_library_page.k18')}
                                 >
                                   <Copy size={14} />
                                 </IconButton>
@@ -627,7 +628,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                                     e.stopPropagation();
                                     handleUsePrompt(prompt);
                                   }}
-                                  aria-label='执行'
+                                  aria-label={i18n.t('ai.ai_prompt_library_page.k19')}
                                 >
                                   <PlayCircle size={14} />
                                 </IconButton>
@@ -650,7 +651,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                       variant='body1'
                       color='text.secondary'
                     >
-                      {t('ai.prompt_library.message.no_results')}
+                      {i18n.t('ai.prompt_library.message.no_results')}
                     </Typography>
                   </Box>
                 )}
@@ -678,7 +679,7 @@ export const AiPromptLibraryPage: React.FC = () => {
             <IconButton
               size='small'
               onClick={() => setUseDialogOpen(false)}
-              aria-label='关闭'
+              aria-label={i18n.t('ai.ai_prompt_library_page.k20')}
             >
               <X size={18} />
             </IconButton>
@@ -698,7 +699,7 @@ export const AiPromptLibraryPage: React.FC = () => {
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 1.5 }}
             >
-              {t('ai.prompt_library.dialog.fill_variables')}
+              {i18n.t('ai.prompt_library.dialog.fill_variables')}
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
               {Object.keys(variables).map((key) => (
@@ -707,7 +708,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                   label={key}
                   value={variables[key]}
                   onChange={(e) => setVariables((prev) => ({ ...prev, [key]: e.target.value }))}
-                  placeholder={t('ai.prompt_library.placeholder.enter_var', { var: key })}
+                  placeholder={i18n.t('ai.prompt_library.placeholder.enter_var', { var: key })}
                   size='small'
                   multiline
                   maxRows={3}
@@ -727,7 +728,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                {t('ai.prompt_library.dialog.generated_result')}
+                {i18n.t('ai.prompt_library.dialog.generated_result')}
               </Typography>
               {generatedResult && (
                 <Button
@@ -735,7 +736,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                   startIcon={<Copy size={14} />}
                   onClick={handleCopyResult}
                 >
-                  {t('ai.prompt_library.button.copy')}
+                  {i18n.t('ai.prompt_library.button.copy')}
                 </Button>
               )}
             </Box>
@@ -760,7 +761,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    {t('ai.prompt_library.message.generating')}
+                    {i18n.t('ai.prompt_library.message.generating')}
                   </Typography>
                 </Box>
               ) : generatedResult ? (
@@ -786,7 +787,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    {t('ai.prompt_library.message.fill_then_generate')}
+                    {i18n.t('ai.prompt_library.message.fill_then_generate')}
                   </Typography>
                 </Box>
               )}
@@ -795,7 +796,7 @@ export const AiPromptLibraryPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setUseDialogOpen(false)}>
-            {t('ai.prompt_library.button.cancel')}
+            {i18n.t('ai.prompt_library.button.cancel')}
           </Button>
           <Button
             variant='contained'
@@ -804,8 +805,8 @@ export const AiPromptLibraryPage: React.FC = () => {
             disabled={generating}
           >
             {generating
-              ? t('ai.prompt_library.button.generating')
-              : t('ai.prompt_library.button.generate')}
+              ? i18n.t('ai.prompt_library.button.generating')
+              : i18n.t('ai.prompt_library.button.generate')}
           </Button>
         </DialogActions>
       </Dialog>

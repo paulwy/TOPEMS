@@ -6,15 +6,18 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useQuery } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/material';
 import { AlertTriangle, ShieldAlert, Clock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const HazardStats: React.FC = () => {
+  const { t } = useTranslation('ehs');
   const { data } = useQuery({
     queryKey: [QUERY_KEYS.EHS.HAZARDS, 'stats'],
     queryFn: async () => {
       const response = await ehsApi.listHazards({ page: 0, pagesize: 1000 } as Parameters<
         typeof ehsApi.listHazards
       >[0]);
-      if (!response.success) throw new Error('加载危险源统计失败');
+      if (!response.success) throw new Error(i18n.t('ehs.hazard_page.k0'));
       const result = response.data;
       return result?.items || [];
     },
@@ -38,7 +41,7 @@ const HazardStats: React.FC = () => {
 
   const statCards = [
     {
-      label: '危险源总数',
+      label: i18n.t('ehs.hazard_page.k1'),
       value: total,
       color: 'error.light',
       textColor: 'text.secondary',
@@ -50,7 +53,7 @@ const HazardStats: React.FC = () => {
       ),
     },
     {
-      label: '活跃隐患',
+      label: i18n.t('ehs.hazard_page.k2'),
       value: active,
       color: 'error.lighter',
       textColor: 'error.dark',
@@ -62,7 +65,7 @@ const HazardStats: React.FC = () => {
       ),
     },
     {
-      label: '已控制',
+      label: i18n.t('ehs.hazard_page.k3'),
       value: controlled,
       color: 'warning.lighter',
       textColor: 'warning.dark',
@@ -74,7 +77,7 @@ const HazardStats: React.FC = () => {
       ),
     },
     {
-      label: '高风险隐患',
+      label: i18n.t('ehs.hazard_page.k4'),
       value: highRisk,
       color: 'error.light',
       textColor: 'error.dark',
@@ -145,7 +148,7 @@ const hazardApiAdapter: CrudApiAdapter = {
       status: params?.status as string | undefined,
     } as Parameters<typeof ehsApi.listHazards>[0]);
     if (!response.success) {
-      throw new Error('加载危险源失败');
+      throw new Error(i18n.t('ehs.hazard_page.k5'));
     }
     const data = response.data;
     return {
@@ -159,7 +162,7 @@ const hazardApiAdapter: CrudApiAdapter = {
       data as unknown as Parameters<typeof ehsApi.createHazard>[0]
     );
     if (!response.success) {
-      throw new Error('创建危险源失败');
+      throw new Error(i18n.t('ehs.hazard_page.k6'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
@@ -170,7 +173,7 @@ const hazardApiAdapter: CrudApiAdapter = {
       data as Parameters<typeof ehsApi.updateHazard>[1]
     );
     if (!response.success) {
-      throw new Error('更新危险源失败');
+      throw new Error(i18n.t('ehs.hazard_page.k7'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
@@ -178,7 +181,7 @@ const hazardApiAdapter: CrudApiAdapter = {
   delete: async (id) => {
     const response = await ehsApi.deleteHazard(id);
     if (!response.success) {
-      throw new Error('删除危险源失败');
+      throw new Error(i18n.t('ehs.hazard_page.k8'));
     }
   },
 };
@@ -189,9 +192,9 @@ const HazardPage: React.FC = () => {
       schema={hazardSchema}
       apiAdapter={hazardApiAdapter}
       breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
+        { label: i18n.t('ehs.hazard_page.k9'), href: '/dashboard' },
         { label: 'EHS', href: '/ehs' },
-        { label: '危险源管理' },
+        { label: i18n.t('ehs.hazard_page.k10') },
       ]}
       headerContent={<HazardStats />}
     />

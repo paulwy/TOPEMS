@@ -2,6 +2,8 @@ import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { accidentSchema } from '@/schemas/ehs';
 import { ehsApi } from '@/api/ehs';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const apiAdapter = createCrudPageAdapter({
   list: ehsApi.listAccidents,
@@ -15,7 +17,7 @@ export default function EhsAccidentPage() {
     <CrudPage
       schema={accidentSchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: 'EHS' }, { label: '事故管理' }]}
+      breadcrumbs={[{ label: 'EHS' }, { label: i18n.t('ehs.ehs_accident_page.k0') }]}
     />
   );
 }

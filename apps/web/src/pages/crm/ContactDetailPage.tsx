@@ -319,7 +319,7 @@ const ContactDetailPage: React.FC = () => {
         detailItemName={
           (contact?.last_name ? `${contact.last_name}${contact.first_name || ''}` : '') ||
           contact?.id ||
-          '联系人详情'
+          t('crm.contact_detail_page.k0')
         }
         backHref={CRM_PATHS.contacts}
         loading={loading}

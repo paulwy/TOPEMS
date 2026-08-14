@@ -594,5 +594,9 @@
       "msg_load_fail": "Failed to load sales funnel data",
       "title_load_fail": "Load Failed"
     }
-  }
+  },
+  "crm.contact_detail_page.k0": "联系人详情",
+  "crm.customer_detail_page.k0": "客户详情",
+  "crm.opportunity_detail_page.k0": "商机详情",
+  "crm.return_detail_page.k0": "退货详情"
 }

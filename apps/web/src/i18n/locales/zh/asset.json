@@ -192,5 +192,8 @@
   "transfer_page.ast_005_01": "AST-005 - 空调-01",
   "transfer_page.ast_006_01": "AST-006 - 办公桌-01",
   "transfer_page.ast_007_01": "AST-007 - 笔记本电脑-01",
-  "transfer_page.ast_008_01": "AST-008 - 监控摄像头-01"
+  "transfer_page.ast_008_01": "AST-008 - 监控摄像头-01",
+  "asset.dashboard_page.k0": "资产管理概览",
+  "asset.dashboard_page.k1": "资产管理数据概览",
+  "asset.dashboard_page.k2": "快捷操作"
 }

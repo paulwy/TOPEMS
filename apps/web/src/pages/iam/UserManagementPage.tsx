@@ -14,19 +14,22 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { userSchema } from '@/schemas/iam/user';
 import { authApi } from '@/api/iam';
 import { IAM_PATHS } from '@/modules/iam/config';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 /**
  * 用户管理 API 适配器
  */
 const userApiAdapter: CrudApiAdapter = {
   list: async (params) => {
+  const { t } = useTranslation('iam');
     const response = await authApi.listUsers({
       page: params?.page,
       pagesize: params?.pageSize,
       search: params?.search,
     });
     if (!response.success) {
-      throw new Error(response.message || '加载用户失败');
+      throw new Error(response.message || i18n.t('iam.user_management_page.k0'));
     }
     const data = response.data;
     return {
@@ -43,7 +46,7 @@ const userApiAdapter: CrudApiAdapter = {
       full_name: data.full_name ? String(data.full_name) : undefined,
     });
     if (!response.success) {
-      throw new Error(response.message || '创建用户失败');
+      throw new Error(response.message || i18n.t('iam.user_management_page.k1'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
@@ -55,7 +58,7 @@ const userApiAdapter: CrudApiAdapter = {
       isactive: Boolean(data.isactive),
     });
     if (!response.success) {
-      throw new Error(response.message || '更新用户失败');
+      throw new Error(response.message || i18n.t('iam.user_management_page.k2'));
     }
     return response.data as unknown as Record<string, unknown>;
   },
@@ -63,7 +66,7 @@ const userApiAdapter: CrudApiAdapter = {
   delete: async (id) => {
     const response = await authApi.deleteUser(id);
     if (!response.success) {
-      throw new Error(response.message || '删除用户失败');
+      throw new Error(response.message || i18n.t('iam.user_management_page.k3'));
     }
   },
 };
@@ -77,9 +80,9 @@ const UserManagementPage: React.FC = () => {
       schema={userSchema}
       apiAdapter={userApiAdapter}
       breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: '身份管理', href: IAM_PATHS.root },
-        { label: '用户管理' },
+        { label: i18n.t('iam.user_management_page.k4'), href: '/dashboard' },
+        { label: i18n.t('iam.user_management_page.k5'), href: IAM_PATHS.root },
+        { label: i18n.t('iam.user_management_page.k6') },
       ]}
     />
   );

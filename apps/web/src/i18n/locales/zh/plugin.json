@@ -261,5 +261,8 @@
       "permanent_usage": "一次性购买，永久使用"
     },
     "install_success_message": "{{name}} 已成功安装"
-  }
+  },
+  "plugin.dashboard_page.k0": "插件市场概览",
+  "plugin.dashboard_page.k1": "插件市场数据概览",
+  "plugin.dashboard_page.k2": "快捷操作"
 }
