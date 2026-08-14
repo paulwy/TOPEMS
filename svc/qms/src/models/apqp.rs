@@ -277,3 +277,328 @@ pub struct ProcessApprovalRequest {
     pub approved: bool,
     pub comment: Option<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_apqp_project_query() {
+        roundtrip(&ApqpProjectQuery {
+            page: Some(1),
+            page_size: Some(10),
+            status: Some("active".to_string()),
+            product_name: None,
+        });
+    }
+
+    #[test]
+    fn test_apqp_project() {
+        roundtrip(&ApqpProject {
+            id: "id".to_string(),
+            tenant_id: "t".to_string(),
+            project_no: "P001".to_string(),
+            project_name: "x".to_string(),
+            product_id: None,
+            product_name: None,
+            customer: None,
+            description: None,
+            status: None,
+            current_phase: None,
+            leader: None,
+            team: None,
+            start_date: None,
+            target_date: None,
+            actual_end_date: None,
+            progress: Some(0),
+            risk_level: None,
+            created_by: None,
+            created_at: None,
+            updated_at: None,
+        });
+    }
+
+    #[test]
+    fn test_create_apqp_project_request() {
+        roundtrip(&CreateApqpProjectRequest {
+            project_name: "x".to_string(),
+            product_id: None,
+            product_name: None,
+            customer: None,
+            description: None,
+            leader: None,
+            team: None,
+            start_date: NaiveDate::from_ymd_opt(2025, 1, 1),
+            target_date: NaiveDate::from_ymd_opt(2025, 12, 31),
+            created_by: None,
+        });
+    }
+
+    #[test]
+    fn test_update_apqp_project_request() {
+        roundtrip(&UpdateApqpProjectRequest {
+            project_name: Some("x".to_string()),
+            product_id: None,
+            product_name: None,
+            customer: None,
+            description: None,
+            status: None,
+            current_phase: None,
+            leader: None,
+            team: None,
+            start_date: None,
+            target_date: None,
+            actual_end_date: None,
+            progress: None,
+            risk_level: None,
+        });
+    }
+
+    #[test]
+    fn test_apqp_phase() {
+        roundtrip(&ApqpPhase {
+            id: "id".to_string(),
+            tenant_id: "t".to_string(),
+            project_id: "p".to_string(),
+            phase_code: "PH1".to_string(),
+            phase_name: "x".to_string(),
+            description: None,
+            status: None,
+            start_date: None,
+            end_date: None,
+            actual_start_date: None,
+            actual_end_date: None,
+            progress: Some(0),
+            sort_order: Some(1),
+            created_at: None,
+            updated_at: None,
+        });
+    }
+
+    #[test]
+    fn test_create_apqp_phase_request() {
+        roundtrip(&CreateApqpPhaseRequest {
+            project_id: "p".to_string(),
+            phase_code: "PH1".to_string(),
+            phase_name: "x".to_string(),
+            description: None,
+            start_date: None,
+            end_date: None,
+            sort_order: Some(1),
+        });
+    }
+
+    #[test]
+    fn test_update_apqp_phase_request() {
+        roundtrip(&UpdateApqpPhaseRequest {
+            phase_name: Some("x".to_string()),
+            description: None,
+            status: None,
+            start_date: None,
+            end_date: None,
+            actual_start_date: None,
+            actual_end_date: None,
+            progress: None,
+            sort_order: None,
+        });
+    }
+
+    #[test]
+    fn test_apqp_task() {
+        roundtrip(&ApqpTask {
+            id: "id".to_string(),
+            tenant_id: "t".to_string(),
+            project_id: "p".to_string(),
+            phase_id: "ph".to_string(),
+            task_name: "x".to_string(),
+            description: None,
+            task_type: None,
+            deliverable: None,
+            status: None,
+            assignee: None,
+            due_date: None,
+            completed_at: None,
+            sort_order: Some(1),
+            created_at: None,
+            updated_at: None,
+        });
+    }
+
+    #[test]
+    fn test_apqp_task_query() {
+        roundtrip(&ApqpTaskQuery {
+            project_id: None,
+            phase_id: None,
+            status: None,
+            assignee: None,
+        });
+    }
+
+    #[test]
+    fn test_create_apqp_task_request() {
+        roundtrip(&CreateApqpTaskRequest {
+            project_id: "p".to_string(),
+            phase_id: "ph".to_string(),
+            task_name: "x".to_string(),
+            description: None,
+            task_type: None,
+            deliverable: None,
+            assignee: None,
+            due_date: None,
+            sort_order: None,
+        });
+    }
+
+    #[test]
+    fn test_update_apqp_task_request() {
+        roundtrip(&UpdateApqpTaskRequest {
+            task_name: Some("x".to_string()),
+            description: None,
+            task_type: None,
+            deliverable: None,
+            status: None,
+            assignee: None,
+            due_date: None,
+            completed_at: None,
+            sort_order: None,
+        });
+    }
+
+    #[test]
+    fn test_apqp_risk() {
+        roundtrip(&ApqpRisk {
+            id: "id".to_string(),
+            tenant_id: "t".to_string(),
+            project_id: "p".to_string(),
+            risk_name: "x".to_string(),
+            description: None,
+            risk_category: None,
+            severity: Some(1),
+            occurrence: Some(1),
+            detection: Some(1),
+            rpn: Some(1),
+            status: None,
+            mitigation_plan: None,
+            responsible: None,
+            target_date: None,
+            created_at: None,
+            updated_at: None,
+        });
+    }
+
+    #[test]
+    fn test_apqp_risk_query() {
+        roundtrip(&ApqpRiskQuery {
+            project_id: None,
+            status: None,
+            min_rpn: None,
+        });
+    }
+
+    #[test]
+    fn test_create_apqp_risk_request() {
+        roundtrip(&CreateApqpRiskRequest {
+            project_id: "p".to_string(),
+            risk_name: "x".to_string(),
+            description: None,
+            risk_category: None,
+            severity: 1,
+            occurrence: 1,
+            detection: 1,
+            mitigation_plan: None,
+            responsible: None,
+            target_date: None,
+        });
+    }
+
+    #[test]
+    fn test_update_apqp_risk_request() {
+        roundtrip(&UpdateApqpRiskRequest {
+            risk_name: Some("x".to_string()),
+            description: None,
+            risk_category: None,
+            severity: None,
+            occurrence: None,
+            detection: None,
+            status: None,
+            mitigation_plan: None,
+            responsible: None,
+            target_date: None,
+        });
+    }
+
+    #[test]
+    fn test_apqp_progress_statistics() {
+        roundtrip(&ApqpProgressStatistics {
+            total_phases: 0,
+            completed_phases: 0,
+            total_tasks: 0,
+            completed_tasks: 0,
+            overall_progress: 0.0,
+            phase_progress: vec![PhaseProgress {
+                phase_id: "id".to_string(),
+                phase_name: "n".to_string(),
+                phase_code: "c".to_string(),
+                total_tasks: 0,
+                completed_tasks: 0,
+                progress: 0.0,
+                status: "s".to_string(),
+            }],
+        });
+    }
+
+    #[test]
+    fn test_status_transition_request() {
+        roundtrip(&StatusTransitionRequest {
+            target_status: "x".to_string(),
+            operator: "op".to_string(),
+            comment: None,
+        });
+    }
+
+    #[test]
+    fn test_apqp_approval() {
+        roundtrip(&ApqpApproval {
+            id: "id".to_string(),
+            tenant_id: "t".to_string(),
+            project_id: "p".to_string(),
+            approval_type: "at".to_string(),
+            status: None,
+            applicant: None,
+            approver: None,
+            comment: None,
+            submitted_at: None,
+            approved_at: None,
+            created_at: None,
+        });
+    }
+
+    #[test]
+    fn test_create_apqp_approval_request() {
+        roundtrip(&CreateApqpApprovalRequest {
+            project_id: "p".to_string(),
+            approval_type: "at".to_string(),
+            applicant: None,
+            comment: None,
+        });
+    }
+
+    #[test]
+    fn test_process_approval_request() {
+        roundtrip(&ProcessApprovalRequest {
+            approver: "a".to_string(),
+            approved: true,
+            comment: None,
+        });
+    }
+}

@@ -447,6 +447,103 @@ pub async fn get_upload_progress(
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::PhotoUpload as ModelPhotoUpload;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+// roundtrip verified by JSON comparison
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn photo_upload_request_roundtrip() {
+        roundtrip(&PhotoUploadRequest {
+            file_name: "a.jpg".into(),
+            file_size: 1024,
+            mime_type: "image/jpeg".into(),
+            width: None,
+            height: None,
+            compression_ratio: None,
+            has_watermark: false,
+            watermark_text: None,
+            location_lat: None,
+            location_lng: None,
+        });
+    }
+
+    #[test]
+    fn photo_upload_response_roundtrip() {
+        roundtrip(&PhotoUploadResponse {
+            upload_id: Uuid::new_v4(),
+            file_path: "/tmp/a.jpg".into(),
+            thumbnail_url: None,
+            status: "done".into(),
+            message: "ok".into(),
+        });
+    }
+
+    #[test]
+    fn batch_upload_request_roundtrip() {
+        roundtrip(&BatchUploadRequest {
+            photos: vec![PhotoUploadRequest {
+                file_name: "a.jpg".into(),
+                file_size: 100,
+                mime_type: "image/png".into(),
+                width: None,
+                height: None,
+                compression_ratio: None,
+                has_watermark: false,
+                watermark_text: None,
+                location_lat: None,
+                location_lng: None,
+            }],
+        });
+    }
+
+    #[test]
+    fn batch_upload_response_roundtrip() {
+        roundtrip(&BatchUploadResponse {
+            success_count: 1,
+            failed_count: 0,
+            results: vec![],
+        });
+    }
+
+    #[test]
+    fn photo_list_response_roundtrip() {
+        roundtrip(&PhotoListResponse {
+            items: vec![],
+            total: 0,
+        });
+    }
+
+    #[test]
+    fn upload_progress_response_roundtrip() {
+        roundtrip(&UploadProgressResponse {
+            upload_id: Uuid::new_v4(),
+            progress: 50,
+            status: "uploading".into(),
+            file_url: None,
+        });
+    }
+
+    #[test]
+    fn photo_list_query_roundtrip() {
+        roundtrip(&PhotoListQuery {
+            page: Some(1),
+            size: Some(20),
+            status: None,
+        });
+    }
+}
+
 pub async fn delete_photo(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

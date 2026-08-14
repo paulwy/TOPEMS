@@ -104,3 +104,63 @@ pub struct TaskApiDoc;
     info(title = "TOPEMS Mobile Device API", version = "1.0.0", description = "设备管理 API")
 )]
 pub struct DeviceApiDoc;
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+// roundtrip verified by JSON comparison
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn patrol_record_openapi_roundtrip() {
+        roundtrip(&PatrolRecord {
+            id: "1".into(),
+            task_id: None,
+            user_id: "u1".into(),
+            location: None,
+            photo_url: None,
+            notes: None,
+            status: "open".into(),
+            created_at: "2026-01-01T00:00:00Z".into(),
+        });
+    }
+
+    #[test]
+    fn scan_record_openapi_roundtrip() {
+        roundtrip(&ScanRecord {
+            id: "1".into(),
+            code: "BC".into(),
+            code_type: "qrcode".into(),
+            user_id: "u1".into(),
+            device_id: None,
+            result: None,
+            created_at: "2026-01-01T00:00:00Z".into(),
+        });
+    }
+
+    #[test]
+    fn mobile_task_openapi_roundtrip() {
+        roundtrip(&MobileTask {
+            id: "1".into(),
+            title: "t".into(),
+            description: None,
+            task_type: "work".into(),
+            assignee_id: None,
+            status: "open".into(),
+            priority: Some(1),
+            due_date: None,
+            created_at: "2026-01-01".into(),
+            updated_at: None,
+        });
+    }
+
+}

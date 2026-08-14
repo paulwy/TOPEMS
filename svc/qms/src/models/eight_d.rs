@@ -101,3 +101,127 @@ pub struct EightDAuditLog {
     pub comment: Option<String>,
     pub created_at: Option<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_eight_d_query() {
+        roundtrip(&EightDQuery {
+            page: Some(1),
+            page_size: Some(10),
+            status: None,
+            severity: None,
+            assignee: None,
+            search: None,
+        });
+    }
+
+    #[test]
+    fn test_list_eight_d_reports_response() {
+        roundtrip(&ListEightDReportsResponse {
+            reports: vec![],
+            total: 0,
+            page: 1,
+            page_size: 10,
+        });
+    }
+
+    #[test]
+    fn test_eight_d_report() {
+        roundtrip(&EightDReport {
+            id: "id".to_string(),
+            tenant_id: "t".to_string(),
+            report_no: "8D001".to_string(),
+            title: "x".to_string(),
+            status: None,
+            severity: None,
+            priority: None,
+            related_issue_id: None,
+            d1_team: None,
+            d1_leader: None,
+            d2_problem_description: None,
+            d3_containment_action: None,
+            d3_implemented_at: None,
+            d4_root_cause: None,
+            d4_cause_analysis: None,
+            d5_permanent_action: None,
+            d6_verification_result: None,
+            d6_verified_at: None,
+            d7_preventive_action: None,
+            d8_congratulations: None,
+            d8_closed_at: None,
+            assignee: None,
+            due_date: None,
+            created_by: None,
+            created_at: None,
+            updated_at: None,
+        });
+    }
+
+    #[test]
+    fn test_create_eight_d_request() {
+        roundtrip(&CreateEightDRequest {
+            title: "x".to_string(),
+            severity: None,
+            priority: None,
+            related_issue_id: None,
+            d2_problem_description: None,
+            assignee: None,
+            due_date: NaiveDate::from_ymd_opt(2025, 1, 1),
+            created_by: None,
+        });
+    }
+
+    #[test]
+    fn test_update_eight_d_request() {
+        roundtrip(&UpdateEightDRequest {
+            title: None,
+            status: None,
+            severity: None,
+            priority: None,
+            d1_team: None,
+            d1_leader: None,
+            d2_problem_description: None,
+            d3_containment_action: None,
+            d4_root_cause: None,
+            d4_cause_analysis: None,
+            d5_permanent_action: None,
+            d6_verification_result: None,
+            d7_preventive_action: None,
+            d8_congratulations: None,
+            assignee: None,
+            due_date: None,
+        });
+    }
+
+    #[test]
+    fn test_eight_d_step_request() {
+        roundtrip(&EightDStepRequest { content: None });
+    }
+
+    #[test]
+    fn test_eight_d_audit_log() {
+        roundtrip(&EightDAuditLog {
+            id: "id".to_string(),
+            tenant_id: "t".to_string(),
+            report_id: "r".to_string(),
+            action: "ap".to_string(),
+            step: None,
+            operator: None,
+            comment: None,
+            created_at: None,
+        });
+    }
+}

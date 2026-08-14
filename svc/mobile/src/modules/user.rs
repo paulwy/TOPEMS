@@ -321,3 +321,72 @@ fn base64_decode(s: &str) -> Result<Vec<u8>, ()> {
     }
     Ok(out)
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+// roundtrip verified by JSON comparison
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn user_profile_roundtrip() {
+        use chrono::Utc;
+        roundtrip(&UserProfile {
+            id: uuid::Uuid::new_v4(),
+            username: "alice".into(),
+            nickname: Some("Alice".into()),
+            phone: None,
+            email: Some("a@b.com".into()),
+            avatar_url: None,
+            department: None,
+            position: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        });
+    }
+
+    #[test]
+    fn update_profile_request_roundtrip() {
+        roundtrip(&UpdateProfileRequest {
+            nickname: Some("A".into()),
+            phone: None,
+            email: None,
+            department: None,
+            position: None,
+        });
+    }
+
+    #[test]
+    fn user_settings_roundtrip() {
+        use chrono::Utc;
+        roundtrip(&UserSettings {
+            id: uuid::Uuid::new_v4(),
+            user_id: uuid::Uuid::new_v4(),
+            language: "zh".into(),
+            theme: "light".into(),
+            notification_enabled: true,
+            sound_enabled: true,
+            auto_sync: true,
+            sync_interval: 15,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        });
+    }
+
+    #[test]
+    fn upload_avatar_request_roundtrip() {
+        roundtrip(&UploadAvatarRequest {
+            avatar_base64: "aGVsbG8=".into(),
+        });
+    }
+
+}

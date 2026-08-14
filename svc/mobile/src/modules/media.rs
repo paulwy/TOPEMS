@@ -311,3 +311,38 @@ pub async fn delete_media(
         }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+// roundtrip verified by JSON comparison
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn media_file_roundtrip() {
+        use chrono::Utc;
+        roundtrip(&MediaFile {
+            id: uuid::Uuid::new_v4(),
+            file_name: "a.jpg".into(),
+            file_type: "photo".into(),
+            file_url: Some("/uploads/a.jpg".into()),
+            file_size: 1024,
+            mime_type: "image/jpeg".into(),
+            uploaded_by: "user".into(),
+            uploaded_by_name: None,
+            description: None,
+            tags: Some(vec!["tag1".into()]),
+            created_at: Utc::now(),
+        });
+    }
+
+}

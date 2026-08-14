@@ -241,3 +241,50 @@ async fn get_shortcuts(pool: &PgPool, user_id: &str) -> Vec<Shortcut> {
         ],
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+// roundtrip verified by JSON comparison
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn workbench_shortcut_roundtrip() {
+        roundtrip(&Shortcut {
+            id: "1".into(),
+            name: "scan".into(),
+            icon: "Scan".into(),
+            path: "/mobile/scan".into(),
+            color: "#1890ff".into(),
+        });
+    }
+
+    #[test]
+    fn mobile_workbench_data_roundtrip() {
+        roundtrip(&MobileWorkbenchData {
+            pending_tasks: 3,
+            pending_approvals: 0,
+            unread_notifications: 5,
+            today_attendance_status: "checked_in".into(),
+            today_production_output: 100,
+            today_quality_pass_rate: 98.5,
+            shortcuts: vec![Shortcut {
+                id: "1".into(),
+                name: "scan".into(),
+                icon: "Scan".into(),
+                path: "/mobile/scan".into(),
+                color: "#1890ff".into(),
+            }],
+        });
+    }
+
+}

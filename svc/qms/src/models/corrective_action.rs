@@ -89,3 +89,123 @@ pub struct UpdateActionRequest {
     pub assignee: Option<String>,
     pub target_date: Option<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_action_query() {
+        roundtrip(&ActionQuery {
+            page: Some(1),
+            page_size: Some(10),
+            status: None,
+            priority: None,
+            issue_id: None,
+            search: None,
+        });
+    }
+
+    #[test]
+    fn test_list_actions_response() {
+        roundtrip(&ListActionsResponse {
+            actions: vec![],
+            total: 0,
+            page: 1,
+            page_size: 10,
+        });
+    }
+
+    #[test]
+    fn test_corrective_action() {
+        roundtrip(&CorrectiveAction {
+            id: "id".to_string(),
+            tenant_id: "t".to_string(),
+            action_no: "CA001".to_string(),
+            issue_id: None,
+            title: "x".to_string(),
+            description: None,
+            root_cause: None,
+            action_type: None,
+            status: None,
+            priority: None,
+            assignee: None,
+            target_date: None,
+            completed_at: None,
+            created_by: None,
+            created_at: None,
+            updated_at: None,
+        });
+    }
+
+    #[test]
+    fn test_action_item() {
+        roundtrip(&ActionItem {
+            id: "id".to_string(),
+            tenant_id: "t".to_string(),
+            action_id: "a".to_string(),
+            item_name: "n".to_string(),
+            responsible: None,
+            due_date: None,
+            status: None,
+            completed_at: None,
+            remark: None,
+            created_at: None,
+        });
+    }
+
+    #[test]
+    fn test_create_action_request() {
+        roundtrip(&CreateActionRequest {
+            issue_id: None,
+            title: "x".to_string(),
+            description: None,
+            root_cause: None,
+            action_type: None,
+            priority: None,
+            assignee: None,
+            target_date: None,
+            created_by: None,
+            items: Some(vec![CreateActionItemRequest {
+                item_name: "it".to_string(),
+                responsible: None,
+                due_date: None,
+                remark: None,
+            }]),
+        });
+    }
+
+    #[test]
+    fn test_create_action_item_request() {
+        roundtrip(&CreateActionItemRequest {
+            item_name: "it".to_string(),
+            responsible: None,
+            due_date: None,
+            remark: None,
+        });
+    }
+
+    #[test]
+    fn test_update_action_request() {
+        roundtrip(&UpdateActionRequest {
+            title: None,
+            description: None,
+            root_cause: None,
+            action_type: None,
+            status: None,
+            priority: None,
+            assignee: None,
+            target_date: None,
+        });
+    }
+}

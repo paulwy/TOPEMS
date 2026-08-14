@@ -220,3 +220,63 @@ pub async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
 
     Ok(())
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+// roundtrip verified by JSON comparison
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn mobile_sync_failed_item_roundtrip() {
+        roundtrip(&MobileSyncFailedItem {
+            id: "rec1".into(),
+            error: "timeout".into(),
+        });
+    }
+
+    #[test]
+    fn mobile_sync_record_item_roundtrip() {
+        roundtrip(&MobileSyncRecordItem {
+            id: "rec1".into(),
+            module: "task".into(),
+            action: "create".into(),
+            data: serde_json::json!({"x":1}),
+            created_at: 1700000000,
+        });
+    }
+
+    #[test]
+    fn mobile_sync_request_roundtrip() {
+        roundtrip(&MobileSyncRequest {
+            records: vec![MobileSyncRecordItem {
+                id: "1".into(),
+                module: "t".into(),
+                action: "a".into(),
+                data: serde_json::json!({}),
+                created_at: 0,
+            }],
+        });
+    }
+
+    #[test]
+    fn mobile_sync_response_roundtrip() {
+        roundtrip(&MobileSyncResponse {
+            success: vec!["1".into()],
+            failed: vec![MobileSyncFailedItem {
+                id: "2".into(),
+                error: "e".into(),
+            }],
+        });
+    }
+
+}

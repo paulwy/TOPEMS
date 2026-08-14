@@ -149,3 +149,181 @@ pub struct FmeaStatistics {
     pub max_rpn: i64,
     pub min_rpn: i64,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_fmea_query() {
+        roundtrip(&FmeaQuery {
+            page: Some(1),
+            page_size: Some(10),
+            status: None,
+            product_id: None,
+            process_id: None,
+        });
+    }
+
+    #[test]
+    fn test_fmea_analysis() {
+        roundtrip(&FmeaAnalysis {
+            id: "id".to_string(),
+            tenant_id: "t".to_string(),
+            fmea_no: "F001".to_string(),
+            title: "x".to_string(),
+            fmea_type: "Design".to_string(),
+            product_id: None,
+            product_name: None,
+            process_id: None,
+            process_name: None,
+            scope: None,
+            status: None,
+            revision: None,
+            team: None,
+            leader: None,
+            description: None,
+            created_by: None,
+            created_at: None,
+            updated_at: None,
+        });
+    }
+
+    #[test]
+    fn test_create_fmea_request() {
+        roundtrip(&CreateFmeaRequest {
+            title: "x".to_string(),
+            fmea_type: "Design".to_string(),
+            product_id: None,
+            product_name: None,
+            process_id: None,
+            process_name: None,
+            scope: None,
+            revision: None,
+            team: None,
+            leader: None,
+            description: None,
+            created_by: None,
+        });
+    }
+
+    #[test]
+    fn test_update_fmea_request() {
+        roundtrip(&UpdateFmeaRequest {
+            title: None,
+            fmea_type: None,
+            scope: None,
+            status: None,
+            revision: None,
+            team: None,
+            leader: None,
+            description: None,
+        });
+    }
+
+    #[test]
+    fn test_fmea_item() {
+        roundtrip(&FmeaItem {
+            id: "id".to_string(),
+            tenant_id: "t".to_string(),
+            fmea_id: "f".to_string(),
+            component: "c".to_string(),
+            function: None,
+            failure_mode: "fm".to_string(),
+            failure_effect: None,
+            failure_cause: None,
+            severity: 1,
+            occurrence: 1,
+            detection: 1,
+            rpn: None,
+            current_controls: None,
+            recommended_actions: None,
+            responsible: None,
+            target_date: None,
+            action_status: None,
+            revised_severity: None,
+            revised_occurrence: None,
+            revised_detection: None,
+            revised_rpn: None,
+            sort_order: None,
+            created_at: None,
+            updated_at: None,
+        });
+    }
+
+    #[test]
+    fn test_fmea_item_query() {
+        roundtrip(&FmeaItemQuery {
+            fmea_id: None,
+            min_rpn: None,
+            action_status: None,
+            sort_by: None,
+        });
+    }
+
+    #[test]
+    fn test_create_fmea_item_request() {
+        roundtrip(&CreateFmeaItemRequest {
+            fmea_id: "f".to_string(),
+            component: "c".to_string(),
+            function: None,
+            failure_mode: "fm".to_string(),
+            failure_effect: None,
+            failure_cause: None,
+            severity: 1,
+            occurrence: 1,
+            detection: 1,
+            current_controls: None,
+            recommended_actions: None,
+            responsible: None,
+            target_date: NaiveDate::from_ymd_opt(2025, 1, 1),
+            sort_order: None,
+        });
+    }
+
+    #[test]
+    fn test_update_fmea_item_request() {
+        roundtrip(&UpdateFmeaItemRequest {
+            component: None,
+            function: None,
+            failure_mode: None,
+            failure_effect: None,
+            failure_cause: None,
+            severity: None,
+            occurrence: None,
+            detection: None,
+            current_controls: None,
+            recommended_actions: None,
+            responsible: None,
+            target_date: None,
+            action_status: None,
+            revised_severity: None,
+            revised_occurrence: None,
+            revised_detection: None,
+            sort_order: None,
+        });
+    }
+
+    #[test]
+    fn test_fmea_statistics() {
+        roundtrip(&FmeaStatistics {
+            total_items: 0,
+            high_risk_count: 0,
+            medium_risk_count: 0,
+            low_risk_count: 0,
+            average_rpn: 0.0,
+            max_rpn: 0,
+            min_rpn: 0,
+        });
+    }
+}

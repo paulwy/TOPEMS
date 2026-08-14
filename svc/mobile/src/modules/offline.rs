@@ -210,3 +210,72 @@ pub async fn get_offline_status(
         Json(ApiResponse::success(response, "获取离线状态成功")),
     )
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+// roundtrip verified by JSON comparison
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn offline_sync_request_roundtrip() {
+        use chrono::Utc;
+        roundtrip(&OfflineSyncRequest {
+            sync_type: "full".into(),
+            data: serde_json::json!({"items":[]}),
+            last_sync_time: Some(Utc::now()),
+            records_count: 0,
+        });
+    }
+
+    #[test]
+    fn offline_sync_response_roundtrip() {
+        use chrono::{Duration, Utc};
+        let now = Utc::now();
+        roundtrip(&OfflineSyncResponse {
+            sync_id: uuid::Uuid::new_v4(),
+            sync_type: "full".into(),
+            status: "done".into(),
+            synced_count: 10,
+            failed_count: 0,
+            server_time: now,
+            next_sync_time: Some(now + Duration::minutes(5)),
+        });
+    }
+
+    #[test]
+    fn offline_status_response_roundtrip() {
+        roundtrip(&OfflineStatusResponse {
+            last_sync_time: None,
+            pending_records: 5,
+            sync_status: "pending".into(),
+            network_status: "online".into(),
+        });
+    }
+
+    #[test]
+    fn offline_sync_record_roundtrip() {
+        use chrono::Utc;
+        roundtrip(&OfflineSyncRecord {
+            id: uuid::Uuid::new_v4(),
+            user_id: uuid::Uuid::new_v4(),
+            sync_type: "full".into(),
+            sync_data: serde_json::json!({}),
+            status: "completed".into(),
+            synced_count: 1,
+            failed_count: 0,
+            created_at: Utc::now(),
+            completed_at: Some(Utc::now()),
+        });
+    }
+
+}
