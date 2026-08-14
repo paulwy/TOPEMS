@@ -11,6 +11,7 @@ import i18n from '@/i18n';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { designTokens } from '@topems/tokens';
 
 /**
  * 加载可用的上级科目（仅总账科目）
@@ -68,16 +69,16 @@ const renderBadge = (
   color: 'primary' | 'error' | 'success' | 'info' | 'warning' | 'default'
 ) => {
   const colorMap: Record<string, string> = {
-    primary: 'var(--color-primary-main, #1976d2)',
-    success: 'var(--color-success-main, #2e7d32)',
-    error: 'var(--color-error-main, #c62828)',
+    primary: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
+    success: `var(--color-success-main, ${designTokens.colors.success.dark})`,
+    error: `var(--color-error-main, ${designTokens.colors.error['800']})`,
     info: 'var(--color-info-main, #0288d1)',
     warning: 'var(--color-warning-main, #ed6c02)',
     default: 'var(--color-text-secondary, rgba(0,0,0,0.6))',
   };
   const bgColorMap: Record<string, string> = {
-    primary: 'var(--color-primary-lighter, #e3f2fd)',
-    success: 'var(--color-success-lighter, #e8f5e9)',
+    primary: `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`,
+    success: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
     error: 'var(--color-error-lighter, #ffebee)',
     info: 'var(--color-info-lighter, #e1f5fe)',
     warning: 'var(--color-warning-lighter, #fff3e0)',
@@ -208,9 +209,9 @@ export const accountSchema: EntitySchema = {
               fontSize: 12,
               fontWeight: 500,
               border: `1px solid ${isDetail ? 'var(--color-primary-main, #1976d2)' : 'var(--color-divider, rgba(0,0,0,0.12))'}`,
-              backgroundColor: isDetail ? 'var(--color-primary-lighter, #e3f2fd)' : 'transparent',
+              backgroundColor: isDetail ? `var(--color-primary-lighter, ${designTokens.colors.primary['50']})` : 'transparent',
               color: isDetail
-                ? 'var(--color-primary-main, #1976d2)'
+                ? `var(--color-primary-main, ${designTokens.colors.primary.dark})`
                 : 'var(--color-text-secondary, rgba(0,0,0,0.6))',
             },
           },
@@ -227,11 +228,11 @@ export const accountSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) => {
         const isActive = row.isactive !== false;
         const colorMap: Record<string, string> = {
-          success: 'var(--color-success-main, #2e7d32)',
+          success: `var(--color-success-main, ${designTokens.colors.success.dark})`,
           default: 'var(--color-text-secondary, rgba(0,0,0,0.6))',
         };
         const bgColorMap: Record<string, string> = {
-          success: 'var(--color-success-lighter, #e8f5e9)',
+          success: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
           default: 'var(--color-action-hover, rgba(0,0,0,0.04))',
         };
         return React.createElement(

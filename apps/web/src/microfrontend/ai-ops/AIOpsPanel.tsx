@@ -317,11 +317,11 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
       case 'high':
         return '#ef6c00';
       case 'medium':
-        return '#f57c00';
+        return 'colors.orange.700';
       case 'low':
         return designTokens.colors.primary.dark;
       default:
-        return '#757575';
+        return designTokens.colors.grey['600'];
     }
   };
 
@@ -330,13 +330,13 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
       case 'firing':
         return designTokens.colors.error.dark;
       case 'acknowledged':
-        return '#f57c00';
+        return 'colors.orange.700';
       case 'resolved':
         return designTokens.colors.success.dark;
       case 'suppressed':
-        return '#757575';
+        return designTokens.colors.grey['600'];
       default:
-        return '#757575';
+        return designTokens.colors.grey['600'];
     }
   };
 
@@ -421,7 +421,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           label='预测异常'
           value={totalPredictions}
           icon={<TrendingUpIcon size={24} />}
-          color='#7b1fa2'
+          color={designTokens.colors.purple['700']}
           trend='未来24h'
           trendUp
         />
@@ -429,7 +429,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           label='扩缩容次数'
           value={scalingEvents}
           icon={<LayersIcon size={24} />}
-          color='#00838f'
+          color={designTokens.colors.teal['700']}
           trend={`${totalInstances} 运行中`}
         />
       </Box>
@@ -701,7 +701,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           label='监控指标'
           value={baselines.length}
           icon={<GaugeIcon size={24} />}
-          color='#7b1fa2'
+          color={designTokens.colors.purple['700']}
         />
       </Box>
 
@@ -1003,7 +1003,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           label='今日告警'
           value={alertStats?.last24h || 0}
           icon={<ClockIcon size={24} />}
-          color='#f57c00'
+          color='colors.orange.700'
         />
         <StatCard
           label='解决率'
@@ -1443,7 +1443,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           label='预测异常数'
           value={predictedAnomalies.length}
           icon={<TrendingUpIcon size={24} />}
-          color='#7b1fa2'
+          color={designTokens.colors.purple['700']}
         />
         <StatCard
           label='高风险预测'
@@ -1464,7 +1464,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           label='监控指标'
           value={baselines.length}
           icon={<ZapIcon size={24} />}
-          color='#00838f'
+          color={designTokens.colors.teal['700']}
         />
       </Box>
 
@@ -1567,7 +1567,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                   {predictionResult && (
                     <polyline
                       fill='none'
-                      stroke='#7b1fa2'
+                      stroke={designTokens.colors.purple['700']}
                       strokeWidth='1.5'
                       strokeDasharray='4 2'
                       points={(() => {
@@ -1722,13 +1722,13 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           label='今日扩容'
           value={scalingHistory.filter((e) => e.direction === 'up').length}
           icon={<ArrowUpIcon size={24} />}
-          color='#f57c00'
+          color='colors.orange.700'
         />
         <StatCard
           label='今日缩容'
           value={scalingHistory.filter((e) => e.direction === 'down').length}
           icon={<ArrowDownIcon size={24} />}
-          color='#00838f'
+          color={designTokens.colors.teal['700']}
         />
       </Box>
 
@@ -2232,7 +2232,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          bgcolor: 'linear-gradient(135deg, #7b1fa2 0%, #1976d2 100%)',
+          bgcolor: `linear-gradient(135deg, ${designTokens.colors.purple['700']} 0%, ${designTokens.colors.primary.dark} 100%)`,
           color: 'common.white',
           flexWrap: 'wrap',
           gap: 1,

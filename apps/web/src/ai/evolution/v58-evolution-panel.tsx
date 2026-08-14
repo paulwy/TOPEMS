@@ -161,7 +161,7 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           bgcolor: 'background.paper',
           borderRadius: 3,
           overflow: 'hidden',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
+          boxShadow: designTokens.darkShadows['3xl'],
           display: 'flex',
           flexDirection: 'column',
           border: '1px solid rgba(139, 92, 246, 0.2)',
@@ -854,7 +854,7 @@ const ModelsTab: React.FC<{
                                     size='small'
                                     sx={{
                                       bgcolor: result.metricDeltas[k] > 0 ? 'colors.success.100' : 'colors.error.50',
-                                      color: result.metricDeltas[k] > 0 ? '#065f46' : 'colors.error.800',
+                                      color: result.metricDeltas[k] > 0 ? 'colors.success.dark' : 'colors.error.800',
                                       fontSize: 10,
                                     }}
                                   />

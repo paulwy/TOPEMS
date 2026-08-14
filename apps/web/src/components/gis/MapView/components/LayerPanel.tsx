@@ -32,7 +32,7 @@ const LayerPanel: React.FC<LayerPanelProps> = ({
         right: 16,
         backgroundColor: 'common.white',
         borderRadius: 2,
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        boxShadow: designTokens.shadows.md,
         overflow: 'hidden',
       }}
     >

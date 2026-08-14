@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTheme } from '@mui/material';
 import { User, FileText, Check, CheckCheck, MoreVertical, Trash2, Edit3 } from 'lucide-react';
 import type { ChatMessage } from '../../api/im';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -146,7 +147,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 right: -4,
                 backgroundColor: 'common.white',
                 borderRadius: 8,
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                boxShadow: designTokens.shadows['2xl'],
                 border: '1px solid grey.200',
                 padding: 4,
                 zIndex: 10,

@@ -36,7 +36,7 @@ import { designTokens, semanticTokens } from '@topems/tokens';
 
 const METHOD_COLORS: Record<ForecastMethod, string> = {
   moving_average: designTokens.colors.primary.dark,
-  weighted_moving_average: '#9c27b0',
+  weighted_moving_average: designTokens.colors.purple['500'],
   exponential_smoothing: designTokens.colors.success.dark,
   linear_regression: 'colors.orange.700',
 };

@@ -1,3 +1,4 @@
+import { designTokens, semanticTokens } from '@topems/tokens';
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -103,7 +104,7 @@ const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) =
         padding: '12px 16px',
         borderRadius: 'md',
         border: '1px solid',
-        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+        boxShadow: designTokens.shadows.lg,
         transition: 'all 0.3s ease',
         animation: 'slideIn 0.3s ease',
         backgroundColor: styles.backgroundColor,

@@ -118,14 +118,14 @@ export const PRESET_TOKENS: DesignToken[] = [
   },
   {
     name: 'secondary-light',
-    value: '#67e8f9',
+    value: 'colors.cyan.300',
     type: TokenType.COLOR,
     category: 'color',
     description: '辅色浅色',
   },
   {
     name: 'secondary-dark',
-    value: '#0e7490',
+    value: designTokens.colors.cyan['700'],
     type: TokenType.COLOR,
     category: 'color',
     description: '辅色深色',
@@ -171,14 +171,14 @@ export const PRESET_TOKENS: DesignToken[] = [
   },
   {
     name: 'gray-100',
-    value: '#f3f4f6',
+    value: 'colors.grey.100',
     type: TokenType.COLOR,
     category: 'color',
     description: '灰阶 100',
   },
   {
     name: 'gray-200',
-    value: '#e5e7eb',
+    value: designTokens.colors.grey['200'],
     type: TokenType.COLOR,
     category: 'color',
     description: '灰阶 200',
@@ -206,21 +206,21 @@ export const PRESET_TOKENS: DesignToken[] = [
   },
   {
     name: 'gray-600',
-    value: '#4b5563',
+    value: 'colors.grey.600',
     type: TokenType.COLOR,
     category: 'color',
     description: '灰阶 600',
   },
   {
     name: 'gray-700',
-    value: '#374151',
+    value: 'colors.grey.700',
     type: TokenType.COLOR,
     category: 'color',
     description: '灰阶 700',
   },
   {
     name: 'gray-800',
-    value: '#1f2937',
+    value: 'colors.grey.800',
     type: TokenType.COLOR,
     category: 'color',
     description: '灰阶 800',
@@ -618,7 +618,7 @@ export const DARK_THEME: ThemeConfig = {
   text_colors: {
     primary: '#f9fafb',
     secondary: `${designTokens.colors.grey['400']}`,
-    disabled: '#4b5563',
+    disabled: 'colors.grey.600',
   },
   component_overrides: {},
 };

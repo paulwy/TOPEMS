@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { IconButton } from '@mui/material';
 import { Maximize2 } from 'lucide-react';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const FitBoundsControl: React.FC<{
   bounds: [number, number][] | undefined;
@@ -22,7 +23,7 @@ const FitBoundsControl: React.FC<{
         padding: 1,
         backgroundColor: 'common.white',
         borderRadius: 2,
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        boxShadow: designTokens.shadows.md,
         '&:hover': {
           backgroundColor: 'grey.50',
         },

@@ -260,7 +260,7 @@ export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose 
           bgcolor: 'background.paper',
           borderRadius: 3,
           overflow: 'hidden',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
+          boxShadow: designTokens.darkShadows['3xl'],
           display: 'flex',
           flexDirection: 'column',
           border: '1px solid rgba(16, 185, 129, 0.2)',
@@ -451,7 +451,7 @@ const V57PanelHeader: React.FC<{ onClose: () => void }> = ({ onClose }) => (
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      background: `linear-gradient(135deg, ${designTokens.colors.success.dark} 0%, ${designTokens.colors.teal['600']} 50%, #0891b2 100%)`,
+      background: `linear-gradient(135deg, ${designTokens.colors.success.dark} 0%, ${designTokens.colors.teal['600']} 50%, ${designTokens.colors.cyan['600']} 100%)`,
       color: 'common.white',
     }}
   >
@@ -1379,20 +1379,20 @@ const PolicyTab: React.FC<{
                               height: 18,
                               bgcolor:
                                 rule.action === 'allow'
-                                  ? '#d1fae5'
+                                  ? 'colors.success.100'
                                   : rule.action === 'deny'
-                                    ? '#fef2f2'
+                                    ? 'colors.error.50'
                                     : rule.action === 'warn'
-                                      ? '#fef3c7'
-                                      : '#dbeafe',
+                                      ? 'colors.warning.100'
+                                      : 'colors.primary.100',
                               color:
                                 rule.action === 'allow'
-                                  ? '#065f46'
+                                  ? 'colors.success.dark'
                                   : rule.action === 'deny'
-                                    ? '#991b1b'
+                                    ? 'colors.error.800'
                                     : rule.action === 'warn'
-                                      ? '#92400e'
-                                      : '#1e40af',
+                                      ? 'colors.orange.800'
+                                      : designTokens.colors.primary['800'],
                               fontWeight: 600,
                             }}
                           />
@@ -1631,20 +1631,20 @@ const AuditRow: React.FC<{ decision: PolicyDecision }> = ({ decision }) => {
               height: 18,
               bgcolor:
                 decision.action === 'allow'
-                  ? '#d1fae5'
+                  ? 'colors.success.100'
                   : decision.action === 'deny'
-                    ? '#fef2f2'
+                    ? 'colors.error.50'
                     : decision.action === 'warn'
-                      ? '#fef3c7'
-                      : '#dbeafe',
+                      ? 'colors.warning.100'
+                      : 'colors.primary.100',
               color:
                 decision.action === 'allow'
-                  ? '#065f46'
+                  ? 'colors.success.dark'
                   : decision.action === 'deny'
-                    ? '#991b1b'
+                    ? 'colors.error.800'
                     : decision.action === 'warn'
-                      ? '#92400e'
-                      : '#1e40af',
+                      ? 'colors.orange.800'
+                      : designTokens.colors.primary['800'],
               fontWeight: 600,
             }}
           />

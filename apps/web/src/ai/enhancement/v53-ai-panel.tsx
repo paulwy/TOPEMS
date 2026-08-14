@@ -166,7 +166,7 @@ const V53AIPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           bgcolor: 'background.paper',
           borderRadius: 3,
           overflow: 'hidden',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
+          boxShadow: designTokens.darkShadows['3xl'],
           display: 'flex',
           flexDirection: 'column',
           border: '1px solid rgba(139, 92, 246, 0.2)',
@@ -718,8 +718,8 @@ const TestGeneratorTab: React.FC = () => {
                     label={`${p.name}${p.required ? ' *' : ''}: ${p.type}`}
                     size='small'
                     sx={{
-                      bgcolor: p.required ? '#fef2f2' : '#f0f9ff',
-                      color: p.required ? '#991b1b' : '#075985',
+                      bgcolor: p.required ? 'colors.error.50' : 'colors.info.50',
+                      color: p.required ? 'colors.error.800' : 'colors.info.800',
                       fontSize: 11,
                       height: 22,
                     }}
@@ -1010,7 +1010,7 @@ const UIRecommenderTab: React.FC = () => {
                   border: '2px solid',
                   borderColor: idx === 0 ? designTokens.colors.secondary.main : 'divider',
                   background:
-                    idx === 0 ? 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)' : 'white',
+                    idx === 0 ? `linear-gradient(135deg, ${designTokens.colors.secondary['50']} 0%, ${designTokens.colors.secondary['100']} 100%)` : 'white',
                 }}
               >
                 {idx === 0 && (
@@ -1069,8 +1069,8 @@ const UIRecommenderTab: React.FC = () => {
                           sx={{
                             fontSize: 10,
                             height: 20,
-                            bgcolor: note.includes('⚠️') ? '#fef2f2' : '#f0fdf4',
-                            color: note.includes('⚠️') ? '#991b1b' : '#166534',
+                            bgcolor: note.includes('⚠️') ? 'colors.error.50' : 'colors.success.50',
+                            color: note.includes('⚠️') ? 'colors.error.800' : '#166534',
                           }}
                         />
                       ))}

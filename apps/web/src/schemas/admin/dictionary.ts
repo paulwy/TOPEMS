@@ -2,6 +2,7 @@ import React from 'react';
 import type { EntitySchema, SchemaField } from '@/schema/types';
 import { dictItemApi } from '@/api/system';
 import i18n from '@/i18n';
+import { designTokens } from '@topems/tokens';
 
 const categoryLabels: Record<string, string> = {
   system: '系统字典',
@@ -74,8 +75,8 @@ export const dictTypeFields: SchemaField[] = [
             borderRadius: 'lg',
             fontSize: '12px',
             fontWeight: 500,
-            backgroundColor: 'var(--color-primary-lighter, #e3f2fd)',
-            color: 'var(--color-primary-main, #1976d2)',
+            backgroundColor: `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`,
+            color: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
           },
         },
         label

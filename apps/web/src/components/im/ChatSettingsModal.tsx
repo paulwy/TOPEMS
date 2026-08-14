@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, BellOff, Bell, Pin, PinOff, Trash2, Users } from 'lucide-react';
 import type { ChatRoom } from '../../api/im';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface ChatSettingsModalProps {
   isOpen: boolean;
@@ -41,7 +42,7 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
         style={{
           backgroundColor: 'common.white',
           borderRadius: 12,
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          boxShadow: designTokens.shadows['2xl'],
           width: '100%',
           maxWidth: 384,
           margin: '0 16px',

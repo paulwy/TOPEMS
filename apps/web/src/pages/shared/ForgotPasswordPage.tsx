@@ -247,7 +247,7 @@ const ForgotPasswordPage: React.FC = () => {
           background: 'common.white',
           backdropFilter: 'blur(20px)',
           borderRadius: 3,
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          boxShadow: designTokens.shadows['2xl'],
           overflow: 'hidden',
           animation: 'fadeInUp 0.5s ease-out',
         }}

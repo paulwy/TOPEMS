@@ -13,6 +13,7 @@ import {
   Layers,
 } from 'lucide-react';
 import createLogger from '../utils/logger';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const logger = createLogger('ErrorBoundary');
 
@@ -379,7 +380,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             style={{
               backgroundColor: 'common.white',
               borderRadius: 'lg',
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+              boxShadow: designTokens.shadows.lg,
               padding: 8,
               maxWidth: '600px',
               width: '100%',

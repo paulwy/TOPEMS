@@ -26,6 +26,7 @@ import {
   CircularProgress,
   Button,
 } from '@mui/material';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export type ExportFormat = 'excel' | 'pdf' | 'csv' | 'json' | 'html' | 'markdown' | 'image' | 'xml';
 
@@ -185,7 +186,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
         paper: {
           sx: {
             borderRadius: 3,
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            boxShadow: designTokens.shadows['2xl'],
             maxHeight: '90vh',
           },
         },

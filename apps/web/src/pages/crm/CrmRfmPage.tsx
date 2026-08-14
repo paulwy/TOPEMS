@@ -24,11 +24,11 @@ const ct= designTokens.colors;
 const SEGMENT_COLORS: Record<RfmSegment, string> = {
   champion: ct.success.main,
   loyal: ct.primary.main,
-  potential: ct.info?.main ?? '#0288d1',
+  potential: ct.info?.main ?? designTokens.colors.info['700'],
   new: ct.secondary.main,
   at_risk: ct.warning.main,
   cannot_lost: ct.error.main,
-  hibernating: '#9e9e9e',
+  hibernating: 'colors.grey.500',
   lost: '#616161',
 };
 

@@ -2,6 +2,7 @@ import { TextField, Button, useTheme } from '@mui/material';
 import React, { useState, useRef } from 'react';
 import { Send, Paperclip, Image, FileText } from 'lucide-react';
 import { logger } from '@/utils/logger';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface ChatInputProps {
   onSendMessage: (
@@ -103,7 +104,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 width: 192,
                 backgroundColor: 'common.white',
                 borderRadius: 8,
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                boxShadow: designTokens.shadows['2xl'],
                 border: '1px solid grey.200',
                 padding: 4,
                 zIndex: 10,

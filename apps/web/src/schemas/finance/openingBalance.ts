@@ -1,5 +1,6 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
+import { designTokens } from '@topems/tokens';
 
 const formatMoney = (amount: number | undefined) =>
   `¥${(Number(amount ?? 0) || 0).toLocaleString('zh-CN', {
@@ -75,7 +76,7 @@ export const openingBalanceSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) =>
         React.createElement(
           'span',
-          { style: { fontWeight: 600, color: 'var(--color-success-main, #2e7d32)' } },
+          { style: { fontWeight: 600, color: `var(--color-success-main, ${designTokens.colors.success.dark})` } },
           formatMoney(Number(row.debit_balance ?? 0))
         ),
     },
@@ -90,7 +91,7 @@ export const openingBalanceSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) =>
         React.createElement(
           'span',
-          { style: { fontWeight: 600, color: 'var(--color-error-main, #c62828)' } },
+          { style: { fontWeight: 600, color: `var(--color-error-main, ${designTokens.colors.error['800']})` } },
           formatMoney(Number(row.credit_balance ?? 0))
         ),
     },

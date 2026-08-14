@@ -233,13 +233,13 @@ const COLOR_MAP: Record<string, { bg: string; gradient: string; light: string; m
   },
   cyan: {
     bg: 'info.main',
-    gradient: `linear-gradient(135deg, ${designTokens.colors.cyan['500']}, #0891B2)`,
+    gradient: `linear-gradient(135deg, ${designTokens.colors.cyan['500']}, ${designTokens.colors.cyan['600']})`,
     light: 'info.lightest',
     main: 'info.main',
   },
   primary: {
     bg: 'primary.main',
-    gradient: 'linear-gradient(135deg, #1976d2, #1565c0)',
+    gradient: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.primary.dark})`,
     light: 'primary.lightest',
     main: 'primary.main',
   },
@@ -251,13 +251,13 @@ const COLOR_MAP: Record<string, { bg: string; gradient: string; light: string; m
   },
   warning: {
     bg: 'warning.main',
-    gradient: 'linear-gradient(135deg, #f57c00, #ef6c00)',
+    gradient: `linear-gradient(135deg, ${designTokens.colors.orange['700']}, ${designTokens.colors.warning.dark})`,
     light: 'warning.lightest',
     main: 'warning.main',
   },
   error: {
     bg: 'error.main',
-    gradient: 'linear-gradient(135deg, #d32f2f, #c62828)',
+    gradient: `linear-gradient(135deg, #d32f2f, ${designTokens.colors.error['800']})`,
     light: 'error.lightest',
     main: 'error.main',
   },

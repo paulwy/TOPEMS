@@ -512,7 +512,7 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           bgcolor: 'background.paper',
           borderRadius: 3,
           overflow: 'hidden',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
+          boxShadow: designTokens.darkShadows['3xl'],
           display: 'flex',
           flexDirection: 'column',
           border: '1px solid rgba(139, 92, 246, 0.2)',

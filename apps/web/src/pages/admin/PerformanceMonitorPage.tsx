@@ -192,7 +192,7 @@ const PerformanceMonitorPage: React.FC = () => {
           borderRadius: 8,
           padding: 24,
           marginBottom: 12,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          boxShadow: designTokens.shadows.sm,
         }}
       >
         <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: 16 }}>
@@ -233,7 +233,7 @@ const PerformanceMonitorPage: React.FC = () => {
           borderRadius: 8,
           padding: 24,
           marginBottom: 12,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          boxShadow: designTokens.shadows.sm,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

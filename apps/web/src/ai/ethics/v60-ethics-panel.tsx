@@ -225,7 +225,7 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
           bgcolor: 'background.paper',
           borderRadius: 2,
           overflow: 'hidden',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          boxShadow: designTokens.darkShadows.xl,
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -237,8 +237,8 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']}, #0891b2)`,
-            bgcolor: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']}, #0891b2)`,
+            background: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']}, ${designTokens.colors.cyan['600']})`,
+            bgcolor: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']}, ${designTokens.colors.cyan['600']})`,
             color: 'common.white',
           }}
         >

@@ -119,7 +119,7 @@ const lifecycleStateColors: Record<LifecycleState, string> = {
   [LifecycleState.UPDATING]: 'colors.cyan.500',
   [LifecycleState.ERROR]: designTokens.colors.error.main,
   [LifecycleState.UNMOUNTING]: 'colors.orange.500',
-  [LifecycleState.UNMOUNTED]: '#94a3b8',
+  [LifecycleState.UNMOUNTED]: designTokens.colors.grey['400'],
 };
 
 const lifecycleStateLabels: Record<LifecycleState, string> = {

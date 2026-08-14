@@ -381,7 +381,7 @@ const CRMRecommendationPage: React.FC = () => {
                         width: 40,
                         height: 40,
                         borderRadius: 2,
-                        bgcolor: 'rgba(255,255,255,0.2)',
+                        bgcolor: 'glass.topLight',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',

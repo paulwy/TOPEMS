@@ -96,7 +96,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
                     backgroundColor: 'common.white',
                     padding: '8px 12px',
                     borderRadius: 2,
-                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                    boxShadow: designTokens.shadows.lg,
                     minWidth: '120px',
                   }}
                 >

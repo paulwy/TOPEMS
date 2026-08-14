@@ -246,7 +246,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             label='平均加载时间'
             value={formatDuration(avgLoadTime)}
             icon={<ClockIcon size={24} />}
-            color='#f57c00'
+            color='colors.orange.700'
           />
         </Grid>
       </Grid>
@@ -260,7 +260,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             label='加载成功率'
             value={`${successRate.toFixed(1)}%`}
             icon={<ZapIcon size={24} />}
-            color='#7b1fa2'
+            color={designTokens.colors.purple['700']}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
@@ -276,7 +276,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             label='今日访问量'
             value={totalVisits}
             icon={<EyeIcon size={24} />}
-            color='#00838f'
+            color={designTokens.colors.teal['700']}
           />
         </Grid>
       </Grid>
@@ -301,7 +301,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                   data={sortedPerformance.slice(0, 5).map((m) => ({
                     label: m.moduleId.split('/')[0]?.slice(0, 10) || m.moduleId,
                     value: Math.round(m.totalLoadTime),
-                    color: m.totalLoadTime > SLOW_MODULE_THRESHOLD ? '#f57c00' : designTokens.colors.primary.dark,
+                    color: m.totalLoadTime > SLOW_MODULE_THRESHOLD ? 'colors.orange.700' : designTokens.colors.primary.dark,
                   }))}
                 />
               )}
@@ -338,7 +338,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <AlertIcon
-                color='#f57c00'
+                color='colors.orange.700'
                 size={20}
               />
               <Typography
@@ -483,7 +483,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
               data={sortedPerformance.slice(0, 10).map((m) => ({
                 label: m.moduleId.split('/')[0]?.slice(0, 8) || m.moduleId,
                 value: Math.round(m.totalLoadTime),
-                color: m.totalLoadTime > SLOW_MODULE_THRESHOLD ? '#f57c00' : designTokens.colors.primary.dark,
+                color: m.totalLoadTime > SLOW_MODULE_THRESHOLD ? 'colors.orange.700' : designTokens.colors.primary.dark,
               }))}
               height={250}
             />
@@ -720,7 +720,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             label='总访问量'
             value={totalVisits}
             icon={<EyeIcon size={24} />}
-            color='#00838f'
+            color={designTokens.colors.teal['700']}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
@@ -740,7 +740,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                 : 0
             )}
             icon={<ClockIcon size={24} />}
-            color='#7b1fa2'
+            color={designTokens.colors.purple['700']}
           />
         </Grid>
       </Grid>

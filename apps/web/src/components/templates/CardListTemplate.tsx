@@ -291,7 +291,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     bgcolor: stat.gradient
-                      ? 'rgba(255,255,255,0.2)'
+                      ? 'glass.topLight'
                       : `${stat.color || 'primary'}.light`,
                     color: stat.gradient ? 'white' : `${stat.color || 'primary'}.main`,
                   }}
@@ -304,7 +304,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                   variant='caption'
                   sx={{
                     opacity: stat.gradient ? 0.8 : 1,
-                    color: stat.gradient ? 'rgba(255,255,255,0.8)' : 'text.secondary',
+                    color: stat.gradient ? 'glass.topLight' : 'text.secondary',
                   }}
                 >
                   {stat.title}
@@ -319,7 +319,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                   <Typography
                     variant='caption'
                     sx={{
-                      color: stat.gradient ? 'rgba(255,255,255,0.7)' : 'text.secondary',
+                      color: stat.gradient ? 'glass.topLight' : 'text.secondary',
                     }}
                   >
                     {stat.subtitle}
@@ -340,11 +340,11 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                   bgcolor:
                     stat.trend.direction === 'up'
                       ? stat.gradient
-                        ? 'rgba(255,255,255,0.2)'
+                        ? 'glass.topLight'
                         : 'success.light'
                       : stat.trend.direction === 'down'
                         ? stat.gradient
-                          ? 'rgba(255,255,255,0.2)'
+                          ? 'glass.topLight'
                           : 'error.light'
                         : 'grey.200',
                   color: stat.gradient

@@ -1,5 +1,6 @@
 import React from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from '../charts/_vendors/recharts-polar';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export interface ChartDataPoint {
   [key: string]: string | number | boolean;
@@ -25,7 +26,7 @@ export const CustomTooltipPolar: React.FC<CustomTooltipProps> = ({ active, paylo
           backgroundColor: 'common.white',
           padding: '12px 16px',
           borderRadius: 'md',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
+          boxShadow: designTokens.shadows.md,
           border: '1px solid border.default',
           minWidth: '120px',
         }}

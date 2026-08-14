@@ -5,6 +5,7 @@ import type { Department } from '@/api/hrm';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { designTokens } from '@topems/tokens';
 
 async function loadDepartments(): Promise<{ value: string; label: string }[]> {
   try {
@@ -52,10 +53,10 @@ const renderUsageBar = (row: Record<string, unknown>) => {
   const rate = Number(row.usage_rate ?? 0);
   const rateColor =
     rate >= 90
-      ? 'var(--color-error-main, #c62828)'
+      ? `var(--color-error-main, ${designTokens.colors.error['800']})`
       : rate >= 70
         ? 'var(--color-warning-main, #ed6c02)'
-        : 'var(--color-primary-main, #1976d2)';
+        : `var(--color-primary-main, ${designTokens.colors.primary.dark})`;
 
   return React.createElement(
     'div',
@@ -75,7 +76,7 @@ const renderUsageBar = (row: Record<string, unknown>) => {
             fontWeight: 700,
             fontSize: '0.75rem',
             color:
-              rate > 80 ? 'var(--color-error-main, #c62828)' : 'var(--color-primary-main, #1976d2)',
+              rate > 80 ? `var(--color-error-main, ${designTokens.colors.error['800']})` : `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
           },
         },
         `${rate.toFixed(1)}%`
@@ -109,13 +110,13 @@ const renderStatusBadge = (row: Record<string, unknown>) => {
   const label = STATUS_LABELS[status] || status;
   const color = STATUS_COLORS[status] || 'default';
   const colorMap: Record<string, string> = {
-    primary: 'var(--color-primary-main, #1976d2)',
+    primary: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
     warning: 'var(--color-warning-main, #ed6c02)',
-    error: 'var(--color-error-main, #c62828)',
+    error: `var(--color-error-main, ${designTokens.colors.error['800']})`,
     default: 'var(--color-text-secondary, rgba(0,0,0,0.6))',
   };
   const bgColorMap: Record<string, string> = {
-    primary: 'var(--color-primary-lighter, #e3f2fd)',
+    primary: `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`,
     warning: 'var(--color-warning-lighter, #fff3e0)',
     error: 'var(--color-error-lighter, #ffebee)',
     default: 'var(--color-action-hover, rgba(0,0,0,0.04))',
@@ -209,7 +210,7 @@ export const budgetSchema: EntitySchema = {
       defaultValue: 0,
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) =>
-        formatMoney(row.total_budget as number | undefined, 'var(--color-primary-main, #1976d2)'),
+        formatMoney(row.total_budget as number | undefined, `var(--color-primary-main, ${designTokens.colors.primary.dark})`),
     },
     {
       name: 'used_amount',
@@ -232,8 +233,8 @@ export const budgetSchema: EntitySchema = {
         const total = Number(row.total_budget ?? 0);
         const color =
           remaining < total * 0.2
-            ? 'var(--color-error-main, #c62828)'
-            : 'var(--color-success-main, #2e7d32)';
+            ? `var(--color-error-main, ${designTokens.colors.error['800']})`
+            : `var(--color-success-main, ${designTokens.colors.success.dark})`;
         return formatMoney(remaining, color);
       },
     },

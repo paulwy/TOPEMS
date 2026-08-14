@@ -31,7 +31,7 @@ const TYPE_COLORS: Record<
 };
 
 const TYPE_BG_COLORS: Record<string, { bg: string; color: string }> = {
-  system: { bg: 'rgba(59, 130, 246, 0.1)', color: 'primary.main' },
+  system: { bg: 'glass.line', color: 'primary.main' },
   workflow: { bg: 'rgba(245, 158, 11, 0.1)', color: 'warning.main' },
   reminder: { bg: 'rgba(245, 158, 11, 0.1)', color: 'warning.main' },
   alert: { bg: 'rgba(239, 68, 68, 0.1)', color: 'error.main' },

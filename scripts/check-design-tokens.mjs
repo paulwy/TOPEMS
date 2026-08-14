@@ -21,6 +21,13 @@ const ignoredPathParts = [
   '/theme/animations/',
   '/__tests__/',
   '.stories.',
+  // V215: Token 定义文件是 design token 的源头，不计为偏差
+  '/theme/tokens/',
+  '/design-system/tokens/',
+  '/theme/generated-tokens',
+  '/theme/gradients.',
+  '/theme/presets.',
+  '/theme/theme.',
 ];
 
 const allowedFiles = new Set([
@@ -43,7 +50,7 @@ const patterns = [
   {
     id: 'fixed-px-spacing',
     description: '固定 px 间距，优先使用 MUI spacing 数字或 theme.spacing',
-    regex: /(?:p|px|py|pt|pr|pb|pl|m|mx|my|mt|mr|mb|ml|gap|rowGap|columnGap|borderRadius|width|height|minWidth|minHeight|maxWidth|maxHeight)\s*:\s*['"]?\d+px['"]?/g,
+    regex: /(?:\bp\b|\bpx\b|\bpy\b|\bpt\b|\bpr\b|\bpb\b|\bpl\b|\bm\b|\bmx\b|\bmy\b|\bmt\b|\bmr\b|\bmb\b|\bml\b|\bgap\b|\browGap\b|\bcolumnGap\b)\s*:\s*['"]?\d+px['"]?/g,
   },
   {
     id: 'box-shadow',

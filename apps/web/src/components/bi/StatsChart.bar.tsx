@@ -50,7 +50,7 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
           backgroundColor: 'common.white',
           padding: 3,
           borderRadius: 'md',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          boxShadow: designTokens.shadows.md,
           border: '1px solid border.default',
         }}
       >
@@ -82,7 +82,7 @@ export const StatsChartBarImpl: React.FC<StatsChartBarProps> = ({
       style={{
         backgroundColor: 'common.white',
         borderRadius: 'lg',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+        boxShadow: designTokens.shadows.sm,
         padding: 6,
       }}
     >

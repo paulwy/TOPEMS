@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ModuleCard, type ModuleItem } from './ModuleCard';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export const MODULE_SECTIONS = [
   {
@@ -179,7 +180,7 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
       sx={{
         bgcolor: 'background.paper',
         borderRadius: 3,
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+        boxShadow: designTokens.shadows.sm,
         overflow: 'hidden',
         mb: 3,
         ...sx,

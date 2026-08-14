@@ -5,6 +5,7 @@ import Paper from '@mui/material/Paper';
 import Chip from '@mui/material/Chip';
 import { designTokens } from '../theme/tokens';
 import { gradients } from '../theme/gradients';
+import { semanticTokens } from '@topems/tokens';
 
 {
   /* DesignTokens.tsx — Reusable helper components for Design System Storybook docs */
@@ -47,7 +48,7 @@ export function ColorSwatch({ color, label, darkText = false }: ColorSwatchProps
       <Typography
         variant='caption'
         sx={{
-          color: darkText ? 'rgba(255,255,255,0.7)' : 'text.secondary',
+          color: darkText ? 'glass.topLight' : 'text.secondary',
           fontFamily: 'monospace',
           fontSize: '0.65rem',
         }}

@@ -204,7 +204,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
         </Box>
 
         {payment.bankName && payment.bankAccountNo && (
-          <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 'md', padding: 2, mb: 4 }}>
+          <Box sx={{ border: `1px solid ${designTokens.colors.grey['300']}`, borderRadius: 'md', padding: 2, mb: 4 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
@@ -235,7 +235,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
         )}
 
         {(payment.actualPaymentDate || payment.bankTransactionNo || payment.executedBy) && (
-          <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 'md', padding: 2, mb: 4 }}>
+          <Box sx={{ border: `1px solid ${designTokens.colors.grey['300']}`, borderRadius: 'md', padding: 2, mb: 4 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
@@ -344,7 +344,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
           </>
         )}
 
-        <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid #e0e0e0' }}>
+        <Box sx={{ mt: 4, pt: 3, borderTop: `1px solid ${designTokens.colors.grey['300']}` }}>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
             <Box sx={{ flex: '1 1 280px', minWidth: '280px' }} />
             <Box sx={{ flex: '1 1 280px', minWidth: '280px' }}>
@@ -391,7 +391,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
               >
                 制单：
               </Typography>
-              <Box sx={{ height: '40px', borderBottom: '1px solid #e0e0e0', mt: 1 }} />
+              <Box sx={{ height: '40px', borderBottom: `1px solid ${designTokens.colors.grey['300']}`, mt: 1 }} />
             </Box>
             <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
               <Typography
@@ -400,7 +400,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
               >
                 审核：
               </Typography>
-              <Box sx={{ height: '40px', borderBottom: '1px solid #e0e0e0', mt: 1 }} />
+              <Box sx={{ height: '40px', borderBottom: `1px solid ${designTokens.colors.grey['300']}`, mt: 1 }} />
             </Box>
             <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
               <Typography
@@ -409,7 +409,7 @@ export const PaymentPrintTemplate: React.FC<PaymentPrintTemplateProps> = ({ paym
               >
                 审批：
               </Typography>
-              <Box sx={{ height: '40px', borderBottom: '1px solid #e0e0e0', mt: 1 }} />
+              <Box sx={{ height: '40px', borderBottom: `1px solid ${designTokens.colors.grey['300']}`, mt: 1 }} />
             </Box>
           </Box>
         </Box>

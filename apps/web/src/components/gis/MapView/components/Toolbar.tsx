@@ -13,6 +13,7 @@ import {
   Box,
 } from 'lucide-react';
 import type { ToolMode } from '../types';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 interface ToolbarProps {
   toolMode: ToolMode;
@@ -63,7 +64,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         left: 16,
         backgroundColor: 'common.white',
         borderRadius: 2,
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        boxShadow: designTokens.shadows.md,
         overflow: 'hidden',
       }}
     >

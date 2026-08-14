@@ -29,6 +29,7 @@ import type { NavItem } from '@/lib/navigation/types';
 import { renderIcon } from '@/lib/iconMapping';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { ADMIN_PATHS } from '@/modules/admin/config';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 export interface CommandPaletteProps {
   open: boolean;
@@ -279,7 +280,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
           mt: '20vh',
           borderRadius: 2,
           overflow: 'hidden',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          boxShadow: designTokens.shadows['2xl'],
         },
       }}
     >

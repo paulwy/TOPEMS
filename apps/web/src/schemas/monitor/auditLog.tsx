@@ -2,10 +2,11 @@ import React from 'react';
 import { Chip, Box, Typography } from '@mui/material';
 import { User } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
+import { designTokens, semanticTokens } from '@topems/tokens';
 
 const ct = {
-  primary: { dark: '#1565c0', light: '#e3f2fd' },
-  grey: { 400: '#bdbdbd', 600: '#757575', 800: '#424242' },
+  primary: { dark: 'colors.primary.dark', light: 'colors.primary.50' },
+  grey: { 400: designTokens.colors.grey['400'], 600: designTokens.colors.grey['600'], 800: '#424242' },
 };
 
 const formatAction = (action: string): string => {

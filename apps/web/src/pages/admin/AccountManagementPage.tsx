@@ -14,6 +14,7 @@ import { accountApi } from '@/api/finance/account';
 import type { Account, AccountBalance } from '@/types/finance';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
+import { designTokens } from '@topems/tokens';
 
 const AccountManagementPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -150,17 +151,17 @@ const AccountManagementPage: React.FC = () => {
             cost: '成本',
           };
           const colors: Record<string, string> = {
-            asset: 'var(--color-primary-main, #1976d2)',
-            liability: 'var(--color-error-main, #c62828)',
-            equity: 'var(--color-success-main, #2e7d32)',
+            asset: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
+            liability: `var(--color-error-main, ${designTokens.colors.error['800']})`,
+            equity: `var(--color-success-main, ${designTokens.colors.success.dark})`,
             revenue: 'var(--color-info-main, #0288d1)',
             expense: 'var(--color-warning-main, #ed6c02)',
             cost: 'var(--color-text-secondary, rgba(0,0,0,0.6))',
           };
           const bgColors: Record<string, string> = {
-            asset: 'var(--color-primary-lighter, #e3f2fd)',
+            asset: `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`,
             liability: 'var(--color-error-lighter, #ffebee)',
-            equity: 'var(--color-success-lighter, #e8f5e9)',
+            equity: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
             revenue: 'var(--color-info-lighter, #e1f5fe)',
             expense: 'var(--color-warning-lighter, #fff3e0)',
             cost: 'var(--color-action-hover, rgba(0,0,0,0.04))',
@@ -194,11 +195,11 @@ const AccountManagementPage: React.FC = () => {
           const label = direction === 'debit' ? '借' : direction === 'credit' ? '贷' : direction;
           const color =
             direction === 'debit'
-              ? 'var(--color-primary-main, #1976d2)'
-              : 'var(--color-error-main, #c62828)';
+              ? `var(--color-primary-main, ${designTokens.colors.primary.dark})`
+              : `var(--color-error-main, ${designTokens.colors.error['800']})`;
           const bgColor =
             direction === 'debit'
-              ? 'var(--color-primary-lighter, #e3f2fd)'
+              ? `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`
               : 'var(--color-error-lighter, #ffebee)';
           return (
             <span
@@ -232,9 +233,9 @@ const AccountManagementPage: React.FC = () => {
                 fontSize: 12,
                 fontWeight: 500,
                 border: `1px solid ${isDetail ? 'var(--color-primary-main, #1976d2)' : 'var(--color-divider, rgba(0,0,0,0.12))'}`,
-                backgroundColor: isDetail ? 'var(--color-primary-lighter, #e3f2fd)' : 'transparent',
+                backgroundColor: isDetail ? `var(--color-primary-lighter, ${designTokens.colors.primary['50']})` : 'transparent',
                 color: isDetail
-                  ? 'var(--color-primary-main, #1976d2)'
+                  ? `var(--color-primary-main, ${designTokens.colors.primary.dark})`
                   : 'var(--color-text-secondary, rgba(0,0,0,0.6))',
               }}
             >
@@ -250,10 +251,10 @@ const AccountManagementPage: React.FC = () => {
         render: (row) => {
           const isActive = row.isactive !== false;
           const color = isActive
-            ? 'var(--color-success-main, #2e7d32)'
+            ? `var(--color-success-main, ${designTokens.colors.success.dark})`
             : 'var(--color-text-secondary, rgba(0,0,0,0.6))';
           const bgColor = isActive
-            ? 'var(--color-success-lighter, #e8f5e9)'
+            ? `var(--color-success-lighter, ${designTokens.colors.success['50']})`
             : 'var(--color-action-hover, rgba(0,0,0,0.04))';
           return (
             <span

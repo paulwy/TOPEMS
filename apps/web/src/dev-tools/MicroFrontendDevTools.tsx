@@ -456,7 +456,7 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
-              '&:hover': { bgcolor: `linear-gradient(135deg, #4f46e5, ${designTokens.colors.secondary.dark}, #db2777)` },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.dark}, ${designTokens.colors.pink['600']})` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -488,7 +488,7 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4)',
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, #4f46e5, ${designTokens.colors.secondary.dark})` },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.dark})` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -552,7 +552,7 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)',
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.secondary.dark}, #4f46e5, ${designTokens.colors.primary.dark})` },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.secondary.dark}, ${designTokens.colors.primary.dark}, ${designTokens.colors.primary.dark})` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -584,7 +584,7 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.warning.dark}, ${designTokens.colors.secondary.dark}, #db2777)` },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.warning.dark}, ${designTokens.colors.secondary.dark}, ${designTokens.colors.pink['600']})` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -616,7 +616,7 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(249, 115, 22, 0.4)',
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.orange['600']}, #b91c1c, #6d28d9)` },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.orange['600']}, ${designTokens.colors.error['800']}, #6d28d9)` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -648,7 +648,7 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(14, 165, 233, 0.4)',
-              '&:hover': { bgcolor: `linear-gradient(135deg, #0284c7, #4f46e5, ${designTokens.colors.secondary.dark})` },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.info['600']}, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.dark})` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -675,12 +675,12 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV57Governance(true)}
             sx={{
-              background: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']}, #0891b2)`,
-              bgcolor: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']}, #0891b2)`,
+              background: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']}, ${designTokens.colors.cyan['600']})`,
+              bgcolor: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']}, ${designTokens.colors.cyan['600']})`,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.success.dark}, #0f766e, #0e7490)` },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.success.dark}, #0f766e, ${designTokens.colors.cyan['700']})` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -712,7 +712,7 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)',
-              '&:hover': { bgcolor: `linear-gradient(135deg, #4f46e5, ${designTokens.colors.secondary.dark}, ${designTokens.colors.purple['600']})` },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.dark}, ${designTokens.colors.purple['600']})` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -739,12 +739,12 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV58UX(true)}
             sx={{
-              background: `linear-gradient(135deg, ${designTokens.colors.cyan['500']}, #0891b2, #0e7490)`,
-              bgcolor: `linear-gradient(135deg, ${designTokens.colors.cyan['500']}, #0891b2, #0e7490)`,
+              background: `linear-gradient(135deg, ${designTokens.colors.cyan['500']}, ${designTokens.colors.cyan['600']}, ${designTokens.colors.cyan['700']})`,
+              bgcolor: `linear-gradient(135deg, ${designTokens.colors.cyan['500']}, ${designTokens.colors.cyan['600']}, ${designTokens.colors.cyan['700']})`,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(6, 182, 212, 0.4)',
-              '&:hover': { bgcolor: 'linear-gradient(135deg, #0891b2, #0e7490, #155e75)' },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.cyan['600']}, ${designTokens.colors.cyan['700']}, #155e75)` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -776,7 +776,7 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)',
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.secondary.dark}, #4f46e5, ${designTokens.colors.primary.dark})` },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.secondary.dark}, ${designTokens.colors.primary.dark}, ${designTokens.colors.primary.dark})` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -808,7 +808,7 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
-              '&:hover': { bgcolor: `linear-gradient(135deg, #4f46e5, ${designTokens.colors.secondary.dark}, #db2777)` },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.dark}, ${designTokens.colors.pink['600']})` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -867,8 +867,8 @@ const MicroFrontendDevTools: React.FC = () => {
             size='small'
             onClick={() => setShowV60Ethics(true)}
             sx={{
-              background: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']}, #0891b2)`,
-              bgcolor: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']}, #0891b2)`,
+              background: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']}, ${designTokens.colors.cyan['600']})`,
+              bgcolor: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal['600']}, ${designTokens.colors.cyan['600']})`,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(5, 150, 105, 0.4)',
@@ -904,7 +904,7 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
-              '&:hover': { bgcolor: `linear-gradient(135deg, #4f46e5, ${designTokens.colors.secondary.dark}, #db2777)` },
+              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.dark}, ${designTokens.colors.pink['600']})` },
               minWidth: 'auto',
               px: 2,
             }}
@@ -951,7 +951,7 @@ const MicroFrontendDevTools: React.FC = () => {
               bgcolor: 'background.paper',
               borderRadius: 2,
               overflow: 'hidden',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+              boxShadow: designTokens.darkShadows.xl,
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1010,7 +1010,7 @@ const MicroFrontendDevTools: React.FC = () => {
               bgcolor: 'background.paper',
               borderRadius: 2,
               overflow: 'hidden',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+              boxShadow: designTokens.darkShadows.xl,
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1069,7 +1069,7 @@ const MicroFrontendDevTools: React.FC = () => {
               bgcolor: 'background.paper',
               borderRadius: 2,
               overflow: 'hidden',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+              boxShadow: designTokens.darkShadows.xl,
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1128,7 +1128,7 @@ const MicroFrontendDevTools: React.FC = () => {
               bgcolor: 'background.paper',
               borderRadius: 2,
               overflow: 'hidden',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+              boxShadow: designTokens.darkShadows.xl,
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1161,7 +1161,7 @@ const MicroFrontendDevTools: React.FC = () => {
               bgcolor: 'background.paper',
               borderRadius: 2,
               overflow: 'hidden',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+              boxShadow: designTokens.darkShadows.xl,
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1194,7 +1194,7 @@ const MicroFrontendDevTools: React.FC = () => {
               bgcolor: 'background.paper',
               borderRadius: 2,
               overflow: 'hidden',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+              boxShadow: designTokens.darkShadows.xl,
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1227,7 +1227,7 @@ const MicroFrontendDevTools: React.FC = () => {
               bgcolor: 'background.paper',
               borderRadius: 2,
               overflow: 'hidden',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+              boxShadow: designTokens.darkShadows.xl,
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1260,7 +1260,7 @@ const MicroFrontendDevTools: React.FC = () => {
               bgcolor: 'background.paper',
               borderRadius: 2,
               overflow: 'hidden',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+              boxShadow: designTokens.darkShadows.xl,
             }}
             onClick={(e) => e.stopPropagation()}
           >
