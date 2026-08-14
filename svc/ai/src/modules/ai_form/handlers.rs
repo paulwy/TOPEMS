@@ -1,10 +1,12 @@
 use axum::extract::{Path, State};
 use axum::Json;
-use std::sync::Arc;
 
 use crate::shared::AppState;
 use topems_shared::ApiResponse;
-use topems_shared_ai::ai_client::{create_client, AIModelConfig, AIProviderType, UnifiedAIClient};
+use topems_shared::form_assistant::{
+    AiFormAssistant, AiFormAssistantClient, FormAssistantAction,
+};
+use topems_shared_ai::ai_client::{create_client, AIModelConfig, AIProviderType};
 use topems_shared_core::response::{api_error, api_success};
 
 use super::models::{
@@ -18,7 +20,7 @@ use super::service::{
     translate_term, validate_form,
 };
 
-fn create_ai_client() -> UnifiedAIClient {
+fn create_ai_client() -> topems_shared_ai::ai_client::UnifiedAIClient {
     let config = AIModelConfig {
         provider: AIProviderType::Ollama,
         model_name: "qwen2.5:7b-instruct".to_string(),
@@ -28,34 +30,44 @@ fn create_ai_client() -> UnifiedAIClient {
     create_client(config)
 }
 
+fn default_assistant() -> AiFormAssistantClient {
+    AiFormAssistantClient::new(std::sync::Arc::new(create_ai_client()))
+}
+
+pub fn parse_action(
+    action: &str,
+    current_data: &serde_json::Value,
+) -> Result<FormAssistantAction, &'static str> {
+    match action {
+        "suggest" => Ok(FormAssistantAction::SuggestFields),
+        "enhance" => {
+            let text = current_data
+                .get("text")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+            Ok(FormAssistantAction::EnhanceText(text.to_string()))
+        }
+        "validate" => Ok(FormAssistantAction::ValidateForm),
+        "translate" => {
+            let term = current_data
+                .get("term")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+            Ok(FormAssistantAction::TranslateTerm(term.to_string()))
+        }
+        _ => Err("无效的 action 参数"),
+    }
+}
+
 pub async fn ai_form_assist(
     State(_state): State<AppState>,
     Json(req): Json<AiFormAssistRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let ai_client = Arc::new(create_ai_client());
+    let assistant = default_assistant();
 
-    let action = match req.action.as_str() {
-        "suggest" => topems_shared::form_assistant::FormAssistantAction::SuggestFields,
-        "enhance" => {
-            let text = req
-                .current_data
-                .get("text")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
-            topems_shared::form_assistant::FormAssistantAction::EnhanceText(text.to_string())
-        }
-        "validate" => topems_shared::form_assistant::FormAssistantAction::ValidateForm,
-        "translate" => {
-            let term = req
-                .current_data
-                .get("term")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
-            topems_shared::form_assistant::FormAssistantAction::TranslateTerm(term.to_string())
-        }
-        _ => {
-            return Json(api_error(400, "无效的 action 参数"));
-        }
+    let action = match parse_action(&req.action, &req.current_data) {
+        Ok(a) => a,
+        Err(msg) => return Json(api_error(400, msg)),
     };
 
     let assistant_request = topems_shared::form_assistant::AiFormAssistantRequest {
@@ -66,7 +78,7 @@ pub async fn ai_form_assist(
         target_field: req.target_field,
     };
 
-    match assist(ai_client, assistant_request).await {
+    match assist(&assistant, assistant_request).await {
         Ok(response) => {
             let json_response = serde_json::json!({
                 "suggestions": response.suggestions,
@@ -84,10 +96,10 @@ pub async fn ai_form_suggest(
     State(_state): State<AppState>,
     Json(req): Json<AiFormSuggestRequest>,
 ) -> Json<ApiResponse<AiFormSuggestResponse>> {
-    let ai_client = Arc::new(create_ai_client());
+    let assistant = default_assistant();
 
     match suggest_fields(
-        ai_client,
+        &assistant,
         &req.form_type,
         &req.form_schema,
         &req.current_data,
@@ -114,9 +126,9 @@ pub async fn ai_form_enhance(
         return Json(api_error(400, "文本内容不能为空"));
     }
 
-    let ai_client = Arc::new(create_ai_client());
+    let assistant = default_assistant();
 
-    match enhance_text(ai_client, &req.text, &req.enhancement_type).await {
+    match enhance_text(&assistant, &req.text, &req.enhancement_type).await {
         Ok(enhanced) => Json(api_success(AiFormEnhanceResponse {
             enhanced_text: enhanced,
         })),
@@ -128,10 +140,10 @@ pub async fn ai_form_validate(
     State(_state): State<AppState>,
     Json(req): Json<AiFormValidateRequest>,
 ) -> Json<ApiResponse<AiFormValidateResponse>> {
-    let ai_client = Arc::new(create_ai_client());
+    let assistant = default_assistant();
 
     match validate_form(
-        ai_client,
+        &assistant,
         &req.form_type,
         &req.form_schema,
         &req.current_data,
@@ -159,9 +171,9 @@ pub async fn ai_form_translate(
         return Json(api_error(400, "术语不能为空"));
     }
 
-    let ai_client = Arc::new(create_ai_client());
+    let assistant = default_assistant();
 
-    match translate_term(ai_client, &req.term, &req.form_type).await {
+    match translate_term(&assistant, &req.term, &req.form_type).await {
         Ok(translated) => Json(api_success(AiFormTranslateResponse {
             translated_text: translated,
         })),
@@ -171,9 +183,6 @@ pub async fn ai_form_translate(
 
 // ==================== 表单注册表 API ====================
 
-/// GET /api/core/ai-form/forms
-///
-/// 列出所有支持的表单类型（30+ 核心表单）。
 pub async fn list_forms(State(_state): State<AppState>) -> Json<ApiResponse<AiFormListResponse>> {
     let registry = topems_shared::form_assistant::default_registry();
     let forms: Vec<FormSummary> = registry.list().into_iter().map(FormSummary::from).collect();
@@ -190,9 +199,6 @@ pub async fn list_forms(State(_state): State<AppState>) -> Json<ApiResponse<AiFo
     }))
 }
 
-/// GET /api/core/ai-form/forms/{form_type}
-///
-/// 获取指定表单的详细配置（字段、示例、验证规则、业务术语）。
 pub async fn get_form(
     State(_state): State<AppState>,
     Path(form_type): Path<String>,
@@ -210,15 +216,11 @@ pub async fn get_form(
     }
 }
 
-/// POST /api/core/ai-form/forms/{form_type}/suggest
-///
-/// 针对特定表单类型提供 AI 字段建议（基于表单配置增强）。
 pub async fn suggest_for_form(
     State(_state): State<AppState>,
     Path(form_type): Path<String>,
     Json(req): Json<AiFormSuggestForFormRequest>,
 ) -> Json<ApiResponse<AiFormSuggestResponse>> {
-    // 校验表单类型是否存在
     let registry = topems_shared::form_assistant::default_registry();
     if !registry.contains(&form_type) {
         return Json(api_error(
@@ -229,9 +231,7 @@ pub async fn suggest_for_form(
             ),
         ));
     }
-    let cfg = registry
-        .get(&form_type)
-        .unwrap();
+    let cfg = registry.get(&form_type).unwrap();
     if !cfg.supports("suggest") {
         return Json(api_error(
             400,
@@ -239,10 +239,10 @@ pub async fn suggest_for_form(
         ));
     }
 
-    let ai_client = Arc::new(create_ai_client());
+    let assistant = default_assistant();
 
     match suggest_fields_for_form(
-        ai_client,
+        &assistant,
         &form_type,
         &req.form_schema,
         &req.current_data,
@@ -261,10 +261,6 @@ pub async fn suggest_for_form(
     }
 }
 
-/// POST /api/core/ai-form/forms/{form_type}/enhance
-///
-/// 针对特定表单类型的文本增强。
-/// 当 enhancement_type 为 "domain_specific" 时，使用业务域专属提示词。
 pub async fn enhance_for_form(
     State(_state): State<AppState>,
     Path(form_type): Path<String>,
@@ -274,7 +270,6 @@ pub async fn enhance_for_form(
         return Json(api_error(400, "文本内容不能为空"));
     }
 
-    // 校验表单类型是否存在
     let registry = topems_shared::form_assistant::default_registry();
     if !registry.contains(&form_type) {
         return Json(api_error(
@@ -285,9 +280,7 @@ pub async fn enhance_for_form(
             ),
         ));
     }
-    let cfg = registry
-        .get(&form_type)
-        .unwrap();
+    let cfg = registry.get(&form_type).unwrap();
     if !cfg.supports("enhance") {
         return Json(api_error(
             400,
@@ -295,12 +288,220 @@ pub async fn enhance_for_form(
         ));
     }
 
-    let ai_client = Arc::new(create_ai_client());
+    let assistant = default_assistant();
 
-    match enhance_text_for_form(ai_client, &req.text, &req.enhancement_type, &form_type).await {
+    match enhance_text_for_form(&assistant, &req.text, &req.enhancement_type, &form_type).await {
         Ok(enhanced) => Json(api_success(AiFormEnhanceResponse {
             enhanced_text: enhanced,
         })),
         Err(e) => Json(api_error(500, &format!("AI 服务调用失败: {}", e))),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use async_trait::async_trait;
+    use topems_shared::form_assistant::{
+        AiFormAssistantRequest, AiFormAssistantResponse, ValidationResult,
+    };
+
+    #[derive(Default, Clone)]
+    struct MockAssistant;
+
+    #[async_trait]
+    impl AiFormAssistant for MockAssistant {
+        async fn suggest_fields(
+            &self,
+            _form_type: &str,
+            _form_schema: &serde_json::Value,
+            _current_data: &serde_json::Value,
+            _target_field: Option<&str>,
+        ) -> Result<Vec<topems_shared::form_assistant::FieldSuggestion>, topems_shared_ai::ai_client::AIClientError>
+        {
+            Ok(vec![topems_shared::form_assistant::FieldSuggestion::new(
+                "f1", "v1", 1.0, "test",
+            )])
+        }
+
+        async fn enhance_text(
+            &self,
+            text: &str,
+            _enhancement_type: &str,
+        ) -> Result<String, topems_shared_ai::ai_client::AIClientError>
+        {
+            Ok(format!("enhanced: {}", text))
+        }
+
+        async fn validate_form(
+            &self,
+            _form_type: &str,
+            _form_schema: &serde_json::Value,
+            _current_data: &serde_json::Value,
+        ) -> Result<Vec<ValidationResult>, topems_shared_ai::ai_client::AIClientError>
+        {
+            Ok(vec![ValidationResult::valid("f1")])
+        }
+
+        async fn translate_term(
+            &self,
+            term: &str,
+            _form_type: &str,
+        ) -> Result<String, topems_shared_ai::ai_client::AIClientError>
+        {
+            Ok(format!("translated:{}", term))
+        }
+
+        async fn assist(
+            &self,
+            _request: AiFormAssistantRequest,
+        ) -> Result<AiFormAssistantResponse, topems_shared_ai::ai_client::AIClientError>
+        {
+            Ok(AiFormAssistantResponse {
+                enhanced_text: Some("assist-ok".into()),
+                ..Default::default()
+            })
+        }
+    }
+
+    // ==================== parse_action ====================
+
+    #[test]
+    fn test_parse_action_suggest() {
+        let r = parse_action("suggest", &serde_json::json!({})).unwrap();
+        assert!(matches!(r, FormAssistantAction::SuggestFields));
+    }
+
+    #[test]
+    fn test_parse_action_enhance_with_text() {
+        let data = serde_json::json!({"text": "hello"});
+        let r = parse_action("enhance", &data).unwrap();
+        assert!(matches!(r, FormAssistantAction::EnhanceText(t) if t == "hello"));
+    }
+
+    #[test]
+    fn test_parse_action_enhance_no_text() {
+        let r = parse_action("enhance", &serde_json::json!({})).unwrap();
+        assert!(matches!(r, FormAssistantAction::EnhanceText(t) if t.is_empty()));
+    }
+
+    #[test]
+    fn test_parse_action_validate() {
+        let r = parse_action("validate", &serde_json::json!({})).unwrap();
+        assert!(matches!(r, FormAssistantAction::ValidateForm));
+    }
+
+    #[test]
+    fn test_parse_action_translate_with_term() {
+        let data = serde_json::json!({"term": "SKU"});
+        let r = parse_action("translate", &data).unwrap();
+        assert!(matches!(r, FormAssistantAction::TranslateTerm(t) if t == "SKU"));
+    }
+
+    #[test]
+    fn test_parse_action_translate_no_term() {
+        let r = parse_action("translate", &serde_json::json!({})).unwrap();
+        assert!(matches!(r, FormAssistantAction::TranslateTerm(t) if t.is_empty()));
+    }
+
+    #[test]
+    fn test_parse_action_unknown() {
+        let r = parse_action("unknown", &serde_json::json!({}));
+        assert!(r.is_err());
+        assert_eq!(r.unwrap_err(), "无效的 action 参数");
+    }
+
+    // ==================== service 层 + MockAssistant ====================
+
+    #[tokio::test]
+    async fn test_service_suggest_fields() {
+        let mock = MockAssistant;
+        let result = suggest_fields(&mock, "po", &serde_json::json!({}), &serde_json::json!({}), None).await;
+        let list = result.unwrap();
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0].field_name, "f1");
+    }
+
+    #[tokio::test]
+    async fn test_service_enhance_text() {
+        let mock = MockAssistant;
+        let result = enhance_text(&mock, "hi", "polish").await;
+        assert_eq!(result.unwrap(), "enhanced: hi");
+    }
+
+    #[tokio::test]
+    async fn test_service_validate_form() {
+        let mock = MockAssistant;
+        let result = validate_form(&mock, "po", &serde_json::json!({}), &serde_json::json!({})).await;
+        let list = result.unwrap();
+        assert_eq!(list.len(), 1);
+        assert!(list[0].is_valid);
+    }
+
+    #[tokio::test]
+    async fn test_service_translate_term() {
+        let mock = MockAssistant;
+        let result = translate_term(&mock, "SKU", "po").await;
+        assert_eq!(result.unwrap(), "translated:SKU");
+    }
+
+    #[tokio::test]
+    async fn test_service_assist() {
+        let mock = MockAssistant;
+        let req = AiFormAssistantRequest {
+            form_type: "po".into(),
+            form_schema: serde_json::json!({}),
+            current_data: serde_json::json!({}),
+            action: FormAssistantAction::SuggestFields,
+            target_field: None,
+        };
+        let resp = assist(&mock, req).await.unwrap();
+        assert_eq!(resp.enhanced_text, Some("assist-ok".into()));
+    }
+
+    #[tokio::test]
+    async fn test_service_suggest_for_form() {
+        let mock = MockAssistant;
+        let result = suggest_fields_for_form(&mock, "po", &serde_json::json!({}), &serde_json::json!({}), None).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_service_enhance_for_form() {
+        let mock = MockAssistant;
+        let result = enhance_text_for_form(&mock, "hi", "polish", "po").await;
+        assert_eq!(result.unwrap(), "enhanced: hi");
+    }
+
+    // ==================== registry 校验（纯逻辑） ====================
+
+    #[test]
+    fn test_list_forms_is_nonempty() {
+        let registry = topems_shared::form_assistant::default_registry();
+        assert!(registry.list().len() >= 30);
+    }
+
+    #[test]
+    fn test_get_form_existing() {
+        let registry = topems_shared::form_assistant::default_registry();
+        let cfg = registry.get("purchase_order");
+        assert!(cfg.is_some(), "purchase_order 应该存在");
+    }
+
+    #[test]
+    fn test_get_form_nonexistent() {
+        let registry = topems_shared::form_assistant::default_registry();
+        assert!(registry.get("totally_fake_form_xyz").is_none());
+    }
+
+    #[test]
+    fn test_form_supports_all_features() {
+        let registry = topems_shared::form_assistant::default_registry();
+        let cfg = registry.get("purchase_order").unwrap();
+        assert!(cfg.supports("suggest"));
+        assert!(cfg.supports("enhance"));
+        assert!(cfg.supports("validate"));
+        assert!(cfg.supports("translate"));
+        assert!(!cfg.supports("unknown_feature"));
     }
 }
