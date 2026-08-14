@@ -24,6 +24,7 @@ pub mod l2_cache;
 pub mod layers;
 pub mod logging;
 pub mod metrics;
+pub mod n_plus_one_detector;
 pub mod plugin;
 pub mod response;
 pub mod service_config;
