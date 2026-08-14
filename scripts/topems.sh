@@ -1735,70 +1735,87 @@ run_cli() {
 }
 
 # =============================================
-# 主流程预检（磁盘空间 + 后台进程 + coverage 残留）
-# 在 run_all / start_dev / build / test 等主流程入口自动调用。
-# 接受 --skip-preflight 参数跳过（CI 场景或已清理过的情况）。
+# 清理/预检 公共工具函数（供 clean_project 和 _preflight_check 共用）
 # =============================================
-_preflight_check() {
-    local -a args=("$@")
-    local skip=false
-    for a in "${args[@]}"; do
-        [ "$a" = "--skip-preflight" ] && skip=true && break
-    done
-    if $skip; then
-        detail "已指定 --skip-preflight，跳过预检"
-        return 0
-    fi
 
-    local issues=0
+# kill 后台 cargo-(llvm-cov|test|bench|build) 进程
+# 用法: _kill_background_cargo [--dry-run]
+# 返回: 0=无进程或已清理, 1=dry-run 预览
+_kill_background_cargo() {
+    local dry_run=false
+    [ "$1" = "--dry-run" ] && dry_run=true
 
-    # ── 1. 检测后台 cargo 进程（llvm-cov / test / build）────────────
-    local cargo_pids=""
+    local cargo_pids
     cargo_pids=$(ps aux | grep -v grep \
         | grep -E "cargo-(llvm-cov|test|bench|build)" \
         | grep -v "grep" \
         | awk '{print $2}' | tr '\n' ' ')
-    if [ -n "$cargo_pids" ]; then
-        warn "检测到后台 cargo 进程（会持续膨胀 target 吃磁盘），自动终止: $cargo_pids"
-        local p
-        for p in $cargo_pids; do
-            kill "$p" 2>/dev/null || true
-        done
-        sleep 2
-        local still=""
-        for p in $cargo_pids; do
-            kill -0 "$p" 2>/dev/null && still="$still $p"
-        done
-        if [ -n "$still" ]; then
-            warn "TERM 未退出，强制 kill -9:$still"
-            for p in $still; do
-                kill -9 "$p" 2>/dev/null || true
-            done
-        fi
-        pkill -9 -f "cargo-llvm-cov" 2>/dev/null || true
-        pkill -9 -f "cargo test.*llvm-cov" 2>/dev/null || true
-        success "后台 cargo 进程已终止"
-        issues=$((issues + 1))
+
+    [ -z "$cargo_pids" ] && return 0
+
+    if $dry_run; then
+        info "[DRY-RUN] 将终止后台 cargo 进程: $cargo_pids"
+        return 1
     fi
 
-    # ── 2. 清理 coverage 独立 target 目录（cargo clean 不会碰它）────
+    warn "检测到后台 cargo 进程（会持续膨胀 target 吃磁盘），自动终止: $cargo_pids"
+    local p
+    for p in $cargo_pids; do
+        kill "$p" 2>/dev/null || true
+    done
+    sleep 2
+    local still=""
+    for p in $cargo_pids; do
+        kill -0 "$p" 2>/dev/null && still="$still $p"
+    done
+    if [ -n "$still" ]; then
+        warn "TERM 未退出，强制 kill -9:$still"
+        for p in $still; do
+            kill -9 "$p" 2>/dev/null || true
+        done
+    fi
+    pkill -9 -f "cargo-llvm-cov" 2>/dev/null || true
+    pkill -9 -f "cargo test.*llvm-cov" 2>/dev/null || true
+    success "后台 cargo 进程已终止"
+    return 1
+}
+
+# 清理 coverage 独立 target 目录（cargo clean 不会碰它）
+# 用法: _clean_cov_remnants [--dry-run]
+# 返回: 0=无残留, 1=已清理或 dry-run 预览
+_clean_cov_remnants() {
+    local dry_run=false
+    [ "$1" = "--dry-run" ] && dry_run=true
+
     local cov_dirs=(
         "$PROJECT_ROOT/target/llvm-cov-target"
         "$PROJECT_ROOT/lib/target"
     )
+    local cleaned=0
     for cov_dir in "${cov_dirs[@]}"; do
         if [ -d "$cov_dir" ]; then
             local size
             size=$(du -sh "$cov_dir" 2>/dev/null | awk '{print $1}')
-            info "自动清理 coverage 残留: $cov_dir ($size)"
-            rm -rf "$cov_dir"
-            issues=$((issues + 1))
+            if $dry_run; then
+                info "[DRY-RUN] 将删除 coverage/target 残留: $cov_dir ($size)"
+            else
+                info "清理 coverage 残留: $cov_dir ($size)"
+                rm -rf "$cov_dir"
+                detail "已清理 $cov_dir"
+            fi
+            cleaned=1
         fi
     done
+    return $cleaned
+}
 
-    # ── 3. 磁盘空间检查 ───────────────────────────────────────────
+# 磁盘空间守卫
+# 用法: _check_disk_space
+# 返回: 0=磁盘充足, 1=磁盘不足（阻断）
+_check_disk_space() {
     local avail_kb
-    avail_kb=$(df -k "$PROJECT_ROOT" | awk 'NR==2 {print $4}')
+    avail_kb=$(df -k "$PROJECT_ROOT" 2>/dev/null | awk 'NR==2 {print $4}')
+    [ -z "$avail_kb" ] && return 0
     local avail_gb=$((avail_kb / 1024 / 1024))
     if [ "$avail_gb" -lt 5 ]; then
         error "磁盘仅剩 ${avail_gb}GiB！即将满盘，请先执行: $0 clean"
@@ -1806,13 +1823,20 @@ _preflight_check() {
     elif [ "$avail_gb" -lt 10 ]; then
         warn "磁盘仅剩 ${avail_gb}GiB，建议执行: $0 clean"
     fi
-
-    if [ $issues -gt 0 ]; then
-        success "预检完成（自动修复 $issues 项）"
-    else
-        detail "预检通过 ✅ (磁盘 ${avail_gb}GiB 可用)"
-    fi
     return 0
+}
+
+# =============================================
+# 主流程预检（轻量模式，调用 clean_project --preflight）
+# 在 run_all / start_dev / build / test 等主流程入口自动调用。
+# 接受 --skip-preflight 参数跳过（CI 场景或已清理过的情况）。
+# =============================================
+_preflight_check() {
+    local -a args=("$@")
+    for a in "${args[@]}"; do
+        [ "$a" = "--skip-preflight" ] && { detail "已指定 --skip-preflight，跳过预检"; return 0; }
+    done
+    clean_project --preflight
 }
 
 # 显示帮助
@@ -1828,6 +1852,7 @@ clean_project() {
     local clean_ollama=false
     local clean_all=false
     local dry_run=false
+    local preflight=false
 
     for arg in "$@"; do
         case "$arg" in
@@ -1839,13 +1864,42 @@ clean_project() {
             --ollama)       clean_ollama=true ;;
             --all)          clean_all=true ;;
             --dry-run)      dry_run=true ;;
+            --preflight)    preflight=true ;;
             *)
                 error "未知参数: $arg"
-                echo "可用选项: --rust --frontend --cache --system-cache --ollama --logs --all --dry-run"
+                echo "可用选项: --rust --frontend --cache --system-cache --ollama --logs --all --dry-run --preflight"
                 return 1
                 ;;
         esac
     done
+
+    # ── 轻量预检模式（主流程自动调用入口）─────────────────────────
+    if $preflight; then
+        local issues=0
+        echo ""
+        info "================================================"
+        info "  TOPEMS 预检（轻量清理）"
+        info "================================================"
+        echo ""
+
+        # 1. 杀后台 cargo 进程
+        _kill_background_cargo
+        [ $? -ne 0 ] && issues=$((issues + 1))
+
+        # 2. 清 coverage 残留
+        _clean_cov_remnants
+        [ $? -ne 0 ] && issues=$((issues + 1))
+
+        # 3. 磁盘守卫
+        _check_disk_space || return 1
+
+        if [ $issues -gt 0 ]; then
+            success "预检完成（自动修复 $issues 项）"
+        else
+            detail "预检通过 ✅"
+        fi
+        return 0
+    fi
 
     # 默认全量清理（仅项目级，system-cache/ollama 需显式指定）
     if [ "$clean_rust" = false ] && [ "$clean_frontend" = false ] && \
@@ -1881,38 +1935,11 @@ clean_project() {
     echo ""
 
     if [ "$clean_rust" = true ]; then
-        # ── 先杀后台 cargo 进程（coverage / test / build 可能在偷偷编译吃盘）──
-        local cargo_pids=""
-        cargo_pids=$(ps aux | grep -v grep | grep -E "cargo-(llvm-cov|test|bench|build)" | grep -v "grep" | awk '{print $2}' | tr '\n' ' ')
-        if [ -n "$cargo_pids" ]; then
-            if [ "$dry_run" = true ]; then
-                info "[DRY-RUN] 将终止后台 cargo 进程: $cargo_pids"
-            else
-                warn "检测到后台 cargo 进程在运行（会持续膨胀 target 吃磁盘），强制终止: $cargo_pids"
-                # 先 TERM 给机会退出，不行再 KILL
-                local p
-                for p in $cargo_pids; do
-                    kill "$p" 2>/dev/null || true
-                done
-                sleep 2
-                local still=""
-                for p in $cargo_pids; do
-                    kill -0 "$p" 2>/dev/null && still="$still $p"
-                done
-                if [ -n "$still" ]; then
-                    warn "TERM 未退出，强制 kill -9:$still"
-                    for p in $still; do
-                        kill -9 "$p" 2>/dev/null || true
-                    done
-                fi
-                # 连带杀掉它们可能 fork 出来的 rustc / llvm-cov 子进程
-                pkill -9 -f "cargo-llvm-cov" 2>/dev/null || true
-                pkill -9 -f "cargo test.*llvm-cov" 2>/dev/null || true
-                success "后台 cargo 进程已终止"
-                did_clean=true
-            fi
-        fi
+        # ── 杀后台 cargo 进程 + 清 coverage 残留（公共函数）──────────
+        _kill_background_cargo $( $dry_run && echo --dry-run ) && did_clean=true
+        _clean_cov_remnants $( $dry_run && echo --dry-run ) && did_clean=true
 
+        # target/ 完整清理
         local dir="$PROJECT_ROOT/target"
         if [ -d "$dir" ]; then
             local size
@@ -1929,25 +1956,6 @@ clean_project() {
         else
             detail "target/ 不存在，跳过"
         fi
-
-        # cargo-llvm-cov 独立 target 目录（cargo clean 不会碰它）
-        local cov_dirs=(
-            "$PROJECT_ROOT/target/llvm-cov-target"
-            "$PROJECT_ROOT/lib/target"
-        )
-        for cov_dir in "${cov_dirs[@]}"; do
-            if [ -d "$cov_dir" ]; then
-                local size
-                size=$(du -sh "$cov_dir" 2>/dev/null | awk '{print $1}')
-                if [ "$dry_run" = true ]; then
-                    info "[DRY-RUN] 将删除 coverage/target 残留: $cov_dir ($size)"
-                else
-                    rm -rf "$cov_dir"
-                    detail "已清理 $cov_dir ($size)"
-                    did_clean=true
-                fi
-            fi
-        done
 
         local sqlx_dir="$PROJECT_ROOT/.sqlx"
         if [ -d "$sqlx_dir" ]; then

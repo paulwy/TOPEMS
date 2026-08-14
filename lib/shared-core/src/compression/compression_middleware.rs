@@ -676,4 +676,42 @@ mod tests {
             .expect("read body");
         assert_eq!(bytes.len(), 2000);
     }
+
+    #[test]
+    fn test_select_algorithm_respects_supported_filter() {
+        let mut algs = HashSet::new();
+        algs.insert(CompressionAlgorithm::Gzip);
+        let config = CompressionConfig::default().with_supported_algorithms(algs);
+        let middleware = CompressionMiddleware::new(config);
+
+        assert_eq!(middleware.select_algorithm("br"), None);
+        assert_eq!(middleware.select_algorithm("deflate"), None);
+        assert_eq!(middleware.select_algorithm("gzip"), Some(CompressionAlgorithm::Gzip));
+        assert_eq!(
+            middleware.select_algorithm("br, gzip"),
+            Some(CompressionAlgorithm::Gzip)
+        );
+    }
+
+    #[test]
+    fn test_should_compress_handles_content_type_with_charset() {
+        let config = CompressionConfig::default();
+        let middleware = CompressionMiddleware::new(config);
+
+        let response = Response::builder()
+            .header(header::CONTENT_TYPE, "application/json; charset=utf-8")
+            .header(header::CONTENT_LENGTH, "2000")
+            .body(Body::empty())
+            .expect("failed to build response");
+
+        assert!(middleware.should_compress(&response));
+
+        let excluded = Response::builder()
+            .header(header::CONTENT_TYPE, "image/png; charset=binary")
+            .header(header::CONTENT_LENGTH, "10000")
+            .body(Body::empty())
+            .expect("failed to build response");
+
+        assert!(!middleware.should_compress(&excluded));
+    }
 }
