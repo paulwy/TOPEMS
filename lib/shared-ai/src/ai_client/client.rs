@@ -296,4 +296,84 @@ mod tests {
         let client = create_http_client(std::time::Duration::from_secs(30));
         let _ = client;
     }
+
+    #[test]
+    fn test_all_error_variants_display() {
+        // NetworkError
+        let s = AIClientError::NetworkError("boom".to_string()).to_string();
+        assert!(s.contains("Network error"), "{}", s);
+        assert!(s.contains("boom"), "{}", s);
+
+        // ApiError
+        let s = AIClientError::ApiError("bad status".to_string()).to_string();
+        assert!(s.contains("API error"), "{}", s);
+        assert!(s.contains("bad status"), "{}", s);
+
+        // ParseError
+        let s = AIClientError::ParseError("invalid json".to_string()).to_string();
+        assert!(s.contains("Parse error"), "{}", s);
+        assert!(s.contains("invalid json"), "{}", s);
+
+        // ConfigError
+        let s = AIClientError::ConfigError("missing field".to_string()).to_string();
+        assert!(s.contains("Config error"), "{}", s);
+        assert!(s.contains("missing field"), "{}", s);
+
+        // TimeoutError
+        let s = AIClientError::TimeoutError("30s".to_string()).to_string();
+        assert!(s.contains("Timeout error"), "{}", s);
+        assert!(s.contains("30s"), "{}", s);
+
+        // AuthError
+        let s = AIClientError::AuthError("invalid key".to_string()).to_string();
+        assert!(s.contains("Auth error"), "{}", s);
+        assert!(s.contains("invalid key"), "{}", s);
+
+        // ServiceUnavailable
+        let s = AIClientError::ServiceUnavailable("503".to_string()).to_string();
+        assert!(s.contains("Service unavailable"), "{}", s);
+        assert!(s.contains("503"), "{}", s);
+
+        // NotImplemented
+        let s = AIClientError::NotImplemented("todo".to_string()).to_string();
+        assert!(s.contains("Not implemented"), "{}", s);
+        assert!(s.contains("todo"), "{}", s);
+    }
+
+    #[test]
+    fn test_error_trait_implementation() {
+        // 验证 AIClientError 实现了 std::error::Error trait
+        fn assert_error<T: std::error::Error>(_: &T) {}
+
+        let errors: Vec<AIClientError> = vec![
+            AIClientError::NetworkError("a".to_string()),
+            AIClientError::ApiError("b".to_string()),
+            AIClientError::ParseError("c".to_string()),
+            AIClientError::ConfigError("d".to_string()),
+            AIClientError::TimeoutError("e".to_string()),
+            AIClientError::AuthError("f".to_string()),
+            AIClientError::ServiceUnavailable("g".to_string()),
+            AIClientError::NotImplemented("h".to_string()),
+        ];
+        for err in &errors {
+            assert_error(err);
+        }
+    }
+
+    #[test]
+    fn test_from_serde_json_error() {
+        let bad_json = "{ this is not valid json";
+        let result: Result<serde_json::Value, _> = serde_json::from_str(bad_json);
+        assert!(result.is_err());
+        let json_err = result.unwrap_err();
+        let ai_err: AIClientError = json_err.into();
+        match &ai_err {
+            AIClientError::ParseError(msg) => {
+                assert!(!msg.is_empty());
+            }
+            other => panic!("expected ParseError, got {:?}", other),
+        }
+        // ParseError 的 Display 应包含 "Parse error"
+        assert!(ai_err.to_string().contains("Parse error"));
+    }
 }

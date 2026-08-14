@@ -450,4 +450,313 @@ mod tests {
         assert_eq!(resp.data.len(), 1);
         assert_eq!(resp.data[0].embedding.len(), 3);
     }
+
+    #[test]
+    fn test_chat_completion_request_serde_roundtrip() {
+        let request = ChatCompletionRequest {
+            model: "gpt-4".to_string(),
+            messages: vec![
+                ChatMessage::system("You are helpful."),
+                ChatMessage::user("Hello"),
+            ],
+            temperature: Some(0.5),
+            max_tokens: Some(1024),
+            stream: Some(false),
+            tools: None,
+            tool_choice: None,
+            frequency_penalty: Some(0.0),
+            presence_penalty: Some(0.0),
+            stop: Some(vec!["\n".to_string()]),
+            response_format: Some(ResponseFormat::json()),
+        };
+        let json = serde_json::to_string(&request).unwrap();
+        let deserialized: ChatCompletionRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.model, request.model);
+        assert_eq!(deserialized.messages.len(), 2);
+        assert_eq!(deserialized.messages[0].role, "system");
+        assert_eq!(deserialized.messages[0].content, "You are helpful.");
+        assert_eq!(deserialized.messages[1].role, "user");
+        assert_eq!(deserialized.messages[1].content, "Hello");
+        assert_eq!(deserialized.temperature, Some(0.5));
+        assert_eq!(deserialized.max_tokens, Some(1024));
+        assert_eq!(deserialized.stream, Some(false));
+        assert_eq!(deserialized.frequency_penalty, Some(0.0));
+        assert_eq!(deserialized.presence_penalty, Some(0.0));
+        assert_eq!(deserialized.stop, Some(vec!["\n".to_string()]));
+        assert_eq!(
+            deserialized.response_format.as_ref().unwrap().r#type,
+            "json_object"
+        );
+    }
+
+    #[test]
+    fn test_chat_message_serde_roundtrip() {
+        let msg = ChatMessage {
+            role: "user".to_string(),
+            content: "Hello, world!".to_string(),
+            tool_call: None,
+            tool_result: None,
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        let deserialized: ChatMessage = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.role, "user");
+        assert_eq!(deserialized.content, "Hello, world!");
+        assert!(deserialized.tool_call.is_none());
+        assert!(deserialized.tool_result.is_none());
+    }
+
+    #[test]
+    fn test_chat_completion_response_serde_roundtrip() {
+        let response = ChatCompletionResponse {
+            id: "chatcmpl-abc".to_string(),
+            object: "chat.completion".to_string(),
+            created: 1700000000,
+            model: "gpt-4".to_string(),
+            choices: vec![Choice {
+                index: 0,
+                message: ChatMessage::assistant("Hi there"),
+                finish_reason: Some("stop".to_string()),
+            }],
+            usage: Some(Usage {
+                prompt_tokens: 10,
+                completion_tokens: 5,
+                total_tokens: 15,
+            }),
+        };
+        let json = serde_json::to_string(&response).unwrap();
+        let deserialized: ChatCompletionResponse = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.id, "chatcmpl-abc");
+        assert_eq!(deserialized.object, "chat.completion");
+        assert_eq!(deserialized.created, 1700000000);
+        assert_eq!(deserialized.model, "gpt-4");
+        assert_eq!(deserialized.choices.len(), 1);
+        assert_eq!(deserialized.choices[0].index, 0);
+        assert_eq!(deserialized.choices[0].message.role, "assistant");
+        assert_eq!(deserialized.choices[0].message.content, "Hi there");
+        assert_eq!(deserialized.choices[0].finish_reason.as_deref(), Some("stop"));
+        let usage = deserialized.usage.unwrap();
+        assert_eq!(usage.prompt_tokens, 10);
+        assert_eq!(usage.completion_tokens, 5);
+        assert_eq!(usage.total_tokens, 15);
+    }
+
+    #[test]
+    fn test_chat_choice_serde_roundtrip() {
+        let choice = Choice {
+            index: 2,
+            message: ChatMessage::user("question"),
+            finish_reason: Some("length".to_string()),
+        };
+        let json = serde_json::to_string(&choice).unwrap();
+        let deserialized: Choice = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.index, 2);
+        assert_eq!(deserialized.message.role, "user");
+        assert_eq!(deserialized.message.content, "question");
+        assert_eq!(deserialized.finish_reason.as_deref(), Some("length"));
+    }
+
+    #[test]
+    fn test_usage_serde_roundtrip() {
+        let usage = Usage {
+            prompt_tokens: 100,
+            completion_tokens: 50,
+            total_tokens: 150,
+        };
+        let json = serde_json::to_string(&usage).unwrap();
+        let deserialized: Usage = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.prompt_tokens, 100);
+        assert_eq!(deserialized.completion_tokens, 50);
+        assert_eq!(deserialized.total_tokens, 150);
+    }
+
+    #[test]
+    fn test_function_call_serde_roundtrip() {
+        let fc = FunctionCall::new("search", serde_json::json!({"query": "rust"}));
+        let json = serde_json::to_string(&fc).unwrap();
+        let deserialized: FunctionCall = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.name, "search");
+        assert_eq!(deserialized.arguments["query"], "rust");
+    }
+
+    #[test]
+    fn test_tool_result_serde_roundtrip() {
+        let tr = ToolResult {
+            tool_name: "calc".to_string(),
+            content: "42".to_string(),
+        };
+        let json = serde_json::to_string(&tr).unwrap();
+        let deserialized: ToolResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.tool_name, "calc");
+        assert_eq!(deserialized.content, "42");
+    }
+
+    #[test]
+    fn test_function_definition_serde_roundtrip() {
+        let params = serde_json::json!({"type": "object"});
+        let fd = FunctionDefinition {
+            name: "search".to_string(),
+            description: "Search the web".to_string(),
+            parameters: params,
+            required: Some(vec!["query".to_string()]),
+        };
+        let json = serde_json::to_string(&fd).unwrap();
+        let deserialized: FunctionDefinition = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.name, "search");
+        assert_eq!(deserialized.description, "Search the web");
+        assert_eq!(deserialized.parameters["type"], "object");
+        assert_eq!(deserialized.required, Some(vec!["query".to_string()]));
+    }
+
+    #[test]
+    fn test_response_format_serde_roundtrip() {
+        let fmt = ResponseFormat::json();
+        let json = serde_json::to_string(&fmt).unwrap();
+        let deserialized: ResponseFormat = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.r#type, "json_object");
+
+        let fmt = ResponseFormat::text();
+        let json = serde_json::to_string(&fmt).unwrap();
+        let deserialized: ResponseFormat = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.r#type, "text");
+    }
+
+    #[test]
+    fn test_tool_choice_function_serde() {
+        let choice = ToolChoice::Function("search".to_string());
+        let json = serde_json::to_string(&choice).unwrap();
+        // untagged: Function(String) 序列化为 JSON 字符串
+        let deserialized: ToolChoice = serde_json::from_str(&json).unwrap();
+        match deserialized {
+            ToolChoice::Function(name) => assert_eq!(name, "search"),
+            other => panic!("expected Function, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_streaming_chunk_serde_roundtrip() {
+        let chunk = StreamingChunk {
+            id: "chatcmpl-1".to_string(),
+            object: "chat.completion.chunk".to_string(),
+            created: 1700000001,
+            model: "gpt-4".to_string(),
+            choices: vec![StreamingChoice {
+                index: 0,
+                delta: StreamingDelta {
+                    role: Some("assistant".to_string()),
+                    content: Some("Hello".to_string()),
+                    tool_call: None,
+                },
+                finish_reason: None,
+            }],
+        };
+        let json = serde_json::to_string(&chunk).unwrap();
+        let deserialized: StreamingChunk = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.id, "chatcmpl-1");
+        assert_eq!(deserialized.object, "chat.completion.chunk");
+        assert_eq!(deserialized.created, 1700000001);
+        assert_eq!(deserialized.choices.len(), 1);
+        assert_eq!(deserialized.choices[0].delta.role.as_deref(), Some("assistant"));
+        assert_eq!(deserialized.choices[0].delta.content.as_deref(), Some("Hello"));
+        assert!(deserialized.choices[0].finish_reason.is_none());
+    }
+
+    #[test]
+    fn test_embedding_request_serde_roundtrip() {
+        let req = EmbeddingRequest {
+            model: "text-embedding-3-small".to_string(),
+            input: vec!["hello".to_string(), "world".to_string()],
+            encoding_format: Some("float".to_string()),
+        };
+        let json = serde_json::to_string(&req).unwrap();
+        let deserialized: EmbeddingRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.model, "text-embedding-3-small");
+        assert_eq!(deserialized.input.len(), 2);
+        assert_eq!(deserialized.input[0], "hello");
+        assert_eq!(deserialized.encoding_format.as_deref(), Some("float"));
+    }
+
+    #[test]
+    fn test_embedding_response_serde_roundtrip() {
+        let resp = EmbeddingResponse {
+            object: "list".to_string(),
+            data: vec![EmbeddingData {
+                index: 0,
+                embedding: vec![0.1, 0.2, 0.3],
+                object: "embedding".to_string(),
+            }],
+            model: "text-embedding-3-small".to_string(),
+            usage: Usage {
+                prompt_tokens: 8,
+                completion_tokens: 0,
+                total_tokens: 8,
+            },
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        let deserialized: EmbeddingResponse = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.object, "list");
+        assert_eq!(deserialized.data.len(), 1);
+        assert_eq!(deserialized.data[0].index, 0);
+        assert_eq!(deserialized.data[0].embedding, vec![0.1, 0.2, 0.3]);
+        assert_eq!(deserialized.data[0].object, "embedding");
+        assert_eq!(deserialized.model, "text-embedding-3-small");
+        assert_eq!(deserialized.usage.total_tokens, 8);
+    }
+
+    #[test]
+    fn test_model_list_response_serde_roundtrip() {
+        let resp = ModelListResponse {
+            object: "list".to_string(),
+            data: vec![ModelInfo {
+                id: "gpt-4".to_string(),
+                object: "model".to_string(),
+                created: 1700000000,
+                owned_by: "openai".to_string(),
+                permission: vec![],
+            }],
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        let deserialized: ModelListResponse = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.object, "list");
+        assert_eq!(deserialized.data.len(), 1);
+        assert_eq!(deserialized.data[0].id, "gpt-4");
+        assert_eq!(deserialized.data[0].owned_by, "openai");
+        assert!(deserialized.data[0].permission.is_empty());
+    }
+
+    #[test]
+    fn test_error_response_serde_roundtrip() {
+        let resp = ErrorResponse {
+            error: ErrorDetails {
+                r#type: "invalid_request_error".to_string(),
+                message: "Bad request".to_string(),
+                param: Some("model".to_string()),
+                code: Some("invalid_model".to_string()),
+            },
+        };
+        let json = serde_json::to_string(&resp).unwrap();
+        let deserialized: ErrorResponse = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.error.r#type, "invalid_request_error");
+        assert_eq!(deserialized.error.message, "Bad request");
+        assert_eq!(deserialized.error.param.as_deref(), Some("model"));
+        assert_eq!(deserialized.error.code.as_deref(), Some("invalid_model"));
+    }
+
+    #[test]
+    fn test_chat_completion_request_default() {
+        let req = ChatCompletionRequest::default();
+        assert_eq!(req.model, "qwen2.5:7b-instruct");
+        assert!(req.messages.is_empty());
+        assert_eq!(req.temperature, Some(0.7));
+        assert_eq!(req.max_tokens, Some(4096));
+        assert_eq!(req.stream, Some(false));
+        assert!(req.tools.is_none());
+    }
+
+    #[test]
+    fn test_embedding_request_default() {
+        let req = EmbeddingRequest::default();
+        assert_eq!(req.model, "text-embedding-3-small");
+        assert!(req.input.is_empty());
+        assert_eq!(req.encoding_format.as_deref(), Some("float"));
+    }
 }

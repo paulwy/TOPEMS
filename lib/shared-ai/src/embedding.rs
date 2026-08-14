@@ -384,4 +384,163 @@ mod tests {
         let result2 = service.embed("Hello world").await.unwrap();
         assert_eq!(result.embedding, result2.embedding);
     }
+
+    #[test]
+    fn test_embedding_config_default() {
+        let config = EmbeddingConfig::default();
+        assert_eq!(config.provider, "ollama");
+        assert_eq!(config.model, "qwen2.5:7b-instruct");
+        assert_eq!(config.dimension, 3584);
+        assert_eq!(config.api_key_env.as_deref(), Some("OPENAI_API_KEY"));
+        assert_eq!(config.ollama_url.as_deref(), Some("http://localhost:11434"));
+        assert!(config.endpoint.is_none());
+    }
+
+    #[test]
+    fn test_embedding_config_deserialize() {
+        let json = r#"{
+            "provider": "openai",
+            "model": "text-embedding-3-small",
+            "dimension": 1536,
+            "api_key_env": "OPENAI_API_KEY",
+            "endpoint": "http://localhost:8080/embed",
+            "ollama_url": null
+        }"#;
+        let config: EmbeddingConfig = serde_json::from_str(json).unwrap();
+        assert_eq!(config.provider, "openai");
+        assert_eq!(config.model, "text-embedding-3-small");
+        assert_eq!(config.dimension, 1536);
+        assert_eq!(config.api_key_env.as_deref(), Some("OPENAI_API_KEY"));
+        assert_eq!(config.endpoint.as_deref(), Some("http://localhost:8080/embed"));
+        assert!(config.ollama_url.is_none());
+    }
+
+    #[test]
+    fn test_embedding_result_serde_roundtrip() {
+        let result = EmbeddingResult {
+            embedding: vec![0.1, 0.2, 0.3],
+            model: "mock".to_string(),
+            usage: EmbeddingUsage {
+                prompt_tokens: 5,
+                total_tokens: 5,
+            },
+        };
+        let json = serde_json::to_string(&result).unwrap();
+        let deserialized: EmbeddingResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.embedding, vec![0.1, 0.2, 0.3]);
+        assert_eq!(deserialized.model, "mock");
+        assert_eq!(deserialized.usage.prompt_tokens, 5);
+        assert_eq!(deserialized.usage.total_tokens, 5);
+    }
+
+    #[test]
+    fn test_embedding_usage_serde_roundtrip() {
+        let usage = EmbeddingUsage {
+            prompt_tokens: 42,
+            total_tokens: 100,
+        };
+        let json = serde_json::to_string(&usage).unwrap();
+        let deserialized: EmbeddingUsage = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.prompt_tokens, 42);
+        assert_eq!(deserialized.total_tokens, 100);
+    }
+
+    #[tokio::test]
+    async fn test_mock_embedding_batch() {
+        let service = MockEmbedding::new(8);
+        let texts = vec![
+            "hello".to_string(),
+            "world".to_string(),
+            "foo".to_string(),
+        ];
+        let results = service.embed_batch(&texts).await.unwrap();
+        assert_eq!(results.len(), 3);
+        for r in &results {
+            assert_eq!(r.embedding.len(), 8);
+            assert_eq!(r.model, "mock");
+        }
+        // 不同文本应产生不同嵌入
+        assert_ne!(results[0].embedding, results[1].embedding);
+    }
+
+    #[tokio::test]
+    async fn test_mock_embedding_is_normalized() {
+        let service = MockEmbedding::new(64);
+        let result = service.embed("normalize me").await.unwrap();
+        let norm: f32 = result.embedding.iter().map(|x| x * x).sum::<f32>().sqrt();
+        assert!(
+            (norm - 1.0).abs() < 1e-5,
+            "expected unit norm, got {}",
+            norm
+        );
+    }
+
+    #[tokio::test]
+    async fn test_mock_embedding_usage_proportional_to_length() {
+        let service = MockEmbedding::new(4);
+        let short = service.embed("ab").await.unwrap();
+        let long = service.embed("abcdefghijklmnopqrst").await.unwrap();
+        // prompt_tokens = text.len() / 4
+        assert!(long.usage.prompt_tokens >= short.usage.prompt_tokens);
+    }
+
+    #[test]
+    fn test_preprocess_text_short_untouched() {
+        let text = "  hello world  ";
+        assert_eq!(preprocess_text(text, 100), "hello world");
+    }
+
+    #[test]
+    fn test_preprocess_text_truncate_at_newline() {
+        let mut text = "first line\n".to_string();
+        text.push_str(&"b".repeat(200));
+        let result = preprocess_text(&text, 50);
+        // 应在换行符处截断
+        assert_eq!(result, "first line");
+    }
+
+    #[test]
+    fn test_preprocess_text_truncate_at_space() {
+        let text = format!("{}{}", "a".repeat(40), " the rest");
+        let result = preprocess_text(&text, 45);
+        // 截断后不应包含完整 "the rest"
+        assert!(!result.contains("the rest"));
+        assert!(result.len() <= 45);
+    }
+
+    #[test]
+    fn test_preprocess_text_truncate_no_boundary() {
+        let text = "a".repeat(200);
+        let result = preprocess_text(&text, 50);
+        assert_eq!(result.len(), 50);
+    }
+
+    #[test]
+    fn test_create_embedding_service_mock() {
+        let config = EmbeddingConfig {
+            provider: "mock".to_string(),
+            model: "mock-model".to_string(),
+            dimension: 16,
+            api_key_env: None,
+            endpoint: None,
+            ollama_url: None,
+        };
+        let service = create_embedding_service(&config).unwrap();
+        // 仅验证可以创建（不调用网络）
+        let _ = service;
+    }
+
+    #[test]
+    fn test_create_embedding_service_unknown_provider() {
+        let config = EmbeddingConfig {
+            provider: "unknown_provider".to_string(),
+            model: "x".to_string(),
+            dimension: 16,
+            api_key_env: None,
+            endpoint: None,
+            ollama_url: None,
+        };
+        let result = create_embedding_service(&config);
+        assert!(result.is_err());
+    }
 }

@@ -479,4 +479,298 @@ mod tests {
         assert_eq!(stats.total_backups, 0);
         assert_eq!(stats.successful_backups, 0);
     }
+
+    #[test]
+    fn test_backup_config_default() {
+        let config = BackupConfig::default();
+        assert!(config.enabled);
+        assert_eq!(config.backup_dir, PathBuf::from("/var/backups/topems"));
+        assert_eq!(config.retention_days, 30);
+        assert!(matches!(config.schedule, BackupSchedule::Daily));
+        assert!(matches!(config.compression, CompressionType::Gzip));
+        assert!(!config.encryption_enabled);
+        assert!(!config.remote_backup_enabled);
+        assert!(config.remote_backup_url.is_none());
+    }
+
+    #[test]
+    fn test_backup_schedule_config_default() {
+        let sc = BackupScheduleConfig::default();
+        assert!(matches!(sc.schedule, BackupSchedule::Daily));
+        assert_eq!(sc.hour, 2);
+        assert_eq!(sc.minute, 0);
+        assert!(sc.day_of_week.is_none());
+        assert!(sc.day_of_month.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_backup_manager_new_default_empty() {
+        let m1 = BackupManager::new();
+        let m2 = BackupManager::default();
+        let cfg1 = m1.get_config().await;
+        let cfg2 = m2.get_config().await;
+        assert_eq!(cfg1.backup_dir, cfg2.backup_dir);
+        assert_eq!(cfg1.retention_days, cfg2.retention_days);
+        assert!(m1.list_backups(None).await.is_empty());
+        assert!(m2.list_backups(None).await.is_empty());
+        let stats1 = m1.get_statistics().await;
+        let stats2 = m2.get_statistics().await;
+        assert_eq!(stats1.total_backups, 0);
+        assert_eq!(stats2.total_backups, 0);
+    }
+
+    #[tokio::test]
+    async fn test_backup_manager_configure_and_get_config() {
+        let manager = BackupManager::new();
+        let custom = BackupConfig {
+            enabled: false,
+            backup_dir: PathBuf::from("/tmp/custom"),
+            retention_days: 14,
+            schedule: BackupSchedule::Weekly,
+            compression: CompressionType::Zstd,
+            encryption_enabled: true,
+            remote_backup_enabled: true,
+            remote_backup_url: Some("http://example.com".to_string()),
+        };
+        manager.configure(custom.clone()).await;
+        let retrieved = manager.get_config().await;
+        assert_eq!(retrieved.enabled, custom.enabled);
+        assert_eq!(retrieved.backup_dir, custom.backup_dir);
+        assert_eq!(retrieved.retention_days, custom.retention_days);
+        assert!(matches!(retrieved.schedule, BackupSchedule::Weekly));
+        assert!(matches!(retrieved.compression, CompressionType::Zstd));
+        assert_eq!(retrieved.encryption_enabled, custom.encryption_enabled);
+        assert_eq!(
+            retrieved.remote_backup_enabled,
+            custom.remote_backup_enabled
+        );
+        assert_eq!(retrieved.remote_backup_url, custom.remote_backup_url);
+    }
+
+    #[test]
+    fn test_backup_type_serde_roundtrip() {
+        let variants = [
+            BackupType::Full,
+            BackupType::Incremental,
+            BackupType::Differential,
+        ];
+        for v in variants {
+            let s = serde_json::to_string(&v).expect("serialize");
+            let d: BackupType = serde_json::from_str(&s).expect("deserialize");
+            assert_eq!(d, v);
+        }
+    }
+
+    #[test]
+    fn test_backup_status_serde_roundtrip() {
+        let variants = [
+            BackupStatus::Pending,
+            BackupStatus::InProgress,
+            BackupStatus::Completed,
+            BackupStatus::Failed,
+            BackupStatus::Restored,
+        ];
+        for v in variants {
+            let s = serde_json::to_string(&v).expect("serialize");
+            let d: BackupStatus = serde_json::from_str(&s).expect("deserialize");
+            assert_eq!(d, v);
+        }
+    }
+
+    #[test]
+    fn test_compression_type_serde_roundtrip() {
+        let variants = [
+            CompressionType::None,
+            CompressionType::Gzip,
+            CompressionType::Zstd,
+        ];
+        for v in variants {
+            let s1 = serde_json::to_string(&v).expect("serialize");
+            let d: CompressionType = serde_json::from_str(&s1).expect("deserialize");
+            let s2 = serde_json::to_string(&d).expect("serialize2");
+            assert_eq!(s1, s2);
+        }
+    }
+
+    #[test]
+    fn test_backup_schedule_serde_roundtrip() {
+        let variants = [
+            BackupSchedule::Hourly,
+            BackupSchedule::Daily,
+            BackupSchedule::Weekly,
+            BackupSchedule::Monthly,
+        ];
+        for v in variants {
+            let s1 = serde_json::to_string(&v).expect("serialize");
+            let d: BackupSchedule = serde_json::from_str(&s1).expect("deserialize");
+            let s2 = serde_json::to_string(&d).expect("serialize2");
+            assert_eq!(s1, s2);
+        }
+    }
+
+    #[test]
+    fn test_backup_config_serde_roundtrip() {
+        let config = BackupConfig {
+            enabled: true,
+            backup_dir: PathBuf::from("/tmp/x"),
+            retention_days: 7,
+            schedule: BackupSchedule::Weekly,
+            compression: CompressionType::Zstd,
+            encryption_enabled: true,
+            remote_backup_enabled: true,
+            remote_backup_url: Some("http://x".to_string()),
+        };
+        let s = serde_json::to_string(&config).expect("serialize");
+        let d: BackupConfig = serde_json::from_str(&s).expect("deserialize");
+        assert_eq!(d.enabled, config.enabled);
+        assert_eq!(d.backup_dir, config.backup_dir);
+        assert_eq!(d.retention_days, config.retention_days);
+        assert!(matches!(d.schedule, BackupSchedule::Weekly));
+        assert!(matches!(d.compression, CompressionType::Zstd));
+        assert_eq!(d.encryption_enabled, config.encryption_enabled);
+        assert_eq!(d.remote_backup_enabled, config.remote_backup_enabled);
+        assert_eq!(d.remote_backup_url, config.remote_backup_url);
+    }
+
+    #[test]
+    fn test_backup_request_construction_and_serde() {
+        let req = BackupRequest {
+            backup_type: BackupType::Full,
+            description: Some("test".to_string()),
+            compression: Some(CompressionType::Gzip),
+            encrypt: Some(false),
+        };
+        assert_eq!(req.backup_type, BackupType::Full);
+        assert_eq!(req.description.as_deref(), Some("test"));
+        assert!(matches!(req.compression, Some(CompressionType::Gzip)));
+        assert_eq!(req.encrypt, Some(false));
+
+        let s = serde_json::to_string(&req).expect("serialize");
+        let d: BackupRequest = serde_json::from_str(&s).expect("deserialize");
+        assert_eq!(d.backup_type, req.backup_type);
+        assert_eq!(d.description, req.description);
+        assert_eq!(d.encrypt, req.encrypt);
+        let s_orig = serde_json::to_string(&req.compression).expect("serialize orig");
+        let s_de = serde_json::to_string(&d.compression).expect("serialize de");
+        assert_eq!(s_orig, s_de);
+    }
+
+    #[test]
+    fn test_restore_request_construction_and_serde() {
+        let id = Uuid::new_v4();
+        let req = RestoreRequest {
+            backup_id: id,
+            target_database: Some("other_db".to_string()),
+            overwrite: true,
+        };
+        assert_eq!(req.backup_id, id);
+        assert_eq!(req.target_database.as_deref(), Some("other_db"));
+        assert!(req.overwrite);
+
+        let s = serde_json::to_string(&req).expect("serialize");
+        let d: RestoreRequest = serde_json::from_str(&s).expect("deserialize");
+        assert_eq!(d.backup_id, req.backup_id);
+        assert_eq!(d.target_database, req.target_database);
+        assert_eq!(d.overwrite, req.overwrite);
+    }
+
+    #[test]
+    fn test_backup_statistics_construction_and_serde() {
+        let now = Utc::now();
+        let earlier = now - chrono::Duration::hours(2);
+        let stats = BackupStatistics {
+            total_backups: 10,
+            successful_backups: 8,
+            failed_backups: 2,
+            total_size_bytes: 1024 * 1024,
+            oldest_backup: Some(earlier),
+            newest_backup: Some(now),
+            average_backup_duration_seconds: 42.5,
+            last_restore: Some(now),
+        };
+        assert_eq!(stats.total_backups, 10);
+        assert_eq!(stats.successful_backups, 8);
+        assert_eq!(stats.failed_backups, 2);
+        assert_eq!(stats.total_size_bytes, 1024 * 1024);
+        assert_eq!(stats.oldest_backup, Some(earlier));
+        assert_eq!(stats.newest_backup, Some(now));
+        assert_eq!(stats.average_backup_duration_seconds, 42.5);
+        assert_eq!(stats.last_restore, Some(now));
+
+        let s = serde_json::to_string(&stats).expect("serialize");
+        let d: BackupStatistics = serde_json::from_str(&s).expect("deserialize");
+        assert_eq!(d.total_backups, stats.total_backups);
+        assert_eq!(d.successful_backups, stats.successful_backups);
+        assert_eq!(d.failed_backups, stats.failed_backups);
+        assert_eq!(d.total_size_bytes, stats.total_size_bytes);
+        assert_eq!(d.oldest_backup, stats.oldest_backup);
+        assert_eq!(d.newest_backup, stats.newest_backup);
+        assert_eq!(
+            d.average_backup_duration_seconds,
+            stats.average_backup_duration_seconds
+        );
+        assert_eq!(d.last_restore, stats.last_restore);
+    }
+
+    #[test]
+    fn test_backup_metadata_construction_and_serde() {
+        let id = Uuid::new_v4();
+        let now = Utc::now();
+        let meta = BackupMetadata {
+            id,
+            backup_type: BackupType::Incremental,
+            status: BackupStatus::Completed,
+            created_at: now,
+            completed_at: Some(now),
+            file_path: PathBuf::from("/tmp/backup.sql.gz"),
+            file_size: 4096,
+            checksum: "abc123".to_string(),
+            database_name: "topems".to_string(),
+            tables_backed_up: vec!["users".to_string(), "orders".to_string()],
+            error_message: None,
+        };
+        assert_eq!(meta.id, id);
+        assert_eq!(meta.backup_type, BackupType::Incremental);
+        assert_eq!(meta.status, BackupStatus::Completed);
+        assert_eq!(meta.created_at, now);
+        assert_eq!(meta.completed_at, Some(now));
+        assert_eq!(meta.file_path, PathBuf::from("/tmp/backup.sql.gz"));
+        assert_eq!(meta.file_size, 4096);
+        assert_eq!(meta.checksum, "abc123");
+        assert_eq!(meta.database_name, "topems");
+        assert_eq!(meta.tables_backed_up.len(), 2);
+        assert!(meta.error_message.is_none());
+
+        let s = serde_json::to_string(&meta).expect("serialize");
+        let d: BackupMetadata = serde_json::from_str(&s).expect("deserialize");
+        assert_eq!(d.id, meta.id);
+        assert_eq!(d.backup_type, meta.backup_type);
+        assert_eq!(d.status, meta.status);
+        assert_eq!(d.created_at, meta.created_at);
+        assert_eq!(d.completed_at, meta.completed_at);
+        assert_eq!(d.file_path, meta.file_path);
+        assert_eq!(d.file_size, meta.file_size);
+        assert_eq!(d.checksum, meta.checksum);
+        assert_eq!(d.database_name, meta.database_name);
+        assert_eq!(d.tables_backed_up, meta.tables_backed_up);
+        assert_eq!(d.error_message, meta.error_message);
+    }
+
+    #[test]
+    fn test_backup_schedule_config_serde_roundtrip() {
+        let sc = BackupScheduleConfig {
+            schedule: BackupSchedule::Weekly,
+            hour: 3,
+            minute: 30,
+            day_of_week: Some(1),
+            day_of_month: None,
+        };
+        let s = serde_json::to_string(&sc).expect("serialize");
+        let d: BackupScheduleConfig = serde_json::from_str(&s).expect("deserialize");
+        assert!(matches!(d.schedule, BackupSchedule::Weekly));
+        assert_eq!(d.hour, sc.hour);
+        assert_eq!(d.minute, sc.minute);
+        assert_eq!(d.day_of_week, sc.day_of_week);
+        assert_eq!(d.day_of_month, sc.day_of_month);
+    }
 }
