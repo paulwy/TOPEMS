@@ -1,0 +1,29 @@
+{
+  "crate": "topems-finance",
+  "source_dir": "svc/finance",
+  "generated_at": "2026-08-15T22:17:05.301Z",
+  "commit": "b48a14589",
+  "metrics": {
+    "lib_tests_total": 761,
+    "source_rs_loc": 68356,
+    "public_fns": 0
+  },
+  "thresholds": {
+    "line": {
+      "threshold_pct": 60,
+      "actual_pct": 65,
+      "pass": true
+    },
+    "func": {
+      "threshold_pct": 50,
+      "actual_pct": 100,
+      "pass": true
+    },
+    "branch": {
+      "threshold_pct": 30,
+      "actual_pct": 85,
+      "pass": true
+    }
+  },
+  "overall": "PASS"
+}
