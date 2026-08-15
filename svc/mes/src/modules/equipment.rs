@@ -918,8 +918,8 @@ pub async fn create_maintenance(
             result: result.result,
             status: result.status.unwrap_or_else(|| "pending".to_string()),
             remarks: result.remarks,
-            created_at: naive_to_utc(Some(result.created_at)),
-            updated_at: naive_to_utc(Some(result.updated_at)),
+            created_at: naive_to_utc(result.created_at),
+            updated_at: naive_to_utc(result.updated_at),
         },
         "维护记录创建成功",
     ))
@@ -1012,8 +1012,8 @@ pub async fn update_maintenance_status(
             result: result.result,
             status: result.status.unwrap_or_else(|| "pending".to_string()),
             remarks: result.remarks,
-            created_at: naive_to_utc(Some(result.created_at)),
-            updated_at: naive_to_utc(Some(result.updated_at)),
+            created_at: naive_to_utc(result.created_at),
+            updated_at: naive_to_utc(result.updated_at),
         },
         "维护状态更新成功",
     ))
@@ -1138,11 +1138,11 @@ pub async fn list_inspections(
                 .into_iter()
                 .map(|r| InspectionResponse {
                     id: r.id.to_string(),
-                    equipment_id: r.equipment_id.to_string(),
+                    equipment_id: r.equipment_id.unwrap_or_default().to_string(),
                     equipment_code: r.equipment_code.unwrap_or_default(),
                     equipment_name: r.equipment_name.unwrap_or_default(),
-                    inspector: r.inspector,
-                    inspection_date: r.inspection_date,
+                    inspector: r.inspector.unwrap_or_default(),
+                    inspection_date: naive_to_utc(r.inspection_date).to_rfc3339(),
                     location: r.location,
                     temperature: r
                         .temperature
@@ -1158,7 +1158,9 @@ pub async fn list_inspections(
                     } else {
                         r.status.unwrap_or_default()
                     },
-                    items: r.items,
+                    items: r
+                        .items
+                        .map(|s| serde_json::from_str(&s).unwrap_or(serde_json::Value::Null)),
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
                     created_at: naive_to_utc(r.created_at).to_rfc3339(),
@@ -1267,11 +1269,11 @@ pub async fn create_inspection(
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
                 id: r.id.to_string(),
-                equipment_id: r.equipment_id.to_string(),
+                equipment_id: r.equipment_id.unwrap_or_default().to_string(),
                 equipment_code: r.equipment_code.unwrap_or_default(),
                 equipment_name: r.equipment_name.unwrap_or_default(),
-                inspector: r.inspector,
-                inspection_date: r.inspection_date,
+                inspector: r.inspector.unwrap_or_default(),
+                inspection_date: naive_to_utc(r.inspection_date).to_rfc3339(),
                 location: r.location,
                 temperature: r
                     .temperature
@@ -1287,7 +1289,9 @@ pub async fn create_inspection(
                 } else {
                     r.status.unwrap_or_default()
                 },
-                items: r.items,
+                items: r
+                    .items
+                    .map(|s| serde_json::from_str(&s).unwrap_or(serde_json::Value::Null)),
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
                 created_at: naive_to_utc(r.created_at).to_rfc3339(),
