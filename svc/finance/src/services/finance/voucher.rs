@@ -997,6 +997,855 @@ impl FinanceService {
     }
 }
 
+use super::trial_balance::calculate_trial_balance;
+use std::fmt;
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum PostValidationError {
+    InvalidVoucherStatus {
+        actual: VoucherStatus,
+    },
+    PeriodMismatch {
+        voucher_period: String,
+        period_id: String,
+    },
+    PeriodNotOpen {
+        actual: PeriodStatus,
+    },
+    EmptyEntries,
+    TrialBalanceUnbalanced {
+        debit: Decimal,
+        credit: Decimal,
+    },
+    InvalidEntryAmount {
+        index: usize,
+        field: &'static str,
+        amount: Decimal,
+    },
+    EmptyAccountCode {
+        index: usize,
+    },
+}
+
+impl fmt::Display for PostValidationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            PostValidationError::InvalidVoucherStatus { actual } => {
+                write!(
+                    f,
+                    "invalid voucher status for posting: expected Draft or Pending/Approved, actual {:?}",
+                    actual
+                )
+            }
+            PostValidationError::PeriodMismatch {
+                voucher_period,
+                period_id,
+            } => {
+                write!(
+                    f,
+                    "voucher period {} does not match target period {}",
+                    voucher_period, period_id
+                )
+            }
+            PostValidationError::PeriodNotOpen { actual } => {
+                write!(
+                    f,
+                    "cannot post to non-Open period, actual status: {:?}",
+                    actual
+                )
+            }
+            PostValidationError::EmptyEntries => {
+                write!(f, "voucher has no entries, cannot post")
+            }
+            PostValidationError::TrialBalanceUnbalanced { debit, credit } => {
+                write!(
+                    f,
+                    "trial balance unbalanced for posting: debit {} != credit {}",
+                    debit, credit
+                )
+            }
+            PostValidationError::InvalidEntryAmount {
+                index,
+                field,
+                amount,
+            } => {
+                write!(
+                    f,
+                    "entry at index {} has non-positive {} amount: {}",
+                    index, field, amount
+                )
+            }
+            PostValidationError::EmptyAccountCode { index } => {
+                write!(f, "entry at index {} has empty account_code", index)
+            }
+        }
+    }
+}
+
+impl std::error::Error for PostValidationError {}
+
+#[derive(Debug, Clone)]
+pub struct PostJournalEntry {
+    pub voucher_no: String,
+    pub voucher_date: DateTime<Utc>,
+    pub account_code: String,
+    pub account_name: String,
+    pub description: Option<String>,
+    pub debit: Decimal,
+    pub credit: Decimal,
+}
+
+impl From<PostJournalEntry> for JournalEntry {
+    fn from(e: PostJournalEntry) -> Self {
+        JournalEntry {
+            voucher_no: e.voucher_no,
+            voucher_date: e.voucher_date,
+            account_code: e.account_code,
+            account_name: e.account_name,
+            description: e.description,
+            debit: e.debit,
+            credit: e.credit,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PostVoucherInput {
+    pub status: VoucherStatus,
+    pub period_id: String,
+    pub entries: Vec<PostJournalEntry>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PostPeriodInput {
+    pub id: String,
+    pub status: PeriodStatus,
+}
+
+pub fn validate_post_entry(
+    voucher: &PostVoucherInput,
+    period: &PostPeriodInput,
+) -> Result<(), PostValidationError> {
+    if !matches!(
+        voucher.status,
+        VoucherStatus::Draft | VoucherStatus::Submitted | VoucherStatus::Approved
+    ) {
+        return Err(PostValidationError::InvalidVoucherStatus {
+            actual: voucher.status.clone(),
+        });
+    }
+
+    if voucher.period_id != period.id {
+        return Err(PostValidationError::PeriodMismatch {
+            voucher_period: voucher.period_id.clone(),
+            period_id: period.id.clone(),
+        });
+    }
+
+    if !matches!(period.status, PeriodStatus::Open | PeriodStatus::Closing) {
+        return Err(PostValidationError::PeriodNotOpen {
+            actual: period.status.clone(),
+        });
+    }
+
+    if voucher.entries.is_empty() {
+        return Err(PostValidationError::EmptyEntries);
+    }
+
+    for (i, entry) in voucher.entries.iter().enumerate() {
+        if entry.account_code.trim().is_empty() {
+            return Err(PostValidationError::EmptyAccountCode { index: i });
+        }
+        if entry.debit < Decimal::ZERO {
+            return Err(PostValidationError::InvalidEntryAmount {
+                index: i,
+                field: "debit",
+                amount: entry.debit,
+            });
+        }
+        if entry.credit < Decimal::ZERO {
+            return Err(PostValidationError::InvalidEntryAmount {
+                index: i,
+                field: "credit",
+                amount: entry.credit,
+            });
+        }
+        if entry.debit == Decimal::ZERO && entry.credit == Decimal::ZERO {
+            return Err(PostValidationError::InvalidEntryAmount {
+                index: i,
+                field: "debit_and_credit",
+                amount: Decimal::ZERO,
+            });
+        }
+    }
+
+    let j_entries: Vec<JournalEntry> = voucher
+        .entries
+        .iter()
+        .cloned()
+        .map(JournalEntry::from)
+        .collect();
+    let tb = calculate_trial_balance(&j_entries);
+    if !tb.is_balanced {
+        return Err(PostValidationError::TrialBalanceUnbalanced {
+            debit: tb.total_debits,
+            credit: tb.total_credits,
+        });
+    }
+
+    Ok(())
+}
+
+#[cfg(test)]
+mod post_validation_tests {
+    use super::super::periods::{validate_children_all_closed, PeriodValidationError};
+    use super::super::trial_balance::validate_period_close_with_trial_balance;
+    use super::*;
+
+    fn now() -> DateTime<Utc> {
+        Utc::now()
+    }
+
+    fn entry(account_code: &str, account_name: &str, debit: i64, credit: i64) -> PostJournalEntry {
+        PostJournalEntry {
+            voucher_no: "记2026080001".to_string(),
+            voucher_date: now(),
+            account_code: account_code.to_string(),
+            account_name: account_name.to_string(),
+            description: None,
+            debit: Decimal::new(debit, 0),
+            credit: Decimal::new(credit, 0),
+        }
+    }
+
+    fn voucher(
+        status: VoucherStatus,
+        period_id: &str,
+        entries: Vec<PostJournalEntry>,
+    ) -> PostVoucherInput {
+        PostVoucherInput {
+            status,
+            period_id: period_id.to_string(),
+            entries,
+        }
+    }
+
+    fn period(id: &str, status: PeriodStatus) -> PostPeriodInput {
+        PostPeriodInput {
+            id: id.to_string(),
+            status,
+        }
+    }
+
+    fn balanced_entries() -> Vec<PostJournalEntry> {
+        vec![
+            entry("1001", "库存现金", 1000, 0),
+            entry("2001", "应付账款", 0, 1000),
+        ]
+    }
+
+    // ===== Rule 1: InvalidVoucherStatus =====
+
+    #[test]
+    fn test_post_err_status_posted() {
+        let v = voucher(VoucherStatus::Posted, "202608", balanced_entries());
+        let p = period("202608", PeriodStatus::Open);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err());
+        let e = r.unwrap_err();
+        assert!(matches!(
+            e,
+            PostValidationError::InvalidVoucherStatus {
+                actual: VoucherStatus::Posted
+            }
+        ));
+        assert!(format!("{}", e).contains("invalid voucher status"));
+    }
+
+    #[test]
+    fn test_post_err_status_reversed() {
+        let v = voucher(VoucherStatus::Reversed, "202608", balanced_entries());
+        let p = period("202608", PeriodStatus::Open);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err());
+        let e = r.unwrap_err();
+        assert!(matches!(
+            e,
+            PostValidationError::InvalidVoucherStatus {
+                actual: VoucherStatus::Reversed
+            }
+        ));
+    }
+
+    #[test]
+    fn test_post_err_status_cancelled() {
+        let v = voucher(VoucherStatus::Cancelled, "202608", balanced_entries());
+        let p = period("202608", PeriodStatus::Open);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err());
+        assert!(matches!(
+            r.unwrap_err(),
+            PostValidationError::InvalidVoucherStatus {
+                actual: VoucherStatus::Cancelled
+            }
+        ));
+    }
+
+    #[test]
+    fn test_post_err_status_rejected() {
+        let v = voucher(VoucherStatus::Rejected, "202608", balanced_entries());
+        let p = period("202608", PeriodStatus::Open);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err());
+        assert!(matches!(
+            r.unwrap_err(),
+            PostValidationError::InvalidVoucherStatus {
+                actual: VoucherStatus::Rejected
+            }
+        ));
+    }
+
+    #[test]
+    fn test_post_ok_status_draft() {
+        let v = voucher(VoucherStatus::Draft, "202608", balanced_entries());
+        let p = period("202608", PeriodStatus::Open);
+        assert!(validate_post_entry(&v, &p).is_ok());
+    }
+
+    #[test]
+    fn test_post_ok_status_submitted() {
+        let v = voucher(VoucherStatus::Submitted, "202608", balanced_entries());
+        let p = period("202608", PeriodStatus::Open);
+        assert!(validate_post_entry(&v, &p).is_ok());
+    }
+
+    #[test]
+    fn test_post_ok_status_approved() {
+        let v = voucher(VoucherStatus::Approved, "202608", balanced_entries());
+        let p = period("202608", PeriodStatus::Open);
+        assert!(validate_post_entry(&v, &p).is_ok());
+    }
+
+    // ===== Rule 2: PeriodMismatch =====
+
+    #[test]
+    fn test_post_err_period_mismatch_different_month() {
+        let v = voucher(VoucherStatus::Approved, "202607", balanced_entries());
+        let p = period("202608", PeriodStatus::Open);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err());
+        let e = r.unwrap_err();
+        assert!(matches!(
+            e,
+            PostValidationError::PeriodMismatch { ref voucher_period, ref period_id }
+            if voucher_period == "202607" && period_id == "202608"
+        ));
+        assert!(format!("{}", e).contains("does not match"));
+    }
+
+    #[test]
+    fn test_post_err_period_mismatch_different_year() {
+        let v = voucher(VoucherStatus::Approved, "202508", balanced_entries());
+        let p = period("202608", PeriodStatus::Open);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err());
+        assert!(matches!(
+            r.unwrap_err(),
+            PostValidationError::PeriodMismatch { .. }
+        ));
+    }
+
+    #[test]
+    fn test_post_err_period_mismatch_case() {
+        let v = voucher(VoucherStatus::Approved, "2026AUG", balanced_entries());
+        let p = period("2026aug", PeriodStatus::Open);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err(), "case-sensitive string comparison");
+    }
+
+    // ===== Rule 3: PeriodNotOpen =====
+
+    #[test]
+    fn test_post_err_period_closed() {
+        let v = voucher(VoucherStatus::Approved, "202608", balanced_entries());
+        let p = period("202608", PeriodStatus::Closed);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err());
+        let e = r.unwrap_err();
+        assert!(matches!(
+            e,
+            PostValidationError::PeriodNotOpen {
+                actual: PeriodStatus::Closed
+            }
+        ));
+        assert!(format!("{}", e).contains("non-Open period"));
+    }
+
+    #[test]
+    fn test_post_ok_period_closing() {
+        let v = voucher(VoucherStatus::Approved, "202608", balanced_entries());
+        let p = period("202608", PeriodStatus::Closing);
+        assert!(
+            validate_post_entry(&v, &p).is_ok(),
+            "Closing period allows posting"
+        );
+    }
+
+    #[test]
+    fn test_post_ok_period_open() {
+        let v = voucher(VoucherStatus::Approved, "202608", balanced_entries());
+        let p = period("202608", PeriodStatus::Open);
+        assert!(validate_post_entry(&v, &p).is_ok());
+    }
+
+    // ===== Rule 4: EmptyEntries =====
+
+    #[test]
+    fn test_post_err_empty_entries() {
+        let v = voucher(VoucherStatus::Approved, "202608", vec![]);
+        let p = period("202608", PeriodStatus::Open);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err());
+        let e = r.unwrap_err();
+        assert!(matches!(e, PostValidationError::EmptyEntries));
+        assert!(format!("{}", e).contains("no entries"));
+    }
+
+    #[test]
+    fn test_post_err_single_balanced_line_ok() {
+        let lines = vec![entry("1001", "现金", 500, 500)];
+        let v = voucher(VoucherStatus::Approved, "202608", lines);
+        let p = period("202608", PeriodStatus::Open);
+        assert!(validate_post_entry(&v, &p).is_ok());
+    }
+
+    // ===== Rule 5: TrialBalanceUnbalanced =====
+
+    #[test]
+    fn test_post_err_unbalanced_debit_greater() {
+        let lines = vec![
+            entry("1001", "现金", 1500, 0),
+            entry("2001", "应付", 0, 1000),
+        ];
+        let v = voucher(VoucherStatus::Approved, "202608", lines);
+        let p = period("202608", PeriodStatus::Open);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err());
+        let e = r.unwrap_err();
+        assert!(matches!(
+            e,
+            PostValidationError::TrialBalanceUnbalanced { debit, credit }
+            if debit == Decimal::new(1500, 0) && credit == Decimal::new(1000, 0)
+        ));
+        assert!(format!("{}", e).contains("unbalanced"));
+    }
+
+    #[test]
+    fn test_post_err_unbalanced_credit_greater() {
+        let lines = vec![
+            entry("1001", "现金", 800, 0),
+            entry("2001", "应付", 0, 1200),
+        ];
+        let v = voucher(VoucherStatus::Approved, "202608", lines);
+        let p = period("202608", PeriodStatus::Open);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err());
+        assert!(matches!(
+            r.unwrap_err(),
+            PostValidationError::TrialBalanceUnbalanced { debit, credit }
+            if debit == Decimal::new(800, 0) && credit == Decimal::new(1200, 0)
+        ));
+    }
+
+    #[test]
+    fn test_post_err_unbalanced_single_sided_debit() {
+        let lines = vec![entry("1001", "现金", 500, 0)];
+        let v = voucher(VoucherStatus::Approved, "202608", lines);
+        let p = period("202608", PeriodStatus::Open);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err());
+        assert!(matches!(
+            r.unwrap_err(),
+            PostValidationError::TrialBalanceUnbalanced { .. }
+        ));
+    }
+
+    #[test]
+    fn test_post_err_unbalanced_off_by_one() {
+        let lines = vec![
+            entry("1001", "现金", 1000, 0),
+            entry("2001", "应付", 0, 999),
+        ];
+        let v = voucher(VoucherStatus::Approved, "202608", lines);
+        let p = period("202608", PeriodStatus::Open);
+        assert!(validate_post_entry(&v, &p).is_err());
+    }
+
+    // ===== Rule 6: InvalidEntryAmount =====
+
+    #[test]
+    fn test_post_err_entry_zero_both() {
+        let lines = vec![entry("1001", "现金", 0, 0), entry("2001", "应付", 0, 0)];
+        let v = voucher(VoucherStatus::Approved, "202608", lines);
+        let p = period("202608", PeriodStatus::Open);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err());
+        let e = r.unwrap_err();
+        assert!(matches!(
+            e,
+            PostValidationError::InvalidEntryAmount { index: 0, .. }
+        ));
+    }
+
+    #[test]
+    fn test_post_err_entry_negative_debit() {
+        let lines = vec![
+            PostJournalEntry {
+                voucher_no: "记001".to_string(),
+                voucher_date: now(),
+                account_code: "1001".to_string(),
+                account_name: "现金".to_string(),
+                description: None,
+                debit: Decimal::new(-100, 0),
+                credit: Decimal::ZERO,
+            },
+            entry("2001", "应付", 0, 100),
+        ];
+        let v = voucher(VoucherStatus::Approved, "202608", lines);
+        let p = period("202608", PeriodStatus::Open);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err());
+        let e = r.unwrap_err();
+        assert!(matches!(
+            e,
+            PostValidationError::InvalidEntryAmount { index: 0, field, .. }
+            if field == "debit"
+        ));
+    }
+
+    #[test]
+    fn test_post_err_entry_negative_credit() {
+        let lines = vec![
+            entry("1001", "现金", 100, 0),
+            PostJournalEntry {
+                voucher_no: "记001".to_string(),
+                voucher_date: now(),
+                account_code: "2001".to_string(),
+                account_name: "应付".to_string(),
+                description: None,
+                debit: Decimal::ZERO,
+                credit: Decimal::new(-50, 0),
+            },
+        ];
+        let v = voucher(VoucherStatus::Approved, "202608", lines);
+        let p = period("202608", PeriodStatus::Open);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err());
+        assert!(matches!(
+            r.unwrap_err(),
+            PostValidationError::InvalidEntryAmount { index: 1, field, .. }
+            if field == "credit"
+        ));
+    }
+
+    #[test]
+    fn test_post_err_entry_second_line_zero_amounts() {
+        let lines = vec![entry("1001", "现金", 1000, 0), entry("2001", "应付", 0, 0)];
+        let v = voucher(VoucherStatus::Approved, "202608", lines);
+        let p = period("202608", PeriodStatus::Open);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err());
+        assert!(matches!(
+            r.unwrap_err(),
+            PostValidationError::InvalidEntryAmount { index: 1, .. }
+        ));
+    }
+
+    // ===== Rule 7: EmptyAccountCode =====
+
+    #[test]
+    fn test_post_err_empty_account_code_first() {
+        let lines = vec![
+            PostJournalEntry {
+                voucher_no: "记001".to_string(),
+                voucher_date: now(),
+                account_code: "".to_string(),
+                account_name: "现金".to_string(),
+                description: None,
+                debit: Decimal::new(1000, 0),
+                credit: Decimal::ZERO,
+            },
+            entry("2001", "应付", 0, 1000),
+        ];
+        let v = voucher(VoucherStatus::Approved, "202608", lines);
+        let p = period("202608", PeriodStatus::Open);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err());
+        let e = r.unwrap_err();
+        assert!(matches!(
+            e,
+            PostValidationError::EmptyAccountCode { index: 0 }
+        ));
+        assert!(format!("{}", e).contains("empty account_code"));
+    }
+
+    #[test]
+    fn test_post_err_whitespace_account_code() {
+        let lines = vec![
+            entry("1001", "现金", 1000, 0),
+            PostJournalEntry {
+                voucher_no: "记001".to_string(),
+                voucher_date: now(),
+                account_code: "   ".to_string(),
+                account_name: "应付".to_string(),
+                description: None,
+                debit: Decimal::ZERO,
+                credit: Decimal::new(1000, 0),
+            },
+        ];
+        let v = voucher(VoucherStatus::Approved, "202608", lines);
+        let p = period("202608", PeriodStatus::Open);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err());
+        assert!(matches!(
+            r.unwrap_err(),
+            PostValidationError::EmptyAccountCode { index: 1 }
+        ));
+    }
+
+    // ===== Happy path =====
+
+    #[test]
+    fn test_post_happy_path_ok() {
+        let lines = vec![
+            entry("1001", "库存现金", 5000, 0),
+            entry("1002", "银行存款", 3000, 0),
+            entry("2001", "应付账款", 0, 4000),
+            entry("3001", "实收资本", 0, 4000),
+        ];
+        let v = voucher(VoucherStatus::Approved, "202606", lines);
+        let p = period("202606", PeriodStatus::Open);
+        assert!(validate_post_entry(&v, &p).is_ok());
+    }
+
+    #[test]
+    fn test_post_happy_path_decimal_precision() {
+        let lines = vec![
+            PostJournalEntry {
+                voucher_no: "记001".to_string(),
+                voucher_date: now(),
+                account_code: "1001".to_string(),
+                account_name: "现金".to_string(),
+                description: None,
+                debit: Decimal::new(12345, 2),
+                credit: Decimal::ZERO,
+            },
+            PostJournalEntry {
+                voucher_no: "记001".to_string(),
+                voucher_date: now(),
+                account_code: "2001".to_string(),
+                account_name: "应付".to_string(),
+                description: None,
+                debit: Decimal::ZERO,
+                credit: Decimal::new(12345, 2),
+            },
+        ];
+        let v = voucher(VoucherStatus::Draft, "202608", lines);
+        let p = period("202608", PeriodStatus::Closing);
+        assert!(validate_post_entry(&v, &p).is_ok());
+    }
+
+    #[test]
+    fn test_post_happy_path_many_entries_balanced() {
+        let mut lines = Vec::new();
+        for i in 0..10 {
+            lines.push(entry(&format!("1{:03}", 100 + i), "资产类", 100, 0));
+        }
+        for i in 0..10 {
+            lines.push(entry(&format!("2{:03}", 200 + i), "负债类", 0, 100));
+        }
+        let v = voucher(VoucherStatus::Submitted, "202608", lines);
+        let p = period("202608", PeriodStatus::Open);
+        assert!(validate_post_entry(&v, &p).is_ok());
+    }
+
+    // ===== Error clone + PartialEq + std::Error =====
+
+    #[test]
+    fn test_post_validation_error_clone_and_partial_eq() {
+        let a = PostValidationError::TrialBalanceUnbalanced {
+            debit: Decimal::new(100, 0),
+            credit: Decimal::new(200, 0),
+        };
+        let b = a.clone();
+        assert_eq!(a, b);
+        let c = PostValidationError::TrialBalanceUnbalanced {
+            debit: Decimal::new(100, 0),
+            credit: Decimal::new(300, 0),
+        };
+        assert_ne!(a, c);
+    }
+
+    #[test]
+    fn test_post_validation_error_is_std_error() {
+        let err: Box<dyn std::error::Error> = Box::new(PostValidationError::EmptyEntries);
+        assert!(err.source().is_none());
+    }
+
+    #[test]
+    fn test_post_validation_error_display_period_not_open() {
+        let err = PostValidationError::PeriodNotOpen {
+            actual: PeriodStatus::Closed,
+        };
+        let display = format!("{}", err);
+        assert!(display.contains("non-Open"));
+        assert!(display.contains("Closed"));
+    }
+
+    #[test]
+    fn test_post_validation_error_display_invalid_amount() {
+        let err = PostValidationError::InvalidEntryAmount {
+            index: 3,
+            field: "debit",
+            amount: Decimal::new(-50, 0),
+        };
+        let display = format!("{}", err);
+        assert!(display.contains("index 3"));
+        assert!(display.contains("debit"));
+        assert!(display.contains("-50"));
+    }
+
+    // ===== Integration tests =====
+
+    #[test]
+    fn test_integration_post_then_close_ok() {
+        let lines = balanced_entries();
+        let v = voucher(VoucherStatus::Approved, "202608", lines.clone());
+        let p = period("202608", PeriodStatus::Open);
+        let post_r = validate_post_entry(&v, &p);
+        assert!(post_r.is_ok(), "post should succeed");
+
+        let j_entries: Vec<JournalEntry> = lines.into_iter().map(JournalEntry::from).collect();
+        let tb = calculate_trial_balance(&j_entries);
+        assert!(tb.is_balanced, "trial balance should be balanced");
+
+        let close_r = validate_period_close_with_trial_balance(&tb);
+        assert!(close_r.is_ok(), "close should succeed with balanced TB");
+    }
+
+    #[test]
+    fn test_integration_post_then_close_many_entries() {
+        let lines = vec![
+            entry("1001", "现金", 1000, 0),
+            entry("1002", "银行", 2000, 0),
+            entry("1122", "应收", 3000, 0),
+            entry("2001", "应付", 0, 1500),
+            entry("2202", "预收", 0, 2500),
+            entry("3001", "实收", 0, 2000),
+        ];
+        let v = voucher(VoucherStatus::Approved, "202612", lines.clone());
+        let p = period("202612", PeriodStatus::Closing);
+        assert!(validate_post_entry(&v, &p).is_ok());
+
+        let j_entries: Vec<JournalEntry> = lines.into_iter().map(JournalEntry::from).collect();
+        let tb = calculate_trial_balance(&j_entries);
+        assert!(validate_period_close_with_trial_balance(&tb).is_ok());
+    }
+
+    #[test]
+    fn test_integration_unbalanced_post_rejected() {
+        let lines = vec![
+            entry("1001", "现金", 1000, 0),
+            entry("2001", "应付", 0, 500),
+        ];
+        let v = voucher(VoucherStatus::Approved, "202608", lines.clone());
+        let p = period("202608", PeriodStatus::Open);
+        let post_r = validate_post_entry(&v, &p);
+        assert!(post_r.is_err(), "unbalanced post should be rejected");
+        assert!(matches!(
+            post_r.unwrap_err(),
+            PostValidationError::TrialBalanceUnbalanced { .. }
+        ));
+    }
+
+    #[test]
+    fn test_integration_closed_period_rejects_post() {
+        let v = voucher(VoucherStatus::Approved, "202607", balanced_entries());
+        let p = period("202607", PeriodStatus::Closed);
+        let post_r = validate_post_entry(&v, &p);
+        assert!(post_r.is_err());
+        assert!(matches!(
+            post_r.unwrap_err(),
+            PostValidationError::PeriodNotOpen {
+                actual: PeriodStatus::Closed
+            }
+        ));
+    }
+
+    #[test]
+    fn test_integration_child_open_blocks_close() {
+        let child_statuses = vec![
+            PeriodStatus::Closed,
+            PeriodStatus::Open,
+            PeriodStatus::Closed,
+        ];
+        let r = validate_children_all_closed(&child_statuses);
+        assert!(r.is_err());
+        assert!(matches!(
+            r.unwrap_err(),
+            PeriodValidationError::ChildPeriodNotClosed { index: 1, .. }
+        ));
+    }
+
+    #[test]
+    fn test_integration_all_children_closed_allows_close() {
+        let child_statuses = vec![
+            PeriodStatus::Closed,
+            PeriodStatus::Closed,
+            PeriodStatus::Closed,
+            PeriodStatus::Closed,
+        ];
+        let r = validate_children_all_closed(&child_statuses);
+        assert!(r.is_ok());
+    }
+
+    #[test]
+    fn test_integration_posted_status_rejects_repost() {
+        let lines = balanced_entries();
+        let v = voucher(VoucherStatus::Posted, "202608", lines);
+        let p = period("202608", PeriodStatus::Open);
+        let r = validate_post_entry(&v, &p);
+        assert!(r.is_err());
+        assert!(matches!(
+            r.unwrap_err(),
+            PostValidationError::InvalidVoucherStatus {
+                actual: VoucherStatus::Posted
+            }
+        ));
+    }
+
+    #[test]
+    fn test_integration_post_ok_child_open_then_close_blocked() {
+        let lines = balanced_entries();
+        let v = voucher(VoucherStatus::Approved, "202606", lines.clone());
+        let p = period("202606", PeriodStatus::Open);
+        assert!(validate_post_entry(&v, &p).is_ok(), "post to June OK");
+
+        let child_statuses = vec![
+            PeriodStatus::Closed,
+            PeriodStatus::Open,
+            PeriodStatus::Closed,
+            PeriodStatus::Closed,
+            PeriodStatus::Closed,
+        ];
+        let close_r = validate_children_all_closed(&child_statuses);
+        assert!(
+            close_r.is_err(),
+            "closing June when Feb (index1) is Open should fail"
+        );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
