@@ -5,6 +5,7 @@ import { checkAllPluginsHealth, pluginApi } from '@/api/plugin';
 import { useAuth } from '@/hooks/useAuth';
 import { deploymentConfig } from '@/config/deployment';
 import createLogger from '@/utils/logger';
+import { pluginManager } from '@/lib/plugin-loader/PluginManager';
 
 const logger = createLogger('PluginContext');
 
@@ -83,6 +84,13 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
 
       if (installedRes?.success && installedRes?.data) {
         setInstalledPlugins(installedRes.data);
+        // 同步 PluginManager：它内部会 fetch + process 已安装插件并触发 syncNavigationRegistry，
+        // 把已激活插件作为新模块动态注册到 Sidebar（专业模块分组）。
+        try {
+          await pluginManager.refreshPlugins();
+        } catch (err) {
+          logger.debug('PluginManager refresh failed, will retry:', err);
+        }
       }
       consecutiveFailuresRef.current = 0;
     } catch (error: unknown) {

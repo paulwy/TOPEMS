@@ -722,6 +722,31 @@ const PluginDetailModal: React.FC<{
 
 const PluginMarketplacePage: React.FC = () => {
   const { t } = useTranslation();
+
+  // 🔧 Dev tool: inject auth via URL query params (?_tok=JWT&_tid=TENANT_ID) for联调
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tok = params.get('_tok');
+    const tid = params.get('_tid');
+    if (tok) localStorage.setItem('token', tok);
+    if (tid) localStorage.setItem('tenant_id', tid);
+    if (tok || tid) {
+      localStorage.setItem(
+        'user',
+        JSON.stringify({
+          id: params.get('_uid') || '11111111-1111-1111-1111-111111111111',
+          username: 'admin',
+          role: 'admin',
+          isSuperuser: true,
+        }),
+      );
+      localStorage.setItem('roles', JSON.stringify(['admin', 'user']));
+      localStorage.setItem('permissions', JSON.stringify(['*']));
+      localStorage.removeItem('topems-plugin-storage');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const {
     marketplacePlugins,
     healthStatus,
@@ -729,6 +754,7 @@ const PluginMarketplacePage: React.FC = () => {
     setSearchQuery,
     fetchMarketplacePlugins,
     fetchHealthStatus,
+    fetchInstalledPlugins,
   } = usePluginStore();
   const [selectedSuite, setSelectedSuite] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('popular');
@@ -739,20 +765,19 @@ const PluginMarketplacePage: React.FC = () => {
   const pluginsQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MARKETPLACE_PLUGINS_BASE,
     queryFn: async () => {
-      await fetchMarketplacePlugins();
-      return marketplacePlugins;
+      await Promise.all([fetchMarketplacePlugins(true), fetchInstalledPlugins(true)]);
+      // 必须从 store.getState() 读取最新值（外层解构 const 是 render 快照，闭包里不变）
+      return usePluginStore.getState().marketplacePlugins;
     },
-    initialData: marketplacePlugins,
     staleTime: 5 * 60 * 1000,
   });
 
   const healthQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MARKETPLACE_HEALTH_BASE,
     queryFn: async () => {
-      await fetchHealthStatus();
-      return healthStatus;
+      await fetchHealthStatus(true);
+      return usePluginStore.getState().healthStatus;
     },
-    initialData: healthStatus,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -772,8 +797,11 @@ const PluginMarketplacePage: React.FC = () => {
   const plugins = pluginsQuery.data || [];
 
   const handleRefresh = () => {
-    pluginsQuery.refetch();
-    healthQuery.refetch();
+    Promise.all([
+      pluginsQuery.refetch(),
+      healthQuery.refetch(),
+      fetchInstalledPlugins(true),
+    ]);
     addNotification({
       title: t('plugin.message.refresh_success'),
       message: t('plugin.message.plugin_list_updated'),

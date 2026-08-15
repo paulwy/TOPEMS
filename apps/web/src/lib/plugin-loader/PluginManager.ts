@@ -1,5 +1,6 @@
 import type { TenantInstalledPlugin, Plugin } from '../../api/plugin/types';
 import { pluginApi, pluginApiAggregated } from '../../api/plugin';
+import { pluginAxios } from '../../api/plugin/marketplace';
 import { apiLogger } from '../../utils/logger';
 import { navigationRegistryV2 } from '../navigation/NavigationRegistryV2';
 import type { ModuleNavConfig, NavItemConfig, ModuleSuite } from '../navigation/types';
@@ -524,8 +525,9 @@ export class PluginManager {
 
     try {
       // V64: 统一使用 /api/core/plugin（去除已废弃的 /v1/ 前缀）
-      const response = await fetch('/api/core/plugin/navigation-config');
-      const result = await response.json();
+      // 必须用带认证拦截器的 pluginAxios（fetch 无 Authorization 头会 401）
+      const response = await pluginAxios.get('/api/core/plugin/navigation-config');
+      const result = response?.data;
 
       if (result?.success && result?.data?.modules) {
         this.navigationConfigCache.clear();
