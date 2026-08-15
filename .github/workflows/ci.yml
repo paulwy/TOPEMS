@@ -69,6 +69,7 @@ jobs:
       i18n: ${{ steps.decide.outputs.i18n }}
       docs: ${{ steps.decide.outputs.docs }}
       ci: ${{ steps.decide.outputs.ci }}
+      permission: ${{ steps.decide.outputs.permission }}
     steps:
       - uses: actions/checkout@v5
 
@@ -107,6 +108,16 @@ jobs:
               - 'apps/web/src/pages/**/*.{ts,tsx}'
               - 'apps/web/src/components/**/*.{ts,tsx}'
               - 'scripts/i18n/glossary.csv'
+            permission:
+              - 'lib/shared-auth/**'
+              - 'svc/**/*.rs'
+              - 'apps/web/src/config/permissions.ts'
+              - 'apps/web/src/modules/*/config.ts'
+              - 'apps/web/src/lib/navigation/**'
+              - 'apps/web/src/lib/routes/v2.tsx'
+              - 'scripts/ci/check-permission-matrix.cjs'
+              - 'docs/roadmap/artifacts/rN-perm-matrix-baseline.json'
+              - 'apps/web/src/__tests__/permission-matrix-guard.test.ts'
             docs:
               - 'docs/**'
               - '**/*.md'
@@ -123,12 +134,14 @@ jobs:
             echo "rust=true" >> $GITHUB_OUTPUT
             echo "frontend=true" >> $GITHUB_OUTPUT
             echo "i18n=true" >> $GITHUB_OUTPUT
+            echo "permission=true" >> $GITHUB_OUTPUT
             echo "docs=true" >> $GITHUB_OUTPUT
             echo "ci=true" >> $GITHUB_OUTPUT
           else
             echo "rust=${{ steps.filter.outputs.rust }}" >> $GITHUB_OUTPUT
             echo "frontend=${{ steps.filter.outputs.frontend }}" >> $GITHUB_OUTPUT
             echo "i18n=${{ steps.filter.outputs.i18n }}" >> $GITHUB_OUTPUT
+            echo "permission=${{ steps.filter.outputs.permission }}" >> $GITHUB_OUTPUT
             echo "docs=${{ steps.filter.outputs.docs }}" >> $GITHUB_OUTPUT
             echo "ci=${{ steps.filter.outputs.ci }}" >> $GITHUB_OUTPUT
           fi
@@ -674,6 +687,108 @@ jobs:
       - name: Run Hardcoded CJK 门禁 (strict 模式 · 全量)
         run: node scripts/i18n/scan-hardcoded-precise.cjs --strict --details 50
 
+  # ──────────────────────────────────────────────────────────────────────────
+  # 权限矩阵三向验证（Perm-Gate）— 后端路由 × 前端导航 × 权限常量
+  #
+  # 6 rules:
+  #   R1/R2/R3 = FAIL (--fail-fast on CI = threshold=1 for each: R1,R2,R3 ≥1 → red)
+  #   R4/R5/R6 = WARN (never red · visible only in summary JSON + step logs)
+  #
+  # Integrity L2 FATAL → always exit=2 red even in dry-run.
+  # Guardian Vitest also runs R1≤8/R2≤12/R3≤1018 in frontend-test job as
+  # Layer-2 never-rebound safety net.
+  # ──────────────────────────────────────────────────────────────────────────
+  permission-matrix-gate:
+    name: Permission Matrix 3-Way Gate (Perm-Gate)
+    needs: changes
+    if: needs.changes.outputs.permission == 'true' || needs.changes.outputs.rust == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run Perm-Gate (report-json + fail-fast @ baseline thresholds)
+        run: |
+          # Baseline thresholds = MAX ALLOWED (inclusive):
+          #   R1=8, R2=12, R3=1018 — known violation frozen on 2026-08-16 snapshot
+          # count > threshold → exit 1 → CI red (PR blocked).
+          # Known violations are allowed; only NEW regressions that INCREASE
+          # R1/R2/R3 beyond baseline block merging.
+          node scripts/ci/check-permission-matrix.cjs \
+            --fail-fast \
+            --thresholds '{"R1":8,"R2":12,"R3":1018}' \
+            --report-json=/tmp/perm-gate-ci.json
+          PERM_EXIT=$?
+          if [ $PERM_EXIT -ne 0 ]; then
+            echo "Perm-Gate exit=$PERM_EXIT — failing the job"
+            exit $PERM_EXIT
+          fi
+
+      - name: Write Perm-Gate summary
+        if: always()
+        run: |
+          echo "## Permission Matrix 3-Way Gate (Perm-Gate)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f /tmp/perm-gate-ci.json ]; then
+            node -e "
+              const j = require('/tmp/perm-gate-ci.json');
+              console.log('### Integrity L2 (anti-false-green)');
+              console.log('| Check | Result |');
+              console.log('|-------|--------|');
+              console.log('| Integrity PASS |', j.integrity && j.integrity.passed ? '✅' : '❌', '|');
+              console.log('');
+              console.log('### Scanner coverage');
+              console.log('| Metric | Value | Min threshold |');
+              console.log('|--------|-------|---------------|');
+              Object.entries(j.scanners || {}).forEach(([k,v]) => {
+                const mins = {
+                  scannedBackendFiles: 50,
+                  scannedFrontendConfigs: 20,
+                  totalBackendCodes: 25,
+                  totalFrontendNavCodes: 100
+                };
+                const min = mins[k];
+                const ok = min ? v >= min : true;
+                console.log('|', k, '|', v, '|', (min ?? 'n/a'), ok ? '✅' : '⚠️', '|');
+              });
+              console.log('');
+              console.log('### 6 Rules vs Baseline');
+              console.log('| Rule | Count | Level | Baseline max | Status |');
+              console.log('|------|-------|-------|--------------|--------|');
+              const bl = { R1: 8, R2: 12, R3: 1018, R4: null, R5: null, R6: null };
+              const lvl = { R1: 'FAIL', R2: 'FAIL', R3: 'FAIL', R4: 'WARN', R5: 'WARN', R6: 'WARN' };
+              [1,2,3,4,5,6].forEach(i => {
+                const r = 'R'+i, c = j.summary[r], base = bl[r] ?? '∞';
+                const under = bl[r] !== null ? c <= bl[r] : true;
+                console.log('|', r, '|', c, '|', lvl[r], '|', base, '|', under ? (bl[r]!==null?'✅':'♾️') : '❌ > baseline', '|');
+              });
+              console.log('');
+              console.log('**Top failures (FAIL-level, first 30):**');
+              console.log('');
+              console.log('| Rule | File:Line | Code | Message |');
+              console.log('|------|-----------|------|---------|');
+              (j.failures || []).slice(0,30).forEach(f => {
+                const msg = String(f.msg||'').replace(/\\|/g, '\\\\|').slice(0,140);
+                console.log('|', f.rule, '|', (f.file||'') + ':' + (f.line||''), '|', (f.code||'') , '|', msg, '|');
+              });
+              console.log('');
+              console.log('**Top warnings (WARN-level, first 20):**');
+              console.log('');
+              console.log('| Rule | Message |');
+              console.log('|------|---------|');
+              (j.warnings || []).slice(0,20).forEach(w => {
+                const msg = String(w.msg||'').replace(/\\|/g, '\\\\|').slice(0,200);
+                console.log('|', w.rule, '|', msg, '|');
+              });
+            " >> $GITHUB_STEP_SUMMARY
+          else
+            echo "_/tmp/perm-gate-ci.json not available — check Perm-Gate step logs above_" >> $GITHUB_STEP_SUMMARY
+          fi
+
   frontend-typecheck:
     name: Frontend Type Check
     needs: changes
@@ -1026,6 +1141,7 @@ jobs:
       - design-system-check
       - frontend-audit
       - i18n-quality-gate
+      - permission-matrix-gate
       - security-scan
       - schema-defense-gate
     if: always()
@@ -1048,6 +1164,7 @@ jobs:
           echo "| Design System Check | ${{ needs.design-system-check.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Audit (V64) | ${{ needs.frontend-audit.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| i18n Quality Gate (R12 · 5-in-1: fake-en / key-alignment / mixed-structure / glossary / hardcoded) | ${{ needs.i18n-quality-gate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Permission Matrix 3-Way Gate (R1/R2/R3 FAIL × backend×frontend×const) | ${{ needs.permission-matrix-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
@@ -1066,7 +1183,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Treat "skipped" as acceptable (path-filtered jobs); only fail on failure/cancelled.
-          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.security-scan.result }}"
+          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.security-scan.result }}"
 
           FAILED=false
           for result in $RESULTS; do
