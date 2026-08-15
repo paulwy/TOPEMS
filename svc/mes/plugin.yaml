@@ -1,28 +1,17 @@
-<<<<<<< Updated upstream
 author: TOPEMS Team
-=======
-author: TOPEMS
->>>>>>> Stashed changes
 category: Manufacturing
 code: mes
 name: 生产执行系统
 description: MES 生产执行系统，包含生产工单、生产工艺、生产记录、设备管理、工位管理等模块
 version: 1.0.0
-<<<<<<< Updated upstream
 icon: precision_manufacturing
-=======
->>>>>>> Stashed changes
 plugin_type: business
 dependencies: []
 deployment: {}
 runtime:
   port: 8030
   health_endpoint: /health
-<<<<<<< Updated upstream
   base_path: /api/mes
-=======
-  base_path: /api/mfg
->>>>>>> Stashed changes
 permissions:
   - code: mes:read
     name: 查看生产工单
