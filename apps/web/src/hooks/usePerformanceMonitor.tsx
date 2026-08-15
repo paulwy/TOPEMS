@@ -488,7 +488,7 @@ export function PerformanceWarnings() {
         zIndex: 1000,
       }}
     >
-      <Typography sx={{ fontWeight: 600, color: 'warning.800', mb: 3 }}>⚠️ 性能警告</Typography>
+      <Typography sx={{ fontWeight: 600, color: 'warning.800', mb: 3 }}>{i18n.t('hooks:use_performance_monitor.k3')}</Typography>
 
       {successRate < 95 && (
         <Box sx={{ mb: 2 }}>
@@ -514,9 +514,7 @@ export function PerformanceWarnings() {
 
       {slowCalls.length > 0 && (
         <Box sx={{ mb: 3 }}>
-          <Typography sx={{ fontWeight: 500, color: 'warning.700', mb: 1 }}>
-            慢 API 调用 ({slowCalls.length}):
-          </Typography>
+          <Typography sx={{ fontWeight: 500, color: 'warning.700', mb: 1 }}>{i18n.t('hooks:use_performance_monitor.k2', { v0: (slowCalls.length) })}</Typography>
           <Box sx={{ pl: 2 }}>
             {slowCalls.slice(0, 3).map((call, idx) => (
               <Typography
@@ -532,17 +530,13 @@ export function PerformanceWarnings() {
 
       {slowComponents.length > 0 && (
         <Box>
-          <Typography sx={{ fontWeight: 500, color: 'warning.700', mb: 1 }}>
-            慢组件渲染 ({slowComponents.length}):
-          </Typography>
+          <Typography sx={{ fontWeight: 500, color: 'warning.700', mb: 1 }}>{i18n.t('hooks:use_performance_monitor.v0_1', { v0: (slowComponents.length) })}</Typography>
           <Box sx={{ pl: 2 }}>
             {slowComponents.slice(0, 3).map((comp, idx) => (
               <Typography
                 key={idx}
                 sx={{ fontSize: '0.75rem', color: 'warning.600' }}
-              >
-                {comp.componentName}: {comp.renderTime.toFixed(2)}ms (更新: {comp.updateCount}次)
-              </Typography>
+              >{i18n.t('hooks:use_performance_monitor.k0', { v0: (comp.componentName), v1: (comp.renderTime.toFixed(2)), v2: (comp.updateCount) })}</Typography>
             ))}
           </Box>
         </Box>

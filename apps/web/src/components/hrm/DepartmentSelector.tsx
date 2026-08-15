@@ -80,7 +80,7 @@ export const DepartmentSelector: React.FC<DepartmentSelectorProps> = ({
           {i18n.t('components.department_selector.k0')}
         </Typography>
         <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
-          {departments.length} 个部门
+          {departments.length} {i18n.t('components.department_selector.k0')}
         </Typography>
       </Box>
       {treeData.length === 0 ? (

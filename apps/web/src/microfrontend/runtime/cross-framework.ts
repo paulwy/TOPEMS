@@ -318,7 +318,7 @@ export class AngularAdapter implements FrameworkAdapter {
       )
       .join('');
     return `<div data-framework="angular" style="padding:12px;border:1px solid ${designTokens.colors.error['600']};border-radius:6px;">
-      <strong>[Angular 模拟组件]</strong>
+      <strong>{i18n.t('microfrontend.cross-framework.ngular_0')}</strong>
       <ul style="margin: designTokens.spacing.sm 0 0;padding-left:20px;">${entries || i18n.t('microfrontend.cross-framework.lili_1')}</ul>
     </div>`;
   }

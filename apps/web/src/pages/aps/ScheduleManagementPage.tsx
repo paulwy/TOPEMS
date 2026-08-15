@@ -463,7 +463,7 @@ const ScheduleManagementPage: React.FC = () => {
         <DialogTitle>{i18n.t('aps.schedule_management_page.k42')}</DialogTitle>
         <DialogContent>
           <Typography>
-            确认要删除排程「{deleteTarget?.schedule_no}」吗？此操作不可撤销。
+            {i18n.t('pages.schedule_management_page.k0')}「{deleteTarget?.schedule_no}」{i18n.t('pages.schedule_management_page.k1')}
           </Typography>
         </DialogContent>
         <DialogActions>

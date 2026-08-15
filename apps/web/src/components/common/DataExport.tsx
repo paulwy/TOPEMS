@@ -274,7 +274,7 @@ const DataExport: React.FC<DataExportProps> = ({
           </head>
           <body>
             <h1>${name}</h1>
-            <div class="export-time">导出时间: ${new Date().toLocaleString()}</div>
+            <div class="export-time">{i18n.t('components.data_export.k0')}</div>
             <table>
               <thead>
                 <tr>
@@ -542,7 +542,7 @@ const DataExport: React.FC<DataExportProps> = ({
               variant='subtitle2'
               color='text.secondary'
             >
-              共 {data.length} 条数据，已选择 {selectedFields.filter((f) => f.selected).length}{' '}
+              {i18n.t('components.data_export.k0')} {data.length} {i18n.t('components.data_export.k1')} {selectedFields.filter((f) => f.selected).length}{' '}
               {i18n.t('components.data_export.k5')}
             </Typography>
           </Box>

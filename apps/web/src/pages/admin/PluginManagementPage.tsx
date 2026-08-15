@@ -692,7 +692,7 @@ const PluginManagementPage: React.FC = () => {
                         size={48}
                         sx={{ mb: 2 }}
                       />
-                      <Typography>正在安装 {installingPlugin?.name}...</Typography>
+                      <Typography>{i18n.t('pages.plugin_management_page.k0')}</Typography>
                     </>
                   ) : installError ? (
                     <Alert
@@ -719,7 +719,7 @@ const PluginManagementPage: React.FC = () => {
                     {i18n.t('pages.plugin_management_page.k28')}
                   </Typography>
                   <Typography color='text.secondary'>
-                    {installingPlugin?.name} 已成功安装。
+                    {installingPlugin?.name} {i18n.t('pages.plugin_management_page.k0')}
                   </Typography>
                 </Box>
               )}

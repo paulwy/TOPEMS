@@ -433,7 +433,7 @@ const AuditTab: React.FC<{
               sx={{ mb: 2 }}
             >
               {i18n.t('ai.v59-security-panel.k8')}{selectedAudit.auditId}: {selectedAudit.passed ? i18n.t('ai.v59-security-panel.k18') : i18n.t('ai.v59-security-panel.k17')} · 得分{' '}
-              {(selectedAudit.score * 100).toFixed(1)}% · 耗时 {selectedAudit.duration_ms}ms
+              {(selectedAudit.score * 100).toFixed(1)}{i18n.t('ai.v59-security-panel.k0')} {selectedAudit.duration_ms}ms
             </Alert>
           )}
 
@@ -927,7 +927,7 @@ const RobustnessTab: React.FC<{
                     {ATTACK_TYPE_LABELS[type as AttackType]}
                   </Typography>
                   <Typography variant='caption'>
-                    {data.enabled}/{data.total} 启用
+                    {data.enabled}/{data.total} {i18n.t('ai.v59-security-panel.k1')}
                   </Typography>
                 </Stack>
                 <LinearProgress
@@ -1772,7 +1772,7 @@ const ThreatSummaryTab: React.FC<{
                         variant='caption'
                         sx={{ fontWeight: 600 }}
                       >
-                        {finding.count} 次
+                        {finding.count} {i18n.t('ai.v59-security-panel.k2')}
                       </Typography>
                     </Stack>
                     <Typography
@@ -1780,7 +1780,7 @@ const ThreatSummaryTab: React.FC<{
                       color='text.secondary'
                       sx={{ fontSize: 12 }}
                     >
-                      类型 "{AUDIT_TYPE_LABELS[finding.type]}"
+                      {i18n.t('ai.v59-security-panel.k3')} "{AUDIT_TYPE_LABELS[finding.type]}"
                       {i18n.t('ai.v59-security-panel.k56')}
                     </Typography>
                   </Paper>

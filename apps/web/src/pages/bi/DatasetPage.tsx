@@ -509,7 +509,7 @@ const DatasetPage = () => {
                   onChange={(e) => setFormData({ ...formData, data_source_id: e.target.value })}
                 >
                   <MenuItem value='ds-mysql-001'>{i18n.t('bi.dataset_page.k9')}</MenuItem>
-                  <MenuItem value='ds-mysql-002'>MES生产数据库</MenuItem>
+                  <MenuItem value='ds-mysql-002'>{i18n.t('pages.dataset_page.me_0')}</MenuItem>
                   <MenuItem value='ds-postgres-001'>{i18n.t('bi.dataset_page.k10')}</MenuItem>
                 </Select>
               </FormControl>
@@ -551,7 +551,7 @@ const DatasetPage = () => {
                       <TableCell>{i18n.t('bi.dataset_page.k15')}</TableCell>
                       <TableCell>{i18n.t('bi.dataset_page.k16')}</TableCell>
                       <TableCell>{i18n.t('bi.dataset_page.k17')}</TableCell>
-                      <TableCell>维度/度量</TableCell>
+                      {i18n.t('pages.dataset_page.k0')}
                       <TableCell align='right'>{i18n.t('bi.dataset_page.k18')}</TableCell>
                     </TableRow>
                   </TableHead>
@@ -638,7 +638,7 @@ const DatasetPage = () => {
                   mb: 2,
                 }}
               >
-                <Typography variant='subtitle1'>SQL 查询语句</Typography>
+                <Typography variant='subtitle1'>{i18n.t('pages.dataset_page.ql_1')}</Typography>
                 <Button
                   variant='outlined'
                   size='small'

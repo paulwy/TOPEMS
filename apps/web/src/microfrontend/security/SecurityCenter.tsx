@@ -309,7 +309,7 @@ const IssueItem: React.FC<{
             variant='body2'
             sx={{ mb: 1 }}
           >
-            <strong>修复建议:</strong> {issue.recommendation}
+            {i18n.t('microfrontend.security_center.k0')} {issue.recommendation}
           </Typography>
           {issue.fixed_version && (
             <Typography
@@ -424,7 +424,7 @@ const ScanHistoryList: React.FC<{ history: ScanHistoryEntry[] }> = ({ history })
               color='text.secondary'
             >
               {new Date(entry.scan_time).toLocaleString('zh-CN')}
-              {entry.total_issues} 个问题
+              {entry.total_issues} {i18n.t('microfrontend.security_center.k1')}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
@@ -713,7 +713,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
                 color='text.secondary'
                 sx={{ alignSelf: 'center' }}
               >
-                共 {filteredIssues.length} 个问题
+                {i18n.t('microfrontend.security_center.k2')} {filteredIssues.length} {i18n.t('microfrontend.security_center.k3')}
               </Typography>
             </Box>
 
@@ -771,7 +771,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
                         variant='caption'
                         color='text.secondary'
                       >
-                        {result.passed_checks} 项通过 · {result.failed_checks} 项失败
+                        {result.passed_checks} {i18n.t('microfrontend.security_center.k4')} {result.failed_checks} {i18n.t('microfrontend.security_center.k5')}
                       </Typography>
                     </Box>
                     <Chip

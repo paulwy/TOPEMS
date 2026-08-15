@@ -585,12 +585,12 @@ const TenantSettingsPage: React.FC = () => {
                           })
                         }
                       >
-                        <MenuItem value={15}>15 分钟</MenuItem>
-                        <MenuItem value={30}>30 分钟</MenuItem>
-                        <MenuItem value={60}>1 小时</MenuItem>
-                        <MenuItem value={120}>2 小时</MenuItem>
-                        <MenuItem value={480}>8 小时</MenuItem>
-                        <MenuItem value={1440}>24 小时</MenuItem>
+                        <MenuItem value={15}>{i18n.t('admin:tenant_settings_page.15_6')}</MenuItem>
+                        <MenuItem value={30}>{i18n.t('admin:tenant_settings_page.30_5')}</MenuItem>
+                        <MenuItem value={60}>{i18n.t('admin:tenant_settings_page.k4')}</MenuItem>
+                        <MenuItem value={120}>{i18n.t('admin:tenant_settings_page.k3')}</MenuItem>
+                        <MenuItem value={480}>{i18n.t('admin:tenant_settings_page.k2')}</MenuItem>
+                        <MenuItem value={1440}>{i18n.t('admin:tenant_settings_page.24_1')}</MenuItem>
                       </Select>
                     </FormControl>
                   </ListItem>
@@ -642,10 +642,7 @@ const TenantSettingsPage: React.FC = () => {
                 <Alert
                   severity='info'
                   sx={{ mb: 2 }}
-                >
-                  当前租户共有 {members.length} 名成员，最多可添加 {tenant.settings.max_users}{' '}
-                  {i18n.t('pages.tenant_settings_page.k15')}
-                </Alert>
+                >{i18n.t('admin:tenant_settings_page.k0', { v0: (members.length), v1: (tenant.settings.max_users), v2: (' '), v3: (i18n.t('pages.tenant_settings_page.k15')) })}</Alert>
 
                 <List disablePadding>
                   {members.map((member: TenantUser) => (

@@ -774,7 +774,7 @@ const MobileQualityPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    {selectedTask.task_no} · 批次 {selectedTask.batch_no}
+                    {selectedTask.task_no} {i18n.t('pages.mobile_quality_page.k0')} {selectedTask.batch_no}
                   </Typography>
                 </Paper>
               )}

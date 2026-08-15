@@ -261,7 +261,7 @@ export default function QmsFmeaDetailPage() {
             </ResponsiveContainer>
           </div>
           <div className='rounded-lg border p-4'>
-            <h3 className='mb-3 font-semibold'>Top 10 风险项 RPN</h3>
+            <h3 className='mb-3 font-semibold'>{i18n.t('qms:qms_fmea_detail_page.top10rpn_2')}</h3>
             <ResponsiveContainer
               width='100%'
               height={280}
@@ -296,10 +296,8 @@ export default function QmsFmeaDetailPage() {
       )}
 
       <div className='rounded-lg border p-4'>
-        <p className='text-sm text-gray-600'>
-          最大 RPN：<span className='font-bold text-red-600'>{maxRpn}</span>
-          <span className='ml-4'>
-            平均 RPN：<span className='font-bold text-orange-600'>{avgRpn}</span>
+        <p className='text-sm text-gray-600'>{i18n.t('qms:qms_fmea_detail_page.rpn_1')}<span className='font-bold text-red-600'>{maxRpn}</span>
+          <span className='ml-4'>{i18n.t('qms:qms_fmea_detail_page.rpn_0')}<span className='font-bold text-orange-600'>{avgRpn}</span>
           </span>
         </p>
       </div>

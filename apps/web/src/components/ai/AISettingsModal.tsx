@@ -163,7 +163,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
               <Settings sx={{ width: 24, height: 24 }} />
-              <h2 style={{ fontSize: '24px', fontWeight: 700 }}>AI 设置</h2>
+              <h2 style={{ fontSize: '24px', fontWeight: 700 }}>{i18n.t('ai:ai_settings_modal.ai_8')}</h2>
             </div>
             <button
               onClick={onClose}
@@ -354,8 +354,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                     color: theme.palette.grey[700],
                     marginBottom: 2,
                   }}
-                >
-                  Temperature (创造性) <span style={{ color: theme.palette.error.dark }}>*</span>
+                >{i18n.t('ai:ai_settings_modal.temperature_7')}<span style={{ color: theme.palette.error.dark }}>*</span>
                 </label>
                 <div
                   style={{
@@ -387,11 +386,11 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                       color: theme.palette.text.secondary,
                     }}
                   >
-                    <span>0 (精确)</span>
+                    <span>{i18n.t('ai:ai_settings_modal.k6')}</span>
                     <span style={{ fontWeight: 500, color: theme.palette.secondary.dark }}>
                       {config.temperature}
                     </span>
-                    <span>2 (创造性)</span>
+                    <span>{i18n.t('ai:ai_settings_modal.k5')}</span>
                   </div>
                 </div>
                 {errors.temperature && (
@@ -420,8 +419,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                     color: theme.palette.grey[700],
                     marginBottom: 2,
                   }}
-                >
-                  Max Tokens (最大令牌数) <span style={{ color: theme.palette.error.dark }}>*</span>
+                >{i18n.t('ai:ai_settings_modal.maxtokens_4')}<span style={{ color: theme.palette.error.dark }}>*</span>
                 </label>
                 <input
                   id='ai-max-tokens'
@@ -490,8 +488,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   marginRight: 1,
                   color: 'success.dark',
                 }}
-              />
-              系统提示词 <span style={{ color: theme.palette.error.dark }}>*</span>
+              />{i18n.t('ai:ai_settings_modal.k3')}<span style={{ color: theme.palette.error.dark }}>*</span>
             </h3>
 
             <div>
@@ -645,8 +642,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                         color: theme.palette.grey[700],
                         marginBottom: 2,
                       }}
-                    >
-                      相似度阈值 <span style={{ color: theme.palette.error.dark }}>*</span>
+                    >{i18n.t('ai:ai_settings_modal.k2')}<span style={{ color: theme.palette.error.dark }}>*</span>
                     </label>
                     <div
                       style={{
@@ -678,11 +674,11 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                           color: theme.palette.text.secondary,
                         }}
                       >
-                        <span>0 (宽松)</span>
+                        <span>{i18n.t('ai:ai_settings_modal.k1')}</span>
                         <span style={{ fontWeight: 500, color: 'orange.600' }}>
                           {config.similarityThreshold.toFixed(2)}
                         </span>
-                        <span>1 (严格)</span>
+                        <span>{i18n.t('ai:ai_settings_modal.k0')}</span>
                       </div>
                     </div>
                     {errors.similarityThreshold && (

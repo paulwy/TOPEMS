@@ -155,7 +155,7 @@ const BatchManagementPage: React.FC = () => {
           >
             {batch.expiry_date ? new Date(batch.expiry_date).toLocaleDateString('zh-CN') : '-'}
             {batch.remaining_days !== undefined && batch.remaining_days >= 0 && (
-              <Box sx={{ fontSize: '0.75rem' }}>剩余 {batch.remaining_days} 天</Box>
+              <Box sx={{ fontSize: '0.75rem' }}>{i18n.t('pages.batch_management_page.k0')}</Box>
             )}
           </Box>
         );

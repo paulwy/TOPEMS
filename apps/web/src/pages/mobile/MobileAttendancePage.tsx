@@ -766,14 +766,14 @@ const MobileAttendancePage: React.FC = () => {
                                 variant='caption'
                                 color='text.secondary'
                               >
-                                {leave.days}天
+                                {leave.days}{i18n.t('pages.mobile_attendance_page.k0')}
                               </Typography>
                             </Box>
                             <Typography
                               variant='body2'
                               sx={{ mb: 1, fontWeight: 500 }}
                             >
-                              {leave.start_date} 至 {leave.end_date}
+                              {leave.start_date} {i18n.t('pages.mobile_attendance_page.k1')} {leave.end_date}
                             </Typography>
                             <Typography
                               variant='body2'

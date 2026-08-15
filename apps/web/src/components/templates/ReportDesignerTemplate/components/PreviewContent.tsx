@@ -77,7 +77,7 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
               variant='caption'
               sx={{ color: 'grey.500' }}
             >
-              共 {previewData.length} 条记录
+              {i18n.t('components.preview_content.k0')} {previewData.length} {i18n.t('components.preview_content.k1')}
             </Typography>
           </Box>
         )}

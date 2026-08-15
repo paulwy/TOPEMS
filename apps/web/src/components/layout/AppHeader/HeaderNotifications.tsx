@@ -168,7 +168,7 @@ export const HeaderNotifications: React.FC = () => {
                 component='span'
                 sx={{ ml: 1, color: 'error.main', fontSize: '0.75rem' }}
               >
-                ({unreadCount}条未读)
+                ({unreadCount}{i18n.t('components.header_notifications.k0')}
               </Typography>
             )}
           </Typography>

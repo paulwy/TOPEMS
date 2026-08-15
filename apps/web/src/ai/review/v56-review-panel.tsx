@@ -254,7 +254,7 @@ const V56ReviewPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   size={20}
                   className='animate-pulse'
                 />
-                <Typography>AI 分析中...</Typography>
+                <Typography>{i18n.t('ai:v56-review-panel.ai_2')}</Typography>
               </Stack>
             </Box>
           )}
@@ -490,9 +490,7 @@ const OverviewTab: React.FC<{
             variant='body2'
             color='text.secondary'
             sx={{ mb: 2 }}
-          >
-            共发现 {scanResult.findings.length} 个安全问题，高危 {scanResult.high_risk_count} 个
-          </Typography>
+          >{i18n.t('ai:v56-review-panel.k1', { v0: (scanResult.findings.length), v1: (scanResult.high_risk_count) })}</Typography>
           <Stack
             direction='row'
             spacing={1}
@@ -787,7 +785,7 @@ const CodeReviewTab: React.FC<{ result: ReviewResult }> = ({ result }) => {
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k30')}</TableCell>
                   <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k31')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>文件:行号</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai:v56-review-panel.k0')}</TableCell>
                   <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k32')}</TableCell>
                   <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k33')}</TableCell>
                 </TableRow>

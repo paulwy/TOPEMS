@@ -142,26 +142,26 @@ export const Counter: React.FC<CounterProps> = ({
 
 export default Counter;`;
 
-const codeExplanation = `这段代码是一个 React 的计数器组件 Counter，主要功能说明如下：
+const codeExplanation = `{i18n.t('pages.ai_code_assistant_page.k0')}
 
-1. **组件定义与 Props**
-   - 接收 initialValue 初始值（默认为0）
-   - 接收 onUpdate 回调函数，值变化时通知父组件
+{i18n.t('pages.ai_code_assistant_page.1props_1')}
+   {i18n.t('pages.ai_code_assistant_page.k2')}
+   {i18n.t('pages.ai_code_assistant_page.k3')}
 
-2. **状态管理**
-   - 使用 useState 管理 count 状态
-   - 所有操作函数都用 useCallback 包裹优化性能
+{i18n.t('pages.ai_code_assistant_page.2_4')}
+   {i18n.t('pages.ai_code_assistant_page.k5')}
+   {i18n.t('pages.ai_code_assistant_page.k6')}
 
-3. **操作函数**
-   - handleIncrement: 加1操作
-   - handleDecrement: 减1操作
-   - handleReset: 重置为初始值
+{i18n.t('pages.ai_code_assistant_page.3_7')}
+   {i18n.t('pages.ai_code_assistant_page.k8')}
+   {i18n.t('pages.ai_code_assistant_page.k9')}
+   {i18n.t('pages.ai_code_assistant_page.k10')}
 
-4. **渲染结构**
-   - 使用 Box 作为容器，flex 布局
-   - 包含减少按钮、当前数值、增加按钮、重置按钮
+{i18n.t('pages.ai_code_assistant_page.4_11')}
+   {i18n.t('pages.ai_code_assistant_page.k12')}
+   {i18n.t('pages.ai_code_assistant_page.k13')}
 
-这是一个结构清晰、功能完整的可复用计数器组件。`;
+{i18n.t('pages.ai_code_assistant_page.k14')}`;
 
 const reviewIssueKeys = [
   {

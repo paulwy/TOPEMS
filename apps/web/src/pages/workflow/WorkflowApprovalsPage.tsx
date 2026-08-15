@@ -413,7 +413,7 @@ export const WorkflowApprovalsPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            确定要驳回「{selectedTask?.title}」的审批吗？
+            {i18n.t('pages.workflow_approvals_page.k0')}「{selectedTask?.title}」{i18n.t('pages.workflow_approvals_page.k1')}
           </Typography>
           <TextField
             size='small'

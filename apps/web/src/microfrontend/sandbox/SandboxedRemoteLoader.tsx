@@ -129,7 +129,7 @@ class SandboxedErrorBoundary extends Component<
             variant='h6'
             color='error'
           >
-            模块 {this.props.moduleName} 加载失败（沙箱隔离模式）
+                        {i18n.t('common.sandboxed_remote_loader.k0')} {this.props.moduleName} {this.props.moduleName} {i18n.t('common.sandboxed_remote_loader.k0')}
           </Typography>
           <Typography
             variant='body2'
@@ -169,7 +169,7 @@ const SandboxedLoadingFallback: React.FC<{ moduleName: string }> = ({ moduleName
       variant='body2'
       color='text.secondary'
     >
-      正在加载 {moduleName}（沙箱隔离中）...
+            {i18n.t('common.sandboxed_remote_loader.k0')} {moduleName}（{moduleName}{i18n.t('common.sandboxed_remote_loader.k0')}
     </Typography>
     <Box sx={{ width: '60%', maxWidth: 300 }}>
       <LinearProgress />

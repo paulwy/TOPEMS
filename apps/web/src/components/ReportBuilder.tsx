@@ -335,7 +335,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                           color: getModuleTextColor(module),
                         }}
                       >
-                        {module} 模块
+                        {module} {i18n.t('components.report_builder.k0')}
                       </h5>
                       <div
                         style={{
@@ -403,7 +403,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                                     marginTop: 4,
                                   }}
                                 >
-                                  {type.module} 报表
+                                  {type.module} {i18n.t('components.report_builder.k1')}
                                 </p>
                               </div>
                             </div>
@@ -574,7 +574,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                           color: theme.palette.grey[700],
                         }}
                       >
-                        选择列（{selectedColumns.length} 已选择）
+                        {i18n.t('components.report_builder.k2')}{selectedColumns.length} {i18n.t('components.report_builder.k3')}
                       </label>
                       <div style={{ display: 'flex', gap: 8 }}>
                         <button
@@ -727,7 +727,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                       {i18n.t('components.report_builder.k15')}
                     </p>
                     <p style={{ fontWeight: 500, color: 'var(--mui-palette-text-primary)' }}>
-                      {startDate} 至 {endDate}
+                      {startDate} {i18n.t('components.report_builder.k4')} {endDate}
                     </p>
                   </div>
                 )}

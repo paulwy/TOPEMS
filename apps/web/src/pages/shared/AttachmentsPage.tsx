@@ -320,7 +320,7 @@ const AttachmentsPage: React.FC = () => {
                           variant='caption'
                           color='text.secondary'
                         >
-                          上传于 {new Date(attachment.uploaded_at).toLocaleString('zh-CN')}
+                          {i18n.t('pages.attachments_page.k0')} {new Date(attachment.uploaded_at).toLocaleString('zh-CN')}
                           {attachment.entity_type && ` · ${attachment.entity_type}`}
                         </Typography>
                       }

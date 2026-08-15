@@ -89,9 +89,7 @@ const BudgetBar: React.FC<{ consumed: number; total: number }> = ({ consumed, to
         <Typography
           variant='caption'
           color='text.secondary'
-        >
-          已消耗 {consumed.toFixed(1)} / {total.toFixed(1)}
-        </Typography>
+        >{i18n.t('monitor:slo_status_page.v0v1_6', { v0: (consumed.toFixed(1)), v1: (total.toFixed(1)) })}</Typography>
         <Typography
           variant='caption'
           sx={{ fontWeight: 600, color }}
@@ -391,7 +389,7 @@ export const SLOStatusPage: React.FC = () => {
       <Table size='small'>
         <TableHead>
           <TableRow>
-            <TableCell>SLO 名称</TableCell>
+            <TableCell>{i18n.t('monitor:slo_status_page.slo_5')}</TableCell>
             <TableCell>{i18n.t('pages.slo_status_page.k26')}</TableCell>
             <TableCell>{i18n.t('pages.slo_status_page.k27')}</TableCell>
             <TableCell align='right'>{i18n.t('pages.slo_status_page.k28')}</TableCell>
@@ -557,9 +555,9 @@ export const SLOStatusPage: React.FC = () => {
             <TableCell>{i18n.t('pages.slo_status_page.k34')}</TableCell>
             <TableCell>{i18n.t('pages.slo_status_page.k35')}</TableCell>
             <TableCell>{i18n.t('pages.slo_status_page.k36')}</TableCell>
-            <TableCell align='right'>1h 燃烧</TableCell>
-            <TableCell align='right'>6h 燃烧</TableCell>
-            <TableCell align='right'>24h 燃烧</TableCell>
+            <TableCell align='right'>{i18n.t('monitor:slo_status_page.1h_4')}</TableCell>
+            <TableCell align='right'>{i18n.t('monitor:slo_status_page.6h_3')}</TableCell>
+            <TableCell align='right'>{i18n.t('monitor:slo_status_page.24h_2')}</TableCell>
             <TableCell>{i18n.t('pages.slo_status_page.k37')}</TableCell>
             <TableCell>{i18n.t('pages.slo_status_page.k38')}</TableCell>
           </TableRow>
@@ -634,7 +632,7 @@ export const SLOStatusPage: React.FC = () => {
             <TableCell>{i18n.t('pages.slo_status_page.k41')}</TableCell>
             <TableCell>{i18n.t('pages.slo_status_page.k42')}</TableCell>
             <TableCell>{i18n.t('pages.slo_status_page.k43')}</TableCell>
-            <TableCell align='right'>当前/目标</TableCell>
+            <TableCell align='right'>{i18n.t('monitor:slo_status_page.k1')}</TableCell>
             <TableCell>{i18n.t('pages.slo_status_page.k44')}</TableCell>
             <TableCell align='right'>{i18n.t('pages.slo_status_page.k45')}</TableCell>
           </TableRow>
@@ -681,9 +679,7 @@ export const SLOStatusPage: React.FC = () => {
                       <Clock
                         size={12}
                         style={{ verticalAlign: 'middle', marginRight: 4 }}
-                      />
-                      {v.duration_minutes} 分钟
-                    </Typography>
+                      />{i18n.t('monitor:slo_status_page.k0', { v0: (v.duration_minutes) })}</Typography>
                   </TableCell>
                   <TableCell align='right'>
                     <Typography

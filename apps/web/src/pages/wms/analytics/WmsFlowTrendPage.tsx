@@ -69,12 +69,12 @@ export default function WmsFlowTrendPage() {
         </div>
         <div className='rounded-lg border p-4'>
           <p className='text-sm text-gray-600'>{i18n.t('pages.wms_flow_trend_page.k8')}</p>
-          <p className='mt-1 text-3xl font-bold text-purple-600'>{totals.days} 天</p>
+          <p className='mt-1 text-3xl font-bold text-purple-600'>{i18n.t('pages.wms_flow_trend_page.totalsdays_0')}</p>
         </div>
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>出入库流量（Area 3 系列：入库 / 出库 / 净流量）</h3>
+        <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_flow_trend_page.k1')}</h3>
         <ResponsiveContainer
           width='100%'
           height={380}

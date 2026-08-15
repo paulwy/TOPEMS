@@ -66,7 +66,7 @@ const EmptyResults: React.FC<{ query: string }> = ({ query }) => (
       variant='body2'
       color='text.secondary'
     >
-      未找到与 "{query}" 相关的结果
+      {i18n.t('components.search_result_list.k0')} "{query}" {i18n.t('components.search_result_list.k1')}
     </Typography>
   </Box>
 );
@@ -239,18 +239,18 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
               variant='caption'
               color='text.secondary'
             >
-              找到{' '}
+              {i18n.t('components.search_result_list.k2')}{' '}
               <Box
                 component='span'
                 sx={{ fontWeight: 700, color: 'text.primary' }}
               >
                 {totalResults}
               </Box>{' '}
-              条结果
+              {i18n.t('components.search_result_list.k3')}
               {totalGroups > 1 && (
                 <>
                   {' '}
-                  · 分为{' '}
+                  {i18n.t('components.search_result_list.k4')}{' '}
                   <Box
                     component='span'
                     sx={{ fontWeight: 600 }}
@@ -307,7 +307,7 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
                   variant='caption'
                   color='text.disabled'
                 >
-                  {group.results.length} 条结果
+                  {group.results.length} {i18n.t('components.search_result_list.k5')}
                 </Typography>
               </Box>
               {group.results.map((result) => {

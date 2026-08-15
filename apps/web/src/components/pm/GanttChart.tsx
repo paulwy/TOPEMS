@@ -217,7 +217,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                   </Typography>
                   {phase.progress > 0 && (
                     <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                      {phase.progress}% 完成
+                      {phase.progress}{i18n.t('components.gantt_chart.k0')}
                     </Typography>
                   )}
                 </Box>
@@ -257,7 +257,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                       top: 0,
                     }}
                   >
-                    {label.date.getFullYear()}年{label.date.getMonth() + 1}月
+                    {label.date.getFullYear()}{i18n.t('components.gantt_chart.k1')}{label.date.getMonth() + 1}{i18n.t('components.gantt_chart.k2')}
                   </Box>
                 ))}
               </Box>

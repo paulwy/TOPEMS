@@ -730,7 +730,7 @@ export function MasterDetailPageTemplate<T>({
             variant='caption'
             color='text.secondary'
           >
-            共 {pagination.total} 条
+                        {i18n.t('common.master_detail_page_template.k0')} {pagination.total} {pagination.total} {i18n.t('common.master_detail_page_template.k0')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             <Button

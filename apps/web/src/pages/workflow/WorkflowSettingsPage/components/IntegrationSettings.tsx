@@ -217,7 +217,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({
             size='small'
             disabled={!settings.enableErpSync}
           >
-            <InputLabel>ERP 系统类型</InputLabel>
+            <InputLabel>{i18n.t('pages.integration_settings.ep_0')}</InputLabel>
             <Select
               value={settings.erpSystem}
               label={i18n.t('pages.integration_settings.erp_9')}

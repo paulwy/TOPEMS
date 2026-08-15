@@ -336,8 +336,7 @@ const TokensTab: React.FC = () => {
         variant='h6'
         sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
       >
-        <Palette size={20} /> 颜色调色板
-      </Typography>
+        <Palette size={20} />{i18n.t('design_system:design_system_panel.k4')}</Typography>
       <Grid
         container
         spacing={2}
@@ -394,8 +393,7 @@ const TokensTab: React.FC = () => {
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}
           >
-            <Type size={16} /> 排版
-          </Typography>
+            <Type size={16} />{i18n.t('design_system:design_system_panel.k3')}</Typography>
           <Paper sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
             {Object.entries(v51DesignTokens.typography.fontSize).map(([name, value]) => (
               <Box
@@ -430,8 +428,7 @@ const TokensTab: React.FC = () => {
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}
           >
-            <Layers size={16} /> 间距 & 圆角
-          </Typography>
+            <Layers size={16} />{i18n.t('design_system:design_system_panel.k2')}</Typography>
           <Paper sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
             <Typography
               variant='caption'
@@ -731,9 +728,7 @@ const ThemingTab: React.FC = () => {
               <V51Button
                 variant='primary'
                 onClick={toggleDarkMode}
-              >
-                切换 {theme.mode === 'dark' ? i18n.t('design-system.design_system_panel.k57') : i18n.t('design-system.design_system_panel.k56')} 模式
-              </V51Button>
+              >{i18n.t('design_system:design_system_panel.k1', { v0: (theme.mode === 'dark' ? i18n.t('design-system.design_system_panel.k57') : i18n.t('design-system.design_system_panel.k56')) })}</V51Button>
 
               <V51Input
                 label={i18n.t('design-system.design_system_panel.hex_58')}
@@ -929,9 +924,7 @@ const LintTab: React.FC<{ onRunLint: () => void; lintResult: string }> = ({
               <Typography
                 variant='caption'
                 sx={{ color: 'text.secondary' }}
-              >
-                (要求 {check.minRatio}:1)
-              </Typography>
+              >{i18n.t('design_system:design_system_panel.k0', { v0: (check.minRatio) })}</Typography>
             </Box>
           </Paper>
         ))}

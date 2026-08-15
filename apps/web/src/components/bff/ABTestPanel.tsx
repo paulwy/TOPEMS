@@ -524,7 +524,7 @@ const CreateExperimentForm: React.FC<{
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                流量分配比例：{traffic}%
+                {i18n.t('components.ab_test_panel.k0')}{traffic}%
               </Typography>
             </Stack>
             <Slider
@@ -541,7 +541,7 @@ const CreateExperimentForm: React.FC<{
             direction='row'
             sx={{ justifyContent: 'space-between', alignItems: 'center' }}
           >
-            <Typography variant='subtitle2'>变体配置（总权重 {totalWeight}）</Typography>
+            <Typography variant='subtitle2'>{i18n.t('components.ab_test_panel.k0')}</Typography>
             <Button
               size='small'
               startIcon={<Plus size={14} />}

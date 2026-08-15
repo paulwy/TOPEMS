@@ -262,9 +262,7 @@ const FinancialAnalysisPage: React.FC = () => {
             <Box
               component='span'
               sx={{ fontSize: 10, color: 'common.white', fontWeight: 500 }}
-            >
-              ¥{(item.value / 10000).toFixed(1)}万
-            </Box>
+            >{i18n.t('erp:financial_analysis_page.v0_19', { v0: ((item.value / 10000).toFixed(1)) })}</Box>
           </Box>
         </Box>
       ))}
@@ -313,9 +311,7 @@ const FinancialAnalysisPage: React.FC = () => {
             fontSize='14'
             fontWeight='bold'
             fill={ct.text.primary}
-          >
-            ¥{(total / 10000).toFixed(1)}万
-          </text>
+          >{i18n.t('erp:financial_analysis_page.v0_18', { v0: ((total / 10000).toFixed(1)) })}</text>
           <text
             x='100'
             y='115'
@@ -448,21 +444,15 @@ const FinancialAnalysisPage: React.FC = () => {
         <>
           <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.financial_analysis_page.k24')}</Box>
-            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>
-              ¥{(balanceSheetData.total_assets / 10000).toFixed(1)}万
-            </Box>
+            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>{i18n.t('erp:financial_analysis_page.v0_17', { v0: ((balanceSheetData.total_assets / 10000).toFixed(1)) })}</Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.financial_analysis_page.k25')}</Box>
-            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'error.dark' }}>
-              ¥{(balanceSheetData.total_liabilities / 10000).toFixed(1)}万
-            </Box>
+            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'error.dark' }}>{i18n.t('erp:financial_analysis_page.v0_16', { v0: ((balanceSheetData.total_liabilities / 10000).toFixed(1)) })}</Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.financial_analysis_page.k26')}</Box>
-            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'primary.dark' }}>
-              ¥{(balanceSheetData.total_equity / 10000).toFixed(1)}万
-            </Box>
+            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'primary.dark' }}>{i18n.t('erp:financial_analysis_page.v0_15', { v0: ((balanceSheetData.total_equity / 10000).toFixed(1)) })}</Box>
           </Box>
         </>
       )}
@@ -470,21 +460,15 @@ const FinancialAnalysisPage: React.FC = () => {
         <>
           <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.financial_analysis_page.k27')}</Box>
-            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>
-              ¥{(incomeStatementData.total_revenue / 10000).toFixed(1)}万
-            </Box>
+            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>{i18n.t('erp:financial_analysis_page.v0_14', { v0: ((incomeStatementData.total_revenue / 10000).toFixed(1)) })}</Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.financial_analysis_page.k28')}</Box>
-            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'error.dark' }}>
-              ¥{(incomeStatementData.total_cost / 10000).toFixed(1)}万
-            </Box>
+            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'error.dark' }}>{i18n.t('erp:financial_analysis_page.v0_13', { v0: ((incomeStatementData.total_cost / 10000).toFixed(1)) })}</Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.financial_analysis_page.k29')}</Box>
-            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'primary.dark' }}>
-              ¥{(incomeStatementData.net_profit / 10000).toFixed(1)}万
-            </Box>
+            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'primary.dark' }}>{i18n.t('erp:financial_analysis_page.v0_12', { v0: ((incomeStatementData.net_profit / 10000).toFixed(1)) })}</Box>
           </Box>
         </>
       )}
@@ -492,43 +476,31 @@ const FinancialAnalysisPage: React.FC = () => {
         <>
           <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.financial_analysis_page.k30')}</Box>
-            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>
-              ¥{(cashFlowData.net_cash_flow / 10000).toFixed(1)}万
-            </Box>
+            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>{i18n.t('erp:financial_analysis_page.v0_11', { v0: ((cashFlowData.net_cash_flow / 10000).toFixed(1)) })}</Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.financial_analysis_page.k31')}</Box>
-            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'warning.700' }}>
-              ¥{(cashFlowData.net_cash_flow / 10000).toFixed(1)}万
-            </Box>
+            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'warning.700' }}>{i18n.t('erp:financial_analysis_page.v0_10', { v0: ((cashFlowData.net_cash_flow / 10000).toFixed(1)) })}</Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.financial_analysis_page.k32')}</Box>
-            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'info.700' }}>
-              ¥{(cashFlowData.net_cash_flow / 10000).toFixed(1)}万
-            </Box>
+            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'info.700' }}>{i18n.t('erp:financial_analysis_page.v0_9', { v0: ((cashFlowData.net_cash_flow / 10000).toFixed(1)) })}</Box>
           </Box>
         </>
       )}
       {activeTab === 3 && agingAnalysisData && (
         <>
           <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
-            <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>0-30天</Box>
-            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>
-              ¥{(agingAnalysisData['0-30'] / 10000).toFixed(1)}万
-            </Box>
+            <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp:financial_analysis_page.030_8')}</Box>
+            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>{i18n.t('erp:financial_analysis_page.v0_7', { v0: ((agingAnalysisData['0-30'] / 10000).toFixed(1)) })}</Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
-            <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>31-60天</Box>
-            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'warning.700' }}>
-              ¥{(agingAnalysisData['31-60'] / 10000).toFixed(1)}万
-            </Box>
+            <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp:financial_analysis_page.3160_6')}</Box>
+            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'warning.700' }}>{i18n.t('erp:financial_analysis_page.v0_5', { v0: ((agingAnalysisData['31-60'] / 10000).toFixed(1)) })}</Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.financial_analysis_page.k33')}</Box>
-            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'error.dark' }}>
-              ¥{((agingAnalysisData['61-90'] || 0) + (agingAnalysisData['90+'] || 0)) / 10000}万
-            </Box>
+            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'error.dark' }}>{i18n.t('erp:financial_analysis_page.v0_4', { v0: (((agingAnalysisData['61-90'] || 0) + (agingAnalysisData['90+'] || 0)) / 10000) })}</Box>
           </Box>
         </>
       )}
@@ -536,15 +508,11 @@ const FinancialAnalysisPage: React.FC = () => {
         <>
           <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.financial_analysis_page.k34')}</Box>
-            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>
-              ¥{(budgetAnalysisData.budget_amount / 10000).toFixed(1)}万
-            </Box>
+            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>{i18n.t('erp:financial_analysis_page.v0_3', { v0: ((budgetAnalysisData.budget_amount / 10000).toFixed(1)) })}</Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.financial_analysis_page.k35')}</Box>
-            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'primary.dark' }}>
-              ¥{(budgetAnalysisData.actual_amount / 10000).toFixed(1)}万
-            </Box>
+            <Box sx={{ fontWeight: 700, fontSize: 24, color: 'primary.dark' }}>{i18n.t('erp:financial_analysis_page.v0_2', { v0: ((budgetAnalysisData.actual_amount / 10000).toFixed(1)) })}</Box>
           </Box>
           <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.financial_analysis_page.k36')}</Box>
@@ -635,9 +603,7 @@ const FinancialAnalysisPage: React.FC = () => {
           <Box
             component='h3'
             sx={{ fontWeight: 600 }}
-          >
-            {tabLabels[activeTab]} - 可视化图表
-          </Box>
+          >{i18n.t('erp:financial_analysis_page.v0_1', { v0: (tabLabels[activeTab]) })}</Box>
         </Box>
         {activeTab === 0 ? renderPieChart() : renderBarChart()}
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, mt: 3 }}>
@@ -661,9 +627,7 @@ const FinancialAnalysisPage: React.FC = () => {
           <Box
             component='h3'
             sx={{ fontWeight: 600 }}
-          >
-            {tabLabels[activeTab]} - 明细数据
-          </Box>
+          >{i18n.t('erp:financial_analysis_page.v0_0', { v0: (tabLabels[activeTab]) })}</Box>
         </Box>
         {renderDataGrid()}
       </Box>

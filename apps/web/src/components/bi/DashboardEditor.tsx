@@ -662,7 +662,7 @@ export const DashboardEditor: React.FC<{
                         key={i + 1}
                         value={i + 1}
                       >
-                        {i + 1} 列
+                        {i + 1} {i18n.t('components.dashboard_editor.k0')}
                       </MenuItem>
                     ))}
                   </Select>
@@ -684,7 +684,7 @@ export const DashboardEditor: React.FC<{
                         key={i + 1}
                         value={i + 1}
                       >
-                        {i + 1} 行
+                        {i + 1} {i18n.t('components.dashboard_editor.k1')}
                       </MenuItem>
                     ))}
                   </Select>

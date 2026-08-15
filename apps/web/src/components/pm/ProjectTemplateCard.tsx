@@ -85,11 +85,11 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <Clock size={16} />
-            <span>{template.estimated_days}天</span>
+            <span>{i18n.t('components.project_template_card.k0')}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <Tag size={16} />
-            <span>{template.phases_count}个阶段</span>
+            <span>{i18n.t('components.project_template_card.k1')}</span>
           </div>
         </div>
 

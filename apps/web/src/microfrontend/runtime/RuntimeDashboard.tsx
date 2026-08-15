@@ -1089,7 +1089,7 @@ const DesignSystemTab: React.FC = () => {
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              设计令牌 ({filteredTokens.length})
+              {i18n.t('microfrontend.runtime_dashboard.k0')}{filteredTokens.length})
             </Typography>
             <FormControl
               size='small'
@@ -1126,7 +1126,7 @@ const DesignSystemTab: React.FC = () => {
                   <TableCell>{i18n.t('microfrontend.runtime_dashboard.k81')}</TableCell>
                   <TableCell>{i18n.t('microfrontend.runtime_dashboard.k20')}</TableCell>
                   <TableCell>{i18n.t('microfrontend.runtime_dashboard.k82')}</TableCell>
-                  <TableCell>CSS 变量</TableCell>
+                  <TableCell>{i18n.t('microfrontend.runtime_dashboard.k0')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1194,7 +1194,7 @@ const DesignSystemTab: React.FC = () => {
             variant='subtitle2'
             sx={{ mb: 1, fontWeight: 600 }}
           >
-            CSS 变量预览 ({cssVars.length})
+            {i18n.t('microfrontend.runtime_dashboard.css_1')}{cssVars.length})
           </Typography>
           <Box
             sx={{
@@ -1679,7 +1679,7 @@ const LifecycleTab: React.FC = () => {
             variant='subtitle2'
             sx={{ mb: 1, fontWeight: 600 }}
           >
-            生命周期事件时间线（最近 {events.length} 条）
+            {i18n.t('microfrontend.runtime_dashboard.k2')} {events.length} {i18n.t('microfrontend.runtime_dashboard.k3')}
           </Typography>
           <TableContainer
             component={Paper}

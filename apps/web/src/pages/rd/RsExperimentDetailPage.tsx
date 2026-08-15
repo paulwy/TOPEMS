@@ -333,7 +333,7 @@ const RsExperimentDetailPage: React.FC = () => {
                 spacing={2}
               >
                 <Grid size={{ xs: 6 }}>
-                  <Typography variant='body2'>开始日期: {experiment.started_at}</Typography>
+                  <Typography variant='body2'>{i18n.t('pages.rs_experiment_detail_page.k0')}</Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography variant='body2'>
@@ -504,7 +504,7 @@ const RsExperimentDetailPage: React.FC = () => {
                   {i18n.t('pages.rs_experiment_detail_page.k19')}
                 </Typography>
                 {experiment.batch_number ? (
-                  <Typography variant='body2'>批次号: {experiment.batch_number}</Typography>
+                  <Typography variant='body2'>{i18n.t('pages.rs_experiment_detail_page.k1')}</Typography>
                 ) : (
                   <Typography
                     variant='body2'

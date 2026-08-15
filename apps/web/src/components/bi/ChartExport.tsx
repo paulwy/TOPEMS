@@ -101,7 +101,7 @@ export const ChartExport = ({ chartRef, filename = 'chart' }: ChartExportProps) 
             onClick={() => handleExport(format.id, format.mimeType)}
           >
             <FileImage sx={{ width: 16, height: 16, marginRight: 8 }} />
-            导出为 {format.label}
+            {i18n.t('components.chart_export.k0')} {format.label}
           </MenuItem>
         ))}
         <MenuItem onClick={handleCopy}>

@@ -517,7 +517,7 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
                 variant='body2'
                 sx={{ color: 'success.main' }}
               >
-                毛利率 {(data.gross_margin * 100).toFixed(2)}%
+                {i18n.t('components.financial_reports.k0')} {(data.gross_margin * 100).toFixed(2)}%
               </Typography>
             </Box>
           </CardContent>
@@ -541,7 +541,7 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
                 variant='body2'
                 sx={{ color: 'success.main' }}
               >
-                利润率 {(data.operating_margin * 100).toFixed(2)}%
+                {i18n.t('components.financial_reports.k1')} {(data.operating_margin * 100).toFixed(2)}%
               </Typography>
             </Box>
           </CardContent>
@@ -581,7 +581,7 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
                 variant='body2'
                 sx={{ color: 'success.main' }}
               >
-                净利率 {(data.net_margin * 100).toFixed(2)}%
+                {i18n.t('components.financial_reports.k2')} {(data.net_margin * 100).toFixed(2)}%
               </Typography>
             </Box>
           </CardContent>

@@ -35,10 +35,8 @@ export default function WmsInventoryMovementDetailPage() {
     <div className='space-y-4 p-4'>
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <div>
-          <h1 className='text-2xl font-bold'>库存移动详情 — {move.movement_number}</h1>
-          <p className='text-sm text-gray-500'>
-            {i18n.t('pages.wms_inventory_movement_detail_page.k1')}{move.movement_type ?? i18n.t('pages.wms_inventory_movement_detail_page.k0')} · 创建于 {move.created_at.slice(0, 10)}
-          </p>
+          <h1 className='text-2xl font-bold'>{i18n.t('wms:wms_inventory_movement_detail_page.v0_5', { v0: (move.movement_number) })}</h1>
+          <p className='text-sm text-gray-500'>{i18n.t('wms:wms_inventory_movement_detail_page.k4', { v0: (i18n.t('pages.wms_inventory_movement_detail_page.k1')), v1: (move.movement_type ?? i18n.t('pages.wms_inventory_movement_detail_page.k0')), v2: (move.created_at.slice(0, 10)) })}</p>
         </div>
         <WmsStatusBadge
           fsm='movement'
@@ -51,7 +49,7 @@ export default function WmsInventoryMovementDetailPage() {
           <div className='text-center p-4 rounded-lg bg-amber-50 border border-amber-200 min-w-[180px]'>
             <p className='text-xs text-amber-700'>{i18n.t('pages.wms_inventory_movement_detail_page.k1')}</p>
             <p className='text-lg font-bold text-amber-800 font-mono mt-1'>{sourceLoc}</p>
-            <p className='text-xs text-gray-500 mt-1'>仓库：{warehouse}</p>
+            <p className='text-xs text-gray-500 mt-1'>{i18n.t('wms:wms_inventory_movement_detail_page.v0_3', { v0: (warehouse) })}</p>
           </div>
 
           <div className='flex items-center justify-center'>
@@ -64,14 +62,14 @@ export default function WmsInventoryMovementDetailPage() {
           <div className='text-center p-4 rounded-lg bg-blue-50 border border-blue-200 min-w-[180px]'>
             <p className='text-xs text-blue-700'>{i18n.t('pages.wms_inventory_movement_detail_page.k2')}</p>
             <p className='text-lg font-bold text-blue-800 font-mono mt-1'>{targetLoc}</p>
-            <p className='text-xs text-gray-500 mt-1'>仓库：{warehouse}</p>
+            <p className='text-xs text-gray-500 mt-1'>{i18n.t('wms:wms_inventory_movement_detail_page.v0_2', { v0: (warehouse) })}</p>
           </div>
         </div>
       </div>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>物料编码 / 名称</p>
+          <p className='text-sm text-gray-600'>{i18n.t('wms:wms_inventory_movement_detail_page.k1')}</p>
           <p className='mt-1 font-mono font-semibold'>{matCode}</p>
           <p className='text-sm text-gray-600'>{matName}</p>
         </div>
@@ -140,7 +138,7 @@ export default function WmsInventoryMovementDetailPage() {
                   />
                   <div className='text-xs text-gray-500'>{e.t?.slice(0, 19).replace('T', ' ')}</div>
                   <div className='text-sm font-medium'>{e.title}</div>
-                  <div className='text-xs text-gray-600'>操作人：{e.who ?? 'system'}</div>
+                  <div className='text-xs text-gray-600'>{i18n.t('wms:wms_inventory_movement_detail_page.v0_0', { v0: (e.who ?? 'system') })}</div>
                 </li>
               ))}
           </ol>

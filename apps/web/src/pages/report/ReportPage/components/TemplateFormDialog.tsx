@@ -70,7 +70,7 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
 
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
             <FormControl fullWidth>
-              <InputLabel>报表类型 *</InputLabel>
+              {i18n.t('pages.template_form_dialog.k0')}
               <Select
                 required
                 value={templateFormData.report_type}

@@ -429,7 +429,7 @@ const ProductionPlanPage: React.FC = () => {
         <DialogTitle>{i18n.t('aps.production_plan_page.k44')}</DialogTitle>
         <DialogContent>
           <Typography>
-            确认要删除生产计划「{deleteTarget?.plan_name ?? deleteTarget?.plan_no}」吗？此操作不可撤销。
+            {i18n.t('pages.production_plan_page.k0')}「{deleteTarget?.plan_name ?? deleteTarget?.plan_no}」{i18n.t('pages.production_plan_page.k1')}
           </Typography>
         </DialogContent>
         <DialogActions>

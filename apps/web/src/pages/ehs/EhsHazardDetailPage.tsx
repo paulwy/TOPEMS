@@ -436,7 +436,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   display: 'inline-block',
                 }}
               >
-                {riskInfo.level}风险
+                {riskInfo.level}{i18n.t('pages.ehs_hazard_detail_page.k0')}
               </Typography>
             </Box>
           </Box>
@@ -518,7 +518,7 @@ const EhsHazardDetailPage: React.FC = () => {
             variant='body2'
             color='text.secondary'
           >
-            共 {assessments.length} 条记录
+            {i18n.t('pages.ehs_hazard_detail_page.k1')} {assessments.length} {i18n.t('pages.ehs_hazard_detail_page.k2')}
           </Typography>
         </Box>
         {assessments.length > 0 ? (
@@ -554,7 +554,7 @@ const EhsHazardDetailPage: React.FC = () => {
             variant='body2'
             color='text.secondary'
           >
-            共 {controls.length} 条措施
+            {i18n.t('pages.ehs_hazard_detail_page.k3')} {controls.length} {i18n.t('pages.ehs_hazard_detail_page.k4')}
           </Typography>
         </Box>
         {controls.length > 0 ? (

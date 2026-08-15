@@ -263,7 +263,7 @@ const NotificationStatsPage: React.FC = () => {
                   color: 'grey.500',
                 }}
               >
-                <span>运行时长：{serviceStatus.uptime}</span>
+                <span>{i18n.t('pages.notification_stats_page.k0')}</span>
                 {serviceStatus.dependencies.map((dep, idx) => (
                   <span key={idx}>
                     {dep.name}：{dep.status === 'healthy' ? i18n.t('notification.notification_stats_page.k32') : i18n.t('notification.notification_stats_page.k31')}

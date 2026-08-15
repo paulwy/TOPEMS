@@ -486,7 +486,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             👋 {i18n.t('pages.dashboard_page.k0')}{user?.full_name || user?.username || i18n.t('pages.dashboard_page.k6')}！
           </Typography>
           <Typography sx={{ color: 'text.secondary', fontSize: { xs: '0.875rem', md: '1rem' } }}>
-            {getGreeting()}，今天有 {pendingTodos.length} 个待处理事项
+            {getGreeting()}{i18n.t('pages.dashboard_page.k0')} {pendingTodos.length} {i18n.t('pages.dashboard_page.k1')}
           </Typography>
         </Box>
 

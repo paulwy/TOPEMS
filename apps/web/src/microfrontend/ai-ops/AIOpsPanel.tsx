@@ -650,7 +650,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           variant='caption'
                           color='text.secondary'
                         >
-                          {e.fromInstances} → {e.toInstances} 实例 ·{' '}
+                          {e.fromInstances} → {e.toInstances} {i18n.t('microfrontend.ai_ops_panel.k0')}{' '}
                           {formatRelativeTime(e.startedAt)}
                         </Typography>
                       </Box>
@@ -912,7 +912,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                         mb: 0.5,
                       }}
                     >
-                      <span>均值: {b.mean.toFixed(2)}</span>
+                      <span>{i18n.t('microfrontend.ai_ops_panel.k0')}</span>
                       <span>P95: {b.p95.toFixed(2)}</span>
                     </Box>
                     <LinearProgress
@@ -1236,7 +1236,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                     color='text.secondary'
                     sx={{ mb: 0.5 }}
                   >
-                    近 24 小时: {alertStats?.last24h || 0} 条
+                    {i18n.t('microfrontend.ai_ops_panel.24_1')} {alertStats?.last24h || 0} {i18n.t('microfrontend.ai_ops_panel.k2')}
                   </Typography>
                   <LinearProgress
                     variant='determinate'
@@ -1250,7 +1250,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                     color='text.secondary'
                     sx={{ mb: 0.5 }}
                   >
-                    近 1 小时: {alertStats?.last1h || 0} 条
+                    {i18n.t('microfrontend.ai_ops_panel.1_3')} {alertStats?.last1h || 0} {i18n.t('microfrontend.ai_ops_panel.k4')}
                   </Typography>
                   <LinearProgress
                     variant='determinate'
@@ -1342,7 +1342,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                   label={i18n.t('microfrontend.ai_ops_panel.k60')}
                   onChange={(e) => setNewRuleMetric(e.target.value)}
                 >
-                  <MenuItem value='cpuUsage'>CPU 使用率</MenuItem>
+                  <MenuItem value='cpuUsage'>{i18n.t('microfrontend.ai_ops_panel.pu_1')}</MenuItem>
                   <MenuItem value='memoryUsage'>{i18n.t('microfrontend.ai_ops_panel.k61')}</MenuItem>
                   <MenuItem value='responseTime'>{i18n.t('microfrontend.ai_ops_panel.k62')}</MenuItem>
                   <MenuItem value='errorRate'>{i18n.t('microfrontend.ai_ops_panel.k63')}</MenuItem>
@@ -1486,7 +1486,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                预测曲线 - {selectedPredMetric}
+                {i18n.t('microfrontend.ai_ops_panel.k5')} {selectedPredMetric}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                 <FormControl
@@ -1499,7 +1499,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                     label={i18n.t('microfrontend.ai_ops_panel.k84')}
                     onChange={(e) => setSelectedPredMetric(e.target.value)}
                   >
-                    <MenuItem value='cpuUsage'>CPU 使用率</MenuItem>
+                    <MenuItem value='cpuUsage'>{i18n.t('microfrontend.ai_ops_panel.pu_2')}</MenuItem>
                     <MenuItem value='memoryUsage'>{i18n.t('microfrontend.ai_ops_panel.k85')}</MenuItem>
                     <MenuItem value='responseTime'>{i18n.t('microfrontend.ai_ops_panel.k86')}</MenuItem>
                     <MenuItem value='errorRate'>{i18n.t('microfrontend.ai_ops_panel.k87')}</MenuItem>
@@ -1690,7 +1690,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           variant='caption'
                           color='text.secondary'
                         >
-                          概率 {(a.probability * 100).toFixed(0)}%
+                          {i18n.t('microfrontend.ai_ops_panel.k6')} {(a.probability * 100).toFixed(0)}%
                         </Typography>
                       </Box>
                     </Box>
@@ -1958,7 +1958,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           variant='caption'
                           color='text.secondary'
                         >
-                          {policy.minInstances} - {policy.maxInstances} 实例
+                          {policy.minInstances} - {policy.maxInstances} {i18n.t('microfrontend.ai_ops_panel.k7')}
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
                           {policy.metrics.slice(0, 2).map((m) => (

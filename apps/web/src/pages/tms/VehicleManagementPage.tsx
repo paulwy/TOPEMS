@@ -387,7 +387,7 @@ const VehicleManagementPage: React.FC = () => {
         <DialogTitle>{i18n.t('tms.vehicle_management_page.k40')}</DialogTitle>
         <DialogContent>
           <Typography>
-            确定要删除车辆「{deleteTarget?.vehicle_no}」吗？此操作不可撤销。
+            {i18n.t('pages.vehicle_management_page.k0')}「{deleteTarget?.vehicle_no}」{i18n.t('pages.vehicle_management_page.k1')}
           </Typography>
         </DialogContent>
         <DialogActions>

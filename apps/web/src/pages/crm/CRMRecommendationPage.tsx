@@ -395,7 +395,7 @@ const CRMRecommendationPage: React.FC = () => {
                         {col.label}
                       </Typography>
                       <Typography variant='caption' sx={{ opacity: 0.9 }}>
-                        {col.sublabel} · {col.data.length} 条
+                        {col.sublabel} · {col.data.length} {i18n.t('pages.crm_recommendation_page.k0')}
                       </Typography>
                     </Box>
                   </Box>

@@ -612,7 +612,7 @@ const ScalingTab: React.FC<{
                     variant='body2'
                     sx={{ fontWeight: 600, flex: 1 }}
                   >
-                    {policy.metric} 策略
+                    {policy.metric} {i18n.t('intelligent-ops.v56-ops-panel.k0')}
                   </Typography>
                   <Chip
                     label={`${currentInstances} ${i18n.t('intelligent_ops.v56-ops-panel.k17')}`}
@@ -654,7 +654,7 @@ const ScalingTab: React.FC<{
                   sx={{ display: 'block', mb: 1 }}
                 >
                   [i18n.t('intelligent_ops.v56-ops-panel.k20')]: {policy.min_instances} - {policy.max_instances} | 冷却:{' '}
-                  {policy.cooldown_ms / 60000}分钟
+                  {policy.cooldown_ms / 60000}{i18n.t('intelligent-ops.v56-ops-panel.k1')}
                 </Typography>
                 <Button
                   variant='contained'

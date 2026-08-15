@@ -201,7 +201,7 @@ const ProjectTemplateModal: React.FC<ProjectTemplateModalProps> = ({
                 variant='h6'
                 sx={{ fontWeight: 'bold' }}
               >
-                {template.estimated_days}天
+                {template.estimated_days}{i18n.t('components.project_template_modal.k0')}
               </Typography>
               <Typography
                 variant='body2'

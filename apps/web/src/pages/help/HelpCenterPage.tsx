@@ -292,7 +292,7 @@ export const HelpCenterPage: React.FC = () => {
                             '&:hover': { textDecoration: 'underline' },
                           }}
                         >
-                          查看更多 {category.count} 篇文档
+                          {i18n.t('pages.help_center_page.k0')} {category.count} {i18n.t('pages.help_center_page.k1')}
                         </Typography>
                       )}
                     </Stack>
@@ -302,7 +302,7 @@ export const HelpCenterPage: React.FC = () => {
                       size='small'
                       sx={{ textTransform: 'none' }}
                     >
-                      浏览 {category.title}
+                      {i18n.t('pages.help_center_page.k2')} {category.title}
                       <ChevronRight size={16} />
                     </Button>
                   </CardActions>
@@ -354,7 +354,7 @@ export const HelpCenterPage: React.FC = () => {
                           variant='body2'
                           color='text.secondary'
                         >
-                          查看 {faq.views.toLocaleString()}
+                          {i18n.t('pages.help_center_page.k3')} {faq.views.toLocaleString()}
                         </Typography>
                         <ChevronRight
                           size={16}

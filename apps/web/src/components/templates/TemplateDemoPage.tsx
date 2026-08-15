@@ -31,29 +31,29 @@ const mockTemplates: Template[] = [
     description: i18n.t('components.template_demo_page.k1'),
     content: `【{{workflow_name}}】
 
-## 流程概述
+{i18n.t('components.template_demo_page.k0')}
 {{description}}
 
-## 审批步骤
+{i18n.t('components.template_demo_page.k1')}
 
-### 步骤1: 部门初审
-- 负责人：{{step1_assignee}}
-- 任务：{{step1_task}}
-- 期限：{{step1_deadline}}天
+{i18n.t('components.template_demo_page.1_2')}
+{i18n.t('components.template_demo_page.k3')}{{step1_assignee}}
+{i18n.t('components.template_demo_page.k4')}{{step1_task}}
+{i18n.t('components.template_demo_page.k5')}{{step1_deadline}}{i18n.t('components.template_demo_page.k6')}
 
-### 步骤2: 财务复核
-- 负责人：{{step2_assignee}}
-- 任务：{{step2_task}}
-- 期限：{{step2_deadline}}天
+{i18n.t('components.template_demo_page.2_7')}
+{i18n.t('components.template_demo_page.k8')}{{step2_assignee}}
+{i18n.t('components.template_demo_page.k9')}{{step2_task}}
+{i18n.t('components.template_demo_page.k10')}{{step2_deadline}}{i18n.t('components.template_demo_page.k11')}
 
-### 步骤3: 最终审批
-- 负责人：{{step3_assignee}}
-- 任务：{{step3_task}}
-- 期限：{{step3_deadline}}天
+{i18n.t('components.template_demo_page.3_12')}
+{i18n.t('components.template_demo_page.k13')}{{step3_assignee}}
+{i18n.t('components.template_demo_page.k14')}{{step3_task}}
+{i18n.t('components.template_demo_page.k15')}{{step3_deadline}}{i18n.t('components.template_demo_page.k16')}
 
 ---
-创建人：{{creator}}
-创建时间：{{today}}`,
+{i18n.t('components.template_demo_page.k17')}{{creator}}
+{i18n.t('components.template_demo_page.k18')}{{today}}`,
     variables: [
       {
         key: 'workflow_name',
@@ -127,29 +127,29 @@ const mockTemplates: Template[] = [
     category_id: 'cat2',
     module: 'hr',
     description: i18n.t('components.template_demo_page.k15'),
-    content: `请假申请单
+    content: `{i18n.t('components.template_demo_page.k19')}
 
-申请人：{{applicant_name}}
-部门：{{department}}
-职位：{{position}}
+{i18n.t('components.template_demo_page.k20')}{{applicant_name}}
+{i18n.t('components.template_demo_page.k21')}{{department}}
+{i18n.t('components.template_demo_page.k22')}{{position}}
 
-请假类型：{{leave_type}}
-开始日期：{{start_date}}
-结束日期：{{end_date}}
-共计：{{days}}天
+{i18n.t('components.template_demo_page.k23')}{{leave_type}}
+{i18n.t('components.template_demo_page.k24')}{{start_date}}
+{i18n.t('components.template_demo_page.k25')}{{end_date}}
+{i18n.t('components.template_demo_page.k26')}{{days}}{i18n.t('components.template_demo_page.k27')}
 
-{{#if is_urgent}}⚠️ 紧急申请，请优先处理{{/if}}
+{{#if is_urgent}}⚠️ {i18n.t('components.template_demo_page.k28')}{{/if}}
 
-请假原因：
+{i18n.t('components.template_demo_page.k29')}
 {{reason}}
 
-{{#if has_attachment}}📎 附件已上传{{/if}}
+{{#if has_attachment}}📎 {i18n.t('components.template_demo_page.k30')}{{/if}}
 
-审批流程：
-1. 直属上级审批：{{manager_name}}
-2. HR审核：{{hr_assignee}}
+{i18n.t('components.template_demo_page.k31')}
+{i18n.t('components.template_demo_page.1_32')}{{manager_name}}
+{i18n.t('components.template_demo_page.2hr_33')}{{hr_assignee}}
 
-申请时间：{{apply_time}}`,
+{i18n.t('components.template_demo_page.k34')}{{apply_time}}`,
     variables: [
       { key: 'applicant_name', label: i18n.t('components.template_demo_page.k16'), type: 'user', required: true },
       { key: 'department', label: i18n.t('components.template_demo_page.k17'), type: 'string', required: true },
@@ -214,23 +214,23 @@ const mockTemplates: Template[] = [
     category_id: 'cat3',
     module: 'finance',
     description: i18n.t('components.template_demo_page.k43'),
-    content: `报销申请
+    content: `{i18n.t('components.template_demo_page.k35')}
 
-申请人：{{applicant_name}}
-部门：{{department}}
+{i18n.t('components.template_demo_page.k36')}{{applicant_name}}
+{i18n.t('components.template_demo_page.k37')}{{department}}
 
-报销类型：{{expense_type}}
-报销金额：¥{{amount}}
+{i18n.t('components.template_demo_page.k38')}{{expense_type}}
+{i18n.t('components.template_demo_page.k39')}¥{{amount}}
 
-明细：
+{i18n.t('components.template_demo_page.k40')}
 {{details}}
 
-{{#if is_over_budget}}⚠️ 超出预算，请说明原因{{/if}}
+{{#if is_over_budget}}⚠️ {i18n.t('components.template_demo_page.k41')}{{/if}}
 
-{{#if is_over_budget}}原因说明：{{over_budget_reason}}{{/if}}
+{{#if is_over_budget}}{i18n.t('components.template_demo_page.k42')}{{over_budget_reason}}{{/if}}
 
-审批人：{{approver_name}}
-提交时间：{{submit_time}}`,
+{i18n.t('components.template_demo_page.k43')}{{approver_name}}
+{i18n.t('components.template_demo_page.k44')}{{submit_time}}`,
     variables: [
       { key: 'applicant_name', label: i18n.t('components.template_demo_page.k44'), type: 'user', required: true },
       { key: 'department', label: i18n.t('components.template_demo_page.k45'), type: 'string', required: true },
@@ -793,7 +793,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                 variant='body2'
                 sx={{ color: 'grey.500' }}
               >
-                共 {templates.length} 个模板
+                {i18n.t('components.template_demo_page.k45')} {templates.length} {i18n.t('components.template_demo_page.k46')}
               </Typography>
             </Box>
             <Box
@@ -964,13 +964,13 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                         variant='caption'
                         sx={{ color: 'grey.400' }}
                       >
-                        版本 {template.version}
+                        {i18n.t('components.template_demo_page.k47')} {template.version}
                       </Typography>
                       <Typography
                         variant='caption'
                         sx={{ color: 'grey.400' }}
                       >
-                        查看 {template.view_count}
+                        {i18n.t('components.template_demo_page.k48')} {template.view_count}
                       </Typography>
                     </Box>
                   </CardContent>

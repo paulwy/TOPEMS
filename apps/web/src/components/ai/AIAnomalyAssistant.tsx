@@ -320,7 +320,7 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
                             <Typography variant='body2'>
                               [i18n.t('components.ai_anomaly_assistant.k18')]: <strong>{anomaly.value.toFixed(2)}</strong>
                               {anomaly.expected !== undefined && (
-                                <span> | 预期值: {anomaly.expected.toFixed(2)}</span>
+                                <span>{i18n.t('components.ai_anomaly_assistant.k0')}</span>
                               )}
                             </Typography>
                             <Typography variant='body2'>

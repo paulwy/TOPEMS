@@ -1146,5 +1146,18 @@
   "monitor.alert_rule.k21": "编辑告警规则",
   "monitor.alert_rule.k22": "告警规则详情",
   "monitor.monitor_dashboard_page.k0": "MonitorDashboardPage 页面开发中",
-  "monitor.monitor_metrics_page.k0": "MonitorMetricsPage 页面开发中"
+  "monitor.monitor_metrics_page.k0": "MonitorMetricsPage 页面开发中",
+  "slo_status_page.k0": "TODO: translate",
+  "slo_status_page.k1": "TODO: translate",
+  "slo_status_page.24h_2": "TODO: translate",
+  "slo_status_page.6h_3": "TODO: translate",
+  "slo_status_page.1h_4": "TODO: translate",
+  "slo_status_page.slo_5": "TODO: translate",
+  "slo_status_page.v0v1_6": "TODO: translate",
+  "metrics_dashboard_page.30_0": "TODO: translate",
+  "metrics_dashboard_page.k1": "TODO: translate",
+  "metrics_dashboard_page.24_2": "TODO: translate",
+  "metrics_dashboard_page.k3": "TODO: translate",
+  "metrics_dashboard_page.k4": "TODO: translate",
+  "metrics_dashboard_page.k5": "TODO: translate"
 }

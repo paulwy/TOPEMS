@@ -241,7 +241,7 @@ export const FaqPage: React.FC = () => {
                           variant='body2'
                           color='text.secondary'
                         >
-                          查看 {faq.views.toLocaleString()}
+                          {i18n.t('pages.faq_page.k0')} {faq.views.toLocaleString()}
                         </Typography>
                       </Box>
                     </AccordionSummary>

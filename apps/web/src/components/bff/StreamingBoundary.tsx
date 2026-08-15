@@ -140,7 +140,7 @@ const DefaultLayerErrorFallback: React.FC<{
         color='error.main'
         sx={{ fontWeight: 600 }}
       >
-        层 [{layerName}] 加载失败
+        {i18n.t('components.streaming_boundary.k0')}{layerName}{i18n.t('components.streaming_boundary.k1')}
       </Typography>
     </Stack>
     <Typography
@@ -352,7 +352,7 @@ export const StreamingBoundary: React.FC<StreamingBoundaryProps> = ({
                   color='error.main'
                   sx={{ ml: 1 }}
                 >
-                  ({Object.keys(trackState.errors).length} 层失败)
+                  ({Object.keys(trackState.errors).length} {i18n.t('components.streaming_boundary.k2')}
                 </Typography>
               )}
             </Typography>

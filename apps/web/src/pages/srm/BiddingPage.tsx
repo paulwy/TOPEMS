@@ -261,7 +261,7 @@ const BiddingPage: React.FC = () => {
         maxWidth='lg'
         fullWidth
       >
-        <DialogTitle>投标人列表 - {viewingBidding?.bidding_no}</DialogTitle>
+        <DialogTitle>{i18n.t('pages.bidding_page.k0')}</DialogTitle>
         <DialogContent>
           <Table size='small'>
             <TableHead>

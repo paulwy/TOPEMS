@@ -340,7 +340,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
             variant='caption'
             color='text.secondary'
           >
-            共 {sessions.length} 条对话记录
+            {i18n.t('components.chat_history.k0')} {sessions.length} {i18n.t('components.chat_history.k1')}
           </Typography>
         </Box>
       </Box>

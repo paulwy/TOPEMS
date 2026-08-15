@@ -102,7 +102,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
               </Select>
             </FormControl>
             <FormControl>
-              <InputLabel size='small'>X轴字段</InputLabel>
+              <InputLabel size='small'>{i18n.t('templates:layout_panel.k5')}</InputLabel>
               <Select
                 size='small'
                 value={layout.chart?.xAxisField || ''}
@@ -133,7 +133,7 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
               </Select>
             </FormControl>
             <FormControl>
-              <InputLabel size='small'>Y轴字段</InputLabel>
+              <InputLabel size='small'>{i18n.t('templates:layout_panel.k4')}</InputLabel>
               <Select
                 size='small'
                 multiple
@@ -299,10 +299,10 @@ export const LayoutPanel: React.FC<LayoutPanelProps> = ({
               }))
             }
           >
-            <MenuItem value={5}>5条/页</MenuItem>
-            <MenuItem value={10}>10条/页</MenuItem>
-            <MenuItem value={20}>20条/页</MenuItem>
-            <MenuItem value={50}>50条/页</MenuItem>
+            <MenuItem value={5}>{i18n.t('templates:layout_panel.k3')}</MenuItem>
+            <MenuItem value={10}>{i18n.t('templates:layout_panel.10_2')}</MenuItem>
+            <MenuItem value={20}>{i18n.t('templates:layout_panel.20_1')}</MenuItem>
+            <MenuItem value={50}>{i18n.t('templates:layout_panel.50_0')}</MenuItem>
           </Select>
         </FormControl>
       )}

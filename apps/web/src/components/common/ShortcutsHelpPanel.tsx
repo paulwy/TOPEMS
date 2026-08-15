@@ -52,7 +52,7 @@ export const ShortcutsHelpPanel = ({ isOpen, onClose }: ShortcutsHelpPanelProps)
           color='text.secondary'
           sx={{ mb: 3 }}
         >
-          按下{' '}
+          {i18n.t('components.shortcuts_help_panel.k0')}{' '}
           <Chip
             size='small'
             label='Ctrl + ?'

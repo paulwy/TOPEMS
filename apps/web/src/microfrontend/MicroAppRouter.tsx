@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { RemoteLoader } from './RemoteLoader';
 import { getEnabledModules } from './config';
+import i18n from '@/i18n';
 
 /**
  * 微前端路由组件
@@ -27,7 +28,7 @@ export const MicroAppRouter: React.FC<{ userPermissions: string[] }> = ({ userPe
             <RemoteLoader
               moduleName={module.name}
               component='./App'
-              fallback={<div>加载 {module.displayName}...</div>}
+              fallback={<div>{i18n.t('microfrontend.micro_app_router.k0')}</div>}
             />
           }
         />

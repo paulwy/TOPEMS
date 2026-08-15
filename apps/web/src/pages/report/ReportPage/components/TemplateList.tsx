@@ -136,10 +136,10 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         color: 'grey.600',
                       }}
                     >
-                      <span>编码: {template.code}</span>
-                      <span>类型: {getReportTypeName(template.report_type, reportTypes)}</span>
-                      <span>列数: {template.columns.length}</span>
-                      <span>输出格式: {template.outputformat.toUpperCase()}</span>
+                      <span>{i18n.t('pages.template_list.templatecode_0')}</span>
+                      <span>{i18n.t('pages.template_list.k1')}</span>
+                      <span>{i18n.t('pages.template_list.k2')}</span>
+                      <span>{i18n.t('pages.template_list.k3')}</span>
                     </Box>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

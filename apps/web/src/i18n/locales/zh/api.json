@@ -5,5 +5,12 @@
   "api.index.k3": "缓存未命中",
   "api._mock.k0": "临时措施：隔离库存，加严检验",
   "api._mock.k1": "验证结果：措施有效，合格率恢复",
-  "api._mock.k2": "团队认可：表彰相关人员"
+  "api._mock.k2": "团队认可：表彰相关人员",
+  "api.index.string_1": ": string; // 对比期间",
+  "api.index.k4": ": string[]; // 指定科目，不指定则全部",
+  "api.index.k5": "consolidation_id: string; // 合并主体ID",
+  "api.index.boolean_6": ": boolean; // 抵消内部交易",
+  "api.index.boolean_7": ": boolean; // 包含附注",
+  "api.index.boolean_8": ": boolean; // 包含对比数据",
+  "api.index.k9": "periods: string[]; // 报表期间，如 ["
 }

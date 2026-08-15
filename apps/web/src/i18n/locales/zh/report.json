@@ -46,5 +46,9 @@
     "subscribe_success": "订阅成功",
     "confirm_delete": "确认删除？",
     "no_data": "暂无数据"
-  }
+  },
+  "report_viewer.k0": "\n              [i18n.t('pages.report_viewer.k7')]: {{v0}} 至 {{v1}}\n            ",
+  "report_viewer.k1": "\n                显示 {{v0}} -{{v1}}\n                {{v2}} 条， 共{{v3}}\n                {{v4}} 条\n              ",
+  "report_viewer.v0_2": "\n              {{v0}} 条匹配\n            ",
+  "report_viewer.v0_3": "共 {{v0}} 条记录\n              "
 }

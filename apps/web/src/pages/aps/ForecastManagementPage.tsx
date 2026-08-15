@@ -454,7 +454,7 @@ const ForecastManagementPage: React.FC = () => {
         <DialogTitle>{i18n.t('pages.forecast_management_page.k37')}</DialogTitle>
         <DialogContent>
           <Typography>
-            确认要删除需求预测「{deleteTarget?.forecast_no}」吗？此操作不可撤销。
+            {i18n.t('pages.forecast_management_page.k0')}「{deleteTarget?.forecast_no}」{i18n.t('pages.forecast_management_page.k1')}
           </Typography>
         </DialogContent>
         <DialogActions>

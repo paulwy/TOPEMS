@@ -586,7 +586,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                   variant='body1'
                   sx={{ fontWeight: 500 }}
                 >
-                  搜索结果 ({searchResults.length})
+                  {i18n.t('components.document_manager.k0')}{searchResults.length})
                 </Typography>
                 {searchResults.map((result, index) => (
                   <Card

@@ -104,7 +104,7 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
               </div>
               <div style={{ fontSize: 14, color: 'text.secondary' }}>
                 {chatRoom.room_type === 'direct' ? i18n.t('im.chat_settings_modal.k3') : i18n.t('im.chat_settings_modal.k2')} ·{' '}
-                {chatRoom.members?.length || 0} 人
+                {chatRoom.members?.length || 0} {i18n.t('components.chat_settings_modal.k0')}
               </div>
             </div>
           </div>

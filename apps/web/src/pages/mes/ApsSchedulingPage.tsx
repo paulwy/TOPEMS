@@ -288,7 +288,7 @@ const ApsSchedulingPage: React.FC = () => {
                         {i18n.t('pages.aps_scheduling_page.k11')}
                       </Typography>
                       <Typography variant='caption'>
-                        / {scheduleResult.total_orders} 总计
+                        / {scheduleResult.total_orders} {i18n.t('pages.aps_scheduling_page.k0')}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -859,7 +859,7 @@ const ApsSchedulingPage: React.FC = () => {
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                               <Typography variant='body2'>{r.resource_name}</Typography>
                               <Typography variant='caption'>
-                                利用率 {r.utilization_rate.toFixed(1)}% | 队列 {r.queue_length}
+                                {i18n.t('pages.aps_scheduling_page.k1')} {r.utilization_rate.toFixed(1)}% | {i18n.t('pages.aps_scheduling_page.k2')} {r.queue_length}
                               </Typography>
                             </Box>
                             <LinearProgress
@@ -989,7 +989,7 @@ const ApsSchedulingPage: React.FC = () => {
                     {i18n.t('pages.aps_scheduling_page.k48')}
                   </Typography>
                   <Typography variant='body1'>
-                    {selectedItem.processing_time_hours.toFixed(2)} 小时
+                    {selectedItem.processing_time_hours.toFixed(2)} {i18n.t('pages.aps_scheduling_page.k3')}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
@@ -999,7 +999,7 @@ const ApsSchedulingPage: React.FC = () => {
                   >
                     {i18n.t('pages.aps_scheduling_page.k49')}
                   </Typography>
-                  <Typography variant='body1'>{selectedItem.setup_time_hours} 小时</Typography>
+                  <Typography variant='body1'>{i18n.t('pages.aps_scheduling_page.k0')}</Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography

@@ -248,12 +248,10 @@ export default function EquipmentManagementPage() {
               mb: 2,
               fontSize: 14,
             }}
-          >
-            {selectedEquipment?.name} - 创建设备维护记录
-          </Box>
+          >{i18n.t('mes:equipment_management_page.k4', { v0: (selectedEquipment?.name) })}</Box>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='maintenance_type'>维护类型 *</InputLabel>
+              <InputLabel htmlFor='maintenance_type'>{i18n.t('mes:equipment_management_page.k3')}</InputLabel>
               <FormControl
                 fullWidth
                 size='small'
@@ -276,7 +274,7 @@ export default function EquipmentManagementPage() {
               </FormControl>
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='maintainer'>维护人员 *</InputLabel>
+              <InputLabel htmlFor='maintainer'>{i18n.t('mes:equipment_management_page.k2')}</InputLabel>
               <TextField
                 id='maintainer'
                 required
@@ -288,7 +286,7 @@ export default function EquipmentManagementPage() {
               />
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='start_time'>开始时间 *</InputLabel>
+              <InputLabel htmlFor='start_time'>{i18n.t('mes:equipment_management_page.k1')}</InputLabel>
               <TextField
                 id='start_time'
                 type='datetime-local'
@@ -328,7 +326,7 @@ export default function EquipmentManagementPage() {
               />
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='description'>维护描述 *</InputLabel>
+              <InputLabel htmlFor='description'>{i18n.t('mes:equipment_management_page.k0')}</InputLabel>
               <TextField
                 id='description'
                 required

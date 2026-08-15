@@ -55,34 +55,34 @@ const recentDocuments = [
   { id: '3', name: i18n.t('pages.ai_document_analysis_page.pdf_2'), type: 'pdf', size: '5.1 MB', date: '2024-06-18' },
 ];
 
-const summaryResult = `本文档是一份企业员工手册，主要内容包括：
+const summaryResult = `{i18n.t('pages.ai_document_analysis_page.k0')}
 
-1. 公司简介与企业文化
-   - 公司成立背景、发展历程和愿景使命
-   - 核心价值观：创新、专业、诚信、共赢
+{i18n.t('pages.ai_document_analysis_page.1_1')}
+   {i18n.t('pages.ai_document_analysis_page.k2')}
+   {i18n.t('pages.ai_document_analysis_page.k3')}
 
-2. 人力资源管理制度
-   - 招聘与录用流程
-   - 试用期规定与转正流程
-   - 考勤管理制度（工作时间、请假流程）
-   - 薪酬福利体系
+{i18n.t('pages.ai_document_analysis_page.2_4')}
+   {i18n.t('pages.ai_document_analysis_page.k5')}
+   {i18n.t('pages.ai_document_analysis_page.k6')}
+   {i18n.t('pages.ai_document_analysis_page.k7')}
+   {i18n.t('pages.ai_document_analysis_page.k8')}
 
-3. 员工行为规范
-   - 职业道德准则
-   - 办公场所行为规范
-   - 信息安全与保密规定
+{i18n.t('pages.ai_document_analysis_page.3_9')}
+   {i18n.t('pages.ai_document_analysis_page.k10')}
+   {i18n.t('pages.ai_document_analysis_page.k11')}
+   {i18n.t('pages.ai_document_analysis_page.k12')}
 
-4. 培训与发展
-   - 新员工入职培训
-   - 职业发展通道
-   - 绩效考核制度
+{i18n.t('pages.ai_document_analysis_page.4_13')}
+   {i18n.t('pages.ai_document_analysis_page.k14')}
+   {i18n.t('pages.ai_document_analysis_page.k15')}
+   {i18n.t('pages.ai_document_analysis_page.k16')}
 
-5. 奖惩制度
-   - 奖励种类与条件
-   - 违纪处分规定
-   - 申诉流程
+{i18n.t('pages.ai_document_analysis_page.5_17')}
+   {i18n.t('pages.ai_document_analysis_page.k18')}
+   {i18n.t('pages.ai_document_analysis_page.k19')}
+   {i18n.t('pages.ai_document_analysis_page.k20')}
 
-总体而言，这份员工手册系统地规范了员工的权利和义务，是企业管理的重要指导性文件。`;
+{i18n.t('pages.ai_document_analysis_page.k21')}`;
 
 const keyPoints = [
   i18n.t('pages.ai_document_analysis_page.k3'),

@@ -39,24 +39,24 @@ export default function WmsAbcAnalysisPage() {
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>ABC 分类分析（帕累托 70/20/10）</h1>
+        <h1 className='text-2xl font-bold'>{i18n.t('wms:wms_abc_analysis_page.abc702010_5')}</h1>
       </div>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <div className='rounded-lg border-l-4 border-red-500 p-4'>
-          <p className='text-sm text-gray-600'>A 类（高价值，70% 金额）</p>
+          <p className='text-sm text-gray-600'>{i18n.t('wms:wms_abc_analysis_page.a70_4')}</p>
           <p className='mt-1 text-3xl font-bold text-red-600'>
             {abc.find((x) => x.category === 'A')?.count ?? 0} SKU
           </p>
         </div>
         <div className='rounded-lg border-l-4 border-amber-500 p-4'>
-          <p className='text-sm text-gray-600'>B 类（中价值，20% 金额）</p>
+          <p className='text-sm text-gray-600'>{i18n.t('wms:wms_abc_analysis_page.b20_3')}</p>
           <p className='mt-1 text-3xl font-bold text-amber-600'>
             {abc.find((x) => x.category === 'B')?.count ?? 0} SKU
           </p>
         </div>
         <div className='rounded-lg border-l-4 border-green-500 p-4'>
-          <p className='text-sm text-gray-600'>C 类（低价值，10% 金额）</p>
+          <p className='text-sm text-gray-600'>{i18n.t('wms:wms_abc_analysis_page.c10_2')}</p>
           <p className='mt-1 text-3xl font-bold text-green-600'>
             {abc.find((x) => x.category === 'C')?.count ?? 0} SKU
           </p>
@@ -134,12 +134,12 @@ export default function WmsAbcAnalysisPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>Top 10 高价值 SKU</h3>
+        <h3 className='mb-2 font-semibold'>{i18n.t('wms:wms_abc_analysis_page.top10sku_1')}</h3>
         <div className='overflow-x-auto'>
           <table className='w-full text-sm'>
             <thead className='bg-gray-50'>
               <tr>
-                <th className='px-3 py-2 text-left font-medium'>SKU 编码</th>
+                <th className='px-3 py-2 text-left font-medium'>{i18n.t('wms:wms_abc_analysis_page.sku_0')}</th>
                 <th className='px-3 py-2 text-left font-medium'>{i18n.t('pages.wms_abc_analysis_page.k3')}</th>
                 <th className='px-3 py-2 text-left font-medium'>{i18n.t('pages.wms_abc_analysis_page.k4')}</th>
                 <th className='px-3 py-2 text-right font-medium'>{i18n.t('pages.wms_abc_analysis_page.k5')}</th>

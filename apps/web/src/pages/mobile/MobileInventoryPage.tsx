@@ -728,10 +728,10 @@ const MobileInventoryPage: React.FC = () => {
                               color='text.secondary'
                               sx={{ display: 'block', mb: 0.5 }}
                             >
-                              {order.total_items}种物料
+                              {order.total_items}{i18n.t('pages.mobile_inventory_page.k0')}
                             </Typography>
                             <Typography variant='body2'>
-                              {order.total_quantity.toLocaleString()}件
+                              {order.total_quantity.toLocaleString()}{i18n.t('pages.mobile_inventory_page.k1')}
                             </Typography>
                           </Box>
                         }
@@ -802,10 +802,10 @@ const MobileInventoryPage: React.FC = () => {
                               color='text.secondary'
                               sx={{ display: 'block', mb: 0.5 }}
                             >
-                              {order.total_items}种物料
+                              {order.total_items}{i18n.t('pages.mobile_inventory_page.k2')}
                             </Typography>
                             <Typography variant='body2'>
-                              {order.total_quantity.toLocaleString()}件
+                              {order.total_quantity.toLocaleString()}{i18n.t('pages.mobile_inventory_page.k3')}
                             </Typography>
                           </Box>
                         }

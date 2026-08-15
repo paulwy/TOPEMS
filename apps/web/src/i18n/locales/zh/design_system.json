@@ -34,5 +34,10 @@
   "design_system.design-lint.k5": "✅ 通过",
   "design_system.design-lint.k6": "❌ 未通过",
   "design_system.design-lint.k7": "✅ 通过",
-  "design_system.design-lint.k8": "❌ 未通过"
+  "design_system.design-lint.k8": "❌ 未通过",
+  "design_system_panel.k0": "\n                (要求 {{v0}}:1)\n              ",
+  "design_system_panel.k1": "\n                切换 {{v0}} 模式\n              ",
+  "design_system_panel.k2": " 间距 & 圆角\n          ",
+  "design_system_panel.k3": " 排版\n          ",
+  "design_system_panel.k4": " 颜色调色板\n      "
 }

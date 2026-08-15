@@ -85,7 +85,7 @@ export const FieldSelector: React.FC<FieldSelectorProps> = ({
             variant='subtitle2'
             sx={{ fontWeight: 600, color: 'grey.600' }}
           >
-            已选字段 ({selectedFields.length})
+            {i18n.t('components.field_selector.k0')}{selectedFields.length})
           </Typography>
           <Typography
             variant='caption'

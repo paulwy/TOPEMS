@@ -107,7 +107,7 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
                 fontWeight: 500,
               }}
             >
-              已选择 {selectedIds.length} 项
+              {i18n.t('components.batch_operations.k0')} {selectedIds.length} {i18n.t('components.batch_operations.k1')}
             </Box>
           )}
           {!hasSelection && (
@@ -115,7 +115,7 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
               variant='body2'
               color='text.disabled'
             >
-              共 {totalItems} 项
+              {i18n.t('components.batch_operations.k2')} {totalItems} {i18n.t('components.batch_operations.k3')}
             </Typography>
           )}
         </Box>

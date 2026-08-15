@@ -424,7 +424,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                 }}
               >
                 <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
-                  已选择 {selectedColumns.length}/{availableColumns.length} 列
+                  {i18n.t('components.enhanced_export_modal.k0')} {selectedColumns.length}/{availableColumns.length} {i18n.t('components.enhanced_export_modal.k1')}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2 }}>
                   <Button

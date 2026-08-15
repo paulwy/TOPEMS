@@ -547,7 +547,7 @@ export function subscribeServiceHealth(
 
     ws.onclose = () => {
       if (!closed) {
-        setTimeout(connect, 5000); // 自动重连
+        {i18n.t('api.index.k0')}
       }
     };
   };

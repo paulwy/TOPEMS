@@ -135,7 +135,7 @@ const TreeNodeComponent: React.FC<{
           variant='caption'
           color='text.secondary'
         >
-          持股 {node.ownership_percentage}%
+          {i18n.t('pages.company_structure_page.k0')} {node.ownership_percentage}%
         </Typography>
       </Box>
       {hasChildren && isExpanded && (

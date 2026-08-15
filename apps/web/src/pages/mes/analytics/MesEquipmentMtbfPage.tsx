@@ -62,7 +62,7 @@ export default function MesEquipmentMtbfPage() {
   return (
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">设备 MTBF / MTTR 分析</h1>
+        <h1 className="text-2xl font-bold">{i18n.t('mes:mes_equipment_mtbf_page.mtbfmttr_3')}</h1>
         <select
           value={severity}
           onChange={(e) => setSeverity(e.target.value)}
@@ -77,7 +77,7 @@ export default function MesEquipmentMtbfPage() {
       </div>
 
       <div className="rounded-lg border p-4">
-        <h3 className="mb-2 font-semibold">MTBF 12 周趋势</h3>
+        <h3 className="mb-2 font-semibold">{i18n.t('mes:mes_equipment_mtbf_page.mtbf12_2')}</h3>
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={TREND_12W}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -114,7 +114,7 @@ export default function MesEquipmentMtbfPage() {
         </div>
 
         <div className="rounded-lg border p-4">
-          <h3 className="mb-2 font-semibold">MTBF vs OEE 散点</h3>
+          <h3 className="mb-2 font-semibold">{i18n.t('mes:mes_equipment_mtbf_page.mtbfvsoee_1')}</h3>
           <ResponsiveContainer width="100%" height={260}>
             <ScatterChart>
               <CartesianGrid />
@@ -145,7 +145,7 @@ export default function MesEquipmentMtbfPage() {
                 return (
                   <tr key={row.reason} className="border-b">
                     <td className="px-3 py-2">{row.reason}</td>
-                    <td className="px-3 py-2">{row.frequency} 次</td>
+                    <td className="px-3 py-2">{i18n.t('mes:mes_equipment_mtbf_page.v0_0', { v0: (row.frequency) })}</td>
                     <td className="px-3 py-2">
                       {((row.frequency / total) * 100).toFixed(1)}%
                     </td>

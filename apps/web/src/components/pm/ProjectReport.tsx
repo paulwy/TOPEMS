@@ -325,7 +325,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
 
       <Card>
         <CardHeader>
-          <Typography variant='h6'>CPI/SPI 趋势分析</Typography>
+          <Typography variant='h6'>{i18n.t('components.project_report.pipi_0')}</Typography>
         </CardHeader>
         <CardContent>
           <Box sx={{ height: 256 }}>
@@ -548,7 +548,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                       key={benefit.id}
                       hover
                     >
-                      <TableCell sx={{ color: 'grey.900' }}>第{index + 1}期</TableCell>
+                      <TableCell sx={{ color: 'grey.900' }}>{i18n.t('components.project_report.index1_1')}</TableCell>
                       <TableCell align='right'>
                         <Badge
                           sx={{

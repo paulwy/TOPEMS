@@ -242,7 +242,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
                       }}
                     />
                   )}
-                  {getMemberCount()}人
+                  {getMemberCount()}{i18n.t('components.chat_room_item.k0')}
                 </span>
               )}
               {chatRoom.room_type === 'direct' && (

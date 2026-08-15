@@ -133,7 +133,7 @@ export default function QmsIssueDetailPage() {
             <div className='rounded-lg border p-4'>
               <p className='mb-2 text-sm font-semibold text-gray-700'>{i18n.t('qms.qms_issue_detail_page.8d_16')}</p>
               <p className='text-sm text-gray-600'>
-                共 {eightDReports.length} 个 8D 报告，可在 8D 报告列表中查看详情。
+                {i18n.t('pages.qms_issue_detail_page.k0')} {eightDReports.length} {i18n.t('pages.qms_issue_detail_page.k1')}
               </p>
             </div>
           )}

@@ -426,13 +426,13 @@ const TemplateManagementPage: React.FC = () => {
                       variant='body2'
                       color='text.secondary'
                     >
-                      模块：{template.module}
+                      {i18n.t('pages.template_management_page.k0')}{template.module}
                     </Typography>
                     <Typography
                       variant='body2'
                       color='text.secondary'
                     >
-                      变量数：{template.variables?.length || 0}
+                      {i18n.t('pages.template_management_page.k1')}{template.variables?.length || 0}
                     </Typography>
                   </Box>
 
@@ -709,7 +709,7 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
               size='small'
               required
             >
-              <InputLabel>分类 *</InputLabel>
+              {i18n.t('pages.template_management_page.k2')}
               <Select
                 value={formData.category_id || ''}
                 label={i18n.t('pages.template_management_page.k8')}
@@ -730,7 +730,7 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
               size='small'
               required
             >
-              <InputLabel>所属模块 *</InputLabel>
+              {i18n.t('pages.template_management_page.k3')}
               <Select
                 value={formData.module}
                 label={i18n.t('pages.template_management_page.k9')}
@@ -772,7 +772,7 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
             variant='caption'
             color='text.secondary'
           >
-            使用 {'{{variable_name}}'} 格式定义变量
+            {i18n.t('pages.template_management_page.k4')} {'{{variable_name}}'} {i18n.t('pages.template_management_page.k5')}
           </Typography>
         </Box>
       </DialogContent>
@@ -828,9 +828,9 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, o
               fontSize: '0.875rem',
             }}
           >
-            <Typography variant='body2'>编码：{template.code}</Typography>
-            <Typography variant='body2'>分类：{template.category_name || '未分类'}</Typography>
-            <Typography variant='body2'>模块：{template.module}</Typography>
+            <Typography variant='body2'>{i18n.t('pages.template_management_page.templatecode_0')}</Typography>
+            <Typography variant='body2'>分类：{template.category_name || i18n.t('pages.template_management_page.k0')}</Typography>
+            <Typography variant='body2'>{i18n.t('pages.template_management_page.templatemodule_1')}</Typography>
           </Box>
           {template.description && (
             <Typography

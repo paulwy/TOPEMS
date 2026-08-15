@@ -1002,7 +1002,7 @@ const SuspenseStatsPanel: React.FC = () => {
                     color='text.secondary'
                     sx={{ display: 'block' }}
                   >
-                    {record.route} · 优先级 {record.priority}
+                    {record.route} {i18n.t('components.performance_panel.k0')} {record.priority}
                   </Typography>
                 )}
               </Box>

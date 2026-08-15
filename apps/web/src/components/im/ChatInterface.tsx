@@ -726,7 +726,7 @@ export const ChatInterface: React.FC = () => {
                       }}
                     >
                       <span style={{ fontSize: 14, color: 'yellow.800' }}>
-                        找到 {filteredMessages.length} 条匹配消息
+                        {i18n.t('components.chat_interface.k0')} {filteredMessages.length} {i18n.t('components.chat_interface.k1')}
                       </span>
                     </div>
                   )}

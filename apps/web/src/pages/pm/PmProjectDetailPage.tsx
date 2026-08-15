@@ -460,7 +460,7 @@ const PmProjectDetailPage: React.FC = () => {
                             variant='body2'
                             sx={{ color: 'grey.400', fontSize: '0.75rem' }}
                           >
-                            至 {formatDate(phase.end_date)}
+                            {i18n.t('pages.pm_project_detail_page.k0')} {formatDate(phase.end_date)}
                           </Typography>
                         </Box>
                       </TableCell>

@@ -115,7 +115,7 @@ const ProfileSecurityPanel: React.FC<ProfileSecurityPanelProps> = ({
                 variant='body2'
                 color='text.secondary'
               >
-                {user.email} 已验证
+                {user.email} {i18n.t('pages.profile_security_panel.k0')}
               </Typography>
             </Box>
           </Box>

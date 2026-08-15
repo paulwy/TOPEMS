@@ -373,7 +373,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           color='text.secondary'
           sx={{ mt: 0.5 }}
         >
-          最多 {maxCount} 个文件，单个不超过 {maxSize}MB，总计不超过 {maxTotalSize}MB
+          {i18n.t('components.file_upload.k0')} {maxCount} {i18n.t('components.file_upload.k1')} {maxSize}{i18n.t('components.file_upload.mb_2')} {maxTotalSize}MB
         </Typography>
         {accept.length > 0 && (
           <Box

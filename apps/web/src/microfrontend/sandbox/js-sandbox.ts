@@ -405,7 +405,7 @@ export class JavaScriptSandbox {
         const key = String(prop);
         if (deny.has(key)) {
           console.warn(`${i18n.t('microfrontend.js-sandbox.k8')}${sandbox.moduleId}${i18n.t('microfrontend.js-sandbox.k9')}${key}`);
-          return true; // 静默拒绝
+          {i18n.t('microfrontend.js-sandbox.returntrue_0')}
         }
         // 记录原始值（首次写入时）
         if (!sandbox.originalValues.has(key) && key in target) {

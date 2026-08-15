@@ -356,7 +356,7 @@ const ProductionCostPage: React.FC = () => {
                   [i18n.t('pages.production_cost_page.k7')]: {formatCurrency(forecastData.confidence_interval[0])} -{' '}
                   {formatCurrency(forecastData.confidence_interval[1])}
                 </Typography>
-                <Typography variant='subtitle1'>趋势因子: {forecastData.trend_factor}</Typography>
+                <Typography variant='subtitle1'>{i18n.t('pages.production_cost_page.k0')}</Typography>
                 <Typography variant='subtitle1'>
                   [i18n.t('pages.production_cost_page.k8')]: {forecastData.seasonality_factor}
                 </Typography>

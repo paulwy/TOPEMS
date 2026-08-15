@@ -417,7 +417,7 @@ const MaterialPlanPage: React.FC = () => {
         <DialogTitle>{i18n.t('aps.material_plan_page.k42')}</DialogTitle>
         <DialogContent>
           <Typography>
-            确认要删除物料计划「{deleteTarget?.plan_no}」吗？此操作不可撤销。
+            {i18n.t('pages.material_plan_page.k0')}「{deleteTarget?.plan_no}」{i18n.t('pages.material_plan_page.k1')}
           </Typography>
         </DialogContent>
         <DialogActions>
