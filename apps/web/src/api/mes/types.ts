@@ -161,14 +161,22 @@ export interface PaginatedResult<T> {
 export interface ProductionOrder {
   id: string;
   order_number: string;
+  product_id?: string;
   product_name: string;
   product_code?: string;
   quantity: number;
+  completed_quantity?: number;
   unit?: string;
+  source?: string;
+  source_order_id?: string;
+  source_order_number?: string;
   scheduled_start_date?: string;
   scheduled_end_date?: string;
   actualStartDate?: string;
   actualEndDate?: string;
+  workshop_id?: string;
+  notes?: string;
+  approval_id?: string;
   status: string;
   priority?: string;
   created_at: string;
