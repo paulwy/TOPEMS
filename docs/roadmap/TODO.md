@@ -4987,4 +4987,51 @@ R12 三线规划落地当日，即完成 X-P0 的 Phase-1（四闸复核）与 P
 | 修改 | `scripts/ci/check-i18n.cjs` | --strict-zero/--upper-bound/--report-json + countByModule() 导出 + 双模式 |
 | 修改 | `docs/roadmap/TODO.md` | 本 R13 章节 + 9/9 验收表 Actual 全填 + Status 全 GREEN |
 
+---
+
+## 🎯 RN — 权限矩阵三向自动化验证（A 档严格全量 · P4 同构 Gate 模式）(Commits: 5 · 🔄 In Progress · Phase-0 Skeleton)
+
+> **来源**：质量横向专题 V222? 候选方向 — 后端路由 / 前端导航 / 权限标识常量三向自动验证（复用 Gate 模式）
+> **策略**：方案 X / A 档严格全量 — 单文件 P4 同构 CJS 脚本 · 3 Scanners · 6 Rules（3 FAIL + 3 WARN）· Dry-run 默认不红 · Integrity L2 防假绿 · CI Gate + Vitest Guardian 双保险（软锁 ≤ baseline 渐进收紧）
+> **Spec**: `docs/superpowers/specs/2026-08-16-permission-matrix-gate-design.md` (7 sections · 9 KPI)
+> **Plan**: `docs/superpowers/plans/2026-08-16-permission-matrix-gate.md` (5 commits · 9 steps · L0-L6 7 层测试金字塔)
+> **Scope Exclude**：NOT 自动修改任何 svc/*.rs 权限中间件 / apps/web modules permission/config 源代码（仅报告 file+line+code，吸收 847749 审查不越权原则）；shared-auth ModulePermission::parse 两段 vs 三段 bug 仅列 violation，由团队后续 PR 专门修复
+
+### 五阶段明细
+
+| Phase | 名称 | Steps | Status |
+|:-----:|------|:-----:|:------:|
+| Phase-0 | Gate 骨架 + CLI + Integrity L2 + TODO 占位（Commit 1） | [1] Skeleton CJS · CLI args 解析 · Integrity 4 minima · runGate() 纯函数导出 · TODO 章节占位 | 🔄 In Progress |
+| Phase-A | 3 Scanners 实现（Commit 2） | [2] SCAN_BACKEND require_permission() regex + 注释排除 · [3] SCAN_FRONTEND（modules config / navTree / v2 routes）· [4] SCAN_CONSTANTS（frontend PERMISSIONS 对象 keys + shared-auth ModuleCode×PermissionAction 笛卡尔） | ⏳ Pending |
+| Phase-B | 6 Rules 实现 + Baseline 实跑写 Artifact（Commit 3） | [5] R1/R2/R3 3 FAIL rules（format/existence/exact-match）· [6] R4/R5/R6 3 WARN rules（prefix-align/orphan/mapping-gap）→ Baseline JSON 写 N1/N2/N3 真实 violations | ⏳ Pending |
+| Phase-C | Vitest Guardian 双绿（Commit 4） | [7] permission-matrix-guard.test.ts · pnpm typecheck GREEN · vitest 4/4 assertions passed（Integrity + R1≤bR1 + R2≤bR2 + R3≤bR3，软锁 ≤ baseline）| ⏳ Pending |
+| Phase-D | 终态快照 + TODO 全填 + Push（Commit 5） | [8] final.json 快照 + TODO 9 KPI Actual 全填 + grep TBD 残留自检 = 0 + 5 commits 状态标记 ✅ · [9] pull --rebase + push | ⏳ Pending |
+
+### 9 KPI 验收表（A 档严格全量）
+
+| # | 类型 | 指标 | Baseline Actual（TBD · Phase-B 末尾填写） | Threshold | Final Actual | Status |
+|:-:|:----:|------|:----------------------:|----------:|:------------:|:------:|
+| 1 | FAIL | R1 Backend code 格式校验 violations | TBD | **== 0**（软锁 ≤ baseline） | TBD | 🔲 |
+| 2 | FAIL | R2 Backend code 常量表存在性 violations | TBD | **== 0**（软锁 ≤ baseline） | TBD | 🔲 |
+| 3 | FAIL | R3 Frontend nav code PERM 存在性 violations | TBD | **== 0**（软锁 ≤ baseline） | TBD | 🔲 |
+| 4 | WARN | R4 模块前缀前后端对齐 mismatches | TBD | ≤ 总数 5% | TBD | 🔲 |
+| 5 | WARN | R5 Orphan 孤儿权限码（静态未引用） | TBD | ≤ 50 条 或 ≤ 5% | TBD | 🔲 |
+| 6 | WARN | R6 Endpoint ↔ Nav 同模块映射缺口 | TBD | ≤ 20 条 | TBD | 🔲 |
+| A | Guard | Integrity L2 扫描量 4 项 | backendFiles≥50 · frontendConfigs≥20 · backendCodes≥100 · frontendNavCodes≥100 | All satisfied | TBD | 🔲 |
+| B | Guard | Vitest Guardian 4 assertions | R1≤bR1 · R2≤bR2 · R3≤bR3 · Integrity ✅ | **4/4 passed** | TBD | 🔲 |
+| C | Guard | CI Gate dry-run exit code | — | **== 0**（DRY-RUN 承诺） | TBD | 🔲 |
+
+### 新增/变更文件清单（10 files）
+
+| 操作 | 文件 | 作用 |
+|:----:|------|------|
+| 新建 | `scripts/ci/check-permission-matrix.cjs` | 核心 Gate（1 file · 3 scanners · 6 rules · Integrity L2 · dry-run 默认 · P4 同构导出 runGate()） |
+| 新建 | `apps/web/src/__tests__/permission-matrix-guard.test.ts` | Layer-2 Vitest Guardian（4 assertions · 软锁 ≤ baseline） |
+| 新建 | `docs/superpowers/specs/2026-08-16-permission-matrix-gate-design.md` | Spec · 7 sections · 9 KPI · Scope Exclude · 5 commits 9 steps |
+| 新建 | `docs/superpowers/plans/2026-08-16-permission-matrix-gate.md` | **本 Plan · 5 tasks · checkboxes** |
+| 新建 | `docs/roadmap/artifacts/rN-perm-matrix-baseline.json` | Phase-B 基线（R1/R2/R3 现存 violations 数 N1/N2/N3 · Guardian 软锁基准） |
+| 新建 | `docs/roadmap/artifacts/rN-perm-matrix-final.json` | Phase-D 终态（验收对比） |
+| 修改 | `docs/roadmap/TODO.md` | 本 RN 权限矩阵章节 + 5 阶段 + 9 KPI 验收表 + 10 files 清单 |
+| （可选） | `.github/workflows/ci.yml` | apps/web job 追加 `--dry-run` step（仅收集报告不 red，独立后续 PR 决定） |
+
 
