@@ -91,7 +91,7 @@ pub fn detect_search_type(query: &str) -> &'static str {
     "exact"
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SearchRequest {
     pub keyword: String,
     pub page: Option<i64>,
@@ -99,7 +99,7 @@ pub struct SearchRequest {
     pub modules: Option<Vec<String>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SearchResult {
     pub id: String,
     pub title: String,
@@ -109,7 +109,7 @@ pub struct SearchResult {
     pub type_name: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SearchResponse {
     pub items: Vec<SearchResult>,
     pub total: i64,
@@ -311,5 +311,83 @@ mod tests {
     #[test]
     fn search_type_phrase_with_spaces_around() {
         assert_eq!(detect_search_type("  \"hi\"  "), "phrase");
+    }
+
+    // --- DTO serde roundtrip ---
+
+    #[test]
+    fn search_request_serde_roundtrip_full() {
+        let req = SearchRequest {
+            keyword: "hello world".to_string(),
+            page: Some(2),
+            page_size: Some(50),
+            modules: Some(vec!["user".to_string(), "order".to_string()]),
+        };
+        let json = serde_json::to_string(&req).expect("serialize failed");
+        let de: SearchRequest = serde_json::from_str(&json).expect("deserialize failed");
+        assert_eq!(de, req);
+    }
+
+    #[test]
+    fn search_request_serde_roundtrip_minimal() {
+        let req = SearchRequest {
+            keyword: "test".to_string(),
+            page: None,
+            page_size: None,
+            modules: None,
+        };
+        let json = serde_json::to_string(&req).expect("serialize failed");
+        let de: SearchRequest = serde_json::from_str(&json).expect("deserialize failed");
+        assert_eq!(de, req);
+    }
+
+    #[test]
+    fn search_result_serde_roundtrip_with_description() {
+        let result = SearchResult {
+            id: "u-123".to_string(),
+            title: "Alice".to_string(),
+            description: Some("alice@example.com | active".to_string()),
+            module: "user".to_string(),
+            path: "/system/users/u-123".to_string(),
+            type_name: "用户".to_string(),
+        };
+        let json = serde_json::to_string(&result).expect("serialize failed");
+        let de: SearchResult = serde_json::from_str(&json).expect("deserialize failed");
+        assert_eq!(de, result);
+    }
+
+    #[test]
+    fn search_result_serde_roundtrip_without_description() {
+        let result = SearchResult {
+            id: "d-456".to_string(),
+            title: "report.pdf".to_string(),
+            description: None,
+            module: "document".to_string(),
+            path: "/files/d-456".to_string(),
+            type_name: "文档".to_string(),
+        };
+        let json = serde_json::to_string(&result).expect("serialize failed");
+        let de: SearchResult = serde_json::from_str(&json).expect("deserialize failed");
+        assert_eq!(de, result);
+    }
+
+    #[test]
+    fn search_response_serde_roundtrip() {
+        let resp = SearchResponse {
+            items: vec![SearchResult {
+                id: "1".to_string(),
+                title: "T".to_string(),
+                description: None,
+                module: "m".to_string(),
+                path: "/p".to_string(),
+                type_name: "t".to_string(),
+            }],
+            total: 1,
+            page: 1,
+            page_size: 20,
+        };
+        let json = serde_json::to_string(&resp).expect("serialize failed");
+        let de: SearchResponse = serde_json::from_str(&json).expect("deserialize failed");
+        assert_eq!(de, resp);
     }
 }

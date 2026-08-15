@@ -743,4 +743,119 @@ mod tests {
         let text = "hello world";
         assert_eq!(extract_snippet(text, "hello", 0), "hello");
     }
+
+    // --- 边界用例补充 ---
+
+    // highlight_term 边界
+
+    #[test]
+    fn highlight_term_longer_than_text() {
+        assert_eq!(highlight_term("hi", "hello"), "hi");
+    }
+
+    #[test]
+    fn highlight_term_single_char() {
+        assert_eq!(highlight_term("a quick fox", "a"), "**a** quick fox");
+    }
+
+    #[test]
+    fn highlight_term_unicode() {
+        assert_eq!(highlight_term("你好世界", "好"), "你**好**世界");
+    }
+
+    #[test]
+    fn highlight_term_entire_text() {
+        assert_eq!(highlight_term("hello", "hello"), "**hello**");
+    }
+
+    // matches_filter 边界
+
+    #[test]
+    fn matches_filter_case_sensitive() {
+        assert!(!matches_filter("Hello", "hello"));
+    }
+
+    #[test]
+    fn matches_filter_empty_value_nonempty_filter() {
+        assert!(!matches_filter("", "hello"));
+    }
+
+    #[test]
+    fn matches_filter_star_only_empty_value() {
+        assert!(matches_filter("", "*"));
+    }
+
+    #[test]
+    fn matches_filter_suffix_partial() {
+        assert!(matches_filter("hello", "*lo"));
+        assert!(!matches_filter("hello", "*wo"));
+    }
+
+    // deduplicate_results 边界
+
+    #[test]
+    fn dedup_many_distinct() {
+        let ids = vec![
+            "a".to_string(),
+            "b".to_string(),
+            "c".to_string(),
+            "d".to_string(),
+        ];
+        assert_eq!(deduplicate_results(&ids), ids);
+    }
+
+    #[test]
+    fn dedup_preserves_first_occurrence() {
+        let ids = vec![
+            "b".to_string(),
+            "a".to_string(),
+            "b".to_string(),
+            "a".to_string(),
+        ];
+        assert_eq!(
+            deduplicate_results(&ids),
+            vec!["b".to_string(), "a".to_string()]
+        );
+    }
+
+    #[test]
+    fn dedup_interleaved() {
+        let ids = vec![
+            "x".to_string(),
+            "y".to_string(),
+            "x".to_string(),
+            "z".to_string(),
+            "y".to_string(),
+        ];
+        assert_eq!(
+            deduplicate_results(&ids),
+            vec!["x".to_string(), "y".to_string(), "z".to_string()]
+        );
+    }
+
+    // extract_snippet 边界
+
+    #[test]
+    fn snippet_match_in_middle() {
+        let text = "the quick brown fox jumps";
+        assert_eq!(extract_snippet(text, "brown", 3), "ck brown fo");
+    }
+
+    #[test]
+    fn snippet_large_context_exceeds_text() {
+        let text = "hello";
+        assert_eq!(extract_snippet(text, "lo", 100), "hello");
+    }
+
+    #[test]
+    fn snippet_zero_context_no_match() {
+        let text = "hello world";
+        assert_eq!(extract_snippet(text, "xyz", 0), "");
+    }
+
+    #[test]
+    fn snippet_unicode_text() {
+        let text = "你好世界测试";
+        assert_eq!(extract_snippet(text, "世界", 1), "好世界测");
+    }
 }

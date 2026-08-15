@@ -17,6 +17,7 @@ pub mod qms_lims_ehs;
 pub mod retry_handler;
 pub mod routes;
 pub mod rule_engine;
+pub mod shared;
 pub mod sync_retry;
 
 pub use openapi::ApiDoc;

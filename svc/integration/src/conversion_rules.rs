@@ -578,3 +578,211 @@ impl<'r> sqlx::FromRow<'r, sqlx::postgres::PgRow> for ConversionRule {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- RuleStatus serde roundtrip (3 tests) ----
+
+    #[test]
+    fn test_rule_status_active_serde_roundtrip() {
+        let original = RuleStatus::Active;
+        let json = serde_json::to_string(&original).expect("serialize Active");
+        let back: RuleStatus = serde_json::from_str(&json).expect("deserialize Active");
+        assert_eq!(original, back);
+        assert_eq!(original.as_str(), "active");
+    }
+
+    #[test]
+    fn test_rule_status_inactive_serde_roundtrip() {
+        let original = RuleStatus::Inactive;
+        let json = serde_json::to_string(&original).expect("serialize Inactive");
+        let back: RuleStatus = serde_json::from_str(&json).expect("deserialize Inactive");
+        assert_eq!(original, back);
+        assert_eq!(original.as_str(), "inactive");
+    }
+
+    #[test]
+    fn test_rule_status_draft_serde_roundtrip() {
+        let original = RuleStatus::Draft;
+        let json = serde_json::to_string(&original).expect("serialize Draft");
+        let back: RuleStatus = serde_json::from_str(&json).expect("deserialize Draft");
+        assert_eq!(original, back);
+        assert_eq!(original.as_str(), "draft");
+    }
+
+    // ---- RuleStatus from_str (2 tests) ----
+
+    #[test]
+    fn test_rule_status_from_str_known_values() {
+        assert_eq!(RuleStatus::from_str("active"), RuleStatus::Active);
+        assert_eq!(RuleStatus::from_str("inactive"), RuleStatus::Inactive);
+        assert_eq!(RuleStatus::from_str("draft"), RuleStatus::Draft);
+    }
+
+    #[test]
+    fn test_rule_status_from_str_unknown_defaults_to_draft() {
+        assert_eq!(RuleStatus::from_str("bogus"), RuleStatus::Draft);
+    }
+
+    // ---- TriggerType serde roundtrip (3 tests) ----
+
+    #[test]
+    fn test_trigger_type_event_serde_roundtrip() {
+        let original = TriggerType::Event;
+        let json = serde_json::to_string(&original).expect("serialize Event");
+        let back: TriggerType = serde_json::from_str(&json).expect("deserialize Event");
+        assert_eq!(original.as_str(), back.as_str());
+        assert_eq!(original.as_str(), "event");
+    }
+
+    #[test]
+    fn test_trigger_type_scheduled_serde_roundtrip() {
+        let original = TriggerType::Scheduled;
+        let json = serde_json::to_string(&original).expect("serialize Scheduled");
+        let back: TriggerType = serde_json::from_str(&json).expect("deserialize Scheduled");
+        assert_eq!(original.as_str(), back.as_str());
+        assert_eq!(original.as_str(), "scheduled");
+    }
+
+    #[test]
+    fn test_trigger_type_manual_serde_roundtrip() {
+        let original = TriggerType::Manual;
+        let json = serde_json::to_string(&original).expect("serialize Manual");
+        let back: TriggerType = serde_json::from_str(&json).expect("deserialize Manual");
+        assert_eq!(original.as_str(), back.as_str());
+        assert_eq!(original.as_str(), "manual");
+    }
+
+    // ---- TriggerType from_str (1 test) ----
+
+    #[test]
+    fn test_trigger_type_from_str_known_and_unknown() {
+        assert_eq!(TriggerType::from_str("event").as_str(), "event");
+        assert_eq!(TriggerType::from_str("scheduled").as_str(), "scheduled");
+        assert_eq!(TriggerType::from_str("manual").as_str(), "manual");
+        assert_eq!(TriggerType::from_str("unknown").as_str(), "event");
+    }
+
+    // ---- Struct serde roundtrips (5 tests) ----
+
+    #[test]
+    fn test_field_mapping_serde_roundtrip() {
+        let mapping = FieldMapping {
+            source_field: "order_number".to_string(),
+            target_field: "source_order_number".to_string(),
+            default_value: Some(serde_json::json!("N/A")),
+            transform: Some("lower".to_string()),
+            value_map: None,
+            conditional_mappings: None,
+        };
+        let json = serde_json::to_string(&mapping).expect("serialize FieldMapping");
+        let back: FieldMapping = serde_json::from_str(&json).expect("deserialize FieldMapping");
+        assert_eq!(back.source_field, "order_number");
+        assert_eq!(back.target_field, "source_order_number");
+        assert_eq!(back.transform, Some("lower".to_string()));
+        assert!(back.value_map.is_none());
+    }
+
+    #[test]
+    fn test_value_map_serde_roundtrip() {
+        let mut mappings = std::collections::HashMap::new();
+        mappings.insert("active".to_string(), serde_json::json!(1));
+        mappings.insert("inactive".to_string(), serde_json::json!(0));
+        let value_map = ValueMap {
+            mappings,
+            default_value: Some(serde_json::json!(-1)),
+        };
+        let json = serde_json::to_string(&value_map).expect("serialize ValueMap");
+        let back: ValueMap = serde_json::from_str(&json).expect("deserialize ValueMap");
+        assert_eq!(back.mappings.len(), 2);
+        assert_eq!(back.get("active"), &serde_json::json!(1));
+        assert_eq!(back.get("inactive"), &serde_json::json!(0));
+        assert_eq!(back.get("missing"), &serde_json::json!(-1));
+    }
+
+    #[test]
+    fn test_value_map_returns_null_when_no_default() {
+        let value_map = ValueMap {
+            mappings: std::collections::HashMap::new(),
+            default_value: None,
+        };
+        assert_eq!(value_map.get("anything"), &serde_json::Value::Null);
+    }
+
+    #[test]
+    fn test_conditional_mapping_serde_roundtrip() {
+        let cm = ConditionalMapping {
+            condition: serde_json::json!({"field": "status", "op": "eq", "value": "active"}),
+            result: serde_json::json!({"enabled": true}),
+        };
+        let json = serde_json::to_string(&cm).expect("serialize ConditionalMapping");
+        let back: ConditionalMapping =
+            serde_json::from_str(&json).expect("deserialize ConditionalMapping");
+        assert_eq!(back.condition, cm.condition);
+        assert_eq!(back.result, cm.result);
+    }
+
+    #[test]
+    fn test_conversion_rule_serde_roundtrip() {
+        let rule = ConversionRule {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            code: "test_rule".to_string(),
+            name: "Test Rule".to_string(),
+            description: Some("desc".to_string()),
+            source_system: "erp".to_string(),
+            source_entity: "sales_order".to_string(),
+            target_system: "mes".to_string(),
+            target_entity: "production_order".to_string(),
+            trigger_type: TriggerType::Event,
+            trigger_condition: None,
+            field_mappings: serde_json::json!([{"source_field": "a", "target_field": "b"}]),
+            transform_script: None,
+            status: RuleStatus::Active,
+            priority: 10,
+            is_enabled: true,
+            max_retries: 3,
+            retry_interval_secs: 60,
+            stop_on_failure: false,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let json = serde_json::to_string(&rule).expect("serialize ConversionRule");
+        let back: ConversionRule = serde_json::from_str(&json).expect("deserialize ConversionRule");
+        assert_eq!(back.code, "test_rule");
+        assert_eq!(back.source_system, "erp");
+        assert_eq!(back.trigger_type.as_str(), "event");
+        assert_eq!(back.status, RuleStatus::Active);
+    }
+
+    // ---- get_predefined_rules (2 tests) ----
+
+    #[test]
+    fn test_get_predefined_rules_returns_four_rules() {
+        let tenant = Uuid::new_v4();
+        let rules = get_predefined_rules(tenant);
+        assert_eq!(rules.len(), 4);
+        for rule in &rules {
+            assert_eq!(rule.tenant_id, tenant);
+            assert!(matches!(rule.status, RuleStatus::Active));
+            assert!(rule.is_enabled);
+        }
+    }
+
+    #[test]
+    fn test_get_predefined_rules_codes_are_unique() {
+        let tenant = Uuid::new_v4();
+        let rules = get_predefined_rules(tenant);
+        let codes: Vec<&str> = rules.iter().map(|r| r.code.as_str()).collect();
+        let mut deduped = codes.clone();
+        deduped.sort();
+        deduped.dedup();
+        assert_eq!(codes.len(), deduped.len(), "rule codes must be unique");
+        assert!(codes.contains(&"order_to_workorder"));
+        assert!(codes.contains(&"purchase_to_contract"));
+        assert!(codes.contains(&"employee_to_account"));
+        assert!(codes.contains(&"project_to_mes"));
+    }
+}

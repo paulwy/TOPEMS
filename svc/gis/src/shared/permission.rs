@@ -95,3 +95,196 @@ pub async fn check_permission<T>(
     let shared_perm = permission.to_shared();
     check_module_permission(db, claims, &shared_perm).await
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ==================== to_shared 映射测试（15 个变体） ====================
+
+    #[test]
+    fn test_factory_map_read_to_shared() {
+        let p = GisPermission::FactoryMapRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Gis);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn test_factory_map_write_to_shared() {
+        let p = GisPermission::FactoryMapWrite.to_shared();
+        assert_eq!(p.module, ModuleCode::Gis);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn test_device_location_read_to_shared() {
+        let p = GisPermission::DeviceLocationRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Gis);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn test_device_location_write_to_shared() {
+        let p = GisPermission::DeviceLocationWrite.to_shared();
+        assert_eq!(p.module, ModuleCode::Gis);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn test_pipeline_read_to_shared() {
+        let p = GisPermission::PipelineRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Gis);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn test_pipeline_write_to_shared() {
+        let p = GisPermission::PipelineWrite.to_shared();
+        assert_eq!(p.module, ModuleCode::Gis);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn test_warehouse_location_read_to_shared() {
+        let p = GisPermission::WarehouseLocationRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Gis);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn test_warehouse_location_write_to_shared() {
+        let p = GisPermission::WarehouseLocationWrite.to_shared();
+        assert_eq!(p.module, ModuleCode::Gis);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn test_business_location_read_to_shared() {
+        let p = GisPermission::BusinessLocationRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Gis);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn test_business_location_write_to_shared() {
+        let p = GisPermission::BusinessLocationWrite.to_shared();
+        assert_eq!(p.module, ModuleCode::Gis);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn test_map_marker_read_to_shared() {
+        let p = GisPermission::MapMarkerRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Gis);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn test_map_marker_write_to_shared() {
+        let p = GisPermission::MapMarkerWrite.to_shared();
+        assert_eq!(p.module, ModuleCode::Gis);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn test_location_photo_read_to_shared() {
+        let p = GisPermission::LocationPhotoRead.to_shared();
+        assert_eq!(p.module, ModuleCode::Gis);
+        assert_eq!(p.action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn test_location_photo_write_to_shared() {
+        let p = GisPermission::LocationPhotoWrite.to_shared();
+        assert_eq!(p.module, ModuleCode::Gis);
+        assert_eq!(p.action, PermissionAction::Write);
+    }
+
+    #[test]
+    fn test_all_to_shared() {
+        let p = GisPermission::All.to_shared();
+        assert_eq!(p.module, ModuleCode::Gis);
+        assert_eq!(p.action, PermissionAction::Admin);
+    }
+
+    // ==================== Display trait 测试 ====================
+
+    #[test]
+    fn test_display_read_permission() {
+        let p = GisPermission::FactoryMapRead;
+        let s = format!("{}", p);
+        assert_eq!(s, "gis:read");
+    }
+
+    #[test]
+    fn test_display_write_permission() {
+        let p = GisPermission::PipelineWrite;
+        let s = format!("{}", p);
+        assert_eq!(s, "gis:write");
+    }
+
+    #[test]
+    fn test_display_admin_permission() {
+        let p = GisPermission::All;
+        let s = format!("{}", p);
+        assert_eq!(s, "gis:admin");
+    }
+
+    // ==================== 一致性和分组测试 ====================
+
+    #[test]
+    fn test_all_read_variants_map_to_read() {
+        let read_variants = [
+            GisPermission::FactoryMapRead,
+            GisPermission::DeviceLocationRead,
+            GisPermission::PipelineRead,
+            GisPermission::WarehouseLocationRead,
+            GisPermission::BusinessLocationRead,
+            GisPermission::MapMarkerRead,
+            GisPermission::LocationPhotoRead,
+        ];
+        for v in &read_variants {
+            assert_eq!(v.to_shared().action, PermissionAction::Read);
+        }
+    }
+
+    #[test]
+    fn test_all_write_variants_map_to_write() {
+        let write_variants = [
+            GisPermission::FactoryMapWrite,
+            GisPermission::DeviceLocationWrite,
+            GisPermission::PipelineWrite,
+            GisPermission::WarehouseLocationWrite,
+            GisPermission::BusinessLocationWrite,
+            GisPermission::MapMarkerWrite,
+            GisPermission::LocationPhotoWrite,
+        ];
+        for v in &write_variants {
+            assert_eq!(v.to_shared().action, PermissionAction::Write);
+        }
+    }
+
+    #[test]
+    fn test_all_variants_use_gis_module() {
+        let all_variants = [
+            GisPermission::FactoryMapRead,
+            GisPermission::FactoryMapWrite,
+            GisPermission::DeviceLocationRead,
+            GisPermission::DeviceLocationWrite,
+            GisPermission::PipelineRead,
+            GisPermission::PipelineWrite,
+            GisPermission::WarehouseLocationRead,
+            GisPermission::WarehouseLocationWrite,
+            GisPermission::BusinessLocationRead,
+            GisPermission::BusinessLocationWrite,
+            GisPermission::MapMarkerRead,
+            GisPermission::MapMarkerWrite,
+            GisPermission::LocationPhotoRead,
+            GisPermission::LocationPhotoWrite,
+            GisPermission::All,
+        ];
+        for v in &all_variants {
+            assert_eq!(v.to_shared().module, ModuleCode::Gis);
+        }
+    }
+}
