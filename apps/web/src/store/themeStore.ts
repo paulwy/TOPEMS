@@ -88,7 +88,7 @@ export const themeList = (() => {
     return (['light', 'dark', 'cyberpunk', 'system'] as Theme[]).map((value) => ({
       value,
       label: THEME_LABEL_KEYS[value].labelKey,
-      description: THEME_LABEL_KEYS[value].description,
+      description: THEME_LABEL_KEYS[value].descriptionKey,
     }));
   }
 })();

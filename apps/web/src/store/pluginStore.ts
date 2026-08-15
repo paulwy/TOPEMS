@@ -349,11 +349,11 @@ export const usePluginStore = create<PluginState>()(
       },
 
       isPluginInstalled: (code) => {
-        return get().installedPlugins.some((p) => p.plugin_code === code || p.plugin_id === code);
+        return get().installedPlugins.some((p) => p.plugin_name === code || p.plugin_id === code);
       },
 
       isPluginActive: (code) => {
-        const plugin = get().installedPlugins.find((p) => p.plugin_code === code || p.plugin_id === code);
+        const plugin = get().installedPlugins.find((p) => p.plugin_name === code || p.plugin_id === code);
         return plugin?.isactive === true;
       },
 
