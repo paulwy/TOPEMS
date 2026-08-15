@@ -326,4 +326,92 @@ mod tests {
             min_rpn: 0,
         });
     }
+
+    #[test]
+    fn test_fmea_analysis_clone_and_debug() {
+        let f = FmeaAnalysis {
+            id: "f1".to_string(),
+            tenant_id: "t1".to_string(),
+            fmea_no: "FMEA-001".to_string(),
+            title: "Design FMEA for X".to_string(),
+            fmea_type: "Design".to_string(),
+            product_id: Some("p1".to_string()),
+            product_name: Some("Product X".to_string()),
+            process_id: Some("pr1".to_string()),
+            process_name: Some("Assembly".to_string()),
+            scope: Some("scope desc".to_string()),
+            status: Some("draft".to_string()),
+            revision: Some("A".to_string()),
+            team: Some("team 1".to_string()),
+            leader: Some("l1".to_string()),
+            description: Some("full desc".to_string()),
+            created_by: Some("u1".to_string()),
+            created_at: Some("c".to_string()),
+            updated_at: Some("u".to_string()),
+        };
+        let f2 = f.clone();
+        assert_eq!(f.id, f2.id);
+        assert_eq!(f.fmea_no, f2.fmea_no);
+        assert_eq!(f.fmea_type, f2.fmea_type);
+        assert_eq!(f.status, f2.status);
+        assert!(!format!("{:?}", f).is_empty());
+    }
+
+    #[test]
+    fn test_fmea_item_clone_and_rpn() {
+        let item = FmeaItem {
+            id: "item1".to_string(),
+            tenant_id: "t1".to_string(),
+            fmea_id: "f1".to_string(),
+            component: "Bolt".to_string(),
+            function: Some("fasten".to_string()),
+            failure_mode: "loosens".to_string(),
+            failure_effect: Some("joint fails".to_string()),
+            failure_cause: Some("torque too low".to_string()),
+            severity: 8,
+            occurrence: 4,
+            detection: 5,
+            rpn: Some(160),
+            current_controls: Some("torque wrench".to_string()),
+            recommended_actions: Some("specify torque".to_string()),
+            responsible: Some("eng A".to_string()),
+            target_date: Some("2025-12-31".to_string()),
+            action_status: Some("open".to_string()),
+            revised_severity: Some(8),
+            revised_occurrence: Some(2),
+            revised_detection: Some(3),
+            revised_rpn: Some(48),
+            sort_order: Some(1),
+            created_at: Some("c".to_string()),
+            updated_at: Some("u".to_string()),
+        };
+        let item2 = item.clone();
+        assert_eq!(item.id, item2.id);
+        assert_eq!(item.rpn, item2.rpn);
+        assert_eq!(item.revised_rpn, item2.revised_rpn);
+        assert!(!format!("{:?}", item).is_empty());
+    }
+
+    #[test]
+    fn test_fmea_item_query_all_some() {
+        roundtrip(&FmeaItemQuery {
+            fmea_id: Some("f1".to_string()),
+            min_rpn: Some(100),
+            action_status: Some("in_progress".to_string()),
+            sort_by: Some("rpn".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_fmea_statistics_nonzero() {
+        roundtrip(&FmeaStatistics {
+            total_items: 50,
+            high_risk_count: 5,
+            medium_risk_count: 20,
+            low_risk_count: 25,
+            average_rpn: 82.5,
+            max_rpn: 729,
+            min_rpn: 1,
+        });
+    }
 }

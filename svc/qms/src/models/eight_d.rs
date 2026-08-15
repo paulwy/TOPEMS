@@ -224,4 +224,90 @@ mod tests {
             created_at: None,
         });
     }
+
+    #[test]
+    fn test_eight_d_report_clone_and_debug() {
+        let r = EightDReport {
+            id: "e1".to_string(),
+            tenant_id: "t1".to_string(),
+            report_no: "8D-2025-001".to_string(),
+            title: "Critical defect 8D".to_string(),
+            status: Some("containment".to_string()),
+            severity: Some("critical".to_string()),
+            priority: Some("high".to_string()),
+            related_issue_id: Some("i1".to_string()),
+            d1_team: Some("team A".to_string()),
+            d1_leader: Some("leader1".to_string()),
+            d2_problem_description: Some("desc".to_string()),
+            d3_containment_action: Some("ca".to_string()),
+            d3_implemented_at: Some("2025-02-01".to_string()),
+            d4_root_cause: Some("rc".to_string()),
+            d4_cause_analysis: Some("ana".to_string()),
+            d5_permanent_action: Some("pa".to_string()),
+            d6_verification_result: None,
+            d6_verified_at: None,
+            d7_preventive_action: None,
+            d8_congratulations: None,
+            d8_closed_at: None,
+            assignee: Some("e1".to_string()),
+            due_date: Some("2025-06-30".to_string()),
+            created_by: Some("u1".to_string()),
+            created_at: Some("c".to_string()),
+            updated_at: Some("u".to_string()),
+        };
+        let r2 = r.clone();
+        assert_eq!(r.id, r2.id);
+        assert_eq!(r.report_no, r2.report_no);
+        assert_eq!(r.severity, r2.severity);
+        assert_eq!(r.d1_team, r2.d1_team);
+        assert!(!format!("{:?}", r).is_empty());
+    }
+
+    #[test]
+    fn test_eight_d_query_all_some() {
+        roundtrip(&EightDQuery {
+            page: Some(2),
+            page_size: Some(15),
+            status: Some("in_progress".to_string()),
+            severity: Some("major".to_string()),
+            assignee: Some("eng1".to_string()),
+            search: Some("keyword".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_create_eight_d_request_all_some() {
+        roundtrip(&CreateEightDRequest {
+            title: "New 8D".to_string(),
+            severity: Some("critical".to_string()),
+            priority: Some("urgent".to_string()),
+            related_issue_id: Some("i100".to_string()),
+            d2_problem_description: Some("problem desc".to_string()),
+            assignee: Some("manager".to_string()),
+            due_date: NaiveDate::from_ymd_opt(2025, 12, 31),
+            created_by: Some("u1".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_update_eight_d_request_all_some() {
+        roundtrip(&UpdateEightDRequest {
+            title: Some("Updated 8D".to_string()),
+            status: Some("containment".to_string()),
+            severity: Some("major".to_string()),
+            priority: Some("medium".to_string()),
+            d1_team: Some("team".to_string()),
+            d1_leader: Some("leader".to_string()),
+            d2_problem_description: Some("pd".to_string()),
+            d3_containment_action: Some("ca".to_string()),
+            d4_root_cause: Some("rc".to_string()),
+            d4_cause_analysis: Some("caa".to_string()),
+            d5_permanent_action: Some("pa".to_string()),
+            d6_verification_result: Some("vr".to_string()),
+            d7_preventive_action: Some("pva".to_string()),
+            d8_congratulations: Some("congrats".to_string()),
+            assignee: Some("a1".to_string()),
+            due_date: NaiveDate::from_ymd_opt(2025, 06, 30),
+        });
+    }
 }

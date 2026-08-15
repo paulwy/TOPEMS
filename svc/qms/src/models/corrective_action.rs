@@ -208,4 +208,89 @@ mod tests {
             target_date: None,
         });
     }
+
+    #[test]
+    fn test_corrective_action_clone_and_debug() {
+        let a = CorrectiveAction {
+            id: "a1".to_string(),
+            tenant_id: "t1".to_string(),
+            action_no: "CA-001".to_string(),
+            issue_id: Some("i1".to_string()),
+            title: "Fix scratch issue".to_string(),
+            description: Some("desc".to_string()),
+            root_cause: Some("rc".to_string()),
+            action_type: Some("preventive".to_string()),
+            status: Some("in_progress".to_string()),
+            priority: Some("high".to_string()),
+            assignee: Some("eng1".to_string()),
+            target_date: Some("2025-06-30".to_string()),
+            completed_at: None,
+            created_by: Some("u1".to_string()),
+            created_at: Some("c".to_string()),
+            updated_at: Some("u".to_string()),
+        };
+        let a2 = a.clone();
+        assert_eq!(a.id, a2.id);
+        assert_eq!(a.action_no, a2.action_no);
+        assert_eq!(a.issue_id, a2.issue_id);
+        assert_eq!(a.priority, a2.priority);
+        assert!(!format!("{:?}", a).is_empty());
+    }
+
+    #[test]
+    fn test_action_query_all_some() {
+        roundtrip(&ActionQuery {
+            page: Some(3),
+            page_size: Some(25),
+            status: Some("pending".to_string()),
+            priority: Some("high".to_string()),
+            issue_id: Some("i-xyz".to_string()),
+            search: Some("keyword".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_action_item_all_fields_some() {
+        roundtrip(&ActionItem {
+            id: "id".to_string(),
+            tenant_id: "t".to_string(),
+            action_id: "a".to_string(),
+            item_name: "task 1".to_string(),
+            responsible: Some("resp".to_string()),
+            due_date: Some("2025-12-31".to_string()),
+            status: Some("completed".to_string()),
+            completed_at: Some("2025-10-01".to_string()),
+            remark: Some("ok".to_string()),
+            created_at: Some("c".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_create_action_request_all_some() {
+        roundtrip(&CreateActionRequest {
+            issue_id: Some("i1".to_string()),
+            title: "Action A".to_string(),
+            description: Some("d".to_string()),
+            root_cause: Some("rc".to_string()),
+            action_type: Some("correction".to_string()),
+            priority: Some("medium".to_string()),
+            assignee: Some("a1".to_string()),
+            target_date: Some("2025-12-31".to_string()),
+            created_by: Some("u1".to_string()),
+            items: Some(vec![
+                CreateActionItemRequest {
+                    item_name: "i1".to_string(),
+                    responsible: Some("r1".to_string()),
+                    due_date: Some("2025-06-01".to_string()),
+                    remark: Some("ok".to_string()),
+                },
+                CreateActionItemRequest {
+                    item_name: "i2".to_string(),
+                    responsible: None,
+                    due_date: None,
+                    remark: None,
+                },
+            ]),
+        });
+    }
 }

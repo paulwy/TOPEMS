@@ -145,4 +145,75 @@ mod tests {
             status: None,
         });
     }
+
+    #[test]
+    fn test_quality_issue_clone_and_debug() {
+        let issue = QualityIssue {
+            id: "id1".to_string(),
+            tenant_id: "t1".to_string(),
+            issue_no: "QI-0001".to_string(),
+            title: "Surface defect".to_string(),
+            description: Some("scratch found".to_string()),
+            severity: Some("major".to_string()),
+            status: Some("open".to_string()),
+            source: Some("line1".to_string()),
+            related_inspection_id: Some("insp-1".to_string()),
+            created_by: Some("user1".to_string()),
+            created_at: Some("2025-01-01".to_string()),
+            resolved_at: None,
+            updated_at: Some("2025-01-02".to_string()),
+        };
+        let issue2 = issue.clone();
+        assert_eq!(issue.id, issue2.id);
+        assert_eq!(issue.issue_no, issue2.issue_no);
+        assert_eq!(issue.title, issue2.title);
+        assert_eq!(issue.severity, issue2.severity);
+        assert!(!format!("{:?}", issue).is_empty());
+    }
+
+    #[test]
+    fn test_issue_query_all_fields_some() {
+        roundtrip(&IssueQuery {
+            page: Some(2),
+            page_size: Some(50),
+            status: Some("open".to_string()),
+            severity: Some("critical".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_quality_issue_with_workflow_all_some() {
+        roundtrip(&QualityIssueWithWorkflow {
+            issue: QualityIssue {
+                id: "id".to_string(),
+                tenant_id: "t".to_string(),
+                issue_no: "QI001".to_string(),
+                title: "x".to_string(),
+                description: Some("d".to_string()),
+                severity: Some("major".to_string()),
+                status: Some("open".to_string()),
+                source: Some("inspection".to_string()),
+                related_inspection_id: Some("i1".to_string()),
+                created_by: Some("u1".to_string()),
+                created_at: Some("c".to_string()),
+                resolved_at: Some("r".to_string()),
+                updated_at: Some("u".to_string()),
+            },
+            approval_workflow_id: Some("wf1".to_string()),
+            approval_status: Some("pending".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_create_issue_request_all_some() {
+        roundtrip(&CreateIssueRequest {
+            title: "Defect A".to_string(),
+            description: Some("d".to_string()),
+            severity: Some("minor".to_string()),
+            source: Some("customer".to_string()),
+            related_inspection_id: Some("insp-1".to_string()),
+            created_by: Some("u1".to_string()),
+            workflow_id: Some(Uuid::new_v4()),
+        });
+    }
 }

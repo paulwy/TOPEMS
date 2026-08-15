@@ -490,3 +490,298 @@ fn test_apqp_self_transition_rejected() {
         Err(FsmError::InvalidTransition { .. })
     ));
 }
+
+// ==================== Additional FSM tests ====================
+
+#[test]
+fn test_is_valid_inspection_status_true() {
+    assert!(is_valid_inspection_status("pending"));
+    assert!(is_valid_inspection_status("in_progress"));
+    assert!(is_valid_inspection_status("pending_audit"));
+    assert!(is_valid_inspection_status("completed"));
+    assert!(is_valid_inspection_status("rejected"));
+}
+
+#[test]
+fn test_is_valid_inspection_status_false() {
+    assert!(!is_valid_inspection_status(""));
+    assert!(!is_valid_inspection_status("unknown"));
+    assert!(!is_valid_inspection_status("PENDING"));
+    assert!(!is_valid_inspection_status("closed"));
+}
+
+#[test]
+fn test_is_valid_issue_status_true() {
+    assert!(is_valid_issue_status("open"));
+    assert!(is_valid_issue_status("in_progress"));
+    assert!(is_valid_issue_status("resolved"));
+    assert!(is_valid_issue_status("closed"));
+    assert!(is_valid_issue_status("cancelled"));
+}
+
+#[test]
+fn test_is_valid_issue_status_false() {
+    assert!(!is_valid_issue_status("pending"));
+    assert!(!is_valid_issue_status("draft"));
+    assert!(!is_valid_issue_status("COMPLETED"));
+}
+
+#[test]
+fn test_is_valid_action_status_true() {
+    assert!(is_valid_action_status("pending"));
+    assert!(is_valid_action_status("in_progress"));
+    assert!(is_valid_action_status("completed"));
+    assert!(is_valid_action_status("verified"));
+    assert!(is_valid_action_status("cancelled"));
+}
+
+#[test]
+fn test_is_valid_action_status_false() {
+    assert!(!is_valid_action_status("open"));
+    assert!(!is_valid_action_status("closed"));
+    assert!(!is_valid_action_status("resolved"));
+}
+
+#[test]
+fn test_is_valid_audit_plan_status_true() {
+    assert!(is_valid_audit_plan_status("draft"));
+    assert!(is_valid_audit_plan_status("scheduled"));
+    assert!(is_valid_audit_plan_status("in_progress"));
+    assert!(is_valid_audit_plan_status("completed"));
+    assert!(is_valid_audit_plan_status("cancelled"));
+}
+
+#[test]
+fn test_is_valid_audit_plan_status_false() {
+    assert!(!is_valid_audit_plan_status("pending"));
+    assert!(!is_valid_audit_plan_status("open"));
+    assert!(!is_valid_audit_plan_status("finished"));
+}
+
+#[test]
+fn test_is_valid_audit_finding_status_true() {
+    assert!(is_valid_audit_finding_status("open"));
+    assert!(is_valid_audit_finding_status("in_progress"));
+    assert!(is_valid_audit_finding_status("verified"));
+    assert!(is_valid_audit_finding_status("closed"));
+}
+
+#[test]
+fn test_is_valid_audit_finding_status_false() {
+    assert!(!is_valid_audit_finding_status("pending"));
+    assert!(!is_valid_audit_finding_status("draft"));
+    assert!(!is_valid_audit_finding_status("cancelled"));
+}
+
+#[test]
+fn test_is_valid_eight_d_status_true() {
+    assert!(is_valid_eight_d_status("initiated"));
+    assert!(is_valid_eight_d_status("in_progress"));
+    assert!(is_valid_eight_d_status("containment"));
+    assert!(is_valid_eight_d_status("root_cause"));
+    assert!(is_valid_eight_d_status("permanent_action"));
+    assert!(is_valid_eight_d_status("verified"));
+    assert!(is_valid_eight_d_status("closed"));
+    assert!(is_valid_eight_d_status("cancelled"));
+}
+
+#[test]
+fn test_is_valid_eight_d_status_false() {
+    assert!(!is_valid_eight_d_status("open"));
+    assert!(!is_valid_eight_d_status("pending"));
+    assert!(!is_valid_eight_d_status("resolved"));
+}
+
+#[test]
+fn test_is_valid_apqp_status_true() {
+    assert!(is_valid_apqp_status("planning"));
+    assert!(is_valid_apqp_status("in_design"));
+    assert!(is_valid_apqp_status("in_pilot"));
+    assert!(is_valid_apqp_status("in_production"));
+    assert!(is_valid_apqp_status("completed"));
+    assert!(is_valid_apqp_status("cancelled"));
+}
+
+#[test]
+fn test_is_valid_apqp_status_false() {
+    assert!(!is_valid_apqp_status("draft"));
+    assert!(!is_valid_apqp_status("open"));
+    assert!(!is_valid_apqp_status("closed"));
+}
+
+#[test]
+fn test_inspection_rejected_can_go_back_to_in_progress() {
+    assert!(inspection_can_transition("rejected", "in_progress").is_ok());
+}
+
+#[test]
+fn test_issue_reopen_paths() {
+    assert!(issue_can_transition("in_progress", "open").is_ok());
+    assert!(issue_can_transition("resolved", "in_progress").is_ok());
+}
+
+#[test]
+fn test_action_backtrack_paths() {
+    assert!(action_can_transition("in_progress", "pending").is_ok());
+    assert!(action_can_transition("completed", "in_progress").is_ok());
+}
+
+#[test]
+fn test_audit_finding_backtrack_paths() {
+    assert!(audit_finding_can_transition("in_progress", "open").is_ok());
+    assert!(audit_finding_can_transition("verified", "in_progress").is_ok());
+}
+
+#[test]
+fn test_issue_cancel_paths() {
+    assert!(issue_can_transition("open", "cancelled").is_ok());
+    assert!(issue_can_transition("in_progress", "cancelled").is_ok());
+    assert!(matches!(
+        issue_can_transition("resolved", "cancelled"),
+        Err(FsmError::InvalidTransition { .. })
+    ));
+}
+
+#[test]
+fn test_action_cancel_paths() {
+    assert!(action_can_transition("pending", "cancelled").is_ok());
+    assert!(action_can_transition("in_progress", "cancelled").is_ok());
+    assert!(matches!(
+        action_can_transition("completed", "cancelled"),
+        Err(FsmError::InvalidTransition { .. })
+    ));
+}
+
+#[test]
+fn test_eight_d_cancel_paths_multiple() {
+    assert!(eight_d_can_transition("initiated", "cancelled").is_ok());
+    assert!(eight_d_can_transition("in_progress", "cancelled").is_ok());
+    assert!(eight_d_can_transition("containment", "cancelled").is_ok());
+    assert!(eight_d_can_transition("root_cause", "cancelled").is_ok());
+    assert!(eight_d_can_transition("permanent_action", "cancelled").is_ok());
+    assert!(matches!(
+        eight_d_can_transition("verified", "cancelled"),
+        Err(FsmError::InvalidTransition { .. })
+    ));
+}
+
+#[test]
+fn test_apqp_cancel_paths_multiple() {
+    assert!(apqp_can_transition("planning", "cancelled").is_ok());
+    assert!(apqp_can_transition("in_design", "cancelled").is_ok());
+    assert!(apqp_can_transition("in_pilot", "cancelled").is_ok());
+    assert!(apqp_can_transition("in_production", "cancelled").is_ok());
+}
+
+#[test]
+fn test_audit_plan_cancel_paths() {
+    assert!(audit_plan_can_transition("draft", "cancelled").is_ok());
+    assert!(audit_plan_can_transition("scheduled", "cancelled").is_ok());
+    assert!(audit_plan_can_transition("in_progress", "cancelled").is_ok());
+}
+
+#[test]
+fn test_fsm_error_partialeq() {
+    let e1 = FsmError::TerminalState("completed".to_string());
+    let e2 = FsmError::TerminalState("completed".to_string());
+    let e3 = FsmError::TerminalState("closed".to_string());
+    assert_eq!(e1, e2);
+    assert_ne!(e1, e3);
+    let e4 = FsmError::InvalidTransition {
+        from: "a".to_string(),
+        to: "b".to_string(),
+    };
+    let e5 = FsmError::InvalidTransition {
+        from: "a".to_string(),
+        to: "b".to_string(),
+    };
+    let e6 = FsmError::InvalidTransition {
+        from: "a".to_string(),
+        to: "c".to_string(),
+    };
+    assert_eq!(e4, e5);
+    assert_ne!(e4, e6);
+    assert_ne!(e1, e4);
+    let e7 = FsmError::UnknownStatus("x".to_string());
+    let e8 = FsmError::UnknownStatus("x".to_string());
+    assert_eq!(e7, e8);
+}
+
+#[test]
+fn test_fsm_error_display() {
+    let s = format!("{}", FsmError::TerminalState("completed".to_string()));
+    assert!(s.contains("terminal"));
+    let s = format!(
+        "{}",
+        FsmError::InvalidTransition {
+            from: "a".to_string(),
+            to: "b".to_string()
+        }
+    );
+    assert!(s.contains("invalid transition"));
+    let s = format!("{}", FsmError::UnknownStatus("xyz".to_string()));
+    assert!(s.contains("unknown status"));
+}
+
+#[test]
+fn test_inspection_requires_approval_all_cases() {
+    assert!(inspection_requires_approval("pending_audit", "completed"));
+    assert!(inspection_requires_approval("pending_audit", "rejected"));
+    assert!(!inspection_requires_approval("rejected", "in_progress"));
+    assert!(!inspection_requires_approval("pending", "in_progress"));
+    assert!(!inspection_requires_approval(
+        "in_progress",
+        "pending_audit"
+    ));
+}
+
+#[test]
+fn test_issue_requires_approval_more_cases() {
+    assert!(issue_requires_approval("resolved", "closed"));
+    assert!(!issue_requires_approval("open", "cancelled"));
+    assert!(!issue_requires_approval("in_progress", "resolved"));
+    assert!(!issue_requires_approval("resolved", "in_progress"));
+}
+
+#[test]
+fn test_action_requires_approval_more_cases() {
+    assert!(action_requires_approval("completed", "verified"));
+    assert!(!action_requires_approval("pending", "in_progress"));
+    assert!(!action_requires_approval("completed", "in_progress"));
+    assert!(!action_requires_approval("in_progress", "completed"));
+}
+
+#[test]
+fn test_audit_plan_requires_approval_more_cases() {
+    assert!(audit_plan_requires_approval("in_progress", "completed"));
+    assert!(!audit_plan_requires_approval("draft", "scheduled"));
+    assert!(!audit_plan_requires_approval("draft", "cancelled"));
+    assert!(!audit_plan_requires_approval("scheduled", "in_progress"));
+}
+
+#[test]
+fn test_audit_finding_requires_approval_more_cases() {
+    assert!(audit_finding_requires_approval("verified", "closed"));
+    assert!(!audit_finding_requires_approval("open", "in_progress"));
+    assert!(!audit_finding_requires_approval("in_progress", "verified"));
+    assert!(!audit_finding_requires_approval("verified", "in_progress"));
+}
+
+#[test]
+fn test_eight_d_requires_approval_more_cases() {
+    assert!(eight_d_requires_approval("permanent_action", "verified"));
+    assert!(eight_d_requires_approval("verified", "closed"));
+    assert!(!eight_d_requires_approval("initiated", "in_progress"));
+    assert!(!eight_d_requires_approval("in_progress", "containment"));
+    assert!(!eight_d_requires_approval("containment", "root_cause"));
+    assert!(!eight_d_requires_approval("root_cause", "permanent_action"));
+}
+
+#[test]
+fn test_apqp_requires_approval_more_cases() {
+    assert!(apqp_requires_approval("in_pilot", "in_production"));
+    assert!(apqp_requires_approval("in_production", "completed"));
+    assert!(!apqp_requires_approval("planning", "in_design"));
+    assert!(!apqp_requires_approval("in_design", "in_pilot"));
+    assert!(!apqp_requires_approval("planning", "cancelled"));
+}

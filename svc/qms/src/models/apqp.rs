@@ -601,4 +601,137 @@ mod tests {
             comment: None,
         });
     }
+
+    #[test]
+    fn test_apqp_project_clone_and_debug() {
+        let p = ApqpProject {
+            id: "ap1".to_string(),
+            tenant_id: "t1".to_string(),
+            project_no: "APQP-001".to_string(),
+            project_name: "New Product X Launch".to_string(),
+            product_id: Some("p1".to_string()),
+            product_name: Some("Prod X".to_string()),
+            customer: Some("Cust A".to_string()),
+            description: Some("full project desc".to_string()),
+            status: Some("in_design".to_string()),
+            current_phase: Some("Phase 2".to_string()),
+            leader: Some("pm1".to_string()),
+            team: Some("team list".to_string()),
+            start_date: Some("2025-01-01".to_string()),
+            target_date: Some("2025-12-31".to_string()),
+            actual_end_date: None,
+            progress: Some(25),
+            risk_level: Some("medium".to_string()),
+            created_by: Some("admin".to_string()),
+            created_at: Some("c".to_string()),
+            updated_at: Some("u".to_string()),
+        };
+        let p2 = p.clone();
+        assert_eq!(p.id, p2.id);
+        assert_eq!(p.project_no, p2.project_no);
+        assert_eq!(p.status, p2.status);
+        assert_eq!(p.progress, p2.progress);
+        assert!(!format!("{:?}", p).is_empty());
+    }
+
+    #[test]
+    fn test_apqp_risk_clone_and_rpn() {
+        let r = ApqpRisk {
+            id: "r1".to_string(),
+            tenant_id: "t1".to_string(),
+            project_id: "p1".to_string(),
+            risk_name: "Supply chain delay".to_string(),
+            description: Some("risk desc".to_string()),
+            risk_category: Some("logistics".to_string()),
+            severity: Some(7),
+            occurrence: Some(5),
+            detection: Some(6),
+            rpn: Some(210),
+            status: Some("mitigating".to_string()),
+            mitigation_plan: Some("dual source".to_string()),
+            responsible: Some("mgr1".to_string()),
+            target_date: Some("2025-06-30".to_string()),
+            created_at: Some("c".to_string()),
+            updated_at: Some("u".to_string()),
+        };
+        let r2 = r.clone();
+        assert_eq!(r.id, r2.id);
+        assert_eq!(r.risk_name, r2.risk_name);
+        assert_eq!(r.rpn, r2.rpn);
+        assert_eq!(r.severity, r2.severity);
+        assert!(!format!("{:?}", r).is_empty());
+    }
+
+    #[test]
+    fn test_apqp_task_all_fields_some() {
+        roundtrip(&ApqpTask {
+            id: "task1".to_string(),
+            tenant_id: "t1".to_string(),
+            project_id: "p1".to_string(),
+            phase_id: "ph1".to_string(),
+            task_name: "Design FMEA".to_string(),
+            description: Some("complete design fmea".to_string()),
+            task_type: Some("deliverable".to_string()),
+            deliverable: Some("FMEA report".to_string()),
+            status: Some("in_progress".to_string()),
+            assignee: Some("eng1".to_string()),
+            due_date: Some("2025-04-30".to_string()),
+            completed_at: None,
+            sort_order: Some(3),
+            created_at: Some("c".to_string()),
+            updated_at: Some("u".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_apqp_phase_all_some() {
+        roundtrip(&ApqpPhase {
+            id: "ph1".to_string(),
+            tenant_id: "t1".to_string(),
+            project_id: "p1".to_string(),
+            phase_code: "PH2".to_string(),
+            phase_name: "Product Design".to_string(),
+            description: Some("phase desc".to_string()),
+            status: Some("in_progress".to_string()),
+            start_date: Some("2025-02-01".to_string()),
+            end_date: Some("2025-05-31".to_string()),
+            actual_start_date: Some("2025-02-05".to_string()),
+            actual_end_date: None,
+            progress: Some(40),
+            sort_order: Some(2),
+            created_at: Some("c".to_string()),
+            updated_at: Some("u".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_apqp_progress_statistics_complex() {
+        roundtrip(&ApqpProgressStatistics {
+            total_phases: 4,
+            completed_phases: 1,
+            total_tasks: 20,
+            completed_tasks: 7,
+            overall_progress: 35.0,
+            phase_progress: vec![
+                PhaseProgress {
+                    phase_id: "ph1".to_string(),
+                    phase_name: "Planning".to_string(),
+                    phase_code: "PH1".to_string(),
+                    total_tasks: 5,
+                    completed_tasks: 5,
+                    progress: 100.0,
+                    status: "completed".to_string(),
+                },
+                PhaseProgress {
+                    phase_id: "ph2".to_string(),
+                    phase_name: "Design".to_string(),
+                    phase_code: "PH2".to_string(),
+                    total_tasks: 7,
+                    completed_tasks: 2,
+                    progress: 28.57,
+                    status: "in_progress".to_string(),
+                },
+            ],
+        });
+    }
 }

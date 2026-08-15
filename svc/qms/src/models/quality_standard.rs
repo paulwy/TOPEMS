@@ -174,4 +174,67 @@ mod tests {
             created_at: None,
         });
     }
+
+    #[test]
+    fn test_quality_standard_clone_and_debug() {
+        let s = QualityStandard {
+            id: "s1".to_string(),
+            tenant_id: "t1".to_string(),
+            code: "ISO-9001".to_string(),
+            name: "QMS Standard".to_string(),
+            category: "iso".to_string(),
+            level: Some("national".to_string()),
+            specification: Some("spec text".to_string()),
+            description: Some("desc".to_string()),
+            version: Some("2015".to_string()),
+            status: Some("active".to_string()),
+            created_by: Some("u1".to_string()),
+            created_at: Some("c".to_string()),
+            updated_at: Some("u".to_string()),
+        };
+        let s2 = s.clone();
+        assert_eq!(s.id, s2.id);
+        assert_eq!(s.code, s2.code);
+        assert_eq!(s.name, s2.name);
+        assert_eq!(s.category, s2.category);
+        assert_eq!(s.version, s2.version);
+        assert!(!format!("{:?}", s).is_empty());
+    }
+
+    #[test]
+    fn test_standard_query_all_some() {
+        roundtrip(&StandardQuery {
+            page: Some(1),
+            page_size: Some(50),
+            category: Some("iso".to_string()),
+            status: Some("active".to_string()),
+            search: Some("9001".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_create_standard_request_all_some() {
+        roundtrip(&CreateStandardRequest {
+            name: "Standard X".to_string(),
+            category: "internal".to_string(),
+            level: Some("company".to_string()),
+            specification: Some("spec here".to_string()),
+            description: Some("full desc".to_string()),
+            version: Some("1.0".to_string()),
+            created_by: Some("admin".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_update_standard_request_all_some() {
+        roundtrip(&UpdateStandardRequest {
+            name: Some("New name".to_string()),
+            category: Some("iso".to_string()),
+            level: Some("international".to_string()),
+            specification: Some("new spec".to_string()),
+            description: Some("new desc".to_string()),
+            version: Some("2.0".to_string()),
+            status: Some("archived".to_string()),
+        });
+    }
 }

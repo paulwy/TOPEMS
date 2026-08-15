@@ -224,4 +224,80 @@ mod tests {
             department_summary: vec![],
         });
     }
+
+    #[test]
+    fn test_quality_cost_clone_and_debug() {
+        let c = QualityCost {
+            id: "c1".to_string(),
+            tenant_id: "t1".to_string(),
+            cost_no: "QC-2025-001".to_string(),
+            cost_category: "prevention".to_string(),
+            cost_type: Some("training".to_string()),
+            amount: BigDecimal::from(15000),
+            department: Some("QA".to_string()),
+            description: Some("training cost".to_string()),
+            related_issue_id: Some("i1".to_string()),
+            incurred_date: Some("2025-01-15".to_string()),
+            created_by: Some("admin".to_string()),
+            created_at: Some("c".to_string()),
+            updated_at: Some("u".to_string()),
+        };
+        let c2 = c.clone();
+        assert_eq!(c.id, c2.id);
+        assert_eq!(c.cost_no, c2.cost_no);
+        assert_eq!(c.cost_category, c2.cost_category);
+        assert_eq!(c.amount, c2.amount);
+        assert!(!format!("{:?}", c).is_empty());
+    }
+
+    #[test]
+    fn test_quality_cost_query_all_some() {
+        roundtrip(&QualityCostQuery {
+            page: Some(1),
+            page_size: Some(30),
+            cost_category: Some("external_failure".to_string()),
+            department: Some("Production".to_string()),
+            start_date: Some("2025-01-01".to_string()),
+            end_date: Some("2025-12-31".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_cost_trend_item_nonzero() {
+        roundtrip(&CostTrendItem {
+            period: "2025-Q1".to_string(),
+            prevention: 1000.0,
+            appraisal: 2000.0,
+            internal_failure: 500.0,
+            external_failure: 2500.0,
+            total: 6000.0,
+        });
+    }
+
+    #[test]
+    fn test_quality_cost_statistics_nonzero() {
+        roundtrip(&QualityCostStatistics {
+            total_cost: 1_000_000.0,
+            category_summary: vec![
+                CostCategorySummary {
+                    category: "prevention".to_string(),
+                    total_amount: 100_000.0,
+                    count: 10,
+                    percentage: 10.0,
+                },
+                CostCategorySummary {
+                    category: "appraisal".to_string(),
+                    total_amount: 200_000.0,
+                    count: 20,
+                    percentage: 20.0,
+                },
+            ],
+            department_summary: vec![CostDepartmentSummary {
+                department: "QA".to_string(),
+                total_amount: 300_000.0,
+                count: 15,
+                percentage: 30.0,
+            }],
+        });
+    }
 }

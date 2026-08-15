@@ -180,3 +180,132 @@ pub fn has_qms_permission(claims: &Claims, action: &str) -> bool {
         || claims.has_permission("qms:admin")
         || claims.has_permission("all")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_qms_permission_clone_and_eq() {
+        let p1 = QmsPermission::CheckRead;
+        let p2 = QmsPermission::CheckRead;
+        assert_eq!(p1, p2);
+        let p3 = p1.clone();
+        assert_eq!(p1, p3);
+        let p4 = QmsPermission::CheckWrite;
+        assert_ne!(p1, p4);
+    }
+
+    #[test]
+    fn test_qms_permission_debug() {
+        let s = format!("{:?}", QmsPermission::CheckRead);
+        assert!(!s.is_empty());
+        let s = format!("{:?}", QmsPermission::All);
+        assert!(!s.is_empty());
+    }
+
+    #[test]
+    fn test_qms_permission_display_not_empty() {
+        for p in [
+            QmsPermission::CheckRead,
+            QmsPermission::CheckWrite,
+            QmsPermission::IssueRead,
+            QmsPermission::IssueWrite,
+            QmsPermission::StandardRead,
+            QmsPermission::StandardWrite,
+            QmsPermission::ActionRead,
+            QmsPermission::ActionWrite,
+            QmsPermission::AuditPlanRead,
+            QmsPermission::AuditPlanWrite,
+            QmsPermission::AuditTaskRead,
+            QmsPermission::AuditTaskWrite,
+            QmsPermission::AuditFindingRead,
+            QmsPermission::AuditFindingWrite,
+            QmsPermission::SpcRead,
+            QmsPermission::SpcWrite,
+            QmsPermission::QualityCostRead,
+            QmsPermission::QualityCostWrite,
+            QmsPermission::EightdRead,
+            QmsPermission::EightdWrite,
+            QmsPermission::FmeaRead,
+            QmsPermission::FmeaWrite,
+            QmsPermission::DashboardRead,
+            QmsPermission::AlertRuleRead,
+            QmsPermission::AlertRuleWrite,
+            QmsPermission::ApqpRead,
+            QmsPermission::ApqpWrite,
+            QmsPermission::SyncRead,
+            QmsPermission::SyncWrite,
+            QmsPermission::InspectionApprove,
+            QmsPermission::IssueApprove,
+            QmsPermission::EightdApprove,
+            QmsPermission::ApqpApprove,
+            QmsPermission::All,
+        ] {
+            assert!(!format!("{}", p).is_empty());
+        }
+    }
+
+    #[test]
+    fn test_qms_permission_all_variants_are_distinct() {
+        use std::collections::HashSet;
+        let mut set = HashSet::new();
+        let perms = vec![
+            QmsPermission::CheckRead,
+            QmsPermission::CheckWrite,
+            QmsPermission::IssueRead,
+            QmsPermission::IssueWrite,
+            QmsPermission::StandardRead,
+            QmsPermission::StandardWrite,
+            QmsPermission::ActionRead,
+            QmsPermission::ActionWrite,
+            QmsPermission::AuditPlanRead,
+            QmsPermission::AuditPlanWrite,
+            QmsPermission::AuditTaskRead,
+            QmsPermission::AuditTaskWrite,
+            QmsPermission::AuditFindingRead,
+            QmsPermission::AuditFindingWrite,
+            QmsPermission::SpcRead,
+            QmsPermission::SpcWrite,
+            QmsPermission::QualityCostRead,
+            QmsPermission::QualityCostWrite,
+            QmsPermission::EightdRead,
+            QmsPermission::EightdWrite,
+            QmsPermission::FmeaRead,
+            QmsPermission::FmeaWrite,
+            QmsPermission::DashboardRead,
+            QmsPermission::AlertRuleRead,
+            QmsPermission::AlertRuleWrite,
+            QmsPermission::ApqpRead,
+            QmsPermission::ApqpWrite,
+            QmsPermission::SyncRead,
+            QmsPermission::SyncWrite,
+            QmsPermission::InspectionApprove,
+            QmsPermission::IssueApprove,
+            QmsPermission::EightdApprove,
+            QmsPermission::ApqpApprove,
+            QmsPermission::All,
+        ];
+        for p in perms {
+            let s = format!("{:?}", p);
+            assert!(set.insert(s), "duplicate variant debug: {}", p);
+        }
+    }
+
+    #[test]
+    fn test_to_shared_module_code_is_qms_for_all() {
+        for p in [
+            QmsPermission::CheckRead,
+            QmsPermission::CheckWrite,
+            QmsPermission::IssueRead,
+            QmsPermission::All,
+            QmsPermission::InspectionApprove,
+        ] {
+            let shared = p.to_shared();
+            assert_eq!(
+                format!("{:?}", shared.module),
+                format!("{:?}", topems_shared_auth::permission::ModuleCode::Qms)
+            );
+        }
+    }
+}
