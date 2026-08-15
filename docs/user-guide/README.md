@@ -16,7 +16,7 @@ user-guide/
     ├── hrm.md           # 人力资源管理
     ├── erp.md           # 企业资源计划
     ├── crm.md           # 客户关系管理
-    ├── rs.md            # 研发管理
+    ├── rd.md            # 研发管理
     ├── qms.md           # 质量管理
     ├── srm.md           # 供应商管理
     ├── wms.md           # 仓库管理
@@ -25,7 +25,9 @@ user-guide/
     ├── ehs.md           # 环境健康安全
     ├── bi.md            # 数据分析
     ├── scm.md           # 供应链管理
-    └── lims.md          # 实验室管理
+    ├── lims.md          # 实验室管理
+    ├── ai.md            # AI 智能助手
+    └── gis.md           # 地理信息
 ```
 
 ---
@@ -53,7 +55,7 @@ user-guide/
 | 人力资源 | [hrm.md](./modules/hrm.md) | 公司架构、员工管理 |
 | 企业资源 | [erp.md](./modules/erp.md) | 资产管理、财务、凭证 |
 | 客户管理 | [crm.md](./modules/crm.md) | 客户、商机 |
-| 研发管理 | [rs.md](./modules/rs.md) | 项目、实验 |
+| 研发管理 | [rd.md](./modules/rd.md) | 项目、实验 |
 | 质量管理 | [qms.md](./modules/qms.md) | 质量标准、检验、SPC |
 | 供应商管理 | [srm.md](./modules/srm.md) | 供应商、采购订单 |
 | 仓库管理 | [wms.md](./modules/wms.md) | 仓库、库存、预警 |
@@ -63,6 +65,8 @@ user-guide/
 | 数据分析 | [bi.md](./modules/bi.md) | 仪表盘、报表、预测 |
 | 供应链 | [scm.md](./modules/scm.md) | 采购、MRP、补货 |
 | 实验室 | [lims.md](./modules/lims.md) | 样品、检验记录 |
+| AI 助手 | [ai.md](./modules/ai.md) | 对话、文档问答、代码助手 |
+| 地理信息 | [gis.md](./modules/gis.md) | 地图、设备追踪、围栏 |
 
 ### 遇到问题
 

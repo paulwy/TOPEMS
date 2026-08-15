@@ -280,3 +280,26 @@ scripts/audit/
 | 模板 | `docs/audit/templates/compliance-report.md`（`{{var}}`） | `scripts/audit/report_template.md`（`{{var}}` + `{% for/if %}`） |
 | 输出 | Markdown / JSON | Markdown / JSON / CSV（含原始日志导出） |
 | 适用 | 在线巡检、运维 dashboard | 离线归档、外部审计交付、定时任务 |
+
+## 9. 架构审计报告索引
+
+本目录还存放了项目各轮架构审计的报告文件，按版本排列：
+
+| 报告 | 版本基线 | 日期 | 说明 |
+|------|---------|------|------|
+| [V67.1-data-layer-audit](./V67.1-data-layer-audit-20260808.md) | V67.1 | 2026-08-08 | 数据层深度审计：审计日志覆盖率 25%→100%、ApprovalStatus 枚举统一、EntitySchema maxLength 校验 |
+| [V70-fifth-round-audit](./V70-fifth-round-audit-20260808.md) | V70 | 2026-08-08 | 第五轮深度架构审计，31 项问题全闭环 |
+| [V71-sixth-round-probe-design](./V71-sixth-round-probe-design.md) | V71 | 2026-08-09 | 第六轮架构审计探针设计（4 探针方案） |
+| [v73-real-handler-triage](./v73-real-handler-triage.md) | V73 | — | V73 Real Handler Triage 报告 |
+| [v77-architecture-audit-report](./v77-architecture-audit-report.md) | V77 | — | V77 架构与质量全面审计 |
+| [v78-architecture-audit-report](./v78-architecture-audit-report.md) | V78 | — | V78.0 架构与质量审计 |
+| [v81-phase-1-report](./v81-phase-1-report.md) | V81 | — | Phase 1：深度治理与规模化拆分 |
+| [v81-phase-2-report](./v81-phase-2-report.md) | V81 | — | Phase 2：深度拆分与编译错误清零 |
+| [v81-phase-3-report](./v81-phase-3-report.md) | V81 | — | Phase 3：规模化 TSC 清零 + 123 hooks 测试 + 剩余大 Page 拆分 |
+| [v81-phase-4-report](./v81-phase-4-report.md) | V81 | — | Phase 4：TSC 零错误达成 + 全量 Page 拆分收官 |
+| [V83.1-react-query-standardization](./V83.1-react-query-standardization-report.md) | V83.1 | — | React Query 标准化审计 |
+| [openapi-coverage-report](./openapi-coverage-report.md) | — | — | OpenAPI 覆盖率对照报告 |
+| [probe-p04-openapi-contract](./probe-p04-openapi-contract.md) | — | — | P-04 探针：OpenAPI 前后端契约一致性 |
+| [probe-p07-utoipa-schema](./probe-p07-utoipa-schema.md) | — | — | P-07 探针：utoipa schema vs handler 签名一致性 |
+| [p04-triage-report](./p04-triage-report.md) | — | — | P-04 Triage：未使用后端 API 与未文档化前端 API |
+| [nav-architecture-verification](./nav-architecture-verification-2026-08-15.md) | V71 | 2026-08-15 | 导航架构全量校对：35 模块 config.ts vs navigation-architecture.md，L1/L3 合规率 100% |

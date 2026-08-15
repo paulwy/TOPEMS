@@ -83,7 +83,7 @@
 | [插件 API](api/plugins-api.md) | 插件开发 API 参考 |
 | [OpenAPI 规范](api/openapi.yaml) | OpenAPI 3.0 规范文件 |
 
-**服务 API 列表**: AUTH · AI · ANALYTICS · CRM · DOC · EHS · ERP · FINANCE · GIS · HRM · INTEGRATION · LIMS · MES · MOBILE · MONITOR · NOTIFICATION · PDM · PM · PORTAL · QMS · REPORT · RS · SCM · SRM · WMS · WORKFLOW
+**服务 API 列表**: AUTH · AI · ANALYTICS · CRM · DOC · EHS · ERP · FINANCE · GIS · HRM · INTEGRATION · LIMS · MES · MOBILE · MONITOR · NOTIFICATION · PDM · PM · PORTAL · QMS · REPORT · RD · SCM · SRM · WMS · WORKFLOW
 
 ---
 
@@ -138,8 +138,7 @@
 |------|------|
 | [部署索引](deployment/README.md) | 部署文档总入口 |
 | [部署指南总览](deployment/deployment-guide-overview.md) | 部署方式总览与选型 |
-| [端口分配规则](deployment/port-allocation-rules.md) | 服务端口分配规范 |
-| [监控告警](deployment/monitoring-alerting.md) | Prometheus、告警规则 |
+| [服务端口分配（唯一真相源）](architecture/ports.md) | 28 服务标准端口分配表（见架构组） |
 | [故障排查手册](deployment/troubleshooting.md) | 常见问题与解决方案 |
 | [发布策略](deployment/release-strategies.md) | 灰度、蓝绿、金丝雀发布 |
 | [微前端部署](deployment/microfrontend-deployment.md) | Module Federation 部署 |
@@ -162,7 +161,7 @@
 |------|------|
 | [TODO 任务清单](roadmap/TODO.md) | **当前真相源** — 版本基线 V71、待办/进度/验收数字、唯一活跃规划文档 |
 | [长期路线图（⚠️已归档 V3.2~V5.6）](roadmap/roadmap.md) | 早期版本历史快照保留（已失配勿用作实施），当前规划请跳转 [roadmap/TODO.md](roadmap/TODO.md) |
-| [历史任务归档](roadmap/todo-archive/) | 已完成版本任务归档 |
+| [V67.3 前端 UI 优化方案（历史）](roadmap/V67.3-frontend-ui-optimization-plan.md) | 历史方案存档 |
 
 ---
 
@@ -187,11 +186,14 @@
 
 | 类别 | 说明 | 位置 |
 |------|------|------|
-| 📚 用户指南 | 最终用户操作手册 | [user-guide/](user-guide/) |
-| 📊 销售资料 | 产品手册、销售话术、案例 | [sales/](sales/) |
-| 🗄️ 历史归档 | 旧方案、旧报告、迁移计划、超级能力规格 | [archive/](archive/) |
-| 📖 文档站 | docsify 文档中心源码 | [docs-center/](docs-center/) |
-| 🎨 资源文件 | Logo、图片等 | [assets/](assets/) |
+| 📚 用户指南 | 最终用户操作手册（16 个模块） | [user-guide/](user-guide/) |
+| 📊 销售资料 | 产品手册、销售话术、案例模板 | [sales/](sales/) |
+| 🗄️ 历史方案归档 | 旧方案、旧规格、旧迁移计划 | [superpowers/](superpowers/) |
+| 📝 审计与验证 | 架构审计、链接验证报告 | [audit/](audit/) |
+| 🧪 测试与技术债务 | 测试报告、技术债务审计 | [reports/](reports/) |
+| ⚡ 性能基准 | 构建、测试、类型生成基准 | [benchmarks/](benchmarks/) |
+| 🎨 资源文件 | Logo、图片等文档资源 | [assets/](assets/) |
+| 🧭 导航架构规范 | 四层导航模型、UI 视觉标准 | [navigation-architecture.md](navigation-architecture.md) |
 
 ---
 
@@ -203,20 +205,23 @@
 docs/
 ├── README.md              ← 本文档（唯一入口）
 ├── assets/                ← 文档资源（图片、logo等）
+├── navigation-architecture.md ← 导航架构规范（L1~L4 四层导航）
 ├── getting-started/       ← 新手入门（3-5 篇）
 ├── architecture/          ← 架构设计（核心文档组）
-├── modules/               ← 业务模块（按服务拆分）
+├── modules/               ← 业务模块（按服务拆分，核心/业务分组）
 ├── api/                   ← API 参考（自动生成 + 手写）
-├── development/           ← 开发指南（按角色分）
+├── development/           ← 开发指南（按角色分：后端/前端/迁移）
 ├── deployment/            ← 部署运维
 ├── plans/                 ← 方案与规划（活跃方案）
-├── roadmap/               ← 路线图与任务
+├── roadmap/               ← 路线图与任务（当前任务用 TODO.md）
+├── audit/                 ← 审计与验证报告
+├── reports/               ← 测试报告、技术债务审计
+├── benchmarks/            ← 性能基准报告
 ├── security/              ← 安全相关
 ├── changelog/             ← 变更日志
 ├── user-guide/            ← 用户文档（保留外来结构）
 ├── sales/                 ← 销售资料（保留外来结构）
-├── docs-center/           ← Docsify 文档站（保留外来结构）
-└── archive/               ← 历史归档（过时/完成但保留）
+└── superpowers/           ← 历史方案归档（旧方案、旧规格、旧计划，保留留痕）
 ```
 
 ### 链接规范

@@ -4,9 +4,128 @@
 >
 > **版本说明**:
 > - 产品版本号遵循 `主版本.次版本.修订号` (MAJOR.MINOR.PATCH) 语义化版本规范
-> - 当前产品版本: **5.14.0** (与 `package.json` 和发布说明对齐)
+> - 当前产品版本: **5.15.0** (与 `package.json` 和发布说明对齐)
 > - Rust crate 版本 (Cargo.toml): `0.1.0` (库内部版本，与产品版本独立)
 > - 历史清理/重构记录: 见 `CHANGELOG-cleanup-history.md`
+
+### 版本号映射
+
+项目存在三套版本号体系，对应关系如下：
+
+| 产品版本 (package.json) | 架构版本 (overview.md) | 任务版本 (TODO.md) | 关键里程碑 |
+|------------------------|----------------------|-------------------|-----------|
+| 5.15.0 | V71 | V182 | 导航三联校验 100%、RD 命名统一、文档重构 |
+| 5.14.3 | V67.2 | V178~V182 | 导航架构合规化、PM 编译清零 |
+| 5.14.2 | V67.1 | — | 第四轮审计 67/67 闭环、Docker 压缩 |
+| 5.14.1 | V67.0 | — | ListResponse 统一、Plugin 自动注册 100% |
+| 5.14.0 | V66.7 | — | 第三轮审计 31/31 闭环、Shared Bootstrap V2 |
+| — | V66.2 | — | Shared Bootstrap V2 五批次迁移 28/28 |
+
+> 产品版本通过 `package.json` 的 `version` 字段管理，架构版本记录在 `docs/architecture/overview.md` 顶部，任务版本记录在 `docs/roadmap/TODO.md` 顶部。
+
+---
+
+## [Unreleased]
+
+### Added
+- **Rust 测试覆盖率基线工具链（V203 P0-3.1 落地）**：
+  - `scripts/ci/coverage-baseline.sh`（27 KB）— bash 主调度：Rust `cargo test -Z instrument-coverage` + llvm-profdata/llvm-cov、TypeScript `pnpm vitest --coverage`、15+ CLI flags（`--fast`/`--full`/`--rust`/`--ts`/`-p`/`--fail-under` 等）、工具链自检与降级、per-crate JSON 产出
+  - `scripts/ci/coverage-report.py`（19 KB）— Python 汇总器：读取 per-crate JSON + vitest summary、**按行数加权汇总**（非简单均值）、red/yellow/green 三级 tier、`--fail-under` 阈值门禁、Markdown + JSON + 控制台 ASCII 三输出
+- **P5 覆盖率冲刺：Region 43.19% → 45.84%（+2.65pp）**
+  - 30 个 `test(cov)` 系列 commit、282 个文件变更、+62,150 行测试代码
+  - 策略：`Serialize`/`Deserialize` derive 密集 + 0-test 文件批量 roundtrip + 纯函数边界测试
+  - 覆盖 crate：shared-core / shared-event / shared-observability / ai / erp / wms / crm / hrm / pdm / qms / lims / ehs / communication / master-data / scm / pm / mobile / finance / portal / unified-core / migration-sdk / plugin-registry 等 20+ crate
+  - 代表性：finance domain 5 个文件 +72 tests、portal models +306 roundtrip、ai_form handlers.rs 从 0% → 91.46%
+- **AI Form 模块接入**：`feat(ai): 接入 ai_form 模块 + 补齐 form_assistant 核心类型`
+- **Mock 可测试架构**：AiFormAssistant trait 化注入，移除 handlers.rs 对 concrete client 的硬耦合
+
+### Changed
+- **finance + portal 两大 crate Region 显著提升**：finance 14.53% → 17.58%（+3.05pp，16 文件 +60 tests）、portal 23.83% → 24.52%（+0.69pp，5 文件 +28 tests）
+- **ai_form handlers.rs 可测试性重构**：从直接实例化 client 改为 trait-based 注入，单测 0% → 91.46%（`refactor(ai): 引入 mock 可测试架构`）
+
+### Fixed
+- `.sqlx/` 目录缓存文件误提交风险：根目录 `.gitignore` 新增 pattern（`chore(gitignore)`）
+- MES 数据库 schema refactor 后 97 个编译错误清零（`fix(mes): resolve 97 compile errors`）
+
+---
+
+## [V67.2] - 2026-08-11
+
+### Changed - 导航架构里程碑（V178~V182 八提交聚合）
+- 导航三联校验综合覆盖率：95.4% → 100.0%（V179→V182），1050/1050 全绿
+- 第一联·页面文件匹配：302/350 (86.3%) → 350/350 (100.0%)，总缺失 48 → 34 → 0
+- workflow 模块三联校验 39/39 = 100% 闭环封版（页面/路由/权限各 13/13）
+- verify_navigation 脚本 10 类命名变体规则系统化落地覆盖 17 模块 34 项
+- 项目版本：5.14.0 → 5.15.0（导航架构合规化里程碑）
+
+### Fixed
+- **web(PM)**: usePmReport 返回类型补齐 6 个缺失属性（projectStatistics/contractStatistics/budgetStatistics/riskStatistics/taskStatistics/dashboard），tsc --noEmit 清零
+- **pm(backend)**: statistics.rs 13 个编译错误清零 — 全量 struct Default trait 实现、`#[utoipa::path]` 宏注册（修复 `__path_get_statistics` 未定义）、f64 与 int 比较修正、`ApiResponse<ProjectStatistics>` 泛型类型修正、`path` 歧义消除移除隐式 import
+- **navigation(asset)**: Asset Module navItems 6 条 permission 字段补齐，第三联权限定义覆盖率 338/350 → 350/350
+- **navigation(lowcode)**: Lowcode Module navItems 3 条 permission 字段补齐
+- **navigation(oa)**: OA Module navItems 3 条 permission 字段补齐
+- **verify_navigation V1**: pagePathToFile 候选路径生成新增 `XxxPage/index.tsx` 目录式 + 复数→单数变体，修复 workflow-templates（单数）/workflow-settings（目录式）误报 2 项
+- **verify_navigation V2**: 系统化增强 7 项规则：
+  1. ABBREV_DICT 缩写词典（statistics→Stats 等）
+  2. toSingular 单数变体规则（`-ies→y` / `-ses→s` / `-s` 去尾，覆盖 categories→category 等）
+  3. 6 类候选路径生成：目录式 index / 单数变体候选族 9 种 / 路径缩略 -management / 缩写词典候选 / 复合末段取后半段 / 模块根 index 兜底
+  4. findFuzzyPageMatch 单数变体降权模糊匹配（覆盖语义扩展类 prompts→PromptLibrary 等）
+  5. 单数变体精确匹配 +20 分（覆盖 Management/List 类）
+  → 修复全局 34 项脚本盲点，清零第一联全部缺失
+
+### Docs
+- TODO.md V178：健康修复专项（usePmReport + statistics.rs 双模块编译清零）
+- TODO.md V179：导航三联权限闭环，第三联 12 条 permission 补齐，350/350 = 100%
+- TODO.md V180：verify_navigation 脚本增强 + workflow 2 项清零，第一联 90.3%
+- TODO.md V181：workflow 模块页面骨架闭环封版 39/39 = 100%
+- TODO.md V182：全局 34 项清零 + 导航三联校验 100% 全绿里程碑（7 版本迭代终点）
+
+---
+
+## [V67.1] - 2026-08-08
+
+### Changed - 架构治理
+- P0×10 / P1×25 / P2×20 / P3×12 = 67 项第四轮审计修复（综合健康评分 99/100）
+- 9 服务 Docker healthcheck 统一 `/health` + wget→curl
+- 12 服务 docker-compose environment 通过 YAML 锚点压缩 DRY
+- 11 服务 55+ tracing::info! → debug! 日志降级（QPS +5-15%）
+- 前端 17 处 barrel 0 引用导出清理（tree-shaking ↓）
+
+### Added
+- shared-core: common_types.rs (ApprovalStatus 6变体 + ResourceType 14实体)
+- shared-bootstrap: audit.rs 通用审计模块（create_routes<S>/log_audit_event）
+- shared-core: `handle_result!` 宏统一 357 次重复错误处理
+- 前端: utils/status.ts STATUS_COLOR_MAP（4 类别 + 6 页面替换）
+- 前端: utils/date.ts formatDate 工具统一
+- docs/architecture/ports.md（28 服务标准端口单一信源表）
+
+### Fixed
+- 6 服务 api_prefix 三方不一致（404 路由阻断 ×6）
+- ERP 6 个列表 COUNT(*) 不带 WHERE 导致 total = 全表行数
+- analytics check_permission 永远返回 true 的 stub
+- docker-compose bi 服务 Dockerfile 路径 + report ghost 引用
+- 6 user-guide 模块文档端口号与 main.rs 实际对齐
+
+---
+
+## [V67.0] - 2026-08-07
+
+### Added
+- shared-core `ListResponse<T>` 统一列表响应 + 5 端点试点迁移
+- master-data service `auto_register_to_core` → 插件自动注册 **28/28 (100%)**
+
+### Changed
+- DocumentsPage 1438→783 (-45.5%) · ProfilePage 1298→566 (-56.4%) 超大页拆分
+- 28 services `plugin.yaml` 统一 author/category/version 字段
+
+---
+
+## [V66.7] - 2026-08-07
+
+### Changed
+- 第三轮深度审计 **31/31 全闭环**（P0×6 / P1×10 / P2×9 / P3×3）
+- 28 服务 shared-bootstrap V2 + println → tracing 迁移
+- 14 处 allow(dead_code) 收敛为 crate/mod 级单条
 
 ---
 
@@ -144,9 +263,9 @@
 - **重复初始化保护** - 设置新 provider 前先 shutdown 旧 provider
 
 ### 📚 文档
-- 新增 [OpenTelemetry 分布式追踪指南](./guides/devops/opentelemetry-guide.md) - 完整记录配置说明、宏代码使用、关键优化点和排查步骤
-- 更新 [TODO.md](./TODO.md) - 标记分布式追踪任务为已完成
-- 更新 [运维手册 README](./guides/devops/README.md) - 添加分布式追踪指南入口
+- 新增 OpenTelemetry 分布式追踪指南 - 完整记录配置说明、宏代码使用、关键优化点和排查步骤（已归档）
+- 更新 [TODO.md](../roadmap/TODO.md) - 标记分布式追踪任务为已完成
+- 更新 运维手册 README - 添加分布式追踪指南入口（已归档）
 
 ---
 
@@ -172,8 +291,8 @@
 - **请求重试** - 429/500/502/503/504 错误自动重试（最多 3 次），指数退避延迟
 
 ### 📚 文档
-- 更新 [TODO.md](./TODO.md) - Phase 4 多端支持统一已完成
-- 更新 [API_MOBILE.md](./api/API_MOBILE.md) - 添加新的 API 模块文档
+- 更新 [TODO.md](../roadmap/TODO.md) - Phase 4 多端支持统一已完成
+- 更新 [API_MOBILE.md](../api/API_MOBILE.md) - 添加新的 API 模块文档
 
 ---
 
@@ -192,12 +311,12 @@
 - **Vite 代理配置精简** - 移除分散的 `/ws/notifications` 和 `/ws/im` 规则，保留统一的 `/ws/core` 规则
 
 ### 📚 文档
-- 更新 [Vite 代理配置规范](./guides/devops/proxy-config-guide.md) - 添加完整的 WebSocket 代理配置规范章节
-- 更新 [Vite 代理验证报告](./vite-proxy-verification-report.md) - 反映 WebSocket 路由统一规范
-- 更新 [通知系统 API](./api/API_NOTIFICATION.md) - 修正 WebSocket 连接地址为统一规范
-- 新增 [WebSocket 路径映射规范](./guides/devops/websocket-path-mapping.md) - 详细说明新的路径映射规则、前端实现、后端路由和代理配置
+- 更新 Vite 代理配置规范 - 添加完整的 WebSocket 代理配置规范章节（已归档）
+- 更新 Vite 代理验证报告 - 反映 WebSocket 路由统一规范（已归档）
+- 更新 [通知系统 API](../api/API_NOTIFICATION.md) - 修正 WebSocket 连接地址为统一规范
+- 新增 [WebSocket 路径映射规范](../architecture/websocket-path-mapping.md) - 详细说明新的路径映射规则、前端实现、后端路由和代理配置
 - 更新 [README.md](../README.md) - 添加 WebSocket 路径映射章节和文档链接
-- 更新 [开发者指南](./guides/devops/developers-guide.md) - 添加 WebSocket 开发指南章节
+- 更新 开发者指南 - 添加 WebSocket 开发指南章节（已归档）
 
 ### 📜 脚本
 - **topems.sh 新增 WebSocket 检查命令** - 添加 `ws check` 命令，支持检查所有 WebSocket 连接状态，显示路径规范和文档链接
@@ -233,10 +352,10 @@
 - **注册结果解析优化** - 修复 topems.sh 中插件注册结果的 JSON 解析逻辑
 
 ### 📚 文档
-- 更新 [脚本工具说明](./guides/devops/scripts-guide.md) - 添加插件自动注册功能说明
-- 更新 [快速入门指南](./QUICKSTART.md) - 反映新的启动和注册流程
-- 更新 [本地部署指南](./LOCAL_DEPLOYMENT.md) - 添加服务注册机制说明
-- 更新 [故障排查手册](./TROUBLESHOOTING.md) - 添加常见问题解决方案
+- 更新 脚本工具说明 - 添加插件自动注册功能说明（已归档）
+- 更新 [快速入门指南](../getting-started/quickstart.md) - 反映新的启动和注册流程
+- 更新 [本地部署指南](../getting-started/local-deployment.md) - 添加服务注册机制说明
+- 更新 [故障排查手册](../deployment/troubleshooting.md) - 添加常见问题解决方案
 
 ---
 
@@ -254,13 +373,13 @@
 - **SCM 供应链集成** - 采购需求计划、采购到货检验、智能补货建议、供应链可视化看板
 
 ### 📚 文档
-- 完善 [权限系统设计](./guides/devops/permission-system-design.md) - 系统设置页面权限检查
-- 完善 [组件迁移指南](./guides/ui/component-migration-guide.md) - 更新 WIP 项状态
-- 新增 [BI模块用户指南](./user-guide/modules/bi.md)
-- 新增 [SCM模块用户指南](./user-guide/modules/scm.md)
-- 完善 [MES模块用户指南](./user-guide/modules/mes.md)
-- 完善 [QMS模块用户指南](./user-guide/modules/qms.md)
-- 更新 [用户指南索引](./user-guide/README.md)
+- 完善 权限系统设计 - 系统设置页面权限检查（已归档）
+- 完善 [组件迁移指南](../development/frontend/component-migration-guide.md) - 更新 WIP 项状态
+- 新增 [BI模块用户指南](../user-guide/modules/bi.md)
+- 新增 [SCM模块用户指南](../user-guide/modules/scm.md)
+- 完善 [MES模块用户指南](../user-guide/modules/mes.md)
+- 完善 [QMS模块用户指南](../user-guide/modules/qms.md)
+- 更新 [用户指南索引](../user-guide/README.md)
 
 ### 🔧 改进
 - 文档体系完整性提升（用户指南覆盖12个业务模块）
@@ -283,7 +402,7 @@
 - **QMS-LIMS-EHS 数据联动** - 质量管理全流程数据联动
 - **移动端支持** - Mobile 服务（端口 8070）
 - **PDM 产品数据管理** - 产品、BOM、版本管理
-- **RS 研发管理** - 研发项目、配方、专利管理
+- **RD 研发管理（原 RS）** - 研发项目、配方、专利管理
 - **GIS 地理信息** - 地图、位置服务
 - **Monitor 系统监控** - 实时系统监控和告警
 
@@ -302,11 +421,11 @@
 - **修复多处端口不一致问题** - 统一所有配置文件端口
 
 ### 📚 文档
-- 完善 [架构设计](./architecture/overview.md)
-- 完善 [API 文档](./api/README.md)
-- 完善 [部署指南](./deployment-guide.md)
-- 完善 [环境配置](./guides/ENVIRONMENT_CONFIG.md)
-- 新增 [端口分配规则](./port-allocation-rules.md)
+- 完善 [架构设计](../architecture/overview.md)
+- 完善 [API 文档](../api/README.md)
+- 完善 [部署指南](../deployment/deployment-guide-overview.md)
+- 完善 [环境配置](../getting-started/environment-config.md)
+- 新增 [端口分配规则](../architecture/ports.md)
 - 新增各模块文档（14个）
 
 ### 🔨 重构
@@ -361,4 +480,4 @@
 
 ## 后续规划
 
-详见 [TODO.md](./TODO.md)
+详见 [TODO.md](../roadmap/TODO.md)

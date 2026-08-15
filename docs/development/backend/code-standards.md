@@ -310,7 +310,7 @@ import type { User } from '@/types';
 
 ### 6. 路径规范
 
-> 详细方案见 [路径重构实施方案](../../superpowers/specs/2026-07-11-path-refactor-implementation-plan.md)
+> 详细方案见 路径重构实施方案（已归档）
 
 #### 6.1 统一配置文件
 

@@ -27,13 +27,14 @@
 ```
 node scripts/analyze_nav_structure.mjs
 →
+
 L1 业务域 x 10      （≤12，用户一眼扫完）
-L2 模块数  x 33     （每个 L1 下 1~8 个，平均 3.3）
+L2 模块数  x 35     （每个 L1 下 1~8 个，平均 3.5）  ← 2026-08-15 校对：补入 aps/tms 后由 33 更新为 35
 L3 子组数  x 118    （每个 L2 下 1~6 个，标准 4 个）
-L4 页面入口 x 341   （每个 L3 下 1~8 个，平均 2.8）
+L4 页面入口 x 368   （每个 L3 下 1~8 个，平均 2.9）  ← 2026-08-15 校对：补入 aps(15)+tms(12) 后由 341 更新为 368
 ```
 
-> 校验：用户最多 4 次点击到达任何 341 个页面（L1→L2→L3→L4），符合米勒定律（7±2 原则）× 4 层友好上限。
+> 校验：用户最多 4 次点击到达任何 368 个页面（L1→L2→L3→L4），符合米勒定律（7±2 原则）× 4 层友好上限。
 
 ---
 
@@ -43,7 +44,7 @@ L4 页面入口 x 341   （每个 L3 下 1~8 个，平均 2.8）
 
 ```
 L1 业务域（Business Domain）  —— ModuleSuite 枚举（10 个，§2 表）
- └ L2 功能模块（Module）      —— ModuleNavConfig.code（全局唯一，33 个）
+ └ L2 功能模块（Module）      —— ModuleNavConfig.code（全局唯一，35 个）
     └ L3 菜单子组（Group）    —— NavGroup 枚举（8 个，§4 表）OPTIONAL：≤5 页面模块可省略
        └ L4 页面入口（Page）  —— NavItemConfig.code = `{module}-{page}`，全局唯一
 ```
@@ -74,9 +75,9 @@ L1 业务域（Business Domain）  —— ModuleSuite 枚举（10 个，§2 表�
 | Order | Code（ModuleSuite 枚举值） | 展示名 (emoji) | 模块数 | 总页面 | 定位说明（= 该域解决什么角色的什么问题） | 判定规则（新增模块怎么选） |
 |---|---|---|---|---|---|---|
 | 10 | `enterprise` | 🏢 企业平台 | 7 | 82 | 平台管理员 / IT / 数据分析师：租户、权限、BI 报表、主数据（物料/客户/供应商）、系统市场 | 涉及系统级/租户级配置、跨域主数据、BI/报表、插件市场 |
-| 20 | `manufacturing` | 🏭 制造域 | 2 | 39 | 生产主管 / 车间主任 / 安全员：车间执行、设备、工艺、安全环保、应急 | 关键词：**车间、设备、生产工单、EHS、应急** |
+| 20 | `manufacturing` | 🏭 制造域 | 3 | 54 | 生产主管 / 车间主任 / 安全员：车间执行、设备、工艺、安全环保、应急、高级排程 | 关键词：**车间、设备、生产工单、EHS、应急、排程** |
 | 30 | `quality` | 🔬 质量域 | 2 | 25 | 质量工程师 QE / 实验室主管：来料检/过程检/出货检、8D、SPC、样品、试剂、仪器 | 关键字：**质检、标准、不合格、实验、检测、校准** |
-| 40 | `supply` | 📦 供应链域 | 3 | 45 | 采购 / 仓储 / 供应商管理：PR→PO→入库、库位、FIFO、供应商准入/绩效 | 关键字：**采购、寻源、入库、出库、库存、供应商配额** |
+| 40 | `supply` | 📦 供应链域 | 4 | 57 | 采购 / 仓储 / 供应商管理 / 运输：PR→PO→入库、库位、FIFO、供应商准入/绩效、运输调度 | 关键字：**采购、寻源、入库、出库、库存、供应商配额、运输** |
 | 50 | `finance` | 💰 财务域 | 1 | 40 | 会计 / 财务共享：凭证、应收应付、预算、税务、成本、资金 | 关键字：**会计、分录、税、预算、应付应收、成本中心** |
 | 60 | `hr` | 👥 人力域 | 1 | 16 | HRBP / 人事行政：员工档案、考勤、薪酬、招聘、绩效、培训 | 关键字：**员工、招聘、考勤、薪资、绩效、培训、组织架构** |
 | 70 | `crm` | 🤝 客户域 | 1 | 12 | 销售 / 售前 / 客户经理：客户 360、销售漏斗、商机跟进、合同 | 关键字：**线索、客户、商机、报价单、合同、回款** |
@@ -105,9 +106,9 @@ L1 业务域（Business Domain）  —— ModuleSuite 枚举（10 个，§2 表�
 flowchart TD
     subgraph L1["L1 业务域（10）"]
     E["🏢 企业平台 enterprise (7)"]
-    M["🏭 制造域 manufacturing (2)"]
+    M["🏭 制造域 manufacturing (3)"]
     Q["🔬 质量域 quality (2)"]
-    SC["📦 供应链域 supply (3)"]
+    SC["📦 供应链域 supply (4)"]
     F["💰 财务域 finance (1)"]
     H["👥 人力域 hr (1)"]
     C["🤝 客户域 crm (1)"]
@@ -116,7 +117,7 @@ flowchart TD
     PL["⚙️ 平台能力 platform (6)"]
     end
 
-    subgraph L2["L2 模块（33，括号内=页面数）"]
+    subgraph L2["L2 模块（35，括号内=页面数）"]
     E --> admin["统一身份 admin·18"]
     E --> iam["身份与权限 iam·4"]
     E --> report["报表中心 report·8"]
@@ -127,6 +128,7 @@ flowchart TD
 
     M --> mes["生产执行 mes·25"]
     M --> ehs["安全环保 ehs·14"]
+    M --> aps["高级排程 aps·15"]
 
     Q --> qms["质量管理 qms·11"]
     Q --> lims["实验室管理 lims·14"]
@@ -134,6 +136,7 @@ flowchart TD
     SC --> scm["供应链管理 scm·15"]
     SC --> wms["仓储管理 wms·16"]
     SC --> srm["供应商关系 srm·14"]
+    SC --> tms["运输管理 tms·12"]
 
     F --> finance["财务管理 finance·17"]
 
@@ -166,17 +169,19 @@ flowchart TD
 
 | Order | L1（10） | L2 模块（按 order 排，括号内=页面数） | 合计 |
 |---|---|---|---|
-| 10 | 🏢 `enterprise` | admin(18) → iam(4) → report(8) → bi(11) → erp(23) → pdm(16) → plugin(2) | 7 ✅ |
-| 20 | 🏭 `manufacturing` | mes(25) → ehs(14) | 2 ✅ |
+| 10 | 🏢 `enterprise` | iam(4) → admin(18) → report(8) → bi(11) → erp(23) → pdm(16) → plugin(2) | 7 ✅ |
+| 20 | 🏭 `manufacturing` | mes(25) → ehs(14) → aps(15) | 3 ✅ |
 | 30 | 🔬 `quality` | qms(11) → lims(14) | 2 ✅ |
-| 40 | 📦 `supply` | scm(15) → wms(16) → srm(14) | 3 ✅ |
+| 40 | 📦 `supply` | scm(15) → tms(12) → wms(16) → srm(14) | 4 ✅ |
 | 50 | 💰 `finance` | finance(17) | 1 ✅ |
 | 60 | 👥 `hr` | hrm(16) | 1 ✅ |
 | 70 | 🤝 `crm` | crm(12) | 1 ✅ |
 | 80 | 🗓️ `project` | pm(6) → rd(17) | 2 ✅ |
-| 90 | 🧰 `collaboration` | workflow(10) → doc(6) → notification(7) → ticket(1) → oa(4) → im(1) → asset(4) → mobile(12) | 8 ✅ |
-| 100 | ⚙️ `platform` | integration(9) → monitor(7) → automation(5) → lowcode(4) → ai(8) → gis(4) | 6 ✅ |
-| — | **合计** | — | **33 模块 / 341 页** |
+| 90 | 🧰 `collaboration` | workflow(10) → notification(7) → doc(6) → ticket(1) → mobile(12) → im(1) → asset(4) → oa(4) | 8 ✅ |
+| 100 | ⚙️ `platform` | monitor(7) → integration(9) → ai(8) → gis(4) → automation(5) → lowcode(4) | 6 ✅ |
+| — | **合计** | — | **35 模块 / 368 页** |
+
+> 📌 **2026-08-15 校对修正**：原表缺失 `aps`（manufacturing，order=12）与 `tms`（supply，order=11），已补入；模块排序已按各模块 `config.ts` 中 `order` 字段重新对齐（原表 enterprise/collaboration/platform 三域排序与代码不一致）。
 
 ✅ **CI 脚本验证：0 模块落在未分组。L1→L2 覆盖率 100%**
 
@@ -221,6 +226,8 @@ export type NavGroup =
 ## 4.3 细化示例（6 个典型大模块 × L3→L4 全量展开 = 后续迭代的分类基准）
 
 > 这是 **后续迭代新增页面的分类参考基准**。新增页面先找对应模块，再按语义映射到 8 个 group 之一。
+>
+> 📌 **2026-08-15 校对状态**：以下 6 个示例为设计规范（前瞻性分类基准），与当前 `config.ts` 实现可能存在差异（如标注"缺失/建议迁"的项为设计建议，尚未在代码中落地）。以 `config.ts` 为当前实现真值源，本节保留作为迭代目标。
 
 ### 4.3.1 🏭 生产执行 MES（25 页）—— 制造域 L2 标杆
 
@@ -381,7 +388,7 @@ export type NavGroup =
 | 展开态（默认） | 260px | L1 emoji+名 → 展开 L2 → 激活 L2 展开 L3 标题 → L4 高亮 | 搜索框 240px、收藏/最近按钮、面包屑 5 段 |
 | 折叠态 | 64px | 仅 L1 emoji + L2 图标（Tooltip 显示 L1 全名） | **悬浮 Popover** 显示该 L2 的 L3→L4 完整子树（类似 macOS Dock），无需先展开 |
 
-其他基准：面包屑 5 段（L0 首页 / L1 / L2 / L3 / L4）均点可回退；Cmd+K 全局搜索范围 = 10 L1 + 33 L2 + 341 L4（排序=收藏×3 / 最近×5 / 完全匹配 / 模糊匹配）。
+其他基准：面包屑 5 段（L0 首页 / L1 / L2 / L3 / L4）均点可回退；Cmd+K 全局搜索范围 = 10 L1 + 35 L2 + 368 L4（排序=收藏×3 / 最近×5 / 完全匹配 / 模糊匹配）。
 
 ---
 
@@ -750,7 +757,7 @@ font-family: "SF Mono", ui-monospace, Menlo, Consolas, "JetBrains Mono",
 
 ---
 
-## 20. 模板化组件 UI 规范（所有 341 个 L4 页面统一）
+## 20. 模板化组件 UI 规范（所有 368 个 L4 页面统一）
 
 ### 20.1 6 大模板组件的 UI 细节规则
 
@@ -815,6 +822,7 @@ font-family: "SF Mono", ui-monospace, Menlo, Consolas, "JetBrains Mono",
 
 | 版本 | 日期 | 变更内容 | 发起人 |
 |---|---|---|---|
+| **v2.3.1** | 2026-08-15 | 全量校对修正：补入遗漏模块 `aps`（manufacturing, order=12, 15页）与 `tms`（supply, order=11, 12页）；L2 模块数 33→35，L4 页面数 341→368；修正 §3 L1→L2 映射表与 mermaid 图中 manufacturing(2→3)/supply(3→4) 域计数；按各模块 `config.ts` 的 `order` 字段重排 enterprise/collaboration/platform 三域模块顺序；§4.3 L3→L4 示例添加"当前实现状态"注释（设计规范 vs 代码实现差异说明）。详见 `docs/audit/nav-architecture-verification-2026-08-15.md` | TOPEMS 架构组 |
 | **v2.3.0** | 2026-08-08 | 同步 git pull 最新 270 文件（ProfilePage/AutomationDesigner/DocumentsPage/WorkflowApprovalDetail 多文件重构架构对齐 + 零冲突）；补全全域 UI 视觉体系：新增 §18 UI 视觉标准（3档密度/6色语义/4级间距/4档圆角/5级阴影/字体层级/Token命名，共7类）；§19 页面视觉骨架（4层容器/12栅格算法/卡片+图表规范）；§20 模板化组件 UI 规范（6大模板细节×4级反馈体系）；§21 全局响应式策略（5档断点+移动端底部TabBar+栅格/图表响应式）；RFC序号重排（原 §16/§17 → §22/§23） | TOPEMS 架构组 |
 | **v2.2.0** | 2026-08-08 | 补充全域导航框架：新增 §12 全域导航 12 大类分类标准（品牌/菜单/搜索CmdK/面包屑/中央Tab/AI/通知/主题/用户菜单/Tabs/页面返回/FAB，每类5项强制规则）；§13 6大页面模板的页面级导航操作铁律；§14 AI×工具×导航四层联动（全局/页内FAB/选中文本气泡/个性化推荐）+ 低代码/集成/帮助中心 自动注册规范；§15 全域一致性 CI 清单 6×3×6=18 条；统一章节序号 | TOPEMS 架构组 |
 | **v2.1.0** | 2026-08-08 | 代码级对齐：types.ts ModuleSuite 10 枚举 + NavGroup 8 枚举锁死；修复 13 模块 suite 缺失/错误（+collaboration/platform 两域，im/gis 迁移）；批量替换 156+13 处非标准 group 值补全 12 项 navItems.group；L1→L2 覆盖率 100%，L3 合规率 100%；补充 6 大模块 L3→L4 细化示例作为迭代分类基准 | TOPEMS 架构组 |
