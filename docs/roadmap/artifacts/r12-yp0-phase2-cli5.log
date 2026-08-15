@@ -1,0 +1,20 @@
+[1m[92m     Running[0m `target/debug/erp-e2e-cli`
+══════════════════════════════════════════════════
+ ERP E2E 真实化 CLI 冒烟测试
+ Scenario 总数=5  运行=5
+══════════════════════════════════════════════════
+▶ scenario happy               ok  totals: PO=1130 GRN=1130 INV=1130 PAY=1130
+  ok  entries: GRN=2 Invoice=3 Payment=2 Total=7
+✅ PASS
+▶ scenario excess_grn          ok  error code: GRN_EXCEEDS_PO_QTY line=0 delta=5
+✅ PASS
+▶ scenario mismatch_inv        ok  error code: INVOICE_GRN_MISMATCH line=0 delta=565
+✅ PASS
+▶ scenario period_close        ok  error code: PERIOD_CLOSED document=GRN:GRN-2025-0001
+✅ PASS
+▶ scenario multi_currency      ok  USD→CNY totals: PO=1130.00 PAY=8113.40
+  ok  entries count: GRN=2 Invoice=3 Payment=2
+✅ PASS
+──────────────────────────────────────────────────
+ Result: 5 passed / 0 failed
+ ALL GREEN ✨
