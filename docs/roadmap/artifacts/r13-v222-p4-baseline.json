@@ -1,0 +1,56 @@
+{
+  "generatedAt": "2026-08-15T22:45:24.674Z",
+  "phase": "R13-V222-P4-Baseline",
+  "p7Modules": [
+    "components/templates",
+    "ai",
+    "microfrontend",
+    "admin",
+    "mobile",
+    "monitor",
+    "mes"
+  ],
+  "zeroModules": [
+    "components/templates",
+    "ai",
+    "microfrontend"
+  ],
+  "boundMap": {
+    "admin": 500,
+    "mobile": 400,
+    "monitor": 450,
+    "mes": 470
+  },
+  "perModule": {
+    "components/templates": {
+      "count": 0,
+      "files": 61
+    },
+    "ai": {
+      "count": 0,
+      "files": 103
+    },
+    "microfrontend": {
+      "count": 0,
+      "files": 79
+    },
+    "admin": {
+      "count": 0,
+      "files": 55
+    },
+    "mobile": {
+      "count": 0,
+      "files": 38
+    },
+    "monitor": {
+      "count": 0,
+      "files": 12
+    },
+    "mes": {
+      "count": 0,
+      "files": 49
+    }
+  },
+  "totalProjectHardcodedLines": 280,
+  "notes": "count per file = string literal w/ CJK + JSX text w/ CJK + 7 known label/title/... attrs w/ CJK"
+}
