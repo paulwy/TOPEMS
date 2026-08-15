@@ -1,5 +1,6 @@
 pub mod fsm;
 pub mod permission;
+pub mod util;
 
 #[cfg(test)]
 mod fsm_test;

@@ -51,4 +51,69 @@ mod tests {
             created_at: Utc::now(),
         });
     }
+
+    #[test]
+    fn audit_log_clone_preserves_fields() {
+        let id = Uuid::new_v4();
+        let entity_id = Uuid::new_v4();
+        let now = Utc::now();
+        let log = AuditLog {
+            id,
+            action: "shipment_dispatched".into(),
+            entity_type: "shipment".into(),
+            entity_id: Some(entity_id),
+            user_id: Some("dispatcher01".into()),
+            created_at: now,
+        };
+        let cloned = log.clone();
+        assert_eq!(cloned.id, id);
+        assert_eq!(cloned.action, "shipment_dispatched");
+        assert_eq!(cloned.entity_type, "shipment");
+        assert_eq!(cloned.entity_id, Some(entity_id));
+        assert_eq!(cloned.user_id, Some("dispatcher01".to_string()));
+        assert_eq!(cloned.created_at, now);
+    }
+
+    #[test]
+    fn audit_log_debug_format() {
+        let log = AuditLog {
+            id: Uuid::new_v4(),
+            action: "vehicle_assigned".into(),
+            entity_type: "vehicle".into(),
+            entity_id: None,
+            user_id: None,
+            created_at: Utc::now(),
+        };
+        let debug = format!("{:?}", log);
+        assert!(debug.contains("vehicle_assigned"));
+        assert!(debug.contains("vehicle"));
+    }
+
+    #[test]
+    fn audit_log_long_user_id() {
+        let long_user = "u".repeat(200);
+        roundtrip(&AuditLog {
+            id: Uuid::new_v4(),
+            action: "route_optimized".into(),
+            entity_type: "route".into(),
+            entity_id: Some(Uuid::new_v4()),
+            user_id: Some(long_user),
+            created_at: Utc::now(),
+        });
+    }
+
+    #[test]
+    fn audit_log_entity_type_all_tms() {
+        let types = vec!["vehicle", "driver", "carrier", "route", "shipment"];
+        for t in types {
+            roundtrip(&AuditLog {
+                id: Uuid::new_v4(),
+                action: "created".into(),
+                entity_type: t.into(),
+                entity_id: Some(Uuid::new_v4()),
+                user_id: Some("admin".into()),
+                created_at: Utc::now(),
+            });
+        }
+    }
 }
