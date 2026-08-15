@@ -332,3 +332,153 @@ fn test_shipment_self_transition_rejected() {
         Err(FsmError::InvalidTransition { .. })
     ));
 }
+
+// ==================== is_valid_status tests ====================
+
+#[test]
+fn test_is_valid_vehicle_status() {
+    assert!(is_valid_vehicle_status("active"));
+    assert!(is_valid_vehicle_status("maintenance"));
+    assert!(is_valid_vehicle_status("inactive"));
+    assert!(is_valid_vehicle_status("retired"));
+    assert!(!is_valid_vehicle_status("suspended"));
+    assert!(!is_valid_vehicle_status(""));
+    assert!(!is_valid_vehicle_status("ACTIVE"));
+}
+
+#[test]
+fn test_is_valid_driver_status() {
+    assert!(is_valid_driver_status("active"));
+    assert!(is_valid_driver_status("on_leave"));
+    assert!(is_valid_driver_status("suspended"));
+    assert!(is_valid_driver_status("inactive"));
+    assert!(!is_valid_driver_status("retired"));
+    assert!(!is_valid_driver_status(""));
+}
+
+#[test]
+fn test_is_valid_carrier_status() {
+    assert!(is_valid_carrier_status("pending_review"));
+    assert!(is_valid_carrier_status("active"));
+    assert!(is_valid_carrier_status("suspended"));
+    assert!(is_valid_carrier_status("blacklisted"));
+    assert!(is_valid_carrier_status("rejected"));
+    assert!(!is_valid_carrier_status("inactive"));
+    assert!(!is_valid_carrier_status(""));
+}
+
+#[test]
+fn test_is_valid_route_status() {
+    assert!(is_valid_route_status("planning"));
+    assert!(is_valid_route_status("active"));
+    assert!(is_valid_route_status("closed"));
+    assert!(is_valid_route_status("deprecated"));
+    assert!(is_valid_route_status("cancelled"));
+    assert!(!is_valid_route_status("in_transit"));
+    assert!(!is_valid_route_status(""));
+}
+
+#[test]
+fn test_is_valid_shipment_status() {
+    assert!(is_valid_shipment_status("draft"));
+    assert!(is_valid_shipment_status("pending"));
+    assert!(is_valid_shipment_status("in_transit"));
+    assert!(is_valid_shipment_status("delivered"));
+    assert!(is_valid_shipment_status("cancelled"));
+    assert!(!is_valid_shipment_status("completed"));
+    assert!(!is_valid_shipment_status(""));
+}
+
+// ==================== FsmError tests ====================
+
+#[test]
+fn test_fsm_error_terminal_display() {
+    let err = FsmError::TerminalState("retired".to_string());
+    let msg = format!("{}", err);
+    assert!(msg.contains("retired"));
+    assert!(msg.contains("terminal"));
+}
+
+#[test]
+fn test_fsm_error_invalid_transition_display() {
+    let err = FsmError::InvalidTransition {
+        from: "active".to_string(),
+        to: "retired".to_string(),
+    };
+    let msg = format!("{}", err);
+    assert!(msg.contains("active"));
+    assert!(msg.contains("retired"));
+    assert!(msg.contains("invalid"));
+}
+
+#[test]
+fn test_fsm_error_unknown_status_display() {
+    let err = FsmError::UnknownStatus("bogus_state".to_string());
+    let msg = format!("{}", err);
+    assert!(msg.contains("bogus_state"));
+    assert!(msg.contains("unknown"));
+}
+
+#[test]
+fn test_fsm_error_partial_eq() {
+    let e1 = FsmError::TerminalState("x".into());
+    let e2 = FsmError::TerminalState("x".into());
+    let e3 = FsmError::TerminalState("y".into());
+    assert_eq!(e1, e2);
+    assert_ne!(e1, e3);
+    assert_ne!(e1, FsmError::UnknownStatus("x".into()));
+}
+
+#[test]
+fn test_fsm_error_debug_format() {
+    let err = FsmError::InvalidTransition {
+        from: "a".into(),
+        to: "b".into(),
+    };
+    let debug = format!("{:?}", err);
+    assert!(debug.contains("InvalidTransition"));
+    assert!(debug.contains("a"));
+    assert!(debug.contains("b"));
+}
+
+// ==================== Additional transition edge cases ====================
+
+#[test]
+fn test_vehicle_active_to_retired_direct() {
+    assert!(vehicle_can_transition("active", "retired").is_ok());
+}
+
+#[test]
+fn test_vehicle_inactive_to_active_reactivate() {
+    assert!(vehicle_can_transition("inactive", "active").is_ok());
+}
+
+#[test]
+fn test_driver_on_leave_to_inactive() {
+    assert!(driver_can_transition("on_leave", "inactive").is_ok());
+}
+
+#[test]
+fn test_driver_suspended_to_active_reinstate() {
+    assert!(driver_can_transition("suspended", "active").is_ok());
+}
+
+#[test]
+fn test_carrier_pending_review_to_rejected() {
+    assert!(carrier_can_transition("pending_review", "rejected").is_ok());
+}
+
+#[test]
+fn test_carrier_suspended_blacklisted() {
+    assert!(carrier_can_transition("suspended", "blacklisted").is_ok());
+}
+
+#[test]
+fn test_route_closed_to_active_reopen() {
+    assert!(route_can_transition("closed", "active").is_ok());
+}
+
+#[test]
+fn test_route_closed_to_deprecated() {
+    assert!(route_can_transition("closed", "deprecated").is_ok());
+}
