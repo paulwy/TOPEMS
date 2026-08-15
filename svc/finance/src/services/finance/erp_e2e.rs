@@ -399,7 +399,7 @@ mod tests {
     use rust_decimal::Decimal;
     use std::str::FromStr;
 
-    use super::super::periods::{validate_children_all_closed, PeriodValidationError};
+    use super::super::periods::PeriodValidationError;
     use super::super::reversal::{
         validate_reverse_voucher, ReverseJournalEntry, ReversePeriodInput, ReverseableVoucherInput,
     };
@@ -410,9 +410,8 @@ mod tests {
         validate_post_entry, PostJournalEntry, PostPeriodInput, PostVoucherInput,
     };
     use super::super::year_end::{
-        validate_consolidation, validate_year_end_close, ConsolidationConversionRate,
-        ConsolidationEntityInput, YearEndAccountSummary, YearEndAccountType, YearEndPeriodInput,
-        YearEndVoucherSummary,
+        validate_consolidation, validate_year_end_close, ConsolidationEntityInput,
+        YearEndAccountSummary, YearEndAccountType, YearEndPeriodInput, YearEndVoucherSummary,
     };
 
     // ===== 测试辅助函数 =====
