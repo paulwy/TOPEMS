@@ -236,3 +236,10 @@ apps/web/dist/*.bak
 scripts/v68-1-2/.run/
 tmp/
 .sqlx/
+
+# Coverage reports
+coverage_report.html
+coverage/
+# i18n script intermediate outputs and scan reports
+scripts/i18n/*.json
+scripts/i18n/*.log
