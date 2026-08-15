@@ -15,7 +15,7 @@
     "status": {
       "all": "All",
       "draft": "Draft",
-      "pending": "Pending",
+      "pending": "Pending Review",
       "approved": "Approved",
       "posted": "Posted",
       "closed": "Closed",
@@ -69,8 +69,8 @@
       "credit_amount": "Credit Amount",
       "maker": "Maker",
       "status": "Status",
-      "operation": "Action",
-      "view_detail": "View Detail",
+      "operation": "Actions",
+      "view_detail": "View Details",
       "edit": "Edit",
       "audit": "Audit",
       "post": "Post",
@@ -144,11 +144,11 @@
     "status": {
       "success": "Success",
       "failed": "Failed",
-      "running": "Running"
+      "running": "In Progress"
     },
     "label": {
       "page_title": "Database Management",
-      "page_subtitle": "Table list, structure view, backup and restore",
+      "page_subtitle": "Table list, structure view, backup, and restore",
       "refresh": "Refresh",
       "data_backup": "Data Backup",
       "backing_up": "Backing up database...",
@@ -163,7 +163,7 @@
       "sort_by_time": "By Updated Time",
       "table_name": "Table Name",
       "type": "Type",
-      "operation": "Action",
+      "operation": "Actions",
       "no_tables": "No tables",
       "view_structure": "View Structure",
       "rows_per_page": "Rows per page",
@@ -174,7 +174,7 @@
       "status": "Status",
       "created_by": "Created By",
       "created_at": "Created At",
-      "remark": "Remark",
+      "remark": "Remarks",
       "no_backups": "No backup records",
       "full_backup": "Full Backup",
       "incremental_backup": "Incremental Backup",
@@ -236,7 +236,7 @@
       "delete_success": "Deleted successfully",
       "delete_failed": "Delete failed",
       "fill_code_and_name": "Please fill in code and name",
-      "select_type_first": "Please select a dictionary type first"
+      "select_type_first": "Select A Dictionary Type First..."
     },
     "label": {
       "page_title": "Dictionary Management",
@@ -248,7 +248,7 @@
       "edit": "Edit",
       "delete": "Delete",
       "manage_items": "Manage items of \"{{name}}\"",
-      "select_type_prompt": "Please select a dictionary type from the left",
+      "select_type_prompt": "Select A Dictionary Type From The Left...",
       "edit_dict_type": "Edit Dictionary Type",
       "code": "Code",
       "code_readonly": "Code cannot be modified",
@@ -324,7 +324,7 @@
       "error": "Error",
       "load_report_failed_retry": "Failed to load report data, please try again later",
       "load_report_failed": "Failed to load report data",
-      "export_success": "Export Successful",
+      "export_success": "Exported successfully",
       "exported_excel": "Report exported as Excel"
     }
   },
@@ -346,15 +346,15 @@
       "operation_type": "Operation Type",
       "all_types": "All Types",
       "status": "Status",
-      "all_status": "All Status",
+      "all_status": "All Statuses",
       "start_date": "Start Date",
       "end_date": "End Date",
-      "action": "Action",
+      "action": "Actions",
       "operation_content": "Operation Content",
       "ip_address": "IP Address",
       "operation_time": "Operation Time",
       "no_audit_logs": "No audit logs",
-      "view_detail": "View Detail",
+      "view_detail": "View Details",
       "rows_per_page": "Rows per page",
       "log_detail": "Log Detail",
       "operation_module": "Operation Module",
@@ -372,7 +372,7 @@
     "message": {
       "error": "Error",
       "load_audit_log_failed": "Failed to load audit logs",
-      "export_success": "Export Successful",
+      "export_success": "Exported successfully",
       "audit_log_exported": "Audit logs exported"
     }
   },
@@ -418,7 +418,7 @@
       "report_data_updated": "Report data has been updated",
       "export_failed": "Export Failed",
       "no_data_to_export": "No data to export",
-      "export_success": "Export Successful",
+      "export_success": "Exported successfully",
       "exported_csv": "Report exported as CSV file",
       "cannot_export": "Cannot export report"
     },
@@ -463,7 +463,7 @@
       "suppliers": "Suppliers",
       "customers": "Customers",
       "assets": "Assets",
-      "vouchers": "Vouchers",
+      "vouchers": "Voucher",
       "in_use": "In Use",
       "inventory": "Inventory",
       "low_stock": "Low Stock",
@@ -586,7 +586,7 @@
     "label": {
       "material_total": "Total Materials",
       "active": "Active",
-      "inactive": "Inactive",
+      "inactive": "Deactivated",
       "obsolete": "Obsolete",
       "home": "Home",
       "material_management": "Material Management"
@@ -654,7 +654,7 @@
       "exceeded_budget": "Exceeded Budget",
       "expense_total": "Expense Total",
       "total_expense": "Total Expense",
-      "pending": "Pending",
+      "pending": "Pending Approval",
       "completed": "Completed"
     },
     "message": {
@@ -729,7 +729,7 @@
     "stats": {
       "total_announcements": "Total Announcements",
       "published": "Published",
-      "drafts": "Drafts",
+      "drafts": "Draft",
       "urgent": "Urgent Announcements"
     },
     "message": {
@@ -745,7 +745,7 @@
       "total_vehicles": "Total Vehicles",
       "available": "Available",
       "in_use": "In Use",
-      "maintenance": "Maintenance"
+      "maintenance": "Under Maintenance"
     },
     "message": {
       "load_stats_failed": "Failed to load vehicle statistics",
@@ -815,8 +815,8 @@
       "overdue_count": "Overdue Count"
     },
     "message": {
-      "create_failed": "Failed to create",
-      "update_failed": "Failed to update"
+      "create_failed": "Create failed",
+      "update_failed": "Update failed"
     }
   },
   "erp.accounting_management_page.k0": "Create Failed",
@@ -1274,5 +1274,58 @@
   "financial_analysis_page.v0_17": "TODO: translate",
   "financial_analysis_page.v0_18": "TODO: translate",
   "financial_analysis_page.v0_19": "TODO: translate",
-  "erp.auditLog.k0": "TODO: translate"
+  "erp.auditLog.k0": "TODO: translate",
+  "erp": {
+    "accounting_management_page": {
+      "k0": "Create failed",
+      "k1": "Update failed",
+      "k2": "Delete failed",
+      "k3": "Create failed",
+      "k4": "Update failed",
+      "k5": "Delete failed"
+    },
+    "audit_log_page": {
+      "k2": "Success",
+      "k5": "Exported successfully",
+      "k12": "Success",
+      "k27": "Success"
+    },
+    "database_management_page": {
+      "k16": "Success",
+      "k18": "Operation failed",
+      "k20": "Success"
+    },
+    "dict_management_page": {
+      "k9": "Success",
+      "k11": "Create failed",
+      "k13": "Success",
+      "k15": "Update failed",
+      "k16": "Deleted successfully",
+      "k17": "Success",
+      "k19": "Delete failed",
+      "k21": "Tip",
+      "k24": "Create failed",
+      "k25": "Update failed",
+      "k26": "Delete failed",
+      "k20": "Code和Name is required"
+    },
+    "financial_analysis_page": {
+      "k21": "Exported successfully"
+    },
+    "financial_report_page": {
+      "k7": "Exported successfully"
+    },
+    "material_management_page": {
+      "k3": "Deactivated"
+    },
+    "receivable_payable_page": {
+      "k0": "Create failed",
+      "k1": "Update failed",
+      "k2": "Create failed",
+      "k3": "Update failed"
+    },
+    "voucher_table": {
+      "k2": "Confirm"
+    }
+  }
 }

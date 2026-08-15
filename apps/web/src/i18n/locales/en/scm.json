@@ -13,7 +13,7 @@
     "submitted": "Submitted",
     "approved": "Approved",
     "rejected": "Rejected",
-    "in_progress": "In Progress",
+    "in_progress": "Executing",
     "completed": "Completed",
     "cancelled": "Cancelled"
   },
@@ -23,7 +23,7 @@
     "delete": "Delete",
     "view": "View",
     "submit": "Submit",
-    "approve": "Approve",
+    "approve": "Approval",
     "reject": "Reject",
     "export": "Export"
   },
@@ -906,5 +906,44 @@
   "scm.supplier_admission.k67": "Others",
   "scm.supplier_admission.k68": "AddSupplier准入",
   "scm.supplier_admission.k69": "EditSupplier准入",
-  "scm.supplier_admission.k70": "Supplier准入Details"
+  "scm.supplier_admission.k70": "Supplier准入Details",
+  "scm": {
+    "mrp_suggestion_page": {
+      "k30": "Confirm"
+    },
+    "scm_delivery_appointment_page": {
+      "k3": "Operation succeeded",
+      "k5": "Approval"
+    },
+    "supplier_admission_page": {
+      "k6": "Operation failed",
+      "k10": "Operation failed",
+      "k2": "Submit failed"
+    },
+    "delivery_appointment": {
+      "k23": "Other",
+      "k24": "Other",
+      "k66": "Other"
+    },
+    "mrp_plan": {
+      "k26": "Other"
+    },
+    "purchase_contract": {
+      "k13": "Executing",
+      "k21": "Executing",
+      "k30": "Executing"
+    },
+    "supplier": {
+      "k11": "Other",
+      "k44": "Other"
+    },
+    "supplier_admission": {
+      "k67": "Other"
+    },
+    "purchase_contract_wizard": {
+      "k10": "ContractNo. is required",
+      "id_11": "SupplierID is required",
+      "k15": "Contract条款 is required"
+    }
+  }
 }

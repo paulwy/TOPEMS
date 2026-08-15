@@ -375,5 +375,28 @@
   "notification.notification_templates_page.k25": "Confirm Delete",
   "notification.notification_templates_page.k26": "Delete",
   "notification.notification_templates_page.k27": "无法加载Preview",
-  "notification.notification_detail_page.k0": "NotificationDetailPage Pages开发中"
+  "notification.notification_detail_page.k0": "NotificationDetailPage Pages开发中",
+  "notification": {
+    "notification_archive_page": {
+      "k1": "Update failed",
+      "k3": "Update failed",
+      "k28": "Close"
+    },
+    "notification_list_page": {
+      "k4": "Operation succeeded",
+      "k8": "Tip",
+      "k10": "Tip",
+      "k12": "Operation succeeded",
+      "k16": "Operation succeeded"
+    },
+    "notification_templates_page": {
+      "k17": "Exported successfully",
+      "k16": "Select 要Import的Templates文件..."
+    },
+    "notification_settings_page": {
+      "k30": "Enter 接收Notifications的邮箱...",
+      "k35": "Enter Mobile Number For SMS...",
+      "corpid_42": "Enter WeCom CorpID..."
+    }
+  }
 }

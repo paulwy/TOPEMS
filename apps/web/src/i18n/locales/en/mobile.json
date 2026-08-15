@@ -1221,7 +1221,7 @@
     "申请金额_typography_typography_variant": "\n                  >\n                    Application Amount\n                  </Typography>\n                  <Typography\n                    variant=",
     "紧急": "Urgent",
     "请假": ",\n    Leave: ",
-    "请输入审批意见_选填": "Please enter approval opinion (optional)",
+    "请输入审批意见_选填": "Enter Approval Opinion (Optional)...",
     "通过": "Pass",
     "采购": ",\n    Procurement: ",
     "首页": "Home",
@@ -1370,7 +1370,7 @@
     "请假类型": "Leave Type",
     "请填写完整": "Please fill in completely",
     "请填写完整的请假信息": "Please complete the leave info",
-    "请输入请假原因": "Please enter leave reason",
+    "请输入请假原因": "Enter Leave Reason...",
     "迟到": "Late",
     "迟到次数": "Late Count\n                          ",
     "陪产假": "Paternity Leave",
@@ -1942,7 +1942,7 @@
     "计划数量": "Planned Quantity\n                              ",
     "设备状态": "Equipment Status",
     "设备详情": "Equipment Detail",
-    "请输入报工数量": "Please enter reported quantity",
+    "请输入报工数量": "Enter Reported Quantity...",
     "请输入数量": "Please 输inQuantity",
     "质量部": "Quality Dept.",
     "运行中": "Running",
@@ -2200,7 +2200,7 @@
     "请填写完整": "Please fill in completely",
     "请填写缺陷类型和描述": "Please fill in defect type and description",
     "请详细描述缺陷情况": "Please describe the defect in detail",
-    "请输入缺陷类型": "Please enter defect type",
+    "请输入缺陷类型": "Enter Defect Type...",
     "质检任务": "QC Task",
     "轻微": "Minor",
     "轻微_menuitem_menuitem_value": ">Minor</MenuItem>\n                <MenuItem value=",
@@ -2329,7 +2329,7 @@
     "电阻_10k": "Resistor 10kΩ",
     "相册": "Album\n                ",
     "设备": "Equipment",
-    "请输入条码内容": "Please enter barcode content",
+    "请输入条码内容": "Enter Barcode Content...",
     "输入成功": "Input succeeded",
     "采购单": "Purchase Order",
     "重新扫描": "Rescan\n                    ",
@@ -2718,7 +2718,7 @@
     "加载推送模板失败": "Failed to load push template",
     "加载推送配置失败": "Failed to load push config",
     "启用中": "Enabling",
-    "已停用": "Disabled",
+    "已停用": "Deactivated",
     "振动提醒": "Vibration Reminder",
     "推送模板": "Push Template\n              ",
     "推送管理": "Push Management",
@@ -2944,5 +2944,111 @@
   "mobilequalitypage.批次": "Batch",
   "mobilequalitypage.当前任务": "Current Task",
   "mobilequalitypage.拍照上传": "Photo Upload",
-  "mobilequalitypage.提交上报": "Submit Report"
+  "mobilequalitypage.提交上报": "Submit Report",
+  "push_notification_page": {
+    "disabled": "Deactivated"
+  },
+  "pushnotificationpage": {
+    "已停用": "Deactivated"
+  },
+  "mobile": {
+    "workbench": {
+      "stats": {
+        "pending_approvals": "Pending Approval"
+      },
+      "quick_action": {
+        "tasks": "Task"
+      },
+      "nav": {
+        "tasks": "Task"
+      }
+    },
+    "push_notification": {
+      "status": {
+        "disabled": "Deactivated"
+      }
+    },
+    "settings": {
+      "message": {
+        "load_failed": "Load failed"
+      }
+    },
+    "approval": {
+      "tab": {
+        "pending": "Pending Approval"
+      },
+      "message": {
+        "action_failed": "Operation failed"
+      }
+    },
+    "notification_settings": {
+      "message": {
+        "load_failed": "Load failed"
+      }
+    },
+    "attendance": {
+      "status": {
+        "pending": "Pending Approval"
+      }
+    },
+    "quality": {
+      "status": {
+        "failed": "Non-Conforming",
+        "open": "Pending"
+      },
+      "severity": {
+        "major": "Critical"
+      }
+    },
+    "push": {
+      "status": {
+        "disabled": "Deactivated"
+      }
+    },
+    "push_notification_page": {
+      "k10": "Deactivated"
+    },
+    "mobile_approval_page": {
+      "k24": "Enter Approval Opinion (Optional)..."
+    },
+    "mobile_attendance_page": {
+      "k56": "Enter Leave Reason..."
+    },
+    "mobile_quality_page": {
+      "k48": "Enter Defect Type..."
+    },
+    "mobile_scan_page": {
+      "k34": "Enter Barcode Content..."
+    }
+  },
+  "mobile_approval_page": {
+    "input": "Enter Approval Opinion (Optional)..."
+  },
+  "mobile_attendance_page": {
+    "input": "Enter Leave Reason..."
+  },
+  "mobile_production_page": {
+    "input": "Enter Reported Quantity..."
+  },
+  "mobile_quality_page": {
+    "input_type": "Enter Defect Type..."
+  },
+  "mobile_scan_page": {
+    "input_barcode": "Enter Barcode Content..."
+  },
+  "mobileattendancepage": {
+    "请输入请假原因": "Enter Leave Reason..."
+  },
+  "mobileproductionpage": {
+    "请输入报工数量": "Enter Reported Quantity..."
+  },
+  "mobilequalitypage": {
+    "请输入缺陷类型": "Enter Defect Type..."
+  },
+  "mobilescanpage": {
+    "请输入条码内容": "Enter Barcode Content..."
+  },
+  "mobileapprovalpage": {
+    "请输入审批意见（选填）": "Enter Approval Opinion (Optional)..."
+  }
 }

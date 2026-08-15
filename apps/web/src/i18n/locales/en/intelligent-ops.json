@@ -39,5 +39,10 @@
   "intelligent-ops.v56-ops-panel.k37": "Unknown Event",
   "intelligent-ops.v56-ops-panel.k38": "Scaling",
   "intelligent-ops.v56-ops-panel.k39": "Remediation",
-  "intelligent-ops.v56-ops-panel.k40": "No event records. Create an event or perform an action to view the timeline."
+  "intelligent-ops.v56-ops-panel.k40": "No event records. Create an event or perform an action to view the timeline.",
+  "intelligent-ops": {
+    "v56-ops-panel": {
+      "k27": "Select Or Create An Event For Analysis..."
+    }
+  }
 }

@@ -45,7 +45,7 @@
       "assignee": "Assignee *",
       "operator": "Operator *",
       "inspector": "Inspector *",
-      "remark": "Remark",
+      "remark": "Remarks",
       "auditor": "Auditor *",
       "audit_opinion": "Audit Opinion",
       "item": "Inspection Item",
@@ -75,7 +75,7 @@
     },
     "option": {
       "qualified": "Qualified",
-      "unqualified": "Unqualified"
+      "unqualified": "Non-Conforming"
     },
     "加载检验数据失败": "Failed to load inspection data",
     "创建质检单失败": "Failed to create inspection order",
@@ -109,8 +109,8 @@
     "请输入不合格数量": "Please 输inUnqualified Quantity",
     "检验员": "Inspector *",
     "请输入检验员姓名": "Please 输inInspectorName",
-    "备注": "Remark",
-    "请输入备注信息": "Please enter remark",
+    "备注": "Remarks",
+    "请输入备注信息": "Enter Remark...",
     "检验项目": "Inspection Item",
     "标准值": "Standard Value",
     "实测值": "Measured Value",
@@ -412,9 +412,9 @@
   "standard_list": {
     "message": {
       "load_fail": "Failed to load quality standard data",
-      "create_fail": "Creation failed",
+      "create_fail": "Create failed",
       "update_fail": "Update failed",
-      "delete_fail": "Deletion failed"
+      "delete_fail": "Delete failed"
     },
     "status": {
       "active": "Active",
@@ -486,9 +486,9 @@
   "nonconformance": {
     "message": {
       "load_fail": "Failed to load nonconformance data",
-      "create_fail": "Creation failed",
+      "create_fail": "Create failed",
       "update_fail": "Update failed",
-      "delete_fail": "Deletion failed"
+      "delete_fail": "Delete failed"
     },
     "status": {
       "pending": "Pending",
@@ -2297,5 +2297,70 @@
   "qmsstandarddetailpage.有效_key": "Active",
   "qmsstandarddetailpage.草稿_key": "Draft",
   "qmsstandarddetailpage.已过期_key": "alreadyExpired",
-  "qmsstandarddetailpage.已归档_key": "already归档"
+  "qmsstandarddetailpage.已归档_key": "already归档",
+  "qmsinspectionpage": {
+    "备注": "Remarks",
+    "请输入备注信息": "Enter Remark..."
+  },
+  "qms": {
+    "apqp": {
+      "k89": "All Statuses",
+      "k33": "Complete manufacturing process design, tooling, and equipment"
+    },
+    "audit": {
+      "k23": "All Statuses"
+    },
+    "eight_d": {
+      "k124": "All Statuses",
+      "k21": "At Least One Temporary Action is required",
+      "k46": "At Least One Permanent Action is required",
+      "k50": "At Least One Team Member is required"
+    },
+    "fmea": {
+      "k74": "All Statuses",
+      "k34": "At Least One Failure Mode is required",
+      "k41": "Enter Reviewer...",
+      "k42": "Select Review Date..."
+    },
+    "inspection": {
+      "k28": "Remarks",
+      "k37": "All Statuses"
+    },
+    "nonconformance": {
+      "k32": "All Statuses"
+    },
+    "quality_control": {
+      "k40": "All Statuses",
+      "k70": "All Statuses"
+    },
+    "quality_cost": {
+      "k43": "All Statuses",
+      "k24": "Enter Department Name...",
+      "k26": "Enter Related Order No....",
+      "k28": "Enter Owner Name..."
+    },
+    "revision": {
+      "k4": "Created At"
+    },
+    "spc": {
+      "k6": "Remarks",
+      "k57": "All Statuses",
+      "k10": "Set control chart type, product, and spec limits",
+      "k12": "Enter Control Chart Name...",
+      "k13": "Select Control Chart Type...",
+      "k14": "Enter Quality Characteristic..."
+    },
+    "qms_inspection_detail_page": {
+      "k16": "Remarks",
+      "k22": "Remarks"
+    },
+    "qms_inspection_page": {
+      "k35": "Remarks",
+      "k44": "Remarks",
+      "k36": "Enter Remark..."
+    }
+  },
+  "qms_inspection_page": {
+    "input_info": "Enter Remark..."
+  }
 }

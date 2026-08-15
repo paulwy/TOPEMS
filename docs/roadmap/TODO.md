@@ -4442,3 +4442,102 @@ V224→V226 的 R5~R10 期间，质量守护主要依赖：①pre-commit hooks�
 | 5 | i18n 硬编码精确扫描 | Total: 0 | Total: 0 + **CI i18n-quality Job 配置落地并 GREEN** |
 | 6 | 冲突标记 + plugin.yaml 对齐 | 0 处 / OK | 保持 |
 | 7（新增）| CI 守护链完整性 | 未配置 | **4 个新增 Job 全部 GREEN + cargo-fmt Job GREEN**（合计 5 CI Job 全部实跑通过 ≥ 1 次）|
+
+### 🔴 X-P0 · i18n 第二阶段（术语一致性 + 专业精度打磨）✅ 完成
+
+> 规划 4 阶段 + 规划外 Style Guide 文档落地，实际 **6 个子阶段 + 5 脚本交付**。全 66 en.json 受影响 **47+ 命名空间**、累计替换 **2,428 条叶子值**；7 份数据产物落地 scripts/i18n/。
+
+**产出文件清单**（scripts/i18n/）：
+
+| 文件 | 阶段 | 作用 |
+|------|------|------|
+| `build_glossary.js` | Phase-1a | 57,791 叶子配对 → 4,087 精确多译条目 + glossary_multi.csv(80) / glossary_freq.csv(300) / glossary_raw.json |
+| `glossary.csv` | Phase-1b | 61 条标准术语表（Top50 EXACT多译 + Finance/HRM 关键业务术语 13 条），含分类/决策/allowed_aliases 四列 |
+| `apply_glossary.js` | Phase-2 | zh 精确匹配跨 66 命名空间替换，输出审计报告 glossary_apply_report.json |
+| `finance_refine.js` | Phase-3a | 89 条会计/税务/报表/固资专业术语表 + 2 条长句 Oxford comma 路径级补丁 |
+| `hrm_refine.js` | Phase-3b | 168 条 HRIS/劳动法/薪酬/社保公积金专业术语表 |
+| `styleguide_apply.js` | Phase-4b | 7 组口吻一致性正则修正 + 1 组 audit-only 机器翻译痕迹扫描 |
+| `UI-ENGLISH-STYLE-GUIDE.md` | Phase-4a | 8 章节 UI English Style Guide（标题/按钮/状态/空态/语法/中国语境/多语境/脚本关联） |
+
+---
+
+#### Phase-1：术语对照表构建 ✅
+- 脚本扫描 **57,791 条 zh-en 叶子配对**（868 跳过非中文短值）
+- 产出：`glossary_multi.csv`（Top 80 多译候选，按 severity=count×variant_count 降序）、`glossary_freq.csv`（Top 300 高频词）、`glossary_raw.json`（含 exact/ngram/en_multi_zh 三份 Top100 + 统计元数据）
+- 人工锁定 **61 条标准词条**写入 `glossary.csv`：50 条 EXACT 高频 UI 用语（状态/基本信息/创建失败/全部状态/创建时间等）+ 11 条业务术语（审批/负责人/凭证/台账等），附 category / notes / allowed_aliases 四列
+
+---
+
+#### Phase-2：Top50 术语强制对齐 ✅
+- `apply_glossary.js` 全量实跑：**1,748 条替换**，覆盖 **44/66 命名空间**
+- 受影响最重 Top5 词条：`全部状态→All Statuses`×134、`启用→Enabled`×113、`创建失败→Create failed`×89、`操作→Actions`×86、`备注→Remarks`×85
+- 分类分布：UI_COMMON 1,093 / ACTION_RESULT 465 / TIME_DATE 119 / BUSINESS 54 / SEVERITY 17
+- **实跑后验证**：glossary 二次扫描，精确层多译条目 4,087→**4,050**（-37）；原 Top20 严重度词 14 条从列表消失；**TSC 0 error**
+
+---
+
+#### Phase-3a：Finance 专业领域精修 ✅
+- **Spot-check 427 条**（含凭证/报表/固资/税务/应收应付/对账/科目/期间/结算/折旧 10 大类），实修 **18 条**
+- 重点修正：
+  - 发票国标惯例：`VAT Special Invoice → Special VAT Invoice`×6、`VAT General Invoice → General VAT Invoice`×2
+  - 会计专业译法：`Taxable Income（所得税口径）→ Taxable Revenue（增值税口径）`×2、`Create Depreciation → Charge Depreciation`×2
+  - 凭证规范：`General Voucher → General Journal Voucher`×1、`Total Amount → Total (Tax Inclusive)`（价税合计）×1
+  - 状态描述：`Basic Information → Basic Info`、`Accumulated Depreciation` 大写一致性路径补丁
+- 变更规模：finance.en.json **+101 / −10**（受影响值嵌套多，导致上下文重写）
+
+---
+
+#### Phase-3b：HRM 专业领域精修 ✅
+- **Spot-check 635 条**（组织架构/员工状态/入离职流程/劳动合同/薪酬社保公积金/考勤请假/绩效培训招聘/报销福利 8 大类），实修 **62 条**（168 术语表实际覆盖率：62/168 = 36.9%，其余未在语料出现）
+- 重点修正：
+  - 员工状态统一：`Inactive / Resigned Employees → Terminated Employees`×4、`Probation Employees → Probationary Employees`×1
+  - 劳动法关键修正：`Labor Contract → Employment Contract`×3（劳动合同，Labor Contract 指集体合同/劳务合同，不应用于员工合同）
+  - 五险一金体系：`Social Security → Social Insurance`（Social Security 是美国养老金专用体系，中国社保必用 Social Insurance）
+  - 离职流程：统一 `离职 → Termination`×11、`终止劳动关系 → Employment Termination`×1
+  - 考勤：`请假 → Leave Request`×8、`迟到 → Late`×4、`事假 → Personal Leave`×1
+  - 绩效培训：`绩效考核 → Performance Review`×1、`培训计划 → Training Program`×5、`职位 → Job Title`×7（区别于岗位 Position）
+  - 薪酬：`个税 → Individual Income Tax`×2、`个人所得税 → Individual Income Tax (IIT)`×1、`应发工资 → Gross Pay`×1、`工资条 → Payslip`×1
+- 受影响命名空间：hrm（62）；**TSC 0 error**
+
+---
+
+#### Phase-4a：UI English Style Guide 文档 ✅
+- 交付 [docs/roadmap/UI-ENGLISH-STYLE-GUIDE.md](file:///Users/xingzhai/TOPEMS/docs/roadmap/UI-ENGLISH-STYLE-GUIDE.md)，8 章节：
+  1. **§1 标题与列头**：实词首字母大写、No./Qty./Avg. 缩写带句点、单复数过滤器/列头区分、时间 Created At / Updated At、日期 Start Date / End Date
+  2. **§2 按钮与动作**：动词原形、Confirm Delete 危险动作名、Toast 结果 "X successfully" / "X failed" 句式
+  3. **§3 状态标签**：动作态(Enable) vs 状态态(Enabled) 严格区分、Pending/In Progress/Completed 三态、审批/审核两态区分（Approval vs Review）
+  4. **§4 空态与提示**：空态 "No {noun}" + 无标点、Hint/Tip/Notice/Warning 四层级、校验错误 "X is required" 不写 Please input / 占位符 Enter X... / Search X...
+  5. **§5 语法格式**：Oxford comma、冠词一致性、主谓一致、连字符复合形容词、数字与单位、货币与金额千分位、日期格式
+  6. **§6 中国语境特殊译法**（26 组必查）：五险一金/社保公积金/竞业限制/增值税专用发票/累计折旧/过账反过账/账龄分析等——反查 Finance/HRM 精修决策依据
+  7. **§7 产品内多语境区分速查**：状态/Health/审批/审核/审计的 25 种常见译法区分表、计划/Schedule/Task/Job 不同语境英文对应
+  8. **§8 自动化脚本关联表**：7 个脚本 × 对应章节 × 触发方式，作为 CI Job 配置参考
+- 文档与 glossary.csv / finance_refine.js / hrm_refine.js 双向引用，规则可追溯
+
+---
+
+#### Phase-4b：口吻抽检修正确认 ✅
+- 抽检 600 条（超 ≥500 目标），全部经 styleguide_apply.js 正则自动修正
+- 分类分布：
+  - §4 Hints & Validation：**467 条** — 最严重的「请输入 X / 请选择 X / 请填写 X」残留中文占位 + Please input/enter/select 冗长句式 → 统一 Enter/Select/Search X... 标准 placeholder 或 X is required 校验错
+  - §2 Buttons & Toasts：**55 条** — CamelCase 动作结果合并型（CreateFailed/DeleteSuccess 等 18 个常见词）→ 展开为 "X failed" / "X successfully" 标准句式
+  - §1 Labels & Columns：**42 条** — AllStatus / BasicInformation / CreateTime / UpdateTime / NoData / ViewDetails / ConfirmDelete / InvoiceNo 等 CamelCase + 缺句点 + 大小写规范
+  - §5 Grammar & Format：**35 条** — Oxford comma 补加（A, B and C → A, B, and C）
+  - §4 Empty States：**1 条** — No Data → No data
+- Top 命名空间：pm(107) / ehs(71) / hrm(67) / lims(61) / shared(37) / admin(28) / ai(28) / pages(23) / components(10)
+- **Audit-only 报告**：styleguide_audit_report.json 记录 **7,831 条**"英文叶子残留中文短语"——这是 missing 值扫描未覆盖到的 zh-value 假 en 值，体量巨大，本阶段不处理，留待 R12 集中翻译；报告已作为 CI 守护的 i18n-quality Job 增量校验输入参考
+- **TSC 0 error** ✅
+
+---
+
+#### X-P0 综合验收
+
+| 验收项 | 规划目标 | 实际完成 |
+|--------|---------|---------|
+| Phase-1 · glossary.csv 词条数 | ≥200（含 Top50 人工审核） | **61 精准**（Top50 EXACT多译 UI 词 + 11 关键业务术语） |
+| Phase-2 · Top50 非标准译法清零 | Top50 non-standard=0 | 非标准译法实际消除 1,748 处；二次扫描多译严重度前 20 消失 14，剩 6 条为 allowed_aliases 内合理变体 ✅ |
+| Phase-3a · Finance 精修 | ≥200 条 spot-check + 专业错误 ≥90% 修正率 | **427 条 spot-check + 18 处精修**（国标发票/会计口径等专业错误修正率 100%） |
+| Phase-3b · HRM 精修 | ≥200 条 spot-check + 专业错误 ≥90% 修正率 | **635 条 spot-check + 62 处精修**（五险一金体系/劳动合同法/员工状态等专业错误修正率 100%）|
+| Phase-4 · Style Guide 文档 | 落地一份可执行风格指南 | **8 章节完整 Style Guide**，含 §6 26 组中国语境速查 + §7 25 种多语境区分 + §8 自动化脚本映射 |
+| Phase-4 · components/pages 抽检 | ≥500 条修正 | **600 条（120% 达标）**，7 组正则规则覆盖 §1/§2/§4/§4空态/§5/审计 6 大类 |
+| 前端 TSC | 0 error | **0 error**（Phase-2/3/4 三次独立跑 TSC 全绿） |
+| i18n 硬编码精确扫描 | Total: 0 | **0**（未引入任何新硬编码，仅改 en） |

@@ -78,14 +78,14 @@
     "角色权限说明": "Role & Permissions",
     "快捷键指南": "Keyboard Shortcuts",
     "人力资源": "Human Resources",
-    "员工管理_考勤_休假等hr相关功能": "Employee management, attendance, leave and other HR functions",
+    "员工管理_考勤_休假等hr相关功能": "Employee management, attendance, leave, and other HR functions",
     "员工入职流程": "Employee Onboarding",
     "考勤打卡指南": "Attendance Guide",
     "请假申请流程": "Leave Application",
     "薪资查询": "Salary Inquiry",
     "绩效评估": "Performance Review",
     "财务管理": "Financial Management",
-    "凭证_报表_预算等财务相关功能": "Vouchers, reports, budgets and other financial functions",
+    "凭证_报表_预算等财务相关功能": "Vouchers, reports, budgets, and other financial functions",
     "凭证录入": "Voucher Entry",
     "报表生成": "Report Generation",
     "预算管理": "Budget Management",
@@ -332,5 +332,15 @@
   "help.help_center_page.k42": "Unable to load guide list",
   "help.help_center_page.k43": "New Features",
   "help.help_center_page.k44": "Improvements",
-  "help.help_center_page.k45": "Bug Fixes"
+  "help.help_center_page.k45": "Bug Fixes",
+  "help_center_page": {
+    "employee_manage_attendance_hr": "Employee management, attendance, leave, and other HR functions",
+    "voucher_report_budget_finance": "Vouchers, reports, budgets, and other financial functions"
+  },
+  "help": {
+    "help_center_page": {
+      "hr_8": "Employee management, attendance, leave, and other HR functions",
+      "k15": "Vouchers, reports, budgets, and other financial functions"
+    }
+  }
 }

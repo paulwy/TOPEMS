@@ -217,5 +217,22 @@
   "automation.automation_designer_page_use_automation_designer.e2": "Failed to load canvas",
   "automation.automation_designer_page_use_automation_designer.e3": "Failed to save canvas",
   "automation.automation_designer_page_use_automation_designer.e4": "Failed to validate canvas",
-  "automation.automation_designer_page_use_automation_designer.e5": "Failed to sync to rule"
+  "automation.automation_designer_page_use_automation_designer.e5": "Failed to sync to rule",
+  "automation": {
+    "automation_rules_page": {
+      "k0": "Enabled",
+      "k20": "Enabled",
+      "k22": "Enabled"
+    },
+    "automation_dashboard_page": {
+      "k19": "Start Date"
+    },
+    "designer_toolbar": {
+      "k6": "Select A Rule First To Load Or Create Canvas..."
+    },
+    "automation_runs_page": {
+      "k15": "Start Date",
+      "k16": "End Date"
+    }
+  }
 }

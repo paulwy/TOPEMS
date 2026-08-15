@@ -540,5 +540,60 @@
   "templates.listPage.k8": "Actions吗？",
   "templates.listPage.k9": "Processing",
   "templates.editor.k0": "TemplatesName *",
-  "templates.editor.k1": "TemplatesCode *"
+  "templates.editor.k1": "TemplatesCode *",
+  "templates": {
+    "card_list_template": {
+      "k7": "No data"
+    },
+    "dashboard_template": {
+      "k0": "No data"
+    },
+    "form_page_template": {
+      "k11": "Close",
+      "k12": "Close"
+    },
+    "list_page_template": {
+      "k0": "No data",
+      "k33": "Exported successfully",
+      "k5": "Enter A Valid Email Address...",
+      "k6": "Enter A Valid Number..."
+    },
+    "markdown_editor_template": {
+      "k41": "Close"
+    },
+    "master_detail_page_template": {
+      "k3": "No data",
+      "k8": "Close",
+      "k12": "Close",
+      "k13": "Close"
+    },
+    "index": {
+      "k15": "Close"
+    },
+    "settings_page_template": {
+      "k4": "Close",
+      "k8": "Close",
+      "k9": "Close"
+    },
+    "stats_page_template": {
+      "k1": "No data",
+      "k2": "No data"
+    },
+    "sub_table_builder": {
+      "k0": "Close",
+      "k2": "Close",
+      "k5": "No data"
+    },
+    "template_demo_page": {
+      "k30": "Start Date",
+      "k31": "End Date",
+      "k75": "以下Variable Value is required"
+    },
+    "tree_page_template": {
+      "k4": "No data"
+    },
+    "wizard_page_template": {
+      "k8": "Close"
+    }
+  }
 }

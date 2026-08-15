@@ -1,0 +1,73 @@
+# TOPEMS i18n 术语表 (glossary.csv)
+# V227 X-P0 Phase-1b · 2026-08-15
+# 规则: zh_term (中文词条) → standard_en (标准英文译法)
+# 非标准译法在 Phase-2 通过 apply_glossary.js 脚本跨 66 命名空间强制替换
+#
+# 列说明:
+#   zh_term:            精确匹配的中文 (exact-match，对 zh.json 的叶子值做整体比较)
+#   standard_en:        强制统一的英文译法
+#   category:           UI_COMMON / ACTION_RESULT / BUSINESS / TIME_DATE / SEVERITY
+#   notes:              决策说明 / 不替换的例外
+#   allowed_aliases:    除 standard_en 外，允许保留的别名（逗号分隔，通常用于特殊语境，如代码内 ID/常量）
+#
+zh_term,standard_en,category,notes,allowed_aliases
+状态,Status,UI_COMMON,列头/过滤器标签通用词,Status
+基本信息,Basic Info,UI_COMMON,面板 section 标题；简写简洁一致,Basic Information
+成功,Success,ACTION_RESULT,Toast 提示统一用名词；不要用 Succeeded 或 成功,
+已完成,Completed,UI_COMMON,状态列值统一,Completed
+创建失败,Create failed,ACTION_RESULT,所有"XX 失败"统一句式: Verb + past + lowercase failed 含空格（非驼峰）,
+取消,Cancel,UI_COMMON,按钮统一用 Cancel（祈使句动词原形）；取消/取消了/Cancelled 不保留,
+删除失败,Delete failed,ACTION_RESULT,句式: Verb past + failed（过去式修饰动词）,
+启用,Enabled,UI_COMMON,状态列值（"开关状态"）→ Enable 用作按钮动词；此处为状态值统一 Enabled,
+全部状态,All Statuses,UI_COMMON,过滤器下拉头；All Status (无复数)不规范；AllStatus（无空格）是旧驼峰应移除,
+创建时间,Created At,TIME_DATE,表格列头统一 Created At / Updated At 两词首大写 + 空格,
+更新失败,Update failed,ACTION_RESULT,同创建失败句式,
+待处理,Pending,UI_COMMON,任务/工单状态统一；Open / On Hold 特殊语境下保留（按 allowed_aliases 限定）,
+失败,Failed,UI_COMMON,列状态值；Toast 里的"失败"才走具体句式,
+进行中,In Progress,UI_COMMON,进度状态统一；Running 仅用于"运行/服务在线"这类真·后台执行态,
+错误,Error,UI_COMMON,面板标题或标签,
+草稿,Draft,UI_COMMON,单数统一；Drafts 不保留（复数用于页面路由标题例外）,
+停用,Disabled,UI_COMMON,与"禁用(Disable)"区分：Disable=按钮动作；Disabled=状态,
+操作失败,Operation failed,ACTION_RESULT,与 Create/Update/Delete failed 句式保持一致；ActionFailed 旧驼峰不保留,
+首页,Home,UI_COMMON,导航项；不写 Home Page,
+操作,Actions,UI_COMMON,表格列头统一用 Actions（复数，因为含多种操作）；Action 作动词或单一操作语境,
+关闭,Close,UI_COMMON,Close 动词（关窗口/关弹窗）；Disabled 是状态不混用,
+待审批,Pending Approval,UI_COMMON,审批模块状态统一；Pending Review 仅走已审核的 review 流程,
+严重,Critical,SEVERITY,告警/事件级别统一；Severe/Major 降级不保留,
+描述,Description,UI_COMMON,表单字段,
+禁用,Disable,UI_COMMON,按钮/操作（动词原形）；Disabled 作状态值另列,""
+备注,Remarks,UI_COMMON,表单字段复数，与 Notes 区分（Notes 是便签/长文本）,Remarks
+全部,All,UI_COMMON,过滤器"全部"选项,
+负责人,Owner,BUSINESS,Owner 简洁通用；Responsible Person 冗长不保留,
+删除成功,Deleted successfully,ACTION_RESULT,句式: Adj + successfully；驼峰/全大写/Deletion 形式不保留,
+加载失败,Load failed,ACTION_RESULT,Create/Delete/Update/Load 统一 failed 句式,
+正常,Normal,UI_COMMON,状态值；Online/Healthy 特殊语境保留,""
+操作成功,Operation succeeded,ACTION_RESULT,所有成功提示统一：名词 + succeeded（动词过去式）,
+加载中...,Loading...,UI_COMMON,统一三点,
+已停用,Deactivated,UI_COMMON,账户/用户状态专用；Disabled 用于功能开关；Inactive 保留为 HRM 员工状态,
+更新时间,Updated At,TIME_DATE,与 Created At 配套,
+分类,Category,UI_COMMON,Category 简洁；Classification 仅在 QMS/质量管理体系严格语境保留（需限定命名空间）,
+待审核,Pending Review,UI_COMMON,Review 审核与 Approval 审批区分：Review 是审核/复核；Approval 是批准决策,Pending Audit
+不合格,Non-Conforming,BUSINESS,QMS/LIMS 专用；标准 ISO 13485 译法 Non-Conforming；Unqualified 非标准不保留,
+暂无数据,No data,UI_COMMON,空态文本统一小写 no + data + 无标点；No Data / NoData 旧写法不保留,
+查看详情,View Details,UI_COMMON,按钮链接统一 View + Details（复数）；ViewDetail 单数不保留,
+已确认,Confirmed,UI_COMMON,状态值,Acknowledged
+提示,Tip,UI_COMMON,小提示用 Tip（Hints 是多条）；Notice 偏通知公告；Warning 是警告,""
+警告,Warning,UI_COMMON,预警/告警警告级别统一,Warn
+编辑,Edit,UI_COMMON,按钮动词原形,
+维护中,Under Maintenance,UI_COMMON,页面占位的标准短语；Maintaining 进行时不地道,
+已解决,Resolved,UI_COMMON,Ticket/EHS 事件统一；Closed 仅用于关闭（语义不同）,
+任务,Task,UI_COMMON,单数任务名；Tasks 复数列表页标题保留（作为页面标题特殊语境）,
+其他,Other,UI_COMMON,表单选项/过滤器用 Other；Others 仅在"其他内容"语境保留,
+审批,Approval,BUSINESS,审批流程名词；Approve 作动词,
+执行中,Executing,UI_COMMON,后台任务执行态（APS/SCM 任务）；In Progress 是进度条态,
+全部类型,All Types,UI_COMMON,过滤器头,
+确认删除,Confirm Delete,UI_COMMON,模态标题 Confirm + 动词原形，空格分隔,
+结束日期,End Date,TIME_DATE,与 Start Date 配套,
+保存,Save,UI_COMMON,按钮动词,
+确认,Confirm,UI_COMMON,按钮/动作,
+更新成功,Updated successfully,ACTION_RESULT,句式: adj + successfully 同 Deleted successfully,
+开始日期,Start Date,TIME_DATE,与 End Date 配套,
+导出成功,Exported successfully,ACTION_RESULT,与 Deleted/Updated 同句式,
+凭证,Voucher,BUSINESS,Finance 领域标准译法；Certificate 是证书/资质，不混用,
+台账,Ledger,BUSINESS,Finance/WMS 通用标准译法；Register/Journal 在 Finance 对应日记账/流水账,

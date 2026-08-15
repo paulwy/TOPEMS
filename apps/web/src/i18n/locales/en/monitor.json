@@ -10,7 +10,7 @@
       "status": {
         "enabled": "Enabled",
         "disabled": "Disabled",
-        "enable": "Enable",
+        "enable": "Enabled",
         "disable": "Disable",
         "active": "Active",
         "resolved": "Resolved",
@@ -48,7 +48,7 @@
         "copy_fail": "Copy Failed",
         "copied_to_clipboard": "{{label}} copied to clipboard",
         "cannot_copy": "Cannot copy to clipboard",
-        "export_success": "Export Succeeded",
+        "export_success": "Exported successfully",
         "export_fail": "Export Failed"
       }
     },
@@ -71,7 +71,7 @@
       "max_concurrent_checks": "Max Concurrent Checks",
       "max_concurrent_checks_desc": "Maximum number of concurrent check tasks",
       "observability": "Observability",
-      "configure_metrics_logs_traces": "Configure metrics, logs and traces",
+      "configure_metrics_logs_traces": "Configure metrics, logs, and traces",
       "metrics_monitoring": "Metrics Monitoring",
       "collect_store_metrics": "Collect and store metric data",
       "log_monitoring": "Log Monitoring",
@@ -245,7 +245,7 @@
       },
       "action": {
         "toggle": "Enable/Disable",
-        "enable": "Enable",
+        "enable": "Enabled",
         "disable": "Disable"
       },
       "message": {
@@ -284,7 +284,7 @@
       "message": {
         "readonly_create": "Logs are read-only and cannot be created",
         "readonly_update": "Logs are read-only and cannot be modified",
-        "delete_success_title": "Deleted",
+        "delete_success_title": "Deleted successfully",
         "delete_success_body": "Log deleted",
         "copy_success_title": "Copied",
         "copy_success_body": "{{label}} copied to clipboard",
@@ -347,7 +347,7 @@
         "confirm_fail": "Failed to confirm alert",
         "resolve_success": "Alert resolved",
         "resolve_fail": "Failed to resolve alert",
-        "export_success": "Export succeeded",
+        "export_success": "Exported successfully",
         "export_fail": "Export failed",
         "readonly_create": "Alert History为只读数据，不可创建",
         "readonly_update": "Alert请Pass确认/解决Actions更新"
@@ -401,7 +401,7 @@
         "service": "Service",
         "all_services": "All Services",
         "status": "Status",
-        "all_status": "All Status",
+        "all_status": "All Statuses",
         "current_value": "Current Value",
         "target": "Target",
         "trend": "Trend",
@@ -463,12 +463,12 @@
         "batch_confirm_fail": "Batch confirm failed",
         "batch_resolve_success": "Batch resolve succeeded",
         "batch_resolve_fail": "Batch resolve failed",
-        "export_success": "Export succeeded",
+        "export_success": "Exported successfully",
         "export_success_body": "Alert data exported successfully",
         "export_fail": "Export failed",
         "readonly_create": "Alert为系统生成数据，不可手动创建",
         "readonly_update": "Alert请Pass确认/解决Actions更新",
-        "operation_fail": "Operation Failed",
+        "operation_fail": "Operation failed",
         "block_title": "屏蔽Alert",
         "blocked_body": "已屏蔽「{{title}}」Alert",
         "batch_confirm_body": "Confirmed {{count}} 条Alert",
@@ -627,6 +627,37 @@
         "at_risk": "At Risk",
         "violated": "Violated"
       }
+    },
+    "monitor_alert_history_page": {
+      "k8": "Resolved",
+      "k21": "Exported successfully",
+      "k26": "Confirm"
+    },
+    "monitor_alert_rules_page": {
+      "k18": "Enabled",
+      "k20": "Success",
+      "k21": "Success",
+      "k30": "Enabled"
+    },
+    "monitor_alerts_page": {
+      "k7": "Operation failed",
+      "k9": "Resolved",
+      "k11": "Operation failed",
+      "k15": "Operation failed",
+      "k18": "Operation failed",
+      "k20": "Exported successfully",
+      "k27": "Confirm"
+    },
+    "monitor_dashboard_page": {
+      "k19": "Normal",
+      "k38": "Normal"
+    },
+    "monitor_notification_page": {
+      "k23": "Deactivated"
+    },
+    "slo_status_page": {
+      "k50": "Tip",
+      "k42": "Start Date"
     }
   },
   "monitor.metrics_dashboard_page.k0": "All类别",

@@ -21,7 +21,7 @@
     "规格型号": "Specification/Model",
     "存放位置": "Storage Location",
     "所属部门": "Department",
-    "负责人": "Responsible Person",
+    "负责人": "Owner",
     "购置价格": "Purchase Price",
     "购置日期": "Purchase Date",
     "创建时间": "Created At",
@@ -73,7 +73,7 @@
     "detail_specification": "Specification/Model",
     "detail_location": "Storage Location",
     "detail_department": "Department",
-    "detail_responsible_person": "Responsible Person",
+    "detail_responsible_person": "Owner",
     "detail_purchase_price": "Purchase Price",
     "detail_purchase_date": "Purchase Date",
     "detail_created_at": "Created At",
@@ -100,19 +100,19 @@
     "breadcrumb_asset_category": "Asset Categories"
   },
   "depreciation": {
-    "创建失败": "Creation failed",
+    "创建失败": "Create failed",
     "更新失败": "Update failed",
     "depreciation_创建失败": "depreciation.Creation failed",
     "depreciation_更新失败": "depreciation.Update failed",
     "notify_success_message": "Depreciation completed for {{count}} assets",
-    "create_fail": "Creation failed",
+    "create_fail": "Create failed",
     "update_fail": "Update failed"
   },
   "transfer": {
-    "请选择资产": "Please select an asset",
-    "请选择调出部门": "Please select the source department",
-    "请选择调入部门": "Please select the destination department",
-    "请选择调拨日期": "Please select the transfer date",
+    "请选择资产": "Select An Asset...",
+    "请选择调出部门": "Select The Source Department...",
+    "请选择调入部门": "Select The Destination Department...",
+    "请选择调拨日期": "Select The Transfer Date...",
     "请填写调拨原因": "Please fill in the transfer reason",
     "研发部": "R&D Department",
     "市场部": "Marketing Department",
@@ -147,10 +147,10 @@
     "transfer_ast_006_办公桌_01": "transfer.ast_006_Office Desk_01",
     "transfer_ast_007_笔记本电脑_01": "transfer.ast_007_Laptop_01",
     "transfer_ast_008_监控摄像头_01": "transfer.ast_008_Surveillance Camera_01",
-    "validation_select_asset": "Please select an asset",
-    "validation_select_from_dept": "Please select the source department",
-    "validation_select_to_dept": "Please select the destination department",
-    "validation_select_date": "Please select the transfer date",
+    "validation_select_asset": "Select An Asset...",
+    "validation_select_from_dept": "Select The Source Department...",
+    "validation_select_to_dept": "Select The Destination Department...",
+    "validation_select_date": "Select The Transfer Date...",
     "validation_fill_reason": "Please fill in the transfer reason",
     "dept_rd": "R&D Department",
     "dept_marketing": "Marketing Department",
@@ -199,5 +199,13 @@
   "asset.asset_list_page.k0": "AssetListPage under development",
   "asset.category_management_page.k0": "CategoryManagementPage under development",
   "asset.depreciation_page.k0": "DepreciationPage under development",
-  "asset.transfer_page.k0": "TransferPage under development"
+  "asset.transfer_page.k0": "TransferPage under development",
+  "depreciation_page": {
+    "create_fail": "Create failed"
+  },
+  "transfer_page": {
+    "select_asset": "Select An Asset...",
+    "select_dept": "Select The Destination Department...",
+    "select_date": "Select The Transfer Date..."
+  }
 }

@@ -30,16 +30,16 @@
     "type_payment": "Payment Voucher",
     "type_receipt": "Receipt Voucher",
     "type_transfer": "Transfer Voucher",
-    "type_general": "General Voucher",
+    "type_general": "General Journal Voucher",
     "action_create": "Create Voucher",
     "action_edit": "Edit Voucher",
     "action_review": "Review",
-    "action_approve": "Approve",
+    "action_approve": "Approval",
     "action_post": "Post",
     "action_cancel": "Cancel Voucher",
     "action_print": "Print",
     "validation_debit_credit_balance": "Debits and credits must balance",
-    "validation_voucher_date_required": "Voucher date is required",
+    "validation_voucher_date_required": "Voucher Date is required",
     "message_create_success": "Voucher created successfully",
     "message_review_success": "Voucher reviewed successfully",
     "message_post_success": "Voucher posted successfully",
@@ -54,7 +54,7 @@
     "department": "Department",
     "expense_amount": "Expense Amount",
     "tax_amount": "Tax Amount",
-    "total_amount": "Total Amount",
+    "total_amount": "Total (Tax Inclusive)",
     "expense_date": "Expense Date",
     "payment_method": "Payment Method",
     "payee": "Payee",
@@ -82,7 +82,7 @@
     "action_approve": "Approve",
     "action_reject": "Reject",
     "action_pay": "Pay",
-    "validation_amount_required": "Expense amount is required",
+    "validation_amount_required": "Expense Amount is required",
     "validation_amount_positive": "Expense amount must be greater than 0",
     "message_create_success": "Expense reimbursement created successfully",
     "message_approve_success": "Expense approved successfully",
@@ -105,11 +105,11 @@
     "variance_rate": "Variance Rate",
     "department": "Department",
     "cost_center": "Cost Center",
-    "responsible_person": "Responsible Person",
+    "responsible_person": "Owner",
     "status_draft": "Draft",
     "status_submitted": "Submitted",
     "status_approved": "Approved",
-    "status_active": "Active",
+    "status_active": "Executing",
     "status_closed": "Closed",
     "status_rejected": "Rejected",
     "type_operating": "Operating Budget",
@@ -122,8 +122,8 @@
     "action_approve": "Approve",
     "action_adjust": "Adjust Budget",
     "action_roll_over": "Roll Over Budget",
-    "validation_budget_amount_required": "Budget amount is required",
-    "validation_budget_year_required": "Budget year is required",
+    "validation_budget_amount_required": "Budget Amount is required",
+    "validation_budget_year_required": "Budget Year is required",
     "message_create_success": "Budget created successfully",
     "message_approve_success": "Budget approved successfully",
     "message_adjust_success": "Budget adjusted successfully"
@@ -163,8 +163,8 @@
     "action_collect": "Collect",
     "action_write_off": "Write Off",
     "action_bad_debt": "Process Bad Debt",
-    "action_aging_report": "Aging Report",
-    "validation_amount_required": "Receivable amount is required",
+    "action_aging_report": "Aging Analysis",
+    "validation_amount_required": "Receivable Amount is required",
     "message_create_success": "Receivable created successfully",
     "message_collect_success": "Collection record saved",
     "message_write_off_success": "Write-off successful"
@@ -196,8 +196,8 @@
     "action_pay": "Pay",
     "action_write_off": "Write Off",
     "action_dispute": "File Dispute",
-    "action_aging_report": "Aging Report",
-    "validation_amount_required": "Payable amount is required",
+    "action_aging_report": "Aging Analysis",
+    "validation_amount_required": "Payable Amount is required",
     "message_create_success": "Payable created successfully",
     "message_pay_success": "Payment successful",
     "message_write_off_success": "Write-off successful"
@@ -219,7 +219,7 @@
     "write_off_amount": "Write-Off Amount",
     "unallocated_amount": "Unallocated Amount",
     "operator": "Operator",
-    "remark": "Remark",
+    "remark": "Remarks",
     "status_draft": "Draft",
     "status_confirmed": "Confirmed",
     "status_written_off": "Written Off",
@@ -233,7 +233,7 @@
     "action_confirm": "Confirm Collection",
     "action_write_off": "Write Off",
     "action_cancel": "Cancel",
-    "validation_amount_required": "Collection amount is required",
+    "validation_amount_required": "Collection Amount is required",
     "message_create_success": "Collection created successfully",
     "message_confirm_success": "Collection confirmed successfully",
     "message_write_off_success": "Write-off successful"
@@ -254,7 +254,7 @@
     "payable_no": "Related Payable No.",
     "applicant": "Applicant",
     "approver": "Approver",
-    "remark": "Remark",
+    "remark": "Remarks",
     "status_draft": "Draft",
     "status_submitted": "Submitted",
     "status_approved": "Approved",
@@ -272,7 +272,7 @@
     "action_reject": "Reject",
     "action_pay": "Execute Payment",
     "action_cancel": "Cancel",
-    "validation_amount_required": "Payment amount is required",
+    "validation_amount_required": "Payment Amount is required",
     "message_create_success": "Payment created successfully",
     "message_approve_success": "Payment approved successfully",
     "message_pay_success": "Payment executed successfully"
@@ -308,7 +308,7 @@
     "action_manual_match": "Manual Match",
     "action_adjust": "Adjust",
     "action_complete": "Complete Reconciliation",
-    "validation_period_required": "Reconciliation period is required",
+    "validation_period_required": "Reconciliation Period is required",
     "message_create_success": "Reconciliation created successfully",
     "message_match_success": "Reconciliation matched successfully",
     "message_complete_success": "Reconciliation completed"
@@ -374,7 +374,7 @@
     "action_trial_balance": "Trial Balance",
     "action_balance_sheet": "Balance Sheet",
     "action_income_statement": "Income Statement",
-    "validation_period_required": "Accounting period is required",
+    "validation_period_required": "Accounting Period is required",
     "message_query_success": "Query completed successfully",
     "message_export_success": "Exported successfully",
     "message_trial_balanced": "Trial balance is balanced",
@@ -1421,5 +1421,110 @@
   "finance.voucher.k35": "Voucher Details",
   "finance.consolidation_scope_page.k0": "ConsolidationScopePage under development",
   "finance.finance_dashboard_page.k0": "FinanceDashboardPage under development",
-  "finance.finance_voucher_page.k0": "FinanceVoucherPage under development"
+  "finance.finance_voucher_page.k0": "FinanceVoucherPage under development",
+  "finance": {
+    "finance_approval_config_page": {
+      "k5": "Create failed",
+      "k6": "Update failed",
+      "k7": "Delete failed"
+    },
+    "payment_print_template": {
+      "k6": "Remarks"
+    },
+    "voucher_create_page": {
+      "k3": "Actions"
+    },
+    "finance_cost_page": {
+      "e9": "Remarks"
+    },
+    "accounting_subject": {
+      "k23": "Remarks",
+      "k37": "All Statuses",
+      "k42": "Remarks",
+      "k1": "Manage account codes, categories, and hierarchical relationships"
+    },
+    "asset": {
+      "k19": "Remarks",
+      "k25": "All Statuses",
+      "k29": "Remarks",
+      "k1": "Manage enterprise fixed assets, depreciation, and disposal"
+    },
+    "budget": {
+      "k6": "Executing",
+      "k24": "Executing",
+      "k28": "All Statuses",
+      "k29": "Executing"
+    },
+    "cost": {
+      "k18": "Remarks",
+      "k22": "All Statuses",
+      "k26": "Remarks"
+    },
+    "expense": {
+      "k33": "All Statuses"
+    },
+    "expense_approval": {
+      "k65": "All Statuses",
+      "k18": "Select Expense Date...",
+      "k22": "Select Approver..."
+    },
+    "fixed_asset": {
+      "k34": "All Statuses",
+      "k0": "Fixed Assets",
+      "k52": "Charge Depreciation",
+      "k1": "Manage enterprise fixed assets including acquisition, depreciation, disposal, and full lifecycle"
+    },
+    "invoice": {
+      "k27": "All Statuses",
+      "k3": "Special VAT Invoice",
+      "k4": "General VAT Invoice",
+      "k23": "Special VAT Invoice",
+      "k24": "General VAT Invoice"
+    },
+    "ledger": {
+      "k23": "Remarks",
+      "k37": "All Statuses",
+      "k42": "Remarks"
+    },
+    "payment": {
+      "k31": "All Statuses"
+    },
+    "receipt": {
+      "k31": "All Statuses"
+    },
+    "receivable_payable": {
+      "k8": "Remarks",
+      "k35": "All Statuses",
+      "k70": "All Statuses",
+      "k20": "Special VAT Invoice",
+      "k33": "Special VAT Invoice",
+      "k55": "Special VAT Invoice",
+      "k68": "Special VAT Invoice"
+    },
+    "tax": {
+      "k37": "All Statuses",
+      "k18": "Taxable Revenue",
+      "k10": "Manage enterprise tax filing, payment, and analysis (data aggregated from sales and purchase invoices)"
+    },
+    "voucher": {
+      "k23": "All Statuses"
+    },
+    "finance_asset_page": {
+      "k3": "Charge Depreciation",
+      "e4": "Manage enterprise fixed assets, depreciation, and disposal"
+    },
+    "finance_tax_page": {
+      "e4": "Taxable Revenue"
+    },
+    "voucher_detail_page": {
+      "e22": "Review Voucher"
+    },
+    "consolidation_reports_page": {
+      "k18": "Select Consolidation Scope...",
+      "k19": "Select Report Type..."
+    },
+    "budget_management_page": {
+      "e5": "Select Status..."
+    }
+  }
 }

@@ -50,7 +50,7 @@
       "pending": "Pending Review"
     },
     "action": {
-      "view_detail": "View Detail"
+      "view_detail": "View Details"
     },
     "breadcrumb": "Supplier Evaluation"
   },
@@ -98,12 +98,12 @@
     },
     "stat": {
       "total": "Total Contracts",
-      "active": "Active",
+      "active": "Executing",
       "completed": "Completed",
       "total_amount": "Total Contract Amount"
     },
     "action": {
-      "view_detail": "View Detail"
+      "view_detail": "View Details"
     },
     "breadcrumb": "Contract Management"
   },
@@ -123,7 +123,7 @@
   },
   "supplier": {
     "status": {
-      "active": "Active"
+      "active": "Enabled"
     },
     "stat": {
       "total": "Total Suppliers",
@@ -634,7 +634,7 @@
     "联系人": "Contact Person",
     "联系电话": "Contact Phone",
     "状态": "Status",
-    "操作": "Action",
+    "操作": "Actions",
     "暂无投标人": "No bidders\n                  ",
     "发布成功": "Published Successfully",
     "发布失败": "Publish Failed",
@@ -704,7 +704,7 @@
     "交货期": "Delivery Period",
     "有效期至": "Valid Until",
     "状态": "Status",
-    "操作": "Action",
+    "操作": "Actions",
     "暂无报价": "No quotations\n                  ",
     "发布成功": "Published Successfully",
     "发布失败": "Publish Failed",
@@ -811,7 +811,7 @@
     "供应商": "Supplier",
     "合同金额": "Contract Amount",
     "供应商id": "Supplier ID",
-    "备注": "Remark",
+    "备注": "Remarks",
     "创建时间": "Created At",
     "更新时间": "Updated At",
     "加载中": "Loading...",
@@ -845,7 +845,7 @@
     "更新合同失败": "Failed to update contract",
     "删除合同失败": "Failed to delete contract",
     "合同总数": "Total Contracts",
-    "执行中": "In Progress",
+    "执行中": "Executing",
     "已完成": "Completed",
     "合同总额": "Total Contract Amount",
     "查看详情": "View Details",
@@ -1177,7 +1177,7 @@
     "新增供应商门户功能上线公告": "New Supplier Portal Feature Launch Announcement",
     "2024年第一季度质量考核结果": "2024 Q1 Quality Assessment Results",
     "加载供应商门户数据失败": "Failed to load supplier portal data:",
-    "加载失败": "Loading failed",
+    "加载失败": "Load failed",
     "无法加载供应商门户数据": "Unable to load supplier portal data",
     "待处理": "Pending",
     "处理中": "Processing",
@@ -1658,5 +1658,74 @@
   "srmcontractdetailpage.加载合同信息失败": "Failed to Load Contract Information",
   "srmcontractdetailpage.时间信息": "Time Information",
   "srmfinancepage.单据总数": "Total Documents",
-  "srmfinancepage.所有单据合计": "All Documents Total"
+  "srmfinancepage.所有单据合计": "All Documents Total",
+  "srm_contract_page": {
+    "medium": "Executing"
+  },
+  "supplier_portal_page": {
+    "loading_fail": "Load failed"
+  },
+  "biddingpage": {
+    "操作": "Actions"
+  },
+  "inquiryquotationpage": {
+    "操作": "Actions"
+  },
+  "srmcontractdetailpage": {
+    "备注": "Remarks"
+  },
+  "srmcontractpage": {
+    "执行中": "Executing"
+  },
+  "supplierportalpage": {
+    "加载失败": "Load failed"
+  },
+  "srm": {
+    "bidding": {
+      "k44": "Remarks",
+      "k46": "All Statuses"
+    },
+    "category": {
+      "k12": "Disable",
+      "k16": "Disable"
+    },
+    "contract": {
+      "k26": "Executing",
+      "k29": "Remarks",
+      "k33": "Executing",
+      "k37": "All Statuses",
+      "k39": "Executing",
+      "k44": "Remarks"
+    },
+    "evaluation": {
+      "k22": "All Statuses"
+    },
+    "finance": {
+      "k18": "Remarks",
+      "k31": "Remarks"
+    },
+    "inquiry": {
+      "k37": "Remarks",
+      "k39": "All Statuses"
+    },
+    "order": {
+      "k16": "Remarks",
+      "k23": "All Statuses",
+      "k31": "Remarks"
+    },
+    "quotation": {
+      "k28": "Remarks",
+      "k35": "All Statuses"
+    },
+    "scoring_dimension": {
+      "k10": "Disable",
+      "k15": "Disable"
+    },
+    "supplier": {
+      "k15": "Disable",
+      "k30": "Disable",
+      "k32": "All Statuses",
+      "k34": "Disable"
+    }
+  }
 }

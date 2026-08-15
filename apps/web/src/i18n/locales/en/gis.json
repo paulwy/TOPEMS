@@ -142,7 +142,7 @@
     "tab_evidence_records": "On-site Evidence",
     "tab_factory_maps": "厂区Map",
     "tab_business_locations": "Business Location",
-    "empty_no_data": "No data yet",
+    "empty_no_data": "No data",
     "col_name": "Name",
     "col_type": "Type",
     "col_coordinates": "Coordinates",
@@ -163,7 +163,7 @@
     "stat_evidence_records": "On-site Evidence",
     "stat_factory_maps": "厂区Map",
     "stat_business_locations": "Business Location",
-    "status_active": "Enable",
+    "status_active": "Enabled",
     "status_pending": "Pending",
     "status_inactive": "Disable"
   },
@@ -517,5 +517,54 @@
   "gis.mapView.k2": "Current:",
   "gis.map3DView.k0": "Height:",
   "gis.map3DView.k1": "<div class=\"building-popup\">\n          <h4>{{v0}}</h4>\n          <p>Height: {{v1}}m</p>\n          {{v2}}\n        </div>",
-  "gis.mapModule.k0": "3D View"
+  "gis.mapModule.k0": "3D View",
+  "gis": {
+    "index": {
+      "k7": "Enabled",
+      "k10": "No data"
+    },
+    "device_track_panel": {
+      "k0": "Close",
+      "k17": "Close",
+      "k3": "Select Equipment...",
+      "k18": "Select 一个EquipmentViewTrajectory...",
+      "k19": "Select Equipment...",
+      "k20": "Select Equipment...",
+      "k21": "Select Equipment..."
+    },
+    "heatmap_layer": {
+      "k0": "Enabled"
+    },
+    "map3_d_view": {
+      "k1": "Enabled",
+      "k6": "Close"
+    },
+    "details_panel": {
+      "k0": "Close",
+      "k1": "Enabled",
+      "k3": "Enabled"
+    },
+    "map_layers": {
+      "k0": "Enabled"
+    },
+    "audio_capture": {
+      "k2": "Close"
+    },
+    "evidence_panel": {
+      "k0": "Close"
+    },
+    "photo_capture": {
+      "k1": "Close"
+    },
+    "video_capture": {
+      "k3": "Close"
+    },
+    "map_view": {
+      "k0": "Enabled",
+      "k3": "Enabled"
+    },
+    "track_panel": {
+      "k0": "Close"
+    }
+  }
 }
