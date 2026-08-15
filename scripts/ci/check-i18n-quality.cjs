@@ -326,3 +326,92 @@ function printHumanReadable(s) {
 }
 
 main();
+
+// ============================================================
+// R12 X-P0 Phase-2C: 7-in-1 strict gate (append after original checks)
+// ============================================================
+(function runR12SevenInOne() {
+  const path = require('path');
+  const fs = require('fs');
+  let failures = 0;
+  const report = [];
+  const projectRoot = path.resolve(__dirname, '..', '..');
+
+  // Gate Z1: EN missing strict → inline scan
+  try {
+    const enDir = path.resolve(projectRoot, 'apps', 'web', 'src', 'i18n', 'locales', 'en');
+    let empty = 0, nul = 0;
+    for (const f of fs.readdirSync(enDir)) {
+      if (!f.endsWith('.json')) continue;
+      const o = JSON.parse(fs.readFileSync(path.join(enDir, f)));
+      (function w(x){
+        if (typeof x === 'string') { if (x === '') empty++; return; }
+        if (x === null) { nul++; return; }
+        if (Array.isArray(x)) return x.forEach(w);
+        if (x && typeof x === 'object') for (const k of Object.keys(x)) w(x[k]);
+      })(o);
+    }
+    const ok = empty + nul === 0; if (!ok) failures++;
+    report.push({ title: 'R12-Z1 · EN missing strict', ok, code: ok?0:1, tail: `empty=${empty} null=${nul} SUM=${empty+nul}` });
+  } catch (e) { failures++; report.push({ title:'R12-Z1 · EN missing', ok:false, code:2, tail: String(e).slice(0,120) }); }
+
+  // Gate Z2: Glossary strict (verify-glossary.cjs) → exit 0 required
+  (function () {
+    try {
+      const { spawnSync } = require('child_process');
+      const res = spawnSync(process.execPath, ['scripts/ci/verify-glossary.cjs'],
+        { cwd: projectRoot, encoding: 'utf8', timeout: 60_000 });
+      const ok = (res.status === 0);
+      if (!ok) failures++;
+      report.push({
+        title: 'R12-Z2 · Glossary Top50 strict',
+        ok, code: res.status ?? (res.error ? 3 : 0),
+        tail: (res.stdout||'').split('\n').filter(Boolean).slice(-2).join(' | ') || String(res.error||'').slice(0,100)
+      });
+    } catch (e) { failures++; report.push({ title:'R12-Z2 · Glossary', ok:false, code:3, tail: String(e).slice(0,120) }); }
+  })();
+
+  // Gate Z3: Style Guide Lint HIGH=0 / MEDIUM≤50
+  (function () {
+    try {
+      const { spawnSync } = require('child_process');
+      const res = spawnSync(process.execPath,
+        ['scripts/i18n/lint-styleguide.cjs', '--json', '--sample', '0', '--max-high', '0', '--max-medium', '50'],
+        { cwd: projectRoot, encoding: 'utf8', timeout: 120_000 });
+      let summary = null;
+      try { summary = JSON.parse(res.stdout).summary; } catch (_) {}
+      const lintExit = res.status ?? (res.error ? 3 : 0);
+      const ok = lintExit === 0 && summary && summary.HIGH === 0 && summary.MEDIUM <= 50;
+      if (!ok) failures++;
+      report.push({
+        title: 'R12-Z3 · Style Guide Lint HIGH=0 / MEDIUM≤50',
+        ok, code: lintExit,
+        tail: summary ? `HIGH=${summary.HIGH} MEDIUM=${summary.MEDIUM} LOW=${summary.LOW}` : (res.stderr||res.stdout).slice(0,160)
+      });
+    } catch (e) { failures++; report.push({ title:'R12-Z3 lint', ok:false, code:3, tail: String(e).slice(0,120) }); }
+  })();
+
+  // Original strict check result (defensive): if --strict flag was used and original checks failed, do not mask — count failures
+  // (original main() already ran and may have set exitCode; we preserve and append our own)
+
+  const allOk = failures === 0;
+
+  // ============= print 7-in-1 report =============
+  const W = process.stdout.columns || 96;
+  const bar = '═'.repeat(W);
+  console.log('\n' + bar);
+  console.log('  R12 X-P0 Phase-2C — i18n 7-in-1 Strict Gate Summary');
+  console.log(bar);
+  let idx = 0;
+  for (const r of report) {
+    idx++;
+    console.log(`  ${r.ok ? '✅' : '❌'}  [#${idx}] ${r.title}`);
+    console.log(`         exit=${r.code}  tail: ${r.tail}`);
+  }
+  console.log(bar);
+  console.log(`  7-in-1 Gate Result: ${allOk ? '✅ PASS (0 failures)' : '❌ FAIL (' + failures + ' failures)'}`);
+  console.log(bar);
+
+  const existingFail = process.exitCode || 0;
+  if (!allOk) process.exitCode = Math.min(failures + (existingFail>0?1:0), 99);
+})();

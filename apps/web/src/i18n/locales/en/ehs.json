@@ -226,7 +226,7 @@
     "update": "Hazardous Material Information Updated Successfully",
     "success_1": "Hazardous Material Checked In Successfully",
     "update_1": "Update failed",
-    "fail_2": "InboundFailed",
+    "fail_2": "Inbound failed",
     "save": "Failed to Save Hazardous Material:",
     "please_input": "Please inputCode",
     "please_input_1": "Please inputName",

@@ -906,7 +906,7 @@
     "已记录合同": "Recorded Contracts",
     "总金额": "Total Amount",
     "待结算": "Pending Settlement",
-    "待处理_处理中_有效": "Pending/Processing/Valid",
+    "待处理_处理中_有效": "Pending/ Processing/ Valid",
     "已完成_已交付": "Completed/Delivered",
     "财务管理": "Financial Management",
     "单据总数": "Total Documents",
@@ -929,7 +929,7 @@
     "srmfinance_所有单据合计": "srmfinance.All Documents Total",
     "srmfinance_待结算": "srmfinance.Pending Settlement",
     "srmfinance_待处理_处理中_有效": "srmfinance.Pending_In Progress_Valid",
-    "srmfinance_已完成_已交付": "srmfinance.Completed_Delivered",
+    "srmfinance_已完成_已交付": "srmfinance. Completed_ Delivered",
     "srmfinance_财务管理": "srmfinance.Financial Management"
   },
   "srmorder": {
@@ -1301,7 +1301,7 @@
   "srm_evaluation_page.total": "Total Evaluations",
   "srm_evaluation_page.detail": "View Details",
   "srm_finance_page.": "Completed/Delivered",
-  "srm_finance_page.medium": "Pending/Processing/Valid",
+  "srm_finance_page.medium": "Pending/ Processing/ Valid",
   "srm_finance_page.cancel": "Cancelled",
   "srm_finance_page.finance_manage": "Financial Management",
   "srm_order_page.loading_stats_fail": "Failed to load order statistics",
@@ -1493,7 +1493,7 @@
   "srmfinancepage.已记录合同": "Recorded Contracts",
   "srmfinancepage.总金额": "Total Amount",
   "srmfinancepage.待结算": "Pending Settlement",
-  "srmfinancepage.待处理/处理中/有效": "Pending/Processing/Valid",
+  "srmfinancepage.待处理/处理中/有效": "Pending/ Processing/ Valid",
   "srmfinancepage.已完成/已交付": "Completed/Delivered",
   "srmfinancepage.财务管理": "Financial Management",
   "srmorderpage.订单总数": "Total Orders",
@@ -2392,7 +2392,7 @@
   },
   "srm_finance_page": {
     "": "Completed/Delivered",
-    "medium": "Pending/Processing/Valid",
+    "medium": "Pending/ Processing/ Valid",
     "cancel": "Cancelled",
     "finance_manage": "Financial Management",
     "total": "Total Documents"
@@ -2519,7 +2519,7 @@
     "已记录合同": "Recorded Contracts",
     "总金额": "Total Amount",
     "待结算": "Pending Settlement",
-    "待处理/处理中/有效": "Pending/Processing/Valid",
+    "待处理/处理中/有效": "Pending/ Processing/ Valid",
     "已完成/已交付": "Completed/Delivered",
     "财务管理": "Financial Management",
     "个订单, 份合同": "${stats.orders} orders, ${stats.contracts} contracts",

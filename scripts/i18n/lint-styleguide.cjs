@@ -111,9 +111,10 @@ const MEDIUM_PATTERNS = [
   // §5 Grammar: Qty / No 缩写缺句点 — 仅在"编号/数量语境"命中（Invoice / Order / PO / SO / Ref / Doc / Serial# / Item 等），豁免 No data / Yes or No / Not applicable 等"No"作为副词的情形
   { id: '§5 abbreviation punctuation',
     test: v => {
-      const contextRe = /(Invoice|Order|PO\b|SO\b|Sales|Purchase|Reference\b|Ref\b|Document\b|Doc\b|Serial\b|Item\b|Product\b|Voucher\b|Batch\b|Lot\b)[\s\w&/-]*\s+(No|Qty)\b/i;
+      // No/Qty 后必须缺句点 (?!\.) 才判定违规；已有 No. / Qty. 的正确值不再误报
+      const contextRe = /(Invoice|Order|PO\b|SO\b|Sales|Purchase|Reference\b|Ref\b|Document\b|Doc\b|Serial\b|Item\b|Product\b|Voucher\b|Batch\b|Lot\b)[\s\w&/-]*\s+(No|Qty)(?!\.)\b/i;
       if (v.length < 5) return false;
-      if (!/\b(No|Qty)\b/.test(v)) return false;
+      if (!/\b(No|Qty)(?!\.)\b/.test(v)) return false;
       // 明确豁免：No data / No records / No items / Yes or No / "No," 开头否定句等 No 作为限定词用法
       if (/^No\s+(data|records|items|result|results|match|matches|permission|permissions|access|rows|entry|entries|info|information|change|changes|updates|update|user|users|role|roles|record|value|values|file|files|comment|comments|attachment|attachments)\b/i.test(v)) return false;
       if (/^Not?\b/i.test(v) && v.split(/\s+/).length <= 3) return false; // 简单否定句
