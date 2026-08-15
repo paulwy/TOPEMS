@@ -117,6 +117,90 @@ pub struct SearchResponse {
     pub page_size: i64,
 }
 
+// ---- 新增 DTO：索引文档（写入倒排索引用）----
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct IndexDocument {
+    pub doc_id: String,
+    pub module: String,
+    pub title: String,
+    pub content: String,
+    pub tags: Vec<String>,
+    pub created_at_ms: i64,
+    pub updated_at_ms: i64,
+    pub owner_id: Option<String>,
+    pub visibility: Visibility,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Visibility {
+    Public,
+    Private,
+    OrgOnly,
+}
+
+// ---- 新增 DTO：搜索过滤条件（结构化条件）----
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SearchFilter {
+    pub module_in: Option<Vec<String>>,
+    pub tag_all: Option<Vec<String>>,
+    pub owner_ids: Option<Vec<String>>,
+    pub created_after_ms: Option<i64>,
+    pub created_before_ms: Option<i64>,
+    pub visibility_in: Option<Vec<Visibility>>,
+}
+
+impl Default for SearchFilter {
+    fn default() -> Self {
+        Self {
+            module_in: None,
+            tag_all: None,
+            owner_ids: None,
+            created_after_ms: None,
+            created_before_ms: None,
+            visibility_in: None,
+        }
+    }
+}
+
+// ---- 新增 DTO：搜索建议（自动补全候选）----
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SearchSuggestion {
+    pub text: String,
+    pub kind: SuggestionKind,
+    pub score: f64,
+    pub highlight: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SuggestionKind {
+    Term,
+    Entity,
+    RecentQuery,
+    Module,
+}
+
+// ---- 新增 DTO：批量索引请求 ----
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BatchIndexRequest {
+    pub upserts: Vec<IndexDocument>,
+    pub deletes: Vec<String>,
+    pub refresh: bool,
+}
+
+impl Default for BatchIndexRequest {
+    fn default() -> Self {
+        Self {
+            upserts: Vec::new(),
+            deletes: Vec::new(),
+            refresh: false,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -389,5 +473,184 @@ mod tests {
         let json = serde_json::to_string(&resp).expect("serialize failed");
         let de: SearchResponse = serde_json::from_str(&json).expect("deserialize failed");
         assert_eq!(de, resp);
+    }
+
+    // ---- IndexDocument / Visibility roundtrip ----
+
+    #[test]
+    fn index_document_serde_roundtrip_public_with_owner() {
+        let doc = IndexDocument {
+            doc_id: "d-001".to_string(),
+            module: "doc".to_string(),
+            title: "Q4 OKR".to_string(),
+            content: "Focus on delivery".to_string(),
+            tags: vec!["okr".to_string(), "q4".to_string()],
+            created_at_ms: 1_700_000_000_000,
+            updated_at_ms: 1_700_000_001_000,
+            owner_id: Some("u-007".to_string()),
+            visibility: Visibility::Public,
+        };
+        let json = serde_json::to_string(&doc).unwrap();
+        let de: IndexDocument = serde_json::from_str(&json).unwrap();
+        assert_eq!(de, doc);
+    }
+
+    #[test]
+    fn index_document_serde_roundtrip_orgonly_no_owner() {
+        let doc = IndexDocument {
+            doc_id: "d-002".to_string(),
+            module: "flow".to_string(),
+            title: "Onboarding SOP".to_string(),
+            content: "Step 1..Step N".to_string(),
+            tags: vec![],
+            created_at_ms: 1_701_000_000_000,
+            updated_at_ms: 1_701_000_000_000,
+            owner_id: None,
+            visibility: Visibility::OrgOnly,
+        };
+        let json = serde_json::to_string(&doc).unwrap();
+        let de: IndexDocument = serde_json::from_str(&json).unwrap();
+        assert_eq!(de, doc);
+    }
+
+    #[test]
+    fn visibility_all_variants_serde_roundtrip() {
+        for v in [Visibility::Public, Visibility::Private, Visibility::OrgOnly] {
+            let json = serde_json::to_string(&v).unwrap();
+            let de: Visibility = serde_json::from_str(&json).unwrap();
+            assert_eq!(de, v);
+        }
+    }
+
+    // ---- SearchFilter roundtrip + default ----
+
+    #[test]
+    fn search_filter_default_all_none() {
+        let f = SearchFilter::default();
+        assert!(f.module_in.is_none());
+        assert!(f.tag_all.is_none());
+        assert!(f.owner_ids.is_none());
+        assert!(f.created_after_ms.is_none());
+        assert!(f.created_before_ms.is_none());
+        assert!(f.visibility_in.is_none());
+    }
+
+    #[test]
+    fn search_filter_serde_roundtrip_full() {
+        let f = SearchFilter {
+            module_in: Some(vec!["user".into(), "doc".into()]),
+            tag_all: Some(vec!["urgent".into()]),
+            owner_ids: Some(vec!["u-1".into()]),
+            created_after_ms: Some(1_700_000_000_000),
+            created_before_ms: Some(1_800_000_000_000),
+            visibility_in: Some(vec![Visibility::Public, Visibility::OrgOnly]),
+        };
+        let json = serde_json::to_string(&f).unwrap();
+        let de: SearchFilter = serde_json::from_str(&json).unwrap();
+        assert_eq!(de, f);
+    }
+
+    #[test]
+    fn search_filter_serde_roundtrip_default() {
+        let f = SearchFilter::default();
+        let json = serde_json::to_string(&f).unwrap();
+        let de: SearchFilter = serde_json::from_str(&json).unwrap();
+        assert_eq!(de, f);
+    }
+
+    // ---- SearchSuggestion / SuggestionKind roundtrip ----
+
+    #[test]
+    fn suggestion_serde_roundtrip_term_with_highlight() {
+        let s = SearchSuggestion {
+            text: "topems".to_string(),
+            kind: SuggestionKind::Term,
+            score: 0.92,
+            highlight: Some("<b>top</b>ems".to_string()),
+        };
+        let json = serde_json::to_string(&s).unwrap();
+        let de: SearchSuggestion = serde_json::from_str(&json).unwrap();
+        assert_eq!(de.text, s.text);
+        assert_eq!(de.kind, s.kind);
+        assert!((de.score - s.score).abs() < 1e-9);
+        assert_eq!(de.highlight, s.highlight);
+    }
+
+    #[test]
+    fn suggestion_serde_roundtrip_no_highlight_all_kinds() {
+        for kind in [
+            SuggestionKind::Term,
+            SuggestionKind::Entity,
+            SuggestionKind::RecentQuery,
+            SuggestionKind::Module,
+        ] {
+            let s = SearchSuggestion {
+                text: "q".to_string(),
+                kind: kind.clone(),
+                score: 0.5,
+                highlight: None,
+            };
+            let json = serde_json::to_string(&s).unwrap();
+            let de: SearchSuggestion = serde_json::from_str(&json).unwrap();
+            assert_eq!(de, s);
+        }
+    }
+
+    #[test]
+    fn suggestion_kind_all_variants_serde_roundtrip() {
+        for k in [
+            SuggestionKind::Term,
+            SuggestionKind::Entity,
+            SuggestionKind::RecentQuery,
+            SuggestionKind::Module,
+        ] {
+            let json = serde_json::to_string(&k).unwrap();
+            let de: SuggestionKind = serde_json::from_str(&json).unwrap();
+            assert_eq!(de, k);
+        }
+    }
+
+    // ---- BatchIndexRequest roundtrip + default ----
+
+    #[test]
+    fn batch_request_default_empty_no_refresh() {
+        let b = BatchIndexRequest::default();
+        assert!(b.upserts.is_empty());
+        assert!(b.deletes.is_empty());
+        assert!(!b.refresh);
+    }
+
+    #[test]
+    fn batch_request_serde_roundtrip_with_data() {
+        let doc1 = IndexDocument {
+            doc_id: "d1".to_string(),
+            module: "m".to_string(),
+            title: "T1".to_string(),
+            content: "C1".to_string(),
+            tags: vec!["a".into()],
+            created_at_ms: 1,
+            updated_at_ms: 1,
+            owner_id: None,
+            visibility: Visibility::Private,
+        };
+        let b = BatchIndexRequest {
+            upserts: vec![doc1.clone()],
+            deletes: vec!["x1".to_string(), "x2".to_string()],
+            refresh: true,
+        };
+        let json = serde_json::to_string(&b).unwrap();
+        let de: BatchIndexRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(de.upserts.len(), 1);
+        assert_eq!(de.upserts[0], doc1);
+        assert_eq!(de.deletes, vec!["x1", "x2"]);
+        assert!(de.refresh);
+    }
+
+    #[test]
+    fn batch_request_serde_roundtrip_default() {
+        let b = BatchIndexRequest::default();
+        let json = serde_json::to_string(&b).unwrap();
+        let de: BatchIndexRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(de, b);
     }
 }

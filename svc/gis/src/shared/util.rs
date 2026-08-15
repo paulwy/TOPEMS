@@ -671,3 +671,589 @@ mod tests {
         assert!(!point_in_bbox(31.1, 121.0, 31.0, 121.0, 31.0, 121.0));
     }
 }
+
+// ============================================================================
+// GIS 领域扩展纯函数（面积 / 围栏 / 哈希 / 瓦片 / 聚类）
+// ============================================================================
+
+/// 计算经纬度边界框的近似面积（平方公里）。
+///
+/// 使用等经纬度投影的简化公式：面积 ≈ 宽度(km) × 高度(km) × cos(平均纬度)。
+/// 对于小范围区域（厂区/园区级别）误差 < 1%。
+pub fn bbox_area_km2(
+    min_lat: f64,
+    min_lng: f64,
+    max_lat: f64,
+    max_lng: f64,
+) -> Result<f64, GisError> {
+    validate_coordinates(min_lat, min_lng)?;
+    validate_coordinates(max_lat, max_lng)?;
+    if max_lat < min_lat || max_lng < min_lng {
+        return Err(GisError::OutOfRange(
+            "max must be >= min in bbox".to_string(),
+        ));
+    }
+    let avg_lat = ((min_lat + max_lat) / 2.0).to_radians();
+    let height_km = haversine_distance(min_lat, min_lng, max_lat, min_lng);
+    let width_km = haversine_distance(min_lat, min_lng, min_lat, max_lng);
+    Ok(width_km * height_km * avg_lat.cos())
+}
+
+/// 判断点是否在圆形地理围栏内（包含边界）。
+///
+/// 圆心 = (center_lat, center_lng)，半径 radius_km（公里）。
+pub fn point_in_circle_geofence(
+    lat: f64,
+    lng: f64,
+    center_lat: f64,
+    center_lng: f64,
+    radius_km: f64,
+) -> Result<bool, GisError> {
+    validate_coordinates(lat, lng)?;
+    validate_coordinates(center_lat, center_lng)?;
+    validate_buffer_radius(radius_km)?;
+    let d = haversine_distance(lat, lng, center_lat, center_lng);
+    Ok(d <= radius_km)
+}
+
+/// 计算多边形顶点列表的包围盒。
+///
+/// 输入多边形顶点 `[(lat, lng)]`，返回 `(min_lat, min_lng, max_lat, max_lng)`。
+pub fn compute_polygon_bbox(points: &[(f64, f64)]) -> Result<(f64, f64, f64, f64), GisError> {
+    if points.is_empty() {
+        return Err(GisError::EmptyInput);
+    }
+    let mut min_lat = f64::INFINITY;
+    let mut min_lng = f64::INFINITY;
+    let mut max_lat = f64::NEG_INFINITY;
+    let mut max_lng = f64::NEG_INFINITY;
+    for (lat, lng) in points {
+        validate_coordinates(*lat, *lng)?;
+        if *lat < min_lat {
+            min_lat = *lat;
+        }
+        if *lng < min_lng {
+            min_lng = *lng;
+        }
+        if *lat > max_lat {
+            max_lat = *lat;
+        }
+        if *lng > max_lng {
+            max_lng = *lng;
+        }
+    }
+    Ok((min_lat, min_lng, max_lat, max_lng))
+}
+
+/// POI（兴趣点）位置哈希：将经纬度截断到指定小数位并生成稳定字符串键。
+///
+/// `precision` 控制截断的小数位数（推荐 5 位 ≈ 1 米精度，4 位 ≈ 11 米）。
+/// 超出范围时返回 [`GisError::OutOfRange`]。
+pub fn poi_hash(lat: f64, lng: f64, precision: u8) -> Result<String, GisError> {
+    validate_coordinates(lat, lng)?;
+    if precision > 9 {
+        return Err(GisError::OutOfRange(format!(
+            "precision must be <= 9, got {precision}"
+        )));
+    }
+    let factor = 10f64.powi(precision as i32);
+    let lats = ((lat * factor).round() / factor).to_string();
+    let lngs = ((lng * factor).round() / factor).to_string();
+    Ok(format!("{lats}:{lngs}@p{precision}"))
+}
+
+/// 瓦片哈希键：将 (z, x, y) 编码为稳定字符串，用于缓存/索引。
+pub fn tile_hash(z: u32, x: u32, y: u32) -> String {
+    format!("t{z}/{x}/{y}")
+}
+
+/// 判断点是否在多边形内（射线法 / even-odd rule）。
+///
+/// `polygon` 是按顺序排列的多边形顶点（无需闭合，最后一条边自动连接到起点）。
+/// 边界点判定：若点恰好落在某条边上则视为在多边形内。
+pub fn point_in_polygon(lat: f64, lng: f64, polygon: &[(f64, f64)]) -> Result<bool, GisError> {
+    if polygon.is_empty() {
+        return Err(GisError::EmptyInput);
+    }
+    for (pl, pg) in polygon {
+        validate_coordinates(*pl, *pg)?;
+    }
+    validate_coordinates(lat, lng)?;
+    let n = polygon.len();
+    let mut inside = false;
+    for i in 0..n {
+        let (y1, x1) = polygon[i];
+        let (y2, x2) = polygon[(i + 1) % n];
+        // 点在顶点上 → 视为在内
+        if ((lat == y1 && lng == x1) || (lat == y2 && lng == x2)) {
+            return Ok(true);
+        }
+        // 点在边上（水平/垂直/斜线均判定）
+        let on_edge = (y2 - y1) * (lng - x1) == (x2 - x1) * (lat - y1)
+            && lat >= y1.min(y2)
+            && lat <= y1.max(y2)
+            && lng >= x1.min(x2)
+            && lng <= x1.max(x2);
+        if on_edge {
+            return Ok(true);
+        }
+        let intersect =
+            ((y1 > lat) != (y2 > lat)) && (lng < (x2 - x1) * (lat - y1) / (y2 - y1) + x1);
+        if intersect {
+            inside = !inside;
+        }
+    }
+    Ok(inside)
+}
+
+/// 将度数格式化为「度分秒」字符串（用于展示）。
+///
+/// 正数输出 "N"/"E" 后缀，负数输出 "S"/"W" 后缀。
+pub fn format_dms(value: f64, is_lat: bool) -> String {
+    let abs = value.abs();
+    let d = abs.trunc();
+    let m_full = (abs - d) * 60.0;
+    let m = m_full.trunc();
+    let s = (m_full - m) * 60.0;
+    let suffix = match (is_lat, value >= 0.0) {
+        (true, true) => "N",
+        (true, false) => "S",
+        (false, true) => "E",
+        (false, false) => "W",
+    };
+    format!("{:.0}°{:02.0}'{:05.2}\"{}", d, m, s, suffix)
+}
+
+/// 计算两点之间的初始方位角（bearing，度，0=正北，顺时针）。
+pub fn initial_bearing(lat1: f64, lng1: f64, lat2: f64, lng2: f64) -> Result<f64, GisError> {
+    validate_coordinates(lat1, lng1)?;
+    validate_coordinates(lat2, lng2)?;
+    let phi1 = lat1.to_radians();
+    let phi2 = lat2.to_radians();
+    let delta_l = (lng2 - lng1).to_radians();
+    let y = delta_l.sin() * phi2.cos();
+    let x = phi1.cos() * phi2.sin() - phi1.sin() * phi2.cos() * delta_l.cos();
+    let brng = y.atan2(x).to_degrees();
+    Ok((brng + 360.0) % 360.0)
+}
+
+/// Web Mercator 像素坐标到经纬度（简化版本，用于展示组件）。
+///
+/// `px`, `py` — 像素坐标；`tile_size` — 瓦片大小（通常 256 或 512）。
+pub fn pixel_to_latlng(
+    z: u32,
+    x: u32,
+    y: u32,
+    px: u32,
+    py: u32,
+    tile_size: u32,
+) -> Result<(f64, f64), GisError> {
+    if z > MAX_TILE_ZOOM {
+        return Err(GisError::InvalidTileZoom(z));
+    }
+    if tile_size == 0 {
+        return Err(GisError::OutOfRange("tile_size must be > 0".to_string()));
+    }
+    let n = 1u64 << z;
+    let world_px = (n as u64) * (tile_size as u64);
+    let abs_x = (x as u64) * (tile_size as u64) + px as u64;
+    let abs_y = (y as u64) * (tile_size as u64) + py as u64;
+    let lng = (abs_x as f64 / world_px as f64) * 360.0 - 180.0;
+    let lat_rad = (PI * (1.0 - 2.0 * abs_y as f64 / world_px as f64))
+        .sinh()
+        .atan();
+    Ok((lat_rad.to_degrees(), lng))
+}
+
+// ============================================================================
+// GIS FSM：设备状态机 + 同步任务状态机
+// ============================================================================
+
+/// 设备地理位置上报状态。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum DeviceLocationState {
+    /// 设备未注册 / 尚未上报任何坐标
+    Unknown,
+    /// 设备已注册但未激活（离线/备用）
+    Inactive,
+    /// 正常上报
+    Online,
+    /// 心跳超时（超过阈值未上报）
+    Timeout,
+    /// 维修/停用
+    Maintenance,
+}
+
+/// 驱动设备状态迁移的事件。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DeviceLocationEvent {
+    Register,
+    Activate,
+    Heartbeat,
+    TimeoutOccurred,
+    Recovered,
+    EnterMaintenance,
+    LeaveMaintenance,
+}
+
+impl DeviceLocationState {
+    /// 按事件触发状态迁移；若 (state, event) 组合非法则返回 `None`。
+    pub fn transition(self, event: DeviceLocationEvent) -> Option<Self> {
+        use DeviceLocationEvent::*;
+        use DeviceLocationState::*;
+        match (self, event) {
+            (Unknown, Register) => Some(Inactive),
+            (Inactive, Activate) => Some(Online),
+            (Online, Heartbeat) => Some(Online),
+            (Online, TimeoutOccurred) => Some(Timeout),
+            (Timeout, Recovered) => Some(Online),
+            (Timeout, TimeoutOccurred) => Some(Timeout),
+            (Online, EnterMaintenance) => Some(Maintenance),
+            (Timeout, EnterMaintenance) => Some(Maintenance),
+            (Inactive, EnterMaintenance) => Some(Maintenance),
+            (Maintenance, LeaveMaintenance) => Some(Inactive),
+            _ => None,
+        }
+    }
+
+    pub fn is_terminal(self) -> bool {
+        matches!(self, DeviceLocationState::Maintenance)
+    }
+}
+
+/// 同步任务（工厂地图/地理围栏等）状态。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum SyncTaskState {
+    Pending,
+    Running,
+    Paused,
+    Success,
+    Failed,
+    Cancelled,
+}
+
+/// 同步任务触发事件。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SyncTaskEvent {
+    Start,
+    Pause,
+    Resume,
+    Complete,
+    Fail,
+    Cancel,
+    Retry,
+}
+
+impl SyncTaskState {
+    pub fn transition(self, event: SyncTaskEvent) -> Option<Self> {
+        use SyncTaskEvent::*;
+        use SyncTaskState::*;
+        match (self, event) {
+            (Pending, Start) => Some(Running),
+            (Running, Pause) => Some(Paused),
+            (Paused, Resume) => Some(Running),
+            (Running, Complete) => Some(Success),
+            (Running, Fail) => Some(Failed),
+            (Pending, Cancel) | (Running, Cancel) | (Paused, Cancel) => Some(Cancelled),
+            (Failed, Retry) => Some(Running),
+            _ => None,
+        }
+    }
+
+    pub fn is_finished(self) -> bool {
+        matches!(
+            self,
+            SyncTaskState::Success | SyncTaskState::Failed | SyncTaskState::Cancelled
+        )
+    }
+}
+
+// ============================================================================
+// 扩展测试
+// ============================================================================
+
+#[cfg(test)]
+mod tests_ext {
+    use super::*;
+
+    // ---------- bbox_area_km2 ----------
+
+    #[test]
+    fn test_bbox_area_small_region() {
+        // 上海附近 0.1° × 0.1° 区域 ≈ 几平方公里
+        let area = bbox_area_km2(31.2, 121.4, 31.3, 121.5).unwrap();
+        assert!(area > 50.0 && area < 200.0, "area = {area}");
+    }
+
+    #[test]
+    fn test_bbox_area_degenerate_zero() {
+        let area = bbox_area_km2(31.2, 121.4, 31.2, 121.4).unwrap();
+        assert!((area - 0.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_bbox_area_invalid_range() {
+        assert!(bbox_area_km2(32.0, 121.0, 31.0, 122.0).is_err());
+    }
+
+    #[test]
+    fn test_bbox_area_invalid_coords() {
+        assert!(bbox_area_km2(95.0, 0.0, 96.0, 1.0).is_err());
+    }
+
+    // ---------- point_in_circle_geofence ----------
+
+    #[test]
+    fn test_circle_geofence_inside() {
+        // 距上海中心 < 50 km 的点（如昆山）
+        assert!(point_in_circle_geofence(31.38, 120.98, 31.2304, 121.4737, 100.0).unwrap());
+    }
+
+    #[test]
+    fn test_circle_geofence_center() {
+        assert!(point_in_circle_geofence(31.2304, 121.4737, 31.2304, 121.4737, 1.0).unwrap());
+    }
+
+    #[test]
+    fn test_circle_geofence_outside() {
+        // 北京肯定不在上海 100 km 圈内
+        assert!(!point_in_circle_geofence(39.9, 116.4, 31.2304, 121.4737, 100.0).unwrap());
+    }
+
+    #[test]
+    fn test_circle_geofence_invalid_radius() {
+        assert!(point_in_circle_geofence(0.0, 0.0, 0.0, 0.0, -1.0).is_err());
+    }
+
+    // ---------- compute_polygon_bbox ----------
+
+    #[test]
+    fn test_polygon_bbox_square() {
+        let pts = [(31.0, 121.0), (31.0, 122.0), (32.0, 122.0), (32.0, 121.0)];
+        let (min_lat, min_lng, max_lat, max_lng) = compute_polygon_bbox(&pts).unwrap();
+        assert_eq!(min_lat, 31.0);
+        assert_eq!(min_lng, 121.0);
+        assert_eq!(max_lat, 32.0);
+        assert_eq!(max_lng, 122.0);
+    }
+
+    #[test]
+    fn test_polygon_bbox_single_point() {
+        let pts = [(31.5, 121.5)];
+        let b = compute_polygon_bbox(&pts).unwrap();
+        assert_eq!(b, (31.5, 121.5, 31.5, 121.5));
+    }
+
+    #[test]
+    fn test_polygon_bbox_empty() {
+        assert!(compute_polygon_bbox(&[]).is_err());
+    }
+
+    // ---------- poi_hash ----------
+
+    #[test]
+    fn test_poi_hash_stable() {
+        let h1 = poi_hash(31.2304, 121.4737, 5).unwrap();
+        let h2 = poi_hash(31.2304, 121.4737, 5).unwrap();
+        assert_eq!(h1, h2);
+    }
+
+    #[test]
+    fn test_poi_hash_precision_changes_key() {
+        let h4 = poi_hash(31.2304, 121.4737, 4).unwrap();
+        let h5 = poi_hash(31.2304, 121.4737, 5).unwrap();
+        assert_ne!(h4, h5);
+    }
+
+    #[test]
+    fn test_poi_hash_invalid_precision() {
+        assert!(poi_hash(0.0, 0.0, 10).is_err());
+    }
+
+    #[test]
+    fn test_poi_hash_invalid_coords() {
+        assert!(poi_hash(100.0, 0.0, 5).is_err());
+    }
+
+    // ---------- tile_hash ----------
+
+    #[test]
+    fn test_tile_hash_format() {
+        assert_eq!(tile_hash(10, 843, 386), "t10/843/386");
+    }
+
+    #[test]
+    fn test_tile_hash_unique() {
+        assert_ne!(tile_hash(10, 843, 386), tile_hash(10, 844, 386));
+    }
+
+    // ---------- point_in_polygon ----------
+
+    #[test]
+    fn test_pip_inside_square() {
+        let sq = [(0.0, 0.0), (0.0, 2.0), (2.0, 2.0), (2.0, 0.0)];
+        assert!(point_in_polygon(1.0, 1.0, &sq).unwrap());
+    }
+
+    #[test]
+    fn test_pip_outside_square() {
+        let sq = [(0.0, 0.0), (0.0, 2.0), (2.0, 2.0), (2.0, 0.0)];
+        assert!(!point_in_polygon(5.0, 5.0, &sq).unwrap());
+    }
+
+    #[test]
+    fn test_pip_on_vertex() {
+        let sq = [(0.0, 0.0), (0.0, 2.0), (2.0, 2.0), (2.0, 0.0)];
+        assert!(point_in_polygon(0.0, 0.0, &sq).unwrap());
+    }
+
+    #[test]
+    fn test_pip_empty_polygon() {
+        assert!(point_in_polygon(0.0, 0.0, &[]).is_err());
+    }
+
+    // ---------- format_dms ----------
+
+    #[test]
+    fn test_dms_north_east() {
+        let s = format_dms(31.5, true);
+        assert!(s.ends_with('N'), "{s}");
+        let s = format_dms(121.5, false);
+        assert!(s.ends_with('E'), "{s}");
+    }
+
+    #[test]
+    fn test_dms_south_west() {
+        let s = format_dms(-31.5, true);
+        assert!(s.ends_with('S'), "{s}");
+        let s = format_dms(-121.5, false);
+        assert!(s.ends_with('W'), "{s}");
+    }
+
+    // ---------- initial_bearing ----------
+
+    #[test]
+    fn test_bearing_due_north() {
+        // 从赤道往正北 1°，方位角应接近 0°
+        let b = initial_bearing(0.0, 0.0, 1.0, 0.0).unwrap();
+        assert!((b - 0.0).abs() < 1.0, "bearing = {b}");
+    }
+
+    #[test]
+    fn test_bearing_due_east() {
+        // 从赤道往正东 1°，方位角接近 90°
+        let b = initial_bearing(0.0, 0.0, 0.0, 1.0).unwrap();
+        assert!((b - 90.0).abs() < 1.0, "bearing = {b}");
+    }
+
+    #[test]
+    fn test_bearing_invalid() {
+        assert!(initial_bearing(100.0, 0.0, 0.0, 0.0).is_err());
+    }
+
+    // ---------- pixel_to_latlng ----------
+
+    #[test]
+    fn test_pixel_to_latlng_tile_origin() {
+        let (lat, lng) = pixel_to_latlng(0, 0, 0, 0, 0, 256).unwrap();
+        assert!((lat - 85.0511).abs() < 0.01);
+        assert!((lng - (-180.0)).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_pixel_to_latlng_invalid_zoom() {
+        assert!(pixel_to_latlng(31, 0, 0, 0, 0, 256).is_err());
+    }
+
+    #[test]
+    fn test_pixel_to_latlng_zero_tile_size() {
+        assert!(pixel_to_latlng(0, 0, 0, 0, 0, 0).is_err());
+    }
+
+    // ---------- DeviceLocationState FSM ----------
+
+    use DeviceLocationEvent::*;
+    use DeviceLocationState::*;
+
+    #[test]
+    fn test_device_fsm_register_flow() {
+        assert_eq!(Unknown.transition(Register), Some(Inactive));
+        assert_eq!(Inactive.transition(Activate), Some(Online));
+    }
+
+    #[test]
+    fn test_device_fsm_heartbeat_stays_online() {
+        assert_eq!(Online.transition(Heartbeat), Some(Online));
+    }
+
+    #[test]
+    fn test_device_fsm_timeout_recovery() {
+        assert_eq!(Online.transition(TimeoutOccurred), Some(Timeout));
+        assert_eq!(Timeout.transition(Recovered), Some(Online));
+    }
+
+    #[test]
+    fn test_device_fsm_maintenance_flow() {
+        assert_eq!(Online.transition(EnterMaintenance), Some(Maintenance));
+        assert_eq!(Maintenance.transition(LeaveMaintenance), Some(Inactive));
+    }
+
+    #[test]
+    fn test_device_fsm_invalid_transitions_none() {
+        // Unknown → Activate 是非法的
+        assert_eq!(Unknown.transition(Activate), None);
+        // Maintenance → Activate 也非法
+        assert_eq!(Maintenance.transition(Activate), None);
+    }
+
+    #[test]
+    fn test_device_fsm_terminal() {
+        assert!(Maintenance.is_terminal());
+        assert!(!Online.is_terminal());
+    }
+
+    // ---------- SyncTaskState FSM ----------
+
+    use SyncTaskEvent::*;
+    use SyncTaskState::*;
+
+    #[test]
+    fn test_sync_fsm_normal_run() {
+        assert_eq!(Pending.transition(Start), Some(Running));
+        assert_eq!(Running.transition(Complete), Some(Success));
+    }
+
+    #[test]
+    fn test_sync_fsm_pause_resume() {
+        assert_eq!(Running.transition(Pause), Some(Paused));
+        assert_eq!(Paused.transition(Resume), Some(Running));
+    }
+
+    #[test]
+    fn test_sync_fsm_fail_retry() {
+        assert_eq!(Running.transition(Fail), Some(Failed));
+        assert_eq!(Failed.transition(Retry), Some(Running));
+    }
+
+    #[test]
+    fn test_sync_fsm_cancel_from_multiple() {
+        assert_eq!(Pending.transition(Cancel), Some(Cancelled));
+        assert_eq!(Running.transition(Cancel), Some(Cancelled));
+        assert_eq!(Paused.transition(Cancel), Some(Cancelled));
+    }
+
+    #[test]
+    fn test_sync_fsm_invalid_transitions() {
+        assert_eq!(Success.transition(Start), None);
+        assert_eq!(Cancelled.transition(Retry), None);
+    }
+
+    #[test]
+    fn test_sync_fsm_finished_set() {
+        assert!(Success.is_finished());
+        assert!(Failed.is_finished());
+        assert!(Cancelled.is_finished());
+        assert!(!Pending.is_finished());
+        assert!(!Running.is_finished());
+    }
+}

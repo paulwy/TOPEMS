@@ -420,3 +420,455 @@ mod tests {
         assert_eq!(normalize_sort_key("createdat"), "createdat");
     }
 }
+
+// ============================================================================
+// Search 扩展纯函数：同义词 / 高亮 / 缓存键 / 停用词 / 排序权重等
+// ============================================================================
+
+/// 同义词扩展：给定一个词，返回在同义词表中所有匹配的条目（含词自身）。
+///
+/// `synonym_map` 条目中的任一词命中即展开整组；去重并保留出现顺序。
+pub fn expand_synonyms<'a>(term: &'a str, synonym_map: &[&[&'a str]]) -> Vec<&'a str> {
+    let mut out: Vec<&'a str> = Vec::new();
+    // 先加入自身
+    if !term.is_empty() {
+        out.push(term);
+    }
+    for group in synonym_map {
+        if group.iter().any(|s| *s == term) {
+            for s in *group {
+                if !out.iter().any(|o| o == s) {
+                    out.push(s);
+                }
+            }
+        }
+    }
+    out
+}
+
+/// 截取高亮片段：在 `text` 中找到 `query_term` 的首次出现，截取以它为中心
+/// 前后各 `radius_chars` 个字符（近似）；未命中时取文本前缀。
+///
+/// 返回的片段用 UTF-8 字符边界对齐，不会割裂多字节字符。
+pub fn highlight_snippet(text: &str, query_term: &str, radius_chars: usize) -> String {
+    let chars: Vec<char> = text.chars().collect();
+    if query_term.is_empty() || chars.is_empty() {
+        // 返回前缀
+        let end = radius_chars.min(chars.len());
+        return chars[..end].iter().collect();
+    }
+    // 查找 query_term 首次出现的字符位置（在 text 中查找子串）
+    let byte_pos = match text.find(query_term) {
+        Some(p) => p,
+        None => {
+            let end = (2 * radius_chars).min(chars.len());
+            return chars[..end].iter().collect();
+        }
+    };
+    // 将 byte_pos 映射到字符索引
+    let hit_char_start = text[..byte_pos].chars().count();
+    let hit_char_len = query_term.chars().count();
+    let start = hit_char_start.saturating_sub(radius_chars);
+    let end = (hit_char_start + hit_char_len + radius_chars).min(chars.len());
+    let mut s: String = chars[start..end].iter().collect();
+    if start > 0 {
+        s.insert_str(0, "…");
+    }
+    if end < chars.len() {
+        s.push('…');
+    }
+    s
+}
+
+/// 生成搜索查询的稳定缓存键：规范化查询 + 模块组合 + 分页参数 → SHA2-like
+/// 短哈希（此处用简化的 FNV-1a 64-bit，hex 编码，**非加密用途**）。
+pub fn build_cache_key(
+    normalized_query: &str,
+    modules: &[String],
+    page: u32,
+    page_size: u32,
+) -> String {
+    const FNV_OFFSET: u64 = 14_695_981_039_346_656_037;
+    const FNV_PRIME: u64 = 1_099_511_628_211;
+    let mut h: u64 = FNV_OFFSET;
+    for b in normalized_query.as_bytes() {
+        h ^= *b as u64;
+        h = h.wrapping_mul(FNV_PRIME);
+    }
+    // 将模块列表排序后混入（保证模块顺序不影响 key）
+    let mut mods: Vec<&str> = modules.iter().map(String::as_str).collect();
+    mods.sort();
+    for m in mods {
+        h ^= 0xff;
+        h = h.wrapping_mul(FNV_PRIME);
+        for b in m.as_bytes() {
+            h ^= *b as u64;
+            h = h.wrapping_mul(FNV_PRIME);
+        }
+    }
+    // page + page_size
+    for b in &page.to_le_bytes() {
+        h ^= *b as u64;
+        h = h.wrapping_mul(FNV_PRIME);
+    }
+    for b in &page_size.to_le_bytes() {
+        h ^= *b as u64;
+        h = h.wrapping_mul(FNV_PRIME);
+    }
+    format!("srch:{h:016x}")
+}
+
+/// 移除搜索停用词（英文常见搜索停用词：a/an/the/of/in/and/or/is/are/to/for/with）。
+pub fn remove_stopwords(terms: &[String]) -> Vec<String> {
+    const STOP: &[&str] = &[
+        "a", "an", "the", "of", "in", "and", "or", "is", "are", "to", "for", "with", "on", "at",
+        "by", "from", "as", "be", "this", "that", "it", "its",
+    ];
+    terms
+        .iter()
+        .filter(|t| !STOP.contains(&t.as_str()))
+        .cloned()
+        .collect()
+}
+
+/// 计算排序字段的综合加权值：给定「字段名 → 权重」映射和「字段名 → 打分」，
+/// 返回加权和。任何缺失字段按 0.0 分处理。
+pub fn compute_weighted_score(weights: &[(&str, f64)], scores: &[(&str, f64)]) -> f64 {
+    let mut total = 0.0;
+    for (field, w) in weights {
+        let s = scores
+            .iter()
+            .find(|(f, _)| f == field)
+            .map(|(_, v)| *v)
+            .unwrap_or(0.0);
+        total += w * s;
+    }
+    total
+}
+
+/// 布尔检索查询的「合取范式」片段解析：接受 `"foo +bar -baz"` 风格的简单查询，
+/// 返回 `(must_terms, should_terms, must_not_terms)` 三个独立列表。
+///
+/// 规则：无前缀 = should；`+` 前缀 = must；`-` 前缀 = must_not。
+pub fn parse_boolean_query(query: &str) -> (Vec<String>, Vec<String>, Vec<String>) {
+    let mut must = Vec::new();
+    let mut should = Vec::new();
+    let mut must_not = Vec::new();
+    for raw in query.split_whitespace() {
+        if let Some(rest) = raw.strip_prefix('+') {
+            if !rest.is_empty() {
+                must.push(rest.to_string());
+            }
+        } else if let Some(rest) = raw.strip_prefix('-') {
+            if !rest.is_empty() {
+                must_not.push(rest.to_string());
+            }
+        } else if !raw.is_empty() {
+            should.push(raw.to_string());
+        }
+    }
+    (must, should, must_not)
+}
+
+/// 归一化分数到 [0.0, 1.0]：`(s - min) / (max - min)`；若 max==min 则返回 0.5。
+pub fn normalize_score(s: f64, min: f64, max: f64) -> f64 {
+    if (max - min).abs() < f64::EPSILON {
+        return 0.5;
+    }
+    ((s - min) / (max - min)).clamp(0.0, 1.0)
+}
+
+/// 搜索建议（前缀匹配 autocomplete）：从候选列表返回所有以 `prefix` 开头的
+/// 条目（大小写不敏感），最多取 `limit` 条。
+pub fn prefix_suggestions(prefix: &str, candidates: &[String], limit: usize) -> Vec<String> {
+    if limit == 0 {
+        return Vec::new();
+    }
+    let p = prefix.to_lowercase();
+    candidates
+        .iter()
+        .filter(|c| c.to_lowercase().starts_with(&p))
+        .take(limit)
+        .cloned()
+        .collect()
+}
+
+/// 近似查询短语匹配：返回 `text` 中是否顺序包含 `terms`（term 之间允许插入
+/// 任意其他 token，但相对顺序必须一致）。
+pub fn matches_phrase_order(text_terms: &[String], query_terms: &[String]) -> bool {
+    if query_terms.is_empty() {
+        return true;
+    }
+    let mut qi = 0usize;
+    for t in text_terms {
+        if qi < query_terms.len() && *t == query_terms[qi] {
+            qi += 1;
+            if qi == query_terms.len() {
+                return true;
+            }
+        }
+    }
+    qi == query_terms.len()
+}
+
+/// 将逗号分隔的模块过滤字符串（如 `"user,order,doc"`）解析为有序的模块列表。
+/// 空字符串返回空 vec；重复项会自动去重。
+pub fn parse_module_filter(raw: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    for part in raw.split(',') {
+        let trimmed = part.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        if !out.iter().any(|s: &String| s == trimmed) {
+            out.push(trimmed.to_string());
+        }
+    }
+    out
+}
+
+// ============================================================================
+// 扩展测试
+// ============================================================================
+
+#[cfg(test)]
+mod tests_ext {
+    use super::*;
+
+    // ---------- expand_synonyms ----------
+
+    #[test]
+    fn test_synonyms_match_expands_group() {
+        let map: &[&[&str]] = &[
+            &["user", "employee", "staff"],
+            &["order", "purchase_order", "po"],
+        ];
+        let r = expand_synonyms("user", map);
+        assert!(r.contains(&"user"));
+        assert!(r.contains(&"employee"));
+        assert!(r.contains(&"staff"));
+    }
+
+    #[test]
+    fn test_synonyms_no_match_just_self() {
+        let map: &[&[&str]] = &[&["a", "b"]];
+        let r = expand_synonyms("xyz", map);
+        assert_eq!(r, vec!["xyz"]);
+    }
+
+    #[test]
+    fn test_synonyms_empty_term_empty_out() {
+        let r = expand_synonyms("", &[]);
+        assert!(r.is_empty());
+    }
+
+    #[test]
+    fn test_synonyms_deduplicates() {
+        let map: &[&[&str]] = &[&["a", "b", "c"]];
+        let r = expand_synonyms("a", map);
+        // self + group: a, b, c（a 出现两次只留一次）
+        assert_eq!(r.len(), 3);
+    }
+
+    // ---------- highlight_snippet ----------
+
+    #[test]
+    fn test_snippet_hit_middle_with_ellipsis() {
+        let text = "abcdefghij0123456789mnopqrstuvwxyz";
+        let s = highlight_snippet(text, "0123", 3);
+        assert!(s.contains("0123"));
+        assert!(s.starts_with('…'));
+        assert!(s.ends_with('…'));
+    }
+
+    #[test]
+    fn test_snippet_miss_returns_prefix() {
+        let s = highlight_snippet("abcdef", "xyz", 3);
+        assert_eq!(s, "abcdef"); // 全前缀
+    }
+
+    #[test]
+    fn test_snippet_empty_query_returns_prefix() {
+        let s = highlight_snippet("hello", "", 2);
+        assert_eq!(s.len(), 2);
+    }
+
+    #[test]
+    fn test_snippet_hit_at_start_no_leading_ellipsis() {
+        let s = highlight_snippet("hello world this is a long text", "hello", 2);
+        assert!(!s.starts_with('…'));
+        assert!(s.ends_with('…'));
+    }
+
+    // ---------- build_cache_key ----------
+
+    #[test]
+    fn test_cache_key_deterministic() {
+        let mods = vec!["user".to_string(), "doc".to_string()];
+        let a = build_cache_key("hello", &mods, 1, 20);
+        let b = build_cache_key("hello", &mods, 1, 20);
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_cache_key_module_order_independent() {
+        let a = build_cache_key("q", &["user".to_string(), "doc".to_string()], 1, 20);
+        let b = build_cache_key("q", &["doc".to_string(), "user".to_string()], 1, 20);
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_cache_key_diff_page_diff_key() {
+        let mods: Vec<String> = vec![];
+        let a = build_cache_key("q", &mods, 1, 20);
+        let b = build_cache_key("q", &mods, 2, 20);
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn test_cache_key_prefix() {
+        let k = build_cache_key("", &[], 1, 20);
+        assert!(k.starts_with("srch:"));
+    }
+
+    // ---------- remove_stopwords ----------
+
+    #[test]
+    fn test_stopwords_remove() {
+        let terms = vec![
+            "the".to_string(),
+            "user".to_string(),
+            "of".to_string(),
+            "acme".to_string(),
+        ];
+        let r = remove_stopwords(&terms);
+        assert_eq!(r, vec!["user".to_string(), "acme".to_string()]);
+    }
+
+    #[test]
+    fn test_stopwords_all_stopwords() {
+        let terms: Vec<String> = vec!["a".into(), "an".into(), "the".into()];
+        assert!(remove_stopwords(&terms).is_empty());
+    }
+
+    // ---------- compute_weighted_score ----------
+
+    #[test]
+    fn test_weighted_score_basic() {
+        let w = &[("title", 2.0), ("body", 1.0)];
+        let s = &[("title", 0.5), ("body", 0.5)];
+        // 2*0.5 + 1*0.5 = 1.5
+        assert!((compute_weighted_score(w, s) - 1.5).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_weighted_score_missing_field_is_zero() {
+        let w = &[("title", 1.0), ("missing", 10.0)];
+        let s = &[("title", 1.0)];
+        assert_eq!(compute_weighted_score(w, s), 1.0);
+    }
+
+    // ---------- parse_boolean_query ----------
+
+    #[test]
+    fn test_bool_must_should_not() {
+        let (m, s, mn) = parse_boolean_query("+required plain -banned");
+        assert_eq!(m, vec!["required".to_string()]);
+        assert_eq!(s, vec!["plain".to_string()]);
+        assert_eq!(mn, vec!["banned".to_string()]);
+    }
+
+    #[test]
+    fn test_bool_empty_or_no_prefix() {
+        let (m, s, mn) = parse_boolean_query("  foo  bar  ");
+        assert!(m.is_empty());
+        assert_eq!(s.len(), 2);
+        assert!(mn.is_empty());
+    }
+
+    #[test]
+    fn test_bool_plus_without_rest_skipped() {
+        let (m, _, _) = parse_boolean_query("+ +foo");
+        // solitary "+" has no rest, so skipped
+        assert_eq!(m, vec!["foo".to_string()]);
+    }
+
+    // ---------- normalize_score ----------
+
+    #[test]
+    fn test_normalize_at_min() {
+        assert_eq!(normalize_score(5.0, 5.0, 10.0), 0.0);
+    }
+
+    #[test]
+    fn test_normalize_at_max() {
+        assert_eq!(normalize_score(10.0, 5.0, 10.0), 1.0);
+    }
+
+    #[test]
+    fn test_normalize_equal_minmax_returns_half() {
+        assert_eq!(normalize_score(7.0, 7.0, 7.0), 0.5);
+    }
+
+    #[test]
+    fn test_normalize_clamped_out_of_range() {
+        assert_eq!(normalize_score(-100.0, 0.0, 1.0), 0.0);
+        assert_eq!(normalize_score(200.0, 0.0, 1.0), 1.0);
+    }
+
+    // ---------- prefix_suggestions ----------
+
+    #[test]
+    fn test_suggestions_case_insensitive() {
+        let cs = vec!["User".into(), "order".into(), "Uptime".into()];
+        let r = prefix_suggestions("u", &cs, 10);
+        assert_eq!(r.len(), 2);
+    }
+
+    #[test]
+    fn test_suggestions_limit_respected() {
+        let cs: Vec<String> = (0..50).map(|i| format!("x{i}")).collect();
+        let r = prefix_suggestions("x", &cs, 5);
+        assert_eq!(r.len(), 5);
+    }
+
+    #[test]
+    fn test_suggestions_zero_limit_empty() {
+        let cs = vec!["abc".into()];
+        assert!(prefix_suggestions("a", &cs, 0).is_empty());
+    }
+
+    // ---------- matches_phrase_order ----------
+
+    #[test]
+    fn test_phrase_match_in_order() {
+        let text: Vec<String> = vec!["a".into(), "b".into(), "c".into(), "d".into()];
+        let q: Vec<String> = vec!["a".into(), "c".into()];
+        assert!(matches_phrase_order(&text, &q));
+    }
+
+    #[test]
+    fn test_phrase_match_wrong_order() {
+        let text: Vec<String> = vec!["a".into(), "b".into(), "c".into()];
+        let q: Vec<String> = vec!["c".into(), "a".into()];
+        assert!(!matches_phrase_order(&text, &q));
+    }
+
+    #[test]
+    fn test_phrase_match_empty_query_true() {
+        assert!(matches_phrase_order(&[], &[]));
+    }
+
+    // ---------- parse_module_filter ----------
+
+    #[test]
+    fn test_module_filter_split_and_dedup() {
+        let r = parse_module_filter("user, doc,user, order,,");
+        assert_eq!(r, vec!["user", "doc", "order"]);
+    }
+
+    #[test]
+    fn test_module_filter_empty_string() {
+        assert!(parse_module_filter("   ").is_empty());
+    }
+}

@@ -1,6 +1,8 @@
 //! Shared module for unified-core service
 //! Contains unified types and utilities for all core modules
 
+pub mod util;
+
 use axum::extract::FromRef;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
