@@ -201,5 +201,14 @@
   "system.system_params_page_components_cache_config_panel.m4": "Saving...",
   "system.system_params_page_components_system_config_panel.m1": "Asia/Shanghai (UTC+8)",
   "system.system_params_page_components_system_config_panel.m2": "Asia/Tokyo (UTC+9)",
-  "system.system_params_page_components_system_config_panel.m3": "Europe/London (UTC+0)"
+  "system.system_params_page_components_system_config_panel.m3": "Europe/London (UTC+0)",
+  "system": {
+    "index": {
+      "k1": "Close",
+      "k17": "Manage system config, cache, and log parameters"
+    },
+    "system_params_page_components_system_config_panel": {
+      "e2": "Site name, description, and icon configuration"
+    }
+  }
 }

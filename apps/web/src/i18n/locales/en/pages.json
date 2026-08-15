@@ -4989,5 +4989,343 @@
   "pages.wms_wave_pick_detail_page.p_0": ">Picked / Pending Pick</p>",
   "pages.wms_abc_analysis_page.b20p_0": ">B Type(Medium Value, 20% Amount)</p>",
   "pages.workflow_version_history_page.strongv_0": "ConfirmRollbackVersion <strong>v",
-  "pages.workflow_version_history_page.strong_1": "</strong> ??"
+  "pages.workflow_version_history_page.strong_1": "</strong> ??",
+  "pages": {
+    "serial_number_page": {
+      "k1": "Non-Conforming",
+      "k15": "Tip"
+    },
+    "stock_take_page": {
+      "k0": "Create failed",
+      "k1": "Update failed"
+    },
+    "report_list_page": {
+      "k5": "Exported successfully",
+      "k9": "View Details",
+      "k7": "Export failed"
+    },
+    "template_form_dialog": {
+      "k2": "Category"
+    },
+    "template_list": {
+      "k2": "Enabled"
+    },
+    "index": {
+      "k16": "End Date",
+      "k17": "Start Date",
+      "k48": "Delete failed",
+      "k52": "Create failed",
+      "k53": "Create failed",
+      "k55": "Update failed",
+      "k56": "Update failed",
+      "k58": "Delete failed",
+      "k59": "Delete failed",
+      "k61": "Create failed",
+      "k62": "Create failed"
+    },
+    "report_schedule_page": {
+      "k17": "Confirm Delete",
+      "k29": "Actions"
+    },
+    "report_viewer": {
+      "k4": "No data"
+    },
+    "template_management_page": {
+      "k2": "Create failed",
+      "k3": "Update failed",
+      "k4": "Delete failed",
+      "k11": "Update failed",
+      "k15": "Update failed"
+    },
+    "attachments_page": {
+      "k3": "Operation failed",
+      "k7": "Operation failed",
+      "k9": "Operation failed"
+    },
+    "comments_page": {
+      "k3": "Operation failed",
+      "k7": "Operation failed",
+      "k11": "Operation failed"
+    },
+    "favorites_page": {
+      "k3": "Operation failed",
+      "k9": "Operation failed"
+    },
+    "forgot_password_page": {
+      "k8": "Operation failed",
+      "k14": "Operation failed",
+      "k24": "Enter The Email Used For Registration..."
+    },
+    "login_page": {
+      "k7": "Operation failed"
+    },
+    "profile_page": {
+      "k3": "Load failed",
+      "k4": "Update failed",
+      "k7": "Update failed",
+      "k33": "Tip",
+      "k34": "Tip"
+    },
+    "bidding_page": {
+      "k30": "Actions",
+      "k10": "Operation failed"
+    },
+    "inquiry_quotation_page": {
+      "k11": "Operation failed",
+      "k29": "Actions"
+    },
+    "srm_contract_detail_page": {
+      "k11": "Start Date",
+      "k12": "End Date",
+      "k19": "Remarks",
+      "k20": "Created At",
+      "k21": "Updated At"
+    },
+    "srm_contract_page": {
+      "k7": "View Details"
+    },
+    "srm_dashboard_page": {
+      "k1": "Disabled"
+    },
+    "srm_evaluation_page": {
+      "k13": "View Details"
+    },
+    "srm_supplier_detail_page": {
+      "k5": "Disabled",
+      "k13": "Basic Info",
+      "k22": "Created At"
+    },
+    "srm_supplier_page": {
+      "k0": "Enabled"
+    },
+    "supplier_portal_page": {
+      "k2": "Load failed"
+    },
+    "dashboard_page": {
+      "k20": "Tip",
+      "k23": "Tip",
+      "k26": "Tip",
+      "k29": "Tip"
+    },
+    "document_center_page": {
+      "k2": "Delete failed",
+      "k4": "Deleted successfully",
+      "k6": "Delete failed",
+      "k16": "Load failed",
+      "k17": "Operation succeeded",
+      "k19": "Tip",
+      "k24": "Tip",
+      "k26": "Category",
+      "k35": "Updated At"
+    },
+    "document_list_page": {
+      "k6": "Tip"
+    },
+    "file_detail_page": {
+      "k3": "Delete failed",
+      "k13": "Created At",
+      "k14": "Updated At",
+      "k16": "Basic Info",
+      "k22": "Confirm Delete"
+    },
+    "v55_automation_panel": {
+      "k11": "Created At",
+      "k12": "Actions",
+      "k18": "Actions",
+      "k39": "Actions",
+      "k51": "Enabled",
+      "k66": "Enabled",
+      "k16": "Start Date",
+      "k26": "Start Date"
+    },
+    "v53-platform-console": {
+      "k28": "View Details",
+      "k52": "Enabled",
+      "k58": "Actions"
+    },
+    "environment_page": {
+      "k2": "Under Maintenance"
+    },
+    "utils": {
+      "k5": "Enabled"
+    },
+    "dictionary_management_page": {
+      "k14": "Update failed",
+      "k15": "Delete failed",
+      "k19": "Delete failed",
+      "k33": "Create failed",
+      "k34": "Update failed",
+      "k35": "Delete failed",
+      "k37": "Enabled",
+      "k40": "Confirm Delete",
+      "k44": "Category",
+      "k45": "Category",
+      "k53": "Enabled",
+      "k30": "Import failed"
+    },
+    "monitoring_alert_page": {
+      "k29": "All Statuses",
+      "k39": "Actions",
+      "k45": "Created At",
+      "k46": "Actions",
+      "k51": "Enabled"
+    },
+    "plugin_management_page": {
+      "k33": "Operation succeeded",
+      "k38": "Enabled",
+      "k51": "Confirm Delete"
+    },
+    "tenant_settings_page": {
+      "k21": "Created At"
+    },
+    "capacity_detail_page": {
+      "k2": "Basic Info"
+    },
+    "forecast_management_page": {
+      "k14": "Actions",
+      "k34": "Remarks",
+      "k37": "Confirm Delete"
+    },
+    "material_shortage_page": {
+      "k18": "Category"
+    },
+    "audit_log_page": {
+      "k5": "Exported successfully",
+      "k23": "All Types",
+      "k26": "All Statuses",
+      "k30": "Start Date",
+      "k31": "End Date",
+      "k32": "Actions",
+      "k39": "View Details"
+    },
+    "database_management_page": {
+      "k18": "Operation failed",
+      "k46": "Created At",
+      "k47": "Remarks",
+      "k72": "Confirm Delete"
+    },
+    "toolbar": {
+      "k8": "Enabled"
+    },
+    "lims_sample_detail_page": {
+      "k19": "Non-Conforming",
+      "k24": "Non-Conforming",
+      "k25": "Non-Conforming",
+      "k78": "Non-Conforming",
+      "k79": "Non-Conforming"
+    },
+    "lims_task_detail_page": {
+      "k41": "Non-Conforming",
+      "k42": "Non-Conforming"
+    },
+    "slo_status_page": {
+      "k0": "All Types",
+      "k45": "Actions",
+      "k50": "Tip",
+      "k42": "Start Date"
+    },
+    "notification_center": {
+      "k4": "Operation failed",
+      "k6": "Operation failed",
+      "k8": "Operation failed",
+      "k10": "Operation failed"
+    },
+    "qms_fmea_detail_page": {
+      "k0": "Basic Info"
+    },
+    "qms_inspection_page": {
+      "k14": "Operation failed",
+      "k35": "Remarks",
+      "k43": "Non-Conforming",
+      "k44": "Remarks"
+    },
+    "qms_standard_detail_page": {
+      "k20": "Category"
+    },
+    "qms_defect_pareto_page": {
+      "k13": "Category"
+    },
+    "approval_actions": {
+      "k8": "Remarks"
+    },
+    "workflow_version_history_page": {
+      "k20": "Tip",
+      "k21": "Tip"
+    },
+    "monitor_page": {
+      "k19": "Created At"
+    },
+    "stats_section": {
+      "k2": "Enabled"
+    },
+    "ehs_hazard_detail_page": {
+      "k8": "Category"
+    },
+    "barcode_page": {
+      "k3": "Disabled",
+      "k7": "Disabled"
+    },
+    "instrument_data_table": {
+      "k0": "No data"
+    },
+    "lims_instrument_detail_page": {
+      "k3": "Disabled"
+    },
+    "equipment_management_page": {
+      "k2": "Under Maintenance"
+    },
+    "material_bom_page": {
+      "k2": "Enabled",
+      "k3": "Disabled"
+    },
+    "process_flow_page": {
+      "k5": "Created At"
+    },
+    "work_station_page": {
+      "k3": "Under Maintenance"
+    },
+    "pm_contract_detail_page": {
+      "k0": "Basic Info"
+    },
+    "report_list": {
+      "k2": "Created At"
+    },
+    "approval_header": {
+      "k5": "Created At"
+    },
+    "workflow_instance_detail_page": {
+      "k4": "Created At",
+      "k5": "Start Date"
+    },
+    "report_builder": {
+      "k14": "End Date",
+      "k15": "Start Date",
+      "k20": "Start Date"
+    },
+    "report_subscription_page": {
+      "k1": "Create failed",
+      "k2": "Update failed",
+      "k3": "Delete failed"
+    },
+    "srm_quotation_page": {
+      "k0": "Load failed",
+      "k1": "Create failed",
+      "k2": "Update failed"
+    },
+    "v56-ops-panel": {
+      "k27": "Select Or Create An Event For Analysis..."
+    },
+    "aps_scheduling_page": {
+      "k10": "Intelligent planning, scheduling, and optimization analysis"
+    },
+    "dict_management_page": {
+      "k3": "Select A Dictionary Type From The Left..."
+    },
+    "mobile_attendance_page": {
+      "k5": "View Details"
+    },
+    "qms_quality_cost_page": {
+      "k2": "Dept."
+    }
+  }
 }

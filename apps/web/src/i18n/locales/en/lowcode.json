@@ -239,5 +239,11 @@
   "lowcode.form_design_page.m1": "Form Designer {{v1}}",
   "lowcode.page_design_page.m1": "Page Designer {{v1}}",
   "lowcode.low_code_home_page.l1": "{{v1}} (placeholder shown when backend lowcode service is unavailable)",
-  "lowcode.data_source_page.l1": "❌ Failed"
+  "lowcode.data_source_page.l1": "❌ Failed",
+  "lowcode": {
+    "workflow_config_page": {
+      "k12": "Enabled",
+      "k14": "Enabled"
+    }
+  }
 }

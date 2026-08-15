@@ -145,7 +145,7 @@
     "status": {
       "active": "Active",
       "inactive": "Inactive",
-      "loading": "Loading... (en ref)"
+      "loading": "Loading..."
     },
     "dialog": {
       "confirm_delete_title": "Confirm Delete",
@@ -267,7 +267,7 @@
   "iam": {
     "companystructure": {
       "高级搜索": "Advanced Search",
-      "加载中": "Loading... (en ref)",
+      "加载中": "Loading...",
       "暂无公司架构数据": "No company structure data",
       "使用提示": "Usage Tips",
       "公司架构用于多公司合并报表的抵消计算": "Company structure is used for elimination calculation in consolidated reporting",

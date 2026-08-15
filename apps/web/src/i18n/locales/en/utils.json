@@ -41,5 +41,11 @@
   "utils.status.k3": "Pending Confirmation",
   "utils.status.k4": "Confirmed",
   "utils.status.k5": "Inspecting",
-  "utils.status.k6": "Completed"
+  "utils.status.k6": "Completed",
+  "utils": {
+    "ui-recommender": {
+      "k9": "Operation succeeded",
+      "k40": "Operation succeeded"
+    }
+  }
 }

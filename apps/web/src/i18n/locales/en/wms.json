@@ -20,9 +20,9 @@
     "edit_warehouse": "Edit Warehouse",
     "delete_warehouse": "Delete Warehouse",
     "view_warehouse": "View Warehouse",
-    "status_active": "Active",
-    "status_inactive": "Inactive",
-    "status_maintenance": "Maintenance",
+    "status_active": "Enabled",
+    "status_inactive": "Disabled",
+    "status_maintenance": "Under Maintenance",
     "status_locked": "Locked",
     "type_raw_material": "Raw Material Warehouse",
     "type_finished": "Finished Goods Warehouse",
@@ -30,8 +30,8 @@
     "type_hazardous": "Hazardous Material Warehouse",
     "type_auxiliary": "Auxiliary Material Warehouse",
     "type_rejection": "Returns Warehouse",
-    "validation_warehouse_name_required": "Warehouse name is required",
-    "validation_warehouse_code_required": "Warehouse code is required",
+    "validation_warehouse_name_required": "Warehouse Name is required",
+    "validation_warehouse_code_required": "Warehouse Code is required",
     "message_create_success": "Warehouse created successfully",
     "message_update_success": "Warehouse updated successfully",
     "message_delete_success": "Warehouse deleted successfully",
@@ -91,7 +91,7 @@
     "actual_date": "Actual Arrival Date",
     "operator": "Operator",
     "inspector": "QC Inspector",
-    "remark": "Remark",
+    "remark": "Remarks",
     "status_draft": "Draft",
     "status_pending": "Pending Inbound",
     "status_partial": "Partial Inbound",
@@ -107,7 +107,7 @@
     "action_cancel": "Cancel",
     "action_print": "Print",
     "validation_order_no_required": "Inbound order no. is required",
-    "validation_warehouse_required": "Target warehouse is required",
+    "validation_warehouse_required": "Target Warehouse is required",
     "message_create_success": "Inbound order created successfully",
     "message_confirm_success": "Inbound confirmed successfully",
     "message_cancel_success": "Inbound order cancelled"
@@ -129,7 +129,7 @@
     "carrier": "Carrier",
     "tracking_no": "Tracking No.",
     "operator": "Operator",
-    "remark": "Remark",
+    "remark": "Remarks",
     "status_draft": "Draft",
     "status_pending": "Pending Outbound",
     "status_partial": "Partial Outbound",
@@ -145,7 +145,7 @@
     "action_cancel": "Cancel",
     "action_print": "Print",
     "validation_order_no_required": "Outbound order no. is required",
-    "validation_warehouse_required": "Source warehouse is required",
+    "validation_warehouse_required": "Source Warehouse is required",
     "message_create_success": "Outbound order created successfully",
     "message_confirm_success": "Outbound confirmed successfully",
     "message_cancel_success": "Outbound order cancelled"
@@ -166,7 +166,7 @@
     "operator": "Operator",
     "approver": "Approver",
     "reason": "Transfer Reason",
-    "remark": "Remark",
+    "remark": "Remarks",
     "status_draft": "Draft",
     "status_pending_approval": "Pending Approval",
     "status_approved": "Approved",
@@ -202,7 +202,7 @@
     "operator": "Counter",
     "supervisor": "Supervisor",
     "status": "Status",
-    "remark": "Remark",
+    "remark": "Remarks",
     "status_draft": "Draft",
     "status_in_progress": "In Progress",
     "status_completed": "Completed",
@@ -217,7 +217,7 @@
     "action_submit": "Submit Count",
     "action_adjust": "Adjust Variance",
     "action_cancel": "Cancel Stocktake",
-    "validation_actual_quantity_required": "Actual quantity is required",
+    "validation_actual_quantity_required": "Actual Quantity is required",
     "message_create_success": "Stocktake created successfully",
     "message_submit_success": "Stock count submitted successfully",
     "message_adjust_success": "Variance adjusted successfully",
@@ -245,7 +245,7 @@
     "status_available": "Available",
     "status_occupied": "Occupied",
     "status_locked": "Locked",
-    "status_disabled": "Disabled",
+    "status_disabled": "Deactivated",
     "type_storage": "Storage Location",
     "type_picking": "Picking Location",
     "type_staging": "Staging Location",
@@ -256,9 +256,9 @@
     "action_batch_create": "Batch Create",
     "action_edit": "Edit Location",
     "action_delete": "Delete Location",
-    "action_enable": "Enable",
-    "action_disable": "Disable",
-    "validation_location_code_required": "Location code is required",
+    "action_enable": "Enabled",
+    "action_disable": "Disabled",
+    "validation_location_code_required": "Location Code is required",
     "validation_location_code_unique": "Location code already exists",
     "message_create_success": "Location created successfully",
     "message_batch_create_success": "Batch creation successful",
@@ -898,5 +898,50 @@
   "wms.wavePickDetail.k0": "TODO: translate",
   "wms.wavePickDetail.k1": "TODO: translate",
   "wms.wavePickDetail.k2": "TODO: translate",
-  "wms.analytics.locationUtilization.k0": "TODO: translate"
+  "wms.analytics.locationUtilization.k0": "TODO: translate",
+  "wms": {
+    "area": {
+      "k12": "Enabled",
+      "k13": "Disabled",
+      "k15": "Enabled",
+      "k16": "Disabled"
+    },
+    "batch": {
+      "k19": "Non-Conforming",
+      "k36": "Non-Conforming",
+      "k42": "Non-Conforming",
+      "k60": "Other"
+    },
+    "inventory": {
+      "k11": "Non-Conforming",
+      "k20": "Non-Conforming",
+      "k25": "Non-Conforming"
+    },
+    "location": {
+      "k25": "Disabled"
+    },
+    "replenishment": {
+      "k42": "Other"
+    },
+    "serial_number": {
+      "k17": "Non-Conforming",
+      "k47": "Non-Conforming"
+    },
+    "supplier": {
+      "k9": "Disabled",
+      "k17": "Disabled",
+      "k22": "Disabled"
+    },
+    "transfer": {
+      "k49": "Other"
+    },
+    "warehouse": {
+      "k8": "Enabled",
+      "k9": "Disabled",
+      "k11": "Enabled",
+      "k12": "Disabled",
+      "k16": "Enabled",
+      "k17": "Disabled"
+    }
+  }
 }

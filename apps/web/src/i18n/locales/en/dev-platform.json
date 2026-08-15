@@ -59,5 +59,10 @@
   "dev-platform.v53-platform-console.k57": "Duration",
   "dev-platform.v53-platform-console.k58": "Actions",
   "dev-platform.v53-platform-console.k59": "Quick Actions",
-  "dev-platform.v53-platform-console.k60": "Recent Activities"
+  "dev-platform.v53-platform-console.k60": "Recent Activities",
+  "dev-platform": {
+    "v53-platform-console": {
+      "k51": "Disable"
+    }
+  }
 }

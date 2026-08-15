@@ -2972,5 +2972,146 @@
   "components.common.dataTable.k4": "Show/Hidden Column",
   "components.common.dataTable.k5": "Records",
   "components.common.dataTable.k6": "No. {{v0}} / {{v1}} Page",
-  "components.addressbook.k0": "Status:"
+  "components.addressbook.k0": "Status:",
+  "components": {
+    "ab_test_panel": {
+      "k38": "Operation failed",
+      "k40": "Create failed"
+    },
+    "bff_data_table": {
+      "k8": "No data"
+    },
+    "bff_detail_page": {
+      "k2": "Load failed",
+      "k12": "Basic Info"
+    },
+    "mock_data": {
+      "k17": "Created At",
+      "k24": "Start Date",
+      "k25": "End Date"
+    },
+    "design_system_panel": {
+      "k55": "Actions"
+    },
+    "index": {
+      "k1": "No data"
+    },
+    "utils": {
+      "k16": "Category"
+    },
+    "report_builder": {
+      "k2": "Start Date",
+      "k18": "Remarks",
+      "k72": "Select Report Type And At Least One Column..."
+    },
+    "report_viewer": {
+      "k0": "No data"
+    },
+    "workflow_table_example": {
+      "k6": "Enabled",
+      "k8": "Created At",
+      "k9": "Updated At"
+    },
+    "status_badge": {
+      "k12": "Under Maintenance"
+    },
+    "login_form_v2": {
+      "k4": "Tip"
+    },
+    "component_palette": {
+      "k3": "Actions"
+    },
+    "types": {
+      "k47": "Basic Info"
+    },
+    "export_button": {
+      "k3": "Exported successfully"
+    },
+    "feedback_list": {
+      "k7": "Created At",
+      "k8": "Actions"
+    },
+    "plugin_detail_modal": {
+      "k10": "Category"
+    },
+    "project_report": {
+      "k16": "No data"
+    },
+    "crud_page": {
+      "k3": "Tip",
+      "k10": "Exported successfully",
+      "k13": "Create failed",
+      "k14": "Updated successfully",
+      "k15": "Update failed",
+      "k16": "Deleted successfully",
+      "k17": "Delete failed",
+      "k19": "Updated successfully",
+      "k20": "Deleted successfully",
+      "k35": "Confirm Delete",
+      "k8": "Imported successfully",
+      "k9": "Import failed",
+      "k11": "Export failed",
+      "k12": "Created successfully",
+      "k18": "Created successfully"
+    },
+    "command_palette": {
+      "k11": "Actions"
+    },
+    "ai_form_validator": {
+      "k2": "Tip"
+    },
+    "ai_tools_panel": {
+      "k4": "End Date"
+    },
+    "prompt_template_manager": {
+      "k19": "Category",
+      "k20": "Category"
+    },
+    "dashboard_template_manager": {
+      "k11": "Category",
+      "k12": "Category",
+      "k26": "Category",
+      "k27": "Category"
+    },
+    "pivot_table": {
+      "k5": "No data"
+    },
+    "chat_interface": {
+      "k9": "Deleted successfully",
+      "k11": "Delete failed"
+    },
+    "mobile_nav": {
+      "k4": "Tip"
+    },
+    "template_demo_page": {
+      "k30": "Start Date"
+    },
+    "template_editor": {
+      "k19": "Category"
+    },
+    "addressbook_sidebar": {
+      "k1": "Category"
+    },
+    "contact_detail_modal": {
+      "k0": "Basic Info"
+    },
+    "map_layers": {
+      "k1": "View Details",
+      "k2": "View Details"
+    },
+    "map_view": {
+      "k9": "View Details",
+      "k10": "View Details"
+    },
+    "markdown_editor_template": {
+      "k18": "Saved successfully"
+    },
+    "ai_code_generator": {
+      "k34": "Dept."
+    },
+    "chart_card": {
+      "k3": "Max.",
+      "k4": "Min."
+    }
+  }
 }

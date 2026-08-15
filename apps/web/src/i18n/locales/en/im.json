@@ -44,7 +44,7 @@
     "send_success": "Sent successfully",
     "send_failed": "Send Failed",
     "confirm_delete": "Confirm delete?",
-    "no_data": "No data yet"
+    "no_data": "No data"
   },
   "im.dashboard_page.k0": "IM Overview",
   "im.dashboard_page.k1": "IM Data Overview",
@@ -353,5 +353,25 @@
   "im.message_bubble.k0": "Chat Image",
   "im.notification_list.k0": "所有Notifications已Markers为Read",
   "im.notification_list.k1": "Just now",
-  "im.notification_list.k2": "暂无Notifications"
+  "im.notification_list.k2": "暂无Notifications",
+  "im": {
+    "template_list": {
+      "k5": "Enabled"
+    },
+    "hooks": {
+      "k37": "Enabled",
+      "k12": "Enter Email Subject...",
+      "k13": "Enter Recipient Email...",
+      "k14": "Enter Email Content..."
+    },
+    "mail_page_components_email_detail_dialog": {
+      "e10": "Close"
+    },
+    "chat_interface": {
+      "k4": "Create failed"
+    },
+    "create_room_modal": {
+      "k4": "Enter GroupsName..."
+    }
+  }
 }

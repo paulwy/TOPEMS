@@ -65,7 +65,7 @@
     },
     "connection": {
       "status_active": "Active",
-      "status_inactive": "Inactive",
+      "status_inactive": "Disabled",
       "status_error": "Error",
       "status_pending": "Pending",
       "name": "Connection Name",
@@ -80,7 +80,7 @@
       "filter_type": "Type",
       "filter_all_types": "All Types",
       "filter_status": "Status",
-      "filter_all_status": "All Status",
+      "filter_all_status": "All Statuses",
       "section_basic_info": "Basic Information",
       "section_sync_config": "Sync Configuration",
       "section_sync_stats": "Sync Statistics",
@@ -95,10 +95,10 @@
       "type_filter": "Filter",
       "type_validate": "Validate",
       "status_active": "Active",
-      "status_inactive": "Inactive",
+      "status_inactive": "Disabled",
       "status_draft": "Draft",
       "name": "Mapping Name",
-      "description": "Manage field mappings, data transforms, filters and validation rules",
+      "description": "Manage field mappings, data transforms, filters, and validation rules",
       "type": "Type",
       "source": "Source",
       "target": "Target",
@@ -132,7 +132,7 @@
       "filter_event_type": "Event Type",
       "filter_all_types": "All Types",
       "filter_status": "Status",
-      "filter_all_status": "All Status",
+      "filter_all_status": "All Statuses",
       "title": "Integration Events",
       "detail_title": "Event Detail"
     }
@@ -156,7 +156,7 @@
       "created_at": "Created At",
       "updated_at": "Updated At",
       "filter_status": "Status",
-      "filter_all_status": "All Status",
+      "filter_all_status": "All Statuses",
       "section_basic_info": "Basic Information",
       "section_billing_info": "Billing Information",
       "create_title": "Create Billing",
@@ -186,7 +186,7 @@
       "filter_severity": "Severity",
       "filter_all_severities": "All Severities",
       "filter_status": "Status",
-      "filter_all_status": "All Status",
+      "filter_all_status": "All Statuses",
       "filter_service": "Service",
       "filter_all_services": "All Services",
       "batch_acknowledge": "Batch Acknowledge",
@@ -194,7 +194,7 @@
       "batch_resolve": "Batch Resolve",
       "confirm_resolve": "Are you sure you want to resolve selected alerts?",
       "title": "System Alerts",
-      "description": "System alert management with view, acknowledge and resolve",
+      "description": "System alert management with view, acknowledge, and resolve",
       "detail_title": "Alert Detail"
     },
     "alert_history": {
@@ -222,7 +222,7 @@
       "filter_severity": "Severity",
       "filter_all_severities": "All Severities",
       "filter_status": "Status",
-      "filter_all_status": "All Status",
+      "filter_all_status": "All Statuses",
       "filter_time_range": "Time Range",
       "time_1h": "Last 1 Hour",
       "time_24h": "Last 24 Hours",
@@ -246,7 +246,7 @@
       "status_failed": "Failed",
       "created_at": "Created At",
       "user_name": "Operator",
-      "action": "Action",
+      "action": "Actions",
       "entity_type": "Entity Type",
       "ip_address": "IP Address",
       "status": "Status",
@@ -259,8 +259,8 @@
       "tenant_id": "Tenant ID",
       "source": "Source",
       "filter_status": "Status",
-      "filter_all_status": "All Status",
-      "filter_action": "Action",
+      "filter_all_status": "All Statuses",
+      "filter_action": "Actions",
       "filter_all_actions": "All Actions",
       "title": "Audit Log",
       "description": "User operation audit log",
@@ -371,7 +371,7 @@
       "type_error": "Error",
       "type_alert": "Alert",
       "status_active": "Active",
-      "status_inactive": "Inactive",
+      "status_inactive": "Disabled",
       "status_draft": "Draft",
       "status_deprecated": "Deprecated",
       "name": "Template Name",
@@ -386,7 +386,7 @@
       "filter_type": "Type",
       "filter_all_types": "All Types",
       "filter_status": "Status",
-      "filter_all_status": "All Status",
+      "filter_all_status": "All Statuses",
       "title": "Notification Templates",
       "description": "Manage notification templates",
       "create_title": "Create Template",
@@ -453,11 +453,11 @@
       "filter_frequency": "Frequency",
       "filter_all_frequencies": "All Frequencies",
       "filter_status": "Status",
-      "filter_all_status": "All Status",
+      "filter_all_status": "All Statuses",
       "section_basic_info": "Basic Information",
       "section_subscription_settings": "Subscription Settings",
       "title": "Report Subscriptions",
-      "description": "Manage report subscriptions with recipients, methods and frequency",
+      "description": "Manage report subscriptions with recipients, methods, and frequency",
       "create_title": "Create Subscription",
       "edit_title": "Edit Subscription",
       "detail_title": "Subscription Detail"
@@ -527,7 +527,7 @@
         "label": "Created At"
       },
       "filter_status": "Status",
-      "filter_all_status": "All Status",
+      "filter_all_status": "All Statuses",
       "detail_title": "Invoice Detail",
       "action_download": "Download Invoice",
       "meta": {
@@ -550,7 +550,7 @@
         "status": {
           "label": "Download Invoice",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "paid": "Paid",
             "pending": "Pending Payment",
             "failed": "Payment Failed",
@@ -705,7 +705,7 @@
         "status": {
           "label": "Account Status",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "active": "Normal",
             "frozen": "Frozen",
             "closed": "Closed"
@@ -745,14 +745,14 @@
           "option": {
             "all": "All",
             "active": "Enabled",
-            "inactive": "Disabled"
+            "inactive": "Disable"
           }
         }
       },
       "status": {
         "option": {
           "active": "Enabled",
-          "inactive": "Disabled"
+          "inactive": "Disable"
         }
       },
       "section": {
@@ -780,14 +780,14 @@
           "option": {
             "all": "All",
             "active": "Enabled",
-            "inactive": "Disabled"
+            "inactive": "Disable"
           }
         }
       },
       "status": {
         "option": {
           "active": "Enabled",
-          "inactive": "Disabled"
+          "inactive": "Disable"
         }
       },
       "batchAction": {
@@ -800,7 +800,7 @@
     "migration": {
       "meta": {
         "title": "Data Migration Management",
-        "description": "Manage data migration for services, support execution, rollback and status viewing",
+        "description": "Manage data migration for services, support execution, rollback, and status viewing",
         "detailTitle": "Service Detail"
       },
       "name": {
@@ -878,7 +878,7 @@
         "option": {
           "active": "Activated",
           "trial": "Trial",
-          "suspended": "Disabled",
+          "suspended": "Deactivated",
           "deleted": "Deleted"
         }
       },
@@ -907,10 +907,10 @@
         "status": {
           "label": "Status",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "active": "Activated",
             "trial": "Trial",
-            "suspended": "Disabled"
+            "suspended": "Deactivated"
           }
         },
         "plan": {
@@ -955,7 +955,7 @@
         "option": {
           "active": "Active",
           "invited": "Invited",
-          "suspended": "Disabled"
+          "suspended": "Deactivated"
         }
       },
       "created_at": {
@@ -990,10 +990,10 @@
       "purchase_date": "Purchase Date",
       "calibration_date": "Last Calibration Date",
       "next_calibration_date": "Next Calibration Date",
-      "responsible_person": "Responsible Person",
-      "description_label": "Notes",
+      "responsible_person": "Owner",
+      "description_label": "Remarks",
       "filter_status": "Status",
-      "filter_all_status": "All Status",
+      "filter_all_status": "All Statuses",
       "section_basic_info": "Basic Information",
       "section_manufacturer_location": "Manufacturer & Location",
       "section_status_dates": "Status & Dates",
@@ -1070,7 +1070,7 @@
         "status": {
           "label": "Status",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "draft": "Draft",
             "published": "Published",
             "archived": "Archived"
@@ -1166,7 +1166,7 @@
         "status": {
           "label": "Status",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "active": "In Use",
             "idle": "Idle",
             "maintenance": "Under Repair",
@@ -1238,7 +1238,7 @@
         "status": {
           "label": "Status",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "active": "Enabled",
             "inactive": "Disabled"
           }
@@ -1306,7 +1306,7 @@
         "status": {
           "label": "Status",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "active": "Normal",
             "frozen": "Frozen",
             "closed": "Cancelled",
@@ -1387,7 +1387,7 @@
         "status": {
           "label": "Status",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "active": "In Progress",
             "completed": "Completed",
             "exceeded": "Overspent",
@@ -1431,7 +1431,7 @@
         "status": {
           "label": "Status",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "active": "In Progress",
             "completed": "Completed",
             "pending": "Pending Approval",
@@ -1539,7 +1539,7 @@
         "status": {
           "label": "Status",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "active": "Active Partnership",
             "inactive": "Suspended Partnership",
             "blacklisted": "Blacklisted"
@@ -1758,7 +1758,7 @@
         "status": {
           "label": "Status",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "active": "Enabled",
             "inactive": "Disabled",
             "obsolete": "Eliminated"
@@ -1824,7 +1824,7 @@
         "status": {
           "label": "Status",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "available": "Available",
             "occupied": "Occupied",
             "maintenance": "Under Maintenance",
@@ -1880,18 +1880,18 @@
           "in_stock": "In Stock",
           "low_stock": "Low Stock",
           "out_of_stock": "Out of Stock",
-          "discontinued": "Disabled"
+          "discontinued": "Deactivated"
         }
       },
       "filter": {
         "status": {
           "label": "Status",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "in_stock": "In Stock",
             "low_stock": "Low Stock",
             "out_of_stock": "Out of Stock",
-            "discontinued": "Disabled"
+            "discontinued": "Deactivated"
           }
         },
         "category": {
@@ -1964,7 +1964,7 @@
         "status": {
           "label": "Status",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "draft": "Draft",
             "pending": "Pending Approval",
             "approved": "Approved",
@@ -2036,7 +2036,7 @@
         "status": {
           "label": "Status",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "draft": "Draft",
             "pending": "Pending Approval",
             "approved": "Approved",
@@ -2143,7 +2143,7 @@
         "status": {
           "label": "Status",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "active": "Active Partnership",
             "inactive": "Suspended Partnership",
             "blacklisted": "Blacklisted"
@@ -2232,7 +2232,7 @@
         "status": {
           "label": "Status",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "available": "Available",
             "in_use": "In Use",
             "maintenance": "Under Maintenance",
@@ -2277,10 +2277,10 @@
         "label": "Purpose"
       },
       "start_time": {
-        "label": "Start Time"
+        "label": "Start Date"
       },
       "end_time": {
-        "label": "End Time"
+        "label": "End Date"
       },
       "driver_required": {
         "label": "Driver Required"
@@ -2298,7 +2298,7 @@
         "status": {
           "label": "Status",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "pending": "Pending Approval",
             "approved": "Approved",
             "rejected": "Rejected",
@@ -2361,7 +2361,7 @@
         "status": {
           "label": "Status",
           "option": {
-            "all": "All Status",
+            "all": "All Statuses",
             "draft": "Draft",
             "submitted": "Submitted",
             "approved": "Reviewed",
@@ -2403,5 +2403,11 @@
   "schema.crud_page_adapter.k0": "Failed to load list",
   "schema.crud_page_adapter.k1": "Creation failed",
   "schema.crud_page_adapter.k2": "Update failed",
-  "schema.crud_page_adapter.k3": "Deletion failed"
+  "schema.crud_page_adapter.k3": "Deletion failed",
+  "schema": {
+    "crud_page_adapter": {
+      "k1": "Create failed",
+      "k3": "Delete failed"
+    }
+  }
 }

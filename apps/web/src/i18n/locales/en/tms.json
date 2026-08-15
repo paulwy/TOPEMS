@@ -452,5 +452,35 @@
   "tms.vehicle_utilization_page.80_7": "Target 80%",
   "tms.vehicle_utilization_page.k8": "Utilization Rate",
   "tms.vehicle_utilization_page.k9": "VehiclesTransportation趟次（柱状图）",
-  "tms.vehicle_utilization_page.k10": "Transportation趟次"
+  "tms.vehicle_utilization_page.k10": "Transportation趟次",
+  "tms": {
+    "carrier_management_page": {
+      "k0": "Enabled",
+      "k2": "Enabled",
+      "k7": "Create failed",
+      "k10": "Update failed"
+    },
+    "driver_management_page": {
+      "k0": "Enabled",
+      "k2": "Enabled",
+      "k7": "Create failed",
+      "k10": "Update failed"
+    },
+    "route_management_page": {
+      "k0": "Enabled",
+      "k2": "Enabled",
+      "k7": "Create failed",
+      "k10": "Update failed"
+    },
+    "transport_plan_detail_page": {
+      "k28": "Start Date",
+      "k29": "End Date"
+    },
+    "vehicle_management_page": {
+      "k0": "Enabled",
+      "k2": "Enabled",
+      "k8": "Create failed",
+      "k11": "Update failed"
+    }
+  }
 }

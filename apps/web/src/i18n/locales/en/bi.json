@@ -857,7 +857,7 @@
     "权限类型": "Permission Type",
     "角色": "Role",
     "用户": "User",
-    "创建时间": "Creation Time",
+    "创建时间": "Created At",
     "数据源": "Data Source",
     "业务主数据库": "Business Main Database",
     "mes生产数据库": "MESProduction Data库",
@@ -997,7 +997,7 @@
     "数据源": "Data Source",
     "状态": "Status",
     "行数": "rowcount",
-    "更新时间": "Update Time",
+    "更新时间": "Updated At",
     "操作": "Actions",
     "保存": "Save\n          ",
     "业务主数据库": "Business Main Database",
@@ -1072,7 +1072,7 @@
     "pageheader_管理设备点位_管线_仓储位置_现场取证_厂区地图和业务位置": "pageheader.tube理Equipment Points_Pipeline_Warehouse Location_Field Evidence_Plant MapandBusiness Location"
   },
   "index": {
-    "此字段为必填项": "This field is required",
+    "此字段为必填项": "This Field is required",
     "纬度必须在_90_到_90_之间": "纬度mustmustat -90 to 90 of间",
     "经度必须在_180_到_180_之间": "经度mustmustat -180 to 180 of间",
     "起点纬度无效": "Invalid start latitude",
@@ -1196,7 +1196,7 @@
     "格式": "Format",
     "状态": "Status",
     "创建人": "Creator",
-    "更新时间": "Update Time",
+    "更新时间": "Updated At",
     "操作": "Actions",
     "保存": "Save\n          ",
     "报表类型": "Report Type",
@@ -1276,7 +1276,7 @@
     "reportbuilder_提示_配置定时任务后_系统将按照设定的时间自动生成报": "reportbuilder.Info_配置定time任务then_Systemobj按照设定ofTimeauto-generate报table并send tospecified email"
   },
   "datatablesection": {
-    "暂无数据": "No Data",
+    "暂无数据": "No data",
     "datatablesection_暂无数据": "datatablesection.No Data"
   },
   "entityformmodal": {
@@ -1814,6 +1814,35 @@
     "bi_visualization_page.text_6ccbe6": "countvalue: {{comp_config_value_0}}",
     "dataset_page.text_8f1c59": "Field{{formData_fields_length_0_1}}",
     "stats_section.text_dc0dcb": "Enable: {{statistics_active_devices_0}}",
-    "stats_section.text_4cf0b3": "Enable: {{statistics_active_pipelines_0}}"
+    "stats_section.text_4cf0b3": "Enable: {{statistics_active_pipelines_0}}",
+    "bi_permission_page": {
+      "text_eca37c": "Created At",
+      "k18": "Created At"
+    },
+    "dataset_page": {
+      "text_a001a2": "Updated At",
+      "k6": "Updated At"
+    },
+    "report_builder_page": {
+      "text_a001a2": "Updated At",
+      "k21": "Updated At"
+    },
+    "data_table_section": {
+      "text_21efd8": "No data",
+      "k0": "No data"
+    },
+    "categories": {
+      "failed": "Non-Conforming"
+    },
+    "gis": {
+      "created_failed": "Create failed",
+      "validation": {
+        "required": "This Field is required"
+      },
+      "select_csv": "Select A CSV File..."
+    },
+    "index": {
+      "k0": "This Field is required"
+    }
   }
 }

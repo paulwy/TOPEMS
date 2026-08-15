@@ -61,5 +61,11 @@
   "design-system.index.k0": "Please select",
   "design-system.index.k1": "No data",
   "design-system.index.k2": "Confirm",
-  "design-system.index.k3": "Cancel"
+  "design-system.index.k3": "Cancel",
+  "design-system": {
+    "design_system_panel": {
+      "k14": "Enter Username...",
+      "k17": "Enter Password..."
+    }
+  }
 }

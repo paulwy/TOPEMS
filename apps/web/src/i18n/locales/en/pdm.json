@@ -11,7 +11,7 @@
   "version": "Version",
   "status_draft": "Draft",
   "status_active": "Active",
-  "status_retired": "Retired",
+  "status_retired": "Deactivated",
   "total_products": "Total Products",
   "total_recipes": "Total Recipes",
   "active_recipes": "Active Recipes",
@@ -861,5 +861,106 @@
   "pdm.version.k39": "VersionDetails",
   "pdm.version.k40": "创建新Version",
   "pdm.version.k41": "EditVersion",
-  "pdm.version.k42": "VersionDetails"
+  "pdm.version.k42": "VersionDetails",
+  "pdm": {
+    "bom_page": {
+      "k4": "Success",
+      "k7": "Success",
+      "k17": "Tip"
+    },
+    "change_page": {
+      "k7": "Success",
+      "k11": "Success"
+    },
+    "document_page": {
+      "k10": "Other",
+      "k12": "Success",
+      "k16": "Success",
+      "k22": "Tip",
+      "k25": "Tip",
+      "k38": "Tip",
+      "k41": "Tip"
+    },
+    "material_page": {
+      "k0": "Create failed",
+      "k1": "Update failed",
+      "k2": "Delete failed"
+    },
+    "pdm_batch_page": {
+      "k0": "Create failed",
+      "k1": "Update failed",
+      "k2": "Delete failed"
+    },
+    "pdm_bom_page": {
+      "k0": "Create failed",
+      "k1": "Update failed",
+      "k2": "Delete failed"
+    },
+    "pdm_formula_page": {
+      "k0": "Create failed",
+      "k1": "Update failed",
+      "k2": "Delete failed"
+    },
+    "pdm_product_config_page": {
+      "k0": "Create failed",
+      "k1": "Update failed",
+      "k2": "Delete failed",
+      "k3": "Enabled"
+    },
+    "pdm_project_page": {
+      "k15": "Success",
+      "k19": "Success",
+      "k22": "Create failed",
+      "k23": "Update failed"
+    },
+    "pdm_stats_page": {
+      "k1": "Enabled",
+      "k3": "Enabled",
+      "k5": "Enabled",
+      "k10": "Enabled",
+      "k11": "Enabled"
+    },
+    "pdm_version_page": {
+      "k0": "Create failed",
+      "k1": "Update failed",
+      "k2": "Delete failed"
+    },
+    "product_page": {
+      "k0": "Create failed",
+      "k1": "Update failed",
+      "k2": "Delete failed"
+    },
+    "document": {
+      "k10": "Other",
+      "k41": "Other"
+    },
+    "formula": {
+      "k8": "Enabled",
+      "k15": "Enabled",
+      "k21": "Enabled"
+    },
+    "process": {
+      "k6": "Enabled",
+      "k11": "Enabled",
+      "k15": "Enabled"
+    },
+    "product_category": {
+      "k12": "Enabled",
+      "k13": "Disabled",
+      "k14": "Enabled",
+      "k15": "Disabled",
+      "k18": "Other"
+    },
+    "product_config": {
+      "k6": "Enabled",
+      "k39": "Enabled",
+      "k45": "Enabled"
+    },
+    "step": {
+      "k10": "Enabled",
+      "k14": "Enabled",
+      "k18": "Enabled",
+      "k22": "Other"
+    }
+  }
 }

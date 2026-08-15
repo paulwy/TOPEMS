@@ -9,7 +9,7 @@
   },
   "status": {
     "pending": "Pending",
-    "running": "Running",
+    "running": "Executing",
     "success": "Success",
     "failed": "Failed",
     "stopped": "Stopped",
@@ -44,7 +44,7 @@
     "test_success": "Connection test successful",
     "test_failed": "Connection test failed",
     "confirm_delete": "Confirm delete?",
-    "no_data": "No data yet"
+    "no_data": "No data"
   },
   "integration.integration_connections_page.k0": "Total Connections",
   "integration.integration_connections_page.k1": "Active Connections",
@@ -346,5 +346,30 @@
   "integration.integration_settings_page.m3": "WMS System",
   "integration.integration_settings_page.m4": "API Endpoint",
   "integration.integration_wms_scm_page.m1": "WMS-SCM sync failed:",
-  "integration.integration_wms_scm_page.m2": "WMS ↔ SCM Sync"
+  "integration.integration_wms_scm_page.m2": "WMS ↔ SCM Sync",
+  "integration": {
+    "integration_lims_qms_page": {
+      "k6": "Create failed",
+      "k8": "Tip"
+    },
+    "integration_mappings_page": {
+      "k15": "Enabled",
+      "k16": "Disabled",
+      "k19": "Exported successfully"
+    },
+    "integration_mes_erp_page": {
+      "k6": "Create failed",
+      "k8": "Tip"
+    },
+    "integration_settings_page": {
+      "k8": "Enabled",
+      "k9": "Disabled",
+      "k24": "Disabled",
+      "k25": "Enabled"
+    },
+    "integration_wms_scm_page": {
+      "k6": "Create failed",
+      "k8": "Tip"
+    }
+  }
 }

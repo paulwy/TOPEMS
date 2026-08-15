@@ -1743,5 +1743,49 @@
   "dependency_governance.v0_3": "NeedVersion {{v0}}",
   "dependency_governance.v0v1_4": "NeedVersion {{v0}}, Module{{v1}}",
   "dependency_governance.k5": "Module",
-  "dependency_governance.v0_6": "{{v0}} Version"
+  "dependency_governance.v0_6": "{{v0}} Version",
+  "microfrontend": {
+    "ai_ops_panel": {
+      "k36": "Actions",
+      "k41": "No data",
+      "k53": "Actions",
+      "k92": "No data"
+    },
+    "devtools-panel": {
+      "k39": "Actions"
+    },
+    "observability_dashboard": {
+      "k7": "No data",
+      "k8": "No data",
+      "k16": "No data"
+    },
+    "registry_panel": {
+      "k21": "Updated At",
+      "k22": "Actions",
+      "k23": "Created At"
+    },
+    "runtime_dashboard": {
+      "k42": "Load failed",
+      "k51": "Actions",
+      "k64": "Actions",
+      "k80": "Category",
+      "k92": "Actions"
+    },
+    "smart-router": {
+      "k4": "View Details"
+    },
+    "on-demand-loader": {
+      "k10": "Load failed"
+    },
+    "version-manager": {
+      "k17": "Update failed"
+    },
+    "module_marketplace": {
+      "k19": "Category"
+    },
+    "observability_panel": {
+      "k3": "No data",
+      "k12": "No data"
+    }
+  }
 }

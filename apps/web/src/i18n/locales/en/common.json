@@ -366,5 +366,18 @@
   "common.wms_age_pareto_page.skup_1": "TODO: translate",
   "common.wms_age_pareto_page.skup_0": "TODO: translate",
   "common.wms_location_utilization_page.h3_0": "TODO: translate",
-  "sw.notification.k0": "TODO: translate"
+  "sw.notification.k0": "TODO: translate",
+  "common": {
+    "context-engine": {
+      "k10": "Task",
+      "k28": "Confirm",
+      "k38": "Error"
+    },
+    "ehs_badges": {
+      "k4": "Critical"
+    },
+    "list_page_template": {
+      "k13": "Confirm"
+    }
+  }
 }

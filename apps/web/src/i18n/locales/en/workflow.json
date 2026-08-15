@@ -432,5 +432,35 @@
   "workflow.workflow_approval_detail_page.k0": "WorkflowApprovalDetailPage Pages开发中",
   "workflow.workflow_settings_page.k0": "WorkflowSettingsPage Pages开发中",
   "workflow.designer.k0": "Save",
-  "workflow.designer.k1": "DeleteNode"
+  "workflow.designer.k1": "DeleteNode",
+  "workflow": {
+    "index": {
+      "k11": "Tip",
+      "k13": "Tip",
+      "k12": "Enter Rejection Reason...",
+      "k14": "Enter Delegation Target Person..."
+    },
+    "workflow_designer_page": {
+      "k10": "Tip",
+      "k11": "Enter WorkflowName...",
+      "k15": "Enter WorkflowName...",
+      "k16": "Enter WorkflowDescription..."
+    },
+    "workflow_version_history_page": {
+      "k20": "Tip",
+      "k21": "Tip",
+      "k19": "Enter Version号..."
+    },
+    "approval_actions": {
+      "k10": "Enter Rejection Reason...",
+      "id_14": "Enter Target Person Name Or ID...",
+      "k16": "Enter Delegation Reason..."
+    },
+    "workflow_approvals_page": {
+      "k29": "Enter Rejection Reason..."
+    },
+    "workflow_instances_page": {
+      "k5": "Confirm Cancel"
+    }
+  }
 }

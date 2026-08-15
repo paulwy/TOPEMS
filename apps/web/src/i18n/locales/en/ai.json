@@ -15,7 +15,7 @@
         "count": "异常数量",
         "description": "输入关键业务指标，AI将基于历史数据预测潜在异常",
         "desc": "输入关键业务指标，AI将基于历史数据预测潜在异常异常",
-        "error_empty_metric": "请输入监控指标",
+        "error_empty_metric": "Enter 监控指标...",
         "error_generation": "异常预测失败",
         "field_metric": "监控指标",
         "field_time_range": "时间范围（可选）",
@@ -25,7 +25,7 @@
         },
         "message": {
           "fail": "异常预测失败",
-          "input_metric": "请输入监控指标"
+          "input_metric": "Enter 监控指标..."
         },
         "placeholder": {
           "metric": "例如：production_defect_rate",
@@ -48,7 +48,7 @@
         "button_analyze": "分析流程",
         "desc": "描述业务场景或流程问题，AI将给出标准化流程步骤和优化建议",
         "description": "描述业务场景或流程问题，AI将给出标准化流程步骤和优化建议",
-        "error_empty_query": "请输入流程问题",
+        "error_empty_query": "Enter 流程问题...",
         "error_generation": "流程分析失败",
         "estimated_time": "预计耗时：{{time}}",
         "field_module": "业务模块（可选）",
@@ -59,7 +59,7 @@
         },
         "message": {
           "fail": "流程分析失败",
-          "input_query": "请输入流程问题"
+          "input_query": "Enter 流程问题..."
         },
         "optimization_suggestion": "优化建议",
         "optimization_suggestions": "优化建议",
@@ -81,7 +81,7 @@
         "button_ask": "提问",
         "desc": "向企业知识库提问，AI将基于知识库内容给出答案和来源",
         "description": "向企业知识库提问，AI将基于知识库内容给出答案和来源",
-        "error_empty_question": "请输入问题",
+        "error_empty_question": "Enter 问题...",
         "error_generation": "知识库查询失败",
         "field_base": "知识库（可选）",
         "field_question": "问题",
@@ -93,7 +93,7 @@
         },
         "message": {
           "fail": "知识库查询失败",
-          "input_question": "请输入问题"
+          "input_question": "Enter 问题..."
         },
         "placeholder": {
           "base": "例如：company_policy",
@@ -116,7 +116,7 @@
         "button_generate": "生成报表",
         "desc": "用自然语言描述您想要的报表，AI将自动生成图表和数据分析",
         "description": "用自然语言描述您想要的报表，AI将自动生成图表和数据分析",
-        "error_empty_query": "请输入报表需求",
+        "error_empty_query": "Enter 报表需求...",
         "error_generation": "生成报表失败",
         "field": {
           "data_source": "数据源",
@@ -128,7 +128,7 @@
         "field_time_range": "时间范围",
         "message": {
           "fail": "生成报表失败",
-          "input_query": "请输入报表需求"
+          "input_query": "Enter 报表需求..."
         },
         "placeholder": {
           "data_source": "例如：sales_order",
@@ -155,7 +155,7 @@
     },
     "chat": {
       "action": {
-        "cancel": "取消",
+        "cancel": "Cancel",
         "copy_message": "复制消息",
         "new_chat": "新建对话",
         "start_summary": "开始摘要",
@@ -188,7 +188,7 @@
         "file_selected": "文件已选择",
         "file_upload_title": "文件上传",
         "new_session_title": "新建会话",
-        "please": "请输入您的问题...",
+        "please": "Enter 您的问题......",
         "sent_title": "消息已发送",
         "session_created": "会话已创建",
         "session_deleted": "会话已删除",
@@ -301,12 +301,12 @@
         "code_generated": "代码已生成",
         "copied_title": "复制成功",
         "generate_complete": "生成完成",
-        "input_bug_code": "请输入需要修复的代码",
-        "input_explain_code": "请输入需要解释的代码",
-        "input_optimize_code": "请输入需要优化的代码",
-        "input_prompt": "请输入提示词",
-        "input_review_code": "请输入需要审查的代码",
-        "notice_title": "提示"
+        "input_bug_code": "Enter 需要修复的代码...",
+        "input_explain_code": "Enter 需要解释的代码...",
+        "input_optimize_code": "Enter 需要优化的代码...",
+        "input_prompt": "Enter 提示词...",
+        "input_review_code": "Enter 需要审查的代码...",
+        "notice_title": "Tip"
       },
       "mock": {
         "code_explanation": "这段代码的主要功能是处理用户请求并返回响应。首先接收输入参数，然后进行数据验证，最后调用业务逻辑处理并返回结果。",
@@ -490,7 +490,7 @@
         "copied": "已复制",
         "copied_body": "内容已复制到剪贴板",
         "empty_qa": "基于文档内容提问，获取精准答案",
-        "notice": "提示",
+        "notice": "Tip",
         "processing": "请稍候，AI正在处理您的文档",
         "select_document": "请先选择或上传文档",
         "select_language": "选择目标语言，点击开始翻译",
@@ -546,7 +546,7 @@
         "q_3": "生产工单如何管理？"
       },
       "label": {
-        "all": "全部",
+        "all": "All",
         "clear_selection": "清除选择",
         "confidence": "置信度",
         "document_library": "文档库",
@@ -562,8 +562,8 @@
       "message": {
         "copied": "已复制",
         "copied_body": "内容已复制到剪贴板",
-        "input_question": "请输入您的问题",
-        "notice": "提示",
+        "input_question": "Enter 您的问题...",
+        "notice": "Tip",
         "welcome": "欢迎使用知识库问答助手",
         "welcome_desc": "选择文档后输入问题，AI将基于文档内容为您解答"
       },
@@ -598,7 +598,7 @@
       },
       "api": {
         "action": {
-          "edit": "编辑"
+          "edit": "Edit"
         },
         "add_key": "添加密钥",
         "key": {
@@ -620,12 +620,12 @@
         },
         "status_enabled": "已启用",
         "table": {
-          "actions": "操作",
-          "created": "创建时间",
+          "actions": "Actions",
+          "created": "Created At",
           "key": "密钥",
           "name": "名称",
           "provider": "提供商",
-          "status": "状态"
+          "status": "Status"
         },
         "tip": {
           "keep_safe": "请妥善保管密钥，避免泄露",
@@ -682,9 +682,9 @@
         "use_history_desc": "在对话中使用历史消息上下文"
       },
       "field": {
-        "actions": "操作",
+        "actions": "Actions",
         "cost_estimate": "预估费用",
-        "created_at": "创建时间",
+        "created_at": "Created At",
         "date": "日期",
         "default": "默认",
         "input_price": "输入价格",
@@ -693,7 +693,7 @@
         "name": "名称",
         "provider": "提供商",
         "request_count": "请求数",
-        "status": "状态",
+        "status": "Status",
         "token_usage": "Token用量"
       },
       "label": {
@@ -740,7 +740,7 @@
         "top_p_desc": "核采样参数，控制生成多样性"
       },
       "placeholder": {
-        "system_prompt": "请输入系统提示词..."
+        "system_prompt": "Enter 系统提示词......"
       },
       "provider": {
         "alibaba": "阿里云",
@@ -756,8 +756,8 @@
       },
       "status": {
         "active": "运行中",
-        "inactive": "已停用",
-        "maintenance": "维护中",
+        "inactive": "Deactivated",
+        "maintenance": "Under Maintenance",
         "saving": "保存中..."
       },
       "subtitle": "AI模型配置与管理",
@@ -786,13 +786,13 @@
     },
     "prompt": {
       "action": {
-        "cancel": "取消",
+        "cancel": "Cancel",
         "copy": "复制",
         "generate": "生成",
         "new_template": "新建模板"
       },
       "category": {
-        "all": "全部",
+        "all": "All",
         "analysis": "分析",
         "business": "商业",
         "code": "代码",
@@ -804,7 +804,7 @@
         "result": "生成结果"
       },
       "empty": {
-        "fill_then_generate": "请填写变量后生成",
+        "fill_then_generate": "变量后生成 is required",
         "no_match": "没有匹配的模板"
       },
       "message": {
@@ -813,7 +813,7 @@
         "open_new_dialog": "已打开新对话框",
         "prompt_copied": "提示词已复制",
         "result_copied": "结果已复制",
-        "success_title": "操作成功",
+        "success_title": "Operation succeeded",
         "usage_count": "使用次数：{{count}}"
       },
       "mock": {
@@ -843,11 +843,11 @@
         "prompt_6_name": "React组件生成"
       },
       "placeholder": {
-        "input": "请输入...",
+        "input": "Enter ......",
         "search": "搜索提示词..."
       },
       "sidebar": {
-        "category": "分类",
+        "category": "Category",
         "favorites_only": "仅显示收藏"
       },
       "status": {
@@ -863,14 +863,14 @@
     },
     "prompt_library": {
       "button": {
-        "cancel": "取消",
+        "cancel": "Cancel",
         "copy": "复制",
         "generate": "生成",
         "generating": "生成中...",
         "new_template": "新建模板"
       },
       "category": {
-        "all": "全部",
+        "all": "All",
         "analysis": "分析",
         "business": "商业",
         "code": "代码",
@@ -882,24 +882,24 @@
         "generated_result": "生成结果"
       },
       "label": {
-        "category": "分类",
+        "category": "Category",
         "favorites_only": "仅显示收藏",
         "usage_count": "使用次数：{{count}}"
       },
       "message": {
         "coming_soon": "该功能即将上线",
         "copied_title": "复制成功",
-        "favorite_title": "操作成功",
+        "favorite_title": "Operation succeeded",
         "favorite_updated": "收藏状态已更新",
-        "feature_title": "提示",
-        "fill_then_generate": "请填写变量后生成",
+        "feature_title": "Tip",
+        "fill_then_generate": "变量后生成 is required",
         "generating": "正在生成结果...",
         "no_results": "没有匹配的模板",
         "prompt_copied": "提示词已复制",
         "result_copied": "结果已复制"
       },
       "placeholder": {
-        "enter_var": "请输入{{var}}的值...",
+        "enter_var": "Enter {{Var}}的值......",
         "search": "搜索提示词..."
       },
       "prompt": {
@@ -922,6 +922,59 @@
         "all_templates": "全部模板",
         "my_templates": "我的模板"
       }
+    },
+    "v57-automation-panel": {
+      "k19": "Actions",
+      "k34": "Actions",
+      "k43": "Actions",
+      "k57": "Actions",
+      "k98": "Tip"
+    },
+    "v59-devex-panel": {
+      "k9": "Actions",
+      "k16": "Actions",
+      "k18": "Enabled"
+    },
+    "v53-ai-panel": {
+      "k8": "Actions"
+    },
+    "v58-evolution-panel": {
+      "k19": "Created At",
+      "k20": "Actions"
+    },
+    "v57-governance-panel": {
+      "k45": "Category",
+      "k46": "Category",
+      "k53": "Actions",
+      "k76": "Actions",
+      "k67": "Select A Policy From The Left To View Details..."
+    },
+    "v54-native-panel": {
+      "k14": "Disabled"
+    },
+    "ai_form_validator": {
+      "k2": "Tip"
+    },
+    "ai_tools_panel": {
+      "k3": "Start Date",
+      "k4": "End Date"
+    },
+    "document_manager": {
+      "k0": "Load failed",
+      "k5": "Deleted successfully",
+      "k6": "Delete failed"
+    },
+    "prompt_template_manager": {
+      "k19": "Category",
+      "k20": "Category"
+    },
+    "ui-recommender": {
+      "k29": "Actions",
+      "k49": "Tip",
+      "k75": "Actions"
+    },
+    "v59-security-panel": {
+      "k52": "No data"
     }
   },
   "ai.ai_chat_page.k0": "SystemOptimizationSuggestion",

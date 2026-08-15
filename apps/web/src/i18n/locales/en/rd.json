@@ -33,7 +33,7 @@
     "delete": "Delete",
     "view": "View",
     "assign": "Assign",
-    "approve": "Approve",
+    "approve": "Approval",
     "execute": "Execute",
     "detail": "Details",
     "export": "Export",
@@ -73,7 +73,7 @@
     "delete_success": "Deleted successfully",
     "confirm_delete": "Confirm deletion?",
     "no_data": "No data",
-    "operation_success": "Operation completed successfully",
+    "operation_success": "Operation succeeded",
     "operation_failed": "Operation failed",
     "submit_failed": "Submit failed"
   },
@@ -161,7 +161,7 @@
       "code": "Project Code",
       "name": "Project Name",
       "project_type": "Project Type",
-      "leader": "Leader",
+      "leader": "Owner",
       "status": "Status",
       "progress": "Progress",
       "start_date": "Start Date",
@@ -173,7 +173,7 @@
       "in_progress": "In Progress",
       "completed": "Completed",
       "paused": "Paused",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancel"
     },
     "row_action": {
       "view_detail": "View Details",
@@ -188,9 +188,9 @@
       "status": "Status"
     },
     "notification": {
-      "delete_success_title": "Deleted Successfully",
+      "delete_success_title": "Deleted successfully",
       "delete_success_message": "Project has been deleted",
-      "delete_failed_title": "Delete Failed",
+      "delete_failed_title": "Delete failed",
       "delete_failed_message": "Unable to delete project"
     },
     "error": {
@@ -219,19 +219,19 @@
     },
     "field": {
       "name": "Project Name",
-      "name_placeholder": "Please enter project name",
+      "name_placeholder": "Enter Project Name...",
       "code": "Project Code",
       "code_placeholder": "e.g.: RS-2024-001",
       "code_helper": "Code cannot be modified when editing",
       "project_type": "Project Type",
       "leader": "Project Leader",
-      "leader_placeholder": "Please enter leader name",
+      "leader_placeholder": "Enter Leader Name...",
       "description": "Project Description",
-      "description_placeholder": "Please enter project description, including goals, background, expected outcomes, etc.",
+      "description_placeholder": "Enter Project Description, Including Goals, Background, Expected Outcomes, Etc....",
       "start_date": "Start Date",
       "end_date": "End Date",
       "budget": "Budget Amount",
-      "budget_placeholder": "Please enter budget amount",
+      "budget_placeholder": "Enter Budget Amount...",
       "budget_helper": "Unit: CNY",
       "risklevel": "Risk Level",
       "priority": "Priority"
@@ -239,7 +239,7 @@
     "notification": {
       "create_success_title": "Created Successfully",
       "create_success_message": "Project has been created",
-      "update_success_title": "Updated Successfully",
+      "update_success_title": "Updated successfully",
       "update_success_message": "Project information has been updated",
       "submit_failed_title": "Submit Failed",
       "submit_failed_message": "Unable to submit project data"
@@ -293,13 +293,13 @@
       "related_requirement_display": "Related Requirement: {{requirement}}"
     },
     "notification": {
-      "execute_success_title": "Operation Successful",
+      "execute_success_title": "Operation succeeded",
       "execute_success_message": "Test case has been executed",
-      "execute_failed_title": "Operation Failed",
+      "execute_failed_title": "Operation failed",
       "execute_failed_message": "Failed to execute test",
       "create_success_title": "Created Successfully",
       "create_success_message": "New test case has been created",
-      "create_failed_title": "Create Failed",
+      "create_failed_title": "Create failed",
       "create_failed_message": "Unable to create test case"
     },
     "error": {
@@ -358,15 +358,15 @@
       "export": "Export"
     },
     "notification": {
-      "delete_success_title": "Deleted Successfully",
+      "delete_success_title": "Deleted successfully",
       "delete_success_message": "Material has been deleted",
-      "delete_failed_title": "Delete Failed",
+      "delete_failed_title": "Delete failed",
       "delete_failed_message": "Unable to delete material",
       "batch_delete_success_title": "Batch Delete Successful",
       "batch_delete_success_message": "Successfully deleted {{success}} materials",
       "batch_delete_partial_title": "Partial Success",
       "batch_delete_partial_message": "Successfully deleted {{success}}, failed {{failed}}",
-      "batch_delete_failed_title": "Delete Failed",
+      "batch_delete_failed_title": "Delete failed",
       "batch_delete_failed_message": "Unable to batch delete materials",
       "import_success_title": "Import Successful",
       "import_success_message": "Successfully imported {{success}} materials",
@@ -374,7 +374,7 @@
       "import_partial_message": "Successfully imported {{success}}, failed {{failed}}",
       "import_failed_title": "Import Failed",
       "import_failed_message": "Unable to import materials",
-      "export_success_title": "Export Successful",
+      "export_success_title": "Exported successfully",
       "export_success_message": "Material data has been exported",
       "export_failed_title": "Export Failed",
       "export_failed_message": "Unable to export materials",
@@ -1415,5 +1415,63 @@
   "rd.rs_test_page.k8": "执行测试Failed",
   "rd.rs_test_page.k9": "EN:执行测试",
   "rd.rs_test_page.k10": "测试Test Case",
-  "rd.rs_test_page.k11": "R&D Management"
+  "rd.rs_test_page.k11": "R&D Management",
+  "rd": {
+    "bug": {
+      "k8": "Resolved",
+      "k25": "Resolved",
+      "k44": "Resolved"
+    },
+    "build": {
+      "k0": "Success",
+      "k19": "Success",
+      "k28": "Success"
+    },
+    "deploy": {
+      "k0": "Success",
+      "k29": "Success",
+      "k50": "Success"
+    },
+    "material": {
+      "k1": "Normal",
+      "k13": "Normal",
+      "k30": "Normal"
+    },
+    "rs_bug_page": {
+      "k5": "Operation succeeded",
+      "k7": "Operation failed"
+    },
+    "rs_build_page": {
+      "k5": "Operation succeeded",
+      "k7": "Operation failed"
+    },
+    "rs_deploy_page": {
+      "k5": "Operation succeeded",
+      "k7": "Operation failed"
+    },
+    "rs_experiment_create_page": {
+      "k0": "Other",
+      "k16": "Updated successfully",
+      "k19": "Submit failed"
+    },
+    "rs_experiment_detail_page": {
+      "k1": "Other"
+    },
+    "rs_formula_create_page": {
+      "k9": "Updated successfully",
+      "k12": "Submit failed",
+      "k30": "Required字段 is required"
+    },
+    "rs_formula_detail_page": {
+      "k34": "Approval"
+    },
+    "rs_release_page": {
+      "k7": "Operation failed",
+      "k9": "Operation succeeded"
+    },
+    "rs_review_page": {
+      "k4": "Operation succeeded",
+      "k6": "Operation succeeded"
+    }
+  }
 }

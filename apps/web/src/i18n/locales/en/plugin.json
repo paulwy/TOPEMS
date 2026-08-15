@@ -24,7 +24,7 @@
     "view": "View",
     "install": "Install",
     "uninstall": "Uninstall",
-    "enable": "Enable",
+    "enable": "Enabled",
     "disable": "Disable",
     "update": "Update",
     "close": "Close",
@@ -167,13 +167,13 @@
       "release_notes": "Describe the updates in this version"
     },
     "validation": {
-      "name_required": "Please enter the plugin name",
-      "code_required": "Please enter the plugin code",
+      "name_required": "Enter The Plugin Name...",
+      "code_required": "Enter The Plugin Code...",
       "code_format": "Plugin code can only contain lowercase letters, numbers, and hyphens, and must start with a letter",
-      "version_required": "Please enter the version number",
-      "description_required": "Please enter the plugin description",
-      "category_required": "Please select a category",
-      "author_required": "Please enter the author name"
+      "version_required": "Enter The Version Number...",
+      "description_required": "Enter The Plugin Description...",
+      "category_required": "Select A Category...",
+      "author_required": "Enter The Author Name..."
     },
     "upload": {
       "package_title": "Upload Plugin Package",

@@ -241,5 +241,8 @@ tmp/
 coverage_report.html
 coverage/
 # i18n script intermediate outputs and scan reports
+# glossary.csv / hrm_refine.js / finance_refine.js / apply_glossary.js 是正式交付物，不忽略
 scripts/i18n/*.json
 scripts/i18n/*.log
+scripts/i18n/glossary_multi.csv
+scripts/i18n/glossary_freq.csv

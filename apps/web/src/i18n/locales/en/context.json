@@ -36,5 +36,21 @@
   "context.gis_context.k34": "Update failed",
   "context.gis_context.k35": "Failed to update business location:",
   "context.gis_context.k36": "Deletion failed",
-  "context.gis_context.k37": "Failed to delete business location:"
+  "context.gis_context.k37": "Failed to delete business location:",
+  "context": {
+    "gis_context": {
+      "k4": "Create failed",
+      "k8": "Delete failed",
+      "k10": "Create failed",
+      "k14": "Delete failed",
+      "k16": "Create failed",
+      "k20": "Delete failed",
+      "k22": "Create failed",
+      "k24": "Delete failed",
+      "k26": "Create failed",
+      "k30": "Delete failed",
+      "k32": "Create failed",
+      "k36": "Delete failed"
+    }
+  }
 }
