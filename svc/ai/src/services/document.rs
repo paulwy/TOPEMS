@@ -1195,7 +1195,7 @@ pub struct DocumentQAQuestion {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde::{Serialize, Deserialize};
+    use serde::{Deserialize, Serialize};
 
     fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
         let json = serde_json::to_string(item).unwrap();

@@ -336,23 +336,233 @@ mod tests {
         let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
         assert_eq!(v1, v2);
     }
-    fn now() -> DateTime<Utc> { Utc::now() }
-    fn uuid() -> Uuid { Uuid::new_v4() }
-    fn dec() -> Decimal { Decimal::from(0) }
+    fn now() -> DateTime<Utc> {
+        Utc::now()
+    }
+    fn uuid() -> Uuid {
+        Uuid::new_v4()
+    }
+    fn dec() -> Decimal {
+        Decimal::from(0)
+    }
 
-    #[test] fn rt_unified_reconciliation() { roundtrip(&UnifiedReconciliation { id: uuid(), recon_code: None, recon_name: "x".into(), recon_type: "x".into(), status: "x".into(), period: "x".into(), entity_id: None, entity_type: None, total_debit: None, total_credit: None, difference: None, matched_count: None, unmatched_count: None, description: None, created_by: None, approved_by: None, approved_at: None, created_at: now(), updated_at: now() }); }
-    #[test] fn rt_reconciliation_detail() { roundtrip(&ReconciliationDetail { reconciliation: UnifiedReconciliation { id: uuid(), recon_code: None, recon_name: "x".into(), recon_type: "x".into(), status: "x".into(), period: "x".into(), entity_id: None, entity_type: None, total_debit: None, total_credit: None, difference: None, matched_count: None, unmatched_count: None, description: None, created_by: None, approved_by: None, approved_at: None, created_at: now(), updated_at: now() }, linked_settlements: vec![] }); }
-    #[test] fn rt_linked_settlement_summary() { roundtrip(&LinkedSettlementSummary { link_id: uuid(), link_type: "x".into(), link_amount: None, link_status: "x".into(), settlement_id: uuid(), settlement_code: None, settlement_name: "x".into(), settlement_type: "x".into(), settlement_status: "x".into(), settlement_amount: None }); }
-    #[test] fn rt_unified_settlement() { roundtrip(&UnifiedSettlement { id: uuid(), project_id: uuid(), settlement_code: None, settlement_name: "x".into(), settlement_type: "x".into(), status: "x".into(), budget_amount: None, actual_amount: None, variance_amount: None, variance_percent: None, settlement_period_start: None, settlement_period_end: None, description: None, created_by: None, approved_by: None, approved_at: None, created_at: now(), updated_at: now() }); }
-    #[test] fn rt_settlement_detail() { roundtrip(&SettlementDetail { settlement: UnifiedSettlement { id: uuid(), project_id: uuid(), settlement_code: None, settlement_name: "x".into(), settlement_type: "x".into(), status: "x".into(), budget_amount: None, actual_amount: None, variance_amount: None, variance_percent: None, settlement_period_start: None, settlement_period_end: None, description: None, created_by: None, approved_by: None, approved_at: None, created_at: now(), updated_at: now() }, linked_reconciliations: vec![] }); }
-    #[test] fn rt_linked_reconciliation_summary() { roundtrip(&LinkedReconciliationSummary { link_id: uuid(), link_type: "x".into(), link_amount: None, link_status: "x".into(), reconciliation_id: uuid(), recon_code: None, recon_name: "x".into(), recon_type: "x".into(), recon_status: "x".into(), recon_difference: None }); }
-    #[test] fn rt_reconciliation_settlement_link() { roundtrip(&ReconciliationSettlementLink { id: uuid(), tenant_id: uuid(), reconciliation_id: uuid(), settlement_id: uuid(), link_type: "x".into(), amount: None, status: "x".into(), remark: None, created_by: uuid(), created_at: now(), updated_at: now() }); }
-    #[test] fn rt_difference_adjustment() { roundtrip(&DifferenceAdjustment { id: uuid(), tenant_id: uuid(), source_type: "x".into(), source_id: uuid(), difference_type: "x".into(), difference_amount: dec(), reason: "x".into(), adjustment_amount: None, adjustment_type: None, status: "x".into(), approved_by: None, approved_at: None, remark: None, created_by: uuid(), created_at: now(), updated_at: now() }); }
-    #[test] fn rt_dashboard() { roundtrip(&SettlementCenterDashboard { id: uuid(), tenant_id: uuid(), name: "x".into(), config: serde_json::Value::Null, is_active: true, created_by: uuid(), created_at: now(), updated_at: now() }); }
-    #[test] fn rt_center_statistics() { roundtrip(&CenterStatistics { reconciliation: ReconciliationStatistics::default(), settlement: SettlementStatistics::default(), difference: DifferenceStatistics::default(), link: LinkStatistics::default() }); }
-    #[test] fn rt_reconciliation_statistics() { roundtrip(&ReconciliationStatistics::default()); }
-    #[test] fn rt_settlement_statistics() { roundtrip(&SettlementStatistics::default()); }
-    #[test] fn rt_difference_statistics() { roundtrip(&DifferenceStatistics::default()); }
-    #[test] fn rt_link_statistics() { roundtrip(&LinkStatistics::default()); }
-    #[test] fn rt_dashboard_summary() { roundtrip(&DashboardSummary { statistics: CenterStatistics { reconciliation: ReconciliationStatistics::default(), settlement: SettlementStatistics::default(), difference: DifferenceStatistics::default(), link: LinkStatistics::default() }, recent_reconciliations: vec![], recent_settlements: vec![], pending_differences: vec![] }); }
+    #[test]
+    fn rt_unified_reconciliation() {
+        roundtrip(&UnifiedReconciliation {
+            id: uuid(),
+            recon_code: None,
+            recon_name: "x".into(),
+            recon_type: "x".into(),
+            status: "x".into(),
+            period: "x".into(),
+            entity_id: None,
+            entity_type: None,
+            total_debit: None,
+            total_credit: None,
+            difference: None,
+            matched_count: None,
+            unmatched_count: None,
+            description: None,
+            created_by: None,
+            approved_by: None,
+            approved_at: None,
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+    #[test]
+    fn rt_reconciliation_detail() {
+        roundtrip(&ReconciliationDetail {
+            reconciliation: UnifiedReconciliation {
+                id: uuid(),
+                recon_code: None,
+                recon_name: "x".into(),
+                recon_type: "x".into(),
+                status: "x".into(),
+                period: "x".into(),
+                entity_id: None,
+                entity_type: None,
+                total_debit: None,
+                total_credit: None,
+                difference: None,
+                matched_count: None,
+                unmatched_count: None,
+                description: None,
+                created_by: None,
+                approved_by: None,
+                approved_at: None,
+                created_at: now(),
+                updated_at: now(),
+            },
+            linked_settlements: vec![],
+        });
+    }
+    #[test]
+    fn rt_linked_settlement_summary() {
+        roundtrip(&LinkedSettlementSummary {
+            link_id: uuid(),
+            link_type: "x".into(),
+            link_amount: None,
+            link_status: "x".into(),
+            settlement_id: uuid(),
+            settlement_code: None,
+            settlement_name: "x".into(),
+            settlement_type: "x".into(),
+            settlement_status: "x".into(),
+            settlement_amount: None,
+        });
+    }
+    #[test]
+    fn rt_unified_settlement() {
+        roundtrip(&UnifiedSettlement {
+            id: uuid(),
+            project_id: uuid(),
+            settlement_code: None,
+            settlement_name: "x".into(),
+            settlement_type: "x".into(),
+            status: "x".into(),
+            budget_amount: None,
+            actual_amount: None,
+            variance_amount: None,
+            variance_percent: None,
+            settlement_period_start: None,
+            settlement_period_end: None,
+            description: None,
+            created_by: None,
+            approved_by: None,
+            approved_at: None,
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+    #[test]
+    fn rt_settlement_detail() {
+        roundtrip(&SettlementDetail {
+            settlement: UnifiedSettlement {
+                id: uuid(),
+                project_id: uuid(),
+                settlement_code: None,
+                settlement_name: "x".into(),
+                settlement_type: "x".into(),
+                status: "x".into(),
+                budget_amount: None,
+                actual_amount: None,
+                variance_amount: None,
+                variance_percent: None,
+                settlement_period_start: None,
+                settlement_period_end: None,
+                description: None,
+                created_by: None,
+                approved_by: None,
+                approved_at: None,
+                created_at: now(),
+                updated_at: now(),
+            },
+            linked_reconciliations: vec![],
+        });
+    }
+    #[test]
+    fn rt_linked_reconciliation_summary() {
+        roundtrip(&LinkedReconciliationSummary {
+            link_id: uuid(),
+            link_type: "x".into(),
+            link_amount: None,
+            link_status: "x".into(),
+            reconciliation_id: uuid(),
+            recon_code: None,
+            recon_name: "x".into(),
+            recon_type: "x".into(),
+            recon_status: "x".into(),
+            recon_difference: None,
+        });
+    }
+    #[test]
+    fn rt_reconciliation_settlement_link() {
+        roundtrip(&ReconciliationSettlementLink {
+            id: uuid(),
+            tenant_id: uuid(),
+            reconciliation_id: uuid(),
+            settlement_id: uuid(),
+            link_type: "x".into(),
+            amount: None,
+            status: "x".into(),
+            remark: None,
+            created_by: uuid(),
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+    #[test]
+    fn rt_difference_adjustment() {
+        roundtrip(&DifferenceAdjustment {
+            id: uuid(),
+            tenant_id: uuid(),
+            source_type: "x".into(),
+            source_id: uuid(),
+            difference_type: "x".into(),
+            difference_amount: dec(),
+            reason: "x".into(),
+            adjustment_amount: None,
+            adjustment_type: None,
+            status: "x".into(),
+            approved_by: None,
+            approved_at: None,
+            remark: None,
+            created_by: uuid(),
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+    #[test]
+    fn rt_dashboard() {
+        roundtrip(&SettlementCenterDashboard {
+            id: uuid(),
+            tenant_id: uuid(),
+            name: "x".into(),
+            config: serde_json::Value::Null,
+            is_active: true,
+            created_by: uuid(),
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+    #[test]
+    fn rt_center_statistics() {
+        roundtrip(&CenterStatistics {
+            reconciliation: ReconciliationStatistics::default(),
+            settlement: SettlementStatistics::default(),
+            difference: DifferenceStatistics::default(),
+            link: LinkStatistics::default(),
+        });
+    }
+    #[test]
+    fn rt_reconciliation_statistics() {
+        roundtrip(&ReconciliationStatistics::default());
+    }
+    #[test]
+    fn rt_settlement_statistics() {
+        roundtrip(&SettlementStatistics::default());
+    }
+    #[test]
+    fn rt_difference_statistics() {
+        roundtrip(&DifferenceStatistics::default());
+    }
+    #[test]
+    fn rt_link_statistics() {
+        roundtrip(&LinkStatistics::default());
+    }
+    #[test]
+    fn rt_dashboard_summary() {
+        roundtrip(&DashboardSummary {
+            statistics: CenterStatistics {
+                reconciliation: ReconciliationStatistics::default(),
+                settlement: SettlementStatistics::default(),
+                difference: DifferenceStatistics::default(),
+                link: LinkStatistics::default(),
+            },
+            recent_reconciliations: vec![],
+            recent_settlements: vec![],
+            pending_differences: vec![],
+        });
+    }
 }

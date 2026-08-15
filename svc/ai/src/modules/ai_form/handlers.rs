@@ -2,10 +2,8 @@ use axum::extract::{Path, State};
 use axum::Json;
 
 use crate::shared::AppState;
+use topems_shared::form_assistant::{AiFormAssistant, AiFormAssistantClient, FormAssistantAction};
 use topems_shared::ApiResponse;
-use topems_shared::form_assistant::{
-    AiFormAssistant, AiFormAssistantClient, FormAssistantAction,
-};
 use topems_shared_ai::ai_client::{create_client, AIModelConfig, AIProviderType};
 use topems_shared_core::response::{api_error, api_success};
 
@@ -317,8 +315,10 @@ mod tests {
             _form_schema: &serde_json::Value,
             _current_data: &serde_json::Value,
             _target_field: Option<&str>,
-        ) -> Result<Vec<topems_shared::form_assistant::FieldSuggestion>, topems_shared_ai::ai_client::AIClientError>
-        {
+        ) -> Result<
+            Vec<topems_shared::form_assistant::FieldSuggestion>,
+            topems_shared_ai::ai_client::AIClientError,
+        > {
             Ok(vec![topems_shared::form_assistant::FieldSuggestion::new(
                 "f1", "v1", 1.0, "test",
             )])
@@ -328,8 +328,7 @@ mod tests {
             &self,
             text: &str,
             _enhancement_type: &str,
-        ) -> Result<String, topems_shared_ai::ai_client::AIClientError>
-        {
+        ) -> Result<String, topems_shared_ai::ai_client::AIClientError> {
             Ok(format!("enhanced: {}", text))
         }
 
@@ -338,8 +337,7 @@ mod tests {
             _form_type: &str,
             _form_schema: &serde_json::Value,
             _current_data: &serde_json::Value,
-        ) -> Result<Vec<ValidationResult>, topems_shared_ai::ai_client::AIClientError>
-        {
+        ) -> Result<Vec<ValidationResult>, topems_shared_ai::ai_client::AIClientError> {
             Ok(vec![ValidationResult::valid("f1")])
         }
 
@@ -347,16 +345,14 @@ mod tests {
             &self,
             term: &str,
             _form_type: &str,
-        ) -> Result<String, topems_shared_ai::ai_client::AIClientError>
-        {
+        ) -> Result<String, topems_shared_ai::ai_client::AIClientError> {
             Ok(format!("translated:{}", term))
         }
 
         async fn assist(
             &self,
             _request: AiFormAssistantRequest,
-        ) -> Result<AiFormAssistantResponse, topems_shared_ai::ai_client::AIClientError>
-        {
+        ) -> Result<AiFormAssistantResponse, topems_shared_ai::ai_client::AIClientError> {
             Ok(AiFormAssistantResponse {
                 enhanced_text: Some("assist-ok".into()),
                 ..Default::default()
@@ -416,7 +412,14 @@ mod tests {
     #[tokio::test]
     async fn test_service_suggest_fields() {
         let mock = MockAssistant;
-        let result = suggest_fields(&mock, "po", &serde_json::json!({}), &serde_json::json!({}), None).await;
+        let result = suggest_fields(
+            &mock,
+            "po",
+            &serde_json::json!({}),
+            &serde_json::json!({}),
+            None,
+        )
+        .await;
         let list = result.unwrap();
         assert_eq!(list.len(), 1);
         assert_eq!(list[0].field_name, "f1");
@@ -432,7 +435,8 @@ mod tests {
     #[tokio::test]
     async fn test_service_validate_form() {
         let mock = MockAssistant;
-        let result = validate_form(&mock, "po", &serde_json::json!({}), &serde_json::json!({})).await;
+        let result =
+            validate_form(&mock, "po", &serde_json::json!({}), &serde_json::json!({})).await;
         let list = result.unwrap();
         assert_eq!(list.len(), 1);
         assert!(list[0].is_valid);
@@ -462,7 +466,14 @@ mod tests {
     #[tokio::test]
     async fn test_service_suggest_for_form() {
         let mock = MockAssistant;
-        let result = suggest_fields_for_form(&mock, "po", &serde_json::json!({}), &serde_json::json!({}), None).await;
+        let result = suggest_fields_for_form(
+            &mock,
+            "po",
+            &serde_json::json!({}),
+            &serde_json::json!({}),
+            None,
+        )
+        .await;
         assert!(result.is_ok());
     }
 

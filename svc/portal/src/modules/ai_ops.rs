@@ -2026,11 +2026,7 @@ mod tests {
 
     #[test]
     fn invalidation_event_roundtrip() {
-        let e = InvalidationEvent::new(
-            "key-1".into(),
-            "updated".into(),
-            "user".into(),
-        );
+        let e = InvalidationEvent::new("key-1".into(), "updated".into(), "user".into());
         roundtrip(&e);
     }
 
@@ -2050,14 +2046,7 @@ mod tests {
 
     #[test]
     fn health_check_roundtrip() {
-        let h = HealthCheck::new(
-            "svc-1".into(),
-            HealthCheckType::Liveness,
-            10000,
-            5000,
-            2,
-            3,
-        );
+        let h = HealthCheck::new("svc-1".into(), HealthCheckType::Liveness, 10000, 5000, 2, 3);
         roundtrip(&h);
     }
 

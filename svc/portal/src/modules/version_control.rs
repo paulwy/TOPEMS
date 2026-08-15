@@ -1412,7 +1412,10 @@ mod tests {
             let parsed = APIVersionStatus::from_str(s);
             assert_eq!(parsed.as_str(), s, "from_str roundtrip for {}", s);
         }
-        assert_eq!(APIVersionStatus::from_str("__unknown__"), APIVersionStatus::Active);
+        assert_eq!(
+            APIVersionStatus::from_str("__unknown__"),
+            APIVersionStatus::Active
+        );
     }
 
     // ---- CompatibilityLevel ----
@@ -1439,7 +1442,10 @@ mod tests {
             let parsed = CompatibilityLevel::from_str(s);
             assert_eq!(parsed.as_str(), s, "from_str roundtrip for {}", s);
         }
-        assert_eq!(CompatibilityLevel::from_str("__unknown__"), CompatibilityLevel::None);
+        assert_eq!(
+            CompatibilityLevel::from_str("__unknown__"),
+            CompatibilityLevel::None
+        );
     }
 
     // ---- CanaryStatus ----
@@ -1487,7 +1493,10 @@ mod tests {
             let parsed = BreakingChangeType::from_str(s);
             assert_eq!(parsed.as_str(), s, "from_str roundtrip for {}", s);
         }
-        assert_eq!(BreakingChangeType::from_str("__unknown__"), BreakingChangeType::NullableChanged);
+        assert_eq!(
+            BreakingChangeType::from_str("__unknown__"),
+            BreakingChangeType::NullableChanged
+        );
     }
 
     // ---- CanaryWinner ----
@@ -1514,7 +1523,10 @@ mod tests {
             let parsed = CanaryWinner::from_str(s);
             assert_eq!(parsed.as_str(), s, "from_str roundtrip for {}", s);
         }
-        assert_eq!(CanaryWinner::from_str("__unknown__"), CanaryWinner::Inconclusive);
+        assert_eq!(
+            CanaryWinner::from_str("__unknown__"),
+            CanaryWinner::Inconclusive
+        );
     }
 
     // ---- struct roundtrip ----

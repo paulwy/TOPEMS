@@ -320,11 +320,17 @@ mod tests {
         assert_eq!(v1, v2);
     }
 
-    fn now() -> chrono::DateTime<chrono::Utc> { chrono::Utc::now() }
+    fn now() -> chrono::DateTime<chrono::Utc> {
+        chrono::Utc::now()
+    }
 
-    fn today() -> chrono::NaiveDate { chrono::Utc::now().date_naive() }
+    fn today() -> chrono::NaiveDate {
+        chrono::Utc::now().date_naive()
+    }
 
-    fn uid() -> String { uuid::Uuid::new_v4().to_string() }
+    fn uid() -> String {
+        uuid::Uuid::new_v4().to_string()
+    }
 
     #[test]
     fn rt_voucher_summary_view_posted_at_none() {
@@ -392,8 +398,18 @@ mod tests {
             days_overdue: 15,
             aging_bucket: "0-30天".into(),
             buckets: vec![
-                AgingBucket { label: "0-30天".into(), min_days: 0, max_days: Some(30), amount: 4000.0 },
-                AgingBucket { label: "31-60天".into(), min_days: 31, max_days: Some(60), amount: 0.0 },
+                AgingBucket {
+                    label: "0-30天".into(),
+                    min_days: 0,
+                    max_days: Some(30),
+                    amount: 4000.0,
+                },
+                AgingBucket {
+                    label: "31-60天".into(),
+                    min_days: 31,
+                    max_days: Some(60),
+                    amount: 0.0,
+                },
             ],
             updated_at: now(),
         });

@@ -284,24 +284,181 @@ mod tests {
         assert_eq!(v1, v2);
     }
 
-    #[test] fn rt_assist_req() { roundtrip(&AiFormAssistRequest { form_type: "x".into(), form_schema: serde_json::Value::Null, current_data: serde_json::Value::Null, action: "x".into(), target_field: None }); }
-    #[test] fn rt_suggest_req() { roundtrip(&AiFormSuggestRequest { form_type: "x".into(), form_schema: serde_json::Value::Null, current_data: serde_json::Value::Null, target_field: None }); }
-    #[test] fn rt_enhance_req() { roundtrip(&AiFormEnhanceRequest { text: "x".into(), enhancement_type: "x".into() }); }
-    #[test] fn rt_validate_req() { roundtrip(&AiFormValidateRequest { form_type: "x".into(), form_schema: serde_json::Value::Null, current_data: serde_json::Value::Null }); }
-    #[test] fn rt_translate_req() { roundtrip(&AiFormTranslateRequest { term: "x".into(), form_type: "x".into() }); }
-    #[test] fn rt_suggest_resp() { roundtrip(&AiFormSuggestResponse { suggestions: vec![] }); }
-    #[test] fn rt_enhance_resp() { roundtrip(&AiFormEnhanceResponse { enhanced_text: "x".into() }); }
-    #[test] fn rt_validate_resp() { roundtrip(&AiFormValidateResponse { validations: vec![], is_valid: true }); }
-    #[test] fn rt_translate_resp() { roundtrip(&AiFormTranslateResponse { translated_text: "x".into() }); }
-    #[test] fn rt_field_suggestion() { roundtrip(&FieldSuggestion { field_name: "x".into(), suggested_value: "x".into(), confidence: 0.0, reasoning: "x".into() }); }
-    #[test] fn rt_validation_result() { roundtrip(&ValidationResult { field_name: "x".into(), validation_type: "x".into(), is_valid: true, message: "x".into(), suggestion: None }); }
-    #[test] fn rt_form_summary() { roundtrip(&FormSummary { form_type: "x".into(), display_name: "x".into(), domain: "x".into(), description: "x".into(), supports_suggest: true, supports_enhance: true, supports_validate: true, supports_translate: true }); }
-    #[test] fn rt_list_resp() { roundtrip(&AiFormListResponse { total: 0, forms: vec![], domains: vec![] }); }
-    #[test] fn rt_config_resp() { roundtrip(&AiFormConfigResponse { form_type: "x".into(), display_name: "x".into(), domain: "x".into(), description: "x".into(), field_descriptions: vec![], filling_examples: serde_json::Value::Null, validation_rules: vec![], business_terms: vec![], ai_features: AiFeaturesDto { suggest: true, enhance: true, validate: true, translate: true } }); }
-    #[test] fn rt_field_def_dto() { roundtrip(&FormFieldDefinitionDto { name: "x".into(), label: "x".into(), field_type: "x".into(), description: "x".into(), required: true, example: "x".into() }); }
-    #[test] fn rt_validation_rule_dto() { roundtrip(&FormValidationRuleDto { field_name: "x".into(), rule_type: "x".into(), description: "x".into(), pattern: None }); }
-    #[test] fn rt_business_term_dto() { roundtrip(&BusinessTermDto { term: "x".into(), english: None, explanation: "x".into() }); }
-    #[test] fn rt_ai_features_dto() { roundtrip(&AiFeaturesDto { suggest: true, enhance: true, validate: true, translate: true }); }
-    #[test] fn rt_suggest_for_form_req() { roundtrip(&AiFormSuggestForFormRequest { form_schema: serde_json::Value::Null, current_data: serde_json::Value::Null, target_field: None }); }
-    #[test] fn rt_enhance_for_form_req() { roundtrip(&AiFormEnhanceForFormRequest { text: "x".into(), enhancement_type: "x".into() }); }
+    #[test]
+    fn rt_assist_req() {
+        roundtrip(&AiFormAssistRequest {
+            form_type: "x".into(),
+            form_schema: serde_json::Value::Null,
+            current_data: serde_json::Value::Null,
+            action: "x".into(),
+            target_field: None,
+        });
+    }
+    #[test]
+    fn rt_suggest_req() {
+        roundtrip(&AiFormSuggestRequest {
+            form_type: "x".into(),
+            form_schema: serde_json::Value::Null,
+            current_data: serde_json::Value::Null,
+            target_field: None,
+        });
+    }
+    #[test]
+    fn rt_enhance_req() {
+        roundtrip(&AiFormEnhanceRequest {
+            text: "x".into(),
+            enhancement_type: "x".into(),
+        });
+    }
+    #[test]
+    fn rt_validate_req() {
+        roundtrip(&AiFormValidateRequest {
+            form_type: "x".into(),
+            form_schema: serde_json::Value::Null,
+            current_data: serde_json::Value::Null,
+        });
+    }
+    #[test]
+    fn rt_translate_req() {
+        roundtrip(&AiFormTranslateRequest {
+            term: "x".into(),
+            form_type: "x".into(),
+        });
+    }
+    #[test]
+    fn rt_suggest_resp() {
+        roundtrip(&AiFormSuggestResponse {
+            suggestions: vec![],
+        });
+    }
+    #[test]
+    fn rt_enhance_resp() {
+        roundtrip(&AiFormEnhanceResponse {
+            enhanced_text: "x".into(),
+        });
+    }
+    #[test]
+    fn rt_validate_resp() {
+        roundtrip(&AiFormValidateResponse {
+            validations: vec![],
+            is_valid: true,
+        });
+    }
+    #[test]
+    fn rt_translate_resp() {
+        roundtrip(&AiFormTranslateResponse {
+            translated_text: "x".into(),
+        });
+    }
+    #[test]
+    fn rt_field_suggestion() {
+        roundtrip(&FieldSuggestion {
+            field_name: "x".into(),
+            suggested_value: "x".into(),
+            confidence: 0.0,
+            reasoning: "x".into(),
+        });
+    }
+    #[test]
+    fn rt_validation_result() {
+        roundtrip(&ValidationResult {
+            field_name: "x".into(),
+            validation_type: "x".into(),
+            is_valid: true,
+            message: "x".into(),
+            suggestion: None,
+        });
+    }
+    #[test]
+    fn rt_form_summary() {
+        roundtrip(&FormSummary {
+            form_type: "x".into(),
+            display_name: "x".into(),
+            domain: "x".into(),
+            description: "x".into(),
+            supports_suggest: true,
+            supports_enhance: true,
+            supports_validate: true,
+            supports_translate: true,
+        });
+    }
+    #[test]
+    fn rt_list_resp() {
+        roundtrip(&AiFormListResponse {
+            total: 0,
+            forms: vec![],
+            domains: vec![],
+        });
+    }
+    #[test]
+    fn rt_config_resp() {
+        roundtrip(&AiFormConfigResponse {
+            form_type: "x".into(),
+            display_name: "x".into(),
+            domain: "x".into(),
+            description: "x".into(),
+            field_descriptions: vec![],
+            filling_examples: serde_json::Value::Null,
+            validation_rules: vec![],
+            business_terms: vec![],
+            ai_features: AiFeaturesDto {
+                suggest: true,
+                enhance: true,
+                validate: true,
+                translate: true,
+            },
+        });
+    }
+    #[test]
+    fn rt_field_def_dto() {
+        roundtrip(&FormFieldDefinitionDto {
+            name: "x".into(),
+            label: "x".into(),
+            field_type: "x".into(),
+            description: "x".into(),
+            required: true,
+            example: "x".into(),
+        });
+    }
+    #[test]
+    fn rt_validation_rule_dto() {
+        roundtrip(&FormValidationRuleDto {
+            field_name: "x".into(),
+            rule_type: "x".into(),
+            description: "x".into(),
+            pattern: None,
+        });
+    }
+    #[test]
+    fn rt_business_term_dto() {
+        roundtrip(&BusinessTermDto {
+            term: "x".into(),
+            english: None,
+            explanation: "x".into(),
+        });
+    }
+    #[test]
+    fn rt_ai_features_dto() {
+        roundtrip(&AiFeaturesDto {
+            suggest: true,
+            enhance: true,
+            validate: true,
+            translate: true,
+        });
+    }
+    #[test]
+    fn rt_suggest_for_form_req() {
+        roundtrip(&AiFormSuggestForFormRequest {
+            form_schema: serde_json::Value::Null,
+            current_data: serde_json::Value::Null,
+            target_field: None,
+        });
+    }
+    #[test]
+    fn rt_enhance_for_form_req() {
+        roundtrip(&AiFormEnhanceForFormRequest {
+            text: "x".into(),
+            enhancement_type: "x".into(),
+        });
+    }
 }

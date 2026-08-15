@@ -56,20 +56,76 @@ mod tests {
         assert_eq!(v1, v2);
     }
 
-    #[test] fn rt_money_cny() { roundtrip(&Money { amount: rust_decimal::Decimal::from(999), currency: "CNY".into() }); }
-    #[test] fn rt_money_zero() { roundtrip(&Money { amount: rust_decimal::Decimal::from(0), currency: "USD".into() }); }
-    #[test] fn rt_aging_bucket_closed() { roundtrip(&AgingBucket { label: "0-30天".into(), min_days: 0, max_days: Some(30), amount: 1000.0 }); }
-    #[test] fn rt_aging_bucket_open() { roundtrip(&AgingBucket { label: "90+天".into(), min_days: 90, max_days: None, amount: 500.0 }); }
-    #[test] fn rt_voucher_status_draft()     { roundtrip(&VoucherStatus::Draft); }
-    #[test] fn rt_voucher_status_submitted() { roundtrip(&VoucherStatus::Submitted); }
-    #[test] fn rt_voucher_status_approved()  { roundtrip(&VoucherStatus::Approved); }
-    #[test] fn rt_voucher_status_posted()    { roundtrip(&VoucherStatus::Posted); }
-    #[test] fn rt_voucher_status_reversed()  { roundtrip(&VoucherStatus::Reversed); }
-    #[test] fn rt_settlement_status_unsettled()   { roundtrip(&SettlementStatus::Unsettled); }
-    #[test] fn rt_settlement_status_partial()     { roundtrip(&SettlementStatus::PartiallySettled); }
-    #[test] fn rt_settlement_status_settled()     { roundtrip(&SettlementStatus::Settled); }
-    #[test] fn rt_settlement_status_written_off() { roundtrip(&SettlementStatus::WrittenOff); }
-    #[test] fn rt_date_range() {
+    #[test]
+    fn rt_money_cny() {
+        roundtrip(&Money {
+            amount: rust_decimal::Decimal::from(999),
+            currency: "CNY".into(),
+        });
+    }
+    #[test]
+    fn rt_money_zero() {
+        roundtrip(&Money {
+            amount: rust_decimal::Decimal::from(0),
+            currency: "USD".into(),
+        });
+    }
+    #[test]
+    fn rt_aging_bucket_closed() {
+        roundtrip(&AgingBucket {
+            label: "0-30天".into(),
+            min_days: 0,
+            max_days: Some(30),
+            amount: 1000.0,
+        });
+    }
+    #[test]
+    fn rt_aging_bucket_open() {
+        roundtrip(&AgingBucket {
+            label: "90+天".into(),
+            min_days: 90,
+            max_days: None,
+            amount: 500.0,
+        });
+    }
+    #[test]
+    fn rt_voucher_status_draft() {
+        roundtrip(&VoucherStatus::Draft);
+    }
+    #[test]
+    fn rt_voucher_status_submitted() {
+        roundtrip(&VoucherStatus::Submitted);
+    }
+    #[test]
+    fn rt_voucher_status_approved() {
+        roundtrip(&VoucherStatus::Approved);
+    }
+    #[test]
+    fn rt_voucher_status_posted() {
+        roundtrip(&VoucherStatus::Posted);
+    }
+    #[test]
+    fn rt_voucher_status_reversed() {
+        roundtrip(&VoucherStatus::Reversed);
+    }
+    #[test]
+    fn rt_settlement_status_unsettled() {
+        roundtrip(&SettlementStatus::Unsettled);
+    }
+    #[test]
+    fn rt_settlement_status_partial() {
+        roundtrip(&SettlementStatus::PartiallySettled);
+    }
+    #[test]
+    fn rt_settlement_status_settled() {
+        roundtrip(&SettlementStatus::Settled);
+    }
+    #[test]
+    fn rt_settlement_status_written_off() {
+        roundtrip(&SettlementStatus::WrittenOff);
+    }
+    #[test]
+    fn rt_date_range() {
         roundtrip(&DateRange {
             start: chrono::NaiveDate::from_ymd_opt(2025, 1, 1).unwrap(),
             end: chrono::NaiveDate::from_ymd_opt(2025, 12, 31).unwrap(),

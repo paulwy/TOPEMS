@@ -2147,7 +2147,7 @@ pub fn create_routes() -> Router<AppState> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde::{Serialize, Deserialize};
+    use serde::{Deserialize, Serialize};
     fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
         let json = serde_json::to_string(item).unwrap();
         let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
@@ -2158,25 +2158,45 @@ mod tests {
     }
 
     #[test]
-    fn rq_decision_scenario_type() { roundtrip(&DecisionScenarioType::Investment); }
+    fn rq_decision_scenario_type() {
+        roundtrip(&DecisionScenarioType::Investment);
+    }
     #[test]
-    fn rq_decision_status() { roundtrip(&DecisionStatus::Draft); }
+    fn rq_decision_status() {
+        roundtrip(&DecisionStatus::Draft);
+    }
     #[test]
-    fn rq_objective_type() { roundtrip(&ObjectiveType::Maximize); }
+    fn rq_objective_type() {
+        roundtrip(&ObjectiveType::Maximize);
+    }
     #[test]
-    fn rq_alert_condition() { roundtrip(&AlertCondition::Above); }
+    fn rq_alert_condition() {
+        roundtrip(&AlertCondition::Above);
+    }
     #[test]
-    fn rq_alert_severity() { roundtrip(&AlertSeverity::Low); }
+    fn rq_alert_severity() {
+        roundtrip(&AlertSeverity::Low);
+    }
     #[test]
-    fn rq_alert_status() { roundtrip(&AlertStatus::Active); }
+    fn rq_alert_status() {
+        roundtrip(&AlertStatus::Active);
+    }
     #[test]
-    fn rq_alert_channel_type() { roundtrip(&AlertChannelType::Email); }
+    fn rq_alert_channel_type() {
+        roundtrip(&AlertChannelType::Email);
+    }
     #[test]
-    fn rq_schedule_task_type() { roundtrip(&ScheduleTaskType::Recurring); }
+    fn rq_schedule_task_type() {
+        roundtrip(&ScheduleTaskType::Recurring);
+    }
     #[test]
-    fn rq_schedule_task_status() { roundtrip(&ScheduleTaskStatus::Pending); }
+    fn rq_schedule_task_status() {
+        roundtrip(&ScheduleTaskStatus::Pending);
+    }
     #[test]
-    fn rq_schedule_execution_status() { roundtrip(&ScheduleExecutionStatus::Pending); }
+    fn rq_schedule_execution_status() {
+        roundtrip(&ScheduleExecutionStatus::Pending);
+    }
 
     #[test]
     fn rq_decision_scenario() {

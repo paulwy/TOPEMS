@@ -1378,17 +1378,16 @@ mod tests {
             let s = v.as_str();
             assert_eq!(SubscriptionStatus::from_str(s).as_str(), s);
         }
-        assert_eq!(SubscriptionStatus::from_str("__unknown__"), SubscriptionStatus::Active);
+        assert_eq!(
+            SubscriptionStatus::from_str("__unknown__"),
+            SubscriptionStatus::Active
+        );
     }
 
     // ---- ReplayType ----
 
     fn replay_type_all() -> Vec<ReplayType> {
-        vec![
-            ReplayType::Full,
-            ReplayType::Incremental,
-            ReplayType::Live,
-        ]
+        vec![ReplayType::Full, ReplayType::Incremental, ReplayType::Live]
     }
 
     #[test]
@@ -1449,7 +1448,10 @@ mod tests {
             let s = v.as_str();
             assert_eq!(AggregationType::from_str(s).as_str(), s);
         }
-        assert_eq!(AggregationType::from_str("__unknown__"), AggregationType::Count);
+        assert_eq!(
+            AggregationType::from_str("__unknown__"),
+            AggregationType::Count
+        );
     }
 
     // ---- Aggregator (has all()) ----
@@ -1467,7 +1469,10 @@ mod tests {
             let s = v.as_str();
             assert_eq!(Aggregator::from_str(s).as_str(), s);
         }
-        assert_eq!(Aggregator::from_str("__unknown__"), Aggregator::TumblingWindow);
+        assert_eq!(
+            Aggregator::from_str("__unknown__"),
+            Aggregator::TumblingWindow
+        );
     }
 
     #[test]

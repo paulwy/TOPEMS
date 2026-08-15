@@ -15,10 +15,10 @@
 //! - [`registry`]：FormRegistry 注册表与默认注册表构造
 //! - `*_forms`：各业务域表单注册实现
 
+mod assistant;
 mod common;
 mod config;
 mod registry;
-mod assistant;
 
 mod crm_forms;
 mod ehs_forms;
@@ -41,10 +41,10 @@ mod wms_forms;
 #[cfg(test)]
 mod tests;
 
-pub use common::{AiFeatures, BusinessTerm, FieldDefinition, FormDomain, FormValidationRule};
-pub use config::FormConfig;
-pub use registry::{default_registry, FormRegistry};
 pub use assistant::{
     AiFormAssistant, AiFormAssistantClient, AiFormAssistantRequest, AiFormAssistantResponse,
     FieldSuggestion, FormAssistantAction, ValidationResult,
 };
+pub use common::{AiFeatures, BusinessTerm, FieldDefinition, FormDomain, FormValidationRule};
+pub use config::FormConfig;
+pub use registry::{default_registry, FormRegistry};

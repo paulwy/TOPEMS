@@ -1591,7 +1591,10 @@ mod tests {
             let s = v.as_str();
             assert_eq!(ConflictStatus::from_str(s).as_str(), s);
         }
-        assert_eq!(ConflictStatus::from_str("__unknown__"), ConflictStatus::Pending);
+        assert_eq!(
+            ConflictStatus::from_str("__unknown__"),
+            ConflictStatus::Pending
+        );
     }
 
     // ---- ResolutionStrategy ----
@@ -1619,7 +1622,10 @@ mod tests {
             let s = v.as_str();
             assert_eq!(ResolutionStrategy::from_str(s).as_str(), s);
         }
-        assert_eq!(ResolutionStrategy::from_str("__unknown__"), ResolutionStrategy::TakeFirst);
+        assert_eq!(
+            ResolutionStrategy::from_str("__unknown__"),
+            ResolutionStrategy::TakeFirst
+        );
     }
 
     // ---- struct roundtrip ----

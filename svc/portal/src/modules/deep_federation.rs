@@ -1590,7 +1590,11 @@ mod tests {
 
     #[test]
     fn check_status_roundtrip() {
-        for v in &[CheckStatus::Passed, CheckStatus::Failed, CheckStatus::Warning] {
+        for v in &[
+            CheckStatus::Passed,
+            CheckStatus::Failed,
+            CheckStatus::Warning,
+        ] {
             roundtrip(v);
         }
     }
@@ -1655,9 +1659,18 @@ mod tests {
 
     #[test]
     fn check_status_as_str_from_str() {
-        assert_eq!(CheckStatus::from_str(CheckStatus::Passed.as_str()), CheckStatus::Passed);
-        assert_eq!(CheckStatus::from_str(CheckStatus::Failed.as_str()), CheckStatus::Failed);
-        assert_eq!(CheckStatus::from_str(CheckStatus::Warning.as_str()), CheckStatus::Warning);
+        assert_eq!(
+            CheckStatus::from_str(CheckStatus::Passed.as_str()),
+            CheckStatus::Passed
+        );
+        assert_eq!(
+            CheckStatus::from_str(CheckStatus::Failed.as_str()),
+            CheckStatus::Failed
+        );
+        assert_eq!(
+            CheckStatus::from_str(CheckStatus::Warning.as_str()),
+            CheckStatus::Warning
+        );
     }
 
     #[test]

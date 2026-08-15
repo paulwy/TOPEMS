@@ -1271,14 +1271,26 @@ mod tests {
 
     #[test]
     fn test_plan_status_roundtrip_all_variants() {
-        for v in [PlanStatus::Pending, PlanStatus::Running, PlanStatus::Completed, PlanStatus::Failed, PlanStatus::Cancelled] {
+        for v in [
+            PlanStatus::Pending,
+            PlanStatus::Running,
+            PlanStatus::Completed,
+            PlanStatus::Failed,
+            PlanStatus::Cancelled,
+        ] {
             roundtrip(&v);
         }
     }
 
     #[test]
     fn test_plan_status_as_str_from_str() {
-        for v in [PlanStatus::Pending, PlanStatus::Running, PlanStatus::Completed, PlanStatus::Failed, PlanStatus::Cancelled] {
+        for v in [
+            PlanStatus::Pending,
+            PlanStatus::Running,
+            PlanStatus::Completed,
+            PlanStatus::Failed,
+            PlanStatus::Cancelled,
+        ] {
             let s = v.as_str();
             let back = PlanStatus::from_str(s);
             roundtrip(&back);
@@ -1289,14 +1301,24 @@ mod tests {
 
     #[test]
     fn test_step_status_roundtrip_all_variants() {
-        for v in [StepStatus::Pending, StepStatus::Running, StepStatus::Completed, StepStatus::Failed] {
+        for v in [
+            StepStatus::Pending,
+            StepStatus::Running,
+            StepStatus::Completed,
+            StepStatus::Failed,
+        ] {
             roundtrip(&v);
         }
     }
 
     #[test]
     fn test_step_status_as_str_from_str() {
-        for v in [StepStatus::Pending, StepStatus::Running, StepStatus::Completed, StepStatus::Failed] {
+        for v in [
+            StepStatus::Pending,
+            StepStatus::Running,
+            StepStatus::Completed,
+            StepStatus::Failed,
+        ] {
             let s = v.as_str();
             let back = StepStatus::from_str(s);
             roundtrip(&back);

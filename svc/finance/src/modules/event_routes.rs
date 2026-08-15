@@ -446,7 +446,10 @@ mod tests {
 
     #[test]
     fn sagas_list_response_roundtrip() {
-        roundtrip(&SagasListResponse { items: vec![], total: 0 });
+        roundtrip(&SagasListResponse {
+            items: vec![],
+            total: 0,
+        });
         let step = SagaStep {
             id: uid(),
             name: "step-1".into(),

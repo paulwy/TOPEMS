@@ -1040,7 +1040,7 @@ pub fn create_routes() -> Router<AppState> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde::{Serialize, Deserialize};
+    use serde::{Deserialize, Serialize};
     fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
         let json = serde_json::to_string(item).unwrap();
         let v1: serde_json::Value = serde_json::from_str(&json).unwrap();

@@ -688,9 +688,13 @@ mod tests {
         assert_eq!(v1, v2);
     }
 
-    fn now() -> chrono::DateTime<chrono::Utc> { chrono::Utc::now() }
+    fn now() -> chrono::DateTime<chrono::Utc> {
+        chrono::Utc::now()
+    }
 
-    fn uid() -> String { uuid::Uuid::new_v4().to_string() }
+    fn uid() -> String {
+        uuid::Uuid::new_v4().to_string()
+    }
 
     #[test]
     fn rt_saga_action_type_variants() {

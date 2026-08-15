@@ -275,7 +275,9 @@ mod tests {
         assert_eq!(v1, v2);
     }
 
-    fn uid() -> String { uuid::Uuid::new_v4().to_string() }
+    fn uid() -> String {
+        uuid::Uuid::new_v4().to_string()
+    }
 
     #[test]
     fn rt_replay_result() {

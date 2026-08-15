@@ -1864,7 +1864,9 @@ mod tests {
     fn test_pqm_update_status() {
         let mut mgr = PersistedQueryManager::new();
         let gql = mgr.register(make_input("{ user { id } }"));
-        let updated = mgr.update_status(&gql.query_hash, QueryStatus::Archived).unwrap();
+        let updated = mgr
+            .update_status(&gql.query_hash, QueryStatus::Archived)
+            .unwrap();
         assert_eq!(updated.status, QueryStatus::Archived);
         let got = mgr.get(&gql.query_hash).unwrap();
         assert_eq!(got.status, QueryStatus::Archived);
@@ -1942,9 +1944,8 @@ mod tests {
         let simple = PersistedQueryManager::estimate_complexity("{ user { id } }");
         assert!(simple > 0);
 
-        let complex = PersistedQueryManager::estimate_complexity(
-            "{ a { b { c { d { e { f } } } } } }",
-        );
+        let complex =
+            PersistedQueryManager::estimate_complexity("{ a { b { c { d { e { f } } } } } }");
         assert!(complex >= simple);
     }
 
@@ -2108,13 +2109,15 @@ mod tests {
     fn test_aw_review_approved_with_expiry() {
         let mut aw = ApprovalWorkflow::new();
         let req = aw.create_request(make_approval_input());
-        let reviewed = aw.review(ApprovalReviewInput {
-            request_id: req.request_id.clone(),
-            reviewer_id: "boss".to_string(),
-            approved: true,
-            review_notes: Some("LGTM".to_string()),
-            expires_in_hours: Some(24),
-        }).unwrap();
+        let reviewed = aw
+            .review(ApprovalReviewInput {
+                request_id: req.request_id.clone(),
+                reviewer_id: "boss".to_string(),
+                approved: true,
+                review_notes: Some("LGTM".to_string()),
+                expires_in_hours: Some(24),
+            })
+            .unwrap();
         assert_eq!(reviewed.status, ApprovalStatus::Approved);
         assert_eq!(reviewed.reviewer_id.as_deref(), Some("boss"));
         assert_eq!(reviewed.review_notes.as_deref(), Some("LGTM"));
@@ -2125,13 +2128,15 @@ mod tests {
     fn test_aw_review_rejected() {
         let mut aw = ApprovalWorkflow::new();
         let req = aw.create_request(make_approval_input());
-        let reviewed = aw.review(ApprovalReviewInput {
-            request_id: req.request_id,
-            reviewer_id: "boss".to_string(),
-            approved: false,
-            review_notes: None,
-            expires_in_hours: None,
-        }).unwrap();
+        let reviewed = aw
+            .review(ApprovalReviewInput {
+                request_id: req.request_id,
+                reviewer_id: "boss".to_string(),
+                approved: false,
+                review_notes: None,
+                expires_in_hours: None,
+            })
+            .unwrap();
         assert_eq!(reviewed.status, ApprovalStatus::Rejected);
     }
 
@@ -2320,7 +2325,12 @@ mod tests {
     #[test]
     fn test_ge_check_governance_all_allowed() {
         let ge = GovernanceEngine::new();
-        let result = ge.check_governance("h1", "u1", &["admin".to_string()], &["User.email".to_string()]);
+        let result = ge.check_governance(
+            "h1",
+            "u1",
+            &["admin".to_string()],
+            &["User.email".to_string()],
+        );
         assert!(result.allowed);
         assert!(result.denial_reason.is_none());
     }
@@ -2336,7 +2346,12 @@ mod tests {
             pii: Some(true),
             audit: None,
         });
-        let result = ge.check_governance("h1", "u1", &["admin".to_string()], &["User.ssn".to_string()]);
+        let result = ge.check_governance(
+            "h1",
+            "u1",
+            &["admin".to_string()],
+            &["User.ssn".to_string()],
+        );
         assert!(result.warnings.iter().any(|w| w.contains("PII")));
     }
 
@@ -2358,7 +2373,9 @@ mod tests {
             &["User.secret".to_string()],
         );
         assert!(!result.allowed);
-        assert!(result.field_restrictions.contains(&"User.secret".to_string()));
+        assert!(result
+            .field_restrictions
+            .contains(&"User.secret".to_string()));
         assert!(!result.warnings.is_empty());
     }
 
@@ -2449,9 +2466,24 @@ mod tests {
     #[test]
     fn test_qas_record_and_filter_by_event_type() {
         let mut store = QueryAuditStore::new();
-        store.record(make_audit_entry("a1", AuditEventType::QueryExecuted, "u1", QueryRisk::Low));
-        store.record(make_audit_entry("a2", AuditEventType::QueryFailed, "u1", QueryRisk::High));
-        store.record(make_audit_entry("a3", AuditEventType::QueryExecuted, "u2", QueryRisk::Low));
+        store.record(make_audit_entry(
+            "a1",
+            AuditEventType::QueryExecuted,
+            "u1",
+            QueryRisk::Low,
+        ));
+        store.record(make_audit_entry(
+            "a2",
+            AuditEventType::QueryFailed,
+            "u1",
+            QueryRisk::High,
+        ));
+        store.record(make_audit_entry(
+            "a3",
+            AuditEventType::QueryExecuted,
+            "u2",
+            QueryRisk::Low,
+        ));
 
         let filter = QueryAuditFilterInput {
             event_type: Some(AuditEventType::QueryFailed),
@@ -2471,8 +2503,18 @@ mod tests {
     #[test]
     fn test_qas_filter_by_user() {
         let mut store = QueryAuditStore::new();
-        store.record(make_audit_entry("a1", AuditEventType::QueryExecuted, "u1", QueryRisk::Low));
-        store.record(make_audit_entry("a2", AuditEventType::QueryExecuted, "u2", QueryRisk::Low));
+        store.record(make_audit_entry(
+            "a1",
+            AuditEventType::QueryExecuted,
+            "u1",
+            QueryRisk::Low,
+        ));
+        store.record(make_audit_entry(
+            "a2",
+            AuditEventType::QueryExecuted,
+            "u2",
+            QueryRisk::Low,
+        ));
 
         let filter = QueryAuditFilterInput {
             event_type: None,
@@ -2492,8 +2534,18 @@ mod tests {
     #[test]
     fn test_qas_filter_by_risk_level() {
         let mut store = QueryAuditStore::new();
-        store.record(make_audit_entry("a1", AuditEventType::QueryExecuted, "u1", QueryRisk::Low));
-        store.record(make_audit_entry("a2", AuditEventType::QueryExecuted, "u1", QueryRisk::High));
+        store.record(make_audit_entry(
+            "a1",
+            AuditEventType::QueryExecuted,
+            "u1",
+            QueryRisk::Low,
+        ));
+        store.record(make_audit_entry(
+            "a2",
+            AuditEventType::QueryExecuted,
+            "u1",
+            QueryRisk::High,
+        ));
 
         let filter = QueryAuditFilterInput {
             event_type: None,
@@ -2566,10 +2618,30 @@ mod tests {
     #[test]
     fn test_qas_stats_tracking() {
         let mut store = QueryAuditStore::new();
-        store.record(make_audit_entry("a1", AuditEventType::QueryExecuted, "u1", QueryRisk::Low));
-        store.record(make_audit_entry("a2", AuditEventType::QueryExecuted, "u1", QueryRisk::Low));
-        store.record(make_audit_entry("a3", AuditEventType::QueryFailed, "u2", QueryRisk::High));
-        store.record(make_audit_entry("a4", AuditEventType::QueryDenied, "u3", QueryRisk::Critical));
+        store.record(make_audit_entry(
+            "a1",
+            AuditEventType::QueryExecuted,
+            "u1",
+            QueryRisk::Low,
+        ));
+        store.record(make_audit_entry(
+            "a2",
+            AuditEventType::QueryExecuted,
+            "u1",
+            QueryRisk::Low,
+        ));
+        store.record(make_audit_entry(
+            "a3",
+            AuditEventType::QueryFailed,
+            "u2",
+            QueryRisk::High,
+        ));
+        store.record(make_audit_entry(
+            "a4",
+            AuditEventType::QueryDenied,
+            "u3",
+            QueryRisk::Critical,
+        ));
 
         let stats = store.get_stats();
         assert_eq!(stats.total_queries, 3);
@@ -2597,9 +2669,17 @@ mod tests {
         let stats = store.get_stats();
         assert_eq!(stats.top_users.len(), 2);
         assert_eq!(stats.top_queries.len(), 2);
-        let alice = stats.top_users.iter().find(|u| u.user_id == "alice").unwrap();
+        let alice = stats
+            .top_users
+            .iter()
+            .find(|u| u.user_id == "alice")
+            .unwrap();
         assert_eq!(alice.query_count, 2);
-        let h1 = stats.top_queries.iter().find(|q| q.query_hash == "h1").unwrap();
+        let h1 = stats
+            .top_queries
+            .iter()
+            .find(|q| q.query_hash == "h1")
+            .unwrap();
         assert_eq!(h1.count, 2);
         assert!((h1.avg_latency_ms - 150.0).abs() < 0.01);
     }
@@ -2720,7 +2800,12 @@ mod tests {
 
     #[test]
     fn test_roundtrip_query_risk_all_variants() {
-        for v in [QueryRisk::Low, QueryRisk::Medium, QueryRisk::High, QueryRisk::Critical] {
+        for v in [
+            QueryRisk::Low,
+            QueryRisk::Medium,
+            QueryRisk::High,
+            QueryRisk::Critical,
+        ] {
             roundtrip(&v);
         }
     }
@@ -2841,12 +2926,7 @@ mod tests {
         let policies = eg.list_policies();
         assert_eq!(policies.len(), 1);
 
-        let result = eg.check_governance(
-            "h",
-            "u",
-            &["guest".to_string()],
-            &["Ssn".to_string()],
-        );
+        let result = eg.check_governance("h", "u", &["guest".to_string()], &["Ssn".to_string()]);
         assert!(result.warnings.iter().any(|w| w.contains("PII")));
         assert!(result.required_approvals.contains(&"Ssn".to_string()));
     }

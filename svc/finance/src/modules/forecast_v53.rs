@@ -1560,70 +1560,93 @@ mod tests {
         assert_eq!(v1, v2);
     }
 
-    #[test] fn enum_prediction_model() {
+    #[test]
+    fn enum_prediction_model() {
         roundtrip(&PredictionModel::MovingAverage);
         roundtrip(&PredictionModel::ExponentialSmoothing);
         roundtrip(&PredictionModel::LinearTrend);
         roundtrip(&PredictionModel::SeasonalDecomposition);
     }
 
-    #[test] fn enum_prediction_scenario() {
+    #[test]
+    fn enum_prediction_scenario() {
         roundtrip(&PredictionScenario::Optimistic);
         roundtrip(&PredictionScenario::Pessimistic);
         roundtrip(&PredictionScenario::Realistic);
     }
 
-    #[test] fn enum_variance_classification() {
+    #[test]
+    fn enum_variance_classification() {
         roundtrip(&VarianceClassification::Favorable);
         roundtrip(&VarianceClassification::Unfavorable);
         roundtrip(&VarianceClassification::Neutral);
     }
 
-    #[test] fn enum_variance_trend() {
+    #[test]
+    fn enum_variance_trend() {
         roundtrip(&VarianceTrend::Increasing);
         roundtrip(&VarianceTrend::Decreasing);
         roundtrip(&VarianceTrend::Stable);
         roundtrip(&VarianceTrend::Volatile);
     }
 
-    #[test] fn struct_cash_flow_prediction() {
+    #[test]
+    fn struct_cash_flow_prediction() {
         let v = CashFlowPrediction {
-            id: Uuid::new_v4(), entity_id: "ENT-001".into(),
+            id: Uuid::new_v4(),
+            entity_id: "ENT-001".into(),
             period: "2024-Q1".into(),
-            predicted_inflow: 100000.0, predicted_outflow: 80000.0,
-            predicted_net: 20000.0, confidence: 0.85,
-            scenario: "realistic".into(), model_version: "v53.0-exp".into(),
-            created_at: Utc::now(), updated_at: Utc::now(),
+            predicted_inflow: 100000.0,
+            predicted_outflow: 80000.0,
+            predicted_net: 20000.0,
+            confidence: 0.85,
+            scenario: "realistic".into(),
+            model_version: "v53.0-exp".into(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_prediction_model_record() {
+    #[test]
+    fn struct_prediction_model_record() {
         let v = PredictionModelRecord {
-            id: Uuid::new_v4(), model_type: "exponential_smoothing".into(),
+            id: Uuid::new_v4(),
+            model_type: "exponential_smoothing".into(),
             entity_id: "default".into(),
             parameters: serde_json::json!({"alpha":0.3}),
-            accuracy: 0.88, is_active: true,
-            trained_at: Utc::now(), created_at: Utc::now(), updated_at: Utc::now(),
+            accuracy: 0.88,
+            is_active: true,
+            trained_at: Utc::now(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_budget_variance() {
+    #[test]
+    fn struct_budget_variance() {
         let v = BudgetVariance {
-            id: Uuid::new_v4(), budget_item_id: "item-1".into(),
+            id: Uuid::new_v4(),
+            budget_item_id: "item-1".into(),
             period: "2024-Q1".into(),
-            budget_amount: 1000.0, actual_amount: 1200.0,
-            variance_amount: 200.0, variance_percentage: 20.0,
-            classification: "unfavorable".into(), trend: "increasing".into(),
-            created_at: Utc::now(), updated_at: Utc::now(),
+            budget_amount: 1000.0,
+            actual_amount: 1200.0,
+            variance_amount: 200.0,
+            variance_percentage: 20.0,
+            classification: "unfavorable".into(),
+            trend: "increasing".into(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_variance_report() {
+    #[test]
+    fn struct_variance_report() {
         let v = VarianceReport {
-            id: Uuid::new_v4(), period: "2024-Q1".into(),
+            id: Uuid::new_v4(),
+            period: "2024-Q1".into(),
             summary: "整体偏差可控".into(),
             line_items: serde_json::json!([]),
             trends: serde_json::json!({}),
@@ -1634,91 +1657,123 @@ mod tests {
         roundtrip(&v);
     }
 
-    #[test] fn struct_prediction_accuracy() {
+    #[test]
+    fn struct_prediction_accuracy() {
         let v = PredictionAccuracy {
             model_type: "linear_trend".into(),
             overall_accuracy: 0.85,
-            inflow_accuracy: 0.88, outflow_accuracy: 0.82,
-            mean_absolute_error: 15.0, sample_count: 120,
+            inflow_accuracy: 0.88,
+            outflow_accuracy: 0.82,
+            mean_absolute_error: 15.0,
+            sample_count: 120,
             last_trained: Some(Utc::now()),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_prediction_result() {
+    #[test]
+    fn struct_prediction_result() {
         let v = PredictionResult {
             prediction: CashFlowPrediction {
-                id: Uuid::new_v4(), entity_id: "ENT-001".into(),
+                id: Uuid::new_v4(),
+                entity_id: "ENT-001".into(),
                 period: "2024-Q2".into(),
-                predicted_inflow: 50000.0, predicted_outflow: 40000.0,
-                predicted_net: 10000.0, confidence: 0.9,
-                scenario: "optimistic".into(), model_version: "v53.0-ma".into(),
-                created_at: Utc::now(), updated_at: Utc::now(),
+                predicted_inflow: 50000.0,
+                predicted_outflow: 40000.0,
+                predicted_net: 10000.0,
+                confidence: 0.9,
+                scenario: "optimistic".into(),
+                model_version: "v53.0-ma".into(),
+                created_at: Utc::now(),
+                updated_at: Utc::now(),
             },
-            confidence_interval_lower: 8000.0, confidence_interval_upper: 12000.0,
+            confidence_interval_lower: 8000.0,
+            confidence_interval_upper: 12000.0,
             seasonal_factors: vec![0.8, 1.0, 1.2],
             trend_slope: 500.0,
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_budget_item_input() {
+    #[test]
+    fn struct_budget_item_input() {
         let v = BudgetItemInput {
-            item_id: "it-1".into(), item_name: "租金".into(),
-            budget_amount: 10000.0, actual_amount: 9500.0,
+            item_id: "it-1".into(),
+            item_name: "租金".into(),
+            budget_amount: 10000.0,
+            actual_amount: 9500.0,
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_anomaly_detection() {
+    #[test]
+    fn struct_anomaly_detection() {
         let v = AnomalyDetection {
-            item_id: "it-1".into(), item_name: "办公用品".into(),
-            anomaly_type: "spike".into(), severity: "high".into(),
-            description: "突然增加".into(), expected_range: "0-500".into(),
+            item_id: "it-1".into(),
+            item_name: "办公用品".into(),
+            anomaly_type: "spike".into(),
+            severity: "high".into(),
+            description: "突然增加".into(),
+            expected_range: "0-500".into(),
             actual_value: 2000.0,
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_variance_analysis_result() {
+    #[test]
+    fn struct_variance_analysis_result() {
         let v = VarianceAnalysisResult {
             variances: vec![BudgetVariance {
-                id: Uuid::new_v4(), budget_item_id: "it-1".into(),
+                id: Uuid::new_v4(),
+                budget_item_id: "it-1".into(),
                 period: "2024-Q1".into(),
-                budget_amount: 1000.0, actual_amount: 1200.0,
-                variance_amount: 200.0, variance_percentage: 20.0,
-                classification: "unfavorable".into(), trend: "stable".into(),
-                created_at: Utc::now(), updated_at: Utc::now(),
+                budget_amount: 1000.0,
+                actual_amount: 1200.0,
+                variance_amount: 200.0,
+                variance_percentage: 20.0,
+                classification: "unfavorable".into(),
+                trend: "stable".into(),
+                created_at: Utc::now(),
+                updated_at: Utc::now(),
             }],
-            total_budget: 1000.0, total_actual: 1200.0,
-            total_variance: 200.0, variance_percentage: 20.0,
+            total_budget: 1000.0,
+            total_actual: 1200.0,
+            total_variance: 200.0,
+            variance_percentage: 20.0,
             classification_summary: [("unfavorable".into(), 1i64)].into(),
             root_causes: vec!["成本上涨".into()],
             recommendations: vec!["控制成本".into()],
             anomalies: vec![AnomalyDetection {
-                item_id: "it-1".into(), item_name: "x".into(),
-                anomaly_type: "spike".into(), severity: "high".into(),
-                description: "d".into(), expected_range: "0-100".into(),
+                item_id: "it-1".into(),
+                item_name: "x".into(),
+                anomaly_type: "spike".into(),
+                severity: "high".into(),
+                description: "d".into(),
+                expected_range: "0-100".into(),
                 actual_value: 500.0,
             }],
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_variance_trend_point() {
+    #[test]
+    fn struct_variance_trend_point() {
         let v = VarianceTrendPoint {
             period: "2024-Q1".into(),
-            variance_amount: 200.0, variance_percentage: 20.0,
+            variance_amount: 200.0,
+            variance_percentage: 20.0,
             classification: "unfavorable".into(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_variance_trend_analysis() {
+    #[test]
+    fn struct_variance_trend_analysis() {
         let v = VarianceTrendAnalysis {
             points: vec![VarianceTrendPoint {
                 period: "2024-Q1".into(),
-                variance_amount: 100.0, variance_percentage: 10.0,
+                variance_amount: 100.0,
+                variance_percentage: 10.0,
                 classification: "unfavorable".into(),
             }],
             overall_trend: "worsening".into(),
