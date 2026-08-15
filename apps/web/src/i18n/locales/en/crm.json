@@ -2,7 +2,7 @@
   "crm": {
     "common": {
       "home": "Home",
-      "crm": "CRM",
+      "crm": "CRM system",
       "customer_relationship_management": "Customer Relationship Management",
       "customer_relationship": "Customer Relationship",
       "loading": "Loading...",
@@ -595,8 +595,8 @@
       "title_load_fail": "Load Failed"
     }
   },
-  "crm.contact_detail_page.k0": "联系人详情",
-  "crm.customer_detail_page.k0": "客户详情",
-  "crm.opportunity_detail_page.k0": "商机详情",
-  "crm.return_detail_page.k0": "退货详情"
+  "crm.contact_detail_page.k0": "Contact Detail",
+  "crm.customer_detail_page.k0": "Customer Detail",
+  "crm.opportunity_detail_page.k0": "Opportunity Detail",
+  "crm.return_detail_page.k0": "Return Detail"
 }
