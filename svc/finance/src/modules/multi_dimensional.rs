@@ -1212,7 +1212,7 @@ pub fn create_routes() -> Router<AppState> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde::{Serialize, Deserialize};
+    use serde::{Deserialize, Serialize};
     fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
         let json = serde_json::to_string(item).unwrap();
         let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
@@ -1225,11 +1225,17 @@ mod tests {
     #[test]
     fn rq_cost_center_type() {
         roundtrip(&CostCenterType::Department);
+        roundtrip(&CostCenterType::Project);
+        roundtrip(&CostCenterType::Product);
+        roundtrip(&CostCenterType::Region);
+        roundtrip(&CostCenterType::Custom);
     }
 
     #[test]
     fn rq_cost_behavior() {
         roundtrip(&CostBehavior::Fixed);
+        roundtrip(&CostBehavior::Variable);
+        roundtrip(&CostBehavior::Mixed);
     }
 
     #[test]
@@ -1303,6 +1309,10 @@ mod tests {
     #[test]
     fn rq_profit_center_type() {
         roundtrip(&ProfitCenterType::ProductLine);
+        roundtrip(&ProfitCenterType::BusinessUnit);
+        roundtrip(&ProfitCenterType::Region);
+        roundtrip(&ProfitCenterType::CustomerSegment);
+        roundtrip(&ProfitCenterType::Project);
     }
 
     #[test]
@@ -1368,6 +1378,10 @@ mod tests {
     #[test]
     fn rq_project_status() {
         roundtrip(&ProjectStatus::Planning);
+        roundtrip(&ProjectStatus::InProgress);
+        roundtrip(&ProjectStatus::OnHold);
+        roundtrip(&ProjectStatus::Completed);
+        roundtrip(&ProjectStatus::Cancelled);
     }
 
     #[test]

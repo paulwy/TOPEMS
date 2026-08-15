@@ -36,11 +36,43 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use std::fmt;
 use uuid::Uuid;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+
+// ==================== ValidationError ====================
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ValidationError {
+    InvalidStatus(String),
+    EmptyField(String),
+    NegativeAmount(String),
+    InvalidCurrency(String),
+    SelfTransfer(String, String),
+    AmountAboveLimit { amount: f64, limit: f64 },
+}
+
+impl fmt::Display for ValidationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ValidationError::InvalidStatus(msg) => write!(f, "invalid status: {}", msg),
+            ValidationError::EmptyField(field) => write!(f, "empty field: {}", field),
+            ValidationError::NegativeAmount(field) => write!(f, "negative amount: {}", field),
+            ValidationError::InvalidCurrency(code) => write!(f, "无效币种代码: {}", code),
+            ValidationError::SelfTransfer(from, to) => {
+                write!(f, "禁止向自己转账: from={} to={}", from, to)
+            }
+            ValidationError::AmountAboveLimit { amount, limit } => {
+                write!(f, "单笔支付金额超限: {} > 上限 {}", amount, limit)
+            }
+        }
+    }
+}
+
+impl std::error::Error for ValidationError {}
 
 fn get_tenant_id(claims: &Claims) -> Uuid {
     claims
@@ -302,6 +334,34 @@ pub struct Invoice {
     pub status: String,
 }
 
+impl Invoice {
+    pub fn can_post(&self) -> bool {
+        self.status == InvoiceStatus::Verified.as_str()
+    }
+
+    pub fn validate_post(&self) -> Result<(), ValidationError> {
+        if self.status != InvoiceStatus::Verified.as_str() {
+            return Err(ValidationError::InvalidStatus(format!(
+                "invoice must be Verified, current status: {}",
+                self.status
+            )));
+        }
+        Ok(())
+    }
+
+    pub fn validate_items_total(&self, items: &[InvoiceItem]) -> Result<(), ValidationError> {
+        let calculated_total: f64 = items.iter().map(|i| i.amount).sum();
+        let tolerance = 0.01;
+        if (calculated_total - self.total_amount).abs() > tolerance && !items.is_empty() {
+            return Err(ValidationError::InvalidStatus(format!(
+                "invoice total_amount {} does not match items total {}",
+                self.total_amount, calculated_total
+            )));
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct InvoiceItem {
     pub id: Uuid,
@@ -342,6 +402,39 @@ pub struct PaymentResult {
     pub transaction_ref: Option<String>,
     pub fee: f64,
     pub processed_at: Option<DateTime<Utc>>,
+}
+
+impl PaymentResult {
+    pub fn can_reverse(&self) -> bool {
+        self.status == PaymentStatus::Completed.as_str()
+    }
+
+    pub fn validate_reverse(&self) -> Result<(), ValidationError> {
+        if self.status != PaymentStatus::Completed.as_str() {
+            return Err(ValidationError::InvalidStatus(format!(
+                "payment must be Completed to reverse, current status: {}",
+                self.status
+            )));
+        }
+        Ok(())
+    }
+
+    pub fn can_complete(&self) -> bool {
+        self.status == PaymentStatus::Pending.as_str()
+            || self.status == PaymentStatus::Processing.as_str()
+    }
+
+    pub fn validate_complete(&self) -> Result<(), ValidationError> {
+        if self.status != PaymentStatus::Pending.as_str()
+            && self.status != PaymentStatus::Processing.as_str()
+        {
+            return Err(ValidationError::InvalidStatus(format!(
+                "payment must be Pending or Processing to complete, current status: {}",
+                self.status
+            )));
+        }
+        Ok(())
+    }
 }
 
 // ==================== 数据库初始化 ====================
@@ -1074,12 +1167,9 @@ impl InvoiceRecognizer {
         .fetch_all(pool)
         .await?;
 
-        let calculated_total: f64 = items.iter().map(|i| i.amount).sum();
-        let tolerance = 0.01;
-
-        if (calculated_total - invoice.total_amount).abs() > tolerance && !items.is_empty() {
-            return Err(sqlx::Error::RowNotFound);
-        }
+        invoice
+            .validate_items_total(&items)
+            .map_err(|_| sqlx::Error::RowNotFound)?;
 
         let now = Utc::now();
         sqlx::query_as(
@@ -1153,9 +1243,9 @@ impl InvoiceRecognizer {
         .fetch_one(pool)
         .await?;
 
-        if invoice.status != InvoiceStatus::Verified.as_str() {
-            return Err(sqlx::Error::RowNotFound);
-        }
+        invoice
+            .validate_post()
+            .map_err(|_| sqlx::Error::RowNotFound)?;
 
         let now = Utc::now();
         sqlx::query_as(
@@ -1205,6 +1295,69 @@ pub struct InitiatePaymentRequest {
     pub reference: String,
 }
 
+impl InitiatePaymentRequest {
+    pub fn validate_initiate(&self) -> Result<(), ValidationError> {
+        if self.amount <= 0.0 {
+            return Err(ValidationError::NegativeAmount(
+                "amount must be greater than 0".to_string(),
+            ));
+        }
+        if self.from_account.trim().is_empty() {
+            return Err(ValidationError::EmptyField("from_account".to_string()));
+        }
+        if self.to_account.trim().is_empty() {
+            return Err(ValidationError::EmptyField("to_account".to_string()));
+        }
+        if self.reference.trim().is_empty() {
+            return Err(ValidationError::EmptyField("reference".to_string()));
+        }
+        Ok(())
+    }
+
+    const VALID_CURRENCIES_WHITELIST: &'static [&'static str; 10] = &[
+        "CNY", "USD", "EUR", "JPY", "GBP", "HKD", "AUD", "CAD", "SGD", "NZD",
+    ];
+
+    pub fn validate_currency(&self) -> Result<(), ValidationError> {
+        match &self.currency {
+            None => Ok(()),
+            Some(code) => {
+                if code.len() != 3 {
+                    return Err(ValidationError::InvalidCurrency(code.clone()));
+                }
+                if !code.chars().all(|c| c.is_ascii_uppercase()) {
+                    return Err(ValidationError::InvalidCurrency(code.clone()));
+                }
+                let _ = Self::VALID_CURRENCIES_WHITELIST;
+                Ok(())
+            }
+        }
+    }
+
+    pub fn validate_no_self_transfer(&self) -> Result<(), ValidationError> {
+        let from = self.from_account.trim().to_lowercase();
+        let to = self.to_account.trim().to_lowercase();
+        if from == to {
+            return Err(ValidationError::SelfTransfer(
+                self.from_account.clone(),
+                self.to_account.clone(),
+            ));
+        }
+        Ok(())
+    }
+
+    pub fn validate_amount_limit(&self, limit: Option<f64>) -> Result<(), ValidationError> {
+        let lim = limit.unwrap_or(100_000_000.0);
+        if self.amount > lim {
+            return Err(ValidationError::AmountAboveLimit {
+                amount: self.amount,
+                limit: lim,
+            });
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PaymentInitiationResult {
     pub request: PaymentRequest,
@@ -1217,6 +1370,14 @@ impl ElectronicPaymentProcessor {
         tenant_id: Uuid,
         req: InitiatePaymentRequest,
     ) -> Result<PaymentInitiationResult, sqlx::Error> {
+        req.validate_initiate()
+            .map_err(|_| sqlx::Error::RowNotFound)?;
+        req.validate_currency()
+            .map_err(|_| sqlx::Error::RowNotFound)?;
+        req.validate_no_self_transfer()
+            .map_err(|_| sqlx::Error::RowNotFound)?;
+        req.validate_amount_limit(None)
+            .map_err(|_| sqlx::Error::RowNotFound)?;
         let now = Utc::now();
         let method_str = req.method.unwrap_or_else(|| "bank_transfer".to_string());
         let method = PaymentMethod::from_str(&method_str);
@@ -1307,9 +1468,9 @@ impl ElectronicPaymentProcessor {
         .fetch_one(pool)
         .await?;
 
-        if original.status != PaymentStatus::Completed.as_str() {
-            return Err(sqlx::Error::RowNotFound);
-        }
+        original
+            .validate_reverse()
+            .map_err(|_| sqlx::Error::RowNotFound)?;
 
         let result_id = Uuid::new_v4();
         let reversed_ref = format!(
@@ -1361,6 +1522,8 @@ impl ElectronicPaymentProcessor {
         req: InitiatePaymentRequest,
         scheduled_at: DateTime<Utc>,
     ) -> Result<PaymentRequest, sqlx::Error> {
+        req.validate_initiate()
+            .map_err(|_| sqlx::Error::RowNotFound)?;
         let method_str = req.method.unwrap_or_else(|| "bank_transfer".to_string());
         let currency = req.currency.unwrap_or_else(|| "CNY".to_string());
         let request_id = Uuid::new_v4();
@@ -2020,34 +2183,39 @@ mod tests {
         assert_eq!(v1, v2);
     }
 
-    #[test] fn enum_match_type() {
+    #[test]
+    fn enum_match_type() {
         roundtrip(&MatchType::Exact);
         roundtrip(&MatchType::Fuzzy);
         roundtrip(&MatchType::Amount);
         roundtrip(&MatchType::Temporal);
     }
 
-    #[test] fn enum_match_status() {
+    #[test]
+    fn enum_match_status() {
         roundtrip(&MatchStatus::Matched);
         roundtrip(&MatchStatus::Partial);
         roundtrip(&MatchStatus::Unmatched);
         roundtrip(&MatchStatus::Discrepancy);
     }
 
-    #[test] fn enum_system_record_type() {
+    #[test]
+    fn enum_system_record_type() {
         roundtrip(&SystemRecordType::Invoice);
         roundtrip(&SystemRecordType::Payment);
         roundtrip(&SystemRecordType::Receipt);
     }
 
-    #[test] fn enum_invoice_status() {
+    #[test]
+    fn enum_invoice_status() {
         roundtrip(&InvoiceStatus::Pending);
         roundtrip(&InvoiceStatus::Recognized);
         roundtrip(&InvoiceStatus::Verified);
         roundtrip(&InvoiceStatus::Posted);
     }
 
-    #[test] fn enum_payment_method() {
+    #[test]
+    fn enum_payment_method() {
         roundtrip(&PaymentMethod::BankTransfer);
         roundtrip(&PaymentMethod::EWallet);
         roundtrip(&PaymentMethod::CreditCard);
@@ -2056,7 +2224,8 @@ mod tests {
         roundtrip(&PaymentMethod::QRCode);
     }
 
-    #[test] fn enum_payment_status() {
+    #[test]
+    fn enum_payment_status() {
         roundtrip(&PaymentStatus::Pending);
         roundtrip(&PaymentStatus::Processing);
         roundtrip(&PaymentStatus::Completed);
@@ -2064,134 +2233,810 @@ mod tests {
         roundtrip(&PaymentStatus::Reversed);
     }
 
-    #[test] fn struct_reconciliation_rule() {
+    #[test]
+    fn struct_reconciliation_rule() {
         let v = ReconciliationRule {
-            id: Uuid::new_v4(), name: "精确匹配".into(),
-            match_type: "exact".into(), tolerance: 0.01, enabled: true,
+            id: Uuid::new_v4(),
+            name: "精确匹配".into(),
+            match_type: "exact".into(),
+            tolerance: 0.01,
+            enabled: true,
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_reconciliation_result() {
+    #[test]
+    fn struct_reconciliation_result() {
         let v = ReconciliationResult {
-            id: Uuid::new_v4(), bank_transaction_id: "BT-001".into(),
+            id: Uuid::new_v4(),
+            bank_transaction_id: "BT-001".into(),
             system_record_id: "SR-001".into(),
-            match_status: "matched".into(), confidence: 0.98,
-            difference_amount: 0.0, notes: None,
+            match_status: "matched".into(),
+            confidence: 0.98,
+            difference_amount: 0.0,
+            notes: None,
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_bank_transaction() {
+    #[test]
+    fn struct_bank_transaction() {
         let v = BankTransaction {
-            id: "BT-001".into(), date: Utc::now(),
-            description: "转账".into(), amount: 5000.0,
-            currency: "CNY".into(), reference: "REF-001".into(),
+            id: "BT-001".into(),
+            date: Utc::now(),
+            description: "转账".into(),
+            amount: 5000.0,
+            currency: "CNY".into(),
+            reference: "REF-001".into(),
             counterparty: "供应商".into(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_system_record() {
+    #[test]
+    fn struct_system_record() {
         let v = SystemRecord {
-            id: "SR-001".into(), date: Utc::now(),
-            record_type: "payment".into(), amount: 5000.0,
-            currency: "CNY".into(), reference: "REF-001".into(),
+            id: "SR-001".into(),
+            date: Utc::now(),
+            record_type: "payment".into(),
+            amount: 5000.0,
+            currency: "CNY".into(),
+            reference: "REF-001".into(),
             counterparty: "供应商".into(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_invoice() {
+    #[test]
+    fn struct_invoice() {
         let v = Invoice {
-            id: Uuid::new_v4(), number: "INV-2024-001".into(),
-            vendor: "供应商A".into(), invoice_date: Utc::now(),
-            total_amount: 1130.0, tax_amount: 130.0,
+            id: Uuid::new_v4(),
+            number: "INV-2024-001".into(),
+            vendor: "供应商A".into(),
+            invoice_date: Utc::now(),
+            total_amount: 1130.0,
+            tax_amount: 130.0,
             status: "verified".into(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_invoice_item() {
+    #[test]
+    fn struct_invoice_item() {
         let v = InvoiceItem {
-            id: Uuid::new_v4(), invoice_id: Uuid::new_v4(),
-            description: "商品".into(), quantity: 10.0,
-            unit_price: 100.0, amount: 1000.0, tax_rate: 0.13,
+            id: Uuid::new_v4(),
+            invoice_id: Uuid::new_v4(),
+            description: "商品".into(),
+            quantity: 10.0,
+            unit_price: 100.0,
+            amount: 1000.0,
+            tax_rate: 0.13,
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_invoice_with_items() {
+    #[test]
+    fn struct_invoice_with_items() {
         let v = InvoiceWithItems {
             invoice: Invoice {
-                id: Uuid::new_v4(), number: "INV-002".into(),
-                vendor: "B".into(), invoice_date: Utc::now(),
-                total_amount: 200.0, tax_amount: 0.0, status: "pending".into(),
+                id: Uuid::new_v4(),
+                number: "INV-002".into(),
+                vendor: "B".into(),
+                invoice_date: Utc::now(),
+                total_amount: 200.0,
+                tax_amount: 0.0,
+                status: "pending".into(),
             },
             items: vec![InvoiceItem {
-                id: Uuid::new_v4(), invoice_id: Uuid::new_v4(),
-                description: "x".into(), quantity: 1.0,
-                unit_price: 200.0, amount: 200.0, tax_rate: 0.0,
+                id: Uuid::new_v4(),
+                invoice_id: Uuid::new_v4(),
+                description: "x".into(),
+                quantity: 1.0,
+                unit_price: 200.0,
+                amount: 200.0,
+                tax_rate: 0.0,
             }],
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_payment_request() {
+    #[test]
+    fn struct_payment_request() {
         let v = PaymentRequest {
-            id: Uuid::new_v4(), amount: 9999.0, currency: "CNY".into(),
-            from_account: "ACC-A".into(), to_account: "ACC-B".into(),
-            method: "bank_transfer".into(), reference: "REF-PAY-001".into(),
+            id: Uuid::new_v4(),
+            amount: 9999.0,
+            currency: "CNY".into(),
+            from_account: "ACC-A".into(),
+            to_account: "ACC-B".into(),
+            method: "bank_transfer".into(),
+            reference: "REF-PAY-001".into(),
             scheduled_at: None,
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_payment_result() {
+    #[test]
+    fn struct_payment_result() {
         let v = PaymentResult {
-            id: Uuid::new_v4(), request_id: Uuid::new_v4(),
+            id: Uuid::new_v4(),
+            request_id: Uuid::new_v4(),
             status: "completed".into(),
             transaction_ref: Some("TX-999".into()),
-            fee: 5.0, processed_at: Some(Utc::now()),
+            fee: 5.0,
+            processed_at: Some(Utc::now()),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_reconciliation_response() {
+    #[test]
+    fn struct_reconciliation_response() {
         let v = ReconciliationResponse {
-            id: Uuid::new_v4(), bank_transaction_id: "BT-002".into(),
+            id: Uuid::new_v4(),
+            bank_transaction_id: "BT-002".into(),
             system_record_id: "SR-002".into(),
-            match_status: "partial".into(), confidence: 0.8,
-            difference_amount: 10.0, notes: Some("金额差10元".into()),
+            match_status: "partial".into(),
+            confidence: 0.8,
+            difference_amount: 10.0,
+            notes: Some("金额差10元".into()),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_recognized_invoice() {
+    #[test]
+    fn struct_recognized_invoice() {
         let v = RecognizedInvoice {
             invoice: Invoice {
-                id: Uuid::new_v4(), number: "INV-003".into(),
-                vendor: "C".into(), invoice_date: Utc::now(),
-                total_amount: 100.0, tax_amount: 0.0, status: "recognized".into(),
+                id: Uuid::new_v4(),
+                number: "INV-003".into(),
+                vendor: "C".into(),
+                invoice_date: Utc::now(),
+                total_amount: 100.0,
+                tax_amount: 0.0,
+                status: "recognized".into(),
             },
             items: vec![],
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_payment_initiation_result() {
+    #[test]
+    fn struct_payment_initiation_result() {
         let v = PaymentInitiationResult {
             request: PaymentRequest {
-                id: Uuid::new_v4(), amount: 100.0, currency: "USD".into(),
-                from_account: "X".into(), to_account: "Y".into(),
-                method: "ach".into(), reference: "R".into(), scheduled_at: None,
+                id: Uuid::new_v4(),
+                amount: 100.0,
+                currency: "USD".into(),
+                from_account: "X".into(),
+                to_account: "Y".into(),
+                method: "ach".into(),
+                reference: "R".into(),
+                scheduled_at: None,
             },
             result: PaymentResult {
-                id: Uuid::new_v4(), request_id: Uuid::new_v4(),
-                status: "pending".into(), transaction_ref: None,
-                fee: 0.2, processed_at: None,
+                id: Uuid::new_v4(),
+                request_id: Uuid::new_v4(),
+                status: "pending".into(),
+                transaction_ref: None,
+                fee: 0.2,
+                processed_at: None,
             },
         };
         roundtrip(&v);
+    }
+
+    // ========== Invoice validate_post (所有 InvoiceStatus 变体) ==========
+
+    fn make_invoice_with_status(status: InvoiceStatus) -> Invoice {
+        Invoice {
+            id: Uuid::new_v4(),
+            number: "INV-TEST".into(),
+            vendor: "Vendor".into(),
+            invoice_date: Utc::now(),
+            total_amount: 100.0,
+            tax_amount: 13.0,
+            status: status.as_str().to_string(),
+        }
+    }
+
+    #[test]
+    fn test_invoice_validate_post_verified_ok() {
+        let inv = make_invoice_with_status(InvoiceStatus::Verified);
+        assert!(inv.can_post());
+        assert_eq!(inv.validate_post(), Ok(()));
+    }
+
+    #[test]
+    fn test_invoice_validate_post_pending_err() {
+        let inv = make_invoice_with_status(InvoiceStatus::Pending);
+        assert!(!inv.can_post());
+        let result = inv.validate_post();
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            ValidationError::InvalidStatus(_)
+        ));
+    }
+
+    #[test]
+    fn test_invoice_validate_post_recognized_err() {
+        let inv = make_invoice_with_status(InvoiceStatus::Recognized);
+        assert!(!inv.can_post());
+        let result = inv.validate_post();
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(format!("{}", err).contains("Verified"));
+    }
+
+    #[test]
+    fn test_invoice_validate_post_posted_err() {
+        let inv = make_invoice_with_status(InvoiceStatus::Posted);
+        assert!(!inv.can_post());
+        let result = inv.validate_post();
+        assert!(result.is_err());
+        if let ValidationError::InvalidStatus(msg) = result.unwrap_err() {
+            assert!(msg.contains("current status: posted"));
+        } else {
+            panic!("expected InvalidStatus");
+        }
+    }
+
+    // ========== Invoice validate_items_total ==========
+
+    #[test]
+    fn test_invoice_validate_items_total_ok() {
+        let inv = Invoice {
+            id: Uuid::new_v4(),
+            number: "INV-1".into(),
+            vendor: "V".into(),
+            invoice_date: Utc::now(),
+            total_amount: 200.0,
+            tax_amount: 26.0,
+            status: "verified".into(),
+        };
+        let items = vec![
+            InvoiceItem {
+                id: Uuid::new_v4(),
+                invoice_id: inv.id,
+                description: "A".into(),
+                quantity: 1.0,
+                unit_price: 100.0,
+                amount: 100.0,
+                tax_rate: 0.13,
+            },
+            InvoiceItem {
+                id: Uuid::new_v4(),
+                invoice_id: inv.id,
+                description: "B".into(),
+                quantity: 2.0,
+                unit_price: 50.0,
+                amount: 100.0,
+                tax_rate: 0.13,
+            },
+        ];
+        assert_eq!(inv.validate_items_total(&items), Ok(()));
+    }
+
+    #[test]
+    fn test_invoice_validate_items_total_mismatch_err() {
+        let inv = Invoice {
+            id: Uuid::new_v4(),
+            number: "INV-1".into(),
+            vendor: "V".into(),
+            invoice_date: Utc::now(),
+            total_amount: 500.0,
+            tax_amount: 0.0,
+            status: "recognized".into(),
+        };
+        let items = vec![InvoiceItem {
+            id: Uuid::new_v4(),
+            invoice_id: inv.id,
+            description: "X".into(),
+            quantity: 1.0,
+            unit_price: 100.0,
+            amount: 100.0,
+            tax_rate: 0.0,
+        }];
+        let result = inv.validate_items_total(&items);
+        assert!(result.is_err());
+        if let ValidationError::InvalidStatus(msg) = result.unwrap_err() {
+            assert!(msg.contains("does not match"));
+        } else {
+            panic!("expected InvalidStatus");
+        }
+    }
+
+    #[test]
+    fn test_invoice_validate_items_total_empty_ok() {
+        let inv = Invoice {
+            id: Uuid::new_v4(),
+            number: "INV-1".into(),
+            vendor: "V".into(),
+            invoice_date: Utc::now(),
+            total_amount: 0.0,
+            tax_amount: 0.0,
+            status: "pending".into(),
+        };
+        assert_eq!(inv.validate_items_total(&[]), Ok(()));
+    }
+
+    // ========== PaymentResult validate_reverse / validate_complete ==========
+
+    fn make_payment_result(status: PaymentStatus) -> PaymentResult {
+        PaymentResult {
+            id: Uuid::new_v4(),
+            request_id: Uuid::new_v4(),
+            status: status.as_str().to_string(),
+            transaction_ref: Some("TX-001".into()),
+            fee: 1.0,
+            processed_at: Some(Utc::now()),
+        }
+    }
+
+    #[test]
+    fn test_payment_validate_reverse_completed_ok() {
+        let p = make_payment_result(PaymentStatus::Completed);
+        assert!(p.can_reverse());
+        assert_eq!(p.validate_reverse(), Ok(()));
+    }
+
+    #[test]
+    fn test_payment_validate_reverse_pending_err() {
+        let p = make_payment_result(PaymentStatus::Pending);
+        assert!(!p.can_reverse());
+        let result = p.validate_reverse();
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            ValidationError::InvalidStatus(_)
+        ));
+    }
+
+    #[test]
+    fn test_payment_validate_reverse_processing_err() {
+        let p = make_payment_result(PaymentStatus::Processing);
+        assert!(!p.can_reverse());
+        let err = p.validate_reverse().unwrap_err();
+        assert!(format!("{}", err).contains("Completed"));
+    }
+
+    #[test]
+    fn test_payment_validate_reverse_failed_err() {
+        let p = make_payment_result(PaymentStatus::Failed);
+        assert!(!p.can_reverse());
+        if let ValidationError::InvalidStatus(msg) = p.validate_reverse().unwrap_err() {
+            assert!(msg.contains("failed"));
+        } else {
+            panic!("expected InvalidStatus");
+        }
+    }
+
+    #[test]
+    fn test_payment_validate_reverse_reversed_err() {
+        let p = make_payment_result(PaymentStatus::Reversed);
+        assert!(!p.can_reverse());
+        assert!(p.validate_reverse().is_err());
+    }
+
+    #[test]
+    fn test_payment_validate_complete_pending_ok() {
+        let p = make_payment_result(PaymentStatus::Pending);
+        assert!(p.can_complete());
+        assert_eq!(p.validate_complete(), Ok(()));
+    }
+
+    #[test]
+    fn test_payment_validate_complete_processing_ok() {
+        let p = make_payment_result(PaymentStatus::Processing);
+        assert!(p.can_complete());
+        assert_eq!(p.validate_complete(), Ok(()));
+    }
+
+    #[test]
+    fn test_payment_validate_complete_completed_err() {
+        let p = make_payment_result(PaymentStatus::Completed);
+        assert!(!p.can_complete());
+        let result = p.validate_complete();
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            ValidationError::InvalidStatus(_)
+        ));
+    }
+
+    #[test]
+    fn test_payment_validate_complete_reversed_err() {
+        let p = make_payment_result(PaymentStatus::Reversed);
+        assert!(!p.can_complete());
+        assert!(p.validate_complete().is_err());
+    }
+
+    // ========== InitiatePaymentRequest validate_initiate ==========
+
+    fn make_initiate_req() -> InitiatePaymentRequest {
+        InitiatePaymentRequest {
+            amount: 1000.0,
+            currency: Some("CNY".into()),
+            from_account: "ACC-FROM".into(),
+            to_account: "ACC-TO".into(),
+            method: Some("bank_transfer".into()),
+            reference: "REF-001".into(),
+        }
+    }
+
+    #[test]
+    fn test_initiate_validate_ok() {
+        let req = make_initiate_req();
+        assert_eq!(req.validate_initiate(), Ok(()));
+    }
+
+    #[test]
+    fn test_initiate_validate_negative_amount_err() {
+        let mut req = make_initiate_req();
+        req.amount = -50.0;
+        let result = req.validate_initiate();
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            ValidationError::NegativeAmount(_)
+        ));
+    }
+
+    #[test]
+    fn test_initiate_validate_zero_amount_err() {
+        let mut req = make_initiate_req();
+        req.amount = 0.0;
+        let result = req.validate_initiate();
+        assert!(result.is_err());
+        if let ValidationError::NegativeAmount(msg) = result.unwrap_err() {
+            assert!(msg.contains("greater than 0"));
+        } else {
+            panic!("expected NegativeAmount");
+        }
+    }
+
+    #[test]
+    fn test_initiate_validate_empty_from_account_err() {
+        let mut req = make_initiate_req();
+        req.from_account = "   ".into();
+        let result = req.validate_initiate();
+        assert!(result.is_err());
+        if let ValidationError::EmptyField(field) = result.unwrap_err() {
+            assert_eq!(field, "from_account");
+        } else {
+            panic!("expected EmptyField(from_account)");
+        }
+    }
+
+    #[test]
+    fn test_initiate_validate_empty_to_account_err() {
+        let mut req = make_initiate_req();
+        req.to_account = "".into();
+        let result = req.validate_initiate();
+        assert!(result.is_err());
+        if let ValidationError::EmptyField(field) = result.unwrap_err() {
+            assert_eq!(field, "to_account");
+        } else {
+            panic!("expected EmptyField(to_account)");
+        }
+    }
+
+    #[test]
+    fn test_initiate_validate_empty_reference_err() {
+        let mut req = make_initiate_req();
+        req.reference = "    ".into();
+        let result = req.validate_initiate();
+        assert!(result.is_err());
+        if let ValidationError::EmptyField(field) = result.unwrap_err() {
+            assert_eq!(field, "reference");
+        } else {
+            panic!("expected EmptyField(reference)");
+        }
+    }
+
+    // ========== VoucherStatus / PeriodStatus validation ==========
+    // 使用 crate::models::* 中的验证函数
+
+    use crate::models::{ModelValidationError, PeriodStatus, VoucherStatus};
+
+    #[test]
+    fn test_voucher_status_validate_post_submitted_err() {
+        assert!(!VoucherStatus::Submitted.can_post());
+        assert!(VoucherStatus::Submitted.validate_post().is_err());
+    }
+
+    #[test]
+    fn test_voucher_status_validate_post_approved_ok() {
+        assert!(VoucherStatus::Approved.can_post());
+        assert_eq!(VoucherStatus::Approved.validate_post(), Ok(()));
+    }
+
+    #[test]
+    fn test_voucher_status_validate_post_draft_err() {
+        assert!(!VoucherStatus::Draft.can_post());
+        let result = VoucherStatus::Draft.validate_post();
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            ModelValidationError::InvalidStatus(_)
+        ));
+    }
+
+    #[test]
+    fn test_voucher_status_validate_post_posted_err() {
+        assert!(!VoucherStatus::Posted.can_post());
+        let result = VoucherStatus::Posted.validate_post();
+        assert!(result.is_err());
+        if let ModelValidationError::InvalidStatus(msg) = result.unwrap_err() {
+            assert!(msg.contains("只有已审批的凭证才能过账"));
+        } else {
+            panic!("expected InvalidStatus");
+        }
+    }
+
+    #[test]
+    fn test_voucher_status_validate_post_reversed_rejected_cancelled_err() {
+        assert!(!VoucherStatus::Reversed.can_post());
+        assert!(VoucherStatus::Reversed.validate_post().is_err());
+        assert!(!VoucherStatus::Rejected.can_post());
+        assert!(VoucherStatus::Rejected.validate_post().is_err());
+        assert!(!VoucherStatus::Cancelled.can_post());
+        assert!(VoucherStatus::Cancelled.validate_post().is_err());
+    }
+
+    #[test]
+    fn test_voucher_status_validate_reverse_posted_ok() {
+        assert!(VoucherStatus::Posted.can_reverse());
+        assert_eq!(VoucherStatus::Posted.validate_reverse(), Ok(()));
+    }
+
+    #[test]
+    fn test_voucher_status_validate_reverse_draft_submitted_err() {
+        assert!(!VoucherStatus::Draft.can_reverse());
+        assert!(VoucherStatus::Draft.validate_reverse().is_err());
+        assert!(!VoucherStatus::Submitted.can_reverse());
+        assert!(VoucherStatus::Submitted.validate_reverse().is_err());
+        assert!(!VoucherStatus::Approved.can_reverse());
+        assert!(VoucherStatus::Approved.validate_reverse().is_err());
+        assert!(!VoucherStatus::Reversed.can_reverse());
+        assert!(VoucherStatus::Reversed.validate_reverse().is_err());
+    }
+
+    #[test]
+    fn test_period_status_validate_post_open_ok() {
+        assert!(PeriodStatus::Open.can_post());
+        assert_eq!(PeriodStatus::Open.validate_post(), Ok(()));
+    }
+
+    #[test]
+    fn test_period_status_validate_post_closing_closed_err() {
+        assert!(!PeriodStatus::Closing.can_post());
+        assert!(PeriodStatus::Closing.validate_post().is_err());
+        assert!(!PeriodStatus::Closed.can_post());
+        let result = PeriodStatus::Closed.validate_post();
+        assert!(result.is_err());
+        if let ModelValidationError::InvalidStatus(msg) = result.unwrap_err() {
+            assert!(msg.contains("Open"));
+        } else {
+            panic!("expected InvalidStatus");
+        }
+    }
+
+    #[test]
+    fn test_period_status_validate_close_ok() {
+        assert!(PeriodStatus::Open.can_close());
+        assert_eq!(PeriodStatus::Open.validate_close(), Ok(()));
+        assert!(PeriodStatus::Closing.can_close());
+        assert_eq!(PeriodStatus::Closing.validate_close(), Ok(()));
+    }
+
+    #[test]
+    fn test_period_status_validate_close_closed_err() {
+        assert!(!PeriodStatus::Closed.can_close());
+        assert!(PeriodStatus::Closed.validate_close().is_err());
+    }
+
+    // ========== A. validate_currency ==========
+
+    #[test]
+    fn test_validate_currency_none_ok() {
+        let mut req = make_initiate_req();
+        req.currency = None;
+        assert!(req.validate_currency().is_ok());
+    }
+
+    #[test]
+    fn test_validate_currency_cny_ok() {
+        let mut req = make_initiate_req();
+        req.currency = Some("CNY".into());
+        assert!(req.validate_currency().is_ok());
+    }
+
+    #[test]
+    fn test_validate_currency_usd_ok() {
+        let mut req = make_initiate_req();
+        req.currency = Some("USD".into());
+        assert!(req.validate_currency().is_ok());
+    }
+
+    #[test]
+    fn test_validate_currency_zzz_format_ok() {
+        let mut req = make_initiate_req();
+        req.currency = Some("ZZZ".into());
+        assert!(req.validate_currency().is_ok());
+    }
+
+    #[test]
+    fn test_validate_currency_lowercase_err() {
+        let mut req = make_initiate_req();
+        req.currency = Some("cny".into());
+        let result = req.validate_currency();
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err, ValidationError::InvalidCurrency(_)));
+        assert!(format!("{}", err).contains("币种"));
+    }
+
+    #[test]
+    fn test_validate_currency_too_short_err() {
+        let mut req = make_initiate_req();
+        req.currency = Some("CN".into());
+        let result = req.validate_currency();
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err, ValidationError::InvalidCurrency(_)));
+        assert!(format!("{}", err).contains("币种"));
+    }
+
+    #[test]
+    fn test_validate_currency_too_long_err() {
+        let mut req = make_initiate_req();
+        req.currency = Some("CNY1".into());
+        let result = req.validate_currency();
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err, ValidationError::InvalidCurrency(_)));
+        assert!(format!("{}", err).contains("币种"));
+    }
+
+    // ========== B. validate_no_self_transfer ==========
+
+    #[test]
+    fn test_no_self_transfer_different_ok() {
+        let mut req = make_initiate_req();
+        req.from_account = "a".into();
+        req.to_account = "b".into();
+        assert!(req.validate_no_self_transfer().is_ok());
+    }
+
+    #[test]
+    fn test_no_self_transfer_case_insensitive_err() {
+        let mut req = make_initiate_req();
+        req.from_account = "a".into();
+        req.to_account = "A".into();
+        let result = req.validate_no_self_transfer();
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err, ValidationError::SelfTransfer(_, _)));
+        assert!(format!("{}", err).contains("自己转账"));
+    }
+
+    #[test]
+    fn test_no_self_transfer_trim_same_err() {
+        let mut req = make_initiate_req();
+        req.from_account = "  acct123  ".into();
+        req.to_account = "acct123".into();
+        let result = req.validate_no_self_transfer();
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err, ValidationError::SelfTransfer(_, _)));
+        assert!(format!("{}", err).contains("自己转账"));
+    }
+
+    #[test]
+    fn test_no_self_transfer_exact_same_err() {
+        let mut req = make_initiate_req();
+        req.from_account = "acct1".into();
+        req.to_account = "acct1".into();
+        let result = req.validate_no_self_transfer();
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err, ValidationError::SelfTransfer(_, _)));
+    }
+
+    // ========== C. validate_amount_limit ==========
+
+    #[test]
+    fn test_amount_limit_under_default_ok() {
+        let mut req = make_initiate_req();
+        req.amount = 10_000_000.0;
+        assert!(req.validate_amount_limit(None).is_ok());
+    }
+
+    #[test]
+    fn test_amount_limit_over_default_err() {
+        let mut req = make_initiate_req();
+        req.amount = 200_000_000.0;
+        let result = req.validate_amount_limit(None);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err, ValidationError::AmountAboveLimit { .. }));
+        assert!(format!("{}", err).contains("超限"));
+    }
+
+    #[test]
+    fn test_amount_limit_equal_custom_ok() {
+        let mut req = make_initiate_req();
+        req.amount = 50_000_000.0;
+        assert!(req.validate_amount_limit(Some(50_000_000.0)).is_ok());
+    }
+
+    #[test]
+    fn test_amount_limit_over_custom_err() {
+        let mut req = make_initiate_req();
+        req.amount = 50_000_001.0;
+        let result = req.validate_amount_limit(Some(50_000_000.0));
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err, ValidationError::AmountAboveLimit { .. }));
+        assert!(format!("{}", err).contains("上限"));
+    }
+
+    // ========== D. 综合链条 validate_all ==========
+
+    fn validate_all(req: &InitiatePaymentRequest) -> Result<(), ValidationError> {
+        req.validate_initiate()?;
+        req.validate_currency()?;
+        req.validate_no_self_transfer()?;
+        req.validate_amount_limit(None)?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_validate_all_all_valid_ok() {
+        let req = make_initiate_req();
+        assert!(validate_all(&req).is_ok());
+    }
+
+    #[test]
+    fn test_validate_all_zero_amount_err() {
+        let mut req = make_initiate_req();
+        req.amount = 0.0;
+        let result = validate_all(&req);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err, ValidationError::NegativeAmount(_)));
+    }
+
+    #[test]
+    fn test_validate_all_self_transfer_err() {
+        let mut req = make_initiate_req();
+        req.from_account = "ACC-X".into();
+        req.to_account = "ACC-X".into();
+        let result = validate_all(&req);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err, ValidationError::SelfTransfer(_, _)));
+    }
+
+    #[test]
+    fn test_validate_all_lowercase_currency_err() {
+        let mut req = make_initiate_req();
+        req.currency = Some("usd".into());
+        let result = validate_all(&req);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err, ValidationError::InvalidCurrency(_)));
+        assert!(format!("{}", err).contains("币种"));
+    }
+
+    #[test]
+    fn test_validate_all_amount_above_limit_err() {
+        let mut req = make_initiate_req();
+        req.amount = 200_000_000.0;
+        let result = validate_all(&req);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err, ValidationError::AmountAboveLimit { .. }));
+        assert!(format!("{}", err).contains("超限"));
     }
 }
