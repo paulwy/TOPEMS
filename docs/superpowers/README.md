@@ -27,7 +27,7 @@
 | [v69-2-p2-6-ai-copilot-refactor](./plans/2026-08-11-v69-2-p2-6-ai-copilot-refactor.md) | 2026-08-11 | V69.2 | ✅ 已实施 | `copilotContext.ts` 存在并被 8 个消费方引用（GlobalActions/MobileNav/AISelectionBubble/AiDashboardPage/GlobalLayout/useAIContext/FloatingAIHelper/recommendations）；`ai-copilot-context` localStorage 经 `AI_COPILOT_CONTEXT_KEY` 常量统一封装 |
 | [crm-full-fill-implementation](./plans/2026-08-12-crm-full-fill-implementation.md) | 2026-08-12 | V183-V190 | ✅ 已实施 | `_mock.ts` / `schemas/crm/index.ts` / `modules/analytics.rs`（7 路由）/ 4 个测试文件（opportunity_fsm/return_fsm/pagination/rls_isolation）/ `check-crm-contract.mjs` 齐备 |
 | [mes-full-fill-implementation](./plans/2026-08-12-mes-full-fill-implementation.md) | 2026-08-12 | V191-V197 | ✅ 已实施 | `types/mes.ts`（28 实体）/ `api/mes/{analytics,approval}.ts` / `models/*.rs`（production_order 在 `modules/`）/ `shared/fsm.rs`（17 FSM 函数）/ 6 BI 页面 / `StatusBadge.tsx` + 按模块分布的 `FSMActionButtons.tsx` |
-| [mes-security-contract-reinforcement](./plans/2026-08-12-mes-security-contract-reinforcement.md) | 2026-08-12 | V191-V196 | ✅ 已实施 | `tenant_id` 迁移 2 份 / `shared/{tenant,audit}.rs` / 269 处 `#[test]`（远超 ≥20 目标）/ `scripts/dev/check-mes-contract.mjs` 已补齐（样板 production_order，检出 5 项前端字段缺失——CI 门禁待修复对齐后转 PASS） |
+| [mes-security-contract-reinforcement](./plans/2026-08-12-mes-security-contract-reinforcement.md) | 2026-08-12 | V191-V196 | ✅ 已实施 | `tenant_id` 迁移 2 份 / `shared/{tenant,audit}.rs` / 269 处 `#[test]`（远超 ≥20 目标）/ `scripts/dev/check-mes-contract.mjs` 已补齐并 PASS（样板 production_order，字段 20/20 + 路由 13/13） |
 | [qms-full-fill-implementation](./plans/2026-08-12-qms-full-fill-implementation.md) | 2026-08-12 | V198 | ✅ 已实施 | `types/qms.ts` / `api/qms/_mock.ts` / `models/`（apqp/audit/audit_log/eight_d/fmea/spc）/ `shared/fsm.rs` 齐备 |
 | [wms-full-fill-implementation](./plans/2026-08-12-wms-full-fill-implementation.md) | 2026-08-12 | V199 | ✅ 已实施 | `shared/fsm.rs` / `tests/approval_endpoints_test.rs` / 10 模型文件 / 6 BI 页面齐备 |
 | [wms-tms-erp-integration-test](./plans/2026-08-12-wms-tms-erp-integration-test.md) | 2026-08-12 | V200 | ✅ 已实施 | 前端 `__tests__/integration/wms-tms-erp-integration.test.ts` + 后端 `svc/{wms,tms}/tests/cross_module_integration_tests.rs` 齐备 |
@@ -48,10 +48,10 @@
 
 经代码库逐项核查，**全部 16 个计划 + 6 个规格均已在代码库完整落地**，无残留待办。
 
-### MES 契约门禁脚本（2026-08-15 补齐）
+### MES 契约门禁脚本（2026-08-15 补齐并修复）
 
 [check-mes-contract.mjs](../../scripts/dev/check-mes-contract.mjs) 已补齐，样板实体 `production_order`，与 CRM 的 [check-crm-contract.mjs](../../scripts/dev/check-crm-contract.mjs) 结构对齐。
 
-当前运行结果：**FAIL**（exit 1）——检出 5 项前端字段缺失（`product_id` / `source` / `source_order_id` / `source_order_number` / `workshop_id`）。这些是 `ProductionOrderResponse` 后端模型与前端 `ProductionOrder` 接口之间的真实契约偏差，需在后续迭代中对齐前端类型定义。脚本本身已作为 CI 门禁基础设施就位，待字段对齐后自动转 PASS。
+运行结果：**PASS**（exit 0）——字段 20/20 + 路由 13/13。初次运行检出的 5 项前端字段缺失（`product_id` / `source` / `source_order_id` / `source_order_number` / `workshop_id`）已通过对齐 `apps/web/src/api/mes/types.ts` 中的 `ProductionOrder` 接口修复，TSC 0 error。
 
 > **关于"已实施"判定的依据**：本核查基于代码库实际文件存在性、关键标识符计数（`#[utoipa::path]` / `#[test]` / `pub use` / `maxLength` / FSM 函数数等）以及与 [roadmap/TODO.md](../roadmap/TODO.md) 已记录里程碑交叉验证。计划文档自身的 `- [ ]` 复选框未回填，仅反映文档归档时未同步更新内部勾选状态，不代表工作未完成。
