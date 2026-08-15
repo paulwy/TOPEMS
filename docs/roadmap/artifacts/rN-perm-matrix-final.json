@@ -1,0 +1,2460 @@
+{
+  "version": "perm-matrix-gate@1.0.0",
+  "createdAt": "2026-08-15T23:58:09.312Z",
+  "runConfig": {
+    "dryRun": true,
+    "failFastThresholds": {
+      "R1": 0,
+      "R2": 0,
+      "R3": 0,
+      "R4": null,
+      "R5": null,
+      "R6": null
+    },
+    "scan": [
+      "backend",
+      "frontend",
+      "constants"
+    ]
+  },
+  "scanners": {
+    "scannedBackendFiles": 1580,
+    "scannedFrontendConfigs": 38,
+    "totalBackendCodes": 42,
+    "totalFrontendNavCodes": 955,
+    "backendCommentSkips": 4,
+    "frontendPERMSetSize": 101,
+    "backendModuleCodeSize": 21
+  },
+  "integrity": {
+    "passed": true,
+    "violations": []
+  },
+  "summary": {
+    "R1": 8,
+    "R2": 12,
+    "R3": 1018,
+    "R4": 39,
+    "R5": 83,
+    "R6": 15
+  },
+  "failures": [
+    {
+      "rule": "R1",
+      "level": "FAIL",
+      "file": "svc/ai/src/modules/ai_knowledge/mod.rs",
+      "line": 281,
+      "code": "knowledge:read",
+      "crateOrModule": "ai",
+      "msg": "module 'knowledge' not in valid set (known modules: iam,hrm,erp,pm,rs,scm,srm,crm,ai,gis,qms,,ehs,,mes,,wms,,workflow,doc,file,notification,im,integration...)"
+    },
+    {
+      "rule": "R1",
+      "level": "FAIL",
+      "file": "svc/ai/src/modules/ai_knowledge/mod.rs",
+      "line": 311,
+      "code": "knowledge:write",
+      "crateOrModule": "ai",
+      "msg": "module 'knowledge' not in valid set (known modules: iam,hrm,erp,pm,rs,scm,srm,crm,ai,gis,qms,,ehs,,mes,,wms,,workflow,doc,file,notification,im,integration...)"
+    },
+    {
+      "rule": "R1",
+      "level": "FAIL",
+      "file": "svc/ai/src/modules/ai_knowledge/mod.rs",
+      "line": 325,
+      "code": "knowledge:admin",
+      "crateOrModule": "ai",
+      "msg": "module 'knowledge' not in valid set (known modules: iam,hrm,erp,pm,rs,scm,srm,crm,ai,gis,qms,,ehs,,mes,,wms,,workflow,doc,file,notification,im,integration...)"
+    },
+    {
+      "rule": "R1",
+      "level": "FAIL",
+      "file": "svc/finance/src/modules/settlement_center/routes.rs",
+      "line": 51,
+      "code": "settlement:read",
+      "crateOrModule": "finance",
+      "msg": "module 'settlement' not in valid set (known modules: iam,hrm,erp,pm,rs,scm,srm,crm,ai,gis,qms,,ehs,,mes,,wms,,workflow,doc,file,notification,im,integration...)"
+    },
+    {
+      "rule": "R1",
+      "level": "FAIL",
+      "file": "svc/finance/src/modules/settlement_center/routes.rs",
+      "line": 85,
+      "code": "settlement:write",
+      "crateOrModule": "finance",
+      "msg": "module 'settlement' not in valid set (known modules: iam,hrm,erp,pm,rs,scm,srm,crm,ai,gis,qms,,ehs,,mes,,wms,,workflow,doc,file,notification,im,integration...)"
+    },
+    {
+      "rule": "R1",
+      "level": "FAIL",
+      "file": "svc/finance/src/modules/settlement_center/routes.rs",
+      "line": 103,
+      "code": "settlement:approve",
+      "crateOrModule": "finance",
+      "msg": "module 'settlement' not in valid set (known modules: iam,hrm,erp,pm,rs,scm,srm,crm,ai,gis,qms,,ehs,,mes,,wms,,workflow,doc,file,notification,im,integration...)"
+    },
+    {
+      "rule": "R1",
+      "level": "FAIL",
+      "file": "svc/unified-core/src/routes/master.rs",
+      "line": 67,
+      "code": "tenant:read",
+      "crateOrModule": "unified-core",
+      "msg": "module 'tenant' not in valid set (known modules: iam,hrm,erp,pm,rs,scm,srm,crm,ai,gis,qms,,ehs,,mes,,wms,,workflow,doc,file,notification,im,integration...)"
+    },
+    {
+      "rule": "R1",
+      "level": "FAIL",
+      "file": "svc/unified-core/src/routes/master.rs",
+      "line": 133,
+      "code": "tenant:write",
+      "crateOrModule": "unified-core",
+      "msg": "module 'tenant' not in valid set (known modules: iam,hrm,erp,pm,rs,scm,srm,crm,ai,gis,qms,,ehs,,mes,,wms,,workflow,doc,file,notification,im,integration...)"
+    },
+    {
+      "rule": "R2",
+      "level": "FAIL",
+      "file": "svc/ai/src/modules/ai_knowledge/mod.rs",
+      "line": 281,
+      "code": "knowledge:read",
+      "crateOrModule": "ai",
+      "msg": "NOT found in allValidSet (frontend PERM ∪ backend ModuleCode×PermissionAction ∪ permission-metadata cache) — knownAction='read'? true; module known? false."
+    },
+    {
+      "rule": "R2",
+      "level": "FAIL",
+      "file": "svc/ai/src/modules/ai_knowledge/mod.rs",
+      "line": 311,
+      "code": "knowledge:write",
+      "crateOrModule": "ai",
+      "msg": "NOT found in allValidSet (frontend PERM ∪ backend ModuleCode×PermissionAction ∪ permission-metadata cache) — knownAction='write'? true; module known? false."
+    },
+    {
+      "rule": "R2",
+      "level": "FAIL",
+      "file": "svc/ai/src/modules/ai_knowledge/mod.rs",
+      "line": 325,
+      "code": "knowledge:admin",
+      "crateOrModule": "ai",
+      "msg": "NOT found in allValidSet (frontend PERM ∪ backend ModuleCode×PermissionAction ∪ permission-metadata cache) — knownAction='admin'? true; module known? false."
+    },
+    {
+      "rule": "R2",
+      "level": "FAIL",
+      "file": "svc/finance/src/modules/settlement_center/routes.rs",
+      "line": 51,
+      "code": "settlement:read",
+      "crateOrModule": "finance",
+      "msg": "NOT found in allValidSet (frontend PERM ∪ backend ModuleCode×PermissionAction ∪ permission-metadata cache) — knownAction='read'? true; module known? false."
+    },
+    {
+      "rule": "R2",
+      "level": "FAIL",
+      "file": "svc/finance/src/modules/settlement_center/routes.rs",
+      "line": 85,
+      "code": "settlement:write",
+      "crateOrModule": "finance",
+      "msg": "NOT found in allValidSet (frontend PERM ∪ backend ModuleCode×PermissionAction ∪ permission-metadata cache) — knownAction='write'? true; module known? false."
+    },
+    {
+      "rule": "R2",
+      "level": "FAIL",
+      "file": "svc/finance/src/modules/settlement_center/routes.rs",
+      "line": 103,
+      "code": "settlement:approve",
+      "crateOrModule": "finance",
+      "msg": "NOT found in allValidSet (frontend PERM ∪ backend ModuleCode×PermissionAction ∪ permission-metadata cache) — knownAction='approve'? true; module known? false."
+    },
+    {
+      "rule": "R2",
+      "level": "FAIL",
+      "file": "svc/unified-core/src/routes/master.rs",
+      "line": 67,
+      "code": "tenant:read",
+      "crateOrModule": "unified-core",
+      "msg": "NOT found in allValidSet (frontend PERM ∪ backend ModuleCode×PermissionAction ∪ permission-metadata cache) — knownAction='read'? true; module known? false."
+    },
+    {
+      "rule": "R2",
+      "level": "FAIL",
+      "file": "svc/unified-core/src/routes/master.rs",
+      "line": 133,
+      "code": "tenant:write",
+      "crateOrModule": "unified-core",
+      "msg": "NOT found in allValidSet (frontend PERM ∪ backend ModuleCode×PermissionAction ∪ permission-metadata cache) — knownAction='write'? true; module known? false."
+    },
+    {
+      "rule": "R2",
+      "level": "FAIL",
+      "file": "lib/shared-auth/src/middleware/permission.rs",
+      "line": 321,
+      "code": "iam:users_read",
+      "crateOrModule": "lib::shared-auth",
+      "msg": "NOT found in allValidSet (frontend PERM ∪ backend ModuleCode×PermissionAction ∪ permission-metadata cache) — knownAction='users_read'? false; module known? true."
+    },
+    {
+      "rule": "R2",
+      "level": "FAIL",
+      "file": "lib/shared-auth/src/middleware/permission.rs",
+      "line": 328,
+      "code": "iam:users_read",
+      "crateOrModule": "lib::shared-auth",
+      "msg": "NOT found in allValidSet (frontend PERM ∪ backend ModuleCode×PermissionAction ∪ permission-metadata cache) — knownAction='users_read'? false; module known? true."
+    },
+    {
+      "rule": "R2",
+      "level": "FAIL",
+      "file": "lib/shared-auth/src/middleware/permission.rs",
+      "line": 335,
+      "code": "iam:users_read",
+      "crateOrModule": "lib::shared-auth",
+      "msg": "NOT found in allValidSet (frontend PERM ∪ backend ModuleCode×PermissionAction ∪ permission-metadata cache) — knownAction='users_read'? false; module known? true."
+    },
+    {
+      "rule": "R2",
+      "level": "FAIL",
+      "file": "lib/shared-auth/src/middleware/permission.rs",
+      "line": 342,
+      "code": "iam:anything",
+      "crateOrModule": "lib::shared-auth",
+      "msg": "NOT found in allValidSet (frontend PERM ∪ backend ModuleCode×PermissionAction ∪ permission-metadata cache) — knownAction='anything'? false; module known? true."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 44,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 55,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 69,
+      "code": "admin:tenant:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 69,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 80,
+      "code": "admin:tenant:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 80,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 94,
+      "code": "admin:tenant:write",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 94,
+      "code": "admin:dashboard:write",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 105,
+      "code": "admin:tenant:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 105,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 121,
+      "code": "admin:account:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 121,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 135,
+      "code": "admin:bank:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 135,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 151,
+      "code": "admin:dictionary:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 151,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 165,
+      "code": "admin:system:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 165,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 179,
+      "code": "admin:system:write",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 179,
+      "code": "admin:dashboard:write",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 193,
+      "code": "admin:plugin:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 193,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 209,
+      "code": "admin:database:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 209,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 223,
+      "code": "admin:migration:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 223,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 234,
+      "code": "admin:debug:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 234,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 247,
+      "code": "admin:audit:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 247,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 261,
+      "code": "admin:system:write",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 261,
+      "code": "admin:dashboard:write",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 275,
+      "code": "system:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 275,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 286,
+      "code": "admin:monitor:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 286,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 300,
+      "code": "admin:monitor:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 300,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 314,
+      "code": "admin:audit:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 314,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 328,
+      "code": "admin:monitor:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 328,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 342,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 354,
+      "code": "admin:dashboard:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 365,
+      "code": "admin:tenant:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 376,
+      "code": "admin:tenant:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 386,
+      "code": "admin:account:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 396,
+      "code": "admin:bank:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 406,
+      "code": "admin:dictionary:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 416,
+      "code": "admin:system:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 427,
+      "code": "admin:system:write",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 437,
+      "code": "admin:plugin:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 447,
+      "code": "admin:database:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 458,
+      "code": "admin:migration:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 469,
+      "code": "admin:debug:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 480,
+      "code": "admin:audit:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 491,
+      "code": "admin:system:write",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 501,
+      "code": "system:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 511,
+      "code": "admin:monitor:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 521,
+      "code": "admin:monitor:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 531,
+      "code": "admin:audit:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/admin/config.ts",
+      "line": 541,
+      "code": "admin:monitor:read",
+      "crateOrModule": "admin",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/ai/config.ts",
+      "line": 52,
+      "code": "ai:chat:read",
+      "crateOrModule": "ai",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/ai/config.ts",
+      "line": 63,
+      "code": "ai:code:read",
+      "crateOrModule": "ai",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/ai/config.ts",
+      "line": 77,
+      "code": "ai:document:read",
+      "crateOrModule": "ai",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/ai/config.ts",
+      "line": 88,
+      "code": "ai:knowledge:read",
+      "crateOrModule": "ai",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/ai/config.ts",
+      "line": 99,
+      "code": "ai:prompt:read",
+      "crateOrModule": "ai",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/ai/config.ts",
+      "line": 156,
+      "code": "ai:chat:read",
+      "crateOrModule": "ai",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/ai/config.ts",
+      "line": 167,
+      "code": "ai:code:read",
+      "crateOrModule": "ai",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/ai/config.ts",
+      "line": 177,
+      "code": "ai:document:read",
+      "crateOrModule": "ai",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/ai/config.ts",
+      "line": 188,
+      "code": "ai:knowledge:read",
+      "crateOrModule": "ai",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/ai/config.ts",
+      "line": 199,
+      "code": "ai:prompt:read",
+      "crateOrModule": "ai",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 43,
+      "code": "aps:module:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 56,
+      "code": "aps:dashboard:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 70,
+      "code": "aps:production_plan:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 84,
+      "code": "aps:schedule:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 98,
+      "code": "aps:capacity:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 112,
+      "code": "aps:material_plan:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 126,
+      "code": "aps:forecast:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 141,
+      "code": "aps:production_plan:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 155,
+      "code": "aps:schedule:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 169,
+      "code": "aps:capacity:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 183,
+      "code": "aps:material_plan:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 197,
+      "code": "aps:forecast:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 211,
+      "code": "aps:production_plan:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 226,
+      "code": "aps:dashboard:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 240,
+      "code": "aps:schedule:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 254,
+      "code": "aps:capacity:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 268,
+      "code": "aps:material_plan:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 282,
+      "code": "aps:forecast:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 296,
+      "code": "aps:dashboard:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 308,
+      "code": "aps:module:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 320,
+      "code": "aps:dashboard:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 331,
+      "code": "aps:production_plan:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 342,
+      "code": "aps:schedule:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 353,
+      "code": "aps:capacity:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 364,
+      "code": "aps:material_plan:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 375,
+      "code": "aps:forecast:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 386,
+      "code": "aps:dashboard:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 397,
+      "code": "aps:schedule:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 408,
+      "code": "aps:capacity:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 419,
+      "code": "aps:material_plan:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 430,
+      "code": "aps:forecast:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/aps/config.ts",
+      "line": 441,
+      "code": "aps:dashboard:read",
+      "crateOrModule": "aps",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/asset/config.ts",
+      "line": 25,
+      "code": "asset:list:read",
+      "crateOrModule": "asset",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/asset/config.ts",
+      "line": 33,
+      "code": "asset:dashboard:read",
+      "crateOrModule": "asset",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/asset/config.ts",
+      "line": 46,
+      "code": "asset:list:read",
+      "crateOrModule": "asset",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/asset/config.ts",
+      "line": 60,
+      "code": "asset:category:read",
+      "crateOrModule": "asset",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/asset/config.ts",
+      "line": 71,
+      "code": "asset:depreciation:read",
+      "crateOrModule": "asset",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/asset/config.ts",
+      "line": 82,
+      "code": "asset:transfer:read",
+      "crateOrModule": "asset",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/asset/config.ts",
+      "line": 102,
+      "code": "asset:dashboard:read",
+      "crateOrModule": "asset",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/asset/config.ts",
+      "line": 112,
+      "code": "asset:list:read",
+      "crateOrModule": "asset",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/asset/config.ts",
+      "line": 120,
+      "code": "asset:category:read",
+      "crateOrModule": "asset",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/asset/config.ts",
+      "line": 128,
+      "code": "asset:depreciation:read",
+      "crateOrModule": "asset",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/asset/config.ts",
+      "line": 136,
+      "code": "asset:transfer:read",
+      "crateOrModule": "asset",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/automation/config.ts",
+      "line": 33,
+      "code": "automation:dashboard:read",
+      "crateOrModule": "automation",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/automation/config.ts",
+      "line": 46,
+      "code": "automation:dashboard:read",
+      "crateOrModule": "automation",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/automation/config.ts",
+      "line": 60,
+      "code": "automation:rule:read",
+      "crateOrModule": "automation",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/automation/config.ts",
+      "line": 74,
+      "code": "automation:run:read",
+      "crateOrModule": "automation",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/automation/config.ts",
+      "line": 88,
+      "code": "automation:rule:write",
+      "crateOrModule": "automation",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/automation/config.ts",
+      "line": 102,
+      "code": "automation:variable:read",
+      "crateOrModule": "automation",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/automation/config.ts",
+      "line": 114,
+      "code": "automation:dashboard:read",
+      "crateOrModule": "automation",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/automation/config.ts",
+      "line": 126,
+      "code": "automation:dashboard:read",
+      "crateOrModule": "automation",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/automation/config.ts",
+      "line": 137,
+      "code": "automation:rule:read",
+      "crateOrModule": "automation",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/automation/config.ts",
+      "line": 148,
+      "code": "automation:run:read",
+      "crateOrModule": "automation",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/automation/config.ts",
+      "line": 159,
+      "code": "automation:rule:write",
+      "crateOrModule": "automation",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/automation/config.ts",
+      "line": 169,
+      "code": "automation:variable:read",
+      "crateOrModule": "automation",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 38,
+      "code": "bi:dashboard:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 46,
+      "code": "bi:dashboard:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 57,
+      "code": "bi:analytics:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 57,
+      "code": "bi:dashboard:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 68,
+      "code": "bi:comparison:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 68,
+      "code": "bi:dashboard:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 79,
+      "code": "bi:data_source:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 79,
+      "code": "bi:dashboard:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 90,
+      "code": "bi:dataset:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 90,
+      "code": "bi:dashboard:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 101,
+      "code": "bi:report:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 101,
+      "code": "bi:dashboard:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 112,
+      "code": "bi:visualization:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 112,
+      "code": "bi:dashboard:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 123,
+      "code": "bi:report:write",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 123,
+      "code": "bi:dashboard:write",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 134,
+      "code": "bi:dashboard:admin",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 145,
+      "code": "bi:index:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 145,
+      "code": "bi:dashboard:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 156,
+      "code": "bi:dashboard:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 167,
+      "code": "bi:analytics:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 167,
+      "code": "bi:dashboard:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 178,
+      "code": "bi:gis:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 178,
+      "code": "bi:dashboard:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 192,
+      "code": "bi:dashboard:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 204,
+      "code": "bi:dashboard:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 215,
+      "code": "bi:analytics:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 226,
+      "code": "bi:comparison:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 236,
+      "code": "bi:data_source:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 246,
+      "code": "bi:dataset:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 256,
+      "code": "bi:report:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 267,
+      "code": "bi:visualization:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 277,
+      "code": "bi:report:write",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 287,
+      "code": "bi:dashboard:admin",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 297,
+      "code": "bi:index:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/bi/config.ts",
+      "line": 307,
+      "code": "bi:gis:read",
+      "crateOrModule": "bi",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/crm/config.ts",
+      "line": 67,
+      "code": "crm:customer:read",
+      "crateOrModule": "crm",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/crm/config.ts",
+      "line": 78,
+      "code": "crm:customer:create",
+      "crateOrModule": "crm",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/crm/config.ts",
+      "line": 89,
+      "code": "crm:customer:read",
+      "crateOrModule": "crm",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/crm/config.ts",
+      "line": 100,
+      "code": "crm:customer:update",
+      "crateOrModule": "crm",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/crm/config.ts",
+      "line": 100,
+      "code": "crm:dashboard:update",
+      "crateOrModule": "crm",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/crm/config.ts",
+      "line": 114,
+      "code": "crm:contact:read",
+      "crateOrModule": "crm",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/crm/config.ts",
+      "line": 125,
+      "code": "crm:contact:read",
+      "crateOrModule": "crm",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/crm/config.ts",
+      "line": 139,
+      "code": "crm:opportunity:read",
+      "crateOrModule": "crm",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/crm/config.ts",
+      "line": 153,
+      "code": "crm:opportunity:read",
+      "crateOrModule": "crm",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/crm/config.ts",
+      "line": 167,
+      "code": "crm:interaction:read",
+      "crateOrModule": "crm",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/crm/config.ts",
+      "line": 177,
+      "code": "crm:billing:read",
+      "crateOrModule": "crm",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/crm/config.ts",
+      "line": 188,
+      "code": "crm:sales_funnel:read",
+      "crateOrModule": "crm",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/crm/config.ts",
+      "line": 202,
+      "code": "crm:customer_scoring:read",
+      "crateOrModule": "crm",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/crm/config.ts",
+      "line": 216,
+      "code": "crm:sales_forecast:read",
+      "crateOrModule": "crm",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/crm/config.ts",
+      "line": 230,
+      "code": "crm:customer_segmentation:read",
+      "crateOrModule": "crm",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/crm/config.ts",
+      "line": 241,
+      "code": "crm:rfm:read",
+      "crateOrModule": "crm",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    },
+    {
+      "rule": "R3",
+      "level": "FAIL",
+      "file": "apps/web/src/modules/crm/config.ts",
+      "line": 255,
+      "code": "crm:forecast:read",
+      "crateOrModule": "crm",
+      "msg": "NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling."
+    }
+  ],
+  "warnings": [
+    {
+      "rule": "R2-WEAK-PASS",
+      "level": "WARN",
+      "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
+      "line": 45,
+      "code": "plugin:read",
+      "msg": "module 'plugin' valid + action 'read' valid, but code NOT explicitly in constants table; suggest add to shared-auth ModuleCode×PermissionAction or frontend PERMISSIONS explicitly (avoids future false-positive R2 after new actions added)."
+    },
+    {
+      "rule": "R2-WEAK-PASS",
+      "level": "WARN",
+      "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
+      "line": 73,
+      "code": "plugin:write",
+      "msg": "module 'plugin' valid + action 'write' valid, but code NOT explicitly in constants table; suggest add to shared-auth ModuleCode×PermissionAction or frontend PERMISSIONS explicitly (avoids future false-positive R2 after new actions added)."
+    },
+    {
+      "rule": "R2-WEAK-PASS",
+      "level": "WARN",
+      "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
+      "line": 92,
+      "code": "plugin:read",
+      "msg": "module 'plugin' valid + action 'read' valid, but code NOT explicitly in constants table; suggest add to shared-auth ModuleCode×PermissionAction or frontend PERMISSIONS explicitly (avoids future false-positive R2 after new actions added)."
+    },
+    {
+      "rule": "R2-WEAK-PASS",
+      "level": "WARN",
+      "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
+      "line": 127,
+      "code": "plugin:write",
+      "msg": "module 'plugin' valid + action 'write' valid, but code NOT explicitly in constants table; suggest add to shared-auth ModuleCode×PermissionAction or frontend PERMISSIONS explicitly (avoids future false-positive R2 after new actions added)."
+    },
+    {
+      "rule": "R2-WEAK-PASS",
+      "level": "WARN",
+      "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
+      "line": 154,
+      "code": "plugin:write",
+      "msg": "module 'plugin' valid + action 'write' valid, but code NOT explicitly in constants table; suggest add to shared-auth ModuleCode×PermissionAction or frontend PERMISSIONS explicitly (avoids future false-positive R2 after new actions added)."
+    },
+    {
+      "rule": "R2-WEAK-PASS",
+      "level": "WARN",
+      "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
+      "line": 176,
+      "code": "plugin:read",
+      "msg": "module 'plugin' valid + action 'read' valid, but code NOT explicitly in constants table; suggest add to shared-auth ModuleCode×PermissionAction or frontend PERMISSIONS explicitly (avoids future false-positive R2 after new actions added)."
+    },
+    {
+      "rule": "R2-WEAK-PASS",
+      "level": "WARN",
+      "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
+      "line": 196,
+      "code": "plugin:write",
+      "msg": "module 'plugin' valid + action 'write' valid, but code NOT explicitly in constants table; suggest add to shared-auth ModuleCode×PermissionAction or frontend PERMISSIONS explicitly (avoids future false-positive R2 after new actions added)."
+    },
+    {
+      "rule": "R2-WEAK-PASS",
+      "level": "WARN",
+      "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
+      "line": 230,
+      "code": "plugin:write",
+      "msg": "module 'plugin' valid + action 'write' valid, but code NOT explicitly in constants table; suggest add to shared-auth ModuleCode×PermissionAction or frontend PERMISSIONS explicitly (avoids future false-positive R2 after new actions added)."
+    },
+    {
+      "rule": "R2-WEAK-PASS",
+      "level": "WARN",
+      "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
+      "line": 252,
+      "code": "plugin:read",
+      "msg": "module 'plugin' valid + action 'read' valid, but code NOT explicitly in constants table; suggest add to shared-auth ModuleCode×PermissionAction or frontend PERMISSIONS explicitly (avoids future false-positive R2 after new actions added)."
+    },
+    {
+      "rule": "R2-WEAK-PASS",
+      "level": "WARN",
+      "file": "svc/unified-core/src/modules/audit/mod.rs",
+      "line": 208,
+      "code": "system:audit",
+      "msg": "module 'system' valid + action 'audit' valid, but code NOT explicitly in constants table; suggest add to shared-auth ModuleCode×PermissionAction or frontend PERMISSIONS explicitly (avoids future false-positive R2 after new actions added)."
+    },
+    {
+      "rule": "R2-WEAK-PASS",
+      "level": "WARN",
+      "file": "svc/unified-core/src/routes/migration.rs",
+      "line": 28,
+      "code": "system:migration",
+      "msg": "module 'system' valid + action 'migration' valid, but code NOT explicitly in constants table; suggest add to shared-auth ModuleCode×PermissionAction or frontend PERMISSIONS explicitly (avoids future false-positive R2 after new actions added)."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[B→F MISMATCH] Backend module prefix 'knowledge' appears in require_permission() checks, but apps/web/src/modules/knowledge/ directory is MISSING. Likely backend/frontend module naming inconsistency pairs (e.g. backend='pdm' ↔ frontend='product' / backend='master-data' ↔ frontend='master', etc.). Verify if frontend module directory SHOULD exist but has different basename."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[B→F MISMATCH] Backend module prefix 'settlement' appears in require_permission() checks, but apps/web/src/modules/settlement/ directory is MISSING. Likely backend/frontend module naming inconsistency pairs (e.g. backend='pdm' ↔ frontend='product' / backend='master-data' ↔ frontend='master', etc.). Verify if frontend module directory SHOULD exist but has different basename."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[B→F MISMATCH] Backend module prefix 'system' appears in require_permission() checks, but apps/web/src/modules/system/ directory is MISSING. Likely backend/frontend module naming inconsistency pairs (e.g. backend='pdm' ↔ frontend='product' / backend='master-data' ↔ frontend='master', etc.). Verify if frontend module directory SHOULD exist but has different basename."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[B→F MISMATCH] Backend module prefix 'file' appears in require_permission() checks, but apps/web/src/modules/file/ directory is MISSING. Likely backend/frontend module naming inconsistency pairs (e.g. backend='pdm' ↔ frontend='product' / backend='master-data' ↔ frontend='master', etc.). Verify if frontend module directory SHOULD exist but has different basename."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[B→F MISMATCH] Backend module prefix 'tenant' appears in require_permission() checks, but apps/web/src/modules/tenant/ directory is MISSING. Likely backend/frontend module naming inconsistency pairs (e.g. backend='pdm' ↔ frontend='product' / backend='master-data' ↔ frontend='master', etc.). Verify if frontend module directory SHOULD exist but has different basename."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'admin' (apps/web/src/modules/admin/) exists, but NO backend require_permission() calls were found with module prefix = 'admin'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module admin is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'ai' (apps/web/src/modules/ai/) exists, but NO backend require_permission() calls were found with module prefix = 'ai'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module ai is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'aps' (apps/web/src/modules/aps/) exists, but NO backend require_permission() calls were found with module prefix = 'aps'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module aps is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'asset' (apps/web/src/modules/asset/) exists, but NO backend require_permission() calls were found with module prefix = 'asset'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module asset is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'automation' (apps/web/src/modules/automation/) exists, but NO backend require_permission() calls were found with module prefix = 'automation'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module automation is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'bi' (apps/web/src/modules/bi/) exists, but NO backend require_permission() calls were found with module prefix = 'bi'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module bi is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'crm' (apps/web/src/modules/crm/) exists, but NO backend require_permission() calls were found with module prefix = 'crm'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module crm is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'doc' (apps/web/src/modules/doc/) exists, but NO backend require_permission() calls were found with module prefix = 'doc'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module doc is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'ehs' (apps/web/src/modules/ehs/) exists, but NO backend require_permission() calls were found with module prefix = 'ehs'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module ehs is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'erp' (apps/web/src/modules/erp/) exists, but NO backend require_permission() calls were found with module prefix = 'erp'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module erp is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'finance' (apps/web/src/modules/finance/) exists, but NO backend require_permission() calls were found with module prefix = 'finance'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module finance is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'gis' (apps/web/src/modules/gis/) exists, but NO backend require_permission() calls were found with module prefix = 'gis'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module gis is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'hrm' (apps/web/src/modules/hrm/) exists, but NO backend require_permission() calls were found with module prefix = 'hrm'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module hrm is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'im' (apps/web/src/modules/im/) exists, but NO backend require_permission() calls were found with module prefix = 'im'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module im is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'integration' (apps/web/src/modules/integration/) exists, but NO backend require_permission() calls were found with module prefix = 'integration'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module integration is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'lims' (apps/web/src/modules/lims/) exists, but NO backend require_permission() calls were found with module prefix = 'lims'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module lims is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'lowcode' (apps/web/src/modules/lowcode/) exists, but NO backend require_permission() calls were found with module prefix = 'lowcode'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module lowcode is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'mes' (apps/web/src/modules/mes/) exists, but NO backend require_permission() calls were found with module prefix = 'mes'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module mes is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'mobile' (apps/web/src/modules/mobile/) exists, but NO backend require_permission() calls were found with module prefix = 'mobile'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module mobile is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'monitor' (apps/web/src/modules/monitor/) exists, but NO backend require_permission() calls were found with module prefix = 'monitor'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module monitor is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'notification' (apps/web/src/modules/notification/) exists, but NO backend require_permission() calls were found with module prefix = 'notification'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module notification is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'oa' (apps/web/src/modules/oa/) exists, but NO backend require_permission() calls were found with module prefix = 'oa'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module oa is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'pdm' (apps/web/src/modules/pdm/) exists, but NO backend require_permission() calls were found with module prefix = 'pdm'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module pdm is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'pm' (apps/web/src/modules/pm/) exists, but NO backend require_permission() calls were found with module prefix = 'pm'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module pm is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'qms' (apps/web/src/modules/qms/) exists, but NO backend require_permission() calls were found with module prefix = 'qms'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module qms is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'rd' (apps/web/src/modules/rd/) exists, but NO backend require_permission() calls were found with module prefix = 'rd'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module rd is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'registry' (apps/web/src/modules/registry/) exists, but NO backend require_permission() calls were found with module prefix = 'registry'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module registry is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'report' (apps/web/src/modules/report/) exists, but NO backend require_permission() calls were found with module prefix = 'report'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module report is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'scm' (apps/web/src/modules/scm/) exists, but NO backend require_permission() calls were found with module prefix = 'scm'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module scm is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'shared' (apps/web/src/modules/shared/) exists, but NO backend require_permission() calls were found with module prefix = 'shared'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module shared is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'srm' (apps/web/src/modules/srm/) exists, but NO backend require_permission() calls were found with module prefix = 'srm'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module srm is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'ticket' (apps/web/src/modules/ticket/) exists, but NO backend require_permission() calls were found with module prefix = 'ticket'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module ticket is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'tms' (apps/web/src/modules/tms/) exists, but NO backend require_permission() calls were found with module prefix = 'tms'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module tms is missing checks."
+    },
+    {
+      "rule": "R4",
+      "level": "WARN",
+      "msg": "[F→B MISMATCH] Frontend module 'wms' (apps/web/src/modules/wms/) exists, but NO backend require_permission() calls were found with module prefix = 'wms'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module wms is missing checks."
+    },
+    {
+      "rule": "R5",
+      "level": "WARN",
+      "msg": "83 STATIC ORPHAN codes found in frontend PERMISSIONS: these keys are defined in config/permissions.ts BUT are NEVER referenced by (A) backend require_permission() AND (B) frontend nav/config requiredPermissions. Definition-only keys increase maintenance burden and mask real permissions lifecycle management; consider cleaning or marking reserved-for-future with TODO comments.",
+      "details": {
+        "count": 83,
+        "top50": [
+          "iam:dashboard:write",
+          "iam:dashboard:delete",
+          "iam:dashboard:approve",
+          "iam:dashboard:admin",
+          "hrm:read",
+          "hrm:write",
+          "hrm:delete",
+          "hrm:approve",
+          "hrm:admin",
+          "erp:dashboard:write",
+          "erp:dashboard:delete",
+          "erp:dashboard:approve",
+          "erp:dashboard:admin",
+          "pm:dashboard:delete",
+          "pm:dashboard:approve",
+          "pm:dashboard:admin",
+          "rs:read",
+          "rs:write",
+          "rs:delete",
+          "rs:approve",
+          "rs:admin",
+          "scm:read",
+          "scm:write",
+          "scm:delete",
+          "scm:approve",
+          "scm:admin",
+          "crm:dashboard:delete",
+          "crm:dashboard:approve",
+          "crm:dashboard:admin",
+          "ai:dashboard:write",
+          "ai:dashboard:delete",
+          "ai:dashboard:approve",
+          "gis:dashboard:write",
+          "gis:dashboard:delete",
+          "gis:dashboard:approve",
+          "gis:dashboard:admin",
+          "qms:dashboard:write",
+          "qms:dashboard:delete",
+          "qms:dashboard:approve",
+          "qms:dashboard:admin",
+          "ehs:dashboard:write",
+          "ehs:dashboard:delete",
+          "ehs:dashboard:approve",
+          "ehs:dashboard:admin",
+          "mes:read",
+          "mes:write",
+          "mes:delete",
+          "mes:approve",
+          "mes:admin",
+          "wms:read"
+        ]
+      }
+    },
+    {
+      "rule": "R6",
+      "level": "WARN",
+      "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
+      "line": 45,
+      "code": "plugin:read",
+      "msg": "Backend code 'plugin:read' (action=read) in module plugin has NO frontend nav/config permission key with same module 'plugin' + same action 'read'. This can be OK if the UI feature is not exposed yet, but verify whether the matching permission field is MISSING in frontend pluginModuleConfig / navTree entry."
+    },
+    {
+      "rule": "R6",
+      "level": "WARN",
+      "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
+      "line": 73,
+      "code": "plugin:write",
+      "msg": "Backend code 'plugin:write' (action=write) in module plugin has NO frontend nav/config permission key with same module 'plugin' + same action 'write'. This can be OK if the UI feature is not exposed yet, but verify whether the matching permission field is MISSING in frontend pluginModuleConfig / navTree entry."
+    },
+    {
+      "rule": "R6",
+      "level": "WARN",
+      "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
+      "line": 92,
+      "code": "plugin:read",
+      "msg": "Backend code 'plugin:read' (action=read) in module plugin has NO frontend nav/config permission key with same module 'plugin' + same action 'read'. This can be OK if the UI feature is not exposed yet, but verify whether the matching permission field is MISSING in frontend pluginModuleConfig / navTree entry."
+    },
+    {
+      "rule": "R6",
+      "level": "WARN",
+      "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
+      "line": 127,
+      "code": "plugin:write",
+      "msg": "Backend code 'plugin:write' (action=write) in module plugin has NO frontend nav/config permission key with same module 'plugin' + same action 'write'. This can be OK if the UI feature is not exposed yet, but verify whether the matching permission field is MISSING in frontend pluginModuleConfig / navTree entry."
+    },
+    {
+      "rule": "R6",
+      "level": "WARN",
+      "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
+      "line": 154,
+      "code": "plugin:write",
+      "msg": "Backend code 'plugin:write' (action=write) in module plugin has NO frontend nav/config permission key with same module 'plugin' + same action 'write'. This can be OK if the UI feature is not exposed yet, but verify whether the matching permission field is MISSING in frontend pluginModuleConfig / navTree entry."
+    },
+    {
+      "rule": "R6",
+      "level": "WARN",
+      "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
+      "line": 176,
+      "code": "plugin:read",
+      "msg": "Backend code 'plugin:read' (action=read) in module plugin has NO frontend nav/config permission key with same module 'plugin' + same action 'read'. This can be OK if the UI feature is not exposed yet, but verify whether the matching permission field is MISSING in frontend pluginModuleConfig / navTree entry."
+    },
+    {
+      "rule": "R6",
+      "level": "WARN",
+      "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
+      "line": 196,
+      "code": "plugin:write",
+      "msg": "Backend code 'plugin:write' (action=write) in module plugin has NO frontend nav/config permission key with same module 'plugin' + same action 'write'. This can be OK if the UI feature is not exposed yet, but verify whether the matching permission field is MISSING in frontend pluginModuleConfig / navTree entry."
+    },
+    {
+      "rule": "R6",
+      "level": "WARN",
+      "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
+      "line": 230,
+      "code": "plugin:write",
+      "msg": "Backend code 'plugin:write' (action=write) in module plugin has NO frontend nav/config permission key with same module 'plugin' + same action 'write'. This can be OK if the UI feature is not exposed yet, but verify whether the matching permission field is MISSING in frontend pluginModuleConfig / navTree entry."
+    },
+    {
+      "rule": "R6",
+      "level": "WARN",
+      "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
+      "line": 252,
+      "code": "plugin:read",
+      "msg": "Backend code 'plugin:read' (action=read) in module plugin has NO frontend nav/config permission key with same module 'plugin' + same action 'read'. This can be OK if the UI feature is not exposed yet, but verify whether the matching permission field is MISSING in frontend pluginModuleConfig / navTree entry."
+    },
+    {
+      "rule": "R6",
+      "level": "WARN",
+      "file": "svc/unified-core/src/routes/iam.rs",
+      "line": 158,
+      "code": "iam:write",
+      "msg": "Backend code 'iam:write' (action=write) in module iam has NO frontend nav/config permission key with same module 'iam' + same action 'write'. This can be OK if the UI feature is not exposed yet, but verify whether the matching permission field is MISSING in frontend iamModuleConfig / navTree entry."
+    },
+    {
+      "rule": "R6",
+      "level": "WARN",
+      "file": "svc/unified-core/src/routes/iam.rs",
+      "line": 174,
+      "code": "iam:delete",
+      "msg": "Backend code 'iam:delete' (action=delete) in module iam has NO frontend nav/config permission key with same module 'iam' + same action 'delete'. This can be OK if the UI feature is not exposed yet, but verify whether the matching permission field is MISSING in frontend iamModuleConfig / navTree entry."
+    },
+    {
+      "rule": "R6",
+      "level": "WARN",
+      "file": "lib/shared-auth/src/middleware/permission.rs",
+      "line": 321,
+      "code": "iam:users_read",
+      "msg": "Backend code 'iam:users_read' (action=users_read) in module iam has NO frontend nav/config permission key with same module 'iam' + same action 'users_read'. This can be OK if the UI feature is not exposed yet, but verify whether the matching permission field is MISSING in frontend iamModuleConfig / navTree entry."
+    },
+    {
+      "rule": "R6",
+      "level": "WARN",
+      "file": "lib/shared-auth/src/middleware/permission.rs",
+      "line": 328,
+      "code": "iam:users_read",
+      "msg": "Backend code 'iam:users_read' (action=users_read) in module iam has NO frontend nav/config permission key with same module 'iam' + same action 'users_read'. This can be OK if the UI feature is not exposed yet, but verify whether the matching permission field is MISSING in frontend iamModuleConfig / navTree entry."
+    },
+    {
+      "rule": "R6",
+      "level": "WARN",
+      "file": "lib/shared-auth/src/middleware/permission.rs",
+      "line": 335,
+      "code": "iam:users_read",
+      "msg": "Backend code 'iam:users_read' (action=users_read) in module iam has NO frontend nav/config permission key with same module 'iam' + same action 'users_read'. This can be OK if the UI feature is not exposed yet, but verify whether the matching permission field is MISSING in frontend iamModuleConfig / navTree entry."
+    },
+    {
+      "rule": "R6",
+      "level": "WARN",
+      "file": "lib/shared-auth/src/middleware/permission.rs",
+      "line": 342,
+      "code": "iam:anything",
+      "msg": "Backend code 'iam:anything' (action=anything) in module iam has NO frontend nav/config permission key with same module 'iam' + same action 'anything'. This can be OK if the UI feature is not exposed yet, but verify whether the matching permission field is MISSING in frontend iamModuleConfig / navTree entry."
+    }
+  ],
+  "orphanCodes": [
+    {
+      "code": "iam:dashboard:write"
+    },
+    {
+      "code": "iam:dashboard:delete"
+    },
+    {
+      "code": "iam:dashboard:approve"
+    },
+    {
+      "code": "iam:dashboard:admin"
+    },
+    {
+      "code": "hrm:read"
+    },
+    {
+      "code": "hrm:write"
+    },
+    {
+      "code": "hrm:delete"
+    },
+    {
+      "code": "hrm:approve"
+    },
+    {
+      "code": "hrm:admin"
+    },
+    {
+      "code": "erp:dashboard:write"
+    },
+    {
+      "code": "erp:dashboard:delete"
+    },
+    {
+      "code": "erp:dashboard:approve"
+    },
+    {
+      "code": "erp:dashboard:admin"
+    },
+    {
+      "code": "pm:dashboard:delete"
+    },
+    {
+      "code": "pm:dashboard:approve"
+    },
+    {
+      "code": "pm:dashboard:admin"
+    },
+    {
+      "code": "rs:read"
+    },
+    {
+      "code": "rs:write"
+    },
+    {
+      "code": "rs:delete"
+    },
+    {
+      "code": "rs:approve"
+    },
+    {
+      "code": "rs:admin"
+    },
+    {
+      "code": "scm:read"
+    },
+    {
+      "code": "scm:write"
+    },
+    {
+      "code": "scm:delete"
+    },
+    {
+      "code": "scm:approve"
+    },
+    {
+      "code": "scm:admin"
+    },
+    {
+      "code": "crm:dashboard:delete"
+    },
+    {
+      "code": "crm:dashboard:approve"
+    },
+    {
+      "code": "crm:dashboard:admin"
+    },
+    {
+      "code": "ai:dashboard:write"
+    },
+    {
+      "code": "ai:dashboard:delete"
+    },
+    {
+      "code": "ai:dashboard:approve"
+    },
+    {
+      "code": "gis:dashboard:write"
+    },
+    {
+      "code": "gis:dashboard:delete"
+    },
+    {
+      "code": "gis:dashboard:approve"
+    },
+    {
+      "code": "gis:dashboard:admin"
+    },
+    {
+      "code": "qms:dashboard:write"
+    },
+    {
+      "code": "qms:dashboard:delete"
+    },
+    {
+      "code": "qms:dashboard:approve"
+    },
+    {
+      "code": "qms:dashboard:admin"
+    },
+    {
+      "code": "ehs:dashboard:write"
+    },
+    {
+      "code": "ehs:dashboard:delete"
+    },
+    {
+      "code": "ehs:dashboard:approve"
+    },
+    {
+      "code": "ehs:dashboard:admin"
+    },
+    {
+      "code": "mes:read"
+    },
+    {
+      "code": "mes:write"
+    },
+    {
+      "code": "mes:delete"
+    },
+    {
+      "code": "mes:approve"
+    },
+    {
+      "code": "mes:admin"
+    },
+    {
+      "code": "wms:read"
+    }
+  ]
+}
