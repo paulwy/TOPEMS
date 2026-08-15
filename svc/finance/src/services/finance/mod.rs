@@ -21,6 +21,7 @@ mod periods;
 mod receivable;
 mod reconciliation;
 mod report;
+mod reversal;
 mod trial_balance;
 pub mod u8_import;
 mod voucher;
