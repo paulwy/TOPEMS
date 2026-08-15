@@ -32,14 +32,35 @@ const DRY_RUN = !HAS_ARG('--fail-fast');          // DEFAULT true
 const REPORT_JSON = GET_ARG('--report-json');
 const SCAN = (GET_ARG('--scan') || 'backend,frontend,constants').split(',').map(s => s.trim());
 const FAIL_FAST_THRESHOLDS = Object.assign({
-  R1: 1, R2: 1, R3: 1, R4: Infinity, R5: Infinity, R6: Infinity
+  // Thresholds = MAX ALLOWED violation count (INCLUSIVE).
+  // count > threshold → red (exit=1). So default R1/R2/R3 = 0 means
+  // "ZERO violations allowed on CI strict mode".
+  // Developer raises threshold to baseline (R1=8, R2=12, R3=1018)
+  // when they want "allow known baseline; only regressions above baseline red".
+  R1: 0, R2: 0, R3: 0, R4: Infinity, R5: Infinity, R6: Infinity
 }, (() => {
   const raw = GET_ARG('--thresholds');
   if (!raw) return {};
+  // Supports BOTH styles:
+  //   1) JSON object:  --thresholds='{"R1":1,"R2":1,"R3":1018}'
+  //   2) K:V comma:   --thresholds=R1:1,R2:1,R3:1018
+  if (raw.trim().startsWith('{')) {
+    try {
+      const obj = JSON.parse(raw);
+      const out = {};
+      for (const k of Object.keys(obj)) out[k] = Number(obj[k]);
+      return out;
+    } catch (e) {
+      console.warn('[WARN] --thresholds JSON parse failed; falling back to K:V format:', e.message);
+    }
+  }
   const out = {};
   for (const pair of raw.split(',')) {
-    const [k, v] = pair.split(':');
-    out[k.trim()] = Number(v);
+    const sep = pair.indexOf(':');
+    if (sep === -1) continue;
+    const k = pair.slice(0, sep).trim();
+    const v = pair.slice(sep + 1).trim();
+    out[k] = Number(v);
   }
   return out;
 })());
@@ -501,7 +522,7 @@ if (require.main === module) {
      */
     if (!report.integrity.passed) process.exit(2);
     if (!DRY_RUN) {
-      const hardFail = (['R1','R2','R3'].some(r => report.summary[r] >= FAIL_FAST_THRESHOLDS[r]));
+      const hardFail = (['R1','R2','R3'].some(r => report.summary[r] > FAIL_FAST_THRESHOLDS[r]));
       if (hardFail) process.exit(1);
     }
     process.exit(0);
