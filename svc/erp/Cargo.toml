@@ -48,3 +48,7 @@ path = "src/lib.rs"
 [[bin]]
 name = "topems-erp"
 path = "src/main.rs"
+
+[[bin]]
+name = "erp-e2e-cli"
+path = "src/bin/erp-e2e-cli.rs"

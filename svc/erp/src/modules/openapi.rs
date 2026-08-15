@@ -474,6 +474,9 @@ pub struct VehicleRequest {
         crate::modules::consolidation::company_relations::get_company_tree,
         // Leave Request
         crate::modules::leave_request::list_leave_requests,
+        // Procurement E2E
+        crate::modules::procurement_e2e::validate_chain_handler,
+        crate::modules::procurement_e2e::validate_chain_multi_handler,
     ),
     components(
         schemas(
@@ -507,6 +510,18 @@ pub struct VehicleRequest {
             Announcement,
             Vehicle,
             VehicleRequest,
+            // Procurement E2E DTOs
+            crate::modules::procurement_e2e::ProcurementLine,
+            crate::modules::procurement_e2e::PurchaseOrder,
+            crate::modules::procurement_e2e::GoodsReceiptNote,
+            crate::modules::procurement_e2e::Invoice,
+            crate::modules::procurement_e2e::Payment,
+            crate::modules::procurement_e2e::CurrencyConversionRate,
+            crate::modules::procurement_e2e::ValidateProcurementRequest,
+            crate::modules::procurement_e2e::ValidateProcurementMultiRequest,
+            crate::modules::procurement_e2e::JournalEntryLine,
+            crate::modules::procurement_e2e::ProcurementValidateResponse,
+            crate::modules::procurement_e2e::ErpE2eErrorResponse,
         ),
     ),
     tags(
@@ -520,6 +535,7 @@ pub struct VehicleRequest {
         (name = "Master Data", description = "主数据管理接口"),
         (name = "Consolidation", description = "合并报表接口"),
         (name = "LeaveRequest", description = "请假申请接口"),
+        (name = "ProcurementE2E", description = "ERP E2E 采购链真实化校验接口"),
         (name = "ERP-System-Compat", description = "ERP system/admin compatibility OpenAPI endpoints"),
     ),
     info(

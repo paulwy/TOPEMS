@@ -45,6 +45,7 @@ pub mod office_supplies;
 pub mod openapi;
 pub mod opening_balance;
 pub mod order_calc;
+pub mod procurement_e2e;
 pub mod production_order;
 pub mod purchase_order;
 pub mod sales_order;
@@ -109,4 +110,6 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(search::create_routes())
         // V15 Phase 3: HR 代理层
         .merge(hr_proxy::proxy_routes())
+        // R12 Y-P0: ERP E2E 真实化采购链
+        .merge(procurement_e2e::create_routes())
 }
