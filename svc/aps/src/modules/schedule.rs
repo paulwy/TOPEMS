@@ -560,13 +560,17 @@ async fn update_schedule_status(
     }
 }
 
-/// 排程状态机：pending → running → completed / cancelled
+/// 排程状态机：pending → released → running → completed / cancelled
 fn is_status_transition_valid(from: &str, to: &str) -> bool {
     matches!(
         (from, to),
-        ("pending", "running")
+        ("pending", "released")
+            | ("pending", "running")
+            | ("released", "running")
+            | ("released", "pending")
             | ("running", "completed")
             | ("pending", "cancelled")
+            | ("released", "cancelled")
             | ("running", "cancelled")
     )
 }
@@ -752,10 +756,18 @@ mod tests {
 
     #[test]
     fn test_schedule_state_machine() {
-        // 合法流转
+        // 合法正向流转
+        assert!(is_status_transition_valid("pending", "released"));
         assert!(is_status_transition_valid("pending", "running"));
+        assert!(is_status_transition_valid("released", "running"));
         assert!(is_status_transition_valid("running", "completed"));
+
+        // 合法 hold 回流
+        assert!(is_status_transition_valid("released", "pending"));
+
+        // 合法取消
         assert!(is_status_transition_valid("pending", "cancelled"));
+        assert!(is_status_transition_valid("released", "cancelled"));
         assert!(is_status_transition_valid("running", "cancelled"));
 
         // 非法流转
@@ -764,5 +776,7 @@ mod tests {
         assert!(!is_status_transition_valid("cancelled", "running"));
         assert!(!is_status_transition_valid("completed", "cancelled"));
         assert!(!is_status_transition_valid("running", "pending"));
+        assert!(!is_status_transition_valid("completed", "released"));
+        assert!(!is_status_transition_valid("cancelled", "pending"));
     }
 }

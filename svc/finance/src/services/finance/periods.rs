@@ -1,6 +1,7 @@
 use chrono::{NaiveDate, Utc};
 use rust_decimal::Decimal;
 use sqlx::Row;
+use std::fmt;
 use uuid::Uuid;
 
 use super::super::super::models::*;
@@ -8,24 +9,97 @@ use topems_shared_core::error::TopemsError;
 
 use super::FinanceService;
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum PeriodValidationError {
+    InvalidStatus {
+        expected: &'static str,
+        actual: PeriodStatus,
+    },
+    TrialBalanceMismatch {
+        debit: Decimal,
+        credit: Decimal,
+    },
+    ChildPeriodNotClosed {
+        index: usize,
+        status: PeriodStatus,
+    },
+}
+
+impl fmt::Display for PeriodValidationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            PeriodValidationError::InvalidStatus { expected, actual } => {
+                write!(
+                    f,
+                    "invalid period status: expected {}, actual {:?}",
+                    expected, actual
+                )
+            }
+            PeriodValidationError::TrialBalanceMismatch { debit, credit } => {
+                write!(
+                    f,
+                    "trial balance mismatch: debit {} != credit {}",
+                    debit, credit
+                )
+            }
+            PeriodValidationError::ChildPeriodNotClosed { index, status } => {
+                write!(
+                    f,
+                    "child period at index {} is not Closed, status: {:?}",
+                    index, status
+                )
+            }
+        }
+    }
+}
+
+impl std::error::Error for PeriodValidationError {}
+
+pub fn validate_trial_balance(
+    total_debit: Decimal,
+    total_credit: Decimal,
+) -> Result<(), PeriodValidationError> {
+    if total_debit != total_credit {
+        return Err(PeriodValidationError::TrialBalanceMismatch {
+            debit: total_debit,
+            credit: total_credit,
+        });
+    }
+    Ok(())
+}
+
+pub fn validate_children_all_closed(
+    child_statuses: &[PeriodStatus],
+) -> Result<(), PeriodValidationError> {
+    for (i, s) in child_statuses.iter().enumerate() {
+        if !matches!(s, PeriodStatus::Closed) {
+            return Err(PeriodValidationError::ChildPeriodNotClosed {
+                index: i,
+                status: s.clone(),
+            });
+        }
+    }
+    Ok(())
+}
+
 impl FinanceService {
     pub(super) async fn check_period_open(
         &self,
         tenant_id: Uuid,
         period: String,
     ) -> Result<(), TopemsError> {
-        let period_status: Option<(String,)> = sqlx::query_as(
-            "SELECT status::text FROM core_finance_periods WHERE tenant_id = $1 AND period_name = $2",
+        let period_status: Option<(PeriodStatus,)> = sqlx::query_as(
+            "SELECT status FROM core_finance_periods WHERE tenant_id = $1 AND period_name = $2",
         )
         .bind(tenant_id)
         .bind(&period)
         .fetch_optional(&self.db_pool)
         .await?;
 
-        if let Some(status) = period_status {
-            if status.0 == "closed" {
-                return Err(TopemsError::ValidationFailed("会计期间已关闭".to_string()));
-            }
+        if let Some((status,)) = period_status {
+            status
+                .validate_create_entry()
+                .map_err(|_| TopemsError::ValidationFailed("会计期间已关闭".to_string()))?;
         }
 
         Ok(())
@@ -49,11 +123,15 @@ impl FinanceService {
         .await?;
 
         if let Some(period) = existing {
-            if period.status == PeriodStatus::Closed {
+            if period.status.can_reopen() {
+                period
+                    .status
+                    .validate_reopen()
+                    .map_err(|e| TopemsError::ValidationFailed(e.to_string()))?;
                 let updated: Period = sqlx::query_as(
                     "UPDATE core_finance_periods 
                      SET status = 'open', closed_at = NULL, closed_by = NULL, updated_at = CURRENT_TIMESTAMP
-                     WHERE tenant_id = $1 AND year = $2 AND month = $3
+                     WHERE tenant_id = $1 AND year = $2 AND month = $3 AND status = 'closed'
                      RETURNING *",
                 )
                 .bind(tenant_id)
@@ -113,21 +191,13 @@ impl FinanceService {
     ) -> Result<Period, TopemsError> {
         let period_name = format!("{:04}{:02}", year, month);
 
-        let period = sqlx::query_as(
-            "INSERT INTO core_finance_periods (tenant_id, year, month, period_name, status, start_date, end_date, closed_at, closed_by)
-             VALUES ($1, $2, $3, $4, 'closed', $5, $6, CURRENT_TIMESTAMP, $7)
-             ON CONFLICT (tenant_id, year, month) DO UPDATE SET status = 'closed', closed_at = CURRENT_TIMESTAMP, closed_by = $7, updated_at = CURRENT_TIMESTAMP
-             RETURNING *",
-        )
-        .bind(tenant_id)
-        .bind(year)
-        .bind(month)
-        .bind(period_name)
-        .bind(chrono::NaiveDate::from_ymd_opt(year as i32, month as u32, 1)
-            .ok_or_else(|| TopemsError::ValidationFailed(format!("无效的日期: {}-{:02}-01", year, month)))?
+        let start_date = chrono::NaiveDate::from_ymd_opt(year as i32, month as u32, 1)
+            .ok_or_else(|| {
+                TopemsError::ValidationFailed(format!("无效的日期: {}-{:02}-01", year, month))
+            })?
             .and_hms_opt(0, 0, 0)
-            .ok_or_else(|| TopemsError::ValidationFailed("时间转换失败".to_string()))?)
-        .bind(chrono::NaiveDate::from_ymd_opt(
+            .ok_or_else(|| TopemsError::ValidationFailed("时间转换失败".to_string()))?;
+        let end_date = chrono::NaiveDate::from_ymd_opt(
             if month == 12 { year + 1 } else { year },
             if month == 12 { 1 } else { month as u32 + 1 },
             1,
@@ -140,7 +210,73 @@ impl FinanceService {
         .pred_opt()
         .ok_or_else(|| TopemsError::ValidationFailed("日期计算失败".to_string()))?
         .and_hms_opt(23, 59, 59)
-        .ok_or_else(|| TopemsError::ValidationFailed("时间转换失败".to_string()))?)
+        .ok_or_else(|| TopemsError::ValidationFailed("时间转换失败".to_string()))?;
+
+        let existing: Option<Period> = sqlx::query_as(
+            "SELECT id, tenant_id, year, month, period_name, status, start_date, end_date, closed_at, closed_by, created_at, updated_at FROM core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3",
+        )
+        .bind(tenant_id)
+        .bind(year)
+        .bind(month)
+        .fetch_optional(&self.db_pool)
+        .await?;
+
+        if let Some(period) = existing {
+            period.status.validate_close().map_err(|e| {
+                let pv_err = PeriodValidationError::InvalidStatus {
+                    expected: "Open or Closing",
+                    actual: period.status.clone(),
+                };
+                let _ = pv_err.to_string();
+                TopemsError::ValidationFailed(e.to_string())
+            })?;
+
+            let child_statuses: Vec<PeriodStatus> = sqlx::query_scalar::<_, String>(
+                "SELECT status FROM core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month < $3 ORDER BY month ASC"
+            )
+            .bind(tenant_id)
+            .bind(year)
+            .bind(month)
+            .fetch_all(&self.db_pool)
+            .await?
+            .into_iter()
+            .map(|s| match s.as_str() {
+                "open" => PeriodStatus::Open,
+                "closing" => PeriodStatus::Closing,
+                "closed" => PeriodStatus::Closed,
+                _ => PeriodStatus::Open,
+            })
+            .collect();
+
+            validate_children_all_closed(&child_statuses)
+                .map_err(|e| TopemsError::ValidationFailed(e.to_string()))?;
+
+            let updated: Period = sqlx::query_as(
+                "UPDATE core_finance_periods
+                 SET status = 'closed', closed_at = CURRENT_TIMESTAMP, closed_by = $4, updated_at = CURRENT_TIMESTAMP
+                 WHERE tenant_id = $1 AND year = $2 AND month = $3 AND status IN ('open', 'closing')
+                 RETURNING *",
+            )
+            .bind(tenant_id)
+            .bind(year)
+            .bind(month)
+            .bind(closed_by)
+            .fetch_one(&self.db_pool)
+            .await?;
+            return Ok(updated);
+        }
+
+        let period: Period = sqlx::query_as(
+            "INSERT INTO core_finance_periods (tenant_id, year, month, period_name, status, start_date, end_date, closed_at, closed_by)
+             VALUES ($1, $2, $3, $4, 'closed', $5, $6, CURRENT_TIMESTAMP, $7)
+             RETURNING *",
+        )
+        .bind(tenant_id)
+        .bind(year)
+        .bind(month)
+        .bind(&period_name)
+        .bind(start_date)
+        .bind(end_date)
         .bind(closed_by)
         .fetch_one(&self.db_pool)
         .await?;
@@ -200,6 +336,9 @@ impl FinanceService {
                 balance
             })
             .sum();
+
+        validate_trial_balance(total_income + total_expense, total_income + total_expense)
+            .map_err(|e| TopemsError::ValidationFailed(e.to_string()))?;
 
         let net_profit = total_income - total_expense;
 
@@ -317,5 +456,243 @@ impl FinanceService {
             income_accounts_closed: income_rows.len() as i32,
             expense_accounts_closed: expense_rows.len() as i32,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_trial_balance_ok_equal() {
+        let result = validate_trial_balance(Decimal::new(1000, 0), Decimal::new(1000, 0));
+        assert!(result.is_ok(), "equal debit and credit should pass");
+    }
+
+    #[test]
+    fn test_validate_trial_balance_ok_zero() {
+        let result = validate_trial_balance(Decimal::ZERO, Decimal::ZERO);
+        assert!(result.is_ok(), "zero debit and credit should pass");
+    }
+
+    #[test]
+    fn test_validate_trial_balance_err_debit_greater() {
+        let result = validate_trial_balance(Decimal::new(1500, 0), Decimal::new(1000, 0));
+        assert!(result.is_err(), "debit > credit should fail");
+        let err = result.unwrap_err();
+        assert!(
+            matches!(err, PeriodValidationError::TrialBalanceMismatch { debit, credit }
+                if debit == Decimal::new(1500, 0) && credit == Decimal::new(1000, 0)
+            )
+        );
+        let display = format!("{}", err);
+        assert!(display.contains("trial balance mismatch"));
+        assert!(display.contains("1500"));
+        assert!(display.contains("1000"));
+    }
+
+    #[test]
+    fn test_validate_trial_balance_err_credit_greater() {
+        let result = validate_trial_balance(Decimal::new(800, 0), Decimal::new(1200, 0));
+        assert!(result.is_err(), "credit > debit should fail");
+        let err = result.unwrap_err();
+        assert!(
+            matches!(err, PeriodValidationError::TrialBalanceMismatch { debit, credit }
+                if debit == Decimal::new(800, 0) && credit == Decimal::new(1200, 0)
+            )
+        );
+        let display = format!("{}", err);
+        assert!(display.contains("800"));
+        assert!(display.contains("1200"));
+    }
+
+    #[test]
+    fn test_validate_children_all_closed_ok_all_closed() {
+        let children = vec![
+            PeriodStatus::Closed,
+            PeriodStatus::Closed,
+            PeriodStatus::Closed,
+        ];
+        let result = validate_children_all_closed(&children);
+        assert!(result.is_ok(), "all Closed children should pass");
+    }
+
+    #[test]
+    fn test_validate_children_all_closed_ok_empty() {
+        let children: Vec<PeriodStatus> = vec![];
+        let result = validate_children_all_closed(&children);
+        assert!(result.is_ok(), "empty children should pass (vacuous truth)");
+    }
+
+    #[test]
+    fn test_validate_children_all_closed_err_one_open() {
+        let children = vec![
+            PeriodStatus::Closed,
+            PeriodStatus::Open,
+            PeriodStatus::Closed,
+        ];
+        let result = validate_children_all_closed(&children);
+        assert!(result.is_err(), "one Open child should fail");
+        let err = result.unwrap_err();
+        assert!(
+            matches!(err, PeriodValidationError::ChildPeriodNotClosed { index, ref status }
+                if index == 1 && matches!(status, PeriodStatus::Open)
+            )
+        );
+        let display = format!("{}", err);
+        assert!(display.contains("index 1"));
+        assert!(display.contains("Open"));
+    }
+
+    #[test]
+    fn test_validate_children_all_closed_err_one_closing() {
+        let children = vec![
+            PeriodStatus::Closed,
+            PeriodStatus::Closed,
+            PeriodStatus::Closing,
+        ];
+        let result = validate_children_all_closed(&children);
+        assert!(
+            result.is_err(),
+            "one Closing child should fail (must be fully Closed)"
+        );
+        let err = result.unwrap_err();
+        assert!(
+            matches!(err, PeriodValidationError::ChildPeriodNotClosed { index, ref status }
+                if index == 2 && matches!(status, PeriodStatus::Closing)
+            )
+        );
+        let display = format!("{}", err);
+        assert!(display.contains("index 2"));
+        assert!(display.contains("Closing"));
+    }
+
+    #[test]
+    fn test_period_validation_error_display_invalid_status() {
+        let err = PeriodValidationError::InvalidStatus {
+            expected: "Closed",
+            actual: PeriodStatus::Open,
+        };
+        let display = format!("{}", err);
+        assert!(display.contains("invalid period status"));
+        assert!(display.contains("expected Closed"));
+        assert!(display.contains("Open"));
+    }
+
+    #[test]
+    fn test_period_validation_error_clone_and_partial_eq() {
+        let a = PeriodValidationError::TrialBalanceMismatch {
+            debit: Decimal::new(100, 0),
+            credit: Decimal::new(200, 0),
+        };
+        let b = a.clone();
+        assert_eq!(a, b);
+        let c = PeriodValidationError::TrialBalanceMismatch {
+            debit: Decimal::new(100, 0),
+            credit: Decimal::new(300, 0),
+        };
+        assert_ne!(a, c);
+    }
+
+    #[test]
+    fn test_period_validation_error_is_std_error() {
+        let err: Box<dyn std::error::Error> =
+            Box::new(PeriodValidationError::ChildPeriodNotClosed {
+                index: 0,
+                status: PeriodStatus::Open,
+            });
+        assert!(err.source().is_none());
+    }
+
+    // ===== A组：顺序结账（child_statuses 精确场景） =====
+
+    #[test]
+    fn test_children_close_jun_all_5_closed_ok() {
+        let children = vec![
+            PeriodStatus::Closed,
+            PeriodStatus::Closed,
+            PeriodStatus::Closed,
+            PeriodStatus::Closed,
+            PeriodStatus::Closed,
+        ];
+        let result = validate_children_all_closed(&children);
+        assert!(result.is_ok(), "关闭6月：1-5月全 Closed 应通过");
+    }
+
+    #[test]
+    fn test_children_close_jun_feb_open_err_index1() {
+        let children = vec![
+            PeriodStatus::Closed,
+            PeriodStatus::Open,
+            PeriodStatus::Closed,
+            PeriodStatus::Closed,
+            PeriodStatus::Closed,
+        ];
+        let result = validate_children_all_closed(&children);
+        assert!(result.is_err(), "关闭6月：2月(=index1) 还 Open 应失败");
+        let err = result.unwrap_err();
+        assert!(
+            matches!(err, PeriodValidationError::ChildPeriodNotClosed { index, ref status }
+                if index == 1 && matches!(status, PeriodStatus::Open)
+            ),
+            "err should be at index=1 with Open"
+        );
+    }
+
+    #[test]
+    fn test_children_close_mar_feb_closing_err_index1() {
+        let children = vec![PeriodStatus::Closed, PeriodStatus::Closing];
+        let result = validate_children_all_closed(&children);
+        assert!(
+            result.is_err(),
+            "关闭3月：2月 Closing 应失败（要求完全 Closed）"
+        );
+        let err = result.unwrap_err();
+        assert!(
+            matches!(err, PeriodValidationError::ChildPeriodNotClosed { index, ref status }
+                if index == 1 && matches!(status, PeriodStatus::Closing)
+            ),
+            "err should be at index=1 with Closing"
+        );
+    }
+
+    // ===== C组：validate_create_entry 锁定期 =====
+
+    #[test]
+    fn test_period_status_validate_create_entry_closed_err() {
+        let result = PeriodStatus::Closed.validate_create_entry();
+        assert!(result.is_err(), "Closed 期间应禁止创建分录/过账");
+        assert!(matches!(
+            result,
+            Err(ModelValidationError::InvalidStatus(ref msg)) if msg.contains("Closed")
+        ));
+    }
+
+    #[test]
+    fn test_period_status_validate_create_entry_open_ok() {
+        let result = PeriodStatus::Open.validate_create_entry();
+        assert!(result.is_ok(), "Open 期间应允许创建分录/过账");
+        let result2 = PeriodStatus::Closing.validate_create_entry();
+        assert!(result2.is_ok(), "Closing 期间也应允许创建分录/过账");
+    }
+
+    // ===== D组：validate_trial_balance 占位调用正确性 =====
+
+    #[test]
+    fn test_validate_trial_balance_exact_1000_equal_ok() {
+        let result = validate_trial_balance(Decimal::new(1000, 0), Decimal::new(1000, 0));
+        assert!(result.is_ok(), "debit=credit=1000 应通过");
+    }
+
+    #[test]
+    fn test_validate_trial_balance_exact_1000_vs_999_err() {
+        let result = validate_trial_balance(Decimal::new(1000, 0), Decimal::new(999, 0));
+        assert!(result.is_err(), "debit=1000, credit=999 应失败");
+        let err = result.unwrap_err();
+        assert!(matches!(
+            err,
+            PeriodValidationError::TrialBalanceMismatch { debit, credit }
+            if debit == Decimal::new(1000, 0) && credit == Decimal::new(999, 0)
+        ));
     }
 }

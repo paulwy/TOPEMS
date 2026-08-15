@@ -1255,7 +1255,7 @@ pub fn create_routes() -> Router<AppState> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde::{Serialize, Deserialize};
+    use serde::{Deserialize, Serialize};
     fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
         let json = serde_json::to_string(item).unwrap();
         let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
@@ -1268,11 +1268,20 @@ mod tests {
     #[test]
     fn rq_service_center_type() {
         roundtrip(&ServiceCenterType::Finance);
+        roundtrip(&ServiceCenterType::HR);
+        roundtrip(&ServiceCenterType::IT);
+        roundtrip(&ServiceCenterType::Procurement);
+        roundtrip(&ServiceCenterType::Admin);
+        roundtrip(&ServiceCenterType::Integrated);
     }
 
     #[test]
     fn rq_service_quality_level() {
         roundtrip(&ServiceQualityLevel::Excellent);
+        roundtrip(&ServiceQualityLevel::Good);
+        roundtrip(&ServiceQualityLevel::Satisfactory);
+        roundtrip(&ServiceQualityLevel::NeedsImprovement);
+        roundtrip(&ServiceQualityLevel::Unsatisfactory);
     }
 
     #[test]
@@ -1343,11 +1352,19 @@ mod tests {
     #[test]
     fn rq_allocation_method() {
         roundtrip(&AllocationMethod::Direct);
+        roundtrip(&AllocationMethod::StepDown);
+        roundtrip(&AllocationMethod::Reciprocal);
+        roundtrip(&AllocationMethod::ActivityBased);
     }
 
     #[test]
     fn rq_allocation_basis() {
         roundtrip(&AllocationBasis::Headcount);
+        roundtrip(&AllocationBasis::Revenue);
+        roundtrip(&AllocationBasis::Area);
+        roundtrip(&AllocationBasis::TransactionVolume);
+        roundtrip(&AllocationBasis::Usage);
+        roundtrip(&AllocationBasis::Custom);
     }
 
     #[test]
@@ -1417,11 +1434,18 @@ mod tests {
     #[test]
     fn rq_pricing_strategy() {
         roundtrip(&PricingStrategy::CostPlus);
+        roundtrip(&PricingStrategy::MarketBased);
+        roundtrip(&PricingStrategy::Negotiated);
+        roundtrip(&PricingStrategy::StandardCost);
+        roundtrip(&PricingStrategy::DualPricing);
     }
 
     #[test]
     fn rq_policy_status() {
         roundtrip(&PolicyStatus::Draft);
+        roundtrip(&PolicyStatus::Active);
+        roundtrip(&PolicyStatus::Suspended);
+        roundtrip(&PolicyStatus::Expired);
     }
 
     #[test]

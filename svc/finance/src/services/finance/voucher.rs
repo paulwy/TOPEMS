@@ -8,6 +8,25 @@ use topems_shared_core::error::TopemsError;
 
 use super::FinanceService;
 
+fn parse_period_str(s: &str) -> Result<(i32, i32), &'static str> {
+    let chars: Vec<char> = s.chars().collect();
+    if chars.len() == 6 {
+        let year_str: String = chars[0..4].iter().collect();
+        let month_str: String = chars[4..6].iter().collect();
+        let year = year_str.parse::<i32>().map_err(|_| "年份解析失败")?;
+        let month = month_str.parse::<i32>().map_err(|_| "月份解析失败")?;
+        Ok((year, month))
+    } else if chars.len() == 7 && chars[4] == '-' {
+        let year_str: String = chars[0..4].iter().collect();
+        let month_str: String = chars[5..7].iter().collect();
+        let year = year_str.parse::<i32>().map_err(|_| "年份解析失败")?;
+        let month = month_str.parse::<i32>().map_err(|_| "月份解析失败")?;
+        Ok((year, month))
+    } else {
+        Err("无效的期间格式，应为 YYYYMM 或 YYYY-MM")
+    }
+}
+
 impl FinanceService {
     pub async fn create_voucher(
         &self,
@@ -128,6 +147,19 @@ impl FinanceService {
         tenant_id: Uuid,
         voucher_id: Uuid,
     ) -> Result<Voucher, TopemsError> {
+        let before: Voucher = sqlx::query_as(
+            "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'draft'",
+        )
+        .bind(tenant_id)
+        .bind(voucher_id)
+        .fetch_one(&self.db_pool)
+        .await?;
+
+        before.status.validate_submit().map_err(|e| {
+            let ModelValidationError::InvalidStatus(msg) = e;
+            TopemsError::ValidationFailed(msg)
+        })?;
+
         let voucher = sqlx::query_as(
             "UPDATE core_finance_vouchers SET status = 'submitted', updated_at = CURRENT_TIMESTAMP
              WHERE tenant_id = $1 AND id = $2 AND status = 'draft'
@@ -147,6 +179,19 @@ impl FinanceService {
         voucher_id: Uuid,
         approved_by: &str,
     ) -> Result<Voucher, TopemsError> {
+        let before: Voucher = sqlx::query_as(
+            "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'submitted'",
+        )
+        .bind(tenant_id)
+        .bind(voucher_id)
+        .fetch_one(&self.db_pool)
+        .await?;
+
+        before.status.validate_approve().map_err(|e| {
+            let ModelValidationError::InvalidStatus(msg) = e;
+            TopemsError::ValidationFailed(msg)
+        })?;
+
         let voucher = sqlx::query_as(
             "UPDATE core_finance_vouchers SET status = 'approved', approved_by = $3, updated_at = CURRENT_TIMESTAMP
              WHERE tenant_id = $1 AND id = $2 AND status = 'submitted'
@@ -167,6 +212,19 @@ impl FinanceService {
         voucher_id: Uuid,
         _rejected_by: &str,
     ) -> Result<Voucher, TopemsError> {
+        let before: Voucher = sqlx::query_as(
+            "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, voucher_number, year, month, total_amount, currency_code, submitter_id, submitter_name, maker_id, maker_name, submitted_at, approver_id, approver_name, checker_id, checker_name, approved_at, poster_id, poster_name, bookkeeper_id, bookkeeper_name, posted_at, is_reversed, reverse_voucher_id, reversed_at, attachment_count, summary, source_module, source_id, template_id, updated_by, created_at, updated_at FROM core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND status = 'submitted'",
+        )
+        .bind(tenant_id)
+        .bind(voucher_id)
+        .fetch_one(&self.db_pool)
+        .await?;
+
+        before.status.validate_reject().map_err(|e| {
+            let ModelValidationError::InvalidStatus(msg) = e;
+            TopemsError::ValidationFailed(msg)
+        })?;
+
         let voucher = sqlx::query_as(
             "UPDATE core_finance_vouchers SET status = 'rejected', updated_at = CURRENT_TIMESTAMP
              WHERE tenant_id = $1 AND id = $2 AND status = 'submitted'
@@ -193,6 +251,40 @@ impl FinanceService {
         .bind(voucher_id)
         .fetch_one(&self.db_pool)
         .await?;
+
+        voucher.status.validate_post().map_err(|e| {
+            let ModelValidationError::InvalidStatus(msg) = e;
+            TopemsError::ValidationFailed(msg)
+        })?;
+
+        let period_month_str = &voucher.period;
+        let (p_year, p_month): (i32, i32) = match parse_period_str(period_month_str) {
+            Ok(v) => v,
+            Err(_) => {
+                return Err(TopemsError::ValidationFailed(
+                    "无效的会计期间格式".to_string(),
+                ))
+            }
+        };
+        let period_status: Option<String> = sqlx::query_scalar(
+            "SELECT status FROM core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3"
+        )
+        .bind(tenant_id)
+        .bind(p_year)
+        .bind(p_month)
+        .fetch_optional(&self.db_pool)
+        .await?;
+        if let Some(status_str) = period_status {
+            let status = match status_str.as_str() {
+                "open" => PeriodStatus::Open,
+                "closing" => PeriodStatus::Closing,
+                "closed" => PeriodStatus::Closed,
+                _ => PeriodStatus::Closed,
+            };
+            status
+                .validate_create_entry()
+                .map_err(|e| TopemsError::ValidationFailed(format!("凭证期间不允许过账：{}", e)))?;
+        }
 
         let lines: Vec<VoucherLine> = sqlx::query_as(
             "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, created_at FROM core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no",
@@ -721,11 +813,10 @@ impl FinanceService {
                 .await?
                 .ok_or_else(|| TopemsError::NotFound("凭证不存在".to_string()))?;
 
-        if existing.status != VoucherStatus::Posted {
-            return Err(TopemsError::ValidationFailed(
-                "只有已过账的凭证才能反过账".to_string(),
-            ));
-        }
+        existing.status.validate_unpost().map_err(|e| {
+            let ModelValidationError::InvalidStatus(msg) = e;
+            TopemsError::ValidationFailed(msg)
+        })?;
 
         sqlx::query("UPDATE core_finance_ledger SET deleted_at = NOW() WHERE tenant_id = $1 AND voucher_id = $2")
             .bind(tenant_id)
@@ -903,5 +994,46 @@ impl FinanceService {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_period_str_yyyymm_ok() {
+        let result = parse_period_str("202608");
+        assert!(result.is_ok(), "YYYYMM format should parse");
+        assert_eq!(result.unwrap(), (2026, 8));
+    }
+
+    #[test]
+    fn test_parse_period_str_yyyy_mm_ok() {
+        let result = parse_period_str("2026-08");
+        assert!(result.is_ok(), "YYYY-MM format should parse");
+        assert_eq!(result.unwrap(), (2026, 8));
+    }
+
+    #[test]
+    fn test_parse_period_str_too_short_err() {
+        let result = parse_period_str("2026");
+        assert!(result.is_err(), "4 chars should be invalid");
+    }
+
+    #[test]
+    fn test_parse_period_str_invalid_month_value_yyyymm() {
+        let result = parse_period_str("202613");
+        assert!(
+            result.is_ok(),
+            "YYYYMM 202613 still parses numerically (13 is valid i32)"
+        );
+        assert_eq!(result.unwrap(), (2026, 13));
+    }
+
+    #[test]
+    fn test_parse_period_str_invalid_year_chars() {
+        let result = parse_period_str("ABCD-EF");
+        assert!(result.is_err(), "non-numeric year should fail");
     }
 }

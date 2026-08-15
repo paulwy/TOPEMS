@@ -2,8 +2,8 @@
 //!
 //! 从 `models/consolidation.rs` 及对应 modules 中提取的业务纯逻辑。
 
-use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
 use rust_decimal::Decimal;
+use std::fmt;
 
 // ── 股权 / 合并比例计算 ────────────────────────────────
 
@@ -121,7 +121,6 @@ pub fn equity_method_investment_income(
     investee_profit: Decimal,
     ownership_pct: Decimal,
 ) -> Decimal {
-    let zero = Decimal::from(0);
     let pct = normalize_decimal_pct(ownership_pct);
     investee_profit * pct
 }
@@ -186,9 +185,109 @@ pub fn validate_elimination_status(status: &str) -> bool {
     )
 }
 
+// ── 合并条目校验（业务前置纯函数）─────────────────────
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ConsolidationError {
+    EmptyField(&'static str),
+    InvalidOwnership(f64),
+    InvalidMethod(String),
+    InvalidPeriod(String),
+    EliminationOverflow {
+        amount: Decimal,
+        prior: Decimal,
+        limit: Decimal,
+    },
+}
+
+impl fmt::Display for ConsolidationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ConsolidationError::EmptyField(field) => {
+                write!(f, "字段不能为空: {}", field)
+            }
+            ConsolidationError::InvalidOwnership(val) => {
+                write!(f, "所有权必须在 [0,1] 范围内, 实际值: {}", val)
+            }
+            ConsolidationError::InvalidMethod(val) => {
+                write!(
+                    f,
+                    "无效的合并方法: {}, 允许值: equity/cost/proportional/full",
+                    val
+                )
+            }
+            ConsolidationError::InvalidPeriod(val) => {
+                write!(
+                    f,
+                    "无效的会计期间: {}, 格式要求 YYYY-MM (年份≥1900, 月份01-12)",
+                    val
+                )
+            }
+            ConsolidationError::EliminationOverflow {
+                amount,
+                prior,
+                limit,
+            } => {
+                write!(
+                    f,
+                    "抵消参数不能为负数: amount={}, prior_eliminated={}, eliminated_limit={}",
+                    amount, prior, limit
+                )
+            }
+        }
+    }
+}
+
+pub struct ConsolidationEntry<'a> {
+    pub subsidiary_name: &'a str,
+    pub parent_name: &'a str,
+    pub ownership: f64,
+    pub consolidation_method: &'a str,
+    pub accounting_period: &'a str,
+}
+
+pub fn validate_consolidation_entry(
+    entry: &ConsolidationEntry<'_>,
+) -> Result<(), ConsolidationError> {
+    use ConsolidationError::*;
+    if entry.subsidiary_name.trim().is_empty() {
+        return Err(EmptyField("subsidiary_name"));
+    }
+    if entry.parent_name.trim().is_empty() {
+        return Err(EmptyField("parent_name"));
+    }
+    if !(0.0..=1.0).contains(&entry.ownership) {
+        return Err(InvalidOwnership(entry.ownership));
+    }
+    if !validate_consolidation_method(entry.consolidation_method) {
+        return Err(InvalidMethod(entry.consolidation_method.to_string()));
+    }
+    if !validate_accounting_period(entry.accounting_period) {
+        return Err(InvalidPeriod(entry.accounting_period.to_string()));
+    }
+    Ok(())
+}
+
+pub fn validate_elimination_params(
+    amount: Decimal,
+    prior_eliminated: Decimal,
+    eliminated_limit: Decimal,
+) -> Result<(), ConsolidationError> {
+    let zero = Decimal::from(0);
+    if amount < zero || prior_eliminated < zero || eliminated_limit < zero {
+        return Err(ConsolidationError::EliminationOverflow {
+            amount,
+            prior: prior_eliminated,
+            limit: eliminated_limit,
+        });
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rust_decimal::prelude::FromPrimitive;
 
     // ── normalize_percentage ─────────────────────
 
@@ -458,5 +557,390 @@ mod tests {
     #[test]
     fn test_elimination_status_invalid() {
         assert!(!validate_elimination_status("done"));
+        assert!(!validate_elimination_status(""));
+    }
+
+    // ── validate_accounting_period 补充边界用例 ─────────
+
+    #[test]
+    fn test_period_boundary_valid() {
+        assert!(validate_accounting_period("2026-08"));
+        assert!(validate_accounting_period("1900-01"));
+        assert!(validate_accounting_period("2099-12"));
+    }
+
+    #[test]
+    fn test_period_boundary_invalid() {
+        assert!(!validate_accounting_period("2026-13"));
+        assert!(!validate_accounting_period("2026-00"));
+        assert!(!validate_accounting_period("2026"));
+        assert!(!validate_accounting_period("2026-8"));
+        assert!(!validate_accounting_period("1899-12"));
+        assert!(!validate_accounting_period("2026/08"));
+    }
+
+    // ── validate_consolidation_entry ──────────────
+
+    #[test]
+    fn test_validate_entry_ok() {
+        let entry = ConsolidationEntry {
+            subsidiary_name: "子公司A",
+            parent_name: "母公司B",
+            ownership: 0.7,
+            consolidation_method: "equity",
+            accounting_period: "2026-08",
+        };
+        assert!(validate_consolidation_entry(&entry).is_ok());
+    }
+
+    #[test]
+    fn test_validate_entry_empty_subsidiary() {
+        let entry = ConsolidationEntry {
+            subsidiary_name: "",
+            parent_name: "母公司B",
+            ownership: 0.7,
+            consolidation_method: "equity",
+            accounting_period: "2026-08",
+        };
+        let r = validate_consolidation_entry(&entry);
+        assert!(matches!(
+            r,
+            Err(ConsolidationError::EmptyField("subsidiary_name"))
+        ));
+    }
+
+    #[test]
+    fn test_validate_entry_empty_parent() {
+        let entry = ConsolidationEntry {
+            subsidiary_name: "子公司A",
+            parent_name: "   ",
+            ownership: 0.7,
+            consolidation_method: "equity",
+            accounting_period: "2026-08",
+        };
+        let r = validate_consolidation_entry(&entry);
+        assert!(matches!(
+            r,
+            Err(ConsolidationError::EmptyField("parent_name"))
+        ));
+    }
+
+    #[test]
+    fn test_validate_entry_ownership_negative() {
+        let entry = ConsolidationEntry {
+            subsidiary_name: "子公司A",
+            parent_name: "母公司B",
+            ownership: -0.1,
+            consolidation_method: "equity",
+            accounting_period: "2026-08",
+        };
+        let r = validate_consolidation_entry(&entry);
+        assert!(matches!(r, Err(ConsolidationError::InvalidOwnership(-0.1))));
+    }
+
+    #[test]
+    fn test_validate_entry_ownership_above_1() {
+        let entry = ConsolidationEntry {
+            subsidiary_name: "子公司A",
+            parent_name: "母公司B",
+            ownership: 1.1,
+            consolidation_method: "equity",
+            accounting_period: "2026-08",
+        };
+        let r = validate_consolidation_entry(&entry);
+        assert!(matches!(r, Err(ConsolidationError::InvalidOwnership(1.1))));
+    }
+
+    #[test]
+    fn test_validate_entry_ownership_boundary_ok() {
+        let entry0 = ConsolidationEntry {
+            subsidiary_name: "子公司A",
+            parent_name: "母公司B",
+            ownership: 0.0,
+            consolidation_method: "equity",
+            accounting_period: "2026-08",
+        };
+        assert!(validate_consolidation_entry(&entry0).is_ok());
+
+        let entry1 = ConsolidationEntry {
+            subsidiary_name: "子公司A",
+            parent_name: "母公司B",
+            ownership: 1.0,
+            consolidation_method: "equity",
+            accounting_period: "2026-08",
+        };
+        assert!(validate_consolidation_entry(&entry1).is_ok());
+    }
+
+    #[test]
+    fn test_validate_entry_invalid_method() {
+        let entry = ConsolidationEntry {
+            subsidiary_name: "子公司A",
+            parent_name: "母公司B",
+            ownership: 0.5,
+            consolidation_method: "bad_method",
+            accounting_period: "2026-08",
+        };
+        let r = validate_consolidation_entry(&entry);
+        assert!(matches!(r, Err(ConsolidationError::InvalidMethod(ref s)) if s == "bad_method"));
+    }
+
+    #[test]
+    fn test_validate_entry_invalid_period() {
+        let entry = ConsolidationEntry {
+            subsidiary_name: "子公司A",
+            parent_name: "母公司B",
+            ownership: 0.5,
+            consolidation_method: "equity",
+            accounting_period: "2026/08",
+        };
+        let r = validate_consolidation_entry(&entry);
+        assert!(matches!(r, Err(ConsolidationError::InvalidPeriod(ref s)) if s == "2026/08"));
+    }
+
+    // ── validate_elimination_params ──────────────
+
+    #[test]
+    fn test_validate_elimination_params_ok() {
+        let r = validate_elimination_params(1000.into(), 0.into(), 1000.into());
+        assert!(r.is_ok());
+    }
+
+    #[test]
+    fn test_validate_elimination_params_negative_amount() {
+        let r = validate_elimination_params((-100).into(), 0.into(), 1000.into());
+        assert!(matches!(
+            r,
+            Err(ConsolidationError::EliminationOverflow { .. })
+        ));
+    }
+
+    #[test]
+    fn test_validate_elimination_params_negative_prior() {
+        let r = validate_elimination_params(1000.into(), (-50).into(), 1000.into());
+        assert!(matches!(
+            r,
+            Err(ConsolidationError::EliminationOverflow { .. })
+        ));
+    }
+
+    #[test]
+    fn test_validate_elimination_params_negative_limit() {
+        let r = validate_elimination_params(1000.into(), 0.into(), (-10).into());
+        assert!(matches!(
+            r,
+            Err(ConsolidationError::EliminationOverflow { .. })
+        ));
+    }
+
+    // ── ConsolidationError Display 验证 ─────────
+
+    #[test]
+    fn test_consolidation_error_display() {
+        let e1 = ConsolidationError::EmptyField("subsidiary_name");
+        assert!(format!("{}", e1).contains("subsidiary_name"));
+
+        let e2 = ConsolidationError::InvalidOwnership(-0.5);
+        assert!(format!("{}", e2).contains("-0.5"));
+
+        let e3 = ConsolidationError::InvalidMethod("xyz".to_string());
+        assert!(format!("{}", e3).contains("xyz"));
+
+        let e4 = ConsolidationError::InvalidPeriod("bad".to_string());
+        assert!(format!("{}", e4).contains("bad"));
+
+        let e5 = ConsolidationError::EliminationOverflow {
+            amount: (-1).into(),
+            prior: 0.into(),
+            limit: 100.into(),
+        };
+        assert!(format!("{}", e5).contains("抵消参数不能为负数"));
+    }
+
+    // ================================================================
+    // 追加 A~E 组深度边界测试 (共 25+ 断言)
+    // ================================================================
+
+    // ── A 组：derive_consolidation_percentage 深度边界 (8 assertions) ──
+
+    #[test]
+    fn test_cons_pct_joint_ownership_exactly_0_2_boundary() {
+        assert_eq!(derive_consolidation_percentage(0.2, "joint"), 0.2);
+    }
+
+    #[test]
+    fn test_cons_pct_associate_tiny_positive_ownership_preserved() {
+        assert_eq!(derive_consolidation_percentage(0.0001, "associate"), 0.0001);
+    }
+
+    #[test]
+    fn test_cons_pct_minority_below_20pct_boundary_returns_zero() {
+        assert_eq!(derive_consolidation_percentage(0.199, "minority"), 0.0);
+    }
+
+    #[test]
+    fn test_cons_pct_custom_type_zero_ownership_returns_zero() {
+        assert_eq!(derive_consolidation_percentage(0.0, "custom"), 0.0);
+    }
+
+    #[test]
+    fn test_cons_pct_custom_type_nan_ownership_normalized_to_zero() {
+        assert_eq!(derive_consolidation_percentage(f64::NAN, "custom"), 0.0);
+    }
+
+    #[test]
+    fn test_cons_pct_custom_type_infinity_ownership_normalized_to_zero() {
+        assert_eq!(
+            derive_consolidation_percentage(f64::INFINITY, "custom"),
+            0.0
+        );
+    }
+
+    #[test]
+    fn test_cons_pct_subsidiary_zero_ownership_still_1() {
+        assert_eq!(derive_consolidation_percentage(0.0, "subsidiary"), 1.0);
+    }
+
+    #[test]
+    fn test_cons_pct_control_negative_ownership_forces_1() {
+        assert_eq!(derive_consolidation_percentage(-0.3, "control"), 1.0);
+    }
+
+    // ── B 组：minority_interest_ratio 边界 (3 assertions) ──
+
+    #[test]
+    fn test_minority_interest_zero_consolidation_gives_100pct_mi() {
+        let cp = Decimal::from(0);
+        assert_eq!(minority_interest_ratio(cp), Decimal::from(1));
+    }
+
+    #[test]
+    fn test_minority_interest_half_consolidation_gives_half_mi() {
+        let cp = Decimal::from_f64(0.5).unwrap();
+        let expected = Decimal::from_f64(0.5).unwrap();
+        assert_eq!(minority_interest_ratio(cp), expected);
+    }
+
+    #[test]
+    fn test_minority_interest_negative_consolidation_normalized_to_1() {
+        let cp = Decimal::from(-5);
+        assert_eq!(minority_interest_ratio(cp), Decimal::from(1));
+    }
+
+    // ── C 组：calculate_elimination_step 极端值 (7 sub-asserts, 5 test fn) ──
+
+    #[test]
+    fn test_elimination_prior_exceeds_amount_extreme() {
+        let r = calculate_elimination_step(1000.into(), 1500.into(), 500.into());
+        assert_eq!(r.eliminated_amount, Decimal::from(0));
+        assert_eq!(r.remaining_amount, Decimal::from(0));
+    }
+
+    #[test]
+    fn test_elimination_zero_limit_never_eliminates() {
+        let r = calculate_elimination_step(1000.into(), 0.into(), 0.into());
+        assert_eq!(r.eliminated_amount, Decimal::from(0));
+        assert_eq!(r.remaining_amount, Decimal::from(1000));
+    }
+
+    #[test]
+    fn test_elimination_all_zeros_extreme() {
+        let r = calculate_elimination_step(0.into(), 0.into(), 0.into());
+        assert_eq!(r.eliminated_amount, Decimal::from(0));
+        assert_eq!(r.remaining_amount, Decimal::from(0));
+    }
+
+    #[test]
+    fn test_elimination_prior_plus_limit_exactly_amount_boundary() {
+        let r = calculate_elimination_step(500.into(), 200.into(), 300.into());
+        assert_eq!(r.eliminated_amount, Decimal::from(300));
+        assert_eq!(r.remaining_amount, Decimal::from(0));
+    }
+
+    #[test]
+    fn test_elimination_large_amount_no_overflow() {
+        let big = Decimal::from(99_999_999_999i64);
+        let prior = Decimal::from(100);
+        let limit = Decimal::from(500);
+        let r = calculate_elimination_step(big, prior, limit);
+        assert_eq!(r.eliminated_amount, Decimal::from(500));
+    }
+
+    // ── D 组：calculate_goodwill 边界 (4 assertions) ──
+
+    #[test]
+    fn test_goodwill_exactly_zero_boundary() {
+        let consideration = Decimal::from(700);
+        let fvna = Decimal::from(1000);
+        let pct = Decimal::from_f64(0.7).unwrap();
+        assert_eq!(
+            calculate_goodwill(consideration, fvna, pct),
+            Decimal::from(0)
+        );
+    }
+
+    #[test]
+    fn test_goodwill_negative_ownership_normalized_to_zero() {
+        let consideration = Decimal::from(500);
+        let fvna = Decimal::from(1000);
+        let pct = Decimal::from_f64(-0.1).unwrap();
+        assert_eq!(
+            calculate_goodwill(consideration, fvna, pct),
+            Decimal::from(500)
+        );
+    }
+
+    #[test]
+    fn test_goodwill_large_values_precision() {
+        let consideration = Decimal::from(10_000_000i64);
+        let fvna = Decimal::from(5_000_000i64);
+        let pct = Decimal::from(1);
+        assert_eq!(
+            calculate_goodwill(consideration, fvna, pct),
+            Decimal::from(5_000_000i64)
+        );
+    }
+
+    #[test]
+    fn test_goodwill_ownership_above_1_clamped_to_1() {
+        let consideration = Decimal::from(800);
+        let fvna = Decimal::from(500);
+        let pct = Decimal::from(2);
+        assert_eq!(
+            calculate_goodwill(consideration, fvna, pct),
+            Decimal::from(300)
+        );
+    }
+
+    // ── E 组：equity_method_investment_income 补充 (3 assertions) ──
+
+    #[test]
+    fn test_equity_method_ownership_above_1_clamped_to_1() {
+        let profit = Decimal::from(1000);
+        let pct = Decimal::from_f64(1.5).unwrap();
+        assert_eq!(
+            equity_method_investment_income(profit, pct),
+            Decimal::from(1000)
+        );
+    }
+
+    #[test]
+    fn test_equity_method_negative_ownership_normalized_to_zero() {
+        let profit = Decimal::from(1000);
+        let pct = Decimal::from_f64(-0.3).unwrap();
+        assert_eq!(
+            equity_method_investment_income(profit, pct),
+            Decimal::from(0)
+        );
+    }
+
+    #[test]
+    fn test_equity_method_zero_profit_always_zero() {
+        let profit = Decimal::from(0);
+        let pct = Decimal::from_f64(0.5).unwrap();
+        assert_eq!(
+            equity_method_investment_income(profit, pct),
+            Decimal::from(0)
+        );
     }
 }

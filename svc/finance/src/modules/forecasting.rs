@@ -1661,6 +1661,242 @@ mod tests {
         assert_eq!(actions.len(), 2);
         assert!(actions.last().unwrap().contains("应急预案"));
     }
+
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn rt<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn enum_forecast_period() {
+        rt(&ForecastPeriod::Daily);
+        rt(&ForecastPeriod::Weekly);
+        rt(&ForecastPeriod::Monthly);
+        rt(&ForecastPeriod::Quarterly);
+    }
+
+    #[test]
+    fn enum_forecast_scenario() {
+        rt(&ForecastScenario::Optimistic);
+        rt(&ForecastScenario::Base);
+        rt(&ForecastScenario::Pessimistic);
+    }
+
+    #[test]
+    fn enum_cash_flow_trend() {
+        rt(&CashFlowTrend::Improving);
+        rt(&CashFlowTrend::Deteriorating);
+        rt(&CashFlowTrend::Stable);
+    }
+
+    #[test]
+    fn enum_variance_type() {
+        rt(&VarianceType::Favorable);
+        rt(&VarianceType::Unfavorable);
+        rt(&VarianceType::Neutral);
+    }
+
+    #[test]
+    fn enum_variance_severity() {
+        rt(&VarianceSeverity::None);
+        rt(&VarianceSeverity::Minor);
+        rt(&VarianceSeverity::Moderate);
+        rt(&VarianceSeverity::Significant);
+        rt(&VarianceSeverity::Critical);
+    }
+
+    #[test]
+    fn enum_alert_condition() {
+        rt(&AlertCondition::GreaterThan);
+        rt(&AlertCondition::LessThan);
+        rt(&AlertCondition::Equals);
+        rt(&AlertCondition::PercentageChange);
+        rt(&AlertCondition::TrendDeviation);
+    }
+
+    #[test]
+    fn enum_alert_severity() {
+        rt(&AlertSeverity::Info);
+        rt(&AlertSeverity::Warning);
+        rt(&AlertSeverity::Critical);
+        rt(&AlertSeverity::Emergency);
+    }
+
+    #[test]
+    fn enum_alert_status() {
+        rt(&AlertStatus::Active);
+        rt(&AlertStatus::Acknowledged);
+        rt(&AlertStatus::Resolved);
+        rt(&AlertStatus::Suppressed);
+    }
+
+    #[test]
+    fn struct_confidence_interval() {
+        rt(&ConfidenceInterval {
+            lower_bound: Decimal::from(90),
+            upper_bound: Decimal::from(110),
+            confidence_percentage: Decimal::from(95),
+        });
+    }
+
+    #[test]
+    fn struct_cash_flow_forecast_item() {
+        rt(&CashFlowForecastItem {
+            date: Utc::now(),
+            predicted_inflow: Decimal::from(10000),
+            predicted_outflow: Decimal::from(8000),
+            net: Decimal::from(2000),
+            cumulative_balance: Decimal::from(50000),
+            confidence_interval: ConfidenceInterval {
+                lower_bound: Decimal::from(1800),
+                upper_bound: Decimal::from(2200),
+                confidence_percentage: Decimal::from(90),
+            },
+        });
+    }
+
+    #[test]
+    fn struct_forecast_accuracy() {
+        rt(&ForecastAccuracy {
+            overall_accuracy: Decimal::from(92),
+            inflow_accuracy: Decimal::from(94),
+            outflow_accuracy: Decimal::from(90),
+            average_deviation: Decimal::from(5),
+            sample_count: 180,
+        });
+    }
+
+    #[test]
+    fn struct_cash_flow_trend_analysis() {
+        rt(&CashFlowTrendAnalysis {
+            trend: CashFlowTrend::Improving,
+            change_percentage: Decimal::from(10),
+            description: "现金流改善".into(),
+        });
+    }
+
+    #[test]
+    fn struct_budget_variance_item() {
+        rt(&BudgetVarianceItem {
+            account_code: "6001".into(),
+            account_name: "管理费用".into(),
+            budget_amount: Decimal::from(10000),
+            actual_amount: Decimal::from(9500),
+            variance: Decimal::from(-500),
+            variance_percentage: Decimal::from(-5),
+            variance_type: VarianceType::Favorable,
+            explanation: "费用节约".into(),
+        });
+    }
+
+    #[test]
+    fn struct_budget_comparison() {
+        use std::collections::HashMap;
+        let mut budget = HashMap::new();
+        budget.insert("revenue".into(), Decimal::from(100000));
+        let mut actual = HashMap::new();
+        actual.insert("revenue".into(), Decimal::from(105000));
+        let mut summary = HashMap::new();
+        summary.insert("revenue".into(), Decimal::from(5000));
+        rt(&BudgetComparison {
+            period: "2026-Q1".into(),
+            budget_data: budget,
+            actual_data: actual,
+            variance_summary: summary,
+        });
+    }
+
+    #[test]
+    fn struct_alert_rule() {
+        rt(&AlertRule {
+            rule_id: Uuid::new_v4(),
+            name: "现金余额告警".into(),
+            description: "低于阈值告警".into(),
+            metric: "cash_balance".into(),
+            condition: AlertCondition::LessThan,
+            threshold: Decimal::from(100000),
+            severity: AlertSeverity::Warning,
+            enabled: true,
+        });
+    }
+
+    #[test]
+    fn struct_smart_alert() {
+        rt(&SmartAlert {
+            alert_id: Uuid::new_v4(),
+            rule_id: Uuid::new_v4(),
+            triggered_at: Utc::now(),
+            metric_value: Decimal::from(50000),
+            threshold_value: Decimal::from(100000),
+            severity: AlertSeverity::Critical,
+            message: "现金余额不足".into(),
+            recommended_actions: vec!["紧急融资".into(), "催收应收".into()],
+            status: AlertStatus::Active,
+        });
+    }
+
+    #[test]
+    fn struct_alert_summary() {
+        use std::collections::HashMap;
+        let mut by_sev = HashMap::new();
+        by_sev.insert("critical".into(), 2i64);
+        let mut by_metric = HashMap::new();
+        by_metric.insert("cash_balance".into(), 3i64);
+        rt(&AlertSummary {
+            total_active: 10,
+            by_severity: by_sev,
+            by_metric,
+            latest_triggered: Some(Utc::now()),
+        });
+    }
+
+    #[test]
+    fn struct_create_alert_rule_request() {
+        rt(&CreateAlertRuleRequest {
+            name: "规则1".into(),
+            description: "desc".into(),
+            metric: "m".into(),
+            condition: AlertCondition::GreaterThan,
+            threshold: Decimal::from(100),
+            severity: AlertSeverity::Warning,
+            enabled: Some(true),
+        });
+    }
+
+    #[test]
+    fn struct_update_alert_rule_request() {
+        rt(&UpdateAlertRuleRequest {
+            name: Some("new".into()),
+            description: Some("desc".into()),
+            metric: Some("m".into()),
+            condition: Some(AlertCondition::GreaterThan),
+            threshold: Some(Decimal::from(1)),
+            severity: Some(AlertSeverity::Info),
+            enabled: Some(false),
+        });
+    }
+
+    #[test]
+    fn struct_cash_flow_forecast() {
+        rt(&CashFlowForecast {
+            forecast_id: Uuid::new_v4(),
+            period_type: ForecastPeriod::Monthly,
+            start_date: Utc::now(),
+            end_date: Utc::now(),
+            predicted_inflow: Decimal::from(1000000),
+            predicted_outflow: Decimal::from(800000),
+            net_cash_flow: Decimal::from(200000),
+            confidence_level: Decimal::from(85),
+            scenario: ForecastScenario::Base,
+        });
+    }
 }
 
 pub fn create_routes() -> Router<AppState> {

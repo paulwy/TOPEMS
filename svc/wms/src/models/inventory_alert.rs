@@ -378,4 +378,192 @@ mod tests {
         let v2 = serde_json::to_value(&back).unwrap();
         assert_eq!(v, v2);
     }
+
+    #[test]
+    fn alert_type_enum_serde_roundtrip_all_variants() {
+        use AlertType::*;
+        for v in [BelowMin, AboveMax, ReorderNeeded, ExpiryWarning, OutOfStock] {
+            let s = serde_json::to_string(&v).unwrap();
+            assert_eq!(v, serde_json::from_str::<AlertType>(&s).unwrap());
+        }
+    }
+
+    #[test]
+    fn warehouse_alert_count_serde_roundtrip() {
+        let w = WarehouseAlertCount {
+            warehouse_id: Some(Uuid::nil()),
+            warehouse_name: Some("WH-TEST".into()),
+            alert_count: 42,
+        };
+        let v = serde_json::to_value(&w).unwrap();
+        let back: WarehouseAlertCount = serde_json::from_value(v.clone()).unwrap();
+        let v2 = serde_json::to_value(&back).unwrap();
+        assert_eq!(v, v2);
+    }
+
+    #[test]
+    fn warehouse_alert_count_serde_none_fields() {
+        let w = WarehouseAlertCount {
+            warehouse_id: None,
+            warehouse_name: None,
+            alert_count: 0,
+        };
+        let v = serde_json::to_value(&w).unwrap();
+        let back: WarehouseAlertCount = serde_json::from_value(v).unwrap();
+        assert!(back.warehouse_id.is_none());
+        assert_eq!(back.alert_count, 0);
+    }
+
+    #[test]
+    fn material_alert_count_serde_roundtrip() {
+        let m = MaterialAlertCount {
+            material_code: "SKU-MAT".into(),
+            material_name: "Test Material".into(),
+            alert_count: 7,
+        };
+        let v = serde_json::to_value(&m).unwrap();
+        let back: MaterialAlertCount = serde_json::from_value(v.clone()).unwrap();
+        let v2 = serde_json::to_value(&back).unwrap();
+        assert_eq!(v, v2);
+    }
+
+    #[test]
+    fn cycle_count_config_serde_roundtrip() {
+        use chrono::Utc;
+        let c = CycleCountConfig {
+            id: Uuid::nil(),
+            tenant_id: Uuid::nil(),
+            warehouse_id: Uuid::nil(),
+            location_id: Some(Uuid::nil()),
+            material_category: Some("category-A".into()),
+            count_frequency: "weekly".into(),
+            priority_level: "high".into(),
+            last_count_date: Some(Utc::now()),
+            next_count_date: Utc::now(),
+            is_active: true,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let v = serde_json::to_value(&c).unwrap();
+        let back: CycleCountConfig = serde_json::from_value(v.clone()).unwrap();
+        let v2 = serde_json::to_value(&back).unwrap();
+        assert_eq!(v, v2);
+    }
+
+    #[test]
+    fn cycle_count_config_serde_none_fields() {
+        use chrono::Utc;
+        let c = CycleCountConfig {
+            id: Uuid::nil(),
+            tenant_id: Uuid::nil(),
+            warehouse_id: Uuid::nil(),
+            location_id: None,
+            material_category: None,
+            count_frequency: "monthly".into(),
+            priority_level: "low".into(),
+            last_count_date: None,
+            next_count_date: Utc::now(),
+            is_active: false,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let v = serde_json::to_value(&c).unwrap();
+        let back: CycleCountConfig = serde_json::from_value(v.clone()).unwrap();
+        let v2 = serde_json::to_value(&back).unwrap();
+        assert_eq!(v, v2);
+        assert!(back.location_id.is_none());
+    }
+
+    #[test]
+    fn create_cycle_count_config_request_serde_roundtrip() {
+        let req = CreateCycleCountConfigRequest {
+            warehouse_id: Uuid::nil(),
+            location_id: Some(Uuid::nil()),
+            material_category: Some("cat-1".into()),
+            count_frequency: "daily".into(),
+            priority_level: "medium".into(),
+        };
+        let v = serde_json::to_value(&req).unwrap();
+        let back: CreateCycleCountConfigRequest = serde_json::from_value(v.clone()).unwrap();
+        let v2 = serde_json::to_value(&back).unwrap();
+        assert_eq!(v, v2);
+    }
+
+    #[test]
+    fn create_cycle_count_config_request_minimal() {
+        let req = CreateCycleCountConfigRequest {
+            warehouse_id: Uuid::nil(),
+            location_id: None,
+            material_category: None,
+            count_frequency: "quarterly".into(),
+            priority_level: "normal".into(),
+        };
+        let v = serde_json::to_value(&req).unwrap();
+        let back: CreateCycleCountConfigRequest = serde_json::from_value(v).unwrap();
+        assert!(back.location_id.is_none());
+        assert!(back.material_category.is_none());
+    }
+
+    #[test]
+    fn discrepancy_record_serde_roundtrip() {
+        use chrono::Utc;
+        let d = DiscrepancyRecord {
+            id: Uuid::nil(),
+            tenant_id: Uuid::nil(),
+            stock_take_id: Uuid::nil(),
+            stock_take_item_id: Uuid::nil(),
+            inventory_id: Uuid::nil(),
+            material_code: "SKU-DISC".into(),
+            material_name: "Disc Material".into(),
+            system_quantity: 100.0,
+            counted_quantity: 95.0,
+            discrepancy_quantity: -5.0,
+            discrepancy_type: "shortage".into(),
+            adjustment_quantity: Some(-5.0),
+            adjustment_status: "pending".into(),
+            approved_by: Some("user1".into()),
+            approval_date: Some(Utc::now()),
+            adjustment_date: Some(Utc::now()),
+            reason: Some("damaged".into()),
+            notes: Some("test note".into()),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let v = serde_json::to_value(&d).unwrap();
+        let back: DiscrepancyRecord = serde_json::from_value(v.clone()).unwrap();
+        let v2 = serde_json::to_value(&back).unwrap();
+        assert_eq!(v, v2);
+    }
+
+    #[test]
+    fn discrepancy_record_serde_none_fields() {
+        use chrono::Utc;
+        let d = DiscrepancyRecord {
+            id: Uuid::nil(),
+            tenant_id: Uuid::nil(),
+            stock_take_id: Uuid::nil(),
+            stock_take_item_id: Uuid::nil(),
+            inventory_id: Uuid::nil(),
+            material_code: "SKU-X".into(),
+            material_name: "X".into(),
+            system_quantity: 0.0,
+            counted_quantity: 0.0,
+            discrepancy_quantity: 0.0,
+            discrepancy_type: "overage".into(),
+            adjustment_quantity: None,
+            adjustment_status: "approved".into(),
+            approved_by: None,
+            approval_date: None,
+            adjustment_date: None,
+            reason: None,
+            notes: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let v = serde_json::to_value(&d).unwrap();
+        let back: DiscrepancyRecord = serde_json::from_value(v.clone()).unwrap();
+        let v2 = serde_json::to_value(&back).unwrap();
+        assert_eq!(v, v2);
+        assert!(back.adjustment_quantity.is_none());
+    }
 }

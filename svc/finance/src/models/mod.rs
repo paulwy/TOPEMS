@@ -224,6 +224,102 @@ impl fmt::Display for VoucherStatus {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ModelValidationError {
+    InvalidStatus(String),
+}
+
+impl fmt::Display for ModelValidationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ModelValidationError::InvalidStatus(msg) => write!(f, "invalid status: {}", msg),
+        }
+    }
+}
+
+impl std::error::Error for ModelValidationError {}
+
+impl VoucherStatus {
+    pub fn can_submit(&self) -> bool {
+        matches!(self, VoucherStatus::Draft)
+    }
+
+    pub fn validate_submit(&self) -> Result<(), ModelValidationError> {
+        if !self.can_submit() {
+            return Err(ModelValidationError::InvalidStatus(
+                "只有草稿状态的凭证才能提交".to_string(),
+            ));
+        }
+        Ok(())
+    }
+
+    pub fn can_approve(&self) -> bool {
+        matches!(self, VoucherStatus::Submitted)
+    }
+
+    pub fn validate_approve(&self) -> Result<(), ModelValidationError> {
+        if !self.can_approve() {
+            return Err(ModelValidationError::InvalidStatus(
+                "只有已提交的凭证才能审批".to_string(),
+            ));
+        }
+        Ok(())
+    }
+
+    pub fn can_reject(&self) -> bool {
+        matches!(self, VoucherStatus::Submitted)
+    }
+
+    pub fn validate_reject(&self) -> Result<(), ModelValidationError> {
+        if !self.can_reject() {
+            return Err(ModelValidationError::InvalidStatus(
+                "只有已提交的凭证才能驳回".to_string(),
+            ));
+        }
+        Ok(())
+    }
+
+    pub fn can_post(&self) -> bool {
+        matches!(self, VoucherStatus::Approved)
+    }
+
+    pub fn validate_post(&self) -> Result<(), ModelValidationError> {
+        if !self.can_post() {
+            return Err(ModelValidationError::InvalidStatus(
+                "只有已审批的凭证才能过账".to_string(),
+            ));
+        }
+        Ok(())
+    }
+
+    pub fn can_unpost(&self) -> bool {
+        matches!(self, VoucherStatus::Posted)
+    }
+
+    pub fn validate_unpost(&self) -> Result<(), ModelValidationError> {
+        if !self.can_unpost() {
+            return Err(ModelValidationError::InvalidStatus(
+                "只有已过账的凭证才能反过账".to_string(),
+            ));
+        }
+        Ok(())
+    }
+
+    pub fn can_reverse(&self) -> bool {
+        matches!(self, VoucherStatus::Posted)
+    }
+
+    pub fn validate_reverse(&self) -> Result<(), ModelValidationError> {
+        if !self.can_reverse() {
+            return Err(ModelValidationError::InvalidStatus(format!(
+                "voucher must be Posted to reverse, current: {}",
+                self
+            )));
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct VoucherLine {
     pub id: Uuid,
@@ -293,6 +389,64 @@ pub enum PeriodStatus {
     Open,
     Closing,
     Closed,
+}
+
+impl PeriodStatus {
+    pub fn can_post(&self) -> bool {
+        matches!(self, PeriodStatus::Open)
+    }
+
+    pub fn validate_post(&self) -> Result<(), ModelValidationError> {
+        if !self.can_post() {
+            return Err(ModelValidationError::InvalidStatus(format!(
+                "period must be Open to post voucher, current: {:?}",
+                self
+            )));
+        }
+        Ok(())
+    }
+
+    pub fn can_close(&self) -> bool {
+        matches!(self, PeriodStatus::Open | PeriodStatus::Closing)
+    }
+
+    pub fn validate_close(&self) -> Result<(), ModelValidationError> {
+        if !self.can_close() {
+            return Err(ModelValidationError::InvalidStatus(format!(
+                "period must be Open or Closing to close, current: {:?}",
+                self
+            )));
+        }
+        Ok(())
+    }
+
+    pub fn can_reopen(&self) -> bool {
+        matches!(self, PeriodStatus::Closed)
+    }
+
+    pub fn validate_reopen(&self) -> Result<(), ModelValidationError> {
+        if !self.can_reopen() {
+            return Err(ModelValidationError::InvalidStatus(format!(
+                "period must be Closed to reopen, current: {:?}",
+                self
+            )));
+        }
+        Ok(())
+    }
+
+    pub fn can_create_entry(&self) -> bool {
+        matches!(self, PeriodStatus::Open | PeriodStatus::Closing)
+    }
+
+    pub fn validate_create_entry(&self) -> Result<(), ModelValidationError> {
+        if !self.can_create_entry() {
+            return Err(ModelValidationError::InvalidStatus(format!(
+                "period must be Open or Closing to create entry, current: {:?}",
+                self
+            )));
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, ToSchema)]
@@ -1490,6 +1644,320 @@ mod tests {
             let json = serde_json::to_string(r).unwrap();
             let d: DiffReason = serde_json::from_str(&json).unwrap();
             assert_eq!(r, &d);
+        }
+    }
+
+    #[test]
+    fn test_voucher_status_can_submit() {
+        use VoucherStatus::*;
+        assert!(Draft.can_submit());
+        assert!(!Submitted.can_submit());
+        assert!(!Approved.can_submit());
+        assert!(!Posted.can_submit());
+        assert!(!Reversed.can_submit());
+        assert!(!Rejected.can_submit());
+        assert!(!Cancelled.can_submit());
+    }
+
+    #[test]
+    fn test_voucher_status_validate_submit() {
+        use VoucherStatus::*;
+        let all = [
+            Draft, Submitted, Approved, Posted, Reversed, Rejected, Cancelled,
+        ];
+        for s in all {
+            let res = s.validate_submit();
+            if matches!(s, Draft) {
+                assert!(res.is_ok(), "Draft should be valid for submit");
+            } else {
+                assert!(res.is_err(), "{:?} should be invalid for submit", s);
+                assert!(
+                    matches!(res, Err(ModelValidationError::InvalidStatus(ref msg)) if msg.contains("只有草稿状态的凭证才能提交")),
+                    "submit error message mismatch for {:?}: {:?}",
+                    s,
+                    res
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_voucher_status_can_approve() {
+        use VoucherStatus::*;
+        assert!(!Draft.can_approve());
+        assert!(Submitted.can_approve());
+        assert!(!Approved.can_approve());
+        assert!(!Posted.can_approve());
+        assert!(!Reversed.can_approve());
+        assert!(!Rejected.can_approve());
+        assert!(!Cancelled.can_approve());
+    }
+
+    #[test]
+    fn test_voucher_status_validate_approve() {
+        use VoucherStatus::*;
+        let all = [
+            Draft, Submitted, Approved, Posted, Reversed, Rejected, Cancelled,
+        ];
+        for s in all {
+            let res = s.validate_approve();
+            if matches!(s, Submitted) {
+                assert!(res.is_ok(), "Submitted should be valid for approve");
+            } else {
+                assert!(res.is_err(), "{:?} should be invalid for approve", s);
+                assert!(
+                    matches!(res, Err(ModelValidationError::InvalidStatus(ref msg)) if msg.contains("只有已提交的凭证才能审批")),
+                    "approve error message mismatch for {:?}: {:?}",
+                    s,
+                    res
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_voucher_status_can_reject() {
+        use VoucherStatus::*;
+        assert!(!Draft.can_reject());
+        assert!(Submitted.can_reject());
+        assert!(!Approved.can_reject());
+        assert!(!Posted.can_reject());
+        assert!(!Reversed.can_reject());
+        assert!(!Rejected.can_reject());
+        assert!(!Cancelled.can_reject());
+    }
+
+    #[test]
+    fn test_voucher_status_validate_reject() {
+        use VoucherStatus::*;
+        let all = [
+            Draft, Submitted, Approved, Posted, Reversed, Rejected, Cancelled,
+        ];
+        for s in all {
+            let res = s.validate_reject();
+            if matches!(s, Submitted) {
+                assert!(res.is_ok(), "Submitted should be valid for reject");
+            } else {
+                assert!(res.is_err(), "{:?} should be invalid for reject", s);
+                assert!(
+                    matches!(res, Err(ModelValidationError::InvalidStatus(ref msg)) if msg.contains("只有已提交的凭证才能驳回")),
+                    "reject error message mismatch for {:?}: {:?}",
+                    s,
+                    res
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_voucher_status_can_post() {
+        use VoucherStatus::*;
+        assert!(!Draft.can_post());
+        assert!(!Submitted.can_post());
+        assert!(Approved.can_post());
+        assert!(!Posted.can_post());
+        assert!(!Reversed.can_post());
+        assert!(!Rejected.can_post());
+        assert!(!Cancelled.can_post());
+    }
+
+    #[test]
+    fn test_voucher_status_validate_post() {
+        use VoucherStatus::*;
+        let all = [
+            Draft, Submitted, Approved, Posted, Reversed, Rejected, Cancelled,
+        ];
+        for s in all {
+            let res = s.validate_post();
+            if matches!(s, Approved) {
+                assert!(res.is_ok(), "Approved should be valid for post");
+            } else {
+                assert!(res.is_err(), "{:?} should be invalid for post", s);
+                assert!(
+                    matches!(res, Err(ModelValidationError::InvalidStatus(ref msg)) if msg.contains("只有已审批的凭证才能过账")),
+                    "post error message mismatch for {:?}: {:?}",
+                    s,
+                    res
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_voucher_status_can_unpost() {
+        use VoucherStatus::*;
+        assert!(!Draft.can_unpost());
+        assert!(!Submitted.can_unpost());
+        assert!(!Approved.can_unpost());
+        assert!(Posted.can_unpost());
+        assert!(!Reversed.can_unpost());
+        assert!(!Rejected.can_unpost());
+        assert!(!Cancelled.can_unpost());
+    }
+
+    #[test]
+    fn test_voucher_status_validate_unpost() {
+        use VoucherStatus::*;
+        let all = [
+            Draft, Submitted, Approved, Posted, Reversed, Rejected, Cancelled,
+        ];
+        for s in all {
+            let res = s.validate_unpost();
+            if matches!(s, Posted) {
+                assert!(res.is_ok(), "Posted should be valid for unpost");
+            } else {
+                assert!(res.is_err(), "{:?} should be invalid for unpost", s);
+                assert!(
+                    matches!(res, Err(ModelValidationError::InvalidStatus(ref msg)) if msg.contains("只有已过账的凭证才能反过账")),
+                    "unpost error message mismatch for {:?}: {:?}",
+                    s,
+                    res
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_model_validation_error_display() {
+        let e = ModelValidationError::InvalidStatus("只有草稿状态的凭证才能提交".to_string());
+        let display = format!("{}", e);
+        assert!(display.contains("invalid status"));
+        assert!(display.contains("只有草稿状态的凭证才能提交"));
+
+        let e2 = ModelValidationError::InvalidStatus("只有已过账的凭证才能反过账".to_string());
+        let display2 = format!("{}", e2);
+        assert!(display2.contains("invalid status"));
+        assert!(display2.contains("只有已过账的凭证才能反过账"));
+    }
+
+    #[test]
+    fn test_period_status_can_close() {
+        use PeriodStatus::*;
+        assert!(Open.can_close());
+        assert!(Closing.can_close());
+        assert!(!Closed.can_close());
+    }
+
+    #[test]
+    fn test_period_status_validate_close() {
+        use PeriodStatus::*;
+        let all = [Open, Closing, Closed];
+        for s in all {
+            let res = s.validate_close();
+            match s {
+                Open | Closing => {
+                    assert!(res.is_ok(), "{:?} should be valid for close", s);
+                    assert!(
+                        s.can_close(),
+                        "can_close should match validate_close ok for {:?}",
+                        s
+                    );
+                }
+                Closed => {
+                    assert!(res.is_err(), "{:?} should be invalid for close", s);
+                    assert!(
+                        !s.can_close(),
+                        "can_close should match validate_close err for {:?}",
+                        s
+                    );
+                    assert!(
+                        matches!(res, Err(ModelValidationError::InvalidStatus(ref msg)) if msg.contains("period must be Open or Closing to close")),
+                        "close error message mismatch for {:?}: {:?}",
+                        s,
+                        res
+                    );
+                    assert!(
+                        matches!(res, Err(ModelValidationError::InvalidStatus(ref msg)) if msg.contains("Closed")),
+                        "close error should mention actual status Closed"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_period_status_can_reopen() {
+        use PeriodStatus::*;
+        assert!(!Open.can_reopen());
+        assert!(!Closing.can_reopen());
+        assert!(Closed.can_reopen());
+    }
+
+    #[test]
+    fn test_period_status_validate_reopen() {
+        use PeriodStatus::*;
+        let all = [Open, Closing, Closed];
+        for s in all {
+            let res = s.validate_reopen();
+            match s {
+                Closed => {
+                    assert!(res.is_ok(), "{:?} should be valid for reopen", s);
+                    assert!(
+                        s.can_reopen(),
+                        "can_reopen should match validate_reopen ok for {:?}",
+                        s
+                    );
+                }
+                Open | Closing => {
+                    assert!(res.is_err(), "{:?} should be invalid for reopen", s);
+                    assert!(
+                        !s.can_reopen(),
+                        "can_reopen should match validate_reopen err for {:?}",
+                        s
+                    );
+                    assert!(
+                        matches!(res, Err(ModelValidationError::InvalidStatus(ref msg)) if msg.contains("period must be Closed to reopen")),
+                        "reopen error message mismatch for {:?}: {:?}",
+                        s,
+                        res
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_period_status_can_create_entry() {
+        use PeriodStatus::*;
+        assert!(Open.can_create_entry());
+        assert!(Closing.can_create_entry());
+        assert!(!Closed.can_create_entry());
+    }
+
+    #[test]
+    fn test_period_status_validate_create_entry() {
+        use PeriodStatus::*;
+        let all = [Open, Closing, Closed];
+        for s in all {
+            let res = s.validate_create_entry();
+            match s {
+                Open | Closing => {
+                    assert!(res.is_ok(), "{:?} should be valid for create_entry", s);
+                    assert!(
+                        s.can_create_entry(),
+                        "can_create_entry should match validate_create_entry ok for {:?}",
+                        s
+                    );
+                }
+                Closed => {
+                    assert!(res.is_err(), "{:?} should be invalid for create_entry", s);
+                    assert!(
+                        !s.can_create_entry(),
+                        "can_create_entry should match validate_create_entry err for {:?}",
+                        s
+                    );
+                    assert!(
+                        matches!(res, Err(ModelValidationError::InvalidStatus(ref msg)) if msg.contains("period must be Open or Closing to create entry")),
+                        "create_entry error message mismatch for {:?}: {:?}",
+                        s,
+                        res
+                    );
+                    assert!(
+                        matches!(res, Err(ModelValidationError::InvalidStatus(ref msg)) if msg.contains("Closed")),
+                        "create_entry error should mention actual status Closed"
+                    );
+                }
+            }
         }
     }
 }
