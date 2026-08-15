@@ -13,12 +13,19 @@ const path = require('path');
 const TOPEMS_ROOT = path.resolve(__dirname, '..', '..');
 const ARGS = process.argv.slice(2);
 
-/* ---------- CLI Args (P4 pattern) ---------- */
-const argIdx = (name) => ARGS.indexOf(name);
-const HAS_ARG = (name) => argIdx(name) !== -1;
+/* ---------- CLI Args (P4 pattern · supports --x=v OR --x v) ---------- */
+const argIdx = (name) => {
+  const idx = ARGS.indexOf(name);
+  if (idx !== -1) return { i: idx, mode: 'space' };
+  const eqIdx = ARGS.findIndex(a => typeof a === 'string' && a.startsWith(`${name}=`));
+  return eqIdx === -1 ? { i: -1, mode: null } : { i: eqIdx, mode: 'eq' };
+};
+const HAS_ARG = (name) => argIdx(name).i !== -1;
 const GET_ARG = (name, fallback = null) => {
-  const i = argIdx(name);
-  return i === -1 ? fallback : (ARGS[i + 1] || fallback);
+  const { i, mode } = argIdx(name);
+  if (i === -1) return fallback;
+  if (mode === 'eq') return ARGS[i].slice(name.length + 1) || fallback;
+  return ARGS[i + 1] || fallback;
 };
 
 const DRY_RUN = !HAS_ARG('--fail-fast');          // DEFAULT true
@@ -263,8 +270,160 @@ function SCAN_CONSTANTS() {
   return { frontendPERMSet, backendCartSet, allValidSet, moduleCodes, actionCodes, _metadataSetSize: metadataSet.size };
 }
 
-/* ---------- Validator stubs (to be implemented in Commit 3) ---------- */
-const RUN_VALIDATORS = (scanR, constR) => { /* noop initially */ };
+/* ---------- Validator: 6 Rules (A-strict 3 FAIL + 3 WARN) ---------- */
+function RUN_VALIDATORS(backendRes, frontendRes, constRes) {
+  const { frontendPERMSet, allValidSet, moduleCodes = [], actionCodes = [] } = constRes || {};
+  const backendCodes = (backendRes && backendRes.codes) || [];
+  const frontendCodes = (frontendRes && frontendRes.codes) || [];
+
+  const backendCodesSet = new Set(backendCodes.map(c => c.code));
+  const frontendNavCodesSet = new Set();
+  frontendCodes.forEach(c => (c.perms || []).forEach(p => frontendNavCodesSet.add(p)));
+  const backendModuleSet = new Set(backendCodes.map(c => (c.code || '').split(':')[0]).filter(Boolean));
+  const frontendModuleSet = new Set();
+  try {
+    fs.readdirSync(path.join(TOPEMS_ROOT, 'apps', 'web', 'src', 'modules'))
+      .filter(n => n.endsWith('.ts') === false) // exclude singular .ts files (e.g. crm.ts)
+      .forEach(n => frontendModuleSet.add(n));
+  } catch {}
+
+  const toSnake = (s) => String(s || '').replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase().replace(/^_/, '');
+  const validModuleSet = new Set([
+    ...moduleCodes.map(mc => toSnake(mc)),
+    ...frontendModuleSet,
+    ...[...frontendPERMSet].map(k => (k || '').split(':')[0]).filter(Boolean)
+  ]);
+  const validActionsSet = new Set([
+    'read', 'write', 'delete', 'approve', 'admin',
+    'view', 'edit', 'create', 'remove', 'export', 'import', 'manage', 'audit', 'migration', 'refresh',
+    ...actionCodes.map(ac => toSnake(ac))
+  ]);
+
+  /* ---------- R1: Backend code FORMAT (段数 2~4 · 字符集 · 模块名合法) ---------- */
+  const segRegex = /^[a-z0-9_\-]+$/;
+  for (const c of backendCodes) {
+    const segs = String(c.code || '').split(':');
+    const segCountOk = segs.length >= 2 && segs.length <= 4;
+    const segCharsOk = segs.every(s => segRegex.test(s));
+    const moduleOk = validModuleSet.has(segs[0]);
+    if (!segCountOk || !segCharsOk || !moduleOk) {
+      REPORT.summary.R1++;
+      REPORT.failures.push({
+        rule: 'R1', level: 'FAIL', file: c.filePath, line: c.lineNo,
+        code: c.code, crateOrModule: c.crateName,
+        msg: [
+          !segCountOk && `segments=${segs.length} (need 2~4)`,
+          !segCharsOk && `chars not in [a-z0-9_-]`,
+          !moduleOk && `module '${segs[0]}' not in valid set (known modules: ${[...validModuleSet].slice(0,20).join(',')}${validModuleSet.size>20?'...':''})`
+        ].filter(Boolean).join('; ')
+      });
+    }
+  }
+
+  /* ---------- R2: Backend code EXISTENCE in AllValidSet ---------- */
+  for (const c of backendCodes) {
+    if (allValidSet && allValidSet.has(c.code)) continue;
+    const segs = String(c.code || '').split(':');
+    const lastSeg = segs[segs.length - 1];
+    const weakPass = validModuleSet.has(segs[0]) && validActionsSet.has(lastSeg);
+    if (weakPass) {
+      REPORT.warnings.push({
+        rule: 'R2-WEAK-PASS', level: 'WARN', file: c.filePath, line: c.lineNo, code: c.code,
+        msg: `module '${segs[0]}' valid + action '${lastSeg}' valid, but code NOT explicitly in constants table; suggest add to shared-auth ModuleCode×PermissionAction or frontend PERMISSIONS explicitly (avoids future false-positive R2 after new actions added).`
+      });
+      continue;
+    }
+    REPORT.summary.R2++;
+    REPORT.failures.push({
+      rule: 'R2', level: 'FAIL', file: c.filePath, line: c.lineNo, code: c.code, crateOrModule: c.crateName,
+      msg: `NOT found in allValidSet (frontend PERM ∪ backend ModuleCode×PermissionAction ∪ permission-metadata cache) — knownAction='${lastSeg}'? ${validActionsSet.has(lastSeg)}; module known? ${validModuleSet.has(segs[0])}.`
+    });
+  }
+
+  /* ---------- R3: Frontend nav code EXISTENCE in frontendPERMSet ---------- */
+  // Build case-insensitive map for suggestions
+  const ciMap = new Map();
+  frontendPERMSet.forEach(k => ciMap.set(String(k).toLowerCase(), k));
+  for (const c of frontendCodes) {
+    const perms = c.perms || [];
+    for (const perm of perms) {
+      if (frontendPERMSet.has(perm)) continue;
+      const suggest = ciMap.get(String(perm).toLowerCase());
+      REPORT.summary.R3++;
+      REPORT.failures.push({
+        rule: 'R3', level: 'FAIL', file: c.filePath, line: c.lineNo, code: perm, crateOrModule: c.module,
+        msg: suggest
+          ? `NOT in frontend PERMISSIONS table; DID YOU MEAN (case-corrected): '${suggest}'?`
+          : `NOT found in apps/web/src/config/permissions.ts — please add explicit definition to PERMISSIONS constant, fix typo, or verify module prefix spelling.`
+      });
+    }
+  }
+
+  /* ---------- R4: Module prefix B-F alignment (WARN only) ---------- */
+  const unionM = new Set([...backendModuleSet, ...frontendModuleSet]);
+  for (const M of unionM) {
+    const inB = backendModuleSet.has(M);
+    const inF = frontendModuleSet.has(M);
+    if (inB && !inF) {
+      REPORT.summary.R4++;
+      REPORT.warnings.push({
+        rule: 'R4', level: 'WARN',
+        msg: `[B→F MISMATCH] Backend module prefix '${M}' appears in require_permission() checks, but apps/web/src/modules/${M}/ directory is MISSING. Likely backend/frontend module naming inconsistency pairs (e.g. backend='pdm' ↔ frontend='product' / backend='master-data' ↔ frontend='master', etc.). Verify if frontend module directory SHOULD exist but has different basename.`
+      });
+    }
+    if (inF && !inB) {
+      REPORT.summary.R4++;
+      REPORT.warnings.push({
+        rule: 'R4', level: 'WARN',
+        msg: `[F→B MISMATCH] Frontend module '${M}' (apps/web/src/modules/${M}/) exists, but NO backend require_permission() calls were found with module prefix = '${M}'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module ${M} is missing checks.`
+      });
+    }
+  }
+
+  /* ---------- R5: Orphan permission codes (STATIC simplified · no git data) WARN only ---------- */
+  const orphanArr = [];
+  for (const p of frontendPERMSet) {
+    if (backendCodesSet.has(p)) continue;
+    if (frontendNavCodesSet.has(p)) continue;
+    orphanArr.push(p);
+  }
+  REPORT.summary.R5 = orphanArr.length;
+  if (orphanArr.length > 0) {
+    REPORT.warnings.push({
+      rule: 'R5', level: 'WARN',
+      msg: `${orphanArr.length} STATIC ORPHAN codes found in frontend PERMISSIONS: these keys are defined in config/permissions.ts BUT are NEVER referenced by (A) backend require_permission() AND (B) frontend nav/config requiredPermissions. Definition-only keys increase maintenance burden and mask real permissions lifecycle management; consider cleaning or marking reserved-for-future with TODO comments.`,
+      details: { count: orphanArr.length, top50: orphanArr.slice(0, 50) }
+    });
+    orphanArr.slice(0, 50).forEach(code => REPORT.orphanCodes.push({ code }));
+  }
+
+  /* ---------- R6: Endpoint ↔ Nav same-module cross mapping gap (WARN only) ---------- */
+  const cappedF = Math.min(60);
+  for (const M of [...backendModuleSet].filter(x => frontendModuleSet.has(x))) {
+    if (REPORT.summary.R6 >= cappedF) break;
+    const bForM = backendCodes.filter(c => String(c.code).startsWith(`${M}:`));
+    const fNavForM = new Set();
+    frontendCodes
+      .filter(c => (c.module === M || String(c.navPathOrRoutePath || '').startsWith(`${M}/`) || (c.perms || []).some(p => String(p).startsWith(`${M}:`))))
+      .forEach(c => (c.perms || []).forEach(p => fNavForM.add(p)));
+    for (const bc of bForM) {
+      if (REPORT.summary.R6 >= cappedF) break;
+      const segs = String(bc.code).split(':');
+      const action = segs[segs.length - 1];
+      const hasF = [...fNavForM].some(fp => {
+        const fs = fp.split(':');
+        return fs[0] === M && fs[fs.length - 1] === action;
+      });
+      if (!hasF) {
+        REPORT.summary.R6++;
+        REPORT.warnings.push({
+          rule: 'R6', level: 'WARN', file: bc.filePath, line: bc.lineNo, code: bc.code,
+          msg: `Backend code '${bc.code}' (action=${action}) in module ${M} has NO frontend nav/config permission key with same module '${M}' + same action '${action}'. This can be OK if the UI feature is not exposed yet, but verify whether the matching permission field is MISSING in frontend ${M}ModuleConfig / navTree entry.`
+        });
+      }
+    }
+  }
+}
 
 /* ---------- Core runGate() (pure · exportable for Vitest) ---------- */
 async function runGate(config = {}) {
