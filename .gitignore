@@ -243,3 +243,6 @@ coverage/
 # i18n script intermediate outputs and scan reports
 scripts/i18n/*.json
 scripts/i18n/*.log
+
+# P2 theme verification screenshots (temp artifacts)
+apps/web/public/__p2_artifacts/

@@ -93,7 +93,9 @@ const SERVICES: ServiceConfig[] = [
   // NOTE: analytics 服务（端口 8060）既承载 /api/bi 也承载 /api/analytics；
   // WebSocket 路径 /ws/bi/dashboard/{id} 用于 BI 仪表盘实时数据推送
   { name: 'bi', port: BACKEND_PORTS.bi, apiPrefix: '/api/bi', wsPath: '/ws/bi' },
-  { name: 'monitor', port: CORE_PORT, isVirtual: true, apiPrefix: '/api/core/monitor', legacyPrefix: '/monitor/api' },
+  // V68.1: monitor 已从 unified-core 拆分为独立服务（端口 8095）
+  // 旧路径 /api/core/monitor/* 通过下方兼容代理重写为 /api/monitor/* 转发到 8095
+  { name: 'monitor', port: BACKEND_PORTS.monitor, apiPrefix: '/api/monitor' },
   { name: 'portal', port: BACKEND_PORTS.portal, apiPrefix: '/api/portal' },
 
   // 主数据服务（独立进程，端口 8090）
@@ -112,6 +114,11 @@ const SERVICES: ServiceConfig[] = [
   // 路径前缀 /api/core/automation，与 moduleMapping.automation.apiBasePath 对齐
   // 后端 unified-core 未实现 automation 路由时返回 404，前端 client.ts 已做 V64 静默降级
   { name: 'automation', port: CORE_PORT, isVirtual: true, apiPrefix: '/api/core/automation' },
+
+  // V68.1: plugin-registry 独立服务（端口 8096）
+  // 插件注册/市场/安装/升级 API，路径前缀 /api/plugin
+  // 旧路径 /api/core/plugin/* 通过下方兼容代理重写为 /api/plugin/* 转发到 8096
+  { name: 'plugin-registry', port: BACKEND_PORTS['plugin-registry'], apiPrefix: '/api/plugin' },
 ];
 
 // ============================================================================
@@ -275,6 +282,7 @@ const HEALTH_CHECK_PATHS: Record<string, string> = {
   'feedback': '/health',
   'master-data': '/health',
   'search': '/health',
+  'plugin-registry': '/health',
 };
 
 const createHealthProxyConfig = (serviceName: string, target: string) => ({
@@ -307,6 +315,20 @@ const createHealthProxyConfig = (serviceName: string, target: string) => ({
 
 const buildServiceProxies = (): Record<string, any> => {
   const proxies: Record<string, any> = {};
+
+  // V68.1 兼容代理（必须在所有其他 /api/core/* 代理之前注册）
+  // Vite 8 按插入顺序匹配 proxy key，不排序。如果 /api/core 先注册，
+  // 会抢先匹配 /api/core/plugin/* 和 /api/core/monitor/*
+  proxies['/api/core/plugin'] = {
+    target: `http://localhost:${BACKEND_PORTS['plugin-registry']}`,
+    changeOrigin: true,
+    rewrite: (path: string) => path.replace(/^\/api\/core\/plugin/, '/api/plugin'),
+  };
+  proxies['/api/core/monitor'] = {
+    target: `http://localhost:${BACKEND_PORTS.monitor}`,
+    changeOrigin: true,
+    rewrite: (path: string) => path.replace(/^\/api\/core\/monitor/, '/api/monitor'),
+  };
 
   // Dashboard 路由走服务自身端口（原硬编码 8080 gateway 已移除）
   // 各服务的 /api/{mod}/dashboard 会自动被下方的 apiPrefix 规则捕获
@@ -350,7 +372,7 @@ const buildServiceProxies = (): Record<string, any> => {
     };
   }
 
-  // 核心服务 /api/core
+  // 核心服务 /api/core（通配代理，兼容代理已在函数开头注册）
   proxies['/api/core'] = {
     target: `http://localhost:${CORE_PORT}`,
     changeOrigin: true,

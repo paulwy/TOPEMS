@@ -87,34 +87,176 @@ declare module '@mui/material/styles' {
   }
 }
 
-const lightShadows = [
-  designTokens.shadows.none,
-  designTokens.shadows.xs,
-  designTokens.shadows.sm,
-  designTokens.shadows.md,
-  designTokens.shadows.lg,
-  designTokens.shadows.xl,
-  designTokens.shadows['2xl'],
-  designTokens.shadows['3xl'],
-  designTokens.shadows.inner,
-  designTokens.shadows.sm,
-  designTokens.shadows.md,
-  designTokens.shadows.lg,
-  designTokens.shadows.xl,
-  designTokens.shadows['2xl'],
-  designTokens.shadows['3xl'],
-  designTokens.shadows.inner,
-  designTokens.shadows.sm,
-  designTokens.shadows.md,
-  designTokens.shadows.lg,
-  designTokens.shadows.xl,
-  designTokens.shadows['2xl'],
-  designTokens.shadows['3xl'],
-  designTokens.shadows.inner,
-  designTokens.shadows.sm,
-  designTokens.shadows.md,
-];
+const lightShadows = [...Array(24)].map((_, i) => {
+  // MUI shadows 是 0..24 的数组（长度 25），以下为对齐设计 tokens 的合理映射
+  const shadows = [
+    designTokens.shadows.none,             // 0
+    designTokens.shadows.xs,               // 1
+    designTokens.shadows.sm,               // 2
+    designTokens.shadows.md,               // 3
+    designTokens.shadows.lg,               // 4
+    designTokens.shadows.xl,               // 5
+    designTokens.shadows['2xl'],            // 6
+    designTokens.shadows['3xl'],            // 7
+    designTokens.shadows.inner,             // 8
+    designTokens.shadows.sm,                // 9
+    designTokens.shadows.md,                // 10
+    designTokens.shadows.lg,                // 11
+    designTokens.shadows.xl,                // 12
+    designTokens.shadows['2xl'],            // 13
+    designTokens.shadows['3xl'],            // 14
+    designTokens.shadows.inner,             // 15
+    designTokens.shadows.sm,                // 16
+    designTokens.shadows.md,                // 17
+    designTokens.shadows.lg,                // 18
+    designTokens.shadows.xl,                // 19
+    designTokens.shadows['2xl'],            // 20
+    designTokens.shadows['3xl'],            // 21
+    designTokens.shadows.inner,             // 22
+    designTokens.shadows.sm,                // 23
+    designTokens.shadows.md,                // 24
+  ];
+  return shadows[i] ?? designTokens.shadows.none;
+});
 
+const darkShadows = [...Array(25)].map((_, i) => {
+  const shadows = [
+    designTokens.darkShadows.none,
+    designTokens.darkShadows.xs,
+    designTokens.darkShadows.sm,
+    designTokens.darkShadows.md,
+    designTokens.darkShadows.lg,
+    designTokens.darkShadows.xl,
+    designTokens.darkShadows['2xl'],
+    designTokens.darkShadows['3xl'],
+    designTokens.darkShadows.inner,
+    designTokens.darkShadows.sm,
+    designTokens.darkShadows.md,
+    designTokens.darkShadows.lg,
+    designTokens.darkShadows.xl,
+    designTokens.darkShadows['2xl'],
+    designTokens.darkShadows['3xl'],
+    designTokens.darkShadows.inner,
+    designTokens.darkShadows.sm,
+    designTokens.darkShadows.md,
+    designTokens.darkShadows.lg,
+    designTokens.darkShadows.xl,
+    designTokens.darkShadows['2xl'],
+    designTokens.darkShadows['3xl'],
+    designTokens.darkShadows.inner,
+    designTokens.darkShadows.sm,
+    designTokens.darkShadows.md,
+  ];
+  return shadows[i] ?? designTokens.darkShadows.none;
+});
+
+/**
+ * Cyberpunk 赛博朋克色彩方案
+ * - 基础色：深空（#0A0A1A），比暗 mode 更纯黑
+ * - 主色：霓虹青（#00FFFF）替换原 primary 蓝
+ * - 副色：霓虹品红（#FF00FF）
+ * - 强调色：霓虹金（#FFD700）
+ * - 玻璃态：半透明 + backdrop-filter 组合
+ */
+const CYBERPUNK_COLORS = {
+  background: {
+    default: '#0A0A1A',
+    paper: 'rgba(26, 26, 46, 0.90)',
+    elevated: 'rgba(26, 26, 46, 0.95)',
+  },
+  text: {
+    primary: '#E6F1FF',
+    secondary: '#8892B0',
+    muted: '#5A648A',
+    disabled: 'rgba(230, 241, 255, 0.40)',
+  },
+  border: {
+    default: 'rgba(0, 255, 255, 0.20)',
+  },
+  primary: {
+    main: '#00FFFF',
+    light: '#5FFFFF',
+    dark: '#00C8C8',
+    contrastText: '#0A0A1A',
+    50: 'rgba(0, 255, 255, 0.05)',
+    100: 'rgba(0, 255, 255, 0.10)',
+    200: 'rgba(0, 255, 255, 0.20)',
+    300: 'rgba(0, 255, 255, 0.35)',
+    400: 'rgba(0, 255, 255, 0.50)',
+    500: '#00FFFF',
+    600: '#00D9D9',
+    700: '#00B3B3',
+    800: '#008C8C',
+    900: '#006666',
+  },
+  secondary: {
+    main: '#FF00FF',
+    light: '#FF5FFF',
+    dark: '#C800C8',
+    contrastText: '#FFFFFF',
+    50: 'rgba(255, 0, 255, 0.05)',
+    100: 'rgba(255, 0, 255, 0.10)',
+    200: 'rgba(255, 0, 255, 0.20)',
+    300: 'rgba(255, 0, 255, 0.35)',
+    400: 'rgba(255, 0, 255, 0.50)',
+    500: '#FF00FF',
+    600: '#D900D9',
+    700: '#B300B3',
+    800: '#8C008C',
+    900: '#660066',
+  },
+  warning: {
+    main: '#FFD700',
+    light: '#FFE54D',
+    dark: '#C9AA00',
+  },
+  error: {
+    main: '#FF4444',
+    light: '#FF7777',
+    dark: '#CC3333',
+  },
+  success: {
+    main: '#00FF88',
+    light: '#4DFFA6',
+    dark: '#00CC66',
+  },
+  info: {
+    main: '#00AAFF',
+    light: '#4DC3FF',
+    dark: '#0088CC',
+  },
+} as const;
+
+const customShadowsLight = {
+  card: `0 1px 2px 0 ${designTokens.colors.action.hover}, 0 1px 3px 0 rgba(0,0,0,0.03)`,
+  dropdown: `0 4px 12px ${designTokens.colors.action.selected}, 0 2px 4px ${designTokens.colors.action.hover}`,
+  dialog: `0 24px 48px rgba(0,0,0,0.16), 0 8px 16px ${designTokens.colors.action.selected}`,
+  focus: '0 0 0 3px rgba(59, 130, 246, 0.15)',
+  dangerButton: '0 4px 12px rgba(239, 68, 68, 0.30)',
+  dangerButtonHover: '0 6px 16px rgba(239, 68, 68, 0.40)',
+};
+
+const customShadowsDark = {
+  ...customShadowsLight,
+  card: '0 1px 2px 0 rgba(0,0,0,0.30), 0 1px 3px 0 rgba(0,0,0,0.20)',
+  dropdown: '0 8px 24px rgba(0,0,0,0.40), 0 2px 6px rgba(0,0,0,0.30)',
+  dialog: '0 24px 48px rgba(0,0,0,0.50), 0 8px 16px rgba(0,0,0,0.40)',
+};
+
+const customShadowsCyberpunk = {
+  card: `0 4px 24px rgba(0, 0, 0, 0.30), 0 0 20px rgba(0, 255, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.08)`,
+  dropdown: `0 8px 32px rgba(0, 0, 0, 0.50), 0 0 24px rgba(0, 255, 255, 0.12)`,
+  dialog: `0 24px 64px rgba(0, 0, 0, 0.60), 0 0 40px rgba(0, 255, 255, 0.15)`,
+  focus: '0 0 0 3px rgba(0, 255, 255, 0.25)',
+  dangerButton: designTokens.neonShadows.red.md,
+  dangerButtonHover: '0 6px 18px rgba(255, 68, 68, 0.55)',
+};
+
+/**
+ * 基础 palette 生成（shared typography/shape/spacing/zIndex/gradients 独立于 mode）
+ * palette.mode 只决定 MUI 组件内置的深色样式规则切换（.Mui-selected 背景色等）
+ * —— 自定义组件通过 theme.applyStyles('dark', {...}) / [data-theme='cyberpunk'] 实现多态
+ */
 export const createCustomTheme = (): Theme => {
   return createTheme({
     palette: {
@@ -157,7 +299,59 @@ export const createCustomTheme = (): Theme => {
       purple: designTokens.colors.purple,
       pink: designTokens.colors.pink,
       surface: designTokens.colors.surface,
+      accent: {
+        main: '#FFD700',
+        light: '#FFE54D',
+        dark: '#C9AA00',
+      },
     },
+    colorSchemes: {
+      light: {
+        palette: {
+          mode: 'light',
+          background: {
+            default: designTokens.colors.background.default,
+            paper: designTokens.colors.background.paper,
+          },
+        },
+      },
+      dark: {
+        palette: {
+          mode: 'dark',
+          background: {
+            default: designTokens.colors.grey[950],
+            paper: designTokens.colors.grey[900],
+          },
+          text: {
+            primary: '#F1F5F9',
+            secondary: designTokens.colors.grey[300],
+            muted: designTokens.colors.grey[500],
+          },
+          divider: designTokens.colors.grey[700],
+          grey: designTokens.colors.grey,
+        },
+      },
+      cyberpunk: {
+        palette: {
+          mode: 'dark',
+          primary: CYBERPUNK_COLORS.primary,
+          secondary: CYBERPUNK_COLORS.secondary,
+          success: CYBERPUNK_COLORS.success,
+          warning: CYBERPUNK_COLORS.warning,
+          error: CYBERPUNK_COLORS.error,
+          info: CYBERPUNK_COLORS.info,
+          background: CYBERPUNK_COLORS.background,
+          text: CYBERPUNK_COLORS.text,
+          divider: CYBERPUNK_COLORS.border.default,
+          accent: {
+            main: '#FFD700',
+            light: '#FFE54D',
+            dark: '#C9AA00',
+          },
+        },
+      },
+      // MUI v5 类型只声明 light/dark，任意字符串键在运行时均支持
+    } as ThemeOptions['colorSchemes'],
     typography: {
       fontFamily: designTokens.typography.fontFamily,
       fontSize: 14,
@@ -188,14 +382,7 @@ export const createCustomTheme = (): Theme => {
     spacing: (factor: number) => `${factor * 8}px`,
     zIndex: designTokens.zIndex,
     shadows: lightShadows as ThemeOptions['shadows'],
-    customShadows: {
-      card: `0 1px 2px 0 ${designTokens.colors.action.hover}, 0 1px 3px 0 rgba(0,0,0,0.03)`,
-      dropdown: `0 4px 12px ${designTokens.colors.action.selected}, 0 2px 4px ${designTokens.colors.action.hover}`,
-      dialog: `0 24px 48px rgba(0,0,0,0.16), 0 8px 16px ${designTokens.colors.action.selected}`,
-      focus: '0 0 0 3px rgba(59, 130, 246, 0.15)',
-      dangerButton: '0 4px 12px rgba(239, 68, 68, 0.30)',
-      dangerButtonHover: '0 6px 16px rgba(239, 68, 68, 0.40)',
-    },
+    customShadows: customShadowsLight,
     transitions: {
       duration: designTokens.transitions.duration,
       easing: designTokens.transitions.easing,
@@ -859,3 +1046,16 @@ export const createCustomTheme = (): Theme => {
 };
 
 export default createCustomTheme;
+
+/**
+ * 按主题返回对应的 customShadows（MUI colorSchemes 不接受 customShadows，因此在组件层使用）
+ *
+ * - light: 基础 shadows（写入 theme.customShadows）
+ * - dark: 暗色调 shadows（应用于 dark 模式）
+ * - cyberpunk: 赛博朋克霓虹阴影（应用于 data-theme=cyberpunk）
+ */
+export const themeCustomShadows = {
+  light: customShadowsLight,
+  dark: customShadowsDark,
+  cyberpunk: customShadowsCyberpunk,
+} as const;

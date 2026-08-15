@@ -105,6 +105,7 @@ export {
   rdNavConfig,
   scmNavConfig,
   srmNavConfig,
+  ticketNavConfig,
   tmsNavConfig,
   wmsNavConfig,
   workflowNavConfig,

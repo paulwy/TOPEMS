@@ -287,9 +287,31 @@ service_groups:
       dependencies: [unified-core]
       service_dir: lowcode
 
+  # V68.1 拆分服务 (8095-8096)
+  # monitor 和 plugin 路由已从 unified-core 迁移至独立进程
+  infrastructure:
+    - name: monitor
+      port: 8095
+      env_var: MONITOR_PORT
+      description: 系统监控服务（V68.1 A2.1 从 unified-core 拆分）
+      status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（指标采集 state）
+      dependencies: [unified-core]
+      service_dir: monitor
+
+    - name: plugin-registry
+      port: 8096
+      env_var: PLUGIN_REGISTRY_PORT
+      description: 插件注册与管理服务（V68.1 A2.2 从 unified-core 拆分）
+      status: implemented
+      bootstrap_mode: B  # Shared Bootstrap V2 Pattern: stateful + build_application（插件状态 state）
+      dependencies: [unified-core]
+      service_dir: plugin-registry
+
 # 虚拟服务（由 unified-core 内部模块提供，不独立启动）
 # 注意：iam 已作为独立服务条目存在于 service_groups.core（service_dir: unified-core）
 # 注意：mail/im/notification 已外迁到 communication 独立服务（端口 8084），unified-core 内保留模块兼容
+# 注意：monitor 已于 V68.1 迁移至独立服务（端口 8095），不再作为虚拟服务
 virtual_services:
   - name: flow
     port: 8000
@@ -307,12 +329,6 @@ virtual_services:
     port: 8000
     env_var: DOC_PORT
     description: 文档管理服务 (由 unified-core 提供，虚拟服务)
-    provider: unified-core
-
-  - name: monitor
-    port: 8000
-    env_var: MONITOR_PORT
-    description: 系统监控服务 (由 unified-core 提供，虚拟服务)
     provider: unified-core
 
   - name: automation

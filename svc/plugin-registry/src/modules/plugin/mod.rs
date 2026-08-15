@@ -135,10 +135,6 @@ pub fn create_routes() -> Router<AppState> {
             "/plugin/plugins/{plugin_id}/reviews",
             post(marketplace::create_review),
         )
-        .route(
-            "/plugin/plugins/{plugin_code}/reviews",
-            post(reviews_stats::create_plugin_review),
-        )
         .layer(axum::middleware::from_fn(require_permission(
             "plugin:write",
         )));
