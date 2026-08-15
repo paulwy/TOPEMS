@@ -316,7 +316,47 @@ pub async fn delete_route(
         Ok(_) => Json(api_error(404, "路线不存在")),
         Err(e) => {
             tracing::error!("删除路线失败: {}", e);
-            Json(api_error(500, "路线删除失败"))
+            Json(api_error(500, "删除路线失败"))
         }
+    }
+}
+
+#[cfg(test)]
+mod serde_tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn create_route_request_roundtrip_full() {
+        roundtrip(&CreateRouteRequest {
+            route_no: "R-2024-001".into(),
+            name: "北京-上海快线".into(),
+            origin: Some("北京".into()),
+            destination: Some("上海".into()),
+            distance_km: Some(bigdecimal::BigDecimal::from(1200i64)),
+            estimated_hours: Some(bigdecimal::BigDecimal::from(14i64)),
+        });
+    }
+
+    #[test]
+    fn update_route_request_roundtrip_full() {
+        roundtrip(&UpdateRouteRequest {
+            name: Some("京沪高速直达".into()),
+            origin: Some("北京南".into()),
+            destination: Some("上海东".into()),
+            distance_km: Some(bigdecimal::BigDecimal::from(1300i64)),
+            estimated_hours: Some(bigdecimal::BigDecimal::from(16i64)),
+            status: Some("active".into()),
+        });
     }
 }

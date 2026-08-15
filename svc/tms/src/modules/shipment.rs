@@ -841,3 +841,53 @@ mod tests {
         assert!(!shipment_requires_approval("draft", "pending"));
     }
 }
+
+#[cfg(test)]
+mod serde_tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn create_shipment_request_roundtrip_full() {
+        roundtrip(&CreateShipmentRequest {
+            shipment_no: "SHP-2024-001".into(),
+            order_id: Some(Uuid::new_v4()),
+            carrier_id: Some(Uuid::new_v4()),
+            vehicle_id: Some(Uuid::new_v4()),
+            driver_id: Some(Uuid::new_v4()),
+            route_id: Some(Uuid::new_v4()),
+            origin: Some("北京".into()),
+            destination: Some("上海".into()),
+            freight_amount: Some(bigdecimal::BigDecimal::from(5000i64)),
+            planned_departure: Some(Utc::now()),
+            planned_arrival: Some(Utc::now()),
+            notes: Some("Fragile goods".into()),
+        });
+    }
+
+    #[test]
+    fn update_shipment_request_roundtrip_full() {
+        roundtrip(&UpdateShipmentRequest {
+            carrier_id: Some(Uuid::new_v4()),
+            vehicle_id: Some(Uuid::new_v4()),
+            driver_id: Some(Uuid::new_v4()),
+            route_id: Some(Uuid::new_v4()),
+            origin: Some("上海".into()),
+            destination: Some("广州".into()),
+            freight_amount: Some(bigdecimal::BigDecimal::from(6000i64)),
+            planned_departure: Some(Utc::now()),
+            planned_arrival: Some(Utc::now()),
+            notes: Some("Updated notes".into()),
+        });
+    }
+}

@@ -530,3 +530,41 @@ pub async fn reject_carrier(
         }
     }
 }
+
+#[cfg(test)]
+mod serde_tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn create_carrier_request_roundtrip_full() {
+        roundtrip(&CreateCarrierRequest {
+            carrier_no: "C-2024-001".into(),
+            name: "顺丰速运".into(),
+            contact_person: Some("王五".into()),
+            contact_phone: Some("13800138001".into()),
+            service_area: Some("华东地区".into()),
+        });
+    }
+
+    #[test]
+    fn update_carrier_request_roundtrip_full() {
+        roundtrip(&UpdateCarrierRequest {
+            name: Some("京东物流".into()),
+            contact_person: Some("赵六".into()),
+            contact_phone: Some("13900139001".into()),
+            status: Some("active".into()),
+            service_area: Some("全国".into()),
+        });
+    }
+}

@@ -562,3 +562,43 @@ pub async fn reject_driver(
         }
     }
 }
+
+#[cfg(test)]
+mod serde_tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn create_driver_request_roundtrip_full() {
+        roundtrip(&CreateDriverRequest {
+            driver_no: "D-2024-001".into(),
+            name: "张三".into(),
+            phone: Some("13800138000".into()),
+            license_no: Some("LIC123456789".into()),
+            license_type: Some("A2".into()),
+            carrier_id: Some(Uuid::new_v4()),
+        });
+    }
+
+    #[test]
+    fn update_driver_request_roundtrip_full() {
+        roundtrip(&UpdateDriverRequest {
+            name: Some("李四".into()),
+            phone: Some("13900139000".into()),
+            license_no: Some("LIC987654321".into()),
+            license_type: Some("B1".into()),
+            status: Some("active".into()),
+            carrier_id: Some(Uuid::new_v4()),
+        });
+    }
+}

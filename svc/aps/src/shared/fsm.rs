@@ -6,7 +6,7 @@
 //! FSM-4 MaterialPlan:     pending → requisitioned → sourced → satisfied
 //! FSM-5 DemandForecast:   draft → calculated → validated → adopted
 
-#[derive(Debug, thiserror::Error, PartialEq)]
+#[derive(Debug, Clone, thiserror::Error, PartialEq)]
 pub enum FsmError {
     #[error("state '{0}' is terminal and cannot transition")]
     TerminalState(String),

@@ -527,3 +527,210 @@ fn test_material_plan_shortage_to_requisitioned() {
 fn test_demand_forecast_calculated_to_draft_rollback() {
     assert!(demand_forecast_can_transition("calculated", "draft").is_ok());
 }
+
+// ==================== Additional terminal & edge case tests ====================
+
+#[test]
+fn test_production_plan_completed_terminal_all_targets() {
+    for target in &[
+        "draft",
+        "pending_approval",
+        "approved",
+        "in_progress",
+        "completed",
+    ] {
+        assert!(
+            matches!(
+                production_plan_can_transition("completed", target),
+                Err(FsmError::TerminalState(_))
+            ),
+            "completed -> {} should be terminal",
+            target
+        );
+    }
+}
+
+#[test]
+fn test_production_plan_cancelled_terminal_all_targets() {
+    for target in &[
+        "draft",
+        "pending_approval",
+        "approved",
+        "in_progress",
+        "cancelled",
+    ] {
+        assert!(matches!(
+            production_plan_can_transition("cancelled", target),
+            Err(FsmError::TerminalState(_))
+        ));
+    }
+}
+
+#[test]
+fn test_schedule_completed_terminal_all_targets() {
+    for target in &["pending", "released", "running", "completed", "cancelled"] {
+        assert!(matches!(
+            schedule_can_transition("completed", target),
+            Err(FsmError::TerminalState(_))
+        ));
+    }
+}
+
+#[test]
+fn test_schedule_cancelled_terminal_all_targets() {
+    for target in &["pending", "released", "running", "completed", "cancelled"] {
+        assert!(matches!(
+            schedule_can_transition("cancelled", target),
+            Err(FsmError::TerminalState(_))
+        ));
+    }
+}
+
+#[test]
+fn test_capacity_consumed_terminal_all_targets() {
+    for target in &[
+        "available",
+        "allocated",
+        "consumed",
+        "maintenance",
+        "released",
+    ] {
+        assert!(matches!(
+            capacity_can_transition("consumed", target),
+            Err(FsmError::TerminalState(_))
+        ));
+    }
+}
+
+#[test]
+fn test_material_plan_satisfied_terminal_all_targets() {
+    for target in &[
+        "pending",
+        "requisitioned",
+        "sourced",
+        "satisfied",
+        "shortage",
+        "cancelled",
+    ] {
+        assert!(matches!(
+            material_plan_can_transition("satisfied", target),
+            Err(FsmError::TerminalState(_))
+        ));
+    }
+}
+
+#[test]
+fn test_material_plan_cancelled_terminal_all_targets() {
+    for target in &[
+        "pending",
+        "requisitioned",
+        "sourced",
+        "satisfied",
+        "shortage",
+        "cancelled",
+    ] {
+        assert!(matches!(
+            material_plan_can_transition("cancelled", target),
+            Err(FsmError::TerminalState(_))
+        ));
+    }
+}
+
+#[test]
+fn test_demand_forecast_superseded_terminal_all_targets() {
+    for target in &[
+        "draft",
+        "calculated",
+        "validated",
+        "adopted",
+        "superseded",
+        "cancelled",
+    ] {
+        assert!(matches!(
+            demand_forecast_can_transition("superseded", target),
+            Err(FsmError::TerminalState(_))
+        ));
+    }
+}
+
+#[test]
+fn test_demand_forecast_cancelled_terminal_all_targets() {
+    for target in &[
+        "draft",
+        "calculated",
+        "validated",
+        "adopted",
+        "superseded",
+        "cancelled",
+    ] {
+        assert!(matches!(
+            demand_forecast_can_transition("cancelled", target),
+            Err(FsmError::TerminalState(_))
+        ));
+    }
+}
+
+#[test]
+fn test_production_plan_approval_false_for_random_pairs() {
+    assert!(!production_plan_requires_approval("draft", "cancelled"));
+    assert!(!production_plan_requires_approval(
+        "in_progress",
+        "completed"
+    ));
+    assert!(!production_plan_requires_approval("approved", "cancelled"));
+    assert!(!production_plan_requires_approval(
+        "draft",
+        "pending_approval"
+    ));
+}
+
+#[test]
+fn test_schedule_approval_false_for_random_pairs() {
+    assert!(!schedule_requires_approval("released", "running"));
+    assert!(!schedule_requires_approval("running", "completed"));
+    assert!(!schedule_requires_approval("released", "pending"));
+    assert!(!schedule_requires_approval("released", "cancelled"));
+}
+
+#[test]
+fn test_capacity_approval_false_for_random_pairs() {
+    assert!(!capacity_requires_approval("allocated", "consumed"));
+    assert!(!capacity_requires_approval("allocated", "released"));
+    assert!(!capacity_requires_approval("maintenance", "available"));
+    assert!(!capacity_requires_approval("released", "available"));
+}
+
+#[test]
+fn test_material_plan_approval_false_for_random_pairs() {
+    assert!(!material_plan_requires_approval("requisitioned", "sourced"));
+    assert!(!material_plan_requires_approval("sourced", "satisfied"));
+    assert!(!material_plan_requires_approval("pending", "shortage"));
+    assert!(!material_plan_requires_approval(
+        "shortage",
+        "requisitioned"
+    ));
+}
+
+#[test]
+fn test_demand_forecast_approval_false_for_random_pairs() {
+    assert!(!demand_forecast_requires_approval("draft", "calculated"));
+    assert!(!demand_forecast_requires_approval(
+        "calculated",
+        "validated"
+    ));
+    assert!(!demand_forecast_requires_approval("adopted", "superseded"));
+    assert!(!demand_forecast_requires_approval("calculated", "draft"));
+}
+
+#[test]
+fn test_fsm_error_clone_and_eq_variants() {
+    let e1 = FsmError::InvalidTransition {
+        from: "a".into(),
+        to: "b".into(),
+    };
+    let e2 = e1.clone();
+    assert_eq!(e1, e2);
+    let e3 = FsmError::UnknownStatus("test".into());
+    assert_ne!(e1, e3);
+    assert_ne!(e2, FsmError::TerminalState("a".into()));
+}

@@ -574,3 +574,43 @@ pub async fn reject_vehicle(
         }
     }
 }
+
+#[cfg(test)]
+mod serde_tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn create_vehicle_request_roundtrip_full() {
+        roundtrip(&CreateVehicleRequest {
+            vehicle_no: "V-2024-001".into(),
+            plate_number: Some("京A12345".into()),
+            vehicle_type: Some("truck".into()),
+            capacity: Some(bigdecimal::BigDecimal::from(5000i64)),
+            carrier_id: Some(Uuid::new_v4()),
+            notes: Some("Test vehicle".into()),
+        });
+    }
+
+    #[test]
+    fn update_vehicle_request_roundtrip_full() {
+        roundtrip(&UpdateVehicleRequest {
+            plate_number: Some("沪B99999".into()),
+            vehicle_type: Some("van".into()),
+            capacity: Some(bigdecimal::BigDecimal::from(3000i64)),
+            status: Some("active".into()),
+            carrier_id: Some(Uuid::new_v4()),
+            notes: Some("Updated note".into()),
+        });
+    }
+}

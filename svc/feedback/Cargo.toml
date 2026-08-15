@@ -25,3 +25,4 @@ topems-shared-auth = { workspace = true }
 topems-shared-core = { workspace = true }
 utoipa.workspace = true
 anyhow.workspace = true
+thiserror.workspace = true

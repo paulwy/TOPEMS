@@ -779,4 +779,69 @@ mod tests {
         assert!(!is_status_transition_valid("completed", "released"));
         assert!(!is_status_transition_valid("cancelled", "pending"));
     }
+
+    #[test]
+    fn create_schedule_request_roundtrip() {
+        use serde::Serialize;
+        use serde_json::Value;
+
+        fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+            let json = serde_json::to_string(item).unwrap();
+            let v1: Value = serde_json::from_str(&json).unwrap();
+            let back: T = serde_json::from_str(&json).unwrap();
+            let json2 = serde_json::to_string(&back).unwrap();
+            let v2: Value = serde_json::from_str(&json2).unwrap();
+            assert_eq!(v1, v2);
+        }
+
+        roundtrip(&CreateScheduleRequest {
+            schedule_no: "SCH-001".into(),
+            plan_id: Some(Uuid::new_v4()),
+            work_order_id: Some(Uuid::new_v4()),
+            product_id: Some(Uuid::new_v4()),
+            product_name: Some("Product A".into()),
+            work_center_id: Some(Uuid::new_v4()),
+            work_center_name: Some("WC-01".into()),
+            planned_start: Some(
+                chrono::NaiveDate::from_ymd_opt(2024, 1, 1)
+                    .unwrap()
+                    .and_hms_opt(8, 0, 0)
+                    .unwrap(),
+            ),
+            planned_end: Some(
+                chrono::NaiveDate::from_ymd_opt(2024, 1, 1)
+                    .unwrap()
+                    .and_hms_opt(16, 0, 0)
+                    .unwrap(),
+            ),
+            quantity: Some(500.0),
+            priority: Some(5),
+        });
+    }
+
+    #[test]
+    fn update_schedule_request_roundtrip() {
+        use serde::Serialize;
+        use serde_json::Value;
+
+        fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+            let json = serde_json::to_string(item).unwrap();
+            let v1: Value = serde_json::from_str(&json).unwrap();
+            let back: T = serde_json::from_str(&json).unwrap();
+            let json2 = serde_json::to_string(&back).unwrap();
+            let v2: Value = serde_json::from_str(&json2).unwrap();
+            assert_eq!(v1, v2);
+        }
+
+        roundtrip(&UpdateScheduleRequest {
+            product_name: Some("Updated Product".into()),
+            work_center_id: Some(Uuid::new_v4()),
+            work_center_name: Some("WC-02".into()),
+            planned_start: None,
+            planned_end: None,
+            quantity: Some(100.0),
+            priority: Some(1),
+            status: Some("released".into()),
+        });
+    }
 }

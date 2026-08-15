@@ -482,3 +482,168 @@ fn test_route_closed_to_active_reopen() {
 fn test_route_closed_to_deprecated() {
     assert!(route_can_transition("closed", "deprecated").is_ok());
 }
+
+// ==================== Additional terminal & edge case tests ====================
+
+#[test]
+fn test_vehicle_retired_terminal_all_targets() {
+    for target in &["active", "maintenance", "inactive", "retired"] {
+        assert!(
+            matches!(
+                vehicle_can_transition("retired", target),
+                Err(FsmError::TerminalState(_))
+            ),
+            "retired -> {} should be terminal",
+            target
+        );
+    }
+}
+
+#[test]
+fn test_driver_inactive_terminal_all_targets() {
+    for target in &["active", "on_leave", "suspended", "inactive"] {
+        assert!(matches!(
+            driver_can_transition("inactive", target),
+            Err(FsmError::TerminalState(_))
+        ));
+    }
+}
+
+#[test]
+fn test_carrier_blacklisted_terminal_all_targets() {
+    for target in &[
+        "pending_review",
+        "active",
+        "suspended",
+        "blacklisted",
+        "rejected",
+    ] {
+        assert!(matches!(
+            carrier_can_transition("blacklisted", target),
+            Err(FsmError::TerminalState(_))
+        ));
+    }
+}
+
+#[test]
+fn test_carrier_rejected_terminal_all_targets() {
+    for target in &[
+        "pending_review",
+        "active",
+        "suspended",
+        "blacklisted",
+        "rejected",
+    ] {
+        assert!(matches!(
+            carrier_can_transition("rejected", target),
+            Err(FsmError::TerminalState(_))
+        ));
+    }
+}
+
+#[test]
+fn test_route_deprecated_terminal_all_targets() {
+    for target in &["planning", "active", "closed", "deprecated", "cancelled"] {
+        assert!(matches!(
+            route_can_transition("deprecated", target),
+            Err(FsmError::TerminalState(_))
+        ));
+    }
+}
+
+#[test]
+fn test_route_cancelled_terminal_all_targets() {
+    for target in &["planning", "active", "closed", "deprecated", "cancelled"] {
+        assert!(matches!(
+            route_can_transition("cancelled", target),
+            Err(FsmError::TerminalState(_))
+        ));
+    }
+}
+
+#[test]
+fn test_shipment_delivered_terminal_all_targets() {
+    for target in &["draft", "pending", "in_transit", "delivered", "cancelled"] {
+        assert!(matches!(
+            shipment_can_transition("delivered", target),
+            Err(FsmError::TerminalState(_))
+        ));
+    }
+}
+
+#[test]
+fn test_shipment_cancelled_terminal_all_targets() {
+    for target in &["draft", "pending", "in_transit", "delivered", "cancelled"] {
+        assert!(matches!(
+            shipment_can_transition("cancelled", target),
+            Err(FsmError::TerminalState(_))
+        ));
+    }
+}
+
+#[test]
+fn test_vehicle_approval_false_for_random_pairs() {
+    assert!(!vehicle_requires_approval("active", "maintenance"));
+    assert!(!vehicle_requires_approval("maintenance", "active"));
+    assert!(!vehicle_requires_approval("maintenance", "inactive"));
+    assert!(!vehicle_requires_approval("active", "retired"));
+}
+
+#[test]
+fn test_driver_approval_false_for_random_pairs() {
+    assert!(!driver_requires_approval("active", "on_leave"));
+    assert!(!driver_requires_approval("on_leave", "active"));
+    assert!(!driver_requires_approval("active", "suspended"));
+    assert!(!driver_requires_approval("on_leave", "inactive"));
+}
+
+#[test]
+fn test_carrier_approval_false_for_random_pairs() {
+    assert!(!carrier_requires_approval("active", "suspended"));
+    assert!(!carrier_requires_approval("suspended", "active"));
+    assert!(!carrier_requires_approval("suspended", "blacklisted"));
+    assert!(!carrier_requires_approval("pending_review", "rejected"));
+}
+
+#[test]
+fn test_route_approval_false_for_random_pairs() {
+    assert!(!route_requires_approval("active", "closed"));
+    assert!(!route_requires_approval("closed", "active"));
+    assert!(!route_requires_approval("closed", "deprecated"));
+    assert!(!route_requires_approval("planning", "cancelled"));
+}
+
+#[test]
+fn test_shipment_approval_false_for_random_pairs() {
+    assert!(!shipment_requires_approval("draft", "pending"));
+    assert!(!shipment_requires_approval("in_transit", "delivered"));
+    assert!(!shipment_requires_approval("draft", "cancelled"));
+    assert!(!shipment_requires_approval("pending", "cancelled"));
+}
+
+#[test]
+fn test_fsm_error_clone_and_eq_variants() {
+    let e1 = FsmError::InvalidTransition {
+        from: "x".into(),
+        to: "y".into(),
+    };
+    let e2 = e1.clone();
+    assert_eq!(e1, e2);
+    let e3 = FsmError::UnknownStatus("test".into());
+    assert_ne!(e1, e3);
+    assert_ne!(e2, FsmError::TerminalState("x".into()));
+}
+
+#[test]
+fn test_all_status_validators_mutual_exclusivity() {
+    // Vehicle states are not valid driver/carrier/route/shipment states
+    assert!(!is_valid_driver_status("retired"));
+    assert!(!is_valid_carrier_status("retired"));
+    assert!(!is_valid_route_status("retired"));
+    assert!(!is_valid_shipment_status("retired"));
+    // Shipment states are not valid vehicle/driver/carrier/route states
+    assert!(!is_valid_vehicle_status("delivered"));
+    assert!(!is_valid_driver_status("delivered"));
+    assert!(!is_valid_carrier_status("delivered"));
+    assert!(!is_valid_route_status("delivered"));
+}

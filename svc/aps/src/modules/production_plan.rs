@@ -584,3 +584,49 @@ pub async fn reject_plan(
         }
     }
 }
+
+#[cfg(test)]
+mod serde_tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn create_plan_request_roundtrip_full() {
+        roundtrip(&CreatePlanRequest {
+            plan_no: "PLAN-2024-001".into(),
+            plan_name: "Monthly Plan".into(),
+            plan_type: "monthly".into(),
+            start_date: Some(NaiveDate::from_ymd_opt(2024, 1, 1).unwrap()),
+            end_date: Some(NaiveDate::from_ymd_opt(2024, 1, 31).unwrap()),
+            product_id: Some(Uuid::new_v4()),
+            product_name: Some("Widget A".into()),
+            target_quantity: Some(1000.0),
+            notes: Some("Test note".into()),
+        });
+    }
+
+    #[test]
+    fn create_plan_request_roundtrip_minimal() {
+        roundtrip(&CreatePlanRequest {
+            plan_no: "P1".into(),
+            plan_name: "N".into(),
+            plan_type: "weekly".into(),
+            start_date: None,
+            end_date: None,
+            product_id: None,
+            product_name: None,
+            target_quantity: None,
+            notes: None,
+        });
+    }
+}
