@@ -217,6 +217,63 @@ else
 fi
 
 # ============================================================
+# 8. i18n 质量检查（R11 Z-P1）— 假 en 值 + 源码硬编码中文
+# ============================================================
+echo ""
+echo "🌐 Checking i18n quality (R11 Z-P1)..."
+
+HAS_I18N_FILES=$(echo "$STAGED_FILES" | grep -E "(^apps/web/src/i18n/|^apps/web/src/pages/.*\.tsx$|^scripts/i18n/)" | head -1)
+
+if [ -n "$HAS_I18N_FILES" ]; then
+  # 8a. en.json 假 en 值 / 混合结构门禁
+  if [ -f "scripts/ci/check-i18n-quality.cjs" ]; then
+    node scripts/ci/check-i18n-quality.cjs --strict
+    I18N_QUALITY_EXIT=$?
+    if [ $I18N_QUALITY_EXIT -ne 0 ]; then
+      echo "❌ i18n quality gate failed (fake EN / mixed structure)"
+      echo "   修复假 en 值: node scripts/i18n/audit_fake_en.js"
+      echo "   修复混合结构: node scripts/i18n/sync_flat_nested.js"
+      ERRORS=$((ERRORS + 1))
+    else
+      echo "✅ i18n quality gate passed (fake EN + mixed structure)"
+    fi
+  else
+    echo "⏭️  Skipped (check-i18n-quality.cjs not found)"
+  fi
+
+  # 8b. 源码硬编码中文（admin 模块严格清零）
+  if [ -f "scripts/ci/check-i18n.cjs" ]; then
+    node scripts/ci/check-i18n.cjs --strict
+    I18N_HARDCODE_EXIT=$?
+    if [ $I18N_HARDCODE_EXIT -ne 0 ]; then
+      echo "❌ Hardcoded CJK text detected in admin module TSX files"
+      ERRORS=$((ERRORS + 1))
+    else
+      echo "✅ No hardcoded CJK text in admin TSX (strict scope)"
+    fi
+  else
+    echo "⏭️  Skipped (check-i18n.cjs not found)"
+  fi
+
+  # 8c. Glossary TopN 术语一致性
+  if [ -f "scripts/ci/verify-glossary.cjs" ]; then
+    node scripts/ci/verify-glossary.cjs --strict
+    GLOSSARY_EXIT=$?
+    if [ $GLOSSARY_EXIT -ne 0 ]; then
+      echo "❌ Glossary TopN 术语存在非标准译法"
+      echo "   修复：运行 node scripts/i18n/apply_glossary.js 自动对齐"
+      ERRORS=$((ERRORS + 1))
+    else
+      echo "✅ Glossary TopN 术语一致性通过"
+    fi
+  else
+    echo "⏭️  Skipped (verify-glossary.cjs not found)"
+  fi
+else
+  echo "⏭️  Skipped (no i18n locale / page TSX files staged)"
+fi
+
+# ============================================================
 # 总结
 # ============================================================
 echo ""

@@ -66,6 +66,7 @@ jobs:
     outputs:
       rust: ${{ steps.decide.outputs.rust }}
       frontend: ${{ steps.decide.outputs.frontend }}
+      i18n: ${{ steps.decide.outputs.i18n }}
       docs: ${{ steps.decide.outputs.docs }}
       ci: ${{ steps.decide.outputs.ci }}
     steps:
@@ -98,6 +99,10 @@ jobs:
               - 'package.json'
               - 'tsconfig*.json'
               - 'eslint.config.js'
+            i18n:
+              - 'apps/web/src/i18n/**'
+              - 'scripts/i18n/**'
+              - 'scripts/ci/check-i18n*.cjs'
             docs:
               - 'docs/**'
               - '**/*.md'
@@ -113,11 +118,13 @@ jobs:
                 "${{ github.ref_type }}" == "tag" ]]; then
             echo "rust=true" >> $GITHUB_OUTPUT
             echo "frontend=true" >> $GITHUB_OUTPUT
+            echo "i18n=true" >> $GITHUB_OUTPUT
             echo "docs=true" >> $GITHUB_OUTPUT
             echo "ci=true" >> $GITHUB_OUTPUT
           else
             echo "rust=${{ steps.filter.outputs.rust }}" >> $GITHUB_OUTPUT
             echo "frontend=${{ steps.filter.outputs.frontend }}" >> $GITHUB_OUTPUT
+            echo "i18n=${{ steps.filter.outputs.i18n }}" >> $GITHUB_OUTPUT
             echo "docs=${{ steps.filter.outputs.docs }}" >> $GITHUB_OUTPUT
             echo "ci=${{ steps.filter.outputs.ci }}" >> $GITHUB_OUTPUT
           fi
@@ -487,6 +494,140 @@ jobs:
       - name: Run i18n check (V65)
         run: node scripts/ci/check-i18n.cjs --strict
 
+  # ──────────────────────────────────────────────────────────────────────────
+  # i18n 质量门禁（R11 Z-P1 固化）
+  #
+  # 四项检查：
+  #   1. en.json 假 en 值 → 残留中文/机翻乱码/中英混杂  → FAIL 阻断
+  #   2. en/zh key 一致性 → 缺 key/空值               → WARN 不阻断
+  #   3. 混合结构 bug     → 扁平 key(含点) 与嵌套对象值不一致 → FAIL 阻断
+  #   4. Glossary TopN 一致性 → 标准译法 / 允许别名之外的译法 → FAIL 阻断
+  #
+  # 前置条件：66 个 en.json 已完成全量翻译清零（902 条假值已修复），
+  #           glossary.csv 61 条 TopN 术语 Phase-2 强制对齐完成。
+  #           此门禁负责防止回退。
+  # ──────────────────────────────────────────────────────────────────────────
+  i18n-quality-gate:
+    name: i18n Quality Gate（fake-en · key-alignment · mixed-structure · glossary）
+    needs: changes
+    if: needs.changes.outputs.i18n == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run i18n 综合 + Glossary 审计 (JSON 报告)
+        id: audit_json
+        run: |
+          node scripts/ci/check-i18n-quality.cjs --json > /tmp/i18n-audit.json || true
+          node scripts/ci/verify-glossary.cjs --json > /tmp/glossary-audit.json || true
+          echo "audit_done=true" >> $GITHUB_OUTPUT
+
+      - name: Write i18n + Glossary audit summary
+        if: always()
+        run: |
+          echo "## i18n Quality Gate Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 检查项 | 数量 | 阈值 | 状态 |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|------|------|------|" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f /tmp/i18n-audit.json ]; then
+            FAKE=$(node -e "console.log(require('/tmp/i18n-audit.json').fake_en.total)")
+            KEYMIS=$(node -e "console.log(require('/tmp/i18n-audit.json').key_mismatch.total)")
+            MIXED=$(node -e "console.log(require('/tmp/i18n-audit.json').mixed_structure.total)")
+            NS=$(node -e "console.log(require('/tmp/i18n-audit.json').namespaces_scanned)")
+
+            echo "| 扫描命名空间 | $NS | - | ⏭️ |" >> $GITHUB_STEP_SUMMARY
+            echo "| ① 假 en 值残留 | $FAKE | 0 | $([ "$FAKE" -eq 0 ] && echo '✅' || echo '❌') |" >> $GITHUB_STEP_SUMMARY
+            echo "| ② en/zh key 偏差 | $KEYMIS | 可容忍 | $([ "$KEYMIS" -eq 0 ] && echo '✅' || echo '⚠️') |" >> $GITHUB_STEP_SUMMARY
+            echo "| ③ 混合结构 bug | $MIXED | 0 | $([ "$MIXED" -eq 0 ] && echo '✅' || echo '❌') |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -f /tmp/glossary-audit.json ]; then
+            GL_VIOL=$(node -e "console.log(require('/tmp/glossary-audit.json').total_violations)")
+            GL_TERMS=$(node -e "console.log(require('/tmp/glossary-audit.json').glossary_terms_loaded)")
+            echo "| ④ Glossary TopN 非标准译法 | $GL_VIOL | 0 | $([ "$GL_VIOL" -eq 0 ] && echo '✅' || echo '❌') |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "_Glossary 加载 \`$GL_TERMS\` 条术语（含标准译法 + allowed_aliases 白名单）_" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| ④ Glossary TopN 非标准译法 | N/A | 0 | ⚪ |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -f /tmp/i18n-audit.json ]; then
+            # 假 en 值按类型
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 假 en 值类型分布" >> $GITHUB_STEP_SUMMARY
+            node -e "
+              const d = require('/tmp/i18n-audit.json');
+              const t = d.fake_en.by_type;
+              if (Object.keys(t).length === 0) {
+                console.log('_全部清零_');
+              } else {
+                console.log('| 类型 | 数量 |');
+                console.log('|------|------|');
+                Object.entries(t).sort((a,b)=>b[1]-a[1]).forEach(([k,v]) => console.log('|', k, '|', v, '|'));
+              }
+            " >> $GITHUB_STEP_SUMMARY
+
+            # key 不一致按子类型
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Key 不一致明细" >> $GITHUB_STEP_SUMMARY
+            node -e "
+              const d = require('/tmp/i18n-audit.json').key_mismatch;
+              console.log('| 子项 | 数量 |');
+              console.log('|------|------|');
+              console.log('| en 缺 key |', d.missing_in_en, '|');
+              console.log('| zh 缺 key |', d.missing_in_zh, '|');
+              console.log('| en 空值 |', d.empty_in_en, '|');
+              console.log('| zh 空值 |', d.empty_in_zh, '|');
+            " >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -f /tmp/glossary-audit.json ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Glossary 违规 Top 词条 / Top 命名空间" >> $GITHUB_STEP_SUMMARY
+            node -e "
+              const d = require('/tmp/glossary-audit.json');
+              const t = Object.entries(d.by_term || {});
+              const n = Object.entries(d.by_ns || {});
+              if (t.length === 0 && n.length === 0) {
+                console.log('_100% 一致，无违规_');
+              } else {
+                if (t.length > 0) {
+                  console.log('');
+                  console.log('**Top 违规词条**');
+                  console.log('| 中文词条 | 违规数 |');
+                  console.log('|----------|--------|');
+                  t.slice(0, 10).forEach(([k, v]) => console.log('|', k, '|', v, '|'));
+                }
+                if (n.length > 0) {
+                  console.log('');
+                  console.log('**Top 违规命名空间**');
+                  console.log('| 命名空间 | 违规数 |');
+                  console.log('|----------|--------|');
+                  n.slice(0, 10).forEach(([k, v]) => console.log('|', k, '|', v, '|'));
+                }
+                if (d.samples && d.samples.length > 0) {
+                  console.log('');
+                  console.log('**样本**');
+                  console.log('| 命名空间 | 词条 | 标准译法 | 实际译法 |');
+                  console.log('|----------|------|----------|----------|');
+                  d.samples.slice(0, 10).forEach(s => console.log('|', s.ns, '|', s.zh_term, '|', s.standard_en, '|', s.actual_en, '|'));
+                }
+              }
+            " >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Run i18n 质量门禁 (strict 模式)
+        run: node scripts/ci/check-i18n-quality.cjs --strict
+
+      - name: Run Glossary 一致性门禁 (strict 模式)
+        run: node scripts/ci/verify-glossary.cjs --strict
+
   frontend-typecheck:
     name: Frontend Type Check
     needs: changes
@@ -838,6 +979,7 @@ jobs:
       - frontend-build
       - design-system-check
       - frontend-audit
+      - i18n-quality-gate
       - security-scan
       - schema-defense-gate
     if: always()
@@ -859,6 +1001,7 @@ jobs:
           echo "| Frontend Build & Bundle | ${{ needs.frontend-build.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Design System Check | ${{ needs.design-system-check.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Audit (V64) | ${{ needs.frontend-audit.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| i18n Quality Gate (R11 Z-P1) | ${{ needs.i18n-quality-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
@@ -873,10 +1016,11 @@ jobs:
           echo "- [ ] Tests added for new features (coverage ≥60%)" >> $GITHUB_STEP_SUMMARY
           echo "- [ ] No circular dependencies introduced" >> $GITHUB_STEP_SUMMARY
           echo "- [ ] Bundle size did not increase significantly" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] i18n: No hardcoded CJK text in TSX + no fake EN values in locale JSON" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Treat "skipped" as acceptable (path-filtered jobs); only fail on failure/cancelled.
-          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.security-scan.result }}"
+          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.security-scan.result }}"
 
           FAILED=false
           for result in $RESULTS; do
