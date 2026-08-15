@@ -34,6 +34,87 @@ const targetModule = moduleIdx !== -1 && args[moduleIdx + 1] ? args[moduleIdx + 
 const thresholdIdx = args.indexOf('--threshold');
 const perModuleThreshold = thresholdIdx !== -1 && args[thresholdIdx + 1] ? parseInt(args[thresholdIdx + 1], 10) : 0;
 
+// --------- R13 V222 P4 NEW CLI ARGS ---------
+function getArgValue(argsList, flag) {
+  const eqIdx = argsList.findIndex(a => a.startsWith(flag + '='));
+  if (eqIdx !== -1) return argsList[eqIdx].slice(flag.length + 1);
+  const spIdx = argsList.indexOf(flag);
+  if (spIdx !== -1 && argsList[spIdx + 1]) return argsList[spIdx + 1];
+  return null;
+}
+const _strictZeroVal = getArgValue(args, '--strict-zero');
+const STRICT_ZERO = _strictZeroVal
+  ? _strictZeroVal.split(',').map(s => s.trim()).filter(Boolean)
+  : [];
+const _upperBoundVal = getArgValue(args, '--upper-bound');
+const UPPER_BOUND = {}; // { admin: 500, mobile: 400, ... }
+if (_upperBoundVal) {
+  for (const pair of _upperBoundVal.split(',')) {
+    const [name, numStr] = pair.split(':');
+    if (!name || !numStr) continue;
+    const n = parseInt(numStr, 10);
+    if (!Number.isFinite(n)) continue;
+    UPPER_BOUND[name.trim()] = n;
+  }
+}
+const _reportJsonVal = getArgValue(args, '--report-json');
+const REPORT_JSON_PATH = _reportJsonVal ? path.resolve(_reportJsonVal) : null;
+// --------- R13 V222 P4 DUAL-PATH SCAN ---------
+const P7_MODULES = ['components/templates','ai','microfrontend','admin','mobile','monitor','mes'];
+function collectFilesDual(moduleName) {
+  const out = [];
+  const d1 = path.join(PAGES_DIR, moduleName);
+  if (fs.existsSync(d1)) collectInto(d1, out);
+  const d2 = path.join(WEB_ROOT, moduleName);
+  if (fs.existsSync(d2)) collectInto(d2, out);
+  return out;
+}
+function collectInto(dir, out) {
+  if (!fs.existsSync(dir)) return;
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const f = path.join(dir, e.name);
+    if (e.isDirectory()) {
+      if (['__tests__','node_modules','test','tests'].includes(e.name)) continue;
+      collectInto(f, out);
+    } else if ((e.name.endsWith('.tsx') || e.name.endsWith('.ts')) &&
+               !e.name.endsWith('.test.ts') && !e.name.endsWith('.test.tsx') &&
+               !e.name.endsWith('.stories.tsx')) {
+      out.push(f);
+    }
+  }
+}
+// --------- R13 V222 P4 EXPORTABLE PURE COUNT (for vitest guardian) ---------
+async function countByModule(moduleNames) {
+  const mods = Array.isArray(moduleNames) ? moduleNames : [moduleNames];
+  const result = {};
+  for (const mod of mods) {
+    const files = collectFilesDual(mod);
+    let count = 0;
+    for (const fp of files) {
+      const c = fs.readFileSync(fp, 'utf8');
+      for (const rawLine of c.split('\n')) {
+        if (shouldSkipLine(rawLine) || !CHINESE_RE.test(rawLine)) continue;
+        const cleaned = rawLine
+          .replace(/\bt\s*\(\s*['"`][^'"`]*['"`]/g, '')
+          .replace(/i18n\.t\s*\(\s*['"`][^'"`]*['"`]/g, '')
+          .replace(/tpl\s*\(\s*['"`][^'"`]*['"`]/g, '');
+        const strRe = /(['"`])((?:\\.|(?!\1).)*?[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff](?:\\.|(?!\1).)*?)\1/g;
+        let m; while ((m = strRe.exec(cleaned)) !== null) count++;
+        const jsxRe = />([^<>{}]*[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff][^<>{}]*)</g;
+        while ((m = jsxRe.exec(cleaned)) !== null) if (m[1].trim()) count++;
+        const atRe = /\b(?:label|title|placeholder|helperText|tooltip|alt|aria-label)\s*=\s*(['"`])((?:\\.|(?!\1).)*?[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff](?:\\.|(?!\1).)*?)\1/g;
+        while ((m = atRe.exec(cleaned)) !== null) count++;
+      }
+    }
+    result[mod] = count;
+  }
+  return result;
+}
+// Export via Node CJS module interop so vitest ESM can import
+if (typeof module !== 'undefined') {
+  module.exports = { countByModule, P7_MODULES, STRICT_ZERO_DEFAULTS: STRICT_ZERO.length ? STRICT_ZERO : P7_MODULES.slice(0,3), UPPER_BOUND_DEFAULTS: Object.keys(UPPER_BOUND).length ? UPPER_BOUND : {admin:500,mobile:400,monitor:450,mes:470} };
+}
+
 // 中文字符正则（CJK 统一表意文字 + 扩展 A + 兼容表意文字）
 const CHINESE_RE = /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/;
 
@@ -239,6 +320,60 @@ function main() {
       });
       process.exit(1);
     }
+  }
+
+  // ---- R13 V222 P4: strict-zero / upper-bound gates ----
+  const gateFailures = [];
+  for (const z of STRICT_ZERO) {
+    const c = moduleStats[z] ? moduleStats[z].count : 0;
+    if (c > 0) gateFailures.push({ type: 'ZERO_EXCEEDED', module: z, actual: c, threshold: 0 });
+  }
+  for (const [name, bound] of Object.entries(UPPER_BOUND)) {
+    const c = moduleStats[name] ? moduleStats[name].count : 0;
+    if (c > bound) gateFailures.push({ type: 'BOUND_EXCEEDED', module: name, actual: c, threshold: bound });
+  }
+
+  // ---- R13 V222 P4: report-json ----
+  const _gateMods = Array.from(new Set([...STRICT_ZERO, ...Object.keys(UPPER_BOUND)]));
+  const _perModule = {};
+  for (const m of _gateMods) {
+    _perModule[m] = moduleStats[m]
+      ? { count: moduleStats[m].count, files: moduleStats[m].files.size }
+      : { count: 0, files: 0 };
+  }
+  for (const [k, v] of Object.entries(moduleStats)) {
+    if (!(k in _perModule)) {
+      _perModule[k] = { count: v.count, files: v.files.size };
+    }
+  }
+  const gateResult = {
+    timestamp: new Date().toISOString(),
+    phase: 'R13-V222-P4-Gate',
+    totalCount,
+    perModule: _perModule,
+    strictZero: STRICT_ZERO,
+    upperBound: UPPER_BOUND,
+    failures: gateFailures,
+    allOk: gateFailures.length === 0,
+  };
+  if (REPORT_JSON_PATH) {
+    fs.mkdirSync(path.dirname(REPORT_JSON_PATH), { recursive: true });
+    fs.writeFileSync(REPORT_JSON_PATH, JSON.stringify(gateResult, null, 2) + '\n', 'utf8');
+  }
+
+  // Print P4 gate summary (always) if any strict gate was enabled
+  if (STRICT_ZERO.length > 0 || Object.keys(UPPER_BOUND).length > 0) {
+    console.log('\n── R13 P4 7-in-1 Gate ──');
+    console.log(`  ZERO modules  (${STRICT_ZERO.length}): ${STRICT_ZERO.map(z => `${z}:${moduleStats[z]?moduleStats[z].count:0}${(moduleStats[z]?moduleStats[z].count:0)===0?' ✅':' ❌'}`).join(' | ')}`);
+    console.log(`  BOUND modules (${Object.keys(UPPER_BOUND).length}): ${Object.entries(UPPER_BOUND).map(([n,b])=>`${n}:${moduleStats[n]?moduleStats[n].count:0}/${b}${(moduleStats[n]?moduleStats[n].count:0)<=b?' ✅':' ❌'}`).join(' | ')}`);
+    console.log(`  Failures: ${gateFailures.length}`);
+    if (gateFailures.length) {
+      for (const f of gateFailures) console.log(`    ❌ ${f.type} ${f.module}: actual=${f.actual} threshold=${f.threshold}`);
+      process.exitCode = 1;
+    } else {
+      console.log(`  ✅ 7/7 modules ALL GREEN within gate`);
+    }
+    if (REPORT_JSON_PATH) console.log(`  Report JSON -> ${path.relative(process.cwd(), REPORT_JSON_PATH)}`);
   }
 }
 
