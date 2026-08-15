@@ -189,7 +189,7 @@
   "automation.automation_designer_page_components_designer_canvas.r2": "Zoom Out (Ctrl+Scroll)",
   "automation.automation_designer_page_components_designer_toolbar.r1": "Previewing…",
   "automation.automation_designer_page_components_designer_toolbar.r2": "Saving…",
-  "automation.automation_rules_page.r1": "Runs/Success/Failure",
+  "automation.automation_rules_page.r1": "Runs/ Success/ Failure",
   "automation.automation_rules_page.r2": "Creating…",
   "automation.automation_runs_page.r1": "Start: {{v1}}",
   "automation.automation_runs_page.r2": "End: {{v1}}",
@@ -261,7 +261,7 @@
       "k38": "Create",
       "e1": "New Rule",
       "e2": "No rules yet, click top-right to create",
-      "r1": "Runs/Success/Failure",
+      "r1": "Runs/ Success/ Failure",
       "r2": "Creating…"
     },
     "automation_dashboard_page": {

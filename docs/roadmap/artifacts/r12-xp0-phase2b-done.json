@@ -1,0 +1,103 @@
+{
+  "tool": "lint-styleguide.cjs",
+  "version": "1.0",
+  "thresholds": {
+    "HIGH": 0,
+    "MEDIUM": 50,
+    "LOW": null
+  },
+  "summary": {
+    "HIGH": 0,
+    "MEDIUM": 4,
+    "LOW": 30,
+    "total": 34,
+    "pass": true
+  },
+  "by_namespace": [
+    {
+      "ns": "qms",
+      "HIGH": 0,
+      "MEDIUM": 0,
+      "LOW": 12,
+      "total": 12
+    },
+    {
+      "ns": "help",
+      "HIGH": 0,
+      "MEDIUM": 0,
+      "LOW": 5,
+      "total": 5
+    },
+    {
+      "ns": "components",
+      "HIGH": 0,
+      "MEDIUM": 0,
+      "LOW": 4,
+      "total": 4
+    },
+    {
+      "ns": "bi",
+      "HIGH": 0,
+      "MEDIUM": 3,
+      "LOW": 0,
+      "total": 3
+    },
+    {
+      "ns": "admin",
+      "HIGH": 0,
+      "MEDIUM": 0,
+      "LOW": 2,
+      "total": 2
+    },
+    {
+      "ns": "finance",
+      "HIGH": 0,
+      "MEDIUM": 0,
+      "LOW": 2,
+      "total": 2
+    },
+    {
+      "ns": "lims",
+      "HIGH": 0,
+      "MEDIUM": 0,
+      "LOW": 2,
+      "total": 2
+    },
+    {
+      "ns": "monitor",
+      "HIGH": 0,
+      "MEDIUM": 0,
+      "LOW": 2,
+      "total": 2
+    },
+    {
+      "ns": "ai",
+      "HIGH": 0,
+      "MEDIUM": 0,
+      "LOW": 1,
+      "total": 1
+    },
+    {
+      "ns": "pm",
+      "HIGH": 0,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "total": 1
+    }
+  ],
+  "by_category": [
+    {
+      "category": "§3 title case (all caps non-acronym)",
+      "count": 18
+    },
+    {
+      "category": "§5.2 Oxford comma",
+      "count": 12
+    },
+    {
+      "category": "Uncategorized",
+      "count": 4
+    }
+  ],
+  "samples": []
+}

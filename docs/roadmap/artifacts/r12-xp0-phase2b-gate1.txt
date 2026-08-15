@@ -1,0 +1,6 @@
+
+按命名空间分布 (top 20):
+
+==== 样本 ====
+
+报告已写入: scripts/i18n/audit_fake_en_report.json
