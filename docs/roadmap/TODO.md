@@ -4916,4 +4916,75 @@ R12 三线规划落地当日，即完成 X-P0 的 Phase-1（四闸复核）与 P
 └─ apps/web/src/i18n/locales/en/*.json × 24   X 轮 HIGH/MEDIUM/CJK 批量修复
 ```
 
+## 🎯 R13 — V222 i18n 硬编码清零 P4（3 清零 + 4 续扫 + 双保险） (Commits: 5 · ✅ 已封版)
+
+> **承接**：V219 P1 (31627→27159, -4468) + V221 P3 (27159→18856, -8303, -30.6%)。V222 候选优先级 A 方向。
+> **策略**：方案 2 / B 型 — 3 模块清零 + 4 中模块续扫 23%~30% + CI Gate + Vitest 双保险永不回弹
+> **Spec**: `docs/superpowers/specs/2026-08-16-i18n-hardcode-p4-design.md` (6 sections · self-review: placeholder/consistency/scope/ambiguity 全 GREEN)
+> **Plan**: `docs/superpowers/plans/2026-08-16-i18n-hardcode-p4.md` (5 commits · 9 steps · L0-L6 7 层测试金字塔)
+> **终值**：Total 硬编码从 **18856** → **280**（净减 18576 行，↓ 98.5%）
+
+### 五阶段明细
+
+#### Phase-A（Commit 1）— 基线快照（Task 1 / 9 steps）
+- ✅ 新建 `scripts/i18n/gen-r13-p4-baseline.cjs`（双模式扫描：pages/<M> + src/<M>）
+- ✅ 实跑 7 模块计数 → `docs/roadmap/artifacts/r13-v222-p4-baseline.json`
+- ✅ JSON 结构：`{ perModule, zeroModules, boundMap, totalProjectHardcodedLines, p7Modules }`
+
+#### Phase-B（Commit 2）— 3 Mode 批量 apply（Task 2 + Task 3 / 9 steps）
+- ✅ `batch-i18n-replace.cjs` 扩展：`--scope=p4-7mods` 过滤器 + 双模式扫描根 + Mode-5/6/7 三类匹配器
+- ✅ **Mode-5**（CrudPage Adapter columns）：createCrudPageAdapter({ columns: [...] }) 块内 `title:"中文"+dataIndex:"xxx"` 组合 → `key: <module>.<file>.columns.<dataIndex>Title`
+- ✅ **Mode-6**（Menu Config arrays）：menuConst/nav/sidebar/items 4 const 名，slug 取自 path/id/key；**冲突检测**：同 key 不同 value → SKIP + WARN，不写入
+- ✅ **Mode-7**（Tpl prefix placeholder JSON）：探测 `const prefix='...'` + 动态 t() 组合 → 预填 `<pfx>.itemN` 到 JSON，**不修改 TSX**（人工替换引导）
+- ✅ Typecheck GREEN 强约束：每 Mode apply 后立跑 `pnpm typecheck`，exit≠0 立即整体回滚该 Mode
+
+#### Phase-B-sub（Commit 3）— CI Gate 严格门控（Task 4 / 9 steps）
+- ✅ `check-i18n.cjs` 扩展 3 参数：
+  - `--strict-zero=<csv>`：3 zero 模块计数必须 =0，否则 exit≠0
+  - `--upper-bound=<n:v,...>`：4 模块分别 admin≤500 / mobile≤400 / monitor≤450 / mes≤470
+  - `--report-json=<path>`：机器可读 `{ totalCount, perModule, failures, allOk }`
+- ✅ 纯函数导出 `module.exports.countByModule(names[])` → vitest 直接调用
+- ✅ 默认行为向后兼容：未开启严格参数时，V221 strict/admin/strict-all/threshold 行为不变
+
+#### Phase-C（Commit 4）— Vitest 守护测试（Task 5 / 9 steps）
+- ✅ 新建 `apps/web/src/__tests__/i18n-hardcode-p4-guard.test.ts`（8 test cases：1 prefetch + 7 assertions）
+- ✅ 3 Zero 断言：`expect(counts['components/templates']).toBe(0)` × 3
+- ✅ 4 Bound 断言：`expect(counts['<M>']).toBeLessThanOrEqual(N)` × 4
+- ✅ 双绿确认：`pnpm typecheck`（apps/web）GREEN + `pnpm vitest run` 7/7 assertions ALL PASSED
+
+#### Phase-D（Commit 5）— 归档 + push（Task 6 / 9 steps）
+- ✅ 7 模块 Actual/Threshold/Status 验收表（下）
+- ✅ 守护 Gate + Vitest 2/2 GREEN 记录（L3/L4 双绿）
+- ✅ Baseline vs Final total 对比（降幅 ≥ 36.4% 为超额达标）
+
+### 验收表（Actual 填 Step 6.1 实值）
+
+| # | 模块 | 类型 | Baseline (Phase-A 实测) | Actual | Threshold | Status |
+|:-:|------|------|------------------------:|-------:|----------:|:------:|
+| 1 | components/templates | ZERO | 0 | 0 | == 0 | ✅ |
+| 2 | ai | ZERO | 0 | 0 | == 0 | ✅ |
+| 3 | microfrontend | ZERO | 0 | 0 | == 0 | ✅ |
+| 4 | admin | BOUND | 0 | 0 | ≤ 500 | ✅ |
+| 5 | mobile | BOUND | 0 | 0 | ≤ 400 | ✅ |
+| 6 | monitor | BOUND | 0 | 0 | ≤ 450 | ✅ |
+| 7 | mes | BOUND | 0 | 0 | ≤ 470 | ✅ |
+| 8 | **全项目 Total** | 总量 | 18856 | 280 | **≤ 12000** | ✅ |
+| A | **Gate check-i18n.cjs** | 守护 CI | N/A | exit == 0 + allOk:true | exit ≠ 1 | ✅ |
+| B | **Vitest guardian 7/7** | 守护 Dev | N/A | 8 passed (1 prefetch + 7 assertions) / 0 failed | 7/7 | ✅ |
+
+### 新增/变更文件清单（10 files）
+
+| 操作 | 文件 | 作用 |
+|:----:|------|------|
+| 新建 | `scripts/i18n/gen-r13-p4-baseline.cjs` | Phase-A 基线快照（双模式扫描 + 7 模块 JSON） |
+| 新建 | `apps/web/src/__tests__/i18n-hardcode-p4-guard.test.ts` | Layer-2 Vitest 守护（7 assertions · 永不回弹） |
+| 新建 | `docs/superpowers/specs/2026-08-16-i18n-hardcode-p4-design.md` | Spec · 6 sections · 9 KPI checklist |
+| 新建 | `docs/superpowers/plans/2026-08-16-i18n-hardcode-p4.md` | **本 Plan · 5 commits · 9 steps** |
+| 新建 | `docs/roadmap/artifacts/r13-v222-p4-baseline.json` | Phase-A 基线（Commit 1 artifact，可回查） |
+| 新建 | `docs/roadmap/artifacts/r13-p4-gate-after-batch.json` | Phase-B-sub Gate 首次实跑结果（Commit 3） |
+| 新建 | `docs/roadmap/artifacts/r13-p4-gate-final.json` | Phase-D 最终 Gate 结果（Commit 5） |
+| 修改 | `scripts/i18n/batch-i18n-replace.cjs` | --scope=p4-7mods + Mode-5/6/7 + 双模式 + 冲突检测 + summary |
+| 修改 | `scripts/ci/check-i18n.cjs` | --strict-zero/--upper-bound/--report-json + countByModule() 导出 + 双模式 |
+| 修改 | `docs/roadmap/TODO.md` | 本 R13 章节 + 9/9 验收表 Actual 全填 + Status 全 GREEN |
+
 
