@@ -30,6 +30,71 @@ const targetModules = moduleIdx !== -1 && args[moduleIdx + 1]
 const dryRun = args.includes('--dry');
 const verbose = args.includes('--verbose');
 
+// ---- R13 V222 P4 ADDITIONS START ----
+const scopeIdx = args.indexOf('--scope');
+const scopeVal = scopeIdx !== -1 && args[scopeIdx + 1] ? args[scopeIdx + 1] : null;
+// --mode=5,6,7  (comma-separated, default all)
+const modeIdx = args.indexOf('--mode');
+const modesActive = new Set((modeIdx !== -1 && args[modeIdx + 1] ? args[modeIdx + 1] : '5,6,7').split(',').map(s => 'M' + s.trim()));
+
+const P7_MODULES = [
+  'components/templates',
+  'ai',
+  'microfrontend',
+  'admin',
+  'mobile',
+  'monitor',
+  'mes',
+];
+
+// DUAL-PATH module roots: for each module M return array of dirs to scan
+function moduleScanDirs(moduleName) {
+  const dirs = [];
+  // Path 1: pages/<M>
+  const dPages = path.join(PAGES_DIR, moduleName);
+  if (fs.existsSync(dPages)) dirs.push(dPages);
+  // Path 2: src/<M> (top-level, e.g. ai, microfrontend, components/templates)
+  const dSrc = path.join(WEB_ROOT, moduleName);
+  if (fs.existsSync(dSrc)) dirs.push(dSrc);
+  return dirs;
+}
+
+// Overridden collectTsxFiles for MULTIPLE roots
+function collectMultiRoots(roots) {
+  const out = [];
+  for (const r of roots) walkDir(r, out);
+  return out;
+}
+function walkDir(dir, out) {
+  if (!fs.existsSync(dir)) return;
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const f = path.join(dir, e.name);
+    if (e.isDirectory()) {
+      if (['__tests__','node_modules','test','tests'].includes(e.name)) continue;
+      walkDir(f, out);
+    } else if ((e.name.endsWith('.tsx') || e.name.endsWith('.ts')) &&
+               !e.name.endsWith('.test.tsx') && !e.name.endsWith('.test.ts') &&
+               !e.name.endsWith('.stories.tsx')) {
+      out.push(f);
+    }
+  }
+}
+
+// SCOPE FILTER: if --scope=p4-7mods, only P7 modules are run; AND skip non-p7 in processModule()
+function inScope(moduleName) {
+  if (!scopeVal) return true; // no scope => run everything (backward compatible)
+  if (scopeVal === 'p4-7mods') return P7_MODULES.includes(moduleName);
+  return true;
+}
+
+// Mode-5/6/7 shared stats
+const p4Stats = {
+  M5: { hit: 0, newKeys: 0, skipConflict: 0 },
+  M6: { hit: 0, newKeys: 0, skipConflict: 0 },
+  M7: { hit: 0, placeholderKeys: 0, warnList: [] },
+};
+// ---- R13 V222 P4 ADDITIONS END ----
+
 const CJK_RE = /[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff]/;
 
 function fileLabel(filePath) {
@@ -173,6 +238,146 @@ function processFile(filePath, moduleName, translations, dryRun) {
     }
   }
 
+  // ============================================================
+  // R13 V222 P4 NEW MODES
+  // ============================================================
+  if (modesActive.has('M5')) runMode5_CrudPageAdapterColumns();
+  if (modesActive.has('M6')) runMode6_MenuConfigArrays();
+  if (modesActive.has('M7')) runMode7_TplPrefixPlaceholder();
+
+  // ---- Mode-5: createCrudPageAdapter columns.title="中文" ----
+  function runMode5_CrudPageAdapterColumns() {
+    // Scan whole file, find createCrudPageAdapter( { columns: [...] }) block
+    const fileStr = newLines.join('\n');
+    const adapterRe = /createCrudPageAdapter\s*\(\s*\{([\s\S]*?)\}\s*\)/g;
+    let ma;
+    while ((ma = adapterRe.exec(fileStr)) !== null) {
+      const block = ma[1];
+      const colsMatch = block.match(/columns\s*:\s*\[([\s\S]*?)\]\s*,?\s*$/m);
+      if (!colsMatch) continue;
+      const columnsText = colsMatch[1];
+      // Parse individual items { title:"中文", dataIndex:"xxx", ... }
+      const itemRe = /\{\s*title\s*:\s*"([^"]{2,})"\s*,\s*dataIndex\s*:\s*['"]([^'"]+)['"]/g;
+      let im;
+      while ((im = itemRe.exec(columnsText)) !== null) {
+        const titleZh = im[1];
+        const dataIndex = im[2];
+        if (!CJK_RE.test(titleZh)) continue;
+        // Key: <module>.<fileKey>.columns.<dataIndex>Title
+        const k = `${moduleName}.${fl}.columns.${dataIndex}Title`;
+        if (!(k in translations.zh)) {
+          translations.zh[k] = titleZh;
+          translations.en[k] = titleZh; // placeholder (see §4.5 strat A/B)
+          p4Stats.M5.newKeys++;
+        }
+        // Replace in file: title:"中文" → title:t(prefixKey + 'columns.<dataIndex>Title')
+        // We do a localized search-replace on newLines joined (safe - offsets of other modes already finished in original Phase)
+        const joined = newLines.join('\n');
+        const oldStr = `title: "${titleZh}",\n${' '.repeat(Math.max(0, im.index))}  dataIndex: "${dataIndex}"`;
+        const newStr = `title: t('${k}'),\n${' '.repeat(Math.max(0, im.index))}  dataIndex: "${dataIndex}"`;
+        if (joined.includes(oldStr)) {
+          newLines.length = 0;
+          newLines.push(...joined.replace(oldStr, newStr).split('\n'));
+          replacedCount++;
+          p4Stats.M5.hit++;
+        }
+      }
+    }
+  }
+
+  // ---- Mode-6: menu/nav/sidebar/items config arrays label/title="中文" ----
+  function runMode6_MenuConfigArrays() {
+    const fileStr = newLines.join('\n');
+    const menuConstRe = /const\s+(menu\w*|nav\w*|sidebar\w*|items|menuItems)\s*=\s*\[([\s\S]*?)\];/g;
+    let mm;
+    while ((mm = menuConstRe.exec(fileStr)) !== null) {
+      const arrBody = mm[2];
+      // Match each item with { ... (path|id|key): "...", ... label|title: "中文" }
+      const itemRe = /\{([^}]*?)(label|title)\s*:\s*"([^"]{2,})"([^}]*?)\}/g;
+      let im;
+      while ((im = itemRe.exec(arrBody)) !== null) {
+        const labelZh = im[3];
+        if (!CJK_RE.test(labelZh)) continue;
+        const preFields = im[1];
+        const postFields = im[4];
+        // Try extract slug from path/id/key fields in preFields or postFields
+        const slugMatch =
+          preFields.match(/\bpath\s*:\s*['"]([^'"]+)['"]/) ||
+          preFields.match(/\bid\s*:\s*['"]([^'"]+)['"]/) ||
+          preFields.match(/\bkey\s*:\s*['"]([^'"]+)['"]/) ||
+          postFields.match(/\bpath\s*:\s*['"]([^'"]+)['"]/) ||
+          postFields.match(/\bid\s*:\s*['"]([^'"]+)['"]/) ||
+          postFields.match(/\bkey\s*:\s*['"]([^'"]+)['"]/);
+        let slug = slugMatch ? slugMatch[1].replace(/^\/+/, '').replace(/\//g, '.').replace(/[^a-zA-Z0-9_.]/g, '') :
+          // fallback: camelize of labelZh (strip CJK -> leave any english chars)
+          labelZh.replace(/[\u4e00-\u9fff]/g, '').replace(/[^a-zA-Z0-9]/g, '') || `item${p4Stats.M6.hit}`;
+        if (!slug) slug = `item${p4Stats.M6.hit}`;
+        const key = `menu.${slug}.${im[2]}`;
+
+        // Conflict-detect (Spec §4.1)
+        if ((key in translations.zh) && translations.zh[key] !== labelZh) {
+          p4Stats.M6.skipConflict++;
+          if (verbose) console.warn(`[Mode-6 SKIP CONFLICT] key=${key} old="${translations.zh[key]}" new="${labelZh}" file=${path.relative(WEB_ROOT, filePath)}`);
+          continue;
+        }
+        if (!(key in translations.zh)) {
+          translations.zh[key] = labelZh;
+          translations.en[key] = labelZh; // placeholder
+          p4Stats.M6.newKeys++;
+        }
+        // Replace in file
+        const joined = newLines.join('\n');
+        const literal = im[2] + ': "' + labelZh + '"';
+        const target = im[2] + `: t('${key}')`;
+        if (joined.includes(literal)) {
+          newLines.length = 0;
+          newLines.push(...joined.split(literal).join(target).split('\n'));
+          replacedCount++;
+          p4Stats.M6.hit++;
+        }
+      }
+    }
+  }
+
+  // ---- Mode-7: detect template-literal prefix constants + write PLACEHOLDER keys (do NOT modify tsx) ----
+  function runMode7_TplPrefixPlaceholder() {
+    const fileStr = newLines.join('\n');
+    // 1. Find static prefix: const (prefix|msgPrefix|pfx|i18nKey) = '<dot.notation>'
+    const prefixRe = /const\s+(prefix|msgPrefix|pfx|i18nKey)\s*=\s*['"]([a-zA-Z][\w.-]+)['"]/g;
+    let pm;
+    while ((pm = prefixRe.exec(fileStr)) !== null) {
+      const pfxVar = pm[1];
+      const pfxStr = pm[2];
+      // 2. Look for any t(pfx + 'X') or t(`${pfx}.itemN`) patterns indicating dynamic indexing
+      const dynIdxRe = new RegExp(`t\\s*\\(\\s*\\(?\\s*${pfxVar}\\s*(?:\\+|\\\`\\.\\\$\\{)`, 'm');
+      if (!dynIdxRe.test(fileStr)) continue;
+
+      // 3. Scan near vicinity for static sibling strings: const ITEMS = [ { name: "中文1" }, { name: "中文2" }, ... ]
+      //    that are indexed similarly. We just capture all CJK strings in this file and write placeholder keys.
+      const cjkLitRe = /"([^"]{2,}[\u4e00-\u9fff][^"]*)"/g;
+      let cm, idx = 0;
+      const vicinity = fileStr.slice(Math.max(0, pm.index - 500), pm.index + 2000); // ~2500 char window
+      while ((cm = cjkLitRe.exec(vicinity)) !== null && idx < 20) {
+        const zhVal = cm[1];
+        if (!CJK_RE.test(zhVal)) continue;
+        const pkey = `${pfxStr}.item${idx}`;
+        if (!(pkey in translations.zh)) {
+          translations.zh[pkey] = zhVal;
+          translations.en[pkey] = zhVal;
+          p4Stats.M7.placeholderKeys++;
+        }
+        idx++;
+      }
+      p4Stats.M7.hit++;
+      if (idx > 0 && verbose) {
+        p4Stats.M7.warnList.push(`${path.relative(WEB_ROOT, filePath)}: pfx=${pfxStr} wrote ${idx} placeholder keys (manual tsx replace required)`);
+      }
+    }
+  }
+  // ============================================================
+  // END R13 P4 MODES
+  // ============================================================
+
   // Check if useTranslation hook needs to be added
   const hasHook = content.includes('useTranslation');
   let hookAdded = false;
@@ -223,13 +428,18 @@ function processFile(filePath, moduleName, translations, dryRun) {
 }
 
 function processModule(moduleName) {
-  const moduleDir = path.join(PAGES_DIR, moduleName);
-  if (!fs.existsSync(moduleDir)) {
-    console.log(`模块 ${moduleName} 目录不存在: ${moduleDir}`);
+  // R13 V222 P4: scope filter
+  if (!inScope(moduleName)) {
+    if (verbose) console.log(`⏭️ 模块 ${moduleName}: 不在 --scope 白名单，跳过`);
     return { module: moduleName, totalReplaced: 0, files: [] };
   }
-
-  const files = collectTsxFiles(moduleDir);
+  // R13 V222 P4: dual-path scan dirs
+  const dirs = moduleScanDirs(moduleName);
+  if (dirs.length === 0) {
+    console.log(`模块 ${moduleName}: 目录不存在 (pages/ + src/ 都无)`);
+    return { module: moduleName, totalReplaced: 0, files: [] };
+  }
+  const files = collectMultiRoots(dirs);
   if (files.length === 0) {
     console.log(`模块 ${moduleName}: 无 .tsx 文件`);
     return { module: moduleName, totalReplaced: 0, files: [] };
@@ -288,3 +498,14 @@ for (const mod of targetModules) {
 
 console.log(`\n${'='.repeat(50)}`);
 console.log(`总计替换: ${grandTotal} 处${dryRun ? ' (DRY RUN)' : ''}`);
+
+// R13 V222 P4 modes summary
+console.log(`\n── R13 P4 Mode Stats ──`);
+console.log(`  Mode-5 CrudPage columns : hit=${p4Stats.M5.hit}  newKeys=${p4Stats.M5.newKeys}  conflictSkip=${p4Stats.M5.skipConflict}`);
+console.log(`  Mode-6 Menu config arrays: hit=${p4Stats.M6.hit}  newKeys=${p4Stats.M6.newKeys}  conflictSkip=${p4Stats.M6.skipConflict}`);
+console.log(`  Mode-7 Tpl prefix detect : hit=${p4Stats.M7.hit}  placeholderJsonKeys=${p4Stats.M7.placeholderKeys}  (manual tsx replace REQUIRED for these)`);
+if (p4Stats.M7.warnList.length > 0) {
+  console.log(`  Mode-7 replace candidates (${p4Stats.M7.warnList.length} files):`);
+  for (const w of p4Stats.M7.warnList.slice(0, 15)) console.log(`    · ${w}`);
+}
+if (scopeVal) console.log(`  Scope filter: ${scopeVal}`);
