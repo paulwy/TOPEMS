@@ -4524,7 +4524,7 @@ V224→V226 的 R5~R10 期间，质量守护主要依赖：①pre-commit hooks�
   - §5 Grammar & Format：**35 条** — Oxford comma 补加（A, B and C → A, B, and C）
   - §4 Empty States：**1 条** — No Data → No data
 - Top 命名空间：pm(107) / ehs(71) / hrm(67) / lims(61) / shared(37) / admin(28) / ai(28) / pages(23) / components(10)
-- **Audit-only 报告**：styleguide_audit_report.json 记录 **7,831 条**"英文叶子残留中文短语"——这是 missing 值扫描未覆盖到的 zh-value 假 en 值，体量巨大，本阶段不处理，留待 R12 集中翻译；报告已作为 CI 守护的 i18n-quality Job 增量校验输入参考
+- **Audit-only 报告**：styleguide_audit_report.json 记录 **7,831 条**"英文叶子残留中文短语"——styleguide 审计基于短语模式匹配的预估上限（含重复计数和误报）。精确 CJK 检测后实际假 en 值 902 条，已于 R12 前置工作清零（commit 1c67cc037）：翻译记忆匹配 490 + 综合清洗 268 + LLM 翻译回填 350 + 混合结构同步 3128（修复扁平 key/嵌套对象冗余 bug）+ 手动 2 = **0 假 en 值**。三闸验证通过（TSC 0 error / 硬编码 0 / en-zh key 完全对齐）
 - **TSC 0 error** ✅
 
 ---
