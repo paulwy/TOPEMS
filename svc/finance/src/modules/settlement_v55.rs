@@ -159,6 +159,57 @@ impl fmt::Display for ValidationError {
 
 impl std::error::Error for ValidationError {}
 
+impl ValidationError {
+    /// 映射到 HTTP 响应码（与 ApiResponse.code 对齐 → IntoResponse 设为 HTTP 状态码）
+    pub fn http_status_code(&self) -> u16 {
+        match self {
+            // 客户端请求级 / 参数格式 / 必填缺失 → 400
+            ValidationError::EmptyField(_)
+            | ValidationError::NegativeAmount(_)
+            | ValidationError::InvalidCurrency(_)
+            | ValidationError::CurrencyNotWhitelisted(_)
+            | ValidationError::ReconEmptyInput { .. }
+            | ValidationError::ReconCurrencyMismatch { .. } => 400,
+            // 业务规则不允许 → 422 Unprocessable Entity
+            ValidationError::SelfTransfer(_, _)
+            | ValidationError::AmountAboveLimit { .. }
+            | ValidationError::StaleReconciliation { .. }
+            | ValidationError::ScheduledPaymentInPast { .. }
+            | ValidationError::InvoiceTaxMismatch { .. }
+            | ValidationError::InvoiceItemsTotalMismatch { .. }
+            | ValidationError::InvoiceDateInFuture { .. }
+            | ValidationError::InvalidStatus(_) => 422,
+        }
+    }
+
+    /// 机器可读错误码（用于前端按 key 分支处理 / i18n）
+    pub fn error_code(&self) -> &'static str {
+        match self {
+            ValidationError::InvalidStatus(_) => "INVALID_STATUS",
+            ValidationError::EmptyField(_) => "EMPTY_FIELD",
+            ValidationError::NegativeAmount(_) => "NEGATIVE_AMOUNT",
+            ValidationError::InvalidCurrency(_) => "INVALID_CURRENCY",
+            ValidationError::SelfTransfer(_, _) => "SELF_TRANSFER_NOT_ALLOWED",
+            ValidationError::AmountAboveLimit { .. } => "AMOUNT_ABOVE_LIMIT",
+            ValidationError::CurrencyNotWhitelisted(_) => "CURRENCY_NOT_WHITELISTED",
+            ValidationError::StaleReconciliation { .. } => "STALE_RECONCILIATION",
+            ValidationError::ScheduledPaymentInPast { .. } => "SCHEDULED_PAYMENT_IN_PAST",
+            ValidationError::InvoiceTaxMismatch { .. } => "INVOICE_TAX_MISMATCH",
+            ValidationError::InvoiceItemsTotalMismatch { .. } => "INVOICE_ITEMS_TOTAL_MISMATCH",
+            ValidationError::InvoiceDateInFuture { .. } => "INVOICE_DATE_IN_FUTURE",
+            ValidationError::ReconEmptyInput { .. } => "RECON_EMPTY_INPUT",
+            ValidationError::ReconCurrencyMismatch { .. } => "RECON_CURRENCY_MISMATCH",
+        }
+    }
+
+    /// 转为 handler 层统一错误响应（ApiResponse::error，同时设置 code 与人类可读消息）
+    pub fn into_api_response<T>(self) -> Json<ApiResponse<T>> {
+        let code = self.http_status_code();
+        let msg = self.to_string();
+        Json(ApiResponse::error(code, &msg))
+    }
+}
+
 // ==================== Prevalidation 纯函数前置校验层 ====================
 
 impl InitiatePaymentRequest {
@@ -883,7 +934,7 @@ impl AutoReconciler {
     ) -> Result<Vec<ReconciliationResult>, sqlx::Error> {
         let now = Utc::now();
         req.prevalidate_reconciliation(now, Some(180), true)
-            .map_err(|_| sqlx::Error::RowNotFound)?;
+            .map_err(|e| sqlx::Error::Decode(e.into()))?;
         let rules = Self::list_rules(pool, tenant_id).await?;
         let mut results = Vec::new();
 
@@ -930,7 +981,7 @@ impl AutoReconciler {
     ) -> Result<ReconciliationResult, sqlx::Error> {
         let now = Utc::now();
         req.prevalidate(now, Some(180), true)
-            .map_err(|_| sqlx::Error::RowNotFound)?;
+            .map_err(|e| sqlx::Error::Decode(e.into()))?;
         let rules = Self::list_rules(pool, tenant_id).await?;
         let result = Self::try_match(&req.bank_transaction, &req.system_record, &rules);
 
@@ -1451,7 +1502,7 @@ impl InvoiceRecognizer {
         };
         with_items
             .prevalidate_recognize()
-            .map_err(|_| sqlx::Error::RowNotFound)?;
+            .map_err(|e| sqlx::Error::Decode(e.into()))?;
 
         let now = Utc::now();
         sqlx::query_as(
@@ -1540,7 +1591,7 @@ impl InvoiceRecognizer {
         let now = Utc::now();
         with_items
             .prevalidate_post(now, false)
-            .map_err(|_| sqlx::Error::RowNotFound)?;
+            .map_err(|e| sqlx::Error::Decode(e.into()))?;
         sqlx::query_as(
             r#"UPDATE finance_v55_invoices
             SET status = 'posted', posted_at = $1
@@ -1664,7 +1715,7 @@ impl ElectronicPaymentProcessor {
         req: InitiatePaymentRequest,
     ) -> Result<PaymentInitiationResult, sqlx::Error> {
         req.prevalidate_payment(None, true)
-            .map_err(|_| sqlx::Error::RowNotFound)?;
+            .map_err(|e| sqlx::Error::Decode(e.into()))?;
         let now = Utc::now();
         let method_str = req.method.unwrap_or_else(|| "bank_transfer".to_string());
         let method = PaymentMethod::from_str(&method_str);
@@ -1757,7 +1808,7 @@ impl ElectronicPaymentProcessor {
 
         original
             .validate_reverse()
-            .map_err(|_| sqlx::Error::RowNotFound)?;
+            .map_err(|e| sqlx::Error::Decode(e.into()))?;
 
         let result_id = Uuid::new_v4();
         let reversed_ref = format!(
@@ -1811,9 +1862,9 @@ impl ElectronicPaymentProcessor {
     ) -> Result<PaymentRequest, sqlx::Error> {
         let now = Utc::now();
         req.prevalidate_payment(None, true)
-            .map_err(|_| sqlx::Error::RowNotFound)?;
+            .map_err(|e| sqlx::Error::Decode(e.into()))?;
         InitiatePaymentRequest::validate_scheduled_at(scheduled_at, now)
-            .map_err(|_| sqlx::Error::RowNotFound)?;
+            .map_err(|e| sqlx::Error::Decode(e.into()))?;
         let method_str = req.method.unwrap_or_else(|| "bank_transfer".to_string());
         let currency = req.currency.unwrap_or_else(|| "CNY".to_string());
         let request_id = Uuid::new_v4();
@@ -1895,10 +1946,15 @@ async fn reconcile_batch_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<ReconcileBatchRequest>,
 ) -> Json<ApiResponse<Vec<ReconciliationResult>>> {
+    let now = Utc::now();
+    if let Err(ve) = req.prevalidate_reconciliation(now, Some(180), true) {
+        return ve.into_api_response();
+    }
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id(&claims);
     match AutoReconciler::reconcile_batch(&pool, tenant_id, req).await {
         Ok(results) => Json(ApiResponse::success(results, "批量对账完成")),
+        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
@@ -1917,10 +1973,15 @@ async fn reconcile_single_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<ReconcileSingleRequest>,
 ) -> Json<ApiResponse<ReconciliationResult>> {
+    let now = Utc::now();
+    if let Err(ve) = req.prevalidate(now, Some(180), true) {
+        return ve.into_api_response();
+    }
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id(&claims);
     match AutoReconciler::reconcile_single(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "对账完成")),
+        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
@@ -2066,6 +2127,18 @@ async fn recognize_invoice_handler(
 ) -> Json<ApiResponse<RecognizedInvoice>> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id(&claims);
+    // OCR 识别层不强制校验未来日期（允许识别后走审批流修正），只在 prevalidate_recognize 之前先兜底：
+    // 如果用户显式输入 number / vendor，就要求非空（其他字段由内部 prevalidate_recognize 守护）。
+    if let Some(n) = req.number.as_deref() {
+        if n.trim().is_empty() {
+            return ValidationError::EmptyField("invoice.number".into()).into_api_response();
+        }
+    }
+    if let Some(v) = req.vendor.as_deref() {
+        if v.trim().is_empty() {
+            return ValidationError::EmptyField("invoice.vendor".into()).into_api_response();
+        }
+    }
     match InvoiceRecognizer::recognize_invoice(&pool, tenant_id, req).await {
         Ok(invoice) => Json(ApiResponse::success(invoice, "识别完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2139,8 +2212,14 @@ async fn validate_invoice_handler(
 ) -> Json<ApiResponse<Invoice>> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id(&claims);
+    // 在 validate_invoice 内部调用 prevalidate_recognize；为使语义化错误向上透出，这里把 sqlx::Error::Decode
+    // 还原为 ValidationError，并通过 handler 返回精确 HTTP code（400/422）。
     match InvoiceRecognizer::validate_invoice(&pool, tenant_id, id).await {
         Ok(invoice) => Json(ApiResponse::success(invoice, "验证通过")),
+        Err(sqlx::Error::Decode(msg)) => {
+            // 保守：无法从 Box<dyn Error> 直接下钻时，以 422 抛出完整消息（已包含 ValidationError Display）
+            Json(ApiResponse::error(422, &msg.to_string()))
+        }
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
@@ -2161,8 +2240,11 @@ async fn post_invoice_handler(
 ) -> Json<ApiResponse<Invoice>> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id(&claims);
+    // 默认 strict：不允许未来日期发票直接过账（allow_future_date=false）；
+    // 若识别层已批准未来日期，可在后续审批流里单独覆盖 allow_future_date=true 分支。
     match InvoiceRecognizer::post_invoice(&pool, tenant_id, id).await {
         Ok(invoice) => Json(ApiResponse::success(invoice, "过账成功")),
+        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
@@ -2215,6 +2297,13 @@ pub struct SchedulePaymentRequest {
     pub scheduled_at: DateTime<Utc>,
 }
 
+impl SchedulePaymentRequest {
+    /// 调度支付前置校验：scheduled_at 必须在当前时间或未来
+    pub fn prevalidate_schedule(&self, now: DateTime<Utc>) -> Result<(), ValidationError> {
+        InitiatePaymentRequest::validate_scheduled_at(self.scheduled_at, now)
+    }
+}
+
 #[utoipa::path(
     post,
     path = "/finance-v55/payment",
@@ -2229,10 +2318,15 @@ async fn initiate_payment_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<InitiatePaymentRequest>,
 ) -> Json<ApiResponse<PaymentInitiationResult>> {
+    // V55 默认开启严格模式：币种必须命中白名单；单笔金额上限 1_000_000.00，可后续由配置中心覆盖
+    if let Err(ve) = req.prevalidate_payment(Some(1_000_000.00), true) {
+        return ve.into_api_response();
+    }
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id(&claims);
     match ElectronicPaymentProcessor::initiate_payment(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "支付发起成功")),
+        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
@@ -2283,8 +2377,10 @@ async fn reverse_payment_handler(
 ) -> Json<ApiResponse<PaymentResult>> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id(&claims);
+    // PaymentResult 状态纯函数校验：仅 Completed 允许冲正；否则在 handler 层以 422 返回精确语义错误。
     match ElectronicPaymentProcessor::reverse_payment(&pool, tenant_id, id).await {
         Ok(result) => Json(ApiResponse::success(result, "冲正成功")),
+        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
@@ -2325,20 +2421,29 @@ async fn schedule_payment_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<SchedulePaymentRequest>,
 ) -> Json<ApiResponse<PaymentRequest>> {
-    let pool = state.pool.clone();
-    let tenant_id = get_tenant_id(&claims);
+    let now = Utc::now();
+    // 复用 initiate 4 联严格校验 + 未来 scheduled_at 校验
     let init_req = InitiatePaymentRequest {
         amount: req.amount,
-        currency: req.currency,
-        from_account: req.from_account,
-        to_account: req.to_account,
-        method: req.method,
-        reference: req.reference,
+        currency: req.currency.clone(),
+        from_account: req.from_account.clone(),
+        to_account: req.to_account.clone(),
+        method: req.method.clone(),
+        reference: req.reference.clone(),
     };
+    if let Err(ve) = init_req.prevalidate_payment(Some(1_000_000.00), true) {
+        return ve.into_api_response();
+    }
+    if let Err(ve) = req.prevalidate_schedule(now) {
+        return ve.into_api_response();
+    }
+    let pool = state.pool.clone();
+    let tenant_id = get_tenant_id(&claims);
     match ElectronicPaymentProcessor::schedule_payment(&pool, tenant_id, init_req, req.scheduled_at)
         .await
     {
         Ok(request) => Json(ApiResponse::success(request, "调度成功")),
+        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
