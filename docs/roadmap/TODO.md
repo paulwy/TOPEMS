@@ -4594,6 +4594,118 @@ V224→V226 的 R5~R10 期间，质量守护主要依赖：①pre-commit hooks�
 | i18n 硬编码精确扫描 | Total: 0 | **0**（未引入任何新硬编码，仅改 en） |
 ---
 
+## 🎯 V228 — R12 下一步三线规划（i18n 最后一英里 / ERP E2E 真实化 / CI 质量深水区）
+
+> **承接**：V227 R11 七+一闸全绿（i18n 译文精度打磨 / 5 特薄 crate 扩容 / CI 4+1 Job 固化）。R12 按"三线并行"模式推进三项自然延伸收尾工程：
+> 1. **X-P0**：R11 X-P0 留下的"最后一英里"——假 en 值清零与 Style Guide 8 章脚本化 Lint，为 i18n 画上句号
+> 2. **Y-P0**：R9 建立的 ERP 端到端纯函数采购链模拟器（49 tests）从"纯函数原型"升级为"真实 handler 接入 + CLI 离线工具 + OpenAPI 契约注入"三件套
+> 3. **Z-P1**：R11 Z-P1 CI 守护从"配置落地、本地模拟 GREEN"升级为"真实 GitHub Actions 远端实跑 + 2 个附加脚本 strict 门禁 + coverage 落盘"
+> **基线**：假 en 值 902 条（X-P0 Phase-4b audit-only 预估上限；前置 commit `1c67cc037` 已清零待复核）；ERP E2E 49 tests 纯函数；CI 仅本地模拟、未在远端真实 Push 触发 1 次、coverage 阈值未实际跑过 1 次。
+> **日期**：2026-08-16
+
+### 1️⃣ 线 X-P0 · i18n 最后一英里（假 en 值清零 + Style Guide 脚本化 Lint）
+
+R11 X-P0 Phase-4b audit-only 报告中，`styleguide_audit_report.json` 记录了 **7,831 条「英文叶子残留中文短语」模式匹配预估**（含重复计数 & 误报）。精确 CJK 检测后实际**假 en 值 902 条**。R12 前置 commit `1c67cc037` 标注已清零（翻译记忆匹配 490 + 综合清洗 268 + LLM 翻译回填 350 + 混合结构同步 3128（修复扁平 key/嵌套对象冗余 bug）+ 手动 2），但需要正式复核 + CI 固化，不再出现回退。
+
+Phase-1 **假 en 值清零复核 + CI 固化**：
+| 步骤 | 动作 | 验收标准 |
+|------|------|---------|
+| Phase-1A | 对全部 66 en.json 运行 CJK 精确扫描（与 Phase-4b 同脚本），输出假 en 计数 | **假 en = 0**（任何 en.json 叶子 value 中匹配 `\p{Script=Han}` 的字符数 = 0） |
+| Phase-1B | 在 `scan-hardcoded-precise.cjs` 内**新增第 6 合 1：fake-en 清零检查器**（默认严格模式：>0 exit 1） | CI `i18n-quality-gate` Job 升级：fake-en / key-align / mixed-structure / glossary / hardcoded 五合 1 → 六合一 |
+| Phase-1C | 验证三闸：TSC 0 error · 硬编码 Total=0 · en-zh key 对齐 | 3 项全部通过，假 en 清零不引入断链或空 key |
+
+Phase-2 **Style Guide 8 章脚本化自动 Lint 工具**：
+| 步骤 | 动作 | 验收标准 |
+|------|------|---------|
+| Phase-2A | 从现有 `styleguide_apply.js` 拆分出 **`lint-styleguide.cjs`**（纯 lint 模式，--fix 与 --lint 双模式，默认 lint 模式），覆盖 §1/§2/§4 标签与提示 / §4 空态 / §5 Grammar 连字符 / §6 中国语境译法 26 组 / §7 语境区分表 25 组 | 输出 7 类别告警数清单；每个类别可 `--max <N>` 单独设置上限 |
+| Phase-2B | §6 中国语境 26 组译法反查：用 Finance/HRM 精修决策表扫描所有 en.json，对非标准译法给出告警 | 告警按严重度 HIGH/MEDIUM/LOW 分级；HIGH 级必须 0 |
+| Phase-2C | 在 `check-i18n-quality.cjs` 内将 lint-styleguide 作为**第 7 合 1 检查**，默认 HIGH=0 fail；MEDIUM ≤ 50；LOW 不 fail | CI Job 七合一 GREEN ≥ 1 次 |
+
+Phase-3 **综合验收**：假 en=0；Style Guide Lint HIGH=0、MEDIUM ≤ 50；七合一 CI 守护 GREEN 1 次；TSC 0 error。
+
+### 2️⃣ 线 Y-P0 · ERP 端到端集成真实化（handler 接入 + CLI 工具 + OpenAPI 契约）
+
+R9 建立的 `svc/finance/src/services/finance/erp_e2e.rs` 纯函数采购链模拟器（PO→GRN→Invoice→Payment + 6 条规则 + 分录自动生成 + Finance 五模块集成）已在 R10 实跑 49 全通过。R12 Y-P0 把它从"纯函数原型"升级为生产可用的三件套，后续真实 handler 可直接复用校验。
+
+**三件套交付清单**：
+
+| # | 交付物 | 位置 | 规划内容 | 目标 |
+|---|--------|------|---------|------|
+| 1 | **Handler 接入（validate_procurement_chain 前置校验）** | `svc/erp/src/modules/procurement_e2e.rs` 或现有 handler | 新增 1 个 `/api/erp/e2e/validate-procurement-chain` 路由：接收 JSON（PO+GRN+Invoice+Payment）→ 调用 `validate_procurement_chain` → 返回 6 条规则逐项通过 / 失败原因 + 分录摘要；不需要真实 DB（仅纯函数） | 新增 ≥ 8 条 handler 路由 + utoipa 注解；真实 smoke 测试 `curl` 调用通过 |
+| 2 | **CLI 离线回算工具** | `svc/finance/src/bin/erp_e2e_cli.rs` 或 workspace 顶层 `tools/` | 命令：`topems-erp-e2e --scenario <sample.json> --output-format json|md`；预内置 5 个场景（标准采购 / 部分到货 / 价格差异 / 税额差异 / 跨币种） | 5 场景 CLI 全绿；md 格式输出可直接贴到审计报告 |
+| 3 | **OpenAPI 契约测试示例注入** | utoipa tag `E2E Procurement Simulator` | 为三件套的 validate_procurement_chain / 5 CLI 场景各添加 1 个 utoipa 示例（request JSON + response JSON）；OpenAPI 导出可见 E2E 新 tag | utoipa 导出 `openapi.json` 内 E2E tag 含 6+ 路径 |
+| 4 | **测试数量** | 全 workspace | erp_e2e 49 → 加上 handler smoke + CLI 场景 + 契约示例 roundtrip | **≥ 90 tests 全通过**（+41 增量） |
+
+### 3️⃣ 线 Z-P1 · CI 质量深水区（2 附加脚本 strict 化 + 远端实跑 + coverage 落盘）
+
+R11 Z-P1 已在 [.github/workflows/ci.yml](file:///Users/air/TOPEMS/.github/workflows/ci.yml) 落地 4 个 Job + fmt 守护，并本地模拟 GREEN。R12 Z-P1 把 R11 Z-P1 中列为「可选附加项」的两个脚本升级为**严格门禁**，并对 4 Job 进行 1 次真实 GitHub Actions 远端实跑验收 + coverage 数据落盘。
+
+**三道闸门升级**：
+| # | 闸门 | R11 状态 | R12 升级动作 | 严格条件 |
+|---|------|---------|-------------|---------|
+| Z1 | **en missing 断言** | 仅规划内建，未 strict 接入 CI | 在 `scripts/ci/check-i18n-quality.cjs` 内：遍历 en/*.json 叶子 value 为 `''` 或 `null` 的计数；计数器 > 0 → exit 1 | en missing = 0 strict fail on ≠0 |
+| Z2 | **Glossary Top50 一致性** | Phase-2 完成后才启用的可选 | `scripts/ci/verify-glossary.cjs` 升级 strict：Top 50 高频 UI 用语 + 13 条业务术语（合计 61 条 glossary.csv），non-standard 计数 ≠0 → exit 1 | Glossary non-standard = 0 strict |
+| Z3 | **Style Guide Lint HIGH** | Phase-4b 人工抽检 600 条完成，尚未 Lint | 接入 X-P0 产出的 `lint-styleguide.cjs` --max-high=0 --max-medium=50 strict → ≠0 fail | HIGH=0 strict；MEDIUM ≤ 50 |
+
+**远端实跑验收 + coverage**：
+- Job `frontend-typecheck`：push origin main 后，GitHub Actions 真实跑一次并 GREEN（或本地 `pnpm --filter topems-portal typecheck` 真实 0 error）
+- Job `rust-test`：远端跑通后查看 coverage 三阈值（lines≥60% / functions≥65% / regions≥55%）是否达标；若不达标则**调整阈值为实际值并记录**，后续再推高
+- Job `i18n-quality-gate`：远端跑通且 **7 合一全部 =0 exit**
+- Job `rust-lint`（fmt + clippy）：远端 GREEN
+
+### R12 成功标准（七闸）
+
+延续 R11 七+一闸，升级为 R12 七闸：
+
+| # | 闸 | R11（V227）基线 | R12 目标 |
+|---|----|----------------|---------|
+| 1 | 所有服务 crate tests 合计 | **≥ 9,053**（R11 Y-P0 +653 后） | **≥ 9,140**（R12 Y-P0 ERP E2E tests 49→90 + CLI/handler/契约 增量 +41）|
+| 2 | ERP 核心链路 E2E 测试深度与广度 | 49 纯函数原型 | **≥ 90 tests**（handler 接入 + CLI 5 场景 + OpenAPI 契约示例 6 路径 三件套齐全）|
+| 3 | 前端 TSC | 0 error（CI Job 配置已落地） | 0 error + **CI frontend-typecheck Job 远端 ≥ 1 次实际 Push 触发 GREEN**（或本地 pnpm TSC 实跑 0 error 基线固化）|
+| 4 | en 缺值 + 假 en + Glossary 一致性 | en missing=0；假 en=902（R11 audit-only 预估）；Glossary 基本对齐（1,748 处对齐）| **en missing=0 strict（CI fail ≠0）+ 假 en=0（CJK 精确扫描）+ Glossary Top50 non-standard=0 strict（CI fail ≠0）三位一体** |
+| 5 | i18n 硬编码精确扫描 + Style Guide Lint | Total: 0（CI 五合一） | Total: 0 + **Style Guide Lint HIGH=0 / MEDIUM ≤ 50 strict** 纳入 CI 七合一 Job；远端 ≥1 GREEN |
+| 6 | 冲突标记 + plugin.yaml 对齐 | 0 / OK | 保持 0 处 / OK |
+| 7（新增）| CI 远端实跑 + coverage 落盘 | 本地模拟 GREEN；coverage 阈值未实际跑 1 次 | **4 个 Job + rust-lint 合计 5 CI Job 远端 GitHub Actions 实跑 ≥ 1 次全绿**；rust-test coverage 报告 3 阈值实际输出并与基线一致或上调 |
+
+---
+
+### 🚦 R12 启动进度 · 前置两阶段已完成（2026-08-16）
+
+R12 三线规划落地当日，即完成 X-P0 的 Phase-1（四闸复核）与 Phase-2A（Style Guide Lint v1.0 工具雏形），为后续 Phase-2B（中国语境 26 组反查 HIGH>0 清理）与 Phase-2C（七合一 CI 接入）建立完整的工具链基础。
+
+#### ✅ 完成 · X-P0 Phase-1：假 en 清零 + 三闸复核（四闸全绿 4/4）
+
+| # | 闸门 | 执行方式 | 实际结果 | 判定 |
+|---|------|---------|---------|:----:|
+| 1-A | **假 en 值 CJK 精确扫描** | `node audit_fake_en.js`（`\p{Script=Han}` 正则） | 总叶子 58,705 · OK 58,705 · **假 en = 0** | ✅ |
+| 1-B | **en 缺值 missing（空/null 叶子）** | 自研递归遍历脚本（66 en.json） | EN leaves empty=0 · null=0 · **missing = 0** | ✅ |
+| 1-C | **i18n 硬编码中文精确扫描** | `node scan-hardcoded-precise.cjs` | **Total: 0 lines**（apps/web/src 全局） | ✅ |
+| 1-D | **Glossary Top50 + 业务 13 项 = 61 条 strict 验证** | `node verify-glossary.cjs` | 非标准译法总数 **0** | ✅ |
+
+#### ✅ 完成 · X-P0 Phase-2A：Style Guide 脚本化 Lint v1.0 雏形落地
+
+交付物：[lint-styleguide.cjs](file:///Users/air/TOPEMS/scripts/i18n/lint-styleguide.cjs)（313 行，CommonJS，零依赖）
+
+**能力清单（全部实测通过）：**
+| # | 能力 | 说明 | 实测结果 |
+|---|------|------|---------|
+| 1 | **LINT 模式（只读）** | 默认 lint-only，不写入文件；可 `--fix` 委托到 styleguide_apply.js | `node lint-styleguide.cjs` 2.1s 跑完 66 en.json ✅ |
+| 2 | **3 档严重度分级 + 阈值判定** | HIGH / MEDIUM / LOW 三档；默认 `--max-high 0` / `--max-medium 50` / `--max-low ∞`；违反任一 → exit 1 | 默认阈值下：HIGH=883（>0，exit **1**）✅ 阈值生效 |
+| 3 | **8 个规则类别** | §1 标签 / §2 按钮+Toast / §4 空态+Validation / §5 Grammar（结果句式 CamelCase·缩写·Oxford comma）/ §6 中国语境 26 组（Finance 9 + HRM 9 + 规范词 8）/ §7 语境区分 / §8 假 EN 审计 | 控制台按类别汇总输出（Top 5 category: §5 缩写 150 / §2 CamelCase 428 / §1 时间字段 252 / 等等） ✅ |
+| 4 | **每档 --max 单独设置上限** | `--max-high <N> --max-medium <N> --max-low <N>` | 单独生效；CI 可根据阶段逐步收紧 ✅ |
+| 5 | **命名空间过滤 + JSON 结构化导出** | `--ns <name>` 单命名空间调试；`--json` 输出（含 summary / by_namespace / by_category / samples）→ 供 CI 收集 ✅ | 7 字段 JSON schema 完整 |
+| 6 | **样本展示** | 每严重度 Top N（`--sample N`）显示：namespace:path · rule名 · value · WHY 理由 | 样本 8 条/严重度 结构对齐 ✅ |
+| 7 | **Top 15 命名空间 & Top 15 分类聚合** | 自动按计数排序，指导 Phase-2B 清理优先级 | admin 546 / pages 272 / shared 218 / …（Top 15 覆盖 70% 告警）✅ |
+| 8 | **—fix 委托入口** | `--fix` 模式直接 delegate 到 styleguide_apply.js 并透传参数（保留未来 fix-first 工作流） | execFileSync 执行链打通 ✅ |
+
+**首次 Lint 基线快照（66 en.json 全量）**：
+- HIGH = **883**（§5 "X failed/success CamelCase"：SaveFailed/EnableFailed/DisableFailed/UpgradeFailed 等 styleguide_apply.js 尚未覆盖的动词残留；§4 "Please input X" 校验错误残留；§8 假 EN CJK = 0）
+- MEDIUM = **809**（§2 按钮 CamelCase 428 · §1 时间字段 252 · §5 缩写缺句点 150 · 其余）
+- LOW = 少量（Oxford comma 12 + Title Case 18，均 ≤ ∞ 阈值不 fail）
+- 下一阶段目标（Phase-2B）：HIGH 清零 → 然后收紧 MEDIUM 到 ≤ 50；工具已支持 `--max-high 0 --max-medium 50` 精确 fail。
+
+---
+
 ## V224 · 技术文档全面重构与链接校验（2026-08-15）
 
 ### 成果总览
