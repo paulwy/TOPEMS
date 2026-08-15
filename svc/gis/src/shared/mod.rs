@@ -1,4 +1,5 @@
 pub mod permission;
+pub mod util;
 
 use axum::extract::FromRef;
 use sqlx::PgPool;
