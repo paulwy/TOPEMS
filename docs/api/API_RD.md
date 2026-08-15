@@ -1,33 +1,35 @@
 # TOPEMS 研发管理系统 API
 
-**服务**: topems-rs
-**端口**: 8058
-**版本**: v2
+**服务名**: topems-rd  
+**代码目录**: `svc/rd/`  
+**端口**: 8053  
+**版本**: v2  
 
 ---
 
-> **API 路径**: `/api/rs/` (例如 `/api/rs/projects`)
-> **实际访问地址**: `http://localhost:8058/api/rs/`
+> **规范 API 路径**: `/api/rd/`（例如 `/api/rd/projects`）  
+> **实际访问地址**: `http://localhost:8053/api/rd/`  
+> **命名说明**: 本文档原名 `API_RS.md`，为与代码目录 `svc/rd/` 对齐已统一为 `API_RD.md`。API 端点示例仍使用 `/api/rd/` 规范前缀。
 
 ## 1. 概述
 
-研发管理系统 API（RS - Research System）提供项目管理、试验记录管理等功能。
+研发管理系统 API（**RD** - Research & Development）提供项目管理、试验记录管理等功能。
 
 ### 1.1 API 端点总览
 
 | 功能 | 端点 | 方法 |
 |------|------|------|
-| 项目列表 | /api/rs/projects | GET |
-| 项目详情 | /api/rs/projects/{id} | GET |
-| 创建项目 | /api/rs/projects | POST |
-| 更新项目 | /api/rs/projects/{id} | PUT |
-| 删除项目 | /api/rs/projects/{id} | DELETE |
-| 试验列表 | /api/rs/experiments | GET |
-| 试验详情 | /api/rs/experiments/{id} | GET |
-| 创建试验 | /api/rs/experiments | POST |
-| 更新试验 | /api/rs/experiments/{id} | PUT |
-| 删除试验 | /api/rs/experiments/{id} | DELETE |
-| 项目试验列表 | /api/rs/experiments/project/{projectId} | GET |
+| 项目列表 | /api/rd/projects | GET |
+| 项目详情 | /api/rd/projects/{id} | GET |
+| 创建项目 | /api/rd/projects | POST |
+| 更新项目 | /api/rd/projects/{id} | PUT |
+| 删除项目 | /api/rd/projects/{id} | DELETE |
+| 试验列表 | /api/rd/experiments | GET |
+| 试验详情 | /api/rd/experiments/{id} | GET |
+| 创建试验 | /api/rd/experiments | POST |
+| 更新试验 | /api/rd/experiments/{id} | PUT |
+| 删除试验 | /api/rd/experiments/{id} | DELETE |
+| 项目试验列表 | /api/rd/experiments/project/{projectId} | GET |
 | 健康检查 | /health | GET |
 
 ### 1.2 数据模型
@@ -72,7 +74,7 @@
 
 ### 2.1 获取项目列表
 
-**端点**: `GET /api/rs/projects`
+**端点**: `GET /api/rd/projects`
 
 **描述**: 获取所有研发项目列表
 
@@ -88,7 +90,7 @@
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8058/api/rs/projects?page=1&page_size=20&status=active" \
+curl -X GET "http://localhost:8058/api/rd/projects?page=1&page_size=20&status=active" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -126,7 +128,7 @@ curl -X GET "http://localhost:8058/api/rs/projects?page=1&page_size=20&status=ac
 
 ### 2.2 获取项目详情
 
-**端点**: `GET /api/rs/projects/{id}`
+**端点**: `GET /api/rd/projects/{id}`
 
 **描述**: 获取指定项目的详细信息
 
@@ -140,7 +142,7 @@ curl -X GET "http://localhost:8058/api/rs/projects?page=1&page_size=20&status=ac
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8058/api/rs/projects/550e8400-e29b-41d4-a716-446655440000 \
+curl -X GET http://localhost:8058/api/rd/projects/550e8400-e29b-41d4-a716-446655440000 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -183,7 +185,7 @@ curl -X GET http://localhost:8058/api/rs/projects/550e8400-e29b-41d4-a716-446655
 
 ### 2.3 创建项目
 
-**端点**: `POST /api/rs/projects`
+**端点**: `POST /api/rd/projects`
 
 **描述**: 创建新的研发项目
 
@@ -216,7 +218,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8058/api/rs/projects \
+curl -X POST http://localhost:8058/api/rd/projects \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -264,7 +266,7 @@ curl -X POST http://localhost:8058/api/rs/projects \
 
 ### 2.4 更新项目
 
-**端点**: `PUT /api/rs/projects/{id}`
+**端点**: `PUT /api/rd/projects/{id}`
 
 **描述**: 更新指定项目的信息
 
@@ -296,7 +298,7 @@ curl -X POST http://localhost:8058/api/rs/projects \
 **请求示例**:
 
 ```bash
-curl -X PUT http://localhost:8058/api/rs/projects/550e8400-e29b-41d4-a716-446655440000 \
+curl -X PUT http://localhost:8058/api/rd/projects/550e8400-e29b-41d4-a716-446655440000 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -327,7 +329,7 @@ curl -X PUT http://localhost:8058/api/rs/projects/550e8400-e29b-41d4-a716-446655
 
 ### 2.5 删除项目
 
-**端点**: `DELETE /api/rs/projects/{id}`
+**端点**: `DELETE /api/rd/projects/{id}`
 
 **描述**: 删除指定项目
 
@@ -343,7 +345,7 @@ curl -X PUT http://localhost:8058/api/rs/projects/550e8400-e29b-41d4-a716-446655
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8058/api/rs/projects/550e8400-e29b-41d4-a716-446655440000 \
+curl -X DELETE http://localhost:8058/api/rd/projects/550e8400-e29b-41d4-a716-446655440000 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -377,7 +379,7 @@ curl -X DELETE http://localhost:8058/api/rs/projects/550e8400-e29b-41d4-a716-446
 
 ### 3.1 获取试验列表
 
-**端点**: `GET /api/rs/experiments`
+**端点**: `GET /api/rd/experiments`
 
 **描述**: 获取所有试验记录列表
 
@@ -394,7 +396,7 @@ curl -X DELETE http://localhost:8058/api/rs/projects/550e8400-e29b-41d4-a716-446
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8058/api/rs/experiments?page=1&page_size=20&status=completed" \
+curl -X GET "http://localhost:8058/api/rd/experiments?page=1&page_size=20&status=completed" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -440,7 +442,7 @@ curl -X GET "http://localhost:8058/api/rs/experiments?page=1&page_size=20&status
 
 ### 3.2 获取试验详情
 
-**端点**: `GET /api/rs/experiments/{id}`
+**端点**: `GET /api/rd/experiments/{id}`
 
 **描述**: 获取指定试验的详细信息
 
@@ -454,7 +456,7 @@ curl -X GET "http://localhost:8058/api/rs/experiments?page=1&page_size=20&status
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8058/api/rs/experiments/exp-001 \
+curl -X GET http://localhost:8058/api/rd/experiments/exp-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -485,7 +487,7 @@ curl -X GET http://localhost:8058/api/rs/experiments/exp-001 \
 
 ### 3.3 创建试验记录
 
-**端点**: `POST /api/rs/experiments`
+**端点**: `POST /api/rd/experiments`
 
 **描述**: 创建新的试验记录
 
@@ -526,7 +528,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8058/api/rs/experiments \
+curl -X POST http://localhost:8058/api/rd/experiments \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -566,7 +568,7 @@ curl -X POST http://localhost:8058/api/rs/experiments \
 
 ### 3.4 更新试验记录
 
-**端点**: `PUT /api/rs/experiments/{id}`
+**端点**: `PUT /api/rd/experiments/{id}`
 
 **描述**: 更新指定试验记录
 
@@ -606,7 +608,7 @@ curl -X POST http://localhost:8058/api/rs/experiments \
 **请求示例**:
 
 ```bash
-curl -X PUT http://localhost:8058/api/rs/experiments/exp-003 \
+curl -X PUT http://localhost:8058/api/rd/experiments/exp-003 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -644,7 +646,7 @@ curl -X PUT http://localhost:8058/api/rs/experiments/exp-003 \
 
 ### 3.5 删除试验记录
 
-**端点**: `DELETE /api/rs/experiments/{id}`
+**端点**: `DELETE /api/rd/experiments/{id}`
 
 **描述**: 删除指定试验记录
 
@@ -660,7 +662,7 @@ curl -X PUT http://localhost:8058/api/rs/experiments/exp-003 \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8058/api/rs/experiments/exp-003 \
+curl -X DELETE http://localhost:8058/api/rd/experiments/exp-003 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -678,7 +680,7 @@ curl -X DELETE http://localhost:8058/api/rs/experiments/exp-003 \
 
 ### 3.6 获取项目的试验列表
 
-**端点**: `GET /api/rs/experiments/project/{projectId}`
+**端点**: `GET /api/rd/experiments/project/{projectId}`
 
 **描述**: 获取指定项目的所有试验记录
 
@@ -697,7 +699,7 @@ curl -X DELETE http://localhost:8058/api/rs/experiments/exp-003 \
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8058/api/rs/experiments/project/550e8400-e29b-41d4-a716-446655440000?status=completed" \
+curl -X GET "http://localhost:8058/api/rd/experiments/project/550e8400-e29b-41d4-a716-446655440000?status=completed" \
   -H "Authorization: Bearer {token}"
 ```
 

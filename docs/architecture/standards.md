@@ -434,16 +434,10 @@ HTTP Request → API Handler → Service → Model → Database
 
 ### 前端待办
 
-1. **大文件拆分**：以下文件仍超过 500 行，**必须**拆分（强制执行）：
-   - `rs.ts` (1,159 行)
-   - `consolidation-contract.ts` (916 行)
-   - `hrm.ts` (875 行)
-   - `finance.ts` (853 行)
-   - `workflow.ts` (729 行)
-   - `gis.ts` (679 行)
-   - `bi.ts` (673 行)
-   - `external-erp.ts` (638 行)
-   - `integration.ts` (570 行)
+1. **大文件拆分（2026-08 实际验证）**：以下 API 客户端文件超过 200 行，**建议**后续拆分（原列表已过时，多数单文件已迁移为 `api/<module>/index.ts` 目录结构）：
+   - `api/bi/index.ts` (425 行)
+   - `api/workflow/index.ts` (248 行)
+   - 其他模块 API 客户端均已完成迁移和拆分，均在 100 行以内（如 rd 80 行、hrm 68 行、finance 81 行、gis 82 行等）
    - `plugin.ts` (564 行)
    - `iam.ts` (526 行)
 

@@ -1,20 +1,33 @@
 # TOPEMS 系统架构设计
 
-> **架构版本**: V66.2（2026-08-07）· **Shared Bootstrap V2**: 28/28 服务 100% · 健康评分 100/100
+> **架构版本**: V71（2026-08-11）· **Shared Bootstrap V2**: 28/28 服务 100% · **Plugin 自动注册**: 28/28 100% · **V68.0 质量门禁**: tsc 0 error · cargo check 0 error 0 warning · vite build ✅
 
 ## 概述
 
 TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一的身份认证、流程自动化、文件管理、协同通讯等功能。系统采用 Rust 后端 + React 前端的现代化技术栈，支持企业级部署和扩展。
 
-### 架构里程碑（V66.2）
+### 架构里程碑
 
-V66.2 完成 **Shared Bootstrap V2 五批次迁移专项（28/28 = 100%）**，所有业务服务的 main.rs 启动代码统一为三段式模板：
-
+**V66.2** — 完成 **Shared Bootstrap V2 五批次迁移专项（28/28 = 100%）**，所有业务服务的 `main.rs` 启动代码统一为三段式模板：
 ```
 ServiceConfig (单一真相源) → bootstrap_service (统一初始化) → build_application (7层中间件自动装配) → run
 ```
-
 三种复杂度模式（A/B/C）覆盖全部服务：无状态标准 10 个 + 自定义 state 13 个 + 自建 Application 5 个。
+
+**V66.7** — 第三轮深度架构审计 31 项问题（P0×6 / P1×10 / P2×9 / P3×3）**全部 31/31 闭环** ✅
+
+**V67.0** — 三大基建落地：
+1. **统一列表响应 `ListResponse<T>`**：shared-core 定义 + 21 服务迁移完成
+2. **Plugin 自动注册 100%**：补齐 master-data = 最后 1 个，全 28 服务覆盖
+3. **超大页 TOP5 拆分达标**：AutomationDesignerPage -93% / DocumentsPage -45% / ProfilePage -56% / WorkflowApprovalDetail -72%
+
+**V67.1** — 第四轮架构四探针并行审计 **67/67 全闭环** ✅（28 服务 plugin schema · 55 处 println→tracing · 17 文件死代码清理 · 12 服务 Docker 锚点压缩等）
+
+**V67.2** — 数据层深度审计 P0 全闭环：审计日志覆盖率 25%→100% · ApprovalStatus 枚举统一 · EntitySchema maxLength 校验
+
+**V67.3** — 前端 UI 代码优化 8 项全闭环：死文件清理、非规范导入修复、Tailwind 残留检查
+
+**V68.0** — **质量门禁全通过**：`npx tsc --noEmit` 0 error · `cargo check --workspace` 0 error 0 warning · `npx vite build` ✅ · L3 导航子组 341 项 100% 对称 · CI 门禁上线
 
 平台采用 **插件化架构** 和 **微前端** 设计理念，支持按需加载业务模块，具备高度的可扩展性和灵活性。
 
@@ -67,13 +80,19 @@ ServiceConfig (单一真相源) → bootstrap_service (统一初始化) → buil
 └─────────────────────────────┬───────────────────────────────┘
                               │ REST API / EventBus
 ┌─────────────────────────────┴───────────────────────────────┐
-│                    Business Services (19)                    │
+│                    Business Services (27)                    │
 │                                                              │
-│  ERP(8010) │ HRM(8020) │ PM(8023) │ CRM(8029)             │
-│  MES(8030) │ PDM(8031) │ SCM(8040) │ WMS(8041) │ SRM(8042) │
+│  ERP(8010) │ Finance(8011) │ AI(8013)                      │
+│  HRM(8020) │ PM(8023) │ CRM(8029)                          │
+│  MES(8030) │ PDM(8031)                                      │
+│  SCM(8040) │ WMS(8041) │ SRM(8042)                         │
 │  QMS(8050) │ LIMS(8051)│ EHS(8052) │ RD(8053)             │
 │  BI(8060)  │ Portal(8063)                                    │
-│  AI(8013)  │ Mobile(8070) │ GIS(8071) │ Integration(8072) │
+│  Mobile(8070) │ GIS(8071) │ Integration(8072)              │
+│  Search(8082) │ Comm(8084) │ Billing(8085) │ Ticket(8086)  │
+│  Feedback(8087) │ Lowcode(8088) │ Master-Data(8090)        │
+│                                                              │
+│  合计 1 核心服务 unified-core(8000) + 27 业务服务 = 28 服务   │
 └─────────────────────────────┬───────────────────────────────┘
                               │
 ┌─────────────────────────────┴───────────────────────────────┐
@@ -113,7 +132,7 @@ ServiceConfig (单一真相源) → bootstrap_service (统一初始化) → buil
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## 服务配置表（V66.2，28/28 服务 Shared Bootstrap V2 100%）
+## 服务配置表（V71，28/28 服务 Shared Bootstrap V2 100%，Plugin 自动注册 100%）
 
 | 服务 | 端口 | 业务域 | 说明 | API 前缀 | 状态 | **V2 模式** |
 |------|------|--------|------|----------|------|-------------|
@@ -565,17 +584,16 @@ cp .env.example .env
 ## 相关文档
 
 - [架构规范标准](./standards.md) - 架构与命名规范
+- [Code Wiki 项目百科](./code-wiki.md) - **核心文档** — 全面的项目百科
 - [数据库设计](./database.md) - 数据库 Schema 设计
-- [部署指南](../deployment-guide.md) - 系统部署说明
-- [API 文档](../api/README.md) - RESTful API 接口文档
-- [端口分配规则](../port-allocation-rules.md) - 详细的端口配置说明
-- [导航设计](../guides/ui/ui-navigation-design.md) - 前端导航架构设计
-- [微前端架构](../guides/ui/module-federation-architecture.md) - 微前端架构设计
+- [标准端口分配（唯一真相源）](./ports.md) - 28 服务端口配置说明
+- [API 路径标准化](./api-path-standardization.md) - 统一 API 路径前缀规范
+- [事件驱动架构](./event-driven.md) - 事件总线与发布订阅机制
+- [部署运维文档索引](../deployment/README.md) - 部署文档总入口
+- [部署指南总览](../deployment/deployment-guide-overview.md) - 部署方式选型对比
+- [API 文档总入口](../api/README.md) - RESTful API 接口文档
+- [前端导航架构设计](../development/frontend/ui-navigation-design.md) - 四层导航模型设计
+- [微前端架构](../development/frontend/module-federation-architecture.md) - Module Federation 架构设计
 
 ---
-**版本**: 3.2.0  
-**最后更新**: 2026-06-29  
-**服务总数**: 20 个 (Doc/Monitor/User-service 已合并到 unified-core)
-**已实现服务**: 6 个 (unified-core, hrm, qms, lims, ehs, rd)
-**部分实现**: 10 个  
-**规划中**: 4 个
+> **版本**: V71 | **最后更新**: 2026-08-11 | **服务总数**: 28/28 (100%) | **已实现**: 28 个 (1 unified-core + 27 业务服务) | **Shared Bootstrap V2**: 28/28 | **Plugin 自动注册**: 28/28 | **V68 质量门禁**: 全通过

@@ -714,8 +714,8 @@ WITH (lists = 100);
 ### C. 相关文档
 
 - [数据库重建指南](../../database/init/README.md)
-- [产品架构计划](../product-architecture-plan.md)
-- [统一数据库架构设计](./DATABASE_SCHEMA_DESIGN.md)
+- 产品架构计划（已归档）
+- 统一数据库架构设计（已归档）
 
 ---
 

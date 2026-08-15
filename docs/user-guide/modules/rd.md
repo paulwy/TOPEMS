@@ -1,12 +1,14 @@
-# 研发管理 (RS) 模块
+# 研发管理 (RD) 模块
 
 ## 概述
 
-RS 模块管理研发项目、实验记录和成果。
+RD（Research & Development 研发管理）模块管理研发项目、实验记录和成果。
 
 **功能路径**: 研发管理  
-**服务端口**: 8080  
-**权限标识**: `rs:read`, `rs:write`, `rs:delete`, `rs:admin`
+**服务端口**: 8053  
+**API 路径**: `/api/rd/*`  
+**代码目录**: `svc/rd/`（后端）、`apps/web/src/pages/rd/`（前端）、`apps/web/src/api/rd/`（API 客户端）  
+**权限标识（代码遗留）**: `rs:read`, `rs:write`, `rs:delete`, `rs:admin`（历史命名，暂未迁移至 `rd:*`）
 
 ---
 

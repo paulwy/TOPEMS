@@ -242,7 +242,7 @@ GET /health/details
 | 质量管理 | [API_QMS.md](./API_QMS.md) | 质量标准、检验 |
 | 实验室 | [API_LIMS.md](./API_LIMS.md) | 样品、仪器、试剂 |
 | 环境健康 | [API_EHS.md](./API_EHS.md) | 安全、环保 |
-| 研发管理 | [API_RS.md](./API_RS.md) | 项目、配方、专利 |
+| 研发管理 | [API_RD.md](./API_RD.md) | 项目、配方、专利 |
 | 供应商 | [API_SRM.md](./API_SRM.md) | 供应商、采购 |
 | 产品数据 | [API_PDM.md](./API_PDM.md) | 产品、BOM |
 | 报表服务 | [API_REPORT.md](./API_REPORT.md) | 报表生成导出 |
@@ -348,5 +348,5 @@ async function getEmployees(token) {
 
 - [系统架构](../architecture/overview.md) - 了解系统架构
 - [数据库设计](../architecture/database.md) - 数据库 Schema 设计
-- [部署指南](../deployment-guide.md) - 系统部署说明
-- [端口分配规则](../port-allocation-rules.md) - 端口配置说明
+- [部署指南](../deployment/deployment-guide-overview.md) - 系统部署说明
+- [端口分配规则](../architecture/ports.md) - 端口配置说明

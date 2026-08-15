@@ -76,7 +76,7 @@ cd apps/web && pnpm install && pnpm dev  # 启动前端
 cd apps/core && pnpm install && pnpm dev # 启动 core
 ```
 
-> **Docker 仅作为可选的容器化方案**，不是本地开发的必需项。详细说明见 [本地部署指南](./LOCAL_DEPLOYMENT.md)。
+> **Docker 仅作为可选的容器化方案**，不是本地开发的必需项。详细说明见 [本地部署指南](../getting-started/local-deployment.md)。
 
 ### 方式二：Docker 部署（可选）
 

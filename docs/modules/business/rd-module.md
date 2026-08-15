@@ -1,8 +1,8 @@
-# RS模块技术文档
+# RD模块技术文档
 
 ## 1. 概述
 
-RS（研发管理）模块是TOPEMS平台专为研发项目管理设计的核心模块，提供项目管理、实验管理、配方管理、专利管理等功能。
+RD（研发管理 Research & Development）模块是 TOPEMS 平台专为研发项目管理设计的核心业务模块。代码后端服务目录为 `svc/rd/`，前端 API 客户端位于 `apps/web/src/api/rd/`，前端页面位于 `apps/web/src/pages/rd/`。提供项目管理、实验管理、配方管理、专利管理等功能。
 
 ### 1.1 功能定位
 
@@ -18,20 +18,25 @@ RS（研发管理）模块是TOPEMS平台专为研发项目管理设计的核心
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      RS模块架构                             │
+│                      RD模块架构                             │
 ├─────────────────────────────────────────────────────────────┤
 │  前端层 (React + TypeScript)                               │
-│  ├── pages/                                                │
-│  │   └── Rspage.tsx         # RS主页面                   │
+│  ├── pages/rd/                                             │
+│  │   ├── DashboardPage.tsx          # RD 仪表盘            │
+│  │   ├── RsProjectListPage.tsx     # 项目列表（历史命名）  │
+│  │   ├── RsProjectDetailPage.tsx   # 项目详情（历史命名）  │
+│  │   ├── RsExperimentListPage.tsx  # 实验列表（历史命名）  │
+│  │   ├── RsFormulaListPage.tsx     # 配方列表（历史命名）  │
+│  │   └── ... 其他 RD 模块页面                             │
 │  └── components/                                           │
-│      └── rs/                                               │
-│          ├── ProjectForm.tsx # 项目表单                  │
-│          └── ExperimentForm.tsx # 实验表单               │
+│      └── rd/                                               │
+│          ├── ProjectForm.tsx      # 项目表单               │
+│          └── ExperimentForm.tsx   # 实验表单               │
 ├─────────────────────────────────────────────────────────────┤
 │  API层 (TypeScript)                                        │
-│  └── rs.ts                # RS API客户端                   │
+│  └── api/rd/index.ts       # RD API 客户端（统一入口）     │
 ├─────────────────────────────────────────────────────────────┤
-│  后端服务 (Rust + PostgreSQL)                              │
+│  后端服务 (Rust + PostgreSQL, svc/rd/)                     │
 │  ├── main.rs              # 服务入口                       │
 │  ├── api/                 # API路由                       │
 │  │   ├── project.rs        # 项目管理                      │
@@ -41,6 +46,8 @@ RS（研发管理）模块是TOPEMS平台专为研发项目管理设计的核心
 │  └── models/              # 数据模型                      │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+> **命名说明**：部分前端组件文件仍保留 `Rs*` 前缀（如 `RsProjectListPage.tsx`），这是历史命名遗留，不影响模块代码名 RD 的统一规范。新开发请统一使用 `RD*` 前缀。
 
 ---
 

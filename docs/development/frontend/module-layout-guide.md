@@ -353,7 +353,7 @@ navigationRegistry.register('erp', { ... });
 
 ## 十、相关文档
 
-- [UI 设计规范](../ui-design-spec.md)
-- [导航设计文档](../ui-navigation-design.md)
-- [PluginLifecycleManager 使用指南](../plugin-lifecycle-guide.md)
-- [组件迁移指南](../component-migration-guide.md)
+- [UI 设计规范](./ui-design-spec.md)
+- [导航设计文档](./ui-navigation-design.md)
+- [PluginLifecycleManager 使用指南](./plugin-lifecycle-guide.md)
+- [组件迁移指南](./component-migration-guide.md)

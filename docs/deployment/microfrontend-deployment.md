@@ -343,4 +343,4 @@ console.log(window.__federation_hooks__);
 - [TOPEMS 模块清单](../../apps/web/src/microfrontend/config.ts)
 - [RemoteLoader 实现](../../apps/web/src/microfrontend/RemoteLoader.tsx)
 - [vite.config.ts federation 配置](../../apps/web/vite.config.ts)
-- [部署主指南](../deployment-guide.md)
+- [部署主指南](./deployment-guide-overview.md)

@@ -1593,10 +1593,10 @@ useEffect(() => {
 
 | 文档 | 说明 |
 |------|------|
-| [UI 重构设计方案](./ui-redesign-design.md) | UI 重构设计 |
-| [UI 系统重构实施方案](./ui-system-redesign.md) | 实施计划 |
-| [前端优化标准](./FRONTEND_OPTIMIZATION_STANDARD.md) | 性能与标准 |
-| [GIS 模块设计](./superpowers/specs/2026-06-13-gis-module-redesign-design.md) | 特殊模块设计 |
+| UI 重构设计方案 | UI 重构设计（已归档） |
+| UI 系统重构实施方案 | 实施计划（已归档） |
+| 前端优化标准 | 性能与标准（已归档） |
+| GIS 模块设计 | 特殊模块设计（已归档） |
 
 ### C. 参考资源
 
