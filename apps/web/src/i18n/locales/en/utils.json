@@ -7,7 +7,7 @@
   "utils.ui-recommender.k3": "Navigation",
   "utils.ui-recommender.k6": "Submit",
   "utils.ui-recommender.esc_8": "ESC to close",
-  "utils.ui-recommender.k9": "Operation successful",
+  "utils.ui-recommender.k9": "Operation succeeded",
   "utils.ui-recommender.modal_14": "\">Content</Modal>",
   "utils.ui-recommender.esc_15": "ESC to close",
   "utils.ui-recommender.k16": "Content",
@@ -32,7 +32,7 @@
   "utils.ui-recommender.k37": "// Navigation combination example",
   "utils.ui-recommender.k38": "Application name",
   "utils.ui-recommender.k39": "// Data display combination example",
-  "utils.ui-recommender.k40": "Operation successful",
+  "utils.ui-recommender.k40": "Operation succeeded",
   "utils.api_path.k0": ", // workflow is alias, actual service is ",
   "utils.api_path.k1": ", // master is alias, actual service is ",
   "utils.status.k0": "Pending Registration",
@@ -45,7 +45,54 @@
   "utils": {
     "ui-recommender": {
       "k9": "Operation succeeded",
-      "k40": "Operation succeeded"
+      "k40": "Operation succeeded",
+      "k0": "Content",
+      "k2": "Content",
+      "k3": "Navigation",
+      "k6": "Submit",
+      "esc_8": "ESC to close",
+      "modal_14": "\">Content</Modal>",
+      "esc_15": "ESC to close",
+      "k16": "Content",
+      "k17": "Content",
+      "k18": "Submit",
+      "esc_20": "ESC to close",
+      "k22": "// Components",
+      "k23": ") not found",
+      "nnn_24": "\\n\\n// Usage example\\n",
+      "k25": ">\\n  {/* Content */}\\n</",
+      "k26": "This component supports:",
+      "k27": "User input → Validation → Submit → Feedback",
+      "k28": "Navigation selection → Route switch → Page update",
+      "k29": "Data request → Render table → User operation → Feedback prompt",
+      "ui_30": "Different UI libraries:",
+      "k31": "Matching keywords:",
+      "k32": "Color contrast does not meet WCAG AA standard (4.5:1)",
+      "arialive_33": " or aria-live=",
+      "k34": "// Form combination example",
+      "k35": "Submit",
+      "k36": "  {/* Form fields */}",
+      "k37": "// Navigation combination example",
+      "k38": "Application name",
+      "k39": "// Data display combination example"
+    },
+    "test-generator": {
+      "k0": "Test cases based on decision table",
+      "k1": "Test cases based on state transition",
+      "k2": " * Auto-generated test file"
+    },
+    "api_path": {
+      "k0": ", // workflow is alias, actual service is ",
+      "k1": ", // master is alias, actual service is "
+    },
+    "status": {
+      "k0": "Pending Registration",
+      "k1": "Pending Receipt",
+      "k2": "Received",
+      "k3": "Pending Confirmation",
+      "k4": "Confirmed",
+      "k5": "Inspecting",
+      "k6": "Completed"
     }
   }
 }

@@ -7,5 +7,24 @@
   "layouts.user_menu.k2": "Logging out will clear the local session and require re-login. Are you sure you want to log out of the current account?",
   "layouts.user_menu.k3": "Cancel",
   "layouts.user_menu.k4": "Confirm Log Out",
-  "layouts.userMenu.k0": "Help Center & Shortcuts"
+  "layouts.userMenu.k0": "Help Center & Shortcuts",
+  "layouts": {
+    "global_actions": {
+      "k0": "Toolbox",
+      "k1": "Toolbox"
+    },
+    "mobile_layout": {
+      "k0": "Log Out"
+    },
+    "user_menu": {
+      "k0": "Log Out",
+      "k1": "Confirm log out?",
+      "k2": "Logging out will clear the local session and require re-login. Are you sure you want to log out of the current account?",
+      "k3": "Cancel",
+      "k4": "Confirm Log Out"
+    },
+    "userMenu": {
+      "k0": "Help Center & Shortcuts"
+    }
+  }
 }

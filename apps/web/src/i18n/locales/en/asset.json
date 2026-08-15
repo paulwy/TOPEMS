@@ -176,11 +176,11 @@
   "asset_list_page.asset_manage": "Asset Management",
   "category_management_page.asset_manage": "Asset Management",
   "category_management_page.asset": "Asset Categories",
-  "depreciation_page.create_fail": "Creation failed",
+  "depreciation_page.create_fail": "Create failed",
   "depreciation_page.fail": "Update failed",
-  "transfer_page.select_asset": "Please select an asset",
-  "transfer_page.select_dept": "Please select the destination department",
-  "transfer_page.select_date": "Please select the transfer date",
+  "transfer_page.select_asset": "Select An Asset...",
+  "transfer_page.select_dept": "Select The Destination Department...",
+  "transfer_page.select_date": "Select The Transfer Date...",
   "transfer_page.fill": "Please fill in the transfer reason",
   "transfer_page.": "Production Department",
   "transfer_page.finance": "Finance Department",
@@ -201,11 +201,56 @@
   "asset.depreciation_page.k0": "DepreciationPage under development",
   "asset.transfer_page.k0": "TransferPage under development",
   "depreciation_page": {
-    "create_fail": "Create failed"
+    "create_fail": "Create failed",
+    "fail": "Update failed"
   },
   "transfer_page": {
     "select_asset": "Select An Asset...",
     "select_dept": "Select The Destination Department...",
-    "select_date": "Select The Transfer Date..."
+    "select_date": "Select The Transfer Date...",
+    "fill": "Please fill in the transfer reason",
+    "": "Production Department",
+    "finance": "Finance Department",
+    "purchase": "Purchasing Department",
+    "ast_001_01": "AST-001 - Office Computer-01",
+    "ast_002_01": "AST-002 - Server-01",
+    "ast_003_printed_01": "AST-003 - Printer-01",
+    "ast_004_01": "AST-004 - Projector-01",
+    "ast_005_01": "AST-005 - Air Conditioner-01",
+    "ast_006_01": "AST-006 - Office Desk-01",
+    "ast_007_01": "AST-007 - Laptop-01",
+    "ast_008_01": "AST-008 - Surveillance Camera-01"
+  },
+  "asset_list_page": {
+    "": "Retire",
+    "medium": "Under Maintenance",
+    "success": "Success",
+    "asset": "Asset status updated",
+    "fail": "Failed to update status",
+    "asset_list": "Asset List",
+    "asset_manage": "Asset Management"
+  },
+  "category_management_page": {
+    "asset_manage": "Asset Management",
+    "asset": "Asset Categories"
+  },
+  "asset": {
+    "dashboard_page": {
+      "k0": "Asset Management Overview",
+      "k1": "Asset Management Data Overview",
+      "k2": "Quick Actions"
+    },
+    "asset_list_page": {
+      "k0": "AssetListPage under development"
+    },
+    "category_management_page": {
+      "k0": "CategoryManagementPage under development"
+    },
+    "depreciation_page": {
+      "k0": "DepreciationPage under development"
+    },
+    "transfer_page": {
+      "k0": "TransferPage under development"
+    }
   }
 }

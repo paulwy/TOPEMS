@@ -9,5 +9,24 @@
   "store.theme_store.k4": "Cyberpunk",
   "store.theme_store.k5": "Neon tech style, deep space background",
   "store.theme_store.k6": "Follow System",
-  "store.theme_store.k7": "Automatically follow system preference"
+  "store.theme_store.k7": "Automatically follow system preference",
+  "store": {
+    "bi_store": {
+      "k0": "Failed to load data"
+    },
+    "shortcuts_store": {
+      "k0": "Dashboard",
+      "k1": "Document Center"
+    },
+    "theme_store": {
+      "k0": "Light",
+      "k1": "Bright and clear, suitable for daytime use",
+      "k2": "Dark",
+      "k3": "Dark background, comfortable for eyes",
+      "k4": "Cyberpunk",
+      "k5": "Neon tech style, deep space background",
+      "k6": "Follow System",
+      "k7": "Automatically follow system preference"
+    }
+  }
 }

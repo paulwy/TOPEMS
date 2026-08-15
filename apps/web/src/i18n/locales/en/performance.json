@@ -45,5 +45,42 @@
   "performance.performance_test_page.k29": "Not Required",
   "performance.performance_test_page.k30": "Dependencies",
   "performance.performance_test_page.k31": "Standalone",
-  "performance.performance_test_page.k32": "Performance marks set"
+  "performance.performance_test_page.k32": "Performance marks set",
+  "performance": {
+    "performance_test_page": {
+      "k0": "Performance Test",
+      "k1": "Pass",
+      "k2": "Load Time",
+      "k3": "Page first screen load time",
+      "k4": "Largest Contentful Paint",
+      "k5": "Time to Interactive",
+      "k6": "First Input Delay",
+      "k7": "Cumulative Layout Shift",
+      "k8": "First Paint",
+      "k9": "Contentful Paint",
+      "k10": "Navigation Time",
+      "k11": "From navigation start to page fully loaded",
+      "k12": "Render Count",
+      "k13": "Component render count",
+      "k14": "Average Render",
+      "k15": "Average time between renders",
+      "k16": "Low",
+      "cpu_17": "Static page CPU usage",
+      "k18": "Minimal",
+      "dom_19": "Minimized DOM structure",
+      "k20": "Security",
+      "k21": "Enabled",
+      "k22": "Security headers configured",
+      "k23": "Framework",
+      "k24": "Render Complete",
+      "k25": "Path",
+      "k26": "Type",
+      "k27": "Static Page",
+      "k28": "Authentication",
+      "k29": "Not Required",
+      "k30": "Dependencies",
+      "k31": "Standalone",
+      "k32": "Performance marks set"
+    }
+  }
 }

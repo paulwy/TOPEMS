@@ -593,6 +593,18 @@
       "stage_closed_lost": "Closed Lost",
       "msg_load_fail": "Failed to load sales funnel data",
       "title_load_fail": "Load failed"
+    },
+    "contact_detail_page": {
+      "k0": "Contact Detail"
+    },
+    "customer_detail_page": {
+      "k0": "Customer Detail"
+    },
+    "opportunity_detail_page": {
+      "k0": "Opportunity Detail"
+    },
+    "return_detail_page": {
+      "k0": "Return Detail"
     }
   },
   "crm.contact_detail_page.k0": "Contact Detail",

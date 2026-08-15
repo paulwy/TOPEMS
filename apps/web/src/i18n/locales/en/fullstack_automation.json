@@ -27,5 +27,38 @@
   "fullstack_automation.v55_automation_panel.k25": "Create",
   "fullstack_automation.v55_automation_panel.v100_26": "e.g. v1.0.0",
   "fullstack_automation.v55_automation_panel.k27": "Cancel",
-  "fullstack_automation.v55_automation_panel.k28": "Start Deployment"
+  "fullstack_automation.v55_automation_panel.k28": "Start Deployment",
+  "fullstack_automation": {
+    "v55_automation_panel": {
+      "cicd_0": "CI/CD Pipeline",
+      "v550_1": "V55.0 Full-Stack Automation Platform",
+      "k2": "CI/CD · Smart Deployment · Auto Rollback · Health Monitoring",
+      "cicd_3": "CI/CD Pipeline",
+      "k4": "pipelines",
+      "k5": "New Pipeline",
+      "k6": "No pipelines, click the top right to create",
+      "k7": "Pipeline details:",
+      "k8": "Stage Configuration",
+      "k9": "Run History",
+      "k10": "No run records",
+      "k11": "No run records",
+      "k12": "New Deployment",
+      "k13": "No deployment records",
+      "k14": "times",
+      "k15": "Reset Conditions",
+      "k16": "Trigger Conditions",
+      "k17": "No configured conditions",
+      "k18": "No rollback events",
+      "p99_19": "P99 Latency",
+      "cpu_20": "CPU Usage",
+      "k21": "No deployments",
+      "k22": "Stage Configuration",
+      "k23": "Add Stage",
+      "k24": "Cancel",
+      "k25": "Create",
+      "v100_26": "e.g. v1.0.0",
+      "k27": "Cancel",
+      "k28": "Start Deployment"
+    }
+  }
 }

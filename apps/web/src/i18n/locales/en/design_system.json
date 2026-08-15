@@ -39,5 +39,56 @@
   "design_system_panel.k1": "\n                Toggle {{v0}} mode\n              ",
   "design_system_panel.k2": " Spacing & Border Radius\n          ",
   "design_system_panel.k3": " Typography\n          ",
-  "design_system_panel.k4": " Color Palette\n      "
+  "design_system_panel.k4": " Color Palette\n      ",
+  "design_system": {
+    "design_system_panel": {
+      "k0": "V51.0 Design Token System with CSS custom properties and TypeScript constants support",
+      "11_1": "11 core components",
+      "k2": "V51 Design System components based on MUI, providing a consistent visual experience",
+      "k3": "Complete theme management system, supporting light/dark/system modes",
+      "k4": "Quick Preview",
+      "aa_5": "Aa text sample",
+      "4px_6": "Spacing (4px base)",
+      "k7": "Border Radius",
+      "k8": "Component Preview",
+      "button_9": "Button",
+      "input_10": "Input field",
+      "select_11": "Select selector",
+      "table_12": "Table data grid",
+      "skeleton_13": "Skeleton screen",
+      "tabs_14": "Tabs",
+      "k15": "Theme Configuration",
+      "k16": "Application Primary Color",
+      "k17": "Font Size (",
+      "css_18": "CSS variable preview",
+      "k19": "Design Compliance Check",
+      "k20": "Contrast Check",
+      "k21": "Total Check Items",
+      "k22": "Pass Rate",
+      "k23": "Standard",
+      "k24": "Run Compliance Check",
+      "k25": "Contrast Details"
+    },
+    "index": {
+      "k0": "Search..."
+    },
+    "design-lint": {
+      "k0": "Use V51 spacing tokens (4px, 8px, 12px, 16px, 24px, 32px, 48px, 64px)",
+      "k1": "✅ Pass",
+      "k2": "❌ Fail",
+      "k3": "✅ Pass",
+      "k4": "❌ Fail",
+      "k5": "✅ Pass",
+      "k6": "❌ Fail",
+      "k7": "✅ Pass",
+      "k8": "❌ Fail"
+    }
+  },
+  "design_system_panel": {
+    "k0": "\n                (Requires {{v0}}:1)\n              ",
+    "k1": "\n                Toggle {{v0}} mode\n              ",
+    "k2": " Spacing & Border Radius\n          ",
+    "k3": " Typography\n          ",
+    "k4": " Color Palette\n      "
+  }
 }

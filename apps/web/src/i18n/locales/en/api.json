@@ -12,5 +12,25 @@
   "api.index.boolean_6": ": boolean; // eliminate internal transactions",
   "api.index.boolean_7": ": boolean; // include notes",
   "api.index.boolean_8": ": boolean; // include comparison data",
-  "api.index.k9": "periods: string[]; // reporting periods, e.g. ["
+  "api.index.k9": "periods: string[]; // reporting periods, e.g. [",
+  "api": {
+    "index": {
+      "k0": "Success",
+      "k1": "Cache Hit",
+      "k2": "Failed",
+      "k3": "Cache Miss",
+      "string_1": ": string; // comparison period",
+      "k4": ": string[]; // specified subjects, all if not specified",
+      "k5": "consolidation_id: string; // consolidation entity ID",
+      "boolean_6": ": boolean; // eliminate internal transactions",
+      "boolean_7": ": boolean; // include notes",
+      "boolean_8": ": boolean; // include comparison data",
+      "k9": "periods: string[]; // reporting periods, e.g. ["
+    },
+    "_mock": {
+      "k0": "Interim measure: isolate inventory, tighten inspection",
+      "k1": "Verification result: measure effective, qualification rate restored",
+      "k2": "Team recognition: commend relevant personnel"
+    }
+  }
 }
