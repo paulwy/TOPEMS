@@ -271,7 +271,7 @@ mod tests {
     use super::*;
     use chrono::Utc;
     use serde::{Deserialize, Serialize};
-    use serde_json::{from_value, to_value, Value};
+    use serde_json::{from_value, to_value};
     use uuid::Uuid;
 
     fn uid() -> Uuid {
