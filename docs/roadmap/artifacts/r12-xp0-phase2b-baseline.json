@@ -1,0 +1,276 @@
+{
+  "tool": "lint-styleguide.cjs",
+  "version": "1.0",
+  "thresholds": {
+    "HIGH": 0,
+    "MEDIUM": 50,
+    "LOW": null
+  },
+  "summary": {
+    "HIGH": 883,
+    "MEDIUM": 809,
+    "LOW": 30,
+    "total": 1722,
+    "pass": false
+  },
+  "by_namespace": [
+    {
+      "ns": "admin",
+      "HIGH": 461,
+      "MEDIUM": 83,
+      "LOW": 2,
+      "total": 546
+    },
+    {
+      "ns": "pages",
+      "HIGH": 118,
+      "MEDIUM": 154,
+      "LOW": 0,
+      "total": 272
+    },
+    {
+      "ns": "shared",
+      "HIGH": 34,
+      "MEDIUM": 184,
+      "LOW": 0,
+      "total": 218
+    },
+    {
+      "ns": "components",
+      "HIGH": 26,
+      "MEDIUM": 40,
+      "LOW": 4,
+      "total": 70
+    },
+    {
+      "ns": "rd",
+      "HIGH": 20,
+      "MEDIUM": 50,
+      "LOW": 0,
+      "total": 70
+    },
+    {
+      "ns": "qms",
+      "HIGH": 36,
+      "MEDIUM": 10,
+      "LOW": 12,
+      "total": 58
+    },
+    {
+      "ns": "bi",
+      "HIGH": 36,
+      "MEDIUM": 14,
+      "LOW": 0,
+      "total": 50
+    },
+    {
+      "ns": "microfrontend",
+      "HIGH": 2,
+      "MEDIUM": 46,
+      "LOW": 0,
+      "total": 48
+    },
+    {
+      "ns": "pdm",
+      "HIGH": 10,
+      "MEDIUM": 36,
+      "LOW": 0,
+      "total": 46
+    },
+    {
+      "ns": "pm",
+      "HIGH": 43,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "total": 44
+    },
+    {
+      "ns": "ai",
+      "HIGH": 17,
+      "MEDIUM": 23,
+      "LOW": 1,
+      "total": 41
+    },
+    {
+      "ns": "mes",
+      "HIGH": 0,
+      "MEDIUM": 38,
+      "LOW": 0,
+      "total": 38
+    },
+    {
+      "ns": "wms",
+      "HIGH": 0,
+      "MEDIUM": 33,
+      "LOW": 0,
+      "total": 33
+    },
+    {
+      "ns": "mobile",
+      "HIGH": 25,
+      "MEDIUM": 5,
+      "LOW": 0,
+      "total": 30
+    },
+    {
+      "ns": "finance",
+      "HIGH": 4,
+      "MEDIUM": 20,
+      "LOW": 2,
+      "total": 26
+    },
+    {
+      "ns": "lims",
+      "HIGH": 0,
+      "MEDIUM": 20,
+      "LOW": 2,
+      "total": 22
+    },
+    {
+      "ns": "workflow",
+      "HIGH": 18,
+      "MEDIUM": 0,
+      "LOW": 0,
+      "total": 18
+    },
+    {
+      "ns": "erp",
+      "HIGH": 4,
+      "MEDIUM": 6,
+      "LOW": 0,
+      "total": 10
+    },
+    {
+      "ns": "monitor",
+      "HIGH": 8,
+      "MEDIUM": 0,
+      "LOW": 2,
+      "total": 10
+    },
+    {
+      "ns": "notification",
+      "HIGH": 6,
+      "MEDIUM": 4,
+      "LOW": 0,
+      "total": 10
+    },
+    {
+      "ns": "scm",
+      "HIGH": 0,
+      "MEDIUM": 10,
+      "LOW": 0,
+      "total": 10
+    },
+    {
+      "ns": "aps",
+      "HIGH": 0,
+      "MEDIUM": 8,
+      "LOW": 0,
+      "total": 8
+    },
+    {
+      "ns": "tms",
+      "HIGH": 4,
+      "MEDIUM": 4,
+      "LOW": 0,
+      "total": 8
+    },
+    {
+      "ns": "im",
+      "HIGH": 2,
+      "MEDIUM": 4,
+      "LOW": 0,
+      "total": 6
+    },
+    {
+      "ns": "srm",
+      "HIGH": 0,
+      "MEDIUM": 6,
+      "LOW": 0,
+      "total": 6
+    },
+    {
+      "ns": "help",
+      "HIGH": 0,
+      "MEDIUM": 0,
+      "LOW": 5,
+      "total": 5
+    },
+    {
+      "ns": "asset",
+      "HIGH": 4,
+      "MEDIUM": 0,
+      "LOW": 0,
+      "total": 4
+    },
+    {
+      "ns": "hrm",
+      "HIGH": 4,
+      "MEDIUM": 0,
+      "LOW": 0,
+      "total": 4
+    },
+    {
+      "ns": "templates",
+      "HIGH": 0,
+      "MEDIUM": 4,
+      "LOW": 0,
+      "total": 4
+    },
+    {
+      "ns": "gis",
+      "HIGH": 0,
+      "MEDIUM": 3,
+      "LOW": 0,
+      "total": 3
+    },
+    {
+      "ns": "schema",
+      "HIGH": 0,
+      "MEDIUM": 2,
+      "LOW": 0,
+      "total": 2
+    },
+    {
+      "ns": "crm",
+      "HIGH": 0,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "total": 1
+    },
+    {
+      "ns": "ehs",
+      "HIGH": 1,
+      "MEDIUM": 0,
+      "LOW": 0,
+      "total": 1
+    }
+  ],
+  "by_category": [
+    {
+      "category": "Uncategorized",
+      "count": 887
+    },
+    {
+      "category": "§2 button CamelCase",
+      "count": 403
+    },
+    {
+      "category": "§1 label time field naming",
+      "count": 252
+    },
+    {
+      "category": "§5 abbreviation punctuation",
+      "count": 150
+    },
+    {
+      "category": "§3 title case (all caps non-acronym)",
+      "count": 18
+    },
+    {
+      "category": "§5.2 Oxford comma",
+      "count": 12
+    }
+  ],
+  "samples": []
+}

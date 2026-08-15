@@ -1,0 +1,146 @@
+[1m[92m   Compiling[0m tokio-tungstenite v0.29.0
+[1m[92m   Compiling[0m rust_decimal v1.42.1
+[1m[92m   Compiling[0m tcp-stream v0.34.14
+[1m[92m   Compiling[0m strsim v0.11.1
+[1m[92m   Compiling[0m topems-shared v0.1.0 (/Users/air/TOPEMS/lib)
+[1m[92m   Compiling[0m axum v0.8.9
+[1m[92m   Compiling[0m amq-protocol-tcp v10.6.2
+[1m[92m   Compiling[0m amq-protocol v10.6.2
+[1m[92m   Compiling[0m sqlx-core v0.8.6
+[1m[92m   Compiling[0m lapin v4.10.0
+[1m[92m   Compiling[0m sqlx-postgres v0.8.6
+[1m[92m   Compiling[0m tonic v0.14.6
+[1m[92m   Compiling[0m axum-prometheus v0.8.0
+[1m[92m   Compiling[0m opentelemetry-otlp v0.32.0
+[1m[92m   Compiling[0m tonic-prost v0.14.6
+[1m[92m   Compiling[0m etcd-client v0.19.0
+[1m[92m   Compiling[0m sqlx v0.8.6
+[1m[92m   Compiling[0m topems-shared-core v0.1.0 (/Users/air/TOPEMS/lib/shared-core)
+[1m[92m   Compiling[0m topems-shared-event v0.1.0 (/Users/air/TOPEMS/lib/shared-event)
+[1m[92m   Compiling[0m topems-shared-db v0.1.0 (/Users/air/TOPEMS/lib/shared-db)
+[1m[92m   Compiling[0m topems-shared-ai v0.1.0 (/Users/air/TOPEMS/lib/shared-ai)
+[1m[92m   Compiling[0m topems-shared-observability v0.1.0 (/Users/air/TOPEMS/lib/shared-observability)
+[1m[92m   Compiling[0m topems-shared-auth v0.1.0 (/Users/air/TOPEMS/lib/shared-auth)
+[1m[92m   Compiling[0m topems-shared-service-client v0.1.0 (/Users/air/TOPEMS/lib/shared-service-client)
+[1m[92m   Compiling[0m topems-shared-bootstrap v0.1.0 (/Users/air/TOPEMS/lib/shared-bootstrap)
+[1m[92m   Compiling[0m topems-finance v0.1.0 (/Users/air/TOPEMS/svc/finance)
+[1m[33mwarning[0m[1m: unused import: `chrono::Duration`[0m
+    [1m[94m--> [0msvc/finance/src/modules/settlement_v55.rs:3596:13
+     [1m[94m|[0m
+[1m[94m3596[0m [1m[94m|[0m         use chrono::Duration;
+     [1m[94m|[0m             [1m[33m^^^^^^^^^^^^^^^^[0m
+     [1m[94m|[0m
+     [1m[94m= [0m[1mnote[0m: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+[1m[33mwarning[0m[1m: unused import: `chrono::Duration`[0m
+    [1m[94m--> [0msvc/finance/src/modules/settlement_v55.rs:3616:13
+     [1m[94m|[0m
+[1m[94m3616[0m [1m[94m|[0m         use chrono::Duration;
+     [1m[94m|[0m             [1m[33m^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused imports: `PeriodValidationError` and `validate_children_all_closed`[0m
+   [1m[94m--> [0msvc/finance/src/services/finance/erp_e2e.rs:402:33
+    [1m[94m|[0m
+[1m[94m402[0m [1m[94m|[0m     use super::super::periods::{validate_children_all_closed, PeriodValidationError};
+    [1m[94m|[0m                                 [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m  [1m[33m^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `ConsolidationConversionRate`[0m
+   [1m[94m--> [0msvc/finance/src/services/finance/erp_e2e.rs:413:58
+    [1m[94m|[0m
+[1m[94m413[0m [1m[94m|[0m         validate_consolidation, validate_year_end_close, ConsolidationConversionRate,
+    [1m[94m|[0m                                                          [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1m[33mwarning[0m[1m: unused import: `Value`[0m
+   [1m[94m--> [0msvc/finance/src/services/finance/u8_import.rs:274:44
+    [1m[94m|[0m
+[1m[94m274[0m [1m[94m|[0m     use serde_json::{from_value, to_value, Value};
+    [1m[94m|[0m                                            [1m[33m^^^^^[0m
+
+[1m[33mwarning[0m[1m: irrefutable `if let` pattern[0m
+    [1m[94m--> [0msvc/finance/src/modules/settlement_v55.rs:3164:12
+     [1m[94m|[0m
+[1m[94m3164[0m [1m[94m|[0m         if let ModelValidationError::InvalidStatus(msg) = result.unwrap_err() {
+     [1m[94m|[0m            [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+     [1m[94m|[0m
+     [1m[94m= [0m[1mnote[0m: this pattern will always match, so the `if let` is useless
+     [1m[94m= [0m[1mhelp[0m: consider replacing the `if let` with a `let`
+     [1m[94m= [0m[1mnote[0m: `#[warn(irrefutable_let_patterns)]` on by default
+
+[1m[33mwarning[0m[1m: irrefutable `if let` pattern[0m
+    [1m[94m--> [0msvc/finance/src/modules/settlement_v55.rs:3212:12
+     [1m[94m|[0m
+[1m[94m3212[0m [1m[94m|[0m         if let ModelValidationError::InvalidStatus(msg) = result.unwrap_err() {
+     [1m[94m|[0m            [1m[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+     [1m[94m|[0m
+     [1m[94m= [0m[1mnote[0m: this pattern will always match, so the `if let` is useless
+     [1m[94m= [0m[1mhelp[0m: consider replacing the `if let` with a `let`
+
+[1m[33mwarning[0m[1m: variant `Equity` is never constructed[0m
+  [1m[94m--> [0msvc/finance/src/services/finance/year_end.rs:31:5
+   [1m[94m|[0m
+[1m[94m28[0m [1m[94m|[0m pub enum YearEndAccountType {
+   [1m[94m|[0m          [1m[94m------------------[0m [1m[94mvariant in this enum[0m
+[1m[94m...[0m
+[1m[94m31[0m [1m[94m|[0m     Equity,
+   [1m[94m|[0m     [1m[33m^^^^^^[0m
+   [1m[94m|[0m
+   [1m[94m= [0m[1mnote[0m: `YearEndAccountType` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+   [1m[94m= [0m[1mnote[0m: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+[1m[33mwarning[0m: `topems-finance` (lib test) generated 8 warnings (run `cargo fix --lib -p topems-finance --tests` to apply 5 suggestions)
+[1m[92m    Finished[0m `test` profile [optimized + debuginfo] target(s) in 44.34s
+[1m[92m     Running[0m unittests src/lib.rs (/Users/air/TOPEMS/target/debug/deps/topems_finance-b2bf99f0b9481275)
+
+running 49 tests
+test services::finance::erp_e2e::tests::test_erp_error_clone_partial_eq ... ok
+test services::finance::erp_e2e::tests::test_erp_error_is_std_error ... ok
+test services::finance::erp_e2e::tests::test_erp_currency_mismatch_invoice_different ... ok
+test services::finance::erp_e2e::tests::test_erp_currency_mismatch_missing_rate_wrong_pair ... ok
+test services::finance::erp_e2e::tests::test_erp_currency_mismatch_grn_different ... ok
+test services::finance::erp_e2e::tests::test_erp_currency_mismatch_payment_different ... ok
+test services::finance::erp_e2e::tests::test_erp_grn_exceeds_po_all_lines ... ok
+test services::finance::erp_e2e::tests::test_erp_currency_mismatch_all_different ... ok
+test services::finance::erp_e2e::tests::test_erp_grn_exceeds_po_by_1 ... ok
+test services::finance::erp_e2e::tests::test_erp_error_display_contains_amounts ... ok
+test services::finance::erp_e2e::tests::test_erp_grn_exceeds_po_by_100_percent ... ok
+test services::finance::erp_e2e::tests::test_erp_grn_exceeds_po_large_amount ... ok
+test services::finance::erp_e2e::tests::test_erp_grn_exceeds_po_second_line ... ok
+test services::finance::erp_e2e::tests::test_erp_grn_partial_over_receipt_one_line ... ok
+test services::finance::erp_e2e::tests::test_erp_happy_0_01_tolerance_boundary ... ok
+test services::finance::erp_e2e::tests::test_erp_happy_multiline_different_tax_rates ... ok
+test services::finance::erp_e2e::tests::test_erp_happy_multiline_partial_grn_full_invoice_partial_payment ... ok
+test services::finance::erp_e2e::tests::test_erp_happy_multicurrency_with_rate ... ok
+test services::finance::erp_e2e::tests::test_erp_happy_payment_exact_invoice_total ... ok
+test services::finance::erp_e2e::tests::test_erp_happy_simple_1line_full_chain ... ok
+test services::finance::erp_e2e::tests::test_erp_integration_consolidation_ic_balanced ... ok
+test services::finance::erp_e2e::tests::test_erp_integration_overpayment_blocked ... ok
+test services::finance::erp_e2e::tests::test_erp_integration_period_close_ok ... ok
+test services::finance::erp_e2e::tests::test_erp_integration_trial_balance_balanced ... ok
+test services::finance::erp_e2e::tests::test_erp_integration_consolidation_with_reversal ... ok
+test services::finance::erp_e2e::tests::test_erp_integration_payment_exact_invoice_ok ... ok
+test services::finance::erp_e2e::tests::test_erp_integration_period_close_blocked_pending_vouchers ... ok
+test services::finance::erp_e2e::tests::test_erp_invoice_grn_mismatch_all_lines ... ok
+test services::finance::erp_e2e::tests::test_erp_integration_journal_entries_pass_post_validation ... ok
+test services::finance::erp_e2e::tests::test_erp_integration_year_end_close_ok ... ok
+test services::finance::erp_e2e::tests::test_erp_integration_post_reverse_tb_nets_zero ... ok
+test services::finance::erp_e2e::tests::test_erp_invoice_grn_mismatch_price_diff ... ok
+test services::finance::erp_e2e::tests::test_erp_invoice_grn_mismatch_just_over_0_01 ... ok
+test services::finance::erp_e2e::tests::test_erp_invoice_grn_mismatch_qty_diff ... ok
+test services::finance::erp_e2e::tests::test_erp_invoice_grn_mismatch_second_line ... ok
+test services::finance::erp_e2e::tests::test_erp_invoice_grn_mismatch_tax_rate_diff ... ok
+test services::finance::erp_e2e::tests::test_erp_payment_exceeds_invoice_by_0_01 ... ok
+test services::finance::erp_e2e::tests::test_erp_payment_exceeds_invoice_by_100_percent ... ok
+test services::finance::erp_e2e::tests::test_erp_payment_exceeds_invoice_half ... ok
+test services::finance::erp_e2e::tests::test_erp_payment_exceeds_invoice_large ... ok
+test services::finance::erp_e2e::tests::test_erp_period_closed_grn ... ok
+test services::finance::erp_e2e::tests::test_erp_period_closed_invoice ... ok
+test services::finance::erp_e2e::tests::test_erp_period_closed_payment ... ok
+test services::finance::erp_e2e::tests::test_erp_period_closed_po ... ok
+test services::finance::erp_e2e::tests::test_erp_unbalanced_credit_greater ... ok
+test services::finance::erp_e2e::tests::test_erp_unbalanced_debit_greater ... ok
+test services::finance::erp_e2e::tests::test_erp_unbalanced_multi_line ... ok
+test services::finance::erp_e2e::tests::test_erp_unbalanced_single_entry ... ok
+test services::finance::erp_e2e::tests::test_erp_unbalanced_three_entries ... ok
+
+test result: ok. 49 passed; 0 failed; 0 ignored; 0 measured; 712 filtered out; finished in 0.00s
+

@@ -1,0 +1,4 @@
+  "name": "topems-portal",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint .",
