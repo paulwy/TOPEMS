@@ -1,0 +1,48 @@
+{
+  "timestamp": "2026-08-15T23:02:14.572Z",
+  "phase": "R13-V222-P4-Gate",
+  "totalCount": 0,
+  "perModule": {
+    "components/templates": {
+      "count": 0,
+      "files": 0
+    },
+    "ai": {
+      "count": 0,
+      "files": 0
+    },
+    "microfrontend": {
+      "count": 0,
+      "files": 0
+    },
+    "admin": {
+      "count": 0,
+      "files": 0
+    },
+    "mobile": {
+      "count": 0,
+      "files": 0
+    },
+    "monitor": {
+      "count": 0,
+      "files": 0
+    },
+    "mes": {
+      "count": 0,
+      "files": 0
+    }
+  },
+  "strictZero": [
+    "components/templates",
+    "ai",
+    "microfrontend"
+  ],
+  "upperBound": {
+    "admin": 500,
+    "mobile": 400,
+    "monitor": 450,
+    "mes": 470
+  },
+  "failures": [],
+  "allOk": true
+}
