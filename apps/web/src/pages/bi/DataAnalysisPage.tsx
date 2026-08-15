@@ -28,62 +28,63 @@ import type { FilterConfig } from '@/api/bi';
 import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 const ct= designTokens.colors;
 
 const mockSalesData = [
-  { month: '1月', 销售额: 125000, 订单数: 450, 客户数: 180 },
-  { month: '2月', 销售额: 138000, 订单数: 480, 客户数: 195 },
-  { month: '3月', 销售额: 152000, 订单数: 520, 客户数: 210 },
-  { month: '4月', 销售额: 145000, 订单数: 500, 客户数: 205 },
-  { month: '5月', 销售额: 168000, 订单数: 560, 客户数: 230 },
-  { month: '6月', 销售额: 185000, 订单数: 620, 客户数: 250 },
+  { month: i18n.t('bi.months.jan'), [i18n.t('bi.data_analysis_page.k32')]: 125000, [i18n.t('bi.data_analysis_page.k33')]: 450, [i18n.t('bi.data_analysis_page.k34')]: 180 },
+  { month: i18n.t('bi.months.feb'), [i18n.t('bi.data_analysis_page.k32')]: 138000, [i18n.t('bi.data_analysis_page.k33')]: 480, [i18n.t('bi.data_analysis_page.k34')]: 195 },
+  { month: i18n.t('bi.months.mar'), [i18n.t('bi.data_analysis_page.k32')]: 152000, [i18n.t('bi.data_analysis_page.k33')]: 520, [i18n.t('bi.data_analysis_page.k34')]: 210 },
+  { month: i18n.t('bi.months.apr'), [i18n.t('bi.data_analysis_page.k32')]: 145000, [i18n.t('bi.data_analysis_page.k33')]: 500, [i18n.t('bi.data_analysis_page.k34')]: 205 },
+  { month: i18n.t('bi.months.may'), [i18n.t('bi.data_analysis_page.k32')]: 168000, [i18n.t('bi.data_analysis_page.k33')]: 560, [i18n.t('bi.data_analysis_page.k34')]: 230 },
+  { month: i18n.t('bi.months.jun'), [i18n.t('bi.data_analysis_page.k32')]: 185000, [i18n.t('bi.data_analysis_page.k33')]: 620, [i18n.t('bi.data_analysis_page.k34')]: 250 },
 ];
 
 const mockRegionData = [
-  { region: '华东', 销售额: 420000, 占比: 35 },
-  { region: '华南', 销售额: 320000, 占比: 27 },
-  { region: '华北', 销售额: 240000, 占比: 20 },
-  { region: '西南', 销售额: 120000, 占比: 10 },
-  { region: '其他', 销售额: 96000, 占比: 8 },
+  { region: i18n.t('bi.data_analysis_page.k0'), [i18n.t('bi.data_analysis_page.k32')]: 420000, [i18n.t('bi.data_analysis_page.k35')]: 35 },
+  { region: i18n.t('bi.data_analysis_page.k1'), [i18n.t('bi.data_analysis_page.k32')]: 320000, [i18n.t('bi.data_analysis_page.k35')]: 27 },
+  { region: i18n.t('bi.data_analysis_page.k2'), [i18n.t('bi.data_analysis_page.k32')]: 240000, [i18n.t('bi.data_analysis_page.k35')]: 20 },
+  { region: i18n.t('bi.data_analysis_page.k3'), [i18n.t('bi.data_analysis_page.k32')]: 120000, [i18n.t('bi.data_analysis_page.k35')]: 10 },
+  { region: i18n.t('bi.data_analysis_page.k4'), [i18n.t('bi.data_analysis_page.k32')]: 96000, [i18n.t('bi.data_analysis_page.k35')]: 8 },
 ];
 
 const mockPivotData = [
   {
-    category: '电子产品',
-    '1月': 45000,
-    '2月': 52000,
-    '3月': 58000,
-    '4月': 55000,
-    '5月': 62000,
-    '6月': 68000,
+    category: i18n.t('bi.data_analysis_page.k5'),
+    [i18n.t('bi.months.jan')]: 45000,
+    [i18n.t('bi.months.feb')]: 52000,
+    [i18n.t('bi.months.mar')]: 58000,
+    [i18n.t('bi.months.apr')]: 55000,
+    [i18n.t('bi.months.may')]: 62000,
+    [i18n.t('bi.months.jun')]: 68000,
   },
   {
-    category: '服装配饰',
-    '1月': 32000,
-    '2月': 35000,
-    '3月': 38000,
-    '4月': 36000,
-    '5月': 42000,
-    '6月': 48000,
+    category: i18n.t('bi.data_analysis_page.k6'),
+    [i18n.t('bi.months.jan')]: 32000,
+    [i18n.t('bi.months.feb')]: 35000,
+    [i18n.t('bi.months.mar')]: 38000,
+    [i18n.t('bi.months.apr')]: 36000,
+    [i18n.t('bi.months.may')]: 42000,
+    [i18n.t('bi.months.jun')]: 48000,
   },
   {
-    category: '家居用品',
-    '1月': 28000,
-    '2月': 30000,
-    '3月': 32000,
-    '4月': 31000,
-    '5月': 35000,
-    '6月': 38000,
+    category: i18n.t('bi.data_analysis_page.k7'),
+    [i18n.t('bi.months.jan')]: 28000,
+    [i18n.t('bi.months.feb')]: 30000,
+    [i18n.t('bi.months.mar')]: 32000,
+    [i18n.t('bi.months.apr')]: 31000,
+    [i18n.t('bi.months.may')]: 35000,
+    [i18n.t('bi.months.jun')]: 38000,
   },
   {
-    category: '食品饮料',
-    '1月': 20000,
-    '2月': 21000,
-    '3月': 24000,
-    '4月': 23000,
-    '5月': 29000,
-    '6月': 31000,
+    category: i18n.t('bi.data_analysis_page.k8'),
+    [i18n.t('bi.months.jan')]: 20000,
+    [i18n.t('bi.months.feb')]: 21000,
+    [i18n.t('bi.months.mar')]: 24000,
+    [i18n.t('bi.months.apr')]: 23000,
+    [i18n.t('bi.months.may')]: 29000,
+    [i18n.t('bi.months.jun')]: 31000,
   },
 ];
 
@@ -91,40 +92,40 @@ const filters: FilterConfig[] = [
   {
     id: 'timeRange',
     type: 'select',
-    label: '时间范围',
+    label: i18n.t('bi.data_analysis_page.k9'),
     field: 'time_range',
     options: [
-      { label: '本月', value: 'this_month' },
-      { label: '上月', value: 'last_month' },
-      { label: '近3个月', value: 'last_3_months' },
-      { label: '近6个月', value: 'last_6_months' },
-      { label: '本年', value: 'this_year' },
+      { label: i18n.t('bi.data_analysis_page.k10'), value: 'this_month' },
+      { label: i18n.t('bi.data_analysis_page.k11'), value: 'last_month' },
+      { label: i18n.t('bi.data_analysis_page.3_12'), value: 'last_3_months' },
+      { label: i18n.t('bi.data_analysis_page.6_13'), value: 'last_6_months' },
+      { label: i18n.t('bi.data_analysis_page.k14'), value: 'this_year' },
     ],
     default_value: 'last_6_months',
   },
   {
     id: 'region',
     type: 'select',
-    label: '地区',
+    label: i18n.t('bi.data_analysis_page.k15'),
     field: 'region',
     options: [
-      { label: '全部地区', value: 'all' },
-      { label: '华东', value: 'east' },
-      { label: '华南', value: 'south' },
-      { label: '华北', value: 'north' },
+      { label: i18n.t('bi.data_analysis_page.k16'), value: 'all' },
+      { label: i18n.t('bi.data_analysis_page.k0'), value: 'east' },
+      { label: i18n.t('bi.data_analysis_page.k1'), value: 'south' },
+      { label: i18n.t('bi.data_analysis_page.k2'), value: 'north' },
     ],
     default_value: 'all',
   },
   {
     id: 'category',
     type: 'select',
-    label: '产品类别',
+    label: i18n.t('bi.data_analysis_page.k20'),
     field: 'category',
     options: [
-      { label: '全部类别', value: 'all' },
-      { label: '电子产品', value: 'electronics' },
-      { label: '服装配饰', value: 'clothing' },
-      { label: '家居用品', value: 'home' },
+      { label: i18n.t('bi.data_analysis_page.k21'), value: 'all' },
+      { label: i18n.t('bi.data_analysis_page.k5'), value: 'electronics' },
+      { label: i18n.t('bi.data_analysis_page.k6'), value: 'clothing' },
+      { label: i18n.t('bi.data_analysis_page.k7'), value: 'home' },
     ],
     default_value: 'all',
   },
@@ -197,7 +198,7 @@ const DataAnalysisPage = () => {
             onClick={handleDrillDown}
             disabled={drillLevel >= 2}
           >
-            下钻
+            {t('bi.data_analysis_page.k36')}
           </Button>
           <Button
             size='small'
@@ -211,14 +212,14 @@ const DataAnalysisPage = () => {
             onClick={handleDrillUp}
             disabled={drillLevel <= 0}
           >
-            上卷
+            {t('bi.data_analysis_page.k37')}
           </Button>
           <Button
             size='small'
             variant='outlined'
             startIcon={<Download size={16} />}
           >
-            导出
+            {t('bi.data_analysis_page.k38')}
           </Button>
         </Box>
       </Box>
@@ -233,7 +234,7 @@ const DataAnalysisPage = () => {
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              销售趋势分析
+              {t('bi.data_analysis_page.k41')}
             </Typography>
             <Chip
               label={
@@ -253,7 +254,7 @@ const DataAnalysisPage = () => {
               type='pie'
               data={mockRegionData}
               xKey='region'
-              yKeys={[t('bi.data_analysis_page.text_9ae444')]}
+              yKeys={[t('bi.data_analysis_page.k32')]}
               chartHeight={400}
               chartWidth={800}
               showLegend
@@ -265,9 +266,9 @@ const DataAnalysisPage = () => {
               data={mockSalesData}
               xKey='month'
               yKeys={[
-                t('bi.data_analysis_page.text_9ae444'),
-                t('bi.data_analysis_page.order'),
-                t('bi.data_analysis_page.customer'),
+                t('bi.data_analysis_page.k32'),
+                t('bi.data_analysis_page.k33'),
+                t('bi.data_analysis_page.k34'),
               ]}
               chartHeight={400}
               chartWidth={800}
@@ -294,13 +295,13 @@ const DataAnalysisPage = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                地区销售分布
+                {t('bi.data_analysis_page.k42')}
               </Typography>
               <ChartComponent
                 type='bar'
                 data={mockRegionData}
                 xKey='region'
-                yKeys={[t('bi.data_analysis_page.text_9ae444')]}
+                yKeys={[t('bi.data_analysis_page.k32')]}
                 chartHeight={300}
                 chartWidth={400}
                 showTooltip
@@ -318,24 +319,24 @@ const DataAnalysisPage = () => {
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                关键指标
+                {t('bi.data_analysis_page.k43')}
               </Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                 {[
                   {
-                    label: t('bi.data_analysis_page.text_4cbae8'),
+                    label: t('bi.data_analysis_page.k32'),
                     value: '¥913,000',
                     change: '+12.5%',
                     color: 'success.main',
                   },
                   {
-                    label: t('bi.data_analysis_page.order_1'),
+                    label: t('bi.data_analysis_page.k33'),
                     value: '3,130',
                     change: '+8.3%',
                     color: 'primary.main',
                   },
                   {
-                    label: t('bi.data_analysis_page.customer'),
+                    label: t('bi.data_analysis_page.k34'),
                     value: '1,270',
                     change: '+15.2%',
                     color: 'secondary.main',
@@ -386,7 +387,7 @@ const DataAnalysisPage = () => {
           variant='subtitle1'
           sx={{ fontWeight: 600 }}
         >
-          数据透视表
+          {t('bi.data_analysis_page.k44')}
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
@@ -394,14 +395,14 @@ const DataAnalysisPage = () => {
             variant='outlined'
             startIcon={<RefreshCw size={16} />}
           >
-            刷新
+            {t('bi.data_analysis_page.k39')}
           </Button>
           <Button
             size='small'
             variant='outlined'
             startIcon={<Download size={16} />}
           >
-            导出
+            {t('bi.data_analysis_page.k38')}
           </Button>
         </Box>
       </Box>
@@ -416,15 +417,15 @@ const DataAnalysisPage = () => {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600, backgroundColor: ct.grey[50] }}>
-                    产品类别
+                    {t('bi.data_analysis_page.k20')}
                   </TableCell>
                   {[
-                    t('bi.data_analysis_page.text_fccc2b'),
-                    t('bi.data_analysis_page.text_c1d13f'),
-                    t('bi.data_analysis_page.text_c4767b'),
-                    t('bi.data_analysis_page.text_3eaf4b'),
-                    t('bi.data_analysis_page.text_0545f1'),
-                    t('bi.data_analysis_page.text_f2422a'),
+                    t('bi.months.jan'),
+                    t('bi.months.feb'),
+                    t('bi.months.mar'),
+                    t('bi.months.apr'),
+                    t('bi.months.may'),
+                    t('bi.months.jun'),
                   ].map((month) => (
                     <TableCell
                       key={month}
@@ -445,32 +446,32 @@ const DataAnalysisPage = () => {
                     <TableCell sx={{ fontWeight: 500 }}>{row.category}</TableCell>
                     <TableCell align='right'>
                       {(row as Record<string, number | string>)[
-                        t('bi.data_analysis_page.text_fccc2b')
+                        t('bi.months.jan')
                       ].toLocaleString()}
                     </TableCell>
                     <TableCell align='right'>
                       {(row as Record<string, number | string>)[
-                        t('bi.data_analysis_page.text_c1d13f')
+                        t('bi.months.feb')
                       ].toLocaleString()}
                     </TableCell>
                     <TableCell align='right'>
                       {(row as Record<string, number | string>)[
-                        t('bi.data_analysis_page.text_c4767b')
+                        t('bi.months.mar')
                       ].toLocaleString()}
                     </TableCell>
                     <TableCell align='right'>
                       {(row as Record<string, number | string>)[
-                        t('bi.data_analysis_page.text_3eaf4b')
+                        t('bi.months.apr')
                       ].toLocaleString()}
                     </TableCell>
                     <TableCell align='right'>
                       {(row as Record<string, number | string>)[
-                        t('bi.data_analysis_page.text_0545f1')
+                        t('bi.months.may')
                       ].toLocaleString()}
                     </TableCell>
                     <TableCell align='right'>
                       {(row as Record<string, number | string>)[
-                        t('bi.data_analysis_page.text_f2422a')
+                        t('bi.months.jun')
                       ].toLocaleString()}
                     </TableCell>
                   </TableRow>
@@ -490,14 +491,14 @@ const DataAnalysisPage = () => {
           variant='subtitle1'
           sx={{ fontWeight: 600 }}
         >
-          数据明细
+          {t('bi.data_analysis_page.k45')}
         </Typography>
         <Button
           size='small'
           variant='outlined'
           startIcon={<Download size={16} />}
         >
-          导出数据
+          {t('bi.data_analysis_page.k40')}
         </Button>
       </Box>
 
@@ -510,13 +511,13 @@ const DataAnalysisPage = () => {
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell>日期</TableCell>
-                  <TableCell>订单号</TableCell>
-                  <TableCell>客户</TableCell>
-                  <TableCell>产品</TableCell>
-                  <TableCell>数量</TableCell>
-                  <TableCell align='right'>金额</TableCell>
-                  <TableCell>状态</TableCell>
+                  <TableCell>{t('bi.data_analysis_page.k25')}</TableCell>
+                  <TableCell>{t('bi.data_analysis_page.k26')}</TableCell>
+                  <TableCell>{t('bi.data_analysis_page.k27')}</TableCell>
+                  <TableCell>{t('bi.data_analysis_page.k28')}</TableCell>
+                  <TableCell>{t('bi.data_analysis_page.k29')}</TableCell>
+                  <TableCell align='right'>{t('bi.data_analysis_page.k30')}</TableCell>
+                  <TableCell>{t('bi.data_analysis_page.k31')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -624,7 +625,7 @@ const DataAnalysisPage = () => {
             variant='h4'
             sx={{ fontWeight: 700, mb: 3 }}
           >
-            多维数据分析
+            {t('bi.data_analysis_page.k46')}
           </Typography>
 
           <FilterBar

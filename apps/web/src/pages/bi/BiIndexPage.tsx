@@ -47,6 +47,7 @@ import { designTokens } from '@/theme/tokens';
 import { BI_PATHS } from '@/modules/bi/config';
 
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -56,42 +57,42 @@ const ct= designTokens.colors;
 const quickActions = [
   {
     icon: <LayoutDashboard size={24} />,
-    label: '新建仪表盘',
+    label: i18n.t('bi.bi_index_page.k0'),
     path: BI_PATHS.dashboard,
     color: ct.secondary[400],
     bg: ct.secondary[50],
   },
   {
     icon: <FileText size={24} />,
-    label: '创建报表',
+    label: i18n.t('bi.bi_index_page.k1'),
     path: '/bi/reports',
     color: 'warning.main',
     bg: ct.warning[50],
   },
   {
     icon: <Database size={24} />,
-    label: '数据集管理',
+    label: i18n.t('bi.bi_index_page.k2'),
     path: '/bi/datasets',
     color: 'success.main',
     bg: ct.success[50],
   },
   {
     icon: <BarChart3 size={24} />,
-    label: '数据分析',
+    label: i18n.t('bi.bi_index_page.k3'),
     path: '/bi/analysis',
     color: 'secondary.main',
     bg: ct.secondary[50],
   },
   {
     icon: <PieChart size={24} />,
-    label: '可视化',
+    label: i18n.t('bi.bi_index_page.k4'),
     path: '/bi/visualizations',
     color: ct.pink[500],
     bg: ct.pink[50],
   },
   {
     icon: <Shield size={24} />,
-    label: '权限管理',
+    label: i18n.t('bi.bi_index_page.k5'),
     path: '/bi/permissions',
     color: 'error.main',
     bg: ct.error[50],
@@ -102,36 +103,36 @@ const recentActivities = [
   {
     id: 1,
     type: 'dashboard',
-    title: '编辑了「销售总览仪表盘」',
-    time: '10 分钟前',
+    title: i18n.t('bi.bi_index_page.k8'),
+    time: i18n.t('bi.analytics.time.10_min_ago'),
     icon: <LayoutDashboard size={16} />,
   },
   {
     id: 2,
     type: 'report',
-    title: '导出了「月度销售报表」',
-    time: '30 分钟前',
+    title: i18n.t('bi.bi_index_page.k9'),
+    time: i18n.t('bi.analytics.time.30_min_ago'),
     icon: <FileText size={16} />,
   },
   {
     id: 3,
     type: 'dataset',
-    title: '创建了「库存分析数据集」',
-    time: '1 小时前',
+    title: i18n.t('bi.bi_index_page.k10'),
+    time: i18n.t('bi.analytics.time.1_hour_ago'),
     icon: <Database size={16} />,
   },
   {
     id: 4,
     type: 'analysis',
-    title: '进行了「地区销售对比分析」',
-    time: '2 小时前',
+    title: i18n.t('bi.bi_index_page.k11'),
+    time: i18n.t('bi.analytics.time.2_hours_ago'),
     icon: <BarChart3 size={16} />,
   },
   {
     id: 5,
     type: 'permission',
-    title: '更新了行级权限规则',
-    time: '昨天',
+    title: i18n.t('bi.bi_index_page.k6'),
+    time: i18n.t('bi.analytics.time.yesterday'),
     icon: <Shield size={16} />,
   },
 ];
@@ -251,13 +252,13 @@ const BiIndexPage = () => {
                 variant='h4'
                 sx={{ fontWeight: 700, mb: 1 }}
               >
-                欢迎使用商业智能平台
+                {t('bi.bi_index_page.k12')}
               </Typography>
               <Typography
                 variant='body1'
                 color='text.secondary'
               >
-                探索数据洞察，驱动业务决策
+                {t('bi.bi_index_page.k13')}
               </Typography>
             </Box>
             <TextField
@@ -322,7 +323,7 @@ const BiIndexPage = () => {
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                快捷入口
+                {t('bi.bi_index_page.k14')}
               </Typography>
             </Box>
             <Grid
@@ -392,7 +393,7 @@ const BiIndexPage = () => {
                       variant='h6'
                       sx={{ fontWeight: 600 }}
                     >
-                      本周使用趋势
+                      {t('bi.bi_index_page.k15')}
                     </Typography>
                     <Chip
                       label={t('bi.bi_index_page.text_531609')}
@@ -437,7 +438,7 @@ const BiIndexPage = () => {
                           variant='subtitle1'
                           sx={{ fontWeight: 600 }}
                         >
-                          我的仪表盘
+                          {t('bi.bi_index_page.k16')}
                         </Typography>
                         <Button
                           size='small'
@@ -445,7 +446,7 @@ const BiIndexPage = () => {
                           sx={{ textTransform: 'none' }}
                           href={BI_PATHS.dashboard}
                         >
-                          查看全部
+                          {t('bi.bi_index_page.k17')}
                         </Button>
                       </Box>
                       <List
@@ -525,7 +526,7 @@ const BiIndexPage = () => {
                           variant='subtitle1'
                           sx={{ fontWeight: 600 }}
                         >
-                          常用报表
+                          {t('bi.bi_index_page.k18')}
                         </Typography>
                         <Button
                           size='small'
@@ -533,7 +534,7 @@ const BiIndexPage = () => {
                           sx={{ textTransform: 'none' }}
                           href={BI_PATHS.report}
                         >
-                          查看全部
+                          {t('bi.bi_index_page.k17')}
                         </Button>
                       </Box>
                       <List
@@ -614,7 +615,7 @@ const BiIndexPage = () => {
                       variant='subtitle1'
                       sx={{ fontWeight: 600 }}
                     >
-                      最近动态
+                      {t('bi.bi_index_page.k19')}
                     </Typography>
                   </Box>
                   <List
@@ -668,7 +669,7 @@ const BiIndexPage = () => {
                       variant='subtitle1'
                       sx={{ fontWeight: 600 }}
                     >
-                      数据集
+                      {t('bi.bi_index_page.k20')}
                     </Typography>
                   </Box>
                   <List
@@ -739,7 +740,7 @@ const BiIndexPage = () => {
                     sx={{ mt: 2 }}
                     href={BI_PATHS.dataset}
                   >
-                    管理数据集
+                    {t('bi.bi_index_page.k21')}
                   </Button>
                 </CardContent>
               </Card>
@@ -763,7 +764,7 @@ const BiIndexPage = () => {
                     variant='subtitle1'
                     sx={{ fontWeight: 600 }}
                   >
-                    快速创建
+                    {t('bi.bi_index_page.k22')}
                   </Typography>
                 </Box>
                 <Typography
@@ -771,7 +772,7 @@ const BiIndexPage = () => {
                   color='text.secondary'
                   sx={{ mb: 2 }}
                 >
-                  使用 AI 智能助手快速创建数据分析报表
+                  {t('bi.bi_index_page.k23')}
                 </Typography>
                 <Button
                   fullWidth
@@ -781,7 +782,7 @@ const BiIndexPage = () => {
                     background: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
                   }}
                 >
-                  AI 智能分析
+                  {t('bi.bi_index_page.k24')}
                 </Button>
               </Paper>
             </Grid>

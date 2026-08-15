@@ -269,6 +269,26 @@ if [ -n "$HAS_I18N_FILES" ]; then
   else
     echo "⏭️  Skipped (verify-glossary.cjs not found)"
   fi
+
+  # 8d. 源码硬编码中文（Precise scan · 仅 staged TS/TSX）
+  if [ -f "scripts/i18n/scan-hardcoded-precise.cjs" ]; then
+    STAGED_TS_TSX=$(echo "$STAGED_FILES" | grep -E "\.(ts|tsx)$" | tr '\n' ' ')
+    if [ -n "$STAGED_TS_TSX" ]; then
+      # shellcheck disable=SC2086
+      node scripts/i18n/scan-hardcoded-precise.cjs --strict --details 30 $STAGED_TS_TSX
+      HC_EXIT=$?
+      if [ $HC_EXIT -ne 0 ]; then
+        echo "❌ Precise scan 检测到硬编码中文，请用 i18n.t() 包装"
+        ERRORS=$((ERRORS + 1))
+      else
+        echo "✅ Precise scan：staged TS/TSX 无硬编码中文"
+      fi
+    else
+      echo "⏭️  Skipped (no TS/TSX files staged)"
+    fi
+  else
+    echo "⏭️  Skipped (scan-hardcoded-precise.cjs not found)"
+  fi
 else
   echo "⏭️  Skipped (no i18n locale / page TSX files staged)"
 fi

@@ -560,7 +560,7 @@ const BIModuleDetailPage = () => {
             variant='body2'
             color='text.secondary'
           >
-            <Clock size={14} /> 最后更新: {new Date().toLocaleString('zh-CN')}
+            <Clock size={14} /> {i18n.t('bi.bi_module_detail_page.k0')}: {new Date().toLocaleString(i18n.language === 'zh' ? 'zh-CN' : 'en-US')}
           </Typography>
           <ExportButton
             data={exportData}

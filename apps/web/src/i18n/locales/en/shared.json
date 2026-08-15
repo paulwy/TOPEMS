@@ -1672,6 +1672,7 @@
   "shared.customer_segmentation.k6": "PointsCondition",
   "shared.customer_segmentation.k7": "Create NewPoints",
   "shared.customer_segmentation.k8": "PointsDetails",
+  "shared.customer_segmentation.k9": "Example: {\"industries\":[\"manufacturing\"],\"score_min\":60,\"statuses\":[\"active\"]}",
   "shared.dashboard_schema.k0": "TotalOpportunityCount",
   "shared.dashboard_schema.k1": "Last Month",
   "shared.dashboard_schema.k2": "Amount",

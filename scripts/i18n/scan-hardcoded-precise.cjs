@@ -2,6 +2,13 @@
 /**
  * Precise scan: only count REAL UI hardcoded Chinese strings
  * Excludes: comments, type-only strings, bracket notation access, whitelist files
+ *
+ * CLI:
+ *   scan-hardcoded-precise.cjs [paths...]            scan given dirs/files (default: apps/web/src)
+ *   --strict                                          exit non-zero when total > 0
+ *   --json                                            JSON report to stdout
+ *   --json-out <path>                                 write JSON report to file
+ *   --details <N>                                     print sample details (0 to disable, default 50)
  */
 const fs = require('fs');
 const path = require('path');
@@ -18,19 +25,38 @@ const WHITELIST_FILES = [
   'components/ehs/EHSBadges.tsx',
   'ai/native/v54-native-panel.tsx',
   'i18n/index.ts',
-  'schemas/crm/customerSegmentation.ts',
   'services/ExternalErpAdapters.ts',
   'utils/bff/codegen.ts',
-  'schemas/workflow/approval.ts',
   'utils/observability/performance-bottleneck.ts',
 ];
 
 const WHITELIST_DIRS = [
   'api/',
-  'pages/bi/',
   'tmp/',
   'context-engine/',
 ];
+
+function parseArgs(argv) {
+  const opts = {
+    strict: false,
+    jsonStdout: false,
+    jsonOut: null,
+    details: 50,
+    paths: [],
+  };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === '--strict') opts.strict = true;
+    else if (a === '--json') opts.jsonStdout = true;
+    else if (a === '--json-out' && argv[i + 1]) { opts.jsonOut = argv[++i]; }
+    else if (a === '--details' && argv[i + 1] != null) { opts.details = parseInt(argv[++i], 10) || 0; }
+    else if (a && !a.startsWith('-')) opts.paths.push(a);
+  }
+  if (opts.paths.length === 0) opts.paths.push(WEB_SRC);
+  return opts;
+}
+
+const OPTS = parseArgs(process.argv.slice(2));
 
 function isWhitelisted(relPath) {
   if (WHITELIST_FILES.some(w => relPath.includes(w))) return true;
@@ -86,7 +112,9 @@ function walk(dir) {
 }
 
 function scanFile(filePath) {
-  const rel = path.relative(WEB_SRC, filePath);
+  let rel = path.relative(WEB_SRC, filePath);
+  // Fall back to basename if file is outside WEB_SRC (e.g. diff mode with absolute paths outside project)
+  if (rel.startsWith('..') || path.isAbsolute(rel)) rel = path.basename(filePath);
   if (isWhitelisted(rel) || isMockFile(rel)) return;
   if (/\/(locales|i18n)\//.test(rel)) return;
 
@@ -105,6 +133,7 @@ function scanFile(filePath) {
     if (trimmed.startsWith('import ') || trimmed.startsWith('import\t')) continue;
     if (/^\s*(export\s+)?(type|interface|enum)\s/.test(trimmed)) continue;
     if (trimmed.startsWith('*') || trimmed.startsWith('/*') || trimmed.startsWith('*/')) continue;
+    if (trimmed.startsWith('{/*')) continue;
     if (/\b(console|logger)\s*\.\s*(log|info|warn|error|debug|trace)\s*\(/.test(line)) continue;
 
     if (line.includes('i18n.t(') || (/\bt\s*\(\s*['"`]/.test(line))) continue;
@@ -124,16 +153,49 @@ function scanFile(filePath) {
   }
 }
 
-walk(WEB_SRC);
+for (const p of OPTS.paths) {
+  const abs = path.resolve(p);
+  if (!fs.existsSync(abs)) continue;
+  const stat = fs.statSync(abs);
+  if (stat.isDirectory()) walk(abs);
+  else if (/\.[mc]?[tj]sx?$/.test(abs)) scanFile(abs);
+}
+
+const sorted = Object.entries(stats).sort((a, b) => b[1] - a[1]);
+const sortedSub = Object.entries(moduleStats).sort((a, b) => b[1] - a[1]).slice(0, 30);
+const report = {
+  scan_paths: OPTS.paths,
+  total,
+  by_module: stats,
+  top_submodules: Object.fromEntries(sortedSub),
+  details,
+  namespaces_scanned: Object.keys(stats).length,
+};
+
+if (OPTS.jsonOut) {
+  fs.writeFileSync(path.resolve(OPTS.jsonOut), JSON.stringify(report, null, 2));
+}
+if (OPTS.jsonStdout) {
+  process.stdout.write(JSON.stringify(report, null, 2) + '\n');
+  process.exit(OPTS.strict && report.total > 0 ? 1 : 0);
+}
+
 console.log(`\n=== Precise Hardcoded Chinese Scan (UI only) ===`);
+console.log(`Scan paths: ${OPTS.paths.join(', ')}`);
 console.log(`Total: ${total} lines\n`);
 console.log('--- By Module ---');
-const sorted = Object.entries(stats).sort((a, b) => b[1] - a[1]);
 for (const [mod, count] of sorted) console.log(`  ${mod}: ${count}`);
 console.log('\n--- Top 30 Sub-modules ---');
-const sortedSub = Object.entries(moduleStats).sort((a, b) => b[1] - a[1]).slice(0, 30);
 for (const [mod, count] of sortedSub) console.log(`  ${mod}: ${count}`);
-console.log('\n--- Sample details (first 50) ---');
-for (const d of details.slice(0, 50)) console.log(`  ${d.file}:${d.line} | ${d.content}`);
-fs.writeFileSync(path.resolve(__dirname, 'scan-precise-details.json'), JSON.stringify(details, null, 2));
-console.log(`\n💾 Full details saved to scripts/i18n/scan-precise-details.json (${details.length} entries)`);
+if (OPTS.details > 0) {
+  console.log(`\n--- Sample details (first ${Math.min(OPTS.details, details.length)}) ---`);
+  for (const d of details.slice(0, OPTS.details)) console.log(`  ${d.file}:${d.line} | ${d.content}`);
+}
+const detailPath = path.resolve(__dirname, 'scan-precise-details.json');
+fs.writeFileSync(detailPath, JSON.stringify(details, null, 2));
+console.log(`\n💾 Full details saved to ${path.relative(process.cwd(), detailPath)} (${details.length} entries)`);
+
+if (OPTS.strict && total > 0) {
+  console.error(`\n❌ Strict mode FAILED: ${total} hardcoded CJK UI strings detected.`);
+  process.exit(1);
+}

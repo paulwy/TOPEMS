@@ -249,7 +249,7 @@ const BIComparisonPage = () => {
             </CardContent>
           </Card>
         )}
-        {/* 筛选条件 */}
+        {/* Filter conditions */}
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -295,9 +295,9 @@ const BIComparisonPage = () => {
                   onChange={(e) => setTimeRange(e.target.value)}
                 >
                   <MenuItem value='all'>{i18n.t('bi.bi_comparison_page.k2')}</MenuItem>
-                  <MenuItem value='2024H1'>2024上半年</MenuItem>
-                  <MenuItem value='2024H2'>2024下半年</MenuItem>
-                  <MenuItem value='2023'>2023年</MenuItem>
+                  <MenuItem value='2024H1'>{i18n.t('bi.bi_comparison_page.k13')}</MenuItem>
+                  <MenuItem value='2024H2'>{i18n.t('bi.bi_comparison_page.k14')}</MenuItem>
+                  <MenuItem value='2023'>{i18n.t('bi.bi_comparison_page.k15')}</MenuItem>
                 </Select>
               </FormControl>
               <FormControl
@@ -337,7 +337,7 @@ const BIComparisonPage = () => {
             </Box>
           </CardContent>
         </Card>
-        {/* 对比图表 */}
+        {/* Comparison chart */}
         <Card sx={{ mb: 3 }}>
           <CardHeader
             title={i18n.t('bi.bi_comparison_page.text_70ef92')}
@@ -377,7 +377,7 @@ const BIComparisonPage = () => {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-        {/* 对比数据表 */}
+        {/* Comparison data table */}
         <Card>
           <CardHeader
             title={i18n.t('bi.bi_comparison_page.text_f9aa62')}

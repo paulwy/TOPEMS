@@ -141,5 +141,6 @@
   "schemas.approval.k0": "采购管理",
   "schemas.approval.k1": "人事管理",
   "schemas.approval.k2": "财务管理",
-  "schemas.approval.k3": "法务管理"
+  "schemas.approval.k3": "法务管理",
+  "schemas.approval.k4": "IT管理"
 }
