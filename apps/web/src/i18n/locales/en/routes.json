@@ -1,8 +1,8 @@
 {
-  "routes.app_routes.k0": "核心模块",
-  "routes.app_routes.k1": "核心模块在静态模式下不可用。请设置 VITE_DEPLOYMENT_MODE=module-federation 启用",
-  "routes.app_routes.k2": "或者访问其他模块：",
-  "routes.app_routes.k3": "人力资源管理",
-  "routes.app_routes.k4": "客户关系管理",
-  "routes.app_routes.k5": "仪表盘"
+  "routes.app_routes.k0": "Core Modules",
+  "routes.app_routes.k1": "Core modules are not available in static mode. Set VITE_DEPLOYMENT_MODE=module-federation to enable",
+  "routes.app_routes.k2": "Or visit other modules:",
+  "routes.app_routes.k3": "Human Resources Management",
+  "routes.app_routes.k4": "Customer Relationship Management",
+  "routes.app_routes.k5": "Dashboard"
 }

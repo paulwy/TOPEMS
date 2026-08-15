@@ -341,11 +341,11 @@
       "sms_aliyun": "Aliyun",
       "sms_tencent": "Tencent",
       "sms_huawei": "Huawei",
-      "sms_access_key": "Access Key",
-      "sms_access_secret": "Access Secret",
+      "sms_access_key": "Access key",
+      "sms_access_secret": "Access secret",
       "sms_sign_name": "Sign Name",
       "sms_template_code": "Template Code",
-      "webhook_url": "Webhook URL",
+      "webhook_url": "Webhook Endpoint",
       "webhook_method": "Request Method",
       "webhook_headers": "Request Headers",
       "filter_type": "Type",
@@ -1005,10 +1005,10 @@
   },
   "document": {
     "document": {
-      "type_pdf": "PDF",
-      "type_word": "Word",
-      "type_excel": "Excel",
-      "type_ppt": "PPT",
+      "type_pdf": "PDF Document",
+      "type_word": "Word Document",
+      "type_excel": "Excel Spreadsheet",
+      "type_ppt": "PowerPoint",
       "type_image": "Image",
       "name": "Document Name",
       "type": "Type",
@@ -2400,8 +2400,8 @@
       }
     }
   },
-  "schema.crud_page_adapter.k0": "加载列表失败",
-  "schema.crud_page_adapter.k1": "创建失败",
-  "schema.crud_page_adapter.k2": "更新失败",
-  "schema.crud_page_adapter.k3": "删除失败"
+  "schema.crud_page_adapter.k0": "Failed to load list",
+  "schema.crud_page_adapter.k1": "Creation failed",
+  "schema.crud_page_adapter.k2": "Update failed",
+  "schema.crud_page_adapter.k3": "Deletion failed"
 }
