@@ -257,4 +257,98 @@ mod tests {
             created_by: None,
         });
     }
+
+    #[test]
+    fn test_audit_plan_clone_and_debug() {
+        let p = AuditPlan {
+            id: "ap1".to_string(),
+            tenant_id: "t1".to_string(),
+            plan_no: "AP-2025-001".to_string(),
+            title: "Annual QMS Audit".to_string(),
+            audit_type: "internal".to_string(),
+            scope: Some("factory floor".to_string()),
+            standard_id: Some("s1".to_string()),
+            status: Some("scheduled".to_string()),
+            scheduled_start: Some("2025-03-01".to_string()),
+            scheduled_end: Some("2025-03-05".to_string()),
+            actual_start: None,
+            actual_end: None,
+            created_by: Some("auditor1".to_string()),
+            created_at: Some("c".to_string()),
+            updated_at: Some("u".to_string()),
+        };
+        let p2 = p.clone();
+        assert_eq!(p.id, p2.id);
+        assert_eq!(p.plan_no, p2.plan_no);
+        assert_eq!(p.audit_type, p2.audit_type);
+        assert_eq!(p.status, p2.status);
+        assert!(!format!("{:?}", p).is_empty());
+    }
+
+    #[test]
+    fn test_audit_finding_clone_and_debug() {
+        let f = AuditFinding {
+            id: "af1".to_string(),
+            tenant_id: "t1".to_string(),
+            finding_no: "AF-001".to_string(),
+            task_id: Some("at1".to_string()),
+            plan_id: Some("ap1".to_string()),
+            title: "Non-conformance A".to_string(),
+            description: Some("desc".to_string()),
+            severity: Some("major".to_string()),
+            category: Some("doc".to_string()),
+            status: Some("open".to_string()),
+            recommendation: Some("rec".to_string()),
+            responsible: Some("mgr1".to_string()),
+            target_date: Some("2025-06-30".to_string()),
+            verified_at: None,
+            created_by: Some("u1".to_string()),
+            created_at: Some("c".to_string()),
+            updated_at: Some("u".to_string()),
+        };
+        let f2 = f.clone();
+        assert_eq!(f.id, f2.id);
+        assert_eq!(f.finding_no, f2.finding_no);
+        assert_eq!(f.severity, f2.severity);
+        assert!(!format!("{:?}", f).is_empty());
+    }
+
+    #[test]
+    fn test_audit_task_query_all_some() {
+        roundtrip(&AuditTaskQuery {
+            page: Some(1),
+            page_size: Some(20),
+            plan_id: Some("plan-1".to_string()),
+            status: Some("in_progress".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_audit_finding_query_all_some() {
+        roundtrip(&AuditFindingQuery {
+            page: Some(1),
+            page_size: Some(20),
+            plan_id: Some("plan-1".to_string()),
+            severity: Some("critical".to_string()),
+            status: Some("open".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_audit_task_all_fields_some() {
+        roundtrip(&AuditTask {
+            id: "at1".to_string(),
+            tenant_id: "t1".to_string(),
+            task_no: "AT-001".to_string(),
+            plan_id: "plan1".to_string(),
+            title: "Audit area A".to_string(),
+            description: Some("desc".to_string()),
+            auditor: Some("auditor-x".to_string()),
+            status: Some("in_progress".to_string()),
+            completed_at: Some("2025-04-01".to_string()),
+            finding_count: Some(3),
+            created_at: Some("c".to_string()),
+            updated_at: Some("u".to_string()),
+        });
+    }
 }

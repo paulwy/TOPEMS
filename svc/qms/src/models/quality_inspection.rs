@@ -274,4 +274,85 @@ mod tests {
             created_at: None,
         });
     }
+
+    #[test]
+    fn test_inspection_query_clone_and_debug() {
+        let q = InspectionQuery {
+            page: Some(1),
+            page_size: Some(10),
+            status: Some("pending".to_string()),
+            inspection_type: Some("incoming".to_string()),
+            search: Some("test".to_string()),
+        };
+        let q2 = q.clone();
+        assert_eq!(format!("{:?}", q), format!("{:?}", q2));
+        assert_eq!(q.page, q2.page);
+        assert_eq!(q.status, q2.status);
+    }
+
+    #[test]
+    fn test_inspection_struct_clone_preserves_fields() {
+        let i1 = Inspection {
+            id: "id1".to_string(),
+            tenant_id: "t1".to_string(),
+            inspection_no: "INSP-001".to_string(),
+            inspection_type: "typeA".to_string(),
+            product_id: None,
+            product_name: Some("Widget".to_string()),
+            standard_id: None,
+            quantity: BigDecimal::from(500),
+            qualified_quantity: Some(BigDecimal::from(490)),
+            unqualified_quantity: Some(BigDecimal::from(10)),
+            qualification_rate: Some(BigDecimal::from(98)),
+            status: Some("pending".to_string()),
+            inspector: Some("inspector_a".to_string()),
+            assignee: Some("assignee_b".to_string()),
+            inspected_at: Some("2025-01-01T00:00:00Z".to_string()),
+            result: Some("pass".to_string()),
+            memo: Some("memo text".to_string()),
+            created_by: Some("creator".to_string()),
+            created_at: Some("2025-01-01T00:00:00Z".to_string()),
+            updated_at: Some("2025-01-02T00:00:00Z".to_string()),
+        };
+        let i2 = i1.clone();
+        assert_eq!(i1.id, i2.id);
+        assert_eq!(i1.inspection_no, i2.inspection_no);
+        assert_eq!(i1.product_name, i2.product_name);
+        assert_eq!(i1.status, i2.status);
+        assert!(!format!("{:?}", i1).is_empty());
+    }
+
+    #[test]
+    fn test_inspection_result_item_all_fields_filled() {
+        roundtrip(&InspectionResultItem {
+            item_name: "dim A".to_string(),
+            standard_value: Some("10.0 ± 0.1".to_string()),
+            measured_value: Some("10.05".to_string()),
+            is_qualified: true,
+            remark: Some("within spec".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_create_inspection_request_all_some() {
+        roundtrip(&CreateInspectionRequest {
+            inspection_type: "incoming".to_string(),
+            product_id: Some("p1".to_string()),
+            product_name: Some("P1".to_string()),
+            standard_id: Some("s1".to_string()),
+            quantity: BigDecimal::from(100),
+            created_by: Some("user1".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_update_inspection_request_all_some() {
+        roundtrip(&UpdateInspectionRequest {
+            inspection_type: Some("final".to_string()),
+            product_id: Some("p2".to_string()),
+            product_name: Some("P2".to_string()),
+            standard_id: Some("s2".to_string()),
+            quantity: Some(BigDecimal::from(200)),
+        });
+    }
 }

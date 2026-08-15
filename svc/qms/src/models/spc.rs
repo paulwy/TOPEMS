@@ -263,4 +263,92 @@ mod tests {
             lsl: None,
         });
     }
+
+    #[test]
+    fn test_spc_chart_clone_and_debug() {
+        let c = SpcChart {
+            id: "c1".to_string(),
+            tenant_id: "t1".to_string(),
+            chart_no: "SPC-001".to_string(),
+            chart_type: "XbarR".to_string(),
+            product_id: Some("p1".to_string()),
+            product_name: Some("Widget".to_string()),
+            parameter_name: "Diameter".to_string(),
+            ucl: Some(BigDecimal::from(10)),
+            cl: Some(BigDecimal::from(5)),
+            lcl: Some(BigDecimal::from(0)),
+            cp: Some(BigDecimal::from(2)),
+            cpk: Some(BigDecimal::from(1)),
+            pp: None,
+            ppk: None,
+            sample_count: Some(25),
+            status: Some("active".to_string()),
+            created_by: Some("u1".to_string()),
+            created_at: Some("c".to_string()),
+            updated_at: Some("u".to_string()),
+        };
+        let c2 = c.clone();
+        assert_eq!(c.id, c2.id);
+        assert_eq!(c.chart_no, c2.chart_no);
+        assert_eq!(c.chart_type, c2.chart_type);
+        assert_eq!(c.parameter_name, c2.parameter_name);
+        assert!(!format!("{:?}", c).is_empty());
+    }
+
+    #[test]
+    fn test_spc_data_point_all_fields_some() {
+        roundtrip(&SpcDataPoint {
+            id: "dp1".to_string(),
+            tenant_id: "t1".to_string(),
+            chart_id: "c1".to_string(),
+            sample_no: 5,
+            value: BigDecimal::from(5),
+            subgroup_size: Some(5),
+            is_out_of_control: Some(false),
+            trend_flag: Some("stable".to_string()),
+            measured_at: Some("2025-01-15T08:30:00Z".to_string()),
+            created_at: Some("c".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_control_limit_result_full() {
+        roundtrip(&ControlLimitResult {
+            ucl: 10.5,
+            cl: 5.0,
+            lcl: -0.5,
+            cp: Some(1.67),
+            cpk: Some(1.33),
+            pp: Some(1.7),
+            ppk: Some(1.4),
+            out_of_control_count: 2,
+            data_points: vec![
+                CalculatedDataPoint {
+                    sample_no: 1,
+                    value: 4.8,
+                    subgroup_size: Some(5),
+                    is_out_of_control: Some(false),
+                    trend_flag: None,
+                },
+                CalculatedDataPoint {
+                    sample_no: 2,
+                    value: 11.0,
+                    subgroup_size: Some(5),
+                    is_out_of_control: Some(true),
+                    trend_flag: Some("above UCL".to_string()),
+                },
+            ],
+        });
+    }
+
+    #[test]
+    fn test_calculate_control_limit_request_all_some() {
+        roundtrip(&CalculateControlLimitRequest {
+            chart_type: "XbarS".to_string(),
+            values: vec![5.1, 5.0, 4.9, 5.2, 5.0, 4.8],
+            subgroup_size: Some(3),
+            usl: Some(10.0),
+            lsl: Some(0.0),
+        });
+    }
 }
