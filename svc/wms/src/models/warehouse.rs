@@ -162,4 +162,43 @@ mod tests {
         assert!(obj.contains_key("tenant_id"));
         assert!(obj.contains_key("name"));
     }
+
+    // ===================== 扩展覆盖：Debug / 边界 / 极端值 =====================
+
+    #[test]
+    fn warehouse_debug_format_contains_name() {
+        let w = sample_warehouse();
+        let s = format!("{:?}", w);
+        assert!(s.contains("Main WH"));
+        assert!(s.contains("WH-001"));
+        assert!(s.contains("active"));
+    }
+
+    #[test]
+    fn warehouse_with_unicode_name_roundtrip() {
+        let w = Warehouse {
+            name: "北京中心仓".into(),
+            code: Some("WH-中文".into()),
+            address: Some("北京市朝阳区".into()),
+            manager: Some("张三".into()),
+            ..sample_warehouse()
+        };
+        let v = serde_json::to_value(&w).unwrap();
+        let back: Warehouse = serde_json::from_value(v).unwrap();
+        assert_eq!(back.name, "北京中心仓");
+        assert_eq!(back.code.as_deref(), Some("WH-中文"));
+        assert_eq!(back.manager.as_deref(), Some("张三"));
+    }
+
+    #[test]
+    fn warehouse_with_empty_name_still_serializes() {
+        // name 是 String，空串也能序列化（语义校验由上层负责）
+        let w = Warehouse {
+            name: String::new(),
+            ..sample_warehouse()
+        };
+        let v = serde_json::to_value(&w).unwrap();
+        let back: Warehouse = serde_json::from_value(v).unwrap();
+        assert_eq!(back.name, "");
+    }
 }

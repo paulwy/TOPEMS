@@ -212,4 +212,47 @@ mod tests {
         assert!(obj.contains_key("status"));
         assert!(obj.contains_key("created_at"));
     }
+
+    // ===================== 扩展覆盖：Debug / 极端值 / 边界 =====================
+
+    #[test]
+    fn inventory_item_debug_format_contains_sku() {
+        let item = sample_item();
+        let s = format!("{:?}", item);
+        assert!(s.contains("SKU-001"));
+        assert!(s.contains("Widget"));
+    }
+
+    #[test]
+    fn inventory_item_with_extreme_quantity_serializable() {
+        // 极大数与极小正数都能正确序列化
+        let big = InventoryItem {
+            quantity: f64::MAX,
+            ..sample_item()
+        };
+        let v = serde_json::to_value(&big).unwrap();
+        let back: InventoryItem = serde_json::from_value(v).unwrap();
+        assert_eq!(back.quantity, f64::MAX);
+
+        let tiny = InventoryItem {
+            quantity: 0.0001,
+            ..sample_item()
+        };
+        let v = serde_json::to_value(&tiny).unwrap();
+        let back: InventoryItem = serde_json::from_value(v).unwrap();
+        assert_eq!(back.quantity, 0.0001);
+    }
+
+    #[test]
+    fn inventory_item_unicode_name_roundtrip() {
+        let item = InventoryItem {
+            name: "中文商品名 ¥¥¥".into(),
+            sku: "SKU-中文-001".into(),
+            ..sample_item()
+        };
+        let v = serde_json::to_value(&item).unwrap();
+        let back: InventoryItem = serde_json::from_value(v).unwrap();
+        assert_eq!(back.name, "中文商品名 ¥¥¥");
+        assert_eq!(back.sku, "SKU-中文-001");
+    }
 }

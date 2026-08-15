@@ -376,4 +376,44 @@ mod tests {
         assert!(obj.contains_key("available_quantity"));
         assert!(obj.contains_key("quality_status"));
     }
+
+    // ===================== 扩展覆盖：Debug / 极端值 / 边界 =====================
+
+    #[test]
+    fn batch_debug_format_contains_batch_no() {
+        let b = sample_batch();
+        let s = format!("{:?}", b);
+        assert!(s.contains("BAT-001"));
+        assert!(s.contains("SKU-A"));
+    }
+
+    #[test]
+    fn batch_available_quantity_less_than_total() {
+        // available < quantity 的语义场景
+        let b = Batch {
+            quantity: 1000.0,
+            available_quantity: 0.0,
+            ..sample_batch()
+        };
+        let v = serde_json::to_value(&b).unwrap();
+        let back: Batch = serde_json::from_value(v).unwrap();
+        assert_eq!(back.quantity, 1000.0);
+        assert_eq!(back.available_quantity, 0.0);
+    }
+
+    #[test]
+    fn batch_statistics_with_negative_counts_serializable() {
+        // 异常输入（负数）也应可序列化，由上层校验
+        let stats = BatchStatistics {
+            total_batches: -1,
+            total_quantity: -100.0,
+            total_value: -500.0,
+            expiring_soon_count: -2,
+            expired_count: -3,
+            quality_pending_count: -4,
+        };
+        let v = serde_json::to_value(&stats).unwrap();
+        let back: BatchStatistics = serde_json::from_value(v).unwrap();
+        assert_eq!(back.total_batches, -1);
+    }
 }

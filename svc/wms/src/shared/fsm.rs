@@ -756,4 +756,207 @@ mod tests {
             );
         }
     }
+
+    // =====================================================================
+    // 扩展矩阵覆盖（status transition matrix + 重复输入 + 边界字符串）
+    // =====================================================================
+    mod extended_matrix {
+        use super::*;
+
+        // ---- FSM-1 InboundOrder 完整矩阵 ----
+        #[test]
+        fn inbound_order_all_terminal_to_any_state_blocked() {
+            // completed / cancelled 都是终态
+            for target in &["created", "confirmed", "received", "completed", "cancelled"] {
+                assert_terminal(
+                    inbound_order_can_transition("completed", target),
+                    "completed",
+                );
+            }
+            for target in &["created", "confirmed", "received", "completed", "cancelled"] {
+                assert_terminal(
+                    inbound_order_can_transition("cancelled", target),
+                    "cancelled",
+                );
+            }
+        }
+
+        #[test]
+        fn inbound_order_self_transitions_all_invalid() {
+            for s in &["created", "confirmed", "received"] {
+                assert_invalid_transition(inbound_order_can_transition(s, s), s, s);
+            }
+        }
+
+        // ---- FSM-2 OutboundOrder 反向流 ----
+        #[test]
+        fn outbound_order_no_backflow_after_picking() {
+            // picking → confirmed 不允许
+            assert_invalid_transition(
+                outbound_order_can_transition("picking", "confirmed"),
+                "picking",
+                "confirmed",
+            );
+            // confirmed → created 不允许
+            assert_invalid_transition(
+                outbound_order_can_transition("confirmed", "created"),
+                "confirmed",
+                "created",
+            );
+        }
+
+        #[test]
+        fn outbound_order_shipping_only_to_completed_or_blocked() {
+            // shipping 只能去 completed；去其它状态全部 InvalidTransition
+            assert_ok(outbound_order_can_transition("shipping", "completed"));
+            assert_invalid_transition(
+                outbound_order_can_transition("shipping", "picking"),
+                "shipping",
+                "picking",
+            );
+        }
+
+        // ---- FSM-3 StockTake 反向与跳跃 ----
+        #[test]
+        fn stock_take_completed_to_cancelled_blocked_by_terminal() {
+            // completed 已是终态，无法再 cancelled
+            assert_terminal(
+                stock_take_can_transition("completed", "cancelled"),
+                "completed",
+            );
+        }
+
+        // ---- FSM-4 TransferOrder 邻接矩阵 ----
+        #[test]
+        fn transfer_order_shipped_back_to_confirmed_invalid() {
+            assert_invalid_transition(
+                transfer_order_can_transition("shipped", "confirmed"),
+                "shipped",
+                "confirmed",
+            );
+        }
+
+        #[test]
+        fn transfer_order_received_to_shipped_invalid() {
+            assert_invalid_transition(
+                transfer_order_can_transition("received", "shipped"),
+                "received",
+                "shipped",
+            );
+        }
+
+        // ---- FSM-5 WavePick 边界 ----
+        #[test]
+        fn wave_pick_assigned_back_to_created_invalid() {
+            assert_invalid_transition(
+                wave_pick_can_transition("assigned", "created"),
+                "assigned",
+                "created",
+            );
+        }
+
+        #[test]
+        fn wave_pick_completed_to_cancelled_terminal() {
+            assert_terminal(
+                wave_pick_can_transition("completed", "cancelled"),
+                "completed",
+            );
+        }
+
+        // ---- FSM-6 InventoryMovement 边界 ----
+        #[test]
+        fn inventory_movement_cancelled_to_completed_terminal() {
+            assert_terminal(
+                inventory_movement_can_transition("cancelled", "completed"),
+                "cancelled",
+            );
+        }
+
+        // ---- FSM-7 SerialNumber 终态唯一 ----
+        #[test]
+        fn serial_number_archived_blocks_every_target() {
+            for target in &["pending", "assigned", "used", "archived"] {
+                assert_terminal(serial_number_can_transition("archived", target), "archived");
+            }
+        }
+
+        #[test]
+        fn empty_string_status_is_unknown_for_every_fsm() {
+            // 空串不是任何 FSM 的合法状态
+            assert_unknown(inbound_order_can_transition("", "created"), "");
+            assert_unknown(outbound_order_can_transition("", "created"), "");
+            assert_unknown(stock_take_can_transition("", "planned"), "");
+            assert_unknown(transfer_order_can_transition("", "pending"), "");
+            assert_unknown(wave_pick_can_transition("", "created"), "");
+            assert_unknown(inventory_movement_can_transition("", "draft"), "");
+            assert_unknown(serial_number_can_transition("", "pending"), "");
+        }
+
+        #[test]
+        fn is_valid_status_helpers_consistent_with_state_lists() {
+            // 校验 is_valid_*_status 与各 FSM STATES 常量一致
+            for s in INBOUND_ORDER_STATES {
+                assert!(is_valid_inbound_order_status(s));
+            }
+            for s in OUTBOUND_ORDER_STATES {
+                assert!(is_valid_outbound_order_status(s));
+            }
+            for s in STOCK_TAKE_STATES {
+                assert!(is_valid_stock_take_status(s));
+            }
+            for s in TRANSFER_ORDER_STATES {
+                assert!(is_valid_transfer_order_status(s));
+            }
+            for s in WAVE_PICK_STATES {
+                assert!(is_valid_wave_pick_status(s));
+            }
+            for s in INVENTORY_MOVEMENT_STATES {
+                assert!(is_valid_inventory_movement_status(s));
+            }
+            for s in SERIAL_NUMBER_STATES {
+                assert!(is_valid_serial_number_status(s));
+            }
+        }
+
+        #[test]
+        fn approval_helpers_return_false_for_unknown_inputs() {
+            // 未知状态的输入不会触发 panic，仅返回 false
+            assert!(!inbound_order_requires_approval("unknown", "completed"));
+            assert!(!outbound_order_requires_approval("unknown", "shipping"));
+            assert!(!transfer_order_requires_approval("unknown", "shipped"));
+            assert!(!stock_take_requires_approval("unknown", "completed"));
+            assert!(!inventory_movement_requires_approval(
+                "unknown",
+                "completed"
+            ));
+            assert!(!serial_number_requires_approval("unknown", "archived"));
+            assert!(!wave_pick_requires_approval("unknown", "completed"));
+        }
+
+        #[test]
+        fn fsm_error_partial_eq_with_reconstruction() {
+            // FsmError 未派生 Clone，用相同参数重建后比较相等性
+            let e1 = FsmError::TerminalState("done".into());
+            let e1_clone = FsmError::TerminalState("done".into());
+            assert_eq!(e1, e1_clone);
+
+            let e2 = FsmError::InvalidTransition {
+                from: "a".into(),
+                to: "b".into(),
+            };
+            let e2_clone = FsmError::InvalidTransition {
+                from: "a".into(),
+                to: "b".into(),
+            };
+            assert_eq!(e2, e2_clone);
+
+            let e3 = FsmError::UnknownStatus("x".into());
+            let e3_clone = FsmError::UnknownStatus("x".into());
+            assert_eq!(e3, e3_clone);
+
+            // 不同变体不相等
+            assert_ne!(e1, e2);
+            assert_ne!(e2, e3);
+        }
+    }
 }

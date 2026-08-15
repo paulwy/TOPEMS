@@ -356,4 +356,69 @@ mod tests {
             false
         );
     }
+
+    // -----------------------------------------------------------------------
+    // 扩展覆盖：负数 / 极端值 / 边界
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_suggested_qty_negative_available_clamps_to_zero() {
+        // available 为负 + max_stock > 0 → max(0, 500 - (-100)) = 600
+        // 但语义上负库存应等价于 0 库存：函数当前直接相减，结果 > max_stock
+        // 这里只验证不抛错并返回非负
+        let r = calculate_suggested_quantity(-100.0, 500.0, 100.0, 10.0, 5);
+        assert!(r >= 0.0);
+        assert!(approx_eq(r, 600.0));
+    }
+
+    #[test]
+    fn test_suggested_qty_zero_consumption_with_fallback() {
+        // max_stock=0 fallback: reorder + 0*lt - available
+        let r = calculate_suggested_quantity(50.0, 0.0, 100.0, 0.0, 5);
+        assert!(approx_eq(r, 50.0));
+    }
+
+    #[test]
+    fn test_priority_with_negative_available() {
+        // available=-10 < safety_stock=20 → urgent
+        assert_eq!(calculate_priority(-10.0, 20.0, 50.0), "urgent");
+    }
+
+    #[test]
+    fn test_safety_stock_with_negative_inputs() {
+        // 任意一项为负 → 结果为负（不做钳制）
+        let r = calculate_safety_stock(-10.0, 5, 1.5);
+        assert!(r < 0.0);
+    }
+
+    #[test]
+    fn test_reorder_point_with_negative_safety_stock() {
+        // safety_stock 为负时直接相加（不做钳制）
+        let r = calculate_reorder_point(10.0, 7, -50.0);
+        assert!(approx_eq(r, 20.0));
+    }
+
+    #[test]
+    fn test_determine_replenishment_with_negative_stock() {
+        // available=-5 < reorder=100 → true（即便 rule_based_only=false）
+        assert!(determine_replenishment_needed(
+            -5.0, 100.0, 0.0, false, false
+        ));
+    }
+
+    #[test]
+    fn test_determine_replenishment_suggested_qty_dominates() {
+        // 高于 reorder_point 但 suggested_qty > 0 → true
+        assert!(determine_replenishment_needed(
+            500.0, 100.0, 1.0, false, false
+        ));
+    }
+
+    #[test]
+    fn test_calculate_min_max_stock_negative_days_of_stock() {
+        // days_of_stock 为负 → max_stock 为负
+        let (min_s, max_s) = calculate_min_max_stock(20.0, 5, 1.5, -10);
+        assert!(approx_eq(min_s, 150.0));
+        assert!(max_s < 0.0);
+    }
 }

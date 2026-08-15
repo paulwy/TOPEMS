@@ -355,4 +355,73 @@ mod tests {
         assert!(obj.contains_key("transfer_type"));
         assert!(obj.contains_key("from_warehouse_id"));
     }
+
+    // ===================== 扩展覆盖：Debug / 边界 / 多 item =====================
+
+    #[test]
+    fn transfer_order_debug_format_contains_order_number() {
+        let to = sample_transfer_order();
+        let s = format!("{:?}", to);
+        assert!(s.contains("TO-001"));
+        assert!(s.contains("warehouse"));
+    }
+
+    #[test]
+    fn create_transfer_order_request_with_multiple_items_roundtrip() {
+        let req = CreateTransferOrderRequest {
+            transfer_type: Some("warehouse".into()),
+            from_warehouse_id: Uuid::new_v4(),
+            from_location_id: None,
+            to_warehouse_id: Uuid::new_v4(),
+            to_location_id: None,
+            planned_date: None,
+            transporter: None,
+            priority: None,
+            remarks: None,
+            items: vec![
+                CreateTransferOrderItemRequest {
+                    sku: "SKU-1".into(),
+                    material_name: "M1".into(),
+                    specification: None,
+                    batch_number: None,
+                    unit: "EA".into(),
+                    planned_quantity: 10,
+                    unit_price: Some(5.0),
+                    from_location_id: None,
+                    to_location_id: None,
+                    remarks: None,
+                },
+                CreateTransferOrderItemRequest {
+                    sku: "SKU-2".into(),
+                    material_name: "M2".into(),
+                    specification: Some("spec".into()),
+                    batch_number: Some("BAT".into()),
+                    unit: "KG".into(),
+                    planned_quantity: 25,
+                    unit_price: None,
+                    from_location_id: None,
+                    to_location_id: None,
+                    remarks: Some("note".into()),
+                },
+                CreateTransferOrderItemRequest {
+                    sku: "SKU-3".into(),
+                    material_name: "M3".into(),
+                    specification: None,
+                    batch_number: None,
+                    unit: "L".into(),
+                    planned_quantity: 100,
+                    unit_price: Some(2.5),
+                    from_location_id: None,
+                    to_location_id: None,
+                    remarks: None,
+                },
+            ],
+        };
+        let v = serde_json::to_value(&req).unwrap();
+        let back: CreateTransferOrderRequest = serde_json::from_value(v.clone()).unwrap();
+        let v2 = serde_json::to_value(&back).unwrap();
+        assert_eq!(v, v2);
+        assert_eq!(back.items.len(), 3);
+        assert_eq!(back.items[2].planned_quantity, 100);
+    }
 }

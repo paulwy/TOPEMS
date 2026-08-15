@@ -303,4 +303,115 @@ mod tests {
         let claims = make_claims(false, vec!["other:read"]);
         assert!(!has_wms_permission(&claims, "read"));
     }
+
+    // ===================== 扩展覆盖：permission string 构造与边界 =====================
+
+    #[test]
+    fn has_wms_permission_formats_wms_prefix_correctly() {
+        // 权限字符串格式 "wms:{action}"，验证 action 直接拼接
+        let claims = make_claims(false, vec!["wms:approve"]);
+        assert!(has_wms_permission(&claims, "approve"));
+        // "wms:approve" 不应满足 "read"（精确匹配）
+        assert!(!has_wms_permission(&claims, "read"));
+    }
+
+    #[test]
+    fn has_wms_permission_with_empty_action_string() {
+        // action 为空字符串 → 权限串变成 "wms:"，几乎不会匹配
+        let claims = make_claims(false, vec!["wms:"]);
+        assert!(has_wms_permission(&claims, ""));
+        assert!(!has_wms_permission(&claims, "read"));
+    }
+
+    #[test]
+    fn has_wms_permission_admin_satisfies_arbitrary_action() {
+        let claims = make_claims(false, vec!["wms:admin"]);
+        for action in &["read", "write", "approve", "delete", "custom_action"] {
+            assert!(has_wms_permission(&claims, action));
+        }
+    }
+
+    #[test]
+    fn has_wms_permission_all_satisfies_arbitrary_action() {
+        let claims = make_claims(false, vec!["all"]);
+        for action in &["read", "write", "approve", "delete", "custom_action"] {
+            assert!(has_wms_permission(&claims, action));
+        }
+    }
+
+    #[test]
+    fn has_wms_permission_superuser_overrides_empty_permissions() {
+        // is_superuser=true 且 permissions 为空仍然放行
+        let claims = make_claims(true, vec![]);
+        assert!(has_wms_permission(&claims, "anything"));
+    }
+
+    #[test]
+    fn wms_permission_clone_preserves_variant() {
+        let p = WmsPermission::InventoryWrite;
+        let cloned = p.clone();
+        assert_eq!(p, cloned);
+        // 不同变体不相等
+        assert_ne!(cloned, WmsPermission::InventoryRead);
+    }
+
+    #[test]
+    fn wms_permission_all_read_variants_map_to_read_action() {
+        let read_variants = [
+            WmsPermission::WarehouseRead,
+            WmsPermission::InventoryRead,
+            WmsPermission::InboundRead,
+            WmsPermission::OutboundRead,
+            WmsPermission::StockTakeRead,
+            WmsPermission::TransferRead,
+            WmsPermission::WavePickRead,
+            WmsPermission::MovementRead,
+            WmsPermission::DashboardRead,
+        ];
+        for v in &read_variants {
+            assert_eq!(v.to_shared().action, PermissionAction::Read);
+        }
+    }
+
+    #[test]
+    fn wms_permission_all_write_variants_map_to_write_action() {
+        let write_variants = [
+            WmsPermission::WarehouseWrite,
+            WmsPermission::InventoryWrite,
+            WmsPermission::InboundWrite,
+            WmsPermission::OutboundWrite,
+            WmsPermission::StockTakeWrite,
+            WmsPermission::TransferWrite,
+            WmsPermission::WavePickWrite,
+            WmsPermission::MovementWrite,
+        ];
+        for v in &write_variants {
+            assert_eq!(v.to_shared().action, PermissionAction::Write);
+        }
+    }
+
+    #[test]
+    fn wms_permission_display_for_all_distinct() {
+        // 至少保证 Display 不抛错且非空
+        let all_variants = [
+            WmsPermission::WarehouseRead,
+            WmsPermission::WarehouseWrite,
+            WmsPermission::InboundApprove,
+            WmsPermission::OutboundApprove,
+            WmsPermission::StockTakeApprove,
+            WmsPermission::TransferApprove,
+            WmsPermission::All,
+        ];
+        for v in &all_variants {
+            let s = v.to_string();
+            assert!(!s.is_empty(), "Display for {:?} produced empty string", v);
+        }
+    }
+
+    #[test]
+    fn has_wms_permission_partial_prefix_does_not_match() {
+        // "other:wms:read" 不应匹配 "wms:read"（精确权限串）
+        let claims = make_claims(false, vec!["other:wms:read"]);
+        assert!(!has_wms_permission(&claims, "read"));
+    }
 }

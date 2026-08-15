@@ -231,4 +231,99 @@ mod tests {
             Some(serde_json::json!({"nested": {"key": "value"}}))
         );
     }
+
+    // ===================== 扩展覆盖：结构 / 边界 / JSON 字段 =====================
+
+    #[test]
+    fn audit_log_status_field_roundtrip() {
+        let log = AuditLog {
+            status: "error".into(),
+            ..sample_audit_log()
+        };
+        let v = serde_json::to_value(&log).unwrap();
+        let back: AuditLog = serde_json::from_value(v).unwrap();
+        assert_eq!(back.status, "error");
+    }
+
+    #[test]
+    fn audit_log_entity_ids_array_roundtrip() {
+        let log = AuditLog {
+            entity_ids: Some(serde_json::json!([1, 2, 3, 4, 5])),
+            ..sample_audit_log()
+        };
+        let v = serde_json::to_value(&log).unwrap();
+        let back: AuditLog = serde_json::from_value(v).unwrap();
+        assert_eq!(back.entity_ids, Some(serde_json::json!([1, 2, 3, 4, 5])));
+    }
+
+    #[test]
+    fn audit_log_with_error_message_field() {
+        let log = AuditLog {
+            error_message: Some("database timeout".into()),
+            status: "error".into(),
+            ..sample_audit_log()
+        };
+        let v = serde_json::to_value(&log).unwrap();
+        let back: AuditLog = serde_json::from_value(v).unwrap();
+        assert_eq!(back.error_message.as_deref(), Some("database timeout"));
+    }
+
+    #[test]
+    fn audit_log_json_has_expected_keys() {
+        let log = sample_audit_log();
+        let v = serde_json::to_value(&log).unwrap();
+        let obj = v.as_object().unwrap();
+        for key in &[
+            "id",
+            "tenant_id",
+            "action",
+            "entity_type",
+            "status",
+            "created_at",
+        ] {
+            assert!(obj.contains_key(*key), "missing key {}", key);
+        }
+    }
+
+    #[test]
+    fn create_audit_log_request_minimal_with_action_only() {
+        // 只填必填字段，可选字段全部 None
+        let req = CreateAuditLogRequest {
+            action: "login".into(),
+            entity_type: "auth".into(),
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            status: "success".into(),
+            error_message: None,
+            ip_address: None,
+            user_agent: None,
+        };
+        let v = serde_json::to_value(&req).unwrap();
+        let back: CreateAuditLogRequest = serde_json::from_value(v).unwrap();
+        assert_eq!(back.action, "login");
+        assert!(back.entity_id.is_none());
+        assert!(back.user_id.is_none());
+    }
+
+    #[test]
+    fn audit_log_query_with_dates_range() {
+        let q = AuditLogQuery {
+            action: Some("create".into()),
+            entity_type: None,
+            user_id: Some("u-1".into()),
+            status: None,
+            start_date: Some(Utc::now()),
+            end_date: Some(Utc::now()),
+            page: Some(2),
+            page_size: Some(50),
+        };
+        let v = serde_json::to_value(&q).unwrap();
+        let back: AuditLogQuery = serde_json::from_value(v.clone()).unwrap();
+        let v2 = serde_json::to_value(&back).unwrap();
+        assert_eq!(v, v2);
+    }
 }
