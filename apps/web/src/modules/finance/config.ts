@@ -312,10 +312,10 @@ export const financeNavConfig: ModuleNavConfig = {
   icon: 'Wallet',
   path: FINANCE_PATHS.root,
   permission: 'finance:dashboard:read',
-  source: 'core',
+  source: 'plugin',
   suite: 'finance',
   status: 'online',
-  order: 6,
+  order: 8,
   description: i18n.t('shared.config.k24'),
   navItems: [
     {

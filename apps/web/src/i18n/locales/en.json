@@ -3518,7 +3518,7 @@
     "help_center": "Help Center",
     "user_guide": "User Guide",
     "contact_support": "Contact Support",
-    "copyright": "© {year} TOPEMS Digital Platform"
+    "copyright": "© {{year}} TOPEMS Digital Platform"
   },
   "help_center": {
     "title": "Help Center",
