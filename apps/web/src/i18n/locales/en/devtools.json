@@ -50,23 +50,23 @@
       },
       "v47Integration": {
         "tooltip": "V47-V50 Integration Panel",
-        "label": "V47-V50",
+        "label": "V47 to V50",
         "sublabel": "Platform + Serverless",
         "title": "V47-V50 Integration Panel — Platform + Serverless + AI Ops",
         "cards": {
           "lowCode": {
             "title": "V47.0 Low-Code Engine",
-            "subtitle": "LowCodeBuilder / lowCodeBuilder",
+            "subtitle": "Low-Code Builder / low-code builder",
             "status": "✅ Loaded (Module marketplace + plugin marketplace available)"
           },
           "unifiedPlatform": {
             "title": "V47.0 Unified Development Platform",
-            "subtitle": "UnifiedDevPlatform / unifiedDevPlatform",
+            "subtitle": "Unified Dev Platform / unified dev platform",
             "status": "✅ Loaded (Project creation + dev server + build & deploy)"
           },
           "serverless": {
             "title": "V48.0 Serverless Architecture",
-            "subtitle": "edgeRenderer / faas / onDemandLoader",
+            "subtitle": "Edge renderer / FaaS / on-demand loader",
             "statusWithCache": "✅ Loaded (Cached pages: {{pages}}, hits: {{hits}})"
           },
           "faas": {
@@ -76,7 +76,7 @@
           },
           "aiDriven": {
             "title": "V48.0 AI-Driven",
-            "subtitle": "smartRouter / autoOps / predictiveScaler",
+            "subtitle": "Smart router / auto ops / predictive scaler",
             "status": "✅ Loaded (Smart routing + auto ops + predictive scaling)"
           },
           "onDemand": {
@@ -86,24 +86,24 @@
           },
           "aiOpsV2": {
             "title": "V50.0 AI Ops V2",
-            "subtitle": "intelligentMonitor / rootCauseAnalyzer / autoRemediation",
+            "subtitle": "Intelligent monitor / root cause analyzer / auto remediation",
             "status": "✅ Loaded (Smart monitoring + root cause analysis + auto-remediation workflow)"
           }
         }
       },
       "v51Design": {
         "tooltip": "V51.0 Design System",
-        "label": "V51",
-        "sublabel": "Design System"
+        "label": "V51.x",
+        "sublabel": "Design system"
       },
       "v51DevEx": {
         "tooltip": "V51.0 DevEx Developer Experience",
-        "label": "DevEx",
+        "label": "Developer Experience",
         "sublabel": "Debug + Performance"
       },
       "v53Ai": {
         "tooltip": "V53.0 AI Enhancement",
-        "label": "V53 AI",
+        "label": "V53 AI platform",
         "sublabel": "Smart Enhancement"
       },
       "v53Platform": {
@@ -113,57 +113,57 @@
       },
       "v54Native": {
         "tooltip": "V54.0 AI-Native Platform",
-        "label": "V54 AI",
+        "label": "V54 AI native",
         "sublabel": "Native Platform"
       },
       "v54Agent": {
         "tooltip": "V54.0 AI Agent Autonomous Intelligence",
-        "label": "V54 Agent",
+        "label": "V54 agent engine",
         "sublabel": "Autonomous Intelligence"
       },
       "v55Copilot": {
         "tooltip": "V55.0 AI Copilot Smart Assistant",
-        "label": "V55 Copilot",
+        "label": "V55 copilot assistant",
         "sublabel": "Smart Assistant"
       },
       "v55Automation": {
         "tooltip": "V55.0 Full-Stack Automation CI/CD",
-        "label": "V55 Auto",
+        "label": "V55 automation",
         "sublabel": "CI/CD · Deploy"
       },
       "v56Ops": {
         "tooltip": "V56.0 Platform Intelligent Ops",
-        "label": "V56 Ops",
+        "label": "V56 ops engine",
         "sublabel": "Intelligent Ops"
       },
       "v56Review": {
         "tooltip": "V56.0 AI Code Review",
-        "label": "V56 Review",
+        "label": "V56 code review",
         "sublabel": "AI Code Review"
       },
       "v57Governance": {
         "tooltip": "V57.0 AI Governance",
-        "label": "V57 AI",
+        "label": "V57 AI governance",
         "sublabel": "Governance · Compliance · Risk"
       },
       "v57Automation": {
         "tooltip": "V57.0 AI Automation",
-        "label": "V57 Auto",
+        "label": "V57 automation suite",
         "sublabel": "Testing · CI · Quality"
       },
       "v58Ux": {
         "tooltip": "V58.0 AI UX Smart Experience",
-        "label": "V58 UX",
+        "label": "V58 smart UX",
         "sublabel": "Smart · Adaptive · Emotional"
       },
       "v58Evolution": {
         "tooltip": "V58.0 AI Evolution",
-        "label": "V58 AI",
+        "label": "V58 AI evolution",
         "sublabel": "Model · A/B · Security"
       },
       "v59DevEx": {
         "tooltip": "V59.0 AI DevEx Smart Developer Experience",
-        "label": "V59 DevEx",
+        "label": "V59 smart DevEx",
         "sublabel": "Smart Debug · Performance · Refactor"
       },
       "v59Security": {
@@ -177,7 +177,7 @@
         "sublabel": "Bias · Fairness · Explainability"
       },
       "v60Quality": {
-        "tooltip": "V60.0 AI Quality",
+        "tooltip": "V60.0 AI quality system",
         "label": "V60 Quality",
         "sublabel": "Testing · Performance · UX"
       }
