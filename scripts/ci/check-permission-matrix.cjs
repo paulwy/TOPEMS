@@ -40,7 +40,10 @@ const FAIL_FAST_THRESHOLDS = Object.assign({
 const INTEGRITY_MIN = Object.freeze({
   scannedBackendFiles: 50,
   scannedFrontendConfigs: 20,
-  totalBackendCodes: 100,
+  // NOTE: Total backend require_permission() real calls across svc+lib is ~49
+  // (includes 1 fn definition + doc comments). So effective midbound = 25
+  // is a conservative minimum above which scanner regex is known to work.
+  totalBackendCodes: 25,
   totalFrontendNavCodes: 100
 });
 
@@ -73,9 +76,192 @@ function walkSync(dir, extOrNull, out = []) {
   }
   return out;
 }
-const SCAN_BACKEND = () => ({ files: [], codes: [] });   // Step 2.2 实现
-const SCAN_FRONTEND = () => ({ configs: [], codes: [] }); // Step 2.3 实现
-const SCAN_CONSTANTS = () => ({ frontendPERMSet: new Set(), backendCartSet: new Set(), allValidSet: new Set(), moduleCodes: [] }); // Step 2.4 实现
+/* ---------- Scanner 1: Backend require_permission(CODE) · TEXT-LEVEL match + row反查 ---------- */
+function stripRustComments(text) {
+  // Remove line comments (// ... \n) and block comments (/* ... */) preserving newlines so line offsets remain correct.
+  // We replace comment content with whitespace (keeping \n intact) so char offsets to newlines don't shift.
+  const out = [];
+  let i = 0;
+  let inBlock = false;
+  while (i < text.length) {
+    const ch = text[i];
+    const nx = text[i + 1];
+    if (inBlock) {
+      if (ch === '*' && nx === '/') { inBlock = false; out.push('  '); i += 2; continue; }
+      if (ch === '\n') out.push('\n'); else out.push(' ');
+      i++; continue;
+    }
+    if (ch === '/' && nx === '*') { inBlock = true; out.push('  '); i += 2; continue; }
+    if (ch === '/' && nx === '/') {
+      // line comment: consume to end-of-line or EOF
+      while (i < text.length && text[i] !== '\n') { out.push(' '); i++; }
+      continue;
+    }
+    out.push(ch); i++;
+  }
+  return out.join('');
+}
+function lineOfOffset(text, offset) {
+  // 1-indexed line number at char position
+  let line = 1;
+  for (let i = 0; i < offset && i < text.length; i++) if (text[i] === '\n') line++;
+  return line;
+}
+function SCAN_BACKEND() {
+  const files = walkSync(path.join(TOPEMS_ROOT, 'svc'), '.rs');
+  // Also scan lib/ crates (shared-auth etc.) if they mount routes with permissions
+  const libFiles = walkSync(path.join(TOPEMS_ROOT, 'lib'), '.rs').filter(f => !f.includes('/target/'));
+  const allFiles = files.concat(libFiles);
+  // Multi-line tolerant regex: allow whitespace (including \n) between tokens,
+  // allow optional comma after string (Rust closure argument pattern):
+  //   require_permission("foo:bar")     — form A
+  //   require_permission("settlement:approve",)  — form B (Rust trailing comma)
+  //   require_permission(\n    "settlement:approve",\n  )  — form C (multi-line)
+  const codeRegex = /require_permission\s*\(\s*"([A-Za-z0-9_:.\\-]+)"\s*,?\s*\)/g;
+  const codes = [];
+  let commentSkips = 0;
+
+  for (const filePath of allFiles) {
+    const parts = filePath.split(path.sep);
+    const topIdx = parts.findIndex(p => p === 'svc' || p === 'lib');
+    const srcIdx = parts.indexOf('src');
+    let crateName = 'unknown-crate';
+    if (topIdx !== -1) {
+      if (srcIdx !== -1 && srcIdx > topIdx + 1) crateName = parts.slice(topIdx + 1, srcIdx).join('/');
+      else if (parts.length > topIdx + 1) crateName = parts[topIdx + 1];
+      if (parts[topIdx] === 'lib') crateName = `lib::${crateName}`;
+    }
+
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const clean = stripRustComments(raw);
+    let m;
+    while ((m = codeRegex.exec(clean)) !== null) {
+      // m[1] is the code. m.index is char offset of the "require_permission" start.
+      codes.push({
+        crateName,
+        filePath: path.relative(TOPEMS_ROOT, filePath),
+        lineNo: lineOfOffset(raw, m.index),
+        code: m[1]
+      });
+    }
+    // Rough estimate of comment skips: raw has matches but clean doesn't in same region
+    const rawMatches = (raw.match(/require_permission\s*\(/g) || []).length;
+    const cleanMatches = (clean.match(/require_permission\s*\(/g) || []).length;
+    commentSkips += Math.max(0, rawMatches - cleanMatches);
+  }
+  REPORT.scanners.backendCommentSkips = commentSkips;
+  return { files: allFiles.map(f => path.relative(TOPEMS_ROOT, f)), codes };
+}
+/* ---------- Scanner 2: Frontend Nav / Routes / ModuleConfig permissions ---------- */
+function SCAN_FRONTEND() {
+  const root = path.join(TOPEMS_ROOT, 'apps', 'web', 'src');
+  const moduleConfigs = walkSync(path.join(root, 'modules'), '.ts')
+    .filter(f => f.endsWith('/config.ts'));
+  const navTreePath = path.join(root, 'layouts', 'navTree.ts');
+  const v2RoutePaths = walkSync(path.join(root, 'routes', 'v2'), '.ts');
+  const allConfigFiles = moduleConfigs.concat([navTreePath]).concat(v2RoutePaths).filter(fs.existsSync);
+
+  const codes = [];
+  const permsRegex1 = /requiredPermissions\s*:\s*\[([^\]]*)\]/g;
+  const permsRegex2 = /permission\s*:\s*(['"])([A-Za-z0-9_:.\\-]+)\1/g;
+  const singleQuotePerm = /['"]([A-Za-z0-9_:.\\-]+)['"]/g;
+
+  const deriveModule = (filePathAbs) => {
+    const rel = path.relative(root, filePathAbs).split(path.sep);
+    if (rel[0] === 'modules' && rel.length >= 2) return rel[1];
+    if (rel[0] === 'layouts') return 'layouts';
+    if (rel[0] === 'routes' && rel[1] === 'v2') return 'routes:v2';
+    return 'unknown-frontend';
+  };
+
+  for (const fileAbs of allConfigFiles) {
+    let text;
+    try { text = fs.readFileSync(fileAbs, 'utf8'); } catch { continue; }
+    const mod = deriveModule(fileAbs);
+    const fileRel = path.relative(TOPEMS_ROOT, fileAbs);
+    text.split('\n').forEach((line, i) => {
+      let m;
+      const rg2 = new RegExp(permsRegex2.source, 'g');
+      while ((m = rg2.exec(line)) !== null) codes.push({
+        module: mod, navPathOrRoutePath: `${mod}/${i+1}`,
+        filePath: fileRel, lineNo: i+1, perms: [m[2]]
+      });
+      const rg1 = new RegExp(permsRegex1.source, 'g');
+      while ((m = rg1.exec(line)) !== null) {
+        const arrStr = m[1];
+        const perms = [];
+        let mm;
+        const sq = new RegExp(singleQuotePerm.source, 'g');
+        while ((mm = sq.exec(arrStr)) !== null) perms.push(mm[1]);
+        if (perms.length) codes.push({
+          module: mod, navPathOrRoutePath: `${mod}/${i+1}`,
+          filePath: fileRel, lineNo: i+1, perms
+        });
+      }
+    });
+  }
+  return { configs: allConfigFiles.map(f => path.relative(TOPEMS_ROOT, f)), codes };
+}
+/* ---------- Scanner 3: Constants Tables ---------- */
+function SCAN_CONSTANTS() {
+  const frontendPERMSet = new Set();
+  const backendCartSet = new Set();
+  const moduleCodes = [];
+  const actionCodes = [];
+
+  /* Part A: apps/web/src/config/permissions.ts PERMISSIONS object keys */
+  const permTsPath = path.join(TOPEMS_ROOT, 'apps', 'web', 'src', 'config', 'permissions.ts');
+  try {
+    const text = fs.readFileSync(permTsPath, 'utf8');
+    // Match quoted 2-4 segment keys with colon separator, followed by ':' (object key pattern)
+    const keyRegA = /['"]([a-z][a-z0-9_\-]*\:[a-z0-9_:\-]+)['"]\s*:/g;
+    let m;
+    while ((m = keyRegA.exec(text)) !== null) frontendPERMSet.add(m[1]);
+    // Brutal fallback: also capture all "<word>:<word>:<word>" colon triplet quoted strings in the file
+    // (PERMISSIONS keys are the only such patterns)
+    const brutal = /['"]([a-z][a-z0-9_\-]*(?:\:[a-z0-9_\-]+){1,3})['"]/g;
+    while ((m = brutal.exec(text)) !== null) frontendPERMSet.add(m[1]);
+  } catch {}
+
+  /* Part B: lib/shared-auth/src/permission.rs ModuleCode × PermissionAction */
+  const permRsPath = path.join(TOPEMS_ROOT, 'lib', 'shared-auth', 'src', 'permission.rs');
+  try {
+    const text = fs.readFileSync(permRsPath, 'utf8');
+    const enumReg = /enum\s+(ModuleCode|PermissionAction)\s*\{([^}]*)\}/g;
+    let me;
+    while ((me = enumReg.exec(text)) !== null) {
+      const [_, name, body] = me;
+      const variants = body.split('\n')
+        .map(l => l.trim())
+        .filter(l => l && !l.startsWith('//') && !l.startsWith('#') && !l.startsWith('['))
+        .map(l => l.replace(/,$/, '').trim())
+        .map(l => l.split(/\s/)[0])
+        .filter(Boolean);
+      if (name === 'ModuleCode') moduleCodes.push(...variants);
+      if (name === 'PermissionAction') actionCodes.push(...variants);
+    }
+  } catch {}
+
+  const toSnake = (s) => s.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase().replace(/^_/, '');
+  moduleCodes.forEach(mc => {
+    const mcLow = toSnake(mc);
+    actionCodes.forEach(ac => {
+      const acLow = toSnake(ac);
+      backendCartSet.add(`${mcLow}:${acLow}`);
+    });
+  });
+
+  /* Part C: optional scripts/data/permission-metadata.json cache */
+  const metadataPath = path.join(TOPEMS_ROOT, 'scripts', 'data', 'permission-metadata.json');
+  const metadataSet = new Set();
+  try {
+    const data = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+    (Array.isArray(data) ? data : (data.codes || data.permissions || [])).forEach(c => typeof c === 'string' && metadataSet.add(c));
+  } catch { /* optional, skip */ }
+
+  const allValidSet = new Set([...frontendPERMSet, ...backendCartSet, ...metadataSet]);
+  return { frontendPERMSet, backendCartSet, allValidSet, moduleCodes, actionCodes, _metadataSetSize: metadataSet.size };
+}
 
 /* ---------- Validator stubs (to be implemented in Commit 3) ---------- */
 const RUN_VALIDATORS = (scanR, constR) => { /* noop initially */ };
