@@ -1,0 +1,241 @@
+[1m[92m   Compiling[0m topems-shared v0.1.0 (/Users/air/TOPEMS/lib)
+[1m[92m   Compiling[0m topems-erp v0.1.0 (/Users/air/TOPEMS/svc/erp)
+[1m[92m    Checking[0m topems-finance v0.1.0 (/Users/air/TOPEMS/svc/finance)
+svc/erp/src/modules/master_data_refs.rs:11596:1: [1m[33mwarning[0m: empty lines after doc comment
+svc/finance/src/modules/voucher_template.rs:455:39: [1m[33mwarning[0m: digits grouped inconsistently by underscores: help: consider: `100_000`
+svc/finance/src/modules/voucher_template.rs:628:49: [1m[33mwarning[0m: digits grouped inconsistently by underscores: help: consider: `100_000`
+svc/finance/src/modules/voucher_template.rs:722:49: [1m[33mwarning[0m: digits grouped inconsistently by underscores: help: consider: `100_000`
+svc/finance/src/services/finance/reversal.rs:1:14: [1m[33mwarning[0m: unused imports: `DateTime` and `Utc`
+svc/finance/src/services/finance/reversal.rs:6:35: [1m[33mwarning[0m: unused import: `JournalEntry`
+svc/finance/src/services/finance/reversal.rs:7:22: [1m[33mwarning[0m: unused imports: `PeriodValidationError` and `validate_children_all_closed`
+svc/finance/src/services/finance/reversal.rs:8:28: [1m[33mwarning[0m: unused imports: `calculate_trial_balance` and `validate_period_close_with_trial_balance`
+svc/finance/src/services/finance/reversal.rs:9:22: [1m[33mwarning[0m: unused imports: `PostJournalEntry`, `PostPeriodInput`, `PostVoucherInput`, and `validate_post_entry`
+svc/finance/src/services/finance/erp_e2e.rs:13:12: [1m[33mwarning[0m: struct `ProcurementLine` is never constructed
+svc/finance/src/services/finance/erp_e2e.rs:22:12: [1m[33mwarning[0m: struct `PurchaseOrder` is never constructed
+svc/finance/src/services/finance/erp_e2e.rs:31:12: [1m[33mwarning[0m: struct `GoodsReceiptNote` is never constructed
+svc/finance/src/services/finance/erp_e2e.rs:41:12: [1m[33mwarning[0m: struct `Invoice` is never constructed
+svc/finance/src/services/finance/erp_e2e.rs:51:12: [1m[33mwarning[0m: struct `Payment` is never constructed
+svc/finance/src/services/finance/erp_e2e.rs:61:12: [1m[33mwarning[0m: struct `CurrencyConversionRate` is never constructed
+svc/finance/src/services/finance/erp_e2e.rs:70:10: [1m[33mwarning[0m: enum `ErpE2eError` is never used
+svc/finance/src/services/finance/erp_e2e.rs:160:12: [1m[33mwarning[0m: struct `ProcurementChainResult` is never constructed
+svc/finance/src/services/finance/erp_e2e.rs:177:4: [1m[33mwarning[0m: function `line_net` is never used
+svc/finance/src/services/finance/erp_e2e.rs:181:4: [1m[33mwarning[0m: function `line_tax` is never used
+svc/finance/src/services/finance/erp_e2e.rs:185:4: [1m[33mwarning[0m: function `line_gross` is never used
+svc/finance/src/services/finance/erp_e2e.rs:189:4: [1m[33mwarning[0m: function `round2` is never used
+svc/finance/src/services/finance/erp_e2e.rs:193:4: [1m[33mwarning[0m: function `conversion_factor` is never used
+svc/finance/src/services/finance/erp_e2e.rs:209:8: [1m[33mwarning[0m: function `check_journal_entries_balanced` is never used
+svc/finance/src/services/finance/erp_e2e.rs:226:8: [1m[33mwarning[0m: function `validate_procurement_chain` is never used
+svc/finance/src/services/finance/erp_e2e.rs:236:8: [1m[33mwarning[0m: function `validate_procurement_chain_with_rates` is never used
+svc/finance/src/services/finance/reversal.rs:12:12: [1m[33mwarning[0m: struct `ReverseJournalEntry` is never constructed
+svc/finance/src/services/finance/reversal.rs:20:12: [1m[33mwarning[0m: struct `ReverseableVoucherInput` is never constructed
+svc/finance/src/services/finance/reversal.rs:29:12: [1m[33mwarning[0m: struct `ReversePeriodInput` is never constructed
+svc/finance/src/services/finance/reversal.rs:35:10: [1m[33mwarning[0m: enum `ReversalValidationError` is never used
+svc/finance/src/services/finance/reversal.rs:185:8: [1m[33mwarning[0m: function `validate_reverse_voucher` is never used
+svc/finance/src/services/finance/trial_balance.rs:11:12: [1m[33mwarning[0m: struct `AccountTotal` is never constructed
+svc/finance/src/services/finance/trial_balance.rs:20:12: [1m[33mwarning[0m: struct `TrialBalanceResult` is never constructed
+svc/finance/src/services/finance/trial_balance.rs:32:8: [1m[33mwarning[0m: function `calculate_trial_balance` is never used
+svc/finance/src/services/finance/trial_balance.rs:69:8: [1m[33mwarning[0m: function `validate_period_close_with_trial_balance` is never used
+svc/finance/src/services/finance/voucher.rs:1004:10: [1m[33mwarning[0m: enum `PostValidationError` is never used
+svc/finance/src/services/finance/voucher.rs:1113:12: [1m[33mwarning[0m: struct `PostVoucherInput` is never constructed
+svc/finance/src/services/finance/voucher.rs:1120:12: [1m[33mwarning[0m: struct `PostPeriodInput` is never constructed
+svc/finance/src/services/finance/voucher.rs:1125:8: [1m[33mwarning[0m: function `validate_post_entry` is never used
+svc/finance/src/services/finance/year_end.rs:13:12: [1m[33mwarning[0m: struct `YearEndPeriodInput` is never constructed
+svc/finance/src/services/finance/year_end.rs:21:12: [1m[33mwarning[0m: struct `YearEndVoucherSummary` is never constructed
+svc/finance/src/services/finance/year_end.rs:28:10: [1m[33mwarning[0m: enum `YearEndAccountType` is never used
+svc/finance/src/services/finance/year_end.rs:40:12: [1m[33mwarning[0m: struct `YearEndAccountSummary` is never constructed
+svc/finance/src/services/finance/year_end.rs:47:10: [1m[33mwarning[0m: enum `YearEndCloseError` is never used
+svc/finance/src/services/finance/year_end.rs:143:8: [1m[33mwarning[0m: function `validate_year_end_close` is never used
+svc/finance/src/services/finance/year_end.rs:238:12: [1m[33mwarning[0m: struct `ConsolidationEntityInput` is never constructed
+svc/finance/src/services/finance/year_end.rs:249:12: [1m[33mwarning[0m: struct `ConsolidationConversionRate` is never constructed
+svc/finance/src/services/finance/year_end.rs:256:10: [1m[33mwarning[0m: enum `ConsolidationError` is never used
+svc/finance/src/services/finance/year_end.rs:350:8: [1m[33mwarning[0m: function `validate_consolidation` is never used
+svc/finance/src/domain/aggregate_repository.rs:106:12: [1m[33mwarning[0m: manual implementation of `.is_multiple_of()`: help: replace with: `version.is_multiple_of(self.snapshot_threshold)`
+svc/finance/src/domain/aggregate_repository.rs:228:17: [1m[33mwarning[0m: this `if` can be collapsed into the outer `match`
+svc/finance/src/domain/aggregate_repository.rs:241:12: [1m[33mwarning[0m: manual implementation of `.is_multiple_of()`: help: replace with: `version.is_multiple_of(self.snapshot_threshold)`
+svc/finance/src/domain/aggregate_repository.rs:369:17: [1m[33mwarning[0m: this `if` can be collapsed into the outer `match`
+svc/finance/src/domain/aggregate_repository.rs:382:12: [1m[33mwarning[0m: manual implementation of `.is_multiple_of()`: help: replace with: `version.is_multiple_of(self.snapshot_threshold)`
+svc/finance/src/domain/audit_log.rs:58:1: [1m[33mwarning[0m: this `impl` can be derived
+svc/finance/src/domain/audit_log.rs:110:5: [1m[33mwarning[0m: this function has too many arguments (8/7)
+svc/finance/src/domain/cqrs.rs:53:52: [1m[33mwarning[0m: this call to `clone` can be replaced with `std::slice::from_ref`: help: try: `std::slice::from_ref(&event)`
+svc/finance/src/domain/cqrs.rs:89:17: [1m[33mwarning[0m: this call to `clone` can be replaced with `std::slice::from_ref`: help: try: `std::slice::from_ref(&event)`
+svc/finance/src/domain/cqrs.rs:129:17: [1m[33mwarning[0m: this call to `clone` can be replaced with `std::slice::from_ref`: help: try: `std::slice::from_ref(&event)`
+svc/finance/src/domain/event_store.rs:141:9: [1m[33mwarning[0m: the variable `version` is used as a loop counter: help: consider using: `for (version, event) in (current_version..).zip(events.iter())`
+svc/finance/src/domain/event_store.rs:173:24: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/finance/src/domain/materialized_view.rs:50:25: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/finance/src/domain/materialized_view.rs:54:9: [1m[33mwarning[0m: consider using `sort_by_key`
+svc/finance/src/domain/materialized_view.rs:168:25: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/finance/src/domain/materialized_view.rs:172:9: [1m[33mwarning[0m: consider using `sort_by_key`
+svc/finance/src/domain/materialized_view.rs:277:17: [1m[33mwarning[0m: this `if` can be collapsed into the outer `match`
+svc/finance/src/domain/pg_materialized_views.rs:439:17: [1m[33mwarning[0m: this `if` can be collapsed into the outer `match`
+svc/finance/src/domain/saga.rs:101:1: [1m[33mwarning[0m: this function has too many arguments (9/7)
+svc/finance/src/domain/saga.rs:322:9: [1m[33mwarning[0m: field assignment outside of initializer for an instance created with Default::default()
+svc/erp/src/modules/addressbook.rs:151:18: [1m[33mwarning[0m: use of `or_insert_with` to construct default value: help: try: `or_default()`
+svc/erp/src/modules/addressbook.rs:276:20: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/erp/src/modules/addressbook.rs:280:20: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/erp/src/modules/addressbook.rs:438:20: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/erp/src/modules/addressbook.rs:442:20: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/erp/src/modules/consolidation/common.rs:9:1: [1m[33mwarning[0m: this function has too many arguments (8/7)
+svc/erp/src/modules/consolidation_calc.rs:86:50: [1m[33mwarning[0m: using `clone` on type `Decimal` which implements the `Copy` trait: help: try removing the `clone` call: `zero`
+svc/erp/src/modules/consolidation_calc.rs:90:9: [1m[33mwarning[0m: using `clone` on type `Decimal` which implements the `Copy` trait: help: try removing the `clone` call: `zero`
+svc/erp/src/modules/consolidation_calc.rs:95:9: [1m[33mwarning[0m: using `clone` on type `Decimal` which implements the `Copy` trait: help: try removing the `clone` call: `zero`
+svc/erp/src/modules/consolidation_calc.rs:97:24: [1m[33mwarning[0m: needlessly taken reference of both operands
+svc/erp/src/modules/consolidation_calc.rs:98:9: [1m[33mwarning[0m: using `clone` on type `Decimal` which implements the `Copy` trait: help: try removing the `clone` call: `amt`
+svc/erp/src/modules/consolidation_calc.rs:100:9: [1m[33mwarning[0m: using `clone` on type `Decimal` which implements the `Copy` trait: help: try removing the `clone` call: `zero`
+svc/erp/src/modules/consolidation_calc.rs:104:26: [1m[33mwarning[0m: taken reference of right operand
+svc/finance/src/modules/audit_v52.rs:828:5: [1m[33mwarning[0m: this function has too many arguments (8/7)
+svc/finance/src/modules/audit_v52.rs:1260:24: [1m[33mwarning[0m: manual `!RangeInclusive::contains` implementation: help: use: `!(0.1..=5.0).contains(&ratio)`
+svc/finance/src/modules/audit_v52.rs:1282:5: [1m[33mwarning[0m: this function has too many arguments (9/7)
+svc/erp/src/modules/customer_calc.rs:32:5: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/erp/src/modules/customer_calc.rs:33:12: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/erp/src/modules/customer_calc.rs:34:12: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/erp/src/modules/customer_calc.rs:64:20: [1m[33mwarning[0m: redundant guard
+svc/erp/src/modules/dashboard.rs:53:13: [1m[33mwarning[0m: match can be simplified with `.unwrap_or_default()`
+svc/erp/src/modules/dashboard.rs:78:13: [1m[33mwarning[0m: match can be simplified with `.unwrap_or_default()`
+svc/erp/src/modules/holidays.rs:33:62: [1m[33mwarning[0m: this expression creates a reference which is immediately dereferenced by the compiler: help: change this to: `HOLIDAY_RANGES`
+svc/erp/src/modules/holidays.rs:36:76: [1m[33mwarning[0m: this expression creates a reference which is immediately dereferenced by the compiler: help: change this to: `MAKEUP_WORKDAY_DATES`
+svc/erp/src/modules/inventory_calc.rs:28:5: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/erp/src/modules/inventory_calc.rs:28:48: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/erp/src/modules/master_data_refs.rs:15:5: [1m[33mwarning[0m: doc list item without indentation
+svc/erp/src/modules/master_data_refs.rs:19:5: [1m[33mwarning[0m: doc list item without indentation
+svc/erp/src/modules/master_data_refs.rs:55:1: [1m[33mwarning[0m: direct implementation of `ToString`
+svc/erp/src/modules/master_data_refs.rs:1211:13: [1m[33mwarning[0m: calls to `push` immediately after creation: help: consider using the `vec![]` macro: `let references = vec![..];`
+svc/erp/src/modules/master_data_refs.rs:1626:1: [1m[33mwarning[0m: this `impl` can be derived
+svc/finance/src/modules/financial_reports.rs:187:22: [1m[33mwarning[0m: match can be simplified with `.unwrap_or_default()`
+svc/erp/src/modules/master_data_refs.rs:2418:1: [1m[33mwarning[0m: this function has too many arguments (8/7)
+svc/erp/src/modules/master_data_refs.rs:3187:1: [1m[33mwarning[0m: this `impl` can be derived
+svc/finance/src/modules/financial_reports.rs:1438:1: [1m[33mwarning[0m: this function has too many arguments (8/7)
+svc/erp/src/modules/master_data_refs.rs:4389:49: [1m[33mwarning[0m: this operation has no effect: help: consider reducing it to: `warnings`
+svc/finance/src/modules/forecast_v53.rs:463:13: [1m[33mwarning[0m: clamp-like pattern without using clamp function: help: replace with clamp: `(1.0 - mean_err).clamp(0.3, 0.99)`
+svc/finance/src/modules/forecast_v53.rs:469:13: [1m[33mwarning[0m: clamp-like pattern without using clamp function: help: replace with clamp: `(1.0 - mean_err).clamp(0.3, 0.99)`
+svc/erp/src/modules/master_data_refs.rs:4691:53: [1m[33mwarning[0m: this operation has no effect: help: consider reducing it to: `warnings`
+svc/erp/src/modules/master_data_refs.rs:5262:53: [1m[33mwarning[0m: this operation has no effect: help: consider reducing it to: `warnings`
+svc/erp/src/modules/master_data_refs.rs:5290:25: [1m[33mwarning[0m: clamp-like pattern without using clamp function: help: replace with clamp: `(base_score + variance).clamp(75.0, 99.5)`
+svc/finance/src/modules/multi_dimensional.rs:163:5: [1m[33mwarning[0m: this function has too many arguments (9/7)
+svc/finance/src/modules/multi_dimensional.rs:355:9: [1m[33mwarning[0m: consider using `sort_by_key`
+svc/finance/src/modules/multi_dimensional.rs:565:17: [1m[33mwarning[0m: manual implementation of an assign operation: help: replace it with: `rev += Decimal::from(80_000 * (i as i64 + 1))`
+svc/finance/src/modules/multi_dimensional.rs:607:9: [1m[33mwarning[0m: consider using `sort_by_key`
+svc/finance/src/modules/multi_dimensional.rs:708:5: [1m[33mwarning[0m: this function has too many arguments (8/7)
+svc/finance/src/modules/multi_dimensional.rs:845:39: [1m[33mwarning[0m: useless conversion to the same type: `rust_decimal::Decimal`: help: consider removing `Decimal::from()`: `i.completion_percentage`
+svc/finance/src/modules/operational.rs:68:53: [1m[33mwarning[0m: redundant closure: help: replace the closure with the function itself: `row_to_expense_json`
+svc/finance/src/modules/operational.rs:372:53: [1m[33mwarning[0m: redundant closure: help: replace the closure with the function itself: `row_to_budget_json`
+svc/erp/src/modules/master_data_refs.rs:8704:5: [1m[33mwarning[0m: consider using `sort_by_key`
+svc/finance/src/modules/operational.rs:666:53: [1m[33mwarning[0m: redundant closure: help: replace the closure with the function itself: `row_to_receivable_json`
+svc/finance/src/modules/operational.rs:956:53: [1m[33mwarning[0m: redundant closure: help: replace the closure with the function itself: `row_to_payable_json`
+svc/erp/src/modules/master_data_refs.rs:10579:1: [1m[33mwarning[0m: this `impl` can be derived
+svc/erp/src/modules/master_data_refs.rs:11601:5: [1m[33mwarning[0m: doc list item without indentation
+svc/erp/src/modules/master_data_refs.rs:11780:25: [1m[33mwarning[0m: clamp-like pattern without using clamp function: help: replace with clamp: `(base - i as f64 * 1.2 + noise - 1.5).clamp(40.0, 99.0)`
+svc/erp/src/modules/master_data_refs.rs:11796:18: [1m[33mwarning[0m: very complex type used. Consider factoring parts into `type` definitions
+svc/erp/src/modules/master_data_refs.rs:11941:16: [1m[33mwarning[0m: manual `RangeInclusive::contains` implementation: help: use: `(2..=64).contains(&len)`
+svc/erp/src/modules/master_data_refs.rs:11981:5: [1m[33mwarning[0m: this `if` statement can be collapsed
+svc/erp/src/modules/master_data_refs.rs:11993:5: [1m[33mwarning[0m: this `if` statement can be collapsed
+svc/erp/src/modules/master_data_refs.rs:12056:5: [1m[33mwarning[0m: this `if` statement can be collapsed
+svc/finance/src/modules/reports_v57.rs:684:13: [1m[33mwarning[0m: this call to `clone` can be replaced with `std::slice::from_ref`: help: try: `std::slice::from_ref(&req.measure)`
+svc/finance/src/modules/reports_v57.rs:686:62: [1m[33mwarning[0m: this call to `clone` can be replaced with `std::slice::from_ref`: help: try: `std::slice::from_ref(&req.measure)`
+svc/erp/src/modules/master_data_refs.rs:14510:21: [1m[33mwarning[0m: this `if` statement can be collapsed
+svc/erp/src/modules/master_data_refs.rs:14511:28: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/erp/src/modules/master_data_refs.rs:14526:21: [1m[33mwarning[0m: this `if` statement can be collapsed
+svc/erp/src/modules/master_data_refs.rs:14527:28: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/erp/src/modules/master_data_refs.rs:14542:21: [1m[33mwarning[0m: this `if` statement can be collapsed
+svc/erp/src/modules/master_data_refs.rs:14543:28: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/erp/src/modules/master_data_refs.rs:14554:21: [1m[33mwarning[0m: this `if` statement can be collapsed
+svc/erp/src/modules/master_data_refs.rs:14555:28: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/erp/src/modules/master_data_refs.rs:15024:13: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/erp/src/modules/master_data_refs.rs:15024:55: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/erp/src/modules/master_data_refs.rs:15036:20: [1m[33mwarning[0m: this `map_or` can be simplified
+svc/erp/src/modules/master_data_refs.rs:15205:14: [1m[33mwarning[0m: use of `or_insert_with` to construct default value: help: try: `or_default()`
+svc/erp/src/modules/master_data_refs.rs:15209:14: [1m[33mwarning[0m: use of `or_insert_with` to construct default value: help: try: `or_default()`
+svc/erp/src/modules/master_data_refs.rs:15266:14: [1m[33mwarning[0m: use of `or_insert_with` to construct default value: help: try: `or_default()`
+svc/erp/src/modules/master_data_refs.rs:15646:21: [1m[33mwarning[0m: clamp-like pattern without using clamp function: help: replace with clamp: `(base_score + offset).clamp(5.0, 95.0)`
+svc/erp/src/modules/master_data_refs.rs:15817:38: [1m[33mwarning[0m: useless use of `format!`: help: consider using `.to_string()`: `"预计该维度评分提升 5-15 分".to_string()`
+svc/erp/src/modules/master_data_refs.rs:16047:16: [1m[33mwarning[0m: very complex type used. Consider factoring parts into `type` definitions
+svc/erp/src/modules/master_data_refs.rs:16257:14: [1m[33mwarning[0m: consider using `sort_by_key`
+svc/erp/src/modules/master_data_refs.rs:16423:5: [1m[33mwarning[0m: consider using `sort_by_key`
+svc/erp/src/modules/master_data_refs.rs:16441:5: [1m[33mwarning[0m: consider using `sort_by_key`
+svc/finance/src/modules/risk_v59.rs:1136:32: [1m[33mwarning[0m: clamp-like pattern without using clamp function: help: replace with clamp: `(0.15 * severity_factor).clamp(0.0, 0.3)`
+svc/finance/src/modules/risk_v59.rs:1137:31: [1m[33mwarning[0m: clamp-like pattern without using clamp function: help: replace with clamp: `(0.20 * severity_factor).clamp(0.0, 0.4)`
+svc/erp/src/modules/master_data_refs.rs:18772:20: [1m[33mwarning[0m: needlessly taken reference of left operand
+svc/erp/src/modules/master_data_refs.rs:19409:24: [1m[33mwarning[0m: very complex type used. Consider factoring parts into `type` definitions
+svc/erp/src/modules/master_data_refs.rs:19688:14: [1m[33mwarning[0m: derefed type is same as origin: help: try: `framework`
+svc/erp/src/modules/master_data_refs.rs:19753:14: [1m[33mwarning[0m: derefed type is same as origin: help: try: `framework`
+svc/erp/src/modules/mdm_v49.rs:56:5: [1m[33mwarning[0m: method `from_str` can be confused for the standard trait method `std::str::FromStr::from_str`
+svc/finance/src/modules/settlement_v55.rs:958:23: [1m[33mwarning[0m: called `.as_ref().map(|s| s.as_str())` on an `Option` value: help: consider using as_deref: `result.notes.as_deref()`
+svc/finance/src/modules/settlement_v55.rs:1001:15: [1m[33mwarning[0m: called `.as_ref().map(|s| s.as_str())` on an `Option` value: help: consider using as_deref: `result.notes.as_deref()`
+svc/erp/src/modules/mdm_v49.rs:565:1: [1m[33mwarning[0m: this function has too many arguments (8/7)
+svc/finance/src/modules/shared_services.rs:169:5: [1m[33mwarning[0m: this function has too many arguments (9/7)
+svc/finance/src/modules/shared_services.rs:434:5: [1m[33mwarning[0m: this function has too many arguments (9/7)
+svc/finance/src/modules/shared_services.rs:550:25: [1m[33mwarning[0m: iterating on a map's values
+svc/finance/src/modules/shared_services.rs:920:25: [1m[33mwarning[0m: iterating on a map's values
+svc/finance/src/modules/tax_v56.rs:1007:21: [1m[33mwarning[0m: manual `RangeInclusive::contains` implementation: help: use: `(0.0..=1.0).contains(&rate)`
+svc/finance/src/modules/tax_v56.rs:1061:12: [1m[33mwarning[0m: unnecessary closure used to substitute value for `Option::None`
+svc/finance/src/modules/tax_v56.rs:1200:25: [1m[33mwarning[0m: manual implementation of an assign operation: help: replace it with: `remaining -= span`
+svc/finance/src/modules/treasury_v58.rs:496:17: [1m[33mwarning[0m: unnecessary closure used to substitute value for `Option::None`
+svc/finance/src/modules/treasury_v58.rs:497:61: [1m[33mwarning[0m: this `if` has identical blocks
+svc/erp/src/modules/procurement_e2e.rs:488:45: [1m[33mwarning[0m: redundant closure: help: replace the closure with the function itself: `line_gross`
+svc/finance/src/modules/treasury_v58.rs:783:35: [1m[33mwarning[0m: clamp-like pattern without using clamp function: help: replace with clamp: `confidence.clamp(0.1, 0.99)`
+svc/erp/src/modules/production_order.rs:172:11: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `req.product_id`
+svc/erp/src/modules/production_order.rs:181:11: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `req.workshop_id`
+svc/erp/src/modules/production_order.rs:228:11: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `id`
+svc/erp/src/modules/production_order.rs:280:11: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `id`
+svc/erp/src/modules/production_order.rs:286:11: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `req.workshop_id`
+svc/erp/src/modules/production_order.rs:324:11: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `id`
+svc/erp/src/modules/production_order.rs:376:11: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `id`
+svc/erp/src/modules/production_order.rs:432:11: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `id`
+svc/erp/src/modules/production_order.rs:515:11: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `order_id`
+svc/erp/src/modules/purchase_order.rs:175:19: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `req.supplier_id`
+svc/erp/src/modules/purchase_order.rs:203:11: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `req.supplier_id`
+svc/erp/src/modules/sales_order.rs:182:53: [1m[33mwarning[0m: redundant closure: help: replace the closure with the associated function itself: `Utc::now`
+svc/finance/src/modules/mod.rs:93:5: [1m[33mwarning[0m: match can be simplified with `.unwrap_or_default()`
+svc/finance/src/modules/mod.rs:112:5: [1m[33mwarning[0m: match can be simplified with `.unwrap_or_default()`
+svc/finance/src/modules/mod.rs:127:5: [1m[33mwarning[0m: match can be simplified with `.unwrap_or_default()`
+svc/finance/src/modules/mod.rs:141:5: [1m[33mwarning[0m: match can be simplified with `.unwrap_or_default()`
+svc/erp/src/services/mdm_event_service.rs:16:5: [1m[33mwarning[0m: you should consider adding a `Default` implementation for `MdmEventService`
+svc/erp/src/services/mdm_event_service.rs:21:5: [1m[33mwarning[0m: this function has too many arguments (10/7)
+svc/erp/src/modules/master_data_refs.rs:4433:24: [1m[33mwarning[0m: useless use of `vec!`: help: you can use an array directly: `["erp", "crm", "hrm", "finance", "mes", "workflow"]`
+svc/erp/src/modules/master_data_refs.rs:9927:23: [1m[33mwarning[0m: useless use of `vec!`
+svc/erp/src/modules/master_data_refs.rs:10712:23: [1m[33mwarning[0m: useless use of `vec!`: help: you can use an array directly: `["tenant-a", "tenant-b", "tenant-c"]`
+svc/finance/src/services/finance/erp_e2e.rs:322:45: [1m[33mwarning[0m: redundant closure: help: replace the closure with the function itself: `line_gross`
+svc/finance/src/services/finance/payment.rs:515:34: [1m[33mwarning[0m: the borrowed expression implements the required traits
+svc/finance/src/services/finance/payment.rs:529:38: [1m[33mwarning[0m: the borrowed expression implements the required traits
+svc/finance/src/services/finance/periods.rs:194:58: [1m[33mwarning[0m: casting to the same type is unnecessary (`i32` -> `i32`): help: try: `year`
+svc/finance/src/services/finance/reconciliation.rs:215:30: [1m[33mwarning[0m: called `unwrap` on `match_type` after checking its variant with `is_some`
+svc/finance/src/services/finance/reversal.rs:257:32: [1m[33mwarning[0m: you seem to want to iterate on a map's keys
+svc/finance/src/services/finance/reversal.rs:265:31: [1m[33mwarning[0m: you seem to want to iterate on a map's keys
+svc/finance/src/services/finance/year_end.rs:402:55: [1m[33mwarning[0m: needlessly taken reference of both operands
+svc/finance/src/services/finance/year_end.rs:403:25: [1m[33mwarning[0m: needlessly taken reference of both operands
+svc/finance/src/modules/forecast_v53.rs:409:41: [1m[33mwarning[0m: useless use of `vec!`: help: you can use an array directly: `[0.0f64; 12]`
+svc/finance/src/modules/forecast_v53.rs:410:42: [1m[33mwarning[0m: useless use of `vec!`: help: you can use an array directly: `[0.0f64; 12]`
+svc/finance/src/modules/forecast_v53.rs:411:34: [1m[33mwarning[0m: useless use of `vec!`: help: you can use an array directly: `[0.0f64; 12]`
+svc/finance/src/modules/forecast_v53.rs:425:42: [1m[33mwarning[0m: useless use of `vec!`: help: you can use an array directly: `[1.0f64; 12]`
+svc/finance/src/modules/forecast_v53.rs:426:43: [1m[33mwarning[0m: useless use of `vec!`: help: you can use an array directly: `[1.0f64; 12]`
+svc/finance/src/modules/forecast_v53.rs:513:32: [1m[33mwarning[0m: useless use of `vec!`: help: you can use an array directly: `[0.0f64; 12]`
+svc/finance/src/modules/forecast_v53.rs:514:34: [1m[33mwarning[0m: useless use of `vec!`: help: you can use an array directly: `[0.0f64; 12]`
+[1m[33mwarning[0m: `topems-erp` (lib) generated 88 warnings (run `cargo clippy --fix --lib -p topems-erp -- --no-deps` to apply 63 suggestions)
+svc/erp/src/bin/erp-e2e-cli.rs:144:12: [1m[33mwarning[0m: very complex type used. Consider factoring parts into `type` definitions
+[1m[33mwarning[0m: `topems-erp` (bin "erp-e2e-cli") generated 1 warning
+[1m[33mwarning[0m: `topems-finance` (lib) generated 120 warnings (run `cargo clippy --fix --lib -p topems-finance -- --no-deps` to apply 46 suggestions)
+svc/erp/src/event_handlers/mod.rs:220:20: [1m[33mwarning[0m: very complex type used. Consider factoring parts into `type` definitions
+svc/erp/src/event_handlers/mod.rs:296:23: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `format!("销售订单{}确认收入", payload.order_no)`
+svc/erp/src/event_handlers/mod.rs:298:23: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `payload.order_id.to_string()`
+svc/erp/src/event_handlers/mod.rs:311:23: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `format!("销售订单{}应收账款", payload.order_no)`
+svc/erp/src/event_handlers/mod.rs:325:23: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `format!("销售订单{}销售收入", payload.order_no)`
+svc/erp/src/event_handlers/mod.rs:368:20: [1m[33mwarning[0m: very complex type used. Consider factoring parts into `type` definitions
+svc/erp/src/event_handlers/mod.rs:444:23: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `format!("采购订单{}确认入库", payload.order_no)`
+svc/erp/src/event_handlers/mod.rs:446:23: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `payload.order_id.to_string()`
+svc/erp/src/event_handlers/mod.rs:459:23: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `format!("采购订单{}原材料入库", payload.order_no)`
+svc/erp/src/event_handlers/mod.rs:473:23: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `format!("采购订单{}应付账款", payload.order_no)`
+svc/erp/src/event_handlers/mod.rs:802:19: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `payload.employee_id.to_string()`
+svc/erp/src/event_handlers/mod.rs:816:27: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `format!("员工{}入职培训费", payload.name)`
+svc/erp/src/event_handlers/mod.rs:829:27: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `format!("员工{}入职费用应付", payload.name)`
+svc/erp/src/event_handlers/mod.rs:959:19: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `payload.project_id.to_string()`
+svc/erp/src/event_handlers/mod.rs:974:27: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `format!("项目{}应收款", payload.project_name)`
+svc/erp/src/event_handlers/mod.rs:988:27: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `format!("项目{}完成收入", payload.project_name)`
+svc/erp/src/event_handlers/mod.rs:1103:15: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `payload.project_id.to_string()`
+svc/erp/src/event_handlers/mod.rs:1118:23: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `format!("项目{}结转成本", payload.project_name)`
+svc/erp/src/event_handlers/mod.rs:1132:23: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `format!("项目{}成本结转", payload.project_name)`
+svc/erp/src/event_handlers/mod.rs:1148:27: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `format!("项目{}结转利润", payload.project_name)`
+svc/erp/src/event_handlers/mod.rs:1394:15: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `payload.return_id.to_string()`
+svc/erp/src/event_handlers/mod.rs:1408:15: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `format!("退换货{}冲减收入", payload.return_no)`
+svc/erp/src/event_handlers/mod.rs:1424:15: [1m[33mwarning[0m: the borrowed expression implements the required traits: help: change this to: `format!("退换货{}退款给{}", payload.return_no, customer_label)`
+[1m[33mwarning[0m: `topems-erp` (bin "topems-erp") generated 110 warnings (87 duplicates) (run `cargo clippy --fix --bin "topems-erp" -p topems-erp -- --no-deps` to apply 21 suggestions)
+[1m[33mwarning[0m: `topems-finance` (bin "topems-finance") generated 120 warnings (120 duplicates)
+[1m[92m    Finished[0m `dev` profile [optimized + debuginfo] target(s) in 10.15s
