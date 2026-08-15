@@ -2506,6 +2506,7 @@
   "shared.customer_segmentation.k6": "分群条件",
   "shared.customer_segmentation.k7": "新建分群",
   "shared.customer_segmentation.k8": "分群详情",
+  "shared.customer_segmentation.k9": "例如：{\"industries\":[\"manufacturing\"],\"score_min\":60,\"statuses\":[\"active\"]}",
   "shared.dashboard_schema.k0": "总商机数",
   "shared.dashboard_schema.k1": "上月",
   "shared.dashboard_schema.k2": "赢单金额",

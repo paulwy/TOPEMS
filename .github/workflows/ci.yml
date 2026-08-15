@@ -103,6 +103,10 @@ jobs:
               - 'apps/web/src/i18n/**'
               - 'scripts/i18n/**'
               - 'scripts/ci/check-i18n*.cjs'
+              - 'scripts/ci/verify-glossary.cjs'
+              - 'apps/web/src/pages/**/*.{ts,tsx}'
+              - 'apps/web/src/components/**/*.{ts,tsx}'
+              - 'scripts/i18n/glossary.csv'
             docs:
               - 'docs/**'
               - '**/*.md'
@@ -520,11 +524,12 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Run i18n 综合 + Glossary 审计 (JSON 报告)
+      - name: Run i18n 综合 + Glossary + Hardcoded 审计 (JSON 报告)
         id: audit_json
         run: |
           node scripts/ci/check-i18n-quality.cjs --json > /tmp/i18n-audit.json || true
           node scripts/ci/verify-glossary.cjs --json > /tmp/glossary-audit.json || true
+          node scripts/i18n/scan-hardcoded-precise.cjs --json --details 0 > /tmp/hardcoded-audit.json || true
           echo "audit_done=true" >> $GITHUB_OUTPUT
 
       - name: Write i18n + Glossary audit summary
@@ -555,6 +560,16 @@ jobs:
             echo "_Glossary 加载 \`$GL_TERMS\` 条术语（含标准译法 + allowed_aliases 白名单）_" >> $GITHUB_STEP_SUMMARY
           else
             echo "| ④ Glossary TopN 非标准译法 | N/A | 0 | ⚪ |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -f /tmp/hardcoded-audit.json ]; then
+            HC_TOTAL=$(node -e "console.log(require('/tmp/hardcoded-audit.json').total || 0)")
+            HC_NS=$(node -e "console.log(require('/tmp/hardcoded-audit.json').namespaces_scanned || 0)")
+            echo "| ⑤ 源码硬编码 CJK（UI only） | $HC_TOTAL | 0 | $([ "$HC_TOTAL" -eq 0 ] && echo '✅' || echo '❌') |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "_扫描范围：\`apps/web/src\` 下全部 TS/TSX（含 pages/ / components/，已排除 locales / test / stories / mock / type-only 声明）；扫描 \`$HC_NS\` 个顶层模块_" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| ⑤ 源码硬编码 CJK（UI only） | N/A | 0 | ⚪ |" >> $GITHUB_STEP_SUMMARY
           fi
 
           if [ -f /tmp/i18n-audit.json ]; then
@@ -622,11 +637,42 @@ jobs:
             " >> $GITHUB_STEP_SUMMARY
           fi
 
+          if [ -f /tmp/hardcoded-audit.json ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 硬编码 CJK Top 违规模块 / 详情样本" >> $GITHUB_STEP_SUMMARY
+            node -e "
+              const d = require('/tmp/hardcoded-audit.json');
+              const sm = Object.entries(d.top_submodules || {});
+              const det = d.details || [];
+              if (sm.length === 0 && det.length === 0) {
+                console.log('_全部清零_');
+              } else {
+                if (sm.length > 0) {
+                  console.log('');
+                  console.log('**Top 30 违规子模块**');
+                  console.log('| 子模块 | 违规数 |');
+                  console.log('|--------|--------|');
+                  sm.slice(0, 30).forEach(([k, v]) => console.log('|', k, '|', v, '|'));
+                }
+                if (det.length > 0) {
+                  console.log('');
+                  console.log('**前 30 条详情样本**');
+                  console.log('| 文件 | 行 | 内容 |');
+                  console.log('|------|----|------|');
+                  det.slice(0, 30).forEach(s => console.log('|', s.file, '|', s.line, '|', s.content, '|'));
+                }
+              }
+            " >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: Run i18n 质量门禁 (strict 模式)
         run: node scripts/ci/check-i18n-quality.cjs --strict
 
       - name: Run Glossary 一致性门禁 (strict 模式)
         run: node scripts/ci/verify-glossary.cjs --strict
+
+      - name: Run Hardcoded CJK 门禁 (strict 模式 · 全量)
+        run: node scripts/i18n/scan-hardcoded-precise.cjs --strict --details 50
 
   frontend-typecheck:
     name: Frontend Type Check
@@ -1001,7 +1047,7 @@ jobs:
           echo "| Frontend Build & Bundle | ${{ needs.frontend-build.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Design System Check | ${{ needs.design-system-check.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Audit (V64) | ${{ needs.frontend-audit.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| i18n Quality Gate (R11 Z-P1) | ${{ needs.i18n-quality-gate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| i18n Quality Gate (R12 · 5-in-1: fake-en / key-alignment / mixed-structure / glossary / hardcoded) | ${{ needs.i18n-quality-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 

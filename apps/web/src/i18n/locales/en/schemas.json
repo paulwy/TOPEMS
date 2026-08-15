@@ -142,6 +142,7 @@
   "schemas.approval.k1": "HR Management",
   "schemas.approval.k2": "Financial Management",
   "schemas.approval.k3": "Legal Management",
+  "schemas.approval.k4": "IT Management",
   "schemas": {
     "accident": {
       "k0": "Under Investigation",

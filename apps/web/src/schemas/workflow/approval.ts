@@ -38,7 +38,7 @@ const WORKFLOW_TYPE_COLORS: Record<string, string> = {
   [i18n.t('schemas.approval.k1')]: 'success.main',
   [i18n.t('schemas.approval.k2')]: 'warning.main',
   [i18n.t('schemas.approval.k3')]: 'secondary.main',
-  IT管理: 'cyan.500',
+  [i18n.t('schemas.approval.k4')]: 'cyan.500',
 };
 
 const statusOptions = Object.entries(STATUS_LABELS).map(([value, label]) => ({

@@ -37,6 +37,7 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -225,37 +226,37 @@ interface ModuleInfo {
 const moduleConfigs: Omit<ModuleInfo, 'stats' | 'trend'>[] = [
   {
     id: 'development',
-    name: '研发管理',
+    name: i18n.t('bi.bi_analytics_page.k0'),
     icon: '🔬',
     color: 'from-blue-500 to-cyan-500',
   },
   {
     id: 'quality',
-    name: '质量管理',
+    name: i18n.t('bi.bi_analytics_page.k1'),
     icon: '✅',
     color: 'from-emerald-500 to-teal-500',
   },
   {
     id: 'production',
-    name: '生产数据',
+    name: i18n.t('bi.bi_analytics_page.k2'),
     icon: '🏭',
     color: 'from-amber-500 to-orange-500',
   },
   {
     id: 'laboratory',
-    name: '实验室',
+    name: i18n.t('bi.bi_analytics_page.k3'),
     icon: '🧪',
     color: 'from-violet-500 to-purple-500',
   },
   {
     id: 'ehs',
-    name: '安全环保',
+    name: i18n.t('bi.bi_analytics_page.k4'),
     icon: '🛡️',
     color: 'from-rose-500 to-pink-500',
   },
   {
     id: 'srm',
-    name: '供应链',
+    name: i18n.t('bi.bi_analytics_page.k5'),
     icon: '📦',
     color: 'from-cyan-500 to-blue-500',
   },
@@ -320,48 +321,72 @@ const BIAnalyticsPage = () => {
     const data = modulesData[moduleId] as Record<string, any>;
     if (!data) {
       const fallbackStats: Record<string, Record<string, string | number>> = {
-        development: { 项目总数: 120, 进行中: 45, 完成率: '85%' },
-        quality: { 检验总数: 3250, 合格率: '97.8%', 待处理: 70 },
-        production: { 批次总数: 450, 完成: 415, 效率: '92%' },
-        laboratory: { 样品总数: 2450, 完成检验: 2150, 仪器使用率: '87.5%' },
-        ehs: { 风险总数: 125, 高风险: 15, 安全事件: 18 },
-        srm: { 供应商总数: 280, 合格: 220, 平均评分: 4.5 },
+        development: {
+          [i18n.t('bi.analytics.stats.total_projects')]: 120,
+          [i18n.t('bi.analytics.stats.in_progress')]: 45,
+          [i18n.t('bi.analytics.stats.completion_rate')]: '85%',
+        },
+        quality: {
+          [i18n.t('bi.analytics.stats.total_inspections')]: 3250,
+          [i18n.t('bi.analytics.stats.pass_rate')]: '97.8%',
+          [i18n.t('bi.analytics.stats.pending')]: 70,
+        },
+        production: {
+          [i18n.t('bi.analytics.stats.total_batches')]: 450,
+          [i18n.t('bi.analytics.stats.completed')]: 415,
+          [i18n.t('bi.analytics.stats.efficiency')]: '92%',
+        },
+        laboratory: {
+          [i18n.t('bi.analytics.stats.total_samples')]: 2450,
+          [i18n.t('bi.analytics.stats.completed_tests')]: 2150,
+          [i18n.t('bi.analytics.stats.instrument_usage')]: '87.5%',
+        },
+        ehs: {
+          [i18n.t('bi.analytics.stats.total_risks')]: 125,
+          [i18n.t('bi.analytics.stats.high_risks')]: 15,
+          [i18n.t('bi.analytics.stats.incidents')]: 18,
+        },
+        srm: {
+          [i18n.t('bi.analytics.stats.total_suppliers')]: 280,
+          [i18n.t('bi.analytics.stats.qualified')]: 220,
+          [i18n.t('bi.analytics.stats.avg_rating')]: 4.5,
+        },
       };
       return fallbackStats[moduleId] || {};
     }
 
     const statsMap: Record<string, Record<string, string | number>> = {
       development: {
-        项目总数: data.total_projects || 0,
-        进行中: data.active_projects || 0,
-        完成率: data.project_status_distribution
+        [i18n.t('bi.analytics.stats.total_projects')]: data.total_projects || 0,
+        [i18n.t('bi.analytics.stats.in_progress')]: data.active_projects || 0,
+        [i18n.t('bi.analytics.stats.completion_rate')]: data.project_status_distribution
           ? `${Math.round(((data.project_status_distribution.completed || 0) / (data.total_projects || 1)) * 100)}%`
           : '0%',
       },
       quality: {
-        检验总数: data.total_inspections || 0,
-        合格率: data.pass_rate ? `${data.pass_rate}%` : '0%',
-        待处理: data.failed_inspections || 0,
+        [i18n.t('bi.analytics.stats.total_inspections')]: data.total_inspections || 0,
+        [i18n.t('bi.analytics.stats.pass_rate')]: data.pass_rate ? `${data.pass_rate}%` : '0%',
+        [i18n.t('bi.analytics.stats.pending')]: data.failed_inspections || 0,
       },
       production: {
-        批次总数: data.total_production_batches || 0,
-        完成: data.completed_batches || 0,
-        效率: data.production_efficiency ? `${data.production_efficiency}%` : '0%',
+        [i18n.t('bi.analytics.stats.total_batches')]: data.total_production_batches || 0,
+        [i18n.t('bi.analytics.stats.completed')]: data.completed_batches || 0,
+        [i18n.t('bi.analytics.stats.efficiency')]: data.production_efficiency ? `${data.production_efficiency}%` : '0%',
       },
       laboratory: {
-        样品总数: data.total_samples || 0,
-        完成检验: data.completed_tests || 0,
-        仪器使用率: data.instrument_usage_rate ? `${data.instrument_usage_rate}%` : '0%',
+        [i18n.t('bi.analytics.stats.total_samples')]: data.total_samples || 0,
+        [i18n.t('bi.analytics.stats.completed_tests')]: data.completed_tests || 0,
+        [i18n.t('bi.analytics.stats.instrument_usage')]: data.instrument_usage_rate ? `${data.instrument_usage_rate}%` : '0%',
       },
       ehs: {
-        风险总数: data.total_risks || 0,
-        高风险: data.high_risks || 0,
-        安全事件: data.incidents || 0,
+        [i18n.t('bi.analytics.stats.total_risks')]: data.total_risks || 0,
+        [i18n.t('bi.analytics.stats.high_risks')]: data.high_risks || 0,
+        [i18n.t('bi.analytics.stats.incidents')]: data.incidents || 0,
       },
       srm: {
-        供应商总数: data.total_suppliers || 0,
-        合格: data.qualified || 0,
-        平均评分: data.avg_rating || 0,
+        [i18n.t('bi.analytics.stats.total_suppliers')]: data.total_suppliers || 0,
+        [i18n.t('bi.analytics.stats.qualified')]: data.qualified || 0,
+        [i18n.t('bi.analytics.stats.avg_rating')]: data.avg_rating || 0,
       },
     };
     return statsMap[moduleId] || {};
@@ -616,7 +641,7 @@ const BIAnalyticsPage = () => {
           </Alert>
         )}
 
-        {/* 模块卡片列表 */}
+        {/* Module card list */}
         <Box
           sx={{
             display: 'grid',
@@ -643,7 +668,7 @@ const BIAnalyticsPage = () => {
           ))}
         </Box>
 
-        {/* 系统状态 */}
+        {/* System status */}
         <Box
           sx={{
             bgcolor: 'background.paper',
@@ -658,7 +683,7 @@ const BIAnalyticsPage = () => {
             variant='h6'
             sx={{ fontWeight: 600, color: 'grey.800', mb: 2 }}
           >
-            系统状态
+            {t('bi.bi_analytics_page.k6')}
           </Typography>
           <Box
             sx={{
@@ -682,7 +707,7 @@ const BIAnalyticsPage = () => {
                 variant='body2'
                 sx={{ color: 'grey.600' }}
               >
-                数据更新时间
+                {t('bi.bi_analytics_page.k7')}
               </Typography>
               <Typography
                 variant='body2'
@@ -705,7 +730,7 @@ const BIAnalyticsPage = () => {
                 variant='body2'
                 sx={{ color: 'grey.600' }}
               >
-                系统状态
+                {t('bi.bi_analytics_page.k6')}
               </Typography>
               <Typography
                 variant='caption'
@@ -718,7 +743,7 @@ const BIAnalyticsPage = () => {
                   borderRadius: 1,
                 }}
               >
-                正常运行
+                {t('bi.bi_analytics_page.k8')}
               </Typography>
             </Box>
             <Box
@@ -735,7 +760,7 @@ const BIAnalyticsPage = () => {
                 variant='body2'
                 sx={{ color: 'grey.600' }}
               >
-                数据源连接
+                {t('bi.bi_analytics_page.k9')}
               </Typography>
               <Typography
                 variant='caption'
@@ -748,7 +773,7 @@ const BIAnalyticsPage = () => {
                   borderRadius: 1,
                 }}
               >
-                已连接
+                {t('bi.bi_analytics_page.k10')}
               </Typography>
             </Box>
           </Box>

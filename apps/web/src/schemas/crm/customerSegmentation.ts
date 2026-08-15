@@ -37,7 +37,7 @@ export const customerSegmentationSchema: EntitySchema = {
       label: i18n.t('shared.customer_segmentation.json_4'),
       type: 'textarea',
       required: true,
-      placeholder: '例如：{"industries":["manufacturing"],"score_min":60,"statuses":["active"]}',
+      placeholder: i18n.t('shared.customer_segmentation.k9'),
       showInList: false,
     },
   ],
