@@ -151,6 +151,84 @@ const isPublicPath = (url: string): boolean => {
   return PUBLIC_API_PATTERNS.some((p) => url === p || url.endsWith(p));
 };
 
+// Notification 只读接口（GET /notifications/*）：
+// - GlobalLayout 在用户未登录时就会调用（未读角标、通知列表）。
+// - 后端路由要求 Extension<Claims>，无 token 时返回 401，Axios 会在浏览器控制台
+//   打印完整错误堆栈，既干扰调试也制造“前端报错”的用户感知。
+// - 这里声明这些路径在缺 token / 401 时应降级为默认空数据，而不是 reject / 抛错。
+// 匹配模式：相对路径（不含 baseURL），与 apiClient.notification.get('/notifications/...') 对齐。
+const NOTIFICATION_READ_GRACE_PATHS: readonly RegExp[] = [
+  /^\/notifications\/unread-count(?:\?.*)?$/,
+  /^\/notifications\/unread(?:\?.*)?$/,
+  /^\/notifications(?:\?.*)?$/,
+  /^\/notifications\/stats\/me(?:\?.*)?$/,
+  /^\/notifications\/archived(?:\?.*)?$/,
+];
+
+const isNotificationGraceRead = (
+  method: string | undefined,
+  url: string,
+  baseURL: string | undefined
+): boolean => {
+  if ((method || 'GET').toUpperCase() !== 'GET') return false;
+  // 仅对 notification 子客户端生效：baseURL 以 /api/communication/notification 结尾
+  if (!baseURL || !baseURL.endsWith('/api/communication/notification')) return false;
+  return NOTIFICATION_READ_GRACE_PATHS.some((re) => re.test(url));
+};
+
+const buildNotificationGraceFallback = (
+  relativeUrl: string,
+  pageParam: unknown,
+  pageSizeParam: unknown
+): ApiResponse => {
+  const page = typeof pageParam === 'number' ? pageParam : Number(pageParam) || 1;
+  const pagesize = typeof pageSizeParam === 'number' ? pageSizeParam : Number(pageSizeParam) || 20;
+  // unread-count: number
+  if (relativeUrl.startsWith('/notifications/unread-count')) {
+    return {
+      code: 0,
+      success: true,
+      data: 0,
+      message: 'Skipped (no auth token)',
+      timestamp: Date.now(),
+    };
+  }
+  // unread: Notification[]
+  if (relativeUrl.startsWith('/notifications/unread')) {
+    return {
+      code: 0,
+      success: true,
+      data: [],
+      message: 'Skipped (no auth token)',
+      timestamp: Date.now(),
+    };
+  }
+  // stats/me: object, 返回空
+  if (relativeUrl.includes('/stats/me')) {
+    return {
+      code: 0,
+      success: true,
+      data: { unread: 0, total: 0, today: 0 },
+      message: 'Skipped (no auth token)',
+      timestamp: Date.now(),
+    };
+  }
+  // archived / notifications list: paginated
+  return {
+    code: 0,
+    success: true,
+    data: {
+      notifications: [],
+      total: 0,
+      page,
+      pagesize,
+      unread_count: 0,
+    },
+    message: 'Skipped (no auth token)',
+    timestamp: Date.now(),
+  };
+};
+
 interface CreateAxiosClientOptions {
   baseURL: string;
   timeout?: number;
@@ -223,6 +301,29 @@ export const createAxiosClient = ({
 
       if (token && !requestConfig.headers['Authorization'] && !isPublicPath(url)) {
         requestConfig.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // Notification 只读接口（GET /notifications/*）在缺 token 时本地短路返回空数据：
+      // - 不发网络请求，避免触发后端 401；
+      // - 不进入 reject 链路，避免 axios / xhr 在控制台打印 AxiosError 堆栈。
+      if (!token && isNotificationGraceRead(requestConfig.method, url, requestBaseURL)) {
+        const fallback = buildNotificationGraceFallback(
+          url,
+          requestConfig.params?.page,
+          requestConfig.params?.pagesize || requestConfig.params?.pageSize
+        );
+        apiLogger.debug(`[Notification Grace] Skip ${url} (no token), returning fallback`);
+        // 通过自定义 adapter 直接返回成功响应，绕开真实网络请求和 xhr 错误回调
+        requestConfig.adapter = () =>
+          Promise.resolve({
+            data: fallback,
+            status: 200,
+            statusText: 'OK',
+            headers: { 'content-type': 'application/json' },
+            config: requestConfig,
+          });
+        // CSRF 跳过（adapter 已短路）
+        return requestConfig;
       }
 
       if (!requestConfig.headers['X-Request-Start']) {
@@ -360,6 +461,19 @@ export const createAxiosClient = ({
       }
 
       if (error.response?.status === 401) {
+        // Notification 只读接口：401 不 reject（不打印堆栈），直接返回默认空数据
+        if (isNotificationGraceRead(error.config?.method, url, baseURL)) {
+          const fallback = buildNotificationGraceFallback(
+            url,
+            error.config?.params?.page,
+            error.config?.params?.pagesize || error.config?.params?.pageSize
+          );
+          apiLogger.debug(
+            `[Notification Grace] 401 on ${fullUrl}, returning fallback instead of rejecting`
+          );
+          return returnData ? fallback : { data: fallback, status: 200, statusText: 'OK', headers: {}, config: error.config };
+        }
+
         const currentPath = window.location.pathname;
         const tokenBefore = localStorage.getItem('token');
         const requestIsAuthPublicApi = isPublicPath(url);

@@ -343,7 +343,7 @@ export const adminNavConfig: ModuleNavConfig = {
   source: 'core',
   suite: 'enterprise',
   status: 'online',
-  order: 1,
+  order: 2,
   description: i18n.t('shared.config.k24'),
   navItems: [
     {
