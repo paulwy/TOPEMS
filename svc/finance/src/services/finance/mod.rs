@@ -13,6 +13,7 @@ mod approval_configs;
 mod aux_accounts;
 mod collection;
 mod database;
+mod erp_e2e;
 mod payable;
 mod payment;
 mod payment_record;
@@ -27,6 +28,7 @@ pub mod u8_import;
 mod voucher;
 pub mod voucher_generation;
 pub mod voucher_template;
+mod year_end;
 
 pub use reconciliation::ReconciliationService;
 
