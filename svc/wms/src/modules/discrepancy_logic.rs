@@ -613,4 +613,113 @@ mod tests {
         assert!(approx_eq(summary.total_value, 100.0));
         assert_eq!(summary.total_count, 4);
     }
+
+    // ========== 扩展覆盖：边界值与结构 ==========
+
+    #[test]
+    fn test_calculate_discrepancy_negative_inputs() {
+        // 系统量与盘点量都为负：仍按公式计算
+        let (diff, dtype) = calculate_discrepancy(-50.0, -30.0);
+        assert!(approx_eq(diff, 20.0));
+        assert_eq!(dtype, "over");
+    }
+
+    #[test]
+    fn test_calculate_discrepancy_value_zero_price() {
+        // 单价为 0 → 差异金额为 0
+        assert_eq!(calculate_discrepancy_value(100.0, 0.0), 0.0);
+        assert_eq!(calculate_discrepancy_value(-100.0, 0.0), 0.0);
+    }
+
+    #[test]
+    fn test_calculate_variance_rate_negative_discrepancy() {
+        // 差异量为负，绝对值后仍为正百分比
+        let r = calculate_variance_rate(-5.0, 100.0);
+        assert!(approx_eq(r, 5.0));
+    }
+
+    #[test]
+    fn test_calculate_accuracy_rate_negative_total_returns_zero() {
+        // total_items <= 0 → 除零保护
+        assert_eq!(calculate_accuracy_rate(5, 0), 0.0);
+        assert_eq!(calculate_accuracy_rate(5, -10), 0.0);
+    }
+
+    #[test]
+    fn test_calculate_completion_rate_negative_total_returns_zero() {
+        assert_eq!(calculate_completion_rate(5, 0), 0.0);
+        assert_eq!(calculate_completion_rate(5, -10), 0.0);
+    }
+
+    #[test]
+    fn test_summarize_discrepancies_single_uncounted() {
+        let items = vec![DiscrepancyItem {
+            system_quantity: 100.0,
+            counted_quantity: None,
+            unit_price: 10.0,
+        }];
+        let s = summarize_discrepancies(&items);
+        assert_eq!(s.total_items, 1);
+        assert_eq!(s.counted_items, 0);
+        assert_eq!(s.uncounted_count, 1);
+        assert_eq!(s.accurate_items, 0);
+        assert_eq!(s.completion_rate, 0.0);
+        assert_eq!(s.accuracy_rate, 0.0);
+    }
+
+    #[test]
+    fn test_classify_abc_negative_input_returns_a() {
+        // 负百分比 < 80 → A（半开区间 [0, 80) 实际接受任意 < 80 的值）
+        assert_eq!(classify_abc(-1.0), "A");
+        assert_eq!(classify_abc(-100.0), "A");
+    }
+
+    #[test]
+    fn test_classify_abc_just_below_a_threshold() {
+        // 79.999 仍归 A（半开区间 [0, 80)）
+        assert_eq!(classify_abc(79.999), "A");
+    }
+
+    #[test]
+    fn test_discrepancy_item_partial_eq() {
+        let a = DiscrepancyItem {
+            system_quantity: 10.0,
+            counted_quantity: Some(8.0),
+            unit_price: 1.5,
+        };
+        let b = a.clone();
+        assert_eq!(a, b);
+        let c = DiscrepancyItem {
+            system_quantity: 10.0,
+            counted_quantity: None,
+            unit_price: 1.5,
+        };
+        assert_ne!(a, c);
+    }
+
+    #[test]
+    fn test_abc_result_partial_eq_with_clone() {
+        let r = AbcResult {
+            code: "X".into(),
+            value: 100.0,
+            cumulative_percentage: 50.0,
+            category: "A",
+        };
+        assert_eq!(r, r.clone());
+    }
+
+    #[test]
+    fn test_abc_summary_partial_eq_with_clone() {
+        let s = AbcSummary {
+            a_count: 1,
+            b_count: 2,
+            c_count: 3,
+            a_value: 100.0,
+            b_value: 50.0,
+            c_value: 10.0,
+            total_value: 160.0,
+            total_count: 6,
+        };
+        assert_eq!(s, s.clone());
+    }
 }
