@@ -80,7 +80,7 @@ struct SensitiveVisitor<'a> {
 }
 
 impl<'a> Visit for SensitiveVisitor<'a> {
-    fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn std::fmt::Debug) {
+    fn record_debug(&mut self, field: &tracing::field::Field, _value: &dyn std::fmt::Debug) {
         let field_name = field.name().to_lowercase();
         if self.sensitive_keys.contains(&field_name) {
             self.found_sensitive = true;
@@ -93,7 +93,7 @@ impl<'a> Visit for SensitiveVisitor<'a> {
         }
     }
 
-    fn record_str(&mut self, field: &tracing::field::Field, value: &str) {
+    fn record_str(&mut self, field: &tracing::field::Field, _value: &str) {
         let field_name = field.name().to_lowercase();
         if self.sensitive_keys.contains(&field_name) {
             self.found_sensitive = true;
