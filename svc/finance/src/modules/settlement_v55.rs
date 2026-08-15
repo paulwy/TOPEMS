@@ -52,7 +52,39 @@ pub enum ValidationError {
     NegativeAmount(String),
     InvalidCurrency(String),
     SelfTransfer(String, String),
-    AmountAboveLimit { amount: f64, limit: f64 },
+    AmountAboveLimit {
+        amount: f64,
+        limit: f64,
+    },
+    CurrencyNotWhitelisted(String),
+    StaleReconciliation {
+        tx_age_days: i64,
+        max_age_days: i64,
+    },
+    ScheduledPaymentInPast {
+        scheduled_at: DateTime<Utc>,
+        now: DateTime<Utc>,
+    },
+    InvoiceTaxMismatch {
+        header_tax: f64,
+        items_tax: f64,
+    },
+    InvoiceItemsTotalMismatch {
+        header_total: f64,
+        items_total: f64,
+    },
+    InvoiceDateInFuture {
+        invoice_date: DateTime<Utc>,
+        now: DateTime<Utc>,
+    },
+    ReconEmptyInput {
+        bank_count: usize,
+        system_count: usize,
+    },
+    ReconCurrencyMismatch {
+        bank_currency: String,
+        system_currency: String,
+    },
 }
 
 impl fmt::Display for ValidationError {
@@ -61,18 +93,258 @@ impl fmt::Display for ValidationError {
             ValidationError::InvalidStatus(msg) => write!(f, "invalid status: {}", msg),
             ValidationError::EmptyField(field) => write!(f, "empty field: {}", field),
             ValidationError::NegativeAmount(field) => write!(f, "negative amount: {}", field),
-            ValidationError::InvalidCurrency(code) => write!(f, "无效币种代码: {}", code),
+            ValidationError::InvalidCurrency(code) => write!(f, "invalid currency code: {}", code),
             ValidationError::SelfTransfer(from, to) => {
-                write!(f, "禁止向自己转账: from={} to={}", from, to)
+                write!(f, "self-transfer not allowed: from={} to={}", from, to)
             }
             ValidationError::AmountAboveLimit { amount, limit } => {
-                write!(f, "单笔支付金额超限: {} > 上限 {}", amount, limit)
+                write!(f, "amount above limit: {} > limit {}", amount, limit)
             }
+            ValidationError::CurrencyNotWhitelisted(code) => {
+                write!(f, "currency not in whitelist: {}", code)
+            }
+            ValidationError::StaleReconciliation {
+                tx_age_days,
+                max_age_days,
+            } => write!(
+                f,
+                "stale reconciliation: transaction {} days old > max {}",
+                tx_age_days, max_age_days
+            ),
+            ValidationError::ScheduledPaymentInPast { scheduled_at, now } => write!(
+                f,
+                "scheduled payment in the past: scheduled={} now={}",
+                scheduled_at, now
+            ),
+            ValidationError::InvoiceTaxMismatch {
+                header_tax,
+                items_tax,
+            } => write!(
+                f,
+                "invoice tax mismatch: header_tax={} items_tax={}",
+                header_tax, items_tax
+            ),
+            ValidationError::InvoiceItemsTotalMismatch {
+                header_total,
+                items_total,
+            } => write!(
+                f,
+                "invoice items total mismatch: header_total={} items_total={}",
+                header_total, items_total
+            ),
+            ValidationError::InvoiceDateInFuture { invoice_date, now } => write!(
+                f,
+                "invoice date in future: invoice_date={} now={}",
+                invoice_date, now
+            ),
+            ValidationError::ReconEmptyInput {
+                bank_count,
+                system_count,
+            } => write!(
+                f,
+                "reconciliation empty input: bank_transactions={} system_records={}",
+                bank_count, system_count
+            ),
+            ValidationError::ReconCurrencyMismatch {
+                bank_currency,
+                system_currency,
+            } => write!(
+                f,
+                "reconciliation currency mismatch: bank={} system={}",
+                bank_currency, system_currency
+            ),
         }
     }
 }
 
 impl std::error::Error for ValidationError {}
+
+// ==================== Prevalidation 纯函数前置校验层 ====================
+
+impl InitiatePaymentRequest {
+    /// 电子支付请求 → 4 联全量前置校验：initiate / currency / no-self-transfer / amount-limit
+    /// （validate_currency 使用白名单严格模式；validate_amount_limit 默认 10^8）
+    pub fn prevalidate_payment(
+        &self,
+        amount_limit: Option<f64>,
+        strict_currency_whitelist: bool,
+    ) -> Result<(), ValidationError> {
+        self.validate_initiate()?;
+        self.validate_currency()?;
+        if strict_currency_whitelist {
+            self.validate_currency_whitelist()?;
+        }
+        self.validate_no_self_transfer()?;
+        self.validate_amount_limit(amount_limit)?;
+        Ok(())
+    }
+
+    /// 币种白名单严格模式：代码长度/大写通过后，必须命中 VALID_CURRENCIES_WHITELIST
+    pub fn validate_currency_whitelist(&self) -> Result<(), ValidationError> {
+        match &self.currency {
+            None => Ok(()),
+            Some(code) => {
+                if !Self::VALID_CURRENCIES_WHITELIST.contains(&code.as_str()) {
+                    return Err(ValidationError::CurrencyNotWhitelisted(code.clone()));
+                }
+                Ok(())
+            }
+        }
+    }
+
+    /// 调度支付额外校验：scheduled_at 不能早于给定的当前时间（可注入）
+    pub fn validate_scheduled_at(
+        scheduled_at: DateTime<Utc>,
+        now: DateTime<Utc>,
+    ) -> Result<(), ValidationError> {
+        if scheduled_at < now {
+            return Err(ValidationError::ScheduledPaymentInPast { scheduled_at, now });
+        }
+        Ok(())
+    }
+}
+
+impl ReconcileBatchRequest {
+    /// 对账批处理纯函数校验：
+    /// - 输入非空（至少 1 条 each）
+    /// - 交易日期不得超过 max_age_days（stale 风控）
+    /// - 同一索引上的银行交易与系统记录币种一致（减少伪匹配）
+    pub fn prevalidate_reconciliation(
+        &self,
+        now: DateTime<Utc>,
+        max_age_days: Option<i64>,
+        check_currency: bool,
+    ) -> Result<(), ValidationError> {
+        let b = self.bank_transactions.len();
+        let s = self.system_records.len();
+        if b == 0 || s == 0 {
+            return Err(ValidationError::ReconEmptyInput {
+                bank_count: b,
+                system_count: s,
+            });
+        }
+        if let Some(max) = max_age_days {
+            for tx in &self.bank_transactions {
+                let age = (now - tx.date).num_days();
+                if age > max {
+                    return Err(ValidationError::StaleReconciliation {
+                        tx_age_days: age,
+                        max_age_days: max,
+                    });
+                }
+            }
+            for tx in &self.system_records {
+                let age = (now - tx.date).num_days();
+                if age > max {
+                    return Err(ValidationError::StaleReconciliation {
+                        tx_age_days: age,
+                        max_age_days: max,
+                    });
+                }
+            }
+        }
+        if check_currency {
+            let n = b.min(s);
+            for i in 0..n {
+                let bc = &self.bank_transactions[i].currency;
+                let sc = &self.system_records[i].currency;
+                if bc != sc {
+                    return Err(ValidationError::ReconCurrencyMismatch {
+                        bank_currency: bc.clone(),
+                        system_currency: sc.clone(),
+                    });
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+impl ReconcileSingleRequest {
+    /// 单笔对账纯函数校验（同上规则）
+    pub fn prevalidate(
+        &self,
+        now: DateTime<Utc>,
+        max_age_days: Option<i64>,
+        check_currency: bool,
+    ) -> Result<(), ValidationError> {
+        let batch = ReconcileBatchRequest {
+            bank_transactions: vec![self.bank_transaction.clone()],
+            system_records: vec![self.system_record.clone()],
+        };
+        batch.prevalidate_reconciliation(now, max_age_days, check_currency)
+    }
+}
+
+impl InvoiceWithItems {
+    /// 发票整单纯函数前置校验：
+    /// - 过账前状态必须 Verified
+    /// - 明细合计 = 总表 total_amount（容差 0.01；无明细跳过）
+    /// - 明细税额合计 = 总表 tax_amount（容差 0.01；无明细跳过）
+    /// - invoice_date 不得晚于 now（防止未来日期发票提前入账）
+    pub fn prevalidate_post(
+        &self,
+        now: DateTime<Utc>,
+        allow_future_date: bool,
+    ) -> Result<(), ValidationError> {
+        self.invoice.validate_post()?;
+        if !allow_future_date && self.invoice.invoice_date > now {
+            return Err(ValidationError::InvoiceDateInFuture {
+                invoice_date: self.invoice.invoice_date,
+                now,
+            });
+        }
+        if !self.items.is_empty() {
+            let items_total: f64 = self.items.iter().map(|i| i.amount).sum();
+            let tol = 0.01;
+            if (items_total - self.invoice.total_amount).abs() > tol {
+                return Err(ValidationError::InvoiceItemsTotalMismatch {
+                    header_total: self.invoice.total_amount,
+                    items_total,
+                });
+            }
+            let items_tax: f64 = self.items.iter().map(|i| i.amount * i.tax_rate).sum();
+            if (items_tax - self.invoice.tax_amount).abs() > tol {
+                return Err(ValidationError::InvoiceTaxMismatch {
+                    header_tax: self.invoice.tax_amount,
+                    items_tax,
+                });
+            }
+        }
+        Ok(())
+    }
+
+    /// 发票识别后整单校验（不强制状态=Verified）：
+    /// - 明细合计对齐；
+    /// - 税额合计对齐；
+    /// - 发票号/供应商/vat_number 非空（前端已有字段校验但在模型层再兜底）
+    pub fn prevalidate_recognize(&self) -> Result<(), ValidationError> {
+        if self.invoice.number.trim().is_empty() {
+            return Err(ValidationError::EmptyField("invoice.number".into()));
+        }
+        if self.invoice.vendor.trim().is_empty() {
+            return Err(ValidationError::EmptyField("invoice.vendor".into()));
+        }
+        if !self.items.is_empty() {
+            let items_total: f64 = self.items.iter().map(|i| i.amount).sum();
+            let tol = 0.01;
+            if (items_total - self.invoice.total_amount).abs() > tol {
+                return Err(ValidationError::InvoiceItemsTotalMismatch {
+                    header_total: self.invoice.total_amount,
+                    items_total,
+                });
+            }
+            let items_tax: f64 = self.items.iter().map(|i| i.amount * i.tax_rate).sum();
+            if (items_tax - self.invoice.tax_amount).abs() > tol {
+                return Err(ValidationError::InvoiceTaxMismatch {
+                    header_tax: self.invoice.tax_amount,
+                    items_tax,
+                });
+            }
+        }
+        Ok(())
+    }
+}
 
 fn get_tenant_id(claims: &Claims) -> Uuid {
     claims
@@ -609,6 +881,9 @@ impl AutoReconciler {
         tenant_id: Uuid,
         req: ReconcileBatchRequest,
     ) -> Result<Vec<ReconciliationResult>, sqlx::Error> {
+        let now = Utc::now();
+        req.prevalidate_reconciliation(now, Some(180), true)
+            .map_err(|_| sqlx::Error::RowNotFound)?;
         let rules = Self::list_rules(pool, tenant_id).await?;
         let mut results = Vec::new();
 
@@ -653,6 +928,9 @@ impl AutoReconciler {
         tenant_id: Uuid,
         req: ReconcileSingleRequest,
     ) -> Result<ReconciliationResult, sqlx::Error> {
+        let now = Utc::now();
+        req.prevalidate(now, Some(180), true)
+            .map_err(|_| sqlx::Error::RowNotFound)?;
         let rules = Self::list_rules(pool, tenant_id).await?;
         let result = Self::try_match(&req.bank_transaction, &req.system_record, &rules);
 
@@ -1167,8 +1445,12 @@ impl InvoiceRecognizer {
         .fetch_all(pool)
         .await?;
 
-        invoice
-            .validate_items_total(&items)
+        let with_items = InvoiceWithItems {
+            invoice: invoice.clone(),
+            items,
+        };
+        with_items
+            .prevalidate_recognize()
             .map_err(|_| sqlx::Error::RowNotFound)?;
 
         let now = Utc::now();
@@ -1243,11 +1525,22 @@ impl InvoiceRecognizer {
         .fetch_one(pool)
         .await?;
 
-        invoice
-            .validate_post()
-            .map_err(|_| sqlx::Error::RowNotFound)?;
+        let items: Vec<InvoiceItem> = sqlx::query_as(
+            "SELECT id, invoice_id, description, quantity, unit_price, amount, tax_rate FROM finance_v55_invoice_items WHERE invoice_id = $1 AND tenant_id = $2",
+        )
+        .bind(invoice_id)
+        .bind(tenant_id)
+        .fetch_all(pool)
+        .await?;
 
+        let with_items = InvoiceWithItems {
+            invoice: invoice.clone(),
+            items,
+        };
         let now = Utc::now();
+        with_items
+            .prevalidate_post(now, false)
+            .map_err(|_| sqlx::Error::RowNotFound)?;
         sqlx::query_as(
             r#"UPDATE finance_v55_invoices
             SET status = 'posted', posted_at = $1
@@ -1370,13 +1663,7 @@ impl ElectronicPaymentProcessor {
         tenant_id: Uuid,
         req: InitiatePaymentRequest,
     ) -> Result<PaymentInitiationResult, sqlx::Error> {
-        req.validate_initiate()
-            .map_err(|_| sqlx::Error::RowNotFound)?;
-        req.validate_currency()
-            .map_err(|_| sqlx::Error::RowNotFound)?;
-        req.validate_no_self_transfer()
-            .map_err(|_| sqlx::Error::RowNotFound)?;
-        req.validate_amount_limit(None)
+        req.prevalidate_payment(None, true)
             .map_err(|_| sqlx::Error::RowNotFound)?;
         let now = Utc::now();
         let method_str = req.method.unwrap_or_else(|| "bank_transfer".to_string());
@@ -1522,7 +1809,10 @@ impl ElectronicPaymentProcessor {
         req: InitiatePaymentRequest,
         scheduled_at: DateTime<Utc>,
     ) -> Result<PaymentRequest, sqlx::Error> {
-        req.validate_initiate()
+        let now = Utc::now();
+        req.prevalidate_payment(None, true)
+            .map_err(|_| sqlx::Error::RowNotFound)?;
+        InitiatePaymentRequest::validate_scheduled_at(scheduled_at, now)
             .map_err(|_| sqlx::Error::RowNotFound)?;
         let method_str = req.method.unwrap_or_else(|| "bank_transfer".to_string());
         let currency = req.currency.unwrap_or_else(|| "CNY".to_string());
@@ -2873,7 +3163,7 @@ mod tests {
         assert!(result.is_err());
         let err = result.unwrap_err();
         assert!(matches!(err, ValidationError::InvalidCurrency(_)));
-        assert!(format!("{}", err).contains("币种"));
+        assert!(format!("{}", err).contains("currency"));
     }
 
     #[test]
@@ -2884,7 +3174,7 @@ mod tests {
         assert!(result.is_err());
         let err = result.unwrap_err();
         assert!(matches!(err, ValidationError::InvalidCurrency(_)));
-        assert!(format!("{}", err).contains("币种"));
+        assert!(format!("{}", err).contains("currency"));
     }
 
     #[test]
@@ -2895,7 +3185,7 @@ mod tests {
         assert!(result.is_err());
         let err = result.unwrap_err();
         assert!(matches!(err, ValidationError::InvalidCurrency(_)));
-        assert!(format!("{}", err).contains("币种"));
+        assert!(format!("{}", err).contains("currency"));
     }
 
     // ========== B. validate_no_self_transfer ==========
@@ -2917,7 +3207,7 @@ mod tests {
         assert!(result.is_err());
         let err = result.unwrap_err();
         assert!(matches!(err, ValidationError::SelfTransfer(_, _)));
-        assert!(format!("{}", err).contains("自己转账"));
+        assert!(format!("{}", err).contains("self-transfer"));
     }
 
     #[test]
@@ -2929,7 +3219,7 @@ mod tests {
         assert!(result.is_err());
         let err = result.unwrap_err();
         assert!(matches!(err, ValidationError::SelfTransfer(_, _)));
-        assert!(format!("{}", err).contains("自己转账"));
+        assert!(format!("{}", err).contains("self-transfer"));
     }
 
     #[test]
@@ -2960,7 +3250,7 @@ mod tests {
         assert!(result.is_err());
         let err = result.unwrap_err();
         assert!(matches!(err, ValidationError::AmountAboveLimit { .. }));
-        assert!(format!("{}", err).contains("超限"));
+        assert!(format!("{}", err).contains("limit"));
     }
 
     #[test]
@@ -2978,7 +3268,7 @@ mod tests {
         assert!(result.is_err());
         let err = result.unwrap_err();
         assert!(matches!(err, ValidationError::AmountAboveLimit { .. }));
-        assert!(format!("{}", err).contains("上限"));
+        assert!(format!("{}", err).contains("limit"));
     }
 
     // ========== D. 综合链条 validate_all ==========
@@ -3026,7 +3316,7 @@ mod tests {
         assert!(result.is_err());
         let err = result.unwrap_err();
         assert!(matches!(err, ValidationError::InvalidCurrency(_)));
-        assert!(format!("{}", err).contains("币种"));
+        assert!(format!("{}", err).contains("currency"));
     }
 
     #[test]
@@ -3037,6 +3327,617 @@ mod tests {
         assert!(result.is_err());
         let err = result.unwrap_err();
         assert!(matches!(err, ValidationError::AmountAboveLimit { .. }));
-        assert!(format!("{}", err).contains("超限"));
+        assert!(format!("{}", err).contains("limit"));
+    }
+
+    // ========== Prevalidation pure function unit tests (新增 28) ==========
+
+    // --- 支付：prevalidate_payment 新增组合模式 ---
+    fn strict_ok() -> InitiatePaymentRequest {
+        InitiatePaymentRequest {
+            amount: 1000.0,
+            currency: Some("CNY".into()),
+            from_account: "A1".into(),
+            to_account: "A2".into(),
+            method: Some("bank_transfer".into()),
+            reference: "REF-X".into(),
+        }
+    }
+
+    #[test]
+    fn pv_payment_strict_ok_cny_usd_eur_sgd() {
+        for code in ["CNY", "USD", "EUR", "SGD"] {
+            let mut r = strict_ok();
+            r.currency = Some(code.into());
+            assert!(r.prevalidate_payment(None, true).is_ok());
+        }
+    }
+
+    #[test]
+    fn pv_payment_strict_currency_whitelist_hit() {
+        for code in [
+            "CNY", "USD", "EUR", "JPY", "GBP", "HKD", "AUD", "CAD", "SGD", "NZD",
+        ] {
+            let mut r = strict_ok();
+            r.currency = Some(code.into());
+            assert!(r.prevalidate_payment(None, true).is_ok());
+        }
+    }
+
+    #[test]
+    fn pv_payment_strict_currency_not_whitelisted_err() {
+        let mut r = strict_ok();
+        r.currency = Some("KRW".into());
+        let e = r.prevalidate_payment(None, true).unwrap_err();
+        assert!(matches!(e, ValidationError::CurrencyNotWhitelisted(_)));
+        assert!(format!("{}", e).contains("KRW"));
+    }
+
+    #[test]
+    fn pv_payment_non_strict_whitelist_skipped_krw_ok() {
+        let mut r = strict_ok();
+        r.currency = Some("KRW".into());
+        // Non-strict：只校验格式（长度 + 大写通过即可），不查白名单
+        assert!(r.prevalidate_payment(None, false).is_ok());
+    }
+
+    #[test]
+    fn pv_payment_len4_currency_err() {
+        let mut r = strict_ok();
+        r.currency = Some("CNY1".into());
+        let e = r.prevalidate_payment(None, false).unwrap_err();
+        assert!(matches!(e, ValidationError::InvalidCurrency(_)));
+    }
+
+    #[test]
+    fn pv_payment_empty_from_account_err() {
+        let mut r = strict_ok();
+        r.from_account = "   ".into();
+        let e = r.prevalidate_payment(None, true).unwrap_err();
+        assert!(matches!(e, ValidationError::EmptyField(f) if f == "from_account"));
+    }
+
+    #[test]
+    fn pv_payment_empty_reference_err() {
+        let mut r = strict_ok();
+        r.reference = "".into();
+        let e = r.prevalidate_payment(None, true).unwrap_err();
+        assert!(matches!(e, ValidationError::EmptyField(f) if f == "reference"));
+    }
+
+    #[test]
+    fn pv_payment_self_transfer_case_insensitive_err() {
+        let mut r = strict_ok();
+        r.from_account = "  Abc123".into();
+        r.to_account = "abc123  ".into();
+        let e = r.prevalidate_payment(None, true).unwrap_err();
+        assert!(matches!(e, ValidationError::SelfTransfer(_, _)));
+    }
+
+    #[test]
+    fn pv_payment_negative_amount_err() {
+        let mut r = strict_ok();
+        r.amount = -0.01;
+        let e = r.prevalidate_payment(None, true).unwrap_err();
+        assert!(matches!(e, ValidationError::NegativeAmount(_)));
+    }
+
+    #[test]
+    fn pv_payment_amount_limit_custom_ok_vs_err() {
+        let mut r = strict_ok();
+        // custom limit = 1,000
+        assert!(r.prevalidate_payment(Some(1_000.0), true).is_ok());
+        r.amount = 1_000.01;
+        let e = r.prevalidate_payment(Some(1_000.0), true).unwrap_err();
+        match e {
+            ValidationError::AmountAboveLimit { amount, limit } => {
+                assert!((amount - 1_000.01).abs() < 1e-6);
+                assert!((limit - 1_000.0).abs() < 1e-6);
+            }
+            _ => panic!("expected AmountAboveLimit"),
+        }
+    }
+
+    // --- 调度支付：scheduled_at in past ---
+    #[test]
+    fn pv_scheduled_at_in_future_ok() {
+        use chrono::Duration;
+        let now = Utc::now();
+        let sched = now + Duration::hours(1);
+        assert!(InitiatePaymentRequest::validate_scheduled_at(sched, now).is_ok());
+    }
+
+    #[test]
+    fn pv_scheduled_at_equal_now_ok() {
+        let now = Utc::now();
+        assert!(InitiatePaymentRequest::validate_scheduled_at(now, now).is_ok());
+    }
+
+    #[test]
+    fn pv_scheduled_at_in_past_err() {
+        use chrono::Duration;
+        let now = Utc::now();
+        let sched = now - Duration::seconds(1);
+        let e = InitiatePaymentRequest::validate_scheduled_at(sched, now).unwrap_err();
+        assert!(matches!(e, ValidationError::ScheduledPaymentInPast { .. }));
+    }
+
+    // --- 对账：ReconBatchRequest prevalidate ---
+    fn mk_bt(id: &str, date: DateTime<Utc>, cur: &str) -> BankTransaction {
+        BankTransaction {
+            id: id.into(),
+            date,
+            description: "".into(),
+            amount: 100.0,
+            currency: cur.into(),
+            reference: "".into(),
+            counterparty: "".into(),
+        }
+    }
+    fn mk_sr(id: &str, date: DateTime<Utc>, cur: &str) -> SystemRecord {
+        SystemRecord {
+            id: id.into(),
+            date,
+            record_type: "payment".into(),
+            amount: 100.0,
+            currency: cur.into(),
+            reference: "".into(),
+            counterparty: "".into(),
+        }
+    }
+
+    #[test]
+    fn pv_recon_empty_bank_err() {
+        use chrono::Duration;
+        let now = Utc::now();
+        let req = ReconcileBatchRequest {
+            bank_transactions: vec![],
+            system_records: vec![mk_sr("S1", now, "CNY")],
+        };
+        let e = req
+            .prevalidate_reconciliation(now, None, false)
+            .unwrap_err();
+        assert!(matches!(
+            e,
+            ValidationError::ReconEmptyInput {
+                bank_count: 0,
+                system_count: 1
+            }
+        ));
+    }
+
+    #[test]
+    fn pv_recon_empty_system_err() {
+        use chrono::Duration;
+        let now = Utc::now();
+        let req = ReconcileBatchRequest {
+            bank_transactions: vec![mk_bt("B1", now, "CNY")],
+            system_records: vec![],
+        };
+        let e = req
+            .prevalidate_reconciliation(now, None, false)
+            .unwrap_err();
+        assert!(matches!(e, ValidationError::ReconEmptyInput { .. }));
+    }
+
+    #[test]
+    fn pv_recon_both_empty_err() {
+        let now = Utc::now();
+        let req = ReconcileBatchRequest {
+            bank_transactions: vec![],
+            system_records: vec![],
+        };
+        let e = req
+            .prevalidate_reconciliation(now, None, false)
+            .unwrap_err();
+        match e {
+            ValidationError::ReconEmptyInput {
+                bank_count,
+                system_count,
+            } => {
+                assert_eq!(bank_count, 0);
+                assert_eq!(system_count, 0);
+            }
+            _ => panic!(),
+        }
+    }
+
+    #[test]
+    fn pv_recon_stale_bank_err_days_200_limit_180() {
+        use chrono::Duration;
+        let now = Utc::now();
+        let req = ReconcileBatchRequest {
+            bank_transactions: vec![mk_bt("B1", now - Duration::days(200), "CNY")],
+            system_records: vec![mk_sr("S1", now, "CNY")],
+        };
+        let e = req
+            .prevalidate_reconciliation(now, Some(180), true)
+            .unwrap_err();
+        match e {
+            ValidationError::StaleReconciliation {
+                tx_age_days,
+                max_age_days,
+            } => {
+                assert!(tx_age_days > 180);
+                assert_eq!(max_age_days, 180);
+            }
+            _ => panic!(),
+        }
+    }
+
+    #[test]
+    fn pv_recon_stale_system_err() {
+        use chrono::Duration;
+        let now = Utc::now();
+        let req = ReconcileBatchRequest {
+            bank_transactions: vec![mk_bt("B1", now, "CNY")],
+            system_records: vec![mk_sr("S1", now - Duration::days(366), "CNY")],
+        };
+        let e = req
+            .prevalidate_reconciliation(now, Some(180), true)
+            .unwrap_err();
+        assert!(matches!(e, ValidationError::StaleReconciliation { .. }));
+    }
+
+    #[test]
+    fn pv_recon_no_max_age_skips_stale_check() {
+        use chrono::Duration;
+        let now = Utc::now();
+        let req = ReconcileBatchRequest {
+            bank_transactions: vec![mk_bt("B1", now - Duration::days(9999), "CNY")],
+            system_records: vec![mk_sr("S1", now - Duration::days(9999), "CNY")],
+        };
+        assert!(req.prevalidate_reconciliation(now, None, true).is_ok());
+    }
+
+    #[test]
+    fn pv_recon_currency_mismatch_err() {
+        let now = Utc::now();
+        let req = ReconcileBatchRequest {
+            bank_transactions: vec![mk_bt("B1", now, "USD"), mk_bt("B2", now, "CNY")],
+            system_records: vec![mk_sr("S1", now, "EUR"), mk_sr("S2", now, "CNY")],
+        };
+        let e = req.prevalidate_reconciliation(now, None, true).unwrap_err();
+        match e {
+            ValidationError::ReconCurrencyMismatch {
+                bank_currency,
+                system_currency,
+            } => {
+                assert_eq!(bank_currency, "USD");
+                assert_eq!(system_currency, "EUR");
+            }
+            _ => panic!(),
+        }
+    }
+
+    #[test]
+    fn pv_recon_currency_check_off_skips_mismatch() {
+        let now = Utc::now();
+        let req = ReconcileBatchRequest {
+            bank_transactions: vec![mk_bt("B1", now, "USD")],
+            system_records: vec![mk_sr("S1", now, "CNY")],
+        };
+        assert!(req.prevalidate_reconciliation(now, None, false).is_ok());
+    }
+
+    #[test]
+    fn pv_recon_single_ok_vs_err() {
+        use chrono::Duration;
+        let now = Utc::now();
+        let ok = ReconcileSingleRequest {
+            bank_transaction: mk_bt("B1", now, "CNY"),
+            system_record: mk_sr("S1", now, "CNY"),
+        };
+        assert!(ok.prevalidate(now, Some(90), true).is_ok());
+        let bad = ReconcileSingleRequest {
+            bank_transaction: mk_bt("B1", now - Duration::days(91), "CNY"),
+            system_record: mk_sr("S1", now, "CNY"),
+        };
+        let e = bad.prevalidate(now, Some(90), true).unwrap_err();
+        assert!(matches!(e, ValidationError::StaleReconciliation { .. }));
+    }
+
+    // --- 发票：prevalidate_recognize / prevalidate_post ---
+    fn invoice_verified() -> Invoice {
+        Invoice {
+            id: Uuid::new_v4(),
+            number: "INV-1".into(),
+            vendor: "供应商A".into(),
+            invoice_date: Utc::now(),
+            total_amount: 1000.0,
+            tax_amount: 130.0,
+            status: InvoiceStatus::Verified.as_str().to_string(),
+        }
+    }
+    fn items_ok() -> Vec<InvoiceItem> {
+        vec![InvoiceItem {
+            id: Uuid::new_v4(),
+            invoice_id: Uuid::new_v4(),
+            description: "商品A".into(),
+            quantity: 10.0,
+            unit_price: 100.0,
+            amount: 1000.0,
+            tax_rate: 0.13,
+        }]
+    }
+
+    #[test]
+    fn pv_invoice_recognize_ok() {
+        let w = InvoiceWithItems {
+            invoice: Invoice {
+                status: InvoiceStatus::Pending.as_str().to_string(),
+                ..invoice_verified()
+            },
+            items: items_ok(),
+        };
+        assert!(w.prevalidate_recognize().is_ok());
+    }
+
+    #[test]
+    fn pv_invoice_recognize_empty_number_err() {
+        let w = InvoiceWithItems {
+            invoice: Invoice {
+                number: "  ".into(),
+                ..invoice_verified()
+            },
+            items: items_ok(),
+        };
+        let e = w.prevalidate_recognize().unwrap_err();
+        assert!(matches!(e, ValidationError::EmptyField(f) if f == "invoice.number"));
+    }
+
+    #[test]
+    fn pv_invoice_recognize_empty_vendor_err() {
+        let w = InvoiceWithItems {
+            invoice: Invoice {
+                vendor: "".into(),
+                ..invoice_verified()
+            },
+            items: items_ok(),
+        };
+        let e = w.prevalidate_recognize().unwrap_err();
+        assert!(matches!(e, ValidationError::EmptyField(f) if f == "invoice.vendor"));
+    }
+
+    #[test]
+    fn pv_invoice_recognize_items_total_mismatch_err() {
+        let mut items = items_ok();
+        items[0].amount = 2000.0;
+        let w = InvoiceWithItems {
+            invoice: invoice_verified(),
+            items,
+        };
+        let e = w.prevalidate_recognize().unwrap_err();
+        assert!(matches!(
+            e,
+            ValidationError::InvoiceItemsTotalMismatch { .. }
+        ));
+    }
+
+    #[test]
+    fn pv_invoice_recognize_tax_mismatch_err() {
+        let mut items = items_ok();
+        items[0].tax_rate = 0.20;
+        let w = InvoiceWithItems {
+            invoice: invoice_verified(),
+            items,
+        };
+        let e = w.prevalidate_recognize().unwrap_err();
+        match e {
+            ValidationError::InvoiceTaxMismatch {
+                header_tax,
+                items_tax,
+            } => {
+                assert!((header_tax - 130.0).abs() < 1e-6);
+                assert!((items_tax - 200.0).abs() < 1e-6);
+            }
+            other => panic!("expected InvoiceTaxMismatch, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn pv_invoice_post_ok_verified() {
+        use chrono::Duration;
+        let now = Utc::now();
+        let w = InvoiceWithItems {
+            invoice: Invoice {
+                invoice_date: now - Duration::days(5),
+                ..invoice_verified()
+            },
+            items: items_ok(),
+        };
+        assert!(w.prevalidate_post(now, false).is_ok());
+    }
+
+    #[test]
+    fn pv_invoice_post_status_not_verified_err() {
+        let now = Utc::now();
+        let w = InvoiceWithItems {
+            invoice: Invoice {
+                status: InvoiceStatus::Pending.as_str().to_string(),
+                ..invoice_verified()
+            },
+            items: items_ok(),
+        };
+        let e = w.prevalidate_post(now, false).unwrap_err();
+        assert!(matches!(e, ValidationError::InvalidStatus(_)));
+    }
+
+    #[test]
+    fn pv_invoice_post_future_date_err_default() {
+        use chrono::Duration;
+        let now = Utc::now();
+        let w = InvoiceWithItems {
+            invoice: Invoice {
+                invoice_date: now + Duration::days(10),
+                ..invoice_verified()
+            },
+            items: items_ok(),
+        };
+        let e = w.prevalidate_post(now, false).unwrap_err();
+        assert!(matches!(e, ValidationError::InvoiceDateInFuture { .. }));
+    }
+
+    #[test]
+    fn pv_invoice_post_future_date_allowed_flag_skips() {
+        use chrono::Duration;
+        let now = Utc::now();
+        let w = InvoiceWithItems {
+            invoice: Invoice {
+                invoice_date: now + Duration::days(10),
+                ..invoice_verified()
+            },
+            items: items_ok(),
+        };
+        assert!(w.prevalidate_post(now, true).is_ok());
+        // without flag: InvoiceDateInFuture error
+        let err = w.prevalidate_post(now, false).unwrap_err();
+        assert!(matches!(err, ValidationError::InvoiceDateInFuture { .. }));
+    }
+
+    #[test]
+    fn pv_invoice_post_items_total_mismatch_err() {
+        use chrono::Duration;
+        let now = Utc::now();
+        let mut items = items_ok();
+        items[0].amount = 999.0;
+        let w = InvoiceWithItems {
+            invoice: Invoice {
+                invoice_date: now - Duration::days(1),
+                ..invoice_verified()
+            },
+            items,
+        };
+        let e = w.prevalidate_post(now, false).unwrap_err();
+        assert!(matches!(
+            e,
+            ValidationError::InvoiceItemsTotalMismatch { .. }
+        ));
+    }
+
+    #[test]
+    fn pv_invoice_post_tax_mismatch_err() {
+        use chrono::Duration;
+        let now = Utc::now();
+        let mut items = items_ok();
+        items[0].tax_rate = 0.20;
+        let w = InvoiceWithItems {
+            invoice: Invoice {
+                invoice_date: now - Duration::days(1),
+                ..invoice_verified()
+            },
+            items,
+        };
+        let e = w.prevalidate_post(now, false).unwrap_err();
+        assert!(matches!(e, ValidationError::InvoiceTaxMismatch { .. }));
+    }
+
+    // No items: both tolerances skip
+    #[test]
+    fn pv_invoice_post_no_items_ok() {
+        use chrono::Duration;
+        let now = Utc::now();
+        let w = InvoiceWithItems {
+            invoice: Invoice {
+                invoice_date: now - Duration::days(1),
+                ..invoice_verified()
+            },
+            items: vec![],
+        };
+        assert!(w.prevalidate_post(now, false).is_ok());
+        assert!(w.prevalidate_recognize().is_ok());
+    }
+
+    // Display smoke test for each new variant
+    #[test]
+    fn validation_error_display_smoke_new_variants() {
+        use chrono::Duration;
+        let now = Utc::now();
+        let cases = [
+            (
+                format!("{}", ValidationError::CurrencyNotWhitelisted("KRW".into())),
+                "KRW",
+            ),
+            (
+                format!(
+                    "{}",
+                    ValidationError::StaleReconciliation {
+                        tx_age_days: 200,
+                        max_age_days: 180
+                    }
+                ),
+                "200",
+            ),
+            (
+                format!(
+                    "{}",
+                    ValidationError::ScheduledPaymentInPast {
+                        scheduled_at: now - Duration::days(1),
+                        now
+                    }
+                ),
+                "scheduled",
+            ),
+            (
+                format!(
+                    "{}",
+                    ValidationError::InvoiceTaxMismatch {
+                        header_tax: 1.0,
+                        items_tax: 2.0
+                    }
+                ),
+                "invoice tax",
+            ),
+            (
+                format!(
+                    "{}",
+                    ValidationError::InvoiceItemsTotalMismatch {
+                        header_total: 1.0,
+                        items_total: 2.0
+                    }
+                ),
+                "invoice items total",
+            ),
+            (
+                format!(
+                    "{}",
+                    ValidationError::InvoiceDateInFuture {
+                        invoice_date: now + Duration::days(1),
+                        now
+                    }
+                ),
+                "invoice date",
+            ),
+            (
+                format!(
+                    "{}",
+                    ValidationError::ReconEmptyInput {
+                        bank_count: 0,
+                        system_count: 0
+                    }
+                ),
+                "reconciliation empty",
+            ),
+            (
+                format!(
+                    "{}",
+                    ValidationError::ReconCurrencyMismatch {
+                        bank_currency: "CNY".into(),
+                        system_currency: "USD".into()
+                    }
+                ),
+                "reconciliation currency",
+            ),
+        ];
+        for (s, needle) in cases.iter() {
+            let s_low = s.to_lowercase();
+            let n_low = needle.to_lowercase();
+            assert!(
+                s_low.contains(&n_low),
+                "Display output '{}' does not contain '{}'",
+                s,
+                needle
+            );
+        }
     }
 }
