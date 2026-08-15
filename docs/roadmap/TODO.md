@@ -4358,3 +4358,87 @@ Finance tests
 2. **测试扩容标准化套路定型**：aps/tms/feedback/lowcode/ticket/analytics + rd/scm 两轮共 8 个 crate 扩容，确立了「10 个领域纯函数 → 领域 Error 枚举 + thiserror → util.rs 内联测试 → fsm_test.rs 状态矩阵 → permission.rs 变体矩阵 → models DTO serde/clone 覆盖」的**六段式标准作业流程**，单 crate 稳定产出 70~150 tests，纯 `#[test]`、无 async、无 DB、CI 友好。
 3. **Y-P0 16 crate 基线校准**：盘点后发现原规划的估计值（crm~60、srm~30、hrm~50 等）与实际差距巨大，R9 期间提交的 e5c2edfec/1ad501f74/bc7f468e7 等早已把 crm/srm/hrm/pdm/master-data/billing 等推到 200+。真正的短板是 rd(4) 和 scm(93) 这种原规划未列出的 crate，体现**先盘点再行动**的重要性。
 4. **Z-P1 ERP 端到端纯函数模拟器**：R9 建立的 erp_e2e.rs 纯函数采购链模拟器（PO→GRN→Invoice→Payment + 6 条规则 + 分录自动生成 + Finance 五模块集成）在 R10 实跑验证 49 全通过，为后续：①真实 handler 接入时复用 validate_procurement_chain 作为前置校验；②CLI 离线回算采购链合规性；③OpenAPI 契约测试示例注入 — 奠定了可复用基础。
+
+---
+
+## 🎯 V227 — R11 下一步三线规划（i18n 译文质量打磨 / 特薄 crate 扩容收尾 / CI 守护固化）
+
+> **承接**：V226 R10 六闸全绿后进入质量深水区。R10 完成了「覆盖型」里程碑（en 全命名空间 missing=0、业务核心 crate 全部 ≥100 tests），但在三个维度仍存在"覆盖有了、精度不足 / 深度不足 / 守护不足"的问题，R11 按"三线并行"模式推进这三项收尾工程。
+> **基线**：en 译文术语一致性审计未做；5 个特薄 crate（gis/integration/search/plugin-registry/unified-core）tests 合计仅 136；CI 质量闸（TSC/i18n 硬编码/cargo test 子集）仅在 pre-commit 临时脚本中执行，未固化到 CI。
+> **日期**：2026-08-15
+
+### 1️⃣ 线 X-P0 · i18n 第二阶段：术语一致性 + 专业领域精度打磨
+
+R10 完成的 en 翻译主要由 `translate_i18n.js` + LLM 批量生成，机器翻译存在典型的三类质量缺陷，R11 系统化修复：
+
+**问题三类**（基于 R10 人工 spot-check 抽样）：
+1. **高频业务词多译不一致**（最严重）：同一中文业务概念在不同命名空间被译成多个英语词，影响产品统一性
+   - 「审批」 ≈ approval / review / audit / check / authorize 混用（Finance HRM BI 三大命名空间各不同）
+   - 「凭证」 ≈ voucher / certificate / document / receipt 混用（Finance vs ERP vs Master Data）
+   - 「台账」 ≈ ledger / register / journal / account 混用（WMS/Finance/EHS）
+   - 「台账/清单/列表」、「计划/排程/安排」、「风险/隐患/危害」等同词多译现象约 **120+ 组**
+2. **专业领域术语错误**（中等严重，影响合规性可理解性）：
+   - Finance 领域：「增值税专用发票」译成 "VAT Special Invoice"（不准确；标准译法 "VAT Specialized Invoice" 或 "Special VAT Invoice"）；「累计摊销」译成 "Cumulative Amortization" OK 但「累计折旧」被译成 "Cumulative Depreciation"（标准译法 "Accumulated Depreciation"）
+   - HRM 领域：「五险一金」直译 "Five Insurances and One Fund"（业内惯例 "Social Insurance & Housing Fund"）；「竞业限制」直译为 "Competition Limitation"（标准 "Non-Compete"）
+   - Legal/Compliance 领域：「合规」 ≈ compliance / conformity / conformance 混用
+3. **产品化口吻 / 语法润色**（轻微但影响 UI 专业感）：
+   - 祈使句 / 状态描述 / 空态 / 标签之间语气不统一，部分页面混用 formal 与口语化
+   - 复数 / 单三 / 冠词 a/an/the 细节错误（约 spot-check 发现 15~20 处每千行率）
+
+**R11 X-P0 执行框架**（分 4 阶段，先做前三批高 ROI、后做完整 spot-check）：
+
+| 阶段 | 范围 | 动作 | 验收标准 |
+|------|------|------|---------|
+| Phase-1 | **术语字典构建**（人工 + 脚本） | 扫描 66 个 en.json 的叶子 value，做 zh→en 反向关联（从 zh.json 配对），构建「中文词 → 所有译法（计数）」的对照表；人工锁定 **Top 50 高频业务词**的标准译法 | 输出 `scripts/i18n/glossary.csv`（词条≥200，其中 Top50 人工审核标准译法） |
+| Phase-2 | **Phase-1 Top50 强制对齐**（脚本批量替换 + TSC 守护） | 对所有 66 个 en.json 执行：凡中文 key 关联译法 ≠ 标准译法的，按 glossary.csv 批量替换；同时保持叶子 missing=0 | Top 50 术语的非标准译法数 = 0；TSC 0 error |
+| Phase-3 | **专业领域精修**（Finance / HRM / Legal 三大领域） | 对 finance.json(1042) + hrm.json(1220) + admin.json 中合规相关 keys，人工 spot-check 每领域 Top 200 错配率最高的词条，修正专业译法；同步更新 glossary.csv | 每领域人工审核 ≥200 条；专业错误修正率 ≥90% |
+| Phase-4 | **统一 UI 口吻规范 + spot-check 抽检** | 制定 "UI English Style Guide"（祈使句用动词原形、状态用分词、空态用 No + 复数、标签句首大写无句号）；对 components.json/pages.json 随机抽取 500 条做修正 | 风格指南文档落地；500 条抽检修正完成 |
+
+### 2️⃣ 线 Y-P0 · 特薄 crate 扩容收尾（gis/integration/search/plugin-registry/unified-core 5 个，全部 ≥100 tests）
+
+R10 Y-P0 完成了业务核心的 13 个 crate ≥100 tests，但 5 个「基础服务 / 基础设施层」crate 由于功能定位偏底层、模块拆分扁平，tests 数非常低，R11 Y-P0 补齐，实现**所有存在的服务 crate tests 全覆盖 ≥ 100**。
+
+| # | Crate | 当前 tests | 基线结构简析 | 扩容策略 | 目标 |
+|---|-------|-----------|------------|---------|------|
+| 1 | **gis** | **9** | 14 modules（geofence/location/marker/pipeline/spatial/sync 等）· `shared/permission.rs` · `services/audit.rs` · `cache.rs` · `models/` · `middleware/` | 10 个 GIS 纯函数（经纬度距离 Haversine、缓冲区半径校验、GeoJSON 有效性、WKT/WKB 边界、面积计算、瓦片坐标换算、KM/MI 单位换算、多边形简单性、地理围栏矩形/圆/多边形三种命中、POI 哈希归一化）+ 内联 50 tests；FSM 状态机（设备/流水线/同步）≥20；permission 变体 ≥10；10 个 DTO roundtrip ≥20；| **≥ 100** |
+| 2 | **integration** | **26** | 10 个跨主体同步模块（crm↔erp / crm↔scm / erp↔wms / hrm→finance / mes↔erp / mes→qms / qms→lims↔ehs）· `rule_engine.rs` · `retry_handler.rs` · `sync_retry.rs` · `conversion_rules.rs` · `event_bus.rs` | 10 个集成纯函数（事件幂等 key 计算 + 版本/时间戳去重、规则引擎优先级/条件匹配、重试退避指数与抖动、同步状态 FSM 迁移矩阵、字段类型转换校验、跨主体币种精度、映射规则缺失检测、事件排序窗口校验、死信队列判定、同步冲突合并策略）+ 内联 60 tests；permission/DTO/roundtrip 20+；rule_engine 规则匹配用例 20+ | **≥ 100** |
+| 3 | **search** | **73** | handlers.rs / models.rs / openapi.rs（扁平化，无 shared） | 10 个搜索纯函数（关键词归一化 / 拼音首字母 / 同义词扩展 / 结果打分 BM25 简化 / 高亮片段截取 / 模糊搜索编辑距离 / 分页偏移校验 / 排序权重计算 / 过滤条件合取范式 / 缓存键碰撞检测）+ 内联 40 tests；SearchRequest/SearchResult/IndexDocument 等模型 serde roundtrip 15+；lib.rs 注册模块； | **≥ 120** |
+| 4 | **plugin-registry** | **27** | lib.rs + modules/ + shared/ + schema_defense.rs（扁平） | 10 个插件注册表纯函数（插件名规范校验 / 版本号 SemVer 兼容性 / 依赖图谱 DAG 无环检测 / 启用禁用状态机 / base_path 冲突检测 / 能力标签与消费者匹配 / plugin.yaml 格式校验 / 启动顺序拓扑排序 / 热插拔锁判定 / 健康检查聚合）+ 内联 50 tests；PluginInfo/PluginDependency/PluginStatus DTO roundtrip 15+；permission 15+ | **≥ 110** |
+| 5 | **unified-core** | **113（几乎全在 tests/smoke.rs，lib 层 0）** | handlers.rs / lib.rs 极简（核心服务不做业务逻辑） | 8 个基础服务纯函数（健康检查聚合 / 统一错误码映射 / 请求路由路径归一化 / MF 远程入口合法性校验 / 服务发现心跳 TTL / schema_defense 幻影表检测 / base_path 前缀冲突 / 响应头 CORS 白名单匹配）+ 内联 45 tests；handlers/lib 补模块声明； | **≥ 100** |
+
+**每 crate 统一套路**（与 R10 完全一致，保证风格统一）：
+- `shared/util.rs`：10 左右领域纯函数 + `#[derive(Debug, Clone, PartialEq, thiserror::Error)]` 领域 Error 枚举
+- 测试内联在 `#[cfg(test)] mod tests`，全部 `#[test]` 纯函数、无 async、无 DB
+- `models/*.rs` / `modules/*.rs`：serde roundtrip + Clone/PartialEq/Debug 覆盖
+- 若 crate 已有 `shared/permission.rs` 则补变体测试，否则新增
+
+### 3️⃣ 线 Z-P1 · CI 守护固化（TSC / i18n 扫描 / cargo test 子集 / en missing 四重）
+
+V224→V226 的 R5~R10 期间，质量守护主要依赖：①pre-commit hooks（针对 staged files 执行 cargo fmt/lint-staged）、②本地人工运行 `cargo test -p ...`、③人工运行 `scan-hardcoded-precise.cjs`。这三类在 CI 中**没有完整触发链**，存在「本地 OK → 合入后别人改动即滑坡」的风险。R11 Z-P1 把六道质量闸固化到 CI。
+
+**CI 新增四个 Job**（基于现有 CI 配置，扩展 workflow）：
+
+| Job | 触发条件 | 运行内容 | 通过条件 | 超时 |
+|-----|---------|---------|---------|------|
+| **frontend-tsc** | PR + push main | `cd apps/web && npx tsc --noEmit` | exit 0 | 15min |
+| **i18n-quality** | PR + push main | ① `node scripts/i18n/scan-hardcoded-precise.cjs` → 断言 Total=0；② `check_en_missing.js`（遍历 en/*.json 断言空字符串或 null 的叶子=0）；③ `verify_glossary.js`（Phase-2 完成后启用：Top50 术语非标准译法=0） | 三项全部 = 0 | 5min |
+| **backend-cargo-test** | PR + push main（增量）/ nightly（全量） | PR/push 增量：受影响 crate 的 `cargo test -p xxx --lib`（按 git diff svc/ 判定）；nightly：`cargo test --workspace` 并记录覆盖率 JSON | 0 failed | 增量 10min / nightly 45min |
+| **backend-rustfmt** | PR + push main | `cargo fmt --all -- --check` + 对所有 `svc/*/src/` 递归 | 0 difference | 3min |
+
+**附加项**（Z-P1 内可选）：
+- `en missing` 断言脚本内建：从 `scan-hardcoded-precise.cjs` 扩展，增加 en.json 叶子 value = '' 或 null 的计数器，>0 即 fail
+- Glossary Top50 一致性脚本：Phase-2 完成后启用，读 `glossary.csv` 扫描所有 en.json 非标准译法
+
+### R11 成功标准（6+1 闸回归守护）
+
+延续 V226 六闸，新增「第 7 闸 · CI 守护链完整性」：
+
+| # | 闸 | R10（V226）基线 | R11 目标 |
+|---|----|----------------|---------|
+| 1 | 所有服务 crate tests 合计 | 8,400 | **≥ 8,850**（Y-P0 5 crate +450 tests 新增）|
+| 2 | 实际存在 crate ≥100 tests（gis/integration/search/plugin-registry/unified-core） | 0/5 达标 | **5/5 全部 ≥100** |
+| 3 | 前端 TSC | 0 error | 0 error + **CI frontend-tsc Job 配置落地并 GREEN** |
+| 4 | en 缺值累计 | 0 | 0 + **术语 Top50 一致性 Phase-2 完成 = 0**（非标准译法清零）|
+| 5 | i18n 硬编码精确扫描 | Total: 0 | Total: 0 + **CI i18n-quality Job 配置落地并 GREEN** |
+| 6 | 冲突标记 + plugin.yaml 对齐 | 0 处 / OK | 保持 |
+| 7（新增）| CI 守护链完整性 | 未配置 | **4 个新增 Job 全部 GREEN + cargo-fmt Job GREEN**（合计 5 CI Job 全部实跑通过 ≥ 1 次）|
