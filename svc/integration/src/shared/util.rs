@@ -523,3 +523,490 @@ mod tests {
         assert_eq!(err.to_string(), "Retry exhausted: 7 attempts");
     }
 }
+
+// ============================================================================
+// Integration 扩展纯函数：规则引擎优先级 / 事件时间窗 / FSM / 币种等
+// ============================================================================
+
+/// 规则优先级比较：返回 Ordering::Less 表示 `a` 优先级高于 `b`（越小越先执行）。
+///
+/// 支持 1..=u16::MAX，0 视为非法优先级（返回 Err）。
+pub fn compare_rule_priority(a: u16, b: u16) -> Result<std::cmp::Ordering, IntegrationError> {
+    if a == 0 {
+        return Err(IntegrationError::RuleNotFound(format!(
+            "priority a must be >= 1, got 0"
+        )));
+    }
+    if b == 0 {
+        return Err(IntegrationError::RuleNotFound(format!(
+            "priority b must be >= 1, got 0"
+        )));
+    }
+    Ok(a.cmp(&b))
+}
+
+/// 判断当前时间是否落在事件处理时间窗内（按小时段，如 9-17 表示白天窗口）。
+///
+/// `hour_of_day` ∈ [0, 24)，`start_hour..end_hour` 为半开区间，若 start == end
+/// 视为全天开放；若 start > end 则表示跨午夜窗口（如 22..6 表示 22:00~06:00）。
+pub fn is_within_time_window(
+    hour_of_day: u8,
+    start_hour: u8,
+    end_hour: u8,
+) -> Result<bool, IntegrationError> {
+    if hour_of_day >= 24 {
+        return Err(IntegrationError::InvalidMapping(format!(
+            "hour_of_day must be < 24, got {hour_of_day}"
+        )));
+    }
+    if start_hour >= 24 || end_hour >= 24 {
+        return Err(IntegrationError::InvalidMapping(format!(
+            "window hours must be < 24, got start={start_hour} end={end_hour}"
+        )));
+    }
+    if start_hour == end_hour {
+        return Ok(true);
+    }
+    Ok(if start_hour < end_hour {
+        hour_of_day >= start_hour && hour_of_day < end_hour
+    } else {
+        // 跨午夜：[start, 24) ∪ [0, end)
+        hour_of_day >= start_hour || hour_of_day < end_hour
+    })
+}
+
+/// 字段类型转换：将字符串值按目标类型标识转换，结果以 JSON 值形式返回。
+///
+/// 支持的 `target_type`：`"string"` / `"int"` / `"float"` / `"bool"` / `"datetime_iso"`。
+pub fn coerce_field_type(
+    value: &str,
+    target_type: &str,
+) -> Result<serde_json::Value, IntegrationError> {
+    use serde_json::{json, Value};
+    match target_type {
+        "string" => Ok(Value::String(value.to_string())),
+        "int" => {
+            let n: i64 = value
+                .parse()
+                .map_err(|e| IntegrationError::ConversionFailed(format!("int parse: {e}")))?;
+            Ok(json!(n))
+        }
+        "float" => {
+            let n: f64 = value
+                .parse()
+                .map_err(|e| IntegrationError::ConversionFailed(format!("float parse: {e}")))?;
+            Ok(json!(n))
+        }
+        "bool" => match value.to_ascii_lowercase().as_str() {
+            "true" | "1" | "yes" | "y" | "on" => Ok(Value::Bool(true)),
+            "false" | "0" | "no" | "n" | "off" => Ok(Value::Bool(false)),
+            other => Err(IntegrationError::ConversionFailed(format!(
+                "bool parse: unknown value '{other}'"
+            ))),
+        },
+        "datetime_iso" => {
+            if chrono::DateTime::parse_from_rfc3339(value).is_ok() {
+                Ok(Value::String(value.to_string()))
+            } else {
+                Err(IntegrationError::ConversionFailed(format!(
+                    "datetime_iso parse: '{value}'"
+                )))
+            }
+        }
+        other => Err(IntegrationError::InvalidMapping(format!(
+            "unknown target_type: {other}"
+        ))),
+    }
+}
+
+/// 计算事件的「顺序」版本号：如果 `new_version` 严格大于等于当前返回
+/// `Ok(new_version)`，否则返回 [`IntegrationError::SyncConflict`] 描述冲突。
+pub fn resolve_event_version(
+    current_version: u64,
+    new_version: u64,
+) -> Result<u64, IntegrationError> {
+    if new_version < current_version {
+        return Err(IntegrationError::SyncConflict(format!(
+            "stale event version: new={new_version} < current={current_version}"
+        )));
+    }
+    Ok(new_version)
+}
+
+/// 估算死信队列需要多少存储空间（每条消息占用的记录条数）。
+///
+/// 简化模型：`total_events × failed_ratio × max_retries + dead_letter_buffer`。
+/// 输入任何非有限数或负数都会返回 [`IntegrationError::OutOfRange`]（通过 InvalidMapping 模拟）。
+pub fn estimate_dead_letter_storage(
+    total_events: u64,
+    failed_ratio: f64,
+    max_retries: u32,
+    buffer: u64,
+) -> Result<u64, IntegrationError> {
+    if !(0.0..=1.0).contains(&failed_ratio) {
+        return Err(IntegrationError::InvalidMapping(format!(
+            "failed_ratio must be in [0.0, 1.0], got {failed_ratio}"
+        )));
+    }
+    let failed = (total_events as f64 * failed_ratio) as u64;
+    let retried = failed.saturating_mul(max_retries as u64);
+    Ok(retried.saturating_add(buffer))
+}
+
+/// 验证插件事件来源白名单：`source` 必须出现在 `allowed_sources` 列表中。
+pub fn validate_event_source(
+    source: &str,
+    allowed_sources: &[&str],
+) -> Result<(), IntegrationError> {
+    if allowed_sources.is_empty() {
+        return Err(IntegrationError::InvalidMapping(
+            "allowed_sources cannot be empty".to_string(),
+        ));
+    }
+    if source.is_empty() {
+        return Err(IntegrationError::InvalidEventId(source.to_string()));
+    }
+    if !allowed_sources.iter().any(|s| *s == source) {
+        return Err(IntegrationError::InvalidEventId(format!(
+            "source '{source}' not in allowlist"
+        )));
+    }
+    Ok(())
+}
+
+/// 将同步任务的进度百分比做「边界归一化」，保证 [0, 100] 整数。
+pub fn normalize_progress(pct: f64) -> u8 {
+    if pct < 0.0 {
+        return 0;
+    }
+    if pct > 100.0 {
+        return 100;
+    }
+    pct.round() as u8
+}
+
+/// 将「跨主体」的币种数量做「四舍五入到分」的规范化：
+/// `amount * 100，四舍五入，再 / 100`；保留两位小数。
+///
+/// 例如 `123.456 -> 123.46`。
+pub fn normalize_currency_cents(amount: f64) -> f64 {
+    (amount * 100.0).round() / 100.0
+}
+
+// ============================================================================
+// Integration FSM：事件同步状态机
+// ============================================================================
+
+/// 跨主体同步事件生命周期状态。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum SyncEventState {
+    /// 刚接收，尚未入校验队列
+    Received,
+    /// 校验通过，等待执行
+    Queued,
+    /// 执行中
+    Processing,
+    /// 执行成功
+    Succeeded,
+    /// 执行失败（可重试）
+    FailedRetryable,
+    /// 已死信，放弃重试
+    DeadLettered,
+    /// 业务方取消
+    Cancelled,
+}
+
+/// 驱动 SyncEventState 的事件。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SyncEventEvent {
+    ValidatePassed,
+    Enqueue,
+    StartProcessing,
+    Succeed,
+    FailRetryable,
+    FailFinal,
+    Retry,
+    Cancel,
+    RouteToDeadLetter,
+}
+
+impl SyncEventState {
+    pub fn transition(self, ev: SyncEventEvent) -> Option<Self> {
+        use SyncEventEvent::*;
+        use SyncEventState::*;
+        match (self, ev) {
+            (Received, ValidatePassed) => Some(Queued),
+            (Received, Enqueue) => Some(Queued),
+            (Queued, StartProcessing) => Some(Processing),
+            (Processing, Succeed) => Some(Succeeded),
+            (Processing, FailRetryable) => Some(FailedRetryable),
+            (Processing, FailFinal) => Some(DeadLettered),
+            (FailedRetryable, Retry) => Some(Processing),
+            (FailedRetryable, RouteToDeadLetter) => Some(DeadLettered),
+            (Queued, Cancel) | (Processing, Cancel) | (Received, Cancel) => Some(Cancelled),
+            _ => None,
+        }
+    }
+
+    pub fn is_terminal(&self) -> bool {
+        matches!(
+            self,
+            SyncEventState::Succeeded | SyncEventState::DeadLettered | SyncEventState::Cancelled
+        )
+    }
+}
+
+// ============================================================================
+// 扩展测试模块
+// ============================================================================
+
+#[cfg(test)]
+mod tests_ext {
+    use super::*;
+
+    // ---------- compare_rule_priority ----------
+
+    #[test]
+    fn test_rule_priority_less_than() {
+        assert_eq!(
+            compare_rule_priority(1, 10).unwrap(),
+            std::cmp::Ordering::Less
+        );
+    }
+
+    #[test]
+    fn test_rule_priority_equal() {
+        assert_eq!(
+            compare_rule_priority(5, 5).unwrap(),
+            std::cmp::Ordering::Equal
+        );
+    }
+
+    #[test]
+    fn test_rule_priority_greater() {
+        assert_eq!(
+            compare_rule_priority(20, 2).unwrap(),
+            std::cmp::Ordering::Greater
+        );
+    }
+
+    #[test]
+    fn test_rule_priority_zero_invalid() {
+        assert!(compare_rule_priority(0, 1).is_err());
+        assert!(compare_rule_priority(1, 0).is_err());
+    }
+
+    // ---------- is_within_time_window ----------
+
+    #[test]
+    fn test_time_window_normal_hours() {
+        // 9-17 点，10 点在窗口内，20 点不在
+        assert!(is_within_time_window(10, 9, 17).unwrap());
+        assert!(!is_within_time_window(20, 9, 17).unwrap());
+    }
+
+    #[test]
+    fn test_time_window_over_midnight() {
+        // 22-06 跨午夜
+        assert!(is_within_time_window(23, 22, 6).unwrap());
+        assert!(is_within_time_window(2, 22, 6).unwrap());
+        assert!(!is_within_time_window(12, 22, 6).unwrap());
+    }
+
+    #[test]
+    fn test_time_window_open_all_day() {
+        assert!(is_within_time_window(3, 0, 0).unwrap());
+        assert!(is_within_time_window(23, 8, 8).unwrap());
+    }
+
+    #[test]
+    fn test_time_window_invalid_hour() {
+        assert!(is_within_time_window(24, 0, 8).is_err());
+        assert!(is_within_time_window(5, 25, 8).is_err());
+    }
+
+    // ---------- coerce_field_type ----------
+
+    #[test]
+    fn test_coerce_string() {
+        let v = coerce_field_type("hello", "string").unwrap();
+        assert_eq!(v, serde_json::Value::String("hello".to_string()));
+    }
+
+    #[test]
+    fn test_coerce_int() {
+        let v = coerce_field_type("-123", "int").unwrap();
+        assert_eq!(v, serde_json::json!(-123));
+    }
+
+    #[test]
+    fn test_coerce_float() {
+        let v = coerce_field_type("3.14", "float").unwrap();
+        assert_eq!(v, serde_json::json!(3.14));
+    }
+
+    #[test]
+    fn test_coerce_bool_variants() {
+        use serde_json::Value::Bool;
+        assert_eq!(coerce_field_type("true", "bool").unwrap(), Bool(true));
+        assert_eq!(coerce_field_type("YES", "bool").unwrap(), Bool(true));
+        assert_eq!(coerce_field_type("1", "bool").unwrap(), Bool(true));
+        assert_eq!(coerce_field_type("false", "bool").unwrap(), Bool(false));
+        assert_eq!(coerce_field_type("0", "bool").unwrap(), Bool(false));
+    }
+
+    #[test]
+    fn test_coerce_bool_invalid() {
+        assert!(coerce_field_type("maybe", "bool").is_err());
+    }
+
+    #[test]
+    fn test_coerce_unknown_type() {
+        assert!(coerce_field_type("x", "money").is_err());
+    }
+
+    #[test]
+    fn test_coerce_int_invalid() {
+        assert!(coerce_field_type("not-a-number", "int").is_err());
+    }
+
+    // ---------- resolve_event_version ----------
+
+    #[test]
+    fn test_resolve_version_higher_ok() {
+        assert_eq!(resolve_event_version(5, 6).unwrap(), 6);
+    }
+
+    #[test]
+    fn test_resolve_version_equal_ok() {
+        assert_eq!(resolve_event_version(3, 3).unwrap(), 3);
+    }
+
+    #[test]
+    fn test_resolve_version_stale_conflict() {
+        let err = resolve_event_version(10, 5).unwrap_err();
+        assert!(matches!(err, IntegrationError::SyncConflict(_)));
+    }
+
+    // ---------- estimate_dead_letter_storage ----------
+
+    #[test]
+    fn test_dl_storage_zero_failures() {
+        assert_eq!(estimate_dead_letter_storage(1000, 0.0, 3, 0).unwrap(), 0);
+    }
+
+    #[test]
+    fn test_dl_storage_hundred_percent() {
+        // 100 × 1.0 × 5 retries + 10 buffer = 510
+        assert_eq!(estimate_dead_letter_storage(100, 1.0, 5, 10).unwrap(), 510);
+    }
+
+    #[test]
+    fn test_dl_storage_invalid_ratio() {
+        assert!(estimate_dead_letter_storage(100, 1.5, 3, 0).is_err());
+    }
+
+    // ---------- validate_event_source ----------
+
+    #[test]
+    fn test_validate_source_allowed() {
+        assert!(validate_event_source("erp", &["erp", "wms", "crm"]).is_ok());
+    }
+
+    #[test]
+    fn test_validate_source_rejected() {
+        let err = validate_event_source("unknown", &["erp", "wms"]).unwrap_err();
+        assert!(matches!(err, IntegrationError::InvalidEventId(_)));
+    }
+
+    #[test]
+    fn test_validate_source_empty_allowlist() {
+        assert!(validate_event_source("erp", &[]).is_err());
+    }
+
+    #[test]
+    fn test_validate_source_empty_source() {
+        assert!(validate_event_source("", &["erp"]).is_err());
+    }
+
+    // ---------- normalize_progress ----------
+
+    #[test]
+    fn test_progress_within_range() {
+        assert_eq!(normalize_progress(42.6), 43);
+    }
+
+    #[test]
+    fn test_progress_clamped_edges() {
+        assert_eq!(normalize_progress(-5.0), 0);
+        assert_eq!(normalize_progress(200.0), 100);
+    }
+
+    // ---------- normalize_currency_cents ----------
+
+    #[test]
+    fn test_currency_rounds_up() {
+        assert!((normalize_currency_cents(123.456) - 123.46).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_currency_rounds_down() {
+        assert!((normalize_currency_cents(7.124) - 7.12).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_currency_negative() {
+        assert!((normalize_currency_cents(-9.8765) - (-9.88)).abs() < 1e-9);
+    }
+
+    // ---------- SyncEventState FSM ----------
+
+    use SyncEventEvent::*;
+    use SyncEventState::*;
+
+    #[test]
+    fn test_sync_event_happy_path() {
+        assert_eq!(Received.transition(ValidatePassed), Some(Queued));
+        assert_eq!(Queued.transition(StartProcessing), Some(Processing));
+        assert_eq!(Processing.transition(Succeed), Some(Succeeded));
+    }
+
+    #[test]
+    fn test_sync_event_retry_flow() {
+        assert_eq!(Processing.transition(FailRetryable), Some(FailedRetryable));
+        assert_eq!(FailedRetryable.transition(Retry), Some(Processing));
+    }
+
+    #[test]
+    fn test_sync_event_to_dead_letter() {
+        assert_eq!(
+            FailedRetryable.transition(RouteToDeadLetter),
+            Some(DeadLettered)
+        );
+        assert_eq!(Processing.transition(FailFinal), Some(DeadLettered));
+    }
+
+    #[test]
+    fn test_sync_event_cancel_from_multiple() {
+        assert_eq!(Received.transition(Cancel), Some(Cancelled));
+        assert_eq!(Queued.transition(Cancel), Some(Cancelled));
+        assert_eq!(Processing.transition(Cancel), Some(Cancelled));
+    }
+
+    #[test]
+    fn test_sync_event_invalid_transitions() {
+        // Succeeded 后不再接受任何事件
+        assert_eq!(Succeeded.transition(Succeed), None);
+        // DeadLettered → Retry 非法
+        assert_eq!(DeadLettered.transition(Retry), None);
+    }
+
+    #[test]
+    fn test_sync_event_terminal_set() {
+        assert!(Succeeded.is_terminal());
+        assert!(DeadLettered.is_terminal());
+        assert!(Cancelled.is_terminal());
+        assert!(!Processing.is_terminal());
+        assert!(!FailedRetryable.is_terminal());
+    }
+}
