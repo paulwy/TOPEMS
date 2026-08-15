@@ -1,4 +1,4 @@
-use chrono::{Duration, NaiveDate, NaiveDateTime};
+use chrono::{NaiveDate, NaiveDateTime};
 
 pub fn validate_resource_id(id: &str) -> bool {
     if id.is_empty() || id.len() > 64 {
@@ -112,6 +112,67 @@ pub fn calc_remaining_hours(available: f64, used: f64) -> f64 {
 
 pub fn is_priority_valid(priority: i32) -> bool {
     priority >= -10 && priority <= 10
+}
+
+/// Calculate capacity utilization rate (clamped to [0.0, 1.0]).
+pub fn calc_capacity_utilization(planned_hours: f64, available_hours: f64) -> f64 {
+    if available_hours <= 0.0 {
+        return 0.0;
+    }
+    let rate = planned_hours / available_hours;
+    if rate < 0.0 {
+        0.0
+    } else {
+        rate.min(1.0)
+    }
+}
+
+/// Error type for APS validation helpers.
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
+pub enum ApsError {
+    #[error("invalid production order number: {0}")]
+    InvalidProductionOrderNo(String),
+}
+
+/// Validate a production order number (non-empty, ≤64 chars, alphanumeric/-/_).
+pub fn validate_production_order_no(order_no: &str) -> Result<(), ApsError> {
+    if order_no.is_empty() || order_no.len() > 64 {
+        return Err(ApsError::InvalidProductionOrderNo(order_no.to_string()));
+    }
+    if !order_no
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+    {
+        return Err(ApsError::InvalidProductionOrderNo(order_no.to_string()));
+    }
+    Ok(())
+}
+
+/// Check that routing step sequence is strictly increasing with no duplicates.
+pub fn is_valid_routing_step(step_sequence: &[u32]) -> bool {
+    if step_sequence.is_empty() {
+        return false;
+    }
+    let mut seen = std::collections::HashSet::new();
+    for &step in step_sequence {
+        if !seen.insert(step) {
+            return false;
+        }
+    }
+    step_sequence.windows(2).all(|w| w[0] < w[1])
+}
+
+/// Calculate throughput rate (units per hour). Returns 0.0 for non-positive time.
+pub fn calc_throughput_rate(units_produced: f64, time_hours: f64) -> f64 {
+    if time_hours <= 0.0 {
+        return 0.0;
+    }
+    let rate = units_produced / time_hours;
+    if rate < 0.0 {
+        0.0
+    } else {
+        rate
+    }
 }
 
 #[cfg(test)]
@@ -271,5 +332,243 @@ mod tests {
         assert!(is_priority_valid(5));
         assert!(!is_priority_valid(-11));
         assert!(!is_priority_valid(11));
+    }
+
+    // ===== Edge case tests for existing functions =====
+
+    #[test]
+    fn test_validate_resource_id_boundary_64() {
+        assert!(validate_resource_id(&"a".repeat(64)));
+        assert!(!validate_resource_id(&"a".repeat(65)));
+    }
+
+    #[test]
+    fn test_validate_resource_id_single_char() {
+        assert!(validate_resource_id("a"));
+        assert!(validate_resource_id("_"));
+        assert!(validate_resource_id("-"));
+        assert!(validate_resource_id(":"));
+    }
+
+    #[test]
+    fn test_validate_resource_id_special_chars_rejected() {
+        assert!(!validate_resource_id("res@001"));
+        assert!(!validate_resource_id("res#1"));
+        assert!(!validate_resource_id("res.1"));
+        assert!(!validate_resource_id("res/1"));
+    }
+
+    #[test]
+    fn test_normalize_code_empty() {
+        assert_eq!(normalize_code(""), "");
+        assert_eq!(normalize_code("   "), "");
+    }
+
+    #[test]
+    fn test_normalize_code_already_upper() {
+        assert_eq!(normalize_code("ABC"), "ABC");
+        assert_eq!(normalize_code("ABC-001"), "ABC-001");
+    }
+
+    #[test]
+    fn test_normalize_code_mixed_case() {
+        assert_eq!(normalize_code("AbC"), "ABC");
+        assert_eq!(normalize_code("xYz_123"), "XYZ_123");
+    }
+
+    #[test]
+    fn test_calc_duration_minutes_cross_day() {
+        let start = NaiveDate::from_ymd_opt(2024, 1, 1)
+            .unwrap()
+            .and_hms_opt(22, 0, 0)
+            .unwrap();
+        let end = NaiveDate::from_ymd_opt(2024, 1, 2)
+            .unwrap()
+            .and_hms_opt(2, 0, 0)
+            .unwrap();
+        assert_eq!(calc_duration_minutes(start, end), Some(240));
+    }
+
+    #[test]
+    fn test_calc_duration_minutes_multi_hour() {
+        let start = NaiveDate::from_ymd_opt(2024, 3, 1)
+            .unwrap()
+            .and_hms_opt(6, 0, 0)
+            .unwrap();
+        let end = NaiveDate::from_ymd_opt(2024, 3, 1)
+            .unwrap()
+            .and_hms_opt(18, 30, 0)
+            .unwrap();
+        assert_eq!(calc_duration_minutes(start, end), Some(750));
+    }
+
+    #[test]
+    fn test_check_capacity_overload_equal_boundary() {
+        assert!(!check_capacity_overload(10.0, 10.0));
+        assert!(check_capacity_overload(10.01, 10.0));
+    }
+
+    #[test]
+    fn test_check_capacity_overload_negative_available() {
+        assert!(check_capacity_overload(1.0, -5.0));
+        assert!(!check_capacity_overload(0.0, -5.0));
+    }
+
+    #[test]
+    fn test_calc_utilization_rate_zero_used() {
+        assert_eq!(calc_utilization_rate(0.0, 10.0), Some(0.0));
+    }
+
+    #[test]
+    fn test_calc_utilization_rate_small_fraction() {
+        assert_eq!(calc_utilization_rate(1.0, 3.0), Some(1.0 / 3.0));
+    }
+
+    #[test]
+    fn test_calc_shortfall_quantity_large_gap() {
+        assert_eq!(calc_shortfall_quantity(10000.0, 1.0), 9999.0);
+    }
+
+    #[test]
+    fn test_calc_forecast_accuracy_negative_actual() {
+        assert_eq!(calc_forecast_accuracy(100.0, -50.0), Some(0.0));
+    }
+
+    #[test]
+    fn test_is_valid_plan_no_numeric_only() {
+        assert!(is_valid_plan_no("123456"));
+        assert!(is_valid_plan_no("0001"));
+    }
+
+    #[test]
+    fn test_normalize_date_range_same_date() {
+        let d = NaiveDate::from_ymd_opt(2024, 6, 15).unwrap();
+        assert_eq!(normalize_date_range(Some(d), Some(d)), Some((d, d)));
+    }
+
+    #[test]
+    fn test_days_between_year_boundary() {
+        let d1 = NaiveDate::from_ymd_opt(2023, 12, 31).unwrap();
+        let d2 = NaiveDate::from_ymd_opt(2024, 1, 1).unwrap();
+        assert_eq!(days_between(d1, d2), 1);
+    }
+
+    #[test]
+    fn test_is_valid_forecast_period_case_sensitive() {
+        assert!(!is_valid_forecast_period("Daily"));
+        assert!(!is_valid_forecast_period("WEEKLY"));
+        assert!(!is_valid_forecast_period("MONTH"));
+    }
+
+    #[test]
+    fn test_calc_remaining_hours_negative_available() {
+        assert_eq!(calc_remaining_hours(-5.0, 0.0), 0.0);
+        assert_eq!(calc_remaining_hours(-5.0, 10.0), 0.0);
+    }
+
+    #[test]
+    fn test_is_priority_valid_mid_range() {
+        assert!(is_priority_valid(-5));
+        assert!(is_priority_valid(7));
+        assert!(is_priority_valid(-1));
+    }
+
+    // ===== Tests for new helper functions =====
+
+    #[test]
+    fn test_calc_capacity_utilization_normal() {
+        assert!((calc_capacity_utilization(5.0, 10.0) - 0.5).abs() < 1e-9);
+        assert!((calc_capacity_utilization(8.0, 10.0) - 0.8).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_calc_capacity_utilization_zero_available() {
+        assert_eq!(calc_capacity_utilization(5.0, 0.0), 0.0);
+        assert_eq!(calc_capacity_utilization(5.0, -10.0), 0.0);
+    }
+
+    #[test]
+    fn test_calc_capacity_utilization_over_capacity() {
+        assert_eq!(calc_capacity_utilization(15.0, 10.0), 1.0);
+        assert_eq!(calc_capacity_utilization(100.0, 10.0), 1.0);
+    }
+
+    #[test]
+    fn test_calc_capacity_utilization_zero_planned() {
+        assert_eq!(calc_capacity_utilization(0.0, 10.0), 0.0);
+    }
+
+    #[test]
+    fn test_validate_production_order_no_valid() {
+        assert!(validate_production_order_no("PO-2024-001").is_ok());
+        assert!(validate_production_order_no("ORDER_001").is_ok());
+        assert!(validate_production_order_no("ABC123").is_ok());
+    }
+
+    #[test]
+    fn test_validate_production_order_no_empty() {
+        assert!(validate_production_order_no("").is_err());
+    }
+
+    #[test]
+    fn test_validate_production_order_no_too_long() {
+        assert!(validate_production_order_no(&"a".repeat(65)).is_err());
+    }
+
+    #[test]
+    fn test_validate_production_order_no_invalid_chars() {
+        assert!(validate_production_order_no("PO 001").is_err());
+        assert!(validate_production_order_no("PO@001").is_err());
+        assert!(validate_production_order_no("PO.001").is_err());
+    }
+
+    #[test]
+    fn test_validate_production_order_no_error_message() {
+        let err = validate_production_order_no("").unwrap_err();
+        assert!(matches!(err, ApsError::InvalidProductionOrderNo(_)));
+        let msg = format!("{}", err);
+        assert!(msg.contains("invalid production order number"));
+    }
+
+    #[test]
+    fn test_is_valid_routing_step_valid() {
+        assert!(is_valid_routing_step(&[1, 2, 3]));
+        assert!(is_valid_routing_step(&[10, 20, 30, 40]));
+        assert!(is_valid_routing_step(&[1]));
+    }
+
+    #[test]
+    fn test_is_valid_routing_step_empty() {
+        assert!(!is_valid_routing_step(&[]));
+    }
+
+    #[test]
+    fn test_is_valid_routing_step_not_increasing() {
+        assert!(!is_valid_routing_step(&[3, 2, 1]));
+        assert!(!is_valid_routing_step(&[1, 3, 2]));
+        assert!(!is_valid_routing_step(&[5, 5]));
+    }
+
+    #[test]
+    fn test_is_valid_routing_step_duplicates() {
+        assert!(!is_valid_routing_step(&[1, 2, 2]));
+        assert!(!is_valid_routing_step(&[5, 5, 6]));
+    }
+
+    #[test]
+    fn test_calc_throughput_rate_normal() {
+        assert!((calc_throughput_rate(100.0, 5.0) - 20.0).abs() < 1e-9);
+        assert!((calc_throughput_rate(50.0, 2.5) - 20.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_calc_throughput_rate_zero_time() {
+        assert_eq!(calc_throughput_rate(100.0, 0.0), 0.0);
+        assert_eq!(calc_throughput_rate(100.0, -1.0), 0.0);
+    }
+
+    #[test]
+    fn test_calc_throughput_rate_zero_units() {
+        assert_eq!(calc_throughput_rate(0.0, 5.0), 0.0);
     }
 }

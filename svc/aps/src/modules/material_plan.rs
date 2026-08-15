@@ -579,3 +579,48 @@ pub async fn cancel_material_plan(
         }
     }
 }
+
+#[cfg(test)]
+mod serde_tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn create_material_plan_request_roundtrip() {
+        roundtrip(&CreateMaterialPlanRequest {
+            plan_no: "MP-001".into(),
+            plan_id: Some(Uuid::new_v4()),
+            material_id: Some(Uuid::new_v4()),
+            material_code: Some("MAT-A001".into()),
+            material_name: Some("Steel Rod".into()),
+            required_quantity: Some(500.0),
+            available_quantity: Some(300.0),
+            required_date: Some(NaiveDate::from_ymd_opt(2024, 3, 15).unwrap()),
+            supply_type: Some("purchase".into()),
+            status: Some("pending".into()),
+        });
+    }
+
+    #[test]
+    fn update_material_plan_request_roundtrip() {
+        roundtrip(&UpdateMaterialPlanRequest {
+            material_code: Some("MAT-B002".into()),
+            material_name: Some("Copper Wire".into()),
+            required_quantity: Some(1000.0),
+            available_quantity: Some(800.0),
+            required_date: Some(NaiveDate::from_ymd_opt(2024, 4, 20).unwrap()),
+            supply_type: Some("transfer".into()),
+            status: Some("sourced".into()),
+        });
+    }
+}

@@ -6,7 +6,7 @@
 //! FSM-4 Route:     planning → active → closed → deprecated/cancelled
 //! FSM-5 Shipment:  draft → pending → in_transit → delivered/cancelled
 
-#[derive(Debug, thiserror::Error, PartialEq)]
+#[derive(Debug, Clone, thiserror::Error, PartialEq)]
 pub enum FsmError {
     #[error("state '{0}' is terminal and cannot transition")]
     TerminalState(String),

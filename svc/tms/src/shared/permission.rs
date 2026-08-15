@@ -248,4 +248,157 @@ mod tests {
         let debug = format!("{:?}", p);
         assert!(debug.contains("ShipmentApprove"));
     }
+
+    // ===== Additional Clone/Eq/Display/Debug tests =====
+
+    #[test]
+    fn test_all_read_permissions_map_to_read() {
+        let read_perms = vec![
+            TmsPermission::VehicleRead,
+            TmsPermission::DriverRead,
+            TmsPermission::CarrierRead,
+            TmsPermission::ShipmentRead,
+            TmsPermission::RouteRead,
+        ];
+        for p in read_perms {
+            assert_eq!(p.to_shared().action, PermissionAction::Read);
+            assert_eq!(p.to_shared().module, ModuleCode::Scm);
+        }
+    }
+
+    #[test]
+    fn test_all_write_permissions_map_to_write() {
+        let write_perms = vec![
+            TmsPermission::VehicleWrite,
+            TmsPermission::DriverWrite,
+            TmsPermission::CarrierWrite,
+            TmsPermission::ShipmentWrite,
+            TmsPermission::RouteWrite,
+        ];
+        for p in write_perms {
+            assert_eq!(p.to_shared().action, PermissionAction::Write);
+            assert_eq!(p.to_shared().module, ModuleCode::Scm);
+        }
+    }
+
+    #[test]
+    fn test_all_approve_permissions_map_to_admin() {
+        let approve_perms = vec![
+            TmsPermission::VehicleApprove,
+            TmsPermission::DriverApprove,
+            TmsPermission::CarrierApprove,
+            TmsPermission::ShipmentApprove,
+            TmsPermission::RouteApprove,
+        ];
+        for p in approve_perms {
+            assert_eq!(p.to_shared().action, PermissionAction::Admin);
+            assert_eq!(p.to_shared().module, ModuleCode::Scm);
+        }
+    }
+
+    #[test]
+    fn test_all_permission_clone_roundtrip() {
+        let perms = vec![
+            TmsPermission::VehicleRead,
+            TmsPermission::VehicleWrite,
+            TmsPermission::VehicleApprove,
+            TmsPermission::DriverRead,
+            TmsPermission::DriverWrite,
+            TmsPermission::DriverApprove,
+            TmsPermission::CarrierRead,
+            TmsPermission::CarrierWrite,
+            TmsPermission::CarrierApprove,
+            TmsPermission::ShipmentRead,
+            TmsPermission::ShipmentWrite,
+            TmsPermission::ShipmentApprove,
+            TmsPermission::RouteRead,
+            TmsPermission::RouteWrite,
+            TmsPermission::RouteApprove,
+            TmsPermission::All,
+        ];
+        for p in perms {
+            let cloned = p.clone();
+            assert_eq!(p, cloned);
+            assert_eq!(p.to_shared(), cloned.to_shared());
+        }
+    }
+
+    #[test]
+    fn test_all_permission_display_not_empty() {
+        let perms = vec![
+            TmsPermission::VehicleRead,
+            TmsPermission::VehicleWrite,
+            TmsPermission::VehicleApprove,
+            TmsPermission::DriverRead,
+            TmsPermission::DriverWrite,
+            TmsPermission::DriverApprove,
+            TmsPermission::CarrierRead,
+            TmsPermission::CarrierWrite,
+            TmsPermission::CarrierApprove,
+            TmsPermission::ShipmentRead,
+            TmsPermission::ShipmentWrite,
+            TmsPermission::ShipmentApprove,
+            TmsPermission::RouteRead,
+            TmsPermission::RouteWrite,
+            TmsPermission::RouteApprove,
+            TmsPermission::All,
+        ];
+        for p in perms {
+            let s = format!("{}", p);
+            assert!(!s.is_empty());
+        }
+    }
+
+    #[test]
+    fn test_permission_neq_different_variants() {
+        let perms = vec![
+            TmsPermission::VehicleRead,
+            TmsPermission::VehicleWrite,
+            TmsPermission::DriverRead,
+            TmsPermission::CarrierApprove,
+            TmsPermission::All,
+        ];
+        for (i, p1) in perms.iter().enumerate() {
+            for (j, p2) in perms.iter().enumerate() {
+                if i != j {
+                    assert_ne!(p1, p2);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_permission_eq_same_variant() {
+        assert_eq!(TmsPermission::All, TmsPermission::All);
+        assert_eq!(TmsPermission::VehicleRead, TmsPermission::VehicleRead);
+        assert_eq!(
+            TmsPermission::ShipmentApprove,
+            TmsPermission::ShipmentApprove
+        );
+    }
+
+    #[test]
+    fn test_permission_all_maps_to_admin() {
+        let p = TmsPermission::All;
+        let shared = p.to_shared();
+        assert_eq!(shared.module, ModuleCode::Scm);
+        assert_eq!(shared.action, PermissionAction::Admin);
+    }
+
+    #[test]
+    fn test_module_permission_type_alias() {
+        let p: ModulePermission = TmsPermission::RouteRead;
+        assert_eq!(p.to_shared().module, ModuleCode::Scm);
+        assert_eq!(p.to_shared().action, PermissionAction::Read);
+    }
+
+    #[test]
+    fn test_permission_display_differs_read_write_approve() {
+        let read = format!("{}", TmsPermission::VehicleRead);
+        let write = format!("{}", TmsPermission::VehicleWrite);
+        let approve = format!("{}", TmsPermission::VehicleApprove);
+        assert_ne!(read, write);
+        assert_ne!(write, approve);
+        assert_ne!(read, approve);
+    }
 }

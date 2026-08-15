@@ -119,6 +119,53 @@ pub fn normalize_tracking_no(tracking: &str) -> String {
         .collect()
 }
 
+/// Error type for TMS validation helpers.
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
+pub enum TmsError {
+    #[error("invalid shipment number: {0}")]
+    InvalidShipmentNo(String),
+}
+
+/// Validate a shipment number (non-empty, ≤64 chars, alphanumeric/-/_).
+pub fn validate_shipment_no(shipment_no: &str) -> Result<(), TmsError> {
+    if shipment_no.is_empty() || shipment_no.len() > 64 {
+        return Err(TmsError::InvalidShipmentNo(shipment_no.to_string()));
+    }
+    if !shipment_no
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+    {
+        return Err(TmsError::InvalidShipmentNo(shipment_no.to_string()));
+    }
+    Ok(())
+}
+
+/// Check that route stop sequence has ≥2 stops, no empty entries, no duplicates.
+pub fn is_valid_route_sequence(stops: &[String]) -> bool {
+    if stops.len() < 2 {
+        return false;
+    }
+    let mut seen = std::collections::HashSet::new();
+    for stop in stops {
+        if stop.trim().is_empty() {
+            return false;
+        }
+        if !seen.insert(stop.trim().to_lowercase()) {
+            return false;
+        }
+    }
+    true
+}
+
+/// Calculate estimated arrival timestamp (epoch seconds) from departure, distance, and average speed.
+pub fn calc_estimated_arrival(departure: i64, distance_km: f64, avg_speed_kmh: f64) -> i64 {
+    if avg_speed_kmh <= 0.0 || distance_km < 0.0 {
+        return departure;
+    }
+    let travel_seconds = (distance_km / avg_speed_kmh) * 3600.0;
+    departure + travel_seconds as i64
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -252,5 +299,231 @@ mod tests {
         assert_eq!(normalize_tracking_no(" SF123456789 "), "SF123456789");
         assert_eq!(normalize_tracking_no("yt-987-654"), "YT987654");
         assert_eq!(normalize_tracking_no("\tJD001ABC\n"), "JD001ABC");
+    }
+
+    // ===== Edge case tests for existing functions =====
+
+    #[test]
+    fn test_validate_waybill_no_boundary_64() {
+        assert!(validate_waybill_no(&"a".repeat(64)));
+        assert!(!validate_waybill_no(&"a".repeat(65)));
+    }
+
+    #[test]
+    fn test_validate_waybill_no_single_char() {
+        assert!(validate_waybill_no("a"));
+        assert!(validate_waybill_no("_"));
+        assert!(validate_waybill_no("-"));
+    }
+
+    #[test]
+    fn test_validate_waybill_no_special_chars_rejected() {
+        assert!(!validate_waybill_no("WB:123"));
+        assert!(!validate_waybill_no("WB.123"));
+        assert!(!validate_waybill_no("WB/123"));
+    }
+
+    #[test]
+    fn test_calc_transport_hours_large_distance() {
+        assert_eq!(calc_transport_hours(10000.0, 80.0), Some(125.0));
+    }
+
+    #[test]
+    fn test_is_valid_shipment_status_transition_delivered_terminal() {
+        assert!(!is_valid_shipment_status_transition("delivered", "pending"));
+        assert!(!is_valid_shipment_status_transition(
+            "delivered",
+            "in_transit"
+        ));
+        assert!(!is_valid_shipment_status_transition(
+            "delivered",
+            "delivered"
+        ));
+    }
+
+    #[test]
+    fn test_is_valid_shipment_status_transition_cancelled_terminal() {
+        assert!(!is_valid_shipment_status_transition("cancelled", "draft"));
+        assert!(!is_valid_shipment_status_transition("cancelled", "pending"));
+        assert!(!is_valid_shipment_status_transition(
+            "cancelled",
+            "in_transit"
+        ));
+    }
+
+    #[test]
+    fn test_check_weight_limit_boundary() {
+        assert!(check_weight_limit(0.0, 1000.0));
+        assert!(!check_weight_limit(1000.01, 1000.0));
+    }
+
+    #[test]
+    fn test_normalize_vehicle_plate_empty() {
+        assert_eq!(normalize_vehicle_plate(""), "");
+        assert_eq!(normalize_vehicle_plate("   "), "");
+    }
+
+    #[test]
+    fn test_calc_delivery_eta_days_zero_distance() {
+        assert_eq!(calc_delivery_eta_days(0.0, 80.0, 8.0), Some(0.0));
+    }
+
+    #[test]
+    fn test_is_valid_driver_license_no_boundary_6() {
+        assert!(is_valid_driver_license_no("123456"));
+        assert!(!is_valid_driver_license_no("12345"));
+    }
+
+    #[test]
+    fn test_is_valid_driver_license_no_boundary_20() {
+        assert!(is_valid_driver_license_no(&"1".repeat(20)));
+        assert!(!is_valid_driver_license_no(&"1".repeat(21)));
+    }
+
+    #[test]
+    fn test_calc_fuel_cost_large_distance() {
+        assert_eq!(calc_fuel_cost(1000.0, 10.0, 7.5), Some(750.0));
+    }
+
+    #[test]
+    fn test_calc_fuel_cost_zero_distance() {
+        assert_eq!(calc_fuel_cost(0.0, 8.0, 7.5), Some(0.0));
+    }
+
+    #[test]
+    fn test_check_volume_limit_boundary() {
+        assert!(check_volume_limit(0.0, 10.0));
+        assert!(check_volume_limit(10.0, 10.0));
+        assert!(!check_volume_limit(10.01, 10.0));
+    }
+
+    #[test]
+    fn test_normalize_carrier_code_empty() {
+        assert_eq!(normalize_carrier_code(""), "");
+        assert_eq!(normalize_carrier_code("   "), "");
+    }
+
+    #[test]
+    fn test_is_valid_route_code_boundary_32() {
+        assert!(is_valid_route_code(&"a".repeat(32)));
+        assert!(!is_valid_route_code(&"a".repeat(33)));
+    }
+
+    #[test]
+    fn test_calc_load_factor_half() {
+        assert_eq!(calc_load_factor(500.0, 1000.0), Some(0.5));
+    }
+
+    #[test]
+    fn test_is_valid_phone_number_boundary_7() {
+        assert!(is_valid_phone_number("1234567"));
+        assert!(!is_valid_phone_number("123456"));
+    }
+
+    #[test]
+    fn test_is_valid_phone_number_boundary_15() {
+        assert!(is_valid_phone_number(&"1".repeat(15)));
+        assert!(!is_valid_phone_number(&"1".repeat(16)));
+    }
+
+    #[test]
+    fn test_normalize_tracking_no_empty() {
+        assert_eq!(normalize_tracking_no(""), "");
+        assert_eq!(normalize_tracking_no("  "), "");
+    }
+
+    // ===== Tests for new helper functions =====
+
+    #[test]
+    fn test_validate_shipment_no_valid() {
+        assert!(validate_shipment_no("SHP-2024-001").is_ok());
+        assert!(validate_shipment_no("SHIP_001").is_ok());
+        assert!(validate_shipment_no("ABC123").is_ok());
+    }
+
+    #[test]
+    fn test_validate_shipment_no_empty() {
+        assert!(validate_shipment_no("").is_err());
+    }
+
+    #[test]
+    fn test_validate_shipment_no_too_long() {
+        assert!(validate_shipment_no(&"a".repeat(65)).is_err());
+    }
+
+    #[test]
+    fn test_validate_shipment_no_invalid_chars() {
+        assert!(validate_shipment_no("SHP 001").is_err());
+        assert!(validate_shipment_no("SHP@001").is_err());
+        assert!(validate_shipment_no("SHP.001").is_err());
+    }
+
+    #[test]
+    fn test_validate_shipment_no_error_message() {
+        let err = validate_shipment_no("").unwrap_err();
+        assert!(matches!(err, TmsError::InvalidShipmentNo(_)));
+        let msg = format!("{}", err);
+        assert!(msg.contains("invalid shipment number"));
+    }
+
+    #[test]
+    fn test_is_valid_route_sequence_valid() {
+        assert!(is_valid_route_sequence(&[
+            "Beijing".into(),
+            "Shanghai".into(),
+            "Guangzhou".into()
+        ]));
+        assert!(is_valid_route_sequence(&["A".into(), "B".into()]));
+    }
+
+    #[test]
+    fn test_is_valid_route_sequence_empty() {
+        assert!(!is_valid_route_sequence(&[]));
+    }
+
+    #[test]
+    fn test_is_valid_route_sequence_single_stop() {
+        assert!(!is_valid_route_sequence(&["OnlyOne".into()]));
+    }
+
+    #[test]
+    fn test_is_valid_route_sequence_duplicates() {
+        assert!(!is_valid_route_sequence(&[
+            "Beijing".into(),
+            "Shanghai".into(),
+            "Beijing".into()
+        ]));
+        assert!(!is_valid_route_sequence(&["A".into(), "A".into()]));
+    }
+
+    #[test]
+    fn test_is_valid_route_sequence_case_insensitive_duplicates() {
+        assert!(!is_valid_route_sequence(&[
+            "Beijing".into(),
+            "BEIJING".into()
+        ]));
+    }
+
+    #[test]
+    fn test_is_valid_route_sequence_empty_stop() {
+        assert!(!is_valid_route_sequence(&["Beijing".into(), "".into()]));
+        assert!(!is_valid_route_sequence(&["Beijing".into(), "   ".into()]));
+    }
+
+    #[test]
+    fn test_calc_estimated_arrival_normal() {
+        // 100 km at 50 km/h = 2 hours = 7200 seconds
+        assert_eq!(calc_estimated_arrival(1000, 100.0, 50.0), 1000 + 7200);
+    }
+
+    #[test]
+    fn test_calc_estimated_arrival_zero_speed() {
+        assert_eq!(calc_estimated_arrival(1000, 100.0, 0.0), 1000);
+        assert_eq!(calc_estimated_arrival(1000, 100.0, -10.0), 1000);
+    }
+
+    #[test]
+    fn test_calc_estimated_arrival_zero_distance() {
+        assert_eq!(calc_estimated_arrival(5000, 0.0, 50.0), 5000);
     }
 }

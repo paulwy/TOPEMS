@@ -580,3 +580,49 @@ pub async fn validate_forecast(
         }
     }
 }
+
+#[cfg(test)]
+mod serde_tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn create_forecast_request_roundtrip() {
+        roundtrip(&CreateForecastRequest {
+            forecast_no: "FC-001".into(),
+            product_id: Some(Uuid::new_v4()),
+            product_name: Some("Product X".into()),
+            forecast_period: Some("monthly".into()),
+            forecast_date: Some(NaiveDate::from_ymd_opt(2024, 5, 1).unwrap()),
+            forecast_quantity: Some(2000.0),
+            actual_quantity: Some(1800.0),
+            method: Some("moving_average".into()),
+            confidence_level: Some(0.95),
+            notes: Some("Q2 forecast".into()),
+        });
+    }
+
+    #[test]
+    fn update_forecast_request_roundtrip() {
+        roundtrip(&UpdateForecastRequest {
+            product_name: Some("Product Y".into()),
+            forecast_period: Some("quarterly".into()),
+            forecast_date: Some(NaiveDate::from_ymd_opt(2024, 7, 1).unwrap()),
+            forecast_quantity: Some(5000.0),
+            actual_quantity: Some(4800.0),
+            method: Some("exponential_smoothing".into()),
+            confidence_level: Some(0.99),
+            notes: None,
+        });
+    }
+}

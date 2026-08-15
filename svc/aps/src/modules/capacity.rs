@@ -543,3 +543,42 @@ pub async fn release_capacity(
         }
     }
 }
+
+#[cfg(test)]
+mod serde_tests {
+    use super::*;
+    use serde::Serialize;
+    use serde_json::Value;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn create_capacity_request_roundtrip() {
+        roundtrip(&CreateCapacityRequest {
+            work_center_id: Uuid::new_v4(),
+            work_center_name: Some("WC-MAIN".into()),
+            capacity_date: Some(NaiveDate::from_ymd_opt(2024, 6, 1).unwrap()),
+            available_hours: Some(8.0),
+            used_hours: Some(3.5),
+            status: Some("available".into()),
+        });
+    }
+
+    #[test]
+    fn update_capacity_request_roundtrip() {
+        roundtrip(&UpdateCapacityRequest {
+            work_center_name: Some("WC-02".into()),
+            capacity_date: Some(NaiveDate::from_ymd_opt(2024, 7, 1).unwrap()),
+            available_hours: Some(16.0),
+            used_hours: Some(0.0),
+            status: Some("allocated".into()),
+        });
+    }
+}
