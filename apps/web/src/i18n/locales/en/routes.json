@@ -4,5 +4,15 @@
   "routes.app_routes.k2": "Or visit other modules:",
   "routes.app_routes.k3": "Human Resources Management",
   "routes.app_routes.k4": "Customer Relationship Management",
-  "routes.app_routes.k5": "Dashboard"
+  "routes.app_routes.k5": "Dashboard",
+  "routes": {
+    "app_routes": {
+      "k0": "Core Modules",
+      "k1": "Core modules are not available in static mode. Set VITE_DEPLOYMENT_MODE=module-federation to enable",
+      "k2": "Or visit other modules:",
+      "k3": "Human Resources Management",
+      "k4": "Customer Relationship Management",
+      "k5": "Dashboard"
+    }
+  }
 }

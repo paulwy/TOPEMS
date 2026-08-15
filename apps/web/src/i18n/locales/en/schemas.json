@@ -141,5 +141,182 @@
   "schemas.approval.k0": "Procurement Management",
   "schemas.approval.k1": "HR Management",
   "schemas.approval.k2": "Financial Management",
-  "schemas.approval.k3": "Legal Management"
+  "schemas.approval.k3": "Legal Management",
+  "schemas": {
+    "accident": {
+      "k0": "Under Investigation",
+      "k1": "In Progress",
+      "k2": "Case Closed",
+      "k3": "Archived",
+      "k4": "Under Investigation",
+      "k5": "In Progress",
+      "k6": "Case Closed",
+      "k7": "Archived"
+    },
+    "hazardous_material": {
+      "k0": "Flammable",
+      "k1": "Explosive",
+      "k2": "Toxic",
+      "k3": "Corrosive",
+      "k4": "Oxidizing",
+      "k5": "Radioactive",
+      "k6": "Level 1",
+      "k7": "Level 2",
+      "k8": "Level 3",
+      "k9": "Level 4",
+      "k10": "Grade 1",
+      "k11": "Grade 2",
+      "k12": "Grade 3",
+      "k13": "Grade 4"
+    },
+    "barcode": {
+      "k0": "Normal",
+      "k1": "Printed",
+      "k2": "Scanned",
+      "k3": "Disabled",
+      "k4": "Normal",
+      "k5": "Printed",
+      "k6": "Scanned",
+      "k7": "Disabled"
+    },
+    "inspection_task": {
+      "k0": "Pending Assignment",
+      "k1": "Assigned",
+      "k2": "In Progress",
+      "k3": "Completed",
+      "k4": "Terminated",
+      "k5": "Pending Assignment",
+      "k6": "Assigned",
+      "k7": "In Progress",
+      "k8": "Completed",
+      "k9": "Terminated"
+    },
+    "instrument": {
+      "k0": "Normal",
+      "k1": "Calibrating",
+      "k2": "Under Maintenance",
+      "k3": "Disabled",
+      "k4": "Normal",
+      "k5": "Calibrating",
+      "k6": "Under Maintenance",
+      "k7": "Disabled"
+    },
+    "pt_plan": {
+      "k0": "Pending Execution",
+      "k1": "Executing",
+      "k2": "Completed",
+      "k3": "Evaluated",
+      "k4": "Pending Execution",
+      "k5": "Executing",
+      "k6": "Completed",
+      "k7": "Evaluated"
+    },
+    "reagent": {
+      "k0": "Normal",
+      "k1": "Low Stock",
+      "k2": "Expired",
+      "k3": "Disabled",
+      "k4": "Normal",
+      "k5": "Low Stock",
+      "k6": "Expired",
+      "k7": "Disabled"
+    },
+    "sample": {
+      "k0": "Pending Registration",
+      "k1": "Pending Receipt",
+      "k2": "Received",
+      "k3": "Pending Confirmation",
+      "k4": "Confirmed",
+      "k5": "Testing",
+      "k6": "Completed",
+      "k7": "Pending Registration",
+      "k8": "Pending Receipt",
+      "k9": "Received",
+      "k10": "Pending Confirmation",
+      "k11": "Confirmed",
+      "k12": "Testing",
+      "k13": "Completed"
+    },
+    "test_method": {
+      "k0": "Draft",
+      "k1": "Published",
+      "k2": "Archived",
+      "k3": "Draft",
+      "k4": "Published",
+      "k5": "Archived"
+    },
+    "uncertainty": {
+      "k0": "Draft",
+      "k1": "Calculating",
+      "k2": "Completed",
+      "k3": "Draft",
+      "k4": "Calculating",
+      "k5": "Completed"
+    },
+    "alert_history": {
+      "k0": "Basic Information",
+      "k1": "Level",
+      "k2": "Status",
+      "k3": "Source Service",
+      "k4": "Alert Type",
+      "k5": "Trigger Time",
+      "k6": "Processing Information",
+      "k7": "Confirmation Time",
+      "k8": "Confirmed By",
+      "k9": "Resolution Time",
+      "k10": "Resolved By",
+      "k11": "No processing records yet",
+      "k12": "Alert Description",
+      "k13": "Resolution Remarks"
+    },
+    "logs": {
+      "k0": "Basic Information",
+      "id_1": "Log ID",
+      "k2": "Time",
+      "k3": "Level",
+      "k4": "Type",
+      "k5": "Service Information",
+      "k6": "Service Name",
+      "k7": "Duration",
+      "k8": "Log Content"
+    },
+    "notification_channel": {
+      "k0": "Last Test"
+    },
+    "experiment": {
+      "k0": "Lab Test",
+      "k1": "Pilot Test",
+      "k2": "Scale-up",
+      "k3": "In Progress",
+      "k4": "Completed",
+      "k5": "Paused",
+      "k6": "Failed"
+    },
+    "finance": {
+      "k0": "Pending",
+      "k1": "Processing",
+      "k2": "Delivered",
+      "k3": "Completed",
+      "k4": "Cancelled",
+      "k5": "Active",
+      "k6": "Expired",
+      "k7": "Draft",
+      "k8": "Terminated",
+      "k9": "Pending",
+      "k10": "Processing",
+      "k11": "Delivered",
+      "k12": "Completed",
+      "k13": "Cancelled",
+      "k14": "Active",
+      "k15": "Expired",
+      "k16": "Draft",
+      "k17": "Terminated"
+    },
+    "approval": {
+      "k0": "Procurement Management",
+      "k1": "HR Management",
+      "k2": "Financial Management",
+      "k3": "Legal Management"
+    }
+  }
 }

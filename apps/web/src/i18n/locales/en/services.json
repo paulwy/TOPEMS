@@ -1,5 +1,14 @@
 {
   "services.external_erp_adapters.gs_0": "Inspur GS",
   "services.external_erp_adapters.erp_1": "Unsupported ERP type:",
-  "services.voucher_template_engine.k0": "balanced: Math.abs(debitTotal - creditTotal) < 0.01, // allow 0.01 tolerance"
+  "services.voucher_template_engine.k0": "balanced: Math.abs(debitTotal - creditTotal) < 0.01, // allow 0.01 tolerance",
+  "services": {
+    "external_erp_adapters": {
+      "gs_0": "Inspur GS",
+      "erp_1": "Unsupported ERP type:"
+    },
+    "voucher_template_engine": {
+      "k0": "balanced: Math.abs(debitTotal - creditTotal) < 0.01, // allow 0.01 tolerance"
+    }
+  }
 }

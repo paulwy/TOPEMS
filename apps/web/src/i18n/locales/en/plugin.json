@@ -267,5 +267,21 @@
   "plugin.dashboard_page.k2": "Quick Actions",
   "plugin.plugin_detail_page.k0": "PluginDetailPage under development",
   "plugin.plugin_marketplace_page.k0": "PluginMarketplacePage under development",
-  "plugin.plugin_upload_page.k0": "PluginUploadPage under development"
+  "plugin.plugin_upload_page.k0": "PluginUploadPage under development",
+  "plugin": {
+    "dashboard_page": {
+      "k0": "Plugin Marketplace Overview",
+      "k1": "Plugin Marketplace Data Overview",
+      "k2": "Quick Actions"
+    },
+    "plugin_detail_page": {
+      "k0": "PluginDetailPage under development"
+    },
+    "plugin_marketplace_page": {
+      "k0": "PluginMarketplacePage under development"
+    },
+    "plugin_upload_page": {
+      "k0": "PluginUploadPage under development"
+    }
+  }
 }

@@ -18,5 +18,24 @@
   "oa.dashboard_page.k2": "Quick Actions",
   "oa.document_management_page.k0": "Document Management",
   "oa.meeting_management_page.k0": "Meeting Management",
-  "oa.vehicle_management_page.k0": "Vehicle Management"
+  "oa.vehicle_management_page.k0": "Vehicle Management",
+  "oa": {
+    "announcement_page": {
+      "k0": "Announcements"
+    },
+    "dashboard_page": {
+      "k0": "Office Automation Overview",
+      "k1": "Office Automation Data Overview",
+      "k2": "Quick Actions"
+    },
+    "document_management_page": {
+      "k0": "Document Management"
+    },
+    "meeting_management_page": {
+      "k0": "Meeting Management"
+    },
+    "vehicle_management_page": {
+      "k0": "Vehicle Management"
+    }
+  }
 }

@@ -2401,13 +2401,15 @@
     }
   },
   "schema.crud_page_adapter.k0": "Failed to load list",
-  "schema.crud_page_adapter.k1": "Creation failed",
+  "schema.crud_page_adapter.k1": "Create failed",
   "schema.crud_page_adapter.k2": "Update failed",
-  "schema.crud_page_adapter.k3": "Deletion failed",
+  "schema.crud_page_adapter.k3": "Delete failed",
   "schema": {
     "crud_page_adapter": {
       "k1": "Create failed",
-      "k3": "Delete failed"
+      "k3": "Delete failed",
+      "k0": "Failed to load list",
+      "k2": "Update failed"
     }
   }
 }

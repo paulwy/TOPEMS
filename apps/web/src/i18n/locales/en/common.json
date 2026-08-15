@@ -10,7 +10,7 @@
   "common.context-engine.k7": "TODO: translate",
   "common.context-engine.k8": "TODO: translate",
   "common.context-engine.k9": "TODO: translate",
-  "common.context-engine.k10": "TODO: translate",
+  "common.context-engine.k10": "Task",
   "common.context-engine.k11": "TODO: translate",
   "common.context-engine.k12": "TODO: translate",
   "common.context-engine.k13": "TODO: translate",
@@ -29,7 +29,7 @@
   "common.context-engine.k25": "TODO: translate",
   "common.context-engine.if_26": "TODO: translate",
   "common.context-engine.k27": "TODO: translate",
-  "common.context-engine.k28": "TODO: translate",
+  "common.context-engine.k28": "Confirm",
   "common.context-engine.k29": "TODO: translate",
   "common.context-engine.k30": "TODO: translate",
   "common.context-engine.k31": "TODO: translate",
@@ -39,7 +39,7 @@
   "common.context-engine.k35": "TODO: translate",
   "common.context-engine.k36": "TODO: translate",
   "common.context-engine.k37": "TODO: translate",
-  "common.context-engine.k38": "TODO: translate",
+  "common.context-engine.k38": "Error",
   "common.context-engine.if_39": "TODO: translate",
   "common.context-engine.k40": "TODO: translate",
   "common.context-engine.k41": "TODO: translate",
@@ -108,7 +108,7 @@
   "common.ehs_badges.k1": "TODO: translate",
   "common.ehs_badges.k2": "TODO: translate",
   "common.ehs_badges.k3": "TODO: translate",
-  "common.ehs_badges.k4": "TODO: translate",
+  "common.ehs_badges.k4": "Critical",
   "common.ehs_badges.k5": "TODO: translate",
   "common.ehs_badges.k6": "TODO: translate",
   "common.ehs_badges.k7": "TODO: translate",
@@ -135,7 +135,7 @@
   "common.list_page_template.strong_11": "TODO: translate",
   "common.list_page_template.strong_0": "TODO: translate",
   "common.list_page_template.strong_12": "TODO: translate",
-  "common.list_page_template.k13": "TODO: translate",
+  "common.list_page_template.k13": "Confirm",
   "common.list_page_template.k14": "TODO: translate",
   "common.master_detail_page_template.k0": "TODO: translate",
   "common.master_detail_page_template.k1": "TODO: translate",
@@ -371,13 +371,490 @@
     "context-engine": {
       "k10": "Task",
       "k28": "Confirm",
-      "k38": "Error"
+      "k38": "Error",
+      "k0": "TODO: translate",
+      "k1": "TODO: translate",
+      "k2": "TODO: translate",
+      "g_3": "TODO: translate",
+      "g_0": "TODO: translate",
+      "k4": "TODO: translate",
+      "k5": "TODO: translate",
+      "k6": "TODO: translate",
+      "k7": "TODO: translate",
+      "k8": "TODO: translate",
+      "k9": "TODO: translate",
+      "k11": "TODO: translate",
+      "k12": "TODO: translate",
+      "k13": "TODO: translate",
+      "k14": "TODO: translate",
+      "k15": "TODO: translate",
+      "k16": "TODO: translate",
+      "if_17": "TODO: translate",
+      "k18": "TODO: translate",
+      "k19": "TODO: translate",
+      "k20": "TODO: translate",
+      "k21": "TODO: translate",
+      "if_0": "TODO: translate",
+      "if_22": "TODO: translate",
+      "k23": "TODO: translate",
+      "k24": "TODO: translate",
+      "k25": "TODO: translate",
+      "if_26": "TODO: translate",
+      "k27": "TODO: translate",
+      "k29": "TODO: translate",
+      "k30": "TODO: translate",
+      "k31": "TODO: translate",
+      "k32": "TODO: translate",
+      "if_33": "TODO: translate",
+      "k34": "TODO: translate",
+      "k35": "TODO: translate",
+      "k36": "TODO: translate",
+      "k37": "TODO: translate",
+      "if_39": "TODO: translate",
+      "k40": "TODO: translate",
+      "k41": "TODO: translate",
+      "k42": "TODO: translate"
     },
     "ehs_badges": {
-      "k4": "Critical"
+      "k4": "Critical",
+      "k0": "TODO: translate",
+      "k1": "TODO: translate",
+      "k2": "TODO: translate",
+      "k3": "TODO: translate",
+      "k5": "TODO: translate",
+      "k6": "TODO: translate",
+      "k7": "TODO: translate",
+      "k8": "TODO: translate",
+      "k9": "TODO: translate",
+      "k10": "TODO: translate",
+      "k11": "TODO: translate"
     },
     "list_page_template": {
-      "k13": "Confirm"
+      "k13": "Confirm",
+      "k3": "TODO: translate",
+      "k7": "TODO: translate",
+      "k8": "TODO: translate",
+      "k9": "TODO: translate",
+      "strong_10": "TODO: translate",
+      "strong_11": "TODO: translate",
+      "strong_0": "TODO: translate",
+      "strong_12": "TODO: translate",
+      "k14": "TODO: translate"
+    },
+    "v54-agent-panel": {
+      "k0": "TODO: translate",
+      "menuitem_1": "TODO: translate",
+      "menuitem_0": "TODO: translate",
+      "k2": "TODO: translate",
+      "k3": "TODO: translate"
+    },
+    "v57-automation-panel": {
+      "e2emenuitem_0": "TODO: translate",
+      "k7": "TODO: translate"
+    },
+    "v59-devex-panel": {
+      "k0": "TODO: translate",
+      "k1": "TODO: translate",
+      "k2": "TODO: translate",
+      "k3": "TODO: translate",
+      "ai_4": "TODO: translate",
+      "ai_0": "TODO: translate",
+      "k5": "TODO: translate",
+      "fps_6": "TODO: translate",
+      "k7": "TODO: translate",
+      "fps_0": "TODO: translate",
+      "k8": "TODO: translate",
+      "k9": "TODO: translate",
+      "k10": "TODO: translate",
+      "k11": "TODO: translate",
+      "k12": "TODO: translate",
+      "k13": "TODO: translate",
+      "k14": "TODO: translate",
+      "k15": "TODO: translate",
+      "k16": "TODO: translate",
+      "k17": "TODO: translate",
+      "k18": "TODO: translate",
+      "ai_19": "TODO: translate"
+    },
+    "v54-native-panel": {
+      "abmenuitem_0": "TODO: translate",
+      "k1": "TODO: translate",
+      "k0": "TODO: translate",
+      "k2": "TODO: translate",
+      "k3": "TODO: translate",
+      "k4": "TODO: translate",
+      "k5": "TODO: translate"
+    },
+    "v56-review-panel": {
+      "k1": "TODO: translate",
+      "k2": "TODO: translate",
+      "k3": "TODO: translate",
+      "tablecell_4": "TODO: translate",
+      "tablecell_0": "TODO: translate"
+    },
+    "index": {
+      "k0": "TODO: translate",
+      "k1": "TODO: translate"
+    },
+    "report_viewer": {
+      "k0": "TODO: translate",
+      "k1": "TODO: translate",
+      "k2": "TODO: translate",
+      "k3": "TODO: translate",
+      "k4": "TODO: translate",
+      "k5": "TODO: translate",
+      "k6": "TODO: translate",
+      "k7": "TODO: translate",
+      "k8": "TODO: translate",
+      "k9": "TODO: translate",
+      "k10": "TODO: translate",
+      "k11": "TODO: translate"
+    },
+    "addressbook_filters": {
+      "span_0": "TODO: translate"
+    },
+    "ai_settings_modal": {
+      "aih2_0": "TODO: translate"
+    },
+    "data_table": {
+      "k0": "TODO: translate",
+      "menuitem_1": "TODO: translate",
+      "menuitem_0": "TODO: translate",
+      "k2": "TODO: translate",
+      "k3": "TODO: translate",
+      "k4": "TODO: translate",
+      "k5": "TODO: translate",
+      "k6": "TODO: translate",
+      "k7": "TODO: translate"
+    },
+    "map3_d_view": {
+      "3dtypography_0": "TODO: translate",
+      "typography_1": "TODO: translate",
+      "typography_0": "TODO: translate",
+      "typography_2": "TODO: translate",
+      "typography_3": "TODO: translate",
+      "k4": "TODO: translate",
+      "k0": "TODO: translate",
+      "k5": "TODO: translate",
+      "k6": "TODO: translate",
+      "k7": "TODO: translate"
+    },
+    "tool_panel": {
+      "3dtypography_0": "TODO: translate"
+    },
+    "master_detail_page_template": {
+      "k0": "TODO: translate",
+      "k1": "TODO: translate"
+    },
+    "layout_panel": {
+      "xinputlabel_0": "TODO: translate",
+      "yinputlabel_1": "TODO: translate",
+      "yinputlabel_0": "TODO: translate",
+      "5menuitem_2": "TODO: translate",
+      "5menuitem_0": "TODO: translate",
+      "10menuitem_3": "TODO: translate",
+      "10menuitem_0": "TODO: translate",
+      "20menuitem_4": "TODO: translate",
+      "20menuitem_0": "TODO: translate",
+      "50menuitem_5": "TODO: translate",
+      "50menuitem_0": "TODO: translate"
+    },
+    "template_editor": {
+      "formlabel_0": "TODO: translate",
+      "formlabel_1": "TODO: translate"
+    },
+    "workflow_designer": {
+      "k0": "TODO: translate",
+      "k1": "TODO: translate"
+    },
+    "design_system_panel": {
+      "k0": "TODO: translate",
+      "k1": "TODO: translate",
+      "k2": "TODO: translate",
+      "k3": "TODO: translate"
+    },
+    "use_performance_monitor": {
+      "typography_0": "TODO: translate",
+      "api_1": "TODO: translate",
+      "api_0": "TODO: translate",
+      "k2": "TODO: translate",
+      "k0": "TODO: translate",
+      "ms_3": "TODO: translate",
+      "k4": "TODO: translate",
+      "ms_0": "TODO: translate"
+    },
+    "user_menu": {
+      "typography_0": "TODO: translate"
+    },
+    "micro_frontend_loader": {
+      "k0": "TODO: translate"
+    },
+    "module_loading_progress": {
+      "k0": "TODO: translate",
+      "k1": "TODO: translate"
+    },
+    "plugin_loader": {
+      "k0": "TODO: translate"
+    },
+    "devtools-panel": {
+      "k0": "TODO: translate",
+      "k1": "TODO: translate",
+      "k2": "TODO: translate",
+      "k3": "TODO: translate",
+      "k4": "TODO: translate",
+      "k5": "TODO: translate"
+    },
+    "dependency_governance": {
+      "k0": "TODO: translate",
+      "strong_1": "TODO: translate",
+      "strong_2": "TODO: translate",
+      "k3": "TODO: translate",
+      "strong_0": "TODO: translate",
+      "strong_4": "TODO: translate",
+      "k5": "TODO: translate",
+      "k6": "TODO: translate",
+      "k7": "TODO: translate",
+      "k8": "TODO: translate",
+      "k9": "TODO: translate",
+      "k10": "TODO: translate"
+    },
+    "sandboxed_remote_loader": {
+      "k0": "TODO: translate",
+      "k1": "TODO: translate",
+      "k2": "TODO: translate",
+      "k3": "TODO: translate"
+    },
+    "tenant_settings_page": {
+      "15menuitem_0": "TODO: translate",
+      "30menuitem_1": "TODO: translate",
+      "30menuitem_0": "TODO: translate",
+      "1menuitem_2": "TODO: translate",
+      "1menuitem_0": "TODO: translate",
+      "2menuitem_3": "TODO: translate",
+      "2menuitem_0": "TODO: translate",
+      "8menuitem_4": "TODO: translate",
+      "8menuitem_0": "TODO: translate",
+      "24menuitem_5": "TODO: translate",
+      "24menuitem_0": "TODO: translate",
+      "k6": "TODO: translate",
+      "k7": "TODO: translate",
+      "k0": "TODO: translate"
+    },
+    "material_shortage_page": {
+      "8020_0": "TODO: translate",
+      "span_1": "TODO: translate",
+      "span_0": "TODO: translate",
+      "h3_2": "TODO: translate",
+      "h3_0": "TODO: translate"
+    },
+    "oee_dashboard_page": {
+      "oeeh1_0": "TODO: translate",
+      "oeeh3_1": "TODO: translate",
+      "oeeh3_0": "TODO: translate",
+      "oeeh3_2": "TODO: translate"
+    },
+    "plan_adherence_page": {
+      "vsh3_0": "TODO: translate"
+    },
+    "audit_log_page": {
+      "iptablecell_0": "TODO: translate"
+    },
+    "financial_analysis_page": {
+      "k0": "TODO: translate",
+      "k1": "TODO: translate",
+      "k2": "TODO: translate",
+      "k3": "TODO: translate",
+      "k4": "TODO: translate",
+      "k5": "TODO: translate",
+      "k6": "TODO: translate",
+      "k7": "TODO: translate",
+      "k8": "TODO: translate",
+      "k9": "TODO: translate",
+      "k10": "TODO: translate",
+      "030box_11": "TODO: translate",
+      "030box_0": "TODO: translate",
+      "k12": "TODO: translate",
+      "3160box_13": "TODO: translate",
+      "3160box_0": "TODO: translate",
+      "k14": "TODO: translate",
+      "k15": "TODO: translate",
+      "k16": "TODO: translate",
+      "k17": "TODO: translate",
+      "k18": "TODO: translate",
+      "k19": "TODO: translate"
+    },
+    "equipment_management_page": {
+      "k0": "TODO: translate",
+      "inputlabel_1": "TODO: translate",
+      "inputlabel_0": "TODO: translate",
+      "inputlabel_2": "TODO: translate",
+      "inputlabel_3": "TODO: translate",
+      "inputlabel_4": "TODO: translate"
+    },
+    "mes_capacity_utilization_page": {
+      "k0": "TODO: translate",
+      "h3_1": "TODO: translate",
+      "h3_0": "TODO: translate"
+    },
+    "mes_delivery_analytics_page": {
+      "aoption_0": "TODO: translate",
+      "boption_1": "TODO: translate",
+      "boption_0": "TODO: translate",
+      "sla_2": "TODO: translate",
+      "sla_0": "TODO: translate",
+      "td_3": "TODO: translate",
+      "td_0": "TODO: translate"
+    },
+    "mes_equipment_mtbf_page": {
+      "mtbfmttrh1_0": "TODO: translate",
+      "mtbf12h3_1": "TODO: translate",
+      "mtbf12h3_0": "TODO: translate",
+      "mtbfvsoeeh3_2": "TODO: translate",
+      "mtbfvsoeeh3_0": "TODO: translate",
+      "td_3": "TODO: translate",
+      "td_0": "TODO: translate"
+    },
+    "mes_oee_dashboard_page": {
+      "oeeh1_0": "TODO: translate",
+      "24hoeeh3_1": "TODO: translate",
+      "24hoeeh3_0": "TODO: translate"
+    },
+    "mes_quality_pareto_page": {
+      "paretoh3_0": "TODO: translate",
+      "k1": "TODO: translate",
+      "h3_2": "TODO: translate",
+      "k0": "TODO: translate",
+      "h3_0": "TODO: translate"
+    },
+    "metrics_dashboard_page": {
+      "k0": "TODO: translate",
+      "1menuitem_1": "TODO: translate",
+      "1menuitem_0": "TODO: translate",
+      "6menuitem_2": "TODO: translate",
+      "6menuitem_0": "TODO: translate",
+      "24menuitem_3": "TODO: translate",
+      "24menuitem_0": "TODO: translate",
+      "7menuitem_4": "TODO: translate",
+      "7menuitem_0": "TODO: translate",
+      "30menuitem_5": "TODO: translate",
+      "30menuitem_0": "TODO: translate"
+    },
+    "slo_status_page": {
+      "k0": "TODO: translate",
+      "1htablecell_2": "TODO: translate",
+      "1htablecell_0": "TODO: translate",
+      "6htablecell_3": "TODO: translate",
+      "6htablecell_0": "TODO: translate",
+      "24htablecell_4": "TODO: translate",
+      "24htablecell_0": "TODO: translate",
+      "tablecell_5": "TODO: translate",
+      "tablecell_0": "TODO: translate",
+      "k6": "TODO: translate"
+    },
+    "qms_eight_d_detail_page": {
+      "8dh3_0": "TODO: translate",
+      "span_1": "TODO: translate",
+      "span_0": "TODO: translate"
+    },
+    "qms_fmea_detail_page": {
+      "top10rpnh3_0": "TODO: translate"
+    },
+    "qms_inspection_detail_page": {
+      "span_0": "TODO: translate"
+    },
+    "qms_audit_compliance_page": {
+      "h3_0": "TODO: translate"
+    },
+    "qms_defect_pareto_page": {
+      "8020_0": "TODO: translate",
+      "span_1": "TODO: translate",
+      "span_0": "TODO: translate",
+      "h3_2": "TODO: translate",
+      "h3_0": "TODO: translate"
+    },
+    "qms_fmea_risk_matrix_page": {
+      "fmeah1_0": "TODO: translate",
+      "k1": "TODO: translate",
+      "k0": "TODO: translate",
+      "k2": "TODO: translate",
+      "rpnh3_3": "TODO: translate",
+      "rpnh3_0": "TODO: translate"
+    },
+    "qms_spc_control_chart_page": {
+      "spch1_0": "TODO: translate",
+      "ucllclp_1": "TODO: translate",
+      "ucllclp_0": "TODO: translate",
+      "p_2": "TODO: translate",
+      "p_0": "TODO: translate",
+      "x_3": "TODO: translate",
+      "h3_4": "TODO: translate",
+      "x_0": "TODO: translate",
+      "h3_0": "TODO: translate"
+    },
+    "wms_inbound_detail_page": {
+      "k0": "TODO: translate",
+      "k1": "TODO: translate",
+      "p_2": "TODO: translate",
+      "p_0": "TODO: translate",
+      "k3": "TODO: translate"
+    },
+    "wms_inventory_movement_detail_page": {
+      "k0": "TODO: translate",
+      "k1": "TODO: translate",
+      "k2": "TODO: translate",
+      "p_3": "TODO: translate",
+      "p_0": "TODO: translate",
+      "k4": "TODO: translate"
+    },
+    "wms_outbound_detail_page": {
+      "k0": "TODO: translate",
+      "k1": "TODO: translate",
+      "p_2": "TODO: translate",
+      "p_0": "TODO: translate",
+      "p_3": "TODO: translate"
+    },
+    "wms_stock_take_detail_page": {
+      "k0": "TODO: translate",
+      "k1": "TODO: translate"
+    },
+    "wms_transfer_detail_page": {
+      "k0": "TODO: translate",
+      "k1": "TODO: translate",
+      "p_2": "TODO: translate",
+      "p_0": "TODO: translate",
+      "p_3": "TODO: translate",
+      "p_4": "TODO: translate"
+    },
+    "wms_wave_pick_detail_page": {
+      "k0": "TODO: translate",
+      "p_1": "TODO: translate",
+      "p_0": "TODO: translate"
+    },
+    "wms_abc_analysis_page": {
+      "abc702010h1_0": "TODO: translate",
+      "a70p_1": "TODO: translate",
+      "a70p_0": "TODO: translate",
+      "b20p_2": "TODO: translate",
+      "b20p_0": "TODO: translate",
+      "c10p_3": "TODO: translate",
+      "c10p_0": "TODO: translate",
+      "top10skuh3_4": "TODO: translate",
+      "top10skuh3_0": "TODO: translate",
+      "skuth_5": "TODO: translate",
+      "skuth_0": "TODO: translate"
+    },
+    "wms_age_pareto_page": {
+      "8020h1_0": "TODO: translate",
+      "skup_1": "TODO: translate",
+      "skup_0": "TODO: translate"
+    },
+    "wms_location_utilization_page": {
+      "h3_0": "TODO: translate"
+    }
+  },
+  "sw": {
+    "notification": {
+      "k0": "TODO: translate"
     }
   }
 }
