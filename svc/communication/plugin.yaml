@@ -1,17 +1,10 @@
-<<<<<<< Updated upstream
 author: TOPEMS Team
-=======
-author: TOPEMS
->>>>>>> Stashed changes
 category: Collaboration
 code: communication
 name: 通信服务
 description: 通信服务 - 站内通知、即时消息、邮件发送
 version: 1.0.0
-<<<<<<< Updated upstream
 icon: groups
-=======
->>>>>>> Stashed changes
 plugin_type: service
 dependencies: []
 deployment: {}
