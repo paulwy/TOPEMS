@@ -45,7 +45,7 @@ pub async fn get_plugin_details(
 ) -> Json<CoreResponse<PluginDetailsResponse>> {
     tracing::info!("[Plugin] Getting plugin details: {}", plugin_code);
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await
@@ -102,7 +102,7 @@ pub async fn install_plugin_simple(
 
     // Get plugin
     let plugin: Option<Plugin> =
-        sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE code = $1 AND is_published = true")
+        sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1 AND is_published = true")
             .bind(&plugin_code)
             .fetch_optional(&state.pool)
             .await
@@ -185,7 +185,7 @@ pub async fn uninstall_plugin_simple(
     }
 
     // Get plugin info
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await
@@ -372,8 +372,8 @@ pub async fn list_tenant_installed_plugins(
                p.version as plugin_version, p.category as plugin_category,
                pi.runtime_status, pi.runtime_url, pi.last_heartbeat
         FROM core.core_tenant_plugins tp
-        JOIN core_plugins p ON tp.plugin_id = p.id
-        LEFT JOIN core_plugin_instances pi ON p.id = pi.plugin_id
+        JOIN core.core_plugins p ON tp.plugin_id = p.id
+        LEFT JOIN core.core_plugin_instances pi ON p.id = pi.plugin_id
         WHERE tp.tenant_id = $1
         ORDER BY p.code
         "#,

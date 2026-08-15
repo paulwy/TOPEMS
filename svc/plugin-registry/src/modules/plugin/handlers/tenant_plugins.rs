@@ -121,7 +121,7 @@ pub async fn list_tenant_plugins(
             p.version as plugin_version, p.category as plugin_category, p.is_free,
             p.price_cents, p.install_count, p.rating, p.rating_count
         FROM core.core_tenant_plugins tp
-        JOIN core_plugins p ON tp.plugin_id = p.id
+        JOIN core.core_plugins p ON tp.plugin_id = p.id
         WHERE tp.tenant_id = $1
         ORDER BY tp.is_active DESC, tp.activated_at DESC
         "#,
@@ -171,7 +171,7 @@ pub async fn list_my_plugins(
             p.version as plugin_version, p.category as plugin_category, p.is_free,
             p.price_cents, p.install_count, p.rating, p.rating_count
         FROM core.core_tenant_plugins tp
-        JOIN core_plugins p ON tp.plugin_id = p.id
+        JOIN core.core_plugins p ON tp.plugin_id = p.id
         WHERE tp.tenant_id = $1
         ORDER BY tp.is_active DESC, tp.activated_at DESC
         "#,
@@ -184,24 +184,10 @@ pub async fn list_my_plugins(
     Json(CoreResponse::success(installations, "My plugins retrieved"))
 }
 
-/// Install plugin for tenant
-#[utoipa::path(
-    post,
-    path = "/tenants/{tenant_id}/plugins/{plugin_code}",
-    tag = "plugin",
-    params(
-        ("tenant_id" = Uuid, Path, description = "Tenant ID"),
-        ("plugin_code" = String, Path, description = "Plugin code"),
-    ),
-    responses(
-        (status = 200, description = "Plugin installed", body = serde_json::Value),
-        (status = 404, description = "Plugin not found"),
-        (status = 500, description = "Internal server error")
-    )
-)]
-pub async fn install_plugin(
-    State(state): State<AppState>,
-    Path((tenant_id, plugin_code)): Path<(Uuid, String)>,
+async fn install_plugin_inner(
+    state: AppState,
+    tenant_id: Uuid,
+    plugin_code: String,
 ) -> Json<CoreResponse<TenantPlugin>> {
     tracing::info!(
         "[Plugin] Installing plugin {} for tenant: {}",
@@ -209,9 +195,8 @@ pub async fn install_plugin(
         tenant_id
     );
 
-    // Get plugin
     let plugin: Option<Plugin> =
-        sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE code = $1 AND is_published = true")
+        sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1 AND is_published = true")
             .bind(&plugin_code)
             .fetch_optional(&state.pool)
             .await
@@ -222,7 +207,6 @@ pub async fn install_plugin(
         None => return Json(CoreResponse::error("Plugin not found")),
     };
 
-    // 依赖检查：验证插件声明的所有依赖是否已安装且激活
     let deps: Vec<String> = if let Some(deps_json) = &plugin.dependencies {
         match serde_json::from_value(deps_json.clone()) {
             Ok(d) => d,
@@ -269,7 +253,6 @@ pub async fn install_plugin(
         }
     }
 
-    // Create installation
     let installation_result = sqlx::query_as(
         r#"
         INSERT INTO core.core_tenant_plugins (tenant_id, plugin_id, is_active, license_type)
@@ -310,11 +293,62 @@ pub async fn install_plugin(
     }
 }
 
-/// Uninstall plugin for tenant (with three-tier strategy)
-pub async fn uninstall_plugin(
+/// Install plugin for tenant
+#[utoipa::path(
+    post,
+    path = "/tenants/{tenant_id}/plugins/{plugin_code}",
+    tag = "plugin",
+    params(
+        ("tenant_id" = Uuid, Path, description = "Tenant ID"),
+        ("plugin_code" = String, Path, description = "Plugin code"),
+    ),
+    responses(
+        (status = 200, description = "Plugin installed", body = serde_json::Value),
+        (status = 404, description = "Plugin not found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub async fn install_plugin(
     State(state): State<AppState>,
     Path((tenant_id, plugin_code)): Path<(Uuid, String)>,
-    Json(req): Json<UninstallRequest>,
+) -> Json<CoreResponse<TenantPlugin>> {
+    install_plugin_inner(state, tenant_id, plugin_code).await
+}
+
+/// Install plugin for current user's tenant
+pub async fn install_my_plugin(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(plugin_code): Path<String>,
+) -> Json<CoreResponse<TenantPlugin>> {
+    let tenant_id = match claims.tenant_id {
+        Some(id) => match Uuid::parse_str(&id) {
+            Ok(id) => id,
+            Err(e) => {
+                tracing::error!("[Plugin] Invalid tenant ID in claims: {}", e);
+                return Json(CoreResponse::error("Invalid tenant ID"));
+            }
+        },
+        None => {
+            tracing::error!("[Plugin] No tenant ID in claims");
+            return Json(CoreResponse::error("Tenant ID not found in token"));
+        }
+    };
+
+    tracing::info!(
+        "[Plugin] Installing my plugin {} for tenant (from claims): {}",
+        plugin_code,
+        tenant_id
+    );
+
+    install_plugin_inner(state, tenant_id, plugin_code).await
+}
+
+async fn uninstall_plugin_inner(
+    state: AppState,
+    tenant_id: Uuid,
+    plugin_code: String,
+    req: UninstallRequest,
 ) -> Json<CoreResponse<UninstallResult>> {
     tracing::info!(
         "[Plugin] Uninstalling plugin {} for tenant: {} with tier: {:?}",
@@ -323,7 +357,6 @@ pub async fn uninstall_plugin(
         req.uninstall_tier
     );
 
-    // Validate Tier 3 deletion
     if req.uninstall_tier == UninstallTier::Delete {
         if !req.confirmed.unwrap_or(false) {
             return Json(CoreResponse::error(
@@ -335,8 +368,7 @@ pub async fn uninstall_plugin(
         }
     }
 
-    // Get plugin info
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await
@@ -347,7 +379,6 @@ pub async fn uninstall_plugin(
         None => return Json(CoreResponse::error("Plugin not found")),
     };
 
-    // 反向依赖检查：查找是否有其他已安装插件依赖当前插件
     let dependent_plugins: Vec<String> = sqlx::query_scalar(
         r#"
         SELECT p.code FROM core.core_plugins p
@@ -371,10 +402,8 @@ pub async fn uninstall_plugin(
         )));
     }
 
-    // Handle each tier
     let result = match req.uninstall_tier {
         UninstallTier::Disable => {
-            // Tier 1: Disable - set is_active = false but keep data
             let installation: Option<TenantPlugin> = sqlx::query_as(
                 r#"
                 UPDATE core.core_tenant_plugins
@@ -411,8 +440,6 @@ pub async fn uninstall_plugin(
             }
         }
         UninstallTier::Uninstall => {
-            // Tier 2: Uninstall - remove from tenant_plugins but keep data
-            // Data in plugin's own schema will be retained for potential reinstallation
             let result = sqlx::query(
                 r#"
                 UPDATE core.core_tenant_plugins SET deleted_at = NOW()
@@ -456,10 +483,8 @@ pub async fn uninstall_plugin(
             }
         }
         UninstallTier::Delete => {
-            // Tier 3: Delete - complete removal including all data
             let backup_created = req.backup.unwrap_or(true);
             let backup_url = if backup_created {
-                // In production, this would create a backup and return the URL
                 tracing::info!(
                     "[Plugin] Creating backup before deletion for plugin: {}",
                     plugin_code
@@ -473,8 +498,6 @@ pub async fn uninstall_plugin(
                 None
             };
 
-            // First, notify the plugin to clean up its own data (via internal API)
-            // Then UPDATE tenant_plugins SET deleted_at = NOW()
             let result = sqlx::query(
                 r#"
                 UPDATE core.core_tenant_plugins SET deleted_at = NOW()
@@ -519,10 +542,50 @@ pub async fn uninstall_plugin(
     Json(CoreResponse::success(result, "Plugin uninstalled"))
 }
 
-/// Activate plugin for tenant
-pub async fn activate_plugin(
+/// Uninstall plugin for tenant (with three-tier strategy)
+pub async fn uninstall_plugin(
     State(state): State<AppState>,
     Path((tenant_id, plugin_code)): Path<(Uuid, String)>,
+    Json(req): Json<UninstallRequest>,
+) -> Json<CoreResponse<UninstallResult>> {
+    uninstall_plugin_inner(state, tenant_id, plugin_code, req).await
+}
+
+/// Uninstall plugin for current user's tenant (with three-tier strategy)
+pub async fn uninstall_my_plugin(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(plugin_code): Path<String>,
+    Json(req): Json<UninstallRequest>,
+) -> Json<CoreResponse<UninstallResult>> {
+    let tenant_id = match claims.tenant_id {
+        Some(id) => match Uuid::parse_str(&id) {
+            Ok(id) => id,
+            Err(e) => {
+                tracing::error!("[Plugin] Invalid tenant ID in claims: {}", e);
+                return Json(CoreResponse::error("Invalid tenant ID"));
+            }
+        },
+        None => {
+            tracing::error!("[Plugin] No tenant ID in claims");
+            return Json(CoreResponse::error("Tenant ID not found in token"));
+        }
+    };
+
+    tracing::info!(
+        "[Plugin] Uninstalling my plugin {} for tenant (from claims): {} with tier: {:?}",
+        plugin_code,
+        tenant_id,
+        req.uninstall_tier
+    );
+
+    uninstall_plugin_inner(state, tenant_id, plugin_code, req).await
+}
+
+async fn activate_plugin_inner(
+    state: AppState,
+    tenant_id: Uuid,
+    plugin_code: String,
 ) -> Json<CoreResponse<TenantPlugin>> {
     tracing::info!(
         "[Plugin] Activating plugin {} for tenant: {}",
@@ -550,10 +613,47 @@ pub async fn activate_plugin(
     }
 }
 
-/// Deactivate plugin for tenant
-pub async fn deactivate_plugin(
+/// Activate plugin for tenant
+pub async fn activate_plugin(
     State(state): State<AppState>,
     Path((tenant_id, plugin_code)): Path<(Uuid, String)>,
+) -> Json<CoreResponse<TenantPlugin>> {
+    activate_plugin_inner(state, tenant_id, plugin_code).await
+}
+
+/// Activate plugin for current user's tenant
+pub async fn activate_my_plugin(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(plugin_code): Path<String>,
+) -> Json<CoreResponse<TenantPlugin>> {
+    let tenant_id = match claims.tenant_id {
+        Some(id) => match Uuid::parse_str(&id) {
+            Ok(id) => id,
+            Err(e) => {
+                tracing::error!("[Plugin] Invalid tenant ID in claims: {}", e);
+                return Json(CoreResponse::error("Invalid tenant ID"));
+            }
+        },
+        None => {
+            tracing::error!("[Plugin] No tenant ID in claims");
+            return Json(CoreResponse::error("Tenant ID not found in token"));
+        }
+    };
+
+    tracing::info!(
+        "[Plugin] Activating my plugin {} for tenant (from claims): {}",
+        plugin_code,
+        tenant_id
+    );
+
+    activate_plugin_inner(state, tenant_id, plugin_code).await
+}
+
+async fn deactivate_plugin_inner(
+    state: AppState,
+    tenant_id: Uuid,
+    plugin_code: String,
 ) -> Json<CoreResponse<TenantPlugin>> {
     tracing::info!(
         "[Plugin] Deactivating plugin {} for tenant: {}",
@@ -579,6 +679,43 @@ pub async fn deactivate_plugin(
         Some(tp) => Json(CoreResponse::success(tp, "Plugin deactivated")),
         None => Json(CoreResponse::error("Plugin not installed")),
     }
+}
+
+/// Deactivate plugin for tenant
+pub async fn deactivate_plugin(
+    State(state): State<AppState>,
+    Path((tenant_id, plugin_code)): Path<(Uuid, String)>,
+) -> Json<CoreResponse<TenantPlugin>> {
+    deactivate_plugin_inner(state, tenant_id, plugin_code).await
+}
+
+/// Deactivate plugin for current user's tenant
+pub async fn deactivate_my_plugin(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(plugin_code): Path<String>,
+) -> Json<CoreResponse<TenantPlugin>> {
+    let tenant_id = match claims.tenant_id {
+        Some(id) => match Uuid::parse_str(&id) {
+            Ok(id) => id,
+            Err(e) => {
+                tracing::error!("[Plugin] Invalid tenant ID in claims: {}", e);
+                return Json(CoreResponse::error("Invalid tenant ID"));
+            }
+        },
+        None => {
+            tracing::error!("[Plugin] No tenant ID in claims");
+            return Json(CoreResponse::error("Tenant ID not found in token"));
+        }
+    };
+
+    tracing::info!(
+        "[Plugin] Deactivating my plugin {} for tenant (from claims): {}",
+        plugin_code,
+        tenant_id
+    );
+
+    deactivate_plugin_inner(state, tenant_id, plugin_code).await
 }
 
 /// Get available plugins for tenant (with ownership status)
@@ -611,7 +748,7 @@ pub async fn get_available_plugins(
     let where_clause = where_clauses.join(" AND ");
 
     let plugins: Vec<Plugin> = sqlx::query_as(&format!(
-        "SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE {} ORDER BY is_featured DESC, install_count DESC LIMIT 50",
+        "SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE {} ORDER BY is_featured DESC, install_count DESC LIMIT 50",
         where_clause
     ))
     .fetch_all(&state.pool)
@@ -709,7 +846,7 @@ pub async fn upload_plugin_version(
     );
 
     // Get plugin id
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await
