@@ -312,9 +312,13 @@ mod tests {
         assert_eq!(v1, v2);
     }
 
-    fn now() -> chrono::DateTime<chrono::Utc> { chrono::Utc::now() }
+    fn now() -> chrono::DateTime<chrono::Utc> {
+        chrono::Utc::now()
+    }
 
-    fn uid() -> String { uuid::Uuid::new_v4().to_string() }
+    fn uid() -> String {
+        uuid::Uuid::new_v4().to_string()
+    }
 
     #[test]
     fn rt_compliance_severity_variants() {
@@ -370,8 +374,13 @@ mod tests {
             period_end: now(),
             issues: vec![],
             summary: ComplianceSummary {
-                critical_count: 0, high_count: 0, medium_count: 0, low_count: 0,
-                info_count: 0, total_issues: 0, overall_compliant: true,
+                critical_count: 0,
+                high_count: 0,
+                medium_count: 0,
+                low_count: 0,
+                info_count: 0,
+                total_issues: 0,
+                overall_compliant: true,
             },
         });
     }
@@ -379,8 +388,13 @@ mod tests {
     #[test]
     fn rt_compliance_report_with_issues() {
         let summary = ComplianceSummary {
-            critical_count: 1, high_count: 1, medium_count: 0, low_count: 0,
-            info_count: 0, total_issues: 2, overall_compliant: false,
+            critical_count: 1,
+            high_count: 1,
+            medium_count: 0,
+            low_count: 0,
+            info_count: 0,
+            total_issues: 2,
+            overall_compliant: false,
         };
         let issue1 = ComplianceIssue {
             severity: ComplianceSeverity::Critical,

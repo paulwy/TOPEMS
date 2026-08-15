@@ -1477,14 +1477,22 @@ mod tests {
 
     #[test]
     fn test_adaptive_strategy_roundtrip_all_variants() {
-        for v in [AdaptiveStrategy::PerformanceFirst, AdaptiveStrategy::AccuracyFirst, AdaptiveStrategy::Balanced] {
+        for v in [
+            AdaptiveStrategy::PerformanceFirst,
+            AdaptiveStrategy::AccuracyFirst,
+            AdaptiveStrategy::Balanced,
+        ] {
             roundtrip(&v);
         }
     }
 
     #[test]
     fn test_adaptive_strategy_as_str_from_str() {
-        for v in [AdaptiveStrategy::PerformanceFirst, AdaptiveStrategy::AccuracyFirst, AdaptiveStrategy::Balanced] {
+        for v in [
+            AdaptiveStrategy::PerformanceFirst,
+            AdaptiveStrategy::AccuracyFirst,
+            AdaptiveStrategy::Balanced,
+        ] {
             let s = v.as_str();
             let back = AdaptiveStrategy::from_str(s);
             assert!(back.is_some());
@@ -1523,14 +1531,26 @@ mod tests {
 
     #[test]
     fn test_stream_state_roundtrip_all_variants() {
-        for v in [StreamState::Active, StreamState::Paused, StreamState::Reconnecting, StreamState::Closed, StreamState::Error] {
+        for v in [
+            StreamState::Active,
+            StreamState::Paused,
+            StreamState::Reconnecting,
+            StreamState::Closed,
+            StreamState::Error,
+        ] {
             roundtrip(&v);
         }
     }
 
     #[test]
     fn test_stream_state_as_str() {
-        for v in [StreamState::Active, StreamState::Paused, StreamState::Reconnecting, StreamState::Closed, StreamState::Error] {
+        for v in [
+            StreamState::Active,
+            StreamState::Paused,
+            StreamState::Reconnecting,
+            StreamState::Closed,
+            StreamState::Error,
+        ] {
             let _ = v.as_str();
         }
     }

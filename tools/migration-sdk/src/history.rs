@@ -288,7 +288,10 @@ mod tests {
         let back = rt(&h);
         assert_eq!(back.status, "failed");
         assert!(back.applied_at.is_none());
-        assert_eq!(back.error_message.as_deref(), Some("syntax error near 'CREATE'"));
+        assert_eq!(
+            back.error_message.as_deref(),
+            Some("syntax error near 'CREATE'")
+        );
     }
 
     #[test]

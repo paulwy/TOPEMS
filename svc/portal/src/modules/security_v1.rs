@@ -1342,14 +1342,22 @@ mod tests {
 
     #[test]
     fn test_trust_decision_type_roundtrip_all_variants() {
-        for v in [TrustDecisionType::Allow, TrustDecisionType::Deny, TrustDecisionType::Challenge] {
+        for v in [
+            TrustDecisionType::Allow,
+            TrustDecisionType::Deny,
+            TrustDecisionType::Challenge,
+        ] {
             roundtrip(&v);
         }
     }
 
     #[test]
     fn test_trust_decision_type_as_str_from_str() {
-        for v in [TrustDecisionType::Allow, TrustDecisionType::Deny, TrustDecisionType::Challenge] {
+        for v in [
+            TrustDecisionType::Allow,
+            TrustDecisionType::Deny,
+            TrustDecisionType::Challenge,
+        ] {
             let s = v.as_str();
             let back = TrustDecisionType::from_str(s);
             assert!(back.is_some());

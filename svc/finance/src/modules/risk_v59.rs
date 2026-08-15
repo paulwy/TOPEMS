@@ -2061,7 +2061,8 @@ mod tests {
         assert_eq!(v1, v2);
     }
 
-    #[test] fn enum_fraud_signal_type() {
+    #[test]
+    fn enum_fraud_signal_type() {
         roundtrip(&FraudSignalType::Velocity);
         roundtrip(&FraudSignalType::Geolocation);
         roundtrip(&FraudSignalType::Device);
@@ -2069,20 +2070,23 @@ mod tests {
         roundtrip(&FraudSignalType::Pattern);
     }
 
-    #[test] fn enum_risk_level() {
+    #[test]
+    fn enum_risk_level() {
         roundtrip(&RiskLevel::Low);
         roundtrip(&RiskLevel::Medium);
         roundtrip(&RiskLevel::High);
         roundtrip(&RiskLevel::Critical);
     }
 
-    #[test] fn enum_fraud_action() {
+    #[test]
+    fn enum_fraud_action() {
         roundtrip(&FraudAction::Approve);
         roundtrip(&FraudAction::Review);
         roundtrip(&FraudAction::Block);
     }
 
-    #[test] fn enum_credit_grade() {
+    #[test]
+    fn enum_credit_grade() {
         roundtrip(&CreditGrade::AAA);
         roundtrip(&CreditGrade::AA);
         roundtrip(&CreditGrade::A);
@@ -2091,113 +2095,146 @@ mod tests {
         roundtrip(&CreditGrade::D);
     }
 
-    #[test] fn enum_stress_scenario_type() {
+    #[test]
+    fn enum_stress_scenario_type() {
         roundtrip(&StressScenarioType::Market);
         roundtrip(&StressScenarioType::Credit);
         roundtrip(&StressScenarioType::Liquidity);
         roundtrip(&StressScenarioType::Operational);
     }
 
-    #[test] fn enum_shock_type() {
+    #[test]
+    fn enum_shock_type() {
         roundtrip(&ShockType::Parallel);
         roundtrip(&ShockType::Sequential);
         roundtrip(&ShockType::Reverse);
     }
 
-    #[test] fn struct_fraud_signal() {
+    #[test]
+    fn struct_fraud_signal() {
         let v = FraudSignal {
-            id: Uuid::new_v4(), signal_type: "velocity".into(),
-            score: 0.85, confidence: 0.9,
+            id: Uuid::new_v4(),
+            signal_type: "velocity".into(),
+            score: 0.85,
+            confidence: 0.9,
             metadata: Some(serde_json::json!({"count":10})),
             detected_at: Utc::now(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_fraud_decision() {
+    #[test]
+    fn struct_fraud_decision() {
         let v = FraudDecision {
-            id: Uuid::new_v4(), transaction_id: "TX-001".into(),
-            risk_level: "high".into(), action: "review".into(),
+            id: Uuid::new_v4(),
+            transaction_id: "TX-001".into(),
+            risk_level: "high".into(),
+            action: "review".into(),
             reason: "多信号触发".into(),
-            signals: Some(serde_json::json!(["velocity","device"])),
+            signals: Some(serde_json::json!(["velocity", "device"])),
             decided_at: Utc::now(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_device_profile() {
+    #[test]
+    fn struct_device_profile() {
         let v = DeviceProfile {
-            id: Uuid::new_v4(), device_id: "DEV-001".into(),
-            fingerprint: "fp-abc123".into(), trust_score: 0.7,
+            id: Uuid::new_v4(),
+            device_id: "DEV-001".into(),
+            fingerprint: "fp-abc123".into(),
+            trust_score: 0.7,
             last_seen: Utc::now(),
             ip_history: Some(serde_json::json!(["1.2.3.4"])),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_credit_profile() {
+    #[test]
+    fn struct_credit_profile() {
         let v = CreditProfile {
-            id: Uuid::new_v4(), entity_id: "Entity-A".into(),
-            score: 720, grade: "AA".into(),
+            id: Uuid::new_v4(),
+            entity_id: "Entity-A".into(),
+            score: 720,
+            grade: "AA".into(),
             factors: Some(serde_json::json!({"payment":0.9})),
             updated_at: Utc::now(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_scoring_model() {
+    #[test]
+    fn struct_scoring_model() {
         let v = ScoringModel {
-            id: Uuid::new_v4(), name: "基础评分模型".into(),
+            id: Uuid::new_v4(),
+            name: "基础评分模型".into(),
             version: "v1.0".into(),
-            features: Some(serde_json::json!(["income","debt"])),
+            features: Some(serde_json::json!(["income", "debt"])),
             weights: Some(serde_json::json!({"income":0.3})),
-            accuracy: 0.88, status: "active".into(),
+            accuracy: 0.88,
+            status: "active".into(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_score_factor() {
+    #[test]
+    fn struct_score_factor() {
         let v = ScoreFactor {
-            name: "payment_history".into(), weight: 0.35,
-            value: 0.95, description: "还款记录".into(),
+            name: "payment_history".into(),
+            weight: 0.35,
+            value: 0.95,
+            description: "还款记录".into(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_stress_scenario() {
+    #[test]
+    fn struct_stress_scenario() {
         let v = StressScenario {
-            id: Uuid::new_v4(), name: "利率冲击".into(),
-            scenario_type: "market".into(), severity: "high".into(),
+            id: Uuid::new_v4(),
+            name: "利率冲击".into(),
+            scenario_type: "market".into(),
+            severity: "high".into(),
             assumptions: Some(serde_json::json!({"rate_shock":0.03})),
             created_at: Utc::now(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_stress_result() {
+    #[test]
+    fn struct_stress_result() {
         let v = StressResult {
-            id: Uuid::new_v4(), scenario_id: Uuid::new_v4(),
+            id: Uuid::new_v4(),
+            scenario_id: Uuid::new_v4(),
             entity_id: "Bank-A".into(),
-            impact_value: -5000000.0, capital_adequacy: 0.08,
-            liquidity_ratio: 1.2, pass_fail: true,
+            impact_value: -5000000.0,
+            capital_adequacy: 0.08,
+            liquidity_ratio: 1.2,
+            pass_fail: true,
             details: Some(serde_json::json!({"note":"ok"})),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_scenario_parameter() {
+    #[test]
+    fn struct_scenario_parameter() {
         let v = ScenarioParameter {
-            name: "interest_rate".into(), base_value: 0.03,
-            shocked_value: 0.06, shock_type: "parallel".into(),
+            name: "interest_rate".into(),
+            base_value: 0.03,
+            shocked_value: 0.06,
+            shock_type: "parallel".into(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_fraud_rule() {
+    #[test]
+    fn struct_fraud_rule() {
         let v = FraudRule {
-            id: Uuid::new_v4(), name: "异地登录".into(),
+            id: Uuid::new_v4(),
+            name: "异地登录".into(),
             signal_type: "geolocation".into(),
-            threshold: 0.8, enabled: true,
+            threshold: 0.8,
+            enabled: true,
         };
         roundtrip(&v);
     }

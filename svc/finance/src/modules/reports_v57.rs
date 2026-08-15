@@ -1883,7 +1883,8 @@ mod tests {
         assert_eq!(v1, v2);
     }
 
-    #[test] fn enum_report_type() {
+    #[test]
+    fn enum_report_type() {
         roundtrip(&ReportType::BalanceSheet);
         roundtrip(&ReportType::IncomeStatement);
         roundtrip(&ReportType::CashFlow);
@@ -1892,14 +1893,16 @@ mod tests {
         roundtrip(&ReportType::Tax);
     }
 
-    #[test] fn enum_report_layout() {
+    #[test]
+    fn enum_report_layout() {
         roundtrip(&ReportLayout::JSON);
         roundtrip(&ReportLayout::CSV);
         roundtrip(&ReportLayout::PDF);
         roundtrip(&ReportLayout::Excel);
     }
 
-    #[test] fn enum_report_schedule() {
+    #[test]
+    fn enum_report_schedule() {
         roundtrip(&ReportSchedule::Daily);
         roundtrip(&ReportSchedule::Weekly);
         roundtrip(&ReportSchedule::Monthly);
@@ -1907,14 +1910,16 @@ mod tests {
         roundtrip(&ReportSchedule::Yearly);
     }
 
-    #[test] fn enum_report_status() {
+    #[test]
+    fn enum_report_status() {
         roundtrip(&ReportStatus::Pending);
         roundtrip(&ReportStatus::Generating);
         roundtrip(&ReportStatus::Completed);
         roundtrip(&ReportStatus::Failed);
     }
 
-    #[test] fn enum_analysis_dimension_name() {
+    #[test]
+    fn enum_analysis_dimension_name() {
         roundtrip(&AnalysisDimensionName::Time);
         roundtrip(&AnalysisDimensionName::Department);
         roundtrip(&AnalysisDimensionName::Project);
@@ -1923,52 +1928,65 @@ mod tests {
         roundtrip(&AnalysisDimensionName::Product);
     }
 
-    #[test] fn enum_forecast_model_type() {
+    #[test]
+    fn enum_forecast_model_type() {
         roundtrip(&ForecastModelType::LinearRegression);
         roundtrip(&ForecastModelType::ExponentialSmoothing);
         roundtrip(&ForecastModelType::ARIMA);
         roundtrip(&ForecastModelType::Prophet);
     }
 
-    #[test] fn enum_insight_type() {
+    #[test]
+    fn enum_insight_type() {
         roundtrip(&InsightType::Trend);
         roundtrip(&InsightType::Anomaly);
         roundtrip(&InsightType::Forecast);
         roundtrip(&InsightType::Recommendation);
     }
 
-    #[test] fn struct_report_template() {
+    #[test]
+    fn struct_report_template() {
         let v = ReportTemplate {
-            id: Uuid::new_v4(), name: "月报模板".into(),
-            report_type: "balance_sheet".into(), layout: "json".into(),
+            id: Uuid::new_v4(),
+            name: "月报模板".into(),
+            report_type: "balance_sheet".into(),
+            layout: "json".into(),
             parameters: Some(serde_json::json!({"level":"summary"})),
             schedule: Some("monthly".into()),
-            created_at: Utc::now(), updated_at: Utc::now(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_generated_report() {
+    #[test]
+    fn struct_generated_report() {
         let v = GeneratedReport {
-            id: Uuid::new_v4(), template_id: Some(Uuid::new_v4()),
-            period_start: Utc::now(), period_end: Utc::now(),
+            id: Uuid::new_v4(),
+            template_id: Some(Uuid::new_v4()),
+            period_start: Utc::now(),
+            period_end: Utc::now(),
             data: Some(serde_json::json!({"total":100})),
-            generated_at: Utc::now(), status: "completed".into(),
+            generated_at: Utc::now(),
+            status: "completed".into(),
             format: "json".into(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_analysis_dimension() {
+    #[test]
+    fn struct_analysis_dimension() {
         let v = AnalysisDimension {
-            id: Uuid::new_v4(), name: "time".into(),
+            id: Uuid::new_v4(),
+            name: "time".into(),
             hierarchy: Some(vec!["year".into(), "quarter".into(), "month".into()]),
             filters: Some(serde_json::json!({"year":2024})),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_analysis_result() {
+    #[test]
+    fn struct_analysis_result() {
         let v = AnalysisResult {
             id: Uuid::new_v4(),
             dimensions: vec!["time".into(), "department".into()],
@@ -1980,19 +1998,24 @@ mod tests {
         roundtrip(&v);
     }
 
-    #[test] fn struct_forecast_model() {
+    #[test]
+    fn struct_forecast_model() {
         let v = ForecastModel {
-            id: Uuid::new_v4(), model_type: "arima".into(),
+            id: Uuid::new_v4(),
+            model_type: "arima".into(),
             target_metric: "revenue".into(),
             features: Some(vec!["gdp".into(), "season".into()]),
-            accuracy: Some(0.88), trained_at: Some(Utc::now()),
+            accuracy: Some(0.88),
+            trained_at: Some(Utc::now()),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_insight() {
+    #[test]
+    fn struct_insight() {
         let v = Insight {
-            id: Uuid::new_v4(), insight_type: "trend".into(),
+            id: Uuid::new_v4(),
+            insight_type: "trend".into(),
             description: "收入上升趋势".into(),
             confidence: Some(0.92),
             data: Some(serde_json::json!({"slope":1000})),

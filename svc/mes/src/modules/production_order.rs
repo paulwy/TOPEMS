@@ -1319,8 +1319,8 @@ pub async fn reject_order(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde::Serialize;
     use serde::de::DeserializeOwned;
+    use serde::Serialize;
     use uuid::Uuid;
 
     fn uid() -> Uuid {

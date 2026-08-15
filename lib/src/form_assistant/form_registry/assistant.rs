@@ -154,11 +154,7 @@ pub trait AiFormAssistant: Send + Sync {
         current_data: &serde_json::Value,
     ) -> Result<Vec<ValidationResult>, AIClientError>;
 
-    async fn translate_term(
-        &self,
-        term: &str,
-        form_type: &str,
-    ) -> Result<String, AIClientError>;
+    async fn translate_term(&self, term: &str, form_type: &str) -> Result<String, AIClientError>;
 
     async fn assist(
         &self,
@@ -212,11 +208,7 @@ impl AiFormAssistant for AiFormAssistantClient {
         Ok(Vec::new())
     }
 
-    async fn translate_term(
-        &self,
-        term: &str,
-        _form_type: &str,
-    ) -> Result<String, AIClientError> {
+    async fn translate_term(&self, term: &str, _form_type: &str) -> Result<String, AIClientError> {
         Ok(term.to_string())
     }
 
@@ -246,7 +238,12 @@ mod tests {
 
     #[test]
     fn rt_field_suggestion() {
-        roundtrip(&FieldSuggestion::new("amount", "100.00", 0.95, "基于历史数据"));
+        roundtrip(&FieldSuggestion::new(
+            "amount",
+            "100.00",
+            0.95,
+            "基于历史数据",
+        ));
     }
 
     #[test]

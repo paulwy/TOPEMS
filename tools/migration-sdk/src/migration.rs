@@ -168,7 +168,12 @@ mod tests {
 
     #[test]
     fn migration_status_roundtrip_all_variants() {
-        for v in [MigrationStatus::Pending, MigrationStatus::Applied, MigrationStatus::Failed, MigrationStatus::RolledBack] {
+        for v in [
+            MigrationStatus::Pending,
+            MigrationStatus::Applied,
+            MigrationStatus::Failed,
+            MigrationStatus::RolledBack,
+        ] {
             let back = rt(&v);
             assert_eq!(back, v);
         }
@@ -242,22 +247,35 @@ mod tests {
             "ALTER TABLE users DROP COLUMN email;",
         );
         assert!(m.script.reversible);
-        assert_eq!(m.down_sql.as_deref(), Some("ALTER TABLE users DROP COLUMN email;"));
+        assert_eq!(
+            m.down_sql.as_deref(),
+            Some("ALTER TABLE users DROP COLUMN email;")
+        );
     }
 
     #[test]
     fn migration_default_methods() {
         use crate::error::Result as MResult;
-        struct Stub { script: MigrationScript }
+        struct Stub {
+            script: MigrationScript,
+        }
         #[async_trait]
         impl Migration for Stub {
-            fn metadata(&self) -> &MigrationScript { &self.script }
-            async fn up(&self, _pool: &sqlx::PgPool) -> MResult<()> { Ok(()) }
+            fn metadata(&self) -> &MigrationScript {
+                &self.script
+            }
+            async fn up(&self, _pool: &sqlx::PgPool) -> MResult<()> {
+                Ok(())
+            }
         }
-        let s = Stub { script: MigrationScript {
-            version: "9.9.9".into(), name: "stub".into(),
-            description: "stub migration".into(), reversible: false,
-        }};
+        let s = Stub {
+            script: MigrationScript {
+                version: "9.9.9".into(),
+                name: "stub".into(),
+                description: "stub migration".into(),
+                reversible: false,
+            },
+        };
         assert_eq!(s.version(), "9.9.9");
         assert_eq!(s.name(), "stub");
     }

@@ -1256,14 +1256,22 @@ mod tests {
 
     #[test]
     fn test_query_status_roundtrip_all_variants() {
-        for v in [QueryStatus::Active, QueryStatus::Deprecated, QueryStatus::Archived] {
+        for v in [
+            QueryStatus::Active,
+            QueryStatus::Deprecated,
+            QueryStatus::Archived,
+        ] {
             roundtrip(&v);
         }
     }
 
     #[test]
     fn test_query_status_as_str_from_str() {
-        for v in [QueryStatus::Active, QueryStatus::Deprecated, QueryStatus::Archived] {
+        for v in [
+            QueryStatus::Active,
+            QueryStatus::Deprecated,
+            QueryStatus::Archived,
+        ] {
             let s = v.as_str();
             let back = QueryStatus::from_str(s);
             roundtrip(&back);

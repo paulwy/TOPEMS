@@ -1529,8 +1529,8 @@ pub async fn check_order_feasibility(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde::Serialize;
     use serde::de::DeserializeOwned;
+    use serde::Serialize;
 
     fn roundtrip<T: Serialize + DeserializeOwned>(val: &T) {
         let s1 = serde_json::to_string(val).unwrap();

@@ -955,14 +955,24 @@ mod tests {
 
     #[test]
     fn test_health_status_roundtrip_all_variants() {
-        for v in [HealthStatus::Healthy, HealthStatus::Degraded, HealthStatus::Unhealthy, HealthStatus::Unknown] {
+        for v in [
+            HealthStatus::Healthy,
+            HealthStatus::Degraded,
+            HealthStatus::Unhealthy,
+            HealthStatus::Unknown,
+        ] {
             roundtrip(&v);
         }
     }
 
     #[test]
     fn test_health_status_as_str_from_str() {
-        for v in [HealthStatus::Healthy, HealthStatus::Degraded, HealthStatus::Unhealthy, HealthStatus::Unknown] {
+        for v in [
+            HealthStatus::Healthy,
+            HealthStatus::Degraded,
+            HealthStatus::Unhealthy,
+            HealthStatus::Unknown,
+        ] {
             let s = v.as_str();
             let back = HealthStatus::from_str(s);
             roundtrip(&back);
@@ -1010,7 +1020,13 @@ mod tests {
 
     #[test]
     fn test_step_status_roundtrip_all_variants() {
-        for v in [StepStatus::Pending, StepStatus::Executing, StepStatus::Completed, StepStatus::Failed, StepStatus::Compensated] {
+        for v in [
+            StepStatus::Pending,
+            StepStatus::Executing,
+            StepStatus::Completed,
+            StepStatus::Failed,
+            StepStatus::Compensated,
+        ] {
             roundtrip(&v);
         }
     }

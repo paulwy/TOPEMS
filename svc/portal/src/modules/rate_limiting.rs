@@ -2447,14 +2447,23 @@ mod tests {
 
     #[test]
     fn test_routing_strategy_v2_roundtrip_all_variants() {
-        for v in [RoutingStrategy::Direct, RoutingStrategy::Sharded, RoutingStrategy::Parallel, RoutingStrategy::Fallback] {
+        for v in [
+            RoutingStrategy::Direct,
+            RoutingStrategy::Sharded,
+            RoutingStrategy::Parallel,
+            RoutingStrategy::Fallback,
+        ] {
             roundtrip(&v);
         }
     }
 
     #[test]
     fn test_circuit_state_gql_roundtrip_all_variants() {
-        for v in [CircuitStateGql::Closed, CircuitStateGql::Open, CircuitStateGql::HalfOpen] {
+        for v in [
+            CircuitStateGql::Closed,
+            CircuitStateGql::Open,
+            CircuitStateGql::HalfOpen,
+        ] {
             roundtrip(&v);
         }
     }
@@ -2475,35 +2484,58 @@ mod tests {
 
     #[test]
     fn test_ai_routing_strategy_roundtrip_all_variants() {
-        for v in [AiRoutingStrategy::Direct, AiRoutingStrategy::Sharded, AiRoutingStrategy::Parallel, AiRoutingStrategy::Fallback] {
+        for v in [
+            AiRoutingStrategy::Direct,
+            AiRoutingStrategy::Sharded,
+            AiRoutingStrategy::Parallel,
+            AiRoutingStrategy::Fallback,
+        ] {
             roundtrip(&v);
         }
     }
 
     #[test]
     fn test_type_merge_strategy_roundtrip_all_variants() {
-        for v in [TypeMergeStrategy::PrimaryWin, TypeMergeStrategy::FieldLevel, TypeMergeStrategy::Versioned] {
+        for v in [
+            TypeMergeStrategy::PrimaryWin,
+            TypeMergeStrategy::FieldLevel,
+            TypeMergeStrategy::Versioned,
+        ] {
             roundtrip(&v);
         }
     }
 
     #[test]
     fn test_access_pattern_roundtrip_all_variants() {
-        for v in [AccessPattern::Frequent, AccessPattern::Burst, AccessPattern::Periodic, AccessPattern::Sparse] {
+        for v in [
+            AccessPattern::Frequent,
+            AccessPattern::Burst,
+            AccessPattern::Periodic,
+            AccessPattern::Sparse,
+        ] {
             roundtrip(&v);
         }
     }
 
     #[test]
     fn test_consistency_level_roundtrip_all_variants() {
-        for v in [ConsistencyLevel::Strong, ConsistencyLevel::Eventual, ConsistencyLevel::StaleWhileRevalidate] {
+        for v in [
+            ConsistencyLevel::Strong,
+            ConsistencyLevel::Eventual,
+            ConsistencyLevel::StaleWhileRevalidate,
+        ] {
             roundtrip(&v);
         }
     }
 
     #[test]
     fn test_invalidation_strategy_roundtrip_all_variants() {
-        for v in [InvalidationStrategy::TTL, InvalidationStrategy::EventDriven, InvalidationStrategy::Versioned, InvalidationStrategy::Manual] {
+        for v in [
+            InvalidationStrategy::TTL,
+            InvalidationStrategy::EventDriven,
+            InvalidationStrategy::Versioned,
+            InvalidationStrategy::Manual,
+        ] {
             roundtrip(&v);
         }
     }
@@ -2759,7 +2791,17 @@ mod tests {
         assert_eq!(metrics.len(), 1);
         assert!((metrics[0].cpu_usage - 0.8).abs() < 1e-6);
         assert!((metrics[0].memory_usage - 0.6).abs() < 1e-6);
-        assert!((metrics[0].load_score - (0.8 * 0.25 + 0.6 * 0.2 + (50.0 / 1000.0) * 0.15 + (20.0 / 100.0) * 0.15 + (200.0 / 1000.0) * 0.15 + 0.1 * 0.1)).abs() < 1e-6);
+        assert!(
+            (metrics[0].load_score
+                - (0.8 * 0.25
+                    + 0.6 * 0.2
+                    + (50.0 / 1000.0) * 0.15
+                    + (20.0 / 100.0) * 0.15
+                    + (200.0 / 1000.0) * 0.15
+                    + 0.1 * 0.1))
+                .abs()
+                < 1e-6
+        );
     }
 
     #[test]

@@ -49,8 +49,8 @@ pub struct WorkOrderResponse {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde::Serialize;
     use serde::de::DeserializeOwned;
+    use serde::Serialize;
     use uuid::Uuid;
 
     fn uid() -> Uuid {

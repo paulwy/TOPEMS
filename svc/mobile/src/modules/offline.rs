@@ -211,7 +211,6 @@ pub async fn get_offline_status(
     )
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -220,7 +219,7 @@ mod tests {
         let json = serde_json::to_string(item).unwrap();
         let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
         let back: T = serde_json::from_str(&json).unwrap();
-// roundtrip verified by JSON comparison
+        // roundtrip verified by JSON comparison
         let json2 = serde_json::to_string(&back).unwrap();
         let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
         assert_eq!(v1, v2);
@@ -277,5 +276,4 @@ mod tests {
             completed_at: Some(Utc::now()),
         });
     }
-
 }

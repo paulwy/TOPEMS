@@ -686,7 +686,10 @@ mod tests {
 
         assert_eq!(middleware.select_algorithm("br"), None);
         assert_eq!(middleware.select_algorithm("deflate"), None);
-        assert_eq!(middleware.select_algorithm("gzip"), Some(CompressionAlgorithm::Gzip));
+        assert_eq!(
+            middleware.select_algorithm("gzip"),
+            Some(CompressionAlgorithm::Gzip)
+        );
         assert_eq!(
             middleware.select_algorithm("br, gzip"),
             Some(CompressionAlgorithm::Gzip)

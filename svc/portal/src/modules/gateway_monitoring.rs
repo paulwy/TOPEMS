@@ -1738,7 +1738,9 @@ mod tests {
     fn struct_roundtrip_dashboard() {
         let v = Dashboard {
             total_metrics: 10,
-            metrics_by_type: [(MetricType::Counter.as_str().to_string(), 1usize)].into_iter().collect(),
+            metrics_by_type: [(MetricType::Counter.as_str().to_string(), 1usize)]
+                .into_iter()
+                .collect(),
             avg_latency_p99: 50.0,
             avg_error_rate: 0.01,
             total_throughput: 1000.0,

@@ -194,8 +194,8 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde::Serialize;
     use serde::de::DeserializeOwned;
+    use serde::Serialize;
 
     fn roundtrip<T: Serialize + DeserializeOwned>(val: &T) {
         let s1 = serde_json::to_string(val).unwrap();

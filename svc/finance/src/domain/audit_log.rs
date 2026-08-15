@@ -230,19 +230,47 @@ mod tests {
 
     // ===== AuditAction roundtrip =====
 
-    #[test] fn rt_audit_action_create()    { roundtrip(&AuditAction::Create); }
-    #[test] fn rt_audit_action_update()    { roundtrip(&AuditAction::Update); }
-    #[test] fn rt_audit_action_delete()    { roundtrip(&AuditAction::Delete); }
-    #[test] fn rt_audit_action_view()      { roundtrip(&AuditAction::View); }
-    #[test] fn rt_audit_action_export()     { roundtrip(&AuditAction::Export); }
-    #[test] fn rt_audit_action_approve()    { roundtrip(&AuditAction::Approve); }
-    #[test] fn rt_audit_action_reject()    { roundtrip(&AuditAction::Reject); }
-    #[test] fn rt_audit_action_post()       { roundtrip(&AuditAction::Post); }
-    #[test] fn rt_audit_action_reverse()    { roundtrip(&AuditAction::Reverse); }
+    #[test]
+    fn rt_audit_action_create() {
+        roundtrip(&AuditAction::Create);
+    }
+    #[test]
+    fn rt_audit_action_update() {
+        roundtrip(&AuditAction::Update);
+    }
+    #[test]
+    fn rt_audit_action_delete() {
+        roundtrip(&AuditAction::Delete);
+    }
+    #[test]
+    fn rt_audit_action_view() {
+        roundtrip(&AuditAction::View);
+    }
+    #[test]
+    fn rt_audit_action_export() {
+        roundtrip(&AuditAction::Export);
+    }
+    #[test]
+    fn rt_audit_action_approve() {
+        roundtrip(&AuditAction::Approve);
+    }
+    #[test]
+    fn rt_audit_action_reject() {
+        roundtrip(&AuditAction::Reject);
+    }
+    #[test]
+    fn rt_audit_action_post() {
+        roundtrip(&AuditAction::Post);
+    }
+    #[test]
+    fn rt_audit_action_reverse() {
+        roundtrip(&AuditAction::Reverse);
+    }
 
     // ===== AuditAction::as_str =====
 
-    #[test] fn test_action_as_str_all() {
+    #[test]
+    fn test_action_as_str_all() {
         assert_eq!(AuditAction::Create.as_str(), "Create");
         assert_eq!(AuditAction::Update.as_str(), "Update");
         assert_eq!(AuditAction::Delete.as_str(), "Delete");
@@ -256,19 +284,28 @@ mod tests {
 
     // ===== AuditLogEntry roundtrip =====
 
-    #[test] fn rt_audit_log_entry() {
+    #[test]
+    fn rt_audit_log_entry() {
         roundtrip(&AuditLogEntry {
-            id: "log1".into(), action: AuditAction::Create,
-            actor: "alice".into(), target_type: "Voucher".into(), target_id: "v1".into(),
-            before: None, after: Some(serde_json::json!({"key": "value"})),
+            id: "log1".into(),
+            action: AuditAction::Create,
+            actor: "alice".into(),
+            target_type: "Voucher".into(),
+            target_id: "v1".into(),
+            before: None,
+            after: Some(serde_json::json!({"key": "value"})),
             metadata: serde_json::json!({}),
             timestamp: Utc::now(),
         });
     }
-    #[test] fn rt_audit_log_entry_with_before() {
+    #[test]
+    fn rt_audit_log_entry_with_before() {
         roundtrip(&AuditLogEntry {
-            id: "log2".into(), action: AuditAction::Update,
-            actor: "bob".into(), target_type: "Receivable".into(), target_id: "r1".into(),
+            id: "log2".into(),
+            action: AuditAction::Update,
+            actor: "bob".into(),
+            target_type: "Receivable".into(),
+            target_id: "r1".into(),
             before: Some(serde_json::json!({"amount": 100})),
             after: Some(serde_json::json!({"amount": 200})),
             metadata: serde_json::json!({"reason": "correction"}),
@@ -278,15 +315,20 @@ mod tests {
 
     // ===== AuditLogService =====
 
-    #[test] fn test_service_default() {
+    #[test]
+    fn test_service_default() {
         let svc = AuditLogService::default();
         assert_eq!(svc.count(), 0);
     }
 
-    #[test] fn test_service_log_action() {
+    #[test]
+    fn test_service_log_action() {
         let svc = AuditLogService::new();
         let entry = svc.log_action(
-            AuditAction::Create, "alice", "Voucher", "v1",
+            AuditAction::Create,
+            "alice",
+            "Voucher",
+            "v1",
             Some(serde_json::json!({"source": "api"})),
         );
         assert_eq!(entry.action, AuditAction::Create);
@@ -300,16 +342,21 @@ mod tests {
         assert_eq!(got.id, entry.id);
     }
 
-    #[test] fn test_service_log_action_no_metadata() {
+    #[test]
+    fn test_service_log_action_no_metadata() {
         let svc = AuditLogService::new();
         let entry = svc.log_action(AuditAction::Delete, "bob", "Receivable", "r1", None);
         assert_eq!(entry.metadata, serde_json::json!({}));
     }
 
-    #[test] fn test_service_log_data_change() {
+    #[test]
+    fn test_service_log_data_change() {
         let svc = AuditLogService::new();
         let entry = svc.log_data_change(
-            AuditAction::Update, "alice", "Voucher", "v1",
+            AuditAction::Update,
+            "alice",
+            "Voucher",
+            "v1",
             Some(serde_json::json!({"status": "Draft"})),
             Some(serde_json::json!({"status": "Approved"})),
             None,
@@ -319,19 +366,22 @@ mod tests {
         assert_eq!(svc.count(), 1);
     }
 
-    #[test] fn test_service_log_access() {
+    #[test]
+    fn test_service_log_access() {
         let svc = AuditLogService::new();
         let entry = svc.log_access("charlie", "Receivable", "r1", None);
         assert_eq!(entry.action, AuditAction::View);
         assert_eq!(entry.actor, "charlie");
     }
 
-    #[test] fn test_service_get_log_not_found() {
+    #[test]
+    fn test_service_get_log_not_found() {
         let svc = AuditLogService::new();
         assert!(svc.get_log_by_id("does-not-exist").is_none());
     }
 
-    #[test] fn test_service_count_empty() {
+    #[test]
+    fn test_service_count_empty() {
         let svc = AuditLogService::new();
         assert_eq!(svc.count(), 0);
     }
@@ -347,38 +397,55 @@ mod tests {
         svc
     }
 
-    #[test] fn test_query_filter_by_action() {
+    #[test]
+    fn test_query_filter_by_action() {
         let svc = seed_svc();
-        let q = AuditLogQuery { action: Some(AuditAction::Create), ..Default::default() };
+        let q = AuditLogQuery {
+            action: Some(AuditAction::Create),
+            ..Default::default()
+        };
         let results = svc.query_logs(q);
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].action, AuditAction::Create);
     }
 
-    #[test] fn test_query_filter_by_actor() {
+    #[test]
+    fn test_query_filter_by_actor() {
         let svc = seed_svc();
-        let q = AuditLogQuery { actor: Some("alice".into()), ..Default::default() };
+        let q = AuditLogQuery {
+            actor: Some("alice".into()),
+            ..Default::default()
+        };
         let results = svc.query_logs(q);
         assert_eq!(results.len(), 2);
         assert!(results.iter().all(|e| e.actor == "alice"));
     }
 
-    #[test] fn test_query_filter_by_target_type() {
+    #[test]
+    fn test_query_filter_by_target_type() {
         let svc = seed_svc();
-        let q = AuditLogQuery { target_type: Some("Voucher".into()), ..Default::default() };
+        let q = AuditLogQuery {
+            target_type: Some("Voucher".into()),
+            ..Default::default()
+        };
         let results = svc.query_logs(q);
         assert_eq!(results.len(), 2);
     }
 
-    #[test] fn test_query_filter_by_target_id() {
+    #[test]
+    fn test_query_filter_by_target_id() {
         let svc = seed_svc();
-        let q = AuditLogQuery { target_id: Some("r1".into()), ..Default::default() };
+        let q = AuditLogQuery {
+            target_id: Some("r1".into()),
+            ..Default::default()
+        };
         let results = svc.query_logs(q);
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].target_id, "r1");
     }
 
-    #[test] fn test_query_combined_filters() {
+    #[test]
+    fn test_query_combined_filters() {
         let svc = seed_svc();
         let q = AuditLogQuery {
             actor: Some("alice".into()),
@@ -389,9 +456,13 @@ mod tests {
         assert_eq!(results.len(), 2);
     }
 
-    #[test] fn test_query_no_match() {
+    #[test]
+    fn test_query_no_match() {
         let svc = seed_svc();
-        let q = AuditLogQuery { target_type: Some("Nonexistent".into()), ..Default::default() };
+        let q = AuditLogQuery {
+            target_type: Some("Nonexistent".into()),
+            ..Default::default()
+        };
         let results = svc.query_logs(q);
         assert!(results.is_empty());
     }

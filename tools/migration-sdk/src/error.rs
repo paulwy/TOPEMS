@@ -86,7 +86,10 @@ mod tests {
             plugin: "plugin-a".into(),
             reason: "another instance running".into(),
         };
-        assert_eq!(e.to_string(), "迁移已锁定: plugin-a - another instance running");
+        assert_eq!(
+            e.to_string(),
+            "迁移已锁定: plugin-a - another instance running"
+        );
     }
 
     #[test]

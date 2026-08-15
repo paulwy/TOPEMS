@@ -981,14 +981,24 @@ mod tests {
 
     #[test]
     fn test_queue_provider_roundtrip_all_variants() {
-        for v in [QueueProvider::Redis, QueueProvider::NATS, QueueProvider::Kafka, QueueProvider::InMemory] {
+        for v in [
+            QueueProvider::Redis,
+            QueueProvider::NATS,
+            QueueProvider::Kafka,
+            QueueProvider::InMemory,
+        ] {
             roundtrip(&v);
         }
     }
 
     #[test]
     fn test_queue_provider_as_str_from_str() {
-        for v in [QueueProvider::Redis, QueueProvider::NATS, QueueProvider::Kafka, QueueProvider::InMemory] {
+        for v in [
+            QueueProvider::Redis,
+            QueueProvider::NATS,
+            QueueProvider::Kafka,
+            QueueProvider::InMemory,
+        ] {
             let s = v.as_str();
             let back = QueueProvider::from_str(s);
             assert!(back.is_some());
@@ -999,14 +1009,24 @@ mod tests {
 
     #[test]
     fn test_push_priority_roundtrip_all_variants() {
-        for v in [PushPriority::Critical, PushPriority::High, PushPriority::Normal, PushPriority::Low] {
+        for v in [
+            PushPriority::Critical,
+            PushPriority::High,
+            PushPriority::Normal,
+            PushPriority::Low,
+        ] {
             roundtrip(&v);
         }
     }
 
     #[test]
     fn test_push_priority_as_str_from_str() {
-        for v in [PushPriority::Critical, PushPriority::High, PushPriority::Normal, PushPriority::Low] {
+        for v in [
+            PushPriority::Critical,
+            PushPriority::High,
+            PushPriority::Normal,
+            PushPriority::Low,
+        ] {
             let s = v.as_str();
             let back = PushPriority::from_str(s);
             roundtrip(&back);

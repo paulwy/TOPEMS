@@ -1770,14 +1770,16 @@ mod tests {
         assert_eq!(v1, v2);
     }
 
-    #[test] fn enum_risk_level() {
+    #[test]
+    fn enum_risk_level() {
         roundtrip(&RiskLevel::Low);
         roundtrip(&RiskLevel::Medium);
         roundtrip(&RiskLevel::High);
         roundtrip(&RiskLevel::Critical);
     }
 
-    #[test] fn enum_risk_category() {
+    #[test]
+    fn enum_risk_category() {
         roundtrip(&RiskCategory::Credit);
         roundtrip(&RiskCategory::Market);
         roundtrip(&RiskCategory::Liquidity);
@@ -1786,7 +1788,8 @@ mod tests {
         roundtrip(&RiskCategory::Fraud);
     }
 
-    #[test] fn enum_fraud_rule_type() {
+    #[test]
+    fn enum_fraud_rule_type() {
         roundtrip(&FraudRuleType::Velocity);
         roundtrip(&FraudRuleType::Amount);
         roundtrip(&FraudRuleType::Location);
@@ -1794,13 +1797,15 @@ mod tests {
         roundtrip(&FraudRuleType::Behavior);
     }
 
-    #[test] fn enum_fraud_recommendation() {
+    #[test]
+    fn enum_fraud_recommendation() {
         roundtrip(&FraudRecommendation::Approve);
         roundtrip(&FraudRecommendation::Review);
         roundtrip(&FraudRecommendation::Block);
     }
 
-    #[test] fn enum_regulation() {
+    #[test]
+    fn enum_regulation() {
         roundtrip(&Regulation::SOX);
         roundtrip(&Regulation::GDPR);
         roundtrip(&Regulation::PCI_DSS);
@@ -1808,83 +1813,110 @@ mod tests {
         roundtrip(&Regulation::Internal);
     }
 
-    #[test] fn enum_review_workflow_status() {
+    #[test]
+    fn enum_review_workflow_status() {
         roundtrip(&ReviewWorkflowStatus::Pending);
         roundtrip(&ReviewWorkflowStatus::InProgress);
         roundtrip(&ReviewWorkflowStatus::Completed);
         roundtrip(&ReviewWorkflowStatus::Rejected);
     }
 
-    #[test] fn enum_review_severity() {
+    #[test]
+    fn enum_review_severity() {
         roundtrip(&ReviewSeverity::Low);
         roundtrip(&ReviewSeverity::Medium);
         roundtrip(&ReviewSeverity::High);
         roundtrip(&ReviewSeverity::Critical);
     }
 
-    #[test] fn enum_review_action() {
+    #[test]
+    fn enum_review_action() {
         roundtrip(&ReviewAction::Approve);
         roundtrip(&ReviewAction::Reject);
         roundtrip(&ReviewAction::Escalate);
         roundtrip(&ReviewAction::Flag);
     }
 
-    #[test] fn struct_risk_indicator() {
+    #[test]
+    fn struct_risk_indicator() {
         let v = RiskIndicator {
-            id: Uuid::new_v4(), category: "liquidity".into(),
-            level: "high".into(), current_value: 200.0,
-            threshold: 150.0, unit: "%".into(), updated_at: Utc::now(),
+            id: Uuid::new_v4(),
+            category: "liquidity".into(),
+            level: "high".into(),
+            current_value: 200.0,
+            threshold: 150.0,
+            unit: "%".into(),
+            updated_at: Utc::now(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_risk_alert() {
+    #[test]
+    fn struct_risk_alert() {
         let v = RiskAlert {
-            id: Uuid::new_v4(), indicator_id: Uuid::new_v4(),
-            level: "critical".into(), message: "指标超阈值".into(),
+            id: Uuid::new_v4(),
+            indicator_id: Uuid::new_v4(),
+            level: "critical".into(),
+            message: "指标超阈值".into(),
             entity: "ENT-001".into(),
             created_at: Utc::now(),
-            acknowledged: false, resolved: false,
+            acknowledged: false,
+            resolved: false,
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_risk_dashboard() {
+    #[test]
+    fn struct_risk_dashboard() {
         let v = RiskDashboard {
-            total_indicators: 50, critical_count: 2, high_count: 5,
-            medium_count: 15, low_count: 28,
-            composite_score: 3.2, open_alerts: 10,
+            total_indicators: 50,
+            critical_count: 2,
+            high_count: 5,
+            medium_count: 15,
+            low_count: 28,
+            composite_score: 3.2,
+            open_alerts: 10,
             by_category: [("liquidity".into(), 10i64)].into(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_fraud_rule() {
+    #[test]
+    fn struct_fraud_rule() {
         let v = FraudRule {
-            id: Uuid::new_v4(), name: "大额交易".into(),
+            id: Uuid::new_v4(),
+            name: "大额交易".into(),
             rule_type: "amount".into(),
             condition: "amount > 50000".into(),
-            threshold: 50000.0, enabled: true,
+            threshold: 50000.0,
+            enabled: true,
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_fraud_score() {
+    #[test]
+    fn struct_fraud_score() {
         let v = FraudScore {
-            id: Uuid::new_v4(), transaction_id: "TX-001".into(),
+            id: Uuid::new_v4(),
+            transaction_id: "TX-001".into(),
             score: 0.92,
             triggered_rules: serde_json::json!(["amount"]),
-            risk_level: "high".into(), recommendation: "review".into(),
+            risk_level: "high".into(),
+            recommendation: "review".into(),
             scored_at: Utc::now(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_transaction() {
+    #[test]
+    fn struct_transaction() {
         let v = Transaction {
-            id: "TX-001".into(), account_id: "ACC-001".into(),
-            amount: 9999.0, currency: "CNY".into(),
-            merchant: "超市".into(), location: "北京".into(),
+            id: "TX-001".into(),
+            account_id: "ACC-001".into(),
+            amount: 9999.0,
+            currency: "CNY".into(),
+            merchant: "超市".into(),
+            location: "北京".into(),
             device_id: "DEV-001".into(),
             timestamp: Utc::now(),
             metadata: Some(serde_json::json!({"channel":"online"})),
@@ -1892,41 +1924,56 @@ mod tests {
         roundtrip(&v);
     }
 
-    #[test] fn struct_review_rule() {
+    #[test]
+    fn struct_review_rule() {
         let v = ReviewRule {
-            id: Uuid::new_v4(), regulation: "sox".into(),
+            id: Uuid::new_v4(),
+            regulation: "sox".into(),
             category: "authorization".into(),
-            severity: "high".into(), action: "escalate".into(),
+            severity: "high".into(),
+            action: "escalate".into(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_review_result() {
+    #[test]
+    fn struct_review_result() {
         let v = ReviewResult {
-            id: Uuid::new_v4(), entity_type: "transaction".into(),
-            entity_id: "TX-001".into(), rule_id: Uuid::new_v4(),
+            id: Uuid::new_v4(),
+            entity_type: "transaction".into(),
+            entity_id: "TX-001".into(),
+            rule_id: Uuid::new_v4(),
             passed: true,
             details: serde_json::json!({"notes":"ok"}),
-            reviewed_at: Utc::now(), reviewer: "tester".into(),
+            reviewed_at: Utc::now(),
+            reviewer: "tester".into(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_review_workflow() {
+    #[test]
+    fn struct_review_workflow() {
         let v = ReviewWorkflow {
-            id: Uuid::new_v4(), entity_type: "merchant".into(),
-            entity_id: "M-001".into(), status: "in_progress".into(),
+            id: Uuid::new_v4(),
+            entity_type: "merchant".into(),
+            entity_id: "M-001".into(),
+            status: "in_progress".into(),
             assigned_to: Some("tester".into()),
             steps: serde_json::json!([{"step":1,"name":"verify"}]),
-            created_at: Utc::now(), updated_at: Utc::now(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         };
         roundtrip(&v);
     }
 
-    #[test] fn struct_compliance_report() {
+    #[test]
+    fn struct_compliance_report() {
         let v = ComplianceReport {
-            entity_type: "merchant".into(), entity_id: "M-001".into(),
-            total_rules: 50, passed_rules: 45, failed_rules: 5,
+            entity_type: "merchant".into(),
+            entity_id: "M-001".into(),
+            total_rules: 50,
+            passed_rules: 45,
+            failed_rules: 5,
             pass_rate: 0.9,
             critical_issues: vec!["严重问题".into()],
             high_issues: vec!["高风险".into()],

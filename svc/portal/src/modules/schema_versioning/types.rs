@@ -299,14 +299,24 @@ mod tests {
 
     #[test]
     fn test_severity_roundtrip_all_variants() {
-        for v in [Severity::Critical, Severity::High, Severity::Medium, Severity::Low] {
+        for v in [
+            Severity::Critical,
+            Severity::High,
+            Severity::Medium,
+            Severity::Low,
+        ] {
             roundtrip(&v);
         }
     }
 
     #[test]
     fn test_severity_as_str() {
-        for v in [Severity::Critical, Severity::High, Severity::Medium, Severity::Low] {
+        for v in [
+            Severity::Critical,
+            Severity::High,
+            Severity::Medium,
+            Severity::Low,
+        ] {
             let _ = v.as_str();
         }
     }
@@ -325,14 +335,24 @@ mod tests {
 
     #[test]
     fn test_version_status_roundtrip_all_variants() {
-        for v in [VersionStatus::Active, VersionStatus::Deprecated, VersionStatus::Sunset, VersionStatus::Unsupported] {
+        for v in [
+            VersionStatus::Active,
+            VersionStatus::Deprecated,
+            VersionStatus::Sunset,
+            VersionStatus::Unsupported,
+        ] {
             roundtrip(&v);
         }
     }
 
     #[test]
     fn test_version_status_as_str() {
-        for v in [VersionStatus::Active, VersionStatus::Deprecated, VersionStatus::Sunset, VersionStatus::Unsupported] {
+        for v in [
+            VersionStatus::Active,
+            VersionStatus::Deprecated,
+            VersionStatus::Sunset,
+            VersionStatus::Unsupported,
+        ] {
             let _ = v.as_str();
         }
     }

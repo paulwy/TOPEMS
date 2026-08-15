@@ -1291,14 +1291,24 @@ mod tests {
 
     #[test]
     fn test_plan_step_strategy_roundtrip_all_variants() {
-        for v in [PlanStepStrategy::Sequential, PlanStepStrategy::Parallel, PlanStepStrategy::Pipelined, PlanStepStrategy::Batched] {
+        for v in [
+            PlanStepStrategy::Sequential,
+            PlanStepStrategy::Parallel,
+            PlanStepStrategy::Pipelined,
+            PlanStepStrategy::Batched,
+        ] {
             roundtrip(&v);
         }
     }
 
     #[test]
     fn test_plan_step_strategy_as_str_from_str() {
-        for v in [PlanStepStrategy::Sequential, PlanStepStrategy::Parallel, PlanStepStrategy::Pipelined, PlanStepStrategy::Batched] {
+        for v in [
+            PlanStepStrategy::Sequential,
+            PlanStepStrategy::Parallel,
+            PlanStepStrategy::Pipelined,
+            PlanStepStrategy::Batched,
+        ] {
             let s = v.as_str();
             let back = PlanStepStrategy::from_str(s);
             roundtrip(&back);

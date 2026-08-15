@@ -489,13 +489,21 @@ mod tests {
         assert_eq!(v1, v2);
     }
 
-    fn now() -> chrono::DateTime<chrono::Utc> { chrono::Utc::now() }
+    fn now() -> chrono::DateTime<chrono::Utc> {
+        chrono::Utc::now()
+    }
 
-    fn today() -> chrono::NaiveDate { chrono::Utc::now().date_naive() }
+    fn today() -> chrono::NaiveDate {
+        chrono::Utc::now().date_naive()
+    }
 
-    fn uid() -> String { uuid::Uuid::new_v4().to_string() }
+    fn uid() -> String {
+        uuid::Uuid::new_v4().to_string()
+    }
 
-    fn dec(n: i64) -> rust_decimal::Decimal { rust_decimal::Decimal::from(n) }
+    fn dec(n: i64) -> rust_decimal::Decimal {
+        rust_decimal::Decimal::from(n)
+    }
 
     #[test]
     fn rt_pg_voucher_summary_posted_at_none() {
