@@ -262,10 +262,10 @@
     },
     "install_success_message": "{{name}} has been installed successfully"
   },
-  "plugin.dashboard_page.k0": "插件市场概览",
-  "plugin.dashboard_page.k1": "插件市场数据概览",
-  "plugin.dashboard_page.k2": "快捷操作",
-  "plugin.plugin_detail_page.k0": "PluginDetailPage 页面开发中",
-  "plugin.plugin_marketplace_page.k0": "PluginMarketplacePage 页面开发中",
-  "plugin.plugin_upload_page.k0": "PluginUploadPage 页面开发中"
+  "plugin.dashboard_page.k0": "Plugin Marketplace Overview",
+  "plugin.dashboard_page.k1": "Plugin Marketplace Data Overview",
+  "plugin.dashboard_page.k2": "Quick Actions",
+  "plugin.plugin_detail_page.k0": "PluginDetailPage under development",
+  "plugin.plugin_marketplace_page.k0": "PluginMarketplacePage under development",
+  "plugin.plugin_upload_page.k0": "PluginUploadPage under development"
 }
