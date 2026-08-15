@@ -1,8 +1,10 @@
+use axum::Extension;
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
     Json,
 };
+use topems_shared_auth::Claims;
 
 use super::super::models::*;
 use crate::{AppState, CoreResponse};
@@ -194,7 +196,7 @@ pub async fn get_plugin_status(
     let instance: Option<PluginInstance> = sqlx::query_as(
         r#"
         SELECT pi.* FROM core.core_plugin_instances pi
-        JOIN core_plugins p ON pi.plugin_id = p.id
+        JOIN core.core_plugins p ON pi.plugin_id = p.id
         WHERE p.code = $1
         "#,
     )
@@ -259,30 +261,102 @@ pub async fn list_plugins_with_status(
 /// 获取所有已激活插件的导航配置（供前端动态加载菜单）
 pub async fn get_navigation_config(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    tracing::info!("[Plugin] Fetching navigation config for all plugins");
+    tracing::info!(
+        "[Plugin] Fetching navigation config for tenant: {:?}",
+        claims.tenant_id
+    );
 
-    // 查询所有已注册插件的导航配置
-    let rows: Vec<(String, Option<serde_json::Value>, String, Option<String>)> = sqlx::query_as(
-        r#"
-        SELECT p.code, pn.nav_config, p.name, p.category
-        FROM core.core_plugins p
-        LEFT JOIN core.core_plugin_navigation pn ON p.code = pn.plugin_code
-        WHERE p.is_published = true
-        ORDER BY p.code
-        "#,
-    )
-    .fetch_all(&state.pool)
-    .await
-    .unwrap_or_default();
+    // 仅返回该租户下已安装 + 已激活的插件（仅当 claims.tenant_id 能解析为 UUID）
+    // 若无法解析，则回退为所有已发布插件生成默认导航（开发调试友好）
+    let tenant_uuid = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| uuid::Uuid::parse_str(s).ok());
+
+    let rows: Vec<(String, String, Option<String>, Option<String>, bool, bool)> =
+        if let Some(tid) = tenant_uuid {
+            sqlx::query_as(
+                r#"
+            SELECT p.code, p.name, p.category, p.entry_point,
+                   COALESCE(tp.is_active, false) AS is_active,
+                   COALESCE(tp.is_active, false) AS is_installed
+            FROM core.core_plugins p
+            LEFT JOIN core.core_tenant_plugins tp
+                   ON tp.plugin_id = p.id AND tp.tenant_id = $1 AND tp.deleted_at IS NULL
+            WHERE p.is_published = true
+              AND (tp.id IS NOT NULL)
+              AND COALESCE(tp.is_active, false) = true
+            ORDER BY p.category NULLS LAST, p.code
+            "#,
+            )
+            .bind(tid)
+            .fetch_all(&state.pool)
+            .await
+            .unwrap_or_default()
+        } else {
+            sqlx::query_as(
+                r#"
+            SELECT p.code, p.name, p.category, p.entry_point,
+                   COALESCE(p.is_active, false),
+                   COALESCE(p.is_installed, false)
+            FROM core.core_plugins p
+            WHERE p.is_published = true
+            ORDER BY p.category NULLS LAST, p.code
+            "#,
+            )
+            .fetch_all(&state.pool)
+            .await
+            .unwrap_or_default()
+        };
 
     let mut modules = Vec::new();
-    for (code, nav_config, name, category) in rows {
-        let nav_items = nav_config.unwrap_or(serde_json::json!([]));
+    for (code, name, category, entry_point, _is_active, _is_installed) in rows {
+        // 为每个插件生成 1~2 个默认导航项：
+        //   [0] = 插件首页（Dashboard/概览）
+        //   [1] = 设置（可选）
+        let path_prefix = entry_point
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| format!("/plugin/{code}"));
+
+        let display_name = if name.trim().is_empty() {
+            code.clone()
+        } else {
+            name.clone()
+        };
+
+        let nav_items = serde_json::json!([
+            {
+                "key": format!("{code}-home"),
+                "label": format!("{display_name}首页"),
+                "title": display_name,
+                "path": path_prefix,
+                "icon": "Package",
+                "order": 10,
+                "children": [
+                    {
+                        "key": format!("{code}-dashboard"),
+                        "label": "概览",
+                        "path": format!("{path_prefix}/dashboard"),
+                        "order": 10,
+                    },
+                    {
+                        "key": format!("{code}-customers"),
+                        "label": if code == "crm" { "客户管理" } else { "业务数据" },
+                        "path": if code == "crm" { format!("{path_prefix}/customers") } else { format!("{path_prefix}/data") },
+                        "order": 20,
+                    },
+                ]
+            }
+        ]);
+
         modules.push(serde_json::json!({
             "code": code,
-            "name": name,
+            "name": display_name,
             "category": category,
+            "group": category.clone().unwrap_or_else(|| "专业模块".to_string()),
+            "pathPrefix": path_prefix,
             "navigation": nav_items,
         }));
     }

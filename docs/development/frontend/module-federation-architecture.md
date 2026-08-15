@@ -548,5 +548,5 @@ topems/
 
 | 文档 | 说明 |
 |------|------|
-| [backend-service-integration-plan.md](backend-service-integration-plan.md) | 后端服务整合实施方案 |
-| [improvement-plan.md](improvement-plan.md) | 项目整体改进计划 |
+| backend-service-integration-plan.md | 后端服务整合实施方案（已归档） |
+| improvement-plan.md | 项目整体改进计划（已归档） |

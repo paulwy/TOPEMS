@@ -126,7 +126,7 @@ pub async fn check_plugin_updates(
 ) -> Json<CoreResponse<UpgradeCheckResult>> {
     tracing::info!("[Plugin] Checking updates for plugin: {}", plugin_code);
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await
@@ -202,7 +202,7 @@ pub async fn rollback_plugin_version(
         target_version
     );
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await
@@ -268,7 +268,7 @@ pub async fn check_all_updates(
 ) -> Json<CoreResponse<Vec<UpgradeCheckResult>>> {
     tracing::info!("[Plugin] Checking updates for all plugins");
 
-    let plugins: Vec<Plugin> = match sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE is_published = true")
+    let plugins: Vec<Plugin> = match sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true")
             .fetch_all(&state.pool)
             .await
         {

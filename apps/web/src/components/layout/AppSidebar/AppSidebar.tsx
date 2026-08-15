@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { Paper, Box, useTheme, useMediaQuery } from '@mui/material';
-import { useLocation } from 'react-router-dom';
+import { Paper, Box, Tooltip, ListItemButton, ListItemIcon, ListItemText, useTheme, useMediaQuery } from '@mui/material';
+import PuzzleIcon from '@mui/icons-material/ExtensionOutlined';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { useAuthAvatarUrl, useAuthDisplayName, useAuthUserRole } from '@/store/authStore';
-import { extractInitials } from '@/layouts/components';
+import { extractInitials } from '@/layouts/components/UserMenu';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem, ModuleCardConfig } from '@/lib/navigation/types';
 import { SUITE_GROUPS } from '@/lib/navigation/types';
@@ -17,6 +18,7 @@ import { SidebarModuleTree } from './SidebarModuleTree';
 import { SidebarUserPanel } from './SidebarUserPanel';
 import { isPlatformPath, getModuleFromPath } from './shared';
 import i18n from '@/i18n';
+import { PLUGIN_PATHS } from '@/modules/plugin/config';
 
 export interface AppSidebarProps {
   collapsed: boolean;
@@ -31,6 +33,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 }) => {
   const theme = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
   const { checkPermission } = usePermission();
   const { serviceStatuses } = useServiceStatus();
   const displayName = useAuthDisplayName();
@@ -221,6 +224,83 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         serviceStatuses={serviceStatuses}
         checkPermission={checkPermission}
       />
+
+      {/* P4-D: Sidebar 底部「🧩 扩展市场」快捷入口 */}
+      <Box
+        sx={{
+          flexShrink: 0,
+          borderTop: '1px solid',
+          borderColor: 'divider',
+          px: collapsed ? 0.5 : 1,
+          py: 0.5,
+        }}
+      >
+        <Tooltip
+          title={collapsed ? i18n.t('shared.app_sidebar.k1') : ''}
+          placement='right'
+          disableHoverListener={!collapsed}
+        >
+          <ListItemButton
+            onClick={() => navigate(PLUGIN_PATHS.marketplace)}
+            selected={location.pathname.startsWith(PLUGIN_PATHS.root)}
+            sx={{
+              minHeight: 40,
+              borderRadius: 1,
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              '&.Mui-selected': {
+                bgcolor: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? 'primary.main'
+                    : 'primary.main',
+                color: 'primary.contrastText',
+                '&:hover': {
+                  bgcolor: 'primary.dark',
+                },
+              },
+              '&:hover': {
+                bgcolor: 'action.hover',
+              },
+              // Cyberpunk theme accent
+              ...theme.applyStyles('dark', {
+                '&.Mui-selected': {
+                  boxShadow: '0 0 12px rgba(0, 255, 255, 0.35)',
+                },
+              }),
+              '[data-theme="cyberpunk"] &': {
+                '&.Mui-selected': {
+                  boxShadow: '0 0 14px rgba(255, 0, 255, 0.45)',
+                  border: '1px solid rgba(255, 0, 255, 0.5)',
+                },
+              },
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: collapsed ? 'auto' : 40,
+                justifyContent: 'center',
+                color: 'inherit',
+              }}
+            >
+              <PuzzleIcon fontSize={collapsed ? 'small' : 'medium'} />
+            </ListItemIcon>
+            {!collapsed && (
+              <ListItemText
+                primary={
+                  <Box component='span' sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                    🧩 {i18n.t('shared.app_sidebar.k1')}
+                  </Box>
+                }
+                secondary={
+                  <Box component='span' sx={{ fontSize: '0.7rem', opacity: 0.7 }}>
+                    {i18n.t('shared.app_sidebar.k2')}
+                  </Box>
+                }
+                sx={{ my: 0 }}
+              />
+            )}
+          </ListItemButton>
+        </Tooltip>
+      </Box>
 
       <SidebarUserPanel
         collapsed={collapsed}

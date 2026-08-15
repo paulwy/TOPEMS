@@ -109,7 +109,7 @@ done
 
 **解决方案**：
 - 使用端口分配规则中预留的端口（如 8023 而非 8021）
-- 参考 [端口分配规则](./port-allocation-rules.md)
+- 参考 [端口分配规则](../architecture/ports.md)
 
 **预防措施**：
 - 启动前检查端口可用性：`lsof -i :<port>`
@@ -630,8 +630,8 @@ docker stats
 
 ## 获取更多帮助
 
-- 查看 [部署指南](./deployment-guide.md)
-- 查看 [API 文档](./api/README.md)
-- 查看 [架构设计](./architecture/overview.md)
-- 查看 [环境配置](./guides/ENVIRONMENT_CONFIG.md)
+- 查看 [部署指南](./deployment-guide-overview.md)
+- 查看 [API 文档](../api/README.md)
+- 查看 [架构设计](../architecture/overview.md)
+- 查看 [环境配置](../getting-started/environment-config.md)
 - 提交 Issue: https://github.com/your-org/topems/issues

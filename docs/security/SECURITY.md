@@ -490,7 +490,7 @@ npm update
 
 ## 相关文档
 
-- [部署指南 - 安全配置](./deployment-guide.md#安全配置)
-- [环境配置 - 密钥管理](./guides/ENVIRONMENT_CONFIG.md)
-- [架构设计 - 安全设计](./architecture/overview.md#安全设计)
-- [故障排查 - 认证问题](./TROUBLESHOOTING.md#认证问题)
+- [部署指南 - 安全配置](../deployment/deployment-guide-overview.md#安全配置)
+- [环境配置 - 密钥管理](../getting-started/environment-config.md)
+- [架构设计 - 安全设计](../architecture/overview.md#安全设计)
+- [故障排查 - 认证问题](../deployment/troubleshooting.md#认证问题)

@@ -16,8 +16,7 @@ import {
 import i18n from '@/i18n';
 import { getUnreadCount } from '@/api/notification';
 import { apiLogger } from '@/utils/logger';
-import { FloatingAIHelper } from '../ai/FloatingAIHelper';
-import { ContextHelpButton } from '../ContextHelpButton';
+import { FloatingDock } from './FloatingDock';
 import { MobileNav } from './MobileNav';
 import { AppSidebar } from './AppSidebar';
 import { AppHeader } from './AppHeader';
@@ -385,8 +384,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
         </Box>
       </Box>
 
-      <FloatingAIHelper />
-      <ContextHelpButton />
+      <FloatingDock />
 
       <CommandPalette
         open={commandPaletteOpen}

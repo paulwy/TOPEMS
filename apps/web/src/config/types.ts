@@ -66,6 +66,8 @@ export interface ServicesConfig {
   lowcode: string;
   // 自动化编排服务（V64 新增，初期落地 unified-core，前端通过 /api/core/automation 访问）
   automation: string;
+  // V68.1 拆分服务：插件注册与管理服务（独立进程，端口 8096）
+  'plugin-registry': string;
 }
 
 export interface FeaturesConfig {

@@ -17,7 +17,7 @@ export const oaModuleConfig: RouteModuleConfig = {
   name: i18n.t('shared.config.k0'),
   icon: 'FileText',
   path: OA_PATHS.root,
-  source: 'plugin',
+  source: 'core',
   suite: 'collaboration',
   status: 'online',
   order: 92,
@@ -96,7 +96,7 @@ export const oaNavConfig: ModuleNavConfig = {
   name: i18n.t('shared.config.k7'),
   icon: 'FileText',
   path: OA_PATHS.root,
-  source: 'plugin' as const,
+  source: 'core',
   suite: 'collaboration',
   order: 92,
   navItems: [

@@ -14,9 +14,6 @@ export const AICopilotFab: React.FC<AICopilotFabProps> = ({ onClick }) => (
       aria-label={i18n.t('components.ai_copilot_fab.ai_0')}
       className='ai-helper-fab'
       sx={{
-        position: 'fixed',
-        bottom: 24,
-        right: 24,
         background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
         boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
         '&:hover': {

@@ -1,4 +1,4 @@
-> 🚨 路由版本过渡中：本文档描述路径含 /v1 为旧格式，新生产路径去掉 /v1。详见 [路由统一计划](../superpowers/plans/2026-07-15-route-unification-contract.md)
+> 🚨 路由版本过渡中：本文档描述路径含 /v1 为旧格式，新生产路径去掉 /v1。详见 [API 路径规范与渐进式统一方案](../architecture/api-path-standardization.md)
 
 # TOPEMS API 版本管理和 Schema 隔离工具使用指南
 
@@ -105,7 +105,7 @@ let result = sqlx::query_as(&format!("SELECT * FROM {}", employees_table))
 | SCM_SCHEMA | 供应链管理 |
 | PDM_SCHEMA | 产品数据管理 |
 | LIMS_SCHEMA | 实验室管理 |
-| RS_SCHEMA | 研发管理 |
+| RD_SCHEMA | 研发管理（原 RS_SCHEMA） |
 | GIS_SCHEMA | 地理信息系统 |
 | EHS_SCHEMA | 环境健康安全 |
 | BI_SCHEMA | 商务智能 |

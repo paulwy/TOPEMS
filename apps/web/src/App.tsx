@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import AppLayout from './components/layout/AppLayout';
 import AppRoutes from './routes/appRoutes';
 import { useAuth } from './hooks/useAuth';
@@ -13,6 +13,32 @@ const MicroFrontendDevTools = import.meta.env.DEV
 const ObservabilityPanel = import.meta.env.DEV
   ? lazy(() => import('./microfrontend/observability').then(m => ({ default: m.ObservabilityPanel })))
   : null;
+
+// 🔧 Dev auth injector: 从 URL query ?_tok=JWT&_tid=TENANT_ID 注入身份，用于联调
+if (import.meta.env.DEV) {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const tok = params.get('_tok');
+    const tid = params.get('_tid');
+    if (tok) localStorage.setItem('token', tok);
+    if (tid) localStorage.setItem('tenant_id', tid);
+    if (tok || tid) {
+      localStorage.setItem(
+        'user',
+        JSON.stringify({
+          id: params.get('_uid') || '11111111-1111-1111-1111-111111111111',
+          username: 'admin',
+          role: 'admin',
+          isSuperuser: true,
+        }),
+      );
+      localStorage.setItem('roles', JSON.stringify(['admin', 'user']));
+      localStorage.setItem('permissions', JSON.stringify(['*']));
+      localStorage.removeItem('topems-plugin-storage');
+      localStorage.removeItem('plugin-persister');
+    }
+  } catch (_) { /* noop */ }
+}
 
 /**
  * 开发模式 dev 面板包装器

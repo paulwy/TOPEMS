@@ -310,10 +310,10 @@ SELECT * FROM iam.users LIMIT 10;
 
 ## 下一步
 
-- 📖 阅读 [架构设计](./architecture/overview.md) 了解系统架构
-- 🚀 阅读 [部署指南](./deployment-guide.md) 部署到生产环境
-- 🔌 阅读 [API 文档](./api/README.md) 集成 API
-- 🔧 遇到问题查看 [故障排查手册](./TROUBLESHOOTING.md)
+- 📖 阅读 [架构设计](../architecture/overview.md) 了解系统架构
+- 🚀 阅读 [部署指南](../deployment/deployment-guide-overview.md) 部署到生产环境
+- 🔌 阅读 [API 文档](../api/README.md) 集成 API
+- 🔧 遇到问题查看 [故障排查手册](../deployment/troubleshooting.md)
 
 ---
 
@@ -369,8 +369,8 @@ A: 编辑 `config/services.yaml` 和 `.env` 文件。所有服务端口都在本
 
 ## 获取帮助
 
-- 📖 [完整文档中心](./README.md)
-- 🐛 [故障排查](./TROUBLESHOOTING.md)
-- 🔄 [变更日志](./CHANGELOG.md)
-- 📋 [TODO 列表](./TODO.md)
+- 📖 [完整文档中心](../README.md)
+- 🐛 [故障排查](../deployment/troubleshooting.md)
+- 🔄 [变更日志](../changelog/CHANGELOG.md)
+- 📋 [TODO 列表](../roadmap/TODO.md)
 - 💬 提交 Issue

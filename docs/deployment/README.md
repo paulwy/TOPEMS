@@ -4,7 +4,7 @@
 
 | 文档 | 说明 |
 |------|------|
-| [deployment-guide.md](../deployment-guide.md) | 主部署指南 |
+| [deployment-guide-overview.md](./deployment-guide-overview.md) | 主部署指南 |
 
 ## 快速开始
 
@@ -26,6 +26,6 @@
 
 ## 相关文档
 
-- [部署指南](../deployment-guide.md)
-- [端口分配规则](../port-allocation-rules.md)
-- [环境配置](../guides/ENVIRONMENT_CONFIG.md)
+- [部署指南](./deployment-guide-overview.md)
+- [端口分配规则](../architecture/ports.md)
+- [环境配置](../getting-started/environment-config.md)
