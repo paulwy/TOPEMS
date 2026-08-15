@@ -417,7 +417,7 @@ let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
 |----|---------|---------|
 | 制造域 | `svc/manufacturing` | MES + PDM + QMS |
 | 供应链域 | `svc/supply-chain` | SCM + WMS + SRM |
-| 质量研发域 | `svc/quality-rd` | LIMS + EHS + RS |
+| 质量研发域 | `svc/quality-rd` | LIMS + EHS + RD |
 | 协同域 | `svc/collaboration` | HRM + PM + CRM |
 
 每个域服务内部仍按模块组织代码，但共享进程与端口（通过路由前缀区分）。

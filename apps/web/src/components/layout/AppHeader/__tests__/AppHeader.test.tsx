@@ -18,10 +18,6 @@ vi.mock('../HeaderLogo', () => ({
   HeaderLogo: () => <div data-testid='header-logo' />,
 }));
 
-vi.mock('../HeaderNavTabs', () => ({
-  HeaderNavTabs: () => <div data-testid='header-nav-tabs' />,
-}));
-
 vi.mock('../HeaderSearch', () => ({
   HeaderSearch: () => <div data-testid='header-search' />,
 }));
@@ -51,11 +47,6 @@ describe('AppHeader', () => {
   it('renders HeaderLogo component', () => {
     renderWithProviders(<AppHeader />);
     expect(screen.getByTestId('header-logo')).toBeInTheDocument();
-  });
-
-  it('renders HeaderNavTabs component', () => {
-    renderWithProviders(<AppHeader />);
-    expect(screen.getByTestId('header-nav-tabs')).toBeInTheDocument();
   });
 
   it('renders HeaderSearch component', () => {

@@ -3,6 +3,10 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Plugin, TenantPlugin, PluginCategory } from '@/api/plugin';
 import { pluginApi, checkAllPluginsHealth, listPlugins } from '@/api/plugin';
 import { REMOTE_MODULES } from '@/config/plugins.config';
+import { pluginManager } from '@/lib/plugin-loader/PluginManager';
+import createLogger from '@/utils/logger';
+
+const logger = createLogger('pluginStore');
 
 export interface PluginState {
   installedPlugins: TenantPlugin[];
@@ -111,6 +115,12 @@ export const usePluginStore = create<PluginState>()(
             set((state) => ({
               lastFetchTime: { ...state.lastFetchTime, installed: now },
             }));
+            // 同步 PluginManager，已激活插件动态注册到 Sidebar 导航（专业模块）
+            try {
+              await pluginManager.refreshPlugins();
+            } catch (err) {
+              logger.debug('pluginManager refresh failed (non-critical):', err);
+            }
           }
         } catch (error: unknown) {
           set({
@@ -339,11 +349,11 @@ export const usePluginStore = create<PluginState>()(
       },
 
       isPluginInstalled: (code) => {
-        return get().installedPlugins.some((p) => p.plugin_id === code);
+        return get().installedPlugins.some((p) => p.plugin_code === code || p.plugin_id === code);
       },
 
       isPluginActive: (code) => {
-        const plugin = get().installedPlugins.find((p) => p.plugin_id === code);
+        const plugin = get().installedPlugins.find((p) => p.plugin_code === code || p.plugin_id === code);
         return plugin?.isactive === true;
       },
 

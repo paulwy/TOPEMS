@@ -131,22 +131,22 @@ pnpm dev
 
 ### 一键启动脚本
 
-[`scripts/start-local.sh`](../scripts/start-local.sh) 提供以下命令：
+[`scripts/start-local.sh`](../../scripts/dev/start-local.sh) 提供以下命令：
 
 ```bash
-./scripts/start-local.sh           # 启动全部（默认）
-./scripts/start-local.sh frontend  # 仅启动前端
-./scripts/start-local.sh backend   # 仅启动后端
-./scripts/start-local.sh db        # 启动本地数据库
-./scripts/start-local.sh install   # 安装依赖
-./scripts/start-local.sh stop      # 停止所有服务
-./scripts/start-local.sh status    # 查看服务状态
-./scripts/start-local.sh help      # 帮助
+./scripts/dev/start-local.sh           # 启动全部（默认）
+./scripts/dev/start-local.sh frontend  # 仅启动前端
+./scripts/dev/start-local.sh backend   # 仅启动后端
+./scripts/dev/start-local.sh db        # 启动本地数据库
+./scripts/dev/start-local.sh install   # 安装依赖
+./scripts/dev/start-local.sh stop      # 停止所有服务
+./scripts/dev/start-local.sh status    # 查看服务状态
+./scripts/dev/start-local.sh help      # 帮助
 ```
 
 ### 统一服务管理脚本
 
-[`scripts/topems.sh`](../scripts/topems.sh) 是细粒度服务管理工具：
+[`scripts/topems.sh`](../../scripts/topems.sh) 是细粒度服务管理工具：
 
 ```bash
 ./scripts/topems.sh status              # 查看所有服务状态
@@ -476,11 +476,11 @@ pnpm dev -- --inspect
 
 ## 相关文档
 
-- [快速入门指南](./QUICKSTART.md)
-- [API 文档](./api/README.md)
-- [架构设计](./architecture/overview.md)
-- [故障排查](./TROUBLESHOOTING.md)
-- [变更日志](./CHANGELOG.md)
+- [快速入门指南](./quickstart.md)
+- [API 文档](../api/README.md)
+- [架构设计](../architecture/overview.md)
+- [故障排查](../deployment/troubleshooting.md)
+- [变更日志](../changelog/CHANGELOG.md)
 
 ---
 

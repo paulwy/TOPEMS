@@ -21,7 +21,6 @@ export const BACKEND_PORTS: Record<string, number> = {
   doc: 8000,
   file: 8000,
   flow: 8000,
-  monitor: 8000,
   // Extension services (8082-8090)
   search: 8082,
   communication: 8084,
@@ -30,6 +29,9 @@ export const BACKEND_PORTS: Record<string, number> = {
   feedback: 8087,
   lowcode: 8088,
   'master-data': 8090,
+  // V68.1 拆分服务 (8095-8096)
+  monitor: 8095,
+  'plugin-registry': 8096,
   // Operation services (8010-8029)
   erp: 8010,
   finance: 8011,

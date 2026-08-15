@@ -1,7 +1,6 @@
 import React from 'react';
 import { Box, useTheme, useMediaQuery } from '@mui/material';
 import { HeaderLogo } from './HeaderLogo';
-import { HeaderNavTabs } from './HeaderNavTabs';
 import { HeaderSearch } from './HeaderSearch';
 import { HeaderNotifications } from './HeaderNotifications';
 import { HeaderUserMenu } from './HeaderUserMenu';
@@ -17,6 +16,7 @@ export interface AppHeaderProps {
     onClose: () => void;
     onOpen: () => void;
   }>;
+  /** @deprecated HeaderNavTabs 已移除，此 prop 不再生效，保留仅为向后兼容 */
   showCentralNav?: boolean;
   showBackButton?: boolean;
   onBack?: () => void;
@@ -29,7 +29,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onMobileMenuOpen,
   onMobileMenuClose,
   mobileNavComponent: MobileNavComponent,
-  showCentralNav = true,
+  showCentralNav: _showCentralNav = true,
   showBackButton = false,
   onBack,
   title,
@@ -69,8 +69,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           isMobileNav={isMobileNav}
           onMobileMenuOpen={onMobileMenuOpen}
         />
-
-        <HeaderNavTabs showCentralNav={showCentralNav} />
 
         <HeaderSearch />
 

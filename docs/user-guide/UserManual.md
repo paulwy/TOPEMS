@@ -19,7 +19,7 @@ TOPEMS (Total Operations and Project Management System) 是一个综合企业管
 | **IAM** | 身份认证与权限管理 |
 | **HRM** | 人力资源管理（公司、员工、部门管理） |
 | **ERP** | 企业资源计划（资产、财务、采购） |
-| **研发管理 (RS)** | 项目管理、实验管理 |
+| **研发管理 (RD)** | 项目管理、实验管理 |
 | **实验室管理 (LIMS)** | 样品管理、检验记录 |
 | **质量管理 (QMS)** | 质量控制、审核管理 |
 | **文档管理 (DOC)** | 文件存储、版本控制 |
@@ -183,7 +183,7 @@ TOPEMS (Total Operations and Project Management System) 是一个综合企业管
 2. 点击「重置密码」按钮
 3. 设置新密码
 
-### 二、研发管理 (RS)
+### 二、研发管理 (RD)
 
 #### 项目管理
 

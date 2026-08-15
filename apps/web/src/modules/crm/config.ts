@@ -301,10 +301,10 @@ export const crmNavConfig: ModuleNavConfig = {
   icon: 'Users',
   path: CRM_PATHS.root,
   permission: 'crm:dashboard:read',
-  source: 'core',
+  source: 'plugin',
   suite: 'crm',
   status: 'online',
-  order: 7,
+  order: 6,
   description: i18n.t('shared.config.k22'),
   navItems: [
     {

@@ -76,21 +76,21 @@ pub async fn get_marketplace_summary(
     .unwrap_or_default();
 
     let featured: Vec<Plugin> = sqlx::query_as(
-        "SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE is_published = true AND is_featured = true ORDER BY install_count DESC LIMIT 6"
+        "SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true AND is_featured = true ORDER BY install_count DESC LIMIT 6"
     )
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
 
     let new_plugins: Vec<Plugin> = sqlx::query_as(
-        "SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE is_published = true ORDER BY published_at DESC LIMIT 6",
+        "SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true ORDER BY published_at DESC LIMIT 6",
     )
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
 
     let top_rated: Vec<Plugin> = sqlx::query_as(
-        "SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE is_published = true AND rating_count > 0 ORDER BY rating DESC LIMIT 6"
+        "SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true AND rating_count > 0 ORDER BY rating DESC LIMIT 6"
     )
     .fetch_all(&state.pool)
     .await
@@ -199,7 +199,7 @@ pub async fn list_plugins(
     .unwrap_or((0,));
 
     let plugins: Vec<Plugin> = match sqlx::query_as::<_, Plugin>(&format!(
-        "SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE {} ORDER BY {} LIMIT {} OFFSET {}",
+        "SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE {} ORDER BY {} LIMIT {} OFFSET {}",
         where_clause, sort_order, page_size, offset
     ))
     .fetch_all(&state.pool)
@@ -246,7 +246,7 @@ pub async fn get_plugin(
 ) -> Json<CoreResponse<Plugin>> {
     tracing::info!("[Plugin] Getting plugin: {}", code);
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, category, version, author, homepage, is_published, is_featured, install_count, rating, rating_count, download_url, icon_url, tags, status, is_active, created_at, updated_at FROM core.core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&code)
         .fetch_optional(&state.pool)
         .await

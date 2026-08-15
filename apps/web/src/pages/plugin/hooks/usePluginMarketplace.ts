@@ -46,6 +46,7 @@ export const usePluginMarketplace = (): UsePluginMarketplaceReturn => {
     setSearchQuery,
     fetchMarketplacePlugins,
     fetchHealthStatus,
+    fetchInstalledPlugins,
   } = usePluginStore();
   const [selectedSuite, setSelectedSuite] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('popular');
@@ -56,20 +57,19 @@ export const usePluginMarketplace = (): UsePluginMarketplaceReturn => {
   const pluginsQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MARKETPLACE_PLUGINS_BASE,
     queryFn: async () => {
-      await fetchMarketplacePlugins();
-      return marketplacePlugins;
+      await Promise.all([fetchMarketplacePlugins(true), fetchInstalledPlugins(true)]);
+      // 必须从 store.getState() 读取最新值（外层解构 const 是 render 快照，闭包里不变）
+      return usePluginStore.getState().marketplacePlugins;
     },
-    initialData: marketplacePlugins,
     staleTime: 5 * 60 * 1000,
   });
 
   const healthQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MARKETPLACE_HEALTH_BASE,
     queryFn: async () => {
-      await fetchHealthStatus();
-      return healthStatus;
+      await fetchHealthStatus(true);
+      return usePluginStore.getState().healthStatus;
     },
-    initialData: healthStatus,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -89,8 +89,11 @@ export const usePluginMarketplace = (): UsePluginMarketplaceReturn => {
   const plugins = pluginsQuery.data || [];
 
   const handleRefresh = () => {
-    pluginsQuery.refetch();
-    healthQuery.refetch();
+    Promise.all([
+      pluginsQuery.refetch(),
+      healthQuery.refetch(),
+      fetchInstalledPlugins(true),
+    ]);
     addNotification({
       title: t('plugin.message.refresh_success'),
       message: t('plugin.message.plugin_list_updated'),

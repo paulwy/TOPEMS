@@ -16,6 +16,8 @@ import {
   Divider,
   Chip,
   Stack,
+  type SxProps,
+  type Theme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import {
@@ -36,12 +38,19 @@ export interface ContextHelpButtonProps {
   position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
   offset?: { x?: number; y?: number };
   showOnMobile?: boolean;
+  /**
+   * 是否以内嵌模式渲染（由父容器统一管理定位）。
+   * - false（默认）：position: fixed 独立浮动，使用 offset 定位
+   * - true：position: static 内嵌于父容器，offset 被忽略
+   */
+  embedded?: boolean;
 }
 
 export const ContextHelpButton: React.FC<ContextHelpButtonProps> = ({
   position = 'bottom-right',
   offset = { x: 24, y: 24 },
   showOnMobile = false,
+  embedded = false,
 }) => {
   const { t } = useTranslation();
   const location = useLocation();
@@ -72,12 +81,35 @@ export const ContextHelpButton: React.FC<ContextHelpButtonProps> = ({
     handleClose();
   };
 
-  const positionStyles: Record<string, React.CSSProperties> = {
-    'bottom-right': { bottom: offset.y, right: offset.x },
-    'bottom-left': { bottom: offset.y, left: offset.x },
-    'top-right': { top: offset.y, right: offset.x },
-    'top-left': { top: offset.y, left: offset.x },
-  };
+  const positionStyles: Record<string, SxProps<Theme>> = embedded
+    ? {}
+    : {
+        'bottom-right': { bottom: offset.y, right: offset.x },
+        'bottom-left': { bottom: offset.y, left: offset.x },
+        'top-right': { top: offset.y, right: offset.x },
+        'top-left': { top: offset.y, left: offset.x },
+      };
+
+  const fabSx: SxProps<Theme> = embedded
+    ? {
+        position: 'static',
+        boxShadow: 2,
+        '&:hover': {
+          transform: 'scale(1.05)',
+          transition: 'transform 0.2s',
+        },
+      }
+    : {
+        position: 'fixed',
+        zIndex: 1000,
+        ...(positionStyles[position] as object),
+        display: showOnMobile ? 'flex' : { xs: 'none', md: 'flex' },
+        boxShadow: 3,
+        '&:hover': {
+          transform: 'scale(1.05)',
+          transition: 'transform 0.2s',
+        },
+      };
 
   return (
     <>
@@ -86,17 +118,7 @@ export const ContextHelpButton: React.FC<ContextHelpButtonProps> = ({
           color='primary'
           size='medium'
           onClick={handleOpen}
-          sx={{
-            position: 'fixed',
-            zIndex: 1000,
-            ...positionStyles[position],
-            display: showOnMobile ? 'flex' : { xs: 'none', md: 'flex' },
-            boxShadow: 3,
-            '&:hover': {
-              transform: 'scale(1.05)',
-              transition: 'transform 0.2s',
-            },
-          }}
+          sx={fabSx}
         >
           <HelpCircle size={24} />
         </Fab>

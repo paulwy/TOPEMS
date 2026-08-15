@@ -4,6 +4,7 @@ import i18n from '@/i18n';
 import { User, Settings, LogOut, Building2, AlertTriangle, HelpCircle } from 'lucide-react';
 import type { User as UserType } from '@topems/shared-types';
 import { useAuth } from '@/hooks/useAuth';
+import { themeCustomShadows } from '@/theme/theme';
 export const extractInitials = (name: string | null | undefined): string => {
     if (!name || typeof name !== 'string')
         return 'U';
@@ -272,7 +273,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, tenantName, onProfileC
         }}>
             {i18n.t('layouts.user_menu.k3')}
           </Button>
-          <Button onClick={handleLogoutConfirm} variant='contained' color='error' size='small' autoFocus startIcon={<LogOut style={{ width: 16, height: 16 }}/>} sx={{
+          <Button onClick={handleLogoutConfirm} variant='contained' color='error' size='small' autoFocus startIcon={<LogOut style={{ width: 16, height: 16 }}/>} sx={[{
             textTransform: 'none',
             borderRadius: (theme) => theme.shape.radii.md,
             px: 3,
@@ -280,7 +281,17 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, tenantName, onProfileC
             '&:hover': {
                 boxShadow: (theme) => theme.customShadows.dangerButtonHover,
             },
-        }}>
+          }, (theme) => ({
+            ...theme.applyStyles('dark', {
+              boxShadow: themeCustomShadows.dark.dangerButton,
+              '&:hover': { boxShadow: themeCustomShadows.dark.dangerButtonHover },
+            }),
+            // data-theme="cyberpunk"
+            [`[data-theme="cyberpunk"] &`]: {
+              boxShadow: themeCustomShadows.cyberpunk.dangerButton,
+              '&:hover': { boxShadow: themeCustomShadows.cyberpunk.dangerButtonHover },
+            },
+          })]}>
             {i18n.t('layouts.user_menu.k4')}
           </Button>
         </DialogActions>

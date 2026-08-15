@@ -55,7 +55,7 @@
 │  ┌───────────────────────────────────────────────────────────────────┐  │
 │  │  🟢 健康度: 98.5%    📈 请求: 12,847    ⚠️ 异常: 1 (SRM)         │  │
 │  ├───────────────────────────────────────────────────────────────────┤  │
-│  │ ✅IAM ✅HRM ✅CRM ✅PM ✅ERP ✅Flow ✅AI ✅Doc ✅RS                  │  │
+│  │ ✅IAM ✅HRM ✅CRM ✅PM ✅ERP ✅Flow ✅AI ✅Doc ✅RD                  │  │
 │  │ ✅LIMS ✅QMS ✅EHS ✅GIS ✅IM ✅Mail ✅BI ⚠️SRM ✅PDM               │  │
 │  │ ✅MES ✅WMS ✅SCM ✅Portal                                         │  │
 │  └───────────────────────────────────────────────────────────────────┘  │  ← 监控区
@@ -76,7 +76,7 @@
 │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐           │
 │  │    🧪      │ │    🔧      │ │    🛡️      │ │    📍      │           │
 │  │   研发管理 │ │   质量管理 │ │   供应链   │ │   地理信息 │           │
-│  │    RS/LIMS │ │    QMS/EHS │ │    SCM/SRM │ │    GIS     │           │
+│  │    RD/LIMS │ │    QMS/EHS │ │    SCM/SRM │ │    GIS     │           │
 │  │   🟢运行中  │ │   🟢运行中  │ │   ⚠️异常   │ │   🟢运行中  │           │
 │  └────────────┘ └────────────┘ └────────────┘ └────────────┘           │
 ├─────────────────────────────────────────────────────────────────────────┤
@@ -448,7 +448,7 @@ export const navigationRegistry = NavigationRegistry.getInstance();
 
 ### 3.6.1 统一配置方案（V5.8 路径重构）
 
-> 详细方案见 [路径重构实施方案](../../superpowers/specs/2026-07-11-path-refactor-implementation-plan.md)
+> 详细方案见 路径重构实施方案（已归档）
 
 **问题**：路径在 3 处重复定义（`routes/v2/*.ts`、`lib/navigation/modules/*.nav.ts`、组件硬编码），导致死链。
 
@@ -962,11 +962,11 @@ import { ModuleLayout } from '@/components/layout/ModuleLayout';
 | 检测记录列表 | `/lims/tests` | 检测记录列表 | 列表型 |
 | 试剂列表 | `/lims/reagents` | 试剂管理列表 | 列表型 |
 | 仪器列表 | `/lims/instruments` | 仪器管理列表 | 列表型 |
-| RS仪表盘 | `/rs` | 研发概览统计 | 仪表盘型 |
-| 项目列表 | `/rs/projects` | 研发项目列表 | 列表型 |
-| 项目详情 | `/rs/projects/:id` | 研发项目详情 | 详情型 |
-| 配方列表 | `/rs/formulas` | 配方管理列表 | 列表型 |
-| 材料列表 | `/rs/materials` | 材料管理列表 | 列表型 |
+| RD 仪表盘 | `/rd/dashboard` | 研发概览统计 | 仪表盘型 |
+| 项目列表 | `/rd/project` | 研发项目列表 | 列表型 |
+| 项目详情 | `/rd/project/:id` | 研发项目详情 | 详情型 |
+| 配方列表 | `/rd/formula` | 配方管理列表 | 列表型 |
+| 材料列表 | `/rd/material` | 材料管理列表 | 列表型 |
 | PDM仪表盘 | `/pdm` | 产品数据概览 | 仪表盘型 |
 | 产品列表 | `/pdm/products` | 产品管理列表 | 列表型 |
 | 产品详情 | `/pdm/products/:id` | 产品详细信息 | 详情型 |
@@ -1066,7 +1066,7 @@ import { ModuleLayout } from '@/components/layout/ModuleLayout';
 | Finance | 1 | 5 | 0 | 0 | 0 | 6 |
 | Flow | 1 | 4 | 1 | 0 | 1 | 7 |
 | 运营(ERP) | 1 | 6 | 2 | 0 | 0 | 9 |
-| 研发(LIMS/RS/PDM) | 3 | 9 | 3 | 0 | 0 | 15 |
+| 研发(LIMS/RD/PDM) | 3 | 9 | 3 | 0 | 0 | 15 |
 | 质量(QMS/EHS) | 2 | 7 | 0 | 0 | 0 | 9 |
 | 供应链(SRM) | 1 | 2 | 1 | 0 | 0 | 4 |
 | GIS | 1 | 3 | 0 | 0 | 1 | 5 |

@@ -4541,3 +4541,123 @@ V224→V226 的 R5~R10 期间，质量守护主要依赖：①pre-commit hooks�
 | Phase-4 · components/pages 抽检 | ≥500 条修正 | **600 条（120% 达标）**，7 组正则规则覆盖 §1/§2/§4/§4空态/§5/审计 6 大类 |
 | 前端 TSC | 0 error | **0 error**（Phase-2/3/4 三次独立跑 TSC 全绿） |
 | i18n 硬编码精确扫描 | Total: 0 | **0**（未引入任何新硬编码，仅改 en） |
+---
+
+## V224 · 技术文档全面重构与链接校验（2026-08-15）
+
+### 成果总览
+
+| 维度 | 重构前 | 重构后 | 变化 |
+|------|--------|--------|------|
+| 断裂链接数 | 110 | 0 | -110 (-100%) |
+| 有效链接数 | 248 | 317 | +69 |
+| 校验脚本 | 无 | `scripts/check-doc-links.sh` | 新增 |
+| 导航架构合规率 | — | 100% (L1/L3) | 全量校对 |
+| 版本映射表 | 缺失 | CHANGELOG.md 顶部 | 新增 |
+
+### 1. 文档链接全量修复（110 → 0）
+
+**修复范围**：20+ 文件，覆盖 7 大类断链问题
+
+| 类别 | 涉及文件数 | 修复方式 |
+|------|----------|---------|
+| API 文件引用缺失的 route-unification-contract | 7 | 替换为 `../architecture/api-path-standardization.md` |
+| CHANGELOG.md 相对路径错误（`./` → `../`） | 1 | 27 处链接路径修正 |
+| deployment/ 跨目录引用错误 | 5 | 指向正确的 `deployment-guide-overview.md`、`architecture/ports.md` 等 |
+| getting-started/ 相对路径错误 | 2 | 脚本路径修正（`scripts/dev/start-local.sh`） |
+| security/SECURITY.md 错误引用 | 1 | 4 处链接修正 |
+| development/ 跨目录引用错误 | 6 | 同目录 `./` 修正 + 已归档文件去链接化 |
+| 其他断链（im-phase21、database、sales 等） | 3 | 已归档文件去链接化 + 路径修正 |
+
+### 2. 链接校验脚本（`scripts/check-doc-links.sh`）
+
+- **功能**：扫描 `docs/` 下所有 Markdown 文件的相对链接，验证目标文件是否存在
+- **特性**：
+  - macOS 兼容（`grep -oE` 替代 `grep -oP`）
+  - 跳过围栏代码块（``` 之间的内容）
+  - 移除行内代码（反引号包裹的内容）避免误判
+  - 匹配完整 `[text](path)` 模式，避免正则字符类误判
+  - 支持 `--strict` 模式（有断链即 exit 1，可集成 CI）
+- **用法**：`./scripts/check-doc-links.sh [--strict] [target_dir]`
+
+### 3. 导航架构全量校对
+
+**校对报告**：[docs/audit/nav-architecture-verification-2026-08-15.md](file:///Users/air/TOPEMS/docs/audit/nav-architecture-verification-2026-08-15.md)
+
+| 校对项 | 结果 |
+|--------|------|
+| L1 业务域（ModuleSuite）合规率 | 100%（35/35 模块） |
+| L3 菜单子组（NavGroup）合规率 | 100%（35/35 模块） |
+| 补入遗漏模块 | aps（manufacturing）、tms（supply） |
+| 模块/页面总数更新 | 33→35 模块、341→368 页面 |
+| 模块排序修正 | enterprise/collaboration/platform 三域 |
+| 待人工判断的 config.ts 冲突 | 3 个（crm/finance/admin 的 source/order 冲突） |
+
+### 4. 版本号映射表
+
+在 `docs/changelog/CHANGELOG.md` 顶部新增产品版本 ↔ 架构版本 ↔ TODO 版本的映射表，消除三套版本号体系之间的混淆。
+
+### 5. 涉及修改的文件清单
+
+| 文件 | 修改类型 |
+|------|---------|
+| `scripts/check-doc-links.sh` | 新建 + 增强（跳过代码块/行内代码） |
+| `docs/changelog/CHANGELOG.md` | 版本映射表 + 27 处链接修复 |
+| `docs/navigation-architecture.md` | 补入 aps/tms 模块 + 总数更新 + 排序修正 |
+| `docs/audit/README.md` | 新增导航校对报告索引 |
+| `docs/audit/nav-architecture-verification-2026-08-15.md` | 新建校对报告 |
+| `docs/api/API_*.md`（7 个文件） | route-unification-contract 链接替换 |
+| `docs/api/README.md` | 部署指南 + 端口分配链接修正 |
+| `docs/api/im-phase21.md` | 已归档文件去链接化 |
+| `docs/deployment/*.md`（5 个文件） | 跨目录引用修正 |
+| `docs/getting-started/*.md`（2 个文件） | 相对路径 + 脚本路径修正 |
+| `docs/security/SECURITY.md` | 4 处链接修正 |
+| `docs/development/backend/code-standards.md` | 已归档文件去链接化 |
+| `docs/development/frontend/*.md`（5 个文件） | 同目录路径修正 + 已归档去链接化 |
+| `docs/architecture/database.md` | 已归档文件去链接化 |
+| `docs/sales/sales-playbook.md` | 部署指南链接修正 |
+
+---
+
+## V225 · 导航 config 冲突闭环修复（2026-08-15）
+
+### 修复内容（3 模块 × 5 字段）
+
+| 模块 | 冲突字段 | 修复前 (Route/Nav) | 修复后 (统一) | 判定依据 |
+|------|---------|-------------------|--------------|---------|
+| **CRM** | source | `plugin` / `core` 不一致 | ✅ `plugin` | `svc/crm/plugin.yaml` plugin_type=business 存在，为插件型模块 |
+| **CRM** | order | `6` / `7` 不一致 | ✅ `6` | 取 RouteConfig 原值；crm 域仅 1 模块，域内唯一 |
+| **Finance** | source | `plugin` / `core` 不一致 | ✅ `plugin` | `svc/finance/plugin.yaml` plugin_type=service 存在，为插件型模块 |
+| **Finance** | order | `8` / `6` 不一致 | ✅ `8` | 取 RouteConfig 原值；finance 域仅 1 模块，域内唯一 |
+| **Admin** | order | `2` / `1` 不一致 | ✅ `2` | IAM=1（身份认证最前置），Admin 紧随其后=2（平台标准排序） |
+
+### 影响验证
+
+| 验证项 | 结果 |
+|--------|------|
+| tsc --noEmit | 0 errors ✅ |
+| RouteModuleConfig ↔ ModuleNavConfig 一致性 | 35/35 模块一致，100% ✅ |
+| enterprise 域排序 | IAM(1) → Admin(2) → Report(6) → BI(9) → ERP(11) → PDM(13) → Plugin(21) 全部域内唯一 ✅ |
+| crm/finance 域内 order 唯一性 | 均为单模块域，天然唯一 ✅ |
+
+### source 判定原则（后续模块新增/修改复用）
+
+1. **最高优先级**：`svc/{module}/plugin.yaml` 是否存在 + `plugin_type` 字段
+   - 存在 plugin.yaml → `source = 'plugin'`
+   - 无 plugin.yaml → `source = 'core'`（核心平台默认内置）
+2. **次优先级**：`RouteModuleConfig.source` 原值（路由注册表通常更贴近后端事实）
+3. **对照参考**：navigation-architecture.md §2.1 L1 域定义
+4. **例外**：根据 project_memory 强制约束
+   - ERP/PM：基础功能 core（专业功能进入 suite）
+   - OA（轻量版）：core
+   - Mobile 配置：core
+
+### 修改文件
+
+| 文件 | 修改 |
+|------|------|
+| `apps/web/src/modules/crm/config.ts` (L304, L307) | NavConfig source→'plugin'、order→6 |
+| `apps/web/src/modules/finance/config.ts` (L315, L318) | NavConfig source→'plugin'、order→8 |
+| `apps/web/src/modules/admin/config.ts` (L346) | NavConfig order→2 |
+| `docs/audit/nav-architecture-verification-2026-08-15.md` | §3.3 标✅、§5.1 汇总表去⚠️、§3.4 去 (Route/Nav) 后缀、§6.1 优先级表三项改状态、§底部说明改 ✅ |
+

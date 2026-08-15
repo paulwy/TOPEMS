@@ -3538,7 +3538,7 @@
     "help_center": "帮助中心",
     "user_guide": "使用文档",
     "contact_support": "联系支持",
-    "copyright": "© {year} TOPEMS 化工新材料数字化平台"
+    "copyright": "© {{year}} TOPEMS 化工新材料数字化平台"
   },
   "help_center": {
     "title": "帮助中心",

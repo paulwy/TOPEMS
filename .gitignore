@@ -246,3 +246,6 @@ scripts/i18n/*.json
 scripts/i18n/*.log
 scripts/i18n/glossary_multi.csv
 scripts/i18n/glossary_freq.csv
+
+# P2 theme verification screenshots (temp artifacts)
+apps/web/public/__p2_artifacts/
