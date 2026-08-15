@@ -356,7 +356,7 @@ const CapacityManagementPage: React.FC = () => {
         <DialogTitle>{i18n.t('aps.capacity_management_page.k32')}</DialogTitle>
         <DialogContent>
           <Typography>
-            确认要删除工作中心「{deleteTarget?.work_center_name ?? deleteTarget?.work_center_id}」的产能记录吗？此操作不可撤销。
+            {i18n.t('pages.capacity_management_page.k0')}「{deleteTarget?.work_center_name ?? deleteTarget?.work_center_id}」{i18n.t('pages.capacity_management_page.k1')}
           </Typography>
         </DialogContent>
         <DialogActions>

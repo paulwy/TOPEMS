@@ -34,5 +34,10 @@
   "design_system.design-lint.k5": "✅ 通过",
   "design_system.design-lint.k6": "❌ 未通过",
   "design_system.design-lint.k7": "✅ 通过",
-  "design_system.design-lint.k8": "❌ 未通过"
+  "design_system.design-lint.k8": "❌ 未通过",
+  "design_system_panel.k0": "TODO: translate",
+  "design_system_panel.k1": "TODO: translate",
+  "design_system_panel.k2": "TODO: translate",
+  "design_system_panel.k3": "TODO: translate",
+  "design_system_panel.k4": "TODO: translate"
 }

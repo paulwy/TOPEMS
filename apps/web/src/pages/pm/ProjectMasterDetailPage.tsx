@@ -265,7 +265,7 @@ export const ProjectMasterDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ fontWeight: 500 }}
                 >
-                  {item.budget.toLocaleString()} 元
+                  {item.budget.toLocaleString()} {i18n.t('pages.project_master_detail_page.k0')}
                 </Typography>
               </Box>
             </Box>

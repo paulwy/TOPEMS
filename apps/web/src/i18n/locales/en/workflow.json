@@ -430,5 +430,7 @@
   "workflow.workflow_version_history_page.k38": "回滚原因",
   "workflow.workflow_version_history_page.k39": "可选：输入回滚原因",
   "workflow.workflow_approval_detail_page.k0": "WorkflowApprovalDetailPage 页面开发中",
-  "workflow.workflow_settings_page.k0": "WorkflowSettingsPage 页面开发中"
+  "workflow.workflow_settings_page.k0": "WorkflowSettingsPage 页面开发中",
+  "workflow.designer.k0": "TODO: translate",
+  "workflow.designer.k1": "TODO: translate"
 }

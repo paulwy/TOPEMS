@@ -494,7 +494,7 @@ const NotificationCenter: React.FC = () => {
             variant='body2'
             color='text.disabled'
           >
-            第 {page} / {totalPages} 页
+            {i18n.t('pages.notification_center.k0')} {page} / {totalPages} {i18n.t('pages.notification_center.k1')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <button

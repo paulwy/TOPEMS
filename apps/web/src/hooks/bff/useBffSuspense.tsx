@@ -483,7 +483,7 @@ class BffErrorBoundaryInner extends Component<
   override componentDidCatch(error: Error, info: ErrorInfo): void {
     const { onError, name } = this.props;
     suspenseLogger.error(
-      `Suspense 边界${name ? ` [${name}]` : ''} 捕获错误:`,
+      `{i18n.t('hooks.use_bff_suspense.suspense_0')}${name ? ` [${name}]` : ''} {i18n.t('hooks.use_bff_suspense.k1')}`,
       error,
       info.componentStack
     );

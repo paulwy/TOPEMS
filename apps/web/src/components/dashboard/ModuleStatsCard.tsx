@@ -136,7 +136,7 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
               color: 'success.400',
             }}
           >
-            {active} 活跃
+            {active} {i18n.t('components.module_stats_card.k0')}
           </Typography>
         </Box>
       </Box>
@@ -167,7 +167,7 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
             mt: 1.5,
           }}
         >
-          活跃率 {(active / total) * 100}%
+          {i18n.t('components.module_stats_card.k1')} {(active / total) * 100}%
         </Typography>
       </Box>
 

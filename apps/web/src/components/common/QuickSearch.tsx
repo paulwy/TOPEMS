@@ -555,7 +555,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
                   variant='caption'
                   color='text.secondary'
                 >
-                  按 Enter 键搜索 "{query}"
+                  {i18n.t('components.quick_search.enter_0')} "{query}"
                 </Typography>
               </Box>
             )}
@@ -578,7 +578,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
                 onClick={handleSearch}
               >
                 <Search size={16} />
-                <Typography variant='body2'>搜索 "{query}"</Typography>
+                <Typography variant='body2'>{i18n.t('components.quick_search.query_0')}</Typography>
               </Box>
             )}
           </SuggestionsPaper>

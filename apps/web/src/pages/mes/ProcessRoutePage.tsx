@@ -134,7 +134,7 @@ const ProcessRoutePage: React.FC = () => {
           </Box>
           <Box>
             <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.process_route_page.k8')}</InputLabel>
-            <Box component='span'>{route.total_standard_time || 0} 分钟</Box>
+            <Box component='span'>{i18n.t('pages.process_route_page.k0')}</Box>
           </Box>
           <Box>
             <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.process_route_page.k9')}</InputLabel>
@@ -191,7 +191,7 @@ const ProcessRoutePage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    {step.process_code} | 标准工时: {step.standard_time || 0} 分钟
+                    {step.process_code} | {i18n.t('pages.process_route_page.k0')} {step.standard_time || 0} {i18n.t('pages.process_route_page.k1')}
                   </Typography>
                 </Box>
                 {step.work_station_name && (

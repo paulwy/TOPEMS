@@ -194,7 +194,7 @@ const PushNotificationPage: React.FC = () => {
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Typography variant='body2'>
-                  免打扰 {config.quiet_hours_start} - {config.quiet_hours_end}
+                  {i18n.t('pages.push_notification_page.k0')} {config.quiet_hours_start} - {config.quiet_hours_end}
                 </Typography>
               </Box>
             </Box>

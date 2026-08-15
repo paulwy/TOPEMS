@@ -838,9 +838,9 @@ const BiPermissionPage = () => {
                       onChange={(e) => setFormData({ ...formData, data_source_id: e.target.value })}
                     >
                       <MenuItem value='ds-001'>{i18n.t('bi.bi_permission_page.k21')}</MenuItem>
-                      <MenuItem value='ds-002'>MES生产数据库</MenuItem>
-                      <MenuItem value='ds-003'>WMS仓储数据库</MenuItem>
-                      <MenuItem value='ds-004'>HR人力资源库</MenuItem>
+                      <MenuItem value='ds-002'>{i18n.t('pages.bi_permission_page.me_0')}</MenuItem>
+                      <MenuItem value='ds-003'>{i18n.t('pages.bi_permission_page.wm_1')}</MenuItem>
+                      <MenuItem value='ds-004'>{i18n.t('pages.bi_permission_page.k2')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>

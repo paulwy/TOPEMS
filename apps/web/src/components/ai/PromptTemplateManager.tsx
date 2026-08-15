@@ -464,7 +464,7 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
                             color='text.secondary'
                             sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
                           >
-                            使用 {prompt.usage_count} 次
+                            {i18n.t('components.prompt_template_manager.k0')} {prompt.usage_count} {i18n.t('components.prompt_template_manager.k1')}
                           </Typography>
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
                             <IconButton

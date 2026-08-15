@@ -48,8 +48,8 @@ export default function WmsInboundDetailPage() {
     <div className='space-y-4 p-4'>
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <div>
-          <h1 className='text-2xl font-bold'>入库单详情 — {order.order_number}</h1>
-          <p className='text-sm text-gray-500'>创建于 {order.created_at.slice(0, 10)}</p>
+          <h1 className='text-2xl font-bold'>{i18n.t('wms:wms_inbound_detail_page.v0_3', { v0: (order.order_number) })}</h1>
+          <p className='text-sm text-gray-500'>{i18n.t('wms:wms_inbound_detail_page.v0_2', { v0: (order.created_at.slice(0, 10)) })}</p>
         </div>
         <div className='flex items-center gap-3'>
           <WmsStatusBadge
@@ -74,7 +74,7 @@ export default function WmsInboundDetailPage() {
           <p className='mt-1 font-semibold'>{order.supplier_name ?? '-'}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>总数量 / 已收</p>
+          <p className='text-sm text-gray-600'>{i18n.t('wms:wms_inbound_detail_page.k1')}</p>
           <p className='mt-1 font-semibold'>
             {order.total_quantity ?? 0} / {order.received_quantity ?? 0}
           </p>
@@ -144,7 +144,7 @@ export default function WmsInboundDetailPage() {
                 <span className='absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full bg-blue-500 border-2 border-white' />
                 <div className='text-sm text-gray-500'>{e.t?.slice(0, 19).replace('T', ' ')}</div>
                 <div className='font-medium'>{e.title}</div>
-                <div className='text-sm text-gray-600'>操作人：{e.who ?? 'system'}</div>
+                <div className='text-sm text-gray-600'>{i18n.t('wms:wms_inbound_detail_page.v0_0', { v0: (e.who ?? 'system') })}</div>
               </li>
             ))}
         </ol>

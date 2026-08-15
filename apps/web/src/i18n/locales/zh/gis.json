@@ -504,5 +504,18 @@
   "gis.track_player.k6": "停止",
   "gis.track_player.k7": "停止",
   "gis.track_player.k8": "跳到结尾",
-  "gis.track_player.k9": "跳到结尾"
+  "gis.track_player.k9": "跳到结尾",
+  "map3_d_view.v0_0": "仓储: {{v0}}",
+  "map3_d_view.v0_1": "管线: {{v0}}",
+  "map3_d_view.v0_2": "设备: {{v0}}",
+  "map3_d_view.k3": "悬停: 查看详情",
+  "map3_d_view.k4": "滚轮: 缩放",
+  "map3_d_view.k5": "左键拖拽: 旋转视角",
+  "map3_d_view.3d_6": "3D 视图操作",
+  "gis.mapView.k0": "类型:",
+  "gis.mapView.k1": "容量:",
+  "gis.mapView.k2": "当前:",
+  "gis.map3DView.k0": "高度:",
+  "gis.map3DView.k1": "<div class=\"building-popup\">\n          <h4>{{v0}}</h4>\n          <p>高度: {{v1}}m</p>\n          {{v2}}\n        </div>",
+  "gis.mapModule.k0": "3D视图"
 }

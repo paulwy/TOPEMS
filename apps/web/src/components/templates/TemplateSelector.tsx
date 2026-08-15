@@ -322,7 +322,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                           variant='caption'
                           color='text.disabled'
                         >
-                          已使用 {template.use_count} 次
+                          {i18n.t('components.template_selector.k0')} {template.use_count} {i18n.t('components.template_selector.k1')}
                         </Typography>
                       </Box>
                     </CardContent>

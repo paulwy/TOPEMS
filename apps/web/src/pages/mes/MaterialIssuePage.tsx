@@ -76,7 +76,7 @@ const MaterialIssuePage: React.FC = () => {
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1 }}
           >
-            物料明细 ({issue.items?.length || 0})
+            {i18n.t('pages.material_issue_page.k0')}{issue.items?.length || 0})
           </Typography>
           <TableContainer
             component={Paper}

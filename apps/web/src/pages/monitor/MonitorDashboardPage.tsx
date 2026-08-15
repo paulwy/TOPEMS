@@ -897,7 +897,7 @@ export const MonitorDashboardPage: React.FC = () => {
                   <TableRow>
                     <TableCell>{i18n.t('monitor.monitor_dashboard_page.k44')}</TableCell>
                     <TableCell>{i18n.t('monitor.monitor_dashboard_page.k45')}</TableCell>
-                    <TableCell>CPU使用率</TableCell>
+                    <TableCell>{i18n.t('pages.monitor_dashboard_page.pu_0')}</TableCell>
                     <TableCell>{i18n.t('monitor.monitor_dashboard_page.k46')}</TableCell>
                     <TableCell>{i18n.t('monitor.monitor_dashboard_page.k47')}</TableCell>
                     <TableCell>{i18n.t('monitor.monitor_dashboard_page.k48')}</TableCell>

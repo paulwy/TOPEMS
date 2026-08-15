@@ -404,7 +404,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                         bgcolor: 'grey.50',
                       }}
                     >
-                      显示前 50 个点，共 {currentTrack.points.length} 个点
+                      {i18n.t('components.track_panel.50_0')} {currentTrack.points.length} {i18n.t('components.track_panel.k1')}
                     </Box>
                   )}
                 </Box>

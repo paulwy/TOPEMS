@@ -204,7 +204,7 @@ export class IntelligentMonitor {
       for (let i = 1; i <= 5; i++) {
         const predictedValue = meanY + slope * (n + i - 1);
         forecast.push(predictedValue);
-        forecastConfidence.push(Math.max(0, 1 - i * 0.1)); // 置信度递减
+        {i18n.t('microfrontend.intelligent-monitor.k0')}
       }
     }
 

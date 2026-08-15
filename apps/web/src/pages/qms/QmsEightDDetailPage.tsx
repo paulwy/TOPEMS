@@ -117,7 +117,7 @@ export default function QmsEightDDetailPage() {
         <p className='mt-1 text-sm leading-relaxed'>{report.problemDescription}</p>
       </div>
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-4 font-semibold'>8D 步骤时间线</h3>
+        <h3 className='mb-4 font-semibold'>{i18n.t('qms:qms_eight_d_detail_page.8d_2')}</h3>
         <ol className='relative space-y-4 border-l-2 border-blue-200 pl-6'>
           {STEPS.map((step, idx) => {
             const isDone = report[step.done as keyof typeof report] as boolean;
@@ -170,7 +170,7 @@ export default function QmsEightDDetailPage() {
           </li>
           {report.currentStage >= 4 && (
             <li className='flex gap-3'>
-              <span className='text-gray-500'>[根因分析完成]</span>
+              <span className='text-gray-500'>{i18n.t('qms:qms_eight_d_detail_page.k1')}</span>
               <span>{i18n.t('qms.qms_eight_d_detail_page.d4_19')}</span>
             </li>
           )}
@@ -179,7 +179,7 @@ export default function QmsEightDDetailPage() {
               <span className='text-gray-500'>
                 [{new Date(report.closedAt).toLocaleString('zh-CN')}]
               </span>
-              <span>8D 报告关闭</span>
+              <span>{i18n.t('qms:qms_eight_d_detail_page.8d_0')}</span>
             </li>
           )}
         </ul>

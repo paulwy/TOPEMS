@@ -252,7 +252,7 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
                   variant='caption'
                   color='text.secondary'
                 >
-                  {step.process_code} | 标准工时: {step.standard_time || 0} 分钟
+                  {step.process_code} | {i18n.t('pages.process_flow_page.k0')} {step.standard_time || 0} {i18n.t('pages.process_flow_page.k1')}
                   {step.quality_check_required
                     ? ` | ${i18n.t('mes.process_flow_page.quality_inspection')}`
                     : ''}

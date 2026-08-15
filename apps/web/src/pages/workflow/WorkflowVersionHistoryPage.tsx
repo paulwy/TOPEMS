@@ -581,7 +581,7 @@ const FlowVersionHistoryPage: React.FC = () => {
         open={showRollbackModal}
         onClose={() => setShowRollbackModal(false)}
       >
-        <DialogTitle>回滚到 v{selectedVersion?.version}</DialogTitle>
+        <DialogTitle>{i18n.t('pages.workflow_version_history_page.k0')}</DialogTitle>
         <DialogContent>
           {selectedVersion && (
             <>
@@ -589,7 +589,7 @@ const FlowVersionHistoryPage: React.FC = () => {
                 variant='body2'
                 sx={{ mb: 1 }}
               >
-                确定要回滚到版本 <strong>v{selectedVersion.version}</strong> 吗？
+                {i18n.t('pages.workflow_version_history_page.strongv_0')}{selectedVersion.version}{i18n.t('pages.workflow_version_history_page.strong_1')}
               </Typography>
               <Typography
                 variant='body2'

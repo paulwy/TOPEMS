@@ -494,7 +494,7 @@ const NotificationTemplatesPage: React.FC = () => {
             sx={{ alignItems: 'center' }}
           >
             <Eye size={20} />
-            模板预览 - {previewTemplate?.name}
+            {i18n.t('pages.notification_templates_page.k0')} {previewTemplate?.name}
           </Stack>
         </DialogTitle>
         <DialogContent dividers>

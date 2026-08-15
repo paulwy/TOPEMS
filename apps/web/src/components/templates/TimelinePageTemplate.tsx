@@ -570,7 +570,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                 variant='caption'
                 color='text.secondary'
               >
-                {group.nodes.length} 个事件
+                {group.nodes.length} {i18n.t('components.timeline_page_template.k0')}
               </Typography>
             </Box>
           </Box>
@@ -615,7 +615,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                 variant='caption'
                 color='text.secondary'
               >
-                点击展开查看 {group.nodes.length} 个事件
+                {i18n.t('components.timeline_page_template.k1')} {group.nodes.length} {i18n.t('components.timeline_page_template.k2')}
               </Typography>
             </Box>
           )}

@@ -269,7 +269,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
               >
                 <div className='flex items-center gap-2 text-amber-800 text-sm'>
                   <AlertTriangle className='w-4 h-4' />
-                  <span>包体积超过阈值 ({formatSize(threshold)})</span>
+                  <span>{i18n.t('components.bundle_size_monitor.k0')}</span>
                 </div>
               </div>
             )}

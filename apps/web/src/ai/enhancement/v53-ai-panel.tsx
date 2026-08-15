@@ -465,7 +465,7 @@ const CodeCompletionTab: React.FC = () => {
             sx={{ fontWeight: 600, mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Search size={16} />
-            智能补全建议 ({completions.length})
+            {i18n.t('ai.v53-ai-panel.k0')}{completions.length})
           </Typography>
           {loading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -765,7 +765,7 @@ const TestGeneratorTab: React.FC = () => {
                   sx={{ color: 'text.secondary', mt: 0.5, display: 'block' }}
                 >
                   [i18n.t('ai.v53-ai-panel.k14')]: {i18n.t('ai.v53-ai-panel.k15')}{analysis.coverage.branches} · 语句{' '}
-                  {analysis.coverage.statements} · 函数 {analysis.coverage.functions}
+                  {analysis.coverage.statements} {i18n.t('ai.v53-ai-panel.k1')} {analysis.coverage.functions}
                 </Typography>
               </Box>
             </Box>
@@ -1118,7 +1118,7 @@ const UIRecommenderTab: React.FC = () => {
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1.5 }}
           >
-            📦 组件库 ({components.length})
+            📦 {i18n.t('ai.v53-ai-panel.k2')}{components.length})
           </Typography>
           <List sx={{ maxHeight: 450, overflow: 'auto' }}>
             {components.map((comp) => (

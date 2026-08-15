@@ -619,7 +619,7 @@ export function AIAnalyzer({
                         variant='body2'
                         sx={{ color: 'text.secondary', mt: 0.5 }}
                       >
-                        共识别到 {entitiesResult.length} 个实体
+                        {i18n.t('components.ai_analyzer.k0')} {entitiesResult.length} {i18n.t('components.ai_analyzer.k1')}
                       </Typography>
                     </Box>
                   </Box>
@@ -708,7 +708,7 @@ export function AIAnalyzer({
                         variant='body2'
                         sx={{ color: 'text.secondary', mt: 0.5 }}
                       >
-                        共提取到 {keywordsResult.length} 个关键词
+                        {i18n.t('components.ai_analyzer.k2')} {keywordsResult.length} {i18n.t('components.ai_analyzer.k3')}
                       </Typography>
                     </Box>
                   </Box>

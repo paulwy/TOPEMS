@@ -411,7 +411,7 @@ const PmContractDetailPage: React.FC = () => {
                       key={payment.id}
                       sx={{ '&:hover': { bgcolor: 'grey.50' } }}
                     >
-                      <TableCell sx={{ fontWeight: 500 }}>第 {index + 1} 期</TableCell>
+                      <TableCell sx={{ fontWeight: 500 }}>{i18n.t('pages.pm_contract_detail_page.index1_0')}</TableCell>
                       <TableCell sx={{ color: 'grey.600' }}>
                         {formatDate(payment.due_date)}
                       </TableCell>

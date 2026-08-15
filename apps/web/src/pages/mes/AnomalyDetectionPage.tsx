@@ -564,7 +564,7 @@ const AnomalyDetectionPage: React.FC = () => {
                               icon={<SettingsIcon size={16} />}
                             >
                               <Typography variant='caption'>
-                                <strong>建议:</strong> {alert.recommendation}
+                                {i18n.t('pages.anomaly_detection_page.strongstrong_0')} {alert.recommendation}
                               </Typography>
                             </Alert>
                           </Box>
@@ -699,7 +699,7 @@ const AnomalyDetectionPage: React.FC = () => {
                       </TableCell>
                       <TableCell align='center'>{rule.warning_threshold}</TableCell>
                       <TableCell align='center'>{rule.critical_threshold}</TableCell>
-                      <TableCell align='center'>{rule.window_size}天</TableCell>
+                      <TableCell align='center'>{i18n.t('pages.anomaly_detection_page.rulewindowsize_0')}</TableCell>
                       <TableCell align='center'>
                         <Switch
                           checked={rule.enabled}

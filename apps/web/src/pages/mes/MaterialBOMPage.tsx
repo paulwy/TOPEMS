@@ -67,7 +67,7 @@ const MaterialBOMPage: React.FC = () => {
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1 }}
           >
-            BOM子项 ({bom.items?.length || 0})
+            {i18n.t('pages.material_bom_page.bom_0')}{bom.items?.length || 0})
           </Typography>
           <TableContainer
             component={Paper}

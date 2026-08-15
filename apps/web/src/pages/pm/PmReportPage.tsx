@@ -275,7 +275,7 @@ const PmReportPage: React.FC = () => {
       </Box>
       <Card sx={{ mb: 3 }}>
         <CardHeader>
-          <Typography variant='h6'>CPI/SPI 趋势分析</Typography>
+          <Typography variant='h6'>{i18n.t('pages.pm_report_page.pipi_0')}</Typography>
         </CardHeader>
         <CardContent>
           <Box sx={{ height: 256 }}>
@@ -468,7 +468,7 @@ const PmReportPage: React.FC = () => {
                       key={benefit.id}
                       hover
                     >
-                      <TableCell sx={{ color: 'grey.900' }}>第{index + 1}期</TableCell>
+                      <TableCell sx={{ color: 'grey.900' }}>{i18n.t('pages.pm_report_page.index1_1')}</TableCell>
                       <TableCell align='right'>
                         <Badge
                           sx={{
@@ -623,7 +623,7 @@ const PmReportPage: React.FC = () => {
         </Box>
         <Card sx={{ mb: 3 }}>
           <CardHeader>
-            <Typography variant='h6'>CPI/SPI 趋势分析</Typography>
+            <Typography variant='h6'>{i18n.t('pages.pm_report_page.pipi_2')}</Typography>
           </CardHeader>
           <CardContent>
             <Box sx={{ height: 256 }}>
@@ -812,7 +812,7 @@ const PmReportPage: React.FC = () => {
                         key={benefit.id}
                         hover
                       >
-                        <TableCell sx={{ color: 'grey.900' }}>第{index + 1}期</TableCell>
+                        <TableCell sx={{ color: 'grey.900' }}>{i18n.t('pages.pm_report_page.index1_3')}</TableCell>
                         <TableCell align='right'>
                           <Badge
                             sx={{

@@ -211,7 +211,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                 variant='h6'
                 sx={{ fontWeight: 'bold' }}
               >
-                用户评价 ({reviews.length})
+                {i18n.t('components.plugin_detail_modal.k0')}{reviews.length})
               </Typography>
               <div className='space-y-4'>
                 {reviews.length > 0 ? (

@@ -242,7 +242,7 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
               </Typography>
               <Box sx={{ marginTop: 1, fontSize: '14px', color: 'warning.700' }}>
                 <p>
-                  您没有访问 {module} 模块的 {action} 权限。
+                  {i18n.t('components.protected_route.k0')} {module} {i18n.t('components.protected_route.k1')} {action} {i18n.t('components.protected_route.k2')}
                 </p>
               </Box>
             </Box>

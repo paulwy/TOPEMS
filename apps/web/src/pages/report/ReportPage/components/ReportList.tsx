@@ -148,7 +148,7 @@ const ReportList: React.FC<ReportListProps> = ({
                       }}
                     >
                       <Columns sx={{ width: 16, height: 16 }} />
-                      {report.config.columns.length} 列
+                      {report.config.columns.length} {i18n.t('pages.report_list.k0')}
                     </Box>
                   </Box>
                 </Box>

@@ -258,7 +258,7 @@ const CRMBillingPage: React.FC = () => {
                               {b.bucket}
                             </Typography>
                             <Typography variant='caption' color='text.secondary'>
-                              {b.count} 笔 · ¥{b.amount.toLocaleString()}
+                              {b.count} {i18n.t('pages.crm_billing_page.k0')} ¥{b.amount.toLocaleString()}
                             </Typography>
                           </Box>
                           <LinearProgress
@@ -333,7 +333,7 @@ const CRMBillingPage: React.FC = () => {
                         {b.bucket}
                       </Typography>
                       <Typography variant='body1' color='text.secondary'>
-                        {b.count} 笔 · ¥{b.amount.toLocaleString()}
+                        {b.count} {i18n.t('pages.crm_billing_page.k1')} ¥{b.amount.toLocaleString()}
                       </Typography>
                     </Box>
                     <LinearProgress

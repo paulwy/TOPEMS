@@ -353,7 +353,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
               variant='body2'
               color='text.secondary'
             >
-              {slowModules.length} 个模块加载超过 {SLOW_MODULE_THRESHOLD}ms
+              {slowModules.length} {i18n.t('microfrontend.observability_dashboard.k0')} {SLOW_MODULE_THRESHOLD}ms
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
               {slowModules.map((m) => (
@@ -535,7 +535,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                     </Box>
                     <Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                        <Typography variant='caption'>Chunk加载</Typography>
+                        <Typography variant='caption'>{i18n.t('microfrontend.observability_dashboard.hunk_0')}</Typography>
                         <Typography variant='caption'>{formatDuration(m.chunkLoadTime)}</Typography>
                       </Box>
                       <LinearProgress
@@ -1084,7 +1084,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         variant='subtitle1'
                         sx={{ fontWeight: 600, mb: 1 }}
                       >
-                        资源列表 ({perf.resources.length})
+                        {i18n.t('microfrontend.observability_dashboard.k1')}{perf.resources.length})
                       </Typography>
                       <TableContainer
                         component={Paper}

@@ -163,8 +163,8 @@ const NotificationArchivePage: React.FC = () => {
               color: 'warning.800',
             }}
           >
-            <span>自动归档天数：{archiveConfig.auto_archive_days} 天</span>
-            <span>保留天数：{archiveConfig.retention_days} 天</span>
+            <span>{i18n.t('pages.notification_archive_page.k0')}</span>
+            <span>{i18n.t('pages.notification_archive_page.k1')}</span>
             <Typography
               component='span'
               sx={{

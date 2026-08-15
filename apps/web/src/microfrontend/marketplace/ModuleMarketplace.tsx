@@ -361,7 +361,7 @@ const ModuleDetailDialog: React.FC<{
                 variant='caption'
                 color='text.secondary'
               >
-                ({mod.review_count} 条评价)
+                ({mod.review_count} {i18n.t('microfrontend.module_marketplace.k0')}
               </Typography>
               <Typography
                 variant='caption'
@@ -377,7 +377,7 @@ const ModuleDetailDialog: React.FC<{
                 variant='caption'
                 color='text.secondary'
               >
-                {formatNumber(mod.download_count)} 次下载
+                {formatNumber(mod.download_count)} {i18n.t('microfrontend.module_marketplace.k1')}
               </Typography>
             </Box>
           </Box>
@@ -843,7 +843,7 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    {cat.module_count} 个
+                    {cat.module_count} {i18n.t('microfrontend.module_marketplace.k2')}
                   </Typography>
                 </Box>
               </ListItemButton>

@@ -73,15 +73,15 @@ export default function MesDeliveryAnalyticsPage() {
           aria-label={i18n.t('mes.mes_delivery_analytics_page.k11')}
         >
           <option value="all">{i18n.t('mes.mes_delivery_analytics_page.k12')}</option>
-          <option value="fa">A 系列</option>
-          <option value="fb">B 系列</option>
+          <option value="fa">{i18n.t('mes:mes_delivery_analytics_page.k3')}</option>
+          <option value="fb">{i18n.t('mes:mes_delivery_analytics_page.k2')}</option>
         </select>
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="rounded-lg border p-4">
           <h3 className="mb-1 font-semibold">{i18n.t('mes.mes_delivery_analytics_page.k13')}</h3>
           <p className="text-3xl font-bold text-emerald-600">{data.on_time_rate.toFixed(1)}%</p>
-          <p className="mt-1 text-xs text-gray-500">SLA 达成 {data.sla_achievement.toFixed(1)}%</p>
+          <p className="mt-1 text-xs text-gray-500">{i18n.t('mes:mes_delivery_analytics_page.slav0_1', { v0: (data.sla_achievement.toFixed(1)) })}</p>
         </div>
         <div className="rounded-lg border p-4 md:col-span-2">
           <h3 className="mb-2 font-semibold">{i18n.t('mes.mes_delivery_analytics_page.k14')}</h3>
@@ -170,7 +170,7 @@ export default function MesDeliveryAnalyticsPage() {
               {data.top10_delayed.map((row) => (
                 <tr key={row.order_no} className="border-b">
                   <td className="px-3 py-2 font-mono">{row.order_no}</td>
-                  <td className="px-3 py-2 text-amber-600">{row.delay_days.toFixed(1)} 天</td>
+                  <td className="px-3 py-2 text-amber-600">{i18n.t('mes:mes_delivery_analytics_page.v0_0', { v0: (row.delay_days.toFixed(1)) })}</td>
                   <td className="px-3 py-2">{row.reason}</td>
                 </tr>
               ))}

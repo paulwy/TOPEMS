@@ -129,13 +129,9 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 }}
               >
                 <span style={{ display: 'flex', alignItems: 'center' }}>
-                  <Rows3 sx={{ width: 16, height: 16, marginRight: 0.5 }} />共 {report.row_count}{' '}
-                  {i18n.t('components.report_viewer.k0')}
-                </span>
+                  <Rows3 sx={{ width: 16, height: 16, marginRight: 0.5 }} />{i18n.t('components:report_viewer.k3', { v0: (report.row_count), v1: (' '), v2: (i18n.t('components.report_viewer.k0')) })}</span>
                 <span style={{ display: 'flex', alignItems: 'center' }}>
-                  <Columns sx={{ width: 16, height: 16, marginRight: 0.5 }} />
-                  {report.config.columns.length} 列
-                </span>
+                  <Columns sx={{ width: 16, height: 16, marginRight: 0.5 }} />{i18n.t('components:report_viewer.k2', { v0: (report.config.columns.length) })}</span>
               </div>
             </div>
             <button
@@ -307,9 +303,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <span style={{ fontSize: '14px', color: 'grey.600' }}>
-                显示 {startIndex + 1}-{Math.min(endIndex, report.row_count)} 共 {report.row_count}
-              </span>
+              <span style={{ fontSize: '14px', color: 'grey.600' }}>{i18n.t('components:report_viewer.k1', { v0: (startIndex + 1), v1: (Math.min(endIndex, report.row_count)), v2: (report.row_count) })}</span>
               <button
                 onClick={() => setCurrentPage(currentPage - 1)}
                 disabled={currentPage === 1}
@@ -325,9 +319,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
               >
                 <ChevronLeft sx={{ width: 16, height: 16 }} />
               </button>
-              <span style={{ fontSize: '14px', color: 'grey.600' }}>
-                第 {currentPage}/{totalPages} 页
-              </span>
+              <span style={{ fontSize: '14px', color: 'grey.600' }}>{i18n.t('components:report_viewer.k0', { v0: (currentPage), v1: (totalPages) })}</span>
               <button
                 onClick={() => setCurrentPage(currentPage + 1)}
                 disabled={currentPage === totalPages}

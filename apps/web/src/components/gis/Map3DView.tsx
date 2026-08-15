@@ -392,7 +392,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
           }}
         >
           <MuiBox sx={{ fontSize: '0.75rem' }}>
-            <Typography sx={{ fontWeight: 500, mb: 2 }}>3D 视图操作</Typography>
+            <Typography sx={{ fontWeight: 500, mb: 2 }}>{i18n.t('gis:map3_d_view.3d_6')}</Typography>
             <MuiBox sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
               <MuiBox
                 sx={{
@@ -428,9 +428,9 @@ const Map3DView: React.FC<Map3DViewProps> = ({
                 color: 'grey.300',
               }}
             >
-              <Typography variant='caption'>左键拖拽: 旋转视角</Typography>
-              <Typography variant='caption'>滚轮: 缩放</Typography>
-              <Typography variant='caption'>悬停: 查看详情</Typography>
+              <Typography variant='caption'>{i18n.t('gis:map3_d_view.k5')}</Typography>
+              <Typography variant='caption'>{i18n.t('gis:map3_d_view.k4')}</Typography>
+              <Typography variant='caption'>{i18n.t('gis:map3_d_view.k3')}</Typography>
             </MuiBox>
           </MuiBox>
         </Paper>
@@ -449,9 +449,9 @@ const Map3DView: React.FC<Map3DViewProps> = ({
         >
           <MuiBox sx={{ fontSize: '0.75rem' }}>
             <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('gis.map3_d_view.k10')}</Typography>
-            <Typography variant='caption'>设备: {devicePoints.length}</Typography>
-            <Typography variant='caption'>管线: {pipelines.length}</Typography>
-            <Typography variant='caption'>仓储: {storageLocations.length}</Typography>
+            <Typography variant='caption'>{i18n.t('gis:map3_d_view.v0_2', { v0: (devicePoints.length) })}</Typography>
+            <Typography variant='caption'>{i18n.t('gis:map3_d_view.v0_1', { v0: (pipelines.length) })}</Typography>
+            <Typography variant='caption'>{i18n.t('gis:map3_d_view.v0_0', { v0: (storageLocations.length) })}</Typography>
           </MuiBox>
         </Paper>
       </MuiBox>

@@ -128,9 +128,9 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
             content: `
             <div style="padding: 10px;">
               <h4>${point.name}</h4>
-              <p>类型: ${point.device_type}</p>
-              <p>状态: ${point.status}</p>
-              <p>坐标: ${point.latitude}, ${point.longitude}</p>
+              <p>{i18n.t('components.amap_layer.k0')}</p>
+              <p>{i18n.t('components.amap_layer.pointstatus_1')}</p>
+              <p>{i18n.t('components.amap_layer.k2')}</p>
             </div>
           `,
           });
@@ -158,9 +158,9 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
             content: `
             <div style="padding: 10px;">
               <h4>${location.name}</h4>
-              <p>类型: ${location.location_type}</p>
+              <p>{i18n.t('components.amap_layer.k3')}</p>
               <p>{i18n.t('components.amap_layer.k0')}${location.capacity || i18n.t('gis.amap_layer.k1')}</p>
-              <p>坐标: ${location.latitude}, ${location.longitude}</p>
+              <p>{i18n.t('components.amap_layer.k4')}</p>
             </div>
           `,
           });

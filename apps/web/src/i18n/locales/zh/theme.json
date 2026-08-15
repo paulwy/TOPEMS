@@ -10,5 +10,13 @@
   "theme.presets.k8": "玫瑰红",
   "theme.presets.k9": "红色调主题，适合安全和质量管控业务",
   "theme.presets.k10": "青碧",
-  "theme.presets.k11": "青色主色调，适合海洋和港口相关业务"
+  "theme.presets.k11": "青色主色调，适合海洋和港口相关业务",
+  "theme.cyberpunk.css.k0": "赛博朋克主题 — 玻璃拟态工具类",
+  "theme.cyberpunk.css.k1": "赛博朋克主题 — 霓虹发光效果",
+  "theme.cyberpunk.css.k2": "赛博朋克主题 — 动效",
+  "theme.cyberpunk.css.k3": "注意：MuiSkeleton 中使用的动画名为 cyber-skeleton，",
+  "theme.cyberpunk.css.k4": "这里同时定义两个名称以兼容自定义 class 和 MUI 内置 skeleton */",
+  "theme.cyberpunk.css.k5": "响应 prefers-reduced-motion",
+  "theme.cyberpunk.css.mui_6": "赛博朋克主题 — MUI 组件级样式覆盖",
+  "theme.cyberpunk.css.k7": "仅在 .cyberpunk-mode 下生效"
 }

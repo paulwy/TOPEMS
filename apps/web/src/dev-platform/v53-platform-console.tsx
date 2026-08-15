@@ -656,7 +656,7 @@ const DashboardTab: React.FC<{
                           variant='caption'
                           color='text.secondary'
                         >
-                          {page.status} · {page.components.length} 组件
+                          {page.status} · {page.components.length} {i18n.t('dev-platform.v53-platform-console.k0')}
                         </Typography>
                       </Box>
                       <Chip

@@ -515,7 +515,7 @@ export const ProductionDashboardPage: React.FC = () => {
             variant='caption'
             sx={{ color: 'text.disabled' }}
           >
-            刷新间隔 {REFRESH_INTERVAL_MS / 1000}s
+            {i18n.t('pages.index.k0')} {REFRESH_INTERVAL_MS / 1000}s
           </Typography>
         </Stack>
         <Box
@@ -612,7 +612,7 @@ export const ProductionDashboardPage: React.FC = () => {
                 variant='caption'
                 sx={{ color: 'text.secondary' }}
               >
-                最近 {TREND_HOURS} 小时 · 实际 vs 目标
+                {i18n.t('pages.index.k1')} {TREND_HOURS} {i18n.t('pages.index.vs_2')}
               </Typography>
             </Stack>
             <Divider sx={{ mb: 1.5 }} />
@@ -771,7 +771,7 @@ export const ProductionDashboardPage: React.FC = () => {
               variant='caption'
               sx={{ color: 'text.disabled' }}
             >
-              TOPEMS MES v1.0 · 数据每 {REFRESH_INTERVAL_MS / 1000} 秒自动刷新
+              {i18n.t('pages.index.k3')} {REFRESH_INTERVAL_MS / 1000} {i18n.t('pages.index.k4')}
               {wsConnected ? i18n.t('pages.index.websocket_18') : i18n.t('pages.index.k17')}
             </Typography>
           </Stack>

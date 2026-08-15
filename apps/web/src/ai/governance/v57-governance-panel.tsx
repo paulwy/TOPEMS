@@ -316,7 +316,7 @@ export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose 
                   size={20}
                   className='animate-pulse'
                 />
-                <Typography>AI 治理分析中...</Typography>
+                <Typography>{i18n.t('ai.v57-governance-panel.i_0')}</Typography>
               </Stack>
             </Box>
           )}
@@ -752,7 +752,7 @@ const ComplianceTab: React.FC<{
             variant='caption'
             sx={{ p: 1, display: 'block', textAlign: 'center', color: 'text.secondary' }}
           >
-            仅显示前 20 条，共 {filtered.length} 条记录
+            {i18n.t('ai.v57-governance-panel.20_0')} {filtered.length} {i18n.t('ai.v57-governance-panel.k1')}
           </Typography>
         )}
       </Card>
@@ -1240,7 +1240,7 @@ const PolicyTab: React.FC<{
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            策略列表 ({policies.length})
+            {i18n.t('ai.v57-governance-panel.k2')}{policies.length})
           </Typography>
           {policies.length === 0 ? (
             <Alert
@@ -1349,7 +1349,7 @@ const PolicyTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 1 }}
               >
-                规则 ({selectedPolicy.rules.length})
+                {i18n.t('ai.v57-governance-panel.k3')}{selectedPolicy.rules.length})
               </Typography>
               <TableContainer>
                 <Table size='small'>
@@ -1517,7 +1517,7 @@ const AuditTab: React.FC<{
           variant='body2'
           color='text.secondary'
         >
-          共 {logs.length} 条记录
+          {i18n.t('ai.v57-governance-panel.k4')} {logs.length} {i18n.t('ai.v57-governance-panel.k5')}
         </Typography>
       </Stack>
 
@@ -1600,7 +1600,7 @@ const AuditTab: React.FC<{
               variant='caption'
               sx={{ p: 1, display: 'block', textAlign: 'center', color: 'text.secondary' }}
             >
-              仅显示最近 30 条，共 {filtered.length} 条记录
+              {i18n.t('ai.v57-governance-panel.30_6')} {filtered.length} {i18n.t('ai.v57-governance-panel.k7')}
             </Typography>
           )}
         </Card>

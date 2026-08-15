@@ -1195,5 +1195,18 @@
   "monitor.alert_rule.k21": "编辑告警规则",
   "monitor.alert_rule.k22": "告警规则详情",
   "monitor.monitor_dashboard_page.k0": "MonitorDashboardPage 页面开发中",
-  "monitor.monitor_metrics_page.k0": "MonitorMetricsPage 页面开发中"
+  "monitor.monitor_metrics_page.k0": "MonitorMetricsPage 页面开发中",
+  "slo_status_page.k0": "\n                      {{v0}} 分钟\n                    ",
+  "slo_status_page.k1": "当前/目标",
+  "slo_status_page.24h_2": "24h 燃烧",
+  "slo_status_page.6h_3": "6h 燃烧",
+  "slo_status_page.1h_4": "1h 燃烧",
+  "slo_status_page.slo_5": "SLO 名称",
+  "slo_status_page.v0v1_6": "\n          已消耗 {{v0}} / {{v1}}\n        ",
+  "metrics_dashboard_page.30_0": "30天",
+  "metrics_dashboard_page.k1": "7天",
+  "metrics_dashboard_page.24_2": "24小时",
+  "metrics_dashboard_page.k3": "6小时",
+  "metrics_dashboard_page.k4": "1小时",
+  "metrics_dashboard_page.k5": "\n          目标 {{v0}}\n          {{v1}}\n        "
 }

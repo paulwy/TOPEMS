@@ -57,10 +57,10 @@ export default function WmsOrderFulfillmentPage() {
         </div>
         <div className='rounded-lg border p-4'>
           <p className='text-sm text-gray-600'>{i18n.t('pages.wms_order_fulfillment_page.k2')}</p>
-          <p className='mt-1 text-3xl font-bold text-blue-600'>{avgHours} 小时</p>
+          <p className='mt-1 text-3xl font-bold text-blue-600'>{i18n.t('pages.wms_order_fulfillment_page.avgours_0')}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>SLA 达标率</p>
+          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_order_fulfillment_page.l_1')}</p>
           <p className='mt-1 text-3xl font-bold text-purple-600'>{avgSla}%</p>
         </div>
         <div className='rounded-lg border p-4'>
@@ -71,7 +71,7 @@ export default function WmsOrderFulfillmentPage() {
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>SLA 准时履约率（径向）</h3>
+          <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_order_fulfillment_page.l_2')}</h3>
           <ResponsiveContainer
             width='100%'
             height={360}
@@ -151,7 +151,7 @@ export default function WmsOrderFulfillmentPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>SLA 达标率 vs 准时履约率 对比</h3>
+        <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_order_fulfillment_page.lvs_3')}</h3>
         <ResponsiveContainer
           width='100%'
           height={300}

@@ -302,9 +302,7 @@ const ConflictItem: React.FC<{ conflict: DependencyConflict }> = ({ conflict }) 
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
-            >
-              {conflict.dependency_name} 版本冲突
-            </Typography>
+            >{i18n.t('microfrontend:dependency_governance.v0_6', { v0: (conflict.dependency_name) })}</Typography>
             <Chip
               label={severityLabels[conflict.severity]}
               size='small'
@@ -319,10 +317,7 @@ const ConflictItem: React.FC<{ conflict: DependencyConflict }> = ({ conflict }) 
             variant='body2'
             color='text.secondary'
             sx={{ mb: 2 }}
-          >
-            模块 <strong>{conflict.module_a}</strong> 需要版本 {conflict.version_a}， 模块{' '}
-            <strong>{conflict.module_b}</strong> 需要版本 {conflict.version_b}
-          </Typography>
+          >{i18n.t('microfrontend:dependency_governance.k5')}<strong>{conflict.module_a}</strong>{i18n.t('microfrontend:dependency_governance.v0v1_4', { v0: (conflict.version_a), v1: (' ') })}<strong>{conflict.module_b}</strong>{i18n.t('microfrontend:dependency_governance.v0_3', { v0: (conflict.version_b) })}</Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
               size='small'
@@ -383,9 +378,7 @@ const CyclePathDisplay: React.FC<{ cycles: string[][] }> = ({ cycles }) => {
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
-            >
-              循环依赖 #{idx + 1} ({cycle.length - 1} 个模块)
-            </Typography>
+            >{i18n.t('microfrontend:dependency_governance.k2', { v0: (idx + 1), v1: (cycle.length - 1) })}</Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
             {cycle.map((moduleId, modIdx) => (
@@ -800,18 +793,14 @@ const LicenseCompliancePanel: React.FC = () => {
             <Typography
               variant='body2'
               color='text.secondary'
-            >
-              已检查 {licenseCheck.licenses.length} 个模块的许可证
-            </Typography>
+            >{i18n.t('microfrontend:dependency_governance.k1', { v0: (licenseCheck.licenses.length) })}</Typography>
           </Box>
         </Box>
         {licenseCheck.issues.length > 0 && (
           <Alert
             severity='warning'
             sx={{ mt: 2 }}
-          >
-            检测到 {licenseCheck.issues.length} 个许可证问题
-          </Alert>
+          >{i18n.t('microfrontend:dependency_governance.k0', { v0: (licenseCheck.issues.length) })}</Alert>
         )}
       </Paper>
 

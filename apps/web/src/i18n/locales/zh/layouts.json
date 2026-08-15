@@ -6,5 +6,6 @@
   "layouts.user_menu.k1": "确认退出登录？",
   "layouts.user_menu.k2": "退出后清除本地会话需重登。您确定要退出当前账号吗？",
   "layouts.user_menu.k3": "取消",
-  "layouts.user_menu.k4": "确认退出"
+  "layouts.user_menu.k4": "确认退出",
+  "layouts.userMenu.k0": "帮助中心 & 快捷键"
 }

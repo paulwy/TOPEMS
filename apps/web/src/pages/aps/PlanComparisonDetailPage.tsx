@@ -81,7 +81,7 @@ export default function PlanComparisonDetailPage() {
           >
             {i18n.t('pages.plan_comparison_detail_page.k1')}
           </button>
-          <h1 className='text-2xl font-bold'>计划对比 - {plan.plan_no}</h1>
+          <h1 className='text-2xl font-bold'>{i18n.t('pages.plan_comparison_detail_page.k0')}</h1>
           <p className='mt-1 text-sm text-gray-500'>{plan.plan_name}</p>
         </div>
         <StatusBadge

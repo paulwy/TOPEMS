@@ -385,7 +385,7 @@ export const DefaultBffErrorFallback: React.FC<BffErrorBoundaryFallbackProps> = 
             sx={{ py: 0.5 }}
           >
             <AlertTitle sx={{ mb: 0 }}>
-              已重试 {retryCount} / {maxRetries} 次
+              {i18n.t('components.bff_error_boundary.k0')} {retryCount} / {maxRetries} {i18n.t('components.bff_error_boundary.k1')}
             </AlertTitle>
           </Alert>
         )}

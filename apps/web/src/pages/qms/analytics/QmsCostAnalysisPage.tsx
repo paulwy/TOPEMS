@@ -105,7 +105,7 @@ export default function QmsCostAnalysisPage() {
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
         <h1 className='text-2xl font-bold'>{t('qms.qms_cost_analysis_page.paf_5')}</h1>
-        <span className='text-sm text-gray-500'>符合性 / 不符合性成本比：{ratio}</span>
+        <span className='text-sm text-gray-500'>{i18n.t('pages.qms_cost_analysis_page.k0')}</span>
       </div>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
@@ -133,7 +133,7 @@ export default function QmsCostAnalysisPage() {
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>PAF 成本结构（饼图）</h3>
+          <h3 className='mb-2 font-semibold'>{i18n.t('pages.qms_cost_analysis_page.pf_1')}</h3>
           <ResponsiveContainer
             width='100%'
             height={300}

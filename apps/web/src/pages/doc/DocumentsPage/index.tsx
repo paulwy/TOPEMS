@@ -692,7 +692,7 @@ const DocumentsPage: React.FC = () => {
                     color: sortBy === 'date' ? 'primary.main' : 'grey.700',
                   }}
                 >
-                  时间{' '}
+                  {i18n.t('pages.index.k0')}{' '}
                   {sortBy === 'date' &&
                     (sortOrder === 'asc' ? (
                       <SortAsc sx={{ width: 12, height: 12, ml: 0.5 }} />
@@ -708,7 +708,7 @@ const DocumentsPage: React.FC = () => {
                     color: sortBy === 'name' ? 'primary.main' : 'grey.700',
                   }}
                 >
-                  名称{' '}
+                  {i18n.t('pages.index.k1')}{' '}
                   {sortBy === 'name' &&
                     (sortOrder === 'asc' ? (
                       <SortAsc sx={{ width: 12, height: 12, ml: 0.5 }} />
@@ -724,7 +724,7 @@ const DocumentsPage: React.FC = () => {
                     color: sortBy === 'size' ? 'primary.main' : 'grey.700',
                   }}
                 >
-                  大小{' '}
+                  {i18n.t('pages.index.k2')}{' '}
                   {sortBy === 'size' &&
                     (sortOrder === 'asc' ? (
                       <SortAsc sx={{ width: 12, height: 12, ml: 0.5 }} />

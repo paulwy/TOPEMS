@@ -197,7 +197,7 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
                           variant='subtitle2'
                           sx={{ mb: 1 }}
                         >
-                          检测项目 ({parseTestResult.testitems.length})
+                          {i18n.t('pages.parse_test_dialog.k0')}{parseTestResult.testitems.length})
                         </Typography>
                         <TableContainer
                           component={Paper}

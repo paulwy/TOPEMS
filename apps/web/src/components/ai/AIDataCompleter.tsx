@@ -248,7 +248,7 @@ export function AIDataCompleter({
                             color: 'grey.500',
                           }}
                         >
-                          <span>置信度:</span>
+                          {i18n.t('components.ai_data_completer.spanspan_0')}
                           <Box
                             sx={{
                               ml: 0.5,

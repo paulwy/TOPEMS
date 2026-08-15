@@ -1130,7 +1130,7 @@ const TestsTab: React.FC<{
                             variant='body2'
                             sx={{ fontWeight: 600 }}
                           >
-                            {run.testCaseIds.length} 测试
+                            {run.testCaseIds.length} {i18n.t('ai.v60-quality-panel.k0')}
                           </Typography>
                           <Chip
                             size='small'

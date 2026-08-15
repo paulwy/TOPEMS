@@ -810,9 +810,7 @@ const TasksTab: React.FC<{
                         variant='caption'
                         color='text.secondary'
                         sx={{ display: 'block', mb: 1 }}
-                      >
-                        任务 ID: {task.id} · 创建: {new Date(task.createdAt).toLocaleTimeString()}
-                      </Typography>
+                      >{i18n.t('ai:v54-agent-panel.k6', { v0: (task.id), v1: (new Date(task.createdAt).toLocaleTimeString()) })}</Typography>
                       <Typography
                         variant='subtitle2'
                         sx={{ fontWeight: 600, mb: 1, fontSize: 12 }}
@@ -1096,11 +1094,9 @@ const WorkflowTab: React.FC<{
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
-          >
-            工作流列表 ({workflows.length})
-          </Typography>
+          >{i18n.t('ai:v54-agent-panel.v0_5', { v0: (workflows.length) })}</Typography>
           {workflows.length === 0 && (
-            <Alert severity='info'>暂无工作流，点击"{i18n.t('ai.v54-agent-panel.k37')}"{i18n.t('ai.v54-agent-panel.k34')}</Alert>
+            <Alert severity='info'>{i18n.t('ai:v54-agent-panel.v0v1_4', { v0: (i18n.t('ai.v54-agent-panel.k37')), v1: (i18n.t('ai.v54-agent-panel.k34')) })}</Alert>
           )}
           {workflows.length > 0 && (
             <List sx={{ maxHeight: 450, overflow: 'auto' }}>
@@ -1221,7 +1217,7 @@ const WorkflowTab: React.FC<{
                 label={i18n.t('ai.v54-agent-panel.k42')}
                 onChange={(e) => setSelectedTemplate(e.target.value)}
               >
-                <MenuItem value=''>-- 选择模板 --</MenuItem>
+                <MenuItem value=''>{i18n.t('ai:v54-agent-panel.k3')}</MenuItem>
                 {templates.map((tpl) => (
                   <MenuItem
                     key={tpl.id}
@@ -1354,9 +1350,7 @@ const WorkflowDetail: React.FC<{
           variant='caption'
           color='text.secondary'
           sx={{ display: 'block', mb: 0.5 }}
-        >
-          工作流 ID: {workflow.id}
-        </Typography>
+        >{i18n.t('ai:v54-agent-panel.idv0_2', { v0: (workflow.id) })}</Typography>
         <Typography
           variant='caption'
           color='text.secondary'
@@ -1569,9 +1563,7 @@ const ContextTab: React.FC<{
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
-          >
-            实体提取 ({context.entities.length})
-          </Typography>
+          >{i18n.t('ai:v54-agent-panel.v0_1', { v0: (context.entities.length) })}</Typography>
           {context.entities.length === 0 ? (
             <Alert severity='info'>{i18n.t('ai.v54-agent-panel.k44')}</Alert>
           ) : (
@@ -1929,9 +1921,7 @@ const MemoryTab: React.FC<{
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
-          >
-            记忆列表 ({filteredMemories.length})
-          </Typography>
+          >{i18n.t('ai:v54-agent-panel.v0_0', { v0: (filteredMemories.length) })}</Typography>
           <TextField
             size='small'
             placeholder={i18n.t('ai.v54-agent-panel.k68')}

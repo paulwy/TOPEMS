@@ -192,7 +192,7 @@ export default function QmsApqpProjectDetailPage() {
                       style={{ width: `${p.progress ?? 0}%` }}
                     />
                   </div>
-                  <p className='mt-1 text-xs text-gray-500'>进度：{p.progress ?? 0}%</p>
+                  <p className='mt-1 text-xs text-gray-500'>{i18n.t('pages.qms_apqp_project_detail_page.k0')}</p>
                 </div>
               ))}
             </div>

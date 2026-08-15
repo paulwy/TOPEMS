@@ -377,7 +377,7 @@ const DriverManagementPage: React.FC = () => {
         <DialogTitle>{i18n.t('tms.driver_management_page.k38')}</DialogTitle>
         <DialogContent>
           <Typography>
-            确定要删除司机「{deleteTarget?.name}」吗？此操作不可撤销。
+            {i18n.t('pages.driver_management_page.k0')}「{deleteTarget?.name}」{i18n.t('pages.driver_management_page.k1')}
           </Typography>
         </DialogContent>
         <DialogActions>

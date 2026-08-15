@@ -239,7 +239,7 @@ export function PageHeader<T = any>({
                   sx={{ whiteSpace: 'nowrap' }}
                 >
                   {t('components.components.pageheader.key_f08afd')}
-                  {selectedCount} 项
+                  {selectedCount} {i18n.t('components.page_header.k0')}
                 </Button>
                 {(batchActions || []).map((action, index) => (
                   <Button

@@ -746,7 +746,7 @@ const RouterTab: React.FC = () => {
             <MenuItem value='hybrid'>{i18n.t('ai.v54-native-panel.k26')}</MenuItem>
             <MenuItem value='intent-based'>{i18n.t('ai.v54-native-panel.k27')}</MenuItem>
             <MenuItem value='performance-based'>{i18n.t('ai.v54-native-panel.k28')}</MenuItem>
-            <MenuItem value='a/b-test'>A/B 测试</MenuItem>
+            <MenuItem value='a/b-test'>{i18n.t('ai:v54-native-panel.ab_5')}</MenuItem>
           </Select>
         </FormControl>
         <Box sx={{ flex: 1, display: 'flex', gap: 1 }}>
@@ -1183,18 +1183,15 @@ const AdaptiveUITab: React.FC<{
                 >
                   <MenuItem value='desktop'>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <MonitorIcon size={14} /> 桌面
-                    </Box>
+                      <MonitorIcon size={14} />{i18n.t('ai:v54-native-panel.k4')}</Box>
                   </MenuItem>
                   <MenuItem value='tablet'>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Tablet size={14} /> 平板
-                    </Box>
+                      <Tablet size={14} />{i18n.t('ai:v54-native-panel.k3')}</Box>
                   </MenuItem>
                   <MenuItem value='mobile'>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Smartphone size={14} /> 手机
-                    </Box>
+                      <Smartphone size={14} />{i18n.t('ai:v54-native-panel.k2')}</Box>
                   </MenuItem>
                 </Select>
               </FormControl>
@@ -1235,9 +1232,7 @@ const AdaptiveUITab: React.FC<{
                   variant='caption'
                   color='text.secondary'
                   sx={{ mb: 1, display: 'block' }}
-                >
-                  行为模式 ({userProfile.behavior_patterns.length})
-                </Typography>
+                >{i18n.t('ai:v54-native-panel.k1', { v0: (userProfile.behavior_patterns.length) })}</Typography>
                 <List
                   dense
                   sx={{ maxHeight: 150, overflow: 'auto' }}
@@ -1437,9 +1432,7 @@ const AdaptiveUITab: React.FC<{
                       <TrendingUp
                         size={14}
                         style={{ marginRight: 4 }}
-                      />
-                      优化建议 (得分: {(optimization.score * 100).toFixed(0)}%)
-                    </Typography>
+                      />{i18n.t('ai:v54-native-panel.k0', { v0: ((optimization.score * 100).toFixed(0)) })}</Typography>
                     {optimization.improvements.map((imp, idx) => (
                       <Paper
                         key={idx}

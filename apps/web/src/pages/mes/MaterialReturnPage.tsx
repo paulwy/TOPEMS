@@ -76,7 +76,7 @@ const MaterialReturnPage: React.FC = () => {
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1 }}
           >
-            物料明细 ({ret.items?.length || 0})
+            {i18n.t('pages.material_return_page.k0')}{ret.items?.length || 0})
           </Typography>
           <TableContainer
             component={Paper}

@@ -222,7 +222,7 @@ const TenantBillingPage: React.FC = () => {
         severity='info'
         sx={{ mb: 3 }}
       >
-        当前套餐：<strong>{currentPlan.name}</strong> - 下次计费日期：
+        {i18n.t('pages.tenant_billing_page.strong_0')}{currentPlan.name}{i18n.t('pages.tenant_billing_page.strong_1')}
         <strong>
           {billingInfo ? new Date(billingInfo.next_billing_date).toLocaleDateString('zh-CN') : '-'}
         </strong>
@@ -351,7 +351,7 @@ const TenantBillingPage: React.FC = () => {
                   color='text.secondary'
                   sx={{ mb: 1 }}
                 >
-                  上限 {(tenant.quota_api_calls || 0).toLocaleString()} 次/天
+                  {i18n.t('pages.tenant_billing_page.k2')} {(tenant.quota_api_calls || 0).toLocaleString()} {i18n.t('pages.tenant_billing_page.k3')}
                 </Typography>
                 <LinearProgress
                   variant='determinate'

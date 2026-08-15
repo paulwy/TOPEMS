@@ -390,5 +390,11 @@
   "aps.schedule_gantt_page.k5": "排程甘特图（天数）",
   "aps.schedule_gantt_page.k6": "天数",
   "aps.schedule_gantt_page.k7": "工期",
-  "aps.schedule_gantt_page.k8": "工期"
+  "aps.schedule_gantt_page.k8": "工期",
+  "oee_dashboard_page.oee_0": "TODO: translate",
+  "oee_dashboard_page.oee_1": "TODO: translate",
+  "oee_dashboard_page.oee_2": "TODO: translate",
+  "aps.analytics.materialShortage.k0": "TODO: translate",
+  "aps.analytics.materialShortage.k1": "TODO: translate",
+  "aps.analytics.planAdherence.k0": "TODO: translate"
 }

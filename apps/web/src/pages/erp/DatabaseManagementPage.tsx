@@ -796,7 +796,7 @@ const DatabaseManagementPage: React.FC = () => {
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Settings size={20} />
-            表结构 - {currentTable?.table_name}
+            {i18n.t('pages.database_management_page.k0')} {currentTable?.table_name}
           </Box>
         </DialogTitle>
         <DialogContent dividers>

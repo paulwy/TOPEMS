@@ -610,7 +610,7 @@ const DocumentCenterPage: React.FC = () => {
             >
               <Upload sx={{ width: 48, height: 48, color: 'grey.400', mx: 'auto', mb: 2 }} />
               <Typography sx={{ color: 'grey.600', mb: 1 }}>
-                拖拽文件到此处，或{' '}
+                {i18n.t('pages.document_center_page.k0')}{' '}
                 <Box
                   component='span'
                   sx={{ color: 'primary.main', cursor: 'pointer' }}
@@ -700,7 +700,7 @@ const DocumentCenterPage: React.FC = () => {
             sx={{ alignItems: 'center' }}
           >
             <History size={20} />
-            <Typography>版本历史 - {versionDoc?.name}</Typography>
+            <Typography>{i18n.t('pages.document_center_page.k0')}</Typography>
           </Stack>
         </DialogTitle>
         <DialogContent dividers>

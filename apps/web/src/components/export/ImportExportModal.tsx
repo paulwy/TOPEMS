@@ -125,7 +125,7 @@ export const ImportExportModal = <T extends Record<string, unknown>>({
                   variant='body2'
                   color='text.secondary'
                 >
-                  成功导入 {importResult.data.length} 条记录
+                  {i18n.t('components.import_export_modal.k0')} {importResult.data.length} {i18n.t('components.import_export_modal.k1')}
                 </Typography>
               </Box>
             ) : (
@@ -159,7 +159,7 @@ export const ImportExportModal = <T extends Record<string, unknown>>({
                       variant='body2'
                       sx={{ color: 'error.dark' }}
                     >
-                      共 {importResult.errors.length} 条错误
+                      {i18n.t('components.import_export_modal.k2')} {importResult.errors.length} {i18n.t('components.import_export_modal.k3')}
                     </Typography>
                   </Box>
                 </Box>
@@ -178,7 +178,7 @@ export const ImportExportModal = <T extends Record<string, unknown>>({
                       variant='body2'
                       sx={{ color: 'error.main', fontSize: 14 }}
                     >
-                      <strong>第 {error.row} 行:</strong> {error.message}
+                      <strong>{i18n.t('components.import_export_modal.errorrow_0')}</strong> {error.message}
                     </Typography>
                   ))}
                   {importResult.errors.length > 10 && (
@@ -186,7 +186,7 @@ export const ImportExportModal = <T extends Record<string, unknown>>({
                       variant='body2'
                       color='text.secondary'
                     >
-                      ... 还有 {importResult.errors.length - 10} 条错误
+                      {i18n.t('components.import_export_modal.k4')} {importResult.errors.length - 10} {i18n.t('components.import_export_modal.k5')}
                     </Typography>
                   )}
                 </Box>

@@ -8,5 +8,8 @@
   "lib.plugin_loader.k0": "加载模块中...",
   "lib.plugin_loader.k1": "模块加载失败",
   "lib.plugin_loader.k2": ">正在加载插件: {loadingPlugins.join(",
-  "lib.plugin_loader.k3": "插件加载错误"
+  "lib.plugin_loader.k3": "插件加载错误",
+  "lib.pluginLoader.k0": "TODO: translate",
+  "lib.pluginLoader.k10": "TODO: translate",
+  "lib.pluginLoader.k20": "TODO: translate"
 }

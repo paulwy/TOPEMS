@@ -79,7 +79,7 @@ const RelatedModuleCardInner: React.FC<RelatedModuleCardProps> = ({
               variant='subtitle2'
               sx={{ fontWeight: 600, fontSize: 13 }}
             >
-              关联数据 ({moduleName})
+              {i18n.t('components.related_module_card.k0')}{moduleName})
             </Typography>
           </Box>
           <Button

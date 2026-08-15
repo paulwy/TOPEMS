@@ -459,7 +459,7 @@ const EnergyManagementPage: React.FC = () => {
                 <Typography variant='subtitle1'>
                   [i18n.t('pages.energy_management_page.k8')]: {forecastData.forecast_period}
                 </Typography>
-                <Typography variant='subtitle1'>趋势因子: {forecastData.trend_factor}</Typography>
+                <Typography variant='subtitle1'>{i18n.t('pages.energy_management_page.k0')}</Typography>
                 <Typography variant='subtitle1'>
                   [i18n.t('pages.energy_management_page.k9')]: {forecastData.seasonality_factor}
                 </Typography>

@@ -144,10 +144,7 @@ const AchievementBar: React.FC<{ value: number; target: number; unit: string }> 
         <Typography
           variant='caption'
           color='text.secondary'
-        >
-          目标 {target.toLocaleString()}
-          {unit}
-        </Typography>
+        >{i18n.t('monitor:metrics_dashboard_page.k5', { v0: (target.toLocaleString()), v1: (unit) })}</Typography>
       </Box>
       <LinearProgress
         variant='determinate'
@@ -352,11 +349,11 @@ export const MetricsDashboardPage: React.FC = () => {
                   label={i18n.t('monitor.metrics_dashboard_page.k22')}
                   onChange={(e) => setTrendPeriod(String(e.target.value))}
                 >
-                  <MenuItem value='1h'>1小时</MenuItem>
-                  <MenuItem value='6h'>6小时</MenuItem>
-                  <MenuItem value='24h'>24小时</MenuItem>
-                  <MenuItem value='7d'>7天</MenuItem>
-                  <MenuItem value='30d'>30天</MenuItem>
+                  <MenuItem value='1h'>{i18n.t('monitor:metrics_dashboard_page.k4')}</MenuItem>
+                  <MenuItem value='6h'>{i18n.t('monitor:metrics_dashboard_page.k3')}</MenuItem>
+                  <MenuItem value='24h'>{i18n.t('monitor:metrics_dashboard_page.24_2')}</MenuItem>
+                  <MenuItem value='7d'>{i18n.t('monitor:metrics_dashboard_page.k1')}</MenuItem>
+                  <MenuItem value='30d'>{i18n.t('monitor:metrics_dashboard_page.30_0')}</MenuItem>
                 </Select>
               </FormControl>
             </Stack>

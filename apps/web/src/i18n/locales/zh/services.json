@@ -1,4 +1,5 @@
 {
   "services.external_erp_adapters.gs_0": "浪潮gs",
-  "services.external_erp_adapters.erp_1": "不支持的ERP类型:"
+  "services.external_erp_adapters.erp_1": "不支持的ERP类型:",
+  "services.voucher_template_engine.k0": "balanced: Math.abs(debitTotal - creditTotal) < 0.01, // 允许0.01误差"
 }

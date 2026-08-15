@@ -204,7 +204,7 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
                             variant='subtitle1'
                             sx={{ fontWeight: 600 }}
                           >
-                            步骤 {idx + 1}: {step.name as string}
+                            {i18n.t('components.ai_flow_assistant.k0')} {idx + 1}: {step.name as string}
                           </Typography>
                         </Box>
                       </StepLabel>

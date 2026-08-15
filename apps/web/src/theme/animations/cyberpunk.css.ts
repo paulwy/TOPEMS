@@ -22,7 +22,7 @@ export const cyberpunkGlassClasses = {
 
 export const cyberpunkGlassStyles = `
 /* ========================================
-   赛博朋克主题 — 玻璃拟态工具类
+   {i18n.t('theme.cyberpunk.css.k0')}
    ======================================== */
 
 /* 基础玻璃卡片 */
@@ -86,7 +86,7 @@ export const cyberpunkGlassStyles = `
 }
 
 /* ========================================
-   赛博朋克主题 — 霓虹发光效果
+   {i18n.t('theme.cyberpunk.css.k1')}
    ======================================== */
 
 /* 文字发光 */
@@ -140,7 +140,7 @@ export const cyberpunkGlassStyles = `
 }
 
 /* ========================================
-   赛博朋克主题 — 动效
+   {i18n.t('theme.cyberpunk.css.k2')}
    ======================================== */
 
 /* 扫光效果 — 鼠标悬停时一道光从左扫到右 */
@@ -166,8 +166,8 @@ export const cyberpunkGlassStyles = `
 }
 
 /* 霓虹骨架屏 — 流光动画
-   注意：MuiSkeleton 中使用的动画名为 cyber-skeleton，
-   这里同时定义两个名称以兼容自定义 class 和 MUI 内置 skeleton */
+   {i18n.t('theme.cyberpunk.css.k3')}
+   {i18n.t('theme.cyberpunk.css.k4')}
 @keyframes cyber-skeleton-glow {
   0% {
     background-position: -200% 0;
@@ -251,7 +251,7 @@ export const cyberpunkGlassStyles = `
 }
 
 /* ========================================
-   响应 prefers-reduced-motion
+   {i18n.t('theme.cyberpunk.css.k5')}
    ======================================== */
 @media (prefers-reduced-motion: reduce) {
   .cyber-glass-card,
@@ -278,8 +278,8 @@ export const cyberpunkGlassStyles = `
  */
 export const cyberpunkComponentStyles = `
 /* ========================================
-   赛博朋克主题 — MUI 组件级样式覆盖
-   仅在 .cyberpunk-mode 下生效
+   {i18n.t('theme.cyberpunk.css.mui_6')}
+   {i18n.t('theme.cyberpunk.css.k7')}
    ======================================== */
 
 /* Paper */

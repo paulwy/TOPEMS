@@ -390,5 +390,11 @@
   "aps.schedule_gantt_page.k5": "排程甘特图（天数）",
   "aps.schedule_gantt_page.k6": "天数",
   "aps.schedule_gantt_page.k7": "工期",
-  "aps.schedule_gantt_page.k8": "工期"
+  "aps.schedule_gantt_page.k8": "工期",
+  "oee_dashboard_page.oee_0": "OEE 明细表",
+  "oee_dashboard_page.oee_1": "OEE 构成（径向图）",
+  "oee_dashboard_page.oee_2": "OEE 综合设备效率仪表盘",
+  "aps.analytics.materialShortage.k0": "80/20 关键少数：",
+  "aps.analytics.materialShortage.k1": "物料短缺帕累托图（柱+累积线）",
+  "aps.analytics.planAdherence.k0": "计划 vs 实际产量（柱+达成率线）"
 }

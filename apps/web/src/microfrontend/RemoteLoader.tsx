@@ -71,7 +71,7 @@ class RemoteErrorBoundary extends Component<
             variant='h6'
             color='error'
           >
-            模块 {this.props.moduleName} 加载失败
+            {i18n.t('microfrontend.remote_loader.k0')} {this.props.moduleName} {i18n.t('microfrontend.remote_loader.k1')}
           </Typography>
           <Typography
             variant='body2'
@@ -113,7 +113,7 @@ const LoadingFallback: React.FC<{ moduleName: string }> = ({ moduleName }) => (
       variant='body2'
       color='text.secondary'
     >
-      正在加载 {moduleName}...
+      {i18n.t('microfrontend.remote_loader.k2')} {moduleName}...
     </Typography>
     {/* V36.0: 可视化加载进度条 */}
     <Box sx={{ width: '60%', maxWidth: 300 }}>

@@ -49,7 +49,7 @@ const EquipmentStatusPanel: React.FC<{
           variant='caption'
           sx={{ color: 'text.secondary' }}
         >
-          合计 {total} 台
+          {i18n.t('pages.equipment_status_panel.k0')} {total} {i18n.t('pages.equipment_status_panel.k1')}
         </Typography>
       </Stack>
       <Divider sx={{ mb: 2 }} />

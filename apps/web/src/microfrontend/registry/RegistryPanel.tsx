@@ -283,7 +283,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
           severity='warning'
           sx={{ mx: 2, mt: 2 }}
         >
-          检测到 {circularResult.cycles.length} 个循环依赖:
+          {i18n.t('microfrontend.registry_panel.k0')} {circularResult.cycles.length} {i18n.t('microfrontend.registry_panel.k1')}
           <Box sx={{ mt: 1 }}>
             {circularResult.cycles.map((cycle, idx) => (
               <Typography
@@ -510,7 +510,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 1 }}
                 >
-                  依赖模块 ({selectedModule.dependencies.length})
+                  {i18n.t('microfrontend.registry_panel.k2')}{selectedModule.dependencies.length})
                 </Typography>
                 {selectedModule.dependencies.length === 0 ? (
                   <Typography
@@ -538,7 +538,7 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 1 }}
                 >
-                  暴露模块 ({selectedModule.exposes.length})
+                  {i18n.t('microfrontend.registry_panel.k3')}{selectedModule.exposes.length})
                 </Typography>
                 {selectedModule.exposes.length === 0 ? (
                   <Typography

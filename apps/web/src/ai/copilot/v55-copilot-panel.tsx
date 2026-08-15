@@ -811,11 +811,11 @@ const NavigatorTab: React.FC<{
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <FileCode size={16} />
-          搜索结果 ({searchResults.length})
+          {i18n.t('ai.v55-copilot-panel.k0')}{searchResults.length})
         </Typography>
         {searchResults.length === 0 && (
           <Alert severity='info'>
-            输入关键词搜索代码符号，或使用示例文件进行测试。尝试搜索: <strong>App</strong>,{' '}
+            {i18n.t('ai.v55-copilot-panel.k1')}{' '}
             <strong>Dashboard</strong>, <strong>fetchUser</strong>
           </Alert>
         )}
@@ -944,7 +944,7 @@ const NavigatorTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 1, fontSize: 12 }}
             >
-              引用 ({refs.length})
+              {i18n.t('ai.v55-copilot-panel.k2')}{refs.length})
             </Typography>
             <Box sx={{ maxHeight: 150, overflow: 'auto' }}>
               {refs.length === 0 ? (
@@ -1003,7 +1003,7 @@ const NavigatorTab: React.FC<{
                 size={12}
                 style={{ verticalAlign: 'middle' }}
               />{' '}
-              依赖 ({graphData.dependencies.length})
+              {i18n.t('ai.v55-copilot-panel.k3')}{graphData.dependencies.length})
             </Typography>
             <Box sx={{ maxHeight: 150, overflow: 'auto' }}>
               {graphData.dependencies.length === 0 ? (
@@ -1035,7 +1035,7 @@ const NavigatorTab: React.FC<{
                 size={12}
                 style={{ verticalAlign: 'middle' }}
               />{' '}
-              被依赖 ({graphData.dependents.length})
+              {i18n.t('ai.v55-copilot-panel.k4')}{graphData.dependents.length})
             </Typography>
             <Box sx={{ maxHeight: 150, overflow: 'auto' }}>
               {graphData.dependents.length === 0 ? (
@@ -1066,7 +1066,7 @@ const NavigatorTab: React.FC<{
           variant='caption'
           sx={{ fontWeight: 600, display: 'block', mb: 1 }}
         >
-          文件符号 ({selectedFile.symbols.length})
+          {i18n.t('ai.v55-copilot-panel.k5')}{selectedFile.symbols.length})
         </Typography>
         <TableContainer>
           <Table size='small'>
@@ -1118,7 +1118,7 @@ const NavigatorTab: React.FC<{
           variant='caption'
           sx={{ fontWeight: 600, display: 'block', mb: 1 }}
         >
-          导入 ({selectedFile.imports.length})
+          {i18n.t('ai.v55-copilot-panel.k6')}{selectedFile.imports.length})
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
           {selectedFile.imports.map((imp, idx) => (
@@ -1357,7 +1357,7 @@ const GeneratorTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600, fontSize: 12 }}
               >
-                条目列表 ({changelogEntries.length})
+                {i18n.t('ai.v55-copilot-panel.k7')}{changelogEntries.length})
               </Typography>
               <Box sx={{ maxHeight: 200, overflow: 'auto' }}>
                 {changelogEntries.length === 0 ? (

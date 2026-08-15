@@ -203,7 +203,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
             borderBottom: activeTab === 'all' ? '2px solid primary.main' : '2px solid transparent',
           }}
         >
-          全部 ({friends.length})
+          {i18n.t('components.contact_list.k0')}{friends.length})
         </button>
         <button
           onClick={() => setActiveTab('friends')}
@@ -223,7 +223,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
               activeTab === 'friends' ? '2px solid primary.main' : '2px solid transparent',
           }}
         >
-          好友 ({acceptedFriends.length})
+          {i18n.t('components.contact_list.k1')}{acceptedFriends.length})
         </button>
         <button
           onClick={() => setActiveTab('groups')}
@@ -243,7 +243,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
               activeTab === 'groups' ? '2px solid primary.main' : '2px solid transparent',
           }}
         >
-          分组 ({groups.length})
+          {i18n.t('components.contact_list.k2')}{groups.length})
         </button>
       </div>
 

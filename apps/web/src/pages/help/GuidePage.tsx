@@ -176,7 +176,7 @@ export const GuidePage: React.FC = () => {
                 variant='body2'
                 color='text.secondary'
               >
-                已完成 {completedCount}/{guides.length} 个课程
+                {i18n.t('pages.guide_page.k0')} {completedCount}/{guides.length} {i18n.t('pages.guide_page.k1')}
               </Typography>
             </Box>
           </Box>
@@ -330,7 +330,7 @@ export const GuidePage: React.FC = () => {
                           variant='body2'
                           color='text.secondary'
                         >
-                          {guide.lessons_count} 节课
+                          {guide.lessons_count} {i18n.t('pages.guide_page.k2')}
                         </Typography>
                       </Box>
                       <Chip

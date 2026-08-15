@@ -154,7 +154,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
                   </Typography>
                 </MuiBox>
                 <MuiBox sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
-                  <Typography variant='body2'>类型: {point.device_type}</Typography>
+                  <Typography variant='body2'>{i18n.t('components.map_layers.k0')}</Typography>
                   <Typography variant='body2'>
                     [i18n.t('components.map_layers.k0')]:{' '}
                     <span style={{ color: getStatusColor(point.status) }}>{point.status}</span>
@@ -237,12 +237,12 @@ const MapLayers: React.FC<MapLayersProps> = ({
                   </Typography>
                 </MuiBox>
                 <MuiBox sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
-                  <Typography variant='body2'>类型: {location.location_type}</Typography>
+                  <Typography variant='body2'>{i18n.t('components.map_layers.k1')}</Typography>
                   {location.capacity !== undefined && (
-                    <Typography variant='body2'>容量: {location.capacity}</Typography>
+                    <Typography variant='body2'>{i18n.t('components.map_layers.k2')}</Typography>
                   )}
                   {location.current_usage !== undefined && (
-                    <Typography variant='body2'>当前: {location.current_usage}</Typography>
+                    <Typography variant='body2'>{i18n.t('components.map_layers.k3')}</Typography>
                   )}
                   <MuiBox
                     sx={{

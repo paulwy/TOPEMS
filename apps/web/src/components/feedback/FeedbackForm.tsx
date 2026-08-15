@@ -163,7 +163,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ onSubmit, loading }) => {
                 max={5}
                 precision={1}
               />
-              <Typography variant='body1'>{field.value} 分</Typography>
+              <Typography variant='body1'>{i18n.t('components.feedback_form.fieldvalue_0')}</Typography>
             </Box>
           )}
         />

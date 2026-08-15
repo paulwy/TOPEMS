@@ -239,7 +239,7 @@ const LimsTaskDetailPage: React.FC = () => {
             >
               <span style={{ color: ct.grey[600] }}>{i18n.t('pages.lims_task_detail_page.k12')}</span>
               <span style={{ fontWeight: 500, color: theme.palette.grey[900] }}>
-                {completedSteps} / {totalSteps} 步骤
+                {completedSteps} / {totalSteps} {i18n.t('pages.lims_task_detail_page.k0')}
               </span>
             </Box>
             <Box
@@ -606,7 +606,7 @@ const LimsTaskDetailPage: React.FC = () => {
                 }}
               >
                 <AlertCircle sx={{ width: 20, height: 20 }} />
-                <span style={{ fontSize: '0.875rem' }}>任务编号: {task.task_no || task.id}</span>
+                <span style={{ fontSize: '0.875rem' }}>{i18n.t('pages.lims_task_detail_page.k0')}</span>
               </Box>
             </Box>
           </DialogContent>

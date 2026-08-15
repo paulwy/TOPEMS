@@ -219,7 +219,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
 
         {/* Max Duration Hint */}
         <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 32 }}>
-          最长 {formatTime(maxDuration)}
+          {i18n.t('components.audio_capture.k0')} {formatTime(maxDuration)}
         </Typography>
 
         {/* Controls */}

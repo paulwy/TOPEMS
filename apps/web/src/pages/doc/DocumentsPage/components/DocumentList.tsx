@@ -130,7 +130,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                 variant='body2'
                 sx={{ fontWeight: 500, color: 'primary.900' }}
               >
-                已选择 {selectedFiles.length} 个文件
+                {i18n.t('pages.document_list.k0')} {selectedFiles.length} {i18n.t('pages.document_list.k1')}
               </Typography>
               <Button
                 variant='text'

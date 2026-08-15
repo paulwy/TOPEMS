@@ -152,23 +152,23 @@ const EquipmentOEEPage: React.FC = () => {
         >
           <Box>
             <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k4')}</InputLabel>
-            <Box component='span'>{record.planned_production_time} 分钟</Box>
+            <Box component='span'>{i18n.t('pages.equipment_oee_page.k0')}</Box>
           </Box>
           <Box>
             <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k5')}</InputLabel>
-            <Box component='span'>{record.run_time} 分钟</Box>
+            <Box component='span'>{i18n.t('pages.equipment_oee_page.recordruntime_1')}</Box>
           </Box>
           <Box>
             <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k6')}</InputLabel>
-            <Box component='span'>{record.downtime} 分钟</Box>
+            <Box component='span'>{i18n.t('pages.equipment_oee_page.recorddowntime_2')}</Box>
           </Box>
           <Box>
             <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k7')}</InputLabel>
-            <Box component='span'>{record.ideal_cycle_time} 秒</Box>
+            <Box component='span'>{i18n.t('pages.equipment_oee_page.k3')}</Box>
           </Box>
           <Box>
             <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k8')}</InputLabel>
-            <Box component='span'>{record.total_count} 件</Box>
+            <Box component='span'>{i18n.t('pages.equipment_oee_page.k4')}</Box>
           </Box>
           <Box>
             <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k9')}</InputLabel>
@@ -176,7 +176,7 @@ const EquipmentOEEPage: React.FC = () => {
               component='span'
               sx={{ color: 'success.dark' }}
             >
-              {record.good_count} 件
+              {record.good_count} {i18n.t('pages.equipment_oee_page.k0')}
             </Box>
           </Box>
           <Box>
@@ -185,7 +185,7 @@ const EquipmentOEEPage: React.FC = () => {
               component='span'
               sx={{ color: 'error.dark' }}
             >
-              {record.reject_count} 件
+              {record.reject_count} {i18n.t('pages.equipment_oee_page.k1')}
             </Box>
           </Box>
         </Box>

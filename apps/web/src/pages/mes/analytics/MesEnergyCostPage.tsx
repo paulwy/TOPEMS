@@ -74,7 +74,7 @@ export default function MesEnergyCostPage() {
               <p className="text-xl font-bold" style={{ color: colors[idx % colors.length] }}>
                 ¥{(e.cost / 1000).toFixed(1)}k
               </p>
-              <p className="mt-1 text-xs text-gray-500">占比 {e.percentage}%</p>
+              <p className="mt-1 text-xs text-gray-500">{i18n.t('pages.mes_energy_cost_page.epercentage_0')}</p>
             </div>
           );
         })}

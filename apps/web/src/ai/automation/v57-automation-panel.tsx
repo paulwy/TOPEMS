@@ -307,7 +307,7 @@ const TestsTab: React.FC = () => {
                   <MenuItem value='all'>{i18n.t('ai.v57-automation-panel.k10')}</MenuItem>
                   <MenuItem value='unit'>{i18n.t('ai.v57-automation-panel.k11')}</MenuItem>
                   <MenuItem value='integration'>{i18n.t('ai.v57-automation-panel.k12')}</MenuItem>
-                  <MenuItem value='e2e'>E2E 测试</MenuItem>
+                  <MenuItem value='e2e'>{i18n.t('ai:v57-automation-panel.e2e_12')}</MenuItem>
                 </Select>
               </FormControl>
               <Button
@@ -494,20 +494,20 @@ const TestsTab: React.FC = () => {
                 variant='outlined'
                 sx={{ mb: 1 }}
               >
-                <strong>失败类型:</strong> {failureAnalysis.failure_type}
+                <strong>{i18n.t('ai:v57-automation-panel.k11')}</strong> {failureAnalysis.failure_type}
               </Alert>
               <Alert
                 severity='warning'
                 variant='outlined'
                 sx={{ mb: 1 }}
               >
-                <strong>根因:</strong> {failureAnalysis.root_cause}
+                <strong>{i18n.t('ai:v57-automation-panel.k10')}</strong> {failureAnalysis.root_cause}
               </Alert>
               <Alert
                 severity='info'
                 variant='outlined'
               >
-                <strong>建议:</strong> {failureAnalysis.suggestion}
+                <strong>{i18n.t('ai:v57-automation-panel.k9')}</strong> {failureAnalysis.suggestion}
               </Alert>
               {failureAnalysis.stack_trace && (
                 <Box
@@ -797,9 +797,7 @@ const CITab: React.FC = () => {
                     <Typography
                       variant='body2'
                       color='text.secondary'
-                    >
-                      {i18n.t('ai.v57-automation-panel.i18n_17')}.t('ai.v57-automation-panel.k44')按钮启动流水线
-                    </Typography>
+                    >{i18n.t('ai:v57-automation-panel.k8', { v0: (i18n.t('ai.v57-automation-panel.i18n_17')) })}</Typography>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -1114,9 +1112,7 @@ const QualityTab: React.FC = () => {
                     <Typography
                       variant='body2'
                       color='text.secondary'
-                    >
-                      {i18n.t('ai.v57-automation-panel.i18n_23')}.t('ai.v57-automation-panel.k66')开始评估
-                    </Typography>
+                    >{i18n.t('ai:v57-automation-panel.k7', { v0: (i18n.t('ai.v57-automation-panel.i18n_23')) })}</Typography>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -1320,20 +1316,17 @@ const TrendsTab: React.FC = () => {
             severity='info'
             variant='outlined'
           >
-            <strong>覆盖率建议:</strong> 当前行覆盖率偏低，建议优先补充单元测试覆盖核心业务逻辑。
-          </Alert>
+            <strong>{i18n.t('ai:v57-automation-panel.k6')}</strong>{i18n.t('ai:v57-automation-panel.k5')}</Alert>
           <Alert
             severity='warning'
             variant='outlined'
           >
-            <strong>性能警告:</strong> 部分构建产物超出预期，建议检查依赖引入和代码分割策略。
-          </Alert>
+            <strong>{i18n.t('ai:v57-automation-panel.k4')}</strong>{i18n.t('ai:v57-automation-panel.k3')}</Alert>
           <Alert
             severity='success'
             variant='outlined'
           >
-            <strong>安全状态:</strong> 当前无严重安全漏洞，所有依赖均在维护期内。
-          </Alert>
+            <strong>{i18n.t('ai:v57-automation-panel.k2')}</strong>{i18n.t('ai:v57-automation-panel.k1')}</Alert>
         </Stack>
       </CardContent>
       </Card>
@@ -1493,9 +1486,7 @@ const RunDetailCard: React.FC<{ run: CIResult }> = ({ run }) => (
         <Typography
           variant='subtitle2'
           sx={{ mb: 1, fontWeight: 600 }}
-        >
-          构建产物 ({run.artifacts.length})
-        </Typography>
+        >{i18n.t('ai:v57-automation-panel.v0_0', { v0: (run.artifacts.length) })}</Typography>
         <Stack
           direction='column'
           spacing={0.5}

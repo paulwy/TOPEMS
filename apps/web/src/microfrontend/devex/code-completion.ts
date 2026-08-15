@@ -72,7 +72,7 @@ const ModuleNamePage: React.FC = () => (
     code: `import { versionManager } from '@/microfrontend';
 
 versionManager.onVersionUpdate((event) => {
-  console.log(\`模块 \${event.moduleId} 有新版本\`);
+  console.log(\`{i18n.t('microfrontend.code-completion.k0')} \${event.moduleId} {i18n.t('microfrontend.code-completion.k1')}\`);
 });
 
 versionManager.startAutoCheck(5 * 60 * 1000);`,

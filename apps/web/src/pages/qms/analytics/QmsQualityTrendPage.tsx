@@ -18,6 +18,7 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
+import i18n from '@/i18n';
 import { useQmsMock, type QmsMockShape } from '@/api/qms/_mock';
 import { designTokens, semanticTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
@@ -65,7 +66,7 @@ export default function QmsQualityTrendPage() {
         </div>
         <div className='rounded-lg border p-4'>
           <p className='text-sm text-gray-600'>{t('qms.qms_quality_trend_page.k6')}</p>
-          <p className='mt-1 text-3xl font-bold text-blue-600'>{trend.length} 月</p>
+          <p className='mt-1 text-3xl font-bold text-blue-600'>{i18n.t('pages.qms_quality_trend_page.trendlength_0')}</p>
         </div>
       </div>
 

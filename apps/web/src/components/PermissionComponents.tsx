@@ -332,7 +332,7 @@ export const ModulePermissionGuard: React.FC<ModulePermissionGuardProps> = ({
               <h3 style={{ fontSize: '14px', fontWeight: 500, color: 'warning.800' }}>{i18n.t('components.permission_components.k1')}</h3>
               <div style={{ marginTop: 2, fontSize: '14px', color: 'warning.800' }}>
                 <p>
-                  您没有访问 {module} 模块的 {action} 权限。
+                  {i18n.t('components.permission_components.k0')} {module} {i18n.t('components.permission_components.k1')} {action} {i18n.t('components.permission_components.k2')}
                 </p>
               </div>
             </div>

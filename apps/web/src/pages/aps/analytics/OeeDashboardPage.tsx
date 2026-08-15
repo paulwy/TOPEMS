@@ -61,7 +61,7 @@ export default function OeeDashboardPage() {
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-2xl font-bold'>OEE 综合设备效率仪表盘</h1>
+        <h1 className='text-2xl font-bold'>{i18n.t('aps:oee_dashboard_page.oee_2')}</h1>
         <span className='text-sm text-gray-500'>Overall Equipment Effectiveness</span>
       </div>
       <p className='text-sm text-gray-600'>
@@ -87,7 +87,7 @@ export default function OeeDashboardPage() {
       </div>
       <div className='grid grid-cols-1 gap-4 lg:grid-cols-2'>
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>OEE 构成（径向图）</h3>
+          <h3 className='mb-2 font-semibold'>{i18n.t('aps:oee_dashboard_page.oee_1')}</h3>
           <ResponsiveContainer
             width='100%'
             height={300}
@@ -160,7 +160,7 @@ export default function OeeDashboardPage() {
         </div>
       </div>
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>OEE 明细表</h3>
+        <h3 className='mb-2 font-semibold'>{i18n.t('aps:oee_dashboard_page.oee_0')}</h3>
         <table className='w-full text-sm'>
           <thead>
             <tr className='border-b text-left text-gray-600'>

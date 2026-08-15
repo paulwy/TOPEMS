@@ -518,7 +518,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
                 variant='caption'
                 color='text.secondary'
               >
-                点击展开查看 {section.fields.length} 个设置项
+                {i18n.t('components.settings_page_template.k0')} {section.fields.length} {i18n.t('components.settings_page_template.k1')}
               </Typography>
             </Box>
           )}
@@ -581,7 +581,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', color: 'error.main' }}>
               <AlertCircle style={{ width: 16, height: 16 }} />
               <Typography variant='caption'>
-                {Object.keys(errors).length}个设置项存在错误
+                {Object.keys(errors).length}{i18n.t('components.settings_page_template.k2')}
               </Typography>
             </Box>
           )}

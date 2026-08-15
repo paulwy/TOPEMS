@@ -302,7 +302,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         color='text.secondary'
         sx={{ mt: 0.5 }}
       >
-        最多上传 {maxCount} 张图片，单张不超过 {maxSize}MB
+        {i18n.t('components.image_upload.k0')} {maxCount} {i18n.t('components.image_upload.k1')} {maxSize}MB
       </Typography>
       <input
         ref={fileInputRef}

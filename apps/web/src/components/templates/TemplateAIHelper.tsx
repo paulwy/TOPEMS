@@ -44,17 +44,17 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
   const mockGenerateResponse: AIResponse = {
     content: `# {{report_title}}
 
-## 一、概述
+{i18n.t('components.template_ai_helper.k0')}
 {{summary}}
 
-## 二、详细内容
+{i18n.t('components.template_ai_helper.k1')}
 {{details}}
 
-## 三、结论
+{i18n.t('components.template_ai_helper.k2')}
 {{conclusion}}
 
-报告人：{{reporter}}
-报告日期：{{today}}`,
+{i18n.t('components.template_ai_helper.k3')}{{reporter}}
+{i18n.t('components.template_ai_helper.k4')}{{today}}`,
     variables: [
       { key: 'report_title', label: i18n.t('templates.template_ai_helper.k0'), type: 'string' },
       { key: 'summary', label: i18n.t('templates.template_ai_helper.k1'), type: 'string' },

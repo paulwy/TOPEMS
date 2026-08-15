@@ -96,7 +96,7 @@ export const DataSourcePanel: React.FC<DataSourcePanelProps> = ({
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Globe sx={{ width: 16, height: 16 }} />
-                  <span>API接口</span>
+                  <span>{i18n.t('components.data_source_panel.pi_0')}</span>
                 </Box>
               }
             />
@@ -106,7 +106,7 @@ export const DataSourcePanel: React.FC<DataSourcePanelProps> = ({
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <FileSpreadsheet sx={{ width: 16, height: 16 }} />
-                  <span>Excel上传</span>
+                  {i18n.t('components.data_source_panel.spanexcelspan_0')}
                 </Box>
               }
             />

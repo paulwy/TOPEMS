@@ -1306,7 +1306,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           onClick={() => setShowDraftDialog(true)}
           startIcon={<FileText style={{ width: 16, height: 16 }} />}
         >
-          草稿 ({drafts.length})
+          {i18n.t('components.form_page_template.k0')}{drafts.length})
         </Button>
       </Tooltip>
     );
@@ -1351,7 +1351,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                 variant='caption'
                 sx={{ ml: 0.5 }}
               >
-                {Object.keys(errors).length}个字段存在错误
+                {Object.keys(errors).length}{i18n.t('components.form_page_template.k1')}
               </Typography>
             </Box>
           </Tooltip>
@@ -1544,7 +1544,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                 }}
                 onClick={() => handleLoadDraft(draft)}
               >
-                <Typography variant='body2'>草稿 #{index + 1}</Typography>
+                <Typography variant='body2'>{i18n.t('components.form_page_template.index1_0')}</Typography>
                 <Typography
                   variant='caption'
                   color='text.secondary'

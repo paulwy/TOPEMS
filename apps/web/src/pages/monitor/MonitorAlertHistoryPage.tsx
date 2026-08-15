@@ -54,7 +54,7 @@ const renderStatsCards = (rows: Record<string, unknown>[], total: number): React
           const resolved = new Date(a.resolved_at!).getTime();
           return acc + (resolved - created) / 60000;
         }, 0) / resolvedAlerts.length
-      )}分钟`
+      )}{i18n.t('pages.monitor_alert_history_page.k0')}`
     : '-';
   const stats = [
     {

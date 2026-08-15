@@ -200,7 +200,7 @@ const RoleManagementPage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>角色权限 - {selectedRole?.name}</DialogTitle>
+        <DialogTitle>{i18n.t('pages.role_management_page.k0')}</DialogTitle>
         <DialogContent sx={{ overflow: 'auto', maxHeight: '60vh' }}>
           <Typography
             variant='subtitle2'

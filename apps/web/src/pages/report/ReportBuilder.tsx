@@ -232,7 +232,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
             variant='body2'
             sx={{ fontWeight: 500, mb: 1, color: 'grey.700' }}
           >
-            报表标题{' '}
+            {i18n.t('pages.report_builder.k0')}{' '}
             <Typography
               component='span'
               sx={{ color: 'error.main' }}
@@ -305,7 +305,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
             variant='h6'
             sx={{ fontWeight: 600 }}
           >
-            报表类型{' '}
+            {i18n.t('pages.report_builder.k1')}{' '}
             <Typography
               component='span'
               sx={{ color: 'error.main' }}
@@ -452,7 +452,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                选择列{' '}
+                {i18n.t('pages.report_builder.k2')}{' '}
                 <Typography
                   component='span'
                   sx={{ color: 'error.main' }}
@@ -548,7 +548,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
             variant='body2'
             sx={{ color: 'grey.500' }}
           >
-            已选择 {formData.selectedColumns.length} 列
+            {i18n.t('pages.report_builder.k3')} {formData.selectedColumns.length} {i18n.t('pages.report_builder.k4')}
           </Typography>
         </Box>
       )}
@@ -636,13 +636,13 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                   mr: 0.5,
                 }}
               />
-              已配置 {formData.selectedColumns.length} 列
+              {i18n.t('pages.report_builder.k5')} {formData.selectedColumns.length} {i18n.t('pages.report_builder.k6')}
               {formData.reportType && (
                 <Typography
                   component='span'
                   sx={{ ml: 1, color: 'grey.400' }}
                 >
-                  ({REPORT_COLUMNS[formData.reportType as ReportType]?.length} 可选)
+                  ({REPORT_COLUMNS[formData.reportType as ReportType]?.length} {i18n.t('pages.report_builder.k7')}
                 </Typography>
               )}
             </Box>

@@ -54,7 +54,7 @@ const AlarmList: React.FC<{ alarms: RealtimeAlarm[]; loading?: boolean }> = ({
           variant='caption'
           sx={{ color: 'text.secondary' }}
         >
-          最近 {alarms.length} 条
+          {i18n.t('pages.alarm_list.k0')} {alarms.length} {i18n.t('pages.alarm_list.k1')}
         </Typography>
       </Stack>
       <Divider sx={{ mb: 1.5 }} />

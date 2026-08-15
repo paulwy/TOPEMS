@@ -253,7 +253,7 @@ const InquiryQuotationPage: React.FC = () => {
         maxWidth='lg'
         fullWidth
       >
-        <DialogTitle>报价单列表 - {viewingInquiry?.inquiry_no}</DialogTitle>
+        <DialogTitle>{i18n.t('pages.inquiry_quotation_page.k0')}</DialogTitle>
         <DialogContent>
           <Table size='small'>
             <TableHead>

@@ -456,7 +456,7 @@ const MonitorNotificationPage: React.FC = () => {
                         variant='caption'
                         color='text.secondary'
                       >
-                        {count} 个渠道, {enabledCount} 已启用
+                        {count} {i18n.t('pages.monitor_notification_page.k0')} {enabledCount} {i18n.t('pages.monitor_notification_page.k1')}
                       </Typography>
                     </Box>
                   </Box>

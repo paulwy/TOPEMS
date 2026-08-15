@@ -680,7 +680,7 @@ export class PerformanceAnalyzer {
     const lazyIssues = this.analyzeLazyEffectiveness().filter((e) => e.recommendation);
     if (lazyIssues.length > 0) {
       recommendations.push(
-        `懒加载优化建议: ${lazyIssues.map((i) => `${i.moduleId}: ${i.recommendation}`).join('; ')}`
+        `{i18n.t('microfrontend.performance-analyzer.k0')} ${lazyIssues.map((i) => `${i.moduleId}: ${i.recommendation}`).join('; ')}`
       );
     }
 

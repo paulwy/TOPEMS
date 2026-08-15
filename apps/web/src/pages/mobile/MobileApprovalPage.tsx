@@ -479,7 +479,7 @@ const MobileApprovalPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    提交时间：{selectedApproval.submitTime}
+                    {i18n.t('pages.mobile_approval_page.k0')}{selectedApproval.submitTime}
                   </Typography>
                 </Box>
               </Box>

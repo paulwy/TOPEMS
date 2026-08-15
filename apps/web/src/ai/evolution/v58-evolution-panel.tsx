@@ -325,7 +325,7 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             maxWidth='sm'
             fullWidth
           >
-            <DialogTitle>创建 A/B 测试</DialogTitle>
+            <DialogTitle>{i18n.t('ai.v58-evolution-panel.b_0')}</DialogTitle>
             <DialogContent>
               <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <TextField
@@ -553,7 +553,7 @@ const ModelsTab: React.FC<{
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            模型列表 ({models.length})
+            {i18n.t('ai.v58-evolution-panel.k0')}{models.length})
           </Typography>
           {models.length === 0 && <Alert severity='info'>{i18n.t('ai.v58-evolution-panel.k14')}</Alert>}
           {models.length > 0 && (
@@ -589,7 +589,7 @@ const ModelsTab: React.FC<{
                           variant='caption'
                           color='text.secondary'
                         >
-                          {model.type} · {model.versions.length} 版本
+                          {model.type} · {model.versions.length} {i18n.t('ai.v58-evolution-panel.k1')}
                         </Typography>
                       </Box>
                     </ListItem>
@@ -1022,7 +1022,7 @@ const ExperimentsTab: React.FC<{
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            实验列表 ({experiments.length})
+            {i18n.t('ai.v58-evolution-panel.k2')}{experiments.length})
           </Typography>
           {experiments.length === 0 && <Alert severity='info'>{i18n.t('ai.v58-evolution-panel.k25')}</Alert>}
           {experiments.length > 0 && (
@@ -1056,7 +1056,7 @@ const ExperimentsTab: React.FC<{
                         variant='caption'
                         color='text.secondary'
                       >
-                        {exp.variants.length} 变体 · {exp.traffic_split}% 流量
+                        {exp.variants.length} {i18n.t('ai.v58-evolution-panel.k3')} {exp.traffic_split}{i18n.t('ai.v58-evolution-panel.k4')}
                       </Typography>
                     </Box>
                   </ListItem>
@@ -1299,7 +1299,7 @@ const ExperimentsTab: React.FC<{
                         variant='body2'
                         sx={{ fontWeight: 600 }}
                       >
-                        🏆 胜者: {significance.winner} (置信度{' '}
+                        🏆 {i18n.t('ai.v58-evolution-panel.k5')} {significance.winner} {i18n.t('ai.v58-evolution-panel.k6')}{' '}
                         {(significance.confidenceLevel * 100).toFixed(1)}%)
                       </Typography>
                     </Paper>
@@ -1610,7 +1610,7 @@ const ThreatsTab: React.FC<{
           variant='caption'
           color='text.secondary'
         >
-          共 {stats.total} 项威胁 · {stats.critical} 严重 · {stats.high} 高危 · {stats.mitigated}{' '}
+          {i18n.t('ai.v58-evolution-panel.k7')} {stats.total} {i18n.t('ai.v58-evolution-panel.k8')} {stats.critical} {i18n.t('ai.v58-evolution-panel.k9')} {stats.high} {i18n.t('ai.v58-evolution-panel.k10')} {stats.mitigated}{' '}
           {i18n.t('ai.v58-evolution-panel.k41')}
         </Typography>
       </Stack>

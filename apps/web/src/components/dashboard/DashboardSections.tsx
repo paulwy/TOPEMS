@@ -89,7 +89,7 @@ export const ModuleSection: React.FC<ModuleSectionProps> = ({
             color='text.secondary'
             sx={{ ml: 1 }}
           >
-            {cards.length} 项
+            {cards.length} {i18n.t('components.dashboard_sections.k0')}
           </Typography>
         </Typography>
         {shouldCollapse ? (
@@ -139,7 +139,7 @@ export const ModuleSection: React.FC<ModuleSectionProps> = ({
           color='text.secondary'
           sx={{ mt: 0.75, display: 'block', textAlign: 'right' }}
         >
-          已折叠 {cards.length - collapsedLimit} 项，点击 ↑ 展开全部
+          {i18n.t('components.dashboard_sections.k1')} {cards.length - collapsedLimit} {i18n.t('components.dashboard_sections.k2')} ↑ {i18n.t('components.dashboard_sections.k3')}
         </Typography>
       ) : null}
     </Box>
