@@ -108,6 +108,22 @@ pub fn create_routes() -> Router<AppState> {
             "/plugin/tenant/{tenant_id}/plugins/{plugin_code}/deactivate",
             post(tenant_plugins::deactivate_plugin),
         )
+        .route(
+            "/plugin/tenant/my/plugins/{plugin_code}/install",
+            post(tenant_plugins::install_my_plugin),
+        )
+        .route(
+            "/plugin/tenant/my/plugins/{plugin_code}/uninstall",
+            post(tenant_plugins::uninstall_my_plugin),
+        )
+        .route(
+            "/plugin/tenant/my/plugins/{plugin_code}/activate",
+            post(tenant_plugins::activate_my_plugin),
+        )
+        .route(
+            "/plugin/tenant/my/plugins/{plugin_code}/deactivate",
+            post(tenant_plugins::deactivate_my_plugin),
+        )
         .layer(axum::middleware::from_fn(require_permission(
             "plugin:write",
         )));

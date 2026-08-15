@@ -521,6 +521,7 @@ pub struct TenantPluginWithDetails {
     pub tenant_id: uuid::Uuid,
     pub plugin_id: uuid::Uuid,
     pub installed_version: Option<String>,
+    #[serde(rename = "isactive")]
     pub is_active: bool,
     pub license_type: Option<String>,
     pub license_expires_at: Option<DateTime<Utc>>,
