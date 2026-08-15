@@ -374,3 +374,156 @@ fn test_demand_forecast_self_transition_rejected() {
         Err(FsmError::InvalidTransition { .. })
     ));
 }
+
+// ==================== is_valid_status tests ====================
+
+#[test]
+fn test_is_valid_production_plan_status() {
+    assert!(is_valid_production_plan_status("draft"));
+    assert!(is_valid_production_plan_status("pending_approval"));
+    assert!(is_valid_production_plan_status("approved"));
+    assert!(is_valid_production_plan_status("in_progress"));
+    assert!(is_valid_production_plan_status("completed"));
+    assert!(is_valid_production_plan_status("cancelled"));
+    assert!(!is_valid_production_plan_status("unknown"));
+    assert!(!is_valid_production_plan_status(""));
+    assert!(!is_valid_production_plan_status("DRAFT"));
+}
+
+#[test]
+fn test_is_valid_schedule_status() {
+    assert!(is_valid_schedule_status("pending"));
+    assert!(is_valid_schedule_status("released"));
+    assert!(is_valid_schedule_status("running"));
+    assert!(is_valid_schedule_status("completed"));
+    assert!(is_valid_schedule_status("cancelled"));
+    assert!(!is_valid_schedule_status("draft"));
+    assert!(!is_valid_schedule_status(""));
+}
+
+#[test]
+fn test_is_valid_capacity_status() {
+    assert!(is_valid_capacity_status("available"));
+    assert!(is_valid_capacity_status("allocated"));
+    assert!(is_valid_capacity_status("consumed"));
+    assert!(is_valid_capacity_status("maintenance"));
+    assert!(is_valid_capacity_status("released"));
+    assert!(!is_valid_capacity_status("pending"));
+    assert!(!is_valid_capacity_status(""));
+}
+
+#[test]
+fn test_is_valid_material_plan_status() {
+    assert!(is_valid_material_plan_status("pending"));
+    assert!(is_valid_material_plan_status("requisitioned"));
+    assert!(is_valid_material_plan_status("sourced"));
+    assert!(is_valid_material_plan_status("satisfied"));
+    assert!(is_valid_material_plan_status("shortage"));
+    assert!(is_valid_material_plan_status("cancelled"));
+    assert!(!is_valid_material_plan_status("draft"));
+    assert!(!is_valid_material_plan_status(""));
+}
+
+#[test]
+fn test_is_valid_demand_forecast_status() {
+    assert!(is_valid_demand_forecast_status("draft"));
+    assert!(is_valid_demand_forecast_status("calculated"));
+    assert!(is_valid_demand_forecast_status("validated"));
+    assert!(is_valid_demand_forecast_status("adopted"));
+    assert!(is_valid_demand_forecast_status("superseded"));
+    assert!(is_valid_demand_forecast_status("cancelled"));
+    assert!(!is_valid_demand_forecast_status("pending"));
+    assert!(!is_valid_demand_forecast_status(""));
+}
+
+// ==================== FsmError Display tests ====================
+
+#[test]
+fn test_fsm_error_terminal_display() {
+    let err = FsmError::TerminalState("completed".to_string());
+    let msg = format!("{}", err);
+    assert!(msg.contains("completed"));
+    assert!(msg.contains("terminal"));
+}
+
+#[test]
+fn test_fsm_error_invalid_transition_display() {
+    let err = FsmError::InvalidTransition {
+        from: "draft".to_string(),
+        to: "completed".to_string(),
+    };
+    let msg = format!("{}", err);
+    assert!(msg.contains("draft"));
+    assert!(msg.contains("completed"));
+    assert!(msg.contains("invalid"));
+}
+
+#[test]
+fn test_fsm_error_unknown_status_display() {
+    let err = FsmError::UnknownStatus("bogus".to_string());
+    let msg = format!("{}", err);
+    assert!(msg.contains("bogus"));
+    assert!(msg.contains("unknown"));
+}
+
+#[test]
+fn test_fsm_error_partial_eq() {
+    let e1 = FsmError::TerminalState("a".into());
+    let e2 = FsmError::TerminalState("a".into());
+    let e3 = FsmError::TerminalState("b".into());
+    assert_eq!(e1, e2);
+    assert_ne!(e1, e3);
+    assert_ne!(e1, FsmError::UnknownStatus("a".into()));
+}
+
+#[test]
+fn test_fsm_error_debug_format() {
+    let err = FsmError::InvalidTransition {
+        from: "x".into(),
+        to: "y".into(),
+    };
+    let debug = format!("{:?}", err);
+    assert!(debug.contains("InvalidTransition"));
+    assert!(debug.contains("x"));
+    assert!(debug.contains("y"));
+}
+
+// ==================== Additional transition edge cases ====================
+
+#[test]
+fn test_production_plan_approved_to_cancelled() {
+    assert!(production_plan_can_transition("approved", "cancelled").is_ok());
+}
+
+#[test]
+fn test_production_plan_in_progress_to_cancelled() {
+    assert!(production_plan_can_transition("in_progress", "cancelled").is_ok());
+}
+
+#[test]
+fn test_capacity_maintenance_roundtrip() {
+    assert!(capacity_can_transition("available", "maintenance").is_ok());
+    assert!(capacity_can_transition("maintenance", "available").is_ok());
+}
+
+#[test]
+fn test_capacity_allocated_released_roundtrip() {
+    assert!(capacity_can_transition("available", "allocated").is_ok());
+    assert!(capacity_can_transition("allocated", "released").is_ok());
+    assert!(capacity_can_transition("released", "available").is_ok());
+}
+
+#[test]
+fn test_schedule_released_to_pending_rollback() {
+    assert!(schedule_can_transition("released", "pending").is_ok());
+}
+
+#[test]
+fn test_material_plan_shortage_to_requisitioned() {
+    assert!(material_plan_can_transition("shortage", "requisitioned").is_ok());
+}
+
+#[test]
+fn test_demand_forecast_calculated_to_draft_rollback() {
+    assert!(demand_forecast_can_transition("calculated", "draft").is_ok());
+}
