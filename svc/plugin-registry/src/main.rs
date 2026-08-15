@@ -34,7 +34,7 @@ async fn main() -> anyhow::Result<()> {
         enable_events: false,
         enable_rls: true,
         enable_request_context: true,
-        api_prefix: "/api/plugin",
+        api_prefix: "/api",
         legacy_prefixes: &[],
     };
 

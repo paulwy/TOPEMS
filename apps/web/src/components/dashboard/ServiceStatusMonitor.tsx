@@ -37,56 +37,56 @@ const groupColors: Record<
     iconColor: string;
   }
 > = {
-  [i18n.t('components.service_status_monitor.k0')]: {
+  core: {
     bg: 'primary.light',
     border: 'primary.light',
     titleColor: 'primary.dark',
     iconBg: 'primary.100',
     iconColor: 'primary.dark',
   },
-  [i18n.t('components.service_status_monitor.k1')]: {
+  business: {
     bg: 'success.light',
     border: 'success.light',
     titleColor: 'success.700',
     iconBg: 'success.lighter',
     iconColor: 'success.dark',
   },
-  [i18n.t('components.service_status_monitor.k2')]: {
+  rd: {
     bg: 'secondary.light',
     border: 'secondary.100',
     titleColor: 'secondary.700',
     iconBg: 'secondary.light',
     iconColor: 'secondary.main',
   },
-  [i18n.t('components.service_status_monitor.k3')]: {
+  quality: {
     bg: 'white7ed',
     border: designTokens.colors.warning[200],
     titleColor: 'orange.700',
     iconBg: designTokens.colors.warning[100],
     iconColor: 'orange.500',
   },
-  [i18n.t('components.service_status_monitor.k4')]: {
+  supply: {
     bg: 'white1f2',
     border: '#fecdd3',
     titleColor: 'pink.700',
     iconBg: '#ffe4e6',
     iconColor: 'error.600',
   },
-  [i18n.t('components.service_status_monitor.k5')]: {
+  manufacturing: {
     bg: 'success.light',
     border: designTokens.colors.success[200],
     titleColor: 'teal.900',
     iconBg: 'success.lighter',
     iconColor: 'success.main',
   },
-  [i18n.t('components.service_status_monitor.k6')]: {
+  data: {
     bg: designTokens.colors.secondary[50],
     border: 'secondary.main',
     titleColor: 'secondary.700',
     iconBg: 'secondary.100',
     iconColor: 'primary.light',
   },
-  [i18n.t('shared.service_status_monitor.k0')]: {
+  platform: {
     bg: '#fdf4ff',
     border: '#f5d0fe',
     titleColor: 'purple.700',
@@ -174,9 +174,10 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
     setTimeout(() => setIsRefreshing(false), 1000);
   }, [hasExternalStatuses, onRefresh]);
 
-  const serviceGroups: { title: string; services: ServiceItem[] }[] = [
+  const serviceGroups: { title: string; groupKey: string; services: ServiceItem[] }[] = [
     {
       title: i18n.t('shared.service_status_monitor.k1'),
+      groupKey: 'core',
       services: [
         {
           name: i18n.t('shared.service_status_monitor.k2'),
@@ -203,6 +204,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
     },
     {
       title: i18n.t('shared.service_status_monitor.k5'),
+      groupKey: 'business',
       services: [
         {
           name: i18n.t('shared.service_status_monitor.k6'),
@@ -229,6 +231,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
     },
     {
       title: i18n.t('shared.service_status_monitor.k9'),
+      groupKey: 'rd',
       services: [
         {
           name: i18n.t('shared.service_status_monitor.k10'),
@@ -255,6 +258,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
     },
     {
       title: i18n.t('shared.service_status_monitor.k13'),
+      groupKey: 'quality',
       services: [
         {
           name: i18n.t('shared.service_status_monitor.k14'),
@@ -281,6 +285,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
     },
     {
       title: i18n.t('shared.service_status_monitor.k17'),
+      groupKey: 'supply',
       services: [
         {
           name: i18n.t('shared.service_status_monitor.k18'),
@@ -307,6 +312,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
     },
     {
       title: i18n.t('shared.service_status_monitor.k21'),
+      groupKey: 'data',
       services: [
         { name: i18n.t('shared.service_status_monitor.k22'), service: 'BI', port: 8060, key: 'bi', icon: BarChart2 },
         { name: i18n.t('shared.service_status_monitor.k23'), service: 'PORTAL', port: 8063, key: 'portal', icon: Building },
@@ -314,6 +320,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
     },
     {
       title: i18n.t('shared.service_status_monitor.k24'),
+      groupKey: 'platform',
       services: [
         { name: i18n.t('shared.service_status_monitor.k25'), service: 'GIS', port: 8071, key: 'gis', icon: Map },
         {
@@ -412,7 +419,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
               color: 'grey.600',
               fontSize: 12,
               fontWeight: 500,
-              '&:hover': { backgroundColor: 'border.default' },
+              '&:hover': { backgroundColor: 'grey.200' },
               '&:disabled': { opacity: 0.5 },
             }}
           >
@@ -439,7 +446,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
         }}
       >
         {serviceGroups.map((group) => {
-          const colors = groupColors[group.title];
+          const colors = groupColors[group.groupKey] || groupColors.core;
           return (
             <Box
               key={group.title}

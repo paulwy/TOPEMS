@@ -99,11 +99,15 @@ const config: RuntimeConfig = {
     bi: getEnv('VITE_BI_SERVICE_URL', '/api/bi'),
     /** 别名：历史上 svc 目录名为 analytics，路径与 bi 完全一致 */
     analytics: getEnv('VITE_BI_SERVICE_URL', '/api/bi'),
-    monitor: getEnv('VITE_MONITOR_SERVICE_URL', '/api/core/monitor'),
+    monitor: getEnv('VITE_MONITOR_SERVICE_URL', '/api/monitor'),
     portal: getEnv('VITE_PORTAL_SERVICE_URL', '/api/portal'),
     mobile: getEnv('VITE_MOBILE_SERVICE_URL', '/api/mobile'),
     gis: getEnv('VITE_GIS_SERVICE_URL', '/api/gis'),
     integration: getEnv('VITE_INTEGRATION_SERVICE_URL', '/api/integration'),
+
+    // === V68.1 拆分服务（从 unified-core 迁移至独立进程） ===
+    // plugin-registry: 插件注册与管理服务（端口 8096）
+    'plugin-registry': getEnv('VITE_PLUGIN_REGISTRY_SERVICE_URL', '/api/plugin'),
 
     // === 独立基础设施服务 ===
     billing: getEnv('VITE_BILLING_SERVICE_URL', '/api/billing'),

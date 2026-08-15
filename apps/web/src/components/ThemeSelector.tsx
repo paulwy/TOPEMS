@@ -5,7 +5,7 @@
  * 点击图标循环切换，长按或通过设置页查看全部选项
  */
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   IconButton,
   Tooltip,
@@ -17,22 +17,46 @@ import {
   ListItemText,
   Divider,
 } from '@mui/material';
-import i18n from '@/i18n';
+import { useTranslation } from 'react-i18next';
 import { Sun, Moon, Sparkles, Monitor, Check } from 'lucide-react';
-import { useThemeStore, themeList, type Theme } from '@/store';
+import {
+  useThemeStore,
+  getThemeList,
+  type Theme,
+  THEME_ICON_KEYS,
+} from '@/store';
 
-const themeIcons: Record<Theme, React.ReactNode> = {
+const THEME_ICON_COMPONENTS: Record<Theme, React.ReactNode> = {
   light: <Sun style={{ width: 18, height: 18 }} />,
   dark: <Moon style={{ width: 18, height: 18 }} />,
   cyberpunk: <Sparkles style={{ width: 18, height: 18 }} />,
   system: <Monitor style={{ width: 18, height: 18 }} />,
 };
 
-const themeLabels: Record<Theme, string> = {
-  light: i18n.t('components.theme_selector.k0'),
-  dark: i18n.t('components.theme_selector.k1'),
-  cyberpunk: i18n.t('components.theme_selector.k2'),
-  system: i18n.t('components.theme_selector.k3'),
+/**
+ * 主题 i18n key 映射（懒翻译，组件渲染期才通过 useTranslation() 取值，避免模块加载期 i18n 未初始化）
+ */
+const THEME_LABEL_KEYS: Record<Theme, { iconKey: string; title: string; selectTheme: string }> = {
+  light: {
+    iconKey: 'components.theme_selector.k0',
+    title: 'components.theme_selector.k0',
+    selectTheme: 'components.theme_selector.k4',
+  },
+  dark: {
+    iconKey: 'components.theme_selector.k1',
+    title: 'components.theme_selector.k1',
+    selectTheme: 'components.theme_selector.k4',
+  },
+  cyberpunk: {
+    iconKey: 'components.theme_selector.k2',
+    title: 'components.theme_selector.k2',
+    selectTheme: 'components.theme_selector.k4',
+  },
+  system: {
+    iconKey: 'components.theme_selector.k3',
+    title: 'components.theme_selector.k3',
+    selectTheme: 'components.theme_selector.k4',
+  },
 };
 
 export interface ThemeSelectorProps {
@@ -41,11 +65,15 @@ export interface ThemeSelectorProps {
 }
 
 export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ showMenu = true }) => {
+  const { t } = useTranslation();
   const theme = useThemeStore((state) => state.theme);
   const setTheme = useThemeStore((state) => state.setTheme);
   const toggleTheme = useThemeStore((state) => state.toggleTheme);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const open = Boolean(anchorEl);
+
+  /** themeList 每次渲染懒翻译 */
+  const themeListItems = useMemo(() => getThemeList((key) => t(key)), [t]);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     if (showMenu) {
@@ -64,13 +92,21 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ showMenu = true })
     handleClose();
   };
 
-  const tooltipText = `${i18n.t('components.theme_selector.k0')} ${themeLabels[theme]}${showMenu ? i18n.t('components.theme_selector.k1') : ''}`;
+  const currentThemeLabel = t(THEME_LABEL_KEYS[theme].title);
+  const themeLabelPrefix = t('components.theme_selector.k0');
+  const dropdownHint = showMenu ? t('components.theme_selector.k1') : '';
+  const tooltipText = `${themeLabelPrefix} ${currentThemeLabel}${dropdownHint}`;
+  const sectionTitle = t('components.theme_selector.k2');
+  const ariaLabel = t(THEME_LABEL_KEYS[theme].selectTheme);
+
+  // 防止 THEME_ICON_KEYS 未使用告警（供外部自定义消费）
+  void THEME_ICON_KEYS;
 
   return (
     <>
       <Tooltip title={tooltipText}>
         <IconButton
-          aria-label={i18n.t('components.theme_selector.k4')}
+          aria-label={ariaLabel}
           onClick={handleClick}
           sx={{
             width: 36,
@@ -80,7 +116,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ showMenu = true })
           }}
           size='small'
         >
-          {themeIcons[theme]}
+          {THEME_ICON_COMPONENTS[theme]}
         </IconButton>
       </Tooltip>
 
@@ -107,11 +143,11 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ showMenu = true })
               color='text.secondary'
               sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}
             >
-              {i18n.t('components.theme_selector.k2')}
+              {sectionTitle}
             </Typography>
           </Box>
           <Divider />
-          {themeList.map((item) => (
+          {themeListItems.map((item) => (
             <ListItemButton
               key={item.value}
               onClick={() => handleSelect(item.value)}
@@ -130,7 +166,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ showMenu = true })
                   color: theme === item.value ? 'primary.main' : 'text.secondary',
                 }}
               >
-                {themeIcons[item.value]}
+                {THEME_ICON_COMPONENTS[item.value]}
               </ListItemIcon>
               <ListItemText
                 primary={

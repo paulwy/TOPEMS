@@ -134,6 +134,9 @@ export function useNavTree(checkPermission: PermissionChecker): NavTreeResult {
     allModuleCodes.forEach((code) => {
       const module = navigationRegistryV2.getModule(code);
       if (!module) return;
+      // P4-C-1: 静态导航树只显示 source='core' 的模块
+      // source='plugin' 的专业模块需通过扩展市场安装后由 PluginManager 动态注册
+      if (module.source !== 'core') return;
       if (module.status !== 'online' && module.status !== 'beta' && module.status !== 'new') return;
       if (module.permission && !checkPermission(module.permission)) return;
 

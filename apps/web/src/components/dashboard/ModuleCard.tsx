@@ -11,6 +11,7 @@ import {
 import i18n from '@/i18n';
 import { ArrowRight } from 'lucide-react';
 import { ModuleStatusBadge, type ModuleStatusValue } from '@topems/shared-components';
+import { themeCustomShadows } from '@/theme/theme';
 
 type IconComponent = React.ComponentType<{
   className?: string;
@@ -57,31 +58,41 @@ const STATUS_CONFIG: Record<
   maintenance: { color: 'default', label: i18n.t('shared.module_card.k3') },
 };
 
-const CARD_STYLE: SxProps<Theme> = {
-  bgcolor: 'background.paper',
-  borderRadius: 2,
-  border: 1,
-  borderColor: 'divider',
-  cursor: 'pointer',
-  transition: (theme) =>
-    `border-color ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}, ` +
-    `box-shadow ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}, ` +
-    `transform ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}`,
-  display: 'flex',
-  flexDirection: 'column',
-  height: '100%',
-  minHeight: 180,
-  p: 2.5,
-  '&:hover': {
-    borderColor: 'primary.main',
-    boxShadow: 2,
-    transform: 'translateY(-1px)',
+const CARD_STYLE: SxProps<Theme> = [
+  {
+    bgcolor: 'background.paper',
+    borderRadius: 2,
+    border: 1,
+    borderColor: 'divider',
+    cursor: 'pointer',
+    transition: (theme) =>
+      `border-color ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}, ` +
+      `box-shadow ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}, ` +
+      `transform ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}`,
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    minHeight: 180,
+    p: 2.5,
+    '&:hover': {
+      borderColor: 'primary.main',
+      boxShadow: 2,
+      transform: 'translateY(-1px)',
+    },
   },
-  '&:focus-visible': {
-    outline: 'none',
-    boxShadow: (theme) => theme.customShadows.focus,
-  },
-};
+  (theme) => ({
+    '&:focus-visible': {
+      outline: 'none',
+      boxShadow: theme.customShadows.focus,
+    },
+    ...theme.applyStyles('dark', {
+      '&:focus-visible': { boxShadow: themeCustomShadows.dark.focus },
+    }),
+    [`[data-theme="cyberpunk"] &:focus-visible`]: {
+      boxShadow: themeCustomShadows.cyberpunk.focus,
+    },
+  }),
+];
 
 const ICON_WRAPPER_STYLE: SxProps<Theme> = {
   width: 40,
@@ -185,30 +196,40 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
       onClick={onClick}
       onKeyDown={handleKeyDown}
       className='dashboard-module-card'
-      sx={{
-        bgcolor: 'background.paper',
-        borderRadius: 2,
-        border: 1,
-        borderColor: 'divider',
-        cursor: 'pointer',
-        transition: (theme) =>
-          `border-color ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}, ` +
-          `box-shadow ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}, ` +
-          `transform ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}`,
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        p: sizeStyles.padding,
-        '&:hover': {
-          borderColor: 'primary.main',
-          boxShadow: 2,
-          transform: 'translateY(-1px)',
+      sx={[
+        {
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          border: 1,
+          borderColor: 'divider',
+          cursor: 'pointer',
+          transition: (theme) =>
+            `border-color ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}, ` +
+            `box-shadow ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}, ` +
+            `transform ${theme.transitions.duration.short}ms ${theme.transitions.easing.easeInOut}`,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          p: sizeStyles.padding,
+          '&:hover': {
+            borderColor: 'primary.main',
+            boxShadow: 2,
+            transform: 'translateY(-1px)',
+          },
         },
-        '&:focus-visible': {
-          outline: 'none',
-          boxShadow: (theme) => theme.customShadows.focus,
-        },
-      }}
+        (theme) => ({
+          '&:focus-visible': {
+            outline: 'none',
+            boxShadow: theme.customShadows.focus,
+          },
+          ...theme.applyStyles('dark', {
+            '&:focus-visible': { boxShadow: themeCustomShadows.dark.focus },
+          }),
+          [`[data-theme="cyberpunk"] &:focus-visible`]: {
+            boxShadow: themeCustomShadows.cyberpunk.focus,
+          },
+        }),
+      ]}
     >
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 1.5 }}>
         <Box

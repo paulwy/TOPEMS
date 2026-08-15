@@ -265,6 +265,24 @@ impl ServiceRegistry {
                 health_endpoint: "/health".to_string(),
                 api_prefix: "/api/master-data".to_string(),
             },
+            // === V68.1 拆分服务 (8095-8096) ===
+            // monitor 和 plugin 路由已从 unified-core 迁移至独立进程
+            ServiceConfig {
+                name: "topems-monitor".to_string(),
+                display_name: "系统监控服务".to_string(),
+                description: "系统监控服务（V68.1 从 unified-core 拆分）".to_string(),
+                port: 8095,
+                health_endpoint: "/health".to_string(),
+                api_prefix: "/api/monitor".to_string(),
+            },
+            ServiceConfig {
+                name: "topems-plugin-registry".to_string(),
+                display_name: "插件注册与管理服务".to_string(),
+                description: "插件注册与管理服务（V68.1 从 unified-core 拆分）".to_string(),
+                port: 8096,
+                health_endpoint: "/health".to_string(),
+                api_prefix: "/api/plugin".to_string(),
+            },
         ]
     }
 
