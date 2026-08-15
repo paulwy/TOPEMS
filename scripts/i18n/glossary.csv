@@ -44,7 +44,7 @@ zh_term,standard_en,category,notes,allowed_aliases
 正常,Normal,UI_COMMON,状态值；Online/Healthy 特殊语境保留,""
 操作成功,Operation succeeded,ACTION_RESULT,所有成功提示统一：名词 + succeeded（动词过去式）,
 加载中...,Loading...,UI_COMMON,统一三点,
-已停用,Deactivated,UI_COMMON,账户/用户状态专用；Disabled 用于功能开关；Inactive 保留为 HRM 员工状态,
+已停用,Deactivated,UI_COMMON,账户/用户状态专用；Disabled 用于功能开关；Inactive 保留为 HRM 员工状态,"Inactive, Disabled"
 更新时间,Updated At,TIME_DATE,与 Created At 配套,
 分类,Category,UI_COMMON,Category 简洁；Classification 仅在 QMS/质量管理体系严格语境保留（需限定命名空间）,
 待审核,Pending Review,UI_COMMON,Review 审核与 Approval 审批区分：Review 是审核/复核；Approval 是批准决策,Pending Audit
@@ -65,7 +65,7 @@ zh_term,standard_en,category,notes,allowed_aliases
 确认删除,Confirm Delete,UI_COMMON,模态标题 Confirm + 动词原形，空格分隔,
 结束日期,End Date,TIME_DATE,与 Start Date 配套,
 保存,Save,UI_COMMON,按钮动词,
-确认,Confirm,UI_COMMON,按钮/动作,
+确认,Confirm,UI_COMMON,按钮/动作,Acknowledge
 更新成功,Updated successfully,ACTION_RESULT,句式: adj + successfully 同 Deleted successfully,
 开始日期,Start Date,TIME_DATE,与 End Date 配套,
 导出成功,Exported successfully,ACTION_RESULT,与 Deleted/Updated 同句式,
