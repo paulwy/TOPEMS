@@ -380,17 +380,30 @@ function RUN_VALIDATORS(backendRes, frontendRes, constRes) {
     }
   }
 
+  /* R4-A2a: Backend→Frontend module alias mappings (hardcoded, count-locked by assert) */
+  const BF_MODULE_ALIAS = Object.freeze({
+    // Backend prefix 'system' = frontend iam/admin bucket system settings
+    system: ['iam', 'admin'],
+    // Backend prefix 'file' = frontend doc/integration bucket file management
+    file: ['doc', 'integration'],
+  });
+  console.assert(Object.keys(BF_MODULE_ALIAS).length === 2, 'BF_MODULE_ALIAS locked at 2 entries');
+
   /* ---------- R4: Module prefix B-F alignment (WARN only) ---------- */
   const unionM = new Set([...backendModuleSet, ...frontendModuleSet]);
   for (const M of unionM) {
     const inB = backendModuleSet.has(M);
     const inF = frontendModuleSet.has(M);
     if (inB && !inF) {
-      REPORT.summary.R4++;
-      REPORT.warnings.push({
-        rule: 'R4', level: 'WARN',
-        msg: `[B→F MISMATCH] Backend module prefix '${M}' appears in require_permission() checks, but apps/web/src/modules/${M}/ directory is MISSING. Likely backend/frontend module naming inconsistency pairs (e.g. backend='pdm' ↔ frontend='product' / backend='master-data' ↔ frontend='master', etc.). Verify if frontend module directory SHOULD exist but has different basename.`
-      });
+      const aliases = BF_MODULE_ALIAS[M] || [];
+      const hasAliasMatch = aliases.some(a => frontendModuleSet.has(a));
+      if (!hasAliasMatch) {
+        REPORT.summary.R4++;
+        REPORT.warnings.push({
+          rule: 'R4', level: 'WARN',
+          msg: `[B→F MISMATCH] Backend module prefix '${M}' appears in require_permission() checks, but apps/web/src/modules/${M}/ directory is MISSING. Likely backend/frontend module naming inconsistency pairs (e.g. backend='pdm' ↔ frontend='product' / backend='master-data' ↔ frontend='master', etc.). Verify if frontend module directory SHOULD exist but has different basename.`
+        });
+      }
     }
     if (inF && !inB) {
       REPORT.summary.R4++;

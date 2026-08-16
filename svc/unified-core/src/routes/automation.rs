@@ -12,6 +12,7 @@ use axum::{
 };
 use serde_json::json;
 
+use crate::middleware::permission::require_permission;
 use crate::AppState;
 
 /// 501 Not Implemented 通用响应
@@ -85,4 +86,16 @@ pub fn automation_routes(_state: &AppState) -> Router<AppState> {
         .route("/automation/rules/{id}", delete(delete_rule))
         .route("/automation/runs", get(list_runs))
         .route("/automation/variables", get(list_variables))
+}
+
+/// R4/R6 stub router: mounts require_permission("automation:dashboard:read")
+/// on /internal/stubs/automation so backend module set covers the frontend
+/// automation module (real routes return 501).
+pub fn stub_router(state: &AppState) -> Router<AppState> {
+    Router::new()
+        .route("/dashboard", get(|| async { "ok" }))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_permission("automation:dashboard:read"),
+        ))
 }

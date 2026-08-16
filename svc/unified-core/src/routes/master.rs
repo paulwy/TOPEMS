@@ -64,7 +64,7 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
         .route("/tenant/my", get(modules::tenant::handlers::get_my_tenants))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
-            require_permission("tenant:read"),
+            require_permission("iam:tenant:read"),
         ));
 
     let tenant_write = Router::new()
@@ -130,7 +130,7 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
         )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
-            require_permission("tenant:write"),
+            require_permission("admin:iam:tenant:write"),
         ));
 
     // V68.1 A2.3: dict 路由迁移到 svc/master-data，后续通过服务发现代理 /dict/* → 主数据服务

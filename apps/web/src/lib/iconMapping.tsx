@@ -171,6 +171,7 @@ import {
   LineChart,
   AreaChart,
   ToggleLeft,
+  Share2,
   // 保留别名导入（lucideIcons map 中通过别名引用）
   Box as BoxIcon,
   DollarSign as DollarSignIcon,
@@ -355,6 +356,7 @@ export const lucideIcons: Record<
   LineChart,
   AreaChart,
   ToggleLeft,
+  Share2,
   // Grid3x3: alias for Grid3X3 (config.ts uses lowercase x)
   Grid3x3: Grid3X3,
   RefreshCwIcon,

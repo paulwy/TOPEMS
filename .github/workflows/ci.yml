@@ -695,8 +695,8 @@ jobs:
   #   R4/R5/R6 = WARN (never red · visible only in summary JSON + step logs)
   #
   # Integrity L2 FATAL → always exit=2 red even in dry-run.
-  # Guardian Vitest also runs R1≤8/R2≤12/R3≤1018 in frontend-test job as
-  # Layer-2 never-rebound safety net.
+  # Guardian Vitest also runs R1≤0/R2≤0/R3≤0 in frontend-test job as
+  # Layer-2 never-rebound safety net (R1/R2/R3 三项清零后永久 0 容忍基线).
   # ──────────────────────────────────────────────────────────────────────────
   permission-matrix-gate:
     name: Permission Matrix 3-Way Gate (Perm-Gate)
@@ -714,13 +714,14 @@ jobs:
       - name: Run Perm-Gate (report-json + fail-fast @ baseline thresholds)
         run: |
           # Baseline thresholds = MAX ALLOWED (inclusive):
-          #   R1=8, R2=12, R3=1018 — known violation frozen on 2026-08-16 snapshot
+          #   R1=0, R2=0, R3=0 — R1/R2 清零 + R3 清零后最终基线（2026-08-17 R3攻坚完成）
+          #   (previous: R1=8/R2=12 frozen 2026-08-16; then R1/R2 tightened to 0 on 2026-08-17; R3=1018→0)
           # count > threshold → exit 1 → CI red (PR blocked).
           # Known violations are allowed; only NEW regressions that INCREASE
           # R1/R2/R3 beyond baseline block merging.
           node scripts/ci/check-permission-matrix.cjs \
             --fail-fast \
-            --thresholds '{"R1":8,"R2":12,"R3":1018}' \
+            --thresholds '{"R1":0,"R2":0,"R3":0}' \
             --report-json=/tmp/perm-gate-ci.json
           PERM_EXIT=$?
           if [ $PERM_EXIT -ne 0 ]; then

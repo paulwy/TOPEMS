@@ -8,7 +8,7 @@
 //! .route("/api/core/iam/users", post(create_user))
 //! .layer(axum::middleware::from_fn_with_state(
 //!     state.clone(),
-//!     require_permission("iam:write"),
+//!     require_permission("admin:iam:write"),
 //! ))
 #![allow(clippy::unused_async)]
 
@@ -49,7 +49,7 @@ pub fn has_role(claims: &Claims, role: &str) -> bool {
 /// .route("/api/core/iam/users", post(create_user))
 /// .layer(axum::middleware::from_fn_with_state(
 ///     state.clone(),
-///     require_permission("iam:write"),
+///     require_permission("admin:iam:write"),
 /// ))
 /// ```
 pub fn require_permission(

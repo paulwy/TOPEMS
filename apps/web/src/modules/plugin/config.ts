@@ -34,7 +34,7 @@ export const pluginModuleConfig: RouteModuleConfig = {
       module: 'plugin',
       title: i18n.t('shared.config.k2'),
       code: 'plugin-dashboard',
-      requiredPermissions: [],
+      requiredPermissions: ['plugin:dashboard:read'],
       action: 'read',
       template: 'dashboard',
       group: 'overview',

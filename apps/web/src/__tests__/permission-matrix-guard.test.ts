@@ -2,12 +2,12 @@
  * Permission Matrix 3-Way Gate Guardian (Layer-2, dual-gate safety net)
  *
  * Design: Spec docs/superpowers/specs/2026-08-16-permission-matrix-gate-design.md
- * Baseline: docs/roadmap/artifacts/rN-perm-matrix-baseline.json (R1=8, R2=12, R3=1018)
+ * Baseline: docs/roadmap/artifacts/rN-perm-matrix-baseline.json (R1=0, R2=0, R3=0)
  *
  * Guarded rules (Layer-2 NEVER-REBOUND):
- *   R1 (backend FORMAT violations)          MUST ≤ 8    (baseline count = 8)
- *   R2 (backend EXISTENCE violations)       MUST ≤ 12   (baseline count = 12)
- *   R3 (frontend nav EXISTENCE violations)  MUST ≤ 1018 (baseline count = 1018)
+ *   R1 (backend FORMAT violations)          MUST ≤ 0    (baseline count = 0)
+ *   R2 (backend EXISTENCE violations)       MUST ≤ 0    (baseline count = 0)
+ *   R3 (frontend nav EXISTENCE violations)  MUST ≤ 0    (baseline count = 0)
  *   Integrity L2                            MUST PASS   (never false-green)
  *
  * Runs runGate() directly from scripts/ci/check-permission-matrix.cjs via
@@ -31,9 +31,9 @@ const { runGate } = _require(_cjsAbs);
 
 // Baseline thresholds (from rN-perm-matrix-baseline.json)
 const BASELINE = Object.freeze({
-  R1: 8,
-  R2: 12,
-  R3: 1018,
+  R1: 0,
+  R2: 0,
+  R3: 0,
 });
 
 describe('Permission Matrix 3-Way Gate · Guardian (never rebound vs baseline)', () => {

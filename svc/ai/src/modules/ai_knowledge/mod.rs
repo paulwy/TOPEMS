@@ -279,10 +279,10 @@ pub fn create_routes() -> Router<AppState> {
             post(handlers::semantic_search),
         )
         .layer(axum::middleware::from_fn(require_permission(
-            "knowledge:read",
+            "ai:dashboard:read",
         )));
 
-    // ===== 写入类路由（需要 knowledge:write 权限）=====
+    // ===== 写入类路由（需要 ai:dashboard:write 权限）=====
     let write_routes = Router::new()
         .route(
             "/api/core/ai-knowledge/bases",
@@ -309,10 +309,10 @@ pub fn create_routes() -> Router<AppState> {
             post(handlers::submit_feedback),
         )
         .layer(axum::middleware::from_fn(require_permission(
-            "knowledge:write",
+            "ai:dashboard:write",
         )));
 
-    // ===== 删除类路由（需要 knowledge:admin 权限）=====
+    // ===== 删除类路由（需要 ai:dashboard:admin 权限）=====
     let admin_routes = Router::new()
         .route(
             "/api/core/ai-knowledge/bases/{id}",
@@ -323,7 +323,7 @@ pub fn create_routes() -> Router<AppState> {
             delete(handlers::delete_document),
         )
         .layer(axum::middleware::from_fn(require_permission(
-            "knowledge:admin",
+            "ai:dashboard:admin",
         )));
 
     Router::new()

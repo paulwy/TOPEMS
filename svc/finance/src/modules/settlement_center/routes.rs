@@ -49,10 +49,10 @@ pub fn create_routes() -> Router<AppState> {
             get(handlers::get_statistics),
         )
         .layer(axum::middleware::from_fn(require_permission(
-            "settlement:read",
+            "finance:settlement:read",
         )));
 
-    // ===== 写入类路由（需要 settlement:write 权限）=====
+    // ===== 写入类路由（需要 finance:settlement:write 权限）=====
     let write_routes = Router::new()
         .route(
             "/api/core/settlement-center/reconciliations",
@@ -83,10 +83,10 @@ pub fn create_routes() -> Router<AppState> {
             post(handlers::create_difference),
         )
         .layer(axum::middleware::from_fn(require_permission(
-            "settlement:write",
+            "finance:settlement:write",
         )));
 
-    // ===== 审批类路由（需要 settlement:approve 权限）=====
+    // ===== 审批类路由（需要 finance:settlement:approve 权限）=====
     let approve_routes = Router::new()
         .route(
             "/api/core/settlement-center/settlements/{id}/approve",
@@ -101,7 +101,7 @@ pub fn create_routes() -> Router<AppState> {
             post(handlers::reject_difference),
         )
         .layer(axum::middleware::from_fn(require_permission(
-            "settlement:approve",
+            "finance:settlement:approve",
         )));
 
     Router::new()

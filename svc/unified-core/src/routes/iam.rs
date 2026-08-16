@@ -155,7 +155,7 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
         )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
-            require_permission("iam:write"),
+            require_permission("admin:iam:write"),
         ));
 
     let delete_routes = Router::new()
@@ -171,7 +171,7 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
         )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
-            require_permission("iam:delete"),
+            require_permission("admin:iam:delete"),
         ));
 
     Router::new().nest("/iam", read.merge(write).merge(delete_routes))
