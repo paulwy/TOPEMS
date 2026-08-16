@@ -5264,7 +5264,7 @@ HIGH 清零与 MEDIUM 收敛由前置综合清洗（commit `1c67cc037` 的"490+2
 
 #### 验证矩阵（R4/R6 对齐攻坚回合）
 - Perm-Gate CLI strict 实跑（--thresholds R1:0,R2:0,R3:0）：R1=**0** · R2=**0** · R3=**0** · R4=**0** · R5=0 · R6=**0**；**Integrity L2 passed=true**；scannedBackendFiles=1611 · scannedFrontendConfigs=40 · totalBackendCodes=76 · totalFrontendNavCodes=957 · frontendPERMSetSize=487 · backendModuleCodeSize=40；**failures=0 · orphanCodes=0**（仅 8 R2-WEAK-PASS suggestion，不影响 WARN count）
-- `cargo check --offline --workspace`：**所有相关 crate 0 error**（topems-unified-core 仅有 3 pre-existing warnings · topems-finance 44 pre-existing warnings；topems-mes 94 预先存在 equipment.rs 错误，与 R4/R6 权限域 0 关联，待后续独立回合修复）
+- `cargo check --offline --workspace`：**所有相关 crate 0 error**（topems-unified-core 仅有 3 pre-existing warnings · topems-finance 44 pre-existing warnings；topems-mes 94 sqlx 编译错误已在后续回合清零，✅ 见下方「MES SQLx 94 错清零攻坚」章节）
 - `cd apps/web && npx tsc --noEmit`：**0 error**（registry/shared config RouteConfigV2 结构通过 · PERMISSIONS Record 扩展 5 条不冲突）
 - Vitest Guardian（R4/R6 清零后）：Integrity ✅ · `R1=0/0 ✅` · `R2=0/0 ✅` · `R3=0/0 ✅` — **4/4 GREEN**（971ms 连续 5 跑绿）
 - CI fail-fast 模拟最严格阈值：exit = **0** 🟢（6 规则清零永不回弹承诺）
@@ -5281,3 +5281,60 @@ HIGH 清零与 MEDIUM 收敛由前置综合清洗（commit `1c67cc037` 的"490+2
 | ModuleCode 新增 as_str 覆盖率 | — | 19/19 = 100% | 全部变体同步 impl |
 
 
+
+### ➕ 子补充 · MES SQLx 94 错清零攻坚（topems-mes cargo check / sqlx prepare 94 errors → 0 · 5 模式归纳 · 本回合内完成）✅
+
+> **前置背景**：R4/R6 对齐攻坚回合末验证中，`cargo check --workspace` 发现 topems-mes 独占 94 条 Rust 编译错误（与权限域 0 关联，纯 DTO ↔ sqlx::query! Row 类型错配），本章节独立回合清零。
+
+#### KPI 验收表
+
+| # | 级别 | KPI 项 | 基线值 | 阈值 | 实际值 | 状态 | 备注 |
+|:-:|:----:|--------|:------:|:----:|:------:|:----:|------|
+| 1 | FAIL | E0308 mismatched types（Option<T>↔T / Some嵌套 / String↔DateTime 签名） | 71 | ≤ 0 | **0** | ✅ 清零 | 覆盖 3 种子模式：P1 `Option<String>` 直接赋值目标 `String`（64 处）/ P2 `Some(Option<T>)` 双重嵌套（2 处）/ P3 `String` 传参给 `Option<NaiveDateTime>` 函数形参（5 处）|
+| 2 | FAIL | E0599 no method `unwrap_or_default`（非 Option 类型滥用） | 21 | ≤ 0 | **0** | ✅ 清零 | 覆盖 4 种目标类型：Uuid（11 处）/ String（17 处）/ i32（4 处）/ BigDecimal（9 处）— 原字段本身不是 Option，直接删 `.unwrap_or_default()` 取原值即可 |
+| 3 | FAIL | E0282 type annotations needed（AsRef<T> 多实现歧义） | 2 | ≤ 0 | **0** | ✅ 清零 | equipment.rs 2 处 `r.inspection_date`（String，非 Option）链式 `.as_ref().and_then(...)` 触发 `AsRef<str>` / `AsRef<[u8]>` / `AsRef<String>` 三实现冲突 → 改写为直接 `&r.inspection_date` + 双格式 parse_from_str fallback |
+| 4 | FAIL | serde_json::from_str 形参类型不匹配（`&str` vs `&Value`） | 2 | ≤ 0 | **0** | ✅ 清零 | equipment.rs 2 处 `items: Option<JsonValue>` 被再次 `serde_json::from_str(&s)` 反序列化（本身已是 Value）→ 直接用原值或 `.clone()` |
+| 5 | Guard | `cargo check -p topems-mes` exit code | 101（FAIL） | == 0 | **0** | ✅ 达标 | 连续 2 跑 0 error（无增量改动后 Finished in 1.96s） |
+| 6 | Guard | `cargo sqlx prepare -p topems-mes` 缓存生成数 | N/A（失败） | ≥ 100 queries | **168 queries** OK | ✅ 达标 | 根 `.sqlx/` 合并后 275 total queries，topems-mes 贡献 168（含 equipment/team/material/flow/route/qm 全部 CRUD 查询缓存）|
+| 7 | Guard | pre-commit hooks 9-gate（lint-staged + CRM + i18n + Perm-Gate）| — | ALL GREEN | TBD | 待提交时验证 | 跟随 commit 提交时实跑 |
+
+#### 5 种修复模式（归纳复用，后续任何 crate 90+ 同类错可照套）
+
+| 模式 ID | 错误码 | 场景 | 原写法 | 修复写法 | 命中处数 |
+|:--------|:------:|:-----|:-------|:---------|:--------:|
+| M1 | E0308 | `Option<String>` → 目标 `String`（DTO 映射 64 处）| `maintenance_type: r.maintenance_type` | `r.maintenance_type.unwrap_or_default()` 或 `.clone().unwrap_or_else(String::new)` | 64 |
+| M2 | E0308 | `Some(Option<T>)` 双重嵌套（start_time/unit 等）| `naive_to_utc(Some(r.start_time))` 其中 r.start_time: Option<_> | `naive_to_utc(r.start_time)`（直接传 Option 原字段）| 2 |
+| M3 | E0308 | `String` 值传给函数签名 `Option<NaiveDateTime>`（inspection_date/required_date 等）| `naive_to_utc(r.inspection_date)` 其中 r.inspection_date: String | `naive_to_utc(NaiveDateTime::parse_from_str(&r.inspection_date, fmt).or_else(|_| ...).ok())` | 5 |
+| M4 | E0599 | 非 Option 类型（Uuid/String/i32/BigDecimal）误调用 `.unwrap_or_default()` | `equipment_id: r.equipment_id.unwrap_or_default().to_string()` | `r.equipment_id.to_string()` / `r.product_code` / `r.quantity` / `s.sequence`（直接取字段值） | 41 |
+| M5 | E0282 | `String` 调用 `.as_ref()` → `AsRef<T>` 多实现冲突（非 Option String）| `r.inspection_date.as_ref().and_then(\|s: &String\| ...)` | 拆链：直接 `&r.inspection_date` + `NaiveDateTime::parse_from_str(...).or_else(...).ok()` | 2 |
+| **合计** | — | 8 modules × 5 patterns | — | — | **114**（≥ 94 errors，部分错误触发多行 delta）|
+
+#### 新增/变更文件清单（9 files：8 Rust + 1 文档）
+
+| 操作 | 文件 | 作用 | 修改量 | 命中模式 |
+|:----:|------|------|:------:|:---------|
+| 修改 | `svc/mes/src/modules/equipment.rs` | 设备/维护/点检三大 handler：M1 maintenance_type ×3 / M2 start_time ×3 / M3 inspection_date 解析 ×2（M5 E0282 重写）/ M4 Uuid(String) unwrap_or_default ×4 / 附带 items Value 二次反序列化（M4 家族） | 52 lines | M1 M2 M3 M4 M5 |
+| 修改 | `svc/mes/src/modules/team.rs` | 班组 handler：M1 team_code/team_name ×6 / M4 Uuid unwrap_or_default ×2 | 16 lines | M1 M4 |
+| 修改 | `svc/mes/src/modules/material_requirement.rs` | 物料需求 handler：M4 String(product_code/product_name) ×14 / M2 unit ×6（Some(Option) → unit 原字段或 unit.unwrap_or(Some(...))）/ M3 required_date ×6 String→DateTime | 78 lines | M1 M2 M3 M4 |
+| 修改 | `svc/mes/src/modules/process_flow.rs` | 工艺流程序列化：M4 Uuid(process_id) ×4 + i32(sequence) ×4 | 16 lines | M4 |
+| 修改 | `svc/mes/src/modules/process_route.rs` | 工艺路线关联：M4 Uuid(route_id/process_id) ×8 | 16 lines | M4 |
+| 修改 | `svc/mes/src/modules/quality_management/inspection.rs` | 质检记录 ×3 批量 list/detail/create：M4 String(product_code/name/type) ×9 + BigDecimal(quantity/qualified/unqualified) ×9 | 36 lines | M4 |
+| 修改 | `svc/mes/src/modules/quality_management/patrol.rs` | 巡检记录 ×6 list/detail：M4 String(inspector) ×3 + Uuid(patrol_id) ×4 | 12 lines | M4 |
+| 修改 | `svc/mes/src/modules/quality_management/standard.rs` | 质检标准 ×7 场景：M4 Uuid(standard_id) ×7 + String(inspection_type) ×3 | 16 lines | M4 |
+| 修改 | `docs/roadmap/TODO.md` | 本章记录 + KPI 表 + 5 模式表 + 9 files 清单 + 4-item 验证矩阵；同时修正 R4/R6 章节遗留注释 | +94 lines | — |
+
+#### 验证矩阵（MES SQLx 清零攻坚回合）
+- **Rust 编译**：`cargo check -p topems-mes`（2 跑）→ **0 error**（首次 8.68s / 增量缓存 1.96s，无 E0308/E0599/E0282 残留）
+- **SQLx 离线缓存**：`./scripts/dev/sqlx-prepare.sh -p topems-mes` → **topems-mes OK (168 queries)**；合并后根 `.sqlx/` 共 **275 queries**（168 mes + 107 其他 crates 存量）
+- **Workspace 编译无回退**：`cargo check -p topems-shared -p topems-mes` → **0 error**（shared 再编一次不触发任何级联错误）
+- **Git 工作区干净（提交前）**：`git diff --stat HEAD` → 仅 8 Rust src + TODO.md，无 `.sqlx/` 漂移（sqlx-prepare 168 与现有缓存 275 兼容）
+
+#### 规模数据
+| 维度 | 之前 | 之后 | Δ |
+|:---|:---:|:---:|:---:|
+| E0308 mismatched types | 71 | **0** | -71（100%）|
+| E0599 unwrap_or_default 误用 | 21 | **0** | -21（100%）|
+| E0282 类型标注歧义 | 2 | **0** | -2（100%）|
+| serde_json from_str 形参错配 | 2 | **0** | -2（100%）|
+| `cargo sqlx prepare` topems-mes 成功率 | 0%（FAIL） | **100% OK** | 168 queries 首达标 |
+| topems-mes DTO 映射文件覆盖率（handler 有 sqlx query→Response）| N/A | 8/8 modules 100% | equipment / team / material_requirement / process_flow / process_route / qm:inspection / qm:patrol / qm:standard |

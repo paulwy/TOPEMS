@@ -320,16 +320,22 @@ pub async fn get_material_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.unwrap_or_default(),
-                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code.clone(),
+                product_name: r.product_name.clone(),
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: Some(r.unit.clone()),
+                unit: r.unit,
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: datetime_to_string(r.required_date),
+                required_date: {
+                    let nd =
+                        NaiveDateTime::parse_from_str(&r.required_date, "%Y-%m-%d %H:%M:%S%.f")
+                            .or_else(|_| NaiveDateTime::parse_from_str(&r.required_date, "%+"))
+                            .ok();
+                    datetime_to_string(nd)
+                },
                 priority: r.priority,
                 status: r
                     .status
@@ -419,16 +425,22 @@ pub async fn create_material_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.unwrap_or_default(),
-                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code.clone(),
+                product_name: r.product_name.clone(),
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: Some(r.unit.clone()),
+                unit: r.unit,
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: datetime_to_string(r.required_date),
+                required_date: {
+                    let nd =
+                        NaiveDateTime::parse_from_str(&r.required_date, "%Y-%m-%d %H:%M:%S%.f")
+                            .or_else(|_| NaiveDateTime::parse_from_str(&r.required_date, "%+"))
+                            .ok();
+                    datetime_to_string(nd)
+                },
                 priority: r.priority,
                 status: r
                     .status
@@ -522,16 +534,22 @@ pub async fn update_material_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.unwrap_or_default(),
-                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code.clone(),
+                product_name: r.product_name.clone(),
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: Some(r.unit.clone()),
+                unit: r.unit,
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: datetime_to_string(r.required_date),
+                required_date: {
+                    let nd =
+                        NaiveDateTime::parse_from_str(&r.required_date, "%Y-%m-%d %H:%M:%S%.f")
+                            .or_else(|_| NaiveDateTime::parse_from_str(&r.required_date, "%+"))
+                            .ok();
+                    datetime_to_string(nd)
+                },
                 priority: r.priority,
                 status: r
                     .status
@@ -689,16 +707,24 @@ pub async fn calculate_requirements(
                         mrp_no: r.mrp_no,
                         order_id: r.order_id.map(|u| u.to_string()),
                         order_number: r.order_number,
-                        product_code: r.product_code.clone().unwrap_or_default(),
-                        product_name: r.product_name.clone().unwrap_or_default(),
+                        product_code: r.product_code.clone(),
+                        product_name: r.product_name.clone(),
                         material_code: r.material_code,
                         material_name: r.material_name,
                         specification: r.specification,
-                        unit: Some(r.unit.clone()),
+                        unit: r.unit,
                         required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
                         available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                         shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                        required_date: datetime_to_string(r.required_date.clone()),
+                        required_date: {
+                            let nd = NaiveDateTime::parse_from_str(
+                                &r.required_date,
+                                "%Y-%m-%d %H:%M:%S%.f",
+                            )
+                            .or_else(|_| NaiveDateTime::parse_from_str(&r.required_date, "%+"))
+                            .ok();
+                            datetime_to_string(nd)
+                        },
                         priority: r.priority,
                         status: r.status.unwrap_or_else(|| "pending".to_string()),
                         source_type: r.source_type,
@@ -754,16 +780,22 @@ pub async fn confirm_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.unwrap_or_default(),
-                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code.clone(),
+                product_name: r.product_name.clone(),
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: Some(r.unit.clone()),
+                unit: r.unit,
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: datetime_to_string(r.required_date),
+                required_date: {
+                    let nd =
+                        NaiveDateTime::parse_from_str(&r.required_date, "%Y-%m-%d %H:%M:%S%.f")
+                            .or_else(|_| NaiveDateTime::parse_from_str(&r.required_date, "%+"))
+                            .ok();
+                    datetime_to_string(nd)
+                },
                 priority: r.priority,
                 status: r
                     .status
@@ -822,16 +854,22 @@ pub async fn release_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.unwrap_or_default(),
-                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code.clone(),
+                product_name: r.product_name.clone(),
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: Some(r.unit.clone()),
+                unit: r.unit,
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: datetime_to_string(r.required_date),
+                required_date: {
+                    let nd =
+                        NaiveDateTime::parse_from_str(&r.required_date, "%Y-%m-%d %H:%M:%S%.f")
+                            .or_else(|_| NaiveDateTime::parse_from_str(&r.required_date, "%+"))
+                            .ok();
+                    datetime_to_string(nd)
+                },
                 priority: r.priority,
                 status: r
                     .status
