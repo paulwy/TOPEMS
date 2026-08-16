@@ -22,6 +22,40 @@ mod migration;
 // mod plugin;
 mod system;
 
+// ===== R4/R6 stub modules (32 F-only frontend modules · backend perm declaration stubs) =====
+pub mod admin;
+pub mod aps;
+pub mod asset;
+pub mod bi;
+pub mod crm;
+pub mod ehs;
+pub mod erp;
+pub mod finance;
+pub mod gis;
+pub mod hrm;
+pub mod im;
+pub mod integration;
+pub mod lims;
+pub mod lowcode;
+pub mod mes;
+pub mod mobile;
+pub mod monitor;
+pub mod notification;
+pub mod oa;
+pub mod pdm;
+pub mod pm;
+pub mod qms;
+pub mod rd;
+pub mod registry;
+pub mod report;
+pub mod scm;
+pub mod shared;
+pub mod srm;
+pub mod ticket;
+pub mod tms;
+pub mod wms;
+// NOTE: automation / doc already declared above (real routes exist), skip duplicate pub mod here
+
 use axum::routing::{get, post};
 use axum::Router;
 
@@ -156,9 +190,48 @@ pub fn create_routes(
         core_routes,
     );
 
+    // ===== R4/R6 B1 · 32 frontend module stubs =====
+    // Only purpose: mount require_permission("{mod}:dashboard:read") so backend
+    // module set covers all frontend modules. All handlers = async "ok" (no-op).
+    let stubs: Router<AppState> = Router::new()
+        .nest("/internal/stubs/admin", admin::router(state))
+        .nest("/internal/stubs/aps", aps::router(state))
+        .nest("/internal/stubs/asset", asset::router(state))
+        .nest("/internal/stubs/automation", automation::stub_router(state))
+        .nest("/internal/stubs/bi", bi::router(state))
+        .nest("/internal/stubs/crm", crm::router(state))
+        .nest("/internal/stubs/doc", doc::stub_router(state))
+        .nest("/internal/stubs/ehs", ehs::router(state))
+        .nest("/internal/stubs/erp", erp::router(state))
+        .nest("/internal/stubs/finance", finance::router(state))
+        .nest("/internal/stubs/gis", gis::router(state))
+        .nest("/internal/stubs/hrm", hrm::router(state))
+        .nest("/internal/stubs/im", im::router(state))
+        .nest("/internal/stubs/integration", integration::router(state))
+        .nest("/internal/stubs/lims", lims::router(state))
+        .nest("/internal/stubs/lowcode", lowcode::router(state))
+        .nest("/internal/stubs/mes", mes::router(state))
+        .nest("/internal/stubs/mobile", mobile::router(state))
+        .nest("/internal/stubs/monitor", monitor::router(state))
+        .nest("/internal/stubs/notification", notification::router(state))
+        .nest("/internal/stubs/oa", oa::router(state))
+        .nest("/internal/stubs/pdm", pdm::router(state))
+        .nest("/internal/stubs/pm", pm::router(state))
+        .nest("/internal/stubs/qms", qms::router(state))
+        .nest("/internal/stubs/rd", rd::router(state))
+        .nest("/internal/stubs/registry", registry::router(state))
+        .nest("/internal/stubs/report", report::router(state))
+        .nest("/internal/stubs/scm", scm::router(state))
+        .nest("/internal/stubs/shared", shared::router(state))
+        .nest("/internal/stubs/srm", srm::router(state))
+        .nest("/internal/stubs/ticket", ticket::router(state))
+        .nest("/internal/stubs/tms", tms::router(state))
+        .nest("/internal/stubs/wms", wms::router(state));
+
     Router::new()
         .merge(public_routes)
         .merge(core_router)
+        .merge(stubs)
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             middleware::input_validation::input_validation_middleware,

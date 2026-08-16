@@ -318,28 +318,32 @@ mod tests {
     // ===== require_permission =====
     #[tokio::test]
     async fn test_require_permission_unauthorized_without_claims() {
-        let status = send(require_permission("iam:users_read"), None).await;
+        let status = send(require_permission("iam:dashboard:read"), None).await;
         assert_eq!(status, StatusCode::UNAUTHORIZED);
     }
 
     #[tokio::test]
     async fn test_require_permission_forbidden_when_missing() {
         let claims = make_claims(&["other:perm"], false, &[]);
-        let status = send(require_permission("iam:users_read"), Some(claims)).await;
+        let status = send(require_permission("iam:dashboard:read"), Some(claims)).await;
         assert_eq!(status, StatusCode::FORBIDDEN);
     }
 
     #[tokio::test]
     async fn test_require_permission_ok_when_has() {
-        let claims = make_claims(&["iam:users_read"], false, &[]);
-        let status = send(require_permission("iam:users_read"), Some(claims)).await;
+        let claims = make_claims(&["iam:dashboard:read"], false, &[]);
+        let status = send(require_permission("iam:dashboard:read"), Some(claims)).await;
         assert_eq!(status, StatusCode::OK);
     }
 
     #[tokio::test]
     async fn test_require_permission_ok_for_superuser() {
         let claims = make_claims(&[], true, &[]);
-        let status = send(require_permission("iam:anything"), Some(claims)).await;
+        let status = send(
+            require_permission("admin:iam:dashboard:approve"),
+            Some(claims),
+        )
+        .await;
         assert_eq!(status, StatusCode::OK);
     }
 

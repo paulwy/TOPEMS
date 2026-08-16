@@ -42,7 +42,9 @@ pub fn create_routes() -> Router<AppState> {
             "/plugin/plugins/{plugin_id}/reviews",
             get(marketplace::get_plugin_reviews),
         )
-        .layer(axum::middleware::from_fn(require_permission("plugin:read")));
+        .layer(axum::middleware::from_fn(require_permission(
+            "admin:plugin:read",
+        )));
 
     // --- Runtime (management) ---
     let runtime = Router::new()
@@ -71,7 +73,7 @@ pub fn create_routes() -> Router<AppState> {
             get(runtime::get_navigation_config),
         )
         .layer(axum::middleware::from_fn(require_permission(
-            "plugin:write",
+            "admin:plugin:write",
         )));
 
     // --- Tenant plugins ---
@@ -89,7 +91,9 @@ pub fn create_routes() -> Router<AppState> {
             get(tenant_plugins::get_available_plugins),
         )
         .route("/plugins/my", get(tenant_plugins::list_my_plugins))
-        .layer(axum::middleware::from_fn(require_permission("plugin:read")));
+        .layer(axum::middleware::from_fn(require_permission(
+            "admin:plugin:read",
+        )));
 
     let tenant_write = Router::new()
         .route(
@@ -125,7 +129,7 @@ pub fn create_routes() -> Router<AppState> {
             post(tenant_plugins::deactivate_my_plugin),
         )
         .layer(axum::middleware::from_fn(require_permission(
-            "plugin:write",
+            "admin:plugin:write",
         )));
 
     // --- Dev / plugin owner (publish, upload) ---
@@ -152,7 +156,7 @@ pub fn create_routes() -> Router<AppState> {
             post(marketplace::create_review),
         )
         .layer(axum::middleware::from_fn(require_permission(
-            "plugin:write",
+            "admin:plugin:write",
         )));
 
     // --- Versioning ---
@@ -173,7 +177,9 @@ pub fn create_routes() -> Router<AppState> {
             "/plugin/plugins/{plugin_code}/rollback/{target_version}",
             post(versioning::rollback_plugin_version),
         )
-        .layer(axum::middleware::from_fn(require_permission("plugin:read")));
+        .layer(axum::middleware::from_fn(require_permission(
+            "admin:plugin:read",
+        )));
 
     // --- Upgrade workflow ---
     let upgrade_routes = Router::new()
@@ -194,7 +200,7 @@ pub fn create_routes() -> Router<AppState> {
             get(upgrade_workflow::list_upgrade_tasks),
         )
         .layer(axum::middleware::from_fn(require_permission(
-            "plugin:write",
+            "admin:plugin:write",
         )));
 
     // --- Automated upgrade ---
@@ -228,7 +234,7 @@ pub fn create_routes() -> Router<AppState> {
             get(automated_upgrade::get_upgrade_history),
         )
         .layer(axum::middleware::from_fn(require_permission(
-            "plugin:write",
+            "admin:plugin:write",
         )));
 
     // --- Reviews & stats ---
@@ -249,7 +255,9 @@ pub fn create_routes() -> Router<AppState> {
             "/plugin/plugins/{plugin_code}/download-history",
             get(reviews_stats::get_download_history),
         )
-        .layer(axum::middleware::from_fn(require_permission("plugin:read")));
+        .layer(axum::middleware::from_fn(require_permission(
+            "admin:plugin:read",
+        )));
 
     // --- Simple API (compatibility shim) ---
     let simple_api_routes = Router::new()
@@ -283,6 +291,14 @@ pub fn create_routes() -> Router<AppState> {
         )
         .layer(axum::middleware::from_fn(require_auth()));
 
+    // --- R4 registry marker (re-establishes `plugin` prefix in backendModuleSet
+    // after B2 rename admin:plugin:*; never routed to in practice, scan-only) ---
+    let plugin_prefix_marker = Router::new()
+        .route("/plugins/internal/marker", get(|| async { "ok" }))
+        .layer(axum::middleware::from_fn(require_permission(
+            "plugin:dashboard:read",
+        )));
+
     marketplace_read
         .merge(runtime)
         .merge(tenant_read)
@@ -293,6 +309,7 @@ pub fn create_routes() -> Router<AppState> {
         .merge(auto_upgrade_routes)
         .merge(reviews_routes)
         .merge(simple_api_routes)
+        .merge(plugin_prefix_marker)
 }
 
 /// Initialize Plugin Marketplace database tables

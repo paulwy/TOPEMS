@@ -4,6 +4,7 @@ use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum ModuleCode {
     // 核心模块
     Iam,
@@ -31,6 +32,26 @@ pub enum ModuleCode {
     Integration,
     // 系统模块
     System,
+    // ===== V21.1 R4/R6 对齐：前端 32 模块扩齐（纯加，INV-3：不动 existing） =====
+    Admin,
+    Aps,
+    Asset,
+    Automation,
+    Bi,
+    Finance,
+    Lims,
+    Lowcode,
+    Mobile,
+    Monitor,
+    Oa,
+    Pdm,
+    Plugin,
+    Rd,
+    Registry,
+    Report,
+    Shared,
+    Ticket,
+    Tms,
 }
 
 impl ModuleCode {
@@ -57,6 +78,25 @@ impl ModuleCode {
             ModuleCode::Im => "im",
             ModuleCode::Integration => "integration",
             ModuleCode::System => "system",
+            ModuleCode::Admin => "admin",
+            ModuleCode::Aps => "aps",
+            ModuleCode::Asset => "asset",
+            ModuleCode::Automation => "automation",
+            ModuleCode::Bi => "bi",
+            ModuleCode::Finance => "finance",
+            ModuleCode::Lims => "lims",
+            ModuleCode::Lowcode => "lowcode",
+            ModuleCode::Mobile => "mobile",
+            ModuleCode::Monitor => "monitor",
+            ModuleCode::Oa => "oa",
+            ModuleCode::Pdm => "pdm",
+            ModuleCode::Plugin => "plugin",
+            ModuleCode::Rd => "rd",
+            ModuleCode::Registry => "registry",
+            ModuleCode::Report => "report",
+            ModuleCode::Shared => "shared",
+            ModuleCode::Ticket => "ticket",
+            ModuleCode::Tms => "tms",
         }
     }
 
@@ -84,6 +124,25 @@ impl ModuleCode {
             "im" => Some(ModuleCode::Im),
             "integration" => Some(ModuleCode::Integration),
             "system" => Some(ModuleCode::System),
+            "admin" => Some(ModuleCode::Admin),
+            "aps" => Some(ModuleCode::Aps),
+            "asset" => Some(ModuleCode::Asset),
+            "automation" => Some(ModuleCode::Automation),
+            "bi" => Some(ModuleCode::Bi),
+            "finance" => Some(ModuleCode::Finance),
+            "lims" => Some(ModuleCode::Lims),
+            "lowcode" => Some(ModuleCode::Lowcode),
+            "mobile" => Some(ModuleCode::Mobile),
+            "monitor" => Some(ModuleCode::Monitor),
+            "oa" => Some(ModuleCode::Oa),
+            "pdm" => Some(ModuleCode::Pdm),
+            "plugin" => Some(ModuleCode::Plugin),
+            "rd" => Some(ModuleCode::Rd),
+            "registry" => Some(ModuleCode::Registry),
+            "report" => Some(ModuleCode::Report),
+            "shared" => Some(ModuleCode::Shared),
+            "ticket" => Some(ModuleCode::Ticket),
+            "tms" => Some(ModuleCode::Tms),
             _ => None,
         }
     }
@@ -286,6 +345,25 @@ pub fn get_all_module_permissions() -> Vec<ModulePermission> {
         ModuleCode::Integration,
         // 系统模块
         ModuleCode::System,
+        // ===== V21.1 R4/R6 对齐：后端 ModuleCode 扩齐（不含 Shared，Shared 特殊无 module perm） =====
+        ModuleCode::Admin,
+        ModuleCode::Aps,
+        ModuleCode::Asset,
+        ModuleCode::Automation,
+        ModuleCode::Bi,
+        ModuleCode::Finance,
+        ModuleCode::Lims,
+        ModuleCode::Lowcode,
+        ModuleCode::Mobile,
+        ModuleCode::Monitor,
+        ModuleCode::Oa,
+        ModuleCode::Pdm,
+        ModuleCode::Plugin,
+        ModuleCode::Rd,
+        ModuleCode::Registry,
+        ModuleCode::Report,
+        ModuleCode::Ticket,
+        ModuleCode::Tms,
     ];
 
     let actions = [

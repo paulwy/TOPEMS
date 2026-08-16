@@ -107,7 +107,7 @@ export const aiModuleConfig: RouteModuleConfig = {
       title: i18n.t('shared.config.k6'),
       template: 'settings',
       group: 'setting',
-      requiredPermissions: ['ai:dashboard:admin'],
+      requiredPermissions: ['ai:dashboard:admin', 'ai:dashboard:write'],
       action: 'admin',
     },
     {
