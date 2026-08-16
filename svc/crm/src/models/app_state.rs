@@ -19,3 +19,20 @@ impl FromRef<AppState> for PgPool {
         state.db.clone()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn app_state_struct_size() {
+        use std::mem::size_of;
+        assert!(size_of::<AppState>() > 0);
+    }
+
+    #[test]
+    fn app_state_clone_trait_implemented() {
+        fn assert_clone<T: Clone>() {}
+        assert_clone::<AppState>();
+    }
+}

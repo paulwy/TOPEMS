@@ -1356,4 +1356,241 @@ mod tests {
             reason: Some("客户反馈".to_string()),
         });
     }
+
+    #[test]
+    fn opp_stage_from_str_all_variants() {
+        assert_eq!(OppStage::from_str("draft"), Some(OppStage::Draft));
+        assert_eq!(OppStage::from_str("lead"), Some(OppStage::Lead));
+        assert_eq!(OppStage::from_str("qualified"), Some(OppStage::Qualified));
+        assert_eq!(OppStage::from_str("proposal"), Some(OppStage::Proposal));
+        assert_eq!(
+            OppStage::from_str("negotiation"),
+            Some(OppStage::Negotiation)
+        );
+        assert_eq!(OppStage::from_str("won"), Some(OppStage::Won));
+        assert_eq!(OppStage::from_str("lost"), Some(OppStage::Lost));
+        assert_eq!(OppStage::from_str("closed"), Some(OppStage::Closed));
+        assert_eq!(OppStage::from_str("invalid"), None);
+        assert_eq!(OppStage::from_str(""), None);
+    }
+
+    #[test]
+    fn opp_stage_as_str_roundtrip() {
+        let variants = [
+            OppStage::Draft,
+            OppStage::Lead,
+            OppStage::Qualified,
+            OppStage::Proposal,
+            OppStage::Negotiation,
+            OppStage::Won,
+            OppStage::Lost,
+            OppStage::Closed,
+        ];
+        for v in variants {
+            let s = v.as_str();
+            let back = OppStage::from_str(s).unwrap();
+            assert_eq!(back, v);
+        }
+    }
+
+    #[test]
+    fn opp_stage_terminal_detection() {
+        assert!(OppStage::Won.is_terminal());
+        assert!(OppStage::Lost.is_terminal());
+        assert!(OppStage::Closed.is_terminal());
+        assert!(!OppStage::Draft.is_terminal());
+        assert!(!OppStage::Lead.is_terminal());
+        assert!(!OppStage::Qualified.is_terminal());
+        assert!(!OppStage::Proposal.is_terminal());
+        assert!(!OppStage::Negotiation.is_terminal());
+    }
+
+    #[test]
+    fn opp_stage_copy_clone_eq() {
+        let a = OppStage::Lead;
+        let b = a;
+        assert_eq!(a, b);
+        assert_eq!(a.clone(), b);
+    }
+
+    #[test]
+    fn can_transition_advances_as_owner() {
+        use OppStage::*;
+        assert!(can_transition(Draft, Lead, true).is_ok());
+        assert!(can_transition(Lead, Qualified, true).is_ok());
+        assert!(can_transition(Qualified, Proposal, true).is_ok());
+        assert!(can_transition(Proposal, Negotiation, true).is_ok());
+        assert!(can_transition(Negotiation, Won, true).is_ok());
+        assert!(can_transition(Negotiation, Lost, true).is_ok());
+        assert!(can_transition(Negotiation, Closed, true).is_ok());
+    }
+
+    #[test]
+    fn can_transition_rollbacks_as_owner() {
+        use OppStage::*;
+        assert!(can_transition(Qualified, Lead, true).is_ok());
+        assert!(can_transition(Proposal, Qualified, true).is_ok());
+        assert!(can_transition(Negotiation, Proposal, true).is_ok());
+    }
+
+    #[test]
+    fn can_transition_rejects_not_owner() {
+        assert_eq!(
+            can_transition(OppStage::Draft, OppStage::Lead, false),
+            Err("NOT_OWNER")
+        );
+        assert_eq!(
+            can_transition(OppStage::Lead, OppStage::Qualified, false),
+            Err("NOT_OWNER")
+        );
+    }
+
+    #[test]
+    fn can_transition_rejects_from_terminal() {
+        use OppStage::*;
+        assert_eq!(
+            can_transition(Won, Lead, true),
+            Err("TERMINAL_CANNOT_TRANSITION")
+        );
+        assert_eq!(
+            can_transition(Lost, Won, true),
+            Err("TERMINAL_CANNOT_TRANSITION")
+        );
+        assert_eq!(
+            can_transition(Closed, Proposal, true),
+            Err("TERMINAL_CANNOT_TRANSITION")
+        );
+    }
+
+    #[test]
+    fn can_transition_invalid_jumps() {
+        use OppStage::*;
+        assert_eq!(
+            can_transition(Draft, Qualified, true),
+            Err("INVALID_TRANSITION")
+        );
+        assert_eq!(
+            can_transition(Lead, Proposal, true),
+            Err("INVALID_TRANSITION")
+        );
+        assert_eq!(
+            can_transition(Negotiation, Draft, true),
+            Err("INVALID_TRANSITION")
+        );
+        assert_eq!(can_transition(Draft, Won, true), Err("INVALID_TRANSITION"));
+    }
+
+    #[test]
+    fn next_advance_stage_happy_path() {
+        use OppStage::*;
+        assert_eq!(next_advance_stage(Draft), Lead);
+        assert_eq!(next_advance_stage(Lead), Qualified);
+        assert_eq!(next_advance_stage(Qualified), Proposal);
+        assert_eq!(next_advance_stage(Proposal), Negotiation);
+        assert_eq!(next_advance_stage(Negotiation), Won);
+    }
+
+    #[test]
+    fn next_advance_stage_terminal_noop() {
+        use OppStage::*;
+        assert_eq!(next_advance_stage(Won), Won);
+        assert_eq!(next_advance_stage(Lost), Lost);
+        assert_eq!(next_advance_stage(Closed), Closed);
+    }
+
+    #[test]
+    fn prev_stage_rollback() {
+        use OppStage::*;
+        assert_eq!(prev_stage(Qualified), Lead);
+        assert_eq!(prev_stage(Proposal), Qualified);
+        assert_eq!(prev_stage(Negotiation), Proposal);
+    }
+
+    #[test]
+    fn prev_stage_noop_for_early_or_terminal() {
+        use OppStage::*;
+        assert_eq!(prev_stage(Draft), Draft);
+        assert_eq!(prev_stage(Lead), Lead);
+        assert_eq!(prev_stage(Won), Won);
+        assert_eq!(prev_stage(Lost), Lost);
+        assert_eq!(prev_stage(Closed), Closed);
+    }
+
+    #[test]
+    fn forecast_params_none() {
+        let json = r#"{}"#;
+        let q: ForecastParams = serde_json::from_str(json).unwrap();
+        assert!(q.months.is_none());
+    }
+
+    #[test]
+    fn forecast_params_some() {
+        let json = r#"{"months":6}"#;
+        let q: ForecastParams = serde_json::from_str(json).unwrap();
+        assert_eq!(q.months, Some(6));
+    }
+
+    #[test]
+    fn opportunity_pagination_params_empty() {
+        let json = r#"{}"#;
+        let q: OpportunityPaginationParams = serde_json::from_str(json).unwrap();
+        assert!(q.page.is_none());
+        assert!(q.page_size.is_none());
+        assert!(q.search.is_none());
+        assert!(q.stage.is_none());
+        assert!(q.customer_id.is_none());
+    }
+
+    #[test]
+    fn opportunity_pagination_params_all() {
+        let cid = Uuid::new_v4();
+        let json = format!(
+            r#"{{"page":4,"page_size":15,"search":"deal","stage":"negotiation","customer_id":"{}"}}"#,
+            cid
+        );
+        let q: OpportunityPaginationParams = serde_json::from_str(&json).unwrap();
+        assert_eq!(q.page, Some(4));
+        assert_eq!(q.page_size, Some(15));
+        assert_eq!(q.search.as_deref(), Some("deal"));
+        assert_eq!(q.stage.as_deref(), Some("negotiation"));
+        assert_eq!(q.customer_id, Some(cid));
+    }
+
+    #[test]
+    fn opportunity_pagination_params_partial() {
+        let json = r#"{"stage":"won","page":1}"#;
+        let q: OpportunityPaginationParams = serde_json::from_str(json).unwrap();
+        assert_eq!(q.stage.as_deref(), Some("won"));
+        assert_eq!(q.page, Some(1));
+        assert!(q.search.is_none());
+    }
+
+    #[test]
+    fn opportunity_pagination_params_invalid_uuid_fails() {
+        let json = r#"{"customer_id":"bad-uuid"}"#;
+        let res: Result<OpportunityPaginationParams, _> = serde_json::from_str(json);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn opportunity_batch_delete_request_ok() {
+        let id1 = Uuid::new_v4();
+        let id2 = Uuid::new_v4();
+        let json = format!(r#"{{"ids":["{}","{}"]}}"#, id1, id2);
+        let r: BatchDeleteRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(r.ids.len(), 2);
+        assert_eq!(r.ids[0], id1);
+    }
+
+    #[test]
+    fn opportunity_batch_delete_request_invalid_uuid_fails() {
+        let json = r#"{"ids":["garbage"]}"#;
+        let res: Result<BatchDeleteRequest, _> = serde_json::from_str(json);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn create_routes_smoke() {
+        let _router: Router<ApiState> = create_routes();
+    }
 }

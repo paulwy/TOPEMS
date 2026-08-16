@@ -85,3 +85,20 @@ impl MdmEventService {
         );
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn mdm_event_service_new() {
+        let svc = MdmEventService::new();
+        let _ = svc.clone();
+    }
+
+    #[test]
+    fn mdm_event_service_default() {
+        let svc = MdmEventService::default();
+        let _ = svc.clone();
+    }
+}

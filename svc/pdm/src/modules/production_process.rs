@@ -336,3 +336,151 @@ pub async fn delete_process(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+    use serde_json::json;
+    use sqlx::types::BigDecimal;
+
+    #[test]
+    fn test_create_routes_smoke() {
+        let _router = create_routes();
+    }
+
+    #[test]
+    fn test_production_process_serde_roundtrip() {
+        let p = ProductionProcess {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            process_no: "PROC-001".to_string(),
+            name: "Assembly".to_string(),
+            description: Some("Assemble parts".to_string()),
+            process_type: Some("manufacturing".to_string()),
+            standard_time: Some(BigDecimal::from(10)),
+            unit: Some("hours".to_string()),
+            status: "active".to_string(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let serialized = serde_json::to_string(&p).unwrap();
+        let d: ProductionProcess = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(d.id, p.id);
+        assert_eq!(d.process_no, "PROC-001");
+        assert_eq!(d.name, "Assembly");
+        assert_eq!(d.status, "active");
+        assert_eq!(d.description.as_deref(), Some("Assemble parts"));
+        assert_eq!(d.process_type.as_deref(), Some("manufacturing"));
+        assert_eq!(d.unit.as_deref(), Some("hours"));
+    }
+
+    #[test]
+    fn test_production_process_serde_all_optionals_none() {
+        let p = ProductionProcess {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            process_no: "P1".to_string(),
+            name: "N".to_string(),
+            description: None,
+            process_type: None,
+            standard_time: None,
+            unit: None,
+            status: "inactive".to_string(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let serialized = serde_json::to_value(&p).unwrap();
+        assert!(serialized["description"].is_null());
+        assert!(serialized["process_type"].is_null());
+        assert!(serialized["standard_time"].is_null());
+        assert!(serialized["unit"].is_null());
+    }
+
+    #[test]
+    fn test_create_process_request_deserialize_full() {
+        let j = json!({
+            "process_no": "PROC-002",
+            "name": "Cutting",
+            "description": "Cut materials",
+            "process_type": "machining",
+            "standard_time": "5.5",
+            "unit": "min",
+            "status": "active"
+        });
+        let req: CreateProcessRequest = serde_json::from_value(j).unwrap();
+        assert_eq!(req.process_no, "PROC-002");
+        assert_eq!(req.name, "Cutting");
+        assert_eq!(req.description.as_deref(), Some("Cut materials"));
+        assert_eq!(req.process_type.as_deref(), Some("machining"));
+        assert!(req.standard_time.is_some());
+        assert_eq!(req.unit.as_deref(), Some("min"));
+        assert_eq!(req.status.as_deref(), Some("active"));
+    }
+
+    #[test]
+    fn test_create_process_request_deserialize_minimal() {
+        let j = json!({
+            "process_no": "P2",
+            "name": "N2"
+        });
+        let req: CreateProcessRequest = serde_json::from_value(j).unwrap();
+        assert_eq!(req.process_no, "P2");
+        assert_eq!(req.name, "N2");
+        assert!(req.description.is_none());
+        assert!(req.process_type.is_none());
+        assert!(req.standard_time.is_none());
+        assert!(req.unit.is_none());
+        assert!(req.status.is_none());
+    }
+
+    #[test]
+    fn test_update_process_request_deserialize_empty() {
+        let j = json!({});
+        let req: UpdateProcessRequest = serde_json::from_value(j).unwrap();
+        assert!(req.process_no.is_none());
+        assert!(req.name.is_none());
+        assert!(req.description.is_none());
+        assert!(req.process_type.is_none());
+        assert!(req.standard_time.is_none());
+        assert!(req.unit.is_none());
+        assert!(req.status.is_none());
+    }
+
+    #[test]
+    fn test_update_process_request_deserialize_partial() {
+        let j = json!({
+            "status": "inactive",
+            "name": "Updated"
+        });
+        let req: UpdateProcessRequest = serde_json::from_value(j).unwrap();
+        assert_eq!(req.status.as_deref(), Some("inactive"));
+        assert_eq!(req.name.as_deref(), Some("Updated"));
+        assert!(req.process_no.is_none());
+    }
+
+    #[test]
+    fn test_process_query_deserialize_empty() {
+        let j = json!({});
+        let q: ProcessQuery = serde_json::from_value(j).unwrap();
+        assert!(q.page.is_none());
+        assert!(q.page_size.is_none());
+        assert!(q.search.is_none());
+        assert!(q.status.is_none());
+    }
+
+    #[test]
+    fn test_process_query_deserialize_filled() {
+        let j = json!({
+            "page": 3,
+            "page_size": 50,
+            "search": "assemble",
+            "status": "active"
+        });
+        let q: ProcessQuery = serde_json::from_value(j).unwrap();
+        assert_eq!(q.page, Some(3));
+        assert_eq!(q.page_size, Some(50));
+        assert_eq!(q.search.as_deref(), Some("assemble"));
+        assert_eq!(q.status.as_deref(), Some("active"));
+    }
+}

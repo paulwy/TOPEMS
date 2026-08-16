@@ -84,3 +84,22 @@ impl MdmEventService {
         );
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_mdm_event_service_new() {
+        let service = MdmEventService::new();
+        let _ = service;
+    }
+
+    #[test]
+    fn test_mdm_event_service_clone() {
+        fn assert_clone<T: Clone>() {}
+        assert_clone::<MdmEventService>();
+        let s1 = MdmEventService::new();
+        let _s2 = s1.clone();
+    }
+}

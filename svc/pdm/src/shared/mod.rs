@@ -18,3 +18,14 @@ impl FromRef<AppState> for AuthState {
         state.auth_state.clone()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_appstate_clone_derive_compiles() {
+        fn assert_clone<T: Clone>() {}
+        assert_clone::<AppState>();
+    }
+}

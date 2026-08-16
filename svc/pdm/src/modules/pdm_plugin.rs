@@ -74,3 +74,70 @@ pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiRespo
         Json(ApiResponse::error(500, "Database connection failed"))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_plugin_info_serde_roundtrip() {
+        let info = PluginInfo {
+            code: "pdm".to_string(),
+            name: "Product Data Mgmt".to_string(),
+            version: "1.0.0".to_string(),
+            description: "desc".to_string(),
+            permissions: vec![PermissionDef {
+                code: "pdm.read".to_string(),
+                name: "Read PDM".to_string(),
+                resource_type: "document".to_string(),
+                action: "read".to_string(),
+            }],
+            runtime_url: "http://localhost:8031".to_string(),
+            dependencies: vec!["mes".to_string(), "core".to_string()],
+            navigation_config: Some(json!([{"code": "pdm-bom"}])),
+            category: Some("manufacturing".to_string()),
+        };
+        let serialized = serde_json::to_string(&info).unwrap();
+        let deserialized: PluginInfo = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(deserialized.code, "pdm");
+        assert_eq!(deserialized.name, "Product Data Mgmt");
+        assert_eq!(deserialized.version, "1.0.0");
+        assert_eq!(deserialized.permissions.len(), 1);
+        assert_eq!(deserialized.permissions[0].code, "pdm.read");
+        assert_eq!(deserialized.dependencies, vec!["mes", "core"]);
+        assert!(deserialized.navigation_config.is_some());
+        assert_eq!(deserialized.category.as_deref(), Some("manufacturing"));
+    }
+
+    #[test]
+    fn test_plugin_info_serde_defaults() {
+        let json_value = json!({
+            "code": "pdm",
+            "name": "N",
+            "version": "0.1",
+            "description": "d",
+            "permissions": [],
+            "runtime_url": "http://x"
+        });
+        let info: PluginInfo = serde_json::from_value(json_value).unwrap();
+        assert!(info.dependencies.is_empty());
+        assert!(info.navigation_config.is_none());
+        assert!(info.category.is_none());
+    }
+
+    #[test]
+    fn test_permission_def_serde_roundtrip() {
+        let pd = PermissionDef {
+            code: "c".to_string(),
+            name: "n".to_string(),
+            resource_type: "r".to_string(),
+            action: "a".to_string(),
+        };
+        let c = pd.clone();
+        assert_eq!(c.code, pd.code);
+        let serialized = serde_json::to_value(pd).unwrap();
+        assert_eq!(serialized["code"], "c");
+        assert_eq!(serialized["action"], "a");
+    }
+}

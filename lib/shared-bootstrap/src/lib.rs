@@ -1197,4 +1197,767 @@ mod tests {
             0
         );
     }
+
+    // ===== BootstrapConfig 完整字段断言 =====
+
+    #[test]
+    fn test_bootstrap_config_default_all_fields() {
+        let config = BootstrapConfig::default();
+        assert_eq!(config.service_name, "unknown");
+        assert_eq!(config.service_version, "0.1.0");
+        assert_eq!(config.default_port, 8000);
+        assert!(config.enable_auth);
+        assert!(config.enable_cors);
+        assert!(config.enable_health_check);
+        assert!(config.enable_metrics);
+        assert!(config.enable_permission_center);
+        assert!(config.enable_event_subscription);
+    }
+
+    #[test]
+    fn test_bootstrap_config_custom_all_booleans_false() {
+        let config = BootstrapConfig {
+            service_name: "minimal",
+            service_version: "2.0.0",
+            default_port: 3000,
+            database: DatabaseConfig::default(),
+            enable_auth: false,
+            enable_cors: false,
+            enable_health_check: false,
+            enable_metrics: false,
+            enable_permission_center: false,
+            enable_event_subscription: false,
+        };
+        assert_eq!(config.service_name, "minimal");
+        assert_eq!(config.service_version, "2.0.0");
+        assert_eq!(config.default_port, 3000);
+        assert!(!config.enable_auth);
+        assert!(!config.enable_cors);
+        assert!(!config.enable_health_check);
+        assert!(!config.enable_metrics);
+        assert!(!config.enable_permission_center);
+        assert!(!config.enable_event_subscription);
+    }
+
+    #[test]
+    fn test_bootstrap_config_clone_and_debug_derive() {
+        let config = BootstrapConfig {
+            service_name: "clone-test",
+            default_port: 7777,
+            ..Default::default()
+        };
+        let cloned = config.clone();
+        assert_eq!(cloned.service_name, "clone-test");
+        assert_eq!(cloned.default_port, 7777);
+        let debug_str = format!("{:?}", config);
+        assert!(debug_str.contains("clone-test"));
+        assert!(debug_str.contains("7777"));
+    }
+
+    // ===== ServiceConfig 完整字段断言 =====
+
+    #[test]
+    fn test_service_config_default_all_fields() {
+        let cfg = ServiceConfig::default();
+        assert_eq!(cfg.name, "unknown");
+        assert_eq!(cfg.port, 8000);
+        assert_eq!(cfg.port_env_var, None);
+        assert_eq!(cfg.max_db_connections, 20);
+        assert!(!cfg.enable_events);
+        assert!(cfg.enable_rls);
+        assert!(cfg.enable_request_context);
+        assert_eq!(cfg.api_prefix, "");
+        assert!(cfg.legacy_prefixes.is_empty());
+    }
+
+    #[test]
+    fn test_service_config_custom_all_fields() {
+        let cfg = ServiceConfig {
+            name: "topems-qms",
+            port: 8090,
+            port_env_var: Some("QMS_PORT"),
+            max_db_connections: 50,
+            enable_events: true,
+            enable_rls: false,
+            enable_request_context: false,
+            api_prefix: "/api/core/qms/v1",
+            legacy_prefixes: &["/api/v1/qms", "/api/qms"],
+        };
+        assert_eq!(cfg.name, "topems-qms");
+        assert_eq!(cfg.port, 8090);
+        assert_eq!(cfg.port_env_var, Some("QMS_PORT"));
+        assert_eq!(cfg.max_db_connections, 50);
+        assert!(cfg.enable_events);
+        assert!(!cfg.enable_rls);
+        assert!(!cfg.enable_request_context);
+        assert_eq!(cfg.api_prefix, "/api/core/qms/v1");
+        assert_eq!(cfg.legacy_prefixes, &["/api/v1/qms", "/api/qms"]);
+    }
+
+    #[test]
+    fn test_service_config_clone_and_debug_derive() {
+        let cfg = ServiceConfig {
+            name: "topems-crm",
+            port: 8020,
+            port_env_var: Some("CRM_PORT"),
+            max_db_connections: 30,
+            enable_events: true,
+            enable_rls: true,
+            enable_request_context: true,
+            api_prefix: "/api/crm",
+            legacy_prefixes: &["/api/v1/crm"],
+        };
+        let cloned = cfg.clone();
+        assert_eq!(cloned.name, "topems-crm");
+        assert_eq!(cloned.port, 8020);
+        assert_eq!(cloned.legacy_prefixes, cfg.legacy_prefixes);
+        let debug_str = format!("{:?}", cfg);
+        assert!(debug_str.contains("topems-crm"));
+        assert!(debug_str.contains("CRM_PORT"));
+    }
+
+    // ===== ServiceBootstrap 构建器（纯构造，不启动异步）=====
+
+    #[test]
+    fn test_service_bootstrap_new_constructs() {
+        let config = BootstrapConfig::default();
+        let bootstrap = ServiceBootstrap::new(config);
+        assert!(bootstrap.custom_routes.is_none());
+        assert!(bootstrap.custom_health_checks.is_none());
+    }
+
+    #[test]
+    fn test_service_bootstrap_with_custom_routes() {
+        let config = BootstrapConfig::default();
+        let router: Router = Router::new();
+        let bootstrap = ServiceBootstrap::new(config).with_custom_routes(router);
+        assert!(bootstrap.custom_routes.is_some());
+    }
+
+    #[test]
+    fn test_service_bootstrap_with_custom_health_checks() {
+        let config = BootstrapConfig::default();
+        fn dummy_check() -> DependencyHealth {
+            DependencyHealth {
+                name: "dummy".to_string(),
+                status: HealthStatus::Healthy,
+                message: "ok".to_string(),
+            }
+        }
+        let checks: Vec<HealthCheckFn> = vec![dummy_check];
+        let bootstrap = ServiceBootstrap::new(config).with_custom_health_checks(checks);
+        assert!(bootstrap.custom_health_checks.is_some());
+        let stored = bootstrap.custom_health_checks.unwrap();
+        assert_eq!(stored.len(), 1);
+        let dep = stored[0]();
+        assert_eq!(dep.name, "dummy");
+        assert_eq!(dep.status, HealthStatus::Healthy);
+    }
+
+    #[test]
+    fn test_service_bootstrap_full_chain_builders() {
+        let config = BootstrapConfig {
+            service_name: "chain-test",
+            default_port: 5000,
+            ..Default::default()
+        };
+        fn check_a() -> DependencyHealth {
+            DependencyHealth {
+                name: "a".into(),
+                status: HealthStatus::Degraded,
+                message: "".into(),
+            }
+        }
+        fn check_b() -> DependencyHealth {
+            DependencyHealth {
+                name: "b".into(),
+                status: HealthStatus::Healthy,
+                message: "ok".into(),
+            }
+        }
+        let bootstrap = ServiceBootstrap::new(config)
+            .with_custom_routes(Router::new())
+            .with_custom_health_checks(vec![check_a, check_b]);
+        assert!(bootstrap.custom_routes.is_some());
+        let checks = bootstrap.custom_health_checks.unwrap();
+        assert_eq!(checks.len(), 2);
+        assert_eq!(checks[0]().name, "a");
+        assert_eq!(checks[1]().status, HealthStatus::Healthy);
+    }
+
+    // ===== HealthCheckFn 类型别名覆盖 =====
+
+    #[test]
+    fn test_health_check_fn_returns_unhealthy() {
+        fn broken() -> DependencyHealth {
+            DependencyHealth {
+                name: "redis".to_string(),
+                status: HealthStatus::Unhealthy,
+                message: "connection refused".to_string(),
+            }
+        }
+        let f: HealthCheckFn = broken;
+        let dep = f();
+        assert_eq!(dep.name, "redis");
+        assert_eq!(dep.status, HealthStatus::Unhealthy);
+        assert_eq!(dep.message, "connection refused");
+    }
+
+    // ===== MetricsResponse: 构造 + 序列化 + Clone + Debug =====
+
+    #[test]
+    fn test_metrics_response_construction_and_serialize() {
+        let response = MetricsResponse {
+            uptime: "1h 2m 3s".to_string(),
+            request_count: 1024,
+            error_count: 7,
+            active_connections: 42,
+        };
+        let json = serde_json::to_value(&response).unwrap();
+        assert_eq!(json["uptime"], "1h 2m 3s");
+        assert_eq!(json["request_count"], 1024);
+        assert_eq!(json["error_count"], 7);
+        assert_eq!(json["active_connections"], 42);
+    }
+
+    #[test]
+    fn test_metrics_response_clone_and_debug() {
+        let response = MetricsResponse {
+            uptime: "0s".to_string(),
+            request_count: 0,
+            error_count: 0,
+            active_connections: 0,
+        };
+        let cloned = response.clone();
+        assert_eq!(cloned.uptime, response.uptime);
+        assert_eq!(cloned.request_count, 0);
+        let debug_str = format!("{:?}", response);
+        assert!(debug_str.contains("MetricsResponse"));
+        assert!(debug_str.contains("request_count: 0"));
+    }
+
+    #[test]
+    fn test_metrics_response_all_zeros_serialization() {
+        let response = MetricsResponse {
+            uptime: "0s".to_string(),
+            request_count: 0,
+            error_count: 0,
+            active_connections: 0,
+        };
+        let serialized = serde_json::to_string(&response).unwrap();
+        assert!(serialized.contains("\"uptime\":\"0s\""));
+        assert!(serialized.contains("\"request_count\":0"));
+        assert!(serialized.contains("\"error_count\":0"));
+        assert!(serialized.contains("\"active_connections\":0"));
+    }
+
+    // ===== ServiceMetricsResponse: 构造 + 序列化 + Clone + Debug =====
+
+    #[test]
+    fn test_service_metrics_response_construction_and_serialize() {
+        let metrics = ServiceMetricsResponse {
+            service_name: "topems-hrm".to_string(),
+            uptime_seconds: 3661,
+            uptime_formatted: "1h 1m 1s".to_string(),
+            request_count: 50000,
+            error_count: 123,
+            active_connections: 99,
+            database_pool_size: 20,
+            database_pool_idle: 8,
+        };
+        let json = serde_json::to_value(&metrics).unwrap();
+        assert_eq!(json["service_name"], "topems-hrm");
+        assert_eq!(json["uptime_seconds"], 3661);
+        assert_eq!(json["uptime_formatted"], "1h 1m 1s");
+        assert_eq!(json["request_count"], 50000);
+        assert_eq!(json["error_count"], 123);
+        assert_eq!(json["active_connections"], 99);
+        assert_eq!(json["database_pool_size"], 20);
+        assert_eq!(json["database_pool_idle"], 8);
+    }
+
+    #[test]
+    fn test_service_metrics_response_clone_and_debug() {
+        let metrics = ServiceMetricsResponse {
+            service_name: "svc".to_string(),
+            uptime_seconds: 0,
+            uptime_formatted: "0s".to_string(),
+            request_count: 0,
+            error_count: 0,
+            active_connections: 0,
+            database_pool_size: 0,
+            database_pool_idle: 0,
+        };
+        let cloned = metrics.clone();
+        assert_eq!(cloned.service_name, "svc");
+        assert_eq!(cloned.uptime_seconds, 0);
+        let debug_str = format!("{:?}", metrics);
+        assert!(debug_str.contains("ServiceMetricsResponse"));
+        assert!(debug_str.contains("\"svc\""));
+    }
+
+    // ===== Application 结构纯构造 =====
+
+    #[test]
+    fn test_application_struct_construction() {
+        let router: Router = Router::new();
+        let app = Application {
+            router,
+            port: 8080,
+            name: "test-app",
+        };
+        assert_eq!(app.port, 8080);
+        assert_eq!(app.name, "test-app");
+    }
+
+    // ===== resolve_port PORT 环境变量分支 =====
+
+    #[test]
+    fn test_resolve_port_port_env_var() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        std::env::remove_var("ERP_PORT");
+        std::env::remove_var("SERVER_PORT");
+        std::env::set_var("PORT", "38000");
+        let cfg = ServiceConfig {
+            name: "topems-erp",
+            port: 8010,
+            port_env_var: Some("ERP_PORT"),
+            ..Default::default()
+        };
+        assert_eq!(resolve_port(&cfg), 38000);
+        std::env::remove_var("PORT");
+    }
+
+    #[test]
+    fn test_resolve_port_priority_order_custom_server_port() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        std::env::set_var("CUSTOM_PORT", "1111");
+        std::env::set_var("SERVER_PORT", "2222");
+        std::env::set_var("PORT", "3333");
+        let cfg = ServiceConfig {
+            name: "svc",
+            port: 4444,
+            port_env_var: Some("CUSTOM_PORT"),
+            ..Default::default()
+        };
+        assert_eq!(resolve_port(&cfg), 1111);
+        std::env::remove_var("CUSTOM_PORT");
+        std::env::remove_var("SERVER_PORT");
+        std::env::remove_var("PORT");
+    }
+
+    // ===== BootstrapConfig struct update syntax =====
+
+    #[test]
+    fn test_bootstrap_config_update_syntax_preserves_rest() {
+        let base = BootstrapConfig::default();
+        let custom = BootstrapConfig {
+            service_name: "special",
+            default_port: 9999,
+            ..base
+        };
+        assert_eq!(custom.service_name, "special");
+        assert_eq!(custom.default_port, 9999);
+        assert_eq!(custom.service_version, "0.1.0");
+        assert!(custom.enable_auth);
+        assert!(custom.enable_cors);
+    }
+
+    // ===== rollup_health_status 三态混合 =====
+
+    #[test]
+    fn test_rollup_three_healthy_one_degraded() {
+        assert_eq!(
+            rollup_health_status(&[
+                HealthStatus::Healthy,
+                HealthStatus::Healthy,
+                HealthStatus::Healthy,
+                HealthStatus::Degraded,
+            ]),
+            HealthStatus::Degraded
+        );
+    }
+
+    #[test]
+    fn test_rollup_three_degraded_one_unhealthy() {
+        assert_eq!(
+            rollup_health_status(&[
+                HealthStatus::Degraded,
+                HealthStatus::Degraded,
+                HealthStatus::Degraded,
+                HealthStatus::Unhealthy,
+            ]),
+            HealthStatus::Unhealthy
+        );
+    }
+
+    #[test]
+    fn test_rollup_only_unhealthy() {
+        assert_eq!(
+            rollup_health_status(&[HealthStatus::Unhealthy]),
+            HealthStatus::Unhealthy
+        );
+    }
+
+    #[test]
+    fn test_rollup_only_degraded() {
+        assert_eq!(
+            rollup_health_status(&[HealthStatus::Degraded]),
+            HealthStatus::Degraded
+        );
+    }
+
+    #[test]
+    fn test_rollup_only_healthy() {
+        assert_eq!(
+            rollup_health_status(&[HealthStatus::Healthy]),
+            HealthStatus::Healthy
+        );
+    }
+
+    // ===== DatabaseConfig 默认值检查（通过 BootstrapConfig 访问）=====
+
+    #[test]
+    fn test_database_config_default_via_bootstrap_config() {
+        let cfg = BootstrapConfig::default();
+        assert!(!cfg.database.url.is_empty());
+        assert!(cfg.database.max_connections > 0);
+    }
+
+    // ===== prometheus_metrics_handler 异步纯函数 =====
+
+    #[tokio::test]
+    async fn test_prometheus_metrics_handler_returns_string_no_panic() {
+        let result = prometheus_metrics_handler().await;
+        assert!(String::from_utf8(result.as_bytes().to_vec()).is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_prometheus_metrics_handler_multiple_calls_return_same_type() {
+        let a = prometheus_metrics_handler().await;
+        let b = prometheus_metrics_handler().await;
+        assert_eq!(a.is_empty(), b.is_empty());
+    }
+
+    // ===== AppState 纯构造（lazy pool，不实际连接 DB）=====
+
+    fn make_test_pg_pool() -> sqlx::PgPool {
+        sqlx::postgres::PgPoolOptions::new()
+            .acquire_timeout(std::time::Duration::from_millis(50))
+            .connect_lazy("postgres://u:p@127.0.0.1:1/nonexistent")
+            .expect("lazy pool build should not fail")
+    }
+
+    #[tokio::test]
+    async fn test_app_state_new_constructs_with_lazy_pool() {
+        let db = make_test_pg_pool();
+        let auth_state = topems_shared_auth::auth::AuthState::from_env();
+        let metrics = Arc::new(SystemMetrics::new());
+        let start_time = Instant::now();
+        let config = BootstrapConfig::default();
+        let state = AppState::new(
+            db.clone(),
+            auth_state.clone(),
+            metrics.clone(),
+            start_time,
+            config.clone(),
+        );
+        assert_eq!(state.config.service_name, config.service_name);
+        assert_eq!(state.config.default_port, config.default_port);
+    }
+
+    #[tokio::test]
+    async fn test_app_state_clone_smoke() {
+        let db = make_test_pg_pool();
+        let auth_state = topems_shared_auth::auth::AuthState::from_env();
+        let metrics = Arc::new(SystemMetrics::new());
+        let start_time = Instant::now();
+        let config = BootstrapConfig::default();
+        let state = AppState::new(
+            db.clone(),
+            auth_state.clone(),
+            metrics.clone(),
+            start_time,
+            config.clone(),
+        );
+        let cloned = state.clone();
+        assert_eq!(cloned.config.service_name, "unknown");
+        assert_eq!(cloned.config.default_port, 8000);
+    }
+
+    #[tokio::test]
+    async fn test_create_standard_health_routes_compiles_and_returns_router() {
+        let db = make_test_pg_pool();
+        let auth_state = topems_shared_auth::auth::AuthState::from_env();
+        let metrics = Arc::new(SystemMetrics::new());
+        let start_time = Instant::now();
+        let config = BootstrapConfig::default();
+        let state = AppState::new(
+            db.clone(),
+            auth_state.clone(),
+            metrics.clone(),
+            start_time,
+            config.clone(),
+        );
+        let _router: Router = create_standard_health_routes(state);
+    }
+
+    #[tokio::test]
+    async fn test_create_health_state_pure_construction() {
+        let db = make_test_pg_pool();
+        let auth_state = topems_shared_auth::auth::AuthState::from_env();
+        let metrics = Arc::new(SystemMetrics::new());
+        let start_time = Instant::now();
+        let ctx = ServiceContext {
+            db: db.clone(),
+            auth_state: auth_state.clone(),
+            metrics: metrics.clone(),
+            event_publisher: None,
+            start_time,
+        };
+        let svc_cfg = ServiceConfig {
+            name: "topems-test-svc",
+            port: 8999,
+            ..Default::default()
+        };
+        let state = create_health_state(&ctx, &svc_cfg);
+        assert_eq!(state.config.service_name, "topems-test-svc");
+        assert_eq!(state.config.default_port, 8999);
+    }
+
+    // ===== ServiceContext 结构纯构造 =====
+
+    #[tokio::test]
+    async fn test_service_context_manual_construction_with_event_publisher_none() {
+        let db = make_test_pg_pool();
+        let auth_state = topems_shared_auth::auth::AuthState::from_env();
+        let metrics = Arc::new(SystemMetrics::new());
+        let start_time = Instant::now();
+        let ctx = ServiceContext {
+            db: db.clone(),
+            auth_state: auth_state.clone(),
+            metrics: metrics.clone(),
+            event_publisher: None,
+            start_time,
+        };
+        assert!(ctx.event_publisher.is_none());
+    }
+
+    // ===== BootstrapConfig 剩余字段变异覆盖 =====
+
+    #[test]
+    fn test_bootstrap_config_mutate_all_fields_individually() {
+        let mut cfg = BootstrapConfig::default();
+        cfg.service_name = "mutated-svc";
+        cfg.service_version = "9.9.9";
+        cfg.default_port = 1234;
+        cfg.enable_auth = false;
+        cfg.enable_cors = false;
+        cfg.enable_health_check = false;
+        cfg.enable_metrics = false;
+        cfg.enable_permission_center = false;
+        cfg.enable_event_subscription = false;
+        assert_eq!(cfg.service_name, "mutated-svc");
+        assert_eq!(cfg.service_version, "9.9.9");
+        assert_eq!(cfg.default_port, 1234);
+        assert!(!cfg.enable_auth);
+        assert!(!cfg.enable_cors);
+        assert!(!cfg.enable_health_check);
+        assert!(!cfg.enable_metrics);
+        assert!(!cfg.enable_permission_center);
+        assert!(!cfg.enable_event_subscription);
+    }
+
+    // ===== ServiceConfig 字段变异覆盖 =====
+
+    #[test]
+    fn test_service_config_mutate_all_fields() {
+        let mut cfg = ServiceConfig::default();
+        cfg.name = "mutated";
+        cfg.port = 7000;
+        cfg.port_env_var = Some("MUT_PORT");
+        cfg.max_db_connections = 99;
+        cfg.enable_events = true;
+        cfg.enable_rls = false;
+        cfg.enable_request_context = false;
+        cfg.api_prefix = "/api/mut";
+        cfg.legacy_prefixes = &["/legacy"];
+        assert_eq!(cfg.name, "mutated");
+        assert_eq!(cfg.port, 7000);
+        assert_eq!(cfg.port_env_var, Some("MUT_PORT"));
+        assert_eq!(cfg.max_db_connections, 99);
+        assert!(cfg.enable_events);
+        assert!(!cfg.enable_rls);
+        assert!(!cfg.enable_request_context);
+        assert_eq!(cfg.api_prefix, "/api/mut");
+        assert_eq!(cfg.legacy_prefixes, &["/legacy"]);
+    }
+
+    // ===== resolve_port 无 port_env_var + 直接走 PORT/SERVER_PORT =====
+
+    #[test]
+    fn test_resolve_port_without_port_env_var_uses_server_port() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        std::env::remove_var("SERVER_PORT");
+        std::env::remove_var("PORT");
+        std::env::set_var("SERVER_PORT", "17000");
+        let cfg = ServiceConfig {
+            port_env_var: None,
+            port: 80,
+            ..Default::default()
+        };
+        assert_eq!(resolve_port(&cfg), 17000);
+        std::env::remove_var("SERVER_PORT");
+    }
+
+    #[test]
+    fn test_resolve_port_invalid_server_port_falls_through_to_default() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        std::env::remove_var("PORT");
+        std::env::set_var("SERVER_PORT", "NaN");
+        let cfg = ServiceConfig {
+            port_env_var: None,
+            port: 8888,
+            ..Default::default()
+        };
+        assert_eq!(resolve_port(&cfg), 8888);
+        std::env::remove_var("SERVER_PORT");
+    }
+
+    // ===== DatabaseConfig: 通过 quick_bootstrap_with_db 内部构造方式 =====
+
+    #[test]
+    fn test_database_config_explicit_construction() {
+        let database_url = "postgres://test".to_string();
+        let db_cfg = DatabaseConfig {
+            url: database_url,
+            max_connections: 10,
+            min_connections: Some(3),
+            connect_timeout: Some(30),
+            idle_timeout: Some(300),
+            max_lifetime: Some(1800),
+            test_interval: Some(60),
+            enable_connection_reuse: Some(true),
+        };
+        assert_eq!(db_cfg.url, "postgres://test");
+        assert_eq!(db_cfg.max_connections, 10);
+        assert_eq!(db_cfg.min_connections, Some(3));
+        assert_eq!(db_cfg.connect_timeout, Some(30));
+        assert_eq!(db_cfg.idle_timeout, Some(300));
+        assert_eq!(db_cfg.max_lifetime, Some(1800));
+        assert_eq!(db_cfg.test_interval, Some(60));
+        assert_eq!(db_cfg.enable_connection_reuse, Some(true));
+    }
+
+    // ===== parse_max_connections: 每服务 None 时全局 Some =====
+
+    #[test]
+    fn test_parse_max_connections_global_wins_when_per_service_none() {
+        assert_eq!(parse_max_connections(None, Some("55".into()), 10), 55);
+    }
+
+    // ===== resolve_port: 自定义 port_env_var 为无效数字时回退到 SERVER_PORT =====
+
+    #[test]
+    fn test_resolve_port_bad_custom_env_then_server_port() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        std::env::remove_var("PORT");
+        std::env::set_var("BAD_CUSTOM", "notport");
+        std::env::set_var("SERVER_PORT", "4567");
+        let cfg = ServiceConfig {
+            port_env_var: Some("BAD_CUSTOM"),
+            port: 9999,
+            ..Default::default()
+        };
+        assert_eq!(resolve_port(&cfg), 4567);
+        std::env::remove_var("BAD_CUSTOM");
+        std::env::remove_var("SERVER_PORT");
+    }
+
+    // ===== resolve_port: 全部环境变量无效时使用 config.port =====
+
+    #[test]
+    fn test_resolve_port_all_env_invalid_uses_default() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        std::env::set_var("MY_PORT", "xyz");
+        std::env::set_var("SERVER_PORT", "abc");
+        std::env::set_var("PORT", "not-a-u16");
+        let cfg = ServiceConfig {
+            port_env_var: Some("MY_PORT"),
+            port: 7654,
+            ..Default::default()
+        };
+        assert_eq!(resolve_port(&cfg), 7654);
+        std::env::remove_var("MY_PORT");
+        std::env::remove_var("SERVER_PORT");
+        std::env::remove_var("PORT");
+    }
+
+    // ===== Application 结构字段变异 =====
+
+    #[test]
+    fn test_application_struct_field_mutation() {
+        let router: Router = Router::new();
+        let mut app = Application {
+            router,
+            port: 1111,
+            name: "before",
+        };
+        app.port = 2222;
+        app.name = "after";
+        assert_eq!(app.port, 2222);
+        assert_eq!(app.name, "after");
+    }
+
+    // ===== MetricsResponse 字段变异 =====
+
+    #[test]
+    fn test_metrics_response_field_mutation() {
+        let mut mr = MetricsResponse {
+            uptime: "a".to_string(),
+            request_count: 1,
+            error_count: 2,
+            active_connections: 3,
+        };
+        mr.uptime = "b".to_string();
+        mr.request_count = 10;
+        mr.error_count = 20;
+        mr.active_connections = 30;
+        assert_eq!(mr.uptime, "b");
+        assert_eq!(mr.request_count, 10);
+        assert_eq!(mr.error_count, 20);
+        assert_eq!(mr.active_connections, 30);
+    }
+
+    // ===== ServiceMetricsResponse 字段变异 =====
+
+    #[test]
+    fn test_service_metrics_response_field_mutation() {
+        let mut smr = ServiceMetricsResponse {
+            service_name: "a".to_string(),
+            uptime_seconds: 1,
+            uptime_formatted: "b".to_string(),
+            request_count: 2,
+            error_count: 3,
+            active_connections: 4,
+            database_pool_size: 5,
+            database_pool_idle: 6,
+        };
+        smr.service_name = "x".to_string();
+        smr.uptime_seconds = 100;
+        smr.uptime_formatted = "y".to_string();
+        smr.request_count = 200;
+        smr.error_count = 300;
+        smr.active_connections = 400;
+        smr.database_pool_size = 500;
+        smr.database_pool_idle = 600;
+        assert_eq!(smr.service_name, "x");
+        assert_eq!(smr.uptime_seconds, 100);
+        assert_eq!(smr.uptime_formatted, "y");
+        assert_eq!(smr.request_count, 200);
+        assert_eq!(smr.error_count, 300);
+        assert_eq!(smr.active_connections, 400);
+        assert_eq!(smr.database_pool_size, 500);
+        assert_eq!(smr.database_pool_idle, 600);
+    }
 }

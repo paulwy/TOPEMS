@@ -325,3 +325,47 @@ pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::
     run_schema_defense(pool, SERVICE_SCHEMA, TABLE_DEFS, SERVICE_TAG).await?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn service_schema_is_crm() {
+        assert_eq!(SERVICE_SCHEMA, "crm");
+    }
+
+    #[test]
+    fn service_tag_is_crm() {
+        assert_eq!(SERVICE_TAG, "crm");
+    }
+
+    #[test]
+    fn table_defs_has_expected_tables() {
+        let names: Vec<&str> = TABLE_DEFS.iter().map(|(n, _)| *n).collect();
+        assert!(names.contains(&"customers"));
+        assert!(names.contains(&"contacts"));
+        assert!(names.contains(&"opportunities"));
+        assert!(names.contains(&"interactions"));
+        assert!(names.contains(&"tags"));
+        assert!(names.contains(&"audit_logs"));
+        assert!(names.contains(&"returns"));
+        assert!(names.contains(&"return_items"));
+        assert!(names.contains(&"rfm_results"));
+        assert!(names.contains(&"customer_tags"));
+        assert!(names.contains(&"dashboard_metrics"));
+        assert!(names.contains(&"customer_orders"));
+        assert!(names.contains(&"crm_master_data_refs"));
+    }
+
+    #[test]
+    fn all_table_defs_have_nonempty_columns() {
+        for (tbl, cols) in TABLE_DEFS {
+            assert!(
+                !cols.is_empty(),
+                "Table {} should have at least one column defined",
+                tbl
+            );
+        }
+    }
+}

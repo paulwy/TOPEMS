@@ -314,3 +314,179 @@ pub async fn get_statistics(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use bigdecimal::BigDecimal;
+    use serde_json::json;
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_create_routes_smoke() {
+        let _router = create_routes();
+    }
+
+    #[test]
+    fn test_statistics_query_deserialize_empty() {
+        let j = json!({});
+        let q: StatisticsQuery = serde_json::from_value(j).unwrap();
+        assert!(q.page.is_none());
+        assert!(q.page_size.is_none());
+    }
+
+    #[test]
+    fn test_statistics_query_deserialize_filled() {
+        let j = json!({ "page": 5, "page_size": 100 });
+        let q: StatisticsQuery = serde_json::from_value(j).unwrap();
+        assert_eq!(q.page, Some(5));
+        assert_eq!(q.page_size, Some(100));
+    }
+
+    #[test]
+    fn test_product_statistics_serde_roundtrip() {
+        let ps = ProductStatistics {
+            product_id: Some(Uuid::new_v4()),
+            product_name: Some("Widget".to_string()),
+            batch_count: 10,
+            total_quantity: Some(BigDecimal::from(100)),
+        };
+        let serialized = serde_json::to_string(&ps).unwrap();
+        let d: ProductStatistics = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(d.product_id, ps.product_id);
+        assert_eq!(d.product_name.as_deref(), Some("Widget"));
+        assert_eq!(d.batch_count, 10);
+        assert!(d.total_quantity.is_some());
+    }
+
+    #[test]
+    fn test_product_statistics_serde_with_nones() {
+        let ps = ProductStatistics {
+            product_id: None,
+            product_name: None,
+            batch_count: 0,
+            total_quantity: None,
+        };
+        let serialized = serde_json::to_value(&ps).unwrap();
+        assert!(serialized["product_id"].is_null());
+        assert!(serialized["product_name"].is_null());
+        assert_eq!(serialized["batch_count"], 0);
+        assert!(serialized["total_quantity"].is_null());
+    }
+
+    #[test]
+    fn test_status_count_serde_roundtrip() {
+        let sc = StatusCount {
+            status: Some("completed".to_string()),
+            count: 25,
+            quantity: Some(BigDecimal::from(500)),
+        };
+        let serialized = serde_json::to_string(&sc).unwrap();
+        let d: StatusCount = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(d.status.as_deref(), Some("completed"));
+        assert_eq!(d.count, 25);
+        assert!(d.quantity.is_some());
+    }
+
+    #[test]
+    fn test_status_count_serde_defaults() {
+        let sc = StatusCount {
+            status: None,
+            count: 0,
+            quantity: None,
+        };
+        let v = serde_json::to_value(&sc).unwrap();
+        assert!(v["status"].is_null());
+        assert_eq!(v["count"], 0);
+        assert!(v["quantity"].is_null());
+    }
+
+    #[test]
+    fn test_statistics_detail_serde_roundtrip() {
+        let mut sd = HashMap::new();
+        sd.insert("planning".to_string(), 3);
+        sd.insert("completed".to_string(), 7);
+        let detail = StatisticsDetail {
+            product_id: Uuid::new_v4(),
+            product_name: Some("ProductA".to_string()),
+            total_batches: 10,
+            total_quantity: Some(BigDecimal::from(200)),
+            status_distribution: sd,
+        };
+        let serialized = serde_json::to_string(&detail).unwrap();
+        let d: StatisticsDetail = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(d.product_id, detail.product_id);
+        assert_eq!(d.product_name.as_deref(), Some("ProductA"));
+        assert_eq!(d.total_batches, 10);
+        assert_eq!(d.status_distribution.get("planning"), Some(&3));
+        assert_eq!(d.status_distribution.get("completed"), Some(&7));
+    }
+
+    #[test]
+    fn test_statistics_detail_serde_empty_map() {
+        let detail = StatisticsDetail {
+            product_id: Uuid::new_v4(),
+            product_name: None,
+            total_batches: 0,
+            total_quantity: None,
+            status_distribution: HashMap::new(),
+        };
+        let v = serde_json::to_value(&detail).unwrap();
+        assert!(v["product_name"].is_null());
+        assert!(v["status_distribution"].as_object().unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_pdm_statistics_summary_serde_roundtrip() {
+        let summary = PdmStatisticsSummary {
+            total_processes: 10,
+            active_processes: 8,
+            total_formulas: 5,
+            active_formulas: 4,
+            total_batches: 20,
+            planning_batches: 5,
+            in_progress_batches: 7,
+            completed_batches: 6,
+            cancelled_batches: 2,
+            total_steps: 50,
+            total_output_quantity: Some(BigDecimal::from(1000)),
+            total_reject_quantity: 10,
+            average_pass_rate: BigDecimal::from(99),
+        };
+        let serialized = serde_json::to_string(&summary).unwrap();
+        let d: PdmStatisticsSummary = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(d.total_processes, 10);
+        assert_eq!(d.active_processes, 8);
+        assert_eq!(d.total_formulas, 5);
+        assert_eq!(d.active_formulas, 4);
+        assert_eq!(d.total_batches, 20);
+        assert_eq!(d.planning_batches, 5);
+        assert_eq!(d.in_progress_batches, 7);
+        assert_eq!(d.completed_batches, 6);
+        assert_eq!(d.cancelled_batches, 2);
+        assert_eq!(d.total_steps, 50);
+        assert_eq!(d.total_reject_quantity, 10);
+    }
+
+    #[test]
+    fn test_pdm_statistics_summary_all_zero() {
+        let summary = PdmStatisticsSummary {
+            total_processes: 0,
+            active_processes: 0,
+            total_formulas: 0,
+            active_formulas: 0,
+            total_batches: 0,
+            planning_batches: 0,
+            in_progress_batches: 0,
+            completed_batches: 0,
+            cancelled_batches: 0,
+            total_steps: 0,
+            total_output_quantity: None,
+            total_reject_quantity: 0,
+            average_pass_rate: BigDecimal::from(0),
+        };
+        let v = serde_json::to_value(&summary).unwrap();
+        assert!(v["total_output_quantity"].is_null());
+        assert_eq!(v["total_processes"], 0);
+    }
+}

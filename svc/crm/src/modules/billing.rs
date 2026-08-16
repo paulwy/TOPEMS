@@ -129,3 +129,13 @@ async fn get_billing_record(
 
 #[allow(dead_code)]
 struct _Unused(UpdateBillingRequest);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn create_routes_smoke() {
+        let _router: Router<ApiState> = create_routes();
+    }
+}

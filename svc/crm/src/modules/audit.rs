@@ -214,3 +214,102 @@ pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &He
         tracing::error!("记录审计日志失败: {}", e);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Deserialize;
+    use uuid::Uuid;
+
+    #[test]
+    fn audit_event_params_clone() {
+        let params = AuditEventParams {
+            action: "create".to_string(),
+            entity_type: "customer".to_string(),
+            entity_id: Some(Uuid::nil()),
+            entity_ids: Some(serde_json::json!([1, 2, 3])),
+            user_id: Some("user-1".to_string()),
+            user_name: Some("Alice".to_string()),
+            request_details: Some(serde_json::json!({"name": "Test"})),
+            response_details: None,
+            status: "success".to_string(),
+            error_message: Some("oops".to_string()),
+        };
+        let cloned = params.clone();
+        assert_eq!(cloned.action, "create");
+        assert_eq!(cloned.entity_type, "customer");
+        assert_eq!(cloned.status, "success");
+        assert!(cloned.entity_id.is_some());
+        assert!(cloned.entity_ids.is_some());
+        assert!(cloned.error_message.is_some());
+    }
+
+    #[test]
+    fn audit_event_params_minimal() {
+        let params = AuditEventParams {
+            action: "read".to_string(),
+            entity_type: "contact".to_string(),
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            status: "success".to_string(),
+            error_message: None,
+        };
+        assert!(params.entity_id.is_none());
+        assert!(params.user_id.is_none());
+    }
+
+    #[test]
+    fn list_audit_logs_query_empty() {
+        let json = r#"{}"#;
+        let q: ListAuditLogsQuery = serde_json::from_str(json).unwrap();
+        assert!(q.action.is_none());
+        assert!(q.entity_type.is_none());
+        assert!(q.user_id.is_none());
+        assert!(q.status.is_none());
+        assert!(q.start_date.is_none());
+        assert!(q.end_date.is_none());
+        assert!(q.page.is_none());
+        assert!(q.page_size.is_none());
+    }
+
+    #[test]
+    fn list_audit_logs_query_all_fields() {
+        let json = r#"{
+            "action": "create",
+            "entity_type": "customer",
+            "user_id": "u1",
+            "status": "success",
+            "start_date": "2025-01-01",
+            "end_date": "2025-12-31",
+            "page": 2,
+            "page_size": 50
+        }"#;
+        let q: ListAuditLogsQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(q.action.as_deref(), Some("create"));
+        assert_eq!(q.entity_type.as_deref(), Some("customer"));
+        assert_eq!(q.user_id.as_deref(), Some("u1"));
+        assert_eq!(q.status.as_deref(), Some("success"));
+        assert_eq!(q.start_date.as_deref(), Some("2025-01-01"));
+        assert_eq!(q.end_date.as_deref(), Some("2025-12-31"));
+        assert_eq!(q.page, Some(2));
+        assert_eq!(q.page_size, Some(50));
+    }
+
+    #[test]
+    fn list_audit_logs_query_partial() {
+        let json = r#"{"action":"delete","page":1}"#;
+        let q: ListAuditLogsQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(q.action.as_deref(), Some("delete"));
+        assert_eq!(q.page, Some(1));
+        assert!(q.entity_type.is_none());
+    }
+
+    #[test]
+    fn create_routes_smoke() {
+        let _router: Router<ApiState> = create_routes();
+    }
+}

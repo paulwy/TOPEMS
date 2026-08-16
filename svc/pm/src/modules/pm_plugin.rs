@@ -182,3 +182,136 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_plugin_info() -> PluginInfo {
+        PluginInfo {
+            code: "pm".to_string(),
+            name: "项目管理".to_string(),
+            version: "1.0.0".to_string(),
+            description: "test".to_string(),
+            deployment: DeploymentInfo {
+                port: 8023,
+                base_path: "/api/pm".to_string(),
+            },
+            permissions: vec![
+                PermissionDef {
+                    code: "project".to_string(),
+                },
+                PermissionDef {
+                    code: "milestone".to_string(),
+                },
+            ],
+            runtime_url: "http://localhost:8023".to_string(),
+            dependencies: vec!["core".to_string()],
+            navigation_config: Some(serde_json::json!([{"code": "a"}])),
+            category: Some("project".to_string()),
+        }
+    }
+
+    #[test]
+    fn test_plugin_info_serde_roundtrip() {
+        let info = sample_plugin_info();
+        let json = serde_json::to_string(&info).unwrap();
+        let parsed: PluginInfo = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.code, "pm");
+        assert_eq!(parsed.name, "项目管理");
+        assert_eq!(parsed.version, "1.0.0");
+        assert_eq!(parsed.deployment.port, 8023);
+        assert_eq!(parsed.deployment.base_path, "/api/pm");
+        assert_eq!(parsed.permissions.len(), 2);
+        assert_eq!(parsed.permissions[0].code, "project");
+        assert_eq!(parsed.runtime_url, "http://localhost:8023");
+        assert_eq!(parsed.dependencies.len(), 1);
+        assert!(parsed.navigation_config.is_some());
+        assert_eq!(parsed.category, Some("project".to_string()));
+    }
+
+    #[test]
+    fn test_plugin_info_minimal_defaults() {
+        let json = r#"{
+            "code": "pm",
+            "name": "PM",
+            "version": "0.1",
+            "description": "d",
+            "deployment": {"port": 8080, "base_path": "/x"},
+            "permissions": [],
+            "runtime_url": "http://x"
+        }"#;
+        let parsed: PluginInfo = serde_json::from_str(json).unwrap();
+        assert!(parsed.dependencies.is_empty());
+        assert!(parsed.navigation_config.is_none());
+        assert!(parsed.category.is_none());
+    }
+
+    #[test]
+    fn test_plugin_info_clone() {
+        let info = sample_plugin_info();
+        let cloned = info.clone();
+        assert_eq!(cloned.code, info.code);
+        assert_eq!(cloned.permissions.len(), info.permissions.len());
+    }
+
+    #[test]
+    fn test_deployment_info_serde_roundtrip() {
+        let d = DeploymentInfo {
+            port: 9000,
+            base_path: "/base".to_string(),
+        };
+        let s = serde_json::to_string(&d).unwrap();
+        let parsed: DeploymentInfo = serde_json::from_str(&s).unwrap();
+        assert_eq!(parsed.port, 9000);
+        assert_eq!(parsed.base_path, "/base");
+    }
+
+    #[test]
+    fn test_permission_def_serde_roundtrip() {
+        let p = PermissionDef {
+            code: "read".to_string(),
+        };
+        let s = serde_json::to_string(&p).unwrap();
+        let parsed: PermissionDef = serde_json::from_str(&s).unwrap();
+        assert_eq!(parsed.code, "read");
+    }
+
+    #[test]
+    fn test_permission_def_clone_eq() {
+        let p = PermissionDef {
+            code: "write".to_string(),
+        };
+        let c = p.clone();
+        assert_eq!(c.code, p.code);
+    }
+
+    #[test]
+    fn test_create_routes_returns_router() {
+        let router = create_routes();
+        let _ = router;
+    }
+
+    #[test]
+    fn test_get_runtime_url_default() {
+        let saved = std::env::var("RUNTIME_URL").ok();
+        std::env::remove_var("RUNTIME_URL");
+        let url = get_runtime_url();
+        assert_eq!(url, "http://localhost:8023");
+        if let Some(v) = saved {
+            std::env::set_var("RUNTIME_URL", v);
+        }
+    }
+
+    #[test]
+    fn test_get_runtime_url_from_env() {
+        let saved = std::env::var("RUNTIME_URL").ok();
+        std::env::set_var("RUNTIME_URL", "https://example.com:9000");
+        let url = get_runtime_url();
+        assert_eq!(url, "https://example.com:9000");
+        match saved {
+            Some(v) => std::env::set_var("RUNTIME_URL", v),
+            None => std::env::remove_var("RUNTIME_URL"),
+        }
+    }
+}

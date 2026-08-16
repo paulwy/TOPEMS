@@ -60,3 +60,24 @@ pub fn create_routes(
         .merge(notification::create_routes(pool.clone()))
         .merge(statistics::create_routes(pool))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sqlx::postgres::PgConnectOptions;
+    use std::str::FromStr;
+    use topems_shared_service_client::service_client::api::workflow_api::WorkflowApi;
+
+    fn make_pool() -> PgPool {
+        let opts = PgConnectOptions::from_str("postgres://localhost/test").unwrap();
+        sqlx::Pool::connect_lazy_with(opts)
+    }
+
+    #[tokio::test]
+    async fn test_create_routes_returns_router() {
+        let pool = make_pool();
+        let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default().unwrap();
+        let router = create_routes(pool, None, workflow_client);
+        let _ = router;
+    }
+}

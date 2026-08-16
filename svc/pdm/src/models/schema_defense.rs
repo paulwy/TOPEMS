@@ -311,3 +311,119 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
         ],
     ),
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_service_schema() {
+        assert_eq!(SERVICE_SCHEMA, "pdm");
+    }
+
+    #[test]
+    fn test_table_defs_count_and_names() {
+        assert!(TABLE_DEFS.len() >= 18);
+        let names: Vec<&str> = TABLE_DEFS.iter().map(|(n, _)| *n).collect();
+        assert!(names.contains(&"pdm_boms"));
+        assert!(names.contains(&"pdm_bom_items"));
+        assert!(names.contains(&"pdm_products"));
+        assert!(names.contains(&"pdm_materials"));
+        assert!(names.contains(&"pdm_documents"));
+        assert!(names.contains(&"pdm_document_versions"));
+        assert!(names.contains(&"pdm_projects"));
+        assert!(names.contains(&"pdm_project_members"));
+        assert!(names.contains(&"pdm_project_phases"));
+        assert!(names.contains(&"pdm_versions"));
+        assert!(names.contains(&"pdm_change_notices"));
+        assert!(names.contains(&"pdm_workflows"));
+        assert!(names.contains(&"pdm_workflow_instances"));
+        assert!(names.contains(&"pdm_configurations"));
+        assert!(names.contains(&"pdm_production_processes"));
+        assert!(names.contains(&"pdm_production_steps"));
+        assert!(names.contains(&"pdm_production_formulas"));
+        assert!(names.contains(&"pdm_production_batches"));
+    }
+
+    #[test]
+    fn test_table_defs_each_has_columns() {
+        for (table_name, columns) in TABLE_DEFS {
+            assert!(
+                !columns.is_empty(),
+                "Table {table_name} should have at least one column defined"
+            );
+            for (col_name, col_def) in *columns {
+                assert!(!col_name.is_empty());
+                assert!(!col_def.is_empty());
+            }
+        }
+    }
+
+    #[test]
+    fn test_each_table_has_tenant_id() {
+        for (table_name, columns) in TABLE_DEFS {
+            let has_tenant = columns.iter().any(|(c, _)| *c == "tenant_id");
+            assert!(
+                has_tenant,
+                "Table {table_name} should have tenant_id column"
+            );
+        }
+    }
+
+    #[test]
+    fn test_bom_items_columns_exist() {
+        let bom_items = TABLE_DEFS
+            .iter()
+            .find(|(n, _)| *n == "pdm_bom_items")
+            .unwrap()
+            .1;
+        let col_names: Vec<&str> = bom_items.iter().map(|(c, _)| *c).collect();
+        assert!(col_names.contains(&"tenant_id"));
+        assert!(col_names.contains(&"bom_id"));
+        assert!(col_names.contains(&"material_code"));
+        assert!(col_names.contains(&"material_name"));
+        assert!(col_names.contains(&"quantity"));
+    }
+
+    #[test]
+    fn test_products_has_status_and_version() {
+        let products = TABLE_DEFS
+            .iter()
+            .find(|(n, _)| *n == "pdm_products")
+            .unwrap()
+            .1;
+        let col_names: Vec<&str> = products.iter().map(|(c, _)| *c).collect();
+        assert!(col_names.contains(&"product_no"));
+        assert!(col_names.contains(&"name"));
+        assert!(col_names.contains(&"status"));
+        assert!(col_names.contains(&"version"));
+        assert!(col_names.contains(&"description"));
+    }
+
+    #[test]
+    fn test_workflow_tables_reference_ids() {
+        let wf = TABLE_DEFS
+            .iter()
+            .find(|(n, _)| *n == "pdm_workflows")
+            .unwrap()
+            .1;
+        let wf_cols: Vec<&str> = wf.iter().map(|(c, _)| *c).collect();
+        assert!(wf_cols.contains(&"workflow_type"));
+        assert!(wf_cols.contains(&"steps"));
+        assert!(wf_cols.contains(&"conditions"));
+        assert!(wf_cols.contains(&"status"));
+
+        let inst = TABLE_DEFS
+            .iter()
+            .find(|(n, _)| *n == "pdm_workflow_instances")
+            .unwrap()
+            .1;
+        let inst_cols: Vec<&str> = inst.iter().map(|(c, _)| *c).collect();
+        assert!(inst_cols.contains(&"workflow_id"));
+        assert!(inst_cols.contains(&"workflow_name"));
+        assert!(inst_cols.contains(&"target_type"));
+        assert!(inst_cols.contains(&"target_id"));
+        assert!(inst_cols.contains(&"current_step"));
+        assert!(inst_cols.contains(&"status"));
+    }
+}

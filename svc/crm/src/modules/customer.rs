@@ -773,3 +773,123 @@ async fn reject_customer(
         "客户审批已驳回",
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Deserialize;
+    use uuid::Uuid;
+
+    #[test]
+    fn customer_pagination_params_defaults() {
+        let json = r#"{}"#;
+        let q: CustomerPaginationParams = serde_json::from_str(json).unwrap();
+        assert_eq!(q.page, 1);
+        assert_eq!(q.page_size, 25);
+        assert!(q.search.is_none());
+        assert!(q.industry.is_none());
+        assert!(q.rating.is_none());
+    }
+
+    #[test]
+    fn customer_pagination_params_all() {
+        let json = r#"{"page":5,"page_size":50,"search":"ACME","industry":"制造业","rating":"A"}"#;
+        let q: CustomerPaginationParams = serde_json::from_str(json).unwrap();
+        assert_eq!(q.page, 5);
+        assert_eq!(q.page_size, 50);
+        assert_eq!(q.search.as_deref(), Some("ACME"));
+        assert_eq!(q.industry.as_deref(), Some("制造业"));
+        assert_eq!(q.rating.as_deref(), Some("A"));
+    }
+
+    #[test]
+    fn customer_pagination_params_partial() {
+        let json = r#"{"search":"Tech","rating":"B"}"#;
+        let q: CustomerPaginationParams = serde_json::from_str(json).unwrap();
+        assert_eq!(q.page, 1);
+        assert_eq!(q.page_size, 25);
+        assert_eq!(q.search.as_deref(), Some("Tech"));
+        assert_eq!(q.rating.as_deref(), Some("B"));
+        assert!(q.industry.is_none());
+    }
+
+    #[test]
+    fn default_page_returns_one() {
+        assert_eq!(default_page(), 1);
+    }
+
+    #[test]
+    fn default_page_size_returns_25() {
+        assert_eq!(default_page_size(), 25);
+    }
+
+    #[test]
+    fn batch_delete_request_valid_ids() {
+        let id1 = Uuid::new_v4();
+        let id2 = Uuid::new_v4();
+        let id3 = Uuid::new_v4();
+        let json = format!(r#"{{"ids":["{}","{}","{}"]}}"#, id1, id2, id3);
+        let r: BatchDeleteRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(r.ids.len(), 3);
+    }
+
+    #[test]
+    fn batch_delete_request_empty_ids() {
+        let json = r#"{"ids":[]}"#;
+        let r: BatchDeleteRequest = serde_json::from_str(json).unwrap();
+        assert!(r.ids.is_empty());
+    }
+
+    #[test]
+    fn batch_delete_request_invalid_uuid_fails() {
+        let json = r#"{"ids":["xyz"]}"#;
+        let res: Result<BatchDeleteRequest, _> = serde_json::from_str(json);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn start_approval_request_with_comment() {
+        let wid = Uuid::new_v4();
+        let json = format!(r#"{{"workflow_id":"{}","comment":"请审批"}}"#, wid);
+        let r: StartApprovalRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(r.workflow_id, wid);
+        assert_eq!(r.comment.as_deref(), Some("请审批"));
+    }
+
+    #[test]
+    fn start_approval_request_no_comment() {
+        let wid = Uuid::new_v4();
+        let json = format!(r#"{{"workflow_id":"{}"}}"#, wid);
+        let r: StartApprovalRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(r.workflow_id, wid);
+        assert!(r.comment.is_none());
+    }
+
+    #[test]
+    fn start_approval_request_invalid_workflow_id_fails() {
+        let json = r#"{"workflow_id":"bad"}"#;
+        let res: Result<StartApprovalRequest, _> = serde_json::from_str(json);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn approval_action_request_full() {
+        let json = r#"{"comment":"已审核","reason":"符合条件"}"#;
+        let r: ApprovalActionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(r.comment.as_deref(), Some("已审核"));
+        assert_eq!(r.reason.as_deref(), Some("符合条件"));
+    }
+
+    #[test]
+    fn approval_action_request_empty() {
+        let json = r#"{}"#;
+        let r: ApprovalActionRequest = serde_json::from_str(json).unwrap();
+        assert!(r.comment.is_none());
+        assert!(r.reason.is_none());
+    }
+
+    #[test]
+    fn create_routes_smoke() {
+        let _router: Router<ApiState> = create_routes();
+    }
+}

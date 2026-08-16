@@ -463,3 +463,47 @@ fn parse_date_opt(date_str: &Option<String>) -> Option<chrono::DateTime<chrono::
         .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
         .map(|d| d.with_timezone(&chrono::Utc))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sqlx::postgres::PgConnectOptions;
+    use std::str::FromStr;
+
+    fn make_pool() -> PgPool {
+        let opts = PgConnectOptions::from_str("postgres://localhost/test").unwrap();
+        sqlx::Pool::connect_lazy_with(opts)
+    }
+
+    #[tokio::test]
+    async fn test_create_routes_returns_router() {
+        let router = create_routes(make_pool());
+        let _ = router;
+    }
+
+    #[test]
+    fn test_parse_date_opt_none() {
+        assert!(parse_date_opt(&None).is_none());
+    }
+
+    #[test]
+    fn test_parse_date_opt_some_valid() {
+        let s = Some("2024-05-01T12:00:00Z".to_string());
+        let r = parse_date_opt(&s);
+        assert!(r.is_some());
+        assert_eq!(r.unwrap().year(), 2024);
+        assert_eq!(r.unwrap().month(), 5);
+    }
+
+    #[test]
+    fn test_parse_date_opt_some_invalid_returns_none() {
+        let s = Some("bad-date".to_string());
+        assert!(parse_date_opt(&s).is_none());
+    }
+
+    #[test]
+    fn test_parse_date_opt_some_empty_string_returns_none() {
+        let s = Some("".to_string());
+        assert!(parse_date_opt(&s).is_none());
+    }
+}

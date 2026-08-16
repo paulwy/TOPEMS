@@ -43,3 +43,13 @@ pub fn create_api_routes() -> Router<AppState> {
         .merge(change_notice::create_routes())
         .merge(workflow::create_routes())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_api_routes_smoke() {
+        let _router = create_api_routes();
+    }
+}

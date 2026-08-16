@@ -147,4 +147,132 @@ mod tests {
         assert!(r.rating.is_none());
         assert!(r.tags.is_none());
     }
+
+    fn roundtrip<T: serde::Serialize + for<'de> serde::Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    use chrono::Duration;
+
+    #[test]
+    fn customer_roundtrip_full() {
+        let now = Utc::now();
+        let later = now + Duration::hours(1);
+        let c = Customer {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            name: "ACME Corp".to_string(),
+            customer_type: "enterprise".to_string(),
+            industry: Some("制造业".to_string()),
+            rating: "A".to_string(),
+            region: Some("华东".to_string()),
+            owner_id: Uuid::new_v4(),
+            tags: vec!["vip".to_string(), "manufacturing".to_string()],
+            approval_status: "approved".to_string(),
+            created_at: now,
+            updated_at: later,
+            deleted_at: None,
+        };
+        roundtrip(&c);
+    }
+
+    #[test]
+    fn customer_roundtrip_minimal_options() {
+        let now = Utc::now();
+        let c = Customer {
+            id: Uuid::nil(),
+            tenant_id: Uuid::nil(),
+            name: String::new(),
+            customer_type: "potential".into(),
+            industry: None,
+            rating: "C".into(),
+            region: None,
+            owner_id: Uuid::nil(),
+            tags: vec![],
+            approval_status: "none".into(),
+            created_at: now,
+            updated_at: now,
+            deleted_at: Some(now + Duration::days(30)),
+        };
+        roundtrip(&c);
+    }
+
+    #[test]
+    fn customer_clone_and_mask() {
+        let c = Customer::default();
+        let mut cloned = c.clone();
+        cloned.mask_sensitive_fields();
+        let _ = cloned.clone();
+    }
+
+    #[test]
+    fn create_customer_request_roundtrip_full() {
+        let r = CreateCustomerRequest {
+            name: "Globex Inc".to_string(),
+            customer_type: "smb".to_string(),
+            industry: Some("科技".to_string()),
+            rating: Some("B".to_string()),
+            region: Some("华南".to_string()),
+            owner_id: Uuid::new_v4(),
+            tags: Some(vec!["new".to_string(), "tech".to_string()]),
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn create_customer_request_roundtrip_minimal() {
+        let r = CreateCustomerRequest {
+            name: "N".to_string(),
+            customer_type: "potential".into(),
+            industry: None,
+            rating: None,
+            region: None,
+            owner_id: Uuid::nil(),
+            tags: None,
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn update_customer_request_roundtrip_all_some() {
+        let r = UpdateCustomerRequest {
+            name: Some("New Name".to_string()),
+            customer_type: Some("enterprise".to_string()),
+            industry: Some("医疗".to_string()),
+            rating: Some("A+".to_string()),
+            region: Some("华北".to_string()),
+            owner_id: Some(Uuid::new_v4()),
+            tags: Some(vec!["updated".to_string()]),
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn update_customer_request_roundtrip_all_none() {
+        let r = UpdateCustomerRequest {
+            name: None,
+            customer_type: None,
+            industry: None,
+            rating: None,
+            region: None,
+            owner_id: None,
+            tags: None,
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn default_rating_c_is_c() {
+        assert_eq!(default_rating_c(), "C");
+    }
+
+    #[test]
+    fn default_approval_none_is_none() {
+        assert_eq!(default_approval_none(), "none");
+    }
 }

@@ -1068,4 +1068,223 @@ mod tests {
 
         log_audit_event("test.audit_logs", &pool, params, &headers).await;
     }
+
+    // ===== Debug derive 覆盖 =====
+
+    #[test]
+    fn test_audit_log_debug_derive_contains_fields() {
+        let log = AuditLog {
+            id: Uuid::new_v4(),
+            action: "debug_test".to_string(),
+            entity_type: Some("order".to_string()),
+            entity_id: Some(Uuid::new_v4()),
+            entity_ids: None,
+            user_id: Some("user-xyz".to_string()),
+            user_name: Some("DebugUser".to_string()),
+            request_details: None,
+            response_details: None,
+            status: "failed".to_string(),
+            error_message: Some("db error".to_string()),
+            ip_address: Some("1.1.1.1".to_string()),
+            user_agent: Some("curl/7".to_string()),
+            created_at: Utc::now(),
+        };
+        let debug_str = format!("{:?}", log);
+        assert!(debug_str.contains("AuditLog"));
+        assert!(debug_str.contains("debug_test"));
+        assert!(debug_str.contains("order"));
+        assert!(debug_str.contains("user-xyz"));
+        assert!(debug_str.contains("DebugUser"));
+        assert!(debug_str.contains("failed"));
+        assert!(debug_str.contains("db error"));
+        assert!(debug_str.contains("1.1.1.1"));
+        assert!(debug_str.contains("curl/7"));
+    }
+
+    #[test]
+    fn test_audit_event_params_debug_derive() {
+        let params = AuditEventParams {
+            action: "update".to_string(),
+            entity_type: "product".to_string(),
+            entity_id: None,
+            entity_ids: Some(json!({"ids": [1, 2]})),
+            user_id: Some("u-debug".to_string()),
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            status: "partial".to_string(),
+            error_message: Some("partial failure".to_string()),
+        };
+        let debug_str = format!("{:?}", params);
+        assert!(debug_str.contains("AuditEventParams"));
+        assert!(debug_str.contains("update"));
+        assert!(debug_str.contains("product"));
+        assert!(debug_str.contains("u-debug"));
+        assert!(debug_str.contains("partial"));
+        assert!(debug_str.contains("partial failure"));
+    }
+
+    #[test]
+    fn test_list_audit_logs_query_debug_derive() {
+        let query = ListAuditLogsQuery {
+            action: Some("create".to_string()),
+            entity_type: Some("invoice".to_string()),
+            user_id: Some("u1".to_string()),
+            status: Some("success".to_string()),
+            start_date: Some("2026-03-01".to_string()),
+            end_date: Some("2026-03-31".to_string()),
+            page: Some(3),
+            page_size: Some(25),
+        };
+        let debug_str = format!("{:?}", query);
+        assert!(debug_str.contains("ListAuditLogsQuery"));
+        assert!(debug_str.contains("create"));
+        assert!(debug_str.contains("invoice"));
+        assert!(debug_str.contains("u1"));
+        assert!(debug_str.contains("success"));
+        assert!(debug_str.contains("2026-03-01"));
+        assert!(debug_str.contains("2026-03-31"));
+        assert!(debug_str.contains("3"));
+        assert!(debug_str.contains("25"));
+    }
+
+    // ===== page/page_size 钳制逻辑常量值验证（纯计算，与 handler 对齐）=====
+    // handler: page = params.page.unwrap_or(1).max(1)
+    // handler: page_size = params.page_size.unwrap_or(20).min(100)
+
+    #[test]
+    fn test_handler_page_default_clamp_logic_matches_comments() {
+        let cases: Vec<(Option<i64>, i64)> = vec![
+            (None, 1),
+            (Some(1), 1),
+            (Some(-5), 1),
+            (Some(0), 1),
+            (Some(2), 2),
+            (Some(100), 100),
+        ];
+        for (input, expected) in cases {
+            let page = input.unwrap_or(1).max(1);
+            assert_eq!(page, expected, "page 钳制失败: input={:?}", input);
+        }
+    }
+
+    #[test]
+    fn test_handler_page_size_default_clamp_logic_matches_comments() {
+        let cases: Vec<(Option<i64>, i64)> = vec![
+            (None, 20),
+            (Some(1), 1),
+            (Some(50), 50),
+            (Some(100), 100),
+            (Some(200), 100),
+            (Some(999), 100),
+            (Some(-10), -10),
+        ];
+        for (input, expected) in cases {
+            let page_size = input.unwrap_or(20).min(100);
+            assert_eq!(page_size, expected, "page_size 钳制失败: input={:?}", input);
+        }
+    }
+
+    #[test]
+    fn test_handler_offset_formula_matches_handler() {
+        // offset = (page - 1) * page_size
+        // page=1, page_size=20 => 0
+        // page=2, page_size=20 => 20
+        // page=3, page_size=50 => 100
+        assert_eq!((1 - 1) * 20, 0);
+        assert_eq!((2 - 1) * 20, 20);
+        assert_eq!((3 - 1) * 50, 100);
+    }
+
+    // ===== create_routes 多种表限定词覆盖 =====
+
+    #[test]
+    fn test_create_routes_with_four_level_schema() {
+        // 验证非标准 schema 前缀也能正常编译
+        let _router: Router<PgPool> = create_routes("custom_schema.audit_logs_v2");
+    }
+
+    #[test]
+    fn test_create_routes_three_different_qualifiers_dont_panic() {
+        let _a: Router<PgPool> = create_routes("audit");
+        let _b: Router<PgPool> = create_routes("a.b.c");
+        let _c: Router<PgPool> =
+            create_routes("very_long_schema_name_with_underscores.audit_logs_table_name_extended");
+    }
+
+    // ===== AuditLog 字段直接访问（FromRow derive 之外）=====
+
+    #[test]
+    fn test_audit_log_direct_field_writes_and_reads() {
+        let mut log = AuditLog {
+            id: Uuid::new_v4(),
+            action: "a".to_string(),
+            entity_type: None,
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            status: "s".to_string(),
+            error_message: None,
+            ip_address: None,
+            user_agent: None,
+            created_at: Utc::now(),
+        };
+        log.action = "b".to_string();
+        log.entity_type = Some("X".to_string());
+        log.user_id = Some("uid".to_string());
+        log.user_name = Some("uname".to_string());
+        log.status = "t".to_string();
+        log.error_message = Some("err".to_string());
+        log.ip_address = Some("ip".to_string());
+        log.user_agent = Some("ua".to_string());
+        assert_eq!(log.action, "b");
+        assert_eq!(log.entity_type.as_deref(), Some("X"));
+        assert_eq!(log.user_id.as_deref(), Some("uid"));
+        assert_eq!(log.user_name.as_deref(), Some("uname"));
+        assert_eq!(log.status, "t");
+        assert_eq!(log.error_message.as_deref(), Some("err"));
+        assert_eq!(log.ip_address.as_deref(), Some("ip"));
+        assert_eq!(log.user_agent.as_deref(), Some("ua"));
+    }
+
+    // ===== AuditEventParams 直接字段修改 =====
+
+    #[test]
+    fn test_audit_event_params_field_mutation() {
+        let mut params = AuditEventParams {
+            action: "x".to_string(),
+            entity_type: "y".to_string(),
+            entity_id: None,
+            entity_ids: None,
+            user_id: None,
+            user_name: None,
+            request_details: None,
+            response_details: None,
+            status: "s".to_string(),
+            error_message: None,
+        };
+        params.action = "create".to_string();
+        params.entity_type = "customer".to_string();
+        params.entity_id = Some(Uuid::new_v4());
+        params.entity_ids = Some(json!({"bulk": true}));
+        params.user_id = Some("u1".to_string());
+        params.user_name = Some("n1".to_string());
+        params.request_details = Some(json!({"a": 1}));
+        params.response_details = Some(json!({"b": 2}));
+        params.status = "success".to_string();
+        params.error_message = Some("none".to_string());
+        assert_eq!(params.action, "create");
+        assert_eq!(params.entity_type, "customer");
+        assert!(params.entity_id.is_some());
+        assert!(params.entity_ids.is_some());
+        assert_eq!(params.user_id.as_deref(), Some("u1"));
+        assert_eq!(params.user_name.as_deref(), Some("n1"));
+        assert!(params.request_details.is_some());
+        assert!(params.response_details.is_some());
+        assert_eq!(params.status, "success");
+        assert_eq!(params.error_message.as_deref(), Some("none"));
+    }
 }

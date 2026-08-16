@@ -160,4 +160,161 @@ mod tests {
         assert!(r.stage.is_none());
         assert!(r.status.is_none());
     }
+
+    fn roundtrip<T: serde::Serialize + for<'de> serde::Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    use chrono::Duration;
+    use rust_decimal::Decimal;
+
+    #[test]
+    fn opportunity_roundtrip_all_some() {
+        let now = Utc::now();
+        let close_dt = now + Duration::days(30);
+        let o = Opportunity {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            opp_no: "OPP-2026-0001".to_string(),
+            name: "Large Enterprise Deal".to_string(),
+            customer_id: Some(Uuid::new_v4()),
+            customer_name: Some("ACME Corp".to_string()),
+            stage: "proposal".into(),
+            priority: "high".into(),
+            value: Some(Decimal::new(5000000, 2)),
+            win_rate: Some(65),
+            close_date: Some(close_dt),
+            owner_id: Some(Uuid::new_v4()),
+            status: "open".into(),
+            notes: Some("Hot deal, follow up next week".to_string()),
+            created_at: now,
+            updated_at: now + Duration::hours(2),
+            deleted_at: None,
+        };
+        roundtrip(&o);
+    }
+
+    #[test]
+    fn opportunity_roundtrip_minimal_none() {
+        let now = Utc::now();
+        let o = Opportunity {
+            id: Uuid::nil(),
+            tenant_id: Uuid::nil(),
+            opp_no: String::new(),
+            name: "Small deal".to_string(),
+            customer_id: None,
+            customer_name: None,
+            stage: "draft".into(),
+            priority: "low".into(),
+            value: None,
+            win_rate: None,
+            close_date: None,
+            owner_id: None,
+            status: "closed".into(),
+            notes: None,
+            created_at: now,
+            updated_at: now,
+            deleted_at: Some(now + Duration::days(90)),
+        };
+        roundtrip(&o);
+    }
+
+    #[test]
+    fn create_opportunity_request_roundtrip_all_some() {
+        let now = Utc::now();
+        let close = (now + Duration::days(45))
+            .date_naive()
+            .and_hms_opt(0, 0, 0)
+            .unwrap()
+            .and_utc();
+        let r = CreateOpportunityRequest {
+            opp_no: "OPP-2026-0042".to_string(),
+            name: "Cloud Migration Project".to_string(),
+            customer_id: Some(Uuid::new_v4()),
+            customer_name: Some("Globex".to_string()),
+            value: Some(Decimal::new(12500000, 2)),
+            win_rate: Some(40),
+            close_date: Some(close),
+            owner_id: Some(Uuid::new_v4()),
+            priority: Some("medium".to_string()),
+            notes: Some("Quarterly target".to_string()),
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn create_opportunity_request_roundtrip_minimal() {
+        let r = CreateOpportunityRequest {
+            opp_no: String::new(),
+            name: "Tiny".to_string(),
+            customer_id: None,
+            customer_name: None,
+            value: None,
+            win_rate: None,
+            close_date: None,
+            owner_id: None,
+            priority: None,
+            notes: None,
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn update_opportunity_request_roundtrip_all_some() {
+        let now = Utc::now();
+        let close = (now + Duration::days(60))
+            .date_naive()
+            .and_hms_opt(0, 0, 0)
+            .unwrap()
+            .and_utc();
+        let r = UpdateOpportunityRequest {
+            opp_no: Some("OPP-UPDATED".to_string()),
+            name: Some("Renamed Deal".to_string()),
+            customer_id: Some(Uuid::new_v4()),
+            customer_name: Some("Initech".to_string()),
+            value: Some(Decimal::new(999999, 2)),
+            stage: Some("negotiation".to_string()),
+            win_rate: Some(80),
+            close_date: Some(close),
+            owner_id: Some(Uuid::new_v4()),
+            priority: Some("urgent".to_string()),
+            status: Some("open".to_string()),
+            notes: Some("Updated all fields".to_string()),
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn update_opportunity_request_roundtrip_all_none() {
+        let r = UpdateOpportunityRequest {
+            opp_no: None,
+            name: None,
+            customer_id: None,
+            customer_name: None,
+            value: None,
+            stage: None,
+            win_rate: None,
+            close_date: None,
+            owner_id: None,
+            priority: None,
+            status: None,
+            notes: None,
+        };
+        roundtrip(&r);
+    }
+
+    #[test]
+    fn default_priority_medium_check() {
+        assert_eq!(default_priority_medium(), "medium");
+    }
+
+    #[test]
+    fn default_status_open_check() {
+        assert_eq!(default_status_open(), "open");
+    }
 }
