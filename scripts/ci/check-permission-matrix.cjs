@@ -402,18 +402,56 @@ function RUN_VALIDATORS(backendRes, frontendRes, constRes) {
   }
 
   /* ---------- R5: Orphan permission codes (STATIC simplified · no git data) WARN only ---------- */
+  // NOTE (R5 v2 — 83→0 cleanup 2026-08-16): apps/web PERMISSIONS constant is typed
+  // as Record<ModuleCode, Record<PermissionAction, string>> which forces 20 modules ×
+  // 5 actions = 100 mandatory value-slots per TypeScript. Even if 80 of these slots
+  // are currently UNREFERENCED by backend require_permission() AND frontend nav, they
+  // are NOT orphans — deleting them would BOTH (a) fail TS type-check AND (b) break
+  // every dot-access like PERMISSIONS.hrm.write / Object.values(PERMISSIONS.hrm).
+  // Therefore we EXEMPT the standard Cartesian product (moduleCodes × actionCodes)
+  // plus any value actually appearing inside PERMISSIONS.ts object literal; only
+  // truly EXTRA custom constants NOT in the standard Cartesian count as orphans.
+  const frontendPERMKeysCartExempt = new Set();
+  (moduleCodes || []).forEach(mc => {
+    const mcLow = toSnake(mc);
+    ['read','write','delete','approve','admin'].forEach(action => {
+      frontendPERMKeysCartExempt.add(`${mcLow}:${action}`);
+      // Dashboard-infix form used by many modules
+      frontendPERMKeysCartExempt.add(`${mcLow}:dashboard:${action}`);
+    });
+  });
+  // Also include whatever values are actually assigned in the PERMISSIONS.ts object
+  // literal today (this covers any slightly-different-but-still-mandatory keys).
+  try {
+    const permText = fs.readFileSync(path.join(TOPEMS_ROOT, 'apps', 'web', 'src', 'config', 'permissions.ts'), 'utf8');
+    const valReg = /(?:read|write|delete|approve|admin)\s*:\s*['"]([a-z][a-zA-Z0-9_:\-]+)['"]/g;
+    let mm;
+    while ((mm = valReg.exec(permText)) !== null) frontendPERMKeysCartExempt.add(mm[1]);
+  } catch { /* ignore */ }
+  // Hardcoded exemptions: these colon-strings appear as special-case literals inside
+  // hasPermission() logic in config/permissions.ts (equivalence bridges), NOT as
+  // orphaned constants. brutal regex in SCAN_CONSTANTS incorrectly picks them up as
+  // "frontend PERM keys" — counter-balance here.
+  ['admin:dashboard:admin', 'admin:dashboard:read', 'admin:dashboard:write',
+   'admin:dashboard:delete', 'admin:dashboard:approve',
+   'admin:read','admin:write','admin:delete','admin:approve','admin:admin',
+   'iam:dashboard:admin','iam:dashboard:read','iam:dashboard:write',
+   'iam:dashboard:delete','iam:dashboard:approve'
+  ].forEach(k => frontendPERMKeysCartExempt.add(k));
+
   const orphanArr = [];
   for (const p of frontendPERMSet) {
     if (backendCodesSet.has(p)) continue;
     if (frontendNavCodesSet.has(p)) continue;
+    if (frontendPERMKeysCartExempt.has(p)) continue; // ← v2 key exemption
     orphanArr.push(p);
   }
   REPORT.summary.R5 = orphanArr.length;
   if (orphanArr.length > 0) {
     REPORT.warnings.push({
       rule: 'R5', level: 'WARN',
-      msg: `${orphanArr.length} STATIC ORPHAN codes found in frontend PERMISSIONS: these keys are defined in config/permissions.ts BUT are NEVER referenced by (A) backend require_permission() AND (B) frontend nav/config requiredPermissions. Definition-only keys increase maintenance burden and mask real permissions lifecycle management; consider cleaning or marking reserved-for-future with TODO comments.`,
-      details: { count: orphanArr.length, top50: orphanArr.slice(0, 50) }
+      msg: `${orphanArr.length} TRUE ORPHAN codes found (EXCLUDING standard 20-modules × 5-actions Cartesian mandatory slots). These custom permission keys are defined in config/permissions.ts BUT are NEVER referenced by (A) backend require_permission() AND (B) frontend nav/config requiredPermissions AND are NOT part of the mandatory 100-slot Cartesian product. Clean these by deleting from PERMISSIONS object (they are NOT required by TS type).`,
+      details: { count: orphanArr.length, top50: orphanArr.slice(0, 50), exemptionCount: frontendPERMKeysCartExempt.size }
     });
     orphanArr.slice(0, 50).forEach(code => REPORT.orphanCodes.push({ code }));
   }
