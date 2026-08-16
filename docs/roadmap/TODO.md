@@ -4704,6 +4704,45 @@ R12 三线规划落地当日，即完成 X-P0 的 Phase-1（四闸复核）与 P
 - LOW = 少量（Oxford comma 12 + Title Case 18，均 ≤ ∞ 阈值不 fail）
 - 下一阶段目标（Phase-2B）：HIGH 清零 → 然后收紧 MEDIUM 到 ≤ 50；工具已支持 `--max-high 0 --max-medium 50` 精确 fail。
 
+#### ✅ 完成 · X-P0 Phase-2B：Style Guide Lint HIGH 883→0 + MEDIUM 809→4（≤50）
+
+HIGH 清零与 MEDIUM 收敛由前置综合清洗（commit `1c67cc037` 的"490+268+350+3128 翻译记忆 + 综合清洗 + LLM 回填 + 混合结构同步"）已覆盖 §5 CamelCase 失败/成功动词、§4 Please input X 校验提示等高严重度模式。2026-08-16 复跑 lint-styleguide.cjs 的实际基线：
+
+| 严重度 | 首次 Lint 基线 | 2026-08-16 实测 | 变化 |
+|:------:|:-----:|:-----:|:-----:|
+| HIGH | 883 | **0** | -883 (-100%) |
+| MEDIUM | 809 | **4** | -805 (-99.5%) |
+| LOW | ≈30 | **30** | ≈ 持平（OXFORD / Title Case 不阻断） |
+
+**默认阈值 `--max-high 0 --max-medium 50` 下 Lint PASS ✅**（HIGH=0 ≤ 0 · MEDIUM=4 ≤ 50 · LOW=30 ≤ ∞）。
+
+#### ✅ 完成 · X-P0 Phase-2C：7-in-1 CI 门禁固化（Z1/Z2/Z3 三合一 strict 接进 check-i18n-quality.cjs）
+
+在 [check-i18n-quality.cjs](file:///Users/air/TOPEMS/scripts/ci/check-i18n-quality.cjs#L331-L417) 底部追加 `runR12SevenInOne()` IIFE，与原有 3 检查（假 en / key 对齐 / 混合结构）串行执行，形成完整 i18n 七闸合并：
+
+| # | 子闸 | 严格条件 | 2026-08-16 实测 |
+|:-:|:-----|:---------|:----:|
+| 1 | 假 en 值（CJK 残留） | >0 → exit 1 | 0 ✅ |
+| 2 | en/zh key 一致性 | >0 WARN（不阻断） | 0 ✅ |
+| 3 | 扁平/嵌套混合结构 bug | >0 → exit 1 | 0 ✅ |
+| 4 | **R12-Z1 EN missing**（空值/null 叶子） | ≠0 → exit 1 | empty=0 null=0 ✅ |
+| 5 | **R12-Z2 Glossary Top50+13** | non-standard≠0 → exit 1 | 0 ✅ |
+| 6 | **R12-Z3 Style Guide Lint** | HIGH>0 或 MEDIUM>50 → exit 1 | HIGH=0 MEDIUM=4 ✅ |
+| 7 | 硬编码中文精确扫描（apps/web/src） | Total>0 → exit 1 | 0 ✅ |
+
+**严格模式实测**：`node scripts/ci/check-i18n-quality.cjs --strict` exit=0 · 7-in-1 Gate Result: ✅ PASS (0 failures)。同步将 [ci.yml](file:///Users/air/TOPEMS/.github/workflows/ci.yml#L1167) 总览 Gate Summary 标签从 "5-in-1" 升级为 "7-in-1: fake-en / key-align / mixed-structure / glossary / hardcoded / EN-missing / styleguide"。
+
+#### ✅ 完成 · X-P0 综合验收（四闸全绿）
+
+| 闸 | 执行方式 | 实际结果 | 判定 |
+|:--:|:---------|:---------|:----:|
+| TSC 前端类型检查 | `apps/web` 下 `npx tsc --noEmit` | 0 errors · exit=0 | ✅ |
+| i18n 7-in-1 Strict Gate | `node scripts/ci/check-i18n-quality.cjs --strict` | 7 子闸 0 failure · exit=0 | ✅ |
+| 硬编码中文精确扫描 strict | `node scripts/i18n/scan-hardcoded-precise.cjs --strict --details 0` | Total=0 lines · exit=0 | ✅ |
+| Style Guide Lint 默认阈值 | `node scripts/i18n/lint-styleguide.cjs`（无参） | HIGH=0 ≤ 0 · MEDIUM=4 ≤ 50 · exit=0 | ✅ |
+
+**X-P0 i18n 最后一英里达成完整交付：** 假 en=0 · 硬编码=0 · EN missing=0 · Glossary 61 条 100% 对齐 · Style Guide HIGH=0（MEDIUM 4 余量远低于 50 上限）· 七合一 CI 门禁 GREEN。
+
 ---
 
 ## V224 · 技术文档全面重构与链接校验（2026-08-15）

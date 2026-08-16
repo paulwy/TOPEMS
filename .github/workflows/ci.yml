@@ -1164,7 +1164,7 @@ jobs:
           echo "| Frontend Build & Bundle | ${{ needs.frontend-build.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Design System Check | ${{ needs.design-system-check.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Audit (V64) | ${{ needs.frontend-audit.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| i18n Quality Gate (R12 · 5-in-1: fake-en / key-alignment / mixed-structure / glossary / hardcoded) | ${{ needs.i18n-quality-gate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| i18n Quality Gate (R12 · 7-in-1: fake-en / key-align / mixed-structure / glossary / hardcoded / EN-missing / styleguide) | ${{ needs.i18n-quality-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Permission Matrix 3-Way Gate (R1/R2/R3 FAIL × backend×frontend×const) | ${{ needs.permission-matrix-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
