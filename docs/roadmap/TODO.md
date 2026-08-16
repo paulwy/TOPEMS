@@ -3156,6 +3156,43 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 > - **i18n 硬编码清零 P4**：继续处理剩余 18856 行 · 优先 components/templates(1069) · ai(2358) · microfrontend(1770)
 > - **权限矩阵自动化验证**：后端路由 → 前端导航 → 权限标识 三向自动验证 CI 门禁
 > - **Design Token 169 处收尾**：主要为图表/地图/调试工具专用色值，属合理例外
+>
+> **V229 已完成**：✅ Coverage 冲刺 P4 · 4 低覆盖 crate 并行补测（详见下方 V229 章节，+183 tests · 4 crate 平均 +16.3% · CI 阈值收紧）
+
+## 🎯 V229 — Coverage 冲刺 P4 · 4 低覆盖 crate 并行补测（60 files · +183 tests · ✅ 完成）
+
+> **承接**：R12 三线七闸全 GREEN 后，聚焦 workspace 覆盖率提升。P4 目标是针对 4 个最低覆盖 crate 并行补齐 unit tests，同时收紧 CI 阈值。
+> **基线** (2026-08-16，cargo-llvm-cov --lib --summary-only 实测)：
+
+| Crate | 基线 Line % | P4 目标 | 实际达成 | 增量 | 新增 tests |
+|:------|:----------:|:-------:|:--------:|:----:|:----------:|
+| topems-erp | 44.62% | ≥55% | **59.45%** | +14.83 | +67 |
+| topems-hrm | 20.73% | ≥35% | **35.97%** | +15.24 | +16 |
+| topems-scm | 22.25% | ≥35% | **41.54%** | +19.29 | +77 |
+| topems-finance | 31.60% | ≥45% | **46.62%** | +15.02 | +23 |
+| **合计** | — | — | — | **+64.38** | **+183** |
+
+**验证**：`cargo test --offline -p topems-erp -p topems-hrm -p topems-scm -p topems-finance --lib` → **2,731 passed · 0 failed**（1030+1054+296+351）
+
+**CI 阈值收紧**（[ci.yml](file:///Users/air/TOPEMS/.github/workflows/ci.yml#L346-L364)）：
+
+| 指标 | 旧阈值 | 新阈值 | 实测值 |
+|:-----|:------:|:------:|:------:|
+| Workspace Line | ≥20% | **≥25%** | — |
+| topems-shared | ≥60% | **≥80%** | 93.72% |
+| topems-qms | ≥50% | **≥60%** | 69.42% |
+| topems-erp | ≥50% | **≥55%** | 59.45% |
+| topems-finance | — | **≥40%** | 46.62% |
+| topems-hrm | — | **≥30%** | 35.97% |
+| topems-scm | — | **≥35%** | 41.54% |
+| topems-wms | — | **≥60%** | 69.73% |
+| topems-tms | — | **≥70%** | 77.12% |
+
+**补测策略**：4 个子代理并行执行，每个聚焦一个 crate：
+- **erp**：master_data_refs.rs（40 tests · quality rule validation + scoring pipeline）· addressbook.rs（7 tests · escape_csv）· dict.rs（8 tests · serde roundtrips）· search.rs（4 tests · SearchParams）· 2 sagas（6 tests · new/default）
+- **hrm**：attendance.rs（6 tests · route creation + params deserialization）· department.rs（5 tests · pagination params）· salary_adjustment.rs（5 tests · pagination params）
+- **scm**：7 model files（77 tests · PurchaseItem/PurchaseRequisition/AuditLog/PriceComparison/SupplierEvaluation/SupplierDeliveryAppointment/SupplierAdmission serde roundtrips）
+- **finance**：report_center.rs（23 tests · financial statement generators + ratio analysis）· risk_v54/v59 · reports_v57 · decision_v60 · audit_v52 · shared_services
 
 ## 🎯 V213 — 覆盖率冲刺 P2→P3 全量推进（26 commits · ~2930 新增 tests · ✅ 已封版）
 

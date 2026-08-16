@@ -628,3 +628,102 @@ async fn clear_supplier_redis_caches(cache: &Option<Arc<RedisCacheService>>) {
         tracing::debug!("🗑️ 供应商Redis缓存已清除");
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use uuid::Uuid;
+
+    #[test]
+    fn supplier_cache_key_includes_id_with_prefix() {
+        let id = Uuid::new_v4();
+        let key = supplier_cache_key(&id);
+        assert!(
+            key.starts_with("scm:supplier:"),
+            "key should start with prefix, got {}",
+            key
+        );
+        assert!(
+            key.contains(&id.to_string()),
+            "key should contain the uuid, got {}",
+            key
+        );
+    }
+
+    #[test]
+    fn supplier_cache_key_format_is_deterministic() {
+        let id = Uuid::nil();
+        let key = supplier_cache_key(&id);
+        assert_eq!(key, format!("scm:supplier:{}", id));
+    }
+
+    #[test]
+    fn suppliers_list_cache_key_includes_pagination_params() {
+        let key = suppliers_list_cache_key(2, 20, &None, &None);
+        assert!(
+            key.contains("page:2"),
+            "key should contain page, got {}",
+            key
+        );
+        assert!(
+            key.contains("size:20"),
+            "key should contain size, got {}",
+            key
+        );
+        assert!(
+            key.starts_with("scm:suppliers:list:"),
+            "key should start with prefix, got {}",
+            key
+        );
+    }
+
+    #[test]
+    fn suppliers_list_cache_key_includes_search_pattern() {
+        let search = Some("acme".to_string());
+        let key = suppliers_list_cache_key(1, 10, &search, &None);
+        assert!(
+            key.contains("search:Some(\"%acme%\")"),
+            "key should contain search pattern, got {}",
+            key
+        );
+    }
+
+    #[test]
+    fn suppliers_list_cache_key_includes_status_filter() {
+        let status = Some("active".to_string());
+        let key = suppliers_list_cache_key(1, 10, &None, &status);
+        assert!(
+            key.contains("status:Some(\"active\")"),
+            "key should contain status, got {}",
+            key
+        );
+    }
+
+    #[test]
+    fn suppliers_list_cache_key_distinct_for_different_params() {
+        let k1 = suppliers_list_cache_key(1, 10, &None, &None);
+        let k2 = suppliers_list_cache_key(2, 10, &None, &None);
+        assert_ne!(k1, k2);
+    }
+
+    #[test]
+    fn suppliers_list_cache_key_search_none_renders_none() {
+        let key = suppliers_list_cache_key(1, 10, &None, &None);
+        assert!(
+            key.contains("search:None"),
+            "key should contain search:None, got {}",
+            key
+        );
+    }
+
+    #[test]
+    fn cache_prefix_constants_are_stable() {
+        assert_eq!(CACHE_PREFIX_SUPPLIER, "scm:supplier");
+        assert_eq!(CACHE_PREFIX_SUPPLIERS_LIST, "scm:suppliers:list");
+    }
+
+    #[test]
+    fn cache_ttl_is_five_minutes() {
+        assert_eq!(CACHE_TTL_SECONDS, 300);
+    }
+}

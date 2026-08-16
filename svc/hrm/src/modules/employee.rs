@@ -681,3 +681,216 @@ async fn export_employees(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_employee_cache_key_format() {
+        let id = Uuid::new_v4();
+        let key = employee_cache_key(&id);
+        assert_eq!(key, format!("employee:{}", id));
+    }
+
+    #[test]
+    fn test_employee_cache_key_nil_uuid() {
+        let id = Uuid::nil();
+        let key = employee_cache_key(&id);
+        assert_eq!(key, format!("employee:{}", Uuid::nil()));
+    }
+
+    #[test]
+    fn test_employee_cache_key_different_uuids() {
+        let id1 = Uuid::new_v4();
+        let id2 = Uuid::new_v4();
+        assert_ne!(employee_cache_key(&id1), employee_cache_key(&id2));
+    }
+
+    #[test]
+    fn test_employee_cache_key_prefix() {
+        let id = Uuid::new_v4();
+        let key = employee_cache_key(&id);
+        assert!(key.starts_with("employee:"));
+    }
+
+    #[test]
+    fn test_create_routes() {
+        let _router = create_routes();
+    }
+
+    #[test]
+    fn test_employee_pagination_params_default_fields() {
+        let params = EmployeePaginationParams {
+            page: None,
+            page_size: None,
+            search: None,
+            status: None,
+            department_id: None,
+            org_id: None,
+        };
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert!(params.search.is_none());
+        assert!(params.status.is_none());
+        assert!(params.department_id.is_none());
+        assert!(params.org_id.is_none());
+    }
+
+    #[test]
+    fn test_employee_pagination_params_with_values() {
+        let dept_id = Uuid::new_v4();
+        let org_id = Uuid::new_v4();
+        let params = EmployeePaginationParams {
+            page: Some(2),
+            page_size: Some(50),
+            search: Some("张三".to_string()),
+            status: Some("active".to_string()),
+            department_id: Some(dept_id),
+            org_id: Some(org_id),
+        };
+        assert_eq!(params.page, Some(2));
+        assert_eq!(params.page_size, Some(50));
+        assert_eq!(params.search.as_deref(), Some("张三"));
+        assert_eq!(params.status.as_deref(), Some("active"));
+        assert_eq!(params.department_id, Some(dept_id));
+        assert_eq!(params.org_id, Some(org_id));
+    }
+
+    #[test]
+    fn test_employee_pagination_params_debug() {
+        let params = EmployeePaginationParams {
+            page: Some(1),
+            page_size: None,
+            search: None,
+            status: None,
+            department_id: None,
+            org_id: None,
+        };
+        let debug = format!("{:?}", params);
+        assert!(debug.contains("EmployeePaginationParams"));
+        assert!(debug.contains("page: Some(1)"));
+    }
+
+    #[test]
+    fn test_export_request_default() {
+        let req = ExportRequest {
+            ids: None,
+            format: None,
+        };
+        assert!(req.ids.is_none());
+        assert!(req.format.is_none());
+    }
+
+    #[test]
+    fn test_export_request_with_ids() {
+        let ids = vec![Uuid::new_v4(), Uuid::new_v4(), Uuid::new_v4()];
+        let req = ExportRequest {
+            ids: Some(ids.clone()),
+            format: Some("csv".to_string()),
+        };
+        assert_eq!(req.ids.as_ref().unwrap().len(), 3);
+        assert_eq!(req.format.as_deref(), Some("csv"));
+    }
+
+    #[test]
+    fn test_export_request_empty_ids() {
+        let req = ExportRequest {
+            ids: Some(vec![]),
+            format: Some("xlsx".to_string()),
+        };
+        assert!(req.ids.as_ref().unwrap().is_empty());
+        assert_eq!(req.format.as_deref(), Some("xlsx"));
+    }
+
+    #[test]
+    fn test_export_request_debug() {
+        let req = ExportRequest {
+            ids: Some(vec![Uuid::new_v4()]),
+            format: Some("csv".to_string()),
+        };
+        let debug = format!("{:?}", req);
+        assert!(debug.contains("ExportRequest"));
+    }
+
+    #[test]
+    fn test_get_tenant_id_with_header() {
+        let claims = Claims {
+            sub: String::new(),
+            username: String::new(),
+            role: String::new(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        };
+        let mut headers = axum::http::HeaderMap::new();
+        let tenant = Uuid::new_v4();
+        headers.insert(
+            "x-tenant-id",
+            axum::http::HeaderValue::from_str(&tenant.to_string()).unwrap(),
+        );
+        let result = get_tenant_id(&claims, &headers);
+        assert_eq!(result, tenant);
+    }
+
+    #[test]
+    fn test_get_tenant_id_fallback_generates_uuid() {
+        let claims = Claims {
+            sub: String::new(),
+            username: String::new(),
+            role: String::new(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        };
+        let headers = axum::http::HeaderMap::new();
+        let result = get_tenant_id(&claims, &headers);
+        // Should generate a random UUID (not nil)
+        assert_ne!(result, Uuid::nil());
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_claims() {
+        let tenant = Uuid::new_v4();
+        let claims = Claims {
+            sub: String::new(),
+            username: String::new(),
+            role: String::new(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: Some(tenant.to_string()),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        };
+        let headers = axum::http::HeaderMap::new();
+        let result = get_tenant_id(&claims, &headers);
+        assert_eq!(result, tenant);
+    }
+
+    #[test]
+    fn test_employee_cache_ttl_constant() {
+        assert_eq!(EMPLOYEE_CACHE_TTL, 3600);
+    }
+}

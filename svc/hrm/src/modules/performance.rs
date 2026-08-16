@@ -792,3 +792,214 @@ async fn get_employee_goals(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::de::DeserializeOwned;
+
+    fn now() -> chrono::DateTime<chrono::Utc> {
+        Utc::now()
+    }
+
+    fn dec(n: i64) -> BigDecimal {
+        BigDecimal::from(n)
+    }
+
+    fn roundtrip<T: Serialize + DeserializeOwned + std::fmt::Debug>(item: &T) {
+        let json = serde_json::to_string(item).expect("serialize");
+        let v1: serde_json::Value = serde_json::from_str(&json).expect("to_value");
+        let back: T = serde_json::from_str(&json).expect("deserialize");
+        let json2 = serde_json::to_string(&back).expect("re-serialize");
+        let v2: serde_json::Value = serde_json::from_str(&json2).expect("to_value2");
+        assert_eq!(v1, v2, "roundtrip mismatch");
+    }
+
+    #[test]
+    fn test_performance_review_roundtrip_full() {
+        roundtrip(&PerformanceReview {
+            id: Uuid::new_v4(),
+            employee_id: Uuid::new_v4(),
+            review_period: "2024-Q1".to_string(),
+            reviewer_id: Some(Uuid::new_v4()),
+            status: "draft".to_string(),
+            overall_rating: Some(dec(85)),
+            self_rating: Some(dec(80)),
+            manager_rating: Some(dec(90)),
+            final_rating: Some(dec(85)),
+            comments: Some("Good performance".to_string()),
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn test_performance_review_roundtrip_minimal() {
+        roundtrip(&PerformanceReview {
+            id: Uuid::new_v4(),
+            employee_id: Uuid::new_v4(),
+            review_period: "2024-H1".to_string(),
+            reviewer_id: None,
+            status: "submitted".to_string(),
+            overall_rating: None,
+            self_rating: None,
+            manager_rating: None,
+            final_rating: None,
+            comments: None,
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn test_performance_goal_roundtrip_full() {
+        roundtrip(&PerformanceGoal {
+            id: Uuid::new_v4(),
+            employee_id: Uuid::new_v4(),
+            title: "Increase sales by 20%".to_string(),
+            description: Some("Q1 sales target".to_string()),
+            target: Some("120% of Q4".to_string()),
+            weight: dec(50),
+            achieved: Some(dec(110)),
+            status: "in_progress".to_string(),
+            due_date: Some(now()),
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn test_performance_goal_roundtrip_minimal() {
+        roundtrip(&PerformanceGoal {
+            id: Uuid::new_v4(),
+            employee_id: Uuid::new_v4(),
+            title: "Complete training".to_string(),
+            description: None,
+            target: None,
+            weight: dec(100),
+            achieved: None,
+            status: "pending".to_string(),
+            due_date: None,
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn test_create_performance_review_request_roundtrip() {
+        roundtrip(&CreatePerformanceReviewRequest {
+            employee_id: Uuid::new_v4(),
+            review_period: "2024-Q2".to_string(),
+            reviewer_id: Some(Uuid::new_v4()),
+        });
+        roundtrip(&CreatePerformanceReviewRequest {
+            employee_id: Uuid::new_v4(),
+            review_period: "2024-Q2".to_string(),
+            reviewer_id: None,
+        });
+    }
+
+    #[test]
+    fn test_update_performance_review_request_roundtrip_all_none() {
+        roundtrip(&UpdatePerformanceReviewRequest {
+            reviewer_id: None,
+            status: None,
+            overall_rating: None,
+            self_rating: None,
+            manager_rating: None,
+            final_rating: None,
+            comments: None,
+        });
+    }
+
+    #[test]
+    fn test_update_performance_review_request_roundtrip_all_some() {
+        roundtrip(&UpdatePerformanceReviewRequest {
+            reviewer_id: Some(Uuid::new_v4()),
+            status: Some("approved".to_string()),
+            overall_rating: Some(dec(95)),
+            self_rating: Some(dec(90)),
+            manager_rating: Some(dec(95)),
+            final_rating: Some(dec(92)),
+            comments: Some("Excellent work".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_create_performance_goal_request_roundtrip() {
+        roundtrip(&CreatePerformanceGoalRequest {
+            employee_id: Uuid::new_v4(),
+            title: "Improve code quality".to_string(),
+            description: Some("Reduce bug count".to_string()),
+            target: Some("50% fewer bugs".to_string()),
+            weight: dec(30),
+            due_date: Some(now()),
+        });
+        roundtrip(&CreatePerformanceGoalRequest {
+            employee_id: Uuid::new_v4(),
+            title: "New goal".to_string(),
+            description: None,
+            target: None,
+            weight: dec(70),
+            due_date: None,
+        });
+    }
+
+    #[test]
+    fn test_update_performance_goal_request_roundtrip_all_none() {
+        roundtrip(&UpdatePerformanceGoalRequest {
+            title: None,
+            description: None,
+            target: None,
+            weight: None,
+            achieved: None,
+            status: None,
+            due_date: None,
+        });
+    }
+
+    #[test]
+    fn test_update_performance_goal_request_roundtrip_all_some() {
+        roundtrip(&UpdatePerformanceGoalRequest {
+            title: Some("Updated goal".to_string()),
+            description: Some("Updated desc".to_string()),
+            target: Some("New target".to_string()),
+            weight: Some(dec(40)),
+            achieved: Some(dec(35)),
+            status: Some("completed".to_string()),
+            due_date: Some(now()),
+        });
+    }
+
+    #[test]
+    fn test_query_params_deserialize_all_none() {
+        let json = r#"{}"#;
+        let params: QueryParams = serde_json::from_str(json).expect("deserialize");
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert!(params.employee_id.is_none());
+        assert!(params.review_period.is_none());
+        assert!(params.status.is_none());
+    }
+
+    #[test]
+    fn test_query_params_deserialize_all_some() {
+        let emp = Uuid::new_v4();
+        let json = format!(
+            r#"{{"page":1,"page_size":20,"employee_id":"{}","review_period":"2024-Q1","status":"draft"}}"#,
+            emp
+        );
+        let params: QueryParams = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(params.page, Some(1));
+        assert_eq!(params.page_size, Some(20));
+        assert_eq!(params.employee_id, Some(emp));
+        assert_eq!(params.review_period.as_deref(), Some("2024-Q1"));
+        assert_eq!(params.status.as_deref(), Some("draft"));
+    }
+
+    #[test]
+    fn test_create_routes_returns_router() {
+        // Verify create_routes compiles and returns a Router without panic
+        let _router = create_routes();
+    }
+}

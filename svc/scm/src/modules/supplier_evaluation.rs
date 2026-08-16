@@ -396,3 +396,52 @@ pub async fn delete_evaluation(
 
     response
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn supplier_evaluation_query_params_defaults_via_serde() {
+        let q: SupplierEvaluationQueryParams =
+            serde_json::from_str("{}").expect("deserialize empty");
+        assert!(q.page.is_none());
+        assert!(q.page_size.is_none());
+        assert!(q.supplier_id.is_none());
+    }
+
+    #[test]
+    fn supplier_evaluation_query_params_roundtrip_preserves_fields() {
+        let supplier_id = Uuid::new_v4();
+        let json = serde_json::json!({
+            "page": 2,
+            "page_size": 50,
+            "supplier_id": supplier_id,
+        });
+        let q: SupplierEvaluationQueryParams = serde_json::from_value(json).expect("deserialize");
+        assert_eq!(q.page, Some(2));
+        assert_eq!(q.page_size, Some(50));
+        assert_eq!(q.supplier_id, Some(supplier_id));
+    }
+
+    #[test]
+    fn supplier_evaluation_query_params_ignores_unknown_fields() {
+        let json = r#"{"page": 1, "extra": "ignored"}"#;
+        let q: SupplierEvaluationQueryParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(q.page, Some(1));
+    }
+
+    #[test]
+    fn supplier_evaluation_query_params_partial_population() {
+        let json = r#"{"page_size": 25}"#;
+        let q: SupplierEvaluationQueryParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(q.page_size, Some(25));
+        assert!(q.page.is_none());
+        assert!(q.supplier_id.is_none());
+    }
+
+    #[test]
+    fn create_routes_returns_router_without_panic() {
+        let _router = create_routes();
+    }
+}

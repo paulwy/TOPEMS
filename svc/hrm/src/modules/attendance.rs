@@ -461,3 +461,54 @@ async fn delete_attendance(
 
     response
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_routes_returns_router() {
+        let _router = create_routes();
+    }
+
+    #[test]
+    fn test_today_status_params_deserialize_all_none() {
+        let json = r#"{}"#;
+        let params: TodayStatusParams = serde_json::from_str(json).expect("deserialize");
+        assert!(params.user_id.is_none());
+        assert!(params.employee_id.is_none());
+    }
+
+    #[test]
+    fn test_today_status_params_deserialize_user_id_only() {
+        let json = r#"{"user_id":"user-abc"}"#;
+        let params: TodayStatusParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(params.user_id.as_deref(), Some("user-abc"));
+        assert!(params.employee_id.is_none());
+    }
+
+    #[test]
+    fn test_today_status_params_deserialize_employee_id_only() {
+        let eid = Uuid::new_v4();
+        let json = format!(r#"{{"employee_id":"{}"}}"#, eid);
+        let params: TodayStatusParams = serde_json::from_str(&json).expect("deserialize");
+        assert!(params.user_id.is_none());
+        assert_eq!(params.employee_id, Some(eid));
+    }
+
+    #[test]
+    fn test_today_status_params_deserialize_both() {
+        let eid = Uuid::new_v4();
+        let json = format!(r#"{{"user_id":"user-xyz","employee_id":"{}"}}"#, eid);
+        let params: TodayStatusParams = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(params.user_id.as_deref(), Some("user-xyz"));
+        assert_eq!(params.employee_id, Some(eid));
+    }
+
+    #[test]
+    fn test_today_status_params_deserialize_invalid_uuid_rejected() {
+        let json = r#"{"employee_id":"not-a-uuid"}"#;
+        let result: Result<TodayStatusParams, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+    }
+}

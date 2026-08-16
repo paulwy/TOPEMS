@@ -79,3 +79,131 @@ pub fn payable_aging_demo() -> Value {
         "total": 147000.0
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_receivable_aging_demo_returns_object() {
+        let v = receivable_aging_demo();
+        assert!(v.is_object());
+    }
+
+    #[test]
+    fn test_receivable_aging_demo_has_items_array() {
+        let v = receivable_aging_demo();
+        let items = v.get("items").expect("items field should exist");
+        assert!(items.is_array());
+        assert_eq!(items.as_array().unwrap().len(), 3);
+    }
+
+    #[test]
+    fn test_receivable_aging_demo_has_total() {
+        let v = receivable_aging_demo();
+        let total = v.get("total").expect("total field should exist");
+        assert!(total.is_number());
+        assert!((total.as_f64().unwrap() - 445000.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_receivable_aging_demo_item_fields() {
+        let v = receivable_aging_demo();
+        let first = &v["items"][0];
+        assert_eq!(first["customer_id"].as_str(), Some("cust001"));
+        assert_eq!(first["customer_name"].as_str(), Some("北京科技有限公司"));
+        assert!(first.get("total").unwrap().is_number());
+        assert!(first.get("current").unwrap().is_number());
+        assert!(first.get("over_30").unwrap().is_number());
+        assert!(first.get("over_60").unwrap().is_number());
+        assert!(first.get("over_90").unwrap().is_number());
+        assert!(first.get("over_180").unwrap().is_number());
+    }
+
+    #[test]
+    fn test_receivable_aging_demo_total_matches_sum() {
+        // Each item's total should be sum of its buckets
+        let v = receivable_aging_demo();
+        for item in v["items"].as_array().unwrap() {
+            let total = item["total"].as_f64().unwrap();
+            let buckets = item["current"].as_f64().unwrap()
+                + item["over_30"].as_f64().unwrap()
+                + item["over_60"].as_f64().unwrap()
+                + item["over_90"].as_f64().unwrap()
+                + item["over_180"].as_f64().unwrap();
+            assert!((total - buckets).abs() < 1e-6);
+        }
+    }
+
+    #[test]
+    fn test_receivable_aging_demo_consistent_across_calls() {
+        let v1 = receivable_aging_demo();
+        let v2 = receivable_aging_demo();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_payable_aging_demo_returns_object() {
+        let v = payable_aging_demo();
+        assert!(v.is_object());
+    }
+
+    #[test]
+    fn test_payable_aging_demo_has_items_array() {
+        let v = payable_aging_demo();
+        let items = v.get("items").expect("items field should exist");
+        assert!(items.is_array());
+        assert_eq!(items.as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn test_payable_aging_demo_has_total() {
+        let v = payable_aging_demo();
+        let total = v.get("total").expect("total field should exist");
+        assert!(total.is_number());
+        assert!((total.as_f64().unwrap() - 147000.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_payable_aging_demo_item_fields() {
+        let v = payable_aging_demo();
+        let first = &v["items"][0];
+        assert_eq!(first["supplier_id"].as_str(), Some("supp001"));
+        assert_eq!(first["supplier_name"].as_str(), Some("深圳供应商有限公司"));
+        assert!(first.get("total").unwrap().is_number());
+        assert!(first.get("current").unwrap().is_number());
+        assert!(first.get("over_30").unwrap().is_number());
+        assert!(first.get("over_60").unwrap().is_number());
+        assert!(first.get("over_90").unwrap().is_number());
+        assert!(first.get("over_180").unwrap().is_number());
+    }
+
+    #[test]
+    fn test_payable_aging_demo_total_matches_sum() {
+        let v = payable_aging_demo();
+        for item in v["items"].as_array().unwrap() {
+            let total = item["total"].as_f64().unwrap();
+            let buckets = item["current"].as_f64().unwrap()
+                + item["over_30"].as_f64().unwrap()
+                + item["over_60"].as_f64().unwrap()
+                + item["over_90"].as_f64().unwrap()
+                + item["over_180"].as_f64().unwrap();
+            assert!((total - buckets).abs() < 1e-6);
+        }
+    }
+
+    #[test]
+    fn test_payable_aging_demo_consistent_across_calls() {
+        let v1 = payable_aging_demo();
+        let v2 = payable_aging_demo();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_receivable_and_payable_are_different() {
+        let r = receivable_aging_demo();
+        let p = payable_aging_demo();
+        assert_ne!(r, p);
+        assert_ne!(r["items"][0]["customer_id"], p["items"][0]["supplier_id"]);
+    }
+}

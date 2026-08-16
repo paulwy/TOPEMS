@@ -355,3 +355,61 @@ async fn reject_salary_adjustment(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_routes_returns_router() {
+        let _router = create_routes();
+    }
+
+    #[test]
+    fn test_salary_adjustment_pagination_params_deserialize_all_none() {
+        let json = r#"{}"#;
+        let params: SalaryAdjustmentPaginationParams =
+            serde_json::from_str(json).expect("deserialize");
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert!(params.employee_id.is_none());
+        assert!(params.status.is_none());
+    }
+
+    #[test]
+    fn test_salary_adjustment_pagination_params_deserialize_all_some() {
+        let emp = Uuid::new_v4();
+        let json = format!(
+            r#"{{"page":3,"page_size":25,"employee_id":"{}","status":"approved"}}"#,
+            emp
+        );
+        let params: SalaryAdjustmentPaginationParams =
+            serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(params.page, Some(3));
+        assert_eq!(params.page_size, Some(25));
+        assert_eq!(params.employee_id, Some(emp));
+        assert_eq!(params.status.as_deref(), Some("approved"));
+    }
+
+    #[test]
+    fn test_salary_adjustment_pagination_params_deserialize_partial() {
+        let emp = Uuid::new_v4();
+        let json = format!(r#"{{"employee_id":"{}"}}"#, emp);
+        let params: SalaryAdjustmentPaginationParams =
+            serde_json::from_str(&json).expect("deserialize");
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert_eq!(params.employee_id, Some(emp));
+        assert!(params.status.is_none());
+    }
+
+    #[test]
+    fn test_salary_adjustment_pagination_params_deserialize_status_only() {
+        let json = r#"{"status":"pending"}"#;
+        let params: SalaryAdjustmentPaginationParams =
+            serde_json::from_str(json).expect("deserialize");
+        assert!(params.page.is_none());
+        assert!(params.employee_id.is_none());
+        assert_eq!(params.status.as_deref(), Some("pending"));
+    }
+}

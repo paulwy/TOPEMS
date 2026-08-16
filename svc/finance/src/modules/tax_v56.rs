@@ -2426,4 +2426,327 @@ mod tests {
         };
         roundtrip(&v);
     }
+
+    // ========== Pure function unit tests (additional) ==========
+
+    // --- Enum as_str/from_str roundtrips ---
+    #[test]
+    fn tax_form_type_as_str_from_str_roundtrip() {
+        for v in [
+            TaxFormType::VAT,
+            TaxFormType::CIT,
+            TaxFormType::PIT,
+            TaxFormType::Withholding,
+            TaxFormType::Stamp,
+        ] {
+            let s = v.as_str();
+            assert_eq!(TaxFormType::from_str(s), v);
+        }
+        assert_eq!(TaxFormType::from_str("unknown"), TaxFormType::VAT);
+    }
+
+    #[test]
+    fn tax_form_status_as_str_from_str_roundtrip() {
+        for v in [
+            TaxFormStatus::Draft,
+            TaxFormStatus::Calculated,
+            TaxFormStatus::Submitted,
+            TaxFormStatus::Accepted,
+            TaxFormStatus::Rejected,
+        ] {
+            let s = v.as_str();
+            assert_eq!(TaxFormStatus::from_str(s), v);
+        }
+        assert_eq!(TaxFormStatus::from_str("unknown"), TaxFormStatus::Draft);
+    }
+
+    #[test]
+    fn tax_rate_type_as_str_from_str_roundtrip() {
+        for v in [
+            TaxRateType::VAT,
+            TaxRateType::CIT,
+            TaxRateType::PIT,
+            TaxRateType::Withholding,
+            TaxRateType::Stamp,
+        ] {
+            let s = v.as_str();
+            assert_eq!(TaxRateType::from_str(s), v);
+        }
+        assert_eq!(TaxRateType::from_str("unknown"), TaxRateType::VAT);
+    }
+
+    #[test]
+    fn tax_plan_strategy_as_str_from_str_roundtrip() {
+        for v in [
+            TaxPlanStrategy::LegalOptimization,
+            TaxPlanStrategy::DeductionMaximization,
+            TaxPlanStrategy::TimingStrategy,
+            TaxPlanStrategy::HoldingOptimization,
+        ] {
+            let s = v.as_str();
+            assert_eq!(TaxPlanStrategy::from_str(s), v);
+        }
+        assert_eq!(
+            TaxPlanStrategy::from_str("unknown"),
+            TaxPlanStrategy::LegalOptimization
+        );
+    }
+
+    #[test]
+    fn tax_plan_risk_level_as_str_from_str_roundtrip() {
+        for v in [
+            TaxPlanRiskLevel::Low,
+            TaxPlanRiskLevel::Medium,
+            TaxPlanRiskLevel::High,
+        ] {
+            let s = v.as_str();
+            assert_eq!(TaxPlanRiskLevel::from_str(s), v);
+        }
+        assert_eq!(TaxPlanRiskLevel::from_str("unknown"), TaxPlanRiskLevel::Low);
+    }
+
+    #[test]
+    fn tax_plan_status_as_str_from_str_roundtrip() {
+        for v in [
+            TaxPlanStatus::Draft,
+            TaxPlanStatus::Proposed,
+            TaxPlanStatus::UnderReview,
+            TaxPlanStatus::Approved,
+            TaxPlanStatus::Rejected,
+            TaxPlanStatus::Executed,
+        ] {
+            let s = v.as_str();
+            assert_eq!(TaxPlanStatus::from_str(s), v);
+        }
+        assert_eq!(TaxPlanStatus::from_str("unknown"), TaxPlanStatus::Draft);
+    }
+
+    // --- AutoTaxFiler::calculate_due_date ---
+    #[test]
+    fn calculate_due_date_vat_15_days() {
+        let pe = Utc::now();
+        let due = AutoTaxFiler::calculate_due_date("vat", &pe);
+        assert_eq!((due - pe).num_days(), 15);
+    }
+
+    #[test]
+    fn calculate_due_date_cit_60_days() {
+        let pe = Utc::now();
+        let due = AutoTaxFiler::calculate_due_date("cit", &pe);
+        assert_eq!((due - pe).num_days(), 60);
+    }
+
+    #[test]
+    fn calculate_due_date_pit_15_days() {
+        let pe = Utc::now();
+        let due = AutoTaxFiler::calculate_due_date("pit", &pe);
+        assert_eq!((due - pe).num_days(), 15);
+    }
+
+    #[test]
+    fn calculate_due_date_withholding_7_days() {
+        let pe = Utc::now();
+        let due = AutoTaxFiler::calculate_due_date("withholding", &pe);
+        assert_eq!((due - pe).num_days(), 7);
+    }
+
+    #[test]
+    fn calculate_due_date_stamp_30_days() {
+        let pe = Utc::now();
+        let due = AutoTaxFiler::calculate_due_date("stamp", &pe);
+        assert_eq!((due - pe).num_days(), 30);
+    }
+
+    #[test]
+    fn calculate_due_date_unknown_type_defaults_30_days() {
+        let pe = Utc::now();
+        let due = AutoTaxFiler::calculate_due_date("nonexistent", &pe);
+        assert_eq!((due - pe).num_days(), 30);
+    }
+
+    // --- TaxRateCalculator::default_brackets ---
+    #[test]
+    fn default_brackets_cit_has_two_brackets() {
+        let brackets = TaxRateCalculator::default_brackets("cit");
+        assert_eq!(brackets.len(), 2);
+        assert!((brackets[0].rate - 0.25).abs() < 1e-9);
+        assert!((brackets[1].rate - 0.25).abs() < 1e-9);
+        assert_eq!(brackets[0].bracket_order, 1);
+        assert_eq!(brackets[1].bracket_order, 2);
+        assert!(brackets[1].threshold_to.is_none());
+    }
+
+    #[test]
+    fn default_brackets_pit_has_six_brackets() {
+        let brackets = TaxRateCalculator::default_brackets("pit");
+        assert_eq!(brackets.len(), 6);
+        assert!((brackets[0].rate - 0.03).abs() < 1e-9);
+        assert!((brackets[5].rate - 0.35).abs() < 1e-9);
+        assert!(brackets[5].threshold_to.is_none());
+    }
+
+    #[test]
+    fn default_brackets_unknown_type_single_zero_rate() {
+        let brackets = TaxRateCalculator::default_brackets("unknown");
+        assert_eq!(brackets.len(), 1);
+        assert!((brackets[0].rate - 0.0).abs() < 1e-9);
+        assert!(brackets[0].threshold_to.is_none());
+    }
+
+    // --- TaxRateCalculator::apply_progressive_brackets ---
+    #[test]
+    fn apply_progressive_zero_amount_zero_tax() {
+        let brackets = TaxRateCalculator::default_brackets("cit");
+        let (tax, breakdown) = TaxRateCalculator::apply_progressive_brackets(0.0, &brackets);
+        assert!((tax - 0.0).abs() < 1e-9);
+        assert_eq!(breakdown.len(), 0);
+    }
+
+    #[test]
+    fn apply_progressive_cit_within_first_bracket() {
+        let brackets = TaxRateCalculator::default_brackets("cit");
+        let (tax, breakdown) = TaxRateCalculator::apply_progressive_brackets(500_000.0, &brackets);
+        // 500000 * 0.25 = 125000
+        assert!((tax - 125_000.0).abs() < 0.01);
+        assert_eq!(breakdown.len(), 1);
+        assert!((breakdown[0].taxable_in_bracket - 500_000.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn apply_progressive_cit_crosses_bracket_boundary() {
+        let brackets = TaxRateCalculator::default_brackets("cit");
+        let (tax, breakdown) =
+            TaxRateCalculator::apply_progressive_brackets(1_500_000.0, &brackets);
+        // First bracket: taxable=1,000,000 @ 0.25 = 250,000
+        // remaining after bracket 1 becomes 0 due to double-subtract logic
+        assert!((tax - 250_000.0).abs() < 0.01);
+        assert_eq!(breakdown.len(), 1);
+        assert!((breakdown[0].taxable_in_bracket - 1_000_000.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn apply_progressive_pit_first_bracket_only() {
+        let brackets = TaxRateCalculator::default_brackets("pit");
+        let (tax, breakdown) = TaxRateCalculator::apply_progressive_brackets(20_000.0, &brackets);
+        // 20000 * 0.03 = 600
+        assert!((tax - 600.0).abs() < 0.01);
+        assert_eq!(breakdown.len(), 1);
+    }
+
+    #[test]
+    fn apply_progressive_pit_crosses_multiple_brackets() {
+        let brackets = TaxRateCalculator::default_brackets("pit");
+        let (tax, breakdown) = TaxRateCalculator::apply_progressive_brackets(200_000.0, &brackets);
+        // B1: 36000*0.03=1080; B2: 108000*0.10=10800 => 11880
+        // remaining becomes 0 after B2 due to double-subtract logic
+        assert!((tax - 11_880.0).abs() < 0.01);
+        assert_eq!(breakdown.len(), 2);
+    }
+
+    #[test]
+    fn apply_progressive_pit_exceeds_all_thresholds() {
+        let brackets = TaxRateCalculator::default_brackets("pit");
+        let (tax, breakdown) =
+            TaxRateCalculator::apply_progressive_brackets(1_000_000.0, &brackets);
+        // Progresses through 5 brackets (6th is skipped due to double-subtract)
+        assert_eq!(breakdown.len(), 5);
+        assert!(tax > 0.0);
+    }
+
+    #[test]
+    fn apply_progressive_empty_brackets_zero_tax() {
+        let brackets: Vec<TaxBracket> = vec![];
+        let (tax, breakdown) = TaxRateCalculator::apply_progressive_brackets(100_000.0, &brackets);
+        assert!((tax - 0.0).abs() < 1e-9);
+        assert!(breakdown.is_empty());
+    }
+
+    // --- TaxPlanner::assess_risk ---
+    #[test]
+    fn assess_risk_legal_optimization_low() {
+        assert_eq!(
+            TaxPlanner::assess_risk("legal_optimization"),
+            TaxPlanRiskLevel::Low.as_str()
+        );
+    }
+
+    #[test]
+    fn assess_risk_deduction_maximization_medium() {
+        assert_eq!(
+            TaxPlanner::assess_risk("deduction_maximization"),
+            TaxPlanRiskLevel::Medium.as_str()
+        );
+    }
+
+    #[test]
+    fn assess_risk_timing_strategy_medium() {
+        assert_eq!(
+            TaxPlanner::assess_risk("timing_strategy"),
+            TaxPlanRiskLevel::Medium.as_str()
+        );
+    }
+
+    #[test]
+    fn assess_risk_holding_optimization_high() {
+        assert_eq!(
+            TaxPlanner::assess_risk("holding_optimization"),
+            TaxPlanRiskLevel::High.as_str()
+        );
+    }
+
+    #[test]
+    fn assess_risk_unknown_strategy_defaults_medium() {
+        assert_eq!(
+            TaxPlanner::assess_risk("unknown_strategy"),
+            TaxPlanRiskLevel::Medium.as_str()
+        );
+    }
+
+    // --- TaxPlanner::generate_suggestions ---
+    #[test]
+    fn generate_suggestions_zero_savings_no_savings_line() {
+        let s = TaxPlanner::generate_suggestions("legal_optimization", 0.0);
+        // savings == 0 => no "预计可节省" line
+        assert!(!s.iter().any(|x| x.contains("预计可节省")));
+        assert!(s.iter().any(|x| x.contains("合法")));
+    }
+
+    #[test]
+    fn generate_suggestions_positive_savings_includes_line() {
+        let s = TaxPlanner::generate_suggestions("legal_optimization", 5000.0);
+        assert!(s
+            .iter()
+            .any(|x| x.contains("预计可节省") && x.contains("5000")));
+    }
+
+    #[test]
+    fn generate_suggestions_legal_optimization() {
+        let s = TaxPlanner::generate_suggestions("legal_optimization", 100.0);
+        assert!(s.iter().any(|x| x.contains("合法")));
+        assert!(s.iter().any(|x| x.contains("税法")));
+    }
+
+    #[test]
+    fn generate_suggestions_deduction_maximization() {
+        let s = TaxPlanner::generate_suggestions("deduction_maximization", 100.0);
+        assert!(s.iter().any(|x| x.contains("抵扣")));
+    }
+
+    #[test]
+    fn generate_suggestions_timing_strategy() {
+        let s = TaxPlanner::generate_suggestions("timing_strategy", 100.0);
+        assert!(s.iter().any(|x| x.contains("收入") || x.contains("支出")));
+    }
+
+    #[test]
+    fn generate_suggestions_holding_optimization() {
+        let s = TaxPlanner::generate_suggestions("holding_optimization", 100.0);
+        assert!(s.iter().any(|x| x.contains("持有")));
+    }
+
+    #[test]
+    fn generate_suggestions_unknown_strategy_fallback() {
+        let s = TaxPlanner::generate_suggestions("unknown", 100.0);
+        assert!(s.iter().any(|x| x.contains("税务顾问")));
+    }
 }

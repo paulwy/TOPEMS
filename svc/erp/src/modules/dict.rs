@@ -1045,3 +1045,92 @@ pub async fn export_dict_items(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_dict_type_query_params_all_none() {
+        let json = r#"{}"#;
+        let params: DictTypeQueryParams = serde_json::from_str(json).unwrap();
+        assert_eq!(params.page, None);
+        assert_eq!(params.search, None);
+    }
+
+    #[test]
+    fn test_dict_type_query_params_full() {
+        let json = r#"{"page":2,"page_size":50,"search":"abc","category":"sys","status":"active"}"#;
+        let params: DictTypeQueryParams = serde_json::from_str(json).unwrap();
+        assert_eq!(params.page, Some(2));
+        assert_eq!(params.page_size, Some(50));
+        assert_eq!(params.search.as_deref(), Some("abc"));
+        assert_eq!(params.category.as_deref(), Some("sys"));
+        assert_eq!(params.status.as_deref(), Some("active"));
+    }
+
+    #[test]
+    fn test_dict_item_query_params_all_none() {
+        let json = r#"{}"#;
+        let params: DictItemQueryParams = serde_json::from_str(json).unwrap();
+        assert_eq!(params.page, None);
+        assert_eq!(params.search, None);
+    }
+
+    #[test]
+    fn test_dict_item_query_params_with_search() {
+        let json = r#"{"page":1,"page_size":10,"search":"gender"}"#;
+        let params: DictItemQueryParams = serde_json::from_str(json).unwrap();
+        assert_eq!(params.page, Some(1));
+        assert_eq!(params.search.as_deref(), Some("gender"));
+    }
+
+    #[test]
+    fn test_dict_item_export_serialize() {
+        let item = DictItemExport {
+            code: "M".to_string(),
+            name: "Male".to_string(),
+            value: Some("1".to_string()),
+            sort_order: 0,
+            status: "active".to_string(),
+        };
+        let json = serde_json::to_string(&item).unwrap();
+        assert!(json.contains("\"code\":\"M\""));
+        assert!(json.contains("\"name\":\"Male\""));
+        assert!(json.contains("\"sort_order\":0"));
+    }
+
+    #[test]
+    fn test_dict_item_export_none_value() {
+        let item = DictItemExport {
+            code: "F".to_string(),
+            name: "Female".to_string(),
+            value: None,
+            sort_order: 1,
+            status: "active".to_string(),
+        };
+        let json = serde_json::to_string(&item).unwrap();
+        assert!(json.contains("\"value\":null"));
+    }
+
+    #[test]
+    fn test_batch_create_dict_item_request_deserialize() {
+        let uuid_str = "550e8400-e29b-41d4-a716-446655440000";
+        let json = format!(
+            r#"{{"dict_type_id":"{}","items":[{{"dict_type_id":"{}","code":"M","name":"Male"}}]}}"#,
+            uuid_str, uuid_str
+        );
+        let req: BatchCreateDictItemRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(req.items.len(), 1);
+        assert_eq!(req.items[0].code, "M");
+        assert_eq!(req.items[0].name, "Male");
+    }
+
+    #[test]
+    fn test_batch_create_dict_item_request_empty_items() {
+        let uuid_str = "550e8400-e29b-41d4-a716-446655440000";
+        let json = format!(r#"{{"dict_type_id":"{}","items":[]}}"#, uuid_str);
+        let req: BatchCreateDictItemRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(req.items.len(), 0);
+    }
+}

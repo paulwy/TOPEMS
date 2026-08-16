@@ -125,3 +125,54 @@ async fn global_search(
 pub fn create_routes() -> Router<ApiState> {
     Router::new().route("/search/global", get(global_search))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_search_params_deserialize_full() {
+        let json = r#"{"query":"laptop","limit":10}"#;
+        let params: SearchParams = serde_json::from_str(json).unwrap();
+        assert_eq!(params.query, "laptop");
+        assert_eq!(params.limit, Some(10));
+    }
+
+    #[test]
+    fn test_search_params_deserialize_optional_limit() {
+        let json = r#"{"query":"test"}"#;
+        let params: SearchParams = serde_json::from_str(json).unwrap();
+        assert_eq!(params.query, "test");
+        assert_eq!(params.limit, None);
+    }
+
+    #[test]
+    fn test_search_result_serialize_roundtrip() {
+        let result = SearchResult {
+            id: "r1".to_string(),
+            title: "Test Item".to_string(),
+            description: Some("A test description".to_string()),
+            module: "material".to_string(),
+            path: "/erp/materials".to_string(),
+            type_name: "物料".to_string(),
+        };
+        let json = serde_json::to_string(&result).unwrap();
+        assert!(json.contains("\"id\":\"r1\""));
+        assert!(json.contains("\"title\":\"Test Item\""));
+        assert!(json.contains("\"module\":\"material\""));
+    }
+
+    #[test]
+    fn test_search_result_none_description() {
+        let result = SearchResult {
+            id: "r2".to_string(),
+            title: "No Desc".to_string(),
+            description: None,
+            module: "customer".to_string(),
+            path: "/crm/customers".to_string(),
+            type_name: "客户".to_string(),
+        };
+        let json = serde_json::to_string(&result).unwrap();
+        assert!(json.contains("\"description\":null"));
+    }
+}

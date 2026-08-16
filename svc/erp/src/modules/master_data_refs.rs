@@ -21365,4 +21365,1886 @@ mod tests {
             compliance_rate: 0.0,
         });
     }
+
+    // ============== PURE FUNCTION TESTS ==============
+
+    fn make_master_data_ref() -> MasterDataRef {
+        MasterDataRef {
+            master_data_id: "md-001".to_string(),
+            tenant_id: "t-1".to_string(),
+            domain: "customer".to_string(),
+            code: "C001".to_string(),
+            name: Some("Alice".to_string()),
+            status: "active".to_string(),
+            source_service: "erp".to_string(),
+            local_entity_type: Some("customer".to_string()),
+            local_entity_id: Some("123".to_string()),
+            last_synced_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: "2024-01-01T00:00:00Z".to_string(),
+            updated_at: "2024-01-02T00:00:00Z".to_string(),
+            archived_at: None,
+            archived_by: None,
+            archive_reason: None,
+            destroy_scheduled_at: None,
+            destroy_reason: None,
+            destroy_scheduled_by: None,
+            destroyed_at: None,
+            destroyed_by: None,
+        }
+    }
+
+    fn make_entity_profile() -> EntityProfile {
+        let mut fields = HashMap::new();
+        fields.insert("status".to_string(), Some("active".to_string()));
+        fields.insert("email".to_string(), Some("a@b.com".to_string()));
+        fields.insert("phone".to_string(), Some("13800138000".to_string()));
+        EntityProfile {
+            id: "e1".to_string(),
+            domain: "customer".to_string(),
+            code: "C001".to_string(),
+            name: Some("Alice".to_string()),
+            fields,
+            last_synced_days_ago: 3,
+        }
+    }
+
+    fn make_graph_node(id: &str, degree: i32) -> GraphNode {
+        GraphNode {
+            id: id.to_string(),
+            label: id.to_string(),
+            entity_type: "entity".to_string(),
+            domain: "customer".to_string(),
+            properties: serde_json::Value::Null,
+            degree,
+            centrality: 0.0,
+            cluster: None,
+        }
+    }
+
+    fn make_graph_edge(id: &str, src: &str, tgt: &str, rel: &str) -> GraphEdge {
+        GraphEdge {
+            id: id.to_string(),
+            source: src.to_string(),
+            target: tgt.to_string(),
+            relation_type: rel.to_string(),
+            label: rel.to_string(),
+            weight: 1.0,
+            properties: serde_json::Value::Null,
+        }
+    }
+
+    // --- is_valid_identifier ---
+    #[test]
+    fn test_is_valid_identifier_valid() {
+        assert!(is_valid_identifier("customer"));
+        assert!(is_valid_identifier("customer_id"));
+        assert!(is_valid_identifier("_customer"));
+        assert!(is_valid_identifier("a"));
+        assert!(is_valid_identifier("abc123"));
+    }
+
+    #[test]
+    fn test_is_valid_identifier_invalid_empty() {
+        assert!(!is_valid_identifier(""));
+    }
+
+    #[test]
+    fn test_is_valid_identifier_invalid_leading_digit() {
+        assert!(!is_valid_identifier("1abc"));
+        assert!(!is_valid_identifier("9"));
+    }
+
+    #[test]
+    fn test_is_valid_identifier_invalid_special_chars() {
+        assert!(!is_valid_identifier("cust-omer"));
+        assert!(!is_valid_identifier("cust omer"));
+        assert!(!is_valid_identifier("cust;omer"));
+        assert!(!is_valid_identifier("cust\"omer"));
+        assert!(!is_valid_identifier("cust.omer"));
+    }
+
+    // --- get_record_field ---
+    #[test]
+    fn test_get_record_field_known_fields() {
+        let r = make_master_data_ref();
+        assert_eq!(
+            get_record_field(&r, "master_data_id"),
+            Some("md-001".to_string())
+        );
+        assert_eq!(get_record_field(&r, "tenant_id"), Some("t-1".to_string()));
+        assert_eq!(get_record_field(&r, "domain"), Some("customer".to_string()));
+        assert_eq!(get_record_field(&r, "code"), Some("C001".to_string()));
+        assert_eq!(get_record_field(&r, "name"), Some("Alice".to_string()));
+        assert_eq!(get_record_field(&r, "status"), Some("active".to_string()));
+        assert_eq!(
+            get_record_field(&r, "source_service"),
+            Some("erp".to_string())
+        );
+        assert_eq!(
+            get_record_field(&r, "local_entity_type"),
+            Some("customer".to_string())
+        );
+        assert_eq!(
+            get_record_field(&r, "local_entity_id"),
+            Some("123".to_string())
+        );
+    }
+
+    #[test]
+    fn test_get_record_field_unknown_returns_none() {
+        let r = make_master_data_ref();
+        assert_eq!(get_record_field(&r, "nonexistent"), None);
+        assert_eq!(get_record_field(&r, ""), None);
+    }
+
+    #[test]
+    fn test_get_record_field_none_values() {
+        let mut r = make_master_data_ref();
+        r.name = None;
+        r.local_entity_type = None;
+        assert_eq!(get_record_field(&r, "name"), None);
+        assert_eq!(get_record_field(&r, "local_entity_type"), None);
+    }
+
+    // --- domain_display_name ---
+    #[test]
+    fn test_domain_display_name_known() {
+        assert_eq!(domain_display_name("customer"), "客户主数据");
+        assert_eq!(domain_display_name("product"), "产品主数据");
+        assert_eq!(domain_display_name("material"), "物料主数据");
+        assert_eq!(domain_display_name("supplier"), "供应商主数据");
+        assert_eq!(domain_display_name("employee"), "员工主数据");
+        assert_eq!(domain_display_name("department"), "部门主数据");
+        assert_eq!(domain_display_name("warehouse"), "仓库主数据");
+        assert_eq!(domain_display_name("project"), "项目主数据");
+        assert_eq!(domain_display_name("chart_of_accounts"), "会计科目主数据");
+        assert_eq!(domain_display_name("cost_center"), "成本中心主数据");
+    }
+
+    #[test]
+    fn test_domain_display_name_unknown_passthrough() {
+        assert_eq!(domain_display_name("custom_domain"), "custom_domain");
+        assert_eq!(domain_display_name("xyz"), "xyz");
+        assert_eq!(domain_display_name(""), "");
+    }
+
+    // --- get_domain_fields ---
+    #[test]
+    fn test_get_domain_fields_customer_has_extras() {
+        let fields = get_domain_fields("customer");
+        assert!(fields.len() >= 7);
+        assert!(fields.iter().any(|f| f.field_name == "customer_type"));
+        assert!(fields.iter().any(|f| f.field_name == "contact_person"));
+        assert!(fields
+            .iter()
+            .any(|f| f.field_name == "master_data_id" && f.is_required));
+        assert!(fields
+            .iter()
+            .any(|f| f.field_name == "code" && f.is_required));
+        assert!(fields
+            .iter()
+            .any(|f| f.field_name == "status" && f.is_required));
+        assert!(fields
+            .iter()
+            .any(|f| f.field_name == "source_service" && f.is_required));
+    }
+
+    #[test]
+    fn test_get_domain_fields_product_and_material_share_extras() {
+        let prod = get_domain_fields("product");
+        let mat = get_domain_fields("material");
+        assert!(prod.iter().any(|f| f.field_name == "category"));
+        assert!(prod.iter().any(|f| f.field_name == "unit"));
+        assert!(mat.iter().any(|f| f.field_name == "category"));
+        assert!(mat.iter().any(|f| f.field_name == "unit"));
+    }
+
+    #[test]
+    fn test_get_domain_fields_supplier_extras() {
+        let fields = get_domain_fields("supplier");
+        assert!(fields.iter().any(|f| f.field_name == "supplier_type"));
+        assert!(fields.iter().any(|f| f.field_name == "credit_level"));
+    }
+
+    #[test]
+    fn test_get_domain_fields_employee_extras() {
+        let fields = get_domain_fields("employee");
+        assert!(fields.iter().any(|f| f.field_name == "department"));
+        assert!(fields.iter().any(|f| f.field_name == "position"));
+    }
+
+    #[test]
+    fn test_get_domain_fields_unknown_only_base() {
+        let fields = get_domain_fields("unknown_domain");
+        assert_eq!(fields.len(), 5);
+        assert!(fields
+            .iter()
+            .all(|f| !f.is_required || f.field_name != "name"));
+    }
+
+    // --- simulate_* functions ---
+    #[test]
+    fn test_simulate_sync_step_returns_true() {
+        assert!(simulate_sync_step("sap", "create"));
+        assert!(simulate_sync_step("kingdee", "update"));
+        assert!(simulate_sync_step("", ""));
+    }
+
+    #[test]
+    fn test_simulate_compensation_returns_true() {
+        assert!(simulate_compensation("sap", "delete"));
+        assert!(simulate_compensation("yonyou", "create"));
+        assert!(simulate_compensation("", ""));
+    }
+
+    #[test]
+    fn test_simulate_repair_step_returns_true() {
+        assert!(simulate_repair_step("fix", "field"));
+        assert!(simulate_repair_step("normalize", "phone"));
+        assert!(simulate_repair_step("", ""));
+    }
+
+    // --- Graph algorithms ---
+    #[test]
+    fn test_build_adjacency_list_bidirectional() {
+        let edges = vec![
+            make_graph_edge("e1", "a", "b", "rel"),
+            make_graph_edge("e2", "b", "c", "rel"),
+        ];
+        let adj = build_adjacency_list(&edges);
+        assert!(adj.contains_key("a"));
+        assert!(adj.contains_key("b"));
+        assert!(adj.contains_key("c"));
+        assert_eq!(adj.get("a").unwrap(), &vec!["b".to_string()]);
+        assert_eq!(adj.get("b").unwrap().len(), 2);
+        assert!(adj.get("b").unwrap().contains(&"a".to_string()));
+        assert!(adj.get("b").unwrap().contains(&"c".to_string()));
+    }
+
+    #[test]
+    fn test_build_adjacency_list_empty() {
+        let adj = build_adjacency_list(&[]);
+        assert!(adj.is_empty());
+    }
+
+    #[test]
+    fn test_calculate_degree_centrality_single_node() {
+        let nodes = vec![make_graph_node("a", 0)];
+        let c = calculate_degree_centrality(&nodes);
+        assert_eq!(c.get("a"), Some(&0.0));
+    }
+
+    #[test]
+    fn test_calculate_degree_centrality_multiple_nodes() {
+        let nodes = vec![
+            make_graph_node("a", 2),
+            make_graph_node("b", 1),
+            make_graph_node("c", 1),
+        ];
+        let c = calculate_degree_centrality(&nodes);
+        assert_eq!(c.len(), 3);
+        // n=3, degree/(n-1) = degree/2
+        assert!((c.get("a").copied().unwrap_or(-1.0) - 1.0).abs() < 1e-9);
+        assert!((c.get("b").copied().unwrap_or(-1.0) - 0.5).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_calculate_degree_centrality_empty() {
+        let c = calculate_degree_centrality(&[]);
+        assert!(c.is_empty());
+    }
+
+    #[test]
+    fn test_count_connected_components_single() {
+        let nodes = vec![
+            make_graph_node("a", 0),
+            make_graph_node("b", 0),
+            make_graph_node("c", 0),
+        ];
+        let edges = vec![
+            make_graph_edge("e1", "a", "b", "rel"),
+            make_graph_edge("e2", "b", "c", "rel"),
+        ];
+        assert_eq!(count_connected_components(&nodes, &edges), 1);
+    }
+
+    #[test]
+    fn test_count_connected_components_multiple() {
+        let nodes = vec![
+            make_graph_node("a", 0),
+            make_graph_node("b", 0),
+            make_graph_node("c", 0),
+            make_graph_node("d", 0),
+        ];
+        let edges = vec![make_graph_edge("e1", "a", "b", "rel")];
+        // a-b connected, c and d isolated => 3 components
+        assert_eq!(count_connected_components(&nodes, &edges), 3);
+    }
+
+    #[test]
+    fn test_count_connected_components_no_edges() {
+        let nodes = vec![make_graph_node("a", 0), make_graph_node("b", 0)];
+        assert_eq!(count_connected_components(&nodes, &[]), 2);
+    }
+
+    #[test]
+    fn test_count_connected_components_empty() {
+        assert_eq!(count_connected_components(&[], &[]), 0);
+    }
+
+    #[test]
+    fn test_detect_communities_single_group() {
+        let nodes = vec![
+            make_graph_node("a", 0),
+            make_graph_node("b", 0),
+            make_graph_node("c", 0),
+        ];
+        let edges = vec![
+            make_graph_edge("e1", "a", "b", "rel"),
+            make_graph_edge("e2", "b", "c", "rel"),
+        ];
+        let comms = detect_communities(&nodes, &edges);
+        assert_eq!(comms.len(), 3);
+        let labels: std::collections::HashSet<&String> = comms.values().collect();
+        assert_eq!(labels.len(), 1);
+    }
+
+    #[test]
+    fn test_detect_communities_multiple_groups() {
+        let nodes = vec![
+            make_graph_node("a", 0),
+            make_graph_node("b", 0),
+            make_graph_node("c", 0),
+            make_graph_node("d", 0),
+        ];
+        let edges = vec![
+            make_graph_edge("e1", "a", "b", "rel"),
+            make_graph_edge("e2", "c", "d", "rel"),
+        ];
+        let comms = detect_communities(&nodes, &edges);
+        assert_ne!(comms.get("a"), comms.get("c"));
+        assert_eq!(comms.get("a"), comms.get("b"));
+        assert_eq!(comms.get("c"), comms.get("d"));
+    }
+
+    #[test]
+    fn test_shortest_path_bfs_direct() {
+        let edges = vec![make_graph_edge("e1", "a", "b", "rel")];
+        let path = shortest_path_bfs(&edges, "a", "b");
+        assert_eq!(path, Some(vec!["a".to_string(), "b".to_string()]));
+    }
+
+    #[test]
+    fn test_shortest_path_bfs_multi_hop() {
+        let edges = vec![
+            make_graph_edge("e1", "a", "b", "rel"),
+            make_graph_edge("e2", "b", "c", "rel"),
+            make_graph_edge("e3", "c", "d", "rel"),
+        ];
+        let path = shortest_path_bfs(&edges, "a", "d").unwrap();
+        assert_eq!(path.len(), 4);
+        assert_eq!(path[0], "a");
+        assert_eq!(path[3], "d");
+    }
+
+    #[test]
+    fn test_shortest_path_bfs_no_path() {
+        let edges = vec![make_graph_edge("e1", "a", "b", "rel")];
+        assert_eq!(shortest_path_bfs(&edges, "a", "z"), None);
+    }
+
+    #[test]
+    fn test_shortest_path_bfs_same_node() {
+        let path = shortest_path_bfs(&[], "a", "a");
+        assert_eq!(path, Some(vec!["a".to_string()]));
+    }
+
+    #[test]
+    fn test_multi_hop_neighbors_within_two() {
+        let edges = vec![
+            make_graph_edge("e1", "a", "b", "rel"),
+            make_graph_edge("e2", "b", "c", "rel"),
+            make_graph_edge("e3", "c", "d", "rel"),
+        ];
+        let neighbors = multi_hop_neighbors(&edges, "a", 2);
+        let map: HashMap<String, usize> = neighbors.into_iter().collect();
+        assert_eq!(map.get("b"), Some(&1));
+        assert_eq!(map.get("c"), Some(&2));
+        assert!(!map.contains_key("d"));
+        assert!(!map.contains_key("a"));
+    }
+
+    #[test]
+    fn test_multi_hop_neighbors_zero_hops() {
+        let edges = vec![make_graph_edge("e1", "a", "b", "rel")];
+        let neighbors = multi_hop_neighbors(&edges, "a", 0);
+        assert!(neighbors.is_empty());
+    }
+
+    #[test]
+    fn test_multi_hop_neighbors_isolated() {
+        let neighbors = multi_hop_neighbors(&[], "a", 3);
+        assert!(neighbors.is_empty());
+    }
+
+    #[test]
+    fn test_calculate_graph_stats_basic() {
+        let nodes = vec![
+            make_graph_node("a", 2),
+            make_graph_node("b", 1),
+            make_graph_node("c", 1),
+        ];
+        let edges = vec![
+            make_graph_edge("e1", "a", "b", "rel"),
+            make_graph_edge("e2", "b", "c", "rel"),
+        ];
+        let stats = calculate_graph_stats(&nodes, &edges);
+        assert_eq!(stats.node_count, 3);
+        assert_eq!(stats.edge_count, 2);
+        assert!((stats.avg_degree - (4.0 / 3.0)).abs() < 1e-9);
+        assert!(stats.density > 0.0);
+        assert_eq!(stats.connected_components, 1);
+        assert_eq!(stats.nodes_by_domain.get("customer"), Some(&3));
+        assert_eq!(stats.edges_by_relation.get("rel"), Some(&2));
+    }
+
+    #[test]
+    fn test_calculate_graph_stats_empty() {
+        let stats = calculate_graph_stats(&[], &[]);
+        assert_eq!(stats.node_count, 0);
+        assert_eq!(stats.edge_count, 0);
+        assert_eq!(stats.avg_degree, 0.0);
+        assert_eq!(stats.density, 0.0);
+        assert_eq!(stats.connected_components, 0);
+    }
+
+    #[test]
+    fn test_calculate_graph_stats_single_node() {
+        let nodes = vec![make_graph_node("a", 0)];
+        let stats = calculate_graph_stats(&nodes, &[]);
+        assert_eq!(stats.node_count, 1);
+        assert_eq!(stats.avg_degree, 0.0);
+        assert_eq!(stats.density, 0.0);
+        assert_eq!(stats.connected_components, 1);
+    }
+
+    // --- Quality scoring functions ---
+    #[test]
+    fn test_domain_required_fields_customer() {
+        let f = domain_required_fields("customer");
+        assert_eq!(f, vec!["code", "name", "phone", "email", "address"]);
+    }
+
+    #[test]
+    fn test_domain_required_fields_supplier() {
+        let f = domain_required_fields("supplier");
+        assert_eq!(f, vec!["code", "name", "grade", "category", "region"]);
+    }
+
+    #[test]
+    fn test_domain_required_fields_material() {
+        let f = domain_required_fields("material");
+        assert_eq!(f, vec!["code", "name", "category", "unit", "price"]);
+    }
+
+    #[test]
+    fn test_domain_required_fields_employee() {
+        let f = domain_required_fields("employee");
+        assert_eq!(f, vec!["code", "name"]);
+    }
+
+    #[test]
+    fn test_domain_required_fields_unknown_defaults() {
+        let f = domain_required_fields("unknown");
+        assert_eq!(f, vec!["code", "name"]);
+        let f2 = domain_required_fields("");
+        assert_eq!(f2, vec!["code", "name"]);
+    }
+
+    #[test]
+    fn test_score_completeness_full() {
+        let mut p = make_entity_profile();
+        // score_completeness checks the fields map (not top-level code/name)
+        // customer requires: code, name, phone, email, address
+        p.fields
+            .insert("address".to_string(), Some("123 St".to_string()));
+        p.fields
+            .insert("code".to_string(), Some("C001".to_string()));
+        p.fields
+            .insert("name".to_string(), Some("Alice".to_string()));
+        assert_eq!(score_completeness(&p), 100.0);
+    }
+
+    #[test]
+    fn test_score_completeness_partial() {
+        let p = make_entity_profile();
+        // customer requires code, name, phone, email, address
+        // code & name are not in fields map but name is a top-level field
+        // phone and email are filled, address is missing
+        let score = score_completeness(&p);
+        assert!(score > 0.0 && score < 100.0);
+    }
+
+    #[test]
+    fn test_score_completeness_empty_required() {
+        // Use a domain where required fields return defaults but profile has no fields
+        let p = EntityProfile {
+            id: "x".to_string(),
+            domain: "unknown".to_string(),
+            code: "C1".to_string(),
+            name: None,
+            fields: HashMap::new(),
+            last_synced_days_ago: 0,
+        };
+        // domain_required_fields returns ["code", "name"]; "code" is checked in fields map (not top-level)
+        let score = score_completeness(&p);
+        assert!(score < 100.0);
+    }
+
+    #[test]
+    fn test_score_accuracy_valid_profile() {
+        let p = make_entity_profile();
+        let s = score_accuracy(&p);
+        assert!(s > 0.0);
+    }
+
+    #[test]
+    fn test_score_accuracy_invalid_email() {
+        let mut p = make_entity_profile();
+        p.fields
+            .insert("email".to_string(), Some("not-an-email".to_string()));
+        let s = score_accuracy(&p);
+        assert!(s < 100.0);
+    }
+
+    #[test]
+    fn test_score_accuracy_invalid_phone() {
+        let mut p = make_entity_profile();
+        p.fields
+            .insert("phone".to_string(), Some("123".to_string()));
+        let s = score_accuracy(&p);
+        assert!(s < 100.0);
+    }
+
+    #[test]
+    fn test_score_accuracy_bad_code() {
+        let mut p = make_entity_profile();
+        p.code = "C-001!".to_string();
+        let s = score_accuracy(&p);
+        assert!(s < 100.0);
+    }
+
+    #[test]
+    fn test_score_accuracy_empty_name_no_penalty() {
+        let mut p = make_entity_profile();
+        p.name = None;
+        let s = score_accuracy(&p);
+        // No name present, so name check is skipped; should be decent score
+        assert!(s > 0.0);
+    }
+
+    #[test]
+    fn test_score_consistency_active_with_empty_name() {
+        let mut p = make_entity_profile();
+        p.name = None;
+        p.fields
+            .insert("status".to_string(), Some("active".to_string()));
+        let s = score_consistency(&p);
+        assert!(s < 100.0);
+    }
+
+    #[test]
+    fn test_score_consistency_stale_active() {
+        let mut p = make_entity_profile();
+        p.last_synced_days_ago = 100;
+        p.fields
+            .insert("status".to_string(), Some("active".to_string()));
+        let s = score_consistency(&p);
+        assert!(s < 100.0);
+    }
+
+    #[test]
+    fn test_score_consistency_healthy() {
+        let p = make_entity_profile();
+        let s = score_consistency(&p);
+        assert_eq!(s, 100.0);
+    }
+
+    #[test]
+    fn test_score_timeliness_fresh() {
+        let p = make_entity_profile();
+        assert_eq!(score_timeliness(&p), 100.0);
+    }
+
+    #[test]
+    fn test_score_timeliness_old() {
+        let mut p = make_entity_profile();
+        p.last_synced_days_ago = 67; // 100 - (67-7)*1.5 = 100 - 90 = 10
+        assert!((score_timeliness(&p) - 10.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_score_timeliness_very_old_clamped() {
+        let mut p = make_entity_profile();
+        p.last_synced_days_ago = 1000;
+        assert_eq!(score_timeliness(&p), 0.0);
+    }
+
+    #[test]
+    fn test_score_uniqueness_short_code() {
+        let mut p = make_entity_profile();
+        p.code = "ab".to_string();
+        assert_eq!(score_uniqueness(&p), 50.0);
+    }
+
+    #[test]
+    fn test_score_uniqueness_long_unique() {
+        let mut p = make_entity_profile();
+        p.code = "CUST001".to_string();
+        assert_eq!(score_uniqueness(&p), 90.0);
+    }
+
+    #[test]
+    fn test_score_uniqueness_repeated_chars() {
+        let mut p = make_entity_profile();
+        p.code = "aaa".to_string();
+        let s = score_uniqueness(&p);
+        assert!(s < 90.0);
+    }
+
+    #[test]
+    fn test_score_validity_valid_status() {
+        let p = make_entity_profile();
+        let s = score_validity(&p);
+        assert_eq!(s, 100.0);
+    }
+
+    #[test]
+    fn test_score_validity_invalid_status() {
+        let mut p = make_entity_profile();
+        p.fields
+            .insert("status".to_string(), Some("bogus".to_string()));
+        let s = score_validity(&p);
+        assert!(s < 100.0);
+    }
+
+    #[test]
+    fn test_score_validity_missing_status() {
+        let mut p = make_entity_profile();
+        p.fields.remove("status");
+        let s = score_validity(&p);
+        assert!(s < 100.0);
+    }
+
+    #[test]
+    fn test_score_validity_material_missing_unit() {
+        let mut p = make_entity_profile();
+        p.domain = "material".to_string();
+        p.fields.remove("unit");
+        let s = score_validity(&p);
+        assert!(s < 100.0);
+    }
+
+    #[test]
+    fn test_score_validity_supplier_bad_grade() {
+        let mut p = make_entity_profile();
+        p.domain = "supplier".to_string();
+        p.fields.insert("grade".to_string(), Some("Z".to_string()));
+        let s = score_validity(&p);
+        assert!(s < 100.0);
+    }
+
+    #[test]
+    fn test_weighted_overall_calculation() {
+        let v = weighted_overall(100.0, 100.0, 100.0, 100.0, 100.0, 100.0);
+        assert!((v - 100.0).abs() < 1e-9);
+        let v2 = weighted_overall(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        assert!((v2 - 0.0).abs() < 1e-9);
+        let v3 = weighted_overall(50.0, 50.0, 50.0, 50.0, 50.0, 50.0);
+        assert!((v3 - 50.0).abs() < 1e-9);
+    }
+
+    // --- linear_regression ---
+    #[test]
+    fn test_linear_regression_perfect_line() {
+        // y = 2x + 1
+        let points = vec![(0.0, 1.0), (1.0, 3.0), (2.0, 5.0), (3.0, 7.0)];
+        let (slope, intercept) = linear_regression(&points);
+        assert!((slope - 2.0).abs() < 1e-6);
+        assert!((intercept - 1.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_linear_regression_empty() {
+        let (slope, intercept) = linear_regression(&[]);
+        assert_eq!(slope, 0.0);
+        assert_eq!(intercept, 0.0);
+    }
+
+    #[test]
+    fn test_linear_regression_single_point() {
+        let (slope, intercept) = linear_regression(&[(5.0, 10.0)]);
+        assert_eq!(slope, 0.0);
+        assert_eq!(intercept, 10.0);
+    }
+
+    #[test]
+    fn test_linear_regression_vertical_line() {
+        // x values all the same => denom == 0
+        let points = vec![(3.0, 1.0), (3.0, 2.0), (3.0, 3.0)];
+        let (slope, intercept) = linear_regression(&points);
+        assert_eq!(slope, 0.0);
+        assert!((intercept - 2.0).abs() < 1e-6);
+    }
+
+    // --- String similarity functions ---
+    #[test]
+    fn test_levenshtein_identical() {
+        assert_eq!(levenshtein("abc", "abc"), 0);
+    }
+
+    #[test]
+    fn test_levenshtein_empty() {
+        assert_eq!(levenshtein("", ""), 0);
+        assert_eq!(levenshtein("", "abc"), 3);
+        assert_eq!(levenshtein("abc", ""), 3);
+    }
+
+    #[test]
+    fn test_levenshtein_substitution() {
+        assert_eq!(levenshtein("abc", "abd"), 1);
+        assert_eq!(levenshtein("kitten", "sitting"), 3);
+    }
+
+    #[test]
+    fn test_levenshtein_unicode() {
+        assert_eq!(levenshtein("你好", "你好"), 0);
+        assert_eq!(levenshtein("你好", "你好世界"), 2);
+    }
+
+    #[test]
+    fn test_levenshtein_similarity_identical() {
+        assert!((levenshtein_similarity("abc", "abc") - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_levenshtein_similarity_both_empty() {
+        assert!((levenshtein_similarity("", "") - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_levenshtein_similarity_partial() {
+        let s = levenshtein_similarity("abc", "abd");
+        assert!(s > 0.5 && s < 1.0);
+    }
+
+    #[test]
+    fn test_jaro_winkler_identical() {
+        assert!((jaro_winkler("abc", "abc") - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_jaro_winkler_both_empty() {
+        assert!((jaro_winkler("", "") - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_jaro_winkler_one_empty() {
+        assert_eq!(jaro_winkler("abc", ""), 0.0);
+        assert_eq!(jaro_winkler("", "abc"), 0.0);
+    }
+
+    #[test]
+    fn test_jaro_winkler_no_match() {
+        assert_eq!(jaro_winkler("xyz", "abc"), 0.0);
+    }
+
+    #[test]
+    fn test_jaro_winkler_prefix_bonus() {
+        // Strings with common prefix should get a bonus
+        let s = jaro_winkler("martha", "marhta");
+        assert!(s > 0.0 && s < 1.0);
+    }
+
+    #[test]
+    fn test_phonetic_similarity_empty() {
+        assert_eq!(phonetic_similarity("", "abc"), 0.0);
+        assert_eq!(phonetic_similarity("abc", ""), 0.0);
+    }
+
+    #[test]
+    fn test_phonetic_similarity_identical() {
+        let s = phonetic_similarity("hello", "hello");
+        assert!((s - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_phonetic_similarity_first_char_bonus() {
+        let s = phonetic_similarity("abc", "abd");
+        assert!(s > 0.0);
+    }
+
+    #[test]
+    fn test_abbreviation_similarity_empty() {
+        assert_eq!(abbreviation_similarity("", "abc"), 0.0);
+        assert_eq!(abbreviation_similarity("abc", ""), 0.0);
+    }
+
+    #[test]
+    fn test_abbreviation_similarity_match() {
+        // "IBM" should match "IBM"
+        let s = abbreviation_similarity("IBM", "IBM");
+        assert!(s > 0.0);
+    }
+
+    #[test]
+    fn test_match_field_value_exact() {
+        let (score, mt) = match_field_value("abc", "abc");
+        assert!((score - 1.0).abs() < 1e-9);
+        assert!(matches!(mt, MatchType::Exact));
+    }
+
+    #[test]
+    fn test_match_field_value_fuzzy_high() {
+        let (score, mt) = match_field_value("abcdefgh", "abcdefgx");
+        assert!(score >= 0.8);
+        assert!(matches!(mt, MatchType::Exact | MatchType::Fuzzy));
+    }
+
+    #[test]
+    fn test_match_field_value_no_match() {
+        let (score, _mt) = match_field_value("xyz", "abc");
+        assert!(score < 0.8);
+    }
+
+    // --- build_category_path ---
+    #[test]
+    fn test_build_category_path_single() {
+        let cats = vec![Category {
+            id: "c1".to_string(),
+            name: "Root".to_string(),
+            parent_id: None,
+            domain: "customer".to_string(),
+            description: String::new(),
+            keywords: vec![],
+            rules: vec![],
+            entity_count: 0,
+        }];
+        assert_eq!(build_category_path("c1", &cats), "Root");
+    }
+
+    #[test]
+    fn test_build_category_path_chain() {
+        let cats = vec![
+            Category {
+                id: "c1".to_string(),
+                name: "Root".to_string(),
+                parent_id: None,
+                domain: "customer".to_string(),
+                description: String::new(),
+                keywords: vec![],
+                rules: vec![],
+                entity_count: 0,
+            },
+            Category {
+                id: "c2".to_string(),
+                name: "Child".to_string(),
+                parent_id: Some("c1".to_string()),
+                domain: "customer".to_string(),
+                description: String::new(),
+                keywords: vec![],
+                rules: vec![],
+                entity_count: 0,
+            },
+            Category {
+                id: "c3".to_string(),
+                name: "Grandchild".to_string(),
+                parent_id: Some("c2".to_string()),
+                domain: "customer".to_string(),
+                description: String::new(),
+                keywords: vec![],
+                rules: vec![],
+                entity_count: 0,
+            },
+        ];
+        assert_eq!(
+            build_category_path("c3", &cats),
+            "Root / Child / Grandchild"
+        );
+    }
+
+    #[test]
+    fn test_build_category_path_not_found() {
+        assert_eq!(build_category_path("nonexistent", &[]), "");
+    }
+
+    #[test]
+    fn test_build_category_path_cycle_guard() {
+        // Self-referencing parent should terminate
+        let cats = vec![Category {
+            id: "c1".to_string(),
+            name: "Loop".to_string(),
+            parent_id: Some("c1".to_string()),
+            domain: "customer".to_string(),
+            description: String::new(),
+            keywords: vec![],
+            rules: vec![],
+            entity_count: 0,
+        }];
+        assert_eq!(build_category_path("c1", &cats), "Loop");
+    }
+
+    // --- Impact analysis ---
+    #[test]
+    fn test_calculate_risk_level_critical() {
+        let impacted = vec![ImpactedEntity {
+            entity_id: "e1".to_string(),
+            entity_name: "E1".to_string(),
+            domain: "customer".to_string(),
+            impact_severity: ImpactSeverity::Critical,
+            change_required: true,
+        }];
+        assert!(matches!(
+            calculate_risk_level(&impacted),
+            ImpactSeverity::Critical
+        ));
+    }
+
+    #[test]
+    fn test_calculate_risk_level_high() {
+        let impacted = vec![
+            ImpactedEntity {
+                entity_id: "e1".to_string(),
+                entity_name: "E1".to_string(),
+                domain: "customer".to_string(),
+                impact_severity: ImpactSeverity::Low,
+                change_required: true,
+            },
+            ImpactedEntity {
+                entity_id: "e2".to_string(),
+                entity_name: "E2".to_string(),
+                domain: "customer".to_string(),
+                impact_severity: ImpactSeverity::High,
+                change_required: true,
+            },
+        ];
+        assert!(matches!(
+            calculate_risk_level(&impacted),
+            ImpactSeverity::High
+        ));
+    }
+
+    #[test]
+    fn test_calculate_risk_level_empty() {
+        assert!(matches!(calculate_risk_level(&[]), ImpactSeverity::None));
+    }
+
+    #[test]
+    fn test_calculate_risk_level_medium_and_low() {
+        let impacted = vec![ImpactedEntity {
+            entity_id: "e1".to_string(),
+            entity_name: "E1".to_string(),
+            domain: "customer".to_string(),
+            impact_severity: ImpactSeverity::Medium,
+            change_required: true,
+        }];
+        assert!(matches!(
+            calculate_risk_level(&impacted),
+            ImpactSeverity::Medium
+        ));
+    }
+
+    #[test]
+    fn test_estimate_migration_effort_schema_change() {
+        let impacted = vec![
+            ImpactedEntity {
+                entity_id: "e1".to_string(),
+                entity_name: "E1".to_string(),
+                domain: "customer".to_string(),
+                impact_severity: ImpactSeverity::High,
+                change_required: true,
+            },
+            ImpactedEntity {
+                entity_id: "e2".to_string(),
+                entity_name: "E2".to_string(),
+                domain: "customer".to_string(),
+                impact_severity: ImpactSeverity::Low,
+                change_required: false,
+            },
+        ];
+        // base=8, high=2.0, low=0.5 => 8*2 + 8*0.5 = 20
+        let effort = estimate_migration_effort(&impacted, &ChangeType::SchemaChange);
+        assert!((effort - 20.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_estimate_migration_effort_data_change() {
+        let impacted = vec![ImpactedEntity {
+            entity_id: "e1".to_string(),
+            entity_name: "E1".to_string(),
+            domain: "customer".to_string(),
+            impact_severity: ImpactSeverity::Critical,
+            change_required: true,
+        }];
+        // base=3, critical=3.0 => 9
+        let effort = estimate_migration_effort(&impacted, &ChangeType::DataChange);
+        assert!((effort - 9.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_estimate_migration_effort_business_rule_change() {
+        let impacted = vec![ImpactedEntity {
+            entity_id: "e1".to_string(),
+            entity_name: "E1".to_string(),
+            domain: "customer".to_string(),
+            impact_severity: ImpactSeverity::None,
+            change_required: false,
+        }];
+        // base=5, none=0.0 => 0
+        let effort = estimate_migration_effort(&impacted, &ChangeType::BusinessRuleChange);
+        assert!((effort - 0.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_estimate_migration_effort_empty() {
+        assert_eq!(
+            estimate_migration_effort(&[], &ChangeType::SchemaChange),
+            0.0
+        );
+    }
+
+    #[test]
+    fn test_generate_impact_report_structure() {
+        let result = ImpactAnalysisResult {
+            impacted_entities: vec![ImpactedEntity {
+                entity_id: "e1".to_string(),
+                entity_name: "Entity One".to_string(),
+                domain: "customer".to_string(),
+                impact_severity: ImpactSeverity::High,
+                change_required: true,
+            }],
+            risk_level: ImpactSeverity::High,
+            estimated_effort: 16.0,
+            recommendations: vec!["Review schema".to_string()],
+        };
+        let report = generate_impact_report(&result);
+        assert!(report.contains("影响分析报告"));
+        assert!(report.contains("风险等级"));
+        assert!(report.contains("预估工作量"));
+        assert!(report.contains("Entity One"));
+        assert!(report.contains("Review schema"));
+    }
+
+    #[test]
+    fn test_generate_impact_report_empty() {
+        let result = ImpactAnalysisResult {
+            impacted_entities: vec![],
+            risk_level: ImpactSeverity::None,
+            estimated_effort: 0.0,
+            recommendations: vec![],
+        };
+        let report = generate_impact_report(&result);
+        assert!(report.contains("影响分析报告"));
+        assert!(report.contains("受影响实体数: 0"));
+    }
+
+    // --- Parse functions ---
+    #[test]
+    fn test_parse_classification_valid() {
+        assert_eq!(
+            parse_classification("public"),
+            Some(CatalogClassification::Public)
+        );
+        assert_eq!(
+            parse_classification("internal"),
+            Some(CatalogClassification::Internal)
+        );
+        assert_eq!(
+            parse_classification("confidential"),
+            Some(CatalogClassification::Confidential)
+        );
+        assert_eq!(
+            parse_classification("restricted"),
+            Some(CatalogClassification::Restricted)
+        );
+    }
+
+    #[test]
+    fn test_parse_classification_case_insensitive() {
+        assert_eq!(
+            parse_classification("PUBLIC"),
+            Some(CatalogClassification::Public)
+        );
+        assert_eq!(
+            parse_classification("Internal"),
+            Some(CatalogClassification::Internal)
+        );
+    }
+
+    #[test]
+    fn test_parse_classification_invalid() {
+        assert_eq!(parse_classification("unknown"), None);
+        assert_eq!(parse_classification(""), None);
+    }
+
+    #[test]
+    fn test_parse_field_type_valid() {
+        assert_eq!(parse_field_type("string"), Some(MetadataFieldType::String));
+        assert_eq!(
+            parse_field_type("integer"),
+            Some(MetadataFieldType::Integer)
+        );
+        assert_eq!(
+            parse_field_type("decimal"),
+            Some(MetadataFieldType::Decimal)
+        );
+        assert_eq!(
+            parse_field_type("boolean"),
+            Some(MetadataFieldType::Boolean)
+        );
+        assert_eq!(parse_field_type("date"), Some(MetadataFieldType::Date));
+        assert_eq!(
+            parse_field_type("datetime"),
+            Some(MetadataFieldType::DateTime)
+        );
+        assert_eq!(parse_field_type("enum"), Some(MetadataFieldType::Enum));
+        assert_eq!(
+            parse_field_type("reference"),
+            Some(MetadataFieldType::Reference)
+        );
+        assert_eq!(parse_field_type("json"), Some(MetadataFieldType::Json));
+        assert_eq!(parse_field_type("binary"), Some(MetadataFieldType::Binary));
+    }
+
+    #[test]
+    fn test_parse_field_type_case_insensitive() {
+        assert_eq!(parse_field_type("STRING"), Some(MetadataFieldType::String));
+        assert_eq!(
+            parse_field_type("Integer"),
+            Some(MetadataFieldType::Integer)
+        );
+    }
+
+    #[test]
+    fn test_parse_field_type_invalid() {
+        assert_eq!(parse_field_type("unknown"), None);
+        assert_eq!(parse_field_type(""), None);
+    }
+
+    #[test]
+    fn test_parse_widget_type_valid() {
+        assert_eq!(parse_widget_type("kpi_card"), Some(WidgetType::KpiCard));
+        assert_eq!(parse_widget_type("kpicard"), Some(WidgetType::KpiCard));
+        assert_eq!(parse_widget_type("bar_chart"), Some(WidgetType::BarChart));
+        assert_eq!(parse_widget_type("line_chart"), Some(WidgetType::LineChart));
+        assert_eq!(parse_widget_type("pie_chart"), Some(WidgetType::PieChart));
+        assert_eq!(parse_widget_type("heat_map"), Some(WidgetType::HeatMap));
+        assert_eq!(parse_widget_type("data_table"), Some(WidgetType::DataTable));
+        assert_eq!(parse_widget_type("gauge"), Some(WidgetType::Gauge));
+        assert_eq!(parse_widget_type("trend_line"), Some(WidgetType::TrendLine));
+        assert_eq!(
+            parse_widget_type("radar_chart"),
+            Some(WidgetType::RadarChart)
+        );
+        assert_eq!(parse_widget_type("tree_map"), Some(WidgetType::TreeMap));
+    }
+
+    #[test]
+    fn test_parse_widget_type_case_insensitive() {
+        assert_eq!(parse_widget_type("KPI_CARD"), Some(WidgetType::KpiCard));
+        assert_eq!(parse_widget_type("BarChart"), Some(WidgetType::BarChart));
+    }
+
+    #[test]
+    fn test_parse_widget_type_invalid() {
+        assert_eq!(parse_widget_type("unknown"), None);
+        assert_eq!(parse_widget_type(""), None);
+    }
+
+    #[test]
+    fn test_parse_report_type_valid() {
+        assert_eq!(
+            parse_report_type("quality_report"),
+            Some(ReportType::QualityReport)
+        );
+        assert_eq!(
+            parse_report_type("maturity_report"),
+            Some(ReportType::MaturityReport)
+        );
+        assert_eq!(
+            parse_report_type("compliance_report"),
+            Some(ReportType::ComplianceReport)
+        );
+        assert_eq!(
+            parse_report_type("stewardship_report"),
+            Some(ReportType::StewardshipReport)
+        );
+        assert_eq!(
+            parse_report_type("data_asset_report"),
+            Some(ReportType::DataAssetReport)
+        );
+        assert_eq!(
+            parse_report_type("executive_summary"),
+            Some(ReportType::ExecutiveSummary)
+        );
+    }
+
+    #[test]
+    fn test_parse_report_type_case_insensitive() {
+        assert_eq!(
+            parse_report_type("QUALITY_REPORT"),
+            Some(ReportType::QualityReport)
+        );
+        assert_eq!(
+            parse_report_type("qualityreport"),
+            Some(ReportType::QualityReport)
+        );
+    }
+
+    #[test]
+    fn test_parse_report_type_invalid() {
+        assert_eq!(parse_report_type("unknown"), None);
+        assert_eq!(parse_report_type(""), None);
+    }
+
+    #[test]
+    fn test_parse_report_frequency_valid() {
+        assert_eq!(
+            parse_report_frequency("daily"),
+            Some(ReportFrequency::Daily)
+        );
+        assert_eq!(
+            parse_report_frequency("weekly"),
+            Some(ReportFrequency::Weekly)
+        );
+        assert_eq!(
+            parse_report_frequency("monthly"),
+            Some(ReportFrequency::Monthly)
+        );
+        assert_eq!(
+            parse_report_frequency("quarterly"),
+            Some(ReportFrequency::Quarterly)
+        );
+        assert_eq!(
+            parse_report_frequency("yearly"),
+            Some(ReportFrequency::Yearly)
+        );
+        assert_eq!(
+            parse_report_frequency("on_demand"),
+            Some(ReportFrequency::OnDemand)
+        );
+        assert_eq!(
+            parse_report_frequency("ondemand"),
+            Some(ReportFrequency::OnDemand)
+        );
+    }
+
+    #[test]
+    fn test_parse_report_frequency_invalid() {
+        assert_eq!(parse_report_frequency("hourly"), None);
+        assert_eq!(parse_report_frequency(""), None);
+    }
+
+    #[test]
+    fn test_parse_report_format_valid() {
+        assert_eq!(parse_report_format("PDF"), Some(ReportFormat::PDF));
+        assert_eq!(parse_report_format("EXCEL"), Some(ReportFormat::Excel));
+        assert_eq!(parse_report_format("HTML"), Some(ReportFormat::HTML));
+        assert_eq!(parse_report_format("JSON"), Some(ReportFormat::JSON));
+        assert_eq!(
+            parse_report_format("MARKDOWN"),
+            Some(ReportFormat::Markdown)
+        );
+    }
+
+    #[test]
+    fn test_parse_report_format_case_insensitive() {
+        assert_eq!(parse_report_format("pdf"), Some(ReportFormat::PDF));
+        assert_eq!(parse_report_format("Excel"), Some(ReportFormat::Excel));
+    }
+
+    #[test]
+    fn test_parse_report_format_invalid() {
+        assert_eq!(parse_report_format("csv"), None);
+        assert_eq!(parse_report_format(""), None);
+    }
+
+    #[test]
+    fn test_calculate_next_run_daily() {
+        let now = chrono::Utc::now();
+        let next = calculate_next_run(&ReportFrequency::Daily);
+        assert!(next > now);
+        let diff = next - now;
+        assert!(diff.num_hours() >= 23 && diff.num_hours() <= 25);
+    }
+
+    #[test]
+    fn test_calculate_next_run_on_demand_is_now() {
+        let now = chrono::Utc::now();
+        let next = calculate_next_run(&ReportFrequency::OnDemand);
+        let diff = next - now;
+        assert!(diff.num_seconds() < 5);
+    }
+
+    #[test]
+    fn test_calculate_next_run_weekly() {
+        let now = chrono::Utc::now();
+        let next = calculate_next_run(&ReportFrequency::Weekly);
+        let diff = next - now;
+        assert!(diff.num_days() >= 6 && diff.num_days() <= 8);
+    }
+
+    #[test]
+    fn test_parse_audit_framework_valid() {
+        assert_eq!(parse_audit_framework("gdpr"), Some(AuditFramework::GDPR));
+        assert_eq!(parse_audit_framework("sox"), Some(AuditFramework::SOX));
+        assert_eq!(
+            parse_audit_framework("iso27001"),
+            Some(AuditFramework::ISO27001)
+        );
+        assert_eq!(
+            parse_audit_framework("iso_27001"),
+            Some(AuditFramework::ISO27001)
+        );
+        assert_eq!(
+            parse_audit_framework("data_governance"),
+            Some(AuditFramework::DataGovernance)
+        );
+        assert_eq!(
+            parse_audit_framework("datagovernance"),
+            Some(AuditFramework::DataGovernance)
+        );
+        assert_eq!(
+            parse_audit_framework("internal_policy"),
+            Some(AuditFramework::InternalPolicy)
+        );
+        assert_eq!(
+            parse_audit_framework("internalpolicy"),
+            Some(AuditFramework::InternalPolicy)
+        );
+        assert_eq!(
+            parse_audit_framework("custom"),
+            Some(AuditFramework::Custom)
+        );
+    }
+
+    #[test]
+    fn test_parse_audit_framework_case_insensitive() {
+        assert_eq!(parse_audit_framework("GDPR"), Some(AuditFramework::GDPR));
+        assert_eq!(parse_audit_framework("Sox"), Some(AuditFramework::SOX));
+    }
+
+    #[test]
+    fn test_parse_audit_framework_invalid() {
+        assert_eq!(parse_audit_framework("unknown"), None);
+        assert_eq!(parse_audit_framework(""), None);
+    }
+
+    #[test]
+    fn test_parse_finding_severity_valid() {
+        assert_eq!(parse_finding_severity("low"), Some(FindingSeverity::Low));
+        assert_eq!(
+            parse_finding_severity("medium"),
+            Some(FindingSeverity::Medium)
+        );
+        assert_eq!(parse_finding_severity("high"), Some(FindingSeverity::High));
+        assert_eq!(
+            parse_finding_severity("critical"),
+            Some(FindingSeverity::Critical)
+        );
+    }
+
+    #[test]
+    fn test_parse_finding_severity_invalid() {
+        assert_eq!(parse_finding_severity("none"), None);
+        assert_eq!(parse_finding_severity(""), None);
+    }
+
+    #[test]
+    fn test_parse_finding_status_valid() {
+        assert_eq!(parse_finding_status("open"), Some(FindingStatus::Open));
+        assert_eq!(
+            parse_finding_status("in_progress"),
+            Some(FindingStatus::InProgress)
+        );
+        assert_eq!(
+            parse_finding_status("inprogress"),
+            Some(FindingStatus::InProgress)
+        );
+        assert_eq!(
+            parse_finding_status("resolved"),
+            Some(FindingStatus::Resolved)
+        );
+        assert_eq!(
+            parse_finding_status("accepted"),
+            Some(FindingStatus::Accepted)
+        );
+        assert_eq!(
+            parse_finding_status("false_positive"),
+            Some(FindingStatus::FalsePositive)
+        );
+        assert_eq!(
+            parse_finding_status("falsepositive"),
+            Some(FindingStatus::FalsePositive)
+        );
+    }
+
+    #[test]
+    fn test_parse_finding_status_invalid() {
+        assert_eq!(parse_finding_status("closed"), None);
+        assert_eq!(parse_finding_status(""), None);
+    }
+
+    // --- compliance_grade ---
+    #[test]
+    fn test_compliance_grade_a() {
+        assert_eq!(compliance_grade(95.0), "A");
+        assert_eq!(compliance_grade(90.0), "A");
+    }
+
+    #[test]
+    fn test_compliance_grade_b() {
+        assert_eq!(compliance_grade(85.0), "B");
+        assert_eq!(compliance_grade(80.0), "B");
+    }
+
+    #[test]
+    fn test_compliance_grade_c() {
+        assert_eq!(compliance_grade(75.0), "C");
+        assert_eq!(compliance_grade(70.0), "C");
+    }
+
+    #[test]
+    fn test_compliance_grade_d() {
+        assert_eq!(compliance_grade(65.0), "D");
+        assert_eq!(compliance_grade(60.0), "D");
+    }
+
+    #[test]
+    fn test_compliance_grade_f() {
+        assert_eq!(compliance_grade(59.9), "F");
+        assert_eq!(compliance_grade(0.0), "F");
+        assert_eq!(compliance_grade(-10.0), "F");
+    }
+
+    // --- check_required ---
+    fn make_quality_rule(field_name: &str, config: serde_json::Value) -> QualityRule {
+        QualityRule {
+            id: uuid::Uuid::new_v4(),
+            name: "test-rule".to_string(),
+            description: "test description".to_string(),
+            domain: "customer".to_string(),
+            field_name: field_name.to_string(),
+            rule_type: QualityRuleType::Required,
+            severity: QualitySeverity::Error,
+            config,
+            is_active: true,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        }
+    }
+
+    #[test]
+    fn test_check_required_finds_empty_field() {
+        let mut r = make_master_data_ref();
+        r.name = None;
+        let rule = make_quality_rule("name", serde_json::json!({}));
+        let issues = check_required(&rule, &[r]);
+        assert_eq!(issues.len(), 1);
+        assert_eq!(issues[0].field_name, "name");
+    }
+
+    #[test]
+    fn test_check_required_no_issue_when_filled() {
+        let r = make_master_data_ref();
+        let rule = make_quality_rule("code", serde_json::json!({}));
+        let issues = check_required(&rule, &[r]);
+        assert!(issues.is_empty());
+    }
+
+    #[test]
+    fn test_check_required_with_default_value() {
+        let mut r = make_master_data_ref();
+        r.name = None;
+        let rule = make_quality_rule("name", serde_json::json!({ "default_value": "Unknown" }));
+        let issues = check_required(&rule, &[r]);
+        assert_eq!(issues.len(), 1);
+        assert!(issues[0]
+            .suggestion
+            .as_deref()
+            .unwrap_or("")
+            .contains("Unknown"));
+    }
+
+    #[test]
+    fn test_check_required_empty_records() {
+        let rule = make_quality_rule("code", serde_json::json!({}));
+        let issues = check_required(&rule, &[]);
+        assert!(issues.is_empty());
+    }
+
+    // --- check_format ---
+    #[test]
+    fn test_check_format_no_pattern_returns_empty() {
+        let r = make_master_data_ref();
+        let rule = make_quality_rule("code", serde_json::json!({}));
+        let issues = check_format(&rule, &[r]);
+        assert!(issues.is_empty());
+    }
+
+    #[test]
+    fn test_check_format_valid_pattern_no_issue() {
+        let r = make_master_data_ref();
+        let rule = make_quality_rule("code", serde_json::json!({ "pattern": "^[A-Z0-9]+$" }));
+        let issues = check_format(&rule, &[r]);
+        assert!(issues.is_empty());
+    }
+
+    #[test]
+    fn test_check_format_invalid_value_finds_issue() {
+        let mut r = make_master_data_ref();
+        r.code = "abc!".to_string();
+        let rule = make_quality_rule("code", serde_json::json!({ "pattern": "^[A-Z0-9]+$" }));
+        let issues = check_format(&rule, &[r]);
+        assert_eq!(issues.len(), 1);
+    }
+
+    #[test]
+    fn test_check_format_invalid_regex_returns_empty() {
+        let r = make_master_data_ref();
+        let rule = make_quality_rule("code", serde_json::json!({ "pattern": "[invalid(" }));
+        let issues = check_format(&rule, &[r]);
+        assert!(issues.is_empty());
+    }
+
+    #[test]
+    fn test_check_format_empty_value_skipped() {
+        let mut r = make_master_data_ref();
+        r.name = None;
+        let rule = make_quality_rule("name", serde_json::json!({ "pattern": "^[A-Z]" }));
+        let issues = check_format(&rule, &[r]);
+        assert!(issues.is_empty());
+    }
+
+    // --- check_range ---
+    #[test]
+    fn test_check_range_within_bounds_no_issue() {
+        let mut r = make_master_data_ref();
+        r.code = "50".to_string();
+        let rule = make_quality_rule("code", serde_json::json!({ "min": 0, "max": 100 }));
+        let issues = check_range(&rule, &[r]);
+        assert!(issues.is_empty());
+    }
+
+    #[test]
+    fn test_check_range_too_low_finds_issue() {
+        let mut r = make_master_data_ref();
+        r.code = "5".to_string();
+        let rule = make_quality_rule("code", serde_json::json!({ "min": 10, "max": 100 }));
+        let issues = check_range(&rule, &[r]);
+        assert_eq!(issues.len(), 1);
+    }
+
+    #[test]
+    fn test_check_range_too_high_finds_issue() {
+        let mut r = make_master_data_ref();
+        r.code = "200".to_string();
+        let rule = make_quality_rule("code", serde_json::json!({ "min": 10, "max": 100 }));
+        let issues = check_range(&rule, &[r]);
+        assert_eq!(issues.len(), 1);
+    }
+
+    #[test]
+    fn test_check_range_non_numeric_skipped() {
+        let r = make_master_data_ref();
+        let rule = make_quality_rule("code", serde_json::json!({ "min": 10, "max": 100 }));
+        let issues = check_range(&rule, &[r]);
+        assert!(issues.is_empty());
+    }
+
+    #[test]
+    fn test_check_range_only_min() {
+        let mut r = make_master_data_ref();
+        r.code = "5".to_string();
+        let rule = make_quality_rule("code", serde_json::json!({ "min": 10 }));
+        let issues = check_range(&rule, &[r]);
+        assert_eq!(issues.len(), 1);
+        assert!(issues[0].expected.contains(">="));
+    }
+
+    #[test]
+    fn test_check_range_only_max() {
+        let mut r = make_master_data_ref();
+        r.code = "200".to_string();
+        let rule = make_quality_rule("code", serde_json::json!({ "max": 100 }));
+        let issues = check_range(&rule, &[r]);
+        assert_eq!(issues.len(), 1);
+        assert!(issues[0].expected.contains("<="));
+    }
+
+    // --- build_risk_factors_and_recommendations ---
+    #[test]
+    fn test_build_risk_factors_all_good() {
+        let p = make_entity_profile();
+        let (factors, recs) =
+            build_risk_factors_and_recommendations(&p, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0);
+        // When all scores are good, the function pushes a default "no risk" factor
+        assert!(factors.iter().any(|f| f.contains("无明显风险")));
+        assert!(!recs.is_empty());
+    }
+
+    #[test]
+    fn test_build_risk_factors_low_completeness() {
+        let p = make_entity_profile();
+        let (factors, recs) =
+            build_risk_factors_and_recommendations(&p, 50.0, 100.0, 100.0, 100.0, 100.0, 100.0);
+        assert!(factors.iter().any(|f| f.contains("完整性")));
+        assert!(recs.iter().any(|r| r.contains("必填字段")));
+    }
+
+    #[test]
+    fn test_build_risk_factors_low_accuracy() {
+        let p = make_entity_profile();
+        let (factors, _recs) =
+            build_risk_factors_and_recommendations(&p, 100.0, 50.0, 100.0, 100.0, 100.0, 100.0);
+        assert!(factors.iter().any(|f| f.contains("准确性")));
+    }
+
+    #[test]
+    fn test_build_risk_factors_low_consistency() {
+        let p = make_entity_profile();
+        let (factors, _recs) =
+            build_risk_factors_and_recommendations(&p, 100.0, 100.0, 50.0, 100.0, 100.0, 100.0);
+        assert!(factors.iter().any(|f| f.contains("一致性")));
+    }
+
+    // --- score_entity_internal ---
+    #[test]
+    fn test_score_entity_internal_returns_scores() {
+        let p = make_entity_profile();
+        let score = score_entity_internal(&p);
+        assert_eq!(score.entity_id, "e1");
+        assert_eq!(score.domain, "customer");
+        assert!(score.overall_score >= 0.0);
+        assert!(score.completeness_score >= 0.0);
+        assert!(!score.risk_level.is_empty());
+        assert!(!score.scored_at.is_empty());
+    }
+
+    #[test]
+    fn test_score_entity_internal_perfect_profile() {
+        let mut p = make_entity_profile();
+        p.fields
+            .insert("code".to_string(), Some("C001".to_string()));
+        p.fields
+            .insert("name".to_string(), Some("Alice".to_string()));
+        p.fields
+            .insert("address".to_string(), Some("123 St".to_string()));
+        let score = score_entity_internal(&p);
+        assert!(score.completeness_score > 0.0);
+    }
+
+    // --- build_preset_categories ---
+    #[test]
+    fn test_build_preset_categories_nonempty() {
+        let cats = build_preset_categories();
+        assert!(!cats.is_empty());
+    }
+
+    #[test]
+    fn test_build_preset_categories_has_customer_tech() {
+        let cats = build_preset_categories();
+        assert!(cats.iter().any(|c| c.id == "cust-industry-tech"));
+    }
+
+    #[test]
+    fn test_build_preset_categories_all_have_domain() {
+        let cats = build_preset_categories();
+        assert!(cats.iter().all(|c| !c.domain.is_empty()));
+    }
+
+    // --- build_preset_rules ---
+    #[test]
+    fn test_build_preset_rules_nonempty() {
+        let rules = build_preset_rules();
+        assert!(!rules.is_empty());
+    }
+
+    #[test]
+    fn test_build_preset_rules_has_customer_tech_rule() {
+        let rules = build_preset_rules();
+        assert!(rules.iter().any(|r| r.id == "rule-cust-tech"));
+    }
+
+    #[test]
+    fn test_build_preset_rules_all_enabled() {
+        let rules = build_preset_rules();
+        assert!(rules.iter().all(|r| r.enabled));
+    }
+
+    // --- tfidf_score ---
+    #[test]
+    fn test_tfidf_score_matching_keywords() {
+        let cats = build_preset_categories();
+        let results = tfidf_score("科技公司", &cats);
+        assert!(!results.is_empty());
+        assert!(results[0].2.iter().any(|k| k.contains("科技")));
+    }
+
+    #[test]
+    fn test_tfidf_score_no_match_returns_empty() {
+        let cats = build_preset_categories();
+        let results = tfidf_score("zzzzz", &cats);
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_tfidf_score_sorted_desc() {
+        let cats = build_preset_categories();
+        let results = tfidf_score("科技贸易制造", &cats);
+        for i in 1..results.len() {
+            assert!(results[i - 1].1 >= results[i].1);
+        }
+    }
+
+    #[test]
+    fn test_tfidf_score_empty_text() {
+        let cats = build_preset_categories();
+        let results = tfidf_score("", &cats);
+        assert!(results.is_empty());
+    }
+
+    // --- apply_rules ---
+    #[test]
+    fn test_apply_rules_matching_name() {
+        let p = EntityProfile {
+            id: "e1".to_string(),
+            domain: "customer".to_string(),
+            code: "C001".to_string(),
+            name: Some("科技公司".to_string()),
+            fields: HashMap::new(),
+            last_synced_days_ago: 0,
+        };
+        let rules = build_preset_rules();
+        let hits = apply_rules(&p, &rules);
+        assert!(!hits.is_empty());
+        assert!(hits
+            .iter()
+            .any(|(cat_id, _)| cat_id == "cust-industry-tech"));
+    }
+
+    #[test]
+    fn test_apply_rules_no_match_returns_empty() {
+        let p = EntityProfile {
+            id: "e1".to_string(),
+            domain: "customer".to_string(),
+            code: "C001".to_string(),
+            name: Some("普通公司".to_string()),
+            fields: HashMap::new(),
+            last_synced_days_ago: 0,
+        };
+        let rules = build_preset_rules();
+        let hits = apply_rules(&p, &rules);
+        assert!(hits.is_empty());
+    }
+
+    #[test]
+    fn test_apply_rules_wrong_domain_skipped() {
+        let p = EntityProfile {
+            id: "e1".to_string(),
+            domain: "material".to_string(),
+            code: "M001".to_string(),
+            name: Some("科技公司".to_string()),
+            fields: HashMap::new(),
+            last_synced_days_ago: 0,
+        };
+        let rules = build_preset_rules();
+        let hits = apply_rules(&p, &rules);
+        assert!(hits.iter().all(|(cat_id, _)| !cat_id.starts_with("cust-")));
+    }
+
+    // --- detect_anomalies_internal ---
+    #[test]
+    fn test_detect_anomalies_stale_data() {
+        let p = EntityProfile {
+            id: "e1".to_string(),
+            domain: "customer".to_string(),
+            code: "C001".to_string(),
+            name: Some("Alice".to_string()),
+            fields: HashMap::new(),
+            last_synced_days_ago: 100,
+        };
+        let anomalies = detect_anomalies_internal(&[p]);
+        assert!(anomalies.iter().any(|a| a.anomaly_type == "threshold"));
+    }
+
+    #[test]
+    fn test_detect_anomalies_missing_required_field() {
+        let p = EntityProfile {
+            id: "e1".to_string(),
+            domain: "customer".to_string(),
+            code: "C001".to_string(),
+            name: Some("Alice".to_string()),
+            fields: HashMap::new(),
+            last_synced_days_ago: 1,
+        };
+        let anomalies = detect_anomalies_internal(&[p]);
+        assert!(anomalies.iter().any(|a| a.anomaly_type == "null_spike"));
+    }
+
+    #[test]
+    fn test_detect_anomalies_empty_profiles() {
+        let anomalies = detect_anomalies_internal(&[]);
+        assert!(anomalies.is_empty());
+    }
+
+    #[test]
+    fn test_detect_anomalies_healthy_profile() {
+        let mut fields = HashMap::new();
+        fields.insert("code".to_string(), Some("C001".to_string()));
+        fields.insert("name".to_string(), Some("Alice".to_string()));
+        fields.insert("phone".to_string(), Some("138".to_string()));
+        fields.insert("email".to_string(), Some("a@b.com".to_string()));
+        fields.insert("address".to_string(), Some("St".to_string()));
+        let p = EntityProfile {
+            id: "e1".to_string(),
+            domain: "customer".to_string(),
+            code: "C001".to_string(),
+            name: Some("Alice".to_string()),
+            fields,
+            last_synced_days_ago: 1,
+        };
+        let anomalies = detect_anomalies_internal(&[p]);
+        assert!(anomalies.is_empty());
+    }
+
+    // --- build_synthetic_assessment ---
+    #[test]
+    fn test_build_synthetic_assessment_basic() {
+        let a = build_synthetic_assessment("asm-001", 60.0);
+        assert_eq!(a.assessment_id, "asm-001");
+        assert!(!a.dimensions.is_empty());
+    }
+
+    #[test]
+    fn test_build_synthetic_assessment_clamps_scores() {
+        let a = build_synthetic_assessment("asm-002", 200.0);
+        for d in &a.dimensions {
+            assert!(d.score <= 95.0);
+        }
+    }
+
+    #[test]
+    fn test_build_synthetic_assessment_low_base() {
+        let a = build_synthetic_assessment("asm-003", 0.0);
+        for d in &a.dimensions {
+            assert!(d.score >= 5.0);
+        }
+    }
+
+    #[test]
+    fn test_build_synthetic_assessment_has_dimensions() {
+        let a = build_synthetic_assessment("asm-004", 50.0);
+        assert!(a.dimensions.len() >= 8);
+    }
 }

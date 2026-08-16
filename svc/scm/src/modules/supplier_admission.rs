@@ -495,3 +495,142 @@ async fn activate_supplier(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::supplier_admission::{
+        AuditItem, AuditRequest, CreateSupplierAdmissionRequest, SupplierAdmissionQueryParams,
+        UpdateSupplierAdmissionRequest,
+    };
+
+    #[test]
+    fn supplier_admission_query_params_defaults_via_serde() {
+        let q: SupplierAdmissionQueryParams =
+            serde_json::from_str("{}").expect("deserialize empty");
+        assert!(q.page.is_none());
+        assert!(q.page_size.is_none());
+        assert!(q.status.is_none());
+        assert!(q.approval_status.is_none());
+        assert!(q.supplier_category.is_none());
+        assert!(q.start_date.is_none());
+        assert!(q.end_date.is_none());
+    }
+
+    #[test]
+    fn supplier_admission_query_params_roundtrip_preserves_fields() {
+        let json = r#"{
+            "page": 2,
+            "page_size": 25,
+            "status": "draft",
+            "approval_status": "approved",
+            "supplier_category": "raw",
+            "start_date": "2026-01-01",
+            "end_date": "2026-01-31"
+        }"#;
+        let q: SupplierAdmissionQueryParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(q.page, Some(2));
+        assert_eq!(q.page_size, Some(25));
+        assert_eq!(q.status.as_deref(), Some("draft"));
+        assert_eq!(q.approval_status.as_deref(), Some("approved"));
+        assert_eq!(q.supplier_category.as_deref(), Some("raw"));
+        assert_eq!(q.start_date.as_deref(), Some("2026-01-01"));
+        assert_eq!(q.end_date.as_deref(), Some("2026-01-31"));
+    }
+
+    #[test]
+    fn supplier_admission_query_params_ignores_unknown_fields() {
+        let json = r#"{"status": "active", "extra": "ignored"}"#;
+        let q: SupplierAdmissionQueryParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(q.status.as_deref(), Some("active"));
+    }
+
+    #[test]
+    fn create_supplier_admission_request_serde_roundtrip_preserves_required_fields() {
+        let req = CreateSupplierAdmissionRequest {
+            admission_no: "ADM-001".to_string(),
+            supplier_name: "Acme Corp".to_string(),
+            short_name: Some("Acme".to_string()),
+            contact_person: Some("Alice".to_string()),
+            contact_phone: Some("13800000000".to_string()),
+            contact_email: Some("alice@acme.com".to_string()),
+            address: Some("123 Main St".to_string()),
+            business_license: Some("BL-001".to_string()),
+            tax_registration: Some("TAX-001".to_string()),
+            organization_code: Some("ORG-001".to_string()),
+            legal_representative: Some("Bob".to_string()),
+            registered_capital: Some("1,000,000".to_string()),
+            established_date: Some("2020-01-01".to_string()),
+            business_scope: Some("Manufacturing".to_string()),
+            supplier_category: Some("raw".to_string()),
+            applicant: Some("Carol".to_string()),
+            remarks: Some("test".to_string()),
+        };
+        let json = serde_json::to_string(&req).expect("serialize");
+        let back: CreateSupplierAdmissionRequest =
+            serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.admission_no, req.admission_no);
+        assert_eq!(back.supplier_name, req.supplier_name);
+        assert_eq!(back.short_name, req.short_name);
+        assert_eq!(back.business_license, req.business_license);
+        assert_eq!(back.remarks, req.remarks);
+    }
+
+    #[test]
+    fn update_supplier_admission_request_defaults_all_none_via_serde() {
+        let req: UpdateSupplierAdmissionRequest =
+            serde_json::from_str("{}").expect("deserialize empty");
+        assert!(req.supplier_name.is_none());
+        assert!(req.status.is_none());
+        assert!(req.risk_level.is_none());
+        assert!(req.remarks.is_none());
+    }
+
+    #[test]
+    fn update_supplier_admission_request_partial_population() {
+        let json = r#"{"status": "approved", "risk_level": "high"}"#;
+        let req: UpdateSupplierAdmissionRequest = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(req.status.as_deref(), Some("approved"));
+        assert_eq!(req.risk_level.as_deref(), Some("high"));
+        assert!(req.supplier_name.is_none());
+    }
+
+    #[test]
+    fn audit_request_deserialize_preserves_items() {
+        let json = r#"{
+            "audit_items": [
+                {"audit_item": "营业执照", "audit_result": "pass", "remarks": "有效"},
+                {"audit_item": "税务登记", "audit_result": "fail"}
+            ]
+        }"#;
+        let req: AuditRequest = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(req.audit_items.len(), 2);
+        assert_eq!(req.audit_items[0].audit_item, "营业执照");
+        assert_eq!(req.audit_items[0].audit_result, "pass");
+        assert_eq!(req.audit_items[0].remarks.as_deref(), Some("有效"));
+        assert_eq!(req.audit_items[1].audit_item, "税务登记");
+        assert_eq!(req.audit_items[1].audit_result, "fail");
+        assert!(req.audit_items[1].remarks.is_none());
+    }
+
+    #[test]
+    fn audit_request_empty_items_list() {
+        let json = r#"{"audit_items": []}"#;
+        let req: AuditRequest = serde_json::from_str(json).expect("deserialize");
+        assert!(req.audit_items.is_empty());
+    }
+
+    #[test]
+    fn audit_item_with_optional_remarks_none() {
+        let json = r#"{"audit_item": "证件", "audit_result": "pass"}"#;
+        let item: AuditItem = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(item.audit_item, "证件");
+        assert_eq!(item.audit_result, "pass");
+        assert!(item.remarks.is_none());
+    }
+
+    #[test]
+    fn create_routes_returns_router_without_panic() {
+        let _router = create_routes();
+    }
+}

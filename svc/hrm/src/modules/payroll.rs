@@ -855,3 +855,250 @@ async fn generate_payroll_voucher(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use bigdecimal::BigDecimal;
+
+    fn now() -> chrono::DateTime<Utc> {
+        Utc::now()
+    }
+
+    fn dec(n: i64) -> BigDecimal {
+        BigDecimal::from(n)
+    }
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn test_create_routes() {
+        let _router = create_routes();
+    }
+
+    #[test]
+    fn test_payroll_run_roundtrip() {
+        roundtrip(&PayrollRun {
+            id: Uuid::new_v4(),
+            pay_period: "2024-01".to_string(),
+            status: "draft".to_string(),
+            total_amount: dec(100000),
+            employee_count: 10,
+            paid_at: None,
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn test_payroll_run_with_paid_at() {
+        roundtrip(&PayrollRun {
+            id: Uuid::new_v4(),
+            pay_period: "2024-06".to_string(),
+            status: "paid".to_string(),
+            total_amount: dec(50000),
+            employee_count: 5,
+            paid_at: Some(now()),
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn test_payroll_item_roundtrip() {
+        roundtrip(&PayrollItem {
+            id: Uuid::new_v4(),
+            payroll_run_id: Uuid::new_v4(),
+            employee_id: Uuid::new_v4(),
+            gross_amount: dec(10000),
+            net_amount: dec(8000),
+            deductions: dec(1000),
+            taxes: dec(1000),
+            status: "pending".to_string(),
+            bank_account: Some("6222000011112222333".to_string()),
+            paid_at: None,
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn test_payroll_item_paid() {
+        roundtrip(&PayrollItem {
+            id: Uuid::new_v4(),
+            payroll_run_id: Uuid::new_v4(),
+            employee_id: Uuid::new_v4(),
+            gross_amount: dec(12000),
+            net_amount: dec(9500),
+            deductions: dec(1500),
+            taxes: dec(1000),
+            status: "paid".to_string(),
+            bank_account: None,
+            paid_at: Some(now()),
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn test_payroll_detail_roundtrip() {
+        roundtrip(&PayrollDetail {
+            id: Uuid::new_v4(),
+            payroll_item_id: Uuid::new_v4(),
+            item_type: "bonus".to_string(),
+            category: "performance".to_string(),
+            description: "季度绩效奖金".to_string(),
+            amount: dec(2000),
+            created_at: now(),
+        });
+    }
+
+    #[test]
+    fn test_create_payroll_run_request() {
+        roundtrip(&CreatePayrollRunRequest {
+            pay_period: "2024-03".to_string(),
+        });
+    }
+
+    #[test]
+    fn test_create_payroll_run_request_empty() {
+        roundtrip(&CreatePayrollRunRequest {
+            pay_period: String::new(),
+        });
+    }
+
+    #[test]
+    fn test_generate_payroll_voucher_request_full() {
+        roundtrip(&GeneratePayrollVoucherRequest {
+            department_id: Some(Uuid::new_v4()),
+            department_name: Some("Engineering".to_string()),
+            voucher_date: Some(now()),
+            period: Some("2024-03".to_string()),
+            maker_id: Some(Uuid::new_v4()),
+            maker_name: Some("admin".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_generate_payroll_voucher_request_empty() {
+        roundtrip(&GeneratePayrollVoucherRequest {
+            department_id: None,
+            department_name: None,
+            voucher_date: None,
+            period: None,
+            maker_id: None,
+            maker_name: None,
+        });
+    }
+
+    #[test]
+    fn test_payroll_voucher_response_success() {
+        let resp = PayrollVoucherResponse {
+            success: true,
+            voucher_id: Some(Uuid::new_v4()),
+            voucher_number: Some("PV20240301001".to_string()),
+            message: "薪资凭证生成成功".to_string(),
+            total_salary: dec(100000),
+            total_social_security: dec(8000),
+            total_housing_fund: dec(2000),
+            total_tax: dec(10000),
+            employee_count: 10,
+        };
+        assert!(resp.success);
+        assert_eq!(resp.employee_count, 10);
+        assert!(resp.voucher_number.is_some());
+    }
+
+    #[test]
+    fn test_payroll_voucher_response_failure() {
+        let resp = PayrollVoucherResponse {
+            success: false,
+            voucher_id: None,
+            voucher_number: None,
+            message: "薪资未发放".to_string(),
+            total_salary: dec(0),
+            total_social_security: dec(0),
+            total_housing_fund: dec(0),
+            total_tax: dec(0),
+            employee_count: 0,
+        };
+        assert!(!resp.success);
+        assert!(resp.voucher_id.is_none());
+    }
+
+    #[test]
+    fn test_query_params_all_none() {
+        let params = QueryParams {
+            page: None,
+            page_size: None,
+            pay_period: None,
+            status: None,
+            payroll_run_id: None,
+            employee_id: None,
+            payroll_item_id: None,
+        };
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+    }
+
+    #[test]
+    fn test_query_params_with_values() {
+        let run_id = Uuid::new_v4();
+        let emp_id = Uuid::new_v4();
+        let params = QueryParams {
+            page: Some(1),
+            page_size: Some(20),
+            pay_period: Some("2024-01".to_string()),
+            status: Some("paid".to_string()),
+            payroll_run_id: Some(run_id),
+            employee_id: Some(emp_id),
+            payroll_item_id: None,
+        };
+        assert_eq!(params.page, Some(1));
+        assert_eq!(params.page_size, Some(20));
+        assert_eq!(params.payroll_run_id, Some(run_id));
+        assert_eq!(params.employee_id, Some(emp_id));
+    }
+
+    #[test]
+    fn test_payroll_run_debug() {
+        let run = PayrollRun {
+            id: Uuid::new_v4(),
+            pay_period: "2024-01".to_string(),
+            status: "draft".to_string(),
+            total_amount: dec(0),
+            employee_count: 0,
+            paid_at: None,
+            created_at: now(),
+            updated_at: now(),
+        };
+        let debug = format!("{:?}", run);
+        assert!(debug.contains("PayrollRun"));
+        assert!(debug.contains("draft"));
+    }
+
+    #[test]
+    fn test_payroll_run_clone() {
+        let run = PayrollRun {
+            id: Uuid::new_v4(),
+            pay_period: "2024-02".to_string(),
+            status: "calculated".to_string(),
+            total_amount: dec(5000),
+            employee_count: 1,
+            paid_at: None,
+            created_at: now(),
+            updated_at: now(),
+        };
+        let cloned = run.clone();
+        assert_eq!(run.id, cloned.id);
+        assert_eq!(run.pay_period, cloned.pay_period);
+        assert_eq!(run.status, cloned.status);
+    }
+}

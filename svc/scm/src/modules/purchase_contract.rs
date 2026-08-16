@@ -569,3 +569,59 @@ async fn renew_contract(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::purchase_contract::PurchaseContractQueryParams;
+
+    #[test]
+    fn purchase_contract_query_params_defaults_via_serde() {
+        let q: PurchaseContractQueryParams = serde_json::from_str("{}").expect("deserialize empty");
+        assert!(q.page.is_none());
+        assert!(q.page_size.is_none());
+        assert!(q.status.is_none());
+    }
+
+    #[test]
+    fn purchase_contract_query_params_roundtrip_preserves_fields() {
+        let json = r#"{
+            "page": 2,
+            "page_size": 10,
+            "status": "approved"
+        }"#;
+        let q: PurchaseContractQueryParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(q.page, Some(2));
+        assert_eq!(q.page_size, Some(10));
+        assert_eq!(q.status.as_deref(), Some("approved"));
+    }
+
+    #[test]
+    fn purchase_contract_query_params_partial_population() {
+        let json = r#"{"page_size": 50}"#;
+        let q: PurchaseContractQueryParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(q.page_size, Some(50));
+        assert!(q.page.is_none());
+        assert!(q.status.is_none());
+    }
+
+    #[test]
+    fn purchase_contract_query_params_ignores_unknown_fields() {
+        let json = r#"{"status": "draft", "extra": "ignored"}"#;
+        let q: PurchaseContractQueryParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(q.status.as_deref(), Some("draft"));
+    }
+
+    #[test]
+    fn create_routes_returns_router_without_panic() {
+        let _router = create_routes();
+    }
+
+    #[test]
+    fn uuid_parse_str_validates_contract_id() {
+        let valid = "550e8400-e29b-41d4-a716-446655440000";
+        assert!(Uuid::parse_str(valid).is_ok());
+        let invalid = "123";
+        assert!(Uuid::parse_str(invalid).is_err());
+    }
+}

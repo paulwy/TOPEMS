@@ -360,3 +360,54 @@ async fn delete_item(
 
     response
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn purchase_item_query_params_defaults_via_serde() {
+        let q: PurchaseItemQueryParams = serde_json::from_str("{}").expect("deserialize empty");
+        assert!(q.page.is_none());
+        assert!(q.page_size.is_none());
+        assert!(q.search.is_none());
+        assert!(q.order_id.is_none());
+    }
+
+    #[test]
+    fn purchase_item_query_params_roundtrip_preserves_fields() {
+        let order_id = Uuid::new_v4();
+        let json = serde_json::json!({
+            "page": 1,
+            "page_size": 20,
+            "search": "widget",
+            "order_id": order_id,
+        });
+        let q: PurchaseItemQueryParams = serde_json::from_value(json).expect("deserialize");
+        assert_eq!(q.page, Some(1));
+        assert_eq!(q.page_size, Some(20));
+        assert_eq!(q.search.as_deref(), Some("widget"));
+        assert_eq!(q.order_id, Some(order_id));
+    }
+
+    #[test]
+    fn purchase_item_query_params_partial_population() {
+        let json = r#"{"search": "abc"}"#;
+        let q: PurchaseItemQueryParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(q.search.as_deref(), Some("abc"));
+        assert!(q.page.is_none());
+        assert!(q.order_id.is_none());
+    }
+
+    #[test]
+    fn purchase_item_query_params_ignores_unknown_fields() {
+        let json = r#"{"page": 3, "extra": "ignored"}"#;
+        let q: PurchaseItemQueryParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(q.page, Some(3));
+    }
+
+    #[test]
+    fn create_routes_returns_router_without_panic() {
+        let _router = create_routes();
+    }
+}

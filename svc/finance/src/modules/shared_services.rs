@@ -1546,4 +1546,231 @@ mod tests {
             summaries: vec![],
         });
     }
+
+    // ===== pure function tests =====
+
+    #[test]
+    fn safe_divide_normal() {
+        let result = safe_divide(Decimal::from(100), Decimal::from(4));
+        assert_eq!(result, Decimal::from(25));
+    }
+
+    #[test]
+    fn safe_divide_zero_denominator() {
+        let result = safe_divide(Decimal::from(100), Decimal::ZERO);
+        assert_eq!(result, Decimal::ZERO);
+    }
+
+    #[test]
+    fn safe_percentage_normal() {
+        let result = safe_percentage(Decimal::from(25), Decimal::from(100));
+        assert_eq!(result, Decimal::from(25));
+    }
+
+    #[test]
+    fn safe_percentage_zero_total() {
+        let result = safe_percentage(Decimal::from(25), Decimal::ZERO);
+        assert_eq!(result, Decimal::ZERO);
+    }
+
+    #[test]
+    fn analyze_returns_five_items() {
+        let report = SharedServiceCenterAnalyzer::analyze("2026-01");
+        assert_eq!(report.period, "2026-01");
+        assert_eq!(report.center_count, 5);
+        assert_eq!(report.items.len(), 5);
+        assert!(report.total_cost > Decimal::ZERO);
+        assert!(report.total_allocated_cost > Decimal::ZERO);
+        assert!(report.total_service_count > 0);
+    }
+
+    #[test]
+    fn analyze_quality_levels_correct() {
+        let report = SharedServiceCenterAnalyzer::analyze("2026-Q1");
+        // SSC-HR has quality 92 => Excellent (>=90)
+        let hr = report
+            .items
+            .iter()
+            .find(|i| i.center_code == "SSC-HR")
+            .unwrap();
+        assert_eq!(hr.quality_level, ServiceQualityLevel::Excellent);
+        // SSC-FIN has quality 88 => Good (>=75)
+        let fin = report
+            .items
+            .iter()
+            .find(|i| i.center_code == "SSC-FIN")
+            .unwrap();
+        assert_eq!(fin.quality_level, ServiceQualityLevel::Good);
+    }
+
+    #[test]
+    fn get_performance_returns_five_records() {
+        let perfs = SharedServiceCenterAnalyzer::get_performance("2026-01");
+        assert_eq!(perfs.len(), 5);
+        for p in &perfs {
+            assert!(p.response_time_avg >= Decimal::ZERO);
+            assert!(p.resolution_rate >= Decimal::ZERO);
+        }
+    }
+
+    #[test]
+    fn get_utilization_returns_five_records() {
+        let utils = SharedServiceCenterAnalyzer::get_utilization("2026-01");
+        assert_eq!(utils.len(), 5);
+        for u in &utils {
+            assert!(u.capacity_hours > Decimal::ZERO);
+            assert!(u.utilized_hours > Decimal::ZERO);
+            assert!(u.utilization_rate > Decimal::ZERO);
+        }
+    }
+
+    #[test]
+    fn calculate_returns_six_items_and_three_summaries() {
+        let req = CalculateAllocationRequest {
+            period: "2026-01".to_string(),
+            method: AllocationMethod::Direct,
+            basis: AllocationBasis::Headcount,
+            source_centers: vec![],
+        };
+        let result = ServiceCostAllocator::calculate(req);
+        assert_eq!(result.period, "2026-01");
+        assert_eq!(result.method, AllocationMethod::Direct);
+        assert_eq!(result.items.len(), 6);
+        // Each target_center_id is unique (Uuid::new_v4), so 6 summaries
+        assert_eq!(result.summaries.len(), 6);
+        assert!(result.total_allocated > Decimal::ZERO);
+    }
+
+    #[test]
+    fn get_allocations_returns_items() {
+        let items = ServiceCostAllocator::get_allocations("2026-02");
+        assert_eq!(items.len(), 6);
+        assert!(items.iter().all(|i| i.period == "2026-02"));
+    }
+
+    #[test]
+    fn get_breakdown_returns_two_sources() {
+        let breakdowns = ServiceCostAllocator::get_breakdown("2026-01");
+        assert_eq!(breakdowns.len(), 2);
+        for b in &breakdowns {
+            assert!(b.total_allocated > Decimal::ZERO);
+        }
+    }
+
+    #[test]
+    fn get_policies_returns_four() {
+        let policies = InternalPricingManager::get_policies();
+        assert_eq!(policies.len(), 4);
+        assert!(policies.iter().all(|p| p.status == PolicyStatus::Active));
+    }
+
+    #[test]
+    fn create_policy_calculates_transfer_price() {
+        let req = CreatePricingPolicyRequest {
+            policy_code: "TEST-001".to_string(),
+            policy_name: "测试定价".to_string(),
+            service_type: "测试服务".to_string(),
+            pricing_strategy: PricingStrategy::CostPlus,
+            base_cost: Decimal::from(100),
+            markup_rate: Decimal::from(20),
+            currency: None,
+            effective_from: None,
+            effective_to: None,
+            description: None,
+        };
+        let policy = InternalPricingManager::create_policy(req);
+        assert_eq!(policy.policy_code, "TEST-001");
+        assert_eq!(policy.status, PolicyStatus::Draft);
+        assert_eq!(policy.currency, "CNY");
+        // transfer_price = 100 * (100 + 20) / 100 = 120
+        assert_eq!(policy.transfer_price, Decimal::from(120));
+    }
+
+    #[test]
+    fn update_policy_updates_fields() {
+        let original = PricingPolicy {
+            policy_id: Uuid::new_v4(),
+            policy_code: "ORIG-001".to_string(),
+            policy_name: "原政策".to_string(),
+            service_type: "服务".to_string(),
+            pricing_strategy: PricingStrategy::CostPlus,
+            base_cost: Decimal::from(100),
+            markup_rate: Decimal::from(10),
+            transfer_price: Decimal::from(110),
+            currency: "CNY".to_string(),
+            effective_from: Utc::now(),
+            effective_to: None,
+            status: PolicyStatus::Draft,
+            description: None,
+        };
+        let req = UpdatePricingPolicyRequest {
+            policy_name: Some("更新政策".to_string()),
+            base_cost: Some(Decimal::from(200)),
+            markup_rate: Some(Decimal::from(15)),
+            effective_to: Some(Utc::now()),
+            status: Some(PolicyStatus::Active),
+            description: Some("更新描述".to_string()),
+        };
+        let updated = InternalPricingManager::update_policy(original, req);
+        assert_eq!(updated.policy_name, "更新政策");
+        assert_eq!(updated.base_cost, Decimal::from(200));
+        assert_eq!(updated.markup_rate, Decimal::from(15));
+        assert_eq!(updated.status, PolicyStatus::Active);
+        assert!(updated.effective_to.is_some());
+        assert_eq!(updated.description, Some("更新描述".to_string()));
+        // transfer_price = 200 * (100 + 15) / 100 = 230
+        assert_eq!(updated.transfer_price, Decimal::from(230));
+    }
+
+    #[test]
+    fn update_policy_no_changes_keeps_original() {
+        let original = PricingPolicy {
+            policy_id: Uuid::new_v4(),
+            policy_code: "ORIG-002".to_string(),
+            policy_name: "原政策".to_string(),
+            service_type: "服务".to_string(),
+            pricing_strategy: PricingStrategy::CostPlus,
+            base_cost: Decimal::from(100),
+            markup_rate: Decimal::from(10),
+            transfer_price: Decimal::from(110),
+            currency: "CNY".to_string(),
+            effective_from: Utc::now(),
+            effective_to: None,
+            status: PolicyStatus::Draft,
+            description: None,
+        };
+        let req = UpdatePricingPolicyRequest {
+            policy_name: None,
+            base_cost: None,
+            markup_rate: None,
+            effective_to: None,
+            status: None,
+            description: None,
+        };
+        let updated = InternalPricingManager::update_policy(original, req);
+        assert_eq!(updated.policy_name, "原政策");
+        assert_eq!(updated.base_cost, Decimal::from(100));
+        assert_eq!(updated.transfer_price, Decimal::from(110));
+    }
+
+    #[test]
+    fn get_settlements_returns_three() {
+        let settlements = InternalPricingManager::get_settlements("2026-01");
+        assert_eq!(settlements.len(), 3);
+        assert!(settlements.iter().all(|s| s.period == "2026-01"));
+    }
+
+    #[test]
+    fn generate_settlements_returns_correct_result() {
+        let req = GenerateSettlementRequest {
+            period: "2026-Q1".to_string(),
+            provider_ids: None,
+        };
+        let result = InternalPricingManager::generate_settlements(req);
+        assert_eq!(result.period, "2026-Q1");
+        assert_eq!(result.total_settlements, 3);
+        assert!(result.total_amount > Decimal::ZERO);
+        assert_eq!(result.settlements.len(), 3);
+        assert!(!result.summaries.is_empty());
+    }
 }

@@ -585,3 +585,171 @@ fn extract_user_from_headers(headers: &HeaderMap) -> Option<String> {
         .and_then(|v| v.to_str().ok())
         .map(|s| s.to_string())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::http::HeaderValue;
+
+    // --- escape_sql_identifier ---
+    #[test]
+    fn test_escape_sql_identifier_simple() {
+        assert_eq!(escape_sql_identifier("users"), "\"users\"");
+        assert_eq!(escape_sql_identifier("my_table"), "\"my_table\"");
+    }
+
+    #[test]
+    fn test_escape_sql_identifier_empty() {
+        assert_eq!(escape_sql_identifier(""), "\"\"");
+    }
+
+    #[test]
+    fn test_escape_sql_identifier_escapes_quotes() {
+        // Embedded double quotes are doubled
+        assert_eq!(escape_sql_identifier("my\"table"), "\"my\"\"table\"");
+        assert_eq!(escape_sql_identifier("a\"b\"c"), "\"a\"\"b\"\"c\"");
+    }
+
+    #[test]
+    fn test_escape_sql_identifier_special_chars() {
+        // Special characters are preserved inside quotes
+        assert_eq!(escape_sql_identifier("my-table"), "\"my-table\"");
+        assert_eq!(escape_sql_identifier("my.table"), "\"my.table\"");
+        assert_eq!(escape_sql_identifier("schema.table"), "\"schema.table\"");
+    }
+
+    // --- build_data_type ---
+    #[test]
+    fn test_build_data_type_varchar_with_length() {
+        assert_eq!(
+            build_data_type("varchar", Some(255), None, None),
+            "VARCHAR(255)"
+        );
+    }
+
+    #[test]
+    fn test_build_data_type_varchar_no_length() {
+        assert_eq!(build_data_type("varchar", None, None, None), "VARCHAR");
+    }
+
+    #[test]
+    fn test_build_data_type_character_varying_alias() {
+        assert_eq!(
+            build_data_type("character varying", Some(100), None, None),
+            "VARCHAR(100)"
+        );
+    }
+
+    #[test]
+    fn test_build_data_type_varchar_case_insensitive() {
+        assert_eq!(
+            build_data_type("VARCHAR", Some(50), None, None),
+            "VARCHAR(50)"
+        );
+        assert_eq!(build_data_type("VarChar", None, None, None), "VARCHAR");
+    }
+
+    #[test]
+    fn test_build_data_type_char_with_length() {
+        assert_eq!(build_data_type("char", Some(10), None, None), "CHAR(10)");
+    }
+
+    #[test]
+    fn test_build_data_type_char_default_length() {
+        // char with no length defaults to CHAR(1)
+        assert_eq!(build_data_type("char", None, None, None), "CHAR(1)");
+    }
+
+    #[test]
+    fn test_build_data_type_character_alias() {
+        assert_eq!(build_data_type("character", Some(5), None, None), "CHAR(5)");
+        assert_eq!(build_data_type("character", None, None, None), "CHAR(1)");
+    }
+
+    #[test]
+    fn test_build_data_type_numeric_with_precision_and_scale() {
+        assert_eq!(
+            build_data_type("numeric", None, Some(10), Some(2)),
+            "NUMERIC(10, 2)"
+        );
+    }
+
+    #[test]
+    fn test_build_data_type_numeric_precision_only() {
+        assert_eq!(
+            build_data_type("numeric", None, Some(10), None),
+            "NUMERIC(10)"
+        );
+    }
+
+    #[test]
+    fn test_build_data_type_numeric_bare() {
+        assert_eq!(build_data_type("numeric", None, None, None), "NUMERIC");
+    }
+
+    #[test]
+    fn test_build_data_type_decimal_alias() {
+        assert_eq!(
+            build_data_type("decimal", None, Some(8), Some(3)),
+            "NUMERIC(8, 3)"
+        );
+        assert_eq!(build_data_type("decimal", None, None, None), "NUMERIC");
+    }
+
+    #[test]
+    fn test_build_data_type_other_uppercased() {
+        assert_eq!(build_data_type("integer", None, None, None), "INTEGER");
+        assert_eq!(build_data_type("text", None, None, None), "TEXT");
+        assert_eq!(build_data_type("boolean", None, None, None), "BOOLEAN");
+        assert_eq!(build_data_type("uuid", None, None, None), "UUID");
+        assert_eq!(build_data_type("timestamp", None, None, None), "TIMESTAMP");
+    }
+
+    #[test]
+    fn test_build_data_type_other_case_insensitive() {
+        assert_eq!(build_data_type("INTEGER", None, None, None), "INTEGER");
+        assert_eq!(build_data_type("Text", None, None, None), "TEXT");
+    }
+
+    // --- extract_user_from_headers ---
+    #[test]
+    fn test_extract_user_from_headers_present() {
+        let mut headers = HeaderMap::new();
+        headers.insert("x-user-id", HeaderValue::from_static("user-123"));
+        assert_eq!(
+            extract_user_from_headers(&headers),
+            Some("user-123".to_string())
+        );
+    }
+
+    #[test]
+    fn test_extract_user_from_headers_missing() {
+        let headers = HeaderMap::new();
+        assert_eq!(extract_user_from_headers(&headers), None);
+    }
+
+    #[test]
+    fn test_extract_user_from_headers_empty_value() {
+        let mut headers = HeaderMap::new();
+        headers.insert("x-user-id", HeaderValue::from_static(""));
+        // Empty string still converts to Some("")
+        assert_eq!(extract_user_from_headers(&headers), Some("".to_string()));
+    }
+
+    #[test]
+    fn test_extract_user_from_headers_different_case_not_found() {
+        // HeaderMap is case-insensitive, so "X-User-Id" should match "x-user-id"
+        let mut headers = HeaderMap::new();
+        headers.insert("X-USER-ID", HeaderValue::from_static("u1"));
+        assert_eq!(extract_user_from_headers(&headers), Some("u1".to_string()));
+    }
+
+    #[test]
+    fn test_extract_user_from_headers_non_ascii_returns_none() {
+        let mut headers = HeaderMap::new();
+        // Non-ASCII bytes cannot be converted to_str
+        let val = HeaderValue::from_bytes(b"\xff\xfe").unwrap();
+        headers.insert("x-user-id", val);
+        assert_eq!(extract_user_from_headers(&headers), None);
+    }
+}

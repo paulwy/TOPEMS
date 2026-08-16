@@ -343,20 +343,25 @@ jobs:
 
           CHECKS_PASSED=true
 
-          # Total line coverage ≥ 20% (Phase 8 P2 target)
-          if (( $(echo "${TOTAL_LINE:-0} >= 20" | bc -l) )); then
-            echo "| **Workspace Line** | ${TOTAL_LINE:-0}% | 20% | ✅ |" >> $GITHUB_STEP_SUMMARY
+          # Total line coverage ≥ 25% (P4 sprint: raised from 20%)
+          if (( $(echo "${TOTAL_LINE:-0} >= 25" | bc -l) )); then
+            echo "| **Workspace Line** | ${TOTAL_LINE:-0}% | 25% | ✅ |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "| **Workspace Line** | ${TOTAL_LINE:-0}% | 20% | ❌ |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Workspace Line** | ${TOTAL_LINE:-0}% | 25% | ❌ |" >> $GITHUB_STEP_SUMMARY
             CHECKS_PASSED=false
           fi
 
-          # Core libs — keep existing high thresholds
+          # Core + service crates — P4 tightened thresholds (2026-08-16)
           for item in \
-            "topems-shared:60" \
+            "topems-shared:80" \
             "topems-mes:50" \
-            "topems-qms:50" \
-            "topems-erp:50"; do
+            "topems-qms:60" \
+            "topems-erp:55" \
+            "topems-finance:40" \
+            "topems-hrm:30" \
+            "topems-scm:35" \
+            "topems-wms:60" \
+            "topems-tms:70"; do
             pkg="${item%%:*}"
             threshold="${item##*:}"
             cov=$(cargo llvm-cov report --summary-only -p "$pkg" 2>/dev/null | grep "$pkg" | awk '{print $9}' | tr -d '%')

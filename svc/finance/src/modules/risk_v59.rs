@@ -2238,4 +2238,170 @@ mod tests {
         };
         roundtrip(&v);
     }
+
+    // ===== as_str / from_str / from_score pure function tests =====
+
+    #[test]
+    fn fraud_signal_type_as_str_all_variants() {
+        assert_eq!(FraudSignalType::Velocity.as_str(), "velocity");
+        assert_eq!(FraudSignalType::Geolocation.as_str(), "geolocation");
+        assert_eq!(FraudSignalType::Device.as_str(), "device");
+        assert_eq!(FraudSignalType::Behavior.as_str(), "behavior");
+        assert_eq!(FraudSignalType::Pattern.as_str(), "pattern");
+    }
+
+    #[test]
+    fn fraud_signal_type_from_str_all_variants() {
+        assert_eq!(
+            FraudSignalType::from_str("velocity"),
+            FraudSignalType::Velocity
+        );
+        assert_eq!(
+            FraudSignalType::from_str("geolocation"),
+            FraudSignalType::Geolocation
+        );
+        assert_eq!(FraudSignalType::from_str("device"), FraudSignalType::Device);
+        assert_eq!(
+            FraudSignalType::from_str("behavior"),
+            FraudSignalType::Behavior
+        );
+        assert_eq!(
+            FraudSignalType::from_str("pattern"),
+            FraudSignalType::Pattern
+        );
+    }
+
+    #[test]
+    fn fraud_signal_type_from_str_unknown_defaults_to_velocity() {
+        assert_eq!(
+            FraudSignalType::from_str("unknown"),
+            FraudSignalType::Velocity
+        );
+        assert_eq!(FraudSignalType::from_str(""), FraudSignalType::Velocity);
+    }
+
+    #[test]
+    fn risk_level_as_str_all_variants() {
+        assert_eq!(RiskLevel::Low.as_str(), "low");
+        assert_eq!(RiskLevel::Medium.as_str(), "medium");
+        assert_eq!(RiskLevel::High.as_str(), "high");
+        assert_eq!(RiskLevel::Critical.as_str(), "critical");
+    }
+
+    #[test]
+    fn risk_level_from_str_all_variants() {
+        assert_eq!(RiskLevel::from_str("low"), RiskLevel::Low);
+        assert_eq!(RiskLevel::from_str("medium"), RiskLevel::Medium);
+        assert_eq!(RiskLevel::from_str("high"), RiskLevel::High);
+        assert_eq!(RiskLevel::from_str("critical"), RiskLevel::Critical);
+    }
+
+    #[test]
+    fn risk_level_from_str_unknown_defaults_to_low() {
+        assert_eq!(RiskLevel::from_str("xxx"), RiskLevel::Low);
+        assert_eq!(RiskLevel::from_str(""), RiskLevel::Low);
+    }
+
+    #[test]
+    fn fraud_action_as_str_all_variants() {
+        assert_eq!(FraudAction::Approve.as_str(), "approve");
+        assert_eq!(FraudAction::Review.as_str(), "review");
+        assert_eq!(FraudAction::Block.as_str(), "block");
+    }
+
+    #[test]
+    fn credit_grade_as_str_all_variants() {
+        assert_eq!(CreditGrade::AAA.as_str(), "AAA");
+        assert_eq!(CreditGrade::AA.as_str(), "AA");
+        assert_eq!(CreditGrade::A.as_str(), "A");
+        assert_eq!(CreditGrade::B.as_str(), "B");
+        assert_eq!(CreditGrade::C.as_str(), "C");
+        assert_eq!(CreditGrade::D.as_str(), "D");
+    }
+
+    #[test]
+    fn credit_grade_from_score_aaa_boundary() {
+        assert_eq!(CreditGrade::from_score(750), CreditGrade::AAA);
+        assert_eq!(CreditGrade::from_score(850), CreditGrade::AAA);
+        assert_eq!(CreditGrade::from_score(999), CreditGrade::AAA);
+    }
+
+    #[test]
+    fn credit_grade_from_score_aa_boundary() {
+        assert_eq!(CreditGrade::from_score(749), CreditGrade::AA);
+        assert_eq!(CreditGrade::from_score(700), CreditGrade::AA);
+        assert_eq!(CreditGrade::from_score(730), CreditGrade::AA);
+    }
+
+    #[test]
+    fn credit_grade_from_score_a_boundary() {
+        assert_eq!(CreditGrade::from_score(699), CreditGrade::A);
+        assert_eq!(CreditGrade::from_score(650), CreditGrade::A);
+        assert_eq!(CreditGrade::from_score(670), CreditGrade::A);
+    }
+
+    #[test]
+    fn credit_grade_from_score_b_boundary() {
+        assert_eq!(CreditGrade::from_score(649), CreditGrade::B);
+        assert_eq!(CreditGrade::from_score(550), CreditGrade::B);
+        assert_eq!(CreditGrade::from_score(600), CreditGrade::B);
+    }
+
+    #[test]
+    fn credit_grade_from_score_c_boundary() {
+        assert_eq!(CreditGrade::from_score(549), CreditGrade::C);
+        assert_eq!(CreditGrade::from_score(400), CreditGrade::C);
+        assert_eq!(CreditGrade::from_score(450), CreditGrade::C);
+    }
+
+    #[test]
+    fn credit_grade_from_score_d_boundary() {
+        assert_eq!(CreditGrade::from_score(399), CreditGrade::D);
+        assert_eq!(CreditGrade::from_score(0), CreditGrade::D);
+        assert_eq!(CreditGrade::from_score(-100), CreditGrade::D);
+    }
+
+    #[test]
+    fn stress_scenario_type_as_str_all_variants() {
+        assert_eq!(StressScenarioType::Market.as_str(), "market");
+        assert_eq!(StressScenarioType::Credit.as_str(), "credit");
+        assert_eq!(StressScenarioType::Liquidity.as_str(), "liquidity");
+        assert_eq!(StressScenarioType::Operational.as_str(), "operational");
+    }
+
+    #[test]
+    fn stress_scenario_type_from_str_all_variants() {
+        assert_eq!(
+            StressScenarioType::from_str("market"),
+            StressScenarioType::Market
+        );
+        assert_eq!(
+            StressScenarioType::from_str("credit"),
+            StressScenarioType::Credit
+        );
+        assert_eq!(
+            StressScenarioType::from_str("liquidity"),
+            StressScenarioType::Liquidity
+        );
+        assert_eq!(
+            StressScenarioType::from_str("operational"),
+            StressScenarioType::Operational
+        );
+    }
+
+    #[test]
+    fn stress_scenario_type_from_str_unknown_defaults_to_market() {
+        assert_eq!(
+            StressScenarioType::from_str("unknown"),
+            StressScenarioType::Market
+        );
+        assert_eq!(StressScenarioType::from_str(""), StressScenarioType::Market);
+    }
+
+    #[test]
+    fn shock_type_as_str_all_variants() {
+        assert_eq!(ShockType::Parallel.as_str(), "parallel");
+        assert_eq!(ShockType::Sequential.as_str(), "sequential");
+        assert_eq!(ShockType::Reverse.as_str(), "reverse");
+    }
 }
