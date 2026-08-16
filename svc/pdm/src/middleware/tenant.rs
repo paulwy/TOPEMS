@@ -93,6 +93,8 @@ pub async fn tenant_middleware(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use axum::http::HeaderMap;
+    use topems_shared_auth::auth::Claims;
 
     #[test]
     fn test_tenant_context_creation() {
@@ -101,5 +103,157 @@ mod tests {
         let ctx = TenantContext { tenant_id, user_id };
         assert_eq!(ctx.tenant_id, tenant_id);
         assert_eq!(ctx.user_id, user_id);
+    }
+
+    #[test]
+    fn test_tenant_context_clone() {
+        let ctx = TenantContext {
+            tenant_id: Uuid::new_v4(),
+            user_id: Uuid::new_v4(),
+        };
+        let cloned = ctx.clone();
+        assert_eq!(cloned.tenant_id, ctx.tenant_id);
+        assert_eq!(cloned.user_id, ctx.user_id);
+    }
+
+    #[test]
+    fn test_extract_tenant_id() {
+        let tid = Uuid::new_v4();
+        let ctx = TenantContext {
+            tenant_id: tid,
+            user_id: Uuid::new_v4(),
+        };
+        assert_eq!(extract_tenant_id(&ctx), tid);
+    }
+
+    #[test]
+    fn test_tenant_data_access_new_and_getters() {
+        let tid = Uuid::new_v4();
+        let opts = sqlx::postgres::PgConnectOptions::new().host("localhost");
+        let pool = PgPool::connect_lazy_with(opts);
+        let tda = TenantDataAccess::new(pool.clone(), tid);
+        assert_eq!(tda.tenant_id(), tid);
+        let _ = tda.pool();
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_claims() {
+        let tid = Uuid::new_v4();
+        let claims = Claims {
+            tenant_id: Some(tid.to_string()),
+            sub: Uuid::new_v4().to_string(),
+            username: "user".to_string(),
+            role: "user".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        };
+        let headers = HeaderMap::new();
+        let result = get_tenant_id(&claims, &headers);
+        assert_eq!(result, tid);
+    }
+
+    #[test]
+    fn test_get_tenant_id_from_headers_when_claims_missing() {
+        let tid = Uuid::new_v4();
+        let claims = Claims {
+            tenant_id: None,
+            sub: Uuid::new_v4().to_string(),
+            username: "u".to_string(),
+            role: "r".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        };
+        let mut headers = HeaderMap::new();
+        headers.insert("x-tenant-id", tid.to_string().parse().unwrap());
+        let result = get_tenant_id(&claims, &headers);
+        assert_eq!(result, tid);
+    }
+
+    #[test]
+    fn test_get_tenant_id_fallback_when_both_missing() {
+        let claims = Claims {
+            tenant_id: None,
+            sub: Uuid::new_v4().to_string(),
+            username: "u".to_string(),
+            role: "r".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        };
+        let headers = HeaderMap::new();
+        let result = get_tenant_id(&claims, &headers);
+        assert!(result != Uuid::nil());
+    }
+
+    #[test]
+    fn test_get_tenant_id_invalid_claims_uuid_falls_back_to_header() {
+        let tid = Uuid::new_v4();
+        let claims = Claims {
+            tenant_id: Some("invalid-uuid".to_string()),
+            sub: Uuid::new_v4().to_string(),
+            username: "u".to_string(),
+            role: "r".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        };
+        let mut headers = HeaderMap::new();
+        headers.insert("x-tenant-id", tid.to_string().parse().unwrap());
+        let result = get_tenant_id(&claims, &headers);
+        assert_eq!(result, tid);
+    }
+
+    #[test]
+    fn test_get_tenant_id_invalid_header_uuid_generates_new() {
+        let claims = Claims {
+            tenant_id: None,
+            sub: Uuid::new_v4().to_string(),
+            username: "u".to_string(),
+            role: "r".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        };
+        let mut headers = HeaderMap::new();
+        headers.insert("x-tenant-id", "bad-uuid".parse().unwrap());
+        let result = get_tenant_id(&claims, &headers);
+        assert!(result != Uuid::nil());
     }
 }

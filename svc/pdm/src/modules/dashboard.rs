@@ -220,3 +220,99 @@ pub async fn import_data(
         "PDM 数据导入请求已接收",
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_create_routes_smoke() {
+        let _router = create_routes();
+    }
+
+    #[test]
+    fn test_named_count_serde_roundtrip() {
+        let nc = NamedCount {
+            name: "active".to_string(),
+            value: 42,
+        };
+        let serialized = serde_json::to_string(&nc).unwrap();
+        let deserialized: NamedCount = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(deserialized.name, "active");
+        assert_eq!(deserialized.value, 42);
+    }
+
+    #[test]
+    fn test_named_count_clone() {
+        fn assert_debug<T: std::fmt::Debug>() {}
+        assert_debug::<NamedCount>();
+        let nc = NamedCount {
+            name: "x".to_string(),
+            value: 1,
+        };
+        let c = NamedCount {
+            name: nc.name.clone(),
+            value: nc.value,
+        };
+        assert_eq!(c.name, nc.name);
+        assert_eq!(c.value, nc.value);
+    }
+
+    #[test]
+    fn test_pdm_dashboard_stats_serde_roundtrip() {
+        let stats = PdmDashboardStats {
+            ongoing_projects: 10,
+            pending_reviews: 5,
+            bom_changes: 20,
+            completion_rate: 75.5,
+            project_distribution: vec![
+                NamedCount {
+                    name: "planning".to_string(),
+                    value: 3,
+                },
+                NamedCount {
+                    name: "active".to_string(),
+                    value: 7,
+                },
+            ],
+            document_types: vec![NamedCount {
+                name: "spec".to_string(),
+                value: 15,
+            }],
+            change_trend: vec![NamedCount {
+                name: "approved".to_string(),
+                value: 8,
+            }],
+        };
+        let serialized = serde_json::to_string(&stats).unwrap();
+        let deserialized: PdmDashboardStats = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(deserialized.ongoing_projects, 10);
+        assert_eq!(deserialized.pending_reviews, 5);
+        assert_eq!(deserialized.bom_changes, 20);
+        assert_eq!(deserialized.completion_rate, 75.5);
+        assert_eq!(deserialized.project_distribution.len(), 2);
+        assert_eq!(deserialized.document_types.len(), 1);
+        assert_eq!(deserialized.change_trend.len(), 1);
+    }
+
+    #[test]
+    fn test_pdm_dashboard_stats_serde_empty_vectors() {
+        let stats = PdmDashboardStats {
+            ongoing_projects: 0,
+            pending_reviews: 0,
+            bom_changes: 0,
+            completion_rate: 0.0,
+            project_distribution: vec![],
+            document_types: vec![],
+            change_trend: vec![],
+        };
+        let serialized = serde_json::to_value(stats).unwrap();
+        assert_eq!(serialized["ongoing_projects"], 0);
+        assert_eq!(serialized["completion_rate"], 0.0);
+        assert!(serialized["project_distribution"]
+            .as_array()
+            .unwrap()
+            .is_empty());
+    }
+}

@@ -662,3 +662,229 @@ pub async fn advance_workflow(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+    use serde_json::json;
+
+    #[test]
+    fn test_create_routes_smoke() {
+        let _router = create_routes();
+    }
+
+    #[test]
+    fn test_workflow_definition_serde_roundtrip() {
+        let wd = WorkflowDefinition {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            name: "Document Approval".to_string(),
+            description: Some("Approve docs".to_string()),
+            workflow_type: "document".to_string(),
+            steps: json!([
+                {"step_name": "review", "step_type": "approval", "assignee_type": "role", "assignees": ["manager"], "required_approval": 1}
+            ]),
+            conditions: json!({"auto_approve": false}),
+            status: "active".to_string(),
+            created_by: "admin".to_string(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let serialized = serde_json::to_string(&wd).unwrap();
+        let d: WorkflowDefinition = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(d.id, wd.id);
+        assert_eq!(d.name, "Document Approval");
+        assert_eq!(d.workflow_type, "document");
+        assert_eq!(d.status, "active");
+        assert_eq!(d.created_by, "admin");
+        assert_eq!(d.description.as_deref(), Some("Approve docs"));
+    }
+
+    #[test]
+    fn test_workflow_definition_serde_optionals_none() {
+        let wd = WorkflowDefinition {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            name: "W1".to_string(),
+            description: None,
+            workflow_type: "basic".to_string(),
+            steps: json!([]),
+            conditions: json!({}),
+            status: "inactive".to_string(),
+            created_by: "u1".to_string(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let v = serde_json::to_value(&wd).unwrap();
+        assert!(v["description"].is_null());
+    }
+
+    #[test]
+    fn test_workflow_instance_serde_roundtrip() {
+        let wi = WorkflowInstance {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            workflow_id: Uuid::new_v4(),
+            workflow_name: "WF-1".to_string(),
+            target_type: "document".to_string(),
+            target_id: Uuid::new_v4(),
+            current_step: "review".to_string(),
+            status: "running".to_string(),
+            assignees: json!(["alice", "bob"]),
+            history: json!([{"step": "start", "action": "started"}]),
+            created_by: "requester".to_string(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let serialized = serde_json::to_string(&wi).unwrap();
+        let d: WorkflowInstance = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(d.id, wi.id);
+        assert_eq!(d.workflow_id, wi.workflow_id);
+        assert_eq!(d.workflow_name, "WF-1");
+        assert_eq!(d.target_type, "document");
+        assert_eq!(d.target_id, wi.target_id);
+        assert_eq!(d.current_step, "review");
+        assert_eq!(d.status, "running");
+        assert_eq!(d.created_by, "requester");
+    }
+
+    #[test]
+    fn test_workflow_step_serde_roundtrip() {
+        let ws = WorkflowStep {
+            step_name: "manager_approval".to_string(),
+            step_type: "approval".to_string(),
+            assignee_type: "user".to_string(),
+            assignees: vec!["alice".to_string(), "bob".to_string()],
+            required_approval: Some(2),
+            timeout_days: Some(7),
+        };
+        let c = ws.clone();
+        assert_eq!(c.step_name, ws.step_name);
+        assert_eq!(c.assignees, ws.assignees);
+        let serialized = serde_json::to_string(&ws).unwrap();
+        let d: WorkflowStep = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(d.step_name, "manager_approval");
+        assert_eq!(d.step_type, "approval");
+        assert_eq!(d.assignee_type, "user");
+        assert_eq!(d.assignees, vec!["alice", "bob"]);
+        assert_eq!(d.required_approval, Some(2));
+        assert_eq!(d.timeout_days, Some(7));
+    }
+
+    #[test]
+    fn test_workflow_step_serde_optionals_none() {
+        let ws = WorkflowStep {
+            step_name: "s1".to_string(),
+            step_type: "t".to_string(),
+            assignee_type: "a".to_string(),
+            assignees: vec![],
+            required_approval: None,
+            timeout_days: None,
+        };
+        let v = serde_json::to_value(&ws).unwrap();
+        assert!(v["required_approval"].is_null());
+        assert!(v["timeout_days"].is_null());
+    }
+
+    #[test]
+    fn test_workflow_step_vector_serde() {
+        let steps = vec![
+            WorkflowStep {
+                step_name: "draft".to_string(),
+                step_type: "start".to_string(),
+                assignee_type: "creator".to_string(),
+                assignees: vec!["creator".to_string()],
+                required_approval: None,
+                timeout_days: None,
+            },
+            WorkflowStep {
+                step_name: "approved".to_string(),
+                step_type: "end".to_string(),
+                assignee_type: "system".to_string(),
+                assignees: vec![],
+                required_approval: None,
+                timeout_days: Some(30),
+            },
+        ];
+        let serialized = serde_json::to_value(steps).unwrap();
+        assert!(serialized.is_array());
+        let arr = serialized.as_array().unwrap();
+        assert_eq!(arr.len(), 2);
+        assert_eq!(arr[0]["step_name"], "draft");
+        assert_eq!(arr[1]["step_name"], "approved");
+    }
+
+    #[test]
+    fn test_create_workflow_request_deserialize_full() {
+        let steps = vec![WorkflowStep {
+            step_name: "review".to_string(),
+            step_type: "approval".to_string(),
+            assignee_type: "role".to_string(),
+            assignees: vec!["reviewer".to_string()],
+            required_approval: Some(1),
+            timeout_days: Some(3),
+        }];
+        let j = json!({
+            "name": "Doc Approval",
+            "description": "Standard doc workflow",
+            "workflow_type": "document",
+            "steps": steps,
+            "conditions": {"min_amount": 1000},
+            "created_by": "admin"
+        });
+        let req: CreateWorkflowRequest = serde_json::from_value(j).unwrap();
+        assert_eq!(req.name, "Doc Approval");
+        assert_eq!(req.description.as_deref(), Some("Standard doc workflow"));
+        assert_eq!(req.workflow_type, "document");
+        assert_eq!(req.steps.len(), 1);
+        assert_eq!(req.steps[0].step_name, "review");
+        assert_eq!(req.created_by, "admin");
+        assert!(req.conditions.is_some());
+    }
+
+    #[test]
+    fn test_create_workflow_request_deserialize_minimal() {
+        let j = json!({
+            "name": "W",
+            "workflow_type": "basic",
+            "steps": [],
+            "created_by": "u"
+        });
+        let req: CreateWorkflowRequest = serde_json::from_value(j).unwrap();
+        assert_eq!(req.name, "W");
+        assert_eq!(req.workflow_type, "basic");
+        assert!(req.description.is_none());
+        assert!(req.conditions.is_none());
+        assert!(req.steps.is_empty());
+    }
+
+    #[test]
+    fn test_start_workflow_request_deserialize() {
+        let wid = Uuid::new_v4();
+        let tid = Uuid::new_v4();
+        let j = json!({
+            "workflow_id": wid.to_string(),
+            "target_type": "document",
+            "target_id": tid.to_string(),
+            "created_by": "requester"
+        });
+        let req: StartWorkflowRequest = serde_json::from_value(j).unwrap();
+        assert_eq!(req.workflow_id, wid);
+        assert_eq!(req.target_type, "document");
+        assert_eq!(req.target_id, tid);
+        assert_eq!(req.created_by, "requester");
+    }
+
+    #[test]
+    fn test_start_workflow_request_invalid_uuid() {
+        let j = json!({
+            "workflow_id": "not-uuid",
+            "target_type": "X",
+            "target_id": "also-not",
+            "created_by": "u"
+        });
+        let res: Result<StartWorkflowRequest, _> = serde_json::from_value(j);
+        assert!(res.is_err());
+    }
+}

@@ -149,3 +149,60 @@ async fn get_interaction(
 
 #[allow(dead_code)]
 struct _Unused(UpdateInteractionRequest);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Deserialize;
+    use uuid::Uuid;
+
+    #[test]
+    fn interaction_pagination_params_empty() {
+        let json = r#"{}"#;
+        let q: InteractionPaginationParams = serde_json::from_str(json).unwrap();
+        assert!(q.page.is_none());
+        assert!(q.page_size.is_none());
+        assert!(q.search.is_none());
+        assert!(q.status.is_none());
+        assert!(q.customer_id.is_none());
+        assert!(q.contact_id.is_none());
+    }
+
+    #[test]
+    fn interaction_pagination_params_all() {
+        let cid = Uuid::new_v4();
+        let coid = Uuid::new_v4();
+        let json = format!(
+            r#"{{"page":3,"page_size":25,"search":"hello","status":"scheduled","customer_id":"{}","contact_id":"{}"}}"#,
+            cid, coid
+        );
+        let q: InteractionPaginationParams = serde_json::from_str(&json).unwrap();
+        assert_eq!(q.page, Some(3));
+        assert_eq!(q.page_size, Some(25));
+        assert_eq!(q.search.as_deref(), Some("hello"));
+        assert_eq!(q.status.as_deref(), Some("scheduled"));
+        assert_eq!(q.customer_id, Some(cid));
+        assert_eq!(q.contact_id, Some(coid));
+    }
+
+    #[test]
+    fn interaction_pagination_params_partial() {
+        let json = r#"{"status":"completed","page":1}"#;
+        let q: InteractionPaginationParams = serde_json::from_str(json).unwrap();
+        assert_eq!(q.status.as_deref(), Some("completed"));
+        assert_eq!(q.page, Some(1));
+        assert!(q.search.is_none());
+    }
+
+    #[test]
+    fn interaction_pagination_params_invalid_uuid_fails() {
+        let json = r#"{"customer_id":"not-a-uuid"}"#;
+        let res: Result<InteractionPaginationParams, _> = serde_json::from_str(json);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn create_routes_smoke() {
+        let _router: Router<ApiState> = create_routes();
+    }
+}

@@ -119,3 +119,115 @@ pub async fn analytics_recommendation(
         "Recommendation 聚合路由占位：cross-sell/upsell/followup 三类智能推荐列表，前端 Mock 渲染",
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Serialize;
+
+    fn serialize_to_value<T: Serialize>(item: &T) -> serde_json::Value {
+        let json = serde_json::to_string(item).unwrap();
+        serde_json::from_str(&json).unwrap()
+    }
+
+    #[test]
+    fn period_param_default() {
+        let json = r#"{}"#;
+        let p: PeriodParam = serde_json::from_str(json).unwrap();
+        assert_eq!(p.period, "MTD");
+    }
+
+    #[test]
+    fn period_param_custom() {
+        let json = r#"{"period":"YTD"}"#;
+        let p: PeriodParam = serde_json::from_str(json).unwrap();
+        assert_eq!(p.period, "YTD");
+    }
+
+    #[test]
+    fn period_param_debug_format() {
+        let p = PeriodParam {
+            period: "QTD".into(),
+        };
+        let debug_str = format!("{:?}", p);
+        assert!(debug_str.contains("QTD"));
+    }
+
+    #[test]
+    fn analytics_meta_serializes() {
+        let meta = AnalyticsMeta {
+            mock_enabled: true,
+            use_frontend_fallback: false,
+            note: "test note".to_string(),
+        };
+        let v = serialize_to_value(&meta);
+        assert_eq!(v["mock_enabled"], true);
+        assert_eq!(v["use_frontend_fallback"], false);
+        assert_eq!(v["note"], "test note");
+    }
+
+    #[test]
+    fn analytics_meta_debug() {
+        let meta = AnalyticsMeta {
+            mock_enabled: false,
+            use_frontend_fallback: true,
+            note: String::new(),
+        };
+        assert!(format!("{:?}", meta).len() > 0);
+    }
+
+    #[test]
+    fn analytics_envelope_with_data_serializes() {
+        let envelope = AnalyticsEnvelope {
+            success: true,
+            data: vec![serde_json::json!({"id":1}), serde_json::json!({"id":2})],
+            meta: AnalyticsMeta {
+                mock_enabled: true,
+                use_frontend_fallback: true,
+                note: "note".to_string(),
+            },
+        };
+        let v = serialize_to_value(&envelope);
+        assert_eq!(v["success"], true);
+        assert!(v["data"].is_array());
+        assert_eq!(v["data"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn analytics_envelope_empty_data_serializes() {
+        let envelope = AnalyticsEnvelope {
+            success: false,
+            data: Vec::<serde_json::Value>::new(),
+            meta: AnalyticsMeta {
+                mock_enabled: false,
+                use_frontend_fallback: false,
+                note: String::new(),
+            },
+        };
+        let v = serialize_to_value(&envelope);
+        assert_eq!(v["success"], false);
+        assert_eq!(v["data"].as_array().unwrap().len(), 0);
+    }
+
+    #[test]
+    fn default_mtd_returns_mtd() {
+        assert_eq!(default_mtd(), "MTD");
+    }
+
+    #[test]
+    fn empty_with_mock_produces_ok_status_and_mock_meta() {
+        let (_status, Json(json_val)) =
+            empty_with_mock::<Vec<serde_json::Value>>("placeholder note");
+        let v: &serde_json::Value = &json_val;
+        assert_eq!(v["success"], true);
+        assert_eq!(v["meta"]["mock_enabled"], true);
+        assert_eq!(v["meta"]["use_frontend_fallback"], true);
+        assert_eq!(v["meta"]["note"], "placeholder note");
+        assert!(v["data"].is_array());
+    }
+
+    #[test]
+    fn create_routes_smoke() {
+        let _router: Router<ApiState> = create_routes();
+    }
+}

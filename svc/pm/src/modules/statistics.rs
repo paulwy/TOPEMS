@@ -377,6 +377,362 @@ pub fn create_routes(db: PgPool) -> Router {
         .with_state(db)
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sqlx::postgres::PgConnectOptions;
+    use std::str::FromStr;
+
+    fn make_pool() -> PgPool {
+        let opts = PgConnectOptions::from_str("postgres://localhost/test").unwrap();
+        sqlx::Pool::connect_lazy_with(opts)
+    }
+
+    #[tokio::test]
+    async fn test_create_routes_returns_router() {
+        let router = create_routes(make_pool());
+        let _ = router;
+    }
+
+    // ---- calculate_average_progress ----
+
+    #[test]
+    fn test_avg_progress_empty() {
+        assert_eq!(calculate_average_progress(&[]), 0.0);
+    }
+
+    #[test]
+    fn test_avg_progress_single() {
+        assert_eq!(calculate_average_progress(&[50.0]), 50.0);
+    }
+
+    #[test]
+    fn test_avg_progress_all_same() {
+        assert_eq!(calculate_average_progress(&[75.0, 75.0, 75.0]), 75.0);
+    }
+
+    #[test]
+    fn test_avg_progress_varied() {
+        let result = calculate_average_progress(&[0.0, 50.0, 100.0]);
+        assert!((result - 50.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_avg_progress_large() {
+        let data: Vec<f64> = (0..=100).map(|i| i as f64).collect();
+        let result = calculate_average_progress(&data);
+        assert!((result - 50.0).abs() < 1e-9);
+    }
+
+    // ---- count_risks_by_level ----
+
+    #[test]
+    fn test_count_risks_empty() {
+        assert_eq!(count_risks_by_level(&[]), (0, 0, 0, 0));
+    }
+
+    #[test]
+    fn test_count_risks_only_low() {
+        assert_eq!(count_risks_by_level(&[1, 2, 3, 5]), (4, 0, 0, 0));
+    }
+
+    #[test]
+    fn test_count_risks_only_medium() {
+        assert_eq!(count_risks_by_level(&[6, 8, 12]), (0, 3, 0, 0));
+    }
+
+    #[test]
+    fn test_count_risks_only_high() {
+        assert_eq!(count_risks_by_level(&[13, 15, 19]), (0, 0, 3, 0));
+    }
+
+    #[test]
+    fn test_count_risks_only_critical() {
+        assert_eq!(count_risks_by_level(&[20, 22, 25]), (0, 0, 0, 3));
+    }
+
+    #[test]
+    fn test_count_risks_mixed() {
+        assert_eq!(
+            count_risks_by_level(&[1, 5, 6, 12, 13, 19, 20, 25]),
+            (2, 2, 2, 2)
+        );
+    }
+
+    #[test]
+    fn test_count_risks_out_of_range_low() {
+        assert_eq!(count_risks_by_level(&[0, 100, 999]), (3, 0, 0, 0));
+    }
+
+    #[test]
+    fn test_count_risks_boundaries() {
+        assert_eq!(
+            count_risks_by_level(&[1, 5, 6, 12, 13, 19, 20, 25]),
+            (2, 2, 2, 2)
+        );
+    }
+
+    // ---- calculate_completion_rate ----
+
+    #[test]
+    fn test_completion_rate_zero_total() {
+        assert_eq!(calculate_completion_rate(5, 0), 0.0);
+        assert_eq!(calculate_completion_rate(5, -1), 0.0);
+    }
+
+    #[test]
+    fn test_completion_rate_none_completed() {
+        assert_eq!(calculate_completion_rate(0, 10), 0.0);
+    }
+
+    #[test]
+    fn test_completion_rate_all_done() {
+        assert_eq!(calculate_completion_rate(10, 10), 100.0);
+    }
+
+    #[test]
+    fn test_completion_rate_half() {
+        assert_eq!(calculate_completion_rate(5, 10), 50.0);
+    }
+
+    #[test]
+    fn test_completion_rate_over_done_clamps() {
+        assert_eq!(calculate_completion_rate(15, 10), 100.0);
+    }
+
+    #[test]
+    fn test_completion_rate_negative_completed() {
+        assert_eq!(calculate_completion_rate(-5, 10), 0.0);
+    }
+
+    // ---- StatsQuery Deserialize ----
+
+    #[test]
+    fn test_stats_query_deserialize_empty() {
+        let json = r#"{}"#;
+        let q: StatsQuery = serde_json::from_str(json).unwrap();
+        assert!(q.start_date.is_none());
+        assert!(q.end_date.is_none());
+        assert!(q.status.is_none());
+        assert!(q.limit.is_none());
+    }
+
+    #[test]
+    fn test_stats_query_deserialize_full() {
+        let json =
+            r#"{"start_date":"2024-01-01","end_date":"2024-12-31","status":"active","limit":50}"#;
+        let q: StatsQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(q.start_date, Some("2024-01-01".to_string()));
+        assert_eq!(q.end_date, Some("2024-12-31".to_string()));
+        assert_eq!(q.status, Some("active".to_string()));
+        assert_eq!(q.limit, Some(50));
+    }
+
+    #[test]
+    fn test_stats_query_deserialize_partial() {
+        let json = r#"{"status":"pending"}"#;
+        let q: StatsQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(q.status, Some("pending".to_string()));
+        assert!(q.start_date.is_none());
+        assert!(q.limit.is_none());
+    }
+
+    #[test]
+    fn test_stats_query_deserialize_limit_zero() {
+        let json = r#"{"limit":0}"#;
+        let q: StatsQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(q.limit, Some(0));
+    }
+
+    #[test]
+    fn test_stats_query_deserialize_limit_negative() {
+        let json = r#"{"limit":-10}"#;
+        let q: StatsQuery = serde_json::from_str(json).unwrap();
+        assert_eq!(q.limit, Some(-10));
+    }
+
+    // ---- Default impls ----
+
+    #[test]
+    fn test_pm_statistics_default() {
+        let d = PmStatistics::default();
+        assert_eq!(d.total_projects, 0);
+        assert_eq!(d.total_budget, 0.0);
+        assert!(d.on_time_projects.is_none());
+    }
+
+    #[test]
+    fn test_project_statistics_default() {
+        let d = ProjectStatistics::default();
+        assert_eq!(d.total_projects, 0);
+        assert!(d.by_status.is_empty());
+    }
+
+    #[test]
+    fn test_status_count_default() {
+        let d = StatusCount::default();
+        assert_eq!(d.status, "");
+        assert_eq!(d.count, 0);
+    }
+
+    #[test]
+    fn test_type_count_default() {
+        let d = TypeCount::default();
+        assert_eq!(d.project_type, "");
+        assert_eq!(d.count, 0);
+    }
+
+    #[test]
+    fn test_leader_count_default() {
+        let d = LeaderCount::default();
+        assert_eq!(d.leader, "");
+        assert_eq!(d.count, 0);
+    }
+
+    #[test]
+    fn test_contract_statistics_default() {
+        let d = ContractStatistics::default();
+        assert_eq!(d.total_contracts, 0);
+        assert_eq!(d.total_amount, 0.0);
+    }
+
+    #[test]
+    fn test_budget_statistics_default() {
+        let d = BudgetStatistics::default();
+        assert_eq!(d.total_budget, 0.0);
+        assert_eq!(d.remaining_budget, 0.0);
+    }
+
+    #[test]
+    fn test_category_count_default() {
+        let d = CategoryCount::default();
+        assert_eq!(d.category, "");
+        assert_eq!(d.total, 0.0);
+    }
+
+    #[test]
+    fn test_risk_statistics_default() {
+        let d = RiskStatistics::default();
+        assert_eq!(d.total_risks, 0);
+        assert!(d.by_level.is_empty());
+    }
+
+    #[test]
+    fn test_level_count_default() {
+        let d = LevelCount::default();
+        assert_eq!(d.level, "");
+        assert_eq!(d.count, 0);
+    }
+
+    #[test]
+    fn test_task_statistics_default() {
+        let d = TaskStatistics::default();
+        assert_eq!(d.total_tasks, 0);
+        assert_eq!(d.overdue_count, 0);
+    }
+
+    #[test]
+    fn test_priority_count_default() {
+        let d = PriorityCount::default();
+        assert_eq!(d.priority, "");
+        assert_eq!(d.count, 0);
+    }
+
+    #[test]
+    fn test_dashboard_overview_default() {
+        let d = DashboardOverview::default();
+        assert_eq!(d.projects.total_projects, 0);
+        assert_eq!(d.budget.total_budget, 0.0);
+    }
+
+    // ---- Clone impls ----
+
+    #[test]
+    fn test_pm_statistics_clone() {
+        let d = PmStatistics::default();
+        let c = d.clone();
+        assert_eq!(c.total_projects, d.total_projects);
+    }
+
+    #[test]
+    fn test_dashboard_overview_clone() {
+        let d = DashboardOverview::default();
+        let c = d.clone();
+        assert_eq!(c.projects.total_projects, d.projects.total_projects);
+    }
+
+    // ---- Serde roundtrips for statistics structs ----
+
+    #[test]
+    fn test_pm_statistics_roundtrip() {
+        let s = PmStatistics {
+            total_projects: 10,
+            draft_projects: 2,
+            pending_projects: 1,
+            active_projects: 5,
+            completed_projects: 2,
+            cancelled_projects: 0,
+            total_contracts: 5,
+            pending_contracts: 1,
+            active_contracts: 3,
+            completed_contracts: 1,
+            total_budget: 100000.0,
+            spent_budget: 50000.0,
+            budget_usage_rate: 50.0,
+            total_risks: 3,
+            open_risks: 2,
+            closed_risks: 1,
+            total_tasks: 100,
+            pending_tasks: 20,
+            in_progress_tasks: 30,
+            completed_tasks: 50,
+            on_time_projects: Some(8),
+            delayed_projects: Some(2),
+            average_progress: Some(75.5),
+            high_risk_projects: Some(1),
+            medium_risk_projects: Some(2),
+            low_risk_projects: Some(7),
+        };
+        let json = serde_json::to_string(&s).unwrap();
+        let parsed: PmStatistics = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.total_projects, 10);
+        assert_eq!(parsed.budget_usage_rate, 50.0);
+        assert_eq!(parsed.on_time_projects, Some(8));
+    }
+
+    #[test]
+    fn test_pm_statistics_skip_serializing_none() {
+        let s = PmStatistics::default();
+        let json = serde_json::to_string(&s).unwrap();
+        let v: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert!(v.get("on_time_projects").is_none());
+        assert!(v.get("average_progress").is_none());
+    }
+
+    #[test]
+    fn test_status_count_roundtrip() {
+        let s = StatusCount {
+            status: "active".to_string(),
+            count: 42,
+        };
+        let json = serde_json::to_string(&s).unwrap();
+        let parsed: StatusCount = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.status, "active");
+        assert_eq!(parsed.count, 42);
+    }
+
+    #[test]
+    fn test_type_count_rename() {
+        let t = TypeCount {
+            project_type: "internal".to_string(),
+            count: 5,
+        };
+        let json = serde_json::to_value(&t).unwrap();
+        assert_eq!(json["type"], "internal");
+        assert_eq!(json["count"], 5);
+    }
+}
+
 // ============ Handler（内部逻辑抽取，避免 extractor 直接调用） ============
 
 async fn build_pm_statistics(db: &PgPool) -> PmStatistics {

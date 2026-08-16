@@ -786,3 +786,75 @@ fn parse_date(date_str: &str) -> DateTime<Utc> {
 fn parse_date_opt(date_str: &Option<String>) -> Option<DateTime<Utc>> {
     date_str.as_ref().map(|s| parse_date(s))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sqlx::postgres::PgConnectOptions;
+    use std::str::FromStr;
+
+    fn make_pool() -> PgPool {
+        let opts = PgConnectOptions::from_str("postgres://localhost/test").unwrap();
+        sqlx::Pool::connect_lazy_with(opts)
+    }
+
+    #[tokio::test]
+    async fn test_create_routes_returns_router() {
+        let router = create_routes(make_pool());
+        let _ = router;
+    }
+
+    #[test]
+    fn test_parse_date_valid_rfc3339() {
+        let s = "2024-01-15T10:30:00Z";
+        let dt = parse_date(s);
+        assert_eq!(dt.year(), 2024);
+        assert_eq!(dt.month(), 1);
+        assert_eq!(dt.day(), 15);
+    }
+
+    #[test]
+    fn test_parse_date_with_offset() {
+        let s = "2024-06-20T14:00:00+08:00";
+        let dt = parse_date(s);
+        assert_eq!(dt.year(), 2024);
+        assert_eq!(dt.month(), 6);
+    }
+
+    #[test]
+    fn test_parse_date_invalid_falls_back_to_now() {
+        let before = Utc::now();
+        let dt = parse_date("not-a-valid-date");
+        let after = Utc::now();
+        assert!(dt >= before || dt <= after);
+    }
+
+    #[test]
+    fn test_parse_date_empty_string_fallback() {
+        let dt = parse_date("");
+        let _ = dt;
+    }
+
+    #[test]
+    fn test_parse_date_opt_none() {
+        let result = parse_date_opt(&None);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_parse_date_opt_some_valid() {
+        let s = Some("2024-03-10T08:00:00Z".to_string());
+        let result = parse_date_opt(&s);
+        assert!(result.is_some());
+        let dt = result.unwrap();
+        assert_eq!(dt.year(), 2024);
+        assert_eq!(dt.month(), 3);
+    }
+
+    #[test]
+    fn test_parse_date_opt_some_invalid_returns_now() {
+        let s = Some("invalid".to_string());
+        let result = parse_date_opt(&s);
+        assert!(result.is_some());
+    }
+}

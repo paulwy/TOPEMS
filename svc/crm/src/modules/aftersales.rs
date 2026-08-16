@@ -2048,3 +2048,199 @@ async fn confirm_return(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use uuid::Uuid;
+
+    #[test]
+    fn return_stage_from_str_all() {
+        assert_eq!(ReturnStage::from_str("pending"), Some(ReturnStage::Pending));
+        assert_eq!(
+            ReturnStage::from_str("accepted"),
+            Some(ReturnStage::Accepted)
+        );
+        assert_eq!(
+            ReturnStage::from_str("processing"),
+            Some(ReturnStage::Processing)
+        );
+        assert_eq!(
+            ReturnStage::from_str("resolving"),
+            Some(ReturnStage::Resolving)
+        );
+        assert_eq!(ReturnStage::from_str("done"), Some(ReturnStage::Done));
+        assert_eq!(
+            ReturnStage::from_str("rejected"),
+            Some(ReturnStage::Rejected)
+        );
+        assert_eq!(
+            ReturnStage::from_str("cancelled"),
+            Some(ReturnStage::Cancelled)
+        );
+        assert_eq!(ReturnStage::from_str("unknown"), None);
+        assert_eq!(ReturnStage::from_str(""), None);
+    }
+
+    #[test]
+    fn return_stage_as_str_roundtrip() {
+        let all = [
+            ReturnStage::Pending,
+            ReturnStage::Accepted,
+            ReturnStage::Processing,
+            ReturnStage::Resolving,
+            ReturnStage::Done,
+            ReturnStage::Rejected,
+            ReturnStage::Cancelled,
+        ];
+        for s in all {
+            let txt = s.as_str();
+            let back = ReturnStage::from_str(txt).unwrap();
+            assert_eq!(back, s);
+        }
+    }
+
+    #[test]
+    fn return_stage_terminal_states() {
+        assert!(ReturnStage::Done.is_terminal());
+        assert!(ReturnStage::Rejected.is_terminal());
+        assert!(ReturnStage::Cancelled.is_terminal());
+        assert!(!ReturnStage::Pending.is_terminal());
+        assert!(!ReturnStage::Accepted.is_terminal());
+        assert!(!ReturnStage::Processing.is_terminal());
+        assert!(!ReturnStage::Resolving.is_terminal());
+    }
+
+    #[test]
+    fn return_stage_copy_clone_eq() {
+        let a = ReturnStage::Processing;
+        let b = a;
+        assert_eq!(a, b);
+        let c = a.clone();
+        assert_eq!(c, a);
+    }
+
+    #[test]
+    fn return_decision_copy_clone() {
+        let all = [
+            ReturnDecision::Accept,
+            ReturnDecision::Process,
+            ReturnDecision::Resolve,
+            ReturnDecision::ConfirmDone,
+            ReturnDecision::ReturnedToProcessing,
+            ReturnDecision::Reject,
+            ReturnDecision::Cancel,
+        ];
+        for d in all {
+            let x = d;
+            assert_eq!(x.clone(), d);
+        }
+    }
+
+    #[test]
+    fn process_type_copy_clone() {
+        use ProcessType::*;
+        for t in [Refund, Exchange, Repair] {
+            assert_eq!(t.clone(), t);
+        }
+    }
+
+    #[test]
+    fn can_transition_valid_forward_path() {
+        use ReturnStage::*;
+        assert!(can_transition(Pending, Accepted).is_ok());
+        assert!(can_transition(Accepted, Processing).is_ok());
+        assert!(can_transition(Processing, Resolving).is_ok());
+        assert!(can_transition(Resolving, Done).is_ok());
+    }
+
+    #[test]
+    fn can_transition_resolving_loop_and_reject() {
+        use ReturnStage::*;
+        assert!(can_transition(Resolving, Processing).is_ok());
+        assert!(can_transition(Resolving, Rejected).is_ok());
+    }
+
+    #[test]
+    fn can_transition_cancel_from_non_terminal() {
+        use ReturnStage::*;
+        assert!(can_transition(Pending, Cancelled).is_ok());
+        assert!(can_transition(Accepted, Cancelled).is_ok());
+        assert!(can_transition(Processing, Cancelled).is_ok());
+        assert!(can_transition(Resolving, Cancelled).is_ok());
+    }
+
+    #[test]
+    fn can_transition_blocks_terminal_sources() {
+        use ReturnStage::*;
+        assert_eq!(
+            can_transition(Done, Pending),
+            Err("TERMINAL_CANNOT_TRANSITION")
+        );
+        assert_eq!(
+            can_transition(Rejected, Accepted),
+            Err("TERMINAL_CANNOT_TRANSITION")
+        );
+        assert_eq!(
+            can_transition(Cancelled, Processing),
+            Err("TERMINAL_CANNOT_TRANSITION")
+        );
+    }
+
+    #[test]
+    fn can_transition_invalid_cross_stage() {
+        use ReturnStage::*;
+        assert_eq!(
+            can_transition(Pending, Processing),
+            Err("INVALID_TRANSITION")
+        );
+        assert_eq!(can_transition(Accepted, Done), Err("INVALID_TRANSITION"));
+        assert_eq!(
+            can_transition(Processing, Accepted),
+            Err("INVALID_TRANSITION")
+        );
+        assert_eq!(
+            can_transition(Done, Cancelled),
+            Err("TERMINAL_CANNOT_TRANSITION")
+        );
+    }
+
+    fn make_claims(sub: &str, tenant_id: Option<&str>) -> topems_shared::auth::Claims {
+        topems_shared::auth::Claims {
+            sub: sub.to_string(),
+            username: "testuser".to_string(),
+            role: "user".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser: false,
+            exp: 9999999999,
+            iat: 0,
+            email: Some("t@e.com".to_string()),
+            department: None,
+            tenant_id: tenant_id.map(|s| s.to_string()),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    #[test]
+    fn extract_operator_id_valid_uuid() {
+        let id = Uuid::new_v4();
+        let claims = make_claims(&id.to_string(), None);
+        let result = extract_operator_id(&claims);
+        assert_eq!(result, Some(id));
+    }
+
+    #[test]
+    fn extract_operator_id_invalid_sub() {
+        let claims = make_claims("not-a-uuid", None);
+        let result = extract_operator_id(&claims);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn create_routes_smoke() {
+        let _router: Router<ApiState> = create_routes();
+    }
+}

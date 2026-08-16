@@ -823,3 +823,115 @@ async fn reject_contact(
         "联系人审批已驳回",
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::Deserialize;
+    use uuid::Uuid;
+
+    #[test]
+    fn contact_pagination_params_empty() {
+        let json = r#"{}"#;
+        let q: ContactPaginationParams = serde_json::from_str(json).unwrap();
+        assert!(q.page.is_none());
+        assert!(q.page_size.is_none());
+        assert!(q.search.is_none());
+        assert!(q.status.is_none());
+        assert!(q.customer_id.is_none());
+    }
+
+    #[test]
+    fn contact_pagination_params_all() {
+        let cid = Uuid::new_v4();
+        let json = format!(
+            r#"{{"page":2,"page_size":30,"search":"Smith","status":"inactive","customer_id":"{}"}}"#,
+            cid
+        );
+        let q: ContactPaginationParams = serde_json::from_str(&json).unwrap();
+        assert_eq!(q.page, Some(2));
+        assert_eq!(q.page_size, Some(30));
+        assert_eq!(q.search.as_deref(), Some("Smith"));
+        assert_eq!(q.status.as_deref(), Some("inactive"));
+        assert_eq!(q.customer_id, Some(cid));
+    }
+
+    #[test]
+    fn contact_pagination_params_partial() {
+        let json = r#"{"page":1,"search":"a"}"#;
+        let q: ContactPaginationParams = serde_json::from_str(json).unwrap();
+        assert_eq!(q.page, Some(1));
+        assert_eq!(q.search.as_deref(), Some("a"));
+        assert!(q.status.is_none());
+    }
+
+    #[test]
+    fn contact_pagination_params_invalid_uuid_fails() {
+        let json = r#"{"customer_id":"bad-uuid"}"#;
+        let res: Result<ContactPaginationParams, _> = serde_json::from_str(json);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn batch_delete_request_valid() {
+        let id1 = Uuid::new_v4();
+        let id2 = Uuid::new_v4();
+        let json = format!(r#"{{"ids":["{}","{}"]}}"#, id1, id2);
+        let r: BatchDeleteRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(r.ids.len(), 2);
+        assert_eq!(r.ids[0], id1);
+        assert_eq!(r.ids[1], id2);
+    }
+
+    #[test]
+    fn batch_delete_request_empty() {
+        let json = r#"{"ids":[]}"#;
+        let r: BatchDeleteRequest = serde_json::from_str(json).unwrap();
+        assert!(r.ids.is_empty());
+    }
+
+    #[test]
+    fn batch_delete_request_invalid_uuid_fails() {
+        let json = r#"{"ids":["not-a-uuid"]}"#;
+        let res: Result<BatchDeleteRequest, _> = serde_json::from_str(json);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn start_contact_approval_request_deserialize() {
+        let wid = Uuid::new_v4();
+        let json = format!(r#"{{"workflow_id":"{}","comment":"开始审批"}}"#, wid);
+        let r: StartContactApprovalRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(r.workflow_id, wid);
+        assert_eq!(r.comment.as_deref(), Some("开始审批"));
+    }
+
+    #[test]
+    fn start_contact_approval_request_no_comment() {
+        let wid = Uuid::new_v4();
+        let json = format!(r#"{{"workflow_id":"{}"}}"#, wid);
+        let r: StartContactApprovalRequest = serde_json::from_str(&json).unwrap();
+        assert!(r.comment.is_none());
+    }
+
+    #[test]
+    fn contact_approval_action_request_both() {
+        let json = r#"{"comment":"同意","reason":"资料齐全"}"#;
+        let r: ContactApprovalActionRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(r.comment.as_deref(), Some("同意"));
+        assert_eq!(r.reason.as_deref(), Some("资料齐全"));
+    }
+
+    #[test]
+    fn contact_approval_action_request_neither() {
+        let json = r#"{}"#;
+        let r: ContactApprovalActionRequest = serde_json::from_str(json).unwrap();
+        assert!(r.comment.is_none());
+        assert!(r.reason.is_none());
+    }
+
+    #[test]
+    fn create_routes_smoke() {
+        let _router: Router<ApiState> = create_routes();
+    }
+}

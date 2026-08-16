@@ -579,3 +579,18 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_module_exports() {
+        use audit_log::{AuditEventParams, AuditLog, ListAuditLogsQuery};
+        use schema_defense::SERVICE_SCHEMA;
+        use schema_defense::TABLE_DEFS;
+        let _: &str = SERVICE_SCHEMA;
+        assert_eq!(SERVICE_SCHEMA, "pdm");
+        assert!(!TABLE_DEFS.is_empty());
+    }
+}

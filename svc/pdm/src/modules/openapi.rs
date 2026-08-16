@@ -198,3 +198,17 @@ fn _detailed_health() {}
     ),
 )]
 pub struct ApiDoc;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use utoipa::OpenApi;
+
+    #[test]
+    fn test_apidoc_derive() {
+        let doc = ApiDoc::openapi();
+        let json = doc.to_pretty_json().unwrap();
+        assert!(!json.is_empty());
+        assert!(json.contains("TOPEMS-pdm API"));
+    }
+}

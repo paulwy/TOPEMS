@@ -186,3 +186,92 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::{Deserialize, Serialize};
+    use uuid::Uuid;
+
+    fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
+        let json = serde_json::to_string(item).unwrap();
+        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let back: T = serde_json::from_str(&json).unwrap();
+        let json2 = serde_json::to_string(&back).unwrap();
+        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn permission_def_full() {
+        let pd = PermissionDef {
+            code: "crm:customer:read".to_string(),
+            name: "View Customer".to_string(),
+            resource_type: "customer".to_string(),
+            action: "read".to_string(),
+        };
+        let cloned = pd.clone();
+        assert_eq!(cloned.code, pd.code);
+        roundtrip(&pd);
+    }
+
+    #[test]
+    fn plugin_info_minimal() {
+        let info = PluginInfo {
+            code: "crm".to_string(),
+            name: "CRM".to_string(),
+            version: "0.1.0".to_string(),
+            description: "desc".to_string(),
+            runtime_url: "http://localhost:8029".to_string(),
+            permissions: vec![],
+            dependencies: vec![],
+            navigation_config: None,
+            category: None,
+        };
+        let cloned = info.clone();
+        assert_eq!(cloned.code, "crm");
+        assert!(cloned.permissions.is_empty());
+        assert!(cloned.navigation_config.is_none());
+        roundtrip(&info);
+    }
+
+    #[test]
+    fn plugin_info_full() {
+        let info = PluginInfo {
+            code: "crm".to_string(),
+            name: "客户关系管理".to_string(),
+            version: "1.0.0".to_string(),
+            description: "Full CRM".to_string(),
+            runtime_url: "http://example.com".to_string(),
+            permissions: vec![
+                PermissionDef {
+                    code: "crm:customer:read".to_string(),
+                    name: "查看客户".to_string(),
+                    resource_type: "customer".to_string(),
+                    action: "read".to_string(),
+                },
+                PermissionDef {
+                    code: "crm:customer:write".to_string(),
+                    name: "管理客户".to_string(),
+                    resource_type: "customer".to_string(),
+                    action: "write".to_string(),
+                },
+            ],
+            dependencies: vec!["core".to_string(), "auth".to_string()],
+            navigation_config: Some(serde_json::json!([
+                {"code": "crm-customers", "label": "客户管理", "path": "/crm/customers"}
+            ])),
+            category: Some("business".to_string()),
+        };
+        assert_eq!(info.permissions.len(), 2);
+        assert_eq!(info.dependencies.len(), 2);
+        assert!(info.navigation_config.is_some());
+        assert_eq!(info.category.as_deref(), Some("business"));
+        roundtrip(&info);
+    }
+
+    #[test]
+    fn create_routes_smoke() {
+        let _router: Router<ApiState> = create_routes();
+    }
+}

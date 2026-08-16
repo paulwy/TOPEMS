@@ -332,3 +332,5 @@ function main() {
 }
 
 main();
+
+// CI 全流水线触发标记（i18n path filter hit）

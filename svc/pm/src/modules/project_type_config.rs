@@ -36,3 +36,21 @@ async fn update_type(State(_pool): State<PgPool>, Path(_id): Path<Uuid>) -> Json
 async fn delete_type(State(_pool): State<PgPool>, Path(_id): Path<Uuid>) -> Json<ApiResponse<()>> {
     Json(ApiResponse::success((), "删除项目类型成功"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sqlx::postgres::PgConnectOptions;
+    use std::str::FromStr;
+
+    fn make_pool() -> PgPool {
+        let opts = PgConnectOptions::from_str("postgres://localhost/test").unwrap();
+        sqlx::Pool::connect_lazy_with(opts)
+    }
+
+    #[tokio::test]
+    async fn test_create_routes_returns_router() {
+        let router = create_routes(make_pool());
+        let _ = router;
+    }
+}

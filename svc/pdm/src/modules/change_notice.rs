@@ -587,3 +587,189 @@ pub async fn reject_change_notice(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+    use serde_json::json;
+
+    #[test]
+    fn test_create_routes_smoke() {
+        let _router = create_routes();
+    }
+
+    #[test]
+    fn test_change_notice_serde_roundtrip() {
+        let notice = ChangeNotice {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            ecn_no: "ECN-20240101-00000000".to_string(),
+            title: "Test Change Notice".to_string(),
+            description: Some("A test description".to_string()),
+            change_type: "minor".to_string(),
+            affected_items: json!(["item1", "item2"]),
+            reason: Some("Test reason".to_string()),
+            priority: "normal".to_string(),
+            status: "draft".to_string(),
+            initiator: "user1".to_string(),
+            approver: Some("approver1".to_string()),
+            approved_at: Some(Utc::now()),
+            effective_date: Some(Utc::now()),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let serialized = serde_json::to_string(&notice).unwrap();
+        let deserialized: ChangeNotice = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(deserialized.id, notice.id);
+        assert_eq!(deserialized.ecn_no, notice.ecn_no);
+        assert_eq!(deserialized.title, notice.title);
+        assert_eq!(deserialized.change_type, notice.change_type);
+        assert_eq!(deserialized.priority, notice.priority);
+        assert_eq!(deserialized.status, notice.status);
+        assert_eq!(deserialized.initiator, notice.initiator);
+    }
+
+    #[test]
+    fn test_change_notice_clone() {
+        fn assert_debug<T: std::fmt::Debug>() {}
+        assert_debug::<ChangeNotice>();
+        let notice = ChangeNotice {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            ecn_no: "ECN-1".to_string(),
+            title: "T".to_string(),
+            description: None,
+            change_type: "major".to_string(),
+            affected_items: json!([]),
+            reason: None,
+            priority: "high".to_string(),
+            status: "draft".to_string(),
+            initiator: "u".to_string(),
+            approver: None,
+            approved_at: None,
+            effective_date: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let _another = ChangeNotice {
+            id: notice.id,
+            tenant_id: notice.tenant_id,
+            ecn_no: notice.ecn_no.clone(),
+            title: notice.title.clone(),
+            description: notice.description.clone(),
+            change_type: notice.change_type.clone(),
+            affected_items: notice.affected_items.clone(),
+            reason: notice.reason.clone(),
+            priority: notice.priority.clone(),
+            status: notice.status.clone(),
+            initiator: notice.initiator.clone(),
+            approver: notice.approver.clone(),
+            approved_at: notice.approved_at,
+            effective_date: notice.effective_date,
+            created_at: notice.created_at,
+            updated_at: notice.updated_at,
+        };
+        assert_eq!(notice.id, _another.id);
+    }
+
+    #[test]
+    fn test_create_change_notice_request_deserialize_full() {
+        let json_value = json!({
+            "title": "Full Request",
+            "description": "A description",
+            "change_type": "minor",
+            "affected_items": ["P-001", "P-002"],
+            "reason": "Because",
+            "priority": "normal",
+            "initiator": "alice",
+            "effective_date": "2025-01-01T00:00:00Z"
+        });
+        let req: CreateChangeNoticeRequest = serde_json::from_value(json_value).unwrap();
+        assert_eq!(req.title, "Full Request");
+        assert_eq!(req.description.as_deref(), Some("A description"));
+        assert_eq!(req.change_type, "minor");
+        assert_eq!(req.affected_items, vec!["P-001", "P-002"]);
+        assert_eq!(req.reason.as_deref(), Some("Because"));
+        assert_eq!(req.priority, "normal");
+        assert_eq!(req.initiator, "alice");
+        assert!(req.effective_date.is_some());
+    }
+
+    #[test]
+    fn test_create_change_notice_request_deserialize_minimal() {
+        let json_value = json!({
+            "title": "Minimal",
+            "change_type": "minor",
+            "affected_items": [],
+            "priority": "normal",
+            "initiator": "bob"
+        });
+        let req: CreateChangeNoticeRequest = serde_json::from_value(json_value).unwrap();
+        assert_eq!(req.title, "Minimal");
+        assert!(req.description.is_none());
+        assert!(req.reason.is_none());
+        assert!(req.effective_date.is_none());
+    }
+
+    #[test]
+    fn test_change_notice_query_deserialize_empty() {
+        let json_value = json!({});
+        let q: ChangeNoticeQuery = serde_json::from_value(json_value).unwrap();
+        assert!(q.page.is_none());
+        assert!(q.page_size.is_none());
+        assert!(q.search.is_none());
+        assert!(q.status.is_none());
+        assert!(q.change_type.is_none());
+        assert!(q.priority.is_none());
+    }
+
+    #[test]
+    fn test_change_notice_query_deserialize_filled() {
+        let json_value = json!({
+            "page": 2,
+            "page_size": 20,
+            "search": "ECN",
+            "status": "pending",
+            "change_type": "minor",
+            "priority": "high"
+        });
+        let q: ChangeNoticeQuery = serde_json::from_value(json_value).unwrap();
+        assert_eq!(q.page, Some(2));
+        assert_eq!(q.page_size, Some(20));
+        assert_eq!(q.search.as_deref(), Some("ECN"));
+        assert_eq!(q.status.as_deref(), Some("pending"));
+        assert_eq!(q.change_type.as_deref(), Some("minor"));
+        assert_eq!(q.priority.as_deref(), Some("high"));
+    }
+
+    #[test]
+    fn test_update_change_notice_request_deserialize_partial() {
+        let json_value = json!({
+            "title": "Updated",
+            "status": "approved"
+        });
+        let req: UpdateChangeNoticeRequest = serde_json::from_value(json_value).unwrap();
+        assert_eq!(req.title.as_deref(), Some("Updated"));
+        assert_eq!(req.status.as_deref(), Some("approved"));
+        assert!(req.description.is_none());
+        assert!(req.change_type.is_none());
+        assert!(req.affected_items.is_none());
+    }
+
+    #[test]
+    fn test_update_change_notice_request_deserialize_all_none() {
+        let json_value = json!({});
+        let req: UpdateChangeNoticeRequest = serde_json::from_value(json_value).unwrap();
+        assert!(req.title.is_none());
+        assert!(req.description.is_none());
+        assert!(req.change_type.is_none());
+        assert!(req.affected_items.is_none());
+        assert!(req.reason.is_none());
+        assert!(req.priority.is_none());
+        assert!(req.status.is_none());
+        assert!(req.approver.is_none());
+        assert!(req.approved_at.is_none());
+        assert!(req.effective_date.is_none());
+    }
+}

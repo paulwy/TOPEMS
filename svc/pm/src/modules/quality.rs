@@ -359,6 +359,39 @@ fn parse_date_opt(date_str: &Option<String>) -> Option<chrono::DateTime<chrono::
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sqlx::postgres::PgConnectOptions;
+    use std::str::FromStr;
+
+    fn make_pool() -> PgPool {
+        let opts = PgConnectOptions::from_str("postgres://localhost/test").unwrap();
+        sqlx::Pool::connect_lazy_with(opts)
+    }
+
+    #[tokio::test]
+    async fn test_create_routes_returns_router() {
+        let router = create_routes(make_pool());
+        let _ = router;
+    }
+
+    #[test]
+    fn test_parse_date_opt_none() {
+        assert!(parse_date_opt(&None).is_none());
+    }
+
+    #[test]
+    fn test_parse_date_opt_valid() {
+        let s = Some("2024-08-20T10:00:00Z".to_string());
+        let r = parse_date_opt(&s);
+        assert!(r.is_some());
+        let dt = r.unwrap();
+        assert_eq!(dt.year(), 2024);
+        assert_eq!(dt.month(), 8);
+    }
+
+    #[test]
+    fn test_parse_date_opt_invalid_returns_none() {
+        assert!(parse_date_opt(&Some("xxx".to_string())).is_none());
+    }
 
     #[test]
     fn test_perfect_score_no_defects() {
@@ -378,7 +411,6 @@ mod tests {
 
     #[test]
     fn test_ten_percent_defects() {
-        // 10 defects out of 100 -> 90% quality
         assert!((calculate_quality_score(10, 100) - 90.0).abs() < 1e-9);
     }
 
@@ -389,7 +421,6 @@ mod tests {
 
     #[test]
     fn test_clamps_when_defects_exceed_total() {
-        // 150 defects out of 100 -> should clamp to 0.0
         assert_eq!(calculate_quality_score(150, 100), 0.0);
     }
 

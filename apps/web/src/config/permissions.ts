@@ -1068,3 +1068,5 @@ export const PERMISSION_CODES_BY_MODULE: Record<string, string[]> = {
 };
 
 export default PERMISSIONS;
+
+// CI 全流水线触发标记（frontend + permission path filter hit）

@@ -88,3 +88,24 @@ pub fn create_routes() -> Router<ApiState> {
 pub fn create_system_routes() -> Router<ApiState> {
     Router::new().merge(crm_plugin::create_routes())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn create_routes_smoke() {
+        let _router: Router<ApiState> = create_routes();
+    }
+
+    #[test]
+    fn create_system_routes_smoke() {
+        let _router: Router<ApiState> = create_system_routes();
+    }
+
+    #[test]
+    fn api_state_clone_trait() {
+        fn assert_clone<T: Clone>() {}
+        assert_clone::<ApiState>();
+    }
+}
