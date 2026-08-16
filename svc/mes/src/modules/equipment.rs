@@ -784,10 +784,10 @@ pub async fn list_maintenances(
             equipment_id: r.equipment_id.unwrap_or_default(),
             equipment_name: Some(r.equipment_name),
             equipment_no: Some(r.equipment_no),
-            maintenance_type: r.maintenance_type,
+            maintenance_type: r.maintenance_type.unwrap_or_default(),
             description: r.description,
             maintainer: r.maintainer.unwrap_or_default(),
-            start_time: naive_to_utc(Some(r.start_time)),
+            start_time: naive_to_utc(r.start_time),
             end_time: r.end_time.map(|dt| naive_to_utc(Some(dt))),
             cost: opt_big_decimal_to_f64(r.cost),
             result: r.result,
@@ -909,10 +909,10 @@ pub async fn create_maintenance(
             equipment_id: result.equipment_id.unwrap_or_default(),
             equipment_name,
             equipment_no,
-            maintenance_type: result.maintenance_type,
+            maintenance_type: result.maintenance_type.unwrap_or_default(),
             description: result.description,
             maintainer: result.maintainer.unwrap_or_default(),
-            start_time: naive_to_utc(Some(result.start_time)),
+            start_time: naive_to_utc(result.start_time),
             end_time: result.end_time.map(|dt| naive_to_utc(Some(dt))),
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
@@ -1003,10 +1003,10 @@ pub async fn update_maintenance_status(
             equipment_id: result.equipment_id.unwrap_or_default(),
             equipment_name,
             equipment_no,
-            maintenance_type: result.maintenance_type,
+            maintenance_type: result.maintenance_type.unwrap_or_default(),
             description: result.description,
             maintainer: result.maintainer.unwrap_or_default(),
-            start_time: naive_to_utc(Some(result.start_time)),
+            start_time: naive_to_utc(result.start_time),
             end_time: result.end_time.map(|dt| naive_to_utc(Some(dt))),
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
@@ -1138,11 +1138,16 @@ pub async fn list_inspections(
                 .into_iter()
                 .map(|r| InspectionResponse {
                     id: r.id.to_string(),
-                    equipment_id: r.equipment_id.unwrap_or_default().to_string(),
-                    equipment_code: r.equipment_code.unwrap_or_default(),
-                    equipment_name: r.equipment_name.unwrap_or_default(),
-                    inspector: r.inspector.unwrap_or_default(),
-                    inspection_date: naive_to_utc(r.inspection_date).to_rfc3339(),
+                    equipment_id: r.equipment_id.to_string(),
+                    equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
+                    equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
+                    inspector: r.inspector,
+                    inspection_date: naive_to_utc(
+                        NaiveDateTime::parse_from_str(&r.inspection_date, "%Y-%m-%d %H:%M:%S%.f")
+                            .or_else(|_| NaiveDateTime::parse_from_str(&r.inspection_date, "%+"))
+                            .ok(),
+                    )
+                    .to_rfc3339(),
                     location: r.location,
                     temperature: r
                         .temperature
@@ -1153,14 +1158,12 @@ pub async fn list_inspections(
                     noiselevel: r
                         .noiselevel
                         .map(|d| d.to_string().parse::<f64>().unwrap_or(0.0)),
-                    status: if r.status.as_deref().map_or(true, str::is_empty) {
+                    status: if r.status.as_deref().unwrap_or("").is_empty() {
                         "normal".to_string()
                     } else {
                         r.status.unwrap_or_default()
                     },
-                    items: r
-                        .items
-                        .map(|s| serde_json::from_str(&s).unwrap_or(serde_json::Value::Null)),
+                    items: r.items,
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
                     created_at: naive_to_utc(r.created_at).to_rfc3339(),
@@ -1269,11 +1272,16 @@ pub async fn create_inspection(
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
                 id: r.id.to_string(),
-                equipment_id: r.equipment_id.unwrap_or_default().to_string(),
-                equipment_code: r.equipment_code.unwrap_or_default(),
-                equipment_name: r.equipment_name.unwrap_or_default(),
-                inspector: r.inspector.unwrap_or_default(),
-                inspection_date: naive_to_utc(r.inspection_date).to_rfc3339(),
+                equipment_id: r.equipment_id.to_string(),
+                equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
+                equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
+                inspector: r.inspector,
+                inspection_date: naive_to_utc(
+                    NaiveDateTime::parse_from_str(&r.inspection_date, "%Y-%m-%d %H:%M:%S%.f")
+                        .or_else(|_| NaiveDateTime::parse_from_str(&r.inspection_date, "%+"))
+                        .ok(),
+                )
+                .to_rfc3339(),
                 location: r.location,
                 temperature: r
                     .temperature
@@ -1284,14 +1292,12 @@ pub async fn create_inspection(
                 noiselevel: r
                     .noiselevel
                     .map(|d| d.to_string().parse::<f64>().unwrap_or(0.0)),
-                status: if r.status.as_deref().map_or(true, str::is_empty) {
+                status: if r.status.as_deref().unwrap_or("").is_empty() {
                     "normal".to_string()
                 } else {
                     r.status.unwrap_or_default()
                 },
-                items: r
-                    .items
-                    .map(|s| serde_json::from_str(&s).unwrap_or(serde_json::Value::Null)),
+                items: r.items,
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
                 created_at: naive_to_utc(r.created_at).to_rfc3339(),
