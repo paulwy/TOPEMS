@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 import { renderWithProviders } from '@/__tests__/test-utils';
@@ -7,7 +7,6 @@ import DataExport, { ExportField } from '../DataExport';
 
 import * as XLSX from 'xlsx';
 
-// Mock xlsx to avoid file system / heavy work in jsdom
 vi.mock('xlsx', () => ({
   utils: {
     json_to_sheet: vi.fn(() => ({})),
@@ -67,7 +66,7 @@ describe('DataExport', () => {
     expect(screen.getByText('导出 PDF')).toBeInTheDocument();
   });
 
-  it('triggers Excel export when "导出 Excel" menu item is clicked', () => {
+  it('triggers Excel export when "导出 Excel" menu item is clicked', async () => {
     renderWithProviders(
       <DataExport
         data={sampleData}
@@ -77,9 +76,8 @@ describe('DataExport', () => {
     fireEvent.click(screen.getByRole('button', { name: /导出/ }));
     fireEvent.click(screen.getByText('导出 Excel'));
 
-    expect(XLSX.writeFile).toHaveBeenCalledTimes(1);
-    const args = (XLSX.writeFile as vi.Mock).mock.calls[0];
-    // Second arg is the file name with .xlsx extension
+    await waitFor(() => expect(XLSX.writeFile).toHaveBeenCalledTimes(1), { timeout: 2000 });
+    const args = (XLSX.writeFile as unknown as vi.Mock).mock.calls[0];
     expect(args[1]).toBe('export.xlsx');
   });
 
@@ -114,16 +112,14 @@ describe('DataExport', () => {
       />
     );
     fireEvent.click(screen.getByRole('button', { name: /导出/ }));
-    // Click the "导出设置" menu item (use getAllByText since the text appears in both the menu item and the dialog title after opening)
     const settingsItems = screen.getAllByText('导出设置');
     fireEvent.click(settingsItems[0]);
 
-    // Dialog should be open with file name field
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('文件名')).toBeInTheDocument();
   });
 
-  it('calls beforeExport before exporting data', () => {
+  it('calls beforeExport before exporting data', async () => {
     const beforeExport = vi.fn((rows) => rows);
     renderWithProviders(
       <DataExport
@@ -135,11 +131,11 @@ describe('DataExport', () => {
     fireEvent.click(screen.getByRole('button', { name: /导出/ }));
     fireEvent.click(screen.getByText('导出 Excel'));
 
-    expect(beforeExport).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(beforeExport).toHaveBeenCalledTimes(1), { timeout: 2000 });
     expect(beforeExport.mock.calls[0][0]).toEqual(sampleData);
   });
 
-  it('uses custom default file name when exporting', () => {
+  it('uses custom default file name when exporting', async () => {
     renderWithProviders(
       <DataExport
         data={sampleData}
@@ -150,8 +146,8 @@ describe('DataExport', () => {
     fireEvent.click(screen.getByRole('button', { name: /导出/ }));
     fireEvent.click(screen.getByText('导出 Excel'));
 
-    expect(XLSX.writeFile).toHaveBeenCalledTimes(1);
-    const args = (XLSX.writeFile as vi.Mock).mock.calls[0];
+    await waitFor(() => expect(XLSX.writeFile).toHaveBeenCalledTimes(1), { timeout: 2000 });
+    const args = (XLSX.writeFile as unknown as vi.Mock).mock.calls[0];
     expect(args[1]).toBe('员工列表.xlsx');
   });
 });

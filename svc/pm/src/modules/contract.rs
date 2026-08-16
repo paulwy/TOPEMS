@@ -790,6 +790,7 @@ fn parse_date_opt(date_str: &Option<String>) -> Option<DateTime<Utc>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::Datelike;
     use sqlx::postgres::PgConnectOptions;
     use std::str::FromStr;
 

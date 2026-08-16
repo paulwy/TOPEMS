@@ -6,14 +6,34 @@ import React from 'react';
 import { FormDrawer } from '../FormDrawer';
 import { renderWithProviders } from '@/__tests__/test-utils';
 
-const i18nMap: Record<string, string> = {
-  'components.common.formDrawer.confirmText': '保存',
-  'components.common.formDrawer.cancelText': '取消',
-};
+const { tMock } = vi.hoisted(() => {
+  const i18nMap: Record<string, string> = {
+    'shared.form_drawer.k0': '保存',
+    'shared.form_drawer.k1': '取消',
+  };
+  const tMock = (key: string): string => i18nMap[key] || key;
+  return { tMock };
+});
+
+vi.mock('@/i18n', () => ({
+  default: {
+    t: tMock,
+    language: 'zh',
+    on: () => {},
+    off: () => {},
+    use: () => ({ init: () => {} }),
+    init: () => {},
+    changeLanguage: () => {},
+  },
+  SUPPORTED_LANGUAGES: [
+    { code: 'zh', name: '中文', flag: 'CN' },
+    { code: 'en', name: 'English', flag: 'US' },
+  ],
+}));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => i18nMap[key] ?? key,
+    t: tMock,
     i18n: {
       changeLanguage: vi.fn(),
     },

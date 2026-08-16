@@ -47,17 +47,17 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/customers", get(list_customers).post(create_customer))
         .route("/customers/batch-delete", post(batch_delete_customers))
         .route(
-            "/customers/:id",
+            "/customers/{id}",
             get(get_customer)
                 .put(update_customer)
                 .delete(delete_customer),
         )
         .route(
-            "/customers/:id/approval/start",
+            "/customers/{id}/approval/start",
             post(start_customer_approval),
         )
-        .route("/customers/:id/approval/approve", post(approve_customer))
-        .route("/customers/:id/approval/reject", post(reject_customer))
+        .route("/customers/{id}/approval/approve", post(approve_customer))
+        .route("/customers/{id}/approval/reject", post(reject_customer))
 }
 
 #[utoipa::path(

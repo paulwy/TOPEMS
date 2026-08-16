@@ -37,12 +37,27 @@ function fixReactTransitionGroup(): Plugin {
   return {
     name: 'fix-react-transition-group-subpaths',
     enforce: 'pre',
-    resolveId(id: string) {
-      if (RTG_SUB_PATHS[id]) {
-        return path.resolve(ROOT, `cjs/${RTG_SUB_PATHS[id]}`);
-      }
-      if (id === 'react-transition-group') {
-        return path.resolve(ROOT, 'cjs/index.js');
+    resolveId(id: string, importer?: string) {
+      // pnpm 的 @mui/x-date-pickers 内部也引用了 react-transition-group（路径在 mui 的虚拟存储下）。
+      // 此时 importer 可能位于 pnpm/.pnpm/.../mui+x-date-pickers/... 下，而 resolve.alias
+      // 无法按 importer 做子依赖修正，所以 resolveId 必须兜底：当 importer 位于 pnpm store、
+      // 且直接 ROOT 路径不存在时，改用 pnpm 根下已安装的 react-transition-group 副本。
+      const fallbackRoots = [
+        ROOT,
+        path.resolve(
+          __dirname,
+          '../../node_modules/.pnpm/react-transition-group@4.4.5_react-dom@19.2.8_react@19.2.8__react@19.2.8/node_modules/react-transition-group',
+        ),
+      ];
+      for (const root of fallbackRoots) {
+        if (RTG_SUB_PATHS[id]) {
+          const p = path.resolve(root, `cjs/${RTG_SUB_PATHS[id]}`);
+          if (fs.existsSync(p)) return p;
+        }
+        if (id === 'react-transition-group') {
+          const p = path.resolve(root, 'cjs/index.js');
+          if (fs.existsSync(p)) return p;
+        }
       }
       return null;
     },

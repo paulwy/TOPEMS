@@ -4,6 +4,82 @@ import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
 import CompanyStructurePage from '../CompanyStructurePage';
 
+const { tMock } = vi.hoisted(() => {
+  const i18nMap: Record<string, string> = {
+    'iam.company_structure_page.k0': '母公司',
+    'iam.company_structure_page.k1': '子公司',
+    'iam.company_structure_page.k2': '联营公司',
+    'iam.company_structure_page.k3': '合营公司',
+    'iam.company_structure_page.k4': '分公司',
+    'iam.company_structure_page.k5': '全部',
+    'iam.company_structure_page.k6': '激活',
+    'iam.company_structure_page.k7': '搜索公司',
+    'iam.company_structure_page.k8': '删除关系',
+    'iam.company_structure_page.k9': '确定要删除此母子公司关系吗？',
+    'iam.company_structure_page.k10': '序号',
+    'iam.company_structure_page.k11': '母公司',
+    'iam.company_structure_page.k12': '子公司',
+    'iam.company_structure_page.k13': '关系类型',
+    'iam.company_structure_page.k14': '股权占比',
+    'iam.company_structure_page.k15': '控制权占比',
+    'iam.company_structure_page.k16': '生效日期',
+    'iam.company_structure_page.k17': '状态',
+    'iam.company_structure_page.k18': '公司架构管理',
+    'iam.company_structure_page.k19': '管理母子公司关系，用于多公司合并报表',
+    'iam.company_structure_page.k20': '新增关系',
+    'iam.company_structure_page.k21': '架构视图',
+    'iam.company_structure_page.k22': '关系列表',
+    'iam.company_structure_page.k23': '使用提示',
+    'iam.company_structure_page.k24': '点击左侧节点可展开/折叠子公司',
+    'iam.company_structure_page.k25': '切换到"关系列表"可查看完整明细',
+    'iam.company_structure_page.k26': '使用右上角搜索框快速定位公司',
+    'iam.company_structure_page.k27': '删除关系后需要重新生成合并报表数据',
+    'pages.company_structure_page.k0': '持股',
+    'pages.company_structure_page.k1': '加载中...',
+    'pages.company_structure_page.k2': '暂无公司架构数据',
+  };
+  const tMock = (key: string, options?: Record<string, unknown>): string => {
+    let value = i18nMap[key] || key;
+    if (options) {
+      for (const [k, v] of Object.entries(options)) {
+        value = value.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), String(v));
+      }
+    }
+    return value;
+  };
+  return { tMock };
+});
+
+vi.mock('@/i18n', () => ({
+  default: {
+    t: tMock,
+    language: 'zh',
+    on: () => {},
+    off: () => {},
+    use: () => ({ init: () => {} }),
+    init: () => {},
+    changeLanguage: () => {},
+  },
+  SUPPORTED_LANGUAGES: [
+    { code: 'zh', name: '中文', flag: 'CN' },
+    { code: 'en', name: 'English', flag: 'US' },
+  ],
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: (_ns?: string) => ({
+    t: tMock,
+    i18n: {
+      changeLanguage: vi.fn(),
+    },
+  }),
+  initReactI18next: {
+    type: '3rdParty',
+    init: vi.fn(),
+  },
+  Trans: ({ children }: any) => children,
+}));
+
 const mockMutate = vi.fn();
 
 vi.mock('@/hooks/useConsolidation', () => ({

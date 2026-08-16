@@ -4,6 +4,115 @@ import { renderWithProviders, screen, fireEvent, waitFor } from '@/__tests__/tes
 
 import FormListPage from '../FormListPage';
 
+vi.mock('react-i18next', () => {
+  const i18nMap: Record<string, string> = {
+    'lowcode.form_list_page.k0': '加载表单失败',
+    'lowcode.form_list_page.k1': '创建表单失败',
+    'lowcode.form_list_page.k2': '删除表单失败',
+    'lowcode.form_list_page.k3': '预览表单失败',
+    'lowcode.form_list_page.k4': '发布表单失败',
+    'lowcode.form_list_page.k5': '表单列表',
+    'lowcode.form_list_page.k6': '表单列表',
+    'lowcode.form_list_page.k7': '表单名称',
+    'lowcode.form_list_page.k8': '编码',
+    'lowcode.form_list_page.k9': '字段数',
+    'lowcode.form_list_page.k10': '状态',
+    'lowcode.form_list_page.k11': '版本',
+    'lowcode.form_list_page.k12': '操作',
+    'lowcode.form_list_page.k13': '预览',
+    'lowcode.form_list_page.k14': '预览',
+    'lowcode.form_list_page.k15': '发布',
+    'lowcode.form_list_page.k16': '发布',
+    'lowcode.form_list_page.k17': '删除',
+    'lowcode.form_list_page.k18': '新建表单',
+    'lowcode.form_list_page.id_19': '所属应用 ID',
+    'lowcode.form_list_page.k20': '表单编码',
+    'lowcode.form_list_page.k21': '应用内唯一',
+    'lowcode.form_list_page.k22': '表单名称',
+    'lowcode.form_list_page.k23': '描述',
+    'lowcode.form_list_page.k24': '取消',
+    'lowcode.form_list_page.k25': '创建',
+    'lowcode.form_list_page.k26': '关闭',
+    'lowcode.form_list_page.e1': '新建表单',
+    'lowcode.form_list_page.e2': '暂无表单',
+    'lowcode.form_list_page.r2': '表单预览 · {{v1}}',
+  };
+  const t = (key: string, vars?: Record<string, unknown>): string => {
+    let result = i18nMap[key] ?? key;
+    if (vars) {
+      Object.entries(vars).forEach(([k, v]) => {
+        result = result.replace(new RegExp(`{{${k}}}`, 'g'), String(v));
+      });
+    }
+    return result;
+  };
+  return {
+    useTranslation: (ns?: string | string[]) => ({
+      t,
+      i18n: {
+        changeLanguage: vi.fn(),
+        language: 'zh',
+      },
+    }),
+    initReactI18next: {
+      type: '3rdParty',
+      init: vi.fn(),
+    },
+    Trans: ({ children }: any) => children,
+  };
+});
+
+vi.mock('@/i18n', () => {
+  const i18nMap: Record<string, string> = {
+    'lowcode.form_list_page.k0': '加载表单失败',
+    'lowcode.form_list_page.k1': '创建表单失败',
+    'lowcode.form_list_page.k2': '删除表单失败',
+    'lowcode.form_list_page.k3': '预览表单失败',
+    'lowcode.form_list_page.k4': '发布表单失败',
+    'lowcode.form_list_page.k5': '表单列表',
+    'lowcode.form_list_page.k6': '表单列表',
+    'lowcode.form_list_page.k7': '表单名称',
+    'lowcode.form_list_page.k8': '编码',
+    'lowcode.form_list_page.k9': '字段数',
+    'lowcode.form_list_page.k10': '状态',
+    'lowcode.form_list_page.k11': '版本',
+    'lowcode.form_list_page.k12': '操作',
+    'lowcode.form_list_page.k13': '预览',
+    'lowcode.form_list_page.k14': '预览',
+    'lowcode.form_list_page.k15': '发布',
+    'lowcode.form_list_page.k16': '发布',
+    'lowcode.form_list_page.k17': '删除',
+    'lowcode.form_list_page.k18': '新建表单',
+    'lowcode.form_list_page.id_19': '所属应用 ID',
+    'lowcode.form_list_page.k20': '表单编码',
+    'lowcode.form_list_page.k21': '应用内唯一',
+    'lowcode.form_list_page.k22': '表单名称',
+    'lowcode.form_list_page.k23': '描述',
+    'lowcode.form_list_page.k24': '取消',
+    'lowcode.form_list_page.k25': '创建',
+    'lowcode.form_list_page.k26': '关闭',
+    'lowcode.form_list_page.e1': '新建表单',
+    'lowcode.form_list_page.e2': '暂无表单',
+    'lowcode.form_list_page.r2': '表单预览 · {{v1}}',
+  };
+  const t = (key: string, vars?: Record<string, unknown>): string => {
+    let result = i18nMap[key] ?? key;
+    if (vars) {
+      Object.entries(vars).forEach(([k, v]) => {
+        result = result.replace(new RegExp(`{{${k}}}`, 'g'), String(v));
+      });
+    }
+    return result;
+  };
+  return {
+    default: {
+      t,
+      language: 'zh',
+      changeLanguage: vi.fn(),
+    },
+  };
+});
+
 const mockList = vi.fn();
 const mockCreate = vi.fn();
 const mockRemove = vi.fn();

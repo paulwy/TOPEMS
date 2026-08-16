@@ -5,25 +5,43 @@ import React from 'react';
 import { renderWithProviders } from '@/__tests__/test-utils';
 import ExportButton from '../ExportButton';
 
-const i18nMap: Record<string, string> = {
-  'components.export.button.download': '导出数据',
-  'components.export.button.exporting': '导出中...',
-  'components.export.button.exportSuccess': '导出成功',
-};
+vi.mock('react-i18next', () => {
+  const i18nMap: Record<string, string> = {
+    'components.export_button.k0': '导出',
+    'components.export_button.k2': '导出中...',
+    'components.export_button.k3': '导出成功',
+    'components.export_button.k1': '导出失败',
+  };
+  return {
+    useTranslation: () => ({
+      t: (key: string) => i18nMap[key] ?? key,
+      i18n: {
+        changeLanguage: vi.fn(),
+      },
+    }),
+    initReactI18next: {
+      type: '3rdParty',
+      init: vi.fn(),
+    },
+    Trans: ({ children }: any) => children,
+  };
+});
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => i18nMap[key] ?? key,
-    i18n: {
+vi.mock('@/i18n', () => {
+  const i18nMap: Record<string, string> = {
+    'components.export_button.k0': '导出',
+    'components.export_button.k2': '导出中...',
+    'components.export_button.k3': '导出成功',
+    'components.export_button.k1': '导出失败',
+  };
+  return {
+    default: {
+      t: (key: string) => i18nMap[key] ?? key,
+      language: 'zh',
       changeLanguage: vi.fn(),
     },
-  }),
-  initReactI18next: {
-    type: '3rdParty',
-    init: vi.fn(),
-  },
-  Trans: ({ children }: any) => children,
-}));
+  };
+});
 
 vi.mock('@/utils/logger', () => ({
   logger: {
@@ -51,7 +69,7 @@ describe('ExportButton', () => {
     vi.clearAllMocks();
   });
 
-  it('renders button with default text 导出数据', () => {
+  it('renders button with default text 导出', () => {
     renderWithProviders(
       <ExportButton
         data={sampleData}
@@ -59,7 +77,7 @@ describe('ExportButton', () => {
         filename='test-export'
       />
     );
-    expect(screen.getByRole('button', { name: /导出数据/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /导出/ })).toBeInTheDocument();
   });
 
   it('renders button with custom buttonText when provided', () => {
@@ -83,7 +101,7 @@ describe('ExportButton', () => {
         disabled
       />
     );
-    const button = screen.getByRole('button', { name: /导出数据/ });
+    const button = screen.getByRole('button', { name: /导出/ });
     expect(button).toBeDisabled();
   });
 
@@ -101,7 +119,7 @@ describe('ExportButton', () => {
       />
     );
 
-    const button = screen.getByRole('button', { name: /导出数据/ });
+    const button = screen.getByRole('button', { name: /导出/ });
     fireEvent.click(button);
 
     expect(onExportStart).toHaveBeenCalledTimes(1);
@@ -127,7 +145,7 @@ describe('ExportButton', () => {
       />
     );
 
-    const button = screen.getByRole('button', { name: /导出数据/ });
+    const button = screen.getByRole('button', { name: /导出/ });
     expect(button).toBeDisabled();
     expect(onExportStart).not.toHaveBeenCalled();
   });

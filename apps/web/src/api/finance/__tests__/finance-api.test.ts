@@ -21,6 +21,11 @@ vi.mock('@/api/client', () => ({
   },
 }));
 
+vi.mock('@topems/shared-types', () => ({
+  toOpenApiParams: (params: Record<string, unknown>) => params,
+  toOpenApiRequestBody: (data: Record<string, unknown>) => data,
+}));
+
 describe('Finance Module API Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();

@@ -4,6 +4,139 @@ import { renderWithProviders, screen, fireEvent, waitFor } from '@/__tests__/tes
 
 import AutomationVariablesPage from '../AutomationVariablesPage';
 
+vi.mock('react-i18next', () => {
+  const i18nMap: Record<string, string> = {
+  'automation.automation_variables_page.k0': '全局',
+  'automation.automation_variables_page.k1': '工作区',
+  'automation.automation_variables_page.k2': '规则级',
+  'automation.automation_variables_page.k3': '加载变量列表失败',
+  'automation.automation_variables_page.k4': '创建变量失败',
+  'automation.automation_variables_page.k5': '删除变量失败',
+  'automation.automation_variables_page.k6': '解密失败',
+  'automation.automation_variables_page.k7': '环境变量',
+  'automation.automation_variables_page.k8': '环境变量',
+  'automation.automation_variables_page.k9': '变量名',
+  'automation.automation_variables_page.e2': '值',
+  'automation.automation_variables_page.k10': '范围',
+  'automation.automation_variables_page.k11': '密钥',
+  'automation.automation_variables_page.id_12': '规则 ID',
+  'automation.automation_variables_page.k13': '描述',
+  'automation.automation_variables_page.k14': '更新时间',
+  'automation.automation_variables_page.k15': '操作',
+  'automation.automation_variables_page.k16': '解密',
+  'automation.automation_variables_page.k17': '隐藏',
+  'automation.automation_variables_page.k18': '解密',
+  'automation.automation_variables_page.k19': '隐藏',
+  'automation.automation_variables_page.k20': '否',
+  'automation.automation_variables_page.k21': '是',
+  'automation.automation_variables_page.k22': '删除',
+  'automation.automation_variables_page.k23': '删除',
+  'automation.automation_variables_page.k24': '新建环境变量',
+  'automation.automation_variables_page.key_25': '变量名（key）',
+  'automation.automation_variables_page.m1': '仅支持字母、数字、下划线和点，scope 为 rule 时建议 {{v1}}',
+  'automation.automation_variables_page.k26': '变量值',
+  'automation.automation_variables_page.k27': '范围',
+  'automation.automation_variables_page.k28': '全局',
+  'automation.automation_variables_page.k29': '工作区',
+  'automation.automation_variables_page.k30': '规则级',
+  'automation.automation_variables_page.id_31': '规则 ID',
+  'automation.automation_variables_page.k32': '是否为密钥',
+  'automation.automation_variables_page.k33': '否（普通变量）',
+  'automation.automation_variables_page.mask_34': '是（密钥，读取时 mask）',
+  'automation.automation_variables_page.k35': '描述',
+  'automation.automation_variables_page.k36': '取消',
+  'automation.automation_variables_page.k37': '创建',
+  'automation.automation_variables_page.e1': '新建变量',
+  'automation.automation_variables_page.e3': '暂无变量',
+};
+  const t = (key: string, vars?: Record<string, unknown>): string => {
+    let result = i18nMap[key] ?? key;
+    if (vars) {
+      Object.entries(vars).forEach(([k, v]) => {
+        result = result.replace(new RegExp(`{{${k}}}`, 'g'), String(v));
+      });
+    }
+    return result;
+  };
+  return {
+    useTranslation: (ns?: string | string[]) => ({
+      t,
+      i18n: {
+        changeLanguage: vi.fn(),
+        language: 'zh',
+      },
+    }),
+    initReactI18next: {
+      type: '3rdParty',
+      init: vi.fn(),
+    },
+    Trans: ({ children }: any) => children,
+  };
+});
+
+vi.mock('@/i18n', () => {
+  const i18nMap: Record<string, string> = {
+  'automation.automation_variables_page.k0': '全局',
+  'automation.automation_variables_page.k1': '工作区',
+  'automation.automation_variables_page.k2': '规则级',
+  'automation.automation_variables_page.k3': '加载变量列表失败',
+  'automation.automation_variables_page.k4': '创建变量失败',
+  'automation.automation_variables_page.k5': '删除变量失败',
+  'automation.automation_variables_page.k6': '解密失败',
+  'automation.automation_variables_page.k7': '环境变量',
+  'automation.automation_variables_page.k8': '环境变量',
+  'automation.automation_variables_page.k9': '变量名',
+  'automation.automation_variables_page.e2': '值',
+  'automation.automation_variables_page.k10': '范围',
+  'automation.automation_variables_page.k11': '密钥',
+  'automation.automation_variables_page.id_12': '规则 ID',
+  'automation.automation_variables_page.k13': '描述',
+  'automation.automation_variables_page.k14': '更新时间',
+  'automation.automation_variables_page.k15': '操作',
+  'automation.automation_variables_page.k16': '解密',
+  'automation.automation_variables_page.k17': '隐藏',
+  'automation.automation_variables_page.k18': '解密',
+  'automation.automation_variables_page.k19': '隐藏',
+  'automation.automation_variables_page.k20': '否',
+  'automation.automation_variables_page.k21': '是',
+  'automation.automation_variables_page.k22': '删除',
+  'automation.automation_variables_page.k23': '删除',
+  'automation.automation_variables_page.k24': '新建环境变量',
+  'automation.automation_variables_page.key_25': '变量名（key）',
+  'automation.automation_variables_page.m1': '仅支持字母、数字、下划线和点，scope 为 rule 时建议 {{v1}}',
+  'automation.automation_variables_page.k26': '变量值',
+  'automation.automation_variables_page.k27': '范围',
+  'automation.automation_variables_page.k28': '全局',
+  'automation.automation_variables_page.k29': '工作区',
+  'automation.automation_variables_page.k30': '规则级',
+  'automation.automation_variables_page.id_31': '规则 ID',
+  'automation.automation_variables_page.k32': '是否为密钥',
+  'automation.automation_variables_page.k33': '否（普通变量）',
+  'automation.automation_variables_page.mask_34': '是（密钥，读取时 mask）',
+  'automation.automation_variables_page.k35': '描述',
+  'automation.automation_variables_page.k36': '取消',
+  'automation.automation_variables_page.k37': '创建',
+  'automation.automation_variables_page.e1': '新建变量',
+  'automation.automation_variables_page.e3': '暂无变量',
+};
+  const t = (key: string, vars?: Record<string, unknown>): string => {
+    let result = i18nMap[key] ?? key;
+    if (vars) {
+      Object.entries(vars).forEach(([k, v]) => {
+        result = result.replace(new RegExp(`{{${k}}}`, 'g'), String(v));
+      });
+    }
+    return result;
+  };
+  return {
+    default: {
+      t,
+      language: 'zh',
+      changeLanguage: vi.fn(),
+    },
+  };
+});
+
 const mockList = vi.fn();
 const mockCreate = vi.fn();
 const mockRemove = vi.fn();

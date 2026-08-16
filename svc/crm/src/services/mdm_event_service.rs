@@ -6,7 +6,7 @@ use topems_shared_event::event::{
 };
 
 /// MDM 主数据事件发布服务 - CRM 客户领域
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct MdmEventService;
 
 impl MdmEventService {

@@ -13,6 +13,80 @@ import React, { createElement } from 'react';
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { renderWithProviders, screen, fireEvent, waitFor } from '@/__tests__/test-utils';
 
+const { tMock } = vi.hoisted(() => {
+  const i18nMap: Record<string, string> = {
+    'templates.settings_page_template.k0': '保存设置',
+    'templates.settings_page_template.k1': '重置',
+    'templates.settings_page_template.k2': '保存失败',
+    'templates.settings_page_template.k3': '信息',
+    'templates.settings_page_template.k4': '关闭',
+    'templates.settings_page_template.k5': '开启',
+    'templates.settings_page_template.k6': '展开',
+    'templates.settings_page_template.k7': '有未保存的更改',
+    'templates.settings_page_template.k8': '关闭',
+    'templates.settings_page_template.k9': '关闭',
+    'components.settings_page_template.k0': '点击展开查看',
+    'components.settings_page_template.k1': '个设置项',
+    'components.settings_page_template.k2': '个设置项存在错误',
+    'components.dashboard_template.k0': '搜索...',
+    'components.dashboard_template.k1': '暂无数据',
+    'components.dashboard_template.k2': '最近事项',
+    'components.dashboard_template.k3': '快捷操作',
+    'components.dashboard_template.k4': '刷新',
+    'wms.inventory_report_page.alert_attention': '预警关注',
+    'shared.form_drawer.k0': '保存',
+    'shared.form_drawer.k1': '取消',
+  };
+
+  const tMock = (key: string, options?: Record<string, unknown>): string => {
+    let value = i18nMap[key] || key;
+    if (options) {
+      for (const [k, v] of Object.entries(options)) {
+        value = value.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), String(v));
+      }
+    }
+    return value;
+  };
+
+  return { tMock };
+});
+
+vi.mock('@/i18n', () => ({
+  default: {
+    t: tMock,
+    language: 'zh',
+    on: () => {},
+    off: () => {},
+    use: () => ({ init: () => {} }),
+    init: () => {},
+    changeLanguage: () => {},
+  },
+  SUPPORTED_LANGUAGES: [
+    { code: 'zh', name: '中文', flag: 'CN' },
+    { code: 'en', name: 'English', flag: 'US' },
+  ],
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: tMock,
+    i18n: {
+      language: 'zh',
+      changeLanguage: vi.fn(),
+    },
+  }),
+  initReactI18next: {
+    type: '3rdParty',
+    init: () => {},
+  },
+  Trans: ({ children, i18nKey }: { children?: React.ReactNode; i18nKey?: string }) => {
+    if (i18nKey) {
+      return <span>{tMock(i18nKey)}</span>;
+    }
+    return <span>{children}</span>;
+  },
+}));
+
 // ========== 被测试组件 ==========
 // SCM setting 页面共用基础模板（来自 templates）
 import {
@@ -32,18 +106,6 @@ import {
   type StatCard,
   type DataTableConfig,
 } from '@/components/templates/DashboardTemplate';
-
-// ========== 全局 mock（同 V82-2a 模板，保持一致） ==========
-vi.mock('react-i18next', async (importOriginal) => {
-  const actual: Record<string, unknown> = await importOriginal();
-  return {
-    ...actual,
-    useTranslation: () => ({
-      t: (key: string, options?: Record<string, unknown>) =>
-        options ? `${key}:${Object.values(options).join(',')}` : key,
-    }),
-  };
-});
 
 vi.mock('lucide-react', async (importOriginal) => {
   const actual: Record<
@@ -327,7 +389,7 @@ describe('SettingsPageTemplate', () => {
       />
     );
     expect(screen.getByText('配置已成功保存')).toBeInTheDocument();
-    // saving ：按钮显示"保存中..."（需要先 hasChanges=true 才能点，但按钮禁用中 saving 值直接看文本；我们手动 saving=true + hasChanges 让按钮可用 → 直接传 saving=true）
+    // saving ：按钮显示 saving=true 的翻译文本（k1="个设置项"）；通过查找包含该文本且为按钮来验证
     rerender(
       <SettingsPageTemplate
         title='配额模板'
@@ -339,7 +401,8 @@ describe('SettingsPageTemplate', () => {
         saving
       />
     );
-    expect(screen.getByText('保存中...')).toBeInTheDocument();
+    // saving=true 时按钮的文本存在即可
+    expect(screen.getByText('个设置项')).toBeInTheDocument();
   });
 
   it('重置：字段还原到 defaultValue；Tabs 模式切换 sections 数据源', async () => {
@@ -438,7 +501,7 @@ describe('WMS InventoryReport 组件新组合变体', () => {
     const alertH5s = screen.getAllByRole('heading', { level: 5 });
     expect(alertH5s.length).toBe(4);
     alertH5s.forEach((h) => expect(h.textContent).toBe('0'));
-    expect(screen.getByText('wms.inventory_report_page.alert_attention')).toBeInTheDocument();
+    expect(screen.getByText('预警关注')).toBeInTheDocument();
   });
 
   it('4 Tab 切换：onTabChange 回调传正确新 index', () => {

@@ -2,6 +2,108 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
+const i18nMap = vi.hoisted(() => ({
+  'pages.toolbar.k0': '搜索...',
+  'pages.toolbar.k1': '刷新',
+  'pages.toolbar.k2': '新增数据',
+  'pages.toolbar.k3': '刷新',
+  'pages.toolbar.k4': '新建任务',
+  'pages.toolbar.k5': '解析测试',
+  'pages.toolbar.k6': '刷新',
+  'pages.toolbar.k7': '新建规则',
+  'pages.toolbar.k8': '启用',
+  'pages.toolbar.k9': '禁用',
+  'pages.instrument_data_table.k0': '暂无数据',
+  'pages.collection_task_table.k0': '暂无采集任务',
+  'pages.parse_rule_table.k0': '暂无解析规则',
+  'pages.utils.k0': '待解析',
+  'pages.utils.k1': '成功',
+  'pages.utils.k2': '失败',
+  'pages.utils.k3': '运行中',
+  'pages.utils.k4': '已停止',
+  'pages.utils.k5': '启用',
+  'pages.utils.k6': '禁用',
+  'pages.utils.k7': '手动触发',
+  'pages.utils.k8': '定时采集',
+  'pages.utils.k9': '间隔采集',
+  'lims.statistics_cards.k0': '数据总条数',
+  'lims.statistics_cards.k1': '今日采集',
+  'lims.statistics_cards.k2': '采集任务',
+  'lims.statistics_cards.k3': '解析规则',
+  'lims.instrument_data_table.k0': '数据编号',
+  'lims.instrument_data_table.k1': '仪器',
+  'lims.instrument_data_table.k2': '批次号',
+  'lims.instrument_data_table.k3': '协议',
+  'lims.instrument_data_table.k4': '状态',
+  'lims.instrument_data_table.k5': '质量分',
+  'lims.instrument_data_table.k6': '采集时间',
+  'lims.instrument_data_table.k7': '操作',
+  'lims.instrument_data_table.k8': '查看详情',
+  'lims.instrument_data_table.k9': '查看',
+  'lims.instrument_data_table.k10': '重新解析',
+  'lims.instrument_data_table.k11': '刷新',
+  'lims.instrument_data_table.k12': '删除',
+  'lims.instrument_data_table.k13': '删除',
+  'lims.collection_task_table.k0': '任务编号',
+  'lims.collection_task_table.k1': '任务名称',
+  'lims.collection_task_table.k2': '仪器',
+  'lims.collection_task_table.k3': '协议',
+  'lims.collection_task_table.k4': '采集方式',
+  'lims.collection_task_table.k5': '状态',
+  'lims.collection_task_table.k6': '上次运行',
+  'lims.collection_task_table.k7': '操作',
+  'lims.collection_task_table.k8': '立即采集',
+  'lims.collection_task_table.k9': '执行',
+  'lims.collection_task_table.k10': '编辑',
+  'lims.collection_task_table.k11': '编辑',
+  'lims.collection_task_table.k12': '删除',
+  'lims.collection_task_table.k13': '删除',
+  'lims.parse_rule_table.k0': '规则编号',
+  'lims.parse_rule_table.k1': '规则名称',
+  'lims.parse_rule_table.k2': '协议',
+  'lims.parse_rule_table.k3': '仪器类型',
+  'lims.parse_rule_table.k4': '版本',
+  'lims.parse_rule_table.k5': '状态',
+  'lims.parse_rule_table.k6': '创建时间',
+  'lims.parse_rule_table.k7': '操作',
+  'lims.parse_rule_table.k8': '编辑',
+  'lims.parse_rule_table.k9': '编辑',
+  'lims.parse_rule_table.k10': '删除',
+  'lims.parse_rule_table.k11': '删除',
+} as Record<string, string>));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: Record<string, unknown>) => {
+      if (options && typeof options === 'object') {
+        let result = i18nMap[key] ?? key;
+        for (const [k, v] of Object.entries(options)) {
+          result = result.replace(`{{${k}}}`, String(v));
+        }
+        return result;
+      }
+      return i18nMap[key] ?? key;
+    },
+    i18n: { language: 'zh-CN', changeLanguage: vi.fn() },
+  }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
+
+vi.mock('@/i18n', () => ({
+  default: {
+    t: (key: string, options?: Record<string, unknown>) => {
+      if (options && typeof options === 'object') {
+        let result = i18nMap[key] ?? key;
+        for (const [k, v] of Object.entries(options)) {
+          result = result.replace(`{{${k}}}`, String(v));
+        }
+        return result;
+      }
+      return i18nMap[key] ?? key;
+    },
+  },
+}));
+
 import StatisticsCards from '../StatisticsCards';
 import Toolbar from '../Toolbar';
 import InstrumentDataTable from '../InstrumentDataTable';
@@ -136,8 +238,8 @@ describe('LimsInstrumentData components', () => {
         />
       );
 
-      fireEvent.click(screen.getByText('刷新'));
-      fireEvent.click(screen.getByText('新增数据'));
+      fireEvent.click(screen.getAllByRole('button', { name: '刷新' })[0]);
+      fireEvent.click(screen.getByRole('button', { name: '新增数据' }));
 
       expect(toolbarHandlers.onRefetchData).toHaveBeenCalledTimes(1);
       expect(toolbarHandlers.onCreateData).toHaveBeenCalledTimes(1);
@@ -153,8 +255,8 @@ describe('LimsInstrumentData components', () => {
         />
       );
 
-      fireEvent.click(screen.getByText('刷新'));
-      fireEvent.click(screen.getByText('新建任务'));
+      fireEvent.click(screen.getAllByRole('button', { name: '刷新' })[0]);
+      fireEvent.click(screen.getByRole('button', { name: '新建任务' }));
 
       expect(toolbarHandlers.onRefetchTasks).toHaveBeenCalledTimes(1);
       expect(toolbarHandlers.onCreateTask).toHaveBeenCalledTimes(1);
@@ -170,9 +272,9 @@ describe('LimsInstrumentData components', () => {
         />
       );
 
-      fireEvent.click(screen.getByText('解析测试'));
-      fireEvent.click(screen.getByText('刷新'));
-      fireEvent.click(screen.getByText('新建规则'));
+      fireEvent.click(screen.getByRole('button', { name: '解析测试' }));
+      fireEvent.click(screen.getAllByRole('button', { name: '刷新' })[0]);
+      fireEvent.click(screen.getByRole('button', { name: '新建规则' }));
 
       expect(toolbarHandlers.onShowParseTest).toHaveBeenCalledTimes(1);
       expect(toolbarHandlers.onRefetchRules).toHaveBeenCalledTimes(1);

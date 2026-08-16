@@ -48,16 +48,152 @@ import {
 } from '@/components/templates/SettingsPageTemplate';
 
 // ========== 全局 mock（同 V82-2c 模板，保持一致） ==========
-vi.mock('react-i18next', async (importOriginal) => {
-  const actual: Record<string, unknown> = await importOriginal();
-  return {
-    ...actual,
-    useTranslation: () => ({
-      t: (key: string, options?: Record<string, unknown>) =>
-        options ? `${key}:${Object.values(options).join(',')}` : key,
-    }),
+const i18nMap = vi.hoisted(() => {
+  const base: Record<string, string> = {
+    'templates.dashboard_template.k0': '数据总览',
+    'templates.dashboard_template.k1': '同比',
+    'templates.dashboard_template.k2': '环比',
+    'templates.dashboard_template.k3': '导出',
+    'templates.dashboard_template.k4': '刷新',
+    'templates.stats_page_template.k0': '导出',
+    'templates.stats_page_template.k1': '搜索...',
+    'templates.stats_page_template.k2': '时间范围',
+    'templates.stats_page_template.k3': '刷新',
+    'templates.stats_page_template.k4': '刷新',
+    'components.stats_page_template.k0': '图表',
+    'components.stats_page_template.k1': '搜索...',
+    'components.stats_page_template.k2': '导出',
+    'templates.page_header.k0': '搜索',
+    'templates.page_header.k1': '搜索...',
+    'templates.page_header.k2': '刷新',
+    'templates.page_header.k3': '刷新',
+    'templates.list_search_bar.k0': '刷新',
+    'templates.list_search_bar.k1': '刷新',
+    'templates.gis_map_template.k0': '矢量地图',
+    'templates.gis_map_template.k1': '卫星影像',
+    'templates.gis_map_template.k2': '标记点',
+    'templates.gis_map_template.k3': '聚类点',
+    'templates.gis_map_template.k4': '电子围栏',
+    'templates.gis_map_template.k5': '轨迹线',
+    'templates.gis_map_template.k6': '搜索',
+    'templates.gis_map_template.k7': '搜索',
+    'templates.gis_map_template.k8': '图层',
+    'templates.gis_map_template.k9': '图层',
+    'templates.gis_map_template.k10': '放大',
+    'templates.gis_map_template.k11': '放大',
+    'templates.gis_map_template.k12': '全屏',
+    'templates.gis_map_template.k13': '退出全屏',
+    'templates.gis_map_template.k14': '全屏切换',
+    'templates.gis_map_template.k15': '播放轨迹',
+    'templates.gis_map_template.k16': '播放',
+    'templates.gis_map_template.k17': '暂停轨迹',
+    'templates.gis_map_template.k18': '暂停',
+    'templates.gis_map_template.k19': '重置轨迹',
+    'templates.gis_map_template.k20': '重置',
+    'templates.gis_map_template.k21': '清除轨迹',
+    'templates.gis_map_template.k22': '清除',
+    'templates.gis_map_template.k23': '重置',
+    'templates.gis_map_template.k24': '上一帧',
+    'templates.gis_map_template.k25': '下一帧',
+    'templates.gis_map_template.k26': '搜索',
+    'templates.gis_map_template.k27': '搜索',
+    'templates.gis_map_template.k28': '图层',
+    'templates.gis_map_template.k29': '图层',
+    'templates.gis_map_template.k30': '标记',
+    'templates.gis_map_template.k31': '标记',
+    'templates.settings_page_template.k0': '保存设置',
+    'templates.settings_page_template.k1': '重置',
+    'templates.settings_page_template.k2': '基础设置',
+    'templates.settings_page_template.k3': '权限设置',
+    'templates.settings_page_template.k4': '保存',
+    'templates.settings_page_template.k5': '取消',
+    'templates.card_list_template.k3': '刷新',
+    'templates.card_list_template.k4': '刷新',
+    'templates.form_page_template.k2': '重置',
+    'templates.list_page_template.k30': '刷新',
+    'templates.list_page_template.k31': '刷新',
+    'components.dashboard_template.k4': '刷新',
+    'components.gis_map_template.k0': '卫星地图',
+    'components.gis_map_template.k1': '矢量地图',
+    'components.gis_map_template.k2': '标记点',
+    'components.gis_map_template.k3': '标记簇',
+    'components.gis_map_template.k4': '围栏',
+    'components.gis_map_template.k5': '轨迹',
+    'components.gis_map_template.k32': '搜索地点、设备或围栏...',
+    'components.gis_map_template.k33': '图层管理',
+    'components.gis_map_template.k34': '底图',
+    'components.gis_map_template.k35': '业务图层',
+    'components.gis_map_template.k36': '轨迹播放',
+    'components.gis_map_template.k37': '绘图',
+    'components.gis_map_template.k6': '放大',
+    'components.gis_map_template.k7': '放大',
+    'components.gis_map_template.k8': '缩小',
+    'components.gis_map_template.k9': '缩小',
+    'components.gis_map_template.k10': '定位',
+    'components.gis_map_template.k11': '定位',
+    'components.gis_map_template.k12': '全屏',
+    'components.gis_map_template.k13': '退出全屏',
+    'components.gis_map_template.k14': '全屏切换',
+    'components.gis_map_template.k15': '播放',
+    'components.gis_map_template.k16': '播放',
+    'components.gis_map_template.k17': '暂停',
+    'components.gis_map_template.k18': '暂停',
+    'components.gis_map_template.k19': '重置',
+    'components.gis_map_template.k20': '重置',
+    'components.gis_map_template.k21': '清除',
+    'components.gis_map_template.k22': '清除',
+    'components.gis_map_template.k23': '重置',
+    'components.gis_map_template.k24': '上一帧',
+    'components.gis_map_template.k25': '下一帧',
+    'components.gis_map_template.k26': '搜索',
+    'components.gis_map_template.k27': '搜索',
+    'components.gis_map_template.k28': '图层',
+    'components.gis_map_template.k29': '图层',
+    'components.gis_map_template.k30': '轨迹',
+    'components.gis_map_template.k31': '轨迹',
+    'components.layer_panel.k0': '图层',
+    'components.layer_manager.k0': '图层',
+    'components.crud_page.k23': '搜索',
+    'components.crud_page.k26': '导出',
+    'components.list_page_template.k2': '搜索',
+    'components.export_button.k0': '导出',
+    'components.bff_data_table.k6': '刷新',
+    'components.bff_data_table.k7': '刷新',
   };
+  return base;
 });
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: Record<string, unknown>) => {
+      if (options && typeof options === 'object') {
+        let result = i18nMap[key] ?? key;
+        for (const [k, v] of Object.entries(options)) {
+          result = result.replace(`{{${k}}}`, String(v));
+        }
+        return result;
+      }
+      return i18nMap[key] ?? key;
+    },
+    i18n: { language: 'zh-CN', changeLanguage: vi.fn() },
+  }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
+
+vi.mock('@/i18n', () => ({
+  default: {
+    t: (key: string, options?: Record<string, unknown>) => {
+      if (options && typeof options === 'object') {
+        let result = i18nMap[key] ?? key;
+        for (const [k, v] of Object.entries(options)) {
+          result = result.replace(`{{${k}}}`, String(v));
+        }
+        return result;
+      }
+      return i18nMap[key] ?? key;
+    },
+  },
+}));
 
 // lucide-react：所有用到的图标 Mock 为 data-testid svg
 vi.mock('lucide-react', async (importOriginal) => {
@@ -815,10 +951,10 @@ describe('StatsPageTemplate · BI 统计报表页', () => {
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(onSearchSubmit).toHaveBeenCalledTimes(1);
     // 导出
-    fireEvent.click(screen.getByRole('button', { name: /导出/ }));
+    fireEvent.click(screen.getAllByRole('button', { name: /导出/ })[0]);
     expect(onExport).toHaveBeenCalledTimes(1);
     // 刷新
-    fireEvent.click(screen.getByRole('button', { name: '刷新' }));
+    fireEvent.click(screen.getAllByRole('button', { name: '刷新' })[0]);
     expect(onRefresh).toHaveBeenCalledTimes(1);
     // Tab 切换
     fireEvent.click(screen.getByRole('tab', { name: /维度下钻/ }));

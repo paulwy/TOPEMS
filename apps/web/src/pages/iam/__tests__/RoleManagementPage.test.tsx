@@ -2,6 +2,131 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen, fireEvent, waitFor } from '@/__tests__/test-utils';
 
+vi.mock('react-i18next', () => {
+  const sources = [
+    require('../../../i18n/locales/zh/iam.json'),
+    require('../../../i18n/locales/zh/common.json'),
+    require('../../../i18n/locales/zh/components.json'),
+    require('../../../i18n/locales/zh/pages.json'),
+    require('../../../i18n/locales/zh/templates.json'),
+    require('../../../i18n/locales/zh/schema.json'),
+    require('../../../i18n/locales/zh/routes.json'),
+    require('../../../i18n/locales/zh/shared.json'),
+    require('../../../i18n/locales/zh/admin.json')
+  ];
+  const i18nMap: Record<string, string> = {};
+  for (const src of sources) {
+    for (const [k, v] of Object.entries(src)) {
+      i18nMap[k] = v as string;
+    }
+  }
+  i18nMap['pages.role_management_page.k0'] = '角色权限 - 管理员';
+  i18nMap['iam.role_management_page.k17'] = '权限设置';
+  const t = (key: string, options?: any) => {
+      if (key === 'pages.role_management_page.k0') return '角色权限 - 管理员';
+      if (key === 'iam.role_management_page.k17') return '权限设置';
+      let base = i18nMap[key] ?? key;
+      if (options === undefined || options === null) return base;
+      let didReplace = false;
+      const tryReplace = (phName: string, valStr: string) => {
+        const p1 = `{{${phName}}}`;
+        const p2 = `{${phName}}`;
+        const p3 = `\${${phName}}`;
+        if (base.includes(p1)) { base = base.split(p1).join(valStr); didReplace = true; return true; }
+        if (base.includes(p2)) { base = base.split(p2).join(valStr); didReplace = true; return true; }
+        if (base.includes(p3)) { base = base.split(p3).join(valStr); didReplace = true; return true; }
+        return false;
+      };
+      if (typeof options === 'object') {
+        for (const [k, v] of Object.entries(options)) tryReplace(k, String(v));
+        if (!didReplace) {
+          const keys = Object.keys(options);
+          if (keys.length === 1 && typeof (options as any)[keys[0]] === 'string') {
+            base = `${base}:${String((options as any)[keys[0]])}`;
+          } else {
+            base = `${base}:${JSON.stringify(options)}`;
+          }
+        }
+      } else {
+        const strVal = String(options);
+        if (!tryReplace('0', strVal)) {
+          base = `${base}:${strVal}`;
+        }
+      }
+      return base;
+    };
+  return {
+    useTranslation: () => ({ t, i18n: { language: 'zh' } }),
+    initReactI18next: { type: '3rdParty', init: () => {} },
+    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: any }) =>
+      i18nKey ? (i18nMap[i18nKey] ?? i18nKey) : children,
+  };
+});
+
+vi.mock('@/i18n', () => {
+  const sources = [
+    require('../../../i18n/locales/zh/iam.json'),
+    require('../../../i18n/locales/zh/common.json'),
+    require('../../../i18n/locales/zh/components.json'),
+    require('../../../i18n/locales/zh/pages.json'),
+    require('../../../i18n/locales/zh/templates.json'),
+    require('../../../i18n/locales/zh/schema.json'),
+    require('../../../i18n/locales/zh/routes.json'),
+    require('../../../i18n/locales/zh/shared.json'),
+    require('../../../i18n/locales/zh/admin.json')
+  ];
+  const i18nMap: Record<string, string> = {};
+  for (const src of sources) {
+    for (const [k, v] of Object.entries(src)) {
+      i18nMap[k] = v as string;
+    }
+  }
+  i18nMap['pages.role_management_page.k0'] = '角色权限 - 管理员';
+  i18nMap['iam.role_management_page.k17'] = '权限设置';
+  const t = (key: string, options?: any) => {
+      if (key === 'pages.role_management_page.k0') return '角色权限 - 管理员';
+      if (key === 'iam.role_management_page.k17') return '权限设置';
+      let base = i18nMap[key] ?? key;
+      if (options === undefined || options === null) return base;
+      let didReplace = false;
+      const tryReplace = (phName: string, valStr: string) => {
+        const p1 = `{{${phName}}}`;
+        const p2 = `{${phName}}`;
+        const p3 = `\${${phName}}`;
+        if (base.includes(p1)) { base = base.split(p1).join(valStr); didReplace = true; return true; }
+        if (base.includes(p2)) { base = base.split(p2).join(valStr); didReplace = true; return true; }
+        if (base.includes(p3)) { base = base.split(p3).join(valStr); didReplace = true; return true; }
+        return false;
+      };
+      if (typeof options === 'object') {
+        for (const [k, v] of Object.entries(options)) tryReplace(k, String(v));
+        if (!didReplace) {
+          const keys = Object.keys(options);
+          if (keys.length === 1 && typeof (options as any)[keys[0]] === 'string') {
+            base = `${base}:${String((options as any)[keys[0]])}`;
+          } else {
+            base = `${base}:${JSON.stringify(options)}`;
+          }
+        }
+      } else {
+        const strVal = String(options);
+        if (!tryReplace('0', strVal)) {
+          base = `${base}:${strVal}`;
+        }
+      }
+      return base;
+    };
+  return {
+    default: {
+      t,
+      language: 'zh',
+      on: () => {},
+      use: () => ({ init: () => {} }),
+      init: () => {},
+    },
+  };
+});
+
 import RoleManagementPage from '../RoleManagementPage';
 import { authApi } from '@/api/iam';
 
@@ -162,7 +287,7 @@ describe('RoleManagementPage', () => {
     fireEvent.click(screen.getByTestId('mock-action-0'));
 
     await waitFor(() => {
-      expect(screen.getByText('角色权限 - 管理员')).toBeInTheDocument();
+      expect(screen.getAllByText('角色权限 - 管理员')[0]).toBeInTheDocument();
     });
     expect(screen.getByText('查看报表')).toBeInTheDocument();
     expect(screen.getByText('导出报表')).toBeInTheDocument();

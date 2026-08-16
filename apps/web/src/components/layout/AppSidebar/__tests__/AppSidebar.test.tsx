@@ -6,6 +6,51 @@ import { renderWithProviders } from '@/__tests__/test-utils';
 
 import { AppSidebar } from '../AppSidebar';
 
+const { i18nMap, translate } = vi.hoisted(() => {
+  const i18nMap: Record<string, string> = {
+    'shared.app_sidebar.k0': '主导航',
+    'shared.app_sidebar.k1': '展开',
+    'shared.app_sidebar.k2': '收起',
+  };
+
+  const translate = (key: string, options?: Record<string, unknown>): string => {
+    if (i18nMap[key]) {
+      let result = i18nMap[key];
+      if (options) {
+        for (const [k, v] of Object.entries(options)) {
+          result = result.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), String(v));
+        }
+      }
+      return result;
+    }
+    if (!options) return key;
+    return `${key}:${Object.values(options).join(',')}`;
+  };
+
+  return { i18nMap, translate };
+});
+
+vi.mock('react-i18next', () => ({
+  useTranslation: (ns?: string) => ({
+    t: (key: string, options?: Record<string, unknown>) => translate(key, options),
+    i18n: { language: 'zh-CN', changeLanguage: vi.fn(), exists: (k: string) => !!i18nMap[k] },
+    ready: true,
+  }),
+  withTranslation: () => (Component: any) => Component,
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+  Trans: ({ i18nKey, children }: { i18nKey?: string; children?: any }) =>
+    i18nKey ? translate(i18nKey) : children,
+}));
+
+vi.mock('@/i18n', () => ({
+  default: {
+    t: (key: string, options?: Record<string, unknown>) => translate(key, options),
+    language: 'zh-CN',
+    changeLanguage: vi.fn(),
+    exists: (key: string) => !!i18nMap[key],
+  },
+}));
+
 const mockNavigate = vi.hoisted(() => vi.fn());
 
 vi.mock('react-router-dom', async () => {

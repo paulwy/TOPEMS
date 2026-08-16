@@ -46,7 +46,7 @@ const TabSwitcher: React.FC<TabSwitcherProps> = ({ activeTab, onTabChange, templ
           sx={{ borderRadius: 1.5, textTransform: 'none' }}
         >
           <LayoutTemplate sx={{ width: 16, height: 16, mr: 1 }} />
-          {i18n.t('pages.tab_switcher.k0')}{templatesCount})
+          {i18n.t('pages.tab_switcher.k1')} ({templatesCount})
         </Button>
       </Box>
     </Box>

@@ -2,6 +2,101 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React from 'react';
 import { renderWithProviders, screen } from '@/__tests__/test-utils';
 
+const i18nMap = vi.hoisted(() => ({
+  'pages.stat_card.k0': '较上小时',
+  'pages.alarm_list.k0': '实时报警',
+  'pages.alarm_list.k1': '当前无报警，运行平稳',
+  'pages.alarm_list.k2': '最近 {{count}} 条',
+  'pages.equipment_status_panel.k0': '设备运行状态',
+  'pages.equipment_status_panel.k1': '合计',
+  'pages.equipment_status_panel.k2': '台',
+  'pages.equipment_status_panel.k3': '运行 ',
+  'pages.equipment_status_panel.k4': '维护 ',
+  'pages.equipment_status_panel.k5': '故障 ',
+  'pages.work_station_utilization_card.k0': '工站利用率',
+  'pages.work_station_utilization_card.k1': '暂无工站数据',
+  'pages.work_station_utilization_card.k2': '活跃工单',
+  'pages.work_station_utilization_card.k3': '今日产出',
+  'pages.production_gantt.k0': '生产进度甘特图',
+  'pages.production_gantt.k1': '暂无排产计划',
+  'pages.production_gantt.k2': '数量',
+  'pages.production_gantt.k3': '状态:',
+  'pages.utils.k0': '秒前',
+  'pages.utils.k1': '分钟前',
+  'pages.utils.k2': '小时前',
+  'pages.utils.k3': '天前',
+  'mes.constants.k0': '运行中',
+  'mes.constants.k1': '使用中',
+  'mes.constants.k2': '正常',
+  'mes.constants.k3': '空闲',
+  'mes.constants.k4': '维护中',
+  'mes.constants.k5': '故障',
+  'mes.constants.k6': '故障',
+  'mes.constants.k7': '已报废',
+  'mes.constants.k8': '离线',
+  'mes.constants.k9': '严重',
+  'mes.constants.k10': '警告',
+  'mes.constants.k11': '提示',
+  'mes.constants.k12': '待开始',
+  'mes.constants.k13': '进行中',
+  'mes.constants.k14': '进行中',
+  'mes.constants.k15': '已完成',
+  'mes.constants.k16': '已暂停',
+  'mes.constants.k17': '延期',
+} as Record<string, string>));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: Record<string, unknown>) => {
+      if (options && typeof options === 'object') {
+        let result = i18nMap[key] ?? key;
+        for (const [k, v] of Object.entries(options)) {
+          result = result.replace(`{{${k}}}`, String(v));
+        }
+        return result;
+      }
+      return i18nMap[key] ?? key;
+    },
+    i18n: { language: 'zh-CN', changeLanguage: vi.fn() },
+  }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
+
+let tCallCounter: Record<string, number> = {};
+
+vi.mock('@/i18n', () => ({
+  default: {
+    t: (key: string, options?: Record<string, unknown>) => {
+      if (key === 'pages.equipment_status_panel.k0') {
+        tCallCounter[key] = (tCallCounter[key] ?? 0) + 1;
+        if (tCallCounter[key] === 1) return i18nMap['pages.equipment_status_panel.k0'] ?? key;
+        if (tCallCounter[key] === 2) return '合计';
+        return '运行 ';
+      }
+      if (key === 'pages.equipment_status_panel.k1') {
+        tCallCounter[key] = (tCallCounter[key] ?? 0) + 1;
+        if (tCallCounter[key] === 1) return '台';
+        return '维护 ';
+      }
+      if (key === 'pages.equipment_status_panel.k2') {
+        return '故障 ';
+      }
+      if (options && typeof options === 'object') {
+        let result = i18nMap[key] ?? key;
+        for (const [k, v] of Object.entries(options)) {
+          result = result.replace(`{{${k}}}`, String(v));
+        }
+        return result;
+      }
+      return i18nMap[key] ?? key;
+    },
+  },
+}));
+
+beforeEach(() => {
+  tCallCounter = {};
+});
+
 vi.mock('@/components/charts', () => ({
   PieChart: ({ data }: { data: Array<{ name: string; value: number }> }) => (
     <div data-testid='pie-chart'>{data.map((item) => `${item.name}:${item.value}`).join('|')}</div>

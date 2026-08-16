@@ -2,6 +2,110 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
+const i18nMap = vi.hoisted(() => {
+  const base: Record<string, string> = {
+    'pages.report_header.k0': '报表中心',
+    'pages.report_header.k1': '生成报表',
+    'pages.search_filter_bar.k0': '全部模块',
+    'pages.search_filter_bar.k1': '搜索...',
+    'pages.tab_switcher.k0': '报表列表',
+    'pages.tab_switcher.k1': '模板管理',
+    'pages.loading_state.k0': '加载中...',
+    'pages.report_stats.k0': '报表总数',
+    'pages.report_stats.rs_1': 'RS 模块',
+    'pages.report_stats.lims_2': 'LIMS 模块',
+    'pages.report_stats.qms_3': 'QMS 模块',
+    'pages.report_list.k0': '暂无报表',
+    'pages.report_list.k1': '生成第一个报表',
+    'pages.report_list.k2': '创建时间',
+    'pages.report_list.k3': '查看',
+    'pages.report_list.k4': '导出',
+    'pages.report_list.k5': '条数据',
+    'pages.report_list.k6': '列',
+    'pages.report_list.k7': '报表列表',
+    'pages.template_list.k0': '暂无模板',
+    'pages.template_list.k1': '禁用',
+    'pages.template_list.k2': '创建第一个模板',
+    'pages.template_list.k3': '暂无描述',
+    'pages.template_list.k4': '编辑',
+    'pages.template_list.k5': '新增模板',
+    'pages.template_list.k6': '禁用',
+    'pages.template_list.k7': '类型',
+    'pages.template_list.k8': '列数',
+    'pages.template_list.k9': '创建报表',
+    'pages.template_list.k10': '模板列表',
+    'pages.template_list.templatecode_0': '编码',
+    'pages.service_down_state.k0': '报表服务未启动',
+    'pages.service_down_state.k1': 'Report服务正在启动中，请稍后刷新页面，或者联系管理员启动服务。',
+    'pages.service_down_state.k2': '返回首页',
+    'pages.template_form_dialog.k0': '新增模板',
+    'pages.template_form_dialog.k1': '编辑模板',
+    'pages.template_form_dialog.k2': '分类',
+    'pages.template_form_dialog.k3': '描述',
+    'pages.template_form_dialog.k4': '输出格式',
+    'pages.template_form_dialog.k5': '输出格式',
+    'pages.template_form_dialog.k6': '启用状态',
+    'pages.template_form_dialog.k7': '数据源查询',
+    'pages.template_form_dialog.k8': '取消',
+    'pages.template_form_dialog.sql_8': '输入SQL查询语句',
+    'pages.template_form_dialog.json_9': '列配置 (JSON)',
+    'pages.template_form_dialog.k10': '创建',
+    'pages.template_form_dialog.k11': '保存',
+    'pages.template_form_dialog.templatecode_0': '模板编码',
+    'pages.template_form_dialog.reporttype_1': '报表类型',
+    'templates.editor.k0': '模板名称',
+  };
+  return base;
+});
+
+let templateListK2Counter: Record<string, number> = {};
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: Record<string, unknown>) => {
+      if (key === 'pages.template_list.k2') {
+        templateListK2Counter[key] = (templateListK2Counter[key] ?? 0) + 1;
+        if (templateListK2Counter[key] === 1) return '创建第一个模板';
+        return '启用';
+      }
+      if (options && typeof options === 'object') {
+        let result = i18nMap[key] ?? key;
+        for (const [k, v] of Object.entries(options)) {
+          result = result.replace(`{{${k}}}`, String(v));
+        }
+        return result;
+      }
+      return i18nMap[key] ?? key;
+    },
+    i18n: { language: 'zh-CN', changeLanguage: vi.fn() },
+  }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
+
+vi.mock('@/i18n', () => ({
+  default: {
+    t: (key: string, options?: Record<string, unknown>) => {
+      if (key === 'pages.template_list.k2') {
+        templateListK2Counter[key] = (templateListK2Counter[key] ?? 0) + 1;
+        if (templateListK2Counter[key] === 1) return '创建第一个模板';
+        return '启用';
+      }
+      if (options && typeof options === 'object') {
+        let result = i18nMap[key] ?? key;
+        for (const [k, v] of Object.entries(options)) {
+          result = result.replace(`{{${k}}}`, String(v));
+        }
+        return result;
+      }
+      return i18nMap[key] ?? key;
+    },
+  },
+}));
+
+beforeEach(() => {
+  templateListK2Counter = {};
+});
+
 import ReportHeader from '../ReportHeader';
 import SearchFilterBar from '../SearchFilterBar';
 import TabSwitcher from '../TabSwitcher';

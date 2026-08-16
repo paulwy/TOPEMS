@@ -39,7 +39,7 @@ const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
           size='small'
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder={i18n.t('pages.search_filter_bar.k0')}
+          placeholder={i18n.t('pages.search_filter_bar.k1')}
           sx={{
             pl: 5,
             '& .MuiOutlinedInput-root': {

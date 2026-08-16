@@ -33,7 +33,7 @@ export const ADMIN_PATHS = {
 // ---- 第二部分：路由配置（供路由系统使用） ----
 export const adminModuleConfig: RouteModuleConfig = {
   code: 'admin',
-  name: i18n.t('shared.config.k0'),
+  name: i18n.t('shared.config.admin_name'),
   icon: 'Settings',
   path: ADMIN_PATHS.root,
   source: 'core',

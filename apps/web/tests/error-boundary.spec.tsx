@@ -7,6 +7,60 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
+
+vi.mock('react-i18next', () => {
+  const sources = [
+    require('../src/i18n/locales/zh/common.json'),
+    require('../src/i18n/locales/zh/components.json'),
+    require('../src/i18n/locales/zh/pages.json'),
+    require('../src/i18n/locales/zh/templates.json'),
+    require('../src/i18n/locales/zh/shared.json')
+  ];
+  const i18nMap: Record<string, string> = {};
+  for (const src of sources) {
+    for (const [k, v] of Object.entries(src)) {
+      i18nMap[k] = v as string;
+    }
+  }
+  i18nMap['components.error_boundary.k0'] = '操作出现错误';
+  i18nMap['components.error_boundary.k1'] = '重试操作';
+  const t = (key: string) => i18nMap[key] ?? key;
+  return {
+    useTranslation: () => ({ t, i18n: { language: 'zh' } }),
+    initReactI18next: { type: '3rdParty', init: () => {} },
+    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: any }) =>
+      i18nKey ? (i18nMap[i18nKey] ?? i18nKey) : children,
+  };
+});
+
+vi.mock('@/i18n', () => {
+  const sources = [
+    require('../src/i18n/locales/zh/common.json'),
+    require('../src/i18n/locales/zh/components.json'),
+    require('../src/i18n/locales/zh/pages.json'),
+    require('../src/i18n/locales/zh/templates.json'),
+    require('../src/i18n/locales/zh/shared.json')
+  ];
+  const i18nMap: Record<string, string> = {};
+  for (const src of sources) {
+    for (const [k, v] of Object.entries(src)) {
+      i18nMap[k] = v as string;
+    }
+  }
+  i18nMap['components.error_boundary.k0'] = '操作出现错误';
+  i18nMap['components.error_boundary.k1'] = '重试操作';
+  const t = (key: string) => i18nMap[key] ?? key;
+  return {
+    default: {
+      t,
+      language: 'zh',
+      on: () => {},
+      use: () => ({ init: () => {} }),
+      init: () => {},
+    },
+  };
+});
+
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 
 vi.mock('@/utils/logger', () => ({

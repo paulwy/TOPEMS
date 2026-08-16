@@ -4,6 +4,15 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { useForm, type Control, type FieldValues } from 'react-hook-form';
 
+// 隔离 MUI x-date-pickers：避免在本测试（未使用 DatePicker）中被其顶层 import 拖进复杂依赖
+vi.mock('@mui/x-date-pickers/DatePicker', () => ({
+  DatePicker: () => null,
+}));
+vi.mock('@mui/x-date-pickers/LocalizationProvider', () => ({
+  LocalizationProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+vi.mock('@mui/x-date-pickers/AdapterDayjs', () => ({ AdapterDayjs: class {} }));
+
 import { FormTextField, FormSelectField, FormSwitchField, FormRadioGroup } from '../FormFields';
 import { renderWithProviders } from '@/__tests__/test-utils';
 

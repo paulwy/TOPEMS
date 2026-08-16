@@ -158,7 +158,16 @@ for (const p of OPTS.paths) {
   if (!fs.existsSync(abs)) continue;
   const stat = fs.statSync(abs);
   if (stat.isDirectory()) walk(abs);
-  else if (/\.[mc]?[tj]sx?$/.test(abs)) scanFile(abs);
+  else if (/\.[mc]?[tj]sx?$/.test(abs)) {
+    // 直接传文件路径时，仍然先跑一次 SKIP_EXT + SKIP_DIRS 过滤，
+    // 否则 pre-commit 把 *.test.tsx / __tests__/*.tsx 作为参数传入会被直接扫描，
+    // 造成 3000+ "硬编码中文 mock 翻译文本" 的误报。
+    const name = path.basename(abs);
+    if (SKIP_EXT.some(ext => name.endsWith(ext))) continue;
+    const parts = path.dirname(path.relative(WEB_SRC, abs) || name).split(/[\\/]/);
+    if (parts.some(d => SKIP_DIRS.includes(d))) continue;
+    scanFile(abs);
+  }
 }
 
 const sorted = Object.entries(stats).sort((a, b) => b[1] - a[1]);

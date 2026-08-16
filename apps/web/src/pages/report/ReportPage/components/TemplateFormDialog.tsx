@@ -53,14 +53,14 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
             <TextField
-              label={i18n.t('pages.template_form_dialog.k0')}
+              label={i18n.t('templates.editor.k0')}
               required
               value={templateFormData.name}
               onChange={(e) => onFormDataChange({ ...templateFormData, name: e.target.value })}
               fullWidth
             />
             <TextField
-              label={i18n.t('pages.template_form_dialog.k1')}
+              label={i18n.t('pages.template_form_dialog.templatecode_0')}
               required
               value={templateFormData.code}
               onChange={(e) => onFormDataChange({ ...templateFormData, code: e.target.value })}
@@ -70,11 +70,11 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
 
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
             <FormControl fullWidth>
-              {i18n.t('pages.template_form_dialog.k0')}
+              <InputLabel>{i18n.t('pages.template_form_dialog.reporttype_1')}</InputLabel>
               <Select
                 required
                 value={templateFormData.report_type}
-                label={i18n.t('pages.template_form_dialog.k2')}
+                label={i18n.t('pages.template_form_dialog.reporttype_1')}
                 onChange={(e) =>
                   onFormDataChange({
                     ...templateFormData,
@@ -172,7 +172,7 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
           variant='outlined'
           onClick={onClose}
         >
-          {i18n.t('pages.template_form_dialog.k3')}
+          {i18n.t('pages.template_form_dialog.k8')}
         </Button>
         <Button
           variant='contained'

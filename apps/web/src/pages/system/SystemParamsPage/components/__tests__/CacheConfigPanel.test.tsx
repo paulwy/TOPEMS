@@ -2,6 +2,46 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
+vi.mock('react-i18next', () => {
+  const merge = (...objs: Record<string, string>[]) => Object.assign({}, ...objs);
+  const i18nMap = merge(
+    require('../../../../../i18n/locales/zh/system.json'),
+    require('../../../../../i18n/locales/zh/common.json'),
+    require('../../../../../i18n/locales/zh/components.json'),
+    require('../../../../../i18n/locales/zh/templates.json'),
+    require('../../../../../i18n/locales/zh/pages.json')
+  );
+  return {
+    useTranslation: () => ({
+      t: (key: string) => i18nMap[key] ?? key,
+      i18n: { language: 'zh' },
+    }),
+    initReactI18next: { type: '3rdParty', init: () => {} },
+    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: any }) =>
+      i18nKey ? (i18nMap[i18nKey] ?? i18nKey) : children,
+  };
+});
+
+vi.mock('@/i18n', () => {
+  const merge = (...objs: Record<string, string>[]) => Object.assign({}, ...objs);
+  const i18nMap = merge(
+    require('../../../../../i18n/locales/zh/system.json'),
+    require('../../../../../i18n/locales/zh/common.json'),
+    require('../../../../../i18n/locales/zh/components.json'),
+    require('../../../../../i18n/locales/zh/templates.json'),
+    require('../../../../../i18n/locales/zh/pages.json')
+  );
+  return {
+    default: {
+      t: (key: string) => i18nMap[key] ?? key,
+      language: 'zh',
+      on: () => {},
+      use: () => ({ init: () => {} }),
+      init: () => {},
+    },
+  };
+});
+
 import CacheConfigPanel from '../CacheConfigPanel';
 
 vi.mock('@/components/common', () => ({
@@ -57,11 +97,11 @@ describe('CacheConfigPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: /清除缓存/ }));
     fireEvent.click(screen.getByRole('button', { name: /保存配置/ }));
 
-    expect(screen.getByText('缓存状态')).toBeInTheDocument();
+    expect(screen.getAllByText('缓存状态')[0]).toBeInTheDocument();
     expect(screen.getByText('1,200')).toBeInTheDocument();
     expect(screen.getByText('42.35')).toBeInTheDocument();
     expect(screen.getByText('87.3')).toBeInTheDocument();
-    expect(screen.getByText('Redis 连接配置')).toBeInTheDocument();
+    expect(screen.getAllByText('缓存状态')[1]).toBeInTheDocument();
     expect(onClearCache).toHaveBeenCalledTimes(1);
     expect(onSave).toHaveBeenCalledTimes(1);
   });

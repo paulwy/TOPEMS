@@ -4,6 +4,107 @@ import { renderWithProviders, screen, fireEvent, waitFor } from '@/__tests__/tes
 
 import AppListPage from '../AppListPage';
 
+vi.mock('react-i18next', () => {
+  const i18nMap: Record<string, string> = {
+    'lowcode.app_list_page.k0': '加载应用列表失败',
+    'lowcode.app_list_page.k1': '创建应用失败',
+    'lowcode.app_list_page.k2': '删除应用失败',
+    'lowcode.app_list_page.k3': '复制应用失败',
+    'lowcode.app_list_page.k4': '应用列表',
+    'lowcode.app_list_page.k5': '低代码应用管理',
+    'lowcode.app_list_page.k6': '应用名称',
+    'lowcode.app_list_page.k7': '编码',
+    'lowcode.app_list_page.k8': '状态',
+    'lowcode.app_list_page.k9': '版本',
+    'lowcode.app_list_page.k10': '更新时间',
+    'lowcode.app_list_page.k11': '操作',
+    'lowcode.app_list_page.k12': '复制',
+    'lowcode.app_list_page.k13': '复制',
+    'lowcode.app_list_page.k14': '删除',
+    'lowcode.app_list_page.k15': '删除',
+    'lowcode.app_list_page.k16': '新建应用',
+    'lowcode.app_list_page.k17': '应用名称',
+    'lowcode.app_list_page.k18': '应用编码',
+    'lowcode.app_list_page.k19': '应用唯一标识，创建后不可修改',
+    'lowcode.app_list_page.k20': '描述',
+    'lowcode.app_list_page.k21': '取消',
+    'lowcode.app_list_page.k22': '创建',
+    'lowcode.app_list_page.e1': '新建应用',
+    'lowcode.app_list_page.e2': '暂无应用，点击右上角新建',
+    'lowcode.app_list_page.r1': '创建中…',
+  };
+  const t = (key: string, vars?: Record<string, unknown>): string => {
+    let result = i18nMap[key] ?? key;
+    if (vars) {
+      Object.entries(vars).forEach(([k, v]) => {
+        result = result.replace(new RegExp(`{{${k}}}`, 'g'), String(v));
+      });
+    }
+    return result;
+  };
+  return {
+    useTranslation: (ns?: string | string[]) => ({
+      t,
+      i18n: {
+        changeLanguage: vi.fn(),
+        language: 'zh',
+      },
+    }),
+    initReactI18next: {
+      type: '3rdParty',
+      init: vi.fn(),
+    },
+    Trans: ({ children }: any) => children,
+  };
+});
+
+vi.mock('@/i18n', () => {
+  const i18nMap: Record<string, string> = {
+    'lowcode.app_list_page.k0': '加载应用列表失败',
+    'lowcode.app_list_page.k1': '创建应用失败',
+    'lowcode.app_list_page.k2': '删除应用失败',
+    'lowcode.app_list_page.k3': '复制应用失败',
+    'lowcode.app_list_page.k4': '应用列表',
+    'lowcode.app_list_page.k5': '低代码应用管理',
+    'lowcode.app_list_page.k6': '应用名称',
+    'lowcode.app_list_page.k7': '编码',
+    'lowcode.app_list_page.k8': '状态',
+    'lowcode.app_list_page.k9': '版本',
+    'lowcode.app_list_page.k10': '更新时间',
+    'lowcode.app_list_page.k11': '操作',
+    'lowcode.app_list_page.k12': '复制',
+    'lowcode.app_list_page.k13': '复制',
+    'lowcode.app_list_page.k14': '删除',
+    'lowcode.app_list_page.k15': '删除',
+    'lowcode.app_list_page.k16': '新建应用',
+    'lowcode.app_list_page.k17': '应用名称',
+    'lowcode.app_list_page.k18': '应用编码',
+    'lowcode.app_list_page.k19': '应用唯一标识，创建后不可修改',
+    'lowcode.app_list_page.k20': '描述',
+    'lowcode.app_list_page.k21': '取消',
+    'lowcode.app_list_page.k22': '创建',
+    'lowcode.app_list_page.e1': '新建应用',
+    'lowcode.app_list_page.e2': '暂无应用，点击右上角新建',
+    'lowcode.app_list_page.r1': '创建中…',
+  };
+  const t = (key: string, vars?: Record<string, unknown>): string => {
+    let result = i18nMap[key] ?? key;
+    if (vars) {
+      Object.entries(vars).forEach(([k, v]) => {
+        result = result.replace(new RegExp(`{{${k}}}`, 'g'), String(v));
+      });
+    }
+    return result;
+  };
+  return {
+    default: {
+      t,
+      language: 'zh',
+      changeLanguage: vi.fn(),
+    },
+  };
+});
+
 const mockList = vi.fn();
 const mockCreate = vi.fn();
 const mockRemove = vi.fn();

@@ -1239,7 +1239,7 @@ async fn query_status_counts(db: &PgPool, sql: &str) -> Vec<StatusCount> {
 }
 
 #[cfg(test)]
-mod tests {
+mod tests_calc {
     use super::*;
 
     // ---- calculate_average_progress ----

@@ -7,6 +7,46 @@ import { renderWithProviders } from '@/__tests__/test-utils';
 import NotificationBell from '../NotificationBell';
 import { useNotificationState } from '@/hooks/useNotificationState';
 
+const { tMock } = vi.hoisted(() => {
+  const i18nMap: Record<string, string> = {
+    'shared.notification_bell.k0': '通知',
+    'shared.notification_bell.k1': '有新通知',
+    'shared.notification_bell.k2': '未读通知',
+  };
+  const tMock = (key: string): string => i18nMap[key] || key;
+  return { tMock };
+});
+
+vi.mock('@/i18n', () => ({
+  default: {
+    t: tMock,
+    language: 'zh',
+    on: () => {},
+    off: () => {},
+    use: () => ({ init: () => {} }),
+    init: () => {},
+    changeLanguage: () => {},
+  },
+  SUPPORTED_LANGUAGES: [
+    { code: 'zh', name: '中文', flag: 'CN' },
+    { code: 'en', name: 'English', flag: 'US' },
+  ],
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: tMock,
+    i18n: {
+      changeLanguage: vi.fn(),
+    },
+  }),
+  initReactI18next: {
+    type: '3rdParty',
+    init: vi.fn(),
+  },
+  Trans: ({ children }: any) => children,
+}));
+
 vi.mock('@/hooks/useAuth', () => ({
   useAuth: vi.fn(() => ({
     user: { id: 'user-1' },

@@ -29,7 +29,7 @@ const ReportList: React.FC<ReportListProps> = ({
           variant='h6'
           sx={{ fontWeight: 600, color: 'grey.900' }}
         >
-          {i18n.t('pages.report_list.k0')}
+          {i18n.t('pages.report_list.k7')}
         </Typography>
       </Box>
       <Box
@@ -97,7 +97,7 @@ const ReportList: React.FC<ReportListProps> = ({
                       sx={{ borderRadius: '50%' }}
                     />
                     <Chip
-                      label={`${report.row_count}${i18n.t('pages.report_list.k0')}`}
+                      label={`${report.row_count} ${i18n.t('pages.report_list.k5')}`}
                       size='small'
                       sx={{
                         bgcolor: 'grey.100',
@@ -128,7 +128,7 @@ const ReportList: React.FC<ReportListProps> = ({
                       }}
                     >
                       <Calendar sx={{ width: 16, height: 16 }} />
-                      [i18n.t('pages.report_list.k2')]: {new Date(report.created_at).toLocaleDateString('zh-CN')}
+                      {i18n.t('pages.report_list.k2')}: {new Date(report.created_at).toLocaleDateString('zh-CN')}
                     </Box>
                     <Box
                       sx={{
@@ -148,7 +148,7 @@ const ReportList: React.FC<ReportListProps> = ({
                       }}
                     >
                       <Columns sx={{ width: 16, height: 16 }} />
-                      {report.config.columns.length} {i18n.t('pages.report_list.k0')}
+                      {report.config.columns.length} {i18n.t('pages.report_list.k6')}
                     </Box>
                   </Box>
                 </Box>
