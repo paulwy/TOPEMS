@@ -1,12 +1,12 @@
 {
   "version": "perm-matrix-gate@1.0.0",
-  "createdAt": "2026-08-15T23:46:40.612Z",
+  "createdAt": "2026-08-16T00:10:12.784Z",
   "runConfig": {
     "dryRun": true,
     "failFastThresholds": {
-      "R1": 1,
-      "R2": 1,
-      "R3": 1,
+      "R1": 0,
+      "R2": 0,
+      "R3": 0,
       "R4": null,
       "R5": null,
       "R6": null
@@ -35,7 +35,7 @@
     "R2": 12,
     "R3": 1018,
     "R4": 39,
-    "R5": 83,
+    "R5": 0,
     "R6": 15
   },
   "failures": [
@@ -2125,66 +2125,6 @@
       "msg": "[F→B MISMATCH] Frontend module 'wms' (apps/web/src/modules/wms/) exists, but NO backend require_permission() calls were found with module prefix = 'wms'. May be OK for publicly-open modules without permissions; otherwise audit whether backend middleware for module wms is missing checks."
     },
     {
-      "rule": "R5",
-      "level": "WARN",
-      "msg": "83 STATIC ORPHAN codes found in frontend PERMISSIONS: these keys are defined in config/permissions.ts BUT are NEVER referenced by (A) backend require_permission() AND (B) frontend nav/config requiredPermissions. Definition-only keys increase maintenance burden and mask real permissions lifecycle management; consider cleaning or marking reserved-for-future with TODO comments.",
-      "details": {
-        "count": 83,
-        "top50": [
-          "iam:dashboard:write",
-          "iam:dashboard:delete",
-          "iam:dashboard:approve",
-          "iam:dashboard:admin",
-          "hrm:read",
-          "hrm:write",
-          "hrm:delete",
-          "hrm:approve",
-          "hrm:admin",
-          "erp:dashboard:write",
-          "erp:dashboard:delete",
-          "erp:dashboard:approve",
-          "erp:dashboard:admin",
-          "pm:dashboard:delete",
-          "pm:dashboard:approve",
-          "pm:dashboard:admin",
-          "rs:read",
-          "rs:write",
-          "rs:delete",
-          "rs:approve",
-          "rs:admin",
-          "scm:read",
-          "scm:write",
-          "scm:delete",
-          "scm:approve",
-          "scm:admin",
-          "crm:dashboard:delete",
-          "crm:dashboard:approve",
-          "crm:dashboard:admin",
-          "ai:dashboard:write",
-          "ai:dashboard:delete",
-          "ai:dashboard:approve",
-          "gis:dashboard:write",
-          "gis:dashboard:delete",
-          "gis:dashboard:approve",
-          "gis:dashboard:admin",
-          "qms:dashboard:write",
-          "qms:dashboard:delete",
-          "qms:dashboard:approve",
-          "qms:dashboard:admin",
-          "ehs:dashboard:write",
-          "ehs:dashboard:delete",
-          "ehs:dashboard:approve",
-          "ehs:dashboard:admin",
-          "mes:read",
-          "mes:write",
-          "mes:delete",
-          "mes:approve",
-          "mes:admin",
-          "wms:read"
-        ]
-      }
-    },
-    {
       "rule": "R6",
       "level": "WARN",
       "file": "svc/plugin-registry/src/modules/plugin/mod.rs",
@@ -2305,156 +2245,5 @@
       "msg": "Backend code 'iam:anything' (action=anything) in module iam has NO frontend nav/config permission key with same module 'iam' + same action 'anything'. This can be OK if the UI feature is not exposed yet, but verify whether the matching permission field is MISSING in frontend iamModuleConfig / navTree entry."
     }
   ],
-  "orphanCodes": [
-    {
-      "code": "iam:dashboard:write"
-    },
-    {
-      "code": "iam:dashboard:delete"
-    },
-    {
-      "code": "iam:dashboard:approve"
-    },
-    {
-      "code": "iam:dashboard:admin"
-    },
-    {
-      "code": "hrm:read"
-    },
-    {
-      "code": "hrm:write"
-    },
-    {
-      "code": "hrm:delete"
-    },
-    {
-      "code": "hrm:approve"
-    },
-    {
-      "code": "hrm:admin"
-    },
-    {
-      "code": "erp:dashboard:write"
-    },
-    {
-      "code": "erp:dashboard:delete"
-    },
-    {
-      "code": "erp:dashboard:approve"
-    },
-    {
-      "code": "erp:dashboard:admin"
-    },
-    {
-      "code": "pm:dashboard:delete"
-    },
-    {
-      "code": "pm:dashboard:approve"
-    },
-    {
-      "code": "pm:dashboard:admin"
-    },
-    {
-      "code": "rs:read"
-    },
-    {
-      "code": "rs:write"
-    },
-    {
-      "code": "rs:delete"
-    },
-    {
-      "code": "rs:approve"
-    },
-    {
-      "code": "rs:admin"
-    },
-    {
-      "code": "scm:read"
-    },
-    {
-      "code": "scm:write"
-    },
-    {
-      "code": "scm:delete"
-    },
-    {
-      "code": "scm:approve"
-    },
-    {
-      "code": "scm:admin"
-    },
-    {
-      "code": "crm:dashboard:delete"
-    },
-    {
-      "code": "crm:dashboard:approve"
-    },
-    {
-      "code": "crm:dashboard:admin"
-    },
-    {
-      "code": "ai:dashboard:write"
-    },
-    {
-      "code": "ai:dashboard:delete"
-    },
-    {
-      "code": "ai:dashboard:approve"
-    },
-    {
-      "code": "gis:dashboard:write"
-    },
-    {
-      "code": "gis:dashboard:delete"
-    },
-    {
-      "code": "gis:dashboard:approve"
-    },
-    {
-      "code": "gis:dashboard:admin"
-    },
-    {
-      "code": "qms:dashboard:write"
-    },
-    {
-      "code": "qms:dashboard:delete"
-    },
-    {
-      "code": "qms:dashboard:approve"
-    },
-    {
-      "code": "qms:dashboard:admin"
-    },
-    {
-      "code": "ehs:dashboard:write"
-    },
-    {
-      "code": "ehs:dashboard:delete"
-    },
-    {
-      "code": "ehs:dashboard:approve"
-    },
-    {
-      "code": "ehs:dashboard:admin"
-    },
-    {
-      "code": "mes:read"
-    },
-    {
-      "code": "mes:write"
-    },
-    {
-      "code": "mes:delete"
-    },
-    {
-      "code": "mes:approve"
-    },
-    {
-      "code": "mes:admin"
-    },
-    {
-      "code": "wms:read"
-    }
-  ]
+  "orphanCodes": []
 }
