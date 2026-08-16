@@ -2323,4 +2323,335 @@ mod tests {
             condition: None,
         });
     }
+
+    // ===== enum as_str / from_str pure function tests =====
+
+    #[test]
+    fn decision_scenario_type_as_str_all_variants() {
+        assert_eq!(DecisionScenarioType::Investment.as_str(), "investment");
+        assert_eq!(DecisionScenarioType::Financing.as_str(), "financing");
+        assert_eq!(DecisionScenarioType::Operational.as_str(), "operational");
+        assert_eq!(DecisionScenarioType::Strategic.as_str(), "strategic");
+    }
+
+    #[test]
+    fn decision_scenario_type_from_str_all_variants() {
+        assert_eq!(
+            DecisionScenarioType::from_str("investment"),
+            DecisionScenarioType::Investment
+        );
+        assert_eq!(
+            DecisionScenarioType::from_str("financing"),
+            DecisionScenarioType::Financing
+        );
+        assert_eq!(
+            DecisionScenarioType::from_str("operational"),
+            DecisionScenarioType::Operational
+        );
+        assert_eq!(
+            DecisionScenarioType::from_str("strategic"),
+            DecisionScenarioType::Strategic
+        );
+    }
+
+    #[test]
+    fn decision_scenario_type_from_str_unknown_defaults_to_investment() {
+        assert_eq!(
+            DecisionScenarioType::from_str("unknown"),
+            DecisionScenarioType::Investment
+        );
+        assert_eq!(
+            DecisionScenarioType::from_str(""),
+            DecisionScenarioType::Investment
+        );
+    }
+
+    #[test]
+    fn decision_status_as_str_all_variants() {
+        assert_eq!(DecisionStatus::Draft.as_str(), "draft");
+        assert_eq!(DecisionStatus::Active.as_str(), "active");
+        assert_eq!(DecisionStatus::Evaluated.as_str(), "evaluated");
+        assert_eq!(DecisionStatus::Archived.as_str(), "archived");
+    }
+
+    #[test]
+    fn objective_type_as_str_all_variants() {
+        assert_eq!(ObjectiveType::Maximize.as_str(), "maximize");
+        assert_eq!(ObjectiveType::Minimize.as_str(), "minimize");
+        assert_eq!(ObjectiveType::Satisfy.as_str(), "satisfy");
+    }
+
+    #[test]
+    fn alert_condition_as_str_all_variants() {
+        assert_eq!(AlertCondition::Above.as_str(), "above");
+        assert_eq!(AlertCondition::Below.as_str(), "below");
+        assert_eq!(AlertCondition::Between.as_str(), "between");
+        assert_eq!(AlertCondition::Change.as_str(), "change");
+    }
+
+    #[test]
+    fn alert_condition_from_str_all_variants() {
+        assert_eq!(AlertCondition::from_str("above"), AlertCondition::Above);
+        assert_eq!(AlertCondition::from_str("below"), AlertCondition::Below);
+        assert_eq!(AlertCondition::from_str("between"), AlertCondition::Between);
+        assert_eq!(AlertCondition::from_str("change"), AlertCondition::Change);
+    }
+
+    #[test]
+    fn alert_condition_from_str_unknown_defaults_to_above() {
+        assert_eq!(AlertCondition::from_str("unknown"), AlertCondition::Above);
+        assert_eq!(AlertCondition::from_str(""), AlertCondition::Above);
+    }
+
+    #[test]
+    fn alert_severity_as_str_all_variants() {
+        assert_eq!(AlertSeverity::Low.as_str(), "low");
+        assert_eq!(AlertSeverity::Medium.as_str(), "medium");
+        assert_eq!(AlertSeverity::High.as_str(), "high");
+        assert_eq!(AlertSeverity::Critical.as_str(), "critical");
+    }
+
+    #[test]
+    fn alert_status_as_str_all_variants() {
+        assert_eq!(AlertStatus::Active.as_str(), "active");
+        assert_eq!(AlertStatus::Acknowledged.as_str(), "acknowledged");
+        assert_eq!(AlertStatus::Resolved.as_str(), "resolved");
+    }
+
+    #[test]
+    fn alert_channel_type_as_str_all_variants() {
+        assert_eq!(AlertChannelType::Email.as_str(), "email");
+        assert_eq!(AlertChannelType::Slack.as_str(), "slack");
+        assert_eq!(AlertChannelType::Webhook.as_str(), "webhook");
+        assert_eq!(AlertChannelType::Dashboard.as_str(), "dashboard");
+    }
+
+    #[test]
+    fn alert_channel_type_from_str_all_variants() {
+        assert_eq!(AlertChannelType::from_str("email"), AlertChannelType::Email);
+        assert_eq!(AlertChannelType::from_str("slack"), AlertChannelType::Slack);
+        assert_eq!(
+            AlertChannelType::from_str("webhook"),
+            AlertChannelType::Webhook
+        );
+        assert_eq!(
+            AlertChannelType::from_str("dashboard"),
+            AlertChannelType::Dashboard
+        );
+    }
+
+    #[test]
+    fn alert_channel_type_from_str_unknown_defaults_to_email() {
+        assert_eq!(
+            AlertChannelType::from_str("unknown"),
+            AlertChannelType::Email
+        );
+        assert_eq!(AlertChannelType::from_str(""), AlertChannelType::Email);
+    }
+
+    #[test]
+    fn schedule_task_type_as_str_all_variants() {
+        assert_eq!(ScheduleTaskType::Recurring.as_str(), "recurring");
+        assert_eq!(ScheduleTaskType::OneTime.as_str(), "one_time");
+        assert_eq!(ScheduleTaskType::EventDriven.as_str(), "event_driven");
+    }
+
+    #[test]
+    fn schedule_task_type_from_str_all_variants() {
+        assert_eq!(
+            ScheduleTaskType::from_str("recurring"),
+            ScheduleTaskType::Recurring
+        );
+        assert_eq!(
+            ScheduleTaskType::from_str("one_time"),
+            ScheduleTaskType::OneTime
+        );
+        assert_eq!(
+            ScheduleTaskType::from_str("event_driven"),
+            ScheduleTaskType::EventDriven
+        );
+    }
+
+    #[test]
+    fn schedule_task_type_from_str_unknown_defaults_to_recurring() {
+        assert_eq!(
+            ScheduleTaskType::from_str("unknown"),
+            ScheduleTaskType::Recurring
+        );
+        assert_eq!(ScheduleTaskType::from_str(""), ScheduleTaskType::Recurring);
+    }
+
+    #[test]
+    fn schedule_task_status_as_str_all_variants() {
+        assert_eq!(ScheduleTaskStatus::Pending.as_str(), "pending");
+        assert_eq!(ScheduleTaskStatus::Running.as_str(), "running");
+        assert_eq!(ScheduleTaskStatus::Paused.as_str(), "paused");
+        assert_eq!(ScheduleTaskStatus::Completed.as_str(), "completed");
+        assert_eq!(ScheduleTaskStatus::Failed.as_str(), "failed");
+    }
+
+    #[test]
+    fn schedule_execution_status_as_str_all_variants() {
+        assert_eq!(ScheduleExecutionStatus::Pending.as_str(), "pending");
+        assert_eq!(ScheduleExecutionStatus::Running.as_str(), "running");
+        assert_eq!(ScheduleExecutionStatus::Completed.as_str(), "completed");
+        assert_eq!(ScheduleExecutionStatus::Failed.as_str(), "failed");
+        assert_eq!(ScheduleExecutionStatus::Cancelled.as_str(), "cancelled");
+    }
+
+    // ===== business logic pure function tests =====
+
+    fn make_scenario(scenario_type: &str) -> DecisionScenario {
+        DecisionScenario {
+            id: Uuid::new_v4(),
+            name: "test".to_string(),
+            scenario_type: scenario_type.to_string(),
+            parameters: None,
+            objectives: None,
+            constraints: None,
+            status: "draft".to_string(),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        }
+    }
+
+    #[test]
+    fn generate_recommendation_investment_large_budget_high_confidence() {
+        let scenario = make_scenario("investment");
+        let params = serde_json::json!({"budget": 2_000_000.0});
+        let rec = DecisionEngine::generate_recommendation(&scenario, &params, 0.8);
+        assert!(rec.contains("大额投资"));
+    }
+
+    #[test]
+    fn generate_recommendation_investment_medium_budget() {
+        let scenario = make_scenario("investment");
+        let params = serde_json::json!({"budget": 200_000.0});
+        let rec = DecisionEngine::generate_recommendation(&scenario, &params, 0.5);
+        assert!(rec.contains("中等规模"));
+    }
+
+    #[test]
+    fn generate_recommendation_investment_small_budget() {
+        let scenario = make_scenario("investment");
+        let params = serde_json::json!({"budget": 50_000.0});
+        let rec = DecisionEngine::generate_recommendation(&scenario, &params, 0.5);
+        assert!(rec.contains("保守投资"));
+    }
+
+    #[test]
+    fn generate_recommendation_investment_no_budget() {
+        let scenario = make_scenario("investment");
+        let params = serde_json::json!({});
+        let rec = DecisionEngine::generate_recommendation(&scenario, &params, 0.5);
+        assert!(rec.contains("保守投资"));
+    }
+
+    #[test]
+    fn generate_recommendation_financing_large_amount() {
+        let scenario = make_scenario("financing");
+        let params = serde_json::json!({"amount": 6_000_000.0});
+        let rec = DecisionEngine::generate_recommendation(&scenario, &params, 0.5);
+        assert!(rec.contains("大规模融资"));
+    }
+
+    #[test]
+    fn generate_recommendation_financing_medium_amount() {
+        let scenario = make_scenario("financing");
+        let params = serde_json::json!({"amount": 600_000.0});
+        let rec = DecisionEngine::generate_recommendation(&scenario, &params, 0.5);
+        assert!(rec.contains("中等规模融资"));
+    }
+
+    #[test]
+    fn generate_recommendation_financing_small_amount() {
+        let scenario = make_scenario("financing");
+        let params = serde_json::json!({"amount": 100_000.0});
+        let rec = DecisionEngine::generate_recommendation(&scenario, &params, 0.5);
+        assert!(rec.contains("小规模融资"));
+    }
+
+    #[test]
+    fn generate_recommendation_operational() {
+        let scenario = make_scenario("operational");
+        let params = serde_json::json!({});
+        let rec = DecisionEngine::generate_recommendation(&scenario, &params, 0.5);
+        assert!(rec.contains("运营"));
+    }
+
+    #[test]
+    fn generate_recommendation_strategic() {
+        let scenario = make_scenario("strategic");
+        let params = serde_json::json!({});
+        let rec = DecisionEngine::generate_recommendation(&scenario, &params, 0.5);
+        assert!(rec.contains("战略"));
+    }
+
+    #[test]
+    fn generate_alternatives_returns_three_options() {
+        let scenario = make_scenario("investment");
+        let alts = DecisionEngine::generate_alternatives(&scenario, 0.8);
+        let arr = alts.as_array().unwrap();
+        assert_eq!(arr.len(), 3);
+        assert_eq!(arr[0]["action"], "方案A - 稳健策略");
+        assert_eq!(arr[1]["action"], "方案B - 平衡策略");
+        assert_eq!(arr[2]["action"], "方案C - 激进策略");
+    }
+
+    #[test]
+    fn generate_alternatives_scores_in_range() {
+        let scenario = make_scenario("investment");
+        let alts = DecisionEngine::generate_alternatives(&scenario, 0.5);
+        let arr = alts.as_array().unwrap();
+        for alt in arr {
+            let score = alt["score"].as_f64().unwrap();
+            assert!(score >= 0.0 && score <= 1.0);
+        }
+    }
+
+    #[test]
+    fn check_condition_above_true() {
+        assert!(AlertEngine::check_condition("above", 100.0, 50.0));
+    }
+
+    #[test]
+    fn check_condition_above_false_when_equal() {
+        assert!(!AlertEngine::check_condition("above", 50.0, 50.0));
+    }
+
+    #[test]
+    fn check_condition_below_true() {
+        assert!(AlertEngine::check_condition("below", 30.0, 50.0));
+    }
+
+    #[test]
+    fn check_condition_below_false_when_equal() {
+        assert!(!AlertEngine::check_condition("below", 50.0, 50.0));
+    }
+
+    #[test]
+    fn check_condition_between_true_when_close() {
+        assert!(AlertEngine::check_condition("between", 52.0, 50.0));
+    }
+
+    #[test]
+    fn check_condition_between_false_when_far() {
+        assert!(!AlertEngine::check_condition("between", 100.0, 50.0));
+    }
+
+    #[test]
+    fn check_condition_change_true_when_large_diff() {
+        assert!(AlertEngine::check_condition("change", 100.0, 50.0));
+    }
+
+    #[test]
+    fn check_condition_change_false_when_small_diff() {
+        assert!(!AlertEngine::check_condition("change", 51.0, 50.0));
+    }
+
+    #[test]
+    fn check_condition_unknown_returns_false() {
+        assert!(!AlertEngine::check_condition("unknown", 100.0, 50.0));
+        assert!(!AlertEngine::check_condition("", 100.0, 50.0));
+    }
 }

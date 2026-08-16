@@ -85,3 +85,57 @@ impl MdmEventService {
         );
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use topems_shared_event::event::MasterDataAction;
+
+    #[test]
+    fn new_returns_service_instance() {
+        let _svc = MdmEventService::new();
+    }
+
+    #[test]
+    fn service_is_cloneable() {
+        let svc = MdmEventService::new();
+        let _cloned = svc.clone();
+    }
+
+    #[tokio::test]
+    async fn publish_supplier_event_does_not_panic_on_create_action() {
+        // This exercises the event-building logic. Network publishes are best-effort
+        // and swallow errors, so this should not panic even without brokers.
+        let svc = MdmEventService::new();
+        let supplier_id = Uuid::new_v4();
+        // Use a short timeout to avoid hanging the test if Redis/RabbitMQ are unreachable.
+        let result = tokio::time::timeout(
+            std::time::Duration::from_millis(500),
+            svc.publish_supplier_event(
+                supplier_id,
+                "SUP-001",
+                "Acme Corp",
+                Some("Alice"),
+                Some("13800000000"),
+                Some("alice@acme.com"),
+                "active",
+                MasterDataAction::Created,
+                None,
+            ),
+        )
+        .await;
+        // We don't assert Ok/Err because the underlying publish is best-effort;
+        // the goal is to ensure the event-building code path executes without panicking.
+        assert!(result.is_ok(), "publish_supplier_event should not hang");
+    }
+
+    #[test]
+    fn master_data_action_variants_are_usable() {
+        // Smoke test that the action enum variants referenced by the service exist.
+        let _ = MasterDataAction::Created;
+        let _ = MasterDataAction::Updated;
+        let _ = MasterDataAction::Deleted;
+        let _ = MasterDataAction::Activated;
+        let _ = MasterDataAction::Deactivated;
+    }
+}

@@ -182,3 +182,128 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_permission_def() -> PermissionDef {
+        PermissionDef {
+            code: "scm:supplier:read".to_string(),
+            name: "查看供应商".to_string(),
+            resource_type: "supplier".to_string(),
+            action: "read".to_string(),
+        }
+    }
+
+    fn sample_plugin_info() -> PluginInfo {
+        PluginInfo {
+            code: "scm".to_string(),
+            name: "供应链管理".to_string(),
+            version: "0.1.0".to_string(),
+            description: "desc".to_string(),
+            permissions: vec![sample_permission_def()],
+            runtime_url: "http://localhost:8040".to_string(),
+            dependencies: vec!["core".to_string()],
+            navigation_config: Some(serde_json::json!([{"code": "scm-purchase"}])),
+            category: Some("supply".to_string()),
+        }
+    }
+
+    #[test]
+    fn permission_def_serde_roundtrip_preserves_fields() {
+        let p = sample_permission_def();
+        let json = serde_json::to_string(&p).expect("serialize");
+        let back: PermissionDef = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.code, p.code);
+        assert_eq!(back.name, p.name);
+        assert_eq!(back.resource_type, p.resource_type);
+        assert_eq!(back.action, p.action);
+    }
+
+    #[test]
+    fn plugin_info_serde_roundtrip_preserves_core_fields() {
+        let info = sample_plugin_info();
+        let json = serde_json::to_string(&info).expect("serialize");
+        let back: PluginInfo = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.code, info.code);
+        assert_eq!(back.name, info.name);
+        assert_eq!(back.version, info.version);
+        assert_eq!(back.runtime_url, info.runtime_url);
+        assert_eq!(back.category, info.category);
+        assert_eq!(back.permissions.len(), 1);
+        assert_eq!(back.permissions[0].code, info.permissions[0].code);
+        assert_eq!(back.dependencies, info.dependencies);
+        assert!(back.navigation_config.is_some());
+    }
+
+    #[test]
+    fn plugin_info_defaults_dependencies_when_missing() {
+        let json = r#"{
+            "code": "scm",
+            "name": "n",
+            "version": "0.1.0",
+            "description": "d",
+            "permissions": [],
+            "runtime_url": "http://x"
+        }"#;
+        let info: PluginInfo = serde_json::from_str(json).expect("deserialize");
+        assert!(
+            info.dependencies.is_empty(),
+            "dependencies should default to empty"
+        );
+        assert!(
+            info.navigation_config.is_none(),
+            "navigation_config should default to None"
+        );
+        assert!(info.category.is_none(), "category should default to None");
+    }
+
+    #[test]
+    fn permission_def_defaults_are_empty_strings_when_missing_optional() {
+        // All fields are required (not Option), so missing fields should fail.
+        let json = r#"{"code":"x","name":"y","resource_type":"r","action":"a"}"#;
+        let p: PermissionDef = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(p.code, "x");
+        assert_eq!(p.action, "a");
+    }
+
+    #[tokio::test]
+    async fn get_plugin_info_returns_scm_metadata() {
+        let response = get_plugin_info().await;
+        let body = response.0;
+        assert!(body.success, "response should be successful");
+        let data = body.data.expect("data should be present");
+        assert_eq!(data.code, "scm");
+        assert_eq!(data.name, "供应链管理");
+        assert_eq!(data.category.as_deref(), Some("supply"));
+        assert!(
+            !data.permissions.is_empty(),
+            "should expose at least one permission"
+        );
+        // First permission should be supplier read
+        assert_eq!(data.permissions[0].code, "scm:supplier:read");
+        assert_eq!(data.permissions[0].resource_type, "supplier");
+        assert_eq!(data.permissions[0].action, "read");
+        assert!(
+            data.navigation_config.is_some(),
+            "should include navigation_config"
+        );
+    }
+
+    #[test]
+    fn plugin_info_clone_is_equal_to_original() {
+        let info = sample_plugin_info();
+        let cloned = info.clone();
+        assert_eq!(cloned.code, info.code);
+        assert_eq!(cloned.permissions.len(), info.permissions.len());
+    }
+
+    #[test]
+    fn permission_def_clone_is_equal_to_original() {
+        let p = sample_permission_def();
+        let cloned = p.clone();
+        assert_eq!(cloned.code, p.code);
+        assert_eq!(cloned.action, p.action);
+    }
+}

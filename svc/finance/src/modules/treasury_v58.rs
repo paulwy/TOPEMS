@@ -2054,4 +2054,300 @@ mod tests {
         };
         roundtrip(&v);
     }
+
+    // ========== Pure function unit tests (additional) ==========
+
+    // --- Enum as_str/from_str roundtrips ---
+    #[test]
+    fn pool_type_as_str_from_str_roundtrip() {
+        for v in [PoolType::Physical, PoolType::Virtual, PoolType::Notional] {
+            let s = v.as_str();
+            assert_eq!(PoolType::from_str(s), v);
+        }
+        assert_eq!(PoolType::from_str("unknown"), PoolType::Physical);
+    }
+
+    #[test]
+    fn transfer_status_as_str_from_str_roundtrip() {
+        for v in [
+            TransferStatus::Pending,
+            TransferStatus::Completed,
+            TransferStatus::Failed,
+        ] {
+            let s = v.as_str();
+            assert_eq!(TransferStatus::from_str(s), v);
+        }
+        assert_eq!(TransferStatus::from_str("unknown"), TransferStatus::Pending);
+    }
+
+    #[test]
+    fn forecast_type_as_str_from_str_roundtrip() {
+        for v in [
+            ForecastType::ShortTerm,
+            ForecastType::MediumTerm,
+            ForecastType::LongTerm,
+        ] {
+            let s = v.as_str();
+            assert_eq!(ForecastType::from_str(s), v);
+        }
+        assert_eq!(ForecastType::from_str("unknown"), ForecastType::MediumTerm);
+    }
+
+    #[test]
+    fn cash_flow_item_type_as_str() {
+        assert_eq!(CashFlowItemType::Inflow.as_str(), "inflow");
+        assert_eq!(CashFlowItemType::Outflow.as_str(), "outflow");
+    }
+
+    #[test]
+    fn action_type_as_str_from_str_roundtrip() {
+        for v in [
+            ActionType::Invest,
+            ActionType::Borrow,
+            ActionType::Transfer,
+            ActionType::Hedge,
+        ] {
+            let s = v.as_str();
+            assert_eq!(ActionType::from_str(s), v);
+        }
+        assert_eq!(ActionType::from_str("unknown"), ActionType::Invest);
+    }
+
+    #[test]
+    fn risk_level_as_str() {
+        assert_eq!(RiskLevel::Low.as_str(), "low");
+        assert_eq!(RiskLevel::Medium.as_str(), "medium");
+        assert_eq!(RiskLevel::High.as_str(), "high");
+    }
+
+    // --- CashFlowPredictor::compute_daily_cash_flow ---
+    #[test]
+    fn compute_daily_cash_flow_day_zero_base_values() {
+        let (inflow, outflow) =
+            CashFlowPredictor::compute_daily_cash_flow(0, 0.0, 0.0, "medium_term");
+        // base_inflow=100000 * (1+0)^0=1 * inflow_mult=1.0 + season(0)=100000
+        // base_outflow=80000 * 1 * 1 * 1.0 + 0 = 80000
+        assert!((inflow - 100_000.0).abs() < 1e-6);
+        assert!((outflow - 80_000.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn compute_daily_cash_flow_short_term_inflow_multiplier() {
+        let (inflow, _) = CashFlowPredictor::compute_daily_cash_flow(0, 0.0, 0.0, "short_term");
+        // 100000 * 1 * 1 * 1.05 + 0 = 105000
+        assert!((inflow - 105_000.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn compute_daily_cash_flow_long_term_multipliers() {
+        let (inflow, outflow) =
+            CashFlowPredictor::compute_daily_cash_flow(0, 0.0, 0.0, "long_term");
+        // inflow: 100000 * 1.10 = 110000
+        // outflow: 80000 * 1.05 = 84000
+        assert!((inflow - 110_000.0).abs() < 1e-6);
+        assert!((outflow - 84_000.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn compute_daily_cash_flow_growth_applies() {
+        let (inflow_day0, _) =
+            CashFlowPredictor::compute_daily_cash_flow(0, 0.05, 0.0, "medium_term");
+        let (inflow_day1, _) =
+            CashFlowPredictor::compute_daily_cash_flow(1, 0.05, 0.0, "medium_term");
+        // day1 should be higher due to growth
+        assert!(inflow_day1 > inflow_day0);
+    }
+
+    // --- CashFlowPredictor::compute_confidence_interval ---
+    #[test]
+    fn compute_confidence_interval_basic() {
+        let ci = CashFlowPredictor::compute_confidence_interval(100_000.0, 80_000.0, 0.9);
+        let net = 100_000.0 - 80_000.0; // 20000
+        let margin = net * (1.0 - 0.9); // 2000
+        assert_eq!(ci["lower_bound"], serde_json::json!(net - margin));
+        assert_eq!(ci["upper_bound"], serde_json::json!(net + margin));
+        assert_eq!(ci["confidence_level"], serde_json::json!(0.9));
+    }
+
+    #[test]
+    fn compute_confidence_interval_clamps_confidence() {
+        // confidence < 0.1 should be clamped to 0.1
+        let ci = CashFlowPredictor::compute_confidence_interval(100.0, 0.0, 0.01);
+        let net = 100.0;
+        let margin = net * (1.0 - 0.1); // 90.0
+        assert_eq!(ci["lower_bound"], serde_json::json!(net - margin));
+        assert_eq!(ci["upper_bound"], serde_json::json!(net + margin));
+    }
+
+    #[test]
+    fn compute_confidence_interval_high_confidence_small_margin() {
+        let ci_low = CashFlowPredictor::compute_confidence_interval(1000.0, 0.0, 0.5);
+        let ci_high = CashFlowPredictor::compute_confidence_interval(1000.0, 0.0, 0.99);
+        // higher confidence => smaller margin => narrower interval
+        let lo_diff = (ci_low["upper_bound"].as_f64().unwrap()
+            - ci_low["lower_bound"].as_f64().unwrap())
+        .abs();
+        let hi_diff = (ci_high["upper_bound"].as_f64().unwrap()
+            - ci_high["lower_bound"].as_f64().unwrap())
+        .abs();
+        assert!(hi_diff < lo_diff);
+    }
+
+    // --- LiquidityOptimizer::generate_actions ---
+    fn target(min: f64, max: f64, t: f64) -> LiquidityTarget {
+        LiquidityTarget {
+            id: Uuid::new_v4(),
+            entity_id: "E1".into(),
+            min_balance: min,
+            max_balance: max,
+            target_balance: t,
+            currency: "CNY".into(),
+        }
+    }
+
+    #[test]
+    fn generate_actions_excess_invest_and_transfer() {
+        let tgt = target(100_000.0, 500_000.0, 300_000.0);
+        let actions = LiquidityOptimizer::generate_actions(600_000.0, &tgt);
+        // current > max => invest + transfer
+        assert!(actions.iter().any(|a| a.action_type == "invest"));
+        assert!(actions.iter().any(|a| a.action_type == "transfer"));
+    }
+
+    #[test]
+    fn generate_actions_deficit_borrow() {
+        let tgt = target(100_000.0, 500_000.0, 300_000.0);
+        let actions = LiquidityOptimizer::generate_actions(50_000.0, &tgt);
+        // current < min => borrow
+        assert!(actions.iter().any(|a| a.action_type == "borrow"));
+    }
+
+    #[test]
+    fn generate_actions_within_range_near_target_default_invest() {
+        let tgt = target(100_000.0, 500_000.0, 300_000.0);
+        let actions = LiquidityOptimizer::generate_actions(305_000.0, &tgt);
+        // within range, close to target => default invest (no hedge since |diff| < 10%)
+        assert!(actions.iter().any(|a| a.action_type == "invest"));
+        assert!(!actions.iter().any(|a| a.action_type == "hedge"));
+    }
+
+    #[test]
+    fn generate_actions_within_range_far_from_target_hedge() {
+        let tgt = target(100_000.0, 500_000.0, 300_000.0);
+        // current between min and max, but far from target (>10% of target)
+        // |350000 - 300000| = 50000 > 30000 (10% of 300000) => hedge
+        let actions = LiquidityOptimizer::generate_actions(350_000.0, &tgt);
+        assert!(actions.iter().any(|a| a.action_type == "hedge"));
+    }
+
+    // --- LiquidityOptimizer::calculate_projected_savings ---
+    #[test]
+    fn calculate_projected_savings_sums_expected_returns() {
+        let tgt = target(100_000.0, 500_000.0, 300_000.0);
+        let actions = vec![
+            Action {
+                action_type: "invest".into(),
+                amount: 100.0,
+                reason: "".into(),
+                expected_return: 500.0,
+                risk: "low".into(),
+            },
+            Action {
+                action_type: "transfer".into(),
+                amount: 200.0,
+                reason: "".into(),
+                expected_return: 300.0,
+                risk: "low".into(),
+            },
+        ];
+        let savings = LiquidityOptimizer::calculate_projected_savings(&actions, 400_000.0, &tgt);
+        // 500 + 300 = 800, current < max so no extra
+        assert!((savings - 800.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn calculate_projected_savings_excess_bonus() {
+        let tgt = target(100_000.0, 500_000.0, 300_000.0);
+        let actions = vec![Action {
+            action_type: "invest".into(),
+            amount: 100.0,
+            reason: "".into(),
+            expected_return: 0.0,
+            risk: "low".into(),
+        }];
+        // current=600000 > max=500000 => extra (600000-500000)*0.03 = 3000
+        let savings = LiquidityOptimizer::calculate_projected_savings(&actions, 600_000.0, &tgt);
+        assert!((savings - 3_000.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn calculate_projected_savings_empty_actions_zero_when_no_excess() {
+        let tgt = target(100_000.0, 500_000.0, 300_000.0);
+        let savings = LiquidityOptimizer::calculate_projected_savings(&[], 200_000.0, &tgt);
+        assert!((savings - 0.0).abs() < 1e-9);
+    }
+
+    // --- LiquidityOptimizer::assess_risk ---
+    #[test]
+    fn assess_risk_no_borrow_no_hedge_low() {
+        let actions = vec![
+            Action {
+                action_type: "invest".into(),
+                amount: 500.0,
+                reason: "".into(),
+                expected_return: 0.0,
+                risk: "low".into(),
+            },
+            Action {
+                action_type: "transfer".into(),
+                amount: 500.0,
+                reason: "".into(),
+                expected_return: 0.0,
+                risk: "low".into(),
+            },
+        ];
+        assert_eq!(LiquidityOptimizer::assess_risk(&actions), RiskLevel::Low);
+    }
+
+    #[test]
+    fn assess_risk_has_hedge_medium() {
+        let actions = vec![Action {
+            action_type: "hedge".into(),
+            amount: 500.0,
+            reason: "".into(),
+            expected_return: 0.0,
+            risk: "low".into(),
+        }];
+        assert_eq!(LiquidityOptimizer::assess_risk(&actions), RiskLevel::Medium);
+    }
+
+    #[test]
+    fn assess_risk_borrow_small_amount_medium() {
+        let actions = vec![Action {
+            action_type: "borrow".into(),
+            amount: 500.0,
+            reason: "".into(),
+            expected_return: 0.0,
+            risk: "medium".into(),
+        }];
+        assert_eq!(LiquidityOptimizer::assess_risk(&actions), RiskLevel::Medium);
+    }
+
+    #[test]
+    fn assess_risk_borrow_high_amount_high() {
+        let actions = vec![Action {
+            action_type: "borrow".into(),
+            amount: 2_000_000.0,
+            reason: "".into(),
+            expected_return: 0.0,
+            risk: "medium".into(),
+        }];
+        assert_eq!(LiquidityOptimizer::assess_risk(&actions), RiskLevel::High);
+    }
+
+    #[test]
+    fn assess_risk_empty_actions_low() {
+        let actions: Vec<Action> = vec![];
+        assert_eq!(LiquidityOptimizer::assess_risk(&actions), RiskLevel::Low);
+    }
 }

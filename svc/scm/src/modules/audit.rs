@@ -185,3 +185,65 @@ pub async fn log_audit_event(
         tracing::error!("记录审计日志失败: {}", e);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn list_audit_logs_query_defaults_via_serde() {
+        let q: ListAuditLogsQuery = serde_json::from_str("{}").expect("deserialize empty");
+        assert!(q.action.is_none());
+        assert!(q.entity_type.is_none());
+        assert!(q.user_id.is_none());
+        assert!(q.status.is_none());
+        assert!(q.start_date.is_none());
+        assert!(q.end_date.is_none());
+        assert!(q.page.is_none());
+        assert!(q.page_size.is_none());
+    }
+
+    #[test]
+    fn list_audit_logs_query_roundtrip_preserves_fields() {
+        let json = r#"{
+            "action": "create",
+            "entity_type": "supplier",
+            "user_id": "u-123",
+            "status": "success",
+            "start_date": "2026-01-01",
+            "end_date": "2026-01-31",
+            "page": 2,
+            "page_size": 50
+        }"#;
+        let q: ListAuditLogsQuery = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(q.action.as_deref(), Some("create"));
+        assert_eq!(q.entity_type.as_deref(), Some("supplier"));
+        assert_eq!(q.user_id.as_deref(), Some("u-123"));
+        assert_eq!(q.status.as_deref(), Some("success"));
+        assert_eq!(q.start_date.as_deref(), Some("2026-01-01"));
+        assert_eq!(q.end_date.as_deref(), Some("2026-01-31"));
+        assert_eq!(q.page, Some(2));
+        assert_eq!(q.page_size, Some(50));
+    }
+
+    #[test]
+    fn list_audit_logs_query_ignores_unknown_fields() {
+        let json = r#"{"action": "delete", "extra": "ignored"}"#;
+        let q: ListAuditLogsQuery = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(q.action.as_deref(), Some("delete"));
+    }
+
+    #[test]
+    fn list_audit_logs_query_partial_population() {
+        let json = r#"{"page": 5}"#;
+        let q: ListAuditLogsQuery = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(q.page, Some(5));
+        assert!(q.action.is_none());
+    }
+
+    #[test]
+    fn create_routes_returns_router_without_panic() {
+        // Smoke test that the router can be constructed.
+        let _router = create_routes();
+    }
+}

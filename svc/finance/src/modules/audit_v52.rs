@@ -2274,4 +2274,172 @@ mod tests {
             rule_ids: Some(vec![Uuid::new_v4()]),
         });
     }
+
+    // ===== as_str / from_str / create_finding / create_alert / get_first_digit tests =====
+
+    #[test]
+    fn audit_severity_as_str_all_variants() {
+        assert_eq!(AuditSeverity::Low.as_str(), "low");
+        assert_eq!(AuditSeverity::Medium.as_str(), "medium");
+        assert_eq!(AuditSeverity::High.as_str(), "high");
+        assert_eq!(AuditSeverity::Critical.as_str(), "critical");
+    }
+
+    #[test]
+    fn finding_status_as_str_all_variants() {
+        assert_eq!(FindingStatus::Open.as_str(), "open");
+        assert_eq!(FindingStatus::Resolved.as_str(), "resolved");
+        assert_eq!(FindingStatus::Ignored.as_str(), "ignored");
+    }
+
+    #[test]
+    fn alert_channel_as_str_all_variants() {
+        assert_eq!(AlertChannel::WebSocket.as_str(), "websocket");
+        assert_eq!(AlertChannel::Email.as_str(), "email");
+        assert_eq!(AlertChannel::DingTalk.as_str(), "dingtalk");
+        assert_eq!(AlertChannel::Webhook.as_str(), "webhook");
+    }
+
+    #[test]
+    fn alert_channel_from_str_all_variants() {
+        assert_eq!(
+            AlertChannel::from_str("websocket"),
+            Some(AlertChannel::WebSocket)
+        );
+        assert_eq!(AlertChannel::from_str("email"), Some(AlertChannel::Email));
+        assert_eq!(
+            AlertChannel::from_str("dingtalk"),
+            Some(AlertChannel::DingTalk)
+        );
+        assert_eq!(
+            AlertChannel::from_str("webhook"),
+            Some(AlertChannel::Webhook)
+        );
+    }
+
+    #[test]
+    fn alert_channel_from_str_unknown_returns_none() {
+        assert_eq!(AlertChannel::from_str("unknown"), None);
+        assert_eq!(AlertChannel::from_str(""), None);
+    }
+
+    #[test]
+    fn create_finding_builds_correct_struct() {
+        let tenant_id = Uuid::new_v4();
+        let rule_id = Uuid::new_v4();
+        let evidence = serde_json::json!({"key": "val"});
+        let finding = AutoAuditEngine::create_finding(
+            tenant_id,
+            rule_id,
+            "invoice",
+            "INV-001",
+            "amount_anomaly",
+            "high",
+            "金额异常",
+            evidence.clone(),
+        );
+        assert_eq!(finding.tenant_id, tenant_id);
+        assert_eq!(finding.rule_id, rule_id);
+        assert_eq!(finding.entity_type, "invoice");
+        assert_eq!(finding.entity_id, "INV-001");
+        assert_eq!(finding.finding_type, "amount_anomaly");
+        assert_eq!(finding.severity, "high");
+        assert_eq!(finding.description, "金额异常");
+        assert_eq!(finding.evidence, evidence);
+        assert_eq!(finding.status, "open");
+        assert!(finding.resolved_at.is_none());
+        assert!(finding.resolved_by.is_none());
+    }
+
+    #[test]
+    fn create_finding_with_empty_strings() {
+        let finding = AutoAuditEngine::create_finding(
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            "",
+            "",
+            "",
+            "",
+            "",
+            serde_json::json!({}),
+        );
+        assert_eq!(finding.entity_type, "");
+        assert_eq!(finding.entity_id, "");
+        assert_eq!(finding.finding_type, "");
+        assert_eq!(finding.severity, "");
+        assert_eq!(finding.status, "open");
+    }
+
+    #[test]
+    fn create_alert_builds_correct_struct() {
+        let tenant_id = Uuid::new_v4();
+        let alert = AnomalyDetector::create_alert(
+            tenant_id,
+            "z_score",
+            "transaction",
+            "TX-001",
+            999.0,
+            "0-100",
+            0.95,
+            "high",
+            "统计异常",
+        );
+        assert_eq!(alert.tenant_id, tenant_id);
+        assert_eq!(alert.detection_type, "z_score");
+        assert_eq!(alert.entity_type, "transaction");
+        assert_eq!(alert.entity_id, "TX-001");
+        assert!((alert.metric_value - 999.0).abs() < 1e-9);
+        assert_eq!(alert.expected_range, "0-100");
+        assert!((alert.confidence - 0.95).abs() < 1e-9);
+        assert_eq!(alert.severity, "high");
+        assert_eq!(alert.description, "统计异常");
+        assert!(!alert.is_resolved);
+    }
+
+    #[test]
+    fn create_alert_with_zero_values() {
+        let alert =
+            AnomalyDetector::create_alert(Uuid::new_v4(), "benford", "", "", 0.0, "", 0.0, "", "");
+        assert!((alert.metric_value - 0.0).abs() < 1e-9);
+        assert!((alert.confidence - 0.0).abs() < 1e-9);
+        assert!(!alert.is_resolved);
+    }
+
+    #[test]
+    fn get_first_digit_single_digit() {
+        assert_eq!(AnomalyDetector::get_first_digit(1.0), 1);
+        assert_eq!(AnomalyDetector::get_first_digit(5.0), 5);
+        assert_eq!(AnomalyDetector::get_first_digit(9.0), 9);
+    }
+
+    #[test]
+    fn get_first_digit_multi_digit() {
+        assert_eq!(AnomalyDetector::get_first_digit(10.0), 1);
+        assert_eq!(AnomalyDetector::get_first_digit(25.0), 2);
+        assert_eq!(AnomalyDetector::get_first_digit(99.0), 9);
+        assert_eq!(AnomalyDetector::get_first_digit(100.0), 1);
+        assert_eq!(AnomalyDetector::get_first_digit(999.0), 9);
+    }
+
+    #[test]
+    fn get_first_digit_decimal() {
+        assert_eq!(AnomalyDetector::get_first_digit(0.5), 5);
+        assert_eq!(AnomalyDetector::get_first_digit(0.1), 1);
+        assert_eq!(AnomalyDetector::get_first_digit(0.01), 1);
+        assert_eq!(AnomalyDetector::get_first_digit(0.05), 5);
+    }
+
+    #[test]
+    fn get_first_digit_zero_or_negative() {
+        assert_eq!(AnomalyDetector::get_first_digit(0.0), 0);
+        assert_eq!(AnomalyDetector::get_first_digit(-1.0), 0);
+        assert_eq!(AnomalyDetector::get_first_digit(-100.0), 0);
+    }
+
+    #[test]
+    fn get_first_digit_large_number() {
+        assert_eq!(AnomalyDetector::get_first_digit(1_000_000.0), 1);
+        assert_eq!(AnomalyDetector::get_first_digit(5_000_000.0), 5);
+        assert_eq!(AnomalyDetector::get_first_digit(9_999_999.0), 9);
+    }
 }

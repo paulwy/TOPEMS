@@ -691,3 +691,65 @@ pub async fn reject_order(
 
     response
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn approval_request_defaults_to_all_none_via_serde() {
+        let req: ApprovalRequest = serde_json::from_str("{}").expect("deserialize empty");
+        assert!(req.approver_id.is_none());
+        assert!(req.approver_name.is_none());
+        assert!(req.remarks.is_none());
+    }
+
+    #[test]
+    fn approval_request_roundtrip_preserves_all_fields() {
+        let approver_id = Uuid::new_v4();
+        let req = ApprovalRequest {
+            approver_id: Some(approver_id),
+            approver_name: Some("张三".to_string()),
+            remarks: Some("同意".to_string()),
+        };
+        let json = serde_json::to_string(&req).expect("serialize");
+        let back: ApprovalRequest = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.approver_id, req.approver_id);
+        assert_eq!(back.approver_name, req.approver_name);
+        assert_eq!(back.remarks, req.remarks);
+    }
+
+    #[test]
+    fn approval_request_partial_population_remarks_only() {
+        let json = r#"{"remarks": "待复核"}"#;
+        let req: ApprovalRequest = serde_json::from_str(json).expect("deserialize");
+        assert!(req.approver_id.is_none());
+        assert!(req.approver_name.is_none());
+        assert_eq!(req.remarks.as_deref(), Some("待复核"));
+    }
+
+    #[test]
+    fn approval_request_ignores_unknown_fields() {
+        let json = r#"{"approver_name": "李四", "extra": "ignored"}"#;
+        let req: ApprovalRequest = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(req.approver_name.as_deref(), Some("李四"));
+    }
+
+    #[test]
+    fn approval_request_clone_is_equal_to_original() {
+        let req = ApprovalRequest {
+            approver_id: Some(Uuid::new_v4()),
+            approver_name: Some("王五".to_string()),
+            remarks: None,
+        };
+        let cloned = req.clone();
+        assert_eq!(cloned.approver_id, req.approver_id);
+        assert_eq!(cloned.approver_name, req.approver_name);
+        assert_eq!(cloned.remarks, req.remarks);
+    }
+
+    #[test]
+    fn create_routes_returns_router_without_panic() {
+        let _router = create_routes();
+    }
+}

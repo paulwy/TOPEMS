@@ -1983,4 +1983,213 @@ mod tests {
         };
         roundtrip(&v);
     }
+
+    // ===== as_str / from_str / weight / evaluate_rule pure function tests =====
+
+    #[test]
+    fn risk_level_as_str_all_variants() {
+        assert_eq!(RiskLevel::Low.as_str(), "low");
+        assert_eq!(RiskLevel::Medium.as_str(), "medium");
+        assert_eq!(RiskLevel::High.as_str(), "high");
+        assert_eq!(RiskLevel::Critical.as_str(), "critical");
+    }
+
+    #[test]
+    fn risk_level_from_str_all_variants() {
+        assert_eq!(RiskLevel::from_str("low"), RiskLevel::Low);
+        assert_eq!(RiskLevel::from_str("medium"), RiskLevel::Medium);
+        assert_eq!(RiskLevel::from_str("high"), RiskLevel::High);
+        assert_eq!(RiskLevel::from_str("critical"), RiskLevel::Critical);
+    }
+
+    #[test]
+    fn risk_level_from_str_unknown_defaults_to_low() {
+        assert_eq!(RiskLevel::from_str("xxx"), RiskLevel::Low);
+        assert_eq!(RiskLevel::from_str(""), RiskLevel::Low);
+    }
+
+    #[test]
+    fn risk_level_weight_all_variants() {
+        assert!((RiskLevel::Low.weight() - 1.0).abs() < 1e-9);
+        assert!((RiskLevel::Medium.weight() - 2.0).abs() < 1e-9);
+        assert!((RiskLevel::High.weight() - 3.0).abs() < 1e-9);
+        assert!((RiskLevel::Critical.weight() - 5.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn risk_category_as_str_all_variants() {
+        assert_eq!(RiskCategory::Credit.as_str(), "credit");
+        assert_eq!(RiskCategory::Market.as_str(), "market");
+        assert_eq!(RiskCategory::Liquidity.as_str(), "liquidity");
+        assert_eq!(RiskCategory::Operational.as_str(), "operational");
+        assert_eq!(RiskCategory::Compliance.as_str(), "compliance");
+        assert_eq!(RiskCategory::Fraud.as_str(), "fraud");
+    }
+
+    #[test]
+    fn risk_category_from_str_all_variants() {
+        assert_eq!(RiskCategory::from_str("credit"), RiskCategory::Credit);
+        assert_eq!(RiskCategory::from_str("market"), RiskCategory::Market);
+        assert_eq!(RiskCategory::from_str("liquidity"), RiskCategory::Liquidity);
+        assert_eq!(
+            RiskCategory::from_str("operational"),
+            RiskCategory::Operational
+        );
+        assert_eq!(
+            RiskCategory::from_str("compliance"),
+            RiskCategory::Compliance
+        );
+        assert_eq!(RiskCategory::from_str("fraud"), RiskCategory::Fraud);
+    }
+
+    #[test]
+    fn risk_category_from_str_unknown_defaults_to_operational() {
+        assert_eq!(RiskCategory::from_str("unknown"), RiskCategory::Operational);
+        assert_eq!(RiskCategory::from_str(""), RiskCategory::Operational);
+    }
+
+    #[test]
+    fn fraud_rule_type_as_str_all_variants() {
+        assert_eq!(FraudRuleType::Velocity.as_str(), "velocity");
+        assert_eq!(FraudRuleType::Amount.as_str(), "amount");
+        assert_eq!(FraudRuleType::Location.as_str(), "location");
+        assert_eq!(FraudRuleType::Device.as_str(), "device");
+        assert_eq!(FraudRuleType::Behavior.as_str(), "behavior");
+    }
+
+    #[test]
+    fn fraud_rule_type_from_str_all_variants() {
+        assert_eq!(FraudRuleType::from_str("velocity"), FraudRuleType::Velocity);
+        assert_eq!(FraudRuleType::from_str("amount"), FraudRuleType::Amount);
+        assert_eq!(FraudRuleType::from_str("location"), FraudRuleType::Location);
+        assert_eq!(FraudRuleType::from_str("device"), FraudRuleType::Device);
+        assert_eq!(FraudRuleType::from_str("behavior"), FraudRuleType::Behavior);
+    }
+
+    #[test]
+    fn fraud_rule_type_from_str_unknown_defaults_to_velocity() {
+        assert_eq!(FraudRuleType::from_str("unknown"), FraudRuleType::Velocity);
+        assert_eq!(FraudRuleType::from_str(""), FraudRuleType::Velocity);
+    }
+
+    #[test]
+    fn fraud_recommendation_as_str_all_variants() {
+        assert_eq!(FraudRecommendation::Approve.as_str(), "approve");
+        assert_eq!(FraudRecommendation::Review.as_str(), "review");
+        assert_eq!(FraudRecommendation::Block.as_str(), "block");
+    }
+
+    #[test]
+    fn regulation_as_str_all_variants() {
+        assert_eq!(Regulation::SOX.as_str(), "sox");
+        assert_eq!(Regulation::GDPR.as_str(), "gdpr");
+        assert_eq!(Regulation::PCI_DSS.as_str(), "pci_dss");
+        assert_eq!(Regulation::HIPAA.as_str(), "hipaa");
+        assert_eq!(Regulation::Internal.as_str(), "internal");
+    }
+
+    #[test]
+    fn regulation_from_str_all_variants() {
+        assert_eq!(Regulation::from_str("sox"), Regulation::SOX);
+        assert_eq!(Regulation::from_str("gdpr"), Regulation::GDPR);
+        assert_eq!(Regulation::from_str("pci_dss"), Regulation::PCI_DSS);
+        assert_eq!(Regulation::from_str("hipaa"), Regulation::HIPAA);
+        assert_eq!(Regulation::from_str("internal"), Regulation::Internal);
+    }
+
+    #[test]
+    fn regulation_from_str_unknown_defaults_to_internal() {
+        assert_eq!(Regulation::from_str("unknown"), Regulation::Internal);
+        assert_eq!(Regulation::from_str(""), Regulation::Internal);
+    }
+
+    #[test]
+    fn review_workflow_status_as_str_all_variants() {
+        assert_eq!(ReviewWorkflowStatus::Pending.as_str(), "pending");
+        assert_eq!(ReviewWorkflowStatus::InProgress.as_str(), "in_progress");
+        assert_eq!(ReviewWorkflowStatus::Completed.as_str(), "completed");
+        assert_eq!(ReviewWorkflowStatus::Rejected.as_str(), "rejected");
+    }
+
+    #[test]
+    fn review_workflow_status_from_str_all_variants() {
+        assert_eq!(
+            ReviewWorkflowStatus::from_str("pending"),
+            ReviewWorkflowStatus::Pending
+        );
+        assert_eq!(
+            ReviewWorkflowStatus::from_str("in_progress"),
+            ReviewWorkflowStatus::InProgress
+        );
+        assert_eq!(
+            ReviewWorkflowStatus::from_str("completed"),
+            ReviewWorkflowStatus::Completed
+        );
+        assert_eq!(
+            ReviewWorkflowStatus::from_str("rejected"),
+            ReviewWorkflowStatus::Rejected
+        );
+    }
+
+    #[test]
+    fn review_workflow_status_from_str_unknown_defaults_to_pending() {
+        assert_eq!(
+            ReviewWorkflowStatus::from_str("unknown"),
+            ReviewWorkflowStatus::Pending
+        );
+        assert_eq!(
+            ReviewWorkflowStatus::from_str(""),
+            ReviewWorkflowStatus::Pending
+        );
+    }
+
+    #[test]
+    fn review_severity_as_str_all_variants() {
+        assert_eq!(ReviewSeverity::Low.as_str(), "low");
+        assert_eq!(ReviewSeverity::Medium.as_str(), "medium");
+        assert_eq!(ReviewSeverity::High.as_str(), "high");
+        assert_eq!(ReviewSeverity::Critical.as_str(), "critical");
+    }
+
+    #[test]
+    fn review_severity_from_str_all_variants() {
+        assert_eq!(ReviewSeverity::from_str("low"), ReviewSeverity::Low);
+        assert_eq!(ReviewSeverity::from_str("medium"), ReviewSeverity::Medium);
+        assert_eq!(ReviewSeverity::from_str("high"), ReviewSeverity::High);
+        assert_eq!(
+            ReviewSeverity::from_str("critical"),
+            ReviewSeverity::Critical
+        );
+    }
+
+    #[test]
+    fn review_severity_from_str_unknown_defaults_to_low() {
+        assert_eq!(ReviewSeverity::from_str("unknown"), ReviewSeverity::Low);
+        assert_eq!(ReviewSeverity::from_str(""), ReviewSeverity::Low);
+    }
+
+    #[test]
+    fn review_action_as_str_all_variants() {
+        assert_eq!(ReviewAction::Approve.as_str(), "approve");
+        assert_eq!(ReviewAction::Reject.as_str(), "reject");
+        assert_eq!(ReviewAction::Escalate.as_str(), "escalate");
+        assert_eq!(ReviewAction::Flag.as_str(), "flag");
+    }
+
+    #[test]
+    fn evaluate_rule_always_returns_true() {
+        let rule = ReviewRule {
+            id: Uuid::new_v4(),
+            regulation: "sox".into(),
+            category: "authorization".into(),
+            severity: "high".into(),
+            action: "escalate".into(),
+        };
+        assert!(AutoComplianceReviewer::evaluate_rule(
+            &rule,
+            "transaction",
+            "TX-001"
+        ));
+        assert!(AutoComplianceReviewer::evaluate_rule(&rule, "", ""));
+    }
 }

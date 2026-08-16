@@ -711,3 +711,254 @@ pub async fn material_requirement_summary(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---- Struct serde roundtrips ----
+
+    #[test]
+    fn mrp_compute_request_defaults_via_serde() {
+        let req: MrpComputeRequest = serde_json::from_str("{}").expect("deserialize empty");
+        assert!(req.forecast_days.is_none());
+        assert!(req.include_sales_orders.is_none());
+        assert!(req.include_forecast.is_none());
+        assert!(req.safety_stock_factor.is_none());
+    }
+
+    #[test]
+    fn mrp_compute_request_roundtrip_preserves_fields() {
+        let req = MrpComputeRequest {
+            forecast_days: Some(45),
+            include_sales_orders: Some(false),
+            include_forecast: Some(true),
+            safety_stock_factor: Some(1.5),
+        };
+        let json = serde_json::to_string(&req).expect("serialize");
+        let back: MrpComputeRequest = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.forecast_days, req.forecast_days);
+        assert_eq!(back.include_sales_orders, req.include_sales_orders);
+        assert_eq!(back.include_forecast, req.include_forecast);
+        assert_eq!(back.safety_stock_factor, req.safety_stock_factor);
+    }
+
+    #[test]
+    fn confirm_suggestion_request_defaults_via_serde() {
+        let req: ConfirmSuggestionRequest = serde_json::from_str("{}").expect("deserialize empty");
+        assert!(req.confirmed_quantity.is_none());
+        assert!(req.supplier_id.is_none());
+        assert!(req.remarks.is_none());
+    }
+
+    #[test]
+    fn confirm_suggestion_request_roundtrip_preserves_fields() {
+        let supplier_id = Uuid::new_v4();
+        let req = ConfirmSuggestionRequest {
+            confirmed_quantity: Some(150.0),
+            supplier_id: Some(supplier_id),
+            remarks: Some("approved".to_string()),
+        };
+        let json = serde_json::to_string(&req).expect("serialize");
+        let back: ConfirmSuggestionRequest = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.confirmed_quantity, req.confirmed_quantity);
+        assert_eq!(back.supplier_id, req.supplier_id);
+        assert_eq!(back.remarks, req.remarks);
+    }
+
+    #[test]
+    fn material_requirement_summary_serde_roundtrip() {
+        let summary = MaterialRequirementSummary {
+            material_code: "MAT-001".to_string(),
+            material_name: "Steel".to_string(),
+            specification: Some("1mm".to_string()),
+            unit: Some("kg".to_string()),
+            total_required: 500.0,
+            current_stock: 200.0,
+            shortage: 300.0,
+            suggestion_count: 3,
+            suggested_total: 350.0,
+        };
+        let json = serde_json::to_string(&summary).expect("serialize");
+        let back: MaterialRequirementSummary = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.material_code, summary.material_code);
+        assert_eq!(back.material_name, summary.material_name);
+        assert_eq!(back.specification, summary.specification);
+        assert_eq!(back.unit, summary.unit);
+        assert_eq!(back.total_required, summary.total_required);
+        assert_eq!(back.current_stock, summary.current_stock);
+        assert_eq!(back.shortage, summary.shortage);
+        assert_eq!(back.suggestion_count, summary.suggestion_count);
+        assert_eq!(back.suggested_total, summary.suggested_total);
+    }
+
+    #[test]
+    fn material_requirement_summary_handles_none_optionals() {
+        let json = r#"{
+            "material_code": "MAT-002",
+            "material_name": "Plastic",
+            "total_required": 0.0,
+            "current_stock": 0.0,
+            "shortage": 0.0,
+            "suggestion_count": 0,
+            "suggested_total": 0.0
+        }"#;
+        let s: MaterialRequirementSummary = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(s.material_code, "MAT-002");
+        assert!(s.specification.is_none());
+        assert!(s.unit.is_none());
+    }
+
+    // ---- Pure function additional edge cases ----
+
+    #[test]
+    fn apply_lot_sizing_zero_requirement_returns_zero() {
+        assert_eq!(apply_lot_sizing(0.0, LotSizingRule::LFL, 0.0, 1.0), 0.0);
+    }
+
+    #[test]
+    fn apply_lot_sizing_negative_requirement_returns_zero() {
+        assert_eq!(apply_lot_sizing(-10.0, LotSizingRule::LFL, 0.0, 1.0), 0.0);
+    }
+
+    #[test]
+    fn apply_lot_sizing_foq_with_zero_batch_size_falls_back_to_requirement() {
+        // FOQ with q <= 0 should fall back to LFL behavior.
+        let result = apply_lot_sizing(50.0, LotSizingRule::FOQ(0.0), 0.0, 1.0);
+        assert_eq!(result, 50.0);
+    }
+
+    #[test]
+    fn apply_lot_sizing_foq_negative_batch_falls_back_to_requirement() {
+        let result = apply_lot_sizing(50.0, LotSizingRule::FOQ(-10.0), 0.0, 1.0);
+        assert_eq!(result, 50.0);
+    }
+
+    #[test]
+    fn apply_lot_sizing_foq_rounds_up_to_next_batch() {
+        // 50 / 20 = 2.5 -> ceil = 3 -> 3 * 20 = 60
+        let result = apply_lot_sizing(50.0, LotSizingRule::FOQ(20.0), 0.0, 1.0);
+        assert_eq!(result, 60.0);
+    }
+
+    #[test]
+    fn apply_lot_sizing_foq_exact_multiple_unchanged() {
+        // 40 / 20 = 2 exactly -> 40
+        let result = apply_lot_sizing(40.0, LotSizingRule::FOQ(20.0), 0.0, 1.0);
+        assert_eq!(result, 40.0);
+    }
+
+    #[test]
+    fn apply_lot_sizing_min_order_qty_bumps_below_threshold() {
+        // requirement 5 < min 100 -> 100
+        let result = apply_lot_sizing(5.0, LotSizingRule::LFL, 100.0, 1.0);
+        assert_eq!(result, 100.0);
+    }
+
+    #[test]
+    fn apply_lot_sizing_min_order_qty_above_threshold_unchanged() {
+        let result = apply_lot_sizing(150.0, LotSizingRule::LFL, 100.0, 1.0);
+        assert_eq!(result, 150.0);
+    }
+
+    #[test]
+    fn apply_lot_sizing_pack_multiple_rounds_up() {
+        // After LFL: 50; pack_multiple 12 -> 50/12=4.166 -> ceil=5 -> 5*12=60
+        let result = apply_lot_sizing(50.0, LotSizingRule::LFL, 0.0, 12.0);
+        assert_eq!(result, 60.0);
+    }
+
+    #[test]
+    fn apply_lot_sizing_pack_multiple_exact_match_unchanged() {
+        // 48 / 12 = 4 exactly -> no rounding
+        let result = apply_lot_sizing(48.0, LotSizingRule::LFL, 0.0, 12.0);
+        assert_eq!(result, 48.0);
+    }
+
+    #[test]
+    fn apply_lot_sizing_pack_multiple_le_one_is_noop() {
+        // pack_multiple <= 1.0 should not alter the result.
+        let result = apply_lot_sizing(50.0, LotSizingRule::LFL, 0.0, 1.0);
+        assert_eq!(result, 50.0);
+    }
+
+    #[test]
+    fn calculate_order_date_subtracts_lead_time() {
+        let required = chrono::NaiveDate::from_ymd_opt(2026, 1, 31).unwrap();
+        let order_date = calculate_order_date(required, 7);
+        assert_eq!(
+            order_date,
+            chrono::NaiveDate::from_ymd_opt(2026, 1, 24).unwrap()
+        );
+    }
+
+    #[test]
+    fn calculate_order_date_zero_lead_time_returns_same_date() {
+        let required = chrono::NaiveDate::from_ymd_opt(2026, 6, 15).unwrap();
+        assert_eq!(calculate_order_date(required, 0), required);
+    }
+
+    #[test]
+    fn calculate_order_date_negative_lead_time_pushes_forward() {
+        let required = chrono::NaiveDate::from_ymd_opt(2026, 6, 15).unwrap();
+        let order_date = calculate_order_date(required, -5);
+        assert_eq!(
+            order_date,
+            chrono::NaiveDate::from_ymd_opt(2026, 6, 20).unwrap()
+        );
+    }
+
+    #[test]
+    fn calculate_order_date_crosses_month_boundary() {
+        let required = chrono::NaiveDate::from_ymd_opt(2026, 3, 1).unwrap();
+        let order_date = calculate_order_date(required, 1);
+        assert_eq!(
+            order_date,
+            chrono::NaiveDate::from_ymd_opt(2026, 2, 28).unwrap()
+        );
+    }
+
+    #[test]
+    fn compute_mrp_suggestion_zero_forecast_days_returns_zero_avg_daily() {
+        // forecast_days == 0 -> avg_daily = 0 -> safety_stock = 0 -> net = gross - on_hand
+        let (suggested, safety, net) = compute_mrp_suggestion(100.0, 30.0, 0.0, 0.0, 7, 0, 1.2);
+        assert_eq!(safety, 0.0);
+        assert_eq!(net, 70.0);
+        assert_eq!(suggested, 70.0);
+    }
+
+    #[test]
+    fn compute_mrp_suggestion_zero_gross_requirement_returns_zeros() {
+        let (suggested, safety, net) = compute_mrp_suggestion(0.0, 0.0, 0.0, 0.0, 7, 30, 1.2);
+        assert_eq!(safety, 0.0);
+        assert_eq!(net, 0.0);
+        assert_eq!(suggested, 0.0);
+    }
+
+    #[test]
+    fn compute_mrp_suggestion_calculates_safety_stock_from_forecast() {
+        // gross=300, forecast=30 -> avg_daily=10 -> safety = 10*7*1.2 = 84
+        let (suggested, safety, net) = compute_mrp_suggestion(300.0, 100.0, 0.0, 0.0, 7, 30, 1.2);
+        assert!((safety - 84.0).abs() < 0.001);
+        // net = 300 + 84 + 0 - 100 - 0 = 284
+        assert!((net - 284.0).abs() < 0.001);
+        assert_eq!(suggested, net);
+    }
+
+    #[test]
+    fn lot_sizing_rule_lfl_equality() {
+        assert_eq!(LotSizingRule::LFL, LotSizingRule::LFL);
+        assert_ne!(LotSizingRule::LFL, LotSizingRule::FOQ(10.0));
+    }
+
+    #[test]
+    fn lot_sizing_rule_foq_equality_with_same_quantity() {
+        assert_eq!(LotSizingRule::FOQ(10.0), LotSizingRule::FOQ(10.0));
+        assert_ne!(LotSizingRule::FOQ(10.0), LotSizingRule::FOQ(20.0));
+    }
+
+    #[test]
+    fn create_routes_returns_router_without_panic() {
+        let _router = create_routes();
+    }
+}

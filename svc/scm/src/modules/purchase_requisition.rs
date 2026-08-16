@@ -485,3 +485,60 @@ async fn convert_to_order(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::purchase_requisition::PurchaseRequisitionQueryParams;
+
+    #[test]
+    fn purchase_requisition_query_params_defaults_via_serde() {
+        let q: PurchaseRequisitionQueryParams =
+            serde_json::from_str("{}").expect("deserialize empty");
+        assert!(q.page.is_none());
+        assert!(q.page_size.is_none());
+        assert!(q.status.is_none());
+    }
+
+    #[test]
+    fn purchase_requisition_query_params_roundtrip_preserves_fields() {
+        let json = r#"{
+            "page": 3,
+            "page_size": 15,
+            "status": "approved"
+        }"#;
+        let q: PurchaseRequisitionQueryParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(q.page, Some(3));
+        assert_eq!(q.page_size, Some(15));
+        assert_eq!(q.status.as_deref(), Some("approved"));
+    }
+
+    #[test]
+    fn purchase_requisition_query_params_partial_population() {
+        let json = r#"{"status": "draft"}"#;
+        let q: PurchaseRequisitionQueryParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(q.status.as_deref(), Some("draft"));
+        assert!(q.page.is_none());
+    }
+
+    #[test]
+    fn purchase_requisition_query_params_ignores_unknown_fields() {
+        let json = r#"{"page": 1, "extra": "ignored"}"#;
+        let q: PurchaseRequisitionQueryParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(q.page, Some(1));
+    }
+
+    #[test]
+    fn create_routes_returns_router_without_panic() {
+        let _router = create_routes();
+    }
+
+    #[test]
+    fn uuid_parse_str_validates_id_format() {
+        // Replicates the ID validation logic used in the handlers.
+        let valid = "550e8400-e29b-41d4-a716-446655440000";
+        assert!(Uuid::parse_str(valid).is_ok());
+        let invalid = "not-a-uuid";
+        assert!(Uuid::parse_str(invalid).is_err());
+    }
+}

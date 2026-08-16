@@ -406,3 +406,57 @@ async fn delete_department(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_routes_returns_router() {
+        let _router = create_routes();
+    }
+
+    #[test]
+    fn test_department_pagination_params_deserialize_all_none() {
+        let json = r#"{}"#;
+        let params: DepartmentPaginationParams = serde_json::from_str(json).expect("deserialize");
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert!(params.search.is_none());
+        assert!(params.status.is_none());
+        assert!(params.org_id.is_none());
+    }
+
+    #[test]
+    fn test_department_pagination_params_deserialize_all_some() {
+        let org_id = Uuid::new_v4();
+        let json = format!(
+            r#"{{"page":2,"page_size":50,"search":"研发","status":"active","org_id":"{}"}}"#,
+            org_id
+        );
+        let params: DepartmentPaginationParams = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(params.page, Some(2));
+        assert_eq!(params.page_size, Some(50));
+        assert_eq!(params.search.as_deref(), Some("研发"));
+        assert_eq!(params.status.as_deref(), Some("active"));
+        assert_eq!(params.org_id, Some(org_id));
+    }
+
+    #[test]
+    fn test_department_pagination_params_deserialize_partial() {
+        let json = r#"{"search":"工程","status":"inactive"}"#;
+        let params: DepartmentPaginationParams = serde_json::from_str(json).expect("deserialize");
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert_eq!(params.search.as_deref(), Some("工程"));
+        assert_eq!(params.status.as_deref(), Some("inactive"));
+        assert!(params.org_id.is_none());
+    }
+
+    #[test]
+    fn test_department_pagination_params_deserialize_empty_search() {
+        let json = r#"{"search":""}"#;
+        let params: DepartmentPaginationParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(params.search.as_deref(), Some(""));
+    }
+}

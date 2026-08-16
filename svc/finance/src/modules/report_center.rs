@@ -1237,4 +1237,406 @@ mod tests {
             cash_flow_summary: vec![],
         });
     }
+
+    // ---- pure function tests ----
+
+    #[test]
+    fn safe_divide_normal() {
+        let r = safe_divide(Decimal::from(10), Decimal::from(4));
+        assert_eq!(r, Decimal::from(10) / Decimal::from(4));
+    }
+
+    #[test]
+    fn safe_divide_zero_denominator_returns_zero() {
+        assert_eq!(
+            safe_divide(Decimal::from(100), Decimal::ZERO),
+            Decimal::ZERO
+        );
+    }
+
+    #[test]
+    fn safe_divide_zero_numerator() {
+        assert_eq!(safe_divide(Decimal::ZERO, Decimal::from(7)), Decimal::ZERO);
+    }
+
+    #[test]
+    fn safe_percentage_normal() {
+        let r = safe_percentage(Decimal::from(25), Decimal::from(100));
+        assert_eq!(r, Decimal::from(25));
+    }
+
+    #[test]
+    fn safe_percentage_zero_total() {
+        assert_eq!(
+            safe_percentage(Decimal::from(50), Decimal::ZERO),
+            Decimal::ZERO
+        );
+    }
+
+    #[test]
+    fn fill_percentages_assigns_share() {
+        let total = Decimal::from(200);
+        let mut items = vec![
+            BalanceSheetItem {
+                account_code: "A".into(),
+                account_name: "n".into(),
+                amount: Decimal::from(50),
+                percentage: Decimal::ZERO,
+                period_amount: Decimal::ZERO,
+                year_amount: Decimal::ZERO,
+            },
+            BalanceSheetItem {
+                account_code: "B".into(),
+                account_name: "n".into(),
+                amount: Decimal::from(150),
+                percentage: Decimal::ZERO,
+                period_amount: Decimal::ZERO,
+                year_amount: Decimal::ZERO,
+            },
+        ];
+        fill_percentages(&mut items, total);
+        assert_eq!(items[0].percentage, Decimal::from(25));
+        assert_eq!(items[1].percentage, Decimal::from(75));
+    }
+
+    #[test]
+    fn fill_percentages_zero_total_keeps_zero() {
+        let mut items = vec![BalanceSheetItem {
+            account_code: "A".into(),
+            account_name: "n".into(),
+            amount: Decimal::from(50),
+            percentage: Decimal::from(9),
+            period_amount: Decimal::ZERO,
+            year_amount: Decimal::ZERO,
+        }];
+        fill_percentages(&mut items, Decimal::ZERO);
+        assert_eq!(items[0].percentage, Decimal::ZERO);
+    }
+
+    #[test]
+    fn bs_item_amount_period_year() {
+        let it = bs_item("1001", "Cash", 1000);
+        assert_eq!(it.account_code, "1001");
+        assert_eq!(it.account_name, "Cash");
+        assert_eq!(it.amount, Decimal::from(1000));
+        assert_eq!(it.percentage, Decimal::ZERO);
+        // period_amount = 1000 * 88 / 100 = 880
+        assert_eq!(it.period_amount, Decimal::from(880));
+        // year_amount = 1000 * 112 / 100 = 1120
+        assert_eq!(it.year_amount, Decimal::from(1120));
+    }
+
+    #[test]
+    fn generate_balance_sheet_no_base_has_expected_totals() {
+        let r = generate_balance_sheet("2025-08", None);
+        assert_eq!(r.period, "2025-08");
+        // current assets: 1_250_000 + 856_000 + 234_000 + 1_680_000 = 4_020_000
+        assert_eq!(r.total_current_assets, Decimal::from(4_020_000));
+        // non-current assets: 500_000 + 2_450_000 + 320_000 = 3_270_000
+        assert_eq!(r.total_non_current_assets, Decimal::from(3_270_000));
+        // total assets
+        assert_eq!(r.total_assets, Decimal::from(7_290_000));
+        // current liabilities: 680_000 + 542_000 + 186_000 = 1_408_000
+        assert_eq!(r.total_current_liabilities, Decimal::from(1_408_000));
+        // non-current liabilities: 1_200_000 + 400_000 = 1_600_000
+        assert_eq!(r.total_non_current_liabilities, Decimal::from(1_600_000));
+        // total liabilities
+        assert_eq!(r.total_liabilities, Decimal::from(3_008_000));
+        // equity: 2_000_000 + 850_000 + 432_000 + 1_000_000 = 4_282_000
+        assert_eq!(r.total_equity, Decimal::from(4_282_000));
+        // last_year_total_assets = 7_290_000 * 85 / 100
+        let expected_last_assets =
+            Decimal::from(7_290_000) * Decimal::from(85) / Decimal::from(100);
+        assert_eq!(r.last_year_total_assets, expected_last_assets);
+        // yoy growth should be positive (15%)
+        assert!(r.assets_yoy_growth > Decimal::ZERO);
+    }
+
+    #[test]
+    fn generate_balance_sheet_with_base_overrides_totals() {
+        let base = crate::models::BalanceSheet {
+            period: "2025-07".to_string(),
+            assets: vec![],
+            liabilities: vec![],
+            equity: vec![],
+            total_assets: Decimal::from(10_000),
+            total_liabilities: Decimal::from(4_000),
+            total_equity: Decimal::from(6_000),
+        };
+        let r = generate_balance_sheet("2025-07", Some(&base));
+        assert_eq!(r.total_assets, Decimal::from(10_000));
+        assert_eq!(r.total_liabilities, Decimal::from(4_000));
+        assert_eq!(r.total_equity, Decimal::from(6_000));
+        // last_year_total_assets = 10000 * 85/100 = 8500
+        assert_eq!(r.last_year_total_assets, Decimal::from(8_500));
+        // assets_yoy_growth = (10000-8500)/8500 * 100
+        assert!(r.assets_yoy_growth > Decimal::ZERO);
+    }
+
+    #[test]
+    fn is_item_calculations() {
+        // current=1000, prev_pct=80, year_pct=120
+        let it = is_item("6001", 1000, 80, 120);
+        assert_eq!(it.current_amount, Decimal::from(1000));
+        assert_eq!(it.previous_amount, Decimal::from(800));
+        assert_eq!(it.year_cumulative, Decimal::from(1200));
+        // yoy_change = (1000-800)/800 * 100 = 25
+        assert_eq!(it.yoy_change, Decimal::from(25));
+    }
+
+    #[test]
+    fn is_item_prev_pct_zero_yoy_zero_avoids_div_by_zero() {
+        let it = is_item("6001", 1000, 0, 120);
+        assert_eq!(it.previous_amount, Decimal::ZERO);
+        // prev=0 -> safe_percentage returns 0
+        assert_eq!(it.yoy_change, Decimal::ZERO);
+    }
+
+    #[test]
+    fn generate_income_statement_no_base() {
+        let r = generate_income_statement("2025-08", None);
+        assert_eq!(r.period, "2025-08");
+        assert_eq!(r.items.len(), 7);
+        // operating_revenue comes from items[0] = 5_680_000
+        assert_eq!(r.operating_revenue, Decimal::from(5_680_000));
+        // operating_cost comes from items[1] = 3_420_000
+        assert_eq!(r.operating_cost, Decimal::from(3_420_000));
+        // period_expenses = items[3]+items[4]+items[5] = 285_000+412_000+98_000 = 795_000
+        assert_eq!(r.period_expenses, Decimal::from(795_000));
+        // trend length is 4
+        assert_eq!(r.trend.len(), 4);
+        // gross_margin > 0
+        assert!(r.gross_margin > Decimal::ZERO);
+    }
+
+    #[test]
+    fn generate_income_statement_with_base_overrides() {
+        let base = crate::models::IncomeStatement {
+            period: "2025-09".to_string(),
+            revenues: vec![],
+            expenses: vec![],
+            total_revenue: Decimal::from(999),
+            total_expense: Decimal::ZERO,
+            net_income: Decimal::from(111),
+        };
+        let r = generate_income_statement("2025-09", Some(&base));
+        assert_eq!(r.operating_revenue, Decimal::from(999));
+        assert_eq!(r.net_profit, Decimal::from(111));
+    }
+
+    #[test]
+    fn cf_item_basic() {
+        let it = cf_item("OP01", "Sales", 1000);
+        assert_eq!(it.item_code, "OP01");
+        assert_eq!(it.item_name, "Sales");
+        assert_eq!(it.amount, Decimal::from(1000));
+    }
+
+    #[test]
+    fn generate_cash_flow_statement_sums() {
+        let r = generate_cash_flow_statement("2025-08");
+        // operating: 6_120_000 - 3_850_000 - 860_000 - 420_000 = 990_000
+        assert_eq!(r.net_operating, Decimal::from(990_000));
+        // investing: 120_000 - 580_000 + 45_000 = -415_000
+        assert_eq!(r.net_investing, Decimal::from(-415_000));
+        // financing: 800_000 - 500_000 - 200_000 = 100_000
+        assert_eq!(r.net_financing, Decimal::from(100_000));
+        // net_change = 990_000 - 415_000 + 100_000 = 675_000
+        assert_eq!(r.net_change, Decimal::from(675_000));
+        // opening_balance = 575_000, closing = 575_000 + 675_000 = 1_250_000
+        assert_eq!(r.opening_balance, Decimal::from(575_000));
+        assert_eq!(r.closing_balance, Decimal::from(1_250_000));
+        // indirect_adjustments has 9 items
+        assert_eq!(r.indirect_adjustments.len(), 9);
+        // free cash flow = net_operating + net_investing = 990_000 - 415_000 = 575_000
+        assert_eq!(r.ratios.free_cash_flow, Decimal::from(575_000));
+    }
+
+    #[test]
+    fn calculate_financial_ratios_uses_provided_data() {
+        let balance = generate_balance_sheet("2025-08", None);
+        let income = generate_income_statement("2025-08", None);
+        let cash = generate_cash_flow_statement("2025-08");
+        let ratios = calculate_financial_ratios(&balance, &income, &cash);
+        // current_ratio = 4_020_000 / 1_408_000 > 0
+        assert!(ratios.current_ratio > Decimal::ZERO);
+        // debt_to_asset_ratio = 3_008_000 / 7_290_000 * 100 > 0
+        assert!(ratios.debt_to_asset_ratio > Decimal::ZERO);
+        // inventory turnover = operating_cost / avg_inventory > 0
+        assert!(ratios.inventory_turnover > Decimal::ZERO);
+        // gross_margin from income > 0
+        assert!(ratios.gross_margin > Decimal::ZERO);
+        // total asset growth should match balance sheet yoy
+        assert!(ratios.total_asset_growth_rate > Decimal::ZERO);
+    }
+
+    #[test]
+    fn calculate_financial_ratios_zero_liabilities_safe() {
+        // balance with zero current liabilities to test safe_divide returns 0
+        let balance = BalanceSheetEnhanced {
+            period: "p".into(),
+            current_assets: vec![],
+            non_current_assets: vec![],
+            current_liabilities: vec![],
+            non_current_liabilities: vec![],
+            equity: vec![],
+            total_current_assets: Decimal::from(100),
+            total_non_current_assets: Decimal::ZERO,
+            total_assets: Decimal::from(100),
+            total_current_liabilities: Decimal::ZERO,
+            total_non_current_liabilities: Decimal::ZERO,
+            total_liabilities: Decimal::ZERO,
+            total_equity: Decimal::from(100),
+            last_year_total_assets: Decimal::from(100),
+            last_year_total_liabilities: Decimal::from(100),
+            last_year_total_equity: Decimal::from(100),
+            assets_yoy_growth: Decimal::ZERO,
+            liabilities_yoy_growth: Decimal::ZERO,
+            equity_yoy_growth: Decimal::ZERO,
+        };
+        let income = IncomeStatementEnhanced {
+            period: "p".into(),
+            items: vec![],
+            operating_revenue: Decimal::from(1000),
+            operating_cost: Decimal::from(500),
+            period_expenses: Decimal::ZERO,
+            total_profit: Decimal::from(500),
+            net_profit: Decimal::from(500),
+            eps: Decimal::ZERO,
+            gross_margin: Decimal::from(50),
+            net_margin: Decimal::from(50),
+            expense_ratio: Decimal::ZERO,
+            trend: vec![],
+        };
+        let cash = generate_cash_flow_statement("p");
+        let ratios = calculate_financial_ratios(&balance, &income, &cash);
+        // current_ratio = safe_divide(100, 0) = 0
+        assert_eq!(ratios.current_ratio, Decimal::ZERO);
+        // quick_ratio = safe_divide(100-0, 0) = 0
+        assert_eq!(ratios.quick_ratio, Decimal::ZERO);
+        // debt_to_asset = safe_percentage(0, 100) = 0
+        assert_eq!(ratios.debt_to_asset_ratio, Decimal::ZERO);
+        // total_asset_growth = safe_percentage(100-100, 100) = 0
+        assert_eq!(ratios.total_asset_growth_rate, Decimal::ZERO);
+    }
+
+    #[test]
+    fn generate_analysis_report_grade_boundaries() {
+        // Construct ratios that should yield grade A (score >= 85)
+        let ratios_a = FinancialRatios {
+            current_ratio: Decimal::from(3), // >= 2.0 -> +18
+            quick_ratio: Decimal::from(2),
+            debt_to_asset_ratio: Decimal::from(40), // < 50 -> +12 (debt 30/30)
+            accounts_receivable_turnover: Decimal::ZERO,
+            inventory_turnover: Decimal::ZERO,
+            total_asset_turnover: Decimal::from(2), // >= 1.0 -> +20
+            gross_margin: Decimal::ZERO,
+            net_margin: Decimal::from(20), // >= 15 -> +12
+            roe: Decimal::from(25),        // >= 20 -> +18
+            roa: Decimal::from(10),
+            revenue_growth_rate: Decimal::from(30), // >= 20 -> +10
+            net_profit_growth_rate: Decimal::from(30), // >= 20 -> +10
+            total_asset_growth_rate: Decimal::ZERO,
+        };
+        let r = generate_analysis_report("2025-08", &ratios_a);
+        // total: 18+12+18+12+20+10+10 = 100
+        assert!(r.score >= Decimal::from(85));
+        assert_eq!(r.grade, "A");
+        // trend: both rev_growth and profit_growth > 0 -> 呈上升趋势
+        assert!(r.trend_judgment.contains("上升"));
+    }
+
+    #[test]
+    fn generate_analysis_report_grade_d_low_score() {
+        let ratios_d = FinancialRatios {
+            current_ratio: Decimal::from(1), // < 1.5 but >= 1.0 -> +9, warning
+            quick_ratio: Decimal::ZERO,
+            debt_to_asset_ratio: Decimal::from(80), // >= 70 -> +3, warning
+            accounts_receivable_turnover: Decimal::ZERO,
+            inventory_turnover: Decimal::ZERO,
+            total_asset_turnover: Decimal::from(1), // >= 1.0 -> +20
+            gross_margin: Decimal::ZERO,
+            net_margin: Decimal::from(2), // < 5 -> +3, warning
+            roe: Decimal::from(5),        // < 10 -> +4, warning
+            roa: Decimal::ZERO,
+            revenue_growth_rate: Decimal::from(-5), // < 0 -> +2, warning
+            net_profit_growth_rate: Decimal::from(-5), // < 0 -> +2, warning
+            total_asset_growth_rate: Decimal::ZERO,
+        };
+        let r = generate_analysis_report("2025-08", &ratios_d);
+        // total = 9 + 3 + 4 + 3 + 20 + 2 + 2 = 43 -> grade D
+        assert!(r.score < Decimal::from(60));
+        assert_eq!(r.grade, "D");
+        assert!(!r.warnings.is_empty());
+        // trend: both <= 0 -> 呈下行趋势
+        assert!(r.trend_judgment.contains("下行"));
+    }
+
+    #[test]
+    fn generate_analysis_report_grade_c_partial_warning() {
+        // mid score: 60 <= score < 70 -> grade C
+        let ratios_c = FinancialRatios {
+            current_ratio: Decimal::from(2), // >= 2.0 -> +18
+            quick_ratio: Decimal::from(2),
+            debt_to_asset_ratio: Decimal::from(55), // 50 <= x < 60 -> +9
+            accounts_receivable_turnover: Decimal::ZERO,
+            inventory_turnover: Decimal::ZERO,
+            total_asset_turnover: Decimal::from(1), // >= 1.0 -> +20
+            gross_margin: Decimal::ZERO,
+            net_margin: Decimal::from(10), // 10 <= x < 15 -> +9
+            roe: Decimal::from(10),        // 10 <= x < 15 -> +9
+            roa: Decimal::ZERO,
+            revenue_growth_rate: Decimal::from(5), // 0 <= x < 10 -> +5
+            net_profit_growth_rate: Decimal::from(5), // 0 <= x < 10 -> +5
+            total_asset_growth_rate: Decimal::ZERO,
+        };
+        let r = generate_analysis_report("2025-08", &ratios_c);
+        // total = 18 + 9 + 9 + 9 + 20 + 5 + 5 = 75 -> B
+        assert_eq!(r.grade, "B");
+    }
+
+    #[test]
+    fn generate_analysis_report_zero_current_ratio_pushes_warning() {
+        let ratios = FinancialRatios {
+            current_ratio: Decimal::from(5), // high
+            quick_ratio: Decimal::from(3),
+            debt_to_asset_ratio: Decimal::from(20), // low
+            accounts_receivable_turnover: Decimal::ZERO,
+            inventory_turnover: Decimal::ZERO,
+            total_asset_turnover: Decimal::from(2),
+            gross_margin: Decimal::ZERO,
+            net_margin: Decimal::from(20),
+            roe: Decimal::from(25),
+            roa: Decimal::from(10),
+            revenue_growth_rate: Decimal::from(30),
+            net_profit_growth_rate: Decimal::from(30),
+            total_asset_growth_rate: Decimal::ZERO,
+        };
+        let r = generate_analysis_report("2025-08", &ratios);
+        //偿债能力充足 -> suggestion pushed
+        assert!(r.suggestions.iter().any(|s| s.contains("偿债能力")));
+        // 盈利能力较强 -> suggestion pushed
+        assert!(r.suggestions.iter().any(|s| s.contains("盈利能力")));
+    }
+
+    #[test]
+    fn generate_comparative_report_has_4_periods() {
+        let r = generate_comparative_report("2025-08");
+        assert_eq!(r.periods.len(), 4);
+        assert_eq!(r.periods[3], "2025-08");
+        // Last period should be the input period (scale = 100%)
+        let last_balance = &r.balance_sheet_summary[3];
+        let base = generate_balance_sheet("2025-08", None);
+        assert_eq!(last_balance.total_assets, base.total_assets);
+        assert_eq!(
+            last_balance.revenue,
+            generate_income_statement("2025-08", None).operating_revenue
+        );
+        // First period scaled to 80%
+        let first = &r.balance_sheet_summary[0];
+        assert_eq!(
+            first.total_assets,
+            base.total_assets * Decimal::from(80) / Decimal::from(100)
+        );
+    }
 }

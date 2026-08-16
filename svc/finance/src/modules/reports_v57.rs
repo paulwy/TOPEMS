@@ -2023,4 +2023,443 @@ mod tests {
         };
         roundtrip(&v);
     }
+
+    // ===== enum as_str / from_str pure function tests =====
+
+    #[test]
+    fn report_type_as_str_all_variants() {
+        assert_eq!(ReportType::BalanceSheet.as_str(), "balance_sheet");
+        assert_eq!(ReportType::IncomeStatement.as_str(), "income_statement");
+        assert_eq!(ReportType::CashFlow.as_str(), "cash_flow");
+        assert_eq!(ReportType::AR.as_str(), "ar");
+        assert_eq!(ReportType::AP.as_str(), "ap");
+        assert_eq!(ReportType::Tax.as_str(), "tax");
+    }
+
+    #[test]
+    fn report_type_from_str_all_variants() {
+        assert_eq!(
+            ReportType::from_str("balance_sheet"),
+            ReportType::BalanceSheet
+        );
+        assert_eq!(
+            ReportType::from_str("income_statement"),
+            ReportType::IncomeStatement
+        );
+        assert_eq!(ReportType::from_str("cash_flow"), ReportType::CashFlow);
+        assert_eq!(ReportType::from_str("ar"), ReportType::AR);
+        assert_eq!(ReportType::from_str("ap"), ReportType::AP);
+        assert_eq!(ReportType::from_str("tax"), ReportType::Tax);
+    }
+
+    #[test]
+    fn report_type_from_str_unknown_defaults_to_tax() {
+        assert_eq!(ReportType::from_str("unknown"), ReportType::Tax);
+        assert_eq!(ReportType::from_str(""), ReportType::Tax);
+    }
+
+    #[test]
+    fn report_layout_as_str_all_variants() {
+        assert_eq!(ReportLayout::JSON.as_str(), "json");
+        assert_eq!(ReportLayout::CSV.as_str(), "csv");
+        assert_eq!(ReportLayout::PDF.as_str(), "pdf");
+        assert_eq!(ReportLayout::Excel.as_str(), "excel");
+    }
+
+    #[test]
+    fn report_layout_from_str_all_variants() {
+        assert_eq!(ReportLayout::from_str("json"), ReportLayout::JSON);
+        assert_eq!(ReportLayout::from_str("csv"), ReportLayout::CSV);
+        assert_eq!(ReportLayout::from_str("pdf"), ReportLayout::PDF);
+        assert_eq!(ReportLayout::from_str("excel"), ReportLayout::Excel);
+    }
+
+    #[test]
+    fn report_layout_from_str_unknown_defaults_to_json() {
+        assert_eq!(ReportLayout::from_str("unknown"), ReportLayout::JSON);
+        assert_eq!(ReportLayout::from_str(""), ReportLayout::JSON);
+    }
+
+    #[test]
+    fn report_schedule_as_str_all_variants() {
+        assert_eq!(ReportSchedule::Daily.as_str(), "daily");
+        assert_eq!(ReportSchedule::Weekly.as_str(), "weekly");
+        assert_eq!(ReportSchedule::Monthly.as_str(), "monthly");
+        assert_eq!(ReportSchedule::Quarterly.as_str(), "quarterly");
+        assert_eq!(ReportSchedule::Yearly.as_str(), "yearly");
+    }
+
+    #[test]
+    fn report_schedule_from_str_all_variants() {
+        assert_eq!(ReportSchedule::from_str("daily"), ReportSchedule::Daily);
+        assert_eq!(ReportSchedule::from_str("weekly"), ReportSchedule::Weekly);
+        assert_eq!(ReportSchedule::from_str("monthly"), ReportSchedule::Monthly);
+        assert_eq!(
+            ReportSchedule::from_str("quarterly"),
+            ReportSchedule::Quarterly
+        );
+        assert_eq!(ReportSchedule::from_str("yearly"), ReportSchedule::Yearly);
+    }
+
+    #[test]
+    fn report_schedule_from_str_unknown_defaults_to_yearly() {
+        assert_eq!(ReportSchedule::from_str("unknown"), ReportSchedule::Yearly);
+        assert_eq!(ReportSchedule::from_str(""), ReportSchedule::Yearly);
+    }
+
+    #[test]
+    fn report_status_as_str_all_variants() {
+        assert_eq!(ReportStatus::Pending.as_str(), "pending");
+        assert_eq!(ReportStatus::Generating.as_str(), "generating");
+        assert_eq!(ReportStatus::Completed.as_str(), "completed");
+        assert_eq!(ReportStatus::Failed.as_str(), "failed");
+    }
+
+    #[test]
+    fn report_status_from_str_all_variants() {
+        assert_eq!(ReportStatus::from_str("pending"), ReportStatus::Pending);
+        assert_eq!(
+            ReportStatus::from_str("generating"),
+            ReportStatus::Generating
+        );
+        assert_eq!(ReportStatus::from_str("completed"), ReportStatus::Completed);
+        assert_eq!(ReportStatus::from_str("failed"), ReportStatus::Failed);
+    }
+
+    #[test]
+    fn report_status_from_str_unknown_defaults_to_pending() {
+        assert_eq!(ReportStatus::from_str("unknown"), ReportStatus::Pending);
+        assert_eq!(ReportStatus::from_str(""), ReportStatus::Pending);
+    }
+
+    #[test]
+    fn analysis_dimension_name_as_str_all_variants() {
+        assert_eq!(AnalysisDimensionName::Time.as_str(), "time");
+        assert_eq!(AnalysisDimensionName::Department.as_str(), "department");
+        assert_eq!(AnalysisDimensionName::Project.as_str(), "project");
+        assert_eq!(AnalysisDimensionName::CostCenter.as_str(), "cost_center");
+        assert_eq!(AnalysisDimensionName::Region.as_str(), "region");
+        assert_eq!(AnalysisDimensionName::Product.as_str(), "product");
+    }
+
+    #[test]
+    fn analysis_dimension_name_from_str_all_variants() {
+        assert_eq!(
+            AnalysisDimensionName::from_str("time"),
+            AnalysisDimensionName::Time
+        );
+        assert_eq!(
+            AnalysisDimensionName::from_str("department"),
+            AnalysisDimensionName::Department
+        );
+        assert_eq!(
+            AnalysisDimensionName::from_str("project"),
+            AnalysisDimensionName::Project
+        );
+        assert_eq!(
+            AnalysisDimensionName::from_str("cost_center"),
+            AnalysisDimensionName::CostCenter
+        );
+        assert_eq!(
+            AnalysisDimensionName::from_str("region"),
+            AnalysisDimensionName::Region
+        );
+        assert_eq!(
+            AnalysisDimensionName::from_str("product"),
+            AnalysisDimensionName::Product
+        );
+    }
+
+    #[test]
+    fn analysis_dimension_name_from_str_unknown_defaults_to_product() {
+        assert_eq!(
+            AnalysisDimensionName::from_str("unknown"),
+            AnalysisDimensionName::Product
+        );
+        assert_eq!(
+            AnalysisDimensionName::from_str(""),
+            AnalysisDimensionName::Product
+        );
+    }
+
+    #[test]
+    fn forecast_model_type_as_str_all_variants() {
+        assert_eq!(
+            ForecastModelType::LinearRegression.as_str(),
+            "linear_regression"
+        );
+        assert_eq!(
+            ForecastModelType::ExponentialSmoothing.as_str(),
+            "exponential_smoothing"
+        );
+        assert_eq!(ForecastModelType::ARIMA.as_str(), "arima");
+        assert_eq!(ForecastModelType::Prophet.as_str(), "prophet");
+    }
+
+    #[test]
+    fn forecast_model_type_from_str_all_variants() {
+        assert_eq!(
+            ForecastModelType::from_str("linear_regression"),
+            ForecastModelType::LinearRegression
+        );
+        assert_eq!(
+            ForecastModelType::from_str("exponential_smoothing"),
+            ForecastModelType::ExponentialSmoothing
+        );
+        assert_eq!(
+            ForecastModelType::from_str("arima"),
+            ForecastModelType::ARIMA
+        );
+        assert_eq!(
+            ForecastModelType::from_str("prophet"),
+            ForecastModelType::Prophet
+        );
+    }
+
+    #[test]
+    fn forecast_model_type_from_str_unknown_defaults_to_prophet() {
+        assert_eq!(
+            ForecastModelType::from_str("unknown"),
+            ForecastModelType::Prophet
+        );
+        assert_eq!(ForecastModelType::from_str(""), ForecastModelType::Prophet);
+    }
+
+    #[test]
+    fn insight_type_as_str_all_variants() {
+        assert_eq!(InsightType::Trend.as_str(), "trend");
+        assert_eq!(InsightType::Anomaly.as_str(), "anomaly");
+        assert_eq!(InsightType::Forecast.as_str(), "forecast");
+        assert_eq!(InsightType::Recommendation.as_str(), "recommendation");
+    }
+
+    #[test]
+    fn insight_type_from_str_all_variants() {
+        assert_eq!(InsightType::from_str("trend"), InsightType::Trend);
+        assert_eq!(InsightType::from_str("anomaly"), InsightType::Anomaly);
+        assert_eq!(InsightType::from_str("forecast"), InsightType::Forecast);
+        assert_eq!(
+            InsightType::from_str("recommendation"),
+            InsightType::Recommendation
+        );
+    }
+
+    #[test]
+    fn insight_type_from_str_unknown_defaults_to_recommendation() {
+        assert_eq!(
+            InsightType::from_str("unknown"),
+            InsightType::Recommendation
+        );
+        assert_eq!(InsightType::from_str(""), InsightType::Recommendation);
+    }
+
+    // ===== business logic pure function tests =====
+
+    #[test]
+    fn build_report_data_default_balance_sheet() {
+        let now = Utc::now();
+        let data = AutomatedReportEngine::build_report_data(&None, now, now);
+        assert_eq!(data["report_type"], "balance_sheet");
+        assert!(data["period_start"].is_string());
+        assert!(data["period_end"].is_string());
+        assert!(data["data"].is_array());
+        assert!(data["data"].as_array().unwrap().is_empty());
+    }
+
+    #[test]
+    fn build_report_data_with_custom_type() {
+        let now = Utc::now();
+        let data = AutomatedReportEngine::build_report_data(&Some("cash_flow".into()), now, now);
+        assert_eq!(data["report_type"], "cash_flow");
+    }
+
+    #[test]
+    fn build_pivot_data_generates_three_rows() {
+        let dims = vec!["region".to_string()];
+        let measures = vec!["revenue".to_string()];
+        let data = MultiDimensionalAnalyzer::build_pivot_data(&dims, &measures);
+        let rows = data["rows"].as_array().unwrap();
+        assert_eq!(rows.len(), 3);
+        assert_eq!(rows[0]["region"], "region_0");
+        assert_eq!(rows[1]["region"], "region_1");
+        assert_eq!(rows[2]["region"], "region_2");
+        assert_eq!(rows[0]["revenue"], 1000);
+        assert_eq!(rows[1]["revenue"], 2000);
+        assert_eq!(rows[2]["revenue"], 3000);
+    }
+
+    #[test]
+    fn build_pivot_data_empty_dims_and_measures() {
+        let data = MultiDimensionalAnalyzer::build_pivot_data(&[], &[]);
+        let rows = data["rows"].as_array().unwrap();
+        assert_eq!(rows.len(), 3);
+    }
+
+    #[test]
+    fn compute_aggregations_sum_count_avg_min_max() {
+        let data = serde_json::json!({
+            "rows": [
+                {"rev": 100.0, "cost": 10.0},
+                {"rev": 200.0, "cost": 20.0},
+                {"rev": 300.0, "cost": 30.0},
+            ]
+        });
+        let measures = vec!["rev".to_string(), "cost".to_string()];
+        let agg = MultiDimensionalAnalyzer::compute_aggregations(&data, &measures);
+        assert!((agg["rev"]["sum"].as_f64().unwrap() - 600.0).abs() < 1e-9);
+        assert_eq!(agg["rev"]["count"].as_i64().unwrap(), 3);
+        assert!((agg["rev"]["avg"].as_f64().unwrap() - 200.0).abs() < 1e-9);
+        assert!((agg["rev"]["min"].as_f64().unwrap() - 100.0).abs() < 1e-9);
+        assert!((agg["rev"]["max"].as_f64().unwrap() - 300.0).abs() < 1e-9);
+        assert!((agg["cost"]["sum"].as_f64().unwrap() - 60.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn compute_aggregations_empty_rows_returns_zero() {
+        let data = serde_json::json!({"rows": []});
+        let measures = vec!["rev".to_string()];
+        let agg = MultiDimensionalAnalyzer::compute_aggregations(&data, &measures);
+        assert!((agg["rev"]["sum"].as_f64().unwrap() - 0.0).abs() < 1e-9);
+        assert_eq!(agg["rev"]["count"].as_i64().unwrap(), 0);
+        assert!((agg["rev"]["avg"].as_f64().unwrap() - 0.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn apply_drill_down_filters_by_contains() {
+        let data = serde_json::json!({
+            "rows": [
+                {"region": "east_1"},
+                {"region": "west_2"},
+                {"region": "east_3"},
+            ]
+        });
+        let result = MultiDimensionalAnalyzer::apply_drill_down(&data, "region", "east");
+        let rows = result["rows"].as_array().unwrap();
+        assert_eq!(rows.len(), 2);
+    }
+
+    #[test]
+    fn apply_drill_down_no_match_returns_empty() {
+        let data = serde_json::json!({"rows": [{"region": "east"}]});
+        let result = MultiDimensionalAnalyzer::apply_drill_down(&data, "region", "north");
+        assert_eq!(result["rows"].as_array().unwrap().len(), 0);
+    }
+
+    #[test]
+    fn apply_slice_filters_by_exact_match() {
+        let data = serde_json::json!({
+            "rows": [
+                {"region": "east"},
+                {"region": "west"},
+                {"region": "east"},
+            ]
+        });
+        let result = MultiDimensionalAnalyzer::apply_slice(&data, "region", "east");
+        assert_eq!(result["rows"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn apply_slice_no_match_returns_empty() {
+        let data = serde_json::json!({"rows": [{"region": "east"}]});
+        let result = MultiDimensionalAnalyzer::apply_slice(&data, "region", "north");
+        assert_eq!(result["rows"].as_array().unwrap().len(), 0);
+    }
+
+    #[test]
+    fn apply_dice_filters_by_multiple_conditions() {
+        let data = serde_json::json!({
+            "rows": [
+                {"region": "east", "product": "A"},
+                {"region": "west", "product": "A"},
+                {"region": "east", "product": "B"},
+            ]
+        });
+        let filters = serde_json::json!({"region": "east", "product": "A"});
+        let result = MultiDimensionalAnalyzer::apply_dice(&data, &filters);
+        assert_eq!(result["rows"].as_array().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn apply_dice_empty_filters_returns_all() {
+        let data = serde_json::json!({"rows": [{"region": "east"}, {"region": "west"}]});
+        let filters = serde_json::json!({});
+        let result = MultiDimensionalAnalyzer::apply_dice(&data, &filters);
+        assert_eq!(result["rows"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn compute_forecast_generates_correct_periods() {
+        let result = PredictiveInsightEngine::compute_forecast("revenue", 5);
+        assert_eq!(result["metric"], "revenue");
+        assert_eq!(result["periods"], 5);
+        let forecast = result["forecast"].as_array().unwrap();
+        assert_eq!(forecast.len(), 5);
+        assert_eq!(forecast[0]["period"], 1);
+        assert_eq!(forecast[4]["period"], 5);
+        // base = 100000, growth = 0.05
+        assert!((forecast[0]["value"].as_f64().unwrap() - 100000.0).abs() < 1.0);
+        // period 2 = 100000 * 1.05 = 105000
+        assert!((forecast[1]["value"].as_f64().unwrap() - 105000.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn compute_forecast_zero_periods() {
+        let result = PredictiveInsightEngine::compute_forecast("cost", 0);
+        assert_eq!(result["periods"], 0);
+        assert!(result["forecast"].as_array().unwrap().is_empty());
+    }
+
+    #[test]
+    fn detect_outliers_finds_anomaly() {
+        let result = PredictiveInsightEngine::detect_outliers("revenue", 2.0);
+        assert_eq!(result["metric"], "revenue");
+        assert_eq!(result["threshold"], 2.0);
+        let outliers = result["outliers"].as_array().unwrap();
+        // The data has a value of 500.0 which should be an outlier
+        assert!(!outliers.is_empty());
+        assert!((outliers[0]["value"].as_f64().unwrap() - 500.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn detect_outliers_high_threshold_finds_none() {
+        let result = PredictiveInsightEngine::detect_outliers("revenue", 100.0);
+        let outliers = result["outliers"].as_array().unwrap();
+        assert!(outliers.is_empty());
+    }
+
+    #[test]
+    fn estimate_accuracy_known_models() {
+        assert!(
+            (PredictiveInsightEngine::estimate_accuracy("linear_regression").unwrap() - 0.82).abs()
+                < 1e-9
+        );
+        assert!(
+            (PredictiveInsightEngine::estimate_accuracy("exponential_smoothing").unwrap() - 0.88)
+                .abs()
+                < 1e-9
+        );
+        assert!((PredictiveInsightEngine::estimate_accuracy("arima").unwrap() - 0.91).abs() < 1e-9);
+        assert!(
+            (PredictiveInsightEngine::estimate_accuracy("prophet").unwrap() - 0.93).abs() < 1e-9
+        );
+    }
+
+    #[test]
+    fn estimate_accuracy_unknown_model_defaults_to_0_80() {
+        assert!(
+            (PredictiveInsightEngine::estimate_accuracy("unknown").unwrap() - 0.80).abs() < 1e-9
+        );
+        assert!((PredictiveInsightEngine::estimate_accuracy("").unwrap() - 0.80).abs() < 1e-9);
+    }
+
+    #[test]
+    fn analyze_trend_upward_direction() {
+        let result = PredictiveInsightEngine::analyze_trend("revenue");
+        assert_eq!(result["metric"], "revenue");
+        assert_eq!(result["direction"], "upward");
+        // first_half_avg = (100+105+103+110+108)/5 = 105.2
+        // second_half_avg = (115+112+120+118+125)/5 = 118.0
+        assert!((result["first_half_avg"].as_f64().unwrap() - 105.2).abs() < 0.01);
+        assert!((result["second_half_avg"].as_f64().unwrap() - 118.0).abs() < 0.01);
+    }
 }

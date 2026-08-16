@@ -584,3 +584,124 @@ async fn real_time_status(
         "获取实时状态成功",
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dashboard_query_params_defaults_via_serde() {
+        let q: DashboardQueryParams = serde_json::from_str("{}").expect("deserialize empty");
+        assert!(q.start_date.is_none());
+        assert!(q.end_date.is_none());
+        assert!(q.warehouse_id.is_none());
+    }
+
+    #[test]
+    fn dashboard_query_params_roundtrip_preserves_fields() {
+        let warehouse_id = Uuid::new_v4();
+        let json = serde_json::json!({
+            "start_date": "2026-01-01",
+            "end_date": "2026-01-31",
+            "warehouse_id": warehouse_id,
+        });
+        let q: DashboardQueryParams = serde_json::from_value(json).expect("deserialize");
+        assert_eq!(q.start_date.as_deref(), Some("2026-01-01"));
+        assert_eq!(q.end_date.as_deref(), Some("2026-01-31"));
+        assert_eq!(q.warehouse_id, Some(warehouse_id));
+    }
+
+    #[test]
+    fn dashboard_query_params_partial_population() {
+        let json = r#"{"start_date": "2026-02-01"}"#;
+        let q: DashboardQueryParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(q.start_date.as_deref(), Some("2026-02-01"));
+        assert!(q.end_date.is_none());
+    }
+
+    #[test]
+    fn dashboard_query_params_ignores_unknown_fields() {
+        let json = r#"{"end_date": "2026-03-01", "extra": "ignored"}"#;
+        let q: DashboardQueryParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(q.end_date.as_deref(), Some("2026-03-01"));
+    }
+
+    #[test]
+    fn supplier_performance_item_serde_roundtrip_preserves_fields() {
+        let item = SupplierPerformanceItem {
+            id: Uuid::new_v4(),
+            name: "Acme".to_string(),
+            code: Some("SUP-001".to_string()),
+            category: Some("raw".to_string()),
+            total_orders: 42,
+            total_amount: 12345.67,
+            on_time_delivery_rate: 95.5,
+            quality_pass_rate: 98.2,
+            avg_response_time_hours: 12.5,
+            overall_score: 88.0,
+            level: Some("A".to_string()),
+        };
+        let json = serde_json::to_string(&item).expect("serialize");
+        let back: SupplierPerformanceItem = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.id, item.id);
+        assert_eq!(back.name, item.name);
+        assert_eq!(back.code, item.code);
+        assert_eq!(back.category, item.category);
+        assert_eq!(back.total_orders, item.total_orders);
+        assert_eq!(back.total_amount, item.total_amount);
+        assert_eq!(back.on_time_delivery_rate, item.on_time_delivery_rate);
+        assert_eq!(back.quality_pass_rate, item.quality_pass_rate);
+        assert_eq!(back.avg_response_time_hours, item.avg_response_time_hours);
+        assert_eq!(back.overall_score, item.overall_score);
+        assert_eq!(back.level, item.level);
+    }
+
+    #[test]
+    fn supplier_performance_item_handles_optional_none_fields() {
+        let json = r#"{
+            "id": "00000000-0000-0000-0000-000000000000",
+            "name": "Supplier",
+            "code": null,
+            "category": null,
+            "total_orders": 0,
+            "total_amount": 0.0,
+            "on_time_delivery_rate": 0.0,
+            "quality_pass_rate": 0.0,
+            "avg_response_time_hours": 0.0,
+            "overall_score": 0.0,
+            "level": null
+        }"#;
+        let item: SupplierPerformanceItem = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(item.name, "Supplier");
+        assert!(item.code.is_none());
+        assert!(item.category.is_none());
+        assert!(item.level.is_none());
+        assert_eq!(item.total_orders, 0);
+    }
+
+    #[test]
+    fn supplier_performance_item_clone_is_equal() {
+        let item = SupplierPerformanceItem {
+            id: Uuid::new_v4(),
+            name: "X".to_string(),
+            code: None,
+            category: None,
+            total_orders: 1,
+            total_amount: 1.0,
+            on_time_delivery_rate: 1.0,
+            quality_pass_rate: 1.0,
+            avg_response_time_hours: 1.0,
+            overall_score: 1.0,
+            level: None,
+        };
+        let cloned = item.clone();
+        assert_eq!(cloned.id, item.id);
+        assert_eq!(cloned.name, item.name);
+        assert_eq!(cloned.total_orders, item.total_orders);
+    }
+
+    #[test]
+    fn create_routes_returns_router_without_panic() {
+        let _router = create_routes();
+    }
+}

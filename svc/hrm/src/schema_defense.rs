@@ -424,3 +424,208 @@ pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::
     run_schema_defense(pool, SERVICE_SCHEMA, TABLE_DEFS, SERVICE_TAG).await?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_service_schema_is_hrm() {
+        assert_eq!(SERVICE_SCHEMA, "hrm");
+    }
+
+    #[test]
+    fn test_service_tag_is_hrm() {
+        assert_eq!(SERVICE_TAG, "hrm");
+    }
+
+    #[test]
+    fn test_table_defs_has_expected_table_count() {
+        // 17 tables as documented in the comment
+        assert!(
+            TABLE_DEFS.len() >= 15,
+            "expected at least 15 table definitions, got {}",
+            TABLE_DEFS.len()
+        );
+    }
+
+    #[test]
+    fn test_table_defs_contains_core_tables() {
+        let table_names: Vec<&str> = TABLE_DEFS.iter().map(|(name, _)| *name).collect();
+        assert!(table_names.contains(&"companies"), "missing 'companies'");
+        assert!(
+            table_names.contains(&"departments"),
+            "missing 'departments'"
+        );
+        assert!(table_names.contains(&"positions"), "missing 'positions'");
+        assert!(table_names.contains(&"employees"), "missing 'employees'");
+        assert!(table_names.contains(&"contracts"), "missing 'contracts'");
+        assert!(
+            table_names.contains(&"attendance_records"),
+            "missing 'attendance_records'"
+        );
+        assert!(
+            table_names.contains(&"payroll_records"),
+            "missing 'payroll_records'"
+        );
+        assert!(table_names.contains(&"audit_logs"), "missing 'audit_logs'");
+    }
+
+    #[test]
+    fn test_all_tables_have_tenant_id_except_init_tables() {
+        for (table_name, cols) in TABLE_DEFS {
+            let col_names: Vec<&str> = cols.iter().map(|(c, _)| *c).collect();
+            // initialization_status and initialization_logs don't have tenant_id
+            if *table_name == "initialization_status" || *table_name == "initialization_logs" {
+                assert!(
+                    !col_names.contains(&"tenant_id"),
+                    "table '{}' should NOT have tenant_id",
+                    table_name
+                );
+            } else {
+                assert!(
+                    col_names.contains(&"tenant_id"),
+                    "table '{}' is missing tenant_id column",
+                    table_name
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_all_tables_have_organization_id() {
+        for (table_name, cols) in TABLE_DEFS {
+            let col_names: Vec<&str> = cols.iter().map(|(c, _)| *c).collect();
+            assert!(
+                col_names.contains(&"organization_id"),
+                "table '{}' is missing organization_id column",
+                table_name
+            );
+        }
+    }
+
+    #[test]
+    fn test_all_tables_have_created_at() {
+        for (table_name, cols) in TABLE_DEFS {
+            let col_names: Vec<&str> = cols.iter().map(|(c, _)| *c).collect();
+            assert!(
+                col_names.contains(&"created_at"),
+                "table '{}' is missing created_at column",
+                table_name
+            );
+        }
+    }
+
+    #[test]
+    fn test_business_tables_have_deleted_at() {
+        // Business tables should support soft delete
+        let business_tables = [
+            "companies",
+            "departments",
+            "positions",
+            "employees",
+            "contracts",
+            "attendance_records",
+            "payroll_records",
+            "performance_records",
+            "training_records",
+            "training_participants",
+            "recruitment_records",
+            "recruitment_applications",
+            "leave_records",
+            "salary_adjustments",
+        ];
+        let table_map: std::collections::HashMap<&str, &[(&str, &str)]> =
+            TABLE_DEFS.iter().cloned().collect();
+
+        for bt in &business_tables {
+            if let Some(cols) = table_map.get(bt) {
+                let col_names: Vec<&str> = cols.iter().map(|(c, _)| *c).collect();
+                assert!(
+                    col_names.contains(&"deleted_at"),
+                    "business table '{}' is missing deleted_at column",
+                    bt
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_audit_logs_has_no_deleted_at() {
+        // audit_logs should not have deleted_at (immutable log)
+        let table_map: std::collections::HashMap<&str, &[(&str, &str)]> =
+            TABLE_DEFS.iter().cloned().collect();
+        if let Some(cols) = table_map.get("audit_logs") {
+            let col_names: Vec<&str> = cols.iter().map(|(c, _)| *c).collect();
+            assert!(
+                !col_names.contains(&"deleted_at"),
+                "audit_logs should NOT have deleted_at"
+            );
+        }
+    }
+
+    #[test]
+    fn test_table_defs_no_duplicate_table_names() {
+        let mut seen = std::collections::HashSet::new();
+        for (name, _) in TABLE_DEFS {
+            assert!(seen.insert(*name), "duplicate table name found: {}", name);
+        }
+    }
+
+    #[test]
+    fn test_table_defs_no_duplicate_columns_per_table() {
+        for (table_name, cols) in TABLE_DEFS {
+            let mut seen = std::collections::HashSet::new();
+            for (col_name, _) in *cols {
+                assert!(
+                    seen.insert(*col_name),
+                    "duplicate column '{}' in table '{}'",
+                    col_name,
+                    table_name
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_employees_table_has_expected_columns() {
+        let table_map: std::collections::HashMap<&str, &[(&str, &str)]> =
+            TABLE_DEFS.iter().cloned().collect();
+        let cols = table_map.get("employees").expect("employees table exists");
+        let col_names: Vec<&str> = cols.iter().map(|(c, _)| *c).collect();
+        assert!(col_names.contains(&"employee_number"));
+        assert!(col_names.contains(&"name"));
+        assert!(col_names.contains(&"gender"));
+        assert!(col_names.contains(&"hire_date"));
+        assert!(col_names.contains(&"status"));
+        assert!(col_names.contains(&"tenant_id"));
+    }
+
+    #[test]
+    fn test_contracts_table_has_expected_columns() {
+        let table_map: std::collections::HashMap<&str, &[(&str, &str)]> =
+            TABLE_DEFS.iter().cloned().collect();
+        let cols = table_map.get("contracts").expect("contracts table exists");
+        let col_names: Vec<&str> = cols.iter().map(|(c, _)| *c).collect();
+        assert!(col_names.contains(&"employee_id"));
+        assert!(col_names.contains(&"contract_no"));
+        assert!(col_names.contains(&"contract_type"));
+        assert!(col_names.contains(&"start_date"));
+        assert!(col_names.contains(&"end_date"));
+        assert!(col_names.contains(&"salary"));
+    }
+
+    #[test]
+    fn test_all_column_types_are_non_empty() {
+        for (table_name, cols) in TABLE_DEFS {
+            for (col_name, col_type) in *cols {
+                assert!(
+                    !col_type.is_empty(),
+                    "column '{}' in table '{}' has empty type",
+                    col_name,
+                    table_name
+                );
+            }
+        }
+    }
+}

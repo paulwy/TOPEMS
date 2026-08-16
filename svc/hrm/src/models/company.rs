@@ -49,3 +49,81 @@ pub struct UpdateCompanyRequest {
     pub description: Option<String>,
     pub status: Option<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn now() -> DateTime<chrono::Utc> {
+        chrono::Utc::now()
+    }
+
+    fn roundtrip<T: Serialize + serde::de::DeserializeOwned + std::fmt::Debug>(item: &T) {
+        let json = serde_json::to_string(item).expect("serialize");
+        let v1: serde_json::Value = serde_json::from_str(&json).expect("to_value");
+        let back: T = serde_json::from_str(&json).expect("deserialize");
+        let json2 = serde_json::to_string(&back).expect("re-serialize");
+        let v2: serde_json::Value = serde_json::from_str(&json2).expect("to_value2");
+        assert_eq!(v1, v2, "roundtrip mismatch");
+    }
+
+    #[test]
+    fn test_company_roundtrip_full() {
+        roundtrip(&Company {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            name: "Acme Corp".to_string(),
+            short_name: Some("Acme".to_string()),
+            registration_number: Some("REG123456".to_string()),
+            tax_number: Some("TAX987654".to_string()),
+            address: Some("123 Main St".to_string()),
+            contact_phone: Some("555-0100".to_string()),
+            email: Some("info@acme.com".to_string()),
+            website: Some("https://acme.com".to_string()),
+            description: Some("A technology company".to_string()),
+            status: "active".to_string(),
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn test_company_roundtrip_minimal() {
+        roundtrip(&Company {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            name: "Minimal Inc".to_string(),
+            short_name: None,
+            registration_number: None,
+            tax_number: None,
+            address: None,
+            contact_phone: None,
+            email: None,
+            website: None,
+            description: None,
+            status: "inactive".to_string(),
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn test_company_roundtrip_all_optional_none() {
+        roundtrip(&Company {
+            id: Uuid::nil(),
+            tenant_id: Uuid::nil(),
+            name: String::new(),
+            short_name: None,
+            registration_number: None,
+            tax_number: None,
+            address: None,
+            contact_phone: None,
+            email: None,
+            website: None,
+            description: None,
+            status: String::new(),
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+}

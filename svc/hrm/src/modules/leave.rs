@@ -420,3 +420,169 @@ async fn reject_leave(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::de::DeserializeOwned;
+
+    fn now() -> chrono::DateTime<chrono::Utc> {
+        Utc::now()
+    }
+
+    fn dec(n: i64) -> BigDecimal {
+        BigDecimal::from(n)
+    }
+
+    fn roundtrip<T: Serialize + DeserializeOwned + std::fmt::Debug>(item: &T) {
+        let json = serde_json::to_string(item).expect("serialize");
+        let v1: serde_json::Value = serde_json::from_str(&json).expect("to_value");
+        let back: T = serde_json::from_str(&json).expect("deserialize");
+        let json2 = serde_json::to_string(&back).expect("re-serialize");
+        let v2: serde_json::Value = serde_json::from_str(&json2).expect("to_value2");
+        assert_eq!(v1, v2, "roundtrip mismatch");
+    }
+
+    #[test]
+    fn test_leave_request_roundtrip_full() {
+        roundtrip(&LeaveRequest {
+            id: Uuid::new_v4(),
+            employee_id: Uuid::new_v4(),
+            leave_type: "annual".to_string(),
+            start_date: now(),
+            end_date: now(),
+            days: dec(3),
+            reason: Some("Family vacation".to_string()),
+            status: "pending".to_string(),
+            approver_id: Some(Uuid::new_v4()),
+            approved_at: Some(now()),
+            rejection_reason: None,
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn test_leave_request_roundtrip_minimal() {
+        roundtrip(&LeaveRequest {
+            id: Uuid::new_v4(),
+            employee_id: Uuid::new_v4(),
+            leave_type: "sick".to_string(),
+            start_date: now(),
+            end_date: now(),
+            days: dec(1),
+            reason: None,
+            status: "approved".to_string(),
+            approver_id: None,
+            approved_at: None,
+            rejection_reason: None,
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn test_leave_request_roundtrip_rejected() {
+        roundtrip(&LeaveRequest {
+            id: Uuid::new_v4(),
+            employee_id: Uuid::new_v4(),
+            leave_type: "personal".to_string(),
+            start_date: now(),
+            end_date: now(),
+            days: dec(2),
+            reason: Some("Personal matter".to_string()),
+            status: "rejected".to_string(),
+            approver_id: Some(Uuid::new_v4()),
+            approved_at: Some(now()),
+            rejection_reason: Some("Not enough notice".to_string()),
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn test_create_leave_request_roundtrip() {
+        roundtrip(&CreateLeaveRequest {
+            employee_id: Uuid::new_v4(),
+            leave_type: "annual".to_string(),
+            start_date: now(),
+            end_date: now(),
+            days: dec(5),
+            reason: Some("Summer break".to_string()),
+        });
+        roundtrip(&CreateLeaveRequest {
+            employee_id: Uuid::new_v4(),
+            leave_type: "sick".to_string(),
+            start_date: now(),
+            end_date: now(),
+            days: dec(1),
+            reason: None,
+        });
+    }
+
+    #[test]
+    fn test_update_leave_request_roundtrip_all_none() {
+        roundtrip(&UpdateLeaveRequest {
+            leave_type: None,
+            start_date: None,
+            end_date: None,
+            days: None,
+            reason: None,
+        });
+    }
+
+    #[test]
+    fn test_update_leave_request_roundtrip_all_some() {
+        roundtrip(&UpdateLeaveRequest {
+            leave_type: Some("annual".to_string()),
+            start_date: Some(now()),
+            end_date: Some(now()),
+            days: Some(dec(4)),
+            reason: Some("Extended vacation".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_approve_leave_request_roundtrip() {
+        roundtrip(&ApproveLeaveRequest {
+            approver_id: Uuid::new_v4(),
+        });
+    }
+
+    #[test]
+    fn test_reject_leave_request_roundtrip() {
+        roundtrip(&RejectLeaveRequest {
+            approver_id: Uuid::new_v4(),
+            reason: "Insufficient staffing".to_string(),
+        });
+    }
+
+    #[test]
+    fn test_query_params_deserialize_all_none() {
+        let json = r#"{}"#;
+        let params: QueryParams = serde_json::from_str(json).expect("deserialize");
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+        assert!(params.employee_id.is_none());
+        assert!(params.status.is_none());
+    }
+
+    #[test]
+    fn test_query_params_deserialize_all_some() {
+        let emp = Uuid::new_v4();
+        let json = format!(
+            r#"{{"page":2,"page_size":15,"employee_id":"{}","status":"pending"}}"#,
+            emp
+        );
+        let params: QueryParams = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(params.page, Some(2));
+        assert_eq!(params.page_size, Some(15));
+        assert_eq!(params.employee_id, Some(emp));
+        assert_eq!(params.status.as_deref(), Some("pending"));
+    }
+
+    #[test]
+    fn test_create_routes_returns_router() {
+        let _router = create_routes();
+    }
+}

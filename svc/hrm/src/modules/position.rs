@@ -354,3 +354,155 @@ async fn delete_position(
 
     response
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde::de::DeserializeOwned;
+
+    fn now() -> chrono::DateTime<chrono::Utc> {
+        Utc::now()
+    }
+
+    fn dec(n: i64) -> BigDecimal {
+        BigDecimal::from(n)
+    }
+
+    fn roundtrip<T: Serialize + DeserializeOwned + std::fmt::Debug>(item: &T) {
+        let json = serde_json::to_string(item).expect("serialize");
+        let v1: serde_json::Value = serde_json::from_str(&json).expect("to_value");
+        let back: T = serde_json::from_str(&json).expect("deserialize");
+        let json2 = serde_json::to_string(&back).expect("re-serialize");
+        let v2: serde_json::Value = serde_json::from_str(&json2).expect("to_value2");
+        assert_eq!(v1, v2, "roundtrip mismatch");
+    }
+
+    #[test]
+    fn test_position_roundtrip_full() {
+        roundtrip(&Position {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            org_id: Some(Uuid::new_v4()),
+            department_id: Some(Uuid::new_v4()),
+            name: "Senior Engineer".to_string(),
+            code: Some("SE-001".to_string()),
+            level: Some("P6".to_string()),
+            min_salary: Some(dec(15000)),
+            max_salary: Some(dec(30000)),
+            description: Some("Senior engineering role".to_string()),
+            requirements: Some("5+ years experience".to_string()),
+            status: "active".to_string(),
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn test_position_roundtrip_minimal() {
+        roundtrip(&Position {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            org_id: None,
+            department_id: None,
+            name: "Intern".to_string(),
+            code: None,
+            level: None,
+            min_salary: None,
+            max_salary: None,
+            description: None,
+            requirements: None,
+            status: "active".to_string(),
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn test_position_roundtrip_inactive() {
+        roundtrip(&Position {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
+            org_id: Some(Uuid::new_v4()),
+            department_id: None,
+            name: "Deprecated Role".to_string(),
+            code: Some("DEP-001".to_string()),
+            level: None,
+            min_salary: None,
+            max_salary: None,
+            description: None,
+            requirements: None,
+            status: "inactive".to_string(),
+            created_at: now(),
+            updated_at: now(),
+        });
+    }
+
+    #[test]
+    fn test_create_position_request_roundtrip_full() {
+        roundtrip(&CreatePositionRequest {
+            tenant_id: Uuid::new_v4(),
+            org_id: Some(Uuid::new_v4()),
+            department_id: Some(Uuid::new_v4()),
+            name: "Tech Lead".to_string(),
+            code: Some("TL-001".to_string()),
+            level: Some("P7".to_string()),
+            min_salary: Some(dec(25000)),
+            max_salary: Some(dec(50000)),
+            description: Some("Technical leader".to_string()),
+            requirements: Some("8+ years".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_create_position_request_roundtrip_minimal() {
+        roundtrip(&CreatePositionRequest {
+            tenant_id: Uuid::new_v4(),
+            org_id: None,
+            department_id: None,
+            name: "Junior Dev".to_string(),
+            code: None,
+            level: None,
+            min_salary: None,
+            max_salary: None,
+            description: None,
+            requirements: None,
+        });
+    }
+
+    #[test]
+    fn test_update_position_request_roundtrip_all_none() {
+        roundtrip(&UpdatePositionRequest {
+            org_id: None,
+            department_id: None,
+            name: None,
+            code: None,
+            level: None,
+            min_salary: None,
+            max_salary: None,
+            description: None,
+            requirements: None,
+            status: None,
+        });
+    }
+
+    #[test]
+    fn test_update_position_request_roundtrip_all_some() {
+        roundtrip(&UpdatePositionRequest {
+            org_id: Some(Uuid::new_v4()),
+            department_id: Some(Uuid::new_v4()),
+            name: Some("Updated Name".to_string()),
+            code: Some("UPD-001".to_string()),
+            level: Some("P8".to_string()),
+            min_salary: Some(dec(30000)),
+            max_salary: Some(dec(60000)),
+            description: Some("Updated desc".to_string()),
+            requirements: Some("Updated reqs".to_string()),
+            status: Some("inactive".to_string()),
+        });
+    }
+
+    #[test]
+    fn test_create_routes_returns_router() {
+        let _router = create_routes();
+    }
+}

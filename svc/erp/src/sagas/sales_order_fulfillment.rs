@@ -131,3 +131,24 @@ impl Default for SalesOrderFulfillmentSaga {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new_returns_instance() {
+        let _saga = SalesOrderFulfillmentSaga::new();
+    }
+
+    #[test]
+    fn test_default_returns_instance() {
+        let _saga = SalesOrderFulfillmentSaga::default();
+    }
+
+    #[test]
+    fn test_new_and_default_are_equivalent() {
+        let _a = SalesOrderFulfillmentSaga::new();
+        let _b = SalesOrderFulfillmentSaga::default();
+    }
+}

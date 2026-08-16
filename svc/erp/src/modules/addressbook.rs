@@ -541,3 +541,45 @@ pub fn create_routes() -> Router<ApiState> {
         )
         .route("/addressbook/export", axum::routing::get(export_contacts))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_escape_csv_plain_text() {
+        assert_eq!(escape_csv("hello"), "hello");
+        assert_eq!(escape_csv("world"), "world");
+    }
+
+    #[test]
+    fn test_escape_csv_with_comma() {
+        assert_eq!(escape_csv("hello,world"), "\"hello,world\"");
+    }
+
+    #[test]
+    fn test_escape_csv_with_quote() {
+        assert_eq!(escape_csv("say \"hi\""), "\"say \"\"hi\"\"\"");
+    }
+
+    #[test]
+    fn test_escape_csv_with_newline() {
+        assert_eq!(escape_csv("line1\nline2"), "\"line1\nline2\"");
+    }
+
+    #[test]
+    fn test_escape_csv_empty_string() {
+        assert_eq!(escape_csv(""), "");
+    }
+
+    #[test]
+    fn test_escape_csv_multiple_special_chars() {
+        assert_eq!(escape_csv("a,b\nc\"d"), "\"a,b\nc\"\"d\"");
+    }
+
+    #[test]
+    fn test_escape_csv_no_special_returns_as_is() {
+        assert_eq!(escape_csv("123abc"), "123abc");
+        assert_eq!(escape_csv("test-value"), "test-value");
+    }
+}

@@ -599,3 +599,305 @@ async fn payroll_summary(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_date_range_week() {
+        let params = ReportParams {
+            start_date: None,
+            end_date: None,
+            department_id: None,
+            time_range: Some("week".to_string()),
+        };
+        let (start, end) = params.get_date_range();
+        assert!(!start.is_empty());
+        assert!(!end.is_empty());
+        // end should be today
+        let today = Utc::now().format("%Y-%m-%d").to_string();
+        assert_eq!(end, today);
+    }
+
+    #[test]
+    fn test_get_date_range_month() {
+        let params = ReportParams {
+            start_date: None,
+            end_date: None,
+            department_id: None,
+            time_range: Some("month".to_string()),
+        };
+        let (start, end) = params.get_date_range();
+        assert!(!start.is_empty());
+        assert!(!end.is_empty());
+        let today = Utc::now().format("%Y-%m-%d").to_string();
+        assert_eq!(end, today);
+    }
+
+    #[test]
+    fn test_get_date_range_quarter() {
+        let params = ReportParams {
+            start_date: None,
+            end_date: None,
+            department_id: None,
+            time_range: Some("quarter".to_string()),
+        };
+        let (start, end) = params.get_date_range();
+        assert!(!start.is_empty());
+        assert!(!end.is_empty());
+        let today = Utc::now().format("%Y-%m-%d").to_string();
+        assert_eq!(end, today);
+    }
+
+    #[test]
+    fn test_get_date_range_year() {
+        let params = ReportParams {
+            start_date: None,
+            end_date: None,
+            department_id: None,
+            time_range: Some("year".to_string()),
+        };
+        let (start, end) = params.get_date_range();
+        assert!(!start.is_empty());
+        assert!(!end.is_empty());
+        let today = Utc::now().format("%Y-%m-%d").to_string();
+        assert_eq!(end, today);
+    }
+
+    #[test]
+    fn test_get_date_range_unknown_time_range_defaults_to_month() {
+        let params = ReportParams {
+            start_date: None,
+            end_date: None,
+            department_id: None,
+            time_range: Some("unknown".to_string()),
+        };
+        let (start, end) = params.get_date_range();
+        assert!(!start.is_empty());
+        assert!(!end.is_empty());
+        let today = Utc::now().format("%Y-%m-%d").to_string();
+        assert_eq!(end, today);
+        // Should default to 30 days back (same as month)
+        let expected_start = (Utc::now() - chrono::Duration::days(30))
+            .format("%Y-%m-%d")
+            .to_string();
+        assert_eq!(start, expected_start);
+    }
+
+    #[test]
+    fn test_get_date_range_explicit_dates() {
+        let params = ReportParams {
+            start_date: Some("2024-01-01".to_string()),
+            end_date: Some("2024-06-30".to_string()),
+            department_id: None,
+            time_range: None,
+        };
+        let (start, end) = params.get_date_range();
+        assert_eq!(start, "2024-01-01");
+        assert_eq!(end, "2024-06-30");
+    }
+
+    #[test]
+    fn test_get_date_range_no_time_range_no_dates_defaults() {
+        let params = ReportParams {
+            start_date: None,
+            end_date: None,
+            department_id: None,
+            time_range: None,
+        };
+        let (start, end) = params.get_date_range();
+        assert!(!start.is_empty());
+        assert!(!end.is_empty());
+        let today = Utc::now().format("%Y-%m-%d").to_string();
+        assert_eq!(end, today);
+        let expected_start = (Utc::now() - chrono::Duration::days(30))
+            .format("%Y-%m-%d")
+            .to_string();
+        assert_eq!(start, expected_start);
+    }
+
+    #[test]
+    fn test_get_date_range_partial_explicit_dates() {
+        let params = ReportParams {
+            start_date: Some("2024-03-15".to_string()),
+            end_date: None,
+            department_id: None,
+            time_range: None,
+        };
+        let (start, end) = params.get_date_range();
+        assert_eq!(start, "2024-03-15");
+        let today = Utc::now().format("%Y-%m-%d").to_string();
+        assert_eq!(end, today);
+    }
+
+    #[test]
+    fn test_get_date_range_end_only() {
+        let params = ReportParams {
+            start_date: None,
+            end_date: Some("2024-12-31".to_string()),
+            department_id: None,
+            time_range: None,
+        };
+        let (start, end) = params.get_date_range();
+        assert_eq!(end, "2024-12-31");
+        let expected_start = (Utc::now() - chrono::Duration::days(30))
+            .format("%Y-%m-%d")
+            .to_string();
+        assert_eq!(start, expected_start);
+    }
+
+    #[test]
+    fn test_get_date_range_week_differs_from_month() {
+        let week_params = ReportParams {
+            start_date: None,
+            end_date: None,
+            department_id: None,
+            time_range: Some("week".to_string()),
+        };
+        let month_params = ReportParams {
+            start_date: None,
+            end_date: None,
+            department_id: None,
+            time_range: Some("month".to_string()),
+        };
+        let (week_start, _) = week_params.get_date_range();
+        let (month_start, _) = month_params.get_date_range();
+        assert_ne!(week_start, month_start);
+    }
+
+    #[test]
+    fn test_get_date_range_year_differs_from_quarter() {
+        let year_params = ReportParams {
+            start_date: None,
+            end_date: None,
+            department_id: None,
+            time_range: Some("year".to_string()),
+        };
+        let quarter_params = ReportParams {
+            start_date: None,
+            end_date: None,
+            department_id: None,
+            time_range: Some("quarter".to_string()),
+        };
+        let (year_start, _) = year_params.get_date_range();
+        let (quarter_start, _) = quarter_params.get_date_range();
+        assert_ne!(year_start, quarter_start);
+    }
+
+    #[test]
+    fn test_create_routes() {
+        let _router = create_routes();
+    }
+
+    #[test]
+    fn test_report_params_debug() {
+        let params = ReportParams {
+            start_date: Some("2024-01-01".to_string()),
+            end_date: None,
+            department_id: None,
+            time_range: Some("month".to_string()),
+        };
+        let debug = format!("{:?}", params);
+        assert!(debug.contains("ReportParams"));
+    }
+
+    #[test]
+    fn test_report_params_with_department_id() {
+        let dept_id = Uuid::new_v4();
+        let params = ReportParams {
+            start_date: None,
+            end_date: None,
+            department_id: Some(dept_id),
+            time_range: Some("week".to_string()),
+        };
+        let (start, end) = params.get_date_range();
+        assert!(!start.is_empty());
+        assert!(!end.is_empty());
+    }
+
+    #[test]
+    fn test_employee_summary_response_fields() {
+        let resp = EmployeeSummaryResponse {
+            total_employees: 100,
+            active_employees: 80,
+            inactive_employees: 20,
+            male_count: 60,
+            female_count: 40,
+            avg_tenure_days: 365.5,
+            new_hires_this_month: 5,
+            terminations_this_month: 2,
+        };
+        assert_eq!(resp.total_employees, 100);
+        assert_eq!(resp.active_employees, 80);
+        assert_eq!(resp.inactive_employees, 20);
+    }
+
+    #[test]
+    fn test_department_summary_response_fields() {
+        let resp = DepartmentSummaryResponse {
+            department_id: Uuid::new_v4(),
+            department_name: "Engineering".to_string(),
+            employee_count: 50,
+            active_count: 45,
+        };
+        assert_eq!(resp.department_name, "Engineering");
+        assert_eq!(resp.employee_count, 50);
+    }
+
+    #[test]
+    fn test_contract_summary_response_fields() {
+        let resp = ContractSummaryResponse {
+            total_contracts: 100,
+            active_contracts: 80,
+            expired_contracts: 15,
+            expiring_this_month: 3,
+            expiring_next_month: 2,
+        };
+        assert_eq!(resp.total_contracts, 100);
+        assert_eq!(resp.active_contracts, 80);
+    }
+
+    #[test]
+    fn test_training_summary_response_fields() {
+        let resp = TrainingSummaryResponse {
+            total_plans: 10,
+            active_plans: 5,
+            total_courses: 50,
+            completed_courses: 30,
+            total_records: 200,
+            completed_records: 150,
+            avg_completion_rate: 75.0,
+        };
+        assert_eq!(resp.total_plans, 10);
+        assert_eq!(resp.avg_completion_rate, 75.0);
+    }
+
+    #[test]
+    fn test_attendance_summary_response_fields() {
+        let resp = AttendanceSummaryResponse {
+            total_records: 1000,
+            on_time_count: 800,
+            late_count: 100,
+            absent_count: 50,
+            leave_count: 50,
+            attendance_rate: 95.0,
+        };
+        assert_eq!(resp.total_records, 1000);
+        assert_eq!(resp.attendance_rate, 95.0);
+    }
+
+    #[test]
+    fn test_payroll_summary_response_fields() {
+        let resp = PayrollSummaryResponse {
+            total_payroll: 500000.0,
+            avg_salary: 10000.0,
+            min_salary: 5000.0,
+            max_salary: 30000.0,
+            employee_count: 50,
+            bonus_total: 50000.0,
+        };
+        assert_eq!(resp.total_payroll, 500000.0);
+        assert_eq!(resp.employee_count, 50);
+    }
+}
