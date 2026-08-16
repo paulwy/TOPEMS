@@ -77,7 +77,14 @@ export interface UseCrudQueriesResult<T, TCreate = Partial<T>, TUpdate = Partial
   update: (id: string, item: TUpdate) => Promise<T | null>;
   delete: (id: string) => Promise<void>;
   bulkDelete: (ids: string[]) => Promise<void>;
-  // 原始 Mutation 对象（用于访问 isPending/isError/onMutate 等高级用法）
+  // 原始 Mutation 对象 — 顶层别名（方便解构与直接访问，和 mutations.* 指向同对象）
+  createMutation: ReturnType<typeof useMutation<T | null, Error, TCreate, unknown>>;
+  updateMutation: ReturnType<
+    typeof useMutation<T | null, Error, { id: string; item: TUpdate }, unknown>
+  >;
+  deleteMutation: ReturnType<typeof useMutation<void, Error, string, unknown>>;
+  bulkDeleteMutation: ReturnType<typeof useMutation<void, Error, string[], unknown>>;
+  // 原始 Mutation 对象（命名空间路径，旧代码兼容）
   mutations: {
     createMutation: ReturnType<typeof useMutation<T | null, Error, TCreate, unknown>>;
     updateMutation: ReturnType<
@@ -341,6 +348,10 @@ export function useCrudQueries<
     update,
     delete: deleteItem,
     bulkDelete,
+    createMutation,
+    updateMutation,
+    deleteMutation,
+    bulkDeleteMutation,
     mutations: {
       createMutation,
       updateMutation,
@@ -349,8 +360,6 @@ export function useCrudQueries<
     },
   };
 }
-
-// ============ useModuleQueries ============
 
 /**
  * 基于 React Query 的模块级 CRUD hook 工厂。
@@ -599,6 +608,10 @@ export function useModuleQueries<T extends { id?: string }>(
     update,
     delete: deleteItem,
     bulkDelete,
+    createMutation,
+    updateMutation,
+    deleteMutation,
+    bulkDeleteMutation,
     mutations: {
       createMutation,
       updateMutation,
@@ -898,6 +911,10 @@ export function useCrudOperations<
     update,
     delete: deleteItem,
     bulkDelete,
+    createMutation,
+    updateMutation,
+    deleteMutation,
+    bulkDeleteMutation,
     mutations: {
       createMutation,
       updateMutation,

@@ -4827,7 +4827,7 @@
   "pages.pm_report_page.index1_1": "第{index + 1}期",
   "pages.pm_report_page.pipi_2": "CPI/SPI 趋势分析",
   "pages.pm_report_page.index1_3": "第{index + 1}期",
-  "pages.pm_report_benefits_table.index1_0": "第 {index + 1} 期",
+  "pages.pm_report_benefits_table.index1_0": "第 {{index}} 期",
   "pages.qms_fmea_detail_page.top10pn_0": "Top 10 风险项 RPN",
   "pages.qms_cost_analysis_page.k0": "符合性 / 不符合性成本比：{ratio}",
   "pages.qms_cost_analysis_page.pf_1": "PAF 成本结构（饼图）",

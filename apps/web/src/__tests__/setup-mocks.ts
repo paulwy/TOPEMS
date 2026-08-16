@@ -567,14 +567,153 @@ vi.mock('@tanstack/react-query', () => {
   };
 });
 
-// ─── Mock react-i18next ───────────────────────────────────────────────────
+// ─── Mock react-i18next with translation lookup ────────────────────────────
+const __TEST_TRANSLATIONS__: Record<string, string> = {
+  // shared.config (module config names - explicit per-module to avoid k0 conflicts)
+  'shared.config.iam_name': '身份与权限',
+  'shared.config.admin_name': '系统管理',
+  'shared.config.k0': '模块',
+  'shared.config.k1': '系统配置',
+  'shared.config.k2': '概览',
+  'shared.config.k3': '名称',
+  'shared.config.k4': '详情',
+  'shared.config.k5': '配置',
+  'shared.config.k6': '自动化',
+  'shared.config.k7': '设置',
+  // shared.data_export
+  'shared.data_export.k0': '导出',
+  'shared.data_export.excel_1': '导出 Excel',
+  'shared.data_export.csv_2': '导出 CSV',
+  'shared.data_export.pdf_3': '导出 PDF',
+  'shared.data_export.k4': '导出设置',
+  'shared.data_export.k5': '请输入文件名',
+  'shared.data_export.k6': '选择导出字段',
+  'shared.data_export.k7': '取消',
+  // components.data_export
+  'components.data_export.k0': '导出设置',
+  'components.data_export.k1': '文件名',
+  'components.data_export.k2': '导出格式',
+  'components.data_export.k3': '全选',
+  'components.data_export.k4': '取消全选',
+  'components.data_export.k5': '字段',
+  'components.data_export.k6': '导出',
+  // shared.quick_search
+  'shared.quick_search.k0': '清除',
+  'shared.quick_search.k1': '清除历史',
+  // components.quick_search
+  'components.quick_search.k0': '搜索...',
+  'components.quick_search.k1': '搜索建议',
+  'components.quick_search.k2': '搜索历史',
+  'components.quick_search.k3': '未找到相关结果',
+  'components.quick_search.enter_0': '按回车搜索',
+  'components.quick_search.query_0': '搜索',
+  // shared.format
+  'shared.format.k0': '刚刚',
+  'shared.format.k1': '未启用',
+  'shared.format.k2': '已启用',
+  'shared.format.k3': '活跃',
+  'shared.format.k4': '停用',
+  'shared.format.k5': '待处理',
+  'shared.format.k6': '已批准',
+  'shared.format.k7': '已拒绝',
+  'shared.format.k8': '已完成',
+  'shared.format.k9': '处理中',
+  'shared.format.k10': '已取消',
+  'shared.format.k11': '草稿',
+  'shared.format.k12': '已发布',
+  'shared.format.k13': '已删除',
+  'shared.format.k14': '成功',
+  'shared.format.k15': '失败',
+  'shared.format.k16': '警告',
+  'shared.format.k17': '错误',
+  'shared.format.yyyymm_12': 'YYYY年MM月',
+  'shared.format.duration.hour': '小时',
+  'shared.format.duration.minute': '分钟',
+  'shared.format.duration.second': '秒',
+  'shared.format.relative_time.minute_ago': '分钟前',
+  'shared.format.relative_time.hour_ago': '小时前',
+  'shared.format.relative_time.day_ago': '天前',
+  'shared.format.relative_time.week_ago': '周前',
+  'shared.format.relative_time.month_ago': '个月前',
+  'shared.format.relative_time.year_ago': '年前',
+  // system (LogConfigPanel)
+  'system.system_params_page_components_log_config_panel.e1': '日志级别和格式',
+  'system.system_params_page_components_log_config_panel.e2': '配置日志的输出级别和记录格式',
+  'system.system_params_page_components_log_config_panel.e3': '文件输出配置',
+  'system.system_params_page_components_log_config_panel.e4': '配置日志文件的存储策略',
+  'system.system_params_page_components_log_config_panel.e5': '文件输出',
+  'system.system_params_page_components_log_config_panel.e6': '高级配置',
+  'system.system_params_page_components_log_config_panel.e7': '控制台、数据库与远程日志',
+  'system.log_config_panel.k0': '日志级别',
+  'system.log_config_panel.k1': '日志级别',
+  'system.log_config_panel.k2': '日志格式',
+  'system.log_config_panel.k3': '日志格式',
+  'system.log_config_panel.k4': '文本',
+  'system.log_config_panel.k5': '输出方式',
+  'system.log_config_panel.k6': '输出方式',
+  'system.log_config_panel.k7': '仅控制台',
+  'system.log_config_panel.k8': '仅文件',
+  'system.log_config_panel.k9': '控制台和文件',
+  'system.log_config_panel.k10': '记录到数据库',
+  'system.log_config_panel.k11': '已启用',
+  'system.log_config_panel.k12': '已禁用',
+  'system.log_config_panel.k13': '日志文件路径',
+  'system.log_config_panel.mb_14': '单文件最大大小 (MB)',
+  'system.log_config_panel.k15': '保留文件数量',
+  'system.log_config_panel.k16': '控制台输出',
+  'system.log_config_panel.k17': '启用远程日志',
+  'system.log_config_panel.url_18': '远程日志URL',
+  'system.log_config_panel.k19': '保存配置',
+  'system.system_params_page_components_cache_config_panel.m4': '保存中...',
+  // shared.location_message (使用实际 zh/shared.json 翻译值)
+  'shared.location_message.k0': '搜索完成',
+  'shared.location_message.k1': '创建围栏失败',
+  'shared.location_message.k2': '未知错误',
+  'shared.location_message.k3': '同步失败',
+  'shared.location_message.k4': '围栏已创建',
+  'shared.location_message.k5': '同步失败:',
+  'shared.location_message.k6': '更新围栏失败',
+  'shared.location_message.k7': '未知错误',
+  'shared.location_message.k8': '同步失败',
+  'shared.location_message.k9': '围栏已更新',
+  'shared.location_message.k10': '围栏不存在',
+  'shared.location_message.k11': '未知错误',
+  'shared.location_message.k12': '同步状态：待同步',
+  'shared.location_message.k14': '搜索完成',
+  'shared.location_message.k15': '无结果',
+  'shared.location_message.k16': '未知错误',
+  'shared.location_message.gis_5': '围栏创建并同步到 GIS',
+  'shared.location_message.gis_6': 'GIS 搜索失败:',
+  'shared.location_message.gis_13': '围栏已同步到 GIS',
+};
+
+const __mockTranslate = (key: string, ns?: string): string => {
+  if (ns) {
+    const full = `${ns}.${key}`;
+    if (__TEST_TRANSLATIONS__[full]) return __TEST_TRANSLATIONS__[full];
+  }
+  return __TEST_TRANSLATIONS__[key] ?? key;
+};
+
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-    i18n: { language: 'zh-CN', changeLanguage: vi.fn() },
+  useTranslation: (ns?: string) => ({
+    t: (key: string) => __mockTranslate(key, ns),
+    i18n: { language: 'zh-CN', changeLanguage: vi.fn(), exists: (k: string) => !!__TEST_TRANSLATIONS__[k] },
+    ready: true,
   }),
   withTranslation: () => (Component: any) => Component,
   initReactI18next: { type: '3rdParty', init: vi.fn() },
+  Trans: ({ i18nKey, children }: { i18nKey?: string; children?: any }) =>
+    React.createElement(React.Fragment, null, __mockTranslate(i18nKey || '') || children),
+}));
+
+vi.mock('@/i18n', () => ({
+  default: {
+    t: (key: string) => __mockTranslate(key),
+    language: 'zh-CN',
+    changeLanguage: vi.fn(),
+    exists: (key: string) => !!__TEST_TRANSLATIONS__[key],
+  },
 }));
 
 // ─── Mock recharts ─────────────────────────────────────────────────────────

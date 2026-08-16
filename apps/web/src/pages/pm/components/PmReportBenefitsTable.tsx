@@ -74,7 +74,7 @@ const PmReportBenefitsTable: React.FC<PmReportBenefitsTableProps> = ({ benefits 
                       key={benefit.id}
                       hover
                     >
-                      <TableCell sx={{ color: 'grey.900' }}>{i18n.t('pages.pm_report_benefits_table.index1_0')}</TableCell>
+                      <TableCell sx={{ color: 'grey.900' }}>{i18n.t('pages.pm_report_benefits_table.index1_0', { index: index + 1 })}</TableCell>
                       <TableCell align='right'>
                         <Badge
                           sx={{

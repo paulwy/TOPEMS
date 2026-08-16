@@ -4,11 +4,96 @@ import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
 const addNotification = vi.fn();
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
-}));
+vi.mock('react-i18next', () => {
+  const sources = [
+    require('../../../../../i18n/locales/zh/finance.json'),
+    require('../../../../../i18n/locales/zh/common.json'),
+    require('../../../../../i18n/locales/zh/components.json'),
+    require('../../../../../i18n/locales/zh/pages.json'),
+    require('../../../../../i18n/locales/zh/templates.json'),
+    require('../../../../../i18n/locales/zh/schema.json'),
+  ];
+  const i18nMap: Record<string, string> = {};
+  for (const src of sources) {
+    for (const [k, v] of Object.entries(src)) {
+      i18nMap[k] = v as string;
+    }
+  }
+  i18nMap['finance.finance_voucher_page_components_voucher_import_modal.e1'] =
+    '用友凭证数据 (JSON格式)';
+  i18nMap['finance.finance_voucher_page_components_subject_list_panel.e1'] =
+    '上级科目';
+  const t = (key: string, options?: Record<string, unknown>) => {
+    let base = i18nMap[key] ?? key;
+    if (typeof options === 'object' && options !== null) {
+      for (const [k, v] of Object.entries(options)) {
+        const strVal = String(v);
+        const placeholder = `{{${k}}}`;
+        if (base.includes(placeholder)) {
+          base = base.split(placeholder).join(strVal);
+        }
+        const placeholder2 = `{${k}}`;
+        if (base.includes(placeholder2)) {
+          base = base.split(placeholder2).join(strVal);
+        }
+      }
+    }
+    return base;
+  };
+  return {
+    useTranslation: () => ({ t, i18n: { language: 'zh' } }),
+    initReactI18next: { type: '3rdParty', init: () => {} },
+    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: any }) =>
+      i18nKey ? (i18nMap[i18nKey] ?? i18nKey) : children,
+  };
+});
+
+vi.mock('@/i18n', () => {
+  const sources = [
+    require('../../../../../i18n/locales/zh/finance.json'),
+    require('../../../../../i18n/locales/zh/common.json'),
+    require('../../../../../i18n/locales/zh/components.json'),
+    require('../../../../../i18n/locales/zh/pages.json'),
+    require('../../../../../i18n/locales/zh/templates.json'),
+    require('../../../../../i18n/locales/zh/schema.json'),
+  ];
+  const i18nMap: Record<string, string> = {};
+  for (const src of sources) {
+    for (const [k, v] of Object.entries(src)) {
+      i18nMap[k] = v as string;
+    }
+  }
+  i18nMap['finance.finance_voucher_page_components_voucher_import_modal.e1'] =
+    '用友凭证数据 (JSON格式)';
+  i18nMap['finance.finance_voucher_page_components_subject_list_panel.e1'] =
+    '上级科目';
+  const t = (key: string, options?: Record<string, unknown>) => {
+    let base = i18nMap[key] ?? key;
+    if (typeof options === 'object' && options !== null) {
+      for (const [k, v] of Object.entries(options)) {
+        const strVal = String(v);
+        const placeholder = `{{${k}}}`;
+        if (base.includes(placeholder)) {
+          base = base.split(placeholder).join(strVal);
+        }
+        const placeholder2 = `{${k}}`;
+        if (base.includes(placeholder2)) {
+          base = base.split(placeholder2).join(strVal);
+        }
+      }
+    }
+    return base;
+  };
+  return {
+    default: {
+      t,
+      language: 'zh',
+      on: () => {},
+      use: () => ({ init: () => {} }),
+      init: () => {},
+    },
+  };
+});
 
 vi.mock('@/store', () => ({
   useNotificationStore: (
@@ -223,7 +308,7 @@ describe('FinanceVoucher components', () => {
       expect(
         screen.getByText('finance.finance_voucher_page_components__voucher_import_modal.import')
       ).toBeInTheDocument();
-      expect(screen.getByText('用友凭证数据 (JSON格式)')).toBeInTheDocument();
+      expect(screen.getAllByText('用友凭证数据 (JSON格式)')[0]).toBeInTheDocument();
       expect(
         screen.getByText(
           'finance.finance_voucher_page_components__voucher_import_modal.text_b7a702'

@@ -125,12 +125,12 @@ export const formatDuration = (seconds: number): string => {
   const secs = Math.floor(seconds % 60);
 
   if (hours > 0) {
-    return `${hours}${i18n.t('shared.format.k0')}${minutes}${i18n.t('shared.format.k1')}${secs}${i18n.t('shared.format.k2')}`;
+    return `${hours}${i18n.t('shared.format.duration.hour')}${minutes}${i18n.t('shared.format.duration.minute')}${secs}${i18n.t('shared.format.duration.second')}`;
   }
   if (minutes > 0) {
-    return `${minutes}${i18n.t('shared.format.k3')}${secs}${i18n.t('shared.format.k4')}`;
+    return `${minutes}${i18n.t('shared.format.duration.minute')}${secs}${i18n.t('shared.format.duration.second')}`;
   }
-  return `${secs}${i18n.t('shared.format.k5')}`;
+  return `${secs}${i18n.t('shared.format.duration.second')}`;
 };
 
 export const formatRelativeTime = (dateString: string): string => {
@@ -149,17 +149,17 @@ export const formatRelativeTime = (dateString: string): string => {
   if (diff < minute) {
     return i18n.t('shared.format.k0');
   } else if (diff < hour) {
-    return `${Math.floor(diff / minute)}${i18n.t('shared.format.k6')}`;
+    return `${Math.floor(diff / minute)}${i18n.t('shared.format.relative_time.minute_ago')}`;
   } else if (diff < day) {
-    return `${Math.floor(diff / hour)}${i18n.t('shared.format.k7')}`;
+    return `${Math.floor(diff / hour)}${i18n.t('shared.format.relative_time.hour_ago')}`;
   } else if (diff < week) {
-    return `${Math.floor(diff / day)}${i18n.t('shared.format.k8')}`;
+    return `${Math.floor(diff / day)}${i18n.t('shared.format.relative_time.day_ago')}`;
   } else if (diff < month) {
-    return `${Math.floor(diff / week)}${i18n.t('shared.format.k9')}`;
+    return `${Math.floor(diff / week)}${i18n.t('shared.format.relative_time.week_ago')}`;
   } else if (diff < year) {
-    return `${Math.floor(diff / month)}${i18n.t('shared.format.k10')}`;
+    return `${Math.floor(diff / month)}${i18n.t('shared.format.relative_time.month_ago')}`;
   } else {
-    return `${Math.floor(diff / year)}${i18n.t('shared.format.k11')}`;
+    return `${Math.floor(diff / year)}${i18n.t('shared.format.relative_time.year_ago')}`;
   }
 };
 

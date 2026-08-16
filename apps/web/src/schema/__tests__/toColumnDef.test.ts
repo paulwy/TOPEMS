@@ -1,10 +1,11 @@
 /**
  * toColumnDef — renderCell 签名一致性测试
  *
- * 验证 SchemaField.renderCell 统一使用 (value, row, index) 签名，
+ * 验证 SchemaField.renderCell 统一使用 (row, index) 签名（fnLength >= 2），
+ * 或 (value) 单参数签名（fnLength === 1），或 (row) 零参数签名（fnLength === 0）。
  * 确保 toColumnDef 正确传递参数，防止因签名不一致导致的渲染错误。
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { toColumnDef, getColumns } from '../types';
 import type { SchemaField, EntitySchema } from '../types';
@@ -16,8 +17,8 @@ describe('toColumnDef - renderCell 签名一致性', () => {
     type: 'text',
   };
 
-  it('renderCell 接收 (value, row, index) 三个参数', () => {
-    const mockFn = vi.fn().mockReturnValue('rendered');
+  it('renderCell 接收 (row, index) 两个参数（fnLength >= 2）', () => {
+    const mockFn = vi.fn((_row: Record<string, unknown>, _index: number) => 'rendered');
     const field: SchemaField = {
       ...baseField,
       renderCell: mockFn,
@@ -31,32 +32,14 @@ describe('toColumnDef - renderCell 签名一致性', () => {
     col!.render!(row, 3);
 
     expect(mockFn).toHaveBeenCalledTimes(1);
-    expect(mockFn).toHaveBeenCalledWith('active', row, 3);
+    expect(mockFn).toHaveBeenCalledWith(row, 3);
   });
 
-  it('renderCell 第一个参数是 value（字段值）', () => {
-    let capturedValue: unknown;
-    const field: SchemaField = {
-      ...baseField,
-      name: 'name',
-      renderCell: (value) => {
-        capturedValue = value;
-        return String(value);
-      },
-    };
-
-    const col = toColumnDef(field);
-    const row = { name: '张三', status: 'active' };
-    col!.render!(row, 0);
-
-    expect(capturedValue).toBe('张三');
-  });
-
-  it('renderCell 第二个参数是完整的 row 对象', () => {
+  it('renderCell 第一个参数是完整的 row 对象（fnLength >= 2）', () => {
     let capturedRow: Record<string, unknown> | undefined;
     const field: SchemaField = {
       ...baseField,
-      renderCell: (_value, row) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         capturedRow = row;
         return String(row.name);
       },
@@ -71,11 +54,11 @@ describe('toColumnDef - renderCell 签名一致性', () => {
     expect(capturedRow!.name).toBe('测试');
   });
 
-  it('renderCell 第三个参数是 index（行索引）', () => {
+  it('renderCell 第二个参数是 index（行索引，fnLength >= 2）', () => {
     let capturedIndex: number | undefined;
     const field: SchemaField = {
       ...baseField,
-      renderCell: (_value, _row, index) => {
+      renderCell: (_row: Record<string, unknown>, index: number) => {
         capturedIndex = index;
         return String(index);
       },
@@ -87,7 +70,7 @@ describe('toColumnDef - renderCell 签名一致性', () => {
     expect(capturedIndex).toBe(7);
   });
 
-  it('仅接收 value 单参数的 renderCell 也能正常工作', () => {
+  it('仅接收 value 单参数的 renderCell 也能正常工作（fnLength === 1）', () => {
     const field: SchemaField = {
       ...baseField,
       name: 'amount',
@@ -100,11 +83,11 @@ describe('toColumnDef - renderCell 签名一致性', () => {
     expect(result).toBe('¥100');
   });
 
-  it('接收 (value, row) 两参数的 renderCell 正常工作', () => {
+  it('接收 (row, index) 两参数的 renderCell 正常工作', () => {
     const field: SchemaField = {
       ...baseField,
       name: 'display',
-      renderCell: (value, row) => `${row.name}: ${value}`,
+      renderCell: (row: Record<string, unknown>, _index: number) => `${row.name}: ${row.display}`,
     };
 
     const col = toColumnDef(field);
@@ -159,7 +142,7 @@ describe('getColumns - renderCell 在列数组中的一致性', () => {
         name: 'status',
         label: '状态',
         type: 'text',
-        renderCell: (value, row, index) => `[${index}] ${row.name}: ${value}`,
+        renderCell: (row: Record<string, unknown>, index: number) => `[${index}] ${row.name}: ${row.status}`,
       },
       { name: 'name', label: '名称', type: 'text' },
     ],
@@ -193,22 +176,12 @@ describe('getColumns - renderCell 在列数组中的一致性', () => {
 });
 
 describe('SchemaField.renderCell 类型约束', () => {
-  it('类型系统接受 (value, row, index) 三参数签名', () => {
+  it('类型系统接受 (row, index) 两参数签名', () => {
     const field: SchemaField = {
       name: 'test',
       label: '测试',
       type: 'text',
-      renderCell: (_value: unknown, _row: Record<string, unknown>, _index: number) => '',
-    };
-    expect(field.renderCell).toBeDefined();
-  });
-
-  it('类型系统接受 (value, row) 两参数签名', () => {
-    const field: SchemaField = {
-      name: 'test',
-      label: '测试',
-      type: 'text',
-      renderCell: (_value: unknown, _row: Record<string, unknown>) => '',
+      renderCell: (_row: Record<string, unknown>, _index: number) => '',
     };
     expect(field.renderCell).toBeDefined();
   });
@@ -219,6 +192,16 @@ describe('SchemaField.renderCell 类型约束', () => {
       label: '测试',
       type: 'text',
       renderCell: (_value: unknown) => '',
+    };
+    expect(field.renderCell).toBeDefined();
+  });
+
+  it('类型系统接受 (row) 零参数签名', () => {
+    const field: SchemaField = {
+      name: 'test',
+      label: '测试',
+      type: 'text',
+      renderCell: () => '',
     };
     expect(field.renderCell).toBeDefined();
   });

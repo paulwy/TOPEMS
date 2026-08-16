@@ -1023,9 +1023,9 @@ export function useCrudForm<T extends { id?: string | number }>({
       setFormSubmitting(true);
       try {
         if (formMode === 'create') {
-          await crudResult.mutations.createMutation.mutateAsync(data as Partial<T>);
+          await crudResult.createMutation.mutateAsync(data as Partial<T>);
         } else if (formMode === 'edit' && currentRecord?.id) {
-          await crudResult.mutations.updateMutation.mutateAsync({
+          await crudResult.updateMutation.mutateAsync({
             id: String(currentRecord.id),
             item: data as Partial<T>,
           });

@@ -248,14 +248,14 @@ function LayerPanel({
           variant='h6'
           sx={{ fontWeight: 600 }}
         >
-          {i18n.t('components.gis_map_template.k0')}
+          {i18n.t('components.gis_map_template.k33')}
         </Typography>
       </Box>
       <Typography
         variant='subtitle2'
         sx={{ fontWeight: 500, mb: 2 }}
       >
-        {i18n.t('components.gis_map_template.k1')}
+        {i18n.t('components.gis_map_template.k34')}
       </Typography>
       <List
         dense
@@ -290,7 +290,7 @@ function LayerPanel({
         variant='subtitle2'
         sx={{ fontWeight: 500, mb: 2 }}
       >
-        {i18n.t('components.gis_map_template.k2')}
+        {i18n.t('components.gis_map_template.k35')}
       </Typography>
       <List dense>
         {overlayLayers.map((layer) => (
@@ -340,7 +340,7 @@ function SearchPanel({ open, onClose, onSearch }: SearchPanelProps) {
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
         <TextField
           autoFocus
-          placeholder={i18n.t('components.gis_map_template.k3')}
+          placeholder={i18n.t('components.gis_map_template.k32')}
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -393,7 +393,7 @@ function DrawControl({ onDraw, onClear, drawMode }: DrawControlProps) {
         variant='caption'
         sx={{ textAlign: 'center', fontWeight: 500, mb: 1 }}
       >
-        {i18n.t('components.gis_map_template.k5')}
+        {i18n.t('components.gis_map_template.k37')}
       </Typography>
       <Tooltip title={i18n.t('components.gis_map_template.k15')}>
         <IconButton
@@ -470,7 +470,7 @@ function TrackPlayback({
             variant='subtitle2'
             sx={{ fontWeight: 500 }}
           >
-            {i18n.t('components.gis_map_template.k6')}
+            {i18n.t('components.gis_map_template.k36')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <IconButton

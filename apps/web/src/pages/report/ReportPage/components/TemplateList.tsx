@@ -36,7 +36,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
           variant='h6'
           sx={{ fontWeight: 600, color: 'grey.900' }}
         >
-          {i18n.t('pages.template_list.k0')}
+          {i18n.t('pages.template_list.k10')}
         </Typography>
         <Button
           onClick={onShowCreateTemplateModal}
@@ -44,7 +44,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
           startIcon={<Plus sx={{ width: 16, height: 16 }} />}
           sx={{ borderRadius: 3, textTransform: 'none' }}
         >
-          {i18n.t('pages.template_list.k1')}
+          {i18n.t('pages.template_list.k5')}
         </Button>
       </Box>
 
@@ -115,7 +115,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         }}
                       />
                       <Chip
-                        label={template.isactive ? i18n.t('pages.template_list.k2') : i18n.t('pages.template_list.k1')}
+                        label={template.isactive ? i18n.t('pages.template_list.k2') : i18n.t('pages.template_list.k6')}
                         size='small'
                         sx={{
                           bgcolor: template.isactive ? 'success.light' : 'grey.100',
@@ -136,10 +136,9 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         color: 'grey.600',
                       }}
                     >
-                      <span>{i18n.t('pages.template_list.templatecode_0')}</span>
-                      <span>{i18n.t('pages.template_list.k1')}</span>
-                      <span>{i18n.t('pages.template_list.k2')}</span>
-                      <span>{i18n.t('pages.template_list.k3')}</span>
+                      <span>{i18n.t('pages.template_list.templatecode_0')}: {template.code}</span>
+                      <span>{i18n.t('pages.template_list.k7')}: {getReportTypeName(template.report_type, reportTypes)}</span>
+                      <span>{i18n.t('pages.template_list.k8')}: {template.columns.length}</span>
                     </Box>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -153,7 +152,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         borderRadius: 3,
                       }}
                     >
-                      {i18n.t('pages.template_list.k3')}
+                      {i18n.t('pages.template_list.k9')}
                     </Button>
                     <Button
                       onClick={() => onEditTemplateClick(template)}

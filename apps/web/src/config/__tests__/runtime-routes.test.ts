@@ -7,9 +7,8 @@ const GROUP1_SERVICES: Record<string, string> = {
   flow: '/api/core/flow',
   file: '/api/core/file',
   migration: '/api/core/migration',
-  // doc/monitor 仍由 unified-core 承载（虚拟服务），路径含 /api/core 前缀
+  // doc 仍由 unified-core 承载（虚拟服务），路径含 /api/core 前缀
   doc: '/api/core/doc',
-  monitor: '/api/core/monitor',
   // automation 初期落地 unified-core，路径 /api/core/automation
   automation: '/api/core/automation',
   core: '/api/core',
@@ -39,11 +38,15 @@ const GROUP2_SERVICES = [
   'bi',
   // analytics 是 bi 的历史别名，路径完全一致
   'analytics',
+  // monitor 已从 unified-core 外迁为独立服务
+  'monitor',
   'portal',
   'mobile',
   'gis',
   'integration',
   'search',
+  // V68.1 拆分服务
+  'plugin-registry',
   'billing',
   'ticket',
   'feedback',

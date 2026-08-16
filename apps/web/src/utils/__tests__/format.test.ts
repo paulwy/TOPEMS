@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   formatDate,
   formatNumber,
@@ -15,6 +15,44 @@ import {
   formatMonth,
   formatWeek,
 } from '@/utils/format';
+
+vi.mock('@/i18n', () => ({
+  default: {
+    t: (key: string) => {
+      const map: Record<string, string> = {
+        'shared.format.duration.hour': '小时',
+        'shared.format.duration.minute': '分钟',
+        'shared.format.duration.second': '秒',
+        'shared.format.relative_time.minute_ago': '分钟前',
+        'shared.format.relative_time.hour_ago': '小时前',
+        'shared.format.relative_time.day_ago': '天前',
+        'shared.format.relative_time.week_ago': '周前',
+        'shared.format.relative_time.month_ago': '个月前',
+        'shared.format.relative_time.year_ago': '年前',
+        'shared.format.k0': '刚刚',
+        'shared.format.k1': '未启用',
+        'shared.format.k2': '已启用',
+        'shared.format.k3': '活跃',
+        'shared.format.k4': '不活跃',
+        'shared.format.k5': '待处理',
+        'shared.format.k6': '已批准',
+        'shared.format.k7': '已拒绝',
+        'shared.format.k8': '已完成',
+        'shared.format.k9': '处理中',
+        'shared.format.k10': '已取消',
+        'shared.format.k11': '草稿',
+        'shared.format.k12': '已发布',
+        'shared.format.k13': '已删除',
+        'shared.format.k14': '成功',
+        'shared.format.k15': '失败',
+        'shared.format.k16': '警告',
+        'shared.format.k17': '错误',
+        'shared.format.yyyymm_12': 'YYYY年MM月',
+      };
+      return map[key] ?? key;
+    },
+  },
+}));
 
 describe('formatDate', () => {
   it('should format a valid date string in default format', () => {

@@ -8,6 +8,59 @@ import NotificationItem from '../NotificationItem';
 import { markAsRead, deleteNotification } from '@/api/notification';
 import type { Notification } from '@/api/notification';
 
+const { i18nMap, translate } = vi.hoisted(() => {
+  const i18nMap: Record<string, string> = {
+    'shared.notification_item.k0': '高',
+    'shared.notification_item.k1': '中高',
+    'shared.notification_item.k2': '中',
+    'shared.notification_item.k3': '低',
+    'shared.notification_item.k4': '刚刚',
+    'shared.notification_item.k5': '标记已读',
+    'shared.notification_item.k6': '删除',
+    'shared.notification_item.k7': '查看详情',
+    'components.notification_item.k0': '分钟前',
+    'components.notification_item.k1': '小时前',
+    'components.notification_item.k2': '天前',
+  };
+
+  const translate = (key: string, options?: Record<string, unknown>): string => {
+    if (i18nMap[key]) {
+      let result = i18nMap[key];
+      if (options) {
+        for (const [k, v] of Object.entries(options)) {
+          result = result.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), String(v));
+        }
+      }
+      return result;
+    }
+    if (!options) return key;
+    return `${key}:${Object.values(options).join(',')}`;
+  };
+
+  return { i18nMap, translate };
+});
+
+vi.mock('react-i18next', () => ({
+  useTranslation: (ns?: string) => ({
+    t: (key: string, options?: Record<string, unknown>) => translate(key, options),
+    i18n: { language: 'zh-CN', changeLanguage: vi.fn(), exists: (k: string) => !!i18nMap[k] },
+    ready: true,
+  }),
+  withTranslation: () => (Component: any) => Component,
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+  Trans: ({ i18nKey, children }: { i18nKey?: string; children?: any }) =>
+    i18nKey ? translate(i18nKey) : children,
+}));
+
+vi.mock('@/i18n', () => ({
+  default: {
+    t: (key: string, options?: Record<string, unknown>) => translate(key, options),
+    language: 'zh-CN',
+    changeLanguage: vi.fn(),
+    exists: (key: string) => !!i18nMap[key],
+  },
+}));
+
 // Mock notification API
 vi.mock('@/api/notification', () => ({
   markAsRead: vi.fn(),
@@ -85,8 +138,7 @@ describe('NotificationItem', () => {
         onDelete={vi.fn()}
       />
     );
-    //5 minutes ago -> "5 min ago"
-    expect(screen.getByText('5 min ago')).toBeInTheDocument();
+    expect(screen.getByText('5分钟前')).toBeInTheDocument();
   });
 
   it('applies unread background style when notification is unread', () => {
@@ -143,10 +195,9 @@ describe('NotificationItem', () => {
       />
     );
     const rootDiv = container.firstChild as HTMLElement;
-    // Trigger hover to show action buttons
     fireEvent.mouseEnter(rootDiv);
 
-    const deleteButton = screen.getByTitle('Delete');
+    const deleteButton = screen.getByTitle('删除');
     fireEvent.click(deleteButton);
 
     await waitFor(() => {
@@ -163,6 +214,6 @@ describe('NotificationItem', () => {
         onDelete={vi.fn()}
       />
     );
-    expect(screen.getByText('Urgent')).toBeInTheDocument();
+    expect(screen.getByText('高')).toBeInTheDocument();
   });
 });

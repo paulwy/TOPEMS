@@ -65,6 +65,7 @@ pub fn create_routes(
 mod tests {
     use super::*;
     use sqlx::postgres::PgConnectOptions;
+    use sqlx::PgPool;
     use std::str::FromStr;
     use topems_shared_service_client::service_client::api::workflow_api::WorkflowApi;
 

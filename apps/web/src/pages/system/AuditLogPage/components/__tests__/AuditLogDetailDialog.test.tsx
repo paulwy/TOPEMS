@@ -5,6 +5,46 @@ import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 import AuditLogDetailDialog from '../AuditLogDetailDialog';
 import type { AuditLog } from '@/api/system';
 
+vi.mock('react-i18next', () => {
+  const merge = (...objs: Record<string, string>[]) => Object.assign({}, ...objs);
+  const i18nMap = merge(
+    require('../../../../../i18n/locales/zh/system.json'),
+    require('../../../../../i18n/locales/zh/common.json'),
+    require('../../../../../i18n/locales/zh/components.json'),
+    require('../../../../../i18n/locales/zh/pages.json'),
+    require('../../../../../i18n/locales/zh/templates.json')
+  );
+  return {
+    useTranslation: () => ({
+      t: (key: string) => i18nMap[key] ?? key,
+      i18n: { language: 'zh' },
+    }),
+    initReactI18next: { type: '3rdParty', init: () => {} },
+    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: any }) =>
+      i18nKey ? (i18nMap[i18nKey] ?? i18nKey) : children,
+  };
+});
+
+vi.mock('@/i18n', () => {
+  const merge = (...objs: Record<string, string>[]) => Object.assign({}, ...objs);
+  const i18nMap = merge(
+    require('../../../../../i18n/locales/zh/system.json'),
+    require('../../../../../i18n/locales/zh/common.json'),
+    require('../../../../../i18n/locales/zh/components.json'),
+    require('../../../../../i18n/locales/zh/pages.json'),
+    require('../../../../../i18n/locales/zh/templates.json')
+  );
+  return {
+    default: {
+      t: (key: string) => i18nMap[key] ?? key,
+      language: 'zh',
+      on: () => {},
+      use: () => ({ init: () => {} }),
+      init: () => {},
+    },
+  };
+});
+
 vi.mock('lucide-react', () => {
   const icon =
     (_name: string) =>

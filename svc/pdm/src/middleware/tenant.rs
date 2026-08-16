@@ -126,8 +126,8 @@ mod tests {
         assert_eq!(extract_tenant_id(&ctx), tid);
     }
 
-    #[test]
-    fn test_tenant_data_access_new_and_getters() {
+    #[tokio::test]
+    async fn test_tenant_data_access_new_and_getters() {
         let tid = Uuid::new_v4();
         let opts = sqlx::postgres::PgConnectOptions::new().host("localhost");
         let pool = PgPool::connect_lazy_with(opts);

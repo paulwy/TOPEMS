@@ -26,13 +26,150 @@ import type { NewVoucherState } from '@/pages/erp/hooks/useVoucherManagement';
 // ============================================================
 // Mock 层
 // ============================================================
+const i18nMap = vi.hoisted(() => {
+  const base: Record<string, string> = {
+    'erp.database.label.table_structure': '表结构 - {{name}}',
+    'erp.database.label.table_name': '表名',
+    'erp.database.label.type': '类型',
+    'erp.database.label.record_count': '行数',
+    'erp.database.label.field_list': '字段列表',
+    'erp.database.label.field_name': '字段名',
+    'erp.database.label.length': '长度',
+    'erp.database.label.nullable': '可空',
+    'erp.database.label.default_value': '默认值',
+    'erp.database.label.description': '描述',
+    'erp.database.label.yes': '是',
+    'erp.database.label.no': '否',
+    'erp.database.label.close': '关闭',
+    'erp.database.label.create_backup': '创建备份',
+    'erp.database.label.backup_warning': '备份前请确保数据库连接稳定，避免数据丢失',
+    'erp.database.label.backup_type': '备份类型',
+    'erp.database.label.full_backup': '完整备份',
+    'erp.database.label.incremental_backup': '增量备份',
+    'erp.database.label.backup_remark': '备份备注',
+    'erp.database.label.backup_remark_placeholder': '请输入备注信息',
+    'erp.database.label.cancel': '取消',
+    'erp.database.label.start_backup': '开始备份',
+    'erp.database.label.restore_confirm_title': '确认恢复',
+    'erp.database.label.restore_warning': '恢复操作将覆盖当前数据',
+    'erp.database.label.restore_warning_desc': '请谨慎操作，恢复前建议先备份当前数据',
+    'erp.database.label.backup_to_restore': '选择要恢复的备份',
+    'erp.database.label.confirm_restore': '确认恢复',
+    'erp.database.label.confirm_delete': '确认删除',
+    'erp.database.label.confirm_delete_message': '删除后无法恢复，确认继续？',
+    'components.financial_reports.k0': '暂无资产负债表数据',
+    'components.financial_reports.k1': '流动资产',
+    'components.financial_reports.k2': '非流动资产',
+    'components.financial_reports.k3': '流动负债',
+    'components.financial_reports.k4': '非流动负债',
+    'components.financial_reports.k5': '实收资本',
+    'components.financial_reports.k6': '资本公积',
+    'components.financial_reports.k7': '未分配利润',
+    'components.financial_reports.k8': '不平衡',
+    'components.financial_reports.k9': '平衡',
+    'components.financial_reports.k10': '资产总计',
+    'components.financial_reports.k11': '负债结构分析',
+    'components.financial_reports.k12': '流动负债合计',
+    'components.financial_reports.k13': '负债总计',
+    'components.financial_reports.k14': '所有者权益合计',
+    'components.financial_reports.k15': '财务结构总览',
+    'components.financial_reports.k16': '流动比率',
+    'components.financial_reports.k17': '流动资产合计',
+    'components.financial_reports.k18': '速动比率',
+    'components.financial_reports.k19': '速动资产合计',
+    'components.financial_reports.k20': '资产负债率',
+    'components.financial_reports.k21': '负债合计',
+    'components.financial_reports.k22': '资产合计',
+    'components.financial_reports.k23': '财务比率',
+    'components.financial_reports.k24': '权益乘数',
+    'components.financial_reports.k25': '产权比率',
+    'components.financial_reports.k26': '利息保障倍数',
+    'components.financial_reports.k27': '暂无利润表数据',
+    'components.financial_reports.k28': '营业收入',
+    'components.financial_reports.k29': '营业成本',
+    'components.financial_reports.k30': '毛利润',
+    'components.financial_reports.k31': '营业利润',
+    'components.financial_reports.k32': '净利润',
+    'components.financial_reports.k33': '销售费用',
+    'components.financial_reports.k34': '毛利',
+    'components.financial_reports.k35': '研发费用',
+    'components.financial_reports.k36': '净利润率',
+    'components.financial_reports.k37': '营业收入分析',
+    'components.financial_reports.k38': '盈利能力分析',
+    'components.financial_reports.k39': '经营活动现金流',
+    'components.financial_reports.k40': '一、营业收入',
+    'components.financial_reports.k41': '营业收入合计',
+    'components.financial_reports.k42': '二、营业成本',
+    'components.financial_reports.k43': '营业成本合计',
+    'components.financial_reports.k44': '三、毛利润',
+    'components.financial_reports.k45': '四、期间费用',
+    'components.financial_reports.k46': '期间费用合计',
+    'components.financial_reports.k47': '五、营业利润',
+    'components.financial_reports.k48': '六、利润总额',
+    'components.financial_reports.k49': '暂无现金流量表数据',
+    'components.financial_reports.k50': '经营活动',
+    'components.financial_reports.k51': '投资活动',
+    'components.financial_reports.k52': '筹资活动',
+    'components.financial_reports.k53': '净现金流',
+    'components.financial_reports.k54': '投资活动现金流',
+    'components.financial_reports.k55': '筹资活动现金流',
+    'components.financial_reports.k56': '经营活动产生的现金流量净额',
+    'components.financial_reports.k57': '投资活动产生的现金流量净额',
+    'components.financial_reports.k58': '筹资活动产生的现金流量净额',
+    'components.financial_reports.k59': '现金及现金等价物净增加额',
+    'components.financial_reports.k60': '期末现金及现金等价物余额',
+    'components.financial_reports.k61': '现金流量分析',
+    'components.financial_reports.k62': '导出 Excel',
+    'components.financial_reports.k63': '导出 PDF',
+    'components.financial_reports.k64': '打印',
+    'components.financial_reports.k100': '资产总计',
+    'components.financial_reports.k101': '负债合计',
+    'components.financial_reports.k102': '所有者权益合计',
+    'components.financial_reports.k110': '营业收入',
+    'components.financial_reports.k111': '毛利率',
+    'components.financial_reports.k112': '营业利润',
+    'components.financial_reports.k113': '营业利润率',
+    'components.financial_reports.k114': '利润总额',
+    'components.financial_reports.k115': '净利润',
+    'components.financial_reports.k116': '净利率',
+    'components.financial_reports.k120': '经营活动现金流',
+    'components.financial_reports.k121': '投资活动现金流',
+    'components.financial_reports.k122': '筹资活动现金流',
+    'components.financial_reports.k123': '净现金流',
+  };
+  return base;
+});
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, options?: Record<string, unknown>) =>
-      options ? `${key}:${Object.values(options).join(',')}` : key,
+    t: (key: string, options?: Record<string, unknown>) => {
+      if (options && typeof options === 'object') {
+        let result = i18nMap[key] ?? key;
+        for (const [k, v] of Object.entries(options)) {
+          result = result.replace(`{{${k}}}`, String(v));
+        }
+        return result;
+      }
+      return i18nMap[key] ?? key;
+    },
     i18n: { language: 'zh-CN', changeLanguage: vi.fn() },
   }),
   initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
+
+vi.mock('@/i18n', () => ({
+  default: {
+    t: (key: string, options?: Record<string, unknown>) => {
+      if (options && typeof options === 'object') {
+        let result = i18nMap[key] ?? key;
+        for (const [k, v] of Object.entries(options)) {
+          result = result.replace(`{{${k}}}`, String(v));
+        }
+        return result;
+      }
+      return i18nMap[key] ?? key;
+    },
+  },
 }));
 
 vi.mock('lucide-react', () => {
@@ -497,7 +634,7 @@ describe('DatabaseManagementModals', () => {
     );
 
     expect(
-      screen.getByText(`erp.database.label.table_structure:financial_vouchers`)
+      screen.getByText(`表结构 - financial_vouchers`)
     ).toBeInTheDocument();
     expect(screen.getByText('financial_vouchers')).toBeInTheDocument();
     expect(screen.getByText('BASE TABLE')).toBeInTheDocument();
@@ -558,17 +695,19 @@ describe('DatabaseManagementModals', () => {
         onConfirmDelete={vi.fn()}
       />
     );
-    // 先用 getByText 定位按钮文本，再通过 closest('button') 获得可点击元素
-    const startBackupLabel = screen.getByText('erp.database.label.start_backup');
-    const startBackupBtn = startBackupLabel.closest('button');
-    expect(startBackupBtn).not.toBeNull();
-    fireEvent.click(startBackupBtn!);
+    // 取所有"开始备份"文本，筛选其祖先存在 button 的节点
+    const startBackupEl = screen.getAllByText('开始备份')
+      .map((el) => el.closest('button'))
+      .find((btn): btn is HTMLElement => btn !== null);
+    expect(startBackupEl).toBeTruthy();
+    fireEvent.click(startBackupEl!);
     expect(onStartBackup).toHaveBeenCalledTimes(1);
 
-    const confirmRestoreLabel = screen.getByText('erp.database.label.confirm_restore');
-    const confirmRestoreBtn = confirmRestoreLabel.closest('button');
-    expect(confirmRestoreBtn).not.toBeNull();
-    fireEvent.click(confirmRestoreBtn!);
+    const confirmRestoreEl = screen.getAllByText(/确认恢复/)
+      .map((el) => el.closest('button'))
+      .find((btn): btn is HTMLElement => btn !== null);
+    expect(confirmRestoreEl).toBeTruthy();
+    fireEvent.click(confirmRestoreEl!);
     expect(onConfirmRestore).toHaveBeenCalledTimes(1);
     expect(screen.getByText('backup_full_20260811')).toBeInTheDocument();
   });
@@ -628,8 +767,8 @@ describe('BalanceSheetViewer', () => {
     expect(screen.getByText('应付账款')).toBeInTheDocument();
     expect(screen.getByText('实收资本')).toBeInTheDocument();
     // 概览卡合计文本标签（可能多处重复，用 getAll）
-    expect(screen.getByText('资产总计')).toBeInTheDocument();
-    expect(screen.getByText('负债合计')).toBeInTheDocument();
+    expect(screen.getAllByText('资产总计').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('负债合计').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('所有者权益合计').length).toBeGreaterThanOrEqual(1);
     // 概览卡合计数值（多处重复，用 getAllBy 验证 ≥1）
     expect(screen.getAllByText('¥2,900,000').length).toBeGreaterThanOrEqual(1);
@@ -714,9 +853,9 @@ describe('CashFlowStatementViewer', () => {
     expect(screen.getByText('购建固定资产支付')).toBeInTheDocument();
     expect(screen.getByText('取得银行借款')).toBeInTheDocument();
     // 概览卡标签
-    expect(screen.getByText('经营活动现金流')).toBeInTheDocument();
-    expect(screen.getByText('投资活动现金流')).toBeInTheDocument();
-    expect(screen.getByText('筹资活动现金流')).toBeInTheDocument();
+    expect(screen.getAllByText('经营活动现金流').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('投资活动现金流').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('筹资活动现金流').length).toBeGreaterThanOrEqual(1);
     // "净现金流"会在标签与图表多处出现，用 getAll 验证
     expect(screen.getAllByText('净现金流').length).toBeGreaterThanOrEqual(1);
     // 关键金额：负数 `¥-500,000` 的格式

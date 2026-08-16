@@ -4,6 +4,81 @@ import { renderWithProviders, screen, waitFor } from '@/__tests__/test-utils';
 
 import LowCodeHomePage from '../LowCodeHomePage';
 
+vi.mock('react-i18next', () => {
+  const i18nMap: Record<string, string> = {
+    'lowcode.low_code_home_page.k0': '加载统计数据失败',
+    'lowcode.low_code_home_page.k1': '低代码概览',
+    'lowcode.low_code_home_page.k2': '低代码概览',
+    'lowcode.low_code_home_page.k3': '应用总数',
+    'lowcode.low_code_home_page.k4': '已发布应用',
+    'lowcode.low_code_home_page.k5': '数据模型',
+    'lowcode.low_code_home_page.k6': '数据源',
+    'lowcode.low_code_home_page.k7': '表单',
+    'lowcode.low_code_home_page.k8': '页面',
+    'lowcode.low_code_home_page.k9': '工作流',
+    'lowcode.low_code_home_page.7_10': '近 7 天活跃',
+    'lowcode.low_code_home_page.e1': '低代码平台概览',
+    'lowcode.low_code_home_page.l1': '{{v1}}（后端 lowcode 服务未就绪时显示占位统计）',
+  };
+  const t = (key: string, vars?: Record<string, unknown>): string => {
+    let result = i18nMap[key] ?? key;
+    if (vars) {
+      Object.entries(vars).forEach(([k, v]) => {
+        result = result.replace(new RegExp(`{{${k}}}`, 'g'), String(v));
+      });
+    }
+    return result;
+  };
+  return {
+    useTranslation: (ns?: string | string[]) => ({
+      t,
+      i18n: {
+        changeLanguage: vi.fn(),
+        language: 'zh',
+      },
+    }),
+    initReactI18next: {
+      type: '3rdParty',
+      init: vi.fn(),
+    },
+    Trans: ({ children }: any) => children,
+  };
+});
+
+vi.mock('@/i18n', () => {
+  const i18nMap: Record<string, string> = {
+    'lowcode.low_code_home_page.k0': '加载统计数据失败',
+    'lowcode.low_code_home_page.k1': '低代码概览',
+    'lowcode.low_code_home_page.k2': '低代码概览',
+    'lowcode.low_code_home_page.k3': '应用总数',
+    'lowcode.low_code_home_page.k4': '已发布应用',
+    'lowcode.low_code_home_page.k5': '数据模型',
+    'lowcode.low_code_home_page.k6': '数据源',
+    'lowcode.low_code_home_page.k7': '表单',
+    'lowcode.low_code_home_page.k8': '页面',
+    'lowcode.low_code_home_page.k9': '工作流',
+    'lowcode.low_code_home_page.7_10': '近 7 天活跃',
+    'lowcode.low_code_home_page.e1': '低代码平台概览',
+    'lowcode.low_code_home_page.l1': '{{v1}}（后端 lowcode 服务未就绪时显示占位统计）',
+  };
+  const t = (key: string, vars?: Record<string, unknown>): string => {
+    let result = i18nMap[key] ?? key;
+    if (vars) {
+      Object.entries(vars).forEach(([k, v]) => {
+        result = result.replace(new RegExp(`{{${k}}}`, 'g'), String(v));
+      });
+    }
+    return result;
+  };
+  return {
+    default: {
+      t,
+      language: 'zh',
+      changeLanguage: vi.fn(),
+    },
+  };
+});
+
 const mockGetDashboardStats = vi.fn();
 
 vi.mock('@/api/lowcode', () => ({

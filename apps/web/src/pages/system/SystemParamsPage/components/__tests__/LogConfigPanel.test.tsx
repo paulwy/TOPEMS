@@ -1,7 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
-
 import LogConfigPanel from '../LogConfigPanel';
 
 vi.mock('@/components/common', () => ({

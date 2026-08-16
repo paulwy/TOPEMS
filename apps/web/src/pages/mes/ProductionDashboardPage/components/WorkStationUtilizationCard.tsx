@@ -135,13 +135,13 @@ const WorkStationUtilizationCard: React.FC<{
                       variant='caption'
                       sx={{ color: 'text.secondary' }}
                     >
-                      [i18n.t('pages.work_station_utilization_card.k2')]: {item.activeOrders}
+                      {i18n.t('pages.work_station_utilization_card.k2')}: {item.activeOrders}
                     </Typography>
                     <Typography
                       variant='caption'
                       sx={{ color: 'text.secondary' }}
                     >
-                      [i18n.t('pages.work_station_utilization_card.k3')]: {item.todayOutput}
+                      {i18n.t('pages.work_station_utilization_card.k3')}: {item.todayOutput}
                     </Typography>
                   </Stack>
                 </Box>

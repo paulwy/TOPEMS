@@ -32,16 +32,73 @@ import FormPageTemplate from '@/components/templates/FormPageTemplate';
 import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
 
 // ========== 全局 mock（同 V82-2b 模板，保持一致） ==========
+const { i18nMap, translate } = vi.hoisted(() => {
+  const i18nMap: Record<string, string> = {
+    'templates.detail_page_template.k0': '编辑',
+    'templates.detail_page_template.k1': '分享',
+    'templates.detail_page_template.k2': '删除',
+    'templates.form_page_template.k0': '保存',
+    'templates.form_page_template.k1': '取消',
+    'templates.form_page_template.k2': '重置',
+    'templates.form_page_template.k3': '提交失败，请重试',
+    'templates.form_page_template.k4': '搜索字段',
+    'templates.form_page_template.k5': '字段搜索',
+    'templates.form_page_template.k6': '请选择',
+    'templates.form_page_template.k7': '请选择',
+    'templates.form_page_template.k8': '上一步',
+    'templates.form_page_template.k9': '下一步',
+    'templates.form_page_template.k10': '草稿列表',
+    'templates.form_page_template.k11': '减少',
+    'templates.form_page_template.k12': '增加',
+    'components.form_page_template.k0': '自动保存于（',
+    'components.form_page_template.k1': '必填',
+    'components.form_page_template.k2': '草稿（',
+    'components.form_page_template.k3': '个）',
+    'components.form_page_template.k4': '提交中...',
+    'components.form_page_template.index1_0': '自动保存',
+  };
+
+  const translate = (key: string, options?: Record<string, unknown>): string => {
+    if (i18nMap[key]) {
+      let result = i18nMap[key];
+      if (options) {
+        for (const [k, v] of Object.entries(options)) {
+          result = result.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), String(v));
+        }
+      }
+      return result;
+    }
+    if (!options) return key;
+    return `${key}:${Object.values(options).join(',')}`;
+  };
+
+  return { i18nMap, translate };
+});
+
 vi.mock('react-i18next', async (importOriginal) => {
   const actual: Record<string, unknown> = await importOriginal();
   return {
     ...actual,
     useTranslation: () => ({
-      t: (key: string, options?: Record<string, unknown>) =>
-        options ? `${key}:${Object.values(options).join(',')}` : key,
+      t: (key: string, options?: Record<string, unknown>) => translate(key, options),
+      i18n: { language: 'zh-CN', changeLanguage: vi.fn(), exists: (k: string) => !!i18nMap[k] },
+      ready: true,
     }),
+    withTranslation: () => (Component: any) => Component,
+    initReactI18next: { type: '3rdParty', init: vi.fn() },
+    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: any }) =>
+      i18nKey ? translate(i18nKey) : children,
   };
 });
+
+vi.mock('@/i18n', () => ({
+  default: {
+    t: (key: string, options?: Record<string, unknown>) => translate(key, options),
+    language: 'zh-CN',
+    changeLanguage: vi.fn(),
+    exists: (key: string) => !!i18nMap[key],
+  },
+}));
 
 vi.mock('lucide-react', async (importOriginal) => {
   const actual: Record<

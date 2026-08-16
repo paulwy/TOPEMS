@@ -427,13 +427,127 @@ test_backend() {
 }
 
 # 运行前端测试
+# 用法: test_frontend [subcommand] [flags]
+#   subcommand: all(default) | unit | component | smoke | coverage | shard:N (N=1..8)
+#   flags:      --no-typecheck  跳过前置 tsc --noEmit
+# 输出: 染色 summary（Test Files X passed / Tests Y passed），失败时返回非 0
 test_frontend() {
-    info "运行前端测试..."
-    
-    local pkg_cmd=$(get_pkg_cmd) || return 1
+    local subcmd="all"
+    local do_typecheck=1
+    local shard_index=""
+
+    # --- 参数解析（按位置 + 长 flag 混合）---
+    local arg
+    for arg in "$@"; do
+        case "$arg" in
+            --no-typecheck)      do_typecheck=0 ;;
+            all|unit|component|smoke|coverage)   subcmd="$arg" ;;
+            shard:1|shard:2|shard:3|shard:4|shard:5|shard:6|shard:7|shard:8)
+                subcmd="shard"
+                shard_index="${arg#shard:}"
+                ;;
+            *)
+                warning "未知参数: $arg（已忽略）"
+                ;;
+        esac
+    done
+
+    info "运行前端测试（subcmd=${subcmd}, typecheck=$( [ "$do_typecheck" = "1" ] && echo "ON" || echo "OFF" )）..."
+
+    local pkg_cmd
+    pkg_cmd=$(get_pkg_cmd) || return 1
     ensure_frontend_deps "$pkg_cmd" || return 1
-    
-    $pkg_cmd test 2>&1 && success "前端测试通过" || { error "前端测试失败"; return 1; }
+
+    local web_dir="$PROJECT_ROOT/apps/web"
+    # 先读取可用 scripts（与 build_frontend 相同防御思路）
+    local pkg_scripts
+    pkg_scripts=$(cd "$web_dir" && node -e 'console.log(Object.keys(require("./package.json").scripts || {}).join("\n"))' 2>/dev/null || true)
+    has_script() {
+        local name="$1"
+        printf '%s\n' "$pkg_scripts" | grep -Fxq "$name"
+    }
+
+    # --- 1) 映射到 package.json 里真实存在的 script ---
+    local script_name=""
+    case "$subcmd" in
+        all)       script_name="test" ;;                       # vitest run (unit + component)
+        unit)      script_name="test:unit" ;;
+        component) script_name="test:component" ;;
+        smoke)     script_name="test:smoke" ;;
+        coverage)  script_name="test:coverage" ;;
+        shard)
+            # 传了 shard:N 就用命名脚本；否则理论上不会进入此分支（上面解析要求数字）
+            if [ -n "$shard_index" ]; then
+                script_name="test:shard:${shard_index}"
+            else
+                script_name="test:shard"
+            fi
+            ;;
+    esac
+
+    if [ -z "$script_name" ] || ! has_script "$script_name"; then
+        error "apps/web/package.json 未定义脚本: $script_name（可用: test, test:unit, test:component, test:smoke, test:coverage, test:shard:1..8）"
+        return 1
+    fi
+
+    # --- 2) 前置：typecheck（默认开启）---
+    if [ "$do_typecheck" = "1" ]; then
+        if has_script "typecheck"; then
+            info "  [1/2] 类型检查: $pkg_cmd typecheck"
+            local log_typecheck="/tmp/topems-test-frontend-typecheck.log"
+            if ! ( cd "$web_dir" && $pkg_cmd typecheck ) >"$log_typecheck" 2>&1; then
+                error "类型检查失败（$pkg_cmd typecheck），摘要如下："
+                tail -n 30 "$log_typecheck" >&2
+                detail "完整日志: $log_typecheck"
+                return 1
+            fi
+            success "  [1/2] 类型检查通过"
+        else
+            warning "  [1/2] apps/web 未定义 typecheck 脚本，跳过类型检查"
+        fi
+    else
+        info "  [1/2] 已指定 --no-typecheck，跳过类型检查"
+    fi
+
+    # --- 3) 实际执行 vitest ---
+    local step_label="[2/2]"
+    if [ "$do_typecheck" != "1" ]; then step_label="[1/1]"; fi
+    local log_test="/tmp/topems-test-frontend-${subcmd}${shard_index:+-$shard_index}.log"
+    info "  $step_label 测试: $pkg_cmd run $script_name"
+    info "  工作目录: $web_dir"
+    info "  完整日志: $log_test"
+
+    local rc=0
+    # 用子 shell 包 cd，不污染主进程工作目录
+    ( cd "$web_dir" && $pkg_cmd run "$script_name" ) >"$log_test" 2>&1 || rc=$?
+
+    # --- 4) 提取 summary 行（vitest 输出末几行固定模式，含 ANSI 颜色码）---
+    # 匹配形如:
+    #   Test Files  5 passed (5)
+    #   Tests  123 passed (123)
+    local test_files_line tests_line
+    # 放宽：允许 ANSI 前缀（\e[...m 用 .* 匹配，因为落盘时已经是字面量字节）
+    test_files_line=$(grep -E "Test Files.*passed" "$log_test" 2>/dev/null | tail -n 1 || true)
+    tests_line=$(grep -E "^.*Tests.*passed" "$log_test" 2>/dev/null | tail -n 1 || true)
+    # 清洗 ANSI：删除 \e[...m 序列，保持最终 CLI 清爽
+    _strip_ansi() { sed -E 's/\x1B\[[0-9;]*[mK]//g'; }
+    if [ -n "$test_files_line" ]; then test_files_line=$(printf '%s' "$test_files_line" | _strip_ansi); fi
+    if [ -n "$tests_line" ];      then tests_line=$(printf '%s' "$tests_line" | _strip_ansi); fi
+
+    if [ "$rc" -eq 0 ]; then
+        success "前端测试通过"
+        if [ -n "$test_files_line" ]; then detail "  $test_files_line"; fi
+        if [ -n "$tests_line" ];      then detail "  $tests_line"; fi
+        return 0
+    fi
+
+    error "前端测试失败（exit=$rc）"
+    if [ -n "$test_files_line" ]; then detail "  $test_files_line"; fi
+    if [ -n "$tests_line" ];      then detail "  $tests_line"; fi
+    detail "失败摘要（日志末 40 行）:"
+    tail -n 40 "$log_test" >&2
+    detail "完整日志: $log_test"
+    return "$rc"
 }
 
 # 运行所有测试
@@ -2250,7 +2364,11 @@ TOPEMS 服务管理工具
 测试:
   test-all                运行所有测试（后端+前端）
   test-backend            运行后端测试
-  test-frontend           运行前端测试
+  test-frontend [模式] [--no-typecheck]
+                          运行前端测试（默认前置 tsc 类型检查）
+                            模式: all(默认) | unit | component | smoke | coverage
+                                  shard:1 .. shard:8  (component 分片，省内存)
+                            --no-typecheck: 跳过类型检查（纯跑 vitest）
 
 SQLx 离线缓存 (V64+):
   sqlx prepare [--pkg=X] [--all]  生成离线缓存
@@ -2414,7 +2532,7 @@ case "${1:-help}" in
         test_backend
         ;;
     test-frontend)
-        test_frontend
+        test_frontend "${@:2}"
         ;;
     start-all)
         start_all_services "${@:2}"

@@ -17,7 +17,7 @@ export const IAM_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const iamModuleConfig: RouteModuleConfig = {
   code: 'iam',
-  name: i18n.t('shared.config.k0'),
+  name: i18n.t('shared.config.iam_name'),
   icon: 'Shield',
   path: IAM_PATHS.root,
   source: 'core',

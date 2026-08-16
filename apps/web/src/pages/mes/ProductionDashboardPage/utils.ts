@@ -25,12 +25,12 @@ export const formatRelativeTime = (timestamp: string | Date): string => {
   const diff = Date.now() - t;
   if (!Number.isFinite(diff) || diff < 0) return i18n.t('pages.utils.k0');
   const sec = Math.floor(diff / 1000);
-  if (sec < 60) return `${sec}${i18n.t('pages.utils.k0')}`;
+  if (sec < 60) return `${sec} ${i18n.t('pages.utils.k0')}`;
   const min = Math.floor(sec / 60);
-  if (min < 60) return `${min}${i18n.t('pages.utils.k1')}`;
+  if (min < 60) return `${min} ${i18n.t('pages.utils.k1')}`;
   const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}${i18n.t('pages.utils.k2')}`;
-  return `${Math.floor(hr / 24)}${i18n.t('pages.utils.k3')}`;
+  if (hr < 24) return `${hr} ${i18n.t('pages.utils.k2')}`;
+  return `${Math.floor(hr / 24)} ${i18n.t('pages.utils.k3')}`;
 };
 
 export const buildHourlyTrend = (records: ProductionRecord[], hours: number): TrendPoint[] => {

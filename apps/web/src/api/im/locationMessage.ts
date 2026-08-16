@@ -804,7 +804,7 @@ export const imLocationApi = {
           }
         } catch {
           syncResult.gis_sync_status = 'pending';
-          syncResult.gis_error = i18n.t('shared.location_message.k1');
+          syncResult.gis_error = i18n.t('shared.location_message.k12');
         }
       } catch (err) {
         syncResult.gis_sync_status = 'failed';
@@ -872,7 +872,7 @@ export const imLocationApi = {
           }
         } catch {
           syncResult.gis_sync_status = 'pending';
-          syncResult.gis_error = i18n.t('shared.location_message.k3');
+          syncResult.gis_error = i18n.t('shared.location_message.k12');
         }
       } catch (err) {
         syncResult.gis_sync_status = 'failed';
@@ -931,7 +931,7 @@ export const imLocationApi = {
         }
       } catch {
         syncResult.gis_sync_status = 'pending';
-        syncResult.gis_error = i18n.t('shared.location_message.k4');
+        syncResult.gis_error = i18n.t('shared.location_message.k12');
       }
     } catch (err) {
       return imLocationApi._createResponse(

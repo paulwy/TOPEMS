@@ -211,7 +211,7 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              {i18n.t('components.financial_reports.k0')}
+              {i18n.t('components.financial_reports.k100')}
             </Typography>
           </CardContent>
         </Card>
@@ -227,7 +227,7 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              {i18n.t('components.financial_reports.k1')}
+              {i18n.t('components.financial_reports.k101')}
             </Typography>
           </CardContent>
         </Card>
@@ -243,7 +243,7 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              {i18n.t('components.financial_reports.k2')}
+              {i18n.t('components.financial_reports.k102')}
             </Typography>
             <Chip
               label={data.balance_check ? i18n.t('components.financial_reports.k9') : i18n.t('components.financial_reports.k8')}
@@ -510,14 +510,14 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              {i18n.t('components.financial_reports.k3')}
+              {i18n.t('components.financial_reports.k110')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
               <Typography
                 variant='body2'
                 sx={{ color: 'success.main' }}
               >
-                {i18n.t('components.financial_reports.k0')} {(data.gross_margin * 100).toFixed(2)}%
+                {i18n.t('components.financial_reports.k111')} {(data.gross_margin * 100).toFixed(2)}%
               </Typography>
             </Box>
           </CardContent>
@@ -534,14 +534,14 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              {i18n.t('components.financial_reports.k4')}
+              {i18n.t('components.financial_reports.k112')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
               <Typography
                 variant='body2'
                 sx={{ color: 'success.main' }}
               >
-                {i18n.t('components.financial_reports.k1')} {(data.operating_margin * 100).toFixed(2)}%
+                {i18n.t('components.financial_reports.k113')} {(data.operating_margin * 100).toFixed(2)}%
               </Typography>
             </Box>
           </CardContent>
@@ -558,7 +558,7 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              {i18n.t('components.financial_reports.k5')}
+              {i18n.t('components.financial_reports.k114')}
             </Typography>
           </CardContent>
         </Card>
@@ -574,14 +574,14 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              {i18n.t('components.financial_reports.k6')}
+              {i18n.t('components.financial_reports.k115')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
               <Typography
                 variant='body2'
                 sx={{ color: 'success.main' }}
               >
-                {i18n.t('components.financial_reports.k2')} {(data.net_margin * 100).toFixed(2)}%
+                {i18n.t('components.financial_reports.k116')} {(data.net_margin * 100).toFixed(2)}%
               </Typography>
             </Box>
           </CardContent>
@@ -851,7 +851,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              {i18n.t('components.financial_reports.k7')}
+              {i18n.t('components.financial_reports.k120')}
             </Typography>
           </CardContent>
         </Card>
@@ -867,7 +867,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              {i18n.t('components.financial_reports.k8')}
+              {i18n.t('components.financial_reports.k121')}
             </Typography>
           </CardContent>
         </Card>
@@ -883,7 +883,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              {i18n.t('components.financial_reports.k9')}
+              {i18n.t('components.financial_reports.k122')}
             </Typography>
           </CardContent>
         </Card>
@@ -902,7 +902,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              {i18n.t('components.financial_reports.k10')}
+              {i18n.t('components.financial_reports.k123')}
             </Typography>
           </CardContent>
         </Card>

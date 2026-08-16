@@ -8,12 +8,62 @@ import {
   type ExportColumn,
 } from '../importExport';
 
-// Mock i18next
-vi.mock('i18next', () => ({
-  default: {
-    t: vi.fn((key: string, fallback?: string) => fallback ?? key),
-  },
-}));
+// Mock @/i18n (i18n instance, used by importExport indirectly via i18n/index initialization)
+vi.mock('@/i18n', () => {
+  const i18nMap: Record<string, string> = {
+    'shared.import_export.k0': '仅创建（跳过已存在）',
+    'shared.import_export.k1': '仅更新',
+    'shared.import_export.k2': '创建或更新',
+    'shared.import_export.k3': '导入失败',
+    'common.yes': '是',
+    'common.no': '否',
+  };
+  const instance = {
+    t: (key: string, options?: any) => {
+      // support dual-sig: t(key, fallbackString) and t(key, {count:..})
+      if (typeof options === 'string') return options;
+      return i18nMap[key] ?? key;
+    },
+    use: (x: any) => instance,
+    init: (cfg: any) => ({} as any),
+    on: vi.fn(),
+    off: vi.fn(),
+    language: 'zh-CN',
+    changeLanguage: vi.fn(),
+  };
+  return {
+    default: instance,
+    SUPPORTED_LANGUAGES: [{ code: 'zh', name: '中文' }, { code: 'en', name: 'English' }],
+  };
+});
+
+// Mock i18next (re-exported, initReactI18next consumed by @/i18n)
+vi.mock('i18next', () => {
+  const i18nMap: Record<string, string> = {
+    'shared.import_export.k0': '仅创建（跳过已存在）',
+    'shared.import_export.k1': '仅更新',
+    'shared.import_export.k6': '否',
+    'shared.import_export.k7': '是',
+    'common.yes': '是',
+    'common.no': '否',
+  };
+  const instance = {
+    t: (key: string, options?: any) => {
+      if (typeof options === 'string') return options;
+      return i18nMap[key] ?? key;
+    },
+    use: (x: any) => instance,
+    init: (cfg: any) => ({} as any),
+    on: vi.fn(),
+    off: vi.fn(),
+    language: 'zh-CN',
+    changeLanguage: vi.fn(),
+  };
+  return {
+    default: instance,
+    initReactI18next: { type: '3rdParty', init: () => {} },
+  };
+});
 
 // Mock xlsx to avoid heavy dependency in tests
 vi.mock('xlsx', () => ({

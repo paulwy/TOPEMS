@@ -1,6 +1,79 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
+
+vi.mock('@/i18n', () => {
+  const i18nMap: Record<string, string> = {
+    'components.mes.status_badge.draft': 'draft',
+    'components.mes.status_badge.completed': 'completed',
+    'components.mes.status_badge.submitted': 'submitted',
+    'components.mes.status_badge.reworking': 'reworking',
+    'components.mes.status_badge.inspecting': 'inspecting',
+    'components.mes.status_badge.concession_received': 'concession received',
+    'components.mes.status_badge.frozen': 'frozen',
+    'components.mes.status_badge.investigating': 'investigating',
+    'components.mes.status_badge.running': 'running',
+    'components.mes.status_badge.maintenance': 'maintenance',
+    'components.mes.status_badge.triggered': 'triggered',
+    'components.mes.status_badge.false_alarm_verified': 'false alarm verified',
+    'components.mes.fsm_action_buttons.released': 'released',
+    'components.mes.fsm_action_buttons.cancelled': 'cancelled',
+    'components.mes.fsm_action_buttons.idle': 'idle',
+    'components.mes.fsm_action_buttons.down': 'down',
+    'components.mes.fsm_action_buttons.scrapped': 'scrapped',
+    'components.mes.fsm_action_buttons.approval_suffix': ' (审批)',
+  };
+  return {
+    default: {
+      t: (key: string) => i18nMap[key] ?? key.replace(/^components\.(mes|wms|tms|qms|aps)\.(status_badge|fsm_action_buttons)\./, '').replace(/_/g, ' '),
+      language: 'zh',
+      on: () => {},
+      use: () => ({ init: () => {} }),
+      init: () => {},
+    },
+  };
+});
+
+vi.mock('react-i18next', () => {
+  const merge = (...objs: Record<string, string>[]) => Object.assign({}, ...objs);
+  const i18nMap = merge(
+    require('../../../i18n/locales/zh/mes.json'),
+    require('../../../i18n/locales/zh/common.json'),
+    require('../../../i18n/locales/zh/components.json'),
+    require('../../../i18n/locales/zh/pages.json'),
+    require('../../../i18n/locales/zh/templates.json')
+  );
+  return {
+    useTranslation: () => ({
+      t: (key: string) => i18nMap[key] ?? key,
+      i18n: { language: 'zh' },
+    }),
+    initReactI18next: { type: '3rdParty', init: () => {} },
+    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: any }) =>
+      i18nKey ? (i18nMap[i18nKey] ?? i18nKey) : children,
+  };
+});
+
+vi.mock('@/i18n', () => {
+  const merge = (...objs: Record<string, string>[]) => Object.assign({}, ...objs);
+  const i18nMap = merge(
+    require('../../../i18n/locales/zh/mes.json'),
+    require('../../../i18n/locales/zh/common.json'),
+    require('../../../i18n/locales/zh/components.json'),
+    require('../../../i18n/locales/zh/pages.json'),
+    require('../../../i18n/locales/zh/templates.json')
+  );
+  return {
+    default: {
+      t: (key: string) => i18nMap[key] ?? key,
+      language: 'zh',
+      on: () => {},
+      use: () => ({ init: () => {} }),
+      init: () => {},
+    },
+  };
+});
+
 import { StatusBadge } from '../StatusBadge';
 import { FSMActionButtons } from '../FSMActionButtons';
 

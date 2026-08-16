@@ -30,7 +30,7 @@ describe('utils/query-cost-analyzer - getCostLevel', () => {
 
 describe('utils/query-cost-analyzer - getCostLevelColor & Label', () => {
   it('low → 绿色 "低"', () => {
-    expect(getCostLevelColor('low')).toBe('#10b981');
+    expect(getCostLevelColor('low')).toBe('#16a34a');
     expect(getCostLevelLabel('low')).toBe('低');
   });
   it('medium → 橙色 "中"', () => {

@@ -4,6 +4,141 @@ import { renderWithProviders, screen, fireEvent, waitFor } from '@/__tests__/tes
 
 import AutomationRulesPage from '../AutomationRulesPage';
 
+vi.mock('react-i18next', () => {
+  const i18nMap: Record<string, string> = {
+    'automation.automation_rules_page.k0': '已启用',
+    'automation.automation_rules_page.k1': '已禁用',
+    'automation.automation_rules_page.k2': '草稿',
+    'automation.automation_rules_page.k9': '自动化规则',
+    'automation.automation_rules_page.k10': '规则列表',
+    'automation.automation_rules_page.e1': '新建规则',
+    'automation.automation_rules_page.e2': '暂无规则，点击右上角新建',
+    'automation.automation_rules_page.k11': '规则名称',
+    'automation.automation_rules_page.k12': '编码',
+    'automation.automation_rules_page.k13': '状态',
+    'automation.automation_rules_page.k14': '触发器类型',
+    'automation.automation_rules_page.k15': '动作类型',
+    'automation.automation_rules_page.r1': '最后运行时间',
+    'automation.automation_rules_page.k16': '运行次数',
+    'automation.automation_rules_page.k17': '操作',
+    'automation.automation_rules_page.k18': '触发',
+    'automation.automation_rules_page.k19': '触发',
+    'automation.automation_rules_page.k20': '启用',
+    'automation.automation_rules_page.k21': '禁用',
+    'automation.automation_rules_page.k22': '启用',
+    'automation.automation_rules_page.k23': '禁用',
+    'automation.automation_rules_page.k24': '复制',
+    'automation.automation_rules_page.k25': '复制',
+    'automation.automation_rules_page.k26': '删除',
+    'automation.automation_rules_page.k27': '删除',
+    'automation.automation_rules_page.k28': '新建自动化规则',
+    'automation.automation_rules_page.k29': '规则名称',
+    'automation.automation_rules_page.k30': '编码',
+    'automation.automation_rules_page.k31': '仅支持字母、数字、下划线和连字符',
+    'automation.automation_rules_page.k32': '触发器类型',
+    'automation.automation_rules_page.k33': '动作类型',
+    'automation.automation_rules_page.json_34': '触发器配置（JSON）',
+    'automation.automation_rules_page.k35': '动作配置（JSON）',
+    'automation.automation_rules_page.id_36': '下游规则 ID（逗号分隔，可选）',
+    'automation.automation_rules_page.k37': '取消',
+    'automation.automation_rules_page.r2': '保存',
+    'automation.automation_rules_page.k38': '保存',
+    'automation.automation_rules_page.k3': '加载规则列表失败',
+    'automation.automation_rules_page.k4': '创建规则失败',
+    'automation.automation_rules_page.k5': '删除规则失败',
+    'automation.automation_rules_page.k6': '复制规则失败',
+    'automation.automation_rules_page.k7': '启用规则失败',
+    'automation.automation_rules_page.k8': '禁用规则失败',
+  };
+  const t = (key: string, vars?: Record<string, unknown>): string => {
+    let result = i18nMap[key] ?? key;
+    if (vars) {
+      Object.entries(vars).forEach(([k, v]) => {
+        result = result.replace(new RegExp(`{{${k}}}`, 'g'), String(v));
+      });
+    }
+    return result;
+  };
+  return {
+    useTranslation: (ns?: string | string[]) => ({
+      t,
+      i18n: {
+        changeLanguage: vi.fn(),
+        language: 'zh',
+      },
+    }),
+    initReactI18next: {
+      type: '3rdParty',
+      init: vi.fn(),
+    },
+    Trans: ({ children }: any) => children,
+  };
+});
+
+vi.mock('@/i18n', () => {
+  const i18nMap: Record<string, string> = {
+    'automation.automation_rules_page.k0': '已启用',
+    'automation.automation_rules_page.k1': '已禁用',
+    'automation.automation_rules_page.k2': '草稿',
+    'automation.automation_rules_page.k9': '自动化规则',
+    'automation.automation_rules_page.k10': '规则列表',
+    'automation.automation_rules_page.e1': '新建规则',
+    'automation.automation_rules_page.e2': '暂无规则，点击右上角新建',
+    'automation.automation_rules_page.k11': '规则名称',
+    'automation.automation_rules_page.k12': '编码',
+    'automation.automation_rules_page.k13': '状态',
+    'automation.automation_rules_page.k14': '触发器类型',
+    'automation.automation_rules_page.k15': '动作类型',
+    'automation.automation_rules_page.r1': '最后运行时间',
+    'automation.automation_rules_page.k16': '运行次数',
+    'automation.automation_rules_page.k17': '操作',
+    'automation.automation_rules_page.k18': '触发',
+    'automation.automation_rules_page.k19': '触发',
+    'automation.automation_rules_page.k20': '启用',
+    'automation.automation_rules_page.k21': '禁用',
+    'automation.automation_rules_page.k22': '启用',
+    'automation.automation_rules_page.k23': '禁用',
+    'automation.automation_rules_page.k24': '复制',
+    'automation.automation_rules_page.k25': '复制',
+    'automation.automation_rules_page.k26': '删除',
+    'automation.automation_rules_page.k27': '删除',
+    'automation.automation_rules_page.k28': '新建自动化规则',
+    'automation.automation_rules_page.k29': '规则名称',
+    'automation.automation_rules_page.k30': '编码',
+    'automation.automation_rules_page.k31': '仅支持字母、数字、下划线和连字符',
+    'automation.automation_rules_page.k32': '触发器类型',
+    'automation.automation_rules_page.k33': '动作类型',
+    'automation.automation_rules_page.json_34': '触发器配置（JSON）',
+    'automation.automation_rules_page.k35': '动作配置（JSON）',
+    'automation.automation_rules_page.id_36': '下游规则 ID（逗号分隔，可选）',
+    'automation.automation_rules_page.k37': '取消',
+    'automation.automation_rules_page.r2': '保存',
+    'automation.automation_rules_page.k38': '保存',
+    'automation.automation_rules_page.k3': '加载规则列表失败',
+    'automation.automation_rules_page.k4': '创建规则失败',
+    'automation.automation_rules_page.k5': '删除规则失败',
+    'automation.automation_rules_page.k6': '复制规则失败',
+    'automation.automation_rules_page.k7': '启用规则失败',
+    'automation.automation_rules_page.k8': '禁用规则失败',
+  };
+  const t = (key: string, vars?: Record<string, unknown>): string => {
+    let result = i18nMap[key] ?? key;
+    if (vars) {
+      Object.entries(vars).forEach(([k, v]) => {
+        result = result.replace(new RegExp(`{{${k}}}`, 'g'), String(v));
+      });
+    }
+    return result;
+  };
+  return {
+    default: {
+      t,
+      language: 'zh',
+      changeLanguage: vi.fn(),
+    },
+  };
+});
+
 const mockList = vi.fn();
 const mockCreate = vi.fn();
 const mockRemove = vi.fn();

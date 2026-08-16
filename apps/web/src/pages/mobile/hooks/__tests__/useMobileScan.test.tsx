@@ -12,6 +12,7 @@ vi.mock('react-i18next', () => ({
     t: (x: string) => x,
     i18n: { language: 'zh', changeLanguage: vi.fn() },
   }),
+  initReactI18next: { type: '3rdParty', init: () => {} },
 }));
 vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
