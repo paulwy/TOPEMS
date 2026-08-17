@@ -1,7 +1,8 @@
 import { flattenRoutes, toFlatRouteConfig } from './types';
-import type { RouteModuleConfig, RouteConfigV2, RouteConfig } from './types';
-import { pluginManager } from '../../lib/plugin-loader/PluginManager';
+import { RouteModuleConfig, RouteConfigV2, RouteConfig } from './types';
+import { pluginManager } from '../../lib/plugin-loader/pluginManager.ts';
 import { apiLogger } from '../../utils/logger';
+import { ensureNamespacesLoaded } from '@/i18n';
 
 const moduleImports: Record<string, () => Promise<{ [key: string]: RouteModuleConfig }>> = {
   iam: () => import('@/modules/iam/config').then((m) => ({ iamModuleConfig: m.iamModuleConfig })),
@@ -90,6 +91,21 @@ export async function loadModuleConfig(moduleCode: string): Promise<RouteModuleC
   if (!importFn) {
     throw new Error(`Module ${moduleCode} not found`);
   }
+
+  // ✨ 按命名空间按需加载：与模块代码 import 并行触发业务 NS 加载。
+  // 不 await 加载结果（避免阻塞模块代码），只做 Promise 链式错误隔离。
+  // 加载组件/templates/schemas/services/pages（与业务 NS 同时预热），
+  // 这会与 DynamicRoutes / useRouteNamespacePreload 形成多入口幂等保障。
+  ensureNamespacesLoaded([
+    moduleCode, // 业务模块专属 NS（如 wms, crm, mes）
+    'components',
+    'templates',
+    'schemas',
+    'services',
+    'pages',
+  ]).catch((e) => {
+    apiLogger.warn(`[i18n] preload ns for module ${moduleCode} skipped`, e);
+  });
 
   const promise = importFn()
     .then((module) => {

@@ -6848,5 +6848,6 @@
   "tenant_settings_page.k3": "2 小时",
   "tenant_settings_page.k4": "1 小时",
   "tenant_settings_page.30_5": "30 分钟",
-  "tenant_settings_page.15_6": "15 分钟"
+  "tenant_settings_page.15_6": "15 分钟",
+  "admin.tenantOnboarding.k_login_guidance_377": "请使用上方管理员账户登录系统，密码为您在向导中设置的密码"
 }

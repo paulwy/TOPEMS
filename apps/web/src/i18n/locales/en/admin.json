@@ -9303,5 +9303,6 @@
     "role_management": "RoleManagement",
     "close": "Close",
     "admin_rolemanagementpage_and_iam_rolemanagementpage_have_80_similarity_todo_v79_extract_sharedpage_core_differentiated_props_on_both_sides": "admin/RoleManagementPage and iam/RoleManagementPage FeatureSimilarity >80%, @todo V79+ Draw SharedPage Kernel + Difference props"
-  }
+  },
+  "admin.tenantOnboarding.k_login_guidance_377": "Please log in with the admin account shown above; the password is the one you set during the wizard"
 }

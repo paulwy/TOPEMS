@@ -15,7 +15,7 @@ import {
 import i18n from '@/i18n';
 import { Building2, User, Settings, CheckCircle2 } from 'lucide-react';
 import { tenantApi } from '@/api/tenant';
-import type { TenantPlan } from '@/api/tenant/types';
+import { TenantPlan } from '@/api/tenant/types';
 import { useNotificationStore } from '@/store';
 import { useNavigate } from 'react-router-dom';
 // 本地定义：后端 onboardTenant API 尚未在 tenantApi 客户端实现，先用本地类型占位
@@ -373,7 +373,7 @@ export const TenantOnboardingWizardPage: React.FC = () => {
             severity='info'
             sx={{ mt: 3 }}
           >
-            {i18n.t('admin.tenantOnboarding.请使用上方管理员账户登录系统_密码为您在向导中设置的密码')}
+            {i18n.t('admin.tenantOnboarding.k_login_guidance_377')}
           </Alert>
           <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
             <Button
