@@ -163,8 +163,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_trace_db_query_propagates_error() {
-        let err = sqlx::Error::Configuration(Box::new(std::io::Error::new(
-            std::io::ErrorKind::Other,
+        let err = sqlx::Error::Configuration(Box::new(std::io::Error::other(
             "db test error",
         )));
         let result: Result<i32, sqlx::Error> =
@@ -210,7 +209,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_trace_service_call_propagates_error() {
-        let err = std::io::Error::new(std::io::ErrorKind::Other, "service down");
+        let err = std::io::Error::other("service down");
         let result: Result<i32, std::io::Error> =
             trace_service_call("user-svc", "/users/1", async { Err(err) }).await;
         assert!(result.is_err());

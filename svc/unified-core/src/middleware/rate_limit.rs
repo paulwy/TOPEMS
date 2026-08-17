@@ -155,6 +155,12 @@ pub struct RateLimitStore {
     buckets: Arc<RwLock<HashMap<String, TokenBucket>>>,
 }
 
+impl Default for RateLimitStore {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RateLimitStore {
     pub fn new() -> Self {
         Self {
@@ -312,9 +318,9 @@ pub async fn rate_limit_middleware(
             rule.window_secs
         );
 
-        let body = format!(
-            r#"{{"success":false,"message":"请求过于频繁，请稍后重试","code":429,"data":null}}"#
-        );
+        let body =
+            r#"{"success":false,"message":"请求过于频繁，请稍后重试","code":429,"data":null}"#
+                .to_string();
 
         let mut response = (
             StatusCode::TOO_MANY_REQUESTS,

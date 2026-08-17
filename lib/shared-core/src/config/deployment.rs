@@ -9,18 +9,15 @@ use uuid::Uuid;
 /// 部署模式
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
+#[derive(Default)]
 pub enum DeploymentMode {
     /// SaaS 多租户模式
     SaaS,
     /// On-Premise 单租户私有化部署模式
+    #[default]
     OnPremise,
 }
 
-impl Default for DeploymentMode {
-    fn default() -> Self {
-        Self::OnPremise
-    }
-}
 
 impl std::fmt::Display for DeploymentMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -33,6 +30,7 @@ impl std::fmt::Display for DeploymentMode {
 
 /// 功能开关配置
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct FeatureFlags {
     /// 配额限制开关
     pub quota_enabled: bool,
@@ -48,18 +46,6 @@ pub struct FeatureFlags {
     pub ip_whitelist_enabled: bool,
 }
 
-impl Default for FeatureFlags {
-    fn default() -> Self {
-        Self {
-            quota_enabled: false,
-            billing_enabled: false,
-            tenant_management: false,
-            sso_enabled: false,
-            two_factor_required: false,
-            ip_whitelist_enabled: false,
-        }
-    }
-}
 
 /// 部署配置
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -250,7 +236,7 @@ mod tests {
     fn deployment_mode_copy_and_clone_equal() {
         let a = DeploymentMode::SaaS;
         let b = a; // Copy
-        let c = a.clone();
+        let c = a;
         assert_eq!(a, b);
         assert_eq!(a, c);
         let d = DeploymentMode::OnPremise;

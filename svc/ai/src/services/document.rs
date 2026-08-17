@@ -807,7 +807,7 @@ impl DocumentService {
         for doc_id in document_ids {
             if let Ok(chunks) = vs.get_document_chunks(*doc_id, tenant_id).await {
                 if let Ok(doc) = vs.get_document(*doc_id, tenant_id).await {
-                    let doc_title = doc.and_then(|d| Some(d.title));
+                    let doc_title = doc.map(|d| d.title);
                     for chunk in chunks {
                         let similarity = self.calculate_text_similarity(question, &chunk.content);
                         if similarity > 0.1 {
@@ -927,10 +927,7 @@ impl DocumentService {
             0.3
         };
 
-        let final_confidence =
-            (length_score * 0.4 + context_score * 0.4 + uncertainty_penalty * 0.2).clamp(0.0, 1.0);
-
-        final_confidence
+        (length_score * 0.4 + context_score * 0.4 + uncertainty_penalty * 0.2).clamp(0.0, 1.0)
     }
 
     /// 生成文档摘要

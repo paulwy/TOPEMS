@@ -114,7 +114,7 @@ pub struct CreateReturnRequest {
     pub warehouse_id: Option<Uuid>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, ToSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, ToSchema, Default)]
 pub struct UpdateReturnRequest {
     #[serde(default)]
     pub customer_id: Option<Uuid>,
@@ -176,21 +176,6 @@ impl Default for CreateReturnRequest {
             customer_id: None,
             order_id: None,
             return_type: Some("return".into()),
-            reason: None,
-            reason_detail: None,
-            exchange_product_id: None,
-            ticket_id: None,
-            warehouse_id: None,
-        }
-    }
-}
-
-impl Default for UpdateReturnRequest {
-    fn default() -> Self {
-        Self {
-            customer_id: None,
-            order_id: None,
-            return_type: None,
             reason: None,
             reason_detail: None,
             exchange_product_id: None,

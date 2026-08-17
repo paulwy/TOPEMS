@@ -1004,7 +1004,7 @@ impl TaxRateCalculator {
         rate: f64,
         tax_type: String,
     ) -> Result<serde_json::Value, sqlx::Error> {
-        let valid = rate >= 0.0 && rate <= 1.0;
+        let valid = (0.0..=1.0).contains(&rate);
         let mut issues: Vec<String> = Vec::new();
 
         if !valid {
@@ -1058,7 +1058,7 @@ impl TaxRateCalculator {
         .fetch_optional(pool)
         .await?;
 
-        Ok(rate.unwrap_or_else(|| match tax_type {
+        Ok(rate.unwrap_or(match tax_type {
             "vat" => 0.13,
             "cit" => 0.25,
             "pit" => 0.03,
@@ -1197,7 +1197,7 @@ impl TaxRateCalculator {
                     if remaining <= span {
                         remaining
                     } else {
-                        remaining = remaining - span;
+                        remaining -= span;
                         span
                     }
                 }

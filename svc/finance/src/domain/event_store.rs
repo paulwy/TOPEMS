@@ -170,7 +170,7 @@ impl EventStore for InMemoryEventStore {
             .filter(|e| {
                 e.aggregate_id == aggregate_id
                     && e.version >= from_version
-                    && to_version.map_or(true, |v| e.version <= v)
+                    && to_version.is_none_or(|v| e.version <= v)
             })
             .cloned()
             .collect();

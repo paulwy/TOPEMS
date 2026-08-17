@@ -79,7 +79,7 @@ pub struct CreateCustomerRequest {
     pub tags: Option<Vec<String>>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema, Default)]
 pub struct UpdateCustomerRequest {
     pub name: Option<String>,
     pub customer_type: Option<String>,
@@ -100,20 +100,6 @@ impl Default for CreateCustomerRequest {
             region: None,
             owner_id: Uuid::nil(),
             tags: Some(vec![]),
-        }
-    }
-}
-
-impl Default for UpdateCustomerRequest {
-    fn default() -> Self {
-        Self {
-            name: None,
-            customer_type: None,
-            industry: None,
-            rating: None,
-            region: None,
-            owner_id: None,
-            tags: None,
         }
     }
 }

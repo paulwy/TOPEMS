@@ -72,8 +72,8 @@ async fn list_interactions(
     .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&status_filter)
-    .bind(&customer_filter)
-    .bind(&contact_filter)
+    .bind(customer_filter)
+    .bind(contact_filter)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.db)
@@ -94,8 +94,8 @@ async fn list_interactions(
             .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
-            .bind(&customer_filter)
-            .bind(&contact_filter)
+            .bind(customer_filter)
+            .bind(contact_filter)
             .fetch_one(&state.db)
             .await;
 

@@ -197,8 +197,8 @@ pub async fn create_tenant(
     .bind(&req.tenant_type)
     .bind(&req.plan)
     .bind(&req.license_type)
-    .bind(&req.license_expires_at)
-    .bind(&req.trial_expires_at)
+    .bind(req.license_expires_at)
+    .bind(req.trial_expires_at)
     .fetch_one(&state.pool)
     .await
     {
@@ -531,9 +531,9 @@ pub async fn update_tenant(
     .bind(&req.name)
     .bind(&req.plan)
     .bind(&req.status)
-    .bind(&req.quota_users)
-    .bind(&req.quota_storage_gb)
-    .bind(&req.quota_api_calls)
+    .bind(req.quota_users)
+    .bind(req.quota_storage_gb)
+    .bind(req.quota_api_calls)
     .bind(&req.features)
     .fetch_optional(&state.pool)
     .await

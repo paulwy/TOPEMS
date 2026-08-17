@@ -181,7 +181,7 @@ async fn recalculate_refund_amount(
     .fetch_optional(&state.db)
     .await?;
 
-    let total = total.unwrap_or_else(|| Decimal::ZERO);
+    let total = total.unwrap_or(Decimal::ZERO);
 
     let _ = sqlx::query(
         "UPDATE crm.returns SET refund_amount = $2, updated_at = $3 WHERE id = $1 AND tenant_id = $4",
@@ -234,8 +234,8 @@ async fn list_returns(
     .bind(tenant_id)
     .bind(&params.status)
     .bind(&params.return_type)
-    .bind(&params.customer_id)
-    .bind(&params.order_id)
+    .bind(params.customer_id)
+    .bind(params.order_id)
     .bind(&search_pattern)
     .bind(page_size)
     .bind(offset)
@@ -258,8 +258,8 @@ async fn list_returns(
             .bind(tenant_id)
             .bind(&params.status)
             .bind(&params.return_type)
-            .bind(&params.customer_id)
-            .bind(&params.order_id)
+            .bind(params.customer_id)
+            .bind(params.order_id)
             .bind(&search_pattern)
             .fetch_one(&state.db)
             .await;
@@ -321,12 +321,12 @@ async fn create_return(
     .bind(id)
     .bind(&return_no)
     .bind(tenant_id)
-    .bind(&req.customer_id)
-    .bind(&req.order_id)
+    .bind(req.customer_id)
+    .bind(req.order_id)
     .bind(&return_type)
     .bind(&req.reason)
     .bind(&req.reason_detail)
-    .bind(&req.exchange_product_id)
+    .bind(req.exchange_product_id)
     .bind(operator_id)
     .bind(now)
     .bind(req.ticket_id)
@@ -480,12 +480,12 @@ async fn update_return(
         "#,
     )
     .bind(id)
-    .bind(&customer_id)
-    .bind(&order_id)
+    .bind(customer_id)
+    .bind(order_id)
     .bind(&return_type)
     .bind(&reason)
     .bind(&reason_detail)
-    .bind(&exchange_product_id)
+    .bind(exchange_product_id)
     .bind(ticket_id)
     .bind(warehouse_id)
     .bind(operator_id)
@@ -1219,7 +1219,7 @@ async fn add_return_item(
     .bind(item_id)
     .bind(id)
     .bind(tenant_id)
-    .bind(&req.product_id)
+    .bind(req.product_id)
     .bind(req.quantity)
     .bind(req.unit_price)
     .bind(total_amount)

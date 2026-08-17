@@ -460,7 +460,7 @@ pub async fn confirm_suggestion(
     .bind(id)
     .bind(confirmed_qty)
     .bind(req.supplier_id)
-    .bind(&req.remarks.unwrap_or_else(|| "已确认".to_string()))
+    .bind(req.remarks.unwrap_or_else(|| "已确认".to_string()))
     .bind(now)
     .fetch_one(&state.db)
     .await;

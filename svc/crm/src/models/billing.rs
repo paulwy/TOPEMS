@@ -68,7 +68,7 @@ pub struct CreateBillingRequest {
     pub items: Vec<BillingItem>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, ToSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, ToSchema, Default)]
 pub struct UpdateBillingRequest {
     #[serde(default)]
     pub customer_id: Option<Uuid>,
@@ -107,20 +107,6 @@ impl Default for CreateBillingRequest {
             currency: Some("CNY".into()),
             due_date: Utc::now(),
             items: vec![],
-        }
-    }
-}
-
-impl Default for UpdateBillingRequest {
-    fn default() -> Self {
-        Self {
-            customer_id: None,
-            invoice_no: None,
-            amount: None,
-            currency: None,
-            due_date: None,
-            status: None,
-            items: None,
         }
     }
 }

@@ -9,6 +9,12 @@ use topems_shared_event::event::{
 #[derive(Clone)]
 pub struct MdmEventService;
 
+impl Default for MdmEventService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MdmEventService {
     pub fn new() -> Self {
         Self

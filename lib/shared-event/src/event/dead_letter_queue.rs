@@ -243,7 +243,7 @@ impl DeadLetterQueue {
         let total_pages = if total == 0 {
             0
         } else {
-            (total + page_size - 1) / page_size
+            total.div_ceil(page_size)
         };
         let start = page.saturating_mul(page_size);
         let end = (start + page_size).min(total);

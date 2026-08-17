@@ -678,8 +678,8 @@ impl DeploymentManager {
         let filtered: Vec<Deployment> = deployments
             .iter()
             .filter(|d| {
-                environment.as_ref().map_or(true, |e| d.environment == *e)
-                    && status.as_ref().map_or(true, |s| d.status == *s)
+                environment.as_ref().is_none_or(|e| d.environment == *e)
+                    && status.as_ref().is_none_or(|s| d.status == *s)
             })
             .rev()
             .take(limit)
@@ -866,7 +866,7 @@ impl DeploymentManager {
 
         deployments
             .iter()
-            .filter(|d| environment.as_ref().map_or(true, |e| d.environment == *e))
+            .filter(|d| environment.as_ref().is_none_or(|e| d.environment == *e))
             .rev()
             .take(limit)
             .cloned()
@@ -913,8 +913,8 @@ impl ConfigurationManager {
         let filtered: Vec<GatewayConfig> = configs
             .iter()
             .filter(|c| {
-                environment.as_ref().map_or(true, |e| c.environment == *e)
-                    && is_active.map_or(true, |a| c.is_active == a)
+                environment.as_ref().is_none_or(|e| c.environment == *e)
+                    && is_active.is_none_or(|a| c.is_active == a)
             })
             .cloned()
             .collect();
@@ -1024,7 +1024,7 @@ impl ConfigurationManager {
 
         configs
             .iter()
-            .filter(|c| environment.as_ref().map_or(true, |e| c.environment == *e))
+            .filter(|c| environment.as_ref().is_none_or(|e| c.environment == *e))
             .rev()
             .take(limit)
             .cloned()
@@ -1154,8 +1154,8 @@ impl RollbackManager {
         policies
             .iter()
             .filter(|p| {
-                trigger.as_ref().map_or(true, |t| p.trigger == *t)
-                    && enabled_only.map_or(true, |e| p.enabled == e)
+                trigger.as_ref().is_none_or(|t| p.trigger == *t)
+                    && enabled_only.is_none_or(|e| p.enabled == e)
             })
             .cloned()
             .collect()
@@ -1222,7 +1222,7 @@ impl RollbackManager {
         actions
             .iter()
             .rev()
-            .filter(|a| policy_id.map_or(true, |p| a.policy_id == p))
+            .filter(|a| policy_id.is_none_or(|p| a.policy_id == p))
             .take(limit)
             .map(|a| RollbackHistoryEntry {
                 id: a.id.clone(),
@@ -1303,7 +1303,7 @@ impl RollbackManager {
 
         policies
             .iter()
-            .filter(|p| policy_id.map_or(true, |id| p.id == id))
+            .filter(|p| policy_id.is_none_or(|id| p.id == id))
             .map(|p| {
                 let counter = counters.get(&p.id).cloned().unwrap_or((0, None, 0));
                 let last_result = if counter.2 > 0 {
@@ -1710,7 +1710,7 @@ pub async fn execute_rollback_handler(
     let policy_id = req
         .reason
         .as_deref()
-        .and_then(|_| Some("unknown".to_string()))
+        .map(|_| "unknown".to_string())
         .unwrap_or_else(|| "unknown".to_string());
 
     let action_type = req

@@ -622,7 +622,7 @@ pub async fn create_version(
         "#,
     )
     .bind(&req.version)
-    .bind(&req.status.to_string())
+    .bind(req.status.to_string())
     .bind(&req.deprecated_since)
     .bind(&req.sunset_date)
     .bind(&req.message)
@@ -663,7 +663,7 @@ pub async fn update_version_status(
         RETURNING *;
         "#,
     )
-    .bind(&req.status.to_string())
+    .bind(req.status.to_string())
     .bind(&req.deprecated_since)
     .bind(&req.sunset_date)
     .bind(&req.message)

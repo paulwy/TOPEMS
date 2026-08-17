@@ -161,7 +161,7 @@ async fn create_customer(
     .bind(req.rating.as_deref())
     .bind(req.region.as_deref())
     .bind(req.owner_id)
-    .bind(req.tags.as_ref().map(|v| v.as_slice()))
+    .bind(req.tags.as_deref())
     .bind("none")
     .bind(now)
     .bind(now)

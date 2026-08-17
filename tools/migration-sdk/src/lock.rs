@@ -38,7 +38,7 @@ impl DistLock {
 
     /// 获取连接
     fn get_client(&self) -> Result<Client> {
-        Client::open(self.redis_url.as_str()).map_err(|e| MigrationError::Redis(e))
+        Client::open(self.redis_url.as_str()).map_err(MigrationError::Redis)
     }
 
     /// 尝试获取锁

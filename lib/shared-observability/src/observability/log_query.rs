@@ -182,7 +182,7 @@ impl LogQueryProvider for InMemoryLogStore {
 
         let total = filtered.len();
         let page_size = query.page_size.max(1);
-        let total_pages = (total + page_size - 1) / page_size;
+        let total_pages = total.div_ceil(page_size);
         let start = (query.page.saturating_sub(1)) * page_size;
         let start = start.min(total);
         let end = (start + page_size).min(total);
@@ -270,7 +270,7 @@ impl LogQueryProvider for InMemoryLogStore {
             .cloned()
             .collect();
         // 按时间正序排列，便于追踪链路
-        result.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
+        result.sort_by_key(|a| a.timestamp);
         Ok(result)
     }
 }

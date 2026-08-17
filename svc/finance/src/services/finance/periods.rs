@@ -191,7 +191,7 @@ impl FinanceService {
     ) -> Result<Period, TopemsError> {
         let period_name = format!("{:04}{:02}", year, month);
 
-        let start_date = chrono::NaiveDate::from_ymd_opt(year as i32, month as u32, 1)
+        let start_date = chrono::NaiveDate::from_ymd_opt(year, month as u32, 1)
             .ok_or_else(|| {
                 TopemsError::ValidationFailed(format!("无效的日期: {}-{:02}-01", year, month))
             })?

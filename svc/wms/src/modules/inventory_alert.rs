@@ -478,11 +478,11 @@ pub async fn get_alert_statistics(
 
     let summary = match summary_result {
         Ok(r) => AlertSummary {
-            total_alerts: r.below_min_count.unwrap_or(0) as i64,
+            total_alerts: r.below_min_count.unwrap_or(0),
             critical_count: r.critical_count.unwrap_or(0) as i64,
             warning_count: r.warning_count.unwrap_or(0) as i64,
             info_count: r.info_count.unwrap_or(0) as i64,
-            below_min_count: r.below_min_count.unwrap_or(0) as i64,
+            below_min_count: r.below_min_count.unwrap_or(0),
             above_max_count: r.above_max_count.unwrap_or(0) as i64,
             reorder_count: r.reorder_count.unwrap_or(0) as i64,
             expiry_count: r.expiry_count.unwrap_or(0) as i64,
@@ -522,7 +522,7 @@ pub async fn get_alert_statistics(
             .map(|r| WarehouseAlertCount {
                 warehouse_id: Some(r.warehouse_id),
                 warehouse_name: Some(r.warehouse_name),
-                alert_count: r.alert_count.unwrap_or(0) as i64,
+                alert_count: r.alert_count.unwrap_or(0),
             })
             .collect(),
         Err(_) => vec![],
@@ -620,15 +620,15 @@ pub async fn get_alert_summary(
     match result {
         Ok(r) => {
             let summary = AlertSummary {
-                total_alerts: r.total_alerts.unwrap_or(0) as i64,
-                critical_count: r.critical_count.unwrap_or(0) as i64,
-                warning_count: r.warning_count.unwrap_or(0) as i64,
-                info_count: r.info_count.unwrap_or(0) as i64,
-                below_min_count: r.below_min_count.unwrap_or(0) as i64,
-                above_max_count: r.above_max_count.unwrap_or(0) as i64,
-                reorder_count: r.reorder_count.unwrap_or(0) as i64,
+                total_alerts: r.total_alerts.unwrap_or(0),
+                critical_count: r.critical_count.unwrap_or(0),
+                warning_count: r.warning_count.unwrap_or(0),
+                info_count: r.info_count.unwrap_or(0),
+                below_min_count: r.below_min_count.unwrap_or(0),
+                above_max_count: r.above_max_count.unwrap_or(0),
+                reorder_count: r.reorder_count.unwrap_or(0),
                 expiry_count: r.expiry_count.unwrap_or(0) as i64,
-                out_of_stock_count: r.out_of_stock_count.unwrap_or(0) as i64,
+                out_of_stock_count: r.out_of_stock_count.unwrap_or(0),
             };
 
             // P3 事件驱动规范化：查询预警汇总时异步触发低库存事件发布，
@@ -1434,7 +1434,7 @@ pub async fn confirm_alert_record(
         "#,
     )
     .bind(id)
-    .bind(&req.notes.unwrap_or_else(|| "已确认".to_string()))
+    .bind(req.notes.unwrap_or_else(|| "已确认".to_string()))
     .bind(now)
     .fetch_one(&state.db)
     .await;

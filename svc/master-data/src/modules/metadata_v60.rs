@@ -507,7 +507,7 @@ impl EnhancedLineage {
         for edge in edges.iter() {
             adjacency
                 .entry(edge.source_id.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(edge.clone());
         }
 

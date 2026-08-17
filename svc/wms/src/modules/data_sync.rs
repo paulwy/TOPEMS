@@ -206,7 +206,7 @@ pub async fn create_shipping_from_outbound_internal(
             .await;
 
             let _ = record_sync_log(
-                &state,
+                state,
                 "outbound_to_shipping",
                 "wms",
                 "crm",
@@ -236,7 +236,7 @@ pub async fn create_shipping_from_outbound_internal(
         Err(e) => {
             tracing::error!("创建销售订单失败: {}", e);
             let _ = record_sync_log(
-                &state,
+                state,
                 "outbound_to_shipping",
                 "wms",
                 "crm",

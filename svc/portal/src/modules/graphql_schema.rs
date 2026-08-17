@@ -1232,7 +1232,7 @@ impl QueryRoot {
         &self,
         _ctx: &Context<'_>,
     ) -> async_graphql::Result<Vec<ServiceHealthGql>> {
-        let services = vec![
+        let services = [
             ("erp", "http://localhost:8010"),
             ("crm", "http://localhost:8029"),
             ("hrm", "http://localhost:8020"),
@@ -1309,7 +1309,7 @@ impl QueryRoot {
     /// V36.0 Phase 4: 获取扩展模块统计（qms/srm/lims/rd/ehs）
     /// 通过 BFF 并行调用各服务列表端点，聚合 total count
     async fn module_stats(&self, _ctx: &Context<'_>) -> async_graphql::Result<Vec<ModuleStatGql>> {
-        let modules = vec![
+        let modules = [
             (
                 "qms",
                 "http://localhost:8050",
@@ -1376,7 +1376,7 @@ impl QueryRoot {
         &self,
         _ctx: &Context<'_>,
     ) -> async_graphql::Result<Vec<FederatedServiceGql>> {
-        let registry = vec![
+        let registry = [
             (
                 "erp",
                 "http://localhost:8010",
@@ -1485,7 +1485,7 @@ impl QueryRoot {
         &self,
         _ctx: &Context<'_>,
     ) -> async_graphql::Result<Vec<FederationServiceSdlGql>> {
-        let services = vec![
+        let services = [
             ("erp", "http://localhost:8010"),
             ("crm", "http://localhost:8029"),
             ("hrm", "http://localhost:8020"),
@@ -1533,7 +1533,7 @@ impl QueryRoot {
             ));
         }
 
-        let futures = by_service.into_iter().map(|(_service, items)| async move {
+        let futures = by_service.into_values().map(|items| async move {
             let mut local_results = Vec::new();
             for (typename, id, idx) in items {
                 let entity = tokio::time::timeout(
@@ -1567,7 +1567,7 @@ impl QueryRoot {
             }
         }
 
-        Ok(results.into_iter().filter_map(|r| r).collect())
+        Ok(results.into_iter().flatten().collect())
     }
 
     /// V38.0: 批量获取同类型实体列表
@@ -4373,7 +4373,7 @@ impl SubscriptionRoot {
         let (tx, rx) = mpsc::channel(32);
         let event_bus = ctx
             .data::<Arc<EventBus>>()
-            .map(|a| a.clone())
+            .cloned()
             .unwrap_or_else(|_| global_event_bus().clone());
 
         tokio::spawn(async move {
@@ -4415,7 +4415,7 @@ impl SubscriptionRoot {
         let (tx, rx) = mpsc::channel(32);
         let event_bus = ctx
             .data::<Arc<EventBus>>()
-            .map(|a| a.clone())
+            .cloned()
             .unwrap_or_else(|_| global_event_bus().clone());
 
         tokio::spawn(async move {
@@ -4454,7 +4454,7 @@ impl SubscriptionRoot {
         let (tx, rx) = mpsc::channel(32);
         let event_bus = ctx
             .data::<Arc<EventBus>>()
-            .map(|a| a.clone())
+            .cloned()
             .unwrap_or_else(|_| global_event_bus().clone());
 
         tokio::spawn(async move {
@@ -4493,7 +4493,7 @@ impl SubscriptionRoot {
         let (tx, rx) = mpsc::channel(32);
         let event_bus = ctx
             .data::<Arc<EventBus>>()
-            .map(|a| a.clone())
+            .cloned()
             .unwrap_or_else(|_| global_event_bus().clone());
 
         tokio::spawn(async move {
@@ -4536,7 +4536,7 @@ impl SubscriptionRoot {
         let (tx, rx) = mpsc::channel(32);
         let event_bus = ctx
             .data::<Arc<EventBus>>()
-            .map(|a| a.clone())
+            .cloned()
             .unwrap_or_else(|_| global_event_bus().clone());
 
         tokio::spawn(async move {
@@ -4781,7 +4781,7 @@ async fn fetch_workflow_stats(state: &AppState) -> Option<ServiceStatsGql> {
 static SHARED_HTTP_CLIENT: std::sync::OnceLock<reqwest::Client> = std::sync::OnceLock::new();
 
 fn shared_http_client() -> &'static reqwest::Client {
-    SHARED_HTTP_CLIENT.get_or_init(|| reqwest::Client::new())
+    SHARED_HTTP_CLIENT.get_or_init(reqwest::Client::new)
 }
 
 async fn check_service_health(url: &str) -> bool {
@@ -5192,9 +5192,7 @@ pub fn estimate_query_depth(query: &str) -> usize {
                 }
             }
             '}' => {
-                if current_depth > 0 {
-                    current_depth -= 1;
-                }
+                current_depth = current_depth.saturating_sub(1);
             }
             _ => {}
         }
@@ -6825,7 +6823,6 @@ pub fn record_discovered_query(
                         query_hash,
                         query_name
                     );
-                    return;
                 }
             }
         }
@@ -7341,7 +7338,7 @@ pub fn get_performance_tuning_suggestions() -> Vec<PerformanceTuningSuggestionGq
     }
 
     let error_count = audit_logs.iter().filter(|l| !l.success).count();
-    let error_rate = if audit_logs.len() > 0 {
+    let error_rate = if !audit_logs.is_empty() {
         error_count as f64 / audit_logs.len() as f64 * 100.0
     } else {
         0.0
@@ -7450,7 +7447,7 @@ pub fn get_performance_analysis() -> PerformanceAnalysisGql {
     };
 
     let error_count = audit_logs.iter().filter(|l| !l.success).count();
-    let error_rate = if audit_logs.len() > 0 {
+    let error_rate = if !audit_logs.is_empty() {
         error_count as f64 / audit_logs.len() as f64 * 100.0
     } else {
         0.0
@@ -8101,7 +8098,7 @@ impl AutoGeneratedResolver {
                     .and_then(|v| v.as_str())
                     .or_else(|| {
                         source
-                            .get(&format!("{}_id", relation.field_name))
+                            .get(format!("{}_id", relation.field_name))
                             .and_then(|v| v.as_str())
                     })
                     .unwrap_or(source_id);
@@ -8418,7 +8415,7 @@ async fn execute_step(
             resolver
                 .resolve_batch(&ids)
                 .await
-                .map(|v| serde_json::Value::Array(v))
+                .map(serde_json::Value::Array)
                 .unwrap_or_else(|e| serde_json::json!({"error": e}))
         }
         PlanStepType::JoinRelation => {
@@ -8590,6 +8587,7 @@ pub struct FederationV2StatsGql {
     pub entities_registered: usize,
 }
 
+#[derive(Default)]
 struct FederationV2StatsInternal {
     total_queries: u64,
     total_steps: u64,
@@ -8603,25 +8601,6 @@ struct FederationV2StatsInternal {
     execute_count: u64,
     plan_cache_hits: u64,
     auto_resolvers_used: u64,
-}
-
-impl Default for FederationV2StatsInternal {
-    fn default() -> Self {
-        Self {
-            total_queries: 0,
-            total_steps: 0,
-            parallel_steps: 0,
-            batch_resolutions: 0,
-            cache_hits: 0,
-            cache_misses: 0,
-            total_plan_time_ms: 0,
-            plan_count: 0,
-            total_execute_time_ms: 0,
-            execute_count: 0,
-            plan_cache_hits: 0,
-            auto_resolvers_used: 0,
-        }
-    }
 }
 
 static FEDERATION_V2_STATS: std::sync::OnceLock<Mutex<FederationV2StatsInternal>> =
@@ -9543,7 +9522,7 @@ impl FederationV3Planner {
         }
 
         let mut sorted_nodes: Vec<&PlanNode> = nodes.iter().collect();
-        sorted_nodes.sort_by(|a, b| a.depends_on.len().cmp(&b.depends_on.len()));
+        sorted_nodes.sort_by_key(|a| a.depends_on.len());
 
         for node in &sorted_nodes {
             for dep in &node.depends_on {
@@ -10633,7 +10612,7 @@ pub fn apply_masking(
     // 检查角色是否豁免
     let role_names: Vec<&str> = roles.iter().map(|r| r.as_str()).collect();
     for exempt in &rule.exempt_roles {
-        if role_names.iter().any(|r| *r == exempt.as_str()) {
+        if role_names.contains(&exempt.as_str()) {
             return value.clone();
         }
     }
@@ -10887,7 +10866,7 @@ pub fn get_field_access_audits(limit: usize, entity_type: Option<&str>) -> Vec<F
     store
         .iter()
         .rev()
-        .filter(|a| entity_type.map_or(true, |et| a.entity_type == et))
+        .filter(|a| entity_type.is_none_or(|et| a.entity_type == et))
         .take(limit)
         .cloned()
         .collect()
@@ -10901,7 +10880,7 @@ pub fn get_data_change_audits(limit: usize, entity_type: Option<&str>) -> Vec<Da
     store
         .iter()
         .rev()
-        .filter(|a| entity_type.map_or(true, |et| a.entity_type == et))
+        .filter(|a| entity_type.is_none_or(|et| a.entity_type == et))
         .take(limit)
         .cloned()
         .collect()
@@ -10961,7 +10940,7 @@ pub fn check_and_record_field_access(
                     let exempt = rule
                         .exempt_roles
                         .iter()
-                        .any(|er| role_names.iter().any(|r| *r == er.as_str()));
+                        .any(|er| role_names.contains(&er.as_str()));
                     if !exempt {
                         (
                             "masked".to_string(),
@@ -12010,6 +11989,12 @@ static ACTION_KEYWORDS: &[ActionKeyword] = &[
 /// V43.0: NL2GraphQL 解析器
 pub struct Nl2GraphqlParser;
 
+impl Default for Nl2GraphqlParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Nl2GraphqlParser {
     pub fn new() -> Self {
         Self
@@ -12725,7 +12710,7 @@ pub fn get_cache_recommendations() -> CacheRecommendationReportGql {
         .unwrap_or_else(|e| e.into_inner());
     store
         .clone()
-        .unwrap_or_else(|| CacheRecommendationEngine::analyze())
+        .unwrap_or_else(CacheRecommendationEngine::analyze)
 }
 
 /// V43.0: 接受缓存推荐
@@ -13272,7 +13257,7 @@ pub fn record_event_published(_channel: SubscriptionChannel) {
     timestamps.push_back(now);
     // 只保留最近 60 秒的时间戳
     let cutoff = now - chrono::Duration::seconds(60);
-    while timestamps.front().map_or(false, |t| *t < cutoff) {
+    while timestamps.front().is_some_and(|t| *t < cutoff) {
         timestamps.pop_front();
     }
 }
@@ -14028,10 +14013,7 @@ pub fn record_query_metric(
     state.query_records.push_back(record);
 
     if let Some(ref op) = operation_name {
-        let stats = state
-            .by_operation_stats
-            .entry(op.clone())
-            .or_insert_with(OperationStats::default);
+        let stats = state.by_operation_stats.entry(op.clone()).or_default();
         stats.count += 1;
         stats.total_duration_ms += duration_ms;
         if !success {
@@ -14049,10 +14031,7 @@ pub fn record_query_metric(
     }
 
     if let Some(ref svc) = service {
-        let stats = state
-            .by_service_stats
-            .entry(svc.clone())
-            .or_insert_with(ServiceStats::default);
+        let stats = state.by_service_stats.entry(svc.clone()).or_default();
         stats.request_count += 1;
         stats.total_latency_ms += duration_ms;
         if !success {
@@ -14159,9 +14138,7 @@ pub fn get_metrics(window: MetricsWindow) -> GraphqlMetricsGql {
     let mut by_operation_map: HashMap<String, OperationStats> = HashMap::new();
     for record in &window_records {
         if let Some(ref op) = record.operation_name {
-            let stats = by_operation_map
-                .entry(op.clone())
-                .or_insert_with(OperationStats::default);
+            let stats = by_operation_map.entry(op.clone()).or_default();
             stats.count += 1;
             stats.total_duration_ms += record.duration_ms;
             if !record.success {
@@ -14208,9 +14185,7 @@ pub fn get_metrics(window: MetricsWindow) -> GraphqlMetricsGql {
     let mut by_service_map: HashMap<String, ServiceStats> = HashMap::new();
     for record in &window_records {
         if let Some(ref svc) = record.service {
-            let stats = by_service_map
-                .entry(svc.clone())
-                .or_insert_with(ServiceStats::default);
+            let stats = by_service_map.entry(svc.clone()).or_default();
             stats.request_count += 1;
             stats.total_latency_ms += record.duration_ms;
             if !record.success {
@@ -14613,20 +14588,14 @@ pub fn get_alerts(
         .filter(|a| {
             if let Some(ref s) = status {
                 match s.as_str() {
-                    "active" => {
-                        if a.resolved {
-                            return false;
-                        }
+                    "active" if a.resolved => {
+                        return false;
                     }
-                    "resolved" => {
-                        if !a.resolved {
-                            return false;
-                        }
+                    "resolved" if !a.resolved => {
+                        return false;
                     }
-                    "acknowledged" => {
-                        if !a.acknowledged {
-                            return false;
-                        }
+                    "acknowledged" if !a.acknowledged => {
+                        return false;
                     }
                     _ => {}
                 }
@@ -14891,9 +14860,7 @@ pub fn get_top_slow_queries(limit: Option<usize>, window: MetricsWindow) -> Vec<
                 .operation_name
                 .clone()
                 .unwrap_or_else(|| "unknown".to_string());
-            let stats = by_operation
-                .entry(key)
-                .or_insert_with(SlowQueryStats::default);
+            let stats = by_operation.entry(key).or_default();
             stats.count += 1;
             stats.total_time_ms += record.duration_ms;
             if record.duration_ms > stats.max_duration_ms {
@@ -15199,8 +15166,7 @@ fn parse_sdl_types(sdl: &str) -> HashMap<String, Vec<String>> {
         if current_type.is_none() {
             let check = line.strip_prefix("extend ").unwrap_or(line);
             for kw in &["type ", "enum ", "interface ", "input "] {
-                if check.starts_with(kw) {
-                    let rest = &check[kw.len()..];
+                if let Some(rest) = check.strip_prefix(kw) {
                     let name: String = rest
                         .split(|c: char| c.is_whitespace() || c == '{' || c == '@' || c == '=')
                         .next()
@@ -15664,7 +15630,7 @@ impl ContractTestRunner {
         let tests: Vec<ContractTestGql> = self
             .tests
             .values()
-            .filter(|t| service.map_or(true, |s| t.service == s))
+            .filter(|t| service.is_none_or(|s| t.service == s))
             .filter(|t| t.enabled)
             .cloned()
             .collect();
@@ -16098,7 +16064,7 @@ pub fn get_service_governance_info() -> Vec<ServiceGovernanceInfoGql> {
         let tests_count = service_tests.len() as u32;
         let passing = service_tests
             .iter()
-            .filter(|t| t.last_result.as_ref().map_or(false, |r| r.passed))
+            .filter(|t| t.last_result.as_ref().is_some_and(|r| r.passed))
             .count();
         let passing_rate = if tests_count > 0 {
             passing as f64 / tests_count as f64
@@ -16774,7 +16740,7 @@ impl EdgeComputeManager {
             .or_insert(0) += 1;
 
         // 模拟缓存命中（50% 概率命中）
-        if elapsed_ms % 2 == 0 {
+        if elapsed_ms.is_multiple_of(2) {
             state.cache_hits += 1;
         } else {
             state.cache_misses += 1;
@@ -17572,7 +17538,7 @@ impl StreamingResponseManager {
         let data_str = serde_json::to_string(data).unwrap_or_default();
         let total_len = data_str.len();
         let num_chunks = if chunk_size > 0 {
-            (total_len + chunk_size - 1) / chunk_size
+            total_len.div_ceil(chunk_size)
         } else {
             1
         };
@@ -19583,7 +19549,7 @@ impl MigrationToolkit {
         let state = migration_toolkit_state()
             .lock()
             .unwrap_or_else(|e| e.into_inner());
-        state.diffs.iter().map(|d| Self::diff_to_gql(d)).collect()
+        state.diffs.iter().map(Self::diff_to_gql).collect()
     }
 
     pub fn detect_breaking_changes(old_sdl: &str, new_sdl: &str) -> Vec<BreakingChangeGql> {
@@ -19643,11 +19609,7 @@ impl MigrationToolkit {
         let state = migration_toolkit_state()
             .lock()
             .unwrap_or_else(|e| e.into_inner());
-        state
-            .scripts
-            .iter()
-            .map(|s| Self::script_to_gql(s))
-            .collect()
+        state.scripts.iter().map(Self::script_to_gql).collect()
     }
 
     pub fn check_compatibility(old_version: &str, new_version: &str) -> CompatibilityCheckGql {
@@ -19663,7 +19625,7 @@ impl MigrationToolkit {
             d.changes
                 .iter()
                 .filter(|c| c.is_breaking)
-                .map(|c| Self::change_to_gql(c))
+                .map(Self::change_to_gql)
                 .collect()
         } else {
             vec![]
@@ -19713,7 +19675,7 @@ impl MigrationToolkit {
             total_changes: d.changes.len() as i32,
             breaking_changes_count: breaking as i32,
             safe_changes_count: (d.changes.len() - breaking) as i32,
-            changes: d.changes.iter().map(|c| Self::change_to_gql(c)).collect(),
+            changes: d.changes.iter().map(Self::change_to_gql).collect(),
             created_at: d.created_at.to_rfc3339(),
         }
     }
@@ -20114,18 +20076,14 @@ impl DeploymentManager {
             .deployments
             .iter()
             .find(|d| d.deployment_id == deployment_id)
-            .map(|d| Self::record_to_gql(d))
+            .map(Self::record_to_gql)
     }
 
     pub fn list_deployments() -> Vec<DeploymentRecordGql> {
         let state = deployment_manager_state()
             .lock()
             .unwrap_or_else(|e| e.into_inner());
-        state
-            .deployments
-            .iter()
-            .map(|d| Self::record_to_gql(d))
-            .collect()
+        state.deployments.iter().map(Self::record_to_gql).collect()
     }
 
     pub fn record_traffic_sample(deployment_id: &str, errors: u64, total: u64, avg_latency: f64) {
@@ -22030,10 +21988,7 @@ impl RealtimeStreamManager {
             compression_enabled: config.compression_enabled,
         };
         state.streams.insert(entity_type.to_string(), data);
-        state
-            .updates
-            .entry(entity_type.to_string())
-            .or_insert_with(VecDeque::new);
+        state.updates.entry(entity_type.to_string()).or_default();
         state.sequences.entry(entity_type.to_string()).or_insert(0);
         true
     }
@@ -22068,10 +22023,7 @@ impl RealtimeStreamManager {
         };
         let gql = Self::update_to_gql(&update);
         let buffer = state.config.buffer_size as usize;
-        let queue = state
-            .updates
-            .entry(entity_type.to_string())
-            .or_insert_with(VecDeque::new);
+        let queue = state.updates.entry(entity_type.to_string()).or_default();
         queue.push_back(update);
         while queue.len() > buffer {
             queue.pop_front();
@@ -22097,7 +22049,7 @@ impl RealtimeStreamManager {
                 q.iter()
                     .filter(|u| u.sequence_number > since_sequence)
                     .take(limit)
-                    .map(|u| Self::update_to_gql(u))
+                    .map(Self::update_to_gql)
                     .collect()
             })
             .unwrap_or_default()
@@ -22151,7 +22103,7 @@ impl RealtimeStreamManager {
         state
             .snapshots
             .entry(entity_type.to_string())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(snapshot);
         gql
     }
@@ -22166,9 +22118,9 @@ impl RealtimeStreamManager {
             snapshots
                 .iter()
                 .find(|s| s.snapshot_id == id)
-                .map(|s| Self::snapshot_to_gql(s))
+                .map(Self::snapshot_to_gql)
         } else {
-            snapshots.last().map(|s| Self::snapshot_to_gql(s))
+            snapshots.last().map(Self::snapshot_to_gql)
         }
     }
 
@@ -22479,7 +22431,7 @@ impl IncrementalUpdateEngine {
                     && u.version > since_version
                     && !u.applied
             })
-            .map(|u| Self::update_to_gql(u))
+            .map(Self::update_to_gql)
             .collect()
     }
 
@@ -22693,7 +22645,7 @@ impl StateSyncManager {
             .sessions
             .iter()
             .find(|s| s.session_id == session_id)
-            .map(|s| Self::session_to_gql(s))
+            .map(Self::session_to_gql)
     }
 
     /// 解决冲突
@@ -22721,7 +22673,7 @@ impl StateSyncManager {
             .filter(|s| client_id.map(|c| s.client_id == c).unwrap_or(true))
             .rev()
             .take(limit)
-            .map(|s| Self::session_to_gql(s))
+            .map(Self::session_to_gql)
             .collect()
     }
 
@@ -25821,7 +25773,7 @@ impl OfflineFirstEngine {
             .filter(|m| {
                 m.status == MutationStatusGql::Pending || m.status == MutationStatusGql::Failed
             })
-            .map(|m| Self::mutation_to_gql(m))
+            .map(Self::mutation_to_gql)
             .collect()
     }
 

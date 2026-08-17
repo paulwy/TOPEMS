@@ -206,10 +206,10 @@ pub async fn create_outbound_order(
     )
     .bind(id)
     .bind(&req.order_number)
-    .bind(&req.warehouse_id)
-    .bind(&req.customer_id)
+    .bind(req.warehouse_id)
+    .bind(req.customer_id)
     .bind(req.order_date)
-    .bind(&req.expected_delivery)
+    .bind(req.expected_delivery)
     .bind(req.total_amount)
     .bind(&req.remarks)
     .bind(now)
@@ -364,10 +364,10 @@ pub async fn update_outbound_order(
         "#,
     )
     .bind(id)
-    .bind(&warehouse_id)
-    .bind(&customer_id)
-    .bind(&expected_delivery)
-    .bind(&actual_delivery)
+    .bind(warehouse_id)
+    .bind(customer_id)
+    .bind(expected_delivery)
+    .bind(actual_delivery)
     .bind(total_amount)
     .bind(&status)
     .bind(&remarks)
@@ -613,7 +613,7 @@ pub async fn create_outbound_order_item(
     .bind(&req.serial_number)
     .bind(req.requested_quantity)
     .bind(&req.unit)
-    .bind(&req.source_location_id)
+    .bind(req.source_location_id)
     .bind(req.unit_price)
     .bind(total_value)
     .bind(&req.remarks)
@@ -1487,8 +1487,8 @@ pub async fn approve_outbound(
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
             if crate::shared::fsm::outbound_order_requires_approval(&current_status, "shipping")
-                && !crate::shared::fsm::outbound_order_can_transition(&current_status, "shipping")
-                    .is_ok()
+                && crate::shared::fsm::outbound_order_can_transition(&current_status, "shipping")
+                    .is_err()
             {
                 return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
             }
@@ -1572,8 +1572,8 @@ pub async fn reject_outbound(
     match current {
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
-            if !crate::shared::fsm::outbound_order_can_transition(&current_status, "picking")
-                .is_ok()
+            if crate::shared::fsm::outbound_order_can_transition(&current_status, "picking")
+                .is_err()
             {
                 return Json(ApiResponse::error(400, "当前状态不允许驳回回流"));
             }

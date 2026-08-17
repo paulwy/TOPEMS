@@ -258,7 +258,7 @@ pub async fn login(
     let tenant_id = match sqlx::query_scalar::<_, uuid::Uuid>(
         "SELECT tenant_id FROM core_tenant_users WHERE user_id = $1 AND status = 'active' LIMIT 1",
     )
-    .bind(&user.id)
+    .bind(user.id)
     .fetch_optional(&state.pool)
     .await
     {
@@ -319,11 +319,11 @@ pub async fn login(
         "INSERT INTO iam.sessions (user_id, token_hash, ip_address, user_agent, expires_at)
          VALUES ($1, $2, $3::inet, $4, $5)",
     )
-    .bind(&user.id)
+    .bind(user.id)
     .bind(&access_token_hash)
     .bind(ip_addr_opt)
     .bind(user_agent.as_deref())
-    .bind(&access_expires_at)
+    .bind(access_expires_at)
     .execute(&state.pool)
     .await;
 
@@ -336,11 +336,11 @@ pub async fn login(
         "INSERT INTO iam.refresh_tokens (user_id, token_hash, ip_address, user_agent, expires_at)
          VALUES ($1, $2, $3::inet, $4, $5)",
     )
-    .bind(&user.id)
+    .bind(user.id)
     .bind(&refresh_token_hash)
     .bind(ip_addr_opt)
     .bind(user_agent.as_deref())
-    .bind(&refresh_expires_at)
+    .bind(refresh_expires_at)
     .execute(&state.pool)
     .await;
 
@@ -641,7 +641,7 @@ pub async fn refresh_token(
     let tenant_id = match sqlx::query_scalar::<_, uuid::Uuid>(
         "SELECT tenant_id FROM core_tenant_users WHERE user_id = $1 AND status = 'active' LIMIT 1",
     )
-    .bind(&user_id)
+    .bind(user_id)
     .fetch_optional(&state.pool)
     .await
     {
@@ -713,7 +713,7 @@ pub async fn refresh_token(
          SET revoked_at = NOW(), revoked_reason = 'rotated'
          WHERE id = $1 AND revoked_at IS NULL",
     )
-    .bind(&old_refresh_token_id)
+    .bind(old_refresh_token_id)
     .execute(&mut *tx)
     .await;
 
@@ -730,9 +730,9 @@ pub async fn refresh_token(
         "INSERT INTO iam.refresh_tokens (user_id, token_hash, expires_at)
          VALUES ($1, $2, $3)",
     )
-    .bind(&user_id)
+    .bind(user_id)
     .bind(&new_refresh_token_hash)
-    .bind(&refresh_expires_at)
+    .bind(refresh_expires_at)
     .execute(&mut *tx)
     .await;
 
@@ -749,9 +749,9 @@ pub async fn refresh_token(
         "INSERT INTO iam.sessions (user_id, token_hash, expires_at)
          VALUES ($1, $2, $3)",
     )
-    .bind(&user_id)
+    .bind(user_id)
     .bind(&access_token_hash)
-    .bind(&access_expires_at)
+    .bind(access_expires_at)
     .execute(&mut *tx)
     .await;
 
@@ -951,7 +951,7 @@ pub async fn forgot_password(
     )
     .bind(user.id)
     .bind(&reset_token)
-    .bind(&expires_at)
+    .bind(expires_at)
     .execute(&state.pool)
     .await
     {

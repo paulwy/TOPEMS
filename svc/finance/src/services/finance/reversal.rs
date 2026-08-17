@@ -1,12 +1,8 @@
-use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use std::collections::BTreeMap;
 use std::fmt;
 
-use super::super::super::models::{JournalEntry, PeriodStatus, VoucherStatus};
-use super::periods::{validate_children_all_closed, PeriodValidationError};
-use super::trial_balance::{calculate_trial_balance, validate_period_close_with_trial_balance};
-use super::voucher::{validate_post_entry, PostJournalEntry, PostPeriodInput, PostVoucherInput};
+use super::super::super::models::{PeriodStatus, VoucherStatus};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReverseJournalEntry {
@@ -254,7 +250,7 @@ pub fn validate_reverse_voucher(
         let _ = i;
     }
 
-    for (code, _orig_entry) in &original_by_code {
+    for code in original_by_code.keys() {
         if !reversal_by_code.contains_key(code) {
             return Err(ReversalValidationError::MissingAccountInReversal {
                 account_code: code.clone(),
@@ -262,7 +258,7 @@ pub fn validate_reverse_voucher(
         }
     }
 
-    for (code, _rev_entry) in &reversal_by_code {
+    for code in reversal_by_code.keys() {
         if !original_by_code.contains_key(code) {
             return Err(ReversalValidationError::ExtraAccountInReversal {
                 account_code: code.clone(),

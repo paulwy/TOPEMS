@@ -1190,8 +1190,7 @@ impl AutoSchemaStitcher {
         let logs = store.stitch_logs.lock().await;
         let last_action = logs
             .iter()
-            .filter(|l| l.plan_id == plan_id)
-            .last()
+            .rfind(|l| l.plan_id == plan_id)
             .map(|l| l.action.clone());
         drop(logs);
 

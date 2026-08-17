@@ -103,7 +103,7 @@ impl<T: EventStore> VoucherEventSourcedRepository<T> {
         aggregate: &VoucherAggregate,
         version: u64,
     ) -> Result<(), String> {
-        if version % self.snapshot_threshold == 0 && version > 0 {
+        if version.is_multiple_of(self.snapshot_threshold) && version > 0 {
             let state = serde_json::to_value(aggregate)
                 .map_err(|e| format!("Failed to serialize snapshot: {}", e))?;
             let snapshot = SnapshotRecord {
@@ -224,10 +224,8 @@ impl<T: EventStore> ReceivableEventSourcedRepository<T> {
                         SettlementStatus::PartiallySettled
                     };
             }
-            FinanceDomainEvent::AgingCalculated(e) => {
-                if e.entity_type == "receivable" {
-                    aggregate.aging_buckets = e.buckets.clone();
-                }
+            FinanceDomainEvent::AgingCalculated(e) if e.entity_type == "receivable" => {
+                aggregate.aging_buckets = e.buckets.clone();
             }
             _ => {}
         }
@@ -238,7 +236,7 @@ impl<T: EventStore> ReceivableEventSourcedRepository<T> {
         aggregate: &ReceivableAggregate,
         version: u64,
     ) -> Result<(), String> {
-        if version % self.snapshot_threshold == 0 && version > 0 {
+        if version.is_multiple_of(self.snapshot_threshold) && version > 0 {
             let state = serde_json::to_value(aggregate)
                 .map_err(|e| format!("Failed to serialize snapshot: {}", e))?;
             let snapshot = SnapshotRecord {
@@ -365,10 +363,8 @@ impl<T: EventStore> PayableEventSourcedRepository<T> {
                         SettlementStatus::PartiallySettled
                     };
             }
-            FinanceDomainEvent::AgingCalculated(e) => {
-                if e.entity_type == "payable" {
-                    aggregate.aging_buckets = e.buckets.clone();
-                }
+            FinanceDomainEvent::AgingCalculated(e) if e.entity_type == "payable" => {
+                aggregate.aging_buckets = e.buckets.clone();
             }
             _ => {}
         }
@@ -379,7 +375,7 @@ impl<T: EventStore> PayableEventSourcedRepository<T> {
         aggregate: &PayableAggregate,
         version: u64,
     ) -> Result<(), String> {
-        if version % self.snapshot_threshold == 0 && version > 0 {
+        if version.is_multiple_of(self.snapshot_threshold) && version > 0 {
             let state = serde_json::to_value(aggregate)
                 .map_err(|e| format!("Failed to serialize snapshot: {}", e))?;
             let snapshot = SnapshotRecord {

@@ -167,7 +167,7 @@ pub async fn operation_audit_middleware(
 fn extract_resource_id(path: &str) -> Option<String> {
     path.split('/')
         .filter(|s| !s.is_empty())
-        .last()
+        .next_back()
         .filter(|seg| {
             // 仅当末段看起来是 ID（UUID 或纯数字）时返回
             Uuid::parse_str(seg).is_ok() || seg.parse::<i64>().is_ok()

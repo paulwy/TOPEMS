@@ -174,14 +174,14 @@ pub async fn get_plugin_reviews_by_code(
             if descending {
                 reviews.sort_by(|a, b| b.rating.cmp(&a.rating));
             } else {
-                reviews.sort_by(|a, b| a.rating.cmp(&b.rating));
+                reviews.sort_by_key(|a| a.rating);
             }
         }
         "created_at" | "date" => {
             if descending {
                 reviews.sort_by(|a, b| b.created_at.cmp(&a.created_at));
             } else {
-                reviews.sort_by(|a, b| a.created_at.cmp(&b.created_at));
+                reviews.sort_by_key(|a| a.created_at);
             }
         }
         "helpful_count" | "helpful" => {

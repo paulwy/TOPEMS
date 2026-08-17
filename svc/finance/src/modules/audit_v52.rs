@@ -1257,7 +1257,7 @@ impl AnomalyDetector {
             for (day, amount) in &rows {
                 if mean > 0.0 {
                     let ratio = *amount / mean;
-                    if ratio > 5.0 || ratio < 0.1 {
+                    if !(0.1..=5.0).contains(&ratio) {
                         alerts.push(Self::create_alert(
                             tenant_id,
                             "amount_velocity",

@@ -319,7 +319,7 @@ pub fn validate_procurement_chain_with_rates(
     }
 
     // 计算总额（转换为基准币种）。
-    let total_po: f64 = po.lines.iter().map(|l| line_gross(l)).sum();
+    let total_po: f64 = po.lines.iter().map(line_gross).sum();
     let total_grn: f64 = grn.lines.iter().map(|l| line_gross(l) * grn_factor).sum();
     let total_invoice: f64 = invoice
         .lines

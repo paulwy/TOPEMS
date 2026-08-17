@@ -112,22 +112,17 @@ pub async fn input_validation_middleware(
         }
     }
 
-    if config.detect_path_traversal {
-        if detect_path_traversal(path) || detect_path_traversal(query) {
-            return bad_request("Invalid path detected").into_response();
-        }
+    if config.detect_path_traversal && (detect_path_traversal(path) || detect_path_traversal(query))
+    {
+        return bad_request("Invalid path detected").into_response();
     }
 
-    if config.detect_sql_injection {
-        if detect_sql_injection(query) {
-            return bad_request("Invalid query parameters").into_response();
-        }
+    if config.detect_sql_injection && detect_sql_injection(query) {
+        return bad_request("Invalid query parameters").into_response();
     }
 
-    if config.detect_xss {
-        if detect_xss(query) {
-            return bad_request("Invalid query parameters").into_response();
-        }
+    if config.detect_xss && detect_xss(query) {
+        return bad_request("Invalid query parameters").into_response();
     }
 
     if let Some(content_type) = request

@@ -78,7 +78,7 @@ pub fn has_circular_dependency(edges: &[(String, String)]) -> bool {
 /// length 3..=64, and does not start or end with a hyphen.
 pub fn validate_plugin_code(code: &str) -> bool {
     let len = code.len();
-    if len < 3 || len > 64 {
+    if !(3..=64).contains(&len) {
         return false;
     }
     if code.starts_with('-') || code.ends_with('-') {

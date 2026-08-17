@@ -72,11 +72,11 @@ pub async fn create_location_photo(
         RETURNING *
         "#,
     )
-    .bind(&payload.location_id)
+    .bind(payload.location_id)
     .bind(&payload.photo_url)
     .bind(&payload.photo_type)
     .bind(&payload.caption)
-    .bind(&taken_at)
+    .bind(taken_at)
     .bind(&payload.tags)
     .fetch_one(&pool)
     .await

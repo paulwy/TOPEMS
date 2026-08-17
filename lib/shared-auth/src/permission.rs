@@ -526,8 +526,10 @@ impl std::fmt::Display for ResourcePermission {
 /// - Team: 本团队数据
 /// - Self: 仅本人数据（最低权限）
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Default)]
 pub enum PermissionScope {
     /// 所有数据（管理员级别）
+    #[default]
     All,
     /// 本部门数据
     Department,
@@ -574,11 +576,6 @@ impl PermissionScope {
     }
 }
 
-impl Default for PermissionScope {
-    fn default() -> Self {
-        PermissionScope::All
-    }
-}
 
 impl std::fmt::Display for PermissionScope {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

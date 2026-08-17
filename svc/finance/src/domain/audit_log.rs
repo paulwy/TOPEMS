@@ -45,7 +45,7 @@ pub struct AuditLogEntry {
     pub timestamp: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct AuditLogQuery {
     pub action: Option<AuditAction>,
     pub actor: Option<String>,
@@ -53,19 +53,6 @@ pub struct AuditLogQuery {
     pub target_id: Option<String>,
     pub start_time: Option<DateTime<Utc>>,
     pub end_time: Option<DateTime<Utc>>,
-}
-
-impl Default for AuditLogQuery {
-    fn default() -> Self {
-        Self {
-            action: None,
-            actor: None,
-            target_type: None,
-            target_id: None,
-            start_time: None,
-            end_time: None,
-        }
-    }
 }
 
 pub struct AuditLogService {

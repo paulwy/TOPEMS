@@ -1132,7 +1132,7 @@ impl FederatedAuthService {
             return Err("令牌链不能为空".to_string());
         }
 
-        let verified = tokens.len() >= 1;
+        let verified = !tokens.is_empty();
 
         Ok(TokenChain {
             chain_id: uuid::Uuid::new_v4().to_string(),

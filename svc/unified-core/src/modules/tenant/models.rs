@@ -7,60 +7,44 @@ use sqlx::FromRow;
 /// Tenant type: independent database or shared database
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum TenantType {
     Independent, // One database per tenant
-    Shared,      // Row-level isolation via tenant_id
-}
-
-impl Default for TenantType {
-    fn default() -> Self {
-        Self::Shared
-    }
+    #[default]
+    Shared, // Row-level isolation via tenant_id
 }
 
 /// Tenant plan levels
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum TenantPlan {
+    #[default]
     Basic,
     Professional,
     Enterprise,
 }
 
-impl Default for TenantPlan {
-    fn default() -> Self {
-        Self::Basic
-    }
-}
-
 /// Tenant status
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum TenantStatus {
+    #[default]
     Trial,
     Active,
     Suspended,
     Expired,
 }
 
-impl Default for TenantStatus {
-    fn default() -> Self {
-        Self::Trial
-    }
-}
-
 /// License type
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum LicenseType {
-    Perpetual,    // One-time purchase
+    Perpetual, // One-time purchase
+    #[default]
     Subscription, // Monthly/annual subscription
-}
-
-impl Default for LicenseType {
-    fn default() -> Self {
-        Self::Subscription
-    }
 }
 
 /// Tenant entity

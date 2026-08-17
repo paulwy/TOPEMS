@@ -498,12 +498,11 @@ pub async fn create_record(
 ) -> Json<ApiResponse<InspectionRecord>> {
     let tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Creating inspection record: {:?}", req);
-    let result = req
-        .items
-        .iter()
-        .all(|i| i.result == "pass")
-        .then(|| "合格".to_string())
-        .unwrap_or_else(|| "不合格".to_string());
+    let result = if req.items.iter().all(|i| i.result == "pass") {
+        "合格".to_string()
+    } else {
+        "不合格".to_string()
+    };
 
     Json(ApiResponse::success(
         InspectionRecord {

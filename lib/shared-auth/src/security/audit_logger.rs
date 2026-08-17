@@ -356,7 +356,7 @@ async fn save_audit_log(
     .bind(id)
     .bind(&request.action)
     .bind(&request.entity_type)
-    .bind(&request.entity_id)
+    .bind(request.entity_id)
     .bind(&request.entity_ids)
     .bind(&request.user_id)
     .bind(&request.user_name)

@@ -530,7 +530,7 @@ pub async fn approve_eightd(
             {
                 return Json(ApiResponse::error(403, "无审批权限"));
             }
-            if !eight_d_can_transition(&current_status, STATUS_VERIFIED).is_ok() {
+            if eight_d_can_transition(&current_status, STATUS_VERIFIED).is_err() {
                 return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
             }
             let report = sqlx::query_as::<_, EightDReport>(
@@ -590,7 +590,7 @@ pub async fn close_eightd_approval(
             {
                 return Json(ApiResponse::error(403, "无审批权限"));
             }
-            if !eight_d_can_transition(&current_status, STATUS_CLOSED).is_ok() {
+            if eight_d_can_transition(&current_status, STATUS_CLOSED).is_err() {
                 return Json(ApiResponse::error(400, "当前状态不允许关闭"));
             }
             let report = sqlx::query_as::<_, EightDReport>(
@@ -645,7 +645,7 @@ pub async fn cancel_eightd(
     match current {
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
-            if !eight_d_can_transition(&current_status, STATUS_CANCELLED).is_ok() {
+            if eight_d_can_transition(&current_status, STATUS_CANCELLED).is_err() {
                 return Json(ApiResponse::error(400, "当前状态不允许取消"));
             }
             let report = sqlx::query_as::<_, EightDReport>(

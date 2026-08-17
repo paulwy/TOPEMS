@@ -955,7 +955,7 @@ impl AutoReconciler {
                 .bind(result.match_status.as_str())
                 .bind(result.confidence)
                 .bind(result.difference_amount)
-                .bind(result.notes.as_ref().map(|s| s.as_str()))
+                .bind(result.notes.as_deref())
                 .execute(pool)
                 .await?;
 
@@ -998,7 +998,7 @@ impl AutoReconciler {
         .bind(result.match_status.as_str())
         .bind(result.confidence)
         .bind(result.difference_amount)
-        .bind(result.notes.as_ref().map(|s| s.as_str()))
+        .bind(result.notes.as_deref())
         .execute(pool)
         .await?;
 

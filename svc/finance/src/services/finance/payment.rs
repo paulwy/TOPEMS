@@ -512,7 +512,7 @@ impl FinanceService {
             })?,
             ExportFormat::Csv => {
                 let mut wtr = Writer::from_writer(vec![]);
-                wtr.write_record(&[
+                wtr.write_record([
                     "付款单号",
                     "供应商",
                     "付款方式",
@@ -526,7 +526,7 @@ impl FinanceService {
                 ])
                 .map_err(|e| TopemsError::Internal(format!("Failed to write CSV header: {}", e)))?;
                 for row in &export_rows {
-                    wtr.write_record(&[
+                    wtr.write_record([
                         row["payment_no"].as_str().unwrap_or(""),
                         row["supplier_name"].as_str().unwrap_or(""),
                         row["payment_method"].as_str().unwrap_or(""),

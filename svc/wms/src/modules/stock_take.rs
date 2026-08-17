@@ -150,7 +150,7 @@ pub async fn list_stock_takes(
     )
     .bind(&search_pattern)
     .bind(&status_filter)
-    .bind(&warehouse_id)
+    .bind(warehouse_id)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.db)
@@ -169,7 +169,7 @@ pub async fn list_stock_takes(
             )
             .bind(&search_pattern)
             .bind(&status_filter)
-            .bind(&warehouse_id)
+            .bind(warehouse_id)
             .fetch_one(&state.db)
             .await;
 
@@ -231,8 +231,8 @@ pub async fn create_stock_take(
     )
     .bind(id)
     .bind(&req.stock_take_number)
-    .bind(&req.warehouse_id)
-    .bind(&req.location_id)
+    .bind(req.warehouse_id)
+    .bind(req.location_id)
     .bind(now.date_naive())
     .bind(&req.remarks)
     .bind(now)
@@ -382,10 +382,10 @@ pub async fn update_stock_take(
         "#,
     )
     .bind(id)
-    .bind(&warehouse_id)
-    .bind(&location_id)
+    .bind(warehouse_id)
+    .bind(location_id)
     .bind(&status)
-    .bind(&end_time)
+    .bind(end_time)
     .bind(&remarks)
     .bind(now)
     .fetch_one(&state.db)
@@ -759,7 +759,7 @@ pub async fn create_stock_take_item(
     )
     .bind(item_id)
     .bind(id)
-    .bind(&req.inventory_item_id.to_string())
+    .bind(req.inventory_item_id.to_string())
     .bind("")
     .bind(&req.remarks)
     .bind(None::<String>)
@@ -995,11 +995,7 @@ pub async fn update_stock_take_item(
             .ok()
             .flatten()
     });
-    let variance = if let Some(actual) = actual_quantity {
-        Some(actual - system_qty)
-    } else {
-        None
-    };
+    let variance = actual_quantity.map(|actual| actual - system_qty);
     let discrepancy_type = if let Some(v) = variance {
         if v > 0.0 {
             "over".to_string()
@@ -1530,8 +1526,8 @@ pub async fn approve_stock_take(
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
             if crate::shared::fsm::stock_take_requires_approval(&current_status, "completed")
-                && !crate::shared::fsm::stock_take_can_transition(&current_status, "completed")
-                    .is_ok()
+                && crate::shared::fsm::stock_take_can_transition(&current_status, "completed")
+                    .is_err()
             {
                 return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
             }

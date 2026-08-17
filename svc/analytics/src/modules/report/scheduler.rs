@@ -80,12 +80,12 @@ impl ReportScheduler {
                     Ok(cron_schedule) => {
                         info!("Adding cron job for schedule '{}' ({})", name, id);
                         let pool_clone = self.pool.clone();
-                        let job_id = id.clone();
+                        let job_id = id;
                         let job_name = name.clone();
 
                         scheduler.add(Job::new(cron_schedule, move || {
                             let pool = pool_clone.clone();
-                            let sid = job_id.clone();
+                            let sid = job_id;
                             let sname = job_name.clone();
                             tokio::spawn(async move {
                                 if let Err(e) = execute_schedule_job(&pool, sid, &sname).await {
@@ -102,7 +102,7 @@ impl ReportScheduler {
                     Ok(interval) => {
                         info!("Adding interval job for schedule '{}' ({})", name, id);
                         let pool_clone = self.pool.clone();
-                        let job_id = id.clone();
+                        let job_id = id;
                         let job_name = name.clone();
 
                         let cron_expr = format!("0 */{} * * * *", interval);
@@ -110,7 +110,7 @@ impl ReportScheduler {
                             Ok(schedule) => {
                                 scheduler.add(Job::new(schedule, move || {
                                     let pool = pool_clone.clone();
-                                    let sid = job_id.clone();
+                                    let sid = job_id;
                                     let sname = job_name.clone();
                                     tokio::spawn(async move {
                                         if let Err(e) =

@@ -571,13 +571,13 @@ pub async fn export_report(
 
     let _ = csv_writer.write_record(&[format!("Report: {}", report.name)]);
     let _ = csv_writer.write_record(&[format!("Exported: {}", Utc::now().to_rfc3339())]);
-    let _ = csv_writer.write_record(&[""]);
+    let _ = csv_writer.write_record([""]);
 
     if field_names.is_empty() {
-        let _ = csv_writer.write_record(&["id", "value"]);
+        let _ = csv_writer.write_record(["id", "value"]);
     } else {
         let _ = csv_writer.write_record(
-            &field_names
+            field_names
                 .iter()
                 .map(|s| s.as_str())
                 .collect::<Vec<&str>>(),

@@ -676,7 +676,7 @@ pub async fn ai_search(Json(req): Json<AiSearchRequest>) -> Json<ApiResponse<AiS
         for (vec, _similarity) in search_results {
             if let Some(doc) = docs.iter().find(|d| d.id == vec.document_id) {
                 documents.push(AiSearchDocument {
-                    id: doc.id.clone(),
+                    id: doc.id,
                     title: doc.title.clone(),
                     content: vec.content.clone(),
                     filename: doc.filename.clone(),

@@ -73,8 +73,8 @@ pub async fn list_transfers(
         "#,
     )
     .bind(&params.transfer_type)
-    .bind(&params.from_warehouse_id)
-    .bind(&params.to_warehouse_id)
+    .bind(params.from_warehouse_id)
+    .bind(params.to_warehouse_id)
     .bind(&params.status)
     .bind(page_size)
     .bind(offset)
@@ -93,8 +93,8 @@ pub async fn list_transfers(
                 "#,
             )
             .bind(&params.transfer_type)
-            .bind(&params.from_warehouse_id)
-            .bind(&params.to_warehouse_id)
+            .bind(params.from_warehouse_id)
+            .bind(params.to_warehouse_id)
             .bind(&params.status)
             .fetch_one(&state.db)
             .await
@@ -149,10 +149,10 @@ pub async fn create_transfer(
     .bind(id)
     .bind(&order_number)
     .bind(req.transfer_type.as_deref().unwrap_or("inter_warehouse"))
-    .bind(&req.from_warehouse_id)
-    .bind(&req.from_location_id)
-    .bind(&req.to_warehouse_id)
-    .bind(&req.to_location_id)
+    .bind(req.from_warehouse_id)
+    .bind(req.from_location_id)
+    .bind(req.to_warehouse_id)
+    .bind(req.to_location_id)
     .bind("pending")
     .bind(&req.planned_date)
     .bind(&req.transporter)
@@ -191,10 +191,10 @@ pub async fn create_transfer(
                 .bind(item.planned_quantity)
                 .bind(0)
                 .bind(0)
-                .bind(&item.unit_price)
+                .bind(item.unit_price)
                 .bind(total_amount)
-                .bind(&item.from_location_id)
-                .bind(&item.to_location_id)
+                .bind(item.from_location_id)
+                .bind(item.to_location_id)
                 .bind(&item.remarks)
                 .bind("pending")
                 .bind(now)
@@ -834,8 +834,8 @@ pub async fn approve_transfer(
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
             if crate::shared::fsm::transfer_order_requires_approval(&current_status, "shipped")
-                && !crate::shared::fsm::transfer_order_can_transition(&current_status, "shipped")
-                    .is_ok()
+                && crate::shared::fsm::transfer_order_can_transition(&current_status, "shipped")
+                    .is_err()
             {
                 return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
             }
@@ -922,8 +922,8 @@ pub async fn reject_transfer(
     match current {
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
-            if !crate::shared::fsm::transfer_order_can_transition(&current_status, "pending")
-                .is_ok()
+            if crate::shared::fsm::transfer_order_can_transition(&current_status, "pending")
+                .is_err()
             {
                 return Json(ApiResponse::error(400, "当前状态不允许驳回回流"));
             }

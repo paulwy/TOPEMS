@@ -138,7 +138,7 @@ async fn create_department(
     let now = Utc::now();
 
     // 如果没有提供 tenant_id，使用默认的 organization
-    let org_id = req.tenant_id.unwrap_or_else(|| Uuid::nil());
+    let org_id = req.tenant_id.unwrap_or_else(Uuid::nil);
 
     let result = sqlx::query_as::<_, Department>(
         r#"

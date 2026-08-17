@@ -304,7 +304,7 @@ fn generate_csv(logs: &[AuditLog]) -> String {
         .quote_style(csv::QuoteStyle::Always)
         .from_writer(vec![]);
 
-    let _ = wtr.write_record(&[
+    let _ = wtr.write_record([
         "ID",
         "操作",
         "实体类型",

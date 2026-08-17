@@ -80,9 +80,7 @@ fn is_valid_date(value: &str) -> bool {
 fn is_valid_datetime(value: &str) -> bool {
     let trimmed = value.trim();
     // 用空格或 T 分隔日期和时间部分
-    let sep_idx = trimmed
-        .find(|c: char| c == ' ' || c == 'T')
-        .unwrap_or(trimmed.len());
+    let sep_idx = trimmed.find([' ', 'T']).unwrap_or(trimmed.len());
     let (date_part, time_part) = trimmed.split_at(sep_idx);
     if !is_valid_date(date_part) {
         return false;

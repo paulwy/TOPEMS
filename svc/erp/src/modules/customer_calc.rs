@@ -29,9 +29,9 @@ pub fn has_customer_filters(
     status: Option<&str>,
     customer_type: Option<&str>,
 ) -> bool {
-    search.map_or(false, |s| !s.is_empty())
-        || status.map_or(false, |s| !s.is_empty())
-        || customer_type.map_or(false, |s| !s.is_empty())
+    search.is_some_and(|s| !s.is_empty())
+        || status.is_some_and(|s| !s.is_empty())
+        || customer_type.is_some_and(|s| !s.is_empty())
 }
 
 // ── 默认值 ─────────────────────────────────────────────

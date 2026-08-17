@@ -179,7 +179,7 @@ pub async fn create_sales_order(
         _ => "".to_string(),
     };
 
-    let order_date = body.order_date.unwrap_or_else(|| Utc::now());
+    let order_date = body.order_date.unwrap_or_else(Utc::now);
     let amounts = calculate_sales_order_amounts(
         body.total_amount,
         body.tax_amount,

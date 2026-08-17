@@ -782,7 +782,7 @@ async fn generate_payroll_voucher(
     .bind(&period)
     .bind(format!("发放{}月工资", payroll_run.pay_period))
     .bind(req.maker_id)
-    .bind(&req.maker_name.clone().unwrap_or_else(|| "系统".to_string()))
+    .bind(req.maker_name.clone().unwrap_or_else(|| "系统".to_string()))
     .bind(&total_gross)
     .bind(&total_gross)
     .bind(id)

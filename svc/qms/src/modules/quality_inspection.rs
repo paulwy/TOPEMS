@@ -324,7 +324,7 @@ pub async fn assign_inspection(
         Ok(row) => {
             let status_opt = row.get::<Option<String>, _>("status");
             let current_status = status_opt.as_deref().unwrap_or("");
-            if !inspection_can_transition(current_status, STATUS_IN_PROGRESS).is_ok() {
+            if inspection_can_transition(current_status, STATUS_IN_PROGRESS).is_err() {
                 return Json(ApiResponse::error(400, "当前状态不允许分配"));
             }
 
@@ -377,13 +377,13 @@ pub async fn submit_result(
         Ok(row) => {
             let status_opt = row.get::<Option<String>, _>("status");
             let current_status = status_opt.as_deref().unwrap_or("");
-            if !inspection_can_transition(current_status, STATUS_PENDING_AUDIT).is_ok() {
+            if inspection_can_transition(current_status, STATUS_PENDING_AUDIT).is_err() {
                 return Json(ApiResponse::error(400, "当前状态不允许提交结果"));
             }
 
             let rate = req.qualification_rate.or_else(|| {
                 let total = &req.qualified_quantity + &req.unqualified_quantity;
-                if total > BigDecimal::from(0) {
+                if total > 0 {
                     Some((&req.qualified_quantity / &total) * BigDecimal::from(100))
                 } else {
                     None
@@ -454,7 +454,7 @@ pub async fn audit_inspection(
                 _ => return Json(ApiResponse::error(400, "无效的审核动作")),
             };
 
-            if !inspection_can_transition(current_status, target_status).is_ok() {
+            if inspection_can_transition(current_status, target_status).is_err() {
                 return Json(ApiResponse::error(400, "当前状态不允许此操作"));
             }
 
@@ -517,7 +517,7 @@ pub async fn rework_inspection(
         Ok(row) => {
             let status_opt = row.get::<Option<String>, _>("status");
             let current_status = status_opt.as_deref().unwrap_or("");
-            if !inspection_can_transition(current_status, STATUS_IN_PROGRESS).is_ok() {
+            if inspection_can_transition(current_status, STATUS_IN_PROGRESS).is_err() {
                 return Json(ApiResponse::error(400, "当前状态不允许返工"));
             }
 
@@ -537,7 +537,7 @@ pub async fn rework_inspection(
                         &id.to_string(),
                         "rework",
                         &req.operator,
-                        &current_status,
+                        current_status,
                         STATUS_IN_PROGRESS,
                         req.comment.as_deref(),
                     )
@@ -652,8 +652,8 @@ pub async fn approve_inspection(
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
             if crate::shared::fsm::inspection_requires_approval(&current_status, STATUS_COMPLETED)
-                && !crate::shared::fsm::inspection_can_transition(&current_status, STATUS_COMPLETED)
-                    .is_ok()
+                && crate::shared::fsm::inspection_can_transition(&current_status, STATUS_COMPLETED)
+                    .is_err()
             {
                 return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
             }
@@ -708,8 +708,8 @@ pub async fn reject_inspection(
     match current {
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
-            if !crate::shared::fsm::inspection_can_transition(&current_status, STATUS_REJECTED)
-                .is_ok()
+            if crate::shared::fsm::inspection_can_transition(&current_status, STATUS_REJECTED)
+                .is_err()
             {
                 return Json(ApiResponse::error(400, "当前状态不允许驳回"));
             }

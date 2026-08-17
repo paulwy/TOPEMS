@@ -562,7 +562,7 @@ impl ProfitCenterAnalyzer {
             .iter()
             .enumerate()
             .map(|(i, p)| {
-                rev = rev + Decimal::from(80_000 * (i as i64 + 1));
+                rev += Decimal::from(80_000 * (i as i64 + 1));
                 let cost = rev * Decimal::from(58) / Decimal::from(100);
                 let gp = rev - cost;
                 let gm = safe_percentage(gp, rev);
@@ -841,8 +841,7 @@ impl ProjectAccountingAnalyzer {
             .items
             .into_iter()
             .map(|i| {
-                let planned =
-                    i.budget_amount * Decimal::from(i.completion_percentage) / Decimal::from(100);
+                let planned = i.budget_amount * i.completion_percentage / Decimal::from(100);
                 let earned = i.earned_value;
                 let cv = earned - i.actual_cost;
                 let sv = earned - planned;

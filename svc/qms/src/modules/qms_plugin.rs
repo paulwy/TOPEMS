@@ -91,10 +91,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 
 // Plugin health check endpoint
 pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<PluginHealth>> {
-    let db_status = match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
-        Ok(_) => true,
-        Err(_) => false,
-    };
+    let db_status = sqlx::query("SELECT 1").fetch_one(&state.pool).await.is_ok();
 
     let health = PluginHealth {
         status: if db_status {

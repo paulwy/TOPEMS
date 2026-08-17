@@ -44,13 +44,7 @@ pub fn apply_operator(numbers: &mut Vec<f64>, op: char) {
         '+' => a + b,
         '-' => a - b,
         '*' => a * b,
-        '/' => {
-            if b != 0.0 {
-                a / b
-            } else {
-                0.0
-            }
-        }
+        '/' if b != 0.0 => a / b,
         '^' => a.powf(b),
         _ => 0.0,
     };

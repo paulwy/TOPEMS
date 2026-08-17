@@ -389,7 +389,7 @@ pub async fn list_formulas(
     .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&query.status)
-    .bind(&query.product_id)
+    .bind(query.product_id)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.pool)
@@ -409,7 +409,7 @@ pub async fn list_formulas(
             .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&query.status)
-            .bind(&query.product_id)
+            .bind(query.product_id)
             .fetch_one(&state.pool)
             .await;
 

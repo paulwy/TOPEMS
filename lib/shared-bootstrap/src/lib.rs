@@ -829,7 +829,7 @@ pub fn rollup_health_status(statuses: &[HealthStatus]) -> HealthStatus {
         return HealthStatus::Healthy;
     }
     let all_healthy = statuses.iter().all(|s| *s == HealthStatus::Healthy);
-    let any_unhealthy = statuses.iter().any(|s| *s == HealthStatus::Unhealthy);
+    let any_unhealthy = statuses.contains(&HealthStatus::Unhealthy);
     if all_healthy {
         HealthStatus::Healthy
     } else if any_unhealthy {
@@ -1185,7 +1185,7 @@ mod tests {
             10
         );
         assert_eq!(
-            parse_max_connections(Some(format!("{}0", u32::MAX).into()), None, 10),
+            parse_max_connections(Some(format!("{}0", u32::MAX)), None, 10),
             10
         );
     }

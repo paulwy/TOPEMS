@@ -83,25 +83,21 @@ pub fn calculate_elimination_step(
     eliminated_limit: Decimal,
 ) -> EliminationCalc {
     let zero = Decimal::from(0);
-    let amt = if amount > zero { amount } else { zero.clone() };
+    let amt = if amount > zero { amount } else { zero };
     let prior = if prior_eliminated > zero {
         prior_eliminated
     } else {
-        zero.clone()
+        zero
     };
     let limit = if eliminated_limit > zero {
         eliminated_limit
     } else {
-        zero.clone()
+        zero
     };
-    let potential = if &amt > &prior {
-        amt.clone() - prior
-    } else {
-        zero.clone()
-    };
+    let potential = if amt > prior { amt - prior } else { zero };
     let eliminated = if potential < limit { potential } else { limit };
     let remaining = {
-        let total_elim = prior + &eliminated;
+        let total_elim = prior + eliminated;
         if amt > total_elim {
             amt - total_elim
         } else {
