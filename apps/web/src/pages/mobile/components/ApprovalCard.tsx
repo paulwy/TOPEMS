@@ -14,6 +14,7 @@ import {
   getPriorityLabel,
 } from '../hooks/useMobileApproval';
 import i18n from '@/i18n';
+
 interface ApprovalCardProps {
   approval: ApprovalItem;
   onClick: () => void;

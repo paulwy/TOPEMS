@@ -12,7 +12,7 @@ import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 import { docApi } from '@/api/doc';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface KnowledgeDoc {
   id: string;
@@ -362,7 +362,9 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
               size={48}
               style={{ color: theme.palette.text.disabled, margin: '0 auto 16px' }}
             />
-            <Typography color='text.secondary'>{i18n.t('pages.knowledge_base_page.k37')}</Typography>
+            <Typography color='text.secondary'>
+              {i18n.t('pages.knowledge_base_page.k37')}
+            </Typography>
           </Box>
         );
       }

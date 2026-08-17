@@ -3,10 +3,18 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type RuleType = 'completeness' | 'accuracy' | 'consistency' | 'timeliness' | 'uniqueness' | 'validity' | 'integrity';
+export type RuleType =
+  | 'completeness'
+  | 'accuracy'
+  | 'consistency'
+  | 'timeliness'
+  | 'uniqueness'
+  | 'validity'
+  | 'integrity';
 export type RuleSeverity = 'critical' | 'warning' | 'info';
 export type RuleStatus = 'active' | 'inactive' | 'draft' | 'archived';
-export type ScoreDimension = 'completeness' | 'accuracy' | 'consistency' | 'timeliness' | 'uniqueness' | 'overall';
+export type ScoreDimension =
+  'completeness' | 'accuracy' | 'consistency' | 'timeliness' | 'uniqueness' | 'overall';
 export type IssueStatus = 'open' | 'in_progress' | 'resolved' | 'ignored';
 export type ReportFormat = 'pdf' | 'excel' | 'json';
 
@@ -229,7 +237,9 @@ export const dataQualityEnhancedApiV65 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: QualityRule[]; total: number }>(`/mdm-v65/rules${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: QualityRule[]; total: number }>(
+      `/mdm-v65/rules${s ? `?${s}` : ''}`
+    );
   },
 
   async updateRule(id: string, data: UpdateQualityRuleRequest): Promise<ApiResponse<QualityRule>> {
@@ -252,23 +262,42 @@ export const dataQualityEnhancedApiV65 = {
     return apiClient.master.post<RuleExecutionResult>(`/mdm-v65/rules/${id}/test`, data ?? {});
   },
 
-  async getRuleVersions(id: string): Promise<ApiResponse<Array<{ version: number; rule: QualityRule; created_at: string; created_by: string }>>> {
-    return apiClient.master.get<Array<{ version: number; rule: QualityRule; created_at: string; created_by: string }>>(`/mdm-v65/rules/${id}/versions`);
+  async getRuleVersions(
+    id: string
+  ): Promise<
+    ApiResponse<
+      Array<{ version: number; rule: QualityRule; created_at: string; created_by: string }>
+    >
+  > {
+    return apiClient.master.get<
+      Array<{ version: number; rule: QualityRule; created_at: string; created_by: string }>
+    >(`/mdm-v65/rules/${id}/versions`);
   },
 
   async getRuleVersion(id: string, version: number): Promise<ApiResponse<QualityRule>> {
     return apiClient.master.get<QualityRule>(`/mdm-v65/rules/${id}/versions/${version}`);
   },
 
-  async exportRules(params?: { rule_ids?: string[]; format?: 'json' | 'csv' }): Promise<ApiResponse<{ download_url: string; count: number }>> {
+  async exportRules(params?: {
+    rule_ids?: string[];
+    format?: 'json' | 'csv';
+  }): Promise<ApiResponse<{ download_url: string; count: number }>> {
     const qs = new URLSearchParams();
     if (params?.rule_ids) qs.set('rule_ids', params.rule_ids.join(','));
     if (params?.format) qs.set('format', params.format);
-    return apiClient.master.get<{ download_url: string; count: number }>(`/mdm-v65/rules/export?${qs.toString()}`);
+    return apiClient.master.get<{ download_url: string; count: number }>(
+      `/mdm-v65/rules/export?${qs.toString()}`
+    );
   },
 
-  async importRules(data: { file_url: string; conflict_strategy?: 'skip' | 'overwrite' | 'error' }): Promise<ApiResponse<{ imported: number; failed: number; errors?: string[] }>> {
-    return apiClient.master.post<{ imported: number; failed: number; errors?: string[] }>('/mdm-v65/rules/import', data);
+  async importRules(data: {
+    file_url: string;
+    conflict_strategy?: 'skip' | 'overwrite' | 'error';
+  }): Promise<ApiResponse<{ imported: number; failed: number; errors?: string[] }>> {
+    return apiClient.master.post<{ imported: number; failed: number; errors?: string[] }>(
+      '/mdm-v65/rules/import',
+      data
+    );
   },
 
   // ===== 规则执行引擎 =====
@@ -276,7 +305,10 @@ export const dataQualityEnhancedApiV65 = {
     return apiClient.master.post<RuleExecutionResult[]>('/mdm-v65/execute', data);
   },
 
-  async executeRuleById(ruleId: string, data?: TestRuleRequest): Promise<ApiResponse<RuleExecutionResult>> {
+  async executeRuleById(
+    ruleId: string,
+    data?: TestRuleRequest
+  ): Promise<ApiResponse<RuleExecutionResult>> {
     return apiClient.master.post<RuleExecutionResult>(`/mdm-v65/execute/${ruleId}`, data ?? {});
   },
 
@@ -298,7 +330,9 @@ export const dataQualityEnhancedApiV65 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: RuleExecutionResult[]; total: number }>(`/mdm-v65/executions${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: RuleExecutionResult[]; total: number }>(
+      `/mdm-v65/executions${s ? `?${s}` : ''}`
+    );
   },
 
   // ===== 数据质量评分 =====
@@ -309,7 +343,9 @@ export const dataQualityEnhancedApiV65 = {
   async getScore(entityType: string, entityId?: string): Promise<ApiResponse<QualityScore>> {
     const qs = new URLSearchParams();
     if (entityId) qs.set('entity_id', entityId);
-    return apiClient.master.get<QualityScore>(`/mdm-v65/scores/${entityType}${qs.toString() ? `?${qs.toString()}` : ''}`);
+    return apiClient.master.get<QualityScore>(
+      `/mdm-v65/scores/${entityType}${qs.toString() ? `?${qs.toString()}` : ''}`
+    );
   },
 
   async listScores(params?: {
@@ -331,31 +367,38 @@ export const dataQualityEnhancedApiV65 = {
     return apiClient.master.get<QualityScore[]>(`/mdm-v65/scores${s ? `?${s}` : ''}`);
   },
 
-  async getScoreTrend(entityType: string, params?: {
-    entity_id?: string;
-    dimension?: ScoreDimension;
-    days?: number;
-  }): Promise<ApiResponse<Array<{ date: string; score: number; grade: string }>>> {
+  async getScoreTrend(
+    entityType: string,
+    params?: {
+      entity_id?: string;
+      dimension?: ScoreDimension;
+      days?: number;
+    }
+  ): Promise<ApiResponse<Array<{ date: string; score: number; grade: string }>>> {
     const qs = new URLSearchParams();
     if (params?.entity_id) qs.set('entity_id', params.entity_id);
     if (params?.dimension) qs.set('dimension', params.dimension);
     if (params?.days !== undefined) qs.set('days', String(params.days));
-    return apiClient.master.get<Array<{ date: string; score: number; grade: string }>>(`/mdm-v65/scores/${entityType}/trend?${qs.toString()}`);
+    return apiClient.master.get<Array<{ date: string; score: number; grade: string }>>(
+      `/mdm-v65/scores/${entityType}/trend?${qs.toString()}`
+    );
   },
 
   async compareScores(data: {
     entity_type: string;
     entity_ids?: string[];
     dimensions?: ScoreDimension[];
-  }): Promise<ApiResponse<{
-    entities: Array<{
-      entity_id: string;
-      scores: Record<ScoreDimension, number>;
-      avg_score: number;
-      grade: string;
-    }>;
-    comparison_matrix?: Record<string, Record<string, number>>;
-  }>> {
+  }): Promise<
+    ApiResponse<{
+      entities: Array<{
+        entity_id: string;
+        scores: Record<ScoreDimension, number>;
+        avg_score: number;
+        grade: string;
+      }>;
+      comparison_matrix?: Record<string, Record<string, number>>;
+    }>
+  > {
     return apiClient.master.post<{
       entities: Array<{
         entity_id: string;
@@ -390,7 +433,9 @@ export const dataQualityEnhancedApiV65 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: QualityIssue[]; total: number }>(`/mdm-v65/issues${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: QualityIssue[]; total: number }>(
+      `/mdm-v65/issues${s ? `?${s}` : ''}`
+    );
   },
 
   async getIssue(id: string): Promise<ApiResponse<QualityIssue>> {
@@ -401,11 +446,17 @@ export const dataQualityEnhancedApiV65 = {
     return apiClient.master.put<QualityIssue>(`/mdm-v65/issues/${id}`, data);
   },
 
-  async resolveIssue(id: string, data?: { resolution?: string }): Promise<ApiResponse<QualityIssue>> {
+  async resolveIssue(
+    id: string,
+    data?: { resolution?: string }
+  ): Promise<ApiResponse<QualityIssue>> {
     return apiClient.master.post<QualityIssue>(`/mdm-v65/issues/${id}/resolve`, data ?? {});
   },
 
-  async bulkResolveIssues(data: { issue_ids: string[]; resolution?: string }): Promise<ApiResponse<{ resolved: number }>> {
+  async bulkResolveIssues(data: {
+    issue_ids: string[];
+    resolution?: string;
+  }): Promise<ApiResponse<{ resolved: number }>> {
     return apiClient.master.post<{ resolved: number }>('/mdm-v65/issues/bulk-resolve', data);
   },
 
@@ -428,7 +479,9 @@ export const dataQualityEnhancedApiV65 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: QualityReport[]; total: number }>(`/mdm-v65/reports${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: QualityReport[]; total: number }>(
+      `/mdm-v65/reports${s ? `?${s}` : ''}`
+    );
   },
 
   async getReport(id: string): Promise<ApiResponse<QualityReport>> {
@@ -439,8 +492,12 @@ export const dataQualityEnhancedApiV65 = {
     return apiClient.master.get<QualityReportSummary>(`/mdm-v65/reports/${id}/summary`);
   },
 
-  async downloadReport(id: string): Promise<ApiResponse<{ download_url: string; file_size: number; format: string }>> {
-    return apiClient.master.get<{ download_url: string; file_size: number; format: string }>(`/mdm-v65/reports/${id}/download`);
+  async downloadReport(
+    id: string
+  ): Promise<ApiResponse<{ download_url: string; file_size: number; format: string }>> {
+    return apiClient.master.get<{ download_url: string; file_size: number; format: string }>(
+      `/mdm-v65/reports/${id}/download`
+    );
   },
 
   async deleteReport(id: string): Promise<ApiResponse<{ deleted: boolean }>> {

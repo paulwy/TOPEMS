@@ -306,8 +306,10 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
   const formatRelativeTime = (timestamp: number): string => {
     const diff = Date.now() - timestamp;
     if (diff < 60000) return i18n.t('microfrontend.ai_ops_panel.k5');
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}${i18n.t('microfrontend.ai_ops_panel.k2')}`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}${i18n.t('microfrontend.ai_ops_panel.k3')}`;
+    if (diff < 3600000)
+      return `${Math.floor(diff / 60000)}${i18n.t('microfrontend.ai_ops_panel.k2')}`;
+    if (diff < 86400000)
+      return `${Math.floor(diff / 3600000)}${i18n.t('microfrontend.ai_ops_panel.k3')}`;
     return `${Math.floor(diff / 86400000)}${i18n.t('microfrontend.ai_ops_panel.k4')}`;
   };
 
@@ -549,7 +551,9 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               {i18n.t('microfrontend.ai_ops_panel.k10')}
             </Typography>
             {anomalies.length === 0 ? (
-              <Typography color='text.secondary'>{i18n.t('microfrontend.ai_ops_panel.k19')}</Typography>
+              <Typography color='text.secondary'>
+                {i18n.t('microfrontend.ai_ops_panel.k19')}
+              </Typography>
             ) : (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {anomalies.slice(0, 5).map((a) => (
@@ -583,7 +587,8 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           variant='caption'
                           color='text.secondary'
                         >
-                          {a.moduleId || i18n.t('microfrontend.ai_ops_panel.k20')} · {formatRelativeTime(a.timestamp)}
+                          {a.moduleId || i18n.t('microfrontend.ai_ops_panel.k20')} ·{' '}
+                          {formatRelativeTime(a.timestamp)}
                         </Typography>
                       </Box>
                       <Typography
@@ -608,7 +613,9 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               {i18n.t('microfrontend.ai_ops_panel.k11')}
             </Typography>
             {scalingHistory.length === 0 ? (
-              <Typography color='text.secondary'>{i18n.t('microfrontend.ai_ops_panel.k21')}</Typography>
+              <Typography color='text.secondary'>
+                {i18n.t('microfrontend.ai_ops_panel.k21')}
+              </Typography>
             ) : (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {scalingHistory.slice(0, 5).map((e) => (
@@ -650,12 +657,17 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           variant='caption'
                           color='text.secondary'
                         >
-                          {e.fromInstances} → {e.toInstances} {i18n.t('microfrontend.ai_ops_panel.k0')}{' '}
+                          {e.fromInstances} → {e.toInstances}{' '}
+                          {i18n.t('microfrontend.ai_ops_panel.k0')}{' '}
                           {formatRelativeTime(e.startedAt)}
                         </Typography>
                       </Box>
                       <Chip
-                        label={e.status === 'completed' ? i18n.t('microfrontend.ai_ops_panel.k22') : e.status}
+                        label={
+                          e.status === 'completed'
+                            ? i18n.t('microfrontend.ai_ops_panel.k22')
+                            : e.status
+                        }
                         size='small'
                         color={
                           e.status === 'completed'
@@ -754,14 +766,30 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               <Table size='small'>
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'action.hover' }}>
-                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k30')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k31')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k32')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k13')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k33')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k34')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k35')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k36')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {i18n.t('microfrontend.ai_ops_panel.k30')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {i18n.t('microfrontend.ai_ops_panel.k31')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {i18n.t('microfrontend.ai_ops_panel.k32')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {i18n.t('microfrontend.ai_ops_panel.k13')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {i18n.t('microfrontend.ai_ops_panel.k33')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {i18n.t('microfrontend.ai_ops_panel.k34')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {i18n.t('microfrontend.ai_ops_panel.k35')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {i18n.t('microfrontend.ai_ops_panel.k36')}
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -947,7 +975,9 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 {i18n.t('microfrontend.ai_ops_panel.k18')}
               </Typography>
               {moduleAnomalies.length === 0 ? (
-                <Typography color='text.secondary'>{i18n.t('microfrontend.ai_ops_panel.k41')}</Typography>
+                <Typography color='text.secondary'>
+                  {i18n.t('microfrontend.ai_ops_panel.k41')}
+                </Typography>
               ) : (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   {moduleAnomalies.slice(0, 10).map(([moduleId, count]) => {
@@ -1038,15 +1068,33 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               <Table size='small'>
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'action.hover' }}>
-                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k46')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k47')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k48')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k49')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k50')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k20')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k51')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k52')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k53')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {i18n.t('microfrontend.ai_ops_panel.k46')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {i18n.t('microfrontend.ai_ops_panel.k47')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {i18n.t('microfrontend.ai_ops_panel.k48')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {i18n.t('microfrontend.ai_ops_panel.k49')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {i18n.t('microfrontend.ai_ops_panel.k50')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {i18n.t('microfrontend.ai_ops_panel.k20')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {i18n.t('microfrontend.ai_ops_panel.k51')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {i18n.t('microfrontend.ai_ops_panel.k52')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>
+                      {i18n.t('microfrontend.ai_ops_panel.k53')}
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1236,7 +1284,8 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                     color='text.secondary'
                     sx={{ mb: 0.5 }}
                   >
-                    {i18n.t('microfrontend.ai_ops_panel.24_1')} {alertStats?.last24h || 0} {i18n.t('microfrontend.ai_ops_panel.k2')}
+                    {i18n.t('microfrontend.ai_ops_panel.24_1')} {alertStats?.last24h || 0}{' '}
+                    {i18n.t('microfrontend.ai_ops_panel.k2')}
                   </Typography>
                   <LinearProgress
                     variant='determinate'
@@ -1250,7 +1299,8 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                     color='text.secondary'
                     sx={{ mb: 0.5 }}
                   >
-                    {i18n.t('microfrontend.ai_ops_panel.1_3')} {alertStats?.last1h || 0} {i18n.t('microfrontend.ai_ops_panel.k4')}
+                    {i18n.t('microfrontend.ai_ops_panel.1_3')} {alertStats?.last1h || 0}{' '}
+                    {i18n.t('microfrontend.ai_ops_panel.k4')}
                   </Typography>
                   <LinearProgress
                     variant='determinate'
@@ -1343,11 +1393,19 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                   onChange={(e) => setNewRuleMetric(e.target.value)}
                 >
                   <MenuItem value='cpuUsage'>{i18n.t('microfrontend.ai_ops_panel.pu_1')}</MenuItem>
-                  <MenuItem value='memoryUsage'>{i18n.t('microfrontend.ai_ops_panel.k61')}</MenuItem>
-                  <MenuItem value='responseTime'>{i18n.t('microfrontend.ai_ops_panel.k62')}</MenuItem>
+                  <MenuItem value='memoryUsage'>
+                    {i18n.t('microfrontend.ai_ops_panel.k61')}
+                  </MenuItem>
+                  <MenuItem value='responseTime'>
+                    {i18n.t('microfrontend.ai_ops_panel.k62')}
+                  </MenuItem>
                   <MenuItem value='errorRate'>{i18n.t('microfrontend.ai_ops_panel.k63')}</MenuItem>
-                  <MenuItem value='requestRate'>{i18n.t('microfrontend.ai_ops_panel.k64')}</MenuItem>
-                  <MenuItem value='totalLoadTime'>{i18n.t('microfrontend.ai_ops_panel.k65')}</MenuItem>
+                  <MenuItem value='requestRate'>
+                    {i18n.t('microfrontend.ai_ops_panel.k64')}
+                  </MenuItem>
+                  <MenuItem value='totalLoadTime'>
+                    {i18n.t('microfrontend.ai_ops_panel.k65')}
+                  </MenuItem>
                 </Select>
               </FormControl>
               <FormControl
@@ -1411,7 +1469,9 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowAddRuleDialog(false)}>{i18n.t('microfrontend.ai_ops_panel.k77')}</Button>
+          <Button onClick={() => setShowAddRuleDialog(false)}>
+            {i18n.t('microfrontend.ai_ops_panel.k77')}
+          </Button>
           <Button
             variant='contained'
             onClick={() => {
@@ -1499,11 +1559,21 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                     label={i18n.t('microfrontend.ai_ops_panel.k84')}
                     onChange={(e) => setSelectedPredMetric(e.target.value)}
                   >
-                    <MenuItem value='cpuUsage'>{i18n.t('microfrontend.ai_ops_panel.pu_2')}</MenuItem>
-                    <MenuItem value='memoryUsage'>{i18n.t('microfrontend.ai_ops_panel.k85')}</MenuItem>
-                    <MenuItem value='responseTime'>{i18n.t('microfrontend.ai_ops_panel.k86')}</MenuItem>
-                    <MenuItem value='errorRate'>{i18n.t('microfrontend.ai_ops_panel.k87')}</MenuItem>
-                    <MenuItem value='totalLoadTime'>{i18n.t('microfrontend.ai_ops_panel.k88')}</MenuItem>
+                    <MenuItem value='cpuUsage'>
+                      {i18n.t('microfrontend.ai_ops_panel.pu_2')}
+                    </MenuItem>
+                    <MenuItem value='memoryUsage'>
+                      {i18n.t('microfrontend.ai_ops_panel.k85')}
+                    </MenuItem>
+                    <MenuItem value='responseTime'>
+                      {i18n.t('microfrontend.ai_ops_panel.k86')}
+                    </MenuItem>
+                    <MenuItem value='errorRate'>
+                      {i18n.t('microfrontend.ai_ops_panel.k87')}
+                    </MenuItem>
+                    <MenuItem value='totalLoadTime'>
+                      {i18n.t('microfrontend.ai_ops_panel.k88')}
+                    </MenuItem>
                   </Select>
                 </FormControl>
                 <FormControl
@@ -1543,7 +1613,9 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                     height: '100%',
                   }}
                 >
-                  <Typography color='text.secondary'>{i18n.t('microfrontend.ai_ops_panel.k92')}</Typography>
+                  <Typography color='text.secondary'>
+                    {i18n.t('microfrontend.ai_ops_panel.k92')}
+                  </Typography>
                 </Box>
               ) : (
                 <svg
@@ -1592,13 +1664,17 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               <Box sx={{ position: 'absolute', bottom: 8, left: 16, display: 'flex', gap: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Box sx={{ width: 16, height: 2, bgcolor: 'info.600' }} />
-                  <Typography variant='caption'>{i18n.t('microfrontend.ai_ops_panel.k93')}</Typography>
+                  <Typography variant='caption'>
+                    {i18n.t('microfrontend.ai_ops_panel.k93')}
+                  </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Box
                     sx={{ width: 16, height: 2, bgcolor: 'purple.800', borderStyle: 'dashed' }}
                   />
-                  <Typography variant='caption'>{i18n.t('microfrontend.ai_ops_panel.k94')}</Typography>
+                  <Typography variant='caption'>
+                    {i18n.t('microfrontend.ai_ops_panel.k94')}
+                  </Typography>
                 </Box>
               </Box>
             </Paper>
@@ -1613,7 +1689,9 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               {i18n.t('microfrontend.ai_ops_panel.k33')}
             </Typography>
             {predictedAnomalies.length === 0 ? (
-              <Typography color='text.secondary'>{i18n.t('microfrontend.ai_ops_panel.k95')}</Typography>
+              <Typography color='text.secondary'>
+                {i18n.t('microfrontend.ai_ops_panel.k95')}
+              </Typography>
             ) : (
               <Box
                 sx={{
@@ -1675,7 +1753,8 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           sx={{ mt: 0.5, display: 'block' }}
                         >
                           <Typography variant='caption'>
-                            [i18n.t('microfrontend.ai_ops_panel.k34')]: {formatRelativeTime(a.expectedTime)}
+                            [i18n.t('microfrontend.ai_ops_panel.k34')]:{' '}
+                            {formatRelativeTime(a.expectedTime)}
                           </Typography>
                         </Box>
                       </Box>
@@ -1690,7 +1769,8 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           variant='caption'
                           color='text.secondary'
                         >
-                          {i18n.t('microfrontend.ai_ops_panel.k6')} {(a.probability * 100).toFixed(0)}%
+                          {i18n.t('microfrontend.ai_ops_panel.k6')}{' '}
+                          {(a.probability * 100).toFixed(0)}%
                         </Typography>
                       </Box>
                     </Box>
@@ -1802,7 +1882,11 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           {inst.moduleId} #{inst.instanceNumber}
                         </Typography>
                         <Chip
-                          label={inst.status === 'running' ? i18n.t('microfrontend.ai_ops_panel.k104') : inst.status}
+                          label={
+                            inst.status === 'running'
+                              ? i18n.t('microfrontend.ai_ops_panel.k104')
+                              : inst.status
+                          }
                           size='small'
                           color={
                             inst.status === 'running'
@@ -1824,7 +1908,8 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           variant='caption'
                           color='text.secondary'
                         >
-                          [i18n.t('microfrontend.ai_ops_panel.k36')]: {formatRelativeTime(inst.startedAt || inst.createdAt)}
+                          [i18n.t('microfrontend.ai_ops_panel.k36')]:{' '}
+                          {formatRelativeTime(inst.startedAt || inst.createdAt)}
                         </Typography>
                       </Box>
                     </Box>
@@ -1848,7 +1933,11 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                   startIcon={<ArrowUpIcon size={16} />}
                   onClick={() => {
                     const current = moduleInstances.filter((i) => i.status === 'running').length;
-                    autoScaler.scale(selectedScaleModule!, current + 1, i18n.t('microfrontend.ai_ops_panel.k105'));
+                    autoScaler.scale(
+                      selectedScaleModule!,
+                      current + 1,
+                      i18n.t('microfrontend.ai_ops_panel.k105')
+                    );
                     refreshData();
                   }}
                 >
@@ -1859,7 +1948,11 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                   startIcon={<ArrowDownIcon size={16} />}
                   onClick={() => {
                     const current = moduleInstances.filter((i) => i.status === 'running').length;
-                    autoScaler.scale(selectedScaleModule!, Math.max(1, current - 1), i18n.t('microfrontend.ai_ops_panel.k106'));
+                    autoScaler.scale(
+                      selectedScaleModule!,
+                      Math.max(1, current - 1),
+                      i18n.t('microfrontend.ai_ops_panel.k106')
+                    );
                     refreshData();
                   }}
                 >
@@ -1958,7 +2051,8 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           variant='caption'
                           color='text.secondary'
                         >
-                          {policy.minInstances} - {policy.maxInstances} {i18n.t('microfrontend.ai_ops_panel.k7')}
+                          {policy.minInstances} - {policy.maxInstances}{' '}
+                          {i18n.t('microfrontend.ai_ops_panel.k7')}
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
                           {policy.metrics.slice(0, 2).map((m) => (
@@ -2002,11 +2096,21 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                 <Table size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'action.hover' }}>
-                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k107')}</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k108')}</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k109')}</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k110')}</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.ai_ops_panel.k111')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {i18n.t('microfrontend.ai_ops_panel.k107')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {i18n.t('microfrontend.ai_ops_panel.k108')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {i18n.t('microfrontend.ai_ops_panel.k109')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {i18n.t('microfrontend.ai_ops_panel.k110')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {i18n.t('microfrontend.ai_ops_panel.k111')}
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -2048,7 +2152,11 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                         </TableCell>
                         <TableCell>
                           <Chip
-                            label={e.status === 'completed' ? i18n.t('microfrontend.ai_ops_panel.k115') : e.status}
+                            label={
+                              e.status === 'completed'
+                                ? i18n.t('microfrontend.ai_ops_panel.k115')
+                                : e.status
+                            }
                             size='small'
                             color={
                               e.status === 'completed'
@@ -2174,7 +2282,9 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowAddPolicyDialog(false)}>{i18n.t('microfrontend.ai_ops_panel.k121')}</Button>
+          <Button onClick={() => setShowAddPolicyDialog(false)}>
+            {i18n.t('microfrontend.ai_ops_panel.k121')}
+          </Button>
           <Button
             variant='contained'
             onClick={() => {
@@ -2254,7 +2364,13 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           />
         </Box>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-          <Tooltip title={autoRefresh ? i18n.t('microfrontend.ai_ops_panel.k124') : i18n.t('microfrontend.ai_ops_panel.k123')}>
+          <Tooltip
+            title={
+              autoRefresh
+                ? i18n.t('microfrontend.ai_ops_panel.k124')
+                : i18n.t('microfrontend.ai_ops_panel.k123')
+            }
+          >
             <Button
               size='small'
               onClick={() => setAutoRefresh(!autoRefresh)}
@@ -2262,7 +2378,9 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
               variant={autoRefresh ? 'contained' : 'outlined'}
             >
-              {autoRefresh ? i18n.t('microfrontend.ai_ops_panel.k126') : i18n.t('microfrontend.ai_ops_panel.k125')}
+              {autoRefresh
+                ? i18n.t('microfrontend.ai_ops_panel.k126')
+                : i18n.t('microfrontend.ai_ops_panel.k125')}
             </Button>
           </Tooltip>
           <Button

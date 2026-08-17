@@ -10,7 +10,6 @@ import { extractErrorMessage } from '@/utils/errors';
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 
 import {
-
   dbStructureApi,
   type TableInfo,
   type TableDetail,
@@ -137,12 +136,11 @@ export const useDatabaseStructure = () => {
       throw new Error(res.message || t('admin.database_structure.failed_to_generate_sql_preview'));
     },
     onSuccess: (data) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLES_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       setSqlPreview(data);
       setPendingColumn(newColumn);
       setShowPreviewModal(true);
@@ -172,14 +170,16 @@ export const useDatabaseStructure = () => {
         default_value: '',
         max_length: 255,
       });
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLE_DETAIL_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_CHANGES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      await queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLE_DETAIL_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      await queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_CHANGES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
       showNotification(
@@ -197,14 +197,16 @@ export const useDatabaseStructure = () => {
     },
     onSuccess: async () => {
       showNotification('success', t('admin.database_structure.field_deleted_successfully'));
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLE_DETAIL_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_CHANGES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      await queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLE_DETAIL_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      await queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_CHANGES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
       showNotification(

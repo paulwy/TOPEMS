@@ -84,23 +84,36 @@ function validateFieldValue(
     for (const rule of field.validation) {
       switch (rule.type) {
         case 'required':
-          if (!value) return rule.message || `${field.label}${i18n.t('components.sub_table_builder.k1')}`;
+          if (!value)
+            return rule.message || `${field.label}${i18n.t('components.sub_table_builder.k1')}`;
           break;
         case 'minLength':
           if (stringValue.length < Number(rule.value ?? 0))
-            return rule.message || `${field.label}${i18n.t('components.sub_table_builder.k2')}${rule.value}${i18n.t('components.sub_table_builder.k3')}`;
+            return (
+              rule.message ||
+              `${field.label}${i18n.t('components.sub_table_builder.k2')}${rule.value}${i18n.t('components.sub_table_builder.k3')}`
+            );
           break;
         case 'maxLength':
           if (stringValue.length > Number(rule.value ?? Infinity))
-            return rule.message || `${field.label}${i18n.t('components.sub_table_builder.k4')}${rule.value}${i18n.t('components.sub_table_builder.k5')}`;
+            return (
+              rule.message ||
+              `${field.label}${i18n.t('components.sub_table_builder.k4')}${rule.value}${i18n.t('components.sub_table_builder.k5')}`
+            );
           break;
         case 'min':
           if (Number(value) < Number(rule.value ?? -Infinity))
-            return rule.message || `${field.label}${i18n.t('components.sub_table_builder.k6')}${rule.value}`;
+            return (
+              rule.message ||
+              `${field.label}${i18n.t('components.sub_table_builder.k6')}${rule.value}`
+            );
           break;
         case 'max':
           if (Number(value) > Number(rule.value ?? Infinity))
-            return rule.message || `${field.label}${i18n.t('components.sub_table_builder.k7')}${rule.value}`;
+            return (
+              rule.message ||
+              `${field.label}${i18n.t('components.sub_table_builder.k7')}${rule.value}`
+            );
           break;
         case 'pattern':
           break;
@@ -351,7 +364,9 @@ const RowFormDialog: React.FC<RowFormDialogProps> = ({
           variant='outlined'
           size='small'
         >
-          {mode === 'view' ? i18n.t('templates.sub_table_builder.k2') : i18n.t('templates.sub_table_builder.k1')}
+          {mode === 'view'
+            ? i18n.t('templates.sub_table_builder.k2')
+            : i18n.t('templates.sub_table_builder.k1')}
         </Button>
         {mode !== 'view' && (
           <Button
@@ -441,7 +456,8 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
       const row = value[i];
       for (const field of fields) {
         const error = validateFieldValue(field, row[field.name], row);
-        if (error) return `${i18n.t('components.sub_table_builder.k8')}${i + 1}${i18n.t('components.sub_table_builder.k9')}${error}`;
+        if (error)
+          return `${i18n.t('components.sub_table_builder.k8')}${i + 1}${i18n.t('components.sub_table_builder.k9')}${error}`;
       }
     }
     if (config.validate) {

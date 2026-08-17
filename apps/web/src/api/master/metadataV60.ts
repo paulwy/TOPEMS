@@ -4,7 +4,8 @@ import type { ApiResponse } from '../client';
 // ============ Types ============
 
 export type MetadataType = 'table' | 'column' | 'entity' | 'field' | 'document' | 'report';
-export type LifecycleStage = 'design' | 'development' | 'testing' | 'production' | 'archive' | 'retire';
+export type LifecycleStage =
+  'design' | 'development' | 'testing' | 'production' | 'archive' | 'retire';
 export type LifecycleStatus = 'active' | 'completed' | 'cancelled';
 
 export interface MetadataV60 {
@@ -54,7 +55,12 @@ export interface LineageImpact {
   entity_id: string;
   entity_name: string;
   downstream_count: number;
-  affected_entities: Array<{ id: string; name: string; type: MetadataType; impact_level: 'high' | 'medium' | 'low' }>;
+  affected_entities: Array<{
+    id: string;
+    name: string;
+    type: MetadataType;
+    impact_level: 'high' | 'medium' | 'low';
+  }>;
   risk_score: number;
 }
 
@@ -107,7 +113,11 @@ export interface CreateMetadataRequest {
   name: string;
   type: MetadataType;
   description?: string;
-  attributes?: Array<{ key: string; value: string; type: 'string' | 'number' | 'boolean' | 'json' }>;
+  attributes?: Array<{
+    key: string;
+    value: string;
+    type: 'string' | 'number' | 'boolean' | 'json';
+  }>;
   tags?: string[];
   owner?: string;
 }
@@ -115,7 +125,11 @@ export interface CreateMetadataRequest {
 export interface UpdateMetadataRequest {
   name?: string;
   description?: string;
-  attributes?: Array<{ key: string; value: string; type: 'string' | 'number' | 'boolean' | 'json' }>;
+  attributes?: Array<{
+    key: string;
+    value: string;
+    type: 'string' | 'number' | 'boolean' | 'json';
+  }>;
   tags?: string[];
   owner?: string;
 }
@@ -192,23 +206,34 @@ export const metadataApiV60 = {
     return apiClient.master.get<MetadataV60>(`/mdm-v60/metadata/${id}`);
   },
 
-  async listMetadata(params?: { type?: MetadataType; tags?: string[]; page?: number; pageSize?: number }): Promise<ApiResponse<{ items: MetadataV60[]; total: number }>> {
+  async listMetadata(params?: {
+    type?: MetadataType;
+    tags?: string[];
+    page?: number;
+    pageSize?: number;
+  }): Promise<ApiResponse<{ items: MetadataV60[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.type) qs.set('type', params.type);
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: MetadataV60[]; total: number }>(`/mdm-v60/metadata${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: MetadataV60[]; total: number }>(
+      `/mdm-v60/metadata${s ? `?${s}` : ''}`
+    );
   },
 
-  async searchMetadata(params?: SearchMetadataParams): Promise<ApiResponse<{ items: MetadataV60[]; total: number }>> {
+  async searchMetadata(
+    params?: SearchMetadataParams
+  ): Promise<ApiResponse<{ items: MetadataV60[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.query) qs.set('q', params.query);
     if (params?.type) qs.set('type', params.type);
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: MetadataV60[]; total: number }>(`/mdm-v60/metadata/search${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: MetadataV60[]; total: number }>(
+      `/mdm-v60/metadata/search${s ? `?${s}` : ''}`
+    );
   },
 
   async updateMetadata(id: string, data: UpdateMetadataRequest): Promise<ApiResponse<MetadataV60>> {
@@ -227,8 +252,18 @@ export const metadataApiV60 = {
     return apiClient.master.post<{ tagged_count: number }>('/mdm-v60/metadata/tag', data);
   },
 
-  async getMetadataStats(): Promise<ApiResponse<{ total: number; by_type: Array<{ type: MetadataType; count: number }>; by_tag: Array<{ tag: string; count: number }> }>> {
-    return apiClient.master.get<{ total: number; by_type: Array<{ type: MetadataType; count: number }>; by_tag: Array<{ tag: string; count: number }> }>('/mdm-v60/metadata/stats');
+  async getMetadataStats(): Promise<
+    ApiResponse<{
+      total: number;
+      by_type: Array<{ type: MetadataType; count: number }>;
+      by_tag: Array<{ tag: string; count: number }>;
+    }>
+  > {
+    return apiClient.master.get<{
+      total: number;
+      by_type: Array<{ type: MetadataType; count: number }>;
+      by_tag: Array<{ tag: string; count: number }>;
+    }>('/mdm-v60/metadata/stats');
   },
 
   // ===== 数据血缘增强 =====
@@ -244,14 +279,21 @@ export const metadataApiV60 = {
     const qs = new URLSearchParams();
     if (params?.depth !== undefined) qs.set('depth', String(params.depth));
     const s = qs.toString();
-    return apiClient.master.get<LineageNode[]>(`/mdm-v60/lineage/${id}/upstream${s ? `?${s}` : ''}`);
+    return apiClient.master.get<LineageNode[]>(
+      `/mdm-v60/lineage/${id}/upstream${s ? `?${s}` : ''}`
+    );
   },
 
-  async getDownstream(id: string, params?: { depth?: number }): Promise<ApiResponse<LineageNode[]>> {
+  async getDownstream(
+    id: string,
+    params?: { depth?: number }
+  ): Promise<ApiResponse<LineageNode[]>> {
     const qs = new URLSearchParams();
     if (params?.depth !== undefined) qs.set('depth', String(params.depth));
     const s = qs.toString();
-    return apiClient.master.get<LineageNode[]>(`/mdm-v60/lineage/${id}/downstream${s ? `?${s}` : ''}`);
+    return apiClient.master.get<LineageNode[]>(
+      `/mdm-v60/lineage/${id}/downstream${s ? `?${s}` : ''}`
+    );
   },
 
   async getPath(data: GetPathRequest): Promise<ApiResponse<LineagePath>> {
@@ -266,20 +308,34 @@ export const metadataApiV60 = {
     return apiClient.master.get<LineageDashboard>('/mdm-v60/lineage/dashboard');
   },
 
-  async exportLineage(format?: 'json' | 'graphml'): Promise<ApiResponse<{ download_url: string; node_count: number; edge_count: number }>> {
+  async exportLineage(
+    format?: 'json' | 'graphml'
+  ): Promise<ApiResponse<{ download_url: string; node_count: number; edge_count: number }>> {
     const qs = new URLSearchParams();
     if (format) qs.set('format', format);
     const s = qs.toString();
-    return apiClient.master.get<{ download_url: string; node_count: number; edge_count: number }>(`/mdm-v60/lineage/export${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ download_url: string; node_count: number; edge_count: number }>(
+      `/mdm-v60/lineage/export${s ? `?${s}` : ''}`
+    );
   },
 
   // ===== 生命周期管理 =====
-  async getCurrentStage(id: string): Promise<ApiResponse<{ stage: LifecycleStage; entered_at: string }>> {
-    return apiClient.master.get<{ stage: LifecycleStage; entered_at: string }>(`/mdm-v60/lifecycle/${id}/stage`);
+  async getCurrentStage(
+    id: string
+  ): Promise<ApiResponse<{ stage: LifecycleStage; entered_at: string }>> {
+    return apiClient.master.get<{ stage: LifecycleStage; entered_at: string }>(
+      `/mdm-v60/lifecycle/${id}/stage`
+    );
   },
 
-  async transitionStage(id: string, data: TransitionStageRequest): Promise<ApiResponse<{ stage: LifecycleStage; history: LifecycleHistoryEntryV60[] }>> {
-    return apiClient.master.post<{ stage: LifecycleStage; history: LifecycleHistoryEntryV60[] }>(`/mdm-v60/lifecycle/${id}/transition`, data);
+  async transitionStage(
+    id: string,
+    data: TransitionStageRequest
+  ): Promise<ApiResponse<{ stage: LifecycleStage; history: LifecycleHistoryEntryV60[] }>> {
+    return apiClient.master.post<{ stage: LifecycleStage; history: LifecycleHistoryEntryV60[] }>(
+      `/mdm-v60/lifecycle/${id}/transition`,
+      data
+    );
   },
 
   async getLifecycleHistory(id: string): Promise<ApiResponse<LifecycleHistoryEntryV60[]>> {
@@ -290,23 +346,47 @@ export const metadataApiV60 = {
     return apiClient.master.post<LifecyclePolicy>('/mdm-v60/lifecycle/policy', data);
   },
 
-  async getPolicies(params?: { entity_type?: MetadataType }): Promise<ApiResponse<LifecyclePolicy[]>> {
+  async getPolicies(params?: {
+    entity_type?: MetadataType;
+  }): Promise<ApiResponse<LifecyclePolicy[]>> {
     const qs = new URLSearchParams();
     if (params?.entity_type) qs.set('entity_type', params.entity_type);
     const s = qs.toString();
-    return apiClient.master.get<LifecyclePolicy[]>(`/mdm-v60/lifecycle/policies${s ? `?${s}` : ''}`);
+    return apiClient.master.get<LifecyclePolicy[]>(
+      `/mdm-v60/lifecycle/policies${s ? `?${s}` : ''}`
+    );
   },
 
-  async autoTransition(data?: AutoTransitionRequest): Promise<ApiResponse<{ transitions: number; failures: number; results: Array<{ id: string; from: LifecycleStage; to: LifecycleStage; success: boolean }> }>> {
-    return apiClient.master.post<{ transitions: number; failures: number; results: Array<{ id: string; from: LifecycleStage; to: LifecycleStage; success: boolean }> }>('/mdm-v60/lifecycle/auto-transition', data || {});
+  async autoTransition(data?: AutoTransitionRequest): Promise<
+    ApiResponse<{
+      transitions: number;
+      failures: number;
+      results: Array<{ id: string; from: LifecycleStage; to: LifecycleStage; success: boolean }>;
+    }>
+  > {
+    return apiClient.master.post<{
+      transitions: number;
+      failures: number;
+      results: Array<{ id: string; from: LifecycleStage; to: LifecycleStage; success: boolean }>;
+    }>('/mdm-v60/lifecycle/auto-transition', data || {});
   },
 
   async getLifecycleDashboard(): Promise<ApiResponse<LifecycleDashboard>> {
     return apiClient.master.get<LifecycleDashboard>('/mdm-v60/lifecycle/dashboard');
   },
 
-  async bulkTransition(data: BulkTransitionRequest): Promise<ApiResponse<{ transitions: number; failures: number; results: Array<{ id: string; success: boolean }> }>> {
-    return apiClient.master.post<{ transitions: number; failures: number; results: Array<{ id: string; success: boolean }> }>('/mdm-v60/lifecycle/bulk', data);
+  async bulkTransition(data: BulkTransitionRequest): Promise<
+    ApiResponse<{
+      transitions: number;
+      failures: number;
+      results: Array<{ id: string; success: boolean }>;
+    }>
+  > {
+    return apiClient.master.post<{
+      transitions: number;
+      failures: number;
+      results: Array<{ id: string; success: boolean }>;
+    }>('/mdm-v60/lifecycle/bulk', data);
   },
 };
 

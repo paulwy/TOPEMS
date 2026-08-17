@@ -108,10 +108,26 @@ export const productionRecordSchema: EntitySchema = {
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-          pending: { label: i18n.t('mes.production_record.k15'), bg: 'warning.light', color: 'warning.700' },
-          in_progress: { label: i18n.t('mes.production_record.k16'), bg: 'primary.100', color: 'primary.dark' },
-          completed: { label: i18n.t('mes.production_record.k17'), bg: 'success.lighter', color: 'success.700' },
-          cancelled: { label: i18n.t('mes.production_record.k18'), bg: 'error.lighter', color: 'error.dark' },
+          pending: {
+            label: i18n.t('mes.production_record.k15'),
+            bg: 'warning.light',
+            color: 'warning.700',
+          },
+          in_progress: {
+            label: i18n.t('mes.production_record.k16'),
+            bg: 'primary.100',
+            color: 'primary.dark',
+          },
+          completed: {
+            label: i18n.t('mes.production_record.k17'),
+            bg: 'success.lighter',
+            color: 'success.700',
+          },
+          cancelled: {
+            label: i18n.t('mes.production_record.k18'),
+            bg: 'error.lighter',
+            color: 'error.dark',
+          },
         };
         const s = statusMap[(row.status as string) || 'pending'] || {
           label: row.status,

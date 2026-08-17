@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import type { TenantRole } from '@/api/tenant/types';
+
 interface InviteMemberDialogProps {
   open: boolean;
   inviteForm: { email: string; role: TenantRole };

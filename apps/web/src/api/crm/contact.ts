@@ -18,7 +18,7 @@ import {
 
 export const contactApi = {
   list: async (
-    params?: AdaptedQuery<'list_contacts'> | ContactQueryParams,
+    params?: AdaptedQuery<'list_contacts'> | ContactQueryParams
   ): Promise<TypedPaginatedResponse<Contact>> => {
     return apiClient.crm.get('/contacts', {
       params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
@@ -26,12 +26,9 @@ export const contactApi = {
   },
 
   create: async (
-    data: AdaptedRequestBody<'create_contact'> | CreateContactRequest,
+    data: AdaptedRequestBody<'create_contact'> | CreateContactRequest
   ): Promise<TypedApiResponse<Contact, 'create_contact'>> => {
-    return apiClient.crm.post(
-      '/contacts',
-      toOpenApiRequestBody(data as Record<string, unknown>),
-    );
+    return apiClient.crm.post('/contacts', toOpenApiRequestBody(data as Record<string, unknown>));
   },
 
   get: async (id: string): Promise<ApiResponse<Contact>> => {
@@ -52,31 +49,33 @@ export const contactApi = {
 
   startApproval: async (
     id: string,
-    data: { workflowId: string; comment?: string },
-  ): Promise<ApiResponse<{ contactId: string; workflowId: string; approvalStatus: ApprovalStatus }>> => {
+    data: { workflowId: string; comment?: string }
+  ): Promise<
+    ApiResponse<{ contactId: string; workflowId: string; approvalStatus: ApprovalStatus }>
+  > => {
     return apiClient.crm.post(
       `/contacts/${id}/approval/start`,
-      toOpenApiRequestBody(data as Record<string, unknown>),
+      toOpenApiRequestBody(data as Record<string, unknown>)
     );
   },
 
   approve: async (
     id: string,
-    data?: { comment?: string },
+    data?: { comment?: string }
   ): Promise<ApiResponse<{ contactId: string; approvalStatus: ApprovalStatus }>> => {
     return apiClient.crm.post(
       `/contacts/${id}/approval/approve`,
-      data ? toOpenApiRequestBody(data as Record<string, unknown>) : {},
+      data ? toOpenApiRequestBody(data as Record<string, unknown>) : {}
     );
   },
 
   reject: async (
     id: string,
-    data?: { comment?: string; reason?: string },
+    data?: { comment?: string; reason?: string }
   ): Promise<ApiResponse<{ contactId: string; approvalStatus: ApprovalStatus }>> => {
     return apiClient.crm.post(
       `/contacts/${id}/approval/reject`,
-      data ? toOpenApiRequestBody(data as Record<string, unknown>) : {},
+      data ? toOpenApiRequestBody(data as Record<string, unknown>) : {}
     );
   },
 };

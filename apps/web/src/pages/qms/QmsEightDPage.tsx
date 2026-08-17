@@ -29,7 +29,6 @@ import type {
 import i18n from '@/i18n';
 import type { SchemaField } from '@/schema/types';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 // ============ 统计卡片 ============
@@ -43,7 +42,7 @@ interface EightDStatsData {
 }
 
 function EightDStats() {
-  const { data: stats, isPending} = useQuery<EightDStatsData>({
+  const { data: stats, isPending } = useQuery<EightDStatsData>({
     queryKey: QUERY_KEYS.AD_HOC.QMS_EIGHTD_STATS_BASE,
     queryFn: async () => {
       const response = await eightDApi.listEightDReports();
@@ -51,21 +50,48 @@ function EightDStats() {
       const reports = response.data || [];
       return {
         total: reports.length,
-        open: reports.filter((r) => r.status === 'open' || r.status === i18n.t('pages.qms_eight_d_page.k1')).length,
-        inProgress: reports.filter((r) => r.status === 'in_progress' || r.status === i18n.t('pages.qms_eight_d_page.k2'))
-          .length,
-        completed: reports.filter((r) => r.status === 'completed' || r.status === i18n.t('pages.qms_eight_d_page.k3')).length,
-        closed: reports.filter((r) => r.status === 'closed' || r.status === i18n.t('pages.qms_eight_d_page.k4')).length,
+        open: reports.filter(
+          (r) => r.status === 'open' || r.status === i18n.t('pages.qms_eight_d_page.k1')
+        ).length,
+        inProgress: reports.filter(
+          (r) => r.status === 'in_progress' || r.status === i18n.t('pages.qms_eight_d_page.k2')
+        ).length,
+        completed: reports.filter(
+          (r) => r.status === 'completed' || r.status === i18n.t('pages.qms_eight_d_page.k3')
+        ).length,
+        closed: reports.filter(
+          (r) => r.status === 'closed' || r.status === i18n.t('pages.qms_eight_d_page.k4')
+        ).length,
       };
     },
     staleTime: 5 * 60 * 1000,
   });
 
   const cards = [
-    { label: i18n.t('pages.qms_eight_d_page.k5'), value: stats?.total ?? 0, icon: FileText, color: 'primary.main' },
-    { label: i18n.t('pages.qms_eight_d_page.k6'), value: stats?.open ?? 0, icon: AlertCircle, color: 'error.main' },
-    { label: i18n.t('pages.qms_eight_d_page.k7'), value: stats?.inProgress ?? 0, icon: Clock, color: 'warning.main' },
-    { label: i18n.t('pages.qms_eight_d_page.k8'), value: stats?.completed ?? 0, icon: CheckCircle, color: 'success.main' },
+    {
+      label: i18n.t('pages.qms_eight_d_page.k5'),
+      value: stats?.total ?? 0,
+      icon: FileText,
+      color: 'primary.main',
+    },
+    {
+      label: i18n.t('pages.qms_eight_d_page.k6'),
+      value: stats?.open ?? 0,
+      icon: AlertCircle,
+      color: 'error.main',
+    },
+    {
+      label: i18n.t('pages.qms_eight_d_page.k7'),
+      value: stats?.inProgress ?? 0,
+      icon: Clock,
+      color: 'warning.main',
+    },
+    {
+      label: i18n.t('pages.qms_eight_d_page.k8'),
+      value: stats?.completed ?? 0,
+      icon: CheckCircle,
+      color: 'success.main',
+    },
   ];
 
   return (
@@ -188,7 +214,10 @@ const RootCauseStepContent: React.FC<WizardStepRenderProps> = ({
             color: 'text.secondary',
           }}
         >
-          <Typography variant='body2'>暂无根因分析数据，点击上方"{i18n.t('pages.qms_eight_d_page.k15')}"{i18n.t('ai.document_analysis.button.start_analysis')}</Typography>
+          <Typography variant='body2'>
+            暂无根因分析数据，点击上方"{i18n.t('pages.qms_eight_d_page.k15')}"
+            {i18n.t('ai.document_analysis.button.start_analysis')}
+          </Typography>
         </Paper>
       )}
     </Box>
@@ -203,7 +232,8 @@ injectRootCauseRenderer((props) => <RootCauseStepContent {...props} />);
 const eightDAdapter: CrudApiAdapter = {
   list: async (params) => {
     const response = await eightDApi.listEightDReports();
-    if (!response.success) throw new Error(response.message || i18n.t('pages.qms_eight_d_page.8d_16'));
+    if (!response.success)
+      throw new Error(response.message || i18n.t('pages.qms_eight_d_page.8d_16'));
     const items = response.data || [];
 
     const search = params?.search as string | undefined;
@@ -238,20 +268,23 @@ const eightDAdapter: CrudApiAdapter = {
   create: async (data) => {
     const payload = data as unknown as Parameters<typeof eightDApi.createEightDReport>[0];
     const response = await eightDApi.createEightDReport(payload);
-    if (!response.success) throw new Error(response.message || i18n.t('pages.qms_eight_d_page.8d_17'));
+    if (!response.success)
+      throw new Error(response.message || i18n.t('pages.qms_eight_d_page.8d_17'));
     return (response.data ?? {}) as Record<string, unknown>;
   },
 
   update: async (id, data) => {
     const payload = data as Parameters<typeof eightDApi.updateEightDReport>[1];
     const response = await eightDApi.updateEightDReport(id, payload);
-    if (!response.success) throw new Error(response.message || i18n.t('pages.qms_eight_d_page.8d_18'));
+    if (!response.success)
+      throw new Error(response.message || i18n.t('pages.qms_eight_d_page.8d_18'));
     return (response.data ?? {}) as Record<string, unknown>;
   },
 
   delete: async (id) => {
     const response = await eightDApi.deleteEightDReport(id);
-    if (!response.success) throw new Error(response.message || i18n.t('pages.qms_eight_d_page.8d_19'));
+    if (!response.success)
+      throw new Error(response.message || i18n.t('pages.qms_eight_d_page.8d_19'));
   },
 };
 
@@ -264,7 +297,10 @@ export default function QmsEightDPage() {
     <CrudPage
       schema={schema}
       apiAdapter={eightDAdapter}
-      breadcrumbs={[{ label: i18n.t('pages.qms_eight_d_page.k20') }, { label: i18n.t('pages.qms_eight_d_page.8d_5') }]}
+      breadcrumbs={[
+        { label: i18n.t('pages.qms_eight_d_page.k20') },
+        { label: i18n.t('pages.qms_eight_d_page.8d_5') },
+      ]}
       headerContent={<EightDStats />}
       idField='id'
     />

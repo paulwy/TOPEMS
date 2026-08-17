@@ -141,7 +141,11 @@ export const disasterRecoveryApi = {
     return apiClient.master.post<RecoveryPoint>('/mdm-v56/recovery/point', data);
   },
 
-  async listRecoveryPoints(params?: { page?: number; pageSize?: number; type?: SnapshotType }): Promise<ApiResponse<{ items: RecoveryPoint[]; total: number }>> {
+  async listRecoveryPoints(params?: {
+    page?: number;
+    pageSize?: number;
+    type?: SnapshotType;
+  }): Promise<ApiResponse<{ items: RecoveryPoint[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
@@ -152,12 +156,18 @@ export const disasterRecoveryApi = {
     );
   },
 
-  async restoreFromPoint(data: { recovery_point_id: string }): Promise<ApiResponse<RecoveryPlanProgress>> {
+  async restoreFromPoint(data: {
+    recovery_point_id: string;
+  }): Promise<ApiResponse<RecoveryPlanProgress>> {
     return apiClient.master.post<RecoveryPlanProgress>('/mdm-v56/recovery/restore', data);
   },
 
-  async getRecoveryStatus(): Promise<ApiResponse<{ state: string; last_recovery_at?: string; pending_jobs: number }>> {
-    return apiClient.master.get<{ state: string; last_recovery_at?: string; pending_jobs: number }>('/mdm-v56/recovery/status');
+  async getRecoveryStatus(): Promise<
+    ApiResponse<{ state: string; last_recovery_at?: string; pending_jobs: number }>
+  > {
+    return apiClient.master.get<{ state: string; last_recovery_at?: string; pending_jobs: number }>(
+      '/mdm-v56/recovery/status'
+    );
   },
 
   async createRecoveryPlan(data: CreateRecoveryPlanRequest): Promise<ApiResponse<RecoveryPlan>> {
@@ -177,11 +187,17 @@ export const disasterRecoveryApi = {
   },
 
   // ===== 业务连续性 =====
-  async createContinuityPlan(data: CreateContinuityPlanRequest): Promise<ApiResponse<ContinuityPlan>> {
+  async createContinuityPlan(
+    data: CreateContinuityPlanRequest
+  ): Promise<ApiResponse<ContinuityPlan>> {
     return apiClient.master.post<ContinuityPlan>('/mdm-v56/continuity/plan', data);
   },
 
-  async listContinuityPlans(params?: { page?: number; pageSize?: number; status?: ContinuityPlanStatus }): Promise<ApiResponse<{ items: ContinuityPlan[]; total: number }>> {
+  async listContinuityPlans(params?: {
+    page?: number;
+    pageSize?: number;
+    status?: ContinuityPlanStatus;
+  }): Promise<ApiResponse<{ items: ContinuityPlan[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
@@ -196,12 +212,18 @@ export const disasterRecoveryApi = {
     return apiClient.master.get<ContinuityPlan>(`/mdm-v56/continuity/plan/${id}`);
   },
 
-  async updateContinuityPlan(id: string, data: Partial<CreateContinuityPlanRequest>): Promise<ApiResponse<ContinuityPlan>> {
+  async updateContinuityPlan(
+    id: string,
+    data: Partial<CreateContinuityPlanRequest>
+  ): Promise<ApiResponse<ContinuityPlan>> {
     return apiClient.master.put<ContinuityPlan>(`/mdm-v56/continuity/plan/${id}`, data);
   },
 
   async testContinuityPlan(id: string): Promise<ApiResponse<{ success: boolean; result: string }>> {
-    return apiClient.master.post<{ success: boolean; result: string }>(`/mdm-v56/continuity/plan/${id}/test`, {});
+    return apiClient.master.post<{ success: boolean; result: string }>(
+      `/mdm-v56/continuity/plan/${id}/test`,
+      {}
+    );
   },
 
   async assessContinuityImpact(): Promise<ApiResponse<ContinuityImpact>> {
@@ -213,7 +235,9 @@ export const disasterRecoveryApi = {
   },
 
   // ===== 跨地域容灾 =====
-  async configureReplication(data: ConfigureReplicationRequest): Promise<ApiResponse<ReplicationConfig>> {
+  async configureReplication(
+    data: ConfigureReplicationRequest
+  ): Promise<ApiResponse<ReplicationConfig>> {
     return apiClient.master.post<ReplicationConfig>('/mdm-v56/dr/replication', data);
   },
 
@@ -225,8 +249,12 @@ export const disasterRecoveryApi = {
     return apiClient.master.post<{ stopped: boolean }>('/mdm-v56/dr/replication/stop', {});
   },
 
-  async getReplicationStatus(): Promise<ApiResponse<{ config: ReplicationConfig[]; lag_seconds: number }>> {
-    return apiClient.master.get<{ config: ReplicationConfig[]; lag_seconds: number }>('/mdm-v56/dr/replication/status');
+  async getReplicationStatus(): Promise<
+    ApiResponse<{ config: ReplicationConfig[]; lag_seconds: number }>
+  > {
+    return apiClient.master.get<{ config: ReplicationConfig[]; lag_seconds: number }>(
+      '/mdm-v56/dr/replication/status'
+    );
   },
 
   async initiateFailover(data: InitiateFailoverRequest): Promise<ApiResponse<FailoverRecord>> {
@@ -237,7 +265,10 @@ export const disasterRecoveryApi = {
     return apiClient.master.post<FailoverRecord>(`/mdm-v56/dr/failover/${id}/complete`, {});
   },
 
-  async getFailoverHistory(params?: { page?: number; pageSize?: number }): Promise<ApiResponse<{ items: FailoverRecord[]; total: number }>> {
+  async getFailoverHistory(params?: {
+    page?: number;
+    pageSize?: number;
+  }): Promise<ApiResponse<{ items: FailoverRecord[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
@@ -247,7 +278,9 @@ export const disasterRecoveryApi = {
     );
   },
 
-  async switchRegions(data: { target_region: string }): Promise<ApiResponse<{ switched: boolean }>> {
+  async switchRegions(data: {
+    target_region: string;
+  }): Promise<ApiResponse<{ switched: boolean }>> {
     return apiClient.master.post<{ switched: boolean }>('/mdm-v56/dr/switch', data);
   },
 

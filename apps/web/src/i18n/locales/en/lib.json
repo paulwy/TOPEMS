@@ -36,5 +36,6 @@
       "k10": "Load",
       "k20": "Loading plugins:"
     }
-  }
+  },
+  "lib.pluginLoader.k21": "..."
 }

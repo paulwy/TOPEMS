@@ -226,8 +226,9 @@ export interface CompanyRelationQueryParams extends PaginationParams {
 // ============ Helper ============
 
 const resolvePageSize = (params?: PaginationParams): string | undefined => {
-  const ps = (params as { pageSize?: number } | undefined)?.pageSize
-    ?? (params as { pagesize?: number } | undefined)?.pagesize;
+  const ps =
+    (params as { pageSize?: number } | undefined)?.pageSize ??
+    (params as { pagesize?: number } | undefined)?.pagesize;
   return ps ? ps.toString() : undefined;
 };
 
@@ -259,7 +260,10 @@ export const consolidationApi = {
     return apiClient.erp.get<ConsolidationScope>(`/consolidation/scopes/${id}`);
   },
 
-  async updateScope(id: string, data: UpdateScopeRequest): Promise<ApiResponse<ConsolidationScope>> {
+  async updateScope(
+    id: string,
+    data: UpdateScopeRequest
+  ): Promise<ApiResponse<ConsolidationScope>> {
     return apiClient.erp.put<ConsolidationScope>(`/consolidation/scopes/${id}`, data);
   },
 
@@ -278,11 +282,16 @@ export const consolidationApi = {
     );
   },
 
-  async addScopeCompany(data: AddScopeCompanyRequest): Promise<ApiResponse<ConsolidationScopeCompany>> {
+  async addScopeCompany(
+    data: AddScopeCompanyRequest
+  ): Promise<ApiResponse<ConsolidationScopeCompany>> {
     return apiClient.erp.post<ConsolidationScopeCompany>('/consolidation/scopes/companies', data);
   },
 
-  async updateScopeCompany(companyId: string, data: UpdateScopeCompanyRequest): Promise<ApiResponse<ConsolidationScopeCompany>> {
+  async updateScopeCompany(
+    companyId: string,
+    data: UpdateScopeCompanyRequest
+  ): Promise<ApiResponse<ConsolidationScopeCompany>> {
     return apiClient.erp.put<ConsolidationScopeCompany>(
       `/consolidation/scopes/companies/${companyId}`,
       data
@@ -298,7 +307,9 @@ export const consolidationApi = {
   },
 
   // ===== Elimination Rules (抵销规则) =====
-  async listEliminationRules(params?: EliminationRuleQueryParams): Promise<ApiResponse<EliminationRuleListResponse>> {
+  async listEliminationRules(
+    params?: EliminationRuleQueryParams
+  ): Promise<ApiResponse<EliminationRuleListResponse>> {
     const sp = buildSearchParams(params);
     if (params?.rule_type) sp.set('rule_type', params.rule_type);
     if (params?.status) sp.set('status', params.status);
@@ -308,7 +319,9 @@ export const consolidationApi = {
     );
   },
 
-  async createEliminationRule(data: CreateEliminationRuleRequest): Promise<ApiResponse<EliminationRule>> {
+  async createEliminationRule(
+    data: CreateEliminationRuleRequest
+  ): Promise<ApiResponse<EliminationRule>> {
     return apiClient.erp.post<EliminationRule>('/consolidation/elimination-rules', data);
   },
 
@@ -316,7 +329,10 @@ export const consolidationApi = {
     return apiClient.erp.get<EliminationRule>(`/consolidation/elimination-rules/${id}`);
   },
 
-  async updateEliminationRule(id: string, data: UpdateEliminationRuleRequest): Promise<ApiResponse<EliminationRule>> {
+  async updateEliminationRule(
+    id: string,
+    data: UpdateEliminationRuleRequest
+  ): Promise<ApiResponse<EliminationRule>> {
     return apiClient.erp.put<EliminationRule>(`/consolidation/elimination-rules/${id}`, data);
   },
 
@@ -329,13 +345,13 @@ export const consolidationApi = {
   },
 
   async exportEliminationWorksheet(scopeId: string): Promise<ApiResponse<Blob>> {
-    return apiClient.erp.get<Blob>(
-      `/consolidation/scopes/${scopeId}/elimination-worksheet/export`
-    );
+    return apiClient.erp.get<Blob>(`/consolidation/scopes/${scopeId}/elimination-worksheet/export`);
   },
 
   // ===== Internal Transactions (内部交易) =====
-  async listInternalTransactions(params?: InternalTransactionQueryParams): Promise<ApiResponse<InternalTransactionListResponse>> {
+  async listInternalTransactions(
+    params?: InternalTransactionQueryParams
+  ): Promise<ApiResponse<InternalTransactionListResponse>> {
     const sp = buildSearchParams(params);
     if (params?.source_company_id) sp.set('source_company_id', params.source_company_id);
     if (params?.target_company_id) sp.set('target_company_id', params.target_company_id);
@@ -350,7 +366,10 @@ export const consolidationApi = {
     return apiClient.erp.get<InternalTransaction>(`/consolidation/internal-transactions/${id}`);
   },
 
-  async executeElimination(data: { scope_id: string; period: string }): Promise<ApiResponse<{ success: boolean; message: string }>> {
+  async executeElimination(data: {
+    scope_id: string;
+    period: string;
+  }): Promise<ApiResponse<{ success: boolean; message: string }>> {
     return apiClient.erp.post<{ success: boolean; message: string }>(
       '/consolidation/execute-elimination',
       data
@@ -384,29 +403,44 @@ export const consolidationApi = {
   },
 
   async getReportLines(reportId: string): Promise<ApiResponse<ReportLineListResponse>> {
-    return apiClient.erp.get<ReportLineListResponse>(
-      `/consolidation/reports/${reportId}/lines`
-    );
+    return apiClient.erp.get<ReportLineListResponse>(`/consolidation/reports/${reportId}/lines`);
   },
 
   async exportReport(reportId: string): Promise<ApiResponse<Blob>> {
     return apiClient.erp.get<Blob>(`/consolidation/reports/${reportId}/export`);
   },
 
-  async approveReport(reportId: string, data?: ApproveReportRequest): Promise<ApiResponse<ConsolidationReport>> {
-    return apiClient.erp.post<ConsolidationReport>(`/consolidation/reports/${reportId}/approve`, data || {});
+  async approveReport(
+    reportId: string,
+    data?: ApproveReportRequest
+  ): Promise<ApiResponse<ConsolidationReport>> {
+    return apiClient.erp.post<ConsolidationReport>(
+      `/consolidation/reports/${reportId}/approve`,
+      data || {}
+    );
   },
 
-  async submitReport(reportId: string, data?: SubmitReportRequest): Promise<ApiResponse<ConsolidationReport>> {
-    return apiClient.erp.post<ConsolidationReport>(`/consolidation/reports/${reportId}/submit`, data || {});
+  async submitReport(
+    reportId: string,
+    data?: SubmitReportRequest
+  ): Promise<ApiResponse<ConsolidationReport>> {
+    return apiClient.erp.post<ConsolidationReport>(
+      `/consolidation/reports/${reportId}/submit`,
+      data || {}
+    );
   },
 
   async publishReport(reportId: string): Promise<ApiResponse<ConsolidationReport>> {
-    return apiClient.erp.post<ConsolidationReport>(`/consolidation/reports/${reportId}/publish`, {});
+    return apiClient.erp.post<ConsolidationReport>(
+      `/consolidation/reports/${reportId}/publish`,
+      {}
+    );
   },
 
   // ===== Company Relations (公司关系) =====
-  async listCompanyRelations(params?: CompanyRelationQueryParams): Promise<ApiResponse<CompanyRelationListResponse>> {
+  async listCompanyRelations(
+    params?: CompanyRelationQueryParams
+  ): Promise<ApiResponse<CompanyRelationListResponse>> {
     const sp = buildSearchParams(params);
     if (params?.parent_company_id) sp.set('parent_company_id', params.parent_company_id);
     if (params?.relation_type) sp.set('relation_type', params.relation_type);
@@ -416,11 +450,16 @@ export const consolidationApi = {
     );
   },
 
-  async createCompanyRelation(data: CreateCompanyRelationRequest): Promise<ApiResponse<CompanyRelation>> {
+  async createCompanyRelation(
+    data: CreateCompanyRelationRequest
+  ): Promise<ApiResponse<CompanyRelation>> {
     return apiClient.erp.post<CompanyRelation>('/consolidation/company-relations', data);
   },
 
-  async updateCompanyRelation(id: string, data: UpdateCompanyRelationRequest): Promise<ApiResponse<CompanyRelation>> {
+  async updateCompanyRelation(
+    id: string,
+    data: UpdateCompanyRelationRequest
+  ): Promise<ApiResponse<CompanyRelation>> {
     return apiClient.erp.put<CompanyRelation>(`/consolidation/company-relations/${id}`, data);
   },
 

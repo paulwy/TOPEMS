@@ -1,10 +1,52 @@
+#!/usr/bin/env node
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
+
+// ===== CLI 解析 =====
+function parseArgs(argv) {
+  const opts = { help: false, apply: false, out: null };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === '--help' || a === '-h') opts.help = true;
+    else if (a === '--apply') opts.apply = true;
+    else if (a === '--out' && argv[i + 1]) opts.out = argv[++i];
+    else if (a.startsWith('--')) { process.stderr.write(`[p7-perm-audit-v5] ⚠️  未知参数 ${a}\n`); opts.help = true; }
+  }
+  return opts;
+}
+const USAGE = `
+p7-perm-audit-v5.cjs — P7 权限编码 LEGAL vs USED 差异审计（v5 全量扫描版本）
+
+USAGE:
+  node scripts/p7-perm-audit-v5.cjs [OPTIONS]
+
+OPTIONS:
+  -h, --help            显示帮助并退出
+      --apply           真正写 3 个 artifact 文件到输出目录；不传为 DRY-RUN（零副作用，只打印统计 + would-write 路径）
+      --out <dir>       指定输出目录；默认 scripts/tmp-output
+
+EXAMPLES:
+  node scripts/p7-perm-audit-v5.cjs
+  node scripts/p7-perm-audit-v5.cjs --apply
+  node scripts/p7-perm-audit-v5.cjs --apply --out /tmp/p7-artifacts
+`;
+const OPTS = parseArgs(process.argv.slice(2));
+if (OPTS.help) { process.stdout.write(USAGE); process.exit(0); }
+
 const APPS = path.join(ROOT, 'apps/web/src');
 function readFile(p){try{return fs.readFileSync(p,'utf8');}catch{return '';}}
-const outDir = path.join(ROOT, 'scripts', 'tmp-output');
-if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+
+const baseOutDir = OPTS.out
+  ? (path.isAbsolute(OPTS.out) ? OPTS.out : path.resolve(ROOT, OPTS.out))
+  : path.join(ROOT, 'scripts', 'tmp-output');
+const outDir = baseOutDir;
+if (OPTS.apply && !fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+
+process.stderr.write(
+  `[p7-perm-audit-v5] ${OPTS.apply ? 'APPLY 写磁盘' : 'DRY-RUN（加 --apply 才写 artifact）'}\n` +
+  `[p7-perm-audit-v5] 输出目录: ${outDir}\n\n`
+);
 
 /* ============ A：从 permissions.ts 提取 LEGAL ============ */
 const permSrc = readFile(path.join(APPS, 'config/permissions.ts'));
@@ -302,11 +344,16 @@ for (const [m,arr] of Object.entries(deadByMod).sort((a,b)=>b[1].length-a[1].len
 P(``);
 
 P(`📝 详细清单输出位置：`);
-fs.writeFileSync(path.join(outDir, 'p7-not-legal.txt'), NOT_LEGAL.map(c => c+'\t# '+(USED.get(c)||[]).join(' | ')).join('\n'));
-fs.writeFileSync(path.join(outDir, 'p7-dead.txt'), DEAD.map(c => {
-  const info = PERM_INFO.get(c);
-  return `${c}\t# module=${info?.module||'-'}  action=${info?.action||'-'}  name=${info?.name||'-'}  group=${info?.group||'-'}`;
-}).join('\n'));
+const p7NotLegal = path.join(outDir, 'p7-not-legal.txt');
+const p7Dead = path.join(outDir, 'p7-dead.txt');
+const p7Report = path.join(outDir, 'p7-audit-report.json');
+if (OPTS.apply) {
+  fs.writeFileSync(p7NotLegal, NOT_LEGAL.map(c => c+'\t# '+(USED.get(c)||[]).join(' | ')).join('\n'));
+  fs.writeFileSync(p7Dead, DEAD.map(c => {
+    const info = PERM_INFO.get(c);
+    return `${c}\t# module=${info?.module||'-'}  action=${info?.action||'-'}  name=${info?.name||'-'}  group=${info?.group||'-'}`;
+  }).join('\n'));
+}
 const summary = {
   LEGAL_count: LEGAL.size,
   USED_count: USED_CODES.length,
@@ -319,9 +366,17 @@ const summary = {
   DEAD: DEAD.map(c => ({ code: c, info: PERM_INFO.get(c) || null })),
   MISMATCH,
 };
-fs.writeFileSync(path.join(outDir, 'p7-audit-report.json'), JSON.stringify(summary, null, 2));
-P(`  • ${path.join(outDir, 'p7-not-legal.txt')}（${NOT_LEGAL.length} 条 NOT_LEGAL）`);
-P(`  • ${path.join(outDir, 'p7-dead.txt')}（${DEAD.length} 条 DEAD，带元数据）`);
-P(`  • ${path.join(outDir, 'p7-audit-report.json')}（结构化 JSON 报告）`);
+if (OPTS.apply) {
+  fs.writeFileSync(p7Report, JSON.stringify(summary, null, 2));
+}
+const label = OPTS.apply ? '→' : 'would write→';
+P(`  • ${p7NotLegal}${OPTS.apply?'':'  (未写，加 --apply)'}（${NOT_LEGAL.length} 条 NOT_LEGAL）`);
+P(`  • ${p7Dead}${OPTS.apply?'':'  (未写，加 --apply)'}（${DEAD.length} 条 DEAD，带元数据）`);
+P(`  • ${p7Report}${OPTS.apply?'':'  (未写，加 --apply)'}（结构化 JSON 报告）`);
 P(``);
 P(`✅ RBAC 合规判定：${NOT_LEGAL.length===0 && MISMATCH.length===0 ? 'PASS（NOT_LEGAL=0, MISMATCH=0）' : 'FAIL（需修复）'}`);
+if (!OPTS.apply) {
+  process.stderr.write(
+    `\n[p7-perm-audit-v5] 💡 当前为 DRY-RUN，加 --apply 才会写 3 个 artifact 文件。\n`
+  );
+}

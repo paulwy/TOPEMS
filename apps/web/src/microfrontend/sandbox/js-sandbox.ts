@@ -244,7 +244,9 @@ export class JavaScriptSandbox {
    */
   execScript(code: string): unknown {
     if (!this.active) {
-      throw new Error(`${i18n.t('microfrontend.js-sandbox.k0')}${this.moduleId}${i18n.t('microfrontend.js-sandbox.k1')}`);
+      throw new Error(
+        `${i18n.t('microfrontend.js-sandbox.k0')}${this.moduleId}${i18n.t('microfrontend.js-sandbox.k1')}`
+      );
     }
 
     try {
@@ -259,7 +261,10 @@ export class JavaScriptSandbox {
       );
       return runner(this.proxyWindow, this.proxyDocument, this.proxyWindow, this.proxyWindow);
     } catch (err) {
-      console.error(`${i18n.t('microfrontend.js-sandbox.k2')}${this.moduleId}${i18n.t('microfrontend.js-sandbox.k3')}`, err);
+      console.error(
+        `${i18n.t('microfrontend.js-sandbox.k2')}${this.moduleId}${i18n.t('microfrontend.js-sandbox.k3')}`,
+        err
+      );
       throw err;
     }
   }
@@ -272,7 +277,9 @@ export class JavaScriptSandbox {
   /** 设置沙箱内全局变量（同时触发冲突检测） */
   setGlobalVar(name: string, value: unknown): void {
     if (this.options.denyGlobals.includes(name)) {
-      console.warn(`${i18n.t('microfrontend.js-sandbox.k4')}${this.moduleId}${i18n.t('microfrontend.js-sandbox.k5')}${name}`);
+      console.warn(
+        `${i18n.t('microfrontend.js-sandbox.k4')}${this.moduleId}${i18n.t('microfrontend.js-sandbox.k5')}${name}`
+      );
       return;
     }
 
@@ -381,7 +388,9 @@ export class JavaScriptSandbox {
         }
         // 禁止访问的变量
         if (deny.has(key)) {
-          console.warn(`${i18n.t('microfrontend.js-sandbox.k6')}${sandbox.moduleId}${i18n.t('microfrontend.js-sandbox.k7')}${key}`);
+          console.warn(
+            `${i18n.t('microfrontend.js-sandbox.k6')}${sandbox.moduleId}${i18n.t('microfrontend.js-sandbox.k7')}${key}`
+          );
           return;
         }
         // 优先返回沙箱内部变量
@@ -404,8 +413,12 @@ export class JavaScriptSandbox {
       set(_target, prop: string | symbol, value: unknown): boolean {
         const key = String(prop);
         if (deny.has(key)) {
-          console.warn(`${i18n.t('microfrontend.js-sandbox.k8')}${sandbox.moduleId}${i18n.t('microfrontend.js-sandbox.k9')}${key}`);
-          {i18n.t('microfrontend.js-sandbox.returntrue_0')}
+          console.warn(
+            `${i18n.t('microfrontend.js-sandbox.k8')}${sandbox.moduleId}${i18n.t('microfrontend.js-sandbox.k9')}${key}`
+          );
+          {
+            i18n.t('microfrontend.js-sandbox.returntrue_0');
+          }
         }
         // 记录原始值（首次写入时）
         if (!sandbox.originalValues.has(key) && key in target) {
@@ -493,7 +506,9 @@ export class JavaScriptSandbox {
       set(_target, prop: string | symbol, value: unknown): boolean {
         const key = String(prop);
         // document 的写入通常不拦截，但记录
-        console.info(`${i18n.t('microfrontend.js-sandbox.k10')}${sandbox.moduleId}${i18n.t('microfrontend.js-sandbox.document_11')}${key}`);
+        console.info(
+          `${i18n.t('microfrontend.js-sandbox.k10')}${sandbox.moduleId}${i18n.t('microfrontend.js-sandbox.document_11')}${key}`
+        );
         try {
           (target as any)[prop] = value;
         } catch {

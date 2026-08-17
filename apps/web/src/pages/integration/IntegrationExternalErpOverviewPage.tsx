@@ -426,7 +426,8 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                         gap: 1,
                       }}
                     >
-                      <Cloud size={20} /> {t('integration.integration_external_erp_overview_page.m2')}
+                      <Cloud size={20} />{' '}
+                      {t('integration.integration_external_erp_overview_page.m2')}
                     </Typography>
                   </Stack>
                   <Typography
@@ -471,7 +472,8 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                         gap: 1,
                       }}
                     >
-                      <Cloud size={20} /> {t('integration.integration_external_erp_overview_page.m3')}
+                      <Cloud size={20} />{' '}
+                      {t('integration.integration_external_erp_overview_page.m3')}
                     </Typography>
                   </Stack>
                   <Typography

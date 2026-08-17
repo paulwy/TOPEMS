@@ -19,6 +19,7 @@ import {
 import i18n from '@/i18n';
 import type { ProjectPhase, ProjectMilestone } from '@/api/pm';
 import { ActionButton, StatusBadge } from '@/components/common';
+
 export interface PmProjectMilestoneProps {
   milestones: ProjectMilestone[];
   phases: ProjectPhase[];
@@ -60,7 +61,9 @@ const PmProjectMilestone: React.FC<PmProjectMilestoneProps> = ({
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ width: 200 }}>{i18n.t('pm.project_detail.milestone_name')}</TableCell>
+                <TableCell sx={{ width: 200 }}>
+                  {i18n.t('pm.project_detail.milestone_name')}
+                </TableCell>
                 <TableCell sx={{ width: 150 }}>{i18n.t('pm.project_detail.target_date')}</TableCell>
                 <TableCell>{i18n.t('pm.project_detail.status')}</TableCell>
                 <TableCell>{i18n.t('pm.project_detail.belongs_to_phase')}</TableCell>

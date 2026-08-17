@@ -2,6 +2,7 @@ import React from 'react';
 import { Settings, CheckSquare, Bell, FileText, Shield, Plug } from 'lucide-react';
 import type { SettingGroup } from './types';
 import i18n from '@/i18n';
+
 export const SETTING_GROUPS: SettingGroup[] = [
   {
     id: 'general',

@@ -4,33 +4,52 @@ import type { EntitySchema } from '@/schema';
 import { commonAuditSchema } from './_shared';
 import i18n from '@/i18n';
 
-export const oppStage = z.enum(['draft', 'lead', 'qualified', 'proposal', 'negotiation', 'won', 'lost', 'closed']);
+export const oppStage = z.enum([
+  'draft',
+  'lead',
+  'qualified',
+  'proposal',
+  'negotiation',
+  'won',
+  'lost',
+  'closed',
+]);
 export const oppPriority = z.enum(['high', 'medium', 'low']);
 export const oppStatus = z.enum(['open', 'won', 'lost', 'archived']);
 
-export const opportunityZodSchema = z.object({
-  id: z.string().uuid(),
-  tenantId: z.string().uuid(),
-  oppNo: z.string().max(64),
-  title: z.string().min(2).max(200),
-  customerId: z.string().uuid().optional(),
-  customerName: z.string().max(120).optional(),
-  stage: oppStage.default('draft'),
-  priority: oppPriority.default('medium'),
-  amount: z.coerce.number().optional(),
-  winRate: z.coerce.number().int().min(0).max(100).optional(),
-  closeDate: z.coerce.date().optional(),
-  ownerId: z.string().uuid().optional(),
-  status: oppStatus.default('open'),
-  description: z.string().optional(),
-}).merge(commonAuditSchema);
+export const opportunityZodSchema = z
+  .object({
+    id: z.string().uuid(),
+    tenantId: z.string().uuid(),
+    oppNo: z.string().max(64),
+    title: z.string().min(2).max(200),
+    customerId: z.string().uuid().optional(),
+    customerName: z.string().max(120).optional(),
+    stage: oppStage.default('draft'),
+    priority: oppPriority.default('medium'),
+    amount: z.coerce.number().optional(),
+    winRate: z.coerce.number().int().min(0).max(100).optional(),
+    closeDate: z.coerce.date().optional(),
+    ownerId: z.string().uuid().optional(),
+    status: oppStatus.default('open'),
+    description: z.string().optional(),
+  })
+  .merge(commonAuditSchema);
 
 export type Opportunity = z.infer<typeof opportunityZodSchema>;
 export type OppStage = z.infer<typeof oppStage>;
 export type OppPriority = z.infer<typeof oppPriority>;
 export type OppStatus = z.infer<typeof oppStatus>;
 
-export const createOpportunitySchema = opportunityZodSchema.omit({ id: true, tenantId: true, stage: true, status: true, createdAt: true, updatedAt: true, deletedAt: true });
+export const createOpportunitySchema = opportunityZodSchema.omit({
+  id: true,
+  tenantId: true,
+  stage: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
 export type CreateOpportunityRequest = z.infer<typeof createOpportunitySchema>;
 
 export const updateOpportunitySchema = createOpportunitySchema.partial();
@@ -63,7 +82,10 @@ export const opportunitySchema: EntitySchema<Opportunity> = {
       type: 'text',
       required: true,
       listWidth: 180,
-      validation: [{ type: 'minLength', value: 2 }, { type: 'maxLength', value: 200 }],
+      validation: [
+        { type: 'minLength', value: 2 },
+        { type: 'maxLength', value: 200 },
+      ],
     },
     {
       name: 'customerId',
@@ -178,7 +200,17 @@ export const opportunitySchema: EntitySchema<Opportunity> = {
   ],
 
   list: {
-    columns: ['oppNo', 'title', 'customerName', 'stage', 'priority', 'amount', 'winRate', 'closeDate', 'status'],
+    columns: [
+      'oppNo',
+      'title',
+      'customerName',
+      'stage',
+      'priority',
+      'amount',
+      'winRate',
+      'closeDate',
+      'status',
+    ],
     searchFields: ['oppNo', 'title', 'customerName'],
     pageSize: 10,
     statusBadge: {

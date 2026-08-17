@@ -52,7 +52,8 @@ import { MapSection } from './components/MapSection';
 import { DataTableSection } from './components/DataTableSection';
 import { EntityFormModal } from './components/EntityFormModal';
 import { ImportModal } from './components/ImportModal';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const GisContent: React.FC = () => {
   const {
     state,
@@ -479,7 +480,14 @@ const GisContent: React.FC = () => {
     switch (activeTab) {
       case 'devicePoints':
         headers = ['name', 'device_type', 'latitude', 'longitude', 'status', 'description'];
-        sampleRow = [i18n.t('bi.index.a_24'), i18n.t('bi.index.k23'), '31.2304', '121.4737', 'active', i18n.t('bi.index.k22')];
+        sampleRow = [
+          i18n.t('bi.index.a_24'),
+          i18n.t('bi.index.k23'),
+          '31.2304',
+          '121.4737',
+          'active',
+          i18n.t('bi.index.k22'),
+        ];
         break;
       case 'pipelines':
         headers = [
@@ -491,11 +499,26 @@ const GisContent: React.FC = () => {
           'end_lng',
           'status',
         ];
-        sampleRow = [i18n.t('bi.index.a_26'), i18n.t('bi.index.k25'), '31.2304', '121.4737', '31.2305', '121.4738', 'active'];
+        sampleRow = [
+          i18n.t('bi.index.a_26'),
+          i18n.t('bi.index.k25'),
+          '31.2304',
+          '121.4737',
+          '31.2305',
+          '121.4738',
+          'active',
+        ];
         break;
       case 'storageLocations':
         headers = ['name', 'location_type', 'latitude', 'longitude', 'capacity', 'current_usage'];
-        sampleRow = [i18n.t('bi.index.a_28'), i18n.t('bi.index.k27'), '31.2304', '121.4737', '1000', '500'];
+        sampleRow = [
+          i18n.t('bi.index.a_28'),
+          i18n.t('bi.index.k27'),
+          '31.2304',
+          '121.4737',
+          '1000',
+          '500',
+        ];
         break;
       case 'evidenceRecords':
         headers = [
@@ -507,11 +530,25 @@ const GisContent: React.FC = () => {
           'file_url',
           'description',
         ];
-        sampleRow = [i18n.t('bi.index.1_32'), i18n.t('bi.index.k31'), '31.2304', '121.4737', i18n.t('bi.index.k30'), '', i18n.t('bi.index.k29')];
+        sampleRow = [
+          i18n.t('bi.index.1_32'),
+          i18n.t('bi.index.k31'),
+          '31.2304',
+          '121.4737',
+          i18n.t('bi.index.k30'),
+          '',
+          i18n.t('bi.index.k29'),
+        ];
         break;
       case 'factoryMaps':
         headers = ['name', 'code', 'map_type', 'file_url', 'description'];
-        sampleRow = [i18n.t('bi.index.k35'), 'F001', i18n.t('bi.index.k34'), '', i18n.t('bi.index.k33')];
+        sampleRow = [
+          i18n.t('bi.index.k35'),
+          'F001',
+          i18n.t('bi.index.k34'),
+          '',
+          i18n.t('bi.index.k33'),
+        ];
         break;
       case 'businessLocations':
         headers = [

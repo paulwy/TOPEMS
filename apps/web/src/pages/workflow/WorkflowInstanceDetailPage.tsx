@@ -25,7 +25,8 @@ import { designTokens } from '@/theme/tokens';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 interface InstanceDetails {
   instance: WorkflowInstance;
   approvals: Approval[];
@@ -50,7 +51,9 @@ const FlowInstanceDetailPage: React.FC = () => {
   });
   const details = detailsQuery.data ?? null;
   const loading = detailsQuery.isLoading;
-  const error = detailsQuery.isError ? i18n.t('workflow.workflow_instance_detail_page.k0') : undefined;
+  const error = detailsQuery.isError
+    ? i18n.t('workflow.workflow_instance_detail_page.k0')
+    : undefined;
   useEffect(() => {
     if (detailsQuery.isError) {
       apiLogger.error(i18n.t('pages.workflow_instance_detail_page.k0'), detailsQuery.error);
@@ -186,7 +189,9 @@ const FlowInstanceDetailPage: React.FC = () => {
                   sx={{ alignItems: 'center' }}
                 >
                   <User size={14} />
-                  <Typography variant='body2'>{instance.initiator_id || i18n.t('workflow.workflow_instance_detail_page.k9')}</Typography>
+                  <Typography variant='body2'>
+                    {instance.initiator_id || i18n.t('workflow.workflow_instance_detail_page.k9')}
+                  </Typography>
                 </Stack>
               </Box>
               <Box>
@@ -267,7 +272,9 @@ const FlowInstanceDetailPage: React.FC = () => {
                     marginBottom: 8,
                   }}
                 />
-                <Typography sx={{ color: 'grey.500' }}>{i18n.t('workflow.workflow_instance_detail_page.k11')}</Typography>
+                <Typography sx={{ color: 'grey.500' }}>
+                  {i18n.t('workflow.workflow_instance_detail_page.k11')}
+                </Typography>
               </Box>
             ) : (
               <Stack spacing={2}>
@@ -338,7 +345,8 @@ const FlowInstanceDetailPage: React.FC = () => {
                           variant='caption'
                           color='text.secondary'
                         >
-                          [i18n.t('pages.workflow_instance_detail_page.k9')]: {approval.assignee_id || 'N/A'}
+                          [i18n.t('pages.workflow_instance_detail_page.k9')]:{' '}
+                          {approval.assignee_id || 'N/A'}
                         </Typography>
                       </Stack>
                       <Stack
@@ -351,7 +359,8 @@ const FlowInstanceDetailPage: React.FC = () => {
                           variant='caption'
                           color='text.secondary'
                         >
-                          [i18n.t('pages.workflow_instance_detail_page.k10')]: {new Date(approval.created_at).toLocaleString()}
+                          [i18n.t('pages.workflow_instance_detail_page.k10')]:{' '}
+                          {new Date(approval.created_at).toLocaleString()}
                         </Typography>
                       </Stack>
                       {approval.approved_at && (
@@ -365,7 +374,8 @@ const FlowInstanceDetailPage: React.FC = () => {
                             variant='caption'
                             color='text.secondary'
                           >
-                            [i18n.t('pages.workflow_instance_detail_page.k11')]: {new Date(approval.approved_at).toLocaleString()}
+                            [i18n.t('pages.workflow_instance_detail_page.k11')]:{' '}
+                            {new Date(approval.approved_at).toLocaleString()}
                           </Typography>
                         </Stack>
                       )}
@@ -412,7 +422,9 @@ const FlowInstanceDetailPage: React.FC = () => {
                     marginBottom: 8,
                   }}
                 />
-                <Typography sx={{ color: 'grey.500' }}>{i18n.t('workflow.workflow_instance_detail_page.k13')}</Typography>
+                <Typography sx={{ color: 'grey.500' }}>
+                  {i18n.t('workflow.workflow_instance_detail_page.k13')}
+                </Typography>
               </Box>
             ) : (
               <Stack spacing={2}>
@@ -441,7 +453,9 @@ const FlowInstanceDetailPage: React.FC = () => {
                         variant='body2'
                         sx={{ fontWeight: 500 }}
                       >
-                        {record.action === 'approve' ? i18n.t('workflow.workflow_instance_detail_page.k15') : i18n.t('workflow.workflow_instance_detail_page.k14')}
+                        {record.action === 'approve'
+                          ? i18n.t('workflow.workflow_instance_detail_page.k15')
+                          : i18n.t('workflow.workflow_instance_detail_page.k14')}
                       </Typography>
                     </Stack>
                     <Typography
@@ -484,7 +498,11 @@ const FlowInstanceDetailPage: React.FC = () => {
       <DetailPageTemplate
         title={i18n.t('workflow.workflow_instance_detail_page.k16')}
         subtitle={details?.instance.id}
-        detailItemName={details?.instance?.name || details?.instance?.id || i18n.t('workflow.workflow_instance_detail_page.k17')}
+        detailItemName={
+          details?.instance?.name ||
+          details?.instance?.id ||
+          i18n.t('workflow.workflow_instance_detail_page.k17')
+        }
         loading={loading}
         error={error}
         backHref={WORKFLOW_PATHS.instances}

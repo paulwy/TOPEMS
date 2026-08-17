@@ -122,7 +122,10 @@ export interface Shipment {
   updated_at?: string;
 }
 
-export type CreateShipmentRequest = Omit<Shipment, 'id' | 'tenant_id' | 'created_at' | 'updated_at'>;
+export type CreateShipmentRequest = Omit<
+  Shipment,
+  'id' | 'tenant_id' | 'created_at' | 'updated_at'
+>;
 export type UpdateShipmentRequest = Partial<CreateShipmentRequest>;
 
 export interface PaginationParams {

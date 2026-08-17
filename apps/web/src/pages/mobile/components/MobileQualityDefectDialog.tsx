@@ -20,6 +20,7 @@ import { Camera, AlertTriangle } from 'lucide-react';
 import { MobileButton } from '@/components/mobile';
 import type { QualityTask, DefectRecord } from '@/api/mobile';
 import type { DefectForm } from '../hooks/useMobileQuality';
+
 interface MobileQualityDefectDialogProps {
   open: boolean;
   onClose: () => void;
@@ -74,7 +75,8 @@ export const MobileQualityDefectDialog: React.FC<MobileQualityDefectDialogProps>
                 variant='caption'
                 color='text.secondary'
               >
-                {selectedTask.task_no} · {i18n.t('mobile.quality.label.batch')} {selectedTask.batch_no}
+                {selectedTask.task_no} · {i18n.t('mobile.quality.label.batch')}{' '}
+                {selectedTask.batch_no}
               </Typography>
             </Paper>
           )}

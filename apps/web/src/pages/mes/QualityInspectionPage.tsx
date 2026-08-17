@@ -10,7 +10,8 @@ import { qualityApi } from '@/api/mes/quality';
 import type { QualityInspection } from '@/api/mes/quality';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const qualityApiAdapter: CrudApiAdapter<QualityInspection> = {
   list: async (params) => {
     const response = await qualityApi.listInspections({
@@ -88,11 +89,13 @@ const QualityInspectionPage: React.FC = () => {
           [i18n.t('pages.quality_inspection_page.k2')]: item.product_code,
           [i18n.t('pages.quality_inspection_page.k3')]: item.product_name,
           [i18n.t('pages.quality_inspection_page.k4')]: item.process_name || '',
-          [i18n.t('pages.quality_inspection_page.k5')]: typeLabelMap[item.inspection_type] || item.inspection_type,
+          [i18n.t('pages.quality_inspection_page.k5')]:
+            typeLabelMap[item.inspection_type] || item.inspection_type,
           [i18n.t('pages.quality_inspection_page.k6')]: item.quantity,
           [i18n.t('pages.quality_inspection_page.k7')]: item.qualified_quantity,
           [i18n.t('pages.quality_inspection_page.k8')]: item.unqualified_quantity,
-          [i18n.t('pages.quality_inspection_page.k9')]: `${item.qualification_rate?.toFixed(2) || 0}%`,
+          [i18n.t('pages.quality_inspection_page.k9')]:
+            `${item.qualification_rate?.toFixed(2) || 0}%`,
           [i18n.t('pages.quality_inspection_page.k10')]: item.inspector || '',
           [i18n.t('pages.quality_inspection_page.k11')]: item.inspection_time
             ? new Date(item.inspection_time).toLocaleString('zh-CN')
@@ -103,7 +106,10 @@ const QualityInspectionPage: React.FC = () => {
         const worksheet = XLSX.utils.json_to_sheet(exportData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, i18n.t('mes.quality_inspection_page.k4'));
-        XLSX.writeFile(workbook, `${i18n.t('pages.quality_inspection_page.__0')}${new Date().toISOString().split('T')[0]}.xlsx`);
+        XLSX.writeFile(
+          workbook,
+          `${i18n.t('pages.quality_inspection_page.__0')}${new Date().toISOString().split('T')[0]}.xlsx`
+        );
         addNotification({
           type: 'success',
           title: i18n.t('mes.quality_inspection_page.export'),

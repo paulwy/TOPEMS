@@ -244,7 +244,9 @@ export const quickCommands: QuickCommand[] = [
   },
 ];
 
-export function getRecommendations(context: Pick<AICopilotContext, 'moduleCode'>): AIRecommendation[] {
+export function getRecommendations(
+  context: Pick<AICopilotContext, 'moduleCode'>
+): AIRecommendation[] {
   return moduleRecommendations[context.moduleCode] || defaultRecommendations;
 }
 

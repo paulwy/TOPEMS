@@ -9,7 +9,6 @@ import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { apiLogger } from '@/utils/logger';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
@@ -20,10 +19,11 @@ export const DocumentListPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => docApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DOCUMENT_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.DOCUMENT_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 
@@ -65,10 +65,11 @@ export const DocumentListPage: React.FC = () => {
   };
 
   const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DOCUMENT_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.DOCUMENT_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
     addNotification({
       title: i18n.t('pages.document_list_page.k0'),
       message: i18n.t('pages.document_list_page.k1'),

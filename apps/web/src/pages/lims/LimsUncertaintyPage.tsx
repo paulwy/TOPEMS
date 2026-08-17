@@ -10,7 +10,8 @@ import type { UncertaintyProject } from '@/api/lims';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const uncertaintyAdapter = {
   list: async (params?: { page?: number; pageSize?: number; search?: string; status?: string }) => {
     const response = await limsApi.listUncertaintyProjects();
@@ -145,8 +146,10 @@ const LimsUncertaintyPage: React.FC = () => {
     return {
       total: projects.length,
       draft: projects.filter((p) => p.status === i18n.t('lims.lims_uncertainty_page.k3')).length,
-      calculating: projects.filter((p) => p.status === i18n.t('lims.lims_uncertainty_page.k4')).length,
-      completed: projects.filter((p) => p.status === i18n.t('lims.lims_uncertainty_page.k5')).length,
+      calculating: projects.filter((p) => p.status === i18n.t('lims.lims_uncertainty_page.k4'))
+        .length,
+      completed: projects.filter((p) => p.status === i18n.t('lims.lims_uncertainty_page.k5'))
+        .length,
     };
   }, [projects]);
   const headerContent = () => (

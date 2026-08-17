@@ -10,6 +10,7 @@ import { MobileButton } from '@/components/mobile';
 import type { QualityTask } from '@/api/mobile';
 import type { TaskAction, ChipColor } from '../hooks/useMobileQuality';
 import i18n from '@/i18n';
+
 interface MobileQualityTaskListProps {
   filteredTasks: QualityTask[];
   getTypeLabel: (type: string) => string;

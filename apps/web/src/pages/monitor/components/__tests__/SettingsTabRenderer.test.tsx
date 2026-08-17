@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
+import { SettingsTabRenderer } from '../SettingsTabRenderer';
+
 vi.mock('@/components/templates', async () => {
   const React = await import('react');
   return {
@@ -42,8 +44,6 @@ vi.mock('@/components/templates', async () => {
       ),
   };
 });
-
-import { SettingsTabRenderer } from '../SettingsTabRenderer';
 
 const tabs = [
   {

@@ -27,9 +27,10 @@ import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityOverview } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { QMS_PATHS } from '@/modules/qms/config';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const QmsDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const {
@@ -48,8 +49,9 @@ const QmsDashboardPage: React.FC = () => {
       }
       return overviewRes.data ?? null;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const stats: StatCard[] = [
     {
       id: 'total-inspections',
@@ -312,7 +314,9 @@ const QmsDashboardPage: React.FC = () => {
               </svg>
             </Box>
           ) : (
-            <Typography color='text.secondary'>{i18n.t('qms.qms_dashboard_page.spc_12')}</Typography>
+            <Typography color='text.secondary'>
+              {i18n.t('qms.qms_dashboard_page.spc_12')}
+            </Typography>
           )}
         </Box>
       ),

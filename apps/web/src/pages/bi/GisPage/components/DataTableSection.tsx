@@ -30,6 +30,7 @@ import {
   getFactoryMapColumns,
   getBusinessLocationColumns,
 } from './TableUtils';
+
 interface DataTableSectionProps {
   activeTab: TabType;
   loading: boolean;

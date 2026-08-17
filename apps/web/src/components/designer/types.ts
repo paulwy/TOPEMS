@@ -184,10 +184,21 @@ export const FORM_COMPONENTS: DesignerComponent[] = [
     description: i18n.t('components.types.k1'),
     defaultProps: { type: 'text', required: false, colSpan: 1 },
     propsPanel: [
-      { key: 'name', label: i18n.t('components.types.k3'), type: 'text', required: true, description: i18n.t('components.types.k2') },
+      {
+        key: 'name',
+        label: i18n.t('components.types.k3'),
+        type: 'text',
+        required: true,
+        description: i18n.t('components.types.k2'),
+      },
       { key: 'label', label: i18n.t('components.types.k4'), type: 'text', required: true },
       { key: 'placeholder', label: i18n.t('components.types.k5'), type: 'text' },
-      { key: 'required', label: i18n.t('components.types.k6'), type: 'boolean', defaultValue: false },
+      {
+        key: 'required',
+        label: i18n.t('components.types.k6'),
+        type: 'boolean',
+        defaultValue: false,
+      },
       {
         key: 'colSpan',
         label: i18n.t('components.types.k7'),
@@ -208,7 +219,12 @@ export const FORM_COMPONENTS: DesignerComponent[] = [
     propsPanel: [
       { key: 'name', label: i18n.t('components.types.k11'), type: 'text', required: true },
       { key: 'label', label: i18n.t('components.types.k12'), type: 'text', required: true },
-      { key: 'required', label: i18n.t('components.types.k13'), type: 'boolean', defaultValue: false },
+      {
+        key: 'required',
+        label: i18n.t('components.types.k13'),
+        type: 'boolean',
+        defaultValue: false,
+      },
       {
         key: 'colSpan',
         label: i18n.t('components.types.k14'),
@@ -230,7 +246,12 @@ export const FORM_COMPONENTS: DesignerComponent[] = [
     propsPanel: [
       { key: 'name', label: i18n.t('components.types.k19'), type: 'text', required: true },
       { key: 'label', label: i18n.t('components.types.k20'), type: 'text', required: true },
-      { key: 'required', label: i18n.t('components.types.k21'), type: 'boolean', defaultValue: false },
+      {
+        key: 'required',
+        label: i18n.t('components.types.k21'),
+        type: 'boolean',
+        defaultValue: false,
+      },
       {
         key: 'colSpan',
         label: i18n.t('components.types.k22'),
@@ -261,7 +282,12 @@ export const FORM_COMPONENTS: DesignerComponent[] = [
     propsPanel: [
       { key: 'name', label: i18n.t('components.types.k28'), type: 'text', required: true },
       { key: 'label', label: i18n.t('components.types.k29'), type: 'text', required: true },
-      { key: 'required', label: i18n.t('components.types.k30'), type: 'boolean', defaultValue: false },
+      {
+        key: 'required',
+        label: i18n.t('components.types.k30'),
+        type: 'boolean',
+        defaultValue: false,
+      },
       {
         key: 'colSpan',
         label: i18n.t('components.types.k31'),
@@ -281,7 +307,12 @@ export const FORM_COMPONENTS: DesignerComponent[] = [
     propsPanel: [
       { key: 'name', label: i18n.t('components.types.k34'), type: 'text', required: true },
       { key: 'label', label: i18n.t('components.types.k35'), type: 'text', required: true },
-      { key: 'required', label: i18n.t('components.types.k36'), type: 'boolean', defaultValue: false },
+      {
+        key: 'required',
+        label: i18n.t('components.types.k36'),
+        type: 'boolean',
+        defaultValue: false,
+      },
       {
         key: 'colSpan',
         label: i18n.t('components.types.k37'),
@@ -289,7 +320,13 @@ export const FORM_COMPONENTS: DesignerComponent[] = [
         defaultValue: 2,
         validation: { min: 1, max: 4 },
       },
-      { key: 'rows', label: i18n.t('components.types.k38'), type: 'number', defaultValue: 3, advanced: true },
+      {
+        key: 'rows',
+        label: i18n.t('components.types.k38'),
+        type: 'number',
+        defaultValue: 3,
+        advanced: true,
+      },
     ],
   },
   {
@@ -302,7 +339,12 @@ export const FORM_COMPONENTS: DesignerComponent[] = [
     propsPanel: [
       { key: 'name', label: i18n.t('components.types.k41'), type: 'text', required: true },
       { key: 'label', label: i18n.t('components.types.k42'), type: 'text', required: true },
-      { key: 'defaultValue', label: i18n.t('components.types.k43'), type: 'boolean', defaultValue: false },
+      {
+        key: 'defaultValue',
+        label: i18n.t('components.types.k43'),
+        type: 'boolean',
+        defaultValue: false,
+      },
       {
         key: 'colSpan',
         label: i18n.t('components.types.k44'),
@@ -326,7 +368,12 @@ export const LAYOUT_COMPONENTS: DesignerComponent[] = [
     defaultProps: { title: i18n.t('components.types.k47') },
     propsPanel: [
       { key: 'title', label: i18n.t('components.types.k48'), type: 'text', required: true },
-      { key: 'description', label: i18n.t('components.types.k49'), type: 'textarea', advanced: true },
+      {
+        key: 'description',
+        label: i18n.t('components.types.k49'),
+        type: 'textarea',
+        advanced: true,
+      },
     ],
   },
 ];

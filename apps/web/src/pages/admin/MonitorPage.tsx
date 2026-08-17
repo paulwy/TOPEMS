@@ -28,6 +28,7 @@ import { PageContainer } from '@/components';
 import { getStatusColor } from '@/utils/status';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@topems/tokens';
+
 const MonitorPage: React.FC = () => {
   const theme = useTheme();
   const { addNotification } = useNotificationStore();
@@ -351,8 +352,15 @@ const MonitorPage: React.FC = () => {
                         key={service.service_name}
                         style={{ borderBottom: '1px solid' }}
                       >
-                        <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{service.service_name}</td>
-                        <td style={{ padding: `${designTokens.spacing.md} 16px`, textAlign: 'center' }}>
+                        <td style={{ padding: `${designTokens.spacing.md} 16px` }}>
+                          {service.service_name}
+                        </td>
+                        <td
+                          style={{
+                            padding: `${designTokens.spacing.md} 16px`,
+                            textAlign: 'center',
+                          }}
+                        >
                           <Chip
                             size='small'
                             label={
@@ -374,13 +382,19 @@ const MonitorPage: React.FC = () => {
                             }}
                           />
                         </td>
-                        <td style={{ padding: `${designTokens.spacing.md} 16px`, textAlign: 'right' }}>
+                        <td
+                          style={{ padding: `${designTokens.spacing.md} 16px`, textAlign: 'right' }}
+                        >
                           {service.latency}
                         </td>
-                        <td style={{ padding: `${designTokens.spacing.md} 16px`, textAlign: 'right' }}>
+                        <td
+                          style={{ padding: `${designTokens.spacing.md} 16px`, textAlign: 'right' }}
+                        >
                           {service.error_rate?.toFixed(2) ?? '0.00'}%
                         </td>
-                        <td style={{ padding: `${designTokens.spacing.md} 16px`, textAlign: 'right' }}>
+                        <td
+                          style={{ padding: `${designTokens.spacing.md} 16px`, textAlign: 'right' }}
+                        >
                           {service.uptime_percentage?.toFixed(1) ?? '0.0'}%
                         </td>
                         <td style={{ padding: `${designTokens.spacing.md} 16px` }}>
@@ -498,8 +512,15 @@ const MonitorPage: React.FC = () => {
                         key={alert.id}
                         style={{ borderBottom: '1px solid' }}
                       >
-                        <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{alert.title}</td>
-                        <td style={{ padding: `${designTokens.spacing.md} 16px`, textAlign: 'center' }}>
+                        <td style={{ padding: `${designTokens.spacing.md} 16px` }}>
+                          {alert.title}
+                        </td>
+                        <td
+                          style={{
+                            padding: `${designTokens.spacing.md} 16px`,
+                            textAlign: 'center',
+                          }}
+                        >
                           <Chip
                             size='small'
                             label={
@@ -515,7 +536,9 @@ const MonitorPage: React.FC = () => {
                             }}
                           />
                         </td>
-                        <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{alert.service_name}</td>
+                        <td style={{ padding: `${designTokens.spacing.md} 16px` }}>
+                          {alert.service_name}
+                        </td>
                         <td
                           style={{
                             padding: `${designTokens.spacing.md} 16px`,
@@ -527,7 +550,12 @@ const MonitorPage: React.FC = () => {
                         >
                           {alert.message}
                         </td>
-                        <td style={{ padding: `${designTokens.spacing.md} 16px`, textAlign: 'center' }}>
+                        <td
+                          style={{
+                            padding: `${designTokens.spacing.md} 16px`,
+                            textAlign: 'center',
+                          }}
+                        >
                           <Chip
                             size='small'
                             label={

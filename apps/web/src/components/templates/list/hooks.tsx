@@ -1527,7 +1527,9 @@ export function useCrudBatchActions<T>({
             .filter(Boolean);
           if (ids.length === 0) return;
           if (
-            confirm(`${i18n.t('components.hooks.k0')}${ids.length}${t('components.components.hooks.key_8e61d9')}`)
+            confirm(
+              `${i18n.t('components.hooks.k0')}${ids.length}${t('components.components.hooks.key_8e61d9')}`
+            )
           ) {
             crudResult.bulkDelete(ids as string[]);
           }

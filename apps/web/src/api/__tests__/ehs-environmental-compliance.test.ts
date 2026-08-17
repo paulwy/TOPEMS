@@ -23,7 +23,13 @@ describe('EHS Environmental Compliance API Tests', () => {
       const { environmentalComplianceApi } = await import('../ehs/environmentalCompliance');
       const { apiClient } = await import('../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
-      await environmentalComplianceApi.listRegulations({ page: 1, page_size: 10, status: 'active', category: 'law', year: 2026 });
+      await environmentalComplianceApi.listRegulations({
+        page: 1,
+        page_size: 10,
+        status: 'active',
+        category: 'law',
+        year: 2026,
+      });
       expect(apiClient.ehs.get).toHaveBeenCalledWith(
         '/environmental-compliance/regulations?page=1&page_size=10&status=active&category=law&year=2026'
       );
@@ -42,7 +48,9 @@ describe('EHS Environmental Compliance API Tests', () => {
       const { apiClient } = await import('../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: {} });
       await environmentalComplianceApi.getRegulation('reg-001');
-      expect(apiClient.ehs.get).toHaveBeenCalledWith('/environmental-compliance/regulations/reg-001');
+      expect(apiClient.ehs.get).toHaveBeenCalledWith(
+        '/environmental-compliance/regulations/reg-001'
+      );
     });
 
     it('createRegulation should call POST with data', async () => {
@@ -51,7 +59,10 @@ describe('EHS Environmental Compliance API Tests', () => {
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { title: '环保法', category: 'law' };
       await environmentalComplianceApi.createRegulation(data);
-      expect(apiClient.ehs.post).toHaveBeenCalledWith('/environmental-compliance/regulations', data);
+      expect(apiClient.ehs.post).toHaveBeenCalledWith(
+        '/environmental-compliance/regulations',
+        data
+      );
     });
 
     it('updateRegulation should call PUT /regulations/:id', async () => {
@@ -60,7 +71,10 @@ describe('EHS Environmental Compliance API Tests', () => {
       (apiClient.ehs.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { title: '更新法规', status: 'active' };
       await environmentalComplianceApi.updateRegulation('reg-001', data);
-      expect(apiClient.ehs.put).toHaveBeenCalledWith('/environmental-compliance/regulations/reg-001', data);
+      expect(apiClient.ehs.put).toHaveBeenCalledWith(
+        '/environmental-compliance/regulations/reg-001',
+        data
+      );
     });
 
     it('deleteRegulation should call DELETE /regulations/:id', async () => {
@@ -68,7 +82,9 @@ describe('EHS Environmental Compliance API Tests', () => {
       const { apiClient } = await import('../client');
       (apiClient.ehs.delete as vi.Mock).mockResolvedValue({ data: null });
       await environmentalComplianceApi.deleteRegulation('reg-001');
-      expect(apiClient.ehs.delete).toHaveBeenCalledWith('/environmental-compliance/regulations/reg-001');
+      expect(apiClient.ehs.delete).toHaveBeenCalledWith(
+        '/environmental-compliance/regulations/reg-001'
+      );
     });
 
     it('listRegulationCategories should call GET /regulations/categories', async () => {
@@ -76,7 +92,9 @@ describe('EHS Environmental Compliance API Tests', () => {
       const { apiClient } = await import('../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: [] });
       await environmentalComplianceApi.listRegulationCategories();
-      expect(apiClient.ehs.get).toHaveBeenCalledWith('/environmental-compliance/regulations/categories');
+      expect(apiClient.ehs.get).toHaveBeenCalledWith(
+        '/environmental-compliance/regulations/categories'
+      );
     });
   });
 
@@ -94,7 +112,9 @@ describe('EHS Environmental Compliance API Tests', () => {
       const { apiClient } = await import('../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: {} });
       await environmentalComplianceApi.getEvaluation('eval-001');
-      expect(apiClient.ehs.get).toHaveBeenCalledWith('/environmental-compliance/evaluations/eval-001');
+      expect(apiClient.ehs.get).toHaveBeenCalledWith(
+        '/environmental-compliance/evaluations/eval-001'
+      );
     });
 
     it('createEvaluation should call POST with data', async () => {
@@ -103,7 +123,10 @@ describe('EHS Environmental Compliance API Tests', () => {
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { title: '年度评价', eval_type: 'annual' };
       await environmentalComplianceApi.createEvaluation(data);
-      expect(apiClient.ehs.post).toHaveBeenCalledWith('/environmental-compliance/evaluations', data);
+      expect(apiClient.ehs.post).toHaveBeenCalledWith(
+        '/environmental-compliance/evaluations',
+        data
+      );
     });
 
     it('updateEvaluation should call PUT /evaluations/:id', async () => {
@@ -112,7 +135,10 @@ describe('EHS Environmental Compliance API Tests', () => {
       (apiClient.ehs.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { status: 'completed', compliance_rate: 95 };
       await environmentalComplianceApi.updateEvaluation('eval-001', data);
-      expect(apiClient.ehs.put).toHaveBeenCalledWith('/environmental-compliance/evaluations/eval-001', data);
+      expect(apiClient.ehs.put).toHaveBeenCalledWith(
+        '/environmental-compliance/evaluations/eval-001',
+        data
+      );
     });
 
     it('deleteEvaluation should call DELETE /evaluations/:id', async () => {
@@ -120,7 +146,9 @@ describe('EHS Environmental Compliance API Tests', () => {
       const { apiClient } = await import('../client');
       (apiClient.ehs.delete as vi.Mock).mockResolvedValue({ data: null });
       await environmentalComplianceApi.deleteEvaluation('eval-001');
-      expect(apiClient.ehs.delete).toHaveBeenCalledWith('/environmental-compliance/evaluations/eval-001');
+      expect(apiClient.ehs.delete).toHaveBeenCalledWith(
+        '/environmental-compliance/evaluations/eval-001'
+      );
     });
   });
 
@@ -138,7 +166,9 @@ describe('EHS Environmental Compliance API Tests', () => {
       const { apiClient } = await import('../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: {} });
       await environmentalComplianceApi.getMonitorRecord('mon-001');
-      expect(apiClient.ehs.get).toHaveBeenCalledWith('/environmental-compliance/monitoring/mon-001');
+      expect(apiClient.ehs.get).toHaveBeenCalledWith(
+        '/environmental-compliance/monitoring/mon-001'
+      );
     });
 
     it('createMonitorRecord should call POST with data', async () => {
@@ -155,7 +185,9 @@ describe('EHS Environmental Compliance API Tests', () => {
       const { apiClient } = await import('../client');
       (apiClient.ehs.delete as vi.Mock).mockResolvedValue({ data: null });
       await environmentalComplianceApi.deleteMonitorRecord('mon-001');
-      expect(apiClient.ehs.delete).toHaveBeenCalledWith('/environmental-compliance/monitoring/mon-001');
+      expect(apiClient.ehs.delete).toHaveBeenCalledWith(
+        '/environmental-compliance/monitoring/mon-001'
+      );
     });
 
     it('listMonitorTypes should call GET /monitoring/types', async () => {
@@ -181,7 +213,9 @@ describe('EHS Environmental Compliance API Tests', () => {
       const { apiClient } = await import('../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: {} });
       await environmentalComplianceApi.getPermit('permit-001');
-      expect(apiClient.ehs.get).toHaveBeenCalledWith('/environmental-compliance/permits/permit-001');
+      expect(apiClient.ehs.get).toHaveBeenCalledWith(
+        '/environmental-compliance/permits/permit-001'
+      );
     });
 
     it('createPermit should call POST with data', async () => {
@@ -199,7 +233,10 @@ describe('EHS Environmental Compliance API Tests', () => {
       (apiClient.ehs.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { status: 'valid', permit_name: '更新许可' };
       await environmentalComplianceApi.updatePermit('permit-001', data);
-      expect(apiClient.ehs.put).toHaveBeenCalledWith('/environmental-compliance/permits/permit-001', data);
+      expect(apiClient.ehs.put).toHaveBeenCalledWith(
+        '/environmental-compliance/permits/permit-001',
+        data
+      );
     });
 
     it('deletePermit should call DELETE /permits/:id', async () => {
@@ -207,7 +244,9 @@ describe('EHS Environmental Compliance API Tests', () => {
       const { apiClient } = await import('../client');
       (apiClient.ehs.delete as vi.Mock).mockResolvedValue({ data: null });
       await environmentalComplianceApi.deletePermit('permit-001');
-      expect(apiClient.ehs.delete).toHaveBeenCalledWith('/environmental-compliance/permits/permit-001');
+      expect(apiClient.ehs.delete).toHaveBeenCalledWith(
+        '/environmental-compliance/permits/permit-001'
+      );
     });
   });
 
@@ -243,7 +282,10 @@ describe('EHS Environmental Compliance API Tests', () => {
       (apiClient.ehs.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { status: 'closed', cause: '管道老化' };
       await environmentalComplianceApi.updateIncident('inc-001', data);
-      expect(apiClient.ehs.put).toHaveBeenCalledWith('/environmental-compliance/incidents/inc-001', data);
+      expect(apiClient.ehs.put).toHaveBeenCalledWith(
+        '/environmental-compliance/incidents/inc-001',
+        data
+      );
     });
 
     it('deleteIncident should call DELETE /incidents/:id', async () => {
@@ -251,7 +293,9 @@ describe('EHS Environmental Compliance API Tests', () => {
       const { apiClient } = await import('../client');
       (apiClient.ehs.delete as vi.Mock).mockResolvedValue({ data: null });
       await environmentalComplianceApi.deleteIncident('inc-001');
-      expect(apiClient.ehs.delete).toHaveBeenCalledWith('/environmental-compliance/incidents/inc-001');
+      expect(apiClient.ehs.delete).toHaveBeenCalledWith(
+        '/environmental-compliance/incidents/inc-001'
+      );
     });
   });
 

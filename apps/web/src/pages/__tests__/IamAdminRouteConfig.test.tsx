@@ -38,10 +38,16 @@ describe('IAM Module Route Configuration', () => {
     expect(roleRoute?.requiredPermissions).toEqual(['iam:role:read', 'iam:dashboard:read']);
 
     const permissionRoute = routes.find((r) => r.path === '/iam/permission');
-    expect(permissionRoute?.requiredPermissions).toEqual(['iam:permission:read', 'iam:dashboard:read']);
+    expect(permissionRoute?.requiredPermissions).toEqual([
+      'iam:permission:read',
+      'iam:dashboard:read',
+    ]);
 
     const companyStructureRoute = routes.find((r) => r.path === '/iam/company-structure');
-    expect(companyStructureRoute?.requiredPermissions).toEqual(['iam:structure:read', 'iam:dashboard:read']);
+    expect(companyStructureRoute?.requiredPermissions).toEqual([
+      'iam:structure:read',
+      'iam:dashboard:read',
+    ]);
   });
 
   it('should be registered in core module routes', () => {

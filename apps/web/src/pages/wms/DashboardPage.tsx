@@ -14,7 +14,6 @@ import {
 import { WMS_PATHS } from '@/modules/wms/config';
 import { LazyChart } from '@/components/charts';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { wmsApi } from '@/api/wms';
 

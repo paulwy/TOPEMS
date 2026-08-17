@@ -1514,5 +1514,6 @@
   "mes.analytics.oeeDashboard.k1": "24h OEE 趋势",
   "mes.analytics.capacityUtilization.k0": "设备 × 班次 利用率热力图",
   "mes.analytics.qualityPareto.k0": "缺陷类型 Pareto（柱+累积线）",
-  "mes.analytics.qualityPareto.k1": "工序 × 缺陷 热力图"
+  "mes.analytics.qualityPareto.k1": "工序 × 缺陷 热力图",
+  "pages.anomaly_detection_page.k0": "阈值"
 }

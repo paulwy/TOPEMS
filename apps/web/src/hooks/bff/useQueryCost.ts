@@ -125,7 +125,9 @@ export function useQueryCost(
 
     if (!warnedQueries.has(queryName)) {
       warnedQueries.add(queryName);
-      costLogger.warn(`${i18n.t('shared.use_query_cost.k0')}${queryName}${i18n.t('shared.use_query_cost.k1')}${cost.score}${i18n.t('shared.use_query_cost.k2')}${costLabel}`);
+      costLogger.warn(
+        `${i18n.t('shared.use_query_cost.k0')}${queryName}${i18n.t('shared.use_query_cost.k1')}${cost.score}${i18n.t('shared.use_query_cost.k2')}${costLabel}`
+      );
     }
 
     onHighCost?.(cost, queryName);

@@ -162,7 +162,9 @@ export function useSmartPrefetch(
       const routeQueries = engine.getRouteQueries(route);
       if (routeQueries.length === 0) return;
 
-      prefetchHookLogger.info(`${i18n.t('shared.use_smart_prefetch.k3')}${route} (${routeQueries.length}${i18n.t('shared.use_smart_prefetch.k4')}`);
+      prefetchHookLogger.info(
+        `${i18n.t('shared.use_smart_prefetch.k3')}${route} (${routeQueries.length}${i18n.t('shared.use_smart_prefetch.k4')}`
+      );
 
       for (const { query, variables } of routeQueries) {
         const queryKeys = routeQueryKeys.get(route) || [];
@@ -205,7 +207,9 @@ export function useSmartPrefetch(
 
   const togglePrefetch = useCallback((enabled: boolean) => {
     setIsEnabled(enabled);
-    prefetchHookLogger.info(`${i18n.t('shared.use_smart_prefetch.k5')}${enabled ? i18n.t('shared.use_smart_prefetch.k1') : i18n.t('shared.use_smart_prefetch.k0')}`);
+    prefetchHookLogger.info(
+      `${i18n.t('shared.use_smart_prefetch.k5')}${enabled ? i18n.t('shared.use_smart_prefetch.k1') : i18n.t('shared.use_smart_prefetch.k0')}`
+    );
   }, []);
 
   const clearHistory = useCallback(() => {

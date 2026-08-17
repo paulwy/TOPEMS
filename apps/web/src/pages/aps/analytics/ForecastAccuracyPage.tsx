@@ -22,6 +22,7 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
+
 const mockData = [
   { period: '2025-01', forecast: 1000, actual: 980 },
   { period: '2025-02', forecast: 1100, actual: 1150 },
@@ -43,7 +44,9 @@ export default function ForecastAccuracyPage() {
       try {
         const res = await apsApi.listForecasts();
         const items = res?.data?.items ?? (Array.isArray(res?.data) ? res.data : []);
-        const valid = items.filter((f: any) => f.forecastQty || f.forecast || f.actualQty || f.actual);
+        const valid = items.filter(
+          (f: any) => f.forecastQty || f.forecast || f.actualQty || f.actual
+        );
         const totalAcc = valid.reduce((s: number, f: any) => {
           const fc = f.forecastQty || f.forecast || 0;
           const ac = f.actualQty || f.actual || 0;
@@ -77,9 +80,7 @@ export default function ForecastAccuracyPage() {
         <h1 className='text-2xl font-bold'>{i18n.t('aps.forecast_accuracy_page.k0')}</h1>
         <span className='text-sm text-gray-500'>{i18n.t('aps.forecast_accuracy_page.vs_1')}</span>
       </div>
-      <p className='text-sm text-gray-600'>
-        {i18n.t('pages.forecast_accuracy_page.k0')}
-      </p>
+      <p className='text-sm text-gray-600'>{i18n.t('pages.forecast_accuracy_page.k0')}</p>
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <div className='rounded-lg border p-4'>
           <p className='text-sm text-gray-600'>{i18n.t('aps.forecast_accuracy_page.k2')}</p>
@@ -112,7 +113,11 @@ export default function ForecastAccuracyPage() {
             <YAxis
               yAxisId='left'
               fontSize={11}
-              label={{ value: i18n.t('aps.forecast_accuracy_page.k6'), angle: -90, position: 'insideLeft' }}
+              label={{
+                value: i18n.t('aps.forecast_accuracy_page.k6'),
+                angle: -90,
+                position: 'insideLeft',
+              }}
             />
             <YAxis
               yAxisId='right'
@@ -120,7 +125,11 @@ export default function ForecastAccuracyPage() {
               domain={[80, 100]}
               unit='%'
               fontSize={11}
-              label={{ value: i18n.t('aps.forecast_accuracy_page.k7'), angle: 90, position: 'insideRight' }}
+              label={{
+                value: i18n.t('aps.forecast_accuracy_page.k7'),
+                angle: 90,
+                position: 'insideRight',
+              }}
             />
             <Tooltip />
             <Legend />

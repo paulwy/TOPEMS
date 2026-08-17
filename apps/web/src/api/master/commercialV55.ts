@@ -251,7 +251,10 @@ export const commercialApiV55 = {
     return apiClient.master.put<Subscription>(`/mdm-v55/subscriptions/${id}/cancel`, {});
   },
 
-  async upgradeTier(id: string, data?: UpdateSubscriptionRequest): Promise<ApiResponse<Subscription>> {
+  async upgradeTier(
+    id: string,
+    data?: UpdateSubscriptionRequest
+  ): Promise<ApiResponse<Subscription>> {
     return apiClient.master.put<Subscription>(`/mdm-v55/subscriptions/${id}/upgrade`, data || {});
   },
 
@@ -292,7 +295,9 @@ export const commercialApiV55 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<BillingRecord>>(`/mdm-v55/billing${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<BillingRecord>>(
+      `/mdm-v55/billing${s ? `?${s}` : ''}`
+    );
   },
 
   async markBillPaid(id: string): Promise<ApiResponse<BillingRecord>> {
@@ -333,7 +338,9 @@ export const commercialApiV55 = {
     if (params?.tenant_id) qs.set('tenant_id', params.tenant_id);
     if (params?.config_id) qs.set('config_id', params.config_id);
     const s = qs.toString();
-    return apiClient.master.get<{ sla_statuses: SLAStatusInfo[] }>(`/mdm-v55/sla/status${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ sla_statuses: SLAStatusInfo[] }>(
+      `/mdm-v55/sla/status${s ? `?${s}` : ''}`
+    );
   },
 
   async getSLAHistory(params?: {
@@ -351,14 +358,19 @@ export const commercialApiV55 = {
     return apiClient.master.get<SLAMeasurement[]>(`/mdm-v55/sla/history${s ? `?${s}` : ''}`);
   },
 
-  async calculatePenalty(configId: string, tenantId: string): Promise<ApiResponse<{
-    config_id: string;
-    tenant_id: string;
-    breach_count: number;
-    penalty_per_min: number;
-    total_penalty: number;
-    currency: string;
-  }>> {
+  async calculatePenalty(
+    configId: string,
+    tenantId: string
+  ): Promise<
+    ApiResponse<{
+      config_id: string;
+      tenant_id: string;
+      breach_count: number;
+      penalty_per_min: number;
+      total_penalty: number;
+      currency: string;
+    }>
+  > {
     const qs = new URLSearchParams();
     qs.set('config_id', configId);
     qs.set('tenant_id', tenantId);
@@ -405,18 +417,21 @@ export const commercialApiV55 = {
     return apiClient.master.get<SLAIncident>(`/mdm-v55/sla/incidents/${id}`);
   },
 
-  async updateIncident(id: string, data: { status?: IncidentStatus }): Promise<ApiResponse<SLAIncident>> {
+  async updateIncident(
+    id: string,
+    data: { status?: IncidentStatus }
+  ): Promise<ApiResponse<SLAIncident>> {
     return apiClient.master.put<SLAIncident>(`/mdm-v55/sla/incidents/${id}`, data);
   },
 
-  async getSLADashboard(params?: {
-    tenant_id?: string;
-  }): Promise<ApiResponse<{
-    total_configs: number;
-    active_incidents: number;
-    pass_rate_avg: number;
-    compensation_total: number;
-  }>> {
+  async getSLADashboard(params?: { tenant_id?: string }): Promise<
+    ApiResponse<{
+      total_configs: number;
+      active_incidents: number;
+      pass_rate_avg: number;
+      compensation_total: number;
+    }>
+  > {
     const qs = new URLSearchParams();
     if (params?.tenant_id) qs.set('tenant_id', params.tenant_id);
     const s = qs.toString();
@@ -436,10 +451,15 @@ export const commercialApiV55 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<APIProduct>>(`/mdm-v55/products/paginated${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<APIProduct>>(
+      `/mdm-v55/products/paginated${s ? `?${s}` : ''}`
+    );
   },
 
-  async updateAPIProduct(id: string, data: Partial<CreateAPIProductRequest>): Promise<ApiResponse<APIProduct>> {
+  async updateAPIProduct(
+    id: string,
+    data: Partial<CreateAPIProductRequest>
+  ): Promise<ApiResponse<APIProduct>> {
     return apiClient.master.put<APIProduct>(`/mdm-v55/products/${id}`, data);
   },
 
@@ -459,10 +479,15 @@ export const commercialApiV55 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<UsageRecord>>(`/mdm-v55/usage/records${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<UsageRecord>>(
+      `/mdm-v55/usage/records${s ? `?${s}` : ''}`
+    );
   },
 
-  async updateSubscription(id: string, data: Partial<UpdateSubscriptionRequest>): Promise<ApiResponse<Subscription>> {
+  async updateSubscription(
+    id: string,
+    data: Partial<UpdateSubscriptionRequest>
+  ): Promise<ApiResponse<Subscription>> {
     return apiClient.master.put<Subscription>(`/mdm-v55/subscriptions/${id}`, data);
   },
 

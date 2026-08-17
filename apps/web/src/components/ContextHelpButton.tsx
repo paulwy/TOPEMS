@@ -167,7 +167,8 @@ export const ContextHelpButton: React.FC<ContextHelpButtonProps> = ({
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                {helpInfo?.title || t('help.help_center', i18n.t('components.context_help_button.k1'))}
+                {helpInfo?.title ||
+                  t('help.help_center', i18n.t('components.context_help_button.k1'))}
               </Typography>
               {helpInfo?.description && (
                 <Typography
@@ -282,7 +283,10 @@ export const ContextHelpButton: React.FC<ContextHelpButtonProps> = ({
                     {t('help.contact_support', i18n.t('components.context_help_button.k6'))}
                   </Typography>
                 }
-                secondary={t('help.contact_support_desc', i18n.t('components.context_help_button.9001800_7'))}
+                secondary={t(
+                  'help.contact_support_desc',
+                  i18n.t('components.context_help_button.9001800_7')
+                )}
               />
               <ChevronRight
                 size={18}

@@ -42,7 +42,10 @@ describe('V140 ERP - dictApi', () => {
   it('should create dict type', async () => {
     mockClient.post.mockResolvedValue({ success: true, data: { id: 'DT-001' } });
     await dictApi.createType({ code: 'status', name: '状态' });
-    expect(mockClient.post).toHaveBeenCalledWith('/system/dict-types', { code: 'status', name: '状态' });
+    expect(mockClient.post).toHaveBeenCalledWith('/system/dict-types', {
+      code: 'status',
+      name: '状态',
+    });
   });
 
   it('should update dict type', async () => {
@@ -66,7 +69,9 @@ describe('V140 ERP - dictApi', () => {
   it('should list dict items for a type', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await dictApi.listItems('DT-001', { page: 1, pageSize: 20 });
-    expect(mockClient.get).toHaveBeenCalledWith('/system/dict-types/DT-001/items?page=1&pagesize=20');
+    expect(mockClient.get).toHaveBeenCalledWith(
+      '/system/dict-types/DT-001/items?page=1&pagesize=20'
+    );
   });
 
   it('should get dict item by id', async () => {
@@ -78,10 +83,11 @@ describe('V140 ERP - dictApi', () => {
   it('should create dict item', async () => {
     mockClient.post.mockResolvedValue({ success: true, data: { id: 'DI-001' } });
     await dictApi.createItem({ dict_type_id: 'DT-001', code: 'active', name: '激活' });
-    expect(mockClient.post).toHaveBeenCalledWith(
-      '/system/dict-items',
-      { dict_type_id: 'DT-001', code: 'active', name: '激活' }
-    );
+    expect(mockClient.post).toHaveBeenCalledWith('/system/dict-items', {
+      dict_type_id: 'DT-001',
+      code: 'active',
+      name: '激活',
+    });
   });
 
   it('should batch create dict items', async () => {
@@ -90,10 +96,10 @@ describe('V140 ERP - dictApi', () => {
       dict_type_id: 'DT-001',
       items: [{ dict_type_id: 'DT-001', code: 'a', name: 'A' }],
     });
-    expect(mockClient.post).toHaveBeenCalledWith(
-      '/system/dict-items/batch',
-      { dict_type_id: 'DT-001', items: [{ dict_type_id: 'DT-001', code: 'a', name: 'A' }] }
-    );
+    expect(mockClient.post).toHaveBeenCalledWith('/system/dict-items/batch', {
+      dict_type_id: 'DT-001',
+      items: [{ dict_type_id: 'DT-001', code: 'a', name: 'A' }],
+    });
   });
 
   it('should update dict item', async () => {
@@ -167,19 +173,21 @@ describe('V140 ERP - openingBalanceApi', () => {
       debit_balance: 1000,
       credit_balance: 0,
     });
-    expect(mockClient.post).toHaveBeenCalledWith(
-      '/finance/accounts/opening-balances',
-      { company_id: 'C-001', subject_code: '1001', period: '2026-08', debit_balance: 1000, credit_balance: 0 }
-    );
+    expect(mockClient.post).toHaveBeenCalledWith('/finance/accounts/opening-balances', {
+      company_id: 'C-001',
+      subject_code: '1001',
+      period: '2026-08',
+      debit_balance: 1000,
+      credit_balance: 0,
+    });
   });
 
   it('should update opening balance', async () => {
     mockClient.put.mockResolvedValue({ success: true, data: { id: 'OB-001' } });
     await openingBalanceApi.update('OB-001', { debit_balance: 2000 });
-    expect(mockClient.put).toHaveBeenCalledWith(
-      '/finance/accounts/opening-balances/OB-001',
-      { debit_balance: 2000 }
-    );
+    expect(mockClient.put).toHaveBeenCalledWith('/finance/accounts/opening-balances/OB-001', {
+      debit_balance: 2000,
+    });
   });
 
   it('should remove opening balance', async () => {
@@ -195,9 +203,18 @@ describe('V140 ERP - openingBalanceApi', () => {
   });
 
   it('should batch import opening balances', async () => {
-    mockClient.post.mockResolvedValue({ success: true, data: { success_count: 2, failed_count: 0, errors: [] } });
+    mockClient.post.mockResolvedValue({
+      success: true,
+      data: { success_count: 2, failed_count: 0, errors: [] },
+    });
     const data = [
-      { company_id: 'C-001', subject_code: '1001', period: '2026-08', debit_balance: 1000, credit_balance: 0 },
+      {
+        company_id: 'C-001',
+        subject_code: '1001',
+        period: '2026-08',
+        debit_balance: 1000,
+        credit_balance: 0,
+      },
     ];
     await openingBalanceApi.import(data);
     expect(mockClient.post).toHaveBeenCalledWith('/finance/accounts/opening-balances/batch', data);
@@ -215,7 +232,9 @@ describe('V140 ERP - openingBalanceApi', () => {
   it('should support pagesize parameter alias', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await openingBalanceApi.list({ page: 1, pagesize: 50 } as any);
-    expect(mockClient.get).toHaveBeenCalledWith('/finance/accounts/opening-balances?page=1&pagesize=50');
+    expect(mockClient.get).toHaveBeenCalledWith(
+      '/finance/accounts/opening-balances?page=1&pagesize=50'
+    );
   });
 });
 

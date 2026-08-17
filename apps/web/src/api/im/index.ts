@@ -729,7 +729,9 @@ export const imApi = {
 
   // ==================== 联系人分组 ====================
 
-  listContactGroups: async (userId: string): Promise<ApiResponse<ListContactGroupsResponseData>> => {
+  listContactGroups: async (
+    userId: string
+  ): Promise<ApiResponse<ListContactGroupsResponseData>> => {
     return apiClient.im.get<ListContactGroupsResponseData>(`/contact-groups/${userId}`);
   },
   createContactGroup: async (

@@ -102,8 +102,9 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
       }
       throw new Error(res.message || i18n.t('pages.dictionary_management_page.k4'));
     },
-  
-      staleTime: CACHE_DURATIONS.LONG,});
+
+    staleTime: CACHE_DURATIONS.LONG,
+  });
 
   const dictTypes = dictTypesQuery.data || [];
   const typesLoading = dictTypesQuery.isLoading;
@@ -117,15 +118,21 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
   const createTypeMutation = useMutation({
     mutationFn: async (data: Partial<DictType>) => {
       const res = await dictTypeApi.create(data);
-      if (!res.success) throw new Error(res.message || i18n.t('pages.dictionary_management_page.k5'));
+      if (!res.success)
+        throw new Error(res.message || i18n.t('pages.dictionary_management_page.k5'));
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_LIST_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      addNotification({ title: i18n.t('pages.dictionary_management_page.k7'), message: i18n.t('pages.dictionary_management_page.k6'), type: 'success' });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_LIST_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        title: i18n.t('pages.dictionary_management_page.k7'),
+        message: i18n.t('pages.dictionary_management_page.k6'),
+        type: 'success',
+      });
       setShowTypeModal(false);
       setNewType({ code: '', name: '', category: 'business', description: '', status: 'active' });
     },
@@ -142,15 +149,21 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
   const updateTypeMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<DictType> }) => {
       const res = await dictTypeApi.update(id, data);
-      if (!res.success) throw new Error(res.message || i18n.t('pages.dictionary_management_page.k10'));
+      if (!res.success)
+        throw new Error(res.message || i18n.t('pages.dictionary_management_page.k10'));
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_LIST_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      addNotification({ title: i18n.t('pages.dictionary_management_page.k12'), message: i18n.t('pages.dictionary_management_page.k11'), type: 'success' });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_LIST_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        title: i18n.t('pages.dictionary_management_page.k12'),
+        message: i18n.t('pages.dictionary_management_page.k11'),
+        type: 'success',
+      });
       setShowTypeModal(false);
       setEditingType(null);
     },
@@ -167,15 +180,21 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
   const deleteTypeMutation = useMutation({
     mutationFn: async (id: string) => {
       const res = await dictTypeApi.delete(id);
-      if (!res.success) throw new Error(res.message || i18n.t('pages.dictionary_management_page.k15'));
+      if (!res.success)
+        throw new Error(res.message || i18n.t('pages.dictionary_management_page.k15'));
       return id;
     },
     onSuccess: (id) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_LIST_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      addNotification({ title: i18n.t('pages.dictionary_management_page.k17'), message: i18n.t('pages.dictionary_management_page.k16'), type: 'success' });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_LIST_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        title: i18n.t('pages.dictionary_management_page.k17'),
+        message: i18n.t('pages.dictionary_management_page.k16'),
+        type: 'success',
+      });
       if (selectedType?.id === id) {
         setSelectedType(null);
       }
@@ -213,11 +232,16 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
       return toggleDictItemStatus(id, status);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DICT_ITEM_LIST_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      addNotification({ title: i18n.t('pages.dictionary_management_page.k21'), message: i18n.t('pages.dictionary_management_page.k20'), type: 'success' });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.DICT_ITEM_LIST_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        title: i18n.t('pages.dictionary_management_page.k21'),
+        message: i18n.t('pages.dictionary_management_page.k20'),
+        type: 'success',
+      });
     },
     onError: (err: unknown) => {
       apiLogger.error(i18n.t('pages.dictionary_management_page.k3'), err);
@@ -239,11 +263,16 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
 
   const handleExport = useCallback(() => {
     if (!selectedType) return;
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DICT_ITEM_LIST_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-    addNotification({ title: i18n.t('pages.dictionary_management_page.k25'), message: i18n.t('pages.dictionary_management_page.k24'), type: 'success' });
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.DICT_ITEM_LIST_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
+    addNotification({
+      title: i18n.t('pages.dictionary_management_page.k25'),
+      message: i18n.t('pages.dictionary_management_page.k24'),
+      type: 'success',
+    });
     setShowExportModal(false);
   }, [selectedType, addNotification, queryClient]);
 
@@ -268,17 +297,21 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
       }
 
       addNotification({
-        title: successCount === items.length ? i18n.t('pages.dictionary_management_page.k28') : i18n.t('pages.dictionary_management_page.k27'),
+        title:
+          successCount === items.length
+            ? i18n.t('pages.dictionary_management_page.k28')
+            : i18n.t('pages.dictionary_management_page.k27'),
         message:
           successCount === items.length
             ? `${i18n.t('pages.dictionary_management_page.k4')} ${successCount} ${i18n.t('pages.dictionary_management_page.k5')}`
             : `${i18n.t('pages.dictionary_management_page.k6')} ${successCount} ${i18n.t('pages.dictionary_management_page.k7')} ${items.length - successCount} ${i18n.t('pages.dictionary_management_page.k8')}`,
         type: successCount === items.length ? 'success' : 'warning',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DICT_ITEM_LIST_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.DICT_ITEM_LIST_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       setShowImportModal(false);
       setImportFile(null);
     } catch (err: unknown) {
@@ -306,17 +339,20 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
       create: async (data) => {
         if (!selectedType) throw new Error(i18n.t('pages.dictionary_management_page.k32'));
         const res = await dictItemApi.create({ ...data, dict_type_id: selectedType.id });
-        if (!res.success) throw new Error(res.message || i18n.t('pages.dictionary_management_page.k33'));
+        if (!res.success)
+          throw new Error(res.message || i18n.t('pages.dictionary_management_page.k33'));
         return res.data as unknown as Record<string, unknown>;
       },
       update: async (id, data) => {
         const res = await dictItemApi.update(id, data);
-        if (!res.success) throw new Error(res.message || i18n.t('pages.dictionary_management_page.k34'));
+        if (!res.success)
+          throw new Error(res.message || i18n.t('pages.dictionary_management_page.k34'));
         return res.data as unknown as Record<string, unknown>;
       },
       delete: async (id) => {
         const res = await dictItemApi.delete(id);
-        if (!res.success) throw new Error(res.message || i18n.t('pages.dictionary_management_page.k35'));
+        if (!res.success)
+          throw new Error(res.message || i18n.t('pages.dictionary_management_page.k35'));
       },
     }),
     [selectedType]
@@ -522,7 +558,11 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                                 />
                               </Box>
                               <Chip
-                                label={type.status === 'active' ? i18n.t('pages.dictionary_management_page.k37') : i18n.t('pages.dictionary_management_page.k36')}
+                                label={
+                                  type.status === 'active'
+                                    ? i18n.t('pages.dictionary_management_page.k37')
+                                    : i18n.t('pages.dictionary_management_page.k36')
+                                }
                                 size='small'
                                 variant='outlined'
                                 sx={{ mt: 1 }}
@@ -543,7 +583,10 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
               <CrudPage
                 schema={dictItemSchema}
                 apiAdapter={dictItemAdapter}
-                breadcrumbs={[{ label: i18n.t('pages.dictionary_management_page.k38') }, { label: selectedType.name }]}
+                breadcrumbs={[
+                  { label: i18n.t('pages.dictionary_management_page.k38') },
+                  { label: selectedType.name },
+                ]}
                 extraQueryParams={{ dict_type_id: selectedType.id }}
                 customRowActions={[
                   {
@@ -558,7 +601,8 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                       variant='body2'
                       color='text.secondary'
                     >
-                      [i18n.t('pages.dictionary_management_page.k13')]: {selectedType.code} | {i18n.t('pages.dictionary_management_page.k14')}{' '}
+                      [i18n.t('pages.dictionary_management_page.k13')]: {selectedType.code} |{' '}
+                      {i18n.t('pages.dictionary_management_page.k14')}{' '}
                       {categoryLabels[selectedType.category] || selectedType.category}
                     </Typography>
                     <Button
@@ -637,7 +681,11 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{editingType ? i18n.t('pages.dictionary_management_page.k43') : i18n.t('pages.dictionary_management_page.k42')}</DialogTitle>
+        <DialogTitle>
+          {editingType
+            ? i18n.t('pages.dictionary_management_page.k43')
+            : i18n.t('pages.dictionary_management_page.k42')}
+        </DialogTitle>
         <Box
           component='form'
           onSubmit={editingType ? handleUpdateType : handleCreateType}
@@ -691,10 +739,18 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                     }
                   }}
                 >
-                  <MenuItem value='system'>{i18n.t('pages.dictionary_management_page.k46')}</MenuItem>
-                  <MenuItem value='business'>{i18n.t('pages.dictionary_management_page.k47')}</MenuItem>
-                  <MenuItem value='basic'>{i18n.t('pages.dictionary_management_page.k48')}</MenuItem>
-                  <MenuItem value='custom'>{i18n.t('pages.dictionary_management_page.k49')}</MenuItem>
+                  <MenuItem value='system'>
+                    {i18n.t('pages.dictionary_management_page.k46')}
+                  </MenuItem>
+                  <MenuItem value='business'>
+                    {i18n.t('pages.dictionary_management_page.k47')}
+                  </MenuItem>
+                  <MenuItem value='basic'>
+                    {i18n.t('pages.dictionary_management_page.k48')}
+                  </MenuItem>
+                  <MenuItem value='custom'>
+                    {i18n.t('pages.dictionary_management_page.k49')}
+                  </MenuItem>
                 </Select>
               </FormControl>
               <TextField
@@ -719,13 +775,17 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                   justifyContent: 'space-between',
                 }}
               >
-                <Typography variant='body2'>{i18n.t('pages.dictionary_management_page.k51')}</Typography>
+                <Typography variant='body2'>
+                  {i18n.t('pages.dictionary_management_page.k51')}
+                </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    {(editingType?.status || newType.status) === 'active' ? i18n.t('pages.dictionary_management_page.k53') : i18n.t('pages.dictionary_management_page.k52')}
+                    {(editingType?.status || newType.status) === 'active'
+                      ? i18n.t('pages.dictionary_management_page.k53')
+                      : i18n.t('pages.dictionary_management_page.k52')}
                   </Typography>
                   <Switch
                     checked={(editingType?.status || newType.status) === 'active'}
@@ -756,7 +816,9 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
               type='submit'
               variant='contained'
             >
-              {editingType ? i18n.t('pages.dictionary_management_page.k55') : i18n.t('pages.dictionary_management_page.k54')}
+              {editingType
+                ? i18n.t('pages.dictionary_management_page.k55')
+                : i18n.t('pages.dictionary_management_page.k54')}
             </Button>
           </DialogActions>
         </Box>

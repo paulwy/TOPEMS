@@ -2,6 +2,15 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { fireEvent, renderWithProviders, screen, waitFor } from '@/__tests__/test-utils';
 
+import { BottomTabBar, type TabItem } from '../mobile/BottomTabBar';
+import { MobileButton } from '../mobile/MobileButton';
+import { MobileCard } from '../mobile/MobileCard';
+import { MobileHeader } from '../mobile/MobileHeader';
+import { MobileSearch } from '../mobile/MobileSearch';
+import { MobileSkeleton } from '../mobile/MobileSkeleton';
+import { PullToRefresh } from '../mobile/PullToRefresh';
+import { SwipeAction, type SwipeActionItem } from '../mobile/SwipeAction';
+
 const { i18nMap, translate } = vi.hoisted(() => {
   const i18nMap: Record<string, string> = {
     'shared.mobile_search.k0': '关闭',
@@ -51,15 +60,6 @@ vi.mock('@/i18n', () => ({
     exists: (key: string) => !!i18nMap[key],
   },
 }));
-
-import { BottomTabBar, type TabItem } from '../mobile/BottomTabBar';
-import { MobileButton } from '../mobile/MobileButton';
-import { MobileCard } from '../mobile/MobileCard';
-import { MobileHeader } from '../mobile/MobileHeader';
-import { MobileSearch } from '../mobile/MobileSearch';
-import { MobileSkeleton } from '../mobile/MobileSkeleton';
-import { PullToRefresh } from '../mobile/PullToRefresh';
-import { SwipeAction, type SwipeActionItem } from '../mobile/SwipeAction';
 
 const tabs: TabItem[] = [
   { id: 'home', label: '首页', icon: <span>home-icon</span> },

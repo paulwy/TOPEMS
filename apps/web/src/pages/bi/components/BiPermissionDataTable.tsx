@@ -19,6 +19,7 @@ import {
 import i18n from '@/i18n';
 import { Edit2, Trash2, Database } from 'lucide-react';
 import type { DataPermissionRule } from '@/api/bi';
+
 export interface BiPermissionDataTableProps {
   permissions: DataPermissionRule[];
   getResourceTypeLabel: (type: string) => string;
@@ -53,13 +54,27 @@ const BiPermissionDataTable: React.FC<BiPermissionDataTableProps> = ({
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_870802')}</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_14871a')}</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_1463e1')}</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_464f3d')}</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_1fd02a')}</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_eca37c')}</TableCell>
-            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.text_2b6bc0')}</TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>
+              {i18n.t('bi.bi_permission_page.text_870802')}
+            </TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>
+              {i18n.t('bi.bi_permission_page.text_14871a')}
+            </TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>
+              {i18n.t('bi.bi_permission_page.text_1463e1')}
+            </TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>
+              {i18n.t('bi.bi_permission_page.text_464f3d')}
+            </TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>
+              {i18n.t('bi.bi_permission_page.text_1fd02a')}
+            </TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>
+              {i18n.t('bi.bi_permission_page.text_eca37c')}
+            </TableCell>
+            <TableCell sx={{ fontWeight: 600 }}>
+              {i18n.t('bi.bi_permission_page.text_2b6bc0')}
+            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>

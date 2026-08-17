@@ -5873,5 +5873,7 @@
     "k0": "File:Line Number",
     "k1": "Total Found {{v0}} itemSecurityProblem, High Risk {{v1}} item",
     "ai_2": "AI Analyzing..."
-  }
+  },
+  "ai.v53-ai-panel.k58": "Statements",
+  "ai.v59-security-panel.k58": "Score"
 }

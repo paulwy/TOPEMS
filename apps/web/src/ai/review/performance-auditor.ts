@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type PerfCategory = 'Rendering' | 'Scripting' | 'Network' | 'Storage';
 
 export interface PerfFinding {
@@ -299,9 +300,7 @@ export class PerformanceAuditor {
       suggestions.push(i18n.t('ai.performance-auditor.k12'));
     }
     if (byCategory['Scripting']?.length) {
-      suggestions.push(
-        i18n.t('ai.performance-auditor.k22')
-      );
+      suggestions.push(i18n.t('ai.performance-auditor.k22'));
     }
     if (byCategory['Network']?.length) {
       suggestions.push(i18n.t('ai.performance-auditor.k23'));
@@ -312,7 +311,9 @@ export class PerformanceAuditor {
 
     const highImpactCount = findings.filter((f) => f.impact === 'high').length;
     if (highImpactCount > 0) {
-      suggestions.push(`${i18n.t('ai.performance-auditor.k13')}${highImpactCount}${i18n.t('ai.performance-auditor.k14')}`);
+      suggestions.push(
+        `${i18n.t('ai.performance-auditor.k13')}${highImpactCount}${i18n.t('ai.performance-auditor.k14')}`
+      );
     }
 
     return suggestions;

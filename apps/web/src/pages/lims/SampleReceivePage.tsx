@@ -10,8 +10,15 @@ import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { getStatusColor } from '@/utils/status';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
-const workflowSteps = [i18n.t('lims.sample_receive_page.k4'), i18n.t('lims.sample_receive_page.k3'), i18n.t('lims.sample_receive_page.k2'), i18n.t('lims.sample_receive_page.k1'), i18n.t('lims.sample_receive_page.k0')];
+
+const ct = designTokens.colors;
+const workflowSteps = [
+  i18n.t('lims.sample_receive_page.k4'),
+  i18n.t('lims.sample_receive_page.k3'),
+  i18n.t('lims.sample_receive_page.k2'),
+  i18n.t('lims.sample_receive_page.k1'),
+  i18n.t('lims.sample_receive_page.k0'),
+];
 const getStageStep = (status: string): number => {
   const stageMap: Record<string, number> = {
     [i18n.t('pages.sample_receive_page.k0')]: 0,
@@ -118,9 +125,23 @@ const SampleReceivePage: React.FC = () => {
     const samples = rows as unknown as Sample[];
     const stats = {
       total: samples.length,
-      pending: samples.filter((s) => [i18n.t('lims.sample_receive_page.k18'), i18n.t('lims.sample_receive_page.k17')].includes(s.status)).length,
-      received: samples.filter((s) => [i18n.t('lims.sample_receive_page.k20'), i18n.t('lims.sample_receive_page.k19')].includes(s.status)).length,
-      confirmed: samples.filter((s) => [i18n.t('lims.sample_receive_page.k23'), i18n.t('lims.sample_receive_page.k22'), i18n.t('lims.sample_receive_page.k21')].includes(s.status)).length,
+      pending: samples.filter((s) =>
+        [i18n.t('lims.sample_receive_page.k18'), i18n.t('lims.sample_receive_page.k17')].includes(
+          s.status
+        )
+      ).length,
+      received: samples.filter((s) =>
+        [i18n.t('lims.sample_receive_page.k20'), i18n.t('lims.sample_receive_page.k19')].includes(
+          s.status
+        )
+      ).length,
+      confirmed: samples.filter((s) =>
+        [
+          i18n.t('lims.sample_receive_page.k23'),
+          i18n.t('lims.sample_receive_page.k22'),
+          i18n.t('lims.sample_receive_page.k21'),
+        ].includes(s.status)
+      ).length,
     };
     return (
       <Box

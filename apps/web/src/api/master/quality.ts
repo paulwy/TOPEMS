@@ -6,11 +6,7 @@ export type FixStatus = 'pending' | 'applied' | 'verified' | 'failed';
 export type SuggestionType = 'standardize' | 'enrich' | 'deprecate' | 'merge';
 export type SuggestionStatus = 'pending' | 'approved' | 'rejected';
 export type AutoFixActionType =
-  | 'normalize'
-  | 'default_value'
-  | 'map_value'
-  | 'remove_duplicate'
-  | 'standardize';
+  'normalize' | 'default_value' | 'map_value' | 'remove_duplicate' | 'standardize';
 
 export interface QualityCheckV51 {
   id: string;
@@ -42,7 +38,12 @@ export interface QualityDashboard {
   failed_checks: number;
   warning_checks: number;
   pass_rate: number;
-  checks_by_entity_type?: Array<{ entity_type: string; total: number; passed: number; failed: number }>;
+  checks_by_entity_type?: Array<{
+    entity_type: string;
+    total: number;
+    passed: number;
+    failed: number;
+  }>;
   recent_checks?: QualityCheckV51[];
 }
 
@@ -173,7 +174,10 @@ export const qualityApi = {
     return apiClient.master.get(`/quality-v51/rules/${id}`);
   },
 
-  updateRule: async (id: string, data: UpdateQualityRuleRequest): Promise<ApiResponse<QualityRule>> => {
+  updateRule: async (
+    id: string,
+    data: UpdateQualityRuleRequest
+  ): Promise<ApiResponse<QualityRule>> => {
     return apiClient.master.put(`/quality-v51/rules/${id}`, data);
   },
 
@@ -183,19 +187,21 @@ export const qualityApi = {
 
   // ==================== 质量评分 ====================
 
-  getScore: async (params?: {
-    entity_type?: string;
-  }): Promise<ApiResponse<QualityScore>> => {
+  getScore: async (params?: { entity_type?: string }): Promise<ApiResponse<QualityScore>> => {
     return apiClient.master.get('/quality-v51/score', { params });
   },
 
   // ==================== 自动修复 ====================
 
-  runAutoFix: async (data?: AutoFixRequest): Promise<ApiResponse<{
-    fixed_count: number;
-    failed_count: number;
-    actions: AutoFixAction[];
-  }>> => {
+  runAutoFix: async (
+    data?: AutoFixRequest
+  ): Promise<
+    ApiResponse<{
+      fixed_count: number;
+      failed_count: number;
+      actions: AutoFixAction[];
+    }>
+  > => {
     return apiClient.master.post('/quality-v51/auto-fix/run', data || {});
   },
 
@@ -226,7 +232,9 @@ export const qualityApi = {
 
   // ==================== AI 治理 ====================
 
-  generateSuggestions: async (data: GenerateSuggestionsRequest): Promise<ApiResponse<GovernanceSuggestion[]>> => {
+  generateSuggestions: async (
+    data: GenerateSuggestionsRequest
+  ): Promise<ApiResponse<GovernanceSuggestion[]>> => {
     return apiClient.master.post('/quality-v51/ai/suggest', data);
   },
 
@@ -255,9 +263,11 @@ export const qualityApi = {
   predictQualityTrend: async (data: {
     entity_type?: string;
     periods?: number;
-  }): Promise<ApiResponse<{
-    predictions: Array<{ period: string; predicted_score: number; confidence: number }>;
-  }>> => {
+  }): Promise<
+    ApiResponse<{
+      predictions: Array<{ period: string; predicted_score: number; confidence: number }>;
+    }>
+  > => {
     return apiClient.master.post('/quality-v51/ai/predict', data);
   },
 };

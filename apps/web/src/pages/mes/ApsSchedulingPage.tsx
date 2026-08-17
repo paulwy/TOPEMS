@@ -44,7 +44,6 @@ import type {
 } from '@/api/mes';
 import { apsApi } from '@/api/mes';
 
-
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 
 const riskColorMap: Record<string, string> = {
@@ -73,12 +72,11 @@ const ApsSchedulingPage: React.FC = () => {
   const scheduleMutation = useMutation({
     mutationFn: apsApi.schedule,
     onSuccess: (res) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.APS_OPTIMIZATION_REPORT_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.APS_OPTIMIZATION_REPORT_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       if (res.success && res.data) {
         setScheduleResult(res.data);
         addNotification({
@@ -102,13 +100,13 @@ const ApsSchedulingPage: React.FC = () => {
       }),
   });
 
-  const { data: optimizationReport, isPending: reportLoading} = useQuery({
+  const { data: optimizationReport, isPending: reportLoading } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.APS_OPTIMIZATION_REPORT_BASE,
     queryFn: apsApi.getOptimizationReport,
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: bottleneckAnalysis, isPending: bottleneckLoading} = useQuery({
+  const { data: bottleneckAnalysis, isPending: bottleneckLoading } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.APS_BOTTLENECK_ANALYSIS_BASE,
     queryFn: () => apsApi.getBottleneckAnalysis('7d'),
     staleTime: 5 * 60 * 1000,
@@ -186,9 +184,15 @@ const ApsSchedulingPage: React.FC = () => {
                       onChange={(e) => setStrategy(e.target.value as typeof strategy)}
                     >
                       <MenuItem value='forward'>{i18n.t('pages.aps_scheduling_page.k16')}</MenuItem>
-                      <MenuItem value='backward'>{i18n.t('pages.aps_scheduling_page.k17')}</MenuItem>
-                      <MenuItem value='bidirectional'>{i18n.t('pages.aps_scheduling_page.k18')}</MenuItem>
-                      <MenuItem value='bottleneck_driven'>{i18n.t('pages.aps_scheduling_page.k19')}</MenuItem>
+                      <MenuItem value='backward'>
+                        {i18n.t('pages.aps_scheduling_page.k17')}
+                      </MenuItem>
+                      <MenuItem value='bidirectional'>
+                        {i18n.t('pages.aps_scheduling_page.k18')}
+                      </MenuItem>
+                      <MenuItem value='bottleneck_driven'>
+                        {i18n.t('pages.aps_scheduling_page.k19')}
+                      </MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -201,7 +205,9 @@ const ApsSchedulingPage: React.FC = () => {
                       disabled={scheduleMutation.isPending}
                       sx={{ flex: 1 }}
                     >
-                      {scheduleMutation.isPending ? i18n.t('pages.aps_scheduling_page.k4') : i18n.t('pages.aps_scheduling_page.k20')}
+                      {scheduleMutation.isPending
+                        ? i18n.t('pages.aps_scheduling_page.k4')
+                        : i18n.t('pages.aps_scheduling_page.k20')}
                     </Button>
                     <Button
                       variant='outlined'
@@ -596,7 +602,9 @@ const ApsSchedulingPage: React.FC = () => {
                               variant='caption'
                               color='text.secondary'
                             >
-                              [i18n.t('pages.aps_scheduling_page.k23')]: {r.queue_length} | {i18n.t('pages.aps_scheduling_page.k24')}{r.utilization_rate.toFixed(1)}%
+                              [i18n.t('pages.aps_scheduling_page.k23')]: {r.queue_length} |{' '}
+                              {i18n.t('pages.aps_scheduling_page.k24')}
+                              {r.utilization_rate.toFixed(1)}%
                             </Typography>
                           </Box>
                           <LinearProgress
@@ -779,7 +787,9 @@ const ApsSchedulingPage: React.FC = () => {
                       </Typography>
                       <Box sx={{ mb: 2 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                          <Typography variant='body2'>{i18n.t('pages.aps_scheduling_page.k35')}</Typography>
+                          <Typography variant='body2'>
+                            {i18n.t('pages.aps_scheduling_page.k35')}
+                          </Typography>
                           <Typography variant='body2'>
                             {bottleneck.capacity_vs_demand.capacity_utilization.toFixed(1)}%
                           </Typography>
@@ -827,7 +837,8 @@ const ApsSchedulingPage: React.FC = () => {
                           severity='error'
                           sx={{ mt: 2 }}
                         >
-                          [i18n.t('pages.aps_scheduling_page.k36')]: {bottleneck.capacity_vs_demand.capacity_gap_hours.toFixed(1)}{' '}
+                          [i18n.t('pages.aps_scheduling_page.k36')]:{' '}
+                          {bottleneck.capacity_vs_demand.capacity_gap_hours.toFixed(1)}{' '}
                           {i18n.t('pages.aps_scheduling_page.k37')}
                         </Alert>
                       )}
@@ -859,7 +870,9 @@ const ApsSchedulingPage: React.FC = () => {
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                               <Typography variant='body2'>{r.resource_name}</Typography>
                               <Typography variant='caption'>
-                                {i18n.t('pages.aps_scheduling_page.k1')} {r.utilization_rate.toFixed(1)}% | {i18n.t('pages.aps_scheduling_page.k2')} {r.queue_length}
+                                {i18n.t('pages.aps_scheduling_page.k1')}{' '}
+                                {r.utilization_rate.toFixed(1)}% |{' '}
+                                {i18n.t('pages.aps_scheduling_page.k2')} {r.queue_length}
                               </Typography>
                             </Box>
                             <LinearProgress
@@ -989,7 +1002,8 @@ const ApsSchedulingPage: React.FC = () => {
                     {i18n.t('pages.aps_scheduling_page.k48')}
                   </Typography>
                   <Typography variant='body1'>
-                    {selectedItem.processing_time_hours.toFixed(2)} {i18n.t('pages.aps_scheduling_page.k3')}
+                    {selectedItem.processing_time_hours.toFixed(2)}{' '}
+                    {i18n.t('pages.aps_scheduling_page.k3')}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
@@ -1040,7 +1054,9 @@ const ApsSchedulingPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSelectedItem(null)}>{i18n.t('pages.aps_scheduling_page.k40')}</Button>
+          <Button onClick={() => setSelectedItem(null)}>
+            {i18n.t('pages.aps_scheduling_page.k40')}
+          </Button>
         </DialogActions>
       </Dialog>
     </PageContainer>

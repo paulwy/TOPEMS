@@ -21,7 +21,9 @@ import {
 import i18n from '@/i18n';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
-const PolarCasesLazy = lazy(() => import('./ChartLibrary.polar').then(m => ({ default: m.PolarCases })));
+const PolarCasesLazy = lazy(() =>
+  import('./ChartLibrary.polar').then((m) => ({ default: m.PolarCases }))
+);
 
 export type ChartType =
   'bar' | 'pie' | 'line' | 'area' | 'radar' | 'scatter' | 'composed' | 'histogram' | 'gauge';
@@ -89,9 +91,7 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
           minWidth: '120px',
         }}
       >
-        <p
-          style={{ fontWeight: 600, color: 'var(--mui-palette-text-primary)', marginBottom: 2 }}
-        >
+        <p style={{ fontWeight: 600, color: 'var(--mui-palette-text-primary)', marginBottom: 2 }}>
           {payload[0].name}
         </p>
         {payload.map((item, index) => (

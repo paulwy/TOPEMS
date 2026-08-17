@@ -12,6 +12,7 @@ import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { QMS_PATHS } from '@/modules/qms/config';
 import i18n from '@/i18n';
+
 const SEVERITY_LABELS: Record<string, string> = {
   critical: i18n.t('qms.qms_issue_detail_page.k0'),
   major: i18n.t('qms.qms_issue_detail_page.k1'),
@@ -69,7 +70,9 @@ export default function QmsIssueDetailPage() {
         />
       </div>
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>{i18n.t('qms.qms_issue_detail_page.k7')}</p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>
+          {i18n.t('qms.qms_issue_detail_page.k7')}
+        </p>
         <FSMActionButtons
           fsm='issue'
           currentStatus={issue.status}
@@ -131,9 +134,12 @@ export default function QmsIssueDetailPage() {
           )}
           {eightDReports.length > 0 && (
             <div className='rounded-lg border p-4'>
-              <p className='mb-2 text-sm font-semibold text-gray-700'>{i18n.t('qms.qms_issue_detail_page.8d_16')}</p>
+              <p className='mb-2 text-sm font-semibold text-gray-700'>
+                {i18n.t('qms.qms_issue_detail_page.8d_16')}
+              </p>
               <p className='text-sm text-gray-600'>
-                {i18n.t('pages.qms_issue_detail_page.k0')} {eightDReports.length} {i18n.t('pages.qms_issue_detail_page.k1')}
+                {i18n.t('pages.qms_issue_detail_page.k0')} {eightDReports.length}{' '}
+                {i18n.t('pages.qms_issue_detail_page.k1')}
               </p>
             </div>
           )}

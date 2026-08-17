@@ -869,7 +869,9 @@ const TestsTab: React.FC<{
                 onClick={onRunAll}
                 disabled={isRunning}
               >
-                {isRunning ? i18n.t('ai.v60-quality-panel.k13') : i18n.t('ai.v60-quality-panel.k19')}
+                {isRunning
+                  ? i18n.t('ai.v60-quality-panel.k13')
+                  : i18n.t('ai.v60-quality-panel.k19')}
               </Button>
               <Button
                 size='small'
@@ -1347,7 +1349,9 @@ const PerformanceTab: React.FC<{
                       variant='caption'
                       sx={{ color: 'text.secondary' }}
                     >
-                      [i18n.t('ai.v60-quality-panel.k27')]: {r.baseline.toFixed(2)} → {i18n.t('ai.v60-quality-panel.k28')}{r.current.toFixed(2)}
+                      [i18n.t('ai.v60-quality-panel.k27')]: {r.baseline.toFixed(2)} →{' '}
+                      {i18n.t('ai.v60-quality-panel.k28')}
+                      {r.current.toFixed(2)}
                     </Typography>
                   </Box>
                 </ListItem>
@@ -1653,7 +1657,9 @@ const UXTab: React.FC<{
                       variant='caption'
                       sx={{ color: 'text.secondary' }}
                     >
-                      [i18n.t('ai.v60-quality-panel.k39')]: {a.currentValue.toFixed(2)} · {i18n.t('ai.v60-quality-panel.k40')}{a.threshold}
+                      [i18n.t('ai.v60-quality-panel.k39')]: {a.currentValue.toFixed(2)} ·{' '}
+                      {i18n.t('ai.v60-quality-panel.k40')}
+                      {a.threshold}
                     </Typography>
                   </Box>
                 </ListItem>

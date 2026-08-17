@@ -44,7 +44,6 @@ import {
 import { PageContainer } from '@/components';
 import { useCrudMutations } from '@/hooks';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const TemplateManagementPage: React.FC = () => {
@@ -133,11 +132,16 @@ const TemplateManagementPage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.TEMPLATES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      addNotification({ type: 'success', title: i18n.t('pages.template_management_page.k8'), message: i18n.t('pages.template_management_page.k7') });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.TEMPLATES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        type: 'success',
+        title: i18n.t('pages.template_management_page.k8'),
+        message: i18n.t('pages.template_management_page.k7'),
+      });
     },
     onError: (err: unknown) => {
       apiLogger.error(i18n.t('pages.template_management_page.k0'), err);
@@ -158,11 +162,16 @@ const TemplateManagementPage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.TEMPLATES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      addNotification({ type: 'success', title: i18n.t('pages.template_management_page.k13'), message: i18n.t('pages.template_management_page.k12') });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.TEMPLATES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        type: 'success',
+        title: i18n.t('pages.template_management_page.k13'),
+        message: i18n.t('pages.template_management_page.k12'),
+      });
     },
     onError: (err: unknown) => {
       apiLogger.error(i18n.t('pages.template_management_page.k1'), err);
@@ -286,14 +295,16 @@ const TemplateManagementPage: React.FC = () => {
           <Button
             variant='outlined'
             onClick={() => {
-              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.TEMPLATES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.TEMPLATE_CATEGORIES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+              queryClient.invalidateQueries({
+                queryKey: QUERY_KEYS.AD_HOC.TEMPLATES_BASE,
+                exact: false,
+                refetchType: 'active',
+              });
+              queryClient.invalidateQueries({
+                queryKey: QUERY_KEYS.AD_HOC.TEMPLATE_CATEGORIES_BASE,
+                exact: false,
+                refetchType: 'active',
+              });
             }}
           >
             {i18n.t('pages.template_management_page.k3')}
@@ -327,7 +338,9 @@ const TemplateManagementPage: React.FC = () => {
         ) : filteredTemplates.length === 0 ? (
           <Box sx={{ p: 4, textAlign: 'center' }}>
             <FileText sx={{ width: 48, height: 48, color: 'grey.400', mb: 1.5 }} />
-            <Typography color='text.secondary'>{i18n.t('pages.template_management_page.k23')}</Typography>
+            <Typography color='text.secondary'>
+              {i18n.t('pages.template_management_page.k23')}
+            </Typography>
           </Box>
         ) : viewMode === 'grid' ? (
           <Box
@@ -380,8 +393,16 @@ const TemplateManagementPage: React.FC = () => {
                           bgcolor: template.isactive ? 'success.light' : 'grey.200',
                         },
                       }}
-                      aria-label={template.isactive ? i18n.t('pages.template_management_page.k25') : i18n.t('pages.template_management_page.k24')}
-                      title={template.isactive ? i18n.t('pages.template_management_page.k27') : i18n.t('pages.template_management_page.k26')}
+                      aria-label={
+                        template.isactive
+                          ? i18n.t('pages.template_management_page.k25')
+                          : i18n.t('pages.template_management_page.k24')
+                      }
+                      title={
+                        template.isactive
+                          ? i18n.t('pages.template_management_page.k27')
+                          : i18n.t('pages.template_management_page.k26')
+                      }
                     >
                       {template.isactive ? (
                         <ToggleRight sx={{ width: 20, height: 20 }} />
@@ -426,13 +447,15 @@ const TemplateManagementPage: React.FC = () => {
                       variant='body2'
                       color='text.secondary'
                     >
-                      {i18n.t('pages.template_management_page.k0')}{template.module}
+                      {i18n.t('pages.template_management_page.k0')}
+                      {template.module}
                     </Typography>
                     <Typography
                       variant='body2'
                       color='text.secondary'
                     >
-                      {i18n.t('pages.template_management_page.k1')}{template.variables?.length || 0}
+                      {i18n.t('pages.template_management_page.k1')}
+                      {template.variables?.length || 0}
                     </Typography>
                   </Box>
 
@@ -529,7 +552,11 @@ const TemplateManagementPage: React.FC = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Typography sx={{ fontWeight: 500 }}>{template.name}</Typography>
                       <Chip
-                        label={template.isactive ? i18n.t('pages.template_management_page.k38') : i18n.t('pages.template_management_page.k37')}
+                        label={
+                          template.isactive
+                            ? i18n.t('pages.template_management_page.k38')
+                            : i18n.t('pages.template_management_page.k37')
+                        }
                         size='small'
                         sx={{
                           bgcolor: template.isactive ? 'success.100' : 'grey.100',
@@ -678,7 +705,11 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
         paper: { sx: { maxHeight: '90vh' } },
       }}
     >
-      <DialogTitle>{template ? i18n.t('pages.template_management_page.k46') : i18n.t('pages.template_management_page.k45')}</DialogTitle>
+      <DialogTitle>
+        {template
+          ? i18n.t('pages.template_management_page.k46')
+          : i18n.t('pages.template_management_page.k45')}
+      </DialogTitle>
       <DialogContent sx={{ overflowY: 'auto' }}>
         <Box
           component='form'
@@ -742,7 +773,9 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
                 <MenuItem value='CRM'>CRM</MenuItem>
                 <MenuItem value='QMS'>QMS</MenuItem>
                 <MenuItem value='LIMS'>LIMS</MenuItem>
-                <MenuItem value={i18n.t('pages.template_management_page.k51')}>{i18n.t('pages.template_management_page.k52')}</MenuItem>
+                <MenuItem value={i18n.t('pages.template_management_page.k51')}>
+                  {i18n.t('pages.template_management_page.k52')}
+                </MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -772,7 +805,8 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
             variant='caption'
             color='text.secondary'
           >
-            {i18n.t('pages.template_management_page.k4')} {'{{variable_name}}'} {i18n.t('pages.template_management_page.k5')}
+            {i18n.t('pages.template_management_page.k4')} {'{{variable_name}}'}{' '}
+            {i18n.t('pages.template_management_page.k5')}
           </Typography>
         </Box>
       </DialogContent>
@@ -787,7 +821,9 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
           variant='contained'
           onClick={handleSubmit}
         >
-          {template ? i18n.t('pages.template_management_page.k56') : i18n.t('pages.template_management_page.k55')}
+          {template
+            ? i18n.t('pages.template_management_page.k56')
+            : i18n.t('pages.template_management_page.k55')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -828,9 +864,15 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, o
               fontSize: '0.875rem',
             }}
           >
-            <Typography variant='body2'>{i18n.t('pages.template_management_page.templatecode_0')}</Typography>
-            <Typography variant='body2'>分类：{template.category_name || i18n.t('pages.template_management_page.k0')}</Typography>
-            <Typography variant='body2'>{i18n.t('pages.template_management_page.templatemodule_1')}</Typography>
+            <Typography variant='body2'>
+              {i18n.t('pages.template_management_page.templatecode_0')}
+            </Typography>
+            <Typography variant='body2'>
+              分类：{template.category_name || i18n.t('pages.template_management_page.k0')}
+            </Typography>
+            <Typography variant='body2'>
+              {i18n.t('pages.template_management_page.templatemodule_1')}
+            </Typography>
           </Box>
           {template.description && (
             <Typography
@@ -843,7 +885,9 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, o
         </Box>
 
         <Card sx={{ bgcolor: 'grey.50', p: 2, mb: 3 }}>
-          <Typography sx={{ fontWeight: 'semibold', mb: 1 }}>{i18n.t('pages.template_management_page.k59')}</Typography>
+          <Typography sx={{ fontWeight: 'semibold', mb: 1 }}>
+            {i18n.t('pages.template_management_page.k59')}
+          </Typography>
           <Box
             component='pre'
             sx={{
@@ -859,7 +903,9 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, o
 
         {template.variables && template.variables.length > 0 && (
           <Box sx={{ mt: 2 }}>
-            <Typography sx={{ fontWeight: 'semibold', mb: 1 }}>{i18n.t('pages.template_management_page.k60')}</Typography>
+            <Typography sx={{ fontWeight: 'semibold', mb: 1 }}>
+              {i18n.t('pages.template_management_page.k60')}
+            </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {template.variables.map((variable, idx) => (
                 <Box
@@ -890,7 +936,9 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, o
                     sx={{ fontSize: '0.75rem' }}
                   />
                   {variable.required && (
-                    <Typography sx={{ color: 'error.main', fontSize: '0.75rem' }}>{i18n.t('pages.template_management_page.k61')}</Typography>
+                    <Typography sx={{ color: 'error.main', fontSize: '0.75rem' }}>
+                      {i18n.t('pages.template_management_page.k61')}
+                    </Typography>
                   )}
                 </Box>
               ))}

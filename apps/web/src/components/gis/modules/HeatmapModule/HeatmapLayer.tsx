@@ -32,7 +32,10 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
     devicePoints.forEach((point) => {
       let intensity = 0.5;
       if (intensityMode === 'status') {
-        if (point.status?.toLowerCase().includes('active') || point.status?.includes(i18n.t('gis.heatmap_layer.k0'))) {
+        if (
+          point.status?.toLowerCase().includes('active') ||
+          point.status?.includes(i18n.t('gis.heatmap_layer.k0'))
+        ) {
           intensity = 1.0;
         } else if (
           point.status?.toLowerCase().includes('pending') ||

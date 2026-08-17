@@ -407,7 +407,9 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
           onClick={onSave}
           disabled={isSaving}
         >
-          {isSaving ? t('system.system_params_page_components_cache_config_panel.m4') : t('system.log_config_panel.k19')}
+          {isSaving
+            ? t('system.system_params_page_components_cache_config_panel.m4')
+            : t('system.log_config_panel.k19')}
         </Button>
       </Box>
     </Box>

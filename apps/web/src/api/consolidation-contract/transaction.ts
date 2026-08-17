@@ -9,7 +9,9 @@ import type {
 } from './types';
 
 export const internalTransactionApi = {
-  list: (query?: InternalTransactionQuery): Promise<ConsolidationPaginatedResponse<InternalTransaction>> => {
+  list: (
+    query?: InternalTransactionQuery
+  ): Promise<ConsolidationPaginatedResponse<InternalTransaction>> => {
     return apiClient.erp.get('/consolidation/internal-transactions', { params: query });
   },
 
@@ -17,7 +19,9 @@ export const internalTransactionApi = {
     return apiClient.erp.get(`/consolidation/internal-transactions/${transactionId}`);
   },
 
-  executeElimination: (data: ExecuteEliminationRequest): Promise<ApiResponse<ExecuteEliminationResult>> => {
+  executeElimination: (
+    data: ExecuteEliminationRequest
+  ): Promise<ApiResponse<ExecuteEliminationResult>> => {
     return apiClient.erp.post('/consolidation/execute-elimination', data);
   },
 };

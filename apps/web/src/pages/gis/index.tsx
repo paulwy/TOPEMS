@@ -444,7 +444,9 @@ const GisContent: React.FC = () => {
                   >
                     {item.latitude?.toFixed(4)}, {item.longitude?.toFixed(4)}
                   </td>
-                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{<StatusChip status={item.status} />}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>
+                    {<StatusChip status={item.status} />}
+                  </td>
                 </tr>
               ))}
             {type === 'pipelines' &&
@@ -454,7 +456,9 @@ const GisContent: React.FC = () => {
                   style={{ borderTop: '1px solid grey.200' }}
                 >
                   <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.name}</td>
-                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.pipeline_type}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>
+                    {item.pipeline_type}
+                  </td>
                   <td
                     style={{
                       padding: `${designTokens.spacing.md} 16px`,
@@ -477,7 +481,9 @@ const GisContent: React.FC = () => {
                       ? `${item.end_point[0].toFixed(4)}, ${item.end_point[1].toFixed(4)}`
                       : ''}
                   </td>
-                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{<StatusChip status={item.status} />}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>
+                    {<StatusChip status={item.status} />}
+                  </td>
                 </tr>
               ))}
             {type === 'storageLocations' &&
@@ -487,7 +493,9 @@ const GisContent: React.FC = () => {
                   style={{ borderTop: '1px solid grey.200' }}
                 >
                   <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.name}</td>
-                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.location_type}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>
+                    {item.location_type}
+                  </td>
                   <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.capacity}</td>
                   <td
                     style={{
@@ -507,7 +515,9 @@ const GisContent: React.FC = () => {
                   style={{ borderTop: '1px solid grey.200' }}
                 >
                   <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.title}</td>
-                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.evidence_type}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>
+                    {item.evidence_type}
+                  </td>
                   <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.recorded_by}</td>
                   <td style={{ padding: `${designTokens.spacing.md} 16px` }}>
                     {item.recorded_at ? new Date(item.recorded_at).toLocaleString() : ''}
@@ -534,11 +544,19 @@ const GisContent: React.FC = () => {
                   key={item.id}
                   style={{ borderTop: '1px solid grey.200' }}
                 >
-                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.business_name}</td>
-                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.business_type}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>
+                    {item.business_name}
+                  </td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>
+                    {item.business_type}
+                  </td>
                   <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.address}</td>
-                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{item.contact_person}</td>
-                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>{<StatusChip status={item.status} />}</td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>
+                    {item.contact_person}
+                  </td>
+                  <td style={{ padding: `${designTokens.spacing.md} 16px` }}>
+                    {<StatusChip status={item.status} />}
+                  </td>
                 </tr>
               ))}
           </tbody>

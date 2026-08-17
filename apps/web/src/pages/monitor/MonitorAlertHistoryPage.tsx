@@ -30,6 +30,7 @@ import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { monitorApi, type Alert, type AlertQueryParams } from '@/api/monitor';
 import { alertHistorySchema } from '@/schemas/monitor';
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+
 const CRUD_QUERY_KEY = ['monitor_alert_history'];
 const METRIC_FILTER_OPTIONS = [
   { label: 'CPU', value: 'cpu' },
@@ -163,20 +164,20 @@ const MonitorAlertHistoryPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [metricFilter, setMetricFilter] = useState<string>('all');
   const invalidateAlerts = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: CRUD_QUERY_KEY ,
-  exact: false,
-  refetchType: 'active',
-});
+    void queryClient.invalidateQueries({
+      queryKey: CRUD_QUERY_KEY,
+      exact: false,
+      refetchType: 'active',
+    });
   }, [queryClient]);
   const acknowledgeMutation = useMutation({
     mutationFn: async (id: string) => monitorApi.acknowledgeAlert(id),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.MONITOR.DASHBOARD,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.MONITOR.DASHBOARD,
+        exact: false,
+        refetchType: 'active',
+      });
       notifySuccess(i18n.t('monitor.monitor_alert_history_page.k10'));
       invalidateAlerts();
     },
@@ -188,12 +189,11 @@ const MonitorAlertHistoryPage: React.FC = () => {
   const resolveMutation = useMutation({
     mutationFn: async (id: string) => monitorApi.resolveAlert(id),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.MONITOR.DASHBOARD,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.MONITOR.DASHBOARD,
+        exact: false,
+        refetchType: 'active',
+      });
       notifySuccess(i18n.t('monitor.monitor_alert_history_page.k12'));
       invalidateAlerts();
     },
@@ -220,7 +220,15 @@ const MonitorAlertHistoryPage: React.FC = () => {
     try {
       const response = await monitorApi.listAlerts({ pagesize: 1000 });
       const alerts = response.data?.items ?? [];
-      const headers = [i18n.t('monitor.monitor_alert_history_page.k20'), i18n.t('monitor.monitor_alert_history_page.k19'), i18n.t('monitor.monitor_alert_history_page.k18'), i18n.t('monitor.monitor_alert_history_page.k17'), i18n.t('monitor.monitor_alert_history_page.k16'), i18n.t('monitor.monitor_alert_history_page.k15'), i18n.t('monitor.monitor_alert_history_page.k14')];
+      const headers = [
+        i18n.t('monitor.monitor_alert_history_page.k20'),
+        i18n.t('monitor.monitor_alert_history_page.k19'),
+        i18n.t('monitor.monitor_alert_history_page.k18'),
+        i18n.t('monitor.monitor_alert_history_page.k17'),
+        i18n.t('monitor.monitor_alert_history_page.k16'),
+        i18n.t('monitor.monitor_alert_history_page.k15'),
+        i18n.t('monitor.monitor_alert_history_page.k14'),
+      ];
       const rows = alerts.map((a) => [
         a.title,
         a.severity,
@@ -364,7 +372,10 @@ const MonitorAlertHistoryPage: React.FC = () => {
         extraQueryParams={{ metricFilter }}
         customRowActions={customRowActions}
         headerContent={headerContent}
-        breadcrumbs={[{ label: i18n.t('monitor.monitor_alert_history_page.k33') }, { label: i18n.t('monitor.monitor_alert_history_page.k32') }]}
+        breadcrumbs={[
+          { label: i18n.t('monitor.monitor_alert_history_page.k33') },
+          { label: i18n.t('monitor.monitor_alert_history_page.k32') },
+        ]}
       />
     </PageContainer>
   );

@@ -2,6 +2,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+import { StatusBadge } from '../StatusBadge';
+import { FSMActionButtons } from '../FSMActionButtons';
+
 vi.mock('@/i18n', () => {
   const i18nMap: Record<string, string> = {
     'components.mes.status_badge.draft': 'draft',
@@ -25,7 +28,11 @@ vi.mock('@/i18n', () => {
   };
   return {
     default: {
-      t: (key: string) => i18nMap[key] ?? key.replace(/^components\.(mes|wms|tms|qms|aps)\.(status_badge|fsm_action_buttons)\./, '').replace(/_/g, ' '),
+      t: (key: string) =>
+        i18nMap[key] ??
+        key
+          .replace(/^components\.(mes|wms|tms|qms|aps)\.(status_badge|fsm_action_buttons)\./, '')
+          .replace(/_/g, ' '),
       language: 'zh',
       on: () => {},
       use: () => ({ init: () => {} }),
@@ -73,9 +80,6 @@ vi.mock('@/i18n', () => {
     },
   };
 });
-
-import { StatusBadge } from '../StatusBadge';
-import { FSMActionButtons } from '../FSMActionButtons';
 
 describe('StatusBadge', () => {
   it('renders production_order statuses with correct colors', () => {
@@ -128,23 +132,43 @@ describe('StatusBadge', () => {
 
 describe('FSMActionButtons', () => {
   it('shows correct transitions for draft status', () => {
-    render(<FSMActionButtons status='draft' onTransition={() => {}} />);
+    render(
+      <FSMActionButtons
+        status='draft'
+        onTransition={() => {}}
+      />
+    );
     expect(screen.getByText('released')).toBeInTheDocument();
     expect(screen.getByText('cancelled')).toBeInTheDocument();
   });
 
   it('marks approval transitions with (审批) label', () => {
-    render(<FSMActionButtons status='in_progress' onTransition={() => {}} />);
+    render(
+      <FSMActionButtons
+        status='in_progress'
+        onTransition={() => {}}
+      />
+    );
     expect(screen.getByText(/cancelled.*审批/)).toBeInTheDocument();
   });
 
   it('shows no buttons for terminal status', () => {
-    render(<FSMActionButtons status='completed' onTransition={() => {}} />);
+    render(
+      <FSMActionButtons
+        status='completed'
+        onTransition={() => {}}
+      />
+    );
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('renders equipment transitions correctly', () => {
-    render(<FSMActionButtons status='running' onTransition={() => {}} />);
+    render(
+      <FSMActionButtons
+        status='running'
+        onTransition={() => {}}
+      />
+    );
     expect(screen.getByText('idle')).toBeInTheDocument();
     expect(screen.getByText('down')).toBeInTheDocument();
     expect(screen.getByText(/scrapped.*审批/)).toBeInTheDocument();
@@ -152,7 +176,12 @@ describe('FSMActionButtons', () => {
 
   it('calls onTransition when button clicked', () => {
     const onTransition = vi.fn();
-    render(<FSMActionButtons status='draft' onTransition={onTransition} />);
+    render(
+      <FSMActionButtons
+        status='draft'
+        onTransition={onTransition}
+      />
+    );
     screen.getByText('released').click();
     expect(onTransition).toHaveBeenCalledWith('released');
   });
@@ -163,7 +192,7 @@ describe('FSMActionButtons', () => {
         status='draft'
         onTransition={() => {}}
         disabled
-      />,
+      />
     );
     const buttons = screen.getAllByRole('button');
     buttons.forEach((btn) => expect(btn).toBeDisabled());

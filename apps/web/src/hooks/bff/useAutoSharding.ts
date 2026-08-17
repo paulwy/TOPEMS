@@ -79,7 +79,12 @@ export function useAutoSharding<T = unknown>(
 
   const shardCheck = useMemo(() => {
     if (!autoDetect || !enabled) {
-      return { shouldShard: false, reason: i18n.t('shared.use_auto_sharding.k0'), estimatedRecords: 0, score: 0 };
+      return {
+        shouldShard: false,
+        reason: i18n.t('shared.use_auto_sharding.k0'),
+        estimatedRecords: 0,
+        score: 0,
+      };
     }
     return shouldShard(query, baseVariables, { maxRecordsPerShard });
   }, [query, baseVariables, autoDetect, enabled, maxRecordsPerShard]);
@@ -115,7 +120,9 @@ export function useAutoSharding<T = unknown>(
 
   const handleProgress = useCallback((p: number, completed: number, total: number) => {
     setProgress(p);
-    autoShardLogger.debug(`${i18n.t('shared.use_auto_sharding.k0')}${completed}/${total} (${p.toFixed(1)}%)`);
+    autoShardLogger.debug(
+      `${i18n.t('shared.use_auto_sharding.k0')}${completed}/${total} (${p.toFixed(1)}%)`
+    );
   }, []);
 
   const executeSharded = useCallback(
@@ -157,7 +164,9 @@ export function useAutoSharding<T = unknown>(
         setShardPlan(plan);
         setShardCount(plan.shards.length);
 
-        autoShardLogger.info(`${i18n.t('shared.use_auto_sharding.k1')}${plan.shards.length}${i18n.t('shared.use_auto_sharding.k2')}${plan.strategy}`);
+        autoShardLogger.info(
+          `${i18n.t('shared.use_auto_sharding.k1')}${plan.shards.length}${i18n.t('shared.use_auto_sharding.k2')}${plan.strategy}`
+        );
 
         const executeFn = async (vars: Record<string, unknown>) => {
           return bffGraphQL<T>(targetQuery, vars);
@@ -179,7 +188,9 @@ export function useAutoSharding<T = unknown>(
         setData(merged);
 
         if (result.errors.length > 0) {
-          autoShardLogger.warn(`${i18n.t('shared.use_auto_sharding.k4')}${result.errors.length}/${result.totalCount}`);
+          autoShardLogger.warn(
+            `${i18n.t('shared.use_auto_sharding.k4')}${result.errors.length}/${result.totalCount}`
+          );
         }
 
         return merged;

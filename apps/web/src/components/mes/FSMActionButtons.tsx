@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 const TRANSITIONS: Record<string, string[]> = {
   // ProductionOrder
   draft: ['released', 'cancelled'],
@@ -59,13 +60,13 @@ interface FSMActionButtonsProps {
 export function FSMActionButtons({ status, onTransition, disabled }: FSMActionButtonsProps) {
   const possible = TRANSITIONS[status] ?? [];
   return (
-    <div className="flex gap-2">
+    <div className='flex gap-2'>
       {possible.map((to) => {
         const requiresApproval = APPROVAL_TRANSITIONS.has(`${status}→${to}`);
         return (
           <button
             key={to}
-            type="button"
+            type='button'
             disabled={disabled}
             onClick={() => onTransition(to)}
             className={

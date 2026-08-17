@@ -98,15 +98,28 @@ export const StatsChartBarImpl: React.FC<StatsChartBarProps> = ({
       </h3>
       <div style={{ width: CHART_WIDTH, height }}>
         {type === 'line' ? (
-          <LineChart width={CHART_WIDTH} height={height} data={data}>
+          <LineChart
+            width={CHART_WIDTH}
+            height={height}
+            data={data}
+          >
             <CartesianGrid strokeDasharray='3 3' />
             <XAxis dataKey={xKey} />
             <YAxis />
             <Tooltip content={<CustomTooltip />} />
-            <Line type='monotone' dataKey={yKey} stroke='primary.light' strokeWidth={2} />
+            <Line
+              type='monotone'
+              dataKey={yKey}
+              stroke='primary.light'
+              strokeWidth={2}
+            />
           </LineChart>
         ) : (
-          <BarChart width={CHART_WIDTH} height={height} data={data}>
+          <BarChart
+            width={CHART_WIDTH}
+            height={height}
+            data={data}
+          >
             <CartesianGrid strokeDasharray='3 3' />
             <XAxis dataKey={xKey} />
             <YAxis />
@@ -123,7 +136,11 @@ export const StatsChartBarImpl: React.FC<StatsChartBarProps> = ({
                 ))}
               </>
             ) : (
-              <Bar dataKey={yKey} fill={colors[0]} radius={[4, 4, 0, 0]}>
+              <Bar
+                dataKey={yKey}
+                fill={colors[0]}
+                radius={[4, 4, 0, 0]}
+              >
                 {data.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}

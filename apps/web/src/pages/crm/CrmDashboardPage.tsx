@@ -2,7 +2,13 @@ import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Target, TrendingUp, Users, Clock, DollarSign, Package } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
-import type { StatCardConfig, ChartConfig, ChartCard, RecentItem, QuickAction } from '@/components/templates/DashboardTemplate';
+import type {
+  StatCardConfig,
+  ChartConfig,
+  ChartCard,
+  RecentItem,
+  QuickAction,
+} from '@/components/templates/DashboardTemplate';
 import { PageContainer } from '@/components/common';
 import { useTranslation } from 'react-i18next';
 import { useCrmDashboardSchema } from '@/schemas/crm';
@@ -36,10 +42,18 @@ const PeriodSelector: React.FC<{
       onChange={(e: SelectChangeEvent<Period>) => onChange(e.target.value as Period)}
       sx={{ minWidth: 140 }}
     >
-      <MenuItem value='MTD'>{t('crm.period.mtd') || i18n.t('pages.crm_dashboard_page.k1')}</MenuItem>
-      <MenuItem value='QTD'>{t('crm.period.qtd') || i18n.t('pages.crm_dashboard_page.k2')}</MenuItem>
-      <MenuItem value='YTD'>{t('crm.period.ytd') || i18n.t('pages.crm_dashboard_page.k3')}</MenuItem>
-      <MenuItem value='ROLLING_12M'>{t('crm.period.r12') || i18n.t('pages.crm_dashboard_page.12_4')}</MenuItem>
+      <MenuItem value='MTD'>
+        {t('crm.period.mtd') || i18n.t('pages.crm_dashboard_page.k1')}
+      </MenuItem>
+      <MenuItem value='QTD'>
+        {t('crm.period.qtd') || i18n.t('pages.crm_dashboard_page.k2')}
+      </MenuItem>
+      <MenuItem value='YTD'>
+        {t('crm.period.ytd') || i18n.t('pages.crm_dashboard_page.k3')}
+      </MenuItem>
+      <MenuItem value='ROLLING_12M'>
+        {t('crm.period.r12') || i18n.t('pages.crm_dashboard_page.12_4')}
+      </MenuItem>
     </Select>
   );
 };
@@ -225,7 +239,10 @@ const CrmDashboardPage: React.FC = () => {
       headerActions={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <MockBadge enabled={mockEnabled} />
-          <PeriodSelector period={period} onChange={setPeriod} />
+          <PeriodSelector
+            period={period}
+            onChange={setPeriod}
+          />
         </Box>
       }
     >

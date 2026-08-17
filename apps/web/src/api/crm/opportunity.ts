@@ -21,7 +21,7 @@ import {
 
 export const opportunityApi = {
   list: async (
-    params?: AdaptedQuery<'list_opportunities'> | OpportunityQueryParams,
+    params?: AdaptedQuery<'list_opportunities'> | OpportunityQueryParams
   ): Promise<TypedPaginatedResponse<Opportunity>> => {
     return apiClient.crm.get('/opportunities', {
       params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
@@ -29,11 +29,11 @@ export const opportunityApi = {
   },
 
   create: async (
-    data: AdaptedRequestBody<'create_opportunity'> | CreateOpportunityRequest,
+    data: AdaptedRequestBody<'create_opportunity'> | CreateOpportunityRequest
   ): Promise<TypedApiResponse<Opportunity, 'create_opportunity'>> => {
     return apiClient.crm.post(
       '/opportunities',
-      toOpenApiRequestBody(data as Record<string, unknown>),
+      toOpenApiRequestBody(data as Record<string, unknown>)
     );
   },
 
@@ -41,10 +41,7 @@ export const opportunityApi = {
     return apiClient.crm.get(`/opportunities/${id}`);
   },
 
-  update: async (
-    id: string,
-    data: UpdateOpportunityRequest,
-  ): Promise<ApiResponse<Opportunity>> => {
+  update: async (id: string, data: UpdateOpportunityRequest): Promise<ApiResponse<Opportunity>> => {
     return apiClient.crm.put(`/opportunities/${id}`, data);
   },
 
@@ -58,21 +55,21 @@ export const opportunityApi = {
 
   advance: async (
     id: string,
-    data?: { note?: string },
+    data?: { note?: string }
   ): Promise<ApiResponse<{ id: string; fromStage: OppStage; toStage: OppStage }>> => {
     return apiClient.crm.post(
       `/opportunities/${id}/advance`,
-      data ? toOpenApiRequestBody(data as Record<string, unknown>) : {},
+      data ? toOpenApiRequestBody(data as Record<string, unknown>) : {}
     );
   },
 
   rollback: async (
     id: string,
-    data?: { note?: string; reason?: string },
+    data?: { note?: string; reason?: string }
   ): Promise<ApiResponse<{ id: string; fromStage: OppStage; toStage: OppStage }>> => {
     return apiClient.crm.post(
       `/opportunities/${id}/rollback`,
-      data ? toOpenApiRequestBody(data as Record<string, unknown>) : {},
+      data ? toOpenApiRequestBody(data as Record<string, unknown>) : {}
     );
   },
 

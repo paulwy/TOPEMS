@@ -299,32 +299,56 @@ const DynamicLoaderTab: React.FC = () => {
   const handleLoad = async (id: string) => {
     try {
       await dynamicLoader.loadModule(id);
-      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k0')}${id}${i18n.t('microfrontend.runtime_dashboard.k1')}`, type: 'success' });
+      setSnack({
+        open: true,
+        msg: `${i18n.t('microfrontend.runtime_dashboard.k0')}${id}${i18n.t('microfrontend.runtime_dashboard.k1')}`,
+        type: 'success',
+      });
       refresh();
     } catch (err) {
-      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k2')}${(err as Error).message}`, type: 'error' });
+      setSnack({
+        open: true,
+        msg: `${i18n.t('microfrontend.runtime_dashboard.k2')}${(err as Error).message}`,
+        type: 'error',
+      });
     }
   };
 
   const handleUnload = (id: string) => {
     dynamicLoader.unloadModule(id);
-    setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k3')}${id}${i18n.t('microfrontend.runtime_dashboard.k4')}`, type: 'success' });
+    setSnack({
+      open: true,
+      msg: `${i18n.t('microfrontend.runtime_dashboard.k3')}${id}${i18n.t('microfrontend.runtime_dashboard.k4')}`,
+      type: 'success',
+    });
     refresh();
   };
 
   const handleReload = async (id: string) => {
     try {
       await dynamicLoader.reloadModule(id);
-      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k5')}${id}${i18n.t('microfrontend.runtime_dashboard.k6')}`, type: 'success' });
+      setSnack({
+        open: true,
+        msg: `${i18n.t('microfrontend.runtime_dashboard.k5')}${id}${i18n.t('microfrontend.runtime_dashboard.k6')}`,
+        type: 'success',
+      });
       refresh();
     } catch (err) {
-      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k7')}${(err as Error).message}`, type: 'error' });
+      setSnack({
+        open: true,
+        msg: `${i18n.t('microfrontend.runtime_dashboard.k7')}${(err as Error).message}`,
+        type: 'error',
+      });
     }
   };
 
   const handlePreload = async (id: string) => {
     await dynamicLoader.preloadModule(id);
-    setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k8')}${id}${i18n.t('microfrontend.runtime_dashboard.k9')}`, type: 'success' });
+    setSnack({
+      open: true,
+      msg: `${i18n.t('microfrontend.runtime_dashboard.k8')}${id}${i18n.t('microfrontend.runtime_dashboard.k9')}`,
+      type: 'success',
+    });
     refresh();
   };
 
@@ -341,12 +365,20 @@ const DynamicLoaderTab: React.FC = () => {
           Promise.resolve({ default: () => null })
         );
       }
-      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k10')}${newModuleId}${i18n.t('microfrontend.runtime_dashboard.k11')}`, type: 'success' });
+      setSnack({
+        open: true,
+        msg: `${i18n.t('microfrontend.runtime_dashboard.k10')}${newModuleId}${i18n.t('microfrontend.runtime_dashboard.k11')}`,
+        type: 'success',
+      });
       setNewModuleId('');
       setNewModuleUrl('');
       refresh();
     } catch (err) {
-      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k12')}${(err as Error).message}`, type: 'error' });
+      setSnack({
+        open: true,
+        msg: `${i18n.t('microfrontend.runtime_dashboard.k12')}${(err as Error).message}`,
+        type: 'error',
+      });
     }
   };
 
@@ -480,7 +512,9 @@ const DynamicLoaderTab: React.FC = () => {
                     <TableCell>{i18n.t('microfrontend.runtime_dashboard.k48')}</TableCell>
                     <TableCell>{i18n.t('microfrontend.runtime_dashboard.k49')}</TableCell>
                     <TableCell>{i18n.t('microfrontend.runtime_dashboard.k50')}</TableCell>
-                    <TableCell align='right'>{i18n.t('microfrontend.runtime_dashboard.k51')}</TableCell>
+                    <TableCell align='right'>
+                      {i18n.t('microfrontend.runtime_dashboard.k51')}
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -598,7 +632,9 @@ const DynamicLoaderTab: React.FC = () => {
 const CrossFrameworkTab: React.FC = () => {
   const [mountedComponents, setMountedComponents] = useState<MountedComponent[]>([]);
   const [selectedFramework, setSelectedFramework] = useState<FrameworkType>(FrameworkType.REACT);
-  const [propsInput, setPropsInput] = useState('{\n  "title": "' + i18n.t('microfrontend.runtime_dashboard.k56') + '",\n  "count": 42\n}');
+  const [propsInput, setPropsInput] = useState(
+    `{\n  "title": "${i18n.t('microfrontend.runtime_dashboard.k56')}",\n  "count": 42\n}`
+  );
   const [snack, setSnack] = useState<{ open: boolean; msg: string; type: 'success' | 'error' }>({
     open: false,
     msg: '',
@@ -623,7 +659,11 @@ const CrossFrameworkTab: React.FC = () => {
     try {
       props = JSON.parse(propsInput);
     } catch {
-      setSnack({ open: true, msg: i18n.t('microfrontend.runtime_dashboard.propsjson_13'), type: 'error' });
+      setSnack({
+        open: true,
+        msg: i18n.t('microfrontend.runtime_dashboard.propsjson_13'),
+        type: 'error',
+      });
       return;
     }
 
@@ -650,13 +690,21 @@ const CrossFrameworkTab: React.FC = () => {
       });
       refresh();
     } catch (err) {
-      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k16')}${(err as Error).message}`, type: 'error' });
+      setSnack({
+        open: true,
+        msg: `${i18n.t('microfrontend.runtime_dashboard.k16')}${(err as Error).message}`,
+        type: 'error',
+      });
     }
   };
 
   const handleUnmount = (id: string) => {
     crossFrameworkBridge.unmountComponent(id);
-    setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k17')}${id}${i18n.t('microfrontend.runtime_dashboard.k18')}`, type: 'success' });
+    setSnack({
+      open: true,
+      msg: `${i18n.t('microfrontend.runtime_dashboard.k17')}${id}${i18n.t('microfrontend.runtime_dashboard.k18')}`,
+      type: 'success',
+    });
     refresh();
   };
 
@@ -818,7 +866,9 @@ const CrossFrameworkTab: React.FC = () => {
                     <TableCell>{i18n.t('microfrontend.runtime_dashboard.k61')}</TableCell>
                     <TableCell>{i18n.t('microfrontend.runtime_dashboard.k62')}</TableCell>
                     <TableCell>{i18n.t('microfrontend.runtime_dashboard.k63')}</TableCell>
-                    <TableCell align='right'>{i18n.t('microfrontend.runtime_dashboard.k64')}</TableCell>
+                    <TableCell align='right'>
+                      {i18n.t('microfrontend.runtime_dashboard.k64')}
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -949,7 +999,11 @@ const DesignSystemTab: React.FC = () => {
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             label={i18n.t('microfrontend.runtime_dashboard.k70')}
-            value={theme.mode === 'dark' ? i18n.t('microfrontend.runtime_dashboard.k72') : i18n.t('microfrontend.runtime_dashboard.k71')}
+            value={
+              theme.mode === 'dark'
+                ? i18n.t('microfrontend.runtime_dashboard.k72')
+                : i18n.t('microfrontend.runtime_dashboard.k71')
+            }
             icon={theme.mode === 'dark' ? <MoonIcon size={20} /> : <SunIcon size={20} />}
             color={theme.mode === 'dark' ? 'colors.grey.800' : designTokens.colors.warning.main}
           />
@@ -983,7 +1037,9 @@ const DesignSystemTab: React.FC = () => {
                 startIcon={theme.mode === 'dark' ? <SunIcon size={16} /> : <MoonIcon size={16} />}
                 onClick={handleThemeToggle}
               >
-                {theme.mode === 'dark' ? i18n.t('microfrontend.runtime_dashboard.k75') : i18n.t('microfrontend.runtime_dashboard.k74')}
+                {theme.mode === 'dark'
+                  ? i18n.t('microfrontend.runtime_dashboard.k75')
+                  : i18n.t('microfrontend.runtime_dashboard.k74')}
               </Button>
               <Button
                 variant='contained'
@@ -1072,7 +1128,8 @@ const DesignSystemTab: React.FC = () => {
                 color='text.secondary'
                 sx={{ display: 'block', mt: 1 }}
               >
-                [i18n.t('microfrontend.runtime_dashboard.k19')]: CustomEvent + CSS Variables + SharedState
+                [i18n.t('microfrontend.runtime_dashboard.k19')]: CustomEvent + CSS Variables +
+                SharedState
               </Typography>
             </Grid>
           </Grid>
@@ -1089,7 +1146,8 @@ const DesignSystemTab: React.FC = () => {
               variant='subtitle2'
               sx={{ fontWeight: 600 }}
             >
-              {i18n.t('microfrontend.runtime_dashboard.k0')}{filteredTokens.length})
+              {i18n.t('microfrontend.runtime_dashboard.k0')}
+              {filteredTokens.length})
             </Typography>
             <FormControl
               size='small'
@@ -1194,7 +1252,8 @@ const DesignSystemTab: React.FC = () => {
             variant='subtitle2'
             sx={{ mb: 1, fontWeight: 600 }}
           >
-            {i18n.t('microfrontend.runtime_dashboard.css_1')}{cssVars.length})
+            {i18n.t('microfrontend.runtime_dashboard.css_1')}
+            {cssVars.length})
           </Typography>
           <Box
             sx={{
@@ -1273,7 +1332,11 @@ const LifecycleTab: React.FC = () => {
     lifecycleManager.register(newModuleId.trim(), {
       name: newModuleName.trim() || newModuleId.trim(),
     });
-    setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k22')}${newModuleId}${i18n.t('microfrontend.runtime_dashboard.k23')}`, type: 'success' });
+    setSnack({
+      open: true,
+      msg: `${i18n.t('microfrontend.runtime_dashboard.k22')}${newModuleId}${i18n.t('microfrontend.runtime_dashboard.k23')}`,
+      type: 'success',
+    });
     setNewModuleId('');
     setNewModuleName('');
     refresh();
@@ -1281,7 +1344,11 @@ const LifecycleTab: React.FC = () => {
 
   const handlePreload = (id: string) => {
     if (lifecycleManager.preload(id)) {
-      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k24')}${id}${i18n.t('microfrontend.runtime_dashboard.k25')}`, type: 'success' });
+      setSnack({
+        open: true,
+        msg: `${i18n.t('microfrontend.runtime_dashboard.k24')}${id}${i18n.t('microfrontend.runtime_dashboard.k25')}`,
+        type: 'success',
+      });
     } else {
       setSnack({ open: true, msg: i18n.t('microfrontend.runtime_dashboard.k21'), type: 'error' });
     }
@@ -1292,7 +1359,11 @@ const LifecycleTab: React.FC = () => {
     const el = document.createElement('div');
     el.id = `lifecycle-mount-${id}`;
     if (lifecycleManager.mount(id, el, { timestamp: Date.now() })) {
-      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k26')}${id}${i18n.t('microfrontend.runtime_dashboard.k27')}`, type: 'success' });
+      setSnack({
+        open: true,
+        msg: `${i18n.t('microfrontend.runtime_dashboard.k26')}${id}${i18n.t('microfrontend.runtime_dashboard.k27')}`,
+        type: 'success',
+      });
     } else {
       setSnack({ open: true, msg: i18n.t('microfrontend.runtime_dashboard.k22'), type: 'error' });
     }
@@ -1301,7 +1372,11 @@ const LifecycleTab: React.FC = () => {
 
   const handleUnmount = (id: string) => {
     if (lifecycleManager.unmount(id)) {
-      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k28')}${id}${i18n.t('microfrontend.runtime_dashboard.k29')}`, type: 'success' });
+      setSnack({
+        open: true,
+        msg: `${i18n.t('microfrontend.runtime_dashboard.k28')}${id}${i18n.t('microfrontend.runtime_dashboard.k29')}`,
+        type: 'success',
+      });
     } else {
       setSnack({ open: true, msg: i18n.t('microfrontend.runtime_dashboard.k23'), type: 'error' });
     }
@@ -1310,7 +1385,11 @@ const LifecycleTab: React.FC = () => {
 
   const handleDestroy = (id: string) => {
     if (lifecycleManager.destroy(id)) {
-      setSnack({ open: true, msg: `${i18n.t('microfrontend.runtime_dashboard.k30')}${id}${i18n.t('microfrontend.runtime_dashboard.k31')}`, type: 'success' });
+      setSnack({
+        open: true,
+        msg: `${i18n.t('microfrontend.runtime_dashboard.k30')}${id}${i18n.t('microfrontend.runtime_dashboard.k31')}`,
+        type: 'success',
+      });
     } else {
       setSnack({ open: true, msg: i18n.t('microfrontend.runtime_dashboard.k24'), type: 'error' });
     }
@@ -1502,7 +1581,9 @@ const LifecycleTab: React.FC = () => {
                         <TableCell>ID</TableCell>
                         <TableCell>{i18n.t('microfrontend.runtime_dashboard.k90')}</TableCell>
                         <TableCell>{i18n.t('microfrontend.runtime_dashboard.k91')}</TableCell>
-                        <TableCell align='right'>{i18n.t('microfrontend.runtime_dashboard.k92')}</TableCell>
+                        <TableCell align='right'>
+                          {i18n.t('microfrontend.runtime_dashboard.k92')}
+                        </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -1620,7 +1701,9 @@ const LifecycleTab: React.FC = () => {
                 variant='subtitle2'
                 sx={{ mb: 1, fontWeight: 600 }}
               >
-                {selectedRecord ? `${i18n.t('microfrontend.runtime_dashboard.k32')}${selectedRecord.id}${i18n.t('microfrontend.runtime_dashboard.k33')}` : i18n.t('microfrontend.runtime_dashboard.k97')}
+                {selectedRecord
+                  ? `${i18n.t('microfrontend.runtime_dashboard.k32')}${selectedRecord.id}${i18n.t('microfrontend.runtime_dashboard.k33')}`
+                  : i18n.t('microfrontend.runtime_dashboard.k97')}
               </Typography>
               {selectedRecord && (
                 <Box>
@@ -1679,7 +1762,8 @@ const LifecycleTab: React.FC = () => {
             variant='subtitle2'
             sx={{ mb: 1, fontWeight: 600 }}
           >
-            {i18n.t('microfrontend.runtime_dashboard.k2')} {events.length} {i18n.t('microfrontend.runtime_dashboard.k3')}
+            {i18n.t('microfrontend.runtime_dashboard.k2')} {events.length}{' '}
+            {i18n.t('microfrontend.runtime_dashboard.k3')}
           </Typography>
           <TableContainer
             component={Paper}

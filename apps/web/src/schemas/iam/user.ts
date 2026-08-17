@@ -8,7 +8,6 @@ import React from 'react';
 import type { EntitySchema, SchemaField } from '@/schema';
 import { authApi } from '@/api/iam';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';

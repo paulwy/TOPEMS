@@ -48,7 +48,9 @@ export default function ProductionPlanDetailPage() {
   };
 
   if (loading) {
-    return <div className='p-4 text-gray-600'>{i18n.t('pages.production_plan_detail_page.k0')}</div>;
+    return (
+      <div className='p-4 text-gray-600'>{i18n.t('pages.production_plan_detail_page.k0')}</div>
+    );
   }
 
   if (!plan) {
@@ -85,7 +87,9 @@ export default function ProductionPlanDetailPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>{t('aps.production_plan_detail_page.k1')}</p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>
+          {t('aps.production_plan_detail_page.k1')}
+        </p>
         <FSMActionButtons
           fsm='production_plan'
           currentStatus={plan.status ?? 'draft'}

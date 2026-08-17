@@ -22,10 +22,9 @@ import { docApi } from '@/api/doc';
 import type { DocDashboardStats } from '@/api/doc';
 import { LazyChart } from '@/components/charts';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const iconMap: Record<string, React.ReactNode> = {
   FileText: <FileText size={24} />,
@@ -46,7 +45,7 @@ const getGreeting = (): string => {
 export const DocumentDashboardPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const { data: statsData, isPending: loading} = useQuery<DocDashboardStats | null>({
+  const { data: statsData, isPending: loading } = useQuery<DocDashboardStats | null>({
     queryKey: QUERY_KEYS.AD_HOC.DOC_DASHBOARD_BASE,
     queryFn: async () => {
       const response = await docApi.getDashboard();
@@ -136,14 +135,20 @@ export const DocumentDashboardPage: React.FC = () => {
       {
         id: 'document-type-distribution',
         title: i18n.t('pages.dashboard_page.k17'),
-        chart: <LazyChart type='pie' data={pieData} />,
+        chart: (
+          <LazyChart
+            type='pie'
+            data={pieData}
+          />
+        ),
         height: 300,
       },
       {
         id: 'upload-trend',
         title: i18n.t('pages.dashboard_page.k18'),
         chart: (
-          <LazyChart type='line'
+          <LazyChart
+            type='line'
             data={lineData}
             xKey='name'
             yKey='value'

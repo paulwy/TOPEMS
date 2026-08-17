@@ -12,6 +12,7 @@ import { StatsPageTemplate, type TableColumn } from '@/components/templates/Stat
 import { apiClient } from '@/api/client';
 import { PageContainer } from '@/components/common';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface RsReportData {
   projects: {
     total: number;

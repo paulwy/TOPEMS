@@ -20,11 +20,7 @@
 
 import apiClient from '../client';
 import type { Document, PaginationParams, PaginatedResult } from './types';
-import {
-  toOpenApiParams,
-  type AdaptedQuery,
-  type TypedApiResponse,
-} from '@topems/shared-types';
+import { toOpenApiParams, type AdaptedQuery, type TypedApiResponse } from '@topems/shared-types';
 
 export const documentTypedApi = {
   /**
@@ -32,7 +28,7 @@ export const documentTypedApi = {
    * Query Params: { page, pagesize, search, category }（AdaptedQuery 后 camelCase）
    */
   list: async (
-    params?: AdaptedQuery<'_document_list'> | PaginationParams,
+    params?: AdaptedQuery<'_document_list'> | PaginationParams
   ): Promise<TypedApiResponse<PaginatedResult<Document>>> => {
     return apiClient.ai.get('/documents', {
       params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,

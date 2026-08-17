@@ -6,6 +6,7 @@ import React from 'react';
 import { Box, Tabs, Tab, TextField, InputAdornment, Chip } from '@mui/material';
 import { Search } from 'lucide-react';
 import i18n from '@/i18n';
+
 interface ApprovalFilterProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;

@@ -11,16 +11,28 @@ import i18n from '@/i18n';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apsApi } from '@/api/aps';
-import { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, } from 'recharts';
+import {
+  ResponsiveContainer,
+  ComposedChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ReferenceLine,
+} from 'recharts';
+
 const mockShortages = [
-    { material: i18n.t('pages.material_shortage_page.2mm_0'), shortage: 500 },
-    { material: i18n.t('pages.material_shortage_page.4040_1'), shortage: 380 },
-    { material: i18n.t('pages.material_shortage_page.15kw_0'), shortage: 320 },
-    { material: i18n.t('pages.material_shortage_page.6204_2'), shortage: 250 },
-    { material: i18n.t('pages.material_shortage_page.m8_3'), shortage: 180 },
-    { material: i18n.t('pages.material_shortage_page.4mm_1'), shortage: 120 },
-    { material: i18n.t('pages.material_shortage_page.o_4'), shortage: 80 },
-    { material: i18n.t('pages.material_shortage_page.k5'), shortage: 50 },
+  { material: i18n.t('pages.material_shortage_page.2mm_0'), shortage: 500 },
+  { material: i18n.t('pages.material_shortage_page.4040_1'), shortage: 380 },
+  { material: i18n.t('pages.material_shortage_page.15kw_0'), shortage: 320 },
+  { material: i18n.t('pages.material_shortage_page.6204_2'), shortage: 250 },
+  { material: i18n.t('pages.material_shortage_page.m8_3'), shortage: 180 },
+  { material: i18n.t('pages.material_shortage_page.4mm_1'), shortage: 120 },
+  { material: i18n.t('pages.material_shortage_page.o_4'), shortage: 80 },
+  { material: i18n.t('pages.material_shortage_page.k5'), shortage: 50 },
 ];
 export default function MaterialShortagePage() {
   const { data: backendData, isLoading: isBackendLoading } = useQuery({
@@ -38,32 +50,34 @@ export default function MaterialShortagePage() {
       }
     },
   });
-    const paretoData = useMemo(() => {
-        const list = mockShortages.slice().sort((a, b) => b.shortage - a.shortage);
-        const total = list.reduce((s, c) => s + c.shortage, 0) || 1;
-        let acc = 0;
-        return list.map((c) => {
-            acc += c.shortage;
-            return {
-                material: c.material,
-                shortage: c.shortage,
-                cumulativePct: Number(((acc / total) * 100).toFixed(1)),
-            };
-        });
-    }, []);
-    const vitalFew = useMemo(() => {
-        const vital = paretoData.filter((d) => d.cumulativePct <= 80);
-        return vital.length === 0 ? paretoData.slice(0, 2) : vital;
-    }, [paretoData]);
-    const totalShortage = useMemo(() => paretoData.reduce((s, d) => s + d.shortage, 0), [paretoData]);
-    return (<div className='space-y-4 p-4'>
+  const paretoData = useMemo(() => {
+    const list = mockShortages.slice().sort((a, b) => b.shortage - a.shortage);
+    const total = list.reduce((s, c) => s + c.shortage, 0) || 1;
+    let acc = 0;
+    return list.map((c) => {
+      acc += c.shortage;
+      return {
+        material: c.material,
+        shortage: c.shortage,
+        cumulativePct: Number(((acc / total) * 100).toFixed(1)),
+      };
+    });
+  }, []);
+  const vitalFew = useMemo(() => {
+    const vital = paretoData.filter((d) => d.cumulativePct <= 80);
+    return vital.length === 0 ? paretoData.slice(0, 2) : vital;
+  }, [paretoData]);
+  const totalShortage = useMemo(() => paretoData.reduce((s, d) => s + d.shortage, 0), [paretoData]);
+  return (
+    <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
         <h1 className='text-2xl font-bold'>{i18n.t('pages.material_shortage_page.k6')}</h1>
-        <span className='text-sm text-gray-500'>{i18n.t("aps.analytics.materialShortage.k0")}{vitalFew.length} 种</span>
+        <span className='text-sm text-gray-500'>
+          {i18n.t('aps.analytics.materialShortage.k0')}
+          {vitalFew.length} {i18n.t('aps.analytics.materialShortage.k2')}
+        </span>
       </div>
-      <p className='text-sm text-gray-600'>
-        {i18n.t('pages.material_shortage_page.k2')}
-      </p>
+      <p className='text-sm text-gray-600'>{i18n.t('pages.material_shortage_page.k2')}</p>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <div className='rounded-lg border p-4'>
@@ -83,18 +97,69 @@ export default function MaterialShortagePage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{i18n.t("aps.analytics.materialShortage.k1")}</h3>
-        <ResponsiveContainer width='100%' height={360}>
-          <ComposedChart data={paretoData} margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
-            <CartesianGrid strokeDasharray='3 3'/>
-            <XAxis dataKey='material' fontSize={11} angle={-15} textAnchor='end' height={60}/>
-            <YAxis yAxisId='left' fontSize={11} label={{ value: i18n.t('pages.material_shortage_page.k10'), angle: -90, position: 'insideLeft' }}/>
-            <YAxis yAxisId='right' orientation='right' domain={[0, 100]} unit='%' fontSize={11} label={{ value: i18n.t('pages.material_shortage_page.k11'), angle: 90, position: 'insideRight' }}/>
+        <h3 className='mb-2 font-semibold'>{i18n.t('aps.analytics.materialShortage.k1')}</h3>
+        <ResponsiveContainer
+          width='100%'
+          height={360}
+        >
+          <ComposedChart
+            data={paretoData}
+            margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+          >
+            <CartesianGrid strokeDasharray='3 3' />
+            <XAxis
+              dataKey='material'
+              fontSize={11}
+              angle={-15}
+              textAnchor='end'
+              height={60}
+            />
+            <YAxis
+              yAxisId='left'
+              fontSize={11}
+              label={{
+                value: i18n.t('pages.material_shortage_page.k10'),
+                angle: -90,
+                position: 'insideLeft',
+              }}
+            />
+            <YAxis
+              yAxisId='right'
+              orientation='right'
+              domain={[0, 100]}
+              unit='%'
+              fontSize={11}
+              label={{
+                value: i18n.t('pages.material_shortage_page.k11'),
+                angle: 90,
+                position: 'insideRight',
+              }}
+            />
             <Tooltip />
             <Legend />
-            <ReferenceLine yAxisId='right' y={80} stroke={designTokens.colors.error.main} strokeDasharray='4 4' label={i18n.t('pages.material_shortage_page.80_3')}/>
-            <Bar yAxisId='left' dataKey='shortage' name={i18n.t('pages.material_shortage_page.k12')} fill={designTokens.colors.secondary.dark} barSize={36}/>
-            <Line yAxisId='right' type='monotone' dataKey='cumulativePct' name={i18n.t('pages.material_shortage_page.k13')} stroke={designTokens.colors.error.main} strokeWidth={2} dot={{ r: 3 }}/>
+            <ReferenceLine
+              yAxisId='right'
+              y={80}
+              stroke={designTokens.colors.error.main}
+              strokeDasharray='4 4'
+              label={i18n.t('pages.material_shortage_page.80_3')}
+            />
+            <Bar
+              yAxisId='left'
+              dataKey='shortage'
+              name={i18n.t('pages.material_shortage_page.k12')}
+              fill={designTokens.colors.secondary.dark}
+              barSize={36}
+            />
+            <Line
+              yAxisId='right'
+              type='monotone'
+              dataKey='cumulativePct'
+              name={i18n.t('pages.material_shortage_page.k13')}
+              stroke={designTokens.colors.error.main}
+              strokeWidth={2}
+              dot={{ r: 3 }}
+            />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -111,20 +176,30 @@ export default function MaterialShortagePage() {
             </tr>
           </thead>
           <tbody>
-            {paretoData.map((d) => (<tr key={d.material} className='border-b'>
+            {paretoData.map((d) => (
+              <tr
+                key={d.material}
+                className='border-b'
+              >
                 <td className='py-2 pr-4 font-medium'>{d.material}</td>
                 <td className='py-2 pr-4'>{d.shortage}</td>
                 <td className='py-2 pr-4'>{d.cumulativePct}%</td>
                 <td className='py-2'>
-                  {d.cumulativePct <= 80 ? (<span className='inline-flex items-center rounded bg-red-100 px-2 py-0.5 text-xs text-red-700'>
+                  {d.cumulativePct <= 80 ? (
+                    <span className='inline-flex items-center rounded bg-red-100 px-2 py-0.5 text-xs text-red-700'>
                       {i18n.t('pages.material_shortage_page.k4')}
-                    </span>) : (<span className='inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600'>
+                    </span>
+                  ) : (
+                    <span className='inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600'>
                       {i18n.t('pages.material_shortage_page.k5')}
-                    </span>)}
+                    </span>
+                  )}
                 </td>
-              </tr>))}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
-    </div>);
+    </div>
+  );
 }

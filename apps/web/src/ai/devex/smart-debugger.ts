@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export interface DebugSession {
   id: string;
   file: string;

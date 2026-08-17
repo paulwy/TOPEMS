@@ -4,6 +4,7 @@
  */
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
+
 const ct = designTokens.colors;
 export const getStatusLabels = (t: (key: string) => string): Record<string, string> => ({
   active: i18n.t('pm.project_detail.status.active'),

@@ -11,11 +11,10 @@ import { useNavigate } from 'react-router-dom';
 import { SRM_PATHS } from '@/modules/srm/config';
 import { designTokens } from '@/theme/tokens';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface SupplierContract {
   id: string;

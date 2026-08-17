@@ -150,7 +150,10 @@ const colorMap: Record<string, { bg: string; gradient: string }> = {
     bg: 'warning.main',
     gradient: `linear-gradient(135deg, ${designTokens.colors.warning.main}, ${designTokens.colors.warning.dark})`,
   },
-  red: { bg: designTokens.colors.error.main, gradient: `linear-gradient(135deg, ${designTokens.colors.error.main}, ${designTokens.colors.error.dark})` },
+  red: {
+    bg: designTokens.colors.error.main,
+    gradient: `linear-gradient(135deg, ${designTokens.colors.error.main}, ${designTokens.colors.error.dark})`,
+  },
   cyan: {
     bg: `${designTokens.colors.cyan['500']}`,
     gradient: `linear-gradient(135deg, ${designTokens.colors.cyan['500']}, ${designTokens.colors.cyan['600']})`,
@@ -432,7 +435,9 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 justifyContent: 'center',
                 background: getIconGradient(),
                 transition: 'box-shadow 0.3s',
-                boxShadow: isHovered ? `inset 0 2px 4px ${designTokens.colors.cyber.glass.divider}` : 'none',
+                boxShadow: isHovered
+                  ? `inset 0 2px 4px ${designTokens.colors.cyber.glass.divider}`
+                  : 'none',
               }}
             >
               {renderIcon()}

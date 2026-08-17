@@ -26,6 +26,7 @@ import i18n from '@/i18n';
 import { Settings, Download, Upload, Play } from 'lucide-react';
 import { ConfirmDialog } from '@/components/common';
 import type { TableInfo, ColumnInfo } from '@/api/erp/database';
+
 interface DatabaseManagementModalsProps {
   // Structure Modal
   showStructureModal: boolean;

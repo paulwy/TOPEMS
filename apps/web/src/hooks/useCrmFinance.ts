@@ -43,10 +43,11 @@ export function useUpdateCustomerFinanceInfo() {
       data: Partial<CustomerFinanceInfo>;
     }) => crmFinanceApi.updateCustomerFinanceInfo(customerId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_crm_finance.k0'));
     },
     onError: (err) => {
@@ -86,8 +87,9 @@ export function useSalesInvoice(invoiceId: string) {
     queryKey: [...QUERY_KEYS.AD_HOC.CRM_SALES_INVOICE_BASE, invoiceId],
     queryFn: () => crmFinanceApi.getSalesInvoice(invoiceId),
     enabled: !!invoiceId,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 }
 
 /**
@@ -100,14 +102,16 @@ export function useCreateSalesInvoice() {
   return useMutation({
     mutationFn: (data: Partial<SalesInvoice>) => crmFinanceApi.createSalesInvoice(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_crm_finance.k2'));
     },
     onError: (err) => {
@@ -127,14 +131,16 @@ export function useUpdateSalesInvoice() {
     mutationFn: ({ invoiceId, data }: { invoiceId: string; data: Partial<SalesInvoice> }) =>
       crmFinanceApi.updateSalesInvoice(invoiceId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_crm_finance.k4'));
     },
     onError: (err) => {
@@ -153,14 +159,16 @@ export function useDeleteSalesInvoice() {
   return useMutation({
     mutationFn: (invoiceId: string) => crmFinanceApi.deleteSalesInvoice(invoiceId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_crm_finance.k6'));
     },
     onError: (err) => {
@@ -179,14 +187,16 @@ export function useIssueSalesInvoice() {
   return useMutation({
     mutationFn: (invoiceId: string) => crmFinanceApi.issueSalesInvoice(invoiceId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_crm_finance.k8'));
     },
     onError: (err) => {
@@ -206,14 +216,16 @@ export function useVoidSalesInvoice() {
     mutationFn: ({ invoiceId, reason }: { invoiceId: string; reason?: string }) =>
       crmFinanceApi.cancelSalesInvoice(invoiceId, reason || ''),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_crm_finance.k10'));
     },
     onError: (err) => {
@@ -233,14 +245,16 @@ export function useRedFlushSalesInvoice() {
     mutationFn: ({ invoiceId, reason }: { invoiceId: string; reason?: string }) =>
       crmFinanceApi.redFlushSalesInvoice(invoiceId, reason),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_crm_finance.k12'));
     },
     onError: (err) => {
@@ -279,8 +293,9 @@ export function useCollectionRecord(recordId: string) {
     queryKey: [...QUERY_KEYS.AD_HOC.CRM_COLLECTION_RECORD_BASE, recordId],
     queryFn: () => crmFinanceApi.getCollectionRecord(recordId),
     enabled: !!recordId,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 }
 
 /**
@@ -295,20 +310,21 @@ export function useCreateCollectionRecord() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.CRM_COLLECTION_RECORDS_BASE,
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE,
-      
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_crm_finance.k14'));
     },
     onError: (err) => {
@@ -329,20 +345,21 @@ export function useConfirmCollection() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.CRM_COLLECTION_RECORDS_BASE,
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE,
-      
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_crm_finance.k16'));
     },
     onError: (err) => {
@@ -363,26 +380,31 @@ export function useBatchConfirmCollections() {
     onSuccess: (result) => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.CRM_COLLECTION_RECORDS_BASE,
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE,
-      
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       const successCount = result?.data?.success || 0;
       const failedCount = result?.data?.failed || 0;
       if (failedCount > 0) {
-        showError(`${i18n.t('shared.use_crm_finance.k0')}${successCount}${i18n.t('shared.use_crm_finance.k1')}${failedCount}${i18n.t('shared.use_crm_finance.k2')}`);
+        showError(
+          `${i18n.t('shared.use_crm_finance.k0')}${successCount}${i18n.t('shared.use_crm_finance.k1')}${failedCount}${i18n.t('shared.use_crm_finance.k2')}`
+        );
       } else {
-        success(`${i18n.t('shared.use_crm_finance.k3')}${successCount}${i18n.t('shared.use_crm_finance.k4')}`);
+        success(
+          `${i18n.t('shared.use_crm_finance.k3')}${successCount}${i18n.t('shared.use_crm_finance.k4')}`
+        );
       }
     },
     onError: (err) => {
@@ -471,12 +493,11 @@ export function useExportSalesInvoices() {
       return blob;
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_crm_finance.k19'));
     },
     onError: (err) => {
@@ -510,12 +531,11 @@ export function useExportCollectionRecords() {
       return blob;
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_crm_finance.k21'));
     },
     onError: (err) => {
@@ -549,12 +569,11 @@ export function useExportReceivableAging() {
       return blob;
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_crm_finance.k23'));
     },
     onError: (err) => {

@@ -17,6 +17,7 @@ import type { RowAction } from '@/components/templates/list/types';
 import { docSchema } from '@/schemas/rd';
 import { rdApi } from '@/api/rd';
 import type { RsStatistics } from '@/api/rd';
+
 interface Doc {
   id: string;
   doc_name: string;
@@ -81,9 +82,24 @@ const docApiAdapter: CrudApiAdapter<Doc> = {
   },
 };
 const VERSION_HISTORY = [
-  { version: 'v2.1.0', date: '2024-06-15', author: i18n.t('rd.rs_doc_page.k7'), note: i18n.t('rd.rs_doc_page.k6') },
-  { version: 'v2.0.0', date: '2024-05-20', author: i18n.t('rd.rs_doc_page.k9'), note: i18n.t('rd.rs_doc_page.k8') },
-  { version: 'v1.0.0', date: '2024-04-01', author: i18n.t('rd.rs_doc_page.k11'), note: i18n.t('rd.rs_doc_page.k10') },
+  {
+    version: 'v2.1.0',
+    date: '2024-06-15',
+    author: i18n.t('rd.rs_doc_page.k7'),
+    note: i18n.t('rd.rs_doc_page.k6'),
+  },
+  {
+    version: 'v2.0.0',
+    date: '2024-05-20',
+    author: i18n.t('rd.rs_doc_page.k9'),
+    note: i18n.t('rd.rs_doc_page.k8'),
+  },
+  {
+    version: 'v1.0.0',
+    date: '2024-04-01',
+    author: i18n.t('rd.rs_doc_page.k11'),
+    note: i18n.t('rd.rs_doc_page.k10'),
+  },
 ];
 const RsDocPage: React.FC = () => {
   const [versionDialogOpen, setVersionDialogOpen] = useState(false);
@@ -112,7 +128,10 @@ const RsDocPage: React.FC = () => {
         schema={docSchema}
         apiAdapter={docApiAdapter}
         customRowActions={customRowActions}
-        breadcrumbs={[{ label: i18n.t('rd.rs_doc_page.k15'), href: '/rd' }, { label: i18n.t('rd.rs_doc_page.k14') }]}
+        breadcrumbs={[
+          { label: i18n.t('rd.rs_doc_page.k15'), href: '/rd' },
+          { label: i18n.t('rd.rs_doc_page.k14') },
+        ]}
       />
       <Dialog
         open={versionDialogOpen}
@@ -169,7 +188,9 @@ const RsDocPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setVersionDialogOpen(false)}>{i18n.t('rd.rs_doc_page.k17')}</Button>
+          <Button onClick={() => setVersionDialogOpen(false)}>
+            {i18n.t('rd.rs_doc_page.k17')}
+          </Button>
         </DialogActions>
       </Dialog>
     </>

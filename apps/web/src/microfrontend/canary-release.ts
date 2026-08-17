@@ -168,7 +168,11 @@ class CanaryReleaseManager {
     });
 
     this.persist();
-    logger.info(i18n.t('microfrontend.canary-release.k1'), this.configs.size, i18n.t('microfrontend.canary-release.k0'));
+    logger.info(
+      i18n.t('microfrontend.canary-release.k1'),
+      this.configs.size,
+      i18n.t('microfrontend.canary-release.k0')
+    );
   }
 
   /**
@@ -205,7 +209,11 @@ class CanaryReleaseManager {
       });
 
       this.persist();
-      logger.info(i18n.t('microfrontend.canary-release.k2'), serverConfigs.length, i18n.t('microfrontend.canary-release.k1'));
+      logger.info(
+        i18n.t('microfrontend.canary-release.k2'),
+        serverConfigs.length,
+        i18n.t('microfrontend.canary-release.k1')
+      );
     } catch (err) {
       logger.warn(i18n.t('microfrontend.canary-release.k3'), err);
     }
@@ -313,10 +321,13 @@ class CanaryReleaseManager {
     this.persist();
     this.notifyListeners(moduleId, config);
 
-    logger.info(`${i18n.t('microfrontend.canary-release.canaryrelease_5')}${moduleId}${i18n.t('microfrontend.canary-release.k6')}${config.percentage}%`, {
-      canaryEntry: config.canaryEntry,
-      canaryVersion: config.canaryVersion,
-    });
+    logger.info(
+      `${i18n.t('microfrontend.canary-release.canaryrelease_5')}${moduleId}${i18n.t('microfrontend.canary-release.k6')}${config.percentage}%`,
+      {
+        canaryEntry: config.canaryEntry,
+        canaryVersion: config.canaryVersion,
+      }
+    );
   }
 
   /**
@@ -338,7 +349,9 @@ class CanaryReleaseManager {
     this.persist();
     this.notifyListeners(moduleId, config);
 
-    logger.info(`${i18n.t('microfrontend.canary-release.canaryrelease_7')}${moduleId}${i18n.t('microfrontend.canary-release.k8')}`);
+    logger.info(
+      `${i18n.t('microfrontend.canary-release.canaryrelease_7')}${moduleId}${i18n.t('microfrontend.canary-release.k8')}`
+    );
   }
 
   /**

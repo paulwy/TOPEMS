@@ -34,7 +34,11 @@ const FSM_TRANSITIONS: Record<TmsFsmType, Record<string, FSMTransition[]>> = {
     ],
     inactive: [
       { targetStatus: 'active', label: i18n.t('components.fsm_action_buttons.k4') },
-      { targetStatus: 'retired', label: i18n.t('components.fsm_action_buttons.k5'), requiresApproval: true },
+      {
+        targetStatus: 'retired',
+        label: i18n.t('components.fsm_action_buttons.k5'),
+        requiresApproval: true,
+      },
     ],
   },
   driver: {
@@ -48,12 +52,20 @@ const FSM_TRANSITIONS: Record<TmsFsmType, Record<string, FSMTransition[]>> = {
     ],
     suspended: [
       { targetStatus: 'active', label: i18n.t('components.fsm_action_buttons.k10') },
-      { targetStatus: 'inactive', label: i18n.t('components.fsm_action_buttons.k11'), requiresApproval: true },
+      {
+        targetStatus: 'inactive',
+        label: i18n.t('components.fsm_action_buttons.k11'),
+        requiresApproval: true,
+      },
     ],
   },
   carrier: {
     pending_review: [
-      { targetStatus: 'active', label: i18n.t('components.fsm_action_buttons.k12'), requiresApproval: true },
+      {
+        targetStatus: 'active',
+        label: i18n.t('components.fsm_action_buttons.k12'),
+        requiresApproval: true,
+      },
       { targetStatus: 'rejected', label: i18n.t('components.fsm_action_buttons.k13') },
     ],
     active: [{ targetStatus: 'suspended', label: i18n.t('components.fsm_action_buttons.k14') }],
@@ -64,7 +76,11 @@ const FSM_TRANSITIONS: Record<TmsFsmType, Record<string, FSMTransition[]>> = {
   },
   route: {
     planning: [
-      { targetStatus: 'active', label: i18n.t('components.fsm_action_buttons.k17'), requiresApproval: true },
+      {
+        targetStatus: 'active',
+        label: i18n.t('components.fsm_action_buttons.k17'),
+        requiresApproval: true,
+      },
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k18') },
     ],
     active: [{ targetStatus: 'closed', label: i18n.t('components.fsm_action_buttons.k19') }],
@@ -79,7 +95,11 @@ const FSM_TRANSITIONS: Record<TmsFsmType, Record<string, FSMTransition[]>> = {
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k23') },
     ],
     pending: [
-      { targetStatus: 'in_transit', label: i18n.t('components.fsm_action_buttons.k24'), requiresApproval: true },
+      {
+        targetStatus: 'in_transit',
+        label: i18n.t('components.fsm_action_buttons.k24'),
+        requiresApproval: true,
+      },
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k25') },
     ],
     in_transit: [

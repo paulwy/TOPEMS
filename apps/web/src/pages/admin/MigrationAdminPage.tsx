@@ -27,6 +27,7 @@ import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
 import { migrationSchema } from '@/schemas/admin';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface ServiceStatusMap {
   [serviceName: string]: MigrationStatus;
 }
@@ -53,7 +54,10 @@ const MigrationAdminPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
   const statusQuery = useQuery({
-    queryKey: [...QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE, servicesQuery.data?.map((s) => s.name) || []],
+    queryKey: [
+      ...QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE,
+      servicesQuery.data?.map((s) => s.name) || [],
+    ],
     queryFn: async () => {
       const services = servicesQuery.data || [];
       if (services.length === 0) return {};
@@ -100,10 +104,11 @@ const MigrationAdminPage: React.FC = () => {
         }),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (error: unknown, serviceName) => {
       apiLogger.error(i18n.t('admin:migration_admin_page.apply_failed_log'), error);
@@ -129,10 +134,11 @@ const MigrationAdminPage: React.FC = () => {
         }),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (error: unknown, serviceName) => {
       apiLogger.error(i18n.t('admin:migration_admin_page.rollback_failed_log'), error);
@@ -153,7 +159,9 @@ const MigrationAdminPage: React.FC = () => {
   const handleRollback = (service: MigrationService) => {
     openConfirmDialog({
       title: i18n.t('admin:migration_admin_page.confirm_rollback_title'),
-      message: i18n.t('admin:migration_admin_page.confirm_rollback_msg', { serviceName: service.name }),
+      message: i18n.t('admin:migration_admin_page.confirm_rollback_msg', {
+        serviceName: service.name,
+      }),
       danger: true,
       onConfirm: async () => {
         setRollingBackService(service.name);
@@ -166,10 +174,11 @@ const MigrationAdminPage: React.FC = () => {
     setActiveService(service);
     setStatusDialogOpen(true);
     if (!statusMap[service.name]) {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     }
   };
   const handleBatchApply = () => {
@@ -200,10 +209,11 @@ const MigrationAdminPage: React.FC = () => {
             });
           }
         }
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
         addNotification({
           title:
             failed === 0

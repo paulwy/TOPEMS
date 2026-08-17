@@ -10,9 +10,10 @@ import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/compon
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const NotificationDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { success, error } = useNotification();
@@ -29,19 +30,23 @@ const NotificationDetailPage: React.FC = () => {
       }
       if (!res.data.is_read) {
         await notificationApi.markRead(id);
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATIONS ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATIONS,
+          exact: false,
+          refetchType: 'active',
+        });
       }
       return res.data;
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.SHORT,});
+
+    staleTime: CACHE_DURATIONS.SHORT,
+  });
   const notification = detailQuery.data ?? null;
   const loading = detailQuery.isLoading;
-  const errorMessage = detailQuery.isError ? i18n.t('notification.notification_detail_page.k2') : undefined;
+  const errorMessage = detailQuery.isError
+    ? i18n.t('notification.notification_detail_page.k2')
+    : undefined;
   const markUnreadMutation = useMutation({
     mutationFn: async () => {
       if (!id) return;
@@ -49,14 +54,16 @@ const NotificationDetailPage: React.FC = () => {
     },
     onSuccess: () => {
       if (id) {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATION(id) ,
-  exact: false,
-  refetchType: 'active',
-});
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATIONS ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATION(id),
+          exact: false,
+          refetchType: 'active',
+        });
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATIONS,
+          exact: false,
+          refetchType: 'active',
+        });
       }
       success(i18n.t('notification.notification_detail_page.k3'));
     },
@@ -100,10 +107,26 @@ const NotificationDetailPage: React.FC = () => {
         icon: React.ReactElement;
       }
     > = {
-      info: { color: 'default', label: i18n.t('notification.notification_detail_page.k14'), icon: <MessageSquare size={16} /> },
-      warning: { color: 'warning', label: i18n.t('notification.notification_detail_page.k15'), icon: <AlertCircle size={16} /> },
-      error: { color: 'error', label: i18n.t('notification.notification_detail_page.k16'), icon: <AlertCircle size={16} /> },
-      success: { color: 'success', label: i18n.t('notification.notification_detail_page.k17'), icon: <CheckCircle2 size={16} /> },
+      info: {
+        color: 'default',
+        label: i18n.t('notification.notification_detail_page.k14'),
+        icon: <MessageSquare size={16} />,
+      },
+      warning: {
+        color: 'warning',
+        label: i18n.t('notification.notification_detail_page.k15'),
+        icon: <AlertCircle size={16} />,
+      },
+      error: {
+        color: 'error',
+        label: i18n.t('notification.notification_detail_page.k16'),
+        icon: <AlertCircle size={16} />,
+      },
+      success: {
+        color: 'success',
+        label: i18n.t('notification.notification_detail_page.k17'),
+        icon: <CheckCircle2 size={16} />,
+      },
     };
     return config[level] || config.info;
   };
@@ -146,7 +169,9 @@ const NotificationDetailPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k18')}</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {i18n.t('notification.notification_detail_page.k18')}
+            </InputLabel>
             <Box sx={{ mt: 0.5 }}>
               <Chip
                 label={getTypeLabel(notification.type || 'other')}
@@ -156,7 +181,9 @@ const NotificationDetailPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k19')}</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {i18n.t('notification.notification_detail_page.k19')}
+            </InputLabel>
             <Box sx={{ mt: 0.5 }}>
               <Chip
                 label={levelConfig.label}
@@ -167,7 +194,9 @@ const NotificationDetailPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k20')}</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {i18n.t('notification.notification_detail_page.k20')}
+            </InputLabel>
             <Box sx={{ mt: 0.5 }}>
               <Chip
                 label={statusConfig.label}
@@ -177,15 +206,21 @@ const NotificationDetailPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k21')}</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {i18n.t('notification.notification_detail_page.k21')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5 }}>{formatDate(notification.created_at)}</Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k22')}</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {i18n.t('notification.notification_detail_page.k22')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5 }}>{notification.source_module || '-'}</Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.id_23')}</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {i18n.t('notification.notification_detail_page.id_23')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}>
               {notification.source_id || '-'}
             </Typography>
@@ -237,29 +272,51 @@ const NotificationDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.id_24')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('notification.notification_detail_page.id_24')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}>
             {notification.id.substring(0, 8)}...
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k25')}</InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{notification.sender_name || i18n.t('notification.notification_detail_page.k26')}</Typography>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('notification.notification_detail_page.k25')}
+          </InputLabel>
+          <Typography sx={{ mt: 0.5 }}>
+            {notification.sender_name || i18n.t('notification.notification_detail_page.k26')}
+          </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k27')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('notification.notification_detail_page.k27')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{notification.recipient_name || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k28')}</InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{notification.is_top ? i18n.t('notification.notification_detail_page.k30') : i18n.t('notification.notification_detail_page.k29')}</Typography>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('notification.notification_detail_page.k28')}
+          </InputLabel>
+          <Typography sx={{ mt: 0.5 }}>
+            {notification.is_top
+              ? i18n.t('notification.notification_detail_page.k30')
+              : i18n.t('notification.notification_detail_page.k29')}
+          </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k31')}</InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{notification.is_deleted ? i18n.t('notification.notification_detail_page.k33') : i18n.t('notification.notification_detail_page.k32')}</Typography>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('notification.notification_detail_page.k31')}
+          </InputLabel>
+          <Typography sx={{ mt: 0.5 }}>
+            {notification.is_deleted
+              ? i18n.t('notification.notification_detail_page.k33')
+              : i18n.t('notification.notification_detail_page.k32')}
+          </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('notification.notification_detail_page.k34')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('notification.notification_detail_page.k34')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(notification.updated_at)}</Typography>
         </Box>
       </Box>
@@ -267,9 +324,21 @@ const NotificationDetailPage: React.FC = () => {
   }, [notification]);
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: i18n.t('notification.notification_detail_page.k35'), content: basicInfoContent || <></> },
-      { id: 'action', label: i18n.t('notification.notification_detail_page.k36'), content: actionContent || <></> },
-      { id: 'extended', label: i18n.t('notification.notification_detail_page.k37'), content: extendedInfoContent || <></> },
+      {
+        id: 'basic',
+        label: i18n.t('notification.notification_detail_page.k35'),
+        content: basicInfoContent || <></>,
+      },
+      {
+        id: 'action',
+        label: i18n.t('notification.notification_detail_page.k36'),
+        content: actionContent || <></>,
+      },
+      {
+        id: 'extended',
+        label: i18n.t('notification.notification_detail_page.k37'),
+        content: extendedInfoContent || <></>,
+      },
     ],
     [basicInfoContent, actionContent, extendedInfoContent]
   );
@@ -285,7 +354,10 @@ const NotificationDetailPage: React.FC = () => {
       subtitle: notification?.type ? getTypeLabel(notification.type) : undefined,
       tags: [getLevelConfig(notification?.level || '').label],
       stats: [
-        { label: i18n.t('notification.notification_detail_page.k38'), value: getStatusConfig(notification?.is_read ? 'read' : 'unread').label },
+        {
+          label: i18n.t('notification.notification_detail_page.k38'),
+          value: getStatusConfig(notification?.is_read ? 'read' : 'unread').label,
+        },
         {
           label: i18n.t('notification.notification_detail_page.k39'),
           value: notification?.created_at ? formatDate(notification.created_at).split(' ')[0] : '-',

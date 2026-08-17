@@ -6,7 +6,7 @@ import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const ServiceDownState: React.FC = () => {
   const navigate = useNavigate();

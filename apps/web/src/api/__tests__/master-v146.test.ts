@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  dataContractApiV61,
-  apiLifecycleApiV62,
-} from '../master';
+import { dataContractApiV61, apiLifecycleApiV62 } from '../master';
 import apiClient from '../client';
 
 vi.mock('../client', () => ({
@@ -64,7 +61,9 @@ describe('V146 masterData API bindings', () => {
     it('should update contract', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await dataContractApiV61.updateContract('c-1', { description: 'updated' });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v61/contracts/c-1', { description: 'updated' });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v61/contracts/c-1', {
+        description: 'updated',
+      });
     });
 
     it('should delete contract', async () => {
@@ -76,13 +75,17 @@ describe('V146 masterData API bindings', () => {
     it('should publish contract', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
       await dataContractApiV61.publishContract('c-1', { changelog: 'init' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v61/contracts/c-1/publish', { changelog: 'init' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v61/contracts/c-1/publish', {
+        changelog: 'init',
+      });
     });
 
     it('should deprecate contract', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
       await dataContractApiV61.deprecateContract('c-1', { reason: 'replaced' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v61/contracts/c-1/deprecate', { reason: 'replaced' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v61/contracts/c-1/deprecate', {
+        reason: 'replaced',
+      });
     });
 
     it('should restore contract', async () => {
@@ -100,20 +103,31 @@ describe('V146 masterData API bindings', () => {
     it('should rollback version', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
       await dataContractApiV61.rollbackVersion('c-1', 'v2');
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v61/contracts/c-1/rollback', { version: 'v2' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v61/contracts/c-1/rollback', {
+        version: 'v2',
+      });
     });
 
     it('should diff versions', async () => {
-      mockClient.get.mockResolvedValue({ success: true, data: { added: [], removed: [], modified: [] } });
+      mockClient.get.mockResolvedValue({
+        success: true,
+        data: { added: [], removed: [], modified: [] },
+      });
       await dataContractApiV61.diffVersions('c-1', 'v1', 'v2');
       expect(mockClient.get).toHaveBeenCalledWith('/mdm-v61/contracts/c-1/diff?from=v1&to=v2');
     });
 
     it('should bind entity', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
-      await dataContractApiV61.bindEntity('c-1', { entity_type: 'customer', entity_id: 'x-1', direction: 'producer' });
+      await dataContractApiV61.bindEntity('c-1', {
+        entity_type: 'customer',
+        entity_id: 'x-1',
+        direction: 'producer',
+      });
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v61/contracts/c-1/bind', {
-        entity_type: 'customer', entity_id: 'x-1', direction: 'producer',
+        entity_type: 'customer',
+        entity_id: 'x-1',
+        direction: 'producer',
       });
     });
 
@@ -130,7 +144,10 @@ describe('V146 masterData API bindings', () => {
     });
 
     it('should test contract', async () => {
-      mockClient.post.mockResolvedValue({ success: true, data: { passed: true, latency_ms: 10, errors: [] } });
+      mockClient.post.mockResolvedValue({
+        success: true,
+        data: { passed: true, latency_ms: 10, errors: [] },
+      });
       await dataContractApiV61.testContract('c-1', { id: 'x' });
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v61/contracts/c-1/test', { id: 'x' });
     });
@@ -144,16 +161,22 @@ describe('V146 masterData API bindings', () => {
     it('should resolve violation', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
       await dataContractApiV61.resolveViolation('v-1', { resolution: 'fixed' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v61/violations/v-1/resolve', { resolution: 'fixed' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v61/violations/v-1/resolve', {
+        resolution: 'fixed',
+      });
     });
 
     it('should generate contract', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
       await dataContractApiV61.generateContract({
-        source_system: 'erp', target_system: 'wms', entity_type: 'order',
+        source_system: 'erp',
+        target_system: 'wms',
+        entity_type: 'order',
       });
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v61/contracts/generate', {
-        source_system: 'erp', target_system: 'wms', entity_type: 'order',
+        source_system: 'erp',
+        target_system: 'wms',
+        entity_type: 'order',
       });
     });
 
@@ -193,7 +216,9 @@ describe('V146 masterData API bindings', () => {
     it('should list APIs with filters', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await apiLifecycleApiV62.listApis({ stage: 'production', page: 1, pageSize: 25 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v62/apis?stage=production&page=1&pagesize=25');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v62/apis?stage=production&page=1&pagesize=25'
+      );
     });
 
     it('should update API', async () => {
@@ -211,19 +236,26 @@ describe('V146 masterData API bindings', () => {
     it('should promote API', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
       await apiLifecycleApiV62.promoteApi('a-1', { target_stage: 'production' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v62/apis/a-1/promote', { target_stage: 'production' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v62/apis/a-1/promote', {
+        target_stage: 'production',
+      });
     });
 
     it('should deprecate API', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
       await apiLifecycleApiV62.deprecateApi('a-1', { reason: 'replaced' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v62/apis/a-1/deprecate', { reason: 'replaced' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v62/apis/a-1/deprecate', {
+        reason: 'replaced',
+      });
     });
 
     it('should retire API', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { retired: true } });
       await apiLifecycleApiV62.retireApi('a-1', { confirmation: true, reason: 'EOL' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v62/apis/a-1/retire', { confirmation: true, reason: 'EOL' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v62/apis/a-1/retire', {
+        confirmation: true,
+        reason: 'EOL',
+      });
     });
 
     it('should list versions', async () => {
@@ -235,13 +267,19 @@ describe('V146 masterData API bindings', () => {
     it('should create version', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
       await apiLifecycleApiV62.createVersion('a-1', { version: 'v2', changelog: 'feat' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v62/apis/a-1/versions', { version: 'v2', changelog: 'feat' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v62/apis/a-1/versions', {
+        version: 'v2',
+        changelog: 'feat',
+      });
     });
 
     it('should deploy API', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
       await apiLifecycleApiV62.deployApi('a-1', { environment: 'prod', version: 'v2' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v62/apis/a-1/deploy', { environment: 'prod', version: 'v2' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v62/apis/a-1/deploy', {
+        environment: 'prod',
+        version: 'v2',
+      });
     });
 
     it('should list consumers', async () => {
@@ -253,7 +291,9 @@ describe('V146 masterData API bindings', () => {
     it('should register consumer', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
       await apiLifecycleApiV62.registerConsumer('a-1', { consumer_service: 'mobile' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v62/apis/a-1/consumers', { consumer_service: 'mobile' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v62/apis/a-1/consumers', {
+        consumer_service: 'mobile',
+      });
     });
 
     it('should unregister consumer', async () => {

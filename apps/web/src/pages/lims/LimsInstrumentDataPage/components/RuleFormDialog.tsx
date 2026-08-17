@@ -20,7 +20,8 @@ import { Grid } from '@/components';
 import type { CreateParseRuleRequest } from '@/api/lims';
 import { formatJson, parseJsonInput } from '../utils';
 import { designTokens } from '@/theme/tokens';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 interface RuleFormDialogProps {
   open: boolean;
   isEditing: boolean;
@@ -46,7 +47,9 @@ const RuleFormDialog: React.FC<RuleFormDialogProps> = ({
       maxWidth='md'
       fullWidth
     >
-      <DialogTitle>{isEditing ? i18n.t('lims.rule_form_dialog.k1') : i18n.t('lims.rule_form_dialog.k0')}</DialogTitle>
+      <DialogTitle>
+        {isEditing ? i18n.t('lims.rule_form_dialog.k1') : i18n.t('lims.rule_form_dialog.k0')}
+      </DialogTitle>
       <DialogContent dividers>
         <Stack
           spacing={2}

@@ -4,7 +4,8 @@ import type { ApiResponse } from '../client';
 // ============ Types ============
 
 export type ApiType = 'rest' | 'graphql' | 'grpc' | 'event';
-export type LifecycleStageV62 = 'design' | 'development' | 'staging' | 'production' | 'deprecated' | 'retired';
+export type LifecycleStageV62 =
+  'design' | 'development' | 'staging' | 'production' | 'deprecated' | 'retired';
 export type ApiStatusV62 = 'active' | 'testing' | 'paused' | 'archived';
 
 export interface ApiEndpointV62 {
@@ -165,7 +166,9 @@ export const apiLifecycleApiV62 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: ApiEndpointV62[]; total: number }>(`/mdm-v62/apis${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: ApiEndpointV62[]; total: number }>(
+      `/mdm-v62/apis${s ? `?${s}` : ''}`
+    );
   },
 
   async updateApi(id: string, data: UpdateApiRequestV62): Promise<ApiResponse<ApiEndpointV62>> {
@@ -193,8 +196,14 @@ export const apiLifecycleApiV62 = {
     return apiClient.master.post<ApiEndpointV62>(`/mdm-v62/apis/${id}/restore`, {});
   },
 
-  async getStageHistory(id: string): Promise<ApiResponse<Array<{ stage: LifecycleStageV62; action: string; at: string; by?: string }>>> {
-    return apiClient.master.get<Array<{ stage: LifecycleStageV62; action: string; at: string; by?: string }>>(`/mdm-v62/apis/${id}/history`);
+  async getStageHistory(
+    id: string
+  ): Promise<
+    ApiResponse<Array<{ stage: LifecycleStageV62; action: string; at: string; by?: string }>>
+  > {
+    return apiClient.master.get<
+      Array<{ stage: LifecycleStageV62; action: string; at: string; by?: string }>
+    >(`/mdm-v62/apis/${id}/history`);
   },
 
   // ===== 版本管理 =====
@@ -202,7 +211,10 @@ export const apiLifecycleApiV62 = {
     return apiClient.master.get<ApiVersionInfoV62[]>(`/mdm-v62/apis/${id}/versions`);
   },
 
-  async createVersion(id: string, data: CreateVersionRequest): Promise<ApiResponse<ApiVersionInfoV62>> {
+  async createVersion(
+    id: string,
+    data: CreateVersionRequest
+  ): Promise<ApiResponse<ApiVersionInfoV62>> {
     return apiClient.master.post<ApiVersionInfoV62>(`/mdm-v62/apis/${id}/versions`, data);
   },
 
@@ -210,7 +222,10 @@ export const apiLifecycleApiV62 = {
     return apiClient.master.get<ApiEndpointV62>(`/mdm-v62/apis/${id}/versions/${version}`);
   },
 
-  async setRecommendedVersion(id: string, version: string): Promise<ApiResponse<ApiVersionInfoV62>> {
+  async setRecommendedVersion(
+    id: string,
+    version: string
+  ): Promise<ApiResponse<ApiVersionInfoV62>> {
     return apiClient.master.post<ApiVersionInfoV62>(`/mdm-v62/apis/${id}/recommend`, { version });
   },
 
@@ -223,12 +238,23 @@ export const apiLifecycleApiV62 = {
     return apiClient.master.post<ApiDeploymentV62>(`/mdm-v62/apis/${apiId}/deploy`, data);
   },
 
-  async rollbackDeployment(apiId: string, deploymentId: string): Promise<ApiResponse<ApiDeploymentV62>> {
-    return apiClient.master.post<ApiDeploymentV62>(`/mdm-v62/apis/${apiId}/rollback/${deploymentId}`, {});
+  async rollbackDeployment(
+    apiId: string,
+    deploymentId: string
+  ): Promise<ApiResponse<ApiDeploymentV62>> {
+    return apiClient.master.post<ApiDeploymentV62>(
+      `/mdm-v62/apis/${apiId}/rollback/${deploymentId}`,
+      {}
+    );
   },
 
-  async getDeploymentHealth(apiId: string, environment: string): Promise<ApiResponse<ApiDeploymentV62['health']>> {
-    return apiClient.master.get<ApiDeploymentV62['health']>(`/mdm-v62/apis/${apiId}/health/${environment}`);
+  async getDeploymentHealth(
+    apiId: string,
+    environment: string
+  ): Promise<ApiResponse<ApiDeploymentV62['health']>> {
+    return apiClient.master.get<ApiDeploymentV62['health']>(
+      `/mdm-v62/apis/${apiId}/health/${environment}`
+    );
   },
 
   // ===== 消费方管理 =====
@@ -236,20 +262,30 @@ export const apiLifecycleApiV62 = {
     return apiClient.master.get<ApiConsumption[]>(`/mdm-v62/apis/${apiId}/consumers`);
   },
 
-  async registerConsumer(apiId: string, data: {
-    consumer_service: string;
-    consumer_team?: string;
-    consumer_contact?: string;
-  }): Promise<ApiResponse<ApiConsumption>> {
+  async registerConsumer(
+    apiId: string,
+    data: {
+      consumer_service: string;
+      consumer_team?: string;
+      consumer_contact?: string;
+    }
+  ): Promise<ApiResponse<ApiConsumption>> {
     return apiClient.master.post<ApiConsumption>(`/mdm-v62/apis/${apiId}/consumers`, data);
   },
 
-  async unregisterConsumer(apiId: string, consumerId: string): Promise<ApiResponse<{ unregistered: boolean }>> {
-    return apiClient.master.delete<{ unregistered: boolean }>(`/mdm-v62/apis/${apiId}/consumers/${consumerId}`);
+  async unregisterConsumer(
+    apiId: string,
+    consumerId: string
+  ): Promise<ApiResponse<{ unregistered: boolean }>> {
+    return apiClient.master.delete<{ unregistered: boolean }>(
+      `/mdm-v62/apis/${apiId}/consumers/${consumerId}`
+    );
   },
 
   async getConsumerUsage(apiId: string, consumerId: string): Promise<ApiResponse<ApiConsumption>> {
-    return apiClient.master.get<ApiConsumption>(`/mdm-v62/apis/${apiId}/consumers/${consumerId}/usage`);
+    return apiClient.master.get<ApiConsumption>(
+      `/mdm-v62/apis/${apiId}/consumers/${consumerId}/usage`
+    );
   },
 
   // ===== 变更日志与仪表盘 =====
@@ -278,7 +314,9 @@ export const apiLifecycleApiV62 = {
     const qs = new URLSearchParams();
     if (daysThreshold !== undefined) qs.set('days', String(daysThreshold));
     const s = qs.toString();
-    return apiClient.master.get<ApiEndpointV62[]>(`/mdm-v62/deprecation-candidates${s ? `?${s}` : ''}`);
+    return apiClient.master.get<ApiEndpointV62[]>(
+      `/mdm-v62/deprecation-candidates${s ? `?${s}` : ''}`
+    );
   },
 };
 

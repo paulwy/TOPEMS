@@ -238,7 +238,9 @@ class OnDemandLoaderImpl {
         status: 'failed',
         loadTime: 0,
         fromPreload: false,
-        error: new Error(`${i18n.t('microfrontend.on-demand-loader.ondemandloader_0')}${id}${i18n.t('microfrontend.on-demand-loader.k1')}`),
+        error: new Error(
+          `${i18n.t('microfrontend.on-demand-loader.ondemandloader_0')}${id}${i18n.t('microfrontend.on-demand-loader.k1')}`
+        ),
       };
     }
 
@@ -248,7 +250,9 @@ class OnDemandLoaderImpl {
         status: 'failed',
         loadTime: 0,
         fromPreload: false,
-        error: new Error(`${i18n.t('microfrontend.on-demand-loader.ondemandloader_2')}${id}${i18n.t('microfrontend.on-demand-loader.k3')}`),
+        error: new Error(
+          `${i18n.t('microfrontend.on-demand-loader.ondemandloader_2')}${id}${i18n.t('microfrontend.on-demand-loader.k3')}`
+        ),
       };
     }
 
@@ -315,7 +319,12 @@ class OnDemandLoaderImpl {
 
   preload(id: string, priority?: LoadPriority): Promise<void> {
     const mod = this.modules.get(id);
-    if (!mod) return Promise.reject(new Error(`${i18n.t('microfrontend.on-demand-loader.k4')}${id}${i18n.t('microfrontend.on-demand-loader.k5')}`));
+    if (!mod)
+      return Promise.reject(
+        new Error(
+          `${i18n.t('microfrontend.on-demand-loader.k4')}${id}${i18n.t('microfrontend.on-demand-loader.k5')}`
+        )
+      );
 
     const req: LoadRequest = {
       id,
@@ -414,12 +423,20 @@ class OnDemandLoaderImpl {
 
   predictNextModules(currentPath: string): LoadPredictionResult {
     if (!this.config.enableSmartPrediction) {
-      return { nextLikelyModules: [], confidence: 0, reasoning: i18n.t('microfrontend.on-demand-loader.k0') };
+      return {
+        nextLikelyModules: [],
+        confidence: 0,
+        reasoning: i18n.t('microfrontend.on-demand-loader.k0'),
+      };
     }
 
     const recent = this.history.slice(-50);
     if (recent.length < 3) {
-      return { nextLikelyModules: [], confidence: 0, reasoning: i18n.t('microfrontend.on-demand-loader.k1') };
+      return {
+        nextLikelyModules: [],
+        confidence: 0,
+        reasoning: i18n.t('microfrontend.on-demand-loader.k1'),
+      };
     }
 
     const transitions = this.buildTransitionMatrix(recent);
@@ -559,14 +576,23 @@ class OnDemandLoaderImpl {
       }
     }
 
-    throw lastError ?? new Error(`${i18n.t('microfrontend.on-demand-loader.ondemandloader_9')}${mod.id}${i18n.t('microfrontend.on-demand-loader.k10')}`);
+    throw (
+      lastError ??
+      new Error(
+        `${i18n.t('microfrontend.on-demand-loader.ondemandloader_9')}${mod.id}${i18n.t('microfrontend.on-demand-loader.k10')}`
+      )
+    );
   }
 
   private async doLoadWithTimeout(mod: OnDemandModule): Promise<any> {
     const timeoutMs = this.config.defaultTimeoutMs;
     return new Promise<any>((resolve, reject) => {
       const timer = setTimeout(() => {
-        reject(new Error(`${i18n.t('microfrontend.on-demand-loader.ondemandloader_11')}${mod.id}${i18n.t('microfrontend.on-demand-loader.k12')}${timeoutMs}ms）`));
+        reject(
+          new Error(
+            `${i18n.t('microfrontend.on-demand-loader.ondemandloader_11')}${mod.id}${i18n.t('microfrontend.on-demand-loader.k12')}${timeoutMs}ms）`
+          )
+        );
       }, timeoutMs);
 
       mod

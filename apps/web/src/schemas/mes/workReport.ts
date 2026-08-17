@@ -129,10 +129,26 @@ export const workReportSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) => {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
           draft: { label: i18n.t('mes.work_report.k21'), bg: 'grey.100', color: 'text.secondary' },
-          submitted: { label: i18n.t('mes.work_report.k22'), bg: 'primary.100', color: 'primary.dark' },
-          approved: { label: i18n.t('mes.work_report.k23'), bg: 'success.lighter', color: 'success.700' },
-          rejected: { label: i18n.t('mes.work_report.k24'), bg: 'error.lighter', color: 'error.dark' },
-          cancelled: { label: i18n.t('mes.work_report.k25'), bg: 'grey.100', color: 'text.secondary' },
+          submitted: {
+            label: i18n.t('mes.work_report.k22'),
+            bg: 'primary.100',
+            color: 'primary.dark',
+          },
+          approved: {
+            label: i18n.t('mes.work_report.k23'),
+            bg: 'success.lighter',
+            color: 'success.700',
+          },
+          rejected: {
+            label: i18n.t('mes.work_report.k24'),
+            bg: 'error.lighter',
+            color: 'error.dark',
+          },
+          cancelled: {
+            label: i18n.t('mes.work_report.k25'),
+            bg: 'grey.100',
+            color: 'text.secondary',
+          },
         };
         const s = statusMap[(row.status as string) || 'draft'] || {
           label: row.status,

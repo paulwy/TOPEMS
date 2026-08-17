@@ -233,7 +233,9 @@ export const dataFederationMeshApiV75 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<DataDomain>>(`/mdm-v75/domains${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<DataDomain>>(
+      `/mdm-v75/domains${s ? `?${s}` : ''}`
+    );
   },
 
   async updateDomain(id: string, data: UpdateDomainRequest): Promise<ApiResponse<DataDomain>> {
@@ -248,7 +250,9 @@ export const dataFederationMeshApiV75 = {
     return apiClient.master.get<FederatedDataProduct[]>(`/mdm-v75/domains/${domainId}/products`);
   },
 
-  async listDomainConsumers(domainId: string): Promise<ApiResponse<Array<{ domain_id: string; access_count: number }>>> {
+  async listDomainConsumers(
+    domainId: string
+  ): Promise<ApiResponse<Array<{ domain_id: string; access_count: number }>>> {
     return apiClient.master.get(`/mdm-v75/domains/${domainId}/consumers`);
   },
 
@@ -279,12 +283,18 @@ export const dataFederationMeshApiV75 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<FederatedDataProduct>>(`/mdm-v75/products${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<FederatedDataProduct>>(
+      `/mdm-v75/products${s ? `?${s}` : ''}`
+    );
   },
 
   async updateProduct(
     id: string,
-    data: { description?: string; status?: FederatedDataProduct['status']; schema?: Record<string, unknown> },
+    data: {
+      description?: string;
+      status?: FederatedDataProduct['status'];
+      schema?: Record<string, unknown>;
+    }
   ): Promise<ApiResponse<FederatedDataProduct>> {
     return apiClient.master.put<FederatedDataProduct>(`/mdm-v75/products/${id}`, data);
   },
@@ -293,19 +303,30 @@ export const dataFederationMeshApiV75 = {
     return apiClient.master.delete<{ deleted: boolean }>(`/mdm-v75/products/${id}`);
   },
 
-  async getProductConsumers(productId: string): Promise<ApiResponse<Array<{ domain_id: string; domain_name: string; access_type: AccessType; last_accessed?: string }>>> {
+  async getProductConsumers(productId: string): Promise<
+    ApiResponse<
+      Array<{
+        domain_id: string;
+        domain_name: string;
+        access_type: AccessType;
+        last_accessed?: string;
+      }>
+    >
+  > {
     return apiClient.master.get(`/mdm-v75/products/${productId}/consumers`);
   },
 
-  async getProductQuality(productId: string): Promise<ApiResponse<{
-    product_id: string;
-    quality_score: number;
-    freshness_score: number;
-    completeness_score: number;
-    accuracy_score: number;
-    compliance_score: number;
-    last_assessed_at: string;
-  }>> {
+  async getProductQuality(productId: string): Promise<
+    ApiResponse<{
+      product_id: string;
+      quality_score: number;
+      freshness_score: number;
+      completeness_score: number;
+      accuracy_score: number;
+      compliance_score: number;
+      last_assessed_at: string;
+    }>
+  > {
     return apiClient.master.get(`/mdm-v75/products/${productId}/quality`);
   },
 
@@ -334,7 +355,9 @@ export const dataFederationMeshApiV75 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<SharingAgreement>>(`/mdm-v75/agreements${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<SharingAgreement>>(
+      `/mdm-v75/agreements${s ? `?${s}` : ''}`
+    );
   },
 
   async approveAgreement(id: string): Promise<ApiResponse<SharingAgreement>> {
@@ -346,17 +369,19 @@ export const dataFederationMeshApiV75 = {
   },
 
   async terminateAgreement(id: string, reason: string): Promise<ApiResponse<SharingAgreement>> {
-    return apiClient.master.post<SharingAgreement>(`/mdm-v75/agreements/${id}/terminate`, { reason });
+    return apiClient.master.post<SharingAgreement>(`/mdm-v75/agreements/${id}/terminate`, {
+      reason,
+    });
   },
 
   // ===== 跨域数据访问 =====
   async requestAccess(
     agreementId: string,
-    data: RequestAccessRequest,
+    data: RequestAccessRequest
   ): Promise<ApiResponse<CrossDomainAccess>> {
     return apiClient.master.post<CrossDomainAccess>(
       `/mdm-v75/agreements/${agreementId}/access-requests`,
-      data,
+      data
     );
   },
 
@@ -374,10 +399,16 @@ export const dataFederationMeshApiV75 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<CrossDomainAccess>>(`/mdm-v75/access-requests${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<CrossDomainAccess>>(
+      `/mdm-v75/access-requests${s ? `?${s}` : ''}`
+    );
   },
 
-  async approveAccessRequest(id: string, grantBy?: string, expiresAt?: string): Promise<ApiResponse<CrossDomainAccess>> {
+  async approveAccessRequest(
+    id: string,
+    grantBy?: string,
+    expiresAt?: string
+  ): Promise<ApiResponse<CrossDomainAccess>> {
     return apiClient.master.post<CrossDomainAccess>(`/mdm-v75/access-requests/${id}/approve`, {
       grant_by: grantBy,
       expires_at: expiresAt,
@@ -385,11 +416,15 @@ export const dataFederationMeshApiV75 = {
   },
 
   async rejectAccessRequest(id: string, reason: string): Promise<ApiResponse<CrossDomainAccess>> {
-    return apiClient.master.post<CrossDomainAccess>(`/mdm-v75/access-requests/${id}/reject`, { reason });
+    return apiClient.master.post<CrossDomainAccess>(`/mdm-v75/access-requests/${id}/reject`, {
+      reason,
+    });
   },
 
   async revokeAccessRequest(id: string, reason: string): Promise<ApiResponse<CrossDomainAccess>> {
-    return apiClient.master.post<CrossDomainAccess>(`/mdm-v75/access-requests/${id}/revoke`, { reason });
+    return apiClient.master.post<CrossDomainAccess>(`/mdm-v75/access-requests/${id}/revoke`, {
+      reason,
+    });
   },
 
   async listAccessAudit(params?: {
@@ -398,16 +433,20 @@ export const dataFederationMeshApiV75 = {
     action?: 'read' | 'write' | 'denied';
     page?: number;
     pageSize?: number;
-  }): Promise<ApiResponse<PaginatedResponse<{
-    id: string;
-    timestamp: string;
-    domain_id: string;
-    data_product_id: string;
-    action: 'read' | 'write' | 'denied';
-    requester: string;
-    status: 'allowed' | 'denied';
-    reason?: string;
-  }>>> {
+  }): Promise<
+    ApiResponse<
+      PaginatedResponse<{
+        id: string;
+        timestamp: string;
+        domain_id: string;
+        data_product_id: string;
+        action: 'read' | 'write' | 'denied';
+        requester: string;
+        status: 'allowed' | 'denied';
+        reason?: string;
+      }>
+    >
+  > {
     const qs = new URLSearchParams();
     if (params?.domainId) qs.set('domain_id', params.domainId);
     if (params?.dataProductId) qs.set('data_product_id', params.dataProductId);
@@ -415,16 +454,18 @@ export const dataFederationMeshApiV75 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<{
-      id: string;
-      timestamp: string;
-      domain_id: string;
-      data_product_id: string;
-      action: 'read' | 'write' | 'denied';
-      requester: string;
-      status: 'allowed' | 'denied';
-      reason?: string;
-    }>>(`/mdm-v75/access-audit${s ? `?${s}` : ''}`);
+    return apiClient.master.get<
+      PaginatedResponse<{
+        id: string;
+        timestamp: string;
+        domain_id: string;
+        data_product_id: string;
+        action: 'read' | 'write' | 'denied';
+        requester: string;
+        status: 'allowed' | 'denied';
+        reason?: string;
+      }>
+    >(`/mdm-v75/access-audit${s ? `?${s}` : ''}`);
   },
 
   // ===== 联邦配置 =====
@@ -448,7 +489,9 @@ export const dataFederationMeshApiV75 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<FederationNode>>(`/mdm-v75/nodes${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<FederationNode>>(
+      `/mdm-v75/nodes${s ? `?${s}` : ''}`
+    );
   },
 
   async updateNode(id: string, data: UpdateNodeRequest): Promise<ApiResponse<FederationNode>> {
@@ -459,29 +502,35 @@ export const dataFederationMeshApiV75 = {
     return apiClient.master.delete<{ deleted: boolean }>(`/mdm-v75/nodes/${id}`);
   },
 
-  async healthCheckNode(id: string): Promise<ApiResponse<{ node_id: string; status: FederationStatus; latency_ms?: number }>> {
+  async healthCheckNode(
+    id: string
+  ): Promise<ApiResponse<{ node_id: string; status: FederationStatus; latency_ms?: number }>> {
     return apiClient.master.post(`/mdm-v75/nodes/${id}/health`, {});
   },
 
   // ===== 跨域血缘追踪 =====
   async getCrossDomainLineage(
     productId: string,
-    params?: { direction?: LineageDirection; depth?: number },
+    params?: { direction?: LineageDirection; depth?: number }
   ): Promise<ApiResponse<FederationLineageGraph>> {
     const qs = new URLSearchParams();
     if (params?.direction) qs.set('direction', params.direction);
     if (params?.depth !== undefined) qs.set('depth', String(params.depth));
     const s = qs.toString();
-    return apiClient.master.get<FederationLineageGraph>(`/mdm-v75/products/${productId}/lineage${s ? `?${s}` : ''}`);
+    return apiClient.master.get<FederationLineageGraph>(
+      `/mdm-v75/products/${productId}/lineage${s ? `?${s}` : ''}`
+    );
   },
 
-  async getCrossDomainImpact(productId: string): Promise<ApiResponse<{
-    product_id: string;
-    downstream_domains: number;
-    downstream_products: number;
-    criticality_score: number;
-    dependent_agreements: number;
-  }>> {
+  async getCrossDomainImpact(productId: string): Promise<
+    ApiResponse<{
+      product_id: string;
+      downstream_domains: number;
+      downstream_products: number;
+      criticality_score: number;
+      dependent_agreements: number;
+    }>
+  > {
     return apiClient.master.get(`/mdm-v75/products/${productId}/impact`);
   },
 
@@ -490,26 +539,30 @@ export const dataFederationMeshApiV75 = {
     return apiClient.master.get<FederationDashboard>('/mdm-v75/dashboard');
   },
 
-  async getDomainStats(domainId: string): Promise<ApiResponse<{
-    domain_id: string;
-    products_count: number;
-    consumers_count: number;
-    agreements_count: number;
-    active_agreements: number;
-    cross_domain_accesses: number;
-    avg_product_quality: number;
-  }>> {
+  async getDomainStats(domainId: string): Promise<
+    ApiResponse<{
+      domain_id: string;
+      products_count: number;
+      consumers_count: number;
+      agreements_count: number;
+      active_agreements: number;
+      cross_domain_accesses: number;
+      avg_product_quality: number;
+    }>
+  > {
     return apiClient.master.get(`/mdm-v75/domains/${domainId}/stats`);
   },
 
-  async getFederationHealth(): Promise<ApiResponse<{
-    overall_health: number;
-    node_health: Record<string, FederationStatus>;
-    domain_health: Record<string, number>;
-    data_flow_health: number;
-    governance_health: number;
-    incidents_last_24h: number;
-  }>> {
+  async getFederationHealth(): Promise<
+    ApiResponse<{
+      overall_health: number;
+      node_health: Record<string, FederationStatus>;
+      domain_health: Record<string, number>;
+      data_flow_health: number;
+      governance_health: number;
+      incidents_last_24h: number;
+    }>
+  > {
     return apiClient.master.get('/mdm-v75/health');
   },
 };

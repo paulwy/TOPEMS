@@ -22,6 +22,7 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
+
 const mockData = [
   { date: 'W1', wcA: 78, wcB: 65, wcC: 88 },
   { date: 'W2', wcA: 82, wcB: 70, wcC: 91 },
@@ -44,7 +45,10 @@ export default function CapacityUtilizationPage() {
         const res = await apsApi.listCapacities();
         const items = res?.data?.items ?? (Array.isArray(res?.data) ? res.data : []);
         const totalUsed = items.reduce((s: number, c: any) => s + (c.usedQty || c.used || 0), 0);
-        const totalCap = items.reduce((s: number, c: any) => s + (c.totalQty || c.total || c.capacity || 0), 0);
+        const totalCap = items.reduce(
+          (s: number, c: any) => s + (c.totalQty || c.total || c.capacity || 0),
+          0
+        );
         return {
           capacities: items,
           usedRatio: totalCap > 0 ? totalUsed / totalCap : 0,
@@ -71,9 +75,7 @@ export default function CapacityUtilizationPage() {
         <h1 className='text-2xl font-bold'>{i18n.t('aps.capacity_utilization_page.k0')}</h1>
         <span className='text-sm text-gray-500'>{i18n.t('aps.capacity_utilization_page.k1')}</span>
       </div>
-      <p className='text-sm text-gray-600'>
-        {i18n.t('pages.capacity_utilization_page.k0')}
-      </p>
+      <p className='text-sm text-gray-600'>{i18n.t('pages.capacity_utilization_page.k0')}</p>
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <div className='rounded-lg border p-4'>
           <p className='text-sm text-gray-600'>{i18n.t('aps.capacity_utilization_page.k2')}</p>
@@ -107,7 +109,11 @@ export default function CapacityUtilizationPage() {
               domain={[50, 100]}
               unit='%'
               fontSize={11}
-              label={{ value: i18n.t('aps.capacity_utilization_page.k6'), angle: -90, position: 'insideLeft' }}
+              label={{
+                value: i18n.t('aps.capacity_utilization_page.k6'),
+                angle: -90,
+                position: 'insideLeft',
+              }}
             />
             <Tooltip />
             <Legend />

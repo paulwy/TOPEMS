@@ -1066,16 +1066,25 @@ export class SmartCodeReviewer {
     const parts: string[] = [];
 
     if (added > 0) {
-      parts.push(`${i18n.t('shared.smart-code-reviewer.k27')}${added}${i18n.t('shared.smart-code-reviewer.k28')}`);
+      parts.push(
+        `${i18n.t('shared.smart-code-reviewer.k27')}${added}${i18n.t('shared.smart-code-reviewer.k28')}`
+      );
     }
     if (fixed > 0) {
-      parts.push(`${i18n.t('shared.smart-code-reviewer.k29')}${fixed}${i18n.t('shared.smart-code-reviewer.k30')}`);
+      parts.push(
+        `${i18n.t('shared.smart-code-reviewer.k29')}${fixed}${i18n.t('shared.smart-code-reviewer.k30')}`
+      );
     }
     if (added === 0 && fixed === 0) {
       parts.push(i18n.t('shared.smart-code-reviewer.k52'));
     }
 
-    const trend = newTotal > oldTotal ? i18n.t('shared.smart-code-reviewer.k55') : newTotal < oldTotal ? i18n.t('shared.smart-code-reviewer.k54') : i18n.t('shared.smart-code-reviewer.k53');
+    const trend =
+      newTotal > oldTotal
+        ? i18n.t('shared.smart-code-reviewer.k55')
+        : newTotal < oldTotal
+          ? i18n.t('shared.smart-code-reviewer.k54')
+          : i18n.t('shared.smart-code-reviewer.k53');
     parts.push(`${i18n.t('shared.smart-code-reviewer.k31')}${trend}`);
 
     return parts.join('，');

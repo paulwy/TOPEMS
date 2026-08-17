@@ -31,7 +31,8 @@ import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const mapStatusToChinese = (status: string): string => {
   const statusMap: Record<string, string> = {
     pending: i18n.t('lims.inspection_task_page.k0'),
@@ -168,11 +169,16 @@ const InspectionTaskPage: React.FC = () => {
         inspector: form.inspector,
       });
       if (response.success) {
-        addNotification({ title: i18n.t('lims.inspection_task_page.k15'), message: i18n.t('lims.inspection_task_page.k14'), type: 'success' });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.TASKS ,
-  exact: false,
-  refetchType: 'active',
-});
+        addNotification({
+          title: i18n.t('lims.inspection_task_page.k15'),
+          message: i18n.t('lims.inspection_task_page.k14'),
+          type: 'success',
+        });
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.LIMS.TASKS,
+          exact: false,
+          refetchType: 'active',
+        });
       } else {
         addNotification({
           title: i18n.t('lims.inspection_task_page.k16'),
@@ -225,7 +231,10 @@ const InspectionTaskPage: React.FC = () => {
         color: 'success',
         show: (row: Record<string, unknown>) => {
           const status = row.status as string;
-          return status === i18n.t('lims.inspection_task_page.k24') || status === i18n.t('lims.inspection_task_page.k23');
+          return (
+            status === i18n.t('lims.inspection_task_page.k24') ||
+            status === i18n.t('lims.inspection_task_page.k23')
+          );
         },
         onClick: (row: Record<string, unknown>) => openRecordModal(row),
       },
@@ -236,7 +245,11 @@ const InspectionTaskPage: React.FC = () => {
     const tasks = rows as unknown as InspectionTask[];
     const stats = {
       total: tasks.length,
-      pending: tasks.filter((t) => t.status === i18n.t('lims.inspection_task_page.k26') || t.status === i18n.t('lims.inspection_task_page.k25')).length,
+      pending: tasks.filter(
+        (t) =>
+          t.status === i18n.t('lims.inspection_task_page.k26') ||
+          t.status === i18n.t('lims.inspection_task_page.k25')
+      ).length,
       inProgress: tasks.filter((t) => t.status === i18n.t('lims.inspection_task_page.k27')).length,
       completed: tasks.filter((t) => t.status === i18n.t('lims.inspection_task_page.k28')).length,
     };
@@ -347,7 +360,9 @@ const InspectionTaskPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 'semibold' }}>{i18n.t('lims.inspection_task_page.k36')}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 'semibold' }}>
+          {i18n.t('lims.inspection_task_page.k36')}
+        </DialogTitle>
         <DialogContent dividers>
           <Stack spacing={3}>
             <Box>

@@ -10,7 +10,9 @@ import type {
 } from './types';
 
 export const productionPlanApi = {
-  list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<ProductionPlan>>> => {
+  list: async (
+    params?: PaginationParams
+  ): Promise<ApiResponse<PaginatedResponse<ProductionPlan>>> => {
     return apiClient.aps.get('/production-plans', { params });
   },
 
@@ -22,7 +24,10 @@ export const productionPlanApi = {
     return apiClient.aps.post('/production-plans', data);
   },
 
-  update: async (id: string, data: UpdateProductionPlanRequest): Promise<ApiResponse<ProductionPlan>> => {
+  update: async (
+    id: string,
+    data: UpdateProductionPlanRequest
+  ): Promise<ApiResponse<ProductionPlan>> => {
     return apiClient.aps.put(`/production-plans/${id}`, data);
   },
 
@@ -31,21 +36,33 @@ export const productionPlanApi = {
   },
 
   // ---- 审批端点 ----
-  submit: async (id: string, operator: string, comment?: string): Promise<ApiResponse<ApprovalResponse>> => {
+  submit: async (
+    id: string,
+    operator: string,
+    comment?: string
+  ): Promise<ApiResponse<ApprovalResponse>> => {
     return apiClient.aps.post(`/production-plans/${id}/submit`, {
       operator,
       comment,
     } as ApprovalRequest);
   },
 
-  approve: async (id: string, operator: string, comment?: string): Promise<ApiResponse<ApprovalResponse>> => {
+  approve: async (
+    id: string,
+    operator: string,
+    comment?: string
+  ): Promise<ApiResponse<ApprovalResponse>> => {
     return apiClient.aps.post(`/production-plans/${id}/approve`, {
       operator,
       comment,
     } as ApprovalRequest);
   },
 
-  reject: async (id: string, operator: string, comment?: string): Promise<ApiResponse<ApprovalResponse>> => {
+  reject: async (
+    id: string,
+    operator: string,
+    comment?: string
+  ): Promise<ApiResponse<ApprovalResponse>> => {
     return apiClient.aps.post(`/production-plans/${id}/reject`, {
       operator,
       comment,

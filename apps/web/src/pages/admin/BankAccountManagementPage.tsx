@@ -12,6 +12,7 @@ import { bankAccountSchema } from '@/schemas/admin';
 import { apiLogger } from '@/utils/logger';
 import i18n from '@/i18n';
 import { adminApi } from '@/api/admin';
+
 interface BankAccount {
   id: string;
   account_name: string;
@@ -141,9 +142,21 @@ export default function BankAccountManagementPage() {
     const activeCount = accounts.filter((a) => a.status === 'active').length;
     const foreignCount = accounts.filter((a) => a.currency !== 'CNY').length;
     const stats = [
-      { label: i18n.t('admin.bank_account_management_page.k7'), value: accounts.length, color: 'primary.main' },
-      { label: i18n.t('admin.bank_account_management_page.k8'), value: activeCount, color: 'success.main' },
-      { label: i18n.t('admin.bank_account_management_page.k9'), value: foreignCount, color: 'secondary.main' },
+      {
+        label: i18n.t('admin.bank_account_management_page.k7'),
+        value: accounts.length,
+        color: 'primary.main',
+      },
+      {
+        label: i18n.t('admin.bank_account_management_page.k8'),
+        value: activeCount,
+        color: 'success.main',
+      },
+      {
+        label: i18n.t('admin.bank_account_management_page.k9'),
+        value: foreignCount,
+        color: 'secondary.main',
+      },
       {
         label: i18n.t('admin.bank_account_management_page.k10'),
         value: totalBalance.toLocaleString('zh-CN', {

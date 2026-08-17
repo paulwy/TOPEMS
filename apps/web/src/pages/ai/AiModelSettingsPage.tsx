@@ -53,7 +53,7 @@ import { LazyChart } from '@/components/charts';
 import i18n from '@/i18n';
 import { aiApi } from '@/api/ai';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 type SettingsTab = 'models' | 'config' | 'usage' | 'api';
 
@@ -82,7 +82,12 @@ const mockModels: AIModel[] = [
     description: i18n.t('ai.ai_model_settings_page.k0'),
     status: 'active',
     max_tokens: 8192,
-    capabilities: [i18n.t('ai.ai_model_settings_page.k4'), i18n.t('ai.ai_model_settings_page.k3'), i18n.t('ai.ai_model_settings_page.k2'), i18n.t('ai.ai_model_settings_page.k1')],
+    capabilities: [
+      i18n.t('ai.ai_model_settings_page.k4'),
+      i18n.t('ai.ai_model_settings_page.k3'),
+      i18n.t('ai.ai_model_settings_page.k2'),
+      i18n.t('ai.ai_model_settings_page.k1'),
+    ],
     pricing: { input_per_1k: 0.03, output_per_1k: 0.06 },
     is_default: true,
   },
@@ -94,7 +99,11 @@ const mockModels: AIModel[] = [
     description: i18n.t('ai.ai_model_settings_page.k5'),
     status: 'active',
     max_tokens: 16384,
-    capabilities: [i18n.t('ai.ai_model_settings_page.k8'), i18n.t('ai.ai_model_settings_page.k7'), i18n.t('ai.ai_model_settings_page.k6')],
+    capabilities: [
+      i18n.t('ai.ai_model_settings_page.k8'),
+      i18n.t('ai.ai_model_settings_page.k7'),
+      i18n.t('ai.ai_model_settings_page.k6'),
+    ],
     pricing: { input_per_1k: 0.0015, output_per_1k: 0.002 },
     is_default: false,
   },
@@ -106,7 +115,12 @@ const mockModels: AIModel[] = [
     description: i18n.t('pages.ai_model_settings_page.k0'),
     status: 'active',
     max_tokens: 200000,
-    capabilities: [i18n.t('ai.ai_model_settings_page.k12'), i18n.t('ai.ai_model_settings_page.k11'), i18n.t('ai.ai_model_settings_page.k10'), i18n.t('ai.ai_model_settings_page.k9')],
+    capabilities: [
+      i18n.t('ai.ai_model_settings_page.k12'),
+      i18n.t('ai.ai_model_settings_page.k11'),
+      i18n.t('ai.ai_model_settings_page.k10'),
+      i18n.t('ai.ai_model_settings_page.k9'),
+    ],
     pricing: { input_per_1k: 0.015, output_per_1k: 0.075 },
     is_default: false,
   },
@@ -118,7 +132,11 @@ const mockModels: AIModel[] = [
     description: i18n.t('ai.ai_model_settings_page.k14'),
     status: 'active',
     max_tokens: 8192,
-    capabilities: [i18n.t('ai.ai_model_settings_page.k17'), i18n.t('ai.ai_model_settings_page.k16'), i18n.t('ai.ai_model_settings_page.k15')],
+    capabilities: [
+      i18n.t('ai.ai_model_settings_page.k17'),
+      i18n.t('ai.ai_model_settings_page.k16'),
+      i18n.t('ai.ai_model_settings_page.k15'),
+    ],
     pricing: { input_per_1k: 0.008, output_per_1k: 0.008 },
     is_default: false,
   },
@@ -130,7 +148,11 @@ const mockModels: AIModel[] = [
     description: i18n.t('ai.ai_model_settings_page.k20'),
     status: 'active',
     max_tokens: 32768,
-    capabilities: [i18n.t('ai.ai_model_settings_page.k23'), i18n.t('ai.ai_model_settings_page.k22'), i18n.t('ai.ai_model_settings_page.k21')],
+    capabilities: [
+      i18n.t('ai.ai_model_settings_page.k23'),
+      i18n.t('ai.ai_model_settings_page.k22'),
+      i18n.t('ai.ai_model_settings_page.k21'),
+    ],
     pricing: { input_per_1k: 0.004, output_per_1k: 0.008 },
     is_default: false,
   },
@@ -142,7 +164,10 @@ const mockModels: AIModel[] = [
     description: i18n.t('ai.ai_model_settings_page.k24'),
     status: 'active',
     max_tokens: 8192,
-    capabilities: [i18n.t('ai.ai_model_settings_page.k26'), i18n.t('ai.ai_model_settings_page.k25')],
+    capabilities: [
+      i18n.t('ai.ai_model_settings_page.k26'),
+      i18n.t('ai.ai_model_settings_page.k25'),
+    ],
     pricing: { input_per_1k: 0.00013, output_per_1k: 0 },
     is_default: false,
   },
@@ -205,9 +230,7 @@ export const AiModelSettingsPage: React.FC = () => {
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState(2048);
   const [topP, setTopP] = useState(1);
-  const [systemPrompt, setSystemPrompt] = useState(
-    i18n.t('ai.ai_model_settings_page.k29')
-  );
+  const [systemPrompt, setSystemPrompt] = useState(i18n.t('ai.ai_model_settings_page.k29'));
   const [saving, setSaving] = useState(false);
 
   const handleSaveConfig = () => {
@@ -775,7 +798,8 @@ export const AiModelSettingsPage: React.FC = () => {
                         {i18n.t('ai.model_settings.usage.trend_7days')}
                       </Typography>
                       <Box sx={{ height: 300 }}>
-                        <LazyChart type='line'
+                        <LazyChart
+                          type='line'
                           data={usageData}
                           xKey='date'
                           yKey='tokens'
@@ -799,7 +823,10 @@ export const AiModelSettingsPage: React.FC = () => {
                         {i18n.t('ai.model_settings.usage.model_ratio')}
                       </Typography>
                       <Box sx={{ height: 300 }}>
-                        <LazyChart type='pie' data={modelUsageData} />
+                        <LazyChart
+                          type='pie'
+                          data={modelUsageData}
+                        />
                       </Box>
                     </Paper>
                   </Grid>
@@ -829,7 +856,9 @@ export const AiModelSettingsPage: React.FC = () => {
                             <TableCell align='right'>
                               {i18n.t('ai.model_settings.table.tokens')}
                             </TableCell>
-                            <TableCell align='right'>{i18n.t('ai.model_settings.table.cost')}</TableCell>
+                            <TableCell align='right'>
+                              {i18n.t('ai.model_settings.table.cost')}
+                            </TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>

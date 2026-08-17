@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type Period = 'MTD' | 'QTD' | 'YTD' | 'ROLLING_12M';
 
 export interface CrmKpis {
@@ -319,16 +320,44 @@ function buildBillingAnalytics(rnd: () => number): BillingAnalyticsData {
   top10.sort((a, b) => b.amount - a.amount);
 
   const statusPie: BillingStatusSlice[] = [
-    { status: 'paid', count: Math.floor(55 + rnd() * 20), amount: Math.floor(5_500_000 + rnd() * 2_000_000) },
-    { status: 'pending', count: Math.floor(25 + rnd() * 15), amount: Math.floor(2_200_000 + rnd() * 1_000_000) },
-    { status: 'overdue', count: Math.floor(8 + rnd() * 10), amount: Math.floor(600_000 + rnd() * 500_000) },
+    {
+      status: 'paid',
+      count: Math.floor(55 + rnd() * 20),
+      amount: Math.floor(5_500_000 + rnd() * 2_000_000),
+    },
+    {
+      status: 'pending',
+      count: Math.floor(25 + rnd() * 15),
+      amount: Math.floor(2_200_000 + rnd() * 1_000_000),
+    },
+    {
+      status: 'overdue',
+      count: Math.floor(8 + rnd() * 10),
+      amount: Math.floor(600_000 + rnd() * 500_000),
+    },
   ];
 
   const agingBuckets: AgingBucket[] = [
-    { bucket: i18n.t('shared._mock.030_0'), count: Math.floor(25 + rnd() * 15), amount: Math.floor(1_800_000 + rnd() * 800_000) },
-    { bucket: i18n.t('shared._mock.3160_1'), count: Math.floor(12 + rnd() * 10), amount: Math.floor(900_000 + rnd() * 500_000) },
-    { bucket: i18n.t('shared._mock.6190_2'), count: Math.floor(6 + rnd() * 8), amount: Math.floor(450_000 + rnd() * 350_000) },
-    { bucket: i18n.t('shared._mock.90_3'), count: Math.floor(4 + rnd() * 6), amount: Math.floor(300_000 + rnd() * 300_000) },
+    {
+      bucket: i18n.t('shared._mock.030_0'),
+      count: Math.floor(25 + rnd() * 15),
+      amount: Math.floor(1_800_000 + rnd() * 800_000),
+    },
+    {
+      bucket: i18n.t('shared._mock.3160_1'),
+      count: Math.floor(12 + rnd() * 10),
+      amount: Math.floor(900_000 + rnd() * 500_000),
+    },
+    {
+      bucket: i18n.t('shared._mock.6190_2'),
+      count: Math.floor(6 + rnd() * 8),
+      amount: Math.floor(450_000 + rnd() * 350_000),
+    },
+    {
+      bucket: i18n.t('shared._mock.90_3'),
+      count: Math.floor(4 + rnd() * 6),
+      amount: Math.floor(300_000 + rnd() * 300_000),
+    },
   ];
 
   const totalAmount = statusPie.reduce((s, x) => s + x.amount, 0);
@@ -391,7 +420,11 @@ function buildRecommendations(rnd: () => number): RecommendationData {
     i18n.t('shared._mock.k38'),
   ];
 
-  const makeItem = (i: number, type: 'cross-sell' | 'upsell' | 'followup', pool: string[]): RecommendationItem => ({
+  const makeItem = (
+    i: number,
+    type: 'cross-sell' | 'upsell' | 'followup',
+    pool: string[]
+  ): RecommendationItem => ({
     id: `rec-${type}-${i}`,
     customerName: customers[i % customers.length],
     type,
@@ -413,22 +446,26 @@ function buildRecommendations(rnd: () => number): RecommendationData {
   };
 }
 
-export function useCrmMock<T = unknown>(config: {
-  seed?: number;
-  period?: Period;
-  locale?: 'zh-CN' | 'en-US';
-} = {}): { data: T; mockEnabled: boolean; refresh: () => void } {
+export function useCrmMock<T = unknown>(
+  config: {
+    seed?: number;
+    period?: Period;
+    locale?: 'zh-CN' | 'en-US';
+  } = {}
+): { data: T; mockEnabled: boolean; refresh: () => void } {
   const seed = config.seed ?? 42;
   const period = config.period ?? 'MTD';
   const envEnable =
     typeof import.meta !== 'undefined' &&
-    (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_ENABLE_CRM_MOCK === 'true';
+    (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_ENABLE_CRM_MOCK ===
+      'true';
   const demoEnable =
     typeof window !== 'undefined' &&
     (window as unknown as { __TOPEMS_DEMO__?: boolean }).__TOPEMS_DEMO__ === true;
   const envDisable =
     typeof import.meta !== 'undefined' &&
-    (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_CRM_DISABLE_MOCK === 'true';
+    (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_CRM_DISABLE_MOCK ===
+      'true';
   const mockEnabled = (envEnable || demoEnable) && !envDisable;
 
   const pm = periodMonths(period);
@@ -444,7 +481,9 @@ export function useCrmMock<T = unknown>(config: {
     totalValue: funnel.reduce((s, x) => s + x.amount, 0),
     avgValue:
       funnel.reduce((s, x) => s + x.count, 0) > 0
-        ? Math.floor(funnel.reduce((s, x) => s + x.amount, 0) / funnel.reduce((s, x) => s + x.count, 0))
+        ? Math.floor(
+            funnel.reduce((s, x) => s + x.amount, 0) / funnel.reduce((s, x) => s + x.count, 0)
+          )
         : 0,
     conversionRate:
       funnel[0]?.count > 0
@@ -452,7 +491,7 @@ export function useCrmMock<T = unknown>(config: {
         : 0,
     weightedValue: funnel.reduce(
       (s, x) => s + Math.floor(x.amount * ((x.probability ?? 0) / 100)),
-      0,
+      0
     ),
   };
 

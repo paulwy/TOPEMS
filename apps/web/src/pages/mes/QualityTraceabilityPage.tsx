@@ -5,7 +5,7 @@ import { MapPin } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { mesApi } from '@/api/mes';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const QualityTraceabilityPage: React.FC = () => {
   const { data: backendData, isLoading } = useQuery({

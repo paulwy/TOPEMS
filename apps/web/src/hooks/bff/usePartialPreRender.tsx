@@ -151,7 +151,9 @@ export function usePartialPreRender(route: string): UsePartialPreRenderResult {
     }
     setStaticData(data);
     setReady(true);
-    pprLogger.debug(`${i18n.t('shared.use_partial_pre_render.k0')}${route}${i18n.t('shared.use_partial_pre_render.k1')}${Object.keys(data).length}${i18n.t('shared.use_partial_pre_render.k2')}`);
+    pprLogger.debug(
+      `${i18n.t('shared.use_partial_pre_render.k0')}${route}${i18n.t('shared.use_partial_pre_render.k1')}${Object.keys(data).length}${i18n.t('shared.use_partial_pre_render.k2')}`
+    );
   }, [route, config]);
 
   return {
@@ -181,19 +183,26 @@ export function prefetchRouteShell(route: string): boolean {
 
   const config = routeShellRegistry.get(route);
   if (!config) {
-    pprLogger.warn(`${i18n.t('shared.use_partial_pre_render.k3')}${route}${i18n.t('shared.use_partial_pre_render.k4')}`);
+    pprLogger.warn(
+      `${i18n.t('shared.use_partial_pre_render.k3')}${route}${i18n.t('shared.use_partial_pre_render.k4')}`
+    );
     return false;
   }
 
   // 标记为已预取（实际数据预取由 usePrefetchBffSuspenseQuery 或路由 loader 完成）
   prefetchedShells.set(route, true);
-  pprLogger.debug(`${i18n.t('shared.use_partial_pre_render.k5')}${route}${i18n.t('shared.use_partial_pre_render.k6')}`);
+  pprLogger.debug(
+    `${i18n.t('shared.use_partial_pre_render.k5')}${route}${i18n.t('shared.use_partial_pre_render.k6')}`
+  );
 
   // 触发静态壳渲染（提前创建 React 元素，触发可能的 lazy import）
   try {
     config.render();
   } catch (e) {
-    pprLogger.warn(`${i18n.t('shared.use_partial_pre_render.k7')}${route}${i18n.t('shared.use_partial_pre_render.k8')}`, e);
+    pprLogger.warn(
+      `${i18n.t('shared.use_partial_pre_render.k7')}${route}${i18n.t('shared.use_partial_pre_render.k8')}`,
+      e
+    );
     prefetchedShells.delete(route);
     return false;
   }
@@ -238,7 +247,9 @@ export const StaticShell: React.FC<StaticShellProps> = ({ children, route, immed
 
   useEffect(() => {
     if (route) {
-      pprLogger.debug(`${i18n.t('shared.use_partial_pre_render.k9')}${route} (${Date.now() - mountedAt.current}ms)`);
+      pprLogger.debug(
+        `${i18n.t('shared.use_partial_pre_render.k9')}${route} (${Date.now() - mountedAt.current}ms)`
+      );
     }
   }, [route]);
 

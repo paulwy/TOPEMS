@@ -25,6 +25,7 @@ import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@topems/tokens';
+
 const NotificationArchivePage: React.FC = () => {
   const { success, error } = useNotification();
   const queryClient = useQueryClient();
@@ -55,13 +56,16 @@ const NotificationArchivePage: React.FC = () => {
     onSuccess: () => {
       success(i18n.t('notification.notification_archive_page.k2'));
       setShowConfigModal(false);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_ARCHIVE_CONFIG_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_ARCHIVE_CONFIG_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
-      error((err as { message?: string }).message || i18n.t('notification.notification_archive_page.k3'));
+      error(
+        (err as { message?: string }).message || i18n.t('notification.notification_archive_page.k3')
+      );
     },
   });
   const runAutoArchiveMutation = useMutation({
@@ -73,14 +77,19 @@ const NotificationArchivePage: React.FC = () => {
       return res;
     },
     onSuccess: (res) => {
-      success(`${i18n.t('pages.notification_archive_page.k0')}${res.data?.archived_count || 0}${i18n.t('pages.notification_archive_page.k1')}`);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ARCHIVEDNOTIFICATION_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      success(
+        `${i18n.t('pages.notification_archive_page.k0')}${res.data?.archived_count || 0}${i18n.t('pages.notification_archive_page.k1')}`
+      );
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ARCHIVEDNOTIFICATION_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
-      error((err as { message?: string }).message || i18n.t('notification.notification_archive_page.k5'));
+      error(
+        (err as { message?: string }).message || i18n.t('notification.notification_archive_page.k5')
+      );
     },
   });
   const apiAdapter: CrudApiAdapter<ArchivedNotification> = {
@@ -171,7 +180,9 @@ const NotificationArchivePage: React.FC = () => {
                 color: archiveConfig.enabled ? 'success.main' : 'error.main',
               }}
             >
-              {archiveConfig.enabled ? i18n.t('notification.notification_archive_page.k9') : i18n.t('notification.notification_archive_page.k8')}
+              {archiveConfig.enabled
+                ? i18n.t('notification.notification_archive_page.k9')
+                : i18n.t('notification.notification_archive_page.k8')}
             </Typography>
           </Box>
         </Box>

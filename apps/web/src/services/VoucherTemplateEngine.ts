@@ -286,7 +286,9 @@ export class VoucherTemplateEngine {
     }
 
     if (!account) {
-      throw new Error(`${i18n.t('shared.voucher_template_engine.k0')}${rule.account_code || rule.account_expression}`);
+      throw new Error(
+        `${i18n.t('shared.voucher_template_engine.k0')}${rule.account_code || rule.account_expression}`
+      );
     }
 
     // 计算金额

@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/material';
 import { Building2 } from 'lucide-react';
 import i18n from '@/i18n';
+
 const AssetStats: React.FC = () => {
   const { data } = useQuery({
     queryKey: [QUERY_KEYS.ERP.ASSETS, 'stats'],
@@ -26,15 +27,30 @@ const AssetStats: React.FC = () => {
   const active = assets.filter((a) => a.status === 'active').length;
   const retired = assets.filter((a) => ['retired', 'transferred'].includes(a.status)).length;
   const stats = [
-    { label: i18n.t('erp.asset_management_page.k1'), value: total, color: 'secondary[100]', textColor: 'secondary.700' },
+    {
+      label: i18n.t('erp.asset_management_page.k1'),
+      value: total,
+      color: 'secondary[100]',
+      textColor: 'secondary.700',
+    },
     {
       label: i18n.t('erp.asset_management_page.k2'),
       value: `¥${totalValue.toFixed(2)}`,
       color: 'success.lighter',
       textColor: 'success.700',
     },
-    { label: i18n.t('erp.asset_management_page.k3'), value: active, color: 'warning.light', textColor: 'warning.700' },
-    { label: i18n.t('erp.asset_management_page.k4'), value: retired, color: 'error.lighter', textColor: 'error.dark' },
+    {
+      label: i18n.t('erp.asset_management_page.k3'),
+      value: active,
+      color: 'warning.light',
+      textColor: 'warning.700',
+    },
+    {
+      label: i18n.t('erp.asset_management_page.k4'),
+      value: retired,
+      color: 'error.lighter',
+      textColor: 'error.dark',
+    },
   ];
   return (
     <Box

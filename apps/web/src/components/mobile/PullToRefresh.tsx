@@ -137,7 +137,11 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
                 fontSize: '0.75rem',
               }}
             >
-              {isRefreshing ? i18n.t('components.pull_to_refresh.k0') : canRefresh ? i18n.t('shared.pull_to_refresh.k1') : i18n.t('shared.pull_to_refresh.k0')}
+              {isRefreshing
+                ? i18n.t('components.pull_to_refresh.k0')
+                : canRefresh
+                  ? i18n.t('shared.pull_to_refresh.k1')
+                  : i18n.t('shared.pull_to_refresh.k0')}
             </Typography>
           </Box>
         )}

@@ -4,7 +4,8 @@ import type { ApiResponse } from '../client';
 // ============ Types ============
 
 export type SecurityLevel = 'public' | 'internal' | 'confidential' | 'secret' | 'top_secret';
-export type DataClassification = 'personal' | 'financial' | 'health' | 'legal' | 'business' | 'technical';
+export type DataClassification =
+  'personal' | 'financial' | 'health' | 'legal' | 'business' | 'technical';
 export type PermissionType = 'read' | 'write' | 'delete' | 'admin' | 'export';
 export type AccessDecision = 'allow' | 'deny' | 'challenge';
 export type AuditAction = 'grant' | 'revoke' | 'access' | 'modify' | 'export' | 'delete';
@@ -288,10 +289,15 @@ export const dataSecurityApiV67 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: SecurityPolicy[]; total: number }>(`/mdm-v67/policies${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: SecurityPolicy[]; total: number }>(
+      `/mdm-v67/policies${s ? `?${s}` : ''}`
+    );
   },
 
-  async updatePolicy(id: string, data: UpdateSecurityPolicyRequest): Promise<ApiResponse<SecurityPolicy>> {
+  async updatePolicy(
+    id: string,
+    data: UpdateSecurityPolicyRequest
+  ): Promise<ApiResponse<SecurityPolicy>> {
     return apiClient.master.put<SecurityPolicy>(`/mdm-v67/policies/${id}`, data);
   },
 
@@ -328,10 +334,15 @@ export const dataSecurityApiV67 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: SecurityRule[]; total: number }>(`/mdm-v67/rules${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: SecurityRule[]; total: number }>(
+      `/mdm-v67/rules${s ? `?${s}` : ''}`
+    );
   },
 
-  async updateRule(id: string, data: Partial<CreateSecurityRuleRequest>): Promise<ApiResponse<SecurityRule>> {
+  async updateRule(
+    id: string,
+    data: Partial<CreateSecurityRuleRequest>
+  ): Promise<ApiResponse<SecurityRule>> {
     return apiClient.master.put<SecurityRule>(`/mdm-v67/rules/${id}`, data);
   },
 
@@ -364,19 +375,43 @@ export const dataSecurityApiV67 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: DataClassificationInfo[]; total: number }>(`/mdm-v67/classifications${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: DataClassificationInfo[]; total: number }>(
+      `/mdm-v67/classifications${s ? `?${s}` : ''}`
+    );
   },
 
-  async updateClassification(assetId: string, data: UpdateClassificationRequest): Promise<ApiResponse<DataClassificationInfo>> {
-    return apiClient.master.put<DataClassificationInfo>(`/mdm-v67/classifications/${assetId}`, data);
+  async updateClassification(
+    assetId: string,
+    data: UpdateClassificationRequest
+  ): Promise<ApiResponse<DataClassificationInfo>> {
+    return apiClient.master.put<DataClassificationInfo>(
+      `/mdm-v67/classifications/${assetId}`,
+      data
+    );
   },
 
-  async reviewClassification(assetId: string, status: 'approved' | 'rejected', reason?: string): Promise<ApiResponse<DataClassificationInfo>> {
-    return apiClient.master.post<DataClassificationInfo>(`/mdm-v67/classifications/${assetId}/review`, { status, reason });
+  async reviewClassification(
+    assetId: string,
+    status: 'approved' | 'rejected',
+    reason?: string
+  ): Promise<ApiResponse<DataClassificationInfo>> {
+    return apiClient.master.post<DataClassificationInfo>(
+      `/mdm-v67/classifications/${assetId}/review`,
+      { status, reason }
+    );
   },
 
-  async batchClassify(data: Array<{ asset_id: string; classification: DataClassification; security_level: SecurityLevel }>): Promise<ApiResponse<{ classified: number; failed: number }>> {
-    return apiClient.master.post<{ classified: number; failed: number }>('/mdm-v67/classifications/batch', { items: data });
+  async batchClassify(
+    data: Array<{
+      asset_id: string;
+      classification: DataClassification;
+      security_level: SecurityLevel;
+    }>
+  ): Promise<ApiResponse<{ classified: number; failed: number }>> {
+    return apiClient.master.post<{ classified: number; failed: number }>(
+      '/mdm-v67/classifications/batch',
+      { items: data }
+    );
   },
 
   // ===== 访问控制列表 =====
@@ -384,24 +419,33 @@ export const dataSecurityApiV67 = {
     return apiClient.master.get<AccessControlList>(`/mdm-v67/acls/${assetId}`);
   },
 
-  async updateAcl(assetId: string, data: UpdateAclRequest): Promise<ApiResponse<AccessControlList>> {
+  async updateAcl(
+    assetId: string,
+    data: UpdateAclRequest
+  ): Promise<ApiResponse<AccessControlList>> {
     return apiClient.master.put<AccessControlList>(`/mdm-v67/acls/${assetId}`, data);
   },
 
-  async grantPermission(assetId: string, data: {
-    subject_type: 'user' | 'role' | 'department' | 'public';
-    subject_id?: string;
-    actions: PermissionType[];
-    expire_at?: string;
-  }): Promise<ApiResponse<AccessControlList>> {
+  async grantPermission(
+    assetId: string,
+    data: {
+      subject_type: 'user' | 'role' | 'department' | 'public';
+      subject_id?: string;
+      actions: PermissionType[];
+      expire_at?: string;
+    }
+  ): Promise<ApiResponse<AccessControlList>> {
     return apiClient.master.post<AccessControlList>(`/mdm-v67/acls/${assetId}/grant`, data);
   },
 
-  async revokePermission(assetId: string, data: {
-    subject_type: 'user' | 'role' | 'department' | 'public';
-    subject_id?: string;
-    actions?: PermissionType[];
-  }): Promise<ApiResponse<AccessControlList>> {
+  async revokePermission(
+    assetId: string,
+    data: {
+      subject_type: 'user' | 'role' | 'department' | 'public';
+      subject_id?: string;
+      actions?: PermissionType[];
+    }
+  ): Promise<ApiResponse<AccessControlList>> {
     return apiClient.master.post<AccessControlList>(`/mdm-v67/acls/${assetId}/revoke`, data);
   },
 
@@ -417,7 +461,9 @@ export const dataSecurityApiV67 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: AccessControlList[]; total: number }>(`/mdm-v67/acls${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: AccessControlList[]; total: number }>(
+      `/mdm-v67/acls${s ? `?${s}` : ''}`
+    );
   },
 
   // ===== 访问请求工作流 =====
@@ -443,10 +489,15 @@ export const dataSecurityApiV67 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: AccessRequest[]; total: number }>(`/mdm-v67/access-requests${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: AccessRequest[]; total: number }>(
+      `/mdm-v67/access-requests${s ? `?${s}` : ''}`
+    );
   },
 
-  async reviewAccessRequest(id: string, data: ReviewAccessRequest): Promise<ApiResponse<AccessRequest>> {
+  async reviewAccessRequest(
+    id: string,
+    data: ReviewAccessRequest
+  ): Promise<ApiResponse<AccessRequest>> {
     return apiClient.master.post<AccessRequest>(`/mdm-v67/access-requests/${id}/review`, data);
   },
 
@@ -460,11 +511,15 @@ export const dataSecurityApiV67 = {
   },
 
   async batchCheckAccess(data: CheckAccessRequest[]): Promise<ApiResponse<CheckAccessResponse[]>> {
-    return apiClient.master.post<CheckAccessResponse[]>('/mdm-v67/check-access/batch', { requests: data });
+    return apiClient.master.post<CheckAccessResponse[]>('/mdm-v67/check-access/batch', {
+      requests: data,
+    });
   },
 
   // ===== 审计日志 =====
-  async queryAuditLogs(params?: QueryAuditLogParams): Promise<ApiResponse<{ items: AuditLog[]; total: number }>> {
+  async queryAuditLogs(
+    params?: QueryAuditLogParams
+  ): Promise<ApiResponse<{ items: AuditLog[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.actor_id) qs.set('actor_id', params.actor_id);
     if (params?.action) qs.set('action', params.action);
@@ -473,25 +528,32 @@ export const dataSecurityApiV67 = {
     if (params?.target_id) qs.set('target_id', params.target_id);
     if (params?.date_from) qs.set('date_from', params.date_from);
     if (params?.date_to) qs.set('date_to', params.date_to);
-    if (params?.sensitive_only !== undefined) qs.set('sensitive_only', String(params.sensitive_only));
+    if (params?.sensitive_only !== undefined)
+      qs.set('sensitive_only', String(params.sensitive_only));
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: AuditLog[]; total: number }>(`/mdm-v67/audit-logs${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: AuditLog[]; total: number }>(
+      `/mdm-v67/audit-logs${s ? `?${s}` : ''}`
+    );
   },
 
   async getAuditLog(id: string): Promise<ApiResponse<AuditLog>> {
     return apiClient.master.get<AuditLog>(`/mdm-v67/audit-logs/${id}`);
   },
 
-  async exportAuditLogs(params?: QueryAuditLogParams): Promise<ApiResponse<{ download_url: string; count: number }>> {
+  async exportAuditLogs(
+    params?: QueryAuditLogParams
+  ): Promise<ApiResponse<{ download_url: string; count: number }>> {
     const qs = new URLSearchParams();
     if (params?.actor_id) qs.set('actor_id', params.actor_id);
     if (params?.action) qs.set('action', params.action);
     if (params?.status) qs.set('status', params.status);
     if (params?.date_from) qs.set('date_from', params.date_from);
     if (params?.date_to) qs.set('date_to', params.date_to);
-    return apiClient.master.get<{ download_url: string; count: number }>(`/mdm-v67/audit-logs/export?${qs.toString()}`);
+    return apiClient.master.get<{ download_url: string; count: number }>(
+      `/mdm-v67/audit-logs/export?${qs.toString()}`
+    );
   },
 
   // ===== 安全评估 =====
@@ -517,7 +579,9 @@ export const dataSecurityApiV67 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: SecurityAssessment[]; total: number }>(`/mdm-v67/assessments${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: SecurityAssessment[]; total: number }>(
+      `/mdm-v67/assessments${s ? `?${s}` : ''}`
+    );
   },
 
   // ===== 安全仪表盘 =====
@@ -525,18 +589,48 @@ export const dataSecurityApiV67 = {
     return apiClient.master.get<SecurityDashboard>('/mdm-v67/dashboard');
   },
 
-  async getPolicyStats(): Promise<ApiResponse<{ by_type: Array<{ type: string; count: number; active: number }>; by_status: Array<{ status: string; count: number }> }>> {
-    return apiClient.master.get<{ by_type: Array<{ type: string; count: number; active: number }>; by_status: Array<{ status: string; count: number }> }>('/mdm-v67/dashboard/policies');
+  async getPolicyStats(): Promise<
+    ApiResponse<{
+      by_type: Array<{ type: string; count: number; active: number }>;
+      by_status: Array<{ status: string; count: number }>;
+    }>
+  > {
+    return apiClient.master.get<{
+      by_type: Array<{ type: string; count: number; active: number }>;
+      by_status: Array<{ status: string; count: number }>;
+    }>('/mdm-v67/dashboard/policies');
   },
 
-  async getClassificationStats(): Promise<ApiResponse<{ by_level: Array<{ level: SecurityLevel; count: number }>; by_classification: Array<{ classification: DataClassification; count: number }>; unclassified_count: number }>> {
-    return apiClient.master.get<{ by_level: Array<{ level: SecurityLevel; count: number }>; by_classification: Array<{ classification: DataClassification; count: number }>; unclassified_count: number }>('/mdm-v67/dashboard/classifications');
+  async getClassificationStats(): Promise<
+    ApiResponse<{
+      by_level: Array<{ level: SecurityLevel; count: number }>;
+      by_classification: Array<{ classification: DataClassification; count: number }>;
+      unclassified_count: number;
+    }>
+  > {
+    return apiClient.master.get<{
+      by_level: Array<{ level: SecurityLevel; count: number }>;
+      by_classification: Array<{ classification: DataClassification; count: number }>;
+      unclassified_count: number;
+    }>('/mdm-v67/dashboard/classifications');
   },
 
-  async getAccessStats(days?: number): Promise<ApiResponse<{ total_granted: number; total_denied: number; by_action: Array<{ action: string; granted: number; denied: number }>; trend: Array<{ date: string; granted: number; denied: number }> }>> {
+  async getAccessStats(days?: number): Promise<
+    ApiResponse<{
+      total_granted: number;
+      total_denied: number;
+      by_action: Array<{ action: string; granted: number; denied: number }>;
+      trend: Array<{ date: string; granted: number; denied: number }>;
+    }>
+  > {
     const qs = new URLSearchParams();
     if (days !== undefined) qs.set('days', String(days));
-    return apiClient.master.get<{ total_granted: number; total_denied: number; by_action: Array<{ action: string; granted: number; denied: number }>; trend: Array<{ date: string; granted: number; denied: number }> }>(`/mdm-v67/dashboard/access${qs.toString() ? `?${qs.toString()}` : ''}`);
+    return apiClient.master.get<{
+      total_granted: number;
+      total_denied: number;
+      by_action: Array<{ action: string; granted: number; denied: number }>;
+      trend: Array<{ date: string; granted: number; denied: number }>;
+    }>(`/mdm-v67/dashboard/access${qs.toString() ? `?${qs.toString()}` : ''}`);
   },
 };
 

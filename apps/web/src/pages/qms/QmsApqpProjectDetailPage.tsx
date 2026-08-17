@@ -14,6 +14,7 @@ import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { QMS_PATHS } from '@/modules/qms/config';
 import { designTokens, semanticTokens } from '@topems/tokens';
 import i18n from '@/i18n';
+
 const TABS = [
   { id: 'phases', label: i18n.t('qms.qms_apqp_project_detail_page.k0') },
   { id: 'tasks', label: i18n.t('qms.qms_apqp_project_detail_page.k1') },
@@ -91,7 +92,9 @@ export default function QmsApqpProjectDetailPage() {
         />
       </div>
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>{i18n.t('qms.qms_apqp_project_detail_page.k5')}</p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>
+          {i18n.t('qms.qms_apqp_project_detail_page.k5')}
+        </p>
         <FSMActionButtons
           fsm='apqp'
           currentStatus={project.status ?? 'planning'}
@@ -192,7 +195,9 @@ export default function QmsApqpProjectDetailPage() {
                       style={{ width: `${p.progress ?? 0}%` }}
                     />
                   </div>
-                  <p className='mt-1 text-xs text-gray-500'>{i18n.t('pages.qms_apqp_project_detail_page.k0')}</p>
+                  <p className='mt-1 text-xs text-gray-500'>
+                    {i18n.t('pages.qms_apqp_project_detail_page.k0')}
+                  </p>
                 </div>
               ))}
             </div>
@@ -203,7 +208,9 @@ export default function QmsApqpProjectDetailPage() {
         <div className='rounded-lg border p-4'>
           <h3 className='mb-3 font-semibold'>{i18n.t('qms.qms_apqp_project_detail_page.k16')}</h3>
           {tasks.length === 0 ? (
-            <p className='text-sm text-gray-500'>{i18n.t('qms.qms_apqp_project_detail_page.k17')}</p>
+            <p className='text-sm text-gray-500'>
+              {i18n.t('qms.qms_apqp_project_detail_page.k17')}
+            </p>
           ) : (
             <table className='w-full text-sm'>
               <thead>
@@ -239,7 +246,9 @@ export default function QmsApqpProjectDetailPage() {
         <div className='rounded-lg border p-4'>
           <h3 className='mb-3 font-semibold'>{i18n.t('qms.qms_apqp_project_detail_page.k23')}</h3>
           {risks.length === 0 ? (
-            <p className='text-sm text-gray-500'>{i18n.t('qms.qms_apqp_project_detail_page.k24')}</p>
+            <p className='text-sm text-gray-500'>
+              {i18n.t('qms.qms_apqp_project_detail_page.k24')}
+            </p>
           ) : (
             <table className='w-full text-sm'>
               <thead>
@@ -277,7 +286,9 @@ export default function QmsApqpProjectDetailPage() {
         <div className='rounded-lg border p-4'>
           <h3 className='mb-3 font-semibold'>{i18n.t('qms.qms_apqp_project_detail_page.k28')}</h3>
           {approvals.length === 0 ? (
-            <p className='text-sm text-gray-500'>{i18n.t('qms.qms_apqp_project_detail_page.k29')}</p>
+            <p className='text-sm text-gray-500'>
+              {i18n.t('qms.qms_apqp_project_detail_page.k29')}
+            </p>
           ) : (
             <table className='w-full text-sm'>
               <thead>

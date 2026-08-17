@@ -2,6 +2,9 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen } from '@/__tests__/test-utils';
 
+import UserManagementPage from '../UserManagementPage';
+import { authApi } from '@/api/iam';
+
 vi.mock('react-i18next', () => {
   const merge = (...objs: Record<string, string>[]) => Object.assign({}, ...objs);
   const i18nMap = merge(
@@ -48,9 +51,6 @@ vi.mock('@/i18n', () => {
   };
 });
 
-import UserManagementPage from '../UserManagementPage';
-import { authApi } from '@/api/iam';
-
 let capturedProps: any = null;
 
 vi.mock('@/components/templates/CrudPage', () => {
@@ -59,7 +59,9 @@ vi.mock('@/components/templates/CrudPage', () => {
       capturedProps = props;
       return (
         <div data-testid='crud-page'>
-          <span data-testid='crud-schema'>{props.schema?.name || props.schema?.entity || 'unknown'}</span>
+          <span data-testid='crud-schema'>
+            {props.schema?.name || props.schema?.entity || 'unknown'}
+          </span>
           <span data-testid='crud-breadcrumbs'>
             {props.breadcrumbs?.map((b: any) => b.label).join(' / ')}
           </span>
@@ -189,7 +191,7 @@ describe('UserManagementPage', () => {
       message: '邮箱已存在',
     });
     await expect(
-      capturedProps.apiAdapter.create({ username: 'dup', email: 'dup@x.com', password: 'p' }),
+      capturedProps.apiAdapter.create({ username: 'dup', email: 'dup@x.com', password: 'p' })
     ).rejects.toThrow('邮箱已存在');
   });
 

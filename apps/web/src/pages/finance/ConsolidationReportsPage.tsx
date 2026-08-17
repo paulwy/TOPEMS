@@ -333,15 +333,19 @@ export default function ConsolidationReportsPage() {
             v1: report.company_count,
             v2:
               report.eliminated_company_count > 0
-                ? i18n.t('finance.consolidation_reports_page.e1', { v1: report.eliminated_company_count })
+                ? i18n.t('finance.consolidation_reports_page.e1', {
+                    v1: report.eliminated_company_count,
+                  })
                 : '',
           }),
           total_assets: report.total_assets
             ? `¥${report.total_assets.toLocaleString('zh-CN')}`
             : '-',
           net_profit:
-            (report as unknown as Record<string, unknown>)[i18n.t('pages.consolidation_reports_page.k0')] || report.net_profit
-              ? `¥${Math.abs((report as unknown as Record<string, unknown>)[i18n.t('pages.consolidation_reports_page.k1')] as number || report.net_profit || 0).toLocaleString('zh-CN')}`
+            (report as unknown as Record<string, unknown>)[
+              i18n.t('pages.consolidation_reports_page.k0')
+            ] || report.net_profit
+              ? `¥${Math.abs(((report as unknown as Record<string, unknown>)[i18n.t('pages.consolidation_reports_page.k1')] as number) || report.net_profit || 0).toLocaleString('zh-CN')}`
               : '-',
           status: STATUS_CONFIG[report.status]?.label || report.status,
           approval_status:

@@ -15,7 +15,7 @@ import { financeSchema } from '@/schemas/srm';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface FinanceRecord {
   id: string;
@@ -156,10 +156,19 @@ const SrmFinancePage: React.FC = () => {
       orders: records.filter((r) => r.type === 'order').length,
       contracts: records.filter((r) => r.type === 'contract').length,
       pendingAmount: records
-        .filter((r) => r.status === i18n.t('pages.srm_finance_page.k11') || r.status === i18n.t('pages.srm_finance_page.k10') || r.status === i18n.t('pages.srm_finance_page.k9'))
+        .filter(
+          (r) =>
+            r.status === i18n.t('pages.srm_finance_page.k11') ||
+            r.status === i18n.t('pages.srm_finance_page.k10') ||
+            r.status === i18n.t('pages.srm_finance_page.k9')
+        )
         .reduce((sum, r) => sum + r.amount, 0),
       completedAmount: records
-        .filter((r) => r.status === i18n.t('pages.srm_finance_page.k13') || r.status === i18n.t('pages.srm_finance_page.k12'))
+        .filter(
+          (r) =>
+            r.status === i18n.t('pages.srm_finance_page.k13') ||
+            r.status === i18n.t('pages.srm_finance_page.k12')
+        )
         .reduce((sum, r) => sum + r.amount, 0),
     };
   }, [records]);

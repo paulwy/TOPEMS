@@ -78,7 +78,9 @@ describe('V158 masterData Data Service Marketplace API bindings', () => {
     it('should update listing', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await dataServiceMarketplaceApiV73.updateListing('list-1', { description: 'Updated' });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v73/listings/list-1', { description: 'Updated' });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v73/listings/list-1', {
+        description: 'Updated',
+      });
     });
 
     it('should remove listing', async () => {

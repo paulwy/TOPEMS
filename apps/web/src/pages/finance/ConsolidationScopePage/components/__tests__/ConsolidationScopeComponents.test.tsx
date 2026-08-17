@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
+import { ConsolidationScopeTable } from '../ConsolidationScopeTable';
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
@@ -58,8 +60,6 @@ vi.mock('@/components/common/DataTable', async () => {
       ),
   };
 });
-
-import { ConsolidationScopeTable } from '../ConsolidationScopeTable';
 
 const scopes = [
   {

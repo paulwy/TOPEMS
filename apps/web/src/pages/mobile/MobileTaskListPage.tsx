@@ -39,6 +39,7 @@ import { mobileApi } from '@/api/mobile';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface Task {
   id: string;
   title: string;
@@ -84,11 +85,15 @@ const mapApiTaskToTask = (apiTask: ApiTask): Task => {
   };
   return {
     id: apiTask.id || String(apiTask.task_no || apiTask.id),
-    title: apiTask.title || apiTask.task_name || `${i18n.t('pages.mobile_task_list_page.k0')}${apiTask.id}`,
+    title:
+      apiTask.title ||
+      apiTask.task_name ||
+      `${i18n.t('pages.mobile_task_list_page.k0')}${apiTask.id}`,
     description: apiTask.description || '',
     status: apiTask.status ? statusMap[apiTask.status] : 'pending',
     priority: apiTask.priority ? priorityMap[apiTask.priority] : 'medium',
-    assignee: apiTask.assignee || apiTask.assigned_to_name || i18n.t('mobile.mobile_task_list_page.k0'),
+    assignee:
+      apiTask.assignee || apiTask.assigned_to_name || i18n.t('mobile.mobile_task_list_page.k0'),
     dueDate: apiTask.due_date ? new Date(apiTask.due_date).toLocaleDateString('zh-CN') : '',
     tag: apiTask.task_type || apiTask.tag || i18n.t('mobile.mobile_task_list_page.k1'),
   };
@@ -100,7 +105,12 @@ const MobileTaskListPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const tabs = [i18n.t('mobile.mobile_task_list_page.k5'), i18n.t('mobile.mobile_task_list_page.k4'), i18n.t('mobile.mobile_task_list_page.k3'), i18n.t('mobile.mobile_task_list_page.k2')];
+  const tabs = [
+    i18n.t('mobile.mobile_task_list_page.k5'),
+    i18n.t('mobile.mobile_task_list_page.k4'),
+    i18n.t('mobile.mobile_task_list_page.k3'),
+    i18n.t('mobile.mobile_task_list_page.k2'),
+  ];
   const tasksQuery = useInfiniteQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_TASKS_BASE, activeTab],
     queryFn: async ({ pageParam = 1 }) => {
@@ -246,16 +256,32 @@ const MobileTaskListPage: React.FC = () => {
       );
     });
   const bottomTabs = [
-    { id: 'home', label: i18n.t('mobile.mobile_task_list_page.k15'), icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: i18n.t('mobile.mobile_task_list_page.k16'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: i18n.t('mobile.mobile_task_list_page.k17'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    {
+      id: 'home',
+      label: i18n.t('mobile.mobile_task_list_page.k15'),
+      icon: <Home style={{ width: 22, height: 22 }} />,
+    },
+    {
+      id: 'tasks',
+      label: i18n.t('mobile.mobile_task_list_page.k16'),
+      icon: <ListTodo style={{ width: 22, height: 22 }} />,
+    },
+    {
+      id: 'scan',
+      label: i18n.t('mobile.mobile_task_list_page.k17'),
+      icon: <ScanLine style={{ width: 22, height: 22 }} />,
+    },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_task_list_page.k18'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
       badge: 3,
     },
-    { id: 'profile', label: i18n.t('mobile.mobile_task_list_page.k19'), icon: <User style={{ width: 22, height: 22 }} /> },
+    {
+      id: 'profile',
+      label: i18n.t('mobile.mobile_task_list_page.k19'),
+      icon: <User style={{ width: 22, height: 22 }} />,
+    },
   ];
   return (
     <MobileLayout
@@ -374,7 +400,9 @@ const MobileTaskListPage: React.FC = () => {
                 color='text.secondary'
                 sx={{ textAlign: 'center' }}
               >
-                {searchQuery ? i18n.t('mobile.mobile_task_list_page.k23') : i18n.t('mobile.mobile_task_list_page.k22')}
+                {searchQuery
+                  ? i18n.t('mobile.mobile_task_list_page.k23')
+                  : i18n.t('mobile.mobile_task_list_page.k22')}
               </Typography>
             </Box>
           ) : (

@@ -217,7 +217,8 @@ const GanttChart: React.FC<GanttChartProps> = ({
                   </Typography>
                   {phase.progress > 0 && (
                     <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                      {phase.progress}{i18n.t('components.gantt_chart.k0')}
+                      {phase.progress}
+                      {i18n.t('components.gantt_chart.k0')}
                     </Typography>
                   )}
                 </Box>
@@ -257,7 +258,10 @@ const GanttChart: React.FC<GanttChartProps> = ({
                       top: 0,
                     }}
                   >
-                    {label.date.getFullYear()}{i18n.t('components.gantt_chart.k1')}{label.date.getMonth() + 1}{i18n.t('components.gantt_chart.k2')}
+                    {label.date.getFullYear()}
+                    {i18n.t('components.gantt_chart.k1')}
+                    {label.date.getMonth() + 1}
+                    {i18n.t('components.gantt_chart.k2')}
                   </Box>
                 ))}
               </Box>
@@ -382,7 +386,9 @@ const GanttChart: React.FC<GanttChartProps> = ({
               backgroundColor: 'primary.main',
             }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{i18n.t('components.gantt_chart.k6')}</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+            {i18n.t('components.gantt_chart.k6')}
+          </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box
@@ -393,7 +399,9 @@ const GanttChart: React.FC<GanttChartProps> = ({
               backgroundColor: 'success.dark',
             }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{i18n.t('components.gantt_chart.k7')}</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+            {i18n.t('components.gantt_chart.k7')}
+          </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box
@@ -405,7 +413,9 @@ const GanttChart: React.FC<GanttChartProps> = ({
               backgroundColor: 'warning.light',
             }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{i18n.t('components.gantt_chart.k8')}</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+            {i18n.t('components.gantt_chart.k8')}
+          </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box
@@ -416,7 +426,9 @@ const GanttChart: React.FC<GanttChartProps> = ({
               backgroundColor: 'text.disabled',
             }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{i18n.t('components.gantt_chart.k9')}</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+            {i18n.t('components.gantt_chart.k9')}
+          </Typography>
         </Box>
       </Box>
     </Paper>

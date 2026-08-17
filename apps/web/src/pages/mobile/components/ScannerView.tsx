@@ -6,7 +6,8 @@ import { designTokens } from '@/theme/tokens';
 import { alpha } from '@mui/material/styles';
 import { sizeTokens } from '@/theme';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 interface ScannerViewProps {
   scanning: boolean;
   scanResult: string | null;

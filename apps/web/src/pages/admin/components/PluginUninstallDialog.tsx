@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import type { UninstallTarget } from '../hooks/usePluginManagement';
+
 interface PluginUninstallDialogProps {
   target: UninstallTarget | null;
   onTierChange: (tier: UninstallTarget['tier']) => void;

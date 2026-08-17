@@ -8,10 +8,22 @@ interface SearchShortcutsProps {
 
 export const SearchShortcuts: React.FC<SearchShortcutsProps> = ({ onSelect }) => {
   const shortcuts = [
-    { text: i18n.t('components.search_shortcuts.k1'), hint: i18n.t('components.search_shortcuts.k0') },
-    { text: i18n.t('components.search_shortcuts.k3'), hint: i18n.t('components.search_shortcuts.k2') },
-    { text: i18n.t('components.search_shortcuts.k5'), hint: i18n.t('components.search_shortcuts.k4') },
-    { text: i18n.t('components.search_shortcuts.k7'), hint: i18n.t('components.search_shortcuts.k6') },
+    {
+      text: i18n.t('components.search_shortcuts.k1'),
+      hint: i18n.t('components.search_shortcuts.k0'),
+    },
+    {
+      text: i18n.t('components.search_shortcuts.k3'),
+      hint: i18n.t('components.search_shortcuts.k2'),
+    },
+    {
+      text: i18n.t('components.search_shortcuts.k5'),
+      hint: i18n.t('components.search_shortcuts.k4'),
+    },
+    {
+      text: i18n.t('components.search_shortcuts.k7'),
+      hint: i18n.t('components.search_shortcuts.k6'),
+    },
   ];
 
   return (

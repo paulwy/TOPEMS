@@ -166,7 +166,11 @@ const dataSourceFields: SchemaField[] = [
             ' ',
             new Date(String(row.last_sync)).toLocaleString('zh-CN')
           )
-        : React.createElement(Typography, { variant: 'body2', color: 'text.secondary' }, i18n.t('shared.data_source.k14')),
+        : React.createElement(
+            Typography,
+            { variant: 'body2', color: 'text.secondary' },
+            i18n.t('shared.data_source.k14')
+          ),
   },
   {
     name: 'data_volume',

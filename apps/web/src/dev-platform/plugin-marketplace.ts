@@ -197,7 +197,12 @@ const PRESET_PLUGINS: PluginManifest[] = [
     description: i18n.t('pages.plugin-marketplace.k1'),
     author: 'TOPEMS Team',
     category: 'ui',
-    tags: [i18n.t('pages.plugin-marketplace.k5'), i18n.t('pages.plugin-marketplace.k4'), i18n.t('pages.plugin-marketplace.k3'), i18n.t('pages.plugin-marketplace.k2')],
+    tags: [
+      i18n.t('pages.plugin-marketplace.k5'),
+      i18n.t('pages.plugin-marketplace.k4'),
+      i18n.t('pages.plugin-marketplace.k3'),
+      i18n.t('pages.plugin-marketplace.k2'),
+    ],
     keywords: ['table', 'grid', 'datatable'],
     permissions: ['storage', 'clipboard'],
     dependencies: [],
@@ -224,7 +229,11 @@ const PRESET_PLUGINS: PluginManifest[] = [
     description: i18n.t('pages.plugin-marketplace.k8'),
     author: 'TOPEMS Team',
     category: 'ui',
-    tags: [i18n.t('pages.plugin-marketplace.k10'), i18n.t('pages.plugin-marketplace.k9'), 'ECharts'],
+    tags: [
+      i18n.t('pages.plugin-marketplace.k10'),
+      i18n.t('pages.plugin-marketplace.k9'),
+      'ECharts',
+    ],
     keywords: ['chart', 'echarts', 'visualization'],
     permissions: [],
     dependencies: [{ id: 'echarts', name: 'echarts', versionRange: '>=5.4.0', required: true }],
@@ -248,7 +257,11 @@ const PRESET_PLUGINS: PluginManifest[] = [
     description: i18n.t('pages.plugin-marketplace.k13'),
     author: 'TOPEMS Team',
     category: 'data',
-    tags: [i18n.t('pages.plugin-marketplace.k16'), i18n.t('pages.plugin-marketplace.k15'), i18n.t('pages.plugin-marketplace.k14')],
+    tags: [
+      i18n.t('pages.plugin-marketplace.k16'),
+      i18n.t('pages.plugin-marketplace.k15'),
+      i18n.t('pages.plugin-marketplace.k14'),
+    ],
     keywords: ['form', 'validation', 'schema'],
     permissions: [],
     dependencies: [],
@@ -272,7 +285,11 @@ const PRESET_PLUGINS: PluginManifest[] = [
     description: i18n.t('pages.plugin-marketplace.k19'),
     author: 'TOPEMS Team',
     category: 'theme',
-    tags: [i18n.t('pages.plugin-marketplace.k22'), i18n.t('pages.plugin-marketplace.k21'), i18n.t('pages.plugin-marketplace.k20')],
+    tags: [
+      i18n.t('pages.plugin-marketplace.k22'),
+      i18n.t('pages.plugin-marketplace.k21'),
+      i18n.t('pages.plugin-marketplace.k20'),
+    ],
     keywords: ['theme', 'dark-mode', 'appearance'],
     permissions: ['storage'],
     dependencies: [],
@@ -708,11 +725,15 @@ export class PluginMarketplace {
       !manifest.engines.platform || manifest.engines.platform.includes(platform);
 
     if (!frameworkSupported) {
-      conflicts.push(`Plugin "${manifest.name}${i18n.t('pages.plugin-marketplace.k36')}${framework}${i18n.t('pages.plugin-marketplace.k37')}`);
+      conflicts.push(
+        `Plugin "${manifest.name}${i18n.t('pages.plugin-marketplace.k36')}${framework}${i18n.t('pages.plugin-marketplace.k37')}`
+      );
     }
 
     if (!platformSupported) {
-      conflicts.push(`Plugin "${manifest.name}${i18n.t('pages.plugin-marketplace.k38')}${platform}${i18n.t('pages.plugin-marketplace.k39')}`);
+      conflicts.push(
+        `Plugin "${manifest.name}${i18n.t('pages.plugin-marketplace.k38')}${platform}${i18n.t('pages.plugin-marketplace.k39')}`
+      );
     }
 
     manifest.dependencies.forEach((dep) => {
@@ -738,7 +759,9 @@ export class PluginMarketplace {
       } else if (dep.required) {
         missingDependencies.push(dep.name);
       } else {
-        warnings.push(`${i18n.t('pages.plugin-marketplace.k42')}${dep.name}${i18n.t('pages.plugin-marketplace.k43')}`);
+        warnings.push(
+          `${i18n.t('pages.plugin-marketplace.k42')}${dep.name}${i18n.t('pages.plugin-marketplace.k43')}`
+        );
       }
     });
 

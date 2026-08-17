@@ -25,7 +25,12 @@ export const assetSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) =>
         React.createElement(
           'span',
-          { style: { fontWeight: 600, color: `var(--color-success-main, ${designTokens.colors.success.dark})` } },
+          {
+            style: {
+              fontWeight: 600,
+              color: `var(--color-success-main, ${designTokens.colors.success.dark})`,
+            },
+          },
           String(row.code || '')
         ),
       validation: [{ type: 'maxLength', value: 50 }],
@@ -85,7 +90,12 @@ export const assetSchema: EntitySchema = {
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const direction = String(row.balance_direction || '');
-        const label = direction === 'debit' ? i18n.t('finance.asset.k11') : direction === 'credit' ? i18n.t('finance.asset.k10') : direction;
+        const label =
+          direction === 'debit'
+            ? i18n.t('finance.asset.k11')
+            : direction === 'credit'
+              ? i18n.t('finance.asset.k10')
+              : direction;
         const color =
           direction === 'debit'
             ? `var(--color-primary-main, ${designTokens.colors.primary.dark})`
@@ -121,7 +131,12 @@ export const assetSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) =>
         React.createElement(
           'span',
-          { style: { color: `var(--color-warning-main, ${designTokens.colors.warning[500]}`, fontFamily: 'monospace' } },
+          {
+            style: {
+              color: `var(--color-warning-main, ${designTokens.colors.warning[500]}`,
+              fontFamily: 'monospace',
+            },
+          },
           String(row.level ?? '')
         ),
     },

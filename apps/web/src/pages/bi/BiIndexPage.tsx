@@ -49,10 +49,9 @@ import { BI_PATHS } from '@/modules/bi/config';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const quickActions = [
   {

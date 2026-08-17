@@ -453,7 +453,9 @@ export const GisTrackingPage: React.FC = () => {
                       ]}
                     />
                   </Box>
-                  <Typography variant='body2'>{t('gis.gis_tracking_page.m1', { v1: playbackSpeed })}</Typography>
+                  <Typography variant='body2'>
+                    {t('gis.gis_tracking_page.m1', { v1: playbackSpeed })}
+                  </Typography>
                 </Box>
               </CardContent>
             </Card>

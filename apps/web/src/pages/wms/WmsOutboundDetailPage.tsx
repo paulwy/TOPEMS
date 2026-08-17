@@ -37,8 +37,12 @@ export default function WmsOutboundDetailPage() {
     <div className='space-y-4 p-4'>
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <div>
-          <h1 className='text-2xl font-bold'>{i18n.t('wms:wms_outbound_detail_page.v0_3', { v0: (order.order_number) })}</h1>
-          <p className='text-sm text-gray-500'>{i18n.t('wms:wms_outbound_detail_page.v0_2', { v0: (order.customer_name ?? '-') })}</p>
+          <h1 className='text-2xl font-bold'>
+            {i18n.t('wms:wms_outbound_detail_page.v0_3', { v0: order.order_number })}
+          </h1>
+          <p className='text-sm text-gray-500'>
+            {i18n.t('wms:wms_outbound_detail_page.v0_2', { v0: order.customer_name ?? '-' })}
+          </p>
         </div>
         <div className='flex items-center gap-3'>
           <WmsStatusBadge

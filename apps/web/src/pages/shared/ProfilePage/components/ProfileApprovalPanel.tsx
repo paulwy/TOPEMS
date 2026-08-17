@@ -16,7 +16,7 @@ import i18n from '@/i18n';
 import { designTokens } from '@/theme/tokens';
 import { IM_PATHS } from '@/modules/im/config';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface ActivityItem {
   id: string;
@@ -109,7 +109,9 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
               size={48}
               style={{ color: theme.palette.text.disabled, marginBottom: 12 }}
             />
-            <Typography color='text.secondary'>{i18n.t('pages.profile_approval_panel.k0')}</Typography>
+            <Typography color='text.secondary'>
+              {i18n.t('pages.profile_approval_panel.k0')}
+            </Typography>
           </Box>
         ) : (
           <Box

@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export interface QAEntry {
   id: string;
   question: string;
@@ -213,7 +214,9 @@ export class KnowledgeQA {
     }
 
     const parts: string[] = [];
-    parts.push(`${i18n.t('ai.knowledge-qa.k2')}${relevantDocs.length}${i18n.t('ai.knowledge-qa.k3')}${question}"：`);
+    parts.push(
+      `${i18n.t('ai.knowledge-qa.k2')}${relevantDocs.length}${i18n.t('ai.knowledge-qa.k3')}${question}"：`
+    );
     parts.push('');
 
     const mainDoc = relevantDocs[0];
@@ -264,7 +267,9 @@ export class KnowledgeQA {
 
         for (const word of relevantWords) {
           if (secondSentence.toLowerCase().includes(word)) {
-            suggestions.push(`${i18n.t('ai.knowledge-qa.k5')}${secondSentence.substring(0, 40)}${i18n.t('ai.knowledge-qa.k6')}`);
+            suggestions.push(
+              `${i18n.t('ai.knowledge-qa.k5')}${secondSentence.substring(0, 40)}${i18n.t('ai.knowledge-qa.k6')}`
+            );
             break;
           }
         }

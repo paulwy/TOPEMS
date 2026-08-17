@@ -5,7 +5,8 @@ import { FileText, CheckCircle2, XCircle, User, Clock, PlayCircle, GitBranch } f
 import type { Approval, ApprovalRecord } from '@/api/workflow';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 interface ApprovalTimelineProps {
   approval: Approval | null;
   records: ApprovalRecord[];
@@ -63,7 +64,9 @@ export const RecordsTabContent: React.FC<{ records: ApprovalRecord[]; theme: The
               variant='body2'
               sx={{ fontWeight: 500 }}
             >
-              {record.action === 'approve' ? i18n.t('workflow.approval_timeline.k1') : i18n.t('workflow.approval_timeline.k0')}
+              {record.action === 'approve'
+                ? i18n.t('workflow.approval_timeline.k1')
+                : i18n.t('workflow.approval_timeline.k0')}
             </Typography>
           </Stack>
           <Stack
@@ -136,7 +139,9 @@ export const TimelineTabContent: React.FC<{
               marginBottom: 8,
             }}
           />
-          <Typography sx={{ color: 'grey.500' }}>{i18n.t('workflow.approval_timeline.k2')}</Typography>
+          <Typography sx={{ color: 'grey.500' }}>
+            {i18n.t('workflow.approval_timeline.k2')}
+          </Typography>
         </Box>
       ) : (
         <Box sx={{ position: 'relative' }}>
@@ -181,7 +186,8 @@ export const TimelineTabContent: React.FC<{
                   variant='caption'
                   sx={{ color: 'grey.500' }}
                 >
-                  [i18n.t('pages.approval_timeline.k4')]: {approval?.assignee_id || i18n.t('workflow.approval_timeline.k3')}
+                  [i18n.t('pages.approval_timeline.k4')]:{' '}
+                  {approval?.assignee_id || i18n.t('workflow.approval_timeline.k3')}
                 </Typography>
                 <Typography
                   variant='caption'
@@ -225,7 +231,9 @@ export const TimelineTabContent: React.FC<{
                         variant='body2'
                         sx={{ fontWeight: 600 }}
                       >
-                        {isApproved ? i18n.t('workflow.approval_timeline.k5') : i18n.t('workflow.approval_timeline.k4')}
+                        {isApproved
+                          ? i18n.t('workflow.approval_timeline.k5')
+                          : i18n.t('workflow.approval_timeline.k4')}
                       </Typography>
                       <Chip
                         size='small'
@@ -328,7 +336,8 @@ export const TimelineTabContent: React.FC<{
                       variant='caption'
                       sx={{ display: 'block', color: 'warning.main', mt: 0.5 }}
                     >
-                      [i18n.t('pages.approval_timeline.k7')]: {new Date(approval.timeout_at).toLocaleString()}
+                      [i18n.t('pages.approval_timeline.k7')]:{' '}
+                      {new Date(approval.timeout_at).toLocaleString()}
                     </Typography>
                   )}
                 </Paper>
@@ -389,7 +398,9 @@ export const FormDataTabContent: React.FC<{ approval: Approval | null; theme: Th
               marginBottom: 8,
             }}
           />
-          <Typography sx={{ color: 'grey.500' }}>{i18n.t('workflow.approval_timeline.k6')}</Typography>
+          <Typography sx={{ color: 'grey.500' }}>
+            {i18n.t('workflow.approval_timeline.k6')}
+          </Typography>
           <Typography
             variant='caption'
             sx={{ color: 'grey.400', display: 'block', mt: 0.5 }}

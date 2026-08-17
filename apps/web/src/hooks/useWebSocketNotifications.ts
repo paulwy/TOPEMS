@@ -85,7 +85,8 @@ export function useWebSocketNotificationChannel(
     channel,
     enabled,
     getTitle: (msg) => msg.payload?.title as string | undefined,
-    getMessage: (msg) => (msg.payload?.message as string) || i18n.t('shared.use_web_socket_notifications.k0'),
+    getMessage: (msg) =>
+      (msg.payload?.message as string) || i18n.t('shared.use_web_socket_notifications.k0'),
     getType: (msg) => {
       const payloadType = msg.payload?.type as string | undefined;
       if (payloadType === 'success' || payloadType === 'error' || payloadType === 'warning') {
@@ -109,8 +110,10 @@ export function useWebSocketAlertChannel(enabled: boolean = true): void {
   useWebSocketNotifications({
     channel: 'alerts',
     enabled,
-    getTitle: (msg) => (msg.payload?.title as string) || i18n.t('shared.use_web_socket_notifications.k1'),
-    getMessage: (msg) => (msg.payload?.message as string) || i18n.t('shared.use_web_socket_notifications.k2'),
+    getTitle: (msg) =>
+      (msg.payload?.title as string) || i18n.t('shared.use_web_socket_notifications.k1'),
+    getMessage: (msg) =>
+      (msg.payload?.message as string) || i18n.t('shared.use_web_socket_notifications.k2'),
     getType: (msg) => {
       const severity = msg.payload?.severity as string | undefined;
       if (severity === 'critical' || severity === 'high') return 'error';

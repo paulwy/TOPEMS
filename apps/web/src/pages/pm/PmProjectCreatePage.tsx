@@ -12,12 +12,15 @@ import { logger } from '@/utils/logger';
 import { PM_PATHS } from '@/modules/pm/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 const projectSchema = z.object({
   name: z.string().min(1, i18n.t('pm.pm_project_create_page.k0')),
   code: z.string().min(1, i18n.t('pm.pm_project_create_page.k1')),
   project_type: z.enum(['RESEARCH', 'PRODUCTION', 'CONSTRUCTION', 'DESIGN', 'SERVICE']),
   description: z.string().optional(),
-  budget: z.string().refine((val) => !val || parseFloat(val) >= 0, i18n.t('pm.pm_project_create_page.k2')),
+  budget: z
+    .string()
+    .refine((val) => !val || parseFloat(val) >= 0, i18n.t('pm.pm_project_create_page.k2')),
   leader: z.string().optional(),
   start_date: z.string().min(1, i18n.t('pm.pm_project_create_page.k3')),
   end_date: z.string().min(1, i18n.t('pm.pm_project_create_page.k4')),
@@ -25,11 +28,31 @@ const projectSchema = z.object({
 });
 type ProjectFormData = z.infer<typeof projectSchema>;
 const PROJECT_TYPES = [
-  { value: 'RESEARCH', label: i18n.t('pm.pm_project_create_page.k6'), description: i18n.t('pm.pm_project_create_page.k5') },
-  { value: 'PRODUCTION', label: i18n.t('pm.pm_project_create_page.k8'), description: i18n.t('pm.pm_project_create_page.k7') },
-  { value: 'CONSTRUCTION', label: i18n.t('pm.pm_project_create_page.k10'), description: i18n.t('pm.pm_project_create_page.k9') },
-  { value: 'DESIGN', label: i18n.t('pm.pm_project_create_page.k12'), description: i18n.t('pm.pm_project_create_page.k11') },
-  { value: 'SERVICE', label: i18n.t('pm.pm_project_create_page.k14'), description: i18n.t('pm.pm_project_create_page.k13') },
+  {
+    value: 'RESEARCH',
+    label: i18n.t('pm.pm_project_create_page.k6'),
+    description: i18n.t('pm.pm_project_create_page.k5'),
+  },
+  {
+    value: 'PRODUCTION',
+    label: i18n.t('pm.pm_project_create_page.k8'),
+    description: i18n.t('pm.pm_project_create_page.k7'),
+  },
+  {
+    value: 'CONSTRUCTION',
+    label: i18n.t('pm.pm_project_create_page.k10'),
+    description: i18n.t('pm.pm_project_create_page.k9'),
+  },
+  {
+    value: 'DESIGN',
+    label: i18n.t('pm.pm_project_create_page.k12'),
+    description: i18n.t('pm.pm_project_create_page.k11'),
+  },
+  {
+    value: 'SERVICE',
+    label: i18n.t('pm.pm_project_create_page.k14'),
+    description: i18n.t('pm.pm_project_create_page.k13'),
+  },
 ];
 const PmProjectCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -50,10 +73,11 @@ const PmProjectCreatePage: React.FC = () => {
       });
     },
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.PROJECTS ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.PM.PROJECTS,
+        exact: false,
+        refetchType: 'active',
+      });
       if (response.code === 200 || response.code === 201) {
         success(i18n.t('pm.pm_project_create_page.k15'));
         navigate(`${PM_PATHS.projects}/${response.data?.id}`);

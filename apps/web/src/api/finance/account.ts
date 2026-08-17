@@ -21,15 +21,17 @@ export const accountApi = {
    * Query Params 经 AdaptedQuery<'list_accounts'> 适配为 camelCase，运行时 adaptReverse → snake_case
    */
   list: async (
-    params?: AdaptedQuery<'list_accounts'> | {
-      category?: string;
-      parentId?: string;
-      level?: number;
-      status?: string;
-      keyword?: string;
-      page?: number;
-      pagesize?: number;
-    },
+    params?:
+      | AdaptedQuery<'list_accounts'>
+      | {
+          category?: string;
+          parentId?: string;
+          level?: number;
+          status?: string;
+          keyword?: string;
+          page?: number;
+          pagesize?: number;
+        }
   ): Promise<TypedPaginatedResponse<Account>> => {
     return apiClient.finance.get('/accounts', {
       params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
@@ -56,11 +58,11 @@ export const accountApi = {
    * Request Body 经 AdaptedRequestBody<'create_account'> 适配，运行时 adaptReverse → snake_case
    */
   create: async (
-    data: AdaptedRequestBody<'create_account'> | Partial<Account>,
+    data: AdaptedRequestBody<'create_account'> | Partial<Account>
   ): Promise<TypedApiResponse<Account, 'create_account'>> => {
     return apiClient.finance.post(
       '/accounts',
-      toOpenApiRequestBody(data as Record<string, unknown>),
+      toOpenApiRequestBody(data as Record<string, unknown>)
     );
   },
 

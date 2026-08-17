@@ -9,6 +9,7 @@ import {
   Button,
 } from '@mui/material';
 import i18n from '@/i18n';
+
 interface DictionaryImportModalProps {
   open: boolean;
   importFile: File | null;

@@ -25,7 +25,8 @@ import {
 import i18n from '@/i18n';
 import { accountingSubjectSchema, openingBalanceSchema } from '@/schemas/finance';
 import { designTokens } from '@/theme/tokens';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const AccountingManagementPage: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState(0);
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -50,17 +51,20 @@ const AccountingManagementPage: React.FC = () => {
       },
       create: async (data) => {
         const res = await accountingSubjectApi.create(data);
-        if (!res.success) throw new Error(res.message || i18n.t('erp.accounting_management_page.k0'));
+        if (!res.success)
+          throw new Error(res.message || i18n.t('erp.accounting_management_page.k0'));
         return res.data as AccountingSubject;
       },
       update: async (id, data) => {
         const res = await accountingSubjectApi.update(id, data);
-        if (!res.success) throw new Error(res.message || i18n.t('erp.accounting_management_page.k1'));
+        if (!res.success)
+          throw new Error(res.message || i18n.t('erp.accounting_management_page.k1'));
         return res.data as AccountingSubject;
       },
       delete: async (id) => {
         const res = await accountingSubjectApi.delete(id);
-        if (!res.success) throw new Error(res.message || i18n.t('erp.accounting_management_page.k2'));
+        if (!res.success)
+          throw new Error(res.message || i18n.t('erp.accounting_management_page.k2'));
       },
     }),
     []
@@ -92,7 +96,8 @@ const AccountingManagementPage: React.FC = () => {
           debit_balance: Number(data.debit_balance ?? 0),
           credit_balance: Number(data.credit_balance ?? 0),
         });
-        if (!res.success) throw new Error(res.message || i18n.t('erp.accounting_management_page.k3'));
+        if (!res.success)
+          throw new Error(res.message || i18n.t('erp.accounting_management_page.k3'));
         return res.data as OpeningBalance;
       },
       update: async (id, data) => {
@@ -104,12 +109,14 @@ const AccountingManagementPage: React.FC = () => {
           debit_balance: Number(data.debit_balance ?? 0),
           credit_balance: Number(data.credit_balance ?? 0),
         });
-        if (!res.success) throw new Error(res.message || i18n.t('erp.accounting_management_page.k4'));
+        if (!res.success)
+          throw new Error(res.message || i18n.t('erp.accounting_management_page.k4'));
         return res.data as OpeningBalance;
       },
       delete: async (id) => {
         const res = await openingBalanceApi.delete(id);
-        if (!res.success) throw new Error(res.message || i18n.t('erp.accounting_management_page.k5'));
+        if (!res.success)
+          throw new Error(res.message || i18n.t('erp.accounting_management_page.k5'));
       },
     }),
     []
@@ -126,10 +133,11 @@ const AccountingManagementPage: React.FC = () => {
         title: i18n.t('erp.accounting_management_page.k6'),
         message: i18n.t('erp.accounting_management_page.k7'),
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ERP.OPENING_BALANCES ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.ERP.OPENING_BALANCES,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
       addNotification({
@@ -151,7 +159,9 @@ const AccountingManagementPage: React.FC = () => {
           onClick={() => carryForwardMutation.mutate()}
           disabled={carryForwardMutation.isPending}
         >
-          {carryForwardMutation.isPending ? i18n.t('pages.accounting_management_page.k0') : i18n.t('erp.accounting_management_page.k10')}
+          {carryForwardMutation.isPending
+            ? i18n.t('pages.accounting_management_page.k0')
+            : i18n.t('erp.accounting_management_page.k10')}
         </Button>
       </Box>
     ),

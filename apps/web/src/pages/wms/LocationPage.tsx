@@ -25,17 +25,12 @@ const locationApiAdapter: CrudApiAdapter = {
     };
   },
   create: async (data) => {
-    const response = await wmsApi.locations.create(
-      data as unknown as CreateLocationRequest,
-    );
+    const response = await wmsApi.locations.create(data as unknown as CreateLocationRequest);
     if (!response.success) throw new Error('Failed to create location');
     return response.data as unknown as Record<string, unknown>;
   },
   update: async (id, data) => {
-    const response = await wmsApi.locations.update(
-      id,
-      data as unknown as UpdateLocationRequest,
-    );
+    const response = await wmsApi.locations.update(id, data as unknown as UpdateLocationRequest);
     if (!response.success) throw new Error('Failed to update location');
     return response.data as unknown as Record<string, unknown>;
   },

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import i18n from '@/i18n';
 import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '@/api/erp/types';
+
 interface FinancialReportSummaryCardsProps {
   activeTab: string;
   balanceSheet: BalanceSheet | null;

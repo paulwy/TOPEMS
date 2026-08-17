@@ -53,7 +53,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               marginBottom: 2,
             }}
           ></Box>
-          <Typography sx={{ color: 'text.secondary' }}>{i18n.t('components.protected_route.k0')}</Typography>
+          <Typography sx={{ color: 'text.secondary' }}>
+            {i18n.t('components.protected_route.k0')}
+          </Typography>
         </Box>
       </Box>
     );
@@ -242,7 +244,9 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
               </Typography>
               <Box sx={{ marginTop: 1, fontSize: '14px', color: 'warning.700' }}>
                 <p>
-                  {i18n.t('components.protected_route.k0')} {module} {i18n.t('components.protected_route.k1')} {action} {i18n.t('components.protected_route.k2')}
+                  {i18n.t('components.protected_route.k0')} {module}{' '}
+                  {i18n.t('components.protected_route.k1')} {action}{' '}
+                  {i18n.t('components.protected_route.k2')}
                 </p>
               </Box>
             </Box>

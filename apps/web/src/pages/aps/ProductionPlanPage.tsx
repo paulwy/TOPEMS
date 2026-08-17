@@ -29,10 +29,8 @@ import i18n from '@/i18n';
 import { Plus, Search, Edit, Trash2, RefreshCw, ClipboardList } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { productionPlanApi } from '@/api/aps';
-import type {
-  ProductionPlan,
-  CreateProductionPlanRequest,
-} from '@/api/aps/types';
+import type { ProductionPlan, CreateProductionPlanRequest } from '@/api/aps/types';
+
 const PLAN_TYPE_LABEL: Record<string, string> = {
   monthly: i18n.t('aps.production_plan_page.k0'),
   weekly: i18n.t('aps.production_plan_page.k1'),
@@ -45,7 +43,10 @@ const STATUS_LABEL: Record<string, string> = {
   completed: i18n.t('aps.production_plan_page.k6'),
   cancelled: i18n.t('aps.production_plan_page.k7'),
 };
-const STATUS_COLOR: Record<string, 'default' | 'primary' | 'info' | 'success' | 'warning' | 'error'> = {
+const STATUS_COLOR: Record<
+  string,
+  'default' | 'primary' | 'info' | 'success' | 'warning' | 'error'
+> = {
   draft: 'default',
   approved: 'info',
   in_progress: 'primary',
@@ -160,10 +161,7 @@ const ProductionPlanPage: React.FC = () => {
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
   };
-  const fieldSx = useMemo(
-    () => ({ minWidth: { xs: '100%', sm: 240 } }),
-    []
-  );
+  const fieldSx = useMemo(() => ({ minWidth: { xs: '100%', sm: 240 } }), []);
   return (
     <PageContainer
       title={i18n.t('aps.production_plan_page.k8')}
@@ -209,7 +207,10 @@ const ProductionPlanPage: React.FC = () => {
               {i18n.t('pages.production_plan_page.k0')}
             </Button>
             <Tooltip title={i18n.t('aps.production_plan_page.k11')}>
-              <IconButton onClick={handleRefresh} size='small'>
+              <IconButton
+                onClick={handleRefresh}
+                size='small'
+              >
                 <RefreshCw size={16} />
               </IconButton>
             </Tooltip>
@@ -225,7 +226,10 @@ const ProductionPlanPage: React.FC = () => {
         </Box>
         <Card>
           <CardContent sx={{ p: 0 }}>
-            <TableContainer component={Paper} variant='outlined'>
+            <TableContainer
+              component={Paper}
+              variant='outlined'
+            >
               <Table size='small'>
                 <TableHead>
                   <TableRow>
@@ -242,16 +246,33 @@ const ProductionPlanPage: React.FC = () => {
                 <TableBody>
                   {listQuery.isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={8} align='center'>
+                      <TableCell
+                        colSpan={8}
+                        align='center'
+                      >
                         {i18n.t('pages.production_plan_page.k2')}
                       </TableCell>
                     </TableRow>
                   ) : items.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} align='center'>
-                        <Box sx={{ py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                      <TableCell
+                        colSpan={8}
+                        align='center'
+                      >
+                        <Box
+                          sx={{
+                            py: 4,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 1,
+                          }}
+                        >
                           <ClipboardList size={32} />
-                          <Typography variant='body2' color='text.secondary'>
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
                             {i18n.t('pages.production_plan_page.k3')}
                           </Typography>
                         </Box>
@@ -259,7 +280,10 @@ const ProductionPlanPage: React.FC = () => {
                     </TableRow>
                   ) : (
                     items.map((row) => (
-                      <TableRow key={row.id} hover>
+                      <TableRow
+                        key={row.id}
+                        hover
+                      >
                         <TableCell>{row.plan_no}</TableCell>
                         <TableCell>{row.plan_name}</TableCell>
                         <TableCell>
@@ -281,12 +305,19 @@ const ProductionPlanPage: React.FC = () => {
                         <TableCell align='right'>{row.target_quantity ?? 0}</TableCell>
                         <TableCell align='center'>
                           <Tooltip title={i18n.t('aps.production_plan_page.k20')}>
-                            <IconButton size='small' onClick={() => handleOpenEdit(row)}>
+                            <IconButton
+                              size='small'
+                              onClick={() => handleOpenEdit(row)}
+                            >
                               <Edit size={16} />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title={i18n.t('aps.production_plan_page.k21')}>
-                            <IconButton size='small' color='error' onClick={() => handleDelete(row)}>
+                            <IconButton
+                              size='small'
+                              color='error'
+                              onClick={() => handleDelete(row)}
+                            >
                               <Trash2 size={16} />
                             </IconButton>
                           </Tooltip>
@@ -309,7 +340,9 @@ const ProductionPlanPage: React.FC = () => {
               }}
               rowsPerPageOptions={[10, 20, 50]}
               labelRowsPerPage={i18n.t('aps.production_plan_page.k22')}
-              labelDisplayedRows={({ from, to, count }) => `${from}-${to}${i18n.t('pages.production_plan_page.k0')}${count}`}
+              labelDisplayedRows={({ from, to, count }) =>
+                `${from}-${to}${i18n.t('pages.production_plan_page.k0')}${count}`
+              }
             />
           </CardContent>
         </Card>
@@ -320,7 +353,11 @@ const ProductionPlanPage: React.FC = () => {
         fullWidth
         maxWidth='md'
       >
-        <DialogTitle>{editingId ? i18n.t('aps.production_plan_page.k24') : i18n.t('aps.production_plan_page.k23')}</DialogTitle>
+        <DialogTitle>
+          {editingId
+            ? i18n.t('aps.production_plan_page.k24')
+            : i18n.t('aps.production_plan_page.k23')}
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, pt: 1 }}>
             <TextField
@@ -342,7 +379,10 @@ const ProductionPlanPage: React.FC = () => {
               select
               value={form.plan_type ?? 'monthly'}
               onChange={(e) =>
-                setForm({ ...form, plan_type: e.target.value as CreateProductionPlanRequest['plan_type'] })
+                setForm({
+                  ...form,
+                  plan_type: e.target.value as CreateProductionPlanRequest['plan_type'],
+                })
               }
               size='small'
               sx={fieldSx}
@@ -374,7 +414,10 @@ const ProductionPlanPage: React.FC = () => {
               select
               value={form.status ?? 'draft'}
               onChange={(e) =>
-                setForm({ ...form, status: e.target.value as CreateProductionPlanRequest['status'] })
+                setForm({
+                  ...form,
+                  status: e.target.value as CreateProductionPlanRequest['status'],
+                })
               }
               size='small'
               sx={fieldSx}
@@ -396,9 +439,7 @@ const ProductionPlanPage: React.FC = () => {
               label={i18n.t('aps.production_plan_page.k40')}
               type='number'
               value={form.target_quantity ?? 0}
-              onChange={(e) =>
-                setForm({ ...form, target_quantity: Number(e.target.value) })
-              }
+              onChange={(e) => setForm({ ...form, target_quantity: Number(e.target.value) })}
               size='small'
               sx={fieldSx}
             />
@@ -414,9 +455,17 @@ const ProductionPlanPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>{i18n.t('aps.production_plan_page.k42')}</Button>
-          <Button variant='contained' onClick={handleSave} disabled={saving}>
-            {saving ? i18n.t('pages.production_plan_page.k1') : i18n.t('aps.production_plan_page.k43')}
+          <Button onClick={() => setDialogOpen(false)}>
+            {i18n.t('aps.production_plan_page.k42')}
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving
+              ? i18n.t('pages.production_plan_page.k1')
+              : i18n.t('aps.production_plan_page.k43')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -429,18 +478,24 @@ const ProductionPlanPage: React.FC = () => {
         <DialogTitle>{i18n.t('aps.production_plan_page.k44')}</DialogTitle>
         <DialogContent>
           <Typography>
-            {i18n.t('pages.production_plan_page.k0')}「{deleteTarget?.plan_name ?? deleteTarget?.plan_no}」{i18n.t('pages.production_plan_page.k1')}
+            {i18n.t('pages.production_plan_page.k0')}「
+            {deleteTarget?.plan_name ?? deleteTarget?.plan_no}」
+            {i18n.t('pages.production_plan_page.k1')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteOpen(false)}>{i18n.t('aps.production_plan_page.k45')}</Button>
+          <Button onClick={() => setDeleteOpen(false)}>
+            {i18n.t('aps.production_plan_page.k45')}
+          </Button>
           <Button
             variant='contained'
             color='error'
             onClick={confirmDelete}
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? i18n.t('pages.production_plan_page.k2') : i18n.t('aps.production_plan_page.k46')}
+            {deleteMutation.isPending
+              ? i18n.t('pages.production_plan_page.k2')
+              : i18n.t('aps.production_plan_page.k46')}
           </Button>
         </DialogActions>
       </Dialog>

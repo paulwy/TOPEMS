@@ -20,7 +20,7 @@ vi.mock('react-i18next', () => {
     require('../../../../i18n/locales/zh/pages.json'),
     require('../../../../i18n/locales/zh/templates.json'),
     require('../../../../i18n/locales/zh/shared.json'),
-    require('../../../../i18n/locales/zh/finance.json')
+    require('../../../../i18n/locales/zh/finance.json'),
   ];
   const i18nMap: Record<string, string> = {};
   for (const src of sources) {
@@ -29,52 +29,71 @@ vi.mock('react-i18next', () => {
     }
   }
   const t = (key: string, options?: any) => {
-      let base = (i18nMap[key] ?? key) as string;
-      if (typeof options === 'object' && options !== null) {
-        const idx = (options as any).index ?? (options as any).index_1;
-        if (typeof idx === 'number' && (key.includes('period') || String(base).includes('期'))) {
-          return `第 ${idx} 期`;
-        }
-        // Fallback: unknown nested key + single numeric option (1..24) → "第 N 期"
-        if (i18nMap[key] === undefined) {
-          const keys = Object.keys(options);
-          if (keys.length === 1) {
-            const v = (options as any)[keys[0]];
-            if (typeof v === 'number' && v >= 1 && v <= 24 && !key.includes('status') && !key.includes('risk') && !key.includes('month')) {
-              return `第 ${v} 期`;
-            }
+    let base = (i18nMap[key] ?? key) as string;
+    if (typeof options === 'object' && options !== null) {
+      const idx = (options as any).index ?? (options as any).index_1;
+      if (typeof idx === 'number' && (key.includes('period') || String(base).includes('期'))) {
+        return `第 ${idx} 期`;
+      }
+      // Fallback: unknown nested key + single numeric option (1..24) → "第 N 期"
+      if (i18nMap[key] === undefined) {
+        const keys = Object.keys(options);
+        if (keys.length === 1) {
+          const v = (options as any)[keys[0]];
+          if (
+            typeof v === 'number' &&
+            v >= 1 &&
+            v <= 24 &&
+            !key.includes('status') &&
+            !key.includes('risk') &&
+            !key.includes('month')
+          ) {
+            return `第 ${v} 期`;
           }
         }
       }
-      if (options === undefined || options === null) return base;
-      let didReplace = false;
-      const tryReplace = (phName: string, valStr: string) => {
-        const p1 = `{{${phName}}}`;
-        const p2 = `{${phName}}`;
-        const p3 = `\${${phName}}`;
-        if (base.includes(p1)) { base = base.split(p1).join(valStr); didReplace = true; return true; }
-        if (base.includes(p2)) { base = base.split(p2).join(valStr); didReplace = true; return true; }
-        if (base.includes(p3)) { base = base.split(p3).join(valStr); didReplace = true; return true; }
-        return false;
-      };
-      if (typeof options === 'object') {
-        for (const [k, v] of Object.entries(options)) tryReplace(k, String(v));
-        if (!didReplace) {
-          const keys = Object.keys(options);
-          if (keys.length === 1) {
-            base = `${base} ${String((options as any)[keys[0]])}`;
-          } else {
-            base = `${base}:${JSON.stringify(options)}`;
-          }
-        }
-      } else {
-        const strVal = String(options);
-        if (!tryReplace('0', strVal)) {
-          base = `${base} ${strVal}`;
-        }
+    }
+    if (options === undefined || options === null) return base;
+    let didReplace = false;
+    const tryReplace = (phName: string, valStr: string) => {
+      const p1 = `{{${phName}}}`;
+      const p2 = `{${phName}}`;
+      const p3 = `\${${phName}}`;
+      if (base.includes(p1)) {
+        base = base.split(p1).join(valStr);
+        didReplace = true;
+        return true;
       }
-      return base;
+      if (base.includes(p2)) {
+        base = base.split(p2).join(valStr);
+        didReplace = true;
+        return true;
+      }
+      if (base.includes(p3)) {
+        base = base.split(p3).join(valStr);
+        didReplace = true;
+        return true;
+      }
+      return false;
     };
+    if (typeof options === 'object') {
+      for (const [k, v] of Object.entries(options)) tryReplace(k, String(v));
+      if (!didReplace) {
+        const keys = Object.keys(options);
+        if (keys.length === 1) {
+          base = `${base} ${String((options as any)[keys[0]])}`;
+        } else {
+          base = `${base}:${JSON.stringify(options)}`;
+        }
+      }
+    } else {
+      const strVal = String(options);
+      if (!tryReplace('0', strVal)) {
+        base = `${base} ${strVal}`;
+      }
+    }
+    return base;
+  };
   return {
     useTranslation: () => ({ t, i18n: { language: 'zh' } }),
     initReactI18next: { type: '3rdParty', init: () => {} },
@@ -91,7 +110,7 @@ vi.mock('@/i18n', () => {
     require('../../../../i18n/locales/zh/pages.json'),
     require('../../../../i18n/locales/zh/templates.json'),
     require('../../../../i18n/locales/zh/shared.json'),
-    require('../../../../i18n/locales/zh/finance.json')
+    require('../../../../i18n/locales/zh/finance.json'),
   ];
   const i18nMap: Record<string, string> = {};
   for (const src of sources) {
@@ -100,52 +119,71 @@ vi.mock('@/i18n', () => {
     }
   }
   const t = (key: string, options?: any) => {
-      let base = (i18nMap[key] ?? key) as string;
-      if (typeof options === 'object' && options !== null) {
-        const idx = (options as any).index ?? (options as any).index_1;
-        if (typeof idx === 'number' && (key.includes('period') || String(base).includes('期'))) {
-          return `第 ${idx} 期`;
-        }
-        // Fallback: unknown nested key + single numeric option (1..24) → "第 N 期"
-        if (i18nMap[key] === undefined) {
-          const keys = Object.keys(options);
-          if (keys.length === 1) {
-            const v = (options as any)[keys[0]];
-            if (typeof v === 'number' && v >= 1 && v <= 24 && !key.includes('status') && !key.includes('risk') && !key.includes('month')) {
-              return `第 ${v} 期`;
-            }
+    let base = (i18nMap[key] ?? key) as string;
+    if (typeof options === 'object' && options !== null) {
+      const idx = (options as any).index ?? (options as any).index_1;
+      if (typeof idx === 'number' && (key.includes('period') || String(base).includes('期'))) {
+        return `第 ${idx} 期`;
+      }
+      // Fallback: unknown nested key + single numeric option (1..24) → "第 N 期"
+      if (i18nMap[key] === undefined) {
+        const keys = Object.keys(options);
+        if (keys.length === 1) {
+          const v = (options as any)[keys[0]];
+          if (
+            typeof v === 'number' &&
+            v >= 1 &&
+            v <= 24 &&
+            !key.includes('status') &&
+            !key.includes('risk') &&
+            !key.includes('month')
+          ) {
+            return `第 ${v} 期`;
           }
         }
       }
-      if (options === undefined || options === null) return base;
-      let didReplace = false;
-      const tryReplace = (phName: string, valStr: string) => {
-        const p1 = `{{${phName}}}`;
-        const p2 = `{${phName}}`;
-        const p3 = `\${${phName}}`;
-        if (base.includes(p1)) { base = base.split(p1).join(valStr); didReplace = true; return true; }
-        if (base.includes(p2)) { base = base.split(p2).join(valStr); didReplace = true; return true; }
-        if (base.includes(p3)) { base = base.split(p3).join(valStr); didReplace = true; return true; }
-        return false;
-      };
-      if (typeof options === 'object') {
-        for (const [k, v] of Object.entries(options)) tryReplace(k, String(v));
-        if (!didReplace) {
-          const keys = Object.keys(options);
-          if (keys.length === 1) {
-            base = `${base} ${String((options as any)[keys[0]])}`;
-          } else {
-            base = `${base}:${JSON.stringify(options)}`;
-          }
-        }
-      } else {
-        const strVal = String(options);
-        if (!tryReplace('0', strVal)) {
-          base = `${base} ${strVal}`;
-        }
+    }
+    if (options === undefined || options === null) return base;
+    let didReplace = false;
+    const tryReplace = (phName: string, valStr: string) => {
+      const p1 = `{{${phName}}}`;
+      const p2 = `{${phName}}`;
+      const p3 = `\${${phName}}`;
+      if (base.includes(p1)) {
+        base = base.split(p1).join(valStr);
+        didReplace = true;
+        return true;
       }
-      return base;
+      if (base.includes(p2)) {
+        base = base.split(p2).join(valStr);
+        didReplace = true;
+        return true;
+      }
+      if (base.includes(p3)) {
+        base = base.split(p3).join(valStr);
+        didReplace = true;
+        return true;
+      }
+      return false;
     };
+    if (typeof options === 'object') {
+      for (const [k, v] of Object.entries(options)) tryReplace(k, String(v));
+      if (!didReplace) {
+        const keys = Object.keys(options);
+        if (keys.length === 1) {
+          base = `${base} ${String((options as any)[keys[0]])}`;
+        } else {
+          base = `${base}:${JSON.stringify(options)}`;
+        }
+      }
+    } else {
+      const strVal = String(options);
+      if (!tryReplace('0', strVal)) {
+        base = `${base} ${strVal}`;
+      }
+    }
+    return base;
+  };
   return {
     default: {
       t,

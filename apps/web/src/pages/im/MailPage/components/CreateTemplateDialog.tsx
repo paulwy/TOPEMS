@@ -202,7 +202,9 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
               />
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='template-body-html'>{t('im.mail_page_components_create_template_dialog.e1')}</InputLabel>
+              <InputLabel htmlFor='template-body-html'>
+                {t('im.mail_page_components_create_template_dialog.e1')}
+              </InputLabel>
               <TextField
                 id='template-body-html'
                 value={templateForm.body_html_template}

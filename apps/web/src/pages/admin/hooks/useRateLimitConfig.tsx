@@ -8,10 +8,9 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 export interface RateLimitRule {
   requests: number;
@@ -184,10 +183,11 @@ export function useRateLimitConfig(): UseRateLimitConfigReturn {
           message: t('admin.rate_limit_config.rate_limit_configuration_updated'),
           type: 'success',
         });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_RATE_LIMIT_CONFIG_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.ADMIN_RATE_LIMIT_CONFIG_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       } else {
         addNotification({
           title: t('admin.rate_limit_config.save_failed'),
@@ -225,10 +225,11 @@ export function useRateLimitConfig(): UseRateLimitConfigReturn {
           message: t('admin.rate_limit_config.anti_replay_configuration_updated'),
           type: 'success',
         });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_ANTI_REPLAY_CONFIG_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.ADMIN_ANTI_REPLAY_CONFIG_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       } else {
         addNotification({
           title: t('admin.rate_limit_config.save_failed'),
@@ -267,10 +268,11 @@ export function useRateLimitConfig(): UseRateLimitConfigReturn {
           message: t('admin.rate_limit_config.rate_limit_configuration_reset_to_default'),
           type: 'success',
         });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_RATE_LIMIT_CONFIG_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.ADMIN_RATE_LIMIT_CONFIG_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       }
     },
   });

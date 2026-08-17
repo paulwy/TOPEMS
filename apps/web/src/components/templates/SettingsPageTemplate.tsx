@@ -224,7 +224,10 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
       await onSave?.(values);
       setHasChanges(false);
     } catch (err) {
-      setErrors({ __global: err instanceof Error ? err.message : i18n.t('templates.settings_page_template.k2') });
+      setErrors({
+        __global:
+          err instanceof Error ? err.message : i18n.t('templates.settings_page_template.k2'),
+      });
     }
   }, [allSections, values, onSave]);
 
@@ -304,7 +307,9 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
               variant='body2'
               color='text.secondary'
             >
-              {value ? i18n.t('templates.settings_page_template.k5') : i18n.t('templates.settings_page_template.k4')}
+              {value
+                ? i18n.t('templates.settings_page_template.k5')
+                : i18n.t('templates.settings_page_template.k4')}
             </Typography>
           </Box>
         )}
@@ -518,7 +523,8 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
                 variant='caption'
                 color='text.secondary'
               >
-                {i18n.t('components.settings_page_template.k0')} {section.fields.length} {i18n.t('components.settings_page_template.k1')}
+                {i18n.t('components.settings_page_template.k0')} {section.fields.length}{' '}
+                {i18n.t('components.settings_page_template.k1')}
               </Typography>
             </Box>
           )}
@@ -581,7 +587,8 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', color: 'error.main' }}>
               <AlertCircle style={{ width: 16, height: 16 }} />
               <Typography variant='caption'>
-                {Object.keys(errors).length}{i18n.t('components.settings_page_template.k2')}
+                {Object.keys(errors).length}
+                {i18n.t('components.settings_page_template.k2')}
               </Typography>
             </Box>
           )}

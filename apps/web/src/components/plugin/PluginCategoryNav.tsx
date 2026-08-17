@@ -23,7 +23,12 @@ export const PluginCategoryNav: React.FC<PluginCategoryNavProps> = ({
         return (
           <Chip
             key={category.id}
-            icon={<LazyIcon name={iconName} size={16} />}
+            icon={
+              <LazyIcon
+                name={iconName}
+                size={16}
+              />
+            }
             label={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography variant='body2'>{category.name}</Typography>

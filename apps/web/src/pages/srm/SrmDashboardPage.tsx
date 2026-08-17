@@ -12,7 +12,7 @@ import i18n from '@/i18n';
 
 const SrmDashboardPage: React.FC = () => {
   const { t } = useTranslation();
-  const { data: statistics, isPending: loading} = useQuery({
+  const { data: statistics, isPending: loading } = useQuery({
     queryKey: QUERY_KEYS.SRM.STATISTICS,
     queryFn: async () => {
       const response = await srmApi.getDetailedStatistics();

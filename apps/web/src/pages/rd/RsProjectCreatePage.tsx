@@ -7,9 +7,10 @@ import { rdApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import type { TeamMember, CreateProjectRequest, UpdateProjectRequest } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
 import i18n from '@/i18n';
+
 const RsProjectCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -53,13 +54,16 @@ const RsProjectCreatePage: React.FC = () => {
     queryFn: async () => {
       const response = await rdApi.getProject(id || '');
       if (!response.success || !response.data) {
-        throw new Error(response.message || i18n.t('rd.project_create_page.error.load_project_failed'));
+        throw new Error(
+          response.message || i18n.t('rd.project_create_page.error.load_project_failed')
+        );
       }
       return response.data;
     },
     enabled: isEdit && !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   useEffect(() => {
     if (projectQuery.data) {
       setTeamMembers(projectQuery.data.team_members || []);
@@ -92,10 +96,11 @@ const RsProjectCreatePage: React.FC = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.PROJECTS ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.RD.PROJECTS,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: isEdit
@@ -256,7 +261,9 @@ const RsProjectCreatePage: React.FC = () => {
   return (
     <PageContainer
       title={
-        isEdit ? i18n.t('rd.project_create_page.title_edit') : i18n.t('rd.project_create_page.title_create')
+        isEdit
+          ? i18n.t('rd.project_create_page.title_edit')
+          : i18n.t('rd.project_create_page.title_create')
       }
       subtitle={
         isEdit

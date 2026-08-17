@@ -23,8 +23,15 @@ describe('EHS Emergency Plan API Tests', () => {
       const { emergencyPlanApi } = await import('../ehs/emergencyPlan');
       const { apiClient } = await import('../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
-      await emergencyPlanApi.listPlans({ page: 1, page_size: 10, status: 'active', category: 'fire' });
-      expect(apiClient.ehs.get).toHaveBeenCalledWith('/emergency-plans?page=1&page_size=10&status=active&category=fire');
+      await emergencyPlanApi.listPlans({
+        page: 1,
+        page_size: 10,
+        status: 'active',
+        category: 'fire',
+      });
+      expect(apiClient.ehs.get).toHaveBeenCalledWith(
+        '/emergency-plans?page=1&page_size=10&status=active&category=fire'
+      );
     });
 
     it('listPlans should call GET /emergency-plans without params', async () => {
@@ -101,7 +108,9 @@ describe('EHS Emergency Plan API Tests', () => {
       const { apiClient } = await import('../client');
       (apiClient.ehs.delete as vi.Mock).mockResolvedValue({ data: null });
       await emergencyPlanApi.deletePlanSupply('plan-001', 'supply-001');
-      expect(apiClient.ehs.delete).toHaveBeenCalledWith('/emergency-plans/plan-001/supplies/supply-001');
+      expect(apiClient.ehs.delete).toHaveBeenCalledWith(
+        '/emergency-plans/plan-001/supplies/supply-001'
+      );
     });
   });
 
@@ -131,7 +140,10 @@ describe('EHS Emergency Plan API Tests', () => {
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { approvers: ['user-1', 'user-2'], remarks: '提交审批' };
       await emergencyPlanApi.submitPlanApproval('plan-001', data);
-      expect(apiClient.ehs.post).toHaveBeenCalledWith('/emergency-plans/plan-001/submit-approval', data);
+      expect(apiClient.ehs.post).toHaveBeenCalledWith(
+        '/emergency-plans/plan-001/submit-approval',
+        data
+      );
     });
 
     it('submitPlanApproval should call POST with empty object when no data', async () => {
@@ -139,7 +151,10 @@ describe('EHS Emergency Plan API Tests', () => {
       const { apiClient } = await import('../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       await emergencyPlanApi.submitPlanApproval('plan-001');
-      expect(apiClient.ehs.post).toHaveBeenCalledWith('/emergency-plans/plan-001/submit-approval', {});
+      expect(apiClient.ehs.post).toHaveBeenCalledWith(
+        '/emergency-plans/plan-001/submit-approval',
+        {}
+      );
     });
 
     it('approvePlan should call POST /emergency-plans/:id/approve', async () => {

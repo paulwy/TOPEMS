@@ -38,7 +38,7 @@ import i18n from '@/i18n';
 const MAX_EVENTS = 200;
 let initialized = false;
 let recentEvents: MFErrorEvent[] = [];
-let loadTimings: Map<string, number> = new Map();
+const loadTimings: Map<string, number> = new Map();
 
 function recordEvent(event: MFErrorEvent): void {
   recentEvents.push(event);
@@ -74,7 +74,10 @@ function routeToToast(event: MFErrorEvent): void {
 
   try {
     useNotificationStore.getState().addNotification({
-      title: event.severity === 'critical' ? i18n.t('microfrontend.mf-runtime-plugin.k1') : i18n.t('microfrontend.mf-runtime-plugin.k0'),
+      title:
+        event.severity === 'critical'
+          ? i18n.t('microfrontend.mf-runtime-plugin.k1')
+          : i18n.t('microfrontend.mf-runtime-plugin.k0'),
       message: getUserMessage(event),
       type: event.severity === 'critical' ? 'error' : 'warning',
       duration: event.severity === 'critical' ? 0 : 8000,
@@ -129,7 +132,7 @@ const mfObservabilityPlugin: ModuleFederationRuntimePlugin = {
       lifecycle: `errorLoadRemote:${ctx.lifecycle}`,
       recovered: false,
     });
-    return undefined;
+    return;
   },
 
   afterLoadRemote: async (ctx) => {
@@ -142,7 +145,7 @@ const mfObservabilityPlugin: ModuleFederationRuntimePlugin = {
         recovered: ctx.recovered,
       });
     }
-    return undefined;
+    return;
   },
 
   beforeRequest: async (ctx) => {
@@ -161,7 +164,7 @@ const mfObservabilityPlugin: ModuleFederationRuntimePlugin = {
       lifecycle: 'loadEntryError',
       recovered: false,
     });
-    return undefined;
+    return;
   },
 
   afterLoadEntry: async (ctx) => {
@@ -173,20 +176,18 @@ const mfObservabilityPlugin: ModuleFederationRuntimePlugin = {
         recovered: ctx.recovered,
       });
     }
-    return undefined;
+    return;
   },
 
   createScript: (ctx) => {
     logger.debug(
       `[MF-Observability] createScript: ${ctx.remoteInfo?.name ?? 'unknown'} → ${ctx.url}`
     );
-    return undefined;
+    return;
   },
 
   fetch: async (url: string, _init: RequestInit, remoteInfo?: any) => {
-    logger.debug(
-      `[MF-Observability] fetch: ${remoteInfo?.name ?? 'unknown'} → ${url}`
-    );
+    logger.debug(`[MF-Observability] fetch: ${remoteInfo?.name ?? 'unknown'} → ${url}`);
 
     // 拦截 MF 发起的 fetch 请求，检测 Content-Type 异常
     try {
@@ -241,9 +242,7 @@ const mfObservabilityPlugin: ModuleFederationRuntimePlugin = {
     if (start) {
       const duration = performance.now() - start;
       loadTimings.delete(key);
-      logger.debug(
-        `[MF-Observability] loadShare: ${ctx.pkgName} → ${duration.toFixed(2)}ms`
-      );
+      logger.debug(`[MF-Observability] loadShare: ${ctx.pkgName} → ${duration.toFixed(2)}ms`);
     }
   },
 
@@ -259,16 +258,12 @@ const mfObservabilityPlugin: ModuleFederationRuntimePlugin = {
   // ==================== Core Lifecycle Hooks ====================
 
   beforeInitContainer: async (ctx) => {
-    logger.debug(
-      `[MF-Observability] beforeInitContainer: ${ctx.remoteInfo.name}`
-    );
+    logger.debug(`[MF-Observability] beforeInitContainer: ${ctx.remoteInfo.name}`);
     return ctx;
   },
 
   initContainer: async (ctx) => {
-    logger.debug(
-      `[MF-Observability] initContainer: ${ctx.remoteInfo.name}`
-    );
+    logger.debug(`[MF-Observability] initContainer: ${ctx.remoteInfo.name}`);
     return ctx;
   },
 
@@ -281,7 +276,7 @@ const mfObservabilityPlugin: ModuleFederationRuntimePlugin = {
         recovered: false,
       });
     }
-    return undefined;
+    return;
   },
 
   afterExecuteFactory: async (ctx) => {
@@ -294,7 +289,7 @@ const mfObservabilityPlugin: ModuleFederationRuntimePlugin = {
         recovered: false,
       });
     }
-    return undefined;
+    return;
   },
 };
 

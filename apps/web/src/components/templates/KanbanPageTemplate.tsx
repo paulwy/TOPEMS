@@ -486,8 +486,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                 height: 20,
                 fontSize: '0.6rem',
                 bgcolor:
-                  tag.color ||
-                  (theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.100'),
+                  tag.color || (theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.100'),
                 color: tag.color || (theme.palette.mode === 'dark' ? 'grey.400' : 'grey.700'),
               }}
             />
@@ -676,7 +675,13 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                 </Tooltip>
               )}
               {column.collapsible && (
-                <Tooltip title={isCollapsed ? i18n.t('components.kanban_page_template.k14') : i18n.t('components.kanban_page_template.k13')}>
+                <Tooltip
+                  title={
+                    isCollapsed
+                      ? i18n.t('components.kanban_page_template.k14')
+                      : i18n.t('components.kanban_page_template.k13')
+                  }
+                >
                   <IconButton
                     size='small'
                     onClick={() => toggleColumn(column.id)}

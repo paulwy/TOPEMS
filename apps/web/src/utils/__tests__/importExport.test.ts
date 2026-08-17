@@ -25,7 +25,7 @@ vi.mock('@/i18n', () => {
       return i18nMap[key] ?? key;
     },
     use: (x: any) => instance,
-    init: (cfg: any) => ({} as any),
+    init: (cfg: any) => ({}) as any,
     on: vi.fn(),
     off: vi.fn(),
     language: 'zh-CN',
@@ -33,7 +33,10 @@ vi.mock('@/i18n', () => {
   };
   return {
     default: instance,
-    SUPPORTED_LANGUAGES: [{ code: 'zh', name: '中文' }, { code: 'en', name: 'English' }],
+    SUPPORTED_LANGUAGES: [
+      { code: 'zh', name: '中文' },
+      { code: 'en', name: 'English' },
+    ],
   };
 });
 
@@ -53,7 +56,7 @@ vi.mock('i18next', () => {
       return i18nMap[key] ?? key;
     },
     use: (x: any) => instance,
-    init: (cfg: any) => ({} as any),
+    init: (cfg: any) => ({}) as any,
     on: vi.fn(),
     off: vi.fn(),
     language: 'zh-CN',

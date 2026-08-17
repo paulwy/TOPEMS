@@ -720,14 +720,22 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
   const handleInstall = (moduleId: string) => {
     const success = moduleMarket.installModule(moduleId);
     if (success) {
-      setSnackbar({ open: true, message: i18n.t('microfrontend.module_marketplace.k6'), type: 'success' });
+      setSnackbar({
+        open: true,
+        message: i18n.t('microfrontend.module_marketplace.k6'),
+        type: 'success',
+      });
     }
   };
 
   const handleUninstall = (moduleId: string) => {
     const success = moduleMarket.uninstallModule(moduleId);
     if (success) {
-      setSnackbar({ open: true, message: i18n.t('microfrontend.module_marketplace.k7'), type: 'success' });
+      setSnackbar({
+        open: true,
+        message: i18n.t('microfrontend.module_marketplace.k7'),
+        type: 'success',
+      });
       if (selectedModule?.id === moduleId) {
         setSelectedModule(null);
         setDetailOpen(false);
@@ -869,7 +877,9 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
               <MenuItem value='popular'>{i18n.t('microfrontend.module_marketplace.k9')}</MenuItem>
               <MenuItem value='newest'>{i18n.t('microfrontend.module_marketplace.k10')}</MenuItem>
               <MenuItem value='rating'>{i18n.t('microfrontend.module_marketplace.k11')}</MenuItem>
-              <MenuItem value='downloads'>{i18n.t('microfrontend.module_marketplace.k12')}</MenuItem>
+              <MenuItem value='downloads'>
+                {i18n.t('microfrontend.module_marketplace.k12')}
+              </MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -933,7 +943,9 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
                   size={48}
                   style={{ opacity: 0.3, marginBottom: 16 }}
                 />
-                <Typography color='text.secondary'>{i18n.t('microfrontend.module_marketplace.k17')}</Typography>
+                <Typography color='text.secondary'>
+                  {i18n.t('microfrontend.module_marketplace.k17')}
+                </Typography>
               </Box>
             ) : (
               <Grid

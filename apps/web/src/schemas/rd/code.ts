@@ -3,7 +3,6 @@ import { Box, Chip, Typography, Button } from '@mui/material';
 import { GitBranch, GitCommit, ExternalLink } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 

@@ -246,8 +246,9 @@ export interface QualityTicketQueryParams extends PaginationParams {
 // ============ Helper ============
 
 const resolvePageSize = (params?: PaginationParams): string | undefined => {
-  const ps = (params as { pageSize?: number } | undefined)?.pageSize
-    ?? (params as { pagesize?: number } | undefined)?.pagesize;
+  const ps =
+    (params as { pageSize?: number } | undefined)?.pageSize ??
+    (params as { pagesize?: number } | undefined)?.pagesize;
   return ps ? ps.toString() : undefined;
 };
 
@@ -297,11 +298,20 @@ export const mdmRefsApi = {
     return apiClient.erp.get<MasterDataVersion[]>(`/master-data-refs/${masterDataId}/versions`);
   },
 
-  async getVersion(masterDataId: string, versionId: string): Promise<ApiResponse<MasterDataVersion>> {
-    return apiClient.erp.get<MasterDataVersion>(`/master-data-refs/${masterDataId}/versions/${versionId}`);
+  async getVersion(
+    masterDataId: string,
+    versionId: string
+  ): Promise<ApiResponse<MasterDataVersion>> {
+    return apiClient.erp.get<MasterDataVersion>(
+      `/master-data-refs/${masterDataId}/versions/${versionId}`
+    );
   },
 
-  async rollbackVersion(masterDataId: string, versionId: string, data?: RollbackRequest): Promise<ApiResponse<MasterDataRef>> {
+  async rollbackVersion(
+    masterDataId: string,
+    versionId: string,
+    data?: RollbackRequest
+  ): Promise<ApiResponse<MasterDataRef>> {
     return apiClient.erp.post<MasterDataRef>(
       `/master-data-refs/${masterDataId}/versions/${versionId}/rollback`,
       data || {}
@@ -313,7 +323,9 @@ export const mdmRefsApi = {
     return apiClient.erp.post<{ conflicts: number }>('/master-data-refs/conflicts/detect', data);
   },
 
-  async listConflicts(params?: ConflictQueryParams): Promise<ApiResponse<{ items: Array<{ id: string }>; total: number }>> {
+  async listConflicts(
+    params?: ConflictQueryParams
+  ): Promise<ApiResponse<{ items: Array<{ id: string }>; total: number }>> {
     const sp = buildSearchParams(params);
     if (params?.status) sp.set('status', params.status);
     if (params?.domain) sp.set('domain', params.domain);
@@ -339,7 +351,9 @@ export const mdmRefsApi = {
     );
   },
 
-  async listPendingDestruction(params?: PaginationParams): Promise<ApiResponse<MasterDataRefListResponse>> {
+  async listPendingDestruction(
+    params?: PaginationParams
+  ): Promise<ApiResponse<MasterDataRefListResponse>> {
     const sp = buildSearchParams(params);
     const qs = sp.toString();
     return apiClient.erp.get<MasterDataRefListResponse>(
@@ -348,14 +362,23 @@ export const mdmRefsApi = {
   },
 
   async archive(masterDataId: string, data?: ArchiveRequest): Promise<ApiResponse<MasterDataRef>> {
-    return apiClient.erp.post<MasterDataRef>(`/master-data-refs/${masterDataId}/archive`, data || {});
+    return apiClient.erp.post<MasterDataRef>(
+      `/master-data-refs/${masterDataId}/archive`,
+      data || {}
+    );
   },
 
   async restore(masterDataId: string, data?: RestoreRequest): Promise<ApiResponse<MasterDataRef>> {
-    return apiClient.erp.post<MasterDataRef>(`/master-data-refs/${masterDataId}/restore`, data || {});
+    return apiClient.erp.post<MasterDataRef>(
+      `/master-data-refs/${masterDataId}/restore`,
+      data || {}
+    );
   },
 
-  async scheduleDestruction(masterDataId: string, data: ScheduleDestructionRequest): Promise<ApiResponse<MasterDataRef>> {
+  async scheduleDestruction(
+    masterDataId: string,
+    data: ScheduleDestructionRequest
+  ): Promise<ApiResponse<MasterDataRef>> {
     return apiClient.erp.post<MasterDataRef>(
       `/master-data-refs/${masterDataId}/schedule-destruction`,
       data
@@ -363,7 +386,10 @@ export const mdmRefsApi = {
   },
 
   async cancelDestruction(masterDataId: string): Promise<ApiResponse<MasterDataRef>> {
-    return apiClient.erp.post<MasterDataRef>(`/master-data-refs/${masterDataId}/cancel-destruction`, {});
+    return apiClient.erp.post<MasterDataRef>(
+      `/master-data-refs/${masterDataId}/cancel-destruction`,
+      {}
+    );
   },
 
   // ===== Quality Rules =====
@@ -416,14 +442,18 @@ export const mdmRefsApi = {
     return apiClient.erp.post<SyncJob>(`/master-data/sync/jobs/${id}/cancel`, {});
   },
 
-  async getSyncStats(): Promise<ApiResponse<{ total_jobs: number; success_rate: number; avg_duration_ms: number }>> {
+  async getSyncStats(): Promise<
+    ApiResponse<{ total_jobs: number; success_rate: number; avg_duration_ms: number }>
+  > {
     return apiClient.erp.get<{ total_jobs: number; success_rate: number; avg_duration_ms: number }>(
       '/master-data/sync/stats'
     );
   },
 
   // ===== Quality Tickets =====
-  async listQualityTickets(params?: QualityTicketQueryParams): Promise<ApiResponse<QualityTicketListResponse>> {
+  async listQualityTickets(
+    params?: QualityTicketQueryParams
+  ): Promise<ApiResponse<QualityTicketListResponse>> {
     const sp = buildSearchParams(params);
     if (params?.domain) sp.set('domain', params.domain);
     if (params?.status) sp.set('status', params.status);
@@ -443,14 +473,18 @@ export const mdmRefsApi = {
   },
 
   async assignQualityTicket(id: string, assignee: string): Promise<ApiResponse<QualityTicket>> {
-    return apiClient.erp.post<QualityTicket>(`/master-data/quality/tickets/${id}/assign`, { assignee });
+    return apiClient.erp.post<QualityTicket>(`/master-data/quality/tickets/${id}/assign`, {
+      assignee,
+    });
   },
 
   async closeQualityTicket(id: string): Promise<ApiResponse<QualityTicket>> {
     return apiClient.erp.post<QualityTicket>(`/master-data/quality/tickets/${id}/close`, {});
   },
 
-  async getQualityLoopStats(): Promise<ApiResponse<{ total: number; resolved: number; avg_resolution_hours: number }>> {
+  async getQualityLoopStats(): Promise<
+    ApiResponse<{ total: number; resolved: number; avg_resolution_hours: number }>
+  > {
     return apiClient.erp.get<{ total: number; resolved: number; avg_resolution_hours: number }>(
       '/master-data/quality/loop-stats'
     );

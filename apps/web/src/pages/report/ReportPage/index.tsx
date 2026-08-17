@@ -33,7 +33,7 @@ import { getModuleFromReportType } from './utils';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const ReportPage: React.FC = () => {
   const { data: backendData, isLoading: isBackendLoading } = useQuery({
@@ -167,7 +167,14 @@ const ReportPage: React.FC = () => {
         format: 'excel',
         title: i18n.t('pages.index.k12'),
         description: i18n.t('pages.index.k13'),
-        columns: [i18n.t('pages.index.k19'), i18n.t('pages.index.k18'), i18n.t('pages.index.k17'), i18n.t('pages.index.k16'), i18n.t('pages.index.k15'), i18n.t('pages.index.k14')],
+        columns: [
+          i18n.t('pages.index.k19'),
+          i18n.t('pages.index.k18'),
+          i18n.t('pages.index.k17'),
+          i18n.t('pages.index.k16'),
+          i18n.t('pages.index.k15'),
+          i18n.t('pages.index.k14'),
+        ],
       },
       data: [
         {
@@ -205,7 +212,12 @@ const ReportPage: React.FC = () => {
         format: 'pdf',
         title: i18n.t('pages.index.k29'),
         description: i18n.t('pages.index.k30'),
-        columns: [i18n.t('pages.index.k34'), i18n.t('pages.index.k33'), i18n.t('pages.index.k32'), i18n.t('pages.index.k31')],
+        columns: [
+          i18n.t('pages.index.k34'),
+          i18n.t('pages.index.k33'),
+          i18n.t('pages.index.k32'),
+          i18n.t('pages.index.k31'),
+        ],
       },
       data: [
         {
@@ -231,7 +243,12 @@ const ReportPage: React.FC = () => {
         format: 'excel',
         title: i18n.t('pages.index.k41'),
         description: i18n.t('pages.index.k42'),
-        columns: [i18n.t('pages.index.k46'), i18n.t('pages.index.k45'), i18n.t('pages.index.k44'), i18n.t('pages.index.k43')],
+        columns: [
+          i18n.t('pages.index.k46'),
+          i18n.t('pages.index.k45'),
+          i18n.t('pages.index.k44'),
+          i18n.t('pages.index.k43'),
+        ],
       },
       data: [
         {
@@ -297,10 +314,11 @@ const ReportPage: React.FC = () => {
     onSuccess: (response) => {
       if (response.success) {
         showNotification('success', i18n.t('pages.index.k47'));
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.REPORTS ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.REPORT.REPORTS,
+          exact: false,
+          refetchType: 'active',
+        });
       } else {
         showNotification('error', response.message || i18n.t('pages.index.k48'));
       }
@@ -332,10 +350,11 @@ const ReportPage: React.FC = () => {
       if (response.success) {
         showNotification('success', i18n.t('pages.index.k51'));
         setShowCreateTemplateModal(false);
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.REPORT.TEMPLATES,
+          exact: false,
+          refetchType: 'active',
+        });
         resetTemplateForm();
       } else {
         showNotification('error', response.message || i18n.t('pages.index.k52'));
@@ -354,10 +373,11 @@ const ReportPage: React.FC = () => {
         showNotification('success', i18n.t('pages.index.k54'));
         setShowEditTemplateModal(false);
         setSelectedTemplate(null);
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.REPORT.TEMPLATES,
+          exact: false,
+          refetchType: 'active',
+        });
         resetTemplateForm();
       } else {
         showNotification('error', response.message || i18n.t('pages.index.k55'));
@@ -373,10 +393,11 @@ const ReportPage: React.FC = () => {
     onSuccess: (response) => {
       if (response.success) {
         showNotification('success', i18n.t('pages.index.k57'));
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.REPORT.TEMPLATES,
+          exact: false,
+          refetchType: 'active',
+        });
       } else {
         showNotification('error', response.message || i18n.t('pages.index.k58'));
       }
@@ -398,10 +419,11 @@ const ReportPage: React.FC = () => {
       if (response.success) {
         showNotification('success', i18n.t('pages.index.k60'));
         setShowCreateReportFromTemplateModal(false);
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.REPORTS ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.REPORT.REPORTS,
+          exact: false,
+          refetchType: 'active',
+        });
       } else {
         showNotification('error', response.message || i18n.t('pages.index.k61'));
       }
@@ -601,10 +623,11 @@ const ReportPage: React.FC = () => {
           onClose={() => setShowBuilder(false)}
           reportTypes={reportTypes}
           onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.REPORTS ,
-  exact: false,
-  refetchType: 'active',
-});
+            queryClient.invalidateQueries({
+              queryKey: QUERY_KEYS.REPORT.REPORTS,
+              exact: false,
+              refetchType: 'active',
+            });
             setShowBuilder(false);
             showNotification('success', i18n.t('pages.index.k64'));
           }}

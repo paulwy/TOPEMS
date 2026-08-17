@@ -17,11 +17,7 @@
  */
 
 import apiClient from '../client';
-import type {
-  Incident,
-  CreateIncidentRequest,
-  ListQueryParams,
-} from './types';
+import type { Incident, CreateIncidentRequest, ListQueryParams } from './types';
 import {
   toOpenApiParams,
   toOpenApiRequestBody,
@@ -37,7 +33,7 @@ export const incidentTypedApi = {
    * Query Params: { page, pagesize, search, status }（AdaptedQuery 后 camelCase）
    */
   list: async (
-    params?: AdaptedQuery<'list_accidents'> | ListQueryParams,
+    params?: AdaptedQuery<'list_accidents'> | ListQueryParams
   ): Promise<TypedPaginatedResponse<Incident>> => {
     return apiClient.ehs.get('/incidents', {
       params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
@@ -56,12 +52,9 @@ export const incidentTypedApi = {
    * Request Body: CreateIncidentRequest（发送前 adaptReverse → snake_case）
    */
   create: async (
-    data: AdaptedRequestBody<'report_accident'> | CreateIncidentRequest,
+    data: AdaptedRequestBody<'report_accident'> | CreateIncidentRequest
   ): Promise<TypedApiResponse<Incident, 'report_accident'>> => {
-    return apiClient.ehs.post(
-      '/incidents',
-      toOpenApiRequestBody(data as Record<string, unknown>),
-    );
+    return apiClient.ehs.post('/incidents', toOpenApiRequestBody(data as Record<string, unknown>));
   },
 
   /**
@@ -69,11 +62,11 @@ export const incidentTypedApi = {
    */
   update: async (
     id: string,
-    data: AdaptedRequestBody<'update_accident'> | Partial<CreateIncidentRequest>,
+    data: AdaptedRequestBody<'update_accident'> | Partial<CreateIncidentRequest>
   ): Promise<TypedApiResponse<Incident, 'update_accident'>> => {
     return apiClient.ehs.put(
       `/incidents/${id}`,
-      toOpenApiRequestBody(data as Record<string, unknown>),
+      toOpenApiRequestBody(data as Record<string, unknown>)
     );
   },
 

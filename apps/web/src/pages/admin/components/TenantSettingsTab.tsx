@@ -13,6 +13,7 @@ import {
 import i18n from '@/i18n';
 import { Palette, Shield, Settings, CheckCircle, XCircle } from 'lucide-react';
 import type { Tenant } from '@/api/tenant/types';
+
 interface TenantSettingsTabProps {
   tenant: Tenant;
 }
@@ -93,7 +94,9 @@ const TenantSettingsTab: React.FC<TenantSettingsTabProps> = ({ tenant }) => {
             </ListItem>
             <Divider component='li' />
             <ListItem sx={{ px: 0 }}>
-              <ListItemText primary={i18n.t('admin.tenant_detail.enforce_two_factor_authentication')} />
+              <ListItemText
+                primary={i18n.t('admin.tenant_detail.enforce_two_factor_authentication')}
+              />
               <Switch
                 checked={tenant.settings.security.two_factor_required}
                 disabled

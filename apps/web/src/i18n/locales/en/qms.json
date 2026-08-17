@@ -4005,5 +4005,6 @@
     "预防成本": "Prevention Cost",
     "鉴定成本": "Appraisal Cost",
     "内部损失": "Internal Failure"
-  }
+  },
+  "qms.analytics.defectPareto.k2": "categories"
 }

@@ -3,6 +3,7 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { meetingRoomSchema } from '@/schemas/erp/meetingRoom';
 import { meetingRoomApi } from '@/api/erp';
 import i18n from '@/i18n';
+
 const meetingRoomApiAdapter: CrudApiAdapter = {
   list: async (params) => {
     const response = await meetingRoomApi.list({

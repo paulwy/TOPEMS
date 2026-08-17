@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {QUERY_KEYS, queryClient, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, queryClient, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Database, Play, Settings } from 'lucide-react';
 import { Paper, Tabs, Tab, Snackbar, Alert } from '@mui/material';
 import { PageContainer } from '@/components/common';
@@ -34,7 +34,8 @@ import DataFormDialog from './components/DataFormDialog';
 import TaskFormDialog from './components/TaskFormDialog';
 import RuleFormDialog from './components/RuleFormDialog';
 import ParseTestDialog from './components/ParseTestDialog';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const LimsInstrumentDataPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState(0);
@@ -101,22 +102,26 @@ const LimsInstrumentDataPage: React.FC = () => {
     setNotification({ open: true, message, severity });
   };
   const invalidateAll = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.INSTRUMENT_DATA ,
-  exact: false,
-  refetchType: 'active',
-});
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.COLLECTION_TASKS ,
-  exact: false,
-  refetchType: 'active',
-});
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.PARSE_RULES ,
-  exact: false,
-  refetchType: 'active',
-});
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.STATISTICS ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.LIMS.INSTRUMENT_DATA,
+      exact: false,
+      refetchType: 'active',
+    });
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.LIMS.COLLECTION_TASKS,
+      exact: false,
+      refetchType: 'active',
+    });
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.LIMS.PARSE_RULES,
+      exact: false,
+      refetchType: 'active',
+    });
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.LIMS.STATISTICS,
+      exact: false,
+      refetchType: 'active',
+    });
   };
   const { data: statisticsData } = useQuery({
     queryKey: QUERY_KEYS.LIMS.STATISTICS,
@@ -127,8 +132,9 @@ const LimsInstrumentDataPage: React.FC = () => {
       }
       return null;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const statistics: InstrumentDataStatistics = statisticsData || {
     total_data_count: 0,
     today_count: 0,
@@ -160,8 +166,9 @@ const LimsInstrumentDataPage: React.FC = () => {
       return [];
     },
     enabled: activeTab === 0,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const collectionTasksQuery = useQuery({
     queryKey: [
       ...QUERY_KEYS.LIMS.COLLECTION_TASKS,
@@ -183,8 +190,9 @@ const LimsInstrumentDataPage: React.FC = () => {
       return [];
     },
     enabled: activeTab === 1,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const parseRulesQuery = useQuery({
     queryKey: [
       ...QUERY_KEYS.LIMS.PARSE_RULES,
@@ -206,8 +214,9 @@ const LimsInstrumentDataPage: React.FC = () => {
       return [];
     },
     enabled: activeTab === 2,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const instrumentDataList: InstrumentData[] = instrumentDataQuery.data || [];
   const collectionTasks: CollectionTask[] = collectionTasksQuery.data || [];
   const parseRules: ParseRule[] = parseRulesQuery.data || [];
@@ -226,12 +235,11 @@ const LimsInstrumentDataPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAll();
     },
     onError: (error: unknown) => {
@@ -247,12 +255,11 @@ const LimsInstrumentDataPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAll();
       setShowDataForm(false);
     },
@@ -269,12 +276,11 @@ const LimsInstrumentDataPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAll();
       setShowDataForm(false);
     },
@@ -291,12 +297,11 @@ const LimsInstrumentDataPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAll();
     },
     onError: (error: unknown) => {
@@ -312,12 +317,11 @@ const LimsInstrumentDataPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAll();
       setShowTaskForm(false);
     },
@@ -334,12 +338,11 @@ const LimsInstrumentDataPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAll();
       setShowTaskForm(false);
     },
@@ -356,12 +359,11 @@ const LimsInstrumentDataPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAll();
     },
     onError: (error: unknown) => {
@@ -377,12 +379,11 @@ const LimsInstrumentDataPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAll();
     },
     onError: (error: unknown) => {
@@ -398,12 +399,11 @@ const LimsInstrumentDataPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAll();
       setShowRuleForm(false);
     },
@@ -420,12 +420,11 @@ const LimsInstrumentDataPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAll();
       setShowRuleForm(false);
     },
@@ -442,12 +441,11 @@ const LimsInstrumentDataPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAll();
     },
     onError: (error: unknown) => {
@@ -463,12 +461,11 @@ const LimsInstrumentDataPage: React.FC = () => {
       return response;
     },
     onSuccess: (response) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.LIMS.TEST_METHODS,
+        exact: false,
+        refetchType: 'active',
+      });
       if (response.data) {
         setParseTestResult(response.data);
       }

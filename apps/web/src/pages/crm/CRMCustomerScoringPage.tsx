@@ -7,8 +7,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef } from '@/components/templates/list/types';
 import { customerScoringSchema } from '@/schemas/crm';
-import { crmApi, useCrmMock, type ScoringData, type Period } from '@/api/crm';
-import type { CustomerScore, ScoreFactor } from '@/api/crm';
+import type {
+  CustomerScore,
+  ScoreFactor,
+  crmApi,
+  useCrmMock,
+  type ScoringData,
+  type Period,
+} from '@/api/crm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { CRM_PATHS } from '@/modules/crm/config';
@@ -260,10 +266,11 @@ const CRMCustomerScoringPage: React.FC = () => {
         title: t('crm.common.success'),
         message: t('crm.customerScoring.msg_batch_success'),
       });
-      queryClient.invalidateQueries({ queryKey: [customerScoringSchema.entity] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [customerScoringSchema.entity],
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (error: unknown) => {
       apiLogger.error(t('crm.customerScoring.log_batch_fail'), error);
@@ -286,16 +293,73 @@ const CRMCustomerScoringPage: React.FC = () => {
     const gradeDistribution = mockEnabled ? mockScoring.distribution : fromList;
 
     const rfm = mockScoring.rfm;
-    const rfmLabels: Array<{ key: keyof typeof rfm; label: string; color: string; bgColor: string }> = [
-      { key: 'recencyHigh', label: t('crm.customerScoring.rfm_recency_high') || i18n.t('pages.crm_customer_scoring_page.k0'), color: 'success.main', bgColor: 'success.light' },
-      { key: 'recencyMedium', label: t('crm.customerScoring.rfm_recency_med') || i18n.t('pages.crm_customer_scoring_page.k1'), color: 'primary.main', bgColor: 'primary.light' },
-      { key: 'recencyLow', label: t('crm.customerScoring.rfm_recency_low') || i18n.t('pages.crm_customer_scoring_page.k2'), color: 'warning.main', bgColor: 'warning.light' },
-      { key: 'frequencyHigh', label: t('crm.customerScoring.rfm_freq_high') || i18n.t('pages.crm_customer_scoring_page.k3'), color: 'success.main', bgColor: 'success.light' },
-      { key: 'frequencyMedium', label: t('crm.customerScoring.rfm_freq_med') || i18n.t('pages.crm_customer_scoring_page.k4'), color: 'primary.main', bgColor: 'primary.light' },
-      { key: 'frequencyLow', label: t('crm.customerScoring.rfm_freq_low') || i18n.t('pages.crm_customer_scoring_page.k5'), color: 'warning.main', bgColor: 'warning.light' },
-      { key: 'monetaryHigh', label: t('crm.customerScoring.rfm_mon_high') || i18n.t('pages.crm_customer_scoring_page.k6'), color: 'success.main', bgColor: 'success.light' },
-      { key: 'monetaryMedium', label: t('crm.customerScoring.rfm_mon_med') || i18n.t('pages.crm_customer_scoring_page.k7'), color: 'primary.main', bgColor: 'primary.light' },
-      { key: 'monetaryLow', label: t('crm.customerScoring.rfm_mon_low') || i18n.t('pages.crm_customer_scoring_page.k8'), color: 'warning.main', bgColor: 'warning.light' },
+    const rfmLabels: Array<{
+      key: keyof typeof rfm;
+      label: string;
+      color: string;
+      bgColor: string;
+    }> = [
+      {
+        key: 'recencyHigh',
+        label:
+          t('crm.customerScoring.rfm_recency_high') || i18n.t('pages.crm_customer_scoring_page.k0'),
+        color: 'success.main',
+        bgColor: 'success.light',
+      },
+      {
+        key: 'recencyMedium',
+        label:
+          t('crm.customerScoring.rfm_recency_med') || i18n.t('pages.crm_customer_scoring_page.k1'),
+        color: 'primary.main',
+        bgColor: 'primary.light',
+      },
+      {
+        key: 'recencyLow',
+        label:
+          t('crm.customerScoring.rfm_recency_low') || i18n.t('pages.crm_customer_scoring_page.k2'),
+        color: 'warning.main',
+        bgColor: 'warning.light',
+      },
+      {
+        key: 'frequencyHigh',
+        label:
+          t('crm.customerScoring.rfm_freq_high') || i18n.t('pages.crm_customer_scoring_page.k3'),
+        color: 'success.main',
+        bgColor: 'success.light',
+      },
+      {
+        key: 'frequencyMedium',
+        label:
+          t('crm.customerScoring.rfm_freq_med') || i18n.t('pages.crm_customer_scoring_page.k4'),
+        color: 'primary.main',
+        bgColor: 'primary.light',
+      },
+      {
+        key: 'frequencyLow',
+        label:
+          t('crm.customerScoring.rfm_freq_low') || i18n.t('pages.crm_customer_scoring_page.k5'),
+        color: 'warning.main',
+        bgColor: 'warning.light',
+      },
+      {
+        key: 'monetaryHigh',
+        label:
+          t('crm.customerScoring.rfm_mon_high') || i18n.t('pages.crm_customer_scoring_page.k6'),
+        color: 'success.main',
+        bgColor: 'success.light',
+      },
+      {
+        key: 'monetaryMedium',
+        label: t('crm.customerScoring.rfm_mon_med') || i18n.t('pages.crm_customer_scoring_page.k7'),
+        color: 'primary.main',
+        bgColor: 'primary.light',
+      },
+      {
+        key: 'monetaryLow',
+        label: t('crm.customerScoring.rfm_mon_low') || i18n.t('pages.crm_customer_scoring_page.k8'),
+        color: 'warning.main',
+        bgColor: 'warning.light',
+      },
     ];
 
     return (
@@ -303,7 +367,9 @@ const CRMCustomerScoringPage: React.FC = () => {
         {mockEnabled && (
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
             <Chip
-              label={t('crm.common.mock_demo_badge') || i18n.t('pages.crm_customer_scoring_page.mock_9')}
+              label={
+                t('crm.common.mock_demo_badge') || i18n.t('pages.crm_customer_scoring_page.mock_9')
+              }
               color='warning'
               size='small'
               variant='outlined'

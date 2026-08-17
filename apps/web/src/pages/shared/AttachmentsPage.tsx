@@ -88,7 +88,11 @@ const AttachmentsPage: React.FC = () => {
   const uploadMutation = useMutation({
     mutationFn: (file: File) => attachmentApi.upload(file, entityType, entityId),
     onSuccess: () => {
-      addNotification({ type: 'success', title: i18n.t('pages.attachments_page.k1'), message: i18n.t('pages.attachments_page.k0') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('pages.attachments_page.k1'),
+        message: i18n.t('pages.attachments_page.k0'),
+      });
       queryClient.invalidateQueries({
         queryKey: [...QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE, entityType, entityId],
 
@@ -100,7 +104,11 @@ const AttachmentsPage: React.FC = () => {
     },
     onError: (error: unknown) => {
       apiLogger.error(i18n.t('pages.attachments_page.k0'), error);
-      addNotification({ type: 'error', title: i18n.t('pages.attachments_page.k3'), message: i18n.t('pages.attachments_page.k2') });
+      addNotification({
+        type: 'error',
+        title: i18n.t('pages.attachments_page.k3'),
+        message: i18n.t('pages.attachments_page.k2'),
+      });
     },
   });
 
@@ -108,7 +116,11 @@ const AttachmentsPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => attachmentApi.delete(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: i18n.t('pages.attachments_page.k5'), message: i18n.t('pages.attachments_page.k4') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('pages.attachments_page.k5'),
+        message: i18n.t('pages.attachments_page.k4'),
+      });
       queryClient.invalidateQueries({
         queryKey: [...QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE, entityType, entityId],
 
@@ -118,7 +130,11 @@ const AttachmentsPage: React.FC = () => {
     },
     onError: (error: unknown) => {
       apiLogger.error(i18n.t('pages.attachments_page.k1'), error);
-      addNotification({ type: 'error', title: i18n.t('pages.attachments_page.k7'), message: i18n.t('pages.attachments_page.k6') });
+      addNotification({
+        type: 'error',
+        title: i18n.t('pages.attachments_page.k7'),
+        message: i18n.t('pages.attachments_page.k6'),
+      });
     },
   });
 
@@ -137,7 +153,11 @@ const AttachmentsPage: React.FC = () => {
     },
     onError: (error: unknown) => {
       apiLogger.error(i18n.t('pages.attachments_page.k2'), error);
-      addNotification({ type: 'error', title: i18n.t('pages.attachments_page.k9'), message: i18n.t('pages.attachments_page.k8') });
+      addNotification({
+        type: 'error',
+        title: i18n.t('pages.attachments_page.k9'),
+        message: i18n.t('pages.attachments_page.k8'),
+      });
     },
 
     onSuccess: () => {
@@ -320,7 +340,8 @@ const AttachmentsPage: React.FC = () => {
                           variant='caption'
                           color='text.secondary'
                         >
-                          {i18n.t('pages.attachments_page.k0')} {new Date(attachment.uploaded_at).toLocaleString('zh-CN')}
+                          {i18n.t('pages.attachments_page.k0')}{' '}
+                          {new Date(attachment.uploaded_at).toLocaleString('zh-CN')}
                           {attachment.entity_type && ` · ${attachment.entity_type}`}
                         </Typography>
                       }

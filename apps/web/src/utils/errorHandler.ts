@@ -46,11 +46,19 @@ export function classifyError(error: unknown): AppError {
   }
 
   if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
-    return { category: 'network', message: i18n.t('shared.error_handler.k1'), originalError: error };
+    return {
+      category: 'network',
+      message: i18n.t('shared.error_handler.k1'),
+      originalError: error,
+    };
   }
 
   if (error.code === 'ECONNABORTED') {
-    return { category: 'network', message: i18n.t('shared.error_handler.k2'), originalError: error };
+    return {
+      category: 'network',
+      message: i18n.t('shared.error_handler.k2'),
+      originalError: error,
+    };
   }
 
   if (error.response) {
@@ -111,11 +119,19 @@ export function classifyError(error: unknown): AppError {
   }
 
   if (error.request) {
-    return { category: 'network', message: i18n.t('shared.error_handler.k9'), originalError: error };
+    return {
+      category: 'network',
+      message: i18n.t('shared.error_handler.k9'),
+      originalError: error,
+    };
   }
 
   if (error instanceof Error) {
-    return { category: 'unknown', message: error.message || i18n.t('shared.error_handler.k10'), originalError: error };
+    return {
+      category: 'unknown',
+      message: error.message || i18n.t('shared.error_handler.k10'),
+      originalError: error,
+    };
   }
 
   return { category: 'unknown', message: i18n.t('shared.error_handler.k11'), originalError: error };

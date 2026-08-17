@@ -24,7 +24,8 @@ import { settingSchema } from '@/schemas/rd';
 import type { EntitySchema } from '@/schema';
 import { PageContainer } from '@/components/common';
 import { rdApi } from '@/api/rd';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
+
 interface SettingItem extends Record<string, unknown> {
   id: string;
   name: string;
@@ -54,23 +55,83 @@ const defaultData: Record<string, SettingItem[]> = {
     },
   ],
   cicd: [
-    { id: '1', name: i18n.t('rd.rs_settings_page.k0'), description: i18n.t('pages.rs_settings_page.push_0'), enabled: true },
-    { id: '2', name: i18n.t('rd.rs_settings_page.k1'), description: i18n.t('pages.rs_settings_page.push_1'), enabled: true },
-    { id: '3', name: i18n.t('rd.rs_settings_page.k2'), description: i18n.t('pages.rs_settings_page.tag_2'), enabled: true },
-    { id: '4', name: i18n.t('rd.rs_settings_page.k3'), description: i18n.t('pages.rs_settings_page.schedule_3'), enabled: false },
+    {
+      id: '1',
+      name: i18n.t('rd.rs_settings_page.k0'),
+      description: i18n.t('pages.rs_settings_page.push_0'),
+      enabled: true,
+    },
+    {
+      id: '2',
+      name: i18n.t('rd.rs_settings_page.k1'),
+      description: i18n.t('pages.rs_settings_page.push_1'),
+      enabled: true,
+    },
+    {
+      id: '3',
+      name: i18n.t('rd.rs_settings_page.k2'),
+      description: i18n.t('pages.rs_settings_page.tag_2'),
+      enabled: true,
+    },
+    {
+      id: '4',
+      name: i18n.t('rd.rs_settings_page.k3'),
+      description: i18n.t('pages.rs_settings_page.schedule_3'),
+      enabled: false,
+    },
   ],
   quality: [
-    { id: '1', name: i18n.t('rd.rs_settings_page.k5'), description: i18n.t('rd.rs_settings_page.80_4'), enabled: true },
-    { id: '2', name: i18n.t('rd.rs_settings_page.k7'), description: i18n.t('rd.rs_settings_page.k6'), enabled: true },
-    { id: '3', name: i18n.t('rd.rs_settings_page.k9'), description: i18n.t('rd.rs_settings_page.eslint_8'), enabled: true },
-    { id: '4', name: i18n.t('rd.rs_settings_page.k11'), description: i18n.t('rd.rs_settings_page.k10'), enabled: false },
+    {
+      id: '1',
+      name: i18n.t('rd.rs_settings_page.k5'),
+      description: i18n.t('rd.rs_settings_page.80_4'),
+      enabled: true,
+    },
+    {
+      id: '2',
+      name: i18n.t('rd.rs_settings_page.k7'),
+      description: i18n.t('rd.rs_settings_page.k6'),
+      enabled: true,
+    },
+    {
+      id: '3',
+      name: i18n.t('rd.rs_settings_page.k9'),
+      description: i18n.t('rd.rs_settings_page.eslint_8'),
+      enabled: true,
+    },
+    {
+      id: '4',
+      name: i18n.t('rd.rs_settings_page.k11'),
+      description: i18n.t('rd.rs_settings_page.k10'),
+      enabled: false,
+    },
   ],
   integration: [
-    { id: '1', name: 'GitLab', description: i18n.t('pages.rs_settings_page.code_4'), enabled: true },
+    {
+      id: '1',
+      name: 'GitLab',
+      description: i18n.t('pages.rs_settings_page.code_4'),
+      enabled: true,
+    },
     { id: '2', name: 'Jenkins', description: i18n.t('pages.rs_settings_page.ci_5'), enabled: true },
-    { id: '3', name: 'SonarQube', description: i18n.t('pages.rs_settings_page.quality_6'), enabled: true },
-    { id: '4', name: 'Jira', description: i18n.t('pages.rs_settings_page.project_7'), enabled: false },
-    { id: '5', name: 'Slack', description: i18n.t('pages.rs_settings_page.notification_8'), enabled: false },
+    {
+      id: '3',
+      name: 'SonarQube',
+      description: i18n.t('pages.rs_settings_page.quality_6'),
+      enabled: true,
+    },
+    {
+      id: '4',
+      name: 'Jira',
+      description: i18n.t('pages.rs_settings_page.project_7'),
+      enabled: false,
+    },
+    {
+      id: '5',
+      name: 'Slack',
+      description: i18n.t('pages.rs_settings_page.notification_8'),
+      enabled: false,
+    },
   ],
 };
 const RsSettingsPage: React.FC = () => {
@@ -85,8 +146,9 @@ const RsSettingsPage: React.FC = () => {
       }
       return response.data;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const statistics = statisticsQuery.data || null;
   const loading = statisticsQuery.isLoading;
   const tabs = [

@@ -516,32 +516,74 @@ export class PerformanceAnalyzer {
 
     const lcp = this.coreWebVitals.get('LCP');
     if (lcp) {
-      results.push(this.checkMetric('LCP', lcp.value, this.budget.lcp, i18n.t('microfrontend.performance-analyzer.lcp_0')));
+      results.push(
+        this.checkMetric(
+          'LCP',
+          lcp.value,
+          this.budget.lcp,
+          i18n.t('microfrontend.performance-analyzer.lcp_0')
+        )
+      );
     }
 
     const fid = this.coreWebVitals.get('FID');
     if (fid) {
-      results.push(this.checkMetric('FID', fid.value, this.budget.fid, i18n.t('microfrontend.performance-analyzer.fid_1')));
+      results.push(
+        this.checkMetric(
+          'FID',
+          fid.value,
+          this.budget.fid,
+          i18n.t('microfrontend.performance-analyzer.fid_1')
+        )
+      );
     }
 
     const cls = this.coreWebVitals.get('CLS');
     if (cls) {
-      results.push(this.checkMetric('CLS', cls.value, this.budget.cls, i18n.t('microfrontend.performance-analyzer.cls_2')));
+      results.push(
+        this.checkMetric(
+          'CLS',
+          cls.value,
+          this.budget.cls,
+          i18n.t('microfrontend.performance-analyzer.cls_2')
+        )
+      );
     }
 
     const inp = this.coreWebVitals.get('INP');
     if (inp) {
-      results.push(this.checkMetric('INP', inp.value, this.budget.inp, i18n.t('microfrontend.performance-analyzer.inp_3')));
+      results.push(
+        this.checkMetric(
+          'INP',
+          inp.value,
+          this.budget.inp,
+          i18n.t('microfrontend.performance-analyzer.inp_3')
+        )
+      );
     }
 
     const fcp = this.coreWebVitals.get('FCP');
     if (fcp) {
-      results.push(this.checkMetric('FCP', fcp.value, this.budget.fcp, i18n.t('microfrontend.performance-analyzer.fcp_4')));
+      results.push(
+        this.checkMetric(
+          'FCP',
+          fcp.value,
+          this.budget.fcp,
+          i18n.t('microfrontend.performance-analyzer.fcp_4')
+        )
+      );
     }
 
     const ttfb = this.coreWebVitals.get('TTFB');
     if (ttfb) {
-      results.push(this.checkMetric('TTFB', ttfb.value, this.budget.ttfb, i18n.t('microfrontend.performance-analyzer.ttfb_5')));
+      results.push(
+        this.checkMetric(
+          'TTFB',
+          ttfb.value,
+          this.budget.ttfb,
+          i18n.t('microfrontend.performance-analyzer.ttfb_5')
+        )
+      );
     }
 
     for (const [, metric] of this.moduleLoads) {
@@ -692,10 +734,14 @@ export class PerformanceAnalyzer {
     }
 
     if (failedChecks.length > 0) {
-      recommendations.push(`${failedChecks.length} $i18n.t('microfrontend.performance-analyzer.k24')`);
+      recommendations.push(
+        `${failedChecks.length} $i18n.t('microfrontend.performance-analyzer.k24')`
+      );
     }
     if (warnedChecks.length > 0) {
-      recommendations.push(`${warnedChecks.length} $i18n.t('microfrontend.performance-analyzer.k25')`);
+      recommendations.push(
+        `${warnedChecks.length} $i18n.t('microfrontend.performance-analyzer.k25')`
+      );
     }
 
     return recommendations;

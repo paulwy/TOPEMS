@@ -10,7 +10,8 @@ import type { QualityIssue, AuditPlan, CreateQualityIssueRequest } from '@/api/q
 import { designTokens } from '@/theme/tokens';
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 function extractListData<T>(response: unknown): T[] {
   if (!response || typeof response !== 'object') return [];
   const obj = response as Record<string, unknown>;
@@ -145,28 +146,36 @@ const QmsQualityControlPage: React.FC = () => {
   const { data: issuesResp } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.QMS_QUALITY_CONTROL_STATS_ISSUES_BASE,
     queryFn: async () => qmsApi.listIssues(),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const { data: auditsResp } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.QMS_QUALITY_CONTROL_STATS_AUDITS_BASE,
     queryFn: async () => qmsApi.listAuditPlans(),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const stats: QualityControlStats = useMemo(() => {
     const issues = extractListData<QualityIssue>(issuesResp);
     const audits = extractListData<AuditPlan>(auditsResp);
     return {
       totalNonconformances: issues.length,
-      openNonconformances: issues.filter((n) => n.status === 'open' || n.status === i18n.t('qms.qms_quality_control_page.k9'))
-        .length,
+      openNonconformances: issues.filter(
+        (n) => n.status === 'open' || n.status === i18n.t('qms.qms_quality_control_page.k9')
+      ).length,
       closedNonconformances: issues.filter(
-        (n) => n.status === 'closed' || n.status === 'resolved' || n.status === i18n.t('qms.qms_quality_control_page.k10')
+        (n) =>
+          n.status === 'closed' ||
+          n.status === 'resolved' ||
+          n.status === i18n.t('qms.qms_quality_control_page.k10')
       ).length,
       totalAudits: audits.length,
-      completedAudits: audits.filter((a) => a.status === 'completed' || a.status === i18n.t('qms.qms_quality_control_page.k11'))
-        .length,
-      inProgressAudits: audits.filter((a) => a.status === 'in_progress' || a.status === i18n.t('qms.qms_quality_control_page.k12'))
-        .length,
+      completedAudits: audits.filter(
+        (a) => a.status === 'completed' || a.status === i18n.t('qms.qms_quality_control_page.k11')
+      ).length,
+      inProgressAudits: audits.filter(
+        (a) => a.status === 'in_progress' || a.status === i18n.t('qms.qms_quality_control_page.k12')
+      ).length,
     };
   }, [issuesResp, auditsResp]);
   return (

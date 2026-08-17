@@ -14,7 +14,7 @@ import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import type { ProductionSchedule, AdjustScheduleRequest, GanttData } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useNotificationStore } from '@/store';
@@ -25,14 +25,15 @@ import { productionScheduleSchema } from '@/schemas/mes';
 import { Calendar, GanttChart, RefreshCw } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter(mesApi.schedules, {
   itemsField: 'schedules',
 });
 // ============ 甘特图视图 ============
 function GanttView() {
   const queryClient = useQueryClient();
-  const { data: ganttData, isPending} = useQuery<GanttData | null>({
+  const { data: ganttData, isPending } = useQuery<GanttData | null>({
     queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULE_GANTT,
     queryFn: async () => {
       const response = await mesApi.schedules.getGanttData();
@@ -41,8 +42,9 @@ function GanttView() {
       }
       return null;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   if (isPending) return <LoadingSpinner />;
   if (!ganttData || ganttData.tasks.length === 0) {
     return (
@@ -73,10 +75,10 @@ function GanttView() {
           onClick={() =>
             queryClient.invalidateQueries({
               queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULE_GANTT,
-            
-  exact: false,
-  refetchType: 'active',
-})
+
+              exact: false,
+              refetchType: 'active',
+            })
           }
           size='small'
         >
@@ -177,14 +179,16 @@ const ProductionSchedulePage: React.FC = () => {
         title: i18n.t('mes.production_schedule_page.k2'),
         message: i18n.t('mes.production_schedule_page.k3'),
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULES ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULE_GANTT ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULES,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULE_GANTT,
+        exact: false,
+        refetchType: 'active',
+      });
       setShowAdjustDialog(false);
       resetAdjustForm();
     },
@@ -230,7 +234,12 @@ const ProductionSchedulePage: React.FC = () => {
     },
   ];
   const tabs = [
-    { id: 'list', label: i18n.t('mes.production_schedule_page.k8'), icon: <Calendar size={16} />, content: null },
+    {
+      id: 'list',
+      label: i18n.t('mes.production_schedule_page.k8'),
+      icon: <Calendar size={16} />,
+      content: null,
+    },
     {
       id: 'gantt',
       label: i18n.t('mes.production_schedule_page.k9'),
@@ -365,7 +374,9 @@ const ProductionSchedulePage: React.FC = () => {
           <form onSubmit={handleAdjustSubmit}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='adjust_start_time'>{i18n.t('mes.production_schedule_page.k12')}</InputLabel>
+                <InputLabel htmlFor='adjust_start_time'>
+                  {i18n.t('mes.production_schedule_page.k12')}
+                </InputLabel>
                 <TextField
                   id='adjust_start_time'
                   type='datetime-local'
@@ -377,7 +388,9 @@ const ProductionSchedulePage: React.FC = () => {
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='adjust_end_time'>{i18n.t('mes.production_schedule_page.k13')}</InputLabel>
+                <InputLabel htmlFor='adjust_end_time'>
+                  {i18n.t('mes.production_schedule_page.k13')}
+                </InputLabel>
                 <TextField
                   id='adjust_end_time'
                   type='datetime-local'
@@ -389,7 +402,9 @@ const ProductionSchedulePage: React.FC = () => {
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='adjust_workstation'>{i18n.t('mes.production_schedule_page.id_14')}</InputLabel>
+                <InputLabel htmlFor='adjust_workstation'>
+                  {i18n.t('mes.production_schedule_page.id_14')}
+                </InputLabel>
                 <TextField
                   id='adjust_workstation'
                   size='small'
@@ -400,7 +415,9 @@ const ProductionSchedulePage: React.FC = () => {
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='adjust_reason'>{i18n.t('mes.production_schedule_page.k15')}</InputLabel>
+                <InputLabel htmlFor='adjust_reason'>
+                  {i18n.t('mes.production_schedule_page.k15')}
+                </InputLabel>
                 <TextField
                   id='adjust_reason'
                   size='small'
@@ -424,7 +441,9 @@ const ProductionSchedulePage: React.FC = () => {
                 variant='contained'
                 disabled={adjustMutation.isPending}
               >
-                {adjustMutation.isPending ? i18n.t('pages.production_schedule_page.k0') : i18n.t('mes.production_schedule_page.k16')}
+                {adjustMutation.isPending
+                  ? i18n.t('pages.production_schedule_page.k0')
+                  : i18n.t('mes.production_schedule_page.k16')}
               </Button>
             </DialogActions>
           </form>

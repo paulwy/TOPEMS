@@ -122,7 +122,13 @@ const JsonFormatter: React.FC = () => {
             sx={{ mb: 1 }}
           />
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Tooltip title={copied ? i18n.t('components.ai_tools_panel.k1') : i18n.t('components.ai_tools_panel.k0')}>
+            <Tooltip
+              title={
+                copied
+                  ? i18n.t('components.ai_tools_panel.k1')
+                  : i18n.t('components.ai_tools_panel.k0')
+              }
+            >
               <IconButton
                 size='small'
                 onClick={handleCopy}
@@ -492,7 +498,13 @@ const UnitConverter: React.FC = () => {
             </option>
           ))}
         </TextField>
-        <Tooltip title={copied ? i18n.t('components.ai_tools_panel.k33') : i18n.t('components.ai_tools_panel.k32')}>
+        <Tooltip
+          title={
+            copied
+              ? i18n.t('components.ai_tools_panel.k33')
+              : i18n.t('components.ai_tools_panel.k32')
+          }
+        >
           <IconButton
             size='small'
             onClick={handleCopy}
@@ -649,7 +661,13 @@ const DataMasker: React.FC = () => {
           {i18n.t('components.ai_tools_panel.k24')}
         </Button>
         {output && (
-          <Tooltip title={copied ? i18n.t('components.ai_tools_panel.k43') : i18n.t('components.ai_tools_panel.k42')}>
+          <Tooltip
+            title={
+              copied
+                ? i18n.t('components.ai_tools_panel.k43')
+                : i18n.t('components.ai_tools_panel.k42')
+            }
+          >
             <IconButton
               size='small'
               onClick={handleCopy}

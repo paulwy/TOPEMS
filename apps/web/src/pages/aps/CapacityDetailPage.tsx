@@ -69,8 +69,12 @@ export default function CapacityDetailPage() {
           >
             {i18n.t('pages.capacity_detail_page.k2')}
           </button>
-          <h1 className='text-2xl font-bold'>{capacity.work_center_name ?? capacity.work_center_id}</h1>
-          <p className='mt-1 text-sm text-gray-500'>{i18n.t('aps.capacity_detail_page.k4')}: {capacity.capacity_date ?? '-'}</p>
+          <h1 className='text-2xl font-bold'>
+            {capacity.work_center_name ?? capacity.work_center_id}
+          </h1>
+          <p className='mt-1 text-sm text-gray-500'>
+            {i18n.t('aps.capacity_detail_page.k4')}: {capacity.capacity_date ?? '-'}
+          </p>
         </div>
         <StatusBadge
           fsm='capacity'
@@ -79,7 +83,9 @@ export default function CapacityDetailPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>{i18n.t('pages.capacity_detail_page.k1')}</p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>
+          {i18n.t('pages.capacity_detail_page.k1')}
+        </p>
         <FSMActionButtons
           fsm='capacity'
           currentStatus={capacity.status ?? 'available'}
@@ -108,7 +114,9 @@ export default function CapacityDetailPage() {
           </div>
           <div>
             <dt className='text-gray-500'>{i18n.t('pages.capacity_detail_page.k7')}</dt>
-            <dd className='font-medium'>{capacity.utilization_rate != null ? `${capacity.utilization_rate}%` : '-'}</dd>
+            <dd className='font-medium'>
+              {capacity.utilization_rate != null ? `${capacity.utilization_rate}%` : '-'}
+            </dd>
           </div>
         </dl>
       </div>

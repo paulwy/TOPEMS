@@ -128,7 +128,10 @@ export function ComponentPalette({ onDragStart, onDragEnd }: ComponentPalettePro
                     >
                       {iconName && (
                         <ListItemIcon sx={{ minWidth: 32 }}>
-                          <LazyIcon name={iconName} size={16} />
+                          <LazyIcon
+                            name={iconName}
+                            size={16}
+                          />
                         </ListItemIcon>
                       )}
                       <ListItemText

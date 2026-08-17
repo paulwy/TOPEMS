@@ -585,7 +585,9 @@ export class PerformanceBottleneckDetector {
 
     const threshold = thresholds[thresholdKey] as number;
     if (value > threshold) {
-      logger.debug(`[Performance] ${metric}${i18n.t('shared.performance-bottleneck.k20')}${value} > ${threshold}`);
+      logger.debug(
+        `[Performance] ${metric}${i18n.t('shared.performance-bottleneck.k20')}${value} > ${threshold}`
+      );
     }
   }
 
@@ -601,7 +603,9 @@ export class PerformanceBottleneckDetector {
         this.config.onBottleneckDetected(bottleneck);
       }
 
-      logger.warn(`${i18n.t('shared.performance-bottleneck.performance_21')}${bottleneck.severity}${i18n.t('shared.performance-bottleneck.k22')}${bottleneck.description}`);
+      logger.warn(
+        `${i18n.t('shared.performance-bottleneck.performance_21')}${bottleneck.severity}${i18n.t('shared.performance-bottleneck.k22')}${bottleneck.description}`
+      );
     }
   }
 

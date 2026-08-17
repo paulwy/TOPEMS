@@ -58,7 +58,13 @@ const teamMembersTable: NestedTableConfig = {
 };
 // ============ D3 临时措施子表 ============
 const containmentActionsFields: NestedTableConfig['fields'] = [
-  { name: 'description', label: i18n.t('qms.eight_d.k12'), type: 'text', required: true, listWidth: 250 },
+  {
+    name: 'description',
+    label: i18n.t('qms.eight_d.k12'),
+    type: 'text',
+    required: true,
+    listWidth: 250,
+  },
   { name: 'implement_date', label: i18n.t('qms.eight_d.k13'), type: 'date', listWidth: 130 },
   { name: 'owner', label: i18n.t('qms.eight_d.k14'), type: 'text', listWidth: 100 },
   {
@@ -159,7 +165,13 @@ const rootCausesTable: NestedTableConfig = {
 };
 // ============ D5 永久措施子表 ============
 const permanentActionsFields: NestedTableConfig['fields'] = [
-  { name: 'action', label: i18n.t('qms.eight_d.k36'), type: 'text', required: true, listWidth: 200 },
+  {
+    name: 'action',
+    label: i18n.t('qms.eight_d.k36'),
+    type: 'text',
+    required: true,
+    listWidth: 200,
+  },
   { name: 'target_date', label: i18n.t('qms.eight_d.k37'), type: 'date', listWidth: 130 },
   { name: 'owner', label: i18n.t('qms.eight_d.k38'), type: 'text', listWidth: 100 },
   { name: 'verification_standard', label: i18n.t('qms.eight_d.k39'), type: 'text', listWidth: 180 },

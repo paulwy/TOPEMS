@@ -20,7 +20,8 @@ import type { MaterialIssue, MaterialIssueItem } from '@/api/mes';
 import { PackageOpen, FileText } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter(
   mesApi.materialIssues as unknown as CrudApi<MaterialIssue>,
   {
@@ -40,7 +41,9 @@ const MaterialIssuePage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_issue_page.k0')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_issue_page.k0')}
+            </InputLabel>
             <Box
               component='span'
               sx={{ fontWeight: 500 }}
@@ -49,25 +52,35 @@ const MaterialIssuePage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_issue_page.k1')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_issue_page.k1')}
+            </InputLabel>
             <Box component='span'>{issue.order_number || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_issue_page.k2')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_issue_page.k2')}
+            </InputLabel>
             <Box component='span'>{issue.operator}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_issue_page.k3')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_issue_page.k3')}
+            </InputLabel>
             <Box component='span'>
               {issue.issue_time ? new Date(issue.issue_time).toLocaleString('zh-CN') : '-'}
             </Box>
           </Box>
           <Box sx={{ gridColumn: '1 / -1' }}>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_issue_page.k4')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_issue_page.k4')}
+            </InputLabel>
             <Box component='span'>{issue.remark || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_issue_page.k5')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_issue_page.k5')}
+            </InputLabel>
             <Box component='span'>{new Date(issue.created_at).toLocaleString('zh-CN')}</Box>
           </Box>
         </Box>
@@ -76,7 +89,8 @@ const MaterialIssuePage: React.FC = () => {
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1 }}
           >
-            {i18n.t('pages.material_issue_page.k0')}{issue.items?.length || 0})
+            {i18n.t('pages.material_issue_page.k0')}
+            {issue.items?.length || 0})
           </Typography>
           <TableContainer
             component={Paper}

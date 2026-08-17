@@ -47,8 +47,9 @@ export const PluginDetailDialog: React.FC<PluginDetailDialogProps> = ({ plugin, 
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const versionsQuery = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_VERSIONS_BASE, plugin.code],
@@ -59,8 +60,9 @@ export const PluginDetailDialog: React.FC<PluginDetailDialogProps> = ({ plugin, 
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   useEffect(() => {
     if (reviewsQuery.isError && reviewsQuery.error) {
@@ -89,10 +91,11 @@ export const PluginDetailDialog: React.FC<PluginDetailDialogProps> = ({ plugin, 
       setRating(0);
       setReviewTitle('');
       setReviewContent('');
-      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_REVIEWS_BASE, plugin.code] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_REVIEWS_BASE, plugin.code],
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (error: unknown) => {
       logger.error(t('plugin.marketplace_page.log.submit_review_failed'), error);

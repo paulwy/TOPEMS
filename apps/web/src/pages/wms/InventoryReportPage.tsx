@@ -21,13 +21,12 @@ import {
 } from './components/InventoryReportChart';
 import i18n from '@/i18n';
 import {
-
   InventoryReportABCTable,
   InventoryReportTurnoverTable,
   InventoryReportValueByWarehouseTable,
 } from './components/InventoryReportTable';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const InventoryReportPage: React.FC = () => {
   const { t } = useTranslation();

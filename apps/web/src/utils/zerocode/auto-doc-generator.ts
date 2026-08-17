@@ -430,11 +430,19 @@ export class AutoDocGenerator {
     if (config.description) {
       parts.push(tmpl.paragraph(config.description));
     }
-    parts.push(tmpl.paragraph(`${i18n.t('shared.auto-doc-generator.k2')}${tmpl.bold(config.version)}`));
+    parts.push(
+      tmpl.paragraph(`${i18n.t('shared.auto-doc-generator.k2')}${tmpl.bold(config.version)}`)
+    );
     if (config.basePath) {
-      parts.push(tmpl.paragraph(`${i18n.t('shared.auto-doc-generator.k3')}${tmpl.inlineCode(config.basePath)}`));
+      parts.push(
+        tmpl.paragraph(
+          `${i18n.t('shared.auto-doc-generator.k3')}${tmpl.inlineCode(config.basePath)}`
+        )
+      );
     }
-    parts.push(tmpl.paragraph(`${i18n.t('shared.auto-doc-generator.k4')}${config.endpoints.length}`));
+    parts.push(
+      tmpl.paragraph(`${i18n.t('shared.auto-doc-generator.k4')}${config.endpoints.length}`)
+    );
     return parts.join('\n\n');
   }
 
@@ -448,7 +456,15 @@ export class AutoDocGenerator {
       'N/A',
       i18n.t('shared.auto-doc-generator.k8'),
     ]);
-    return tmpl.table(['#', i18n.t('shared.auto-doc-generator.k11'), i18n.t('shared.auto-doc-generator.k10'), i18n.t('shared.auto-doc-generator.k9')], rows);
+    return tmpl.table(
+      [
+        '#',
+        i18n.t('shared.auto-doc-generator.k11'),
+        i18n.t('shared.auto-doc-generator.k10'),
+        i18n.t('shared.auto-doc-generator.k9'),
+      ],
+      rows
+    );
   }
 
   private buildSchemaSection(
@@ -456,12 +472,40 @@ export class AutoDocGenerator {
     tmpl: (typeof DOC_TEMPLATES)[DocFormat.MARKDOWN]
   ): string {
     const rows = [
-      ['id', 'string', i18n.t('shared.auto-doc-generator.k13'), i18n.t('shared.auto-doc-generator.k12')],
-      ['name', 'string', i18n.t('shared.auto-doc-generator.k15'), i18n.t('shared.auto-doc-generator.k14')],
-      ['createdAt', 'datetime', i18n.t('shared.auto-doc-generator.k17'), i18n.t('shared.auto-doc-generator.k16')],
-      ['updatedAt', 'datetime', i18n.t('shared.auto-doc-generator.k19'), i18n.t('shared.auto-doc-generator.k18')],
+      [
+        'id',
+        'string',
+        i18n.t('shared.auto-doc-generator.k13'),
+        i18n.t('shared.auto-doc-generator.k12'),
+      ],
+      [
+        'name',
+        'string',
+        i18n.t('shared.auto-doc-generator.k15'),
+        i18n.t('shared.auto-doc-generator.k14'),
+      ],
+      [
+        'createdAt',
+        'datetime',
+        i18n.t('shared.auto-doc-generator.k17'),
+        i18n.t('shared.auto-doc-generator.k16'),
+      ],
+      [
+        'updatedAt',
+        'datetime',
+        i18n.t('shared.auto-doc-generator.k19'),
+        i18n.t('shared.auto-doc-generator.k18'),
+      ],
     ];
-    return tmpl.table([i18n.t('shared.auto-doc-generator.k23'), i18n.t('shared.auto-doc-generator.k22'), i18n.t('shared.auto-doc-generator.k21'), i18n.t('shared.auto-doc-generator.k20')], rows);
+    return tmpl.table(
+      [
+        i18n.t('shared.auto-doc-generator.k23'),
+        i18n.t('shared.auto-doc-generator.k22'),
+        i18n.t('shared.auto-doc-generator.k21'),
+        i18n.t('shared.auto-doc-generator.k20'),
+      ],
+      rows
+    );
   }
 
   private buildExamplesSection(
@@ -472,10 +516,24 @@ export class AutoDocGenerator {
     for (const endpointId of config.endpoints) {
       parts.push(tmpl.h3(endpointId));
       parts.push(tmpl.paragraph(i18n.t('shared.auto-doc-generator.k5')));
-      parts.push(tmpl.code(JSON.stringify({ id: 'example-1', name: i18n.t('shared.auto-doc-generator.k24') }, null, 2)));
+      parts.push(
+        tmpl.code(
+          JSON.stringify(
+            { id: 'example-1', name: i18n.t('shared.auto-doc-generator.k24') },
+            null,
+            2
+          )
+        )
+      );
       parts.push(tmpl.paragraph(i18n.t('shared.auto-doc-generator.k6')));
       parts.push(
-        tmpl.code(JSON.stringify({ code: 0, data: { id: 'example-1', name: i18n.t('shared.auto-doc-generator.k25') } }, null, 2))
+        tmpl.code(
+          JSON.stringify(
+            { code: 0, data: { id: 'example-1', name: i18n.t('shared.auto-doc-generator.k25') } },
+            null,
+            2
+          )
+        )
       );
     }
     return parts.join('\n\n');
@@ -490,7 +548,10 @@ export class AutoDocGenerator {
       ['404', i18n.t('shared.auto-doc-generator.k30')],
       ['500', i18n.t('shared.auto-doc-generator.k31')],
     ];
-    return tmpl.table([i18n.t('shared.auto-doc-generator.http_7'), i18n.t('shared.auto-doc-generator.k32')], rows);
+    return tmpl.table(
+      [i18n.t('shared.auto-doc-generator.http_7'), i18n.t('shared.auto-doc-generator.k32')],
+      rows
+    );
   }
 
   private buildFlowSection(
@@ -500,7 +561,11 @@ export class AutoDocGenerator {
     const parts: string[] = [];
     for (const flowId of config.flows) {
       parts.push(tmpl.h3(flowId));
-      parts.push(tmpl.paragraph(`${i18n.t('shared.auto-doc-generator.k8')}${tmpl.inlineCode(flowId)}${i18n.t('shared.auto-doc-generator.k9')}`));
+      parts.push(
+        tmpl.paragraph(
+          `${i18n.t('shared.auto-doc-generator.k8')}${tmpl.inlineCode(flowId)}${i18n.t('shared.auto-doc-generator.k9')}`
+        )
+      );
     }
     return parts.join('\n\n');
   }
@@ -530,16 +595,34 @@ export class AutoDocGenerator {
       const propRows = comp.props.map((p) => [
         tmpl.inlineCode(p.name),
         tmpl.inlineCode(p.type),
-        p.required ? i18n.t('shared.auto-doc-generator.k34') : i18n.t('shared.auto-doc-generator.k33'),
+        p.required
+          ? i18n.t('shared.auto-doc-generator.k34')
+          : i18n.t('shared.auto-doc-generator.k33'),
         p.description ?? '-',
         p.defaultValue ?? '-',
       ]);
-      parts.push(tmpl.table([i18n.t('shared.auto-doc-generator.k39'), i18n.t('shared.auto-doc-generator.k38'), i18n.t('shared.auto-doc-generator.k37'), i18n.t('shared.auto-doc-generator.k36'), i18n.t('shared.auto-doc-generator.k35')], propRows));
+      parts.push(
+        tmpl.table(
+          [
+            i18n.t('shared.auto-doc-generator.k39'),
+            i18n.t('shared.auto-doc-generator.k38'),
+            i18n.t('shared.auto-doc-generator.k37'),
+            i18n.t('shared.auto-doc-generator.k36'),
+            i18n.t('shared.auto-doc-generator.k35'),
+          ],
+          propRows
+        )
+      );
     }
     if (comp.events.length > 0) {
       parts.push(tmpl.h3(i18n.t('shared.auto-doc-generator.k40')));
       const eventRows = comp.events.map((e) => [tmpl.inlineCode(e.name), e.description ?? '-']);
-      parts.push(tmpl.table([i18n.t('shared.auto-doc-generator.k42'), i18n.t('shared.auto-doc-generator.k41')], eventRows));
+      parts.push(
+        tmpl.table(
+          [i18n.t('shared.auto-doc-generator.k42'), i18n.t('shared.auto-doc-generator.k41')],
+          eventRows
+        )
+      );
     }
     if (comp.example) {
       parts.push(tmpl.h3(i18n.t('shared.auto-doc-generator.k43')));

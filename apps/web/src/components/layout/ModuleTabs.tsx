@@ -504,7 +504,11 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
               <Pin style={{ width: 18, height: 18 }} />
             )}
           </ListItemIcon>
-          <ListItemText>{contextMenu?.tab.pinned ? i18n.t('shared.module_tabs.k5') : i18n.t('shared.module_tabs.k4')}</ListItemText>
+          <ListItemText>
+            {contextMenu?.tab.pinned
+              ? i18n.t('shared.module_tabs.k5')
+              : i18n.t('shared.module_tabs.k4')}
+          </ListItemText>
         </MenuItem>
         {contextMenu?.tab.closable !== false && (
           <MenuItem onClick={() => contextMenu && handleCloseTab(contextMenu.tab)}>

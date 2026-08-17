@@ -438,7 +438,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
             size='small'
             sx={{ height: 20, fontSize: '0.7rem' }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{i18n.t('components.command_palette.k12')}</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+            {i18n.t('components.command_palette.k12')}
+          </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Chip
@@ -446,7 +448,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
             size='small'
             sx={{ height: 20, fontSize: '0.7rem' }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{i18n.t('components.command_palette.k13')}</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+            {i18n.t('components.command_palette.k13')}
+          </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 'auto' }}>
           <Chip
@@ -454,7 +458,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
             size='small'
             sx={{ height: 20, fontSize: '0.7rem' }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{i18n.t('components.command_palette.k14')}</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+            {i18n.t('components.command_palette.k14')}
+          </Typography>
         </Box>
       </Box>
     </Dialog>

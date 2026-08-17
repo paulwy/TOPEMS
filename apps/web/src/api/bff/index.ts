@@ -547,7 +547,9 @@ export function subscribeServiceHealth(
 
     ws.onclose = () => {
       if (!closed) {
-        {i18n.t('api.index.k0')}
+        {
+          i18n.t('api.index.k0');
+        }
       }
     };
   };

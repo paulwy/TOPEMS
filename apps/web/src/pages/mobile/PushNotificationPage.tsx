@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 const defaultPushConfig: PushConfig = {
   enabled: true,
   sound_enabled: true,
@@ -46,26 +47,39 @@ const PushNotificationPage: React.FC = () => {
   useEffect(() => {
     if (configQuery.isError) {
       logger.error(i18n.t('pages.push_notification_page.k0'), configQuery.error);
-      addNotification({ type: 'error', title: i18n.t('mobile.push_notification_page.k1'), message: i18n.t('mobile.push_notification_page.k0') });
+      addNotification({
+        type: 'error',
+        title: i18n.t('mobile.push_notification_page.k1'),
+        message: i18n.t('mobile.push_notification_page.k0'),
+      });
     }
   }, [configQuery.isError, configQuery.error, addNotification]);
   useEffect(() => {
     if (templatesQuery.isError) {
       logger.error(i18n.t('pages.push_notification_page.k1'), templatesQuery.error);
-      addNotification({ type: 'error', title: i18n.t('mobile.push_notification_page.k3'), message: i18n.t('mobile.push_notification_page.k2') });
+      addNotification({
+        type: 'error',
+        title: i18n.t('mobile.push_notification_page.k3'),
+        message: i18n.t('mobile.push_notification_page.k2'),
+      });
     }
   }, [templatesQuery.isError, templatesQuery.error, addNotification]);
   const updateConfigMutation = useMutation({
     mutationFn: (data: Partial<PushConfig>) => mobileApi.updatePushConfig(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_PUSH_CONFIG_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MOBILE_PUSH_CONFIG_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
       logger.error(i18n.t('pages.push_notification_page.k2'), err);
-      addNotification({ type: 'error', title: i18n.t('mobile.push_notification_page.k5'), message: i18n.t('mobile.push_notification_page.k4') });
+      addNotification({
+        type: 'error',
+        title: i18n.t('mobile.push_notification_page.k5'),
+        message: i18n.t('mobile.push_notification_page.k4'),
+      });
     },
   });
   const handleToggleConfig = (key: keyof PushConfig) => {
@@ -75,14 +89,19 @@ const PushNotificationPage: React.FC = () => {
     mutationFn: (params: { id: string; data: Partial<PushTemplate> }) =>
       mobileApi.updatePushTemplate(params.id, params.data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_PUSH_TEMPLATES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MOBILE_PUSH_TEMPLATES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
       logger.error(i18n.t('pages.push_notification_page.k3'), err);
-      addNotification({ type: 'error', title: i18n.t('mobile.push_notification_page.k7'), message: i18n.t('mobile.push_notification_page.k6') });
+      addNotification({
+        type: 'error',
+        title: i18n.t('mobile.push_notification_page.k7'),
+        message: i18n.t('mobile.push_notification_page.k6'),
+      });
     },
   });
   const handleToggleTemplate = (id: string) => {
@@ -177,7 +196,9 @@ const PushNotificationPage: React.FC = () => {
             <Divider sx={{ mb: 1.5 }} />
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Typography variant='body2'>{i18n.t('mobile.push_notification_page.k13')}</Typography>
+                <Typography variant='body2'>
+                  {i18n.t('mobile.push_notification_page.k13')}
+                </Typography>
                 <Switch
                   checked={config.sound_enabled}
                   onChange={() => handleToggleConfig('sound_enabled')}
@@ -185,7 +206,9 @@ const PushNotificationPage: React.FC = () => {
                 />
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Typography variant='body2'>{i18n.t('mobile.push_notification_page.k14')}</Typography>
+                <Typography variant='body2'>
+                  {i18n.t('mobile.push_notification_page.k14')}
+                </Typography>
                 <Switch
                   checked={config.vibration_enabled}
                   onChange={() => handleToggleConfig('vibration_enabled')}
@@ -194,7 +217,8 @@ const PushNotificationPage: React.FC = () => {
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Typography variant='body2'>
-                  {i18n.t('pages.push_notification_page.k0')} {config.quiet_hours_start} - {config.quiet_hours_end}
+                  {i18n.t('pages.push_notification_page.k0')} {config.quiet_hours_start} -{' '}
+                  {config.quiet_hours_end}
                 </Typography>
               </Box>
             </Box>

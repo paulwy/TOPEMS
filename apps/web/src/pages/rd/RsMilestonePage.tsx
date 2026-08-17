@@ -5,6 +5,7 @@ import { rdApi } from '@/api/rd';
 import type { Build, CreateBuildRequest } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
 import i18n from '@/i18n';
+
 interface Milestone {
   id: string;
   name: string;
@@ -74,7 +75,10 @@ const RsMilestonePage: React.FC = () => {
     <CrudPage
       schema={milestoneSchema}
       apiAdapter={milestoneApiAdapter}
-      breadcrumbs={[{ label: i18n.t('rd.rs_milestone_page.k5'), href: RD_PATHS.root }, { label: i18n.t('rd.rs_milestone_page.k4') }]}
+      breadcrumbs={[
+        { label: i18n.t('rd.rs_milestone_page.k5'), href: RD_PATHS.root },
+        { label: i18n.t('rd.rs_milestone_page.k4') },
+      ]}
     />
   );
 };

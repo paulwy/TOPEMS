@@ -75,11 +75,16 @@ export default function CarrierDetailPage() {
           <h1 className='text-2xl font-bold'>{carrier.name}</h1>
           <p className='mt-1 text-sm text-gray-500'>{carrier.carrier_no}</p>
         </div>
-        <StatusBadge fsm='carrier' status={carrier.status ?? 'pending_review'} />
+        <StatusBadge
+          fsm='carrier'
+          status={carrier.status ?? 'pending_review'}
+        />
       </div>
 
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>{t('tms.carrier_detail_page.k3')}</p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>
+          {t('tms.carrier_detail_page.k3')}
+        </p>
         <FSMActionButtons
           fsm='carrier'
           currentStatus={carrier.status ?? 'pending_review'}
@@ -88,12 +93,30 @@ export default function CarrierDetailPage() {
       </div>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        <Field label={t('tms.carrier_detail_page.k4')} value={carrier.carrier_no} />
-        <Field label={t('tms.carrier_detail_page.k5')} value={carrier.name} />
-        <Field label={t('tms.carrier_detail_page.k6')} value={carrier.contact_person ?? '-'} />
-        <Field label={t('tms.carrier_detail_page.k7')} value={carrier.contact_phone ?? '-'} />
-        <Field label={t('tms.carrier_detail_page.k8')} value={carrier.status ?? '-'} />
-        <Field label={t('tms.carrier_detail_page.k9')} value={carrier.service_area ?? '-'} />
+        <Field
+          label={t('tms.carrier_detail_page.k4')}
+          value={carrier.carrier_no}
+        />
+        <Field
+          label={t('tms.carrier_detail_page.k5')}
+          value={carrier.name}
+        />
+        <Field
+          label={t('tms.carrier_detail_page.k6')}
+          value={carrier.contact_person ?? '-'}
+        />
+        <Field
+          label={t('tms.carrier_detail_page.k7')}
+          value={carrier.contact_phone ?? '-'}
+        />
+        <Field
+          label={t('tms.carrier_detail_page.k8')}
+          value={carrier.status ?? '-'}
+        />
+        <Field
+          label={t('tms.carrier_detail_page.k9')}
+          value={carrier.service_area ?? '-'}
+        />
         <Field
           label={t('tms.carrier_detail_page.k10')}
           value={carrier.created_at ? new Date(carrier.created_at).toLocaleString('zh-CN') : '-'}

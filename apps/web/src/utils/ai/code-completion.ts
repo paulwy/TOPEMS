@@ -580,7 +580,11 @@ export class CodeCompletionEngine {
             description: `${i18n.t('shared.code-completion.k9')}${item} (from ${imp.path})`,
             insert_text: item,
             cursor_offset: item.length,
-            detail: imp.is_default ? i18n.t('shared.code-completion.k21') : imp.is_namespace ? i18n.t('shared.code-completion.k20') : i18n.t('shared.code-completion.k19'),
+            detail: imp.is_default
+              ? i18n.t('shared.code-completion.k21')
+              : imp.is_namespace
+                ? i18n.t('shared.code-completion.k20')
+                : i18n.t('shared.code-completion.k19'),
           });
         }
       }

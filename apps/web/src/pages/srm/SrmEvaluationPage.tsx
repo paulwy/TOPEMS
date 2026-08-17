@@ -9,11 +9,10 @@ import { Box, Card, CardContent, Typography, Rating, Chip } from '@mui/material'
 import { FileText, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface SupplierEvaluation {
   id: string;
@@ -65,7 +64,8 @@ const evaluationApiAdapter: CrudApiAdapter = {
     const response = await srmApi.createEvaluation(
       data as unknown as Parameters<typeof srmApi.createEvaluation>[0]
     );
-    if (!response.success || !response.data) throw new Error(i18n.t('pages.srm_evaluation_page.k0'));
+    if (!response.success || !response.data)
+      throw new Error(i18n.t('pages.srm_evaluation_page.k0'));
     return response.data as unknown as Record<string, unknown>;
   },
   update: async (id, data) => {
@@ -73,7 +73,8 @@ const evaluationApiAdapter: CrudApiAdapter = {
       id,
       data as unknown as Parameters<typeof srmApi.updateEvaluation>[1]
     );
-    if (!response.success || !response.data) throw new Error(i18n.t('pages.srm_evaluation_page.k1'));
+    if (!response.success || !response.data)
+      throw new Error(i18n.t('pages.srm_evaluation_page.k1'));
     return response.data as unknown as Record<string, unknown>;
   },
   delete: async (id) => {

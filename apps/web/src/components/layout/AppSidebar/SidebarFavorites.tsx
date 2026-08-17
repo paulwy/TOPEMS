@@ -72,7 +72,8 @@ export const SidebarFavorites: React.FC<SidebarFavoritesProps> = ({
       >
         <Box sx={{ p: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
           <Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
-            {i18n.t('components.sidebar_favorites.k0')}{favorites.size})
+            {i18n.t('components.sidebar_favorites.k0')}
+            {favorites.size})
           </Typography>
         </Box>
         {favorites.size === 0 ? (

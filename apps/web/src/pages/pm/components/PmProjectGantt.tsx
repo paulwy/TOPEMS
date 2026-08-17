@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, Typography } from '@mui/material';
 import GanttChart from '@/components/pm/GanttChart';
 import type { GanttPhase, GanttMilestone } from '@/api/pm';
 import i18n from '@/i18n';
+
 export interface PmProjectGanttProps {
   projectStartDate?: string;
   projectEndDate?: string;

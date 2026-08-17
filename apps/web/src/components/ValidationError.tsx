@@ -174,13 +174,17 @@ export const InlineValidation: React.FC<InlineValidationProps> = ({
 
     if (value) {
       if (rules.minLength && value.length < rules.minLength) {
-        setError(`${fieldName}${i18n.t('components.validation_error.k1')}${rules.minLength}${i18n.t('components.validation_error.k2')}`);
+        setError(
+          `${fieldName}${i18n.t('components.validation_error.k1')}${rules.minLength}${i18n.t('components.validation_error.k2')}`
+        );
         onValidChange?.(false);
         return;
       }
 
       if (rules.maxLength && value.length > rules.maxLength) {
-        setError(`${fieldName}${i18n.t('components.validation_error.k3')}${rules.maxLength}${i18n.t('components.validation_error.k4')}`);
+        setError(
+          `${fieldName}${i18n.t('components.validation_error.k3')}${rules.maxLength}${i18n.t('components.validation_error.k4')}`
+        );
         onValidChange?.(false);
         return;
       }
@@ -194,7 +198,11 @@ export const InlineValidation: React.FC<InlineValidationProps> = ({
       if (rules.custom) {
         const result = rules.custom(value);
         if (result !== true) {
-          setError(typeof result === 'string' ? result : `${fieldName}${i18n.t('components.validation_error.k6')}`);
+          setError(
+            typeof result === 'string'
+              ? result
+              : `${fieldName}${i18n.t('components.validation_error.k6')}`
+          );
           onValidChange?.(false);
           return;
         }

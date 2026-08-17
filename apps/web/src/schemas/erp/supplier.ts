@@ -57,9 +57,18 @@ export const supplierSchema: EntitySchema = {
             value: i18n.t('shared.supplier.k0'),
             label: i18n.t('schema:erp.supplier.category.option.原材料供应商'),
           },
-          { value: i18n.t('shared.supplier.k0'), label: i18n.t('schema:erp.supplier.category.option.配件供应商') },
-          { value: i18n.t('shared.supplier.k1'), label: i18n.t('schema:erp.supplier.category.option.设备供应商') },
-          { value: i18n.t('shared.supplier.k2'), label: i18n.t('schema:erp.supplier.category.option.服务供应商') },
+          {
+            value: i18n.t('shared.supplier.k0'),
+            label: i18n.t('schema:erp.supplier.category.option.配件供应商'),
+          },
+          {
+            value: i18n.t('shared.supplier.k1'),
+            label: i18n.t('schema:erp.supplier.category.option.设备供应商'),
+          },
+          {
+            value: i18n.t('shared.supplier.k2'),
+            label: i18n.t('schema:erp.supplier.category.option.服务供应商'),
+          },
         ],
       },
       listWidth: 120,

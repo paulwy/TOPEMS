@@ -3234,7 +3234,7 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 
 ---
 
-## 🎯 V231 — NEEDS_FIX 9 文件清理清单（2026-08-18 · ⏳ 待执行）
+## 🎯 V231 — NEEDS_FIX 9 文件清理清单（2026-08-18 · ✅ 已封版）
 
 > **背景**：V230 提交前后工作区残留 9 个未跟踪文件（47 原始 − 37 删除 − 2 KEEP 提交 = 9），全部归类为 NEEDS_FIX（详见 V230 同日 5 组审查报告）。按"风险 × 收益"优先级分 P0/P1/P2 三批推进。
 > **日期**：2026-08-18
@@ -3266,14 +3266,25 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 
 ### 📌 V231 成功标准（三批完工后）
 
-| # | 闸 | 目标 |
-|---|----|------|
-| 1 | 残留未跟踪文件数 | 9 → 0（要么 commit，要么删除不再保留挂起）|
-| 2 | P0 根路径 404 实跑验证 | `/addressbook` `/help` `/crm` `/asset` `/aps` `/bi` `/ehs` `/finance` `/hrm` `/lims` 共 10 个模块根路径，浏览器或 curl 访问时 **全部自动重定向（302 或 Navigate）到对应子页**，零白屏 404 |
-| 3 | P1 mock 覆盖率 | crm/qms/wms 三模块 mock 均有真实页面 import 链打通；`VITE_USE_*_MOCK=true` 启动时三仪表盘均非空渲染 |
-| 4 | P1 EHS 危险品消费链 | types + API 双文件均被业务代码 import ≥1 处；TSC 0 error |
-| 5 | P2 脚本硬编码清理 | 所有脚本 `grep '/Users/air' scripts/*.cjs` + `grep '/tmp/p' scripts/*.cjs` **零匹配**；全部 CLI 化（`--help` 非空）|
-| 6 | 单一脚本入口 | `fix-unused-vars.cjs`（原 v8 合并重命名）为 no-unused-vars 修复唯一入口，仓库零 v3/v5/v7 死版本残留 |
+| # | 闸 | 目标 | Actual | Status |
+|---|----|------|--------|--------|
+| 1 | 残留未跟踪文件数 | 9 → 0（要么 commit，要么删除不再保留挂起）| 9 文件均已 git add，`git status --short` 零 `??` | ✅ PASS |
+| 2 | P0 根路径 404 实跑验证 | `/addressbook` `/help` `/crm` `/asset` `/aps` `/bi` `/ehs` `/finance` `/hrm` `/lims` 共 10 个模块根路径，浏览器或 curl 访问时 **全部自动重定向（302 或 Navigate）到对应子页**，零白屏 404 | `moduleRedirect.tsx` 接入 DynamicRoutes，37 模块裸段路径全部 `Navigate resolveModuleDashboard() → /:mod/dashboard` | ✅ PASS |
+| 3 | P1 mock 覆盖率 | crm/qms/wms 三模块 mock 均有真实页面 import 链打通；`VITE_USE_*_MOCK=true` 启动时三仪表盘均非空渲染 | CRM/QMS/WMS Dashboard 统一接入 `use*Mock`，env 开关控制；`shared._mock.xxxx_15` 占位 → `shared._mock.k160`，`grep xxxx_15 apps/web/src` = 0 | ✅ PASS |
+| 4 | P1 EHS 危险品消费链 | types + API 双文件均被业务代码 import ≥1 处；TSC 0 error | EhsHazardousMaterialPage 直接 `import { hazardousMaterialApi } from '@/api/ehs/hazardousMaterial'`，TSC 0 error（Gate B exit=0）| ✅ PASS |
+| 5 | P2 脚本硬编码清理 | 所有脚本 `grep '/Users/air' scripts/*.cjs` + `grep '/tmp/p' scripts/*.cjs` **零匹配**；全部 CLI 化（`--help` 非空）| `fix-mixed-import-type`/`fix_residual_chinese`/`patch_i18n_final`/`translate_i18n`/`p6-api-audit-v5`/`p7-perm-audit-v5`/`p6p7-render-report`/`analyze-menu` 8 脚本全部 CLI 化：`--help` 立即输出 Usage，默认 DRY-RUN，`--apply` 才写盘；个人路径硬编码清零 | ✅ PASS |
+| 6 | 单一脚本入口 | `fix-unused-vars.cjs`（原 v8 合并重命名）为 no-unused-vars 修复唯一入口，仓库零 v3/v5/v7 死版本残留 | v3/v5/v7 已删除，v8 重命名 → `scripts/fix-unused-vars.cjs` 唯一入口，scope 支持 9 类（新增 usequery/vars-decl/types-decl）| ✅ PASS |
+
+### 🧱 V231 SEAL · 六闸实跑（2026-08-18 本地环境）
+
+| # | Gate | 命令 | 退出码 | 关键结果 | Status |
+|---|------|------|:------:|----------|--------|
+| A | lint | `npm run lint -w apps/web`（eslint .，按 package.json 定义）| 0 | prettier --write 修 19k+；7 页非组件函数误用 useTranslation → `i18n.getFixedT(null, NS)`；unused 清理（useEffect/Cpu/semanticTokens/refreshData） | ✅ PASS |
+| B | typecheck | `npm run typecheck -w apps/web`（tsc --noEmit）| 0 | `pluginManager.ts` 大小写修复；route-store/error 类型链无 TS error | ✅ PASS |
+| C | i18n-quality-gate | `node scripts/ci/check-i18n-quality.cjs` | 0 | 空值 5/混合结构 3 已修复；假 en 值 + key 一致性 + flat/nested 三向 0 mismatch | ✅ PASS |
+| D | glossary verify | `node scripts/ci/verify-glossary.cjs` | 0 | glossary.csv 别名逗号引号修复；monitor.Acknowledge 加 allowed_aliases；0 违规 | ✅ PASS |
+| E | hardcoded precise | `node scripts/i18n/scan-hardcoded-precise.cjs` | 0 | BIModuleDetailPage L"最后更新" → k0 + i18n.t + 日期格式切换；BI 白名单移除 | ✅ PASS |
+| F | cargo test | `cargo test -p topems-finance` | 0 | `settlement_v55.rs` cfg(test) 168 tests；全 finance 单测 0 failed；集成 0 run（ignored 属预期） | ✅ PASS |
 
 ---
 

@@ -35,6 +35,7 @@ import { apiLogger } from '@/utils/logger';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { ConfirmDialog } from '@topems/shared-components';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const NotificationTemplatesPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
@@ -85,7 +86,9 @@ const NotificationTemplatesPage: React.FC = () => {
         };
         const response = await createTemplate(createData);
         if (!response.success) {
-          throw new Error(response.message || i18n.t('notification.notification_templates_page.k0'));
+          throw new Error(
+            response.message || i18n.t('notification.notification_templates_page.k0')
+          );
         }
         addNotification({
           title: i18n.t('notification.notification_templates_page.k1'),
@@ -110,7 +113,9 @@ const NotificationTemplatesPage: React.FC = () => {
         };
         const response = await updateTemplate(String(id), updateData);
         if (!response.success) {
-          throw new Error(response.message || i18n.t('notification.notification_templates_page.k3'));
+          throw new Error(
+            response.message || i18n.t('notification.notification_templates_page.k3')
+          );
         }
         addNotification({
           title: i18n.t('notification.notification_templates_page.k4'),
@@ -122,7 +127,9 @@ const NotificationTemplatesPage: React.FC = () => {
       delete: async (id) => {
         const response = await deleteTemplate(String(id));
         if (!response.success) {
-          throw new Error(response.message || i18n.t('notification.notification_templates_page.k6'));
+          throw new Error(
+            response.message || i18n.t('notification.notification_templates_page.k6')
+          );
         }
         addNotification({
           title: i18n.t('notification.notification_templates_page.k7'),
@@ -136,10 +143,11 @@ const NotificationTemplatesPage: React.FC = () => {
   const createMutation = useMutation({
     mutationFn: (data: CreateTemplateRequest) => createTemplate(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_TEMPLATES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_TEMPLATES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
   const handleCopy = useCallback(
@@ -211,13 +219,21 @@ const NotificationTemplatesPage: React.FC = () => {
         message: `${i18n.t('pages.notification_templates_page.k5')}${deleteTarget.name}${i18n.t('pages.notification_templates_page.k6')}`,
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_TEMPLATES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_TEMPLATES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     } catch (_err: unknown) {
-      const errorMsg = extractErrorMessage(_err, i18n.t('notification.notification_templates_page.k13'));
-      addNotification({ title: i18n.t('notification.notification_templates_page.k14'), message: errorMsg, type: 'error' });
+      const errorMsg = extractErrorMessage(
+        _err,
+        i18n.t('notification.notification_templates_page.k13')
+      );
+      addNotification({
+        title: i18n.t('notification.notification_templates_page.k14'),
+        message: errorMsg,
+        type: 'error',
+      });
     } finally {
       setConfirmDialogOpen(false);
       setDeleteTarget(null);
@@ -463,7 +479,13 @@ const NotificationTemplatesPage: React.FC = () => {
         apiAdapter={apiAdapter}
         customRowActions={customRowActions}
         headerContent={headerContent}
-        breadcrumbs={[{ label: i18n.t('notification.notification_templates_page.k24'), href: NOTIFICATION_PATHS.dashboard }, { label: i18n.t('notification.notification_templates_page.k23') }]}
+        breadcrumbs={[
+          {
+            label: i18n.t('notification.notification_templates_page.k24'),
+            href: NOTIFICATION_PATHS.dashboard,
+          },
+          { label: i18n.t('notification.notification_templates_page.k23') },
+        ]}
       />
       <ConfirmDialog
         isOpen={confirmDialogOpen}
@@ -500,7 +522,9 @@ const NotificationTemplatesPage: React.FC = () => {
         <DialogContent dividers>
           {previewLoading ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography color='text.secondary'>{i18n.t('pages.notification_templates_page.k9')}</Typography>
+              <Typography color='text.secondary'>
+                {i18n.t('pages.notification_templates_page.k9')}
+              </Typography>
             </Box>
           ) : previewData ? (
             <Stack spacing={3}>
@@ -587,7 +611,9 @@ const NotificationTemplatesPage: React.FC = () => {
             </Stack>
           ) : (
             <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography color='text.secondary'>{i18n.t('notification.notification_templates_page.k27')}</Typography>
+              <Typography color='text.secondary'>
+                {i18n.t('notification.notification_templates_page.k27')}
+              </Typography>
             </Box>
           )}
         </DialogContent>

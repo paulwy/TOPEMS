@@ -30,15 +30,36 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store/notificationStore';
 import { carrierApi } from '@/api/tms';
 import type { Carrier, CreateCarrierRequest, CarrierStatus } from '@/api/tms';
+
 const QUERY_KEY = 'tms-carriers';
 const statusOptions = [
   { value: 'active', label: i18n.t('tms.carrier_management_page.k0') },
   { value: 'inactive', label: i18n.t('tms.carrier_management_page.k1') },
 ];
 const renderStatusChip = (status?: string) => {
-  if (status === 'active') return <Chip size='small' color='success' label={i18n.t('tms.carrier_management_page.k2')} />;
-  if (status === 'inactive') return <Chip size='small' color='default' label={i18n.t('tms.carrier_management_page.k3')} />;
-  return <Chip size='small' color='default' label={status || '-'} />;
+  if (status === 'active')
+    return (
+      <Chip
+        size='small'
+        color='success'
+        label={i18n.t('tms.carrier_management_page.k2')}
+      />
+    );
+  if (status === 'inactive')
+    return (
+      <Chip
+        size='small'
+        color='default'
+        label={i18n.t('tms.carrier_management_page.k3')}
+      />
+    );
+  return (
+    <Chip
+      size='small'
+      color='default'
+      label={status || '-'}
+    />
+  );
 };
 const CarrierManagementPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -64,7 +85,11 @@ const CarrierManagementPage: React.FC = () => {
     mutationFn: (data: CreateCarrierRequest) => carrierApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({ type: 'success', title: i18n.t('tms.carrier_management_page.k6'), message: i18n.t('tms.carrier_management_page.k5') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('tms.carrier_management_page.k6'),
+        message: i18n.t('tms.carrier_management_page.k5'),
+      });
       setFormOpen(false);
     },
     onError: (err: unknown) => {
@@ -80,7 +105,11 @@ const CarrierManagementPage: React.FC = () => {
       carrierApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({ type: 'success', title: i18n.t('tms.carrier_management_page.k9'), message: i18n.t('tms.carrier_management_page.k8') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('tms.carrier_management_page.k9'),
+        message: i18n.t('tms.carrier_management_page.k8'),
+      });
       setFormOpen(false);
     },
     onError: (err: unknown) => {
@@ -95,7 +124,11 @@ const CarrierManagementPage: React.FC = () => {
     mutationFn: (id: string) => carrierApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({ type: 'success', title: i18n.t('tms.carrier_management_page.k12'), message: i18n.t('tms.carrier_management_page.k11') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('tms.carrier_management_page.k12'),
+        message: i18n.t('tms.carrier_management_page.k11'),
+      });
       setDeleteTarget(null);
     },
     onError: (err: unknown) => {
@@ -150,7 +183,13 @@ const CarrierManagementPage: React.FC = () => {
       <Stack
         direction='row'
         spacing={2}
-        sx={{ mb: 2, flexWrap: 'wrap', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}
+        sx={{
+          mb: 2,
+          flexWrap: 'wrap',
+          gap: 1,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
       >
         <Stack
           direction='row'
@@ -287,7 +326,9 @@ const CarrierManagementPage: React.FC = () => {
           }}
           rowsPerPageOptions={[10, 20, 50]}
           labelRowsPerPage={i18n.t('tms.carrier_management_page.k27')}
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to}${i18n.t('pages.carrier_management_page.k0')}${count}${i18n.t('pages.carrier_management_page.k1')}`}
+          labelDisplayedRows={({ from, to, count }) =>
+            `${from}-${to}${i18n.t('pages.carrier_management_page.k0')}${count}${i18n.t('pages.carrier_management_page.k1')}`
+          }
         />
       </Card>
       <Dialog
@@ -296,7 +337,11 @@ const CarrierManagementPage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>{formMode === 'create' ? i18n.t('tms.carrier_management_page.k29') : i18n.t('tms.carrier_management_page.k28')}</DialogTitle>
+        <DialogTitle>
+          {formMode === 'create'
+            ? i18n.t('tms.carrier_management_page.k29')
+            : i18n.t('tms.carrier_management_page.k28')}
+        </DialogTitle>
         <DialogContent>
           <Box
             sx={{
@@ -342,7 +387,9 @@ const CarrierManagementPage: React.FC = () => {
               label={i18n.t('tms.carrier_management_page.k35')}
               select
               value={formData.status || 'active'}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value as CarrierStatus })}
+              onChange={(e) =>
+                setFormData({ ...formData, status: e.target.value as CarrierStatus })
+              }
               size='small'
             >
               {statusOptions.map((opt) => (
@@ -357,13 +404,17 @@ const CarrierManagementPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setFormOpen(false)}>{i18n.t('tms.carrier_management_page.k36')}</Button>
+          <Button onClick={() => setFormOpen(false)}>
+            {i18n.t('tms.carrier_management_page.k36')}
+          </Button>
           <Button
             variant='contained'
             onClick={handleSubmit}
             disabled={submitting || !formData.carrier_no || !formData.name}
           >
-            {submitting ? i18n.t('pages.carrier_management_page.k2') : i18n.t('tms.carrier_management_page.k37')}
+            {submitting
+              ? i18n.t('pages.carrier_management_page.k2')
+              : i18n.t('tms.carrier_management_page.k37')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -376,18 +427,23 @@ const CarrierManagementPage: React.FC = () => {
         <DialogTitle>{i18n.t('tms.carrier_management_page.k38')}</DialogTitle>
         <DialogContent>
           <Typography>
-            {i18n.t('pages.carrier_management_page.k0')}「{deleteTarget?.name}」{i18n.t('pages.carrier_management_page.k1')}
+            {i18n.t('pages.carrier_management_page.k0')}「{deleteTarget?.name}」
+            {i18n.t('pages.carrier_management_page.k1')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>{i18n.t('tms.carrier_management_page.k39')}</Button>
+          <Button onClick={() => setDeleteTarget(null)}>
+            {i18n.t('tms.carrier_management_page.k39')}
+          </Button>
           <Button
             color='error'
             variant='contained'
             onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? i18n.t('pages.carrier_management_page.k3') : i18n.t('tms.carrier_management_page.k40')}
+            {deleteMutation.isPending
+              ? i18n.t('pages.carrier_management_page.k3')
+              : i18n.t('tms.carrier_management_page.k40')}
           </Button>
         </DialogActions>
       </Dialog>

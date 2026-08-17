@@ -58,7 +58,9 @@ export interface HealthStatistics {
 }
 
 export const healthMonitoringApi = {
-  async listHealthRecords(params?: HealthMonitoringQuery): Promise<ApiResponse<PaginatedResponse<HealthRecordItem>>> {
+  async listHealthRecords(
+    params?: HealthMonitoringQuery
+  ): Promise<ApiResponse<PaginatedResponse<HealthRecordItem>>> {
     const qs = new URLSearchParams();
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));
@@ -74,11 +76,16 @@ export const healthMonitoringApi = {
     return apiClient.ehs.get<HealthRecordItem>(`/health/${id}`);
   },
 
-  async createHealthRecord(data: CreateHealthRecordRequest): Promise<ApiResponse<HealthRecordItem>> {
+  async createHealthRecord(
+    data: CreateHealthRecordRequest
+  ): Promise<ApiResponse<HealthRecordItem>> {
     return apiClient.ehs.post<HealthRecordItem>('/health', data);
   },
 
-  async updateHealthRecord(id: string, data: UpdateHealthRecordRequest): Promise<ApiResponse<HealthRecordItem>> {
+  async updateHealthRecord(
+    id: string,
+    data: UpdateHealthRecordRequest
+  ): Promise<ApiResponse<HealthRecordItem>> {
     return apiClient.ehs.put<HealthRecordItem>(`/health/${id}`, data);
   },
 

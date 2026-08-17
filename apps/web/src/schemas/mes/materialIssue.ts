@@ -71,10 +71,26 @@ export const materialIssueSchema: EntitySchema = {
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-          pending: { label: i18n.t('mes.material_issue.k12'), bg: 'warning.light', color: 'warning.700' },
-          approved: { label: i18n.t('mes.material_issue.k13'), bg: 'secondary.100', color: 'secondary.700' },
-          issued: { label: i18n.t('mes.material_issue.k14'), bg: 'success.lighter', color: 'success.700' },
-          cancelled: { label: i18n.t('mes.material_issue.k15'), bg: 'error.lighter', color: 'error.dark' },
+          pending: {
+            label: i18n.t('mes.material_issue.k12'),
+            bg: 'warning.light',
+            color: 'warning.700',
+          },
+          approved: {
+            label: i18n.t('mes.material_issue.k13'),
+            bg: 'secondary.100',
+            color: 'secondary.700',
+          },
+          issued: {
+            label: i18n.t('mes.material_issue.k14'),
+            bg: 'success.lighter',
+            color: 'success.700',
+          },
+          cancelled: {
+            label: i18n.t('mes.material_issue.k15'),
+            bg: 'error.lighter',
+            color: 'error.dark',
+          },
         };
         const s = statusMap[(row.status as string) || 'pending'] || {
           label: row.status,

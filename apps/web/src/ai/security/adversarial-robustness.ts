@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type AttackType = 'PromptInjection' | 'ModelPoisoning' | 'DataExfiltration' | 'SideChannel';
 
 export type AttackSeverity = 'critical' | 'high' | 'medium' | 'low';
@@ -50,7 +51,10 @@ const DEFAULT_ATTACK_VECTORS: AttackVector[] = [
     vector: i18n.t('ai.adversarial-robustness.k0'),
     mitigation: i18n.t('ai.adversarial-robustness.k1'),
     description: i18n.t('ai.adversarial-robustness.k2'),
-    examples: [i18n.t('ai.adversarial-robustness.k3'), i18n.t('ai.adversarial-robustness.system_0')],
+    examples: [
+      i18n.t('ai.adversarial-robustness.k3'),
+      i18n.t('ai.adversarial-robustness.system_0'),
+    ],
   },
   {
     id: 'av-model-poisoning',

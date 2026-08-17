@@ -21,6 +21,7 @@ import { productionPlanApi } from '@/api/aps';
 import type { ProductionPlan } from '@/api/aps/types';
 import { StatusBadge } from '@/components/aps/StatusBadge';
 import { designTokens, semanticTokens } from '@topems/tokens';
+
 interface ComparisonData {
   period: string;
   planned: number;
@@ -53,7 +54,9 @@ export default function PlanComparisonDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
   if (loading) {
-    return <div className='p-4 text-gray-600'>{i18n.t('pages.plan_comparison_detail_page.k0')}</div>;
+    return (
+      <div className='p-4 text-gray-600'>{i18n.t('pages.plan_comparison_detail_page.k0')}</div>
+    );
   }
   if (!plan) {
     return (
@@ -105,15 +108,26 @@ export default function PlanComparisonDetailPage() {
       </div>
       <div className='rounded-lg border p-4'>
         <h3 className='mb-3 font-semibold'>{i18n.t('aps.plan_comparison_detail_page.vs_10')}</h3>
-        <ResponsiveContainer width='100%' height={350}>
+        <ResponsiveContainer
+          width='100%'
+          height={350}
+        >
           <BarChart data={MOCK_COMPARISON}>
             <CartesianGrid strokeDasharray='3 3' />
             <XAxis dataKey='period' />
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey='planned' name={i18n.t('aps.plan_comparison_detail_page.k11')} fill={designTokens.colors.primary.main} />
-            <Bar dataKey='actual' name={i18n.t('aps.plan_comparison_detail_page.k12')} fill={designTokens.colors.success.dark} />
+            <Bar
+              dataKey='planned'
+              name={i18n.t('aps.plan_comparison_detail_page.k11')}
+              fill={designTokens.colors.primary.main}
+            />
+            <Bar
+              dataKey='actual'
+              name={i18n.t('aps.plan_comparison_detail_page.k12')}
+              fill={designTokens.colors.success.dark}
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>

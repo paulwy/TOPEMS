@@ -38,10 +38,11 @@ const TabSwitcher: React.FC<TabSwitcherProps> = ({ activeTab, onTabChange, templ
           variant={activeTab === 'templates' ? 'contained' : 'text'}
           onClick={() => {
             onTabChange('templates');
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES ,
-  exact: false,
-  refetchType: 'active',
-});
+            queryClient.invalidateQueries({
+              queryKey: QUERY_KEYS.REPORT.TEMPLATES,
+              exact: false,
+              refetchType: 'active',
+            });
           }}
           sx={{ borderRadius: 1.5, textTransform: 'none' }}
         >

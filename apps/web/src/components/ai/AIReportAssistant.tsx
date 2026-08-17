@@ -46,7 +46,11 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
 
   const handleGenerateReport = async () => {
     if (!query.trim()) {
-      addNotification({ title: i18n.t('components.ai_report_assistant.k1'), message: i18n.t('components.ai_report_assistant.k0'), type: 'warning' });
+      addNotification({
+        title: i18n.t('components.ai_report_assistant.k1'),
+        message: i18n.t('components.ai_report_assistant.k0'),
+        type: 'warning',
+      });
       return;
     }
 
@@ -67,14 +71,22 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
           data: response.data.data as Record<string, unknown>[],
           metrics: (response.data.metrics ?? []) as unknown as Record<string, unknown>[],
         });
-        addNotification({ title: i18n.t('components.ai_report_assistant.k3'), message: i18n.t('components.ai_report_assistant.k2'), type: 'success' });
+        addNotification({
+          title: i18n.t('components.ai_report_assistant.k3'),
+          message: i18n.t('components.ai_report_assistant.k2'),
+          type: 'success',
+        });
       } else {
         setError(response.message || i18n.t('components.ai_report_assistant.k4'));
       }
     } catch (err: unknown) {
       logger.error(i18n.t('components.ai_report_assistant.k0'), err);
       setError(i18n.t('components.ai_report_assistant.k5'));
-      addNotification({ title: i18n.t('components.ai_report_assistant.k7'), message: i18n.t('components.ai_report_assistant.k6'), type: 'error' });
+      addNotification({
+        title: i18n.t('components.ai_report_assistant.k7'),
+        message: i18n.t('components.ai_report_assistant.k6'),
+        type: 'error',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -187,7 +199,14 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
       (sum: number, item: Record<string, unknown>) => sum + (item.value as number),
       0
     );
-    const colors = [designTokens.colors.primary.main, designTokens.colors.success.dark, designTokens.colors.warning.main, designTokens.colors.error.main, designTokens.colors.secondary.main, designTokens.colors.pink.main];
+    const colors = [
+      designTokens.colors.primary.main,
+      designTokens.colors.success.dark,
+      designTokens.colors.warning.main,
+      designTokens.colors.error.main,
+      designTokens.colors.secondary.main,
+      designTokens.colors.pink.main,
+    ];
     let cumulativeAngle = 0;
 
     return (
@@ -446,7 +465,9 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
           }
           fullWidth
         >
-          {isLoading ? i18n.t('components.ai_report_assistant.k6') : i18n.t('components.ai_report_assistant.k17')}
+          {isLoading
+            ? i18n.t('components.ai_report_assistant.k6')
+            : i18n.t('components.ai_report_assistant.k17')}
         </Button>
 
         {error && (

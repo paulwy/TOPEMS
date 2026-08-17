@@ -16,12 +16,36 @@ import { voucherApi } from '@/api/finance/voucher';
 // ============ 凭证明细子表配置 ============
 
 const voucherItemsFields: NestedTableConfig['fields'] = [
-  { name: 'line_number', label: i18n.t('shared.voucher.k0'), type: 'number', required: true, listWidth: 60 },
-  { name: 'subject_code', label: i18n.t('shared.voucher.k1'), type: 'text', required: true, listWidth: 100 },
+  {
+    name: 'line_number',
+    label: i18n.t('shared.voucher.k0'),
+    type: 'number',
+    required: true,
+    listWidth: 60,
+  },
+  {
+    name: 'subject_code',
+    label: i18n.t('shared.voucher.k1'),
+    type: 'text',
+    required: true,
+    listWidth: 100,
+  },
   { name: 'subject_name', label: i18n.t('shared.voucher.k2'), type: 'text', listWidth: 120 },
   { name: 'summary', label: i18n.t('shared.voucher.k3'), type: 'text', listWidth: 150 },
-  { name: 'debit_amount', label: i18n.t('shared.voucher.k4'), type: 'number', required: true, listWidth: 110 },
-  { name: 'credit_amount', label: i18n.t('shared.voucher.k5'), type: 'number', required: true, listWidth: 110 },
+  {
+    name: 'debit_amount',
+    label: i18n.t('shared.voucher.k4'),
+    type: 'number',
+    required: true,
+    listWidth: 110,
+  },
+  {
+    name: 'credit_amount',
+    label: i18n.t('shared.voucher.k5'),
+    type: 'number',
+    required: true,
+    listWidth: 110,
+  },
   { name: 'unit', label: i18n.t('shared.voucher.k6'), type: 'text' },
   { name: 'quantity', label: i18n.t('shared.voucher.k7'), type: 'number' },
   { name: 'price', label: i18n.t('shared.voucher.k8'), type: 'number' },
@@ -153,10 +177,22 @@ export const voucherSchema: EntitySchema & {
       options: {
         type: 'static',
         options: [
-          { label: i18n.t('schema:erp.voucher.voucher_type.option.记'), value: i18n.t('shared.voucher.k2') },
-          { label: i18n.t('schema:erp.voucher.voucher_type.option.收'), value: i18n.t('shared.voucher.k3') },
-          { label: i18n.t('schema:erp.voucher.voucher_type.option.付'), value: i18n.t('shared.voucher.k4') },
-          { label: i18n.t('schema:erp.voucher.voucher_type.option.转'), value: i18n.t('shared.voucher.k5') },
+          {
+            label: i18n.t('schema:erp.voucher.voucher_type.option.记'),
+            value: i18n.t('shared.voucher.k2'),
+          },
+          {
+            label: i18n.t('schema:erp.voucher.voucher_type.option.收'),
+            value: i18n.t('shared.voucher.k3'),
+          },
+          {
+            label: i18n.t('schema:erp.voucher.voucher_type.option.付'),
+            value: i18n.t('shared.voucher.k4'),
+          },
+          {
+            label: i18n.t('schema:erp.voucher.voucher_type.option.转'),
+            value: i18n.t('shared.voucher.k5'),
+          },
         ],
       },
       defaultValue: i18n.t('shared.voucher.k26'),
@@ -219,10 +255,22 @@ export const voucherSchema: EntitySchema & {
         type: 'select',
         options: [
           { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.all'), value: 'all' },
-          { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.记'), value: i18n.t('shared.voucher.k6') },
-          { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.收'), value: i18n.t('shared.voucher.k7') },
-          { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.付'), value: i18n.t('shared.voucher.k8') },
-          { label: i18n.t('schema:erp.voucher.filter.voucher_type.option.转'), value: i18n.t('shared.voucher.k9') },
+          {
+            label: i18n.t('schema:erp.voucher.filter.voucher_type.option.记'),
+            value: i18n.t('shared.voucher.k6'),
+          },
+          {
+            label: i18n.t('schema:erp.voucher.filter.voucher_type.option.收'),
+            value: i18n.t('shared.voucher.k7'),
+          },
+          {
+            label: i18n.t('schema:erp.voucher.filter.voucher_type.option.付'),
+            value: i18n.t('shared.voucher.k8'),
+          },
+          {
+            label: i18n.t('schema:erp.voucher.filter.voucher_type.option.转'),
+            value: i18n.t('shared.voucher.k9'),
+          },
         ],
         defaultValue: 'all',
       },

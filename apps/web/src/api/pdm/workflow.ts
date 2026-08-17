@@ -35,7 +35,10 @@ export interface StartWorkflowRequest {
 }
 
 export const workflowApi = {
-  listWorkflows: (params?: { status?: string; type?: string }): Promise<ApiResponse<WorkflowDefinition[]>> => {
+  listWorkflows: (params?: {
+    status?: string;
+    type?: string;
+  }): Promise<ApiResponse<WorkflowDefinition[]>> => {
     return apiClient.pdm.get('/workflows', { params });
   },
 
@@ -47,7 +50,10 @@ export const workflowApi = {
     return apiClient.pdm.post('/workflows', data);
   },
 
-  updateWorkflow: (id: string, data: Partial<WorkflowDefinition>): Promise<ApiResponse<WorkflowDefinition>> => {
+  updateWorkflow: (
+    id: string,
+    data: Partial<WorkflowDefinition>
+  ): Promise<ApiResponse<WorkflowDefinition>> => {
     return apiClient.pdm.put(`/workflows/${id}`, data);
   },
 
@@ -66,7 +72,10 @@ export const workflowApi = {
     return apiClient.pdm.get(`/workflow-instances/${id}`);
   },
 
-  advanceInstance: (id: string, data?: { action?: string; comment?: string }): Promise<ApiResponse<WorkflowInstance>> => {
+  advanceInstance: (
+    id: string,
+    data?: { action?: string; comment?: string }
+  ): Promise<ApiResponse<WorkflowInstance>> => {
     return apiClient.pdm.post(`/workflow-instances/${id}/advance`, data || {});
   },
 };

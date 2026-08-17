@@ -55,8 +55,16 @@ describe('V150 masterData Security API bindings', () => {
 
     it('should list policies with filters', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-      await dataSecurityApiV67.listPolicies({ entity_type: 'customer', policy_type: 'row_level', status: 'active', page: 1, pageSize: 20 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v67/policies?entity_type=customer&policy_type=row_level&status=active&page=1&pagesize=20');
+      await dataSecurityApiV67.listPolicies({
+        entity_type: 'customer',
+        policy_type: 'row_level',
+        status: 'active',
+        page: 1,
+        pageSize: 20,
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v67/policies?entity_type=customer&policy_type=row_level&status=active&page=1&pagesize=20'
+      );
     });
 
     it('should list policies with search', async () => {
@@ -68,7 +76,9 @@ describe('V150 masterData Security API bindings', () => {
     it('should update policy', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await dataSecurityApiV67.updatePolicy('p-1', { description: '更新策略描述' });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v67/policies/p-1', { description: '更新策略描述' });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v67/policies/p-1', {
+        description: '更新策略描述',
+      });
     });
 
     it('should delete policy', async () => {
@@ -121,7 +131,9 @@ describe('V150 masterData Security API bindings', () => {
     it('should update rule', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await dataSecurityApiV67.updateRule('r-1', { description: '更新规则描述' });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v67/rules/r-1', { description: '更新规则描述' });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v67/rules/r-1', {
+        description: '更新规则描述',
+      });
     });
 
     it('should delete rule', async () => {
@@ -157,14 +169,22 @@ describe('V150 masterData Security API bindings', () => {
 
     it('should list classifications', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-      await dataSecurityApiV67.listClassifications({ security_level: 'confidential', page: 1, pageSize: 20 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v67/classifications?security_level=confidential&page=1&pagesize=20');
+      await dataSecurityApiV67.listClassifications({
+        security_level: 'confidential',
+        page: 1,
+        pageSize: 20,
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v67/classifications?security_level=confidential&page=1&pagesize=20'
+      );
     });
 
     it('should update classification', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await dataSecurityApiV67.updateClassification('a-1', { security_level: 'secret' });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v67/classifications/a-1', { security_level: 'secret' });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v67/classifications/a-1', {
+        security_level: 'secret',
+      });
     });
 
     it('should review classification', async () => {
@@ -203,13 +223,21 @@ describe('V150 masterData Security API bindings', () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await dataSecurityApiV67.updateAcl('a-1', {
         permissions: [
-          { subject_type: 'role', subject_id: 'admin', actions: ['read', 'write', 'delete', 'admin'] },
+          {
+            subject_type: 'role',
+            subject_id: 'admin',
+            actions: ['read', 'write', 'delete', 'admin'],
+          },
           { subject_type: 'public', actions: ['read'] },
         ],
       });
       expect(mockClient.put).toHaveBeenCalledWith('/mdm-v67/acls/a-1', {
         permissions: [
-          { subject_type: 'role', subject_id: 'admin', actions: ['read', 'write', 'delete', 'admin'] },
+          {
+            subject_type: 'role',
+            subject_id: 'admin',
+            actions: ['read', 'write', 'delete', 'admin'],
+          },
           { subject_type: 'public', actions: ['read'] },
         ],
       });
@@ -248,7 +276,9 @@ describe('V150 masterData Security API bindings', () => {
     it('should list ACLs', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await dataSecurityApiV67.listAcls({ asset_type: 'table', page: 1, pageSize: 50 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v67/acls?asset_type=table&page=1&pagesize=50');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v67/acls?asset_type=table&page=1&pagesize=50'
+      );
     });
   });
 
@@ -279,7 +309,9 @@ describe('V150 masterData Security API bindings', () => {
     it('should list access requests', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await dataSecurityApiV67.listAccessRequests({ status: 'pending', page: 1, pageSize: 20 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v67/access-requests?status=pending&page=1&pagesize=20');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v67/access-requests?status=pending&page=1&pagesize=20'
+      );
     });
 
     it('should review access request (approve)', async () => {
@@ -349,7 +381,9 @@ describe('V150 masterData Security API bindings', () => {
         page: 1,
         pageSize: 50,
       });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v67/audit-logs?action=access&status=denied&date_from=2026-08-01&date_to=2026-08-24&sensitive_only=true&page=1&pagesize=50');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v67/audit-logs?action=access&status=denied&date_from=2026-08-01&date_to=2026-08-24&sensitive_only=true&page=1&pagesize=50'
+      );
     });
 
     it('should get audit log by id', async () => {
@@ -359,13 +393,18 @@ describe('V150 masterData Security API bindings', () => {
     });
 
     it('should export audit logs', async () => {
-      mockClient.get.mockResolvedValue({ success: true, data: { download_url: '/exports/audit-logs.json', count: 150 } });
+      mockClient.get.mockResolvedValue({
+        success: true,
+        data: { download_url: '/exports/audit-logs.json', count: 150 },
+      });
       await dataSecurityApiV67.exportAuditLogs({
         action: 'access',
         date_from: '2026-08-01',
         date_to: '2026-08-24',
       });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v67/audit-logs/export?action=access&date_from=2026-08-01&date_to=2026-08-24');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v67/audit-logs/export?action=access&date_from=2026-08-01&date_to=2026-08-24'
+      );
     });
   });
 
@@ -391,7 +430,9 @@ describe('V150 masterData Security API bindings', () => {
         page: 1,
         pageSize: 20,
       });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v67/assessments?status=non_compliant&min_score=50&page=1&pagesize=20');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v67/assessments?status=non_compliant&min_score=50&page=1&pagesize=20'
+      );
     });
   });
 
@@ -410,19 +451,28 @@ describe('V150 masterData Security API bindings', () => {
     });
 
     it('should get classification stats', async () => {
-      mockClient.get.mockResolvedValue({ success: true, data: { by_level: [], by_classification: [], unclassified_count: 0 } });
+      mockClient.get.mockResolvedValue({
+        success: true,
+        data: { by_level: [], by_classification: [], unclassified_count: 0 },
+      });
       await dataSecurityApiV67.getClassificationStats();
       expect(mockClient.get).toHaveBeenCalledWith('/mdm-v67/dashboard/classifications');
     });
 
     it('should get access stats', async () => {
-      mockClient.get.mockResolvedValue({ success: true, data: { total_granted: 1000, total_denied: 50, by_action: [], trend: [] } });
+      mockClient.get.mockResolvedValue({
+        success: true,
+        data: { total_granted: 1000, total_denied: 50, by_action: [], trend: [] },
+      });
       await dataSecurityApiV67.getAccessStats(30);
       expect(mockClient.get).toHaveBeenCalledWith('/mdm-v67/dashboard/access?days=30');
     });
 
     it('should get access stats without params', async () => {
-      mockClient.get.mockResolvedValue({ success: true, data: { total_granted: 0, total_denied: 0, by_action: [], trend: [] } });
+      mockClient.get.mockResolvedValue({
+        success: true,
+        data: { total_granted: 0, total_denied: 0, by_action: [], trend: [] },
+      });
       await dataSecurityApiV67.getAccessStats();
       expect(mockClient.get).toHaveBeenCalledWith('/mdm-v67/dashboard/access');
     });

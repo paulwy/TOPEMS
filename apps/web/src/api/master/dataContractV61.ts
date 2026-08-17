@@ -162,10 +162,15 @@ export const dataContractApiV61 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: DataContractV61[]; total: number }>(`/mdm-v61/contracts${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: DataContractV61[]; total: number }>(
+      `/mdm-v61/contracts${s ? `?${s}` : ''}`
+    );
   },
 
-  async updateContract(id: string, data: UpdateContractRequest): Promise<ApiResponse<DataContractV61>> {
+  async updateContract(
+    id: string,
+    data: UpdateContractRequest
+  ): Promise<ApiResponse<DataContractV61>> {
     return apiClient.master.put<DataContractV61>(`/mdm-v61/contracts/${id}`, data);
   },
 
@@ -173,11 +178,17 @@ export const dataContractApiV61 = {
     return apiClient.master.delete<{ deleted: boolean }>(`/mdm-v61/contracts/${id}`);
   },
 
-  async publishContract(id: string, data: PublishContractRequest): Promise<ApiResponse<DataContractV61>> {
+  async publishContract(
+    id: string,
+    data: PublishContractRequest
+  ): Promise<ApiResponse<DataContractV61>> {
     return apiClient.master.post<DataContractV61>(`/mdm-v61/contracts/${id}/publish`, data);
   },
 
-  async deprecateContract(id: string, data: DeprecateContractRequest): Promise<ApiResponse<DataContractV61>> {
+  async deprecateContract(
+    id: string,
+    data: DeprecateContractRequest
+  ): Promise<ApiResponse<DataContractV61>> {
     return apiClient.master.post<DataContractV61>(`/mdm-v61/contracts/${id}/deprecate`, data);
   },
 
@@ -198,11 +209,17 @@ export const dataContractApiV61 = {
     return apiClient.master.post<DataContractV61>(`/mdm-v61/contracts/${id}/rollback`, { version });
   },
 
-  async diffVersions(id: string, from: string, to: string): Promise<ApiResponse<{ added: string[]; removed: string[]; modified: string[] }>> {
+  async diffVersions(
+    id: string,
+    from: string,
+    to: string
+  ): Promise<ApiResponse<{ added: string[]; removed: string[]; modified: string[] }>> {
     const qs = new URLSearchParams();
     qs.set('from', from);
     qs.set('to', to);
-    return apiClient.master.get<{ added: string[]; removed: string[]; modified: string[] }>(`/mdm-v61/contracts/${id}/diff?${qs.toString()}`);
+    return apiClient.master.get<{ added: string[]; removed: string[]; modified: string[] }>(
+      `/mdm-v61/contracts/${id}/diff?${qs.toString()}`
+    );
   },
 
   // ===== 实体绑定 =====
@@ -210,25 +227,56 @@ export const dataContractApiV61 = {
     return apiClient.master.get<ContractBinding[]>(`/mdm-v61/contracts/${contractId}/bindings`);
   },
 
-  async bindEntity(contractId: string, data: BindEntityRequest): Promise<ApiResponse<ContractBinding>> {
+  async bindEntity(
+    contractId: string,
+    data: BindEntityRequest
+  ): Promise<ApiResponse<ContractBinding>> {
     return apiClient.master.post<ContractBinding>(`/mdm-v61/contracts/${contractId}/bind`, data);
   },
 
-  async unbindEntity(contractId: string, bindingId: string): Promise<ApiResponse<{ unbound: boolean }>> {
-    return apiClient.master.post<{ unbound: boolean }>(`/mdm-v61/contracts/${contractId}/unbind/${bindingId}`, {});
+  async unbindEntity(
+    contractId: string,
+    bindingId: string
+  ): Promise<ApiResponse<{ unbound: boolean }>> {
+    return apiClient.master.post<{ unbound: boolean }>(
+      `/mdm-v61/contracts/${contractId}/unbind/${bindingId}`,
+      {}
+    );
   },
 
-  async listEntityBindings(entityType: string, entityId: string): Promise<ApiResponse<ContractBinding[]>> {
-    return apiClient.master.get<ContractBinding[]>(`/mdm-v61/entities/${entityType}/${entityId}/contracts`);
+  async listEntityBindings(
+    entityType: string,
+    entityId: string
+  ): Promise<ApiResponse<ContractBinding[]>> {
+    return apiClient.master.get<ContractBinding[]>(
+      `/mdm-v61/entities/${entityType}/${entityId}/contracts`
+    );
   },
 
   // ===== 校验与监控 =====
-  async validateContract(id: string, data?: ValidateContractRequest): Promise<ApiResponse<{ valid: boolean; issues: Array<{ field: string; message: string; severity: 'error' | 'warning' }> }>> {
-    return apiClient.master.post<{ valid: boolean; issues: Array<{ field: string; message: string; severity: 'error' | 'warning' }> }>(`/mdm-v61/contracts/${id}/validate`, data || {});
+  async validateContract(
+    id: string,
+    data?: ValidateContractRequest
+  ): Promise<
+    ApiResponse<{
+      valid: boolean;
+      issues: Array<{ field: string; message: string; severity: 'error' | 'warning' }>;
+    }>
+  > {
+    return apiClient.master.post<{
+      valid: boolean;
+      issues: Array<{ field: string; message: string; severity: 'error' | 'warning' }>;
+    }>(`/mdm-v61/contracts/${id}/validate`, data || {});
   },
 
-  async testContract(id: string, payload: Record<string, unknown>): Promise<ApiResponse<{ passed: boolean; latency_ms: number; errors: string[] }>> {
-    return apiClient.master.post<{ passed: boolean; latency_ms: number; errors: string[] }>(`/mdm-v61/contracts/${id}/test`, payload);
+  async testContract(
+    id: string,
+    payload: Record<string, unknown>
+  ): Promise<ApiResponse<{ passed: boolean; latency_ms: number; errors: string[] }>> {
+    return apiClient.master.post<{ passed: boolean; latency_ms: number; errors: string[] }>(
+      `/mdm-v61/contracts/${id}/test`,
+      payload
+    );
   },
 
   async listViolations(params?: {
@@ -244,7 +292,10 @@ export const dataContractApiV61 = {
     return apiClient.master.get<ContractViolation[]>(`/mdm-v61/violations${s ? `?${s}` : ''}`);
   },
 
-  async resolveViolation(id: string, data: { resolution: string }): Promise<ApiResponse<ContractViolation>> {
+  async resolveViolation(
+    id: string,
+    data: { resolution: string }
+  ): Promise<ApiResponse<ContractViolation>> {
     return apiClient.master.post<ContractViolation>(`/mdm-v61/violations/${id}/resolve`, data);
   },
 

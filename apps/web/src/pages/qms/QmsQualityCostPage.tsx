@@ -8,7 +8,8 @@ import { qualityCostApi } from '@/api/qms';
 import type { QualityCost } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter<QualityCost>({
   list: qualityCostApi.listQualityCosts as unknown as CrudApi<QualityCost>['list'],
   create: qualityCostApi.createQualityCost as unknown as CrudApi<QualityCost>['create'],
@@ -49,7 +50,9 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
         <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box>
-              <Typography sx={{ color: 'info.light', fontSize: '0.875rem' }}>{i18n.t('qms.qms_quality_cost_page.k0')}</Typography>
+              <Typography sx={{ color: 'info.light', fontSize: '0.875rem' }}>
+                {i18n.t('qms.qms_quality_cost_page.k0')}
+              </Typography>
               <Typography
                 variant='h4'
                 sx={{ fontWeight: 700, mt: 0.5 }}
@@ -139,7 +142,9 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
         <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box>
-              <Typography sx={{ color: 'error.light', fontSize: '0.875rem' }}>{i18n.t('qms.qms_quality_cost_page.k1')}</Typography>
+              <Typography sx={{ color: 'error.light', fontSize: '0.875rem' }}>
+                {i18n.t('qms.qms_quality_cost_page.k1')}
+              </Typography>
               <Typography
                 variant='h4'
                 sx={{ fontWeight: 700, mt: 0.5 }}

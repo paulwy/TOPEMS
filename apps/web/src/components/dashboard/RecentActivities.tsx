@@ -27,7 +27,12 @@ interface RecentActivitiesProps {
 const DEFAULT_COLORS = { bg: 'grey.50', text: 'grey.600', bar: 'grey.400', iconBg: 'grey.100' };
 
 const typeColors: Record<string, { bg: string; text: string; bar: string; iconBg: string }> = {
-  [i18n.t('shared.recent_activities.k0')]: { bg: 'primary.light', text: 'primary.dark', bar: 'primary.main', iconBg: 'primary.100' },
+  [i18n.t('shared.recent_activities.k0')]: {
+    bg: 'primary.light',
+    text: 'primary.dark',
+    bar: 'primary.main',
+    iconBg: 'primary.100',
+  },
   [i18n.t('shared.recent_activities.k1')]: {
     bg: 'secondary.light',
     text: 'secondary.dark',
@@ -40,9 +45,24 @@ const typeColors: Record<string, { bg: string; text: string; bar: string; iconBg
     bar: 'success.dark',
     iconBg: 'success.lighter',
   },
-  [i18n.t('shared.recent_activities.k3')]: { bg: 'warning.lighter', text: designTokens.colors.warning[600], bar: 'warning.main', iconBg: 'warning.100' },
-  [i18n.t('shared.recent_activities.k4')]: { bg: 'grey.50', text: 'grey.600', bar: 'grey.400', iconBg: 'grey.100' },
-  [i18n.t('shared.recent_activities.k5')]: { bg: 'primary.light', text: 'primary.dark', bar: 'primary.main', iconBg: 'primary.100' },
+  [i18n.t('shared.recent_activities.k3')]: {
+    bg: 'warning.lighter',
+    text: designTokens.colors.warning[600],
+    bar: 'warning.main',
+    iconBg: 'warning.100',
+  },
+  [i18n.t('shared.recent_activities.k4')]: {
+    bg: 'grey.50',
+    text: 'grey.600',
+    bar: 'grey.400',
+    iconBg: 'grey.100',
+  },
+  [i18n.t('shared.recent_activities.k5')]: {
+    bg: 'primary.light',
+    text: 'primary.dark',
+    bar: 'primary.main',
+    iconBg: 'primary.100',
+  },
   [i18n.t('shared.recent_activities.k6')]: DEFAULT_COLORS,
 };
 
@@ -138,7 +158,10 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {currentActivities.map((activity, index) => {
-        const colors = typeColors[activity.type] ?? typeColors[i18n.t('shared.recent_activities.k6')] ?? DEFAULT_COLORS;
+        const colors =
+          typeColors[activity.type] ??
+          typeColors[i18n.t('shared.recent_activities.k6')] ??
+          DEFAULT_COLORS;
         const progressWidth = `${((currentActivities.length - index) / currentActivities.length) * 100}%`;
 
         return (

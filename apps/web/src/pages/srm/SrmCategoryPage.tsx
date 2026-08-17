@@ -9,7 +9,7 @@ import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 import { srmApi } from '@/api/srm';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface SupplierCategory {
   id: string;
@@ -177,9 +177,24 @@ const CategoryStats: React.FC<{ rows: SupplierCategory[] }> = ({ rows }) => {
   );
 
   const statCards = [
-    { label: i18n.t('pages.srm_category_page.k17'), value: stats.total, color: ct.purple[500], bgColor: 'secondary.light' },
-    { label: i18n.t('pages.srm_category_page.k18'), value: stats.active, color: 'success.dark', bgColor: 'success.lighter' },
-    { label: i18n.t('pages.srm_category_page.k19'), value: stats.withSuppliers, color: 'info.dark', bgColor: 'info.lighter' },
+    {
+      label: i18n.t('pages.srm_category_page.k17'),
+      value: stats.total,
+      color: ct.purple[500],
+      bgColor: 'secondary.light',
+    },
+    {
+      label: i18n.t('pages.srm_category_page.k18'),
+      value: stats.active,
+      color: 'success.dark',
+      bgColor: 'success.lighter',
+    },
+    {
+      label: i18n.t('pages.srm_category_page.k19'),
+      value: stats.withSuppliers,
+      color: 'info.dark',
+      bgColor: 'info.lighter',
+    },
     {
       label: i18n.t('pages.srm_category_page.k20'),
       value: stats.totalSuppliers,

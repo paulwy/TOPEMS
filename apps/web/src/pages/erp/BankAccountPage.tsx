@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/material';
 import { CreditCard } from 'lucide-react';
 import i18n from '@/i18n';
+
 const BankAccountStats: React.FC = () => {
   const { data } = useQuery({
     queryKey: [QUERY_KEYS.ERP.BANK_ACCOUNTS, 'stats'],
@@ -26,15 +27,30 @@ const BankAccountStats: React.FC = () => {
   const active = accounts.filter((a) => a.status === 'active').length;
   const frozen = accounts.filter((a) => ['frozen', 'closed'].includes(a.status)).length;
   const stats = [
-    { label: i18n.t('erp.bank_account_page.k1'), value: total, color: 'secondary[100]', textColor: 'secondary.700' },
+    {
+      label: i18n.t('erp.bank_account_page.k1'),
+      value: total,
+      color: 'secondary[100]',
+      textColor: 'secondary.700',
+    },
     {
       label: i18n.t('erp.bank_account_page.k2'),
       value: `¥${totalBalance.toFixed(2)}`,
       color: 'success.lighter',
       textColor: 'success.700',
     },
-    { label: i18n.t('erp.bank_account_page.k3'), value: active, color: 'warning.light', textColor: 'warning.700' },
-    { label: i18n.t('erp.bank_account_page.k4'), value: frozen, color: 'error.lighter', textColor: 'error.dark' },
+    {
+      label: i18n.t('erp.bank_account_page.k3'),
+      value: active,
+      color: 'warning.light',
+      textColor: 'warning.700',
+    },
+    {
+      label: i18n.t('erp.bank_account_page.k4'),
+      value: frozen,
+      color: 'error.lighter',
+      textColor: 'error.dark',
+    },
   ];
   return (
     <Box

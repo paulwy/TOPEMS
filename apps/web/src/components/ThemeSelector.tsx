@@ -19,12 +19,7 @@ import {
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { Sun, Moon, Sparkles, Monitor, Check } from 'lucide-react';
-import {
-  useThemeStore,
-  getThemeList,
-  type Theme,
-  THEME_ICON_KEYS,
-} from '@/store';
+import { useThemeStore, getThemeList, type Theme, THEME_ICON_KEYS } from '@/store';
 
 const THEME_ICON_COMPONENTS: Record<Theme, React.ReactNode> = {
   light: <Sun style={{ width: 18, height: 18 }} />,

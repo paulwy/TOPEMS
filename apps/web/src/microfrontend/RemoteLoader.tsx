@@ -37,7 +37,11 @@ class RemoteErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    logger.error(`${i18n.t('microfrontend.remote_loader.k0')}${this.props.moduleName}${i18n.t('microfrontend.remote_loader.k1')}`, error, errorInfo);
+    logger.error(
+      `${i18n.t('microfrontend.remote_loader.k0')}${this.props.moduleName}${i18n.t('microfrontend.remote_loader.k1')}`,
+      error,
+      errorInfo
+    );
     errorTracker.captureError(error, {
       moduleId: this.props.moduleName,
       extra: { errorInfo },
@@ -71,7 +75,8 @@ class RemoteErrorBoundary extends Component<
             variant='h6'
             color='error'
           >
-            {i18n.t('microfrontend.remote_loader.k0')} {this.props.moduleName} {i18n.t('microfrontend.remote_loader.k1')}
+            {i18n.t('microfrontend.remote_loader.k0')} {this.props.moduleName}{' '}
+            {i18n.t('microfrontend.remote_loader.k1')}
           </Typography>
           <Typography
             variant='body2'
@@ -212,7 +217,9 @@ export const RemoteLoader: React.FC<RemoteLoaderProps> = ({
       if (opts.js) bundle.jsSandbox.activate();
       if (opts.events ?? true) bundle.eventIsolation.activate();
       bundle.status = 'active';
-      logger.info(`${i18n.t('microfrontend.remote_loader.remoteloader_2')}${moduleName}${i18n.t('microfrontend.remote_loader.k3')}`);
+      logger.info(
+        `${i18n.t('microfrontend.remote_loader.remoteloader_2')}${moduleName}${i18n.t('microfrontend.remote_loader.k3')}`
+      );
     }
 
     return () => {
@@ -265,7 +272,10 @@ export const RemoteLoader: React.FC<RemoteLoaderProps> = ({
 
           return { default: module.default || module };
         } catch (err) {
-          console.error(`${i18n.t('microfrontend.remote_loader.remoteloader_7')}${moduleName}/${component}${i18n.t('microfrontend.remote_loader.k8')}`, err);
+          console.error(
+            `${i18n.t('microfrontend.remote_loader.remoteloader_7')}${moduleName}/${component}${i18n.t('microfrontend.remote_loader.k8')}`,
+            err
+          );
           microFrontendPerf.recordModuleLoad(moduleName, component, {
             success: false,
             error: err instanceof Error ? err.message : String(err),
@@ -349,7 +359,9 @@ export async function preloadRemoteModules(moduleNames: string[]): Promise<void>
       await loadRemoteModule(name, './preload');
     } catch {
       // 预加载失败不阻塞主流程
-      console.warn(`${i18n.t('microfrontend.remote_loader.k9')}${name}${i18n.t('microfrontend.remote_loader.k10')}`);
+      console.warn(
+        `${i18n.t('microfrontend.remote_loader.k9')}${name}${i18n.t('microfrontend.remote_loader.k10')}`
+      );
     }
   });
   await Promise.allSettled(promises);

@@ -12,10 +12,10 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { DOC_PATHS } from '@/modules/doc/config';
 
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const DocsFileDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -39,8 +39,9 @@ const DocsFileDetailPage: React.FC = () => {
       throw new Error(res.message || i18n.t('pages.file_detail_page.k1'));
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const errorMessage = queryError
     ? queryError instanceof Error
@@ -59,10 +60,11 @@ const DocsFileDetailPage: React.FC = () => {
     onSuccess: () => {
       success(i18n.t('pages.file_detail_page.k4'));
       if (id) {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.DOC.DOCUMENTS,
+          exact: false,
+          refetchType: 'active',
+        });
       }
       navigate(DOC_PATHS.documents);
     },
@@ -101,27 +103,41 @@ const DocsFileDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.file_detail_page.k6')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('pages.file_detail_page.k6')}
+          </InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{file.name}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.file_detail_page.k7')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('pages.file_detail_page.k7')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{file.content_type || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.file_detail_page.k8')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('pages.file_detail_page.k8')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatFileSize(file.size)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.file_detail_page.k9')}</InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{file.folder_id || i18n.t('pages.file_detail_page.k10')}</Typography>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('pages.file_detail_page.k9')}
+          </InputLabel>
+          <Typography sx={{ mt: 0.5 }}>
+            {file.folder_id || i18n.t('pages.file_detail_page.k10')}
+          </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.file_detail_page.k11')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('pages.file_detail_page.k11')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{file.created_by || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.file_detail_page.id_12')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('pages.file_detail_page.id_12')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}>
             {file.id.substring(0, 8)}...
           </Typography>
@@ -141,11 +157,15 @@ const DocsFileDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.file_detail_page.k13')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('pages.file_detail_page.k13')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(file.created_at)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.file_detail_page.k14')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('pages.file_detail_page.k14')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(file.updated_at)}</Typography>
         </Box>
       </Box>
@@ -205,8 +225,16 @@ const DocsFileDetailPage: React.FC = () => {
 
   const tabs = useMemo<TabConfig[]>(
     () => [
-      { id: 'basic', label: i18n.t('pages.file_detail_page.k16'), content: basicInfoContent || <></> },
-      { id: 'time', label: i18n.t('pages.file_detail_page.k17'), content: timeInfoContent || <></> },
+      {
+        id: 'basic',
+        label: i18n.t('pages.file_detail_page.k16'),
+        content: basicInfoContent || <></>,
+      },
+      {
+        id: 'time',
+        label: i18n.t('pages.file_detail_page.k17'),
+        content: timeInfoContent || <></>,
+      },
     ],
     [basicInfoContent, timeInfoContent]
   );

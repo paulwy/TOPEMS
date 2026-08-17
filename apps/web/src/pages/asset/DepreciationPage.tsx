@@ -23,7 +23,6 @@ import { fixedAssetApi } from '@/api/erp';
 import type { FixedAsset } from '@/api/erp';
 import { apiLogger } from '@/utils/logger';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const DepreciationPage: React.FC = () => {
@@ -54,10 +53,11 @@ const DepreciationPage: React.FC = () => {
             count: result.data.depreciated_count,
           }),
         });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.FIXED_ASSETS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.FIXED_ASSETS_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
         setShowDepreciateDialog(false);
         setDepreciatePeriod('');
         setSelectedIds([]);
@@ -123,7 +123,10 @@ const DepreciationPage: React.FC = () => {
             totalDepreciation: items.reduce((sum, a) => sum + (a.accumulated_depreciation || 0), 0),
             monthlyDepreciation: items.reduce((sum, a) => sum + (a.monthly_depreciation || 0), 0),
           });
-          return { data: items as unknown as Record<string, unknown>[], total: response.data.total || 0 };
+          return {
+            data: items as unknown as Record<string, unknown>[],
+            total: response.data.total || 0,
+          };
         }
         return { data: [], total: 0 };
       },

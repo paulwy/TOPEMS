@@ -41,7 +41,9 @@ const TaskFormDialog: React.FC<TaskFormDialogProps> = ({
       maxWidth='sm'
       fullWidth
     >
-      <DialogTitle>{isEditing ? i18n.t('pages.task_form_dialog.k1') : i18n.t('pages.task_form_dialog.k0')}</DialogTitle>
+      <DialogTitle>
+        {isEditing ? i18n.t('pages.task_form_dialog.k1') : i18n.t('pages.task_form_dialog.k0')}
+      </DialogTitle>
       <DialogContent dividers>
         <Stack
           spacing={2}

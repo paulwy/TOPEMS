@@ -5,6 +5,7 @@ import type { MarketplacePlugin } from '../hooks/usePluginManagement';
 import PluginInstallStepper from './PluginInstallStepper';
 import PluginMarketplaceList from './PluginMarketplaceList';
 import i18n from '@/i18n';
+
 interface PluginMarketplaceDialogProps {
   open: boolean;
   onClose: () => void;

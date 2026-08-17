@@ -28,8 +28,9 @@ export interface DepartmentTreeNode {
 }
 
 const resolvePageSize = (params?: PaginationParams): string | undefined => {
-  const ps = (params as { pageSize?: number } | undefined)?.pageSize
-    ?? (params as { pagesize?: number } | undefined)?.pagesize;
+  const ps =
+    (params as { pageSize?: number } | undefined)?.pageSize ??
+    (params as { pagesize?: number } | undefined)?.pagesize;
   return ps ? ps.toString() : undefined;
 };
 
@@ -51,7 +52,11 @@ export const addressbookApi = {
     return apiClient.erp.get<AddressContact>(`/addressbook/${id}`);
   },
 
-  async search(keyword: string, page?: number, pageSize?: number): Promise<ApiResponse<AddressContactListResponse>> {
+  async search(
+    keyword: string,
+    page?: number,
+    pageSize?: number
+  ): Promise<ApiResponse<AddressContactListResponse>> {
     const searchParams = new URLSearchParams();
     searchParams.set('keyword', keyword);
     if (page) searchParams.set('page', page.toString());
@@ -69,6 +74,8 @@ export const addressbookApi = {
   async export(format?: 'csv' | 'json'): Promise<ApiResponse<string>> {
     const searchParams = new URLSearchParams();
     if (format) searchParams.set('format', format);
-    return apiClient.erp.get<string>(`/addressbook/export${format ? `?${searchParams.toString()}` : ''}`);
+    return apiClient.erp.get<string>(
+      `/addressbook/export${format ? `?${searchParams.toString()}` : ''}`
+    );
   },
 };

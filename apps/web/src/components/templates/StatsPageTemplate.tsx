@@ -307,9 +307,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    bgcolor: stat.gradient
-                      ? 'glass.topLight'
-                      : `${stat.color || 'primary'}.light`,
+                    bgcolor: stat.gradient ? 'glass.topLight' : `${stat.color || 'primary'}.light`,
                     color: stat.gradient ? 'white' : `${stat.color || 'primary'}.main`,
                   }}
                 >
@@ -470,7 +468,8 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                 }}
               >
                 <Typography color='text.secondary'>
-                  [i18n.t('components.stats_page_template.k0')]: {chart.type} - {chart.data.length} {i18n.t('components.stats_page_template.k1')}
+                  [i18n.t('components.stats_page_template.k0')]: {chart.type} - {chart.data.length}{' '}
+                  {i18n.t('components.stats_page_template.k1')}
                 </Typography>
               </Box>
             </Paper>
@@ -558,7 +557,9 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                         colSpan={table.columns.length}
                         style={{ textAlign: 'center', padding: 40 }}
                       >
-                        <Typography color='text.secondary'>{i18n.t('components.stats_page_template.k0')}</Typography>
+                        <Typography color='text.secondary'>
+                          {i18n.t('components.stats_page_template.k0')}
+                        </Typography>
                       </td>
                     </tr>
                   ) : table.data.length === 0 ? (
@@ -567,7 +568,9 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                         colSpan={table.columns.length}
                         style={{ textAlign: 'center', padding: 40 }}
                       >
-                        <Typography color='text.secondary'>{i18n.t('templates.stats_page_template.k1')}</Typography>
+                        <Typography color='text.secondary'>
+                          {i18n.t('templates.stats_page_template.k1')}
+                        </Typography>
                       </td>
                     </tr>
                   ) : (

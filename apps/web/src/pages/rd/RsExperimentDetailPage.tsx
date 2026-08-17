@@ -47,7 +47,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { rdApi, type Experiment, type CreateExperimentRecordRequest } from '@/api/rd';
 import { useNotificationStore } from '@/store';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
 
 interface ExperimentWithProject extends Experiment {
@@ -68,7 +68,13 @@ const RsExperimentDetailPage: React.FC = () => {
     recorded_by: '',
   });
 
-  const recordTypes = [i18n.t('pages.rs_experiment_detail_page.k5'), i18n.t('pages.rs_experiment_detail_page.k4'), i18n.t('pages.rs_experiment_detail_page.k3'), i18n.t('pages.rs_experiment_detail_page.k2'), i18n.t('pages.rs_experiment_detail_page.k1')];
+  const recordTypes = [
+    i18n.t('pages.rs_experiment_detail_page.k5'),
+    i18n.t('pages.rs_experiment_detail_page.k4'),
+    i18n.t('pages.rs_experiment_detail_page.k3'),
+    i18n.t('pages.rs_experiment_detail_page.k2'),
+    i18n.t('pages.rs_experiment_detail_page.k1'),
+  ];
 
   const experimentQuery = useQuery({
     queryKey: QUERY_KEYS.RD.EXPERIMENT(id || ''),
@@ -80,8 +86,9 @@ const RsExperimentDetailPage: React.FC = () => {
       return response.data as ExperimentWithProject;
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const recordsQuery = useQuery({
     queryKey: QUERY_KEYS.RD.EXPERIMENT_RECORDS(id || ''),
@@ -93,8 +100,9 @@ const RsExperimentDetailPage: React.FC = () => {
       return response.data;
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const advancePhaseMutation = useMutation({
     mutationFn: async () => {
@@ -115,7 +123,8 @@ const RsExperimentDetailPage: React.FC = () => {
       apiLogger.error(i18n.t('pages.rs_experiment_detail_page.k0'), error);
       addNotification({
         type: 'error',
-        message: error instanceof Error ? error.message : i18n.t('pages.rs_experiment_detail_page.k10'),
+        message:
+          error instanceof Error ? error.message : i18n.t('pages.rs_experiment_detail_page.k10'),
       });
     },
   });
@@ -129,10 +138,11 @@ const RsExperimentDetailPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.EXPERIMENT_RECORDS(id || '') ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.RD.EXPERIMENT_RECORDS(id || ''),
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         message: i18n.t('pages.rs_experiment_detail_page.k12'),
@@ -148,7 +158,8 @@ const RsExperimentDetailPage: React.FC = () => {
       apiLogger.error(i18n.t('pages.rs_experiment_detail_page.k1'), error);
       addNotification({
         type: 'error',
-        message: error instanceof Error ? error.message : i18n.t('pages.rs_experiment_detail_page.k14'),
+        message:
+          error instanceof Error ? error.message : i18n.t('pages.rs_experiment_detail_page.k14'),
       });
     },
   });
@@ -266,7 +277,9 @@ const RsExperimentDetailPage: React.FC = () => {
               color='text.secondary'
               sx={{ mt: 1 }}
             >
-              [i18n.t('pages.rs_experiment_detail_page.k3')]: {experiment.code} | {i18n.t('pages.rs_experiment_detail_page.k4')}{experiment.project_name || experiment.project_id} |
+              [i18n.t('pages.rs_experiment_detail_page.k3')]: {experiment.code} |{' '}
+              {i18n.t('pages.rs_experiment_detail_page.k4')}
+              {experiment.project_name || experiment.project_id} |
               [i18n.t('pages.rs_experiment_detail_page.k5')]: {experiment.experimenter}
             </Typography>
           </div>
@@ -287,7 +300,11 @@ const RsExperimentDetailPage: React.FC = () => {
               onClick={handleAdvancePhase}
               disabled={advancePhaseLoading}
             >
-              {advancePhaseLoading ? <LoadingSpinner size='sm' /> : i18n.t('pages.rs_experiment_detail_page.k21')}
+              {advancePhaseLoading ? (
+                <LoadingSpinner size='sm' />
+              ) : (
+                i18n.t('pages.rs_experiment_detail_page.k21')
+              )}
             </Button>
           </Stack>
         </Stack>
@@ -333,19 +350,25 @@ const RsExperimentDetailPage: React.FC = () => {
                 spacing={2}
               >
                 <Grid size={{ xs: 6 }}>
-                  <Typography variant='body2'>{i18n.t('pages.rs_experiment_detail_page.k0')}</Typography>
-                </Grid>
-                <Grid size={{ xs: 6 }}>
                   <Typography variant='body2'>
-                    [i18n.t('pages.rs_experiment_detail_page.k9')]: {experiment.completed_at || i18n.t('pages.rs_experiment_detail_page.k22')}
+                    {i18n.t('pages.rs_experiment_detail_page.k0')}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
-                  <Typography variant='body2'>{i18n.t('components.report_builder.k21')}: {experiment.batch_number || '-'}</Typography>
+                  <Typography variant='body2'>
+                    [i18n.t('pages.rs_experiment_detail_page.k9')]:{' '}
+                    {experiment.completed_at || i18n.t('pages.rs_experiment_detail_page.k22')}
+                  </Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography variant='body2'>
-                    [i18n.t('pages.rs_experiment_detail_page.k11')]: {experiment.scale} {experiment.scale_unit}
+                    {i18n.t('components.report_builder.k21')}: {experiment.batch_number || '-'}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <Typography variant='body2'>
+                    [i18n.t('pages.rs_experiment_detail_page.k11')]: {experiment.scale}{' '}
+                    {experiment.scale_unit}
                   </Typography>
                 </Grid>
               </Grid>
@@ -455,7 +478,9 @@ const RsExperimentDetailPage: React.FC = () => {
                               variant='caption'
                               color='text.secondary'
                             >
-                              [i18n.t('pages.rs_experiment_detail_page.k15')]: {record.recorded_by} | {i18n.t('pages.rs_experiment_detail_page.k16')}{record.recorded_at}
+                              [i18n.t('pages.rs_experiment_detail_page.k15')]: {record.recorded_by}{' '}
+                              | {i18n.t('pages.rs_experiment_detail_page.k16')}
+                              {record.recorded_at}
                             </Typography>
                           </div>
                         </Stack>
@@ -504,7 +529,9 @@ const RsExperimentDetailPage: React.FC = () => {
                   {i18n.t('pages.rs_experiment_detail_page.k19')}
                 </Typography>
                 {experiment.batch_number ? (
-                  <Typography variant='body2'>{i18n.t('pages.rs_experiment_detail_page.k1')}</Typography>
+                  <Typography variant='body2'>
+                    {i18n.t('pages.rs_experiment_detail_page.k1')}
+                  </Typography>
                 ) : (
                   <Typography
                     variant='body2'
@@ -568,13 +595,19 @@ const RsExperimentDetailPage: React.FC = () => {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowAddRecordDialog(false)}>{i18n.t('pages.rs_experiment_detail_page.k34')}</Button>
+          <Button onClick={() => setShowAddRecordDialog(false)}>
+            {i18n.t('pages.rs_experiment_detail_page.k34')}
+          </Button>
           <Button
             variant='contained'
             onClick={handleAddRecord}
             disabled={addRecordLoading}
           >
-            {addRecordLoading ? <LoadingSpinner size='sm' /> : i18n.t('pages.rs_experiment_detail_page.k35')}
+            {addRecordLoading ? (
+              <LoadingSpinner size='sm' />
+            ) : (
+              i18n.t('pages.rs_experiment_detail_page.k35')
+            )}
           </Button>
         </DialogActions>
       </Dialog>

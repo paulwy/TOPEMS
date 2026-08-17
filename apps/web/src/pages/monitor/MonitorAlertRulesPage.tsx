@@ -24,6 +24,7 @@ import {
   Smartphone,
 } from 'lucide-react';
 import i18n from '@/i18n';
+
 interface AlertRule {
   id: string;
   name: string;
@@ -49,10 +50,26 @@ const METRIC_TYPE_CONFIG: Record<
   }
 > = {
   cpu: { label: 'CPU', color: 'primary', icon: <Cpu size={14} /> },
-  memory: { label: i18n.t('monitor.monitor_alert_rules_page.k0'), color: 'success', icon: <HardDrive size={14} /> },
-  disk: { label: i18n.t('monitor.monitor_alert_rules_page.k1'), color: 'warning', icon: <HardDrive size={14} /> },
-  network: { label: i18n.t('monitor.monitor_alert_rules_page.k2'), color: 'info', icon: <Network size={14} /> },
-  database: { label: i18n.t('monitor.monitor_alert_rules_page.k3'), color: 'error', icon: <Database size={14} /> },
+  memory: {
+    label: i18n.t('monitor.monitor_alert_rules_page.k0'),
+    color: 'success',
+    icon: <HardDrive size={14} />,
+  },
+  disk: {
+    label: i18n.t('monitor.monitor_alert_rules_page.k1'),
+    color: 'warning',
+    icon: <HardDrive size={14} />,
+  },
+  network: {
+    label: i18n.t('monitor.monitor_alert_rules_page.k2'),
+    color: 'info',
+    icon: <Network size={14} />,
+  },
+  database: {
+    label: i18n.t('monitor.monitor_alert_rules_page.k3'),
+    color: 'error',
+    icon: <Database size={14} />,
+  },
   api: { label: 'API', color: 'default', icon: <Globe size={14} /> },
 };
 const SEVERITY_CONFIG: Record<string, { label: string; color: 'error' | 'warning' | 'info' }> = {
@@ -64,7 +81,10 @@ const CHANNEL_CONFIG: Record<string, { label: string; icon: React.ReactNode }> =
   email: { label: i18n.t('monitor.monitor_alert_rules_page.k7'), icon: <Mail size={14} /> },
   sms: { label: i18n.t('monitor.monitor_alert_rules_page.k8'), icon: <Smartphone size={14} /> },
   push: { label: i18n.t('monitor.monitor_alert_rules_page.k9'), icon: <Bell size={14} /> },
-  wechat: { label: i18n.t('monitor.monitor_alert_rules_page.k10'), icon: <MessageSquare size={14} /> },
+  wechat: {
+    label: i18n.t('monitor.monitor_alert_rules_page.k10'),
+    icon: <MessageSquare size={14} />,
+  },
 };
 const initialMockRules: AlertRule[] = [
   {
@@ -254,7 +274,9 @@ const MonitorAlertRulesPage: React.FC = () => {
   const handleToggleStatus = (ruleId: string) => {
     const rule = rules.find((r) => r.id === ruleId);
     if (!rule) return;
-    const action = rule.enabled ? i18n.t('monitor.monitor_alert_rules_page.k19') : i18n.t('monitor.monitor_alert_rules_page.k18');
+    const action = rule.enabled
+      ? i18n.t('monitor.monitor_alert_rules_page.k19')
+      : i18n.t('monitor.monitor_alert_rules_page.k18');
     setRules(
       rules.map((r) =>
         r.id === ruleId
@@ -429,7 +451,9 @@ const MonitorAlertRulesPage: React.FC = () => {
               color={row.enabled ? 'success.main' : 'text.disabled'}
               sx={{ fontWeight: 500 }}
             >
-              {row.enabled ? i18n.t('monitor.monitor_alert_rules_page.k30') : i18n.t('monitor.monitor_alert_rules_page.k29')}
+              {row.enabled
+                ? i18n.t('monitor.monitor_alert_rules_page.k30')
+                : i18n.t('monitor.monitor_alert_rules_page.k29')}
             </Typography>
           </Box>
         ),
@@ -571,7 +595,10 @@ const MonitorAlertRulesPage: React.FC = () => {
       <CrudPage
         schema={alertRuleSchema}
         apiAdapter={mockApiAdapter as unknown as CrudApiAdapter}
-        breadcrumbs={[{ label: i18n.t('monitor.monitor_alert_rules_page.k35') }, { label: i18n.t('monitor.monitor_alert_rules_page.k34') }]}
+        breadcrumbs={[
+          { label: i18n.t('monitor.monitor_alert_rules_page.k35') },
+          { label: i18n.t('monitor.monitor_alert_rules_page.k34') },
+        ]}
         customColumns={customColumns as unknown as ColumnDef<Record<string, unknown>>[]}
         customRowActions={customRowActions as unknown as RowAction<Record<string, unknown>>[]}
         detailMaxWidth='md'

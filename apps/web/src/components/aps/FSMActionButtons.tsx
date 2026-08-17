@@ -29,7 +29,11 @@ const FSM_TRANSITIONS: Record<ApsFsmType, Record<string, FSMTransition[]>> = {
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k1') },
     ],
     pending_approval: [
-      { targetStatus: 'approved', label: i18n.t('components.fsm_action_buttons.k2'), requiresApproval: true },
+      {
+        targetStatus: 'approved',
+        label: i18n.t('components.fsm_action_buttons.k2'),
+        requiresApproval: true,
+      },
       { targetStatus: 'draft', label: i18n.t('components.fsm_action_buttons.k3') },
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k4') },
     ],
@@ -44,7 +48,11 @@ const FSM_TRANSITIONS: Record<ApsFsmType, Record<string, FSMTransition[]>> = {
   },
   schedule: {
     pending: [
-      { targetStatus: 'released', label: i18n.t('components.fsm_action_buttons.k9'), requiresApproval: true },
+      {
+        targetStatus: 'released',
+        label: i18n.t('components.fsm_action_buttons.k9'),
+        requiresApproval: true,
+      },
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k10') },
     ],
     released: [
@@ -59,19 +67,29 @@ const FSM_TRANSITIONS: Record<ApsFsmType, Record<string, FSMTransition[]>> = {
   },
   capacity: {
     available: [
-      { targetStatus: 'allocated', label: i18n.t('components.fsm_action_buttons.k16'), requiresApproval: true },
+      {
+        targetStatus: 'allocated',
+        label: i18n.t('components.fsm_action_buttons.k16'),
+        requiresApproval: true,
+      },
       { targetStatus: 'maintenance', label: i18n.t('components.fsm_action_buttons.k17') },
     ],
     allocated: [
       { targetStatus: 'consumed', label: i18n.t('components.fsm_action_buttons.k18') },
       { targetStatus: 'released', label: i18n.t('components.fsm_action_buttons.k19') },
     ],
-    maintenance: [{ targetStatus: 'available', label: i18n.t('components.fsm_action_buttons.k20') }],
+    maintenance: [
+      { targetStatus: 'available', label: i18n.t('components.fsm_action_buttons.k20') },
+    ],
     released: [{ targetStatus: 'available', label: i18n.t('components.fsm_action_buttons.k21') }],
   },
   material_plan: {
     pending: [
-      { targetStatus: 'requisitioned', label: i18n.t('components.fsm_action_buttons.k22'), requiresApproval: true },
+      {
+        targetStatus: 'requisitioned',
+        label: i18n.t('components.fsm_action_buttons.k22'),
+        requiresApproval: true,
+      },
       { targetStatus: 'shortage', label: i18n.t('components.fsm_action_buttons.k23') },
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k24') },
     ],
@@ -83,7 +101,9 @@ const FSM_TRANSITIONS: Record<ApsFsmType, Record<string, FSMTransition[]>> = {
       { targetStatus: 'satisfied', label: i18n.t('components.fsm_action_buttons.k27') },
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k28') },
     ],
-    shortage: [{ targetStatus: 'requisitioned', label: i18n.t('components.fsm_action_buttons.k29') }],
+    shortage: [
+      { targetStatus: 'requisitioned', label: i18n.t('components.fsm_action_buttons.k29') },
+    ],
   },
   forecast: {
     draft: [
@@ -96,7 +116,11 @@ const FSM_TRANSITIONS: Record<ApsFsmType, Record<string, FSMTransition[]>> = {
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k34') },
     ],
     validated: [
-      { targetStatus: 'adopted', label: i18n.t('components.fsm_action_buttons.k35'), requiresApproval: true },
+      {
+        targetStatus: 'adopted',
+        label: i18n.t('components.fsm_action_buttons.k35'),
+        requiresApproval: true,
+      },
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k36') },
     ],
     adopted: [{ targetStatus: 'superseded', label: i18n.t('components.fsm_action_buttons.k37') }],

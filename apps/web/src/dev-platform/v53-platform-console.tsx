@@ -404,7 +404,9 @@ const DashboardTab: React.FC<{
                       <TableCell>{i18n.t('dev-platform.v53-platform-console.k15')}</TableCell>
                       <TableCell>{i18n.t('dev-platform.v53-platform-console.k16')}</TableCell>
                       <TableCell>{i18n.t('dev-platform.v53-platform-console.k17')}</TableCell>
-                      <TableCell align='right'>{i18n.t('dev-platform.v53-platform-console.k18')}</TableCell>
+                      <TableCell align='right'>
+                        {i18n.t('dev-platform.v53-platform-console.k18')}
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -656,7 +658,8 @@ const DashboardTab: React.FC<{
                           variant='caption'
                           color='text.secondary'
                         >
-                          {page.status} · {page.components.length} {i18n.t('dev-platform.v53-platform-console.k0')}
+                          {page.status} · {page.components.length}{' '}
+                          {i18n.t('dev-platform.v53-platform-console.k0')}
                         </Typography>
                       </Box>
                       <Chip
@@ -967,7 +970,9 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
                   >
                     {i18n.t('dev_platform.v53-platform-console.k16')}
                   </Button>
-                  <Button onClick={() => setShowCreate(false)}>{i18n.t('dev-platform.v53-platform-console.k33')}</Button>
+                  <Button onClick={() => setShowCreate(false)}>
+                    {i18n.t('dev-platform.v53-platform-console.k33')}
+                  </Button>
                 </Box>
               </Grid>
             </Grid>
@@ -1176,14 +1181,46 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
   };
 
   const componentTypes: Array<{ type: string; label: string; icon: React.ReactNode }> = [
-    { type: 'text', label: i18n.t('dev-platform.v53-platform-console.k34'), icon: <MousePointerClick size={16} /> },
-    { type: 'heading', label: i18n.t('dev-platform.v53-platform-console.k35'), icon: <MousePointerClick size={16} /> },
-    { type: 'button', label: i18n.t('dev-platform.v53-platform-console.k36'), icon: <MousePointerClick size={16} /> },
-    { type: 'input', label: i18n.t('dev-platform.v53-platform-console.k37'), icon: <MousePointerClick size={16} /> },
-    { type: 'card', label: i18n.t('dev-platform.v53-platform-console.k38'), icon: <MousePointerClick size={16} /> },
-    { type: 'table', label: i18n.t('dev-platform.v53-platform-console.k39'), icon: <MousePointerClick size={16} /> },
-    { type: 'chart', label: i18n.t('dev-platform.v53-platform-console.k40'), icon: <MousePointerClick size={16} /> },
-    { type: 'container', label: i18n.t('dev-platform.v53-platform-console.k41'), icon: <BoxIcon size={16} /> },
+    {
+      type: 'text',
+      label: i18n.t('dev-platform.v53-platform-console.k34'),
+      icon: <MousePointerClick size={16} />,
+    },
+    {
+      type: 'heading',
+      label: i18n.t('dev-platform.v53-platform-console.k35'),
+      icon: <MousePointerClick size={16} />,
+    },
+    {
+      type: 'button',
+      label: i18n.t('dev-platform.v53-platform-console.k36'),
+      icon: <MousePointerClick size={16} />,
+    },
+    {
+      type: 'input',
+      label: i18n.t('dev-platform.v53-platform-console.k37'),
+      icon: <MousePointerClick size={16} />,
+    },
+    {
+      type: 'card',
+      label: i18n.t('dev-platform.v53-platform-console.k38'),
+      icon: <MousePointerClick size={16} />,
+    },
+    {
+      type: 'table',
+      label: i18n.t('dev-platform.v53-platform-console.k39'),
+      icon: <MousePointerClick size={16} />,
+    },
+    {
+      type: 'chart',
+      label: i18n.t('dev-platform.v53-platform-console.k40'),
+      icon: <MousePointerClick size={16} />,
+    },
+    {
+      type: 'container',
+      label: i18n.t('dev-platform.v53-platform-console.k41'),
+      icon: <BoxIcon size={16} />,
+    },
   ];
 
   return (
@@ -1258,7 +1295,9 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
         <Grid size={{ xs: 12, md: 6 }}>
           <Card variant='outlined'>
             <CardHeader
-              title={selectedPage ? selectedPage.name : i18n.t('dev-platform.v53-platform-console.k43')}
+              title={
+                selectedPage ? selectedPage.name : i18n.t('dev-platform.v53-platform-console.k43')
+              }
               avatar={<BoxIcon size={18} />}
               action={
                 selectedPage && (
@@ -1655,7 +1694,11 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
                           {p.manifest.name}
                         </Typography>
                         <Chip
-                          label={p.enabled ? i18n.t('dev-platform.v53-platform-console.k52') : i18n.t('dev-platform.v53-platform-console.k51')}
+                          label={
+                            p.enabled
+                              ? i18n.t('dev-platform.v53-platform-console.k52')
+                              : i18n.t('dev-platform.v53-platform-console.k51')
+                          }
                           size='small'
                           color={p.enabled ? 'success' : 'default'}
                         />
@@ -1823,7 +1866,9 @@ const PipelinesTab: React.FC<{
                       <TableCell>{i18n.t('dev-platform.v53-platform-console.k55')}</TableCell>
                       <TableCell>{i18n.t('dev-platform.v53-platform-console.k56')}</TableCell>
                       <TableCell>{i18n.t('dev-platform.v53-platform-console.k57')}</TableCell>
-                      <TableCell align='right'>{i18n.t('dev-platform.v53-platform-console.k58')}</TableCell>
+                      <TableCell align='right'>
+                        {i18n.t('dev-platform.v53-platform-console.k58')}
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -2027,7 +2072,8 @@ const PipelineDetailDialog: React.FC<{ run: PipelineRun; onClose: () => void }> 
               variant='caption'
               sx={{ ml: 1 }}
             >
-              [i18n.t('dev_platform.v53-platform-console.k40')]: {(run.totalDurationMs / 1000).toFixed(1)}s
+              [i18n.t('dev_platform.v53-platform-console.k40')]:{' '}
+              {(run.totalDurationMs / 1000).toFixed(1)}s
             </Typography>
           )}
         </Box>

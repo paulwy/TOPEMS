@@ -21,8 +21,9 @@ export const useEmployeeFinance = (employeeId: string) => {
       return response.data?.data!;
     },
     enabled: !!employeeId,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -38,8 +39,9 @@ export const useEmployeeFinanceInfo = (employeeId: string) => {
       return response.data?.data!;
     },
     enabled: !!employeeId,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -60,14 +62,14 @@ export const useUpdateEmployeeFinanceInfo = () => {
       );
       return response.data;
     },
-  
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.EMPLOYEE_FINANCE_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
-      },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.EMPLOYEE_FINANCE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+    },
   });
 };
 
@@ -84,8 +86,9 @@ export const useEmployeePayrolls = (employeeId: string) => {
       return response.data;
     },
     enabled: !!employeeId,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -114,8 +117,9 @@ export const useDepartmentPayrollSummary = (departmentId: string, period: string
       return response.data;
     },
     enabled: !!departmentId && !!period,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -128,6 +132,7 @@ export const usePayrollPeriods = () => {
       const response = await apiClient.hrm.get<{ data: string[] }>('/payroll/periods');
       return response.data;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };

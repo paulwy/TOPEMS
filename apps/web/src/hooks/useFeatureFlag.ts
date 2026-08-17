@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 /**

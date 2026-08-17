@@ -215,7 +215,9 @@ export const ModuleLoader: React.FC<ModuleLoaderProps> = ({
           variant='body2'
           color='text.secondary'
         >
-          {isTimedOut ? `${i18n.t('shared.module_loader.k0')}${timeout / 1000}${i18n.t('shared.module_loader.k1')}` : error?.message}
+          {isTimedOut
+            ? `${i18n.t('shared.module_loader.k0')}${timeout / 1000}${i18n.t('shared.module_loader.k1')}`
+            : error?.message}
         </Typography>
         {healthStatus === 'unhealthy' && (
           <Typography

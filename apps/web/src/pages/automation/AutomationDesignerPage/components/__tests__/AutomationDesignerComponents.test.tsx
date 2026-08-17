@@ -34,7 +34,8 @@ vi.mock('react-i18next', () => {
     'automation.automation_designer_page_components_properties_panel.e6': '下游节点（连线）',
     'automation.automation_designer_page_components_properties_panel.e7': '暂无其他节点可连接',
     'automation.automation_designer_page_components_designer_canvas.e1': '未保存',
-    'automation.automation_designer_page_components_designer_canvas.e2': '画布为空，从左侧拖拽节点类型到此处',
+    'automation.automation_designer_page_components_designer_canvas.e2':
+      '画布为空，从左侧拖拽节点类型到此处',
     'automation.automation_designer_page_components_designer_canvas.e3': '缩略图',
     'automation.automation_designer_page_components_designer_canvas.r1': '放大 (Ctrl+滚轮)',
     'automation.automation_designer_page_components_designer_canvas.r2': '缩小 (Ctrl+滚轮)',
@@ -95,7 +96,8 @@ vi.mock('@/i18n', () => {
     'automation.automation_designer_page_components_properties_panel.e6': '下游节点（连线）',
     'automation.automation_designer_page_components_properties_panel.e7': '暂无其他节点可连接',
     'automation.automation_designer_page_components_designer_canvas.e1': '未保存',
-    'automation.automation_designer_page_components_designer_canvas.e2': '画布为空，从左侧拖拽节点类型到此处',
+    'automation.automation_designer_page_components_designer_canvas.e2':
+      '画布为空，从左侧拖拽节点类型到此处',
     'automation.automation_designer_page_components_designer_canvas.e3': '缩略图',
     'automation.automation_designer_page_components_designer_canvas.r1': '放大 (Ctrl+滚轮)',
     'automation.automation_designer_page_components_designer_canvas.r2': '缩小 (Ctrl+滚轮)',

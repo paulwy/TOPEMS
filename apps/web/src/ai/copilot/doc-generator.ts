@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export interface DocTemplate {
   id: string;
   name: string;
@@ -154,7 +155,9 @@ export class DocGenerator {
       sections.push({
         title: i18n.t('ai.doc-generator.k3'),
         content: options.examples
-          .map((e, i) => `${i18n.t('ai.doc-generator.k4')}${i + 1}\n\n\`\`\`typescript\n${e}\n\`\`\``)
+          .map(
+            (e, i) => `${i18n.t('ai.doc-generator.k4')}${i + 1}\n\n\`\`\`typescript\n${e}\n\`\`\``
+          )
           .join('\n\n'),
       });
     }

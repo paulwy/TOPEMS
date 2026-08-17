@@ -3,6 +3,7 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { vehicleRequestSchema } from '@/schemas/erp/vehicleRequest';
 import { vehicleRequestApi } from '@/api/erp';
 import i18n from '@/i18n';
+
 const vehicleRequestApiAdapter: CrudApiAdapter = {
   list: async (params) => {
     const response = await vehicleRequestApi.list({

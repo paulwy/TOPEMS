@@ -115,7 +115,11 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         }}
                       />
                       <Chip
-                        label={template.isactive ? i18n.t('pages.template_list.k2') : i18n.t('pages.template_list.k6')}
+                        label={
+                          template.isactive
+                            ? i18n.t('pages.template_list.k2')
+                            : i18n.t('pages.template_list.k6')
+                        }
                         size='small'
                         sx={{
                           bgcolor: template.isactive ? 'success.light' : 'grey.100',
@@ -136,9 +140,16 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         color: 'grey.600',
                       }}
                     >
-                      <span>{i18n.t('pages.template_list.templatecode_0')}: {template.code}</span>
-                      <span>{i18n.t('pages.template_list.k7')}: {getReportTypeName(template.report_type, reportTypes)}</span>
-                      <span>{i18n.t('pages.template_list.k8')}: {template.columns.length}</span>
+                      <span>
+                        {i18n.t('pages.template_list.templatecode_0')}: {template.code}
+                      </span>
+                      <span>
+                        {i18n.t('pages.template_list.k7')}:{' '}
+                        {getReportTypeName(template.report_type, reportTypes)}
+                      </span>
+                      <span>
+                        {i18n.t('pages.template_list.k8')}: {template.columns.length}
+                      </span>
                     </Box>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

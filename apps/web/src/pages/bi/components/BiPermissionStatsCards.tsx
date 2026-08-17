@@ -7,7 +7,8 @@ import { Box, Card, CardContent, Typography, Grid } from '@mui/material';
 import { Shield, Database, CheckCircle2, Users } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 export interface BiPermissionStatsCardsProps {
   rowPermissionsCount: number;
   dataPermissionsCount: number;

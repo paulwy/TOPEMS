@@ -679,7 +679,10 @@ const legacyToConfig = (s: StatCard): StatCardConfig => ({
     s.change !== undefined
       ? { value: s.change, label: s.changeLabel }
       : s.trend && s.trend.length > 0
-        ? { value: s.trend[s.trend.length - 1] - s.trend[0], label: i18n.t('components.dashboard_template.k1') }
+        ? {
+            value: s.trend[s.trend.length - 1] - s.trend[0],
+            label: i18n.t('components.dashboard_template.k1'),
+          }
         : undefined,
 });
 
@@ -1000,15 +1003,16 @@ export interface DashboardPageProps {
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({ schema, queryKey }) => {
-  const { isPending} = useQuery({
+  const { isPending } = useQuery({
     queryKey: queryKey || ['dashboard', schema.title],
     queryFn: async () => {
       if (schema.loader) return schema.loader();
       return null;
     },
     enabled: !!schema.loader,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const resolvedStatCards = useMemo<StatCardConfig[] | undefined>(() => {
     if (!schema.statCards) return;

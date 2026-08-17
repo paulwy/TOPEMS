@@ -8,7 +8,6 @@ import { mesApi } from '@/api/mes';
 import { useNotificationStore } from '@/store';
 import { Play, Pause, CheckCircle, XCircle } from 'lucide-react';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
@@ -51,10 +50,11 @@ export default function WorkOrderPage() {
             title: t('mes.work_order_page.k0'),
             message: `${i18n.t('pages.work_order_page.k1')}${response.data?.status ?? ''}"`,
           });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MES_WORK_ORDER_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.AD_HOC.MES_WORK_ORDER_BASE,
+            exact: false,
+            refetchType: 'active',
+          });
         } else {
           addNotification({
             type: 'error',

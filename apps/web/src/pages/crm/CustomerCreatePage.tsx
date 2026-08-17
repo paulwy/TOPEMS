@@ -74,10 +74,11 @@ const CustomerCreatePage: React.FC = () => {
         notes: data.description?.trim() || undefined,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.CUSTOMERS ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CRM.CUSTOMERS,
+        exact: false,
+        refetchType: 'active',
+      });
       navigate(CRM_PATHS.customers);
     },
   });

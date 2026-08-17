@@ -9,7 +9,8 @@ import type { MaterialRequirement } from '@/api/mes';
 import { Calculator } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter(mesApi.materialRequirements, {
   itemsField: 'requirements',
 });
@@ -26,7 +27,9 @@ const MaterialRequirementPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k0')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_requirement_page.k0')}
+            </InputLabel>
             <Box
               component='span'
               sx={{ fontWeight: 500 }}
@@ -35,43 +38,63 @@ const MaterialRequirementPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k1')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_requirement_page.k1')}
+            </InputLabel>
             <Box component='span'>{req.order_number || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k2')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_requirement_page.k2')}
+            </InputLabel>
             <Box component='span'>{req.product_code}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k3')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_requirement_page.k3')}
+            </InputLabel>
             <Box component='span'>{req.product_name}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k4')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_requirement_page.k4')}
+            </InputLabel>
             <Box component='span'>{req.material_code}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k5')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_requirement_page.k5')}
+            </InputLabel>
             <Box component='span'>{req.material_name}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k6')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_requirement_page.k6')}
+            </InputLabel>
             <Box component='span'>{req.specification || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k7')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_requirement_page.k7')}
+            </InputLabel>
             <Box component='span'>{req.unit || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k8')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_requirement_page.k8')}
+            </InputLabel>
             <Box component='span'>{req.required_quantity}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k9')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_requirement_page.k9')}
+            </InputLabel>
             <Box component='span'>{req.available_quantity || 0}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k10')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_requirement_page.k10')}
+            </InputLabel>
             <Box
               component='span'
               sx={{
@@ -83,33 +106,47 @@ const MaterialRequirementPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k11')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_requirement_page.k11')}
+            </InputLabel>
             <Box component='span'>
               {req.required_date ? new Date(req.required_date).toLocaleDateString('zh-CN') : '-'}
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k12')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_requirement_page.k12')}
+            </InputLabel>
             <Box component='span'>{req.priority || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k13')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_requirement_page.k13')}
+            </InputLabel>
             <Box component='span'>{req.status}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k14')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_requirement_page.k14')}
+            </InputLabel>
             <Box component='span'>{req.source_type || '-'}</Box>
           </Box>
           <Box sx={{ gridColumn: '1 / -1' }}>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k15')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_requirement_page.k15')}
+            </InputLabel>
             <Box component='span'>{req.remark || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k16')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_requirement_page.k16')}
+            </InputLabel>
             <Box component='span'>{new Date(req.created_at).toLocaleString('zh-CN')}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_requirement_page.k17')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_requirement_page.k17')}
+            </InputLabel>
             <Box component='span'>{new Date(req.updated_at).toLocaleString('zh-CN')}</Box>
           </Box>
         </Box>

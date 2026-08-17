@@ -59,8 +59,9 @@ export interface UpdateAssetRequest {
 }
 
 const resolvePageSize = (params?: PaginationParams): string | undefined => {
-  const ps = (params as { pageSize?: number } | undefined)?.pageSize
-    ?? (params as { pagesize?: number } | undefined)?.pagesize;
+  const ps =
+    (params as { pageSize?: number } | undefined)?.pageSize ??
+    (params as { pagesize?: number } | undefined)?.pagesize;
   return ps ? ps.toString() : undefined;
 };
 
@@ -75,9 +76,7 @@ export const assetApi = {
     if (params?.category) searchParams.set('category', params.category);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get<AssetListResponse>(
-      `/assets${queryString ? `?${queryString}` : ''}`
-    );
+    return apiClient.erp.get<AssetListResponse>(`/assets${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Asset>> {

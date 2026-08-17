@@ -142,7 +142,8 @@ describe('getColumns - renderCell 在列数组中的一致性', () => {
         name: 'status',
         label: '状态',
         type: 'text',
-        renderCell: (row: Record<string, unknown>, index: number) => `[${index}] ${row.name}: ${row.status}`,
+        renderCell: (row: Record<string, unknown>, index: number) =>
+          `[${index}] ${row.name}: ${row.status}`,
       },
       { name: 'name', label: '名称', type: 'text' },
     ],

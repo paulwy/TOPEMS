@@ -39,6 +39,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { dictTypeApi, dictItemApi, type DictType, type DictItem } from '@/api/system';
 import { dictItemSchema } from '@/schemas/admin';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const categoryLabels: Record<string, string> = {
   system: i18n.t('erp.dict_management_page.k0'),
   iam: i18n.t('pages.dict_management_page.iam_0'),
@@ -99,11 +100,16 @@ const DictManagementPage: React.FC = () => {
   const createTypeMutation = useMutation({
     mutationFn: (data: Partial<DictType>) => dictTypeApi.create(data),
     onSuccess: () => {
-      addNotification({ title: i18n.t('erp.dict_management_page.k9'), message: i18n.t('erp.dict_management_page.k8'), type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      addNotification({
+        title: i18n.t('erp.dict_management_page.k9'),
+        message: i18n.t('erp.dict_management_page.k8'),
+        type: 'success',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       setTypeDialogOpen(false);
     },
     onError: (err: unknown) => {
@@ -118,11 +124,16 @@ const DictManagementPage: React.FC = () => {
     mutationFn: ({ id, data }: { id: string; data: Partial<DictType> }) =>
       dictTypeApi.update(id, data),
     onSuccess: () => {
-      addNotification({ title: i18n.t('erp.dict_management_page.k13'), message: i18n.t('erp.dict_management_page.k12'), type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      addNotification({
+        title: i18n.t('erp.dict_management_page.k13'),
+        message: i18n.t('erp.dict_management_page.k12'),
+        type: 'success',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       setTypeDialogOpen(false);
     },
     onError: (err: unknown) => {
@@ -136,14 +147,19 @@ const DictManagementPage: React.FC = () => {
   const deleteTypeMutation = useMutation({
     mutationFn: (id: string) => dictTypeApi.delete(id),
     onSuccess: (_, id) => {
-      addNotification({ title: i18n.t('erp.dict_management_page.k17'), message: i18n.t('erp.dict_management_page.k16'), type: 'success' });
+      addNotification({
+        title: i18n.t('erp.dict_management_page.k17'),
+        message: i18n.t('erp.dict_management_page.k16'),
+        type: 'success',
+      });
       if (selectedTypeId === id) {
         setSelectedTypeId(null);
       }
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
       addNotification({
@@ -177,7 +193,11 @@ const DictManagementPage: React.FC = () => {
   };
   const handleSaveType = () => {
     if (!typeForm.code || !typeForm.name) {
-      addNotification({ title: i18n.t('erp.dict_management_page.k21'), message: i18n.t('erp.dict_management_page.k20'), type: 'warning' });
+      addNotification({
+        title: i18n.t('erp.dict_management_page.k21'),
+        message: i18n.t('erp.dict_management_page.k20'),
+        type: 'warning',
+      });
       return;
     }
     if (editingType) {
@@ -219,10 +239,11 @@ const DictManagementPage: React.FC = () => {
           dict_type_id: selectedTypeId,
         });
         if (!res.success) throw new Error(res.message || i18n.t('erp.dict_management_page.k24'));
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
         return res.data as DictItem;
       },
       update: async (id, data) => {
@@ -233,19 +254,21 @@ const DictManagementPage: React.FC = () => {
       delete: async (id) => {
         const res = await dictItemApi.delete(id);
         if (!res.success) throw new Error(res.message || i18n.t('erp.dict_management_page.k26'));
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       },
     }),
     [selectedTypeId, queryClient]
   );
   const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.SYSTEM_DICT_TYPES_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
   }, [queryClient]);
   const saving = createTypeMutation.isPending || updateTypeMutation.isPending;
   return (
@@ -384,14 +407,18 @@ const DictManagementPage: React.FC = () => {
             <CrudPage
               schema={dictItemSchema}
               apiAdapter={itemApiAdapter}
-              breadcrumbs={[{ label: i18n.t('erp.dict_management_page.k35') }, { label: selectedType.name }]}
+              breadcrumbs={[
+                { label: i18n.t('erp.dict_management_page.k35') },
+                { label: selectedType.name },
+              ]}
               headerContent={
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    {selectedType.description || `${i18n.t('pages.dict_management_page.k8')}${selectedType.name}${i18n.t('pages.dict_management_page.k9')}`}
+                    {selectedType.description ||
+                      `${i18n.t('pages.dict_management_page.k8')}${selectedType.name}${i18n.t('pages.dict_management_page.k9')}`}
                   </Typography>
                   <Typography
                     variant='caption'
@@ -452,7 +479,11 @@ const DictManagementPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{editingType ? i18n.t('erp.dict_management_page.k37') : i18n.t('erp.dict_management_page.k36')}</DialogTitle>
+        <DialogTitle>
+          {editingType
+            ? i18n.t('erp.dict_management_page.k37')
+            : i18n.t('erp.dict_management_page.k36')}
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField
@@ -460,7 +491,11 @@ const DictManagementPage: React.FC = () => {
               value={typeForm.code || ''}
               onChange={(e) => setTypeForm({ ...typeForm, code: e.target.value })}
               disabled={!!editingType}
-              helperText={editingType ? i18n.t('erp.dict_management_page.k40') : i18n.t('erp.dict_management_page.k39')}
+              helperText={
+                editingType
+                  ? i18n.t('erp.dict_management_page.k40')
+                  : i18n.t('erp.dict_management_page.k39')
+              }
               size='small'
             />
             <TextField
@@ -497,7 +532,9 @@ const DictManagementPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setTypeDialogOpen(false)}>{i18n.t('erp.dict_management_page.k45')}</Button>
+          <Button onClick={() => setTypeDialogOpen(false)}>
+            {i18n.t('erp.dict_management_page.k45')}
+          </Button>
           <Button
             variant='contained'
             onClick={handleSaveType}

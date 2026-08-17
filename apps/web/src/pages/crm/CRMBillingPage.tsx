@@ -15,8 +15,13 @@ import { useQuery } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
-import { crmApi, useCrmMock, type BillingAnalyticsData, type Period } from '@/api/crm';
-import type { BillingRecord } from '@/api/crm';
+import type {
+  BillingRecord,
+  crmApi,
+  useCrmMock,
+  type BillingAnalyticsData,
+  type Period,
+} from '@/api/crm';
 import { billingSchema } from '@/schemas/crm';
 
 const statusColorMap: Record<string, { main: string; light: string }> = {
@@ -39,7 +44,9 @@ const CRMBillingPage: React.FC = () => {
       const items = response.data?.items || [];
       return {
         totalAmount: items.reduce((sum, r) => sum + (r.amount || 0), 0),
-        paidAmount: items.filter((r) => r.status === 'paid').reduce((sum, r) => sum + (r.amount || 0), 0),
+        paidAmount: items
+          .filter((r) => r.status === 'paid')
+          .reduce((sum, r) => sum + (r.amount || 0), 0),
         pendingAmount: items
           .filter((r) => r.status === 'pending')
           .reduce((sum, r) => sum + (r.amount || 0), 0),
@@ -61,15 +68,30 @@ const CRMBillingPage: React.FC = () => {
 
   const cards = useMemo(
     () => [
-      { label: t('crm.billing.stat_total'), value: displayStats?.totalCount ?? 0, color: 'primary.main', amount: displayStats?.totalAmount ?? 0 },
-      { label: t('crm.billing.stat_paid'), value: displayStats?.paidCount ?? 0, color: 'success.main', amount: displayStats?.paidAmount ?? 0 },
+      {
+        label: t('crm.billing.stat_total'),
+        value: displayStats?.totalCount ?? 0,
+        color: 'primary.main',
+        amount: displayStats?.totalAmount ?? 0,
+      },
+      {
+        label: t('crm.billing.stat_paid'),
+        value: displayStats?.paidCount ?? 0,
+        color: 'success.main',
+        amount: displayStats?.paidAmount ?? 0,
+      },
       {
         label: t('crm.billing.stat_pending'),
         value: displayStats?.pendingCount ?? 0,
         color: 'warning.main',
         amount: displayStats?.pendingAmount ?? 0,
       },
-      { label: t('crm.billing.stat_overdue'), value: displayStats?.overdueCount ?? 0, color: 'error.main', amount: displayStats?.overdueAmount ?? 0 },
+      {
+        label: t('crm.billing.stat_overdue'),
+        value: displayStats?.overdueCount ?? 0,
+        color: 'error.main',
+        amount: displayStats?.overdueAmount ?? 0,
+      },
     ],
     [t, displayStats]
   );
@@ -88,8 +110,10 @@ const CRMBillingPage: React.FC = () => {
           throw new Error(response.message || t('crm.billing.error_load_list'));
         }
         const raw = response.data as unknown;
-        const items = Array.isArray(raw) ? raw : (raw as { items?: BillingRecord[] }).items ?? [];
-        const total = Array.isArray(raw) ? items.length : ((raw as { total?: number }).total ?? items.length);
+        const items = Array.isArray(raw) ? raw : ((raw as { items?: BillingRecord[] }).items ?? []);
+        const total = Array.isArray(raw)
+          ? items.length
+          : ((raw as { total?: number }).total ?? items.length);
         return { data: items, total };
       },
       create: async () => {
@@ -133,22 +157,41 @@ const CRMBillingPage: React.FC = () => {
       }
     >
       <Stack spacing={3}>
-        <Stack direction='row' spacing={2} sx={{ flexWrap: 'wrap' }}>
+        <Stack
+          direction='row'
+          spacing={2}
+          sx={{ flexWrap: 'wrap' }}
+        >
           {loading
             ? Array.from({ length: 4 }).map((_, i) => (
-                <Paper key={i} sx={{ p: 2, flex: '1 1 200px', minWidth: 200 }}>
+                <Paper
+                  key={i}
+                  sx={{ p: 2, flex: '1 1 200px', minWidth: 200 }}
+                >
                   <LinearProgress />
                 </Paper>
               ))
             : cards.map((card) => (
-                <Paper key={card.label} sx={{ p: 2, flex: '1 1 200px', minWidth: 200 }}>
-                  <Typography variant='caption' color='text.secondary'>
+                <Paper
+                  key={card.label}
+                  sx={{ p: 2, flex: '1 1 200px', minWidth: 200 }}
+                >
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
                     {card.label}
                   </Typography>
-                  <Typography variant='h6' sx={{ color: card.color, fontWeight: 700 }}>
+                  <Typography
+                    variant='h6'
+                    sx={{ color: card.color, fontWeight: 700 }}
+                  >
                     {card.value}
                   </Typography>
-                  <Typography variant='caption' color='text.secondary'>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
                     ¥{Number(card.amount).toLocaleString()}
                   </Typography>
                 </Paper>
@@ -171,7 +214,10 @@ const CRMBillingPage: React.FC = () => {
               backgroundColor: alpha(theme.palette.primary.main, 0.02),
             }}
           >
-            <Stack direction='row' spacing={1}>
+            <Stack
+              direction='row'
+              spacing={1}
+            >
               <Chip
                 label={t('crm.billing.tab_overview')}
                 onClick={() => setActiveTab('overview')}
@@ -206,8 +252,14 @@ const CRMBillingPage: React.FC = () => {
                     gap: 3,
                   }}
                 >
-                  <Paper variant='outlined' sx={{ p: 3 }}>
-                    <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+                  <Paper
+                    variant='outlined'
+                    sx={{ p: 3 }}
+                  >
+                    <Typography
+                      variant='subtitle2'
+                      sx={{ fontWeight: 600, mb: 2 }}
+                    >
                       {t('crm.billing.section_status_pie') || i18n.t('pages.crm_billing_page.k1')}
                     </Typography>
                     <Stack spacing={2}>
@@ -217,10 +269,16 @@ const CRMBillingPage: React.FC = () => {
                         return (
                           <Box key={s.status}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                              <Typography variant='body2' sx={{ color: colors.main, fontWeight: 600 }}>
+                              <Typography
+                                variant='body2'
+                                sx={{ color: colors.main, fontWeight: 600 }}
+                              >
                                 {t(`crm.billing.status_${s.status}`) || s.status}
                               </Typography>
-                              <Typography variant='caption' color='text.secondary'>
+                              <Typography
+                                variant='caption'
+                                color='text.secondary'
+                              >
                                 ¥{s.amount.toLocaleString()} ({pct.toFixed(1)}%)
                               </Typography>
                             </Box>
@@ -237,8 +295,13 @@ const CRMBillingPage: React.FC = () => {
                                 },
                               }}
                             />
-                            <Typography variant='caption' color='text.secondary' sx={{ mt: 0.5, display: 'block' }}>
-                              {s.count} {t('crm.billing.unit_invoice') || i18n.t('pages.crm_billing_page.k2')}
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                              sx={{ mt: 0.5, display: 'block' }}
+                            >
+                              {s.count}{' '}
+                              {t('crm.billing.unit_invoice') || i18n.t('pages.crm_billing_page.k2')}
                             </Typography>
                           </Box>
                         );
@@ -246,19 +309,32 @@ const CRMBillingPage: React.FC = () => {
                     </Stack>
                   </Paper>
 
-                  <Paper variant='outlined' sx={{ p: 3 }}>
-                    <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+                  <Paper
+                    variant='outlined'
+                    sx={{ p: 3 }}
+                  >
+                    <Typography
+                      variant='subtitle2'
+                      sx={{ fontWeight: 600, mb: 2 }}
+                    >
                       {t('crm.billing.section_aging') || i18n.t('pages.crm_billing_page.k3')}
                     </Typography>
                     <Stack spacing={2}>
                       {agingBuckets.map((b) => (
                         <Box key={b.bucket}>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                            <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                            <Typography
+                              variant='body2'
+                              sx={{ fontWeight: 500 }}
+                            >
                               {b.bucket}
                             </Typography>
-                            <Typography variant='caption' color='text.secondary'>
-                              {b.count} {i18n.t('pages.crm_billing_page.k0')} ¥{b.amount.toLocaleString()}
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              {b.count} {i18n.t('pages.crm_billing_page.k0')} ¥
+                              {b.amount.toLocaleString()}
                             </Typography>
                           </Box>
                           <LinearProgress
@@ -272,8 +348,14 @@ const CRMBillingPage: React.FC = () => {
                   </Paper>
                 </Box>
 
-                <Paper variant='outlined' sx={{ p: 3 }}>
-                  <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+                <Paper
+                  variant='outlined'
+                  sx={{ p: 3 }}
+                >
+                  <Typography
+                    variant='subtitle2'
+                    sx={{ fontWeight: 600, mb: 2 }}
+                  >
                     {t('crm.billing.section_top10') || i18n.t('pages.crm_billing_page.top10_4')}
                   </Typography>
                   <Stack spacing={1.5}>
@@ -281,11 +363,20 @@ const CRMBillingPage: React.FC = () => {
                       const c = statusColorMap[item.status] || statusColorMap.pending;
                       const maxTop = top10[0]?.amount || 1;
                       return (
-                        <Box key={item.customerName} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <Typography variant='caption' sx={{ width: 24, color: 'text.secondary', fontWeight: 600 }}>
+                        <Box
+                          key={item.customerName}
+                          sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
+                        >
+                          <Typography
+                            variant='caption'
+                            sx={{ width: 24, color: 'text.secondary', fontWeight: 600 }}
+                          >
                             {idx + 1}.
                           </Typography>
-                          <Typography variant='body2' sx={{ flex: 1, minWidth: 160 }}>
+                          <Typography
+                            variant='body2'
+                            sx={{ flex: 1, minWidth: 160 }}
+                          >
                             {item.customerName}
                           </Typography>
                           <Box sx={{ flex: 1, minWidth: 120 }}>
@@ -313,7 +404,10 @@ const CRMBillingPage: React.FC = () => {
                               minWidth: 56,
                             }}
                           />
-                          <Typography variant='body2' sx={{ fontWeight: 700, width: 140, textAlign: 'right' }}>
+                          <Typography
+                            variant='body2'
+                            sx={{ fontWeight: 700, width: 140, textAlign: 'right' }}
+                          >
                             ¥{item.amount.toLocaleString()}
                           </Typography>
                         </Box>
@@ -327,12 +421,22 @@ const CRMBillingPage: React.FC = () => {
             {activeTab === 'aging' && (
               <Stack spacing={2}>
                 {agingBuckets.map((b) => (
-                  <Paper key={b.bucket} variant='outlined' sx={{ p: 3 }}>
+                  <Paper
+                    key={b.bucket}
+                    variant='outlined'
+                    sx={{ p: 3 }}
+                  >
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant='h6' sx={{ fontWeight: 700 }}>
+                      <Typography
+                        variant='h6'
+                        sx={{ fontWeight: 700 }}
+                      >
                         {b.bucket}
                       </Typography>
-                      <Typography variant='body1' color='text.secondary'>
+                      <Typography
+                        variant='body1'
+                        color='text.secondary'
+                      >
                         {b.count} {i18n.t('pages.crm_billing_page.k1')} ¥{b.amount.toLocaleString()}
                       </Typography>
                     </Box>

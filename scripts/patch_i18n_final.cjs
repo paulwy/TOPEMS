@@ -1,15 +1,50 @@
-// Final patch script: translates all 540 remaining missing i18n keys.
+#!/usr/bin/env node
+// Final patch script: translates all remaining missing i18n keys (zh → en).
 // Patterns handled:
 //  1. Standalone Chinese values (direct dictionary lookup)
 //  2. "prefix.中文" values (translate Chinese part, keep prefix)
-//  3. "prefix.prefix_中文" self-referential values (translate Chinese part)
+//  3. "prefix.prefix_中文" self-referential values (translate Chinese portion)
 //  4. Code snippets containing Chinese (translate Chinese portions)
 //  5. Template/description strings
+//
+// USAGE:
+//   node scripts/patch_i18n_final.cjs --help
+//   node scripts/patch_i18n_final.cjs                 # DRY-RUN 预览，不写磁盘
+//   node scripts/patch_i18n_final.cjs --apply         # 真正写 en/*.json
+//   node scripts/patch_i18n_final.cjs --ns hrm,finance
 const fs = require('fs');
 const path = require('path');
 
-const dir = 'apps/web/src/i18n/locales/';
-const files = ['finance', 'hrm', 'mes', 'ehs', 'srm'];
+// ===== CLI 解析 =====
+function parseArgs(argv) {
+  const opts = { help: false, apply: false, ns: null };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === '--help' || a === '-h') opts.help = true;
+    else if (a === '--apply') opts.apply = true;
+    else if (a === '--ns' && argv[i + 1]) opts.ns = argv[++i].split(',').map((s) => s.trim());
+    else if (a.startsWith('--')) { process.stderr.write(`[patch-i18n-final] ⚠️  未知参数 ${a}\n`); opts.help = true; }
+  }
+  return opts;
+}
+const USAGE = `
+patch_i18n_final.cjs — 填充 zh 值到 en 值的 i18n 最终补丁（对照 master 字典）
+
+USAGE:
+  node scripts/patch_i18n_final.cjs [OPTIONS]
+
+OPTIONS:
+  -h, --help            显示帮助并退出
+      --apply           真正写 en/*.json；不传为 DRY-RUN（不写磁盘，只打印缺失数）
+      --ns <a,b,c>     只处理命名空间子集（默认 finance,hrm,mes,ehs,srm 全部）
+
+EXAMPLES:
+  node scripts/patch_i18n_final.cjs
+  node scripts/patch_i18n_final.cjs --ns hrm --apply
+`;
+
+const DEFAULT_DIR = 'apps/web/src/i18n/locales/';
+const DEFAULT_FILES = ['finance', 'hrm', 'mes', 'ehs', 'srm'];
 
 // Master Chinese → English dictionary for standalone values
 const D = {
@@ -274,6 +309,16 @@ function translateValue(zhVal) {
 let totalMissing = 0;
 const stillNotFound = new Set();
 
+// ====== 实际入口 ======
+const OPTS = parseArgs(process.argv.slice(2));
+if (OPTS.help) { process.stdout.write(USAGE); process.exit(0); }
+const dir = DEFAULT_DIR;
+const files = OPTS.ns && OPTS.ns.length ? OPTS.ns.filter((n) => DEFAULT_FILES.includes(n)) : DEFAULT_FILES;
+process.stderr.write(
+  `[patch-i18n-final] ${OPTS.apply ? 'APPLY 写磁盘' : 'DRY-RUN（加 --apply 才写）'}\n` +
+  `[patch-i18n-final] 命名空间: ${files.join(', ')}\n\n`
+);
+
 for (const f of files) {
   const zhPath = path.resolve(dir + 'zh/' + f + '.json');
   const enPath = path.resolve(dir + 'en/' + f + '.json');
@@ -304,8 +349,10 @@ for (const f of files) {
   }
 
   translate(zh, en);
-  fs.writeFileSync(enPath, JSON.stringify(en, null, 2) + '\n', 'utf8');
-  console.log(f + '.json: ' + missCount + ' still missing');
+  if (OPTS.apply) {
+    fs.writeFileSync(enPath, JSON.stringify(en, null, 2) + '\n', 'utf8');
+  }
+  console.log(`${f}.json: would fill ${missCount} missing (pass --apply to write)`);
   totalMissing += missCount;
 }
 
@@ -315,4 +362,9 @@ if (stillNotFound.size > 0) {
   for (const v of stillNotFound) {
     console.log('  ' + JSON.stringify(v));
   }
+}
+if (!OPTS.apply && totalMissing > 0) {
+  process.stderr.write(
+    `\n[patch-i18n-final] 💡 DRY-RUN，加 --apply 才会写 en JSON 文件。\n`
+  );
 }

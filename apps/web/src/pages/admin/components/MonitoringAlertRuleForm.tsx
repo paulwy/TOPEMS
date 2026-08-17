@@ -21,6 +21,7 @@ import type {
   CreateAlertRuleRequest,
   UpdateAlertRuleRequest,
 } from '@/api/admin/monitoring';
+
 export interface MonitoringAlertRuleFormProps {
   open: boolean;
   editingRule: AlertRule | null;
@@ -75,7 +76,9 @@ export const MonitoringAlertRuleForm: React.FC<MonitoringAlertRuleFormProps> = (
               defaultValue={editingRule?.notification_channels?.[0] || 'internal'}
               label={i18n.t('admin.monitoring_alert.notification_method')}
             >
-              <MenuItem value='internal'>{i18n.t('admin.monitoring_alert.in_app_message')}</MenuItem>
+              <MenuItem value='internal'>
+                {i18n.t('admin.monitoring_alert.in_app_message')}
+              </MenuItem>
               <MenuItem value='email'>{i18n.t('admin.monitoring_alert.email')}</MenuItem>
               <MenuItem value='sms'>{i18n.t('admin.monitoring_alert.sms')}</MenuItem>
             </Select>

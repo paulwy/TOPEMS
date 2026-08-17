@@ -9,6 +9,7 @@ import { rdApi } from '@/api/rd';
 import type { Experiment } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
 import i18n from '@/i18n';
+
 const experimentApiAdapter: CrudApiAdapter<Experiment> = {
   list: async (params) => {
     const queryParams: Record<string, unknown> = {
@@ -131,7 +132,10 @@ const RsExperimentListPage: React.FC = () => {
           onChange={setActiveTab}
         />
       }
-      breadcrumbs={[{ label: i18n.t('rd.rs_experiment_list_page.k11'), href: RD_PATHS.root }, { label: i18n.t('rd.rs_experiment_list_page.k10') }]}
+      breadcrumbs={[
+        { label: i18n.t('rd.rs_experiment_list_page.k11'), href: RD_PATHS.root },
+        { label: i18n.t('rd.rs_experiment_list_page.k10') },
+      ]}
     />
   );
 };

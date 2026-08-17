@@ -112,7 +112,10 @@ export const Timeline: React.FC<TimelineProps> = ({
                   variant === 'soft'
                     ? `${statusColor[item.status || 'pending']}20`
                     : statusColor[item.status || 'pending'],
-                color: variant === 'soft' ? statusColor[item.status || 'pending'] : designTokens.colors.background.paper,
+                color:
+                  variant === 'soft'
+                    ? statusColor[item.status || 'pending']
+                    : designTokens.colors.background.paper,
                 mb: 1,
                 cursor: onItemClick ? 'pointer' : 'default',
                 '&:hover': onItemClick

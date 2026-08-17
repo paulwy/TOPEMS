@@ -5,7 +5,7 @@ import type { DevicePoint, StorageLocation } from '../../../../api/gis';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface DetailsPanelProps {
   selectedItem: DevicePoint | StorageLocation;

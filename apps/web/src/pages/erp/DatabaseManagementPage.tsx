@@ -57,7 +57,6 @@ import { ERP_PATHS } from '@/modules/erp/config';
 import { databaseApi, type TableInfo, type TableDetail } from '@/api/erp/database';
 import { extractErrorMessage } from '@/utils/errors';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 export interface BackupRecord {
@@ -180,7 +179,10 @@ const DatabaseManagementPage: React.FC = () => {
       apiLogger.error(i18n.t('pages.database_management_page.k0'), tablesQuery.error);
       addNotification({
         title: i18n.t('pages.database_management_page.k6'),
-        message: extractErrorMessage(tablesQuery.error, i18n.t('pages.database_management_page.k7')),
+        message: extractErrorMessage(
+          tablesQuery.error,
+          i18n.t('pages.database_management_page.k7')
+        ),
         type: 'error',
       });
     }
@@ -191,7 +193,10 @@ const DatabaseManagementPage: React.FC = () => {
       apiLogger.error(i18n.t('pages.database_management_page.k1'), tableDetailQuery.error);
       addNotification({
         title: i18n.t('pages.database_management_page.k8'),
-        message: extractErrorMessage(tableDetailQuery.error, i18n.t('pages.database_management_page.k9')),
+        message: extractErrorMessage(
+          tableDetailQuery.error,
+          i18n.t('pages.database_management_page.k9')
+        ),
         type: 'error',
       });
     }
@@ -276,7 +281,11 @@ const DatabaseManagementPage: React.FC = () => {
         type: 'success',
       });
     } catch (err: unknown) {
-      addNotification({ title: i18n.t('pages.database_management_page.k19'), message: i18n.t('pages.database_management_page.k18'), type: 'error' });
+      addNotification({
+        title: i18n.t('pages.database_management_page.k19'),
+        message: i18n.t('pages.database_management_page.k18'),
+        type: 'error',
+      });
     } finally {
       setDeleteBackupDialogOpen(false);
       setDeletingBackupId(null);
@@ -288,9 +297,21 @@ const DatabaseManagementPage: React.FC = () => {
       string,
       { color: 'success' | 'error' | 'info' | 'default'; label: string; icon: React.ReactNode }
     > = {
-      success: { color: 'success', label: i18n.t('pages.database_management_page.k20'), icon: <CheckCircle size={14} /> },
-      failed: { color: 'error', label: i18n.t('pages.database_management_page.k21'), icon: <AlertCircle size={14} /> },
-      running: { color: 'info', label: i18n.t('pages.database_management_page.k22'), icon: <CircularProgress size={14} /> },
+      success: {
+        color: 'success',
+        label: i18n.t('pages.database_management_page.k20'),
+        icon: <CheckCircle size={14} />,
+      },
+      failed: {
+        color: 'error',
+        label: i18n.t('pages.database_management_page.k21'),
+        icon: <AlertCircle size={14} />,
+      },
+      running: {
+        color: 'info',
+        label: i18n.t('pages.database_management_page.k22'),
+        icon: <CircularProgress size={14} />,
+      },
     };
     const config = badges[status] || { color: 'default', label: status, icon: <Info size={14} /> };
     return (
@@ -506,8 +527,12 @@ const DatabaseManagementPage: React.FC = () => {
                   <MuiTable>
                     <TableHead>
                       <TableRow sx={{ bgcolor: 'grey.50' }}>
-                        <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k36')}</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k37')}</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>
+                          {i18n.t('pages.database_management_page.k36')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>
+                          {i18n.t('pages.database_management_page.k37')}
+                        </TableCell>
                         <TableCell
                           align='center'
                           sx={{ fontWeight: 'bold', width: 120 }}
@@ -647,13 +672,27 @@ const DatabaseManagementPage: React.FC = () => {
                 <MuiTable>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
-                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k41')}</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k42')}</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k43')}</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k44')}</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k45')}</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k46')}</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k47')}</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>
+                        {i18n.t('pages.database_management_page.k41')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>
+                        {i18n.t('pages.database_management_page.k42')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>
+                        {i18n.t('pages.database_management_page.k43')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>
+                        {i18n.t('pages.database_management_page.k44')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>
+                        {i18n.t('pages.database_management_page.k45')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>
+                        {i18n.t('pages.database_management_page.k46')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>
+                        {i18n.t('pages.database_management_page.k47')}
+                      </TableCell>
                       <TableCell
                         align='center'
                         sx={{ fontWeight: 'bold', width: 160 }}
@@ -711,7 +750,11 @@ const DatabaseManagementPage: React.FC = () => {
                           </TableCell>
                           <TableCell>
                             <Chip
-                              label={backup.backup_type === 'full' ? i18n.t('pages.database_management_page.k49') : i18n.t('pages.database_management_page.k48')}
+                              label={
+                                backup.backup_type === 'full'
+                                  ? i18n.t('pages.database_management_page.k49')
+                                  : i18n.t('pages.database_management_page.k48')
+                              }
                               size='small'
                               color={backup.backup_type === 'full' ? 'primary' : 'default'}
                               variant='outlined'
@@ -856,12 +899,24 @@ const DatabaseManagementPage: React.FC = () => {
                 <MuiTable size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
-                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k56')}</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k57')}</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k58')}</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k59')}</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k60')}</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('pages.database_management_page.k61')}</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>
+                        {i18n.t('pages.database_management_page.k56')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>
+                        {i18n.t('pages.database_management_page.k57')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>
+                        {i18n.t('pages.database_management_page.k58')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>
+                        {i18n.t('pages.database_management_page.k59')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>
+                        {i18n.t('pages.database_management_page.k60')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>
+                        {i18n.t('pages.database_management_page.k61')}
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -912,7 +967,9 @@ const DatabaseManagementPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={() => setShowStructureModal(false)}>{i18n.t('pages.database_management_page.k64')}</Button>
+          <Button onClick={() => setShowStructureModal(false)}>
+            {i18n.t('pages.database_management_page.k64')}
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -930,9 +987,7 @@ const DatabaseManagementPage: React.FC = () => {
         </DialogTitle>
         <DialogContent dividers>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-            <Alert severity='info'>
-              {i18n.t('pages.database_management_page.k15')}
-            </Alert>
+            <Alert severity='info'>{i18n.t('pages.database_management_page.k15')}</Alert>
             <FormControl size='small'>
               <InputLabel>{i18n.t('pages.database_management_page.k65')}</InputLabel>
               <Select
@@ -940,7 +995,9 @@ const DatabaseManagementPage: React.FC = () => {
                 label={i18n.t('pages.database_management_page.k66')}
               >
                 <MenuItem value='full'>{i18n.t('pages.database_management_page.k67')}</MenuItem>
-                <MenuItem value='incremental'>{i18n.t('pages.database_management_page.k68')}</MenuItem>
+                <MenuItem value='incremental'>
+                  {i18n.t('pages.database_management_page.k68')}
+                </MenuItem>
               </Select>
             </FormControl>
             <TextField
@@ -953,7 +1010,9 @@ const DatabaseManagementPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={() => setShowBackupModal(false)}>{i18n.t('pages.database_management_page.k71')}</Button>
+          <Button onClick={() => setShowBackupModal(false)}>
+            {i18n.t('pages.database_management_page.k71')}
+          </Button>
           <Button
             variant='contained'
             startIcon={<Play size={16} />}

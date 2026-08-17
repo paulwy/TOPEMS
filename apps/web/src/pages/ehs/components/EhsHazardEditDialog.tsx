@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { designTokens } from '@/theme/tokens';
 import type { HazardFormData } from '../hooks/useEhsHazardDetail';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 export interface EhsHazardEditDialogProps {
   open: boolean;

@@ -244,7 +244,9 @@ export interface UpdateIncidentRequest {
 }
 
 export const environmentalComplianceApi = {
-  async listRegulations(params?: RegulationListQuery): Promise<ApiResponse<PaginatedResponse<EnvironmentalRegulation>>> {
+  async listRegulations(
+    params?: RegulationListQuery
+  ): Promise<ApiResponse<PaginatedResponse<EnvironmentalRegulation>>> {
     const qs = new URLSearchParams();
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));
@@ -252,19 +254,34 @@ export const environmentalComplianceApi = {
     if (params?.category) qs.set('category', params.category);
     if (params?.year) qs.set('year', String(params.year));
     const s = qs.toString();
-    return apiClient.ehs.get<PaginatedResponse<EnvironmentalRegulation>>(`/environmental-compliance/regulations${s ? `?${s}` : ''}`);
+    return apiClient.ehs.get<PaginatedResponse<EnvironmentalRegulation>>(
+      `/environmental-compliance/regulations${s ? `?${s}` : ''}`
+    );
   },
 
   async getRegulation(id: string): Promise<ApiResponse<EnvironmentalRegulation>> {
-    return apiClient.ehs.get<EnvironmentalRegulation>(`/environmental-compliance/regulations/${id}`);
+    return apiClient.ehs.get<EnvironmentalRegulation>(
+      `/environmental-compliance/regulations/${id}`
+    );
   },
 
-  async createRegulation(data: CreateRegulationRequest): Promise<ApiResponse<EnvironmentalRegulation>> {
-    return apiClient.ehs.post<EnvironmentalRegulation>('/environmental-compliance/regulations', data);
+  async createRegulation(
+    data: CreateRegulationRequest
+  ): Promise<ApiResponse<EnvironmentalRegulation>> {
+    return apiClient.ehs.post<EnvironmentalRegulation>(
+      '/environmental-compliance/regulations',
+      data
+    );
   },
 
-  async updateRegulation(id: string, data: UpdateRegulationRequest): Promise<ApiResponse<EnvironmentalRegulation>> {
-    return apiClient.ehs.put<EnvironmentalRegulation>(`/environmental-compliance/regulations/${id}`, data);
+  async updateRegulation(
+    id: string,
+    data: UpdateRegulationRequest
+  ): Promise<ApiResponse<EnvironmentalRegulation>> {
+    return apiClient.ehs.put<EnvironmentalRegulation>(
+      `/environmental-compliance/regulations/${id}`,
+      data
+    );
   },
 
   async deleteRegulation(id: string): Promise<ApiResponse<null>> {
@@ -272,23 +289,35 @@ export const environmentalComplianceApi = {
   },
 
   async listRegulationCategories(): Promise<ApiResponse<Record<string, unknown>[]>> {
-    return apiClient.ehs.get<Record<string, unknown>[]>('/environmental-compliance/regulations/categories');
+    return apiClient.ehs.get<Record<string, unknown>[]>(
+      '/environmental-compliance/regulations/categories'
+    );
   },
 
   async listEvaluations(): Promise<ApiResponse<PaginatedResponse<ComplianceEvaluation>>> {
-    return apiClient.ehs.get<PaginatedResponse<ComplianceEvaluation>>('/environmental-compliance/evaluations');
+    return apiClient.ehs.get<PaginatedResponse<ComplianceEvaluation>>(
+      '/environmental-compliance/evaluations'
+    );
   },
 
   async getEvaluation(id: string): Promise<ApiResponse<ComplianceEvaluation>> {
     return apiClient.ehs.get<ComplianceEvaluation>(`/environmental-compliance/evaluations/${id}`);
   },
 
-  async createEvaluation(data: CreateEvaluationRequest): Promise<ApiResponse<ComplianceEvaluation>> {
+  async createEvaluation(
+    data: CreateEvaluationRequest
+  ): Promise<ApiResponse<ComplianceEvaluation>> {
     return apiClient.ehs.post<ComplianceEvaluation>('/environmental-compliance/evaluations', data);
   },
 
-  async updateEvaluation(id: string, data: UpdateEvaluationRequest): Promise<ApiResponse<ComplianceEvaluation>> {
-    return apiClient.ehs.put<ComplianceEvaluation>(`/environmental-compliance/evaluations/${id}`, data);
+  async updateEvaluation(
+    id: string,
+    data: UpdateEvaluationRequest
+  ): Promise<ApiResponse<ComplianceEvaluation>> {
+    return apiClient.ehs.put<ComplianceEvaluation>(
+      `/environmental-compliance/evaluations/${id}`,
+      data
+    );
   },
 
   async deleteEvaluation(id: string): Promise<ApiResponse<null>> {
@@ -296,14 +325,18 @@ export const environmentalComplianceApi = {
   },
 
   async listMonitorRecords(): Promise<ApiResponse<PaginatedResponse<EnvironmentMonitor>>> {
-    return apiClient.ehs.get<PaginatedResponse<EnvironmentMonitor>>('/environmental-compliance/monitoring');
+    return apiClient.ehs.get<PaginatedResponse<EnvironmentMonitor>>(
+      '/environmental-compliance/monitoring'
+    );
   },
 
   async getMonitorRecord(id: string): Promise<ApiResponse<EnvironmentMonitor>> {
     return apiClient.ehs.get<EnvironmentMonitor>(`/environmental-compliance/monitoring/${id}`);
   },
 
-  async createMonitorRecord(data: CreateMonitorRecordRequest): Promise<ApiResponse<EnvironmentMonitor>> {
+  async createMonitorRecord(
+    data: CreateMonitorRecordRequest
+  ): Promise<ApiResponse<EnvironmentMonitor>> {
     return apiClient.ehs.post<EnvironmentMonitor>('/environmental-compliance/monitoring', data);
   },
 
@@ -312,11 +345,15 @@ export const environmentalComplianceApi = {
   },
 
   async listMonitorTypes(): Promise<ApiResponse<Record<string, unknown>[]>> {
-    return apiClient.ehs.get<Record<string, unknown>[]>('/environmental-compliance/monitoring/types');
+    return apiClient.ehs.get<Record<string, unknown>[]>(
+      '/environmental-compliance/monitoring/types'
+    );
   },
 
   async listPermits(): Promise<ApiResponse<PaginatedResponse<DischargePermit>>> {
-    return apiClient.ehs.get<PaginatedResponse<DischargePermit>>('/environmental-compliance/permits');
+    return apiClient.ehs.get<PaginatedResponse<DischargePermit>>(
+      '/environmental-compliance/permits'
+    );
   },
 
   async getPermit(id: string): Promise<ApiResponse<DischargePermit>> {
@@ -336,7 +373,9 @@ export const environmentalComplianceApi = {
   },
 
   async listIncidents(): Promise<ApiResponse<PaginatedResponse<EnvironmentIncident>>> {
-    return apiClient.ehs.get<PaginatedResponse<EnvironmentIncident>>('/environmental-compliance/incidents');
+    return apiClient.ehs.get<PaginatedResponse<EnvironmentIncident>>(
+      '/environmental-compliance/incidents'
+    );
   },
 
   async getIncident(id: string): Promise<ApiResponse<EnvironmentIncident>> {
@@ -347,8 +386,14 @@ export const environmentalComplianceApi = {
     return apiClient.ehs.post<EnvironmentIncident>('/environmental-compliance/incidents', data);
   },
 
-  async updateIncident(id: string, data: UpdateIncidentRequest): Promise<ApiResponse<EnvironmentIncident>> {
-    return apiClient.ehs.put<EnvironmentIncident>(`/environmental-compliance/incidents/${id}`, data);
+  async updateIncident(
+    id: string,
+    data: UpdateIncidentRequest
+  ): Promise<ApiResponse<EnvironmentIncident>> {
+    return apiClient.ehs.put<EnvironmentIncident>(
+      `/environmental-compliance/incidents/${id}`,
+      data
+    );
   },
 
   async deleteIncident(id: string): Promise<ApiResponse<null>> {

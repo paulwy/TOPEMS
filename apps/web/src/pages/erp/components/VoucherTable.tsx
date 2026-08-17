@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import type { VoucherManagementReturn } from '../hooks/useVoucherManagement';
+
 export type VoucherTableProps = VoucherManagementReturn;
 const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
   const {
@@ -73,8 +74,12 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
               <TableCell sx={{ fontWeight: 'bold' }}>
                 {i18n.t('erp.voucher_mgmt.label.voucher_number')}
               </TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.voucher_mgmt.label.type')}</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.voucher_mgmt.label.date')}</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>
+                {i18n.t('erp.voucher_mgmt.label.type')}
+              </TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>
+                {i18n.t('erp.voucher_mgmt.label.date')}
+              </TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>
                 {i18n.t('erp.voucher_mgmt.label.period')}
               </TableCell>
@@ -93,7 +98,9 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
               >
                 {i18n.t('erp.voucher_mgmt.label.credit_amount')}
               </TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.voucher_mgmt.label.maker')}</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>
+                {i18n.t('erp.voucher_mgmt.label.maker')}
+              </TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>
                 {i18n.t('erp.voucher_mgmt.label.status')}
               </TableCell>

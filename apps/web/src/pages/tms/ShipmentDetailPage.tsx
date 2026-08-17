@@ -77,11 +77,16 @@ export default function ShipmentDetailPage() {
             {shipment.origin ?? '-'} → {shipment.destination ?? '-'}
           </p>
         </div>
-        <StatusBadge fsm='shipment' status={shipment.status ?? 'draft'} />
+        <StatusBadge
+          fsm='shipment'
+          status={shipment.status ?? 'draft'}
+        />
       </div>
 
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>{t('tms.shipment_detail_page.k3')}</p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>
+          {t('tms.shipment_detail_page.k3')}
+        </p>
         <FSMActionButtons
           fsm='shipment'
           currentStatus={shipment.status ?? 'draft'}
@@ -90,36 +95,82 @@ export default function ShipmentDetailPage() {
       </div>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        <Field label={t('tms.shipment_detail_page.k4')} value={shipment.shipment_no} />
-        <Field label={t('tms.shipment_detail_page.k5')} value={shipment.status ?? '-'} />
-        <Field label={t('tms.shipment_detail_page.k6')} value={shipment.origin ?? '-'} />
-        <Field label={t('tms.shipment_detail_page.k7')} value={shipment.destination ?? '-'} />
+        <Field
+          label={t('tms.shipment_detail_page.k4')}
+          value={shipment.shipment_no}
+        />
+        <Field
+          label={t('tms.shipment_detail_page.k5')}
+          value={shipment.status ?? '-'}
+        />
+        <Field
+          label={t('tms.shipment_detail_page.k6')}
+          value={shipment.origin ?? '-'}
+        />
+        <Field
+          label={t('tms.shipment_detail_page.k7')}
+          value={shipment.destination ?? '-'}
+        />
         <Field
           label={t('tms.shipment_detail_page.k8')}
           value={shipment.freight_amount != null ? `¥${shipment.freight_amount}` : '-'}
         />
-        <Field label={t('tms.shipment_detail_page.id_9')} value={shipment.carrier_id ?? '-'} />
-        <Field label={t('tms.shipment_detail_page.id_10')} value={shipment.vehicle_id ?? '-'} />
-        <Field label={t('tms.shipment_detail_page.id_11')} value={shipment.driver_id ?? '-'} />
-        <Field label={t('tms.shipment_detail_page.id_12')} value={shipment.route_id ?? '-'} />
-        <Field label={t('tms.shipment_detail_page.id_13')} value={shipment.order_id ?? '-'} />
+        <Field
+          label={t('tms.shipment_detail_page.id_9')}
+          value={shipment.carrier_id ?? '-'}
+        />
+        <Field
+          label={t('tms.shipment_detail_page.id_10')}
+          value={shipment.vehicle_id ?? '-'}
+        />
+        <Field
+          label={t('tms.shipment_detail_page.id_11')}
+          value={shipment.driver_id ?? '-'}
+        />
+        <Field
+          label={t('tms.shipment_detail_page.id_12')}
+          value={shipment.route_id ?? '-'}
+        />
+        <Field
+          label={t('tms.shipment_detail_page.id_13')}
+          value={shipment.order_id ?? '-'}
+        />
         <Field
           label={t('tms.shipment_detail_page.k14')}
-          value={shipment.planned_departure ? new Date(shipment.planned_departure).toLocaleString('zh-CN') : '-'}
+          value={
+            shipment.planned_departure
+              ? new Date(shipment.planned_departure).toLocaleString('zh-CN')
+              : '-'
+          }
         />
         <Field
           label={t('tms.shipment_detail_page.k15')}
-          value={shipment.planned_arrival ? new Date(shipment.planned_arrival).toLocaleString('zh-CN') : '-'}
+          value={
+            shipment.planned_arrival
+              ? new Date(shipment.planned_arrival).toLocaleString('zh-CN')
+              : '-'
+          }
         />
         <Field
           label={t('tms.shipment_detail_page.k16')}
-          value={shipment.actual_departure ? new Date(shipment.actual_departure).toLocaleString('zh-CN') : '-'}
+          value={
+            shipment.actual_departure
+              ? new Date(shipment.actual_departure).toLocaleString('zh-CN')
+              : '-'
+          }
         />
         <Field
           label={t('tms.shipment_detail_page.k17')}
-          value={shipment.actual_arrival ? new Date(shipment.actual_arrival).toLocaleString('zh-CN') : '-'}
+          value={
+            shipment.actual_arrival
+              ? new Date(shipment.actual_arrival).toLocaleString('zh-CN')
+              : '-'
+          }
         />
-        <Field label={t('tms.shipment_detail_page.k18')} value={shipment.notes ?? '-'} />
+        <Field
+          label={t('tms.shipment_detail_page.k18')}
+          value={shipment.notes ?? '-'}
+        />
       </div>
     </div>
   );

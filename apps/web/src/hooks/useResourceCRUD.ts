@@ -45,30 +45,33 @@ export function useResourceCRUD<T, CreateRequest, UpdateRequest>(
   const createMutation = useMutation({
     mutationFn: options.createFn as (data: unknown) => Promise<unknown>,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: options.queryKey ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: options.queryKey,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: options.updateFn as (params: unknown) => Promise<unknown>,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: options.queryKey ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: options.queryKey,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: options.deleteFn as (id: unknown) => Promise<unknown>,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: options.queryKey ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: options.queryKey,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 

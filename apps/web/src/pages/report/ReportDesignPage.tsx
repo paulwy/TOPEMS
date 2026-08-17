@@ -12,7 +12,7 @@ import i18n from '@/i18n';
 import { designTokens } from '@/theme/tokens';
 import { reportApi } from '@/api/report';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const ReportDesignPage: React.FC = () => {
   const { data: backendData, isLoading: isBackendLoading } = useQuery({

@@ -83,7 +83,11 @@ export const inventoryTurnoverSchema: EntitySchema = {
         const style: React.CSSProperties = {
           color: isHigh ? designTokens.colors.error.dark : undefined,
         };
-        return React.createElement(Typography, { variant: 'body2', style }, `${val}${i18n.t('shared.inventory_turnover.k1')}`);
+        return React.createElement(
+          Typography,
+          { variant: 'body2', style },
+          `${val}${i18n.t('shared.inventory_turnover.k1')}`
+        );
       },
     },
     {
@@ -203,10 +207,22 @@ export const inventoryTurnoverSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('scm.inventory_turnover.k17'), value: 'all' },
-          { label: i18n.t('scm.inventory_turnover.k18'), value: i18n.t('scm.inventory_turnover.k19') },
-          { label: i18n.t('scm.inventory_turnover.k20'), value: i18n.t('scm.inventory_turnover.k21') },
-          { label: i18n.t('scm.inventory_turnover.k22'), value: i18n.t('scm.inventory_turnover.k23') },
-          { label: i18n.t('scm.inventory_turnover.k24'), value: i18n.t('scm.inventory_turnover.k25') },
+          {
+            label: i18n.t('scm.inventory_turnover.k18'),
+            value: i18n.t('scm.inventory_turnover.k19'),
+          },
+          {
+            label: i18n.t('scm.inventory_turnover.k20'),
+            value: i18n.t('scm.inventory_turnover.k21'),
+          },
+          {
+            label: i18n.t('scm.inventory_turnover.k22'),
+            value: i18n.t('scm.inventory_turnover.k23'),
+          },
+          {
+            label: i18n.t('scm.inventory_turnover.k24'),
+            value: i18n.t('scm.inventory_turnover.k25'),
+          },
         ],
       },
     ],

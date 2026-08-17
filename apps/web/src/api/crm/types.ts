@@ -498,14 +498,7 @@ export interface ReturnInventoryStatus {
 // ---- RFM 客户分群 ----
 
 export type RfmSegment =
-  | 'champion'
-  | 'loyal'
-  | 'potential'
-  | 'new'
-  | 'at_risk'
-  | 'cannot_lost'
-  | 'hibernating'
-  | 'lost';
+  'champion' | 'loyal' | 'potential' | 'new' | 'at_risk' | 'cannot_lost' | 'hibernating' | 'lost';
 
 export interface RfmConfig {
   reference_date?: string;
@@ -541,10 +534,7 @@ export interface SegmentStats {
 // ---- 销售预测 ----
 
 export type ForecastMethod =
-  | 'moving_average'
-  | 'weighted_moving_average'
-  | 'exponential_smoothing'
-  | 'linear_regression';
+  'moving_average' | 'weighted_moving_average' | 'exponential_smoothing' | 'linear_regression';
 
 export interface ForecastConfig {
   method: ForecastMethod;

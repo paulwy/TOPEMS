@@ -167,7 +167,12 @@ function CanvasNodeItem({
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        {iconName && <LazyIcon name={iconName} size={16} />}
+        {iconName && (
+          <LazyIcon
+            name={iconName}
+            size={16}
+          />
+        )}
         <Typography
           variant='body2'
           sx={{ fontWeight: 500 }}

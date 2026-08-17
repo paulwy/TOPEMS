@@ -36,7 +36,9 @@ export const featureFlagApi = {
     return apiClient.core.put(`/system/feature-flags/${key}`, data);
   },
 
-  async refresh(key: string): Promise<ApiResponse<{ key: string; refreshed: boolean; existed: boolean }>> {
+  async refresh(
+    key: string
+  ): Promise<ApiResponse<{ key: string; refreshed: boolean; existed: boolean }>> {
     return apiClient.core.post(`/system/feature-flags/${key}/refresh`);
   },
 };

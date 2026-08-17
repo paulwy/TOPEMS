@@ -16,7 +16,8 @@ import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { useNotificationStore } from '@/store';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const BarcodePage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const barcodeApiAdapter: CrudApiAdapter<BarcodeType> = useMemo(
@@ -72,9 +73,17 @@ const BarcodePage: React.FC = () => {
     try {
       const response = await limsApi.printBarcode({ barcode_ids: [id] });
       if (response.success) {
-        addNotification({ title: i18n.t('lims.barcode_page.k5'), message: i18n.t('lims.barcode_page.k4'), type: 'success' });
+        addNotification({
+          title: i18n.t('lims.barcode_page.k5'),
+          message: i18n.t('lims.barcode_page.k4'),
+          type: 'success',
+        });
       } else {
-        addNotification({ title: i18n.t('lims.barcode_page.k7'), message: response.message || i18n.t('lims.barcode_page.k6'), type: 'error' });
+        addNotification({
+          title: i18n.t('lims.barcode_page.k7'),
+          message: response.message || i18n.t('lims.barcode_page.k6'),
+          type: 'error',
+        });
       }
     } catch (err) {
       addNotification({
@@ -95,7 +104,11 @@ const BarcodePage: React.FC = () => {
           type: 'success',
         });
       } else {
-        addNotification({ title: i18n.t('lims.barcode_page.k12'), message: response.message || i18n.t('lims.barcode_page.k11'), type: 'error' });
+        addNotification({
+          title: i18n.t('lims.barcode_page.k12'),
+          message: response.message || i18n.t('lims.barcode_page.k11'),
+          type: 'error',
+        });
       }
     } catch (err) {
       addNotification({
@@ -128,9 +141,15 @@ const BarcodePage: React.FC = () => {
     const barcodes = rows as unknown as BarcodeType[];
     const stats = {
       total: barcodes.length,
-      normal: barcodes.filter((b) => b.status === i18n.t('lims.barcode_page.k17') || b.status === 'normal').length,
-      printed: barcodes.filter((b) => b.status === i18n.t('lims.barcode_page.k18') || b.status === 'printed').length,
-      scanned: barcodes.filter((b) => b.status === i18n.t('lims.barcode_page.k19') || b.status === 'scanned').length,
+      normal: barcodes.filter(
+        (b) => b.status === i18n.t('lims.barcode_page.k17') || b.status === 'normal'
+      ).length,
+      printed: barcodes.filter(
+        (b) => b.status === i18n.t('lims.barcode_page.k18') || b.status === 'printed'
+      ).length,
+      scanned: barcodes.filter(
+        (b) => b.status === i18n.t('lims.barcode_page.k19') || b.status === 'scanned'
+      ).length,
     };
     const cards = [
       {

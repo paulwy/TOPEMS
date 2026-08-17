@@ -82,8 +82,9 @@ export interface DictItemQueryParams extends PaginationParams {
 }
 
 const resolvePageSize = (params?: PaginationParams): string | undefined => {
-  const ps = (params as { pageSize?: number } | undefined)?.pageSize
-    ?? (params as { pagesize?: number } | undefined)?.pagesize;
+  const ps =
+    (params as { pageSize?: number } | undefined)?.pageSize ??
+    (params as { pagesize?: number } | undefined)?.pagesize;
   return ps ? ps.toString() : undefined;
 };
 
@@ -127,7 +128,10 @@ export const dictApi = {
   },
 
   // DictItem
-  async listItems(typeId: string, params?: DictItemQueryParams): Promise<ApiResponse<DictItemListResponse>> {
+  async listItems(
+    typeId: string,
+    params?: DictItemQueryParams
+  ): Promise<ApiResponse<DictItemListResponse>> {
     const sp = buildSearchParams(params);
     if (params?.search) sp.set('search', params.search);
     const qs = sp.toString();

@@ -36,7 +36,7 @@ export const alertTypedApi = {
    * Query Params: { page, pagesize, severity, status, service_name }（AdaptedQuery 后 camelCase）
    */
   list: async (
-    params?: AdaptedQuery<'list_alerts'> | AlertQueryParams,
+    params?: AdaptedQuery<'list_alerts'> | AlertQueryParams
   ): Promise<TypedPaginatedResponse<Alert>> => {
     return apiClient.monitor.get('/alerts', {
       params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,

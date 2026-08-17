@@ -446,17 +446,27 @@ export function formatReport(report: LintReport): string {
   lines.push('========================================');
   lines.push('');
   lines.push(`${i18n.t('components.design-lint.k24')}${report.timestamp}`);
-  lines.push(`${i18n.t('components.design-lint.k25')}${report.score}/100 ${report.passed ? '✅' : '❌'}`);
+  lines.push(
+    `${i18n.t('components.design-lint.k25')}${report.score}/100 ${report.passed ? '✅' : '❌'}`
+  );
   lines.push(`${i18n.t('components.design-lint.k26')}${report.total}`);
   lines.push(`${i18n.t('components.design-lint.k27')}${report.errors}`);
   lines.push(`${i18n.t('components.design-lint.k28')}${report.warnings}`);
   lines.push(`${i18n.t('components.design-lint.k29')}${report.info}`);
   lines.push('');
   lines.push(i18n.t('components.design-lint.k30'));
-  lines.push(`${i18n.t('components.design-lint.k31')}${report.checks.colorContrast ? i18n.t('design_system.design-lint.k1') : i18n.t('design_system.design-lint.k2')}`);
-  lines.push(`${i18n.t('components.design-lint.k32')}${report.checks.spacingConsistency ? i18n.t('design_system.design-lint.k3') : i18n.t('design_system.design-lint.k4')}`);
-  lines.push(`${i18n.t('components.design-lint.k33')}${report.checks.typographyScale ? i18n.t('design_system.design-lint.k5') : i18n.t('design_system.design-lint.k6')}`);
-  lines.push(`${i18n.t('components.design-lint.k34')}${report.checks.componentUsage ? i18n.t('design_system.design-lint.k7') : i18n.t('design_system.design-lint.k8')}`);
+  lines.push(
+    `${i18n.t('components.design-lint.k31')}${report.checks.colorContrast ? i18n.t('design_system.design-lint.k1') : i18n.t('design_system.design-lint.k2')}`
+  );
+  lines.push(
+    `${i18n.t('components.design-lint.k32')}${report.checks.spacingConsistency ? i18n.t('design_system.design-lint.k3') : i18n.t('design_system.design-lint.k4')}`
+  );
+  lines.push(
+    `${i18n.t('components.design-lint.k33')}${report.checks.typographyScale ? i18n.t('design_system.design-lint.k5') : i18n.t('design_system.design-lint.k6')}`
+  );
+  lines.push(
+    `${i18n.t('components.design-lint.k34')}${report.checks.componentUsage ? i18n.t('design_system.design-lint.k7') : i18n.t('design_system.design-lint.k8')}`
+  );
   lines.push('');
 
   if (report.issues.length > 0) {

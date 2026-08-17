@@ -13,10 +13,10 @@ import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 function extractListData<T>(response: unknown): T[] {
-  const { t } = useTranslation('ehs');
+  const t = i18n.getFixedT(null, 'ehs');
   if (!response || typeof response !== 'object') return [];
   const obj = response as Record<string, unknown>;
   const data = obj.data;
@@ -145,20 +145,23 @@ const CompliancePage: React.FC = () => {
   const { data: regulationsResp } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.EHS_COMPLIANCE_STATS_REGULATIONS_BASE,
     queryFn: async () => ehsApi.listEnvironmentalRegulations({ pagesize: 500 }),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const { data: assessmentsResp } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.EHS_COMPLIANCE_STATS_ASSESSMENTS_BASE,
     queryFn: async () => ehsApi.listComplianceAssessments({ pagesize: 500 }),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const { data: permitsResp } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.EHS_COMPLIANCE_STATS_PERMITS_BASE,
     queryFn: async () => ehsApi.listDischargePermits({ pagesize: 500 }),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const stats: ComplianceStats = useMemo(() => {
     const regulations = extractListData<any>(regulationsResp);

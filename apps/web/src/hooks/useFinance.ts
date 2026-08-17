@@ -29,8 +29,9 @@ export const useAccounts = (params?: {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.ACCOUNTS_BASE, params],
     queryFn: () => accountApi.list(params),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -56,8 +57,9 @@ export const useAccount = (id: string) => {
     queryKey: [...QUERY_KEYS.AD_HOC.ACCOUNT_BASE, id],
     queryFn: () => accountApi.get(id),
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -74,8 +76,9 @@ export const useAccountBalances = (params: {
     queryKey: [...QUERY_KEYS.AD_HOC.ACCOUNT_BALANCES_BASE, params],
     queryFn: () => accountApi.getBalances(params),
     enabled: !!params.period,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -90,8 +93,9 @@ export const useOpeningBalances = (params: {
     queryKey: [...QUERY_KEYS.AD_HOC.OPENING_BALANCES_BASE, params],
     queryFn: () => accountApi.getOpeningBalances(params),
     enabled: !!params.period,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -104,14 +108,16 @@ export const useCreateAccount = () => {
   return useMutation({
     mutationFn: (data: Partial<Account>) => accountApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_TREE_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_TREE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_finance.k0'));
     },
     onError: (error) => {
@@ -131,14 +137,16 @@ export const useUpdateAccount = () => {
     mutationFn: ({ id, data }: { id: string; data: Partial<Account> }) =>
       accountApi.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_TREE_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_TREE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_finance.k2'));
     },
     onError: (error) => {
@@ -157,14 +165,16 @@ export const useDeleteAccount = () => {
   return useMutation({
     mutationFn: (id: string) => accountApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_TREE_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ACCOUNTS_TREE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_finance.k4'));
     },
     onError: (error) => {
@@ -194,14 +204,16 @@ export const useSetOpeningBalance = () => {
       }>;
     }) => accountApi.setOpeningBalance(accountId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.OPENING_BALANCES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ACCOUNT_BALANCES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.OPENING_BALANCES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ACCOUNT_BALANCES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_finance.k6'));
     },
     onError: (error) => {
@@ -221,14 +233,16 @@ export const useCarryForwardOpeningBalance = () => {
     mutationFn: (params: { from_period: string; to_period: string; company_id?: string }) =>
       accountApi.carryForwardOpeningBalance(params),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.OPENING_BALANCES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ACCOUNT_BALANCES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.OPENING_BALANCES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ACCOUNT_BALANCES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_finance.k8'));
     },
     onError: (error) => {

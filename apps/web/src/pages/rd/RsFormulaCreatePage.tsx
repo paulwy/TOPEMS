@@ -13,7 +13,7 @@ import type {
 import i18n from '@/i18n';
 import { useNotificationStore } from '@/store';
 import { RD_PATHS } from '@/modules/rd/config';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
 import {
   Paper,
@@ -30,6 +30,7 @@ import {
   Divider,
 } from '@mui/material';
 import { Plus, Trash2 } from 'lucide-react';
+
 const statuses = [
   { value: 'draft', label: i18n.t('rd.rs_formula_create_page.k0') },
   { value: 'testing', label: i18n.t('rd.rs_formula_create_page.k1') },
@@ -53,8 +54,9 @@ const RsFormulaCreatePage: React.FC = () => {
       }
       return response.data.projects?.map((p) => ({ id: p.id, name: p.name })) || [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const formulaQuery = useQuery({
     queryKey: QUERY_KEYS.RD.FORMULA(id || ''),
     queryFn: async () => {
@@ -65,8 +67,9 @@ const RsFormulaCreatePage: React.FC = () => {
       return response.data;
     },
     enabled: isEdit && !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   useEffect(() => {
     if (formulaQuery.data) {
       setIngredients(
@@ -99,14 +102,19 @@ const RsFormulaCreatePage: React.FC = () => {
       throw new Error(i18n.t('rd.rs_formula_create_page.k7'));
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.FORMULAS ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.RD.FORMULAS,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
-        title: isEdit ? i18n.t('rd.rs_formula_create_page.k9') : i18n.t('rd.rs_formula_create_page.k8'),
-        message: isEdit ? i18n.t('rd.rs_formula_create_page.k11') : i18n.t('rd.rs_formula_create_page.k10'),
+        title: isEdit
+          ? i18n.t('rd.rs_formula_create_page.k9')
+          : i18n.t('rd.rs_formula_create_page.k8'),
+        message: isEdit
+          ? i18n.t('rd.rs_formula_create_page.k11')
+          : i18n.t('rd.rs_formula_create_page.k10'),
       });
       navigate(RD_PATHS.formula);
     },
@@ -370,8 +378,12 @@ const RsFormulaCreatePage: React.FC = () => {
   );
   return (
     <PageContainer
-      title={isEdit ? i18n.t('rd.rs_formula_create_page.k40') : i18n.t('rd.rs_formula_create_page.k39')}
-      subtitle={isEdit ? i18n.t('rd.rs_formula_create_page.k42') : i18n.t('rd.rs_formula_create_page.k41')}
+      title={
+        isEdit ? i18n.t('rd.rs_formula_create_page.k40') : i18n.t('rd.rs_formula_create_page.k39')
+      }
+      subtitle={
+        isEdit ? i18n.t('rd.rs_formula_create_page.k42') : i18n.t('rd.rs_formula_create_page.k41')
+      }
     >
       <FormPageTemplate
         title=''
@@ -384,7 +396,9 @@ const RsFormulaCreatePage: React.FC = () => {
         error={error}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        submitText={isEdit ? i18n.t('rd.rs_formula_create_page.k44') : i18n.t('rd.rs_formula_create_page.k43')}
+        submitText={
+          isEdit ? i18n.t('rd.rs_formula_create_page.k44') : i18n.t('rd.rs_formula_create_page.k43')
+        }
         columns={2}
         showValidationHints
         validationToasts={[

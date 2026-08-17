@@ -103,18 +103,25 @@ export const lineageApi = {
     entity_type: string;
     entity_id: string;
     proposed_change: Record<string, unknown>;
-  }): Promise<ApiResponse<{
-    affected_entities: Array<{ entity_type: string; entity_id: string; impact: string }>;
-    risk_score: number;
-  }>> => {
+  }): Promise<
+    ApiResponse<{
+      affected_entities: Array<{ entity_type: string; entity_id: string; impact: string }>;
+      risk_score: number;
+    }>
+  > => {
     return apiClient.master.post('/lineage-v52/impact/simulate', data);
   },
 
-  getAffectedScope: async (entityType: string, id: string): Promise<ApiResponse<{
-    upstream_count: number;
-    downstream_count: number;
-    critical_entities: Array<{ entity_type: string; count: number }>;
-  }>> => {
+  getAffectedScope: async (
+    entityType: string,
+    id: string
+  ): Promise<
+    ApiResponse<{
+      upstream_count: number;
+      downstream_count: number;
+      critical_entities: Array<{ entity_type: string; count: number }>;
+    }>
+  > => {
     return apiClient.master.get('/lineage-v52/impact/scope', {
       params: { entity_type: entityType, id } as unknown as Record<string, string>,
     });
@@ -139,7 +146,9 @@ export const lineageApi = {
     return apiClient.master.get('/lineage-v52/propagation/rules', { params });
   },
 
-  addPropagationRule: async (data: Omit<PropagationRule, 'id'>): Promise<ApiResponse<PropagationRule>> => {
+  addPropagationRule: async (
+    data: Omit<PropagationRule, 'id'>
+  ): Promise<ApiResponse<PropagationRule>> => {
     return apiClient.master.post('/lineage-v52/propagation/rules', data);
   },
 
@@ -147,7 +156,17 @@ export const lineageApi = {
     entity_type?: string;
     status?: string;
     limit?: number;
-  }): Promise<ApiResponse<Array<{ id: string; entity_type: string; entity_id: string; status: string; propagated_at: string }>>> => {
+  }): Promise<
+    ApiResponse<
+      Array<{
+        id: string;
+        entity_type: string;
+        entity_id: string;
+        status: string;
+        propagated_at: string;
+      }>
+    >
+  > => {
     return apiClient.master.get('/lineage-v52/propagation/log', { params });
   },
 

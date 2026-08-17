@@ -149,7 +149,9 @@ export function AISummarizer({
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
                 <Quote style={{ width: 20, height: 20, color: 'purple.600' }} />
-                <FormLabel sx={{ color: 'secondary.dark', fontWeight: 500 }}>{i18n.t('components.ai_summarizer.k8')}</FormLabel>
+                <FormLabel sx={{ color: 'secondary.dark', fontWeight: 500 }}>
+                  {i18n.t('components.ai_summarizer.k8')}
+                </FormLabel>
               </Box>
               <Box
                 sx={{

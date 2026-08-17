@@ -10,7 +10,9 @@ import type {
 } from './types';
 
 export const materialPlanApi = {
-  list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<MaterialPlan>>> => {
+  list: async (
+    params?: PaginationParams
+  ): Promise<ApiResponse<PaginatedResponse<MaterialPlan>>> => {
     return apiClient.aps.get('/material-plans', { params });
   },
 
@@ -22,7 +24,10 @@ export const materialPlanApi = {
     return apiClient.aps.post('/material-plans', data);
   },
 
-  update: async (id: string, data: UpdateMaterialPlanRequest): Promise<ApiResponse<MaterialPlan>> => {
+  update: async (
+    id: string,
+    data: UpdateMaterialPlanRequest
+  ): Promise<ApiResponse<MaterialPlan>> => {
     return apiClient.aps.put(`/material-plans/${id}`, data);
   },
 
@@ -31,21 +36,33 @@ export const materialPlanApi = {
   },
 
   // ---- 审批端点 ----
-  submit: async (id: string, operator: string, comment?: string): Promise<ApiResponse<ApprovalResponse>> => {
+  submit: async (
+    id: string,
+    operator: string,
+    comment?: string
+  ): Promise<ApiResponse<ApprovalResponse>> => {
     return apiClient.aps.post(`/material-plans/${id}/submit`, {
       operator,
       comment,
     } as ApprovalRequest);
   },
 
-  requisition: async (id: string, operator: string, comment?: string): Promise<ApiResponse<ApprovalResponse>> => {
+  requisition: async (
+    id: string,
+    operator: string,
+    comment?: string
+  ): Promise<ApiResponse<ApprovalResponse>> => {
     return apiClient.aps.post(`/material-plans/${id}/requisition`, {
       operator,
       comment,
     } as ApprovalRequest);
   },
 
-  cancel: async (id: string, operator: string, comment?: string): Promise<ApiResponse<ApprovalResponse>> => {
+  cancel: async (
+    id: string,
+    operator: string,
+    comment?: string
+  ): Promise<ApiResponse<ApprovalResponse>> => {
     return apiClient.aps.post(`/material-plans/${id}/cancel`, {
       operator,
       comment,

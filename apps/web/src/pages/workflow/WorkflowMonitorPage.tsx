@@ -14,6 +14,7 @@ import { monitorApi } from '@/api/workflow/monitor';
 import { workflowMonitorSchema } from '@/schemas/workflow';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 type ExceptionType = 'timeout' | 'error' | 'stuck';
 interface WorkflowException {
   id: string;
@@ -44,7 +45,10 @@ const buildExceptionList = (
       id: instance.id,
       instanceId: instance.id,
       workflowName: instance.workflow_name || i18n.t('workflow.workflow_monitor_page.k0'),
-      currentNode: instance.current_node_name || instance.current_node_id || i18n.t('workflow.workflow_monitor_page.k1'),
+      currentNode:
+        instance.current_node_name ||
+        instance.current_node_id ||
+        i18n.t('workflow.workflow_monitor_page.k1'),
       exceptionType: 'timeout',
       exceptionDescription: i18n.t('workflow.workflow_monitor_page.k2'),
       occurredAt: instance.started_at,
@@ -56,7 +60,10 @@ const buildExceptionList = (
       id: instance.id,
       instanceId: instance.id,
       workflowName: instance.workflow_name || i18n.t('workflow.workflow_monitor_page.k3'),
-      currentNode: instance.current_node_name || instance.current_node_id || i18n.t('workflow.workflow_monitor_page.k4'),
+      currentNode:
+        instance.current_node_name ||
+        instance.current_node_id ||
+        i18n.t('workflow.workflow_monitor_page.k4'),
       exceptionType: 'error',
       exceptionDescription: i18n.t('workflow.workflow_monitor_page.k5'),
       occurredAt: instance.updated_at || instance.created_at,
@@ -128,18 +135,21 @@ export const WorkflowMonitorPage: React.FC = () => {
             if (!res.success) {
               throw new Error(res.message || i18n.t('workflow.workflow_monitor_page.k7'));
             }
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_MONITOR_ERROR_INSTANCES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_MONITOR_OVERDUE_INSTANCES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-            queryClient.invalidateQueries({ queryKey: [workflowMonitorSchema.entity] ,
-  exact: false,
-  refetchType: 'active',
-});
+            queryClient.invalidateQueries({
+              queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_MONITOR_ERROR_INSTANCES_BASE,
+              exact: false,
+              refetchType: 'active',
+            });
+            queryClient.invalidateQueries({
+              queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_MONITOR_OVERDUE_INSTANCES_BASE,
+              exact: false,
+              refetchType: 'active',
+            });
+            queryClient.invalidateQueries({
+              queryKey: [workflowMonitorSchema.entity],
+              exact: false,
+              refetchType: 'active',
+            });
             addNotification({
               title: i18n.t('workflow.workflow_monitor_page.k8'),
               message: `${i18n.t('pages.workflow_monitor_page.k2')}${instanceId}${i18n.t('pages.workflow_monitor_page.k3')}`,

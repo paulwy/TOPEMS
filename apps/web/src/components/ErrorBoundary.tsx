@@ -364,7 +364,10 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       const enableRetry = this.props.enableRetry ?? true;
       const friendlyMessage = error
         ? getErrorFriendlyMessage(error, level)
-        : { title: i18n.t('components.error_boundary.k13'), description: i18n.t('components.error_boundary.k12') };
+        : {
+            title: i18n.t('components.error_boundary.k13'),
+            description: i18n.t('components.error_boundary.k12'),
+          };
 
       return (
         <div
@@ -471,7 +474,9 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                       }}
                     >
                       <Code2 style={{ width: 16, height: 16 }} />
-                      <span style={{ fontWeight: 600, fontSize: '14px' }}>{i18n.t('components.error_boundary.k14')}</span>
+                      <span style={{ fontWeight: 600, fontSize: '14px' }}>
+                        {i18n.t('components.error_boundary.k14')}
+                      </span>
                     </div>
 
                     {/* 错误信息 */}
@@ -722,7 +727,9 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                   }}
                 >
                   <Bug style={{ width: 18, height: 18, marginRight: 8 }} />
-                  {this.state.isReporting ? i18n.t('components.error_boundary.k16') : i18n.t('components.error_boundary.k15')}
+                  {this.state.isReporting
+                    ? i18n.t('components.error_boundary.k16')
+                    : i18n.t('components.error_boundary.k15')}
                 </button>
               )}
 

@@ -756,7 +756,11 @@ const FairnessTab: React.FC<{
               <ScoreCard
                 label={i18n.t('ai.v60-ethics-panel.k16')}
                 value={`${audit.summary.passed}/${audit.summary.total_checks}`}
-                color={audit.status === 'passed' ? designTokens.colors.success.dark : designTokens.colors.error.main}
+                color={
+                  audit.status === 'passed'
+                    ? designTokens.colors.success.dark
+                    : designTokens.colors.error.main
+                }
                 icon={<CheckCircle size={24} />}
               />
             </Grid>
@@ -764,7 +768,11 @@ const FairnessTab: React.FC<{
               <ScoreCard
                 label={i18n.t('ai.v60-ethics-panel.k17')}
                 value={benchmark.ranking}
-                color={benchmark.yourScore >= benchmark.industryAverage ? designTokens.colors.success.dark : designTokens.colors.warning.main}
+                color={
+                  benchmark.yourScore >= benchmark.industryAverage
+                    ? designTokens.colors.success.dark
+                    : designTokens.colors.warning.main
+                }
                 icon={<TrendingUp size={24} />}
               />
             </Grid>
@@ -820,7 +828,9 @@ const FairnessTab: React.FC<{
                         variant='body2'
                         sx={{ fontWeight: 500 }}
                       >
-                        {result.passed ? i18n.t('ai.v60-ethics-panel.k19') : i18n.t('ai.v60-ethics-panel.k18')}
+                        {result.passed
+                          ? i18n.t('ai.v60-ethics-panel.k19')
+                          : i18n.t('ai.v60-ethics-panel.k18')}
                       </Typography>
                       <Typography
                         variant='caption'

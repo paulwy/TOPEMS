@@ -134,10 +134,11 @@ const PluginManagementPage: React.FC = () => {
   } | null>(null);
 
   const loadPlugins = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.PLUGINS ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.SYSTEM.PLUGINS,
+      exact: false,
+      refetchType: 'active',
+    });
   }, [queryClient]);
 
   const apiAdapter: CrudApiAdapter = useMemo(
@@ -195,12 +196,11 @@ const PluginManagementPage: React.FC = () => {
       return pluginCode;
     },
     onSuccess: (pluginCode) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         title: i18n.t('pages.plugin_management_page.k21'),
         message: `${pluginCode} ${i18n.t('pages.plugin_management_page.k1')}`,
@@ -224,12 +224,11 @@ const PluginManagementPage: React.FC = () => {
       return pluginCode;
     },
     onSuccess: (pluginCode) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         title: i18n.t('pages.plugin_management_page.k25'),
         message: `${pluginCode} ${i18n.t('pages.plugin_management_page.k2')}`,
@@ -253,12 +252,11 @@ const PluginManagementPage: React.FC = () => {
       return pluginCode;
     },
     onSuccess: (pluginCode) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         title: i18n.t('pages.plugin_management_page.k29'),
         message: `${pluginCode} ${i18n.t('pages.plugin_management_page.k3')}`,
@@ -282,12 +280,11 @@ const PluginManagementPage: React.FC = () => {
       return { pluginCode, tier };
     },
     onSuccess: ({ pluginCode, tier }) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         title: i18n.t('pages.plugin_management_page.k33'),
         message:
@@ -318,14 +315,15 @@ const PluginManagementPage: React.FC = () => {
       if (!success) throw new Error(i18n.t('pages.plugin_management_page.k36'));
       return pluginCode;
     },
-  
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
-          exact: false,
-          refetchType: 'active',
-        });
-      },});
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+        exact: false,
+        refetchType: 'active',
+      });
+    },
+  });
 
   const allMarketplacePlugins: MarketplacePlugin[] = useMemo(
     () =>
@@ -497,7 +495,9 @@ const PluginManagementPage: React.FC = () => {
         onClose={() => setUninstallTarget(null)}
       >
         <DialogTitle>
-          {uninstallTarget?.tier === 'delete' ? i18n.t('pages.plugin_management_page.k46') : i18n.t('pages.plugin_management_page.k45')}
+          {uninstallTarget?.tier === 'delete'
+            ? i18n.t('pages.plugin_management_page.k46')
+            : i18n.t('pages.plugin_management_page.k45')}
         </DialogTitle>
         <DialogContent>
           {uninstallTarget && (
@@ -551,14 +551,17 @@ const PluginManagementPage: React.FC = () => {
                 color='textSecondary'
               >
                 {uninstallTarget.tier === 'disable' && i18n.t('pages.plugin_management_page.k47')}
-                {uninstallTarget.tier === 'uninstall' && i18n.t('pages.plugin_management_page.90_48')}
+                {uninstallTarget.tier === 'uninstall' &&
+                  i18n.t('pages.plugin_management_page.90_48')}
                 {uninstallTarget.tier === 'delete' && i18n.t('pages.plugin_management_page.k49')}
               </Typography>
             </>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setUninstallTarget(null)}>{i18n.t('pages.plugin_management_page.k50')}</Button>
+          <Button onClick={() => setUninstallTarget(null)}>
+            {i18n.t('pages.plugin_management_page.k50')}
+          </Button>
           <Button
             onClick={() => {
               if (uninstallTarget) {
@@ -647,7 +650,8 @@ const PluginManagementPage: React.FC = () => {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <GitBranch size={14} />
                         <Typography variant='caption'>
-                          [i18n.t('pages.plugin_management_page.k25')]: {installingPlugin.latest_version}
+                          [i18n.t('pages.plugin_management_page.k25')]:{' '}
+                          {installingPlugin.latest_version}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -743,7 +747,9 @@ const PluginManagementPage: React.FC = () => {
                     onClick={handleInstallNext}
                     disabled={installLoading}
                   >
-                    {installStep === 0 ? i18n.t('pages.plugin_management_page.k57') : i18n.t('pages.plugin_management_page.k56')}
+                    {installStep === 0
+                      ? i18n.t('pages.plugin_management_page.k57')
+                      : i18n.t('pages.plugin_management_page.k56')}
                   </Button>
                 ) : (
                   <Button
@@ -863,7 +869,9 @@ const PluginManagementPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseMarketplace}>{i18n.t('pages.plugin_management_page.k63')}</Button>
+          <Button onClick={handleCloseMarketplace}>
+            {i18n.t('pages.plugin_management_page.k63')}
+          </Button>
         </DialogActions>
       </Dialog>
     </>

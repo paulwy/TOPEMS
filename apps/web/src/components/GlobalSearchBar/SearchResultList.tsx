@@ -66,7 +66,8 @@ const EmptyResults: React.FC<{ query: string }> = ({ query }) => (
       variant='body2'
       color='text.secondary'
     >
-      {i18n.t('components.search_result_list.k0')} "{query}" {i18n.t('components.search_result_list.k1')}
+      {i18n.t('components.search_result_list.k0')} "{query}"{' '}
+      {i18n.t('components.search_result_list.k1')}
     </Typography>
   </Box>
 );

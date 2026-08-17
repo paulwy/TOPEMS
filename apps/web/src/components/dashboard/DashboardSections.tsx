@@ -93,7 +93,13 @@ export const ModuleSection: React.FC<ModuleSectionProps> = ({
           </Typography>
         </Typography>
         {shouldCollapse ? (
-          <Tooltip title={collapsed ? i18n.t('shared.dashboard_sections.k5') : i18n.t('shared.dashboard_sections.k4')}>
+          <Tooltip
+            title={
+              collapsed
+                ? i18n.t('shared.dashboard_sections.k5')
+                : i18n.t('shared.dashboard_sections.k4')
+            }
+          >
             <IconButton
               size='small'
               onClick={() => setCollapsed((v) => !v)}
@@ -139,7 +145,9 @@ export const ModuleSection: React.FC<ModuleSectionProps> = ({
           color='text.secondary'
           sx={{ mt: 0.75, display: 'block', textAlign: 'right' }}
         >
-          {i18n.t('components.dashboard_sections.k1')} {cards.length - collapsedLimit} {i18n.t('components.dashboard_sections.k2')} ↑ {i18n.t('components.dashboard_sections.k3')}
+          {i18n.t('components.dashboard_sections.k1')} {cards.length - collapsedLimit}{' '}
+          {i18n.t('components.dashboard_sections.k2')} ↑{' '}
+          {i18n.t('components.dashboard_sections.k3')}
         </Typography>
       ) : null}
     </Box>

@@ -12,6 +12,7 @@ import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 const FlowNotificationCenter: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -42,7 +43,10 @@ const FlowNotificationCenter: React.FC = () => {
   );
   useEffect(() => {
     if (notificationsQuery.isError) {
-      apiLogger.error(i18n.t('pages.workflow_notification_center_page.k0'), notificationsQuery.error);
+      apiLogger.error(
+        i18n.t('pages.workflow_notification_center_page.k0'),
+        notificationsQuery.error
+      );
       addNotification({
         title: i18n.t('workflow.workflow_notification_center_page.k0'),
         message: i18n.t('workflow.workflow_notification_center_page.k1'),
@@ -53,10 +57,11 @@ const FlowNotificationCenter: React.FC = () => {
   const markAsReadMutation = useMutation({
     mutationFn: (userId: string) => workflowApi.markNotificationsAsRead(userId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_NOTIFICATIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_NOTIFICATIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         title: i18n.t('workflow.workflow_notification_center_page.k2'),
         message: i18n.t('workflow.workflow_notification_center_page.k3'),
@@ -64,7 +69,11 @@ const FlowNotificationCenter: React.FC = () => {
       });
     },
     onError: (err: unknown) => {
-      addNotification({ title: i18n.t('workflow.workflow_notification_center_page.k5'), message: i18n.t('workflow.workflow_notification_center_page.k4'), type: 'error' });
+      addNotification({
+        title: i18n.t('workflow.workflow_notification_center_page.k5'),
+        message: i18n.t('workflow.workflow_notification_center_page.k4'),
+        type: 'error',
+      });
       apiLogger.error(i18n.t('pages.workflow_notification_center_page.k1'), err);
     },
   });
@@ -189,7 +198,9 @@ const FlowNotificationCenter: React.FC = () => {
           <Box sx={{ textAlign: 'center', py: 6 }}>
             <Bell sx={{ width: 64, height: 64, color: 'grey.300', mb: 2 }} />
             <Typography color='text.secondary'>
-              {filter === 'unread' ? i18n.t('workflow.workflow_notification_center_page.k15') : i18n.t('workflow.workflow_notification_center_page.k14')}
+              {filter === 'unread'
+                ? i18n.t('workflow.workflow_notification_center_page.k15')
+                : i18n.t('workflow.workflow_notification_center_page.k14')}
             </Typography>
           </Box>
         ) : (

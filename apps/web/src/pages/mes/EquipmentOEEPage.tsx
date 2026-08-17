@@ -7,11 +7,12 @@ import { equipmentOeeSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { OeeRecord, OeeStatistics } from '@/api/mes';
 import { useQuery } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Gauge, Activity, TrendingUp, CheckCircle2 } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter(mesApi.equipmentOee, {
   itemsField: 'records',
 });
@@ -41,8 +42,9 @@ const EquipmentOEEPage: React.FC = () => {
       }
       return null;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const renderDetailContent = (row: Record<string, unknown>) => {
     const record = row as unknown as OeeRecord;
     return (
@@ -55,7 +57,9 @@ const EquipmentOEEPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k0')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.equipment_oee_page.k0')}
+            </InputLabel>
             <Box
               component='span'
               sx={{ fontWeight: 500 }}
@@ -64,15 +68,21 @@ const EquipmentOEEPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k1')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.equipment_oee_page.k1')}
+            </InputLabel>
             <Box component='span'>{record.equipment_name}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k2')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.equipment_oee_page.k2')}
+            </InputLabel>
             <Box component='span'>{new Date(record.record_date).toLocaleDateString('zh-CN')}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k3')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.equipment_oee_page.k3')}
+            </InputLabel>
             <Box component='span'>{record.shift || '-'}</Box>
           </Box>
         </Box>
@@ -151,27 +161,39 @@ const EquipmentOEEPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k4')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.equipment_oee_page.k4')}
+            </InputLabel>
             <Box component='span'>{i18n.t('pages.equipment_oee_page.k0')}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k5')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.equipment_oee_page.k5')}
+            </InputLabel>
             <Box component='span'>{i18n.t('pages.equipment_oee_page.recordruntime_1')}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k6')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.equipment_oee_page.k6')}
+            </InputLabel>
             <Box component='span'>{i18n.t('pages.equipment_oee_page.recorddowntime_2')}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k7')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.equipment_oee_page.k7')}
+            </InputLabel>
             <Box component='span'>{i18n.t('pages.equipment_oee_page.k3')}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k8')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.equipment_oee_page.k8')}
+            </InputLabel>
             <Box component='span'>{i18n.t('pages.equipment_oee_page.k4')}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k9')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.equipment_oee_page.k9')}
+            </InputLabel>
             <Box
               component='span'
               sx={{ color: 'success.dark' }}
@@ -180,7 +202,9 @@ const EquipmentOEEPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k10')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.equipment_oee_page.k10')}
+            </InputLabel>
             <Box
               component='span'
               sx={{ color: 'error.dark' }}
@@ -197,11 +221,15 @@ const EquipmentOEEPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k11')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.equipment_oee_page.k11')}
+            </InputLabel>
             <Box component='span'>{new Date(record.created_at).toLocaleString('zh-CN')}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.equipment_oee_page.k12')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.equipment_oee_page.k12')}
+            </InputLabel>
             <Box component='span'>{new Date(record.updated_at).toLocaleString('zh-CN')}</Box>
           </Box>
         </Box>

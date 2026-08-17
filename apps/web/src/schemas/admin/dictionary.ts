@@ -264,11 +264,7 @@ export const dictItemFields: SchemaField[] = [
         'span',
         { style: { display: 'flex', alignItems: 'center' } },
         hasParent
-          ? React.createElement(
-              'span',
-              { style: { color: 'text.disabled', marginRight: 1 } },
-              '└─'
-            )
+          ? React.createElement('span', { style: { color: 'text.disabled', marginRight: 1 } }, '└─')
           : null,
         React.createElement('span', null, name)
       );

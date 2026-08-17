@@ -78,8 +78,9 @@ export interface DbChangeQueryParams extends PaginationParams {
 // ============ Helper ============
 
 const resolvePageSize = (params?: PaginationParams): string | undefined => {
-  const ps = (params as { pageSize?: number } | undefined)?.pageSize
-    ?? (params as { pagesize?: number } | undefined)?.pagesize;
+  const ps =
+    (params as { pageSize?: number } | undefined)?.pageSize ??
+    (params as { pagesize?: number } | undefined)?.pagesize;
   return ps ? ps.toString() : undefined;
 };
 
@@ -102,18 +103,28 @@ export const dbStructureApi = {
     return apiClient.erp.post<SqlPreview>('/db/columns/preview', data);
   },
 
-  async addColumn(data: AddColumnRequest): Promise<ApiResponse<{ success: boolean; message: string }>> {
+  async addColumn(
+    data: AddColumnRequest
+  ): Promise<ApiResponse<{ success: boolean; message: string }>> {
     return apiClient.erp.post<{ success: boolean; message: string }>('/db/columns', data);
   },
 
-  async modifyColumn(tableName: string, columnName: string, data: ModifyColumnRequest): Promise<ApiResponse<{ success: boolean; message: string }>> {
+  async modifyColumn(
+    tableName: string,
+    columnName: string,
+    data: ModifyColumnRequest
+  ): Promise<ApiResponse<{ success: boolean; message: string }>> {
     return apiClient.erp.put<{ success: boolean; message: string }>(
       `/db/columns/${tableName}/${columnName}`,
       data
     );
   },
 
-  async dropColumn(tableName: string, columnName: string, data: DropColumnRequest): Promise<ApiResponse<{ success: boolean; message: string }>> {
+  async dropColumn(
+    tableName: string,
+    columnName: string,
+    data: DropColumnRequest
+  ): Promise<ApiResponse<{ success: boolean; message: string }>> {
     const sp = new URLSearchParams();
     sp.set('confirm', data.confirm.toString());
     if (data.reason) sp.set('reason', data.reason);

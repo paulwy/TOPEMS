@@ -99,7 +99,10 @@ export const SidebarUserPanel: React.FC<SidebarUserPanelProps> = ({
           }}
         >
           <Tooltip
-            title={[displayName, userRole].filter(Boolean).join(' - ') || i18n.t('shared.sidebar_user_panel.k4')}
+            title={
+              [displayName, userRole].filter(Boolean).join(' - ') ||
+              i18n.t('shared.sidebar_user_panel.k4')
+            }
             placement='right'
           >
             <Avatar
@@ -146,7 +149,11 @@ export const SidebarUserPanel: React.FC<SidebarUserPanelProps> = ({
               transition: 'transform 300ms ease',
             }}
           />
-          {!collapsed && <Typography sx={{ fontSize: 13, fontWeight: 500 }}>{i18n.t('shared.sidebar_user_panel.k5')}</Typography>}
+          {!collapsed && (
+            <Typography sx={{ fontSize: 13, fontWeight: 500 }}>
+              {i18n.t('shared.sidebar_user_panel.k5')}
+            </Typography>
+          )}
         </Button>
       </Box>
     </Box>

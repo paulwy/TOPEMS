@@ -24,7 +24,7 @@ import { REPORT_PATHS } from '@/modules/report/config';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const reportApiAdapter: CrudApiAdapter<ReportData> = {
   list: async (params) => {
@@ -75,12 +75,11 @@ const ReportListPage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.REPORT.REPORTS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.REPORT.REPORTS,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: i18n.t('pages.report_list_page.k5'),
@@ -129,8 +128,18 @@ const ReportListPage: React.FC = () => {
     }).length;
 
     const stats = [
-      { label: i18n.t('pages.report_list_page.k11'), value: rows.length, icon: FileTextIcon, color: 'primary' },
-      { label: i18n.t('pages.report_list_page.k12'), value: today, icon: AnalyticsIcon, color: 'success' },
+      {
+        label: i18n.t('pages.report_list_page.k11'),
+        value: rows.length,
+        icon: FileTextIcon,
+        color: 'primary',
+      },
+      {
+        label: i18n.t('pages.report_list_page.k12'),
+        value: today,
+        icon: AnalyticsIcon,
+        color: 'success',
+      },
       { label: i18n.t('pages.report_list_page.k13'), value: 0, icon: ClockIcon, color: 'warning' },
       { label: i18n.t('pages.report_list_page.k14'), value: 0, icon: UsersIcon, color: 'info' },
     ];
@@ -198,7 +207,10 @@ const ReportListPage: React.FC = () => {
             total: number
           ) => React.ReactNode
         }
-        breadcrumbs={[{ label: i18n.t('pages.report_list_page.k18'), href: '/dashboard' }, { label: i18n.t('pages.report_list_page.k17') }]}
+        breadcrumbs={[
+          { label: i18n.t('pages.report_list_page.k18'), href: '/dashboard' },
+          { label: i18n.t('pages.report_list_page.k17') },
+        ]}
       />
     </PageContainer>
   );

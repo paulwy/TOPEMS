@@ -1,10 +1,6 @@
 import apiClient from '../../client';
 import type { ApiResponse } from '../../client';
-import type {
-  SalesOrder,
-  CreateSalesOrderRequest,
-  UpdateSalesOrderRequest,
-} from './types';
+import type { SalesOrder, CreateSalesOrderRequest, UpdateSalesOrderRequest } from './types';
 
 export interface BulkApproveRequest {
   ids: string[];

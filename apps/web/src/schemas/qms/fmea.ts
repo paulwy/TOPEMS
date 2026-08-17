@@ -6,9 +6,27 @@ import i18n from '@/i18n';
 const fmeaItemFields: NestedTableConfig['fields'] = [
   { name: 'itemNo', label: i18n.t('qms.fmea.k0'), type: 'text', listWidth: 80 },
   { name: 'functionDescription', label: i18n.t('qms.fmea.k1'), type: 'text', listWidth: 150 },
-  { name: 'failureMode', label: i18n.t('qms.fmea.k2'), type: 'text', required: true, listWidth: 180 },
-  { name: 'failureEffect', label: i18n.t('qms.fmea.k3'), type: 'text', required: true, listWidth: 200 },
-  { name: 'failureCause', label: i18n.t('qms.fmea.k4'), type: 'text', required: true, listWidth: 200 },
+  {
+    name: 'failureMode',
+    label: i18n.t('qms.fmea.k2'),
+    type: 'text',
+    required: true,
+    listWidth: 180,
+  },
+  {
+    name: 'failureEffect',
+    label: i18n.t('qms.fmea.k3'),
+    type: 'text',
+    required: true,
+    listWidth: 200,
+  },
+  {
+    name: 'failureCause',
+    label: i18n.t('qms.fmea.k4'),
+    type: 'text',
+    required: true,
+    listWidth: 200,
+  },
   {
     name: 'severity',
     label: i18n.t('qms.fmea.s_5'),

@@ -325,7 +325,10 @@ export class FallbackManager {
       try {
         conditionMet = strategy.condition(context);
       } catch (condErr) {
-        fallbackLogger.warn(`${i18n.t('shared.fallback-strategy.k1')}${strategy.name}${i18n.t('shared.fallback-strategy.condition_2')}`, condErr);
+        fallbackLogger.warn(
+          `${i18n.t('shared.fallback-strategy.k1')}${strategy.name}${i18n.t('shared.fallback-strategy.condition_2')}`,
+          condErr
+        );
         continue;
       }
 
@@ -384,7 +387,10 @@ export class FallbackManager {
       level: FallbackLevel.OFFLINE,
       strategyName: 'none',
       durationMs: totalMs,
-      reason: context.error instanceof Error ? context.error.message : i18n.t('shared.fallback-strategy.k0'),
+      reason:
+        context.error instanceof Error
+          ? context.error.message
+          : i18n.t('shared.fallback-strategy.k0'),
     };
   }
 

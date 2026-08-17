@@ -17,6 +17,7 @@ import {
 import i18n from '@/i18n';
 import { Clock } from 'lucide-react';
 import type { DbChange } from '@/api/system';
+
 interface DatabaseStructureIndexesProps {
   dbChanges: DbChange[];
 }

@@ -955,7 +955,8 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 sx={{ textTransform: 'none' }}
               >
                 <Calendar style={{ width: 16, height: 16, marginRight: 0.5 }} />
-                {DEFAULT_TIME_RANGES.find((r) => r.value === timeRange)?.label || i18n.t('shared.stat_card.k5')}
+                {DEFAULT_TIME_RANGES.find((r) => r.value === timeRange)?.label ||
+                  i18n.t('shared.stat_card.k5')}
               </Button>
             )}
 

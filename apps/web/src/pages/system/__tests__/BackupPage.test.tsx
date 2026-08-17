@@ -2,6 +2,8 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen, waitFor, fireEvent } from '@/__tests__/test-utils';
 
+import BackupPage from '../BackupPage';
+
 vi.mock('react-i18next', () => {
   const merge = (...objs: Record<string, string>[]) => Object.assign({}, ...objs);
   const i18nMap = merge(
@@ -41,8 +43,6 @@ vi.mock('@/i18n', () => {
     },
   };
 });
-
-import BackupPage from '../BackupPage';
 
 vi.mock('lucide-react', () => {
   const icon =

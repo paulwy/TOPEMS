@@ -62,9 +62,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
 
   const renderValue = () => {
     if (multiple && Array.isArray(value)) {
-      return value
-        .map((v) => options.find((opt) => opt.value === v)?.label ?? v)
-        .join(', ');
+      return value.map((v) => options.find((opt) => opt.value === v)?.label ?? v).join(', ');
     }
     if (!multiple && hasValue) {
       return options.find((opt) => opt.value === value)?.label ?? String(value);
@@ -96,12 +94,19 @@ export const FormSelect: React.FC<FormSelectProps> = ({
         aria-label={label}
       >
         {placeholder && !multiple && (
-          <MenuItem value="" disabled>
+          <MenuItem
+            value=''
+            disabled
+          >
             {placeholder}
           </MenuItem>
         )}
         {options.map((opt) => (
-          <MenuItem key={opt.value} value={opt.value} disabled={opt.disabled}>
+          <MenuItem
+            key={opt.value}
+            value={opt.value}
+            disabled={opt.disabled}
+          >
             {opt.label}
           </MenuItem>
         ))}

@@ -18,12 +18,7 @@ import i18n from '@/i18n';
  * - 紫色  : 其他中间态（maintenance/superseded）
  */
 
-export type ApsFsmType =
-  | 'production_plan'
-  | 'schedule'
-  | 'capacity'
-  | 'material_plan'
-  | 'forecast';
+export type ApsFsmType = 'production_plan' | 'schedule' | 'capacity' | 'material_plan' | 'forecast';
 
 const GRAY = 'bg-gray-100 text-gray-700';
 const BLUE = 'bg-blue-100 text-blue-700';

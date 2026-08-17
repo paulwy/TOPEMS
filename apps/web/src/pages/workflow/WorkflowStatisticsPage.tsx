@@ -48,10 +48,9 @@ import { workflowApi } from '@/api/workflow';
 import { apiLogger } from '@/utils/logger';
 import { LazyChart } from '@/components/charts';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 type TimeRange = 'today' | 'week' | 'month' | 'quarter' | 'year';
 
@@ -73,9 +72,19 @@ const generateTrendData = (range: TimeRange) => {
   };
   const labels: Record<TimeRange, (i: number) => string> = {
     today: (i) => `${i}:00`,
-    week: (i) => [i18n.t('pages.workflow_statistics_page.k11'), i18n.t('pages.workflow_statistics_page.k10'), i18n.t('pages.workflow_statistics_page.k9'), i18n.t('pages.workflow_statistics_page.k8'), i18n.t('pages.workflow_statistics_page.k7'), i18n.t('pages.workflow_statistics_page.k6'), i18n.t('pages.workflow_statistics_page.k5')][i] || '',
+    week: (i) =>
+      [
+        i18n.t('pages.workflow_statistics_page.k11'),
+        i18n.t('pages.workflow_statistics_page.k10'),
+        i18n.t('pages.workflow_statistics_page.k9'),
+        i18n.t('pages.workflow_statistics_page.k8'),
+        i18n.t('pages.workflow_statistics_page.k7'),
+        i18n.t('pages.workflow_statistics_page.k6'),
+        i18n.t('pages.workflow_statistics_page.k5'),
+      ][i] || '',
     month: (i) => `${i + 1}${i18n.t('pages.workflow_statistics_page.k0')}`,
-    quarter: (i) => `${i18n.t('pages.workflow_statistics_page.k1')}${i + 1}${i18n.t('pages.workflow_statistics_page.k2')}`,
+    quarter: (i) =>
+      `${i18n.t('pages.workflow_statistics_page.k1')}${i + 1}${i18n.t('pages.workflow_statistics_page.k2')}`,
     year: (i) => `${i + 1}${i18n.t('pages.workflow_statistics_page.k3')}`,
   };
   const count = counts[range];
@@ -95,32 +104,122 @@ const distributionData = [
 ];
 
 const efficiencyData = [
-  { name: i18n.t('pages.workflow_statistics_page.k17'), [i18n.t('pages.workflow_statistics_page.k6')]: 48 },
-  { name: i18n.t('pages.workflow_statistics_page.k18'), [i18n.t('pages.workflow_statistics_page.k7')]: 12 },
-  { name: i18n.t('pages.workflow_statistics_page.k19'), [i18n.t('pages.workflow_statistics_page.k8')]: 36 },
-  { name: i18n.t('pages.workflow_statistics_page.k20'), [i18n.t('pages.workflow_statistics_page.k9')]: 72 },
-  { name: i18n.t('pages.workflow_statistics_page.k21'), [i18n.t('pages.workflow_statistics_page.k10')]: 24 },
+  {
+    name: i18n.t('pages.workflow_statistics_page.k17'),
+    [i18n.t('pages.workflow_statistics_page.k6')]: 48,
+  },
+  {
+    name: i18n.t('pages.workflow_statistics_page.k18'),
+    [i18n.t('pages.workflow_statistics_page.k7')]: 12,
+  },
+  {
+    name: i18n.t('pages.workflow_statistics_page.k19'),
+    [i18n.t('pages.workflow_statistics_page.k8')]: 36,
+  },
+  {
+    name: i18n.t('pages.workflow_statistics_page.k20'),
+    [i18n.t('pages.workflow_statistics_page.k9')]: 72,
+  },
+  {
+    name: i18n.t('pages.workflow_statistics_page.k21'),
+    [i18n.t('pages.workflow_statistics_page.k10')]: 24,
+  },
 ];
 
 const bottleneckData = [
-  { name: i18n.t('pages.workflow_statistics_page.k22'), [i18n.t('pages.workflow_statistics_page.k11')]: 0.5 },
-  { name: i18n.t('pages.workflow_statistics_page.k23'), [i18n.t('pages.workflow_statistics_page.k12')]: 2.5 },
-  { name: i18n.t('pages.workflow_statistics_page.k24'), [i18n.t('pages.workflow_statistics_page.k13')]: 4.0 },
-  { name: i18n.t('pages.workflow_statistics_page.k25'), [i18n.t('pages.workflow_statistics_page.k14')]: 6.0 },
-  { name: i18n.t('pages.workflow_statistics_page.k26'), [i18n.t('pages.workflow_statistics_page.k15')]: 1.0 },
+  {
+    name: i18n.t('pages.workflow_statistics_page.k22'),
+    [i18n.t('pages.workflow_statistics_page.k11')]: 0.5,
+  },
+  {
+    name: i18n.t('pages.workflow_statistics_page.k23'),
+    [i18n.t('pages.workflow_statistics_page.k12')]: 2.5,
+  },
+  {
+    name: i18n.t('pages.workflow_statistics_page.k24'),
+    [i18n.t('pages.workflow_statistics_page.k13')]: 4.0,
+  },
+  {
+    name: i18n.t('pages.workflow_statistics_page.k25'),
+    [i18n.t('pages.workflow_statistics_page.k14')]: 6.0,
+  },
+  {
+    name: i18n.t('pages.workflow_statistics_page.k26'),
+    [i18n.t('pages.workflow_statistics_page.k15')]: 1.0,
+  },
 ];
 
 const topWorkflows = [
-  { id: '1', name: i18n.t('pages.workflow_statistics_page.k27'), count: 128, avgTime: i18n.t('pages.workflow_statistics_page.12_16'), passRate: '95%' },
-  { id: '2', name: i18n.t('pages.workflow_statistics_page.k28'), count: 96, avgTime: i18n.t('pages.workflow_statistics_page.36_17'), passRate: '88%' },
-  { id: '3', name: i18n.t('pages.workflow_statistics_page.k29'), count: 85, avgTime: i18n.t('pages.workflow_statistics_page.48_18'), passRate: '82%' },
-  { id: '4', name: i18n.t('pages.workflow_statistics_page.k30'), count: 64, avgTime: i18n.t('pages.workflow_statistics_page.24_19'), passRate: '92%' },
-  { id: '5', name: i18n.t('pages.workflow_statistics_page.k31'), count: 52, avgTime: i18n.t('pages.workflow_statistics_page.72_20'), passRate: '78%' },
-  { id: '6', name: i18n.t('pages.workflow_statistics_page.k32'), count: 45, avgTime: i18n.t('pages.workflow_statistics_page.18_21'), passRate: '90%' },
-  { id: '7', name: i18n.t('pages.workflow_statistics_page.k33'), count: 38, avgTime: i18n.t('pages.workflow_statistics_page.60_22'), passRate: '96%' },
-  { id: '8', name: i18n.t('pages.workflow_statistics_page.k34'), count: 32, avgTime: i18n.t('pages.workflow_statistics_page.48_23'), passRate: '94%' },
-  { id: '9', name: i18n.t('pages.workflow_statistics_page.k35'), count: 28, avgTime: i18n.t('pages.workflow_statistics_page.54_24'), passRate: '85%' },
-  { id: '10', name: i18n.t('pages.workflow_statistics_page.k36'), count: 25, avgTime: i18n.t('pages.workflow_statistics_page.36_25'), passRate: '91%' },
+  {
+    id: '1',
+    name: i18n.t('pages.workflow_statistics_page.k27'),
+    count: 128,
+    avgTime: i18n.t('pages.workflow_statistics_page.12_16'),
+    passRate: '95%',
+  },
+  {
+    id: '2',
+    name: i18n.t('pages.workflow_statistics_page.k28'),
+    count: 96,
+    avgTime: i18n.t('pages.workflow_statistics_page.36_17'),
+    passRate: '88%',
+  },
+  {
+    id: '3',
+    name: i18n.t('pages.workflow_statistics_page.k29'),
+    count: 85,
+    avgTime: i18n.t('pages.workflow_statistics_page.48_18'),
+    passRate: '82%',
+  },
+  {
+    id: '4',
+    name: i18n.t('pages.workflow_statistics_page.k30'),
+    count: 64,
+    avgTime: i18n.t('pages.workflow_statistics_page.24_19'),
+    passRate: '92%',
+  },
+  {
+    id: '5',
+    name: i18n.t('pages.workflow_statistics_page.k31'),
+    count: 52,
+    avgTime: i18n.t('pages.workflow_statistics_page.72_20'),
+    passRate: '78%',
+  },
+  {
+    id: '6',
+    name: i18n.t('pages.workflow_statistics_page.k32'),
+    count: 45,
+    avgTime: i18n.t('pages.workflow_statistics_page.18_21'),
+    passRate: '90%',
+  },
+  {
+    id: '7',
+    name: i18n.t('pages.workflow_statistics_page.k33'),
+    count: 38,
+    avgTime: i18n.t('pages.workflow_statistics_page.60_22'),
+    passRate: '96%',
+  },
+  {
+    id: '8',
+    name: i18n.t('pages.workflow_statistics_page.k34'),
+    count: 32,
+    avgTime: i18n.t('pages.workflow_statistics_page.48_23'),
+    passRate: '94%',
+  },
+  {
+    id: '9',
+    name: i18n.t('pages.workflow_statistics_page.k35'),
+    count: 28,
+    avgTime: i18n.t('pages.workflow_statistics_page.54_24'),
+    passRate: '85%',
+  },
+  {
+    id: '10',
+    name: i18n.t('pages.workflow_statistics_page.k36'),
+    count: 25,
+    avgTime: i18n.t('pages.workflow_statistics_page.36_25'),
+    passRate: '91%',
+  },
 ];
 
 export const WorkflowStatisticsPage: React.FC = () => {
@@ -146,7 +245,11 @@ export const WorkflowStatisticsPage: React.FC = () => {
   useEffect(() => {
     if (statisticsQuery.isError) {
       apiLogger.error('Failed to load workflow statistics:', statisticsQuery.error);
-      addNotification({ title: i18n.t('pages.workflow_statistics_page.k38'), message: i18n.t('pages.workflow_statistics_page.k37'), type: 'error' });
+      addNotification({
+        title: i18n.t('pages.workflow_statistics_page.k38'),
+        message: i18n.t('pages.workflow_statistics_page.k37'),
+        type: 'error',
+      });
     }
   }, [statisticsQuery.isError, statisticsQuery.error, addNotification]);
 
@@ -164,7 +267,8 @@ export const WorkflowStatisticsPage: React.FC = () => {
   };
 
   const currentTimeRangeLabel =
-    timeRangeOptions.find((o) => o.value === timeRange)?.label || i18n.t('pages.workflow_statistics_page.k39');
+    timeRangeOptions.find((o) => o.value === timeRange)?.label ||
+    i18n.t('pages.workflow_statistics_page.k39');
 
   const handleRefresh = () => {
     statisticsQuery.refetch();
@@ -270,7 +374,12 @@ export const WorkflowStatisticsPage: React.FC = () => {
             width={100}
           />
           <Tooltip
-            formatter={(value) => [`${value} ${i18n.t('pages.workflow_statistics_page.k26')}`, i18n.t('pages.workflow_statistics_page.k56')] as [string, string]}
+            formatter={(value) =>
+              [
+                `${value} ${i18n.t('pages.workflow_statistics_page.k26')}`,
+                i18n.t('pages.workflow_statistics_page.k56'),
+              ] as [string, string]
+            }
             contentStyle={{
               borderRadius: 8,
               padding: 12,
@@ -306,12 +415,21 @@ export const WorkflowStatisticsPage: React.FC = () => {
         title: i18n.t('pages.workflow_statistics_page.k58'),
         subtitle: i18n.t('pages.workflow_statistics_page.30_59'),
         chart: (
-          <LazyChart type='line'
+          <LazyChart
+            type='line'
             data={trendData}
             xKey='name'
             yKeys={[
-              { key: i18n.t('pages.workflow_statistics_page.k60'), name: i18n.t('pages.workflow_statistics_page.k61'), color: 'primary.main' },
-              { key: i18n.t('pages.workflow_statistics_page.k62'), name: i18n.t('pages.workflow_statistics_page.k63'), color: 'success.main' },
+              {
+                key: i18n.t('pages.workflow_statistics_page.k60'),
+                name: i18n.t('pages.workflow_statistics_page.k61'),
+                color: 'primary.main',
+              },
+              {
+                key: i18n.t('pages.workflow_statistics_page.k62'),
+                name: i18n.t('pages.workflow_statistics_page.k63'),
+                color: 'success.main',
+              },
             ]}
             height={280}
           />
@@ -324,7 +442,12 @@ export const WorkflowStatisticsPage: React.FC = () => {
         id: 'distribution',
         title: i18n.t('pages.workflow_statistics_page.k64'),
         subtitle: i18n.t('pages.workflow_statistics_page.k65'),
-        chart: <LazyChart type='pie' data={distributionData} />,
+        chart: (
+          <LazyChart
+            type='pie'
+            data={distributionData}
+          />
+        ),
         height: 360,
         type: 'pie',
         onRefresh: handleRefresh,
@@ -343,7 +466,12 @@ export const WorkflowStatisticsPage: React.FC = () => {
               <XAxis dataKey='name' />
               <YAxis unit='h' />
               <Tooltip
-                formatter={(value) => [`${value} ${i18n.t('pages.workflow_statistics_page.k27')}`, i18n.t('pages.workflow_statistics_page.k68')] as [string, string]}
+                formatter={(value) =>
+                  [
+                    `${value} ${i18n.t('pages.workflow_statistics_page.k27')}`,
+                    i18n.t('pages.workflow_statistics_page.k68'),
+                  ] as [string, string]
+                }
                 contentStyle={{
                   borderRadius: 8,
                   padding: 12,

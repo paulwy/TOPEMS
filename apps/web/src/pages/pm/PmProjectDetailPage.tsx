@@ -28,7 +28,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const STATUS_LABELS: Record<string, string> = {
   active: i18n.t('pm.pm_project_detail_page.k0'),
@@ -160,7 +160,9 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.pm_project_detail_page.k10')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.pm_project_detail_page.k10')}
+              </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{project.code}</Typography>
             </Box>
             <Box
@@ -173,7 +175,9 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.pm_project_detail_page.k11')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.pm_project_detail_page.k11')}
+              </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {project.project_type}
               </Typography>
@@ -188,7 +192,9 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.pm_project_detail_page.k12')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.pm_project_detail_page.k12')}
+              </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {project.leader || '-'}
               </Typography>
@@ -203,7 +209,9 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.pm_project_detail_page.k13')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.pm_project_detail_page.k13')}
+              </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {formatDate(project.start_date)}
               </Typography>
@@ -218,7 +226,9 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.pm_project_detail_page.k14')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.pm_project_detail_page.k14')}
+              </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {formatDate(project.end_date)}
               </Typography>
@@ -231,7 +241,9 @@ const PmProjectDetailPage: React.FC = () => {
                 py: 1,
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>{t('pm.pm_project_detail_page.k15')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {t('pm.pm_project_detail_page.k15')}
+              </Typography>
               <StatusBadge
                 status={project.risklevel || 'low'}
                 label={RISK_LABELS[project.risklevel || ''] || t('pm.pm_project_detail_page.k16')}
@@ -1177,18 +1189,21 @@ const PmProjectDetailPage: React.FC = () => {
   ]);
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.PROJECT(id || '') ,
-  exact: false,
-  refetchType: 'active',
-});
-    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.PROJECT(id || ''), 'phases'] ,
-  exact: false,
-  refetchType: 'active',
-});
-    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.PROJECT(id || ''), 'milestones'] ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.PM.PROJECT(id || ''),
+      exact: false,
+      refetchType: 'active',
+    });
+    queryClient.invalidateQueries({
+      queryKey: [...QUERY_KEYS.PM.PROJECT(id || ''), 'phases'],
+      exact: false,
+      refetchType: 'active',
+    });
+    queryClient.invalidateQueries({
+      queryKey: [...QUERY_KEYS.PM.PROJECT(id || ''), 'milestones'],
+      exact: false,
+      refetchType: 'active',
+    });
   };
 
   return (

@@ -13,6 +13,7 @@ import i18n from '@/i18n';
 import { History, Search, Trash2, Clock, Barcode, QrCode } from 'lucide-react';
 import { MobileCard } from '@/components/mobile';
 import type { ScanHistoryItem } from '../hooks/useMobileScan';
+
 interface ScanHistoryProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;

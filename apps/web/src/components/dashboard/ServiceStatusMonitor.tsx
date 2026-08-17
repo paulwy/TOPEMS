@@ -314,15 +314,33 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
       title: i18n.t('shared.service_status_monitor.k21'),
       groupKey: 'data',
       services: [
-        { name: i18n.t('shared.service_status_monitor.k22'), service: 'BI', port: 8060, key: 'bi', icon: BarChart2 },
-        { name: i18n.t('shared.service_status_monitor.k23'), service: 'PORTAL', port: 8063, key: 'portal', icon: Building },
+        {
+          name: i18n.t('shared.service_status_monitor.k22'),
+          service: 'BI',
+          port: 8060,
+          key: 'bi',
+          icon: BarChart2,
+        },
+        {
+          name: i18n.t('shared.service_status_monitor.k23'),
+          service: 'PORTAL',
+          port: 8063,
+          key: 'portal',
+          icon: Building,
+        },
       ],
     },
     {
       title: i18n.t('shared.service_status_monitor.k24'),
       groupKey: 'platform',
       services: [
-        { name: i18n.t('shared.service_status_monitor.k25'), service: 'GIS', port: 8071, key: 'gis', icon: Map },
+        {
+          name: i18n.t('shared.service_status_monitor.k25'),
+          service: 'GIS',
+          port: 8071,
+          key: 'gis',
+          icon: Map,
+        },
         {
           name: i18n.t('shared.service_status_monitor.k26'),
           service: 'MOBILE',
@@ -374,9 +392,12 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
             <Typography sx={{ fontSize: 18, fontWeight: 600, color: 'text.primary' }}>
               {i18n.t('components.service_status_monitor.k7')}
             </Typography>
-            <Typography sx={{ fontSize: 12, color: 'grey.600' }}>{i18n.t('shared.service_status_monitor.k27')}</Typography>
+            <Typography sx={{ fontSize: 12, color: 'grey.600' }}>
+              {i18n.t('shared.service_status_monitor.k27')}
+            </Typography>
             <Typography sx={{ fontSize: 11, color: 'grey.400', mt: 0.5 }}>
-              [i18n.t('components.service_status_monitor.k8')]: {lastUpdate.toLocaleTimeString('zh-CN')}
+              [i18n.t('components.service_status_monitor.k8')]:{' '}
+              {lastUpdate.toLocaleTimeString('zh-CN')}
             </Typography>
           </Box>
         </Box>

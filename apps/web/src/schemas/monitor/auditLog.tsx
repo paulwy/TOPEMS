@@ -7,7 +7,11 @@ import i18n from '@/i18n';
 
 const ct = {
   primary: { dark: 'colors.primary.dark', light: 'colors.primary.50' },
-  grey: { 400: designTokens.colors.grey['400'], 600: designTokens.colors.grey['600'], 800: designTokens.colors.grey[800] },
+  grey: {
+    400: designTokens.colors.grey['400'],
+    600: designTokens.colors.grey['600'],
+    800: designTokens.colors.grey[800],
+  },
 };
 
 const formatAction = (action: string): string => {

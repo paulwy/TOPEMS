@@ -193,12 +193,20 @@ export class AutoRemediation {
 
       const workflow = this.workflows.get(workflowId);
       if (!workflow) {
-        reject(new Error(`${i18n.t('microfrontend.auto-remediation.k0')}${workflowId}${i18n.t('microfrontend.auto-remediation.k1')}`));
+        reject(
+          new Error(
+            `${i18n.t('microfrontend.auto-remediation.k0')}${workflowId}${i18n.t('microfrontend.auto-remediation.k1')}`
+          )
+        );
         return;
       }
 
       if (workflow.status !== 'active') {
-        reject(new Error(`${i18n.t('microfrontend.auto-remediation.k2')}${workflowId}${i18n.t('microfrontend.auto-remediation.k3')}`));
+        reject(
+          new Error(
+            `${i18n.t('microfrontend.auto-remediation.k2')}${workflowId}${i18n.t('microfrontend.auto-remediation.k3')}`
+          )
+        );
         return;
       }
 
@@ -560,7 +568,9 @@ export class AutoRemediation {
       }, this.config.approvalTimeout);
 
       // 在实际应用中，这里应该发送审批请求到审批系统
-      console.info(`${i18n.t('microfrontend.auto-remediation.k13')}${workflow.name} (${executionId})`);
+      console.info(
+        `${i18n.t('microfrontend.auto-remediation.k13')}${workflow.name} (${executionId})`
+      );
     });
   }
 

@@ -13,7 +13,7 @@ import i18n from '@/i18n';
 
 const apiAdapter: CrudApiAdapter<Permission> = {
   list: async () => {
-  const { t } = useTranslation('iam');
+    const t = i18n.getFixedT(null, 'iam');
     const res = await authApi.listPermissions();
     if (res.success === false) {
       throw new Error(res.message || i18n.t('iam.permission_management_page.k0'));
@@ -91,7 +91,11 @@ const PermissionManagementPage: React.FC = () => {
     <CrudPage
       schema={permissionSchema}
       apiAdapter={apiAdapter}
-      breadcrumbs={[{ label: i18n.t('iam.permission_management_page.k6'), href: '/' }, { label: i18n.t('iam.permission_management_page.k5') }, { label: i18n.t('iam.permission_management_page.k4') }]}
+      breadcrumbs={[
+        { label: i18n.t('iam.permission_management_page.k6'), href: '/' },
+        { label: i18n.t('iam.permission_management_page.k5') },
+        { label: i18n.t('iam.permission_management_page.k4') },
+      ]}
       headerContent={headerContent}
     />
   );

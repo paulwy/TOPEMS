@@ -423,7 +423,9 @@ function generateSmartFallbackBreadcrumbs(
       label = navItem.label;
       href = isLast ? undefined : currentPath;
     } else if (isDynamic) {
-      label = dynamicTitleResolver ? dynamicTitleResolver('id', segment) || i18n.t('shared.use_auto_breadcrumbs.k5') : i18n.t('shared.use_auto_breadcrumbs.k6');
+      label = dynamicTitleResolver
+        ? dynamicTitleResolver('id', segment) || i18n.t('shared.use_auto_breadcrumbs.k5')
+        : i18n.t('shared.use_auto_breadcrumbs.k6');
       href = undefined;
     } else {
       const pluralMatch = findPluralParentPath(currentPath, allNavItems);

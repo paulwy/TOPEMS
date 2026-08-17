@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
+import ConfirmDialogs from '../ConfirmDialogs';
+import VoucherImportModal from '../VoucherImportModal';
+import SubjectListPanel from '../SubjectListPanel';
+
 const addNotification = vi.fn();
 
 vi.mock('react-i18next', () => {
@@ -21,8 +25,7 @@ vi.mock('react-i18next', () => {
   }
   i18nMap['finance.finance_voucher_page_components_voucher_import_modal.e1'] =
     '用友凭证数据 (JSON格式)';
-  i18nMap['finance.finance_voucher_page_components_subject_list_panel.e1'] =
-    '上级科目';
+  i18nMap['finance.finance_voucher_page_components_subject_list_panel.e1'] = '上级科目';
   const t = (key: string, options?: Record<string, unknown>) => {
     let base = i18nMap[key] ?? key;
     if (typeof options === 'object' && options !== null) {
@@ -65,8 +68,7 @@ vi.mock('@/i18n', () => {
   }
   i18nMap['finance.finance_voucher_page_components_voucher_import_modal.e1'] =
     '用友凭证数据 (JSON格式)';
-  i18nMap['finance.finance_voucher_page_components_subject_list_panel.e1'] =
-    '上级科目';
+  i18nMap['finance.finance_voucher_page_components_subject_list_panel.e1'] = '上级科目';
   const t = (key: string, options?: Record<string, unknown>) => {
     let base = i18nMap[key] ?? key;
     if (typeof options === 'object' && options !== null) {
@@ -200,10 +202,6 @@ vi.mock('@/components', async () => {
       ),
   };
 });
-
-import ConfirmDialogs from '../ConfirmDialogs';
-import VoucherImportModal from '../VoucherImportModal';
-import SubjectListPanel from '../SubjectListPanel';
 
 const subjects = [
   {

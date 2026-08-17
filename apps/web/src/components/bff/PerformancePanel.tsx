@@ -946,7 +946,11 @@ const SuspenseStatsPanel: React.FC = () => {
                   size='small'
                   variant='outlined'
                   color={record.duration !== null ? 'success' : 'warning'}
-                  label={record.duration !== null ? `${record.duration}ms` : i18n.t('components.performance_panel.k20')}
+                  label={
+                    record.duration !== null
+                      ? `${record.duration}ms`
+                      : i18n.t('components.performance_panel.k20')
+                  }
                 />
                 <Typography
                   variant='caption'
@@ -1009,7 +1013,11 @@ const SuspenseStatsPanel: React.FC = () => {
               <Chip
                 size='small'
                 color={record.loaded ? 'success' : 'warning'}
-                label={record.loaded ? `${i18n.t('components.performance_panel.k5')}${record.duration ?? 0}ms` : i18n.t('components.performance_panel.k21')}
+                label={
+                  record.loaded
+                    ? `${i18n.t('components.performance_panel.k5')}${record.duration ?? 0}ms`
+                    : i18n.t('components.performance_panel.k21')
+                }
                 variant='outlined'
               />
             </Paper>

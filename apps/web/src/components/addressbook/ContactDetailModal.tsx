@@ -224,7 +224,9 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                         : { backgroundColor: 'error.lighter', color: 'error.darker' }),
                     }}
                   >
-                    {contact.status === 'active' ? i18n.t('shared.contact_detail_modal.k5') : i18n.t('shared.contact_detail_modal.k4')}
+                    {contact.status === 'active'
+                      ? i18n.t('shared.contact_detail_modal.k5')
+                      : i18n.t('shared.contact_detail_modal.k4')}
                   </span>
                 </div>
               </div>
@@ -320,7 +322,8 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <Calendar sx={{ width: 20, height: 20, color: 'grey.400' }} />
                     <span style={{ fontSize: 14, color: 'var(--mui-palette-text-primary)' }}>
-                      [i18n.t('components.contact_detail_modal.k7')]: {new Date(contact.hire_date).toLocaleDateString()}
+                      [i18n.t('components.contact_detail_modal.k7')]:{' '}
+                      {new Date(contact.hire_date).toLocaleDateString()}
                     </span>
                   </div>
                 </div>

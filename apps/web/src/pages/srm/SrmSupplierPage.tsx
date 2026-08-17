@@ -10,7 +10,7 @@ import { Users } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const apiAdapter = createCrudPageAdapter({
   list: srmApi.listSuppliers,
@@ -41,7 +41,9 @@ const SupplierStats: React.FC = () => {
   const stats = React.useMemo(
     () => ({
       total: suppliers.length,
-      active: suppliers.filter((s) => s.status === i18n.t('pages.srm_supplier_page.k0') || s.status === 'active').length,
+      active: suppliers.filter(
+        (s) => s.status === i18n.t('pages.srm_supplier_page.k0') || s.status === 'active'
+      ).length,
       lowRisk: suppliers.filter((s) => s.risklevel === 'low').length,
       highRisk: suppliers.filter((s) => s.risklevel === 'high').length,
     }),

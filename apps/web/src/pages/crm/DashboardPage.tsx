@@ -22,7 +22,7 @@ import { logger } from '@/utils/logger';
 import type { FunnelStage, OpportunityStats } from '@/api/crm';
 import { CRM_PATHS } from '@/modules/crm/config';
 import { useQuery } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { LazyChart } from '@/components/charts';
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
@@ -58,8 +58,9 @@ export const DashboardPage: React.FC = () => {
         return null;
       }
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const funnelQuery = useQuery({
     queryKey: QUERY_KEYS.CRM.OPPORTUNITY_FUNNEL,
@@ -82,8 +83,9 @@ export const DashboardPage: React.FC = () => {
         return [];
       }
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const stats = statsQuery.data ?? null;
   const funnelData = funnelQuery.data ?? [];
@@ -154,7 +156,8 @@ export const DashboardPage: React.FC = () => {
       title: t('crm.overview.chart_funnel_count'),
       height: 300,
       chart: (
-        <LazyChart type='bar'
+        <LazyChart
+          type='bar'
           data={funnelBarData}
           xKey='name'
           yKey='value'
@@ -166,7 +169,8 @@ export const DashboardPage: React.FC = () => {
       title: t('crm.overview.chart_funnel_value'),
       height: 300,
       chart: (
-        <LazyChart type='bar'
+        <LazyChart
+          type='bar'
           data={funnelValueData}
           xKey='name'
           yKey='value'
@@ -178,7 +182,8 @@ export const DashboardPage: React.FC = () => {
       title: t('crm.overview.chart_stage_ratio'),
       height: 300,
       chart: (
-        <LazyChart type='pie'
+        <LazyChart
+          type='pie'
           data={funnelData.map((item) => ({
             name: item.stage_label,
             value: item.count,

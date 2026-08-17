@@ -17,8 +17,12 @@ export interface StatsChartProps {
   height?: number;
 }
 
-const StatsChartBarImpl = lazy(() => import('./StatsChart.bar').then(m => ({ default: m.StatsChartBarImpl })));
-const StatsChartPieImpl = lazy(() => import('./StatsChart.pie').then(m => ({ default: m.StatsChartPieImpl })));
+const StatsChartBarImpl = lazy(() =>
+  import('./StatsChart.bar').then((m) => ({ default: m.StatsChartBarImpl }))
+);
+const StatsChartPieImpl = lazy(() =>
+  import('./StatsChart.pie').then((m) => ({ default: m.StatsChartPieImpl }))
+);
 
 const EmptyFallback: React.FC<{ title?: string }> = ({ title }) => (
   <div
@@ -74,7 +78,10 @@ export const StatsChartImpl: React.FC<StatsChartProps> = (props) => {
       {type === 'pie' ? (
         <StatsChartPieImpl {...props} />
       ) : (
-        <StatsChartBarImpl {...props} type={type as 'bar' | 'line'} />
+        <StatsChartBarImpl
+          {...props}
+          type={type as 'bar' | 'line'}
+        />
       )}
     </Suspense>
   );

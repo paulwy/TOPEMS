@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export interface L1BusinessDomain {
   key: string;
   title: string;
@@ -9,16 +10,76 @@ export interface L1BusinessDomain {
 }
 
 export const L1_BUSINESS_DOMAINS: L1BusinessDomain[] = [
-  { key: 'workbench', title: i18n.t('shared.constants.k0'), titleKey: 'shared.constants.k0', order: 1, icon: 'LayoutDashboard' },
-  { key: 'core', title: i18n.t('shared.constants.k1'), titleKey: 'shared.constants.k1', order: 2, icon: 'Building2' },
-  { key: 'operation', title: i18n.t('shared.constants.k2'), titleKey: 'shared.constants.k2', order: 3, icon: 'Briefcase' },
-  { key: 'manufacturing', title: i18n.t('shared.constants.k3'), titleKey: 'shared.constants.k3', order: 4, icon: 'Factory' },
-  { key: 'quality', title: i18n.t('shared.constants.k4'), titleKey: 'shared.constants.k4', order: 5, icon: 'ShieldCheck' },
-  { key: 'supply', title: i18n.t('shared.constants.k5'), titleKey: 'shared.constants.k5', order: 6, icon: 'Truck' },
-  { key: 'finance_hr', title: i18n.t('shared.constants.k6'), titleKey: 'shared.constants.k6', order: 7, icon: 'Wallet' },
-  { key: 'data_ai', title: i18n.t('shared.constants.ai_7'), titleKey: 'shared.constants.ai_7', order: 8, icon: 'Sparkles' },
-  { key: 'system', title: i18n.t('shared.constants.k8'), titleKey: 'shared.constants.k8', order: 9, icon: 'Settings' },
-  { key: 'profile', title: i18n.t('shared.constants.k9'), titleKey: 'shared.constants.k9', order: 10, icon: 'User' },
+  {
+    key: 'workbench',
+    title: i18n.t('shared.constants.k0'),
+    titleKey: 'shared.constants.k0',
+    order: 1,
+    icon: 'LayoutDashboard',
+  },
+  {
+    key: 'core',
+    title: i18n.t('shared.constants.k1'),
+    titleKey: 'shared.constants.k1',
+    order: 2,
+    icon: 'Building2',
+  },
+  {
+    key: 'operation',
+    title: i18n.t('shared.constants.k2'),
+    titleKey: 'shared.constants.k2',
+    order: 3,
+    icon: 'Briefcase',
+  },
+  {
+    key: 'manufacturing',
+    title: i18n.t('shared.constants.k3'),
+    titleKey: 'shared.constants.k3',
+    order: 4,
+    icon: 'Factory',
+  },
+  {
+    key: 'quality',
+    title: i18n.t('shared.constants.k4'),
+    titleKey: 'shared.constants.k4',
+    order: 5,
+    icon: 'ShieldCheck',
+  },
+  {
+    key: 'supply',
+    title: i18n.t('shared.constants.k5'),
+    titleKey: 'shared.constants.k5',
+    order: 6,
+    icon: 'Truck',
+  },
+  {
+    key: 'finance_hr',
+    title: i18n.t('shared.constants.k6'),
+    titleKey: 'shared.constants.k6',
+    order: 7,
+    icon: 'Wallet',
+  },
+  {
+    key: 'data_ai',
+    title: i18n.t('shared.constants.ai_7'),
+    titleKey: 'shared.constants.ai_7',
+    order: 8,
+    icon: 'Sparkles',
+  },
+  {
+    key: 'system',
+    title: i18n.t('shared.constants.k8'),
+    titleKey: 'shared.constants.k8',
+    order: 9,
+    icon: 'Settings',
+  },
+  {
+    key: 'profile',
+    title: i18n.t('shared.constants.k9'),
+    titleKey: 'shared.constants.k9',
+    order: 10,
+    icon: 'User',
+  },
 ];
 
 export const L2_TO_L1_MAP: Record<string, string> = {

@@ -144,7 +144,12 @@ const baseLayers: MapLayer[] = [
 
 const defaultOverlayLayers: MapLayer[] = [
   { id: 'markers', name: i18n.t('components.gis_map_template.k2'), type: 'overlay', visible: true },
-  { id: 'clusters', name: i18n.t('components.gis_map_template.k3'), type: 'overlay', visible: true },
+  {
+    id: 'clusters',
+    name: i18n.t('components.gis_map_template.k3'),
+    type: 'overlay',
+    visible: true,
+  },
   { id: 'fences', name: i18n.t('components.gis_map_template.k4'), type: 'overlay', visible: true },
   { id: 'tracks', name: i18n.t('components.gis_map_template.k5'), type: 'overlay', visible: true },
 ];
@@ -204,7 +209,13 @@ function MapControl({
           <Locate size={20} />
         </IconButton>
       </Tooltip>
-      <Tooltip title={isFullscreen ? i18n.t('components.gis_map_template.k13') : i18n.t('components.gis_map_template.k12')}>
+      <Tooltip
+        title={
+          isFullscreen
+            ? i18n.t('components.gis_map_template.k13')
+            : i18n.t('components.gis_map_template.k12')
+        }
+      >
         <IconButton
           onClick={onFullscreen}
           sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
@@ -271,7 +282,11 @@ function LayerPanel({
               sx={{
                 backgroundColor: isSelected ? 'primary.main' : 'transparent',
                 color: isSelected ? designTokens.colors.background.paper : 'inherit',
-                '&:hover': { backgroundColor: isSelected ? 'primary.main' : designTokens.colors.cyber.glass.bgLight },
+                '&:hover': {
+                  backgroundColor: isSelected
+                    ? 'primary.main'
+                    : designTokens.colors.cyber.glass.bgLight,
+                },
               }}
             >
               <ListItemText primary={layer.name} />

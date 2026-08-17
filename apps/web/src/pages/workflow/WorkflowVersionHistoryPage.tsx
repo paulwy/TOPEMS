@@ -36,7 +36,6 @@ import { apiLogger } from '@/utils/logger';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 
 const FlowVersionHistoryPage: React.FC = () => {
@@ -113,14 +112,16 @@ const FlowVersionHistoryPage: React.FC = () => {
   ]);
 
   const invalidateVersionQueries = () => {
-    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_VERSIONS_BASE, id] ,
-  exact: false,
-  refetchType: 'active',
-});
-    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_VERSION_WORKFLOW_BASE, id] ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_VERSIONS_BASE, id],
+      exact: false,
+      refetchType: 'active',
+    });
+    queryClient.invalidateQueries({
+      queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_VERSION_WORKFLOW_BASE, id],
+      exact: false,
+      refetchType: 'active',
+    });
   };
 
   const createVersionMutation = useMutation({
@@ -138,12 +139,11 @@ const FlowVersionHistoryPage: React.FC = () => {
       });
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_VERSION_WORKFLOW_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_VERSION_WORKFLOW_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateVersionQueries();
       addNotification({
         title: i18n.t('pages.workflow_version_history_page.k3'),
@@ -166,12 +166,11 @@ const FlowVersionHistoryPage: React.FC = () => {
   const activateVersionMutation = useMutation({
     mutationFn: (versionId: string) => workflowApi.activateVersion(id!, versionId),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_VERSION_WORKFLOW_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_VERSION_WORKFLOW_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateVersionQueries();
       addNotification({
         title: i18n.t('pages.workflow_version_history_page.k7'),
@@ -197,12 +196,11 @@ const FlowVersionHistoryPage: React.FC = () => {
         rolled_back_by: 'current-user',
       }),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_VERSION_WORKFLOW_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_VERSION_WORKFLOW_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateVersionQueries();
       addNotification({
         title: i18n.t('pages.workflow_version_history_page.k11'),
@@ -215,19 +213,22 @@ const FlowVersionHistoryPage: React.FC = () => {
     },
     onError: (err: unknown) => {
       apiLogger.error(i18n.t('pages.workflow_version_history_page.k3'), err);
-      addNotification({ title: i18n.t('pages.workflow_version_history_page.k14'), message: i18n.t('pages.workflow_version_history_page.k13'), type: 'error' });
+      addNotification({
+        title: i18n.t('pages.workflow_version_history_page.k14'),
+        message: i18n.t('pages.workflow_version_history_page.k13'),
+        type: 'error',
+      });
     },
   });
 
   const deleteVersionMutation = useMutation({
     mutationFn: (versionId: string) => workflowApi.deleteVersion(id!, versionId),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_VERSION_WORKFLOW_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_VERSION_WORKFLOW_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateVersionQueries();
       addNotification({
         title: i18n.t('pages.workflow_version_history_page.k15'),
@@ -253,7 +254,11 @@ const FlowVersionHistoryPage: React.FC = () => {
 
   const handleCreateVersion = () => {
     if (!id || !createForm.version.trim()) {
-      addNotification({ title: i18n.t('pages.workflow_version_history_page.k20'), message: i18n.t('pages.workflow_version_history_page.k19'), type: 'info' });
+      addNotification({
+        title: i18n.t('pages.workflow_version_history_page.k20'),
+        message: i18n.t('pages.workflow_version_history_page.k19'),
+        type: 'info',
+      });
       return;
     }
 
@@ -343,7 +348,9 @@ const FlowVersionHistoryPage: React.FC = () => {
                   marginBottom: 16,
                 }}
               />
-              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pages.workflow_version_history_page.k26')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {i18n.t('pages.workflow_version_history_page.k26')}
+              </Typography>
               <Button
                 onClick={() => setShowCreateModal(true)}
                 variant='contained'
@@ -443,7 +450,8 @@ const FlowVersionHistoryPage: React.FC = () => {
                               variant='caption'
                               color='text.secondary'
                             >
-                              {version.created_by || i18n.t('pages.workflow_version_history_page.k28')}
+                              {version.created_by ||
+                                i18n.t('pages.workflow_version_history_page.k28')}
                             </Typography>
                           </Stack>
                           <Stack
@@ -500,7 +508,9 @@ const FlowVersionHistoryPage: React.FC = () => {
                         variant={version.isactive ? 'outlined' : 'contained'}
                         sx={version.isactive ? {} : { bgcolor: 'secondary.main' }}
                       >
-                        {version.isactive ? i18n.t('pages.workflow_version_history_page.k34') : i18n.t('pages.workflow_version_history_page.k33')}
+                        {version.isactive
+                          ? i18n.t('pages.workflow_version_history_page.k34')
+                          : i18n.t('pages.workflow_version_history_page.k33')}
                       </Button>
                     </Stack>
                   </Stack>
@@ -589,7 +599,9 @@ const FlowVersionHistoryPage: React.FC = () => {
                 variant='body2'
                 sx={{ mb: 1 }}
               >
-                {i18n.t('pages.workflow_version_history_page.strongv_0')}{selectedVersion.version}{i18n.t('pages.workflow_version_history_page.strong_1')}
+                {i18n.t('pages.workflow_version_history_page.strongv_0')}
+                {selectedVersion.version}
+                {i18n.t('pages.workflow_version_history_page.strong_1')}
               </Typography>
               <Typography
                 variant='body2'

@@ -295,7 +295,9 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               </Box>
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => setShowCreateModel(false)}>{i18n.t('ai.v58-evolution-panel.k6')}</Button>
+              <Button onClick={() => setShowCreateModel(false)}>
+                {i18n.t('ai.v58-evolution-panel.k6')}
+              </Button>
               <Button
                 onClick={() => {
                   if (!newModel.name.trim()) return;
@@ -362,7 +364,9 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               </Box>
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => setShowCreateExp(false)}>{i18n.t('ai.v58-evolution-panel.k11')}</Button>
+              <Button onClick={() => setShowCreateExp(false)}>
+                {i18n.t('ai.v58-evolution-panel.k11')}
+              </Button>
               <Button
                 onClick={() => {
                   if (!newExp.name.trim()) return;
@@ -370,8 +374,18 @@ const V58EvolutionPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     newExp.name,
                     newExp.description,
                     [
-                      { name: i18n.t('ai.v58-evolution-panel.k12'), modelVersion: 'v1.0.0', weight: 50, metrics: {} },
-                      { name: i18n.t('ai.v58-evolution-panel.k13'), modelVersion: 'v2.0.0', weight: 50, metrics: {} },
+                      {
+                        name: i18n.t('ai.v58-evolution-panel.k12'),
+                        modelVersion: 'v1.0.0',
+                        weight: 50,
+                        metrics: {},
+                      },
+                      {
+                        name: i18n.t('ai.v58-evolution-panel.k13'),
+                        modelVersion: 'v2.0.0',
+                        weight: 50,
+                        metrics: {},
+                      },
                     ],
                     newExp.trafficSplit
                   );
@@ -548,14 +562,20 @@ const ModelsTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            {i18n.t('ai.v58-evolution-panel.k0')}{models.length})
+            {i18n.t('ai.v58-evolution-panel.k0')}
+            {models.length})
           </Typography>
-          {models.length === 0 && <Alert severity='info'>{i18n.t('ai.v58-evolution-panel.k14')}</Alert>}
+          {models.length === 0 && (
+            <Alert severity='info'>{i18n.t('ai.v58-evolution-panel.k14')}</Alert>
+          )}
           {models.length > 0 && (
             <List sx={{ maxHeight: 500, overflow: 'auto' }}>
               {models.map((model) => {
@@ -567,7 +587,10 @@ const ModelsTab: React.FC<{
                     sx={{
                       mb: 1,
                       border: '1px solid',
-                      borderColor: selectedModelId === model.id ? designTokens.colors.secondary.main : 'divider',
+                      borderColor:
+                        selectedModelId === model.id
+                          ? designTokens.colors.secondary.main
+                          : 'divider',
                       borderRadius: 1,
                       bgcolor: selectedModelId === model.id ? 'colors.secondary.50' : 'white',
                       cursor: 'pointer',
@@ -589,7 +612,8 @@ const ModelsTab: React.FC<{
                           variant='caption'
                           color='text.secondary'
                         >
-                          {model.type} · {model.versions.length} {i18n.t('ai.v58-evolution-panel.k1')}
+                          {model.type} · {model.versions.length}{' '}
+                          {i18n.t('ai.v58-evolution-panel.k1')}
                         </Typography>
                       </Box>
                     </ListItem>
@@ -603,7 +627,10 @@ const ModelsTab: React.FC<{
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           {selectedModel ? (
             <>
-              <Card variant='outlined' sx={{ p: 2 }}>
+              <Card
+                variant='outlined'
+                sx={{ p: 2 }}
+              >
                 <Stack
                   direction='row'
                   spacing={2}
@@ -643,7 +670,10 @@ const ModelsTab: React.FC<{
                 </Typography>
               </Card>
 
-              <Card variant='outlined' sx={{ p: 2 }}>
+              <Card
+                variant='outlined'
+                sx={{ p: 2 }}
+              >
                 <Stack
                   direction='row'
                   spacing={2}
@@ -673,11 +703,21 @@ const ModelsTab: React.FC<{
                       <TableHead>
                         <TableRow>
                           <TableCell sx={{ fontWeight: 600, width: 40 }}></TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k16')}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k17')}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k18')}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k19')}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k20')}</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>
+                            {i18n.t('ai.v58-evolution-panel.k16')}
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>
+                            {i18n.t('ai.v58-evolution-panel.k17')}
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>
+                            {i18n.t('ai.v58-evolution-panel.k18')}
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>
+                            {i18n.t('ai.v58-evolution-panel.k19')}
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>
+                            {i18n.t('ai.v58-evolution-panel.k20')}
+                          </TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -695,7 +735,9 @@ const ModelsTab: React.FC<{
                                   width: 24,
                                   height: 24,
                                   cursor: 'pointer',
-                                  bgcolor: compareIds.includes(v.id) ? designTokens.colors.secondary.main : 'transparent',
+                                  bgcolor: compareIds.includes(v.id)
+                                    ? designTokens.colors.secondary.main
+                                    : 'transparent',
                                   border: `1px solid ${designTokens.colors.secondary.main}`,
                                 }}
                               />
@@ -854,8 +896,14 @@ const ModelsTab: React.FC<{
                                     label={`${k}: ${result.metricDeltas[k] > 0 ? '+' : ''}${result.metricDeltas[k].toFixed(3)}`}
                                     size='small'
                                     sx={{
-                                      bgcolor: result.metricDeltas[k] > 0 ? 'colors.success.100' : 'colors.error.50',
-                                      color: result.metricDeltas[k] > 0 ? 'colors.success.dark' : 'colors.error.800',
+                                      bgcolor:
+                                        result.metricDeltas[k] > 0
+                                          ? 'colors.success.100'
+                                          : 'colors.error.50',
+                                      color:
+                                        result.metricDeltas[k] > 0
+                                          ? 'colors.success.dark'
+                                          : 'colors.error.800',
                                       fontSize: 10,
                                     }}
                                   />
@@ -876,7 +924,10 @@ const ModelsTab: React.FC<{
                   })()}
               </Card>
 
-              <Card variant='outlined' sx={{ p: 2 }}>
+              <Card
+                variant='outlined'
+                sx={{ p: 2 }}
+              >
                 <Typography
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -955,7 +1006,10 @@ const ModelsTab: React.FC<{
               </Card>
             </>
           ) : (
-            <Card variant='outlined' sx={{ p: 2 }}>
+            <Card
+              variant='outlined'
+              sx={{ p: 2 }}
+            >
               <Alert severity='info'>{i18n.t('ai.v58-evolution-panel.k24')}</Alert>
             </Card>
           )}
@@ -1017,14 +1071,20 @@ const ExperimentsTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            {i18n.t('ai.v58-evolution-panel.k2')}{experiments.length})
+            {i18n.t('ai.v58-evolution-panel.k2')}
+            {experiments.length})
           </Typography>
-          {experiments.length === 0 && <Alert severity='info'>{i18n.t('ai.v58-evolution-panel.k25')}</Alert>}
+          {experiments.length === 0 && (
+            <Alert severity='info'>{i18n.t('ai.v58-evolution-panel.k25')}</Alert>
+          )}
           {experiments.length > 0 && (
             <List sx={{ maxHeight: 500, overflow: 'auto' }}>
               {experiments.map((exp) => (
@@ -1034,7 +1094,8 @@ const ExperimentsTab: React.FC<{
                   sx={{
                     mb: 1,
                     border: '1px solid',
-                    borderColor: selectedExpId === exp.id ? designTokens.colors.success.dark : 'divider',
+                    borderColor:
+                      selectedExpId === exp.id ? designTokens.colors.success.dark : 'divider',
                     borderRadius: 1,
                     bgcolor: selectedExpId === exp.id ? 'colors.success.50' : 'white',
                     cursor: 'pointer',
@@ -1056,7 +1117,9 @@ const ExperimentsTab: React.FC<{
                         variant='caption'
                         color='text.secondary'
                       >
-                        {exp.variants.length} {i18n.t('ai.v58-evolution-panel.k3')} {exp.traffic_split}{i18n.t('ai.v58-evolution-panel.k4')}
+                        {exp.variants.length} {i18n.t('ai.v58-evolution-panel.k3')}{' '}
+                        {exp.traffic_split}
+                        {i18n.t('ai.v58-evolution-panel.k4')}
                       </Typography>
                     </Box>
                   </ListItem>
@@ -1069,7 +1132,10 @@ const ExperimentsTab: React.FC<{
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           {selectedExp ? (
             <>
-              <Card variant='outlined' sx={{ p: 2 }}>
+              <Card
+                variant='outlined'
+                sx={{ p: 2 }}
+              >
                 <Stack
                   direction='row'
                   spacing={2}
@@ -1132,7 +1198,10 @@ const ExperimentsTab: React.FC<{
                 </Box>
               </Card>
 
-              <Card variant='outlined' sx={{ p: 2 }}>
+              <Card
+                variant='outlined'
+                sx={{ p: 2 }}
+              >
                 <Typography
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1145,12 +1214,24 @@ const ExperimentsTab: React.FC<{
                     <Table size='small'>
                       <TableHead>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k26')}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k27')}</TableCell>
-                          <TableCell sx={{ fontWeight: 600, align: 'right' }}>{i18n.t('ai.v58-evolution-panel.k28')}</TableCell>
-                          <TableCell sx={{ fontWeight: 600, align: 'right' }}>{i18n.t('ai.v58-evolution-panel.k29')}</TableCell>
-                          <TableCell sx={{ fontWeight: 600, align: 'right' }}>{i18n.t('ai.v58-evolution-panel.k30')}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k31')}</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>
+                            {i18n.t('ai.v58-evolution-panel.k26')}
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>
+                            {i18n.t('ai.v58-evolution-panel.k27')}
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 600, align: 'right' }}>
+                            {i18n.t('ai.v58-evolution-panel.k28')}
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 600, align: 'right' }}>
+                            {i18n.t('ai.v58-evolution-panel.k29')}
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 600, align: 'right' }}>
+                            {i18n.t('ai.v58-evolution-panel.k30')}
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>
+                            {i18n.t('ai.v58-evolution-panel.k31')}
+                          </TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -1189,7 +1270,10 @@ const ExperimentsTab: React.FC<{
                               </TableCell>
                               <TableCell align='right'>
                                 <Typography
-                                  sx={{ fontWeight: 600, color: isWinner ? designTokens.colors.success.dark : 'inherit' }}
+                                  sx={{
+                                    fontWeight: 600,
+                                    color: isWinner ? designTokens.colors.success.dark : 'inherit',
+                                  }}
                                 >
                                   {(result.conversionRate * 100).toFixed(2)}%
                                 </Typography>
@@ -1213,7 +1297,10 @@ const ExperimentsTab: React.FC<{
               </Card>
 
               {significance && (
-                <Card variant='outlined' sx={{ p: 2 }}>
+                <Card
+                  variant='outlined'
+                  sx={{ p: 2 }}
+                >
                   <Typography
                     variant='subtitle2'
                     sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1282,7 +1369,10 @@ const ExperimentsTab: React.FC<{
                         variant='h6'
                         sx={{
                           fontWeight: 700,
-                          color: significance.relativeLift > 0 ? designTokens.colors.success.dark : designTokens.colors.error.main,
+                          color:
+                            significance.relativeLift > 0
+                              ? designTokens.colors.success.dark
+                              : designTokens.colors.error.main,
                         }}
                       >
                         {significance.relativeLift > 0 ? '+' : ''}
@@ -1299,7 +1389,8 @@ const ExperimentsTab: React.FC<{
                         variant='body2'
                         sx={{ fontWeight: 600 }}
                       >
-                        🏆 {i18n.t('ai.v58-evolution-panel.k5')} {significance.winner} {i18n.t('ai.v58-evolution-panel.k6')}{' '}
+                        🏆 {i18n.t('ai.v58-evolution-panel.k5')} {significance.winner}{' '}
+                        {i18n.t('ai.v58-evolution-panel.k6')}{' '}
                         {(significance.confidenceLevel * 100).toFixed(1)}%)
                       </Typography>
                     </Paper>
@@ -1308,7 +1399,10 @@ const ExperimentsTab: React.FC<{
               )}
             </>
           ) : (
-            <Card variant='outlined' sx={{ p: 2 }}>
+            <Card
+              variant='outlined'
+              sx={{ p: 2 }}
+            >
               <Alert severity='info'>{i18n.t('ai.v58-evolution-panel.k33')}</Alert>
             </Card>
           )}
@@ -1374,12 +1468,20 @@ const SecurityTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, mb: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Box sx={{ textAlign: 'center' }}>
             <Gauge
               size={32}
               style={{
-                color: report.score >= 80 ? designTokens.colors.success.dark : report.score >= 60 ? designTokens.colors.warning.main : designTokens.colors.error.main,
+                color:
+                  report.score >= 80
+                    ? designTokens.colors.success.dark
+                    : report.score >= 60
+                      ? designTokens.colors.warning.main
+                      : designTokens.colors.error.main,
               }}
             />
             <Typography
@@ -1396,7 +1498,10 @@ const SecurityTab: React.FC<{
             </Typography>
           </Box>
         </Card>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Box sx={{ textAlign: 'center' }}>
             <CheckCircle2
               size={32}
@@ -1416,7 +1521,10 @@ const SecurityTab: React.FC<{
             </Typography>
           </Box>
         </Card>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Box sx={{ textAlign: 'center' }}>
             <AlertTriangle
               size={32}
@@ -1436,7 +1544,10 @@ const SecurityTab: React.FC<{
             </Typography>
           </Box>
         </Card>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Box sx={{ textAlign: 'center' }}>
             <XCircle
               size={32}
@@ -1458,7 +1569,10 @@ const SecurityTab: React.FC<{
         </Card>
       </Box>
 
-      <Card variant='outlined' sx={{ p: 2 }}>
+      <Card
+        variant='outlined'
+        sx={{ p: 2 }}
+      >
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1470,11 +1584,21 @@ const SecurityTab: React.FC<{
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k34')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k35')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k36')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k37')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v58-evolution-panel.k38')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('ai.v58-evolution-panel.k34')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('ai.v58-evolution-panel.k35')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('ai.v58-evolution-panel.k36')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('ai.v58-evolution-panel.k37')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('ai.v58-evolution-panel.k38')}
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1610,13 +1734,18 @@ const ThreatsTab: React.FC<{
           variant='caption'
           color='text.secondary'
         >
-          {i18n.t('ai.v58-evolution-panel.k7')} {stats.total} {i18n.t('ai.v58-evolution-panel.k8')} {stats.critical} {i18n.t('ai.v58-evolution-panel.k9')} {stats.high} {i18n.t('ai.v58-evolution-panel.k10')} {stats.mitigated}{' '}
+          {i18n.t('ai.v58-evolution-panel.k7')} {stats.total} {i18n.t('ai.v58-evolution-panel.k8')}{' '}
+          {stats.critical} {i18n.t('ai.v58-evolution-panel.k9')} {stats.high}{' '}
+          {i18n.t('ai.v58-evolution-panel.k10')} {stats.mitigated}{' '}
           {i18n.t('ai.v58-evolution-panel.k41')}
         </Typography>
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, mb: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Lock
               size={24}
@@ -1638,7 +1767,10 @@ const ThreatsTab: React.FC<{
             </Box>
           </Box>
         </Card>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <AlertTriangle
               size={24}
@@ -1660,7 +1792,10 @@ const ThreatsTab: React.FC<{
             </Box>
           </Box>
         </Card>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Gauge
               size={24}
@@ -1682,7 +1817,10 @@ const ThreatsTab: React.FC<{
             </Box>
           </Box>
         </Card>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CheckCircle2
               size={24}
@@ -1706,7 +1844,10 @@ const ThreatsTab: React.FC<{
         </Card>
       </Box>
 
-      <Card variant='outlined' sx={{ p: 2 }}>
+      <Card
+        variant='outlined'
+        sx={{ p: 2 }}
+      >
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1714,7 +1855,9 @@ const ThreatsTab: React.FC<{
           <Eye size={16} />
           {i18n.t('ai.v58-evolution-panel.k46')}
         </Typography>
-        {threats.length === 0 && <Alert severity='info'>{i18n.t('ai.v58-evolution-panel.k42')}</Alert>}
+        {threats.length === 0 && (
+          <Alert severity='info'>{i18n.t('ai.v58-evolution-panel.k42')}</Alert>
+        )}
         {threats.length > 0 && (
           <Box>
             {threats.map((threat) => (
@@ -1724,7 +1867,8 @@ const ThreatsTab: React.FC<{
                 sx={{
                   mb: 1,
                   border: '1px solid',
-                  borderColor: expandedThreat === threat.id ? designTokens.colors.secondary.main : 'divider',
+                  borderColor:
+                    expandedThreat === threat.id ? designTokens.colors.secondary.main : 'divider',
                   borderRadius: 1,
                   bgcolor: expandedThreat === threat.id ? 'colors.secondary.50' : 'white',
                 }}

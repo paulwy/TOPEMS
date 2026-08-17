@@ -94,7 +94,9 @@ const SrmContractDetailPage: React.FC = () => {
                 <Calendar sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
-                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.k10')}</InputLabel>
+                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+                  {i18n.t('pages.srm_contract_detail_page.k10')}
+                </InputLabel>
                 <Typography sx={{ mt: 0.5 }}>
                   {new Date(contract.sign_date).toLocaleDateString('zh-CN')}
                 </Typography>
@@ -107,7 +109,9 @@ const SrmContractDetailPage: React.FC = () => {
                 <Calendar sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
-                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.k11')}</InputLabel>
+                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+                  {i18n.t('pages.srm_contract_detail_page.k11')}
+                </InputLabel>
                 <Typography sx={{ mt: 0.5 }}>
                   {new Date(contract.start_date).toLocaleDateString('zh-CN')}
                 </Typography>
@@ -120,7 +124,9 @@ const SrmContractDetailPage: React.FC = () => {
                 <Calendar sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
-                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.k12')}</InputLabel>
+                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+                  {i18n.t('pages.srm_contract_detail_page.k12')}
+                </InputLabel>
                 <Typography sx={{ mt: 0.5 }}>
                   {new Date(contract.end_date).toLocaleDateString('zh-CN')}
                 </Typography>
@@ -146,11 +152,15 @@ const SrmContractDetailPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.k14')}</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {i18n.t('pages.srm_contract_detail_page.k14')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5 }}>{contract.contract_type}</Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.k15')}</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {i18n.t('pages.srm_contract_detail_page.k15')}
+            </InputLabel>
             <Box sx={{ mt: 0.5 }}>
               <Chip
                 icon={<Building2 sx={{ width: 14, height: 14 }} />}
@@ -160,7 +170,9 @@ const SrmContractDetailPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.k17')}</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {i18n.t('pages.srm_contract_detail_page.k17')}
+            </InputLabel>
             <Box sx={{ mt: 0.5 }}>
               <Chip
                 icon={<DollarSign sx={{ width: 14, height: 14 }} />}
@@ -170,23 +182,31 @@ const SrmContractDetailPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.id_18')}</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {i18n.t('pages.srm_contract_detail_page.id_18')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5 }}>{contract.supplier_id}</Typography>
           </Box>
           {contract.remarks && (
             <Box sx={{ gridColumn: 'span 2' }}>
-              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.k19')}</InputLabel>
+              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+                {i18n.t('pages.srm_contract_detail_page.k19')}
+              </InputLabel>
               <Typography sx={{ mt: 0.5 }}>{contract.remarks}</Typography>
             </Box>
           )}
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.k20')}</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {i18n.t('pages.srm_contract_detail_page.k20')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5 }}>
               {new Date(contract.created_at).toLocaleString('zh-CN')}
             </Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_contract_detail_page.k21')}</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {i18n.t('pages.srm_contract_detail_page.k21')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5 }}>
               {new Date(contract.updated_at).toLocaleString('zh-CN')}
             </Typography>
@@ -210,7 +230,9 @@ const SrmContractDetailPage: React.FC = () => {
     return (
       <PageContainer title={i18n.t('pages.srm_contract_detail_page.k23')}>
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <Typography color='error'>{error || i18n.t('pages.srm_contract_detail_page.k24')}</Typography>
+          <Typography color='error'>
+            {error || i18n.t('pages.srm_contract_detail_page.k24')}
+          </Typography>
         </Box>
       </PageContainer>
     );
@@ -225,7 +247,12 @@ const SrmContractDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={contract?.title || contract?.contractNo || contract?.id || i18n.t('pages.srm_contract_detail_page.k26')}
+        detailItemName={
+          contract?.title ||
+          contract?.contractNo ||
+          contract?.id ||
+          i18n.t('pages.srm_contract_detail_page.k26')
+        }
         backHref={SRM_PATHS.contract}
         loading={loading}
         error={error || undefined}

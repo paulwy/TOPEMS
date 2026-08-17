@@ -5,6 +5,7 @@ import { productionProcessSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { ProductionProcess } from '@/api/mes/types';
 import i18n from '@/i18n';
+
 const apiAdapter = createCrudPageAdapter<ProductionProcess>(
   {
     list: mesApi.processes.list as unknown as CrudApi<ProductionProcess>['list'],

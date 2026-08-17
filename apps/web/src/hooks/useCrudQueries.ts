@@ -195,10 +195,11 @@ export function useCrudQueries<
         setExtraParams(params);
       }
       // 强制 refetch
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [queryKey, 'list'],
+        exact: false,
+        refetchType: 'active',
+      });
     },
     [queryClient, queryKey]
   );
@@ -224,10 +225,7 @@ export function useCrudQueries<
 
   // ---- 刷新 ----
   const refresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: [queryKey] ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({ queryKey: [queryKey], exact: false, refetchType: 'active' });
   }, [queryClient, queryKey]);
 
   // ---- 错误处理辅助 ----
@@ -246,10 +244,11 @@ export function useCrudQueries<
       return response.data?.data ?? response.data;
     },
     onSuccess: (_newItem: T) => {
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [queryKey, 'list'],
+        exact: false,
+        refetchType: 'active',
+      });
       onSuccess?.(i18n.t('shared.use_crud_queries.k0'));
     },
     onError: (err) => handleMutationError(err, i18n.t('shared.use_crud_queries.k1')),
@@ -262,16 +261,17 @@ export function useCrudQueries<
       return response.data?.data ?? response.data;
     },
     onSuccess: (_updatedItem: T, variables: { id: string; item: TUpdate }) => {
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [queryKey, 'list'],
+        exact: false,
+        refetchType: 'active',
+      });
       queryClient.invalidateQueries({
         queryKey: [queryKey, 'detail', variables.id],
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
       onSuccess?.(i18n.t('shared.use_crud_queries.k2'));
     },
     onError: (err) => handleMutationError(err, i18n.t('shared.use_crud_queries.k3')),
@@ -283,10 +283,7 @@ export function useCrudQueries<
       await api.delete(`${basePath}/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({ queryKey: [queryKey], exact: false, refetchType: 'active' });
       onSuccess?.(i18n.t('shared.use_crud_queries.k4'));
     },
     onError: (err) => handleMutationError(err, i18n.t('shared.use_crud_queries.k5')),
@@ -298,11 +295,10 @@ export function useCrudQueries<
       await api.post(`${basePath}/bulk-delete`, { ids });
     },
     onSuccess: (_data: void, variables: string[]) => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] ,
-  exact: false,
-  refetchType: 'active',
-});
-      onSuccess?.(`${i18n.t('shared.use_crud_queries.k0')}${variables.length}${i18n.t('shared.use_crud_queries.k1')}`);
+      queryClient.invalidateQueries({ queryKey: [queryKey], exact: false, refetchType: 'active' });
+      onSuccess?.(
+        `${i18n.t('shared.use_crud_queries.k0')}${variables.length}${i18n.t('shared.use_crud_queries.k1')}`
+      );
     },
     onError: (err) => handleMutationError(err, i18n.t('shared.use_crud_queries.k6')),
   });
@@ -434,10 +430,11 @@ export function useModuleQueries<T extends { id?: string }>(
       if (params) {
         setExtraParams(params);
       }
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [queryKey, 'list'],
+        exact: false,
+        refetchType: 'active',
+      });
     },
     [queryClient, queryKey]
   );
@@ -457,7 +454,10 @@ export function useModuleQueries<T extends { id?: string }>(
         return null;
       } catch (err: unknown) {
         const errAny = err as { response?: { data?: { message?: string } }; message?: string };
-        const message = errAny?.response?.data?.message || errAny?.message || i18n.t('shared.use_crud_queries.k8');
+        const message =
+          errAny?.response?.data?.message ||
+          errAny?.message ||
+          i18n.t('shared.use_crud_queries.k8');
         addNotification({ title: i18n.t('shared.use_crud_queries.k9'), message, type: 'error' });
         return null;
       }
@@ -467,10 +467,7 @@ export function useModuleQueries<T extends { id?: string }>(
 
   // ---- refresh ----
   const refresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: [queryKey] ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({ queryKey: [queryKey], exact: false, refetchType: 'active' });
   }, [queryClient, queryKey]);
 
   // ---- 错误通知辅助 ----
@@ -501,10 +498,11 @@ export function useModuleQueries<T extends { id?: string }>(
       return response.data ?? null;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [queryKey, 'list'],
+        exact: false,
+        refetchType: 'active',
+      });
       notifySuccess(i18n.t('shared.use_crud_queries.k13'));
     },
     onError: (err) => notifyError(err, i18n.t('shared.use_crud_queries.k14')),
@@ -520,16 +518,17 @@ export function useModuleQueries<T extends { id?: string }>(
       return response.data ?? null;
     },
     onSuccess: (_data: T | null, variables) => {
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [queryKey, 'list'],
+        exact: false,
+        refetchType: 'active',
+      });
       queryClient.invalidateQueries({
         queryKey: [queryKey, 'detail', variables.id],
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
       notifySuccess(i18n.t('shared.use_crud_queries.k16'));
     },
     onError: (err) => notifyError(err, i18n.t('shared.use_crud_queries.k17')),
@@ -544,10 +543,7 @@ export function useModuleQueries<T extends { id?: string }>(
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({ queryKey: [queryKey], exact: false, refetchType: 'active' });
       notifySuccess(i18n.t('shared.use_crud_queries.k19'));
     },
     onError: (err) => notifyError(err, i18n.t('shared.use_crud_queries.k20')),
@@ -559,11 +555,10 @@ export function useModuleQueries<T extends { id?: string }>(
       await Promise.all(ids.map((id) => api.delete(id)));
     },
     onSuccess: (_data: void, variables: string[]) => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] ,
-  exact: false,
-  refetchType: 'active',
-});
-      notifySuccess(`${i18n.t('shared.use_crud_queries.k2')}${variables.length}${i18n.t('shared.use_crud_queries.k3')}`);
+      queryClient.invalidateQueries({ queryKey: [queryKey], exact: false, refetchType: 'active' });
+      notifySuccess(
+        `${i18n.t('shared.use_crud_queries.k2')}${variables.length}${i18n.t('shared.use_crud_queries.k3')}`
+      );
     },
     onError: (err) => notifyError(err, i18n.t('shared.use_crud_queries.k21')),
   });
@@ -736,10 +731,11 @@ export function useCrudOperations<
       if (params) {
         setExtraParams(params);
       }
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [queryKey, 'list'],
+        exact: false,
+        refetchType: 'active',
+      });
     },
     [queryClient, queryKey]
   );
@@ -758,7 +754,10 @@ export function useCrudOperations<
         return null;
       } catch (err: unknown) {
         const errAny = err as { response?: { data?: { message?: string } }; message?: string };
-        const message = errAny?.response?.data?.message || errAny?.message || i18n.t('shared.use_crud_queries.k23');
+        const message =
+          errAny?.response?.data?.message ||
+          errAny?.message ||
+          i18n.t('shared.use_crud_queries.k23');
         addNotification({ title: i18n.t('shared.use_crud_queries.k24'), message, type: 'error' });
         return null;
       }
@@ -767,10 +766,7 @@ export function useCrudOperations<
   );
 
   const refresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: [queryKey] ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({ queryKey: [queryKey], exact: false, refetchType: 'active' });
   }, [queryClient, queryKey]);
 
   const notifyError = useCallback(
@@ -791,12 +787,24 @@ export function useCrudOperations<
   );
 
   // 语义化通知文案：传入 entityName 时变为"用户创建成功"，否则使用默认"创建成功"
-  const msgCreate = entityName ? `${entityName}${i18n.t('shared.use_crud_queries.k4')}` : i18n.t('shared.use_crud_queries.k27');
-  const msgUpdate = entityName ? `${entityName}${i18n.t('shared.use_crud_queries.k5')}` : i18n.t('shared.use_crud_queries.k28');
-  const msgDelete = entityName ? `${entityName}${i18n.t('shared.use_crud_queries.k6')}` : i18n.t('shared.use_crud_queries.k29');
-  const msgCreateErr = entityName ? `${entityName}${i18n.t('shared.use_crud_queries.k7')}` : i18n.t('shared.use_crud_queries.k30');
-  const msgUpdateErr = entityName ? `${entityName}${i18n.t('shared.use_crud_queries.k8')}` : i18n.t('shared.use_crud_queries.k31');
-  const msgDeleteErr = entityName ? `${entityName}${i18n.t('shared.use_crud_queries.k9')}` : i18n.t('shared.use_crud_queries.k32');
+  const msgCreate = entityName
+    ? `${entityName}${i18n.t('shared.use_crud_queries.k4')}`
+    : i18n.t('shared.use_crud_queries.k27');
+  const msgUpdate = entityName
+    ? `${entityName}${i18n.t('shared.use_crud_queries.k5')}`
+    : i18n.t('shared.use_crud_queries.k28');
+  const msgDelete = entityName
+    ? `${entityName}${i18n.t('shared.use_crud_queries.k6')}`
+    : i18n.t('shared.use_crud_queries.k29');
+  const msgCreateErr = entityName
+    ? `${entityName}${i18n.t('shared.use_crud_queries.k7')}`
+    : i18n.t('shared.use_crud_queries.k30');
+  const msgUpdateErr = entityName
+    ? `${entityName}${i18n.t('shared.use_crud_queries.k8')}`
+    : i18n.t('shared.use_crud_queries.k31');
+  const msgDeleteErr = entityName
+    ? `${entityName}${i18n.t('shared.use_crud_queries.k9')}`
+    : i18n.t('shared.use_crud_queries.k32');
 
   const createMutation = useMutation({
     mutationFn: async (item: TCreate) => {
@@ -807,10 +815,11 @@ export function useCrudOperations<
       return response.data ?? null;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [queryKey, 'list'],
+        exact: false,
+        refetchType: 'active',
+      });
       notifySuccess(msgCreate);
     },
     onError: (err) => notifyError(err, msgCreateErr),
@@ -825,14 +834,16 @@ export function useCrudOperations<
       return response.data ?? null;
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: [queryKey, 'detail', variables.id] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [queryKey, 'list'],
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: [queryKey, 'detail', variables.id],
+        exact: false,
+        refetchType: 'active',
+      });
       notifySuccess(msgUpdate);
     },
     onError: (err) => notifyError(err, msgUpdateErr),
@@ -846,10 +857,7 @@ export function useCrudOperations<
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({ queryKey: [queryKey], exact: false, refetchType: 'active' });
       notifySuccess(msgDelete);
     },
     onError: (err) => notifyError(err, msgDeleteErr),
@@ -860,10 +868,7 @@ export function useCrudOperations<
       await Promise.all(ids.map((id) => api.delete(id)));
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({ queryKey: [queryKey], exact: false, refetchType: 'active' });
       notifySuccess(
         entityName
           ? `${i18n.t('shared.use_crud_queries.k10')}${variables.length}${i18n.t('shared.use_crud_queries.k11')}${entityName}`

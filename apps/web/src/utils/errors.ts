@@ -106,7 +106,10 @@ export const getErrorMessage = (error: AppError | unknown): string => {
  * 从未知错误中提取消息（兼容 axios 错误响应）
  * 优先使用服务端返回的 message 字段，否则使用 Error.message，最后使用兜底值
  */
-export const extractErrorMessage = (error: unknown, fallback = i18n.t('shared.errors.k8')): string => {
+export const extractErrorMessage = (
+  error: unknown,
+  fallback = i18n.t('shared.errors.k8')
+): string => {
   if (!error) return fallback;
   const err = error as {
     response?: { data?: { message?: string } };

@@ -243,7 +243,9 @@ export const ProgressiveHydration: React.FC<ProgressiveHydrationProps> = ({
         hydratedAt: Date.now(),
       });
       onHydrated?.(componentId.current, duration);
-      hydrationLogger.debug(`${i18n.t('components.progressive_hydration.k1')}${componentId.current}${i18n.t('components.progressive_hydration.k2')}${duration.toFixed(1)}ms)`);
+      hydrationLogger.debug(
+        `${i18n.t('components.progressive_hydration.k1')}${componentId.current}${i18n.t('components.progressive_hydration.k2')}${duration.toFixed(1)}ms)`
+      );
     });
   }, [status, priority, when, onHydrated]);
 
@@ -276,7 +278,9 @@ export const ProgressiveHydration: React.FC<ProgressiveHydrationProps> = ({
 
     // 交互优先：任何用户交互立即触发水合
     const interactionHandler = (): void => {
-      hydrationLogger.debug(`${i18n.t('components.progressive_hydration.k3')}${componentId.current}${i18n.t('components.progressive_hydration.k4')}`);
+      hydrationLogger.debug(
+        `${i18n.t('components.progressive_hydration.k3')}${componentId.current}${i18n.t('components.progressive_hydration.k4')}`
+      );
       hydrate();
       cleanupInteraction();
     };
@@ -305,7 +309,9 @@ export const ProgressiveHydration: React.FC<ProgressiveHydrationProps> = ({
       // 超时保底：即使浏览器一直不空闲，也强制水合
       timeoutHandle = window.setTimeout(() => {
         if (status === 'pending') {
-          hydrationLogger.debug(`${i18n.t('components.progressive_hydration.k5')}${componentId.current}${i18n.t('components.progressive_hydration.k6')}`);
+          hydrationLogger.debug(
+            `${i18n.t('components.progressive_hydration.k5')}${componentId.current}${i18n.t('components.progressive_hydration.k6')}`
+          );
           hydrate();
         }
       }, idleTimeout);

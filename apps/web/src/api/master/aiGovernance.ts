@@ -104,10 +104,13 @@ export const aiGovernanceApi = {
     return apiClient.master.get('/mdm-v59/governance/models');
   },
 
-  trainModel: async (id: string, data?: {
-    dataset?: string;
-    parameters?: Record<string, unknown>;
-  }): Promise<ApiResponse<{ training_job_id: string; status: string }>> => {
+  trainModel: async (
+    id: string,
+    data?: {
+      dataset?: string;
+      parameters?: Record<string, unknown>;
+    }
+  ): Promise<ApiResponse<{ training_job_id: string; status: string }>> => {
     return apiClient.master.post(`/mdm-v59/governance/train/${id}`, data || {});
   },
 
@@ -141,10 +144,13 @@ export const aiGovernanceApi = {
     return apiClient.master.get('/mdm-v59/matching/results', { params });
   },
 
-  reviewMatch: async (id: string, data: {
-    decision: 'confirm' | 'reject';
-    note?: string;
-  }): Promise<ApiResponse<MatchResult>> => {
+  reviewMatch: async (
+    id: string,
+    data: {
+      decision: 'confirm' | 'reject';
+      note?: string;
+    }
+  ): Promise<ApiResponse<MatchResult>> => {
     return apiClient.master.post(`/mdm-v59/matching/review/${id}`, data);
   },
 
@@ -152,20 +158,25 @@ export const aiGovernanceApi = {
     return apiClient.master.post(`/mdm-v59/matching/confirm/${id}`, {});
   },
 
-  rejectMatch: async (id: string, data?: { reason?: string }): Promise<ApiResponse<MatchResult>> => {
+  rejectMatch: async (
+    id: string,
+    data?: { reason?: string }
+  ): Promise<ApiResponse<MatchResult>> => {
     return apiClient.master.post(`/mdm-v59/matching/reject/${id}`, data || {});
   },
 
   getMatchStats: async (params?: {
     entity_type?: string;
     time_range?: 'today' | 'week' | 'month';
-  }): Promise<ApiResponse<{
-    total_pairs: number;
-    confirmed: number;
-    rejected: number;
-    pending: number;
-    avg_confidence: number;
-  }>> => {
+  }): Promise<
+    ApiResponse<{
+      total_pairs: number;
+      confirmed: number;
+      rejected: number;
+      pending: number;
+      avg_confidence: number;
+    }>
+  > => {
     return apiClient.master.get('/mdm-v59/matching/stats', { params });
   },
 
@@ -182,50 +193,74 @@ export const aiGovernanceApi = {
     return apiClient.master.get('/mdm-v59/classifiers', { params });
   },
 
-  classifyEntity: async (entityType: string, id: string): Promise<ApiResponse<{
-    classification: string;
-    confidence: number;
-    alternatives?: Array<{ category: string; confidence: number }>;
-  }>> => {
+  classifyEntity: async (
+    entityType: string,
+    id: string
+  ): Promise<
+    ApiResponse<{
+      classification: string;
+      confidence: number;
+      alternatives?: Array<{ category: string; confidence: number }>;
+    }>
+  > => {
     return apiClient.master.post(`/mdm-v59/classify/${entityType}/${id}`, {});
   },
 
-  getClassification: async (entityType: string, id: string): Promise<ApiResponse<{
-    category: string;
-    confidence: number;
-    classified_at: string;
-    classifier_id: string;
-  }>> => {
+  getClassification: async (
+    entityType: string,
+    id: string
+  ): Promise<
+    ApiResponse<{
+      category: string;
+      confidence: number;
+      classified_at: string;
+      classifier_id: string;
+    }>
+  > => {
     return apiClient.master.get(`/mdm-v59/classification/${entityType}/${id}`);
   },
 
-  getEntityCategories: async (entityType: string): Promise<ApiResponse<Array<{
-    category: string;
-    count: number;
-  }>>> => {
+  getEntityCategories: async (
+    entityType: string
+  ): Promise<
+    ApiResponse<
+      Array<{
+        category: string;
+        count: number;
+      }>
+    >
+  > => {
     return apiClient.master.get(`/mdm-v59/classification/categories/${entityType}`);
   },
 
-  reviewClassification: async (id: string, data: {
-    correct: boolean;
-    corrected_category?: string;
-  }): Promise<ApiResponse<void>> => {
+  reviewClassification: async (
+    id: string,
+    data: {
+      correct: boolean;
+      corrected_category?: string;
+    }
+  ): Promise<ApiResponse<void>> => {
     return apiClient.master.post(`/mdm-v59/classification/review/${id}`, data);
   },
 
   getClassificationStats: async (params?: {
     entity_type?: string;
-  }): Promise<ApiResponse<{
-    total_classified: number;
-    avg_confidence: number;
-    categories: Array<{ name: string; count: number; accuracy: number }>;
-  }>> => {
+  }): Promise<
+    ApiResponse<{
+      total_classified: number;
+      avg_confidence: number;
+      categories: Array<{ name: string; count: number; accuracy: number }>;
+    }>
+  > => {
     return apiClient.master.get('/mdm-v59/classification/stats', { params });
   },
 
-  updateClassifierRules: async (id: string, data: {
-    rules: Array<{ pattern: string; category: string }>;
-  }): Promise<ApiResponse<Classifier>> => {
+  updateClassifierRules: async (
+    id: string,
+    data: {
+      rules: Array<{ pattern: string; category: string }>;
+    }
+  ): Promise<ApiResponse<Classifier>> => {
     return apiClient.master.post(`/mdm-v59/classifier/rules/${id}`, data);
   },
 };

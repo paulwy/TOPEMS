@@ -430,7 +430,11 @@ export const ChatInterface: React.FC = () => {
 
   const tabs = [
     { id: 'all' as TabType, label: i18n.t('components.chat_interface.k30'), icon: MessageSquare },
-    { id: 'direct' as TabType, label: i18n.t('components.chat_interface.k31'), icon: MessageSquare },
+    {
+      id: 'direct' as TabType,
+      label: i18n.t('components.chat_interface.k31'),
+      icon: MessageSquare,
+    },
     { id: 'group' as TabType, label: i18n.t('components.chat_interface.k32'), icon: Users },
     { id: 'contacts' as TabType, label: i18n.t('components.chat_interface.k33'), icon: User },
     { id: 'notifications' as TabType, label: i18n.t('components.chat_interface.k34'), icon: Bell },
@@ -587,7 +591,9 @@ export const ChatInterface: React.FC = () => {
                     marginBottom: 12,
                   }}
                 />
-                <p style={{ color: theme.palette.text.secondary }}>{i18n.t('components.chat_interface.k35')}</p>
+                <p style={{ color: theme.palette.text.secondary }}>
+                  {i18n.t('components.chat_interface.k35')}
+                </p>
               </div>
             ) : (
               filteredRooms.map((room) => (
@@ -631,7 +637,9 @@ export const ChatInterface: React.FC = () => {
                     {selectedRoom.name || i18n.t('components.chat_interface.k36')}
                   </h2>
                   <p style={{ fontSize: 14, color: theme.palette.text.secondary }}>
-                    {selectedRoom.room_type === 'direct' ? i18n.t('components.chat_interface.k38') : i18n.t('components.chat_interface.k37')}
+                    {selectedRoom.room_type === 'direct'
+                      ? i18n.t('components.chat_interface.k38')
+                      : i18n.t('components.chat_interface.k37')}
                     {!isConnected && i18n.t('components.chat_interface.k4')}
                   </p>
                 </div>
@@ -688,7 +696,9 @@ export const ChatInterface: React.FC = () => {
                         marginBottom: 12,
                       }}
                     />
-                    <p style={{ color: theme.palette.text.secondary }}>{i18n.t('components.chat_interface.k39')}</p>
+                    <p style={{ color: theme.palette.text.secondary }}>
+                      {i18n.t('components.chat_interface.k39')}
+                    </p>
                   </div>
                 </div>
               ) : messageSearchQuery.trim() && filteredMessages.length === 0 ? (
@@ -710,7 +720,9 @@ export const ChatInterface: React.FC = () => {
                         marginBottom: 12,
                       }}
                     />
-                    <p style={{ color: theme.palette.text.secondary }}>{i18n.t('components.chat_interface.k40')}</p>
+                    <p style={{ color: theme.palette.text.secondary }}>
+                      {i18n.t('components.chat_interface.k40')}
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -726,7 +738,8 @@ export const ChatInterface: React.FC = () => {
                       }}
                     >
                       <span style={{ fontSize: 14, color: 'yellow.800' }}>
-                        {i18n.t('components.chat_interface.k0')} {filteredMessages.length} {i18n.t('components.chat_interface.k1')}
+                        {i18n.t('components.chat_interface.k0')} {filteredMessages.length}{' '}
+                        {i18n.t('components.chat_interface.k1')}
                       </span>
                     </div>
                   )}
@@ -784,7 +797,9 @@ export const ChatInterface: React.FC = () => {
                 {i18n.t('components.chat_interface.topemsim_6')}
               </h2>
               <p style={{ color: theme.palette.text.secondary, marginBottom: 16 }}>
-                {activeTab === 'notifications' ? i18n.t('components.chat_interface.k42') : i18n.t('components.chat_interface.k41')}
+                {activeTab === 'notifications'
+                  ? i18n.t('components.chat_interface.k42')
+                  : i18n.t('components.chat_interface.k41')}
               </p>
               {activeTab !== 'notifications' && (
                 <Button

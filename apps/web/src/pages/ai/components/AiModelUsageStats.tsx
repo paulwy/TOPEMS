@@ -142,7 +142,8 @@ export const AiModelUsageStats: React.FC<AiModelUsageStatsProps> = ({ totalUsage
               {t('ai.model_settings.usage.trend_7days')}
             </Typography>
             <Box sx={{ height: 300 }}>
-              <LazyChart type='line'
+              <LazyChart
+                type='line'
                 data={usageData as unknown as ChartData[]}
                 xKey='date'
                 yKey='tokens'
@@ -166,7 +167,10 @@ export const AiModelUsageStats: React.FC<AiModelUsageStatsProps> = ({ totalUsage
               {t('ai.model_settings.usage.model_ratio')}
             </Typography>
             <Box sx={{ height: 300 }}>
-              <LazyChart type='pie' data={modelUsageData} />
+              <LazyChart
+                type='pie'
+                data={modelUsageData}
+              />
             </Box>
           </Paper>
         </Grid>

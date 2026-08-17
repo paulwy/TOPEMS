@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export enum TrustLevel {
   TRUSTED = 'trusted',
   VERIFIED = 'verified',
@@ -63,7 +64,9 @@ export class ModuleSigner {
   ): Promise<ModuleSignature> {
     const publisher = this.trustedPublishers.get(publisherId);
     if (!publisher) {
-      throw new Error(`${i18n.t('microfrontend.module-signer.k0')}${publisherId}${i18n.t('microfrontend.module-signer.k1')}`);
+      throw new Error(
+        `${i18n.t('microfrontend.module-signer.k0')}${publisherId}${i18n.t('microfrontend.module-signer.k1')}`
+      );
     }
 
     const signature = await this.generateSignature(content, algorithm);

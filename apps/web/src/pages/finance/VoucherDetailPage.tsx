@@ -341,7 +341,9 @@ const VoucherDetailPage: React.FC = () => {
             >
               {t('finance.voucher_detail_page.e8')}
             </Typography>
-            <Typography variant='body1'>{t('finance.voucher_detail_page.m2', { v1: voucher.attachment_count || 0 })}</Typography>
+            <Typography variant='body1'>
+              {t('finance.voucher_detail_page.m2', { v1: voucher.attachment_count || 0 })}
+            </Typography>
           </Box>
           <Box>
             <Typography

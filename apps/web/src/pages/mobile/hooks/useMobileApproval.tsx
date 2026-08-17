@@ -13,6 +13,7 @@ import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { Package, Users, DollarSign, FileText } from 'lucide-react';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 export interface ApprovalItem {
   id: string;
   title: string;

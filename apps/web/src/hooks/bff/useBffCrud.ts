@@ -175,8 +175,7 @@ export function useBffCrud<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
     enabled: autoFetch,
     staleTime,
     retry: 2,
-
-});
+  });
 
   const data = listQuery.data?.items ?? [];
   const total = listQuery.data?.total ?? 0;
@@ -192,10 +191,11 @@ export function useBffCrud<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
       if (params) {
         setExtraParams(params);
       }
-      queryClient.invalidateQueries({ queryKey: [...queryKey, 'list'] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [...queryKey, 'list'],
+        exact: false,
+        refetchType: 'active',
+      });
     },
     [queryClient, queryKey]
   );
@@ -223,10 +223,7 @@ export function useBffCrud<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
 
   // ---- refresh ----
   const refresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({ queryKey, exact: false, refetchType: 'active' });
   }, [queryClient, queryKey]);
 
   // ---- 通知辅助 ----
@@ -262,10 +259,11 @@ export function useBffCrud<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
       return transformItem(result.createEntity);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [...queryKey, 'list'] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [...queryKey, 'list'],
+        exact: false,
+        refetchType: 'active',
+      });
       notifySuccess(msgCreate);
     },
     onError: (err) => notifyError(err, msgCreateErr),
@@ -283,14 +281,16 @@ export function useBffCrud<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
       return transformItem(result.updateEntity);
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: [...queryKey, 'list'] ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: [...queryKey, 'detail', variables.id] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [...queryKey, 'list'],
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...queryKey, 'detail', variables.id],
+        exact: false,
+        refetchType: 'active',
+      });
       notifySuccess(msgUpdate);
     },
     onError: (err) => notifyError(err, msgUpdateErr),
@@ -302,10 +302,7 @@ export function useBffCrud<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
       await deleteEntityGql(service, entityType, id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({ queryKey, exact: false, refetchType: 'active' });
       notifySuccess(msgDelete);
     },
     onError: (err) => notifyError(err, msgDeleteErr),
@@ -317,10 +314,7 @@ export function useBffCrud<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
       await Promise.all(ids.map((id) => deleteEntityGql(service, entityType, id)));
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({ queryKey, exact: false, refetchType: 'active' });
       notifySuccess(
         entityName
           ? `${i18n.t('shared.use_bff_crud.k7')}${variables.length}${i18n.t('shared.use_bff_crud.k8')}${entityName}`

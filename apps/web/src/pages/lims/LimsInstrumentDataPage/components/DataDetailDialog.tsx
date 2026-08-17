@@ -18,6 +18,7 @@ import { Grid } from '@/components';
 import type { InstrumentData } from '@/api/lims';
 import { getStatusColor, getStatusLabel, formatJson } from '../utils';
 import type { ChipColor } from '../utils';
+
 interface DataDetailDialogProps {
   open: boolean;
   selectedData: InstrumentData | null;

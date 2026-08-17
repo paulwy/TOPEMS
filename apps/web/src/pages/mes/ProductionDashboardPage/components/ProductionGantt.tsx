@@ -265,7 +265,9 @@ const ProductionGantt: React.FC<{
                           <Typography variant='caption'>{s.order_number || s.id}</Typography>
                           <br />
                           <Typography variant='caption'>
-                            [i18n.t('pages.production_gantt.k2')]: {s.quantity} | {i18n.t('pages.production_gantt.k3')}{meta.label}
+                            [i18n.t('pages.production_gantt.k2')]: {s.quantity} |{' '}
+                            {i18n.t('pages.production_gantt.k3')}
+                            {meta.label}
                           </Typography>
                           <br />
                           <Typography variant='caption'>

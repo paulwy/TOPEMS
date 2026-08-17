@@ -1,6 +1,39 @@
+#!/usr/bin/env node
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
+
+// ===== CLI 解析 =====
+function parseArgs(argv) {
+  const opts = { help: false, apply: false, out: null };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === '--help' || a === '-h') opts.help = true;
+    else if (a === '--apply') opts.apply = true;
+    else if (a === '--out' && argv[i + 1]) opts.out = argv[++i];
+    else if (a.startsWith('--')) { process.stderr.write(`[p6-api-audit-v5] ⚠️  未知参数 ${a}\n`); opts.help = true; }
+  }
+  return opts;
+}
+const USAGE = `
+p6-api-audit-v5.cjs — P6 API/字典 合规性审计（v5 稳健版：符号表 + 嵌套字典）
+
+USAGE:
+  node scripts/p6-api-audit-v5.cjs [OPTIONS]
+
+OPTIONS:
+  -h, --help            显示帮助并退出
+      --apply           真正写 artifact 文件（p6-audit-v5-robust.csv / p6-red.json）到输出目录；不传为 DRY-RUN（只打印统计 + 文件 would-write 路径摘要，零副作用）
+      --out <dir>       指定输出目录；默认 scripts/tmp-output
+
+EXAMPLES:
+  node scripts/p6-api-audit-v5.cjs
+  node scripts/p6-api-audit-v5.cjs --apply
+  node scripts/p6-api-audit-v5.cjs --apply --out /tmp/p6-artifacts
+`;
+const OPTS = parseArgs(process.argv.slice(2));
+if (OPTS.help) { process.stdout.write(USAGE); process.exit(0); }
+
 const APPS = path.join(ROOT, 'apps/web/src');
 function readFile(p){try{return fs.readFileSync(p,'utf8');}catch{return '';}}
 const API_DIR = path.join(APPS, 'api');
@@ -681,18 +714,32 @@ if (YELLOW.length) {
   for (const c of YELLOW.slice(0,30)) console.log(`  ${c.keyPath.padEnd(60)}  want=${(c.shapes.join(',')||'-').padEnd(10)}  pageType=${c.pageType.padEnd(14)}  ret=${(c.hit.info.returns||'').slice(0,70).replace(/\s+/g,' ')}`);
 }
 
-const outDir = path.join(ROOT, 'scripts', 'tmp-output');
-if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+const baseOutDir = OPTS.out
+  ? (path.isAbsolute(OPTS.out) ? OPTS.out : path.resolve(ROOT, OPTS.out))
+  : path.join(ROOT, 'scripts', 'tmp-output');
+const outDir = baseOutDir;
+if (OPTS.apply && !fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
 const CSV = ['page,keyPath,level,shapes,pageType,dictKey,verb,url,returns'];
 for (const c of RED) CSV.push([`"${c.page}"`,c.keyPath,'RED',c.shapes.join('|'),'','','','',''].join(','));
 for (const c of YELLOW) CSV.push([`"${c.page}"`,c.keyPath,'YELLOW',c.shapes.join('|'),c.pageType,c.hit.dictKey,c.hit.info.verb,`"${c.hit.info.url||''}"`,`"${(c.hit.info.returns||'').replace(/"/g,'""')}"`].join(','));
 for (const c of AMBER) CSV.push([`"${c.page}"`,c.keyPath,'AMBER',c.shapes.join('|'),c.pageType,c.hit.dictKey,c.hit.info.verb,`"${c.hit.info.url||''}"`,`"${(c.hit.info.returns||'').replace(/"/g,'""')}"`].join(','));
 for (const c of GREEN.slice(0,5000)) CSV.push([`"${c.page}"`,c.keyPath,'GREEN',c.shapes.join('|'),c.pageType,c.hit.dictKey,c.hit.info.verb,`"${c.hit.info.url||''}"`,`"${(c.hit.info.returns||'').replace(/"/g,'""')}"`].join(','));
-fs.writeFileSync(path.join(outDir, 'p6-audit-v5-robust.csv'), CSV.join('\n'));
-fs.writeFileSync(path.join(outDir, 'p6-red.json'), JSON.stringify(RED, null, 2));
-console.log(`\nCSV→${path.join(outDir, 'p6-audit-v5-robust.csv')}`);
-console.log(`RED→${path.join(outDir, 'p6-red.json')}`);
+
+const csvPath = path.join(outDir, 'p6-audit-v5-robust.csv');
+const redPath = path.join(outDir, 'p6-red.json');
+if (OPTS.apply) {
+  fs.writeFileSync(csvPath, CSV.join('\n'));
+  fs.writeFileSync(redPath, JSON.stringify(RED, null, 2));
+}
+const label = OPTS.apply ? '→' : 'would write→';
+console.log(`\nCSV${label}${csvPath}  (${CSV.length - 1} rows)`);
+console.log(`RED${label}${redPath}  (${RED.length} records)`);
+if (!OPTS.apply) {
+  process.stderr.write(
+    `\n[p6-api-audit-v5] 💡 当前为 DRY-RUN，加 --apply 才会写 ${csvPath} 与 ${redPath}。\n`
+  );
+}
 
 console.log('\n[lookup 调试] 前 5 条命中：');
 for (const c of GREEN.slice(0,5)) console.log('  ', c.keyPath, '→', c.hit?.dictKey, c.hit?.info?.url);

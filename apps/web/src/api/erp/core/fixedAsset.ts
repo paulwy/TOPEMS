@@ -64,21 +64,29 @@ export interface DepreciateAssetsRequest {
 }
 
 const resolvePageSize = (params?: PaginationParams): string | undefined => {
-  const ps = (params as { pageSize?: number } | undefined)?.pageSize
-    ?? (params as { pagesize?: number } | undefined)?.pagesize;
+  const ps =
+    (params as { pageSize?: number } | undefined)?.pageSize ??
+    (params as { pagesize?: number } | undefined)?.pagesize;
   return ps ? ps.toString() : undefined;
 };
 
 export const fixedAssetApi = {
-  async list(params?: PaginationParams & { asset_type?: string; department_id?: string }): Promise<ApiResponse<FixedAssetListResponse>> {
+  async list(
+    params?: PaginationParams & { asset_type?: string; department_id?: string }
+  ): Promise<ApiResponse<FixedAssetListResponse>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     const ps = resolvePageSize(params);
     if (ps) searchParams.set('pagesize', ps);
     if (params?.search) searchParams.set('search', params.search);
     if (params?.status) searchParams.set('status', params.status);
-    if ((params as { asset_type?: string })?.asset_type) searchParams.set('asset_type', (params as { asset_type?: string }).asset_type as string);
-    if ((params as { department_id?: string })?.department_id) searchParams.set('department_id', (params as { department_id?: string }).department_id as string);
+    if ((params as { asset_type?: string })?.asset_type)
+      searchParams.set('asset_type', (params as { asset_type?: string }).asset_type as string);
+    if ((params as { department_id?: string })?.department_id)
+      searchParams.set(
+        'department_id',
+        (params as { department_id?: string }).department_id as string
+      );
 
     const queryString = searchParams.toString();
     return apiClient.erp.get<FixedAssetListResponse>(

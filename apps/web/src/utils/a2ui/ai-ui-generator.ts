@@ -300,7 +300,9 @@ export class AIUIGenerator {
         return filtered;
       }
     }
-    return [`${i18n.t('shared.ai-ui-generator.k2')}${request.prompt.slice(0, 40)}${i18n.t('shared.ai-ui-generator.ai_3')}`];
+    return [
+      `${i18n.t('shared.ai-ui-generator.k2')}${request.prompt.slice(0, 40)}${i18n.t('shared.ai-ui-generator.ai_3')}`,
+    ];
   }
 }
 

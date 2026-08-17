@@ -20,6 +20,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter, type CrudTab } from '@/components/templates/CrudPage';
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 type NotificationTab = 'all' | 'unread' | 'read' | 'important';
 export const NotificationListPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -35,8 +36,9 @@ export const NotificationListPage: React.FC = () => {
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.SHORT,});
+
+    staleTime: CACHE_DURATIONS.SHORT,
+  });
   const stats = useMemo(() => {
     const notifications = allNotifications as Notification[];
     const unreadCount = notifications.filter((n) => !n.is_read).length;
@@ -82,66 +84,76 @@ export const NotificationListPage: React.FC = () => {
   const markAsReadMutation = useMutation({
     mutationFn: (id: string) => markAsRead(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteNotification(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
   const markAllAsReadMutation = useMutation({
     mutationFn: () => markAllAsRead(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
   const bulkMarkReadMutation = useMutation({
     mutationFn: (ids: string[]) => bulkMarkAsRead(ids),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
   const bulkDeleteMutation = useMutation({
     mutationFn: (ids: string[]) => bulkDeleteNotifications(ids),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATIONS_ALL_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
   const createApiAdapter = (tab: NotificationTab): CrudApiAdapter => ({
@@ -167,7 +179,9 @@ export const NotificationListPage: React.FC = () => {
             notifications = notifications.filter((n) => n.is_read);
             break;
           case 'important':
-            notifications = notifications.filter((n) => (n as Notification & { important?: boolean }).important);
+            notifications = notifications.filter(
+              (n) => (n as Notification & { important?: boolean }).important
+            );
             break;
         }
         if (search) {
@@ -178,7 +192,9 @@ export const NotificationListPage: React.FC = () => {
         }
         if (importantFilter !== 'all') {
           notifications = notifications.filter((n) =>
-            importantFilter === 'important' ? (n as Notification & { important?: boolean }).important : !(n as Notification & { important?: boolean }).important
+            importantFilter === 'important'
+              ? (n as Notification & { important?: boolean }).important
+              : !(n as Notification & { important?: boolean }).important
           );
         }
         total = notifications.length;

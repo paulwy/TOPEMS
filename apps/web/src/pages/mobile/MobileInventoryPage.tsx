@@ -48,13 +48,19 @@ import { useQuery } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const MobileInventoryPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { addNotification } = useNotificationStore();
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const tabs = [i18n.t('mobile.mobile_inventory_page.k3'), i18n.t('mobile.mobile_inventory_page.k2'), i18n.t('mobile.mobile_inventory_page.k1'), i18n.t('mobile.mobile_inventory_page.k0')];
+  const tabs = [
+    i18n.t('mobile.mobile_inventory_page.k3'),
+    i18n.t('mobile.mobile_inventory_page.k2'),
+    i18n.t('mobile.mobile_inventory_page.k1'),
+    i18n.t('mobile.mobile_inventory_page.k0'),
+  ];
   const itemsQuery = useQuery<InventoryItem[]>({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_INVENTORY_ITEMS_BASE,
     queryFn: async () => {
@@ -365,16 +371,32 @@ const MobileInventoryPage: React.FC = () => {
     }
   };
   const bottomTabs = [
-    { id: 'home', label: i18n.t('mobile.mobile_inventory_page.k40'), icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: i18n.t('mobile.mobile_inventory_page.k41'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: i18n.t('mobile.mobile_inventory_page.k42'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    {
+      id: 'home',
+      label: i18n.t('mobile.mobile_inventory_page.k40'),
+      icon: <Home style={{ width: 22, height: 22 }} />,
+    },
+    {
+      id: 'tasks',
+      label: i18n.t('mobile.mobile_inventory_page.k41'),
+      icon: <ListTodo style={{ width: 22, height: 22 }} />,
+    },
+    {
+      id: 'scan',
+      label: i18n.t('mobile.mobile_inventory_page.k42'),
+      icon: <ScanLine style={{ width: 22, height: 22 }} />,
+    },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_inventory_page.k43'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
       badge: 3,
     },
-    { id: 'profile', label: i18n.t('mobile.mobile_inventory_page.k44'), icon: <User style={{ width: 22, height: 22 }} /> },
+    {
+      id: 'profile',
+      label: i18n.t('mobile.mobile_inventory_page.k44'),
+      icon: <User style={{ width: 22, height: 22 }} />,
+    },
   ];
   return (
     <MobileLayout
@@ -663,7 +685,9 @@ const MobileInventoryPage: React.FC = () => {
                                 })
                               }
                             >
-                              {task.status === 'pending' ? i18n.t('mobile.mobile_inventory_page.k51') : i18n.t('mobile.mobile_inventory_page.k50')}
+                              {task.status === 'pending'
+                                ? i18n.t('mobile.mobile_inventory_page.k51')
+                                : i18n.t('mobile.mobile_inventory_page.k50')}
                             </MobileButton>
                           )}
                         </Box>
@@ -728,10 +752,12 @@ const MobileInventoryPage: React.FC = () => {
                               color='text.secondary'
                               sx={{ display: 'block', mb: 0.5 }}
                             >
-                              {order.total_items}{i18n.t('pages.mobile_inventory_page.k0')}
+                              {order.total_items}
+                              {i18n.t('pages.mobile_inventory_page.k0')}
                             </Typography>
                             <Typography variant='body2'>
-                              {order.total_quantity.toLocaleString()}{i18n.t('pages.mobile_inventory_page.k1')}
+                              {order.total_quantity.toLocaleString()}
+                              {i18n.t('pages.mobile_inventory_page.k1')}
                             </Typography>
                           </Box>
                         }
@@ -802,10 +828,12 @@ const MobileInventoryPage: React.FC = () => {
                               color='text.secondary'
                               sx={{ display: 'block', mb: 0.5 }}
                             >
-                              {order.total_items}{i18n.t('pages.mobile_inventory_page.k2')}
+                              {order.total_items}
+                              {i18n.t('pages.mobile_inventory_page.k2')}
                             </Typography>
                             <Typography variant='body2'>
-                              {order.total_quantity.toLocaleString()}{i18n.t('pages.mobile_inventory_page.k3')}
+                              {order.total_quantity.toLocaleString()}
+                              {i18n.t('pages.mobile_inventory_page.k3')}
                             </Typography>
                           </Box>
                         }

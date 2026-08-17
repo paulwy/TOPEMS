@@ -220,10 +220,14 @@ class FunctionAsModuleImpl {
   async invoke<TOutput = any>(id: string, options?: InvokeOptions): Promise<InvokeResult<TOutput>> {
     const def = this.functions.get(id);
     if (!def) {
-      throw new Error(`${i18n.t('microfrontend.function-as-module.faas_0')}${id}${i18n.t('microfrontend.function-as-module.k1')}`);
+      throw new Error(
+        `${i18n.t('microfrontend.function-as-module.faas_0')}${id}${i18n.t('microfrontend.function-as-module.k1')}`
+      );
     }
     if (def.status !== 'active') {
-      throw new Error(`${i18n.t('microfrontend.function-as-module.faas_2')}${id}${i18n.t('microfrontend.function-as-module.k3')}${def.status}${i18n.t('microfrontend.function-as-module.k4')}`);
+      throw new Error(
+        `${i18n.t('microfrontend.function-as-module.faas_2')}${id}${i18n.t('microfrontend.function-as-module.k3')}${def.status}${i18n.t('microfrontend.function-as-module.k4')}`
+      );
     }
 
     const traceId = options?.traceId || this.generateTraceId();
@@ -293,7 +297,9 @@ class FunctionAsModuleImpl {
     } catch (err) {
       const execTime = Date.now() - startTime;
       const status: ExecStatus =
-        err instanceof Error && err.message.includes(i18n.t('microfrontend.function-as-module.k0')) ? 'timeout' : 'error';
+        err instanceof Error && err.message.includes(i18n.t('microfrontend.function-as-module.k0'))
+          ? 'timeout'
+          : 'error';
       const result: InvokeResult<TOutput> = {
         data: null as any,
         status,
@@ -325,7 +331,9 @@ class FunctionAsModuleImpl {
   ): Promise<Map<string, InvokeResult>> {
     const def = this.functions.get(id);
     if (!def) {
-      throw new Error(`${i18n.t('microfrontend.function-as-module.faas_5')}${id}${i18n.t('microfrontend.function-as-module.k6')}`);
+      throw new Error(
+        `${i18n.t('microfrontend.function-as-module.faas_5')}${id}${i18n.t('microfrontend.function-as-module.k6')}`
+      );
     }
 
     const executionOrder = this.topologicalSort(id);
@@ -488,7 +496,11 @@ class FunctionAsModuleImpl {
   ): Promise<any> {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
-        reject(new Error(`${i18n.t('microfrontend.function-as-module.faas_7')}${def.id}${i18n.t('microfrontend.function-as-module.k8')}${timeoutMs}ms）`));
+        reject(
+          new Error(
+            `${i18n.t('microfrontend.function-as-module.faas_7')}${def.id}${i18n.t('microfrontend.function-as-module.k8')}${timeoutMs}ms）`
+          )
+        );
       }, timeoutMs);
 
       Promise.resolve(def.handler(context))
@@ -506,7 +518,9 @@ class FunctionAsModuleImpl {
   private validateDependencies(deps: string[]): void {
     for (const dep of deps) {
       if (!this.functions.has(dep)) {
-        throw new Error(`${i18n.t('microfrontend.function-as-module.faas_9')}${dep}${i18n.t('microfrontend.function-as-module.k10')}`);
+        throw new Error(
+          `${i18n.t('microfrontend.function-as-module.faas_9')}${dep}${i18n.t('microfrontend.function-as-module.k10')}`
+        );
       }
     }
   }

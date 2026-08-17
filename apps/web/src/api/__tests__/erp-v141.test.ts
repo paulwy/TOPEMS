@@ -37,10 +37,10 @@ describe('V141 ERP - consolidationApi', () => {
   it('should create consolidation scope', async () => {
     mockClient.post.mockResolvedValue({ success: true, data: { id: 'S-001' } });
     await consolidationApi.createScope({ name: '合并范围A', period: '2026-08' });
-    expect(mockClient.post).toHaveBeenCalledWith(
-      '/consolidation/scopes',
-      { name: '合并范围A', period: '2026-08' }
-    );
+    expect(mockClient.post).toHaveBeenCalledWith('/consolidation/scopes', {
+      name: '合并范围A',
+      period: '2026-08',
+    });
   });
 
   it('should get consolidation scope', async () => {
@@ -76,17 +76,24 @@ describe('V141 ERP - consolidationApi', () => {
 
   it('should add scope company', async () => {
     mockClient.post.mockResolvedValue({ success: true, data: { id: 'SC-001' } });
-    await consolidationApi.addScopeCompany({ scope_id: 'S-001', company_id: 'C-001', ownership_percentage: 80 });
-    expect(mockClient.post).toHaveBeenCalledWith(
-      '/consolidation/scopes/companies',
-      { scope_id: 'S-001', company_id: 'C-001', ownership_percentage: 80 }
-    );
+    await consolidationApi.addScopeCompany({
+      scope_id: 'S-001',
+      company_id: 'C-001',
+      ownership_percentage: 80,
+    });
+    expect(mockClient.post).toHaveBeenCalledWith('/consolidation/scopes/companies', {
+      scope_id: 'S-001',
+      company_id: 'C-001',
+      ownership_percentage: 80,
+    });
   });
 
   it('should update scope company', async () => {
     mockClient.put.mockResolvedValue({ success: true, data: { id: 'SC-001' } });
     await consolidationApi.updateScopeCompany('SC-001', { ownership_percentage: 90 });
-    expect(mockClient.put).toHaveBeenCalledWith('/consolidation/scopes/companies/SC-001', { ownership_percentage: 90 });
+    expect(mockClient.put).toHaveBeenCalledWith('/consolidation/scopes/companies/SC-001', {
+      ownership_percentage: 90,
+    });
   });
 
   it('should remove scope company', async () => {
@@ -99,16 +106,18 @@ describe('V141 ERP - consolidationApi', () => {
   it('should list elimination rules', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await consolidationApi.listEliminationRules({ page: 1, pageSize: 20 });
-    expect(mockClient.get).toHaveBeenCalledWith('/consolidation/elimination-rules?page=1&pagesize=20');
+    expect(mockClient.get).toHaveBeenCalledWith(
+      '/consolidation/elimination-rules?page=1&pagesize=20'
+    );
   });
 
   it('should create elimination rule', async () => {
     mockClient.post.mockResolvedValue({ success: true, data: { id: 'R-001' } });
     await consolidationApi.createEliminationRule({ name: '抵销规则1', rule_type: 'intercompany' });
-    expect(mockClient.post).toHaveBeenCalledWith(
-      '/consolidation/elimination-rules',
-      { name: '抵销规则1', rule_type: 'intercompany' }
-    );
+    expect(mockClient.post).toHaveBeenCalledWith('/consolidation/elimination-rules', {
+      name: '抵销规则1',
+      rule_type: 'intercompany',
+    });
   });
 
   it('should get elimination rule', async () => {
@@ -120,7 +129,9 @@ describe('V141 ERP - consolidationApi', () => {
   it('should update elimination rule', async () => {
     mockClient.put.mockResolvedValue({ success: true, data: { id: 'R-001' } });
     await consolidationApi.updateEliminationRule('R-001', { name: '新规则' });
-    expect(mockClient.put).toHaveBeenCalledWith('/consolidation/elimination-rules/R-001', { name: '新规则' });
+    expect(mockClient.put).toHaveBeenCalledWith('/consolidation/elimination-rules/R-001', {
+      name: '新规则',
+    });
   });
 
   it('should remove elimination rule', async () => {
@@ -155,10 +166,10 @@ describe('V141 ERP - consolidationApi', () => {
   it('should execute elimination', async () => {
     mockClient.post.mockResolvedValue({ success: true, data: { success: true, message: '完成' } });
     await consolidationApi.executeElimination({ scope_id: 'S-001', period: '2026-08' });
-    expect(mockClient.post).toHaveBeenCalledWith(
-      '/consolidation/execute-elimination',
-      { scope_id: 'S-001', period: '2026-08' }
-    );
+    expect(mockClient.post).toHaveBeenCalledWith('/consolidation/execute-elimination', {
+      scope_id: 'S-001',
+      period: '2026-08',
+    });
   });
 
   // ===== Reports =====
@@ -173,10 +184,10 @@ describe('V141 ERP - consolidationApi', () => {
   it('should generate report', async () => {
     mockClient.post.mockResolvedValue({ success: true, data: { id: 'RPT-001' } });
     await consolidationApi.generateReport({ scope_id: 'S-001', period: '2026-08' });
-    expect(mockClient.post).toHaveBeenCalledWith(
-      '/consolidation/reports/generate',
-      { scope_id: 'S-001', period: '2026-08' }
-    );
+    expect(mockClient.post).toHaveBeenCalledWith('/consolidation/reports/generate', {
+      scope_id: 'S-001',
+      period: '2026-08',
+    });
   });
 
   it('should get report', async () => {
@@ -206,10 +217,9 @@ describe('V141 ERP - consolidationApi', () => {
   it('should approve report', async () => {
     mockClient.post.mockResolvedValue({ success: true, data: { id: 'RPT-001' } });
     await consolidationApi.approveReport('RPT-001', { comment: '审批通过' });
-    expect(mockClient.post).toHaveBeenCalledWith(
-      '/consolidation/reports/RPT-001/approve',
-      { comment: '审批通过' }
-    );
+    expect(mockClient.post).toHaveBeenCalledWith('/consolidation/reports/RPT-001/approve', {
+      comment: '审批通过',
+    });
   });
 
   it('should submit report', async () => {
@@ -228,7 +238,9 @@ describe('V141 ERP - consolidationApi', () => {
   it('should list company relations', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await consolidationApi.listCompanyRelations({ page: 1, pageSize: 20 });
-    expect(mockClient.get).toHaveBeenCalledWith('/consolidation/company-relations?page=1&pagesize=20');
+    expect(mockClient.get).toHaveBeenCalledWith(
+      '/consolidation/company-relations?page=1&pagesize=20'
+    );
   });
 
   it('should create company relation', async () => {
@@ -239,15 +251,12 @@ describe('V141 ERP - consolidationApi', () => {
       relation_type: 'subsidiary',
       ownership_percentage: 80,
     });
-    expect(mockClient.post).toHaveBeenCalledWith(
-      '/consolidation/company-relations',
-      {
-        parent_company_id: 'C-001',
-        child_company_id: 'C-002',
-        relation_type: 'subsidiary',
-        ownership_percentage: 80,
-      }
-    );
+    expect(mockClient.post).toHaveBeenCalledWith('/consolidation/company-relations', {
+      parent_company_id: 'C-001',
+      child_company_id: 'C-002',
+      relation_type: 'subsidiary',
+      ownership_percentage: 80,
+    });
   });
 
   it('should get company tree', async () => {
@@ -302,10 +311,11 @@ describe('V141 ERP - leaveRequestApi', () => {
       start_date: '2026-08-01',
       end_date: '2026-08-03',
     });
-    expect(mockClient.post).toHaveBeenCalledWith(
-      '/leave-requests',
-      { leave_type: 'annual', start_date: '2026-08-01', end_date: '2026-08-03' }
-    );
+    expect(mockClient.post).toHaveBeenCalledWith('/leave-requests', {
+      leave_type: 'annual',
+      start_date: '2026-08-01',
+      end_date: '2026-08-03',
+    });
   });
 
   it('should update leave request', async () => {
@@ -329,19 +339,17 @@ describe('V141 ERP - leaveRequestApi', () => {
   it('approve should work', async () => {
     mockClient.post.mockResolvedValue({ success: true, data: { id: 'LR-001' } });
     await leaveRequestApi.approve('LR-001', { comment: '批准' });
-    expect(mockClient.post).toHaveBeenCalledWith(
-      '/leave-requests/LR-001/approve',
-      { comment: '批准' }
-    );
+    expect(mockClient.post).toHaveBeenCalledWith('/leave-requests/LR-001/approve', {
+      comment: '批准',
+    });
   });
 
   it('reject should work', async () => {
     mockClient.post.mockResolvedValue({ success: true, data: { id: 'LR-001' } });
     await leaveRequestApi.reject('LR-001', { reason: '人手不足' });
-    expect(mockClient.post).toHaveBeenCalledWith(
-      '/leave-requests/LR-001/reject',
-      { reason: '人手不足' }
-    );
+    expect(mockClient.post).toHaveBeenCalledWith('/leave-requests/LR-001/reject', {
+      reason: '人手不足',
+    });
   });
 
   it('cancel should work', async () => {
@@ -437,9 +445,7 @@ describe('V141 ERP - hrProxyApi', () => {
   it('should list payrolls', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await hrProxyApi.listPayrolls({ page: 1, pageSize: 20, period: '2026-08' });
-    expect(mockClient.get).toHaveBeenCalledWith(
-      '/hr/payrolls?page=1&pagesize=20&period=2026-08'
-    );
+    expect(mockClient.get).toHaveBeenCalledWith('/hr/payrolls?page=1&pagesize=20&period=2026-08');
   });
 
   it('should get payroll', async () => {

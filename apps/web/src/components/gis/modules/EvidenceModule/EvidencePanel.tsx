@@ -423,7 +423,9 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               size={48}
               sx={{ color: 'action.disabled', mb: 1.5 }}
             />
-            <Typography sx={{ fontSize: '0.875rem' }}>{i18n.t('components.evidence_panel.k7')}</Typography>
+            <Typography sx={{ fontSize: '0.875rem' }}>
+              {i18n.t('components.evidence_panel.k7')}
+            </Typography>
           </Box>
         ) : viewMode === 'grid' ? (
           <MuiGrid

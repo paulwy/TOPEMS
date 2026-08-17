@@ -80,7 +80,10 @@ export const salesFunnelApi = {
     return apiClient.crm.get<FunnelTrend[]>(`/sales-funnel/trend${s ? `?${s}` : ''}`);
   },
 
-  async getStageOpportunities(stage: string, params?: FunnelQueryParams): Promise<ApiResponse<unknown[]>> {
+  async getStageOpportunities(
+    stage: string,
+    params?: FunnelQueryParams
+  ): Promise<ApiResponse<unknown[]>> {
     const qs = new URLSearchParams();
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));

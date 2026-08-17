@@ -47,7 +47,6 @@ import { logger } from '@/utils/logger';
 import { PLUGIN_PATHS } from '@/modules/plugin/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const PluginDetailPage: React.FC = () => {
@@ -167,10 +166,11 @@ const PluginDetailPage: React.FC = () => {
       setRating(0);
       setReviewTitle('');
       setReviewContent('');
-      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_REVIEWS_BASE, pluginCode] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_REVIEWS_BASE, pluginCode],
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (error: unknown) => {
       logger.error(i18n.t('pages.plugin_detail_page.k4'), error);

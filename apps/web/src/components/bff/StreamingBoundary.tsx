@@ -76,7 +76,11 @@ class LayerErrorBoundary extends Component<LayerErrorBoundaryProps, LayerErrorBo
   }
 
   override componentDidCatch(error: Error, info: ErrorInfo): void {
-    boundaryLogger.error(`${i18n.t('components.streaming_boundary.k0')}${this.props.layerName}${i18n.t('components.streaming_boundary.k1')}`, error, info.componentStack);
+    boundaryLogger.error(
+      `${i18n.t('components.streaming_boundary.k0')}${this.props.layerName}${i18n.t('components.streaming_boundary.k1')}`,
+      error,
+      info.componentStack
+    );
     this.props.onError?.(error, this.props.layerName);
   }
 
@@ -140,7 +144,9 @@ const DefaultLayerErrorFallback: React.FC<{
         color='error.main'
         sx={{ fontWeight: 600 }}
       >
-        {i18n.t('components.streaming_boundary.k0')}{layerName}{i18n.t('components.streaming_boundary.k1')}
+        {i18n.t('components.streaming_boundary.k0')}
+        {layerName}
+        {i18n.t('components.streaming_boundary.k1')}
       </Typography>
     </Stack>
     <Typography
@@ -344,7 +350,8 @@ export const StreamingBoundary: React.FC<StreamingBoundaryProps> = ({
               variant='caption'
               color='text.secondary'
             >
-              [i18n.t('components.streaming_boundary.k1')]: {readyLayers}/{totalLayers} {i18n.t('components.streaming_boundary.k2')}
+              [i18n.t('components.streaming_boundary.k1')]: {readyLayers}/{totalLayers}{' '}
+              {i18n.t('components.streaming_boundary.k2')}
               {hasErrors && (
                 <Typography
                   component='span'
@@ -352,7 +359,8 @@ export const StreamingBoundary: React.FC<StreamingBoundaryProps> = ({
                   color='error.main'
                   sx={{ ml: 1 }}
                 >
-                  ({Object.keys(trackState.errors).length} {i18n.t('components.streaming_boundary.k2')}
+                  ({Object.keys(trackState.errors).length}{' '}
+                  {i18n.t('components.streaming_boundary.k2')}
                 </Typography>
               )}
             </Typography>

@@ -356,7 +356,11 @@ const DashboardTab: React.FC<{
         <Grid size={{ xs: 12, md: 6, lg: 3 }}>
           <MetricCard
             title={i18n.t('ai.v54-native-panel.k7')}
-            value={status.initialized ? i18n.t('ai.v54-native-panel.k9') : i18n.t('ai.v54-native-panel.k8')}
+            value={
+              status.initialized
+                ? i18n.t('ai.v54-native-panel.k9')
+                : i18n.t('ai.v54-native-panel.k8')
+            }
             subtitle={`${i18n.t('ai.v54-native-panel.k8')} ${status.middleware.total} ${i18n.t('ai.v54-native-panel.k9')}`}
             icon={
               <Activity
@@ -376,7 +380,10 @@ const DashboardTab: React.FC<{
         sx={{ mt: 1 }}
       >
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card variant='outlined' sx={{ p: 2 }}>
+          <Card
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -385,7 +392,11 @@ const DashboardTab: React.FC<{
               {i18n.t('ai.v54-native-panel.top_10')}
             </Typography>
             {routerStats.top_routes.length === 0 ? (
-              <Alert severity='info'>{i18n.t('ai.v54-native-panel.k11')}{i18n.t('ai.v54-native-panel.k10')}{i18n.t('ai.v54-native-panel.k12')}</Alert>
+              <Alert severity='info'>
+                {i18n.t('ai.v54-native-panel.k11')}
+                {i18n.t('ai.v54-native-panel.k10')}
+                {i18n.t('ai.v54-native-panel.k12')}
+              </Alert>
             ) : (
               <TableContainer>
                 <Table size='small'>
@@ -408,8 +419,14 @@ const DashboardTab: React.FC<{
                             label={`${(route.avg_confidence * 100).toFixed(0)}%`}
                             size='small'
                             sx={{
-                              bgcolor: route.avg_confidence > 0.7 ? 'colors.success.100' : 'colors.warning.100',
-                              color: route.avg_confidence > 0.7 ? 'colors.success.dark' : 'colors.orange.800',
+                              bgcolor:
+                                route.avg_confidence > 0.7
+                                  ? 'colors.success.100'
+                                  : 'colors.warning.100',
+                              color:
+                                route.avg_confidence > 0.7
+                                  ? 'colors.success.dark'
+                                  : 'colors.orange.800',
                               fontWeight: 600,
                             }}
                           />
@@ -424,7 +441,10 @@ const DashboardTab: React.FC<{
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card variant='outlined' sx={{ p: 2 }}>
+          <Card
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -446,7 +466,11 @@ const DashboardTab: React.FC<{
                       {cap.name}
                     </Typography>
                     <Chip
-                      label={cap.enabled ? i18n.t('ai.v54-native-panel.k15') : i18n.t('ai.v54-native-panel.k14')}
+                      label={
+                        cap.enabled
+                          ? i18n.t('ai.v54-native-panel.k15')
+                          : i18n.t('ai.v54-native-panel.k14')
+                      }
                       size='small'
                       sx={{
                         fontSize: 10,
@@ -479,7 +503,10 @@ const MetricCard: React.FC<{
   color: string;
   progress: number;
 }> = ({ title, value, subtitle, icon, color, progress }) => (
-  <Card variant='outlined' sx={{ p: 2 }}>
+  <Card
+    variant='outlined'
+    sx={{ p: 2 }}
+  >
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
       <Box
         sx={{
@@ -551,7 +578,9 @@ const CapabilitiesTab: React.FC = () => {
 
   const handleDiscover = () => {
     const discovered = aiFirstPlatform.discoverCapabilities(i18n.t('ai.v54-native-panel.k16'));
-    alert(`${i18n.t('ai.v54-native-panel.k14')} ${discovered.length} ${i18n.t('ai.v54-native-panel.k15')}`);
+    alert(
+      `${i18n.t('ai.v54-native-panel.k14')} ${discovered.length} ${i18n.t('ai.v54-native-panel.k15')}`
+    );
   };
 
   return (
@@ -615,7 +644,10 @@ const CapabilitiesTab: React.FC = () => {
             size={{ xs: 12, md: 6, lg: 4 }}
             key={cap.id}
           >
-            <Card variant='outlined' sx={{ p: 2 }}>
+            <Card
+              variant='outlined'
+              sx={{ p: 2 }}
+            >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <Box
                   sx={{
@@ -630,7 +662,11 @@ const CapabilitiesTab: React.FC = () => {
                 >
                   <Cpu
                     size={18}
-                    color={cap.enabled ? designTokens.colors.success.dark : designTokens.colors.error.dark}
+                    color={
+                      cap.enabled
+                        ? designTokens.colors.success.dark
+                        : designTokens.colors.error.dark
+                    }
                   />
                 </Box>
                 <Box sx={{ flex: 1 }}>
@@ -686,7 +722,8 @@ const CapabilitiesTab: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  [i18n.t('ai.v54-native-panel.k19')]: {new Date(cap.updatedAt).toLocaleTimeString()}
+                  [i18n.t('ai.v54-native-panel.k19')]:{' '}
+                  {new Date(cap.updatedAt).toLocaleTimeString()}
                 </Typography>
               </Box>
             </Card>
@@ -767,11 +804,21 @@ const RouterTab: React.FC = () => {
                 onChange={(e) => setIntent(e.target.value)}
                 sx={{ height: 36 }}
               >
-                <MenuItem value={i18n.t('ai.v54-native-panel.k29')}>{i18n.t('ai.v54-native-panel.k30')}</MenuItem>
-                <MenuItem value={i18n.t('ai.v54-native-panel.k31')}>{i18n.t('ai.v54-native-panel.k32')}</MenuItem>
-                <MenuItem value={i18n.t('ai.v54-native-panel.k33')}>{i18n.t('ai.v54-native-panel.k34')}</MenuItem>
-                <MenuItem value={i18n.t('ai.v54-native-panel.k35')}>{i18n.t('ai.v54-native-panel.k36')}</MenuItem>
-                <MenuItem value={i18n.t('ai.v54-native-panel.k37')}>{i18n.t('ai.v54-native-panel.k38')}</MenuItem>
+                <MenuItem value={i18n.t('ai.v54-native-panel.k29')}>
+                  {i18n.t('ai.v54-native-panel.k30')}
+                </MenuItem>
+                <MenuItem value={i18n.t('ai.v54-native-panel.k31')}>
+                  {i18n.t('ai.v54-native-panel.k32')}
+                </MenuItem>
+                <MenuItem value={i18n.t('ai.v54-native-panel.k33')}>
+                  {i18n.t('ai.v54-native-panel.k34')}
+                </MenuItem>
+                <MenuItem value={i18n.t('ai.v54-native-panel.k35')}>
+                  {i18n.t('ai.v54-native-panel.k36')}
+                </MenuItem>
+                <MenuItem value={i18n.t('ai.v54-native-panel.k37')}>
+                  {i18n.t('ai.v54-native-panel.k38')}
+                </MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -799,7 +846,10 @@ const RouterTab: React.FC = () => {
         spacing={3}
       >
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card variant='outlined' sx={{ p: 2 }}>
+          <Card
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -905,7 +955,10 @@ const RouterTab: React.FC = () => {
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card variant='outlined' sx={{ p: 2 }}>
+          <Card
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -978,8 +1031,14 @@ const RouterTab: React.FC = () => {
                           sx={{
                             fontSize: 10,
                             height: 18,
-                            bgcolor: perf.avg_latency_ms < 200 ? 'colors.success.100' : 'colors.warning.100',
-                            color: perf.avg_latency_ms < 200 ? 'colors.success.dark' : 'colors.orange.800',
+                            bgcolor:
+                              perf.avg_latency_ms < 200
+                                ? 'colors.success.100'
+                                : 'colors.warning.100',
+                            color:
+                              perf.avg_latency_ms < 200
+                                ? 'colors.success.dark'
+                                : 'colors.orange.800',
                           }}
                         />
                       </TableCell>
@@ -1100,7 +1159,11 @@ const AdaptiveUITab: React.FC<{
         timezone: 'Asia/Shanghai',
         is_online: true,
       },
-      segments: [i18n.t('ai.v54-native-panel.k52'), i18n.t('ai.v54-native-panel.k51'), i18n.t('ai.v54-native-panel.k50')],
+      segments: [
+        i18n.t('ai.v54-native-panel.k52'),
+        i18n.t('ai.v54-native-panel.k51'),
+        i18n.t('ai.v54-native-panel.k50'),
+      ],
       lastActiveAt: Date.now(),
     });
     adaptiveUIEngine.setCurrentUser(profile.id);
@@ -1140,7 +1203,10 @@ const AdaptiveUITab: React.FC<{
       const recs = adaptiveUIEngine.personalizeContent(profile.id, items);
       alert(
         `内容推荐结果:\n\n${recs
-          .map((r) => `${r.title} - ${r.reason} ${i18n.t('ai.v54-native-panel.k30')} ${(r.confidence * 100).toFixed(0)}%)`)
+          .map(
+            (r) =>
+              `${r.title} - ${r.reason} ${i18n.t('ai.v54-native-panel.k30')} ${(r.confidence * 100).toFixed(0)}%)`
+          )
           .join('\n')}`
       );
     }
@@ -1158,7 +1224,10 @@ const AdaptiveUITab: React.FC<{
         spacing={3}
       >
         <Grid size={{ xs: 12, md: 4 }}>
-          <Card variant='outlined' sx={{ p: 2 }}>
+          <Card
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1183,15 +1252,21 @@ const AdaptiveUITab: React.FC<{
                 >
                   <MenuItem value='desktop'>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <MonitorIcon size={14} />{i18n.t('ai:v54-native-panel.k4')}</Box>
+                      <MonitorIcon size={14} />
+                      {i18n.t('ai:v54-native-panel.k4')}
+                    </Box>
                   </MenuItem>
                   <MenuItem value='tablet'>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Tablet size={14} />{i18n.t('ai:v54-native-panel.k3')}</Box>
+                      <Tablet size={14} />
+                      {i18n.t('ai:v54-native-panel.k3')}
+                    </Box>
                   </MenuItem>
                   <MenuItem value='mobile'>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Smartphone size={14} />{i18n.t('ai:v54-native-panel.k2')}</Box>
+                      <Smartphone size={14} />
+                      {i18n.t('ai:v54-native-panel.k2')}
+                    </Box>
                   </MenuItem>
                 </Select>
               </FormControl>
@@ -1232,7 +1307,9 @@ const AdaptiveUITab: React.FC<{
                   variant='caption'
                   color='text.secondary'
                   sx={{ mb: 1, display: 'block' }}
-                >{i18n.t('ai:v54-native-panel.k1', { v0: (userProfile.behavior_patterns.length) })}</Typography>
+                >
+                  {i18n.t('ai:v54-native-panel.k1', { v0: userProfile.behavior_patterns.length })}
+                </Typography>
                 <List
                   dense
                   sx={{ maxHeight: 150, overflow: 'auto' }}
@@ -1319,7 +1396,10 @@ const AdaptiveUITab: React.FC<{
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <Card variant='outlined' sx={{ p: 2 }}>
+          <Card
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1414,8 +1494,10 @@ const AdaptiveUITab: React.FC<{
                         sx={{
                           fontSize: 10,
                           height: 18,
-                          bgcolor: mod.priority === 'high' ? 'colors.success.100' : 'colors.warning.100',
-                          color: mod.priority === 'high' ? 'colors.success.dark' : 'colors.orange.800',
+                          bgcolor:
+                            mod.priority === 'high' ? 'colors.success.100' : 'colors.warning.100',
+                          color:
+                            mod.priority === 'high' ? 'colors.success.dark' : 'colors.orange.800',
                         }}
                       />
                     </ListItem>
@@ -1432,7 +1514,11 @@ const AdaptiveUITab: React.FC<{
                       <TrendingUp
                         size={14}
                         style={{ marginRight: 4 }}
-                      />{i18n.t('ai:v54-native-panel.k0', { v0: ((optimization.score * 100).toFixed(0)) })}</Typography>
+                      />
+                      {i18n.t('ai:v54-native-panel.k0', {
+                        v0: (optimization.score * 100).toFixed(0),
+                      })}
+                    </Typography>
                     {optimization.improvements.map((imp, idx) => (
                       <Paper
                         key={idx}
@@ -1446,13 +1532,20 @@ const AdaptiveUITab: React.FC<{
                 )}
               </>
             ) : (
-              <Alert severity='info'>{i18n.t('ai.v54-native-panel.i18nt_47')}{i18n.t('ai.v54-native-panel.k64')}{i18n.t('ai.v54-native-panel.k48')}</Alert>
+              <Alert severity='info'>
+                {i18n.t('ai.v54-native-panel.i18nt_47')}
+                {i18n.t('ai.v54-native-panel.k64')}
+                {i18n.t('ai.v54-native-panel.k48')}
+              </Alert>
             )}
           </Card>
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <Card variant='outlined' sx={{ p: 2 }}>
+          <Card
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1513,7 +1606,11 @@ const AdaptiveUITab: React.FC<{
                       variant='body2'
                       sx={{ fontSize: 12 }}
                     >
-                      {dev === 'desktop' ? i18n.t('ai.v54-native-panel.k71') : dev === 'tablet' ? i18n.t('ai.v54-native-panel.k70') : i18n.t('ai.v54-native-panel.k69')}
+                      {dev === 'desktop'
+                        ? i18n.t('ai.v54-native-panel.k71')
+                        : dev === 'tablet'
+                          ? i18n.t('ai.v54-native-panel.k70')
+                          : i18n.t('ai.v54-native-panel.k69')}
                     </Typography>
                     <Typography
                       variant='body2'
@@ -1598,8 +1695,9 @@ const SettingsTab: React.FC = () => {
       metadata: { test: true },
     });
     alert(
-      i18n.t('ai.v54-native-panel.nn_53') +
-        `${i18n.t('ai.v54-native-panel.k54')} ${result.success}\n` +
+      `${i18n.t(
+        'ai.v54-native-panel.nn_53'
+      )}${i18n.t('ai.v54-native-panel.k54')} ${result.success}\n` +
         `${i18n.t('ai.v54-native-panel.k55')} ${result.latency.toFixed(2)}ms\n` +
         `${i18n.t('ai.v54-native-panel.k56')} ${JSON.stringify(result.data, null, 2)}`
     );
@@ -1612,7 +1710,10 @@ const SettingsTab: React.FC = () => {
         spacing={3}
       >
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card variant='outlined' sx={{ p: 2 }}>
+          <Card
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1734,7 +1835,11 @@ const SettingsTab: React.FC = () => {
                 [i18n.t('ai.v54-native-panel.k62')]: {config.config_version}
               </Typography>
               <Chip
-                label={status.initialized ? i18n.t('ai.v54-native-panel.k78') : i18n.t('ai.v54-native-panel.k77')}
+                label={
+                  status.initialized
+                    ? i18n.t('ai.v54-native-panel.k78')
+                    : i18n.t('ai.v54-native-panel.k77')
+                }
                 size='small'
                 sx={{
                   bgcolor: status.initialized ? 'colors.success.100' : 'colors.error.50',
@@ -1747,7 +1852,10 @@ const SettingsTab: React.FC = () => {
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card variant='outlined' sx={{ p: 2 }}>
+          <Card
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}

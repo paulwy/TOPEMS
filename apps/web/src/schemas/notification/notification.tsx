@@ -177,7 +177,11 @@ export const notificationSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) => (
         <Chip
           size='small'
-          label={(row as unknown as NotificationRow).is_read ? i18n.t('shared.notification.k24') : i18n.t('shared.notification.k23')}
+          label={
+            (row as unknown as NotificationRow).is_read
+              ? i18n.t('shared.notification.k24')
+              : i18n.t('shared.notification.k23')
+          }
           color={(row as unknown as NotificationRow).is_read ? 'default' : 'primary'}
           variant='outlined'
         />

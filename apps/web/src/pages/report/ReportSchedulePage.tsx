@@ -43,7 +43,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 import {
-
   reportApi,
   type ReportSchedule,
   type CreateScheduleRequest,
@@ -126,10 +125,11 @@ const ReportSchedulePage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.REPORT_SCHEDULES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.REPORT_SCHEDULES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
       setError((err as Error).message || i18n.t('pages.report_schedule_page.k9'));
@@ -145,10 +145,11 @@ const ReportSchedulePage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.REPORT_SCHEDULES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.REPORT_SCHEDULES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
       setError((err as Error).message || i18n.t('pages.report_schedule_page.k11'));
@@ -164,10 +165,11 @@ const ReportSchedulePage: React.FC = () => {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.REPORT_SCHEDULES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.REPORT_SCHEDULES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
       setError((err as Error).message || i18n.t('pages.report_schedule_page.k13'));
@@ -183,10 +185,11 @@ const ReportSchedulePage: React.FC = () => {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.REPORT_SCHEDULES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.REPORT_SCHEDULES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
       setError((err as Error).message || i18n.t('pages.report_schedule_page.k15'));
@@ -383,7 +386,9 @@ const ReportSchedulePage: React.FC = () => {
                       colSpan={8}
                       align='center'
                     >
-                      <Typography variant='body1'>{i18n.t('pages.report_schedule_page.k1')}</Typography>
+                      <Typography variant='body1'>
+                        {i18n.t('pages.report_schedule_page.k1')}
+                      </Typography>
                     </TableCell>
                   </TableRow>
                 ) : schedules.length === 0 ? (
@@ -392,7 +397,9 @@ const ReportSchedulePage: React.FC = () => {
                       colSpan={8}
                       align='center'
                     >
-                      <Typography variant='body1'>{i18n.t('pages.report_schedule_page.k30')}</Typography>
+                      <Typography variant='body1'>
+                        {i18n.t('pages.report_schedule_page.k30')}
+                      </Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -484,7 +491,11 @@ const ReportSchedulePage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>{editMode ? i18n.t('pages.report_schedule_page.k40') : i18n.t('pages.report_schedule_page.k39')}</DialogTitle>
+        <DialogTitle>
+          {editMode
+            ? i18n.t('pages.report_schedule_page.k40')
+            : i18n.t('pages.report_schedule_page.k39')}
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
             <TextField
@@ -594,7 +605,9 @@ const ReportSchedulePage: React.FC = () => {
             onClick={handleSubmit}
             variant='contained'
           >
-            {editMode ? i18n.t('pages.report_schedule_page.k50') : i18n.t('pages.report_schedule_page.k49')}
+            {editMode
+              ? i18n.t('pages.report_schedule_page.k50')
+              : i18n.t('pages.report_schedule_page.k49')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -625,7 +638,9 @@ const ReportSchedulePage: React.FC = () => {
                       colSpan={5}
                       align='center'
                     >
-                      <Typography variant='body1'>{i18n.t('pages.report_schedule_page.k6')}</Typography>
+                      <Typography variant='body1'>
+                        {i18n.t('pages.report_schedule_page.k6')}
+                      </Typography>
                     </TableCell>
                   </TableRow>
                 ) : (historyQuery.data || []).length === 0 ? (
@@ -634,7 +649,9 @@ const ReportSchedulePage: React.FC = () => {
                       colSpan={5}
                       align='center'
                     >
-                      <Typography variant='body1'>{i18n.t('pages.report_schedule_page.k57')}</Typography>
+                      <Typography variant='body1'>
+                        {i18n.t('pages.report_schedule_page.k57')}
+                      </Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -686,7 +703,9 @@ const ReportSchedulePage: React.FC = () => {
           </TableContainer>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setHistoryDialogOpen(false)}>{i18n.t('pages.report_schedule_page.k58')}</Button>
+          <Button onClick={() => setHistoryDialogOpen(false)}>
+            {i18n.t('pages.report_schedule_page.k58')}
+          </Button>
         </DialogActions>
       </Dialog>
 

@@ -90,31 +90,31 @@ declare module '@mui/material/styles' {
 const lightShadows = [...Array(24)].map((_, i) => {
   // MUI shadows 是 0..24 的数组（长度 25），以下为对齐设计 tokens 的合理映射
   const shadows = [
-    designTokens.shadows.none,             // 0
-    designTokens.shadows.xs,               // 1
-    designTokens.shadows.sm,               // 2
-    designTokens.shadows.md,               // 3
-    designTokens.shadows.lg,               // 4
-    designTokens.shadows.xl,               // 5
-    designTokens.shadows['2xl'],            // 6
-    designTokens.shadows['3xl'],            // 7
-    designTokens.shadows.inner,             // 8
-    designTokens.shadows.sm,                // 9
-    designTokens.shadows.md,                // 10
-    designTokens.shadows.lg,                // 11
-    designTokens.shadows.xl,                // 12
-    designTokens.shadows['2xl'],            // 13
-    designTokens.shadows['3xl'],            // 14
-    designTokens.shadows.inner,             // 15
-    designTokens.shadows.sm,                // 16
-    designTokens.shadows.md,                // 17
-    designTokens.shadows.lg,                // 18
-    designTokens.shadows.xl,                // 19
-    designTokens.shadows['2xl'],            // 20
-    designTokens.shadows['3xl'],            // 21
-    designTokens.shadows.inner,             // 22
-    designTokens.shadows.sm,                // 23
-    designTokens.shadows.md,                // 24
+    designTokens.shadows.none, // 0
+    designTokens.shadows.xs, // 1
+    designTokens.shadows.sm, // 2
+    designTokens.shadows.md, // 3
+    designTokens.shadows.lg, // 4
+    designTokens.shadows.xl, // 5
+    designTokens.shadows['2xl'], // 6
+    designTokens.shadows['3xl'], // 7
+    designTokens.shadows.inner, // 8
+    designTokens.shadows.sm, // 9
+    designTokens.shadows.md, // 10
+    designTokens.shadows.lg, // 11
+    designTokens.shadows.xl, // 12
+    designTokens.shadows['2xl'], // 13
+    designTokens.shadows['3xl'], // 14
+    designTokens.shadows.inner, // 15
+    designTokens.shadows.sm, // 16
+    designTokens.shadows.md, // 17
+    designTokens.shadows.lg, // 18
+    designTokens.shadows.xl, // 19
+    designTokens.shadows['2xl'], // 20
+    designTokens.shadows['3xl'], // 21
+    designTokens.shadows.inner, // 22
+    designTokens.shadows.sm, // 23
+    designTokens.shadows.md, // 24
   ];
   return shadows[i] ?? designTokens.shadows.none;
 });

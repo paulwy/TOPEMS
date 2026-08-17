@@ -396,5 +396,6 @@
   "oee_dashboard_page.oee_2": "OEE 综合设备效率仪表盘",
   "aps.analytics.materialShortage.k0": "80/20 关键少数：",
   "aps.analytics.materialShortage.k1": "物料短缺帕累托图（柱+累积线）",
-  "aps.analytics.planAdherence.k0": "计划 vs 实际产量（柱+达成率线）"
+  "aps.analytics.planAdherence.k0": "计划 vs 实际产量（柱+达成率线）",
+  "aps.analytics.materialShortage.k2": "种"
 }

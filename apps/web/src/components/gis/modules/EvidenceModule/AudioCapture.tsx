@@ -166,7 +166,9 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
           borderColor: 'grey.700',
         }}
       >
-        <Typography sx={{ color: 'common.white', fontWeight: 500 }}>{i18n.t('gis.audio_capture.k1')}</Typography>
+        <Typography sx={{ color: 'common.white', fontWeight: 500 }}>
+          {i18n.t('gis.audio_capture.k1')}
+        </Typography>
         <IconButton
           onClick={onCancel}
           sx={{ borderRadius: 4, '&:hover': { bgcolor: 'grey.800' } }}

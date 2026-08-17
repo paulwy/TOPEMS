@@ -39,7 +39,7 @@ type AssetRow = Asset & {
   description?: string;
 };
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const baseAdapter = createCrudPageAdapter<Asset>({
   list: assetApi.list,
@@ -125,10 +125,11 @@ export const AssetListPage: React.FC = () => {
         message: t('asset:assetlist.notify_success_message'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ERP.ASSETS ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.ERP.ASSETS,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
       addNotification({

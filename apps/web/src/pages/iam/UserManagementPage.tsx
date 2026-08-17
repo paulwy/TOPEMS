@@ -22,7 +22,7 @@ import i18n from '@/i18n';
  */
 const userApiAdapter: CrudApiAdapter = {
   list: async (params) => {
-  const { t } = useTranslation('iam');
+    const t = i18n.getFixedT(null, 'iam');
     const response = await authApi.listUsers({
       page: params?.page,
       pagesize: params?.pageSize,

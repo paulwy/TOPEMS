@@ -300,7 +300,9 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                 textTransform: 'none',
               }}
             >
-              {isPlaying ? i18n.t('gis.device_track_panel.k7') : i18n.t('gis.device_track_panel.k6')}
+              {isPlaying
+                ? i18n.t('gis.device_track_panel.k7')
+                : i18n.t('gis.device_track_panel.k6')}
             </Button>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -363,7 +365,9 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       }}
                     >
                       <Navigation size={16} />
-                      <Typography variant='caption'>{i18n.t('gis.device_track_panel.k8')}</Typography>
+                      <Typography variant='caption'>
+                        {i18n.t('gis.device_track_panel.k8')}
+                      </Typography>
                     </Box>
                     <Typography
                       variant='h6'
@@ -385,7 +389,9 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       }}
                     >
                       <Gauge size={16} />
-                      <Typography variant='caption'>{i18n.t('gis.device_track_panel.k9')}</Typography>
+                      <Typography variant='caption'>
+                        {i18n.t('gis.device_track_panel.k9')}
+                      </Typography>
                     </Box>
                     <Typography
                       variant='h6'
@@ -407,7 +413,9 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       }}
                     >
                       <Activity size={16} />
-                      <Typography variant='caption'>{i18n.t('gis.device_track_panel.k10')}</Typography>
+                      <Typography variant='caption'>
+                        {i18n.t('gis.device_track_panel.k10')}
+                      </Typography>
                     </Box>
                     <Typography
                       variant='h6'
@@ -429,7 +437,9 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       }}
                     >
                       <Activity size={16} />
-                      <Typography variant='caption'>{i18n.t('gis.device_track_panel.k11')}</Typography>
+                      <Typography variant='caption'>
+                        {i18n.t('gis.device_track_panel.k11')}
+                      </Typography>
                     </Box>
                     <Typography
                       variant='h6'
@@ -451,7 +461,9 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       }}
                     >
                       <Clock size={16} />
-                      <Typography variant='caption'>{i18n.t('gis.device_track_panel.k12')}</Typography>
+                      <Typography variant='caption'>
+                        {i18n.t('gis.device_track_panel.k12')}
+                      </Typography>
                     </Box>
                     <Typography
                       variant='body2'
@@ -473,7 +485,9 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                       }}
                     >
                       <Clock size={16} />
-                      <Typography variant='caption'>{i18n.t('gis.device_track_panel.k13')}</Typography>
+                      <Typography variant='caption'>
+                        {i18n.t('gis.device_track_panel.k13')}
+                      </Typography>
                     </Box>
                     <Typography
                       variant='body2'
@@ -668,7 +682,9 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                 >
                   <Popup>
                     <Box sx={{ fontSize: '0.875rem' }}>
-                      <Typography sx={{ fontWeight: 500 }}>{i18n.t('gis.device_track_panel.k15')}</Typography>
+                      <Typography sx={{ fontWeight: 500 }}>
+                        {i18n.t('gis.device_track_panel.k15')}
+                      </Typography>
                       <Typography>{formatTime(currentPoint.timestamp)}</Typography>
                     </Box>
                   </Popup>
@@ -756,7 +772,9 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
             size={48}
             sx={{ color: 'action.disabled', margin: '0 auto 12px' }}
           />
-          <Typography sx={{ color: 'text.secondary' }}>{i18n.t('gis.device_track_panel.k18')}</Typography>
+          <Typography sx={{ color: 'text.secondary' }}>
+            {i18n.t('gis.device_track_panel.k18')}
+          </Typography>
           <FormControl
             sx={{ mt: 4, minWidth: 200 }}
             size='small'

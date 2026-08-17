@@ -26,19 +26,22 @@ const PmTemplatePage: React.FC = () => {
   const createProjectMutation = useMutation({
     mutationFn: (data: CreateProjectRequest) => pmApi.projects.create(data),
     onSuccess: (response) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.PM.PROJECTS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.PM.PROJECTS,
+        exact: false,
+        refetchType: 'active',
+      });
       if (response.success) {
         navigate(PM_PATHS.projects);
       }
     },
     onError: (err: unknown) => {
       logger.error('Failed to create project:', err);
-      addNotification({ title: i18n.t('pages.pm_template_page.k1'), message: i18n.t('pages.pm_template_page.k0'), type: 'error' });
+      addNotification({
+        title: i18n.t('pages.pm_template_page.k1'),
+        message: i18n.t('pages.pm_template_page.k0'),
+        type: 'error',
+      });
     },
   });
 
@@ -46,14 +49,17 @@ const PmTemplatePage: React.FC = () => {
     {
       id: '1',
       name: i18n.t('pages.pm_template_page.k2'),
-      description:
-        i18n.t('pages.pm_template_page.k3'),
+      description: i18n.t('pages.pm_template_page.k3'),
       project_type: 'research',
       icon: 'code',
       phases_count: 5,
       estimated_days: 90,
       default_budget: 500000,
-      tags: [i18n.t('pages.pm_template_page.k6'), i18n.t('pages.pm_template_page.k5'), i18n.t('pages.pm_template_page.k4')],
+      tags: [
+        i18n.t('pages.pm_template_page.k6'),
+        i18n.t('pages.pm_template_page.k5'),
+        i18n.t('pages.pm_template_page.k4'),
+      ],
     },
     {
       id: '2',
@@ -64,7 +70,11 @@ const PmTemplatePage: React.FC = () => {
       phases_count: 6,
       estimated_days: 180,
       default_budget: 2000000,
-      tags: [i18n.t('pages.pm_template_page.k11'), i18n.t('pages.pm_template_page.k10'), i18n.t('pages.pm_template_page.k9')],
+      tags: [
+        i18n.t('pages.pm_template_page.k11'),
+        i18n.t('pages.pm_template_page.k10'),
+        i18n.t('pages.pm_template_page.k9'),
+      ],
     },
     {
       id: '3',
@@ -75,7 +85,11 @@ const PmTemplatePage: React.FC = () => {
       phases_count: 4,
       estimated_days: 45,
       default_budget: 100000,
-      tags: [i18n.t('pages.pm_template_page.k16'), i18n.t('pages.pm_template_page.k15'), i18n.t('pages.pm_template_page.k14')],
+      tags: [
+        i18n.t('pages.pm_template_page.k16'),
+        i18n.t('pages.pm_template_page.k15'),
+        i18n.t('pages.pm_template_page.k14'),
+      ],
     },
     {
       id: '4',
@@ -86,7 +100,11 @@ const PmTemplatePage: React.FC = () => {
       phases_count: 4,
       estimated_days: 30,
       default_budget: 80000,
-      tags: [i18n.t('pages.pm_template_page.k21'), i18n.t('pages.pm_template_page.k20'), i18n.t('pages.pm_template_page.k19')],
+      tags: [
+        i18n.t('pages.pm_template_page.k21'),
+        i18n.t('pages.pm_template_page.k20'),
+        i18n.t('pages.pm_template_page.k19'),
+      ],
     },
     {
       id: '5',
@@ -97,19 +115,26 @@ const PmTemplatePage: React.FC = () => {
       phases_count: 5,
       estimated_days: 120,
       default_budget: 800000,
-      tags: [i18n.t('pages.pm_template_page.k26'), i18n.t('pages.pm_template_page.k25'), i18n.t('pages.pm_template_page.k24')],
+      tags: [
+        i18n.t('pages.pm_template_page.k26'),
+        i18n.t('pages.pm_template_page.k25'),
+        i18n.t('pages.pm_template_page.k24'),
+      ],
     },
     {
       id: '6',
       name: i18n.t('pages.pm_template_page.k27'),
-      description:
-        i18n.t('pages.pm_template_page.k28'),
+      description: i18n.t('pages.pm_template_page.k28'),
       project_type: 'service',
       icon: 'graduation-cap',
       phases_count: 4,
       estimated_days: 60,
       default_budget: 50000,
-      tags: [i18n.t('pages.pm_template_page.k31'), i18n.t('pages.pm_template_page.k30'), i18n.t('pages.pm_template_page.k29')],
+      tags: [
+        i18n.t('pages.pm_template_page.k31'),
+        i18n.t('pages.pm_template_page.k30'),
+        i18n.t('pages.pm_template_page.k29'),
+      ],
     },
   ];
 
@@ -187,7 +212,9 @@ const PmTemplatePage: React.FC = () => {
       {filteredTemplates.length === 0 && (
         <Card>
           <CardContent sx={{ p: 6, textAlign: 'center' }}>
-            <Typography sx={{ color: 'text.secondary' }}>{i18n.t('pages.pm_template_page.k33')}</Typography>
+            <Typography sx={{ color: 'text.secondary' }}>
+              {i18n.t('pages.pm_template_page.k33')}
+            </Typography>
           </CardContent>
         </Card>
       )}

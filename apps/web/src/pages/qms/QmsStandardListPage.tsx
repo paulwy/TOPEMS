@@ -12,7 +12,8 @@ import type { QualityStandard } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
 import { QMS_PATHS } from '@/modules/qms/config';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const standardAdapter = {
   list: async (params?: { page?: number; pageSize?: number; search?: string; status?: string }) => {
     const response = await qmsApi.listStandards();
@@ -117,8 +118,12 @@ const QmsStandardListPage: React.FC = () => {
   const stats = useMemo(() => {
     return {
       totalStandards: standards.length,
-      activeStandards: standards.filter((s) => s.status === 'active' || s.status === i18n.t('qms.qms_standard_list_page.k4')).length,
-      draftStandards: standards.filter((s) => s.status === 'draft' || s.status === i18n.t('qms.qms_standard_list_page.k5')).length,
+      activeStandards: standards.filter(
+        (s) => s.status === 'active' || s.status === i18n.t('qms.qms_standard_list_page.k4')
+      ).length,
+      draftStandards: standards.filter(
+        (s) => s.status === 'draft' || s.status === i18n.t('qms.qms_standard_list_page.k5')
+      ).length,
     };
   }, [standards]);
   const customRowActions: RowAction[] = [

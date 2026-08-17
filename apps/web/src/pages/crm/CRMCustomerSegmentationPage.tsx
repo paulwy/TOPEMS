@@ -7,8 +7,15 @@ import { useTranslation } from 'react-i18next';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { customerSegmentationSchema } from '@/schemas/crm';
-import { crmApi, useCrmMock, type SegmentationData, type Period } from '@/api/crm';
-import type { CustomerSegment, CreateSegmentRequest, SegmentCriteria } from '@/api/crm';
+import type {
+  CustomerSegment,
+  CreateSegmentRequest,
+  SegmentCriteria,
+  crmApi,
+  useCrmMock,
+  type SegmentationData,
+  type Period,
+} from '@/api/crm';
 import { CRM_PATHS } from '@/modules/crm/config';
 import i18n from '@/i18n';
 
@@ -210,7 +217,9 @@ const CRMCustomerSegmentationPage: React.FC = () => {
         coveredCustomers: segments.reduce((sum, s) => sum + (s.customer_count || 0), 0),
         avgCustomers:
           segments.length > 0
-            ? Math.round(segments.reduce((sum, s) => sum + (s.customer_count || 0), 0) / segments.length)
+            ? Math.round(
+                segments.reduce((sum, s) => sum + (s.customer_count || 0), 0) / segments.length
+              )
             : 0,
       };
       const summary = mockEnabled ? mockSeg.summary : realSummary;
@@ -228,7 +237,10 @@ const CRMCustomerSegmentationPage: React.FC = () => {
           {mockEnabled && (
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
               <Chip
-                label={t('crm.common.mock_demo_badge') || i18n.t('pages.crm_customer_segmentation_page.mock_0')}
+                label={
+                  t('crm.common.mock_demo_badge') ||
+                  i18n.t('pages.crm_customer_segmentation_page.mock_0')
+                }
                 color='warning'
                 size='small'
                 variant='outlined'
@@ -257,13 +269,22 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <Tag size={24} color='white' />
+                  <Tag
+                    size={24}
+                    color='white'
+                  />
                 </Box>
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
                     {t('crm.customerSegmentation.stat_total_segments')}
                   </Typography>
-                  <Typography variant='h4' sx={{ fontWeight: 700 }}>
+                  <Typography
+                    variant='h4'
+                    sx={{ fontWeight: 700 }}
+                  >
                     {summary.totalSegments}
                   </Typography>
                 </Box>
@@ -282,13 +303,22 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <Users size={24} color='white' />
+                  <Users
+                    size={24}
+                    color='white'
+                  />
                 </Box>
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
                     {t('crm.customerSegmentation.stat_covered_customers')}
                   </Typography>
-                  <Typography variant='h4' sx={{ fontWeight: 700 }}>
+                  <Typography
+                    variant='h4'
+                    sx={{ fontWeight: 700 }}
+                  >
                     {summary.coveredCustomers}
                   </Typography>
                 </Box>
@@ -307,13 +337,22 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <TrendingUp size={24} color='white' />
+                  <TrendingUp
+                    size={24}
+                    color='white'
+                  />
                 </Box>
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
                     {t('crm.customerSegmentation.stat_avg_customers')}
                   </Typography>
-                  <Typography variant='h4' sx={{ fontWeight: 700 }}>
+                  <Typography
+                    variant='h4'
+                    sx={{ fontWeight: 700 }}
+                  >
                     {summary.avgCustomers}
                   </Typography>
                 </Box>
@@ -322,9 +361,16 @@ const CRMCustomerSegmentationPage: React.FC = () => {
           </Box>
 
           {mockEnabled && (
-            <Paper variant='outlined' sx={{ p: 3, mb: 3, position: 'relative' }}>
-              <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
-                {t('crm.customerSegmentation.quadrant_title') || i18n.t('pages.crm_customer_segmentation_page.k1')}
+            <Paper
+              variant='outlined'
+              sx={{ p: 3, mb: 3, position: 'relative' }}
+            >
+              <Typography
+                variant='subtitle2'
+                sx={{ fontWeight: 600, mb: 2 }}
+              >
+                {t('crm.customerSegmentation.quadrant_title') ||
+                  i18n.t('pages.crm_customer_segmentation_page.k1')}
               </Typography>
               <Box
                 sx={{
@@ -357,17 +403,57 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                     bgcolor: 'divider',
                   }}
                 />
-                <Box sx={{ position: 'absolute', left: 8, top: 8, fontSize: 12, color: 'success.main', fontWeight: 600 }}>
-                  {t('crm.customerSegmentation.q2_high_active_high_value') || i18n.t('pages.crm_customer_segmentation_page.k2')}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: 8,
+                    top: 8,
+                    fontSize: 12,
+                    color: 'success.main',
+                    fontWeight: 600,
+                  }}
+                >
+                  {t('crm.customerSegmentation.q2_high_active_high_value') ||
+                    i18n.t('pages.crm_customer_segmentation_page.k2')}
                 </Box>
-                <Box sx={{ position: 'absolute', right: 8, top: 8, fontSize: 12, color: 'primary.main', fontWeight: 600 }}>
-                  {t('crm.customerSegmentation.q1_high_value_low_active') || i18n.t('pages.crm_customer_segmentation_page.k3')}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    right: 8,
+                    top: 8,
+                    fontSize: 12,
+                    color: 'primary.main',
+                    fontWeight: 600,
+                  }}
+                >
+                  {t('crm.customerSegmentation.q1_high_value_low_active') ||
+                    i18n.t('pages.crm_customer_segmentation_page.k3')}
                 </Box>
-                <Box sx={{ position: 'absolute', left: 8, bottom: 8, fontSize: 12, color: 'warning.main', fontWeight: 600 }}>
-                  {t('crm.customerSegmentation.q3_low_value_high_active') || i18n.t('pages.crm_customer_segmentation_page.k4')}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: 8,
+                    bottom: 8,
+                    fontSize: 12,
+                    color: 'warning.main',
+                    fontWeight: 600,
+                  }}
+                >
+                  {t('crm.customerSegmentation.q3_low_value_high_active') ||
+                    i18n.t('pages.crm_customer_segmentation_page.k4')}
                 </Box>
-                <Box sx={{ position: 'absolute', right: 8, bottom: 8, fontSize: 12, color: 'error.main', fontWeight: 600 }}>
-                  {t('crm.customerSegmentation.q4_low_value_low_active') || i18n.t('pages.crm_customer_segmentation_page.k5')}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    right: 8,
+                    bottom: 8,
+                    fontSize: 12,
+                    color: 'error.main',
+                    fontWeight: 600,
+                  }}
+                >
+                  {t('crm.customerSegmentation.q4_low_value_low_active') ||
+                    i18n.t('pages.crm_customer_segmentation_page.k5')}
                 </Box>
                 <Box sx={{ position: 'absolute', inset: 0 }}>
                   {quadrants.map((p) => {
@@ -421,8 +507,16 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                   color: 'text.secondary',
                 }}
               >
-                <Box>← {t('crm.customerSegmentation.x_axis_activity') || i18n.t('pages.crm_customer_segmentation_page.k8')}</Box>
-                <Box>{t('crm.customerSegmentation.x_axis_activity_high') || i18n.t('pages.crm_customer_segmentation_page.k9')} →</Box>
+                <Box>
+                  ←{' '}
+                  {t('crm.customerSegmentation.x_axis_activity') ||
+                    i18n.t('pages.crm_customer_segmentation_page.k8')}
+                </Box>
+                <Box>
+                  {t('crm.customerSegmentation.x_axis_activity_high') ||
+                    i18n.t('pages.crm_customer_segmentation_page.k9')}{' '}
+                  →
+                </Box>
               </Box>
             </Paper>
           )}

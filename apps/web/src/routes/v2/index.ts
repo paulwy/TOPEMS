@@ -1,6 +1,6 @@
+import type { RouteModuleConfig, RouteConfigV2, RouteConfig } from './types';
 import { flattenRoutes, toFlatRouteConfig } from './types';
-import { RouteModuleConfig, RouteConfigV2, RouteConfig } from './types';
-import { pluginManager } from '../../lib/plugin-loader/pluginManager.ts';
+import { pluginManager } from '../../lib/plugin-loader/PluginManager.ts';
 import { apiLogger } from '../../utils/logger';
 import { ensureNamespacesLoaded } from '@/i18n';
 

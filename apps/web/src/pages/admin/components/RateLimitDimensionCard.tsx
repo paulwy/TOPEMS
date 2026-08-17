@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Card, CardContent, Grid, InputAdornment, TextField, Typography } from '@mui/material';
 import type { RateLimitRule } from '../hooks/useRateLimitConfig';
 import i18n from '@/i18n';
+
 interface RateLimitDimensionCardProps {
   dimKey: 'tenant_default' | 'user_default' | 'ip_default' | 'global_default';
   title: string;

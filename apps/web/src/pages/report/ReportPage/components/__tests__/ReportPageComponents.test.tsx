@@ -2,6 +2,23 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
+import ReportHeader from '../ReportHeader';
+import SearchFilterBar from '../SearchFilterBar';
+import TabSwitcher from '../TabSwitcher';
+import LoadingState from '../LoadingState';
+import ServiceDownState from '../ServiceDownState';
+import ReportStats from '../ReportStats';
+import NotificationToast from '../NotificationToast';
+import ReportList from '../ReportList';
+import TemplateList from '../TemplateList';
+import TemplateFormDialog from '../TemplateFormDialog';
+import type {
+  CreateTemplateRequest,
+  ReportData,
+  ReportTemplate,
+  ReportTypeInfo,
+} from '@/api/report';
+
 const i18nMap = vi.hoisted(() => {
   const base: Record<string, string> = {
     'pages.report_header.k0': '报表中心',
@@ -105,23 +122,6 @@ vi.mock('@/i18n', () => ({
 beforeEach(() => {
   templateListK2Counter = {};
 });
-
-import ReportHeader from '../ReportHeader';
-import SearchFilterBar from '../SearchFilterBar';
-import TabSwitcher from '../TabSwitcher';
-import LoadingState from '../LoadingState';
-import ServiceDownState from '../ServiceDownState';
-import ReportStats from '../ReportStats';
-import NotificationToast from '../NotificationToast';
-import ReportList from '../ReportList';
-import TemplateList from '../TemplateList';
-import TemplateFormDialog from '../TemplateFormDialog';
-import type {
-  CreateTemplateRequest,
-  ReportData,
-  ReportTemplate,
-  ReportTypeInfo,
-} from '@/api/report';
 
 const mockNavigate = vi.hoisted(() => vi.fn());
 const mockInvalidateQueries = vi.hoisted(() => vi.fn());

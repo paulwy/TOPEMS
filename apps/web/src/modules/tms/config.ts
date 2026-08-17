@@ -45,10 +45,7 @@ export const tmsModuleConfig: RouteModuleConfig = {
   routes: [
     {
       path: TMS_PATHS.dashboard,
-      element: lazyWithRetry(
-        () => import('@/pages/tms/TmsDashboardPage'),
-        'TmsDashboardPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/tms/TmsDashboardPage'), 'TmsDashboardPage'),
       module: 'tms',
       code: 'tms-dashboard',
       title: i18n.t('shared.config.k2'),
@@ -227,10 +224,7 @@ export const tmsModuleConfig: RouteModuleConfig = {
     // ---- 详情页（6 个） ----
     {
       path: TMS_PATHS.shipmentDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/tms/ShipmentDetailPage'),
-        'ShipmentDetailPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/tms/ShipmentDetailPage'), 'ShipmentDetailPage'),
       module: 'tms',
       code: 'tms-shipment-detail',
       title: i18n.t('shared.config.k14'),
@@ -242,10 +236,7 @@ export const tmsModuleConfig: RouteModuleConfig = {
     },
     {
       path: TMS_PATHS.vehicleDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/tms/VehicleDetailPage'),
-        'VehicleDetailPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/tms/VehicleDetailPage'), 'VehicleDetailPage'),
       module: 'tms',
       code: 'tms-vehicle-detail',
       title: i18n.t('shared.config.k15'),
@@ -257,10 +248,7 @@ export const tmsModuleConfig: RouteModuleConfig = {
     },
     {
       path: TMS_PATHS.driverDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/tms/DriverDetailPage'),
-        'DriverDetailPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/tms/DriverDetailPage'), 'DriverDetailPage'),
       module: 'tms',
       code: 'tms-driver-detail',
       title: i18n.t('shared.config.k16'),
@@ -272,10 +260,7 @@ export const tmsModuleConfig: RouteModuleConfig = {
     },
     {
       path: TMS_PATHS.carrierDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/tms/CarrierDetailPage'),
-        'CarrierDetailPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/tms/CarrierDetailPage'), 'CarrierDetailPage'),
       module: 'tms',
       code: 'tms-carrier-detail',
       title: i18n.t('shared.config.k17'),
@@ -287,10 +272,7 @@ export const tmsModuleConfig: RouteModuleConfig = {
     },
     {
       path: TMS_PATHS.routeDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/tms/RouteDetailPage'),
-        'RouteDetailPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/tms/RouteDetailPage'), 'RouteDetailPage'),
       module: 'tms',
       code: 'tms-route-detail',
       title: i18n.t('shared.config.k18'),

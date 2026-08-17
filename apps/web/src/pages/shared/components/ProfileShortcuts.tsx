@@ -12,7 +12,7 @@ import { designTokens } from '@/theme/tokens';
 import { IM_PATHS } from '@/modules/im/config';
 import type { UseProfileReturn } from '../hooks/useProfile';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface ShortcutOption {
   id: string;

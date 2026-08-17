@@ -51,7 +51,12 @@ export function ComponentTree({ nodes, selectedNodeId, onSelectNode }: Component
 
     const label = (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        {iconName && <LazyIcon name={iconName} size={14} />}
+        {iconName && (
+          <LazyIcon
+            name={iconName}
+            size={14}
+          />
+        )}
         <Typography
           variant='body2'
           sx={{ fontSize: '0.8rem' }}

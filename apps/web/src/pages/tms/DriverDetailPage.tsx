@@ -75,7 +75,10 @@ export default function DriverDetailPage() {
           <h1 className='text-2xl font-bold'>{driver.name}</h1>
           <p className='mt-1 text-sm text-gray-500'>{driver.driver_no}</p>
         </div>
-        <StatusBadge fsm='driver' status={driver.status ?? 'active'} />
+        <StatusBadge
+          fsm='driver'
+          status={driver.status ?? 'active'}
+        />
       </div>
 
       <div className='rounded-lg border p-4'>
@@ -88,13 +91,34 @@ export default function DriverDetailPage() {
       </div>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        <Field label={t('tms.driver_detail_page.k4')} value={driver.driver_no} />
-        <Field label={t('tms.driver_detail_page.k5')} value={driver.name} />
-        <Field label={t('tms.driver_detail_page.k6')} value={driver.phone ?? '-'} />
-        <Field label={t('tms.driver_detail_page.k7')} value={driver.license_no ?? '-'} />
-        <Field label={t('tms.driver_detail_page.k8')} value={driver.license_type ?? '-'} />
-        <Field label={t('tms.driver_detail_page.k9')} value={driver.status ?? '-'} />
-        <Field label={t('tms.driver_detail_page.id_10')} value={driver.carrier_id ?? '-'} />
+        <Field
+          label={t('tms.driver_detail_page.k4')}
+          value={driver.driver_no}
+        />
+        <Field
+          label={t('tms.driver_detail_page.k5')}
+          value={driver.name}
+        />
+        <Field
+          label={t('tms.driver_detail_page.k6')}
+          value={driver.phone ?? '-'}
+        />
+        <Field
+          label={t('tms.driver_detail_page.k7')}
+          value={driver.license_no ?? '-'}
+        />
+        <Field
+          label={t('tms.driver_detail_page.k8')}
+          value={driver.license_type ?? '-'}
+        />
+        <Field
+          label={t('tms.driver_detail_page.k9')}
+          value={driver.status ?? '-'}
+        />
+        <Field
+          label={t('tms.driver_detail_page.id_10')}
+          value={driver.carrier_id ?? '-'}
+        />
         <Field
           label={t('tms.driver_detail_page.k11')}
           value={driver.created_at ? new Date(driver.created_at).toLocaleString('zh-CN') : '-'}

@@ -33,7 +33,8 @@ vi.mock('react-i18next', () => {
     'lowcode.workflow_config_page.k24': '取消',
     'lowcode.workflow_config_page.k25': '创建',
     'lowcode.workflow_config_page.e1': '新建工作流',
-    'lowcode.workflow_config_page.e2': '低代码应用内嵌工作流（表单提交/定时/事件触发）。 与 BPM 审批流程（workflow',
+    'lowcode.workflow_config_page.e2':
+      '低代码应用内嵌工作流（表单提交/定时/事件触发）。 与 BPM 审批流程（workflow',
     'lowcode.workflow_config_page.e3': '模块）不同——本表用于数据/系统自动化。',
     'lowcode.workflow_config_page.e4': '暂无工作流',
   };
@@ -91,7 +92,8 @@ vi.mock('@/i18n', () => {
     'lowcode.workflow_config_page.k24': '取消',
     'lowcode.workflow_config_page.k25': '创建',
     'lowcode.workflow_config_page.e1': '新建工作流',
-    'lowcode.workflow_config_page.e2': '低代码应用内嵌工作流（表单提交/定时/事件触发）。 与 BPM 审批流程（workflow',
+    'lowcode.workflow_config_page.e2':
+      '低代码应用内嵌工作流（表单提交/定时/事件触发）。 与 BPM 审批流程（workflow',
     'lowcode.workflow_config_page.e3': '模块）不同——本表用于数据/系统自动化。',
     'lowcode.workflow_config_page.e4': '暂无工作流',
   };

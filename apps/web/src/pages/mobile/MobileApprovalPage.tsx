@@ -46,6 +46,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface ApprovalItem {
   id: string;
   title: string;
@@ -115,10 +116,16 @@ const mapApiApprovalToApprovalItem = (apiApproval: ApiApproval): ApprovalItem =>
   };
   return {
     id: apiApproval.id || String(apiApproval.task_id || apiApproval.id),
-    title: apiApproval.title || apiApproval.task_name || `${i18n.t('pages.mobile_approval_page.k0')}${apiApproval.id}`,
+    title:
+      apiApproval.title ||
+      apiApproval.task_name ||
+      `${i18n.t('pages.mobile_approval_page.k0')}${apiApproval.id}`,
     type: apiApproval.type ? typeMap[apiApproval.type] : 'other',
     applicant:
-      apiApproval.applicant_name || apiApproval.assignee_name || apiApproval.applicant || i18n.t('mobile.mobile_approval_page.k0'),
+      apiApproval.applicant_name ||
+      apiApproval.assignee_name ||
+      apiApproval.applicant ||
+      i18n.t('mobile.mobile_approval_page.k0'),
     department: apiApproval.department || apiApproval.department_name || '',
     submitTime: apiApproval.created_at
       ? new Date(apiApproval.created_at).toLocaleString('zh-CN')
@@ -142,7 +149,11 @@ const MobileApprovalPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedApproval, setSelectedApproval] = useState<ApprovalItem | null>(null);
   const [approvalComment, setApprovalComment] = useState('');
-  const tabs = [i18n.t('mobile.mobile_approval_page.k5'), i18n.t('mobile.mobile_approval_page.k4'), i18n.t('mobile.mobile_approval_page.k3')];
+  const tabs = [
+    i18n.t('mobile.mobile_approval_page.k5'),
+    i18n.t('mobile.mobile_approval_page.k4'),
+    i18n.t('mobile.mobile_approval_page.k3'),
+  ];
   const queryClient = useQueryClient();
   const approvalsQuery = useQuery<ApprovalItem[]>({
     queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_APPROVALS_BASE, activeTab, searchQuery, user?.id],
@@ -333,16 +344,32 @@ const MobileApprovalPage: React.FC = () => {
     );
   });
   const bottomTabs = [
-    { id: 'home', label: i18n.t('mobile.mobile_approval_page.k17'), icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: i18n.t('mobile.mobile_approval_page.k18'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: i18n.t('mobile.mobile_approval_page.k19'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    {
+      id: 'home',
+      label: i18n.t('mobile.mobile_approval_page.k17'),
+      icon: <Home style={{ width: 22, height: 22 }} />,
+    },
+    {
+      id: 'tasks',
+      label: i18n.t('mobile.mobile_approval_page.k18'),
+      icon: <ListTodo style={{ width: 22, height: 22 }} />,
+    },
+    {
+      id: 'scan',
+      label: i18n.t('mobile.mobile_approval_page.k19'),
+      icon: <ScanLine style={{ width: 22, height: 22 }} />,
+    },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_approval_page.k20'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
       badge: 3,
     },
-    { id: 'profile', label: i18n.t('mobile.mobile_approval_page.k21'), icon: <User style={{ width: 22, height: 22 }} /> },
+    {
+      id: 'profile',
+      label: i18n.t('mobile.mobile_approval_page.k21'),
+      icon: <User style={{ width: 22, height: 22 }} />,
+    },
   ];
   if (selectedApproval) {
     return (
@@ -479,7 +506,8 @@ const MobileApprovalPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    {i18n.t('pages.mobile_approval_page.k0')}{selectedApproval.submitTime}
+                    {i18n.t('pages.mobile_approval_page.k0')}
+                    {selectedApproval.submitTime}
                   </Typography>
                 </Box>
               </Box>
@@ -648,7 +676,9 @@ const MobileApprovalPage: React.FC = () => {
                 onClick={() => handleReject(selectedApproval)}
                 disabled={processing}
               >
-                {processing ? i18n.t('pages.mobile_approval_page.k6') : i18n.t('mobile.mobile_approval_page.k25')}
+                {processing
+                  ? i18n.t('pages.mobile_approval_page.k6')
+                  : i18n.t('mobile.mobile_approval_page.k25')}
               </MobileButton>
               <MobileButton
                 fullWidth
@@ -658,7 +688,9 @@ const MobileApprovalPage: React.FC = () => {
                 onClick={() => handleApprove(selectedApproval)}
                 disabled={processing}
               >
-                {processing ? i18n.t('pages.mobile_approval_page.k7') : i18n.t('mobile.mobile_approval_page.k26')}
+                {processing
+                  ? i18n.t('pages.mobile_approval_page.k7')
+                  : i18n.t('mobile.mobile_approval_page.k26')}
               </MobileButton>
             </Box>
           </Box>
@@ -796,7 +828,9 @@ const MobileApprovalPage: React.FC = () => {
                 color='text.secondary'
                 sx={{ textAlign: 'center' }}
               >
-                {searchQuery ? i18n.t('mobile.mobile_approval_page.k31') : i18n.t('mobile.mobile_approval_page.k30')}
+                {searchQuery
+                  ? i18n.t('mobile.mobile_approval_page.k31')
+                  : i18n.t('mobile.mobile_approval_page.k30')}
               </Typography>
             </Box>
           ) : (

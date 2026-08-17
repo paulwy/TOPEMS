@@ -10,7 +10,8 @@ import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import i18n from '@/i18n';
 import { adminApi } from '@/api/admin';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 interface SystemManagementPageProps {
   onNavigate?: (page: string) => void;
 }

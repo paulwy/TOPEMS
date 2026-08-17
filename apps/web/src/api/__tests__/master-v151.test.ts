@@ -55,14 +55,23 @@ describe('V151 masterData Lifecycle API bindings', () => {
 
     it('should list policies', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-      await dataLifecycleApiV68.listPolicies({ entity_type: 'customer', policy_type: 'archive', page: 1, pageSize: 20 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v68/policies?entity_type=customer&policy_type=archive&page=1&pagesize=20');
+      await dataLifecycleApiV68.listPolicies({
+        entity_type: 'customer',
+        policy_type: 'archive',
+        page: 1,
+        pageSize: 20,
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v68/policies?entity_type=customer&policy_type=archive&page=1&pagesize=20'
+      );
     });
 
     it('should update policy', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await dataLifecycleApiV68.updatePolicy('p-1', { description: '更新策略' });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v68/policies/p-1', { description: '更新策略' });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v68/policies/p-1', {
+        description: '更新策略',
+      });
     });
 
     it('should delete policy', async () => {
@@ -112,14 +121,21 @@ describe('V151 masterData Lifecycle API bindings', () => {
 
     it('should list retention policies', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-      await dataLifecycleApiV68.listRetentionPolicies({ entity_type: 'invoice', action: 'archive' });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v68/retention-policies?entity_type=invoice&action=archive');
+      await dataLifecycleApiV68.listRetentionPolicies({
+        entity_type: 'invoice',
+        action: 'archive',
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v68/retention-policies?entity_type=invoice&action=archive'
+      );
     });
 
     it('should update retention policy', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await dataLifecycleApiV68.updateRetentionPolicy('rp-1', { duration_days: 3650 });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v68/retention-policies/rp-1', { duration_days: 3650 });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v68/retention-policies/rp-1', {
+        duration_days: 3650,
+      });
     });
 
     it('should delete retention policy', async () => {
@@ -159,14 +175,21 @@ describe('V151 masterData Lifecycle API bindings', () => {
 
     it('should list archive strategies', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-      await dataLifecycleApiV68.listArchiveStrategies({ entity_type: 'customer', storage_tier: 'cold' });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v68/archive-strategies?entity_type=customer&storage_tier=cold');
+      await dataLifecycleApiV68.listArchiveStrategies({
+        entity_type: 'customer',
+        storage_tier: 'cold',
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v68/archive-strategies?entity_type=customer&storage_tier=cold'
+      );
     });
 
     it('should update archive strategy', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await dataLifecycleApiV68.updateArchiveStrategy('as-1', { age_days: 730 });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v68/archive-strategies/as-1', { age_days: 730 });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v68/archive-strategies/as-1', {
+        age_days: 730,
+      });
     });
 
     it('should delete archive strategy', async () => {
@@ -204,14 +227,21 @@ describe('V151 masterData Lifecycle API bindings', () => {
 
     it('should list destruction policies', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-      await dataLifecycleApiV68.listDestructionPolicies({ entity_type: 'temp_data', require_approval: true });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v68/destruction-policies?entity_type=temp_data&require_approval=true');
+      await dataLifecycleApiV68.listDestructionPolicies({
+        entity_type: 'temp_data',
+        require_approval: true,
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v68/destruction-policies?entity_type=temp_data&require_approval=true'
+      );
     });
 
     it('should update destruction policy', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await dataLifecycleApiV68.updateDestructionPolicy('dp-1', { age_days: 60 });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v68/destruction-policies/dp-1', { age_days: 60 });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v68/destruction-policies/dp-1', {
+        age_days: 60,
+      });
     });
 
     it('should delete destruction policy', async () => {
@@ -247,8 +277,15 @@ describe('V151 masterData Lifecycle API bindings', () => {
 
     it('should list transitions', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-      await dataLifecycleApiV68.listTransitions({ entity_type: 'customer', to_state: 'archived', page: 1, pageSize: 20 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v68/transitions?entity_type=customer&to_state=archived&page=1&pagesize=20');
+      await dataLifecycleApiV68.listTransitions({
+        entity_type: 'customer',
+        to_state: 'archived',
+        page: 1,
+        pageSize: 20,
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v68/transitions?entity_type=customer&to_state=archived&page=1&pagesize=20'
+      );
     });
 
     it('should get lifecycle history', async () => {
@@ -298,8 +335,15 @@ describe('V151 masterData Lifecycle API bindings', () => {
 
     it('should list archive jobs', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-      await dataLifecycleApiV68.listArchiveJobs({ entity_type: 'customer', status: 'completed', page: 1, pageSize: 20 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v68/archive/jobs?entity_type=customer&status=completed&page=1&pagesize=20');
+      await dataLifecycleApiV68.listArchiveJobs({
+        entity_type: 'customer',
+        status: 'completed',
+        page: 1,
+        pageSize: 20,
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v68/archive/jobs?entity_type=customer&status=completed&page=1&pagesize=20'
+      );
     });
 
     it('should restore from archive', async () => {
@@ -311,7 +355,10 @@ describe('V151 masterData Lifecycle API bindings', () => {
     });
 
     it('should verify archive job', async () => {
-      mockClient.post.mockResolvedValue({ success: true, data: { verified: true, record_count: 1000, checksum: 'abc123' } });
+      mockClient.post.mockResolvedValue({
+        success: true,
+        data: { verified: true, record_count: 1000, checksum: 'abc123' },
+      });
       await dataLifecycleApiV68.verifyArchiveJob('j-1');
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v68/archive/jobs/j-1/verify', {});
     });
@@ -343,14 +390,23 @@ describe('V151 masterData Lifecycle API bindings', () => {
 
     it('should list destruction jobs', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-      await dataLifecycleApiV68.listDestructionJobs({ entity_type: 'temp_data', status: 'completed', page: 1, pageSize: 20 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v68/destruction/jobs?entity_type=temp_data&status=completed&page=1&pagesize=20');
+      await dataLifecycleApiV68.listDestructionJobs({
+        entity_type: 'temp_data',
+        status: 'completed',
+        page: 1,
+        pageSize: 20,
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v68/destruction/jobs?entity_type=temp_data&status=completed&page=1&pagesize=20'
+      );
     });
 
     it('should approve destruction job', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
       await dataLifecycleApiV68.approveDestructionJob('j-1', { reason: '已确认' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v68/destruction/jobs/j-1/approve', { reason: '已确认' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v68/destruction/jobs/j-1/approve', {
+        reason: '已确认',
+      });
     });
 
     it('should cancel destruction job', async () => {
@@ -360,7 +416,10 @@ describe('V151 masterData Lifecycle API bindings', () => {
     });
 
     it('should verify destruction job', async () => {
-      mockClient.post.mockResolvedValue({ success: true, data: { verified: true, hash: 'def456', audit_trail: 'audit-log-url' } });
+      mockClient.post.mockResolvedValue({
+        success: true,
+        data: { verified: true, hash: 'def456', audit_trail: 'audit-log-url' },
+      });
       await dataLifecycleApiV68.verifyDestructionJob('j-1');
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v68/destruction/jobs/j-1/verify', {});
     });
@@ -394,8 +453,14 @@ describe('V151 masterData Lifecycle API bindings', () => {
 
     it('should list versions', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-      await dataLifecycleApiV68.listVersions({ entity_type: 'customer', entity_id: 'c-1', action: 'publish' });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v68/versions?entity_type=customer&entity_id=c-1&action=publish');
+      await dataLifecycleApiV68.listVersions({
+        entity_type: 'customer',
+        entity_id: 'c-1',
+        action: 'publish',
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v68/versions?entity_type=customer&entity_id=c-1&action=publish'
+      );
     });
 
     it('should promote version', async () => {
@@ -417,15 +482,28 @@ describe('V151 masterData Lifecycle API bindings', () => {
     });
 
     it('should destroy version', async () => {
-      mockClient.post.mockResolvedValue({ success: true, data: { destroyed: true, audit_hash: 'hash789' } });
+      mockClient.post.mockResolvedValue({
+        success: true,
+        data: { destroyed: true, audit_hash: 'hash789' },
+      });
       await dataLifecycleApiV68.destroyVersion('v-1');
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v68/versions/v-1/destroy', {});
     });
 
     it('should compare versions', async () => {
-      mockClient.get.mockResolvedValue({ success: true, data: { added: ['field1'], removed: ['field2'], modified: ['field3'], summary: '版本差异摘要' } });
+      mockClient.get.mockResolvedValue({
+        success: true,
+        data: {
+          added: ['field1'],
+          removed: ['field2'],
+          modified: ['field3'],
+          summary: '版本差异摘要',
+        },
+      });
       await dataLifecycleApiV68.compareVersions('v-1', 'v-2');
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v68/versions/compare?source_id=v-1&target_id=v-2');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v68/versions/compare?source_id=v-1&target_id=v-2'
+      );
     });
   });
 
@@ -445,8 +523,13 @@ describe('V151 masterData Lifecycle API bindings', () => {
 
     it('should list compliance reports', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-      await dataLifecycleApiV68.listComplianceReports({ entity_type: 'customer', severity: 'high' });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v68/compliance/reports?entity_type=customer&severity=high');
+      await dataLifecycleApiV68.listComplianceReports({
+        entity_type: 'customer',
+        severity: 'high',
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v68/compliance/reports?entity_type=customer&severity=high'
+      );
     });
   });
 
@@ -459,25 +542,43 @@ describe('V151 masterData Lifecycle API bindings', () => {
     });
 
     it('should get policy compliance stats', async () => {
-      mockClient.get.mockResolvedValue({ success: true, data: { compliant: 10, non_compliant: 2, violations: [] } });
+      mockClient.get.mockResolvedValue({
+        success: true,
+        data: { compliant: 10, non_compliant: 2, violations: [] },
+      });
       await dataLifecycleApiV68.getPolicyComplianceStats();
       expect(mockClient.get).toHaveBeenCalledWith('/mdm-v68/dashboard/compliance');
     });
 
     it('should get retention stats', async () => {
-      mockClient.get.mockResolvedValue({ success: true, data: { by_type: [], total_expiring_30d: 5 } });
+      mockClient.get.mockResolvedValue({
+        success: true,
+        data: { by_type: [], total_expiring_30d: 5 },
+      });
       await dataLifecycleApiV68.getRetentionStats();
       expect(mockClient.get).toHaveBeenCalledWith('/mdm-v68/dashboard/retention');
     });
 
     it('should get archive stats', async () => {
-      mockClient.get.mockResolvedValue({ success: true, data: { total_archived: 1000, total_size_bytes: 1024, by_tier: [], trend: [] } });
+      mockClient.get.mockResolvedValue({
+        success: true,
+        data: { total_archived: 1000, total_size_bytes: 1024, by_tier: [], trend: [] },
+      });
       await dataLifecycleApiV68.getArchiveStats(30);
       expect(mockClient.get).toHaveBeenCalledWith('/mdm-v68/dashboard/archive?days=30');
     });
 
     it('should get destruction stats', async () => {
-      mockClient.get.mockResolvedValue({ success: true, data: { total_destroyed: 100, total_size_bytes: 512, by_method: [], pending_approvals: 2, trend: [] } });
+      mockClient.get.mockResolvedValue({
+        success: true,
+        data: {
+          total_destroyed: 100,
+          total_size_bytes: 512,
+          by_method: [],
+          pending_approvals: 2,
+          trend: [],
+        },
+      });
       await dataLifecycleApiV68.getDestructionStats(30);
       expect(mockClient.get).toHaveBeenCalledWith('/mdm-v68/dashboard/destruction?days=30');
     });

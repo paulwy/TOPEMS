@@ -530,7 +530,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
             setAuthStatus('success');
           }
           message = parsed;
-        } catch (e) { console.error("[WebSocket] Failed to parse incoming message", e); }
+        } catch (e) {
+          console.error('[WebSocket] Failed to parse incoming message', e);
+        }
         onMessage?.(message);
       };
 

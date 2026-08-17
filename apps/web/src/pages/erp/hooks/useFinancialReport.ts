@@ -6,6 +6,7 @@ import { financeReportApi } from '@/api/erp';
 import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '@/api/erp/types';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 export interface PeriodOption {
   value: string;
   label: string;
@@ -91,10 +92,11 @@ export function useFinancialReport() {
     }
   }, [cashFlowQuery.isError, cashFlowQuery.error, addNotification, i18n.t]);
   const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ERP_FINANCIAL_REPORTS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.ERP_FINANCIAL_REPORTS_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
   }, [queryClient]);
   const formatCurrency = useCallback((amount: number) => {
     return `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;

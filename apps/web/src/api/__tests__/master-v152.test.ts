@@ -32,7 +32,10 @@ describe('V152 masterData Commercial API bindings', () => {
     it('should create API product', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
       await commercialApiV55.createAPIProduct({ name: '企业版API', tier: 'enterprise' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v55/products', { name: '企业版API', tier: 'enterprise' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v55/products', {
+        name: '企业版API',
+        tier: 'enterprise',
+      });
     });
 
     it('should list API products', async () => {
@@ -50,7 +53,9 @@ describe('V152 masterData Commercial API bindings', () => {
     it('should list API products paginated', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await commercialApiV55.listAPIProductsPaginated({ page: 1, pageSize: 10 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v55/products/paginated?page=1&page_size=10');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v55/products/paginated?page=1&page_size=10'
+      );
     });
 
     it('should update API product', async () => {
@@ -71,7 +76,10 @@ describe('V152 masterData Commercial API bindings', () => {
     it('should subscribe tenant', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
       await commercialApiV55.subscribeTenant({ api_product_id: 'prod-1', tenant_id: 't-1' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v55/subscribe', { api_product_id: 'prod-1', tenant_id: 't-1' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v55/subscribe', {
+        api_product_id: 'prod-1',
+        tenant_id: 't-1',
+      });
     });
 
     it('should list subscriptions', async () => {
@@ -101,13 +109,17 @@ describe('V152 masterData Commercial API bindings', () => {
     it('should upgrade tier', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await commercialApiV55.upgradeTier('sub-1', { tier: 'professional' });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v55/subscriptions/sub-1/upgrade', { tier: 'professional' });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v55/subscriptions/sub-1/upgrade', {
+        tier: 'professional',
+      });
     });
 
     it('should update subscription', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await commercialApiV55.updateSubscription('sub-1', { tier: 'basic' });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v55/subscriptions/sub-1', { tier: 'basic' });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v55/subscriptions/sub-1', {
+        tier: 'basic',
+      });
     });
   });
 
@@ -115,22 +127,38 @@ describe('V152 masterData Commercial API bindings', () => {
   describe('Usage Records', () => {
     it('should record usage', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
-      await commercialApiV55.recordUsage({ tenant_id: 't-1', api_product_id: 'prod-1', endpoint: '/api/data', requests: 100 });
+      await commercialApiV55.recordUsage({
+        tenant_id: 't-1',
+        api_product_id: 'prod-1',
+        endpoint: '/api/data',
+        requests: 100,
+      });
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v55/usage/record', {
-        tenant_id: 't-1', api_product_id: 'prod-1', endpoint: '/api/data', requests: 100,
+        tenant_id: 't-1',
+        api_product_id: 'prod-1',
+        endpoint: '/api/data',
+        requests: 100,
       });
     });
 
     it('should get usage summary', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: {} });
-      await commercialApiV55.getUsageSummary({ tenant_id: 't-1', start_time: '2026-08-01', end_time: '2026-08-31' });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v55/usage/summary?tenant_id=t-1&start_time=2026-08-01&end_time=2026-08-31');
+      await commercialApiV55.getUsageSummary({
+        tenant_id: 't-1',
+        start_time: '2026-08-01',
+        end_time: '2026-08-31',
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v55/usage/summary?tenant_id=t-1&start_time=2026-08-01&end_time=2026-08-31'
+      );
     });
 
     it('should list usage records', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await commercialApiV55.listUsageRecords({ tenant_id: 't-1', page: 1, pageSize: 20 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v55/usage/records?tenant_id=t-1&page=1&page_size=20');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v55/usage/records?tenant_id=t-1&page=1&page_size=20'
+      );
     });
   });
 
@@ -145,7 +173,9 @@ describe('V152 masterData Commercial API bindings', () => {
     it('should get billing history', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await commercialApiV55.getBillingHistory({ tenant_id: 't-1', page: 1, pageSize: 10 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v55/billing?tenant_id=t-1&page=1&page_size=10');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v55/billing?tenant_id=t-1&page=1&page_size=10'
+      );
     });
 
     it('should mark bill as paid', async () => {
@@ -165,8 +195,16 @@ describe('V152 masterData Commercial API bindings', () => {
   describe('Rate Card', () => {
     it('should create rate card', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
-      await commercialApiV55.createRateCard({ tier: 'basic', cost_per_request: 0.01, cost_per_mb: 0.5 });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v55/rate-cards', { tier: 'basic', cost_per_request: 0.01, cost_per_mb: 0.5 });
+      await commercialApiV55.createRateCard({
+        tier: 'basic',
+        cost_per_request: 0.01,
+        cost_per_mb: 0.5,
+      });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v55/rate-cards', {
+        tier: 'basic',
+        cost_per_request: 0.01,
+        cost_per_mb: 0.5,
+      });
     });
 
     it('should get rate cards', async () => {
@@ -177,8 +215,16 @@ describe('V152 masterData Commercial API bindings', () => {
 
     it('should update rate card', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
-      await commercialApiV55.updateRateCard('rc-1', { tier: 'basic', cost_per_request: 0.02, cost_per_mb: 0.5 });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v55/rate-cards/rc-1', { tier: 'basic', cost_per_request: 0.02, cost_per_mb: 0.5 });
+      await commercialApiV55.updateRateCard('rc-1', {
+        tier: 'basic',
+        cost_per_request: 0.02,
+        cost_per_mb: 0.5,
+      });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v55/rate-cards/rc-1', {
+        tier: 'basic',
+        cost_per_request: 0.02,
+        cost_per_mb: 0.5,
+      });
     });
 
     it('should delete rate card', async () => {
@@ -193,14 +239,23 @@ describe('V152 masterData Commercial API bindings', () => {
     it('should configure SLA', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
       await commercialApiV55.configureSLA({ metric: 'availability', target_value: 99.9 });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v55/sla/configure', { metric: 'availability', target_value: 99.9 });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v55/sla/configure', {
+        metric: 'availability',
+        target_value: 99.9,
+      });
     });
 
     it('should measure SLA', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
-      await commercialApiV55.measureSLA({ config_id: 'cfg-1', tenant_id: 't-1', measured_value: 99.95 });
+      await commercialApiV55.measureSLA({
+        config_id: 'cfg-1',
+        tenant_id: 't-1',
+        measured_value: 99.95,
+      });
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v55/sla/measure', {
-        config_id: 'cfg-1', tenant_id: 't-1', measured_value: 99.95,
+        config_id: 'cfg-1',
+        tenant_id: 't-1',
+        measured_value: 99.95,
       });
     });
 
@@ -213,13 +268,17 @@ describe('V152 masterData Commercial API bindings', () => {
     it('should get SLA history', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: [] });
       await commercialApiV55.getSLAHistory({ config_id: 'cfg-1', tenant_id: 't-1' });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v55/sla/history?tenant_id=t-1&config_id=cfg-1');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v55/sla/history?tenant_id=t-1&config_id=cfg-1'
+      );
     });
 
     it('should calculate penalty', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: {} });
       await commercialApiV55.calculatePenalty('cfg-1', 't-1');
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v55/sla/penalty?config_id=cfg-1&tenant_id=t-1');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v55/sla/penalty?config_id=cfg-1&tenant_id=t-1'
+      );
     });
   });
 
@@ -227,16 +286,26 @@ describe('V152 masterData Commercial API bindings', () => {
   describe('SLA Incident Management', () => {
     it('should create incident', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
-      await commercialApiV55.createIncident({ config_id: 'cfg-1', tenant_id: 't-1', incident_type: 'downtime', duration_min: 30 });
+      await commercialApiV55.createIncident({
+        config_id: 'cfg-1',
+        tenant_id: 't-1',
+        incident_type: 'downtime',
+        duration_min: 30,
+      });
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v55/sla/incident', {
-        config_id: 'cfg-1', tenant_id: 't-1', incident_type: 'downtime', duration_min: 30,
+        config_id: 'cfg-1',
+        tenant_id: 't-1',
+        incident_type: 'downtime',
+        duration_min: 30,
       });
     });
 
     it('should get incidents', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: [] });
       await commercialApiV55.getIncidents({ tenant_id: 't-1', status: 'open' });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v55/sla/incidents?tenant_id=t-1&status=open');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v55/sla/incidents?tenant_id=t-1&status=open'
+      );
     });
 
     it('should generate SLA report', async () => {
@@ -254,7 +323,9 @@ describe('V152 masterData Commercial API bindings', () => {
     it('should update incident', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await commercialApiV55.updateIncident('inc-1', { status: 'resolved' });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v55/sla/incidents/inc-1', { status: 'resolved' });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v55/sla/incidents/inc-1', {
+        status: 'resolved',
+      });
     });
 
     it('should get SLA dashboard', async () => {

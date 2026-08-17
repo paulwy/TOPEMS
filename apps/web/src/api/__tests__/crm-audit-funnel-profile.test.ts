@@ -67,7 +67,9 @@ describe('CRM Sales Funnel API Tests', () => {
       const { apiClient } = await import('../client');
       (apiClient.crm.get as vi.Mock).mockResolvedValue({ data: [] });
       await salesFunnelApi.getFunnelData({ period_type: 'month', start_date: '2026-01-01' });
-      expect(apiClient.crm.get).toHaveBeenCalledWith('/sales-funnel?period_type=month&start_date=2026-01-01');
+      expect(apiClient.crm.get).toHaveBeenCalledWith(
+        '/sales-funnel?period_type=month&start_date=2026-01-01'
+      );
     });
 
     it('getFunnelData should call GET without params', async () => {
@@ -131,7 +133,9 @@ describe('CRM Customer Profile API Tests', () => {
       const { apiClient } = await import('../client');
       (apiClient.crm.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
       await customerProfileApi.listCustomerProfiles({ status: 'active', industry: 'tech' });
-      expect(apiClient.crm.get).toHaveBeenCalledWith('/customer-profiles?status=active&industry=tech');
+      expect(apiClient.crm.get).toHaveBeenCalledWith(
+        '/customer-profiles?status=active&industry=tech'
+      );
     });
 
     it('addProfileTags should call POST /customers/:id/profile/tags', async () => {
@@ -139,7 +143,9 @@ describe('CRM Customer Profile API Tests', () => {
       const { apiClient } = await import('../client');
       (apiClient.crm.post as vi.Mock).mockResolvedValue({ data: null });
       await customerProfileApi.addProfileTags('cust-001', ['VIP', 'Tech']);
-      expect(apiClient.crm.post).toHaveBeenCalledWith('/customers/cust-001/profile/tags', { tags: ['VIP', 'Tech'] });
+      expect(apiClient.crm.post).toHaveBeenCalledWith('/customers/cust-001/profile/tags', {
+        tags: ['VIP', 'Tech'],
+      });
     });
 
     it('removeProfileTags should call DELETE /customers/:id/profile/tags', async () => {

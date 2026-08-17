@@ -162,7 +162,10 @@ export const systemApi = {
     return apiClient.core.put('/api/core/system/log/config', data);
   },
 
-  listParams: (params?: { category?: string; keyword?: string }): Promise<ApiResponse<SystemParam[]>> => {
+  listParams: (params?: {
+    category?: string;
+    keyword?: string;
+  }): Promise<ApiResponse<SystemParam[]>> => {
     return apiClient.core.get('/api/core/system/params', { params });
   },
 

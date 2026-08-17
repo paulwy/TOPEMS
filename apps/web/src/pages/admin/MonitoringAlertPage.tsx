@@ -56,7 +56,6 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 
-
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 
 interface MonitoringAlertPageProps {
@@ -79,7 +78,13 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
   const PER_PAGE = 20;
 
   const alertsQuery = useQuery<{ items: Alert[]; total: number }>({
-    queryKey: [...QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE, currentPage, searchQuery, filterLevel, filterStatus],
+    queryKey: [
+      ...QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
+      currentPage,
+      searchQuery,
+      filterLevel,
+      filterStatus,
+    ],
     queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage,
@@ -185,64 +190,72 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
   }, [alertStatsQuery.isError, alertStatsQuery.error]);
 
   const invalidateAlerts = () =>
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
   const invalidateRules = () =>
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_RULES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_RULES_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
 
   const acknowledgeMutation = useMutation({
     mutationFn: (alertId: string) => monitoringApi.acknowledgeAlert(alertId),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAlerts();
       addNotification({ type: 'success', message: i18n.t('pages.monitoring_alert_page.k0') });
     },
     onError: (err: unknown) => {
-      addNotification({ type: 'error', message: `${i18n.t('pages.monitoring_alert_page.k3')} ${extractErrorMessage(err)}` });
+      addNotification({
+        type: 'error',
+        message: `${i18n.t('pages.monitoring_alert_page.k3')} ${extractErrorMessage(err)}`,
+      });
     },
   });
 
   const resolveMutation = useMutation({
     mutationFn: (alertId: string) => monitoringApi.resolveAlert(alertId),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAlerts();
       addNotification({ type: 'success', message: i18n.t('pages.monitoring_alert_page.k1') });
     },
     onError: (err: unknown) => {
-      addNotification({ type: 'error', message: `${i18n.t('pages.monitoring_alert_page.k4')} ${extractErrorMessage(err)}` });
+      addNotification({
+        type: 'error',
+        message: `${i18n.t('pages.monitoring_alert_page.k4')} ${extractErrorMessage(err)}`,
+      });
     },
   });
 
   const escalateMutation = useMutation({
     mutationFn: (alertId: string) => monitoringApi.escalateAlert(alertId),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAlerts();
       addNotification({ type: 'success', message: i18n.t('pages.monitoring_alert_page.k2') });
     },
     onError: (err: unknown) => {
-      addNotification({ type: 'error', message: `${i18n.t('pages.monitoring_alert_page.k5')} ${extractErrorMessage(err)}` });
+      addNotification({
+        type: 'error',
+        message: `${i18n.t('pages.monitoring_alert_page.k5')} ${extractErrorMessage(err)}`,
+      });
     },
   });
 
@@ -252,34 +265,43 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
         ? monitoringApi.enableAlertRule(params.ruleId)
         : monitoringApi.disableAlertRule(params.ruleId),
     onSuccess: (_data, params) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateRules();
-      addNotification({ type: 'success', message: params.enabled ? i18n.t('pages.monitoring_alert_page.k4') : i18n.t('pages.monitoring_alert_page.k3') });
+      addNotification({
+        type: 'success',
+        message: params.enabled
+          ? i18n.t('pages.monitoring_alert_page.k4')
+          : i18n.t('pages.monitoring_alert_page.k3'),
+      });
     },
     onError: (err: unknown) => {
-      addNotification({ type: 'error', message: `${i18n.t('pages.monitoring_alert_page.k6')} ${extractErrorMessage(err)}` });
+      addNotification({
+        type: 'error',
+        message: `${i18n.t('pages.monitoring_alert_page.k6')} ${extractErrorMessage(err)}`,
+      });
     },
   });
 
   const deleteRuleMutation = useMutation({
     mutationFn: (ruleId: string) => monitoringApi.deleteAlertRule(ruleId),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateRules();
       addNotification({ type: 'success', message: i18n.t('pages.monitoring_alert_page.k5') });
     },
     onError: (err: unknown) => {
-      addNotification({ type: 'error', message: `${i18n.t('pages.monitoring_alert_page.k7')} ${extractErrorMessage(err)}` });
+      addNotification({
+        type: 'error',
+        message: `${i18n.t('pages.monitoring_alert_page.k7')} ${extractErrorMessage(err)}`,
+      });
     },
   });
 
@@ -289,21 +311,25 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
         ? monitoringApi.updateAlertRule(params.id, params.data as UpdateAlertRuleRequest)
         : monitoringApi.createAlertRule(params.data as CreateAlertRuleRequest),
     onSuccess: (_data, params) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITORING_ALERTS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateRules();
       addNotification({
         type: 'success',
-        message: params.id ? i18n.t('pages.monitoring_alert_page.k7') : i18n.t('pages.monitoring_alert_page.k6'),
+        message: params.id
+          ? i18n.t('pages.monitoring_alert_page.k7')
+          : i18n.t('pages.monitoring_alert_page.k6'),
       });
       setRuleDialogOpen(false);
     },
     onError: (err: unknown) => {
-      addNotification({ type: 'error', message: `${i18n.t('pages.monitoring_alert_page.k8')} ${extractErrorMessage(err)}` });
+      addNotification({
+        type: 'error',
+        message: `${i18n.t('pages.monitoring_alert_page.k8')} ${extractErrorMessage(err)}`,
+      });
     },
   });
 
@@ -636,9 +662,15 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                         label={i18n.t('pages.monitoring_alert_page.k22')}
                       >
                         <MenuItem value='all'>{i18n.t('pages.monitoring_alert_page.k23')}</MenuItem>
-                        <MenuItem value='critical'>{i18n.t('pages.monitoring_alert_page.k24')}</MenuItem>
-                        <MenuItem value='warning'>{i18n.t('pages.monitoring_alert_page.k25')}</MenuItem>
-                        <MenuItem value='info'>{i18n.t('pages.monitoring_alert_page.k26')}</MenuItem>
+                        <MenuItem value='critical'>
+                          {i18n.t('pages.monitoring_alert_page.k24')}
+                        </MenuItem>
+                        <MenuItem value='warning'>
+                          {i18n.t('pages.monitoring_alert_page.k25')}
+                        </MenuItem>
+                        <MenuItem value='info'>
+                          {i18n.t('pages.monitoring_alert_page.k26')}
+                        </MenuItem>
                       </Select>
                     </FormControl>
                     <FormControl sx={{ minWidth: 120 }}>
@@ -649,9 +681,15 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                         label={i18n.t('pages.monitoring_alert_page.k28')}
                       >
                         <MenuItem value='all'>{i18n.t('pages.monitoring_alert_page.k29')}</MenuItem>
-                        <MenuItem value='pending'>{i18n.t('pages.monitoring_alert_page.k30')}</MenuItem>
-                        <MenuItem value='acknowledged'>{i18n.t('pages.monitoring_alert_page.k31')}</MenuItem>
-                        <MenuItem value='resolved'>{i18n.t('pages.monitoring_alert_page.k32')}</MenuItem>
+                        <MenuItem value='pending'>
+                          {i18n.t('pages.monitoring_alert_page.k30')}
+                        </MenuItem>
+                        <MenuItem value='acknowledged'>
+                          {i18n.t('pages.monitoring_alert_page.k31')}
+                        </MenuItem>
+                        <MenuItem value='resolved'>
+                          {i18n.t('pages.monitoring_alert_page.k32')}
+                        </MenuItem>
                       </Select>
                     </FormControl>
                   </Box>
@@ -884,7 +922,11 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                                   onChange={() => handleToggleRule(rule.id, !rule.enabled)}
                                   color={rule.enabled ? 'primary' : 'default'}
                                 />
-                                <Typography>{rule.enabled ? i18n.t('pages.monitoring_alert_page.k51') : i18n.t('pages.monitoring_alert_page.k50')}</Typography>
+                                <Typography>
+                                  {rule.enabled
+                                    ? i18n.t('pages.monitoring_alert_page.k51')
+                                    : i18n.t('pages.monitoring_alert_page.k50')}
+                                </Typography>
                               </Box>
                             </TableCell>
                             <TableCell>
@@ -929,7 +971,9 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                       <CardContent>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
                           <Server className='w-5 h-5 text-blue-600' />
-                          <Typography variant='h6'>{i18n.t('pages.monitoring_alert_page.k52')}</Typography>
+                          <Typography variant='h6'>
+                            {i18n.t('pages.monitoring_alert_page.k52')}
+                          </Typography>
                         </Box>
                         <Grid spacing={2}>
                           {systemHealth.services?.map((service) => (
@@ -946,7 +990,11 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                               >
                                 <Typography>{service.name}</Typography>
                                 <Chip
-                                  label={service.status === 'healthy' ? i18n.t('pages.monitoring_alert_page.k54') : i18n.t('pages.monitoring_alert_page.k53')}
+                                  label={
+                                    service.status === 'healthy'
+                                      ? i18n.t('pages.monitoring_alert_page.k54')
+                                      : i18n.t('pages.monitoring_alert_page.k53')
+                                  }
                                   size='small'
                                   color={service.status === 'healthy' ? 'success' : 'error'}
                                 />
@@ -962,7 +1010,9 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                       <CardContent>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
                           <Cpu className='w-5 h-5 text-green-600' />
-                          <Typography variant='h6'>{i18n.t('pages.monitoring_alert_page.k55')}</Typography>
+                          <Typography variant='h6'>
+                            {i18n.t('pages.monitoring_alert_page.k55')}
+                          </Typography>
                         </Box>
                         <Grid spacing={2}>
                           <Grid size={{ xs: 6 }}>
@@ -1088,7 +1138,9 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
                       <CardContent>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
                           <TrendingUp className='w-5 h-5 text-purple-600' />
-                          <Typography variant='h6'>{i18n.t('pages.monitoring_alert_page.k68')}</Typography>
+                          <Typography variant='h6'>
+                            {i18n.t('pages.monitoring_alert_page.k68')}
+                          </Typography>
                         </Box>
                         <Grid spacing={2}>
                           <Grid size={{ xs: 3 }}>
@@ -1164,7 +1216,11 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
         onClose={() => setRuleDialogOpen(false)}
         maxWidth='md'
       >
-        <DialogTitle>{editingRule ? i18n.t('pages.monitoring_alert_page.k70') : i18n.t('pages.monitoring_alert_page.k69')}</DialogTitle>
+        <DialogTitle>
+          {editingRule
+            ? i18n.t('pages.monitoring_alert_page.k70')
+            : i18n.t('pages.monitoring_alert_page.k69')}
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
             <TextField
@@ -1204,7 +1260,9 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setRuleDialogOpen(false)}>{i18n.t('pages.monitoring_alert_page.k84')}</Button>
+          <Button onClick={() => setRuleDialogOpen(false)}>
+            {i18n.t('pages.monitoring_alert_page.k84')}
+          </Button>
           <Button
             onClick={() => {
               if (editingRule) {
@@ -1215,7 +1273,9 @@ const MonitoringAlertPage: React.FC<MonitoringAlertPageProps> = () => {
             }}
             variant='contained'
           >
-            {editingRule ? i18n.t('pages.monitoring_alert_page.k86') : i18n.t('pages.monitoring_alert_page.k85')}
+            {editingRule
+              ? i18n.t('pages.monitoring_alert_page.k86')
+              : i18n.t('pages.monitoring_alert_page.k85')}
           </Button>
         </DialogActions>
       </Dialog>

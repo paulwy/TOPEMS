@@ -3,7 +3,8 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type AssetType = 'table' | 'view' | 'api' | 'dashboard' | 'model' | 'report' | 'topic' | 'file';
+export type AssetType =
+  'table' | 'view' | 'api' | 'dashboard' | 'model' | 'report' | 'topic' | 'file';
 export type AssetClassification = 'public' | 'internal' | 'confidential' | 'restricted' | 'secret';
 export type AssetQualityStatus = 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
 export type LineageDirection = 'upstream' | 'downstream' | 'both';
@@ -231,7 +232,9 @@ export const dataGovernanceDashboardApiV74 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<GovernanceAsset>>(`/mdm-v74/assets${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<GovernanceAsset>>(
+      `/mdm-v74/assets${s ? `?${s}` : ''}`
+    );
   },
 
   async getAsset(id: string): Promise<ApiResponse<GovernanceAsset>> {
@@ -242,8 +245,13 @@ export const dataGovernanceDashboardApiV74 = {
     return apiClient.master.post<{ scanned: number }>('/mdm-v74/assets/scan', {});
   },
 
-  async classifyAsset(id: string, classification: AssetClassification): Promise<ApiResponse<GovernanceAsset>> {
-    return apiClient.master.post<GovernanceAsset>(`/mdm-v74/assets/${id}/classify`, { classification });
+  async classifyAsset(
+    id: string,
+    classification: AssetClassification
+  ): Promise<ApiResponse<GovernanceAsset>> {
+    return apiClient.master.post<GovernanceAsset>(`/mdm-v74/assets/${id}/classify`, {
+      classification,
+    });
   },
 
   // ===== 数据质量仪表板 =====
@@ -269,18 +277,31 @@ export const dataGovernanceDashboardApiV74 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<QualityIssue>>(`/mdm-v74/issues${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<QualityIssue>>(
+      `/mdm-v74/issues${s ? `?${s}` : ''}`
+    );
   },
 
-  async updateIssueStatus(issueId: string, status: QualityIssue['status'], assigneeId?: string): Promise<ApiResponse<QualityIssue>> {
-    return apiClient.master.patch<QualityIssue>(`/mdm-v74/issues/${issueId}`, { status, assignee_id: assigneeId });
+  async updateIssueStatus(
+    issueId: string,
+    status: QualityIssue['status'],
+    assigneeId?: string
+  ): Promise<ApiResponse<QualityIssue>> {
+    return apiClient.master.patch<QualityIssue>(`/mdm-v74/issues/${issueId}`, {
+      status,
+      assignee_id: assigneeId,
+    });
   },
 
   async resolveIssue(issueId: string, resolution: string): Promise<ApiResponse<QualityIssue>> {
-    return apiClient.master.post<QualityIssue>(`/mdm-v74/issues/${issueId}/resolve`, { resolution });
+    return apiClient.master.post<QualityIssue>(`/mdm-v74/issues/${issueId}/resolve`, {
+      resolution,
+    });
   },
 
-  async getQualityTrend(days?: number): Promise<ApiResponse<Array<{ date: string; avg_score: number; issues_count: number }>>> {
+  async getQualityTrend(
+    days?: number
+  ): Promise<ApiResponse<Array<{ date: string; avg_score: number; issues_count: number }>>> {
     const qs = new URLSearchParams();
     if (days !== undefined) qs.set('days', String(days));
     const s = qs.toString();
@@ -288,23 +309,30 @@ export const dataGovernanceDashboardApiV74 = {
   },
 
   // ===== 数据血缘追踪 =====
-  async getLineage(assetId: string, params?: {
-    direction?: LineageDirection;
-    depth?: number;
-  }): Promise<ApiResponse<LineageGraph>> {
+  async getLineage(
+    assetId: string,
+    params?: {
+      direction?: LineageDirection;
+      depth?: number;
+    }
+  ): Promise<ApiResponse<LineageGraph>> {
     const qs = new URLSearchParams();
     if (params?.direction) qs.set('direction', params.direction);
     if (params?.depth !== undefined) qs.set('depth', String(params.depth));
     const s = qs.toString();
-    return apiClient.master.get<LineageGraph>(`/mdm-v74/assets/${assetId}/lineage${s ? `?${s}` : ''}`);
+    return apiClient.master.get<LineageGraph>(
+      `/mdm-v74/assets/${assetId}/lineage${s ? `?${s}` : ''}`
+    );
   },
 
-  async getAssetLineageImpact(assetId: string): Promise<ApiResponse<{
-    affected_downstream_assets: number;
-    criticality_score: number;
-    dependent_reports: number;
-    dependent_dashboards: number;
-  }>> {
+  async getAssetLineageImpact(assetId: string): Promise<
+    ApiResponse<{
+      affected_downstream_assets: number;
+      criticality_score: number;
+      dependent_reports: number;
+      dependent_dashboards: number;
+    }>
+  > {
     return apiClient.master.get(`/mdm-v74/assets/${assetId}/lineage/impact`);
   },
 
@@ -323,34 +351,45 @@ export const dataGovernanceDashboardApiV74 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<ComplianceCheck>>(`/mdm-v74/compliance/checks${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<ComplianceCheck>>(
+      `/mdm-v74/compliance/checks${s ? `?${s}` : ''}`
+    );
   },
 
-  async runComplianceCheck(assetId?: string): Promise<ApiResponse<{ checked: number; failed: number }>> {
+  async runComplianceCheck(
+    assetId?: string
+  ): Promise<ApiResponse<{ checked: number; failed: number }>> {
     const qs = new URLSearchParams();
     if (assetId) qs.set('asset_id', assetId);
     const s = qs.toString();
-    return apiClient.master.post<{ checked: number; failed: number }>(`/mdm-v74/compliance/run${s ? `?${s}` : ''}`, {});
+    return apiClient.master.post<{ checked: number; failed: number }>(
+      `/mdm-v74/compliance/run${s ? `?${s}` : ''}`,
+      {}
+    );
   },
 
-  async getComplianceSummary(): Promise<ApiResponse<{
-    total_checks: number;
-    passed: number;
-    failed: number;
-    warnings: number;
-    compliance_rate: number;
-    by_category: Record<string, { passed: number; failed: number }>;
-  }>> {
+  async getComplianceSummary(): Promise<
+    ApiResponse<{
+      total_checks: number;
+      passed: number;
+      failed: number;
+      warnings: number;
+      compliance_rate: number;
+      by_category: Record<string, { passed: number; failed: number }>;
+    }>
+  > {
     return apiClient.master.get('/mdm-v74/compliance/summary');
   },
 
-  async getSensitiveDataReport(): Promise<ApiResponse<{
-    total_sensitive_assets: number;
-    pii_assets: number;
-    financial_data_assets: number;
-    health_data_assets: number;
-    classification_gaps: number;
-  }>> {
+  async getSensitiveDataReport(): Promise<
+    ApiResponse<{
+      total_sensitive_assets: number;
+      pii_assets: number;
+      financial_data_assets: number;
+      health_data_assets: number;
+      classification_gaps: number;
+    }>
+  > {
     return apiClient.master.get('/mdm-v74/compliance/sensitive-data');
   },
 
@@ -369,7 +408,9 @@ export const dataGovernanceDashboardApiV74 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<GovernanceRule>>(`/mdm-v74/rules${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<GovernanceRule>>(
+      `/mdm-v74/rules${s ? `?${s}` : ''}`
+    );
   },
 
   async getRule(id: string): Promise<ApiResponse<GovernanceRule>> {
@@ -389,7 +430,10 @@ export const dataGovernanceDashboardApiV74 = {
   },
 
   async runRule(id: string): Promise<ApiResponse<{ rule_id: string; found_issues: number }>> {
-    return apiClient.master.post<{ rule_id: string; found_issues: number }>(`/mdm-v74/rules/${id}/run`, {});
+    return apiClient.master.post<{ rule_id: string; found_issues: number }>(
+      `/mdm-v74/rules/${id}/run`,
+      {}
+    );
   },
 
   // ===== 治理报告 =====
@@ -405,7 +449,9 @@ export const dataGovernanceDashboardApiV74 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<GovernanceReport>>(`/mdm-v74/reports${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<GovernanceReport>>(
+      `/mdm-v74/reports${s ? `?${s}` : ''}`
+    );
   },
 
   async getReport(id: string): Promise<ApiResponse<GovernanceReport>> {
@@ -421,28 +467,34 @@ export const dataGovernanceDashboardApiV74 = {
   },
 
   // ===== 治理效率指标 =====
-  async getGovernanceMetrics(): Promise<ApiResponse<{
-    assets_total: number;
-    assets_classified: number;
-    compliance_rate: number;
-    avg_quality_score: number;
-    issues_open: number;
-    issues_resolved_7d: number;
-    rule_coverage: number;
-    governance_maturity_score: number;
-    maturity_by_category: Record<string, number>;
-  }>> {
+  async getGovernanceMetrics(): Promise<
+    ApiResponse<{
+      assets_total: number;
+      assets_classified: number;
+      compliance_rate: number;
+      avg_quality_score: number;
+      issues_open: number;
+      issues_resolved_7d: number;
+      rule_coverage: number;
+      governance_maturity_score: number;
+      maturity_by_category: Record<string, number>;
+    }>
+  > {
     return apiClient.master.get('/mdm-v74/metrics');
   },
 
-  async getOwnerStats(): Promise<ApiResponse<Array<{
-    owner_id: string;
-    owner_name: string;
-    assets_count: number;
-    quality_score: number;
-    compliance_rate: number;
-    issues_assigned: number;
-  }>>> {
+  async getOwnerStats(): Promise<
+    ApiResponse<
+      Array<{
+        owner_id: string;
+        owner_name: string;
+        assets_count: number;
+        quality_score: number;
+        compliance_rate: number;
+        issues_assigned: number;
+      }>
+    >
+  > {
     return apiClient.master.get('/mdm-v74/stats/owners');
   },
 };

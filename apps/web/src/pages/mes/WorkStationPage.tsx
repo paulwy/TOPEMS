@@ -5,6 +5,7 @@ import { workstationSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { WorkStation, CreateWorkStationRequest } from '@/api/mes/types';
 import i18n from '@/i18n';
+
 const apiAdapter = createCrudPageAdapter<WorkStation>(
   {
     list: mesApi.workstations.list,

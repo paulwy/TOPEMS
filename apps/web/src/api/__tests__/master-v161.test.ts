@@ -42,7 +42,9 @@ describe('V161 · 数据安全审计 - 访问审计日志', () => {
       page_size: 20,
     });
 
-    expect(mockGet).toHaveBeenCalledWith('/mdm-v76/logs?user_id=u1&action=read&resource_type=document&page=1&page_size=20');
+    expect(mockGet).toHaveBeenCalledWith(
+      '/mdm-v76/logs?user_id=u1&action=read&resource_type=document&page=1&page_size=20'
+    );
   });
 
   it('查询审计日志 - 无参数', async () => {
@@ -192,7 +194,9 @@ describe('V161 · 数据安全审计 - 审计策略管理', () => {
 
     await dataSecurityAuditApiV76.testRule('r1', { action: 'read' });
 
-    expect(mockPost).toHaveBeenCalledWith('/mdm-v76/rules/r1/test', { sample_log: { action: 'read' } });
+    expect(mockPost).toHaveBeenCalledWith('/mdm-v76/rules/r1/test', {
+      sample_log: { action: 'read' },
+    });
   });
 });
 
@@ -273,7 +277,9 @@ describe('V161 · 数据安全审计 - 安全事件管理', () => {
 
     await dataSecurityAuditApiV76.resolveEvent('e1', '已确认是正常操作');
 
-    expect(mockPost).toHaveBeenCalledWith('/mdm-v76/events/e1/resolve', { resolution: '已确认是正常操作' });
+    expect(mockPost).toHaveBeenCalledWith('/mdm-v76/events/e1/resolve', {
+      resolution: '已确认是正常操作',
+    });
   });
 
   it('关闭事件', async () => {
@@ -525,7 +531,13 @@ describe('V161 · 数据安全审计 - 仪表板', () => {
         avg_resolution_time_hours: 24,
         compliance_score: 0.85,
         event_severity_distribution: { low: 900, medium: 80, high: 15, critical: 5 },
-        event_status_distribution: { open: 10, in_progress: 5, resolved: 80, closed: 5, ignored: 0 },
+        event_status_distribution: {
+          open: 10,
+          in_progress: 5,
+          resolved: 80,
+          closed: 5,
+          ignored: 0,
+        },
         top_rules_triggered: [],
         top_targeted_resources: [],
         resolution_trend_7d: [],

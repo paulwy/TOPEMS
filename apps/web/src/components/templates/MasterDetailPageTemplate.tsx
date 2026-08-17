@@ -360,7 +360,13 @@ export function MasterDetailPageTemplate<T>({
           )}
         </Typography>
         {collapsible && !isMobile && (
-          <Tooltip title={collapsed ? i18n.t('templates.master_detail_page_template.k6') : i18n.t('templates.master_detail_page_template.k5')}>
+          <Tooltip
+            title={
+              collapsed
+                ? i18n.t('templates.master_detail_page_template.k6')
+                : i18n.t('templates.master_detail_page_template.k5')
+            }
+          >
             <IconButton
               size='small'
               onClick={() => setCollapsed(!collapsed)}
@@ -526,7 +532,9 @@ export function MasterDetailPageTemplate<T>({
                             ? 'glass.topLight'
                             : `${action.color || 'primary'}.main`,
                           '&:hover': {
-                            color: isSelected ? designTokens.colors.background.paper : `${action.color || 'primary'}.dark`,
+                            color: isSelected
+                              ? designTokens.colors.background.paper
+                              : `${action.color || 'primary'}.dark`,
                           },
                         }}
                         aria-label={i18n.t('templates.master_detail_page_template.k9')}
@@ -730,7 +738,8 @@ export function MasterDetailPageTemplate<T>({
             variant='caption'
             color='text.secondary'
           >
-                        {i18n.t('common.master_detail_page_template.k0')} {pagination.total} {pagination.total} {i18n.t('common.master_detail_page_template.k0')}
+            {i18n.t('common.master_detail_page_template.k0')} {pagination.total} {pagination.total}{' '}
+            {i18n.t('common.master_detail_page_template.k0')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             <Button

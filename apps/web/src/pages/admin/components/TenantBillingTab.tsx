@@ -5,6 +5,7 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { tenantInvoiceSchema } from '@/schemas/admin';
 import type { Tenant, TenantInvoice } from '@/api/tenant/types';
 import i18n from '@/i18n';
+
 interface TenantBillingTabProps {
   tenant: Tenant;
   invoices: TenantInvoice[];

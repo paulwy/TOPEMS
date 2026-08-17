@@ -106,7 +106,9 @@ export function AIDocumentGenerator({
               copied ? <Check style={{ fontSize: 16 }} /> : <Copy style={{ fontSize: 16 }} />
             }
           >
-            {copied ? i18n.t('components.ai_document_generator.k3') : i18n.t('components.ai_document_generator.k2')}
+            {copied
+              ? i18n.t('components.ai_document_generator.k3')
+              : i18n.t('components.ai_document_generator.k2')}
           </Button>
         ) : null
       }
@@ -231,7 +233,9 @@ export function AIDocumentGenerator({
               fullWidth
               startIcon={<Sparkles style={{ fontSize: 16 }} />}
             >
-              {isLoading ? i18n.t('components.ai_document_generator.k5') : i18n.t('components.ai_document_generator.k5')}
+              {isLoading
+                ? i18n.t('components.ai_document_generator.k5')
+                : i18n.t('components.ai_document_generator.k5')}
             </Button>
 
             {hasResult && (

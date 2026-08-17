@@ -32,8 +32,14 @@ interface EHSStatusBadgeProps {
 }
 
 const hazardStatusConfig: Record<string, { color: string; label: string }> = {
-  active: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k12') },
-  [i18n.t('components.ehs_badges.k21')]: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k13') },
+  active: {
+    color: 'bg-red-100 text-red-700 border-red-200',
+    label: i18n.t('components.ehs_badges.k12'),
+  },
+  [i18n.t('components.ehs_badges.k21')]: {
+    color: 'bg-red-100 text-red-700 border-red-200',
+    label: i18n.t('components.ehs_badges.k13'),
+  },
   controlled: {
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
     label: i18n.t('components.ehs_badges.k14'),
@@ -185,10 +191,22 @@ interface EHSSeverityBadgeProps {
 }
 
 const severityConfig: Record<string, { color: string; label: string }> = {
-  high: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k43') },
-  [i18n.t('components.ehs_badges.k40')]: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k44') },
-  fatal: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k45') },
-  [i18n.t('components.ehs_badges.k41')]: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k46') },
+  high: {
+    color: 'bg-red-100 text-red-700 border-red-200',
+    label: i18n.t('components.ehs_badges.k43'),
+  },
+  [i18n.t('components.ehs_badges.k40')]: {
+    color: 'bg-red-100 text-red-700 border-red-200',
+    label: i18n.t('components.ehs_badges.k44'),
+  },
+  fatal: {
+    color: 'bg-red-100 text-red-700 border-red-200',
+    label: i18n.t('components.ehs_badges.k45'),
+  },
+  [i18n.t('components.ehs_badges.k41')]: {
+    color: 'bg-red-100 text-red-700 border-red-200',
+    label: i18n.t('components.ehs_badges.k46'),
+  },
   serious: {
     color: 'bg-orange-100 text-orange-700 border-orange-200',
     label: i18n.t('components.ehs_badges.k47'),
@@ -201,7 +219,10 @@ const severityConfig: Record<string, { color: string; label: string }> = {
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
     label: i18n.t('components.ehs_badges.k49'),
   },
-  [i18n.t('components.ehs_badges.k43')]: { color: 'bg-yellow-100 text-yellow-700 border-yellow-200', label: i18n.t('components.ehs_badges.k50') },
+  [i18n.t('components.ehs_badges.k43')]: {
+    color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    label: i18n.t('components.ehs_badges.k50'),
+  },
   minor: {
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
     label: i18n.t('components.ehs_badges.k51'),
@@ -210,13 +231,22 @@ const severityConfig: Record<string, { color: string; label: string }> = {
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
     label: i18n.t('components.ehs_badges.k52'),
   },
-  low: { color: 'bg-green-100 text-green-700 border-green-200', label: i18n.t('components.ehs_badges.k53') },
-  [i18n.t('components.ehs_badges.k45')]: { color: 'bg-green-100 text-green-700 border-green-200', label: i18n.t('components.ehs_badges.k54') },
+  low: {
+    color: 'bg-green-100 text-green-700 border-green-200',
+    label: i18n.t('components.ehs_badges.k53'),
+  },
+  [i18n.t('components.ehs_badges.k45')]: {
+    color: 'bg-green-100 text-green-700 border-green-200',
+    label: i18n.t('components.ehs_badges.k54'),
+  },
   near_miss: {
     color: 'bg-blue-100 text-blue-700 border-blue-200',
     label: i18n.t('components.ehs_badges.k55'),
   },
-  [i18n.t('components.ehs_badges.k46')]: { color: 'bg-blue-100 text-blue-700 border-blue-200', label: i18n.t('components.ehs_badges.k56') },
+  [i18n.t('components.ehs_badges.k46')]: {
+    color: 'bg-blue-100 text-blue-700 border-blue-200',
+    label: i18n.t('components.ehs_badges.k56'),
+  },
 };
 
 export const EHSSeverityBadge: React.FC<EHSSeverityBadgeProps> = ({ severity }) => {
@@ -250,8 +280,14 @@ interface EHSRiskLevelBadgeProps {
 }
 
 const riskLevelConfig: Record<string, { color: string; label: string }> = {
-  high: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k57') },
-  [i18n.t('components.ehs_badges.k50')]: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k58') },
+  high: {
+    color: 'bg-red-100 text-red-700 border-red-200',
+    label: i18n.t('components.ehs_badges.k57'),
+  },
+  [i18n.t('components.ehs_badges.k50')]: {
+    color: 'bg-red-100 text-red-700 border-red-200',
+    label: i18n.t('components.ehs_badges.k58'),
+  },
   medium: {
     color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
     label: i18n.t('components.ehs_badges.k59'),
@@ -382,8 +418,14 @@ const incidentTypeConfig: Record<string, { color: string; label: string }> = {
     color: 'bg-blue-100 text-blue-700 border-blue-200',
     label: i18n.t('components.ehs_badges.k78'),
   },
-  accident: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k79') },
-  [i18n.t('components.ehs_badges.k67')]: { color: 'bg-red-100 text-red-700 border-red-200', label: i18n.t('components.ehs_badges.k80') },
+  accident: {
+    color: 'bg-red-100 text-red-700 border-red-200',
+    label: i18n.t('components.ehs_badges.k79'),
+  },
+  [i18n.t('components.ehs_badges.k67')]: {
+    color: 'bg-red-100 text-red-700 border-red-200',
+    label: i18n.t('components.ehs_badges.k80'),
+  },
   injury: {
     color: 'bg-orange-100 text-orange-700 border-orange-200',
     label: i18n.t('components.ehs_badges.k81'),

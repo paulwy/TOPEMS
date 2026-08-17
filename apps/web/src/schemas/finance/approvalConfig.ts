@@ -91,7 +91,9 @@ export const approvalConfigSchema: EntitySchema = {
       listWidth: 80,
       renderCell: (row: Record<string, unknown>) => {
         const active = row.isActive !== false;
-        return active ? i18n.t('finance.approval_config.k15') : i18n.t('finance.approval_config.k14');
+        return active
+          ? i18n.t('finance.approval_config.k15')
+          : i18n.t('finance.approval_config.k14');
       },
     },
     {

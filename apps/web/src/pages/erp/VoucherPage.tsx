@@ -29,7 +29,7 @@ interface VoucherStatsData {
   posted: number;
 }
 function VoucherStats() {
-  const { data: stats, isPending} = useQuery<VoucherStatsData>({
+  const { data: stats, isPending } = useQuery<VoucherStatsData>({
     queryKey: QUERY_KEYS.AD_HOC.ERP_VOUCHER_STATS_BASE,
     queryFn: async () => {
       const response = await voucherApi.list({ page: 1, pagesize: 100 });
@@ -48,7 +48,11 @@ function VoucherStats() {
   const cards = [
     { label: i18n.t('erp.voucher_page.k1'), value: stats?.total ?? 0, iconColor: 'primary.main' },
     { label: i18n.t('erp.voucher_page.k2'), value: stats?.draft ?? 0, iconColor: 'grey.500' },
-    { label: i18n.t('erp.voucher_page.k3'), value: stats?.submitted ?? 0, iconColor: 'warning.main' },
+    {
+      label: i18n.t('erp.voucher_page.k3'),
+      value: stats?.submitted ?? 0,
+      iconColor: 'warning.main',
+    },
     { label: i18n.t('erp.voucher_page.k4'), value: stats?.approved ?? 0, iconColor: 'info.main' },
     { label: i18n.t('erp.voucher_page.k5'), value: stats?.posted ?? 0, iconColor: 'success.main' },
   ];
@@ -93,7 +97,11 @@ export default function VoucherPage() {
     <CrudPage
       schema={schema}
       apiAdapter={voucherAdapter}
-      breadcrumbs={[{ label: 'ERP' }, { label: i18n.t('erp.voucher_page.k7') }, { label: i18n.t('erp.voucher_page.k6') }]}
+      breadcrumbs={[
+        { label: 'ERP' },
+        { label: i18n.t('erp.voucher_page.k7') },
+        { label: i18n.t('erp.voucher_page.k6') },
+      ]}
       headerContent={<VoucherStats />}
     />
   );

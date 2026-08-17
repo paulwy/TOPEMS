@@ -11,6 +11,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import i18n from '@/i18n';
+
 const buildApiAdapter: CrudApiAdapter<Build> = {
   list: async (params) => {
     const queryParams: Record<string, unknown> = {
@@ -66,10 +67,11 @@ const RsBuildPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.BUILDS ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.RD.BUILDS,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: i18n.t('rd.rs_build_page.k5'),
@@ -102,7 +104,10 @@ const RsBuildPage: React.FC = () => {
       schema={buildSchema}
       apiAdapter={buildApiAdapter}
       customRowActions={customRowActions}
-      breadcrumbs={[{ label: i18n.t('rd.rs_build_page.k11'), href: RD_PATHS.root }, { label: i18n.t('rd.rs_build_page.k10') }]}
+      breadcrumbs={[
+        { label: i18n.t('rd.rs_build_page.k11'), href: RD_PATHS.root },
+        { label: i18n.t('rd.rs_build_page.k10') },
+      ]}
     />
   );
 };

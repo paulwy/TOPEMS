@@ -72,7 +72,9 @@ describe('V163 · 工作流定义管理', () => {
       page_size: 10,
     });
 
-    expect(mockGet).toHaveBeenCalledWith('/mdm-v78/workflows?entity_type=user&status=active&q=test&page=2&page_size=10');
+    expect(mockGet).toHaveBeenCalledWith(
+      '/mdm-v78/workflows?entity_type=user&status=active&q=test&page=2&page_size=10'
+    );
   });
 
   it('列表查询 - 无参数', async () => {
@@ -171,7 +173,10 @@ describe('V163 · 数据变更审批', () => {
 
     await dataWorkflowAutomationApiV78.reviewApproval('a1', { action: 'approve', comment: 'OK' });
 
-    expect(mockPost).toHaveBeenCalledWith('/mdm-v78/approvals/a1/review', { action: 'approve', comment: 'OK' });
+    expect(mockPost).toHaveBeenCalledWith('/mdm-v78/approvals/a1/review', {
+      action: 'approve',
+      comment: 'OK',
+    });
   });
 
   it('获取我的审批', async () => {
@@ -207,7 +212,9 @@ describe('V163 · 自动化工作流执行', () => {
 
     await dataWorkflowAutomationApiV78.executeWorkflow('w1', { input_data: { key: 'val' } });
 
-    expect(mockPost).toHaveBeenCalledWith('/mdm-v78/workflows/w1/execute', { input_data: { key: 'val' } });
+    expect(mockPost).toHaveBeenCalledWith('/mdm-v78/workflows/w1/execute', {
+      input_data: { key: 'val' },
+    });
   });
 
   it('执行工作流 - 无参数', async () => {

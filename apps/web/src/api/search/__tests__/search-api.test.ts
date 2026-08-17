@@ -41,7 +41,26 @@ describe('searchApi.globalSearch', () => {
       success: true,
       code: 200,
       message: 'ok',
-      data: { total: 1, by_service: {}, results: [{ id: '1', title: 'API Result', summary: '', highlight_title: 'API Result', highlight_summary: '', service: 'user', service_name: '用户', url: '/api', result_type: 'page', module: 'user', type_name: '用户' }], duration_ms: 0 },
+      data: {
+        total: 1,
+        by_service: {},
+        results: [
+          {
+            id: '1',
+            title: 'API Result',
+            summary: '',
+            highlight_title: 'API Result',
+            highlight_summary: '',
+            service: 'user',
+            service_name: '用户',
+            url: '/api',
+            result_type: 'page',
+            module: 'user',
+            type_name: '用户',
+          },
+        ],
+        duration_ms: 0,
+      },
       timestamp: Date.now(),
     });
   });
@@ -83,7 +102,9 @@ describe('searchApi.globalSearch', () => {
 
     const result = await searchApi.globalSearch('test', 10);
 
-    expect(apiClient.portal.get).toHaveBeenCalledWith('/search?q=test&limit=10', { signal: undefined });
+    expect(apiClient.portal.get).toHaveBeenCalledWith('/search?q=test&limit=10', {
+      signal: undefined,
+    });
     expect(result).toEqual(mockResponse);
   });
 
@@ -101,13 +122,17 @@ describe('searchApi.globalSearch', () => {
     const controller = new AbortController();
     await searchApi.globalSearch('test', 10, controller.signal);
 
-    expect(apiClient.portal.get).toHaveBeenCalledWith('/search?q=test&limit=10', { signal: controller.signal });
+    expect(apiClient.portal.get).toHaveBeenCalledWith('/search?q=test&limit=10', {
+      signal: controller.signal,
+    });
   });
 
   it('should use default limit of 20', async () => {
     await searchApi.globalSearch('test');
 
-    expect(apiClient.portal.get).toHaveBeenCalledWith('/search?q=test&limit=20', { signal: undefined });
+    expect(apiClient.portal.get).toHaveBeenCalledWith('/search?q=test&limit=20', {
+      signal: undefined,
+    });
   });
 
   it('should throw error when API call fails', async () => {

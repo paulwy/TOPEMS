@@ -168,10 +168,7 @@ describe('V159 masterData Data Governance Dashboard API bindings', () => {
     it('should run compliance check', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { checked: 50, failed: 2 } });
       await dataGovernanceDashboardApiV74.runComplianceCheck('asset-1');
-      expect(mockClient.post).toHaveBeenCalledWith(
-        '/mdm-v74/compliance/run?asset_id=asset-1',
-        {}
-      );
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v74/compliance/run?asset_id=asset-1', {});
     });
 
     it('should run compliance check without asset', async () => {
@@ -249,7 +246,10 @@ describe('V159 masterData Data Governance Dashboard API bindings', () => {
     });
 
     it('should run rule', async () => {
-      mockClient.post.mockResolvedValue({ success: true, data: { rule_id: 'rule-1', found_issues: 5 } });
+      mockClient.post.mockResolvedValue({
+        success: true,
+        data: { rule_id: 'rule-1', found_issues: 5 },
+      });
       await dataGovernanceDashboardApiV74.runRule('rule-1');
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v74/rules/rule-1/run', {});
     });

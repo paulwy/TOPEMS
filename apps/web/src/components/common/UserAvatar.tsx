@@ -99,7 +99,9 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
     colorKey = email.trim().toLowerCase();
   }
 
-  const palette = colorKey ? getColorForKey(colorKey) : { bg: 'colors.grey.300', fg: designTokens.colors.grey['600'] };
+  const palette = colorKey
+    ? getColorForKey(colorKey)
+    : { bg: 'colors.grey.300', fg: designTokens.colors.grey['600'] };
   const tooltipText = alt || name || email || '';
   const fontSize = getFontSize(size);
 

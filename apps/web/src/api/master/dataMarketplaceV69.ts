@@ -4,13 +4,7 @@ import type { ApiResponse } from '../client';
 // ============ Types ============
 
 export type MarketplaceAssetStatus = 'draft' | 'published' | 'deprecated' | 'archived';
-export type AssetCategory =
-  | 'dataset'
-  | 'api'
-  | 'report'
-  | 'model'
-  | 'dashboard'
-  | 'template';
+export type AssetCategory = 'dataset' | 'api' | 'report' | 'model' | 'dashboard' | 'template';
 export type SubscriptionStatus = 'pending' | 'active' | 'expired' | 'cancelled';
 export type PricingModel = 'free' | 'per_call' | 'subscription' | 'tiered';
 export type ReviewRating = 1 | 2 | 3 | 4 | 5;
@@ -190,7 +184,9 @@ export const marketplaceApiV69 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<MarketplaceAsset>>(`/mdm-v69/assets${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<MarketplaceAsset>>(
+      `/mdm-v69/assets${s ? `?${s}` : ''}`
+    );
   },
 
   async updateAsset(id: string, data: UpdateAssetRequest): Promise<ApiResponse<MarketplaceAsset>> {
@@ -201,19 +197,24 @@ export const marketplaceApiV69 = {
     return apiClient.master.delete<{ deleted: boolean }>(`/mdm-v69/assets/${id}`);
   },
 
-  async searchAssets(query: string, filters?: {
-    category?: AssetCategory;
-    minRating?: number;
-    page?: number;
-    pageSize?: number;
-  }): Promise<ApiResponse<PaginatedResponse<MarketplaceAsset>>> {
+  async searchAssets(
+    query: string,
+    filters?: {
+      category?: AssetCategory;
+      minRating?: number;
+      page?: number;
+      pageSize?: number;
+    }
+  ): Promise<ApiResponse<PaginatedResponse<MarketplaceAsset>>> {
     const qs = new URLSearchParams();
     qs.set('q', query);
     if (filters?.category) qs.set('category', filters.category);
     if (filters?.minRating !== undefined) qs.set('min_rating', String(filters.minRating));
     if (filters?.page !== undefined) qs.set('page', String(filters.page));
     if (filters?.pageSize !== undefined) qs.set('page_size', String(filters.pageSize));
-    return apiClient.master.get<PaginatedResponse<MarketplaceAsset>>(`/mdm-v69/assets/search?${qs.toString()}`);
+    return apiClient.master.get<PaginatedResponse<MarketplaceAsset>>(
+      `/mdm-v69/assets/search?${qs.toString()}`
+    );
   },
 
   // ===== 资产版本管理 =====
@@ -223,7 +224,7 @@ export const marketplaceApiV69 = {
 
   async publishNewVersion(
     assetId: string,
-    data: { version: string; changelog: string },
+    data: { version: string; changelog: string }
   ): Promise<ApiResponse<AssetVersion>> {
     return apiClient.master.post<AssetVersion>(`/mdm-v69/assets/${assetId}/versions`, data);
   },
@@ -249,7 +250,9 @@ export const marketplaceApiV69 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<AssetSubscription>>(`/mdm-v69/subscriptions${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<AssetSubscription>>(
+      `/mdm-v69/subscriptions${s ? `?${s}` : ''}`
+    );
   },
 
   async getSubscription(id: string): Promise<ApiResponse<AssetSubscription>> {
@@ -266,7 +269,7 @@ export const marketplaceApiV69 = {
 
   async upgradeSubscription(
     id: string,
-    data: { new_plan: string },
+    data: { new_plan: string }
   ): Promise<ApiResponse<AssetSubscription>> {
     return apiClient.master.post<AssetSubscription>(`/mdm-v69/subscriptions/${id}/upgrade`, data);
   },
@@ -276,17 +279,22 @@ export const marketplaceApiV69 = {
     return apiClient.master.post<AssetReview>('/mdm-v69/reviews', data);
   },
 
-  async listAssetReviews(assetId: string, params?: {
-    minRating?: ReviewRating;
-    page?: number;
-    pageSize?: number;
-  }): Promise<ApiResponse<PaginatedResponse<AssetReview>>> {
+  async listAssetReviews(
+    assetId: string,
+    params?: {
+      minRating?: ReviewRating;
+      page?: number;
+      pageSize?: number;
+    }
+  ): Promise<ApiResponse<PaginatedResponse<AssetReview>>> {
     const qs = new URLSearchParams();
     if (params?.minRating !== undefined) qs.set('min_rating', String(params.minRating));
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<AssetReview>>(`/mdm-v69/assets/${assetId}/reviews${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<AssetReview>>(
+      `/mdm-v69/assets/${assetId}/reviews${s ? `?${s}` : ''}`
+    );
   },
 
   async deleteReview(id: string): Promise<ApiResponse<{ deleted: boolean }>> {
@@ -305,7 +313,7 @@ export const marketplaceApiV69 = {
       tiers?: Array<{ name: string; limit: number; price: number }>;
       price_per_call?: number;
       subscription_price?: number;
-    },
+    }
   ): Promise<ApiResponse<AssetPricing>> {
     return apiClient.master.put<AssetPricing>(`/mdm-v69/assets/${assetId}/pricing`, data);
   },
@@ -331,7 +339,9 @@ export const marketplaceApiV69 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<MarketplaceProvider>>(`/mdm-v69/providers${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<MarketplaceProvider>>(
+      `/mdm-v69/providers${s ? `?${s}` : ''}`
+    );
   },
 
   async verifyProvider(id: string): Promise<ApiResponse<MarketplaceProvider>> {
@@ -347,19 +357,24 @@ export const marketplaceApiV69 = {
   },
 
   // ===== 使用量统计与仪表盘 =====
-  async getAssetUsageStats(assetId: string, params?: {
-    period?: 'day' | 'week' | 'month';
-    start_date?: string;
-    end_date?: string;
-  }): Promise<ApiResponse<{
-    asset_id: string;
-    total_calls: number;
-    unique_subscribers: number;
-    errors: number;
-    avg_latency_ms: number;
-    period_start: string;
-    period_end: string;
-  }>> {
+  async getAssetUsageStats(
+    assetId: string,
+    params?: {
+      period?: 'day' | 'week' | 'month';
+      start_date?: string;
+      end_date?: string;
+    }
+  ): Promise<
+    ApiResponse<{
+      asset_id: string;
+      total_calls: number;
+      unique_subscribers: number;
+      errors: number;
+      avg_latency_ms: number;
+      period_start: string;
+      period_end: string;
+    }>
+  > {
     const qs = new URLSearchParams();
     if (params?.period) qs.set('period', params.period);
     if (params?.start_date) qs.set('start_date', params.start_date);
@@ -389,7 +404,9 @@ export const marketplaceApiV69 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<MarketplaceAsset>>(`/mdm-v69/favorites${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<MarketplaceAsset>>(
+      `/mdm-v69/favorites${s ? `?${s}` : ''}`
+    );
   },
 
   async getFeaturedAssets(params?: {
@@ -403,15 +420,22 @@ export const marketplaceApiV69 = {
     return apiClient.master.get<MarketplaceAsset[]>(`/mdm-v69/assets/featured${s ? `?${s}` : ''}`);
   },
 
-  async getRecommendations(assetId: string, limit?: number): Promise<ApiResponse<MarketplaceAsset[]>> {
+  async getRecommendations(
+    assetId: string,
+    limit?: number
+  ): Promise<ApiResponse<MarketplaceAsset[]>> {
     const qs = new URLSearchParams();
     if (limit !== undefined) qs.set('limit', String(limit));
     const s = qs.toString();
-    return apiClient.master.get<MarketplaceAsset[]>(`/mdm-v69/assets/${assetId}/recommend${s ? `?${s}` : ''}`);
+    return apiClient.master.get<MarketplaceAsset[]>(
+      `/mdm-v69/assets/${assetId}/recommend${s ? `?${s}` : ''}`
+    );
   },
 
   async listCategories(): Promise<ApiResponse<Array<{ category: AssetCategory; count: number }>>> {
-    return apiClient.master.get<Array<{ category: AssetCategory; count: number }>>('/mdm-v69/categories');
+    return apiClient.master.get<Array<{ category: AssetCategory; count: number }>>(
+      '/mdm-v69/categories'
+    );
   },
 
   async listRecentlyUpdated(params?: {
@@ -424,7 +448,9 @@ export const marketplaceApiV69 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<MarketplaceAsset>>(`/mdm-v69/assets/recent${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<MarketplaceAsset>>(
+      `/mdm-v69/assets/recent${s ? `?${s}` : ''}`
+    );
   },
 };
 

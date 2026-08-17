@@ -290,10 +290,14 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 disabled={isRecording}
                 sx={{
                   borderRadius: 'full',
-                  bgcolor: isRecording ? designTokens.colors.grey[800] : 'colors.cyber.glass.divider',
+                  bgcolor: isRecording
+                    ? designTokens.colors.grey[800]
+                    : 'colors.cyber.glass.divider',
                   color: isRecording ? 'text.secondary' : 'white',
                   '&:hover': {
-                    bgcolor: isRecording ? designTokens.colors.grey[800] : designTokens.colors.cyber.metal.bottomShadow,
+                    bgcolor: isRecording
+                      ? designTokens.colors.grey[800]
+                      : designTokens.colors.cyber.metal.bottomShadow,
                   },
                   '&.Mui-disabled': {
                     bgcolor: 'common.white',

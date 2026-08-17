@@ -71,7 +71,11 @@ export interface Keyword {
 }
 
 const sentimentColors: Record<string, { bg: string; text: string; label: string }> = {
-  positive: { bg: 'success.lighter', text: 'success.700', label: i18n.t('components.ai_analyzer.k0') },
+  positive: {
+    bg: 'success.lighter',
+    text: 'success.700',
+    label: i18n.t('components.ai_analyzer.k0'),
+  },
   negative: { bg: 'error.lighter', text: 'error.dark', label: i18n.t('components.ai_analyzer.k1') },
   neutral: { bg: 'grey.100', text: 'grey.700', label: i18n.t('components.ai_analyzer.k2') },
 };
@@ -333,7 +337,8 @@ export function AIAnalyzer({
                           variant='caption'
                           sx={{ color: 'text.secondary' }}
                         >
-                          [i18n.t('components.ai_analyzer.k11')]: {Math.round(sentimentResult.confidence * 100)}%
+                          [i18n.t('components.ai_analyzer.k11')]:{' '}
+                          {Math.round(sentimentResult.confidence * 100)}%
                         </Typography>
                       </Box>
                     </Box>
@@ -501,7 +506,8 @@ export function AIAnalyzer({
                           variant='caption'
                           sx={{ color: 'text.secondary' }}
                         >
-                          [i18n.t('components.ai_analyzer.k16')]: {Math.round(classificationResult.confidence * 100)}%
+                          [i18n.t('components.ai_analyzer.k16')]:{' '}
+                          {Math.round(classificationResult.confidence * 100)}%
                         </Typography>
                       </Box>
                     </Box>
@@ -619,7 +625,8 @@ export function AIAnalyzer({
                         variant='body2'
                         sx={{ color: 'text.secondary', mt: 0.5 }}
                       >
-                        {i18n.t('components.ai_analyzer.k0')} {entitiesResult.length} {i18n.t('components.ai_analyzer.k1')}
+                        {i18n.t('components.ai_analyzer.k0')} {entitiesResult.length}{' '}
+                        {i18n.t('components.ai_analyzer.k1')}
                       </Typography>
                     </Box>
                   </Box>
@@ -708,7 +715,8 @@ export function AIAnalyzer({
                         variant='body2'
                         sx={{ color: 'text.secondary', mt: 0.5 }}
                       >
-                        {i18n.t('components.ai_analyzer.k2')} {keywordsResult.length} {i18n.t('components.ai_analyzer.k3')}
+                        {i18n.t('components.ai_analyzer.k2')} {keywordsResult.length}{' '}
+                        {i18n.t('components.ai_analyzer.k3')}
                       </Typography>
                     </Box>
                   </Box>

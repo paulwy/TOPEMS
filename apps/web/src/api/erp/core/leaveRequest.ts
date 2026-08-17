@@ -70,8 +70,9 @@ export interface LeaveRequestQueryParams extends PaginationParams {
 // ============ Helper ============
 
 const resolvePageSize = (params?: PaginationParams): string | undefined => {
-  const ps = (params as { pageSize?: number } | undefined)?.pageSize
-    ?? (params as { pagesize?: number } | undefined)?.pagesize;
+  const ps =
+    (params as { pageSize?: number } | undefined)?.pageSize ??
+    (params as { pagesize?: number } | undefined)?.pagesize;
   return ps ? ps.toString() : undefined;
 };
 
@@ -88,9 +89,7 @@ export const leaveRequestApi = {
     if (params?.leave_type) sp.set('leave_type', params.leave_type);
     if (params?.employee_id) sp.set('employee_id', params.employee_id);
     const qs = sp.toString();
-    return apiClient.erp.get<LeaveRequestListResponse>(
-      `/leave-requests${qs ? `?${qs}` : ''}`
-    );
+    return apiClient.erp.get<LeaveRequestListResponse>(`/leave-requests${qs ? `?${qs}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<LeaveRequest>> {
@@ -114,17 +113,11 @@ export const leaveRequestApi = {
   },
 
   async submit(id: string, data?: SubmitLeaveRequestRequest): Promise<ApiResponse<LeaveRequest>> {
-    return apiClient.erp.post<LeaveRequest>(
-      `/leave-requests/${id}/submit`,
-      data || {}
-    );
+    return apiClient.erp.post<LeaveRequest>(`/leave-requests/${id}/submit`, data || {});
   },
 
   async approve(id: string, data?: ApproveLeaveRequestRequest): Promise<ApiResponse<LeaveRequest>> {
-    return apiClient.erp.post<LeaveRequest>(
-      `/leave-requests/${id}/approve`,
-      data || {}
-    );
+    return apiClient.erp.post<LeaveRequest>(`/leave-requests/${id}/approve`, data || {});
   },
 
   async reject(id: string, data: RejectLeaveRequestRequest): Promise<ApiResponse<LeaveRequest>> {

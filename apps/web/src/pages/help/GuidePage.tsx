@@ -32,7 +32,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
@@ -176,7 +175,8 @@ export const GuidePage: React.FC = () => {
                 variant='body2'
                 color='text.secondary'
               >
-                {i18n.t('pages.guide_page.k0')} {completedCount}/{guides.length} {i18n.t('pages.guide_page.k1')}
+                {i18n.t('pages.guide_page.k0')} {completedCount}/{guides.length}{' '}
+                {i18n.t('pages.guide_page.k1')}
               </Typography>
             </Box>
           </Box>
@@ -370,7 +370,9 @@ export const GuidePage: React.FC = () => {
                         variant={guide.isActive ? 'outlined' : 'contained'}
                         sx={{ textTransform: 'none', borderRadius: 1 }}
                       >
-                        {guide.isActive ? i18n.t('help.guide_page.k7') : i18n.t('help.guide_page.k6')}
+                        {guide.isActive
+                          ? i18n.t('help.guide_page.k7')
+                          : i18n.t('help.guide_page.k6')}
                         <ChevronRight size={16} />
                       </Button>
                     </Box>
@@ -427,7 +429,8 @@ export const GuidePage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  📖 <strong>{i18n.t('help.guide_page.k8')}</strong>：{i18n.t('pages.guide_page.k8')}→进阶→高级的顺序学习
+                  📖 <strong>{i18n.t('help.guide_page.k8')}</strong>：
+                  {i18n.t('pages.guide_page.k8')}→进阶→高级的顺序学习
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
@@ -435,7 +438,8 @@ export const GuidePage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  👀 <strong>{i18n.t('help.guide_page.k9')}</strong>：{i18n.t('pages.guide_page.k11')}
+                  👀 <strong>{i18n.t('help.guide_page.k9')}</strong>：
+                  {i18n.t('pages.guide_page.k11')}
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
@@ -443,7 +447,8 @@ export const GuidePage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  💬 <strong>{i18n.t('help.guide_page.k10')}</strong>：{i18n.t('pages.guide_page.k12')}
+                  💬 <strong>{i18n.t('help.guide_page.k10')}</strong>：
+                  {i18n.t('pages.guide_page.k12')}
                 </Typography>
               </Grid>
             </Grid>

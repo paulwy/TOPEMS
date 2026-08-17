@@ -52,7 +52,14 @@ export const DashboardTemplateManager: React.FC<{
     isactive: true,
   });
 
-  const categories = ['all', i18n.t('components.dashboard_template_manager.k5'), i18n.t('components.dashboard_template_manager.k4'), i18n.t('components.dashboard_template_manager.k3'), i18n.t('components.dashboard_template_manager.k2'), i18n.t('components.dashboard_template_manager.k1')];
+  const categories = [
+    'all',
+    i18n.t('components.dashboard_template_manager.k5'),
+    i18n.t('components.dashboard_template_manager.k4'),
+    i18n.t('components.dashboard_template_manager.k3'),
+    i18n.t('components.dashboard_template_manager.k2'),
+    i18n.t('components.dashboard_template_manager.k1'),
+  ];
 
   const loadTemplates = async () => {
     setLoading(true);
@@ -127,7 +134,9 @@ export const DashboardTemplateManager: React.FC<{
   const handleCreateDashboard = async (templateId: string) => {
     try {
       const template = templates.find((t) => t.id === templateId);
-      const name = template ? `${template.name} ${i18n.t('components.dashboard_template_manager.k0')}` : i18n.t('components.dashboard_template_manager.k9');
+      const name = template
+        ? `${template.name} ${i18n.t('components.dashboard_template_manager.k0')}`
+        : i18n.t('components.dashboard_template_manager.k9');
       const res = await createDashboardFromTemplate(templateId, { name, is_public: false });
       if (res.success) {
         onDashboardCreated?.();
@@ -231,8 +240,12 @@ export const DashboardTemplateManager: React.FC<{
           }}
         >
           <FolderOpen sx={{ width: 64, height: 64, mb: 3, opacity: 0.5 }} />
-          <Typography variant='h6'>{i18n.t('components.dashboard_template_manager.k14')}</Typography>
-          <Typography variant='body2'>{i18n.t('components.dashboard_template_manager.k15')}</Typography>
+          <Typography variant='h6'>
+            {i18n.t('components.dashboard_template_manager.k14')}
+          </Typography>
+          <Typography variant='body2'>
+            {i18n.t('components.dashboard_template_manager.k15')}
+          </Typography>
           <Button
             variant='contained'
             startIcon={<Plus />}
@@ -392,7 +405,11 @@ export const DashboardTemplateManager: React.FC<{
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{editingTemplate ? i18n.t('components.dashboard_template_manager.k23') : i18n.t('components.dashboard_template_manager.k22')}</DialogTitle>
+        <DialogTitle>
+          {editingTemplate
+            ? i18n.t('components.dashboard_template_manager.k23')
+            : i18n.t('components.dashboard_template_manager.k22')}
+        </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
           <TextField
             label={i18n.t('components.dashboard_template_manager.k24')}
@@ -490,7 +507,9 @@ export const DashboardTemplateManager: React.FC<{
             onClick={editingTemplate ? handleUpdateTemplate : handleCreateTemplate}
             disabled={!newTemplate.name.trim()}
           >
-            {editingTemplate ? i18n.t('components.dashboard_template_manager.k31') : i18n.t('components.dashboard_template_manager.k30')}
+            {editingTemplate
+              ? i18n.t('components.dashboard_template_manager.k31')
+              : i18n.t('components.dashboard_template_manager.k30')}
           </Button>
         </DialogActions>
       </Dialog>

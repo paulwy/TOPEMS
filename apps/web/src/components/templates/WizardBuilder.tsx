@@ -317,7 +317,9 @@ export function WizardBuilder({
                 initialValues={values}
                 showReset={false}
                 submitLabel={
-                  isLastStep ? config.finishButtonText || i18n.t('templates.wizard_builder.k1') : config.nextButtonText || i18n.t('templates.wizard_builder.k0')
+                  isLastStep
+                    ? config.finishButtonText || i18n.t('templates.wizard_builder.k1')
+                    : config.nextButtonText || i18n.t('templates.wizard_builder.k0')
                 }
                 onSubmit={async () => {
                   handleNext();
@@ -444,7 +446,9 @@ export function WizardBuilder({
           onClick={handleNext}
           disabled={disabled}
         >
-          {isLastStep ? config.finishButtonText || i18n.t('templates.wizard_builder.k4') : config.nextButtonText || i18n.t('templates.wizard_builder.k3')}
+          {isLastStep
+            ? config.finishButtonText || i18n.t('templates.wizard_builder.k4')
+            : config.nextButtonText || i18n.t('templates.wizard_builder.k3')}
         </Button>
       </Box>
     </Paper>

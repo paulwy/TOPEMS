@@ -20,10 +20,7 @@
  */
 
 import apiClient from '../client';
-import type {
-  AlertRuleRecord,
-  AlertRuleCreateRequest,
-} from './metrics';
+import type { AlertRuleRecord, AlertRuleCreateRequest } from './metrics';
 import {
   toOpenApiRequestBody,
   type AdaptedRequestBody,
@@ -42,9 +39,7 @@ export const ruleTypedApi = {
   /**
    * get_rule operation（openapi: GET /api/monitor/rules/{id}）
    */
-  get: async (
-    id: string,
-  ): Promise<TypedApiResponse<AlertRuleRecord, 'get_rule'>> => {
+  get: async (id: string): Promise<TypedApiResponse<AlertRuleRecord, 'get_rule'>> => {
     return apiClient.monitor.get(`/rules/${id}`);
   },
 
@@ -53,12 +48,9 @@ export const ruleTypedApi = {
    * Request Body: AlertRuleCreateRequest（发送前 adaptReverse → snake_case）
    */
   create: async (
-    data: AdaptedRequestBody<'create_rule'> | AlertRuleCreateRequest,
+    data: AdaptedRequestBody<'create_rule'> | AlertRuleCreateRequest
   ): Promise<TypedApiResponse<AlertRuleRecord, 'create_rule'>> => {
-    return apiClient.monitor.post(
-      '/rules',
-      toOpenApiRequestBody(data as Record<string, unknown>),
-    );
+    return apiClient.monitor.post('/rules', toOpenApiRequestBody(data as Record<string, unknown>));
   },
 
   /**
@@ -66,20 +58,18 @@ export const ruleTypedApi = {
    */
   update: async (
     id: string,
-    data: AdaptedRequestBody<'update_rule'> | AlertRuleCreateRequest,
+    data: AdaptedRequestBody<'update_rule'> | AlertRuleCreateRequest
   ): Promise<TypedApiResponse<AlertRuleRecord, 'update_rule'>> => {
     return apiClient.monitor.put(
       `/rules/${id}`,
-      toOpenApiRequestBody(data as Record<string, unknown>),
+      toOpenApiRequestBody(data as Record<string, unknown>)
     );
   },
 
   /**
    * delete_rule operation（openapi: DELETE /api/monitor/rules/{id}）
    */
-  delete: async (
-    id: string,
-  ): Promise<TypedApiResponse<{ id: string }, 'delete_rule'>> => {
+  delete: async (id: string): Promise<TypedApiResponse<{ id: string }, 'delete_rule'>> => {
     return apiClient.monitor.delete(`/rules/${id}`);
   },
 };

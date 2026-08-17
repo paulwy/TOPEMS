@@ -14,6 +14,7 @@ import {
 import i18n from '@/i18n';
 import { CheckCircle, XCircle, Loader2, ArrowRightLeft } from 'lucide-react';
 import type { Approval } from '@/api/workflow';
+
 interface WorkflowApprovalActionsProps {
   approval: Approval | null;
   showApprovalModal: boolean;
@@ -77,14 +78,18 @@ export const WorkflowApprovalActions: React.FC<WorkflowApprovalActionsProps> = (
                 variant='body2'
                 sx={{ color: 'grey.600', mb: 1 }}
               >
-                {i18n.t('workflow.approval_detail.dialog.task_with_val', { name: approval.task_name })}
+                {i18n.t('workflow.approval_detail.dialog.task_with_val', {
+                  name: approval.task_name,
+                })}
               </Typography>
               {approval.node_id && (
                 <Typography
                   variant='body2'
                   sx={{ color: 'grey.600', mb: 1 }}
                 >
-                  {i18n.t('workflow.approval_detail.dialog.node_with_val', { name: approval.node_id })}
+                  {i18n.t('workflow.approval_detail.dialog.node_with_val', {
+                    name: approval.node_id,
+                  })}
                 </Typography>
               )}
             </>

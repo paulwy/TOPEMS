@@ -111,8 +111,7 @@ const mockMessages: Message[] = [
   {
     id: '2',
     role: 'assistant',
-    content:
-      i18n.t('pages.ai_chat_page.k1'),
+    content: i18n.t('pages.ai_chat_page.k1'),
     timestamp: new Date(Date.now() - 280000),
     type: 'qa',
   },
@@ -126,8 +125,7 @@ const mockMessages: Message[] = [
   {
     id: '4',
     role: 'assistant',
-    content:
-      i18n.t('pages.ai_chat_page.k2'),
+    content: i18n.t('pages.ai_chat_page.k2'),
     timestamp: new Date(Date.now() - 30000),
     type: 'qa',
   },
@@ -388,7 +386,11 @@ export const AiChatPage: React.FC = () => {
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                 {[
                   { id: 'qa', label: i18n.t('ai.chat.mode.qa'), icon: <Lightbulb size={14} /> },
-                  { id: 'summary', label: i18n.t('ai.chat.mode.summary'), icon: <FileText size={14} /> },
+                  {
+                    id: 'summary',
+                    label: i18n.t('ai.chat.mode.summary'),
+                    icon: <FileText size={14} />,
+                  },
                   { id: 'code', label: i18n.t('ai.chat.mode.code'), icon: <Code size={14} /> },
                   {
                     id: 'general',
@@ -619,7 +621,9 @@ export const AiChatPage: React.FC = () => {
                       variant='body2'
                       sx={{ fontWeight: 500 }}
                     >
-                      {msg.role === 'user' ? i18n.t('ai.chat.role.user') : i18n.t('ai.chat.role.assistant')}
+                      {msg.role === 'user'
+                        ? i18n.t('ai.chat.role.user')
+                        : i18n.t('ai.chat.role.assistant')}
                     </Typography>
                     <Typography
                       variant='caption'
@@ -857,7 +861,9 @@ export const AiChatPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDocUploadDialog(false)}>{i18n.t('ai.chat.action.cancel')}</Button>
+          <Button onClick={() => setDocUploadDialog(false)}>
+            {i18n.t('ai.chat.action.cancel')}
+          </Button>
           <Button
             variant='contained'
             onClick={handleStartSummary}

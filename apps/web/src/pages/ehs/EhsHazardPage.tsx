@@ -12,12 +12,11 @@ import type { SafetyIssue, CreateSafetyIssueRequest } from '@/api/ehs';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const safetyIssueApi = {
   list: ehsApi.listSafetyIssues,
@@ -30,7 +29,7 @@ const baseAdapter = createCrudPageAdapter<SafetyIssue, CreateSafetyIssueRequest>
 
 const safetyIssueAdapter: CrudApiAdapter<SafetyIssue> = {
   list: async (params) => {
-  const { t } = useTranslation('ehs');
+    const t = i18n.getFixedT(null, 'ehs');
     const response = await ehsApi.listSafetyIssues({
       page: params?.page,
       pagesize: params?.pageSize,

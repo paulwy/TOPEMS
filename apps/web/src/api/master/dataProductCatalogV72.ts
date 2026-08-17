@@ -6,14 +6,7 @@ import type { ApiResponse } from '../client';
 export type ProductStatus = 'draft' | 'review' | 'published' | 'deprecated' | 'archived';
 export type ProductType = 'dataset' | 'api' | 'report' | 'model' | 'dashboard' | 'template';
 export type ProductCategory =
-  | 'customer'
-  | 'finance'
-  | 'inventory'
-  | 'sales'
-  | 'hr'
-  | 'operations'
-  | 'analytics'
-  | 'master';
+  'customer' | 'finance' | 'inventory' | 'sales' | 'hr' | 'operations' | 'analytics' | 'master';
 export type ConsumerRole = 'viewer' | 'editor' | 'admin';
 export type BundleStatus = 'active' | 'inactive' | 'archived';
 
@@ -180,7 +173,9 @@ export const dataProductCatalogApiV72 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<DataProduct>>(`/mdm-v72/products${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<DataProduct>>(
+      `/mdm-v72/products${s ? `?${s}` : ''}`
+    );
   },
 
   async updateProduct(id: string, data: UpdateProductRequest): Promise<ApiResponse<DataProduct>> {
@@ -202,7 +197,7 @@ export const dataProductCatalogApiV72 = {
 
   async createProductVersion(
     productId: string,
-    data: { version: string; changelog: string; attributes?: Record<string, unknown> },
+    data: { version: string; changelog: string; attributes?: Record<string, unknown> }
   ): Promise<ApiResponse<ProductVersion>> {
     return apiClient.master.post<ProductVersion>(`/mdm-v72/products/${productId}/versions`, data);
   },
@@ -210,7 +205,7 @@ export const dataProductCatalogApiV72 = {
   async setCurrentVersion(productId: string, versionId: string): Promise<ApiResponse<DataProduct>> {
     return apiClient.master.post<DataProduct>(
       `/mdm-v72/products/${productId}/versions/${versionId}/set-current`,
-      {},
+      {}
     );
   },
 
@@ -236,12 +231,15 @@ export const dataProductCatalogApiV72 = {
   },
 
   // ===== 产品消费者管理 =====
-  async listProductConsumers(productId: string, params?: {
-    role?: ConsumerRole;
-    status?: 'active' | 'suspended' | 'expired';
-    page?: number;
-    pageSize?: number;
-  }): Promise<ApiResponse<PaginatedResponse<ProductConsumer>>> {
+  async listProductConsumers(
+    productId: string,
+    params?: {
+      role?: ConsumerRole;
+      status?: 'active' | 'suspended' | 'expired';
+      page?: number;
+      pageSize?: number;
+    }
+  ): Promise<ApiResponse<PaginatedResponse<ProductConsumer>>> {
     const qs = new URLSearchParams();
     if (params?.role) qs.set('role', params.role);
     if (params?.status) qs.set('status', params.status);
@@ -253,27 +251,30 @@ export const dataProductCatalogApiV72 = {
     );
   },
 
-  async grantAccess(productId: string, data: GrantAccessRequest): Promise<ApiResponse<ProductConsumer>> {
-    return apiClient.master.post<ProductConsumer>(
-      `/mdm-v72/products/${productId}/consumers`,
-      data,
-    );
+  async grantAccess(
+    productId: string,
+    data: GrantAccessRequest
+  ): Promise<ApiResponse<ProductConsumer>> {
+    return apiClient.master.post<ProductConsumer>(`/mdm-v72/products/${productId}/consumers`, data);
   },
 
-  async revokeAccess(productId: string, consumerId: string): Promise<ApiResponse<{ revoked: boolean }>> {
+  async revokeAccess(
+    productId: string,
+    consumerId: string
+  ): Promise<ApiResponse<{ revoked: boolean }>> {
     return apiClient.master.delete<{ revoked: boolean }>(
-      `/mdm-v72/products/${productId}/consumers/${consumerId}`,
+      `/mdm-v72/products/${productId}/consumers/${consumerId}`
     );
   },
 
   async updateConsumerRole(
     productId: string,
     consumerId: string,
-    role: ConsumerRole,
+    role: ConsumerRole
   ): Promise<ApiResponse<ProductConsumer>> {
     return apiClient.master.patch<ProductConsumer>(
       `/mdm-v72/products/${productId}/consumers/${consumerId}`,
-      { role },
+      { role }
     );
   },
 
@@ -293,15 +294,17 @@ export const dataProductCatalogApiV72 = {
     return apiClient.master.get<DataProduct[]>(`/mdm-v72/products/popular${s ? `?${s}` : ''}`);
   },
 
-  async getProductCatalogStats(): Promise<ApiResponse<{
-    total_products: number;
-    published_products: number;
-    draft_products: number;
-    deprecated_products: number;
-    total_consumers: number;
-    product_type_distribution: Record<ProductType, number>;
-    category_distribution: Record<ProductCategory, number>;
-  }>> {
+  async getProductCatalogStats(): Promise<
+    ApiResponse<{
+      total_products: number;
+      published_products: number;
+      draft_products: number;
+      deprecated_products: number;
+      total_consumers: number;
+      product_type_distribution: Record<ProductType, number>;
+      category_distribution: Record<ProductCategory, number>;
+    }>
+  > {
     return apiClient.master.get('/mdm-v72/stats');
   },
 
@@ -324,7 +327,9 @@ export const dataProductCatalogApiV72 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<ProductBundle>>(`/mdm-v72/bundles${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<ProductBundle>>(
+      `/mdm-v72/bundles${s ? `?${s}` : ''}`
+    );
   },
 
   async updateBundle(id: string, data: UpdateBundleRequest): Promise<ApiResponse<ProductBundle>> {
@@ -340,11 +345,18 @@ export const dataProductCatalogApiV72 = {
     return apiClient.master.get<ProductTag[]>('/mdm-v72/tags');
   },
 
-  async createTag(data: { name: string; color?: string; description?: string }): Promise<ApiResponse<ProductTag>> {
+  async createTag(data: {
+    name: string;
+    color?: string;
+    description?: string;
+  }): Promise<ApiResponse<ProductTag>> {
     return apiClient.master.post<ProductTag>('/mdm-v72/tags', data);
   },
 
-  async updateTag(id: string, data: { name?: string; color?: string; description?: string }): Promise<ApiResponse<ProductTag>> {
+  async updateTag(
+    id: string,
+    data: { name?: string; color?: string; description?: string }
+  ): Promise<ApiResponse<ProductTag>> {
     return apiClient.master.put<ProductTag>(`/mdm-v72/tags/${id}`, data);
   },
 

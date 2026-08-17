@@ -6,6 +6,7 @@ import React from 'react';
 import { Box, TextField, InputAdornment, Tabs, Tab } from '@mui/material';
 import { Search } from 'lucide-react';
 import i18n from '@/i18n';
+
 interface MobileProductionFiltersProps {
   activeTab: number;
   onTabChange: (event: React.SyntheticEvent, newValue: number) => void;

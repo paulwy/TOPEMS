@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type TestType = 'unit' | 'integration' | 'e2e';
 export type TestPriority = 'low' | 'medium' | 'high' | 'critical';
 export type TestStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
@@ -73,10 +74,26 @@ const DEFAULT_SCENARIOS: TestScenario[] = [
     name: i18n.t('ai.smart-testing.k0'),
     type: 'e2e',
     steps: [
-      { name: i18n.t('ai.smart-testing.k2'), action: 'navigate("/login")', expected: i18n.t('ai.smart-testing.k1') },
-      { name: i18n.t('ai.smart-testing.k4'), action: 'fill("username", "admin")', expected: i18n.t('ai.smart-testing.k3') },
-      { name: i18n.t('ai.smart-testing.k6'), action: 'fill("password", "password123")', expected: i18n.t('ai.smart-testing.k5') },
-      { name: i18n.t('ai.smart-testing.k8'), action: 'click("login-btn")', expected: i18n.t('ai.smart-testing.k7') },
+      {
+        name: i18n.t('ai.smart-testing.k2'),
+        action: 'navigate("/login")',
+        expected: i18n.t('ai.smart-testing.k1'),
+      },
+      {
+        name: i18n.t('ai.smart-testing.k4'),
+        action: 'fill("username", "admin")',
+        expected: i18n.t('ai.smart-testing.k3'),
+      },
+      {
+        name: i18n.t('ai.smart-testing.k6'),
+        action: 'fill("password", "password123")',
+        expected: i18n.t('ai.smart-testing.k5'),
+      },
+      {
+        name: i18n.t('ai.smart-testing.k8'),
+        action: 'click("login-btn")',
+        expected: i18n.t('ai.smart-testing.k7'),
+      },
     ],
     expected_result: i18n.t('ai.smart-testing.k9'),
     priority: 'critical',
@@ -90,9 +107,21 @@ const DEFAULT_SCENARIOS: TestScenario[] = [
     name: i18n.t('ai.smart-testing.k10'),
     type: 'integration',
     steps: [
-      { name: i18n.t('ai.smart-testing.k12'), action: 'fetch("/api/items?page=1")', expected: i18n.t('ai.smart-testing.k11') },
-      { name: i18n.t('ai.smart-testing.k14'), action: 'click("page-2")', expected: i18n.t('ai.smart-testing.k13') },
-      { name: i18n.t('ai.smart-testing.k16'), action: 'assert(items.length > 0)', expected: i18n.t('ai.smart-testing.k15') },
+      {
+        name: i18n.t('ai.smart-testing.k12'),
+        action: 'fetch("/api/items?page=1")',
+        expected: i18n.t('ai.smart-testing.k11'),
+      },
+      {
+        name: i18n.t('ai.smart-testing.k14'),
+        action: 'click("page-2")',
+        expected: i18n.t('ai.smart-testing.k13'),
+      },
+      {
+        name: i18n.t('ai.smart-testing.k16'),
+        action: 'assert(items.length > 0)',
+        expected: i18n.t('ai.smart-testing.k15'),
+      },
     ],
     expected_result: i18n.t('ai.smart-testing.k17'),
     priority: 'high',
@@ -106,10 +135,26 @@ const DEFAULT_SCENARIOS: TestScenario[] = [
     name: i18n.t('ai.smart-testing.k18'),
     type: 'unit',
     steps: [
-      { name: i18n.t('ai.smart-testing.k20'), action: 'createForm()', expected: i18n.t('ai.smart-testing.k19') },
-      { name: i18n.t('ai.smart-testing.k22'), action: 'submit()', expected: i18n.t('ai.smart-testing.k21') },
-      { name: i18n.t('ai.smart-testing.k24'), action: 'fill(requiredFields)', expected: i18n.t('ai.smart-testing.k23') },
-      { name: i18n.t('ai.smart-testing.k26'), action: 'submit()', expected: i18n.t('ai.smart-testing.k25') },
+      {
+        name: i18n.t('ai.smart-testing.k20'),
+        action: 'createForm()',
+        expected: i18n.t('ai.smart-testing.k19'),
+      },
+      {
+        name: i18n.t('ai.smart-testing.k22'),
+        action: 'submit()',
+        expected: i18n.t('ai.smart-testing.k21'),
+      },
+      {
+        name: i18n.t('ai.smart-testing.k24'),
+        action: 'fill(requiredFields)',
+        expected: i18n.t('ai.smart-testing.k23'),
+      },
+      {
+        name: i18n.t('ai.smart-testing.k26'),
+        action: 'submit()',
+        expected: i18n.t('ai.smart-testing.k25'),
+      },
     ],
     expected_result: i18n.t('ai.smart-testing.k27'),
     priority: 'high',
@@ -123,10 +168,26 @@ const DEFAULT_SCENARIOS: TestScenario[] = [
     name: i18n.t('ai.smart-testing.api_0'),
     type: 'unit',
     steps: [
-      { name: i18n.t('ai.smart-testing.k29'), action: 'fetch("/api/data")', expected: i18n.t('ai.smart-testing.k28') },
-      { name: i18n.t('ai.smart-testing.k31'), action: 'fetch("/api/data")', expected: i18n.t('ai.smart-testing.k30') },
-      { name: i18n.t('ai.smart-testing.k33'), action: 'clearCache()', expected: i18n.t('ai.smart-testing.k32') },
-      { name: i18n.t('ai.smart-testing.k35'), action: 'fetch("/api/data")', expected: i18n.t('ai.smart-testing.k34') },
+      {
+        name: i18n.t('ai.smart-testing.k29'),
+        action: 'fetch("/api/data")',
+        expected: i18n.t('ai.smart-testing.k28'),
+      },
+      {
+        name: i18n.t('ai.smart-testing.k31'),
+        action: 'fetch("/api/data")',
+        expected: i18n.t('ai.smart-testing.k30'),
+      },
+      {
+        name: i18n.t('ai.smart-testing.k33'),
+        action: 'clearCache()',
+        expected: i18n.t('ai.smart-testing.k32'),
+      },
+      {
+        name: i18n.t('ai.smart-testing.k35'),
+        action: 'fetch("/api/data")',
+        expected: i18n.t('ai.smart-testing.k34'),
+      },
     ],
     expected_result: i18n.t('ai.smart-testing.k36'),
     priority: 'medium',
@@ -140,9 +201,21 @@ const DEFAULT_SCENARIOS: TestScenario[] = [
     name: i18n.t('ai.smart-testing.k37'),
     type: 'integration',
     steps: [
-      { name: i18n.t('ai.smart-testing.k39'), action: 'getTheme()', expected: i18n.t('ai.smart-testing.k38') },
-      { name: i18n.t('ai.smart-testing.k41'), action: 'toggleTheme()', expected: i18n.t('ai.smart-testing.k40') },
-      { name: i18n.t('ai.smart-testing.k43'), action: 'reload()', expected: i18n.t('ai.smart-testing.k42') },
+      {
+        name: i18n.t('ai.smart-testing.k39'),
+        action: 'getTheme()',
+        expected: i18n.t('ai.smart-testing.k38'),
+      },
+      {
+        name: i18n.t('ai.smart-testing.k41'),
+        action: 'toggleTheme()',
+        expected: i18n.t('ai.smart-testing.k40'),
+      },
+      {
+        name: i18n.t('ai.smart-testing.k43'),
+        action: 'reload()',
+        expected: i18n.t('ai.smart-testing.k42'),
+      },
     ],
     expected_result: i18n.t('ai.smart-testing.k44'),
     priority: 'medium',
@@ -204,10 +277,26 @@ class SmartTesterImpl {
         name: `${i18n.t('ai.smart-testing.ai_1')}${module} #${i + 1}`,
         type,
         steps: [
-          { name: i18n.t('ai.smart-testing.k46'), action: `setup_${module}()`, expected: i18n.t('ai.smart-testing.k45') },
-          { name: i18n.t('ai.smart-testing.k48'), action: `execute_${type}_test()`, expected: i18n.t('ai.smart-testing.k47') },
-          { name: i18n.t('ai.smart-testing.k50'), action: 'assert_result()', expected: i18n.t('ai.smart-testing.k49') },
-          { name: i18n.t('ai.smart-testing.k52'), action: 'teardown()', expected: i18n.t('ai.smart-testing.k51') },
+          {
+            name: i18n.t('ai.smart-testing.k46'),
+            action: `setup_${module}()`,
+            expected: i18n.t('ai.smart-testing.k45'),
+          },
+          {
+            name: i18n.t('ai.smart-testing.k48'),
+            action: `execute_${type}_test()`,
+            expected: i18n.t('ai.smart-testing.k47'),
+          },
+          {
+            name: i18n.t('ai.smart-testing.k50'),
+            action: 'assert_result()',
+            expected: i18n.t('ai.smart-testing.k49'),
+          },
+          {
+            name: i18n.t('ai.smart-testing.k52'),
+            action: 'teardown()',
+            expected: i18n.t('ai.smart-testing.k51'),
+          },
         ],
         expected_result: `${type.toUpperCase()}${i18n.t('ai.smart-testing.k2')}`,
         priority,

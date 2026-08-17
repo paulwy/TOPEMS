@@ -25,7 +25,7 @@ export interface ProductionOrder {
 }
 
 export type ProductionOrderStatus =
-  | 'draft' | 'released' | 'in_progress' | 'completed' | 'cancelled';
+  'draft' | 'released' | 'in_progress' | 'completed' | 'cancelled';
 export type ProductionOrderSource = 'manual' | 'erp_sales_order' | 'mrp';
 
 export interface CreateProductionOrderRequest {
@@ -70,8 +70,14 @@ export interface WorkOrder {
 }
 
 export type WorkOrderStatus =
-  | 'created' | 'dispatched' | 'material_picked' | 'working'
-  | 'reporting' | 'paused' | 'completed' | 'cancelled';
+  | 'created'
+  | 'dispatched'
+  | 'material_picked'
+  | 'working'
+  | 'reporting'
+  | 'paused'
+  | 'completed'
+  | 'cancelled';
 
 export interface CreateWorkOrderRequest {
   order_id: string;
@@ -111,8 +117,7 @@ export interface WorkReport {
   updated_at: string;
 }
 
-export type WorkReportStatus =
-  | 'draft' | 'submitted' | 'archived' | 'rejected' | 'reworking';
+export type WorkReportStatus = 'draft' | 'submitted' | 'archived' | 'rejected' | 'reworking';
 
 export interface CreateWorkReportRequest {
   work_order_id: string;
@@ -144,8 +149,13 @@ export interface QualityInspection {
 }
 
 export type QualityInspectionResult =
-  | 'pending' | 'inspecting' | 'passed' | 'failed'
-  | 'concession_received' | 'rework_assigned' | 'scrapped';
+  | 'pending'
+  | 'inspecting'
+  | 'passed'
+  | 'failed'
+  | 'concession_received'
+  | 'rework_assigned'
+  | 'scrapped';
 
 export interface CreateQualityInspectionRequest {
   work_report_id: string;
@@ -165,8 +175,7 @@ export interface TraceabilityRecord {
   updated_at: string;
 }
 
-export type TraceabilityStatus =
-  | 'active' | 'frozen' | 'locked' | 'investigating' | 'resolved';
+export type TraceabilityStatus = 'active' | 'frozen' | 'locked' | 'investigating' | 'resolved';
 
 // ==================== E-6 Equipment ====================
 export interface Equipment {
@@ -181,7 +190,7 @@ export interface Equipment {
 }
 
 export type EquipmentStatus =
-  | 'running' | 'idle' | 'calibrating' | 'down' | 'maintenance' | 'scrapped';
+  'running' | 'idle' | 'calibrating' | 'down' | 'maintenance' | 'scrapped';
 
 // ==================== E-7 AnomalyRecord ====================
 export interface AnomalyRecord {
@@ -200,7 +209,7 @@ export interface AnomalyRecord {
 
 export type AnomalySeverity = 'low' | 'medium' | 'high' | 'critical';
 export type AnomalyStatus =
-  | 'monitoring' | 'triggered' | 'acknowledged' | 'handling' | 'closed' | 'false_alarm_verified';
+  'monitoring' | 'triggered' | 'acknowledged' | 'handling' | 'closed' | 'false_alarm_verified';
 
 // ==================== E-8 EquipmentOeeSnapshot ====================
 export interface EquipmentOeeSnapshot {

@@ -58,7 +58,9 @@ export interface SafetyTrainingStatistics {
 }
 
 export const safetyTrainingApi = {
-  async listTrainings(params?: SafetyTrainingListQuery): Promise<ApiResponse<PaginatedResponse<SafetyTrainingItem>>> {
+  async listTrainings(
+    params?: SafetyTrainingListQuery
+  ): Promise<ApiResponse<PaginatedResponse<SafetyTrainingItem>>> {
     const qs = new URLSearchParams();
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));
@@ -74,11 +76,16 @@ export const safetyTrainingApi = {
     return apiClient.ehs.get<SafetyTrainingItem>(`/training/${id}`);
   },
 
-  async createTraining(data: CreateSafetyTrainingRequest): Promise<ApiResponse<SafetyTrainingItem>> {
+  async createTraining(
+    data: CreateSafetyTrainingRequest
+  ): Promise<ApiResponse<SafetyTrainingItem>> {
     return apiClient.ehs.post<SafetyTrainingItem>('/training', data);
   },
 
-  async updateTraining(id: string, data: UpdateSafetyTrainingRequest): Promise<ApiResponse<SafetyTrainingItem>> {
+  async updateTraining(
+    id: string,
+    data: UpdateSafetyTrainingRequest
+  ): Promise<ApiResponse<SafetyTrainingItem>> {
     return apiClient.ehs.put<SafetyTrainingItem>(`/training/${id}`, data);
   },
 

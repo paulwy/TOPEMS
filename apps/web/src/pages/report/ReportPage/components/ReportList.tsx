@@ -128,7 +128,8 @@ const ReportList: React.FC<ReportListProps> = ({
                       }}
                     >
                       <Calendar sx={{ width: 16, height: 16 }} />
-                      {i18n.t('pages.report_list.k2')}: {new Date(report.created_at).toLocaleDateString('zh-CN')}
+                      {i18n.t('pages.report_list.k2')}:{' '}
+                      {new Date(report.created_at).toLocaleDateString('zh-CN')}
                     </Box>
                     <Box
                       sx={{

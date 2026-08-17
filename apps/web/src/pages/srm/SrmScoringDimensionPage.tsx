@@ -8,11 +8,10 @@ import { Box, Card, CardContent, Typography } from '@mui/material';
 import { Sliders } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface ScoringDimension {
   id: string;
@@ -55,7 +54,8 @@ const scoringDimensionApiAdapter: CrudApiAdapter = {
     const response = await srmApi.createScoringDimension(
       data as unknown as Parameters<typeof srmApi.createScoringDimension>[0]
     );
-    if (!response.success || !response.data) throw new Error(i18n.t('pages.srm_scoring_dimension_page.k0'));
+    if (!response.success || !response.data)
+      throw new Error(i18n.t('pages.srm_scoring_dimension_page.k0'));
     return response.data as unknown as Record<string, unknown>;
   },
   update: async (id, data) => {
@@ -63,7 +63,8 @@ const scoringDimensionApiAdapter: CrudApiAdapter = {
       id,
       data as unknown as Parameters<typeof srmApi.updateScoringDimension>[1]
     );
-    if (!response.success || !response.data) throw new Error(i18n.t('pages.srm_scoring_dimension_page.k1'));
+    if (!response.success || !response.data)
+      throw new Error(i18n.t('pages.srm_scoring_dimension_page.k1'));
     return response.data as unknown as Record<string, unknown>;
   },
   delete: async (id) => {
@@ -97,15 +98,30 @@ const ScoringDimensionStats: React.FC = () => {
   }, [dimensions]);
 
   const statCards = [
-    { label: i18n.t('pages.srm_scoring_dimension_page.k3'), value: stats.total, color: ct.purple[500], bgColor: 'secondary.light' },
-    { label: i18n.t('pages.srm_scoring_dimension_page.k4'), value: stats.active, color: 'success.dark', bgColor: 'success.lighter' },
+    {
+      label: i18n.t('pages.srm_scoring_dimension_page.k3'),
+      value: stats.total,
+      color: ct.purple[500],
+      bgColor: 'secondary.light',
+    },
+    {
+      label: i18n.t('pages.srm_scoring_dimension_page.k4'),
+      value: stats.active,
+      color: 'success.dark',
+      bgColor: 'success.lighter',
+    },
     {
       label: i18n.t('pages.srm_scoring_dimension_page.k5'),
       value: `${stats.totalWeight}%`,
       color: stats.totalWeight === 100 ? 'success.dark' : 'warning.dark',
       bgColor: stats.totalWeight === 100 ? 'success.lighter' : 'warning.lighter',
     },
-    { label: i18n.t('pages.srm_scoring_dimension_page.k6'), value: stats.inactive, color: 'error.dark', bgColor: 'error.lighter' },
+    {
+      label: i18n.t('pages.srm_scoring_dimension_page.k6'),
+      value: stats.inactive,
+      color: 'error.dark',
+      bgColor: 'error.lighter',
+    },
   ];
 
   return (

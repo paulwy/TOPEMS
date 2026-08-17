@@ -60,9 +60,21 @@ export default function QmsFmeaDetailPage() {
       buckets[riskLevel(it.rpn)] += 1;
     });
     return [
-      { level: i18n.t('pages.qms_fmea_detail_page.200_0'), count: buckets.high, fill: designTokens.colors.error.main },
-      { level: i18n.t('pages.qms_fmea_detail_page.100199_3'), count: buckets.medium, fill: designTokens.colors.warning.main },
-      { level: i18n.t('pages.qms_fmea_detail_page.100_1'), count: buckets.low, fill: designTokens.colors.success.dark },
+      {
+        level: i18n.t('pages.qms_fmea_detail_page.200_0'),
+        count: buckets.high,
+        fill: designTokens.colors.error.main,
+      },
+      {
+        level: i18n.t('pages.qms_fmea_detail_page.100199_3'),
+        count: buckets.medium,
+        fill: designTokens.colors.warning.main,
+      },
+      {
+        level: i18n.t('pages.qms_fmea_detail_page.100_1'),
+        count: buckets.low,
+        fill: designTokens.colors.success.dark,
+      },
     ];
   }, [items]);
 
@@ -296,8 +308,12 @@ export default function QmsFmeaDetailPage() {
       )}
 
       <div className='rounded-lg border p-4'>
-        <p className='text-sm text-gray-600'>{i18n.t('qms:qms_fmea_detail_page.rpn_1')}<span className='font-bold text-red-600'>{maxRpn}</span>
-          <span className='ml-4'>{i18n.t('qms:qms_fmea_detail_page.rpn_0')}<span className='font-bold text-orange-600'>{avgRpn}</span>
+        <p className='text-sm text-gray-600'>
+          {i18n.t('qms:qms_fmea_detail_page.rpn_1')}
+          <span className='font-bold text-red-600'>{maxRpn}</span>
+          <span className='ml-4'>
+            {i18n.t('qms:qms_fmea_detail_page.rpn_0')}
+            <span className='font-bold text-orange-600'>{avgRpn}</span>
           </span>
         </p>
       </div>

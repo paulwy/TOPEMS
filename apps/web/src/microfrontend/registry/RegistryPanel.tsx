@@ -92,7 +92,11 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
     try {
       moduleRegistry.registerModule(newModule as any);
       setShowRegisterDialog(false);
-      setSnackbar({ open: true, message: `${i18n.t('microfrontend.registry_panel.k0')} ${newModule.id} ${i18n.t('microfrontend.registry_panel.k1')}`, type: 'success' });
+      setSnackbar({
+        open: true,
+        message: `${i18n.t('microfrontend.registry_panel.k0')} ${newModule.id} ${i18n.t('microfrontend.registry_panel.k1')}`,
+        type: 'success',
+      });
       setNewModule({
         id: '',
         name: '',
@@ -115,7 +119,11 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
   const handleUnregister = (moduleId: string) => {
     const success = moduleRegistry.unregisterModule(moduleId);
     if (success) {
-      setSnackbar({ open: true, message: `${i18n.t('microfrontend.registry_panel.k2')} ${moduleId} ${i18n.t('microfrontend.registry_panel.k3')}`, type: 'success' });
+      setSnackbar({
+        open: true,
+        message: `${i18n.t('microfrontend.registry_panel.k2')} ${moduleId} ${i18n.t('microfrontend.registry_panel.k3')}`,
+        type: 'success',
+      });
       if (selectedModule?.id === moduleId) {
         setSelectedModule(null);
       }
@@ -283,7 +291,8 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
           severity='warning'
           sx={{ mx: 2, mt: 2 }}
         >
-          {i18n.t('microfrontend.registry_panel.k0')} {circularResult.cycles.length} {i18n.t('microfrontend.registry_panel.k1')}
+          {i18n.t('microfrontend.registry_panel.k0')} {circularResult.cycles.length}{' '}
+          {i18n.t('microfrontend.registry_panel.k1')}
           <Box sx={{ mt: 1 }}>
             {circularResult.cycles.map((cycle, idx) => (
               <Typography
@@ -306,15 +315,33 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
           <Table size='small'>
             <TableHead>
               <TableRow sx={{ bgcolor: 'action.hover' }}>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.registry_panel.id_14')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.registry_panel.k15')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.registry_panel.k16')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.registry_panel.k17')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.registry_panel.k18')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.registry_panel.url_19')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.registry_panel.k20')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.registry_panel.k21')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.registry_panel.k22')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('microfrontend.registry_panel.id_14')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('microfrontend.registry_panel.k15')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('microfrontend.registry_panel.k16')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('microfrontend.registry_panel.k17')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('microfrontend.registry_panel.k18')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('microfrontend.registry_panel.url_19')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('microfrontend.registry_panel.k20')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('microfrontend.registry_panel.k21')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('microfrontend.registry_panel.k22')}
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -510,7 +537,8 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 1 }}
                 >
-                  {i18n.t('microfrontend.registry_panel.k2')}{selectedModule.dependencies.length})
+                  {i18n.t('microfrontend.registry_panel.k2')}
+                  {selectedModule.dependencies.length})
                 </Typography>
                 {selectedModule.dependencies.length === 0 ? (
                   <Typography
@@ -538,7 +566,8 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
                   variant='subtitle2'
                   sx={{ fontWeight: 600, mb: 1 }}
                 >
-                  {i18n.t('microfrontend.registry_panel.k3')}{selectedModule.exposes.length})
+                  {i18n.t('microfrontend.registry_panel.k3')}
+                  {selectedModule.exposes.length})
                 </Typography>
                 {selectedModule.exposes.length === 0 ? (
                   <Typography

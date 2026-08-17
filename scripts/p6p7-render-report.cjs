@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * 生成 P6+P7 合并的 Markdown 审计报告
  * 读取 scripts/tmp-output/ 下的 JSON 数据，渲染成最终交付文档
@@ -5,7 +6,48 @@
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
-const OUT = path.join(ROOT, 'scripts', 'tmp-output');
+
+// ===== CLI 解析 =====
+function parseArgs(argv) {
+  const opts = { help: false, apply: false, input: null, output: null };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === '--help' || a === '-h') opts.help = true;
+    else if (a === '--apply') opts.apply = true;
+    else if (a === '--input' && argv[i + 1]) opts.input = argv[++i];
+    else if (a === '--output' && argv[i + 1]) opts.output = argv[++i];
+    else if (a.startsWith('--')) { process.stderr.write(`[p6p7-render-report] ⚠️  未知参数 ${a}\n`); opts.help = true; }
+  }
+  return opts;
+}
+const USAGE = `
+p6p7-render-report.cjs — P6 审计 CSV + P7 审计 JSON → 合并 Markdown 交付报告
+
+USAGE:
+  node scripts/p6p7-render-report.cjs [OPTIONS]
+
+OPTIONS:
+  -h, --help            显示帮助并退出
+      --apply           真正写最终 Markdown 文件到输出路径；不传为 DRY-RUN（只打印前 40 行预览 + 行数/字节数摘要，零副作用）
+      --input <dir>    P6/P7 artifact 目录；默认 scripts/tmp-output
+      --output <file>  输出 Markdown 文件路径；默认 scripts/tmp-output/P6-P7-合并审计报告-终版.md
+
+EXAMPLES:
+  node scripts/p6p7-render-report.cjs
+  node scripts/p6p7-render-report.cjs --apply
+  node scripts/p6p7-render-report.cjs --apply --input /tmp/p6-artifacts --output docs/P6-P7-report.md
+`;
+const OPTS = parseArgs(process.argv.slice(2));
+if (OPTS.help) { process.stdout.write(USAGE); process.exit(0); }
+
+const OUT = OPTS.input
+  ? (path.isAbsolute(OPTS.input) ? OPTS.input : path.resolve(ROOT, OPTS.input))
+  : path.join(ROOT, 'scripts', 'tmp-output');
+process.stderr.write(
+  `[p6p7-render-report] ${OPTS.apply ? 'APPLY 写磁盘' : 'DRY-RUN（加 --apply 才写 Markdown）'}\n` +
+  `[p6p7-render-report] input 目录: ${OUT}\n\n`
+);
+
 function read(p) { try { return fs.readFileSync(p,'utf8'); } catch(e){ return ''; } }
 function readJson(p) { try { return JSON.parse(read(p)); } catch(e){ return null; } }
 
@@ -201,7 +243,24 @@ P(`2. 将 \`p7-perm-audit-v5.cjs\` 复用 CI 已有 permission matrix gate 规�
 P(`3. 输出 JSON → 接入现有 health-dashboard 可视化面板`);
 
 /* ============ 写入文件 ============ */
-const outPath = path.join(OUT, 'P6-P7-合并审计报告-终版.md');
-fs.writeFileSync(outPath, lines.join('\n'));
-console.log(`✅ 最终报告已生成：${outPath}`);
-console.log(`   行数：${lines.length}  大小：${(fs.statSync(outPath).size/1024).toFixed(1)}KB`);
+const defaultOut = path.join(OUT, 'P6-P7-合并审计报告-终版.md');
+const outPath = OPTS.output
+  ? (path.isAbsolute(OPTS.output) ? OPTS.output : path.resolve(ROOT, OPTS.output))
+  : defaultOut;
+const contentBuf = Buffer.from(lines.join('\n'), 'utf8');
+
+if (OPTS.apply) {
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  fs.writeFileSync(outPath, contentBuf);
+}
+const stat = { lines: lines.length, bytes: contentBuf.length };
+if (OPTS.apply) {
+  console.log(`✅ 最终报告已生成：${outPath}`);
+  console.log(`   行数：${stat.lines}  大小：${(stat.bytes/1024).toFixed(1)}KB`);
+} else {
+  console.log(`\n📄 DRY-RUN 预览（前 40 行 / 共 ${stat.lines} 行，${(stat.bytes/1024).toFixed(1)}KB）`);
+  console.log('─'.repeat(80));
+  lines.slice(0, 40).forEach((l, i) => console.log(String(i + 1).padStart(3) + '  ' + l));
+  console.log('─'.repeat(80));
+  console.log(`\n💡 加 --apply 才会真正写入：${outPath}`);
+}

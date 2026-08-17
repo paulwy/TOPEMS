@@ -60,10 +60,22 @@ export const occupationalDiseaseSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: i18n.t('ehs.occupational_disease.k7'), label: i18n.t('ehs.occupational_disease.k8') },
-          { value: i18n.t('ehs.occupational_disease.k9'), label: i18n.t('ehs.occupational_disease.k10') },
-          { value: i18n.t('ehs.occupational_disease.k11'), label: i18n.t('ehs.occupational_disease.k12') },
-          { value: i18n.t('ehs.occupational_disease.k13'), label: i18n.t('ehs.occupational_disease.k14') },
+          {
+            value: i18n.t('ehs.occupational_disease.k7'),
+            label: i18n.t('ehs.occupational_disease.k8'),
+          },
+          {
+            value: i18n.t('ehs.occupational_disease.k9'),
+            label: i18n.t('ehs.occupational_disease.k10'),
+          },
+          {
+            value: i18n.t('ehs.occupational_disease.k11'),
+            label: i18n.t('ehs.occupational_disease.k12'),
+          },
+          {
+            value: i18n.t('ehs.occupational_disease.k13'),
+            label: i18n.t('ehs.occupational_disease.k14'),
+          },
         ],
       },
       listWidth: 120,

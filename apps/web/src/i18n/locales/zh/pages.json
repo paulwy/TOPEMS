@@ -4989,5 +4989,8 @@
   "pages.wms_wave_pick_detail_page.p_0": ">已拣 / 待拣</p>",
   "pages.wms_abc_analysis_page.b20p_0": ">B 类（中价值，20% 金额）</p>",
   "pages.workflow_version_history_page.strongv_0": "确定要回滚到版本 <strong>v",
-  "pages.workflow_version_history_page.strong_1": "</strong> 吗？"
+  "pages.workflow_version_history_page.strong_1": "</strong> 吗？",
+  "pages.login_page.k29": "普通员工",
+  "pages.login_page.k30": "管理员",
+  "pages.v55_automation_panel.k127": "指标超过临界值，将触发自动回滚"
 }

@@ -47,7 +47,12 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
     { id: 'departments', label: i18n.t('shared.mobile_menu.k7'), icon: Folder, adminOnly: true },
     { id: 'employees', label: i18n.t('shared.mobile_menu.k8'), icon: Users, adminOnly: true },
     { id: 'documents', label: i18n.t('shared.mobile_menu.k9'), icon: BookOpen },
-    { id: 'bi', label: i18n.t('shared.mobile_menu.k10'), icon: BarChart3, path: BI_PATHS.dashboard },
+    {
+      id: 'bi',
+      label: i18n.t('shared.mobile_menu.k10'),
+      icon: BarChart3,
+      path: BI_PATHS.dashboard,
+    },
     { id: 'help', label: i18n.t('shared.mobile_menu.k11'), icon: HelpCircle },
   ];
 
@@ -105,7 +110,9 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               mb: 6,
             }}
           >
-            <Typography sx={{ fontSize: '1.125rem', fontWeight: 600 }}>{i18n.t('shared.mobile_menu.k12')}</Typography>
+            <Typography sx={{ fontSize: '1.125rem', fontWeight: 600 }}>
+              {i18n.t('shared.mobile_menu.k12')}
+            </Typography>
             <IconButton
               onClick={onClose}
               sx={{

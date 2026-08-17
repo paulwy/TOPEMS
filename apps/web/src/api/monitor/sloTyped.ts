@@ -34,7 +34,7 @@ export const sloTypedApi = {
    * Query Params: { serviceName, sloType, status, keyword }（AdaptedQuery 后 camelCase）
    */
   list: async (
-    params?: AdaptedQuery<'list_slos'> | SloQuery,
+    params?: AdaptedQuery<'list_slos'> | SloQuery
   ): Promise<TypedPaginatedResponse<Slo>> => {
     return apiClient.monitor.get('/slos', {
       params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
@@ -53,12 +53,9 @@ export const sloTypedApi = {
    * Request Body: SloRequest（发送前 adaptReverse → snake_case）
    */
   create: async (
-    data: AdaptedRequestBody<'create_slo'> | SloRequest,
+    data: AdaptedRequestBody<'create_slo'> | SloRequest
   ): Promise<TypedApiResponse<Slo, 'create_slo'>> => {
-    return apiClient.monitor.post(
-      '/slos',
-      toOpenApiRequestBody(data as Record<string, unknown>),
-    );
+    return apiClient.monitor.post('/slos', toOpenApiRequestBody(data as Record<string, unknown>));
   },
 
   /**
@@ -66,11 +63,11 @@ export const sloTypedApi = {
    */
   update: async (
     id: string,
-    data: AdaptedRequestBody<'update_slo'> | SloRequest,
+    data: AdaptedRequestBody<'update_slo'> | SloRequest
   ): Promise<TypedApiResponse<Slo, 'update_slo'>> => {
     return apiClient.monitor.put(
       `/slos/${id}`,
-      toOpenApiRequestBody(data as Record<string, unknown>),
+      toOpenApiRequestBody(data as Record<string, unknown>)
     );
   },
 

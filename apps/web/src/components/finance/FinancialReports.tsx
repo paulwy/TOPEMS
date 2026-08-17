@@ -246,7 +246,11 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
               {i18n.t('components.financial_reports.k102')}
             </Typography>
             <Chip
-              label={data.balance_check ? i18n.t('components.financial_reports.k9') : i18n.t('components.financial_reports.k8')}
+              label={
+                data.balance_check
+                  ? i18n.t('components.financial_reports.k9')
+                  : i18n.t('components.financial_reports.k8')
+              }
               color={data.balance_check ? 'success' : 'error'}
               size='small'
               sx={{ mt: 1 }}
@@ -258,7 +262,13 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
       {/* 图表 */}
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
         <Card>
-          <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k10')}</Typography>} />
+          <CardHeader
+            title={
+              <Typography variant='subtitle1'>
+                {i18n.t('components.financial_reports.k10')}
+              </Typography>
+            }
+          />
           <CardContent>
             <ResponsiveContainer
               width='100%'
@@ -289,7 +299,13 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
         </Card>
 
         <Card>
-          <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k11')}</Typography>} />
+          <CardHeader
+            title={
+              <Typography variant='subtitle1'>
+                {i18n.t('components.financial_reports.k11')}
+              </Typography>
+            }
+          />
           <CardContent>
             <ResponsiveContainer
               width='100%'
@@ -297,7 +313,10 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
             >
               <BarChart
                 data={[
-                  { name: i18n.t('components.financial_reports.k12'), value: data.liabilities.current.total },
+                  {
+                    name: i18n.t('components.financial_reports.k12'),
+                    value: data.liabilities.current.total,
+                  },
                   {
                     name: i18n.t('components.financial_reports.k13'),
                     value: data.liabilities.non_current.total,
@@ -323,11 +342,19 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3 }}>
         {/* 资产 */}
         <Card>
-          <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k15')}</Typography>} />
+          <CardHeader
+            title={
+              <Typography variant='subtitle1'>
+                {i18n.t('components.financial_reports.k15')}
+              </Typography>
+            }
+          />
           <CardContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Box>
-                <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('components.financial_reports.k16')}</Typography>
+                <Typography sx={{ fontWeight: 500, mb: 1 }}>
+                  {i18n.t('components.financial_reports.k16')}
+                </Typography>
                 <ReportTable
                   items={data.assets.current.items.map((item) => ({
                     label: item.account_name,
@@ -339,7 +366,9 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
                 />
               </Box>
               <Box>
-                <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('components.financial_reports.k18')}</Typography>
+                <Typography sx={{ fontWeight: 500, mb: 1 }}>
+                  {i18n.t('components.financial_reports.k18')}
+                </Typography>
                 <ReportTable
                   items={data.assets.non_current.items.map((item) => ({
                     label: item.account_name,
@@ -356,11 +385,19 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
 
         {/* 负债和所有者权益 */}
         <Card>
-          <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k20')}</Typography>} />
+          <CardHeader
+            title={
+              <Typography variant='subtitle1'>
+                {i18n.t('components.financial_reports.k20')}
+              </Typography>
+            }
+          />
           <CardContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Box>
-                <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('components.financial_reports.k21')}</Typography>
+                <Typography sx={{ fontWeight: 500, mb: 1 }}>
+                  {i18n.t('components.financial_reports.k21')}
+                </Typography>
                 <ReportTable
                   items={data.liabilities.current.items.map((item) => ({
                     label: item.account_name,
@@ -372,7 +409,9 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
                 />
               </Box>
               <Box>
-                <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('components.financial_reports.k23')}</Typography>
+                <Typography sx={{ fontWeight: 500, mb: 1 }}>
+                  {i18n.t('components.financial_reports.k23')}
+                </Typography>
                 <ReportTable
                   items={data.liabilities.non_current.items.map((item) => ({
                     label: item.account_name,
@@ -384,7 +423,9 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
                 />
               </Box>
               <Box>
-                <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('components.financial_reports.k25')}</Typography>
+                <Typography sx={{ fontWeight: 500, mb: 1 }}>
+                  {i18n.t('components.financial_reports.k25')}
+                </Typography>
                 <ReportTable
                   items={[
                     ...data.equity.paid_in.items.map((item) => ({
@@ -482,12 +523,18 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
   ];
 
   const costBreakdown = [
-    { name: i18n.t('components.financial_reports.k33'), value: data.operating_expenses.selling_expense.total },
+    {
+      name: i18n.t('components.financial_reports.k33'),
+      value: data.operating_expenses.selling_expense.total,
+    },
     {
       name: i18n.t('components.financial_reports.k34'),
       value: data.operating_expenses.administrative_expense.total,
     },
-    { name: i18n.t('components.financial_reports.k35'), value: data.operating_expenses.rd_expense.total },
+    {
+      name: i18n.t('components.financial_reports.k35'),
+      value: data.operating_expenses.rd_expense.total,
+    },
     {
       name: i18n.t('components.financial_reports.k36'),
       value: data.operating_expenses.financial_expense.total,
@@ -517,7 +564,8 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
                 variant='body2'
                 sx={{ color: 'success.main' }}
               >
-                {i18n.t('components.financial_reports.k111')} {(data.gross_margin * 100).toFixed(2)}%
+                {i18n.t('components.financial_reports.k111')} {(data.gross_margin * 100).toFixed(2)}
+                %
               </Typography>
             </Box>
           </CardContent>
@@ -541,7 +589,8 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
                 variant='body2'
                 sx={{ color: 'success.main' }}
               >
-                {i18n.t('components.financial_reports.k113')} {(data.operating_margin * 100).toFixed(2)}%
+                {i18n.t('components.financial_reports.k113')}{' '}
+                {(data.operating_margin * 100).toFixed(2)}%
               </Typography>
             </Box>
           </CardContent>
@@ -591,7 +640,13 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
       {/* 图表 */}
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
         <Card>
-          <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k37')}</Typography>} />
+          <CardHeader
+            title={
+              <Typography variant='subtitle1'>
+                {i18n.t('components.financial_reports.k37')}
+              </Typography>
+            }
+          />
           <CardContent>
             <ResponsiveContainer
               width='100%'
@@ -612,7 +667,13 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
         </Card>
 
         <Card>
-          <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k38')}</Typography>} />
+          <CardHeader
+            title={
+              <Typography variant='subtitle1'>
+                {i18n.t('components.financial_reports.k38')}
+              </Typography>
+            }
+          />
           <CardContent>
             <ResponsiveContainer
               width='100%'
@@ -647,11 +708,19 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
 
       {/* 详细表格 */}
       <Card>
-        <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k39')}</Typography>} />
+        <CardHeader
+          title={
+            <Typography variant='subtitle1'>
+              {i18n.t('components.financial_reports.k39')}
+            </Typography>
+          }
+        />
         <CardContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Box>
-              <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('components.financial_reports.k40')}</Typography>
+              <Typography sx={{ fontWeight: 500, mb: 1 }}>
+                {i18n.t('components.financial_reports.k40')}
+              </Typography>
               <ReportTable
                 items={[
                   ...data.revenue.main_revenue.items.map((item) => ({
@@ -671,7 +740,9 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
             </Box>
 
             <Box>
-              <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('components.financial_reports.k42')}</Typography>
+              <Typography sx={{ fontWeight: 500, mb: 1 }}>
+                {i18n.t('components.financial_reports.k42')}
+              </Typography>
               <ReportTable
                 items={[
                   ...data.cost_of_sales.main_cost.items.map((item) => ({
@@ -693,14 +764,18 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
                 borderTop: 2,
               }}
             >
-              <Typography sx={{ fontWeight: 600 }}>{i18n.t('components.financial_reports.k44')}</Typography>
+              <Typography sx={{ fontWeight: 600 }}>
+                {i18n.t('components.financial_reports.k44')}
+              </Typography>
               <Typography sx={{ fontWeight: 600, fontFamily: 'monospace' }}>
                 {data.gross_profit.toLocaleString()} ({(data.gross_margin * 100).toFixed(2)}%)
               </Typography>
             </Box>
 
             <Box>
-              <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('components.financial_reports.k45')}</Typography>
+              <Typography sx={{ fontWeight: 500, mb: 1 }}>
+                {i18n.t('components.financial_reports.k45')}
+              </Typography>
               <ReportTable
                 items={[
                   ...data.operating_expenses.selling_expense.items.map((item) => ({
@@ -737,7 +812,9 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
                 borderTop: 1,
               }}
             >
-              <Typography sx={{ fontWeight: 600 }}>{i18n.t('components.financial_reports.k47')}</Typography>
+              <Typography sx={{ fontWeight: 600 }}>
+                {i18n.t('components.financial_reports.k47')}
+              </Typography>
               <Typography sx={{ fontWeight: 600, fontFamily: 'monospace' }}>
                 {data.operating_profit.toLocaleString()} ({(data.operating_margin * 100).toFixed(2)}
                 %)
@@ -752,7 +829,9 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
                 borderTop: 1,
               }}
             >
-              <Typography sx={{ fontWeight: 600 }}>{i18n.t('components.financial_reports.k48')}</Typography>
+              <Typography sx={{ fontWeight: 600 }}>
+                {i18n.t('components.financial_reports.k48')}
+              </Typography>
               <Typography
                 sx={{
                   fontWeight: 600,
@@ -910,7 +989,13 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
 
       {/* 图表 */}
       <Card>
-        <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k54')}</Typography>} />
+        <CardHeader
+          title={
+            <Typography variant='subtitle1'>
+              {i18n.t('components.financial_reports.k54')}
+            </Typography>
+          }
+        />
         <CardContent>
           <ResponsiveContainer
             width='100%'
@@ -938,7 +1023,13 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3 }}>
         {/* 经营活动 */}
         <Card>
-          <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k55')}</Typography>} />
+          <CardHeader
+            title={
+              <Typography variant='subtitle1'>
+                {i18n.t('components.financial_reports.k55')}
+              </Typography>
+            }
+          />
           <CardContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Box>
@@ -1002,7 +1093,9 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
                   fontWeight: 600,
                 }}
               >
-                <Typography sx={{ fontWeight: 600 }}>{i18n.t('components.financial_reports.k56')}</Typography>
+                <Typography sx={{ fontWeight: 600 }}>
+                  {i18n.t('components.financial_reports.k56')}
+                </Typography>
                 <Typography
                   sx={{
                     fontFamily: 'monospace',
@@ -1019,7 +1112,13 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
 
         {/* 投资活动 */}
         <Card>
-          <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k57')}</Typography>} />
+          <CardHeader
+            title={
+              <Typography variant='subtitle1'>
+                {i18n.t('components.financial_reports.k57')}
+              </Typography>
+            }
+          />
           <CardContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Box>
@@ -1083,7 +1182,9 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
                   fontWeight: 600,
                 }}
               >
-                <Typography sx={{ fontWeight: 600 }}>{i18n.t('components.financial_reports.k58')}</Typography>
+                <Typography sx={{ fontWeight: 600 }}>
+                  {i18n.t('components.financial_reports.k58')}
+                </Typography>
                 <Typography
                   sx={{
                     fontFamily: 'monospace',
@@ -1100,7 +1201,13 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
 
         {/* 筹资活动 */}
         <Card>
-          <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k59')}</Typography>} />
+          <CardHeader
+            title={
+              <Typography variant='subtitle1'>
+                {i18n.t('components.financial_reports.k59')}
+              </Typography>
+            }
+          />
           <CardContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Box>
@@ -1164,7 +1271,9 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
                   fontWeight: 600,
                 }}
               >
-                <Typography sx={{ fontWeight: 600 }}>{i18n.t('components.financial_reports.k60')}</Typography>
+                <Typography sx={{ fontWeight: 600 }}>
+                  {i18n.t('components.financial_reports.k60')}
+                </Typography>
                 <Typography
                   sx={{
                     fontFamily: 'monospace',
@@ -1182,7 +1291,13 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
 
       {/* 现金变动汇总 */}
       <Card>
-        <CardHeader title={<Typography variant='subtitle1'>{i18n.t('components.financial_reports.k61')}</Typography>} />
+        <CardHeader
+          title={
+            <Typography variant='subtitle1'>
+              {i18n.t('components.financial_reports.k61')}
+            </Typography>
+          }
+        />
         <CardContent>
           <Box
             sx={{
@@ -1270,26 +1385,29 @@ interface FinancialReportsViewerProps {
 export function FinancialReportsViewer({ orgId, period }: FinancialReportsViewerProps) {
   const [activeReport, setActiveReport] = useState<'balance' | 'income' | 'cash'>('balance');
 
-  const { data: balanceSheet, isPending: balanceLoading} = useQuery({
+  const { data: balanceSheet, isPending: balanceLoading } = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.BALANCE_SHEET_BASE, orgId, period],
     queryFn: () => reportApi.getBalanceSheet({ org_id: orgId, period }),
     enabled: activeReport === 'balance',
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
 
-  const { data: incomeStatement, isPending: incomeLoading} = useQuery({
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
+
+  const { data: incomeStatement, isPending: incomeLoading } = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.INCOME_STATEMENT_BASE, orgId, period],
     queryFn: () => reportApi.getIncomeStatement({ org_id: orgId, period }),
     enabled: activeReport === 'income',
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
 
-  const { data: cashFlow, isPending: cashLoading} = useQuery({
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
+
+  const { data: cashFlow, isPending: cashLoading } = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.CASH_FLOW_BASE, orgId, period],
     queryFn: () => reportApi.getCashFlowStatement({ org_id: orgId, period }),
     enabled: activeReport === 'cash',
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const handleExport = async () => {
     logger.info('Export report:', activeReport);

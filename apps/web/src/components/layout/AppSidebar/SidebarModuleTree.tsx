@@ -59,7 +59,8 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
   }, [i18n.language]);
 
   const translatedSuiteGroups = useMemo(() => {
-    const result: Record<string, { label: string; emoji: string; icon: string; order: number }> = {};
+    const result: Record<string, { label: string; emoji: string; icon: string; order: number }> =
+      {};
     for (const [key, info] of Object.entries(SUITE_GROUPS)) {
       result[key] = {
         ...info,
@@ -297,7 +298,9 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
             >
               <Home style={{ width: 18, height: 18, flexShrink: 0 }} />
               {!collapsed && (
-                <Typography sx={{ fontSize: 14, fontWeight: 500 }}>{i18n.t('shared.sidebar_module_tree.k0')}</Typography>
+                <Typography sx={{ fontSize: 14, fontWeight: 500 }}>
+                  {i18n.t('shared.sidebar_module_tree.k0')}
+                </Typography>
               )}
             </Box>
 

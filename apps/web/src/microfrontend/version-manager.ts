@@ -182,7 +182,11 @@ class VersionManager {
     });
 
     this.persist();
-    logger.info(i18n.t('microfrontend.version-manager.k1'), this.manifest.size, i18n.t('microfrontend.version-manager.k0'));
+    logger.info(
+      i18n.t('microfrontend.version-manager.k1'),
+      this.manifest.size,
+      i18n.t('microfrontend.version-manager.k0')
+    );
   }
 
   /**
@@ -257,7 +261,10 @@ class VersionManager {
       };
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      logger.warn(`${i18n.t('microfrontend.version-manager.versionmanager_2')}${moduleId}${i18n.t('microfrontend.version-manager.k3')}`, errorMsg);
+      logger.warn(
+        `${i18n.t('microfrontend.version-manager.versionmanager_2')}${moduleId}${i18n.t('microfrontend.version-manager.k3')}`,
+        errorMsg
+      );
       return {
         moduleId,
         hasUpdate: false,
@@ -380,7 +387,9 @@ class VersionManager {
       link.as = 'script';
       link.crossOrigin = 'anonymous';
       document.head.appendChild(link);
-      logger.info(`${i18n.t('microfrontend.version-manager.k7')}${moduleId}${i18n.t('microfrontend.version-manager.entry_8')}`);
+      logger.info(
+        `${i18n.t('microfrontend.version-manager.k7')}${moduleId}${i18n.t('microfrontend.version-manager.entry_8')}`
+      );
     } catch {
       // 预加载失败不阻塞
     }
@@ -392,7 +401,9 @@ class VersionManager {
    * 对于关键模块（如 core），直接刷新整个页面以确保用户使用最新版本。
    */
   private forceReload(moduleId: string): void {
-    logger.warn(`${i18n.t('microfrontend.version-manager.k9')}${moduleId}${i18n.t('microfrontend.version-manager.k10')}`);
+    logger.warn(
+      `${i18n.t('microfrontend.version-manager.k9')}${moduleId}${i18n.t('microfrontend.version-manager.k10')}`
+    );
     // 给当前请求一点时间完成，然后刷新
     setTimeout(() => {
       window.location.reload();
@@ -508,7 +519,9 @@ class VersionManager {
       return false;
     }
 
-    logger.info(`${i18n.t('microfrontend.version-manager.versionmanager_13')}${moduleId}: ${info.current} → ${info.previous}`);
+    logger.info(
+      `${i18n.t('microfrontend.version-manager.versionmanager_13')}${moduleId}: ${info.current} → ${info.previous}`
+    );
 
     // 交换 current 和 previous
     const rolledBackVersion = info.previous;
@@ -596,7 +609,10 @@ class VersionManager {
 
       return true;
     } catch (err) {
-      logger.error(`${i18n.t('microfrontend.version-manager.versionmanager_16')}${moduleId}${i18n.t('microfrontend.version-manager.k17')}`, err);
+      logger.error(
+        `${i18n.t('microfrontend.version-manager.versionmanager_16')}${moduleId}${i18n.t('microfrontend.version-manager.k17')}`,
+        err
+      );
       return false;
     }
   }

@@ -12,6 +12,7 @@ import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { QMS_PATHS } from '@/modules/qms/config';
 import i18n from '@/i18n';
+
 const TABS = [
   { id: 'info', label: i18n.t('qms.qms_audit_plan_detail_page.k0') },
   { id: 'tasks', label: i18n.t('qms.qms_audit_plan_detail_page.k1') },
@@ -71,7 +72,9 @@ export default function QmsAuditPlanDetailPage() {
         />
       </div>
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>{i18n.t('qms.qms_audit_plan_detail_page.k4')}</p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>
+          {i18n.t('qms.qms_audit_plan_detail_page.k4')}
+        </p>
         <FSMActionButtons
           fsm='audit_plan'
           currentStatus={plan.status}

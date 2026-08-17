@@ -141,7 +141,11 @@ export const knowledgeGraphApi = {
     return apiClient.master.get<KGSubgraph>(`/kg-v53/subgraph/${nodeId}${s ? `?${s}` : ''}`);
   },
 
-  async findPath(params: { from: string; to: string; max_depth?: number }): Promise<ApiResponse<KGPath>> {
+  async findPath(params: {
+    from: string;
+    to: string;
+    max_depth?: number;
+  }): Promise<ApiResponse<KGPath>> {
     const qs = new URLSearchParams();
     qs.set('from', params.from);
     qs.set('to', params.to);
@@ -149,14 +153,20 @@ export const knowledgeGraphApi = {
     return apiClient.master.get<KGPath>(`/kg-v53/path?${qs.toString()}`);
   },
 
-  async getSimilar(nodeId: string, params?: { limit?: number }): Promise<ApiResponse<KGSimilarNode[]>> {
+  async getSimilar(
+    nodeId: string,
+    params?: { limit?: number }
+  ): Promise<ApiResponse<KGSimilarNode[]>> {
     const qs = new URLSearchParams();
     if (params?.limit !== undefined) qs.set('limit', String(params.limit));
     const s = qs.toString();
     return apiClient.master.get<KGSimilarNode[]>(`/kg-v53/similar/${nodeId}${s ? `?${s}` : ''}`);
   },
 
-  async exportKg(params?: { format?: 'json' | 'graphml' | 'gexf'; scope?: 'full' | 'subgraph' }): Promise<ApiResponse<KGExport>> {
+  async exportKg(params?: {
+    format?: 'json' | 'graphml' | 'gexf';
+    scope?: 'full' | 'subgraph';
+  }): Promise<ApiResponse<KGExport>> {
     const qs = new URLSearchParams();
     if (params?.format) qs.set('format', params.format);
     if (params?.scope) qs.set('scope', params.scope);
@@ -173,7 +183,10 @@ export const knowledgeGraphApi = {
     return apiClient.master.post<{ success: boolean }>('/kg-v53/interactions', data);
   },
 
-  async getSimilarItems(itemId: string, params?: { limit?: number }): Promise<ApiResponse<Array<{ id: string; name: string; similarity: number }>>> {
+  async getSimilarItems(
+    itemId: string,
+    params?: { limit?: number }
+  ): Promise<ApiResponse<Array<{ id: string; name: string; similarity: number }>>> {
     const qs = new URLSearchParams();
     if (params?.limit !== undefined) qs.set('limit', String(params.limit));
     const s = qs.toString();
@@ -182,7 +195,10 @@ export const knowledgeGraphApi = {
     );
   },
 
-  async getTrendingItems(params?: { limit?: number; category?: string }): Promise<ApiResponse<Array<{ id: string; name: string; score: number }>>> {
+  async getTrendingItems(params?: {
+    limit?: number;
+    category?: string;
+  }): Promise<ApiResponse<Array<{ id: string; name: string; score: number }>>> {
     const qs = new URLSearchParams();
     if (params?.limit !== undefined) qs.set('limit', String(params.limit));
     if (params?.category) qs.set('category', params.category);
@@ -197,7 +213,9 @@ export const knowledgeGraphApi = {
     return apiClient.master.post<KGAsset>('/kg-v53/assets', data);
   },
 
-  async searchAssets(params?: SearchAssetsParams): Promise<ApiResponse<{ items: KGAsset[]; total: number }>> {
+  async searchAssets(
+    params?: SearchAssetsParams
+  ): Promise<ApiResponse<{ items: KGAsset[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.query) qs.set('q', params.query);
     if (params?.type) qs.set('type', params.type);
@@ -205,18 +223,33 @@ export const knowledgeGraphApi = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: KGAsset[]; total: number }>(`/kg-v53/assets${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: KGAsset[]; total: number }>(
+      `/kg-v53/assets${s ? `?${s}` : ''}`
+    );
   },
 
-  async getAssetStats(): Promise<ApiResponse<{ total: number; by_type: Array<{ type: string; count: number }>; by_category: Array<{ category: string; count: number }> }>> {
-    return apiClient.master.get<{ total: number; by_type: Array<{ type: string; count: number }>; by_category: Array<{ category: string; count: number }> }>('/kg-v53/assets/stats');
+  async getAssetStats(): Promise<
+    ApiResponse<{
+      total: number;
+      by_type: Array<{ type: string; count: number }>;
+      by_category: Array<{ category: string; count: number }>;
+    }>
+  > {
+    return apiClient.master.get<{
+      total: number;
+      by_type: Array<{ type: string; count: number }>;
+      by_category: Array<{ category: string; count: number }>;
+    }>('/kg-v53/assets/stats');
   },
 
   async getAsset(id: string): Promise<ApiResponse<KGAsset>> {
     return apiClient.master.get<KGAsset>(`/kg-v53/assets/${id}`);
   },
 
-  async updateAsset(id: string, data: Partial<RegisterAssetRequest>): Promise<ApiResponse<KGAsset>> {
+  async updateAsset(
+    id: string,
+    data: Partial<RegisterAssetRequest>
+  ): Promise<ApiResponse<KGAsset>> {
     return apiClient.master.put<KGAsset>(`/kg-v53/assets/${id}`, data);
   },
 

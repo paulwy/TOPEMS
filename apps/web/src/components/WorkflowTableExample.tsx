@@ -32,7 +32,9 @@ export function WorkflowTableExample() {
     } catch (err: unknown) {
       logger.error(i18n.t('components.workflow_table_example.k0'), err);
       const error = err as { message?: string };
-      setError(`${i18n.t('components.workflow_table_example.k1')} ${error.message || i18n.t('components.workflow_table_example.k1')}`);
+      setError(
+        `${i18n.t('components.workflow_table_example.k1')} ${error.message || i18n.t('components.workflow_table_example.k1')}`
+      );
     } finally {
       setLoading(false);
     }
@@ -75,19 +77,27 @@ export function WorkflowTableExample() {
       },
       {
         accessorKey: 'description',
-        header: () => <Box sx={{ textAlign: 'left' }}>{i18n.t('components.workflow_table_example.k2')}</Box>,
+        header: () => (
+          <Box sx={{ textAlign: 'left' }}>{i18n.t('components.workflow_table_example.k2')}</Box>
+        ),
         cell: ({ row }) => <Box sx={{ textAlign: 'left' }}>{row.getValue('description')}</Box>,
       },
       {
         accessorKey: 'isactive',
-        header: () => <Box sx={{ textAlign: 'left' }}>{i18n.t('components.workflow_table_example.k3')}</Box>,
+        header: () => (
+          <Box sx={{ textAlign: 'left' }}>{i18n.t('components.workflow_table_example.k3')}</Box>
+        ),
         cell: ({ row }) => {
           const isActive = row.getValue('isactive') as boolean;
           return (
             <Box sx={{ textAlign: 'left' }}>
               <Chip
                 size='small'
-                label={isActive ? i18n.t('components.workflow_table_example.k5') : i18n.t('components.workflow_table_example.k4')}
+                label={
+                  isActive
+                    ? i18n.t('components.workflow_table_example.k5')
+                    : i18n.t('components.workflow_table_example.k4')
+                }
                 sx={{
                   backgroundColor: isActive ? 'success.light' : 'grey.100',
                   color: isActive ? 'success.dark' : 'grey.600',
@@ -99,19 +109,25 @@ export function WorkflowTableExample() {
       },
       {
         accessorKey: 'created_by',
-        header: () => <Box sx={{ textAlign: 'left' }}>{i18n.t('components.workflow_table_example.k6')}</Box>,
+        header: () => (
+          <Box sx={{ textAlign: 'left' }}>{i18n.t('components.workflow_table_example.k6')}</Box>
+        ),
         cell: ({ row }) => (
           <Box sx={{ textAlign: 'left' }}>{row.getValue('created_by') || '-'}</Box>
         ),
       },
       {
         accessorKey: 'created_at',
-        header: () => <Box sx={{ textAlign: 'left' }}>{i18n.t('components.workflow_table_example.k7')}</Box>,
+        header: () => (
+          <Box sx={{ textAlign: 'left' }}>{i18n.t('components.workflow_table_example.k7')}</Box>
+        ),
         cell: ({ row }) => <Box sx={{ textAlign: 'left' }}>{row.getValue('created_at')}</Box>,
       },
       {
         accessorKey: 'updated_at',
-        header: () => <Box sx={{ textAlign: 'left' }}>{i18n.t('components.workflow_table_example.k8')}</Box>,
+        header: () => (
+          <Box sx={{ textAlign: 'left' }}>{i18n.t('components.workflow_table_example.k8')}</Box>
+        ),
         cell: ({ row }) => <Box sx={{ textAlign: 'left' }}>{row.getValue('updated_at')}</Box>,
       },
       {

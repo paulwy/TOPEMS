@@ -97,10 +97,11 @@ const DocumentsPage: React.FC = () => {
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
 
-  const { data: files = [], isPending: filesLoading} = useQuery<FileItem[]>({
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
+
+  const { data: files = [], isPending: filesLoading } = useQuery<FileItem[]>({
     queryKey: [...QUERY_KEYS.AD_HOC.DOC_FILES_BASE, selectedFolderId],
     queryFn: async () => {
       const response = await docApi.list(selectedFolderId || undefined);
@@ -120,30 +121,34 @@ const DocumentsPage: React.FC = () => {
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => docApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DOC_FILES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.DOC_FILES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 
   const deleteFolderMutation = useMutation({
     mutationFn: (id: string) => docApi.deleteFolder(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DOC_FOLDERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DOC_FILES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.DOC_FOLDERS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.DOC_FILES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 
@@ -151,20 +156,22 @@ const DocumentsPage: React.FC = () => {
     mutationFn: ({ file, folderId }: { file: File; folderId?: string }) =>
       docApi.upload(file, folderId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DOC_FILES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.DOC_FILES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 
   const createFolderMutation = useMutation({
     mutationFn: (data: { name: string; parentId?: string }) => docApi.createFolder(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DOC_FOLDERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.DOC_FOLDERS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 
@@ -205,7 +212,8 @@ const DocumentsPage: React.FC = () => {
       clearInterval(progressInterval);
       apiLogger.error(i18n.t('pages.index.k0'), err);
       const error = err as { response?: { data?: { message?: string } }; message?: string };
-      const errorMessage = error.response?.data?.message || error.message || i18n.t('pages.index.k4');
+      const errorMessage =
+        error.response?.data?.message || error.message || i18n.t('pages.index.k4');
       addNotification({ title: i18n.t('pages.index.k5'), message: errorMessage, type: 'error' });
     } finally {
       setUploading(false);
@@ -325,14 +333,16 @@ const DocumentsPage: React.FC = () => {
   }, []);
 
   const handleCreateFolderSuccess = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DOC_FOLDERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.DOC_FILES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.DOC_FOLDERS_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.DOC_FILES_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
   }, [queryClient]);
 
   const toggleFileSelect = useCallback((fileId: string) => {
@@ -412,7 +422,10 @@ const DocumentsPage: React.FC = () => {
             uploadedCount++;
           }
         } catch (err: unknown) {
-          apiLogger.error(`${i18n.t('pages.index.k11')} ${file.name} ${i18n.t('pages.index.k12')}`, err);
+          apiLogger.error(
+            `${i18n.t('pages.index.k11')} ${file.name} ${i18n.t('pages.index.k12')}`,
+            err
+          );
         }
         setUploadProgress(Math.round(((i + 1) / files.length) * 100));
       }

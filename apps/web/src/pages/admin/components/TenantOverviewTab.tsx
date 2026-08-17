@@ -15,6 +15,7 @@ import {
 import i18n from '@/i18n';
 import { Users, Activity, HardDrive, BarChart3 } from 'lucide-react';
 import type { Tenant, TenantStats } from '@/api/tenant/types';
+
 interface TenantOverviewTabProps {
   tenant: Tenant;
   stats: TenantStats;

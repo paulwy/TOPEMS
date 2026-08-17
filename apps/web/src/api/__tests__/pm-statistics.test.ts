@@ -206,9 +206,22 @@ describe('PM Statistics API Tests', () => {
     it('getProjectStatistics should accept query params', async () => {
       const { pmStatisticsApi } = await import('../pm/statistics');
       const { apiClient } = await import('../client');
-      (apiClient.pm.get as vi.Mock).mockResolvedValue({ data: { total_projects: 10, by_status: [], by_type: [], by_leader: [], average_progress: 0, on_time_rate: 0, high_risk_count: 0 } });
+      (apiClient.pm.get as vi.Mock).mockResolvedValue({
+        data: {
+          total_projects: 10,
+          by_status: [],
+          by_type: [],
+          by_leader: [],
+          average_progress: 0,
+          on_time_rate: 0,
+          high_risk_count: 0,
+        },
+      });
 
-      await pmStatisticsApi.getProjectStatistics({ start_date: '2026-01-01', end_date: '2026-12-31' });
+      await pmStatisticsApi.getProjectStatistics({
+        start_date: '2026-01-01',
+        end_date: '2026-12-31',
+      });
       expect(apiClient.pm.get).toHaveBeenCalledWith('/statistics/projects', {
         params: { start_date: '2026-01-01', end_date: '2026-12-31' },
       });
@@ -341,11 +354,38 @@ describe('PM Statistics API Tests', () => {
       const { pmStatisticsApi } = await import('../pm/statistics');
       const { apiClient } = await import('../client');
       const mockData = {
-        projects: { total_projects: 50, by_status: [], by_type: [], by_leader: [], average_progress: 60.0, on_time_rate: 75.0, high_risk_count: 3 },
-        contracts: { total_contracts: 30, by_status: [], by_type: [], total_amount: 5000000, avg_amount: 166666.67 },
-        budget: { total_budget: 1000000, allocated_budget: 800000, spent_budget: 450000, remaining_budget: 550000, budget_usage_rate: 45.0, by_category: [] },
+        projects: {
+          total_projects: 50,
+          by_status: [],
+          by_type: [],
+          by_leader: [],
+          average_progress: 60.0,
+          on_time_rate: 75.0,
+          high_risk_count: 3,
+        },
+        contracts: {
+          total_contracts: 30,
+          by_status: [],
+          by_type: [],
+          total_amount: 5000000,
+          avg_amount: 166666.67,
+        },
+        budget: {
+          total_budget: 1000000,
+          allocated_budget: 800000,
+          spent_budget: 450000,
+          remaining_budget: 550000,
+          budget_usage_rate: 45.0,
+          by_category: [],
+        },
         risks: { total_risks: 25, open_risks: 10, closed_risks: 15, by_level: [], by_category: [] },
-        tasks: { total_tasks: 200, by_status: [], by_priority: [], completion_rate: 40.0, overdue_count: 15 },
+        tasks: {
+          total_tasks: 200,
+          by_status: [],
+          by_priority: [],
+          completion_rate: 40.0,
+          overdue_count: 15,
+        },
       };
       (apiClient.pm.get as vi.Mock).mockResolvedValue({ data: mockData });
 
@@ -361,7 +401,42 @@ describe('PM Statistics API Tests', () => {
     it('getDashboard should not accept params', async () => {
       const { pmStatisticsApi } = await import('../pm/statistics');
       const { apiClient } = await import('../client');
-      (apiClient.pm.get as vi.Mock).mockResolvedValue({ data: { projects: { total_projects: 0, by_status: [], by_type: [], by_leader: [], average_progress: 0, on_time_rate: 0, high_risk_count: 0 }, contracts: { total_contracts: 0, by_status: [], by_type: [], total_amount: 0, avg_amount: 0 }, budget: { total_budget: 0, allocated_budget: 0, spent_budget: 0, remaining_budget: 0, budget_usage_rate: 0, by_category: [] }, risks: { total_risks: 0, open_risks: 0, closed_risks: 0, by_level: [], by_category: [] }, tasks: { total_tasks: 0, by_status: [], by_priority: [], completion_rate: 0, overdue_count: 0 } } });
+      (apiClient.pm.get as vi.Mock).mockResolvedValue({
+        data: {
+          projects: {
+            total_projects: 0,
+            by_status: [],
+            by_type: [],
+            by_leader: [],
+            average_progress: 0,
+            on_time_rate: 0,
+            high_risk_count: 0,
+          },
+          contracts: {
+            total_contracts: 0,
+            by_status: [],
+            by_type: [],
+            total_amount: 0,
+            avg_amount: 0,
+          },
+          budget: {
+            total_budget: 0,
+            allocated_budget: 0,
+            spent_budget: 0,
+            remaining_budget: 0,
+            budget_usage_rate: 0,
+            by_category: [],
+          },
+          risks: { total_risks: 0, open_risks: 0, closed_risks: 0, by_level: [], by_category: [] },
+          tasks: {
+            total_tasks: 0,
+            by_status: [],
+            by_priority: [],
+            completion_rate: 0,
+            overdue_count: 0,
+          },
+        },
+      });
 
       await pmStatisticsApi.getDashboard();
       expect(apiClient.pm.get).toHaveBeenCalledWith('/statistics/dashboard');
@@ -373,11 +448,38 @@ describe('PM Statistics API Tests', () => {
       const { dashboardApi } = await import('../pm/dashboard');
       const { apiClient } = await import('../client');
       const mockData = {
-        projects: { total_projects: 50, by_status: [], by_type: [], by_leader: [], average_progress: 60.0, on_time_rate: 75.0, high_risk_count: 3 },
-        contracts: { total_contracts: 30, by_status: [], by_type: [], total_amount: 5000000, avg_amount: 166666.67 },
-        budget: { total_budget: 1000000, allocated_budget: 800000, spent_budget: 450000, remaining_budget: 550000, budget_usage_rate: 45.0, by_category: [] },
+        projects: {
+          total_projects: 50,
+          by_status: [],
+          by_type: [],
+          by_leader: [],
+          average_progress: 60.0,
+          on_time_rate: 75.0,
+          high_risk_count: 3,
+        },
+        contracts: {
+          total_contracts: 30,
+          by_status: [],
+          by_type: [],
+          total_amount: 5000000,
+          avg_amount: 166666.67,
+        },
+        budget: {
+          total_budget: 1000000,
+          allocated_budget: 800000,
+          spent_budget: 450000,
+          remaining_budget: 550000,
+          budget_usage_rate: 45.0,
+          by_category: [],
+        },
         risks: { total_risks: 25, open_risks: 10, closed_risks: 15, by_level: [], by_category: [] },
-        tasks: { total_tasks: 200, by_status: [], by_priority: [], completion_rate: 40.0, overdue_count: 15 },
+        tasks: {
+          total_tasks: 200,
+          by_status: [],
+          by_priority: [],
+          completion_rate: 40.0,
+          overdue_count: 15,
+        },
       };
       (apiClient.pm.get as vi.Mock).mockResolvedValue({ data: mockData });
 
@@ -414,7 +516,9 @@ describe('PM Statistics API Tests', () => {
       (apiClient.pm.get as vi.Mock).mockResolvedValue({ data: mockData });
 
       await dashboardApi.getStatistics({ start_date: '2026-01-01' });
-      expect(apiClient.pm.get).toHaveBeenCalledWith('/statistics', { params: { start_date: '2026-01-01' } });
+      expect(apiClient.pm.get).toHaveBeenCalledWith('/statistics', {
+        params: { start_date: '2026-01-01' },
+      });
     });
   });
 });

@@ -45,7 +45,8 @@ import { extractErrorMessage } from '@/utils/errors';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 interface RateLimitRule {
   requests: number;
   window_secs: number;
@@ -157,14 +158,16 @@ const RateLimitConfigPage: React.FC = () => {
           message: i18n.t('admin:rate_limit_config_page.rate_limit_config_updated'),
           type: 'success',
         });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_RATE_LIMIT_CONFIG_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.ADMIN_RATE_LIMIT_CONFIG_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       } else {
         addNotification({
           title: i18n.t('admin:rate_limit_config_page.save_fail'),
-          message: res.message || i18n.t('admin:rate_limit_config_page.rate_limit_config_save_fail'),
+          message:
+            res.message || i18n.t('admin:rate_limit_config_page.rate_limit_config_save_fail'),
           type: 'error',
         });
       }
@@ -173,7 +176,10 @@ const RateLimitConfigPage: React.FC = () => {
       apiLogger.error(i18n.t('admin:rate_limit_config_page.log_save_rate_limit_fail'), err);
       addNotification({
         title: i18n.t('admin:rate_limit_config_page.save_fail'),
-        message: extractErrorMessage(err, i18n.t('admin:rate_limit_config_page.save_rate_limit_fail')),
+        message: extractErrorMessage(
+          err,
+          i18n.t('admin:rate_limit_config_page.save_rate_limit_fail')
+        ),
         type: 'error',
       });
     },
@@ -193,14 +199,16 @@ const RateLimitConfigPage: React.FC = () => {
           message: i18n.t('admin:rate_limit_config_page.anti_replay_config_updated'),
           type: 'success',
         });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_ANTI_REPLAY_CONFIG_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.ADMIN_ANTI_REPLAY_CONFIG_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       } else {
         addNotification({
           title: i18n.t('admin:rate_limit_config_page.save_fail'),
-          message: res.message || i18n.t('admin:rate_limit_config_page.anti_replay_config_save_fail'),
+          message:
+            res.message || i18n.t('admin:rate_limit_config_page.anti_replay_config_save_fail'),
           type: 'error',
         });
       }
@@ -209,7 +217,10 @@ const RateLimitConfigPage: React.FC = () => {
       apiLogger.error(i18n.t('admin:rate_limit_config_page.log_save_anti_replay_fail'), err);
       addNotification({
         title: i18n.t('admin:rate_limit_config_page.save_fail'),
-        message: extractErrorMessage(err, i18n.t('admin:rate_limit_config_page.save_anti_replay_fail')),
+        message: extractErrorMessage(
+          err,
+          i18n.t('admin:rate_limit_config_page.save_anti_replay_fail')
+        ),
         type: 'error',
       });
     },
@@ -230,10 +241,11 @@ const RateLimitConfigPage: React.FC = () => {
           message: i18n.t('admin:rate_limit_config_page.rate_limit_config_reset'),
           type: 'success',
         });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_RATE_LIMIT_CONFIG_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.AD_HOC.ADMIN_RATE_LIMIT_CONFIG_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       }
     },
   });
@@ -620,7 +632,9 @@ const RateLimitConfigPage: React.FC = () => {
                 <Table size='small'>
                   <TableHead>
                     <TableRow>
-                      <TableCell>{i18n.t('admin:rate_limit_config_page.label_path_prefix')}</TableCell>
+                      <TableCell>
+                        {i18n.t('admin:rate_limit_config_page.label_path_prefix')}
+                      </TableCell>
                       <TableCell>{i18n.t('admin:rate_limit_config_page.label_requests')}</TableCell>
                       <TableCell>
                         {i18n.t('admin:rate_limit_config_page.label_window_seconds')}

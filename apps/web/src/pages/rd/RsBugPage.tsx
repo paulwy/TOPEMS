@@ -10,6 +10,7 @@ import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 const bugApiAdapter: CrudApiAdapter<Bug> = {
   list: async (params) => {
     const queryParams: Record<string, unknown> = {
@@ -77,10 +78,11 @@ const RsBugPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.RD_BUG_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.RD_BUG_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: i18n.t('rd.rs_bug_page.k5'),
@@ -117,7 +119,10 @@ const RsBugPage: React.FC = () => {
       schema={bugSchema}
       apiAdapter={bugApiAdapter}
       customRowActions={customRowActions}
-      breadcrumbs={[{ label: i18n.t('rd.rs_bug_page.k11'), href: '/rd' }, { label: i18n.t('rd.rs_bug_page.k10') }]}
+      breadcrumbs={[
+        { label: i18n.t('rd.rs_bug_page.k11'), href: '/rd' },
+        { label: i18n.t('rd.rs_bug_page.k10') },
+      ]}
     />
   );
 };

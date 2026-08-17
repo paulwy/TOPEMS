@@ -1,7 +1,6 @@
 import type { EntitySchema } from '@/schema';
 import { departmentApi, companyApi } from '@/api/hrm';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 

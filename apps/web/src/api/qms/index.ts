@@ -223,14 +223,17 @@ export const qmsApi = {
 
       const statistics: QmsStatistics = {
         total_standards: standards.length,
-        active_standards: standards.filter((s) => s.status === 'active' || s.status === i18n.t('shared.index.k0'))
-          .length,
-        inactive_standards: standards.filter((s) => s.status === 'inactive' || s.status === i18n.t('shared.index.k1'))
-          .length,
+        active_standards: standards.filter(
+          (s) => s.status === 'active' || s.status === i18n.t('shared.index.k0')
+        ).length,
+        inactive_standards: standards.filter(
+          (s) => s.status === 'inactive' || s.status === i18n.t('shared.index.k1')
+        ).length,
 
         total_inspections: checks.length,
-        pending_inspections: checks.filter((c) => c.status === 'pending' || c.status === i18n.t('shared.index.k2'))
-          .length,
+        pending_inspections: checks.filter(
+          (c) => c.status === 'pending' || c.status === i18n.t('shared.index.k2')
+        ).length,
         in_progress_inspections: checks.filter(
           (c) => c.status === 'in_progress' || c.status === i18n.t('shared.index.k3')
         ).length,
@@ -240,17 +243,25 @@ export const qmsApi = {
 
         total_issues: issues.length,
         open_issues: issues.filter(
-          (i) => i.status === 'open' || i.status === i18n.t('shared.index.k6') || i.status === i18n.t('shared.index.k5')
+          (i) =>
+            i.status === 'open' ||
+            i.status === i18n.t('shared.index.k6') ||
+            i.status === i18n.t('shared.index.k5')
         ).length,
         resolved_issues: issues.filter(
-          (i) => i.status === 'closed' || i.status === 'resolved' || i.status === i18n.t('shared.index.k7')
+          (i) =>
+            i.status === 'closed' ||
+            i.status === 'resolved' ||
+            i.status === i18n.t('shared.index.k7')
         ).length,
-        critical_issues: issues.filter((i) => i.severity === 'critical' || i.severity === i18n.t('shared.index.k8'))
-          .length,
+        critical_issues: issues.filter(
+          (i) => i.severity === 'critical' || i.severity === i18n.t('shared.index.k8')
+        ).length,
 
         total_actions: improvements.length,
-        pending_actions: improvements.filter((a) => a.status === 'pending' || a.status === i18n.t('shared.index.k9'))
-          .length,
+        pending_actions: improvements.filter(
+          (a) => a.status === 'pending' || a.status === i18n.t('shared.index.k9')
+        ).length,
         in_progress_actions: improvements.filter(
           (a) => a.status === 'in_progress' || a.status === i18n.t('shared.index.k10')
         ).length,
@@ -311,10 +322,7 @@ export const qmsApprovalApi = {
     id: string,
     data: { operator: string; comment?: string; next_status?: string }
   ): Promise<ApiResponse<ApprovalResponse>> => {
-    return apiClient.qms.post<ApprovalResponse>(
-      `/${entityType}/${id}/approve`,
-      data
-    );
+    return apiClient.qms.post<ApprovalResponse>(`/${entityType}/${id}/approve`, data);
   },
 
   reject: async (
@@ -322,10 +330,7 @@ export const qmsApprovalApi = {
     id: string,
     data: { operator: string; comment?: string }
   ): Promise<ApiResponse<ApprovalResponse>> => {
-    return apiClient.qms.post<ApprovalResponse>(
-      `/${entityType}/${id}/reject`,
-      data
-    );
+    return apiClient.qms.post<ApprovalResponse>(`/${entityType}/${id}/reject`, data);
   },
 
   rework: async (
@@ -333,10 +338,7 @@ export const qmsApprovalApi = {
     id: string,
     data: { operator: string; comment?: string; next_status?: string }
   ): Promise<ApiResponse<ApprovalResponse>> => {
-    return apiClient.qms.post<ApprovalResponse>(
-      `/${entityType}/${id}/rework`,
-      data
-    );
+    return apiClient.qms.post<ApprovalResponse>(`/${entityType}/${id}/rework`, data);
   },
 
   cancel: async (
@@ -344,10 +346,7 @@ export const qmsApprovalApi = {
     id: string,
     data: { operator: string; comment?: string }
   ): Promise<ApiResponse<ApprovalResponse>> => {
-    return apiClient.qms.post<ApprovalResponse>(
-      `/${entityType}/${id}/cancel`,
-      data
-    );
+    return apiClient.qms.post<ApprovalResponse>(`/${entityType}/${id}/cancel`, data);
   },
 
   /**

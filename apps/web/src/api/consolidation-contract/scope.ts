@@ -44,7 +44,10 @@ export const consolidationScopeCompanyApi = {
     return apiClient.erp.post('/consolidation/scopes/companies', data);
   },
 
-  update: (companyId: string, data: UpdateScopeCompanyRequest): Promise<ApiResponse<ScopeCompany>> => {
+  update: (
+    companyId: string,
+    data: UpdateScopeCompanyRequest
+  ): Promise<ApiResponse<ScopeCompany>> => {
     return apiClient.erp.put(`/consolidation/scopes/companies/${companyId}`, data);
   },
 

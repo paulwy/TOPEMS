@@ -96,7 +96,11 @@ const reportFields: SchemaField[] = [
         Box,
         { sx: { display: 'flex', alignItems: 'center', gap: 0.5 } },
         React.createElement(User, { size: 14, color: 'grey.600' }),
-        React.createElement(Typography, { variant: 'body2' }, String(row.created_by ?? i18n.t('shared.report.k14')))
+        React.createElement(
+          Typography,
+          { variant: 'body2' },
+          String(row.created_by ?? i18n.t('shared.report.k14'))
+        )
       ),
   },
   {

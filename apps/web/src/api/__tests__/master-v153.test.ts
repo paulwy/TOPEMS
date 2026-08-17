@@ -47,7 +47,9 @@ describe('V153 masterData Gateway API bindings', () => {
     it('should list routes', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await gatewayApiV54.listRoutes({ status: 'active', page: 1, pageSize: 20 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v54/routes?status=active&page=1&page_size=20');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v54/routes?status=active&page=1&page_size=20'
+      );
     });
 
     it('should list routes without params', async () => {
@@ -59,7 +61,9 @@ describe('V153 masterData Gateway API bindings', () => {
     it('should update route', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await gatewayApiV54.updateRoute('route-1', { upstream: 'http://localhost:4000' });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v54/routes/route-1', { upstream: 'http://localhost:4000' });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v54/routes/route-1', {
+        upstream: 'http://localhost:4000',
+      });
     });
 
     it('should delete route', async () => {
@@ -120,7 +124,9 @@ describe('V153 masterData Gateway API bindings', () => {
     it('should update rate limit rule', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await gatewayApiV54.updateRateLimitRule('rl-1', { limit_value: 500 });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v54/rate-limits/rl-1', { limit_value: 500 });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v54/rate-limits/rl-1', {
+        limit_value: 500,
+      });
     });
 
     it('should delete rate limit rule', async () => {
@@ -160,7 +166,9 @@ describe('V153 masterData Gateway API bindings', () => {
 
     it('should update auth config', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
-      await gatewayApiV54.updateAuthConfig('auth-1', { config: { audience: 'https://api.example.com' } });
+      await gatewayApiV54.updateAuthConfig('auth-1', {
+        config: { audience: 'https://api.example.com' },
+      });
       expect(mockClient.put).toHaveBeenCalledWith('/mdm-v54/auth-configs/auth-1', {
         config: { audience: 'https://api.example.com' },
       });
@@ -178,7 +186,9 @@ describe('V153 masterData Gateway API bindings', () => {
     it('should list logs', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await gatewayApiV54.listLogs({ route_id: 'route-1', page: 1, pageSize: 20 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v54/logs?route_id=route-1&page=1&page_size=20');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v54/logs?route_id=route-1&page=1&page_size=20'
+      );
     });
 
     it('should get log by id', async () => {
@@ -213,13 +223,17 @@ describe('V153 masterData Gateway API bindings', () => {
     it('should list developers', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await gatewayApiV54.listDevelopers({ tenant_id: 'tenant-1', status: 'active' });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v54/developers?tenant_id=tenant-1&status=active');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v54/developers?tenant_id=tenant-1&status=active'
+      );
     });
 
     it('should update developer', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await gatewayApiV54.updateDeveloper('dev-1', { company: 'ACME Corp' });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v54/developers/dev-1', { company: 'ACME Corp' });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v54/developers/dev-1', {
+        company: 'ACME Corp',
+      });
     });
 
     it('should delete developer', async () => {
@@ -282,7 +296,9 @@ describe('V153 masterData Gateway API bindings', () => {
     it('should get usage stats', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: {} });
       await gatewayApiV54.getUsageStats('dev-1', { start_time: '2026-08-01' });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v54/developers/dev-1/usage?start_time=2026-08-01');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v54/developers/dev-1/usage?start_time=2026-08-01'
+      );
     });
 
     it('should get gateway dashboard', async () => {

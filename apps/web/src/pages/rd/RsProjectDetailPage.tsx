@@ -46,7 +46,8 @@ import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { rdApi } from '@/api/rd';
 import { PageContainer } from '@/components/common';
 import type { Project, GanttPhase, GanttMilestone, Experiment } from '@/api/rd';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
+
 const RsProjectDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -60,8 +61,9 @@ const RsProjectDetailPage: React.FC = () => {
       return response.data;
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const ganttQuery = useQuery({
     queryKey: QUERY_KEYS.RD.PROJECT_GANTT(id || ''),
     queryFn: async () => {
@@ -72,8 +74,9 @@ const RsProjectDetailPage: React.FC = () => {
       return response.data;
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const experimentsQuery = useQuery({
     queryKey: [...QUERY_KEYS.RD.EXPERIMENTS, { projectId: id, pagesize: 100 }],
     queryFn: async () => {
@@ -84,8 +87,9 @@ const RsProjectDetailPage: React.FC = () => {
       return response.data.experiments || [];
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const project = projectQuery.data || null;
   const phases = ganttQuery.data?.phases || [];
   const milestones = ganttQuery.data?.milestones || [];

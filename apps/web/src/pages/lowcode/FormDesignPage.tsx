@@ -72,9 +72,7 @@ export const FormDesignPage: React.FC = () => {
     return (
       <PageContainer title={t('lowcode.form_design_page.k2')}>
         <Box sx={{ p: 3 }}>
-          <Typography color='text.secondary'>
-            {t('lowcode.form_design_page.e1')}
-          </Typography>
+          <Typography color='text.secondary'>{t('lowcode.form_design_page.e1')}</Typography>
         </Box>
       </PageContainer>
     );
@@ -98,7 +96,9 @@ export const FormDesignPage: React.FC = () => {
           spacing={2}
           sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
         >
-          <Typography variant='h5'>{t('lowcode.form_design_page.m1', { v1: form ? `· ${form.name}` : '' })}</Typography>
+          <Typography variant='h5'>
+            {t('lowcode.form_design_page.m1', { v1: form ? `· ${form.name}` : '' })}
+          </Typography>
           <Button
             variant='contained'
             onClick={handleSave}
@@ -124,7 +124,10 @@ export const FormDesignPage: React.FC = () => {
           sx={{ mb: 1 }}
         >
           {t('lowcode.form_design_page.e2')}
-          {form && i18n.t('lowcode.form_design_page.e2', { v1: form.data_model_id ?? t('lowcode.form_design_page.k6') })}
+          {form &&
+            i18n.t('lowcode.form_design_page.e2', {
+              v1: form.data_model_id ?? t('lowcode.form_design_page.k6'),
+            })}
         </Typography>
 
         <Paper

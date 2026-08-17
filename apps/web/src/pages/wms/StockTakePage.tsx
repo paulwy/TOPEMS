@@ -29,10 +29,9 @@ import { WMS_PATHS } from '@/modules/wms/config';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
-
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const StockTakePage: React.FC = () => {
   const { t } = useTranslation();
@@ -92,10 +91,11 @@ const StockTakePage: React.FC = () => {
         title: t('wms.stocktake_page.create'),
         message: t('wms.stocktake_page.create_1'),
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_STOCK_TAKES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.WMS_STOCK_TAKES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (error: unknown) => {
       apiLogger.error(t('wms.stocktake_page.create_2'), error);
@@ -115,10 +115,11 @@ const StockTakePage: React.FC = () => {
         title: t('wms.stocktake_page.delete_success'),
         message: t('wms.stocktake_page.delete_success_1'),
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_STOCK_TAKES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.WMS_STOCK_TAKES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (error: unknown) => {
       apiLogger.error(t('wms.stocktake_page.delete'), error);
@@ -138,10 +139,11 @@ const StockTakePage: React.FC = () => {
         title: t('wms.stocktake_page.operation_success'),
         message: t('wms.stocktake_page.stocktake_1'),
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_STOCK_TAKES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.WMS_STOCK_TAKES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (error: unknown) => {
       apiLogger.error(t('wms.stocktake_page.fail_2'), error);
@@ -161,10 +163,11 @@ const StockTakePage: React.FC = () => {
         title: t('wms.stocktake_page.operation_success'),
         message: t('wms.stocktake_page.completed'),
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_STOCK_TAKES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.WMS_STOCK_TAKES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       setShowDetailDialog(false);
     },
     onError: (error: unknown) => {
@@ -185,10 +188,11 @@ const StockTakePage: React.FC = () => {
         title: t('wms.stocktake_page.operation_success'),
         message: t('wms.stocktake_page.text_cd78ac'),
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_STOCK_TAKES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.WMS_STOCK_TAKES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       setShowDetailDialog(false);
     },
     onError: (error: unknown) => {
@@ -205,12 +209,11 @@ const StockTakePage: React.FC = () => {
     mutationFn: ({ id, items }: { id: string; items: CountItemRequest[] }) =>
       wmsApi.stockTakes.count(id, items),
     onSuccess: async (_, { id }) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.WMS_WAREHOUSES_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.WMS_WAREHOUSES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: t('wms.stocktake_page.operation_success'),
@@ -320,14 +323,20 @@ const StockTakePage: React.FC = () => {
             ...item,
             warehouse_name: getWarehouseName(item.warehouse_id),
           }));
-          return { data: items as unknown as Record<string, unknown>[], total: response.data.total || 0 };
+          return {
+            data: items as unknown as Record<string, unknown>[],
+            total: response.data.total || 0,
+          };
         }
         return { data: [], total: 0 };
       },
       create: async (data) => {
         const res = await wmsApi.stockTakes.create(data as unknown as CreateStockTakeRequest);
         if (res.success && res.data) {
-          return { ...res.data, warehouse_name: getWarehouseName(res.data.warehouse_id) } as unknown as Record<string, unknown>;
+          return {
+            ...res.data,
+            warehouse_name: getWarehouseName(res.data.warehouse_id),
+          } as unknown as Record<string, unknown>;
         }
         throw new Error(res.message || i18n.t('pages.stock_take_page.k0'));
       },

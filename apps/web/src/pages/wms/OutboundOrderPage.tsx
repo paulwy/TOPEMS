@@ -36,7 +36,7 @@ const outboundOrderApiAdapter: CrudApiAdapter = {
   update: async (id, data) => {
     const response = await wmsApi.outboundOrders.update(
       id,
-      data as unknown as Partial<OutboundOrder>,
+      data as unknown as Partial<OutboundOrder>
     );
     if (!response.success) throw new Error('Failed to update outbound order');
     return response.data as unknown as Record<string, unknown>;

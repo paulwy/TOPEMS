@@ -13,6 +13,7 @@ import i18n from '@/i18n';
 import { LazyChart } from '@/components/charts';
 import { APS_PATHS } from '@/modules/aps/config';
 import { productionPlanApi, scheduleApi } from '@/api/aps';
+
 const ApsDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const plansQuery = useQuery({

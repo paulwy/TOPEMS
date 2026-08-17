@@ -2,6 +2,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+import { StatusBadge } from '../StatusBadge';
+import { FSMActionButtons } from '../FSMActionButtons';
+
 const { tMock } = vi.hoisted(() => {
   const statusBadgeTranslations: Record<string, string> = {
     'components.status_badge.k0': '草稿',
@@ -70,11 +73,7 @@ const { tMock } = vi.hoisted(() => {
   };
 
   const tMock = (key: string): string => {
-    return (
-      statusBadgeTranslations[key] ||
-      fsmActionButtonsTranslations[key] ||
-      key
-    );
+    return statusBadgeTranslations[key] || fsmActionButtonsTranslations[key] || key;
   };
 
   return { tMock };
@@ -112,9 +111,6 @@ vi.mock('react-i18next', () => ({
     return <span>{children}</span>;
   },
 }));
-
-import { StatusBadge } from '../StatusBadge';
-import { FSMActionButtons } from '../FSMActionButtons';
 
 describe('APS StatusBadge', () => {
   it('renders production_plan FSM statuses with correct labels', () => {

@@ -7,9 +7,21 @@ import i18n from '@/i18n';
 
 function buildInboundItems(orderId: string, count: number) {
   const mats = [
-    { code: 'MAT-001', name: i18n.t('pages.wms_inbound_detail_page.a_1'), unit: i18n.t('pages.wms_inbound_detail_page.k0') },
-    { code: 'MAT-002', name: i18n.t('pages.wms_inbound_detail_page.b_3'), unit: i18n.t('pages.wms_inbound_detail_page.k2') },
-    { code: 'MAT-003', name: i18n.t('pages.wms_inbound_detail_page.c_5'), unit: i18n.t('pages.wms_inbound_detail_page.k4') },
+    {
+      code: 'MAT-001',
+      name: i18n.t('pages.wms_inbound_detail_page.a_1'),
+      unit: i18n.t('pages.wms_inbound_detail_page.k0'),
+    },
+    {
+      code: 'MAT-002',
+      name: i18n.t('pages.wms_inbound_detail_page.b_3'),
+      unit: i18n.t('pages.wms_inbound_detail_page.k2'),
+    },
+    {
+      code: 'MAT-003',
+      name: i18n.t('pages.wms_inbound_detail_page.c_5'),
+      unit: i18n.t('pages.wms_inbound_detail_page.k4'),
+    },
   ];
   return Array.from({ length: count }, (_, i) => {
     const m = mats[i % mats.length];
@@ -48,8 +60,12 @@ export default function WmsInboundDetailPage() {
     <div className='space-y-4 p-4'>
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <div>
-          <h1 className='text-2xl font-bold'>{i18n.t('wms:wms_inbound_detail_page.v0_3', { v0: (order.order_number) })}</h1>
-          <p className='text-sm text-gray-500'>{i18n.t('wms:wms_inbound_detail_page.v0_2', { v0: (order.created_at.slice(0, 10)) })}</p>
+          <h1 className='text-2xl font-bold'>
+            {i18n.t('wms:wms_inbound_detail_page.v0_3', { v0: order.order_number })}
+          </h1>
+          <p className='text-sm text-gray-500'>
+            {i18n.t('wms:wms_inbound_detail_page.v0_2', { v0: order.created_at.slice(0, 10) })}
+          </p>
         </div>
         <div className='flex items-center gap-3'>
           <WmsStatusBadge
@@ -93,13 +109,27 @@ export default function WmsInboundDetailPage() {
           <table className='w-full text-sm'>
             <thead className='bg-gray-50'>
               <tr>
-                <th className='px-3 py-2 text-left'>{i18n.t('pages.wms_inbound_detail_page.k10')}</th>
-                <th className='px-3 py-2 text-left'>{i18n.t('pages.wms_inbound_detail_page.k11')}</th>
-                <th className='px-3 py-2 text-left'>{i18n.t('pages.wms_inbound_detail_page.k12')}</th>
-                <th className='px-3 py-2 text-right'>{i18n.t('pages.wms_inbound_detail_page.k13')}</th>
-                <th className='px-3 py-2 text-right'>{i18n.t('pages.wms_inbound_detail_page.k14')}</th>
-                <th className='px-3 py-2 text-right'>{i18n.t('pages.wms_inbound_detail_page.k15')}</th>
-                <th className='px-3 py-2 text-left'>{i18n.t('pages.wms_inbound_detail_page.k16')}</th>
+                <th className='px-3 py-2 text-left'>
+                  {i18n.t('pages.wms_inbound_detail_page.k10')}
+                </th>
+                <th className='px-3 py-2 text-left'>
+                  {i18n.t('pages.wms_inbound_detail_page.k11')}
+                </th>
+                <th className='px-3 py-2 text-left'>
+                  {i18n.t('pages.wms_inbound_detail_page.k12')}
+                </th>
+                <th className='px-3 py-2 text-right'>
+                  {i18n.t('pages.wms_inbound_detail_page.k13')}
+                </th>
+                <th className='px-3 py-2 text-right'>
+                  {i18n.t('pages.wms_inbound_detail_page.k14')}
+                </th>
+                <th className='px-3 py-2 text-right'>
+                  {i18n.t('pages.wms_inbound_detail_page.k15')}
+                </th>
+                <th className='px-3 py-2 text-left'>
+                  {i18n.t('pages.wms_inbound_detail_page.k16')}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -118,7 +148,9 @@ export default function WmsInboundDetailPage() {
                     <span
                       className={`text-xs ${it.status === 'received' ? 'text-green-600' : 'text-gray-500'}`}
                     >
-                      {it.status === 'received' ? i18n.t('pages.wms_inbound_detail_page.k18') : i18n.t('pages.wms_inbound_detail_page.k17')}
+                      {it.status === 'received'
+                        ? i18n.t('pages.wms_inbound_detail_page.k18')
+                        : i18n.t('pages.wms_inbound_detail_page.k17')}
                     </span>
                   </td>
                 </tr>
@@ -132,8 +164,16 @@ export default function WmsInboundDetailPage() {
         <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_inbound_detail_page.k19')}</h3>
         <ol className='relative border-l border-gray-200 ml-3'>
           {[
-            { t: order.created_at, title: i18n.t('pages.wms_inbound_detail_page.k20'), who: order.created_by },
-            { t: order.approved_at, title: i18n.t('pages.wms_inbound_detail_page.k21'), who: order.approved_by },
+            {
+              t: order.created_at,
+              title: i18n.t('pages.wms_inbound_detail_page.k20'),
+              who: order.created_by,
+            },
+            {
+              t: order.approved_at,
+              title: i18n.t('pages.wms_inbound_detail_page.k21'),
+              who: order.approved_by,
+            },
           ]
             .filter((x) => x.t)
             .map((e, i) => (
@@ -144,7 +184,9 @@ export default function WmsInboundDetailPage() {
                 <span className='absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full bg-blue-500 border-2 border-white' />
                 <div className='text-sm text-gray-500'>{e.t?.slice(0, 19).replace('T', ' ')}</div>
                 <div className='font-medium'>{e.title}</div>
-                <div className='text-sm text-gray-600'>{i18n.t('wms:wms_inbound_detail_page.v0_0', { v0: (e.who ?? 'system') })}</div>
+                <div className='text-sm text-gray-600'>
+                  {i18n.t('wms:wms_inbound_detail_page.v0_0', { v0: e.who ?? 'system' })}
+                </div>
               </li>
             ))}
         </ol>

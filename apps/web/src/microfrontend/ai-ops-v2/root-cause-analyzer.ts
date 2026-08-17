@@ -436,28 +436,42 @@ export class RootCauseAnalyzer {
     // 基于主要原因生成建议
     switch (primary.type) {
       case 'metric':
-        recommendations.push(`${i18n.t('microfrontend.root-cause-analyzer.k5')}${primary.name}${i18n.t('microfrontend.root-cause-analyzer.k6')}`);
+        recommendations.push(
+          `${i18n.t('microfrontend.root-cause-analyzer.k5')}${primary.name}${i18n.t('microfrontend.root-cause-analyzer.k6')}`
+        );
         break;
       case 'resource':
-        recommendations.push(`${i18n.t('microfrontend.root-cause-analyzer.k7')}${primary.name}${i18n.t('microfrontend.root-cause-analyzer.k8')}`);
+        recommendations.push(
+          `${i18n.t('microfrontend.root-cause-analyzer.k7')}${primary.name}${i18n.t('microfrontend.root-cause-analyzer.k8')}`
+        );
         break;
       case 'dependency':
-        recommendations.push(`${i18n.t('microfrontend.root-cause-analyzer.k9')}${primary.name}${i18n.t('microfrontend.root-cause-analyzer.k10')}`);
+        recommendations.push(
+          `${i18n.t('microfrontend.root-cause-analyzer.k9')}${primary.name}${i18n.t('microfrontend.root-cause-analyzer.k10')}`
+        );
         break;
       case 'configuration':
-        recommendations.push(`${i18n.t('microfrontend.root-cause-analyzer.k11')}${primary.name}${i18n.t('microfrontend.root-cause-analyzer.k12')}`);
+        recommendations.push(
+          `${i18n.t('microfrontend.root-cause-analyzer.k11')}${primary.name}${i18n.t('microfrontend.root-cause-analyzer.k12')}`
+        );
         break;
       case 'event':
-        recommendations.push(`${i18n.t('microfrontend.root-cause-analyzer.k13')}${primary.name}${i18n.t('microfrontend.root-cause-analyzer.k14')}`);
+        recommendations.push(
+          `${i18n.t('microfrontend.root-cause-analyzer.k13')}${primary.name}${i18n.t('microfrontend.root-cause-analyzer.k14')}`
+        );
         break;
     }
 
     // 基于次要原因补充建议
     secondary.slice(0, this.config.maxRecommendations - 1).forEach((factor) => {
       if (factor.type === 'dependency') {
-        recommendations.push(`${i18n.t('microfrontend.root-cause-analyzer.k15')}${factor.name}${i18n.t('microfrontend.root-cause-analyzer.k16')}`);
+        recommendations.push(
+          `${i18n.t('microfrontend.root-cause-analyzer.k15')}${factor.name}${i18n.t('microfrontend.root-cause-analyzer.k16')}`
+        );
       } else if (factor.type === 'resource') {
-        recommendations.push(`${i18n.t('microfrontend.root-cause-analyzer.k17')}${factor.name}${i18n.t('microfrontend.root-cause-analyzer.k18')}`);
+        recommendations.push(
+          `${i18n.t('microfrontend.root-cause-analyzer.k17')}${factor.name}${i18n.t('microfrontend.root-cause-analyzer.k18')}`
+        );
       }
     });
 

@@ -34,7 +34,11 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
 
   const handlePredictAnomaly = async () => {
     if (!metric.trim()) {
-      addNotification({ title: i18n.t('components.ai_anomaly_assistant.k1'), message: i18n.t('components.ai_anomaly_assistant.k0'), type: 'warning' });
+      addNotification({
+        title: i18n.t('components.ai_anomaly_assistant.k1'),
+        message: i18n.t('components.ai_anomaly_assistant.k0'),
+        type: 'warning',
+      });
       return;
     }
 
@@ -62,7 +66,11 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
     } catch (err: unknown) {
       logger.error(i18n.t('components.ai_anomaly_assistant.k2'), err);
       setError(i18n.t('components.ai_anomaly_assistant.k4'));
-      addNotification({ title: i18n.t('components.ai_anomaly_assistant.k6'), message: i18n.t('components.ai_anomaly_assistant.k5'), type: 'error' });
+      addNotification({
+        title: i18n.t('components.ai_anomaly_assistant.k6'),
+        message: i18n.t('components.ai_anomaly_assistant.k5'),
+        type: 'error',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -122,7 +130,9 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
                 <Box
                   sx={{
                     width: '100%',
-                    bgcolor: isAnomaly ? designTokens.colors.error.main : designTokens.colors.primary.main,
+                    bgcolor: isAnomaly
+                      ? designTokens.colors.error.main
+                      : designTokens.colors.primary.main,
                     borderRadius: '4px 4px 0 0',
                     height: `${Math.max(height, 10)}%`,
                     minHeight: 8,
@@ -234,7 +244,8 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
             variant='subtitle2'
             sx={{ mb: 1, color: 'text.secondary' }}
           >
-            [i18n.t('components.ai_anomaly_assistant.k12')]: {threshold} {i18n.t('components.ai_anomaly_assistant.k13')}
+            [i18n.t('components.ai_anomaly_assistant.k12')]: {threshold}{' '}
+            {i18n.t('components.ai_anomaly_assistant.k13')}
           </Typography>
           <Slider
             value={threshold}
@@ -269,7 +280,9 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
           }
           fullWidth
         >
-          {isLoading ? i18n.t('components.ai_anomaly_assistant.k14') : i18n.t('components.ai_anomaly_assistant.k20')}
+          {isLoading
+            ? i18n.t('components.ai_anomaly_assistant.k14')
+            : i18n.t('components.ai_anomaly_assistant.k20')}
         </Button>
 
         {error && (
@@ -318,13 +331,15 @@ export const AIAnomalyAssistant: React.FC<AIAnomalyAssistantProps> = ({ initialM
                           </AlertTitle>
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                             <Typography variant='body2'>
-                              [i18n.t('components.ai_anomaly_assistant.k18')]: <strong>{anomaly.value.toFixed(2)}</strong>
+                              [i18n.t('components.ai_anomaly_assistant.k18')]:{' '}
+                              <strong>{anomaly.value.toFixed(2)}</strong>
                               {anomaly.expected !== undefined && (
                                 <span>{i18n.t('components.ai_anomaly_assistant.k0')}</span>
                               )}
                             </Typography>
                             <Typography variant='body2'>
-                              [i18n.t('components.ai_anomaly_assistant.k19')]: <strong>{getSeverityLabel(anomaly.severity)}</strong>
+                              [i18n.t('components.ai_anomaly_assistant.k19')]:{' '}
+                              <strong>{getSeverityLabel(anomaly.severity)}</strong>
                             </Typography>
                             {anomaly.reason && (
                               <Typography

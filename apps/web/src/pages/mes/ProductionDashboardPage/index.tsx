@@ -57,6 +57,7 @@ import AlarmList from './components/AlarmList';
 import WorkStationUtilizationCard from './components/WorkStationUtilizationCard';
 import EquipmentStatusPanel from './components/EquipmentStatusPanel';
 import ProductionGantt from './components/ProductionGantt';
+
 export const ProductionDashboardPage: React.FC = () => {
   const { token } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -462,7 +463,9 @@ export const ProductionDashboardPage: React.FC = () => {
               variant='caption'
               sx={{ color: 'text.secondary' }}
             >
-              {lastUpdated ? `${i18n.t('pages.index.k9')}${formatTime(lastUpdated)}` : i18n.t('mes.index.k23')}
+              {lastUpdated
+                ? `${i18n.t('pages.index.k9')}${formatTime(lastUpdated)}`
+                : i18n.t('mes.index.k23')}
             </Typography>
           </Stack>
           <Divider

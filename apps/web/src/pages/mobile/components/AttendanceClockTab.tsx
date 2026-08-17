@@ -7,6 +7,7 @@ import { Box, Typography, Paper, Chip, useTheme } from '@mui/material';
 import { CalendarCheck, MapPin } from 'lucide-react';
 import type { AttendanceStats } from '@/api/mobile';
 import i18n from '@/i18n';
+
 interface AttendanceClockTabProps {
   attendanceStats: AttendanceStats | null;
   checkingIn: boolean;

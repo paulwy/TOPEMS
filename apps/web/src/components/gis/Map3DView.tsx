@@ -392,7 +392,9 @@ const Map3DView: React.FC<Map3DViewProps> = ({
           }}
         >
           <MuiBox sx={{ fontSize: '0.75rem' }}>
-            <Typography sx={{ fontWeight: 500, mb: 2 }}>{i18n.t('gis:map3_d_view.3d_6')}</Typography>
+            <Typography sx={{ fontWeight: 500, mb: 2 }}>
+              {i18n.t('gis:map3_d_view.3d_6')}
+            </Typography>
             <MuiBox sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
               <MuiBox
                 sx={{
@@ -449,9 +451,15 @@ const Map3DView: React.FC<Map3DViewProps> = ({
         >
           <MuiBox sx={{ fontSize: '0.75rem' }}>
             <Typography sx={{ fontWeight: 500, mb: 1 }}>{i18n.t('gis.map3_d_view.k10')}</Typography>
-            <Typography variant='caption'>{i18n.t('gis:map3_d_view.v0_2', { v0: (devicePoints.length) })}</Typography>
-            <Typography variant='caption'>{i18n.t('gis:map3_d_view.v0_1', { v0: (pipelines.length) })}</Typography>
-            <Typography variant='caption'>{i18n.t('gis:map3_d_view.v0_0', { v0: (storageLocations.length) })}</Typography>
+            <Typography variant='caption'>
+              {i18n.t('gis:map3_d_view.v0_2', { v0: devicePoints.length })}
+            </Typography>
+            <Typography variant='caption'>
+              {i18n.t('gis:map3_d_view.v0_1', { v0: pipelines.length })}
+            </Typography>
+            <Typography variant='caption'>
+              {i18n.t('gis:map3_d_view.v0_0', { v0: storageLocations.length })}
+            </Typography>
           </MuiBox>
         </Paper>
       </MuiBox>

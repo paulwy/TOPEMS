@@ -7,7 +7,8 @@ import { receivableSchema, payableSchema } from '@/schemas/finance';
 import { receivableApi, payableApi, type Receivable, type Payable } from '@/api/erp';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const ReceivablePayablePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const receivableAdapter: CrudApiAdapter<Receivable> = useMemo(
@@ -78,7 +79,10 @@ const ReceivablePayablePage: React.FC = () => {
     }),
     []
   );
-  const renderStatsContent = (rows: Array<{ original_value?: number; amount?: number; balance?: number; status?: string }>, total: number) => {
+  const renderStatsContent = (
+    rows: Array<{ original_value?: number; amount?: number; balance?: number; status?: string }>,
+    total: number
+  ) => {
     const totalAmount = rows.reduce((sum, item) => sum + (item.amount || 0), 0);
     const pendingAmount = rows
       .filter((item) => item.status === 'pending' || item.status === 'draft')
@@ -116,19 +120,25 @@ const ReceivablePayablePage: React.FC = () => {
           <Box sx={{ fontWeight: 700, fontSize: 24, color: 'secondary.700' }}>{total}</Box>
         </Box>
         <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
-          <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.receivable_payable_page.k4')}</Box>
+          <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>
+            {i18n.t('erp.receivable_payable_page.k4')}
+          </Box>
           <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>
             {totalAmount.toFixed(2)}
           </Box>
         </Box>
         <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
-          <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.receivable_payable_page.k5')}</Box>
+          <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>
+            {i18n.t('erp.receivable_payable_page.k5')}
+          </Box>
           <Box sx={{ fontWeight: 700, fontSize: 24, color: 'warning.700' }}>
             {pendingAmount.toFixed(2)}
           </Box>
         </Box>
         <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
-          <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>{i18n.t('erp.receivable_payable_page.k6')}</Box>
+          <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>
+            {i18n.t('erp.receivable_payable_page.k6')}
+          </Box>
           <Box sx={{ fontWeight: 700, fontSize: 24, color: 'error.dark' }}>{overdueCount}</Box>
         </Box>
       </Box>

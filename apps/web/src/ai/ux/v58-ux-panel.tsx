@@ -448,7 +448,9 @@ const RecommendationsTab: React.FC<{
                       >
                         {rec.id}
                       </Typography>
-                      <Tooltip title={`${i18n.t('ai.v58-ux-panel.k2')}${(rec.confidence * 100).toFixed(1)}%`}>
+                      <Tooltip
+                        title={`${i18n.t('ai.v58-ux-panel.k2')}${(rec.confidence * 100).toFixed(1)}%`}
+                      >
                         <Gauge
                           size={14}
                           color={
@@ -1009,7 +1011,11 @@ const AdaptiveTab: React.FC<{
               <Grid size={6}>
                 <InfoBlock
                   title={i18n.t('ai.v58-ux-panel.k49')}
-                  value={adaptation.layout.sidebarCollapsed ? i18n.t('ai.v58-ux-panel.k51') : i18n.t('ai.v58-ux-panel.k50')}
+                  value={
+                    adaptation.layout.sidebarCollapsed
+                      ? i18n.t('ai.v58-ux-panel.k51')
+                      : i18n.t('ai.v58-ux-panel.k50')
+                  }
                 />
               </Grid>
             </Grid>
@@ -1500,7 +1506,12 @@ const ColorBar: React.FC<{ label: string; value: number }> = ({ label, value }) 
         borderRadius: 3,
         bgcolor: 'grey.200',
         '& .MuiLinearProgress-bar': {
-          bgcolor: value > 1 ? designTokens.colors.success.dark : value < 0.95 ? designTokens.colors.error.main : 'colors.cyan.600',
+          bgcolor:
+            value > 1
+              ? designTokens.colors.success.dark
+              : value < 0.95
+                ? designTokens.colors.error.main
+                : 'colors.cyan.600',
         },
       }}
     />
@@ -1585,7 +1596,11 @@ const SettingsTab: React.FC<{
                       })
                     }
                   >
-                    {m === 'no_preference' ? i18n.t('ai.v58-ux-panel.k74') : m === 'reduce' ? i18n.t('ai.v58-ux-panel.k73') : i18n.t('ai.v58-ux-panel.k72')}
+                    {m === 'no_preference'
+                      ? i18n.t('ai.v58-ux-panel.k74')
+                      : m === 'reduce'
+                        ? i18n.t('ai.v58-ux-panel.k73')
+                        : i18n.t('ai.v58-ux-panel.k72')}
                   </Button>
                 ))}
               </Stack>

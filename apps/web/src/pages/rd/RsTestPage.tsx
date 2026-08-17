@@ -10,6 +10,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import i18n from '@/i18n';
+
 const testApiAdapter: CrudApiAdapter<TestCase> = {
   list: async (params) => {
     const queryParams: Record<string, unknown> = {
@@ -62,10 +63,11 @@ const RsTestPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.TEST_CASES ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.RD.TEST_CASES,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: i18n.t('rd.rs_test_page.k5'),
@@ -101,7 +103,10 @@ const RsTestPage: React.FC = () => {
       schema={testSchema}
       apiAdapter={testApiAdapter}
       customRowActions={customRowActions}
-      breadcrumbs={[{ label: i18n.t('rd.rs_test_page.k11'), href: '/rd' }, { label: i18n.t('rd.rs_test_page.k10') }]}
+      breadcrumbs={[
+        { label: i18n.t('rd.rs_test_page.k11'), href: '/rd' },
+        { label: i18n.t('rd.rs_test_page.k10') },
+      ]}
     />
   );
 };

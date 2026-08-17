@@ -1,5 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Box, Typography, Card, CardContent, LinearProgress, Chip, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  LinearProgress,
+  Chip,
+  ToggleButton,
+  ToggleButtonGroup,
+} from '@mui/material';
 import { TrendingUp, Users, Target, DollarSign } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -143,7 +152,9 @@ const CRMSalesFunnelPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {mockEnabled && (
             <Chip
-              label={t('crm.common.mock_demo_badge') || i18n.t('pages.crm_sales_funnel_page.mock_0')}
+              label={
+                t('crm.common.mock_demo_badge') || i18n.t('pages.crm_sales_funnel_page.mock_0')
+              }
               color='warning'
               size='small'
               variant='outlined'
@@ -156,7 +167,9 @@ const CRMSalesFunnelPage: React.FC = () => {
             onChange={(_, v) => v && setViewMode(v)}
             size='small'
           >
-            <ToggleButton value='count'>{t('crm.salesFunnel.view_count') || i18n.t('pages.crm_sales_funnel_page.k1')}</ToggleButton>
+            <ToggleButton value='count'>
+              {t('crm.salesFunnel.view_count') || i18n.t('pages.crm_sales_funnel_page.k1')}
+            </ToggleButton>
             <ToggleButton value='weighted'>
               {t('crm.salesFunnel.view_weighted') || i18n.t('pages.crm_sales_funnel_page.k2')}
             </ToggleButton>
@@ -174,13 +187,19 @@ const CRMSalesFunnelPage: React.FC = () => {
           { value: 'MTD', label: t('crm.period.mtd') || i18n.t('pages.crm_sales_funnel_page.k3') },
           { value: 'QTD', label: t('crm.period.qtd') || i18n.t('pages.crm_sales_funnel_page.k4') },
           { value: 'YTD', label: t('crm.period.ytd') || i18n.t('pages.crm_sales_funnel_page.k5') },
-          { value: 'ROLLING_12M', label: t('crm.period.r12') || i18n.t('pages.crm_sales_funnel_page.12_6') },
+          {
+            value: 'ROLLING_12M',
+            label: t('crm.period.r12') || i18n.t('pages.crm_sales_funnel_page.12_6'),
+          },
         ]}
         onTimeRangeChange={(v) => setPeriod(v as Period)}
       />
 
       <Box sx={{ mt: 4 }}>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           {t('crm.salesFunnel.section_detail')}
         </Typography>
         <Box
@@ -191,18 +210,30 @@ const CRMSalesFunnelPage: React.FC = () => {
           }}
         >
           {stages.map((stage, idx) => {
-            const max = Math.max(...stages.map((s) => (viewMode === 'count' ? s.count : s.amount)), 1);
+            const max = Math.max(
+              ...stages.map((s) => (viewMode === 'count' ? s.count : s.amount)),
+              1
+            );
             const progressValue =
               viewMode === 'count' ? (stage.count / max) * 100 : (stage.amount / max) * 100;
             return (
-              <Card key={stage.stage} variant='outlined'>
+              <Card
+                key={stage.stage}
+                variant='outlined'
+              >
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                     <Box>
-                      <Typography variant='caption' color='text.secondary'>
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
                         {t('crm.salesFunnel.stage_index', { index: idx + 1 })}
                       </Typography>
-                      <Typography variant='h6' sx={{ fontWeight: 600 }}>
+                      <Typography
+                        variant='h6'
+                        sx={{ fontWeight: 600 }}
+                      >
                         {stageLabelMap[stage.stage] || stage.stage}
                       </Typography>
                     </Box>
@@ -215,18 +246,33 @@ const CRMSalesFunnelPage: React.FC = () => {
                     )}
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 1 }}>
-                    <Typography variant='h4' sx={{ fontWeight: 700 }} color='primary.main'>
-                      {viewMode === 'count' ? stage.count : `¥${Math.round(stage.amount).toLocaleString()}`}
+                    <Typography
+                      variant='h4'
+                      sx={{ fontWeight: 700 }}
+                      color='primary.main'
+                    >
+                      {viewMode === 'count'
+                        ? stage.count
+                        : `¥${Math.round(stage.amount).toLocaleString()}`}
                     </Typography>
-                    <Typography variant='body2' color='text.secondary'>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
                       {viewMode === 'count'
                         ? t('crm.salesFunnel.text_opportunity_count')
                         : t('crm.salesFunnel.text_total_value', { value: '' }).trim()}
                     </Typography>
                   </Box>
-                  <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ mb: 2 }}
+                  >
                     {t('crm.salesFunnel.text_avg_value', {
-                      value: Math.round(Number(stage.avgValue ?? stage.amount / Math.max(stage.count, 1))).toLocaleString(),
+                      value: Math.round(
+                        Number(stage.avgValue ?? stage.amount / Math.max(stage.count, 1))
+                      ).toLocaleString(),
                     })}
                   </Typography>
                   <LinearProgress

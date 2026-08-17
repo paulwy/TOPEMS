@@ -60,7 +60,6 @@ import type {
 } from '@/api/tenant/types';
 import { ADMIN_PATHS } from '@/modules/admin/config';
 
-
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 
 const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
@@ -195,21 +194,22 @@ const TenantDetailPage: React.FC = () => {
     }
   }, [invoicesQuery.isError, invoicesQuery.error]);
 
-  const invalidateUsers = () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_USERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+  const invalidateUsers = () =>
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_USERS_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
 
   const inviteMemberMutation = useMutation({
     mutationFn: (params: { tenantId: string; data: { email: string; role: TenantRole } }) =>
       tenantApi.inviteMember(params.tenantId, params.data),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateUsers();
       setShowInviteDialog(false);
       setInviteForm({ email: '', role: 'member' });
@@ -223,12 +223,11 @@ const TenantDetailPage: React.FC = () => {
     mutationFn: (params: { tenantId: string; userId: string }) =>
       tenantApi.removeMember(params.tenantId, params.userId),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateUsers();
       setConfirmDialogClosed();
     },
@@ -241,12 +240,11 @@ const TenantDetailPage: React.FC = () => {
     mutationFn: (params: { tenantId: string; userId: string; role: TenantRole }) =>
       tenantApi.updateMemberRole(params.tenantId, params.userId, { role: params.role }),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateUsers();
     },
     onError: (error: unknown) => {
@@ -283,15 +281,30 @@ const TenantDetailPage: React.FC = () => {
     if (!stats || !tenant) return null;
 
     const statCards = [
-      { label: i18n.t('pages.tenant_detail_page.k17'), value: stats.total_users, icon: Users, color: 'primary' },
-      { label: i18n.t('pages.tenant_detail_page.k18'), value: stats.active_users, icon: Activity, color: 'success' },
+      {
+        label: i18n.t('pages.tenant_detail_page.k17'),
+        value: stats.total_users,
+        icon: Users,
+        color: 'primary',
+      },
+      {
+        label: i18n.t('pages.tenant_detail_page.k18'),
+        value: stats.active_users,
+        icon: Activity,
+        color: 'success',
+      },
       {
         label: i18n.t('pages.tenant_detail_page.k19'),
         value: `${stats.storage_used_gb}/${tenant.settings.max_storage_gb}GB`,
         icon: HardDrive,
         color: 'warning',
       },
-      { label: i18n.t('pages.tenant_detail_page.30_20'), value: stats.last_30d_logins, icon: BarChart3, color: 'secondary' },
+      {
+        label: i18n.t('pages.tenant_detail_page.30_20'),
+        value: stats.last_30d_logins,
+        icon: BarChart3,
+        color: 'secondary',
+      },
     ];
 
     return (
@@ -504,7 +517,9 @@ const TenantDetailPage: React.FC = () => {
               <ListItem sx={{ px: 0 }}>
                 <ListItemText
                   primary={i18n.t('pages.tenant_detail_page.k26')}
-                  secondary={tenant.settings.branding.custom_domain || i18n.t('pages.tenant_detail_page.k27')}
+                  secondary={
+                    tenant.settings.branding.custom_domain || i18n.t('pages.tenant_detail_page.k27')
+                  }
                 />
               </ListItem>
             </List>
@@ -680,7 +695,9 @@ const TenantDetailPage: React.FC = () => {
             delete: async () => {},
           }}
           breadcrumbs={[]}
-          headerContent={<Typography variant='h6'>{i18n.t('pages.tenant_detail_page.k31')}</Typography>}
+          headerContent={
+            <Typography variant='h6'>{i18n.t('pages.tenant_detail_page.k31')}</Typography>
+          }
         />
       </Box>
     );
@@ -807,7 +824,9 @@ const TenantDetailPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowInviteDialog(false)}>{i18n.t('pages.tenant_detail_page.k45')}</Button>
+          <Button onClick={() => setShowInviteDialog(false)}>
+            {i18n.t('pages.tenant_detail_page.k45')}
+          </Button>
           <Button
             variant='contained'
             onClick={handleInviteMember}

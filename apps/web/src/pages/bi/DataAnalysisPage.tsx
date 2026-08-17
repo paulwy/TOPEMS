@@ -30,23 +30,73 @@ import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const mockSalesData = [
-  { month: i18n.t('bi.months.jan'), [i18n.t('bi.data_analysis_page.k32')]: 125000, [i18n.t('bi.data_analysis_page.k33')]: 450, [i18n.t('bi.data_analysis_page.k34')]: 180 },
-  { month: i18n.t('bi.months.feb'), [i18n.t('bi.data_analysis_page.k32')]: 138000, [i18n.t('bi.data_analysis_page.k33')]: 480, [i18n.t('bi.data_analysis_page.k34')]: 195 },
-  { month: i18n.t('bi.months.mar'), [i18n.t('bi.data_analysis_page.k32')]: 152000, [i18n.t('bi.data_analysis_page.k33')]: 520, [i18n.t('bi.data_analysis_page.k34')]: 210 },
-  { month: i18n.t('bi.months.apr'), [i18n.t('bi.data_analysis_page.k32')]: 145000, [i18n.t('bi.data_analysis_page.k33')]: 500, [i18n.t('bi.data_analysis_page.k34')]: 205 },
-  { month: i18n.t('bi.months.may'), [i18n.t('bi.data_analysis_page.k32')]: 168000, [i18n.t('bi.data_analysis_page.k33')]: 560, [i18n.t('bi.data_analysis_page.k34')]: 230 },
-  { month: i18n.t('bi.months.jun'), [i18n.t('bi.data_analysis_page.k32')]: 185000, [i18n.t('bi.data_analysis_page.k33')]: 620, [i18n.t('bi.data_analysis_page.k34')]: 250 },
+  {
+    month: i18n.t('bi.months.jan'),
+    [i18n.t('bi.data_analysis_page.k32')]: 125000,
+    [i18n.t('bi.data_analysis_page.k33')]: 450,
+    [i18n.t('bi.data_analysis_page.k34')]: 180,
+  },
+  {
+    month: i18n.t('bi.months.feb'),
+    [i18n.t('bi.data_analysis_page.k32')]: 138000,
+    [i18n.t('bi.data_analysis_page.k33')]: 480,
+    [i18n.t('bi.data_analysis_page.k34')]: 195,
+  },
+  {
+    month: i18n.t('bi.months.mar'),
+    [i18n.t('bi.data_analysis_page.k32')]: 152000,
+    [i18n.t('bi.data_analysis_page.k33')]: 520,
+    [i18n.t('bi.data_analysis_page.k34')]: 210,
+  },
+  {
+    month: i18n.t('bi.months.apr'),
+    [i18n.t('bi.data_analysis_page.k32')]: 145000,
+    [i18n.t('bi.data_analysis_page.k33')]: 500,
+    [i18n.t('bi.data_analysis_page.k34')]: 205,
+  },
+  {
+    month: i18n.t('bi.months.may'),
+    [i18n.t('bi.data_analysis_page.k32')]: 168000,
+    [i18n.t('bi.data_analysis_page.k33')]: 560,
+    [i18n.t('bi.data_analysis_page.k34')]: 230,
+  },
+  {
+    month: i18n.t('bi.months.jun'),
+    [i18n.t('bi.data_analysis_page.k32')]: 185000,
+    [i18n.t('bi.data_analysis_page.k33')]: 620,
+    [i18n.t('bi.data_analysis_page.k34')]: 250,
+  },
 ];
 
 const mockRegionData = [
-  { region: i18n.t('bi.data_analysis_page.k0'), [i18n.t('bi.data_analysis_page.k32')]: 420000, [i18n.t('bi.data_analysis_page.k35')]: 35 },
-  { region: i18n.t('bi.data_analysis_page.k1'), [i18n.t('bi.data_analysis_page.k32')]: 320000, [i18n.t('bi.data_analysis_page.k35')]: 27 },
-  { region: i18n.t('bi.data_analysis_page.k2'), [i18n.t('bi.data_analysis_page.k32')]: 240000, [i18n.t('bi.data_analysis_page.k35')]: 20 },
-  { region: i18n.t('bi.data_analysis_page.k3'), [i18n.t('bi.data_analysis_page.k32')]: 120000, [i18n.t('bi.data_analysis_page.k35')]: 10 },
-  { region: i18n.t('bi.data_analysis_page.k4'), [i18n.t('bi.data_analysis_page.k32')]: 96000, [i18n.t('bi.data_analysis_page.k35')]: 8 },
+  {
+    region: i18n.t('bi.data_analysis_page.k0'),
+    [i18n.t('bi.data_analysis_page.k32')]: 420000,
+    [i18n.t('bi.data_analysis_page.k35')]: 35,
+  },
+  {
+    region: i18n.t('bi.data_analysis_page.k1'),
+    [i18n.t('bi.data_analysis_page.k32')]: 320000,
+    [i18n.t('bi.data_analysis_page.k35')]: 27,
+  },
+  {
+    region: i18n.t('bi.data_analysis_page.k2'),
+    [i18n.t('bi.data_analysis_page.k32')]: 240000,
+    [i18n.t('bi.data_analysis_page.k35')]: 20,
+  },
+  {
+    region: i18n.t('bi.data_analysis_page.k3'),
+    [i18n.t('bi.data_analysis_page.k32')]: 120000,
+    [i18n.t('bi.data_analysis_page.k35')]: 10,
+  },
+  {
+    region: i18n.t('bi.data_analysis_page.k4'),
+    [i18n.t('bi.data_analysis_page.k32')]: 96000,
+    [i18n.t('bi.data_analysis_page.k35')]: 8,
+  },
 ];
 
 const mockPivotData = [

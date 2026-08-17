@@ -29,10 +29,7 @@ export interface FloatingDockProps {
   showAI?: boolean;
 }
 
-export const FloatingDock: React.FC<FloatingDockProps> = ({
-  showHelp = true,
-  showAI = true,
-}) => {
+export const FloatingDock: React.FC<FloatingDockProps> = ({ showHelp = true, showAI = true }) => {
   if (!showAI && !showHelp) return null;
 
   return (

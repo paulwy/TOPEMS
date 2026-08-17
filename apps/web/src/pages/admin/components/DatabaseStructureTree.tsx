@@ -15,6 +15,7 @@ import {
 import i18n from '@/i18n';
 import { Table, Search } from 'lucide-react';
 import type { TableInfo, TableDetail } from '@/api/system';
+
 interface DatabaseStructureTreeProps {
   loading: boolean;
   searchQuery: string;

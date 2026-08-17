@@ -29,8 +29,14 @@ import { useTranslation } from 'react-i18next';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef } from '@/components/templates/list/types';
 import { recommendationSchema } from '@/schemas/crm';
-import { crmApi, useCrmMock, type RecommendationData, type Period } from '@/api/crm';
-import type { RecommendationResult, RecommendationRequest } from '@/api/crm';
+import type {
+  RecommendationResult,
+  RecommendationRequest,
+  crmApi,
+  useCrmMock,
+  type RecommendationData,
+  type Period,
+} from '@/api/crm';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
 // ============ 辅助函数 ============
@@ -318,24 +324,42 @@ const CRMRecommendationPage: React.FC = () => {
     {
       key: 'crossSell',
       label: t('crm.recommendation.col_cross_sell') || i18n.t('pages.crm_recommendation_page.k0'),
-      sublabel: t('crm.recommendation.col_cross_sell_sub') || i18n.t('pages.crm_recommendation_page.k1'),
-      icon: <ShoppingCart size={20} color='white' />,
+      sublabel:
+        t('crm.recommendation.col_cross_sell_sub') || i18n.t('pages.crm_recommendation_page.k1'),
+      icon: (
+        <ShoppingCart
+          size={20}
+          color='white'
+        />
+      ),
       gradient: ['colors.primary.dark', 'colors.primary.700'],
       data: mockRec.crossSell,
     },
     {
       key: 'upsell',
       label: t('crm.recommendation.col_upsell') || i18n.t('pages.crm_recommendation_page.k2'),
-      sublabel: t('crm.recommendation.col_upsell_sub') || i18n.t('pages.crm_recommendation_page.k3'),
-      icon: <TrendingUp size={20} color='white' />,
+      sublabel:
+        t('crm.recommendation.col_upsell_sub') || i18n.t('pages.crm_recommendation_page.k3'),
+      icon: (
+        <TrendingUp
+          size={20}
+          color='white'
+        />
+      ),
       gradient: ['colors.success.dark', designTokens.colors.success[700]],
       data: mockRec.upsell,
     },
     {
       key: 'followup',
       label: t('crm.recommendation.col_followup') || i18n.t('pages.crm_recommendation_page.k4'),
-      sublabel: t('crm.recommendation.col_followup_sub') || i18n.t('pages.crm_recommendation_page.k5'),
-      icon: <MessageSquare size={20} color='white' />,
+      sublabel:
+        t('crm.recommendation.col_followup_sub') || i18n.t('pages.crm_recommendation_page.k5'),
+      icon: (
+        <MessageSquare
+          size={20}
+          color='white'
+        />
+      ),
       gradient: [designTokens.colors.warning.dark, designTokens.colors.warning[700]],
       data: mockRec.followup,
     },
@@ -346,7 +370,9 @@ const CRMRecommendationPage: React.FC = () => {
       {mockEnabled && (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Chip
-            label={t('crm.common.mock_demo_badge') || i18n.t('pages.crm_recommendation_page.mock_6')}
+            label={
+              t('crm.common.mock_demo_badge') || i18n.t('pages.crm_recommendation_page.mock_6')
+            }
             color='warning'
             size='small'
             variant='outlined'
@@ -356,9 +382,15 @@ const CRMRecommendationPage: React.FC = () => {
       )}
 
       {mockEnabled && (
-        <Grid container spacing={3}>
+        <Grid
+          container
+          spacing={3}
+        >
           {typeColumnConfig.map((col) => (
-            <Grid size={{ xs: 12, lg: 4 }} key={col.key}>
+            <Grid
+              size={{ xs: 12, lg: 4 }}
+              key={col.key}
+            >
               <Paper
                 variant='outlined'
                 sx={{
@@ -391,11 +423,18 @@ const CRMRecommendationPage: React.FC = () => {
                       {col.icon}
                     </Box>
                     <Box>
-                      <Typography variant='h6' sx={{ fontWeight: 700 }}>
+                      <Typography
+                        variant='h6'
+                        sx={{ fontWeight: 700 }}
+                      >
                         {col.label}
                       </Typography>
-                      <Typography variant='caption' sx={{ opacity: 0.9 }}>
-                        {col.sublabel} · {col.data.length} {i18n.t('pages.crm_recommendation_page.k0')}
+                      <Typography
+                        variant='caption'
+                        sx={{ opacity: 0.9 }}
+                      >
+                        {col.sublabel} · {col.data.length}{' '}
+                        {i18n.t('pages.crm_recommendation_page.k0')}
                       </Typography>
                     </Box>
                   </Box>
@@ -411,30 +450,64 @@ const CRMRecommendationPage: React.FC = () => {
                             ? 'warning.main'
                             : 'error.main';
                     return (
-                      <Card key={item.id} variant='outlined' sx={{ flex: 1 }}>
+                      <Card
+                        key={item.id}
+                        variant='outlined'
+                        sx={{ flex: 1 }}
+                      >
                         <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                            <Typography variant='body2' sx={{ fontWeight: 600 }}>
+                            <Typography
+                              variant='body2'
+                              sx={{ fontWeight: 600 }}
+                            >
                               {item.customerName}
                             </Typography>
-                            <Typography variant='caption' sx={{ color: confColor, fontWeight: 700 }}>
+                            <Typography
+                              variant='caption'
+                              sx={{ color: confColor, fontWeight: 700 }}
+                            >
                               {(item.confidence * 100).toFixed(0)}%
                             </Typography>
                           </Box>
-                          <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 0.5 }}>
+                          <Typography
+                            variant='subtitle2'
+                            sx={{ fontWeight: 600, mb: 0.5 }}
+                          >
                             {item.title}
                           </Typography>
-                          <Typography variant='caption' color='text.secondary' sx={{ mb: 1.5, display: 'block' }}>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                            sx={{ mb: 1.5, display: 'block' }}
+                          >
                             {item.reason}
                           </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                            }}
+                          >
                             <LinearProgress
                               variant='determinate'
                               value={item.confidence * 100}
-                              color={item.confidence >= 0.9 ? 'success' : item.confidence >= 0.7 ? 'primary' : item.confidence >= 0.5 ? 'warning' : 'error'}
+                              color={
+                                item.confidence >= 0.9
+                                  ? 'success'
+                                  : item.confidence >= 0.7
+                                    ? 'primary'
+                                    : item.confidence >= 0.5
+                                      ? 'warning'
+                                      : 'error'
+                              }
                               sx={{ flex: 1, height: 4, borderRadius: 2, mr: 2 }}
                             />
-                            <Typography variant='caption' sx={{ fontWeight: 700, color: 'primary.main' }}>
+                            <Typography
+                              variant='caption'
+                              sx={{ fontWeight: 700, color: 'primary.main' }}
+                            >
                               ¥{item.expectedValue.toLocaleString()}
                             </Typography>
                           </Box>

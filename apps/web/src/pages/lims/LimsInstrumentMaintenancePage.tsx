@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Wrench, Calendar, DollarSign, Clock, AlertCircle } from 'lucide-react';
 import {
   Chip,
@@ -22,12 +22,13 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { instrumentMaintenanceSchema } from '@/schemas/lims';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const LimsInstrumentMaintenancePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const theme = useTheme();
   const navigate = useNavigate();
-  const { data: instrument, isPending: loadingInstrument} = useQuery({
+  const { data: instrument, isPending: loadingInstrument } = useQuery({
     queryKey: QUERY_KEYS.LIMS.INSTRUMENT(id || ''),
     queryFn: async () => {
       if (!id) return null;
@@ -38,8 +39,9 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       return null;
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const apiAdapter: CrudApiAdapter<MaintenanceRecord> = useMemo(
     () => ({
       list: async () => {
@@ -67,7 +69,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       update: async (recordId, data) => {
         const res = await limsApi.updateMaintenance(
           recordId,
-          data as unknown as Partial<CreateMaintenanceRecordRequest>,
+          data as unknown as Partial<CreateMaintenanceRecordRequest>
         );
         if (!res.success || !res.data) {
           throw new Error(res.message || i18n.t('lims.lims_instrument_maintenance_page.k2'));
@@ -85,14 +87,46 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
   );
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      normal: { bg: 'success.lighter', color: 'success.dark', label: i18n.t('lims.lims_instrument_maintenance_page.k4') },
-      in_use: { bg: 'success.lighter', color: 'success.dark', label: i18n.t('lims.lims_instrument_maintenance_page.k5') },
-      calibration: { bg: 'warning.100', color: ct.yellow[600], label: i18n.t('lims.lims_instrument_maintenance_page.k6') },
-      calibrated: { bg: 'info.100', color: 'info.dark', label: i18n.t('lims.lims_instrument_maintenance_page.k7') },
-      maintenance: { bg: 'error.lighter', color: 'error.dark', label: i18n.t('lims.lims_instrument_maintenance_page.k8') },
-      under_maintenance: { bg: 'warning.light', color: 'warning.dark', label: i18n.t('lims.lims_instrument_maintenance_page.k9') },
-      disabled: { bg: 'grey.100', color: 'text.secondary', label: i18n.t('lims.lims_instrument_maintenance_page.k10') },
-      scrapped: { bg: 'grey.100', color: 'text.secondary', label: i18n.t('lims.lims_instrument_maintenance_page.k11') },
+      normal: {
+        bg: 'success.lighter',
+        color: 'success.dark',
+        label: i18n.t('lims.lims_instrument_maintenance_page.k4'),
+      },
+      in_use: {
+        bg: 'success.lighter',
+        color: 'success.dark',
+        label: i18n.t('lims.lims_instrument_maintenance_page.k5'),
+      },
+      calibration: {
+        bg: 'warning.100',
+        color: ct.yellow[600],
+        label: i18n.t('lims.lims_instrument_maintenance_page.k6'),
+      },
+      calibrated: {
+        bg: 'info.100',
+        color: 'info.dark',
+        label: i18n.t('lims.lims_instrument_maintenance_page.k7'),
+      },
+      maintenance: {
+        bg: 'error.lighter',
+        color: 'error.dark',
+        label: i18n.t('lims.lims_instrument_maintenance_page.k8'),
+      },
+      under_maintenance: {
+        bg: 'warning.light',
+        color: 'warning.dark',
+        label: i18n.t('lims.lims_instrument_maintenance_page.k9'),
+      },
+      disabled: {
+        bg: 'grey.100',
+        color: 'text.secondary',
+        label: i18n.t('lims.lims_instrument_maintenance_page.k10'),
+      },
+      scrapped: {
+        bg: 'grey.100',
+        color: 'text.secondary',
+        label: i18n.t('lims.lims_instrument_maintenance_page.k11'),
+      },
     };
     const item = statusMap[status] || {
       bg: 'grey.100',
@@ -232,7 +266,9 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
-          <p style={{ color: ct.grey[600] }}>{i18n.t('pages.lims_instrument_maintenance_page.k0')}</p>
+          <p style={{ color: ct.grey[600] }}>
+            {i18n.t('pages.lims_instrument_maintenance_page.k0')}
+          </p>
         </Box>
       </Box>
     );
@@ -249,7 +285,9 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       >
         <Box sx={{ textAlign: 'center' }}>
           <AlertCircle sx={{ width: 64, height: 64, color: 'error.main', mb: 2 }} />
-          <p style={{ color: ct.grey[600] }}>{i18n.t('lims.lims_instrument_maintenance_page.k12')}</p>
+          <p style={{ color: ct.grey[600] }}>
+            {i18n.t('lims.lims_instrument_maintenance_page.k12')}
+          </p>
           <Button
             onClick={() => navigate(LIMS_PATHS.root)}
             sx={{ mt: 2 }}

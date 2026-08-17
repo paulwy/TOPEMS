@@ -180,10 +180,26 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
             {[
-              { id: 'qa' as const, label: i18n.t('components.chat_history.k5'), icon: <Lightbulb size={14} /> },
-              { id: 'summary' as const, label: i18n.t('components.chat_history.k6'), icon: <FileText size={14} /> },
-              { id: 'code' as const, label: i18n.t('components.chat_history.k7'), icon: <Code size={14} /> },
-              { id: 'general' as const, label: i18n.t('components.chat_history.k8'), icon: <MessageSquare size={14} /> },
+              {
+                id: 'qa' as const,
+                label: i18n.t('components.chat_history.k5'),
+                icon: <Lightbulb size={14} />,
+              },
+              {
+                id: 'summary' as const,
+                label: i18n.t('components.chat_history.k6'),
+                icon: <FileText size={14} />,
+              },
+              {
+                id: 'code' as const,
+                label: i18n.t('components.chat_history.k7'),
+                icon: <Code size={14} />,
+              },
+              {
+                id: 'general' as const,
+                label: i18n.t('components.chat_history.k8'),
+                icon: <MessageSquare size={14} />,
+              },
             ].map((tab) => (
               <Chip
                 key={tab.id}
@@ -328,7 +344,9 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
                 variant='body2'
                 color='text.secondary'
               >
-                {searchQuery ? i18n.t('components.chat_history.k16') : i18n.t('components.chat_history.k15')}
+                {searchQuery
+                  ? i18n.t('components.chat_history.k16')
+                  : i18n.t('components.chat_history.k15')}
               </Typography>
             </Box>
           )}
@@ -340,7 +358,8 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
             variant='caption'
             color='text.secondary'
           >
-            {i18n.t('components.chat_history.k0')} {sessions.length} {i18n.t('components.chat_history.k1')}
+            {i18n.t('components.chat_history.k0')} {sessions.length}{' '}
+            {i18n.t('components.chat_history.k1')}
           </Typography>
         </Box>
       </Box>
@@ -360,7 +379,9 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>{i18n.t('components.chat_history.k18')}</Button>
+          <Button onClick={() => setDeleteDialogOpen(false)}>
+            {i18n.t('components.chat_history.k18')}
+          </Button>
           <Button
             onClick={handleConfirmDelete}
             color='error'

@@ -6386,5 +6386,7 @@
     "k1": "Show {{v0}}-{{v1}} Total {{v2}}",
     "k2": "{{v0}} Column",
     "k3": "Total {{v0}}{{v1}} {{v2}}"
-  }
+  },
+  "components.login_form_v2.k28": "Regular employee",
+  "components.login_form_v2.k29": "Administrator"
 }

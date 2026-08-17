@@ -2,6 +2,8 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
+import CacheConfigPanel from '../CacheConfigPanel';
+
 vi.mock('react-i18next', () => {
   const merge = (...objs: Record<string, string>[]) => Object.assign({}, ...objs);
   const i18nMap = merge(
@@ -41,8 +43,6 @@ vi.mock('@/i18n', () => {
     },
   };
 });
-
-import CacheConfigPanel from '../CacheConfigPanel';
 
 vi.mock('@/components/common', () => ({
   Grid: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

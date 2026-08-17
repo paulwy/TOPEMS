@@ -17,6 +17,7 @@ import {
 import i18n from '@/i18n';
 import { CheckCircle, Download, GitBranch, Shield } from 'lucide-react';
 import type { MarketplacePlugin } from '../hooks/usePluginManagement';
+
 interface PluginInstallStepperProps {
   plugin: MarketplacePlugin;
   step: number;
@@ -179,7 +180,9 @@ const PluginInstallStepper: React.FC<PluginInstallStepperProps> = ({
             onClick={onNext}
             disabled={loading}
           >
-            {step === 0 ? i18n.t('admin.plugin_management.next') : i18n.t('admin.plugin_management.install')}
+            {step === 0
+              ? i18n.t('admin.plugin_management.next')
+              : i18n.t('admin.plugin_management.install')}
           </Button>
         ) : (
           <Button

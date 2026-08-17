@@ -77,12 +77,20 @@ export const settlementCenterApi = {
     return apiClient.finance.get(`/api/core/settlement-center/reconciliations/${id}`);
   },
 
-  createReconciliation: (data: Partial<SettlementReconciliation>): Promise<ApiResponse<SettlementReconciliation>> => {
+  createReconciliation: (
+    data: Partial<SettlementReconciliation>
+  ): Promise<ApiResponse<SettlementReconciliation>> => {
     return apiClient.finance.post('/api/core/settlement-center/reconciliations', data);
   },
 
-  reconcile: (id: string, data?: Record<string, unknown>): Promise<ApiResponse<SettlementReconciliation>> => {
-    return apiClient.finance.post(`/api/core/settlement-center/reconciliations/${id}/reconcile`, data || {});
+  reconcile: (
+    id: string,
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<SettlementReconciliation>> => {
+    return apiClient.finance.post(
+      `/api/core/settlement-center/reconciliations/${id}/reconcile`,
+      data || {}
+    );
   },
 
   autoReconcile: (data: {
@@ -114,11 +122,17 @@ export const settlementCenterApi = {
     return apiClient.finance.post(`/api/core/settlement-center/settlements/${id}/approve`, {});
   },
 
-  listLinks: (params?: { reconciliation_id?: string; settlement_id?: string }): Promise<ApiResponse<SettlementLink[]>> => {
+  listLinks: (params?: {
+    reconciliation_id?: string;
+    settlement_id?: string;
+  }): Promise<ApiResponse<SettlementLink[]>> => {
     return apiClient.finance.get('/api/core/settlement-center/links', { params });
   },
 
-  createLink: (data: { reconciliation_id: string; settlement_id: string }): Promise<ApiResponse<SettlementLink>> => {
+  createLink: (data: {
+    reconciliation_id: string;
+    settlement_id: string;
+  }): Promise<ApiResponse<SettlementLink>> => {
     return apiClient.finance.post('/api/core/settlement-center/links', data);
   },
 
@@ -126,11 +140,16 @@ export const settlementCenterApi = {
     return apiClient.finance.delete(`/api/core/settlement-center/links/${id}`);
   },
 
-  listDifferences: (params?: { reconciliation_id?: string; status?: string }): Promise<ApiResponse<SettlementDifference[]>> => {
+  listDifferences: (params?: {
+    reconciliation_id?: string;
+    status?: string;
+  }): Promise<ApiResponse<SettlementDifference[]>> => {
     return apiClient.finance.get('/api/core/settlement-center/differences', { params });
   },
 
-  createDifference: (data: Partial<SettlementDifference>): Promise<ApiResponse<SettlementDifference>> => {
+  createDifference: (
+    data: Partial<SettlementDifference>
+  ): Promise<ApiResponse<SettlementDifference>> => {
     return apiClient.finance.post('/api/core/settlement-center/differences', data);
   },
 
@@ -146,7 +165,11 @@ export const settlementCenterApi = {
     return apiClient.finance.get('/api/core/settlement-center/dashboard');
   },
 
-  getStatistics: (params?: { period?: string; start_date?: string; end_date?: string }): Promise<ApiResponse<Record<string, unknown>>> => {
+  getStatistics: (params?: {
+    period?: string;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<ApiResponse<Record<string, unknown>>> => {
     return apiClient.finance.get('/api/core/settlement-center/statistics', { params });
   },
 };

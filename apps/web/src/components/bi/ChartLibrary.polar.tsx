@@ -1,5 +1,16 @@
 import React from 'react';
-import { PieChart, Pie, Cell, Tooltip, Legend, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from '../charts/_vendors/recharts-polar';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+} from '../charts/_vendors/recharts-polar';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
 export interface ChartDataPoint {
@@ -71,7 +82,10 @@ interface PolarCaseProps {
 export const PolarCases: React.FC<PolarCaseProps> = (p) => {
   if (p.type === 'pie') {
     return (
-      <PieChart width={p.chartWidth} height={p.chartHeight}>
+      <PieChart
+        width={p.chartWidth}
+        height={p.chartHeight}
+      >
         <Pie
           data={p.data}
           cx='50%'
@@ -96,10 +110,20 @@ export const PolarCases: React.FC<PolarCaseProps> = (p) => {
   }
   // radar
   return (
-    <RadarChart width={p.chartWidth} height={p.chartHeight} data={p.data}>
+    <RadarChart
+      width={p.chartWidth}
+      height={p.chartHeight}
+      data={p.data}
+    >
       <PolarGrid stroke='border.default' />
-      <PolarAngleAxis dataKey={p.xKey} tick={{ fill: 'grey.600', fontSize: 11 }} />
-      <PolarRadiusAxis angle={30} domain={[0, 'dataMax']} />
+      <PolarAngleAxis
+        dataKey={p.xKey}
+        tick={{ fill: 'grey.600', fontSize: 11 }}
+      />
+      <PolarRadiusAxis
+        angle={30}
+        domain={[0, 'dataMax']}
+      />
       {p.showTooltip && <Tooltip content={<CustomTooltipPolar />} />}
       {p.showLegend && <Legend />}
       <Radar

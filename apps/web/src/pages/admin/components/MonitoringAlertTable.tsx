@@ -11,6 +11,7 @@ import ListPageTemplate, {
 } from '@/components/templates/ListPageTemplate';
 import i18n from '@/i18n';
 import type { Alert } from '@/api/admin/monitoring';
+
 export interface MonitoringAlertTableProps {
   alerts: Alert[];
   loading: boolean;

@@ -8,6 +8,7 @@ import i18n from '@/i18n';
 import { Box, Typography, Chip, Divider } from '@mui/material';
 import { Calendar, User, DollarSign, Target, CheckCircle } from 'lucide-react';
 import { pmApi } from '@/api/pm';
+
 interface ProjectItem {
   id: string;
   name: string;
@@ -83,7 +84,12 @@ export const ProjectMasterDetailPage: React.FC = () => {
   });
   const [projects] = useState<ProjectItem[]>(initialProjects);
   const columns: MasterColumn<ProjectItem>[] = [
-    { id: 'name', label: i18n.t('pm.project_master_detail_page.k12'), width: 'flex', minWidth: 150 },
+    {
+      id: 'name',
+      label: i18n.t('pm.project_master_detail_page.k12'),
+      width: 'flex',
+      minWidth: 150,
+    },
     {
       id: 'manager',
       label: i18n.t('pm.project_master_detail_page.k13'),
@@ -97,8 +103,14 @@ export const ProjectMasterDetailPage: React.FC = () => {
       render: (_value, row) => {
         const statusConfig = {
           active: { label: i18n.t('pm.project_master_detail_page.k15'), color: 'success' as const },
-          inactive: { label: i18n.t('pm.project_master_detail_page.k16'), color: 'warning' as const },
-          completed: { label: i18n.t('pm.project_master_detail_page.k17'), color: 'default' as const },
+          inactive: {
+            label: i18n.t('pm.project_master_detail_page.k16'),
+            color: 'warning' as const,
+          },
+          completed: {
+            label: i18n.t('pm.project_master_detail_page.k17'),
+            color: 'default' as const,
+          },
         };
         const config = statusConfig[row.status];
         return (

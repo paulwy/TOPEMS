@@ -28,20 +28,43 @@ beforeEach(() => {
 describe('V164 · 策略管理', () => {
   it('创建策略', async () => {
     mockPost.mockResolvedValueOnce({
-      data: { id: 'p1', name: 'Data Classification', policy_type: 'classification', status: 'draft' },
+      data: {
+        id: 'p1',
+        name: 'Data Classification',
+        policy_type: 'classification',
+        status: 'draft',
+      },
       status: 200,
     });
 
     await dataPolicyConfigurationApiV79.createPolicy({
       name: 'Data Classification',
       policy_type: 'classification',
-      rules: [{ id: 'r1', name: 'Rule 1', condition: 'level > 3', action: 'encrypt', priority: 1, enabled: true }],
+      rules: [
+        {
+          id: 'r1',
+          name: 'Rule 1',
+          condition: 'level > 3',
+          action: 'encrypt',
+          priority: 1,
+          enabled: true,
+        },
+      ],
     });
 
     expect(mockPost).toHaveBeenCalledWith('/mdm-v79/policies', {
       name: 'Data Classification',
       policy_type: 'classification',
-      rules: [{ id: 'r1', name: 'Rule 1', condition: 'level > 3', action: 'encrypt', priority: 1, enabled: true }],
+      rules: [
+        {
+          id: 'r1',
+          name: 'Rule 1',
+          condition: 'level > 3',
+          action: 'encrypt',
+          priority: 1,
+          enabled: true,
+        },
+      ],
     });
   });
 
@@ -70,7 +93,9 @@ describe('V164 · 策略管理', () => {
       pagesize: 10,
     });
 
-    expect(mockGet).toHaveBeenCalledWith('/mdm-v79/policies?page=2&pagesize=10&policy_type=classification&status=active&keyword=test');
+    expect(mockGet).toHaveBeenCalledWith(
+      '/mdm-v79/policies?page=2&pagesize=10&policy_type=classification&status=active&keyword=test'
+    );
   });
 
   it('列表查询 - 无参数', async () => {
@@ -280,7 +305,9 @@ describe('V164 · 策略评估与测试', () => {
 
     await dataPolicyConfigurationApiV79.evaluatePolicy('p1', { sample_data: { name: 'test' } });
 
-    expect(mockPost).toHaveBeenCalledWith('/mdm-v79/policies/p1/evaluate', { sample_data: { name: 'test' } });
+    expect(mockPost).toHaveBeenCalledWith('/mdm-v79/policies/p1/evaluate', {
+      sample_data: { name: 'test' },
+    });
   });
 
   it('测试策略', async () => {
@@ -291,7 +318,9 @@ describe('V164 · 策略评估与测试', () => {
 
     await dataPolicyConfigurationApiV79.testPolicy('p1', [{ id: '1' }, { id: '2' }]);
 
-    expect(mockPost).toHaveBeenCalledWith('/mdm-v79/policies/p1/test', { test_data: [{ id: '1' }, { id: '2' }] });
+    expect(mockPost).toHaveBeenCalledWith('/mdm-v79/policies/p1/test', {
+      test_data: [{ id: '1' }, { id: '2' }],
+    });
   });
 
   it('获取策略影响分析', async () => {
@@ -316,7 +345,10 @@ describe('V164 · 批量操作', () => {
 
     await dataPolicyConfigurationApiV79.batchUpdateStatus(['p1', 'p2', 'p3'], 'active');
 
-    expect(mockPatch).toHaveBeenCalledWith('/mdm-v79/policies/batch-status', { ids: ['p1', 'p2', 'p3'], status: 'active' });
+    expect(mockPatch).toHaveBeenCalledWith('/mdm-v79/policies/batch-status', {
+      ids: ['p1', 'p2', 'p3'],
+      status: 'active',
+    });
   });
 
   it('批量删除', async () => {
@@ -338,7 +370,9 @@ describe('V164 · 批量操作', () => {
 
     await dataPolicyConfigurationApiV79.batchExecute(['p1', 'p2']);
 
-    expect(mockPost).toHaveBeenCalledWith('/mdm-v79/policies/batch-execute', { policy_ids: ['p1', 'p2'] });
+    expect(mockPost).toHaveBeenCalledWith('/mdm-v79/policies/batch-execute', {
+      policy_ids: ['p1', 'p2'],
+    });
   });
 });
 
@@ -350,9 +384,14 @@ describe('V164 · 策略导入导出', () => {
       status: 200,
     });
 
-    await dataPolicyConfigurationApiV79.exportPolicies({ policy_type: 'classification', format: 'json' });
+    await dataPolicyConfigurationApiV79.exportPolicies({
+      policy_type: 'classification',
+      format: 'json',
+    });
 
-    expect(mockGet).toHaveBeenCalledWith('/mdm-v79/policies/export?policy_type=classification&format=json');
+    expect(mockGet).toHaveBeenCalledWith(
+      '/mdm-v79/policies/export?policy_type=classification&format=json'
+    );
   });
 
   it('导入策略', async () => {
@@ -361,9 +400,7 @@ describe('V164 · 策略导入导出', () => {
       status: 200,
     });
 
-    const policies = [
-      { name: 'Policy 1', policy_type: 'classification' as const, rules: [] },
-    ];
+    const policies = [{ name: 'Policy 1', policy_type: 'classification' as const, rules: [] }];
     await dataPolicyConfigurationApiV79.importPolicies(policies);
 
     expect(mockPost).toHaveBeenCalledWith('/mdm-v79/policies/import', { policies });
@@ -389,9 +426,15 @@ describe('V164 · 策略模板', () => {
       status: 200,
     });
 
-    await dataPolicyConfigurationApiV79.createPolicyFromTemplate('t1', { name: 'GDPR Policy', scope: 'tenant' });
+    await dataPolicyConfigurationApiV79.createPolicyFromTemplate('t1', {
+      name: 'GDPR Policy',
+      scope: 'tenant',
+    });
 
-    expect(mockPost).toHaveBeenCalledWith('/mdm-v79/templates/t1/instantiate', { name: 'GDPR Policy', scope: 'tenant' });
+    expect(mockPost).toHaveBeenCalledWith('/mdm-v79/templates/t1/instantiate', {
+      name: 'GDPR Policy',
+      scope: 'tenant',
+    });
   });
 });
 

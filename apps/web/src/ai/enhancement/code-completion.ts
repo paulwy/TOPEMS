@@ -393,24 +393,84 @@ const COMMON_TYPESCRIPT_KEYWORDS: Array<{
   detail: string;
   insert_text: string;
 }> = [
-  { label: 'import', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k18'), insert_text: 'import ' },
-  { label: 'export', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k19'), insert_text: 'export ' },
+  {
+    label: 'import',
+    kind: CompletionKind.KEYWORD,
+    detail: i18n.t('shared.code-completion.k18'),
+    insert_text: 'import ',
+  },
+  {
+    label: 'export',
+    kind: CompletionKind.KEYWORD,
+    detail: i18n.t('shared.code-completion.k19'),
+    insert_text: 'export ',
+  },
   {
     label: 'interface',
     kind: CompletionKind.KEYWORD,
     detail: i18n.t('shared.code-completion.k20'),
     insert_text: 'interface ',
   },
-  { label: 'type', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k21'), insert_text: 'type ' },
-  { label: 'class', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k22'), insert_text: 'class ' },
-  { label: 'function', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k23'), insert_text: 'function ' },
-  { label: 'const', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k24'), insert_text: 'const ' },
-  { label: 'let', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k25'), insert_text: 'let ' },
-  { label: 'var', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k26'), insert_text: 'var ' },
-  { label: 'return', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k27'), insert_text: 'return ' },
-  { label: 'async', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k28'), insert_text: 'async ' },
-  { label: 'await', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k29'), insert_text: 'await ' },
-  { label: 'extends', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k30'), insert_text: 'extends ' },
+  {
+    label: 'type',
+    kind: CompletionKind.KEYWORD,
+    detail: i18n.t('shared.code-completion.k21'),
+    insert_text: 'type ',
+  },
+  {
+    label: 'class',
+    kind: CompletionKind.KEYWORD,
+    detail: i18n.t('shared.code-completion.k22'),
+    insert_text: 'class ',
+  },
+  {
+    label: 'function',
+    kind: CompletionKind.KEYWORD,
+    detail: i18n.t('shared.code-completion.k23'),
+    insert_text: 'function ',
+  },
+  {
+    label: 'const',
+    kind: CompletionKind.KEYWORD,
+    detail: i18n.t('shared.code-completion.k24'),
+    insert_text: 'const ',
+  },
+  {
+    label: 'let',
+    kind: CompletionKind.KEYWORD,
+    detail: i18n.t('shared.code-completion.k25'),
+    insert_text: 'let ',
+  },
+  {
+    label: 'var',
+    kind: CompletionKind.KEYWORD,
+    detail: i18n.t('shared.code-completion.k26'),
+    insert_text: 'var ',
+  },
+  {
+    label: 'return',
+    kind: CompletionKind.KEYWORD,
+    detail: i18n.t('shared.code-completion.k27'),
+    insert_text: 'return ',
+  },
+  {
+    label: 'async',
+    kind: CompletionKind.KEYWORD,
+    detail: i18n.t('shared.code-completion.k28'),
+    insert_text: 'async ',
+  },
+  {
+    label: 'await',
+    kind: CompletionKind.KEYWORD,
+    detail: i18n.t('shared.code-completion.k29'),
+    insert_text: 'await ',
+  },
+  {
+    label: 'extends',
+    kind: CompletionKind.KEYWORD,
+    detail: i18n.t('shared.code-completion.k30'),
+    insert_text: 'extends ',
+  },
   {
     label: 'implements',
     kind: CompletionKind.KEYWORD,
@@ -423,22 +483,55 @@ const COMMON_TYPESCRIPT_KEYWORDS: Array<{
     detail: i18n.t('shared.code-completion.k32'),
     insert_text: 'namespace ',
   },
-  { label: 'declare', kind: CompletionKind.KEYWORD, detail: i18n.t('shared.code-completion.k33'), insert_text: 'declare ' },
+  {
+    label: 'declare',
+    kind: CompletionKind.KEYWORD,
+    detail: i18n.t('shared.code-completion.k33'),
+    insert_text: 'declare ',
+  },
 ];
 
 const COMMON_REACT_HOOKS: Array<{ label: string; detail: string; insert_text: string }> = [
   { label: 'useState', detail: i18n.t('shared.code-completion.k34'), insert_text: 'useState' },
   { label: 'useEffect', detail: i18n.t('shared.code-completion.k35'), insert_text: 'useEffect' },
-  { label: 'useCallback', detail: i18n.t('shared.code-completion.k36'), insert_text: 'useCallback' },
+  {
+    label: 'useCallback',
+    detail: i18n.t('shared.code-completion.k36'),
+    insert_text: 'useCallback',
+  },
   { label: 'useMemo', detail: i18n.t('shared.code-completion.k37'), insert_text: 'useMemo' },
   { label: 'useRef', detail: i18n.t('shared.code-completion.k38'), insert_text: 'useRef' },
   { label: 'useContext', detail: i18n.t('shared.code-completion.k39'), insert_text: 'useContext' },
-  { label: 'useReducer', detail: i18n.t('ai.code-completion.reducer_1'), insert_text: 'useReducer' },
-  { label: 'useImperativeHandle', detail: i18n.t('shared.code-completion.k40'), insert_text: 'useImperativeHandle' },
-  { label: 'useLayoutEffect', detail: i18n.t('shared.code-completion.k41'), insert_text: 'useLayoutEffect' },
-  { label: 'useDebugValue', detail: i18n.t('shared.code-completion.k42'), insert_text: 'useDebugValue' },
-  { label: 'useDeferredValue', detail: i18n.t('shared.code-completion.k43'), insert_text: 'useDeferredValue' },
-  { label: 'useTransition', detail: i18n.t('shared.code-completion.k44'), insert_text: 'useTransition' },
+  {
+    label: 'useReducer',
+    detail: i18n.t('ai.code-completion.reducer_1'),
+    insert_text: 'useReducer',
+  },
+  {
+    label: 'useImperativeHandle',
+    detail: i18n.t('shared.code-completion.k40'),
+    insert_text: 'useImperativeHandle',
+  },
+  {
+    label: 'useLayoutEffect',
+    detail: i18n.t('shared.code-completion.k41'),
+    insert_text: 'useLayoutEffect',
+  },
+  {
+    label: 'useDebugValue',
+    detail: i18n.t('shared.code-completion.k42'),
+    insert_text: 'useDebugValue',
+  },
+  {
+    label: 'useDeferredValue',
+    detail: i18n.t('shared.code-completion.k43'),
+    insert_text: 'useDeferredValue',
+  },
+  {
+    label: 'useTransition',
+    detail: i18n.t('shared.code-completion.k44'),
+    insert_text: 'useTransition',
+  },
   { label: 'useId', detail: i18n.t('shared.code-completion.id_45'), insert_text: 'useId' },
 ];
 

@@ -19,6 +19,7 @@ import { MobileCard } from '@/components/mobile';
 import { sizeTokens } from '@/theme';
 import type { ProductionOrder, WorkReport, Equipment } from '@/api/mobile';
 import { MobileProductionActions } from './MobileProductionActions';
+
 interface MobileProductionCardProps {
   activeTab: number;
   filteredOrders: ProductionOrder[];

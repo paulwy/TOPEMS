@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useNotificationStore } from '@/store';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import i18n from '@/i18n';
+
 export interface ScanHistoryItem {
   id: string;
   content: string;

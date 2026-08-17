@@ -23,6 +23,7 @@ import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { instanceApi } from '@/api/workflow';
 import type { WorkflowInstance } from '@/api/workflow';
 import { workflowInstanceSchema } from '@/schemas/workflow';
+
 export const WorkflowInstancesPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -87,10 +88,11 @@ export const WorkflowInstancesPage: React.FC = () => {
         onConfirm: async () => {
           try {
             await instanceApi.suspendInstance(instance.id);
-            queryClient.invalidateQueries({ queryKey: [workflowInstanceSchema.entity] ,
-  exact: false,
-  refetchType: 'active',
-});
+            queryClient.invalidateQueries({
+              queryKey: [workflowInstanceSchema.entity],
+              exact: false,
+              refetchType: 'active',
+            });
             addNotification({
               title: i18n.t('workflow.workflow_instances_page.k1'),
               message: i18n.t('workflow.workflow_instances_page.k2'),
@@ -118,10 +120,11 @@ export const WorkflowInstancesPage: React.FC = () => {
         onConfirm: async () => {
           try {
             await instanceApi.cancelInstance(instance.id);
-            queryClient.invalidateQueries({ queryKey: [workflowInstanceSchema.entity] ,
-  exact: false,
-  refetchType: 'active',
-});
+            queryClient.invalidateQueries({
+              queryKey: [workflowInstanceSchema.entity],
+              exact: false,
+              refetchType: 'active',
+            });
             addNotification({
               title: i18n.t('workflow.workflow_instances_page.k6'),
               message: i18n.t('workflow.workflow_instances_page.k7'),
@@ -182,15 +185,22 @@ export const WorkflowInstancesPage: React.FC = () => {
     }).length;
     const formatDuration = (seconds: number) => {
       if (seconds < 60) return `${seconds}${i18n.t('pages.workflow_instances_page.k4')}`;
-      if (seconds < 3600) return `${Math.round(seconds / 60)}${i18n.t('pages.workflow_instances_page.k5')}`;
+      if (seconds < 3600)
+        return `${Math.round(seconds / 60)}${i18n.t('pages.workflow_instances_page.k5')}`;
       return `${Math.round(seconds / 3600)}${i18n.t('pages.workflow_instances_page.k6')}`;
     };
     let totalDuration = 0;
     let completedWithDuration = 0;
     instances.forEach((i) => {
-      if (i.status === 'completed' && i.started_at && (i as WorkflowInstance & { completed_at?: string }).completed_at) {
+      if (
+        i.status === 'completed' &&
+        i.started_at &&
+        (i as WorkflowInstance & { completed_at?: string }).completed_at
+      ) {
         const duration =
-          (new Date((i as WorkflowInstance & { completed_at?: string }).completed_at!).getTime() - new Date(i.started_at!).getTime()) / 1000;
+          (new Date((i as WorkflowInstance & { completed_at?: string }).completed_at!).getTime() -
+            new Date(i.started_at!).getTime()) /
+          1000;
         totalDuration += duration;
         completedWithDuration++;
       }

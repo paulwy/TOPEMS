@@ -18,11 +18,7 @@
  */
 
 import apiClient from '../client';
-import type {
-  SafetyHazard,
-  CreateSafetyHazardRequest,
-  ListQueryParams,
-} from './types';
+import type { SafetyHazard, CreateSafetyHazardRequest, ListQueryParams } from './types';
 import {
   toOpenApiParams,
   toOpenApiRequestBody,
@@ -38,7 +34,7 @@ export const hazardTypedApi = {
    * Query Params: { page, pagesize, search, status }（AdaptedQuery 后 camelCase）
    */
   list: async (
-    params?: AdaptedQuery<'list_risks'> | ListQueryParams,
+    params?: AdaptedQuery<'list_risks'> | ListQueryParams
   ): Promise<TypedPaginatedResponse<SafetyHazard>> => {
     return apiClient.ehs.get('/hazards', {
       params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
@@ -57,12 +53,9 @@ export const hazardTypedApi = {
    * Request Body: CreateSafetyHazardRequest（发送前 adaptReverse → snake_case）
    */
   create: async (
-    data: AdaptedRequestBody<'create_risk'> | CreateSafetyHazardRequest,
+    data: AdaptedRequestBody<'create_risk'> | CreateSafetyHazardRequest
   ): Promise<TypedApiResponse<SafetyHazard, 'create_risk'>> => {
-    return apiClient.ehs.post(
-      '/hazards',
-      toOpenApiRequestBody(data as Record<string, unknown>),
-    );
+    return apiClient.ehs.post('/hazards', toOpenApiRequestBody(data as Record<string, unknown>));
   },
 
   /**
@@ -70,11 +63,11 @@ export const hazardTypedApi = {
    */
   update: async (
     id: string,
-    data: AdaptedRequestBody<'update_risk'> | Partial<CreateSafetyHazardRequest>,
+    data: AdaptedRequestBody<'update_risk'> | Partial<CreateSafetyHazardRequest>
   ): Promise<TypedApiResponse<SafetyHazard, 'update_risk'>> => {
     return apiClient.ehs.put(
       `/hazards/${id}`,
-      toOpenApiRequestBody(data as Record<string, unknown>),
+      toOpenApiRequestBody(data as Record<string, unknown>)
     );
   },
 

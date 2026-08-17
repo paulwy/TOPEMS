@@ -176,12 +176,16 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         if (validFiles.length >= remainingSlots) return;
 
         if (!file.type.startsWith('image/')) {
-          logger.warn(`${i18n.t('components.image_upload.k0')}${file.name}${i18n.t('components.image_upload.k1')}`);
+          logger.warn(
+            `${i18n.t('components.image_upload.k0')}${file.name}${i18n.t('components.image_upload.k1')}`
+          );
           return;
         }
 
         if (file.size > maxSize * 1024 * 1024) {
-          logger.warn(`${i18n.t('components.image_upload.k2')}${file.name}${i18n.t('components.image_upload.k3')}${maxSize}MB`);
+          logger.warn(
+            `${i18n.t('components.image_upload.k2')}${file.name}${i18n.t('components.image_upload.k3')}${maxSize}MB`
+          );
           return;
         }
 
@@ -302,7 +306,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         color='text.secondary'
         sx={{ mt: 0.5 }}
       >
-        {i18n.t('components.image_upload.k0')} {maxCount} {i18n.t('components.image_upload.k1')} {maxSize}MB
+        {i18n.t('components.image_upload.k0')} {maxCount} {i18n.t('components.image_upload.k1')}{' '}
+        {maxSize}MB
       </Typography>
       <input
         ref={fileInputRef}

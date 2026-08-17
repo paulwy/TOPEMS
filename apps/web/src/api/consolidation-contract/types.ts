@@ -7,7 +7,8 @@ export type EliminationDirection = 'debit' | 'credit' | 'both';
 export type EliminationStatus = 'pending' | 'eliminated' | 'partial' | 'not_applicable';
 export type ReportStatus = 'draft' | 'calculating' | 'completed' | 'published';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
-export type CompanyRelationType = 'parent' | 'subsidiary' | 'associate' | 'joint_venture' | 'branch';
+export type CompanyRelationType =
+  'parent' | 'subsidiary' | 'associate' | 'joint_venture' | 'branch';
 export type CompanyRelationStatus = 'active' | 'inactive';
 
 export interface ConsolidationScope {

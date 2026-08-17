@@ -59,7 +59,9 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
             borderBottom: '1px solid grey.200',
           }}
         >
-          <h3 style={{ fontWeight: 600, color: 'text.primary' }}>{i18n.t('im.chat_settings_modal.k0')}</h3>
+          <h3 style={{ fontWeight: 600, color: 'text.primary' }}>
+            {i18n.t('im.chat_settings_modal.k0')}
+          </h3>
           <button
             onClick={onClose}
             style={{
@@ -103,8 +105,10 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
                 {chatRoom.name || i18n.t('im.chat_settings_modal.k1')}
               </div>
               <div style={{ fontSize: 14, color: 'text.secondary' }}>
-                {chatRoom.room_type === 'direct' ? i18n.t('im.chat_settings_modal.k3') : i18n.t('im.chat_settings_modal.k2')} ·{' '}
-                {chatRoom.members?.length || 0} {i18n.t('components.chat_settings_modal.k0')}
+                {chatRoom.room_type === 'direct'
+                  ? i18n.t('im.chat_settings_modal.k3')
+                  : i18n.t('im.chat_settings_modal.k2')}{' '}
+                · {chatRoom.members?.length || 0} {i18n.t('components.chat_settings_modal.k0')}
               </div>
             </div>
           </div>
@@ -138,7 +142,9 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
                     >
                       {i18n.t('components.chat_settings_modal.k0')}
                     </div>
-                    <div style={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('im.chat_settings_modal.k4')}</div>
+                    <div style={{ fontSize: 12, color: 'text.secondary' }}>
+                      {i18n.t('im.chat_settings_modal.k4')}
+                    </div>
                   </div>
                 </>
               ) : (
@@ -154,7 +160,9 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
                     >
                       {i18n.t('components.chat_settings_modal.k1')}
                     </div>
-                    <div style={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('im.chat_settings_modal.k5')}</div>
+                    <div style={{ fontSize: 12, color: 'text.secondary' }}>
+                      {i18n.t('im.chat_settings_modal.k5')}
+                    </div>
                   </div>
                 </>
               )}
@@ -188,7 +196,9 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
                     >
                       {i18n.t('components.chat_settings_modal.k2')}
                     </div>
-                    <div style={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('im.chat_settings_modal.k6')}</div>
+                    <div style={{ fontSize: 12, color: 'text.secondary' }}>
+                      {i18n.t('im.chat_settings_modal.k6')}
+                    </div>
                   </div>
                 </>
               ) : (
@@ -229,8 +239,12 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
             >
               <Trash2 style={{ width: 20, height: 20, color: 'error.main' }} />
               <div style={{ flex: 1, textAlign: 'left' }}>
-                <div style={{ fontSize: 14, fontWeight: 500, color: 'error.dark' }}>{i18n.t('im.chat_settings_modal.k7')}</div>
-                <div style={{ fontSize: 12, color: 'error.light' }}>{i18n.t('im.chat_settings_modal.k8')}</div>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'error.dark' }}>
+                  {i18n.t('im.chat_settings_modal.k7')}
+                </div>
+                <div style={{ fontSize: 12, color: 'error.light' }}>
+                  {i18n.t('im.chat_settings_modal.k8')}
+                </div>
               </div>
             </button>
           </div>

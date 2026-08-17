@@ -49,16 +49,44 @@ interface ProjectReportProps {
 const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
   const projectStatusData = [
     { name: i18n.t('components.project_report.k0'), value: stats.draft_projects, fill: 'grey.500' },
-    { name: i18n.t('components.project_report.k1'), value: stats.pending_projects, fill: 'warning.main' },
-    { name: i18n.t('components.project_report.k2'), value: stats.active_projects, fill: 'primary.main' },
-    { name: i18n.t('components.project_report.k3'), value: stats.completed_projects, fill: 'success.main' },
-    { name: i18n.t('components.project_report.k4'), value: stats.cancelled_projects, fill: 'error.main' },
+    {
+      name: i18n.t('components.project_report.k1'),
+      value: stats.pending_projects,
+      fill: 'warning.main',
+    },
+    {
+      name: i18n.t('components.project_report.k2'),
+      value: stats.active_projects,
+      fill: 'primary.main',
+    },
+    {
+      name: i18n.t('components.project_report.k3'),
+      value: stats.completed_projects,
+      fill: 'success.main',
+    },
+    {
+      name: i18n.t('components.project_report.k4'),
+      value: stats.cancelled_projects,
+      fill: 'error.main',
+    },
   ].filter((d) => (d.value ?? 0) > 0);
 
   const riskData = [
-    { name: i18n.t('components.project_report.k5'), value: stats.high_risk_projects ?? 0, fill: 'error.main' },
-    { name: i18n.t('components.project_report.k6'), value: stats.medium_risk_projects ?? 0, fill: 'warning.main' },
-    { name: i18n.t('components.project_report.k7'), value: stats.low_risk_projects ?? 0, fill: 'success.main' },
+    {
+      name: i18n.t('components.project_report.k5'),
+      value: stats.high_risk_projects ?? 0,
+      fill: 'error.main',
+    },
+    {
+      name: i18n.t('components.project_report.k6'),
+      value: stats.medium_risk_projects ?? 0,
+      fill: 'warning.main',
+    },
+    {
+      name: i18n.t('components.project_report.k7'),
+      value: stats.low_risk_projects ?? 0,
+      fill: 'success.main',
+    },
   ].filter((d) => (d.value ?? 0) > 0);
 
   const trendData = benefits.slice(0, 6).map((b, index) => ({
@@ -277,7 +305,12 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                       />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => [`${value} ${i18n.t('components.project_report.k9')}`, i18n.t('components.project_report.k9')]} />
+                  <Tooltip
+                    formatter={(value) => [
+                      `${value} ${i18n.t('components.project_report.k9')}`,
+                      i18n.t('components.project_report.k9'),
+                    ]}
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -314,7 +347,12 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                       />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: unknown) => [`${value} ${i18n.t('components.project_report.k10')}`, i18n.t('components.project_report.k11')]} />
+                  <Tooltip
+                    formatter={(value: unknown) => [
+                      `${value} ${i18n.t('components.project_report.k10')}`,
+                      i18n.t('components.project_report.k11'),
+                    ]}
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -334,7 +372,11 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
               height='100%'
             >
               <LineChart
-                data={trendData.length > 0 ? trendData : [{ month: i18n.t('components.project_report.k12'), cpi: 1, spi: 1 }]}
+                data={
+                  trendData.length > 0
+                    ? trendData
+                    : [{ month: i18n.t('components.project_report.k12'), cpi: 1, spi: 1 }]
+                }
               >
                 <CartesianGrid strokeDasharray='3 3' />
                 <XAxis dataKey='month' />
@@ -478,8 +520,14 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
             >
               <BarChart
                 data={[
-                  { name: i18n.t('components.project_report.k15'), value: stats.on_time_projects ?? 0 },
-                  { name: i18n.t('components.project_report.k16'), value: stats.delayed_projects ?? 0 },
+                  {
+                    name: i18n.t('components.project_report.k15'),
+                    value: stats.on_time_projects ?? 0,
+                  },
+                  {
+                    name: i18n.t('components.project_report.k16'),
+                    value: stats.delayed_projects ?? 0,
+                  },
                 ].filter((d) => (d.value ?? 0) > 0)}
               >
                 <CartesianGrid strokeDasharray='3 3' />
@@ -509,7 +557,9 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 'medium', color: 'grey.600' }}>{i18n.t('components.project_report.k19')}</TableCell>
+                    <TableCell sx={{ fontWeight: 'medium', color: 'grey.600' }}>
+                      {i18n.t('components.project_report.k19')}
+                    </TableCell>
                     <TableCell
                       align='right'
                       sx={{ fontWeight: 'medium', color: 'grey.600' }}
@@ -548,7 +598,9 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                       key={benefit.id}
                       hover
                     >
-                      <TableCell sx={{ color: 'grey.900' }}>{i18n.t('components.project_report.index1_1')}</TableCell>
+                      <TableCell sx={{ color: 'grey.900' }}>
+                        {i18n.t('components.project_report.index1_1')}
+                      </TableCell>
                       <TableCell align='right'>
                         <Badge
                           sx={{

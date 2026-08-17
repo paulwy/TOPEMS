@@ -10,7 +10,8 @@ import type { Contract } from '@/api/pm';
 import { PM_PATHS } from '@/modules/pm/config';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const CURRENCY_FORMATTER = new Intl.NumberFormat('zh-CN', {
   style: 'currency',
   currency: 'CNY',

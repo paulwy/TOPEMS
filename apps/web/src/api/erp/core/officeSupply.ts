@@ -41,20 +41,24 @@ export interface UpdateOfficeSupplyRequest {
 }
 
 const resolvePageSize = (params?: PaginationParams): string | undefined => {
-  const ps = (params as { pageSize?: number } | undefined)?.pageSize
-    ?? (params as { pagesize?: number } | undefined)?.pagesize;
+  const ps =
+    (params as { pageSize?: number } | undefined)?.pageSize ??
+    (params as { pagesize?: number } | undefined)?.pagesize;
   return ps ? ps.toString() : undefined;
 };
 
 export const officeSupplyApi = {
-  async list(params?: PaginationParams & { category?: string }): Promise<ApiResponse<OfficeSupplyListResponse>> {
+  async list(
+    params?: PaginationParams & { category?: string }
+  ): Promise<ApiResponse<OfficeSupplyListResponse>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     const ps = resolvePageSize(params);
     if (ps) searchParams.set('pagesize', ps);
     if (params?.search) searchParams.set('search', params.search);
     if (params?.status) searchParams.set('status', params.status);
-    if ((params as { category?: string })?.category) searchParams.set('category', (params as { category?: string }).category as string);
+    if ((params as { category?: string })?.category)
+      searchParams.set('category', (params as { category?: string }).category as string);
 
     const queryString = searchParams.toString();
     return apiClient.erp.get<OfficeSupplyListResponse>(

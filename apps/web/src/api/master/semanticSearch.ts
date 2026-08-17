@@ -137,12 +137,17 @@ export const semanticSearchApi = {
     return apiClient.master.post<SemanticEdge>('/mdm-v57/graph/edge', data);
   },
 
-  async getNeighbors(id: string, params?: { depth?: number; relation?: string }): Promise<ApiResponse<SemanticNode[]>> {
+  async getNeighbors(
+    id: string,
+    params?: { depth?: number; relation?: string }
+  ): Promise<ApiResponse<SemanticNode[]>> {
     const qs = new URLSearchParams();
     if (params?.depth !== undefined) qs.set('depth', String(params.depth));
     if (params?.relation) qs.set('relation', params.relation);
     const s = qs.toString();
-    return apiClient.master.get<SemanticNode[]>(`/mdm-v57/graph/neighbors/${id}${s ? `?${s}` : ''}`);
+    return apiClient.master.get<SemanticNode[]>(
+      `/mdm-v57/graph/neighbors/${id}${s ? `?${s}` : ''}`
+    );
   },
 
   async getCommunity(id: string): Promise<ApiResponse<Community>> {
@@ -153,26 +158,46 @@ export const semanticSearchApi = {
     return apiClient.master.post<ShortestPath>('/mdm-v57/graph/path', data);
   },
 
-  async getSubgraph(params?: { center_id?: string; depth?: number; entity_type?: GraphEntityType }): Promise<ApiResponse<{ nodes: SemanticNode[]; edges: SemanticEdge[] }>> {
+  async getSubgraph(params?: {
+    center_id?: string;
+    depth?: number;
+    entity_type?: GraphEntityType;
+  }): Promise<ApiResponse<{ nodes: SemanticNode[]; edges: SemanticEdge[] }>> {
     const qs = new URLSearchParams();
     if (params?.center_id) qs.set('center_id', params.center_id);
     if (params?.depth !== undefined) qs.set('depth', String(params.depth));
     if (params?.entity_type) qs.set('entity_type', params.entity_type);
     const s = qs.toString();
-    return apiClient.master.get<{ nodes: SemanticNode[]; edges: SemanticEdge[] }>(`/mdm-v57/graph/subgraph${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ nodes: SemanticNode[]; edges: SemanticEdge[] }>(
+      `/mdm-v57/graph/subgraph${s ? `?${s}` : ''}`
+    );
   },
 
-  async computeEmbeddings(data: { texts: string[]; model?: string }): Promise<ApiResponse<{ embeddings: number[][]; model: string }>> {
-    return apiClient.master.post<{ embeddings: number[][]; model: string }>('/mdm-v57/graph/embeddings', data);
+  async computeEmbeddings(data: {
+    texts: string[];
+    model?: string;
+  }): Promise<ApiResponse<{ embeddings: number[][]; model: string }>> {
+    return apiClient.master.post<{ embeddings: number[][]; model: string }>(
+      '/mdm-v57/graph/embeddings',
+      data
+    );
   },
 
-  async detectCommunities(data?: { algorithm?: 'louvain' | 'label_propagation'; resolution?: number }): Promise<ApiResponse<Community[]>> {
+  async detectCommunities(data?: {
+    algorithm?: 'louvain' | 'label_propagation';
+    resolution?: number;
+  }): Promise<ApiResponse<Community[]>> {
     return apiClient.master.post<Community[]>('/mdm-v57/graph/communities', data || {});
   },
 
   // ===== 语义搜索 =====
-  async indexEntity(data: IndexEntityRequest): Promise<ApiResponse<{ indexed: boolean; embedding_id?: string }>> {
-    return apiClient.master.post<{ indexed: boolean; embedding_id?: string }>('/mdm-v57/search/index', data);
+  async indexEntity(
+    data: IndexEntityRequest
+  ): Promise<ApiResponse<{ indexed: boolean; embedding_id?: string }>> {
+    return apiClient.master.post<{ indexed: boolean; embedding_id?: string }>(
+      '/mdm-v57/search/index',
+      data
+    );
   },
 
   async searchSemantic(data: SemanticSearchRequest): Promise<ApiResponse<SemanticSearchResult[]>> {
@@ -184,7 +209,10 @@ export const semanticSearchApi = {
   },
 
   async reindexAll(): Promise<ApiResponse<{ reindexed: number; duration_ms: number }>> {
-    return apiClient.master.post<{ reindexed: number; duration_ms: number }>('/mdm-v57/search/reindex', {});
+    return apiClient.master.post<{ reindexed: number; duration_ms: number }>(
+      '/mdm-v57/search/reindex',
+      {}
+    );
   },
 
   async getSearchStats(): Promise<ApiResponse<SemanticSearchStats>> {
@@ -204,22 +232,36 @@ export const semanticSearchApi = {
     return apiClient.master.post<{ success: boolean }>('/mdm-v57/tag/apply', data);
   },
 
-  async autoTag(data: AutoTagRequest): Promise<ApiResponse<Array<{ tag_id: string; tag_name: string; confidence: number }>>> {
-    return apiClient.master.post<Array<{ tag_id: string; tag_name: string; confidence: number }>>('/mdm-v57/tag/auto', data);
+  async autoTag(
+    data: AutoTagRequest
+  ): Promise<ApiResponse<Array<{ tag_id: string; tag_name: string; confidence: number }>>> {
+    return apiClient.master.post<Array<{ tag_id: string; tag_name: string; confidence: number }>>(
+      '/mdm-v57/tag/auto',
+      data
+    );
   },
 
-  async getTagsForEntity(entityType: GraphEntityType, id: string): Promise<ApiResponse<SemanticTag[]>> {
+  async getTagsForEntity(
+    entityType: GraphEntityType,
+    id: string
+  ): Promise<ApiResponse<SemanticTag[]>> {
     return apiClient.master.get<SemanticTag[]>(`/mdm-v57/tags/entity/${entityType}/${id}`);
   },
 
-  async getEntitiesByTag(tag: string, params?: { page?: number; pageSize?: number }): Promise<ApiResponse<{ items: Array<{ id: string; name: string; type: string }>; total: number }>> {
+  async getEntitiesByTag(
+    tag: string,
+    params?: { page?: number; pageSize?: number }
+  ): Promise<
+    ApiResponse<{ items: Array<{ id: string; name: string; type: string }>; total: number }>
+  > {
     const qs = new URLSearchParams();
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: Array<{ id: string; name: string; type: string }>; total: number }>(
-      `/mdm-v57/entities/tag/${tag}${s ? `?${s}` : ''}`
-    );
+    return apiClient.master.get<{
+      items: Array<{ id: string; name: string; type: string }>;
+      total: number;
+    }>(`/mdm-v57/entities/tag/${tag}${s ? `?${s}` : ''}`);
   },
 
   async removeTag(id: string): Promise<ApiResponse<{ success: boolean }>> {
@@ -233,8 +275,13 @@ export const semanticSearchApi = {
     return apiClient.master.get<SemanticTag[]>(`/mdm-v57/tags${s ? `?${s}` : ''}`);
   },
 
-  async suggestTags(entityType: GraphEntityType, id: string): Promise<ApiResponse<TagSuggestion[]>> {
-    return apiClient.master.get<TagSuggestion[]>(`/mdm-v57/tags/suggest?entity_type=${entityType}&id=${id}`);
+  async suggestTags(
+    entityType: GraphEntityType,
+    id: string
+  ): Promise<ApiResponse<TagSuggestion[]>> {
+    return apiClient.master.get<TagSuggestion[]>(
+      `/mdm-v57/tags/suggest?entity_type=${entityType}&id=${id}`
+    );
   },
 };
 

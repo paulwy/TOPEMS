@@ -366,7 +366,9 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
 
   const handleDelete = useCallback(async () => {
     if (!entityId || !currentData) return;
-    const confirmed = window.confirm(`${i18n.t('components.bff_detail_page.k0')}${entityName ?? i18n.t('components.bff_detail_page.k1')}${i18n.t('components.bff_detail_page.k1')}`);
+    const confirmed = window.confirm(
+      `${i18n.t('components.bff_detail_page.k0')}${entityName ?? i18n.t('components.bff_detail_page.k1')}${i18n.t('components.bff_detail_page.k1')}`
+    );
     if (!confirmed) return;
 
     try {
@@ -422,7 +424,9 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
     });
   }, []);
 
-  const displayTitle = String(title ?? dataObj.name ?? dataObj.title ?? entityName ?? i18n.t('components.bff_detail_page.k4'));
+  const displayTitle = String(
+    title ?? dataObj.name ?? dataObj.title ?? entityName ?? i18n.t('components.bff_detail_page.k4')
+  );
   const displaySubtitle = subtitle ?? (dataObj.code as string) ?? '';
 
   const loading = crud.loading;

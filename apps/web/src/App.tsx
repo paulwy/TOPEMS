@@ -1,17 +1,17 @@
-import React, { Suspense, lazy, useEffect } from 'react';
+import React, { Suspense, lazy } from 'react';
 import AppLayout from './components/layout/AppLayout';
 import AppRoutes from './routes/appRoutes';
 import { useAuth } from './hooks/useAuth';
 
 // DevTools 仅在开发模式按需加载，生产构建由 Vite tree-shaking 移除（import.meta.env.DEV 字面量）
-const MicroFrontendDevTools = import.meta.env.DEV
-  ? lazy(() => import('./dev-tools'))
-  : null;
+const MicroFrontendDevTools = import.meta.env.DEV ? lazy(() => import('./dev-tools')) : null;
 
 // V40.0 Track F: 微前端可观测性面板（开发模式）
 // 使用 import.meta.env.DEV 编译时常量门控，确保生产构建中完全移除
 const ObservabilityPanel = import.meta.env.DEV
-  ? lazy(() => import('./microfrontend/observability').then(m => ({ default: m.ObservabilityPanel })))
+  ? lazy(() =>
+      import('./microfrontend/observability').then((m) => ({ default: m.ObservabilityPanel }))
+    )
   : null;
 
 // 🔧 Dev auth injector: 从 URL query ?_tok=JWT&_tid=TENANT_ID 注入身份，用于联调
@@ -30,14 +30,16 @@ if (import.meta.env.DEV) {
           username: 'admin',
           role: 'admin',
           isSuperuser: true,
-        }),
+        })
       );
       localStorage.setItem('roles', JSON.stringify(['admin', 'user']));
       localStorage.setItem('permissions', JSON.stringify(['*']));
       localStorage.removeItem('topems-plugin-storage');
       localStorage.removeItem('plugin-persister');
     }
-  } catch (_) { /* noop */ }
+  } catch (_) {
+    /* noop */
+  }
 }
 
 /**

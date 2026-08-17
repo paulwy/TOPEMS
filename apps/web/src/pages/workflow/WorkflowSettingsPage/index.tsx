@@ -42,6 +42,7 @@ import { NotificationSettings } from './components/NotificationSettings';
 import { FormSettings } from './components/FormSettings';
 import { PermissionSettings } from './components/PermissionSettings';
 import { IntegrationSettings } from './components/IntegrationSettings';
+
 export const WorkflowSettingsPage: React.FC = () => {
   const { data: backendData } = useQuery({
     queryKey: ['workflow-settings-page'],

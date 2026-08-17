@@ -13,6 +13,7 @@ import {
 import i18n from '@/i18n';
 import React from 'react';
 import type { ApprovalSettings as ApprovalSettingsType } from '../types';
+
 interface ApprovalSettingsProps {
   settings: ApprovalSettingsType;
   onChange: (settings: ApprovalSettingsType) => void;

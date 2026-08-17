@@ -11,7 +11,9 @@ import type {
 } from './types';
 
 export const companyRelationApi = {
-  list: (query?: CompanyRelationQuery): Promise<ConsolidationPaginatedResponse<CompanyRelation>> => {
+  list: (
+    query?: CompanyRelationQuery
+  ): Promise<ConsolidationPaginatedResponse<CompanyRelation>> => {
     return apiClient.erp.get('/consolidation/company-relations', { params: query });
   },
 
@@ -23,7 +25,10 @@ export const companyRelationApi = {
     return apiClient.erp.post('/consolidation/company-relations', data);
   },
 
-  update: (relationId: string, data: UpdateCompanyRelationRequest): Promise<ApiResponse<CompanyRelation>> => {
+  update: (
+    relationId: string,
+    data: UpdateCompanyRelationRequest
+  ): Promise<ApiResponse<CompanyRelation>> => {
     return apiClient.erp.put(`/consolidation/company-relations/${relationId}`, data);
   },
 
@@ -31,7 +36,10 @@ export const companyRelationApi = {
     return apiClient.erp.delete(`/consolidation/company-relations/${relationId}`);
   },
 
-  getFinancialData: (companyId: string, period: string): Promise<ApiResponse<CompanyFinancialData>> => {
+  getFinancialData: (
+    companyId: string,
+    period: string
+  ): Promise<ApiResponse<CompanyFinancialData>> => {
     return apiClient.erp.get(`/consolidation/companies/${companyId}/financial-data`, {
       params: { period },
     });

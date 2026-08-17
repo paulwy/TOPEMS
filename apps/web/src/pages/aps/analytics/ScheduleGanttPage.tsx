@@ -22,14 +22,45 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+
 const mockSchedules = [
-  { name: i18n.t('pages.schedule_gantt_page.sch001a_0'), start: 1, duration: 5, status: 'completed' },
-  { name: i18n.t('pages.schedule_gantt_page.sch002b_1'), start: 3, duration: 4, status: 'completed' },
+  {
+    name: i18n.t('pages.schedule_gantt_page.sch001a_0'),
+    start: 1,
+    duration: 5,
+    status: 'completed',
+  },
+  {
+    name: i18n.t('pages.schedule_gantt_page.sch002b_1'),
+    start: 3,
+    duration: 4,
+    status: 'completed',
+  },
   { name: i18n.t('pages.schedule_gantt_page.sch003c_2'), start: 6, duration: 6, status: 'running' },
-  { name: i18n.t('pages.schedule_gantt_page.sch004d_3'), start: 8, duration: 3, status: 'released' },
-  { name: i18n.t('pages.schedule_gantt_page.sch005e_4'), start: 10, duration: 5, status: 'pending' },
-  { name: i18n.t('pages.schedule_gantt_page.sch006f_5'), start: 12, duration: 4, status: 'pending' },
-  { name: i18n.t('pages.schedule_gantt_page.sch007g_6'), start: 14, duration: 7, status: 'pending' },
+  {
+    name: i18n.t('pages.schedule_gantt_page.sch004d_3'),
+    start: 8,
+    duration: 3,
+    status: 'released',
+  },
+  {
+    name: i18n.t('pages.schedule_gantt_page.sch005e_4'),
+    start: 10,
+    duration: 5,
+    status: 'pending',
+  },
+  {
+    name: i18n.t('pages.schedule_gantt_page.sch006f_5'),
+    start: 12,
+    duration: 4,
+    status: 'pending',
+  },
+  {
+    name: i18n.t('pages.schedule_gantt_page.sch007g_6'),
+    start: 14,
+    duration: 7,
+    status: 'pending',
+  },
 ];
 const STATUS_COLORS: Record<string, string> = {
   completed: designTokens.colors.success.dark,
@@ -62,23 +93,15 @@ export default function ScheduleGanttPage() {
   const totalDuration = useMemo(() => {
     return Math.max(...data.map((d) => d.end));
   }, [data]);
-  const completedCount = useMemo(
-    () => data.filter((d) => d.status === 'completed').length,
-    [data],
-  );
-  const runningCount = useMemo(
-    () => data.filter((d) => d.status === 'running').length,
-    [data],
-  );
+  const completedCount = useMemo(() => data.filter((d) => d.status === 'completed').length, [data]);
+  const runningCount = useMemo(() => data.filter((d) => d.status === 'running').length, [data]);
   return (
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
         <h1 className='text-2xl font-bold'>{i18n.t('aps.schedule_gantt_page.k0')}</h1>
         <span className='text-sm text-gray-500'>{i18n.t('aps.schedule_gantt_page.k1')}</span>
       </div>
-      <p className='text-sm text-gray-600'>
-        {i18n.t('pages.schedule_gantt_page.k0')}
-      </p>
+      <p className='text-sm text-gray-600'>{i18n.t('pages.schedule_gantt_page.k0')}</p>
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <div className='rounded-lg border p-4'>
           <p className='text-sm text-gray-600'>{i18n.t('aps.schedule_gantt_page.k2')}</p>
@@ -109,7 +132,11 @@ export default function ScheduleGanttPage() {
               type='number'
               domain={[0, totalDuration + 2]}
               fontSize={11}
-              label={{ value: i18n.t('aps.schedule_gantt_page.k6'), position: 'insideBottom', offset: -5 }}
+              label={{
+                value: i18n.t('aps.schedule_gantt_page.k6'),
+                position: 'insideBottom',
+                offset: -5,
+              }}
             />
             <YAxis
               type='category'
@@ -119,7 +146,8 @@ export default function ScheduleGanttPage() {
             />
             <Tooltip
               formatter={(value, name) => {
-                if (name === i18n.t('aps.schedule_gantt_page.k7')) return [`${value}${i18n.t('pages.schedule_gantt_page.k7')}`, name];
+                if (name === i18n.t('aps.schedule_gantt_page.k7'))
+                  return [`${value}${i18n.t('pages.schedule_gantt_page.k7')}`, name];
                 return [value, name];
               }}
             />

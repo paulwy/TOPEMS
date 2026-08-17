@@ -156,8 +156,7 @@ const PRESET_TEMPLATES: ProjectTemplate[] = [
   {
     template_id: 'react-ts',
     name: 'React + TypeScript',
-    description:
-      i18n.t('microfrontend.unified-dev-platform.k0'),
+    description: i18n.t('microfrontend.unified-dev-platform.k0'),
     category: ProjectCategory.WEBAPP,
     dependencies: ['react@18', 'react-dom@18', 'react-router-dom@6'],
     file_structure: {
@@ -188,8 +187,7 @@ const PRESET_TEMPLATES: ProjectTemplate[] = [
   {
     template_id: 'vue3-ts',
     name: 'Vue 3 + TypeScript',
-    description:
-      i18n.t('microfrontend.unified-dev-platform.k3'),
+    description: i18n.t('microfrontend.unified-dev-platform.k3'),
     category: ProjectCategory.WEBAPP,
     dependencies: ['vue@3', 'vue-router@4', 'pinia@2'],
     file_structure: {
@@ -241,7 +239,12 @@ const PRESET_TEMPLATES: ProjectTemplate[] = [
       port: 7100,
     },
     icon: 'boxes',
-    tags: [i18n.t('microfrontend.unified-dev-platform.k30'), 'React', 'qiankun', i18n.t('microfrontend.unified-dev-platform.k29')],
+    tags: [
+      i18n.t('microfrontend.unified-dev-platform.k30'),
+      'React',
+      'qiankun',
+      i18n.t('microfrontend.unified-dev-platform.k29'),
+    ],
     author: 'TOPEMS Team',
     popularity: 5600,
   },
@@ -268,7 +271,12 @@ const PRESET_TEMPLATES: ProjectTemplate[] = [
       port: 7200,
     },
     icon: 'boxes',
-    tags: [i18n.t('microfrontend.unified-dev-platform.k40'), 'Vue3', 'wujie', i18n.t('microfrontend.unified-dev-platform.k39')],
+    tags: [
+      i18n.t('microfrontend.unified-dev-platform.k40'),
+      'Vue3',
+      'wujie',
+      i18n.t('microfrontend.unified-dev-platform.k39'),
+    ],
     author: 'TOPEMS Team',
     popularity: 4800,
   },
@@ -319,15 +327,19 @@ const PRESET_TEMPLATES: ProjectTemplate[] = [
       port: 5180,
     },
     icon: 'monitor',
-    tags: ['Electron', i18n.t('microfrontend.unified-dev-platform.k56'), 'React', i18n.t('microfrontend.unified-dev-platform.k55')],
+    tags: [
+      'Electron',
+      i18n.t('microfrontend.unified-dev-platform.k56'),
+      'React',
+      i18n.t('microfrontend.unified-dev-platform.k55'),
+    ],
     author: 'TOPEMS Team',
     popularity: 3600,
   },
   {
     template_id: 'api-nestjs',
     name: i18n.t('microfrontend.unified-dev-platform.nestjsapi_15'),
-    description:
-      i18n.t('microfrontend.unified-dev-platform.k16'),
+    description: i18n.t('microfrontend.unified-dev-platform.k16'),
     category: ProjectCategory.APISERVICE,
     dependencies: ['nestjs@10', '@nestjs/swagger', '@nestjs/jwt'],
     file_structure: {

@@ -2,6 +2,7 @@ import { Box, Typography, Switch, TextField, Stack, Divider } from '@mui/materia
 import React from 'react';
 import type { FormSettings as FormSettingsType } from '../types';
 import i18n from '@/i18n';
+
 interface FormSettingsProps {
   settings: FormSettingsType;
   onChange: (settings: FormSettingsType) => void;

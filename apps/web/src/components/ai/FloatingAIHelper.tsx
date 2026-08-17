@@ -2,11 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AI_PATHS } from '@/modules/ai/config';
 import { useAIContext } from '@/hooks';
-import {
-  AICopilotFab,
-  AICopilotPanel,
-  AISelectionBubble,
-} from '@/components/ai/copilot';
+import { AICopilotFab, AICopilotPanel, AISelectionBubble } from '@/components/ai/copilot';
 import { writeAICopilotContext, type AICopilotIntent } from '@/lib/ai/copilotContext';
 import type { AIRecommendation, QuickCommand } from '@/lib/ai/recommendations';
 
@@ -18,14 +14,17 @@ export const FloatingAIHelper: React.FC = () => {
 
   const open = Boolean(anchorEl);
 
-  const openPanel = useCallback((event: React.MouseEvent<HTMLElement>) => {
-    writeAICopilotContext({
-      pathname: location.pathname,
-      source: 'fab',
-      intent: 'chat',
-    });
-    setAnchorEl(event.currentTarget);
-  }, [location.pathname]);
+  const openPanel = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      writeAICopilotContext({
+        pathname: location.pathname,
+        source: 'fab',
+        intent: 'chat',
+      });
+      setAnchorEl(event.currentTarget);
+    },
+    [location.pathname]
+  );
 
   const closePanel = useCallback(() => {
     setAnchorEl(null);

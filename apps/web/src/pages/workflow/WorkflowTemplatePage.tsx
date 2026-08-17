@@ -144,10 +144,11 @@ const WorkflowTemplatePage: React.FC = () => {
             isactive: false,
             data: workflow.data,
           } as Partial<Workflow>);
-          queryClient.invalidateQueries({ queryKey: [workflowTemplateSchema.entity] ,
-  exact: false,
-  refetchType: 'active',
-});
+          queryClient.invalidateQueries({
+            queryKey: [workflowTemplateSchema.entity],
+            exact: false,
+            refetchType: 'active',
+          });
           addNotification({
             type: 'success',
             title: i18n.t('workflow.workflow_template_page.k12'),
@@ -181,7 +182,11 @@ const WorkflowTemplatePage: React.FC = () => {
         apiAdapter={apiAdapter}
         customColumns={customColumns}
         customRowActions={customRowActions}
-        breadcrumbs={[{ label: i18n.t('workflow.workflow_template_page.k18'), href: '/' }, { label: i18n.t('workflow.workflow_template_page.k17') }, { label: i18n.t('workflow.workflow_template_page.k16') }]}
+        breadcrumbs={[
+          { label: i18n.t('workflow.workflow_template_page.k18'), href: '/' },
+          { label: i18n.t('workflow.workflow_template_page.k17') },
+          { label: i18n.t('workflow.workflow_template_page.k16') },
+        ]}
       />
     </PageContainer>
   );

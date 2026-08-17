@@ -11,10 +11,7 @@ import type {
   PerformanceGoal,
 } from './types';
 import { buildQueryString } from './types';
-import {
-  toOpenApiRequestBody,
-  type TypedApiResponse,
-} from '@topems/shared-types';
+import { toOpenApiRequestBody, type TypedApiResponse } from '@topems/shared-types';
 
 function createCrudApi<T>(endpoint: string): CrudOperations<T> {
   return {
@@ -66,10 +63,7 @@ export const employeeApi: CrudOperations<Employee> = {
    * 保留 Partial<Employee> 并 TODO: V72 A4-5 后补 schema。
    */
   create: (data: Partial<Employee>): Promise<ApiResponse<Employee>> => {
-    return apiClient.hrm.post(
-      '/employees',
-      toOpenApiRequestBody(data as Record<string, unknown>),
-    );
+    return apiClient.hrm.post('/employees', toOpenApiRequestBody(data as Record<string, unknown>));
   },
 
   /**

@@ -142,8 +142,9 @@ export interface HrmAttendanceQueryParams extends PaginationParams {
 // ============ Helper ============
 
 const resolvePageSize = (params?: PaginationParams): string | undefined => {
-  const ps = (params as { pageSize?: number } | undefined)?.pageSize
-    ?? (params as { pagesize?: number } | undefined)?.pagesize;
+  const ps =
+    (params as { pageSize?: number } | undefined)?.pageSize ??
+    (params as { pagesize?: number } | undefined)?.pagesize;
   return ps ? ps.toString() : undefined;
 };
 
@@ -164,7 +165,9 @@ export const hrProxyApi = {
   },
 
   // ===== Employees =====
-  async listEmployees(params?: HrmEmployeeQueryParams): Promise<ApiResponse<HrmEmployeeListResponse>> {
+  async listEmployees(
+    params?: HrmEmployeeQueryParams
+  ): Promise<ApiResponse<HrmEmployeeListResponse>> {
     const sp = buildSearchParams(params);
     if (params?.department_id) sp.set('department_id', params.department_id);
     if (params?.status) sp.set('status', params.status);
@@ -182,7 +185,9 @@ export const hrProxyApi = {
   },
 
   // ===== Departments =====
-  async listDepartments(params?: PaginationParams): Promise<ApiResponse<HrmDepartmentListResponse>> {
+  async listDepartments(
+    params?: PaginationParams
+  ): Promise<ApiResponse<HrmDepartmentListResponse>> {
     const sp = buildSearchParams(params);
     const qs = sp.toString();
     return apiClient.erp.get<HrmDepartmentListResponse>(`/hr/departments${qs ? `?${qs}` : ''}`);
@@ -233,7 +238,9 @@ export const hrProxyApi = {
   },
 
   // ===== Attendances =====
-  async listAttendances(params?: HrmAttendanceQueryParams): Promise<ApiResponse<HrmAttendanceListResponse>> {
+  async listAttendances(
+    params?: HrmAttendanceQueryParams
+  ): Promise<ApiResponse<HrmAttendanceListResponse>> {
     const sp = buildSearchParams(params);
     if (params?.employee_id) sp.set('employee_id', params.employee_id);
     if (params?.start_date) sp.set('start_date', params.start_date);

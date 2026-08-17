@@ -82,7 +82,7 @@ import {
   type RollbackEvent,
   type RollbackMetric,
 } from './auto-rollback';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 type TabId = 'pipelines' | 'deployments' | 'rollbacks' | 'health';
 
@@ -486,12 +486,24 @@ const PipelinesTab: React.FC<{
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k7')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k8')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k9')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k10')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k11')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k12')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k7')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k8')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k9')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k10')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k11')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k12')}
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -627,11 +639,21 @@ const PipelinesTab: React.FC<{
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.id_14')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k15')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k16')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k17')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k18')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.id_14')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.k15')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.k16')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.k17')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.k18')}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -715,11 +737,21 @@ const PipelinesTab: React.FC<{
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k22')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k23')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k24')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k25')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k26')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k22')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k23')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k24')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k25')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k26')}
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -847,14 +879,30 @@ const DeploymentsTab: React.FC<{
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k32')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k33')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k34')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k35')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k36')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k37')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k38')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k39')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k32')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k33')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k34')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k35')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k36')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k37')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k38')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('pages.v55_automation_panel.k39')}
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1050,8 +1098,14 @@ const RollbacksTab: React.FC<{
           <StatCard
             icon={<Shield size={20} />}
             label={i18n.t('pages.v55_automation_panel.k49')}
-            value={autoEnabled ? i18n.t('pages.v55_automation_panel.k51') : i18n.t('pages.v55_automation_panel.k50')}
-            color={autoEnabled ? designTokens.colors.success.dark : `${designTokens.colors.grey['400']}`}
+            value={
+              autoEnabled
+                ? i18n.t('pages.v55_automation_panel.k51')
+                : i18n.t('pages.v55_automation_panel.k50')
+            }
+            color={
+              autoEnabled ? designTokens.colors.success.dark : `${designTokens.colors.grey['400']}`
+            }
           />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -1101,7 +1155,11 @@ const RollbacksTab: React.FC<{
                     size='small'
                   />
                 }
-                label={<Typography variant='body2'>{i18n.t('pages.v55_automation_panel.k56')}</Typography>}
+                label={
+                  <Typography variant='body2'>
+                    {i18n.t('pages.v55_automation_panel.k56')}
+                  </Typography>
+                }
               />
               <Button
                 variant='outlined'
@@ -1125,11 +1183,21 @@ const RollbacksTab: React.FC<{
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k57')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k58')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k59')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k60')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k61')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.k57')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.k58')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.k59')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.k60')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.k61')}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1159,7 +1227,11 @@ const RollbacksTab: React.FC<{
                       </TableCell>
                       <TableCell>
                         <Typography variant='caption'>
-                          {c.comparison === 'gt' ? i18n.t('pages.v55_automation_panel.k64') : c.comparison === 'lt' ? i18n.t('pages.v55_automation_panel.k63') : i18n.t('pages.v55_automation_panel.k62')}
+                          {c.comparison === 'gt'
+                            ? i18n.t('pages.v55_automation_panel.k64')
+                            : c.comparison === 'lt'
+                              ? i18n.t('pages.v55_automation_panel.k63')
+                              : i18n.t('pages.v55_automation_panel.k62')}
                         </Typography>
                       </TableCell>
                       <TableCell>
@@ -1173,7 +1245,11 @@ const RollbacksTab: React.FC<{
                       <TableCell>{c.duration_window}</TableCell>
                       <TableCell>
                         <Chip
-                          label={c.enabled ? i18n.t('pages.v55_automation_panel.k66') : i18n.t('pages.v55_automation_panel.k65')}
+                          label={
+                            c.enabled
+                              ? i18n.t('pages.v55_automation_panel.k66')
+                              : i18n.t('pages.v55_automation_panel.k65')
+                          }
                           color={c.enabled ? 'success' : 'default'}
                           size='small'
                         />
@@ -1197,12 +1273,24 @@ const RollbacksTab: React.FC<{
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.id_68')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.id_69')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k70')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k71')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k72')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k73')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.id_68')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.id_69')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.k70')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.k71')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.k72')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.k73')}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1416,7 +1504,10 @@ const HealthTab: React.FC<{
                     <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 1 }}>
                       <Typography
                         variant='h4'
-                        sx={{ fontWeight: 700, color: isCritical ? designTokens.colors.error.main : 'text.primary' }}
+                        sx={{
+                          fontWeight: 700,
+                          color: isCritical ? designTokens.colors.error.main : 'text.primary',
+                        }}
                       >
                         {value.toFixed(config.key === 'error_rate' ? 2 : 0)}
                       </Typography>
@@ -1489,10 +1580,18 @@ const HealthTab: React.FC<{
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k83')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k84')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k85')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k86')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.k83')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.k84')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.k85')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('pages.v55_automation_panel.k86')}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1598,7 +1697,8 @@ const HealthTab: React.FC<{
                 severity='error'
                 variant='outlined'
               >
-                <strong>{i18n.t('pages.v55_automation_panel.k90')}</strong>指标超过临界值，将触发自动回滚
+                <strong>{i18n.t('pages.v55_automation_panel.k90')}</strong>
+                {i18n.t('pages.v55_automation_panel.k127')}
               </Alert>
             </Grid>
           </Grid>
@@ -1770,10 +1870,18 @@ const CreatePipelineDialog: React.FC<{
                             setStageConfigs(next);
                           }}
                         >
-                          <MenuItem value='build'>{i18n.t('pages.v55_automation_panel.k104')}</MenuItem>
-                          <MenuItem value='test'>{i18n.t('pages.v55_automation_panel.k105')}</MenuItem>
-                          <MenuItem value='deploy'>{i18n.t('pages.v55_automation_panel.k106')}</MenuItem>
-                          <MenuItem value='notify'>{i18n.t('pages.v55_automation_panel.k107')}</MenuItem>
+                          <MenuItem value='build'>
+                            {i18n.t('pages.v55_automation_panel.k104')}
+                          </MenuItem>
+                          <MenuItem value='test'>
+                            {i18n.t('pages.v55_automation_panel.k105')}
+                          </MenuItem>
+                          <MenuItem value='deploy'>
+                            {i18n.t('pages.v55_automation_panel.k106')}
+                          </MenuItem>
+                          <MenuItem value='notify'>
+                            {i18n.t('pages.v55_automation_panel.k107')}
+                          </MenuItem>
                         </Select>
                       </FormControl>
                     </Grid>
@@ -1893,7 +2001,9 @@ const DeployDialog: React.FC<{
       maxWidth='sm'
       fullWidth
     >
-      <DialogTitle sx={{ fontWeight: 600 }}>{i18n.t('pages.v55_automation_panel.k112')}</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 600 }}>
+        {i18n.t('pages.v55_automation_panel.k112')}
+      </DialogTitle>
       <DialogContent sx={{ pt: 2 }}>
         <Stack spacing={2}>
           <TextField
@@ -1918,7 +2028,9 @@ const DeployDialog: React.FC<{
               onChange={(e) => setEnvironment(e.target.value as Environment)}
             >
               <MenuItem value='dev'>{i18n.t('pages.v55_automation_panel.dev_118')}</MenuItem>
-              <MenuItem value='staging'>{i18n.t('pages.v55_automation_panel.staging_119')}</MenuItem>
+              <MenuItem value='staging'>
+                {i18n.t('pages.v55_automation_panel.staging_119')}
+              </MenuItem>
               <MenuItem value='prod'>{i18n.t('pages.v55_automation_panel.prod_120')}</MenuItem>
             </Select>
           </FormControl>

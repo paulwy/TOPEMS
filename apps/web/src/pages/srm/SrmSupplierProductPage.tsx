@@ -9,7 +9,7 @@ import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 import { srmApi } from '@/api/srm';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface SupplierProduct {
   id: string;
@@ -189,9 +189,24 @@ const SupplierProductStats: React.FC<{ rows: SupplierProduct[] }> = ({ rows }) =
   );
 
   const statCards = [
-    { label: i18n.t('pages.srm_supplier_product_page.k33'), value: stats.total, color: ct.purple[500], bgColor: 'secondary.light' },
-    { label: i18n.t('pages.srm_supplier_product_page.k34'), value: stats.active, color: 'success.dark', bgColor: 'success.lighter' },
-    { label: i18n.t('pages.srm_supplier_product_page.k35'), value: stats.pending, color: 'warning.dark', bgColor: 'warning.lighter' },
+    {
+      label: i18n.t('pages.srm_supplier_product_page.k33'),
+      value: stats.total,
+      color: ct.purple[500],
+      bgColor: 'secondary.light',
+    },
+    {
+      label: i18n.t('pages.srm_supplier_product_page.k34'),
+      value: stats.active,
+      color: 'success.dark',
+      bgColor: 'success.lighter',
+    },
+    {
+      label: i18n.t('pages.srm_supplier_product_page.k35'),
+      value: stats.pending,
+      color: 'warning.dark',
+      bgColor: 'warning.lighter',
+    },
     {
       label: i18n.t('pages.srm_supplier_product_page.k36'),
       value: `¥${stats.totalValue.toLocaleString()}`,

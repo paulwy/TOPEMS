@@ -98,9 +98,18 @@ export const productConfigSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: i18n.t('shared.product_config.a_0'), label: i18n.t('shared.product_config.a_1') },
-          { value: i18n.t('shared.product_config.b_2'), label: i18n.t('shared.product_config.b_3') },
-          { value: i18n.t('shared.product_config.c_4'), label: i18n.t('shared.product_config.c_5') },
+          {
+            value: i18n.t('shared.product_config.a_0'),
+            label: i18n.t('shared.product_config.a_1'),
+          },
+          {
+            value: i18n.t('shared.product_config.b_2'),
+            label: i18n.t('shared.product_config.b_3'),
+          },
+          {
+            value: i18n.t('shared.product_config.c_4'),
+            label: i18n.t('shared.product_config.c_5'),
+          },
         ],
       },
       listWidth: 80,

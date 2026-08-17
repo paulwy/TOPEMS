@@ -4,6 +4,7 @@
 // 所以需要在此 shim：每个子路径模块导出一个 LucideIcon 类型的默认组件。
 declare module 'lucide-react/dist/esm/icons/*.mjs' {
   import type { LucideIcon } from 'lucide-react/dist/lucide-react';
+
   const component: LucideIcon;
   export default component;
 }

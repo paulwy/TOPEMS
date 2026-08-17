@@ -37,20 +37,24 @@ export interface UpdateAnnouncementRequest {
 }
 
 const resolvePageSize = (params?: PaginationParams): string | undefined => {
-  const ps = (params as { pageSize?: number } | undefined)?.pageSize
-    ?? (params as { pagesize?: number } | undefined)?.pagesize;
+  const ps =
+    (params as { pageSize?: number } | undefined)?.pageSize ??
+    (params as { pagesize?: number } | undefined)?.pagesize;
   return ps ? ps.toString() : undefined;
 };
 
 export const announcementApi = {
-  async list(params?: PaginationParams & { priority?: string }): Promise<ApiResponse<AnnouncementListResponse>> {
+  async list(
+    params?: PaginationParams & { priority?: string }
+  ): Promise<ApiResponse<AnnouncementListResponse>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     const ps = resolvePageSize(params);
     if (ps) searchParams.set('pagesize', ps);
     if (params?.search) searchParams.set('search', params.search);
     if (params?.status) searchParams.set('status', params.status);
-    if ((params as { priority?: string })?.priority) searchParams.set('priority', (params as { priority?: string }).priority as string);
+    if ((params as { priority?: string })?.priority)
+      searchParams.set('priority', (params as { priority?: string }).priority as string);
 
     const queryString = searchParams.toString();
     return apiClient.erp.get<AnnouncementListResponse>(

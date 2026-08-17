@@ -299,7 +299,9 @@ export async function executeShardedQuery<T>(
       } catch (error) {
         const err = error instanceof Error ? error : new Error(String(error));
         errors.push({ shardIndex: shard.index, error: err });
-        shardLogger.error(`${i18n.t('shared.query-sharding.k9')}${shard.index}${i18n.t('shared.query-sharding.k10')}${err.message}`);
+        shardLogger.error(
+          `${i18n.t('shared.query-sharding.k9')}${shard.index}${i18n.t('shared.query-sharding.k10')}${err.message}`
+        );
       } finally {
         completedCount++;
         const progress = (completedCount / totalCount) * 100;
@@ -318,7 +320,9 @@ export async function executeShardedQuery<T>(
   await Promise.all(workers);
 
   const successCount = totalCount - errors.length;
-  shardLogger.info(`${i18n.t('shared.query-sharding.k11')}${successCount}/${totalCount}${i18n.t('shared.query-sharding.k12')}${errors.length}`);
+  shardLogger.info(
+    `${i18n.t('shared.query-sharding.k11')}${successCount}/${totalCount}${i18n.t('shared.query-sharding.k12')}${errors.length}`
+  );
 
   return {
     data: results.filter((r): r is T => r !== undefined),

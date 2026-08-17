@@ -1,5 +1,36 @@
+#!/usr/bin/env node
 const fs = require('fs');
 const path = require('path');
+
+// ===== CLI 解析 =====
+function parseArgs(argv) {
+  const opts = { help: false, apply: false, ns: null };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === '--help' || a === '-h') opts.help = true;
+    else if (a === '--apply') opts.apply = true;
+    else if (a === '--ns' && argv[i + 1]) opts.ns = argv[++i].split(',').map((s) => s.trim());
+    else if (a.startsWith('--')) { process.stderr.write(`[translate-i18n] ⚠️  未知参数 ${a}\n`); opts.help = true; }
+  }
+  return opts;
+}
+const USAGE = `
+translate_i18n.cjs — 用 master zh→en 字典填充 en JSON（覆盖 finance/hrm/mes/ehs/srm）
+
+USAGE:
+  node scripts/translate_i18n.cjs [OPTIONS]
+
+OPTIONS:
+  -h, --help            显示帮助并退出
+      --apply           真正写 en/*.json；不传为 DRY-RUN（只打印 missing 统计）
+      --ns <a,b,c>     只处理命名空间子集（默认 finance,hrm,mes,ehs,srm 全部）
+
+EXAMPLES:
+  node scripts/translate_i18n.cjs
+  node scripts/translate_i18n.cjs --ns srm --apply
+`;
+const OPTS = parseArgs(process.argv.slice(2));
+if (OPTS.help) { process.stdout.write(USAGE); process.exit(0); }
 
 // Comprehensive Chinese-to-English translation dictionary
 const D = {
@@ -36,13 +67,6 @@ const D = {
 "借方合计  = 贷方合计 = ":"Debit Total  = Credit Total = ",
 // Additional missing standalone values
 "一级":"Level 1","二级":"Level 2","三级":"Level 3","四级":"Level 4","下单日期":"Order Date","不合格数量":"Unqualified Quantity","临时":"Temporary","主管已评":"Supervisor Rated","主管评分":"Supervisor Score","人":"person","人员不足":"Understaffed","人数":"Headcount","代码":"Code","价值信息":"Value Information","价格与单位":"Price & Unit","优先级与备注":"Priority & Remark","优化报告":"Optimization Report","位置与采购":"Location & Procurement","作废":"Void","全部分类":"All Categories","共 {{v1}} 个科目":"{{v1}} accounts total","内容与状态":"Content & Status","创建人":"Created By","初始化财务信息":"Initialize Financial Information","加载合同信息失败":"Failed to load contract information","单":"unit","单据总数":"Total Documents","单据编号":"Document No.","原因与状态":"Reason & Status","发布信息":"Publish Information","发布失败":"Publish Failed","发布成功":"Publish Successful","发放人数":"Distribution Count","发放周期":"Distribution Cycle","启用此规则":"Enable This Rule","员工分析":"Employee Analysis","处置分布":"Disposition Distribution","天数":"Days","工程":"Engineering","已付款":"Paid","已拒绝":"Rejected","延期":"Delayed","延期天数":"Delayed Days","总账管理":"General Ledger Management","所有单据合计":"All Documents Total","按类型分布":"By Type Distribution","数量与优先级":"Quantity & Priority","数量信息":"Quantity Information","新增入职":"Add Onboarding","新增明细行":"Add Detail Row","无扣除":"No Deduction","日期与状态":"Date & Status","时间与状态":"Time & Status","时间与预算":"Time & Budget","时间信息":"Time Information","时间安排":"Time Schedule","时间计划":"Time Plan","明细":"Details","普通":"General","暂无趋势数据":"No trend data","暂无部门":"No departments","最大人数":"Max Headcount","服务":"Service","服务类":"Service","机械设备":"Mechanical Equipment","流程名称":"Process Name","流程编号":"Process No.","添加明细":"Add Detail","环境因素":"Environmental Factor","生效日期":"Effective Date","申请人":"Applicant","申请总数":"Total Applications","等级":"Grade","管理企业公司信息，包括公司名称、注册号、税号、联系方式等":"Manage enterprise company information, including company name, registration No., tax ID, and contact","管理企业固定资产，包括购置、折旧、处置等全生命周期":"Manage enterprise fixed assets, including acquisition, depreciation, and disposal lifecycle","管理企业固定资产，计提折旧和处理报废":"Manage enterprise fixed assets, depreciation, and scrap disposal","管理企业税务申报、缴纳和分析（数据由销售发票与采购发票聚合）":"Manage enterprise tax declaration, payment, and analysis (data aggregated from sales and purchase invoices)","管理会计科目总账，查看账户余额和发生额":"Manage chart of accounts general ledger, view account balances and transactions","管理会计科目编码、类别与层级关系":"Manage account code, category, and hierarchy relationships","管理供应商报价单，包括报价明细、金额、交付时间等信息":"Manage supplier quotations, including quotation details, amount, delivery time, etc.","管理合规评估记录，包括评估类型、评估人、结果等":"Manage compliance assessment records, including assessment type, assessor, and results","管理员工请假申请":"Manage employee leave applications","管理设备综合效率（OEE）记录，包括可用率、性能率、质量率等指标":"Manage equipment OEE records, including availability, performance, and quality rates","管理财务凭证、会计科目，支持用友凭证导入":"Manage financial vouchers and chart of accounts, support Yonyou voucher import","管理财务凭证，支持凭证审核、反审核及用友凭证导入":"Manage financial vouchers, support voucher review, reverse review, and Yonyou voucher import","粉尘":"Dust","级别":"Level","结果与内容":"Result & Content","编辑危险源":"Edit Hazard Source","缺口数量":"Shortfall Quantity","致命":"Fatal","负责人":"Responsible Person","负责人与时间":"Responsible Person & Time","身份证号":"ID Card No.","返工":"Rework","追溯详情":"Traceability Details","顺序":"Sequence","齐套":"Material Ready","产品不存在":"Product does not exist","产品总数":"Total Products","产品编码":"Product Code","供应商产品":"Supplier Product","设备配件":"Equipment Parts","在售":"On Sale","待审核":"Pending Review","活跃":"Active","税号":"Tax ID","邮箱":"Email","品类":"Category","地址":"Address","基本信息":"Basic Information","官网":"Website","法定名称":"Legal Name","风险等级":"Risk Level","创建时间":"Created At","更新时间":"Updated At","联系信息":"Contact Information","联系人":"Contact Person","联系电话":"Contact Phone","总价值":"Total Value","低风险":"Low Risk","高风险":"High Risk","启用":"Enabled","中":"Medium","低":"Low","高":"High","重要":"Important","个":"pcs","升":"liters","只":"pcs","台":"units","吨":"tons","草稿":"Draft","状态":"Status","操作":"Action","描述":"Description","已完成":"Completed","执行中":"In Progress","查看详情":"View Details","处理中":"Processing","待处理":"Pending","已取消":"Cancelled","已交付":"Delivered","已过期":"Expired","已终止":"Terminated","有效":"Valid","订单数量":"Order Count","合同数量":"Contract Count","单据总数":"Total Documents","总金额":"Total Amount","所有单据合计":"All Documents Total","已完成_已交付":"Completed_Delivered","待处理_处理中_有效":"Pending_Processing_Valid","已记录合同":"Recorded Contracts","已记录订单":"Recorded Orders","待结算":"Pending Settlement","财务管理":"Financial Management","首页":"Home","采购订单":"Purchase Order","订单总数":"Total Orders","订单总额":"Total Order Amount","加载订单失败":"Failed to load order","加载订单统计失败":"Failed to load order statistics","创建订单失败":"Failed to create order","更新订单失败":"Failed to update order","删除订单失败":"Failed to delete order","交付评分":"Delivery Score","供应商总数":"Total Suppliers","供应商绩效":"Supplier Performance","准时交付率":"On-time Delivery Rate","已评估供应商":"Evaluated Suppliers","平均综合评分":"Average Composite Score","最佳供应商":"Best Supplier","绩效数据不可创建":"Performance data cannot be created","绩效数据不可删除":"Performance data cannot be deleted","绩效数据不可更新":"Performance data cannot be updated","绩效概览":"Performance Overview","综合评分":"Composite Score","缺陷率":"Defect Rate","订单金额":"Order Amount","评估覆盖率":"Evaluation Coverage","质量评分":"Quality Score","中标":"Award","中标操作失败":"Award operation failed","创建报价单失败":"Failed to create quotation","加载报价单失败":"Failed to load quotation","失败":"Failed","成功":"Success","报价单已中标":"Quotation Won","报价单已驳回":"Quotation Rejected","报价单管理":"Quotation Management","更新报价单失败":"Failed to update quotation","驳回":"Reject","驳回操作失败":"Reject operation failed","创建评分维度失败":"Failed to create scoring dimension","删除评分维度失败":"Failed to delete scoring dimension","已禁用":"Disabled","更新评分维度失败":"Failed to update scoring dimension","权重合计":"Total Weight","维度总数":"Total Dimensions","评分维度配置":"Scoring Dimension Configuration","供应商管理":"Supplier Management","供应商详情":"Supplier Details","供应商id为空":"Supplier ID is empty","供应商不存在":"Supplier does not exist","信用等级":"Credit Rating","停用":"Disabled","加载供应商信息失败":"Failed to load supplier information","供应商id":"Supplier ID","合同id为空":"Contract ID is empty","合同不存在":"Contract does not exist","合同信息":"Contract Information","合同类型":"Contract Type","合同详情":"Contract Details","合同金额":"Contract Amount","履行中":"In Performance","已到期":"Expired","已签署":"Signed","已终止":"Terminated","开始日期":"Start Date","待签署":"Pending Signature","时间信息":"Time Information","未知供应商":"Unknown Supplier","签署日期":"Signing Date","结束日期":"End Date","供应商评估":"Supplier Evaluation","创建评估失败":"Failed to create evaluation","删除评估失败":"Failed to delete evaluation","已驳回":"Rejected","更新评估失败":"Failed to update evaluation","综合评分":"Composite Score","评估总数":"Total Evaluations","进行中":"In Progress","合同总数":"Total Contracts","合同总额":"Total Contract Amount","合同管理":"Contract Management","创建合同失败":"Failed to create contract","删除合同失败":"Failed to delete contract","更新合同失败":"Failed to update contract","供应商分类":"Supplier Category","供应商总数":"Total Suppliers","分类不存在":"Category does not exist","分类总数":"Total Categories","包装材料供应商":"Packaging Material Supplier","化工原料供应商":"Chemical Raw Material Supplier","原材料供应商":"Raw Material Supplier","含供应商":"Including Suppliers","提供包装材料的供应商":"Suppliers providing packaging materials","提供化工原料的供应商":"Suppliers providing chemical raw materials","提供原材料的供应商分类":"Raw material supplier category","提供检测设备的供应商":"Suppliers providing testing equipment","提供物流配送服务的供应商":"Suppliers providing logistics services","提供生产设备的供应商":"Suppliers providing production equipment","提供电子元器件的供应商":"Suppliers providing electronic components","提供零部件的供应商":"Suppliers providing components","检测设备供应商":"Testing Equipment Supplier","物流服务商":"Logistics Service Provider","电子元器件供应商":"Electronic Components Supplier","设备供应商":"Equipment Supplier","零部件供应商":"Components Supplier","中标供应商":"Winning Supplier","交货期":"Delivery Period","供应商名称":"Supplier Name","发布":"Publish","发布失败":"Publish Failed","发布成功":"Publish Successful","发布招标项目失败":"Failed to publish bidding project","定标失败":"Award Failed","定标成功":"Award Successful","定标操作失败":"Award operation failed","已发布":"Published","已完成定标":"Bid Awarded","已投标":"Bid Submitted","开标":"Open Bid","开标失败":"Failed to open bid","开标成功":"Bid opened successfully","开标操作失败":"Bid opening operation failed","投标中":"Bidding","投标人":"Bidder","投标金额":"Bid Amount","招投标管理":"Bidding Management","招标项目已发布":"Bidding project published","招标项目已开标":"Bidding project opened","招标项目总数":"Total Bidding Projects","暂无投标人":"No bidders","联系人":"Contact Person","联系电话":"Contact Phone","项目描述":"Project Description","预算总额":"Total Budget","预算金额":"Budget Amount","供应商":"Supplier","发布询价单失败":"Failed to publish RFQ","已完成授标":"Awarded","已拒绝":"Rejected","已授标":"Awarded","已提交":"Submitted","总报价数":"Total Quotations","截止日期":"Deadline","报价中":"Quoting","报价单号":"Quotation No.","报价单已拒绝":"Quotation Rejected","报价数":"Quotation Count","拒绝":"Reject","拒绝报价失败":"Failed to reject quotation","授标":"Award","授标失败":"Award Failed","授标成功":"Award Successful","授标操作失败":"Award operation failed","操作失败":"Operation failed","暂无报价":"No quotations","有效期至":"Valid Until","查看报价":"View Quotation","询价单已发布":"RFQ published","询价单总数":"Total RFQs","询报价管理":"RFQ & Quotation Management","公告通知":"Announcements","关于春节期间发货安排的通知":"Notice on Shipping Arrangements During Spring Festival","加载供应商门户数据失败":"Failed to load supplier portal data","加载失败":"Loading failed","原材料供应商":"Raw Material Supplier","发票对账 INV-2024-005":"Invoice Reconciliation INV-2024-005","发票管理":"Invoice Management","发货提醒 PO-2024-002":"Shipping Notice PO-2024-002","发货管理":"Shipping Management","合作评分":"Cooperation Score","已发货":"Shipped","待办事项":"To-do Items","待处理订单":"Pending Orders","快速入口":"Quick Access","按时交付率":"On-time Delivery Rate","新增供应商门户功能上线公告":"New Supplier Portal Feature Launch Announcement","无法加载供应商门户数据":"Unable to load supplier portal data","最近订单":"Recent Orders","查看发票":"View Invoice","查看订单":"View Order","消息通知":"Notifications","确认订单 PO-2024-001":"Confirm Order PO-2024-001","示例供应商":"Sample Supplier","累计金额":"Cumulative Amount","绩效指标":"Performance Indicators","绩效评估":"Performance Evaluation","订单总数":"Total Orders","订单管理":"Order Management","询报价":"RFQ & Quotation","质量评分":"Quality Score","三力密封":"Sanli Seal","不锈钢板材_304":"Stainless Steel Sheet 304","中铝集团":"Chinalco","产品不存在":"Product does not exist","产品总数":"Total Products","传感器_pt100":"Sensor PT100","供应商产品":"Supplier Product","包装材料":"Packaging Materials","化工原料":"Chemical Raw Material","原材料":"Raw Material","合兴包装":"Hexing Packaging","宝钢集团":"Baosteel Group","密封圈_nbr":"Seal Ring NBR","瑞典skf":"SKF Sweden","瓦楞纸箱定制":"Corrugated Box Customization","电子元器件":"Electronic Components","西门子电气":"Siemens Electric","设备配件":"Equipment Parts","轴承_skf6205":"Bearing SKF6205","铝合金型材_6061":"Aluminum Alloy Profile 6061","长城润滑油":"Great Wall Lubricant","零部件":"Components","霍尼韦尔":"Honeywell","已发货":"Shipped","2024年第一季度质量考核结果":"2024 Q1 Quality Assessment Results",
-// Code snippet translations
-">\n            <TableHead>\n              <TableRow>\n                <TableCell>供应商名称</TableCell>\n                <TableCell align=":">\n            <TableHead>\n              <TableRow>\n                <TableCell>Supplier Name</TableCell>\n                <TableCell align=",
-">\n            <TableHead>\n              <TableRow>\n                <TableCell>报价单号</TableCell>\n                <TableCell>供应商</TableCell>\n                <TableCell>总金额</TableCell>\n                <TableCell>交货期</TableCell>\n                <TableCell>有效期至</TableCell>\n                <TableCell>状态</TableCell>\n                <TableCell align=":">\n            <TableHead>\n              <TableRow>\n                <TableCell>Quotation No.</TableCell>\n                <TableCell>Supplier</TableCell>\n                <TableCell>Total Amount</TableCell>\n                <TableCell>Delivery Period</TableCell>\n                <TableCell>Valid Until</TableCell>\n                <TableCell>Status</TableCell>\n                <TableCell align=",
-">{row.score ? `${row.score}分` : "":">{row.score ? `${row.score} pts` : "",
-">合作评分</Typography>\n                  <Typography\n                    variant=":>Cooperation Score</Typography>\n                  <Typography\n                    variant=",
-">按时交付率</Typography>\n                  <Typography\n                    variant=":>On-time Delivery Rate</Typography>\n                  <Typography\n                    variant=",
-">质量评分</Typography>\n                  <Typography\n                    variant=":>Quality Score</Typography>\n                  <Typography\n                    variant=",
 "[0]\n    );\n    if (!response.success || !response.data) throw new Error('创建合同失败');\n    return response.data as unknown as Record":"[0]\n    );\n    if (!response.success || !response.data) throw new Error('Failed to create contract');\n    return response.data as unknown as Record",
 "[0]\n    );\n    if (!response.success || !response.data) throw new Error('创建评估失败');\n    return response.data as unknown as Record":"[0]\n    );\n    if (!response.success || !response.data) throw new Error('Failed to create evaluation');\n    return response.data as unknown as Record",
 "[0]\n    );\n    if (!response.success || !response.data) throw new Error('创建评分维度失败');\n    return response.data as unknown as Record":"[0]\n    );\n    if (!response.success || !response.data) throw new Error('Failed to create scoring dimension');\n    return response.data as unknown as Record",
@@ -57,8 +81,14 @@ const D = {
 };
 
 // Apply translations
-const dir = 'apps/web/src/i18n/locales/';
-const files = ['finance','hrm','mes','ehs','srm'];
+const DEFAULT_DIR = 'apps/web/src/i18n/locales/';
+const DEFAULT_FILES = ['finance','hrm','mes','ehs','srm'];
+const dir = DEFAULT_DIR;
+const files = OPTS.ns && OPTS.ns.length ? OPTS.ns.filter((n) => DEFAULT_FILES.includes(n)) : DEFAULT_FILES;
+process.stderr.write(
+  `[translate-i18n] ${OPTS.apply ? 'APPLY 写磁盘' : 'DRY-RUN（加 --apply 才写）'}\n` +
+  `[translate-i18n] 命名空间: ${files.join(', ')}\n\n`
+);
 let totalMissing = 0;
 const notFound = new Set();
 
@@ -92,9 +122,12 @@ for (const f of files) {
 
   translate(zh, en);
 
-  // Write updated en file
-  fs.writeFileSync(enPath, JSON.stringify(en, null, 2) + '\n', 'utf8');
-  console.log(f + '.json: ' + missCount + ' still missing');
+  // Write updated en file (only when --apply)
+  if (OPTS.apply) {
+    fs.writeFileSync(enPath, JSON.stringify(en, null, 2) + '\n', 'utf8');
+  }
+  const mode = OPTS.apply ? `still missing:` : `would fix, still missing:`;
+  console.log(f + '.json: ' + mode + ' ' + missCount);
   totalMissing += missCount;
 }
 
@@ -103,4 +136,9 @@ if (notFound.size > 0) {
   console.log('\nValues not found in dictionary (' + notFound.size + '):');
   const arr = [...notFound].sort();
   arr.forEach(v => console.log(JSON.stringify(v)));
+}
+if (!OPTS.apply && totalMissing > 0) {
+  process.stderr.write(
+    `\n[translate-i18n] 💡 DRY-RUN，加 --apply 才会把字典翻译写入 en JSON 文件。\n`
+  );
 }

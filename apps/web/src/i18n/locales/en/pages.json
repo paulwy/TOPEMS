@@ -10700,5 +10700,8 @@
       "k2": "Findings:",
       "k3": ">DepartmentCompliance Rate(TaskCompletion Rate + FindingsClose)</h3>"
     }
-  }
+  },
+  "pages.login_page.k29": "Regular employee",
+  "pages.login_page.k30": "Administrator",
+  "pages.v55_automation_panel.k127": "Metrics exceed threshold, automatic rollback will be triggered"
 }

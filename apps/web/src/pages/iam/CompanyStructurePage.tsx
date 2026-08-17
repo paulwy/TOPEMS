@@ -498,7 +498,9 @@ export default function CompanyStructurePage() {
           <Box sx={{ display: 'flex', gap: 1.5 }}>
             <AlertCircle sx={{ width: 20, height: 20, color: 'info.main' }} />
             <Box>
-              <Typography sx={{ fontWeight: 'medium', color: 'info.dark' }}>{t('iam.company_structure_page.k23')}</Typography>
+              <Typography sx={{ fontWeight: 'medium', color: 'info.dark' }}>
+                {t('iam.company_structure_page.k23')}
+              </Typography>
               <Box
                 component='ul'
                 sx={{ mt: 1, pl: 2, color: 'info.dark' }}

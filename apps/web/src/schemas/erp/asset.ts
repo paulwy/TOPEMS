@@ -200,11 +200,26 @@ export const assetSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('schema:erp.asset.filter.category.option.all'), value: 'all' },
-          { label: i18n.t('schema:erp.asset.filter.category.option.电子设备'), value: i18n.t('shared.asset.k0') },
-          { label: i18n.t('schema:erp.asset.filter.category.option.机械设备'), value: i18n.t('shared.asset.k1') },
-          { label: i18n.t('schema:erp.asset.filter.category.option.办公设备'), value: i18n.t('shared.asset.k2') },
-          { label: i18n.t('schema:erp.asset.filter.category.option.家具'), value: i18n.t('shared.asset.k3') },
-          { label: i18n.t('schema:erp.asset.filter.category.option.其他'), value: i18n.t('shared.asset.k4') },
+          {
+            label: i18n.t('schema:erp.asset.filter.category.option.电子设备'),
+            value: i18n.t('shared.asset.k0'),
+          },
+          {
+            label: i18n.t('schema:erp.asset.filter.category.option.机械设备'),
+            value: i18n.t('shared.asset.k1'),
+          },
+          {
+            label: i18n.t('schema:erp.asset.filter.category.option.办公设备'),
+            value: i18n.t('shared.asset.k2'),
+          },
+          {
+            label: i18n.t('schema:erp.asset.filter.category.option.家具'),
+            value: i18n.t('shared.asset.k3'),
+          },
+          {
+            label: i18n.t('schema:erp.asset.filter.category.option.其他'),
+            value: i18n.t('shared.asset.k4'),
+          },
         ],
       },
     ],

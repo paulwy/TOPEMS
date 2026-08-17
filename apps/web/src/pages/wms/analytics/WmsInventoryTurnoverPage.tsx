@@ -42,7 +42,9 @@ export default function WmsInventoryTurnoverPage() {
         </div>
         <div className='rounded-lg border p-4'>
           <p className='text-sm text-gray-600'>{i18n.t('pages.wms_inventory_turnover_page.k2')}</p>
-          <p className='mt-1 text-3xl font-bold text-blue-600'>{i18n.t('pages.wms_inventory_turnover_page.summaryavgdays_0')}</p>
+          <p className='mt-1 text-3xl font-bold text-blue-600'>
+            {i18n.t('pages.wms_inventory_turnover_page.summaryavgdays_0')}
+          </p>
         </div>
         <div className='rounded-lg border p-4'>
           <p className='text-sm text-gray-600'>{i18n.t('pages.wms_inventory_turnover_page.k3')}</p>

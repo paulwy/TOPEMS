@@ -11,8 +11,12 @@ const apiAdapter: CrudApiAdapter<Record<string, unknown>> = {
       throw new Error(response.message || 'Failed to load interactions');
     }
     const raw = response.data as unknown;
-    const items: Record<string, unknown>[] = Array.isArray(raw) ? raw : (raw as { items?: Record<string, unknown>[] }).items ?? [];
-    const total: number = Array.isArray(raw) ? items.length : ((raw as { total?: number }).total ?? items.length);
+    const items: Record<string, unknown>[] = Array.isArray(raw)
+      ? raw
+      : ((raw as { items?: Record<string, unknown>[] }).items ?? []);
+    const total: number = Array.isArray(raw)
+      ? items.length
+      : ((raw as { total?: number }).total ?? items.length);
     return { data: items, total };
   },
   create: async () => {

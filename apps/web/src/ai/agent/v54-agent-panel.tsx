@@ -52,7 +52,6 @@ import {
   Loader2,
   Terminal,
   MessageSquare,
-  Cpu,
   HardDrive,
   Activity,
   FileText,
@@ -84,7 +83,7 @@ import {
   type Intent,
   type Sentiment,
 } from './context-engine';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 type TabId = 'conversation' | 'tasks' | 'workflow' | 'context' | 'memory';
 
@@ -160,6 +159,7 @@ const V54AgentPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const ctx = contextEngine.getContext(sessionId);
     if (ctx) setContext(ctx);
   };
+  void refreshData;
 
   return (
     <Box
@@ -391,8 +391,7 @@ const ConversationTab: React.FC<{
     {
       id: 'welcome',
       role: 'assistant',
-      content:
-        i18n.t('ai.v54-agent-panel.k6'),
+      content: i18n.t('ai.v54-agent-panel.k6'),
       timestamp: Date.now(),
     },
   ]);
@@ -463,7 +462,15 @@ const ConversationTab: React.FC<{
       tools: autonomousAgent.getTools(),
     };
 
-    const taskKeywords = [i18n.t('ai.v54-agent-panel.k28'), i18n.t('ai.v54-agent-panel.k27'), i18n.t('ai.v54-agent-panel.k26'), i18n.t('ai.v54-agent-panel.k25'), i18n.t('ai.v54-agent-panel.k24'), i18n.t('ai.v54-agent-panel.k23'), i18n.t('ai.v54-agent-panel.k22')];
+    const taskKeywords = [
+      i18n.t('ai.v54-agent-panel.k28'),
+      i18n.t('ai.v54-agent-panel.k27'),
+      i18n.t('ai.v54-agent-panel.k26'),
+      i18n.t('ai.v54-agent-panel.k25'),
+      i18n.t('ai.v54-agent-panel.k24'),
+      i18n.t('ai.v54-agent-panel.k23'),
+      i18n.t('ai.v54-agent-panel.k22'),
+    ];
     const shouldExecuteTask = taskKeywords.some((kw) => input.includes(kw));
 
     if (shouldExecuteTask) {
@@ -512,7 +519,10 @@ const ConversationTab: React.FC<{
                 borderRadius: 2,
                 bgcolor: msg.role === 'user' ? designTokens.colors.success.dark : 'white',
                 color: msg.role === 'user' ? 'white' : 'inherit',
-                border: msg.role === 'assistant' ? `1px solid ${designTokens.colors.grey['200']}` : 'none',
+                border:
+                  msg.role === 'assistant'
+                    ? `1px solid ${designTokens.colors.grey['200']}`
+                    : 'none',
               }}
             >
               <Typography
@@ -531,7 +541,12 @@ const ConversationTab: React.FC<{
           <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
             <Paper
               elevation={1}
-              sx={{ p: 2, borderRadius: 2, bgcolor: 'common.white', border: `1px solid ${designTokens.colors.grey['200']}` }}
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                bgcolor: 'common.white',
+                border: `1px solid ${designTokens.colors.grey['200']}`,
+              }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Loader2
@@ -716,7 +731,10 @@ const TasksTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -724,9 +742,7 @@ const TasksTab: React.FC<{
             <Activity size={16} />
             {i18n.t('ai.v54-agent-panel.k25')}
           </Typography>
-          {tasks.length === 0 && (
-            <Alert severity='info'>{i18n.t('ai.v54-agent-panel.k29')}</Alert>
-          )}
+          {tasks.length === 0 && <Alert severity='info'>{i18n.t('ai.v54-agent-panel.k29')}</Alert>}
           {tasks.length > 0 && (
             <List sx={{ maxHeight: 500, overflow: 'auto' }}>
               {tasks.map((task) => (
@@ -736,7 +752,8 @@ const TasksTab: React.FC<{
                   sx={{
                     mb: 1,
                     border: '1px solid',
-                    borderColor: expandedTask === task.id ? designTokens.colors.success.dark : 'divider',
+                    borderColor:
+                      expandedTask === task.id ? designTokens.colors.success.dark : 'divider',
                     borderRadius: 1,
                     bgcolor: expandedTask === task.id ? 'colors.success.50' : 'white',
                     transition: 'all 0.2s',
@@ -810,7 +827,12 @@ const TasksTab: React.FC<{
                         variant='caption'
                         color='text.secondary'
                         sx={{ display: 'block', mb: 1 }}
-                      >{i18n.t('ai:v54-agent-panel.k6', { v0: (task.id), v1: (new Date(task.createdAt).toLocaleTimeString()) })}</Typography>
+                      >
+                        {i18n.t('ai:v54-agent-panel.k6', {
+                          v0: task.id,
+                          v1: new Date(task.createdAt).toLocaleTimeString(),
+                        })}
+                      </Typography>
                       <Typography
                         variant='subtitle2'
                         sx={{ fontWeight: 600, mb: 1, fontSize: 12 }}
@@ -834,7 +856,10 @@ const TasksTab: React.FC<{
           )}
         </Card>
 
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -940,9 +965,15 @@ const EventLog: React.FC<{ events: AgentEvent[] }> = ({ events }) => (
         <Table size='small'>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v54-agent-panel.k31')}</TableCell>
-              <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v54-agent-panel.k32')}</TableCell>
-              <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v54-agent-panel.k33')}</TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                {i18n.t('ai.v54-agent-panel.k31')}
+              </TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                {i18n.t('ai.v54-agent-panel.k32')}
+              </TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                {i18n.t('ai.v54-agent-panel.k33')}
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -1041,7 +1072,11 @@ const WorkflowTab: React.FC<{
   const handleCreateCustom = () => {
     if (!newWfName.trim()) return;
     onCreate(newWfName, [
-      { id: `s1-${Date.now()}`, type: 'action', config: { description: i18n.t('ai.v54-agent-panel.k34'), action: 'start' } },
+      {
+        id: `s1-${Date.now()}`,
+        type: 'action',
+        config: { description: i18n.t('ai.v54-agent-panel.k34'), action: 'start' },
+      },
       {
         id: `s2-${Date.now()}`,
         type: 'action',
@@ -1090,13 +1125,23 @@ const WorkflowTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
-          >{i18n.t('ai:v54-agent-panel.v0_5', { v0: (workflows.length) })}</Typography>
+          >
+            {i18n.t('ai:v54-agent-panel.v0_5', { v0: workflows.length })}
+          </Typography>
           {workflows.length === 0 && (
-            <Alert severity='info'>{i18n.t('ai:v54-agent-panel.v0v1_4', { v0: (i18n.t('ai.v54-agent-panel.k37')), v1: (i18n.t('ai.v54-agent-panel.k34')) })}</Alert>
+            <Alert severity='info'>
+              {i18n.t('ai:v54-agent-panel.v0v1_4', {
+                v0: i18n.t('ai.v54-agent-panel.k37'),
+                v1: i18n.t('ai.v54-agent-panel.k34'),
+              })}
+            </Alert>
           )}
           {workflows.length > 0 && (
             <List sx={{ maxHeight: 450, overflow: 'auto' }}>
@@ -1107,7 +1152,8 @@ const WorkflowTab: React.FC<{
                   sx={{
                     mb: 1,
                     border: '1px solid',
-                    borderColor: selectedWorkflow?.id === wf.id ? designTokens.colors.success.dark : 'divider',
+                    borderColor:
+                      selectedWorkflow?.id === wf.id ? designTokens.colors.success.dark : 'divider',
                     borderRadius: 1,
                     bgcolor: selectedWorkflow?.id === wf.id ? 'colors.success.50' : 'white',
                     cursor: 'pointer',
@@ -1156,7 +1202,10 @@ const WorkflowTab: React.FC<{
           )}
         </Card>
 
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
@@ -1184,7 +1233,10 @@ const WorkflowTab: React.FC<{
         </Card>
       </Box>
 
-      <Card variant='outlined' sx={{ p: 2, mt: 3 }}>
+      <Card
+        variant='outlined'
+        sx={{ p: 2, mt: 3 }}
+      >
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2 }}
@@ -1236,7 +1288,9 @@ const WorkflowTab: React.FC<{
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowCreateDialog(false)}>{i18n.t('ai.v54-agent-panel.k43')}</Button>
+          <Button onClick={() => setShowCreateDialog(false)}>
+            {i18n.t('ai.v54-agent-panel.k43')}
+          </Button>
           {selectedTemplate ? (
             <Button
               onClick={handleCreateFromTemplate}
@@ -1350,12 +1404,15 @@ const WorkflowDetail: React.FC<{
           variant='caption'
           color='text.secondary'
           sx={{ display: 'block', mb: 0.5 }}
-        >{i18n.t('ai:v54-agent-panel.idv0_2', { v0: (workflow.id) })}</Typography>
+        >
+          {i18n.t('ai:v54-agent-panel.idv0_2', { v0: workflow.id })}
+        </Typography>
         <Typography
           variant='caption'
           color='text.secondary'
         >
-          [i18n.t('ai.v54-agent-panel.k42')]: {workflow.completedSteps}/{workflow.totalSteps} {i18n.t('ai.v54-agent-panel.k43')}
+          [i18n.t('ai.v54-agent-panel.k42')]: {workflow.completedSteps}/{workflow.totalSteps}{' '}
+          {i18n.t('ai.v54-agent-panel.k43')}
         </Typography>
       </Box>
 
@@ -1460,7 +1517,10 @@ const ContextTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
@@ -1559,11 +1619,16 @@ const ContextTab: React.FC<{
           </Stack>
         </Card>
 
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
-          >{i18n.t('ai:v54-agent-panel.v0_1', { v0: (context.entities.length) })}</Typography>
+          >
+            {i18n.t('ai:v54-agent-panel.v0_1', { v0: context.entities.length })}
+          </Typography>
           {context.entities.length === 0 ? (
             <Alert severity='info'>{i18n.t('ai.v54-agent-panel.k44')}</Alert>
           ) : (
@@ -1579,7 +1644,10 @@ const ContextTab: React.FC<{
         </Card>
       </Box>
 
-      <Card variant='outlined' sx={{ p: 2, mt: 3 }}>
+      <Card
+        variant='outlined'
+        sx={{ p: 2, mt: 3 }}
+      >
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2 }}
@@ -1594,9 +1662,15 @@ const ContextTab: React.FC<{
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v54-agent-panel.k46')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v54-agent-panel.k47')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v54-agent-panel.k48')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                      {i18n.t('ai.v54-agent-panel.k46')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                      {i18n.t('ai.v54-agent-panel.k47')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                      {i18n.t('ai.v54-agent-panel.k48')}
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1644,7 +1718,10 @@ const ContextTab: React.FC<{
       </Card>
 
       {context.summary && (
-        <Card variant='outlined' sx={{ p: 2, mt: 3 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2, mt: 3 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1785,7 +1862,10 @@ const MemoryTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
@@ -1917,11 +1997,16 @@ const MemoryTab: React.FC<{
           </Stack>
         </Card>
 
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
-          >{i18n.t('ai:v54-agent-panel.v0_0', { v0: (filteredMemories.length) })}</Typography>
+          >
+            {i18n.t('ai:v54-agent-panel.v0_0', { v0: filteredMemories.length })}
+          </Typography>
           <TextField
             size='small'
             placeholder={i18n.t('ai.v54-agent-panel.k68')}

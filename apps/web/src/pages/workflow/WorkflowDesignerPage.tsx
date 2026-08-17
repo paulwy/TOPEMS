@@ -24,6 +24,7 @@ import { PageContainer } from '@/components/common';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const WorkflowDesignerPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -129,10 +130,11 @@ const WorkflowDesignerPage: React.FC = () => {
     mutationFn: (params: { id: string; data: UpdateWorkflowRequest }) =>
       workflowApi.updateWorkflow(params.id, params.data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_DESIGNER_BASE, workflowId] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_DESIGNER_BASE, workflowId],
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         title: i18n.t('workflow.workflow_designer_page.k2'),
         message: i18n.t('workflow.workflow_designer_page.k3'),
@@ -152,10 +154,11 @@ const WorkflowDesignerPage: React.FC = () => {
   const createWorkflowMutation = useMutation({
     mutationFn: (data: CreateWorkflowRequest) => workflowApi.createWorkflow(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_DESIGNER_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_DESIGNER_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         title: i18n.t('workflow.workflow_designer_page.k6'),
         message: i18n.t('workflow.workflow_designer_page.k7'),
@@ -220,7 +223,11 @@ const WorkflowDesignerPage: React.FC = () => {
   }
   return (
     <PageContainer
-      title={workflow ? `${i18n.t('pages.workflow_designer_page.k3')}${workflow.name}` : i18n.t('workflow.workflow_designer_page.k12')}
+      title={
+        workflow
+          ? `${i18n.t('pages.workflow_designer_page.k3')}${workflow.name}`
+          : i18n.t('workflow.workflow_designer_page.k12')
+      }
       subtitle={i18n.t('workflow.workflow_designer_page.k13')}
       headerProps={{
         showDivider: true,
@@ -303,7 +310,9 @@ const WorkflowDesignerPage: React.FC = () => {
               variant='contained'
               startIcon={saving ? undefined : <Save size={16} />}
             >
-              {saving ? i18n.t('pages.workflow_designer_page.k4') : i18n.t('workflow.workflow_designer_page.k17')}
+              {saving
+                ? i18n.t('pages.workflow_designer_page.k4')
+                : i18n.t('workflow.workflow_designer_page.k17')}
             </Button>
           </DialogActions>
         </DialogContent>
