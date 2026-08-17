@@ -5216,7 +5216,7 @@ HIGH 清零与 MEDIUM 收敛由前置综合清洗（commit `1c67cc037` 的"490+2
 > - `e836065aa` feat(ci): implement perm matrix 3 scanners (phase-A)
 > - `376d285bd` feat(ci): perm matrix 6 rules + baseline snapshot (phase-B)
 > - `c6718e489` feat(ci): perm-matrix guardian double-green (phase-C)
-> - `TBD` (phase-D · current commit: TODO update + Push)
+> - `9307ea5ab` docs(roadmap): perm-matrix RN 9-step finalize + 2 plans + final artifact (phase-D)
 
 ### 五阶段明细
 
@@ -5390,7 +5390,7 @@ HIGH 清零与 MEDIUM 收敛由前置综合清洗（commit `1c67cc037` 的"490+2
 | 4 | FAIL | serde_json::from_str 形参类型不匹配（`&str` vs `&Value`） | 2 | ≤ 0 | **0** | ✅ 清零 | equipment.rs 2 处 `items: Option<JsonValue>` 被再次 `serde_json::from_str(&s)` 反序列化（本身已是 Value）→ 直接用原值或 `.clone()` |
 | 5 | Guard | `cargo check -p topems-mes` exit code | 101（FAIL） | == 0 | **0** | ✅ 达标 | 连续 2 跑 0 error（无增量改动后 Finished in 1.96s） |
 | 6 | Guard | `cargo sqlx prepare -p topems-mes` 缓存生成数 | N/A（失败） | ≥ 100 queries | **168 queries** OK | ✅ 达标 | 根 `.sqlx/` 合并后 275 total queries，topems-mes 贡献 168（含 equipment/team/material/flow/route/qm 全部 CRUD 查询缓存）|
-| 7 | Guard | pre-commit hooks 9-gate（lint-staged + CRM + i18n + Perm-Gate）| — | ALL GREEN | TBD | 待提交时验证 | 跟随 commit 提交时实跑 |
+| 7 | Guard | pre-commit hooks 9-gate（lint-staged + CRM + i18n + Perm-Gate）| — | ALL GREEN | **ALL GREEN（commit ec9dcd20f 实跑：hardcoded strict=0 + Perm-Gate Integrity PASS / R1-R3=0/0/0 · 9 子闸全部通过）** | ✅ 达标 | V231 封版提交时预提交门控现场验证；TBD 残留自检 grep = 0（TODO.md 大写 TBD 清零）|
 
 #### 5 种修复模式（归纳复用，后续任何 crate 90+ 同类错可照套）
 
