@@ -75,6 +75,9 @@ async fn main() -> anyhow::Result<()> {
 
     let stateful_public = Router::new()
         .route("/health", get(health))
+        // V68.1 A2.2: 暴露 /api/plugin/health 公开探活端点，与 monitor 的
+        // /api/monitor/health 路径约定对齐（无认证，供 vite proxy / 网关 / curl 探活）
+        .route("/api/plugin/health", get(health))
         .route(
             "/metrics",
             get(move || async { prometheus_metrics_handler().await }),

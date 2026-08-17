@@ -61,7 +61,9 @@ generate_services_conf() {
 # 格式: 服务名 服务路径 二进制名 端口
 #
 # 架构说明:
-# - unified-core (端口 8000): 平台核心，内含 iam/doc/flow/file/monitor 等模块
+# - unified-core (端口 8000): 平台核心，内含 iam/doc/flow/file 等模块
+# - monitor (端口 8095): V68.1 从 unified-core 拆分的独立监控服务 (alerts/metrics/slo)
+# - plugin-registry (端口 8096): V68.1 从 unified-core 拆分的独立插件注册服务
 # - communication/billing/ticket/feedback/search: 从 unified-core 外迁的独立进程 (8082-8090)
 # - bi (analytics): 含原 report 报表功能
 #
@@ -80,7 +82,7 @@ generate_services_conf() {
 #   8070-8079 基础设施 (Infra)
 # 最后更新: $(date +%Y-%m-%d)
 
-# 平台核心服务 (unified-core 包含 iam, doc, flow, file, monitor; communication 模块保留兼容)
+# 平台核心服务 (unified-core 包含 iam, doc, flow, file; communication 模块保留兼容)
 iam         svc/unified-core       topems-unified-core        $(get_port IAM_PORT 8000)
 pm          svc/pm                 topems-pm                   $(get_port PM_PORT 8023)
 erp         svc/erp                topems-erp                  $(get_port ERP_PORT 8010)
@@ -106,7 +108,6 @@ rd          svc/rd                 topems-rd                   $(get_port RD_POR
 
 # 数据分析/门户服务
 # NOTE: report 功能已整合到 bi 服务(topems-analytics)中，不再需要单独端口
-# NOTE: monitor 功能已整合到 unified-core/modules/monitor 中，不再需要单独端口
 bi          svc/analytics          topems-analytics           $(get_port BI_PORT 8060)
 portal      svc/portal             topems-portal               $(get_port PORTAL_PORT 8063)
 
@@ -115,13 +116,17 @@ mobile      svc/mobile             topems-mobile               $(get_port MOBILE
 gis         svc/gis                topems-gis                  $(get_port GIS_PORT 8071)
 integration svc/integration        topems-integration           $(get_port INTEGRATION_PORT 8072)
 
-# 扩展服务 (8082-8090，从 unified-core 外迁为独立进程)
+# 扩展服务 (8082-8096，从 unified-core 外迁为独立进程)
 search      svc/search             topems-search               $(get_port SEARCH_PORT 8082)
 communication svc/communication    topems-communication         $(get_port COMMUNICATION_PORT 8084)
 billing     svc/billing            topems-billing              $(get_port BILLING_PORT 8085)
 ticket      svc/ticket             topems-ticket               $(get_port TICKET_PORT 8086)
 feedback    svc/feedback           topems-feedback             $(get_port FEEDBACK_PORT 8087)
+lowcode     svc/lowcode            topems-lowcode              $(get_port LOWCODE_PORT 8088)
 master-data svc/master-data        topems-master-data          $(get_port MASTER_DATA_PORT 8090)
+# V68.1 拆分服务 (8095-8096，从 unified-core 独立为单独进程)
+monitor     svc/monitor            topems-monitor              $(get_port MONITOR_PORT 8095)
+plugin-registry svc/plugin-registry topems-plugin-registry    $(get_port PLUGIN_REGISTRY_PORT 8096)
 
 # 核心服务列表 (必须先启动)
 CORE_SERVICES=iam
@@ -145,12 +150,14 @@ IAM_PORT=$(get_port IAM_PORT 8000)
 DOC_PORT=$(get_port DOC_PORT 8000)
 FILE_PORT=$(get_port FILE_PORT 8000)
 FLOW_PORT=$(get_port FLOW_PORT 8000)
-MONITOR_PORT=$(get_port MONITOR_PORT 8000)
+MONITOR_PORT=$(get_port MONITOR_PORT 8095)
+PLUGIN_REGISTRY_PORT=$(get_port PLUGIN_REGISTRY_PORT 8096)
 COMMUNICATION_PORT=$(get_port COMMUNICATION_PORT 8084)
 SEARCH_PORT=$(get_port SEARCH_PORT 8082)
 BILLING_PORT=$(get_port BILLING_PORT 8085)
 TICKET_PORT=$(get_port TICKET_PORT 8086)
 FEEDBACK_PORT=$(get_port FEEDBACK_PORT 8087)
+LOWCODE_PORT=$(get_port LOWCODE_PORT 8088)
 ERP_PORT=$(get_port ERP_PORT 8010)
 FINANCE_PORT=$(get_port FINANCE_PORT 8011)
 AI_PORT=$(get_port AI_PORT 8013)
