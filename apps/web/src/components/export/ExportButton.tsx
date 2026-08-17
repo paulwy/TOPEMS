@@ -139,7 +139,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({
           : exportComplete
             ? theme.palette.success.dark
             : theme.palette.primary.dark,
-        color: disabled ? theme.palette.grey[600] : 'white',
+        color: disabled ? theme.palette.grey[600] : 'var(--color-primary-foreground, #ffffff)',
         cursor: disabled || exporting ? 'not-allowed' : 'pointer',
         border: 'none',
         ...(buttonClassName ? {} : {}),

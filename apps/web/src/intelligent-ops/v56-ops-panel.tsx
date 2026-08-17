@@ -656,7 +656,7 @@ const ScalingTab: React.FC<{
                         percent > 90
                           ? designTokens.colors.error['200']
                           : percent > 70
-                            ? '#fed7aa'
+                            ? 'var(--color-error-200, #fecaca)'
                             : 'colors.success.100',
                       '& .MuiLinearProgress-bar': {
                         bgcolor:
@@ -675,7 +675,8 @@ const ScalingTab: React.FC<{
                   sx={{ display: 'block', mb: 1 }}
                 >
                   [i18n.t('intelligent_ops.v56-ops-panel.k20')]: {policy.min_instances} -{' '}
-                  {policy.max_instances} | {i18n.t('intelligent_ops.v56-ops-panel.k0')}: {policy.cooldown_ms / 60000}
+                  {policy.max_instances} | {i18n.t('intelligent_ops.v56-ops-panel.k0')}:{' '}
+                  {policy.cooldown_ms / 60000}
                   {i18n.t('intelligent-ops.v56-ops-panel.k1')}
                 </Typography>
                 <Button
@@ -792,7 +793,10 @@ const ScalingTab: React.FC<{
                 borderRadius: 1,
                 minWidth: 80,
                 textAlign: 'center',
-                bgcolor: p.hour >= 9 && p.hour <= 17 ? '#fff7ed' : 'white',
+                bgcolor:
+                  p.hour >= 9 && p.hour <= 17
+                    ? 'var(--color-warning-50, #fffbeb)'
+                    : 'var(--color-primary-foreground, #ffffff)',
               }}
             >
               <Typography
@@ -858,7 +862,7 @@ const RCATab: React.FC<{
     };
     const bgColors: Record<string, string> = {
       Open: 'colors.error.50',
-      Investigating: '#fffbeb',
+      Investigating: 'var(--color-warning-50, #fffbeb)',
       Resolved: 'colors.success.50',
       Closed: 'colors.grey.100',
     };
@@ -943,7 +947,10 @@ const RCATab: React.FC<{
                         ? `${designTokens.colors.orange['500']}`
                         : 'divider',
                     borderRadius: 1,
-                    bgcolor: selectedIncident === incident.id ? '#fff7ed' : 'white',
+                    bgcolor:
+                      selectedIncident === incident.id
+                        ? 'var(--color-warning-50, #fffbeb)'
+                        : 'var(--color-primary-foreground, #ffffff)',
                     cursor: 'pointer',
                   }}
                   onClick={() => onSelectIncident(incident.id)}
@@ -1229,7 +1236,10 @@ const RepairTab: React.FC<{
                 borderColor:
                   playbook.status === 'Active' ? designTokens.colors.success.dark : 'divider',
                 borderRadius: 1,
-                bgcolor: playbook.status === 'Active' ? 'colors.success.50' : 'white',
+                bgcolor:
+                  playbook.status === 'Active'
+                    ? 'colors.success.50'
+                    : 'var(--color-primary-foreground, #ffffff)',
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -1532,7 +1542,7 @@ const TimelineTab: React.FC<{
                     height: 12,
                     borderRadius: '50%',
                     bgcolor: event.color,
-                    border: '2px solid white',
+                    border: '2px solid var(--color-primary-foreground, #ffffff)',
                     boxShadow: 1,
                   }}
                 />

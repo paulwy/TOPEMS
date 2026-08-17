@@ -688,7 +688,7 @@ const ComplianceTab: React.FC<{
           onClick={() => setFilter('all')}
           sx={{
             bgcolor: filter === 'all' ? designTokens.colors.success.dark : 'grey.100',
-            color: filter === 'all' ? 'white' : 'text.secondary',
+            color: filter === 'all' ? 'var(--color-primary-foreground, #ffffff)' : 'text.secondary',
             fontWeight: 600,
           }}
         />
@@ -700,7 +700,7 @@ const ComplianceTab: React.FC<{
             onClick={() => setFilter(reg)}
             sx={{
               bgcolor: filter === reg ? REGULATION_COLORS[reg] : 'grey.100',
-              color: filter === reg ? 'white' : 'text.secondary',
+              color: filter === reg ? 'var(--color-primary-foreground, #ffffff)' : 'text.secondary',
               fontWeight: 600,
             }}
           />
@@ -1601,7 +1601,7 @@ const AuditTab: React.FC<{
           onClick={() => onFilterChange('all')}
           sx={{
             bgcolor: filter === 'all' ? designTokens.colors.success.dark : 'grey.100',
-            color: filter === 'all' ? 'white' : 'text.secondary',
+            color: filter === 'all' ? 'var(--color-primary-foreground, #ffffff)' : 'text.secondary',
             fontWeight: 600,
           }}
         />
@@ -1611,7 +1611,8 @@ const AuditTab: React.FC<{
           onClick={() => onFilterChange('allowed')}
           sx={{
             bgcolor: filter === 'allowed' ? designTokens.colors.success.dark : 'grey.100',
-            color: filter === 'allowed' ? 'white' : 'text.secondary',
+            color:
+              filter === 'allowed' ? 'var(--color-primary-foreground, #ffffff)' : 'text.secondary',
             fontWeight: 600,
           }}
         />
@@ -1621,7 +1622,8 @@ const AuditTab: React.FC<{
           onClick={() => onFilterChange('denied')}
           sx={{
             bgcolor: filter === 'denied' ? designTokens.colors.error.dark : 'grey.100',
-            color: filter === 'denied' ? 'white' : 'text.secondary',
+            color:
+              filter === 'denied' ? 'var(--color-primary-foreground, #ffffff)' : 'text.secondary',
             fontWeight: 600,
           }}
         />
@@ -1631,7 +1633,10 @@ const AuditTab: React.FC<{
           onClick={() => onFilterChange('simulated')}
           sx={{
             bgcolor: filter === 'simulated' ? designTokens.colors.warning.main : 'grey.100',
-            color: filter === 'simulated' ? 'white' : 'text.secondary',
+            color:
+              filter === 'simulated'
+                ? 'var(--color-primary-foreground, #ffffff)'
+                : 'text.secondary',
             fontWeight: 600,
           }}
         />

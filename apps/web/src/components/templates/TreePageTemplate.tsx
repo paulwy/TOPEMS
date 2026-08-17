@@ -437,7 +437,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                   height: 20,
                   fontSize: '0.75rem',
                   bgcolor: isSelected ? nodeAccentColor || 'primary.main' : 'grey.200',
-                  color: isSelected ? 'white' : 'text.secondary',
+                  color: isSelected ? 'var(--color-primary-foreground, #ffffff)' : 'text.secondary',
                 }}
               />
             )}

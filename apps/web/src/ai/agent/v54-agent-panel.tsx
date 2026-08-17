@@ -517,8 +517,11 @@ const ConversationTab: React.FC<{
                 maxWidth: '80%',
                 p: 2,
                 borderRadius: 2,
-                bgcolor: msg.role === 'user' ? designTokens.colors.success.dark : 'white',
-                color: msg.role === 'user' ? 'white' : 'inherit',
+                bgcolor:
+                  msg.role === 'user'
+                    ? designTokens.colors.success.dark
+                    : 'var(--color-primary-foreground, #ffffff)',
+                color: msg.role === 'user' ? 'var(--color-primary-foreground, #ffffff)' : 'inherit',
                 border:
                   msg.role === 'assistant'
                     ? `1px solid ${designTokens.colors.grey['200']}`
@@ -565,7 +568,14 @@ const ConversationTab: React.FC<{
         )}
         <div ref={messagesEndRef} />
       </Box>
-      <Box sx={{ borderTop: 1, borderColor: 'divider', p: 2, bgcolor: 'common.white' }}>
+      <Box
+        sx={{
+          borderTop: 1,
+          borderColor: 'divider',
+          p: 2,
+          bgcolor: 'common.white',
+        }}
+      >
         <Box sx={{ mb: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           {SAMPLE_TASKS.map((task) => (
             <Chip
@@ -755,7 +765,10 @@ const TasksTab: React.FC<{
                     borderColor:
                       expandedTask === task.id ? designTokens.colors.success.dark : 'divider',
                     borderRadius: 1,
-                    bgcolor: expandedTask === task.id ? 'colors.success.50' : 'white',
+                    bgcolor:
+                      expandedTask === task.id
+                        ? 'colors.success.50'
+                        : 'var(--color-primary-foreground, #ffffff)',
                     transition: 'all 0.2s',
                   }}
                 >
@@ -919,12 +932,12 @@ const StepItem: React.FC<{ step: TaskStep; index: number }> = ({ step, index }) 
             ? 'colors.success.50'
             : step.status === 'failed'
               ? 'colors.error.50'
-              : '#f9fafb',
+              : 'var(--color-grey-50, var(--color-grey-50, #f9fafb))',
         borderRadius: 1,
         border: '1px solid',
         borderColor:
           step.status === 'completed'
-            ? '#a7f3d0'
+            ? 'var(--color-success-200, #bbf7d0)'
             : step.status === 'failed'
               ? designTokens.colors.error['200']
               : designTokens.colors.grey['200'],
@@ -1155,7 +1168,10 @@ const WorkflowTab: React.FC<{
                     borderColor:
                       selectedWorkflow?.id === wf.id ? designTokens.colors.success.dark : 'divider',
                     borderRadius: 1,
-                    bgcolor: selectedWorkflow?.id === wf.id ? 'colors.success.50' : 'white',
+                    bgcolor:
+                      selectedWorkflow?.id === wf.id
+                        ? 'colors.success.50'
+                        : 'var(--color-primary-foreground, #ffffff)',
                     cursor: 'pointer',
                   }}
                   onClick={() => setSelectedWorkflow(wf)}

@@ -57,7 +57,7 @@ export const MiniChart: React.FC<{ data: number[]; color: string }> = ({ data, c
             cx={point[0]}
             cy={point[1]}
             r='3'
-            fill='white'
+            fill='var(--color-primary-foreground, #ffffff)'
             stroke={color}
             strokeWidth='2'
           />

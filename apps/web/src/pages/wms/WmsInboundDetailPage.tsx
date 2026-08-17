@@ -181,7 +181,7 @@ export default function WmsInboundDetailPage() {
                 key={i}
                 className='ml-6 pb-4'
               >
-                <span className='absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full bg-blue-500 border-2 border-white' />
+                <span className='absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full bg-blue-500 border-2 border-var(--color-primary-foreground, #ffffff)' />
                 <div className='text-sm text-gray-500'>{e.t?.slice(0, 19).replace('T', ' ')}</div>
                 <div className='font-medium'>{e.title}</div>
                 <div className='text-sm text-gray-600'>

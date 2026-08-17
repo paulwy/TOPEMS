@@ -136,8 +136,8 @@ const lifecycleStateLabels: Record<LifecycleState, string> = {
 };
 
 const frameworkColors: Record<FrameworkType, string> = {
-  [FrameworkType.REACT]: '#61dafb',
-  [FrameworkType.VUE]: '#42b883',
+  [FrameworkType.REACT]: 'var(--color-info-light, #7dd3fc)',
+  [FrameworkType.VUE]: 'var(--color-success-400, #4ade80)',
   [FrameworkType.ANGULAR]: designTokens.colors.error[700],
   [FrameworkType.SVELTE]: designTokens.colors.error[600],
   [FrameworkType.VANILLA]: 'colors.grey.500',
@@ -735,7 +735,7 @@ const CrossFrameworkTab: React.FC = () => {
             label='React'
             value={mountedComponents.filter((c) => c.framework === FrameworkType.REACT).length}
             icon={<CodeIcon size={20} />}
-            color='#61dafb'
+            color='var(--color-info-light, #7dd3fc)'
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -743,7 +743,7 @@ const CrossFrameworkTab: React.FC = () => {
             label='Vue'
             value={mountedComponents.filter((c) => c.framework === FrameworkType.VUE).length}
             icon={<CodeIcon size={20} />}
-            color='#42b883'
+            color='var(--color-success-400, #4ade80)'
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -1080,12 +1080,18 @@ const DesignSystemTab: React.FC = () => {
                   <Chip
                     size='small'
                     label={i18n.t('microfrontend.runtime_dashboard.k76')}
-                    sx={{ bgcolor: theme.primary_color, color: 'common.white' }}
+                    sx={{
+                      bgcolor: theme.primary_color,
+                      color: 'common.white',
+                    }}
                   />
                   <Chip
                     size='small'
                     label={i18n.t('microfrontend.runtime_dashboard.k77')}
-                    sx={{ bgcolor: theme.secondary_color, color: 'common.white' }}
+                    sx={{
+                      bgcolor: theme.secondary_color,
+                      color: 'common.white',
+                    }}
                   />
                 </Box>
               </Box>

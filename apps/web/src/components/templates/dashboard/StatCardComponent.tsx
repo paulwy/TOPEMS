@@ -225,7 +225,10 @@ export const StatCardComponent: React.FC<StatCardType & { loading?: boolean }> =
                 height: currentSize.iconSize,
                 borderRadius: 2,
                 ...(customGradient
-                  ? { background: customGradient, color: 'common.white' }
+                  ? {
+                      background: customGradient,
+                      color: 'common.white',
+                    }
                   : { bgcolor: `${bgColor}15`, color: bgColor }),
                 display: 'flex',
                 alignItems: 'center',

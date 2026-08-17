@@ -46,7 +46,7 @@ export default function WmsTransferDetailPage() {
       <div className='rounded-lg border p-6'>
         <div className='flex flex-wrap items-center justify-between gap-4'>
           <div className='flex items-center gap-3 p-4 rounded-lg bg-blue-50 border border-blue-200'>
-            <div className='p-2 rounded-full bg-blue-600 text-white'>
+            <div className='p-2 rounded-full bg-blue-600 text-var(--color-primary-foreground, #ffffff)'>
               <MapPin size={20} />
             </div>
             <div>
@@ -66,7 +66,7 @@ export default function WmsTransferDetailPage() {
           </div>
 
           <div className='flex items-center gap-3 p-4 rounded-lg bg-green-50 border border-green-200'>
-            <div className='p-2 rounded-full bg-green-600 text-white'>
+            <div className='p-2 rounded-full bg-green-600 text-var(--color-primary-foreground, #ffffff)'>
               <CheckCircle2 size={20} />
             </div>
             <div>

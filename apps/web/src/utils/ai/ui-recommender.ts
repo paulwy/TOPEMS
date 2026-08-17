@@ -1004,7 +1004,11 @@ export class UIRecommender {
       const theme = designInfo.theme as Record<string, unknown>;
       if (Array.isArray(theme.colors)) return theme.colors.map(String);
     }
-    return [designTokens.colors.primary.dark, designTokens.colors.background.paper, '#f5f5f5'];
+    return [
+      designTokens.colors.primary.dark,
+      designTokens.colors.background.paper,
+      'var(--color-surface-light, #f1f5f9)',
+    ];
   }
 
   private extractTypography(designInfo: Record<string, unknown>): {

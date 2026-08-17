@@ -190,7 +190,10 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
           <Chip
             label={modules.length}
             size='small'
-            sx={{ bgcolor: 'action.disabledBackground', color: 'common.white' }}
+            sx={{
+              bgcolor: 'action.disabledBackground',
+              color: 'common.white',
+            }}
           />
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -198,7 +201,10 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
             size='small'
             onClick={handleCheckCircular}
             startIcon={<AlertIcon size={16} />}
-            sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
+            sx={{
+              color: 'common.white',
+              borderColor: 'action.disabledBackground',
+            }}
             variant='outlined'
           >
             {i18n.t('microfrontend.registry_panel.k5')}
@@ -207,7 +213,10 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
             size='small'
             onClick={() => setShowRegisterDialog(true)}
             startIcon={<PlusIcon size={16} />}
-            sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
+            sx={{
+              color: 'common.white',
+              borderColor: 'action.disabledBackground',
+            }}
             variant='outlined'
           >
             {i18n.t('microfrontend.registry_panel.k6')}
@@ -216,7 +225,10 @@ const RegistryPanel: React.FC<RegistryPanelProps> = ({ onClose }) => {
             size='small'
             onClick={refreshModules}
             startIcon={<RefreshIcon size={16} />}
-            sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
+            sx={{
+              color: 'common.white',
+              borderColor: 'action.disabledBackground',
+            }}
             variant='outlined'
           >
             {i18n.t('microfrontend.registry_panel.k7')}

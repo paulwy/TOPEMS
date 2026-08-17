@@ -264,7 +264,10 @@ export const V58UXPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <Button
               size='small'
               variant='outlined'
-              sx={{ borderColor: 'common.white', color: 'common.white' }}
+              sx={{
+                borderColor: 'common.white',
+                color: 'common.white',
+              }}
               onClick={simulateBehavior}
               disabled={isSimulating}
             >

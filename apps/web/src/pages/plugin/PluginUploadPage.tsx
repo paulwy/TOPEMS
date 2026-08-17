@@ -549,7 +549,13 @@ const PluginUploadPage: React.FC = () => {
                           justifyContent: 'center',
                         }}
                       >
-                        <Package sx={{ width: 28, height: 28, color: 'common.white' }} />
+                        <Package
+                          sx={{
+                            width: 28,
+                            height: 28,
+                            color: 'common.white',
+                          }}
+                        />
                       </Box>
                       <Box>
                         <Typography

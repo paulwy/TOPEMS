@@ -163,7 +163,7 @@ export default function WmsAbcAnalysisPage() {
               {topSku.map((s, i) => (
                 <tr
                   key={s.id}
-                  className={i % 2 ? 'bg-white' : 'bg-gray-50'}
+                  className={i % 2 ? 'bg-var(--color-primary-foreground, #ffffff)' : 'bg-gray-50'}
                 >
                   <td className='px-3 py-2 font-mono'>{s.sku}</td>
                   <td className='px-3 py-2'>{s.name}</td>

@@ -87,7 +87,8 @@ const formatArea = (squareMeters: number): string => {
 const getStatusColor = (status: string) => {
   if (!status) return 'text.secondary';
   const s = status.toLowerCase();
-  if (s.includes('active') || s.includes(i18n.t('gis.map_view.k0'))) return '#00C897';
+  if (s.includes('active') || s.includes(i18n.t('gis.map_view.k0')))
+    return 'var(--color-fallback-ant-blue, #00c897)';
   if (s.includes('pending') || s.includes(i18n.t('gis.map_view.k1'))) return 'warning.main';
   if (s.includes('inactive') || s.includes(i18n.t('gis.map_view.k2'))) return 'error.main';
   return 'text.secondary';
@@ -116,7 +117,7 @@ const MeasureTooltip: React.FC<{
     style={{
       position: 'absolute',
       backgroundColor: 'var(--mui-palette-grey-800)',
-      color: 'var(--mui-palette-common-white)',
+      color: 'var(--mui-palette-common-var(--color-primary-foreground, #ffffff))',
       fontSize: '0.75rem',
       padding: '0.25rem 0.5rem',
       borderRadius: '0.25rem',
@@ -181,7 +182,13 @@ const DetailsPanel: React.FC<{
           background: `linear-gradient(to right, ${designTokens.colors.cyan['500']}, primary.main)`,
         }}
       >
-        <h3 style={{ fontWeight: 600, color: 'common.white', margin: 0 }}>
+        <h3
+          style={{
+            fontWeight: 600,
+            color: 'common.white',
+            margin: 0,
+          }}
+        >
           {i18n.t('gis.map_view.k5')}
         </h3>
         <button
@@ -201,7 +208,13 @@ const DetailsPanel: React.FC<{
             e.currentTarget.style.backgroundColor = 'transparent';
           }}
         >
-          <X style={{ width: '1.25rem', height: '1.25rem', color: 'common.white' }} />
+          <X
+            style={{
+              width: '1.25rem',
+              height: '1.25rem',
+              color: 'common.white',
+            }}
+          />
         </button>
       </div>
       <div style={{ padding: '1rem' }}>

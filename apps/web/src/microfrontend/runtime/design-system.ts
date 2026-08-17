@@ -34,7 +34,7 @@ export enum TokenType {
 export interface DesignToken {
   /** 令牌名称（如 primary / spacing-md / font-size-lg） */
   name: string;
-  /** 令牌值（如 #7c3aed / 16px / 1.5rem） */
+  /** 令牌值（如 var(--color-secondary-hover, #7c3aed) / 16px / 1.5rem） */
   value: string | number;
   /** 令牌类型 */
   type: TokenType;
@@ -105,7 +105,7 @@ export const PRESET_TOKENS: DesignToken[] = [
   },
   {
     name: 'primary-dark',
-    value: '#5b21b6',
+    value: 'var(--color-secondary-800, #5b21b6)',
     type: TokenType.COLOR,
     category: 'color',
     description: i18n.t('microfrontend.design-system.k2'),

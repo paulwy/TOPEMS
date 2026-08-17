@@ -33,9 +33,9 @@ export const BIChartColors = {
   dark: {
     series: [
       'colors.primary.400', // Blue (lighter for dark bg)
-      '#4ade80', // Emerald
+      'var(--color-success-400, #4ade80)', // Emerald
       'colors.warning.400', // Amber
-      '#f87171', // Red
+      'var(--color-error-400, #f87171)', // Red
       'colors.secondary.light', // Violet
       'colors.cyan.400', // Cyan
       'colors.pink.400', // Pink
@@ -49,17 +49,17 @@ export const BIChartColors = {
   // 赛博朋克霓虹色板 — 高饱和度发光色，适配深空背景
   cyberpunk: {
     series: [
-      '#00FFFF', // 霓虹青
-      '#FF00FF', // 霓虹品红
-      '#FFD700', // 霓虹金
-      '#00FF88', // 霓虹绿
-      '#FF4444', // 霓虹红
-      '#00AAFF', // 电光蓝
-      '#FF8800', // 霓虹橙
-      '#AA00FF', // 紫电
+      'var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff))', // 霓虹青
+      'var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff))', // 霓虹品红
+      'var(--cyber-color-gold, var(--cyber-color-gold, #ffd700))', // 霓虹金
+      'var(--cyber-color-green, var(--cyber-color-green, #00ff88))', // 霓虹绿
+      'var(--cyber-color-danger, var(--cyber-color-danger, #ff4444))', // 霓虹红
+      'var(--cyber-color-blue, var(--cyber-color-blue, #00aaff))', // 电光蓝
+      'var(--color-warning, #f59e0b)', // 霓虹橙
+      'var(--color-fallback-ant-purple, #aa00ff)', // 紫电
     ],
     grid: 'rgba(0, 255, 255, 0.10)',
-    text: '#8892B0',
+    text: 'var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0))',
     background: 'common.white',
     border: 'rgba(0, 255, 255, 0.30)',
   },
@@ -89,7 +89,7 @@ export const BIChartColors = {
     blue: [designTokens.colors.primary.main, 'colors.cyan.500'],
     emerald: ['colors.success.main', 'colors.teal.500'],
     violet: [designTokens.colors.secondary.main, 'colors.purple.500'],
-    rose: [designTokens.colors.error[500], '#FB7185'],
+    rose: [designTokens.colors.error[500], 'var(--color-error-400, #f87171)'],
     amber: [designTokens.colors.warning.main, 'colors.warning.400'],
   },
 } as const;
@@ -106,7 +106,7 @@ export const getContrastingColor = (hexColor: string): string => {
   const g = parseInt(hexColor.slice(3, 5), 16);
   const b = parseInt(hexColor.slice(5, 7), 16);
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5 ? 'colors.grey.800' : 'white';
+  return luminance > 0.5 ? 'colors.grey.800' : 'var(--color-primary-foreground, #ffffff)';
 };
 
 /** Create gradient ID for SVG defs */
@@ -153,12 +153,12 @@ export const useChartTheme = (): ChartThemeColors => {
       textColor: BIChartColors.cyberpunk.text,
       tooltipBg: BIChartColors.cyberpunk.background,
       borderColor: BIChartColors.cyberpunk.border,
-      primary: '#00FFFF',
-      secondary: '#FF00FF',
-      success: '#00FF88',
-      warning: '#FFD700',
-      error: '#FF4444',
-      info: '#00AAFF',
+      primary: 'var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff))',
+      secondary: 'var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff))',
+      success: 'var(--cyber-color-green, var(--cyber-color-green, #00ff88))',
+      warning: 'var(--cyber-color-gold, var(--cyber-color-gold, #ffd700))',
+      error: 'var(--cyber-color-danger, var(--cyber-color-danger, #ff4444))',
+      info: 'var(--cyber-color-blue, var(--cyber-color-blue, #00aaff))',
       series: BIChartColors.cyberpunk.series,
     };
   }

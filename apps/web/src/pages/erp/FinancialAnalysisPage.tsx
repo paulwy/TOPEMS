@@ -303,7 +303,11 @@ const FinancialAnalysisPage: React.FC = () => {
           >
             <Box
               component='span'
-              sx={{ fontSize: 10, color: 'common.white', fontWeight: 500 }}
+              sx={{
+                fontSize: 10,
+                color: 'common.white',
+                fontWeight: 500,
+              }}
             >
               {i18n.t('erp:financial_analysis_page.v0_19', { v0: (item.value / 10000).toFixed(1) })}
             </Box>
@@ -754,7 +758,14 @@ const FinancialAnalysisPage: React.FC = () => {
         ))}
       </Tabs>
       <Box sx={{ mb: 3 }}>{statsContent}</Box>
-      <Box sx={{ bgcolor: 'common.white', borderRadius: 3, p: 4, mb: 3 }}>
+      <Box
+        sx={{
+          bgcolor: 'common.white',
+          borderRadius: 3,
+          p: 4,
+          mb: 3,
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
           {activeTab === 0 ? <TrendingUp size={20} /> : <BarChart3 size={20} />}
           <Box
@@ -773,7 +784,11 @@ const FinancialAnalysisPage: React.FC = () => {
             >
               <Chip
                 size='small'
-                sx={{ backgroundColor: item.color, color: 'common.white', fontWeight: 500 }}
+                sx={{
+                  backgroundColor: item.color,
+                  color: 'common.white',
+                  fontWeight: 500,
+                }}
                 label={item.category}
               />
             </Box>

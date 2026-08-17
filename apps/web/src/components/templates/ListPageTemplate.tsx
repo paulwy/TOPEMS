@@ -3491,7 +3491,10 @@ export function ListPageTemplate<
                       primaryActionButton.gradient
                         ? {
                             background: primaryActionButton.gradient,
-                            color: theme.palette.common.white,
+                            color: theme.palette.common.var(
+                              --color - primary - foreground,
+                              #ffffff
+                            ),
                             '&:hover': { opacity: 0.9 },
                           }
                         : {}

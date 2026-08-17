@@ -123,7 +123,8 @@ export const ModuleLoadingProgress: React.FC<ModuleLoadingProgressProps> = ({
           color='text.secondary'
         >
           {i18n.t('lib.pluginLoader.k10')}
-          {moduleName}{i18n.t('lib.pluginLoader.k21')}
+          {moduleName}
+          {i18n.t('lib.pluginLoader.k21')}
         </Typography>
         {showEstimatedTime && estimatedTime && (
           <Typography

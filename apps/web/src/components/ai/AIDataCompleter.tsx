@@ -175,7 +175,9 @@ export function AIDataCompleter({
                         borderRadius: '50%',
                         border: 2,
                         borderColor: selectedFields.has(field) ? 'purple.600' : 'grey.300',
-                        bgcolor: selectedFields.has(field) ? 'purple.600' : 'white',
+                        bgcolor: selectedFields.has(field)
+                          ? 'purple.600'
+                          : 'var(--color-primary-foreground, #ffffff)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -185,7 +187,7 @@ export function AIDataCompleter({
                       {selectedFields.has(field) && (
                         <Check
                           size={12}
-                          color='white'
+                          color='var(--color-primary-foreground, #ffffff)'
                         />
                       )}
                     </Box>

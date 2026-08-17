@@ -110,7 +110,8 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)',
+        background:
+          'linear-gradient(135deg, var(--color-primary-100, #dbeafe) 0%, var(--color-primary-200, #bfdbfe) 100%)',
       }}
       className={className}
     >
@@ -318,8 +319,9 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
                   textAlign: 'center',
                 }}
               >
-                [i18n.t('components.login_form_v2.k4')]: admin / admin123 ({i18n.t('components.login_form_v2.k29')}) | user / user123
-                ({i18n.t('components.login_form_v2.k28')})
+                [i18n.t('components.login_form_v2.k4')]: admin / admin123 (
+                {i18n.t('components.login_form_v2.k29')}) | user / user123 (
+                {i18n.t('components.login_form_v2.k28')})
               </Box>
             </Box>
           )}

@@ -127,7 +127,13 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
                 justifyContent: 'center',
               }}
             >
-              <Package sx={{ width: 24, height: 24, color: 'common.white' }} />
+              <Package
+                sx={{
+                  width: 24,
+                  height: 24,
+                  color: 'common.white',
+                }}
+              />
             </Box>
             <Box>
               <Typography
@@ -395,7 +401,13 @@ const PluginDetailModal: React.FC<{
               justifyContent: 'center',
             }}
           >
-            <Package sx={{ width: 24, height: 24, color: 'common.white' }} />
+            <Package
+              sx={{
+                width: 24,
+                height: 24,
+                color: 'common.white',
+              }}
+            />
           </Box>
           <Box>
             <Typography

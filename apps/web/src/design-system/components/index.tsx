@@ -177,7 +177,7 @@ export const V51Card: React.FC<V51CardProps> = ({
     <MuiCard
       sx={{
         borderRadius: v51DesignTokens.borderRadius.xl,
-        backgroundColor: 'var(--v51-surface-card, #ffffff)',
+        backgroundColor: 'var(--v51-surface-card, var(--color-primary-foreground, #ffffff))',
         border: bordered ? '1px solid var(--v51-border-default, rgba(0, 0, 0, 0.12))' : 'none',
         boxShadow: elevated ? v51DesignTokens.shadows.md : 'none',
         overflow: 'hidden',
@@ -330,7 +330,7 @@ export const V51Input: React.FC<V51InputProps> = ({
       sx={{
         '& .MuiOutlinedInput-root': {
           borderRadius: v51DesignTokens.borderRadius.lg,
-          backgroundColor: 'var(--v51-surface-card, #ffffff)',
+          backgroundColor: 'var(--v51-surface-card, var(--color-primary-foreground, #ffffff))',
           transition: `border-color ${v51DesignTokens.motion.transition.fast}, box-shadow ${v51DesignTokens.motion.transition.fast}`,
           '& fieldset': {
             borderColor: borderColorMap[validationState],
@@ -429,7 +429,9 @@ export const V51Select: React.FC<V51SelectProps> = ({
         <InputLabel
           sx={{
             color: 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
-            '&.Mui-focused': { color: 'var(--v51-color-primary-main, #3b82f6)' },
+            '&.Mui-focused': {
+              color: 'var(--v51-color-primary-main, var(--color-primary, #3b82f6))',
+            },
           }}
         >
           {label}
@@ -444,7 +446,7 @@ export const V51Select: React.FC<V51SelectProps> = ({
         onClose={() => setOpen(false)}
         sx={{
           borderRadius: v51DesignTokens.borderRadius.lg,
-          backgroundColor: 'var(--v51-surface-card, #ffffff)',
+          backgroundColor: 'var(--v51-surface-card, var(--color-primary-foreground, #ffffff))',
           '& .MuiOutlinedInput-notchedOutline': {
             borderColor: 'var(--v51-border-default, rgba(0, 0, 0, 0.12))',
           },
@@ -452,7 +454,7 @@ export const V51Select: React.FC<V51SelectProps> = ({
             borderColor: 'var(--v51-border-strong, rgba(0, 0, 0, 0.23))',
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'var(--v51-color-primary-main, #3b82f6)',
+            borderColor: 'var(--v51-color-primary-main, var(--color-primary, #3b82f6))',
             borderWidth: '2px',
           },
         }}
@@ -476,7 +478,7 @@ export const V51Select: React.FC<V51SelectProps> = ({
               py: 1,
               position: 'sticky',
               top: 0,
-              bgcolor: 'var(--v51-surface-card, #ffffff)',
+              bgcolor: 'var(--v51-surface-card, var(--color-primary-foreground, #ffffff))',
               zIndex: 1,
             }}
           >
@@ -733,7 +735,9 @@ export function V51Table<T extends Record<string, unknown>>({
                       direction={sortBy === col.id ? sortDirection : 'asc'}
                       onClick={() => handleSort(col.id)}
                       sx={{
-                        '&.Mui-active': { color: 'var(--v51-color-primary-main, #3b82f6)' },
+                        '&.Mui-active': {
+                          color: 'var(--v51-color-primary-main, var(--color-primary, #3b82f6))',
+                        },
                       }}
                     >
                       {col.label}
@@ -1248,7 +1252,7 @@ export const V51Tabs: React.FC<V51TabsProps> = ({
           '& .MuiTabs-indicator': {
             height: 3,
             borderRadius: '3px 3px 0 0',
-            backgroundColor: 'var(--v51-color-primary-main, #3b82f6)',
+            backgroundColor: 'var(--v51-color-primary-main, var(--color-primary, #3b82f6))',
           },
           ...tabSx,
         }}
@@ -1269,11 +1273,11 @@ export const V51Tabs: React.FC<V51TabsProps> = ({
               padding: '12px 20px',
               color: 'var(--v51-text-secondary, rgba(0, 0, 0, 0.6))',
               '&.Mui-selected': {
-                color: 'var(--v51-color-primary-main, #3b82f6)',
+                color: 'var(--v51-color-primary-main, var(--color-primary, #3b82f6))',
                 fontWeight: v51DesignTokens.typography.fontWeight.semibold,
               },
               '&:hover': {
-                color: 'var(--v51-color-primary-main, #3b82f6)',
+                color: 'var(--v51-color-primary-main, var(--color-primary, #3b82f6))',
                 backgroundColor: 'var(--v51-fill-subtle, rgba(0,0,0,0.04))',
               },
             }}
@@ -1303,27 +1307,27 @@ export interface V51BadgeProps {
 const variantColorMap: Record<V51BadgeVariant, { bg: string; color: string }> = {
   primary: {
     bg: 'var(--v51-color-primary-50, rgba(59,130,246,0.08))',
-    color: 'var(--v51-color-primary-700, #1d4ed8)',
+    color: 'var(--v51-color-primary-700, var(--color-primary-700, #1d4ed8))',
   },
   secondary: {
     bg: 'var(--v51-color-secondary-50, rgba(139,92,246,0.08))',
-    color: 'var(--v51-color-secondary-700, #6d28d9)',
+    color: 'var(--v51-color-secondary-700, var(--color-secondary-700, #6d28d9))',
   },
   success: {
     bg: 'var(--v51-color-success-50, rgba(34,197,94,0.08))',
-    color: 'var(--v51-color-success-700, #15803d)',
+    color: 'var(--v51-color-success-700, var(--color-success-700, #15803d))',
   },
   warning: {
     bg: 'var(--v51-color-warning-50, rgba(245,158,11,0.08))',
-    color: 'var(--v51-color-warning-700, #b45309)',
+    color: 'var(--v51-color-warning-700, var(--color-warning-700, #b45309))',
   },
   error: {
     bg: 'var(--v51-color-error-50, rgba(239,68,68,0.08))',
-    color: 'var(--v51-color-error-700, #b91c1c)',
+    color: 'var(--v51-color-error-700, var(--color-error-700, #b91c1c))',
   },
   info: {
     bg: 'var(--v51-color-info-50, rgba(14,165,233,0.08))',
-    color: 'var(--v51-color-info-700, #0369a1)',
+    color: 'var(--v51-color-info-700, var(--color-info-700, #0369a1))',
   },
   neutral: {
     bg: 'var(--v51-fill-muted, rgba(0,0,0,0.08))',
@@ -1468,12 +1472,12 @@ export interface V51AvatarProps {
 }
 
 const avatarColors = [
-  'var(--v51-color-primary-main, #3b82f6)',
-  'var(--v51-color-secondary-main, #8b5cf6)',
-  'var(--v51-color-success-main, #22c55e)',
-  'var(--v51-color-warning-main, #f59e0b)',
-  'var(--v51-color-error-main, #ef4444)',
-  'var(--v51-color-info-main, #0ea5e9)',
+  'var(--v51-color-primary-main, var(--color-primary, #3b82f6))',
+  'var(--v51-color-secondary-main, var(--color-secondary, var(--color-secondary, #8b5cf6)))',
+  'var(--v51-color-success-main, var(--color-success, #22c55e))',
+  'var(--v51-color-warning-main, var(--color-warning, #f59e0b))',
+  'var(--v51-color-error-main, var(--color-error, #ef4444))',
+  'var(--v51-color-info-main, var(--color-info, #0ea5e9))',
 ];
 
 function getInitials(name?: string): string {
@@ -1545,7 +1549,7 @@ export const V51Avatar: React.FC<V51AvatarProps> = ({
             height: Math.max(8, config.size * 0.25),
             borderRadius: '50%',
             bgcolor: online ? v51DesignTokens.colors.success.main : 'grey.400',
-            border: '2px solid var(--v51-surface-card, #ffffff)',
+            border: '2px solid var(--v51-surface-card, var(--color-primary-foreground, #ffffff))',
           }}
         />
       )}

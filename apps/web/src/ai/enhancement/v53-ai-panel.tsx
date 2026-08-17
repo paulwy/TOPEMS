@@ -805,8 +805,9 @@ const TestGeneratorTab: React.FC = () => {
                   sx={{ color: 'text.secondary', mt: 0.5, display: 'block' }}
                 >
                   [i18n.t('ai.v53-ai-panel.k14')]: {i18n.t('ai.v53-ai-panel.k15')}
-                  {analysis.coverage.branches} · {i18n.t('ai.v53-ai-panel.k58')} {analysis.coverage.statements}{' '}
-                  {i18n.t('ai.v53-ai-panel.k1')} {analysis.coverage.functions}
+                  {analysis.coverage.branches} · {i18n.t('ai.v53-ai-panel.k58')}{' '}
+                  {analysis.coverage.statements} {i18n.t('ai.v53-ai-panel.k1')}{' '}
+                  {analysis.coverage.functions}
                 </Typography>
               </Box>
             </Box>
@@ -1060,7 +1061,7 @@ const UIRecommenderTab: React.FC = () => {
                   background:
                     idx === 0
                       ? `linear-gradient(135deg, ${designTokens.colors.secondary['50']} 0%, ${designTokens.colors.secondary['100']} 100%)`
-                      : 'white',
+                      : 'var(--color-primary-foreground, #ffffff)',
                 }}
               >
                 {idx === 0 && (
@@ -1120,7 +1121,9 @@ const UIRecommenderTab: React.FC = () => {
                             fontSize: 10,
                             height: 20,
                             bgcolor: note.includes('⚠️') ? 'colors.error.50' : 'colors.success.50',
-                            color: note.includes('⚠️') ? 'colors.error.800' : '#166534',
+                            color: note.includes('⚠️')
+                              ? 'colors.error.800'
+                              : 'var(--color-success-800, #166534)',
                           }}
                         />
                       ))}
@@ -1372,7 +1375,7 @@ const AIChatTab: React.FC = () => {
                   msg.role === 'user'
                     ? designTokens.colors.secondary.dark
                     : designTokens.colors.background.paper,
-                color: msg.role === 'user' ? 'white' : 'inherit',
+                color: msg.role === 'user' ? 'var(--color-primary-foreground, #ffffff)' : 'inherit',
                 border:
                   msg.role === 'assistant'
                     ? `1px solid ${designTokens.colors.grey['200']}`
@@ -1421,7 +1424,14 @@ const AIChatTab: React.FC = () => {
         <div ref={messagesEndRef} />
       </Box>
 
-      <Box sx={{ borderTop: 1, borderColor: 'divider', p: 2, bgcolor: 'common.white' }}>
+      <Box
+        sx={{
+          borderTop: 1,
+          borderColor: 'divider',
+          p: 2,
+          bgcolor: 'common.white',
+        }}
+      >
         <Box sx={{ mb: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           {quickPrompts.map((prompt) => (
             <Chip

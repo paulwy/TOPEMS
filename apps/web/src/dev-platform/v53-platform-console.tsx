@@ -120,17 +120,17 @@ const ENV_LABELS: Record<EnvironmentName, string> = {
 
 const STATUS_COLORS: Record<string, string> = {
   drafting: 'colors.grey.500',
-  development: '#2196f3',
+  development: 'var(--color-fallback-ant-blue, #1890ff)',
   building: designTokens.colors.warning.main,
   testing: designTokens.colors.purple['500'],
-  staging: '#00bcd4',
+  staging: 'var(--color-info, #0ea5e9)',
   production: designTokens.colors.success.main,
-  archived: '#616161',
+  archived: 'var(--color-fallback-neutral-grey, #666666)',
   pending: 'colors.grey.500',
-  running: '#2196f3',
+  running: 'var(--color-fallback-ant-blue, #1890ff)',
   success: designTokens.colors.success.main,
   failed: 'colors.error.main',
-  cancelled: '#616161',
+  cancelled: 'var(--color-fallback-neutral-grey, #666666)',
 };
 
 const V53PlatformConsole: React.FC<{ onClose: () => void }> = ({ onClose }) => {
@@ -455,7 +455,10 @@ const DashboardTab: React.FC<{
                             <Chip
                               label={project.status}
                               size='small'
-                              sx={{ bgcolor: STATUS_COLORS[project.status], color: 'common.white' }}
+                              sx={{
+                                bgcolor: STATUS_COLORS[project.status],
+                                color: 'common.white',
+                              }}
                             />
                           </TableCell>
                           <TableCell align='right'>
@@ -2065,7 +2068,10 @@ const PipelineDetailDialog: React.FC<{ run: PipelineRun; onClose: () => void }> 
           <Chip
             label={run.status}
             size='small'
-            sx={{ bgcolor: STATUS_COLORS[run.status], color: 'common.white' }}
+            sx={{
+              bgcolor: STATUS_COLORS[run.status],
+              color: 'common.white',
+            }}
           />
           {run.totalDurationMs && (
             <Typography

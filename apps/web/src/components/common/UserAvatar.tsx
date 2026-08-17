@@ -54,13 +54,16 @@ const getInitialsFromEmail = (email: string): string => {
 
 const fallbackColors = [
   { bg: 'colors.primary.50', fg: 'colors.primary.dark' },
-  { bg: '#F3E5F5', fg: designTokens.colors.purple['700'] },
+  { bg: 'var(--color-grey-100, #f3f4f6)', fg: designTokens.colors.purple['700'] },
   { bg: 'colors.success.50', fg: designTokens.colors.success.dark },
-  { bg: designTokens.colors.warning['50'], fg: '#E65100' },
-  { bg: '#FCE4EC', fg: '#C2185B' },
-  { bg: '#E0F7FA', fg: designTokens.colors.teal['700'] },
-  { bg: `${designTokens.colors.common.white}8E1`, fg: '#F57F17' },
-  { bg: '#F1F8E9', fg: '#558B2F' },
+  { bg: designTokens.colors.warning['50'], fg: 'var(--color-warning-hover, #d97706)' },
+  { bg: 'var(--color-error-100, #fee2e2)', fg: 'var(--color-error-700, #b91c1c)' },
+  { bg: 'var(--color-info-100, #e0f2fe)', fg: designTokens.colors.teal['700'] },
+  {
+    bg: `${designTokens.colors.common.white}8E1`,
+    fg: 'var(--color-warning, #f59e0b)',
+  },
+  { bg: 'var(--color-success-50, #f0fdf4)', fg: 'var(--color-fallback-ant-green, #52c41a)' },
 ];
 
 const hashString = (s: string): number => {

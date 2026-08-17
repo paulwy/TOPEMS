@@ -256,7 +256,10 @@ export const V60EthicsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
             <Button
               size='small'
               variant='outlined'
-              sx={{ borderColor: 'common.white', color: 'common.white' }}
+              sx={{
+                borderColor: 'common.white',
+                color: 'common.white',
+              }}
               onClick={runFullAnalysis}
               disabled={isAnalyzing}
             >

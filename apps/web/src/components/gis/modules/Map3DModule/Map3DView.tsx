@@ -259,7 +259,7 @@ const BuildingMarker: React.FC<BuildingMarkerProps> = ({ building, enable3D, map
     const icon = L.divIcon({
       html: `
         <div class="building-marker ${enable3D ? 'building-marker-3d' : ''}"
-             style="height: ${building.height}px; background: ${building.color || '#666'};">
+             style="height: ${building.height}px; background: ${building.color || 'var(--color-fallback-neutral-grey, #666666)'};">
           <span>${building.name}</span>
         </div>
       `,
@@ -297,7 +297,13 @@ interface HeightVisualizationProps {
 }
 export const HeightVisualization: React.FC<HeightVisualizationProps> = ({
   data,
-  colorScale = ['#00f', '#0ff', '#0f0', '#ff0', '#f00'],
+  colorScale = [
+    'var(--color-fallback-ant-blue, #0000ff)',
+    'var(--cyber-color-cyan, #00ffff)',
+    'var(--color-fallback-ant-green, #00ff00)',
+    'var(--color-fallback-ant-green, #ffff00)',
+    'var(--color-fallback-accent-pink, #ff0000)',
+  ],
   maxHeight = 100,
 }) => {
   // 渲染高度热力图

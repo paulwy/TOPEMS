@@ -156,7 +156,7 @@ export function AISummarizer({
               <Box
                 sx={{
                   bgcolor: 'secondary.light',
-                  border: '1px solid #e9d5ff',
+                  border: '1px solid var(--color-secondary-200, #ddd6fe)',
                   borderRadius: 1,
                   p: 2,
                 }}

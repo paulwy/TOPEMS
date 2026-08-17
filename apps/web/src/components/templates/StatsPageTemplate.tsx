@@ -287,7 +287,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                 ? `linear-gradient(135deg, ${stat.gradient[0]}, ${stat.gradient[1]})`
                 : undefined,
               bgcolor: stat.gradient ? undefined : 'background.paper',
-              color: stat.gradient ? 'white' : 'inherit',
+              color: stat.gradient ? 'var(--color-primary-foreground, #ffffff)' : 'inherit',
               position: 'relative',
               overflow: 'hidden',
               transition: 'all 0.2s ease',
@@ -308,7 +308,9 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     bgcolor: stat.gradient ? 'glass.topLight' : `${stat.color || 'primary'}.light`,
-                    color: stat.gradient ? 'white' : `${stat.color || 'primary'}.main`,
+                    color: stat.gradient
+                      ? 'var(--color-primary-foreground, #ffffff)'
+                      : `${stat.color || 'primary'}.main`,
                   }}
                 >
                   {stat.icon}
@@ -330,7 +332,9 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                       variant='h4'
                       sx={{
                         fontWeight: 700,
-                        color: stat.gradient ? 'white' : 'text.primary',
+                        color: stat.gradient
+                          ? 'var(--color-primary-foreground, #ffffff)'
+                          : 'text.primary',
                       }}
                     >
                       {stat.prefix}
@@ -340,7 +344,9 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                     variant='h3'
                     sx={{
                       fontWeight: 700,
-                      color: stat.gradient ? 'white' : 'text.primary',
+                      color: stat.gradient
+                        ? 'var(--color-primary-foreground, #ffffff)'
+                        : 'text.primary',
                     }}
                   >
                     {stat.value}
@@ -397,7 +403,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                           : 'error.light'
                         : 'grey.200',
                   color: stat.gradient
-                    ? 'white'
+                    ? 'var(--color-primary-foreground, #ffffff)'
                     : stat.trend.direction === 'up'
                       ? 'success.main'
                       : stat.trend.direction === 'down'

@@ -294,7 +294,11 @@ const ReturnDetailPage: React.FC = () => {
                 <CircleDot
                   size={16}
                   style={{
-                    color: isCompleted ? ct.success.main : isCurrent ? ct.primary.main : '#aaa',
+                    color: isCompleted
+                      ? ct.success.main
+                      : isCurrent
+                        ? ct.primary.main
+                        : 'var(--color-grey-400, #9ca3af)',
                   }}
                 />
                 <Typography

@@ -246,7 +246,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       return (
         <Activity
           size={24}
-          color='white'
+          color='var(--color-primary-foreground, #ffffff)'
         />
       );
     }
@@ -260,7 +260,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     return (
       <IconComponent
         size={24}
-        color='white'
+        color='var(--color-primary-foreground, #ffffff)'
       />
     );
   };

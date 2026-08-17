@@ -459,11 +459,21 @@ const MobileScanPage: React.FC = () => {
                       mb: 2,
                     }}
                   >
-                    <CheckSquare style={{ width: 32, height: 32, color: 'common.white' }} />
+                    <CheckSquare
+                      style={{
+                        width: 32,
+                        height: 32,
+                        color: 'common.white',
+                      }}
+                    />
                   </Box>
                   <Typography
                     variant='h6'
-                    sx={{ color: 'common.white', mb: 1, fontWeight: 600 }}
+                    sx={{
+                      color: 'common.white',
+                      mb: 1,
+                      fontWeight: 600,
+                    }}
                   >
                     {i18n.t('pages.mobile_scan_page.k0')}
                   </Typography>
@@ -484,7 +494,10 @@ const MobileScanPage: React.FC = () => {
                       variant='outlined'
                       size='small'
                       onClick={handleRescan}
-                      sx={{ color: 'common.white', borderColor: 'common.white' }}
+                      sx={{
+                        color: 'common.white',
+                        borderColor: 'common.white',
+                      }}
                     >
                       {i18n.t('pages.mobile_scan_page.k1')}
                     </MobileButton>
@@ -506,7 +519,7 @@ const MobileScanPage: React.FC = () => {
                     width: 52,
                     height: 52,
                     bgcolor: flashOn ? 'warning.main' : 'grey.100',
-                    color: flashOn ? 'white' : 'text.primary',
+                    color: flashOn ? 'var(--color-primary-foreground, #ffffff)' : 'text.primary',
                     '&:hover': {
                       bgcolor: flashOn ? 'warning.dark' : 'grey.200',
                     },

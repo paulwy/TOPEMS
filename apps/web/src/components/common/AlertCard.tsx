@@ -500,7 +500,9 @@ export const AlertCard: React.FC<AlertCardProps> = ({
                         startIcon={action.loading ? <RefreshCw size={14} /> : undefined}
                         sx={{
                           borderColor: config.borderColor,
-                          color: action.primary ? 'white' : config.titleColor,
+                          color: action.primary
+                            ? 'var(--color-primary-foreground, #ffffff)'
+                            : config.titleColor,
                           bgcolor: action.primary ? config.color : 'transparent',
                           '&:hover': {
                             bgcolor: action.primary ? config.color : config.bgColor,
@@ -635,7 +637,9 @@ export const AlertCard: React.FC<AlertCardProps> = ({
                   startIcon={action.loading ? <RefreshCw size={14} /> : undefined}
                   sx={{
                     borderColor: config.borderColor,
-                    color: action.primary ? 'white' : config.titleColor,
+                    color: action.primary
+                      ? 'var(--color-primary-foreground, #ffffff)'
+                      : config.titleColor,
                     bgcolor: action.primary ? config.color : 'transparent',
                     '&:hover': {
                       bgcolor: action.primary ? config.color : config.bgColor,

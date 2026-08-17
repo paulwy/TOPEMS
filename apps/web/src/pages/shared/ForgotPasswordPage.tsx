@@ -228,7 +228,13 @@ const ForgotPasswordPage: React.FC = () => {
               backdropFilter: 'blur(10px)',
             }}
           >
-            <Lock sx={{ width: 20, height: 20, color: 'common.white' }} />
+            <Lock
+              sx={{
+                width: 20,
+                height: 20,
+                color: 'common.white',
+              }}
+            />
           </Box>
           <Typography
             variant='h6'
@@ -273,9 +279,21 @@ const ForgotPasswordPage: React.FC = () => {
             }}
           >
             {emailSent || resetSuccess ? (
-              <CheckCircle sx={{ width: 36, height: 36, color: 'common.white' }} />
+              <CheckCircle
+                sx={{
+                  width: 36,
+                  height: 36,
+                  color: 'common.white',
+                }}
+              />
             ) : (
-              <Mail sx={{ width: 36, height: 36, color: 'common.white' }} />
+              <Mail
+                sx={{
+                  width: 36,
+                  height: 36,
+                  color: 'common.white',
+                }}
+              />
             )}
           </Box>
           <Typography

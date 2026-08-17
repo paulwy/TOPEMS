@@ -162,7 +162,7 @@ function Globe() {
     <group>
       <Sphere args={[0.99, 64, 64]}>
         <meshStandardMaterial
-          color='#1e3a5f'
+          color='var(--color-border-light, #1e3455)'
           transparent
           opacity={0.3}
           wireframe
@@ -170,7 +170,7 @@ function Globe() {
       </Sphere>
       <Sphere args={[0.98, 64, 64]}>
         <meshStandardMaterial
-          color='#2d5a87'
+          color='var(--color-info-800, #075985)'
           transparent
           opacity={0.1}
         />
@@ -226,7 +226,8 @@ function Scene({
 }) {
   const getStatusColor = (status: string) => {
     const s = status.toLowerCase();
-    if (s.includes('active') || s.includes(i18n.t('gis.map3_d_view.k1'))) return '#00C897';
+    if (s.includes('active') || s.includes(i18n.t('gis.map3_d_view.k1')))
+      return 'var(--color-fallback-ant-blue, #00c897)';
     if (s.includes('pending') || s.includes(i18n.t('gis.map3_d_view.k2'))) return 'warning.main';
     if (s.includes('inactive') || s.includes(i18n.t('gis.map3_d_view.k3'))) return 'error.main';
     return 'text.secondary';
@@ -365,7 +366,8 @@ const Map3DView: React.FC<Map3DViewProps> = ({
         sx={{
           flex: 1,
           position: 'relative',
-          background: 'linear-gradient(180deg, #0a1628 0%, #1a2a4a 100%)',
+          background:
+            'linear-gradient(180deg, var(--color-card, #0e1628) 0%, var(--color-border, #1a2d4d) 100%)',
         }}
       >
         <Canvas

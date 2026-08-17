@@ -45,7 +45,7 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
           >
             <Tag
               size={24}
-              color='white'
+              color='var(--color-primary-foreground, #ffffff)'
             />
           </div>
           <div>

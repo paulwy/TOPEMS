@@ -167,7 +167,13 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
               bgcolor: 'action.active',
             }}
           >
-            <Box sx={{ textAlign: 'center', color: 'common.white', p: 16 }}>
+            <Box
+              sx={{
+                textAlign: 'center',
+                color: 'common.white',
+                p: 16,
+              }}
+            >
               <Typography sx={{ color: 'error.light', mb: 8 }}>{error}</Typography>
               <Button
                 onClick={onCancel}
@@ -255,7 +261,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
           sx={{
             p: 16,
             borderRadius: 'full',
-            bgcolor: isCapturing ? 'text.secondary' : 'white',
+            bgcolor: isCapturing ? 'text.secondary' : 'var(--color-primary-foreground, #ffffff)',
             color: isCapturing ? 'text.disabled' : 'grey.800',
             '&:hover': { bgcolor: isCapturing ? 'text.secondary' : 'grey.200' },
             '&:active': { transform: 'scale(0.95)' },

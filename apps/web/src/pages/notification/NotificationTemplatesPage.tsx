@@ -303,7 +303,7 @@ const NotificationTemplatesPage: React.FC = () => {
               >
                 <FileText
                   size={24}
-                  color='white'
+                  color='var(--color-primary-foreground, #ffffff)'
                 />
               </Box>
               <Box>
@@ -346,7 +346,7 @@ const NotificationTemplatesPage: React.FC = () => {
               >
                 <FileText
                   size={24}
-                  color='white'
+                  color='var(--color-primary-foreground, #ffffff)'
                 />
               </Box>
               <Box>
@@ -389,7 +389,7 @@ const NotificationTemplatesPage: React.FC = () => {
               >
                 <FileText
                   size={24}
-                  color='white'
+                  color='var(--color-primary-foreground, #ffffff)'
                 />
               </Box>
               <Box>
@@ -432,7 +432,7 @@ const NotificationTemplatesPage: React.FC = () => {
               >
                 <FileText
                   size={24}
-                  color='white'
+                  color='var(--color-primary-foreground, #ffffff)'
                 />
               </Box>
               <Box>

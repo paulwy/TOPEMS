@@ -318,7 +318,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
       case 'critical':
         return designTokens.colors.error.dark;
       case 'high':
-        return '#ef6c00';
+        return 'var(--color-warning-hover, #d97706)';
       case 'medium':
         return 'colors.orange.700';
       case 'low':
@@ -416,7 +416,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           label={i18n.t('microfrontend.ai_ops_panel.k7')}
           value={unresolvedAnomalies}
           icon={<ActivityIcon size={24} />}
-          color='#ef6c00'
+          color='var(--color-warning-hover, #d97706)'
           trend={`${totalAnomalies} ${i18n.t('microfrontend.ai_ops_panel.k6')}`}
           trendUp={unresolvedAnomalies > 10}
         />
@@ -574,7 +574,10 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           <Chip
                             label={a.severity}
                             size='small'
-                            sx={{ bgcolor: getSeverityColor(a.severity), color: 'common.white' }}
+                            sx={{
+                              bgcolor: getSeverityColor(a.severity),
+                              color: 'common.white',
+                            }}
                           />
                           <Typography
                             variant='body2'
@@ -805,7 +808,10 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                           <Chip
                             label={a.severity}
                             size='small'
-                            sx={{ bgcolor: getSeverityColor(a.severity), color: 'common.white' }}
+                            sx={{
+                              bgcolor: getSeverityColor(a.severity),
+                              color: 'common.white',
+                            }}
                           />
                         </TableCell>
                         <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>
@@ -1108,14 +1114,20 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
                         <Chip
                           label={alert.severity}
                           size='small'
-                          sx={{ bgcolor: getSeverityColor(alert.severity), color: 'common.white' }}
+                          sx={{
+                            bgcolor: getSeverityColor(alert.severity),
+                            color: 'common.white',
+                          }}
                         />
                       </TableCell>
                       <TableCell>
                         <Chip
                           label={alert.status}
                           size='small'
-                          sx={{ bgcolor: getAlertStatusColor(alert.status), color: 'common.white' }}
+                          sx={{
+                            bgcolor: getAlertStatusColor(alert.status),
+                            color: 'common.white',
+                          }}
                         />
                       </TableCell>
                       <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>
@@ -2360,7 +2372,10 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           <Chip
             label='V43.0'
             size='small'
-            sx={{ bgcolor: 'action.disabledBackground', color: 'common.white' }}
+            sx={{
+              bgcolor: 'action.disabledBackground',
+              color: 'common.white',
+            }}
           />
         </Box>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -2375,7 +2390,10 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
               size='small'
               onClick={() => setAutoRefresh(!autoRefresh)}
               startIcon={autoRefresh ? <PlayIcon size={16} /> : <PauseIcon size={16} />}
-              sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
+              sx={{
+                color: 'common.white',
+                borderColor: 'action.disabledBackground',
+              }}
               variant={autoRefresh ? 'contained' : 'outlined'}
             >
               {autoRefresh
@@ -2387,7 +2405,10 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
             size='small'
             onClick={refreshData}
             startIcon={<RefreshIcon size={16} />}
-            sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
+            sx={{
+              color: 'common.white',
+              borderColor: 'action.disabledBackground',
+            }}
             variant='outlined'
           >
             {i18n.t('microfrontend.ai_ops_panel.k51')}
@@ -2396,7 +2417,10 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
             size='small'
             onClick={handleExport}
             startIcon={<DownloadIcon size={16} />}
-            sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
+            sx={{
+              color: 'common.white',
+              borderColor: 'action.disabledBackground',
+            }}
             variant='outlined'
           >
             {i18n.t('microfrontend.ai_ops_panel.k52')}

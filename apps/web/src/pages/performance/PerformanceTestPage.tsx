@@ -735,7 +735,12 @@ const PerformanceTestPage: React.FC = () => {
         </div>
 
         <div style={{ marginTop: '3rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '0.875rem', color: 'common.white' }}>
+          <div
+            style={{
+              fontSize: '0.875rem',
+              color: 'common.white',
+            }}
+          >
             {i18n.t('pages.performance_test_page.k6')}
           </div>
         </div>

@@ -67,7 +67,9 @@ export default function WmsOutboundDetailPage() {
             >
               <div
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
-                  i <= stageIndex ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
+                  i <= stageIndex
+                    ? 'bg-blue-600 text-var(--color-primary-foreground, #ffffff)'
+                    : 'bg-gray-200 text-gray-500'
                 }`}
               >
                 {i + 1}

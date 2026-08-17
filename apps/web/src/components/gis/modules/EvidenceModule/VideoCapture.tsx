@@ -251,7 +251,13 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                     animation: 'pulse 1.5s infinite',
                   }}
                 />
-                <Typography sx={{ color: 'common.white', fontSize: '0.875rem', fontWeight: 500 }}>
+                <Typography
+                  sx={{
+                    color: 'common.white',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                  }}
+                >
                   {i18n.t('components.video_capture.k0')}
                 </Typography>
               </Box>
@@ -293,7 +299,9 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                   bgcolor: isRecording
                     ? designTokens.colors.grey[800]
                     : 'colors.cyber.glass.divider',
-                  color: isRecording ? 'text.secondary' : 'white',
+                  color: isRecording
+                    ? 'text.secondary'
+                    : 'var(--color-primary-foreground, #ffffff)',
                   '&:hover': {
                     bgcolor: isRecording
                       ? designTokens.colors.grey[800]
@@ -330,7 +338,13 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
               bgcolor: 'action.active',
             }}
           >
-            <Box sx={{ textAlign: 'center', color: 'common.white', p: 16 }}>
+            <Box
+              sx={{
+                textAlign: 'center',
+                color: 'common.white',
+                p: 16,
+              }}
+            >
               <Typography sx={{ color: 'error.light', mb: 8 }}>{error}</Typography>
               <Button
                 onClick={onCancel}
