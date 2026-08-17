@@ -1,0 +1,104 @@
+pre-commit:
+  parallel: false
+  commands:
+    # [Gate A] Frontend lint (eslint + prettier)
+    frontend-lint:
+      name: Gate A · Frontend Lint (eslint + prettier)
+      tags: frontend lint
+      files: \.(ts|tsx|js|jsx|cjs|mjs|json|css|scss|yml|yaml|md)$
+      run: npx lint-staged
+
+    # [Gate B] Frontend typecheck (tsc --noEmit)
+    frontend-typecheck:
+      name: Gate B · Frontend Typecheck (tsc --noEmit)
+      tags: frontend typecheck
+      files: \.(ts|tsx|js|jsx|cjs|mjs|json)$
+      run: pnpm --filter topems-portal typecheck
+
+    # [Gate C] i18n quality (fake-en + mixed-structure)
+    i18n-quality:
+      name: Gate C · i18n Quality (fake-en + mixed-structure)
+      tags: frontend i18n
+      files: \.(ts|tsx|js|jsx|cjs|mjs|json)$
+      run: |
+        if [ -f "scripts/ci/check-i18n-quality.cjs" ]; then
+          node scripts/ci/check-i18n-quality.cjs --strict
+        fi
+
+    # [Gate D] Glossary TopN consistency
+    glossary-verify:
+      name: Gate D · Glossary TopN 术语一致性
+      tags: frontend i18n glossary
+      files: \.(ts|tsx|js|jsx|cjs|mjs|json|csv)$
+      run: |
+        if [ -f "scripts/ci/verify-glossary.cjs" ]; then
+          node scripts/ci/verify-glossary.cjs --strict
+        fi
+
+    # [Gate E] Hardcoded CJK precise scan
+    hardcoded-precise:
+      name: Gate E · Hardcoded CJK Precise Scan
+      tags: frontend i18n hardcoded
+      files: \.(ts|tsx|js|jsx)$
+      run: |
+        STAGED_TS_TSX=$(git diff --cached --name-only --diff-filter=ACM | grep -E "\.(ts|tsx)$" | tr '\n' ' ')
+        if [ -n "$STAGED_TS_TSX" ] && [ -f "scripts/i18n/scan-hardcoded-precise.cjs" ]; then
+          node scripts/i18n/scan-hardcoded-precise.cjs --strict --details 30 $STAGED_TS_TSX
+        fi
+
+    # [Gate F] cargo test (Rust workspace)
+    cargo-test:
+      name: Gate F · cargo test workspace (Rust)
+      tags: rust test
+      files: \.(rs|toml|lock)$
+      run: cargo test --workspace
+
+    # [Gate G] Permission matrix 3-way gate (dry-run)
+    perm-matrix:
+      name: Gate G · Permission Matrix 3-way (dry-run)
+      tags: permission security
+      files: (\.(rs|ts|tsx)$|^apps/web/src/config/permissions\.ts$|^apps/web/src/modules/[^/]+/config\.ts$|^apps/web/src/lib/navigation/|^apps/web/src/lib/routes/v2\.tsx$)
+      run: |
+        if [ -f "scripts/ci/check-permission-matrix.cjs" ]; then
+          node scripts/ci/check-permission-matrix.cjs --dry-run
+        fi
+
+    # [Gate H] CRM contract consistency
+    crm-contract:
+      name: Gate H · CRM Contract Consistency
+      tags: crm contract
+      files: (^apps/web/src/schemas/crm/|^apps/web/src/api/crm/|^svc/crm/src/(models|modules)/customer|\.(rs|ts|tsx)$)
+      run: |
+        if [ -f "scripts/dev/check-crm-contract.mjs" ]; then
+          node scripts/dev/check-crm-contract.mjs
+        fi
+
+    # [Gate I] Icon completeness + Page standardization
+    icon-page:
+      name: Gate I · Icon Completeness + Page Standardization
+      tags: frontend icon page
+      files: (^apps/web/src/lib/iconMapping\.tsx$|^apps/web/src/modules/[^/]+/config\.ts$|^apps/web/src/lib/navigation/types\.ts$|^apps/web/src/pages/.*\.tsx$|\.(ts|tsx)$)
+      run: |
+        if [ -f "scripts/ci/check-icons.cjs" ]; then
+          node scripts/ci/check-icons.cjs --strict
+        fi
+        if [ -f "scripts/ci/page-audit.cjs" ]; then
+          node scripts/ci/page-audit.cjs --diff --strict
+        fi
+
+pre-push:
+  parallel: true
+  commands:
+    # [V232-P3 NEW Gate J] cargo fmt workspace check — Rust-only
+    cargo-fmt-check:
+      name: Gate J · cargo fmt --all --check (Rust workspace)
+      tags: rust fmt
+      files: \.(rs|toml|lock)$
+      run: cargo fmt --all --check
+
+    # [V232-P3 NEW Gate K] cargo clippy workspace — Rust-only
+    cargo-clippy-workspace:
+      name: Gate K · cargo clippy --workspace -D warnings
+      tags: rust clippy
+      files: \.(rs|toml|lock)$
+      run: cargo clippy --workspace --all-targets -- -D warnings
