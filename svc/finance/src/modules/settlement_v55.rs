@@ -865,7 +865,7 @@ pub struct CreateRuleRequest {
     pub enabled: Option<bool>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct ReconcileBatchRequest {
     pub bank_transactions: Vec<BankTransaction>,
     pub system_records: Vec<SystemRecord>,
@@ -1629,7 +1629,7 @@ impl InvoiceRecognizer {
 
 pub struct ElectronicPaymentProcessor;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct InitiatePaymentRequest {
     pub amount: f64,
     pub currency: Option<String>,
@@ -1913,6 +1913,45 @@ impl ElectronicPaymentProcessor {
     }
 }
 
+// ==================== [V232-P0.1 NEW] Pre-validate async pure-fn wrappers ====================
+// 等价重构纪律：仅只读 pool（不开启事务）；校验通过后 clone 原请求作为 validated 视图
+// validate fn 名按 task 要求 grep 实际导出名后命名：post_settlement / unsettlement / reverse_settlement
+
+pub async fn validate_settlement_prepare(
+    req: &InitiatePaymentRequest,
+    _pool: &PgPool,
+) -> Result<InitiatePaymentRequest, ValidationError> {
+    req.prevalidate_payment(Some(1_000_000.00), true)?;
+    Ok(req.clone())
+}
+
+pub async fn validate_unsettlement_prepare(
+    req: &SchedulePaymentRequest,
+    _pool: &PgPool,
+) -> Result<SchedulePaymentRequest, ValidationError> {
+    let init_req = InitiatePaymentRequest {
+        amount: req.amount,
+        currency: req.currency.clone(),
+        from_account: req.from_account.clone(),
+        to_account: req.to_account.clone(),
+        method: req.method.clone(),
+        reference: req.reference.clone(),
+    };
+    init_req.prevalidate_payment(Some(1_000_000.00), true)?;
+    let now = Utc::now();
+    req.prevalidate_schedule(now)?;
+    Ok(req.clone())
+}
+
+pub async fn validate_reverse_settlement_prepare(
+    req: &ReconcileBatchRequest,
+    _pool: &PgPool,
+) -> Result<ReconcileBatchRequest, ValidationError> {
+    let now = Utc::now();
+    req.prevalidate_reconciliation(now, Some(180), true)?;
+    Ok(req.clone())
+}
+
 // ==================== API Handlers ====================
 
 // --- Reconciliation ---
@@ -1946,6 +1985,25 @@ async fn reconcile_batch_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<ReconcileBatchRequest>,
 ) -> Json<ApiResponse<Vec<ReconciliationResult>>> {
+    // [V232-P0.1 NEW] Step 1: pure-fn pre-validate (只读 pool，不开启事务) · Equiv-refactor discipline
+    let validated = match validate_reverse_settlement_prepare(&req, &state.pool).await {
+        Ok(v) => v,
+        Err(e) => return e.into_api_response(),
+    };
+    // [V232-P0.1 NEW] Step 2: double-check guard (validate fn 不能改值，否则 assert 报错)
+    debug_assert_eq!(
+        validated.bank_transactions.len(),
+        req.bank_transactions.len()
+    );
+    debug_assert_eq!(validated.system_records.len(), req.system_records.len());
+    debug_assert_eq!(
+        validated.bank_transactions.first().map(|b| b.amount),
+        req.bank_transactions.first().map(|b| b.amount)
+    );
+    debug_assert_eq!(
+        validated.system_records.first().map(|s| s.currency.clone()),
+        req.system_records.first().map(|s| s.currency.clone())
+    );
     let now = Utc::now();
     if let Err(ve) = req.prevalidate_reconciliation(now, Some(180), true) {
         return ve.into_api_response();
@@ -2286,7 +2344,7 @@ pub struct PaymentListQueryParams {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct SchedulePaymentRequest {
     pub amount: f64,
     pub currency: Option<String>,
@@ -2318,6 +2376,16 @@ async fn initiate_payment_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<InitiatePaymentRequest>,
 ) -> Json<ApiResponse<PaymentInitiationResult>> {
+    // [V232-P0.1 NEW] Step 1: pure-fn pre-validate (只读 pool，不开启事务) · Equiv-refactor discipline
+    let validated = match validate_settlement_prepare(&req, &state.pool).await {
+        Ok(v) => v,
+        Err(e) => return e.into_api_response(),
+    };
+    // [V232-P0.1 NEW] Step 2: double-check guard (validate fn 不能改值，否则 assert 报错)
+    debug_assert_eq!(validated.currency, req.currency);
+    debug_assert_eq!(validated.amount, req.amount);
+    debug_assert_eq!(validated.from_account, req.from_account);
+    debug_assert_eq!(validated.to_account, req.to_account);
     // V55 默认开启严格模式：币种必须命中白名单；单笔金额上限 1_000_000.00，可后续由配置中心覆盖
     if let Err(ve) = req.prevalidate_payment(Some(1_000_000.00), true) {
         return ve.into_api_response();
@@ -2421,6 +2489,16 @@ async fn schedule_payment_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<SchedulePaymentRequest>,
 ) -> Json<ApiResponse<PaymentRequest>> {
+    // [V232-P0.1 NEW] Step 1: pure-fn pre-validate (只读 pool，不开启事务) · Equiv-refactor discipline
+    let validated = match validate_unsettlement_prepare(&req, &state.pool).await {
+        Ok(v) => v,
+        Err(e) => return e.into_api_response(),
+    };
+    // [V232-P0.1 NEW] Step 2: double-check guard (validate fn 不能改值，否则 assert 报错)
+    debug_assert_eq!(validated.currency, req.currency);
+    debug_assert_eq!(validated.amount, req.amount);
+    debug_assert_eq!(validated.from_account, req.from_account);
+    debug_assert_eq!(validated.to_account, req.to_account);
     let now = Utc::now();
     // 复用 initiate 4 联严格校验 + 未来 scheduled_at 校验
     let init_req = InitiatePaymentRequest {
