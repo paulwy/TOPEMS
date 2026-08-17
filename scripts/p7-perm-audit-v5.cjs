@@ -27,15 +27,24 @@ function extractObjectBlock(text, startKeyword) {
   return '';
 }
 
-for (const kw of [
+// 分别处理不同的权限定义块：
+// - PERMISSION_DEFS / PERMISSIONS / MODULE_PERMISSIONS / ROLE_PERMISSIONS：提取所有引号内的字符串
+// - PERMISSION_CODES_BY_MODULE：只提取数组内的字符串，不提取 key（避免裸模块名如 'admin' 被误识别为权限码）
+const blockKeywords = [
   'export const PERMISSION_DEFS',
   'export const PERMISSIONS',
   'export const MODULE_PERMISSIONS',
   'export const ROLE_PERMISSIONS',
-  'export const PERMISSION_CODES_BY_MODULE',
-]) {
+];
+for (const kw of blockKeywords) {
   const blk = extractObjectBlock(permSrc, kw);
   for (const m of blk.matchAll(/'([A-Za-z0-9_:-]{3,90})'/g)) LEGAL.add(m[1]);
+}
+// PERMISSION_CODES_BY_MODULE 单独处理：仅提取数组元素，跳过 key
+const codesByModBlock = extractObjectBlock(permSrc, 'export const PERMISSION_CODES_BY_MODULE');
+if (codesByModBlock) {
+  // 匹配双引号数组元素，如 "admin:account:read"
+  for (const m of codesByModBlock.matchAll(/"([A-Za-z0-9_:-]{3,90})"/g)) LEGAL.add(m[1]);
 }
 const arrBlk = permSrc.match(/export\s+const\s+ALL_3PART_PERM_CODES\s*:\s*string\[\]\s*=\s*\[([\s\S]*?)\];/);
 if (arrBlk) for (const m of arrBlk[1].matchAll(/'([A-Za-z0-9_:-]{3,90})'/g)) LEGAL.add(m[1]);
@@ -92,6 +101,17 @@ for (const cfg of cfgs) {
   const navBs = parseBlocks(src, 'navItems:');
   const routeBs = parseBlocks(src, 'routes:');
   const navMap = new Map();
+
+  // 扫描模块配置顶层的 permission 字段（RouteModuleConfig.permission）
+  // 例如: export const xxxModuleConfig: RouteModuleConfig = { ..., permission: 'xxx:module:read', ... }
+  // 这些权限码控制整个模块的访问，应视为 USED
+  const modPermRe = /permission\s*:\s*['"]([A-Za-z0-9_:-]{3,90})['"]/g;
+  let mpm;
+  while ((mpm = modPermRe.exec(src)) !== null) {
+    const p = mpm[1];
+    (USED.get(p) || USED.set(p,[]).get(p)).push(mod+'/config/module-permission');
+  }
+
   for (const b of navBs) {
     const code = (b.match(/code\s*:\s*['"]([^'"]+)['"]/)||[])[1]; if (!code) continue;
     tNav++;
@@ -178,6 +198,24 @@ if (roleBlock) {
       (USED.get(code) || USED.set(code,[]).get(code)).push('permissions.ts/ROLE_PERMISSIONS/bare');
     }
   }
+}
+
+// ── 阶段 B3：将 PERMISSIONS 表中定义的模块级权限码自动视为 USED ──
+// 这些权限码是模块级权限模板（Record<ModuleCode, Record<PermissionAction, string>>），
+// 类型要求每个模块必须定义全部 5 个动作（read/write/delete/approve/admin），
+// 但实际业务中通常只用部分动作（如 dashboard 只需 read）。
+// 未使用的动作不应被判定为 DEAD，因为它们是权限模板的完整性约束，并非真正废弃。
+let permsTableUsedCount = 0;
+for (const actions of Object.values(PERMS_TABLE)) {
+  for (const code of Object.values(actions)) {
+    if (LEGAL.has(code)) {
+      (USED.get(code) || USED.set(code,[]).get(code)).push('permissions.ts/PERMISSIONS_TABLE/module-template');
+      permsTableUsedCount++;
+    }
+  }
+}
+if (permsTableUsedCount > 0) {
+  console.log(`[P7 v5] PERMISSIONS 表模块级权限模板自动标记为 USED：${permsTableUsedCount} 条`);
 }
 
 const USED_CODES = [...USED.keys()];
