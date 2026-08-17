@@ -102,7 +102,7 @@ pub fn init_metrics() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use prometheus::Encoder;
+    
 
     #[test]
     fn test_init_metrics_succeeds() {

@@ -148,7 +148,7 @@ fn build_department_tree(departments: Vec<HrmDepartment>) -> Vec<HrmDepartmentNo
         if let Some(parent_id) = dept.parent_id {
             children_map
                 .entry(parent_id)
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(dept.clone());
         }
     }
@@ -276,11 +276,11 @@ pub async fn get_contacts(
                 || entry
                     .email
                     .as_ref()
-                    .map_or(false, |e| e.to_lowercase().contains(&search_lower))
+                    .is_some_and(|e| e.to_lowercase().contains(&search_lower))
                 || entry
                     .phone
                     .as_ref()
-                    .map_or(false, |p| p.contains(&search_lower))
+                    .is_some_and(|p| p.contains(&search_lower))
         });
     }
 
@@ -438,11 +438,11 @@ pub async fn search_contacts(
                 || entry
                     .email
                     .as_ref()
-                    .map_or(false, |e| e.to_lowercase().contains(&search_lower))
+                    .is_some_and(|e| e.to_lowercase().contains(&search_lower))
                 || entry
                     .phone
                     .as_ref()
-                    .map_or(false, |p| p.contains(&search_lower))
+                    .is_some_and(|p| p.contains(&search_lower))
         });
     }
 

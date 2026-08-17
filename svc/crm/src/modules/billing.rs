@@ -51,7 +51,7 @@ async fn list_billing_records(
         "#,
     )
     .bind(tenant_id)
-    .bind(&customer_id_filter)
+    .bind(customer_id_filter)
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
@@ -69,7 +69,7 @@ async fn list_billing_records(
                 "#,
             )
             .bind(tenant_id)
-            .bind(&customer_id_filter)
+            .bind(customer_id_filter)
             .bind(&status_filter)
             .fetch_one(&state.db)
             .await;

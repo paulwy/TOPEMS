@@ -65,7 +65,7 @@ pub async fn list_expenses(
 
     match rows {
         Ok(rows) => {
-            let items: Vec<Value> = rows.iter().map(|r| row_to_expense_json(r)).collect();
+            let items: Vec<Value> = rows.iter().map(row_to_expense_json).collect();
             let total: i64 = sqlx::query_scalar(
                 r#"SELECT COUNT(*) FROM expenses
                    WHERE deleted_at IS NULL AND ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
@@ -369,7 +369,7 @@ pub async fn list_budgets(
 
     match rows {
         Ok(rows) => {
-            let items: Vec<Value> = rows.iter().map(|r| row_to_budget_json(r)).collect();
+            let items: Vec<Value> = rows.iter().map(row_to_budget_json).collect();
             let total: i64 =
                 sqlx::query_scalar("SELECT COUNT(*) FROM budgets WHERE deleted_at IS NULL")
                     .fetch_one(&state.pool)
@@ -663,7 +663,7 @@ pub async fn list_receivables(
 
     match rows {
         Ok(rows) => {
-            let items: Vec<Value> = rows.iter().map(|r| row_to_receivable_json(r)).collect();
+            let items: Vec<Value> = rows.iter().map(row_to_receivable_json).collect();
             let total: i64 = sqlx::query_scalar(
                 r#"SELECT COUNT(*) FROM receivables
                    WHERE deleted_at IS NULL AND ($1::text IS NULL OR invoice_number ILIKE $1 OR customer_name ILIKE $1)
@@ -953,7 +953,7 @@ pub async fn list_payables(
 
     match rows {
         Ok(rows) => {
-            let items: Vec<Value> = rows.iter().map(|r| row_to_payable_json(r)).collect();
+            let items: Vec<Value> = rows.iter().map(row_to_payable_json).collect();
             let total: i64 = sqlx::query_scalar(
                 r#"SELECT COUNT(*) FROM payables
                    WHERE deleted_at IS NULL AND ($1::text IS NULL OR invoice_number ILIKE $1 OR supplier_name ILIKE $1)

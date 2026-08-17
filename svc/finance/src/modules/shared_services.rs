@@ -548,8 +548,8 @@ impl ServiceCostAllocator {
         }
 
         let summaries = summary_map
-            .into_iter()
-            .map(|(_, v)| {
+            .into_values()
+            .map(|v| {
                 let total = v.1 + v.2;
                 let avg = safe_divide(v.2, Decimal::from(v.3.max(1)));
                 CostAllocationSummary {
@@ -918,8 +918,8 @@ impl InternalPricingManager {
         }
 
         let summaries = summary_map
-            .into_iter()
-            .map(|(_, v)| {
+            .into_values()
+            .map(|v| {
                 let avg = safe_divide(v.1, Decimal::from(v.2.max(1)));
                 SettlementSummary {
                     provider_id: Uuid::new_v4(),

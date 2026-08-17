@@ -733,7 +733,7 @@ async fn ensure_initialized() {
     let now = chrono::Utc::now().to_rfc3339();
 
     // --- 图谱种子数据 ---
-    let node_types = vec![
+    let node_types = [
         ("customer", "客户主数据"),
         ("product", "产品主数据"),
         ("supplier", "供应商主数据"),
@@ -1148,7 +1148,7 @@ pub async fn get_subgraph(
 
     let node_ids: Vec<String> = params
         .node_ids
-        .unwrap_or_else(|| String::new())
+        .unwrap_or_else(String::new)
         .split(',')
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty())
@@ -1318,7 +1318,7 @@ pub async fn create_tag(
         name: req.name,
         category: req.category.unwrap_or_else(|| "general".to_string()),
         color: req.color.unwrap_or_else(|| "#6C757D".to_string()),
-        description: req.description.unwrap_or_else(|| String::new()),
+        description: req.description.unwrap_or_else(String::new),
         usage_count: 0,
     };
 

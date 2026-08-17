@@ -238,7 +238,7 @@ mod tests {
     #[tokio::test]
     async fn handle_result_macro_with_err() {
         async fn fake_failing_query() -> std::result::Result<i32, std::io::Error> {
-            Err(std::io::Error::new(std::io::ErrorKind::Other, "db down"))
+            Err(std::io::Error::other("db down"))
         }
         let json = handle_result!(fake_failing_query(), "查询失败");
         let resp = json.0;

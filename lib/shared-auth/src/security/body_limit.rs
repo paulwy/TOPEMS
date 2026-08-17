@@ -53,7 +53,7 @@ impl BodyLimitConfig {
 
     pub fn strict() -> Self {
         Self {
-            max_size_bytes: 1 * 1024 * 1024,
+            max_size_bytes: 1024 * 1024,
             allowed_content_types: vec!["application/json".to_string()],
         }
     }
@@ -166,7 +166,7 @@ pub async fn body_limit_middleware(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axum::{http::Method, response::IntoResponse};
+    use axum::http::Method;
 
     #[test]
     fn test_config_default() {
@@ -178,7 +178,7 @@ mod tests {
     #[test]
     fn test_config_strict() {
         let config = BodyLimitConfig::strict();
-        assert_eq!(config.max_size_bytes, 1 * 1024 * 1024);
+        assert_eq!(config.max_size_bytes, 1024 * 1024);
         assert_eq!(config.allowed_content_types, vec!["application/json"]);
     }
 

@@ -1289,7 +1289,7 @@ pub async fn generate_sla_report(
             .iter()
             .filter(|m| {
                 m.config_id == config.id
-                    && tenant_filter.map(|tid| &m.tenant_id == tid).unwrap_or(true)
+                    && tenant_filter.map(|tid| m.tenant_id == tid).unwrap_or(true)
                     && params
                         .period_start
                         .as_ref()
@@ -1315,7 +1315,7 @@ pub async fn generate_sla_report(
             .iter()
             .filter(|i| {
                 i.config_id == config.id
-                    && tenant_filter.map(|tid| &i.tenant_id == tid).unwrap_or(true)
+                    && tenant_filter.map(|tid| i.tenant_id == tid).unwrap_or(true)
             })
             .collect();
 

@@ -212,8 +212,8 @@ pub async fn list_menus(
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let group_id = query.group_id.clone();
-    let parent_id = query.parent_id.clone();
+    let group_id = query.group_id;
+    let parent_id = query.parent_id;
     let search = query.search.clone();
     let status = query.status.clone();
 
@@ -224,8 +224,8 @@ pub async fn list_menus(
              AND ($3::text IS NULL OR name ILIKE '%' || $3 || '%' OR code ILIKE '%' || $3 || '%')
              AND ($4::text IS NULL OR status = $4)"#,
     )
-    .bind(group_id.clone())
-    .bind(parent_id.clone())
+    .bind(group_id)
+    .bind(parent_id)
     .bind(search.clone())
     .bind(status.clone())
     .fetch_one(&state.pool)

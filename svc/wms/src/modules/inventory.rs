@@ -136,7 +136,7 @@ pub async fn list_inventory(
     )
     .bind(&search_pattern)
     .bind(&status_filter)
-    .bind(&warehouse_id)
+    .bind(warehouse_id)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.db)
@@ -155,7 +155,7 @@ pub async fn list_inventory(
             )
             .bind(&search_pattern)
             .bind(&status_filter)
-            .bind(&warehouse_id)
+            .bind(warehouse_id)
             .fetch_one(&state.db)
             .await;
 
@@ -213,8 +213,8 @@ pub async fn create_inventory(
         "#,
     )
     .bind(id)
-    .bind(&req.warehouse_id)
-    .bind(&req.location_id)
+    .bind(req.warehouse_id)
+    .bind(req.location_id)
     .bind(&req.sku)
     .bind(&req.name)
     .bind(&req.specification)
@@ -445,8 +445,8 @@ pub async fn update_inventory(
     .bind(&unit)
     .bind(quantity)
     .bind(available_quantity)
-    .bind(&location_id)
-    .bind(&warehouse_id)
+    .bind(location_id)
+    .bind(warehouse_id)
     .bind(min_quantity)
     .bind(max_quantity)
     .bind(&status)
@@ -773,7 +773,7 @@ pub async fn get_inventory_statistics(
           AND deleted_at IS NULL
         "#,
     )
-    .bind(&warehouse_id)
+    .bind(warehouse_id)
     .fetch_one(&state.db)
     .await;
 

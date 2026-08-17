@@ -472,8 +472,7 @@ impl SubscriptionGateway {
             let msg_count = messages.iter().filter(|m| m.channel == channel).count() as u64;
             let last_msg = messages
                 .iter()
-                .filter(|m| m.channel == channel)
-                .last()
+                .rfind(|m| m.channel == channel)
                 .map(|m| m.created_at.clone());
 
             stats.push(ChannelStats {

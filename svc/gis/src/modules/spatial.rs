@@ -447,7 +447,7 @@ pub async fn nearest_query(
                 .into_iter()
                 .filter_map(|f| {
                     let dist = calculate_distance(&payload.point, &f.geometry);
-                    if payload.max_distance.map_or(true, |max| dist <= max) {
+                    if payload.max_distance.is_none_or(|max| dist <= max) {
                         Some((f, dist))
                     } else {
                         None

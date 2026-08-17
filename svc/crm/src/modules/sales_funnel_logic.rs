@@ -56,7 +56,7 @@ pub fn calculate_conversion_chain(stage_counts: &[(&str, i64)]) -> Vec<StageConv
 
 /// 校验概率合法性（0-100）
 pub fn validate_probability(probability: i32) -> Result<i32, String> {
-    if probability < 0 || probability > 100 {
+    if !(0..=100).contains(&probability) {
         return Err(format!(
             "probability must be in [0, 100], got {}",
             probability

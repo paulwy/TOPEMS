@@ -291,7 +291,7 @@ mod tests {
         assert!(AlertSeverity::Info < AlertSeverity::Warning);
         assert!(AlertSeverity::Warning < AlertSeverity::Critical);
         assert!(AlertSeverity::Critical < AlertSeverity::Emergency);
-        assert!(!(AlertSeverity::Emergency < AlertSeverity::Info));
+        assert!((AlertSeverity::Emergency >= AlertSeverity::Info));
 
         // 通过 PartialOrd/Ord 排序
         let mut levels = vec![

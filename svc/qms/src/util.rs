@@ -1,7 +1,5 @@
 //! QMS domain pure helpers
 
-use std::fmt;
-
 #[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum QmsUtilError {
     #[error("invalid inspection number: {0}")]

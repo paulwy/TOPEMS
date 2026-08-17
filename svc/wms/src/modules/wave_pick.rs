@@ -186,9 +186,9 @@ pub async fn create_wave_pick(
     .bind(id)
     .bind(&req.wave_pick_number)
     .bind(&req.wave_pick_type)
-    .bind(&req.warehouse_id)
+    .bind(req.warehouse_id)
     .bind(&req.priority)
-    .bind(&req.batch_id)
+    .bind(req.batch_id)
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
@@ -531,7 +531,7 @@ pub async fn assign_wave_pick(
         "#,
     )
     .bind(id)
-    .bind(&req.assigned_to)
+    .bind(req.assigned_to)
     .bind(now)
     .fetch_one(&state.db)
     .await;

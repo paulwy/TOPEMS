@@ -155,50 +155,23 @@ impl Default for ProjectStatistics {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Default)]
 pub struct StatusCount {
     pub status: String,
     pub count: i64,
 }
 
-impl Default for StatusCount {
-    fn default() -> Self {
-        Self {
-            status: String::new(),
-            count: 0,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Default)]
 pub struct TypeCount {
     #[serde(rename = "type")]
     pub project_type: String,
     pub count: i64,
 }
 
-impl Default for TypeCount {
-    fn default() -> Self {
-        Self {
-            project_type: String::new(),
-            count: 0,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Default)]
 pub struct LeaderCount {
     pub leader: String,
     pub count: i64,
-}
-
-impl Default for LeaderCount {
-    fn default() -> Self {
-        Self {
-            leader: String::new(),
-            count: 0,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -262,7 +235,7 @@ impl Default for CategoryCount {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Default)]
 pub struct RiskStatistics {
     pub total_risks: i64,
     pub open_risks: i64,
@@ -271,31 +244,10 @@ pub struct RiskStatistics {
     pub by_category: Vec<CategoryCount>,
 }
 
-impl Default for RiskStatistics {
-    fn default() -> Self {
-        Self {
-            total_risks: 0,
-            open_risks: 0,
-            closed_risks: 0,
-            by_level: Vec::new(),
-            by_category: Vec::new(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Default)]
 pub struct LevelCount {
     pub level: String,
     pub count: i64,
-}
-
-impl Default for LevelCount {
-    fn default() -> Self {
-        Self {
-            level: String::new(),
-            count: 0,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -319,40 +271,19 @@ impl Default for TaskStatistics {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Default)]
 pub struct PriorityCount {
     pub priority: String,
     pub count: i64,
 }
 
-impl Default for PriorityCount {
-    fn default() -> Self {
-        Self {
-            priority: String::new(),
-            count: 0,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Default)]
 pub struct DashboardOverview {
     pub projects: ProjectStatistics,
     pub contracts: ContractStatistics,
     pub budget: BudgetStatistics,
     pub risks: RiskStatistics,
     pub tasks: TaskStatistics,
-}
-
-impl Default for DashboardOverview {
-    fn default() -> Self {
-        Self {
-            projects: ProjectStatistics::default(),
-            contracts: ContractStatistics::default(),
-            budget: BudgetStatistics::default(),
-            risks: RiskStatistics::default(),
-            tasks: TaskStatistics::default(),
-        }
-    }
 }
 
 #[derive(Debug, Deserialize, ToSchema)]

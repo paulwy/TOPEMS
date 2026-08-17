@@ -881,7 +881,7 @@ impl RealtimeAggregator {
                     && active_only
                         .map(|a| {
                             if a {
-                                running.get(&c.id).map(|r| *r).unwrap_or(false)
+                                running.get(&c.id).copied().unwrap_or(false)
                             } else {
                                 true
                             }

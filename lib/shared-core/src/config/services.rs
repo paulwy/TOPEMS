@@ -408,6 +408,50 @@ pub fn get_default_port(service_name: &str) -> u16 {
     }
 }
 
+pub fn get_service_name_by_port(port: u16) -> Option<&'static str> {
+    match port {
+        // 核心
+        8000 => Some("unified-core"),
+        // 扩展服务
+        8082 => Some("topems-search"),
+        8084 => Some("topems-communication"),
+        8085 => Some("topems-billing"),
+        8086 => Some("topems-ticket"),
+        8087 => Some("topems-feedback"),
+        8088 => Some("topems-lowcode"),
+        // 经营管理
+        8010 => Some("topems-erp"),
+        8011 => Some("topems-finance"),
+        8013 => Some("topems-ai"),
+        // 协同办公
+        8020 => Some("topems-hrm"),
+        8023 => Some("topems-pm"),
+        8029 => Some("topems-crm"),
+        // 生产制造
+        8030 => Some("topems-mes"),
+        8031 => Some("topems-pdm"),
+        // 供应链
+        8040 => Some("topems-scm"),
+        8041 => Some("topems-wms"),
+        8042 => Some("topems-srm"),
+        // 质量/研发
+        8050 => Some("topems-qms"),
+        8051 => Some("topems-lims"),
+        8052 => Some("topems-ehs"),
+        8053 => Some("topems-rd"),
+        // 数据分析/门户
+        8060 => Some("topems-analytics"),
+        8063 => Some("topems-portal"),
+        // 基础设施
+        8070 => Some("topems-mobile"),
+        8071 => Some("topems-gis"),
+        8072 => Some("topems-integration"),
+        // 主数据
+        8090 => Some("topems-master-data"),
+        _ => None,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -700,49 +744,5 @@ mod tests {
                 assert_eq!(np, s.name);
             }
         }
-    }
-}
-
-pub fn get_service_name_by_port(port: u16) -> Option<&'static str> {
-    match port {
-        // 核心
-        8000 => Some("unified-core"),
-        // 扩展服务
-        8082 => Some("topems-search"),
-        8084 => Some("topems-communication"),
-        8085 => Some("topems-billing"),
-        8086 => Some("topems-ticket"),
-        8087 => Some("topems-feedback"),
-        8088 => Some("topems-lowcode"),
-        // 经营管理
-        8010 => Some("topems-erp"),
-        8011 => Some("topems-finance"),
-        8013 => Some("topems-ai"),
-        // 协同办公
-        8020 => Some("topems-hrm"),
-        8023 => Some("topems-pm"),
-        8029 => Some("topems-crm"),
-        // 生产制造
-        8030 => Some("topems-mes"),
-        8031 => Some("topems-pdm"),
-        // 供应链
-        8040 => Some("topems-scm"),
-        8041 => Some("topems-wms"),
-        8042 => Some("topems-srm"),
-        // 质量/研发
-        8050 => Some("topems-qms"),
-        8051 => Some("topems-lims"),
-        8052 => Some("topems-ehs"),
-        8053 => Some("topems-rd"),
-        // 数据分析/门户
-        8060 => Some("topems-analytics"),
-        8063 => Some("topems-portal"),
-        // 基础设施
-        8070 => Some("topems-mobile"),
-        8071 => Some("topems-gis"),
-        8072 => Some("topems-integration"),
-        // 主数据
-        8090 => Some("topems-master-data"),
-        _ => None,
     }
 }

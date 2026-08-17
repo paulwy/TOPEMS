@@ -233,6 +233,12 @@ pub struct EnhancedRateLimitStore {
     nonces: Arc<DashMap<String, Instant>>,
 }
 
+impl Default for EnhancedRateLimitStore {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EnhancedRateLimitStore {
     pub fn new() -> Self {
         Self {

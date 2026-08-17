@@ -153,7 +153,7 @@ pub async fn create_rule(
     )
     .bind(id)
     .bind(&req.rule_name)
-    .bind(&req.rule_type.unwrap_or_else(|| "custom".to_string()))
+    .bind(req.rule_type.unwrap_or_else(|| "custom".to_string()))
     .bind(req.warehouse_id)
     .bind(&req.warehouse_name)
     .bind(&req.material_category)
@@ -285,7 +285,7 @@ pub async fn update_rule(
             .fetch_optional(&state.db)
             .await;
 
-    let _ = match existing {
+    match existing {
         Ok(Some(_)) => (),
         Ok(None) => return Json(api_error(404, "补货规则不存在")),
         Err(_) => return Json(api_error(500, "查询补货规则失败")),

@@ -68,18 +68,12 @@ pub trait DomainEntity: SoftDeletable + IncrementallySynced {}
 
 /// 软删除查询过滤器
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct SoftDeleteFilter {
     /// 是否包含已删除记录
     pub include_deleted: bool,
 }
 
-impl Default for SoftDeleteFilter {
-    fn default() -> Self {
-        Self {
-            include_deleted: false,
-        }
-    }
-}
 
 impl SoftDeleteFilter {
     pub fn only_live() -> Self {

@@ -363,9 +363,9 @@ impl MultimodalService {
     }
 
     fn extract_image_features(&self, image_base64: &str) -> ImageFeatures {
-        let has_person = image_base64.len() % 7 == 0;
-        let has_document = image_base64.len() % 5 == 0;
-        let has_chair = image_base64.len() % 3 == 0;
+        let has_person = image_base64.len().is_multiple_of(7);
+        let has_document = image_base64.len().is_multiple_of(5);
+        let has_chair = image_base64.len().is_multiple_of(3);
 
         let mut features = vec!["office".to_string(), "technology".to_string()];
         if has_person {
@@ -500,7 +500,7 @@ impl MultimodalService {
     }
 
     pub async fn analyze_chart(&self, image_base64: &str) -> Result<ChartAnalysisResult, String> {
-        let chart_types = vec!["line", "bar", "pie", "scatter", "area"];
+        let chart_types = ["line", "bar", "pie", "scatter", "area"];
         let chart_type = chart_types[image_base64.len() % chart_types.len()].to_string();
 
         let data_points = vec![

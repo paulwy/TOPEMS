@@ -268,7 +268,7 @@ pub async fn transition_project_status(
         Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
     };
 
-    let valid_statuses = vec!["planning", "developing", "verifying", "released", "closed"];
+    let valid_statuses = ["planning", "developing", "verifying", "released", "closed"];
 
     if !valid_statuses.contains(&req.target_status.as_str()) {
         return Json(ApiResponse::error(400, "无效的状态值"));
@@ -1063,7 +1063,7 @@ pub async fn approve_apqp(
             {
                 return Json(ApiResponse::error(403, "无审批权限"));
             }
-            if !apqp_can_transition(&current_status, STATUS_IN_PRODUCTION).is_ok() {
+            if apqp_can_transition(&current_status, STATUS_IN_PRODUCTION).is_err() {
                 return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
             }
             let project = sqlx::query_as::<_, ApqpProject>(
@@ -1125,7 +1125,7 @@ pub async fn complete_apqp(
             {
                 return Json(ApiResponse::error(403, "无审批权限"));
             }
-            if !apqp_can_transition(&current_status, STATUS_COMPLETED).is_ok() {
+            if apqp_can_transition(&current_status, STATUS_COMPLETED).is_err() {
                 return Json(ApiResponse::error(400, "当前状态不允许完成"));
             }
             let project = sqlx::query_as::<_, ApqpProject>(
@@ -1182,7 +1182,7 @@ pub async fn cancel_apqp(
     match current {
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
-            if !apqp_can_transition(&current_status, STATUS_CANCELLED).is_ok() {
+            if apqp_can_transition(&current_status, STATUS_CANCELLED).is_err() {
                 return Json(ApiResponse::error(400, "当前状态不允许取消"));
             }
             let project = sqlx::query_as::<_, ApqpProject>(

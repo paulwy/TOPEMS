@@ -135,14 +135,14 @@ impl FeatureFlagService {
     fn evaluate_condition(&self, condition: &FeatureCondition, context: &FeatureContext) -> bool {
         match condition {
             FeatureCondition::TenantWhitelist(tenants) => {
-                context.tenant_id.map_or(false, |t| tenants.contains(&t))
+                context.tenant_id.is_some_and(|t| tenants.contains(&t))
             }
             FeatureCondition::UserWhitelist(users) => {
-                context.user_id.map_or(false, |u| users.contains(&u))
+                context.user_id.is_some_and(|u| users.contains(&u))
             }
             FeatureCondition::UserPercentage(percentage) => {
                 // 基于用户ID哈希的稳定百分比
-                context.user_id.map_or(false, |u| {
+                context.user_id.is_some_and(|u| {
                     let hash = Self::hash_uuid(&u);
                     (hash % 100) < *percentage as u64
                 })
@@ -326,9 +326,9 @@ mod tests {
         svc.register(make_flag("a", FeatureState::Enabled, vec![]));
         svc.register(make_flag("b", FeatureState::Disabled, vec![]));
         let result = svc.check_multiple(&["a", "b", "c"], &empty_context());
-        assert_eq!(*result.get("a").unwrap(), true);
-        assert_eq!(*result.get("b").unwrap(), false);
-        assert_eq!(*result.get("c").unwrap(), false);
+        assert!(*result.get("a").unwrap());
+        assert!(!(*result.get("b").unwrap()));
+        assert!(!(*result.get("c").unwrap()));
     }
 
     #[test]

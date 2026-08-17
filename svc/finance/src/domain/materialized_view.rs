@@ -47,7 +47,7 @@ impl VoucherSummaryMaterializedView {
 
         let mut items: Vec<VoucherSummaryView> = data
             .values()
-            .filter(|v| status.as_deref().map_or(true, |s| v.status == s))
+            .filter(|v| status.as_deref().is_none_or(|s| v.status == s))
             .cloned()
             .collect();
 
@@ -165,7 +165,7 @@ impl ReceivableAgingMaterializedView {
 
         let mut items: Vec<ReceivableAgingView> = data
             .values()
-            .filter(|v| status.as_deref().map_or(true, |s| v.status == s))
+            .filter(|v| status.as_deref().is_none_or(|s| v.status == s))
             .cloned()
             .collect();
 
@@ -273,12 +273,10 @@ impl MaterializedView for ReceivableAgingMaterializedView {
                     view.updated_at = e.occurred_at;
                 }
             }
-            FinanceDomainEvent::AgingCalculated(e) => {
-                if e.entity_type == "receivable" {
-                    for view in data.values_mut() {
-                        view.buckets = e.buckets.clone();
-                        view.updated_at = e.occurred_at;
-                    }
+            FinanceDomainEvent::AgingCalculated(e) if e.entity_type == "receivable" => {
+                for view in data.values_mut() {
+                    view.buckets = e.buckets.clone();
+                    view.updated_at = e.occurred_at;
                 }
             }
             _ => {}

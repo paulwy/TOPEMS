@@ -785,7 +785,7 @@ pub fn point_in_polygon(lat: f64, lng: f64, polygon: &[(f64, f64)]) -> Result<bo
         let (y1, x1) = polygon[i];
         let (y2, x2) = polygon[(i + 1) % n];
         // 点在顶点上 → 视为在内
-        if ((lat == y1 && lng == x1) || (lat == y2 && lng == x2)) {
+        if (lat == y1 && lng == x1) || (lat == y2 && lng == x2) {
             return Ok(true);
         }
         // 点在边上（水平/垂直/斜线均判定）
@@ -855,7 +855,7 @@ pub fn pixel_to_latlng(
         return Err(GisError::OutOfRange("tile_size must be > 0".to_string()));
     }
     let n = 1u64 << z;
-    let world_px = (n as u64) * (tile_size as u64);
+    let world_px = n * (tile_size as u64);
     let abs_x = (x as u64) * (tile_size as u64) + px as u64;
     let abs_y = (y as u64) * (tile_size as u64) + py as u64;
     let lng = (abs_x as f64 / world_px as f64) * 360.0 - 180.0;

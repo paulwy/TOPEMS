@@ -222,10 +222,10 @@ pub async fn create_inbound_order(
     )
     .bind(id)
     .bind(&req.order_number)
-    .bind(&req.warehouse_id)
-    .bind(&req.supplier_id)
+    .bind(req.warehouse_id)
+    .bind(req.supplier_id)
     .bind(req.order_date)
-    .bind(&req.expected_arrival)
+    .bind(req.expected_arrival)
     .bind(req.total_amount)
     .bind(&req.remarks)
     .bind(now)
@@ -416,10 +416,10 @@ pub async fn update_inbound_order(
         "#,
     )
     .bind(id)
-    .bind(&warehouse_id)
-    .bind(&supplier_id)
-    .bind(&expected_arrival)
-    .bind(&actual_arrival)
+    .bind(warehouse_id)
+    .bind(supplier_id)
+    .bind(expected_arrival)
+    .bind(actual_arrival)
     .bind(total_amount)
     .bind(&status)
     .bind(&remarks)
@@ -647,7 +647,7 @@ pub async fn create_inbound_order_item(
     .bind(&req.serial_number)
     .bind(req.expected_quantity)
     .bind(&req.unit)
-    .bind(&req.location_id)
+    .bind(req.location_id)
     .bind(req.unit_price)
     .bind(total_value)
     .bind(&req.remarks)
@@ -1367,8 +1367,8 @@ pub async fn approve_inbound(
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
             if crate::shared::fsm::inbound_order_requires_approval(&current_status, "completed")
-                && !crate::shared::fsm::inbound_order_can_transition(&current_status, "completed")
-                    .is_ok()
+                && crate::shared::fsm::inbound_order_can_transition(&current_status, "completed")
+                    .is_err()
             {
                 return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
             }
@@ -1452,8 +1452,8 @@ pub async fn reject_inbound(
     match current {
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
-            if !crate::shared::fsm::inbound_order_can_transition(&current_status, "confirmed")
-                .is_ok()
+            if crate::shared::fsm::inbound_order_can_transition(&current_status, "confirmed")
+                .is_err()
             {
                 return Json(ApiResponse::error(400, "当前状态不允许驳回回流"));
             }

@@ -357,7 +357,7 @@ impl AdaptiveExecutorInner {
     }
 
     fn analyze_complexity(&self, query: &str) -> (f64, usize, usize, usize) {
-        let field_count = query.matches(|c| c == '{').count() + query.matches("field").count();
+        let field_count = query.matches('{').count() + query.matches("field").count();
         let depth = Self::estimate_depth(query);
         let connections = query.matches("connection").count()
             + query.matches("edges").count()
@@ -505,10 +505,7 @@ impl AdaptiveExecutor {
             inner.configure_strategy(s);
         }
 
-        let query_hash = format!("{:x}", {
-            let hasher = simple_hash(query);
-            hasher
-        });
+        let query_hash = format!("{:x}", { simple_hash(query) });
 
         let profile = inner.get_or_create_profile(&query_hash, query);
         Ok(profile)
@@ -839,7 +836,7 @@ impl StreamManagerInner {
             return Err(format!("Stream '{}' not found", stream_id));
         }
 
-        let sub_id = subscriber_id.unwrap_or_else(|| generate_id());
+        let sub_id = subscriber_id.unwrap_or_else(generate_id);
 
         if let Some(subs) = self.subscribers.get_mut(stream_id) {
             subs.subscribe(stream_id, &sub_id);
@@ -1427,7 +1424,7 @@ pub async fn ensure_adaptive_execution_tables_exist(
 pub fn init_adaptive_execution() {
     configure_strategy(AdaptiveStrategy::Balanced);
 
-    let default_configs = vec![
+    let default_configs = [
         StreamConfig {
             buffer_size: 2000,
             batch_interval_ms: 50,

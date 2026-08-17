@@ -656,7 +656,7 @@ pub async fn list_recovery_points(
             }
             if let Some(st) = &params.snapshot_type {
                 let expected = snapshot_type_from_str(st);
-                if &p.snapshot_type != &expected {
+                if p.snapshot_type != expected {
                     return false;
                 }
             }
@@ -1087,7 +1087,7 @@ pub async fn get_test_results(
         .iter()
         .filter(|t| {
             if let Some(pid) = plan_id {
-                if &t.plan_id != pid {
+                if t.plan_id != pid {
                     return false;
                 }
             }

@@ -547,11 +547,11 @@ pub async fn update_rectification(
     tracing::debug!("Updating rectification {}: {:?}", id, req);
     let status = req
         .status
-        .or(req.progress.and_then(|p| {
+        .or(req.progress.map(|p| {
             if p >= 100 {
-                Some("completed".to_string())
+                "completed".to_string()
             } else {
-                Some("in_progress".to_string())
+                "in_progress".to_string()
             }
         }))
         .unwrap_or("in_progress".to_string());

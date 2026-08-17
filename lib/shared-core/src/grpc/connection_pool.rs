@@ -16,8 +16,10 @@ use tracing::{debug, warn};
 
 /// 负载均衡策略
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default)]
 pub enum LoadBalancingStrategy {
     /// 轮询
+    #[default]
     RoundRobin,
     /// 随机
     Random,
@@ -27,11 +29,6 @@ pub enum LoadBalancingStrategy {
     LeastUsed,
 }
 
-impl Default for LoadBalancingStrategy {
-    fn default() -> Self {
-        LoadBalancingStrategy::RoundRobin
-    }
-}
 
 /// 连接池配置
 #[derive(Debug, Clone)]

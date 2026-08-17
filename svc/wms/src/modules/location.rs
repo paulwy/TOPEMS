@@ -101,7 +101,7 @@ pub async fn list_locations(
     )
     .bind(&search_pattern)
     .bind(&status_filter)
-    .bind(&warehouse_id)
+    .bind(warehouse_id)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.db)
@@ -119,7 +119,7 @@ pub async fn list_locations(
             )
             .bind(&search_pattern)
             .bind(&status_filter)
-            .bind(&warehouse_id)
+            .bind(warehouse_id)
             .fetch_one(&state.db)
             .await;
 
@@ -175,7 +175,7 @@ pub async fn create_location(
         "#,
     )
     .bind(id)
-    .bind(&req.warehouse_id)
+    .bind(req.warehouse_id)
     .bind(&req.code)
     .bind(&req.name)
     .bind(&req.r#type)
@@ -331,7 +331,7 @@ pub async fn update_location(
         "#,
     )
     .bind(location_id)
-    .bind(&warehouse_id)
+    .bind(warehouse_id)
     .bind(&code)
     .bind(&name)
     .bind(&r#type)
@@ -547,7 +547,7 @@ pub async fn batch_create_locations(
             "#,
         )
         .bind(id)
-        .bind(&item.warehouse_id)
+        .bind(item.warehouse_id)
         .bind(&item.code)
         .bind(&item.name)
         .bind(&item.r#type)
@@ -612,11 +612,11 @@ pub async fn batch_update_locations(
         WHERE id = ANY($8)
         "#,
     )
-    .bind(&req.updates.warehouse_id)
+    .bind(req.updates.warehouse_id)
     .bind(&req.updates.code)
     .bind(&req.updates.name)
     .bind(&req.updates.r#type)
-    .bind(&req.updates.capacity)
+    .bind(req.updates.capacity)
     .bind(&req.updates.status)
     .bind(now)
     .bind(&ids)

@@ -95,7 +95,7 @@ fn extract_or_generate_request_id(headers: &HeaderMap) -> String {
         .get("x-request-id")
         .and_then(|v| v.to_str().ok())
         .map(String::from)
-        .unwrap_or_else(|| generate_request_id())
+        .unwrap_or_else(generate_request_id)
 }
 
 fn resolve_trace_context_from_otel() -> Option<TraceContext> {

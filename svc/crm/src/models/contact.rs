@@ -58,7 +58,7 @@ fn default_approval_none() -> String {
     "none".into()
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema, Default)]
 pub struct CreateContactRequest {
     pub customer_id: Option<Uuid>,
     pub first_name: String,
@@ -69,7 +69,7 @@ pub struct CreateContactRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema, Default)]
 pub struct UpdateContactRequest {
     pub customer_id: Option<Uuid>,
     pub first_name: Option<String>,
@@ -79,35 +79,6 @@ pub struct UpdateContactRequest {
     pub position: Option<String>,
     pub status: Option<String>,
     pub notes: Option<String>,
-}
-
-impl Default for CreateContactRequest {
-    fn default() -> Self {
-        Self {
-            customer_id: None,
-            first_name: String::new(),
-            last_name: None,
-            email: None,
-            phone: None,
-            position: None,
-            notes: None,
-        }
-    }
-}
-
-impl Default for UpdateContactRequest {
-    fn default() -> Self {
-        Self {
-            customer_id: None,
-            first_name: None,
-            last_name: None,
-            email: None,
-            phone: None,
-            position: None,
-            status: None,
-            notes: None,
-        }
-    }
 }
 
 #[cfg(test)]

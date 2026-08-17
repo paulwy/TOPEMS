@@ -30,10 +30,10 @@ lazy_static! {
     ///
     /// 仅记录法定假日当天，周末本身已由 `Weekday` 判断处理，但此处一并收录
     /// 假期区间内的周末日期，便于 `is_holiday` 语义清晰（区间内即为假日）。
-    static ref HOLIDAYS: HashSet<NaiveDate> = build_date_set(&HOLIDAY_RANGES);
+    static ref HOLIDAYS: HashSet<NaiveDate> = build_date_set(HOLIDAY_RANGES);
 
     /// 调休补班日（因假期调休而需要上班的周末）
-    static ref MAKEUP_WORKDAYS: HashSet<NaiveDate> = build_date_set_single(&MAKEUP_WORKDAY_DATES);
+    static ref MAKEUP_WORKDAYS: HashSet<NaiveDate> = build_date_set_single(MAKEUP_WORKDAY_DATES);
 }
 
 // ========== 数据库优先：HolidayProvider 两级回退实现 ==========

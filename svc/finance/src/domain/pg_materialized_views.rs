@@ -435,30 +435,28 @@ impl MaterializedView for PgReceivableAgingView {
                 .await
                 .map_err(|e| e.to_string())?;
             }
-            FinanceDomainEvent::AgingCalculated(e) => {
-                if e.entity_type == "receivable" {
-                    for bucket in &e.buckets {
-                        let amount = rust_decimal::Decimal::from_f64(bucket.amount)
-                            .unwrap_or(rust_decimal::Decimal::ZERO);
-                        let bucket_col = match (bucket.min_days, bucket.max_days) {
-                            (0, Some(0)) => "current_amount",
-                            (_, Some(30)) => "bucket_30_amount",
-                            (_, Some(60)) => "bucket_60_amount",
-                            (_, Some(90)) => "bucket_90_amount",
-                            (_, Some(180)) => "bucket_180_amount",
-                            (181, None) => "over_180_amount",
-                            _ => continue,
-                        };
-                        let query = format!(
+            FinanceDomainEvent::AgingCalculated(e) if e.entity_type == "receivable" => {
+                for bucket in &e.buckets {
+                    let amount = rust_decimal::Decimal::from_f64(bucket.amount)
+                        .unwrap_or(rust_decimal::Decimal::ZERO);
+                    let bucket_col = match (bucket.min_days, bucket.max_days) {
+                        (0, Some(0)) => "current_amount",
+                        (_, Some(30)) => "bucket_30_amount",
+                        (_, Some(60)) => "bucket_60_amount",
+                        (_, Some(90)) => "bucket_90_amount",
+                        (_, Some(180)) => "bucket_180_amount",
+                        (181, None) => "over_180_amount",
+                        _ => continue,
+                    };
+                    let query = format!(
                             "UPDATE mv_receivable_aging SET {} = $1, version = version + 1, updated_at = NOW() WHERE status != 'Settled'",
                             bucket_col
                         );
-                        sqlx::query(&query)
-                            .bind(amount)
-                            .execute(&self.pool)
-                            .await
-                            .map_err(|e| e.to_string())?;
-                    }
+                    sqlx::query(&query)
+                        .bind(amount)
+                        .execute(&self.pool)
+                        .await
+                        .map_err(|e| e.to_string())?;
                 }
             }
             _ => {}

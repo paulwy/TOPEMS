@@ -217,7 +217,7 @@ mod tests {
     #[test]
     fn test_layer_clone_and_copy() {
         let l = Layer::Web;
-        let cloned = l.clone();
+        let cloned = l;
         let copied = l;
         assert_eq!(l, cloned);
         assert_eq!(l, copied);

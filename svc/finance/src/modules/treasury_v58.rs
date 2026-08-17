@@ -492,9 +492,9 @@ impl CashPoolManager {
 
         for item in &req.allocations {
             let allocation_id = Uuid::new_v4();
-            let percentage =
-                item.percentage
-                    .unwrap_or_else(|| if item.amount > 0.0 { 0.0 } else { 0.0 });
+            let percentage = item
+                .percentage
+                .unwrap_or(if item.amount > 0.0 { 0.0 } else { 0.0 });
 
             let allocation = sqlx::query_as::<_, PoolAllocation>(
                 r#"INSERT INTO finance_v58_pool_allocations

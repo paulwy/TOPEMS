@@ -309,7 +309,7 @@ async fn create_inbound_from_purchase_internal(
             };
 
             let next_retry_at = if new_retry_count < max_retries {
-                Some(now + Duration::seconds((new_retry_count as i64 * 60 * 2).into()))
+                Some(now + Duration::seconds((new_retry_count as i64 * 60 * 2)))
             } else {
                 None
             };

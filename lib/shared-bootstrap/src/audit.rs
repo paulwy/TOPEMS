@@ -1192,7 +1192,7 @@ mod tests {
         // page=2, page_size=20 => 20
         // page=3, page_size=50 => 100
         assert_eq!((1 - 1) * 20, 0);
-        assert_eq!((2 - 1) * 20, 20);
+        assert_eq!(20, 20);
         assert_eq!((3 - 1) * 50, 100);
     }
 

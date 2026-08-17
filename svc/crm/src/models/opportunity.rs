@@ -79,7 +79,7 @@ pub struct CreateOpportunityRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema, Default)]
 pub struct UpdateOpportunityRequest {
     pub opp_no: Option<String>,
     pub name: Option<String>,
@@ -107,25 +107,6 @@ impl Default for CreateOpportunityRequest {
             close_date: None,
             owner_id: None,
             priority: Some("medium".into()),
-            notes: None,
-        }
-    }
-}
-
-impl Default for UpdateOpportunityRequest {
-    fn default() -> Self {
-        Self {
-            opp_no: None,
-            name: None,
-            customer_id: None,
-            customer_name: None,
-            value: None,
-            stage: None,
-            win_rate: None,
-            close_date: None,
-            owner_id: None,
-            priority: None,
-            status: None,
             notes: None,
         }
     }

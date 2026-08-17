@@ -310,7 +310,7 @@ pub struct ChangelogEntry {
 
 // --- 灰度流量切换 ---
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CanaryCondition {
     pub user_segment: Option<String>,
     pub region: Option<String>,
@@ -1361,17 +1361,6 @@ impl CompatibilityLevel {
             CompatibilityLevel::Full => 0,
             CompatibilityLevel::Partial => 1,
             CompatibilityLevel::None => 10,
-        }
-    }
-}
-
-impl Default for CanaryCondition {
-    fn default() -> Self {
-        Self {
-            user_segment: None,
-            region: None,
-            feature_flag: None,
-            custom: None,
         }
     }
 }

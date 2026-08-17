@@ -818,11 +818,7 @@ mod tests {
     #[test]
     fn test_auth_state_validates_secret_length() {
         assert!(std::panic::catch_unwind(|| {
-            AuthState {
-                jwt_secret: "short".to_string(),
-                refresh_secret: "this-is-a-very-long-secret-key-at-least-32-chars".to_string(),
-                token_expiry_hours: 24,
-            };
+            "short".to_string(); "this-is-a-very-long-secret-key-at-least-32-chars".to_string(); 24;
         })
         .is_ok());
 

@@ -282,7 +282,7 @@ mod tests {
 
     #[test]
     fn test_json_event_formatter_default() {
-        let formatter = JsonEventFormatter::default();
+        let formatter = JsonEventFormatter;
         let _ = formatter;
     }
 

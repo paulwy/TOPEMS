@@ -382,16 +382,14 @@ pub async fn list_appointments(
 
     match result {
         Ok(items) => {
-            let count_query = format!(
-                r#"
+            let count_query = r#"
                 SELECT COUNT(*) FROM scm.supplier_delivery_appointments
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR appointment_no ILIKE $1 OR supplier_name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR supplier_id = $3)
                   AND ($4::date IS NULL OR delivery_date >= $4)
                   AND ($5::date IS NULL OR delivery_date <= $5)
-                "#
-            );
+                "#.to_string();
             let count_result = sqlx::query_scalar::<_, i64>(&count_query)
                 .bind(&search_pattern)
                 .bind(&params.status)

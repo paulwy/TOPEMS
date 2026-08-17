@@ -393,7 +393,7 @@ pub async fn drill_down(
     let levels = path.levels.unwrap_or(serde_json::json!([]));
     let levels_arr = levels.as_array();
 
-    if levels_arr.map_or(true, |arr| next_level as usize >= arr.len()) {
+    if levels_arr.is_none_or(|arr| next_level as usize >= arr.len()) {
         return Json(topems_shared_core::response::error_value(
             500,
             "Already at the lowest drill level",

@@ -207,12 +207,11 @@ async fn create_cost(
     let now = Utc::now();
     let cost_date = req
         .cost_date
-        .map(|d| {
+        .and_then(|d| {
             DateTime::parse_from_rfc3339(&d)
                 .ok()
                 .map(|d| d.with_timezone(&Utc))
         })
-        .flatten()
         .unwrap_or(now);
 
     let result = sqlx::query_as::<_, ResearchCost>(
@@ -313,12 +312,11 @@ async fn update_cost(
     let description = req.description.or(existing.description);
     let cost_date = req
         .cost_date
-        .map(|d| {
+        .and_then(|d| {
             DateTime::parse_from_rfc3339(&d)
                 .ok()
                 .map(|d| d.with_timezone(&Utc))
         })
-        .flatten()
         .or(Some(existing.cost_date));
     let payer = req.payer.or(existing.payer);
     let payment_method = req.payment_method.or(existing.payment_method);

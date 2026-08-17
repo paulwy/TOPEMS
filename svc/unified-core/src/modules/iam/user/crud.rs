@@ -5,7 +5,7 @@ use axum::{
     extract::{Path, Query, State},
     Json,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use topems_shared_auth::auth::Claims;
 use utoipa::ToSchema;
 use uuid::Uuid;

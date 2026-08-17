@@ -19,7 +19,7 @@ pub const SERVICE_TAG: &str = "plugin-registry";
 /// hyphens.
 pub fn validate_plugin_id(id: &str) -> bool {
     let len = id.len();
-    if len < 3 || len > 64 {
+    if !(3..=64).contains(&len) {
         return false;
     }
     if id.starts_with('-') || id.ends_with('-') {

@@ -392,6 +392,6 @@ mod tests {
         let client = GenericServiceClient::new("svc", "http://127.0.0.1:1").unwrap();
         let result = client.get_health().await;
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), false);
+        assert!(!result.unwrap());
     }
 }

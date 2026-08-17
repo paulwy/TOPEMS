@@ -724,10 +724,8 @@ impl GatewaySecurityV2 {
         let filtered: Vec<SecurityIncident> = incidents
             .iter()
             .filter(|i| {
-                incident_type
-                    .as_ref()
-                    .map_or(true, |t| &i.incident_type == t)
-                    && severity.as_ref().map_or(true, |s| &i.severity == s)
+                incident_type.as_ref().is_none_or(|t| &i.incident_type == t)
+                    && severity.as_ref().is_none_or(|s| &i.severity == s)
             })
             .cloned()
             .collect();
@@ -873,17 +871,14 @@ impl AuditTrailV2 {
                 filter
                     .actor_id
                     .as_ref()
-                    .map_or(true, |a| e.actor_id.as_ref().map_or(false, |ai| ai == a))
-                    && filter.action.as_ref().map_or(true, |a| &e.action == a)
+                    .is_none_or(|a| e.actor_id.as_ref() == Some(a))
+                    && filter.action.as_ref().is_none_or(|a| &e.action == a)
                     && filter
                         .resource_type
                         .as_ref()
-                        .map_or(true, |r| &e.resource_type == r)
-                    && filter
-                        .date_from
-                        .as_ref()
-                        .map_or(true, |d| e.timestamp >= *d)
-                    && filter.date_to.as_ref().map_or(true, |d| e.timestamp <= *d)
+                        .is_none_or(|r| &e.resource_type == r)
+                    && filter.date_from.as_ref().is_none_or(|d| e.timestamp >= *d)
+                    && filter.date_to.as_ref().is_none_or(|d| e.timestamp <= *d)
             })
             .cloned()
             .collect()
@@ -895,7 +890,7 @@ impl AuditTrailV2 {
 
         entries
             .iter()
-            .filter(|e| e.actor_id.as_ref().map_or(false, |a| a == actor_id))
+            .filter(|e| e.actor_id.as_ref().is_some_and(|a| a == actor_id))
             .cloned()
             .collect()
     }
@@ -911,9 +906,8 @@ impl AuditTrailV2 {
             .iter()
             .filter(|e| {
                 e.resource_type == resource_type
-                    && resource_id.map_or(true, |rid| {
-                        e.resource_id.as_ref().map_or(false, |eid| eid == rid)
-                    })
+                    && resource_id
+                        .is_none_or(|rid| e.resource_id.as_ref().is_some_and(|eid| eid == rid))
             })
             .cloned()
             .collect()
@@ -1030,12 +1024,12 @@ impl AccessControlV2 {
             if Self::policy_matches(policy, resource, action) {
                 match policy.effect {
                     AccessEffect::Allow => {
-                        if matched_allow.map_or(true, |p| policy.priority > p.priority) {
+                        if matched_allow.is_none_or(|p| policy.priority > p.priority) {
                             matched_allow = Some(policy);
                         }
                     }
                     AccessEffect::Deny => {
-                        if matched_deny.map_or(true, |p| policy.priority > p.priority) {
+                        if matched_deny.is_none_or(|p| policy.priority > p.priority) {
                             matched_deny = Some(policy);
                         }
                     }

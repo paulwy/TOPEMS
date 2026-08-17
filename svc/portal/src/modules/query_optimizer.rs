@@ -627,7 +627,7 @@ impl QueryPlanner {
             };
 
             let step_id = uuid::Uuid::new_v4().to_string();
-            let estimated_time_ms = (100 + idx as u64 * 50) as u64;
+            let estimated_time_ms = 100 + idx as u64 * 50;
 
             let step = PlanStep {
                 id: step_id.clone(),

@@ -267,7 +267,7 @@ impl MigrationServiceLayer {
             .bind(service_name)
             .bind(&version)
             .bind(&name)
-            .bind(&format!("{} migration", migration_type))
+            .bind(format!("{} migration", migration_type))
             .bind(100 + i as i64 * 50)
             .execute(&self.pool)
             .await?;

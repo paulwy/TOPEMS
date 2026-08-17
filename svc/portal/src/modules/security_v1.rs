@@ -289,7 +289,7 @@ pub struct ValidationResult {
 
 // --- Zero Trust ---
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct IdentityContext {
     pub user_id: Option<String>,
     pub session_id: Option<String>,
@@ -297,19 +297,6 @@ pub struct IdentityContext {
     pub ip: Option<String>,
     pub location: Option<String>,
     pub mfa_completed: bool,
-}
-
-impl Default for IdentityContext {
-    fn default() -> Self {
-        Self {
-            user_id: None,
-            session_id: None,
-            device_id: None,
-            ip: None,
-            location: None,
-            mfa_completed: false,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -759,7 +746,7 @@ impl ZeroTrustEngine {
         let store = get_security_store();
         let decisions = store.trust_decisions.lock().await;
 
-        let latest = decisions.iter().filter(|d| d.identity == identity).last();
+        let latest = decisions.iter().rfind(|d| d.identity == identity);
 
         match latest {
             Some(d) => Ok(1.0 - d.risk_score),

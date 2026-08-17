@@ -172,7 +172,7 @@ pub async fn create_purchase_order(
 
     let supplier_name =
         match sqlx::query_scalar::<_, Option<String>>("SELECT name FROM suppliers WHERE id = $1")
-            .bind(&req.supplier_id)
+            .bind(req.supplier_id)
             .fetch_one(&state.db)
             .await
         {
@@ -200,7 +200,7 @@ pub async fn create_purchase_order(
                       total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"#
     )
     .bind(order_no)
-    .bind(&req.supplier_id)
+    .bind(req.supplier_id)
     .bind(supplier_name)
     .bind(req.order_date)
     .bind(req.delivery_date)

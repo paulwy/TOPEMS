@@ -4,8 +4,9 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub enum ChartType {
+    #[default]
     Line,
     Bar,
     Pie,
@@ -14,12 +15,6 @@ pub enum ChartType {
     Histogram,
     Gauge,
     Table,
-}
-
-impl Default for ChartType {
-    fn default() -> Self {
-        ChartType::Line
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

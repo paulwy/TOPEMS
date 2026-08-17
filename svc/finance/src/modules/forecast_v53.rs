@@ -406,9 +406,9 @@ impl CashFlowPredictor {
             }
             PredictionModel::SeasonalDecomposition => {
                 let _period = 12.0_f64;
-                let mut season_inflow = vec![0.0f64; 12];
-                let mut season_outflow = vec![0.0f64; 12];
-                let mut counts = vec![0.0f64; 12];
+                let mut season_inflow = [0.0f64; 12];
+                let mut season_outflow = [0.0f64; 12];
+                let mut counts = [0.0f64; 12];
 
                 for (i, h) in historical.iter().enumerate() {
                     let month = i % 12;
@@ -422,8 +422,8 @@ impl CashFlowPredictor {
                 let avg_outflow: f64 =
                     historical.iter().map(|h| h.1).sum::<f64>() / historical.len() as f64;
 
-                let mut factors_inflow = vec![1.0f64; 12];
-                let mut factors_outflow = vec![1.0f64; 12];
+                let mut factors_inflow = [1.0f64; 12];
+                let mut factors_outflow = [1.0f64; 12];
                 for m in 0..12 {
                     if counts[m] > 0.0 && avg_inflow > 0.0 {
                         factors_inflow[m] = (season_inflow[m] / counts[m]) / avg_inflow;
@@ -510,8 +510,8 @@ impl CashFlowPredictor {
             return patterns;
         }
 
-        let mut monthly_avgs = vec![0.0f64; 12];
-        let mut monthly_counts = vec![0.0f64; 12];
+        let mut monthly_avgs = [0.0f64; 12];
+        let mut monthly_counts = [0.0f64; 12];
 
         for (i, h) in historical.iter().enumerate() {
             let month = i % 12;

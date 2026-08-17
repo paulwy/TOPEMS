@@ -22,7 +22,7 @@ fn validate_table_name(table_name: &str) -> Result<(), String> {
     if !table_name
         .chars()
         .next()
-        .map_or(false, |c| c.is_ascii_alphabetic() || c == '_')
+        .is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
     {
         return Err(format!(
             "Table name '{}' must start with a letter or underscore",

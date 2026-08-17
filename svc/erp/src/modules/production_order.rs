@@ -169,7 +169,7 @@ pub async fn create_production_order(
         "#,
     )
     .bind(&order_no)
-    .bind(&req.product_id)
+    .bind(req.product_id)
     .bind(&req.product_name)
     .bind(&req.product_code)
     .bind(req.quantity)
@@ -178,7 +178,7 @@ pub async fn create_production_order(
     .bind(&req.source_order_number)
     .bind(req.planned_start_date.map(|d| d.date_naive()))
     .bind(req.planned_end_date.map(|d| d.date_naive()))
-    .bind(&req.workshop_id)
+    .bind(req.workshop_id)
     .bind(&req.workshop_name)
     .bind(req.priority.unwrap_or(0))
     .bind(&req.notes)
@@ -225,7 +225,7 @@ pub async fn get_production_order(
         WHERE id = $1
         "#,
     )
-    .bind(&id)
+    .bind(id)
     .fetch_optional(&state.db)
     .await;
 
@@ -277,13 +277,13 @@ pub async fn update_production_order(
                   created_at, updated_at
         "#,
     )
-    .bind(&id)
+    .bind(id)
     .bind(&req.product_name)
     .bind(&req.product_code)
     .bind(req.quantity)
     .bind(req.planned_start_date.map(|d| d.date_naive()))
     .bind(req.planned_end_date.map(|d| d.date_naive()))
-    .bind(&req.workshop_id)
+    .bind(req.workshop_id)
     .bind(&req.workshop_name)
     .bind(req.priority)
     .bind(&req.notes)
@@ -321,7 +321,7 @@ pub async fn delete_production_order(
         WHERE id = $1 AND status IN ('pending', 'cancelled')
         "#,
     )
-    .bind(&id)
+    .bind(id)
     .execute(&state.db)
     .await;
 
@@ -373,7 +373,7 @@ pub async fn update_production_progress(
                   created_at, updated_at
         "#,
     )
-    .bind(&id)
+    .bind(id)
     .bind(req.completed_quantity)
     .bind(&req.status)
     .bind(req.actual_start_date.map(|d| d.naive_utc()))
@@ -429,7 +429,7 @@ pub async fn update_production_status(
                   created_at, updated_at
         "#,
     )
-    .bind(&id)
+    .bind(id)
     .bind(&req.status)
     .bind(now.naive_utc())
     .fetch_optional(&state.db)
@@ -512,7 +512,7 @@ pub async fn receive_mes_progress(
                   created_at, updated_at
         "#,
     )
-    .bind(&order_id)
+    .bind(order_id)
     .bind(req.completed_quantity)
     .bind(&req.status)
     .bind(req.actual_start_date.map(|d| d.naive_utc()))

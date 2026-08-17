@@ -487,7 +487,7 @@ impl PersistedQueryManager {
     }
 
     fn estimate_complexity(query: &str) -> u32 {
-        let field_count = query.matches(|c| c == '{' || c == '(').count() as u32;
+        let field_count = query.matches(['{', '(']).count() as u32;
         let nesting = query.matches('{').count() as u32;
         field_count * nesting / 10 + 1
     }
@@ -1232,11 +1232,11 @@ pub fn persisted_query_manager() -> &'static Mutex<PersistedQueryManager> {
 }
 
 pub fn query_auditor() -> &'static QueryAuditor {
-    QUERY_AUDITOR.get_or_init(|| QueryAuditor::new())
+    QUERY_AUDITOR.get_or_init(QueryAuditor::new)
 }
 
 pub fn enterprise_governance() -> &'static EnterpriseGovernance {
-    ENTERPRISE_GOVERNANCE.get_or_init(|| EnterpriseGovernance::new())
+    ENTERPRISE_GOVERNANCE.get_or_init(EnterpriseGovernance::new)
 }
 
 // ==================== 公共 API 函数 ====================

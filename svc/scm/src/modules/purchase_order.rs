@@ -510,7 +510,7 @@ pub async fn approve_order(
                         order_no,
                         supplier_id,
                         supplier_name: None,
-                        total_amount: total_amount,
+                        total_amount,
                         approved_by: approver_name_val,
                         approved_at: Some(now_val),
                     };

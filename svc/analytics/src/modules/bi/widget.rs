@@ -74,20 +74,17 @@ impl WidgetCache {
     }
 
     pub fn get(&self, widget_id: &Uuid) -> Option<CachedWidgetData> {
-        self.cache
-            .get(widget_id)
-            .map(|entry| {
-                let cached = entry.value().clone();
-                let elapsed = Utc::now().timestamp() - cached.cached_at.timestamp();
-                if elapsed > cached.ttl_seconds {
-                    drop(entry);
-                    self.cache.remove(widget_id);
-                    None
-                } else {
-                    Some(cached)
-                }
-            })
-            .flatten()
+        self.cache.get(widget_id).and_then(|entry| {
+            let cached = entry.value().clone();
+            let elapsed = Utc::now().timestamp() - cached.cached_at.timestamp();
+            if elapsed > cached.ttl_seconds {
+                drop(entry);
+                self.cache.remove(widget_id);
+                None
+            } else {
+                Some(cached)
+            }
+        })
     }
 
     pub fn set(&self, widget_id: Uuid, data: serde_json::Value, ttl_seconds: i64) {

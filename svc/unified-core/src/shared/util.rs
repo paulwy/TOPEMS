@@ -5,7 +5,7 @@
 //! 基础 DTO Roundtrip。
 
 use serde::{Deserialize, Serialize};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 // ============================================================================
 // 1. 健康检查聚合
@@ -202,7 +202,6 @@ pub enum TimeBucket {
 
 /// 把毫秒时间戳向下取整到给定 bucket 的毫秒边界。
 pub fn truncate_timestamp_ms(ts_ms: i64, bucket: TimeBucket) -> i64 {
-    use TimeBucket::*;
     let sec = bucket_seconds(bucket);
     let ts_sec = ts_ms.div_euclid(1000);
     let aligned = ts_sec - ts_sec.rem_euclid(sec as i64);

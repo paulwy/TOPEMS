@@ -78,7 +78,7 @@ impl Default for DeductionPolicy {
 pub fn hourly_rate(monthly_salary: &BigDecimal) -> BigDecimal {
     let days = BigDecimal::try_from(MONTHLY_WORK_DAYS).unwrap_or_else(|_| BigDecimal::from(22));
     let hours = BigDecimal::try_from(DAILY_WORK_HOURS).unwrap_or_else(|_| BigDecimal::from(8));
-    if days == BigDecimal::from(0) || hours == BigDecimal::from(0) {
+    if days == 0 || hours == 0 {
         return BigDecimal::from(0);
     }
     monthly_salary / (days * hours)
@@ -87,7 +87,7 @@ pub fn hourly_rate(monthly_salary: &BigDecimal) -> BigDecimal {
 /// 计算日薪 = 月薪 / 21.75
 pub fn daily_rate(monthly_salary: &BigDecimal) -> BigDecimal {
     let days = BigDecimal::try_from(MONTHLY_WORK_DAYS).unwrap_or_else(|_| BigDecimal::from(22));
-    if days == BigDecimal::from(0) {
+    if days == 0 {
         return BigDecimal::from(0);
     }
     monthly_salary / days
@@ -483,7 +483,7 @@ pub fn validate_pay_period(period: &str) -> bool {
         .ok()
         .and_then(|s| s.parse::<u32>().ok());
     match (yr, mo) {
-        (Some(y), Some(m)) => y >= 1970 && y <= 2999 && m >= 1 && m <= 12,
+        (Some(y), Some(m)) => (1970..=2999).contains(&y) && (1..=12).contains(&m),
         _ => false,
     }
 }
@@ -542,7 +542,7 @@ pub fn build_payroll_voucher_entries(summary: &PayrollVoucherSummary<'_>) -> Vec
     // 借贷平衡：若 sum(credit) != gross，则调整 net 使 credit 合计 = gross
     // 钳制后的 net 为非负
     let credit_sum_ex_net = &tax + &social;
-    let expected_net = if &gross >= &credit_sum_ex_net {
+    let expected_net = if gross >= credit_sum_ex_net {
         gross.clone() - credit_sum_ex_net
     } else {
         zero.clone()

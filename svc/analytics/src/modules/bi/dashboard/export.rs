@@ -301,23 +301,23 @@ pub async fn export_dashboard_excel(
 
     let mut csv_writer = csv::Writer::from_writer(Vec::new());
 
-    let _ = csv_writer.write_record(&["Dashboard Export"]);
-    let _ = csv_writer.write_record(&["ID", &dashboard.id.to_string()]);
-    let _ = csv_writer.write_record(&["Name", &dashboard.name]);
-    let _ = csv_writer.write_record(&["Description", &dashboard.description.unwrap_or_default()]);
-    let _ = csv_writer.write_record(&["Owner", &dashboard.owner_id]);
-    let _ = csv_writer.write_record(&["Public", &dashboard.is_public.unwrap_or(false).to_string()]);
-    let _ = csv_writer.write_record(&[""; 0]);
+    let _ = csv_writer.write_record(["Dashboard Export"]);
+    let _ = csv_writer.write_record(["ID", &dashboard.id.to_string()]);
+    let _ = csv_writer.write_record(["Name", &dashboard.name]);
+    let _ = csv_writer.write_record(["Description", &dashboard.description.unwrap_or_default()]);
+    let _ = csv_writer.write_record(["Owner", &dashboard.owner_id]);
+    let _ = csv_writer.write_record(["Public", &dashboard.is_public.unwrap_or(false).to_string()]);
+    let _ = csv_writer.write_record([""; 0]);
 
-    let _ = csv_writer.write_record(&["Widgets"]);
-    let _ = csv_writer.write_record(&["Widget ID", "Name", "Type", "Config"]);
+    let _ = csv_writer.write_record(["Widgets"]);
+    let _ = csv_writer.write_record(["Widget ID", "Name", "Type", "Config"]);
     for widget in &widgets {
         let config_str = widget
             .config
             .as_ref()
             .map(|c| c.to_string())
             .unwrap_or_default();
-        let _ = csv_writer.write_record(&[
+        let _ = csv_writer.write_record([
             &widget.id.to_string(),
             &widget.name,
             &widget.widget_type,

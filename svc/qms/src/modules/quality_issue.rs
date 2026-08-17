@@ -454,7 +454,7 @@ pub async fn approve_issue_status(
             {
                 return Json(ApiResponse::error(403, "无审批权限"));
             }
-            if !issue_can_transition(&current_status, STATUS_CLOSED).is_ok() {
+            if issue_can_transition(&current_status, STATUS_CLOSED).is_err() {
                 return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
             }
             let issue = sqlx::query_as::<_, QualityIssue>(
@@ -509,7 +509,7 @@ pub async fn reject_issue_status(
     match current {
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
-            if !issue_can_transition(&current_status, STATUS_IN_PROGRESS).is_ok() {
+            if issue_can_transition(&current_status, STATUS_IN_PROGRESS).is_err() {
                 return Json(ApiResponse::error(400, "当前状态不允许驳回"));
             }
             let issue = sqlx::query_as::<_, QualityIssue>(
@@ -564,7 +564,7 @@ pub async fn cancel_issue(
     match current {
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
-            if !issue_can_transition(&current_status, STATUS_CANCELLED).is_ok() {
+            if issue_can_transition(&current_status, STATUS_CANCELLED).is_err() {
                 return Json(ApiResponse::error(400, "当前状态不允许取消"));
             }
             let issue = sqlx::query_as::<_, QualityIssue>(

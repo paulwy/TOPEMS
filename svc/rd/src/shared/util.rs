@@ -231,7 +231,7 @@ pub fn calc_formula_yield(actual: f64, theoretical: f64) -> Option<f64> {
 
 /// 校验项目优先级是否在 [-10, 10] 区间内。
 pub fn is_valid_priority(priority: i32) -> bool {
-    priority >= -10 && priority <= 10
+    (-10..=10).contains(&priority)
 }
 
 /// 校验项目状态字符串是否属于合法枚举值。

@@ -481,7 +481,7 @@ mod tests {
             .await;
 
         assert!(result.is_err());
-        let saga_id = result.unwrap_err().to_string();
+        let _saga_id = result.unwrap_err().to_string();
 
         // The saga should be in Compensated state (all compensations succeeded)
         let sagas = orch.store.list_failed_sagas().await.unwrap();

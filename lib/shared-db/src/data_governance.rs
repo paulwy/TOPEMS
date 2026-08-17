@@ -16,10 +16,12 @@ use uuid::Uuid;
 
 /// 数据分类级别（基于常见企业数据分级标准）
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[derive(Default)]
 pub enum DataClassification {
     /// 公开数据：可在组织外部自由共享
     Public,
     /// 内部数据：可在组织内共享，但不宜对外公开
+    #[default]
     Internal,
     /// 机密数据：仅限于特定团队或角色访问
     Confidential,
@@ -62,11 +64,6 @@ impl DataClassification {
     }
 }
 
-impl Default for DataClassification {
-    fn default() -> Self {
-        DataClassification::Internal
-    }
-}
 
 impl std::fmt::Display for DataClassification {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -248,8 +245,10 @@ impl EntityDataTags {
 
 /// 脱敏策略
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Default)]
 pub enum MaskingStrategy {
     /// 完全掩码：全部替换为固定字符（如 ********）
+    #[default]
     FullMask,
     /// 部分掩码：保留部分字符（如 138****1234）
     PartialMask {
@@ -266,11 +265,6 @@ pub enum MaskingStrategy {
     Nullify,
 }
 
-impl Default for MaskingStrategy {
-    fn default() -> Self {
-        MaskingStrategy::FullMask
-    }
-}
 
 /// 脱敏规则：针对特定数据模式的脱敏配置
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -478,7 +472,7 @@ impl DataMaskingEngine {
                 use sha2::{Digest, Sha256};
                 let mut hasher = Sha256::new();
                 hasher.update(value.as_bytes());
-                format!("hash:{}", hex::encode(hasher.finalize())[..16].to_string())
+                format!("hash:{}", &hex::encode(hasher.finalize())[..16])
             }
             MaskingStrategy::Tokenize => {
                 format!(
@@ -1111,8 +1105,8 @@ impl ComplianceAuditor {
         events
             .iter()
             .filter(|e| e.timestamp >= start && e.timestamp <= end)
-            .filter(|e| tenant_id.map_or(true, |tid| e.tenant_id == tid))
-            .filter(|e| event_type.as_ref().map_or(true, |et| e.event_type == *et))
+            .filter(|e| tenant_id.is_none_or(|tid| e.tenant_id == tid))
+            .filter(|e| event_type.as_ref().is_none_or(|et| e.event_type == *et))
             .cloned()
             .collect()
     }

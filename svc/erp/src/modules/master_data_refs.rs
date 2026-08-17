@@ -1614,19 +1614,15 @@ pub async fn rollback_to_version(
 /// 合并策略
 #[derive(Debug, Clone, serde::Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum MergeStrategy {
     /// 最后写入胜出（基于时间戳）
+    #[default]
     LastWriteWins,
     /// 来源服务优先级（高优先级服务的数据胜出）
     SourcePriority,
     /// 手动审查（不自动合并，等待人工裁决）
     ManualReview,
-}
-
-impl Default for MergeStrategy {
-    fn default() -> Self {
-        MergeStrategy::LastWriteWins
-    }
 }
 
 /// 主数据冲突记录
@@ -3158,8 +3154,10 @@ impl QualityRuleType {
 /// 规则严重级别
 #[derive(Debug, Clone, serde::Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum QualitySeverity {
     /// 错误（必须修复）
+    #[default]
     Error,
     /// 警告
     Warning,
@@ -3181,12 +3179,6 @@ impl QualitySeverity {
             Self::Warning => "warning",
             Self::Info => "info",
         }
-    }
-}
-
-impl Default for QualitySeverity {
-    fn default() -> Self {
-        Self::Error
     }
 }
 
@@ -4386,7 +4378,7 @@ pub async fn get_governance_dashboard(
         let errors: i64 = row.try_get("errors").unwrap_or(0);
         let warnings: i64 = row.try_get("warnings").unwrap_or(0);
         let score = if total_checked > 0 {
-            let weighted_issues = (errors * 3 + warnings * 1) as f64;
+            let weighted_issues = (errors * 3 + warnings) as f64;
             let max_possible = (total_checked * 3) as f64;
             ((1.0 - weighted_issues / max_possible.max(1.0)) * 100.0).max(0.0)
         } else {
@@ -4430,7 +4422,7 @@ pub async fn get_governance_dashboard(
     .await
     .unwrap_or_default();
 
-    let all_services = vec!["erp", "crm", "hrm", "finance", "mes", "workflow"];
+    let all_services = ["erp", "crm", "hrm", "finance", "mes", "workflow"];
     let synced_set: std::collections::HashSet<_> =
         synced_services_rows.iter().map(|s| s.as_str()).collect();
     let sync_coverage = if all_services.is_empty() {
@@ -4688,7 +4680,7 @@ async fn calculate_domain_quality_score(db: &sqlx::PgPool, domain: &str) -> f64 
             let errors: i64 = row.try_get("errors").unwrap_or(0);
             let warnings: i64 = row.try_get("warnings").unwrap_or(0);
             if total_checked > 0 {
-                let weighted_issues = (errors * 3 + warnings * 1) as f64;
+                let weighted_issues = (errors * 3 + warnings) as f64;
                 let max_possible = (total_checked * 3) as f64;
                 ((1.0 - weighted_issues / max_possible.max(1.0)) * 100.0).max(0.0)
             } else {
@@ -5259,7 +5251,7 @@ pub async fn get_quality_trend(
             let warnings: i64 = row.try_get("warnings").unwrap_or(0);
 
             let score = if total_checked > 0 {
-                let weighted_issues = (errors * 3 + warnings * 1) as f64;
+                let weighted_issues = (errors * 3 + warnings) as f64;
                 let max_possible = (total_checked * 3) as f64;
                 ((1.0 - weighted_issues / max_possible.max(1.0)) * 100.0).max(0.0)
             } else {
@@ -9924,7 +9916,7 @@ impl MdmGraphqlStore {
     fn new() -> Self {
         let mut entities = std::collections::HashMap::new();
         let now = chrono::Utc::now().to_rfc3339();
-        let domains = vec![
+        let domains = [
             "customer",
             "supplier",
             "material",
@@ -10570,16 +10562,12 @@ fn base64_encode(input: &str) -> String {
 
 #[derive(Debug, Clone, serde::Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum SyncJobPriority {
     High,
+    #[default]
     Normal,
     Low,
-}
-
-impl Default for SyncJobPriority {
-    fn default() -> Self {
-        SyncJobPriority::Normal
-    }
 }
 
 #[derive(Debug, Clone, serde::Serialize, Deserialize)]
@@ -10709,7 +10697,7 @@ impl SyncEngineV2Store {
             low: vec![],
         };
         let mut tenant_stats = std::collections::HashMap::new();
-        let tenants = vec!["tenant-a", "tenant-b", "tenant-c"];
+        let tenants = ["tenant-a", "tenant-b", "tenant-c"];
 
         for (ti, tenant) in tenants.iter().enumerate() {
             for i in 1..=3 {
@@ -11938,7 +11926,7 @@ fn score_accuracy(profile: &EntityProfile) -> f64 {
         if !name.is_empty() {
             total += 1.0;
             let len = name.chars().count();
-            if len >= 2 && len <= 64 {
+            if (2..=64).contains(&len) {
                 pass += 1.0;
             }
         }
@@ -11978,28 +11966,26 @@ fn score_accuracy(profile: &EntityProfile) -> f64 {
 fn score_consistency(profile: &EntityProfile) -> f64 {
     let mut score: f64 = 100.0;
     // status 与 name 一致性：name 为空但 status=active 视为不一致
-    if profile.name.as_deref().unwrap_or("").is_empty() {
-        if profile
+    if profile.name.as_deref().unwrap_or("").is_empty()
+        && profile
             .fields
             .get("status")
             .and_then(|v| v.as_ref())
             .map(|s| s == "active")
             .unwrap_or(false)
-        {
-            score -= 30.0;
-        }
+    {
+        score -= 30.0;
     }
     // 同步时间与状态一致性：超过 90 天未同步但 active 视为不一致
-    if profile.last_synced_days_ago > 90 {
-        if profile
+    if profile.last_synced_days_ago > 90
+        && profile
             .fields
             .get("status")
             .and_then(|v| v.as_ref())
             .map(|s| s == "active")
             .unwrap_or(false)
-        {
-            score -= 20.0;
-        }
+    {
+        score -= 20.0;
     }
     score.max(0.0)
 }
@@ -12053,16 +12039,15 @@ fn score_validity(profile: &EntityProfile) -> f64 {
         score -= 20.0;
     }
     // material 的 unit 必须非空
-    if profile.domain == "material" {
-        if profile
+    if profile.domain == "material"
+        && profile
             .fields
             .get("unit")
             .and_then(|v| v.as_ref())
             .map(|s| s.is_empty())
             .unwrap_or(true)
-        {
-            score -= 25.0;
-        }
+    {
+        score -= 25.0;
     }
     // supplier 的 grade 必须是 A/B/C
     if profile.domain == "supplier" {
@@ -14507,61 +14492,65 @@ async fn trace_lineage(query: &LineageTraceQuery) -> LineageTraceResult {
         match direction {
             LineageDirection::Upstream => {
                 for edge in &edges {
-                    if edge.target == current_id && !visited_nodes.contains(&edge.source) {
-                        if query.relationship_types.as_ref().map_or(true, |types| {
+                    if edge.target == current_id
+                        && !visited_nodes.contains(&edge.source)
+                        && query.relationship_types.as_ref().is_none_or(|types| {
                             types.iter().any(|t| {
                                 std::mem::discriminant(t)
                                     == std::mem::discriminant(&edge.relationship)
                             })
-                        }) {
-                            visited_nodes.insert(edge.source.clone());
-                            result_edges.push(edge.clone());
-                            queue.push_back((edge.source.clone(), depth + 1));
-                        }
+                        })
+                    {
+                        visited_nodes.insert(edge.source.clone());
+                        result_edges.push(edge.clone());
+                        queue.push_back((edge.source.clone(), depth + 1));
                     }
                 }
             }
             LineageDirection::Downstream => {
                 for edge in &edges {
-                    if edge.source == current_id && !visited_nodes.contains(&edge.target) {
-                        if query.relationship_types.as_ref().map_or(true, |types| {
+                    if edge.source == current_id
+                        && !visited_nodes.contains(&edge.target)
+                        && query.relationship_types.as_ref().is_none_or(|types| {
                             types.iter().any(|t| {
                                 std::mem::discriminant(t)
                                     == std::mem::discriminant(&edge.relationship)
                             })
-                        }) {
-                            visited_nodes.insert(edge.target.clone());
-                            result_edges.push(edge.clone());
-                            queue.push_back((edge.target.clone(), depth + 1));
-                        }
+                        })
+                    {
+                        visited_nodes.insert(edge.target.clone());
+                        result_edges.push(edge.clone());
+                        queue.push_back((edge.target.clone(), depth + 1));
                     }
                 }
             }
             LineageDirection::Both => {
                 for edge in &edges {
-                    if edge.source == current_id && !visited_nodes.contains(&edge.target) {
-                        if query.relationship_types.as_ref().map_or(true, |types| {
+                    if edge.source == current_id
+                        && !visited_nodes.contains(&edge.target)
+                        && query.relationship_types.as_ref().is_none_or(|types| {
                             types.iter().any(|t| {
                                 std::mem::discriminant(t)
                                     == std::mem::discriminant(&edge.relationship)
                             })
-                        }) {
-                            visited_nodes.insert(edge.target.clone());
-                            result_edges.push(edge.clone());
-                            queue.push_back((edge.target.clone(), depth + 1));
-                        }
+                        })
+                    {
+                        visited_nodes.insert(edge.target.clone());
+                        result_edges.push(edge.clone());
+                        queue.push_back((edge.target.clone(), depth + 1));
                     }
-                    if edge.target == current_id && !visited_nodes.contains(&edge.source) {
-                        if query.relationship_types.as_ref().map_or(true, |types| {
+                    if edge.target == current_id
+                        && !visited_nodes.contains(&edge.source)
+                        && query.relationship_types.as_ref().is_none_or(|types| {
                             types.iter().any(|t| {
                                 std::mem::discriminant(t)
                                     == std::mem::discriminant(&edge.relationship)
                             })
-                        }) {
-                            visited_nodes.insert(edge.source.clone());
-                            result_edges.push(edge.clone());
-                            queue.push_back((edge.source.clone(), depth + 1));
-                        }
+                        })
+                    {
+                        visited_nodes.insert(edge.source.clone());
+                        result_edges.push(edge.clone());
+                        queue.push_back((edge.source.clone(), depth + 1));
                     }
                 }
             }
@@ -15021,7 +15010,7 @@ async fn filter_graph(
         .nodes
         .into_iter()
         .filter(|n| {
-            domain.map_or(true, |d| n.domain == d) && node_type.map_or(true, |t| n.node_type == t)
+            domain.is_none_or(|d| n.domain == d) && node_type.is_none_or(|t| n.node_type == t)
         })
         .collect();
 
@@ -15033,7 +15022,7 @@ async fn filter_graph(
         .filter(|e| {
             node_ids.contains(&e.source)
                 && node_ids.contains(&e.target)
-                && relationship.map_or(true, |r| {
+                && relationship.is_none_or(|r| {
                     let rel_str = match e.relationship {
                         LineageRelationship::References => "references",
                         LineageRelationship::DependsOn => "depends_on",
@@ -15202,11 +15191,11 @@ async fn find_critical_paths() -> Vec<Vec<String>> {
     for edge in &edges {
         outgoing
             .entry(edge.source.clone())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(edge.target.clone());
         incoming
             .entry(edge.target.clone())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(edge.source.clone());
     }
 
@@ -15263,7 +15252,7 @@ async fn detect_circular_dependencies() -> Vec<Vec<String>> {
     let mut adj: HashMap<String, Vec<String>> = HashMap::new();
     for edge in &edges {
         adj.entry(edge.source.clone())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(edge.target.clone());
     }
 
@@ -15814,7 +15803,7 @@ async fn generate_improvement_plan() -> ImprovementPlan {
                         s if s < 60.0 => "中（1-3 人月）".to_string(),
                         _ => "低（<1 人月）".to_string(),
                     },
-                    expected_impact: format!("预计该维度评分提升 5-15 分"),
+                    expected_impact: "预计该维度评分提升 5-15 分".to_string(),
                     timeline: match dim.score {
                         s if s < 30.0 => "3-6 个月".to_string(),
                         s if s < 60.0 => "1-3 个月".to_string(),
@@ -18769,7 +18758,7 @@ async fn list_generated_reports(
         .into_iter()
         .filter(|r| {
             if let Some(tid) = template_id {
-                if &r.template_id != tid {
+                if r.template_id != tid {
                     return false;
                 }
             }
@@ -19685,7 +19674,7 @@ async fn generate_audit_report(framework: Option<&str>) -> ComplianceAuditReport
     let rules = store.rules.lock().await.clone();
     let findings = store.findings.lock().await.clone();
 
-    let fw = framework.as_deref().and_then(parse_audit_framework);
+    let fw = framework.and_then(parse_audit_framework);
 
     let filtered_rules: Vec<&ComplianceRule> = match fw.as_ref() {
         Some(f) => rules.iter().filter(|r| &r.framework == f).collect(),
@@ -19751,7 +19740,6 @@ async fn get_audit_scorecard(framework: Option<&str>) -> AuditScorecard {
     let rules = store.rules.lock().await.clone();
 
     let fw = framework
-        .as_deref()
         .and_then(parse_audit_framework)
         .unwrap_or(AuditFramework::DataGovernance);
 

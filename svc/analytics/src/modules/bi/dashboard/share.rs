@@ -5,7 +5,6 @@ use axum::{
 use chrono::Utc;
 use sqlx::types::Uuid;
 use tracing::info;
-use utoipa::IntoParams;
 
 use crate::shared::AppState;
 

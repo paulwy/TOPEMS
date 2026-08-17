@@ -702,11 +702,11 @@ impl LoadAwareRouter {
         };
         self.instances
             .entry(service.to_string())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(instance);
         self.load_metrics
             .entry(service.to_string())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(metrics);
     }
 
@@ -1178,7 +1178,6 @@ pub fn get_traffic_policy(service: &str) -> TrafficPolicyGql {
         let limiter = rate_limiter().lock().unwrap_or_else(|e| e.into_inner());
         let rate_config = limiter
             .get_config(service)
-            .map(|c| c.clone())
             .unwrap_or_else(|| RateLimiterConfigGql {
                 service: service.to_string(),
                 max_requests_per_second: 100.0,
@@ -2407,11 +2406,11 @@ impl RateLimitingMutationRoot {
             .lock()
             .unwrap_or_else(|e| e.into_inner())
             .set_policy(&policy.key_pattern, ttl, consistency, invalidation);
-        Ok(intelligent_cache()
+        intelligent_cache()
             .lock()
             .unwrap_or_else(|e| e.into_inner())
             .get_policy(&policy.key_pattern)
-            .ok_or_else(|| async_graphql::Error::new("Policy not found after set"))?)
+            .ok_or_else(|| async_graphql::Error::new("Policy not found after set"))
     }
 }
 

@@ -399,8 +399,8 @@ pub fn validate_consolidation(
     for e in entities.iter().skip(1) {
         if &e.currency != base_currency {
             let has_rate = conversion_rates.iter().any(|r| {
-                (&r.from_currency == base_currency && &r.to_currency == &e.currency)
-                    || (&r.from_currency == &e.currency && &r.to_currency == base_currency)
+                (&r.from_currency == base_currency && r.to_currency == e.currency)
+                    || (r.from_currency == e.currency && &r.to_currency == base_currency)
             });
             if !has_rate {
                 return Err(ConsolidationError::MissingConversionRate {

@@ -261,7 +261,7 @@ pub async fn test_connector(
 
             Json(ApiResponse::success(
                 ConnectorStatus {
-                    connector_id: connector.id.clone(),
+                    connector_id: connector.id,
                     name: connector.name.clone(),
                     is_connected,
                     error,

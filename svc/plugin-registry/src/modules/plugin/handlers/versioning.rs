@@ -169,7 +169,7 @@ pub async fn check_plugin_updates(
         release_notes: latest_version_info
             .as_ref()
             .and_then(|v| v.release_notes.clone()),
-        update_available_at: latest_version_info.and_then(|v| Some(v.created_at)),
+        update_available_at: latest_version_info.map(|v| v.created_at),
     };
 
     Json(CoreResponse::success(result, "Update check completed"))
@@ -179,8 +179,8 @@ fn compare_version_levels(current: &str, latest: &str) -> (bool, bool) {
     let current_parts: Vec<u32> = current.split('.').filter_map(|s| s.parse().ok()).collect();
     let latest_parts: Vec<u32> = latest.split('.').filter_map(|s| s.parse().ok()).collect();
 
-    let current_major = current_parts.get(0).copied().unwrap_or(0);
-    let latest_major = latest_parts.get(0).copied().unwrap_or(0);
+    let current_major = current_parts.first().copied().unwrap_or(0);
+    let latest_major = latest_parts.first().copied().unwrap_or(0);
 
     let current_minor = current_parts.get(1).copied().unwrap_or(0);
     let latest_minor = latest_parts.get(1).copied().unwrap_or(0);
@@ -314,7 +314,7 @@ pub async fn check_all_updates(
             release_notes: latest_version_info
                 .as_ref()
                 .and_then(|v| v.release_notes.clone()),
-            update_available_at: latest_version_info.and_then(|v| Some(v.created_at)),
+            update_available_at: latest_version_info.map(|v| v.created_at),
         });
     }
 

@@ -249,7 +249,7 @@ async fn create_project(
 
     let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(ref project) = result {
-        serde_json::to_value(&project).ok()
+        serde_json::to_value(project).ok()
     } else {
         None
     };

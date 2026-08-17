@@ -449,13 +449,7 @@ impl AgentService {
             '+' => a + b,
             '-' => a - b,
             '*' => a * b,
-            '/' => {
-                if b != 0.0 {
-                    a / b
-                } else {
-                    0.0
-                }
-            }
+            '/' if b != 0.0 => a / b,
             '^' => a.powf(b),
             _ => 0.0,
         };
@@ -490,7 +484,7 @@ impl AgentService {
     }
 
     fn get_weather_data(&self, _city: &str) -> WeatherData {
-        let weather_conditions = vec!["晴", "多云", "阴", "小雨", "中雨", "大雨", "雷阵雨", "雾霾"];
+        let weather_conditions = ["晴", "多云", "阴", "小雨", "中雨", "大雨", "雷阵雨", "雾霾"];
         let mut rng = rand::thread_rng();
         let idx = rand::Rng::gen_range(&mut rng, 0..weather_conditions.len());
 
@@ -609,7 +603,7 @@ impl AgentService {
         if code_clean.contains("sum") || code_clean.contains("add") {
             let nums: Vec<f64> = code_clean
                 .chars()
-                .filter(|c| c.is_digit(10) || *c == '.')
+                .filter(|c| c.is_ascii_digit() || *c == '.')
                 .collect::<String>()
                 .split('.')
                 .filter(|s| !s.is_empty())
@@ -974,7 +968,7 @@ impl WorkflowOrchestrator {
         let mut has_error = false;
         let mut error_msg: Option<String> = None;
 
-        for (_index, step) in workflow.steps.iter().enumerate() {
+        for step in workflow.steps.iter() {
             // Check condition
             if let Some(condition) = &step.condition {
                 if !self.evaluate_condition(condition, &context, &results) {

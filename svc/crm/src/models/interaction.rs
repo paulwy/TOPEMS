@@ -69,7 +69,7 @@ pub struct CreateInteractionRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, ToSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, ToSchema, Default)]
 pub struct UpdateInteractionRequest {
     #[serde(default)]
     pub customer_id: Option<Uuid>,
@@ -100,22 +100,6 @@ impl Default for CreateInteractionRequest {
             subject: None,
             content: None,
             scheduled_at: None,
-            notes: None,
-        }
-    }
-}
-
-impl Default for UpdateInteractionRequest {
-    fn default() -> Self {
-        Self {
-            customer_id: None,
-            contact_id: None,
-            type_: None,
-            subject: None,
-            content: None,
-            scheduled_at: None,
-            completed_at: None,
-            status: None,
             notes: None,
         }
     }

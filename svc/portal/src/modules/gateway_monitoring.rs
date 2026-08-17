@@ -554,8 +554,8 @@ impl GatewayMonitor {
         metrics
             .iter()
             .filter(|m| {
-                name.map_or(true, |n| m.name == n)
-                    && metric_type.as_ref().map_or(true, |t| m.metric_type == *t)
+                name.is_none_or(|n| m.name == n)
+                    && metric_type.as_ref().is_none_or(|t| m.metric_type == *t)
             })
             .rev()
             .take(limit)
@@ -657,8 +657,8 @@ impl GatewayMonitor {
             .iter()
             .filter(|m| {
                 m.name == metric_name
-                    && from.map_or(true, |f| m.checked_at.as_str() >= f)
-                    && to.map_or(true, |t| m.checked_at.as_str() <= t)
+                    && from.is_none_or(|f| m.checked_at.as_str() >= f)
+                    && to.is_none_or(|t| m.checked_at.as_str() <= t)
             })
             .cloned()
             .collect()
@@ -819,7 +819,7 @@ impl PerformanceTracer {
 
         traces
             .iter()
-            .filter(|t| query_hash.map_or(true, |h| t.query_hash.as_deref() == Some(h)))
+            .filter(|t| query_hash.is_none_or(|h| t.query_hash.as_deref() == Some(h)))
             .rev()
             .take(limit)
             .cloned()
@@ -932,7 +932,7 @@ impl PerformanceTracer {
 
         let filtered: Vec<&Trace> = traces
             .iter()
-            .filter(|t| query_hash.map_or(true, |h| t.query_hash.as_deref() == Some(h)))
+            .filter(|t| query_hash.is_none_or(|h| t.query_hash.as_deref() == Some(h)))
             .collect();
 
         match format {
@@ -1073,9 +1073,9 @@ impl AnomalyDetector {
         anomalies
             .iter()
             .filter(|a| {
-                anomaly_type.as_ref().map_or(true, |t| a.anomaly_type == *t)
-                    && severity.as_ref().map_or(true, |s| a.severity == *s)
-                    && metric_name.map_or(true, |m| a.metric_name == m)
+                anomaly_type.as_ref().is_none_or(|t| a.anomaly_type == *t)
+                    && severity.as_ref().is_none_or(|s| a.severity == *s)
+                    && metric_name.is_none_or(|m| a.metric_name == m)
             })
             .rev()
             .take(limit)

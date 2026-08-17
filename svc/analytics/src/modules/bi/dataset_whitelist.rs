@@ -14,17 +14,12 @@ use sqlx::PgPool;
 use std::env;
 use tracing::{error, warn};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum EnforceMode {
     Off,
+    #[default]
     Warn,
     Strict,
-}
-
-impl Default for EnforceMode {
-    fn default() -> Self {
-        EnforceMode::Warn
-    }
 }
 
 impl EnforceMode {
@@ -108,7 +103,7 @@ pub async fn validate_columns(
 
     let missing: Vec<String> = columns
         .iter()
-        .map(|c| c.clone())
+        .cloned()
         .filter(|c| !allowed.contains(c))
         .collect();
 
