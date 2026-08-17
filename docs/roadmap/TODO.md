@@ -3301,7 +3301,7 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 | # | 指标 | 基线（启动值） | 阈值 | Actual | Status |
 |---|------|:----:|:----:|--------|--------|
 | 1 | Finance handler 集成测试覆盖（settlement / unsettlement / reverse 3 端） | 0 handler tests（纯函数 168 unit 已 PASS，但 handler 链未接） | ≥20 handler tests 0 failed + 3 async handler 均已接前置校验层（grep `settlement_v55_validate_prepare` 匹配 3 处） | TBD | ⏳ 待执行 |
-| 2 | i18n 硬编码 strict-zero 全模块（scan-hardcoded-precise.cjs --strict） | baseline 280 FAIL（开工前第一件事重跑真实 baseline 并校正此处 Actual） | FAIL=0 且 WARN=0 且 ALL=0（真·严格清零） | TBD | ⏳ 待执行 |
+| 2 | i18n 硬编码 strict-zero 全模块（scan-hardcoded-precise.cjs --strict） | baseline 280 FAIL（开工前第一件事重跑真实 baseline 并校正此处 Actual） | FAIL=0 且 WARN=0 且 ALL=0（真·严格清零） | "FAIL=0 WARN=0 ALL=0" P1 三批 (8c4a3cfed/286c35bf8/本批) strict=0, V231 已清零; C+E 双闸 GREEN | ✅ |
 | 3 | Design Token 硬编码清零（色值 + box-shadow 合计） | baseline 616 条（V214 末段统计 2067→1024→616，开工前重跑真实 baseline） | 616→0，且 CI 强门禁（scan-hardcoded-colors.cjs --strict） | TBD | ⏳ 待执行 |
 | 4 | 11-Gate 全工作区固化（lefthook pre-commit + pre-push 双段） | 现 9-Gate：A-lint / B-typecheck / C-i18n / D-glossary / E-hardcoded / F-cargo-test / G-perm / H-CRM / I-icon+page | 9→11，新增 J-cargo-fmt / K-cargo-clippy；lefthook 新增 `pre-push` 段，Changes filter 按文件扩展名智能跑子集 | TBD | ⏳ 待执行 |
 | 5 | 版本章节完整度（标题 tag + 双表 Actual/Status） | V232 标题 tag=`⏳ 待执行`，2 张表 Actual=`TBD`，Status=`⏳` | tag=`✅ 已封版`，Actual 全部填实值（非 TBD/空），Status 16 行全部 ✅ | TBD | ⏳ 待执行 |
