@@ -224,16 +224,29 @@ for (const fp of allApiFiles) {
 
       if (a.kind === 'spread') {
         const target = a.name;
-        // 检测 createCrudApi<T>('/path') 模式，注入 CRUD 方法
-        const crudMatch = body.slice(a.pos, a.pos + 200).match(/createCrudApi(?:<[^>]+>)?\s*\(\s*[`'"]([^`'"]+)[`'"]/);
+        // 检测 createCrudApi<T>('/path') 模式，注入 CRUD 方法（含返回类型推断）
+        const crudMatch = body.slice(a.pos, a.pos + 200).match(/createCrudApi(?:<([^>]+)>)?\s*\(\s*[`'"]([^`'"]+)[`'"]/);
         if (crudMatch || target === 'createCrudApi') {
-          const crudEndpoint = crudMatch?.[1] || '';
-          // 注入 5 个标准 CRUD 方法
+          const crudGeneric = crudMatch?.[1] || ''; // e.g. 'PtPlan' from createCrudApi<PtPlan>
+          const crudEndpoint = crudMatch?.[2] || '';
+          // 标准实现（参考 lims/utils.ts 的 createCrudApi<T>）：
+          //   list   → ApiResponse<PaginatedResult<T>>（分页结构，含 list/data/items/total）
+          //   get    → ApiResponse<T>
+          //   create → ApiResponse<T>
+          //   update → ApiResponse<T>
+          //   delete → ApiResponse<string>
+          const verbMap = { list: 'get', get: 'get', create: 'post', update: 'put', delete: 'delete' };
+          const retMap = {
+            list: crudGeneric ? `ApiResponse<PaginatedResult<${crudGeneric}>>` : 'ApiResponse<PaginatedResult>',
+            get: crudGeneric ? `ApiResponse<${crudGeneric}>` : 'ApiResponse',
+            create: crudGeneric ? `ApiResponse<${crudGeneric}>` : 'ApiResponse',
+            update: crudGeneric ? `ApiResponse<${crudGeneric}>` : 'ApiResponse',
+            delete: 'ApiResponse<string>',
+          };
           for (const m of ['list','get','create','update','delete']) {
             if (!entries[m]) {
               entries[m] = { kind: 'method' };
-              const verbMap = { list: 'get', get: 'get', create: 'post', update: 'put', delete: 'delete' };
-              LEAF_DICT[canonical + '.' + m] = { verb: verbMap[m], url: crudEndpoint, returns: '', file: relFile };
+              LEAF_DICT[canonical + '.' + m] = { verb: verbMap[m], url: crudEndpoint, returns: retMap[m], file: relFile };
             }
           }
           continue;
@@ -259,14 +272,41 @@ for (const fp of allApiFiles) {
         const verb = afterColon.match(/apiClient(?:\.[A-Za-z_][\w]*)?\s*\.\s*(get|post|put|patch|delete)/);
         const url = afterColon.match(/apiClient(?:\.[A-Za-z_][\w]*)?\s*\.\s*(?:get|post|put|patch|delete)\s*\(\s*[`'"]([^`'"]+)/);
         const rtInner = extractPromiseInner(afterColon);
-        if (verb || url || rtInner) {
+        // 检测箭头函数体内的 createCrudApi<T>('path').<method>(...) 调用
+        // 例如: createSample: (data) => createCrudApi<Sample>('/samples').create(data)
+        // 根据泛型 T 和方法名推断返回类型（与 utils.ts 的 createCrudApi<T> 实现一致）
+        const crudCallMatch = afterColon.match(/createCrudApi(?:<([^>]+)>)?\s*\(\s*[`'"]([^`'"]+)[`'"]\s*\)\s*\.\s*(list|get|create|update|delete)\s*\(/);
+        let crudInferredReturn = '';
+        if (crudCallMatch) {
+          const crudT = crudCallMatch[1] || '';
+          const crudM = crudCallMatch[3];
+          const crudRetMap = {
+            list: crudT ? `ApiResponse<PaginatedResult<${crudT}>>` : 'ApiResponse<PaginatedResult>',
+            get: crudT ? `ApiResponse<${crudT}>` : 'ApiResponse',
+            create: crudT ? `ApiResponse<${crudT}>` : 'ApiResponse',
+            update: crudT ? `ApiResponse<${crudT}>` : 'ApiResponse',
+            delete: 'ApiResponse<string>',
+          };
+          crudInferredReturn = crudRetMap[crudM];
+        }
+        // 推断返回类型：优先 Promise<T>，其次 createCrudApi 工厂推断，最后 apiClient 推断 ApiResponse
+        const inferredReturn = rtInner || crudInferredReturn || (verb ? 'ApiResponse' : '');
+        let inferredVerb = verb?.[1] || '';
+        let inferredUrl = url?.[1] || '';
+        // 箭头函数调用 createCrudApi 时，根据标准 CRUD 实现补全 verb/url
+        if (crudCallMatch && !inferredVerb) {
+          const crudVerbMap = { list: 'get', get: 'get', create: 'post', update: 'put', delete: 'delete' };
+          inferredVerb = crudVerbMap[crudCallMatch[3]];
+          inferredUrl = crudCallMatch[2];
+        }
+        if (verb || url || rtInner || crudCallMatch) {
           entries[a.name] = { kind: 'method' };
-          LEAF_DICT[canonical + '.' + a.name] = { verb: verb?.[1]||'', url: url?.[1]||'', returns: rtInner||'', file: relFile };
+          LEAF_DICT[canonical + '.' + a.name] = { verb: inferredVerb, url: inferredUrl, returns: inferredReturn, file: relFile };
         } else if (/(async\s+)?\([^)]*\)\s*=>|async\s+function|function\s*\(/.test(afterColon)) {
           // 箭头函数或 function 表达式（即使没有 apiClient 直接调用，也标记为方法）
-          // 例如: (params) => createCrudApi(...).list(params) 或 (params) => listDataSources({...})
+          // 例如: (params) => listDataSources({...})（未识别的工厂模式）
           entries[a.name] = { kind: 'method' };
-          LEAF_DICT[canonical + '.' + a.name] = { verb: '', url: '', returns: rtInner||'', file: relFile };
+          LEAF_DICT[canonical + '.' + a.name] = { verb: '', url: '', returns: inferredReturn, file: relFile };
         } else if (/^[A-Za-z_$][\w$]*\s*,?\s*$/.test(afterColon)) {
           // 纯标识符引用（如 create: createDataSource），通常是导入的函数引用
           entries[a.name] = { kind: 'method' };
@@ -308,33 +348,72 @@ for (const fp of allApiFiles) {
         const verb = block.match(/apiClient(?:\.[A-Za-z_][\w]*)?\s*\.\s*(get|post|put|patch|delete)/);
         const url = block.match(/apiClient(?:\.[A-Za-z_][\w]*)?\s*\.\s*(?:get|post|put|patch|delete)\s*\(\s*[`'"]([^`'"]+)/);
         const rtInner = extractPromiseInner(block);
+        const inferredReturn = rtInner || (verb ? 'ApiResponse' : '');
         if (verb || url || rtInner) {
           entries[a.name] = { kind: 'method' };
-          LEAF_DICT[canonical + '.' + a.name] = { verb: verb?.[1]||'', url: url?.[1]||'', returns: rtInner||'', file: relFile };
+          LEAF_DICT[canonical + '.' + a.name] = { verb: verb?.[1]||'', url: url?.[1]||'', returns: inferredReturn, file: relFile };
         } else {
           // shorthand method（async name() {} 或 name() {}），即使没有 apiClient 也标记为方法
           entries[a.name] = { kind: 'method' };
-          LEAF_DICT[canonical + '.' + a.name] = { verb: '', url: '', returns: rtInner||'', file: relFile };
+          LEAF_DICT[canonical + '.' + a.name] = { verb: '', url: '', returns: inferredReturn, file: relFile };
         }
       }
     }
   }
 
   // 直接工厂赋值: const xxxApi = createCrudApi<T>('/path')
-  const factoryRe = /(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*Api)(?:\s*:\s*[^=]+?)?\s*=\s*createCrudApi(?:<[^>]+>)?\s*\(\s*[`'"]([^`'"]+)[`'"]/g;
+  const factoryRe = /(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*Api)(?:\s*:\s*[^=]+?)?\s*=\s*createCrudApi(?:<([^>]+)>)?\s*\(\s*[`'"]([^`'"]+)[`'"]/g;
   let fcm; while ((fcm = factoryRe.exec(src)) !== null) {
     const symName = fcm[1];
-    const endpoint = fcm[2];
+    const genericType = fcm[2] || ''; // e.g. 'Position' from createCrudApi<Position>
+    const endpoint = fcm[3];
     const canonical = `${relFile.replace(/\.[^.]+$/,'')}:${symName}`;
     fileExports.set(symName, canonical);
     CANONICAL[canonical] = { filePath: fp, kind: 'object' };
     const entries = NESTED_MAP[canonical] || (NESTED_MAP[canonical] = {});
-    // 注入 5 个标准 CRUD 方法
+    // 注入 5 个标准 CRUD 方法，根据泛型 T 推断返回类型
+    // createCrudApi<T> 的标准实现：
+    //   list → ApiResponse<T[]>  (PaginatedResult<T>)
+    //   get/create/update/delete → ApiResponse<T>
     const verbMap = { list: 'get', get: 'get', create: 'post', update: 'put', delete: 'delete' };
+    const retMap = {
+      list: genericType ? `ApiResponse<${genericType}[]>` : 'ApiResponse',
+      get: genericType ? `ApiResponse<${genericType}>` : 'ApiResponse',
+      create: genericType ? `ApiResponse<${genericType}>` : 'ApiResponse',
+      update: genericType ? `ApiResponse<${genericType}>` : 'ApiResponse',
+      delete: genericType ? `ApiResponse<${genericType}>` : 'ApiResponse',
+    };
     for (const m of ['list','get','create','update','delete']) {
       if (!entries[m]) {
         entries[m] = { kind: 'method' };
-        LEAF_DICT[canonical + '.' + m] = { verb: verbMap[m], url: endpoint, returns: '', file: relFile };
+        LEAF_DICT[canonical + '.' + m] = { verb: verbMap[m], url: endpoint, returns: retMap[m], file: relFile };
+      }
+    }
+  }
+
+  // ── CrudOperations<T> 类型标注的对象：推断 CRUD 方法返回类型 ──
+  // 模式: export const xxxApi: CrudOperations<T> = { list: ..., get: ..., ... }
+  // 或:   export const xxxApi: CrudOperations<T> = createCrudApi<T>('/path')
+  const crudTypeRe = /(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*Api)\s*:\s*CrudOperations(?:<([^>]+)>)?\s*=/g;
+  let ctm; while ((ctm = crudTypeRe.exec(src)) !== null) {
+    const symName = ctm[1];
+    const genericType = ctm[2] || '';
+    const canonical = `${relFile.replace(/\.[^.]+$/,'')}:${symName}`;
+    // 若已有 NESTED_MAP 条目，补全 returns
+    const entries = NESTED_MAP[canonical];
+    if (entries) {
+      const retMap = {
+        list: genericType ? `ApiResponse<${genericType}[]>` : 'ApiResponse',
+        get: genericType ? `ApiResponse<${genericType}>` : 'ApiResponse',
+        create: genericType ? `ApiResponse<${genericType}>` : 'ApiResponse',
+        update: genericType ? `ApiResponse<${genericType}>` : 'ApiResponse',
+        delete: genericType ? `ApiResponse<${genericType}>` : 'ApiResponse',
+      };
+      for (const m of ['list','get','create','update','delete']) {
+        const key = canonical + '.' + m;
+        if (LEAF_DICT[key] && !LEAF_DICT[key].returns) {
+          LEAF_DICT[key].returns = retMap[m];
+        }
       }
     }
   }
