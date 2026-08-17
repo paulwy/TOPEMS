@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { RefreshCw, Power, AlertCircle } from 'lucide-react';
 import {
   Box,
@@ -20,8 +21,19 @@ import {
 import { PageContainer } from '@/components/common';
 import { useFeatureFlagStore } from '@/store/featureFlagStore';
 import { useTranslation } from 'react-i18next';
+import { featureFlagApi } from '@/api/system';
 
 const FeatureFlagPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['system', 'featureFlag'],
+    queryFn: async () => {
+      try {
+        return await featureFlagApi.list();
+      } catch {
+        return {};
+      }
+    },
+  });
   const { t } = useTranslation('system');
   const { flags, loading, error, fetchFlags, updateFlag, refreshFlag } = useFeatureFlagStore();
   const [togglingKey, setTogglingKey] = useState<string | null>(null);

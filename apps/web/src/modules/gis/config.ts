@@ -17,6 +17,7 @@ export const GIS_PATHS = {
 export const gisModuleConfig: RouteModuleConfig = {
   code: 'gis',
   name: i18n.t('shared.config.k0'),
+  nameKey: 'shared.config.k0',
   icon: 'Map',
   path: GIS_PATHS.root,
   source: 'plugin',
@@ -31,6 +32,7 @@ export const gisModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/gis/DashboardPage'), 'DashboardPage'),
       module: 'gis',
       title: i18n.t('shared.config.gis_0'),
+      titleKey: 'shared.config.gis_0',
       code: 'gis-dashboard',
       requiredPermissions: ['gis:dashboard:read'],
       action: 'read',
@@ -42,6 +44,7 @@ export const gisModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/gis/index'), 'GisMapPage'),
       module: 'gis',
       title: i18n.t('shared.config.k2'),
+      titleKey: 'shared.config.k2',
       code: 'gis-map',
       requiredPermissions: ['gis:map:read', 'gis:dashboard:read'],
       action: 'read',
@@ -53,6 +56,7 @@ export const gisModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/gis/GisTrackingPage'), 'GisTrackingPage'),
       module: 'gis',
       title: i18n.t('shared.config.k3'),
+      titleKey: 'shared.config.k3',
       code: 'gis-tracking',
       requiredPermissions: ['gis:tracking:read', 'gis:dashboard:read'],
       action: 'read',
@@ -64,6 +68,7 @@ export const gisModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/gis/GisFencePage'), 'GisFencePage'),
       module: 'gis',
       title: i18n.t('shared.config.k4'),
+      titleKey: 'shared.config.k4',
       code: 'gis-fence',
       requiredPermissions: ['gis:fence:read', 'gis:dashboard:read'],
       action: 'read',
@@ -77,6 +82,7 @@ export const gisModuleConfig: RouteModuleConfig = {
 export const gisNavConfig: ModuleNavConfig = {
   code: 'gis',
   name: i18n.t('shared.config.k5'),
+  nameKey: 'shared.config.k5',
   icon: 'Map',
   path: GIS_PATHS.root,
   permission: 'gis:dashboard:read',
@@ -89,6 +95,7 @@ export const gisNavConfig: ModuleNavConfig = {
     {
       code: 'gis-dashboard',
       label: i18n.t('shared.config.k7'),
+      labelKey: 'shared.config.k7',
       icon: 'LayoutDashboard',
       path: GIS_PATHS.dashboard,
       permission: 'gis:dashboard:read',
@@ -100,6 +107,7 @@ export const gisNavConfig: ModuleNavConfig = {
     {
       code: 'gis-map',
       label: i18n.t('shared.config.k8'),
+      labelKey: 'shared.config.k8',
       icon: 'MapPin',
       path: GIS_PATHS.map,
       permission: 'gis:map:read',
@@ -111,6 +119,7 @@ export const gisNavConfig: ModuleNavConfig = {
     {
       code: 'gis-tracking',
       label: i18n.t('shared.config.k10'),
+      labelKey: 'shared.config.k10',
       icon: 'Navigation',
       path: GIS_PATHS.tracking,
       permission: 'gis:tracking:read',
@@ -122,6 +131,7 @@ export const gisNavConfig: ModuleNavConfig = {
     {
       code: 'gis-fence',
       label: i18n.t('shared.config.k12'),
+      labelKey: 'shared.config.k12',
       icon: 'MapPin',
       path: GIS_PATHS.fence,
       permission: 'gis:fence:read',

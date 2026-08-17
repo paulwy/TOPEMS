@@ -9,11 +9,11 @@ import type {
 
 export const mappingApi = {
   listMappings: async (
-    connectionId: string,
+    connectionId?: string,
     params?: { mapping_type?: MappingType; page?: number; pageSize?: number }
   ): Promise<ApiResponse<ErpMapping[]>> => {
     return apiClient.integration.get(`/erp/mappings`, {
-      params: { connection_id: connectionId, ...params },
+      params: { ...(connectionId ? { connection_id: connectionId } : {}), ...params },
     });
   },
 

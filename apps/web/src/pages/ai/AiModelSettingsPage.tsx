@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -50,6 +51,7 @@ import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { LazyChart } from '@/components/charts';
 import i18n from '@/i18n';
+import { aiApi } from '@/api/ai';
 
 const ct= designTokens.colors;
 
@@ -186,6 +188,16 @@ const getStatusConfig = (status: AIModel['status'], t: (key: string) => string) 
 };
 
 export const AiModelSettingsPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['ai', 'modelSettings'],
+    queryFn: async () => {
+      try {
+        return await aiApi.listModels();
+      } catch {
+        return {};
+      }
+    },
+  });
   const addNotification = useNotificationStore((state) => state.addNotification);
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<SettingsTab>('models');

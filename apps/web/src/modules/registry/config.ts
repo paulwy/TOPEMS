@@ -1,4 +1,5 @@
 import type { RouteModuleConfig } from '@/routes/v2/types';
+import i18n from '@/i18n';
 
 export const REGISTRY_PATHS = {
   root: '/registry',
@@ -7,14 +8,15 @@ export const REGISTRY_PATHS = {
 
 export const registryModuleConfig: RouteModuleConfig = {
   code: 'registry',
-  name: 'Registry',
+  name: i18n.t('shared.registry.k0'),
+  nameKey: 'shared.registry.k0',
   icon: 'Archive',
   path: REGISTRY_PATHS.root,
   source: 'core',
   suite: 'enterprise',
   status: 'online',
   order: 24,
-  description: 'Plugin registry and module index admin',
+  description: i18n.t('shared.registry.k1'),
   permission: 'registry:dashboard:read',
   routes: [],
 };

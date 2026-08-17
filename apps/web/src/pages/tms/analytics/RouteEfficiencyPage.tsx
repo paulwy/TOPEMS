@@ -9,6 +9,8 @@ import i18n from '@/i18n';
  * 数据为 mock 数据。
  */
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { tmsApi } from '@/api/tms';
 import {
   ResponsiveContainer,
   BarChart,
@@ -35,6 +37,35 @@ const MOCK_DATA = [
 ];
 
 export default function RouteEfficiencyPage() {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['tms', 'RouteEfficiencyPage'],
+    queryFn: async () => {
+      try {
+        const res = await tmsApi.listRoutes();
+        const data = (res as { data?: unknown })?.data;
+        const items = Array.isArray(data)
+          ? data
+          : Array.isArray((data as { items?: unknown[] })?.items)
+          ? (data as { items: unknown[] }).items
+          : [];
+        const distances = items
+          .map((x: unknown) => (x as { distance?: number })?.distance)
+          .filter((v: unknown): v is number => typeof v === 'number' && !isNaN(v));
+        const avgDistance = distances.length > 0 ? distances.reduce((s, d) => s + d, 0) / distances.length : 0;
+        const totalTrips = items.reduce(
+          (s: number, x: unknown) => s + ((x as { total_trips?: number })?.total_trips ?? 0),
+          0
+        );
+        return {
+          total: items.length,
+          avgDistance,
+          totalTrips,
+        };
+      } catch {
+        return {};
+      }
+    },
+  });
   const data = useMemo(() => MOCK_DATA, []);
 
   const avgHours =

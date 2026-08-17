@@ -5,6 +5,8 @@
  * @path /mobile/home
  */
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { mobileApi } from '@/api/mobile';
 import {
   Home,
   Clock,
@@ -86,6 +88,16 @@ const mockActivities = [
   { id: '3', title: i18n.t('mobile.mobile_home_page.k13'), time: i18n.t('pages.mobile_home_page.1_3'), icon: <FileText size={16} /> },
 ];
 export const MobileHomePage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['mobile-home-page'],
+    queryFn: async () => {
+      try {
+        return await mobileApi.analytics.getUsageStats() ?? {};
+      } catch (e) {
+        return {};
+      }
+    },
+  });
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [checkedIn, setCheckedIn] = useState(false);

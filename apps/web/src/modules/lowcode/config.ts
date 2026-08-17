@@ -15,6 +15,7 @@ export const LOWCODE_PATHS = {
 export const lowcodeModuleConfig: RouteModuleConfig = {
   code: 'lowcode',
   name: i18n.t('shared.config.k0'),
+  nameKey: 'shared.config.k0',
   icon: 'Blocks',
   path: LOWCODE_PATHS.root,
   source: 'plugin',
@@ -29,6 +30,7 @@ export const lowcodeModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/lowcode/DashboardPage'), 'DashboardPage'),
       module: 'lowcode',
       title: i18n.t('shared.config.k2'),
+      titleKey: 'shared.config.k2',
       code: 'lowcode-dashboard',
       requiredPermissions: ['lowcode:dashboard:read'],
       action: 'read',
@@ -41,6 +43,7 @@ export const lowcodeModuleConfig: RouteModuleConfig = {
       module: 'lowcode',
       code: 'lowcode-apps',
       title: i18n.t('shared.config.k3'),
+      titleKey: 'shared.config.k3',
       template: 'list',
       group: 'master',
       requiredPermissions: ['lowcode:apps:read'],
@@ -52,6 +55,7 @@ export const lowcodeModuleConfig: RouteModuleConfig = {
       module: 'lowcode',
       code: 'lowcode-forms',
       title: i18n.t('shared.config.k4'),
+      titleKey: 'shared.config.k4',
       template: 'form',
       group: 'process',
       requiredPermissions: ['lowcode:form:read'],
@@ -63,6 +67,7 @@ export const lowcodeModuleConfig: RouteModuleConfig = {
       module: 'lowcode',
       code: 'lowcode-pages',
       title: i18n.t('shared.config.k5'),
+      titleKey: 'shared.config.k5',
       template: 'form',
       group: 'process',
       requiredPermissions: ['lowcode:page:read'],
@@ -77,6 +82,7 @@ export const lowcodeModuleConfig: RouteModuleConfig = {
       module: 'lowcode',
       code: 'lowcode-workflows',
       title: i18n.t('shared.config.k6'),
+      titleKey: 'shared.config.k6',
       template: 'form',
       group: 'setting',
       requiredPermissions: ['lowcode:workflow:read'],
@@ -88,6 +94,7 @@ export const lowcodeModuleConfig: RouteModuleConfig = {
 export const lowcodeNavConfig: ModuleNavConfig = {
   code: 'lowcode',
   name: i18n.t('shared.config.k7'),
+  nameKey: 'shared.config.k7',
   icon: 'Blocks',
   path: LOWCODE_PATHS.root,
   source: 'plugin' as const,
@@ -97,6 +104,7 @@ export const lowcodeNavConfig: ModuleNavConfig = {
     {
       code: 'lowcode-dashboard',
       label: i18n.t('shared.config.k8'),
+      labelKey: 'shared.config.k8',
       icon: 'LayoutDashboard',
       path: LOWCODE_PATHS.dashboard,
       permission: 'lowcode:dashboard:read',
@@ -108,6 +116,7 @@ export const lowcodeNavConfig: ModuleNavConfig = {
     {
       code: 'lowcode-apps',
       label: i18n.t('shared.config.k10'),
+      labelKey: 'shared.config.k10',
       path: LOWCODE_PATHS.apps,
       permission: 'lowcode:apps:read',
       group: 'master',
@@ -116,6 +125,7 @@ export const lowcodeNavConfig: ModuleNavConfig = {
     {
       code: 'lowcode-forms',
       label: i18n.t('shared.config.k11'),
+      labelKey: 'shared.config.k11',
       path: LOWCODE_PATHS.forms,
       permission: 'lowcode:form:read',
       group: 'process',
@@ -124,6 +134,7 @@ export const lowcodeNavConfig: ModuleNavConfig = {
     {
       code: 'lowcode-pages',
       label: i18n.t('shared.config.k12'),
+      labelKey: 'shared.config.k12',
       path: LOWCODE_PATHS.pages,
       permission: 'lowcode:page:read',
       group: 'process',
@@ -132,6 +143,7 @@ export const lowcodeNavConfig: ModuleNavConfig = {
     {
       code: 'lowcode-workflows',
       label: i18n.t('shared.config.k13'),
+      labelKey: 'shared.config.k13',
       path: LOWCODE_PATHS.workflows,
       permission: 'lowcode:workflow:read',
       group: 'setting',

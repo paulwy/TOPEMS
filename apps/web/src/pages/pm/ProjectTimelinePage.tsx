@@ -1,4 +1,5 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   TimelinePageTemplate,
   type TimelineGroup,
@@ -6,6 +7,7 @@ import {
 import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import { Plus, Rocket, Target, Calendar } from 'lucide-react';
+import { pmApi } from '@/api/pm';
 const today = new Date();
 const formatDate = (daysOffset: number) => {
   const date = new Date(today);
@@ -171,6 +173,16 @@ const groups: TimelineGroup[] = [
   },
 ];
 export const ProjectTimelinePage: React.FC = () => {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['pm-timeline'],
+    queryFn: async () => {
+      try {
+        return await pmApi.milestones.getTimeline();
+      } catch {
+        return {};
+      }
+    },
+  });
   return (
     <PageContainer
       autoTitle={false}

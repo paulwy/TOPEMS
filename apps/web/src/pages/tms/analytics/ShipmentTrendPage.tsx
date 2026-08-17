@@ -10,6 +10,8 @@ import i18n from '@/i18n';
  * 数据为 mock 数据。
  */
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { tmsApi } from '@/api/tms';
 import {
   ResponsiveContainer,
   LineChart,
@@ -37,6 +39,31 @@ const MOCK_DATA = [
   { month: '2025-12', total: 270, delivered: 245, cancelled: 8 },
 ];
 export default function ShipmentTrendPage() {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['tms', 'ShipmentTrendPage'],
+    queryFn: async () => {
+      try {
+        const allRes = await tmsApi.listShipments({ page: 1, pageSize: 2000 });
+        const extractItems = (res: unknown) => {
+          const data = (res as { data?: unknown })?.data;
+          if (Array.isArray(data)) return data as Record<string, unknown>[];
+          const items = (data as { items?: unknown[] })?.items;
+          return Array.isArray(items) ? items as Record<string, unknown>[] : [];
+        };
+        const items = extractItems(allRes);
+        const statusOf = (x: Record<string, unknown>) => String(x.status ?? '').toLowerCase();
+        const deliveredItems = items.filter(x => statusOf(x).includes('deliver'));
+        const cancelledItems = items.filter(x => statusOf(x).includes('cancel'));
+        return {
+          total: items.length,
+          delivered: deliveredItems.length,
+          cancelled: cancelledItems.length,
+        };
+      } catch {
+        return {};
+      }
+    },
+  });
   const data = useMemo(() => MOCK_DATA, []);
   const totalShipments = data.reduce((s, d) => s + d.total, 0);
   const totalDelivered = data.reduce((s, d) => s + d.delivered, 0);

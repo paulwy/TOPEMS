@@ -52,6 +52,7 @@ import { useTranslation } from 'react-i18next';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+import { aiApi } from '@/api/ai';
 
 const ct= designTokens.colors;
 
@@ -192,6 +193,16 @@ const getCategoryColor = (category: string) => {
 };
 
 export const AiPromptLibraryPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['ai', 'promptLibrary'],
+    queryFn: async () => {
+      try {
+        return await aiApi.listPromptTemplates();
+      } catch {
+        return {};
+      }
+    },
+  });
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
   const { t } = useTranslation();

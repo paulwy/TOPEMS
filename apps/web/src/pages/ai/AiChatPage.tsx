@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   MessageSquare,
   Send,
@@ -50,6 +51,7 @@ import { PageContainer } from '@/components/common';
 import { AI_PATHS } from '@/modules/ai/config';
 import { useNotificationStore } from '@/store';
 import i18n from '@/i18n';
+import { aiApi } from '@/api/ai';
 
 interface Message {
   id: string;
@@ -160,6 +162,16 @@ const getTypeLabel = (type: Message['type']) => {
 };
 
 export const AiChatPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['ai', 'chat'],
+    queryFn: async () => {
+      try {
+        return await aiApi.listConversations();
+      } catch {
+        return {};
+      }
+    },
+  });
   const addNotification = useNotificationStore((state) => state.addNotification);
   const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>(mockMessages);

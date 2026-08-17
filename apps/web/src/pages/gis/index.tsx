@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { GisProvider, useGis } from '../../context/GisContext';
 import MapView from '../../components/gis/MapView';
 import { PageContainer } from '@/components/common';
@@ -33,6 +34,7 @@ import type {
   FactoryMap,
   BusinessLocation,
 } from '../../api/gis';
+import { gisApi } from '../../api/gis';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 
@@ -48,6 +50,17 @@ type TabType =
   | 'businessLocations';
 
 const GisContent: React.FC = () => {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['gis-map'],
+    queryFn: async () => {
+      try {
+        const res = await gisApi.getStatistics();
+        return res?.data ?? {};
+      } catch {
+        return {};
+      }
+    },
+  });
   const { t } = useTranslation('gis');
   const { state, loadAllData } = useGis();
   const [activeTab, setActiveTab] = useState<TabType>('map');

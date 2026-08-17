@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -45,6 +46,8 @@ import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { integrationApi } from '@/api/integration';
+import { externalErpApi } from '@/api/external-erp';
 
 const ct = designTokens.colors;
 
@@ -211,6 +214,16 @@ const getStatusColor = (status: SyncStatus) => {
 };
 
 export const IntegrationErpOverviewPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['integration', 'erpOverview'],
+    queryFn: async () => {
+      try {
+        return await externalErpApi.syncLogs.getSyncStatistics();
+      } catch {
+        return {};
+      }
+    },
+  });
   const { t } = useTranslation('integration');
   const addNotification = useNotificationStore((state) => state.addNotification);
 

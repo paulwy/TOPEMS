@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Settings, AlertTriangle, Bell, Database, Shield, Plug } from 'lucide-react';
 import { useNotificationStore } from '@/store';
 import {
@@ -7,7 +8,18 @@ import {
   type SettingValueType,
 } from '@/components/templates';
 import i18n from '@/i18n';
+import { monitorApi } from '@/api/monitor';
 export const MonitorSettingsPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['monitor', 'settings'],
+    queryFn: async () => {
+      try {
+        return await monitorApi.threshold.list();
+      } catch {
+        return {};
+      }
+    },
+  });
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [generalSettings, setGeneralSettings] = useState({
     monitoringEnabled: true,

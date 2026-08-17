@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   KanbanPageTemplate,
   type KanbanColumn,
 } from '../../components/templates/KanbanPageTemplate';
 import i18n from '@/i18n';
 import { Plus } from 'lucide-react';
+import { pmApi } from '@/api/pm';
 const initialColumns: KanbanColumn[] = [
   {
     id: 'backlog',
@@ -96,6 +98,16 @@ const initialColumns: KanbanColumn[] = [
   },
 ];
 export const ProjectTaskKanbanPage: React.FC = () => {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['pm-task-kanban'],
+    queryFn: async () => {
+      try {
+        return await pmApi.projects.getKanbanBoard();
+      } catch {
+        return {};
+      }
+    },
+  });
   const [columns, setColumns] = useState<KanbanColumn[]>(initialColumns);
   const handleCardMove = (cardId: string, sourceColumn: string, targetColumn: string) => {
     const sourceCol = columns.find((col) => col.id === sourceColumn);

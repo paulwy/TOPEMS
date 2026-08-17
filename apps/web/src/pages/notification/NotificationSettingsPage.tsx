@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Settings, Bell, MessageSquare, Zap, Bookmark } from 'lucide-react';
 import { useNotificationStore } from '@/store';
 import {
@@ -7,7 +8,18 @@ import {
   type SettingValueType,
 } from '@/components/templates';
 import i18n from '@/i18n';
+import { notificationApi } from '@/api/notification';
 export const NotificationSettingsPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['notification', 'settings'],
+    queryFn: async () => {
+      try {
+        return await notificationApi.listChannels();
+      } catch {
+        return {};
+      }
+    },
+  });
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [generalSettings, setGeneralSettings] = useState({
     notificationEnabled: true,

@@ -47,6 +47,19 @@ export const projectApi = {
   gantt: async (id: string) => {
     return apiClient.pm.get(`/projects/${id}/gantt`);
   },
+
+  listProjects: async (params?: {
+    project_type?: string;
+    status?: string;
+    page?: number;
+    pagesize?: number;
+  }) => {
+    return projectApi.list(params);
+  },
+
+  getKanbanBoard: async () => {
+    return apiClient.pm.get('/projects/kanban-board');
+  },
 };
 
 export const phaseApi = {
@@ -132,6 +145,10 @@ export const milestoneApi = {
 
   delete: async (projectId: string, id: string) => {
     return apiClient.pm.delete(`/projects/${projectId}/milestones/${id}`);
+  },
+
+  getTimeline: async () => {
+    return apiClient.pm.get('/projects/milestones/timeline');
   },
 };
 

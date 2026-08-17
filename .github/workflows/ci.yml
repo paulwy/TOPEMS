@@ -70,6 +70,8 @@ jobs:
       docs: ${{ steps.decide.outputs.docs }}
       ci: ${{ steps.decide.outputs.ci }}
       permission: ${{ steps.decide.outputs.permission }}
+      menu: ${{ steps.decide.outputs.menu }}
+      api_audit: ${{ steps.decide.outputs.api_audit }}
     steps:
       - uses: actions/checkout@v5
 
@@ -118,6 +120,20 @@ jobs:
               - 'scripts/ci/check-permission-matrix.cjs'
               - 'docs/roadmap/artifacts/rN-perm-matrix-baseline.json'
               - 'apps/web/src/__tests__/permission-matrix-guard.test.ts'
+            menu:
+              - 'apps/web/src/modules/*/config.ts'
+              - 'apps/web/src/lib/navigation/**'
+              - 'apps/web/src/routes/**'
+              - 'apps/web/src/config/permissions.ts'
+              - 'scripts/analyze-menu.cjs'
+            api_audit:
+              - 'apps/web/src/api/**'
+              - 'apps/web/src/pages/**'
+              - 'apps/web/src/modules/*/config.ts'
+              - 'apps/web/src/config/permissions.ts'
+              - 'scripts/p6-api-audit-v5.cjs'
+              - 'scripts/p7-perm-audit-v5.cjs'
+              - 'scripts/ci/check-api-audit.cjs'
             docs:
               - 'docs/**'
               - '**/*.md'
@@ -135,6 +151,8 @@ jobs:
             echo "frontend=true" >> $GITHUB_OUTPUT
             echo "i18n=true" >> $GITHUB_OUTPUT
             echo "permission=true" >> $GITHUB_OUTPUT
+            echo "menu=true" >> $GITHUB_OUTPUT
+            echo "api_audit=true" >> $GITHUB_OUTPUT
             echo "docs=true" >> $GITHUB_OUTPUT
             echo "ci=true" >> $GITHUB_OUTPUT
           else
@@ -142,6 +160,8 @@ jobs:
             echo "frontend=${{ steps.filter.outputs.frontend }}" >> $GITHUB_OUTPUT
             echo "i18n=${{ steps.filter.outputs.i18n }}" >> $GITHUB_OUTPUT
             echo "permission=${{ steps.filter.outputs.permission }}" >> $GITHUB_OUTPUT
+            echo "menu=${{ steps.filter.outputs.menu }}" >> $GITHUB_OUTPUT
+            echo "api_audit=${{ steps.filter.outputs.api_audit }}" >> $GITHUB_OUTPUT
             echo "docs=${{ steps.filter.outputs.docs }}" >> $GITHUB_OUTPUT
             echo "ci=${{ steps.filter.outputs.ci }}" >> $GITHUB_OUTPUT
           fi
@@ -795,6 +815,199 @@ jobs:
             echo "_/tmp/perm-gate-ci.json not available — check Perm-Gate step logs above_" >> $GITHUB_STEP_SUMMARY
           fi
 
+  # ──────────────────────────────────────────────────────────────────────────
+  # 菜单健康门禁（Menu-Gate）— 37 模块 Route × NavItem 双向一致性
+  #
+  # 8 rules (T1/T2/P1/R3 = FAIL 永久 0 容忍；其余 = WARN 永不阻断)：
+  #   FAIL: T1(Route缺titleKey) · T2(NavItem缺labelKey) · P1(权限码未注册) · R3(NavItem无对应Route→404)
+  #   WARN: R1(路径冲突) · R2(前缀不匹配) · R4(菜单无入口) · G1(缺NavGroup) · O1(order冲突) · C1(缺code) · M1(空壳模块)
+  #
+  # 与 permission-matrix-gate 共享同一批变更路径（menu / permission / frontend / rust / ci）
+  # CI 默认 DRY-RUN 不阻断 + 生成 JSON summary 写入 Step Summary；
+  # --fail-fast 在基线阈值(T1/T2/P1/R3=0)上判定超限时 exit=1 → CI red。
+  # ──────────────────────────────────────────────────────────────────────────
+  menu-health-gate:
+    name: Menu Health Gate (37 modules · Route×NavItem 2-way)
+    needs: changes
+    if: needs.changes.outputs.menu == 'true' || needs.changes.outputs.permission == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run Menu-Gate (report-json + fail-fast @ baseline T1=0 T2=0 P1=0 R3=0)
+        run: |
+          node scripts/analyze-menu.cjs \
+            --fail-fast \
+            --thresholds '{"T1":0,"T2":0,"P1":0,"R3":0}' \
+            --report-json=/tmp/menu-gate-ci.json \
+            --quiet
+          MENU_EXIT=$?
+          if [ $MENU_EXIT -ne 0 ]; then
+            echo "Menu-Gate exit=$MENU_EXIT — failing the job"
+            exit $MENU_EXIT
+          fi
+
+      - name: Write Menu-Gate summary
+        if: always()
+        run: |
+          echo "## Menu Health Gate (37 modules · Route × NavItem 2-way)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f /tmp/menu-gate-ci.json ]; then
+            node -e "
+              const j = require('/tmp/menu-gate-ci.json');
+              console.log('### Overview');
+              console.log('| Metric | Value |');
+              console.log('|--------|-------|');
+              const s = j.stats || {};
+              console.log('| 总模块数 |', s.totalModules ?? '-', '|');
+              console.log('| Core / Plugin |', (s.coreModules?s.coreModules.length:0), '/', (s.pluginModules?s.pluginModules.length:0), '|');
+              console.log('| Route 项总数 |', s.totalRoutes ?? '-', '|');
+              console.log('| NavItem 项总数 |', s.totalNavItems ?? '-', '|');
+              console.log('| 权限要求总数 |', s.totalPermissionsRequired ?? '-', '|');
+              console.log('| 已注册权限码数 |', j.registeredPermissionsCount ?? '-', '|');
+              console.log('| 菜单最大嵌套深度 |', s.maxDepth ?? '-', '|');
+              console.log('| 空壳模块数 |', (j.emptyModules||[]).length, '|');
+              console.log('');
+              console.log('### Rules vs Baseline');
+              console.log('| Rule | Level | Count | Baseline max | Status |');
+              console.log('|------|-------|-------|--------------|--------|');
+              (j.issues || []).forEach(x => {
+                const base = x.threshold !== null && x.threshold !== undefined ? x.threshold : '∞';
+                const ok = x.threshold !== null && x.threshold !== undefined ? x.count <= x.threshold : true;
+                const mark = x.threshold === null ? '⚠️ WARN 不阻断' : (ok ? '✅' : '❌ > baseline');
+                console.log('|', x.id, '|', x.level, '|', x.count, '|', base, '|', mark, '|');
+              });
+              console.log('');
+              // 按模块 TOP 汇总（routes/navItems 数 Top 15）
+              const ms = (j.modulesSummary || []).slice().sort((a,b)=> (b.routesCount+b.navItemsCount)-(a.routesCount+b.navItemsCount)).slice(0,15);
+              if (ms.length) {
+                console.log('### Top 15 模块（按 Route+NavItem 数）');
+                console.log('| 模块 | source | suite | Routes | NavItems | nameKey |');
+                console.log('|------|--------|-------|--------|----------|---------|');
+                ms.forEach(m => {
+                  console.log('|', m.code, '|', (m.source||'-'), '|', (m.suite||'-'), '|', m.routesCount, '|', m.navItemsCount, '|', (m.hasNameKey?'✅':'❌'), '|');
+                });
+              }
+              console.log('');
+              // 空壳模块
+              if ((j.emptyModules||[]).length) {
+                console.log('**空壳模块（无 routes/navItems）：**', j.emptyModules.join(', '));
+                console.log('');
+              }
+              // 孤立路由 & 孤立导航
+              console.log('### 双向匹配');
+              console.log('- Route 有定义但菜单无入口（R4，多为详情页/创建页）：**', j.orphanRoutesCount, '** 条');
+              console.log('- NavItem 有菜单但无对应 Route（R3，会 404）：**', j.orphanNavItemsCount, '** 条');
+            " >> $GITHUB_STEP_SUMMARY
+          else
+            echo "_/tmp/menu-gate-ci.json not available — check Menu-Gate step logs above_" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # API 审计门禁（API-Audit-Gate）— P6 (Page→API) + P7 (RBAC 权限码)
+  #
+  # 3 FAIL 规则（永久 0 容忍，与 project_memory R1/R2/R3 对齐）：
+  #   p6.red          — Page 调用了 API 字典中不存在的方法（运行时 404/500）
+  #   p7.not_legal    — 前端使用了未在 PERMISSION_DEFS 注册的权限码（RBAC 绕过）
+  #   p7.mismatch     — NavItem.code 与 Route.permission 不一致（菜单可见但 403）
+  #
+  # 3 WARN 规则（仅报告，永不阻断）：
+  #   p6.yellow       — Page 期望分页结构但 API 返回非分页（需适配器兼容）
+  #   p6.amber        — API 返回类型未知（多为 createCrudApi 工厂方法）
+  #   p7.dead         — 已注册但前端未使用的权限码（待清理）
+  #
+  # CI 默认 DRY-RUN 不阻断 + 生成 JSON summary 写入 Step Summary；
+  # --fail-fast 在基线阈值(p6.red=0, p7.not_legal=0, p7.mismatch=0)上判定超限时 exit=1 → CI red。
+  # ──────────────────────────────────────────────────────────────────────────
+  api-audit-gate:
+    name: API Audit Gate (P6 Page→API + P7 RBAC)
+    needs: changes
+    if: needs.changes.outputs.api_audit == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run API Audit (P6 + P7, fail-fast @ baseline p6.red=0 p7.not_legal=0 p7.mismatch=0)
+        run: |
+          node scripts/ci/check-api-audit.cjs \
+            --fail-fast \
+            --thresholds '{"p6.red":0,"p7.not_legal":0,"p7.mismatch":0}' \
+            --report-json=/tmp/api-audit-ci.json \
+            --quiet
+          AUDIT_EXIT=$?
+          if [ $AUDIT_EXIT -ne 0 ]; then
+            echo "API-Audit-Gate exit=$AUDIT_EXIT — failing the job"
+            exit $AUDIT_EXIT
+          fi
+
+      - name: Write API-Audit summary
+        if: always()
+        run: |
+          echo "## API Audit Gate (P6 Page→API + P7 RBAC Permission Codes)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f /tmp/api-audit-ci.json ]; then
+            node -e "
+              const j = require('/tmp/api-audit-ci.json');
+              console.log('### Overview');
+              console.log('| Metric | Value | Threshold | Level |');
+              console.log('|--------|-------|-----------|-------|');
+              (j.results || []).forEach(r => {
+                const thr = r.threshold === Infinity ? '∞ (WARN)' : r.threshold;
+                const mark = r.level === 'PASS' ? '✅' : (r.level === 'FAIL' ? '❌' : '⚠️');
+                console.log('|', r.key, '|', r.value, '|', thr, '|', mark, r.level, '|');
+              });
+              console.log('');
+              console.log('### P7 RBAC Coverage');
+              console.log('- Legal permission codes: **', j.metrics['p7.legal_count'] ?? '-', '**');
+              console.log('- Used permission codes: **', j.metrics['p7.used_count'] ?? '-', '**');
+              console.log('- Coverage: **', j.metrics['p7.coverage_pct'] ?? '-', '%**');
+              console.log('- Dead codes (WARN, not blocking): **', j.metrics['p7.dead'] ?? 0, '**');
+              console.log('');
+              // P6 RED 样本
+              const p6Red = (j.samples && j.samples.p6Red) || [];
+              if (p6Red.length > 0) {
+                console.log('### P6 RED Samples (Page→API 方法不存在, 前 30 条)');
+                console.log('| keyPath | shapes | page |');
+                console.log('|---------|--------|------|');
+                p6Red.forEach(c => {
+                  console.log('|', c.keyPath, '|', (c.shapes || []).join(','), '|', c.page, '|');
+                });
+              }
+              // P7 NOT_LEGAL 样本
+              const p7nl = (j.samples && j.samples.p7NotLegal) || [];
+              if (p7nl.length > 0) {
+                console.log('');
+                console.log('### P7 NOT_LEGAL Samples (未注册权限码, 前 30 条)');
+                console.log('| code | usages |');
+                console.log('|------|--------|');
+                p7nl.forEach(x => {
+                  console.log('|', x.code, '|', (x.usages || []).join(' ; '), '|');
+                });
+              }
+              // P7 MISMATCH 样本
+              const p7mm = (j.samples && j.samples.p7Mismatch) || [];
+              if (p7mm.length > 0) {
+                console.log('');
+                console.log('### P7 MISMATCH Samples (NavItem.code ≠ Route.permission)');
+                console.log('```json');
+                console.log(JSON.stringify(p7mm, null, 2));
+                console.log('```');
+              }
+            " >> $GITHUB_STEP_SUMMARY
+          else
+            echo "_/tmp/api-audit-ci.json not available — check API-Audit-Gate step logs above_" >> $GITHUB_STEP_SUMMARY
+          fi
+
   frontend-typecheck:
     name: Frontend Type Check
     needs: changes
@@ -1148,6 +1361,7 @@ jobs:
       - frontend-audit
       - i18n-quality-gate
       - permission-matrix-gate
+      - menu-health-gate
       - security-scan
       - schema-defense-gate
     if: always()
@@ -1171,6 +1385,7 @@ jobs:
           echo "| Frontend Audit (V64) | ${{ needs.frontend-audit.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| i18n Quality Gate (R12 · 7-in-1: fake-en / key-align / mixed-structure / glossary / hardcoded / EN-missing / styleguide) | ${{ needs.i18n-quality-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Permission Matrix 3-Way Gate (R1/R2/R3 FAIL × backend×frontend×const) | ${{ needs.permission-matrix-gate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Menu Health Gate (37 modules · T1/T2/P1/R3 FAIL × Route×NavItem 2-way) | ${{ needs.menu-health-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
@@ -1186,10 +1401,11 @@ jobs:
           echo "- [ ] No circular dependencies introduced" >> $GITHUB_STEP_SUMMARY
           echo "- [ ] Bundle size did not increase significantly" >> $GITHUB_STEP_SUMMARY
           echo "- [ ] i18n: No hardcoded CJK text in TSX + no fake EN values in locale JSON" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Menu: Routes 含 titleKey / NavItems 含 labelKey / 权限码已注册 / 无悬空 NavItem(404)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Treat "skipped" as acceptable (path-filtered jobs); only fail on failure/cancelled.
-          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.security-scan.result }}"
+          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.security-scan.result }}"
 
           FAILED=false
           for result in $RESULTS; do

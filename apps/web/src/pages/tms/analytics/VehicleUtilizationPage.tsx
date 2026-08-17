@@ -8,6 +8,8 @@ import i18n from '@/i18n';
  * 数据为 mock 数据。
  */
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { tmsApi } from '@/api/tms';
 import {
   ResponsiveContainer,
   BarChart,
@@ -32,6 +34,28 @@ const MOCK_DATA = [
   { vehicleNo: 'V-010', utilization: 70, trips: 32 },
 ];
 export default function VehicleUtilizationPage() {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['tms', 'VehicleUtilizationPage'],
+    queryFn: async () => {
+      try {
+        const res = await tmsApi.listVehicles();
+        const data = (res as { data?: unknown })?.data;
+        const items = Array.isArray(data)
+          ? data
+          : Array.isArray((data as { items?: unknown[] })?.items)
+          ? (data as { items: unknown[] }).items
+          : [];
+        return {
+          total: items.length,
+          utilization: {
+            active: items.filter((x: unknown) => (x as { status?: string })?.status === 'ACTIVE').length,
+          },
+        };
+      } catch {
+        return {};
+      }
+    },
+  });
   const data = useMemo(() => MOCK_DATA, []);
   const avgUtilization =
     data.length > 0

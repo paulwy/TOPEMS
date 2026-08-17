@@ -8,6 +8,7 @@
  */
 
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   Search,
@@ -44,6 +45,7 @@ import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { iamApi } from '@/api/iam';
 
 // 关系类型配置
 const RELATION_TYPE_CONFIG: Record<
@@ -156,6 +158,17 @@ const TreeNodeComponent: React.FC<{
 };
 
 export default function CompanyStructurePage() {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['iam-company-structure'],
+    queryFn: async () => {
+      try {
+        // TODO: iamApi.getCompanyStructure 不存在，等待后端接口对接
+        return {};
+      } catch (e) {
+        return {};
+      }
+    },
+  });
   const { t } = useTranslation('iam');
   // 状态
   const [searchKeyword, setSearchKeyword] = useState('');

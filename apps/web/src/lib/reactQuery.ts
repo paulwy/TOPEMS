@@ -1,38 +1,113 @@
-import { QueryClient, QueryCache, MutationCache, type DefaultOptions } from '@tanstack/react-query';
+import {
+  QueryClient,
+  QueryCache,
+  MutationCache,
+  type DefaultOptions,
+} from '@tanstack/react-query';
 import { logger } from '@/utils/logger';
 import { useNotificationStore } from '../store';
 import i18n from '../i18n';
 
-function getT() {
-  return (key: string) => i18n.t(key);
+/**
+ * Fallback English strings for React Query cache callbacks.
+ *
+ * These callbacks fire outside the React render cycle, so we avoid depending
+ * on react-i18next's `t()` — while the static `i18n.t()` from i18next core
+ * should not itself call hooks, wrapping the translation lookup with a
+ * try/catch + hardcoded fallback eliminates both:
+ *   1. Any risk of accidentally triggering React-only primitives through
+ *      `initReactI18next` plugin internals (Invalid hook call).
+ *   2. Missing-translation fallthrough when the key path is wrong.
+ */
+const FALLBACK_TEXTS = {
+  data_load_failed_title: 'Data Load Failed',
+  operation_failed_title: 'Operation Failed',
+  operation_success_title: 'Operation Successful',
+  data_updated_message: 'Data Updated',
+} as const;
+
+/**
+ * Safely translate a key from the global i18n instance (no React context
+ * required).  Returns the fallback string when the key is missing or the
+ * call throws for any reason.
+ *
+ * NOTE: Shared-module translation keys live inside the default `translation`
+ * namespace as nested objects (buildAllTranslations merges `shared.json`
+ * into the merged bundle).  Therefore callers MUST use the dot-notation
+ * `shared.reactQuery.xxx` and NOT the colon-notation `shared:reactQuery.xxx`
+ * — the latter would ask i18next for a *namespace* literally named `shared`
+ * which does not exist in `ns: ['translation', 'schema']`.
+ */
+function safeTranslate(key: string, fallback: string): string {
+  try {
+    const translated = i18n.t(key);
+    if (translated && translated !== key) return translated;
+  } catch {
+    /* i18n is not ready or threw; fall through */
+  }
+  return fallback;
 }
 
 const queryCache = new QueryCache({
-  onError: (error) => {
+  onError: (error, query) => {
     try {
+      // Include the failing queryKey in structured logs so the culprit query
+      // can be identified without guessing.  If the original error is itself
+      // "Invalid hook call", this log line pinpoints which queryFn triggered
+      // it (e.g. a fn that accidentally called hooks after an `await`).
+      logger.error('[reactQuery] query failed', {
+        queryKey: query.queryKey,
+        queryHash: query.queryHash,
+        errorMessage: (error as { message?: string })?.message,
+      });
+
+      const title = safeTranslate(
+        'shared.reactQuery.data_load_failed',
+        FALLBACK_TEXTS.data_load_failed_title
+      );
       const addNotification = useNotificationStore.getState().addNotification;
       addNotification({
-        title: getT()('shared:reactQuery.data_load_failed'),
-        message: error.message,
+        title,
+        message: (error as { message?: string })?.message ?? String(error),
         type: 'error',
       });
     } catch {
-      logger.error('Query error:', error);
+      // If the notification path itself failed (zustand / i18n / UI side
+      // effect), at least make sure the original error still surfaces in
+      // structured logs.
+      logger.error('[reactQuery] query error (handler failed too)', {
+        queryKey: query.queryKey,
+        originalErrorMessage: (error as { message?: string })?.message,
+        originalErrorStack: (error as { stack?: string })?.stack,
+      });
     }
   },
 });
 
 const mutationCache = new MutationCache({
-  onError: (error) => {
+  onError: (error, _variables, _context, mutation) => {
     try {
+      logger.error('[reactQuery] mutation failed', {
+        mutationKey: (mutation as { options?: { mutationKey?: unknown } })?.options?.mutationKey,
+        errorMessage: (error as { message?: string })?.message,
+      });
+
+      const title = safeTranslate(
+        'shared.reactQuery.operation_failed',
+        FALLBACK_TEXTS.operation_failed_title
+      );
       const addNotification = useNotificationStore.getState().addNotification;
       addNotification({
-        title: getT()('shared:reactQuery.operation_failed'),
-        message: error.message,
+        title,
+        message: (error as { message?: string })?.message ?? String(error),
         type: 'error',
       });
     } catch {
-      logger.error('Mutation error:', error);
+      logger.error('[reactQuery] mutation error (handler failed too)', {
+        mutationKey: (mutation as { options?: { mutationKey?: unknown } })?.options?.mutationKey,
+        originalErrorMessage: (error as { message?: string })?.message,
+        originalErrorStack: (error as { stack?: string })?.stack,
+      });
     }
   },
 });
@@ -50,17 +125,28 @@ const defaultQueryOptions: DefaultOptions['queries'] = {
 
 const defaultMutationOptions: DefaultOptions['mutations'] = {
   retry: 1,
-  onSuccess: () => {
+  onSuccess: (_data, _variables, _context, mutation) => {
     try {
       const addNotification = useNotificationStore.getState().addNotification;
-      const t = getT();
+      const title = safeTranslate(
+        'shared.reactQuery.operation_success',
+        FALLBACK_TEXTS.operation_success_title
+      );
+      const message = safeTranslate(
+        'shared.reactQuery.data_updated',
+        FALLBACK_TEXTS.data_updated_message
+      );
       addNotification({
-        title: t('shared:reactQuery.operation_success'),
-        message: t('shared:reactQuery.data_updated'),
+        title,
+        message,
         type: 'success',
       });
+
+      logger.debug('[reactQuery] mutation succeeded', {
+        mutationKey: (mutation as { options?: { mutationKey?: unknown } })?.options?.mutationKey,
+      });
     } catch {
-      // ignore
+      // ignore — UI success notification is best-effort only
     }
   },
 };

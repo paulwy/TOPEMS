@@ -458,6 +458,13 @@ export const mobileApi = {
   delegateTask: approvalApi.delegateTask,
 
   // Push
+  push: pushApi,
+  // 分析子域
+  analytics: analyticsApi,
+  // 用户子域
+  user: userApi,
+  // 巡检子域
+  inspection: inspectionApi,
   listPushDevices: pushApi.listDevices,
   registerPushDevice: pushApi.registerDevice,
   listPushNotifications_v2: pushApi.listPushNotifications,

@@ -10,6 +10,8 @@ import i18n from '@/i18n';
  * 数据使用内置 mock 数据。
  */
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apsApi } from '@/api/aps';
 import {
   ResponsiveContainer,
   BarChart,
@@ -37,6 +39,18 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: designTokens.colors.error.main,
 };
 export default function ScheduleGanttPage() {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['aps', 'ScheduleGanttPage'],
+    queryFn: async () => {
+      try {
+        const res = await apsApi.listSchedules();
+        const items = res?.data?.items ?? (Array.isArray(res?.data) ? res.data : []);
+        return { schedules: items };
+      } catch {
+        return {};
+      }
+    },
+  });
   const data = useMemo(() => {
     return mockSchedules.map((s) => ({
       ...s,

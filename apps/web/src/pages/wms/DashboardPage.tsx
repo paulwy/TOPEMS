@@ -16,6 +16,7 @@ import { LazyChart } from '@/components/charts';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { wmsApi } from '@/api/wms';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string; size?: number }>> = {
   Warehouse,
@@ -27,6 +28,18 @@ const iconMap: Record<string, React.ComponentType<{ className?: string; size?: n
 export const DashboardPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
+  const { data: backendData2, isLoading: isBackendLoading2 } = useQuery({
+    queryKey: ['wms-dashboard'],
+    queryFn: async () => {
+      try {
+        const res = await wmsApi.dashboard.getOverview();
+        return res?.data ?? {};
+      } catch (e) {
+        return {};
+      }
+    },
+  });
 
   const loadingQuery = useQuery<boolean>({
     queryKey: QUERY_KEYS.AD_HOC.WMS_DASHBOARD_BASE,

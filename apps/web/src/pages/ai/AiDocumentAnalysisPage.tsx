@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -44,6 +45,7 @@ import { PageContainer, Grid } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
+import { aiApi } from '@/api/ai';
 
 const ct= designTokens.colors;
 
@@ -94,6 +96,16 @@ const keyPoints = [
 ];
 
 export const AiDocumentAnalysisPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['ai', 'documentAnalysis'],
+    queryFn: async () => {
+      try {
+        return await aiApi.listDocuments();
+      } catch {
+        return {};
+      }
+    },
+  });
   const addNotification = useNotificationStore((state) => state.addNotification);
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<AnalysisTab>('summary');

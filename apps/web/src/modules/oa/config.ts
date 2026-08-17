@@ -15,6 +15,7 @@ export const OA_PATHS = {
 export const oaModuleConfig: RouteModuleConfig = {
   code: 'oa',
   name: i18n.t('shared.config.k0'),
+  nameKey: 'shared.config.k0',
   icon: 'FileText',
   path: OA_PATHS.root,
   source: 'core',
@@ -29,6 +30,7 @@ export const oaModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/oa/DashboardPage'), 'DashboardPage'),
       module: 'oa',
       title: i18n.t('shared.config.k2'),
+      titleKey: 'shared.config.k2',
       code: 'oa-dashboard',
       requiredPermissions: ['oa:dashboard:read'],
       action: 'read',
@@ -44,6 +46,7 @@ export const oaModuleConfig: RouteModuleConfig = {
       module: 'oa',
       code: 'oa-documents',
       title: i18n.t('shared.config.k3'),
+      titleKey: 'shared.config.k3',
       template: 'list',
       group: 'business',
       requiredPermissions: ['oa:document:read'],
@@ -55,6 +58,7 @@ export const oaModuleConfig: RouteModuleConfig = {
       module: 'oa',
       code: 'oa-announcements',
       title: i18n.t('shared.config.k4'),
+      titleKey: 'shared.config.k4',
       template: 'list',
       group: 'master',
       requiredPermissions: ['oa:announcement:read'],
@@ -69,6 +73,7 @@ export const oaModuleConfig: RouteModuleConfig = {
       module: 'oa',
       code: 'oa-meetings',
       title: i18n.t('shared.config.k5'),
+      titleKey: 'shared.config.k5',
       template: 'form',
       group: 'process',
       requiredPermissions: ['oa:meeting:read'],
@@ -83,6 +88,7 @@ export const oaModuleConfig: RouteModuleConfig = {
       module: 'oa',
       code: 'oa-vehicles',
       title: i18n.t('shared.config.k6'),
+      titleKey: 'shared.config.k6',
       template: 'list',
       group: 'business',
       requiredPermissions: ['oa:vehicle:read'],
@@ -94,6 +100,7 @@ export const oaModuleConfig: RouteModuleConfig = {
 export const oaNavConfig: ModuleNavConfig = {
   code: 'oa',
   name: i18n.t('shared.config.k7'),
+  nameKey: 'shared.config.k7',
   icon: 'FileText',
   path: OA_PATHS.root,
   source: 'core',
@@ -103,6 +110,7 @@ export const oaNavConfig: ModuleNavConfig = {
     {
       code: 'oa-dashboard',
       label: i18n.t('shared.config.k8'),
+      labelKey: 'shared.config.k8',
       icon: 'LayoutDashboard',
       path: OA_PATHS.dashboard,
       permission: 'oa:dashboard:read',
@@ -114,6 +122,7 @@ export const oaNavConfig: ModuleNavConfig = {
     {
       code: 'oa-documents',
       label: i18n.t('shared.config.k10'),
+      labelKey: 'shared.config.k10',
       path: OA_PATHS.documents,
       permission: 'oa:document:read',
       group: 'business',
@@ -122,6 +131,7 @@ export const oaNavConfig: ModuleNavConfig = {
     {
       code: 'oa-announcements',
       label: i18n.t('shared.config.k11'),
+      labelKey: 'shared.config.k11',
       path: OA_PATHS.announcements,
       permission: 'oa:announcement:read',
       group: 'master',
@@ -130,6 +140,7 @@ export const oaNavConfig: ModuleNavConfig = {
     {
       code: 'oa-meetings',
       label: i18n.t('shared.config.k12'),
+      labelKey: 'shared.config.k12',
       path: OA_PATHS.meetings,
       permission: 'oa:meeting:read',
       group: 'process',
@@ -138,6 +149,7 @@ export const oaNavConfig: ModuleNavConfig = {
     {
       code: 'oa-vehicles',
       label: i18n.t('shared.config.k13'),
+      labelKey: 'shared.config.k13',
       path: OA_PATHS.vehicles,
       permission: 'oa:vehicle:read',
       group: 'business',

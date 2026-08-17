@@ -9,6 +9,8 @@ import i18n from '@/i18n';
  * 数据使用内置 mock 数据。
  */
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apsApi } from '@/api/aps';
 import {
   ResponsiveContainer,
   LineChart,
@@ -35,6 +37,28 @@ const mockData = [
   { period: '2025-12', forecast: 2100, actual: 2080 },
 ];
 export default function ForecastAccuracyPage() {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['aps', 'ForecastAccuracyPage'],
+    queryFn: async () => {
+      try {
+        const res = await apsApi.listForecasts();
+        const items = res?.data?.items ?? (Array.isArray(res?.data) ? res.data : []);
+        const valid = items.filter((f: any) => f.forecastQty || f.forecast || f.actualQty || f.actual);
+        const totalAcc = valid.reduce((s: number, f: any) => {
+          const fc = f.forecastQty || f.forecast || 0;
+          const ac = f.actualQty || f.actual || 0;
+          if (fc <= 0) return s;
+          return s + (100 - (Math.abs(ac - fc) / fc) * 100);
+        }, 0);
+        return {
+          forecasts: items,
+          accuracy: valid.length > 0 ? totalAcc / valid.length : 0,
+        };
+      } catch {
+        return {};
+      }
+    },
+  });
   const data = useMemo(() => {
     return mockData.map((d) => ({
       ...d,

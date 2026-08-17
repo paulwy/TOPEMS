@@ -1,5 +1,6 @@
 import { Box, Typography, Chip, Stack, useTheme } from '@mui/material';
 import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { BookOpen, FolderOpen, FileText } from 'lucide-react';
 
 import { useNotificationStore } from '@/store';
@@ -9,6 +10,7 @@ import { PageContainer } from '@/components/common';
 import { documentSchema } from '@/schemas/doc';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
+import { docApi } from '@/api/doc';
 
 const ct= designTokens.colors;
 
@@ -192,6 +194,16 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export const DocumentKnowledgeBasePage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['doc', 'knowledgeBase'],
+    queryFn: async () => {
+      try {
+        return await docApi.workspaces.listWorkspaces();
+      } catch {
+        return {};
+      }
+    },
+  });
   const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
 

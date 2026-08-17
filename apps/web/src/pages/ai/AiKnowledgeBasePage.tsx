@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -32,6 +33,7 @@ import { PageContainer, Grid } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
+import { aiApi } from '@/api/ai';
 
 const ct= designTokens.colors;
 
@@ -91,6 +93,16 @@ type ChatMessage = {
 };
 
 export const AiKnowledgeBasePage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['ai', 'knowledgeBase'],
+    queryFn: async () => {
+      try {
+        return await aiApi.getVectorCollections();
+      } catch {
+        return {};
+      }
+    },
+  });
   const addNotification = useNotificationStore((state) => state.addNotification);
   const { t } = useTranslation();
   const [query, setQuery] = useState('');

@@ -6,6 +6,8 @@ import type { CrudOperations } from '@/hooks/useCrudQueries';
 import { alertBatchApi } from './alertBatch';
 import { performanceExtendedApi } from './performanceExtended';
 import { ruleAdvancedApi } from './ruleAdvanced';
+import { ruleTypedApi } from './ruleTyped';
+import { metricTypedApi } from './metricTyped';
 import { suppressionApi } from './suppression';
 import { templateApi } from './template';
 import { thresholdApi } from './threshold';
@@ -284,6 +286,11 @@ export const monitorApi = {
       'testRetry'
     );
   },
+
+  ruleTyped: ruleTypedApi,
+  metrics: metricTypedApi,
+  threshold: thresholdApi,
+  alert: { batch: alertBatchApi },
 };
 
 export default monitorApi;
@@ -318,6 +325,8 @@ export {
   alertBatchApi,
   performanceExtendedApi,
   ruleAdvancedApi,
+  ruleTypedApi,
+  metricTypedApi,
   suppressionApi,
   templateApi,
   thresholdApi,

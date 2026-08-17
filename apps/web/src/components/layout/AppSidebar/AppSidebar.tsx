@@ -137,23 +137,36 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       const suiteInfo = SUITE_GROUPS[suiteKey] || SUITE_GROUPS.other;
       orders.push({ suite, order: suiteInfo.order });
 
-      result[suite] = modules.map((m: ModuleCardConfig) => ({
-        code: m.code,
-        label: m.name,
-        icon: m.icon,
-        path: m.path,
-        permission: m.permission,
-        order: m.order,
-        moduleCode: m.code,
-        moduleName: m.name,
-        badge: m.status === 'beta' ? 'Beta' : m.status === 'new' ? 'New' : undefined,
-      }));
+      result[suite] = modules.map((m: ModuleCardConfig) => {
+        // 运行时翻译：优先 nameKey（响应语言切换），降级到 name（模块初始化时的静态翻译）
+        const translatedName = m.nameKey ? i18n.t(m.nameKey) : m.name;
+        return {
+          code: m.code,
+          label: translatedName,
+          icon: m.icon,
+          path: m.path,
+          permission: m.permission,
+          order: m.order,
+          moduleCode: m.code,
+          moduleName: translatedName,
+          badge: m.status === 'beta' ? 'Beta' : m.status === 'new' ? 'New' : undefined,
+        };
+      });
     });
 
     orders.sort((a, b) => a.order - b.order);
     setSuiteOrder(orders.map((o) => o.suite));
     setGroupedModules(result);
   }, []);
+
+  // 语言切换时：重新分组并重翻译所有模块名称、面包屑与子菜单标签
+  useEffect(() => {
+    const onChange = () => updateGroupedNavItems();
+    i18n.on('languageChanged', onChange);
+    return () => {
+      i18n.off('languageChanged', onChange);
+    };
+  }, [updateGroupedNavItems]);
 
   useEffect(() => {
     updateGroupedNavItems();
@@ -165,8 +178,20 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
   const moduleNavItems = useMemo<NavItem[]>(() => {
     if (!currentModule) return [];
-    return navigationRegistryV2.getSidebarNavItems(currentModule, checkPermission);
-  }, [currentModule, checkPermission]);
+    const raw = navigationRegistryV2.getSidebarNavItems(currentModule, checkPermission);
+    // NavItem 也可能有 labelKey（从 NavItemConfig.labelKey 透传），在此翻译
+    const translate = (items: NavItem[]): NavItem[] =>
+      items.map((it) => {
+        const translated =
+          it.labelKey && typeof it.labelKey === 'string' ? i18n.t(it.labelKey) : it.label;
+        const next: NavItem = { ...it, label: translated };
+        if (Array.isArray(it.children) && it.children.length > 0) {
+          next.children = translate(it.children as NavItem[]);
+        }
+        return next;
+      });
+    return translate(raw);
+  }, [currentModule, checkPermission, i18n.language]);
 
   return (
     <Paper

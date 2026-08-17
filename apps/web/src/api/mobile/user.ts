@@ -51,6 +51,10 @@ export const userApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+
+  getSettings: async (): Promise<ApiResponse<any>> => {
+    return apiClient.mobile.get('/user/settings');
+  },
 };
 
 export default userApi;

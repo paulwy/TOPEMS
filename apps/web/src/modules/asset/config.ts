@@ -15,6 +15,7 @@ export const ASSET_PATHS = {
 export const assetModuleConfig: RouteModuleConfig = {
   code: 'asset',
   name: i18n.t('shared.config.k0'),
+  nameKey: 'shared.config.k0',
   icon: 'Package',
   path: ASSET_PATHS.root,
   source: 'plugin',
@@ -29,6 +30,7 @@ export const assetModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/asset/DashboardPage'), 'DashboardPage'),
       module: 'asset',
       title: i18n.t('shared.config.k2'),
+      titleKey: 'shared.config.k2',
       code: 'asset-dashboard',
       requiredPermissions: ['asset:dashboard:read'],
       action: 'read',
@@ -41,6 +43,7 @@ export const assetModuleConfig: RouteModuleConfig = {
       module: 'asset',
       code: 'asset-list',
       title: i18n.t('shared.config.k3'),
+      titleKey: 'shared.config.k3',
       template: 'list',
       group: 'business',
       requiredPermissions: ['asset:list:read'],
@@ -55,6 +58,7 @@ export const assetModuleConfig: RouteModuleConfig = {
       module: 'asset',
       code: 'asset-categories',
       title: i18n.t('shared.config.k4'),
+      titleKey: 'shared.config.k4',
       template: 'list',
       group: 'master',
       requiredPermissions: ['asset:category:read'],
@@ -66,6 +70,7 @@ export const assetModuleConfig: RouteModuleConfig = {
       module: 'asset',
       code: 'asset-depreciation',
       title: i18n.t('shared.config.k5'),
+      titleKey: 'shared.config.k5',
       template: 'form',
       group: 'analytics',
       requiredPermissions: ['asset:depreciation:read'],
@@ -77,6 +82,7 @@ export const assetModuleConfig: RouteModuleConfig = {
       module: 'asset',
       code: 'asset-transfers',
       title: i18n.t('shared.config.k6'),
+      titleKey: 'shared.config.k6',
       template: 'form',
       group: 'process',
       requiredPermissions: ['asset:transfer:read'],
@@ -88,6 +94,7 @@ export const assetModuleConfig: RouteModuleConfig = {
 export const assetNavConfig: ModuleNavConfig = {
   code: 'asset',
   name: i18n.t('shared.config.k7'),
+  nameKey: 'shared.config.k7',
   icon: 'Package',
   path: ASSET_PATHS.root,
   source: 'plugin' as const,
@@ -97,6 +104,7 @@ export const assetNavConfig: ModuleNavConfig = {
     {
       code: 'asset-dashboard',
       label: i18n.t('shared.config.k8'),
+      labelKey: 'shared.config.k8',
       icon: 'LayoutDashboard',
       path: ASSET_PATHS.dashboard,
       permission: 'asset:dashboard:read',
@@ -108,6 +116,7 @@ export const assetNavConfig: ModuleNavConfig = {
     {
       code: 'asset-list',
       label: i18n.t('shared.config.k10'),
+      labelKey: 'shared.config.k10',
       path: ASSET_PATHS.list,
       permission: 'asset:list:read',
       group: 'business',
@@ -116,6 +125,7 @@ export const assetNavConfig: ModuleNavConfig = {
     {
       code: 'asset-categories',
       label: i18n.t('shared.config.k11'),
+      labelKey: 'shared.config.k11',
       path: ASSET_PATHS.categories,
       permission: 'asset:category:read',
       group: 'master',
@@ -124,6 +134,7 @@ export const assetNavConfig: ModuleNavConfig = {
     {
       code: 'asset-depreciation',
       label: i18n.t('shared.config.k12'),
+      labelKey: 'shared.config.k12',
       path: ASSET_PATHS.depreciation,
       permission: 'asset:depreciation:read',
       group: 'analytics',
@@ -132,6 +143,7 @@ export const assetNavConfig: ModuleNavConfig = {
     {
       code: 'asset-transfers',
       label: i18n.t('shared.config.k13'),
+      labelKey: 'shared.config.k13',
       path: ASSET_PATHS.transfers,
       permission: 'asset:transfer:read',
       group: 'process',

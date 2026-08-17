@@ -9,10 +9,23 @@ import { useEhsDashboardSchema } from '@/schemas/ehs';
 
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { ehsApi } from '@/api/ehs';
 
 const EhsDashboardPage: React.FC = () => {
   const { t } = useTranslation();
   const schema = useEhsDashboardSchema();
+
+  const { data: backendData } = useQuery({
+    queryKey: ['ehs', 'dashboard-backend'],
+    queryFn: async () => {
+      try {
+        return await ehsApi.dashboard.getOverview();
+      } catch {
+        return {};
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const { isPending: loading} = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.EHS_DASHBOARD_BASE,

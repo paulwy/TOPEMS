@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationStore } from '@/store';
 import {
@@ -21,8 +22,19 @@ import {
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { adminApi } from '@/api/admin';
 const ct= designTokens.colors;
 const PerformanceMonitorPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['admin', 'performanceMonitor'],
+    queryFn: async () => {
+      try {
+        return await adminApi.monitoring.getSystemHealth();
+      } catch {
+        return {};
+      }
+    },
+  });
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const {

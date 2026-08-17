@@ -1,4 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { mobileApi } from '@/api/mobile';
 import {
   Box,
   Typography,
@@ -52,6 +54,16 @@ interface ScanHistoryItem {
   };
 }
 const MobileScanPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['mobile-scan-page'],
+    queryFn: async () => {
+      try {
+        return await mobileApi.inspection.listTasks() ?? {};
+      } catch (e) {
+        return {};
+      }
+    },
+  });
   const theme = useTheme();
   const navigate = useNavigate();
   const { addNotification } = useNotificationStore();

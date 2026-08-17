@@ -1671,6 +1671,10 @@ export const imApi = {
   updateGeofenceWithSync: imLocationApi.updateGeofenceWithSync,
   syncGeofenceToGis: imLocationApi.syncGeofenceToGis,
   searchGisPois: imLocationApi.searchGisPois,
+
+  getDashboardSummary: async (): Promise<ApiResponse<unknown>> => {
+    return apiClient.im.get('/dashboard/summary');
+  },
 };
 
 // ==================== 类型导出 ====================

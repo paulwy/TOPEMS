@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   Upload,
@@ -31,10 +32,25 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
+import { QUERY_KEYS } from '@/lib/reactQuery';
+import { pluginApi } from '@/api/plugin';
 
 const PluginUploadPage: React.FC = () => {
   const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
+
+  const { data: backendData } = useQuery({
+    queryKey: ['plugin', 'upload-backend'],
+    queryFn: async () => {
+      try {
+        return await pluginApi.listMarketplace();
+      } catch {
+        return {};
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 

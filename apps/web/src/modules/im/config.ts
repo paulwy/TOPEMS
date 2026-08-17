@@ -15,6 +15,7 @@ export const IM_PATHS = {
 export const imModuleConfig: RouteModuleConfig = {
   code: 'im',
   name: i18n.t('shared.config.k0'),
+  nameKey: 'shared.config.k0',
   icon: 'MessageSquare',
   path: IM_PATHS.root,
   source: 'plugin',
@@ -30,6 +31,7 @@ export const imModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/im/DashboardPage'), 'DashboardPage'),
       module: 'im',
       title: i18n.t('shared.config.k2'),
+      titleKey: 'shared.config.k2',
       code: 'im-dashboard',
       requiredPermissions: ['im:dashboard:read'],
       action: 'read',
@@ -41,6 +43,7 @@ export const imModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/im/MailPage'), 'MailPage'),
       module: 'im',
       title: i18n.t('shared.config.k3'),
+      titleKey: 'shared.config.k3',
       code: 'im-mail',
       requiredPermissions: ['im:mail:read', 'im:mail:read'],
       action: 'read',
@@ -54,6 +57,7 @@ export const imModuleConfig: RouteModuleConfig = {
 export const imNavConfig: ModuleNavConfig = {
   code: 'im',
   name: i18n.t('shared.config.k4'),
+  nameKey: 'shared.config.k4',
   icon: 'MessageSquare',
   path: IM_PATHS.root,
   permission: 'im:mail:read',
@@ -66,6 +70,7 @@ export const imNavConfig: ModuleNavConfig = {
     {
       code: 'im-dashboard',
       label: i18n.t('shared.config.k6'),
+      labelKey: 'shared.config.k6',
       icon: 'LayoutDashboard',
       path: IM_PATHS.dashboard,
       permission: 'im:dashboard:read',
@@ -77,6 +82,7 @@ export const imNavConfig: ModuleNavConfig = {
     {
       code: 'im-mail',
       label: i18n.t('shared.config.k8'),
+      labelKey: 'shared.config.k8',
       icon: 'Mail',
       path: IM_PATHS.mail,
       permission: 'im:mail:read',

@@ -153,12 +153,76 @@ function buildAllTranslations(): { zh: Record<string, unknown>; en: Record<strin
 
 const { zh: mergedZh, en: mergedEn } = buildAllTranslations();
 
+// 必须在 pickInitialLanguage() 之前声明，避免 TS2448/TS2454 声明顺序错误
+export const SUPPORTED_LANGUAGES = [
+  { code: 'zh', name: '中文', flag: 'CN' },
+  { code: 'en', name: 'English', flag: 'US' },
+] as const;
+export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number]['code'];
+
+/**
+ * 安全地获取浏览器可接受语言代码集合。
+ * 考虑 navigator.language / navigator.languages（如果存在）。
+ */
+function _navigatorLanguageCodes(): readonly string[] {
+  if (typeof navigator === 'undefined') return [];
+  const primary = typeof navigator.language === 'string' ? [navigator.language] : [];
+  const list =
+    Array.isArray(navigator.languages) && navigator.languages.length > 0
+      ? Array.from(navigator.languages)
+      : primary;
+  return list.map((x) => x.toLowerCase());
+}
+
+/**
+ * 选择初始语言。
+ * 优先级：
+ *   1. localStorage.language（仅在其为合法的 SUPPORTED_LANGUAGES 代码时才接受）
+ *   2. navigator.language / languages：含 zh(含 zh-CN/zh-TW 等) → zh
+ *   3. 默认 zh（平台默认展示语言）
+ *
+ * 这样做避免以下问题：
+ *   - 之前保存了非法代码（如 zh-CN、undefined 字符串等）
+ *   - 用户之前手动选择了英文但想回到中文，却不知道语言选择器位置
+ *   - 中文浏览器首次访问被错误显示为英文
+ */
+function pickInitialLanguage(): LanguageCode {
+  const validCodes = new Set(SUPPORTED_LANGUAGES.map((l) => l.code));
+
+  const stored =
+    typeof localStorage !== 'undefined' ? localStorage.getItem('language') : null;
+  if (stored !== null && validCodes.has(stored as LanguageCode)) {
+    return stored as LanguageCode;
+  }
+
+  const navCodes = _navigatorLanguageCodes();
+  if (navCodes.some((code) => code.startsWith('zh'))) {
+    return 'zh';
+  }
+
+  return 'zh';
+}
+
+const initialLanguage = pickInitialLanguage();
+// 同步写回 localStorage，保证下次启动一致性；LanguageSelector 仍会在切换时覆盖
+if (typeof localStorage !== 'undefined') {
+  const current = localStorage.getItem('language');
+  const validCodes = new Set<string>(SUPPORTED_LANGUAGES.map((l) => l.code));
+  if (current === null || !validCodes.has(current)) {
+    try {
+      localStorage.setItem('language', initialLanguage);
+    } catch {
+      /* ignore quota / private-mode errors */
+    }
+  }
+}
+
 i18n.use(initReactI18next).init({
   resources: {
     en: { translation: mergedEn, schema: schemaEn },
     zh: { translation: mergedZh, schema: schemaZh },
   },
-  lng: localStorage.getItem('language') || 'zh',
+  lng: initialLanguage,
   fallbackLng: 'zh',
   defaultNS: 'translation',
   ns: ['translation', 'schema'],
@@ -173,8 +237,3 @@ i18n.on('languageChanged', (lng: string) => {
 });
 
 export default i18n;
-export const SUPPORTED_LANGUAGES = [
-  { code: 'zh', name: '中文', flag: 'CN' },
-  { code: 'en', name: 'English', flag: 'US' },
-] as const;
-export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number]['code'];

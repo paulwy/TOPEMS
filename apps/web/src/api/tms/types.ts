@@ -129,4 +129,6 @@ export interface PaginationParams {
   page?: number;
   pageSize?: number;
   search?: string;
+  status?: string;
+  tenant_id?: string;
 }

@@ -8,6 +8,8 @@ import i18n from '@/i18n';
  * 数据为 mock 数据。
  */
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { tmsApi } from '@/api/tms';
 import {
   ResponsiveContainer,
   PieChart,
@@ -54,6 +56,34 @@ const MOCK_MONTHLY = [
   { month: '2025-12', fuel: 30000, toll: 15125, labor: 26000, other: 27000 },
 ];
 export default function FreightCostPage() {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['tms', 'FreightCostPage'],
+    queryFn: async () => {
+      try {
+        const [shipmentsRes, routesRes, carriersRes] = await Promise.all([
+          tmsApi.listShipments(),
+          tmsApi.listRoutes(),
+          tmsApi.listCarriers(),
+        ]);
+        const extractItems = (res: unknown) => {
+          const data = (res as { data?: unknown })?.data;
+          if (Array.isArray(data)) return data;
+          const items = (data as { items?: unknown[] })?.items;
+          return Array.isArray(items) ? items : [];
+        };
+        const n1 = extractItems(shipmentsRes).length;
+        const n2 = extractItems(routesRes).length;
+        const n3 = extractItems(carriersRes).length;
+        return {
+          shipments: n1,
+          routes: n2,
+          carriers: n3,
+        };
+      } catch {
+        return {};
+      }
+    },
+  });
   const costData = useMemo(
     () =>
       MOCK_COST_DATA.map((c) => ({

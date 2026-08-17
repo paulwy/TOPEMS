@@ -9,7 +9,7 @@
  */
 
 import React, { useMemo, useCallback } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plug, Cloud, Database, TestTube } from 'lucide-react';
 import { Box, Typography, Paper, Stack } from '@mui/material';
 
@@ -21,6 +21,7 @@ import { INTEGRATION_PATHS } from '@/modules/integration/config';
 import { integrationConnectionSchema } from '@/schemas/integration';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { integrationApi } from '@/api/integration';
 
 interface IntegrationConnection {
   id: string;
@@ -123,6 +124,16 @@ const renderStatsCards = (rows: Record<string, unknown>[]) => {
 };
 
 export const IntegrationConnectionsPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['integration', 'connection'],
+    queryFn: async () => {
+      try {
+        return await integrationApi.connections.listConnections();
+      } catch {
+        return {};
+      }
+    },
+  });
   const { t } = useTranslation('integration');
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);

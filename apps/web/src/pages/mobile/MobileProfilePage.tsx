@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { mobileApi } from '@/api/mobile';
 import { Box, Typography, Avatar, useTheme, Switch, Chip, Paper } from '@mui/material';
 import {
   Home,
@@ -39,6 +41,16 @@ interface SettingItem {
   badge?: React.ReactNode;
 }
 const MobileSettingsPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['mobile-profile-page'],
+    queryFn: async () => {
+      try {
+        return await mobileApi.user.getProfile() ?? {};
+      } catch (e) {
+        return {};
+      }
+    },
+  });
   const theme = useTheme();
   const navigate = useNavigate();
   const { user, setUser } = useAuthStore();
