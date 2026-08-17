@@ -229,6 +229,62 @@ jobs:
       - name: Run Clippy
         run: cargo clippy --workspace --all-targets -- -D warnings
 
+  # ──────────────────────────────────────────────────────────────────────────
+  # [V232-P3 NEW Gate J] Cargo fmt workspace (Rust only, standalone job)
+  # ──────────────────────────────────────────────────────────────────────────
+  fmt-check:
+    name: Gate J · cargo fmt --all --check (Rust workspace)
+    needs: changes
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2026-07-01
+          components: rustfmt
+
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "fmt-check-nightly-2026-07-01"
+
+      - name: Check code format (workspace)
+        run: cargo fmt --all --check
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # [V232-P3 NEW Gate K] Cargo clippy workspace -- -D warnings (standalone job)
+  # ──────────────────────────────────────────────────────────────────────────
+  clippy-check:
+    name: Gate K · cargo clippy --workspace -D warnings
+    needs: changes
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2026-07-01
+          components: clippy
+
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "clippy-check-nightly-2026-07-01"
+
+      - name: Run Clippy (workspace, all targets)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
   rust-test:
     name: Rust Tests
     needs: [changes, rust-lint]
@@ -1350,6 +1406,8 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - rust-lint
+      - fmt-check
+      - clippy-check
       - rust-test
       - rust-audit
       - frontend-lint
@@ -1373,6 +1431,8 @@ jobs:
           echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Rust Lint | ${{ needs.rust-lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate J · cargo fmt workspace | ${{ needs.fmt-check.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate K · cargo clippy workspace | ${{ needs.clippy-check.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Rust Tests | ${{ needs.rust-test.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Rust Security Audit | ${{ needs.rust-audit.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Schema Defense Gate（26 services · strict） | ${{ needs.schema-defense-gate.result }} |" >> $GITHUB_STEP_SUMMARY
@@ -1405,7 +1465,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Treat "skipped" as acceptable (path-filtered jobs); only fail on failure/cancelled.
-          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.security-scan.result }}"
+          RESULTS="${{ needs.rust-lint.result }} ${{ needs.fmt-check.result }} ${{ needs.clippy-check.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.security-scan.result }}"
 
           FAILED=false
           for result in $RESULTS; do
