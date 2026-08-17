@@ -1,0 +1,18 @@
+{
+  "version": "V232-baseline",
+  "commit": "47216b876",
+  "date": "2026-08-18",
+  "p1_baseline_fail": 0,
+  "p2_baseline_hardcoded": 616,
+  "baseline_gates_9": {
+    "A": 1,
+    "B": 2,
+    "C": 0,
+    "D": 0,
+    "E": 0,
+    "F": 0,
+    "G": 1,
+    "H": 1,
+    "I": 1
+  }
+}
