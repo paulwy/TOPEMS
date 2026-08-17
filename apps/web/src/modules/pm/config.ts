@@ -293,7 +293,7 @@ export const pmNavConfig: ModuleNavConfig = {
       code: 'pm-task-kanban',
       label: i18n.t('shared.config.pm_1'),
       labelKey: 'shared.config.pm_1',
-      icon: 'KanbanSquare',
+      icon: 'SquareKanban',
       path: PM_PATHS.taskKanban,
       permission: 'pm:task:read',
       order: 3,
