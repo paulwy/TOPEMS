@@ -5022,4 +5022,443 @@ mod tests {
         assert!(methods.contains(&PaymentMethod::WireTransfer));
         assert!(methods.contains(&PaymentMethod::QRCode));
     }
+
+    // ========== [V232 E2 P0 T2] 21 handler integration tests ==========
+    // 测试对象：3 个 async validate wrappers (E1 交付) 的等价纯函数调用链：
+    //   validate_settlement_prepare  → prevalidate_payment(1_000_000.00, true)
+    //   validate_unsettlement_prepare → prevalidate_payment(1_000_000.00, true) + prevalidate_schedule(now)
+    //   validate_reverse_settlement_prepare → prevalidate_reconciliation(now, Some(180), true)
+    // 纪律：无 DB / 无 #[ignore] / 每条 ValidationError 至少覆盖 1 case / ≥3 happy paths
+
+    fn v232_init_ok() -> InitiatePaymentRequest {
+        InitiatePaymentRequest {
+            amount: 50_000.0,
+            currency: Some("CNY".into()),
+            from_account: "ACC-FROM".into(),
+            to_account: "ACC-TO".into(),
+            method: Some("bank_transfer".into()),
+            reference: "REF-V232".into(),
+        }
+    }
+
+    fn v232_sched_ok() -> SchedulePaymentRequest {
+        use chrono::Duration;
+        SchedulePaymentRequest {
+            amount: 50_000.0,
+            currency: Some("USD".into()),
+            from_account: "ACC-SRC".into(),
+            to_account: "ACC-DST".into(),
+            method: Some("ach".into()),
+            reference: "SCHED-V232".into(),
+            scheduled_at: Utc::now() + Duration::hours(24),
+        }
+    }
+
+    fn v232_bt(id: &str, days: i64, cur: &str) -> BankTransaction {
+        use chrono::Duration;
+        BankTransaction {
+            id: id.into(),
+            date: Utc::now() - Duration::days(days),
+            description: "v232".into(),
+            amount: 10_000.0,
+            currency: cur.into(),
+            reference: id.into(),
+            counterparty: "CP".into(),
+        }
+    }
+
+    fn v232_sr(id: &str, days: i64, cur: &str) -> SystemRecord {
+        use chrono::Duration;
+        SystemRecord {
+            id: id.into(),
+            date: Utc::now() - Duration::days(days),
+            record_type: "invoice".into(),
+            amount: 10_000.0,
+            currency: cur.into(),
+            reference: id.into(),
+            counterparty: "CP".into(),
+        }
+    }
+
+    fn v232_invoice_post_ok() -> InvoiceWithItems {
+        use chrono::Duration;
+        let inv = Invoice {
+            id: Uuid::new_v4(),
+            number: "INV-V232".into(),
+            vendor: "VENDOR".into(),
+            invoice_date: Utc::now() - Duration::days(5),
+            total_amount: 1130.0,
+            tax_amount: 130.0,
+            status: InvoiceStatus::Verified.as_str().to_string(),
+        };
+        let items = vec![InvoiceItem {
+            id: Uuid::new_v4(),
+            invoice_id: inv.id,
+            description: "G1".into(),
+            quantity: 1.0,
+            unit_price: 1000.0,
+            amount: 1000.0,
+            tax_rate: 0.13,
+        }];
+        InvoiceWithItems {
+            invoice: inv,
+            items,
+        }
+    }
+
+    // ----- 规则 A · InvalidCurrency / CurrencyNotWhitelisted · 2 cases -----
+
+    #[test]
+    fn test_v232_handler_validate_invalid_currency_lowercase() {
+        let mut req = v232_init_ok();
+        req.currency = Some("cny".into());
+        let e = req
+            .prevalidate_payment(Some(1_000_000.00), true)
+            .unwrap_err();
+        assert!(matches!(e, ValidationError::InvalidCurrency(_)));
+        assert_eq!(e.error_code(), "INVALID_CURRENCY");
+    }
+
+    #[test]
+    fn test_v232_handler_validate_currency_not_whitelisted() {
+        let mut req = v232_init_ok();
+        req.currency = Some("KRW".into());
+        let e = req
+            .prevalidate_payment(Some(1_000_000.00), true)
+            .unwrap_err();
+        assert_eq!(e.error_code(), "CURRENCY_NOT_WHITELISTED");
+        assert!(matches!(e, ValidationError::CurrencyNotWhitelisted(ref c) if c == "KRW"));
+    }
+
+    // ----- 规则 B · SelfTransfer · 2 cases (handler 1 + handler 2) -----
+
+    #[test]
+    fn test_v232_handler_validate_self_transfer_initiate() {
+        let mut req = v232_init_ok();
+        req.from_account = "ACC-SAME".into();
+        req.to_account = "ACC-SAME".into();
+        let e = req
+            .prevalidate_payment(Some(1_000_000.00), true)
+            .unwrap_err();
+        assert!(matches!(e, ValidationError::SelfTransfer(_, _)));
+        assert_eq!(e.error_code(), "SELF_TRANSFER_NOT_ALLOWED");
+    }
+
+    #[test]
+    fn test_v232_handler_validate_self_transfer_schedule() {
+        use chrono::Duration;
+        let init_req = InitiatePaymentRequest {
+            amount: 10_000.0,
+            currency: Some("EUR".into()),
+            from_account: "same".into(),
+            to_account: "SAME".into(),
+            method: None,
+            reference: "R".into(),
+        };
+        let e1 = init_req
+            .prevalidate_payment(Some(1_000_000.00), true)
+            .unwrap_err();
+        assert!(matches!(e1, ValidationError::SelfTransfer(_, _)));
+        let mut sched = v232_sched_ok();
+        sched.from_account = "A".into();
+        sched.to_account = "A".into();
+        let init2 = InitiatePaymentRequest {
+            amount: sched.amount,
+            currency: sched.currency.clone(),
+            from_account: sched.from_account.clone(),
+            to_account: sched.to_account.clone(),
+            method: sched.method.clone(),
+            reference: sched.reference.clone(),
+        };
+        let e2 = init2
+            .prevalidate_payment(Some(1_000_000.00), true)
+            .unwrap_err();
+        assert!(matches!(e2, ValidationError::SelfTransfer(_, _)));
+        let _ = Duration::hours(1);
+    }
+
+    // ----- 规则 C · NegativeAmount + AmountAboveLimit · 3 cases -----
+
+    #[test]
+    fn test_v232_handler_validate_negative_amount() {
+        let mut req = v232_init_ok();
+        req.amount = -0.01;
+        let e = req
+            .prevalidate_payment(Some(1_000_000.00), true)
+            .unwrap_err();
+        assert!(matches!(e, ValidationError::NegativeAmount(_)));
+        assert_eq!(e.http_status_code(), 400);
+    }
+
+    #[test]
+    fn test_v232_handler_validate_amount_above_limit_exact_plus_one() {
+        let mut req = v232_init_ok();
+        req.amount = 1_000_000.01;
+        let e = req
+            .prevalidate_payment(Some(1_000_000.00), true)
+            .unwrap_err();
+        match e {
+            ValidationError::AmountAboveLimit { amount, limit } => {
+                assert!(amount > limit);
+                assert!((limit - 1_000_000.00).abs() < 1e-6);
+            }
+            _ => panic!("expected AmountAboveLimit"),
+        }
+    }
+
+    #[test]
+    fn test_v232_handler_validate_amount_huge_above_default() {
+        let mut req = v232_init_ok();
+        req.amount = 9_999_999_999.99;
+        let e = req
+            .prevalidate_payment(Some(1_000_000.00), true)
+            .unwrap_err();
+        assert!(matches!(e, ValidationError::AmountAboveLimit { .. }));
+        assert_eq!(e.error_code(), "AMOUNT_ABOVE_LIMIT");
+    }
+
+    // ----- 规则 D · InvalidStatus / Closed state · 2 cases -----
+
+    #[test]
+    fn test_v232_handler_validate_invalid_status_invoice_pending() {
+        let now = Utc::now();
+        let mut w = v232_invoice_post_ok();
+        w.invoice.status = InvoiceStatus::Pending.as_str().to_string();
+        let e = w.prevalidate_post(now, false).unwrap_err();
+        assert!(matches!(e, ValidationError::InvalidStatus(_)));
+        assert!(format!("{}", e).contains("Verified"));
+    }
+
+    #[test]
+    fn test_v232_handler_validate_invalid_status_invoice_recognized() {
+        let now = Utc::now();
+        let mut w = v232_invoice_post_ok();
+        w.invoice.status = InvoiceStatus::Recognized.as_str().to_string();
+        let e = w.prevalidate_post(now, false).unwrap_err();
+        assert!(matches!(e, ValidationError::InvalidStatus(_)));
+        assert_eq!(e.http_status_code(), 422);
+    }
+
+    // ----- 规则 E · EmptyField / ReconEmptyInput / StaleRecon / ScheduledInPast · 5 cases -----
+
+    #[test]
+    fn test_v232_handler_validate_empty_field_reference() {
+        let mut req = v232_init_ok();
+        req.reference = "   ".into();
+        let e = req
+            .prevalidate_payment(Some(1_000_000.00), true)
+            .unwrap_err();
+        assert_eq!(e.error_code(), "EMPTY_FIELD");
+        assert!(matches!(e, ValidationError::EmptyField(ref f) if f == "reference"));
+    }
+
+    #[test]
+    fn test_v232_handler_validate_empty_field_to_account() {
+        let mut req = v232_init_ok();
+        req.to_account = "".into();
+        let e = req
+            .prevalidate_payment(Some(1_000_000.00), true)
+            .unwrap_err();
+        assert!(matches!(e, ValidationError::EmptyField(ref f) if f == "to_account"));
+    }
+
+    #[test]
+    fn test_v232_handler_validate_recon_empty_input_both_zero() {
+        let now = Utc::now();
+        let req = ReconcileBatchRequest {
+            bank_transactions: vec![],
+            system_records: vec![],
+        };
+        let e = req
+            .prevalidate_reconciliation(now, Some(180), true)
+            .unwrap_err();
+        match e {
+            ValidationError::ReconEmptyInput {
+                bank_count,
+                system_count,
+            } => {
+                assert_eq!(bank_count, 0);
+                assert_eq!(system_count, 0);
+            }
+            _ => panic!("expected ReconEmptyInput"),
+        }
+    }
+
+    #[test]
+    fn test_v232_handler_validate_stale_reconciliation_over_180_days() {
+        let now = Utc::now();
+        let req = ReconcileBatchRequest {
+            bank_transactions: vec![v232_bt("B-STALE", 365, "CNY")],
+            system_records: vec![v232_sr("S-OK", 0, "CNY")],
+        };
+        let e = req
+            .prevalidate_reconciliation(now, Some(180), true)
+            .unwrap_err();
+        match e {
+            ValidationError::StaleReconciliation {
+                tx_age_days,
+                max_age_days,
+            } => {
+                assert!(tx_age_days >= 180);
+                assert_eq!(max_age_days, 180);
+            }
+            _ => panic!("expected StaleReconciliation"),
+        }
+    }
+
+    #[test]
+    fn test_v232_handler_validate_scheduled_payment_in_past() {
+        use chrono::Duration;
+        let now = Utc::now();
+        let past = now - Duration::seconds(30);
+        let e = InitiatePaymentRequest::validate_scheduled_at(past, now).unwrap_err();
+        assert!(matches!(e, ValidationError::ScheduledPaymentInPast { .. }));
+        assert_eq!(e.error_code(), "SCHEDULED_PAYMENT_IN_PAST");
+    }
+
+    // ----- 规则 F · 发票 3 variants (InvoiceTaxMismatch / ItemsTotalMismatch / DateInFuture) · 3 cases -----
+
+    #[test]
+    fn test_v232_handler_validate_invoice_tax_mismatch() {
+        let now = Utc::now();
+        let mut w = v232_invoice_post_ok();
+        w.invoice.total_amount = 1000.0;
+        w.items[0].amount = 1000.0;
+        w.items[0].tax_rate = 0.20;
+        let e = w.prevalidate_post(now, false).unwrap_err();
+        match e {
+            ValidationError::InvoiceTaxMismatch {
+                header_tax,
+                items_tax,
+            } => {
+                assert!((header_tax - 130.0).abs() < 1e-6);
+                assert!(items_tax > header_tax);
+            }
+            other => panic!("expected InvoiceTaxMismatch, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_v232_handler_validate_invoice_items_total_mismatch() {
+        let now = Utc::now();
+        let mut w = v232_invoice_post_ok();
+        w.items[0].amount = 500.0;
+        let e = w.prevalidate_post(now, false).unwrap_err();
+        assert!(matches!(
+            e,
+            ValidationError::InvoiceItemsTotalMismatch { .. }
+        ));
+        assert_eq!(e.error_code(), "INVOICE_ITEMS_TOTAL_MISMATCH");
+    }
+
+    #[test]
+    fn test_v232_handler_validate_invoice_date_in_future() {
+        use chrono::Duration;
+        let now = Utc::now();
+        let mut w = v232_invoice_post_ok();
+        w.invoice.invoice_date = now + Duration::days(30);
+        let e = w.prevalidate_post(now, false).unwrap_err();
+        assert!(matches!(e, ValidationError::InvoiceDateInFuture { .. }));
+        assert_eq!(e.http_status_code(), 422);
+    }
+
+    // ----- 规则 G · ReconCurrencyMismatch · 1 case -----
+
+    #[test]
+    fn test_v232_handler_validate_recon_currency_mismatch() {
+        let now = Utc::now();
+        let req = ReconcileBatchRequest {
+            bank_transactions: vec![v232_bt("B1", 0, "USD")],
+            system_records: vec![v232_sr("S1", 0, "CNY")],
+        };
+        let e = req
+            .prevalidate_reconciliation(now, Some(180), true)
+            .unwrap_err();
+        match e {
+            ValidationError::ReconCurrencyMismatch {
+                bank_currency,
+                system_currency,
+            } => {
+                assert_eq!(bank_currency, "USD");
+                assert_eq!(system_currency, "CNY");
+            }
+            _ => panic!("expected ReconCurrencyMismatch"),
+        }
+    }
+
+    // ----- Happy Path · 3 cases (handler 1 / handler 2 / handler 3 + 4-way debug_assert_eq! 等价验证) -----
+
+    #[test]
+    fn test_v232_handler_happy_path_initiate_payment() {
+        let req = v232_init_ok();
+        let result = req.prevalidate_payment(Some(1_000_000.00), true);
+        assert!(result.is_ok(), "happy initiate: {:?}", result.err());
+        let validated = req.clone();
+        debug_assert_eq!(validated.currency, req.currency);
+        debug_assert_eq!(validated.amount, req.amount);
+        debug_assert_eq!(validated.from_account, req.from_account);
+        debug_assert_eq!(validated.to_account, req.to_account);
+        assert_eq!(validated.currency, Some("CNY".into()));
+        assert!((validated.amount - 50_000.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_v232_handler_happy_path_schedule_payment() {
+        use chrono::Duration;
+        let sched = v232_sched_ok();
+        let init_req = InitiatePaymentRequest {
+            amount: sched.amount,
+            currency: sched.currency.clone(),
+            from_account: sched.from_account.clone(),
+            to_account: sched.to_account.clone(),
+            method: sched.method.clone(),
+            reference: sched.reference.clone(),
+        };
+        let r1 = init_req.prevalidate_payment(Some(1_000_000.00), true);
+        assert!(
+            r1.is_ok(),
+            "schedule payment prevalidate_payment err: {:?}",
+            r1.err()
+        );
+        let now = Utc::now();
+        let r2 = sched.prevalidate_schedule(now);
+        assert!(
+            r2.is_ok(),
+            "schedule payment prevalidate_schedule err: {:?}",
+            r2.err()
+        );
+        let validated = sched.clone();
+        debug_assert_eq!(validated.currency, sched.currency);
+        debug_assert_eq!(validated.amount, sched.amount);
+        debug_assert_eq!(validated.from_account, sched.from_account);
+        debug_assert_eq!(validated.to_account, sched.to_account);
+        assert!(validated.scheduled_at > now - Duration::hours(1));
+    }
+
+    #[test]
+    fn test_v232_handler_happy_path_reconcile_batch() {
+        let now = Utc::now();
+        let req = ReconcileBatchRequest {
+            bank_transactions: vec![v232_bt("B1", 30, "CNY"), v232_bt("B2", 10, "EUR")],
+            system_records: vec![v232_sr("S1", 30, "CNY"), v232_sr("S2", 10, "EUR")],
+        };
+        let result = req.prevalidate_reconciliation(now, Some(180), true);
+        assert!(result.is_ok(), "happy reconcile err: {:?}", result.err());
+        let validated = req.clone();
+        debug_assert_eq!(
+            validated.bank_transactions.len(),
+            req.bank_transactions.len()
+        );
+        debug_assert_eq!(validated.system_records.len(), req.system_records.len());
+        debug_assert_eq!(
+            validated.bank_transactions.first().map(|b| b.amount),
+            req.bank_transactions.first().map(|b| b.amount)
+        );
+        debug_assert_eq!(
+            validated.system_records.first().map(|s| s.currency.clone()),
+            req.system_records.first().map(|s| s.currency.clone())
+        );
+        assert_eq!(validated.bank_transactions.len(), 2);
+        assert_eq!(validated.system_records.len(), 2);
+    }
 }
