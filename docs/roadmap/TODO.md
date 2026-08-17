@@ -3288,6 +3288,42 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 
 ---
 
+## 🎯 V232 — i18n Strict-Zero + 616 Design Token 收尾 + Finance Handler 接入 + 9→11 Gate 升级（2026-08-18 · ⏳ 待执行）
+
+> **承接**：V231 六闸 SEAL ALL GREEN 封版（ec9dcd20f / dfaaedd4a）。方向 A "最后硬骨头收尾 + CI 升级一次性闭环"，打包策略 A-1（全量一锅端）。P0(Finance Handler)→P1(i18n 280→0)→P2(616 Design Token 收尾)→P3(9→11 Gate 升级)→P4(SEAL 11-Gate + TODO Actual 全填) 五批严格串行推进，5 批文件空间零耦合可独立 revert。
+> **日期**：2026-08-18
+> **验收原则**：每批完工即 `git add + commit`（scope 按批次 P0/P1/P2/P3），P4 完工后 A-K 11-Gate 本地实跑全绿 + TODO Actual/Status 两列 16 行填实值。
+> **设计文档（Spec）**：[2026-08-18-v232-i18n-design-token-finance-handler-11gate-design.md](file:///Users/xingzhai/TOPEMS/docs/superpowers/specs/2026-08-18-v232-i18n-design-token-finance-handler-11gate-design.md)
+> **实现计划（Plan）**：[2026-08-18-v232-i18n-design-token-finance-handler-11gate.md](file:///Users/xingzhai/TOPEMS/docs/superpowers/plans/2026-08-18-v232-i18n-design-token-finance-handler-11gate.md)
+
+### 📌 V232 成功标准（五批完工后 · KPI #1-#5）
+
+| # | 指标 | 基线（启动值） | 阈值 | Actual | Status |
+|---|------|:----:|:----:|--------|--------|
+| 1 | Finance handler 集成测试覆盖（settlement / unsettlement / reverse 3 端） | 0 handler tests（纯函数 168 unit 已 PASS，但 handler 链未接） | ≥20 handler tests 0 failed + 3 async handler 均已接前置校验层（grep `settlement_v55_validate_prepare` 匹配 3 处） | TBD | ⏳ 待执行 |
+| 2 | i18n 硬编码 strict-zero 全模块（scan-hardcoded-precise.cjs --strict） | baseline 280 FAIL（开工前第一件事重跑真实 baseline 并校正此处 Actual） | FAIL=0 且 WARN=0 且 ALL=0（真·严格清零） | TBD | ⏳ 待执行 |
+| 3 | Design Token 硬编码清零（色值 + box-shadow 合计） | baseline 616 条（V214 末段统计 2067→1024→616，开工前重跑真实 baseline） | 616→0，且 CI 强门禁（scan-hardcoded-colors.cjs --strict） | TBD | ⏳ 待执行 |
+| 4 | 11-Gate 全工作区固化（lefthook pre-commit + pre-push 双段） | 现 9-Gate：A-lint / B-typecheck / C-i18n / D-glossary / E-hardcoded / F-cargo-test / G-perm / H-CRM / I-icon+page | 9→11，新增 J-cargo-fmt / K-cargo-clippy；lefthook 新增 `pre-push` 段，Changes filter 按文件扩展名智能跑子集 | TBD | ⏳ 待执行 |
+| 5 | 版本章节完整度（标题 tag + 双表 Actual/Status） | V232 标题 tag=`⏳ 待执行`，2 张表 Actual=`TBD`，Status=`⏳` | tag=`✅ 已封版`，Actual 全部填实值（非 TBD/空），Status 16 行全部 ✅ | TBD | ⏳ 待执行 |
+
+### 🧱 V232 SEAL · 十一闸实跑（P4 批次触发 · 本地环境）
+
+| # | Gate | 命令 | 退出码 | 关键结果 | Status |
+|---|------|------|:------:|----------|--------|
+| A | lint（apps/web + scripts） | `npm run lint -w apps/web && npm run lint -w scripts` | — | 包含 eslint + prettier --check；scripts/*.cjs 全 prettier 2 空格 + 无 unused var | ⏳ 待执行 |
+| B | typecheck（apps/web） | `npm run typecheck -w apps/web` | — | `tsc --noEmit` 0 error 0 warning；i18n 新增 key 不引入未定义 import | ⏳ 待执行 |
+| C | i18n-quality-gate | `node scripts/ci/check-i18n-quality.cjs` | — | 假 en 值检测 + key 一致性 + flat/nested 三向 0 mismatch；P1 新增 ~280 个 i18n key 双语齐全 | ⏳ 待执行 |
+| D | glossary verify | `node scripts/ci/verify-glossary.cjs` | — | glossary.csv 别名 CSV 合法；0 alias 冲突；P1 新增翻译符合术语表（尤其 Finance settlement 相关术语 currency / period / reversal） | ⏳ 待执行 |
+| E | hardcoded-precise strict-zero | `node scripts/i18n/scan-hardcoded-precise.cjs --strict` | — | EXEMPT_PATHS = `['__tests__','stories']`（空业务豁免）；FAIL=0 WARN=0 | ⏳ 待执行 |
+| F | cargo test finance（unit + handler integration） | `cargo test -p topems-finance -- --test-threads=4` | — | `#[cfg(test)]` 168 unit + P0.1 新增 ≥20 handler integration，合计 188+ tests 0 failed | ⏳ 待执行 |
+| G | perm-matrix 3-way gate | `node scripts/ci/perm-matrix-gate.cjs --strict` | — | R1（Routes ↔ PERMISSIONS）/ R2（Nav ↔ PERMISSIONS）/ R3（Routes ↔ Nav）全 0；baseline 已 0/0/0 确保 P3 没改路由/权限时仍绿 | ⏳ 待执行 |
+| H | CRM contract consistency | `node scripts/ci/check-crm-contract.cjs` | — | CRM entity schema ↔ frontend types ↔ utoipa OpenAPI 三路一致；无改动时应 PASS | ⏳ 待执行 |
+| I | icon completeness + V64 page standardization | `node scripts/ci/check-icons.cjs && node scripts/ci/check-pages.cjs` | — | icon registry 零缺失；pages/ 下所有路由符合 V64 模块路径规范（2 deep 根路径 redirect + 404 fallback） | ⏳ 待执行 |
+| J | cargo fmt workspace（新增 10th Gate） | `cargo fmt --all --check` | — | 所有 `lib/` + `svc/` Rust 文件 cargo fmt 对齐；如有 diff 先 `cargo fmt --all` commit 再跑 | ⏳ 待执行 |
+| K | cargo clippy workspace（新增 11th Gate） | `cargo clippy --workspace --all-targets -- -D warnings` | — | clippy 0 warnings（-D warnings 强约束变 error 退出非 0）；修 warning 不引入逻辑改动，只写 idiom fix | ⏳ 待执行 |
+
+---
+
 ## 🎯 V213 — 覆盖率冲刺 P2→P3 全量推进（26 commits · ~2930 新增 tests · ✅ 已封版）
 
 > **承接**：V211 方向 B 闭环后启动覆盖率冲刺。V203 已完成 18 crate 纯函数提取（1439+ tests · 10% 达标），V213 在此基础上推进 P2→P3 全量覆盖。
