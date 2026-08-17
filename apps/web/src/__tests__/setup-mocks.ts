@@ -665,6 +665,19 @@ const __TEST_TRANSLATIONS__: Record<string, string> = {
   'system.log_config_panel.url_18': '远程日志URL',
   'system.log_config_panel.k19': '保存配置',
   'system.system_params_page_components_cache_config_panel.m4': '保存中...',
+  // shared.error_handler (utils/errorHandler 全局错误分类使用)
+  'shared.error_handler.k0': '未知错误',
+  'shared.error_handler.k1': '网络连接失败，请检查网络设置',
+  'shared.error_handler.k2': '请求超时，请稍后重试',
+  'shared.error_handler.k3': '登录已过期，请重新登录',
+  'shared.error_handler.k4': '没有权限执行此操作',
+  'shared.error_handler.k5': '请求的资源不存在',
+  'shared.error_handler.k6': '请求数据验证失败',
+  'shared.error_handler.k7': '服务器内部错误，请联系管理员',
+  'shared.error_handler.k8': '服务暂时不可用，请稍后重试',
+  'shared.error_handler.k9': '服务器未响应，请检查网络连接',
+  'shared.error_handler.k10': '操作失败',
+  'shared.error_handler.k11': '操作失败',
   // shared.location_message (使用实际 zh/shared.json 翻译值)
   'shared.location_message.k0': '搜索完成',
   'shared.location_message.k1': '创建围栏失败',
@@ -698,7 +711,11 @@ const __mockTranslate = (key: string, ns?: string): string => {
 vi.mock('react-i18next', () => ({
   useTranslation: (ns?: string) => ({
     t: (key: string) => __mockTranslate(key, ns),
-    i18n: { language: 'zh-CN', changeLanguage: vi.fn(), exists: (k: string) => !!__TEST_TRANSLATIONS__[k] },
+    i18n: {
+      language: 'zh-CN',
+      changeLanguage: vi.fn(),
+      exists: (k: string) => !!__TEST_TRANSLATIONS__[k],
+    },
     ready: true,
   }),
   withTranslation: () => (Component: any) => Component,
@@ -713,7 +730,11 @@ vi.mock('@/i18n', () => ({
     language: 'zh-CN',
     changeLanguage: vi.fn(),
     exists: (key: string) => !!__TEST_TRANSLATIONS__[key],
+    loadNamespaces: vi.fn().mockResolvedValue(undefined),
   },
+  ensureLanguageLoaded: vi.fn().mockResolvedValue(undefined),
+  ensureNamespacesLoaded: vi.fn().mockResolvedValue(undefined),
+  loadTranslationsForLang: vi.fn().mockResolvedValue(undefined),
 }));
 
 // ─── Mock recharts ─────────────────────────────────────────────────────────
@@ -766,7 +787,9 @@ vi.mock('@/components/templates/CrudPage', () => {
   return {
     default: ({ schema, breadcrumbs, headerContent, children }: any) => {
       const title = schema?.title || 'CRUD';
-      return React.createElement('div', { 'data-testid': 'crud-page' },
+      return React.createElement(
+        'div',
+        { 'data-testid': 'crud-page' },
         React.createElement('h1', null, title),
         headerContent,
         children
