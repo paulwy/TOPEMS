@@ -109,6 +109,77 @@ for (const cfg of cfgs) {
   }
 }
 
+// ── 阶段 B2：扫描 permissions.ts 中 ROLE_PERMISSIONS 对 PERMISSIONS 表的引用 ──
+// 识别模式：
+//   1. Object.values(PERMISSIONS.xxx)         → 引用该模块全部 5 个 action code
+//   2. PERMISSIONS.xxx.read / .write / ...    → 引用单个 action code
+//   3. 直接字符串 'all' / 'admin' 等           → 引用裸码
+// 注意：PERMISSIONS 表的 key 是 MODULES.XXX 的值（小写字符串如 'hrm'），
+// 属性访问用小写：PERMISSIONS.hrm，而非 PERMISSIONS.HRM。
+const permSrcFull = readFile(path.join(APPS, 'config/permissions.ts'));
+
+// 构建 MODULES 常量名 → 实际字符串值 的映射（如 HRM → 'hrm'）
+const MODULES_MAP = {};
+const modConstBlock = extractObjectBlock(permSrcFull, 'export const MODULES');
+if (modConstBlock) {
+  for (const m of modConstBlock.matchAll(/([A-Z_]+)\s*:\s*['"]([^'"]+)['"]/g)) {
+    MODULES_MAP[m[1]] = m[2]; // HRM → 'hrm'
+  }
+}
+
+// 构建 PERMISSIONS 表的 lowercase-key → {action: code} 映射
+const PERMS_TABLE = {};
+const permBlock = extractObjectBlock(permSrcFull, 'export const PERMISSIONS');
+if (permBlock) {
+  // 匹配 [MODULES.XXX]: { read: 'code', write: 'code', ... }
+  const modRe = /\[MODULES\.([A-Z_]+)\]\s*:\s*\{([^}]*)\}/g;
+  let pm;
+  while ((pm = modRe.exec(permBlock)) !== null) {
+    const modConst = pm[1];           // HRM
+    const modKey = MODULES_MAP[modConst] || modConst.toLowerCase(); // 'hrm'
+    const body = pm[2];
+    const actions = {};
+    for (const am of body.matchAll(/(\w+)\s*:\s*['"]([^'"]+)['"]/g)) {
+      actions[am[1]] = am[2];
+    }
+    PERMS_TABLE[modKey] = actions;    // 用小写 key 'hrm' 存储
+  }
+}
+
+// 扫描 ROLE_PERMISSIONS 块中的引用
+const roleBlock = extractObjectBlock(permSrcFull, 'export const ROLE_PERMISSIONS');
+if (roleBlock) {
+  // 模式 1: Object.values(PERMISSIONS.xxx) — xxx 是小写属性 key
+  const spreadRe = /Object\.values\s*\(\s*PERMISSIONS\.([A-Za-z_]+)\s*\)/g;
+  let sm;
+  while ((sm = spreadRe.exec(roleBlock)) !== null) {
+    const modKey = sm[1];
+    const actions = PERMS_TABLE[modKey] || {};
+    for (const [action, code] of Object.entries(actions)) {
+      (USED.get(code) || USED.set(code,[]).get(code)).push(`permissions.ts/ROLE_PERMISSIONS/Object.values(PERMISSIONS.${modKey}).${action}`);
+    }
+  }
+  // 模式 2: PERMISSIONS.xxx.action
+  const directRe = /PERMISSIONS\.([A-Za-z_]+)\.(\w+)/g;
+  let dm;
+  while ((dm = directRe.exec(roleBlock)) !== null) {
+    const modKey = dm[1];
+    const action = dm[2];
+    const code = PERMS_TABLE[modKey]?.[action];
+    if (code) (USED.get(code) || USED.set(code,[]).get(code)).push(`permissions.ts/ROLE_PERMISSIONS/PERMISSIONS.${modKey}.${action}`);
+  }
+  // 模式 3: 裸字符串 'all' / 'admin' 等
+  const bareRe = /['"]([a-z_]+)['"]/g;
+  let bm;
+  while ((bm = bareRe.exec(roleBlock)) !== null) {
+    const code = bm[1];
+    // 仅当该裸码在 LEGAL 集合中时才记录（避免误判普通字符串）
+    if (LEGAL.has(code)) {
+      (USED.get(code) || USED.set(code,[]).get(code)).push('permissions.ts/ROLE_PERMISSIONS/bare');
+    }
+  }
+}
+
 const USED_CODES = [...USED.keys()];
 console.log(`[P7 v5] Nav=${tNav}  Route=${tRoute}  nav.perm=${navP}  route.perm.entries=${routeP}  Used distinct=${USED_CODES.length}`);
 
