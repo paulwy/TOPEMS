@@ -15,6 +15,7 @@ import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
+
 const AccountManagementPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const apiAdapter: CrudApiAdapter = useMemo(
@@ -183,7 +184,12 @@ const AccountManagementPage: React.FC = () => {
         width: 100,
         render: (row) => {
           const direction = String(row.balance_direction || '');
-          const label = direction === 'debit' ? i18n.t('admin.account_management_page.k20') : direction === 'credit' ? i18n.t('admin.account_management_page.k19') : direction;
+          const label =
+            direction === 'debit'
+              ? i18n.t('admin.account_management_page.k20')
+              : direction === 'credit'
+                ? i18n.t('admin.account_management_page.k19')
+                : direction;
           const color =
             direction === 'debit'
               ? `var(--color-primary-main, ${designTokens.colors.primary.dark})`
@@ -224,13 +230,17 @@ const AccountManagementPage: React.FC = () => {
                 fontSize: 12,
                 fontWeight: 500,
                 border: `1px solid ${isDetail ? `var(--color-primary-main, ${designTokens.colors.primary[700]}` : `var(--color-divider, ${designTokens.colors.action.selected}`}`,
-                backgroundColor: isDetail ? `var(--color-primary-lighter, ${designTokens.colors.primary['50']})` : 'transparent',
+                backgroundColor: isDetail
+                  ? `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`
+                  : 'transparent',
                 color: isDetail
                   ? `var(--color-primary-main, ${designTokens.colors.primary.dark})`
                   : `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
               }}
             >
-              {isDetail ? i18n.t('admin.account_management_page.k23') : i18n.t('admin.account_management_page.k22')}
+              {isDetail
+                ? i18n.t('admin.account_management_page.k23')
+                : i18n.t('admin.account_management_page.k22')}
             </span>
           );
         },
@@ -269,7 +279,9 @@ const AccountManagementPage: React.FC = () => {
                   backgroundColor: color,
                 }}
               />
-              {isActive ? i18n.t('admin.account_management_page.k26') : i18n.t('admin.account_management_page.k25')}
+              {isActive
+                ? i18n.t('admin.account_management_page.k26')
+                : i18n.t('admin.account_management_page.k25')}
             </span>
           );
         },
@@ -311,10 +323,26 @@ const AccountManagementPage: React.FC = () => {
       inactive: accounts.filter((a) => !a.isactive).length,
     };
     const statCards = [
-      { label: i18n.t('admin.account_management_page.k28'), value: stats.total, color: 'primary.main' },
-      { label: i18n.t('admin.account_management_page.k29'), value: stats.detail, color: 'success.main' },
-      { label: i18n.t('admin.account_management_page.k30'), value: stats.summary, color: 'info.main' },
-      { label: i18n.t('admin.account_management_page.k31'), value: stats.inactive, color: 'warning.main' },
+      {
+        label: i18n.t('admin.account_management_page.k28'),
+        value: stats.total,
+        color: 'primary.main',
+      },
+      {
+        label: i18n.t('admin.account_management_page.k29'),
+        value: stats.detail,
+        color: 'success.main',
+      },
+      {
+        label: i18n.t('admin.account_management_page.k30'),
+        value: stats.summary,
+        color: 'info.main',
+      },
+      {
+        label: i18n.t('admin.account_management_page.k31'),
+        value: stats.inactive,
+        color: 'warning.main',
+      },
     ];
     return (
       <Box sx={{ mb: 3 }}>

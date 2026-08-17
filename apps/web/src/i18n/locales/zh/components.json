@@ -2972,5 +2972,7 @@
   "components.common.dataTable.k4": "显示/隐藏列",
   "components.common.dataTable.k5": "条记录",
   "components.common.dataTable.k6": "第 {{v0}} / {{v1}} 页",
-  "components.addressbook.k0": "状态:"
+  "components.addressbook.k0": "状态:",
+  "components.login_form_v2.k28": "普通员工",
+  "components.login_form_v2.k29": "管理员"
 }

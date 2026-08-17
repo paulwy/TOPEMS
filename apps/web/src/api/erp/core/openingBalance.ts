@@ -44,8 +44,9 @@ export interface OpeningBalanceQueryParams extends PaginationParams {
 }
 
 const resolvePageSize = (params?: PaginationParams): string | undefined => {
-  const ps = (params as { pageSize?: number } | undefined)?.pageSize
-    ?? (params as { pagesize?: number } | undefined)?.pagesize;
+  const ps =
+    (params as { pageSize?: number } | undefined)?.pageSize ??
+    (params as { pagesize?: number } | undefined)?.pagesize;
   return ps ? ps.toString() : undefined;
 };
 
@@ -69,17 +70,14 @@ export const openingBalanceApi = {
   },
 
   async create(data: CreateOpeningBalanceRequest): Promise<ApiResponse<OpeningBalance>> {
-    return apiClient.erp.post<OpeningBalance>(
-      '/finance/accounts/opening-balances',
-      data
-    );
+    return apiClient.erp.post<OpeningBalance>('/finance/accounts/opening-balances', data);
   },
 
-  async update(id: string, data: UpdateOpeningBalanceRequest): Promise<ApiResponse<OpeningBalance>> {
-    return apiClient.erp.put<OpeningBalance>(
-      `/finance/accounts/opening-balances/${id}`,
-      data
-    );
+  async update(
+    id: string,
+    data: UpdateOpeningBalanceRequest
+  ): Promise<ApiResponse<OpeningBalance>> {
+    return apiClient.erp.put<OpeningBalance>(`/finance/accounts/opening-balances/${id}`, data);
   },
 
   async remove(id: string): Promise<ApiResponse<string>> {
@@ -90,7 +88,9 @@ export const openingBalanceApi = {
     return this.remove(id);
   },
 
-  async import(data: CreateOpeningBalanceRequest[]): Promise<ApiResponse<{ success_count: number; failed_count: number; errors: string[] }>> {
+  async import(
+    data: CreateOpeningBalanceRequest[]
+  ): Promise<ApiResponse<{ success_count: number; failed_count: number; errors: string[] }>> {
     return apiClient.erp.post<{ success_count: number; failed_count: number; errors: string[] }>(
       '/finance/accounts/opening-balances/batch',
       data

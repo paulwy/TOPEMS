@@ -75,7 +75,10 @@ export default function RouteDetailPage() {
           <h1 className='text-2xl font-bold'>{route.name}</h1>
           <p className='mt-1 text-sm text-gray-500'>{route.route_no}</p>
         </div>
-        <StatusBadge fsm='route' status={route.status ?? 'planning'} />
+        <StatusBadge
+          fsm='route'
+          status={route.status ?? 'planning'}
+        />
       </div>
 
       <div className='rounded-lg border p-4'>
@@ -88,10 +91,22 @@ export default function RouteDetailPage() {
       </div>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        <Field label={t('tms.route_detail_page.k4')} value={route.route_no} />
-        <Field label={t('tms.route_detail_page.k5')} value={route.name} />
-        <Field label={t('tms.route_detail_page.k6')} value={route.origin ?? '-'} />
-        <Field label={t('tms.route_detail_page.k7')} value={route.destination ?? '-'} />
+        <Field
+          label={t('tms.route_detail_page.k4')}
+          value={route.route_no}
+        />
+        <Field
+          label={t('tms.route_detail_page.k5')}
+          value={route.name}
+        />
+        <Field
+          label={t('tms.route_detail_page.k6')}
+          value={route.origin ?? '-'}
+        />
+        <Field
+          label={t('tms.route_detail_page.k7')}
+          value={route.destination ?? '-'}
+        />
         <Field
           label={t('tms.route_detail_page.k8')}
           value={route.distance_km != null ? `${route.distance_km} km` : '-'}
@@ -100,7 +115,10 @@ export default function RouteDetailPage() {
           label={t('tms.route_detail_page.k9')}
           value={route.estimated_hours != null ? `${route.estimated_hours} h` : '-'}
         />
-        <Field label={t('tms.route_detail_page.k10')} value={route.status ?? '-'} />
+        <Field
+          label={t('tms.route_detail_page.k10')}
+          value={route.status ?? '-'}
+        />
         <Field
           label={t('tms.route_detail_page.k11')}
           value={route.created_at ? new Date(route.created_at).toLocaleString('zh-CN') : '-'}

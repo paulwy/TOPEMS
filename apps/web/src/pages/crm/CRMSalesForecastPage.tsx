@@ -17,9 +17,9 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const CRMSalesForecastPage: React.FC = () => {
   const { t } = useTranslation();
@@ -38,8 +38,9 @@ const CRMSalesForecastPage: React.FC = () => {
       });
       return response.data?.items || [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const forecasts = forecastsQuery.data || [];
   const series = mockForecast?.series;
@@ -53,7 +54,9 @@ const CRMSalesForecastPage: React.FC = () => {
         trend: '↑',
       }))
     : [];
-  const displayForecasts = mockEnabled ? (mockForecastRows as unknown as typeof forecasts) : forecasts;
+  const displayForecasts = mockEnabled
+    ? (mockForecastRows as unknown as typeof forecasts)
+    : forecasts;
 
   const generateMutation = useMutation({
     mutationFn: async () => {
@@ -75,10 +78,11 @@ const CRMSalesForecastPage: React.FC = () => {
         title: t('crm.salesForecast.title_success'),
         message: t('crm.salesForecast.msg_generate_success'),
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.SALES_FORECAST ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CRM.SALES_FORECAST,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (error: unknown) => {
       apiLogger.error(t('crm.salesForecast.log_generate_fail'), error);
@@ -231,7 +235,9 @@ const CRMSalesForecastPage: React.FC = () => {
         data: displayForecasts.map((forecast) => ({
           period: forecast.period,
           predicted: `¥${Number(forecast.predicted_amount || 0).toLocaleString()}`,
-          actual: forecast.actual_amount ? `¥${Number(forecast.actual_amount).toLocaleString()}` : '-',
+          actual: forecast.actual_amount
+            ? `¥${Number(forecast.actual_amount).toLocaleString()}`
+            : '-',
           confidence: `${Math.round((forecast.confidencelevel || 0) * 100)}%`,
           trend: forecast.trend,
           status:
@@ -251,7 +257,10 @@ const CRMSalesForecastPage: React.FC = () => {
     { label: t('crm.period.mtd') || i18n.t('pages.crm_sales_forecast_page.k0'), value: 'MTD' },
     { label: t('crm.period.qtd') || i18n.t('pages.crm_sales_forecast_page.k1'), value: 'QTD' },
     { label: t('crm.period.ytd') || i18n.t('pages.crm_sales_forecast_page.k2'), value: 'YTD' },
-    { label: t('crm.period.r12') || i18n.t('pages.crm_sales_forecast_page.12_3'), value: 'ROLLING_12M' },
+    {
+      label: t('crm.period.r12') || i18n.t('pages.crm_sales_forecast_page.12_3'),
+      value: 'ROLLING_12M',
+    },
   ];
 
   const customToolbar = (

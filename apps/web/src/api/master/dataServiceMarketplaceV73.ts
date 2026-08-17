@@ -211,10 +211,15 @@ export const dataServiceMarketplaceApiV73 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<MarketplaceListing>>(`/mdm-v73/listings${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<MarketplaceListing>>(
+      `/mdm-v73/listings${s ? `?${s}` : ''}`
+    );
   },
 
-  async updateListing(id: string, data: UpdateListingRequest): Promise<ApiResponse<MarketplaceListing>> {
+  async updateListing(
+    id: string,
+    data: UpdateListingRequest
+  ): Promise<ApiResponse<MarketplaceListing>> {
     return apiClient.master.put<MarketplaceListing>(`/mdm-v73/listings/${id}`, data);
   },
 
@@ -255,7 +260,9 @@ export const dataServiceMarketplaceApiV73 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<MarketplaceOrder>>(`/mdm-v73/orders${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<MarketplaceOrder>>(
+      `/mdm-v73/orders${s ? `?${s}` : ''}`
+    );
   },
 
   async payOrder(id: string, data: PayOrderRequest): Promise<ApiResponse<MarketplacePayment>> {
@@ -291,7 +298,9 @@ export const dataServiceMarketplaceApiV73 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<MarketplacePayment>>(`/mdm-v73/payments${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<MarketplacePayment>>(
+      `/mdm-v73/payments${s ? `?${s}` : ''}`
+    );
   },
 
   async issueInvoice(orderId: string): Promise<ApiResponse<MarketplaceInvoice>> {
@@ -314,37 +323,54 @@ export const dataServiceMarketplaceApiV73 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<MarketplaceInvoice>>(`/mdm-v73/invoices${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<MarketplaceInvoice>>(
+      `/mdm-v73/invoices${s ? `?${s}` : ''}`
+    );
   },
 
   // ===== 市场评价 =====
-  async writeReview(listingId: string, data: WriteReviewRequest): Promise<ApiResponse<MarketplaceReview>> {
+  async writeReview(
+    listingId: string,
+    data: WriteReviewRequest
+  ): Promise<ApiResponse<MarketplaceReview>> {
     return apiClient.master.post<MarketplaceReview>(`/mdm-v73/listings/${listingId}/reviews`, data);
   },
 
-  async listListingReviews(listingId: string, params?: {
-    rating?: ReviewRating;
-    page?: number;
-    pageSize?: number;
-  }): Promise<ApiResponse<PaginatedResponse<MarketplaceReview>>> {
+  async listListingReviews(
+    listingId: string,
+    params?: {
+      rating?: ReviewRating;
+      page?: number;
+      pageSize?: number;
+    }
+  ): Promise<ApiResponse<PaginatedResponse<MarketplaceReview>>> {
     const qs = new URLSearchParams();
     if (params?.rating) qs.set('rating', String(params.rating));
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<MarketplaceReview>>(`/mdm-v73/listings/${listingId}/reviews${s ? `?${s}` : ''}`);
-  },
-
-  async replyReview(listingId: string, reviewId: string, data: ReplyReviewRequest): Promise<ApiResponse<MarketplaceReview>> {
-    return apiClient.master.post<MarketplaceReview>(
-      `/mdm-v73/listings/${listingId}/reviews/${reviewId}/reply`,
-      data,
+    return apiClient.master.get<PaginatedResponse<MarketplaceReview>>(
+      `/mdm-v73/listings/${listingId}/reviews${s ? `?${s}` : ''}`
     );
   },
 
-  async deleteReview(listingId: string, reviewId: string): Promise<ApiResponse<{ deleted: boolean }>> {
+  async replyReview(
+    listingId: string,
+    reviewId: string,
+    data: ReplyReviewRequest
+  ): Promise<ApiResponse<MarketplaceReview>> {
+    return apiClient.master.post<MarketplaceReview>(
+      `/mdm-v73/listings/${listingId}/reviews/${reviewId}/reply`,
+      data
+    );
+  },
+
+  async deleteReview(
+    listingId: string,
+    reviewId: string
+  ): Promise<ApiResponse<{ deleted: boolean }>> {
     return apiClient.master.delete<{ deleted: boolean }>(
-      `/mdm-v73/listings/${listingId}/reviews/${reviewId}`,
+      `/mdm-v73/listings/${listingId}/reviews/${reviewId}`
     );
   },
 
@@ -357,16 +383,21 @@ export const dataServiceMarketplaceApiV73 = {
     if (params?.category) qs.set('category', params.category);
     if (params?.limit !== undefined) qs.set('limit', String(params.limit));
     const s = qs.toString();
-    return apiClient.master.get<MarketplaceListing[]>(`/mdm-v73/listings/featured${s ? `?${s}` : ''}`);
+    return apiClient.master.get<MarketplaceListing[]>(
+      `/mdm-v73/listings/featured${s ? `?${s}` : ''}`
+    );
   },
 
-  async searchListings(query: string, filters?: {
-    category?: ServiceCategory;
-    minRating?: number;
-    pricingModel?: PricingModel;
-    page?: number;
-    pageSize?: number;
-  }): Promise<ApiResponse<PaginatedResponse<MarketplaceListing>>> {
+  async searchListings(
+    query: string,
+    filters?: {
+      category?: ServiceCategory;
+      minRating?: number;
+      pricingModel?: PricingModel;
+      page?: number;
+      pageSize?: number;
+    }
+  ): Promise<ApiResponse<PaginatedResponse<MarketplaceListing>>> {
     const qs = new URLSearchParams();
     qs.set('q', query);
     if (filters?.category) qs.set('category', filters.category);
@@ -374,18 +405,29 @@ export const dataServiceMarketplaceApiV73 = {
     if (filters?.pricingModel) qs.set('pricing_model', filters.pricingModel);
     if (filters?.page !== undefined) qs.set('page', String(filters.page));
     if (filters?.pageSize !== undefined) qs.set('page_size', String(filters.pageSize));
-    return apiClient.master.get<PaginatedResponse<MarketplaceListing>>(`/mdm-v73/listings/search?${qs.toString()}`);
+    return apiClient.master.get<PaginatedResponse<MarketplaceListing>>(
+      `/mdm-v73/listings/search?${qs.toString()}`
+    );
   },
 
-  async getSimilarListings(listingId: string, limit?: number): Promise<ApiResponse<MarketplaceListing[]>> {
+  async getSimilarListings(
+    listingId: string,
+    limit?: number
+  ): Promise<ApiResponse<MarketplaceListing[]>> {
     const qs = new URLSearchParams();
     if (limit !== undefined) qs.set('limit', String(limit));
     const s = qs.toString();
-    return apiClient.master.get<MarketplaceListing[]>(`/mdm-v73/listings/${listingId}/similar${s ? `?${s}` : ''}`);
+    return apiClient.master.get<MarketplaceListing[]>(
+      `/mdm-v73/listings/${listingId}/similar${s ? `?${s}` : ''}`
+    );
   },
 
-  async listCategories(): Promise<ApiResponse<Array<{ category: ServiceCategory; count: number }>>> {
-    return apiClient.master.get<Array<{ category: ServiceCategory; count: number }>>('/mdm-v73/categories');
+  async listCategories(): Promise<
+    ApiResponse<Array<{ category: ServiceCategory; count: number }>>
+  > {
+    return apiClient.master.get<Array<{ category: ServiceCategory; count: number }>>(
+      '/mdm-v73/categories'
+    );
   },
 
   // ===== 市场统计仪表板 =====
@@ -393,25 +435,29 @@ export const dataServiceMarketplaceApiV73 = {
     return apiClient.master.get<MarketplaceDashboard>('/mdm-v73/dashboard');
   },
 
-  async getSellerStats(sellerId: string): Promise<ApiResponse<{
-    seller_id: string;
-    total_listings: number;
-    active_listings: number;
-    total_orders: number;
-    completed_orders: number;
-    total_revenue: number;
-    avg_rating: number;
-  }>> {
+  async getSellerStats(sellerId: string): Promise<
+    ApiResponse<{
+      seller_id: string;
+      total_listings: number;
+      active_listings: number;
+      total_orders: number;
+      completed_orders: number;
+      total_revenue: number;
+      avg_rating: number;
+    }>
+  > {
     return apiClient.master.get(`/mdm-v73/sellers/${sellerId}/stats`);
   },
 
-  async getBuyerStats(buyerId: string): Promise<ApiResponse<{
-    buyer_id: string;
-    total_orders: number;
-    active_subscriptions: number;
-    total_spent: number;
-    recent_purchases: MarketplaceOrder[];
-  }>> {
+  async getBuyerStats(buyerId: string): Promise<
+    ApiResponse<{
+      buyer_id: string;
+      total_orders: number;
+      active_subscriptions: number;
+      total_spent: number;
+      recent_purchases: MarketplaceOrder[];
+    }>
+  > {
     return apiClient.master.get(`/mdm-v73/buyers/${buyerId}/stats`);
   },
 };

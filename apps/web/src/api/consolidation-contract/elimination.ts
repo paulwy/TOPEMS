@@ -21,7 +21,10 @@ export const eliminationRuleApi = {
     return apiClient.erp.post('/consolidation/elimination-rules', data);
   },
 
-  update: (ruleId: string, data: UpdateEliminationRuleRequest): Promise<ApiResponse<EliminationRule>> => {
+  update: (
+    ruleId: string,
+    data: UpdateEliminationRuleRequest
+  ): Promise<ApiResponse<EliminationRule>> => {
     return apiClient.erp.put(`/consolidation/elimination-rules/${ruleId}`, data);
   },
 

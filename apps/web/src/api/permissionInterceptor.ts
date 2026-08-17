@@ -14,7 +14,8 @@ export const createPermissionInterceptor = () => {
       (response) => response,
       (error) => {
         if (error.response?.status === 403) {
-          const errorMessage = error.response?.data?.message || i18n.t('shared.permission_interceptor.k0');
+          const errorMessage =
+            error.response?.data?.message || i18n.t('shared.permission_interceptor.k0');
           apiLogger.warn('Permission denied:', errorMessage);
 
           window.dispatchEvent(
@@ -33,13 +34,16 @@ export const createPermissionInterceptor = () => {
           const currentPath = window.location.pathname;
           const hasToken = !!localStorage.getItem('token');
 
-          apiLogger.warn(`${i18n.t('shared.permission_interceptor.3401_0')}${error.config?.url || ''}`, {
-            currentPath,
-            hasToken,
-            note: i18n.t('shared.permission_interceptor.k1'),
-            handledByPrimaryInterceptor: true,
-            timestamp: new Date().toISOString(),
-          });
+          apiLogger.warn(
+            `${i18n.t('shared.permission_interceptor.3401_0')}${error.config?.url || ''}`,
+            {
+              currentPath,
+              hasToken,
+              note: i18n.t('shared.permission_interceptor.k1'),
+              handledByPrimaryInterceptor: true,
+              timestamp: new Date().toISOString(),
+            }
+          );
         }
 
         return Promise.reject(error);

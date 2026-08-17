@@ -60,7 +60,9 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             >
               {t('automation.automation_designer_page_components_properties_panel.e1')}
             </Typography>
-            <Tooltip title={t('automation.automation_designer_page_components_properties_panel.m1')}>
+            <Tooltip
+              title={t('automation.automation_designer_page_components_properties_panel.m1')}
+            >
               <IconButton
                 size='small'
                 onClick={() => onDuplicateNode(selectedNode.id)}

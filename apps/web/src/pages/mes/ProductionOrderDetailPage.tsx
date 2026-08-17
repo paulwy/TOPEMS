@@ -11,7 +11,7 @@ import i18n from '@/i18n';
 import React, { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Package, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
@@ -20,7 +20,8 @@ import type { ProductionOrder, ProductionRecord, QualityRecord } from '@/api/mes
 import { designTokens } from '@/theme/tokens';
 import { MES_PATHS } from '@/modules/mes/config';
 import { getChipStatusColor } from '@/utils/status';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const ProductionOrderDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const {
@@ -38,8 +39,9 @@ const ProductionOrderDetailPage: React.FC = () => {
       throw new Error(res.message || i18n.t('mes.production_order_detail_page.fail'));
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const { data: recordsData } = useQuery({
     queryKey: [...QUERY_KEYS.MES.PRODUCTION_RECORDS, { order_id: id }],
     queryFn: async () => {
@@ -50,8 +52,9 @@ const ProductionOrderDetailPage: React.FC = () => {
       return [];
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const { data: qualityRecordsData } = useQuery<QualityRecord[]>({
     queryKey: id
       ? QUERY_KEYS.MES.TRACEABILITY_QUALITY_RECORDS(id)
@@ -64,8 +67,9 @@ const ProductionOrderDetailPage: React.FC = () => {
       return [];
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const records = recordsData || [];
   const qualityRecords = qualityRecordsData || [];
   const loading = orderLoading;
@@ -101,31 +105,43 @@ const ProductionOrderDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k0')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('mes.production_order_detail_page.k0')}
+          </InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
             {order.order_number || '-'}
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k1')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('mes.production_order_detail_page.k1')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{order.product_name || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k2')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('mes.production_order_detail_page.k2')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{order.product_code || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k3')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('mes.production_order_detail_page.k3')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>
             {order.quantity} {order.unit || i18n.t('mes.production_order_detail_page.text_f7edf5')}
           </Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k4')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('mes.production_order_detail_page.k4')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{order.priority || '-'}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k5')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('mes.production_order_detail_page.k5')}
+          </InputLabel>
           <Box sx={{ mt: 0.5 }}>
             <Chip
               label={getStatusLabel(order.status)}
@@ -149,19 +165,27 @@ const ProductionOrderDetailPage: React.FC = () => {
         }}
       >
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k6')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('mes.production_order_detail_page.k6')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(order.scheduled_start_date)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k7')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('mes.production_order_detail_page.k7')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(order.scheduled_end_date)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k8')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('mes.production_order_detail_page.k8')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(order.actualStartDate)}</Typography>
         </Box>
         <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k9')}</InputLabel>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('mes.production_order_detail_page.k9')}
+          </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{formatDate(order.actualEndDate)}</Typography>
         </Box>
       </Box>
@@ -170,7 +194,11 @@ const ProductionOrderDetailPage: React.FC = () => {
   // 报工记录内容
   const recordsContent = useMemo(() => {
     if (records.length === 0) {
-      return <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k10')}</Box>;
+      return (
+        <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+          {i18n.t('mes.production_order_detail_page.k10')}
+        </Box>
+      );
     }
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -221,7 +249,9 @@ const ProductionOrderDetailPage: React.FC = () => {
                 }}
               >
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k11')}</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                    {i18n.t('mes.production_order_detail_page.k11')}
+                  </InputLabel>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 500 }}
@@ -230,7 +260,9 @@ const ProductionOrderDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k12')}</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                    {i18n.t('mes.production_order_detail_page.k12')}
+                  </InputLabel>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 500, color: 'error.main' }}
@@ -239,17 +271,23 @@ const ProductionOrderDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k13')}</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                    {i18n.t('mes.production_order_detail_page.k13')}
+                  </InputLabel>
                   <Typography variant='body2'>{record.process_id || '-'}</Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k14')}</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                    {i18n.t('mes.production_order_detail_page.k14')}
+                  </InputLabel>
                   <Typography variant='body2'>{record.work_station_id || '-'}</Typography>
                 </Box>
               </Box>
               {record.notes && (
                 <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k15')}</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                    {i18n.t('mes.production_order_detail_page.k15')}
+                  </InputLabel>
                   <Typography variant='body2'>{record.notes}</Typography>
                 </Box>
               )}
@@ -263,7 +301,9 @@ const ProductionOrderDetailPage: React.FC = () => {
   const qualityContent = useMemo(() => {
     if (qualityRecords.length === 0) {
       return (
-        <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k16')}</Box>
+        <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+          {i18n.t('mes.production_order_detail_page.k16')}
+        </Box>
       );
     }
     return (
@@ -315,7 +355,9 @@ const ProductionOrderDetailPage: React.FC = () => {
                 }}
               >
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k17')}</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                    {i18n.t('mes.production_order_detail_page.k17')}
+                  </InputLabel>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 500 }}
@@ -324,7 +366,9 @@ const ProductionOrderDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k18')}</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                    {i18n.t('mes.production_order_detail_page.k18')}
+                  </InputLabel>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 500, color: 'success.main' }}
@@ -333,7 +377,9 @@ const ProductionOrderDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k19')}</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                    {i18n.t('mes.production_order_detail_page.k19')}
+                  </InputLabel>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 500, color: 'error.main' }}
@@ -342,7 +388,9 @@ const ProductionOrderDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k20')}</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                    {i18n.t('mes.production_order_detail_page.k20')}
+                  </InputLabel>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 500 }}
@@ -353,7 +401,9 @@ const ProductionOrderDetailPage: React.FC = () => {
               </Box>
               {record.result && (
                 <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k21')}</InputLabel>
+                  <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
+                    {i18n.t('mes.production_order_detail_page.k21')}
+                  </InputLabel>
                   <Typography variant='body2'>{record.result}</Typography>
                 </Box>
               )}
@@ -387,7 +437,9 @@ const ProductionOrderDetailPage: React.FC = () => {
                 size={18}
                 color={ct.primary.dark}
               />
-              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k22')}</InputLabel>
+              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+                {i18n.t('mes.production_order_detail_page.k22')}
+              </InputLabel>
             </Box>
             <Typography
               variant='h5'
@@ -407,7 +459,9 @@ const ProductionOrderDetailPage: React.FC = () => {
                 size={18}
                 color='success.700'
               />
-              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k23')}</InputLabel>
+              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+                {i18n.t('mes.production_order_detail_page.k23')}
+              </InputLabel>
             </Box>
             <Typography
               variant='h5'
@@ -427,7 +481,9 @@ const ProductionOrderDetailPage: React.FC = () => {
                 size={18}
                 color={ct.error[700]}
               />
-              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k24')}</InputLabel>
+              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+                {i18n.t('mes.production_order_detail_page.k24')}
+              </InputLabel>
             </Box>
             <Typography
               variant='h5'
@@ -447,7 +503,9 @@ const ProductionOrderDetailPage: React.FC = () => {
                 size={18}
                 color='warning.700'
               />
-              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('mes.production_order_detail_page.k25')}</InputLabel>
+              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+                {i18n.t('mes.production_order_detail_page.k25')}
+              </InputLabel>
             </Box>
             <Typography
               variant='h5'
@@ -527,7 +585,12 @@ const ProductionOrderDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={order?.product_name || order?.order_number || order?.id || i18n.t('mes.production_order_detail_page.k27')}
+        detailItemName={
+          order?.product_name ||
+          order?.order_number ||
+          order?.id ||
+          i18n.t('mes.production_order_detail_page.k27')
+        }
         backHref={MES_PATHS.productionOrders}
         loading={loading}
         error={errorMessage}

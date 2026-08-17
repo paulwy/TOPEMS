@@ -120,7 +120,9 @@ export class DynamicModuleLoader {
     url?: string
   ): RuntimeModule {
     if (this.modules.has(id)) {
-      console.warn(`${i18n.t('microfrontend.dynamic-loader.dynamicloader_0')}${id}${i18n.t('microfrontend.dynamic-loader.k1')}`);
+      console.warn(
+        `${i18n.t('microfrontend.dynamic-loader.dynamicloader_0')}${id}${i18n.t('microfrontend.dynamic-loader.k1')}`
+      );
     }
     const mod: RuntimeModule = {
       id,
@@ -157,7 +159,9 @@ export class DynamicModuleLoader {
   async loadModule(id: string): Promise<any> {
     const mod = this.modules.get(id);
     if (!mod) {
-      throw new Error(`${i18n.t('microfrontend.dynamic-loader.dynamicloader_2')}${id}${i18n.t('microfrontend.dynamic-loader.k3')}`);
+      throw new Error(
+        `${i18n.t('microfrontend.dynamic-loader.dynamicloader_2')}${id}${i18n.t('microfrontend.dynamic-loader.k3')}`
+      );
     }
 
     // 缓存命中：已加载则直接返回
@@ -201,7 +205,10 @@ export class DynamicModuleLoader {
     try {
       await this.loadModule(id);
     } catch (err) {
-      console.warn(`${i18n.t('microfrontend.dynamic-loader.k4')}${id}${i18n.t('microfrontend.dynamic-loader.k5')}`, err);
+      console.warn(
+        `${i18n.t('microfrontend.dynamic-loader.k4')}${id}${i18n.t('microfrontend.dynamic-loader.k5')}`,
+        err
+      );
     }
   }
 
@@ -376,7 +383,11 @@ export class DynamicModuleLoader {
 
     return new Promise<any>((resolve, reject) => {
       const timer = setTimeout(() => {
-        reject(new Error(`${i18n.t('microfrontend.dynamic-loader.dynamicloader_10')}${id}${i18n.t('microfrontend.dynamic-loader.k11')}${timeoutMs}ms）`));
+        reject(
+          new Error(
+            `${i18n.t('microfrontend.dynamic-loader.dynamicloader_10')}${id}${i18n.t('microfrontend.dynamic-loader.k11')}${timeoutMs}ms）`
+          )
+        );
       }, timeoutMs);
 
       mod

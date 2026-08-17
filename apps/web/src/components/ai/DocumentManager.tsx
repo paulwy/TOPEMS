@@ -138,7 +138,12 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
   };
 
   const handleDelete = async (doc: Document) => {
-    if (!confirm(`${i18n.t('components.document_manager.k5')}${doc.title}${i18n.t('components.document_manager.k6')}`)) return;
+    if (
+      !confirm(
+        `${i18n.t('components.document_manager.k5')}${doc.title}${i18n.t('components.document_manager.k6')}`
+      )
+    )
+      return;
 
     try {
       const response = await aiApi.deleteDocument(doc.id);
@@ -490,7 +495,8 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                             color='text.secondary'
                             sx={{ mt: 1, display: 'block' }}
                           >
-                            [i18n.t('components.document_manager.k19')]: {formatDate(doc.created_at)}
+                            [i18n.t('components.document_manager.k19')]:{' '}
+                            {formatDate(doc.created_at)}
                           </Typography>
                         </Box>
                       </Box>
@@ -586,7 +592,8 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                   variant='body1'
                   sx={{ fontWeight: 500 }}
                 >
-                  {i18n.t('components.document_manager.k0')}{searchResults.length})
+                  {i18n.t('components.document_manager.k0')}
+                  {searchResults.length})
                 </Typography>
                 {searchResults.map((result, index) => (
                   <Card
@@ -725,7 +732,9 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
                 >
-                  {uploading ? i18n.t('components.document_manager.k28') : i18n.t('components.document_manager.k21')}
+                  {uploading
+                    ? i18n.t('components.document_manager.k28')
+                    : i18n.t('components.document_manager.k21')}
                 </Typography>
                 <Typography
                   variant='caption'

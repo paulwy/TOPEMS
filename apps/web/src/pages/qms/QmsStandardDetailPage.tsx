@@ -24,17 +24,17 @@ import { qmsApi } from '@/api/qms';
 import type { QualityStandard, StandardRevision, CreateQualityStandardRequest } from '@/api/qms';
 import { useCrudMutations } from '@/hooks';
 import { designTokens } from '@/theme/tokens';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { QMS_PATHS } from '@/modules/qms/config';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const QmsStandardDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: standard, isPending: loading} = useQuery<QualityStandard | null>({
+  const { data: standard, isPending: loading } = useQuery<QualityStandard | null>({
     queryKey: QUERY_KEYS.QMS.STANDARD(id || ''),
     queryFn: async () => {
       if (!id) return null;
@@ -45,8 +45,9 @@ const QmsStandardDetailPage: React.FC = () => {
       return (res.data as QualityStandard) ?? null;
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const { data: revisions = [] } = useQuery<StandardRevision[]>({
     queryKey: QUERY_KEYS.QMS.STANDARD_REVISIONS(id || ''),
@@ -61,8 +62,9 @@ const QmsStandardDetailPage: React.FC = () => {
       return Array.isArray(revisionsData) ? revisionsData : revisionsData.revisions || [];
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRevisionModal, setShowRevisionModal] = useState(false);
@@ -94,14 +96,38 @@ const QmsStandardDetailPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { color: string; label: string }> = {
-      active: { color: 'bg-green-100 text-green-700', label: i18n.t('pages.qms_standard_detail_page.k2') },
-      [i18n.t('pages.qms_standard_detail_page.k0')]: { color: 'bg-green-100 text-green-700', label: i18n.t('pages.qms_standard_detail_page.k3') },
-      draft: { color: 'bg-yellow-100 text-yellow-700', label: i18n.t('pages.qms_standard_detail_page.k4') },
-      [i18n.t('pages.qms_standard_detail_page.k1')]: { color: 'bg-yellow-100 text-yellow-700', label: i18n.t('pages.qms_standard_detail_page.k5') },
-      expired: { color: 'bg-red-100 text-red-700', label: i18n.t('pages.qms_standard_detail_page.k6') },
-      [i18n.t('pages.qms_standard_detail_page.k2')]: { color: 'bg-red-100 text-red-700', label: i18n.t('pages.qms_standard_detail_page.k7') },
-      archived: { color: 'bg-gray-100 text-gray-700', label: i18n.t('pages.qms_standard_detail_page.k8') },
-      [i18n.t('pages.qms_standard_detail_page.k3')]: { color: 'bg-gray-100 text-gray-700', label: i18n.t('pages.qms_standard_detail_page.k9') },
+      active: {
+        color: 'bg-green-100 text-green-700',
+        label: i18n.t('pages.qms_standard_detail_page.k2'),
+      },
+      [i18n.t('pages.qms_standard_detail_page.k0')]: {
+        color: 'bg-green-100 text-green-700',
+        label: i18n.t('pages.qms_standard_detail_page.k3'),
+      },
+      draft: {
+        color: 'bg-yellow-100 text-yellow-700',
+        label: i18n.t('pages.qms_standard_detail_page.k4'),
+      },
+      [i18n.t('pages.qms_standard_detail_page.k1')]: {
+        color: 'bg-yellow-100 text-yellow-700',
+        label: i18n.t('pages.qms_standard_detail_page.k5'),
+      },
+      expired: {
+        color: 'bg-red-100 text-red-700',
+        label: i18n.t('pages.qms_standard_detail_page.k6'),
+      },
+      [i18n.t('pages.qms_standard_detail_page.k2')]: {
+        color: 'bg-red-100 text-red-700',
+        label: i18n.t('pages.qms_standard_detail_page.k7'),
+      },
+      archived: {
+        color: 'bg-gray-100 text-gray-700',
+        label: i18n.t('pages.qms_standard_detail_page.k8'),
+      },
+      [i18n.t('pages.qms_standard_detail_page.k3')]: {
+        color: 'bg-gray-100 text-gray-700',
+        label: i18n.t('pages.qms_standard_detail_page.k9'),
+      },
     };
     const item = statusMap[status] || {
       color: 'bg-gray-100 text-gray-700',
@@ -162,19 +188,21 @@ const QmsStandardDetailPage: React.FC = () => {
     onUpdateSuccess: () => {
       setShowEditModal(false);
       if (standard) {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.STANDARD(standard.id) ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.QMS.STANDARD(standard.id),
+          exact: false,
+          refetchType: 'active',
+        });
       }
     },
     onCreateSuccess: () => {
       setShowRevisionModal(false);
       if (standard) {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.STANDARD_REVISIONS(standard.id) ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.QMS.STANDARD_REVISIONS(standard.id),
+          exact: false,
+          refetchType: 'active',
+        });
       }
       navigate(QMS_PATHS.standards);
     },
@@ -261,8 +289,12 @@ const QmsStandardDetailPage: React.FC = () => {
               y2={16}
             />
           </Box>
-          <Typography sx={{ color: 'grey.600', mb: 2 }}>{i18n.t('pages.qms_standard_detail_page.k14')}</Typography>
-          <Button onClick={() => navigate(QMS_PATHS.root)}>{i18n.t('pages.qms_standard_detail_page.k15')}</Button>
+          <Typography sx={{ color: 'grey.600', mb: 2 }}>
+            {i18n.t('pages.qms_standard_detail_page.k14')}
+          </Typography>
+          <Button onClick={() => navigate(QMS_PATHS.root)}>
+            {i18n.t('pages.qms_standard_detail_page.k15')}
+          </Button>
         </Box>
       </Box>
     );
@@ -276,7 +308,12 @@ const QmsStandardDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={standard?.title || standard?.name || standard?.code || i18n.t('pages.qms_standard_detail_page.k17')}
+        detailItemName={
+          standard?.title ||
+          standard?.name ||
+          standard?.code ||
+          i18n.t('pages.qms_standard_detail_page.k17')
+        }
         backHref={QMS_PATHS.root}
         onBack={() => navigate(QMS_PATHS.root)}
         onEdit={() => setShowEditModal(true)}
@@ -285,12 +322,20 @@ const QmsStandardDetailPage: React.FC = () => {
           title: standard?.name,
           subtitle: standard?.code || standard?.id,
           tags: [
-            standard?.status === 'active' ? i18n.t('pages.qms_standard_detail_page.k18') : standard?.status || '',
+            standard?.status === 'active'
+              ? i18n.t('pages.qms_standard_detail_page.k18')
+              : standard?.status || '',
             `v${standard?.version || '1.0'}`,
           ].filter(Boolean),
           stats: [
-            { label: i18n.t('pages.qms_standard_detail_page.k19'), value: `v${standard?.version || '1.0'}` },
-            { label: i18n.t('pages.qms_standard_detail_page.k20'), value: standard?.category || '-' },
+            {
+              label: i18n.t('pages.qms_standard_detail_page.k19'),
+              value: `v${standard?.version || '1.0'}`,
+            },
+            {
+              label: i18n.t('pages.qms_standard_detail_page.k20'),
+              value: standard?.category || '-',
+            },
           ],
         }}
         sidebar={
@@ -668,7 +713,9 @@ const QmsStandardDetailPage: React.FC = () => {
             onClick={handleUpdateStandard}
             disabled={submitting}
           >
-            {submitting ? i18n.t('pages.qms_standard_detail_page.k25') : i18n.t('pages.qms_standard_detail_page.k34')}
+            {submitting
+              ? i18n.t('pages.qms_standard_detail_page.k25')
+              : i18n.t('pages.qms_standard_detail_page.k34')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -742,7 +789,9 @@ const QmsStandardDetailPage: React.FC = () => {
               '&:hover': { backgroundColor: ct.purple[700] },
             }}
           >
-            {submitting ? i18n.t('pages.qms_standard_detail_page.k31') : i18n.t('pages.qms_standard_detail_page.k36')}
+            {submitting
+              ? i18n.t('pages.qms_standard_detail_page.k31')
+              : i18n.t('pages.qms_standard_detail_page.k36')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -8,6 +8,7 @@ import { rdApi } from '@/api/rd';
 import type { Project } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
 import i18n from '@/i18n';
+
 const projectApiAdapter: CrudApiAdapter<Project> = {
   list: async (params) => {
     const queryParams: Record<string, unknown> = {
@@ -70,7 +71,10 @@ const RsProjectListPage: React.FC = () => {
       schema={projectSchema}
       apiAdapter={projectApiAdapter}
       customRowActions={customRowActions}
-      breadcrumbs={[{ label: i18n.t('rd.rs_project_list_page.k7'), href: RD_PATHS.root }, { label: i18n.t('rd.rs_project_list_page.k6') }]}
+      breadcrumbs={[
+        { label: i18n.t('rd.rs_project_list_page.k7'), href: RD_PATHS.root },
+        { label: i18n.t('rd.rs_project_list_page.k6') },
+      ]}
     />
   );
 };

@@ -6,6 +6,7 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { testMethodSchema } from '@/schemas/lims/testMethod';
 import { limsApi } from '@/api/lims';
 import i18n from '@/i18n';
+
 const testMethodApiAdapter: CrudApiAdapter = {
   list: async (params) => {
     const response = await limsApi.testMethods.list({

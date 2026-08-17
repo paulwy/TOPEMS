@@ -90,7 +90,10 @@ export const metadataApi = {
     });
   },
 
-  update: async (id: string, data: Partial<MetadataRecord>): Promise<ApiResponse<MetadataRecord>> => {
+  update: async (
+    id: string,
+    data: Partial<MetadataRecord>
+  ): Promise<ApiResponse<MetadataRecord>> => {
     return apiClient.master.put(`/mdm-v60/metadata/${id}`, data);
   },
 
@@ -98,29 +101,31 @@ export const metadataApi = {
     return apiClient.master.delete(`/mdm-v60/metadata/${id}`);
   },
 
-  addAttribute: async (id: string, data: {
-    name: string;
-    value: string;
-    type?: string;
-  }): Promise<ApiResponse<MetadataRecord>> => {
+  addAttribute: async (
+    id: string,
+    data: {
+      name: string;
+      value: string;
+      type?: string;
+    }
+  ): Promise<ApiResponse<MetadataRecord>> => {
     return apiClient.master.post(`/mdm-v60/metadata/${id}/attribute`, data);
   },
 
-  addTag: async (data: {
-    metadata_id: string;
-    tag: string;
-  }): Promise<ApiResponse<void>> => {
+  addTag: async (data: { metadata_id: string; tag: string }): Promise<ApiResponse<void>> => {
     return apiClient.master.post('/mdm-v60/metadata/tag', data);
   },
 
   getStats: async (params?: {
     entity_type?: string;
-  }): Promise<ApiResponse<{
-    total_metadata: number;
-    by_entity_type: Record<string, number>;
-    by_owner: Record<string, number>;
-    recent_updates: Array<{ id: string; title: string; updated_at: string }>;
-  }>> => {
+  }): Promise<
+    ApiResponse<{
+      total_metadata: number;
+      by_entity_type: Record<string, number>;
+      by_owner: Record<string, number>;
+      recent_updates: Array<{ id: string; title: string; updated_at: string }>;
+    }>
+  > => {
     return apiClient.master.get('/mdm-v60/metadata/stats', { params });
   },
 
@@ -133,28 +138,44 @@ export const metadataApi = {
     return apiClient.master.post('/mdm-v60/lineage/graph', data);
   },
 
-  getLineageGraph: async (id: string): Promise<ApiResponse<{
-    nodes: Array<{ id: string; entity_type: string; name: string }>;
-    edges: Array<{ source: string; target: string; type: string }>;
-  }>> => {
+  getLineageGraph: async (
+    id: string
+  ): Promise<
+    ApiResponse<{
+      nodes: Array<{ id: string; entity_type: string; name: string }>;
+      edges: Array<{ source: string; target: string; type: string }>;
+    }>
+  > => {
     return apiClient.master.get(`/mdm-v60/lineage/graph/${id}`);
   },
 
-  getUpstream: async (id: string): Promise<ApiResponse<Array<{
-    entity_type: string;
-    entity_id: string;
-    name: string;
-    relation: string;
-  }>>> => {
+  getUpstream: async (
+    id: string
+  ): Promise<
+    ApiResponse<
+      Array<{
+        entity_type: string;
+        entity_id: string;
+        name: string;
+        relation: string;
+      }>
+    >
+  > => {
     return apiClient.master.get(`/mdm-v60/lineage/${id}/upstream`);
   },
 
-  getDownstream: async (id: string): Promise<ApiResponse<Array<{
-    entity_type: string;
-    entity_id: string;
-    name: string;
-    relation: string;
-  }>>> => {
+  getDownstream: async (
+    id: string
+  ): Promise<
+    ApiResponse<
+      Array<{
+        entity_type: string;
+        entity_id: string;
+        name: string;
+        relation: string;
+      }>
+    >
+  > => {
     return apiClient.master.get(`/mdm-v60/lineage/${id}/downstream`);
   },
 
@@ -163,19 +184,27 @@ export const metadataApi = {
     source_id: string;
     target_type: string;
     target_id: string;
-  }): Promise<ApiResponse<Array<{
-    entity_type: string;
-    entity_id: string;
-    name: string;
-  }>>> => {
+  }): Promise<
+    ApiResponse<
+      Array<{
+        entity_type: string;
+        entity_id: string;
+        name: string;
+      }>
+    >
+  > => {
     return apiClient.master.post('/mdm-v60/lineage/path', data);
   },
 
-  getLineageImpact: async (id: string): Promise<ApiResponse<{
-    affected_count: number;
-    risk_level: 'low' | 'medium' | 'high';
-    details: Array<{ entity_type: string; entity_id: string; impact: string }>;
-  }>> => {
+  getLineageImpact: async (
+    id: string
+  ): Promise<
+    ApiResponse<{
+      affected_count: number;
+      risk_level: 'low' | 'medium' | 'high';
+      details: Array<{ entity_type: string; entity_id: string; impact: string }>;
+    }>
+  > => {
     return apiClient.master.get(`/mdm-v60/lineage/${id}/impact`);
   },
 
@@ -198,23 +227,34 @@ export const metadataApi = {
     return apiClient.master.get(`/mdm-v60/lifecycle/${id}/stage`);
   },
 
-  transitionStage: async (id: string, data: {
-    target_stage: string;
-    reason?: string;
-  }): Promise<ApiResponse<LifecycleStage>> => {
+  transitionStage: async (
+    id: string,
+    data: {
+      target_stage: string;
+      reason?: string;
+    }
+  ): Promise<ApiResponse<LifecycleStage>> => {
     return apiClient.master.post(`/mdm-v60/lifecycle/${id}/transition`, data);
   },
 
-  getLifecycleHistory: async (id: string): Promise<ApiResponse<Array<{
-    from_stage: string;
-    to_stage: string;
-    transitioned_at: string;
-    reason?: string;
-  }>>> => {
+  getLifecycleHistory: async (
+    id: string
+  ): Promise<
+    ApiResponse<
+      Array<{
+        from_stage: string;
+        to_stage: string;
+        transitioned_at: string;
+        reason?: string;
+      }>
+    >
+  > => {
     return apiClient.master.get(`/mdm-v60/lifecycle/${id}/history`);
   },
 
-  createPolicy: async (data: Omit<LifecyclePolicy, 'id'>): Promise<ApiResponse<LifecyclePolicy>> => {
+  createPolicy: async (
+    data: Omit<LifecyclePolicy, 'id'>
+  ): Promise<ApiResponse<LifecyclePolicy>> => {
     return apiClient.master.post('/mdm-v60/lifecycle/policy', data);
   },
 
@@ -228,11 +268,13 @@ export const metadataApi = {
   autoTransition: async (data: {
     entity_type?: string;
     dry_run?: boolean;
-  }): Promise<ApiResponse<{
-    transitioned_count: number;
-    failed_count: number;
-    details?: Array<{ id: string; from: string; to: string }>;
-  }>> => {
+  }): Promise<
+    ApiResponse<{
+      transitioned_count: number;
+      failed_count: number;
+      details?: Array<{ id: string; from: string; to: string }>;
+    }>
+  > => {
     return apiClient.master.post('/mdm-v60/lifecycle/auto-transition', data);
   },
 
@@ -245,11 +287,13 @@ export const metadataApi = {
   bulkTransition: async (data: {
     entity_ids: string[];
     target_stage: string;
-  }): Promise<ApiResponse<{
-    success_count: number;
-    failed_count: number;
-    errors?: Array<{ id: string; error: string }>;
-  }>> => {
+  }): Promise<
+    ApiResponse<{
+      success_count: number;
+      failed_count: number;
+      errors?: Array<{ id: string; error: string }>;
+    }>
+  > => {
     return apiClient.master.post('/mdm-v60/lifecycle/bulk', data);
   },
 };

@@ -24,7 +24,9 @@ export const AddressbookList: React.FC<AddressbookListProps> = ({
           height: 256,
         }}
       >
-        <div style={{ color: 'var(--mui-palette-text-secondary)' }}>{i18n.t('components.addressbook_list.k0')}</div>
+        <div style={{ color: 'var(--mui-palette-text-secondary)' }}>
+          {i18n.t('components.addressbook_list.k0')}
+        </div>
       </div>
     );
   }
@@ -40,7 +42,9 @@ export const AddressbookList: React.FC<AddressbookListProps> = ({
         }}
       >
         <div style={{ textAlign: 'center' }}>
-          <p style={{ color: 'var(--mui-palette-text-secondary)' }}>{i18n.t('shared.addressbook_list.k0')}</p>
+          <p style={{ color: 'var(--mui-palette-text-secondary)' }}>
+            {i18n.t('shared.addressbook_list.k0')}
+          </p>
         </div>
       </div>
     );

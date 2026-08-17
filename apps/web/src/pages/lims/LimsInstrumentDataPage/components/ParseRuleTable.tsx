@@ -21,6 +21,7 @@ import i18n from '@/i18n';
 import type { ParseRule } from '@/api/lims';
 import { getStatusColor, getStatusLabel } from '../utils';
 import type { ChipColor } from '../utils';
+
 interface ParseRuleTableProps {
   loading: boolean;
   rules: ParseRule[];

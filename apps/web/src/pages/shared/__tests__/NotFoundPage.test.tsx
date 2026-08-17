@@ -4,6 +4,8 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { renderWithProviders } from '@/__tests__/test-utils';
 
+import NotFoundPage from '../NotFoundPage';
+
 const { tMock, mockNavigate } = vi.hoisted(() => {
   const notFoundPageTranslations: Record<string, string> = {
     'pages.not_found_page.k0': '页面未找到',
@@ -76,8 +78,6 @@ vi.mock('@/routes/dashboard', () => ({
     modules: '/modules',
   },
 }));
-
-import NotFoundPage from '../NotFoundPage';
 
 describe('NotFoundPage', () => {
   beforeEach(() => {

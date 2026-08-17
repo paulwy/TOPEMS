@@ -30,6 +30,7 @@ import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter, RowAction } from '@/components/templates/CrudPage';
 import { useNotificationStore } from '../../store';
 import { notificationSchema } from '@/schemas/mobile';
+
 type NotificationType = 'system' | 'approval' | 'task' | 'message';
 type NotificationPriority = 'high' | 'medium' | 'low';
 type TabType = 'all' | 'unread' | 'system' | 'approval' | 'task';
@@ -133,7 +134,7 @@ export const MobileNotificationPage: React.FC = () => {
     queryKey: ['mobile-notification-page'],
     queryFn: async () => {
       try {
-        return await mobileApi.push.listPushNotifications() ?? {};
+        return (await mobileApi.push.listPushNotifications()) ?? {};
       } catch (e) {
         return {};
       }
@@ -310,7 +311,9 @@ export const MobileNotificationPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Settings size={18} />
-            <Typography variant='subtitle2'>{i18n.t('mobile.mobile_notification_page.k29')}</Typography>
+            <Typography variant='subtitle2'>
+              {i18n.t('mobile.mobile_notification_page.k29')}
+            </Typography>
           </Box>
         </Box>
         <Box sx={{ display: 'flex', gap: 3, mt: 1.5 }}>

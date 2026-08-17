@@ -287,7 +287,10 @@ const PerformanceTestPage: React.FC = () => {
     {
       label: t('performance.performance_test_page.k2'),
       value: loadTime ? `${loadTime.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k1'),
-      color: loadTime && loadTime < 100 ? `${designTokens.colors.success.dark}` : designTokens.colors.warning.dark,
+      color:
+        loadTime && loadTime < 100
+          ? `${designTokens.colors.success.dark}`
+          : designTokens.colors.warning.dark,
       bgColor: loadTime && loadTime < 100 ? 'colors.success.100' : 'colors.warning.100',
       description: t('performance.performance_test_page.k3'),
     },
@@ -295,27 +298,51 @@ const PerformanceTestPage: React.FC = () => {
       label: t('performance.performance_test_page.k4'),
       value: lcpTime ? `${lcpTime.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k2'),
       color:
-        lcpTime && lcpTime < 2500 ? `${designTokens.colors.success.dark}` : lcpTime && lcpTime < 4000 ? designTokens.colors.warning.dark : designTokens.colors.error.dark,
+        lcpTime && lcpTime < 2500
+          ? `${designTokens.colors.success.dark}`
+          : lcpTime && lcpTime < 4000
+            ? designTokens.colors.warning.dark
+            : designTokens.colors.error.dark,
       bgColor:
-        lcpTime && lcpTime < 2500 ? 'colors.success.100' : lcpTime && lcpTime < 4000 ? 'colors.warning.100' : 'colors.error.100',
+        lcpTime && lcpTime < 2500
+          ? 'colors.success.100'
+          : lcpTime && lcpTime < 4000
+            ? 'colors.warning.100'
+            : 'colors.error.100',
       description: 'Largest Contentful Paint (LCP)',
     },
     {
       label: t('performance.performance_test_page.k5'),
       value: ttiTime ? `${ttiTime.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k3'),
       color:
-        ttiTime && ttiTime < 3800 ? `${designTokens.colors.success.dark}` : ttiTime && ttiTime < 7300 ? designTokens.colors.warning.dark : designTokens.colors.error.dark,
+        ttiTime && ttiTime < 3800
+          ? `${designTokens.colors.success.dark}`
+          : ttiTime && ttiTime < 7300
+            ? designTokens.colors.warning.dark
+            : designTokens.colors.error.dark,
       bgColor:
-        ttiTime && ttiTime < 3800 ? 'colors.success.100' : ttiTime && ttiTime < 7300 ? 'colors.warning.100' : 'colors.error.100',
+        ttiTime && ttiTime < 3800
+          ? 'colors.success.100'
+          : ttiTime && ttiTime < 7300
+            ? 'colors.warning.100'
+            : 'colors.error.100',
       description: 'Time to Interactive (TTI)',
     },
     {
       label: t('performance.performance_test_page.k6'),
       value: fidTime ? `${fidTime.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k4'),
       color:
-        fidTime && fidTime < 100 ? `${designTokens.colors.success.dark}` : fidTime && fidTime < 300 ? designTokens.colors.warning.dark : designTokens.colors.error.dark,
+        fidTime && fidTime < 100
+          ? `${designTokens.colors.success.dark}`
+          : fidTime && fidTime < 300
+            ? designTokens.colors.warning.dark
+            : designTokens.colors.error.dark,
       bgColor:
-        fidTime && fidTime < 100 ? 'colors.success.100' : fidTime && fidTime < 300 ? 'colors.warning.100' : 'colors.error.100',
+        fidTime && fidTime < 100
+          ? 'colors.success.100'
+          : fidTime && fidTime < 300
+            ? 'colors.warning.100'
+            : 'colors.error.100',
       description: 'First Input Delay (FID)',
     },
     {
@@ -338,22 +365,39 @@ const PerformanceTestPage: React.FC = () => {
     {
       label: t('performance.performance_test_page.k8'),
       value: firstPaint ? `${firstPaint.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k6'),
-      color: firstPaint && firstPaint < 1000 ? `${designTokens.colors.success.dark}` : designTokens.colors.warning.dark,
+      color:
+        firstPaint && firstPaint < 1000
+          ? `${designTokens.colors.success.dark}`
+          : designTokens.colors.warning.dark,
       bgColor: firstPaint && firstPaint < 1000 ? 'colors.success.100' : 'colors.warning.100',
       description: 'First Paint (FP)',
     },
     {
       label: t('performance.performance_test_page.k9'),
-      value: firstContentfulPaint ? `${firstContentfulPaint.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k7'),
-      color: firstContentfulPaint && firstContentfulPaint < 1500 ? `${designTokens.colors.success.dark}` : designTokens.colors.warning.dark,
-      bgColor: firstContentfulPaint && firstContentfulPaint < 1500 ? 'colors.success.100' : 'colors.warning.100',
+      value: firstContentfulPaint
+        ? `${firstContentfulPaint.toFixed(2)}ms`
+        : i18n.t('pages.performance_test_page.k7'),
+      color:
+        firstContentfulPaint && firstContentfulPaint < 1500
+          ? `${designTokens.colors.success.dark}`
+          : designTokens.colors.warning.dark,
+      bgColor:
+        firstContentfulPaint && firstContentfulPaint < 1500
+          ? 'colors.success.100'
+          : 'colors.warning.100',
       description: 'First Contentful Paint (FCP)',
     },
     {
       label: t('performance.performance_test_page.k10'),
-      value: navigationTime ? `${navigationTime.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k8'),
-      color: navigationTime && navigationTime < 2000 ? `${designTokens.colors.success.dark}` : designTokens.colors.warning.dark,
-      bgColor: navigationTime && navigationTime < 2000 ? 'colors.success.100' : 'colors.warning.100',
+      value: navigationTime
+        ? `${navigationTime.toFixed(2)}ms`
+        : i18n.t('pages.performance_test_page.k8'),
+      color:
+        navigationTime && navigationTime < 2000
+          ? `${designTokens.colors.success.dark}`
+          : designTokens.colors.warning.dark,
+      bgColor:
+        navigationTime && navigationTime < 2000 ? 'colors.success.100' : 'colors.warning.100',
       description: t('performance.performance_test_page.k11'),
     },
     {
@@ -366,15 +410,24 @@ const PerformanceTestPage: React.FC = () => {
     {
       label: t('performance.performance_test_page.k14'),
       value: avgRenderTime ? `${avgRenderTime.toFixed(2)}ms` : 'N/A',
-      color: avgRenderTime && avgRenderTime < 16 ? `${designTokens.colors.success.dark}` : designTokens.colors.warning.dark,
+      color:
+        avgRenderTime && avgRenderTime < 16
+          ? `${designTokens.colors.success.dark}`
+          : designTokens.colors.warning.dark,
       bgColor: avgRenderTime && avgRenderTime < 16 ? 'colors.success.100' : 'colors.warning.100',
       description: t('performance.performance_test_page.k15'),
     },
     {
       label: i18n.t('pages.performance_test_page.dom_10'),
-      value: domContentLoaded ? `${domContentLoaded.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k11'),
-      color: domContentLoaded && domContentLoaded < 1000 ? `${designTokens.colors.success.dark}` : designTokens.colors.warning.dark,
-      bgColor: domContentLoaded && domContentLoaded < 1000 ? 'colors.success.100' : 'colors.warning.100',
+      value: domContentLoaded
+        ? `${domContentLoaded.toFixed(2)}ms`
+        : i18n.t('pages.performance_test_page.k11'),
+      color:
+        domContentLoaded && domContentLoaded < 1000
+          ? `${designTokens.colors.success.dark}`
+          : designTokens.colors.warning.dark,
+      bgColor:
+        domContentLoaded && domContentLoaded < 1000 ? 'colors.success.100' : 'colors.warning.100',
       description: 'DOM Content Loaded',
     },
     {
@@ -492,7 +545,9 @@ const PerformanceTestPage: React.FC = () => {
             }}
             className={!renderComplete ? 'animate-pulse' : ''}
           >
-            {renderComplete ? t('performance.performance_test_page.k24') : i18n.t('pages.performance_test_page.k14')}
+            {renderComplete
+              ? t('performance.performance_test_page.k24')
+              : i18n.t('pages.performance_test_page.k14')}
           </span>
         </div>
 
@@ -517,11 +572,13 @@ const PerformanceTestPage: React.FC = () => {
               }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)';
-                (e.currentTarget as HTMLElement).style.boxShadow = `0 15px 50px ${designTokens.colors.action.selected}`;
+                (e.currentTarget as HTMLElement).style.boxShadow =
+                  `0 15px 50px ${designTokens.colors.action.selected}`;
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-                (e.currentTarget as HTMLElement).style.boxShadow = `0 10px 40px ${designTokens.colors.action.selected}`;
+                (e.currentTarget as HTMLElement).style.boxShadow =
+                  `0 10px 40px ${designTokens.colors.action.selected}`;
               }}
             >
               <div
@@ -600,20 +657,34 @@ const PerformanceTestPage: React.FC = () => {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
               <div>
-                <div style={{ fontSize: '0.875rem', color: 'grey.500' }}>{t('performance.performance_test_page.k25')}</div>
+                <div style={{ fontSize: '0.875rem', color: 'grey.500' }}>
+                  {t('performance.performance_test_page.k25')}
+                </div>
                 <div style={{ fontWeight: 500, color: 'grey.900' }}>/performance</div>
               </div>
               <div>
-                <div style={{ fontSize: '0.875rem', color: 'grey.500' }}>{t('performance.performance_test_page.k26')}</div>
-                <div style={{ fontWeight: 500, color: 'grey.900' }}>{t('performance.performance_test_page.k27')}</div>
+                <div style={{ fontSize: '0.875rem', color: 'grey.500' }}>
+                  {t('performance.performance_test_page.k26')}
+                </div>
+                <div style={{ fontWeight: 500, color: 'grey.900' }}>
+                  {t('performance.performance_test_page.k27')}
+                </div>
               </div>
               <div>
-                <div style={{ fontSize: '0.875rem', color: 'grey.500' }}>{t('performance.performance_test_page.k28')}</div>
-                <div style={{ fontWeight: 500, color: 'success.600' }}>{t('performance.performance_test_page.k29')}</div>
+                <div style={{ fontSize: '0.875rem', color: 'grey.500' }}>
+                  {t('performance.performance_test_page.k28')}
+                </div>
+                <div style={{ fontWeight: 500, color: 'success.600' }}>
+                  {t('performance.performance_test_page.k29')}
+                </div>
               </div>
               <div>
-                <div style={{ fontSize: '0.875rem', color: 'grey.500' }}>{t('performance.performance_test_page.k30')}</div>
-                <div style={{ fontWeight: 500, color: 'success.600' }}>{t('performance.performance_test_page.k31')}</div>
+                <div style={{ fontSize: '0.875rem', color: 'grey.500' }}>
+                  {t('performance.performance_test_page.k30')}
+                </div>
+                <div style={{ fontWeight: 500, color: 'success.600' }}>
+                  {t('performance.performance_test_page.k31')}
+                </div>
               </div>
             </div>
             <div

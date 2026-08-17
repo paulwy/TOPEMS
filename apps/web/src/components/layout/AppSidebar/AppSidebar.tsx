@@ -1,5 +1,14 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { Paper, Box, Tooltip, ListItemButton, ListItemIcon, ListItemText, useTheme, useMediaQuery } from '@mui/material';
+import {
+  Paper,
+  Box,
+  Tooltip,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  useTheme,
+  useMediaQuery,
+} from '@mui/material';
 import PuzzleIcon from '@mui/icons-material/ExtensionOutlined';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
@@ -274,9 +283,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               justifyContent: collapsed ? 'center' : 'flex-start',
               '&.Mui-selected': {
                 bgcolor: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? 'primary.main'
-                    : 'primary.main',
+                  theme.palette.mode === 'dark' ? 'primary.main' : 'primary.main',
                 color: 'primary.contrastText',
                 '&:hover': {
                   bgcolor: 'primary.dark',
@@ -311,12 +318,18 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             {!collapsed && (
               <ListItemText
                 primary={
-                  <Box component='span' sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                  <Box
+                    component='span'
+                    sx={{ fontSize: '0.875rem', fontWeight: 500 }}
+                  >
                     🧩 {i18n.t('shared.app_sidebar.k1')}
                   </Box>
                 }
                 secondary={
-                  <Box component='span' sx={{ fontSize: '0.7rem', opacity: 0.7 }}>
+                  <Box
+                    component='span'
+                    sx={{ fontSize: '0.7rem', opacity: 0.7 }}
+                  >
                     {i18n.t('shared.app_sidebar.k2')}
                   </Box>
                 }

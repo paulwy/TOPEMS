@@ -86,7 +86,11 @@ export function useCrudMutations<TCreate, TUpdate, TDelete>(
   const notifySuccess = useCallback(
     (message: string) => {
       if (showNotifications) {
-        addNotification({ title: i18n.t('shared.use_crud_mutations.k0'), message, type: 'success' });
+        addNotification({
+          title: i18n.t('shared.use_crud_mutations.k0'),
+          message,
+          type: 'success',
+        });
       }
     },
     [addNotification, showNotifications]
@@ -98,7 +102,10 @@ export function useCrudMutations<TCreate, TUpdate, TDelete>(
       if (showNotifications) {
         addNotification({
           title: i18n.t('shared.use_crud_mutations.k1'),
-          message: extractErrorMessage(err, `${entityName}${action}${i18n.t('shared.use_crud_mutations.k1')}`),
+          message: extractErrorMessage(
+            err,
+            `${entityName}${action}${i18n.t('shared.use_crud_mutations.k1')}`
+          ),
           type: 'error',
         });
       }
@@ -109,10 +116,11 @@ export function useCrudMutations<TCreate, TUpdate, TDelete>(
   const createMutation = useMutation({
     mutationFn: createFn,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: queryKeyToInvalidate ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: queryKeyToInvalidate,
+        exact: false,
+        refetchType: 'active',
+      });
       notifySuccess(`${entityName}${i18n.t('shared.use_crud_mutations.k2')}`);
       onCreateSuccess?.(data);
     },
@@ -122,10 +130,11 @@ export function useCrudMutations<TCreate, TUpdate, TDelete>(
   const updateMutation = useMutation({
     mutationFn: updateFn,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: queryKeyToInvalidate ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: queryKeyToInvalidate,
+        exact: false,
+        refetchType: 'active',
+      });
       notifySuccess(`${entityName}${i18n.t('shared.use_crud_mutations.k3')}`);
       onUpdateSuccess?.(data);
     },
@@ -135,10 +144,11 @@ export function useCrudMutations<TCreate, TUpdate, TDelete>(
   const deleteMutation = useMutation({
     mutationFn: deleteFn,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: queryKeyToInvalidate ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: queryKeyToInvalidate,
+        exact: false,
+        refetchType: 'active',
+      });
       notifySuccess(`${entityName}${i18n.t('shared.use_crud_mutations.k4')}`);
       onDeleteSuccess?.(data);
     },

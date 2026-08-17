@@ -11,6 +11,7 @@ import { apiLogger } from '@/utils/logger';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 export interface LeaveForm {
   leave_type: LeaveApplication['leave_type'];
   start_date: string;
@@ -110,14 +111,16 @@ export const useMobileAttendance = () => {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_STATS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_RECORDS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_STATS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_RECORDS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
   const checkOutMutation = useMutation({
@@ -165,14 +168,16 @@ export const useMobileAttendance = () => {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_STATS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_RECORDS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_STATS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_RECORDS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
   const applyLeaveMutation = useMutation({
@@ -196,10 +201,11 @@ export const useMobileAttendance = () => {
         message: i18n.t('mobile.attendance.message.leave_submitted'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_LEAVE_APPLICATIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MOBILE_LEAVE_APPLICATIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err) => {
       apiLogger.error(i18n.t('mobile.attendance.message.leave_submit_failed'), err);

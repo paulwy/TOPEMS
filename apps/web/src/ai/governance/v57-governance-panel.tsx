@@ -430,7 +430,9 @@ export const V57GovernancePanel: React.FC<{ onClose: () => void }> = ({ onClose 
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setPolicyDialogOpen(false)}>{i18n.t('ai.v57-governance-panel.k23')}</Button>
+            <Button onClick={() => setPolicyDialogOpen(false)}>
+              {i18n.t('ai.v57-governance-panel.k23')}
+            </Button>
             <Button
               variant='contained'
               onClick={handleCreatePolicy}
@@ -527,7 +529,10 @@ const ComplianceTab: React.FC<{
   if (!status) {
     return (
       <Box sx={{ p: 3 }}>
-        <Alert severity='info'>暂无合规数据，请点击"{i18n.t('ai.v57-governance-panel.k24')}"{i18n.t('ai.document_analysis.button.start_analysis')}</Alert>
+        <Alert severity='info'>
+          暂无合规数据，请点击"{i18n.t('ai.v57-governance-panel.k24')}"
+          {i18n.t('ai.document_analysis.button.start_analysis')}
+        </Alert>
       </Box>
     );
   }
@@ -587,7 +592,10 @@ const ComplianceTab: React.FC<{
       </Box>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3, mb: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -629,7 +637,10 @@ const ComplianceTab: React.FC<{
         </Card>
 
         {report && (
-          <Card variant='outlined' sx={{ p: 2 }}>
+          <Card
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -696,16 +707,29 @@ const ComplianceTab: React.FC<{
         ))}
       </Stack>
 
-      <Card variant='outlined' sx={{ p: 2 }}>
+      <Card
+        variant='outlined'
+        sx={{ p: 2 }}
+      >
         <TableContainer>
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k27')}</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k28')}</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k29')}</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k30')}</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k31')}</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                  {i18n.t('ai.v57-governance-panel.k27')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                  {i18n.t('ai.v57-governance-panel.k28')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                  {i18n.t('ai.v57-governance-panel.k29')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                  {i18n.t('ai.v57-governance-panel.k30')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                  {i18n.t('ai.v57-governance-panel.k31')}
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -752,7 +776,8 @@ const ComplianceTab: React.FC<{
             variant='caption'
             sx={{ p: 1, display: 'block', textAlign: 'center', color: 'text.secondary' }}
           >
-            {i18n.t('ai.v57-governance-panel.20_0')} {filtered.length} {i18n.t('ai.v57-governance-panel.k1')}
+            {i18n.t('ai.v57-governance-panel.20_0')} {filtered.length}{' '}
+            {i18n.t('ai.v57-governance-panel.k1')}
           </Typography>
         )}
       </Card>
@@ -879,7 +904,10 @@ const RiskTab: React.FC<{
       )}
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3, mb: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -963,7 +991,10 @@ const RiskTab: React.FC<{
           </Stack>
         </Card>
 
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1073,16 +1104,29 @@ const RiskTab: React.FC<{
       {filteredAlerts.length === 0 ? (
         <Alert severity='info'>{i18n.t('ai.v57-governance-panel.k48')}</Alert>
       ) : (
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <TableContainer>
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k49')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k50')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k51')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k52')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k53')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v57-governance-panel.k49')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v57-governance-panel.k50')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v57-governance-panel.k51')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v57-governance-panel.k52')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v57-governance-panel.k53')}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1235,12 +1279,16 @@ const PolicyTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            {i18n.t('ai.v57-governance-panel.k2')}{policies.length})
+            {i18n.t('ai.v57-governance-panel.k2')}
+            {policies.length})
           </Typography>
           {policies.length === 0 ? (
             <Alert
@@ -1310,7 +1358,10 @@ const PolicyTab: React.FC<{
           )}
         </Card>
 
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           {selectedPolicy ? (
             <>
               <Typography
@@ -1349,16 +1400,25 @@ const PolicyTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600, mb: 1 }}
               >
-                {i18n.t('ai.v57-governance-panel.k3')}{selectedPolicy.rules.length})
+                {i18n.t('ai.v57-governance-panel.k3')}
+                {selectedPolicy.rules.length})
               </Typography>
               <TableContainer>
                 <Table size='small'>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v57-governance-panel.k57')}</TableCell>
-                      <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v57-governance-panel.k58')}</TableCell>
-                      <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v57-governance-panel.k59')}</TableCell>
-                      <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v57-governance-panel.k60')}</TableCell>
+                      <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>
+                        {i18n.t('ai.v57-governance-panel.k57')}
+                      </TableCell>
+                      <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>
+                        {i18n.t('ai.v57-governance-panel.k58')}
+                      </TableCell>
+                      <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>
+                        {i18n.t('ai.v57-governance-panel.k59')}
+                      </TableCell>
+                      <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>
+                        {i18n.t('ai.v57-governance-panel.k60')}
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -1424,10 +1484,18 @@ const PolicyTab: React.FC<{
                   <Table size='small'>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v57-governance-panel.k61')}</TableCell>
-                        <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v57-governance-panel.k62')}</TableCell>
-                        <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v57-governance-panel.k63')}</TableCell>
-                        <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v57-governance-panel.k64')}</TableCell>
+                        <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>
+                          {i18n.t('ai.v57-governance-panel.k61')}
+                        </TableCell>
+                        <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>
+                          {i18n.t('ai.v57-governance-panel.k62')}
+                        </TableCell>
+                        <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>
+                          {i18n.t('ai.v57-governance-panel.k63')}
+                        </TableCell>
+                        <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>
+                          {i18n.t('ai.v57-governance-panel.k64')}
+                        </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -1517,7 +1585,8 @@ const AuditTab: React.FC<{
           variant='body2'
           color='text.secondary'
         >
-          {i18n.t('ai.v57-governance-panel.k4')} {logs.length} {i18n.t('ai.v57-governance-panel.k5')}
+          {i18n.t('ai.v57-governance-panel.k4')} {logs.length}{' '}
+          {i18n.t('ai.v57-governance-panel.k5')}
         </Typography>
       </Stack>
 
@@ -1571,18 +1640,35 @@ const AuditTab: React.FC<{
       {filtered.length === 0 ? (
         <Alert severity='info'>{i18n.t('ai.v57-governance-panel.k72')}</Alert>
       ) : (
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <TableContainer>
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k73')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k74')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k75')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k76')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k77')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k78')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v57-governance-panel.k79')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v57-governance-panel.k73')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v57-governance-panel.k74')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v57-governance-panel.k75')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v57-governance-panel.k76')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v57-governance-panel.k77')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v57-governance-panel.k78')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v57-governance-panel.k79')}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1600,7 +1686,8 @@ const AuditTab: React.FC<{
               variant='caption'
               sx={{ p: 1, display: 'block', textAlign: 'center', color: 'text.secondary' }}
             >
-              {i18n.t('ai.v57-governance-panel.30_6')} {filtered.length} {i18n.t('ai.v57-governance-panel.k7')}
+              {i18n.t('ai.v57-governance-panel.30_6')} {filtered.length}{' '}
+              {i18n.t('ai.v57-governance-panel.k7')}
             </Typography>
           )}
         </Card>
@@ -1746,7 +1833,10 @@ const ScoreCard: React.FC<{
   icon: React.ReactNode;
   subtitle: string;
 }> = ({ title, score, color, icon, subtitle }) => (
-  <Card variant='outlined' sx={{ p: 2 }}>
+  <Card
+    variant='outlined'
+    sx={{ p: 2 }}
+  >
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       <Box sx={{ color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {icon}

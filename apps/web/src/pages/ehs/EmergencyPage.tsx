@@ -16,7 +16,7 @@ import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const drillApi = {
   list: ehsApi.listDrills,
@@ -30,7 +30,7 @@ const baseAdapter = createCrudPageAdapter<DrillRecord, CreateDrillRecordRequest>
 const drillAdapter: CrudApiAdapter<DrillRecord> = {
   list: baseAdapter.list as unknown as CrudApiAdapter<DrillRecord>['list'],
   create: async (data) => {
-  const { t } = useTranslation('ehs');
+    const t = i18n.getFixedT(null, 'ehs');
     const transformed = { ...data };
     if (typeof transformed.participants === 'string') {
       transformed.participants = (transformed.participants as string)
@@ -87,8 +87,9 @@ const EmergencyPage: React.FC = () => {
   const { data: drillsResp } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.EHS_EMERGENCY_DRILLS_STATS_BASE,
     queryFn: async () => ehsApi.listDrills({ pagesize: 500 }),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const stats = useMemo(() => {
     const drills = extractListData(drillsResp);

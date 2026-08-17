@@ -35,6 +35,7 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { PageContainer } from '@/components/common';
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens, semanticTokens } from '@topems/tokens';
+
 const EnergyManagementPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const queryClient = useQueryClient();
@@ -43,36 +44,53 @@ const EnergyManagementPage: React.FC = () => {
     queryKey: QUERY_KEYS.AD_HOC.REALTIMECONSUMPTION_BASE,
     queryFn: () => energyManagementApi.getRealTimeConsumption(),
     refetchInterval: 10000,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const energyReport = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ENERGYREPORT_BASE,
     queryFn: () => energyManagementApi.getEnergyReport(),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const energyForecast = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ENERGYFORECAST_BASE,
     queryFn: () => energyManagementApi.getEnergyForecast({ months: 3 }),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const energyAlerts = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ENERGYALERTS_BASE,
     queryFn: () => energyManagementApi.getEnergyAlerts(),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.REALTIMECONSUMPTION_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-    addNotification({ title: i18n.t('mes.energy_management_page.k1'), message: i18n.t('mes.energy_management_page.k0'), type: 'success' });
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.REALTIMECONSUMPTION_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
+    addNotification({
+      title: i18n.t('mes.energy_management_page.k1'),
+      message: i18n.t('mes.energy_management_page.k0'),
+      type: 'success',
+    });
   };
   const handleExport = async () => {
     try {
       await energyManagementApi.exportEnergyReport();
-      addNotification({ title: i18n.t('mes.energy_management_page.k3'), message: i18n.t('mes.energy_management_page.k2'), type: 'success' });
+      addNotification({
+        title: i18n.t('mes.energy_management_page.k3'),
+        message: i18n.t('mes.energy_management_page.k2'),
+        type: 'success',
+      });
     } catch {
-      addNotification({ title: i18n.t('mes.energy_management_page.k5'), message: i18n.t('mes.energy_management_page.k4'), type: 'error' });
+      addNotification({
+        title: i18n.t('mes.energy_management_page.k5'),
+        message: i18n.t('mes.energy_management_page.k4'),
+        type: 'error',
+      });
     }
   };
   const getStatusColor = (status: string) => {
@@ -446,7 +464,9 @@ const EnergyManagementPage: React.FC = () => {
                 <Grid sx={{ gridColumn: 'span 4' }}>
                   <Card>
                     <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography variant='h6'>{i18n.t('mes.energy_management_page.k31')}</Typography>
+                      <Typography variant='h6'>
+                        {i18n.t('mes.energy_management_page.k31')}
+                      </Typography>
                       <Typography variant='h5'>
                         {formatNumber(forecastData.confidence_interval[0])} -{' '}
                         {formatNumber(forecastData.confidence_interval[1])} kWh
@@ -459,7 +479,9 @@ const EnergyManagementPage: React.FC = () => {
                 <Typography variant='subtitle1'>
                   [i18n.t('pages.energy_management_page.k8')]: {forecastData.forecast_period}
                 </Typography>
-                <Typography variant='subtitle1'>{i18n.t('pages.energy_management_page.k0')}</Typography>
+                <Typography variant='subtitle1'>
+                  {i18n.t('pages.energy_management_page.k0')}
+                </Typography>
                 <Typography variant='subtitle1'>
                   [i18n.t('pages.energy_management_page.k9')]: {forecastData.seasonality_factor}
                 </Typography>
@@ -473,7 +495,9 @@ const EnergyManagementPage: React.FC = () => {
             <CardContent>
               <Grid sx={{ display: 'flex', gap: 2, mb: 4 }}>
                 <Grid>
-                  <Chip label={`${i18n.t('pages.energy_management_page.k0')}${alertsData.total_count}`} />
+                  <Chip
+                    label={`${i18n.t('pages.energy_management_page.k0')}${alertsData.total_count}`}
+                  />
                 </Grid>
                 <Grid>
                   <Chip
@@ -499,13 +523,19 @@ const EnergyManagementPage: React.FC = () => {
                     <span>{alert.message}</span>
                     <span>
                       <Chip
-                        label={alert.status === 'active' ? i18n.t('mes.energy_management_page.k34') : i18n.t('mes.energy_management_page.k33')}
+                        label={
+                          alert.status === 'active'
+                            ? i18n.t('mes.energy_management_page.k34')
+                            : i18n.t('mes.energy_management_page.k33')
+                        }
                         size='small'
                       />
                     </span>
                   </Box>
                   <Box sx={{ mt: 1, fontSize: '0.875rem' }}>
-                    [i18n.t('pages.energy_management_page.k10')]: {alert.threshold_value} | {i18n.t('pages.energy_management_page.k11')}{alert.actualValue} | {alert.timestamp}
+                    [i18n.t('pages.energy_management_page.k10')]: {alert.threshold_value} |{' '}
+                    {i18n.t('pages.energy_management_page.k11')}
+                    {alert.actualValue} | {alert.timestamp}
                   </Box>
                 </Alert>
               ))}

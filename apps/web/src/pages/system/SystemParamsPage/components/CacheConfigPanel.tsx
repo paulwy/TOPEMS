@@ -106,7 +106,9 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
               onClick={onClearCache}
               disabled={isClearingCache || !cacheConfig.enabled}
             >
-              {isClearingCache ? i18n.t('pages.cache_config_panel.k0') : i18n.t('system.cache_config_panel.k0')}
+              {isClearingCache
+                ? i18n.t('pages.cache_config_panel.k0')
+                : i18n.t('system.cache_config_panel.k0')}
             </Button>
           }
         />
@@ -451,7 +453,9 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
           onClick={onSave}
           disabled={isSaving}
         >
-          {isSaving ? t('system.system_params_page_components_cache_config_panel.m4') : t('system.cache_config_panel.k11')}
+          {isSaving
+            ? t('system.system_params_page_components_cache_config_panel.m4')
+            : t('system.cache_config_panel.k11')}
         </Button>
       </Box>
     </Box>

@@ -18,6 +18,7 @@ import i18n from '@/i18n';
 import { Database, Download, Upload, Trash2, Play } from 'lucide-react';
 import { StatusBadge } from '@/components/common';
 import type { BackupRecord } from '../hooks/useDatabaseManagement';
+
 interface DatabaseManagementBackupsProps {
   backups: BackupRecord[];
   loading: boolean;
@@ -106,18 +107,24 @@ export const DatabaseManagementBackups: React.FC<DatabaseManagementBackupsProps>
                 <TableCell sx={{ fontWeight: 'bold' }}>
                   {i18n.t('erp.database.label.backup_name')}
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.database.label.type')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>
+                  {i18n.t('erp.database.label.type')}
+                </TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>
                   {i18n.t('erp.database.label.file_size')}
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.database.label.status')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>
+                  {i18n.t('erp.database.label.status')}
+                </TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>
                   {i18n.t('erp.database.label.created_by')}
                 </TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>
                   {i18n.t('erp.database.label.created_at')}
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.database.label.remark')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>
+                  {i18n.t('erp.database.label.remark')}
+                </TableCell>
                 <TableCell
                   align='center'
                   sx={{ fontWeight: 'bold', width: 160 }}

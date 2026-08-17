@@ -125,10 +125,30 @@ export const V57AutomationPanel: React.FC<{ onClose: () => void }> = ({ onClose 
             onChange={(_, tab) => setActiveTab(tab as TabId)}
             variant='fullWidth'
           >
-            <Tab value='tests' label={i18n.t('ai.v57-automation-panel.k0')} icon={<TestTube size={16} />} iconPosition='start' />
-            <Tab value='ci' label={i18n.t('ai.v57-automation-panel.ci_0')} icon={<GitBranch size={16} />} iconPosition='start' />
-            <Tab value='quality' label={i18n.t('ai.v57-automation-panel.k1')} icon={<Shield size={16} />} iconPosition='start' />
-            <Tab value='trends' label={i18n.t('ai.v57-automation-panel.k2')} icon={<TrendingUp size={16} />} iconPosition='start' />
+            <Tab
+              value='tests'
+              label={i18n.t('ai.v57-automation-panel.k0')}
+              icon={<TestTube size={16} />}
+              iconPosition='start'
+            />
+            <Tab
+              value='ci'
+              label={i18n.t('ai.v57-automation-panel.ci_0')}
+              icon={<GitBranch size={16} />}
+              iconPosition='start'
+            />
+            <Tab
+              value='quality'
+              label={i18n.t('ai.v57-automation-panel.k1')}
+              icon={<Shield size={16} />}
+              iconPosition='start'
+            />
+            <Tab
+              value='trends'
+              label={i18n.t('ai.v57-automation-panel.k2')}
+              icon={<TrendingUp size={16} />}
+              iconPosition='start'
+            />
           </Tabs>
           <Box sx={{ flex: 1, overflow: 'auto' }}>
             {activeTab === 'tests' && <TestsTab />}
@@ -330,239 +350,262 @@ const TestsTab: React.FC = () => {
           }
         />
         <CardContent>
-        <TableContainer>
-          <Table size='small'>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k13')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k14')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k15')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k16')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k17')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k18')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k19')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredScenarios.length === 0 ? (
+          <TableContainer>
+            <Table size='small'>
+              <TableHead>
                 <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    align='center'
-                    sx={{ py: 4 }}
-                  >
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      {i18n.t('ai.v57-automation-panel.k8')}
-                    </Typography>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k13')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k14')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k15')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k16')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k17')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k18')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k19')}
                   </TableCell>
                 </TableRow>
-              ) : (
-                filteredScenarios.map((s) => (
-                  <TableRow
-                    key={s.id}
-                    hover
-                    onClick={() => handleSelectScenario(s)}
-                    sx={{ cursor: 'pointer' }}
-                    selected={selectedScenario?.id === s.id}
-                  >
-                    <TableCell>
+              </TableHead>
+              <TableBody>
+                {filteredScenarios.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      align='center'
+                      sx={{ py: 4 }}
+                    >
                       <Typography
                         variant='body2'
-                        sx={{ fontWeight: 500 }}
+                        color='text.secondary'
                       >
-                        {s.name}
+                        {i18n.t('ai.v57-automation-panel.k8')}
                       </Typography>
                     </TableCell>
-                    <TableCell>
-                      <TestTypeBadge type={s.type} />
-                    </TableCell>
-                    <TableCell>
-                      <PriorityBadge priority={s.priority} />
-                    </TableCell>
-                    <TableCell>
-                      <TestStatusChip status={s.status} />
-                    </TableCell>
-                    <TableCell>{s.steps.length}</TableCell>
-                    <TableCell>
-                      <Typography variant='caption'>{s.module || '—'}</Typography>
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Tooltip title={i18n.t('ai.v57-automation-panel.k20')}>
-                        <IconButton
-                          size='small'
-                          onClick={() => handleRunScenario(s.id)}
-                        >
-                          <Play
-                            size={16}
-                            color={designTokens.colors.success.dark}
-                          />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </CardContent>
+                ) : (
+                  filteredScenarios.map((s) => (
+                    <TableRow
+                      key={s.id}
+                      hover
+                      onClick={() => handleSelectScenario(s)}
+                      sx={{ cursor: 'pointer' }}
+                      selected={selectedScenario?.id === s.id}
+                    >
+                      <TableCell>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {s.name}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <TestTypeBadge type={s.type} />
+                      </TableCell>
+                      <TableCell>
+                        <PriorityBadge priority={s.priority} />
+                      </TableCell>
+                      <TableCell>
+                        <TestStatusChip status={s.status} />
+                      </TableCell>
+                      <TableCell>{s.steps.length}</TableCell>
+                      <TableCell>
+                        <Typography variant='caption'>{s.module || '—'}</Typography>
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Tooltip title={i18n.t('ai.v57-automation-panel.k20')}>
+                          <IconButton
+                            size='small'
+                            onClick={() => handleRunScenario(s.id)}
+                          >
+                            <Play
+                              size={16}
+                              color={designTokens.colors.success.dark}
+                            />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
       </Card>
 
       {selectedScenario && (
-        <Card variant='outlined' sx={{ mt: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ mt: 2 }}
+        >
           <CardHeader
             title={`${i18n.t('ai.v57-automation-panel.k9')} ${selectedScenario.name}`}
             subheader={selectedScenario.expected_result}
           />
           <CardContent>
-          <Typography
-            variant='subtitle2'
-            sx={{ mb: 1, fontWeight: 600 }}
-          >
-            {i18n.t('ai.v57-automation-panel.k10')}
-          </Typography>
-          <Stack
-            spacing={1}
-            sx={{ mb: 2 }}
-          >
-            {selectedScenario.steps.map((step, idx) => (
-              <Paper
-                key={idx}
-                sx={{
-                  p: 1.5,
-                  borderRadius: 1,
-                  bgcolor: 'grey.50',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                }}
-              >
-                <Box
+            <Typography
+              variant='subtitle2'
+              sx={{ mb: 1, fontWeight: 600 }}
+            >
+              {i18n.t('ai.v57-automation-panel.k10')}
+            </Typography>
+            <Stack
+              spacing={1}
+              sx={{ mb: 2 }}
+            >
+              {selectedScenario.steps.map((step, idx) => (
+                <Paper
+                  key={idx}
                   sx={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: '50%',
-                    bgcolor: 'teal.500',
-                    color: 'common.white',
+                    p: 1.5,
+                    borderRadius: 1,
+                    bgcolor: 'grey.50',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12,
-                    fontWeight: 600,
+                    gap: 1,
                   }}
                 >
-                  {idx + 1}
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500 }}
+                  <Box
+                    sx={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      bgcolor: 'teal.500',
+                      color: 'common.white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 12,
+                      fontWeight: 600,
+                    }}
                   >
-                    {step.name}
-                  </Typography>
+                    {idx + 1}
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ fontWeight: 500 }}
+                    >
+                      {step.name}
+                    </Typography>
+                    <Typography
+                      variant='caption'
+                      sx={{ fontFamily: 'monospace', color: 'text.secondary' }}
+                    >
+                      {step.action}
+                    </Typography>
+                  </Box>
                   <Typography
                     variant='caption'
-                    sx={{ fontFamily: 'monospace', color: 'text.secondary' }}
+                    color='text.secondary'
                   >
-                    {step.action}
+                    → {step.expected}
                   </Typography>
-                </Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  → {step.expected}
-                </Typography>
-              </Paper>
-            ))}
-          </Stack>
+                </Paper>
+              ))}
+            </Stack>
 
-          {failureAnalysis && (
-            <>
-              <Divider sx={{ my: 2 }} />
-              <Typography
-                variant='subtitle2'
-                sx={{ mb: 1, fontWeight: 600, color: 'error.500' }}
-              >
-                {i18n.t('ai.v57-automation-panel.k11')}
-              </Typography>
-              <Alert
-                severity='error'
-                variant='outlined'
-                sx={{ mb: 1 }}
-              >
-                <strong>{i18n.t('ai:v57-automation-panel.k11')}</strong> {failureAnalysis.failure_type}
-              </Alert>
-              <Alert
-                severity='warning'
-                variant='outlined'
-                sx={{ mb: 1 }}
-              >
-                <strong>{i18n.t('ai:v57-automation-panel.k10')}</strong> {failureAnalysis.root_cause}
-              </Alert>
-              <Alert
-                severity='info'
-                variant='outlined'
-              >
-                <strong>{i18n.t('ai:v57-automation-panel.k9')}</strong> {failureAnalysis.suggestion}
-              </Alert>
-              {failureAnalysis.stack_trace && (
-                <Box
-                  sx={{
-                    mt: 2,
-                    p: 1.5,
-                    bgcolor: 'grey.900',
-                    color: 'grey.100',
-                    borderRadius: 1,
-                    fontFamily: 'monospace',
-                    fontSize: 11,
-                    whiteSpace: 'pre-wrap',
-                  }}
+            {failureAnalysis && (
+              <>
+                <Divider sx={{ my: 2 }} />
+                <Typography
+                  variant='subtitle2'
+                  sx={{ mb: 1, fontWeight: 600, color: 'error.500' }}
                 >
-                  {failureAnalysis.stack_trace}
-                </Box>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+                  {i18n.t('ai.v57-automation-panel.k11')}
+                </Typography>
+                <Alert
+                  severity='error'
+                  variant='outlined'
+                  sx={{ mb: 1 }}
+                >
+                  <strong>{i18n.t('ai:v57-automation-panel.k11')}</strong>{' '}
+                  {failureAnalysis.failure_type}
+                </Alert>
+                <Alert
+                  severity='warning'
+                  variant='outlined'
+                  sx={{ mb: 1 }}
+                >
+                  <strong>{i18n.t('ai:v57-automation-panel.k10')}</strong>{' '}
+                  {failureAnalysis.root_cause}
+                </Alert>
+                <Alert
+                  severity='info'
+                  variant='outlined'
+                >
+                  <strong>{i18n.t('ai:v57-automation-panel.k9')}</strong>{' '}
+                  {failureAnalysis.suggestion}
+                </Alert>
+                {failureAnalysis.stack_trace && (
+                  <Box
+                    sx={{
+                      mt: 2,
+                      p: 1.5,
+                      bgcolor: 'grey.900',
+                      color: 'grey.100',
+                      borderRadius: 1,
+                      fontFamily: 'monospace',
+                      fontSize: 11,
+                      whiteSpace: 'pre-wrap',
+                    }}
+                  >
+                    {failureAnalysis.stack_trace}
+                  </Box>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {coverage && (
-        <Card variant='outlined' sx={{ mt: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ mt: 2 }}
+        >
           <CardHeader title={i18n.t('ai.v57-automation-panel.k21')} />
           <CardContent>
-          <Grid
-            container
-            spacing={2}
-          >
-            <Grid size={{ xs: 12, md: 4 }}>
-              <CoverageGauge
-                label={i18n.t('ai.v57-automation-panel.k22')}
-                value={coverage.line_coverage}
-                color={designTokens.colors.success.dark}
-              />
+            <Grid
+              container
+              spacing={2}
+            >
+              <Grid size={{ xs: 12, md: 4 }}>
+                <CoverageGauge
+                  label={i18n.t('ai.v57-automation-panel.k22')}
+                  value={coverage.line_coverage}
+                  color={designTokens.colors.success.dark}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <CoverageGauge
+                  label={i18n.t('ai.v57-automation-panel.k23')}
+                  value={coverage.branch_coverage}
+                  color={`${designTokens.colors.info.main}`}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <CoverageGauge
+                  label={i18n.t('ai.v57-automation-panel.k24')}
+                  value={coverage.function_coverage}
+                  color={designTokens.colors.secondary.main}
+                />
+              </Grid>
             </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <CoverageGauge
-                label={i18n.t('ai.v57-automation-panel.k23')}
-                value={coverage.branch_coverage}
-                color={`${designTokens.colors.info.main}`}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <CoverageGauge
-                label={i18n.t('ai.v57-automation-panel.k24')}
-                value={coverage.function_coverage}
-                color={designTokens.colors.secondary.main}
-              />
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
       )}
 
       {showGenerate && (
@@ -673,202 +716,235 @@ const CITab: React.FC = () => {
           }
         />
         <CardContent>
-        <TableContainer>
-          <Table size='small'>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k29')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Provider</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k30')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k31')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k32')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k33')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k34')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {configs.length === 0 ? (
+          <TableContainer>
+            <Table size='small'>
+              <TableHead>
                 <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    align='center'
-                    sx={{ py: 4 }}
-                  >
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      {i18n.t('ai.v57-automation-panel.k15')}
-                    </Typography>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k29')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Provider</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k30')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k31')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k32')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k33')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k34')}
                   </TableCell>
                 </TableRow>
-              ) : (
-                configs.map((c) => (
-                  <TableRow
-                    key={c.pipeline}
-                    hover
-                    onClick={() => setSelectedConfig(c)}
-                    sx={{ cursor: 'pointer' }}
-                    selected={selectedConfig?.pipeline === c.pipeline}
-                  >
-                    <TableCell sx={{ fontWeight: 500 }}>{c.pipeline}</TableCell>
-                    <TableCell>
-                      <ProviderBadge provider={c.provider} />
-                    </TableCell>
-                    <TableCell>
-                      <Stack
-                        direction='row'
-                        spacing={0.5}
-                        sx={{ flexWrap: 'wrap' }}
+              </TableHead>
+              <TableBody>
+                {configs.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      align='center'
+                      sx={{ py: 4 }}
+                    >
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
                       >
-                        {c.triggers.slice(0, 3).map((t) => (
-                          <Chip
-                            key={t}
-                            label={t}
-                            size='small'
-                            variant='outlined'
-                          />
-                        ))}
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant='caption'>
-                        {c.branches.slice(0, 2).join(', ')}
-                        {c.branches.length > 2 ? ` +${c.branches.length - 2}` : ''}
+                        {i18n.t('ai.v57-automation-panel.k15')}
                       </Typography>
                     </TableCell>
-                    <TableCell>{c.stages.length}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={c.environment || '—'}
-                        size='small'
-                        color={c.environment === 'production' ? 'error' : 'info'}
-                      />
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Tooltip title={i18n.t('ai.v57-automation-panel.k35')}>
-                        <IconButton
-                          size='small'
-                          onClick={() => handleTrigger(c.pipeline)}
-                        >
-                          <Play
-                            size={16}
-                            color={designTokens.colors.success.dark}
-                          />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </CardContent>
+                ) : (
+                  configs.map((c) => (
+                    <TableRow
+                      key={c.pipeline}
+                      hover
+                      onClick={() => setSelectedConfig(c)}
+                      sx={{ cursor: 'pointer' }}
+                      selected={selectedConfig?.pipeline === c.pipeline}
+                    >
+                      <TableCell sx={{ fontWeight: 500 }}>{c.pipeline}</TableCell>
+                      <TableCell>
+                        <ProviderBadge provider={c.provider} />
+                      </TableCell>
+                      <TableCell>
+                        <Stack
+                          direction='row'
+                          spacing={0.5}
+                          sx={{ flexWrap: 'wrap' }}
+                        >
+                          {c.triggers.slice(0, 3).map((t) => (
+                            <Chip
+                              key={t}
+                              label={t}
+                              size='small'
+                              variant='outlined'
+                            />
+                          ))}
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant='caption'>
+                          {c.branches.slice(0, 2).join(', ')}
+                          {c.branches.length > 2 ? ` +${c.branches.length - 2}` : ''}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>{c.stages.length}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={c.environment || '—'}
+                          size='small'
+                          color={c.environment === 'production' ? 'error' : 'info'}
+                        />
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Tooltip title={i18n.t('ai.v57-automation-panel.k35')}>
+                          <IconButton
+                            size='small'
+                            onClick={() => handleTrigger(c.pipeline)}
+                          >
+                            <Play
+                              size={16}
+                              color={designTokens.colors.success.dark}
+                            />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
       </Card>
 
-      <Card variant='outlined' sx={{ mt: 2 }}>
+      <Card
+        variant='outlined'
+        sx={{ mt: 2 }}
+      >
         <CardHeader
           title={i18n.t('ai.v57-automation-panel.k36')}
           subheader={`${runs.length} ${i18n.t('ai.v57-automation-panel.k16')}`}
         />
         <CardContent>
-        <TableContainer>
-          <Table size='small'>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.id_37')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k38')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k39')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k40')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k41')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k42')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k43')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {runs.length === 0 ? (
+          <TableContainer>
+            <Table size='small'>
+              <TableHead>
                 <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    align='center'
-                    sx={{ py: 4 }}
-                  >
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >{i18n.t('ai:v57-automation-panel.k8', { v0: (i18n.t('ai.v57-automation-panel.i18n_17')) })}</Typography>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.id_37')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k38')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k39')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k40')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k41')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k42')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k43')}
                   </TableCell>
                 </TableRow>
-              ) : (
-                runs.slice(0, 15).map((r) => {
-                  const progress =
-                    r.total_stages > 0 ? (r.stages_completed / r.total_stages) * 100 : 0;
-                  return (
-                    <TableRow
-                      key={r.run_id}
-                      hover
-                      onClick={() => setSelectedRun(r)}
-                      sx={{ cursor: 'pointer' }}
+              </TableHead>
+              <TableBody>
+                {runs.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      align='center'
+                      sx={{ py: 4 }}
                     >
-                      <TableCell>
-                        <Typography
-                          variant='caption'
-                          sx={{ fontFamily: 'monospace' }}
-                        >
-                          {r.run_id.slice(-12)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>{r.pipeline}</TableCell>
-                      <TableCell>
-                        <CIStatusChip status={r.status} />
-                      </TableCell>
-                      <TableCell sx={{ minWidth: 120 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <LinearProgress
-                            variant='determinate'
-                            value={progress}
-                            sx={{ flex: 1, height: 6, borderRadius: 3 }}
-                            color={
-                              r.status === 'failed'
-                                ? 'error'
-                                : r.status === 'success'
-                                  ? 'success'
-                                  : 'primary'
-                            }
-                          />
-                          <Typography variant='caption'>{Math.round(progress)}%</Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant='caption'>
-                          {r.duration_ms > 0 ? `${Math.round(r.duration_ms / 100) / 10}s` : '—'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>{r.artifacts.length}</TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        {r.status === 'running' && (
-                          <Tooltip title={i18n.t('ai.v57-automation-panel.k45')}>
-                            <IconButton
-                              size='small'
-                              onClick={() => handleCancel(r.run_id)}
-                            >
-                              <Square
-                                size={16}
-                                color={designTokens.colors.error.main}
-                              />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </CardContent>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        {i18n.t('ai:v57-automation-panel.k8', {
+                          v0: i18n.t('ai.v57-automation-panel.i18n_17'),
+                        })}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  runs.slice(0, 15).map((r) => {
+                    const progress =
+                      r.total_stages > 0 ? (r.stages_completed / r.total_stages) * 100 : 0;
+                    return (
+                      <TableRow
+                        key={r.run_id}
+                        hover
+                        onClick={() => setSelectedRun(r)}
+                        sx={{ cursor: 'pointer' }}
+                      >
+                        <TableCell>
+                          <Typography
+                            variant='caption'
+                            sx={{ fontFamily: 'monospace' }}
+                          >
+                            {r.run_id.slice(-12)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>{r.pipeline}</TableCell>
+                        <TableCell>
+                          <CIStatusChip status={r.status} />
+                        </TableCell>
+                        <TableCell sx={{ minWidth: 120 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <LinearProgress
+                              variant='determinate'
+                              value={progress}
+                              sx={{ flex: 1, height: 6, borderRadius: 3 }}
+                              color={
+                                r.status === 'failed'
+                                  ? 'error'
+                                  : r.status === 'success'
+                                    ? 'success'
+                                    : 'primary'
+                              }
+                            />
+                            <Typography variant='caption'>{Math.round(progress)}%</Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant='caption'>
+                            {r.duration_ms > 0 ? `${Math.round(r.duration_ms / 100) / 10}s` : '—'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>{r.artifacts.length}</TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          {r.status === 'running' && (
+                            <Tooltip title={i18n.t('ai.v57-automation-panel.k45')}>
+                              <IconButton
+                                size='small'
+                                onClick={() => handleCancel(r.run_id)}
+                              >
+                                <Square
+                                  size={16}
+                                  color={designTokens.colors.error.main}
+                                />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
       </Card>
 
       {selectedRun && <RunDetailCard run={selectedRun} />}
@@ -976,180 +1052,211 @@ const QualityTab: React.FC = () => {
           }
         />
         <CardContent>
-        <TableContainer>
-          <Table size='small'>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k51')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k52')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k53')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k54')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k55')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k56')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k57')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {criteria.length === 0 ? (
+          <TableContainer>
+            <Table size='small'>
+              <TableHead>
                 <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    align='center'
-                    sx={{ py: 4 }}
-                  >
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      {i18n.t('ai.v57-automation-panel.k21')}
-                    </Typography>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k51')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k52')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k53')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k54')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k55')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k56')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k57')}
                   </TableCell>
                 </TableRow>
-              ) : (
-                criteria.map((c) => {
-                  const lastResult = summary.last_results.find((r) => r.criteria_id === c.id);
-                  return (
-                    <TableRow
-                      key={c.id}
-                      hover
+              </TableHead>
+              <TableBody>
+                {criteria.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      align='center'
+                      sx={{ py: 4 }}
                     >
-                      <TableCell sx={{ fontWeight: 500 }}>{c.name}</TableCell>
-                      <TableCell>
-                        <GateTypeBadge type={c.type} />
-                      </TableCell>
-                      <TableCell>
-                        <Typography
-                          variant='caption'
-                          sx={{ fontFamily: 'monospace' }}
-                        >
-                          {c.metric_key}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography
-                          variant='caption'
-                          sx={{ fontFamily: 'monospace' }}
-                        >
-                          {c.threshold} {c.comparison}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <GateActionBadge action={c.action} />
-                      </TableCell>
-                      <TableCell>
-                        {lastResult ? (
-                          <GateStatusChip status={lastResult.status} />
-                        ) : (
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {i18n.t('ai.v57-automation-panel.k22')}
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Stack
-                          direction='row'
-                          spacing={0.5}
-                        >
-                          <Tooltip title={i18n.t('ai.v57-automation-panel.k58')}>
-                            <IconButton
-                              size='small'
-                              onClick={() => setSelectedCriteria(c)}
-                            >
-                              <BarChart3
-                                size={16}
-                                color={designTokens.colors.secondary.dark}
-                              />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title={i18n.t('ai.v57-automation-panel.k59')}>
-                            <IconButton
-                              size='small'
-                              onClick={() => handleOverride(c)}
-                            >
-                              <Lock
-                                size={16}
-                                color={designTokens.colors.warning.main}
-                              />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </CardContent>
-      </Card>
-
-      <Card variant='outlined' sx={{ mt: 2 }}>
-        <CardHeader title={i18n.t('ai.v57-automation-panel.k60')} />
-        <CardContent>
-        <TableContainer>
-          <Table size='small'>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k61')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k62')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k63')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k64')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('ai.v57-automation-panel.k65')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {results.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    align='center'
-                    sx={{ py: 4 }}
-                  >
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >{i18n.t('ai:v57-automation-panel.k7', { v0: (i18n.t('ai.v57-automation-panel.i18n_23')) })}</Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                results.slice(0, 10).map((r, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell>{r.criteria_name}</TableCell>
-                    <TableCell>
                       <Typography
-                        variant='caption'
-                        sx={{ fontFamily: 'monospace' }}
+                        variant='body2'
+                        color='text.secondary'
                       >
-                        {r.actual}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography
-                        variant='caption'
-                        sx={{ fontFamily: 'monospace' }}
-                      >
-                        {r.threshold}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <GateStatusChip status={r.status} />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant='caption'>
-                        {new Date(r.measured_at).toLocaleString()}
+                        {i18n.t('ai.v57-automation-panel.k21')}
                       </Typography>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </CardContent>
+                ) : (
+                  criteria.map((c) => {
+                    const lastResult = summary.last_results.find((r) => r.criteria_id === c.id);
+                    return (
+                      <TableRow
+                        key={c.id}
+                        hover
+                      >
+                        <TableCell sx={{ fontWeight: 500 }}>{c.name}</TableCell>
+                        <TableCell>
+                          <GateTypeBadge type={c.type} />
+                        </TableCell>
+                        <TableCell>
+                          <Typography
+                            variant='caption'
+                            sx={{ fontFamily: 'monospace' }}
+                          >
+                            {c.metric_key}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography
+                            variant='caption'
+                            sx={{ fontFamily: 'monospace' }}
+                          >
+                            {c.threshold} {c.comparison}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <GateActionBadge action={c.action} />
+                        </TableCell>
+                        <TableCell>
+                          {lastResult ? (
+                            <GateStatusChip status={lastResult.status} />
+                          ) : (
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              {i18n.t('ai.v57-automation-panel.k22')}
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Stack
+                            direction='row'
+                            spacing={0.5}
+                          >
+                            <Tooltip title={i18n.t('ai.v57-automation-panel.k58')}>
+                              <IconButton
+                                size='small'
+                                onClick={() => setSelectedCriteria(c)}
+                              >
+                                <BarChart3
+                                  size={16}
+                                  color={designTokens.colors.secondary.dark}
+                                />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title={i18n.t('ai.v57-automation-panel.k59')}>
+                              <IconButton
+                                size='small'
+                                onClick={() => handleOverride(c)}
+                              >
+                                <Lock
+                                  size={16}
+                                  color={designTokens.colors.warning.main}
+                                />
+                              </IconButton>
+                            </Tooltip>
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
+
+      <Card
+        variant='outlined'
+        sx={{ mt: 2 }}
+      >
+        <CardHeader title={i18n.t('ai.v57-automation-panel.k60')} />
+        <CardContent>
+          <TableContainer>
+            <Table size='small'>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k61')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k62')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k63')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k64')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('ai.v57-automation-panel.k65')}
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {results.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      align='center'
+                      sx={{ py: 4 }}
+                    >
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        {i18n.t('ai:v57-automation-panel.k7', {
+                          v0: i18n.t('ai.v57-automation-panel.i18n_23'),
+                        })}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  results.slice(0, 10).map((r, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>{r.criteria_name}</TableCell>
+                      <TableCell>
+                        <Typography
+                          variant='caption'
+                          sx={{ fontFamily: 'monospace' }}
+                        >
+                          {r.actual}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography
+                          variant='caption'
+                          sx={{ fontFamily: 'monospace' }}
+                        >
+                          {r.threshold}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <GateStatusChip status={r.status} />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant='caption'>
+                          {new Date(r.measured_at).toLocaleString()}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
       </Card>
 
       {showOverride && selectedCriteria && (
@@ -1237,98 +1344,114 @@ const TrendsTab: React.FC = () => {
       <Card variant='outlined'>
         <CardHeader
           title={i18n.t('ai.v57-automation-panel.k69')}
-          subheader={selectedCriteria ? `${i18n.t('ai.v57-automation-panel.k27')} ${selectedCriteria.name}` : i18n.t('ai.v57-automation-panel.k70')}
+          subheader={
+            selectedCriteria
+              ? `${i18n.t('ai.v57-automation-panel.k27')} ${selectedCriteria.name}`
+              : i18n.t('ai.v57-automation-panel.k70')
+          }
         />
         <CardContent>
-        <Grid
-          container
-          spacing={2}
-        >
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Typography
-              variant='subtitle2'
-              sx={{ mb: 1, fontWeight: 600 }}
-            >
-              {i18n.t('ai.v57-automation-panel.k28')}
-            </Typography>
-            <Stack spacing={1}>
-              {criteria.map((c) => (
-                <Button
-                  key={c.id}
-                  variant={selectedCriteria?.id === c.id ? 'contained' : 'outlined'}
-                  size='small'
-                  onClick={() => handleSelectCriteria(c)}
+          <Grid
+            container
+            spacing={2}
+          >
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Typography
+                variant='subtitle2'
+                sx={{ mb: 1, fontWeight: 600 }}
+              >
+                {i18n.t('ai.v57-automation-panel.k28')}
+              </Typography>
+              <Stack spacing={1}>
+                {criteria.map((c) => (
+                  <Button
+                    key={c.id}
+                    variant={selectedCriteria?.id === c.id ? 'contained' : 'outlined'}
+                    size='small'
+                    onClick={() => handleSelectCriteria(c)}
+                    sx={{
+                      justifyContent: 'flex-start',
+                      textTransform: 'none',
+                      borderColor:
+                        selectedCriteria?.id === c.id
+                          ? designTokens.colors.success.dark
+                          : undefined,
+                    }}
+                  >
+                    <GateTypeIcon type={c.type} />
+                    <Box sx={{ ml: 1 }}>
+                      <Typography variant='body2'>{c.name}</Typography>
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
+                        [i18n.t('ai.v57-automation-panel.k29')]: {c.threshold}
+                      </Typography>
+                    </Box>
+                  </Button>
+                ))}
+              </Stack>
+            </Grid>
+            <Grid size={{ xs: 12, md: 8 }}>
+              {trendData.length > 0 ? (
+                <TrendChart
+                  data={trendData}
+                  criteria={selectedCriteria}
+                />
+              ) : (
+                <Box
                   sx={{
-                    justifyContent: 'flex-start',
-                    textTransform: 'none',
-                    borderColor: selectedCriteria?.id === c.id ? designTokens.colors.success.dark : undefined,
+                    height: 300,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: 'grey.50',
+                    borderRadius: 2,
                   }}
                 >
-                  <GateTypeIcon type={c.type} />
-                  <Box sx={{ ml: 1 }}>
-                    <Typography variant='body2'>{c.name}</Typography>
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      [i18n.t('ai.v57-automation-panel.k29')]: {c.threshold}
-                    </Typography>
-                  </Box>
-                </Button>
-              ))}
-            </Stack>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
+                    {i18n.t('ai.v57-automation-panel.k30')}
+                  </Typography>
+                </Box>
+              )}
+            </Grid>
           </Grid>
-          <Grid size={{ xs: 12, md: 8 }}>
-            {trendData.length > 0 ? (
-              <TrendChart
-                data={trendData}
-                criteria={selectedCriteria}
-              />
-            ) : (
-              <Box
-                sx={{
-                  height: 300,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  bgcolor: 'grey.50',
-                  borderRadius: 2,
-                }}
-              >
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  {i18n.t('ai.v57-automation-panel.k30')}
-                </Typography>
-              </Box>
-            )}
-          </Grid>
-        </Grid>
-      </CardContent>
+        </CardContent>
       </Card>
 
-      <Card variant='outlined' sx={{ mt: 2 }}>
+      <Card
+        variant='outlined'
+        sx={{ mt: 2 }}
+      >
         <CardHeader title={i18n.t('ai.v57-automation-panel.ai_31')} />
         <CardContent>
-        <Stack spacing={2}>
-          <Alert
-            severity='info'
-            variant='outlined'
-          >
-            <strong>{i18n.t('ai:v57-automation-panel.k6')}</strong>{i18n.t('ai:v57-automation-panel.k5')}</Alert>
-          <Alert
-            severity='warning'
-            variant='outlined'
-          >
-            <strong>{i18n.t('ai:v57-automation-panel.k4')}</strong>{i18n.t('ai:v57-automation-panel.k3')}</Alert>
-          <Alert
-            severity='success'
-            variant='outlined'
-          >
-            <strong>{i18n.t('ai:v57-automation-panel.k2')}</strong>{i18n.t('ai:v57-automation-panel.k1')}</Alert>
-        </Stack>
-      </CardContent>
+          <Stack spacing={2}>
+            <Alert
+              severity='info'
+              variant='outlined'
+            >
+              <strong>{i18n.t('ai:v57-automation-panel.k6')}</strong>
+              {i18n.t('ai:v57-automation-panel.k5')}
+            </Alert>
+            <Alert
+              severity='warning'
+              variant='outlined'
+            >
+              <strong>{i18n.t('ai:v57-automation-panel.k4')}</strong>
+              {i18n.t('ai:v57-automation-panel.k3')}
+            </Alert>
+            <Alert
+              severity='success'
+              variant='outlined'
+            >
+              <strong>{i18n.t('ai:v57-automation-panel.k2')}</strong>
+              {i18n.t('ai:v57-automation-panel.k1')}
+            </Alert>
+          </Stack>
+        </CardContent>
       </Card>
     </Box>
   );
@@ -1446,108 +1569,114 @@ const TrendChart: React.FC<{ data: TrendPoint[]; criteria: GateCriteria | null }
 };
 
 const RunDetailCard: React.FC<{ run: CIResult }> = ({ run }) => (
-  <Card variant='outlined' sx={{ mt: 2 }}>
+  <Card
+    variant='outlined'
+    sx={{ mt: 2 }}
+  >
     <CardHeader
       title={`${i18n.t('ai.v57-automation-panel.k33')} ${run.run_id.slice(-12)}`}
       subheader={`${run.pipeline} · ${run.status}`}
     />
     <CardContent>
-    <Grid
-      container
-      spacing={2}
-    >
-      <Grid size={{ xs: 12, md: 6 }}>
-        <Typography
-          variant='subtitle2'
-          sx={{ mb: 1, fontWeight: 600 }}
-        >
-          {i18n.t('ai.v57-automation-panel.k34')}
-        </Typography>
-        <Typography variant='body2'>
-          [i18n.t('ai.v57-automation-panel.k35')]: {run.stages_completed}/{run.total_stages}
-        </Typography>
-        <LinearProgress
-          variant='determinate'
-          value={run.total_stages > 0 ? (run.stages_completed / run.total_stages) * 100 : 0}
-          sx={{ height: 8, borderRadius: 4, mt: 1 }}
-          color={
-            run.status === 'failed' ? 'error' : run.status === 'success' ? 'success' : 'primary'
-          }
-        />
-        <Typography
-          variant='caption'
-          color='text.secondary'
-          sx={{ mt: 0.5 }}
-        >
-          [i18n.t('ai.v57-automation-panel.k36')]: {run.duration_ms > 0 ? `${Math.round(run.duration_ms / 100) / 10}s` : '—'}
-        </Typography>
-      </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
-        <Typography
-          variant='subtitle2'
-          sx={{ mb: 1, fontWeight: 600 }}
-        >{i18n.t('ai:v57-automation-panel.v0_0', { v0: (run.artifacts.length) })}</Typography>
-        <Stack
-          direction='column'
-          spacing={0.5}
-        >
-          {run.artifacts.length === 0 ? (
-            <Typography
-              variant='caption'
-              color='text.secondary'
-            >
-              {i18n.t('ai.v57-automation-panel.k37')}
-            </Typography>
-          ) : (
-            run.artifacts.map((a, i) => (
-              <Box
-                key={i}
-                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+      <Grid
+        container
+        spacing={2}
+      >
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 1, fontWeight: 600 }}
+          >
+            {i18n.t('ai.v57-automation-panel.k34')}
+          </Typography>
+          <Typography variant='body2'>
+            [i18n.t('ai.v57-automation-panel.k35')]: {run.stages_completed}/{run.total_stages}
+          </Typography>
+          <LinearProgress
+            variant='determinate'
+            value={run.total_stages > 0 ? (run.stages_completed / run.total_stages) * 100 : 0}
+            sx={{ height: 8, borderRadius: 4, mt: 1 }}
+            color={
+              run.status === 'failed' ? 'error' : run.status === 'success' ? 'success' : 'primary'
+            }
+          />
+          <Typography
+            variant='caption'
+            color='text.secondary'
+            sx={{ mt: 0.5 }}
+          >
+            [i18n.t('ai.v57-automation-panel.k36')]:{' '}
+            {run.duration_ms > 0 ? `${Math.round(run.duration_ms / 100) / 10}s` : '—'}
+          </Typography>
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 1, fontWeight: 600 }}
+          >
+            {i18n.t('ai:v57-automation-panel.v0_0', { v0: run.artifacts.length })}
+          </Typography>
+          <Stack
+            direction='column'
+            spacing={0.5}
+          >
+            {run.artifacts.length === 0 ? (
+              <Typography
+                variant='caption'
+                color='text.secondary'
               >
-                <FileText size={14} />
-                <Typography variant='caption'>{a.name}</Typography>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
+                {i18n.t('ai.v57-automation-panel.k37')}
+              </Typography>
+            ) : (
+              run.artifacts.map((a, i) => (
+                <Box
+                  key={i}
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                 >
-                  ({(a.size / 1024).toFixed(1)} KB)
-                </Typography>
-              </Box>
-            ))
-          )}
-        </Stack>
+                  <FileText size={14} />
+                  <Typography variant='caption'>{a.name}</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    ({(a.size / 1024).toFixed(1)} KB)
+                  </Typography>
+                </Box>
+              ))
+            )}
+          </Stack>
+        </Grid>
       </Grid>
-    </Grid>
 
-    {run.logs.length > 0 && (
-      <>
-        <Divider sx={{ my: 2 }} />
-        <Typography
-          variant='subtitle2'
-          sx={{ mb: 1, fontWeight: 600 }}
-        >
-          {i18n.t('ai.v57-automation-panel.k38')}
-        </Typography>
-        <Box
-          sx={{
-            maxHeight: 200,
-            overflow: 'auto',
-            bgcolor: 'grey.900',
-            color: 'grey.100',
-            borderRadius: 1,
-            p: 1.5,
-            fontFamily: 'monospace',
-            fontSize: 11,
-          }}
-        >
-          {run.logs.slice(-20).map((log, i) => (
-            <div key={i}>{log}</div>
-          ))}
-        </Box>
-      </>
-    )}
-  </CardContent>
-      </Card>
+      {run.logs.length > 0 && (
+        <>
+          <Divider sx={{ my: 2 }} />
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 1, fontWeight: 600 }}
+          >
+            {i18n.t('ai.v57-automation-panel.k38')}
+          </Typography>
+          <Box
+            sx={{
+              maxHeight: 200,
+              overflow: 'auto',
+              bgcolor: 'grey.900',
+              color: 'grey.100',
+              borderRadius: 1,
+              p: 1.5,
+              fontFamily: 'monospace',
+              fontSize: 11,
+            }}
+          >
+            {run.logs.slice(-20).map((log, i) => (
+              <div key={i}>{log}</div>
+            ))}
+          </Box>
+        </>
+      )}
+    </CardContent>
+  </Card>
 );
 
 const GenerateTestDialog: React.FC<{
@@ -1775,7 +1904,8 @@ const OverrideDialog: React.FC<{
           color='text.secondary'
           sx={{ mb: 2 }}
         >
-          [i18n.t('ai.v57-automation-panel.k47')]: <strong>{criteria.name}</strong> ({criteria.type})
+          [i18n.t('ai.v57-automation-panel.k47')]: <strong>{criteria.name}</strong> ({criteria.type}
+          )
         </Typography>
         <Stack spacing={2}>
           <TextField

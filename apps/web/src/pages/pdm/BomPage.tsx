@@ -117,7 +117,11 @@ export const BomPage: React.FC = () => {
   const activateVersionMutation = useMutation({
     mutationFn: (id: string) => bomApi.activateVersion(id),
     onSuccess: () => {
-      addNotification({ title: t('pdm.bom_page.k4'), message: i18n.t('pdm.bom_page.m1'), type: 'success' });
+      addNotification({
+        title: t('pdm.bom_page.k4'),
+        message: i18n.t('pdm.bom_page.m1'),
+        type: 'success',
+      });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.PDM.BOM_VERSIONS,
         exact: false,
@@ -136,7 +140,11 @@ export const BomPage: React.FC = () => {
   const archiveVersionMutation = useMutation({
     mutationFn: (id: string) => bomApi.archiveVersion(id),
     onSuccess: () => {
-      addNotification({ title: t('pdm.bom_page.k7'), message: i18n.t('pdm.bom_page.m2'), type: 'success' });
+      addNotification({
+        title: t('pdm.bom_page.k7'),
+        message: i18n.t('pdm.bom_page.m2'),
+        type: 'success',
+      });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.PDM.BOM_VERSIONS,
         exact: false,

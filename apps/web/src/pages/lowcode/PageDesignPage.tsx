@@ -71,9 +71,7 @@ export const PageDesignPage: React.FC = () => {
     return (
       <PageContainer title={t('lowcode.page_design_page.k2')}>
         <Box sx={{ p: 3 }}>
-          <Typography color='text.secondary'>
-            {t('lowcode.page_design_page.e1')}
-          </Typography>
+          <Typography color='text.secondary'>{t('lowcode.page_design_page.e1')}</Typography>
         </Box>
       </PageContainer>
     );
@@ -97,7 +95,9 @@ export const PageDesignPage: React.FC = () => {
           spacing={2}
           sx={{ mb: 2, justifyContent: 'space-between', alignItems: 'center' }}
         >
-          <Typography variant='h5'>{t('lowcode.page_design_page.m1', { v1: page ? `· ${page.name}` : '' })}</Typography>
+          <Typography variant='h5'>
+            {t('lowcode.page_design_page.m1', { v1: page ? `· ${page.name}` : '' })}
+          </Typography>
           <Button
             variant='contained'
             onClick={handleSave}

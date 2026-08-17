@@ -9,6 +9,7 @@ import { type QualityTask, type DefectRecord } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 export interface DefectForm {
   defect_type: string;
   severity: DefectRecord['severity'];

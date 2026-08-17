@@ -80,20 +80,27 @@ export interface UpdateVehicleRequestPayload {
 }
 
 const resolvePageSize = (params?: PaginationParams): string | undefined => {
-  const ps = (params as { pageSize?: number } | undefined)?.pageSize
-    ?? (params as { pagesize?: number } | undefined)?.pagesize;
+  const ps =
+    (params as { pageSize?: number } | undefined)?.pageSize ??
+    (params as { pagesize?: number } | undefined)?.pagesize;
   return ps ? ps.toString() : undefined;
 };
 
 export const vehicleApi = {
-  async list(params?: PaginationParams & { vehicle_type?: string }): Promise<ApiResponse<VehicleListResponse>> {
+  async list(
+    params?: PaginationParams & { vehicle_type?: string }
+  ): Promise<ApiResponse<VehicleListResponse>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     const ps = resolvePageSize(params);
     if (ps) searchParams.set('pagesize', ps);
     if (params?.search) searchParams.set('search', params.search);
     if (params?.status) searchParams.set('status', params.status);
-    if ((params as { vehicle_type?: string })?.vehicle_type) searchParams.set('vehicle_type', (params as { vehicle_type?: string }).vehicle_type as string);
+    if ((params as { vehicle_type?: string })?.vehicle_type)
+      searchParams.set(
+        'vehicle_type',
+        (params as { vehicle_type?: string }).vehicle_type as string
+      );
 
     const queryString = searchParams.toString();
     return apiClient.erp.get<VehicleListResponse>(
@@ -120,7 +127,9 @@ export const vehicleApi = {
     return this.remove(id);
   },
 
-  async listRequests(params?: PaginationParams & { status?: string }): Promise<ApiResponse<VehicleRequestListResponse>> {
+  async listRequests(
+    params?: PaginationParams & { status?: string }
+  ): Promise<ApiResponse<VehicleRequestListResponse>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     const ps = resolvePageSize(params);
@@ -142,7 +151,10 @@ export const vehicleApi = {
     return apiClient.erp.post<VehicleRequest>('/vehicle-requests', data);
   },
 
-  async updateRequest(id: string, data: UpdateVehicleRequestPayload): Promise<ApiResponse<VehicleRequest>> {
+  async updateRequest(
+    id: string,
+    data: UpdateVehicleRequestPayload
+  ): Promise<ApiResponse<VehicleRequest>> {
     return apiClient.erp.put<VehicleRequest>(`/vehicle-requests/${id}`, data);
   },
 
@@ -153,7 +165,10 @@ export const vehicleApi = {
     return this.removeRequest(id);
   },
 
-  async listVehicleRequests(vehicleId: string, params?: PaginationParams): Promise<ApiResponse<VehicleRequestListResponse>> {
+  async listVehicleRequests(
+    vehicleId: string,
+    params?: PaginationParams
+  ): Promise<ApiResponse<VehicleRequestListResponse>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     const ps = resolvePageSize(params);

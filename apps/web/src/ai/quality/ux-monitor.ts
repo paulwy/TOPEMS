@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type UXMetricType = 'CLS' | 'LCP' | 'INP' | 'FCP';
 export type AlertStatus = 'active' | 'acknowledged' | 'resolved';
 export type UserSegment =
@@ -347,7 +348,13 @@ class UXMonitorImpl {
   }
 
   getFunnelAnalysis(steps?: string[]): FunnelAnalysis {
-    const defaultSteps = steps || [i18n.t('ai.ux-monitor.k8'), i18n.t('ai.ux-monitor.k7'), i18n.t('ai.ux-monitor.k6'), i18n.t('ai.ux-monitor.k5'), i18n.t('ai.ux-monitor.k4')];
+    const defaultSteps = steps || [
+      i18n.t('ai.ux-monitor.k8'),
+      i18n.t('ai.ux-monitor.k7'),
+      i18n.t('ai.ux-monitor.k6'),
+      i18n.t('ai.ux-monitor.k5'),
+      i18n.t('ai.ux-monitor.k4'),
+    ];
     const values = defaultSteps.map((_, i) => {
       if (i === 0) return 10000 + Math.floor(Math.random() * 2000);
       const prev = 10000 * Math.pow(0.75, i);

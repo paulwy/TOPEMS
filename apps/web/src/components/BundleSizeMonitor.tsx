@@ -204,7 +204,9 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                 className='w-5 h-5'
                 style={{ color: 'secondary.500' }}
               />
-              <h3 className='font-semibold text-gray-900'>{i18n.t('components.bundle_size_monitor.k3')}</h3>
+              <h3 className='font-semibold text-gray-900'>
+                {i18n.t('components.bundle_size_monitor.k3')}
+              </h3>
             </div>
             <button
               onClick={() => setIsVisible(false)}
@@ -253,7 +255,9 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                 >
                   {getScore()}
                 </div>
-                <div className='text-sm text-gray-600 mt-1'>{i18n.t('components.bundle_size_monitor.k4')}</div>
+                <div className='text-sm text-gray-600 mt-1'>
+                  {i18n.t('components.bundle_size_monitor.k4')}
+                </div>
               </div>
             </div>
 
@@ -286,14 +290,18 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
               <div className='p-3 bg-gray-50 rounded-lg'>
                 <div className='flex items-center gap-2 mb-1'>
                   <HardDrive className='w-4 h-4 text-blue-500' />
-                  <span className='text-xs text-gray-600'>{i18n.t('components.bundle_size_monitor.k5')}</span>
+                  <span className='text-xs text-gray-600'>
+                    {i18n.t('components.bundle_size_monitor.k5')}
+                  </span>
                 </div>
                 <div className='font-semibold text-gray-900'>{formatSize(stats.totalSize)}</div>
               </div>
               <div className='p-3 bg-gray-50 rounded-lg'>
                 <div className='flex items-center gap-2 mb-1'>
                   <BarChart3 className='w-4 h-4 text-purple-500' />
-                  <span className='text-xs text-gray-600'>{i18n.t('components.bundle_size_monitor.k6')}</span>
+                  <span className='text-xs text-gray-600'>
+                    {i18n.t('components.bundle_size_monitor.k6')}
+                  </span>
                 </div>
                 <div className='font-semibold text-gray-900'>{stats.entryCount}</div>
               </div>
@@ -369,7 +377,9 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                 borderTop: '1px solid grey.100',
               }}
             >
-              <div className='text-xs text-gray-500 mb-2'>{i18n.t('components.bundle_size_monitor.k8')}</div>
+              <div className='text-xs text-gray-500 mb-2'>
+                {i18n.t('components.bundle_size_monitor.k8')}
+              </div>
               <div className='flex gap-1'>
                 {stats.jsSize > 0 && (
                   <div
@@ -467,7 +477,11 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
           border: 'none',
           cursor: 'pointer',
         }}
-        title={hasWarning ? `${i18n.t('components.bundle_size_monitor.k10')}${formatSize(stats.totalSize)}` : i18n.t('components.bundle_size_monitor.k9')}
+        title={
+          hasWarning
+            ? `${i18n.t('components.bundle_size_monitor.k10')}${formatSize(stats.totalSize)}`
+            : i18n.t('components.bundle_size_monitor.k9')
+        }
       >
         {hasWarning ? (
           <AlertTriangle className='w-6 h-6 animate-pulse' />

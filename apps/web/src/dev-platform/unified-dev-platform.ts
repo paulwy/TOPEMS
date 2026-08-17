@@ -349,7 +349,8 @@ export class UnifiedDevPlatform {
     const project: DevProject = {
       id: projectId,
       name: options.name,
-      description: options.description || `${options.name}${i18n.t('pages.unified-dev-platform.v53_6')}`,
+      description:
+        options.description || `${options.name}${i18n.t('pages.unified-dev-platform.v53_6')}`,
       stack,
       modules: options.modules || [],
       config: {

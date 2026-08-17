@@ -5,6 +5,7 @@
 import type { Project, ProjectPhase, ProjectMilestone } from '@/api/pm';
 import { getStatusLabels, getRiskLabels } from './pmProjectDetail.constants';
 import i18n from '@/i18n';
+
 export interface PmProjectDetailHeaderProps {
   project: Project | null;
   phases: ProjectPhase[];

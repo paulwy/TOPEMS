@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import type { TabType } from '../types';
 import i18n from '@/i18n';
+
 interface PageHeaderProps {
   activeTab: TabType;
   loading: boolean;
@@ -49,9 +50,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           >
             {i18n.t('pages.page_header.k0')}
           </Typography>
-          <Typography color='text.secondary'>
-            {i18n.t('pages.page_header.k1')}
-          </Typography>
+          <Typography color='text.secondary'>{i18n.t('pages.page_header.k1')}</Typography>
         </Box>
       </Stack>
       <Stack

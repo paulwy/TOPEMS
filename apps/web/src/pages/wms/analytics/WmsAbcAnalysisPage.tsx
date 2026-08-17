@@ -139,12 +139,24 @@ export default function WmsAbcAnalysisPage() {
           <table className='w-full text-sm'>
             <thead className='bg-gray-50'>
               <tr>
-                <th className='px-3 py-2 text-left font-medium'>{i18n.t('wms:wms_abc_analysis_page.sku_0')}</th>
-                <th className='px-3 py-2 text-left font-medium'>{i18n.t('pages.wms_abc_analysis_page.k3')}</th>
-                <th className='px-3 py-2 text-left font-medium'>{i18n.t('pages.wms_abc_analysis_page.k4')}</th>
-                <th className='px-3 py-2 text-right font-medium'>{i18n.t('pages.wms_abc_analysis_page.k5')}</th>
-                <th className='px-3 py-2 text-right font-medium'>{i18n.t('pages.wms_abc_analysis_page.k6')}</th>
-                <th className='px-3 py-2 text-right font-medium'>{i18n.t('pages.wms_abc_analysis_page.k7')}</th>
+                <th className='px-3 py-2 text-left font-medium'>
+                  {i18n.t('wms:wms_abc_analysis_page.sku_0')}
+                </th>
+                <th className='px-3 py-2 text-left font-medium'>
+                  {i18n.t('pages.wms_abc_analysis_page.k3')}
+                </th>
+                <th className='px-3 py-2 text-left font-medium'>
+                  {i18n.t('pages.wms_abc_analysis_page.k4')}
+                </th>
+                <th className='px-3 py-2 text-right font-medium'>
+                  {i18n.t('pages.wms_abc_analysis_page.k5')}
+                </th>
+                <th className='px-3 py-2 text-right font-medium'>
+                  {i18n.t('pages.wms_abc_analysis_page.k6')}
+                </th>
+                <th className='px-3 py-2 text-right font-medium'>
+                  {i18n.t('pages.wms_abc_analysis_page.k7')}
+                </th>
               </tr>
             </thead>
             <tbody>

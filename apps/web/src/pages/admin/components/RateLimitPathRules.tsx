@@ -21,6 +21,7 @@ import {
 import i18n from '@/i18n';
 import { Plus, Trash2 } from 'lucide-react';
 import type { PathRule } from '../hooks/useRateLimitConfig';
+
 interface RateLimitPathRulesProps {
   path_rules: PathRule[];
   newPath: string;

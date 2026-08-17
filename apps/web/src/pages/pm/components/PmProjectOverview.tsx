@@ -8,6 +8,7 @@ import type { Project, ProjectPhase, ProjectMilestone } from '@/api/pm';
 import { StatusBadge } from '@/components/common';
 import { getRiskLabels } from './pmProjectDetail.constants';
 import i18n from '@/i18n';
+
 export interface PmProjectOverviewProps {
   project: Project | null;
   phases: ProjectPhase[];
@@ -105,7 +106,9 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
               borderColor: 'grey.100',
             }}
           >
-            <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.project_detail.start_date')}</Typography>
+            <Typography sx={{ color: 'grey.500' }}>
+              {i18n.t('pm.project_detail.start_date')}
+            </Typography>
             <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
               {formatDate(project.start_date)}
             </Typography>
@@ -120,7 +123,9 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
               borderColor: 'grey.100',
             }}
           >
-            <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.project_detail.end_date')}</Typography>
+            <Typography sx={{ color: 'grey.500' }}>
+              {i18n.t('pm.project_detail.end_date')}
+            </Typography>
             <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
               {formatDate(project.end_date)}
             </Typography>
@@ -133,11 +138,14 @@ const PmProjectOverview: React.FC<PmProjectOverviewProps> = ({
               py: 1,
             }}
           >
-            <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.project_detail.risk_level')}</Typography>
+            <Typography sx={{ color: 'grey.500' }}>
+              {i18n.t('pm.project_detail.risk_level')}
+            </Typography>
             <StatusBadge
               status={project.risklevel || 'low'}
               label={
-                getRiskLabels(i18n.t)[project.risklevel || ''] || i18n.t('pm.project_detail.not_evaluated')
+                getRiskLabels(i18n.t)[project.risklevel || ''] ||
+                i18n.t('pm.project_detail.not_evaluated')
               }
               color={
                 project.risklevel === 'high'

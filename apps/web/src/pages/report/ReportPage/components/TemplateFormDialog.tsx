@@ -48,7 +48,11 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
       maxWidth='lg'
       fullWidth
     >
-      <DialogTitle>{selectedTemplate ? i18n.t('pages.template_form_dialog.k1') : i18n.t('pages.template_form_dialog.k0')}</DialogTitle>
+      <DialogTitle>
+        {selectedTemplate
+          ? i18n.t('pages.template_form_dialog.k1')
+          : i18n.t('pages.template_form_dialog.k0')}
+      </DialogTitle>
       <DialogContent sx={{ overflowY: 'auto', maxHeight: '80vh' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
@@ -158,7 +162,9 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
               try {
                 const columns = JSON.parse(e.target.value);
                 onFormDataChange({ ...templateFormData, columns });
-              } catch (e) { console.error("[Report] Failed to parse JSON column config", e); }
+              } catch (e) {
+                console.error('[Report] Failed to parse JSON column config', e);
+              }
             }}
             multiline
             rows={4}
@@ -178,7 +184,9 @@ const TemplateFormDialog: React.FC<TemplateFormDialogProps> = ({
           variant='contained'
           onClick={onSubmit}
         >
-          {selectedTemplate ? i18n.t('pages.template_form_dialog.k11') : i18n.t('pages.template_form_dialog.k10')}
+          {selectedTemplate
+            ? i18n.t('pages.template_form_dialog.k11')
+            : i18n.t('pages.template_form_dialog.k10')}
         </Button>
       </DialogActions>
     </Dialog>

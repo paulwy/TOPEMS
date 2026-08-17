@@ -536,10 +536,14 @@ export class SmartRouter {
   private inferIntent(fromRoute: string, toRoute: string): string {
     if (toRoute.includes('dashboard')) return i18n.t('microfrontend.smart-router.k1');
     if (toRoute.includes('settings')) return i18n.t('microfrontend.smart-router.k2');
-    if (toRoute.includes('list') || toRoute.includes('manage')) return i18n.t('microfrontend.smart-router.k3');
-    if (toRoute.includes('detail') || toRoute.includes('view')) return i18n.t('microfrontend.smart-router.k4');
-    if (toRoute.includes('create') || toRoute.includes('new')) return i18n.t('microfrontend.smart-router.k5');
-    if (fromRoute.includes('list') && toRoute.includes('detail')) return i18n.t('microfrontend.smart-router.k6');
+    if (toRoute.includes('list') || toRoute.includes('manage'))
+      return i18n.t('microfrontend.smart-router.k3');
+    if (toRoute.includes('detail') || toRoute.includes('view'))
+      return i18n.t('microfrontend.smart-router.k4');
+    if (toRoute.includes('create') || toRoute.includes('new'))
+      return i18n.t('microfrontend.smart-router.k5');
+    if (fromRoute.includes('list') && toRoute.includes('detail'))
+      return i18n.t('microfrontend.smart-router.k6');
     return i18n.t('microfrontend.smart-router.k7');
   }
 

@@ -207,7 +207,12 @@ export const ProjectCreateWizardPage: React.FC = () => {
           <PaperInfo
             title={t('pm.project_create_wizard_page.k32')}
             value={
-              { low: t('pm.project_create_wizard_page.k37'), medium: t('pm.project_create_wizard_page.k33'), high: t('pm.project_create_wizard_page.k35'), urgent: t('pm.project_create_wizard_page.k34') }[formData.priority] || t('pm.project_create_wizard_page.k36')
+              {
+                low: t('pm.project_create_wizard_page.k37'),
+                medium: t('pm.project_create_wizard_page.k33'),
+                high: t('pm.project_create_wizard_page.k35'),
+                urgent: t('pm.project_create_wizard_page.k34'),
+              }[formData.priority] || t('pm.project_create_wizard_page.k36')
             }
           />
           <PaperInfo
@@ -220,7 +225,11 @@ export const ProjectCreateWizardPage: React.FC = () => {
           />
           <PaperInfo
             title={t('pm.project_create_wizard_page.k42')}
-            value={formData.budget ? `${formData.budget}${i18n.t('pages.project_create_wizard_page.k0')}` : t('pm.project_create_wizard_page.k43')}
+            value={
+              formData.budget
+                ? `${formData.budget}${i18n.t('pages.project_create_wizard_page.k0')}`
+                : t('pm.project_create_wizard_page.k43')
+            }
           />
         </Box>
       ),
@@ -244,7 +253,11 @@ export const ProjectCreateWizardPage: React.FC = () => {
 
       const response = await pmApi.projects.create(requestData);
       if (response.success) {
-        addNotification({ type: 'success', title: t('pm.project_create_wizard_page.k45'), message: t('pm.project_create_wizard_page.k44') });
+        addNotification({
+          type: 'success',
+          title: t('pm.project_create_wizard_page.k45'),
+          message: t('pm.project_create_wizard_page.k44'),
+        });
         navigate('/pm/projects');
       } else {
         addNotification({
@@ -254,7 +267,11 @@ export const ProjectCreateWizardPage: React.FC = () => {
         });
       }
     } catch (error) {
-      addNotification({ type: 'error', title: t('pm.project_create_wizard_page.k49'), message: t('pm.project_create_wizard_page.k48') });
+      addNotification({
+        type: 'error',
+        title: t('pm.project_create_wizard_page.k49'),
+        message: t('pm.project_create_wizard_page.k48'),
+      });
     }
   };
 

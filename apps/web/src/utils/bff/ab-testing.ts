@@ -486,7 +486,9 @@ export class ABTestEngine {
     }
     const assignment = this.assignments.get(`${experimentId}:${userId}`);
     if (!assignment) {
-      abLogger.debug(`${i18n.t('shared.ab-testing.k9')}${userId}${i18n.t('shared.ab-testing.k10')}${experimentId}`);
+      abLogger.debug(
+        `${i18n.t('shared.ab-testing.k9')}${userId}${i18n.t('shared.ab-testing.k10')}${experimentId}`
+      );
       return;
     }
 

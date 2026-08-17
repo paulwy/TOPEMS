@@ -4,6 +4,8 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { renderWithProviders } from '@/__tests__/test-utils';
 
+import { CommentList, Comment } from '../CommentList';
+
 vi.mock('react-i18next', () => {
   const merge = (...objs: Record<string, string>[]) => Object.assign({}, ...objs);
   const i18nMap = merge(
@@ -41,8 +43,6 @@ vi.mock('@/i18n', () => {
     },
   };
 });
-
-import { CommentList, Comment } from '../CommentList';
 
 const sampleComments: Comment[] = [
   {

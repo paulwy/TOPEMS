@@ -205,7 +205,9 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
               />
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>
-              <InputLabel sx={{ fontSize: 14, mb: 0.5 }}>{i18n.t('components.template_selector.k5')}</InputLabel>
+              <InputLabel sx={{ fontSize: 14, mb: 0.5 }}>
+                {i18n.t('components.template_selector.k5')}
+              </InputLabel>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 <Button
                   variant={!selectedCategory ? 'contained' : 'outlined'}
@@ -309,7 +311,9 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                           <Chip
                             size='small'
                             variant='outlined'
-                            label={template.category_name || i18n.t('components.template_selector.k7')}
+                            label={
+                              template.category_name || i18n.t('components.template_selector.k7')
+                            }
                           />
                           {template.is_public && (
                             <Chip
@@ -322,7 +326,8 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                           variant='caption'
                           color='text.disabled'
                         >
-                          {i18n.t('components.template_selector.k0')} {template.use_count} {i18n.t('components.template_selector.k1')}
+                          {i18n.t('components.template_selector.k0')} {template.use_count}{' '}
+                          {i18n.t('components.template_selector.k1')}
                         </Typography>
                       </Box>
                     </CardContent>
@@ -350,7 +355,9 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                     }}
                   />
                   <Typography>{i18n.t('components.template_selector.k9')}</Typography>
-                  <Typography variant='body2'>{i18n.t('components.template_selector.k10')}</Typography>
+                  <Typography variant='body2'>
+                    {i18n.t('components.template_selector.k10')}
+                  </Typography>
                 </Box>
               )}
             </Box>
@@ -418,7 +425,9 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                   </Typography>
 
                   <Box sx={{ mb: 3 }}>
-                    <InputLabel sx={{ mb: 1 }}>{i18n.t('components.template_selector.k12')}</InputLabel>
+                    <InputLabel sx={{ mb: 1 }}>
+                      {i18n.t('components.template_selector.k12')}
+                    </InputLabel>
                     <Box
                       sx={{
                         p: 2,
@@ -438,7 +447,9 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 
                   {showVariables && selectedTemplate.variables.length > 0 && (
                     <Box>
-                      <InputLabel sx={{ mb: 1.5, fontWeight: 'bold' }}>{i18n.t('components.template_selector.k13')}</InputLabel>
+                      <InputLabel sx={{ mb: 1.5, fontWeight: 'bold' }}>
+                        {i18n.t('components.template_selector.k13')}
+                      </InputLabel>
                       <Box
                         sx={{
                           display: 'flex',
@@ -466,7 +477,10 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                               )}
                             </Box>
                             <TextField
-                              placeholder={variable.placeholder || `${i18n.t('components.template_selector.k6')}${variable.label}`}
+                              placeholder={
+                                variable.placeholder ||
+                                `${i18n.t('components.template_selector.k6')}${variable.label}`
+                              }
                               defaultValue={variable.default_value}
                               onChange={(e) => handleVariableChange(variable.key, e.target.value)}
                               size='small'

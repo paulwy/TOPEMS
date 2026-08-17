@@ -7,6 +7,7 @@ import { reportCrudApi } from '@/api/bi';
 import type { Report } from '@/api/bi';
 import { logger } from '@/utils/logger';
 import i18n from '@/i18n';
+
 const BIReportPage: React.FC = () => {
   const apiAdapter: CrudApiAdapter<Report> = {
     list: async (params) => {

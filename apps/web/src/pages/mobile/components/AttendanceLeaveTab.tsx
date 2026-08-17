@@ -8,6 +8,7 @@ import { FileText, Plus } from 'lucide-react';
 import { MobileButton } from '@/components/mobile';
 import type { LeaveApplication } from '@/api/mobile';
 import i18n from '@/i18n';
+
 interface AttendanceLeaveTabProps {
   leaves: LeaveApplication[];
   onOpenLeaveDialog: () => void;

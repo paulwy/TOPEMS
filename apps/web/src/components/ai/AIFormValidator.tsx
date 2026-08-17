@@ -97,12 +97,16 @@ export function AIFormValidator({
             {isValid ? (
               <>
                 <CheckCircle style={{ width: 24, height: 24, color: theme.palette.success.dark }} />
-                <Typography sx={{ fontWeight: 500, color: 'success.700' }}>{i18n.t('components.ai_form_validator.k4')}</Typography>
+                <Typography sx={{ fontWeight: 500, color: 'success.700' }}>
+                  {i18n.t('components.ai_form_validator.k4')}
+                </Typography>
               </>
             ) : (
               <>
                 <AlertCircle style={{ width: 24, height: 24, color: theme.palette.error.main }} />
-                <Typography sx={{ fontWeight: 500, color: 'error.dark' }}>{i18n.t('components.ai_form_validator.k5')}</Typography>
+                <Typography sx={{ fontWeight: 500, color: 'error.dark' }}>
+                  {i18n.t('components.ai_form_validator.k5')}
+                </Typography>
               </>
             )}
           </Box>
@@ -285,7 +289,9 @@ export function AIFormValidator({
               }}
             />
             <Typography>{i18n.t('components.ai_form_validator.k6')}</Typography>
-            <Typography sx={{ fontSize: '0.875rem', mt: 0.25 }}>{i18n.t('components.ai_form_validator.k7')}</Typography>
+            <Typography sx={{ fontSize: '0.875rem', mt: 0.25 }}>
+              {i18n.t('components.ai_form_validator.k7')}
+            </Typography>
           </Box>
         )}
       </Box>

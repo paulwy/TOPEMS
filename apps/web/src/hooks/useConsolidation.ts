@@ -29,8 +29,9 @@ export const useConsolidationScopes = (params?: ConsolidationScopeQueryParams) =
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.CONSOLIDATION_SCOPES_BASE, params],
     queryFn: () => consolidationApi.getConsolidationScopes(params),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -41,8 +42,9 @@ export const useConsolidationScope = (scopeId: string) => {
     queryKey: [...QUERY_KEYS.AD_HOC.CONSOLIDATION_SCOPE_BASE, scopeId],
     queryFn: () => consolidationApi.getConsolidationScope(scopeId),
     enabled: !!scopeId,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -54,10 +56,11 @@ export const useCreateConsolidationScope = () => {
     mutationFn: (data: Partial<ConsolidationScope>) =>
       consolidationApi.createConsolidationScope(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_SCOPES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_SCOPES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 };
@@ -71,16 +74,17 @@ export const useUpdateConsolidationScope = () => {
     mutationFn: ({ scopeId, data }: { scopeId: string; data: Partial<ConsolidationScope> }) =>
       consolidationApi.updateConsolidationScope(scopeId, data),
     onSuccess: (_, { scopeId }) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_SCOPES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_SCOPES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       queryClient.invalidateQueries({
         queryKey: [...QUERY_KEYS.AD_HOC.CONSOLIDATION_SCOPE_BASE, scopeId],
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 };
@@ -93,10 +97,11 @@ export const useDeleteConsolidationScope = () => {
   return useMutation({
     mutationFn: (scopeId: string) => consolidationApi.deleteConsolidationScope(scopeId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_SCOPES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_SCOPES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 };
@@ -113,8 +118,9 @@ export const useScopeCompanies = (scopeId: string) => {
     queryKey: [...QUERY_KEYS.AD_HOC.SCOPE_COMPANIES_BASE, scopeId],
     queryFn: () => consolidationApi.getScopeCompanies(scopeId),
     enabled: !!scopeId,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -133,10 +139,10 @@ export const useAddCompanyToScope = () => {
     onSuccess: (_, data) => {
       queryClient.invalidateQueries({
         queryKey: [...QUERY_KEYS.AD_HOC.SCOPE_COMPANIES_BASE, data.scope_id],
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 };
@@ -150,10 +156,11 @@ export const useUpdateScopeCompany = () => {
     mutationFn: ({ companyId, data }: { companyId: string; data: Partial<ConsolidationCompany> }) =>
       consolidationApi.updateScopeCompany(companyId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SCOPE_COMPANIES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.SCOPE_COMPANIES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 };
@@ -166,10 +173,11 @@ export const useRemoveCompanyFromScope = () => {
   return useMutation({
     mutationFn: (companyId: string) => consolidationApi.removeCompanyFromScope(companyId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.SCOPE_COMPANIES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.SCOPE_COMPANIES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 };
@@ -185,8 +193,9 @@ export const useEliminationRules = (params: EliminationRuleQueryParams) => {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.ELIMINATION_RULES_BASE, params],
     queryFn: () => consolidationApi.getEliminationRules(params),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -197,8 +206,9 @@ export const useEliminationRule = (ruleId: string) => {
     queryKey: [...QUERY_KEYS.AD_HOC.ELIMINATION_RULE_BASE, ruleId],
     queryFn: () => consolidationApi.getEliminationRule(ruleId),
     enabled: !!ruleId,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -211,10 +221,10 @@ export const useCreateEliminationRule = () => {
     onSuccess: (_, data) => {
       queryClient.invalidateQueries({
         queryKey: [...QUERY_KEYS.AD_HOC.ELIMINATION_RULES_BASE, { scope_id: data.scope_id }],
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 };
@@ -230,10 +240,10 @@ export const useUpdateEliminationRule = () => {
     onSuccess: (_, { data }) => {
       queryClient.invalidateQueries({
         queryKey: [...QUERY_KEYS.AD_HOC.ELIMINATION_RULES_BASE, { scope_id: data.scope_id }],
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 };
@@ -246,10 +256,11 @@ export const useDeleteEliminationRule = () => {
   return useMutation({
     mutationFn: (ruleId: string) => consolidationApi.deleteEliminationRule(ruleId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ELIMINATION_RULES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ELIMINATION_RULES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 };
@@ -265,8 +276,9 @@ export const useInternalTransactions = (params?: InternalTransactionQueryParams)
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.INTERNAL_TRANSACTIONS_BASE, params],
     queryFn: () => consolidationApi.getInternalTransactions(params),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -277,8 +289,9 @@ export const useInternalTransaction = (transactionId: string) => {
     queryKey: [...QUERY_KEYS.AD_HOC.INTERNAL_TRANSACTION_BASE, transactionId],
     queryFn: () => consolidationApi.getInternalTransaction(transactionId),
     enabled: !!transactionId,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -292,10 +305,10 @@ export const useExecuteElimination = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.INTERNAL_TRANSACTIONS_BASE,
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 };
@@ -311,8 +324,9 @@ export const useConsolidationReports = (params?: ConsolidationReportQueryParams)
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORTS_BASE, params],
     queryFn: () => consolidationApi.getConsolidationReports(params),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -323,8 +337,9 @@ export const useConsolidationReport = (reportId: string) => {
     queryKey: [...QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORT_BASE, reportId],
     queryFn: () => consolidationApi.getConsolidationReport(reportId),
     enabled: !!reportId,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -338,16 +353,16 @@ export const useGenerateConsolidationReport = () => {
     onSuccess: (result) => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORTS_BASE,
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
       queryClient.invalidateQueries({
         queryKey: [...QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORT_BASE, result.data?.report_id],
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 };
@@ -360,8 +375,9 @@ export const useConsolidationReportLines = (reportId: string) => {
     queryKey: [...QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORT_LINES_BASE, reportId],
     queryFn: () => consolidationApi.getConsolidationReportLines(reportId),
     enabled: !!reportId,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -372,10 +388,11 @@ export const useApproveConsolidationReport = () => {
   return useMutation({
     mutationFn: (reportId: string) => consolidationApi.approveConsolidationReport(reportId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORTS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORTS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 };
@@ -388,10 +405,11 @@ export const usePublishConsolidationReport = () => {
   return useMutation({
     mutationFn: (reportId: string) => consolidationApi.publishConsolidationReport(reportId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORTS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORTS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 };
@@ -404,10 +422,11 @@ export const useDeleteConsolidationReport = () => {
   return useMutation({
     mutationFn: (reportId: string) => consolidationApi.deleteConsolidationReport(reportId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORTS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CONSOLIDATION_REPORTS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 };
@@ -427,8 +446,9 @@ export const useCompanyRelations = (params?: {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.COMPANY_RELATIONS_BASE, params],
     queryFn: () => consolidationApi.getCompanyRelations(params),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -446,14 +466,16 @@ export const useCreateCompanyRelation = () => {
       }>
     ) => consolidationApi.createCompanyRelation(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.COMPANY_RELATIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.COMPANY_TREE_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.COMPANY_RELATIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.COMPANY_TREE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 };
@@ -475,10 +497,11 @@ export const useUpdateCompanyRelation = () => {
       }>;
     }) => consolidationApi.updateCompanyRelation(relationId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.COMPANY_RELATIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.COMPANY_RELATIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 };
@@ -491,14 +514,16 @@ export const useDeleteCompanyRelation = () => {
   return useMutation({
     mutationFn: (relationId: string) => consolidationApi.deleteCompanyRelation(relationId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.COMPANY_RELATIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.COMPANY_TREE_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.COMPANY_RELATIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.COMPANY_TREE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 };
@@ -510,6 +535,7 @@ export const useCompanyTree = () => {
   return useQuery({
     queryKey: QUERY_KEYS.AD_HOC.COMPANY_TREE_BASE,
     queryFn: () => consolidationApi.getCompanyTree(),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };

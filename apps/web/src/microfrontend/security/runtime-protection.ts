@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export enum ProtectionType {
   PROTOTYPEPOLLUTION = 'prototype_pollution',
   GLOBALTAMPERING = 'global_tampering',
@@ -260,7 +261,9 @@ export class RuntimeProtector {
 
           if (name === 'eval' || name === 'Function') {
             protector.stats.blockedCount++;
-            throw new Error(`${i18n.t('microfrontend.runtime-protection.k7')}${name}${i18n.t('microfrontend.runtime-protection.k8')}`);
+            throw new Error(
+              `${i18n.t('microfrontend.runtime-protection.k7')}${name}${i18n.t('microfrontend.runtime-protection.k8')}`
+            );
           }
 
           return (original as Function).apply(this, args);
@@ -420,7 +423,9 @@ export class RuntimeProtector {
         const usagePercent = (mem.usedJSHeapSize / mem.jsHeapSizeLimit) * 100;
         if (usagePercent > 80) {
           detected = true;
-          details.push(`${i18n.t('microfrontend.runtime-protection.k10')}${usagePercent.toFixed(1)}%`);
+          details.push(
+            `${i18n.t('microfrontend.runtime-protection.k10')}${usagePercent.toFixed(1)}%`
+          );
 
           this.addEvent({
             type: ProtectionType.MEMORYLEAK,
@@ -438,7 +443,9 @@ export class RuntimeProtector {
       window.eventListeners.length > 1000
     ) {
       detected = true;
-      details.push(`${i18n.t('microfrontend.runtime-protection.k13')}${window.eventListeners.length}`);
+      details.push(
+        `${i18n.t('microfrontend.runtime-protection.k13')}${window.eventListeners.length}`
+      );
     }
 
     return { detected, details };

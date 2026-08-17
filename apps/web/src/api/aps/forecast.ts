@@ -1,9 +1,16 @@
 import apiClient from '../client';
 import type { ApiResponse, PaginatedResponse } from '../client';
-import type { DemandForecast, CreateDemandForecastRequest, UpdateDemandForecastRequest, PaginationParams } from './types';
+import type {
+  DemandForecast,
+  CreateDemandForecastRequest,
+  UpdateDemandForecastRequest,
+  PaginationParams,
+} from './types';
 
 export const forecastApi = {
-  list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<DemandForecast>>> => {
+  list: async (
+    params?: PaginationParams
+  ): Promise<ApiResponse<PaginatedResponse<DemandForecast>>> => {
     return apiClient.aps.get('/forecasts', { params });
   },
 
@@ -15,7 +22,10 @@ export const forecastApi = {
     return apiClient.aps.post('/forecasts', data);
   },
 
-  update: async (id: string, data: UpdateDemandForecastRequest): Promise<ApiResponse<DemandForecast>> => {
+  update: async (
+    id: string,
+    data: UpdateDemandForecastRequest
+  ): Promise<ApiResponse<DemandForecast>> => {
     return apiClient.aps.put(`/forecasts/${id}`, data);
   },
 

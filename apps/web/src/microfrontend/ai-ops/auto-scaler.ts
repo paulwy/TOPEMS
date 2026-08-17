@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type ScalingDirection = 'up' | 'down' | 'none';
 export type ScalingStatus = 'pending' | 'scaling' | 'completed' | 'failed' | 'cancelled';
 
@@ -325,7 +326,10 @@ export class AutoScaler {
       direction,
       currentInstances: metrics.currentInstances,
       targetInstances,
-      reason: direction === 'up' ? i18n.t('microfrontend.auto-scaler.k2') : i18n.t('microfrontend.auto-scaler.k1'),
+      reason:
+        direction === 'up'
+          ? i18n.t('microfrontend.auto-scaler.k2')
+          : i18n.t('microfrontend.auto-scaler.k1'),
       metrics: scalingMetrics,
       confidence,
       timestamp: now,

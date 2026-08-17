@@ -53,11 +53,26 @@ export const customerSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: i18n.t('shared.customer.k0'), label: i18n.t('schema:erp.customer.category.option.大型企业') },
-          { value: i18n.t('shared.customer.k1'), label: i18n.t('schema:erp.customer.category.option.中型企业') },
-          { value: i18n.t('shared.customer.k2'), label: i18n.t('schema:erp.customer.category.option.小型企业') },
-          { value: i18n.t('shared.customer.k3'), label: i18n.t('schema:erp.customer.category.option.政府机构') },
-          { value: i18n.t('shared.customer.k4'), label: i18n.t('schema:erp.customer.category.option.个人客户') },
+          {
+            value: i18n.t('shared.customer.k0'),
+            label: i18n.t('schema:erp.customer.category.option.大型企业'),
+          },
+          {
+            value: i18n.t('shared.customer.k1'),
+            label: i18n.t('schema:erp.customer.category.option.中型企业'),
+          },
+          {
+            value: i18n.t('shared.customer.k2'),
+            label: i18n.t('schema:erp.customer.category.option.小型企业'),
+          },
+          {
+            value: i18n.t('shared.customer.k3'),
+            label: i18n.t('schema:erp.customer.category.option.政府机构'),
+          },
+          {
+            value: i18n.t('shared.customer.k4'),
+            label: i18n.t('schema:erp.customer.category.option.个人客户'),
+          },
         ],
       },
       listWidth: 120,
@@ -69,12 +84,30 @@ export const customerSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: i18n.t('shared.customer.k5'), label: i18n.t('schema:erp.customer.industry.option.电子制造') },
-          { value: i18n.t('shared.customer.k6'), label: i18n.t('schema:erp.customer.industry.option.机械制造') },
-          { value: i18n.t('shared.customer.k7'), label: i18n.t('schema:erp.customer.industry.option.化工') },
-          { value: i18n.t('shared.customer.k8'), label: i18n.t('schema:erp.customer.industry.option.金融') },
-          { value: i18n.t('shared.customer.k9'), label: i18n.t('schema:erp.customer.industry.option.互联网') },
-          { value: i18n.t('shared.customer.k10'), label: i18n.t('schema:erp.customer.industry.option.医疗') },
+          {
+            value: i18n.t('shared.customer.k5'),
+            label: i18n.t('schema:erp.customer.industry.option.电子制造'),
+          },
+          {
+            value: i18n.t('shared.customer.k6'),
+            label: i18n.t('schema:erp.customer.industry.option.机械制造'),
+          },
+          {
+            value: i18n.t('shared.customer.k7'),
+            label: i18n.t('schema:erp.customer.industry.option.化工'),
+          },
+          {
+            value: i18n.t('shared.customer.k8'),
+            label: i18n.t('schema:erp.customer.industry.option.金融'),
+          },
+          {
+            value: i18n.t('shared.customer.k9'),
+            label: i18n.t('schema:erp.customer.industry.option.互联网'),
+          },
+          {
+            value: i18n.t('shared.customer.k10'),
+            label: i18n.t('schema:erp.customer.industry.option.医疗'),
+          },
         ],
       },
       listWidth: 120,
@@ -282,10 +315,22 @@ export const customerSchema: EntitySchema = {
             label: i18n.t('schema:erp.customer.filter.industry.option.机械制造'),
             value: i18n.t('shared.customer.k7'),
           },
-          { label: i18n.t('schema:erp.customer.filter.industry.option.化工'), value: i18n.t('shared.customer.k11') },
-          { label: i18n.t('schema:erp.customer.filter.industry.option.金融'), value: i18n.t('shared.customer.k12') },
-          { label: i18n.t('schema:erp.customer.filter.industry.option.互联网'), value: i18n.t('shared.customer.k13') },
-          { label: i18n.t('schema:erp.customer.filter.industry.option.医疗'), value: i18n.t('shared.customer.k14') },
+          {
+            label: i18n.t('schema:erp.customer.filter.industry.option.化工'),
+            value: i18n.t('shared.customer.k11'),
+          },
+          {
+            label: i18n.t('schema:erp.customer.filter.industry.option.金融'),
+            value: i18n.t('shared.customer.k12'),
+          },
+          {
+            label: i18n.t('schema:erp.customer.filter.industry.option.互联网'),
+            value: i18n.t('shared.customer.k13'),
+          },
+          {
+            label: i18n.t('schema:erp.customer.filter.industry.option.医疗'),
+            value: i18n.t('shared.customer.k14'),
+          },
         ],
       },
     ],

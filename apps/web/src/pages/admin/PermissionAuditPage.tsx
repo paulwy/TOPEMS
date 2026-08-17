@@ -37,6 +37,7 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface PermissionAuditPageProps {
   onNavigate?: (page: string) => void;
 }
@@ -50,7 +51,12 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
   const debouncedSearch = useDebounce(searchQuery, 300);
   const PER_PAGE = 20;
   const permissionChangesQuery = useQuery<{ items: PermissionChange[]; total: number }>({
-    queryKey: [...QUERY_KEYS.AD_HOC.ADMIN_PERMISSION_CHANGES_BASE, currentPage, debouncedSearch, filterType],
+    queryKey: [
+      ...QUERY_KEYS.AD_HOC.ADMIN_PERMISSION_CHANGES_BASE,
+      currentPage,
+      debouncedSearch,
+      filterType,
+    ],
     queryFn: async () => {
       const response = await permissionAuditApi.listPermissionChanges({
         page: currentPage,
@@ -67,7 +73,12 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
     staleTime: 30 * 1000,
   });
   const accessLogsQuery = useQuery<{ items: AccessControlLog[]; total: number }>({
-    queryKey: [...QUERY_KEYS.AD_HOC.ADMIN_ACCESS_LOGS_BASE, currentPage, debouncedSearch, filterType],
+    queryKey: [
+      ...QUERY_KEYS.AD_HOC.ADMIN_ACCESS_LOGS_BASE,
+      currentPage,
+      debouncedSearch,
+      filterType,
+    ],
     queryFn: async () => {
       const response = await permissionAuditApi.listAccessLogs({
         page: currentPage,
@@ -429,7 +440,9 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                     onChange={(e) => setFilterType(e.target.value)}
                     label={i18n.t('admin:permission_audit_page.filter_type')}
                   >
-                    <MenuItem value='all'>{i18n.t('admin:permission_audit_page.all_types')}</MenuItem>
+                    <MenuItem value='all'>
+                      {i18n.t('admin:permission_audit_page.all_types')}
+                    </MenuItem>
                     {activeTab === 'permissionChanges' ? (
                       <>
                         <MenuItem value='role_assignment'>
@@ -483,25 +496,39 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                       {activeTab === 'permissionChanges' ? (
                         <>
                           <TableCell>{i18n.t('admin:permission_audit_page.col_time')}</TableCell>
-                          <TableCell>{i18n.t('admin:permission_audit_page.col_change_type')}</TableCell>
-                          <TableCell>{i18n.t('admin:permission_audit_page.col_operator')}</TableCell>
-                          <TableCell>{i18n.t('admin:permission_audit_page.col_target_user')}</TableCell>
+                          <TableCell>
+                            {i18n.t('admin:permission_audit_page.col_change_type')}
+                          </TableCell>
+                          <TableCell>
+                            {i18n.t('admin:permission_audit_page.col_operator')}
+                          </TableCell>
+                          <TableCell>
+                            {i18n.t('admin:permission_audit_page.col_target_user')}
+                          </TableCell>
                           <TableCell>
                             {i18n.t('admin:permission_audit_page.col_role_permission')}
                           </TableCell>
-                          <TableCell>{i18n.t('admin:permission_audit_page.col_old_value')}</TableCell>
-                          <TableCell>{i18n.t('admin:permission_audit_page.col_new_value')}</TableCell>
+                          <TableCell>
+                            {i18n.t('admin:permission_audit_page.col_old_value')}
+                          </TableCell>
+                          <TableCell>
+                            {i18n.t('admin:permission_audit_page.col_new_value')}
+                          </TableCell>
                           <TableCell>{i18n.t('admin:permission_audit_page.col_status')}</TableCell>
                         </>
                       ) : (
                         <>
                           <TableCell>{i18n.t('admin:permission_audit_page.col_time')}</TableCell>
-                          <TableCell>{i18n.t('admin:permission_audit_page.col_access_type')}</TableCell>
+                          <TableCell>
+                            {i18n.t('admin:permission_audit_page.col_access_type')}
+                          </TableCell>
                           <TableCell>{i18n.t('admin:permission_audit_page.col_user')}</TableCell>
                           <TableCell>
                             {i18n.t('admin:permission_audit_page.col_resource_path')}
                           </TableCell>
-                          <TableCell>{i18n.t('admin:permission_audit_page.col_ip_address')}</TableCell>
+                          <TableCell>
+                            {i18n.t('admin:permission_audit_page.col_ip_address')}
+                          </TableCell>
                           <TableCell>{i18n.t('admin:permission_audit_page.col_device')}</TableCell>
                           <TableCell>{i18n.t('admin:permission_audit_page.col_status')}</TableCell>
                           <TableCell>

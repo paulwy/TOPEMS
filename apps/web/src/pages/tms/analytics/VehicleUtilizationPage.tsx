@@ -21,6 +21,7 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
+
 const MOCK_DATA = [
   { vehicleNo: 'V-001', utilization: 85, trips: 42 },
   { vehicleNo: 'V-002', utilization: 72, trips: 35 },
@@ -43,12 +44,13 @@ export default function VehicleUtilizationPage() {
         const items = Array.isArray(data)
           ? data
           : Array.isArray((data as { items?: unknown[] })?.items)
-          ? (data as { items: unknown[] }).items
-          : [];
+            ? (data as { items: unknown[] }).items
+            : [];
         return {
           total: items.length,
           utilization: {
-            active: items.filter((x: unknown) => (x as { status?: string })?.status === 'ACTIVE').length,
+            active: items.filter((x: unknown) => (x as { status?: string })?.status === 'ACTIVE')
+              .length,
           },
         };
       } catch {
@@ -90,28 +92,65 @@ export default function VehicleUtilizationPage() {
       </div>
       <div className='rounded-lg border p-4'>
         <h3 className='mb-2 font-semibold'>{i18n.t('tms.vehicle_utilization_page.k6')}</h3>
-        <ResponsiveContainer width='100%' height={340}>
-          <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
+        <ResponsiveContainer
+          width='100%'
+          height={340}
+        >
+          <BarChart
+            data={data}
+            margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+          >
             <CartesianGrid strokeDasharray='3 3' />
-            <XAxis dataKey='vehicleNo' fontSize={11} />
-            <YAxis domain={[0, 100]} unit='%' fontSize={11} />
+            <XAxis
+              dataKey='vehicleNo'
+              fontSize={11}
+            />
+            <YAxis
+              domain={[0, 100]}
+              unit='%'
+              fontSize={11}
+            />
             <Tooltip formatter={(value: unknown) => `${value}%`} />
             <Legend />
-            <ReferenceLine y={80} stroke={designTokens.colors.success.dark} strokeDasharray='4 4' label={i18n.t('tms.vehicle_utilization_page.80_7')} />
-            <Bar dataKey='utilization' name={i18n.t('tms.vehicle_utilization_page.k8')} fill={designTokens.colors.primary.main} barSize={28} />
+            <ReferenceLine
+              y={80}
+              stroke={designTokens.colors.success.dark}
+              strokeDasharray='4 4'
+              label={i18n.t('tms.vehicle_utilization_page.80_7')}
+            />
+            <Bar
+              dataKey='utilization'
+              name={i18n.t('tms.vehicle_utilization_page.k8')}
+              fill={designTokens.colors.primary.main}
+              barSize={28}
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>
       <div className='rounded-lg border p-4'>
         <h3 className='mb-2 font-semibold'>{i18n.t('tms.vehicle_utilization_page.k9')}</h3>
-        <ResponsiveContainer width='100%' height={240}>
-          <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
+        <ResponsiveContainer
+          width='100%'
+          height={240}
+        >
+          <BarChart
+            data={data}
+            margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+          >
             <CartesianGrid strokeDasharray='3 3' />
-            <XAxis dataKey='vehicleNo' fontSize={11} />
+            <XAxis
+              dataKey='vehicleNo'
+              fontSize={11}
+            />
             <YAxis fontSize={11} />
             <Tooltip />
             <Legend />
-            <Bar dataKey='trips' name={i18n.t('tms.vehicle_utilization_page.k10')} fill={designTokens.colors.secondary.dark} barSize={28} />
+            <Bar
+              dataKey='trips'
+              name={i18n.t('tms.vehicle_utilization_page.k10')}
+              fill={designTokens.colors.secondary.dark}
+              barSize={28}
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>

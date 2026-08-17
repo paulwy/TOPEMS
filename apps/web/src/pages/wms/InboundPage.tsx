@@ -9,11 +9,10 @@ import { Download, Check, Package, ClipboardCheck } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const InboundStats: React.FC = () => {
   const { data: orders = [] } = useQuery({
@@ -152,14 +151,23 @@ export default function InboundPage() {
       try {
         const response = await wmsApi.inboundOrders.confirm(id);
         if (response.success) {
-          addNotification({ type: 'success', title: i18n.t('pages.inbound_page.k5'), message: i18n.t('pages.inbound_page.k4') });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_INBOUND_ORDERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+          addNotification({
+            type: 'success',
+            title: i18n.t('pages.inbound_page.k5'),
+            message: i18n.t('pages.inbound_page.k4'),
+          });
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.AD_HOC.WMS_INBOUND_ORDERS_BASE,
+            exact: false,
+            refetchType: 'active',
+          });
         }
       } catch {
-        addNotification({ type: 'error', title: i18n.t('pages.inbound_page.k7'), message: i18n.t('pages.inbound_page.k6') });
+        addNotification({
+          type: 'error',
+          title: i18n.t('pages.inbound_page.k7'),
+          message: i18n.t('pages.inbound_page.k6'),
+        });
       }
     },
     [queryClient, addNotification]
@@ -170,14 +178,23 @@ export default function InboundPage() {
       try {
         const response = await wmsApi.inboundOrders.complete(id);
         if (response.success) {
-          addNotification({ type: 'success', title: i18n.t('pages.inbound_page.k9'), message: i18n.t('pages.inbound_page.k8') });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_INBOUND_ORDERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+          addNotification({
+            type: 'success',
+            title: i18n.t('pages.inbound_page.k9'),
+            message: i18n.t('pages.inbound_page.k8'),
+          });
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.AD_HOC.WMS_INBOUND_ORDERS_BASE,
+            exact: false,
+            refetchType: 'active',
+          });
         }
       } catch {
-        addNotification({ type: 'error', title: i18n.t('pages.inbound_page.k11'), message: i18n.t('pages.inbound_page.k10') });
+        addNotification({
+          type: 'error',
+          title: i18n.t('pages.inbound_page.k11'),
+          message: i18n.t('pages.inbound_page.k10'),
+        });
       }
     },
     [queryClient, addNotification]

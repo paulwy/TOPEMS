@@ -15,9 +15,10 @@ import {
   type CapacityAnalysis,
 } from '@/api/mes/processFlow';
 import i18n from '@/i18n';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter<
   ProcessFlow,
   CreateProcessFlowRequest,
@@ -42,8 +43,9 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const { data: capacityData } = useQuery({
     queryKey: [...QUERY_KEYS.MES.PROCESS_FLOWS, flowId, 'capacity'],
     queryFn: async () => {
@@ -53,14 +55,27 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
       }
       return null;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const steps = (stepsData as ProcessFlowStep[]) || [];
   const capacity = capacityData as CapacityAnalysis | null;
   const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-    active: { label: i18n.t('mes.process_flow_page.k0'), bg: 'success.lighter', color: 'success.dark' },
-    inactive: { label: i18n.t('mes.process_flow_page.k1'), bg: 'grey.100', color: 'text.secondary' },
-    draft: { label: i18n.t('mes.process_flow_page.k2'), bg: 'warning.light', color: 'warning.dark' },
+    active: {
+      label: i18n.t('mes.process_flow_page.k0'),
+      bg: 'success.lighter',
+      color: 'success.dark',
+    },
+    inactive: {
+      label: i18n.t('mes.process_flow_page.k1'),
+      bg: 'grey.100',
+      color: 'text.secondary',
+    },
+    draft: {
+      label: i18n.t('mes.process_flow_page.k2'),
+      bg: 'warning.light',
+      color: 'warning.dark',
+    },
   };
   const status = statusMap[String(row.status)] || statusMap.inactive;
   return (
@@ -252,7 +267,8 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
                   variant='caption'
                   color='text.secondary'
                 >
-                  {step.process_code} | {i18n.t('pages.process_flow_page.k0')} {step.standard_time || 0} {i18n.t('pages.process_flow_page.k1')}
+                  {step.process_code} | {i18n.t('pages.process_flow_page.k0')}{' '}
+                  {step.standard_time || 0} {i18n.t('pages.process_flow_page.k1')}
                   {step.quality_check_required
                     ? ` | ${i18n.t('mes.process_flow_page.quality_inspection')}`
                     : ''}

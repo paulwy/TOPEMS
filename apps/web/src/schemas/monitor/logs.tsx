@@ -12,7 +12,7 @@ import type { EntitySchema, SchemaField } from '@/schema';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 type LogType = 'access' | 'error' | 'application' | 'slow_query';

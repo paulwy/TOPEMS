@@ -40,7 +40,12 @@ const groupIcons: Record<string, ComponentType<{ size?: number | string }>> = {
 
 function getIcon(iconName?: string): ReactNode {
   if (!iconName) return null;
-  return <LazyIcon name={iconName} size={20} />;
+  return (
+    <LazyIcon
+      name={iconName}
+      size={20}
+    />
+  );
 }
 
 function NavItemComponent({

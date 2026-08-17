@@ -1,11 +1,12 @@
 import { designTokens, semanticTokens } from '@topems/tokens';
 import i18n from '@/i18n';
-'use client';
 
 import React, { useEffect, useState } from 'react';
 import { X, CheckCircle2, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { useNotificationStore } from '@/store';
 import { Box, Typography, Button } from '@mui/material';
+
+('use client');
 
 type NotificationType = 'success' | 'error' | 'info' | 'warning';
 

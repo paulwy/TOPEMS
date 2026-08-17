@@ -50,7 +50,7 @@ import {
 export const trainingPlanTypedApi = {
   /** list_training_plans operation（openapi: GET /api/ehs/training/plans） */
   list: async (
-    params?: AdaptedQuery<'list_training_plans'> | TrainingPlanListQueryParams,
+    params?: AdaptedQuery<'list_training_plans'> | TrainingPlanListQueryParams
   ): Promise<TypedPaginatedResponse<TrainingPlan>> => {
     return apiClient.ehs.get('/training/plans', {
       params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
@@ -64,22 +64,22 @@ export const trainingPlanTypedApi = {
 
   /** create_training_plan operation（openapi: POST /api/ehs/training/plans） */
   create: async (
-    data: AdaptedRequestBody<'create_training_plan'> | CreateTrainingPlanRequest,
+    data: AdaptedRequestBody<'create_training_plan'> | CreateTrainingPlanRequest
   ): Promise<TypedApiResponse<TrainingPlan, 'create_training_plan'>> => {
     return apiClient.ehs.post(
       '/training/plans',
-      toOpenApiRequestBody(data as Record<string, unknown>),
+      toOpenApiRequestBody(data as Record<string, unknown>)
     );
   },
 
   /** update_training_plan operation（openapi: PUT /api/ehs/training/plans/{id}） */
   update: async (
     id: string,
-    data: AdaptedRequestBody<'update_training_plan'> | Partial<UpdateTrainingPlanRequest>,
+    data: AdaptedRequestBody<'update_training_plan'> | Partial<UpdateTrainingPlanRequest>
   ): Promise<TypedApiResponse<TrainingPlan, 'update_training_plan'>> => {
     return apiClient.ehs.put(
       `/training/plans/${id}`,
-      toOpenApiRequestBody(data as Record<string, unknown>),
+      toOpenApiRequestBody(data as Record<string, unknown>)
     );
   },
 
@@ -94,7 +94,7 @@ export const trainingPlanTypedApi = {
 export const trainingRecordTypedApi = {
   /** list_training_records operation（openapi: GET /api/ehs/training/records） */
   list: async (
-    params?: AdaptedQuery<'list_training_records'> | TrainingRecordListQueryParams,
+    params?: AdaptedQuery<'list_training_records'> | TrainingRecordListQueryParams
   ): Promise<TypedPaginatedResponse<TrainingRecord>> => {
     return apiClient.ehs.get('/training/records', {
       params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
@@ -108,22 +108,22 @@ export const trainingRecordTypedApi = {
 
   /** create_training_record operation（openapi: POST /api/ehs/training/records） */
   create: async (
-    data: AdaptedRequestBody<'create_training_record'> | CreateTrainingRecordRequest,
+    data: AdaptedRequestBody<'create_training_record'> | CreateTrainingRecordRequest
   ): Promise<TypedApiResponse<TrainingRecord, 'create_training_record'>> => {
     return apiClient.ehs.post(
       '/training/records',
-      toOpenApiRequestBody(data as Record<string, unknown>),
+      toOpenApiRequestBody(data as Record<string, unknown>)
     );
   },
 
   /** update_training_record operation（openapi: PUT /api/ehs/training/records/{id}） */
   update: async (
     id: string,
-    data: AdaptedRequestBody<'update_training_record'> | Partial<UpdateTrainingRecordRequest>,
+    data: AdaptedRequestBody<'update_training_record'> | Partial<UpdateTrainingRecordRequest>
   ): Promise<TypedApiResponse<TrainingRecord, 'update_training_record'>> => {
     return apiClient.ehs.put(
       `/training/records/${id}`,
-      toOpenApiRequestBody(data as Record<string, unknown>),
+      toOpenApiRequestBody(data as Record<string, unknown>)
     );
   },
 
@@ -138,7 +138,7 @@ export const trainingRecordTypedApi = {
 export const trainingCertificateTypedApi = {
   /** list_certificates operation（openapi: GET /api/ehs/training/certificates） */
   list: async (
-    params?: AdaptedQuery<'list_certificates'> | TrainingCertificateListQueryParams,
+    params?: AdaptedQuery<'list_certificates'> | TrainingCertificateListQueryParams
   ): Promise<TypedPaginatedResponse<TrainingCertificate>> => {
     return apiClient.ehs.get('/training/certificates', {
       params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
@@ -146,30 +146,28 @@ export const trainingCertificateTypedApi = {
   },
 
   /** get_certificate operation（openapi: GET /api/ehs/training/certificates/{id}） */
-  get: async (
-    id: string,
-  ): Promise<TypedApiResponse<TrainingCertificate, 'get_certificate'>> => {
+  get: async (id: string): Promise<TypedApiResponse<TrainingCertificate, 'get_certificate'>> => {
     return apiClient.ehs.get(`/training/certificates/${id}`);
   },
 
   /** create_certificate operation（openapi: POST /api/ehs/training/certificates） */
   create: async (
-    data: AdaptedRequestBody<'create_certificate'> | CreateTrainingCertificateRequest,
+    data: AdaptedRequestBody<'create_certificate'> | CreateTrainingCertificateRequest
   ): Promise<TypedApiResponse<TrainingCertificate, 'create_certificate'>> => {
     return apiClient.ehs.post(
       '/training/certificates',
-      toOpenApiRequestBody(data as Record<string, unknown>),
+      toOpenApiRequestBody(data as Record<string, unknown>)
     );
   },
 
   /** update_certificate operation（openapi: PUT /api/ehs/training/certificates/{id}） */
   update: async (
     id: string,
-    data: AdaptedRequestBody<'update_certificate'> | Partial<UpdateTrainingCertificateRequest>,
+    data: AdaptedRequestBody<'update_certificate'> | Partial<UpdateTrainingCertificateRequest>
   ): Promise<TypedApiResponse<TrainingCertificate, 'update_certificate'>> => {
     return apiClient.ehs.put(
       `/training/certificates/${id}`,
-      toOpenApiRequestBody(data as Record<string, unknown>),
+      toOpenApiRequestBody(data as Record<string, unknown>)
     );
   },
 

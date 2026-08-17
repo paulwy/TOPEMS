@@ -26,7 +26,8 @@ import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const processAdapter: CrudApiAdapter<InspectionProcess> = {
   list: async (params) => {
     const response = await limsApi.processes.list({

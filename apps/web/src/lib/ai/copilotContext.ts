@@ -1,19 +1,10 @@
 import i18n from '@/i18n';
+
 export type AICopilotSource =
-  | 'fab'
-  | 'shortcut'
-  | 'selection'
-  | 'dashboard'
-  | 'global-action'
-  | 'mobile-nav';
+  'fab' | 'shortcut' | 'selection' | 'dashboard' | 'global-action' | 'mobile-nav';
 
 export type AICopilotIntent =
-  | 'chat'
-  | 'explain'
-  | 'summarize'
-  | 'rewrite'
-  | 'todo'
-  | 'recommendation';
+  'chat' | 'explain' | 'summarize' | 'rewrite' | 'todo' | 'recommendation';
 
 export interface AICopilotContext {
   pathname: string;
@@ -71,7 +62,7 @@ const moduleLabelMap: Record<string, string> = {
 };
 
 export function getModuleFromPath(pathname: string): string {
-  const [firstSegment] = pathname.split('/').filter(Boolean);
+  const firstSegment = pathname.split('/').find(Boolean);
   if (!firstSegment) return 'dashboard';
 
   const moduleMap: Record<string, string> = {

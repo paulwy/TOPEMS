@@ -376,7 +376,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
           title={i18n.t('components.toolbar.k12')}
         >
           <Globe size={16} />
-          {mapType === 'osm' ? i18n.t('components.toolbar.k14') : i18n.t('components.toolbar.osm_13')}
+          {mapType === 'osm'
+            ? i18n.t('components.toolbar.k14')
+            : i18n.t('components.toolbar.osm_13')}
         </Button>
         <MuiBox sx={{ borderTop: '1px solid grey.100', my: 1 }} />
         <Button

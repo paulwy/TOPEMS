@@ -3,6 +3,7 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { reagentSchema } from '@/schemas/lims';
 import { reagentApi } from '@/api/lims';
 import i18n from '@/i18n';
+
 const apiAdapter = createCrudPageAdapter({
   list: reagentApi.listReagents,
   create: reagentApi.createReagent,

@@ -21,7 +21,7 @@ import {
 import { designTokens } from '@/theme/tokens';
 import type { UseProfileReturn } from '../hooks/useProfile';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 export interface ProfileSecurityFormProps {
   profile: UseProfileReturn;

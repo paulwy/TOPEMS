@@ -43,7 +43,7 @@ import { NAV_GROUPS } from '@/lib/navigation/types';
 import type { NavItem, NavGroup } from '@/lib/navigation/types';
 import { designTokens } from '@/theme/tokens';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const iconMap: Record<string, React.ReactNode> = {
   Shield: <Shield size={20} />,
@@ -91,8 +91,16 @@ const V4DemoPage: React.FC = () => {
       value: allNavItems.filter((i) => i.showInSidebar).length,
       color: 'success',
     },
-    { label: i18n.t('pages.v4_demo_page.tab_0'), value: allNavItems.filter((i) => i.showInTabs).length, color: 'info' },
-    { label: i18n.t('pages.v4_demo_page.k2'), value: Object.keys(sidebarGrouped).length, color: 'warning' },
+    {
+      label: i18n.t('pages.v4_demo_page.tab_0'),
+      value: allNavItems.filter((i) => i.showInTabs).length,
+      color: 'info',
+    },
+    {
+      label: i18n.t('pages.v4_demo_page.k2'),
+      value: Object.keys(sidebarGrouped).length,
+      color: 'warning',
+    },
   ];
 
   const renderIcon = (iconName?: string) => {
@@ -476,7 +484,12 @@ const V4DemoPage: React.FC = () => {
                     icon: 'LayoutDashboard',
                     color: 'primary',
                   },
-                  { name: 'ListPageTemplate', desc: i18n.t('pages.v4_demo_page.crud_9'), icon: 'List', color: 'success' },
+                  {
+                    name: 'ListPageTemplate',
+                    desc: i18n.t('pages.v4_demo_page.crud_9'),
+                    icon: 'List',
+                    color: 'success',
+                  },
                   {
                     name: 'DetailPageTemplate',
                     desc: i18n.t('pages.v4_demo_page.k10'),

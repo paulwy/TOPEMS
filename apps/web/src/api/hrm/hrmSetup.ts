@@ -120,7 +120,9 @@ export const hrmSetupApi = {
     return apiClient.hrm.post<CompanyInfoResponse>('/setup/company', data);
   },
 
-  async setupDepartments(data: DepartmentsBatchRequest): Promise<ApiResponse<DepartmentsBatchResponse>> {
+  async setupDepartments(
+    data: DepartmentsBatchRequest
+  ): Promise<ApiResponse<DepartmentsBatchResponse>> {
     return apiClient.hrm.post<DepartmentsBatchResponse>('/setup/departments', data);
   },
 
@@ -132,7 +134,9 @@ export const hrmSetupApi = {
     return apiClient.hrm.post<AdminUserResponse>('/setup/admin', data);
   },
 
-  async completeInitialization(data: CompleteInitRequest): Promise<ApiResponse<CompleteInitResponse>> {
+  async completeInitialization(
+    data: CompleteInitRequest
+  ): Promise<ApiResponse<CompleteInitResponse>> {
     return apiClient.hrm.post<CompleteInitResponse>('/setup/complete', data);
   },
 };

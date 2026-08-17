@@ -6,23 +6,26 @@ import React from 'react';
 import FileUpload from '../FileUpload';
 import { renderWithProviders } from '@/__tests__/test-utils';
 
-const i18nMap = vi.hoisted(() => ({
-  'shared.file_upload.k0': '选择文件',
-  'shared.file_upload.k1': '未知大小',
-  'shared.file_upload.k2': '已达到最大文件数量限制',
-  'shared.file_upload.k3': '文件总大小超过限制',
-  'shared.file_upload.k4': '拖拽文件到此处或点击上传',
-  'shared.file_upload.k5': '松开以上传',
-  'shared.file_upload.k6': '上传失败',
-  'shared.file_upload.k7': '下载',
-  'shared.file_upload.k8': '执行',
-  'shared.file_upload.k9': '关闭',
-  'components.file_upload.k0': '最多',
-  'components.file_upload.k1': '个文件，单个不超过',
-  'components.file_upload.k2': '文件',
-  'components.file_upload.k3': '超过大小限制',
-  'components.file_upload.mb_2': 'MB，总计不超过',
-} as Record<string, string>));
+const i18nMap = vi.hoisted(
+  () =>
+    ({
+      'shared.file_upload.k0': '选择文件',
+      'shared.file_upload.k1': '未知大小',
+      'shared.file_upload.k2': '已达到最大文件数量限制',
+      'shared.file_upload.k3': '文件总大小超过限制',
+      'shared.file_upload.k4': '拖拽文件到此处或点击上传',
+      'shared.file_upload.k5': '松开以上传',
+      'shared.file_upload.k6': '上传失败',
+      'shared.file_upload.k7': '下载',
+      'shared.file_upload.k8': '执行',
+      'shared.file_upload.k9': '关闭',
+      'components.file_upload.k0': '最多',
+      'components.file_upload.k1': '个文件，单个不超过',
+      'components.file_upload.k2': '文件',
+      'components.file_upload.k3': '超过大小限制',
+      'components.file_upload.mb_2': 'MB，总计不超过',
+    }) as Record<string, string>
+);
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({

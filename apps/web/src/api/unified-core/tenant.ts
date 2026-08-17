@@ -131,7 +131,10 @@ export const tenantApi = {
     return apiClient.core.get(`/api/core/tenant/${tenantId}/users`);
   },
 
-  inviteUser: (tenantId: string, data: { email: string; role?: string }): Promise<ApiResponse<TenantUser>> => {
+  inviteUser: (
+    tenantId: string,
+    data: { email: string; role?: string }
+  ): Promise<ApiResponse<TenantUser>> => {
     return apiClient.core.post(`/api/core/tenant/${tenantId}/users/invite`, data);
   },
 
@@ -139,7 +142,11 @@ export const tenantApi = {
     return apiClient.core.delete(`/api/core/tenant/${tenantId}/users/${userId}`);
   },
 
-  updateUserRole: (tenantId: string, userId: string, role: string): Promise<ApiResponse<TenantUser>> => {
+  updateUserRole: (
+    tenantId: string,
+    userId: string,
+    role: string
+  ): Promise<ApiResponse<TenantUser>> => {
     return apiClient.core.put(`/api/core/tenant/${tenantId}/users/${userId}/role`, { role });
   },
 };

@@ -6,8 +6,6 @@ import type { DevicePoint, Pipeline, StorageLocation, GeoJSONFeature } from '../
 import DeviceTrackPanel from '../DeviceTrackPanel';
 import HeatmapLayer, { HeatmapLegend } from '../HeatmapLayer';
 import i18n from '@/i18n';
-// C3 §5 P1-2: Map3DView 按需懒加载，将 three.js + @react-three/* 拆分为独立 chunk
-const Map3DView = lazy(() => import('../Map3DView'));
 import AmapLayer from '../AmapLayer';
 import { designTokens } from '@/theme/tokens';
 
@@ -23,8 +21,10 @@ import MapLayers from './components/MapLayers';
 import Toolbar from './components/Toolbar';
 import LayerPanel from './components/LayerPanel';
 import DetailsPanel from './components/DetailsPanel';
+// C3 §5 P1-2: Map3DView 按需懒加载，将 three.js + @react-three/* 拆分为独立 chunk
+const Map3DView = lazy(() => import('../Map3DView'));
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const MapView: React.FC<MapViewProps> = ({
   devicePoints = [],

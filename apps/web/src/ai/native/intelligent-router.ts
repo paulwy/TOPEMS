@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type RoutingStrategy = 'intent-based' | 'performance-based' | 'hybrid' | 'a/b-test';
 
 export interface RouteRecommendation {

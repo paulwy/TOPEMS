@@ -178,7 +178,10 @@ export const instrumentMaintenanceSchema: EntitySchema = {
         id: 'maintenance_type',
         label: i18n.t('lims.instrument_maintenance.k21'),
         type: 'select',
-        options: [{ label: i18n.t('lims.instrument_maintenance.k22'), value: 'all' }, ...MAINTENANCE_TYPE_OPTIONS],
+        options: [
+          { label: i18n.t('lims.instrument_maintenance.k22'), value: 'all' },
+          ...MAINTENANCE_TYPE_OPTIONS,
+        ],
       },
     ],
   },

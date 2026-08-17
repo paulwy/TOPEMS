@@ -181,10 +181,30 @@ const V53AIPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             onChange={(_, id) => setActiveTab(id as TabId)}
             variant='fullWidth'
           >
-            <Tab value='completion' label={i18n.t('ai.v53-ai-panel.k19')} icon={<Code2 size={16} />} iconPosition='start' />
-            <Tab value='test' label={i18n.t('ai.v53-ai-panel.k20')} icon={<TestTube2 size={16} />} iconPosition='start' />
-            <Tab value='ui' label={i18n.t('ai.v53-ai-panel.k21')} icon={<LayoutGrid size={16} />} iconPosition='start' />
-            <Tab value='chat' label={i18n.t('ai.v53-ai-panel.ai_0')} icon={<MessageCircle size={16} />} iconPosition='start' />
+            <Tab
+              value='completion'
+              label={i18n.t('ai.v53-ai-panel.k19')}
+              icon={<Code2 size={16} />}
+              iconPosition='start'
+            />
+            <Tab
+              value='test'
+              label={i18n.t('ai.v53-ai-panel.k20')}
+              icon={<TestTube2 size={16} />}
+              iconPosition='start'
+            />
+            <Tab
+              value='ui'
+              label={i18n.t('ai.v53-ai-panel.k21')}
+              icon={<LayoutGrid size={16} />}
+              iconPosition='start'
+            />
+            <Tab
+              value='chat'
+              label={i18n.t('ai.v53-ai-panel.ai_0')}
+              icon={<MessageCircle size={16} />}
+              iconPosition='start'
+            />
           </Tabs>
         </Box>
         <Box sx={{ flex: 1, overflow: 'auto', bgcolor: 'grey.50' }}>
@@ -327,7 +347,12 @@ const CodeCompletionTab: React.FC = () => {
     ]);
 
     intelligentCodeCompletion.registerAPIEndpoints('users', [
-      { method: 'GET', path: '/api/users', description: i18n.t('ai.v53-ai-panel.k25'), response_type: 'User[]' },
+      {
+        method: 'GET',
+        path: '/api/users',
+        description: i18n.t('ai.v53-ai-panel.k25'),
+        response_type: 'User[]',
+      },
       {
         method: 'POST',
         path: '/api/users',
@@ -335,7 +360,12 @@ const CodeCompletionTab: React.FC = () => {
         request_type: 'CreateUserDTO',
         response_type: 'User',
       },
-      { method: 'GET', path: '/api/users/:id', description: i18n.t('ai.v53-ai-panel.k27'), response_type: 'User' },
+      {
+        method: 'GET',
+        path: '/api/users/:id',
+        description: i18n.t('ai.v53-ai-panel.k27'),
+        response_type: 'User',
+      },
     ]);
 
     intelligentCodeCompletion.registerProjectImport('react', [
@@ -400,7 +430,10 @@ const CodeCompletionTab: React.FC = () => {
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -459,13 +492,17 @@ const CodeCompletionTab: React.FC = () => {
           />
         </Card>
 
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}
           >
             <Search size={16} />
-            {i18n.t('ai.v53-ai-panel.k0')}{completions.length})
+            {i18n.t('ai.v53-ai-panel.k0')}
+            {completions.length})
           </Typography>
           {loading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -672,7 +709,10 @@ const TestGeneratorTab: React.FC = () => {
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1.5 }}
@@ -764,15 +804,19 @@ const TestGeneratorTab: React.FC = () => {
                   variant='caption'
                   sx={{ color: 'text.secondary', mt: 0.5, display: 'block' }}
                 >
-                  [i18n.t('ai.v53-ai-panel.k14')]: {i18n.t('ai.v53-ai-panel.k15')}{analysis.coverage.branches} · 语句{' '}
-                  {analysis.coverage.statements} {i18n.t('ai.v53-ai-panel.k1')} {analysis.coverage.functions}
+                  [i18n.t('ai.v53-ai-panel.k14')]: {i18n.t('ai.v53-ai-panel.k15')}
+                  {analysis.coverage.branches} · {i18n.t('ai.v53-ai-panel.k58')} {analysis.coverage.statements}{' '}
+                  {i18n.t('ai.v53-ai-panel.k1')} {analysis.coverage.functions}
                 </Typography>
               </Box>
             </Box>
           )}
         </Card>
 
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Box
             sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}
           >
@@ -983,7 +1027,10 @@ const UIRecommenderTab: React.FC = () => {
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1.5 }}
@@ -1011,7 +1058,9 @@ const UIRecommenderTab: React.FC = () => {
                   border: '2px solid',
                   borderColor: idx === 0 ? designTokens.colors.secondary.main : 'divider',
                   background:
-                    idx === 0 ? `linear-gradient(135deg, ${designTokens.colors.secondary['50']} 0%, ${designTokens.colors.secondary['100']} 100%)` : 'white',
+                    idx === 0
+                      ? `linear-gradient(135deg, ${designTokens.colors.secondary['50']} 0%, ${designTokens.colors.secondary['100']} 100%)`
+                      : 'white',
                 }}
               >
                 {idx === 0 && (
@@ -1113,12 +1162,16 @@ const UIRecommenderTab: React.FC = () => {
             ))}
         </Card>
 
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1.5 }}
           >
-            📦 {i18n.t('ai.v53-ai-panel.k2')}{components.length})
+            📦 {i18n.t('ai.v53-ai-panel.k2')}
+            {components.length})
           </Typography>
           <List sx={{ maxHeight: 450, overflow: 'auto' }}>
             {components.map((comp) => (
@@ -1203,8 +1256,7 @@ const AIChatTab: React.FC = () => {
     {
       id: 'welcome',
       role: 'assistant',
-      content:
-        i18n.t('ai.v53-ai-panel.k28'),
+      content: i18n.t('ai.v53-ai-panel.k28'),
       timestamp: Date.now(),
     },
   ]);
@@ -1226,12 +1278,20 @@ const AIChatTab: React.FC = () => {
     if (lower.includes('test') || lower.includes(i18n.t('ai.v53-ai-panel.k47'))) {
       return autoTestGenerator.generateComponentTest('MyComponent');
     }
-    if (lower.includes('completion') || lower.includes(i18n.t('ai.v53-ai-panel.k49')) || lower.includes(i18n.t('ai.v53-ai-panel.k48'))) {
+    if (
+      lower.includes('completion') ||
+      lower.includes(i18n.t('ai.v53-ai-panel.k49')) ||
+      lower.includes(i18n.t('ai.v53-ai-panel.k48'))
+    ) {
       return intelligentCodeCompletion.getStats()
         ? `${i18n.t('ai.v53-ai-panel.nn_29')}${JSON.stringify(intelligentCodeCompletion.getStats(), null, 2)}`
         : i18n.t('ai.v53-ai-panel.k50');
     }
-    if (lower.includes('ui') || lower.includes(i18n.t('ai.v53-ai-panel.k52')) || lower.includes(i18n.t('ai.v53-ai-panel.k51'))) {
+    if (
+      lower.includes('ui') ||
+      lower.includes(i18n.t('ai.v53-ai-panel.k52')) ||
+      lower.includes(i18n.t('ai.v53-ai-panel.k51'))
+    ) {
       return `${i18n.t('ai.v53-ai-panel.k30')}${i18n.t('ai.v53-ai-panel.k53')}。`;
     }
     if (lower.includes('help') || lower.includes(i18n.t('ai.v53-ai-panel.k54'))) {
@@ -1308,9 +1368,15 @@ const AIChatTab: React.FC = () => {
                 maxWidth: '80%',
                 p: 2,
                 borderRadius: 2,
-                bgcolor: msg.role === 'user' ? designTokens.colors.secondary.dark : designTokens.colors.background.paper,
+                bgcolor:
+                  msg.role === 'user'
+                    ? designTokens.colors.secondary.dark
+                    : designTokens.colors.background.paper,
                 color: msg.role === 'user' ? 'white' : 'inherit',
-                border: msg.role === 'assistant' ? `1px solid ${designTokens.colors.grey['200']}` : 'none',
+                border:
+                  msg.role === 'assistant'
+                    ? `1px solid ${designTokens.colors.grey['200']}`
+                    : 'none',
               }}
             >
               <Typography
@@ -1330,7 +1396,12 @@ const AIChatTab: React.FC = () => {
           <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
             <Paper
               elevation={1}
-              sx={{ p: 2, borderRadius: 2, bgcolor: 'common.white', border: `1px solid ${designTokens.colors.grey['200']}` }}
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                bgcolor: 'common.white',
+                border: `1px solid ${designTokens.colors.grey['200']}`,
+              }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Loader2

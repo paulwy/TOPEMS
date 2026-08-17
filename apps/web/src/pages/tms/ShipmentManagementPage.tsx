@@ -25,9 +25,13 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store/notificationStore';
 import { shipmentApi } from '@/api/tms';
 import type { Shipment } from '@/api/tms';
+
 const QUERY_KEY = 'tms-shipments';
 type ShipmentStatus = 'pending' | 'in_transit' | 'delivered' | 'cancelled';
-const statusMeta: Record<ShipmentStatus, { label: string; color: 'warning' | 'info' | 'success' | 'default' }> = {
+const statusMeta: Record<
+  ShipmentStatus,
+  { label: string; color: 'warning' | 'info' | 'success' | 'default' }
+> = {
   pending: { label: i18n.t('tms.shipment_management_page.k0'), color: 'warning' },
   in_transit: { label: i18n.t('tms.shipment_management_page.k1'), color: 'info' },
   delivered: { label: i18n.t('tms.shipment_management_page.k2'), color: 'success' },
@@ -36,7 +40,13 @@ const statusMeta: Record<ShipmentStatus, { label: string; color: 'warning' | 'in
 const renderStatusChip = (status?: string) => {
   const key = (status as ShipmentStatus) || 'pending';
   const meta = statusMeta[key] || { label: status || '-', color: 'default' as const };
-  return <Chip size='small' color={meta.color} label={meta.label} />;
+  return (
+    <Chip
+      size='small'
+      color={meta.color}
+      label={meta.label}
+    />
+  );
 };
 const ShipmentManagementPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -61,7 +71,11 @@ const ShipmentManagementPage: React.FC = () => {
     mutationFn: (id: string) => shipmentApi.dispatch(id),
     onSuccess: () => {
       invalidateList();
-      addNotification({ type: 'success', title: i18n.t('tms.shipment_management_page.k6'), message: i18n.t('tms.shipment_management_page.k5') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('tms.shipment_management_page.k6'),
+        message: i18n.t('tms.shipment_management_page.k5'),
+      });
     },
     onError: (err: unknown) => {
       addNotification({
@@ -75,7 +89,11 @@ const ShipmentManagementPage: React.FC = () => {
     mutationFn: (id: string) => shipmentApi.arrive(id),
     onSuccess: () => {
       invalidateList();
-      addNotification({ type: 'success', title: i18n.t('tms.shipment_management_page.k9'), message: i18n.t('tms.shipment_management_page.k8') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('tms.shipment_management_page.k9'),
+        message: i18n.t('tms.shipment_management_page.k8'),
+      });
     },
     onError: (err: unknown) => {
       addNotification({
@@ -89,7 +107,11 @@ const ShipmentManagementPage: React.FC = () => {
     mutationFn: (id: string) => shipmentApi.cancel(id),
     onSuccess: () => {
       invalidateList();
-      addNotification({ type: 'success', title: i18n.t('tms.shipment_management_page.k12'), message: i18n.t('tms.shipment_management_page.k11') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('tms.shipment_management_page.k12'),
+        message: i18n.t('tms.shipment_management_page.k11'),
+      });
     },
     onError: (err: unknown) => {
       addNotification({
@@ -172,7 +194,14 @@ const ShipmentManagementPage: React.FC = () => {
         </Stack>
       );
     }
-    return <Typography variant='body2' color='text.secondary'>-</Typography>;
+    return (
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
+        -
+      </Typography>
+    );
   };
   return (
     <PageContainer
@@ -183,7 +212,13 @@ const ShipmentManagementPage: React.FC = () => {
       <Stack
         direction='row'
         spacing={2}
-        sx={{ mb: 2, flexWrap: 'wrap', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}
+        sx={{
+          mb: 2,
+          flexWrap: 'wrap',
+          gap: 1,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
       >
         <Stack
           direction='row'
@@ -226,10 +261,26 @@ const ShipmentManagementPage: React.FC = () => {
           spacing={1}
           sx={{ alignItems: 'center' }}
         >
-          <Chip size='small' color='warning' label={i18n.t('tms.shipment_management_page.k22')} />
-          <Chip size='small' color='info' label={i18n.t('tms.shipment_management_page.k23')} />
-          <Chip size='small' color='success' label={i18n.t('tms.shipment_management_page.k24')} />
-          <Chip size='small' color='default' label={i18n.t('tms.shipment_management_page.k25')} />
+          <Chip
+            size='small'
+            color='warning'
+            label={i18n.t('tms.shipment_management_page.k22')}
+          />
+          <Chip
+            size='small'
+            color='info'
+            label={i18n.t('tms.shipment_management_page.k23')}
+          />
+          <Chip
+            size='small'
+            color='success'
+            label={i18n.t('tms.shipment_management_page.k24')}
+          />
+          <Chip
+            size='small'
+            color='default'
+            label={i18n.t('tms.shipment_management_page.k25')}
+          />
         </Stack>
       </Stack>
       <Card variant='outlined'>
@@ -306,7 +357,9 @@ const ShipmentManagementPage: React.FC = () => {
           }}
           rowsPerPageOptions={[10, 20, 50]}
           labelRowsPerPage={i18n.t('tms.shipment_management_page.k37')}
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to}${i18n.t('pages.shipment_management_page.k0')}${count}${i18n.t('pages.shipment_management_page.k1')}`}
+          labelDisplayedRows={({ from, to, count }) =>
+            `${from}-${to}${i18n.t('pages.shipment_management_page.k0')}${count}${i18n.t('pages.shipment_management_page.k1')}`
+          }
         />
       </Card>
     </PageContainer>

@@ -3,6 +3,7 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { instrumentSchema } from '@/schemas/lims';
 import { limsApi } from '@/api/lims';
 import i18n from '@/i18n';
+
 const apiAdapter = createCrudPageAdapter(
   limsApi.instruments as unknown as Parameters<typeof createCrudPageAdapter>[0]
 );

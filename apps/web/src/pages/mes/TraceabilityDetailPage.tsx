@@ -12,7 +12,7 @@ import i18n from '@/i18n';
 import React, { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Package, MapPin, CheckCircle, Factory, Truck, Boxes } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
@@ -20,7 +20,8 @@ import { traceabilityApi } from '@/api/mes';
 import type { TraceChain, QualityRecord } from '@/api/mes';
 import { designTokens } from '@/theme/tokens';
 import { MES_PATHS } from '@/modules/mes/config';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const TraceabilityDetailPage: React.FC = () => {
   const { batchNo } = useParams<{ batchNo: string }>();
   const {
@@ -42,8 +43,9 @@ const TraceabilityDetailPage: React.FC = () => {
       );
     },
     enabled: !!batchNo,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const { data: qualityRecordsData } = useQuery<QualityRecord[]>({
     queryKey: batchNo
       ? QUERY_KEYS.MES.TRACEABILITY_QUALITY_RECORDS(batchNo)
@@ -57,8 +59,9 @@ const TraceabilityDetailPage: React.FC = () => {
       return [];
     },
     enabled: !!batchNo,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const qualityRecords = qualityRecordsData || [];
   const loading = chainLoading;
   const errorMessage = chainError

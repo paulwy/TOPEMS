@@ -7,7 +7,8 @@ import { qmsApi } from '@/api/qms';
 import type { QualityIssue } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const issueAdapter: CrudApiAdapter<QualityIssue> = {
   list: async (params) => {
     const response = await qmsApi.listIssues();
@@ -61,9 +62,14 @@ const issueAdapter: CrudApiAdapter<QualityIssue> = {
 };
 const QmsNonconformancePage: React.FC = () => {
   const headerContent = (rows: QualityIssue[], total: number) => {
-    const openCount = rows.filter((n) => n.status === 'open' || n.status === i18n.t('qms.qms_nonconformance_page.k4')).length;
+    const openCount = rows.filter(
+      (n) => n.status === 'open' || n.status === i18n.t('qms.qms_nonconformance_page.k4')
+    ).length;
     const closedCount = rows.filter(
-      (n) => n.status === 'closed' || n.status === 'resolved' || n.status === i18n.t('qms.qms_nonconformance_page.k5')
+      (n) =>
+        n.status === 'closed' ||
+        n.status === 'resolved' ||
+        n.status === i18n.t('qms.qms_nonconformance_page.k5')
     ).length;
     return (
       <Box

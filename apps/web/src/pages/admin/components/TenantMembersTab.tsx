@@ -6,6 +6,7 @@ import { tenantUserSchema } from '@/schemas/admin';
 import { tenantApi } from '@/api/tenant';
 import type { TenantUser, TenantRole } from '@/api/tenant/types';
 import i18n from '@/i18n';
+
 interface TenantMembersTabProps {
   users: TenantUser[];
   tenantId?: string;

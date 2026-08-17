@@ -28,7 +28,14 @@ beforeEach(() => {
 describe('V162 · 数据血缘 - 数据流向追踪', () => {
   it('获取血缘图谱 - 带参数', async () => {
     mockGet.mockResolvedValueOnce({
-      data: { nodes: [], edges: [], root_node_id: 'n1', direction: 'downstream', depth: 2, generated_at: '2026-01-01' },
+      data: {
+        nodes: [],
+        edges: [],
+        root_node_id: 'n1',
+        direction: 'downstream',
+        depth: 2,
+        generated_at: '2026-01-01',
+      },
       status: 200,
     });
 
@@ -40,12 +47,21 @@ describe('V162 · 数据血缘 - 数据流向追踪', () => {
       depth: 3,
     });
 
-    expect(mockGet).toHaveBeenCalledWith('/mdm-v77/graph?database=prod&schema=public&table=users&direction=downstream&depth=3');
+    expect(mockGet).toHaveBeenCalledWith(
+      '/mdm-v77/graph?database=prod&schema=public&table=users&direction=downstream&depth=3'
+    );
   });
 
   it('获取血缘图谱 - 最小参数', async () => {
     mockGet.mockResolvedValueOnce({
-      data: { nodes: [], edges: [], root_node_id: '', direction: 'upstream', depth: 1, generated_at: '2026-01-01' },
+      data: {
+        nodes: [],
+        edges: [],
+        root_node_id: '',
+        direction: 'upstream',
+        depth: 1,
+        generated_at: '2026-01-01',
+      },
       status: 200,
     });
 
@@ -100,7 +116,13 @@ describe('V162 · 数据血缘 - 数据流向追踪', () => {
 
   it('获取刷新状态', async () => {
     mockGet.mockResolvedValueOnce({
-      data: { job_id: 'j1', status: 'completed', progress: 100, nodes_processed: 500, total_nodes: 500 },
+      data: {
+        job_id: 'j1',
+        status: 'completed',
+        progress: 100,
+        nodes_processed: 500,
+        total_nodes: 500,
+      },
       status: 200,
     });
 
@@ -126,7 +148,9 @@ describe('V162 · 数据血缘 - 列级血缘分析', () => {
       direction: 'downstream',
     });
 
-    expect(mockGet).toHaveBeenCalledWith('/mdm-v77/column-lineage?database=prod&schema=public&table=users&column=email&direction=downstream');
+    expect(mockGet).toHaveBeenCalledWith(
+      '/mdm-v77/column-lineage?database=prod&schema=public&table=users&column=email&direction=downstream'
+    );
   });
 
   it('批量追踪列级血缘', async () => {
@@ -242,7 +266,9 @@ describe('V162 · 数据血缘 - 变更传播路径', () => {
       max_hops: 5,
     });
 
-    expect(mockGet).toHaveBeenCalledWith('/mdm-v77/propagation-path?source_node_id=n1&target_node_id=n5&max_hops=5');
+    expect(mockGet).toHaveBeenCalledWith(
+      '/mdm-v77/propagation-path?source_node_id=n1&target_node_id=n5&max_hops=5'
+    );
   });
 
   it('批量获取传播路径', async () => {
@@ -294,7 +320,9 @@ describe('V162 · 数据血缘 - 血缘差异对比', () => {
 
     await dataLineageEnhancedApiV77.compareNodeLineage('n1', '2026-01-01', '2026-01-02');
 
-    expect(mockGet).toHaveBeenCalledWith('/mdm-v77/diff/nodes/n1?baseline=2026-01-01&current=2026-01-02');
+    expect(mockGet).toHaveBeenCalledWith(
+      '/mdm-v77/diff/nodes/n1?baseline=2026-01-01&current=2026-01-02'
+    );
   });
 
   it('获取差异列表', async () => {
@@ -368,7 +396,10 @@ describe('V162 · 数据血缘 - 血缘统计', () => {
 
     await dataLineageEnhancedApiV77.fixOrphanNode('orphan1', 'target1');
 
-    expect(mockPost).toHaveBeenCalledWith('/mdm-v77/orphans/fix', { orphan_node_id: 'orphan1', target_node_id: 'target1' });
+    expect(mockPost).toHaveBeenCalledWith('/mdm-v77/orphans/fix', {
+      orphan_node_id: 'orphan1',
+      target_node_id: 'target1',
+    });
   });
 });
 

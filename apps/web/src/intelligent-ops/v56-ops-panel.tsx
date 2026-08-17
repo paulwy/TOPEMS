@@ -77,7 +77,7 @@ import {
   type RepairPlaybook,
   type RepairType,
 } from './intelligent-repair';
-import { designTokens, semanticTokens } from '@topems/tokens';
+import { designTokens } from '@topems/tokens';
 
 type TabId = 'scaling' | 'rca' | 'repair' | 'timeline';
 
@@ -371,7 +371,9 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setShowCreateIncident(false)}>{i18n.t('intelligent-ops.v56-ops-panel.k7')}</Button>
+            <Button onClick={() => setShowCreateIncident(false)}>
+              {i18n.t('intelligent-ops.v56-ops-panel.k7')}
+            </Button>
             <Button
               onClick={handleCreateIncident}
               variant='contained'
@@ -419,7 +421,9 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 >
                   <MenuItem value='Restart'>{i18n.t('intelligent-ops.v56-ops-panel.k13')}</MenuItem>
                   <MenuItem value='ScaleUp'>{i18n.t('intelligent-ops.v56-ops-panel.k14')}</MenuItem>
-                  <MenuItem value='ConfigUpdate'>{i18n.t('intelligent-ops.v56-ops-panel.k15')}</MenuItem>
+                  <MenuItem value='ConfigUpdate'>
+                    {i18n.t('intelligent-ops.v56-ops-panel.k15')}
+                  </MenuItem>
                   <MenuItem value='Patched'>{i18n.t('intelligent-ops.v56-ops-panel.k16')}</MenuItem>
                 </Select>
               </FormControl>
@@ -434,7 +438,9 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setShowCreatePlaybook(false)}>{i18n.t('intelligent-ops.v56-ops-panel.k18')}</Button>
+            <Button onClick={() => setShowCreatePlaybook(false)}>
+              {i18n.t('intelligent-ops.v56-ops-panel.k18')}
+            </Button>
             <Button
               onClick={handleCreatePlaybook}
               variant='contained'
@@ -578,7 +584,10 @@ const ScalingTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -586,7 +595,9 @@ const ScalingTab: React.FC<{
             <Gauge size={16} />
             {i18n.t('intelligent_ops.v56-ops-panel.k16')}
           </Typography>
-          {policies.length === 0 && <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k19')}</Alert>}
+          {policies.length === 0 && (
+            <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k19')}</Alert>
+          )}
           {policies.map((policy) => {
             const currentValue = autoScaler.getMetricValue(policy.metric);
             const capacity = autoScaler.getCurrentCapacity(policy.id);
@@ -641,9 +652,19 @@ const ScalingTab: React.FC<{
                     sx={{
                       height: 6,
                       borderRadius: 2,
-                      bgcolor: percent > 90 ? designTokens.colors.error['200'] : percent > 70 ? '#fed7aa' : 'colors.success.100',
+                      bgcolor:
+                        percent > 90
+                          ? designTokens.colors.error['200']
+                          : percent > 70
+                            ? '#fed7aa'
+                            : 'colors.success.100',
                       '& .MuiLinearProgress-bar': {
-                        bgcolor: percent > 90 ? designTokens.colors.error.dark : percent > 70 ? `${designTokens.colors.orange['500']}` : designTokens.colors.success.dark,
+                        bgcolor:
+                          percent > 90
+                            ? designTokens.colors.error.dark
+                            : percent > 70
+                              ? `${designTokens.colors.orange['500']}`
+                              : designTokens.colors.success.dark,
                       },
                     }}
                   />
@@ -653,8 +674,9 @@ const ScalingTab: React.FC<{
                   color='text.secondary'
                   sx={{ display: 'block', mb: 1 }}
                 >
-                  [i18n.t('intelligent_ops.v56-ops-panel.k20')]: {policy.min_instances} - {policy.max_instances} | 冷却:{' '}
-                  {policy.cooldown_ms / 60000}{i18n.t('intelligent-ops.v56-ops-panel.k1')}
+                  [i18n.t('intelligent_ops.v56-ops-panel.k20')]: {policy.min_instances} -{' '}
+                  {policy.max_instances} | {i18n.t('intelligent_ops.v56-ops-panel.k0')}: {policy.cooldown_ms / 60000}
+                  {i18n.t('intelligent-ops.v56-ops-panel.k1')}
                 </Typography>
                 <Button
                   variant='contained'
@@ -670,7 +692,10 @@ const ScalingTab: React.FC<{
           })}
         </Card>
 
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -678,16 +703,26 @@ const ScalingTab: React.FC<{
             <Activity size={16} />
             {i18n.t('intelligent_ops.v56-ops-panel.k22')}
           </Typography>
-          {scalingHistory.length === 0 && <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k20')}</Alert>}
+          {scalingHistory.length === 0 && (
+            <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k20')}</Alert>
+          )}
           {scalingHistory.length > 0 && (
             <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('intelligent-ops.v56-ops-panel.k21')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('intelligent-ops.v56-ops-panel.k22')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('intelligent-ops.v56-ops-panel.k23')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('intelligent-ops.v56-ops-panel.k24')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                      {i18n.t('intelligent-ops.v56-ops-panel.k21')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                      {i18n.t('intelligent-ops.v56-ops-panel.k22')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                      {i18n.t('intelligent-ops.v56-ops-panel.k23')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                      {i18n.t('intelligent-ops.v56-ops-panel.k24')}
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -713,8 +748,14 @@ const ScalingTab: React.FC<{
                           sx={{
                             fontSize: 10,
                             height: 20,
-                            bgcolor: action.direction === 'ScaleUp' ? 'colors.success.100' : 'colors.primary.100',
-                            color: action.direction === 'ScaleUp' ? 'colors.success.dark' : designTokens.colors.primary['800'],
+                            bgcolor:
+                              action.direction === 'ScaleUp'
+                                ? 'colors.success.100'
+                                : 'colors.primary.100',
+                            color:
+                              action.direction === 'ScaleUp'
+                                ? 'colors.success.dark'
+                                : designTokens.colors.primary['800'],
                           }}
                         />
                       </TableCell>
@@ -728,7 +769,10 @@ const ScalingTab: React.FC<{
         </Card>
       </Box>
 
-      <Card variant='outlined' sx={{ p: 2, mt: 3 }}>
+      <Card
+        variant='outlined'
+        sx={{ p: 2, mt: 3 }}
+      >
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -872,14 +916,19 @@ const RCATab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
           >
             {i18n.t('intelligent_ops.v56-ops-panel.k27')}
           </Typography>
-          {incidents.length === 0 && <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k25')}</Alert>}
+          {incidents.length === 0 && (
+            <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k25')}</Alert>
+          )}
           {incidents.length > 0 && (
             <List sx={{ maxHeight: 500, overflow: 'auto' }}>
               {incidents.map((incident) => (
@@ -889,7 +938,10 @@ const RCATab: React.FC<{
                   sx={{
                     mb: 1,
                     border: '1px solid',
-                    borderColor: selectedIncident === incident.id ? `${designTokens.colors.orange['500']}` : 'divider',
+                    borderColor:
+                      selectedIncident === incident.id
+                        ? `${designTokens.colors.orange['500']}`
+                        : 'divider',
                     borderRadius: 1,
                     bgcolor: selectedIncident === incident.id ? '#fff7ed' : 'white',
                     cursor: 'pointer',
@@ -935,7 +987,10 @@ const RCATab: React.FC<{
           )}
         </Card>
 
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -943,7 +998,9 @@ const RCATab: React.FC<{
             <Database size={16} />
             {i18n.t('intelligent_ops.v56-ops-panel.k28')}
           </Typography>
-          {!selectedIncident && <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k27')}</Alert>}
+          {!selectedIncident && (
+            <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k27')}</Alert>
+          )}
           {selectedIncident && !causes && (
             <Stack
               direction='column'
@@ -1021,7 +1078,8 @@ const RCATab: React.FC<{
                       sx={{
                         fontSize: 10,
                         height: 20,
-                        bgcolor: cause.confidence > 0.7 ? 'colors.success.100' : 'colors.warning.100',
+                        bgcolor:
+                          cause.confidence > 0.7 ? 'colors.success.100' : 'colors.warning.100',
                         color: cause.confidence > 0.7 ? 'colors.success.dark' : 'colors.orange.800',
                       }}
                     />
@@ -1146,7 +1204,10 @@ const RepairTab: React.FC<{
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1154,7 +1215,9 @@ const RepairTab: React.FC<{
             <Workflow size={16} />
             {i18n.t('intelligent_ops.v56-ops-panel.k40')}
           </Typography>
-          {playbooks.length === 0 && <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k29')}</Alert>}
+          {playbooks.length === 0 && (
+            <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k29')}</Alert>
+          )}
           {playbooks.map((playbook) => (
             <Paper
               key={playbook.id}
@@ -1163,7 +1226,8 @@ const RepairTab: React.FC<{
                 mb: 1.5,
                 p: 2,
                 border: '1px solid',
-                borderColor: playbook.status === 'Active' ? designTokens.colors.success.dark : 'divider',
+                borderColor:
+                  playbook.status === 'Active' ? designTokens.colors.success.dark : 'divider',
                 borderRadius: 1,
                 bgcolor: playbook.status === 'Active' ? 'colors.success.50' : 'white',
               }}
@@ -1231,14 +1295,19 @@ const RepairTab: React.FC<{
                   onClick={() => onToggleStatus(playbook.id)}
                   sx={{ minWidth: 'auto', px: 1.5 }}
                 >
-                  {playbook.status === 'Active' ? i18n.t('intelligent-ops.v56-ops-panel.k31') : i18n.t('intelligent-ops.v56-ops-panel.k30')}
+                  {playbook.status === 'Active'
+                    ? i18n.t('intelligent-ops.v56-ops-panel.k31')
+                    : i18n.t('intelligent-ops.v56-ops-panel.k30')}
                 </Button>
               </Stack>
             </Paper>
           ))}
         </Card>
 
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1293,10 +1362,18 @@ const RepairTab: React.FC<{
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>{i18n.t('intelligent-ops.v56-ops-panel.k32')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>{i18n.t('intelligent-ops.v56-ops-panel.k33')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>{i18n.t('intelligent-ops.v56-ops-panel.k34')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>{i18n.t('intelligent-ops.v56-ops-panel.k35')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>
+                      {i18n.t('intelligent-ops.v56-ops-panel.k32')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>
+                      {i18n.t('intelligent-ops.v56-ops-panel.k33')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>
+                      {i18n.t('intelligent-ops.v56-ops-panel.k34')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>
+                      {i18n.t('intelligent-ops.v56-ops-panel.k35')}
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1368,7 +1445,10 @@ const TimelineTab: React.FC<{
         time: s.executed_at,
         category: i18n.t('intelligent-ops.v56-ops-panel.k38'),
         title: `${s.direction} → ${s.instances} ${i18n.t('intelligent_ops.v56-ops-panel.k47')}`,
-        color: s.direction === 'ScaleUp' ? designTokens.colors.success.dark : designTokens.colors.primary.main,
+        color:
+          s.direction === 'ScaleUp'
+            ? designTokens.colors.success.dark
+            : designTokens.colors.primary.main,
         details: s.reason,
       });
     });
@@ -1418,7 +1498,10 @@ const TimelineTab: React.FC<{
       )}
 
       {events.length > 0 && (
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Box sx={{ position: 'relative', pl: 3 }}>
             <Box
               sx={{

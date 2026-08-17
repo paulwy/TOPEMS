@@ -29,7 +29,7 @@ import type { ParseDataRequest, ParseResult } from '@/api/lims';
 import { formatJson, parseJsonInput } from '../utils';
 import { designTokens } from '@/theme/tokens';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface ParseTestDialogProps {
   open: boolean;
@@ -116,7 +116,9 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
                 onClick={onTestParse}
                 disabled={submitting}
               >
-                {submitting ? i18n.t('pages.parse_test_dialog.k1') : i18n.t('pages.parse_test_dialog.k3')}
+                {submitting
+                  ? i18n.t('pages.parse_test_dialog.k1')
+                  : i18n.t('pages.parse_test_dialog.k3')}
               </Button>
             </Stack>
           </Grid>
@@ -154,7 +156,9 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
                         />
                       )}
                       <Typography sx={{ fontWeight: 'bold' }}>
-                        {parseTestResult.success ? i18n.t('pages.parse_test_dialog.k5') : i18n.t('pages.parse_test_dialog.k4')}
+                        {parseTestResult.success
+                          ? i18n.t('pages.parse_test_dialog.k5')
+                          : i18n.t('pages.parse_test_dialog.k4')}
                       </Typography>
                       {parseTestResult.quality_score !== undefined && (
                         <Chip
@@ -197,7 +201,8 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
                           variant='subtitle2'
                           sx={{ mb: 1 }}
                         >
-                          {i18n.t('pages.parse_test_dialog.k0')}{parseTestResult.testitems.length})
+                          {i18n.t('pages.parse_test_dialog.k0')}
+                          {parseTestResult.testitems.length})
                         </Typography>
                         <TableContainer
                           component={Paper}
@@ -242,7 +247,9 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
                       height: 300,
                     }}
                   >
-                    <Typography color='text.secondary'>点击"{i18n.t('parsetestdialog.开始解析')}"{i18n.t('ai.v55-copilot-panel.k47')}</Typography>
+                    <Typography color='text.secondary'>
+                      点击"{i18n.t('parsetestdialog.开始解析')}"{i18n.t('ai.v55-copilot-panel.k47')}
+                    </Typography>
                   </Box>
                 )}
               </Paper>

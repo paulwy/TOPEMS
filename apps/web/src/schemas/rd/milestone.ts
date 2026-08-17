@@ -157,7 +157,11 @@ export const milestoneSchema: EntitySchema = {
       React.createElement(
         Box,
         { sx: { mt: 3 } },
-        React.createElement(Typography, { variant: 'subtitle2', color: 'text.secondary' }, i18n.t('rd.milestone.k22')),
+        React.createElement(
+          Typography,
+          { variant: 'subtitle2', color: 'text.secondary' },
+          i18n.t('rd.milestone.k22')
+        ),
         React.createElement(
           Box,
           { sx: { display: 'flex', alignItems: 'center', gap: 2, mt: 1 } },

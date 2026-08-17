@@ -7,6 +7,7 @@ import { rdApi } from '@/api/rd';
 import type { Project } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
 import i18n from '@/i18n';
+
 interface CodeRepo {
   id: string;
   repo_name: string;
@@ -83,7 +84,10 @@ const RsCodePage: React.FC = () => {
       schema={codeSchema}
       apiAdapter={codeApiAdapter}
       customRowActions={customRowActions}
-      breadcrumbs={[{ label: i18n.t('rd.rs_code_page.k6'), href: RD_PATHS.root }, { label: i18n.t('rd.rs_code_page.k5') }]}
+      breadcrumbs={[
+        { label: i18n.t('rd.rs_code_page.k6'), href: RD_PATHS.root },
+        { label: i18n.t('rd.rs_code_page.k5') },
+      ]}
     />
   );
 };

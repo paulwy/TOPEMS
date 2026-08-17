@@ -260,7 +260,9 @@ export const dataAssetCatalogApiV66 = {
     return apiClient.master.get<DataAsset>(`/mdm-v66/assets/${id}`);
   },
 
-  async listAssets(params?: CatalogAssetParams): Promise<ApiResponse<{ items: DataAsset[]; total: number }>> {
+  async listAssets(
+    params?: CatalogAssetParams
+  ): Promise<ApiResponse<{ items: DataAsset[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.type) qs.set('type', params.type);
     if (params?.status) qs.set('status', params.status);
@@ -276,7 +278,9 @@ export const dataAssetCatalogApiV66 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: DataAsset[]; total: number }>(`/mdm-v66/assets${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: DataAsset[]; total: number }>(
+      `/mdm-v66/assets${s ? `?${s}` : ''}`
+    );
   },
 
   async updateAsset(id: string, data: UpdateDataAssetRequest): Promise<ApiResponse<DataAsset>> {
@@ -307,11 +311,24 @@ export const dataAssetCatalogApiV66 = {
   },
 
   async batchDeleteAssets(assetIds: string[]): Promise<ApiResponse<{ deleted: number }>> {
-    return apiClient.master.post<{ deleted: number }>('/mdm-v66/assets/bulk-delete', { asset_ids: assetIds });
+    return apiClient.master.post<{ deleted: number }>('/mdm-v66/assets/bulk-delete', {
+      asset_ids: assetIds,
+    });
   },
 
-  async importAssets(data: { file_url: string; format?: 'csv' | 'json' | 'yaml'; on_duplicate?: 'skip' | 'update' | 'error' }): Promise<ApiResponse<{ imported: number; updated: number; failed: number; errors?: string[] }>> {
-    return apiClient.master.post<{ imported: number; updated: number; failed: number; errors?: string[] }>('/mdm-v66/assets/import', data);
+  async importAssets(data: {
+    file_url: string;
+    format?: 'csv' | 'json' | 'yaml';
+    on_duplicate?: 'skip' | 'update' | 'error';
+  }): Promise<
+    ApiResponse<{ imported: number; updated: number; failed: number; errors?: string[] }>
+  > {
+    return apiClient.master.post<{
+      imported: number;
+      updated: number;
+      failed: number;
+      errors?: string[];
+    }>('/mdm-v66/assets/import', data);
   },
 
   async exportAssets(params?: {
@@ -324,8 +341,11 @@ export const dataAssetCatalogApiV66 = {
     if (params?.type) qs.set('type', params.type);
     if (params?.status) qs.set('status', params.status);
     if (params?.format) qs.set('format', params.format);
-    if (params?.include_lineage !== undefined) qs.set('include_lineage', String(params.include_lineage));
-    return apiClient.master.get<{ download_url: string; count: number }>(`/mdm-v66/assets/export?${qs.toString()}`);
+    if (params?.include_lineage !== undefined)
+      qs.set('include_lineage', String(params.include_lineage));
+    return apiClient.master.get<{ download_url: string; count: number }>(
+      `/mdm-v66/assets/export?${qs.toString()}`
+    );
   },
 
   // ===== 数据血缘 =====
@@ -334,27 +354,38 @@ export const dataAssetCatalogApiV66 = {
     qs.set('asset_id', params.asset_id);
     if (params.direction) qs.set('direction', params.direction);
     if (params.depth) qs.set('depth', String(params.depth));
-    if (params.include_columns !== undefined) qs.set('include_columns', String(params.include_columns));
+    if (params.include_columns !== undefined)
+      qs.set('include_columns', String(params.include_columns));
     if (params.filters?.types) qs.set('types', params.filters.types.join(','));
-    if (params.filters?.min_confidence !== undefined) qs.set('min_confidence', String(params.filters.min_confidence));
+    if (params.filters?.min_confidence !== undefined)
+      qs.set('min_confidence', String(params.filters.min_confidence));
     return apiClient.master.get<AssetLineageGraph>(`/mdm-v66/lineage?${qs.toString()}`);
   },
 
-  async getLineageUpstream(assetId: string, depth?: LineageDepth): Promise<ApiResponse<AssetLineageGraph>> {
+  async getLineageUpstream(
+    assetId: string,
+    depth?: LineageDepth
+  ): Promise<ApiResponse<AssetLineageGraph>> {
     const qs = new URLSearchParams();
     qs.set('asset_id', assetId);
     if (depth) qs.set('depth', String(depth));
     return apiClient.master.get<AssetLineageGraph>(`/mdm-v66/lineage/upstream?${qs.toString()}`);
   },
 
-  async getLineageDownstream(assetId: string, depth?: LineageDepth): Promise<ApiResponse<AssetLineageGraph>> {
+  async getLineageDownstream(
+    assetId: string,
+    depth?: LineageDepth
+  ): Promise<ApiResponse<AssetLineageGraph>> {
     const qs = new URLSearchParams();
     qs.set('asset_id', assetId);
     if (depth) qs.set('depth', String(depth));
     return apiClient.master.get<AssetLineageGraph>(`/mdm-v66/lineage/downstream?${qs.toString()}`);
   },
 
-  async getLineageByColumn(assetId: string, columnName: string): Promise<ApiResponse<AssetLineageGraph>> {
+  async getLineageByColumn(
+    assetId: string,
+    columnName: string
+  ): Promise<ApiResponse<AssetLineageGraph>> {
     const qs = new URLSearchParams();
     qs.set('asset_id', assetId);
     qs.set('column', columnName);
@@ -364,7 +395,10 @@ export const dataAssetCatalogApiV66 = {
   async refreshLineage(assetId?: string): Promise<ApiResponse<{ refreshed: number }>> {
     const qs = new URLSearchParams();
     if (assetId) qs.set('asset_id', assetId);
-    return apiClient.master.post<{ refreshed: number }>(`/mdm-v66/lineage/refresh${qs.toString() ? `?${qs.toString()}` : ''}`, {});
+    return apiClient.master.post<{ refreshed: number }>(
+      `/mdm-v66/lineage/refresh${qs.toString() ? `?${qs.toString()}` : ''}`,
+      {}
+    );
   },
 
   // ===== 资产标签 =====
@@ -372,17 +406,27 @@ export const dataAssetCatalogApiV66 = {
     return apiClient.master.post<AssetTag>('/mdm-v66/tags', data);
   },
 
-  async listTags(params?: { category?: string; search?: string; page?: number; pageSize?: number }): Promise<ApiResponse<{ items: AssetTag[]; total: number }>> {
+  async listTags(params?: {
+    category?: string;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<ApiResponse<{ items: AssetTag[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.category) qs.set('category', params.category);
     if (params?.search) qs.set('q', params.search);
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: AssetTag[]; total: number }>(`/mdm-v66/tags${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: AssetTag[]; total: number }>(
+      `/mdm-v66/tags${s ? `?${s}` : ''}`
+    );
   },
 
-  async updateTag(id: string, data: Partial<CreateAssetTagRequest>): Promise<ApiResponse<AssetTag>> {
+  async updateTag(
+    id: string,
+    data: Partial<CreateAssetTagRequest>
+  ): Promise<ApiResponse<AssetTag>> {
     return apiClient.master.put<AssetTag>(`/mdm-v66/tags/${id}`, data);
   },
 
@@ -395,7 +439,9 @@ export const dataAssetCatalogApiV66 = {
   },
 
   async removeTagsFromAsset(assetId: string, tagIds: string[]): Promise<ApiResponse<DataAsset>> {
-    return apiClient.master.delete<DataAsset>(`/mdm-v66/assets/${assetId}/tags`, { data: { tag_ids: tagIds } });
+    return apiClient.master.delete<DataAsset>(`/mdm-v66/assets/${assetId}/tags`, {
+      data: { tag_ids: tagIds },
+    });
   },
 
   // ===== 资产分类 =====
@@ -407,15 +453,23 @@ export const dataAssetCatalogApiV66 = {
     return apiClient.master.get<AssetCategory[]>('/mdm-v66/categories/tree');
   },
 
-  async listCategories(params?: { parent_id?: string; search?: string }): Promise<ApiResponse<{ items: AssetCategory[]; total: number }>> {
+  async listCategories(params?: {
+    parent_id?: string;
+    search?: string;
+  }): Promise<ApiResponse<{ items: AssetCategory[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.parent_id) qs.set('parent_id', params.parent_id);
     if (params?.search) qs.set('q', params.search);
     const s = qs.toString();
-    return apiClient.master.get<{ items: AssetCategory[]; total: number }>(`/mdm-v66/categories${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: AssetCategory[]; total: number }>(
+      `/mdm-v66/categories${s ? `?${s}` : ''}`
+    );
   },
 
-  async updateCategory(id: string, data: Partial<CreateAssetCategoryRequest>): Promise<ApiResponse<AssetCategory>> {
+  async updateCategory(
+    id: string,
+    data: Partial<CreateAssetCategoryRequest>
+  ): Promise<ApiResponse<AssetCategory>> {
     return apiClient.master.put<AssetCategory>(`/mdm-v66/categories/${id}`, data);
   },
 
@@ -432,7 +486,13 @@ export const dataAssetCatalogApiV66 = {
     return apiClient.master.get<DataMap>(`/mdm-v66/maps/${id}`);
   },
 
-  async listDataMaps(params?: { scope?: string; domain?: string; status?: string; page?: number; pageSize?: number }): Promise<ApiResponse<{ items: DataMap[]; total: number }>> {
+  async listDataMaps(params?: {
+    scope?: string;
+    domain?: string;
+    status?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<ApiResponse<{ items: DataMap[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.scope) qs.set('scope', params.scope);
     if (params?.domain) qs.set('domain', params.domain);
@@ -440,10 +500,15 @@ export const dataAssetCatalogApiV66 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: DataMap[]; total: number }>(`/mdm-v66/maps${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: DataMap[]; total: number }>(
+      `/mdm-v66/maps${s ? `?${s}` : ''}`
+    );
   },
 
-  async updateDataMap(id: string, data: Partial<CreateDataMapRequest>): Promise<ApiResponse<DataMap>> {
+  async updateDataMap(
+    id: string,
+    data: Partial<CreateDataMapRequest>
+  ): Promise<ApiResponse<DataMap>> {
     return apiClient.master.put<DataMap>(`/mdm-v66/maps/${id}`, data);
   },
 
@@ -451,10 +516,15 @@ export const dataAssetCatalogApiV66 = {
     return apiClient.master.delete<{ deleted: boolean }>(`/mdm-v66/maps/${id}`);
   },
 
-  async exportDataMap(id: string, format?: 'svg' | 'json' | 'png'): Promise<ApiResponse<{ download_url: string; size_kb: number }>> {
+  async exportDataMap(
+    id: string,
+    format?: 'svg' | 'json' | 'png'
+  ): Promise<ApiResponse<{ download_url: string; size_kb: number }>> {
     const qs = new URLSearchParams();
     if (format) qs.set('format', format);
-    return apiClient.master.get<{ download_url: string; size_kb: number }>(`/mdm-v66/maps/${id}/export?${qs.toString()}`);
+    return apiClient.master.get<{ download_url: string; size_kb: number }>(
+      `/mdm-v66/maps/${id}/export?${qs.toString()}`
+    );
   },
 
   // ===== 资产搜索 =====
@@ -483,7 +553,9 @@ export const dataAssetCatalogApiV66 = {
   async getRecentAssets(limit?: number): Promise<ApiResponse<DataAsset[]>> {
     const qs = new URLSearchParams();
     if (limit !== undefined) qs.set('limit', String(limit));
-    return apiClient.master.get<DataAsset[]>(`/mdm-v66/dashboard/recent${qs.toString() ? `?${qs.toString()}` : ''}`);
+    return apiClient.master.get<DataAsset[]>(
+      `/mdm-v66/dashboard/recent${qs.toString() ? `?${qs.toString()}` : ''}`
+    );
   },
 
   async getOrphanAssets(): Promise<ApiResponse<DataAsset[]>> {

@@ -20,7 +20,8 @@ import { mesApi } from '@/api/mes';
 import type { MaterialBom, MaterialBomItem } from '@/api/mes';
 import { Package } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter(mesApi.boms, {
   itemsField: 'boms',
 });
@@ -37,7 +38,9 @@ const MaterialBOMPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_bom_page.k0')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_bom_page.k0')}
+            </InputLabel>
             <Box
               component='span'
               sx={{ fontWeight: 500 }}
@@ -46,19 +49,27 @@ const MaterialBOMPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_bom_page.k1')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_bom_page.k1')}
+            </InputLabel>
             <Box component='span'>{bom.product_name}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_bom_page.k2')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_bom_page.k2')}
+            </InputLabel>
             <Box component='span'>{bom.version || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_bom_page.k3')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_bom_page.k3')}
+            </InputLabel>
             <Box component='span'>{bom.status}</Box>
           </Box>
           <Box sx={{ gridColumn: '1 / -1' }}>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_bom_page.k4')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_bom_page.k4')}
+            </InputLabel>
             <Box component='span'>{bom.description || '-'}</Box>
           </Box>
         </Box>
@@ -67,7 +78,8 @@ const MaterialBOMPage: React.FC = () => {
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1 }}
           >
-            {i18n.t('pages.material_bom_page.bom_0')}{bom.items?.length || 0})
+            {i18n.t('pages.material_bom_page.bom_0')}
+            {bom.items?.length || 0})
           </Typography>
           <TableContainer
             component={Paper}
@@ -119,11 +131,15 @@ const MaterialBOMPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_bom_page.k11')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_bom_page.k11')}
+            </InputLabel>
             <Box component='span'>{new Date(bom.created_at).toLocaleString('zh-CN')}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_bom_page.k12')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_bom_page.k12')}
+            </InputLabel>
             <Box component='span'>{new Date(bom.updated_at).toLocaleString('zh-CN')}</Box>
           </Box>
         </Box>

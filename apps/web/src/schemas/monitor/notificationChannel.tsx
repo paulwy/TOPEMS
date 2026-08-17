@@ -12,7 +12,7 @@ import type { EntitySchema, SchemaField } from '@/schema';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 type ChannelType = 'email' | 'dingtalk' | 'wechat' | 'sms' | 'webhook';
 
@@ -22,10 +22,30 @@ export const CHANNEL_TYPE_OPTIONS: {
   icon: React.ReactNode;
   color: string;
 }[] = [
-  { value: 'email', label: i18n.t('shared.notification_channel.k0'), icon: <Mail size={18} />, color: ct.primary.dark },
-  { value: 'dingtalk', label: i18n.t('shared.notification_channel.k1'), icon: <MessageSquare size={18} />, color: ct.success.main },
-  { value: 'wechat', label: i18n.t('shared.notification_channel.k2'), icon: <MessageSquare size={18} />, color: 'success.main' },
-  { value: 'sms', label: i18n.t('shared.notification_channel.k3'), icon: <Smartphone size={18} />, color: 'secondary.main' },
+  {
+    value: 'email',
+    label: i18n.t('shared.notification_channel.k0'),
+    icon: <Mail size={18} />,
+    color: ct.primary.dark,
+  },
+  {
+    value: 'dingtalk',
+    label: i18n.t('shared.notification_channel.k1'),
+    icon: <MessageSquare size={18} />,
+    color: ct.success.main,
+  },
+  {
+    value: 'wechat',
+    label: i18n.t('shared.notification_channel.k2'),
+    icon: <MessageSquare size={18} />,
+    color: 'success.main',
+  },
+  {
+    value: 'sms',
+    label: i18n.t('shared.notification_channel.k3'),
+    icon: <Smartphone size={18} />,
+    color: 'secondary.main',
+  },
   { value: 'webhook', label: 'Webhook', icon: <Webhook size={18} />, color: 'warning.main' },
 ];
 
@@ -152,7 +172,9 @@ const channelFields: SchemaField[] = [
             variant='body2'
             color={row.enabled ? 'success.main' : 'text.disabled'}
           >
-            {row.enabled ? i18n.t('shared.notification_channel.k10') : i18n.t('shared.notification_channel.k9')}
+            {row.enabled
+              ? i18n.t('shared.notification_channel.k10')
+              : i18n.t('shared.notification_channel.k9')}
           </Typography>
         </Box>
         {!!row.last_test_at && (
@@ -172,7 +194,8 @@ const channelFields: SchemaField[] = [
               variant='caption'
               color='text.secondary'
             >
-              [i18n.t('schemas.notification_channel.k0')]: {new Date(row.last_test_at as string).toLocaleString('zh-CN')}
+              [i18n.t('schemas.notification_channel.k0')]:{' '}
+              {new Date(row.last_test_at as string).toLocaleString('zh-CN')}
             </Typography>
           </Box>
         )}

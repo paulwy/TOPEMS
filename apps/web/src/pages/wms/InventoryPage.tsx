@@ -10,7 +10,7 @@ import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const InventoryStats: React.FC = () => {
   const { data: stats } = useQuery({

@@ -15,7 +15,8 @@ import type {
 } from '@/api/pm';
 import i18n from '@/i18n';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
+
 export const DEFAULT_STATS: PmStatistics = {
   total_projects: 0,
   draft_projects: 0,
@@ -99,8 +100,9 @@ export const usePmReport = (): UsePmReportReturn => {
       }
       return DEFAULT_STATS;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const benefitsQuery = useQuery({
     queryKey: [
       ...(params.projectId ? QUERY_KEYS.PM.BENEFITS(params.projectId) : QUERY_KEYS.PM.REPORTS),
@@ -114,8 +116,9 @@ export const usePmReport = (): UsePmReportReturn => {
       }
       return [] as ProjectBenefit[];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const stats = statsQuery.data ?? DEFAULT_STATS;
   const benefits = benefitsQuery.data ?? [];
   const loading = statsQuery.isLoading || benefitsQuery.isLoading;
@@ -131,8 +134,9 @@ export const usePmReport = (): UsePmReportReturn => {
       return null;
     },
     enabled: true,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const contractStatsQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS_CONTRACTS, selectedPeriod],
     queryFn: async () => {
@@ -143,8 +147,9 @@ export const usePmReport = (): UsePmReportReturn => {
       return null;
     },
     enabled: true,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const budgetStatsQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS_BUDGET, selectedPeriod],
     queryFn: async () => {
@@ -155,8 +160,9 @@ export const usePmReport = (): UsePmReportReturn => {
       return null;
     },
     enabled: true,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const riskStatsQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS_RISKS, selectedPeriod],
     queryFn: async () => {
@@ -167,8 +173,9 @@ export const usePmReport = (): UsePmReportReturn => {
       return null;
     },
     enabled: true,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const taskStatsQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS_TASKS, selectedPeriod],
     queryFn: async () => {
@@ -179,8 +186,9 @@ export const usePmReport = (): UsePmReportReturn => {
       return null;
     },
     enabled: true,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const dashboardQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS_DASHBOARD],
     queryFn: async () => {
@@ -191,8 +199,9 @@ export const usePmReport = (): UsePmReportReturn => {
       return null;
     },
     enabled: true,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const projectStatistics = projectStatsQuery.data ?? null;
   const contractStatistics = contractStatsQuery.data ?? null;
   const budgetStatistics = budgetStatsQuery.data ?? null;
@@ -287,7 +296,11 @@ export const usePmReport = (): UsePmReportReturn => {
   const projectStatusData: ChartDatum[] = useMemo(
     () =>
       [
-        { name: i18n.t('pm.pm_report_page.name_22b433'), value: stats.draft_projects, fill: 'grey.500' },
+        {
+          name: i18n.t('pm.pm_report_page.name_22b433'),
+          value: stats.draft_projects,
+          fill: 'grey.500',
+        },
         {
           name: i18n.t('pm.pm_report_page.name_b0bf01'),
           value: stats.pending_projects,

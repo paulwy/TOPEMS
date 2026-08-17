@@ -2297,5 +2297,6 @@
   "qms.analytics.auditCompliance.k2": "| 发现项：",
   "qms.analytics.auditCompliance.k3": "部门合规率（任务完成率 + 发现项关闭率）",
   "qms.analytics.defectPareto.k0": "80/20 关键少数：",
-  "qms.analytics.defectPareto.k1": "缺陷帕累托图（柱+累积线）"
+  "qms.analytics.defectPareto.k1": "缺陷帕累托图（柱+累积线）",
+  "qms.analytics.defectPareto.k2": "类"
 }

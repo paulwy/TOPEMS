@@ -10,8 +10,9 @@ import { pmApi, type Project } from '@/api/pm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
 import { PM_PATHS } from '@/modules/pm/config';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 const contractSchema = z.object({
   project_id: z.string().optional(),
   contract_code: z.string().min(1, i18n.t('pm.pm_contract_create_page.k0')),
@@ -24,7 +25,10 @@ const contractSchema = z.object({
   currency: z.enum(['CNY', 'USD', 'EUR']),
   tax_rate: z
     .string()
-    .refine((val) => parseFloat(val) >= 0 && parseFloat(val) <= 100, i18n.t('pm.pm_contract_create_page.0100_3')),
+    .refine(
+      (val) => parseFloat(val) >= 0 && parseFloat(val) <= 100,
+      i18n.t('pm.pm_contract_create_page.0100_3')
+    ),
   signing_date: z.string().optional(),
   effective_date: z.string().optional(),
   end_date: z.string().optional(),
@@ -51,14 +55,15 @@ const PmContractCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { success, error } = useNotification();
   const queryClient = useQueryClient();
-  const { data: projectsData, isPending: loading} = useQuery({
+  const { data: projectsData, isPending: loading } = useQuery({
     queryKey: QUERY_KEYS.PM.PROJECTS,
     queryFn: async (): Promise<Project[]> => {
       const response = await pmApi.projects.list();
       return (response.data?.items ?? []) as Project[];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const createMutation = useMutation({
     mutationFn: async (formData: ContractFormData) => {
       return pmApi.contracts.create({
@@ -79,10 +84,11 @@ const PmContractCreatePage: React.FC = () => {
       });
     },
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.CONTRACTS ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.PM.CONTRACTS,
+        exact: false,
+        refetchType: 'active',
+      });
       if (response.code === 200 || response.code === 201) {
         success(i18n.t('pm.pm_contract_create_page.k14'));
         navigate(PM_PATHS.contracts);
@@ -123,7 +129,10 @@ const PmContractCreatePage: React.FC = () => {
           name: 'project_id',
           label: i18n.t('pm.pm_contract_create_page.k19'),
           type: 'select',
-          options: [{ label: i18n.t('pm.pm_contract_create_page.k20'), value: '' }, ...projectOptions],
+          options: [
+            { label: i18n.t('pm.pm_contract_create_page.k20'), value: '' },
+            ...projectOptions,
+          ],
           placeholder: i18n.t('pm.pm_contract_create_page.k21'),
         },
         {

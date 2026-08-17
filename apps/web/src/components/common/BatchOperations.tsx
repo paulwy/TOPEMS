@@ -93,7 +93,9 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
             variant='body2'
             color='text.secondary'
           >
-            {allItemsSelected ? i18n.t('shared.batch_operations.k1') : i18n.t('shared.batch_operations.k0')}
+            {allItemsSelected
+              ? i18n.t('shared.batch_operations.k1')
+              : i18n.t('shared.batch_operations.k0')}
           </Typography>
           {hasSelection && (
             <Box
@@ -107,7 +109,8 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
                 fontWeight: 500,
               }}
             >
-              {i18n.t('components.batch_operations.k0')} {selectedIds.length} {i18n.t('components.batch_operations.k1')}
+              {i18n.t('components.batch_operations.k0')} {selectedIds.length}{' '}
+              {i18n.t('components.batch_operations.k1')}
             </Box>
           )}
           {!hasSelection && (
@@ -115,7 +118,8 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
               variant='body2'
               color='text.disabled'
             >
-              {i18n.t('components.batch_operations.k2')} {totalItems} {i18n.t('components.batch_operations.k3')}
+              {i18n.t('components.batch_operations.k2')} {totalItems}{' '}
+              {i18n.t('components.batch_operations.k3')}
             </Typography>
           )}
         </Box>

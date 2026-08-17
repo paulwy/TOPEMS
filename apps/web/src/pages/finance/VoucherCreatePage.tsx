@@ -582,7 +582,10 @@ const VoucherCreatePage: React.FC = () => {
             sx={{ mt: 2 }}
           >
             <Typography variant='body2'>
-              {t('finance.voucher_create_page.e1', { v1: t('finance.voucher_create_page.m1'), v2: formatCurrency(totalDebit) })}
+              {t('finance.voucher_create_page.e1', {
+                v1: t('finance.voucher_create_page.m1'),
+                v2: formatCurrency(totalDebit),
+              })}
               {t('finance.voucher_create_page.e1', { v1: formatCurrency(totalCredit) })}
               {formatCurrency(Math.abs(totalDebit - totalCredit))}
             </Typography>

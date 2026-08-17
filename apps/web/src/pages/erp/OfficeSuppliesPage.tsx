@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/material';
 import { Package } from 'lucide-react';
 import i18n from '@/i18n';
+
 const OfficeSuppliesStats: React.FC = () => {
   const { data } = useQuery({
     queryKey: [QUERY_KEYS.ERP.OFFICE_SUPPLIES, 'stats'],
@@ -26,10 +27,30 @@ const OfficeSuppliesStats: React.FC = () => {
   const lowStock = supplies.filter((s) => s.status === 'low_stock').length;
   const outOfStock = supplies.filter((s) => s.status === 'out_of_stock').length;
   const stats = [
-    { label: i18n.t('erp.office_supplies_page.k1'), value: total, color: 'secondary[100]', textColor: 'secondary.700' },
-    { label: i18n.t('erp.office_supplies_page.k2'), value: inStock, color: 'success.lighter', textColor: 'success.700' },
-    { label: i18n.t('erp.office_supplies_page.k3'), value: lowStock, color: 'warning.light', textColor: 'warning.700' },
-    { label: i18n.t('erp.office_supplies_page.k4'), value: outOfStock, color: 'error.lighter', textColor: 'error.dark' },
+    {
+      label: i18n.t('erp.office_supplies_page.k1'),
+      value: total,
+      color: 'secondary[100]',
+      textColor: 'secondary.700',
+    },
+    {
+      label: i18n.t('erp.office_supplies_page.k2'),
+      value: inStock,
+      color: 'success.lighter',
+      textColor: 'success.700',
+    },
+    {
+      label: i18n.t('erp.office_supplies_page.k3'),
+      value: lowStock,
+      color: 'warning.light',
+      textColor: 'warning.700',
+    },
+    {
+      label: i18n.t('erp.office_supplies_page.k4'),
+      value: outOfStock,
+      color: 'error.lighter',
+      textColor: 'error.dark',
+    },
   ];
   return (
     <Box

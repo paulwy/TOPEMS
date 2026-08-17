@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type FairnessType = 'Demographic' | 'Equalized' | 'Calibrated';
 
 export type AuditStatus = 'passed' | 'failed' | 'warning';

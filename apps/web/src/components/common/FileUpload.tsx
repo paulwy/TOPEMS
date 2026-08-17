@@ -186,12 +186,16 @@ const FileUpload: React.FC<FileUploadProps> = ({
         }
 
         if (!validateFileType(file)) {
-          logger.warn(`${i18n.t('components.file_upload.k0')}${file.name}${i18n.t('components.file_upload.k1')}`);
+          logger.warn(
+            `${i18n.t('components.file_upload.k0')}${file.name}${i18n.t('components.file_upload.k1')}`
+          );
           return;
         }
 
         if (file.size > maxSize * 1024 * 1024) {
-          logger.warn(`${i18n.t('components.file_upload.k2')}${file.name}${i18n.t('components.file_upload.k3')}${maxSize}MB`);
+          logger.warn(
+            `${i18n.t('components.file_upload.k2')}${file.name}${i18n.t('components.file_upload.k3')}${maxSize}MB`
+          );
           return;
         }
 
@@ -373,7 +377,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
           color='text.secondary'
           sx={{ mt: 0.5 }}
         >
-          {i18n.t('components.file_upload.k0')} {maxCount} {i18n.t('components.file_upload.k1')} {maxSize}{i18n.t('components.file_upload.mb_2')} {maxTotalSize}MB
+          {i18n.t('components.file_upload.k0')} {maxCount} {i18n.t('components.file_upload.k1')}{' '}
+          {maxSize}
+          {i18n.t('components.file_upload.mb_2')} {maxTotalSize}MB
         </Typography>
         {accept.length > 0 && (
           <Box

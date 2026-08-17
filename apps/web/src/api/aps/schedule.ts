@@ -43,21 +43,33 @@ export const scheduleApi = {
   },
 
   // ---- 审批端点 ----
-  submit: async (id: string, operator: string, comment?: string): Promise<ApiResponse<ApprovalResponse>> => {
+  submit: async (
+    id: string,
+    operator: string,
+    comment?: string
+  ): Promise<ApiResponse<ApprovalResponse>> => {
     return apiClient.aps.post(`/schedules/${id}/submit`, {
       operator,
       comment,
     } as ApprovalRequest);
   },
 
-  release: async (id: string, operator: string, comment?: string): Promise<ApiResponse<ApprovalResponse>> => {
+  release: async (
+    id: string,
+    operator: string,
+    comment?: string
+  ): Promise<ApiResponse<ApprovalResponse>> => {
     return apiClient.aps.post(`/schedules/${id}/release`, {
       operator,
       comment,
     } as ApprovalRequest);
   },
 
-  hold: async (id: string, operator: string, comment?: string): Promise<ApiResponse<ApprovalResponse>> => {
+  hold: async (
+    id: string,
+    operator: string,
+    comment?: string
+  ): Promise<ApiResponse<ApprovalResponse>> => {
     return apiClient.aps.post(`/schedules/${id}/hold`, {
       operator,
       comment,

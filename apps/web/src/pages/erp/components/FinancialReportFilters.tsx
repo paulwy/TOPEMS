@@ -3,6 +3,7 @@ import { Box, Tabs, Tab, FormControl, InputLabel, Select, MenuItem } from '@mui/
 import { PieChart, TrendingUp, Activity, Building2 } from 'lucide-react';
 import type { PeriodOption, TabConfig } from '../hooks/useFinancialReport';
 import i18n from '@/i18n';
+
 interface FinancialReportFiltersProps {
   activeTab: string;
   onTabChange: (value: string) => void;

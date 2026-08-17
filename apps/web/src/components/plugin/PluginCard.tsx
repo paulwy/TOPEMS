@@ -188,7 +188,11 @@ export const PluginCard: React.FC<PluginCardProps> = ({
                       )
                     }
                   >
-                    {isInstalling ? i18n.t('components.plugin_card.k3') : plugin.is_free ? i18n.t('components.plugin_card.k8') : i18n.t('components.plugin_card.k7')}
+                    {isInstalling
+                      ? i18n.t('components.plugin_card.k3')
+                      : plugin.is_free
+                        ? i18n.t('components.plugin_card.k8')
+                        : i18n.t('components.plugin_card.k7')}
                   </Button>
                 )}
               </Box>
@@ -337,7 +341,11 @@ export const PluginCard: React.FC<PluginCardProps> = ({
                 )
               }
             >
-              {isInstalling ? i18n.t('components.plugin_card.k6') : plugin.is_free ? i18n.t('components.plugin_card.k12') : i18n.t('components.plugin_card.k11')}
+              {isInstalling
+                ? i18n.t('components.plugin_card.k6')
+                : plugin.is_free
+                  ? i18n.t('components.plugin_card.k12')
+                  : i18n.t('components.plugin_card.k11')}
             </Button>
           )}
         </Box>

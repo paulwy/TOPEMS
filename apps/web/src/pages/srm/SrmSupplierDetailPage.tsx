@@ -94,7 +94,9 @@ const SrmSupplierDetailPage: React.FC = () => {
                 <Building2 sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
-                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k8')}</InputLabel>
+                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+                  {i18n.t('pages.srm_supplier_detail_page.k8')}
+                </InputLabel>
                 <Typography sx={{ mt: 0.5 }}>{supplier.contact_person}</Typography>
               </Box>
             </Box>
@@ -105,7 +107,9 @@ const SrmSupplierDetailPage: React.FC = () => {
                 <Phone sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
-                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k9')}</InputLabel>
+                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+                  {i18n.t('pages.srm_supplier_detail_page.k9')}
+                </InputLabel>
                 <Typography sx={{ mt: 0.5 }}>{supplier.phone}</Typography>
               </Box>
             </Box>
@@ -116,7 +120,9 @@ const SrmSupplierDetailPage: React.FC = () => {
                 <Mail sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
-                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k10')}</InputLabel>
+                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+                  {i18n.t('pages.srm_supplier_detail_page.k10')}
+                </InputLabel>
                 <Typography sx={{ mt: 0.5 }}>{supplier.email}</Typography>
               </Box>
             </Box>
@@ -127,7 +133,9 @@ const SrmSupplierDetailPage: React.FC = () => {
                 <MapPin sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
-                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k11')}</InputLabel>
+                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+                  {i18n.t('pages.srm_supplier_detail_page.k11')}
+                </InputLabel>
                 <Typography sx={{ mt: 0.5 }}>{supplier.address}</Typography>
               </Box>
             </Box>
@@ -138,7 +146,9 @@ const SrmSupplierDetailPage: React.FC = () => {
                 <Building2 sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
-                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k12')}</InputLabel>
+                <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+                  {i18n.t('pages.srm_supplier_detail_page.k12')}
+                </InputLabel>
                 <Typography sx={{ mt: 0.5 }}>{supplier.website}</Typography>
               </Box>
             </Box>
@@ -163,22 +173,30 @@ const SrmSupplierDetailPage: React.FC = () => {
         >
           {supplier.legal_name && (
             <Box>
-              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k14')}</InputLabel>
+              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+                {i18n.t('pages.srm_supplier_detail_page.k14')}
+              </InputLabel>
               <Typography sx={{ mt: 0.5 }}>{supplier.legal_name}</Typography>
             </Box>
           )}
           {supplier.tax_id && (
             <Box>
-              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k15')}</InputLabel>
+              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+                {i18n.t('pages.srm_supplier_detail_page.k15')}
+              </InputLabel>
               <Typography sx={{ mt: 0.5 }}>{supplier.tax_id}</Typography>
             </Box>
           )}
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k16')}</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {i18n.t('pages.srm_supplier_detail_page.k16')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5 }}>{supplier.category}</Typography>
           </Box>
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k17')}</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {i18n.t('pages.srm_supplier_detail_page.k17')}
+            </InputLabel>
             <Box sx={{ mt: 0.5 }}>
               <Chip
                 icon={<AlertTriangle sx={{ width: 14, height: 14 }} />}
@@ -196,7 +214,9 @@ const SrmSupplierDetailPage: React.FC = () => {
           </Box>
           {supplier.credit_rating && (
             <Box>
-              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k21')}</InputLabel>
+              <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+                {i18n.t('pages.srm_supplier_detail_page.k21')}
+              </InputLabel>
               <Box sx={{ mt: 0.5 }}>
                 <Chip
                   icon={<CreditCard sx={{ width: 14, height: 14 }} />}
@@ -207,7 +227,9 @@ const SrmSupplierDetailPage: React.FC = () => {
             </Box>
           )}
           <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.srm_supplier_detail_page.k22')}</InputLabel>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {i18n.t('pages.srm_supplier_detail_page.k22')}
+            </InputLabel>
             <Typography sx={{ mt: 0.5 }}>
               {new Date(supplier.created_at).toLocaleString('zh-CN')}
             </Typography>
@@ -231,7 +253,9 @@ const SrmSupplierDetailPage: React.FC = () => {
     return (
       <PageContainer title={i18n.t('pages.srm_supplier_detail_page.k24')}>
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <Typography color='error'>{error || i18n.t('pages.srm_supplier_detail_page.k25')}</Typography>
+          <Typography color='error'>
+            {error || i18n.t('pages.srm_supplier_detail_page.k25')}
+          </Typography>
         </Box>
       </PageContainer>
     );
@@ -246,7 +270,9 @@ const SrmSupplierDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={supplier?.name || supplier?.id || i18n.t('pages.srm_supplier_detail_page.k27')}
+        detailItemName={
+          supplier?.name || supplier?.id || i18n.t('pages.srm_supplier_detail_page.k27')
+        }
         backHref={SRM_PATHS.supplier}
         loading={loading}
         error={error || undefined}

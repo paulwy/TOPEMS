@@ -7,7 +7,6 @@ import { usePluginStore } from '@/store/pluginStore';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 export type SortOption = 'popular' | 'rating' | 'newest' | 'price';
@@ -89,11 +88,7 @@ export const usePluginMarketplace = (): UsePluginMarketplaceReturn => {
   const plugins = pluginsQuery.data || [];
 
   const handleRefresh = () => {
-    Promise.all([
-      pluginsQuery.refetch(),
-      healthQuery.refetch(),
-      fetchInstalledPlugins(true),
-    ]);
+    Promise.all([pluginsQuery.refetch(), healthQuery.refetch(), fetchInstalledPlugins(true)]);
     addNotification({
       title: t('plugin.message.refresh_success'),
       message: t('plugin.message.plugin_list_updated'),

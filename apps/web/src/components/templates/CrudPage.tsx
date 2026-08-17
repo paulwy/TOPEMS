@@ -373,10 +373,11 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
           title: t('common.import_success', i18n.t('components.crud_page.k8')),
           message: '',
         });
-        queryClient.invalidateQueries({ queryKey: [schema.entity] ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: [schema.entity],
+          exact: false,
+          refetchType: 'active',
+        });
       } catch (error) {
         addNotification({
           type: 'error',
@@ -419,7 +420,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
 
   const queryKey = [schema.entity, 'list', page, pageSize, search, filterParams, extraQueryParams];
 
-  const { data, isPending} = useQuery({
+  const { data, isPending } = useQuery({
     queryKey,
     queryFn: async () => {
       return apiAdapter.list({
@@ -430,17 +431,19 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
         ...extraQueryParams,
       });
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   // ── Mutations ──
   const createMutation = useMutation({
     mutationFn: (data: Partial<T>) => apiAdapter.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [schema.entity] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [schema.entity],
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: t('common.create_success', i18n.t('components.crud_page.k12')),
@@ -460,10 +463,11 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<T> }) => apiAdapter.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [schema.entity] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [schema.entity],
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: t('common.update_success', i18n.t('components.crud_page.k14')),
@@ -483,10 +487,11 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiAdapter.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [schema.entity] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [schema.entity],
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: t('common.delete_success', i18n.t('components.crud_page.k16')),
@@ -509,7 +514,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   // ── 树形数据查询 ──
   const treeQueryKey = [schema.entity, 'tree'];
 
-  const { data: treeRawData, isPending: treeLoading} = useQuery({
+  const { data: treeRawData, isPending: treeLoading } = useQuery({
     queryKey: treeQueryKey,
     queryFn: async () => {
       if (!effectiveTreeAdapter) return [];
@@ -573,10 +578,11 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
       } else {
         (await apiAdapter.create(nodeData as Partial<T>)) as unknown;
       }
-      queryClient.invalidateQueries({ queryKey: treeQueryKey ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: treeQueryKey,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: t('common.create_success', i18n.t('components.crud_page.k18')),
@@ -593,10 +599,11 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
       } else {
         await apiAdapter.update(String(id), nodeData as Partial<T>);
       }
-      queryClient.invalidateQueries({ queryKey: treeQueryKey ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: treeQueryKey,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: t('common.update_success', i18n.t('components.crud_page.k19')),
@@ -613,10 +620,11 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
       } else {
         await apiAdapter.delete(String(id));
       }
-      queryClient.invalidateQueries({ queryKey: treeQueryKey ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: treeQueryKey,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: t('common.delete_success', i18n.t('components.crud_page.k20')),
@@ -875,7 +883,9 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                   [
                     showCreate
                       ? {
-                          label: schema.createTitle || `${i18n.t('components.crud_page.k24')}${schema.title}`,
+                          label:
+                            schema.createTitle ||
+                            `${i18n.t('components.crud_page.k24')}${schema.title}`,
                           icon: <Plus size={16} />,
                           onClick: () => {
                             setWizardValues({});
@@ -937,7 +947,9 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
           maxWidth={hasWizard ? 'lg' : 'md'}
           fullWidth
         >
-          <DialogTitle>{schema.createTitle || `${i18n.t('components.crud_page.k27')}${schema.title}`}</DialogTitle>
+          <DialogTitle>
+            {schema.createTitle || `${i18n.t('components.crud_page.k27')}${schema.title}`}
+          </DialogTitle>
           <DialogContent>
             {hasWizard && extensions.wizard ? (
               <WizardBuilder
@@ -1007,7 +1019,9 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
           maxWidth={hasWizard ? 'lg' : 'md'}
           fullWidth
         >
-          <DialogTitle>{schema.editTitle || `${i18n.t('components.crud_page.k30')}${schema.title}`}</DialogTitle>
+          <DialogTitle>
+            {schema.editTitle || `${i18n.t('components.crud_page.k30')}${schema.title}`}
+          </DialogTitle>
           <DialogContent>
             {hasWizard && extensions.wizard ? (
               <WizardBuilder
@@ -1080,7 +1094,9 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
           maxWidth={detailMaxWidth}
           fullWidth
         >
-          <DialogTitle>{schema.detailTitle || `${schema.title}${i18n.t('components.crud_page.k33')}`}</DialogTitle>
+          <DialogTitle>
+            {schema.detailTitle || `${schema.title}${i18n.t('components.crud_page.k33')}`}
+          </DialogTitle>
           <DialogContent>
             {detailContentProp ? (
               detailContentProp(detailTarget)
@@ -1112,12 +1128,18 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
           maxWidth='xs'
           fullWidth
         >
-          <DialogTitle>{t('common.confirm_delete', i18n.t('components.crud_page.k35'))}</DialogTitle>
+          <DialogTitle>
+            {t('common.confirm_delete', i18n.t('components.crud_page.k35'))}
+          </DialogTitle>
           <DialogContent>
-            <Box sx={{ py: 1 }}>{t('common.confirm_delete_message', i18n.t('components.crud_page.k36'))}</Box>
+            <Box sx={{ py: 1 }}>
+              {t('common.confirm_delete_message', i18n.t('components.crud_page.k36'))}
+            </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setDeleteTarget(null)}>{t('common.cancel', i18n.t('components.crud_page.k37'))}</Button>
+            <Button onClick={() => setDeleteTarget(null)}>
+              {t('common.cancel', i18n.t('components.crud_page.k37'))}
+            </Button>
             <Button
               color='error'
               variant='contained'
@@ -1145,7 +1167,9 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
             <Box sx={{ py: 1 }}>{confirmConfig.message}</Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setConfirmConfig(null)}>{t('common.cancel', i18n.t('components.crud_page.k40'))}</Button>
+            <Button onClick={() => setConfirmConfig(null)}>
+              {t('common.cancel', i18n.t('components.crud_page.k40'))}
+            </Button>
             <Button
               color='error'
               variant='contained'

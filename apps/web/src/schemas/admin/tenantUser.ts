@@ -61,8 +61,14 @@ function renderRoleCell(row: Record<string, unknown>) {
       children: [
         React.createElement(MenuItem, { value: 'owner', children: i18n.t('admin.tenant_user.k7') }),
         React.createElement(MenuItem, { value: 'admin', children: i18n.t('admin.tenant_user.k8') }),
-        React.createElement(MenuItem, { value: 'member', children: i18n.t('admin.tenant_user.k9') }),
-        React.createElement(MenuItem, { value: 'guest', children: i18n.t('admin.tenant_user.k10') }),
+        React.createElement(MenuItem, {
+          value: 'member',
+          children: i18n.t('admin.tenant_user.k9'),
+        }),
+        React.createElement(MenuItem, {
+          value: 'guest',
+          children: i18n.t('admin.tenant_user.k10'),
+        }),
       ],
     }),
   });

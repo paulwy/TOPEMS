@@ -43,7 +43,9 @@ export const LazyIcon: React.FC<LazyIconProps> = ({ name, ...props }) => {
   const IconComp = iconMap[pascalName];
   if (!IconComp) {
     if (import.meta.env.DEV) {
-      console.warn(`${i18n.t('components.lazy_icon.lazyicon_0')}${name}" (PascalCase: "${pascalName}${i18n.t('components.lazy_icon.barrel_1')}`);
+      console.warn(
+        `${i18n.t('components.lazy_icon.lazyicon_0')}${name}" (PascalCase: "${pascalName}${i18n.t('components.lazy_icon.barrel_1')}`
+      );
     }
     return null;
   }

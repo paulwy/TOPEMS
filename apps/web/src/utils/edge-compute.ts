@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type EdgeCacheStrategy =
   'cache-first' | 'network-first' | 'stale-while-revalidate' | 'cache-only';
 

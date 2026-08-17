@@ -14,7 +14,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const ReturnDetailPage: React.FC = () => {
   const { t } = useTranslation();
@@ -93,27 +93,32 @@ const ReturnDetailPage: React.FC = () => {
   const loading = returnQuery.isLoading;
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.RETURNS ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.CRM.RETURNS,
+      exact: false,
+      refetchType: 'active',
+    });
     if (id) {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.RETURN(id) ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.RETURN_ITEMS(id) ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.RETURN_FINANCE_STATUS(id) ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.RETURN_INVENTORY_STATUS(id) ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CRM.RETURN(id),
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CRM.RETURN_ITEMS(id),
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CRM.RETURN_FINANCE_STATUS(id),
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.CRM.RETURN_INVENTORY_STATUS(id),
+        exact: false,
+        refetchType: 'active',
+      });
     }
   };
 
@@ -122,12 +127,11 @@ const ReturnDetailPage: React.FC = () => {
       await fn();
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.CRM.CUSTOMERS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.CRM.CUSTOMERS,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: t('crm.common.operation_success'),
@@ -147,12 +151,11 @@ const ReturnDetailPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (returnId: string) => crmApi.returns.delete(returnId),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.CRM.CUSTOMERS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.CRM.CUSTOMERS,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: t('crm.common.delete_success'),
@@ -398,13 +401,31 @@ const ReturnDetailPage: React.FC = () => {
                 key={item.id}
                 style={{ borderBottom: `1px solid ${designTokens.colors.grey[200]}` }}
               >
-                <td style={{ padding: `${designTokens.spacing.sm} 12px`, fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                <td
+                  style={{
+                    padding: `${designTokens.spacing.sm} 12px`,
+                    fontFamily: 'monospace',
+                    fontSize: '0.85rem',
+                  }}
+                >
                   {item.product_id}
                 </td>
-                <td style={{ padding: `${designTokens.spacing.sm} 12px`, textAlign: 'right', fontFamily: 'monospace' }}>
+                <td
+                  style={{
+                    padding: `${designTokens.spacing.sm} 12px`,
+                    textAlign: 'right',
+                    fontFamily: 'monospace',
+                  }}
+                >
                   {item.quantity}
                 </td>
-                <td style={{ padding: `${designTokens.spacing.sm} 12px`, textAlign: 'right', fontFamily: 'monospace' }}>
+                <td
+                  style={{
+                    padding: `${designTokens.spacing.sm} 12px`,
+                    textAlign: 'right',
+                    fontFamily: 'monospace',
+                  }}
+                >
                   {formatCurrency(item.unit_price)}
                 </td>
                 <td

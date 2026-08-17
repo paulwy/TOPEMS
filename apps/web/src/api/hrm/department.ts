@@ -16,7 +16,7 @@ export const departmentApi: CrudOperations<Department> = {
    * Query Params: { page, pageSize, search, status, orgId }（AdaptedQuery 后 camelCase）
    */
   list: async (
-    params?: AdaptedQuery<'list_departments'> | ListParams,
+    params?: AdaptedQuery<'list_departments'> | ListParams
   ): Promise<ApiResponse<PaginatedResult<Department>>> => {
     const openapiParams = params
       ? (toOpenApiParams(params as Record<string, unknown>) as ListParams)
@@ -38,11 +38,11 @@ export const departmentApi: CrudOperations<Department> = {
    * A4 绑定样板：create_department operation（openapi: POST /hrm/departments）
    */
   create: (
-    data: AdaptedRequestBody<'create_department'> | Partial<Department>,
+    data: AdaptedRequestBody<'create_department'> | Partial<Department>
   ): Promise<ApiResponse<Department>> => {
     return apiClient.hrm.post(
       '/departments',
-      toOpenApiRequestBody(data as Record<string, unknown>),
+      toOpenApiRequestBody(data as Record<string, unknown>)
     );
   },
 

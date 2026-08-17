@@ -113,7 +113,9 @@ function buildSpecialL2Nodes(l1Key: string, checkPermission: PermissionChecker):
       });
       nodes.push({
         key: profileFavorites.key,
-        title: profileFavorites.titleKey ? i18n.t(profileFavorites.titleKey) : profileFavorites.title,
+        title: profileFavorites.titleKey
+          ? i18n.t(profileFavorites.titleKey)
+          : profileFavorites.title,
         titleKey: profileFavorites.titleKey,
         path: profileFavorites.path,
         icon: profileFavorites.icon || 'Bookmark',

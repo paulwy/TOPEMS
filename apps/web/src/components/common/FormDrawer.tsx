@@ -118,7 +118,10 @@ export const FormDrawer = React.memo(function FormDrawer({
           padding: `${designTokens.spacing.sm} 16px`,
           borderRadius: 4,
           border: 'none',
-          backgroundColor: loading || disableSubmit ? designTokens.colors.info[200] : designTokens.colors.primary.dark,
+          backgroundColor:
+            loading || disableSubmit
+              ? designTokens.colors.info[200]
+              : designTokens.colors.primary.dark,
           cursor: loading || disableSubmit ? 'not-allowed' : 'pointer',
           fontSize: 14,
           color: 'common.white',

@@ -66,7 +66,9 @@ export const exportToExcel = async <T>(
         return '';
       }
       if (typeof value === 'boolean') {
-        return value ? i18next.t('common.yes', i18n.t('shared.import_export.k1')) : i18next.t('common.no', i18n.t('shared.import_export.k0'));
+        return value
+          ? i18next.t('common.yes', i18n.t('shared.import_export.k1'))
+          : i18next.t('common.no', i18n.t('shared.import_export.k0'));
       }
       if (value instanceof Date || (typeof value === 'string' && dayjs(value).isValid())) {
         return dayjs(value).format('YYYY-MM-DD HH:mm:ss');

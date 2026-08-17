@@ -840,5 +840,6 @@
     "oee_2": "OEE Overall Equipment Efficiency Dashboard",
     "oee_0": "OEE Detail Table",
     "oee_1": "OEE Composition (Radial Chart)"
-  }
+  },
+  "aps.analytics.materialShortage.k2": "types"
 }

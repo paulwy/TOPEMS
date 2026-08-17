@@ -32,7 +32,8 @@ import {
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 export const NotificationDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -298,7 +299,15 @@ export const NotificationDashboardPage: React.FC = () => {
   );
 };
 const NotificationTrendChart: React.FC = () => {
-  const days = [i18n.t('notification.notification_dashboard_page.k40'), i18n.t('notification.notification_dashboard_page.k39'), i18n.t('notification.notification_dashboard_page.k38'), i18n.t('notification.notification_dashboard_page.k37'), i18n.t('notification.notification_dashboard_page.k36'), i18n.t('notification.notification_dashboard_page.k35'), i18n.t('notification.notification_dashboard_page.k34')];
+  const days = [
+    i18n.t('notification.notification_dashboard_page.k40'),
+    i18n.t('notification.notification_dashboard_page.k39'),
+    i18n.t('notification.notification_dashboard_page.k38'),
+    i18n.t('notification.notification_dashboard_page.k37'),
+    i18n.t('notification.notification_dashboard_page.k36'),
+    i18n.t('notification.notification_dashboard_page.k35'),
+    i18n.t('notification.notification_dashboard_page.k34'),
+  ];
   const sentData = [45, 52, 38, 65, 48, 28, 32];
   const readData = [38, 45, 32, 58, 42, 22, 28];
   const max = Math.max(...sentData, ...readData);
@@ -388,10 +397,26 @@ const NotificationTrendChart: React.FC = () => {
 };
 const TypeDistributionChart: React.FC = () => {
   const data = [
-    { label: i18n.t('notification.notification_dashboard_page.k41'), value: 35, color: 'primary.main' },
-    { label: i18n.t('notification.notification_dashboard_page.k42'), value: 28, color: 'success.main' },
-    { label: i18n.t('notification.notification_dashboard_page.k43'), value: 22, color: 'warning.main' },
-    { label: i18n.t('notification.notification_dashboard_page.k44'), value: 15, color: 'secondary.main' },
+    {
+      label: i18n.t('notification.notification_dashboard_page.k41'),
+      value: 35,
+      color: 'primary.main',
+    },
+    {
+      label: i18n.t('notification.notification_dashboard_page.k42'),
+      value: 28,
+      color: 'success.main',
+    },
+    {
+      label: i18n.t('notification.notification_dashboard_page.k43'),
+      value: 22,
+      color: 'warning.main',
+    },
+    {
+      label: i18n.t('notification.notification_dashboard_page.k44'),
+      value: 15,
+      color: 'secondary.main',
+    },
   ];
   const total = data.reduce((sum, item) => sum + item.value, 0);
   let currentAngle = -90;
@@ -459,10 +484,26 @@ const TypeDistributionChart: React.FC = () => {
 };
 const ChannelDistributionChart: React.FC = () => {
   const data = [
-    { label: i18n.t('notification.notification_dashboard_page.k45'), value: 120, color: 'primary.main' },
-    { label: i18n.t('notification.notification_dashboard_page.k46'), value: 85, color: 'success.main' },
-    { label: i18n.t('notification.notification_dashboard_page.k47'), value: 180, color: 'warning.main' },
-    { label: i18n.t('notification.notification_dashboard_page.k48'), value: 95, color: 'secondary.main' },
+    {
+      label: i18n.t('notification.notification_dashboard_page.k45'),
+      value: 120,
+      color: 'primary.main',
+    },
+    {
+      label: i18n.t('notification.notification_dashboard_page.k46'),
+      value: 85,
+      color: 'success.main',
+    },
+    {
+      label: i18n.t('notification.notification_dashboard_page.k47'),
+      value: 180,
+      color: 'warning.main',
+    },
+    {
+      label: i18n.t('notification.notification_dashboard_page.k48'),
+      value: 95,
+      color: 'secondary.main',
+    },
   ];
   const max = Math.max(...data.map((item) => item.value));
   return (

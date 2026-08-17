@@ -951,6 +951,42 @@ function getArgValue(argsList, flag) {
   return null;
 }
 const ARGS = process.argv.slice(2);
+
+// --help / -h 最高优先级：不跑任何 FS 扫描，立即打印 Usage + exit 0
+const HELP = ARGS.some(a => a === '--help' || a === '-h');
+if (HELP) {
+  const USAGE = [
+    'analyze-menu.cjs — 菜单全面统计与问题分析（路由 / NavItem / 权限码一致性审计）',
+    '',
+    'USAGE:',
+    '  node scripts/analyze-menu.cjs [OPTIONS]',
+    '',
+    'OPTIONS:',
+    '  -h, --help                              显示帮助并退出（不跑扫描）',
+    '      --fail-fast                         严格门禁：FAIL 违规 > thresholds 时 exit 1',
+    '      --quiet                             不打印全文本报告（配合 --fail-fast / --report-json）',
+    '      --summary                           仅打印概览 + 问题清单（不打印附录 A/B）',
+    '      --report-json=<path>                输出 JSON 机器报告到 path（供 CI summary 解析）',
+    '      --thresholds=\'{"T1":0,"T2":0,"P1":0}\'   自定义 FAIL 级阈值（默认：T1/T2/P1/R3 全 0）',
+    '',
+    'RULES (FAIL / WARN):',
+    '  FAIL(0 容忍):  T1 Route 缺 titleKey   T2 NavItem 缺 labelKey',
+    '                 P1 权限码未注册        R3 NavItem 无对应 Route（404）',
+    '  WARN(仅报告):  R1 路径冲突  R2 模块 code 前缀错  R4 Route 菜单无入口',
+    '                 G1 未分配 NavGroup     O1 order 冲突    C1 缺 code',
+    '                 M1 空壳模块',
+    '',
+    'EXIT CODES: 0=通过  1=--fail-fast 违规超限  2=CLI 参数错误',
+    '',
+    'EXAMPLES:',
+    '  node scripts/analyze-menu.cjs',
+    '  node scripts/analyze-menu.cjs --summary',
+    '  node scripts/analyze-menu.cjs --fail-fast --report-json=/tmp/m.json',
+  ].join('\n') + '\n';
+  process.stdout.write(USAGE);
+  process.exit(0);
+}
+
 const FAIL_FAST = ARGS.includes('--fail-fast');
 const QUIET = ARGS.includes('--quiet');
 const SUMMARY_ONLY = ARGS.includes('--summary');

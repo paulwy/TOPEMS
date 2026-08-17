@@ -41,7 +41,11 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
 
   const handleAnalyzeFlow = async () => {
     if (!query.trim()) {
-      addNotification({ title: i18n.t('components.ai_flow_assistant.k1'), message: i18n.t('components.ai_flow_assistant.k0'), type: 'warning' });
+      addNotification({
+        title: i18n.t('components.ai_flow_assistant.k1'),
+        message: i18n.t('components.ai_flow_assistant.k0'),
+        type: 'warning',
+      });
       return;
     }
 
@@ -62,14 +66,22 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
           steps: response.data.steps as unknown as Record<string, unknown>[],
           suggestions: response.data.suggestions,
         });
-        addNotification({ title: i18n.t('components.ai_flow_assistant.k3'), message: i18n.t('components.ai_flow_assistant.k2'), type: 'success' });
+        addNotification({
+          title: i18n.t('components.ai_flow_assistant.k3'),
+          message: i18n.t('components.ai_flow_assistant.k2'),
+          type: 'success',
+        });
       } else {
         setError(response.message || i18n.t('components.ai_flow_assistant.k4'));
       }
     } catch (err: unknown) {
       logger.error(i18n.t('components.ai_flow_assistant.k0'), err);
       setError(i18n.t('components.ai_flow_assistant.k5'));
-      addNotification({ title: i18n.t('components.ai_flow_assistant.k7'), message: i18n.t('components.ai_flow_assistant.k6'), type: 'error' });
+      addNotification({
+        title: i18n.t('components.ai_flow_assistant.k7'),
+        message: i18n.t('components.ai_flow_assistant.k6'),
+        type: 'error',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -164,7 +176,9 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
           }
           fullWidth
         >
-          {isLoading ? i18n.t('components.ai_flow_assistant.k4') : i18n.t('components.ai_flow_assistant.k17')}
+          {isLoading
+            ? i18n.t('components.ai_flow_assistant.k4')
+            : i18n.t('components.ai_flow_assistant.k17')}
         </Button>
 
         {error && (
@@ -204,7 +218,8 @@ export const AIFlowAssistant: React.FC<AIFlowAssistantProps> = ({ initialQuery, 
                             variant='subtitle1'
                             sx={{ fontWeight: 600 }}
                           >
-                            {i18n.t('components.ai_flow_assistant.k0')} {idx + 1}: {step.name as string}
+                            {i18n.t('components.ai_flow_assistant.k0')} {idx + 1}:{' '}
+                            {step.name as string}
                           </Typography>
                         </Box>
                       </StepLabel>

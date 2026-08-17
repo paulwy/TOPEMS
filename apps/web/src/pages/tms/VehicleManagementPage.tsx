@@ -30,16 +30,44 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store/notificationStore';
 import { vehicleApi } from '@/api/tms';
 import type { Vehicle, CreateVehicleRequest, VehicleStatus } from '@/api/tms';
+
 const QUERY_KEY = 'tms-vehicles';
 const statusOptions = [
   { value: 'active', label: i18n.t('tms.vehicle_management_page.k0') },
   { value: 'inactive', label: i18n.t('tms.vehicle_management_page.k1') },
 ];
 const renderStatusChip = (status?: string) => {
-  if (status === 'active') return <Chip size='small' color='success' label={i18n.t('tms.vehicle_management_page.k2')} />;
-  if (status === 'inactive') return <Chip size='small' color='default' label={i18n.t('tms.vehicle_management_page.k3')} />;
-  if (status === 'maintenance') return <Chip size='small' color='warning' label={i18n.t('tms.vehicle_management_page.k4')} />;
-  return <Chip size='small' color='default' label={status || '-'} />;
+  if (status === 'active')
+    return (
+      <Chip
+        size='small'
+        color='success'
+        label={i18n.t('tms.vehicle_management_page.k2')}
+      />
+    );
+  if (status === 'inactive')
+    return (
+      <Chip
+        size='small'
+        color='default'
+        label={i18n.t('tms.vehicle_management_page.k3')}
+      />
+    );
+  if (status === 'maintenance')
+    return (
+      <Chip
+        size='small'
+        color='warning'
+        label={i18n.t('tms.vehicle_management_page.k4')}
+      />
+    );
+  return (
+    <Chip
+      size='small'
+      color='default'
+      label={status || '-'}
+    />
+  );
 };
 const VehicleManagementPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -65,7 +93,11 @@ const VehicleManagementPage: React.FC = () => {
     mutationFn: (data: CreateVehicleRequest) => vehicleApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({ type: 'success', title: i18n.t('tms.vehicle_management_page.k7'), message: i18n.t('tms.vehicle_management_page.k6') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('tms.vehicle_management_page.k7'),
+        message: i18n.t('tms.vehicle_management_page.k6'),
+      });
       setFormOpen(false);
     },
     onError: (err: unknown) => {
@@ -81,7 +113,11 @@ const VehicleManagementPage: React.FC = () => {
       vehicleApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({ type: 'success', title: i18n.t('tms.vehicle_management_page.k10'), message: i18n.t('tms.vehicle_management_page.k9') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('tms.vehicle_management_page.k10'),
+        message: i18n.t('tms.vehicle_management_page.k9'),
+      });
       setFormOpen(false);
     },
     onError: (err: unknown) => {
@@ -96,7 +132,11 @@ const VehicleManagementPage: React.FC = () => {
     mutationFn: (id: string) => vehicleApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({ type: 'success', title: i18n.t('tms.vehicle_management_page.k13'), message: i18n.t('tms.vehicle_management_page.k12') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('tms.vehicle_management_page.k13'),
+        message: i18n.t('tms.vehicle_management_page.k12'),
+      });
       setDeleteTarget(null);
     },
     onError: (err: unknown) => {
@@ -152,9 +192,19 @@ const VehicleManagementPage: React.FC = () => {
       <Stack
         direction='row'
         spacing={2}
-        sx={{ mb: 2, flexWrap: 'wrap', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}
+        sx={{
+          mb: 2,
+          flexWrap: 'wrap',
+          gap: 1,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
       >
-        <Stack direction='row' spacing={1} sx={{ alignItems: 'center' }}>
+        <Stack
+          direction='row'
+          spacing={1}
+          sx={{ alignItems: 'center' }}
+        >
           <TextField
             size='small'
             placeholder={i18n.t('tms.vehicle_management_page.k17')}
@@ -285,7 +335,9 @@ const VehicleManagementPage: React.FC = () => {
           }}
           rowsPerPageOptions={[10, 20, 50]}
           labelRowsPerPage={i18n.t('tms.vehicle_management_page.k28')}
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to}${i18n.t('pages.vehicle_management_page.k0')}${count}${i18n.t('pages.vehicle_management_page.k1')}`}
+          labelDisplayedRows={({ from, to, count }) =>
+            `${from}-${to}${i18n.t('pages.vehicle_management_page.k0')}${count}${i18n.t('pages.vehicle_management_page.k1')}`
+          }
         />
       </Card>
       {/* 新增 / 编辑表单 */}
@@ -295,7 +347,11 @@ const VehicleManagementPage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>{formMode === 'create' ? i18n.t('tms.vehicle_management_page.k30') : i18n.t('tms.vehicle_management_page.k29')}</DialogTitle>
+        <DialogTitle>
+          {formMode === 'create'
+            ? i18n.t('tms.vehicle_management_page.k30')
+            : i18n.t('tms.vehicle_management_page.k29')}
+        </DialogTitle>
         <DialogContent>
           <Box
             sx={{
@@ -341,7 +397,9 @@ const VehicleManagementPage: React.FC = () => {
               label={i18n.t('tms.vehicle_management_page.k36')}
               select
               value={formData.status || 'active'}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value as VehicleStatus })}
+              onChange={(e) =>
+                setFormData({ ...formData, status: e.target.value as VehicleStatus })
+              }
               size='small'
             >
               {statusOptions.map((opt) => (
@@ -367,13 +425,17 @@ const VehicleManagementPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setFormOpen(false)}>{i18n.t('tms.vehicle_management_page.k38')}</Button>
+          <Button onClick={() => setFormOpen(false)}>
+            {i18n.t('tms.vehicle_management_page.k38')}
+          </Button>
           <Button
             variant='contained'
             onClick={handleSubmit}
             disabled={submitting || !formData.vehicle_no}
           >
-            {submitting ? i18n.t('pages.vehicle_management_page.k2') : i18n.t('tms.vehicle_management_page.k39')}
+            {submitting
+              ? i18n.t('pages.vehicle_management_page.k2')
+              : i18n.t('tms.vehicle_management_page.k39')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -387,18 +449,23 @@ const VehicleManagementPage: React.FC = () => {
         <DialogTitle>{i18n.t('tms.vehicle_management_page.k40')}</DialogTitle>
         <DialogContent>
           <Typography>
-            {i18n.t('pages.vehicle_management_page.k0')}「{deleteTarget?.vehicle_no}」{i18n.t('pages.vehicle_management_page.k1')}
+            {i18n.t('pages.vehicle_management_page.k0')}「{deleteTarget?.vehicle_no}」
+            {i18n.t('pages.vehicle_management_page.k1')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>{i18n.t('tms.vehicle_management_page.k41')}</Button>
+          <Button onClick={() => setDeleteTarget(null)}>
+            {i18n.t('tms.vehicle_management_page.k41')}
+          </Button>
           <Button
             color='error'
             variant='contained'
             onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? i18n.t('pages.vehicle_management_page.k3') : i18n.t('tms.vehicle_management_page.k42')}
+            {deleteMutation.isPending
+              ? i18n.t('pages.vehicle_management_page.k3')
+              : i18n.t('tms.vehicle_management_page.k42')}
           </Button>
         </DialogActions>
       </Dialog>

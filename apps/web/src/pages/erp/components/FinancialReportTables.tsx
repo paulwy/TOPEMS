@@ -21,6 +21,7 @@ import type {
   IncomeItem,
   CashFlowItem,
 } from '@/api/erp/types';
+
 interface FinancialReportTablesProps {
   activeTab: string;
   balanceSheet: BalanceSheet | null;

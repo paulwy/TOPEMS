@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type BiasType = 'Gender' | 'Race' | 'Age' | 'Socioeconomic';
 
 export type BiasSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
@@ -216,7 +217,9 @@ export class BiasDetector {
       .filter((r) => r.severity !== 'info')
       .sort((a, b) => b.timestamp - a.timestamp)
       .slice(0, 5)
-      .map((r) => `[${r.biasType}] ${r.modelId}: ${r.findings[0] ?? i18n.t('ai.bias-detection.k9')}`);
+      .map(
+        (r) => `[${r.biasType}] ${r.modelId}: ${r.findings[0] ?? i18n.t('ai.bias-detection.k9')}`
+      );
 
     return {
       total_reports: total,

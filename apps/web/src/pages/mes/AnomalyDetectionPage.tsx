@@ -47,10 +47,23 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { PageContainer } from '@/components/common';
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens, semanticTokens } from '@topems/tokens';
+
 const SEVERITY_CONFIG = {
-  critical: { color: 'error' as const, icon: <AlertCircle size={16} />, label: i18n.t('mes.anomaly_detection_page.k0') },
-  warning: { color: 'warning' as const, icon: <AlertTriangle size={16} />, label: i18n.t('mes.anomaly_detection_page.k1') },
-  info: { color: 'info' as const, icon: <CheckCircle size={16} />, label: i18n.t('mes.anomaly_detection_page.k2') },
+  critical: {
+    color: 'error' as const,
+    icon: <AlertCircle size={16} />,
+    label: i18n.t('mes.anomaly_detection_page.k0'),
+  },
+  warning: {
+    color: 'warning' as const,
+    icon: <AlertTriangle size={16} />,
+    label: i18n.t('mes.anomaly_detection_page.k1'),
+  },
+  info: {
+    color: 'info' as const,
+    icon: <CheckCircle size={16} />,
+    label: i18n.t('mes.anomaly_detection_page.k2'),
+  },
 };
 const ANOMALY_TYPE_LABELS: Record<string, string> = {
   equipment_overheat: i18n.t('mes.anomaly_detection_page.k3'),
@@ -81,8 +94,9 @@ const AnomalyDetectionPage: React.FC = () => {
     queryKey: QUERY_KEYS.AD_HOC.ANOMALY_SUMMARY_BASE,
     queryFn: () => anomalyDetectionApi.getSummary(),
     refetchInterval: 30000,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   // Alerts query
   const alertsQuery = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.ANOMALY_ALERTS_BASE, severityFilter, typeFilter],
@@ -92,36 +106,49 @@ const AnomalyDetectionPage: React.FC = () => {
         anomaly_type: typeFilter || undefined,
       }),
     refetchInterval: 30000,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   // Rules query
   const rulesQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ANOMALY_RULES_BASE,
     queryFn: () => anomalyDetectionApi.getRules(),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   // Trend query
   const trendQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ANOMALY_TREND_BASE,
     queryFn: () => anomalyDetectionApi.getTrend(),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   // Scan mutation
   const scanMutation = useMutation({
     mutationFn: () => anomalyDetectionApi.triggerScan(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ANOMALY_SUMMARY_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ANOMALY_ALERTS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      addNotification({ title: i18n.t('mes.anomaly_detection_page.k13'), message: i18n.t('mes.anomaly_detection_page.k12'), type: 'success' });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ANOMALY_SUMMARY_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ANOMALY_ALERTS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        title: i18n.t('mes.anomaly_detection_page.k13'),
+        message: i18n.t('mes.anomaly_detection_page.k12'),
+        type: 'success',
+      });
     },
     onError: () => {
-      addNotification({ title: i18n.t('mes.anomaly_detection_page.k15'), message: i18n.t('mes.anomaly_detection_page.k14'), type: 'error' });
+      addNotification({
+        title: i18n.t('mes.anomaly_detection_page.k15'),
+        message: i18n.t('mes.anomaly_detection_page.k14'),
+        type: 'error',
+      });
     },
   });
   // Rule update mutation
@@ -129,31 +156,47 @@ const AnomalyDetectionPage: React.FC = () => {
     mutationFn: ({ ruleId, req }: { ruleId: string; req: Record<string, unknown> }) =>
       anomalyDetectionApi.updateRule(req),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ANOMALY_RULES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      addNotification({ title: i18n.t('mes.anomaly_detection_page.k17'), message: i18n.t('mes.anomaly_detection_page.k16'), type: 'success' });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.ANOMALY_RULES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        title: i18n.t('mes.anomaly_detection_page.k17'),
+        message: i18n.t('mes.anomaly_detection_page.k16'),
+        type: 'success',
+      });
       setEditingRule(null);
     },
     onError: () => {
-      addNotification({ title: i18n.t('mes.anomaly_detection_page.k19'), message: i18n.t('mes.anomaly_detection_page.k18'), type: 'error' });
+      addNotification({
+        title: i18n.t('mes.anomaly_detection_page.k19'),
+        message: i18n.t('mes.anomaly_detection_page.k18'),
+        type: 'error',
+      });
     },
   });
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ANOMALY_SUMMARY_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ANOMALY_ALERTS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ANOMALY_TREND_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-    addNotification({ title: i18n.t('mes.anomaly_detection_page.k21'), message: i18n.t('mes.anomaly_detection_page.k20'), type: 'success' });
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.ANOMALY_SUMMARY_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.ANOMALY_ALERTS_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.ANOMALY_TREND_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
+    addNotification({
+      title: i18n.t('mes.anomaly_detection_page.k21'),
+      message: i18n.t('mes.anomaly_detection_page.k20'),
+      type: 'success',
+    });
   };
   const handleScan = () => {
     scanMutation.mutate();
@@ -232,7 +275,9 @@ const AnomalyDetectionPage: React.FC = () => {
               onClick={handleScan}
               disabled={scanMutation.isPending}
             >
-              {scanMutation.isPending ? i18n.t('pages.anomaly_detection_page.k1') : i18n.t('mes.anomaly_detection_page.k23')}
+              {scanMutation.isPending
+                ? i18n.t('pages.anomaly_detection_page.k1')
+                : i18n.t('mes.anomaly_detection_page.k23')}
             </Button>
           </Box>
         </Box>
@@ -392,8 +437,12 @@ const AnomalyDetectionPage: React.FC = () => {
                       <TableHead>
                         <TableRow>
                           <TableCell>{i18n.t('mes.anomaly_detection_page.k30')}</TableCell>
-                          <TableCell align='center'>{i18n.t('mes.anomaly_detection_page.k31')}</TableCell>
-                          <TableCell align='center'>{i18n.t('mes.anomaly_detection_page.k32')}</TableCell>
+                          <TableCell align='center'>
+                            {i18n.t('mes.anomaly_detection_page.k31')}
+                          </TableCell>
+                          <TableCell align='center'>
+                            {i18n.t('mes.anomaly_detection_page.k32')}
+                          </TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -539,8 +588,8 @@ const AnomalyDetectionPage: React.FC = () => {
                                 variant='caption'
                                 color='textSecondary'
                               >
-                                [i18n.t('pages.anomaly_detection_page.k10')]: {alert.metric_name} = {alert.metric_value.toFixed(2)} (阈值:{' '}
-                                {alert.threshold_value})
+                                [i18n.t('pages.anomaly_detection_page.k10')]: {alert.metric_name} ={' '}
+                                {alert.metric_value.toFixed(2)} ({i18n.t('pages.anomaly_detection_page.k0')}: {alert.threshold_value})
                               </Typography>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 <Typography
@@ -564,7 +613,8 @@ const AnomalyDetectionPage: React.FC = () => {
                               icon={<SettingsIcon size={16} />}
                             >
                               <Typography variant='caption'>
-                                {i18n.t('pages.anomaly_detection_page.strongstrong_0')} {alert.recommendation}
+                                {i18n.t('pages.anomaly_detection_page.strongstrong_0')}{' '}
+                                {alert.recommendation}
                               </Typography>
                             </Alert>
                           </Box>
@@ -642,13 +692,17 @@ const AnomalyDetectionPage: React.FC = () => {
                       <Box
                         sx={{ width: 12, height: 12, bgcolor: 'primary.main', borderRadius: 0.5 }}
                       />
-                      <Typography variant='caption'>{i18n.t('mes.anomaly_detection_page.k43')}</Typography>
+                      <Typography variant='caption'>
+                        {i18n.t('mes.anomaly_detection_page.k43')}
+                      </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <Box
                         sx={{ width: 12, height: 12, bgcolor: 'error.main', borderRadius: 0.5 }}
                       />
-                      <Typography variant='caption'>{i18n.t('mes.anomaly_detection_page.k44')}</Typography>
+                      <Typography variant='caption'>
+                        {i18n.t('mes.anomaly_detection_page.k44')}
+                      </Typography>
                     </Box>
                   </Box>
                 </Box>
@@ -699,7 +753,9 @@ const AnomalyDetectionPage: React.FC = () => {
                       </TableCell>
                       <TableCell align='center'>{rule.warning_threshold}</TableCell>
                       <TableCell align='center'>{rule.critical_threshold}</TableCell>
-                      <TableCell align='center'>{i18n.t('pages.anomaly_detection_page.rulewindowsize_0')}</TableCell>
+                      <TableCell align='center'>
+                        {i18n.t('pages.anomaly_detection_page.rulewindowsize_0')}
+                      </TableCell>
                       <TableCell align='center'>
                         <Switch
                           checked={rule.enabled}
@@ -768,13 +824,17 @@ const AnomalyDetectionPage: React.FC = () => {
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setEditingRule(null)}>{i18n.t('mes.anomaly_detection_page.k60')}</Button>
+            <Button onClick={() => setEditingRule(null)}>
+              {i18n.t('mes.anomaly_detection_page.k60')}
+            </Button>
             <Button
               variant='contained'
               onClick={handleSaveRule}
               disabled={updateRuleMutation.isPending}
             >
-              {updateRuleMutation.isPending ? i18n.t('pages.anomaly_detection_page.k3') : i18n.t('mes.anomaly_detection_page.k61')}
+              {updateRuleMutation.isPending
+                ? i18n.t('pages.anomaly_detection_page.k3')
+                : i18n.t('mes.anomaly_detection_page.k61')}
             </Button>
           </DialogActions>
         </Dialog>

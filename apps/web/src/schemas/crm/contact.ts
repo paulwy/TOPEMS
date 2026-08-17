@@ -6,24 +6,33 @@ import i18n from '@/i18n';
 
 export const contactStatus = z.enum(['active', 'inactive']);
 
-export const contactZodSchema = z.object({
-  id: z.string().uuid(),
-  tenantId: z.string().uuid(),
-  customerId: z.string().uuid().optional(),
-  firstName: z.string().min(1).max(100),
-  lastName: z.string().max(100).optional(),
-  email: z.string().email().max(100).optional().or(z.literal('')),
-  phone: z.string().max(50).optional(),
-  position: z.string().max(100).optional(),
-  status: contactStatus.default('active'),
-  notes: z.string().optional(),
-  approvalStatus: approvalStatus.default('none'),
-}).merge(commonAuditSchema);
+export const contactZodSchema = z
+  .object({
+    id: z.string().uuid(),
+    tenantId: z.string().uuid(),
+    customerId: z.string().uuid().optional(),
+    firstName: z.string().min(1).max(100),
+    lastName: z.string().max(100).optional(),
+    email: z.string().email().max(100).optional().or(z.literal('')),
+    phone: z.string().max(50).optional(),
+    position: z.string().max(100).optional(),
+    status: contactStatus.default('active'),
+    notes: z.string().optional(),
+    approvalStatus: approvalStatus.default('none'),
+  })
+  .merge(commonAuditSchema);
 
 export type Contact = z.infer<typeof contactZodSchema>;
 export type ContactStatus = z.infer<typeof contactStatus>;
 
-export const createContactSchema = contactZodSchema.omit({ id: true, tenantId: true, approvalStatus: true, createdAt: true, updatedAt: true, deletedAt: true });
+export const createContactSchema = contactZodSchema.omit({
+  id: true,
+  tenantId: true,
+  approvalStatus: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
 export type CreateContactRequest = z.infer<typeof createContactSchema>;
 
 export const updateContactSchema = createContactSchema.partial();

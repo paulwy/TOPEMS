@@ -25,6 +25,7 @@ import { useAuthStore } from '@/store';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { AUTH_PATHS } from '@/routes/auth';
 import { PageContainer } from '@/components/common';
+
 interface SettingGroup {
   title: string;
   items: SettingItem[];
@@ -45,7 +46,7 @@ const MobileSettingsPage: React.FC = () => {
     queryKey: ['mobile-profile-page'],
     queryFn: async () => {
       try {
-        return await mobileApi.user.getProfile() ?? {};
+        return (await mobileApi.user.getProfile()) ?? {};
       } catch (e) {
         return {};
       }
@@ -196,16 +197,32 @@ const MobileSettingsPage: React.FC = () => {
     }
   };
   const bottomTabs = [
-    { id: 'home', label: i18n.t('mobile.mobile_profile_page.k22'), icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: i18n.t('mobile.mobile_profile_page.k23'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: i18n.t('mobile.mobile_profile_page.k24'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    {
+      id: 'home',
+      label: i18n.t('mobile.mobile_profile_page.k22'),
+      icon: <Home style={{ width: 22, height: 22 }} />,
+    },
+    {
+      id: 'tasks',
+      label: i18n.t('mobile.mobile_profile_page.k23'),
+      icon: <ListTodo style={{ width: 22, height: 22 }} />,
+    },
+    {
+      id: 'scan',
+      label: i18n.t('mobile.mobile_profile_page.k24'),
+      icon: <ScanLine style={{ width: 22, height: 22 }} />,
+    },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_profile_page.k25'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
       badge: 3,
     },
-    { id: 'profile', label: i18n.t('mobile.mobile_profile_page.k26'), icon: <User style={{ width: 22, height: 22 }} /> },
+    {
+      id: 'profile',
+      label: i18n.t('mobile.mobile_profile_page.k26'),
+      icon: <User style={{ width: 22, height: 22 }} />,
+    },
   ];
   const handleNavigate = (path?: string) => {
     if (path) {

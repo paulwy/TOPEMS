@@ -59,7 +59,15 @@ describe('V139 ERP - fixedAssetApi', () => {
   });
 
   it('should create fixed asset', async () => {
-    const data = { asset_code: 'FA-001', asset_name: '服务器A', asset_type: 'it', asset_category: 'server', original_value: 5000, depreciation_method: 'straight_line', useful_life_months: 36 };
+    const data = {
+      asset_code: 'FA-001',
+      asset_name: '服务器A',
+      asset_type: 'it',
+      asset_category: 'server',
+      original_value: 5000,
+      depreciation_method: 'straight_line',
+      useful_life_months: 36,
+    };
     mockClient.post.mockResolvedValue({ success: true, data: { id: 'FA-001' } });
     await fixedAssetApi.create(data);
     expect(mockClient.post).toHaveBeenCalledWith('/fixed-assets', data);
@@ -88,7 +96,9 @@ describe('V139 ERP - officeSupplyApi', () => {
   it('should list office supplies', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await officeSupplyApi.list({ page: 1, pageSize: 20, category: 'paper' });
-    expect(mockClient.get).toHaveBeenCalledWith('/office-supplies?page=1&pagesize=20&category=paper');
+    expect(mockClient.get).toHaveBeenCalledWith(
+      '/office-supplies?page=1&pagesize=20&category=paper'
+    );
   });
 
   it('should create office supply', async () => {
@@ -133,7 +143,9 @@ describe('V139 ERP - vehicleApi', () => {
   it('should list vehicle requests', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await vehicleApi.listRequests({ page: 1, pageSize: 20, status: 'pending' });
-    expect(mockClient.get).toHaveBeenCalledWith('/vehicle-requests?page=1&pagesize=20&status=pending');
+    expect(mockClient.get).toHaveBeenCalledWith(
+      '/vehicle-requests?page=1&pagesize=20&status=pending'
+    );
   });
 
   it('should create vehicle request', async () => {

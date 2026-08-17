@@ -229,11 +229,18 @@ const ForecastManagementPage: React.FC = () => {
                 },
               }}
             />
-            <Button variant='outlined' size='small' onClick={handleSearch}>
+            <Button
+              variant='outlined'
+              size='small'
+              onClick={handleSearch}
+            >
               {i18n.t('pages.forecast_management_page.k0')}
             </Button>
             <Tooltip title={i18n.t('pages.forecast_management_page.k6')}>
-              <IconButton onClick={handleRefresh} size='small'>
+              <IconButton
+                onClick={handleRefresh}
+                size='small'
+              >
                 <RefreshCw size={16} />
               </IconButton>
             </Tooltip>
@@ -250,33 +257,61 @@ const ForecastManagementPage: React.FC = () => {
 
         <Card>
           <CardContent sx={{ p: 0 }}>
-            <TableContainer component={Paper} variant='outlined'>
+            <TableContainer
+              component={Paper}
+              variant='outlined'
+            >
               <Table size='small'>
                 <TableHead>
                   <TableRow>
                     <TableCell>{i18n.t('pages.forecast_management_page.k7')}</TableCell>
                     <TableCell>{i18n.t('pages.forecast_management_page.k8')}</TableCell>
                     <TableCell>{i18n.t('pages.forecast_management_page.k9')}</TableCell>
-                    <TableCell align='right'>{i18n.t('pages.forecast_management_page.k10')}</TableCell>
-                    <TableCell align='right'>{i18n.t('pages.forecast_management_page.k11')}</TableCell>
-                    <TableCell align='right'>{i18n.t('pages.forecast_management_page.k12')}</TableCell>
+                    <TableCell align='right'>
+                      {i18n.t('pages.forecast_management_page.k10')}
+                    </TableCell>
+                    <TableCell align='right'>
+                      {i18n.t('pages.forecast_management_page.k11')}
+                    </TableCell>
+                    <TableCell align='right'>
+                      {i18n.t('pages.forecast_management_page.k12')}
+                    </TableCell>
                     <TableCell>{i18n.t('pages.forecast_management_page.k13')}</TableCell>
-                    <TableCell align='center'>{i18n.t('pages.forecast_management_page.k14')}</TableCell>
+                    <TableCell align='center'>
+                      {i18n.t('pages.forecast_management_page.k14')}
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {listQuery.isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={8} align='center'>
+                      <TableCell
+                        colSpan={8}
+                        align='center'
+                      >
                         {i18n.t('pages.forecast_management_page.k2')}
                       </TableCell>
                     </TableRow>
                   ) : items.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} align='center'>
-                        <Box sx={{ py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                      <TableCell
+                        colSpan={8}
+                        align='center'
+                      >
+                        <Box
+                          sx={{
+                            py: 4,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 1,
+                          }}
+                        >
                           <TrendingUp size={32} />
-                          <Typography variant='body2' color='text.secondary'>
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
                             {i18n.t('pages.forecast_management_page.k3')}
                           </Typography>
                         </Box>
@@ -284,7 +319,10 @@ const ForecastManagementPage: React.FC = () => {
                     </TableRow>
                   ) : (
                     items.map((row) => (
-                      <TableRow key={row.id} hover>
+                      <TableRow
+                        key={row.id}
+                        hover
+                      >
                         <TableCell>{row.forecast_no}</TableCell>
                         <TableCell>{row.product_name ?? '-'}</TableCell>
                         <TableCell>{row.forecast_period ?? '-'}</TableCell>
@@ -299,7 +337,14 @@ const ForecastManagementPage: React.FC = () => {
                           />
                         </TableCell>
                         <TableCell align='center'>
-                          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center', flexWrap: 'wrap' }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              gap: 0.5,
+                              justifyContent: 'center',
+                              flexWrap: 'wrap',
+                            }}
+                          >
                             <Tooltip title={i18n.t('pages.forecast_management_page.k15')}>
                               <IconButton
                                 size='small'
@@ -321,12 +366,19 @@ const ForecastManagementPage: React.FC = () => {
                               </IconButton>
                             </Tooltip>
                             <Tooltip title={i18n.t('pages.forecast_management_page.k17')}>
-                              <IconButton size='small' onClick={() => handleOpenEdit(row)}>
+                              <IconButton
+                                size='small'
+                                onClick={() => handleOpenEdit(row)}
+                              >
                                 <Edit size={16} />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title={i18n.t('pages.forecast_management_page.k18')}>
-                              <IconButton size='small' color='error' onClick={() => handleDelete(row)}>
+                              <IconButton
+                                size='small'
+                                color='error'
+                                onClick={() => handleDelete(row)}
+                              >
                                 <Trash2 size={16} />
                               </IconButton>
                             </Tooltip>
@@ -350,14 +402,25 @@ const ForecastManagementPage: React.FC = () => {
               }}
               rowsPerPageOptions={[10, 20, 50]}
               labelRowsPerPage={i18n.t('pages.forecast_management_page.k19')}
-              labelDisplayedRows={({ from, to, count }) => `${from}-${to} ${i18n.t('pages.forecast_management_page.k4')} ${count}`}
+              labelDisplayedRows={({ from, to, count }) =>
+                `${from}-${to} ${i18n.t('pages.forecast_management_page.k4')} ${count}`
+              }
             />
           </CardContent>
         </Card>
       </Box>
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth='md'>
-        <DialogTitle>{editingId ? i18n.t('pages.forecast_management_page.k21') : i18n.t('pages.forecast_management_page.k20')}</DialogTitle>
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        fullWidth
+        maxWidth='md'
+      >
+        <DialogTitle>
+          {editingId
+            ? i18n.t('pages.forecast_management_page.k21')
+            : i18n.t('pages.forecast_management_page.k20')}
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, pt: 1 }}>
             <TextField
@@ -412,14 +475,23 @@ const ForecastManagementPage: React.FC = () => {
               select
               value={form.method ?? 'moving_average'}
               onChange={(e) =>
-                setForm({ ...form, method: e.target.value as CreateDemandForecastRequest['method'] })
+                setForm({
+                  ...form,
+                  method: e.target.value as CreateDemandForecastRequest['method'],
+                })
               }
               size='small'
               sx={fieldSx}
             >
-              <MenuItem value='moving_average'>{i18n.t('pages.forecast_management_page.k30')}</MenuItem>
-              <MenuItem value='exponential_smoothing'>{i18n.t('pages.forecast_management_page.k31')}</MenuItem>
-              <MenuItem value='linear_regression'>{i18n.t('pages.forecast_management_page.k32')}</MenuItem>
+              <MenuItem value='moving_average'>
+                {i18n.t('pages.forecast_management_page.k30')}
+              </MenuItem>
+              <MenuItem value='exponential_smoothing'>
+                {i18n.t('pages.forecast_management_page.k31')}
+              </MenuItem>
+              <MenuItem value='linear_regression'>
+                {i18n.t('pages.forecast_management_page.k32')}
+              </MenuItem>
               <MenuItem value='arima'>ARIMA</MenuItem>
             </TextField>
             <TextField
@@ -443,29 +515,47 @@ const ForecastManagementPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>{i18n.t('pages.forecast_management_page.k35')}</Button>
-          <Button variant='contained' onClick={handleSave} disabled={saving}>
-            {saving ? i18n.t('pages.forecast_management_page.k6') : i18n.t('pages.forecast_management_page.k36')}
+          <Button onClick={() => setDialogOpen(false)}>
+            {i18n.t('pages.forecast_management_page.k35')}
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving
+              ? i18n.t('pages.forecast_management_page.k6')
+              : i18n.t('pages.forecast_management_page.k36')}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} maxWidth='xs' fullWidth>
+      <Dialog
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        maxWidth='xs'
+        fullWidth
+      >
         <DialogTitle>{i18n.t('pages.forecast_management_page.k37')}</DialogTitle>
         <DialogContent>
           <Typography>
-            {i18n.t('pages.forecast_management_page.k0')}「{deleteTarget?.forecast_no}」{i18n.t('pages.forecast_management_page.k1')}
+            {i18n.t('pages.forecast_management_page.k0')}「{deleteTarget?.forecast_no}」
+            {i18n.t('pages.forecast_management_page.k1')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteOpen(false)}>{i18n.t('pages.forecast_management_page.k38')}</Button>
+          <Button onClick={() => setDeleteOpen(false)}>
+            {i18n.t('pages.forecast_management_page.k38')}
+          </Button>
           <Button
             variant='contained'
             color='error'
             onClick={confirmDelete}
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? i18n.t('pages.forecast_management_page.k7') : i18n.t('pages.forecast_management_page.k39')}
+            {deleteMutation.isPending
+              ? i18n.t('pages.forecast_management_page.k7')
+              : i18n.t('pages.forecast_management_page.k39')}
           </Button>
         </DialogActions>
       </Dialog>

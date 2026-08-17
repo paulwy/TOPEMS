@@ -9,7 +9,6 @@ import { externalErpApi } from '../api/external-erp';
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 
 import type {
-
   // 连接配置
   ErpConnectionConfig,
   CompanyMapping,
@@ -75,10 +74,11 @@ export function useCreateErpConnection() {
       company_mappings?: CompanyMapping[];
     }) => externalErpApi.createConnection(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_external_erp.erp_0'));
     },
     onError: (err) => {
@@ -103,10 +103,11 @@ export function useUpdateErpConnection() {
       data: Partial<ErpConnectionConfig>;
     }) => externalErpApi.updateConnection(connectionId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_external_erp.erp_2'));
     },
     onError: (err) => {
@@ -125,10 +126,11 @@ export function useDeleteErpConnection() {
   return useMutation({
     mutationFn: (connectionId: string) => externalErpApi.deleteConnection(connectionId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_external_erp.erp_4'));
     },
     onError: (err) => {
@@ -146,12 +148,11 @@ export function useTestErpConnection() {
   return useMutation({
     mutationFn: (data: ConnectionTestRequest) => externalErpApi.testConnection(data),
     onSuccess: (result) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       if (result.success) {
         success(i18n.t('shared.use_external_erp.k0'));
       } else {
@@ -175,10 +176,11 @@ export function useToggleErpConnection() {
     mutationFn: ({ connectionId, enabled }: { connectionId: string; enabled: boolean }) =>
       externalErpApi.toggleConnection(connectionId, enabled),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_external_erp.k3'));
     },
     onError: (err) => {
@@ -207,11 +209,14 @@ export function useSyncAccounts() {
       force_sync?: boolean;
     }) => externalErpApi.syncAccounts(data),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_LOGS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      success(`${i18n.t('shared.use_external_erp.k6')}${result.data.created_count + result.data.updated_count}${i18n.t('shared.use_external_erp.k7')}`);
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_LOGS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      success(
+        `${i18n.t('shared.use_external_erp.k6')}${result.data.created_count + result.data.updated_count}${i18n.t('shared.use_external_erp.k7')}`
+      );
     },
     onError: (err) => {
       error(err.message || i18n.t('shared.use_external_erp.k5'));
@@ -235,11 +240,14 @@ export function useSyncCustomers() {
       force_sync?: boolean;
     }) => externalErpApi.syncCustomers(data),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_LOGS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      success(`${i18n.t('shared.use_external_erp.k8')}${result.data.created_count + result.data.updated_count}${i18n.t('shared.use_external_erp.k9')}`);
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_LOGS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      success(
+        `${i18n.t('shared.use_external_erp.k8')}${result.data.created_count + result.data.updated_count}${i18n.t('shared.use_external_erp.k9')}`
+      );
     },
     onError: (err) => {
       error(err.message || i18n.t('shared.use_external_erp.k6'));
@@ -263,11 +271,14 @@ export function useSyncSuppliers() {
       force_sync?: boolean;
     }) => externalErpApi.syncSuppliers(data),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_LOGS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      success(`${i18n.t('shared.use_external_erp.k10')}${result.data.created_count + result.data.updated_count}${i18n.t('shared.use_external_erp.k11')}`);
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_LOGS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      success(
+        `${i18n.t('shared.use_external_erp.k10')}${result.data.created_count + result.data.updated_count}${i18n.t('shared.use_external_erp.k11')}`
+      );
     },
     onError: (err) => {
       error(err.message || i18n.t('shared.use_external_erp.k7'));
@@ -293,14 +304,19 @@ export function useSyncVouchers() {
       force_sync?: boolean;
     }) => externalErpApi.syncVouchers(data),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_LOGS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_LOGS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       if (result.data.failed_count > 0) {
-        error(`${i18n.t('shared.use_external_erp.k12')}${result.data.synced_count}${i18n.t('shared.use_external_erp.k13')}${result.data.failed_count}${i18n.t('shared.use_external_erp.k14')}`);
+        error(
+          `${i18n.t('shared.use_external_erp.k12')}${result.data.synced_count}${i18n.t('shared.use_external_erp.k13')}${result.data.failed_count}${i18n.t('shared.use_external_erp.k14')}`
+        );
       } else {
-        success(`${i18n.t('shared.use_external_erp.k15')}${result.data.synced_count}${i18n.t('shared.use_external_erp.k16')}`);
+        success(
+          `${i18n.t('shared.use_external_erp.k15')}${result.data.synced_count}${i18n.t('shared.use_external_erp.k16')}`
+        );
       }
     },
     onError: (err) => {
@@ -320,10 +336,11 @@ export function useFullSync() {
     mutationFn: (data: { config_id: string; company_id?: string; sync_modules?: string[] }) =>
       externalErpApi.fullSync(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_LOGS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SYNC_LOGS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_external_erp.k9'));
     },
     onError: (err) => {
@@ -425,10 +442,10 @@ export function useImportAccountMappings() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_ACCOUNT_MAPPINGS_BASE,
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_external_erp.k11'));
     },
     onError: (err) => {
@@ -449,10 +466,10 @@ export function useAutoMatchAccountMappings() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_ACCOUNT_MAPPINGS_BASE,
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_external_erp.k13'));
     },
     onError: (err) => {
@@ -481,10 +498,10 @@ export function useUpdateAccountMapping() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_ACCOUNT_MAPPINGS_BASE,
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_external_erp.k15'));
     },
     onError: (err) => {
@@ -533,10 +550,10 @@ export function useImportCustomerMappings() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CUSTOMER_MAPPINGS_BASE,
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_external_erp.k17'));
     },
     onError: (err) => {
@@ -565,10 +582,10 @@ export function useUpdateCustomerMapping() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CUSTOMER_MAPPINGS_BASE,
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_external_erp.k19'));
     },
     onError: (err) => {
@@ -617,10 +634,10 @@ export function useImportSupplierMappings() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SUPPLIER_MAPPINGS_BASE,
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_external_erp.k21'));
     },
     onError: (err) => {
@@ -649,10 +666,10 @@ export function useUpdateSupplierMapping() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_SUPPLIER_MAPPINGS_BASE,
-      
-  exact: false,
-  refetchType: 'active',
-});
+
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_external_erp.k23'));
     },
     onError: (err) => {
@@ -753,12 +770,11 @@ export function useExportSyncLogs() {
       return blob;
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_external_erp.k25'));
     },
     onError: (err) => {
@@ -791,12 +807,11 @@ export function useExportMappingRules() {
       return blob;
     },
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_external_erp.k27'));
     },
     onError: (err) => {

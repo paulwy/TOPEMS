@@ -7,7 +7,8 @@ import { SettingsPageTemplate, type SettingSection } from '@/components/template
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 import { adminApi } from '@/api/admin';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const ConfigDebugPage: React.FC = () => {
   const { data: backendData, isLoading: isBackendLoading } = useQuery({
     queryKey: ['admin-config-debug'],

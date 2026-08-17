@@ -123,7 +123,9 @@ export function useBffSubscription<T>(
       try {
         ws = new WebSocket(wsUrl, ['graphql-transport-ws']);
       } catch (err) {
-        setError(err instanceof Error ? err.message : i18n.t('shared.use_bff_subscription.websocket_0'));
+        setError(
+          err instanceof Error ? err.message : i18n.t('shared.use_bff_subscription.websocket_0')
+        );
         updateStatus('disconnected');
         scheduleReconnect();
         return;

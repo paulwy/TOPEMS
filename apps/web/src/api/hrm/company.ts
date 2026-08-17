@@ -16,7 +16,7 @@ export const companyApi: CrudOperations<Company> = {
    * Query Params: { page, pageSize, search, status }（AdaptedQuery 后 camelCase）
    */
   list: async (
-    params?: AdaptedQuery<'list_companies'> | ListParams,
+    params?: AdaptedQuery<'list_companies'> | ListParams
   ): Promise<ApiResponse<PaginatedResult<Company>>> => {
     const openapiParams = params
       ? (toOpenApiParams(params as Record<string, unknown>) as ListParams)
@@ -39,12 +39,9 @@ export const companyApi: CrudOperations<Company> = {
    * Request Body: CreateCompanyRequest schema（发送前 adaptReverse → snake_case）
    */
   create: (
-    data: AdaptedRequestBody<'create_company'> | Partial<Company>,
+    data: AdaptedRequestBody<'create_company'> | Partial<Company>
   ): Promise<ApiResponse<Company>> => {
-    return apiClient.hrm.post(
-      '/companies',
-      toOpenApiRequestBody(data as Record<string, unknown>),
-    );
+    return apiClient.hrm.post('/companies', toOpenApiRequestBody(data as Record<string, unknown>));
   },
 
   update: (id: string, data: Partial<Company>): Promise<ApiResponse<Company>> => {

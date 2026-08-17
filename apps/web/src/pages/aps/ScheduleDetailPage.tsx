@@ -81,7 +81,9 @@ export default function ScheduleDetailPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>{t('aps.schedule_detail_page.k1')}</p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>
+          {t('aps.schedule_detail_page.k1')}
+        </p>
         <FSMActionButtons
           fsm='schedule'
           currentStatus={schedule.status ?? 'pending'}

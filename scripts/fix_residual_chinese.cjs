@@ -1,10 +1,45 @@
+#!/usr/bin/env node
 // Fix script: re-translates all en values that still contain Chinese characters.
 // For each key where en value has CJK, looks up the zh value and provides full translation.
+//
+// USAGE:
+//   node scripts/fix_residual_chinese.cjs --help
+//   node scripts/fix_residual_chinese.cjs                     # DRY-RUN：只预览哪些 key 会被修 + 数量，不写磁盘
+//   node scripts/fix_residual_chinese.cjs --apply             # 真正写 en/*.json 文件
+//   node scripts/fix_residual_chinese.cjs --ns finance,hrm    # 只处理指定命名空间（逗号分隔）
 const fs = require('fs');
 const path = require('path');
 
-const dir = 'apps/web/src/i18n/locales/';
-const files = ['finance', 'hrm', 'mes', 'ehs', 'srm'];
+// ===== CLI 解析 =====
+function parseArgs(argv) {
+  const opts = { help: false, apply: false, ns: null };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === '--help' || a === '-h') opts.help = true;
+    else if (a === '--apply') opts.apply = true;
+    else if (a === '--ns' && argv[i + 1]) opts.ns = argv[++i].split(',').map((s) => s.trim());
+    else if (a.startsWith('--')) { process.stderr.write(`[fix-residual-chinese] ⚠️  未知参数 ${a}\n`); opts.help = true; }
+  }
+  return opts;
+}
+const USAGE = `
+fix_residual_chinese.cjs — 修正 en 值中仍残留中文的翻译问题（对照 zh 值全量字典替换）
+
+USAGE:
+  node scripts/fix_residual_chinese.cjs [OPTIONS]
+
+OPTIONS:
+  -h, --help            显示帮助并退出
+      --apply           真正写 en/*.json；不传为 DRY-RUN（只打印统计，零副作用）
+      --ns <a,b,c>     只处理命名空间子集，默认处理 finance,hrm,mes,ehs,srm 全部
+
+EXAMPLES:
+  node scripts/fix_residual_chinese.cjs
+  node scripts/fix_residual_chinese.cjs --ns finance --apply
+`;
+
+const DEFAULT_DIR = 'apps/web/src/i18n/locales/';
+const DEFAULT_FILES = ['finance', 'hrm', 'mes', 'ehs', 'srm'];
 
 // Comprehensive full-phrase dictionary: zh → en
 // Organized by domain for clarity
@@ -1041,6 +1076,16 @@ let totalFixed = 0;
 let totalRemaining = 0;
 const stillChinese = new Set();
 
+// ====== 实际入口 ======
+const OPTS = parseArgs(process.argv.slice(2));
+if (OPTS.help) { process.stdout.write(USAGE); process.exit(0); }
+const dir = DEFAULT_DIR;
+const files = OPTS.ns && OPTS.ns.length ? OPTS.ns.filter((n) => DEFAULT_FILES.includes(n)) : DEFAULT_FILES;
+process.stderr.write(
+  `[fix-residual-chinese] ${OPTS.apply ? 'APPLY 写磁盘' : 'DRY-RUN（加 --apply 才写）'}\n` +
+  `[fix-residual-chinese] 命名空间: ${files.join(', ')}\n\n`
+);
+
 for (const f of files) {
   const zhPath = path.resolve(dir + 'zh/' + f + '.json');
   const enPath = path.resolve(dir + 'en/' + f + '.json');
@@ -1057,14 +1102,12 @@ for (const f of files) {
         fix(zhObj[k], enObj[k]);
       } else {
         const enVal = enObj[k];
-        // Fix if en value contains Chinese characters
         if (typeof enVal === 'string' && /[\u4e00-\u9fff]/.test(enVal)) {
           const zhVal = zhObj[k];
           const translated = translateValue(zhVal);
           if (translated !== null && translated !== zhVal) {
             enObj[k] = translated;
             fixed++;
-            // Check if the translation still has Chinese
             if (/[\u4e00-\u9fff]/.test(translated)) {
               stillChinese.add(zhVal);
               remaining++;
@@ -1079,17 +1122,26 @@ for (const f of files) {
   }
 
   fix(zh, en);
-  fs.writeFileSync(enPath, JSON.stringify(en, null, 2) + '\n', 'utf8');
-  console.log(f + '.json: fixed ' + fixed + ', still Chinese: ' + remaining);
+  if (OPTS.apply) {
+    fs.writeFileSync(enPath, JSON.stringify(en, null, 2) + '\n', 'utf8');
+  }
+  const action = OPTS.apply ? 'fixed' : 'would fix';
+  console.log(`${f}.json: ${action} ${fixed}, still Chinese: ${remaining}`);
   totalFixed += fixed;
   totalRemaining += remaining;
 }
 
-console.log('\nTotal fixed: ' + totalFixed);
+const actionTotal = OPTS.apply ? 'Total fixed' : 'Total would fix';
+console.log(`\n${actionTotal}: ${totalFixed}`);
 console.log('Total still with Chinese: ' + totalRemaining);
 if (stillChinese.size > 0 && stillChinese.size <= 50) {
   console.log('\nUntranslated values:');
   for (const v of stillChinese) {
     console.log('  ' + JSON.stringify(v));
   }
+}
+if (!OPTS.apply && totalFixed > 0) {
+  process.stderr.write(
+    `\n[fix-residual-chinese] 💡 当前为 DRY-RUN，加 --apply 才会写 en/*.json 文件。\n`
+  );
 }

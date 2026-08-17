@@ -202,7 +202,11 @@ export const adminModuleConfig: RouteModuleConfig = {
       title: i18n.t('shared.config.k12'),
       titleKey: 'shared.config.k12',
       code: 'admin-plugin',
-      requiredPermissions: ['admin:plugin:read', 'admin:dashboard:read', 'admin:iam:dashboard:approve'],
+      requiredPermissions: [
+        'admin:plugin:read',
+        'admin:dashboard:read',
+        'admin:iam:dashboard:approve',
+      ],
       action: 'read',
       template: 'list',
       group: 'setting',
@@ -282,10 +286,7 @@ export const adminModuleConfig: RouteModuleConfig = {
     },
     {
       path: ADMIN_PATHS.featureFlag,
-      element: lazyWithRetry(
-        () => import('@/pages/system/FeatureFlagPage'),
-        'FeatureFlagPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/system/FeatureFlagPage'), 'FeatureFlagPage'),
       module: 'admin',
       title: i18n.t('shared.config.k18'),
       titleKey: 'shared.config.k18',
@@ -332,10 +333,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       title: i18n.t('shared.config.k21'),
       titleKey: 'shared.config.k21',
       code: 'admin-permission-audit',
-      requiredPermissions: [
-        'admin:audit:read',
-        'admin:dashboard:read',
-      ],
+      requiredPermissions: ['admin:audit:read', 'admin:dashboard:read'],
       action: 'read',
       template: 'list',
       group: 'analytics',

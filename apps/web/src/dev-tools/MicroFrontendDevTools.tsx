@@ -456,7 +456,9 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: `0 4px 12px ${designTokens.colors.secondary[300]}`,
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.dark}, ${designTokens.colors.pink['600']})` },
+              '&:hover': {
+                bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.dark}, ${designTokens.colors.pink['600']})`,
+              },
               minWidth: 'auto',
               px: 2,
             }}
@@ -488,7 +490,9 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: `0 4px 12px ${designTokens.colors.primary[400]}`,
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.dark})` },
+              '&:hover': {
+                bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.dark})`,
+              },
               minWidth: 'auto',
               px: 2,
             }}
@@ -520,7 +524,9 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: `0 4px 12px ${designTokens.colors.success[400]}`,
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.success[700]}, ${designTokens.colors.teal[700]})` },
+              '&:hover': {
+                bgcolor: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.success[700]}, ${designTokens.colors.teal[700]})`,
+              },
               minWidth: 'auto',
               px: 2,
             }}
@@ -552,7 +558,9 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: `0 4px 12px ${designTokens.colors.secondary[400]}`,
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.secondary.dark}, ${designTokens.colors.primary.dark}, ${designTokens.colors.primary.dark})` },
+              '&:hover': {
+                bgcolor: `linear-gradient(135deg, ${designTokens.colors.secondary.dark}, ${designTokens.colors.primary.dark}, ${designTokens.colors.primary.dark})`,
+              },
               minWidth: 'auto',
               px: 2,
             }}
@@ -584,7 +592,9 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: `0 4px 12px ${designTokens.colors.warning[500]}`,
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.warning.dark}, ${designTokens.colors.secondary.dark}, ${designTokens.colors.pink['600']})` },
+              '&:hover': {
+                bgcolor: `linear-gradient(135deg, ${designTokens.colors.warning.dark}, ${designTokens.colors.secondary.dark}, ${designTokens.colors.pink['600']})`,
+              },
               minWidth: 'auto',
               px: 2,
             }}
@@ -616,7 +626,9 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: `0 4px 12px ${designTokens.colors.warning[600]}`,
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.orange['600']}, ${designTokens.colors.error['800']}, ${designTokens.colors.secondary[700]})` },
+              '&:hover': {
+                bgcolor: `linear-gradient(135deg, ${designTokens.colors.orange['600']}, ${designTokens.colors.error['800']}, ${designTokens.colors.secondary[700]})`,
+              },
               minWidth: 'auto',
               px: 2,
             }}
@@ -648,7 +660,9 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: `0 4px 12px ${designTokens.colors.info[500]}`,
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.info['600']}, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.dark})` },
+              '&:hover': {
+                bgcolor: `linear-gradient(135deg, ${designTokens.colors.info['600']}, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.dark})`,
+              },
               minWidth: 'auto',
               px: 2,
             }}
@@ -680,7 +694,9 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: `0 4px 12px ${designTokens.colors.success[400]}`,
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal[700]}, ${designTokens.colors.cyan['700']})` },
+              '&:hover': {
+                bgcolor: `linear-gradient(135deg, ${designTokens.colors.success.dark}, ${designTokens.colors.teal[700]}, ${designTokens.colors.cyan['700']})`,
+              },
               minWidth: 'auto',
               px: 2,
             }}
@@ -712,7 +728,9 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: `0 4px 12px ${designTokens.colors.secondary[400]}`,
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.dark}, ${designTokens.colors.purple['600']})` },
+              '&:hover': {
+                bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.dark}, ${designTokens.colors.purple['600']})`,
+              },
               minWidth: 'auto',
               px: 2,
             }}
@@ -744,7 +762,9 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: `0 4px 12px ${designTokens.colors.cyan[500]}`,
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.cyan['600']}, ${designTokens.colors.cyan['700']}, ${designTokens.colors.cyan[800]})` },
+              '&:hover': {
+                bgcolor: `linear-gradient(135deg, ${designTokens.colors.cyan['600']}, ${designTokens.colors.cyan['700']}, ${designTokens.colors.cyan[800]})`,
+              },
               minWidth: 'auto',
               px: 2,
             }}
@@ -776,7 +796,9 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: `0 4px 12px ${designTokens.colors.secondary[400]}`,
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.secondary.dark}, ${designTokens.colors.primary.dark}, ${designTokens.colors.primary.dark})` },
+              '&:hover': {
+                bgcolor: `linear-gradient(135deg, ${designTokens.colors.secondary.dark}, ${designTokens.colors.primary.dark}, ${designTokens.colors.primary.dark})`,
+              },
               minWidth: 'auto',
               px: 2,
             }}
@@ -808,7 +830,9 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: `0 4px 12px ${designTokens.colors.secondary[300]}`,
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.dark}, ${designTokens.colors.pink['600']})` },
+              '&:hover': {
+                bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.dark}, ${designTokens.colors.pink['600']})`,
+              },
               minWidth: 'auto',
               px: 2,
             }}
@@ -840,7 +864,9 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: `0 4px 12px ${designTokens.colors.error[600]}`,
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.error[700]}, ${designTokens.colors.warning[700]}, ${designTokens.colors.warning[700]})` },
+              '&:hover': {
+                bgcolor: `linear-gradient(135deg, ${designTokens.colors.error[700]}, ${designTokens.colors.warning[700]}, ${designTokens.colors.warning[700]})`,
+              },
               minWidth: 'auto',
               px: 2,
             }}
@@ -872,7 +898,9 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: `0 4px 12px ${designTokens.colors.success[600]}`,
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.success[700]}, ${designTokens.colors.teal[700]}, ${designTokens.colors.cyan[700]})` },
+              '&:hover': {
+                bgcolor: `linear-gradient(135deg, ${designTokens.colors.success[700]}, ${designTokens.colors.teal[700]}, ${designTokens.colors.cyan[700]})`,
+              },
               minWidth: 'auto',
               px: 2,
             }}
@@ -904,7 +932,9 @@ const MicroFrontendDevTools: React.FC = () => {
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: `0 4px 12px ${designTokens.colors.secondary[300]}`,
-              '&:hover': { bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.dark}, ${designTokens.colors.pink['600']})` },
+              '&:hover': {
+                bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.dark}, ${designTokens.colors.secondary.dark}, ${designTokens.colors.pink['600']})`,
+              },
               minWidth: 'auto',
               px: 2,
             }}

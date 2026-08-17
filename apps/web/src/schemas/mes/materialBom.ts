@@ -59,9 +59,21 @@ export const materialBomSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) => {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
           draft: { label: i18n.t('mes.material_bom.k10'), bg: 'grey.100', color: 'text.secondary' },
-          active: { label: i18n.t('mes.material_bom.k11'), bg: 'success.lighter', color: 'success.700' },
-          inactive: { label: i18n.t('mes.material_bom.k12'), bg: 'warning.light', color: 'warning.700' },
-          obsolete: { label: i18n.t('mes.material_bom.k13'), bg: 'error.lighter', color: 'error.dark' },
+          active: {
+            label: i18n.t('mes.material_bom.k11'),
+            bg: 'success.lighter',
+            color: 'success.700',
+          },
+          inactive: {
+            label: i18n.t('mes.material_bom.k12'),
+            bg: 'warning.light',
+            color: 'warning.700',
+          },
+          obsolete: {
+            label: i18n.t('mes.material_bom.k13'),
+            bg: 'error.lighter',
+            color: 'error.dark',
+          },
         };
         const s = statusMap[(row.status as string) || 'draft'] || {
           label: row.status,

@@ -12,15 +12,56 @@ import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { QMS_PATHS } from '@/modules/qms/config';
 import i18n from '@/i18n';
+
 const STEPS = [
-  { id: 'd1', label: i18n.t('pages.qms_eight_d_detail_page.d1_0'), field: 'd1Content', done: 'd1TeamEstablished' },
-  { id: 'd2', label: i18n.t('pages.qms_eight_d_detail_page.d2_1'), field: 'd2Content', done: 'd2ProblemDescribed' },
-  { id: 'd3', label: i18n.t('pages.qms_eight_d_detail_page.d3_2'), field: 'd3Content', done: 'd3ContainmentImplemented' },
-  { id: 'd4', label: i18n.t('pages.qms_eight_d_detail_page.d4_3'), field: 'd4Content', done: 'd4RootCauseIdentified' },
-  { id: 'd5', label: i18n.t('pages.qms_eight_d_detail_page.d5_4'), field: 'd5Content', done: 'd5PermanentActionSelected' },
-  { id: 'd6', label: i18n.t('pages.qms_eight_d_detail_page.d6_5'), field: 'd6Content', done: 'd6ActionVerified' },
-  { id: 'd7', label: i18n.t('pages.qms_eight_d_detail_page.d7_6'), field: 'd7Content', done: 'd7PreventiveImplemented' },
-  { id: 'd8', label: i18n.t('pages.qms_eight_d_detail_page.d8_7'), field: 'd8Content', done: 'd8TeamRecognized' },
+  {
+    id: 'd1',
+    label: i18n.t('pages.qms_eight_d_detail_page.d1_0'),
+    field: 'd1Content',
+    done: 'd1TeamEstablished',
+  },
+  {
+    id: 'd2',
+    label: i18n.t('pages.qms_eight_d_detail_page.d2_1'),
+    field: 'd2Content',
+    done: 'd2ProblemDescribed',
+  },
+  {
+    id: 'd3',
+    label: i18n.t('pages.qms_eight_d_detail_page.d3_2'),
+    field: 'd3Content',
+    done: 'd3ContainmentImplemented',
+  },
+  {
+    id: 'd4',
+    label: i18n.t('pages.qms_eight_d_detail_page.d4_3'),
+    field: 'd4Content',
+    done: 'd4RootCauseIdentified',
+  },
+  {
+    id: 'd5',
+    label: i18n.t('pages.qms_eight_d_detail_page.d5_4'),
+    field: 'd5Content',
+    done: 'd5PermanentActionSelected',
+  },
+  {
+    id: 'd6',
+    label: i18n.t('pages.qms_eight_d_detail_page.d6_5'),
+    field: 'd6Content',
+    done: 'd6ActionVerified',
+  },
+  {
+    id: 'd7',
+    label: i18n.t('pages.qms_eight_d_detail_page.d7_6'),
+    field: 'd7Content',
+    done: 'd7PreventiveImplemented',
+  },
+  {
+    id: 'd8',
+    label: i18n.t('pages.qms_eight_d_detail_page.d8_7'),
+    field: 'd8Content',
+    done: 'd8TeamRecognized',
+  },
 ] as const;
 const SEVERITY_LABELS: Record<string, string> = {
   critical: i18n.t('qms.qms_eight_d_detail_page.k0'),
@@ -71,7 +112,9 @@ export default function QmsEightDDetailPage() {
         />
       </div>
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>{i18n.t('qms.qms_eight_d_detail_page.k4')}</p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>
+          {i18n.t('qms.qms_eight_d_detail_page.k4')}
+        </p>
         <FSMActionButtons
           fsm='eight_d'
           currentStatus={report.status}
@@ -149,7 +192,11 @@ export default function QmsEightDDetailPage() {
                             : 'bg-gray-100 text-gray-500'
                       }`}
                     >
-                      {isDone ? i18n.t('qms.qms_eight_d_detail_page.k16') : isCurrent ? i18n.t('qms.qms_eight_d_detail_page.k15') : i18n.t('qms.qms_eight_d_detail_page.k14')}
+                      {isDone
+                        ? i18n.t('qms.qms_eight_d_detail_page.k16')
+                        : isCurrent
+                          ? i18n.t('qms.qms_eight_d_detail_page.k15')
+                          : i18n.t('qms.qms_eight_d_detail_page.k14')}
                     </span>
                   </div>
                   {content && <p className='mt-2 text-sm text-gray-700'>{content}</p>}

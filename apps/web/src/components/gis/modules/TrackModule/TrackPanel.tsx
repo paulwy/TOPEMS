@@ -404,7 +404,8 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                         bgcolor: 'grey.50',
                       }}
                     >
-                      {i18n.t('components.track_panel.50_0')} {currentTrack.points.length} {i18n.t('components.track_panel.k1')}
+                      {i18n.t('components.track_panel.50_0')} {currentTrack.points.length}{' '}
+                      {i18n.t('components.track_panel.k1')}
                     </Box>
                   )}
                 </Box>

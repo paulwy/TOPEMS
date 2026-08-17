@@ -19,10 +19,26 @@ const selectionActions: Array<{
   label: string;
   icon: React.ReactNode;
 }> = [
-  { intent: 'explain', label: i18n.t('ai.ai_selection_bubble.k0'), icon: <Sparkles style={{ width: 14, height: 14 }} /> },
-  { intent: 'summarize', label: i18n.t('ai.ai_selection_bubble.k1'), icon: <FileText style={{ width: 14, height: 14 }} /> },
-  { intent: 'rewrite', label: i18n.t('ai.ai_selection_bubble.k2'), icon: <FileEdit style={{ width: 14, height: 14 }} /> },
-  { intent: 'todo', label: i18n.t('ai.ai_selection_bubble.k3'), icon: <CheckSquare style={{ width: 14, height: 14 }} /> },
+  {
+    intent: 'explain',
+    label: i18n.t('ai.ai_selection_bubble.k0'),
+    icon: <Sparkles style={{ width: 14, height: 14 }} />,
+  },
+  {
+    intent: 'summarize',
+    label: i18n.t('ai.ai_selection_bubble.k1'),
+    icon: <FileText style={{ width: 14, height: 14 }} />,
+  },
+  {
+    intent: 'rewrite',
+    label: i18n.t('ai.ai_selection_bubble.k2'),
+    icon: <FileEdit style={{ width: 14, height: 14 }} />,
+  },
+  {
+    intent: 'todo',
+    label: i18n.t('ai.ai_selection_bubble.k3'),
+    icon: <CheckSquare style={{ width: 14, height: 14 }} />,
+  },
 ];
 
 function isEditableElement(node: Node | null): boolean {
@@ -38,7 +54,11 @@ export const AISelectionBubble: React.FC<AISelectionBubbleProps> = ({ onAction }
     const activeSelection = window.getSelection();
     const selectedText = activeSelection?.toString().trim() || '';
 
-    if (!activeSelection || selectedText.length < 2 || isEditableElement(activeSelection.anchorNode)) {
+    if (
+      !activeSelection ||
+      selectedText.length < 2 ||
+      isEditableElement(activeSelection.anchorNode)
+    ) {
       setSelection(null);
       return;
     }

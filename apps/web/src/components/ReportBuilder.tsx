@@ -25,18 +25,102 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
   const [step, setStep] = useState(1);
 
   const defaultColumns: Record<string, string[]> = {
-    rs_project_progress: [i18n.t('components.report_builder.k5'), i18n.t('components.report_builder.k4'), i18n.t('components.report_builder.k3'), i18n.t('components.report_builder.k2'), i18n.t('components.report_builder.k1'), i18n.t('components.report_builder.k0')],
-    rs_experiment_record: [i18n.t('components.report_builder.k11'), i18n.t('components.report_builder.k10'), i18n.t('components.report_builder.k9'), i18n.t('components.report_builder.k8'), i18n.t('components.report_builder.k7'), i18n.t('components.report_builder.k6')],
-    lims_inspection_stats: [i18n.t('components.report_builder.k17'), i18n.t('components.report_builder.k16'), i18n.t('components.report_builder.k15'), i18n.t('components.report_builder.k14'), i18n.t('components.report_builder.k13'), i18n.t('components.report_builder.k12')],
-    lims_sample_summary: [i18n.t('components.report_builder.k23'), i18n.t('components.report_builder.k22'), i18n.t('components.report_builder.k21'), i18n.t('components.report_builder.k20'), i18n.t('components.report_builder.k19'), i18n.t('components.report_builder.k18')],
-    qms_quality_analysis: [i18n.t('components.report_builder.k29'), i18n.t('components.report_builder.k28'), i18n.t('components.report_builder.k27'), i18n.t('components.report_builder.k26'), i18n.t('components.report_builder.k25'), i18n.t('components.report_builder.k24')],
-    qms_defect_stats: [i18n.t('components.report_builder.k35'), i18n.t('components.report_builder.k34'), i18n.t('components.report_builder.k33'), i18n.t('components.report_builder.k32'), i18n.t('components.report_builder.k31'), i18n.t('components.report_builder.k30')],
-    ehs_safety_check: [i18n.t('components.report_builder.k41'), i18n.t('components.report_builder.k40'), i18n.t('components.report_builder.k39'), i18n.t('components.report_builder.k38'), i18n.t('components.report_builder.k37'), i18n.t('components.report_builder.k36')],
-    ehs_risk_assessment: [i18n.t('components.report_builder.k47'), i18n.t('components.report_builder.k46'), i18n.t('components.report_builder.k45'), i18n.t('components.report_builder.k44'), i18n.t('components.report_builder.k43'), i18n.t('components.report_builder.k42')],
-    srm_supplier_eval: [i18n.t('components.report_builder.k53'), i18n.t('components.report_builder.k52'), i18n.t('components.report_builder.k51'), i18n.t('components.report_builder.k50'), i18n.t('components.report_builder.k49'), i18n.t('components.report_builder.k48')],
-    srm_purchase_stats: [i18n.t('components.report_builder.k59'), i18n.t('components.report_builder.k58'), i18n.t('components.report_builder.k57'), i18n.t('components.report_builder.k56'), i18n.t('components.report_builder.k55'), i18n.t('components.report_builder.k54')],
-    pdm_production_stats: [i18n.t('components.report_builder.k65'), i18n.t('components.report_builder.k64'), i18n.t('components.report_builder.k63'), i18n.t('components.report_builder.k62'), i18n.t('components.report_builder.k61'), i18n.t('components.report_builder.k60')],
-    pdm_process_summary: [i18n.t('components.report_builder.k71'), i18n.t('components.report_builder.k70'), i18n.t('components.report_builder.k69'), i18n.t('components.report_builder.k68'), i18n.t('components.report_builder.k67'), i18n.t('components.report_builder.k66')],
+    rs_project_progress: [
+      i18n.t('components.report_builder.k5'),
+      i18n.t('components.report_builder.k4'),
+      i18n.t('components.report_builder.k3'),
+      i18n.t('components.report_builder.k2'),
+      i18n.t('components.report_builder.k1'),
+      i18n.t('components.report_builder.k0'),
+    ],
+    rs_experiment_record: [
+      i18n.t('components.report_builder.k11'),
+      i18n.t('components.report_builder.k10'),
+      i18n.t('components.report_builder.k9'),
+      i18n.t('components.report_builder.k8'),
+      i18n.t('components.report_builder.k7'),
+      i18n.t('components.report_builder.k6'),
+    ],
+    lims_inspection_stats: [
+      i18n.t('components.report_builder.k17'),
+      i18n.t('components.report_builder.k16'),
+      i18n.t('components.report_builder.k15'),
+      i18n.t('components.report_builder.k14'),
+      i18n.t('components.report_builder.k13'),
+      i18n.t('components.report_builder.k12'),
+    ],
+    lims_sample_summary: [
+      i18n.t('components.report_builder.k23'),
+      i18n.t('components.report_builder.k22'),
+      i18n.t('components.report_builder.k21'),
+      i18n.t('components.report_builder.k20'),
+      i18n.t('components.report_builder.k19'),
+      i18n.t('components.report_builder.k18'),
+    ],
+    qms_quality_analysis: [
+      i18n.t('components.report_builder.k29'),
+      i18n.t('components.report_builder.k28'),
+      i18n.t('components.report_builder.k27'),
+      i18n.t('components.report_builder.k26'),
+      i18n.t('components.report_builder.k25'),
+      i18n.t('components.report_builder.k24'),
+    ],
+    qms_defect_stats: [
+      i18n.t('components.report_builder.k35'),
+      i18n.t('components.report_builder.k34'),
+      i18n.t('components.report_builder.k33'),
+      i18n.t('components.report_builder.k32'),
+      i18n.t('components.report_builder.k31'),
+      i18n.t('components.report_builder.k30'),
+    ],
+    ehs_safety_check: [
+      i18n.t('components.report_builder.k41'),
+      i18n.t('components.report_builder.k40'),
+      i18n.t('components.report_builder.k39'),
+      i18n.t('components.report_builder.k38'),
+      i18n.t('components.report_builder.k37'),
+      i18n.t('components.report_builder.k36'),
+    ],
+    ehs_risk_assessment: [
+      i18n.t('components.report_builder.k47'),
+      i18n.t('components.report_builder.k46'),
+      i18n.t('components.report_builder.k45'),
+      i18n.t('components.report_builder.k44'),
+      i18n.t('components.report_builder.k43'),
+      i18n.t('components.report_builder.k42'),
+    ],
+    srm_supplier_eval: [
+      i18n.t('components.report_builder.k53'),
+      i18n.t('components.report_builder.k52'),
+      i18n.t('components.report_builder.k51'),
+      i18n.t('components.report_builder.k50'),
+      i18n.t('components.report_builder.k49'),
+      i18n.t('components.report_builder.k48'),
+    ],
+    srm_purchase_stats: [
+      i18n.t('components.report_builder.k59'),
+      i18n.t('components.report_builder.k58'),
+      i18n.t('components.report_builder.k57'),
+      i18n.t('components.report_builder.k56'),
+      i18n.t('components.report_builder.k55'),
+      i18n.t('components.report_builder.k54'),
+    ],
+    pdm_production_stats: [
+      i18n.t('components.report_builder.k65'),
+      i18n.t('components.report_builder.k64'),
+      i18n.t('components.report_builder.k63'),
+      i18n.t('components.report_builder.k62'),
+      i18n.t('components.report_builder.k61'),
+      i18n.t('components.report_builder.k60'),
+    ],
+    pdm_process_summary: [
+      i18n.t('components.report_builder.k71'),
+      i18n.t('components.report_builder.k70'),
+      i18n.t('components.report_builder.k69'),
+      i18n.t('components.report_builder.k68'),
+      i18n.t('components.report_builder.k67'),
+      i18n.t('components.report_builder.k66'),
+    ],
   };
 
   const handleReportTypeChange = (type: ReportType) => {
@@ -178,7 +262,9 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
             <h3 style={{ fontSize: 20, fontWeight: 600, color: 'var(--mui-palette-text-primary)' }}>
               {i18n.t('components.report_builder.k1')}
             </h3>
-            <p style={{ fontSize: 14, color: 'grey.600', marginTop: 4 }}>{i18n.t('components.report_builder.k75')}</p>
+            <p style={{ fontSize: 14, color: 'grey.600', marginTop: 4 }}>
+              {i18n.t('components.report_builder.k75')}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -227,7 +313,9 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
               >
                 {step > 1 ? <CheckCircle style={{ width: 20, height: 20 }} /> : '1'}
               </div>
-              <span style={{ marginLeft: 8, fontWeight: 500 }}>{i18n.t('components.report_builder.k76')}</span>
+              <span style={{ marginLeft: 8, fontWeight: 500 }}>
+                {i18n.t('components.report_builder.k76')}
+              </span>
             </div>
             <div style={{ flex: 1, height: 2, backgroundColor: 'var(--mui-palette-divider)' }}>
               <div
@@ -263,7 +351,9 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
               >
                 {step > 2 ? <CheckCircle style={{ width: 20, height: 20 }} /> : '2'}
               </div>
-              <span style={{ marginLeft: 8, fontWeight: 500 }}>{i18n.t('components.report_builder.k77')}</span>
+              <span style={{ marginLeft: 8, fontWeight: 500 }}>
+                {i18n.t('components.report_builder.k77')}
+              </span>
             </div>
             <div style={{ flex: 1, height: 2, backgroundColor: 'var(--mui-palette-divider)' }}>
               <div
@@ -299,7 +389,9 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
               >
                 3
               </div>
-              <span style={{ marginLeft: 8, fontWeight: 500 }}>{i18n.t('components.report_builder.k78')}</span>
+              <span style={{ marginLeft: 8, fontWeight: 500 }}>
+                {i18n.t('components.report_builder.k78')}
+              </span>
             </div>
           </div>
         </div>
@@ -574,7 +666,8 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                           color: theme.palette.grey[700],
                         }}
                       >
-                        {i18n.t('components.report_builder.k2')}{selectedColumns.length} {i18n.t('components.report_builder.k3')}
+                        {i18n.t('components.report_builder.k2')}
+                        {selectedColumns.length} {i18n.t('components.report_builder.k3')}
                       </label>
                       <div style={{ display: 'flex', gap: 8 }}>
                         <button
@@ -755,7 +848,9 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
               cursor: 'pointer',
             }}
           >
-            {step === 1 ? i18n.t('components.report_builder.k82') : i18n.t('components.report_builder.k81')}
+            {step === 1
+              ? i18n.t('components.report_builder.k82')
+              : i18n.t('components.report_builder.k81')}
           </button>
           <button
             onClick={step === 3 ? handleCreate : () => setStep(step + 1)}

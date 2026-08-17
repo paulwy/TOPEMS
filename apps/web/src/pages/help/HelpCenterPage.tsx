@@ -36,7 +36,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
@@ -48,7 +47,13 @@ const HELP_CATEGORIES = [
     icon: Rocket,
     color: 'primary',
     count: 5,
-    items: [i18n.t('help.help_center_page.k6'), i18n.t('help.help_center_page.k5'), i18n.t('help.help_center_page.k4'), i18n.t('help.help_center_page.k3'), i18n.t('help.help_center_page.k2')],
+    items: [
+      i18n.t('help.help_center_page.k6'),
+      i18n.t('help.help_center_page.k5'),
+      i18n.t('help.help_center_page.k4'),
+      i18n.t('help.help_center_page.k3'),
+      i18n.t('help.help_center_page.k2'),
+    ],
   },
   {
     id: 'hrm',
@@ -57,7 +62,13 @@ const HELP_CATEGORIES = [
     icon: Users,
     color: 'success',
     count: 8,
-    items: [i18n.t('help.help_center_page.k13'), i18n.t('help.help_center_page.k12'), i18n.t('help.help_center_page.k11'), i18n.t('help.help_center_page.k10'), i18n.t('help.help_center_page.k9')],
+    items: [
+      i18n.t('help.help_center_page.k13'),
+      i18n.t('help.help_center_page.k12'),
+      i18n.t('help.help_center_page.k11'),
+      i18n.t('help.help_center_page.k10'),
+      i18n.t('help.help_center_page.k9'),
+    ],
   },
   {
     id: 'finance',
@@ -66,7 +77,13 @@ const HELP_CATEGORIES = [
     icon: FileText,
     color: 'warning',
     count: 12,
-    items: [i18n.t('help.help_center_page.k20'), i18n.t('help.help_center_page.k19'), i18n.t('help.help_center_page.k18'), i18n.t('help.help_center_page.k17'), i18n.t('help.help_center_page.k16')],
+    items: [
+      i18n.t('help.help_center_page.k20'),
+      i18n.t('help.help_center_page.k19'),
+      i18n.t('help.help_center_page.k18'),
+      i18n.t('help.help_center_page.k17'),
+      i18n.t('help.help_center_page.k16'),
+    ],
   },
   {
     id: 'workflow',
@@ -75,7 +92,13 @@ const HELP_CATEGORIES = [
     icon: Clock,
     color: 'info',
     count: 6,
-    items: [i18n.t('help.help_center_page.k27'), i18n.t('help.help_center_page.k26'), i18n.t('help.help_center_page.k25'), i18n.t('help.help_center_page.k24'), i18n.t('help.help_center_page.k23')],
+    items: [
+      i18n.t('help.help_center_page.k27'),
+      i18n.t('help.help_center_page.k26'),
+      i18n.t('help.help_center_page.k25'),
+      i18n.t('help.help_center_page.k24'),
+      i18n.t('help.help_center_page.k23'),
+    ],
   },
   {
     id: 'security',
@@ -84,7 +107,12 @@ const HELP_CATEGORIES = [
     icon: Shield,
     color: 'error',
     count: 4,
-    items: [i18n.t('help.help_center_page.k33'), i18n.t('help.help_center_page.k32'), i18n.t('help.help_center_page.k31'), i18n.t('help.help_center_page.k30')],
+    items: [
+      i18n.t('help.help_center_page.k33'),
+      i18n.t('help.help_center_page.k32'),
+      i18n.t('help.help_center_page.k31'),
+      i18n.t('help.help_center_page.k30'),
+    ],
   },
   {
     id: 'ai',
@@ -93,7 +121,11 @@ const HELP_CATEGORIES = [
     icon: MessageCircle,
     color: 'secondary',
     count: 3,
-    items: [i18n.t('pages.help_center_page.ai_2'), i18n.t('help.help_center_page.k35'), i18n.t('help.help_center_page.k34')],
+    items: [
+      i18n.t('pages.help_center_page.ai_2'),
+      i18n.t('help.help_center_page.k35'),
+      i18n.t('help.help_center_page.k34'),
+    ],
   },
 ];
 
@@ -292,7 +324,8 @@ export const HelpCenterPage: React.FC = () => {
                             '&:hover': { textDecoration: 'underline' },
                           }}
                         >
-                          {i18n.t('pages.help_center_page.k0')} {category.count} {i18n.t('pages.help_center_page.k1')}
+                          {i18n.t('pages.help_center_page.k0')} {category.count}{' '}
+                          {i18n.t('pages.help_center_page.k1')}
                         </Typography>
                       )}
                     </Stack>

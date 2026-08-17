@@ -23,7 +23,8 @@ export default function WmsInventoryMovementDetailPage() {
     return ['SN-2024A001', 'SN-2024A002', 'SN-2024A003'];
   }, [move]);
 
-  if (!move) return <div className='p-8'>{i18n.t('pages.wms_inventory_movement_detail_page.k0')}</div>;
+  if (!move)
+    return <div className='p-8'>{i18n.t('pages.wms_inventory_movement_detail_page.k0')}</div>;
 
   const sourceLoc = move.source_location_code ?? 'A-01-01';
   const targetLoc = move.target_location_code ?? 'B-02-05';
@@ -35,8 +36,16 @@ export default function WmsInventoryMovementDetailPage() {
     <div className='space-y-4 p-4'>
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <div>
-          <h1 className='text-2xl font-bold'>{i18n.t('wms:wms_inventory_movement_detail_page.v0_5', { v0: (move.movement_number) })}</h1>
-          <p className='text-sm text-gray-500'>{i18n.t('wms:wms_inventory_movement_detail_page.k4', { v0: (i18n.t('pages.wms_inventory_movement_detail_page.k1')), v1: (move.movement_type ?? i18n.t('pages.wms_inventory_movement_detail_page.k0')), v2: (move.created_at.slice(0, 10)) })}</p>
+          <h1 className='text-2xl font-bold'>
+            {i18n.t('wms:wms_inventory_movement_detail_page.v0_5', { v0: move.movement_number })}
+          </h1>
+          <p className='text-sm text-gray-500'>
+            {i18n.t('wms:wms_inventory_movement_detail_page.k4', {
+              v0: i18n.t('pages.wms_inventory_movement_detail_page.k1'),
+              v1: move.movement_type ?? i18n.t('pages.wms_inventory_movement_detail_page.k0'),
+              v2: move.created_at.slice(0, 10),
+            })}
+          </p>
         </div>
         <WmsStatusBadge
           fsm='movement'
@@ -47,9 +56,13 @@ export default function WmsInventoryMovementDetailPage() {
       <div className='rounded-lg border p-6'>
         <div className='flex flex-wrap items-center justify-around gap-4'>
           <div className='text-center p-4 rounded-lg bg-amber-50 border border-amber-200 min-w-[180px]'>
-            <p className='text-xs text-amber-700'>{i18n.t('pages.wms_inventory_movement_detail_page.k1')}</p>
+            <p className='text-xs text-amber-700'>
+              {i18n.t('pages.wms_inventory_movement_detail_page.k1')}
+            </p>
             <p className='text-lg font-bold text-amber-800 font-mono mt-1'>{sourceLoc}</p>
-            <p className='text-xs text-gray-500 mt-1'>{i18n.t('wms:wms_inventory_movement_detail_page.v0_3', { v0: (warehouse) })}</p>
+            <p className='text-xs text-gray-500 mt-1'>
+              {i18n.t('wms:wms_inventory_movement_detail_page.v0_3', { v0: warehouse })}
+            </p>
           </div>
 
           <div className='flex items-center justify-center'>
@@ -60,38 +73,52 @@ export default function WmsInventoryMovementDetailPage() {
           </div>
 
           <div className='text-center p-4 rounded-lg bg-blue-50 border border-blue-200 min-w-[180px]'>
-            <p className='text-xs text-blue-700'>{i18n.t('pages.wms_inventory_movement_detail_page.k2')}</p>
+            <p className='text-xs text-blue-700'>
+              {i18n.t('pages.wms_inventory_movement_detail_page.k2')}
+            </p>
             <p className='text-lg font-bold text-blue-800 font-mono mt-1'>{targetLoc}</p>
-            <p className='text-xs text-gray-500 mt-1'>{i18n.t('wms:wms_inventory_movement_detail_page.v0_2', { v0: (warehouse) })}</p>
+            <p className='text-xs text-gray-500 mt-1'>
+              {i18n.t('wms:wms_inventory_movement_detail_page.v0_2', { v0: warehouse })}
+            </p>
           </div>
         </div>
       </div>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('wms:wms_inventory_movement_detail_page.k1')}</p>
+          <p className='text-sm text-gray-600'>
+            {i18n.t('wms:wms_inventory_movement_detail_page.k1')}
+          </p>
           <p className='mt-1 font-mono font-semibold'>{matCode}</p>
           <p className='text-sm text-gray-600'>{matName}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_inventory_movement_detail_page.k3')}</p>
+          <p className='text-sm text-gray-600'>
+            {i18n.t('pages.wms_inventory_movement_detail_page.k3')}
+          </p>
           <p className='mt-1 text-2xl font-bold text-blue-600'>
             {move.quantity ?? move.total_quantity ?? 0}
           </p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_inventory_movement_detail_page.k4')}</p>
+          <p className='text-sm text-gray-600'>
+            {i18n.t('pages.wms_inventory_movement_detail_page.k4')}
+          </p>
           <p className='mt-1 font-mono font-semibold'>{move.batch_number ?? 'B202410-001'}</p>
         </div>
         <div className='rounded-lg border p-4'>
-          <p className='text-sm text-gray-600'>{i18n.t('pages.wms_inventory_movement_detail_page.k5')}</p>
+          <p className='text-sm text-gray-600'>
+            {i18n.t('pages.wms_inventory_movement_detail_page.k5')}
+          </p>
           <p className='mt-1 text-2xl font-bold text-purple-600'>{serials.length}</p>
         </div>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_inventory_movement_detail_page.k6')}</h3>
+          <h3 className='mb-2 font-semibold'>
+            {i18n.t('pages.wms_inventory_movement_detail_page.k6')}
+          </h3>
           <div className='flex flex-wrap gap-2'>
             {serials.map((sn, i) => (
               <span
@@ -105,7 +132,9 @@ export default function WmsInventoryMovementDetailPage() {
         </div>
 
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>{i18n.t('pages.wms_inventory_movement_detail_page.k7')}</h3>
+          <h3 className='mb-2 font-semibold'>
+            {i18n.t('pages.wms_inventory_movement_detail_page.k7')}
+          </h3>
           <ol className='relative border-l border-gray-200 ml-3 space-y-3'>
             {[
               {
@@ -138,7 +167,11 @@ export default function WmsInventoryMovementDetailPage() {
                   />
                   <div className='text-xs text-gray-500'>{e.t?.slice(0, 19).replace('T', ' ')}</div>
                   <div className='text-sm font-medium'>{e.title}</div>
-                  <div className='text-xs text-gray-600'>{i18n.t('wms:wms_inventory_movement_detail_page.v0_0', { v0: (e.who ?? 'system') })}</div>
+                  <div className='text-xs text-gray-600'>
+                    {i18n.t('wms:wms_inventory_movement_detail_page.v0_0', {
+                      v0: e.who ?? 'system',
+                    })}
+                  </div>
                 </li>
               ))}
           </ol>

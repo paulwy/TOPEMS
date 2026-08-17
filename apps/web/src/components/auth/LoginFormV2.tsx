@@ -133,7 +133,9 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
                 {i18n.t('components.login_form_v2.k2')}
               </Box>
               <Box sx={{ fontSize: '1.5rem', fontWeight: 600, pt: 2 }}>
-                {isRegister ? i18n.t('components.login_form_v2.k11') : i18n.t('components.login_form_v2.k10')}
+                {isRegister
+                  ? i18n.t('components.login_form_v2.k11')
+                  : i18n.t('components.login_form_v2.k10')}
               </Box>
             </Box>
           }
@@ -156,7 +158,9 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
                     placeholder={i18n.t('components.login_form_v2.k13')}
                     size='small'
                     error={!!fieldState.error}
-                    helperText={fieldState.error?.message || i18n.t('components.login_form_v2.20_14')}
+                    helperText={
+                      fieldState.error?.message || i18n.t('components.login_form_v2.20_14')
+                    }
                   />
                 </FormControl>
               )}
@@ -240,8 +244,12 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
                       size='small'
                     />
                     <Box>
-                      <FormLabel sx={{ fontSize: '0.875rem', cursor: 'pointer' }}>{i18n.t('components.login_form_v2.k19')}</FormLabel>
-                      <FormHelperText sx={{ m: 0 }}>{i18n.t('components.login_form_v2.k20')}</FormHelperText>
+                      <FormLabel sx={{ fontSize: '0.875rem', cursor: 'pointer' }}>
+                        {i18n.t('components.login_form_v2.k19')}
+                      </FormLabel>
+                      <FormHelperText sx={{ m: 0 }}>
+                        {i18n.t('components.login_form_v2.k20')}
+                      </FormHelperText>
                     </Box>
                   </Box>
                 )}
@@ -255,7 +263,11 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
               disabled={loading}
               sx={{ width: '100%' }}
             >
-              {loading ? i18n.t('components.login_form_v2.k3') : isRegister ? i18n.t('components.login_form_v2.k22') : i18n.t('components.login_form_v2.k21')}
+              {loading
+                ? i18n.t('components.login_form_v2.k3')
+                : isRegister
+                  ? i18n.t('components.login_form_v2.k22')
+                  : i18n.t('components.login_form_v2.k21')}
             </Button>
           </Box>
         </CardContent>
@@ -283,7 +295,9 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
                 '&:hover': { textDecoration: 'underline' },
               }}
             >
-              {isRegister ? i18n.t('components.login_form_v2.k24') : i18n.t('components.login_form_v2.k23')}
+              {isRegister
+                ? i18n.t('components.login_form_v2.k24')
+                : i18n.t('components.login_form_v2.k23')}
             </Box>
           </Box>
 
@@ -304,7 +318,8 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
                   textAlign: 'center',
                 }}
               >
-                [i18n.t('components.login_form_v2.k4')]: admin / admin123 (管理员) | user / user123 (普通员工)
+                [i18n.t('components.login_form_v2.k4')]: admin / admin123 ({i18n.t('components.login_form_v2.k29')}) | user / user123
+                ({i18n.t('components.login_form_v2.k28')})
               </Box>
             </Box>
           )}

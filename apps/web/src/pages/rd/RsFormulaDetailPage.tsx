@@ -24,8 +24,9 @@ import { formulaApi } from '@/api/rd';
 import { PageContainer } from '@/components/common';
 import type { Formula, FormulaVersion } from '@/api/rd';
 import { useNotificationStore } from '@/store';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
+
 const RsFormulaDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -41,8 +42,9 @@ const RsFormulaDetailPage: React.FC = () => {
       return response.data;
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const versionsQuery = useQuery({
     queryKey: QUERY_KEYS.RD.FORMULA_VERSIONS(id || ''),
     queryFn: async () => {
@@ -53,8 +55,9 @@ const RsFormulaDetailPage: React.FC = () => {
       return response.data;
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const approveMutation = useMutation({
     mutationFn: async (formulaId: string) => {
       const response = await formulaApi.approveFormula(formulaId);
@@ -65,10 +68,11 @@ const RsFormulaDetailPage: React.FC = () => {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(QUERY_KEYS.RD.FORMULA(id || ''), data);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.FORMULA_VERSIONS(id || '') ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.RD.FORMULA_VERSIONS(id || ''),
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: i18n.t('rd.rs_formula_detail_page.k3'),

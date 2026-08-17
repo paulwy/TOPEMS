@@ -144,13 +144,16 @@ const PRESET_PLUGINS: Plugin[] = [
   {
     plugin_id: 'log-enhancer',
     name: i18n.t('microfrontend.plugin-market.k0'),
-    description:
-      i18n.t('microfrontend.plugin-market.k1'),
+    description: i18n.t('microfrontend.plugin-market.k1'),
     version: '2.4.1',
     author: 'TOPEMS Team',
     author_url: 'https://github.com/topems',
     category: PluginCategory.DEVTOOL,
-    tags: [i18n.t('microfrontend.plugin-market.k4'), i18n.t('microfrontend.plugin-market.k3'), i18n.t('microfrontend.plugin-market.k2')],
+    tags: [
+      i18n.t('microfrontend.plugin-market.k4'),
+      i18n.t('microfrontend.plugin-market.k3'),
+      i18n.t('microfrontend.plugin-market.k2'),
+    ],
     dependencies: [],
     permissions: ['log:read', 'log:write'],
     versions: [
@@ -198,7 +201,13 @@ const PRESET_PLUGINS: Plugin[] = [
     updated_at: Date.now() - DAY_MS * 2,
     size_kb: 120,
     icon: 'file-text',
-    keywords: ['log', 'logger', 'debug', i18n.t('microfrontend.plugin-market.k9'), i18n.t('microfrontend.plugin-market.k8')],
+    keywords: [
+      'log',
+      'logger',
+      'debug',
+      i18n.t('microfrontend.plugin-market.k9'),
+      i18n.t('microfrontend.plugin-market.k8'),
+    ],
   },
   {
     plugin_id: 'perf-monitor',
@@ -207,7 +216,12 @@ const PRESET_PLUGINS: Plugin[] = [
     version: '3.2.0',
     author: 'TOPEMS Team',
     category: PluginCategory.ANALYTICS,
-    tags: [i18n.t('microfrontend.plugin-market.k14'), i18n.t('microfrontend.plugin-market.k13'), 'FPS', i18n.t('microfrontend.plugin-market.k12')],
+    tags: [
+      i18n.t('microfrontend.plugin-market.k14'),
+      i18n.t('microfrontend.plugin-market.k13'),
+      'FPS',
+      i18n.t('microfrontend.plugin-market.k12'),
+    ],
     dependencies: [
       {
         plugin_id: 'perf-monitor',
@@ -252,17 +266,27 @@ const PRESET_PLUGINS: Plugin[] = [
     updated_at: Date.now() - DAY_MS * 5,
     size_kb: 256,
     icon: 'activity',
-    keywords: ['performance', 'fps', 'memory', 'flamegraph', i18n.t('microfrontend.plugin-market.k17')],
+    keywords: [
+      'performance',
+      'fps',
+      'memory',
+      'flamegraph',
+      i18n.t('microfrontend.plugin-market.k17'),
+    ],
   },
   {
     plugin_id: 'theme-pack-pro',
     name: i18n.t('microfrontend.plugin-market.pro_18'),
-    description:
-      i18n.t('microfrontend.plugin-market.k2'),
+    description: i18n.t('microfrontend.plugin-market.k2'),
     version: '4.1.0',
     author: 'Design Studio',
     category: PluginCategory.THEME,
-    tags: [i18n.t('microfrontend.plugin-market.k21'), i18n.t('microfrontend.plugin-market.k20'), 'Material', i18n.t('microfrontend.plugin-market.k19')],
+    tags: [
+      i18n.t('microfrontend.plugin-market.k21'),
+      i18n.t('microfrontend.plugin-market.k20'),
+      'Material',
+      i18n.t('microfrontend.plugin-market.k19'),
+    ],
     dependencies: [],
     permissions: ['theme:apply'],
     versions: [
@@ -300,17 +324,26 @@ const PRESET_PLUGINS: Plugin[] = [
     updated_at: Date.now() - DAY_MS * 7,
     size_kb: 480,
     icon: 'palette',
-    keywords: ['theme', 'dark', 'material', i18n.t('microfrontend.plugin-market.k25'), i18n.t('microfrontend.plugin-market.k24')],
+    keywords: [
+      'theme',
+      'dark',
+      'material',
+      i18n.t('microfrontend.plugin-market.k25'),
+      i18n.t('microfrontend.plugin-market.k24'),
+    ],
   },
   {
     plugin_id: 'form-validator',
     name: i18n.t('microfrontend.plugin-market.k26'),
-    description:
-      i18n.t('microfrontend.plugin-market.k4'),
+    description: i18n.t('microfrontend.plugin-market.k4'),
     version: '2.0.3',
     author: 'TOPEMS Team',
     category: PluginCategory.UI,
-    tags: [i18n.t('microfrontend.plugin-market.k29'), i18n.t('microfrontend.plugin-market.k28'), i18n.t('microfrontend.plugin-market.k27')],
+    tags: [
+      i18n.t('microfrontend.plugin-market.k29'),
+      i18n.t('microfrontend.plugin-market.k28'),
+      i18n.t('microfrontend.plugin-market.k27'),
+    ],
     dependencies: [],
     permissions: [],
     versions: [
@@ -348,7 +381,13 @@ const PRESET_PLUGINS: Plugin[] = [
     updated_at: Date.now() - DAY_MS * 3,
     size_kb: 88,
     icon: 'check-circle',
-    keywords: ['form', 'validation', 'validate', i18n.t('microfrontend.plugin-market.k33'), i18n.t('microfrontend.plugin-market.k32')],
+    keywords: [
+      'form',
+      'validation',
+      'validate',
+      i18n.t('microfrontend.plugin-market.k33'),
+      i18n.t('microfrontend.plugin-market.k32'),
+    ],
   },
   {
     plugin_id: 'chart-extension',
@@ -357,7 +396,12 @@ const PRESET_PLUGINS: Plugin[] = [
     version: '1.8.0',
     author: 'DataViz Lab',
     category: PluginCategory.UI,
-    tags: [i18n.t('microfrontend.plugin-market.k36'), i18n.t('microfrontend.plugin-market.k35'), 'ECharts', '3D'],
+    tags: [
+      i18n.t('microfrontend.plugin-market.k36'),
+      i18n.t('microfrontend.plugin-market.k35'),
+      'ECharts',
+      '3D',
+    ],
     dependencies: [
       {
         plugin_id: 'chart-extension',
@@ -402,7 +446,14 @@ const PRESET_PLUGINS: Plugin[] = [
     updated_at: Date.now() - DAY_MS * 10,
     size_kb: 640,
     icon: 'bar-chart-3',
-    keywords: ['chart', 'echarts', '3d', 'map', i18n.t('microfrontend.plugin-market.k40'), i18n.t('microfrontend.plugin-market.k39')],
+    keywords: [
+      'chart',
+      'echarts',
+      '3d',
+      'map',
+      i18n.t('microfrontend.plugin-market.k40'),
+      i18n.t('microfrontend.plugin-market.k39'),
+    ],
   },
   {
     plugin_id: 'export-toolkit',
@@ -496,13 +547,19 @@ const PRESET_PLUGINS: Plugin[] = [
     updated_at: Date.now() - DAY_MS * 4,
     size_kb: 210,
     icon: 'shield',
-    keywords: ['sso', 'oauth', 'saml', 'auth', i18n.t('microfrontend.plugin-market.k52'), i18n.t('microfrontend.plugin-market.k51')],
+    keywords: [
+      'sso',
+      'oauth',
+      'saml',
+      'auth',
+      i18n.t('microfrontend.plugin-market.k52'),
+      i18n.t('microfrontend.plugin-market.k51'),
+    ],
   },
   {
     plugin_id: 'api-mock-server',
     name: i18n.t('microfrontend.plugin-market.apimock_11'),
-    description:
-      i18n.t('microfrontend.plugin-market.k53'),
+    description: i18n.t('microfrontend.plugin-market.k53'),
     version: '1.5.2',
     author: 'DevTools Team',
     category: PluginCategory.DEVTOOL,
@@ -553,7 +610,11 @@ const PRESET_PLUGINS: Plugin[] = [
     version: '2.0.0',
     author: 'Compliance Team',
     category: PluginCategory.ANALYTICS,
-    tags: [i18n.t('microfrontend.plugin-market.k61'), i18n.t('microfrontend.plugin-market.k60'), i18n.t('microfrontend.plugin-market.k59')],
+    tags: [
+      i18n.t('microfrontend.plugin-market.k61'),
+      i18n.t('microfrontend.plugin-market.k60'),
+      i18n.t('microfrontend.plugin-market.k59'),
+    ],
     dependencies: [
       {
         plugin_id: 'audit-trail',
@@ -589,17 +650,27 @@ const PRESET_PLUGINS: Plugin[] = [
     updated_at: Date.now() - DAY_MS * 15,
     size_kb: 240,
     icon: 'file-search',
-    keywords: ['audit', 'compliance', 'trail', i18n.t('microfrontend.plugin-market.k64'), i18n.t('microfrontend.plugin-market.k63')],
+    keywords: [
+      'audit',
+      'compliance',
+      'trail',
+      i18n.t('microfrontend.plugin-market.k64'),
+      i18n.t('microfrontend.plugin-market.k63'),
+    ],
   },
   {
     plugin_id: 'i18n-pro',
     name: i18n.t('microfrontend.plugin-market.pro_65'),
-    description:
-      i18n.t('microfrontend.plugin-market.k15'),
+    description: i18n.t('microfrontend.plugin-market.k15'),
     version: '3.4.0',
     author: 'Global Team',
     category: PluginCategory.UI,
-    tags: [i18n.t('microfrontend.plugin-market.k68'), 'i18n', i18n.t('microfrontend.plugin-market.k67'), i18n.t('microfrontend.plugin-market.k66')],
+    tags: [
+      i18n.t('microfrontend.plugin-market.k68'),
+      'i18n',
+      i18n.t('microfrontend.plugin-market.k67'),
+      i18n.t('microfrontend.plugin-market.k66'),
+    ],
     dependencies: [],
     permissions: [],
     versions: [
@@ -637,7 +708,13 @@ const PRESET_PLUGINS: Plugin[] = [
     updated_at: Date.now() - DAY_MS * 6,
     size_kb: 360,
     icon: 'languages',
-    keywords: ['i18n', 'locale', 'translate', i18n.t('microfrontend.plugin-market.k72'), i18n.t('microfrontend.plugin-market.k71')],
+    keywords: [
+      'i18n',
+      'locale',
+      'translate',
+      i18n.t('microfrontend.plugin-market.k72'),
+      i18n.t('microfrontend.plugin-market.k71'),
+    ],
   },
   {
     plugin_id: 'workflow-automation',
@@ -646,7 +723,12 @@ const PRESET_PLUGINS: Plugin[] = [
     version: '1.9.0',
     author: 'Automation Team',
     category: PluginCategory.AUTOMATION,
-    tags: [i18n.t('microfrontend.plugin-market.k77'), i18n.t('microfrontend.plugin-market.k76'), i18n.t('microfrontend.plugin-market.k75'), i18n.t('microfrontend.plugin-market.k74')],
+    tags: [
+      i18n.t('microfrontend.plugin-market.k77'),
+      i18n.t('microfrontend.plugin-market.k76'),
+      i18n.t('microfrontend.plugin-market.k75'),
+      i18n.t('microfrontend.plugin-market.k74'),
+    ],
     dependencies: [],
     permissions: ['workflow:execute', 'schedule:manage'],
     versions: [
@@ -675,7 +757,13 @@ const PRESET_PLUGINS: Plugin[] = [
     updated_at: Date.now() - DAY_MS * 9,
     size_kb: 520,
     icon: 'git-branch',
-    keywords: ['workflow', 'automation', 'trigger', i18n.t('microfrontend.plugin-market.k80'), i18n.t('microfrontend.plugin-market.k79')],
+    keywords: [
+      'workflow',
+      'automation',
+      'trigger',
+      i18n.t('microfrontend.plugin-market.k80'),
+      i18n.t('microfrontend.plugin-market.k79'),
+    ],
   },
   {
     plugin_id: 'data-sync',
@@ -722,7 +810,11 @@ const PRESET_PLUGINS: Plugin[] = [
     version: '1.2.0',
     author: 'Integration Team',
     category: PluginCategory.INTEGRATION,
-    tags: ['Webhook', i18n.t('microfrontend.plugin-market.k88'), i18n.t('microfrontend.plugin-market.k87')],
+    tags: [
+      'Webhook',
+      i18n.t('microfrontend.plugin-market.k88'),
+      i18n.t('microfrontend.plugin-market.k87'),
+    ],
     dependencies: [],
     permissions: ['network:webhook'],
     versions: [
@@ -751,7 +843,13 @@ const PRESET_PLUGINS: Plugin[] = [
     updated_at: Date.now() - DAY_MS * 18,
     size_kb: 150,
     icon: 'webhook',
-    keywords: ['webhook', 'integration', 'event', i18n.t('microfrontend.plugin-market.k91'), i18n.t('microfrontend.plugin-market.k90')],
+    keywords: [
+      'webhook',
+      'integration',
+      'event',
+      i18n.t('microfrontend.plugin-market.k91'),
+      i18n.t('microfrontend.plugin-market.k90'),
+    ],
   },
   {
     plugin_id: 'starter-template-pack',
@@ -798,7 +896,11 @@ const PRESET_PLUGINS: Plugin[] = [
     version: '1.7.1',
     author: 'Infra Team',
     category: PluginCategory.SERVICE,
-    tags: [i18n.t('microfrontend.plugin-market.k99'), 'Redis', i18n.t('microfrontend.plugin-market.k98')],
+    tags: [
+      i18n.t('microfrontend.plugin-market.k99'),
+      'Redis',
+      i18n.t('microfrontend.plugin-market.k98'),
+    ],
     dependencies: [],
     permissions: ['cache:read', 'cache:write'],
     versions: [

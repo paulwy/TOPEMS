@@ -21,6 +21,7 @@ import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { approvalTaskApi } from '@/api/workflow/approval';
 import type { ApiResponse } from '@/api/client';
 import { workflowApprovalSchema } from '@/schemas/workflow';
+
 type TabType = 'pending' | 'approved' | 'initiated' | 'cc';
 interface ApprovalTask {
   id: string;
@@ -139,10 +140,11 @@ export const WorkflowApprovalsPage: React.FC = () => {
       const task = row as unknown as ApprovalTask;
       try {
         await approvalTaskApi.approveTask(task.id, { comment: '' });
-        queryClient.invalidateQueries({ queryKey: [workflowApprovalSchema.entity] ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: [workflowApprovalSchema.entity],
+          exact: false,
+          refetchType: 'active',
+        });
         addNotification({
           title: i18n.t('workflow.workflow_approvals_page.k5'),
           message: `${i18n.t('pages.workflow_approvals_page.k0')}${task.title}${i18n.t('pages.workflow_approvals_page.k1')}`,
@@ -168,10 +170,11 @@ export const WorkflowApprovalsPage: React.FC = () => {
     if (!selectedTask) return;
     try {
       await approvalTaskApi.rejectTask(selectedTask.id, { comment: rejectReason });
-      queryClient.invalidateQueries({ queryKey: [workflowApprovalSchema.entity] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [workflowApprovalSchema.entity],
+        exact: false,
+        refetchType: 'active',
+      });
       setRejectDialogOpen(false);
       setSelectedTask(null);
       addNotification({
@@ -413,7 +416,8 @@ export const WorkflowApprovalsPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            {i18n.t('pages.workflow_approvals_page.k0')}「{selectedTask?.title}」{i18n.t('pages.workflow_approvals_page.k1')}
+            {i18n.t('pages.workflow_approvals_page.k0')}「{selectedTask?.title}」
+            {i18n.t('pages.workflow_approvals_page.k1')}
           </Typography>
           <TextField
             size='small'

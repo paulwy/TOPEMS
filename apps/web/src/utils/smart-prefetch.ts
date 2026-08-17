@@ -300,7 +300,9 @@ export class PrefetchEngine {
     queries: Array<{ query: string; variables?: Record<string, unknown> }>
   ): void {
     this.routeQueries.set(route, queries);
-    prefetchLogger.debug(`${i18n.t('shared.smart-prefetch.k3')}${route} (${queries.length}${i18n.t('shared.smart-prefetch.k4')}`);
+    prefetchLogger.debug(
+      `${i18n.t('shared.smart-prefetch.k3')}${route} (${queries.length}${i18n.t('shared.smart-prefetch.k4')}`
+    );
   }
 
   getRouteQueries(route: string): Array<{ query: string; variables?: Record<string, unknown> }> {

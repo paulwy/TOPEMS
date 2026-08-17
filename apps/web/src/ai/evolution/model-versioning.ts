@@ -169,7 +169,12 @@ class ModelVersionManagerImpl {
   seed(): void {
     if (this.models.size > 0) return;
 
-    const m1 = this.registerModel('TOPEMS-NLU', 'nlu', i18n.t('ai.model-versioning.topems_0'), 'ai-team');
+    const m1 = this.registerModel(
+      'TOPEMS-NLU',
+      'nlu',
+      i18n.t('ai.model-versioning.topems_0'),
+      'ai-team'
+    );
     this.publishVersion(m1.id, 'v1.0.0', { accuracy: 0.82, latency: 120, f1: 0.78 });
     this.publishVersion(m1.id, 'v1.1.0', { accuracy: 0.85, latency: 110, f1: 0.81 });
     this.publishVersion(m1.id, 'v2.0.0', { accuracy: 0.9, latency: 95, f1: 0.87 });
@@ -185,7 +190,12 @@ class ModelVersionManagerImpl {
     this.publishVersion(m2.id, 'v1.0.0', { accuracy: 0.88, latency: 80, satisfaction: 0.82 });
     this.publishVersion(m2.id, 'v1.1.0', { accuracy: 0.91, latency: 72, satisfaction: 0.86 });
 
-    const m3 = this.registerModel('TOPEMS-Ops', 'ops', i18n.t('ai.model-versioning.topems_2'), 'ops-team');
+    const m3 = this.registerModel(
+      'TOPEMS-Ops',
+      'ops',
+      i18n.t('ai.model-versioning.topems_2'),
+      'ops-team'
+    );
     this.publishVersion(m3.id, 'v1.0.0', { anomalyRate: 0.05, mttr: 12, precision: 0.88 });
     this.publishVersion(m3.id, 'v1.0.1', { anomalyRate: 0.03, mttr: 10, precision: 0.91 });
   }

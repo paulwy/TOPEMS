@@ -17,6 +17,7 @@ import i18n from '@/i18n';
 import { MobileButton } from '@/components/mobile';
 import type { LeaveApplication } from '@/api/mobile';
 import type { LeaveForm } from '../hooks/useMobileAttendance';
+
 interface LeaveApplicationDialogProps {
   open: boolean;
   leaveForm: LeaveForm;
@@ -58,8 +59,12 @@ export const LeaveApplicationDialog: React.FC<LeaveApplicationDialogProps> = ({
             <MenuItem value='annual'>{i18n.t('mobile.attendance.leave_type.annual')}</MenuItem>
             <MenuItem value='sick'>{i18n.t('mobile.attendance.leave_type.sick')}</MenuItem>
             <MenuItem value='personal'>{i18n.t('mobile.attendance.leave_type.personal')}</MenuItem>
-            <MenuItem value='maternity'>{i18n.t('mobile.attendance.leave_type.maternity')}</MenuItem>
-            <MenuItem value='paternity'>{i18n.t('mobile.attendance.leave_type.paternity')}</MenuItem>
+            <MenuItem value='maternity'>
+              {i18n.t('mobile.attendance.leave_type.maternity')}
+            </MenuItem>
+            <MenuItem value='paternity'>
+              {i18n.t('mobile.attendance.leave_type.paternity')}
+            </MenuItem>
             <MenuItem value='other'>{i18n.t('mobile.attendance.leave_type.other')}</MenuItem>
           </TextField>
           <TextField

@@ -72,7 +72,9 @@ export const customerProfileApi = {
     return apiClient.crm.get<CustomerProfileItem>(`/customers/${id}/profile`);
   },
 
-  async listCustomerProfiles(params?: CustomerProfileListQuery): Promise<ApiResponse<{ items: CustomerProfileItem[]; total: number }>> {
+  async listCustomerProfiles(
+    params?: CustomerProfileListQuery
+  ): Promise<ApiResponse<{ items: CustomerProfileItem[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));
@@ -81,7 +83,9 @@ export const customerProfileApi = {
     if (params?.customer_type) qs.set('customer_type', params.customer_type);
     if (params?.keyword) qs.set('q', params.keyword);
     const s = qs.toString();
-    return apiClient.crm.get<{ items: CustomerProfileItem[]; total: number }>(`/customer-profiles${s ? `?${s}` : ''}`);
+    return apiClient.crm.get<{ items: CustomerProfileItem[]; total: number }>(
+      `/customer-profiles${s ? `?${s}` : ''}`
+    );
   },
 
   async addProfileTags(customerId: string, tags: string[]): Promise<ApiResponse<void>> {
@@ -89,7 +93,7 @@ export const customerProfileApi = {
   },
 
   async removeProfileTags(customerId: string, tagIds: string[]): Promise<ApiResponse<void>> {
-    const qs = tagIds.map(id => `tag_ids[]=${encodeURIComponent(id)}`).join('&');
+    const qs = tagIds.map((id) => `tag_ids[]=${encodeURIComponent(id)}`).join('&');
     return apiClient.crm.delete<void>(`/customers/${customerId}/profile/tags${qs ? `?${qs}` : ''}`);
   },
 };

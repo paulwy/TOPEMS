@@ -19,7 +19,8 @@ import i18n from '@/i18n';
 import type { CreateInstrumentDataRequest } from '@/api/lims';
 import { formatJson, parseJsonInput } from '../utils';
 import { designTokens } from '@/theme/tokens';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 interface DataFormDialogProps {
   open: boolean;
   isEditing: boolean;
@@ -45,7 +46,9 @@ const DataFormDialog: React.FC<DataFormDialogProps> = ({
       maxWidth='sm'
       fullWidth
     >
-      <DialogTitle>{isEditing ? i18n.t('lims.data_form_dialog.k1') : i18n.t('lims.data_form_dialog.k0')}</DialogTitle>
+      <DialogTitle>
+        {isEditing ? i18n.t('lims.data_form_dialog.k1') : i18n.t('lims.data_form_dialog.k0')}
+      </DialogTitle>
       <DialogContent dividers>
         <Stack
           spacing={2}

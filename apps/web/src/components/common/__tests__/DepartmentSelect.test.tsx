@@ -5,11 +5,14 @@ import React from 'react';
 import { renderWithProviders } from '@/__tests__/test-utils';
 import DepartmentSelect, { Department } from '../DepartmentSelect';
 
-const i18nMap = vi.hoisted(() => ({
-  'components.department_select.k0': '选择部门',
-  'components.department_select.k1': '清除',
-  'components.department_select.k2': '暂无部门',
-} as Record<string, string>));
+const i18nMap = vi.hoisted(
+  () =>
+    ({
+      'components.department_select.k0': '选择部门',
+      'components.department_select.k1': '清除',
+      'components.department_select.k2': '暂无部门',
+    }) as Record<string, string>
+);
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({

@@ -28,6 +28,7 @@ import { useQuery } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface StatCard {
   id: string;
   label: string;
@@ -314,16 +315,32 @@ const MobileWorkbenchPage: React.FC = () => {
     }
   };
   const tabs = [
-    { id: 'home', label: i18n.t('mobile.mobile_workbench_page.k26'), icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: i18n.t('mobile.mobile_workbench_page.k27'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: i18n.t('mobile.mobile_workbench_page.k28'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    {
+      id: 'home',
+      label: i18n.t('mobile.mobile_workbench_page.k26'),
+      icon: <Home style={{ width: 22, height: 22 }} />,
+    },
+    {
+      id: 'tasks',
+      label: i18n.t('mobile.mobile_workbench_page.k27'),
+      icon: <ListTodo style={{ width: 22, height: 22 }} />,
+    },
+    {
+      id: 'scan',
+      label: i18n.t('mobile.mobile_workbench_page.k28'),
+      icon: <ScanLine style={{ width: 22, height: 22 }} />,
+    },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_workbench_page.k29'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
       badge: 3,
     },
-    { id: 'profile', label: i18n.t('mobile.mobile_workbench_page.k30'), icon: <User style={{ width: 22, height: 22 }} /> },
+    {
+      id: 'profile',
+      label: i18n.t('mobile.mobile_workbench_page.k30'),
+      icon: <User style={{ width: 22, height: 22 }} />,
+    },
   ];
   return (
     <MobileLayout
@@ -575,7 +592,9 @@ const MobileWorkbenchPage: React.FC = () => {
                       }}
                       onClick={() => navigate(MOBILE_PATHS.tasks)}
                     >
-                      <Typography variant='caption'>{i18n.t('mobile.mobile_workbench_page.k34')}</Typography>
+                      <Typography variant='caption'>
+                        {i18n.t('mobile.mobile_workbench_page.k34')}
+                      </Typography>
                       <ChevronRight style={{ width: 16, height: 16 }} />
                     </Box>
                   </Box>

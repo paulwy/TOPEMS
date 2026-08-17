@@ -74,7 +74,9 @@ describe('V157 masterData Data Product Catalog API bindings', () => {
     it('should update product', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await dataProductCatalogApiV72.updateProduct('prod-1', { description: 'Updated' });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v72/products/prod-1', { description: 'Updated' });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v72/products/prod-1', {
+        description: 'Updated',
+      });
     });
 
     it('should remove product', async () => {
@@ -190,10 +192,9 @@ describe('V157 masterData Data Product Catalog API bindings', () => {
     it('should update consumer role', async () => {
       mockClient.patch.mockResolvedValue({ success: true, data: {} });
       await dataProductCatalogApiV72.updateConsumerRole('prod-1', 'cons-1', 'admin');
-      expect(mockClient.patch).toHaveBeenCalledWith(
-        '/mdm-v72/products/prod-1/consumers/cons-1',
-        { role: 'admin' }
-      );
+      expect(mockClient.patch).toHaveBeenCalledWith('/mdm-v72/products/prod-1/consumers/cons-1', {
+        role: 'admin',
+      });
     });
   });
 
@@ -208,7 +209,9 @@ describe('V157 masterData Data Product Catalog API bindings', () => {
     it('should list popular products', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: [] });
       await dataProductCatalogApiV72.listPopularProducts({ category: 'customer', limit: 5 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v72/products/popular?category=customer&limit=5');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v72/products/popular?category=customer&limit=5'
+      );
     });
 
     it('should get product catalog stats', async () => {

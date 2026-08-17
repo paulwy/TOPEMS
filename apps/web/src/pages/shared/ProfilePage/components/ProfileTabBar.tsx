@@ -107,7 +107,8 @@ const UserCard: React.FC<UserCardProps> = ({ user, avatarUrl, onAvatarUpload }) 
                 variant='body2'
                 color='text.secondary'
               >
-                [i18n.t('pages.profile_tab_bar.k1')]: {user.role || i18n.t('pages.profile_tab_bar.k1')}
+                [i18n.t('pages.profile_tab_bar.k1')]:{' '}
+                {user.role || i18n.t('pages.profile_tab_bar.k1')}
               </Typography>
             </Box>
             <Box
@@ -123,7 +124,8 @@ const UserCard: React.FC<UserCardProps> = ({ user, avatarUrl, onAvatarUpload }) 
                 variant='body2'
                 color='text.secondary'
               >
-                [i18n.t('pages.profile_tab_bar.k2')]: {new Date(user.created_at).toLocaleDateString('zh-CN')}
+                [i18n.t('pages.profile_tab_bar.k2')]:{' '}
+                {new Date(user.created_at).toLocaleDateString('zh-CN')}
               </Typography>
             </Box>
           </Box>

@@ -40,7 +40,10 @@ export const suppressionApi = {
     return apiClient.monitor.post('/suppression', data);
   },
 
-  update: (id: string, data: Partial<SuppressionCreateRequest>): Promise<ApiResponse<SuppressionRule>> => {
+  update: (
+    id: string,
+    data: Partial<SuppressionCreateRequest>
+  ): Promise<ApiResponse<SuppressionRule>> => {
     return apiClient.monitor.put(`/suppression/${id}`, data);
   },
 

@@ -14,7 +14,8 @@ import i18n from '@/i18n';
 import type { Approval, ApprovalRecord } from '@/api/workflow';
 import type { TabConfig } from '@/components/templates/DetailPageTemplate';
 import { designTokens } from '@/theme/tokens';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 interface WorkflowApprovalDetailTabsProps {
   approval: Approval | null;
   records: ApprovalRecord[];

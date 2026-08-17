@@ -2,6 +2,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+import { WmsStatusBadge, type WmsFsm } from '../StatusBadge';
+import { WmsFSMActionButtons } from '../FSMActionButtons';
+
 const { tMock } = vi.hoisted(() => {
   const statusBadgeTranslations: Record<string, string> = {
     'components.status_badge.k0': '草稿',
@@ -75,11 +78,7 @@ const { tMock } = vi.hoisted(() => {
   };
 
   const tMock = (key: string): string => {
-    return (
-      statusBadgeTranslations[key] ||
-      fsmActionButtonsTranslations[key] ||
-      key
-    );
+    return statusBadgeTranslations[key] || fsmActionButtonsTranslations[key] || key;
   };
 
   return { tMock };
@@ -113,9 +112,6 @@ vi.mock('react-i18next', () => ({
     return <span>{children}</span>;
   },
 }));
-
-import { WmsStatusBadge, type WmsFsm } from '../StatusBadge';
-import { WmsFSMActionButtons } from '../FSMActionButtons';
 
 describe('WMS StatusBadge', () => {
   it('renders inbound FSM statuses correctly', () => {
@@ -367,8 +363,18 @@ describe('WMS StatusBadge', () => {
     const cases: Array<{ fsm: WmsFsm; status: string; cls: string; label: string }> = [
       { fsm: 'inbound', status: 'received', cls: 'bg-orange-100 text-orange-700', label: '已分配' },
       { fsm: 'outbound', status: 'packing', cls: 'bg-orange-100 text-orange-700', label: '已发布' },
-      { fsm: 'stocktake', status: 'in_progress', cls: 'bg-orange-100 text-orange-700', label: '已消耗' },
-      { fsm: 'transfer', status: 'confirmed', cls: 'bg-orange-100 text-orange-700', label: '已完成' },
+      {
+        fsm: 'stocktake',
+        status: 'in_progress',
+        cls: 'bg-orange-100 text-orange-700',
+        label: '已消耗',
+      },
+      {
+        fsm: 'transfer',
+        status: 'confirmed',
+        cls: 'bg-orange-100 text-orange-700',
+        label: '已完成',
+      },
       { fsm: 'movement', status: 'posted', cls: 'bg-orange-100 text-orange-700', label: '维护中' },
       { fsm: 'inbound', status: 'completed', cls: 'bg-green-100 text-green-700', label: '已采购' },
       { fsm: 'inbound', status: 'cancelled', cls: 'bg-red-100 text-red-700', label: '短缺' },

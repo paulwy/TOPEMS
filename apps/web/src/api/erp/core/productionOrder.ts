@@ -14,8 +14,9 @@ export interface ProductionOrderListResponse {
 }
 
 const resolvePageSize = (params?: PaginationParams): string | undefined => {
-  const ps = (params as { pageSize?: number } | undefined)?.pageSize
-    ?? (params as { pagesize?: number } | undefined)?.pagesize;
+  const ps =
+    (params as { pageSize?: number } | undefined)?.pageSize ??
+    (params as { pagesize?: number } | undefined)?.pagesize;
   return ps ? ps.toString() : undefined;
 };
 
@@ -63,10 +64,7 @@ export const productionOrderApi = {
     return apiClient.erp.put<ProductionOrder>(`/production-orders/${id}/progress`, data);
   },
 
-  async updateStatus(
-    id: string,
-    status: string
-  ): Promise<ApiResponse<ProductionOrder>> {
+  async updateStatus(id: string, status: string): Promise<ApiResponse<ProductionOrder>> {
     return apiClient.erp.post<ProductionOrder>(`/production-orders/${id}/status`, { status });
   },
 

@@ -94,7 +94,11 @@ const SubjectListPanel: React.FC<SubjectListPanelProps> = ({ subjects, subjectSt
                 color: 'text.secondary',
               }}
             >
-              <Typography variant='body2'>{t('finance.finance_voucher_page_components_subject_list_panel.m1', { v1: subject.level })}</Typography>
+              <Typography variant='body2'>
+                {t('finance.finance_voucher_page_components_subject_list_panel.m1', {
+                  v1: subject.level,
+                })}
+              </Typography>
               <Box
                 sx={{
                   width: 4,

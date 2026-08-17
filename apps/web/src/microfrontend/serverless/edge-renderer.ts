@@ -362,7 +362,11 @@ class EdgeRendererImpl {
     const timeoutMs = this.config.renderTimeoutMs;
     return new Promise<string>((resolve, reject) => {
       const timer = setTimeout(() => {
-        reject(new Error(`${i18n.t('microfrontend.edge-renderer.edgerenderer_0')}${request.path}${i18n.t('microfrontend.edge-renderer.k1')}${timeoutMs}ms）`));
+        reject(
+          new Error(
+            `${i18n.t('microfrontend.edge-renderer.edgerenderer_0')}${request.path}${i18n.t('microfrontend.edge-renderer.k1')}${timeoutMs}ms）`
+          )
+        );
       }, timeoutMs);
 
       this.doRenderWork(request)

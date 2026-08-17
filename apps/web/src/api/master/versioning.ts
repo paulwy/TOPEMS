@@ -170,11 +170,17 @@ export const versioningApi = {
     return apiClient.master.post<VersionSnapshot>('/mdm-v54/version/snapshot', data);
   },
 
-  async getVersion(entityType: string, entityId: string, params?: { version?: string }): Promise<ApiResponse<VersionSnapshot>> {
+  async getVersion(
+    entityType: string,
+    entityId: string,
+    params?: { version?: string }
+  ): Promise<ApiResponse<VersionSnapshot>> {
     const qs = new URLSearchParams();
     if (params?.version) qs.set('version', params.version);
     const s = qs.toString();
-    return apiClient.master.get<VersionSnapshot>(`/mdm-v54/version/${entityType}/${entityId}${s ? `?${s}` : ''}`);
+    return apiClient.master.get<VersionSnapshot>(
+      `/mdm-v54/version/${entityType}/${entityId}${s ? `?${s}` : ''}`
+    );
   },
 
   async diffVersions(params: DiffVersionsParams): Promise<ApiResponse<VersionDiff>> {
@@ -190,7 +196,11 @@ export const versioningApi = {
     return apiClient.master.post<VersionSnapshot>('/mdm-v54/version/restore', data);
   },
 
-  async listHistory(entityType: string, entityId: string, params?: { page?: number; pageSize?: number; action?: string }): Promise<ApiResponse<{ items: VersionHistoryEntry[]; total: number }>> {
+  async listHistory(
+    entityType: string,
+    entityId: string,
+    params?: { page?: number; pageSize?: number; action?: string }
+  ): Promise<ApiResponse<{ items: VersionHistoryEntry[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
@@ -210,7 +220,9 @@ export const versioningApi = {
   },
 
   // ===== 审计日志 =====
-  async queryAuditLog(params?: QueryAuditParams): Promise<ApiResponse<{ items: AuditLogEntry[]; total: number }>> {
+  async queryAuditLog(
+    params?: QueryAuditParams
+  ): Promise<ApiResponse<{ items: AuditLogEntry[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.entity_type) qs.set('entity_type', params.entity_type);
     if (params?.entity_id) qs.set('entity_id', params.entity_id);
@@ -221,26 +233,48 @@ export const versioningApi = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: AuditLogEntry[]; total: number }>(`/mdm-v54/audit/log${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: AuditLogEntry[]; total: number }>(
+      `/mdm-v54/audit/log${s ? `?${s}` : ''}`
+    );
   },
 
-  async getUserActivity(userId: string, params?: { days?: number }): Promise<ApiResponse<AuditLogEntry[]>> {
+  async getUserActivity(
+    userId: string,
+    params?: { days?: number }
+  ): Promise<ApiResponse<AuditLogEntry[]>> {
     const qs = new URLSearchParams();
     if (params?.days !== undefined) qs.set('days', String(params.days));
     const s = qs.toString();
-    return apiClient.master.get<AuditLogEntry[]>(`/mdm-v54/audit/user/${userId}${s ? `?${s}` : ''}`);
+    return apiClient.master.get<AuditLogEntry[]>(
+      `/mdm-v54/audit/user/${userId}${s ? `?${s}` : ''}`
+    );
   },
 
-  async getEntityHistory(entityType: string, entityId: string): Promise<ApiResponse<AuditLogEntry[]>> {
+  async getEntityHistory(
+    entityType: string,
+    entityId: string
+  ): Promise<ApiResponse<AuditLogEntry[]>> {
     return apiClient.master.get<AuditLogEntry[]>(`/mdm-v54/audit/entity/${entityType}/${entityId}`);
   },
 
-  async exportAuditLog(params?: { format?: 'json' | 'csv'; from?: string; to?: string }): Promise<ApiResponse<{ job_id: string; download_url?: string }>> {
-    return apiClient.master.post<{ job_id: string; download_url?: string }>('/mdm-v54/audit/export', params || {});
+  async exportAuditLog(params?: {
+    format?: 'json' | 'csv';
+    from?: string;
+    to?: string;
+  }): Promise<ApiResponse<{ job_id: string; download_url?: string }>> {
+    return apiClient.master.post<{ job_id: string; download_url?: string }>(
+      '/mdm-v54/audit/export',
+      params || {}
+    );
   },
 
-  async getComplianceAudit(entityType: string, entityId: string): Promise<ApiResponse<ComplianceAudit>> {
-    return apiClient.master.get<ComplianceAudit>(`/mdm-v54/audit/compliance?entity_type=${entityType}&entity_id=${entityId}`);
+  async getComplianceAudit(
+    entityType: string,
+    entityId: string
+  ): Promise<ApiResponse<ComplianceAudit>> {
+    return apiClient.master.get<ComplianceAudit>(
+      `/mdm-v54/audit/compliance?entity_type=${entityType}&entity_id=${entityId}`
+    );
   },
 
   // ===== 权限管理 =====
@@ -252,20 +286,30 @@ export const versioningApi = {
     return apiClient.master.delete<{ success: boolean }>(`/mdm-v54/permissions/${id}`);
   },
 
-  async checkPermission(params: { user_id: string; resource_type: string; resource_id?: string; action?: string }): Promise<ApiResponse<{ allowed: boolean; reason?: string }>> {
+  async checkPermission(params: {
+    user_id: string;
+    resource_type: string;
+    resource_id?: string;
+    action?: string;
+  }): Promise<ApiResponse<{ allowed: boolean; reason?: string }>> {
     const qs = new URLSearchParams();
     qs.set('user_id', params.user_id);
     qs.set('resource_type', params.resource_type);
     if (params.resource_id) qs.set('resource_id', params.resource_id);
     if (params.action) qs.set('action', params.action);
-    return apiClient.master.get<{ allowed: boolean; reason?: string }>(`/mdm-v54/permissions/check?${qs.toString()}`);
+    return apiClient.master.get<{ allowed: boolean; reason?: string }>(
+      `/mdm-v54/permissions/check?${qs.toString()}`
+    );
   },
 
   async getUserPermissions(userId: string): Promise<ApiResponse<UserPermissions>> {
     return apiClient.master.get<UserPermissions>(`/mdm-v54/permissions/user/${userId}`);
   },
 
-  async getResourcePermissions(params?: { resource_type?: string; resource_id?: string }): Promise<ApiResponse<Permission[]>> {
+  async getResourcePermissions(params?: {
+    resource_type?: string;
+    resource_id?: string;
+  }): Promise<ApiResponse<Permission[]>> {
     const qs = new URLSearchParams();
     if (params?.resource_type) qs.set('resource_type', params.resource_type);
     if (params?.resource_id) qs.set('resource_id', params.resource_id);

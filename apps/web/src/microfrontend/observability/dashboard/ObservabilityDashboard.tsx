@@ -296,13 +296,18 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                 {i18n.t('microfrontend.observability_dashboard.top5_0')}
               </Typography>
               {sortedPerformance.length === 0 ? (
-                <Typography color='text.secondary'>{i18n.t('microfrontend.observability_dashboard.k7')}</Typography>
+                <Typography color='text.secondary'>
+                  {i18n.t('microfrontend.observability_dashboard.k7')}
+                </Typography>
               ) : (
                 <BarChartSimple
                   data={sortedPerformance.slice(0, 5).map((m) => ({
                     label: m.moduleId.split('/')[0]?.slice(0, 10) || m.moduleId,
                     value: Math.round(m.totalLoadTime),
-                    color: m.totalLoadTime > SLOW_MODULE_THRESHOLD ? 'colors.orange.700' : designTokens.colors.primary.dark,
+                    color:
+                      m.totalLoadTime > SLOW_MODULE_THRESHOLD
+                        ? 'colors.orange.700'
+                        : designTokens.colors.primary.dark,
                   }))}
                 />
               )}
@@ -319,7 +324,9 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                 {i18n.t('microfrontend.observability_dashboard.top5_1')}
               </Typography>
               {sortedBehavior.length === 0 ? (
-                <Typography color='text.secondary'>{i18n.t('microfrontend.observability_dashboard.k8')}</Typography>
+                <Typography color='text.secondary'>
+                  {i18n.t('microfrontend.observability_dashboard.k8')}
+                </Typography>
               ) : (
                 <BarChartSimple
                   data={sortedBehavior.slice(0, 5).map((s) => ({
@@ -353,7 +360,8 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
               variant='body2'
               color='text.secondary'
             >
-              {slowModules.length} {i18n.t('microfrontend.observability_dashboard.k0')} {SLOW_MODULE_THRESHOLD}ms
+              {slowModules.length} {i18n.t('microfrontend.observability_dashboard.k0')}{' '}
+              {SLOW_MODULE_THRESHOLD}ms
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
               {slowModules.map((m) => (
@@ -389,13 +397,23 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             <Table size='small'>
               <TableHead>
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k9')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k10')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k11')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k12')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('microfrontend.observability_dashboard.k9')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('microfrontend.observability_dashboard.k10')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('microfrontend.observability_dashboard.k11')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('microfrontend.observability_dashboard.k12')}
+                  </TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>FCP</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>TTI</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k13')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('microfrontend.observability_dashboard.k13')}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -478,13 +496,18 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             {i18n.t('microfrontend.observability_dashboard.k5')}
           </Typography>
           {sortedPerformance.length === 0 ? (
-            <Typography color='text.secondary'>{i18n.t('microfrontend.observability_dashboard.k16')}</Typography>
+            <Typography color='text.secondary'>
+              {i18n.t('microfrontend.observability_dashboard.k16')}
+            </Typography>
           ) : (
             <BarChartSimple
               data={sortedPerformance.slice(0, 10).map((m) => ({
                 label: m.moduleId.split('/')[0]?.slice(0, 8) || m.moduleId,
                 value: Math.round(m.totalLoadTime),
-                color: m.totalLoadTime > SLOW_MODULE_THRESHOLD ? 'colors.orange.700' : designTokens.colors.primary.dark,
+                color:
+                  m.totalLoadTime > SLOW_MODULE_THRESHOLD
+                    ? 'colors.orange.700'
+                    : designTokens.colors.primary.dark,
               }))}
               height={250}
             />
@@ -522,7 +545,9 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                     <Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                        <Typography variant='caption'>{i18n.t('microfrontend.observability_dashboard.k17')}</Typography>
+                        <Typography variant='caption'>
+                          {i18n.t('microfrontend.observability_dashboard.k17')}
+                        </Typography>
                         <Typography variant='caption'>
                           {formatDuration(m.remoteEntryLoadTime)}
                         </Typography>
@@ -535,7 +560,9 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                     </Box>
                     <Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                        <Typography variant='caption'>{i18n.t('microfrontend.observability_dashboard.hunk_0')}</Typography>
+                        <Typography variant='caption'>
+                          {i18n.t('microfrontend.observability_dashboard.hunk_0')}
+                        </Typography>
                         <Typography variant='caption'>{formatDuration(m.chunkLoadTime)}</Typography>
                       </Box>
                       <LinearProgress
@@ -547,7 +574,9 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                     </Box>
                     <Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                        <Typography variant='caption'>{i18n.t('microfrontend.observability_dashboard.k18')}</Typography>
+                        <Typography variant='caption'>
+                          {i18n.t('microfrontend.observability_dashboard.k18')}
+                        </Typography>
                         <Typography variant='caption'>
                           {formatDuration(m.firstScreenRenderTime)}
                         </Typography>
@@ -629,7 +658,9 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                 }))}
             />
           ) : (
-            <Typography color='text.secondary'>{i18n.t('microfrontend.observability_dashboard.k23')}</Typography>
+            <Typography color='text.secondary'>
+              {i18n.t('microfrontend.observability_dashboard.k23')}
+            </Typography>
           )}
         </CardContent>
       </Card>
@@ -649,11 +680,21 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             <Table size='small'>
               <TableHead>
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k24')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k25')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k26')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k27')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k28')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('microfrontend.observability_dashboard.k24')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('microfrontend.observability_dashboard.k25')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('microfrontend.observability_dashboard.k26')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('microfrontend.observability_dashboard.k27')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('microfrontend.observability_dashboard.k28')}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -761,11 +802,21 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             <Table size='small'>
               <TableHead>
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k32')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k33')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k34')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k35')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k36')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('microfrontend.observability_dashboard.k32')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('microfrontend.observability_dashboard.k33')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('microfrontend.observability_dashboard.k34')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('microfrontend.observability_dashboard.k35')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {i18n.t('microfrontend.observability_dashboard.k36')}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -822,7 +873,11 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
           {(() => {
             const paths = (userBehaviorAnalytics as any).getPopularPaths?.() || [];
             if (paths.length === 0) {
-              return <Typography color='text.secondary'>{i18n.t('microfrontend.observability_dashboard.k37')}</Typography>;
+              return (
+                <Typography color='text.secondary'>
+                  {i18n.t('microfrontend.observability_dashboard.k37')}
+                </Typography>
+              );
             }
             return (
               <TableContainer
@@ -832,9 +887,15 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                 <Table size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'action.hover' }}>
-                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k38')}</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k39')}</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k40')}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {i18n.t('microfrontend.observability_dashboard.k38')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {i18n.t('microfrontend.observability_dashboard.k39')}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {i18n.t('microfrontend.observability_dashboard.k40')}
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -909,7 +970,11 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
               const reg = registeredModules.find((m) => m.id === selectedModule.split('/')[0]);
 
               if (!perf) {
-                return <Typography color='text.secondary'>{i18n.t('microfrontend.observability_dashboard.k43')}</Typography>;
+                return (
+                  <Typography color='text.secondary'>
+                    {i18n.t('microfrontend.observability_dashboard.k43')}
+                  </Typography>
+                );
               }
 
               return (
@@ -930,7 +995,9 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         sx={{ p: 2 }}
                       >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                          <Typography variant='body2'>{i18n.t('microfrontend.observability_dashboard.k44')}</Typography>
+                          <Typography variant='body2'>
+                            {i18n.t('microfrontend.observability_dashboard.k44')}
+                          </Typography>
                           <Typography
                             variant='body2'
                             sx={{ fontWeight: 600 }}
@@ -949,7 +1016,9 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         sx={{ p: 2 }}
                       >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                          <Typography variant='body2'>{i18n.t('microfrontend.observability_dashboard.k45')}</Typography>
+                          <Typography variant='body2'>
+                            {i18n.t('microfrontend.observability_dashboard.k45')}
+                          </Typography>
                           <Typography
                             variant='body2'
                             sx={{ fontWeight: 600 }}
@@ -1019,7 +1088,9 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         sx={{ p: 2 }}
                       >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant='body2'>{i18n.t('microfrontend.observability_dashboard.k46')}</Typography>
+                          <Typography variant='body2'>
+                            {i18n.t('microfrontend.observability_dashboard.k46')}
+                          </Typography>
                           <Typography
                             variant='body2'
                             sx={{ fontWeight: 600 }}
@@ -1033,7 +1104,9 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         sx={{ p: 2 }}
                       >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant='body2'>{i18n.t('microfrontend.observability_dashboard.k47')}</Typography>
+                          <Typography variant='body2'>
+                            {i18n.t('microfrontend.observability_dashboard.k47')}
+                          </Typography>
                           <Typography
                             variant='body2'
                             sx={{ fontWeight: 600 }}
@@ -1047,7 +1120,9 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         sx={{ p: 2 }}
                       >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant='body2'>{i18n.t('microfrontend.observability_dashboard.k48')}</Typography>
+                          <Typography variant='body2'>
+                            {i18n.t('microfrontend.observability_dashboard.k48')}
+                          </Typography>
                           <Typography
                             variant='body2'
                             sx={{ fontWeight: 600 }}
@@ -1061,9 +1136,13 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         sx={{ p: 2 }}
                       >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant='body2'>{i18n.t('microfrontend.observability_dashboard.k49')}</Typography>
+                          <Typography variant='body2'>
+                            {i18n.t('microfrontend.observability_dashboard.k49')}
+                          </Typography>
                           <Chip
-                            label={reg?.status || i18n.t('microfrontend.observability_dashboard.k50')}
+                            label={
+                              reg?.status || i18n.t('microfrontend.observability_dashboard.k50')
+                            }
                             size='small'
                             color={
                               reg?.status === 'active'
@@ -1084,7 +1163,8 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         variant='subtitle1'
                         sx={{ fontWeight: 600, mb: 1 }}
                       >
-                        {i18n.t('microfrontend.observability_dashboard.k1')}{perf.resources.length})
+                        {i18n.t('microfrontend.observability_dashboard.k1')}
+                        {perf.resources.length})
                       </Typography>
                       <TableContainer
                         component={Paper}
@@ -1093,10 +1173,18 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                         <Table size='small'>
                           <TableHead>
                             <TableRow sx={{ bgcolor: 'action.hover' }}>
-                              <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k51')}</TableCell>
-                              <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k52')}</TableCell>
-                              <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k53')}</TableCell>
-                              <TableCell sx={{ fontWeight: 600 }}>{i18n.t('microfrontend.observability_dashboard.k54')}</TableCell>
+                              <TableCell sx={{ fontWeight: 600 }}>
+                                {i18n.t('microfrontend.observability_dashboard.k51')}
+                              </TableCell>
+                              <TableCell sx={{ fontWeight: 600 }}>
+                                {i18n.t('microfrontend.observability_dashboard.k52')}
+                              </TableCell>
+                              <TableCell sx={{ fontWeight: 600 }}>
+                                {i18n.t('microfrontend.observability_dashboard.k53')}
+                              </TableCell>
+                              <TableCell sx={{ fontWeight: 600 }}>
+                                {i18n.t('microfrontend.observability_dashboard.k54')}
+                              </TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -1135,7 +1223,9 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
               );
             })()
           ) : (
-            <Typography color='text.secondary'>{i18n.t('microfrontend.observability_dashboard.k55')}</Typography>
+            <Typography color='text.secondary'>
+              {i18n.t('microfrontend.observability_dashboard.k55')}
+            </Typography>
           )}
         </CardContent>
       </Card>
@@ -1184,7 +1274,9 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
             variant={autoRefresh ? 'contained' : 'outlined'}
           >
-            {autoRefresh ? i18n.t('microfrontend.observability_dashboard.k57') : i18n.t('microfrontend.observability_dashboard.k56')}
+            {autoRefresh
+              ? i18n.t('microfrontend.observability_dashboard.k57')
+              : i18n.t('microfrontend.observability_dashboard.k56')}
           </Button>
           <Button
             size='small'

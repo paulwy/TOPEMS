@@ -6,7 +6,8 @@ import type { ApiResponse } from '../client';
 export type ServiceStatus = 'draft' | 'published' | 'deprecated' | 'archived';
 export type OrchestrationStatus = 'designing' | 'testing' | 'active' | 'inactive' | 'error';
 export type ExecutionStatus = 'pending' | 'running' | 'success' | 'failed' | 'cancelled';
-export type ServiceType = 'integration' | 'transformation' | 'validation' | 'enrichment' | 'delivery';
+export type ServiceType =
+  'integration' | 'transformation' | 'validation' | 'enrichment' | 'delivery';
 export type DeploymentStatus = 'deploying' | 'active' | 'failed' | 'rolled_back';
 
 export interface DataService {
@@ -195,7 +196,9 @@ export const dataServiceOrchestrationApiV71 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<DataService>>(`/mdm-v71/services${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<DataService>>(
+      `/mdm-v71/services${s ? `?${s}` : ''}`
+    );
   },
 
   async updateService(id: string, data: UpdateServiceRequest): Promise<ApiResponse<DataService>> {
@@ -211,7 +214,9 @@ export const dataServiceOrchestrationApiV71 = {
   },
 
   // ===== 编排流程管理 =====
-  async createOrchestration(data: CreateOrchestrationRequest): Promise<ApiResponse<OrchestrationFlow>> {
+  async createOrchestration(
+    data: CreateOrchestrationRequest
+  ): Promise<ApiResponse<OrchestrationFlow>> {
     return apiClient.master.post<OrchestrationFlow>('/mdm-v71/orchestrations', data);
   },
 
@@ -233,12 +238,14 @@ export const dataServiceOrchestrationApiV71 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<OrchestrationFlow>>(`/mdm-v71/orchestrations${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<OrchestrationFlow>>(
+      `/mdm-v71/orchestrations${s ? `?${s}` : ''}`
+    );
   },
 
   async updateOrchestration(
     id: string,
-    data: UpdateOrchestrationRequest,
+    data: UpdateOrchestrationRequest
   ): Promise<ApiResponse<OrchestrationFlow>> {
     return apiClient.master.put<OrchestrationFlow>(`/mdm-v71/orchestrations/${id}`, data);
   },
@@ -256,11 +263,11 @@ export const dataServiceOrchestrationApiV71 = {
   },
 
   // ===== 服务执行/作业管理 =====
-  async executeFlow(
-    id: string,
-    data?: ExecuteFlowRequest,
-  ): Promise<ApiResponse<ServiceExecution>> {
-    return apiClient.master.post<ServiceExecution>(`/mdm-v71/orchestrations/${id}/execute`, data || {});
+  async executeFlow(id: string, data?: ExecuteFlowRequest): Promise<ApiResponse<ServiceExecution>> {
+    return apiClient.master.post<ServiceExecution>(
+      `/mdm-v71/orchestrations/${id}/execute`,
+      data || {}
+    );
   },
 
   async getExecution(id: string): Promise<ApiResponse<ServiceExecution>> {
@@ -281,7 +288,9 @@ export const dataServiceOrchestrationApiV71 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<ServiceExecution>>(`/mdm-v71/executions${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<ServiceExecution>>(
+      `/mdm-v71/executions${s ? `?${s}` : ''}`
+    );
   },
 
   async cancelExecution(id: string): Promise<ApiResponse<{ cancelled: boolean }>> {
@@ -293,31 +302,41 @@ export const dataServiceOrchestrationApiV71 = {
   },
 
   // ===== 服务监控与日志 =====
-  async listExecutionLogs(executionId: string, params?: {
-    level?: 'info' | 'warning' | 'error' | 'debug';
-    page?: number;
-    pageSize?: number;
-  }): Promise<ApiResponse<PaginatedResponse<ServiceLog>>> {
+  async listExecutionLogs(
+    executionId: string,
+    params?: {
+      level?: 'info' | 'warning' | 'error' | 'debug';
+      page?: number;
+      pageSize?: number;
+    }
+  ): Promise<ApiResponse<PaginatedResponse<ServiceLog>>> {
     const qs = new URLSearchParams();
     if (params?.level) qs.set('level', params.level);
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<ServiceLog>>(`/mdm-v71/executions/${executionId}/logs${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<ServiceLog>>(
+      `/mdm-v71/executions/${executionId}/logs${s ? `?${s}` : ''}`
+    );
   },
 
-  async getServiceMetrics(serviceId: string, params?: {
-    period?: 'hour' | 'day' | 'week' | 'month';
-  }): Promise<ApiResponse<{
-    service_id: string;
-    total_calls: number;
-    successful_calls: number;
-    failed_calls: number;
-    avg_duration_ms: number;
-    p95_duration_ms: number;
-    period_start: string;
-    period_end: string;
-  }>> {
+  async getServiceMetrics(
+    serviceId: string,
+    params?: {
+      period?: 'hour' | 'day' | 'week' | 'month';
+    }
+  ): Promise<
+    ApiResponse<{
+      service_id: string;
+      total_calls: number;
+      successful_calls: number;
+      failed_calls: number;
+      avg_duration_ms: number;
+      p95_duration_ms: number;
+      period_start: string;
+      period_end: string;
+    }>
+  > {
     const qs = new URLSearchParams();
     if (params?.period) qs.set('period', params.period);
     const s = qs.toString();
@@ -331,7 +350,7 @@ export const dataServiceOrchestrationApiV71 = {
 
   async createServiceVersion(
     serviceId: string,
-    data: { changelog: string; configuration: Record<string, unknown> },
+    data: { changelog: string; configuration: Record<string, unknown> }
   ): Promise<ApiResponse<ServiceVersion>> {
     return apiClient.master.post<ServiceVersion>(`/mdm-v71/services/${serviceId}/versions`, data);
   },
@@ -339,18 +358,18 @@ export const dataServiceOrchestrationApiV71 = {
   async setCurrentVersion(serviceId: string, versionId: string): Promise<ApiResponse<DataService>> {
     return apiClient.master.post<DataService>(
       `/mdm-v71/services/${serviceId}/versions/${versionId}/set-current`,
-      {},
+      {}
     );
   },
 
   // ===== 服务部署 =====
   async deployService(
     serviceId: string,
-    data: DeployServiceRequest,
+    data: DeployServiceRequest
   ): Promise<ApiResponse<ServiceDeployment>> {
     return apiClient.master.post<ServiceDeployment>(
       `/mdm-v71/services/${serviceId}/deployments`,
-      data,
+      data
     );
   },
 
@@ -361,7 +380,7 @@ export const dataServiceOrchestrationApiV71 = {
   async rollbackDeployment(deploymentId: string): Promise<ApiResponse<ServiceDeployment>> {
     return apiClient.master.post<ServiceDeployment>(
       `/mdm-v71/deployments/${deploymentId}/rollback`,
-      {},
+      {}
     );
   },
 
@@ -370,14 +389,16 @@ export const dataServiceOrchestrationApiV71 = {
     return apiClient.master.get<ServiceDashboard>('/mdm-v71/dashboard');
   },
 
-  async getFlowStatistics(flowId: string): Promise<ApiResponse<{
-    flow_id: string;
-    total_executions: number;
-    successful_executions: number;
-    failed_executions: number;
-    avg_duration_ms: number;
-    last_execution_at?: string;
-  }>> {
+  async getFlowStatistics(flowId: string): Promise<
+    ApiResponse<{
+      flow_id: string;
+      total_executions: number;
+      successful_executions: number;
+      failed_executions: number;
+      avg_duration_ms: number;
+      last_execution_at?: string;
+    }>
+  > {
     return apiClient.master.get(`/mdm-v71/orchestrations/${flowId}/statistics`);
   },
 };

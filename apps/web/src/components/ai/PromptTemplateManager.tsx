@@ -86,11 +86,27 @@ interface PromptTemplateManagerProps {
 
 const categories = [
   { id: 'all', label: i18n.t('components.prompt_template_manager.k0'), icon: <Tag size={18} /> },
-  { id: 'writing', label: i18n.t('components.prompt_template_manager.k1'), icon: <FileText size={18} /> },
+  {
+    id: 'writing',
+    label: i18n.t('components.prompt_template_manager.k1'),
+    icon: <FileText size={18} />,
+  },
   { id: 'code', label: i18n.t('components.prompt_template_manager.k2'), icon: <Code2 size={18} /> },
-  { id: 'business', label: i18n.t('components.prompt_template_manager.k3'), icon: <MessageSquare size={18} /> },
-  { id: 'analysis', label: i18n.t('components.prompt_template_manager.k4'), icon: <BarChart3 size={18} /> },
-  { id: 'creative', label: i18n.t('components.prompt_template_manager.k5'), icon: <Lightbulb size={18} /> },
+  {
+    id: 'business',
+    label: i18n.t('components.prompt_template_manager.k3'),
+    icon: <MessageSquare size={18} />,
+  },
+  {
+    id: 'analysis',
+    label: i18n.t('components.prompt_template_manager.k4'),
+    icon: <BarChart3 size={18} />,
+  },
+  {
+    id: 'creative',
+    label: i18n.t('components.prompt_template_manager.k5'),
+    icon: <Lightbulb size={18} />,
+  },
 ];
 
 const getCategoryIcon = (category: string) => {
@@ -464,7 +480,8 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
                             color='text.secondary'
                             sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
                           >
-                            {i18n.t('components.prompt_template_manager.k0')} {prompt.usage_count} {i18n.t('components.prompt_template_manager.k1')}
+                            {i18n.t('components.prompt_template_manager.k0')} {prompt.usage_count}{' '}
+                            {i18n.t('components.prompt_template_manager.k1')}
                           </Typography>
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
                             <IconButton
@@ -521,7 +538,9 @@ export const PromptTemplateManager: React.FC<PromptTemplateManagerProps> = ({
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              {editingPrompt ? i18n.t('components.prompt_template_manager.k15') : i18n.t('components.prompt_template_manager.k14')}
+              {editingPrompt
+                ? i18n.t('components.prompt_template_manager.k15')
+                : i18n.t('components.prompt_template_manager.k14')}
             </Typography>
             <IconButton
               size='small'
@@ -618,14 +637,18 @@ key_points'
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseEditDialog}>{i18n.t('components.prompt_template_manager.k23')}</Button>
+          <Button onClick={handleCloseEditDialog}>
+            {i18n.t('components.prompt_template_manager.k23')}
+          </Button>
           <Button
             variant='contained'
             startIcon={<Save size={16} />}
             onClick={handleSave}
             disabled={!formData.name || !formData.content}
           >
-            {editingPrompt ? i18n.t('components.prompt_template_manager.k25') : i18n.t('components.prompt_template_manager.k24')}
+            {editingPrompt
+              ? i18n.t('components.prompt_template_manager.k25')
+              : i18n.t('components.prompt_template_manager.k24')}
           </Button>
         </DialogActions>
       </Dialog>

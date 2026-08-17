@@ -2,48 +2,57 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React from 'react';
 import { renderWithProviders, screen } from '@/__tests__/test-utils';
 
-const i18nMap = vi.hoisted(() => ({
-  'pages.stat_card.k0': '较上小时',
-  'pages.alarm_list.k0': '实时报警',
-  'pages.alarm_list.k1': '当前无报警，运行平稳',
-  'pages.alarm_list.k2': '最近 {{count}} 条',
-  'pages.equipment_status_panel.k0': '设备运行状态',
-  'pages.equipment_status_panel.k1': '合计',
-  'pages.equipment_status_panel.k2': '台',
-  'pages.equipment_status_panel.k3': '运行 ',
-  'pages.equipment_status_panel.k4': '维护 ',
-  'pages.equipment_status_panel.k5': '故障 ',
-  'pages.work_station_utilization_card.k0': '工站利用率',
-  'pages.work_station_utilization_card.k1': '暂无工站数据',
-  'pages.work_station_utilization_card.k2': '活跃工单',
-  'pages.work_station_utilization_card.k3': '今日产出',
-  'pages.production_gantt.k0': '生产进度甘特图',
-  'pages.production_gantt.k1': '暂无排产计划',
-  'pages.production_gantt.k2': '数量',
-  'pages.production_gantt.k3': '状态:',
-  'pages.utils.k0': '秒前',
-  'pages.utils.k1': '分钟前',
-  'pages.utils.k2': '小时前',
-  'pages.utils.k3': '天前',
-  'mes.constants.k0': '运行中',
-  'mes.constants.k1': '使用中',
-  'mes.constants.k2': '正常',
-  'mes.constants.k3': '空闲',
-  'mes.constants.k4': '维护中',
-  'mes.constants.k5': '故障',
-  'mes.constants.k6': '故障',
-  'mes.constants.k7': '已报废',
-  'mes.constants.k8': '离线',
-  'mes.constants.k9': '严重',
-  'mes.constants.k10': '警告',
-  'mes.constants.k11': '提示',
-  'mes.constants.k12': '待开始',
-  'mes.constants.k13': '进行中',
-  'mes.constants.k14': '进行中',
-  'mes.constants.k15': '已完成',
-  'mes.constants.k16': '已暂停',
-  'mes.constants.k17': '延期',
-} as Record<string, string>));
+import StatCard from '../StatCard';
+import AlarmList from '../AlarmList';
+import EquipmentStatusPanel from '../EquipmentStatusPanel';
+import WorkStationUtilizationCard from '../WorkStationUtilizationCard';
+import ProductionGantt from '../ProductionGantt';
+
+const i18nMap = vi.hoisted(
+  () =>
+    ({
+      'pages.stat_card.k0': '较上小时',
+      'pages.alarm_list.k0': '实时报警',
+      'pages.alarm_list.k1': '当前无报警，运行平稳',
+      'pages.alarm_list.k2': '最近 {{count}} 条',
+      'pages.equipment_status_panel.k0': '设备运行状态',
+      'pages.equipment_status_panel.k1': '合计',
+      'pages.equipment_status_panel.k2': '台',
+      'pages.equipment_status_panel.k3': '运行 ',
+      'pages.equipment_status_panel.k4': '维护 ',
+      'pages.equipment_status_panel.k5': '故障 ',
+      'pages.work_station_utilization_card.k0': '工站利用率',
+      'pages.work_station_utilization_card.k1': '暂无工站数据',
+      'pages.work_station_utilization_card.k2': '活跃工单',
+      'pages.work_station_utilization_card.k3': '今日产出',
+      'pages.production_gantt.k0': '生产进度甘特图',
+      'pages.production_gantt.k1': '暂无排产计划',
+      'pages.production_gantt.k2': '数量',
+      'pages.production_gantt.k3': '状态:',
+      'pages.utils.k0': '秒前',
+      'pages.utils.k1': '分钟前',
+      'pages.utils.k2': '小时前',
+      'pages.utils.k3': '天前',
+      'mes.constants.k0': '运行中',
+      'mes.constants.k1': '使用中',
+      'mes.constants.k2': '正常',
+      'mes.constants.k3': '空闲',
+      'mes.constants.k4': '维护中',
+      'mes.constants.k5': '故障',
+      'mes.constants.k6': '故障',
+      'mes.constants.k7': '已报废',
+      'mes.constants.k8': '离线',
+      'mes.constants.k9': '严重',
+      'mes.constants.k10': '警告',
+      'mes.constants.k11': '提示',
+      'mes.constants.k12': '待开始',
+      'mes.constants.k13': '进行中',
+      'mes.constants.k14': '进行中',
+      'mes.constants.k15': '已完成',
+      'mes.constants.k16': '已暂停',
+      'mes.constants.k17': '延期',
+    }) as Record<string, string>
+);
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -102,12 +111,6 @@ vi.mock('@/components/charts', () => ({
     <div data-testid='pie-chart'>{data.map((item) => `${item.name}:${item.value}`).join('|')}</div>
   ),
 }));
-
-import StatCard from '../StatCard';
-import AlarmList from '../AlarmList';
-import EquipmentStatusPanel from '../EquipmentStatusPanel';
-import WorkStationUtilizationCard from '../WorkStationUtilizationCard';
-import ProductionGantt from '../ProductionGantt';
 
 const alarms = [
   {

@@ -181,7 +181,12 @@ describe('APS Module API Tests', () => {
 
     it('create should call POST /material-plans with data', async () => {
       const { materialPlanApi } = await import('../aps/materialPlan');
-      const data = { plan_no: 'MP-001', material_code: 'M-001', material_name: '原料A', required_quantity: 100 };
+      const data = {
+        plan_no: 'MP-001',
+        material_code: 'M-001',
+        material_name: '原料A',
+        required_quantity: 100,
+      };
       await materialPlanApi.create(data);
       const { apiClient } = await import('../client');
       expect(apiClient.aps.post).toHaveBeenCalledWith('/material-plans', data);
@@ -222,7 +227,12 @@ describe('APS Module API Tests', () => {
 
     it('create should call POST /forecasts with data', async () => {
       const { forecastApi } = await import('../aps/forecast');
-      const data = { forecast_no: 'F-001', product_name: '产品A', forecast_quantity: 1000, method: 'moving_average' };
+      const data = {
+        forecast_no: 'F-001',
+        product_name: '产品A',
+        forecast_quantity: 1000,
+        method: 'moving_average',
+      };
       await forecastApi.create(data);
       const { apiClient } = await import('../client');
       expect(apiClient.aps.post).toHaveBeenCalledWith('/forecasts', data);

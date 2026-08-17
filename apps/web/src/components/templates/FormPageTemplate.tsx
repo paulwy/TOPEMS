@@ -854,7 +854,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           control={control}
           defaultValue={field.defaultValue || ''}
           rules={{
-            required: isRequired ? `${field.label}${i18n.t('components.form_page_template.k1')}` : false,
+            required: isRequired
+              ? `${field.label}${i18n.t('components.form_page_template.k1')}`
+              : false,
           }}
           render={({ field: controllerField }) => {
             switch (field.type) {
@@ -1299,14 +1301,17 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     if (!draftConfig?.enabled || drafts.length === 0) return null;
 
     return (
-      <Tooltip title={`${i18n.t('components.form_page_template.k2')}${drafts.length}${i18n.t('components.form_page_template.k3')}`}>
+      <Tooltip
+        title={`${i18n.t('components.form_page_template.k2')}${drafts.length}${i18n.t('components.form_page_template.k3')}`}
+      >
         <Button
           variant='outlined'
           size='small'
           onClick={() => setShowDraftDialog(true)}
           startIcon={<FileText style={{ width: 16, height: 16 }} />}
         >
-          {i18n.t('components.form_page_template.k0')}{drafts.length})
+          {i18n.t('components.form_page_template.k0')}
+          {drafts.length})
         </Button>
       </Tooltip>
     );
@@ -1351,7 +1356,8 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                 variant='caption'
                 sx={{ ml: 0.5 }}
               >
-                {Object.keys(errors).length}{i18n.t('components.form_page_template.k1')}
+                {Object.keys(errors).length}
+                {i18n.t('components.form_page_template.k1')}
               </Typography>
             </Box>
           </Tooltip>
@@ -1544,7 +1550,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                 }}
                 onClick={() => handleLoadDraft(draft)}
               >
-                <Typography variant='body2'>{i18n.t('components.form_page_template.index1_0')}</Typography>
+                <Typography variant='body2'>
+                  {i18n.t('components.form_page_template.index1_0')}
+                </Typography>
                 <Typography
                   variant='caption'
                   color='text.secondary'

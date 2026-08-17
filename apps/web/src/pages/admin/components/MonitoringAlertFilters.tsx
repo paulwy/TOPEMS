@@ -5,6 +5,7 @@ import React from 'react';
 import { Box, TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { Search } from 'lucide-react';
 import i18n from '@/i18n';
+
 export interface MonitoringAlertFiltersProps {
   searchQuery: string;
   filterLevel: string;

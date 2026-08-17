@@ -64,7 +64,7 @@ import ProfileInfoPanel from './ProfilePage/components/ProfileInfoPanel';
 import ProfileSecurityPanel from './ProfilePage/components/ProfileSecurityPanel';
 import ProfileApprovalPanel from './ProfilePage/components/ProfileApprovalPanel';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface ActivityItem {
   id: string;
@@ -248,7 +248,8 @@ const ProfilePage: React.FC = () => {
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } }; message?: string };
-      const errorMsg = error.response?.data?.message || error.message || i18n.t('pages.profile_page.k7');
+      const errorMsg =
+        error.response?.data?.message || error.message || i18n.t('pages.profile_page.k7');
       addNotification({ title: i18n.t('pages.profile_page.k8'), message: errorMsg, type: 'error' });
     },
   });
@@ -281,8 +282,13 @@ const ProfilePage: React.FC = () => {
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } }; message?: string };
-      const errorMsg = error.response?.data?.message || error.message || i18n.t('pages.profile_page.k12');
-      addNotification({ title: i18n.t('pages.profile_page.k13'), message: errorMsg, type: 'error' });
+      const errorMsg =
+        error.response?.data?.message || error.message || i18n.t('pages.profile_page.k12');
+      addNotification({
+        title: i18n.t('pages.profile_page.k13'),
+        message: errorMsg,
+        type: 'error',
+      });
     },
   });
 

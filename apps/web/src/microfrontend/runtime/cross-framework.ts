@@ -428,7 +428,10 @@ export class CrossFrameworkBridge {
 
   /** 注册内置适配器工厂 */
   private registerBuiltInAdapters(): void {
-    this.adapterFactories.set(FrameworkType.REACT, (c) => new ReactAdapter(c as React.ComponentType<object>));
+    this.adapterFactories.set(
+      FrameworkType.REACT,
+      (c) => new ReactAdapter(c as React.ComponentType<object>)
+    );
     this.adapterFactories.set(FrameworkType.VUE, (c) => new VueAdapter(c));
     this.adapterFactories.set(FrameworkType.ANGULAR, (c) => new AngularAdapter(c));
     this.adapterFactories.set(FrameworkType.SVELTE, (c) => new SvelteAdapter(c));
@@ -486,7 +489,10 @@ export class CrossFrameworkBridge {
     try {
       mounted.adapter.unmount(mounted.container);
     } catch (err) {
-      console.error(`${i18n.t('microfrontend.cross-framework.k4')}${id}${i18n.t('microfrontend.cross-framework.k5')}`, err);
+      console.error(
+        `${i18n.t('microfrontend.cross-framework.k4')}${id}${i18n.t('microfrontend.cross-framework.k5')}`,
+        err
+      );
     }
     this.mounted.delete(id);
     this.notifyListeners();

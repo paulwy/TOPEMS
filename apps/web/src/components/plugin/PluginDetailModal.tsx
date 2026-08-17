@@ -211,7 +211,8 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                 variant='h6'
                 sx={{ fontWeight: 'bold' }}
               >
-                {i18n.t('components.plugin_detail_modal.k0')}{reviews.length})
+                {i18n.t('components.plugin_detail_modal.k0')}
+                {reviews.length})
               </Typography>
               <div className='space-y-4'>
                 {reviews.length > 0 ? (
@@ -302,19 +303,25 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                 <Divider />
 
                 <div className='flex items-center justify-between'>
-                  <span style={{ color: 'var(--mui-palette-text-secondary)' }}>{i18n.t('components.plugin_detail_modal.k8')}</span>
+                  <span style={{ color: 'var(--mui-palette-text-secondary)' }}>
+                    {i18n.t('components.plugin_detail_modal.k8')}
+                  </span>
                   <Typography sx={{ fontWeight: 'medium' }}>
                     {plugin.install_count?.toLocaleString() || 0}
                   </Typography>
                 </div>
 
                 <div className='flex items-center justify-between'>
-                  <span style={{ color: 'var(--mui-palette-text-secondary)' }}>{i18n.t('components.plugin_detail_modal.k9')}</span>
+                  <span style={{ color: 'var(--mui-palette-text-secondary)' }}>
+                    {i18n.t('components.plugin_detail_modal.k9')}
+                  </span>
                   <Typography sx={{ fontWeight: 'medium' }}>{plugin.category}</Typography>
                 </div>
 
                 <div className='flex items-center justify-between'>
-                  <span style={{ color: 'var(--mui-palette-text-secondary)' }}>{i18n.t('components.plugin_detail_modal.k10')}</span>
+                  <span style={{ color: 'var(--mui-palette-text-secondary)' }}>
+                    {i18n.t('components.plugin_detail_modal.k10')}
+                  </span>
                   <Typography sx={{ fontWeight: 'medium' }}>
                     {plugin.author_name || i18n.t('components.plugin_detail_modal.k11')}
                   </Typography>
@@ -336,7 +343,11 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                     )
                   }
                 >
-                  {installed ? i18n.t('components.plugin_detail_modal.k14') : plugin.is_free ? i18n.t('components.plugin_detail_modal.k13') : i18n.t('components.plugin_detail_modal.k12')}
+                  {installed
+                    ? i18n.t('components.plugin_detail_modal.k14')
+                    : plugin.is_free
+                      ? i18n.t('components.plugin_detail_modal.k13')
+                      : i18n.t('components.plugin_detail_modal.k12')}
                 </Button>
               </CardContent>
             </Card>
@@ -374,7 +385,9 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                     onClick={handleSubmitReview}
                     disabled={rating === 0 || isSubmitting}
                   >
-                    {isSubmitting ? i18n.t('components.plugin_detail_modal.k8') : i18n.t('components.plugin_detail_modal.k17')}
+                    {isSubmitting
+                      ? i18n.t('components.plugin_detail_modal.k8')
+                      : i18n.t('components.plugin_detail_modal.k17')}
                   </Button>
                 </div>
               </CardContent>

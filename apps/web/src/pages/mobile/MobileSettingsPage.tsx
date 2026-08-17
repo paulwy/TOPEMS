@@ -11,6 +11,7 @@ import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { mobileApi } from '@/api/mobile';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface MobileSetting {
   key: string;
   label: string;
@@ -53,7 +54,7 @@ const MobileSettingsPage: React.FC = () => {
     queryKey: ['mobile-settings-page'],
     queryFn: async () => {
       try {
-        return await mobileApi.user.getSettings() ?? {};
+        return (await mobileApi.user.getSettings()) ?? {};
       } catch (e) {
         return {};
       }
@@ -77,7 +78,11 @@ const MobileSettingsPage: React.FC = () => {
   useEffect(() => {
     if (settingsQuery.isError) {
       logger.error('Error loading mobile settings:', settingsQuery.error);
-      addNotification({ title: i18n.t('mobile.mobile_settings_page.k9'), message: i18n.t('mobile.mobile_settings_page.k8'), type: 'error' });
+      addNotification({
+        title: i18n.t('mobile.mobile_settings_page.k9'),
+        message: i18n.t('mobile.mobile_settings_page.k8'),
+        type: 'error',
+      });
     }
   }, [settingsQuery.isError, settingsQuery.error, addNotification]);
   const saveMutation = useMutation({
@@ -86,15 +91,24 @@ const MobileSettingsPage: React.FC = () => {
       return settings;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_SETTINGS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      addNotification({ title: i18n.t('mobile.mobile_settings_page.k11'), message: i18n.t('mobile.mobile_settings_page.k10'), type: 'success' });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MOBILE_SETTINGS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        title: i18n.t('mobile.mobile_settings_page.k11'),
+        message: i18n.t('mobile.mobile_settings_page.k10'),
+        type: 'success',
+      });
     },
     onError: (err: unknown) => {
       logger.error('Error saving mobile settings:', err);
-      addNotification({ title: i18n.t('mobile.mobile_settings_page.k13'), message: i18n.t('mobile.mobile_settings_page.k12'), type: 'error' });
+      addNotification({
+        title: i18n.t('mobile.mobile_settings_page.k13'),
+        message: i18n.t('mobile.mobile_settings_page.k12'),
+        type: 'error',
+      });
     },
   });
   const saving = saveMutation.isPending;
@@ -111,15 +125,24 @@ const MobileSettingsPage: React.FC = () => {
       return defaultMobileSettings;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_SETTINGS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      addNotification({ title: i18n.t('mobile.mobile_settings_page.k15'), message: i18n.t('mobile.mobile_settings_page.k14'), type: 'info' });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MOBILE_SETTINGS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        title: i18n.t('mobile.mobile_settings_page.k15'),
+        message: i18n.t('mobile.mobile_settings_page.k14'),
+        type: 'info',
+      });
     },
     onError: (err: unknown) => {
       logger.error('Error resetting mobile settings:', err);
-      addNotification({ title: i18n.t('mobile.mobile_settings_page.k17'), message: i18n.t('mobile.mobile_settings_page.k16'), type: 'error' });
+      addNotification({
+        title: i18n.t('mobile.mobile_settings_page.k17'),
+        message: i18n.t('mobile.mobile_settings_page.k16'),
+        type: 'error',
+      });
     },
   });
   const handleReset = () => {

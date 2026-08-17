@@ -56,7 +56,8 @@ import { BIChartColors } from '@/components/charts/chartTheme';
 import { designTokens } from '@/theme/tokens';
 import { BI_PATHS } from '@/modules/bi/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const moduleConfig: Record<string, { name: string; icon: string; color: string }> = {
   rs: { name: i18n.t('bi.bi_module_detail_page.k0'), icon: '🔬', color: 'primary.main' },
   lims: { name: i18n.t('bi.bi_module_detail_page.k1'), icon: '🧪', color: 'success.main' },
@@ -308,7 +309,10 @@ const BIModuleDetailPage = () => {
                   item: { month?: string; date?: string; count?: number; value?: number },
                   index: number
                 ) => ({
-                  month: item.month || item.date || `${index + 1}${i18n.t('pages.bi_module_detail_page.k36')}`,
+                  month:
+                    item.month ||
+                    item.date ||
+                    `${index + 1}${i18n.t('pages.bi_module_detail_page.k36')}`,
                   count: item.count || item.value || 0,
                 })
               );
@@ -560,7 +564,8 @@ const BIModuleDetailPage = () => {
             variant='body2'
             color='text.secondary'
           >
-            <Clock size={14} /> {i18n.t('bi.bi_module_detail_page.k0')}: {new Date().toLocaleString(i18n.language === 'zh' ? 'zh-CN' : 'en-US')}
+            <Clock size={14} /> {i18n.t('bi.bi_module_detail_page.k0')}:{' '}
+            {new Date().toLocaleString(i18n.language === 'zh' ? 'zh-CN' : 'en-US')}
           </Typography>
           <ExportButton
             data={exportData}
@@ -601,55 +606,113 @@ const BIModuleDetailPage = () => {
                   <TableRow>
                     {moduleId === 'rs' && (
                       <>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k48')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k49')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k50')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k51')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k52')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k48')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k49')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k50')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k51')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k52')}
+                        </TableCell>
                       </>
                     )}
                     {moduleId === 'lims' && (
                       <>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k53')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k54')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k55')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k56')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k57')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k53')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k54')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k55')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k56')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k57')}
+                        </TableCell>
                       </>
                     )}
                     {moduleId === 'qms' && (
                       <>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k58')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k59')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k60')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k61')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k62')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k58')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k59')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k60')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k61')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k62')}
+                        </TableCell>
                       </>
                     )}
                     {moduleId === 'ehs' && (
                       <>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k63')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k64')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k65')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k66')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k67')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k63')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k64')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k65')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k66')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k67')}
+                        </TableCell>
                       </>
                     )}
                     {moduleId === 'srm' && (
                       <>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k68')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k69')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k70')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k71')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k72')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k68')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k69')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k70')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k71')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k72')}
+                        </TableCell>
                       </>
                     )}
                     {moduleId === 'pdm' && (
                       <>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k73')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k74')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k75')}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_module_detail_page.k76')}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k73')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k74')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k75')}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {i18n.t('bi.bi_module_detail_page.k76')}
+                        </TableCell>
                       </>
                     )}
                   </TableRow>

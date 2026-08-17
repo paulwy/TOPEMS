@@ -58,7 +58,10 @@ export interface SlosBudget {
 }
 
 export const businessMetricApi = {
-  list: (params?: { service_name?: string; metric_type?: string }): Promise<ApiResponse<BusinessMetric[]>> => {
+  list: (params?: {
+    service_name?: string;
+    metric_type?: string;
+  }): Promise<ApiResponse<BusinessMetric[]>> => {
     return apiClient.core.get('/api/core/monitor/business-metrics', { params });
   },
 
@@ -82,7 +85,12 @@ export const businessMetricApi = {
     return apiClient.core.get('/api/core/monitor/business-metrics/summary', { params });
   },
 
-  getTrend: (params?: { metric_name?: string; interval?: string; start_date?: string; end_date?: string }): Promise<ApiResponse<Array<{ timestamp: string; value: number }>>> => {
+  getTrend: (params?: {
+    metric_name?: string;
+    interval?: string;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<ApiResponse<Array<{ timestamp: string; value: number }>>> => {
     return apiClient.core.get('/api/core/monitor/business-metrics/trend', { params });
   },
 
@@ -90,19 +98,31 @@ export const businessMetricApi = {
     return apiClient.core.get('/api/core/monitor/health');
   },
 
-  getMetrics: (type: 'system' | 'database' | 'realtime'): Promise<ApiResponse<Record<string, unknown>>> => {
+  getMetrics: (
+    type: 'system' | 'database' | 'realtime'
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
     return apiClient.core.get(`/api/core/monitor/metrics/${type}`);
   },
 
-  getPerformanceApi: (params?: { endpoint?: string; period?: string }): Promise<ApiResponse<Record<string, unknown>>> => {
+  getPerformanceApi: (params?: {
+    endpoint?: string;
+    period?: string;
+  }): Promise<ApiResponse<Record<string, unknown>>> => {
     return apiClient.core.get('/api/core/monitor/performance/api', { params });
   },
 
-  getPerformanceReport: (params?: { period?: string; start_date?: string; end_date?: string }): Promise<ApiResponse<PerformanceReport>> => {
+  getPerformanceReport: (params?: {
+    period?: string;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<ApiResponse<PerformanceReport>> => {
     return apiClient.core.get('/api/core/monitor/reports/performance', { params });
   },
 
-  listAlerts: (params?: { status?: string; severity?: string }): Promise<ApiResponse<Record<string, unknown>[]>> => {
+  listAlerts: (params?: {
+    status?: string;
+    severity?: string;
+  }): Promise<ApiResponse<Record<string, unknown>[]>> => {
     return apiClient.core.get('/api/core/monitor/alerts', { params });
   },
 
@@ -134,7 +154,10 @@ export const businessMetricApi = {
     return apiClient.core.get(`/api/core/monitor/rules/${id}`);
   },
 
-  updateRule: (id: string, data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> => {
+  updateRule: (
+    id: string,
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
     return apiClient.core.put(`/api/core/monitor/rules/${id}`, data);
   },
 
@@ -174,7 +197,10 @@ export const businessMetricApi = {
     return apiClient.core.get('/api/core/monitor/slos/summary');
   },
 
-  getSlosTrend: (params?: { start_date?: string; end_date?: string }): Promise<ApiResponse<Array<{ timestamp: string; value: number }>>> => {
+  getSlosTrend: (params?: {
+    start_date?: string;
+    end_date?: string;
+  }): Promise<ApiResponse<Array<{ timestamp: string; value: number }>>> => {
     return apiClient.core.get('/api/core/monitor/slos/trend', { params });
   },
 

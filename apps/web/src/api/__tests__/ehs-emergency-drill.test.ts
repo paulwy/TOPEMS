@@ -23,7 +23,14 @@ describe('EHS Emergency Drill API Tests', () => {
       const { emergencyDrillApi } = await import('../ehs/emergencyDrill');
       const { apiClient } = await import('../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
-      await emergencyDrillApi.listDrillPlans({ page: 1, pagesize: 10, status: 'active', drill_type: 'fire', year: 2026, keyword: 'test' });
+      await emergencyDrillApi.listDrillPlans({
+        page: 1,
+        pagesize: 10,
+        status: 'active',
+        drill_type: 'fire',
+        year: 2026,
+        keyword: 'test',
+      });
       expect(apiClient.ehs.get).toHaveBeenCalledWith(
         '/drills/plans?page=1&pagesize=10&status=active&drill_type=fire&year=2026&q=test'
       );
@@ -77,7 +84,14 @@ describe('EHS Emergency Drill API Tests', () => {
       const { emergencyDrillApi } = await import('../ehs/emergencyDrill');
       const { apiClient } = await import('../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
-      await emergencyDrillApi.listDrillRecords({ page: 1, pagesize: 10, status: 'completed', drill_type: 'fire', plan_id: 'plan-001', keyword: 'test' });
+      await emergencyDrillApi.listDrillRecords({
+        page: 1,
+        pagesize: 10,
+        status: 'completed',
+        drill_type: 'fire',
+        plan_id: 'plan-001',
+        keyword: 'test',
+      });
       expect(apiClient.ehs.get).toHaveBeenCalledWith(
         '/drills/records?page=1&pagesize=10&status=completed&drill_type=fire&plan_id=plan-001&q=test'
       );
@@ -103,7 +117,12 @@ describe('EHS Emergency Drill API Tests', () => {
       const { emergencyDrillApi } = await import('../ehs/emergencyDrill');
       const { apiClient } = await import('../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
-      const data = { title: '火灾应急演练', drill_type: 'fire', location: '生产厂区', plan_id: 'plan-001' };
+      const data = {
+        title: '火灾应急演练',
+        drill_type: 'fire',
+        location: '生产厂区',
+        plan_id: 'plan-001',
+      };
       await emergencyDrillApi.createDrillRecord(data);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/drills/records', data);
     });
@@ -133,7 +152,10 @@ describe('EHS Emergency Drill API Tests', () => {
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { evaluator: '李主任', overall_score: 85, overall_comment: '演练效果良好' };
       await emergencyDrillApi.createDrillEvaluation('record-001', data);
-      expect(apiClient.ehs.post).toHaveBeenCalledWith('/drills/records/record-001/evaluation', data);
+      expect(apiClient.ehs.post).toHaveBeenCalledWith(
+        '/drills/records/record-001/evaluation',
+        data
+      );
     });
 
     it('createDrillEvaluation with empty data should call POST with empty object', async () => {
@@ -158,7 +180,11 @@ describe('EHS Emergency Drill API Tests', () => {
       const { emergencyDrillApi } = await import('../ehs/emergencyDrill');
       const { apiClient } = await import('../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
-      const data = { description: '部分员工不熟悉疏散路线', category: 'training', severity: 'medium' };
+      const data = {
+        description: '部分员工不熟悉疏散路线',
+        category: 'training',
+        severity: 'medium',
+      };
       await emergencyDrillApi.createDrillProblem('record-001', data);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/drills/records/record-001/problems', data);
     });
@@ -169,7 +195,10 @@ describe('EHS Emergency Drill API Tests', () => {
       (apiClient.ehs.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { status: 'rectified', verifier: '王主管' };
       await emergencyDrillApi.updateDrillProblem('record-001', 'problem-001', data);
-      expect(apiClient.ehs.put).toHaveBeenCalledWith('/drills/records/record-001/problems/problem-001', data);
+      expect(apiClient.ehs.put).toHaveBeenCalledWith(
+        '/drills/records/record-001/problems/problem-001',
+        data
+      );
     });
   });
 

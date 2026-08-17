@@ -5,6 +5,7 @@ import { Card, CardContent, Stack, Box, Typography } from '@mui/material';
 import { Grid } from '@/components';
 import type { InstrumentDataStatistics } from '@/api/lims';
 import i18n from '@/i18n';
+
 const StatCard = ({
   title,
   value,

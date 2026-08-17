@@ -40,6 +40,7 @@ import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { monitorApi, type Alert, type AlertQueryParams } from '@/api/monitor';
 import { alertSchema, SEVERITY_LABELS, STATUS_LABELS } from '@/schemas/monitor';
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+
 type AlertSeverity = 'critical' | 'warning' | 'info';
 type AlertStatus = 'active' | 'acknowledged' | 'resolved';
 type TabType = 'all' | 'critical' | 'warning' | 'info' | 'resolved';
@@ -150,22 +151,26 @@ export const MonitorAlertsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const invalidateAlerts = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: CRUD_QUERY_KEY ,
-  exact: false,
-  refetchType: 'active',
-});
+    void queryClient.invalidateQueries({
+      queryKey: CRUD_QUERY_KEY,
+      exact: false,
+      refetchType: 'active',
+    });
   }, [queryClient]);
   const acknowledgeMutation = useMutation({
     mutationFn: (id: string) => monitorApi.acknowledgeAlert(id),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.MONITOR.DASHBOARD,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.MONITOR.DASHBOARD,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAlerts();
-      addNotification({ title: i18n.t('monitor.monitor_alerts_page.k5'), message: i18n.t('monitor.monitor_alerts_page.k4'), type: 'success' });
+      addNotification({
+        title: i18n.t('monitor.monitor_alerts_page.k5'),
+        message: i18n.t('monitor.monitor_alerts_page.k4'),
+        type: 'success',
+      });
     },
     onError: (err: unknown) => {
       const message = extractErrorMessage(err, i18n.t('monitor.monitor_alerts_page.k6'));
@@ -175,14 +180,17 @@ export const MonitorAlertsPage: React.FC = () => {
   const resolveMutation = useMutation({
     mutationFn: (id: string) => monitorApi.resolveAlert(id),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.MONITOR.DASHBOARD,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.MONITOR.DASHBOARD,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateAlerts();
-      addNotification({ title: i18n.t('monitor.monitor_alerts_page.k9'), message: i18n.t('monitor.monitor_alerts_page.k8'), type: 'success' });
+      addNotification({
+        title: i18n.t('monitor.monitor_alerts_page.k9'),
+        message: i18n.t('monitor.monitor_alerts_page.k8'),
+        type: 'success',
+      });
     },
     onError: (err: unknown) => {
       const message = extractErrorMessage(err, i18n.t('monitor.monitor_alerts_page.k10'));
@@ -226,7 +234,11 @@ export const MonitorAlertsPage: React.FC = () => {
         });
       } catch (err: unknown) {
         const message = extractErrorMessage(err, i18n.t('monitor.monitor_alerts_page.k14'));
-        addNotification({ title: i18n.t('monitor.monitor_alerts_page.k15'), message, type: 'error' });
+        addNotification({
+          title: i18n.t('monitor.monitor_alerts_page.k15'),
+          message,
+          type: 'error',
+        });
       }
     },
     [invalidateAlerts, addNotification]
@@ -243,7 +255,11 @@ export const MonitorAlertsPage: React.FC = () => {
         });
       } catch (err: unknown) {
         const message = extractErrorMessage(err, i18n.t('monitor.monitor_alerts_page.k17'));
-        addNotification({ title: i18n.t('monitor.monitor_alerts_page.k18'), message, type: 'error' });
+        addNotification({
+          title: i18n.t('monitor.monitor_alerts_page.k18'),
+          message,
+          type: 'error',
+        });
       }
     },
     [invalidateAlerts, addNotification]
@@ -254,12 +270,16 @@ export const MonitorAlertsPage: React.FC = () => {
       const alerts = response.data?.items ?? [];
       const exportData = alerts.map((alert) => ({
         [i18n.t('pages.monitor_alerts_page.k0')]: alert.title,
-        [i18n.t('pages.monitor_alerts_page.k1')]: SEVERITY_LABELS[alert.severity as AlertSeverity] || alert.severity,
+        [i18n.t('pages.monitor_alerts_page.k1')]:
+          SEVERITY_LABELS[alert.severity as AlertSeverity] || alert.severity,
         [i18n.t('pages.monitor_alerts_page.k2')]: alert.service_name,
         [i18n.t('pages.monitor_alerts_page.k3')]: alert.message,
         [i18n.t('pages.monitor_alerts_page.k4')]: alert.created_at,
-        [i18n.t('pages.monitor_alerts_page.k5')]: STATUS_LABELS[alert.status as AlertStatus] || alert.status,
-        [i18n.t('pages.monitor_alerts_page.k6')]: alert.acknowledged_at ? i18n.t('monitor.monitor_alerts_page.k19') : '-',
+        [i18n.t('pages.monitor_alerts_page.k5')]:
+          STATUS_LABELS[alert.status as AlertStatus] || alert.status,
+        [i18n.t('pages.monitor_alerts_page.k6')]: alert.acknowledged_at
+          ? i18n.t('monitor.monitor_alerts_page.k19')
+          : '-',
         [i18n.t('pages.monitor_alerts_page.k7')]: alert.resolved_at || '-',
       }));
       const blob = new Blob([JSON.stringify(exportData, null, 2)], {
@@ -451,7 +471,10 @@ export const MonitorAlertsPage: React.FC = () => {
         extraQueryParams={{ activeTab }}
         customRowActions={customRowActions}
         headerContent={headerContent}
-        breadcrumbs={[{ label: i18n.t('monitor.monitor_alerts_page.k38') }, { label: i18n.t('monitor.monitor_alerts_page.k37') }]}
+        breadcrumbs={[
+          { label: i18n.t('monitor.monitor_alerts_page.k38') },
+          { label: i18n.t('monitor.monitor_alerts_page.k37') },
+        ]}
       />
     </PageContainer>
   );

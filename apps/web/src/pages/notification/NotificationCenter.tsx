@@ -22,7 +22,7 @@ import { useNotificationStore } from '@/store';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 type NotificationFilterType = 'all' | NotificationTypeEnum;
 
@@ -494,7 +494,8 @@ const NotificationCenter: React.FC = () => {
             variant='body2'
             color='text.disabled'
           >
-            {i18n.t('pages.notification_center.k0')} {page} / {totalPages} {i18n.t('pages.notification_center.k1')}
+            {i18n.t('pages.notification_center.k0')} {page} / {totalPages}{' '}
+            {i18n.t('pages.notification_center.k1')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <button

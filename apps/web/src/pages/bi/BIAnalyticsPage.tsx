@@ -39,10 +39,9 @@ import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const ModuleCard = ({
   id,
@@ -371,12 +370,16 @@ const BIAnalyticsPage = () => {
       production: {
         [i18n.t('bi.analytics.stats.total_batches')]: data.total_production_batches || 0,
         [i18n.t('bi.analytics.stats.completed')]: data.completed_batches || 0,
-        [i18n.t('bi.analytics.stats.efficiency')]: data.production_efficiency ? `${data.production_efficiency}%` : '0%',
+        [i18n.t('bi.analytics.stats.efficiency')]: data.production_efficiency
+          ? `${data.production_efficiency}%`
+          : '0%',
       },
       laboratory: {
         [i18n.t('bi.analytics.stats.total_samples')]: data.total_samples || 0,
         [i18n.t('bi.analytics.stats.completed_tests')]: data.completed_tests || 0,
-        [i18n.t('bi.analytics.stats.instrument_usage')]: data.instrument_usage_rate ? `${data.instrument_usage_rate}%` : '0%',
+        [i18n.t('bi.analytics.stats.instrument_usage')]: data.instrument_usage_rate
+          ? `${data.instrument_usage_rate}%`
+          : '0%',
       },
       ehs: {
         [i18n.t('bi.analytics.stats.total_risks')]: data.total_risks || 0,
@@ -527,7 +530,9 @@ const BIAnalyticsPage = () => {
   ];
 
   // 构建图表数据
-  const chartData = (overview?.chartData as Array<{ name: string; value: number }> | undefined) ?? fallbackChartData;
+  const chartData =
+    (overview?.chartData as Array<{ name: string; value: number }> | undefined) ??
+    fallbackChartData;
 
   // 构建图表卡片
   const chartCards: ChartCardType[] = [

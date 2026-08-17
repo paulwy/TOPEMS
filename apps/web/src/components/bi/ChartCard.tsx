@@ -184,7 +184,10 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                       backgroundColor: activeChartType === type ? 'white' : 'transparent',
                       color: activeChartType === type ? 'primary.700' : 'text.secondary',
                       cursor: 'pointer',
-                      boxShadow: activeChartType === type ? `0 1px 2px ${designTokens.colors.action.selected}` : 'none',
+                      boxShadow:
+                        activeChartType === type
+                          ? `0 1px 2px ${designTokens.colors.action.selected}`
+                          : 'none',
                       transition: 'all 0.2s ease',
                     }}
                     title={type}
@@ -203,7 +206,10 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 sx={{ textTransform: 'none', padding: `${designTokens.spacing.sm} 12px` }}
               >
                 <Calendar style={{ width: 16, height: 16, marginRight: 4 }} />
-                <span>{timeRanges.find((r) => r.value === timeRange)?.label || i18n.t('shared.chart_card.k6')}</span>
+                <span>
+                  {timeRanges.find((r) => r.value === timeRange)?.label ||
+                    i18n.t('shared.chart_card.k6')}
+                </span>
               </Button>
             )}
 

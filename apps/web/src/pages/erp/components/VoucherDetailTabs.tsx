@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import type { VoucherManagementReturn } from '../hooks/useVoucherManagement';
+
 export type VoucherDetailTabsProps = VoucherManagementReturn;
 const VoucherDetailTabs: React.FC<VoucherDetailTabsProps> = (vm) => {
   const {

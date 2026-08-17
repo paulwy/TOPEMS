@@ -55,11 +55,26 @@ export const materialSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: i18n.t('shared.material.k0'), label: i18n.t('schema:erp.material.category.option.电子元件') },
-          { value: i18n.t('shared.material.k1'), label: i18n.t('schema:erp.material.category.option.机械零件') },
-          { value: i18n.t('shared.material.k2'), label: i18n.t('schema:erp.material.category.option.原材料') },
-          { value: i18n.t('shared.material.k3'), label: i18n.t('schema:erp.material.category.option.包装材料') },
-          { value: i18n.t('shared.material.k4'), label: i18n.t('schema:erp.material.category.option.辅助材料') },
+          {
+            value: i18n.t('shared.material.k0'),
+            label: i18n.t('schema:erp.material.category.option.电子元件'),
+          },
+          {
+            value: i18n.t('shared.material.k1'),
+            label: i18n.t('schema:erp.material.category.option.机械零件'),
+          },
+          {
+            value: i18n.t('shared.material.k2'),
+            label: i18n.t('schema:erp.material.category.option.原材料'),
+          },
+          {
+            value: i18n.t('shared.material.k3'),
+            label: i18n.t('schema:erp.material.category.option.包装材料'),
+          },
+          {
+            value: i18n.t('shared.material.k4'),
+            label: i18n.t('schema:erp.material.category.option.辅助材料'),
+          },
         ],
       },
       listWidth: 100,
@@ -193,7 +208,10 @@ export const materialSchema: EntitySchema = {
             label: i18n.t('schema:erp.material.filter.category.option.机械零件'),
             value: i18n.t('shared.material.k1'),
           },
-          { label: i18n.t('schema:erp.material.filter.category.option.原材料'), value: i18n.t('shared.material.k5') },
+          {
+            label: i18n.t('schema:erp.material.filter.category.option.原材料'),
+            value: i18n.t('shared.material.k5'),
+          },
           {
             label: i18n.t('schema:erp.material.filter.category.option.包装材料'),
             value: i18n.t('shared.material.k2'),

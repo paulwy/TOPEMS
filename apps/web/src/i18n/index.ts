@@ -69,7 +69,10 @@ function deepMerge(
 
 // ─── import.meta.glob 按命名空间拆分的懒加载 import 函数 ────────
 // Vite 会为 "每个语言 × 每个命名空间的 JSON" 生成独立异步 chunk。
-const moduleMaps: Record<'zh' | 'en', Record<string, () => Promise<{ default: Record<string, unknown> }>>> = {
+const moduleMaps: Record<
+  'zh' | 'en',
+  Record<string, () => Promise<{ default: Record<string, unknown> }>>
+> = {
   zh: import.meta.glob('./locales/zh/*.json') as Record<
     string,
     () => Promise<{ default: Record<string, unknown> }>
@@ -79,7 +82,10 @@ const moduleMaps: Record<'zh' | 'en', Record<string, () => Promise<{ default: Re
     () => Promise<{ default: Record<string, unknown> }>
   >,
 };
-const rootMaps: Record<'zh' | 'en', Record<string, () => Promise<{ default: Record<string, unknown> }>>> = {
+const rootMaps: Record<
+  'zh' | 'en',
+  Record<string, () => Promise<{ default: Record<string, unknown> }>>
+> = {
   zh: import.meta.glob('./locales/zh.json') as Record<
     string,
     () => Promise<{ default: Record<string, unknown> }>
@@ -250,7 +256,9 @@ async function loadNamespaceJsonFile(
 ): Promise<Record<string, unknown>> {
   if (ns === 'schema') {
     // schema 是 eager 静态 import，不走 glob 路径
-    return lang === 'zh' ? (schemaZh as Record<string, unknown>) : (schemaEn as Record<string, unknown>);
+    return lang === 'zh'
+      ? (schemaZh as Record<string, unknown>)
+      : (schemaEn as Record<string, unknown>);
   }
   const moduleMap = moduleMaps[lang];
   const path = `./locales/${lang}/${ns}.json`;

@@ -9,6 +9,7 @@ import { PullToRefresh, MobileSkeleton } from '@/components/mobile';
 import type { ApprovalItem } from '../hooks/useMobileApproval';
 import { ApprovalCard } from './ApprovalCard';
 import i18n from '@/i18n';
+
 interface ApprovalListProps {
   loading: boolean;
   filteredApprovals: ApprovalItem[];

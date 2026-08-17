@@ -11,11 +11,36 @@ import i18n from '@/i18n';
 // ── Mock Data ──────────────────────────────────────────────
 
 const todoData = [
-  { id: 1, title: i18n.t('shared.hybrid_dashboard.po20240087_0'), time: '10:30', priority: 'urgent' as const },
-  { id: 2, title: i18n.t('shared.hybrid_dashboard.q3_1'), time: '09:15', priority: 'warning' as const },
-  { id: 3, title: i18n.t('shared.hybrid_dashboard.k2'), time: i18n.t('components.hybrid_dashboard.1642_0'), priority: 'normal' as const },
-  { id: 4, title: i18n.t('shared.hybrid_dashboard.k3'), time: i18n.t('components.hybrid_dashboard.1420_1'), priority: 'urgent' as const },
-  { id: 5, title: i18n.t('shared.hybrid_dashboard.k4'), time: i18n.t('components.hybrid_dashboard.1105_2'), priority: 'normal' as const },
+  {
+    id: 1,
+    title: i18n.t('shared.hybrid_dashboard.po20240087_0'),
+    time: '10:30',
+    priority: 'urgent' as const,
+  },
+  {
+    id: 2,
+    title: i18n.t('shared.hybrid_dashboard.q3_1'),
+    time: '09:15',
+    priority: 'warning' as const,
+  },
+  {
+    id: 3,
+    title: i18n.t('shared.hybrid_dashboard.k2'),
+    time: i18n.t('components.hybrid_dashboard.1642_0'),
+    priority: 'normal' as const,
+  },
+  {
+    id: 4,
+    title: i18n.t('shared.hybrid_dashboard.k3'),
+    time: i18n.t('components.hybrid_dashboard.1420_1'),
+    priority: 'urgent' as const,
+  },
+  {
+    id: 5,
+    title: i18n.t('shared.hybrid_dashboard.k4'),
+    time: i18n.t('components.hybrid_dashboard.1105_2'),
+    priority: 'normal' as const,
+  },
 ];
 
 const activityData = [
@@ -57,10 +82,30 @@ const activityData = [
 ];
 
 const contactData = [
-  { name: i18n.t('shared.hybrid_dashboard.k22'), initial: i18n.t('shared.hybrid_dashboard.k21'), role: i18n.t('shared.hybrid_dashboard.k20'), color: 'primary' as const },
-  { name: i18n.t('shared.hybrid_dashboard.k25'), initial: i18n.t('shared.hybrid_dashboard.k24'), role: i18n.t('shared.hybrid_dashboard.k23'), color: 'success' as const },
-  { name: i18n.t('shared.hybrid_dashboard.k28'), initial: i18n.t('shared.hybrid_dashboard.k27'), role: i18n.t('shared.hybrid_dashboard.k26'), color: 'info' as const },
-  { name: i18n.t('shared.hybrid_dashboard.k31'), initial: i18n.t('shared.hybrid_dashboard.k30'), role: i18n.t('shared.hybrid_dashboard.k29'), color: 'warning' as const },
+  {
+    name: i18n.t('shared.hybrid_dashboard.k22'),
+    initial: i18n.t('shared.hybrid_dashboard.k21'),
+    role: i18n.t('shared.hybrid_dashboard.k20'),
+    color: 'primary' as const,
+  },
+  {
+    name: i18n.t('shared.hybrid_dashboard.k25'),
+    initial: i18n.t('shared.hybrid_dashboard.k24'),
+    role: i18n.t('shared.hybrid_dashboard.k23'),
+    color: 'success' as const,
+  },
+  {
+    name: i18n.t('shared.hybrid_dashboard.k28'),
+    initial: i18n.t('shared.hybrid_dashboard.k27'),
+    role: i18n.t('shared.hybrid_dashboard.k26'),
+    color: 'info' as const,
+  },
+  {
+    name: i18n.t('shared.hybrid_dashboard.k31'),
+    initial: i18n.t('shared.hybrid_dashboard.k30'),
+    role: i18n.t('shared.hybrid_dashboard.k29'),
+    color: 'warning' as const,
+  },
 ];
 
 // ── Helper: get greeting based on time of day ──────────────
@@ -144,7 +189,11 @@ const PersonalInfoCard: React.FC = () => {
 
       {/* Right: mini stats */}
       <Box sx={{ display: 'flex', gap: 1 }}>
-        {[i18n.t('components.hybrid_dashboard.5_11'), i18n.t('components.hybrid_dashboard.3_10'), i18n.t('components.hybrid_dashboard.2_9')].map((label) => (
+        {[
+          i18n.t('components.hybrid_dashboard.5_11'),
+          i18n.t('components.hybrid_dashboard.3_10'),
+          i18n.t('components.hybrid_dashboard.2_9'),
+        ].map((label) => (
           <Box
             key={label}
             sx={{

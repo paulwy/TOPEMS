@@ -89,7 +89,12 @@ const BudgetBar: React.FC<{ consumed: number; total: number }> = ({ consumed, to
         <Typography
           variant='caption'
           color='text.secondary'
-        >{i18n.t('monitor:slo_status_page.v0v1_6', { v0: (consumed.toFixed(1)), v1: (total.toFixed(1)) })}</Typography>
+        >
+          {i18n.t('monitor:slo_status_page.v0v1_6', {
+            v0: consumed.toFixed(1),
+            v1: total.toFixed(1),
+          })}
+        </Typography>
         <Typography
           variant='caption'
           sx={{ fontWeight: 600, color }}
@@ -168,8 +173,9 @@ export const SLOStatusPage: React.FC = () => {
       const res = await metricsApi.getSloSummary();
       return res.data;
     },
-  
-      staleTime: CACHE_DURATIONS.SHORT,});
+
+    staleTime: CACHE_DURATIONS.SHORT,
+  });
 
   const listQuery = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.MONITOR_SLO_LIST_BASE, sloType, statusFilter, keyword],
@@ -181,8 +187,9 @@ export const SLOStatusPage: React.FC = () => {
       });
       return res.data?.items ?? [];
     },
-  
-      staleTime: CACHE_DURATIONS.SHORT,});
+
+    staleTime: CACHE_DURATIONS.SHORT,
+  });
 
   const budgetQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MONITOR_SLO_BUDGET_BASE,
@@ -190,8 +197,9 @@ export const SLOStatusPage: React.FC = () => {
       const res = await metricsApi.getSloBudget();
       return res.data ?? [];
     },
-  
-      staleTime: CACHE_DURATIONS.SHORT,});
+
+    staleTime: CACHE_DURATIONS.SHORT,
+  });
 
   const violationsQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MONITOR_SLO_VIOLATIONS_BASE,
@@ -199,17 +207,23 @@ export const SLOStatusPage: React.FC = () => {
       const res = await metricsApi.listSloViolations();
       return res.data?.items ?? [];
     },
-  
-      staleTime: CACHE_DURATIONS.SHORT,});
+
+    staleTime: CACHE_DURATIONS.SHORT,
+  });
 
   const resolveMutation = useMutation({
     mutationFn: (id: string) => metricsApi.resolveSloViolation(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: i18n.t('pages.slo_status_page.k9'), message: i18n.t('pages.slo_status_page.k8') });
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MONITOR_SLO_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      addNotification({
+        type: 'success',
+        title: i18n.t('pages.slo_status_page.k9'),
+        message: i18n.t('pages.slo_status_page.k8'),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MONITOR_SLO_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
       addNotification({
@@ -366,7 +380,11 @@ export const SLOStatusPage: React.FC = () => {
         budgetQuery.refetch(),
         violationsQuery.refetch(),
       ]);
-      addNotification({ type: 'success', title: i18n.t('pages.slo_status_page.k23'), message: i18n.t('pages.slo_status_page.slo_4') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('pages.slo_status_page.k23'),
+        message: i18n.t('pages.slo_status_page.slo_4'),
+      });
     } catch (err) {
       addNotification({
         type: 'error',
@@ -679,7 +697,9 @@ export const SLOStatusPage: React.FC = () => {
                       <Clock
                         size={12}
                         style={{ verticalAlign: 'middle', marginRight: 4 }}
-                      />{i18n.t('monitor:slo_status_page.k0', { v0: (v.duration_minutes) })}</Typography>
+                      />
+                      {i18n.t('monitor:slo_status_page.k0', { v0: v.duration_minutes })}
+                    </Typography>
                   </TableCell>
                   <TableCell align='right'>
                     <Typography

@@ -26,7 +26,8 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '../../store';
 import { designTokens } from '@/theme/tokens';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const quickActions = [
   {
     id: 'attendance',
@@ -79,20 +80,47 @@ const mockTodos = [
     priority: 'high',
     time: i18n.t('pages.mobile_home_page.2_0'),
   },
-  { id: '2', title: i18n.t('mobile.mobile_home_page.k8'), type: 'task', priority: 'medium', time: i18n.t('mobile.mobile_home_page.k7') },
-  { id: '3', title: i18n.t('mobile.mobile_home_page.k10'), type: 'task', priority: 'low', time: i18n.t('mobile.mobile_home_page.k9') },
+  {
+    id: '2',
+    title: i18n.t('mobile.mobile_home_page.k8'),
+    type: 'task',
+    priority: 'medium',
+    time: i18n.t('mobile.mobile_home_page.k7'),
+  },
+  {
+    id: '3',
+    title: i18n.t('mobile.mobile_home_page.k10'),
+    type: 'task',
+    priority: 'low',
+    time: i18n.t('mobile.mobile_home_page.k9'),
+  },
 ];
 const mockActivities = [
-  { id: '1', title: i18n.t('mobile.mobile_home_page.k11'), time: i18n.t('pages.mobile_home_page.10_1'), icon: <CheckSquare size={16} /> },
-  { id: '2', title: i18n.t('mobile.mobile_home_page.k12'), time: i18n.t('pages.mobile_home_page.30_2'), icon: <AlertTriangle size={16} /> },
-  { id: '3', title: i18n.t('mobile.mobile_home_page.k13'), time: i18n.t('pages.mobile_home_page.1_3'), icon: <FileText size={16} /> },
+  {
+    id: '1',
+    title: i18n.t('mobile.mobile_home_page.k11'),
+    time: i18n.t('pages.mobile_home_page.10_1'),
+    icon: <CheckSquare size={16} />,
+  },
+  {
+    id: '2',
+    title: i18n.t('mobile.mobile_home_page.k12'),
+    time: i18n.t('pages.mobile_home_page.30_2'),
+    icon: <AlertTriangle size={16} />,
+  },
+  {
+    id: '3',
+    title: i18n.t('mobile.mobile_home_page.k13'),
+    time: i18n.t('pages.mobile_home_page.1_3'),
+    icon: <FileText size={16} />,
+  },
 ];
 export const MobileHomePage: React.FC = () => {
   const { data: backendData } = useQuery({
     queryKey: ['mobile-home-page'],
     queryFn: async () => {
       try {
-        return await mobileApi.analytics.getUsageStats() ?? {};
+        return (await mobileApi.analytics.getUsageStats()) ?? {};
       } catch (e) {
         return {};
       }
@@ -141,7 +169,9 @@ export const MobileHomePage: React.FC = () => {
               />
             }
           >
-            <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main' }}>{i18n.t('pages.mobile_home_page.k0')}</Avatar>
+            <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main' }}>
+              {i18n.t('pages.mobile_home_page.k0')}
+            </Avatar>
           </Badge>
           <Box sx={{ flex: 1 }}>
             <Typography variant='h6'>{i18n.t('mobile.mobile_home_page.k16')}</Typography>
@@ -207,7 +237,11 @@ export const MobileHomePage: React.FC = () => {
           </Box>
           <Box sx={{ mt: 2 }}>
             <Chip
-              label={checkedIn ? i18n.t('mobile.mobile_home_page.k18') : i18n.t('mobile.mobile_home_page.k17')}
+              label={
+                checkedIn
+                  ? i18n.t('mobile.mobile_home_page.k18')
+                  : i18n.t('mobile.mobile_home_page.k17')
+              }
               color={checkedIn ? 'success' : 'primary'}
               onClick={handleCheckIn}
               sx={{ cursor: 'pointer' }}
@@ -316,7 +350,11 @@ export const MobileHomePage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Chip
-                  label={todo.type === 'approval' ? i18n.t('mobile.mobile_home_page.k21') : i18n.t('mobile.mobile_home_page.k20')}
+                  label={
+                    todo.type === 'approval'
+                      ? i18n.t('mobile.mobile_home_page.k21')
+                      : i18n.t('mobile.mobile_home_page.k20')
+                  }
                   size='small'
                   variant='outlined'
                 />

@@ -124,20 +124,22 @@ export const usePmProjectDetail = (): UsePmProjectDetailReturn => {
   );
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.PROJECT(id || '') ,
-  exact: false,
-  refetchType: 'active',
-});
-    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.PROJECT(id || ''), 'phases'] ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.PM.PROJECT(id || ''),
+      exact: false,
+      refetchType: 'active',
+    });
+    queryClient.invalidateQueries({
+      queryKey: [...QUERY_KEYS.PM.PROJECT(id || ''), 'phases'],
+      exact: false,
+      refetchType: 'active',
+    });
     queryClient.invalidateQueries({
       queryKey: [...QUERY_KEYS.PM.PROJECT(id || ''), 'milestones'],
-    
-  exact: false,
-  refetchType: 'active',
-});
+
+      exact: false,
+      refetchType: 'active',
+    });
   };
 
   return {

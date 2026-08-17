@@ -172,7 +172,11 @@ export const BffErrorFallback: React.FC<BffErrorFallbackProps> = ({
   retryCount = 0,
 }) => {
   const handleAction = onRetry ?? onRefresh;
-  const actionLabel = onRetry ? i18n.t('components.bff_fallback.k2') : onRefresh ? i18n.t('components.bff_fallback.k1') : null;
+  const actionLabel = onRetry
+    ? i18n.t('components.bff_fallback.k2')
+    : onRefresh
+      ? i18n.t('components.bff_fallback.k1')
+      : null;
   const canRetry = maxRetries === undefined || retryCount < maxRetries;
 
   const content = (
@@ -235,7 +239,8 @@ export const BffErrorFallback: React.FC<BffErrorFallbackProps> = ({
             variant='caption'
             color='text.secondary'
           >
-            {i18n.t('components.bff_fallback.k0')} {retryCount} / {maxRetries} {i18n.t('components.bff_fallback.k1')}
+            {i18n.t('components.bff_fallback.k0')} {retryCount} / {maxRetries}{' '}
+            {i18n.t('components.bff_fallback.k1')}
           </Typography>
         )}
 
@@ -490,7 +495,8 @@ export const BffCacheFallback: React.FC<BffCacheFallbackProps> = ({
             color='text.secondary'
             sx={{ display: 'block', mt: 0.5 }}
           >
-            {i18n.t('components.bff_fallback.k2')}{formattedTime}
+            {i18n.t('components.bff_fallback.k2')}
+            {formattedTime}
           </Typography>
         )}
       </Alert>

@@ -40,7 +40,8 @@ import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 interface ScanHistoryItem {
   id: string;
   content: string;
@@ -58,7 +59,7 @@ const MobileScanPage: React.FC = () => {
     queryKey: ['mobile-scan-page'],
     queryFn: async () => {
       try {
-        return await mobileApi.inspection.listTasks() ?? {};
+        return (await mobileApi.inspection.listTasks()) ?? {};
       } catch (e) {
         return {};
       }
@@ -74,7 +75,11 @@ const MobileScanPage: React.FC = () => {
   const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [manualInput, setManualInput] = useState('');
-  const tabs = [i18n.t('mobile.mobile_scan_page.k2'), i18n.t('mobile.mobile_scan_page.k1'), i18n.t('mobile.mobile_scan_page.k0')];
+  const tabs = [
+    i18n.t('mobile.mobile_scan_page.k2'),
+    i18n.t('mobile.mobile_scan_page.k1'),
+    i18n.t('mobile.mobile_scan_page.k0'),
+  ];
   useEffect(() => {
     const history: ScanHistoryItem[] = [
       {
@@ -251,16 +256,32 @@ const MobileScanPage: React.FC = () => {
     item.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
   const bottomTabs = [
-    { id: 'home', label: i18n.t('mobile.mobile_scan_page.k21'), icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: i18n.t('mobile.mobile_scan_page.k22'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: i18n.t('mobile.mobile_scan_page.k23'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    {
+      id: 'home',
+      label: i18n.t('mobile.mobile_scan_page.k21'),
+      icon: <Home style={{ width: 22, height: 22 }} />,
+    },
+    {
+      id: 'tasks',
+      label: i18n.t('mobile.mobile_scan_page.k22'),
+      icon: <ListTodo style={{ width: 22, height: 22 }} />,
+    },
+    {
+      id: 'scan',
+      label: i18n.t('mobile.mobile_scan_page.k23'),
+      icon: <ScanLine style={{ width: 22, height: 22 }} />,
+    },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_scan_page.k24'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
       badge: 3,
     },
-    { id: 'profile', label: i18n.t('mobile.mobile_scan_page.k25'), icon: <User style={{ width: 22, height: 22 }} /> },
+    {
+      id: 'profile',
+      label: i18n.t('mobile.mobile_scan_page.k25'),
+      icon: <User style={{ width: 22, height: 22 }} />,
+    },
   ];
   return (
     <MobileLayout
@@ -593,7 +614,9 @@ const MobileScanPage: React.FC = () => {
                       [i18n.t('pages.mobile_scan_page.k8')]: {scanResult}
                     </Typography>
                   </Box>
-                  <Button endIcon={<ArrowRight style={{ width: 16, height: 16 }} />}>{i18n.t('mobile.mobile_scan_page.k31')}</Button>
+                  <Button endIcon={<ArrowRight style={{ width: 16, height: 16 }} />}>
+                    {i18n.t('mobile.mobile_scan_page.k31')}
+                  </Button>
                 </Box>
               </Paper>
             )}

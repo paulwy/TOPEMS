@@ -69,8 +69,20 @@ const COMPONENT_REGISTRY: ComponentMeta[] = [
     name: 'V51Button',
     category: 'action',
     description: i18n.t('ai.ui-recommender.k0'),
-    keywords: ['button', 'btn', 'click', 'action', 'submit', i18n.t('ai.ui-recommender.k2'), i18n.t('ai.ui-recommender.k1')],
-    a11y_features: ['role="button"', i18n.t('ai.ui-recommender.arialabel_0'), i18n.t('ai.ui-recommender.k3')],
+    keywords: [
+      'button',
+      'btn',
+      'click',
+      'action',
+      'submit',
+      i18n.t('ai.ui-recommender.k2'),
+      i18n.t('ai.ui-recommender.k1'),
+    ],
+    a11y_features: [
+      'role="button"',
+      i18n.t('ai.ui-recommender.arialabel_0'),
+      i18n.t('ai.ui-recommender.k3'),
+    ],
     responsive_support: 'full',
     theme_support: 'full',
     performance_impact: 'low',
@@ -82,7 +94,14 @@ const COMPONENT_REGISTRY: ComponentMeta[] = [
     name: 'V51Card',
     category: 'display',
     description: i18n.t('ai.ui-recommender.k4'),
-    keywords: ['card', 'container', 'panel', 'box', i18n.t('ai.ui-recommender.k6'), i18n.t('ai.ui-recommender.k5')],
+    keywords: [
+      'card',
+      'container',
+      'panel',
+      'box',
+      i18n.t('ai.ui-recommender.k6'),
+      i18n.t('ai.ui-recommender.k5'),
+    ],
     a11y_features: [i18n.t('ai.ui-recommender.k7'), i18n.t('ai.ui-recommender.arialabel_1')],
     responsive_support: 'full',
     theme_support: 'full',
@@ -95,8 +114,19 @@ const COMPONENT_REGISTRY: ComponentMeta[] = [
     name: 'V51Input',
     category: 'data-entry',
     description: i18n.t('ai.ui-recommender.k8'),
-    keywords: ['input', 'text', 'field', 'form', i18n.t('ai.ui-recommender.k10'), i18n.t('ai.ui-recommender.k9')],
-    a11y_features: [i18n.t('ai.ui-recommender.label_2'), 'aria-invalid', i18n.t('ai.ui-recommender.k11')],
+    keywords: [
+      'input',
+      'text',
+      'field',
+      'form',
+      i18n.t('ai.ui-recommender.k10'),
+      i18n.t('ai.ui-recommender.k9'),
+    ],
+    a11y_features: [
+      i18n.t('ai.ui-recommender.label_2'),
+      'aria-invalid',
+      i18n.t('ai.ui-recommender.k11'),
+    ],
     responsive_support: 'full',
     theme_support: 'full',
     performance_impact: 'low',
@@ -108,7 +138,13 @@ const COMPONENT_REGISTRY: ComponentMeta[] = [
     name: 'V51Select',
     category: 'data-entry',
     description: i18n.t('ai.ui-recommender.k12'),
-    keywords: ['select', 'dropdown', 'picker', i18n.t('ai.ui-recommender.k14'), i18n.t('ai.ui-recommender.k13')],
+    keywords: [
+      'select',
+      'dropdown',
+      'picker',
+      i18n.t('ai.ui-recommender.k14'),
+      i18n.t('ai.ui-recommender.k13'),
+    ],
     a11y_features: ['role="listbox"', i18n.t('ai.ui-recommender.k15'), 'aria-expanded'],
     responsive_support: 'full',
     theme_support: 'full',
@@ -121,8 +157,20 @@ const COMPONENT_REGISTRY: ComponentMeta[] = [
     name: 'V51Tabs',
     category: 'navigation',
     description: i18n.t('ai.ui-recommender.k16'),
-    keywords: ['tabs', 'tab', 'switch', 'navigation', i18n.t('ai.ui-recommender.k18'), i18n.t('ai.ui-recommender.k17')],
-    a11y_features: ['role="tablist"', 'role="tab"', 'aria-selected', i18n.t('ai.ui-recommender.k19')],
+    keywords: [
+      'tabs',
+      'tab',
+      'switch',
+      'navigation',
+      i18n.t('ai.ui-recommender.k18'),
+      i18n.t('ai.ui-recommender.k17'),
+    ],
+    a11y_features: [
+      'role="tablist"',
+      'role="tab"',
+      'aria-selected',
+      i18n.t('ai.ui-recommender.k19'),
+    ],
     responsive_support: 'partial',
     theme_support: 'full',
     performance_impact: 'low',
@@ -134,7 +182,14 @@ const COMPONENT_REGISTRY: ComponentMeta[] = [
     name: 'V51Badge',
     category: 'display',
     description: i18n.t('ai.ui-recommender.k20'),
-    keywords: ['badge', 'tag', 'chip', 'label', i18n.t('ai.ui-recommender.k22'), i18n.t('ai.ui-recommender.k21')],
+    keywords: [
+      'badge',
+      'tag',
+      'chip',
+      'label',
+      i18n.t('ai.ui-recommender.k22'),
+      i18n.t('ai.ui-recommender.k21'),
+    ],
     a11y_features: ['aria-label', 'role="status"'],
     responsive_support: 'full',
     theme_support: 'full',
@@ -147,7 +202,13 @@ const COMPONENT_REGISTRY: ComponentMeta[] = [
     name: 'V51Skeleton',
     category: 'loading',
     description: i18n.t('ai.ui-recommender.k23'),
-    keywords: ['skeleton', 'loading', 'placeholder', i18n.t('ai.ui-recommender.k25'), i18n.t('ai.ui-recommender.k24')],
+    keywords: [
+      'skeleton',
+      'loading',
+      'placeholder',
+      i18n.t('ai.ui-recommender.k25'),
+      i18n.t('ai.ui-recommender.k24'),
+    ],
     a11y_features: ['aria-busy', 'aria-live'],
     responsive_support: 'full',
     theme_support: 'full',
@@ -160,7 +221,13 @@ const COMPONENT_REGISTRY: ComponentMeta[] = [
     name: 'V51Avatar',
     category: 'display',
     description: i18n.t('ai.ui-recommender.k26'),
-    keywords: ['avatar', 'user', 'image', i18n.t('ai.ui-recommender.k28'), i18n.t('ai.ui-recommender.k27')],
+    keywords: [
+      'avatar',
+      'user',
+      'image',
+      i18n.t('ai.ui-recommender.k28'),
+      i18n.t('ai.ui-recommender.k27'),
+    ],
     a11y_features: ['aria-label', i18n.t('ai.ui-recommender.alt_3')],
     responsive_support: 'full',
     theme_support: 'full',
@@ -172,21 +239,122 @@ const COMPONENT_REGISTRY: ComponentMeta[] = [
 ];
 
 const INTENT_KEYWORD_MAP: Record<string, string[]> = {
-  button: ['button', 'btn', 'click', 'submit', 'confirm', 'action', i18n.t('ai.ui-recommender.k30'), i18n.t('ai.ui-recommender.k29')],
-  card: ['card', 'panel', 'container', 'box', i18n.t('ai.ui-recommender.k32'), i18n.t('ai.ui-recommender.k31')],
-  input: ['input', 'text', 'field', 'form', i18n.t('ai.ui-recommender.k34'), i18n.t('ai.ui-recommender.k33')],
-  select: ['select', 'dropdown', 'picker', i18n.t('ai.ui-recommender.k36'), i18n.t('ai.ui-recommender.k35')],
-  tabs: ['tab', 'switch', 'navigate', i18n.t('ai.ui-recommender.k38'), i18n.t('ai.ui-recommender.k37')],
-  badge: ['badge', 'tag', 'chip', 'label', i18n.t('ai.ui-recommender.k40'), i18n.t('ai.ui-recommender.k39')],
-  skeleton: ['skeleton', 'loading', 'placeholder', i18n.t('ai.ui-recommender.k42'), i18n.t('ai.ui-recommender.k41')],
-  avatar: ['avatar', 'user', 'image', i18n.t('ai.ui-recommender.k44'), i18n.t('ai.ui-recommender.k43')],
-  table: ['table', 'grid', 'list', 'row', 'column', i18n.t('ai.ui-recommender.k46'), i18n.t('ai.ui-recommender.k45')],
-  dialog: ['dialog', 'modal', 'popup', 'overlay', i18n.t('ai.ui-recommender.k48'), i18n.t('ai.ui-recommender.k47')],
-  toast: ['toast', 'snackbar', 'notification', 'alert', i18n.t('ai.ui-recommender.k50'), i18n.t('ai.ui-recommender.k49')],
-  toolbar: ['toolbar', 'appbar', 'header', i18n.t('ai.ui-recommender.k52'), i18n.t('ai.ui-recommender.k51')],
-  sidebar: ['sidebar', 'drawer', 'navigation', i18n.t('ai.ui-recommender.k54'), i18n.t('ai.ui-recommender.k53')],
-  form: ['form', 'input', 'field', 'submit', i18n.t('ai.ui-recommender.k56'), i18n.t('ai.ui-recommender.k55')],
-  chart: ['chart', 'graph', 'diagram', i18n.t('ai.ui-recommender.k58'), i18n.t('ai.ui-recommender.k57')],
+  button: [
+    'button',
+    'btn',
+    'click',
+    'submit',
+    'confirm',
+    'action',
+    i18n.t('ai.ui-recommender.k30'),
+    i18n.t('ai.ui-recommender.k29'),
+  ],
+  card: [
+    'card',
+    'panel',
+    'container',
+    'box',
+    i18n.t('ai.ui-recommender.k32'),
+    i18n.t('ai.ui-recommender.k31'),
+  ],
+  input: [
+    'input',
+    'text',
+    'field',
+    'form',
+    i18n.t('ai.ui-recommender.k34'),
+    i18n.t('ai.ui-recommender.k33'),
+  ],
+  select: [
+    'select',
+    'dropdown',
+    'picker',
+    i18n.t('ai.ui-recommender.k36'),
+    i18n.t('ai.ui-recommender.k35'),
+  ],
+  tabs: [
+    'tab',
+    'switch',
+    'navigate',
+    i18n.t('ai.ui-recommender.k38'),
+    i18n.t('ai.ui-recommender.k37'),
+  ],
+  badge: [
+    'badge',
+    'tag',
+    'chip',
+    'label',
+    i18n.t('ai.ui-recommender.k40'),
+    i18n.t('ai.ui-recommender.k39'),
+  ],
+  skeleton: [
+    'skeleton',
+    'loading',
+    'placeholder',
+    i18n.t('ai.ui-recommender.k42'),
+    i18n.t('ai.ui-recommender.k41'),
+  ],
+  avatar: [
+    'avatar',
+    'user',
+    'image',
+    i18n.t('ai.ui-recommender.k44'),
+    i18n.t('ai.ui-recommender.k43'),
+  ],
+  table: [
+    'table',
+    'grid',
+    'list',
+    'row',
+    'column',
+    i18n.t('ai.ui-recommender.k46'),
+    i18n.t('ai.ui-recommender.k45'),
+  ],
+  dialog: [
+    'dialog',
+    'modal',
+    'popup',
+    'overlay',
+    i18n.t('ai.ui-recommender.k48'),
+    i18n.t('ai.ui-recommender.k47'),
+  ],
+  toast: [
+    'toast',
+    'snackbar',
+    'notification',
+    'alert',
+    i18n.t('ai.ui-recommender.k50'),
+    i18n.t('ai.ui-recommender.k49'),
+  ],
+  toolbar: [
+    'toolbar',
+    'appbar',
+    'header',
+    i18n.t('ai.ui-recommender.k52'),
+    i18n.t('ai.ui-recommender.k51'),
+  ],
+  sidebar: [
+    'sidebar',
+    'drawer',
+    'navigation',
+    i18n.t('ai.ui-recommender.k54'),
+    i18n.t('ai.ui-recommender.k53'),
+  ],
+  form: [
+    'form',
+    'input',
+    'field',
+    'submit',
+    i18n.t('ai.ui-recommender.k56'),
+    i18n.t('ai.ui-recommender.k55'),
+  ],
+  chart: [
+    'chart',
+    'graph',
+    'diagram',
+    i18n.t('ai.ui-recommender.k58'),
+    i18n.t('ai.ui-recommender.k57'),
+  ],
 };
 
 const CATEGORY_INTENT_MAP: Record<IntentCategory, string[]> = {
@@ -463,11 +631,15 @@ export class UIComponentRecommender {
     }
 
     if (context.a11yRequirements && context.a11yRequirements.length > 0) {
-      reasons.push(`${i18n.t('ai.ui-recommender.k14')}${comp.a11y_features.length}${i18n.t('ai.ui-recommender.k15')}`);
+      reasons.push(
+        `${i18n.t('ai.ui-recommender.k14')}${comp.a11y_features.length}${i18n.t('ai.ui-recommender.k15')}`
+      );
     }
 
     if (comp.usage_count > 100) {
-      reasons.push(`${i18n.t('ai.ui-recommender.k16')}${comp.usage_count}${i18n.t('ai.ui-recommender.k17')}`);
+      reasons.push(
+        `${i18n.t('ai.ui-recommender.k16')}${comp.usage_count}${i18n.t('ai.ui-recommender.k17')}`
+      );
     }
 
     return reasons.join(' | ');
@@ -483,7 +655,10 @@ export class UIComponentRecommender {
 
     return sameCategory.slice(0, 2).map((c) => ({
       name: c.name,
-      pros: c.performance_impact === 'low' ? i18n.t('ai.ui-recommender.k62') : i18n.t('ai.ui-recommender.k61'),
+      pros:
+        c.performance_impact === 'low'
+          ? i18n.t('ai.ui-recommender.k62')
+          : i18n.t('ai.ui-recommender.k61'),
       cons: `${c.file_size_kb}${i18n.t('ai.ui-recommender.kb_18')}${c.responsive_support !== 'full' ? i18n.t('ai.ui-recommender.k64') : i18n.t('ai.ui-recommender.k63')}`,
     }));
   }

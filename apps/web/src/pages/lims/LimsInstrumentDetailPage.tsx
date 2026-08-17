@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Settings, Wrench, Clock, Eye, AlertCircle, CheckCircle, FileText } from 'lucide-react';
 import {
   Box,
@@ -26,7 +26,8 @@ import type { Instrument, CalibrationRecord, MaintenanceRecord, InspectionTask }
 import dayjs from 'dayjs';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 interface LimsListResponse<T> {
   items?: T[];
   records?: T[];
@@ -122,15 +123,33 @@ function InfoGrid({ instrument }: { instrument: Instrument }) {
     { label: i18n.t('lims.lims_instrument_detail_page.k0'), value: instrument.name },
     { label: i18n.t('lims.lims_instrument_detail_page.k1'), value: instrument.code, mono: true },
     { label: i18n.t('lims.lims_instrument_detail_page.k2'), value: instrument.model },
-    { label: i18n.t('lims.lims_instrument_detail_page.k3'), value: instrument.serial_number, mono: true },
+    {
+      label: i18n.t('lims.lims_instrument_detail_page.k3'),
+      value: instrument.serial_number,
+      mono: true,
+    },
     { label: i18n.t('lims.lims_instrument_detail_page.k4'), value: instrument.type },
     { label: i18n.t('lims.lims_instrument_detail_page.k5'), value: instrument.manufacturer },
     { label: i18n.t('lims.lims_instrument_detail_page.k6'), value: instrument.location },
     { label: i18n.t('lims.lims_instrument_detail_page.k7'), value: instrument.responsible_person },
-    { label: i18n.t('lims.lims_instrument_detail_page.k8'), value: instrument.status, isStatus: true },
-    { label: i18n.t('lims.lims_instrument_detail_page.k9'), value: formatDate(instrument.purchase_date) },
-    { label: i18n.t('lims.lims_instrument_detail_page.k10'), value: formatDate(instrument.calibration_date) },
-    { label: i18n.t('lims.lims_instrument_detail_page.k11'), value: formatDate(instrument.next_calibration_date), isNextCal: true },
+    {
+      label: i18n.t('lims.lims_instrument_detail_page.k8'),
+      value: instrument.status,
+      isStatus: true,
+    },
+    {
+      label: i18n.t('lims.lims_instrument_detail_page.k9'),
+      value: formatDate(instrument.purchase_date),
+    },
+    {
+      label: i18n.t('lims.lims_instrument_detail_page.k10'),
+      value: formatDate(instrument.calibration_date),
+    },
+    {
+      label: i18n.t('lims.lims_instrument_detail_page.k11'),
+      value: formatDate(instrument.next_calibration_date),
+      isNextCal: true,
+    },
   ];
   return (
     <Box
@@ -307,8 +326,9 @@ const LimsInstrumentDetailPage: React.FC = () => {
       };
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const instrument = data?.instrument || null;
   const calibrationRecords = data?.calibrationRecords || [];
   const maintenanceRecords = data?.maintenanceRecords || [];
@@ -426,7 +446,9 @@ const LimsInstrumentDetailPage: React.FC = () => {
               mb: 2,
             }}
           />
-          <Typography sx={{ color: 'slate.600' }}>{i18n.t('pages.lims_instrument_detail_page.k0')}</Typography>
+          <Typography sx={{ color: 'slate.600' }}>
+            {i18n.t('pages.lims_instrument_detail_page.k0')}
+          </Typography>
         </Box>
       </Box>
     );
@@ -446,7 +468,9 @@ const LimsInstrumentDetailPage: React.FC = () => {
           <AlertCircle
             sx={{ width: 64, height: 64, color: 'error.main', mb: 2, mx: 'auto', display: 'block' }}
           />
-          <p style={{ color: ct.grey[600] }}>{pageError || i18n.t('lims.lims_instrument_detail_page.k38')}</p>
+          <p style={{ color: ct.grey[600] }}>
+            {pageError || i18n.t('lims.lims_instrument_detail_page.k38')}
+          </p>
           <Button
             onClick={() => navigate(LIMS_PATHS.instrument)}
             sx={{ mt: 2 }}
@@ -469,7 +493,9 @@ const LimsInstrumentDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={instrument?.name || instrument?.code || i18n.t('lims.lims_instrument_detail_page.k39')}
+        detailItemName={
+          instrument?.name || instrument?.code || i18n.t('lims.lims_instrument_detail_page.k39')
+        }
         breadcrumbs={[
           { label: i18n.t('lims.lims_instrument_detail_page.k40'), href: '/dashboard' },
           { label: 'LIMS', href: LIMS_PATHS.root },
@@ -485,8 +511,14 @@ const LimsInstrumentDetailPage: React.FC = () => {
           subtitle: instrument.code,
           tags: [instrument.status, instrument.type].filter(Boolean),
           stats: [
-            { label: i18n.t('lims.lims_instrument_detail_page.k43'), value: calibrationRecords.length },
-            { label: i18n.t('lims.lims_instrument_detail_page.k44'), value: maintenanceRecords.length },
+            {
+              label: i18n.t('lims.lims_instrument_detail_page.k43'),
+              value: calibrationRecords.length,
+            },
+            {
+              label: i18n.t('lims.lims_instrument_detail_page.k44'),
+              value: maintenanceRecords.length,
+            },
             { label: i18n.t('lims.lims_instrument_detail_page.k45'), value: usageDays },
           ],
         }}

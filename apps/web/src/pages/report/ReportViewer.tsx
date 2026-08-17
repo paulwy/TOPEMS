@@ -96,7 +96,8 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
 
   const formatValue = (value: unknown): string => {
     if (value === null || value === undefined) return '-';
-    if (typeof value === 'boolean') return value ? i18n.t('pages.report_viewer.k1') : i18n.t('pages.report_viewer.k0');
+    if (typeof value === 'boolean')
+      return value ? i18n.t('pages.report_viewer.k1') : i18n.t('pages.report_viewer.k0');
     if (typeof value === 'number') {
       return value.toLocaleString('zh-CN');
     }
@@ -213,10 +214,13 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <Calendar sx={{ width: 16, height: 16, mr: 0.5 }} />
-                [i18n.t('pages.report_viewer.k1')]: {new Date(report.created_at).toLocaleDateString('zh-CN')}
+                [i18n.t('pages.report_viewer.k1')]:{' '}
+                {new Date(report.created_at).toLocaleDateString('zh-CN')}
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Table sx={{ width: 16, height: 16, mr: 0.5 }} />{i18n.t('report:report_viewer.v0_3', { v0: (report.row_count) })}</Box>
+                <Table sx={{ width: 16, height: 16, mr: 0.5 }} />
+                {i18n.t('report:report_viewer.v0_3', { v0: report.row_count })}
+              </Box>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <User sx={{ width: 16, height: 16, mr: 0.5 }} />
                 [i18n.t('pages.report_viewer.k2')]: {report.config.report_type}
@@ -293,7 +297,9 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
             >
               {showAllColumns ? i18n.t('pages.report_viewer.k3') : i18n.t('pages.report_viewer.k2')}
             </Button>
-            <Typography sx={{ fontSize: 14, color: 'grey.500' }}>{i18n.t('report:report_viewer.v0_2', { v0: (filteredData.length) })}</Typography>
+            <Typography sx={{ fontSize: 14, color: 'grey.500' }}>
+              {i18n.t('report:report_viewer.v0_2', { v0: filteredData.length })}
+            </Typography>
           </Box>
         </Box>
 
@@ -381,7 +387,15 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 justifyContent: 'space-between',
               }}
             >
-              <Box sx={{ fontSize: 14, color: 'grey.600' }}>{i18n.t('report:report_viewer.k1', { v0: ((currentPage - 1) * itemsPerPage + 1), v1: (' '), v2: (Math.min(currentPage * itemsPerPage, filteredData.length)), v3: (' '), v4: (filteredData.length) })}</Box>
+              <Box sx={{ fontSize: 14, color: 'grey.600' }}>
+                {i18n.t('report:report_viewer.k1', {
+                  v0: (currentPage - 1) * itemsPerPage + 1,
+                  v1: ' ',
+                  v2: Math.min(currentPage * itemsPerPage, filteredData.length),
+                  v3: ' ',
+                  v4: filteredData.length,
+                })}
+              </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <IconButton
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
@@ -458,7 +472,12 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 color: 'grey.600',
               }}
             >
-              <Calendar sx={{ width: 16, height: 16, mr: 1 }} />{i18n.t('report:report_viewer.k0', { v0: (report.config.date_range.start_date), v1: (report.config.date_range.end_date) })}</Box>
+              <Calendar sx={{ width: 16, height: 16, mr: 1 }} />
+              {i18n.t('report:report_viewer.k0', {
+                v0: report.config.date_range.start_date,
+                v1: report.config.date_range.end_date,
+              })}
+            </Box>
           </Box>
         )}
       </Box>

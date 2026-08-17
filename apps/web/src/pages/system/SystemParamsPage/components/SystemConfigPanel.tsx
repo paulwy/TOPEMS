@@ -259,9 +259,15 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                     }))
                   }
                 >
-                  <MenuItem value='Asia/Shanghai'>{t('system.system_params_page_components_system_config_panel.m1')}</MenuItem>
-                  <MenuItem value='Asia/Tokyo'>{t('system.system_params_page_components_system_config_panel.m2')}</MenuItem>
-                  <MenuItem value='Europe/London'>{t('system.system_params_page_components_system_config_panel.m3')}</MenuItem>
+                  <MenuItem value='Asia/Shanghai'>
+                    {t('system.system_params_page_components_system_config_panel.m1')}
+                  </MenuItem>
+                  <MenuItem value='Asia/Tokyo'>
+                    {t('system.system_params_page_components_system_config_panel.m2')}
+                  </MenuItem>
+                  <MenuItem value='Europe/London'>
+                    {t('system.system_params_page_components_system_config_panel.m3')}
+                  </MenuItem>
                   <MenuItem value='America/New_York'>
                     {t('system.system_params_page_components_system_config_panel.r1')}
                   </MenuItem>
@@ -522,7 +528,9 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
           onClick={onSave}
           disabled={isSaving}
         >
-          {isSaving ? t('system.system_params_page_components_cache_config_panel.m4') : t('system.system_config_panel.k23')}
+          {isSaving
+            ? t('system.system_params_page_components_cache_config_panel.m4')
+            : t('system.system_config_panel.k23')}
         </Button>
       </Box>
     </Box>

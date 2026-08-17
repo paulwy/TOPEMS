@@ -18,42 +18,57 @@ vi.mock('react-i18next', () => {
   return {
     useTranslation: () => ({
       t: (key: string, options?: Record<string, unknown>) => {
-      let base = i18nMap[key] ?? key;
-      if (typeof options === 'object' && options !== null) {
-        for (const [k, v] of Object.entries(options)) {
-          const strVal = String(v);
-          // Try {{k}} style first
-          const pattern1 = `{{\\s*${k}\\s*}}`;
-          const re1 = new RegExp(pattern1, 'g');
-          if (re1.test(base)) {
-            base = base.replace(re1, strVal);
-          } else {
-            // Also try common alternative patterns {k} or :k
-            const re2 = new RegExp(`\\{\\s*${k}\\s*\\}`, 'g');
-            if (re2.test(base)) {
-              base = base.replace(re2, strVal);
+        let base = i18nMap[key] ?? key;
+        if (typeof options === 'object' && options !== null) {
+          for (const [k, v] of Object.entries(options)) {
+            const strVal = String(v);
+            // Try {{k}} style first
+            const pattern1 = `{{\\s*${k}\\s*}}`;
+            const re1 = new RegExp(pattern1, 'g');
+            if (re1.test(base)) {
+              base = base.replace(re1, strVal);
+            } else {
+              // Also try common alternative patterns {k} or :k
+              const re2 = new RegExp(`\\{\\s*${k}\\s*\\}`, 'g');
+              if (re2.test(base)) {
+                base = base.replace(re2, strVal);
+              }
             }
           }
-        }
-        // If no interpolation happened, fallback to appending for known keys (count,value,etc.)
-        const hasPlaceholders = /\{\{?\s*\w+\s*\}\}?/.test(i18nMap[key] ?? '');
-        if (!hasPlaceholders) {
-          for (const [k, v] of Object.entries(options)) {
-            if (['count','value','index','period','v1','v2','v3','date','batchNo','quantity','qualified','defective'].includes(k)) {
-              const strVal = String(v);
-              if (base.endsWith(':') || base.endsWith('：')) {
-                base = `${base}${strVal}`;
-              } else if (base.includes(' ')) {
-                base = `${base} ${strVal}`;
-              } else {
-                base = `${base}:${strVal}`;
+          // If no interpolation happened, fallback to appending for known keys (count,value,etc.)
+          const hasPlaceholders = /\{\{?\s*\w+\s*\}\}?/.test(i18nMap[key] ?? '');
+          if (!hasPlaceholders) {
+            for (const [k, v] of Object.entries(options)) {
+              if (
+                [
+                  'count',
+                  'value',
+                  'index',
+                  'period',
+                  'v1',
+                  'v2',
+                  'v3',
+                  'date',
+                  'batchNo',
+                  'quantity',
+                  'qualified',
+                  'defective',
+                ].includes(k)
+              ) {
+                const strVal = String(v);
+                if (base.endsWith(':') || base.endsWith('：')) {
+                  base = `${base}${strVal}`;
+                } else if (base.includes(' ')) {
+                  base = `${base} ${strVal}`;
+                } else {
+                  base = `${base}:${strVal}`;
+                }
               }
             }
           }
         }
-      }
-      return base;
-    },
+        return base;
+      },
       i18n: { language: 'zh' },
     }),
     initReactI18next: { type: '3rdParty', init: () => {} },
@@ -75,42 +90,57 @@ vi.mock('@/i18n', () => {
   return {
     default: {
       t: (key: string, options?: Record<string, unknown>) => {
-      let base = i18nMap[key] ?? key;
-      if (typeof options === 'object' && options !== null) {
-        for (const [k, v] of Object.entries(options)) {
-          const strVal = String(v);
-          // Try {{k}} style first
-          const pattern1 = `{{\\s*${k}\\s*}}`;
-          const re1 = new RegExp(pattern1, 'g');
-          if (re1.test(base)) {
-            base = base.replace(re1, strVal);
-          } else {
-            // Also try common alternative patterns {k} or :k
-            const re2 = new RegExp(`\\{\\s*${k}\\s*\\}`, 'g');
-            if (re2.test(base)) {
-              base = base.replace(re2, strVal);
+        let base = i18nMap[key] ?? key;
+        if (typeof options === 'object' && options !== null) {
+          for (const [k, v] of Object.entries(options)) {
+            const strVal = String(v);
+            // Try {{k}} style first
+            const pattern1 = `{{\\s*${k}\\s*}}`;
+            const re1 = new RegExp(pattern1, 'g');
+            if (re1.test(base)) {
+              base = base.replace(re1, strVal);
+            } else {
+              // Also try common alternative patterns {k} or :k
+              const re2 = new RegExp(`\\{\\s*${k}\\s*\\}`, 'g');
+              if (re2.test(base)) {
+                base = base.replace(re2, strVal);
+              }
             }
           }
-        }
-        // If no interpolation happened, fallback to appending for known keys (count,value,etc.)
-        const hasPlaceholders = /\{\{?\s*\w+\s*\}\}?/.test(i18nMap[key] ?? '');
-        if (!hasPlaceholders) {
-          for (const [k, v] of Object.entries(options)) {
-            if (['count','value','index','period','v1','v2','v3','date','batchNo','quantity','qualified','defective'].includes(k)) {
-              const strVal = String(v);
-              if (base.endsWith(':') || base.endsWith('：')) {
-                base = `${base}${strVal}`;
-              } else if (base.includes(' ')) {
-                base = `${base} ${strVal}`;
-              } else {
-                base = `${base}:${strVal}`;
+          // If no interpolation happened, fallback to appending for known keys (count,value,etc.)
+          const hasPlaceholders = /\{\{?\s*\w+\s*\}\}?/.test(i18nMap[key] ?? '');
+          if (!hasPlaceholders) {
+            for (const [k, v] of Object.entries(options)) {
+              if (
+                [
+                  'count',
+                  'value',
+                  'index',
+                  'period',
+                  'v1',
+                  'v2',
+                  'v3',
+                  'date',
+                  'batchNo',
+                  'quantity',
+                  'qualified',
+                  'defective',
+                ].includes(k)
+              ) {
+                const strVal = String(v);
+                if (base.endsWith(':') || base.endsWith('：')) {
+                  base = `${base}${strVal}`;
+                } else if (base.includes(' ')) {
+                  base = `${base} ${strVal}`;
+                } else {
+                  base = `${base}:${strVal}`;
+                }
               }
             }
           }
         }
-      }
-      return base;
-    },
+        return base;
+      },
       language: 'zh',
       on: () => {},
       use: () => ({ init: () => {} }),

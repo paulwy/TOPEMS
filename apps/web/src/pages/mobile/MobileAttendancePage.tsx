@@ -46,6 +46,7 @@ import { apiLogger } from '@/utils/logger';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const MobileAttendancePage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -59,7 +60,11 @@ const MobileAttendancePage: React.FC = () => {
     reason: '',
   });
   const queryClient = useQueryClient();
-  const tabs = [i18n.t('mobile.mobile_attendance_page.k2'), i18n.t('mobile.mobile_attendance_page.k1'), i18n.t('mobile.mobile_attendance_page.k0')];
+  const tabs = [
+    i18n.t('mobile.mobile_attendance_page.k2'),
+    i18n.t('mobile.mobile_attendance_page.k1'),
+    i18n.t('mobile.mobile_attendance_page.k0'),
+  ];
   const statsQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_STATS_BASE,
     queryFn: async () => {
@@ -136,14 +141,16 @@ const MobileAttendancePage: React.FC = () => {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_STATS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_RECORDS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_STATS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_RECORDS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
   const checkOutMutation = useMutation({
@@ -191,14 +198,16 @@ const MobileAttendancePage: React.FC = () => {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_STATS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_RECORDS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_STATS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_RECORDS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
   const applyLeaveMutation = useMutation({
@@ -227,10 +236,11 @@ const MobileAttendancePage: React.FC = () => {
         message: i18n.t('mobile.mobile_attendance_page.k13'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MOBILE_LEAVE_APPLICATIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MOBILE_LEAVE_APPLICATIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err) => {
       apiLogger.error(i18n.t('pages.mobile_attendance_page.k2'), err);
@@ -339,16 +349,32 @@ const MobileAttendancePage: React.FC = () => {
     }
   };
   const bottomTabs = [
-    { id: 'home', label: i18n.t('mobile.mobile_attendance_page.k35'), icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: i18n.t('mobile.mobile_attendance_page.k36'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: i18n.t('mobile.mobile_attendance_page.k37'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    {
+      id: 'home',
+      label: i18n.t('mobile.mobile_attendance_page.k35'),
+      icon: <Home style={{ width: 22, height: 22 }} />,
+    },
+    {
+      id: 'tasks',
+      label: i18n.t('mobile.mobile_attendance_page.k36'),
+      icon: <ListTodo style={{ width: 22, height: 22 }} />,
+    },
+    {
+      id: 'scan',
+      label: i18n.t('mobile.mobile_attendance_page.k37'),
+      icon: <ScanLine style={{ width: 22, height: 22 }} />,
+    },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_attendance_page.k38'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
       badge: 3,
     },
-    { id: 'profile', label: i18n.t('mobile.mobile_attendance_page.k39'), icon: <User style={{ width: 22, height: 22 }} /> },
+    {
+      id: 'profile',
+      label: i18n.t('mobile.mobile_attendance_page.k39'),
+      icon: <User style={{ width: 22, height: 22 }} />,
+    },
   ];
   const todayStatus = attendanceStats?.today_status;
   return (
@@ -766,14 +792,16 @@ const MobileAttendancePage: React.FC = () => {
                                 variant='caption'
                                 color='text.secondary'
                               >
-                                {leave.days}{i18n.t('pages.mobile_attendance_page.k0')}
+                                {leave.days}
+                                {i18n.t('pages.mobile_attendance_page.k0')}
                               </Typography>
                             </Box>
                             <Typography
                               variant='body2'
                               sx={{ mb: 1, fontWeight: 500 }}
                             >
-                              {leave.start_date} {i18n.t('pages.mobile_attendance_page.k1')} {leave.end_date}
+                              {leave.start_date} {i18n.t('pages.mobile_attendance_page.k1')}{' '}
+                              {leave.end_date}
                             </Typography>
                             <Typography
                               variant='body2'
@@ -849,7 +877,9 @@ const MobileAttendancePage: React.FC = () => {
             </Box>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button onClick={() => setLeaveDialogOpen(false)}>{i18n.t('mobile.mobile_attendance_page.k57')}</Button>
+            <Button onClick={() => setLeaveDialogOpen(false)}>
+              {i18n.t('mobile.mobile_attendance_page.k57')}
+            </Button>
             <MobileButton
               variant='contained'
               onClick={handleSubmitLeave}

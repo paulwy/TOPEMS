@@ -132,7 +132,12 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
   filters,
   onFilterChange,
   timeRanges = [
-    { id: 'today', label: i18n.t('components.timeline_page_template.k0'), start: new Date(), end: new Date() },
+    {
+      id: 'today',
+      label: i18n.t('components.timeline_page_template.k0'),
+      start: new Date(),
+      end: new Date(),
+    },
     {
       id: 'week',
       label: i18n.t('components.timeline_page_template.k1'),
@@ -145,7 +150,12 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
       start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       end: new Date(),
     },
-    { id: 'all', label: i18n.t('components.timeline_page_template.k3'), start: new Date(0), end: new Date() },
+    {
+      id: 'all',
+      label: i18n.t('components.timeline_page_template.k3'),
+      start: new Date(0),
+      end: new Date(),
+    },
   ],
   selectedTimeRange = 'week',
   onTimeRangeChange,
@@ -615,7 +625,8 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                 variant='caption'
                 color='text.secondary'
               >
-                {i18n.t('components.timeline_page_template.k1')} {group.nodes.length} {i18n.t('components.timeline_page_template.k2')}
+                {i18n.t('components.timeline_page_template.k1')} {group.nodes.length}{' '}
+                {i18n.t('components.timeline_page_template.k2')}
               </Typography>
             </Box>
           )}

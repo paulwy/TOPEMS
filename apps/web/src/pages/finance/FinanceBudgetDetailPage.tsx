@@ -274,7 +274,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 sx={{ height: 8, borderRadius: 1, mb: 1 }}
               />
               <Typography variant='body2'>
-                {t('finance.finance_budget_detail_page.l1')}{' '}<strong>{budget.usageRate}%</strong>
+                {t('finance.finance_budget_detail_page.l1')} <strong>{budget.usageRate}%</strong>
               </Typography>
             </Box>
           </Box>
@@ -303,7 +303,9 @@ const FinanceBudgetDetailPage: React.FC = () => {
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
               {t('finance.finance_budget_detail_page.k2')}
             </InputLabel>
-            <Typography sx={{ mt: 0.5 }}>{t('finance.finance_budget_detail_page.m1', { v1: budget.fiscalYear })}</Typography>
+            <Typography sx={{ mt: 0.5 }}>
+              {t('finance.finance_budget_detail_page.m1', { v1: budget.fiscalYear })}
+            </Typography>
           </Box>
           <Box>
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>

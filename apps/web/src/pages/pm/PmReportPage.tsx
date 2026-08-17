@@ -39,7 +39,8 @@ import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type { StatCard, ChartConfig } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
 import { PM_PATHS } from '@/modules/pm/config';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
+
 const DEFAULT_STATS: PmStatistics = {
   total_projects: 0,
   draft_projects: 0,
@@ -81,8 +82,9 @@ const PmReportPage: React.FC = () => {
       }
       return DEFAULT_STATS;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const benefitsQuery = useQuery({
     queryKey: [
       ...(params.projectId ? QUERY_KEYS.PM.BENEFITS(params.projectId) : QUERY_KEYS.PM.REPORTS),
@@ -96,8 +98,9 @@ const PmReportPage: React.FC = () => {
       }
       return [] as ProjectBenefit[];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const stats = statsQuery.data ?? DEFAULT_STATS;
   const benefits = benefitsQuery.data ?? [];
   const loading = statsQuery.isLoading || benefitsQuery.isLoading;
@@ -160,19 +163,47 @@ const PmReportPage: React.FC = () => {
     () =>
       [
         { name: i18n.t('pm.pm_report_page.k4'), value: stats.draft_projects, fill: 'grey.500' },
-        { name: i18n.t('pm.pm_report_page.k5'), value: stats.pending_projects, fill: 'warning.main' },
-        { name: i18n.t('pm.pm_report_page.k6'), value: stats.active_projects, fill: 'primary.main' },
-        { name: i18n.t('pm.pm_report_page.k7'), value: stats.completed_projects, fill: 'success.main' },
-        { name: i18n.t('pm.pm_report_page.k8'), value: stats.cancelled_projects, fill: 'error.main' },
+        {
+          name: i18n.t('pm.pm_report_page.k5'),
+          value: stats.pending_projects,
+          fill: 'warning.main',
+        },
+        {
+          name: i18n.t('pm.pm_report_page.k6'),
+          value: stats.active_projects,
+          fill: 'primary.main',
+        },
+        {
+          name: i18n.t('pm.pm_report_page.k7'),
+          value: stats.completed_projects,
+          fill: 'success.main',
+        },
+        {
+          name: i18n.t('pm.pm_report_page.k8'),
+          value: stats.cancelled_projects,
+          fill: 'error.main',
+        },
       ].filter((d) => (d.value ?? 0) > 0),
     [stats]
   );
   const riskData = useMemo(
     () =>
       [
-        { name: i18n.t('pm.pm_report_page.k9'), value: stats.high_risk_projects ?? 0, fill: 'error.main' },
-        { name: i18n.t('pm.pm_report_page.k10'), value: stats.medium_risk_projects ?? 0, fill: 'warning.main' },
-        { name: i18n.t('pm.pm_report_page.k11'), value: stats.low_risk_projects ?? 0, fill: 'success.main' },
+        {
+          name: i18n.t('pm.pm_report_page.k9'),
+          value: stats.high_risk_projects ?? 0,
+          fill: 'error.main',
+        },
+        {
+          name: i18n.t('pm.pm_report_page.k10'),
+          value: stats.medium_risk_projects ?? 0,
+          fill: 'warning.main',
+        },
+        {
+          name: i18n.t('pm.pm_report_page.k11'),
+          value: stats.low_risk_projects ?? 0,
+          fill: 'success.main',
+        },
       ].filter((d) => (d.value ?? 0) > 0),
     [stats]
   );
@@ -229,7 +260,12 @@ const PmReportPage: React.FC = () => {
                       />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => [`${value}${i18n.t('pages.pm_report_page.k2')}`, i18n.t('pm.pm_report_page.k13')]} />
+                  <Tooltip
+                    formatter={(value) => [
+                      `${value}${i18n.t('pages.pm_report_page.k2')}`,
+                      i18n.t('pm.pm_report_page.k13'),
+                    ]}
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -265,7 +301,12 @@ const PmReportPage: React.FC = () => {
                       />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: unknown) => [`${value}${i18n.t('pages.pm_report_page.k3')}`, i18n.t('pm.pm_report_page.k15')]} />
+                  <Tooltip
+                    formatter={(value: unknown) => [
+                      `${value}${i18n.t('pages.pm_report_page.k3')}`,
+                      i18n.t('pm.pm_report_page.k15'),
+                    ]}
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -284,7 +325,11 @@ const PmReportPage: React.FC = () => {
               height='100%'
             >
               <LineChart
-                data={trendData.length > 0 ? trendData : [{ month: i18n.t('pm.pm_report_page.k16'), cpi: 1, spi: 1 }]}
+                data={
+                  trendData.length > 0
+                    ? trendData
+                    : [{ month: i18n.t('pm.pm_report_page.k16'), cpi: 1, spi: 1 }]
+                }
               >
                 <CartesianGrid strokeDasharray='3 3' />
                 <XAxis dataKey='month' />
@@ -429,7 +474,9 @@ const PmReportPage: React.FC = () => {
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 'medium', color: 'grey.600' }}>{i18n.t('pm.pm_report_page.k22')}</TableCell>
+                    <TableCell sx={{ fontWeight: 'medium', color: 'grey.600' }}>
+                      {i18n.t('pm.pm_report_page.k22')}
+                    </TableCell>
                     <TableCell
                       align='right'
                       sx={{ fontWeight: 'medium', color: 'grey.600' }}
@@ -468,7 +515,9 @@ const PmReportPage: React.FC = () => {
                       key={benefit.id}
                       hover
                     >
-                      <TableCell sx={{ color: 'grey.900' }}>{i18n.t('pages.pm_report_page.index1_1')}</TableCell>
+                      <TableCell sx={{ color: 'grey.900' }}>
+                        {i18n.t('pages.pm_report_page.index1_1')}
+                      </TableCell>
                       <TableCell align='right'>
                         <Badge
                           sx={{
@@ -577,7 +626,12 @@ const PmReportPage: React.FC = () => {
                         />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => [`${value}${i18n.t('pages.pm_report_page.k4')}`, i18n.t('pm.pm_report_page.k25')]} />
+                    <Tooltip
+                      formatter={(value) => [
+                        `${value}${i18n.t('pages.pm_report_page.k4')}`,
+                        i18n.t('pm.pm_report_page.k25'),
+                      ]}
+                    />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
@@ -613,7 +667,12 @@ const PmReportPage: React.FC = () => {
                         />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: unknown) => [`${value}${i18n.t('pages.pm_report_page.k5')}`, i18n.t('pm.pm_report_page.k27')]} />
+                    <Tooltip
+                      formatter={(value: unknown) => [
+                        `${value}${i18n.t('pages.pm_report_page.k5')}`,
+                        i18n.t('pm.pm_report_page.k27'),
+                      ]}
+                    />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
@@ -632,7 +691,11 @@ const PmReportPage: React.FC = () => {
                 height='100%'
               >
                 <LineChart
-                  data={trendData.length > 0 ? trendData : [{ month: i18n.t('pm.pm_report_page.k28'), cpi: 1, spi: 1 }]}
+                  data={
+                    trendData.length > 0
+                      ? trendData
+                      : [{ month: i18n.t('pm.pm_report_page.k28'), cpi: 1, spi: 1 }]
+                  }
                 >
                   <CartesianGrid strokeDasharray='3 3' />
                   <XAxis dataKey='month' />
@@ -773,7 +836,9 @@ const PmReportPage: React.FC = () => {
                 <Table size='small'>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 'medium', color: 'grey.600' }}>{i18n.t('pm.pm_report_page.k34')}</TableCell>
+                      <TableCell sx={{ fontWeight: 'medium', color: 'grey.600' }}>
+                        {i18n.t('pm.pm_report_page.k34')}
+                      </TableCell>
                       <TableCell
                         align='right'
                         sx={{ fontWeight: 'medium', color: 'grey.600' }}
@@ -812,7 +877,9 @@ const PmReportPage: React.FC = () => {
                         key={benefit.id}
                         hover
                       >
-                        <TableCell sx={{ color: 'grey.900' }}>{i18n.t('pages.pm_report_page.index1_3')}</TableCell>
+                        <TableCell sx={{ color: 'grey.900' }}>
+                          {i18n.t('pages.pm_report_page.index1_3')}
+                        </TableCell>
                         <TableCell align='right'>
                           <Badge
                             sx={{
@@ -886,7 +953,9 @@ const PmReportPage: React.FC = () => {
     >
       <StatsPageTemplate
         title={i18n.t('pm.pm_report_page.k36')}
-        subtitle={params.projectId ? i18n.t('pm.pm_report_page.k38') : i18n.t('pm.pm_report_page.k37')}
+        subtitle={
+          params.projectId ? i18n.t('pm.pm_report_page.k38') : i18n.t('pm.pm_report_page.k37')
+        }
         statCards={statCards}
         loading={loading}
         timeRangeOptions={[

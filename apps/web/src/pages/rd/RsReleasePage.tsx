@@ -14,6 +14,7 @@ import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
 import i18n from '@/i18n';
+
 const baseAdapter = createCrudPageAdapter<Deploy, CreateDeployRequest>({
   list: deployApi.listDeploys,
   create: deployApi.createDeploy,
@@ -62,14 +63,16 @@ const RsReleasePage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.RELEASES ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.DEPLOYS ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.RD.RELEASES,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.RD.DEPLOYS,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (error: unknown) => {
       logger.error(i18n.t('pages.rs_release_page.k0'), error);
@@ -97,7 +100,9 @@ const RsReleasePage: React.FC = () => {
         title: i18n.t('rd.rs_release_page.k9'),
         message: i18n.t('rd.rs_release_page.k10'),
       });
-    } catch (e) { console.error("[RD] Failed to submit rollback deployment", e); }
+    } catch (e) {
+      console.error('[RD] Failed to submit rollback deployment', e);
+    }
   };
   const customRowActions: RowAction<Record<string, unknown>>[] = [
     {

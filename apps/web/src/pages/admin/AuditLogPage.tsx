@@ -26,7 +26,8 @@ import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 type AuditLogSource = 'lims' | 'rd' | 'core';
 const formatDateTimeForApi = (dateTimeString: string): string => {
   if (!dateTimeString) return '';
@@ -416,7 +417,10 @@ const AuditLogPage: React.FC = () => {
           }
           return { data: [], total: 0 };
         } catch (error) {
-          apiLogger.error(`${i18n.t('pages.audit_log_page.k3')}${source}${i18n.t('pages.audit_log_page.k4')}`, error);
+          apiLogger.error(
+            `${i18n.t('pages.audit_log_page.k3')}${source}${i18n.t('pages.audit_log_page.k4')}`,
+            error
+          );
           throw new Error(extractErrorMessage(error, i18n.t('admin.audit_log_page.k14')));
         }
       },
@@ -452,12 +456,11 @@ const AuditLogPage: React.FC = () => {
       return api.exportAuditLogs(params);
     },
     onSuccess: (blob: unknown) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+        exact: false,
+        refetchType: 'active',
+      });
       apiLogger.debug(i18n.t('pages.audit_log_page.blobsize_5'), (blob as Blob)?.size);
       const url = window.URL.createObjectURL(blob as Blob);
       const a = document.createElement('a');
@@ -757,7 +760,9 @@ const AuditLogPage: React.FC = () => {
                 disabled={exportMutation.isPending}
                 size='small'
               >
-                {exportMutation.isPending ? i18n.t('pages.audit_log_page.k8') : i18n.t('admin.audit_log_page.k36')}
+                {exportMutation.isPending
+                  ? i18n.t('pages.audit_log_page.k8')
+                  : i18n.t('admin.audit_log_page.k36')}
               </Button>
             </Box>
           </Paper>

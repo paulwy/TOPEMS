@@ -4,6 +4,7 @@ import { Typography } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import i18n from '@/i18n';
 import { limsApi } from '@/api/lims';
+
 export default function InspectionResultPage() {
   const { data: backendData, isLoading: isBackendLoading } = useQuery({
     queryKey: ['lims-inspection-result'],

@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { LazyChart } from '@/components/charts';
 import i18n from '@/i18n';
+
 const iconMap: Record<string, React.ReactNode> = {
   FileText: <FileText size={24} />,
   FlaskConical: <FlaskConical size={24} />,
@@ -19,7 +20,7 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const { data: stats, isPending: loading} = useQuery({
+  const { data: stats, isPending: loading } = useQuery({
     queryKey: QUERY_KEYS.RD.STATISTICS,
     queryFn: async () => {
       const response = await rdApi.getStatistics();
@@ -79,7 +80,10 @@ export const DashboardPage: React.FC = () => {
   );
   const charts: ChartCard[] = useMemo(() => {
     const barData = [
-      { name: i18n.t('rd.dashboard_page.status_label.pending'), value: stats?.pending_projects || 0 },
+      {
+        name: i18n.t('rd.dashboard_page.status_label.pending'),
+        value: stats?.pending_projects || 0,
+      },
       {
         name: i18n.t('rd.dashboard_page.status_label.in_progress'),
         value: stats?.in_progress_projects || 0,
@@ -94,7 +98,10 @@ export const DashboardPage: React.FC = () => {
       },
     ];
     const lineData = [
-      { name: i18n.t('rd.dashboard_page.status_label.pending'), value: stats?.pending_experiments || 0 },
+      {
+        name: i18n.t('rd.dashboard_page.status_label.pending'),
+        value: stats?.pending_experiments || 0,
+      },
       {
         name: i18n.t('rd.dashboard_page.status_label.in_progress'),
         value: stats?.in_progress_experiments || 0,
@@ -109,7 +116,8 @@ export const DashboardPage: React.FC = () => {
         id: 'project-type-distribution',
         title: i18n.t('rd.dashboard_page.chart.project_status_distribution'),
         chart: (
-          <LazyChart type='bar'
+          <LazyChart
+            type='bar'
             data={barData}
             xKey='name'
             yKey='value'
@@ -121,7 +129,8 @@ export const DashboardPage: React.FC = () => {
         id: 'monthly-release-trend',
         title: i18n.t('rd.dashboard_page.chart.experiment_status_distribution'),
         chart: (
-          <LazyChart type='line'
+          <LazyChart
+            type='line'
             data={lineData}
             xKey='name'
             yKey='value'

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import {
   Box,
   Typography,
@@ -35,6 +35,7 @@ import type { CrudApiAdapter, RowAction } from '@/components/templates/CrudPage'
 import { tenantApi } from '@/api/tenant';
 import type { TenantInvoice, Tenant, UsageMetrics, TenantBillingInfo } from '@/api/tenant/types';
 import { tenantInvoiceSchema } from '@/schemas/admin';
+
 const plans = [
   {
     id: 'free',
@@ -124,8 +125,9 @@ const TenantBillingPage: React.FC = () => {
       }
       throw new Error(i18n.t('admin.tenant_billing_page.k34'));
     },
-  
-      staleTime: CACHE_DURATIONS.LONG,});
+
+    staleTime: CACHE_DURATIONS.LONG,
+  });
   const tenantId = contextQuery.data?.tenant_id;
   const tenantQuery = useQuery({
     queryKey: QUERY_KEYS.TENANT.TENANT(tenantId ?? ''),
@@ -138,8 +140,9 @@ const TenantBillingPage: React.FC = () => {
       throw new Error(i18n.t('admin.tenant_billing_page.k35'));
     },
     enabled: !!tenantId,
-  
-      staleTime: CACHE_DURATIONS.LONG,});
+
+    staleTime: CACHE_DURATIONS.LONG,
+  });
   const billingQuery = useQuery({
     queryKey: QUERY_KEYS.TENANT.BILLING(tenantId ?? ''),
     queryFn: async () => {
@@ -151,8 +154,9 @@ const TenantBillingPage: React.FC = () => {
       throw new Error(i18n.t('admin.tenant_billing_page.k36'));
     },
     enabled: !!tenantId,
-  
-      staleTime: CACHE_DURATIONS.LONG,});
+
+    staleTime: CACHE_DURATIONS.LONG,
+  });
   const usageQuery = useQuery({
     queryKey: QUERY_KEYS.TENANT.USAGE(tenantId ?? ''),
     queryFn: async () => {
@@ -164,8 +168,9 @@ const TenantBillingPage: React.FC = () => {
       throw new Error(i18n.t('admin.tenant_billing_page.k37'));
     },
     enabled: !!tenantId,
-  
-      staleTime: CACHE_DURATIONS.LONG,});
+
+    staleTime: CACHE_DURATIONS.LONG,
+  });
   const tenant = tenantQuery.data ?? null;
   const billingInfo = billingQuery.data ?? null;
   const usage = usageQuery.data ?? null;
@@ -222,7 +227,9 @@ const TenantBillingPage: React.FC = () => {
         severity='info'
         sx={{ mb: 3 }}
       >
-        {i18n.t('pages.tenant_billing_page.strong_0')}{currentPlan.name}{i18n.t('pages.tenant_billing_page.strong_1')}
+        {i18n.t('pages.tenant_billing_page.strong_0')}
+        {currentPlan.name}
+        {i18n.t('pages.tenant_billing_page.strong_1')}
         <strong>
           {billingInfo ? new Date(billingInfo.next_billing_date).toLocaleDateString('zh-CN') : '-'}
         </strong>
@@ -351,7 +358,9 @@ const TenantBillingPage: React.FC = () => {
                   color='text.secondary'
                   sx={{ mb: 1 }}
                 >
-                  {i18n.t('pages.tenant_billing_page.k2')} {(tenant.quota_api_calls || 0).toLocaleString()} {i18n.t('pages.tenant_billing_page.k3')}
+                  {i18n.t('pages.tenant_billing_page.k2')}{' '}
+                  {(tenant.quota_api_calls || 0).toLocaleString()}{' '}
+                  {i18n.t('pages.tenant_billing_page.k3')}
                 </Typography>
                 <LinearProgress
                   variant='determinate'
@@ -494,7 +503,9 @@ const TenantBillingPage: React.FC = () => {
                           endIcon={<ArrowUpRight size={16} />}
                           disabled={plan.id === 'enterprise' ? false : false}
                         >
-                          {plan.id === 'enterprise' ? i18n.t('admin.tenant_billing_page.k47') : i18n.t('admin.tenant_billing_page.k46')}
+                          {plan.id === 'enterprise'
+                            ? i18n.t('admin.tenant_billing_page.k47')
+                            : i18n.t('admin.tenant_billing_page.k46')}
                         </Button>
                       )}
                     </Box>

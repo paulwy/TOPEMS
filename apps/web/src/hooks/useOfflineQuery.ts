@@ -64,8 +64,9 @@ export function useOfflineQuery<TQueryFnData = unknown, TError = unknown, TData 
   return useQuery({
     ...queryOptions,
     queryFn: enhancedQueryFn,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 }
 
 export function useOfflineMutation<TData = unknown, TError = unknown, TVariables = void>(

@@ -62,7 +62,9 @@ const USER_MESSAGES: Record<MFErrorType, string> = {
   unknown: i18n.t('microfrontend.mf-error-classifier.k9'),
 };
 
-function extractModuleName(remoteInfo?: { name?: string; alias?: string } | null): string | undefined {
+function extractModuleName(
+  remoteInfo?: { name?: string; alias?: string } | null
+): string | undefined {
   if (!remoteInfo) return undefined;
   return remoteInfo.alias || remoteInfo.name || undefined;
 }
@@ -195,10 +197,7 @@ export function shouldSuppressToast(event: MFErrorEvent, recentEvents: MFErrorEv
   const window = 10_000;
   const now = Date.now();
   const similar = recentEvents.filter(
-    (e) =>
-      e.type === event.type &&
-      e.moduleName === event.moduleName &&
-      now - e.timestamp < window
+    (e) => e.type === event.type && e.moduleName === event.moduleName && now - e.timestamp < window
   );
   return similar.length >= 2;
 }

@@ -3,6 +3,7 @@ import { Settings, AlertTriangle, Bell, Database, Shield, Plug } from 'lucide-re
 import { useNotificationStore } from '@/store';
 import type { SettingTab, SettingValueType } from '@/components/templates';
 import i18n from '@/i18n';
+
 interface GeneralSettings {
   monitoringEnabled: boolean;
   dataRetentionDays: number;

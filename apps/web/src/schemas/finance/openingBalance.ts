@@ -77,7 +77,12 @@ export const openingBalanceSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) =>
         React.createElement(
           'span',
-          { style: { fontWeight: 600, color: `var(--color-success-main, ${designTokens.colors.success.dark})` } },
+          {
+            style: {
+              fontWeight: 600,
+              color: `var(--color-success-main, ${designTokens.colors.success.dark})`,
+            },
+          },
           formatMoney(Number(row.debit_balance ?? 0))
         ),
     },
@@ -92,7 +97,12 @@ export const openingBalanceSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) =>
         React.createElement(
           'span',
-          { style: { fontWeight: 600, color: `var(--color-error-main, ${designTokens.colors.error['800']})` } },
+          {
+            style: {
+              fontWeight: 600,
+              color: `var(--color-error-main, ${designTokens.colors.error['800']})`,
+            },
+          },
           formatMoney(Number(row.credit_balance ?? 0))
         ),
     },

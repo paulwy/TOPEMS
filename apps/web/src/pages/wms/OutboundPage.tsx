@@ -9,11 +9,10 @@ import { Upload, Check, ClipboardList, Truck, Package } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const OutboundStats: React.FC = () => {
   const { data: orders = [] } = useQuery({
@@ -154,14 +153,23 @@ export default function OutboundPage() {
       try {
         const response = await wmsApi.outboundOrders.confirm(id);
         if (response.success) {
-          addNotification({ type: 'success', title: i18n.t('pages.outbound_page.k5'), message: i18n.t('pages.outbound_page.k4') });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_OUTBOUND_ORDERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+          addNotification({
+            type: 'success',
+            title: i18n.t('pages.outbound_page.k5'),
+            message: i18n.t('pages.outbound_page.k4'),
+          });
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.AD_HOC.WMS_OUTBOUND_ORDERS_BASE,
+            exact: false,
+            refetchType: 'active',
+          });
         }
       } catch {
-        addNotification({ type: 'error', title: i18n.t('pages.outbound_page.k7'), message: i18n.t('pages.outbound_page.k6') });
+        addNotification({
+          type: 'error',
+          title: i18n.t('pages.outbound_page.k7'),
+          message: i18n.t('pages.outbound_page.k6'),
+        });
       }
     },
     [queryClient, addNotification]
@@ -172,14 +180,23 @@ export default function OutboundPage() {
       try {
         const response = await wmsApi.outboundOrders.pick(id);
         if (response.success) {
-          addNotification({ type: 'success', title: i18n.t('pages.outbound_page.k9'), message: i18n.t('pages.outbound_page.k8') });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_OUTBOUND_ORDERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+          addNotification({
+            type: 'success',
+            title: i18n.t('pages.outbound_page.k9'),
+            message: i18n.t('pages.outbound_page.k8'),
+          });
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.AD_HOC.WMS_OUTBOUND_ORDERS_BASE,
+            exact: false,
+            refetchType: 'active',
+          });
         }
       } catch {
-        addNotification({ type: 'error', title: i18n.t('pages.outbound_page.k11'), message: i18n.t('pages.outbound_page.k10') });
+        addNotification({
+          type: 'error',
+          title: i18n.t('pages.outbound_page.k11'),
+          message: i18n.t('pages.outbound_page.k10'),
+        });
       }
     },
     [queryClient, addNotification]
@@ -190,14 +207,23 @@ export default function OutboundPage() {
       try {
         const response = await wmsApi.outboundOrders.ship(id, []);
         if (response.success) {
-          addNotification({ type: 'success', title: i18n.t('pages.outbound_page.k13'), message: i18n.t('pages.outbound_page.k12') });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_OUTBOUND_ORDERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+          addNotification({
+            type: 'success',
+            title: i18n.t('pages.outbound_page.k13'),
+            message: i18n.t('pages.outbound_page.k12'),
+          });
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.AD_HOC.WMS_OUTBOUND_ORDERS_BASE,
+            exact: false,
+            refetchType: 'active',
+          });
         }
       } catch {
-        addNotification({ type: 'error', title: i18n.t('pages.outbound_page.k15'), message: i18n.t('pages.outbound_page.k14') });
+        addNotification({
+          type: 'error',
+          title: i18n.t('pages.outbound_page.k15'),
+          message: i18n.t('pages.outbound_page.k14'),
+        });
       }
     },
     [queryClient, addNotification]
@@ -208,14 +234,23 @@ export default function OutboundPage() {
       try {
         const response = await wmsApi.outboundOrders.complete(id);
         if (response.success) {
-          addNotification({ type: 'success', title: i18n.t('pages.outbound_page.k17'), message: i18n.t('pages.outbound_page.k16') });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_OUTBOUND_ORDERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+          addNotification({
+            type: 'success',
+            title: i18n.t('pages.outbound_page.k17'),
+            message: i18n.t('pages.outbound_page.k16'),
+          });
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.AD_HOC.WMS_OUTBOUND_ORDERS_BASE,
+            exact: false,
+            refetchType: 'active',
+          });
         }
       } catch {
-        addNotification({ type: 'error', title: i18n.t('pages.outbound_page.k19'), message: i18n.t('pages.outbound_page.k18') });
+        addNotification({
+          type: 'error',
+          title: i18n.t('pages.outbound_page.k19'),
+          message: i18n.t('pages.outbound_page.k18'),
+        });
       }
     },
     [queryClient, addNotification]

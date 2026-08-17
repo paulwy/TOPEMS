@@ -196,22 +196,34 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
               break;
             case 'minLength':
               if (stringValue.length < rule.value) {
-                return rule.message || `${field.label}${i18n.t('components.form_builder.k2')}${rule.value}${i18n.t('components.form_builder.k3')}`;
+                return (
+                  rule.message ||
+                  `${field.label}${i18n.t('components.form_builder.k2')}${rule.value}${i18n.t('components.form_builder.k3')}`
+                );
               }
               break;
             case 'maxLength':
               if (stringValue.length > rule.value) {
-                return rule.message || `${field.label}${i18n.t('components.form_builder.k4')}${rule.value}${i18n.t('components.form_builder.k5')}`;
+                return (
+                  rule.message ||
+                  `${field.label}${i18n.t('components.form_builder.k4')}${rule.value}${i18n.t('components.form_builder.k5')}`
+                );
               }
               break;
             case 'min':
               if (Number(value) < rule.value) {
-                return rule.message || `${field.label}${i18n.t('components.form_builder.k6')}${rule.value}`;
+                return (
+                  rule.message ||
+                  `${field.label}${i18n.t('components.form_builder.k6')}${rule.value}`
+                );
               }
               break;
             case 'max':
               if (Number(value) > rule.value) {
-                return rule.message || `${field.label}${i18n.t('components.form_builder.k7')}${rule.value}`;
+                return (
+                  rule.message ||
+                  `${field.label}${i18n.t('components.form_builder.k7')}${rule.value}`
+                );
               }
               break;
             case 'pattern':

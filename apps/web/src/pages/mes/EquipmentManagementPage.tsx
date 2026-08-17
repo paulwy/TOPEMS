@@ -27,7 +27,8 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import type { Equipment, MaintenanceEquipmentRequest } from '@/api/mes';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter(mesApi.equipment);
 export default function EquipmentManagementPage() {
   const queryClient = useQueryClient();
@@ -62,14 +63,16 @@ export default function EquipmentManagementPage() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MES_EQUIPMENT_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MES_EQUIPMENT_STATISTICS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MES_EQUIPMENT_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.MES_EQUIPMENT_STATISTICS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: i18n.t('mes.equipment_management_page.success'),
@@ -94,7 +97,9 @@ export default function EquipmentManagementPage() {
       });
       setShowMaintenanceDialog(false);
       resetMaintenanceForm();
-    } catch (e) { console.error("[MES] Failed to submit equipment maintenance update", e); }
+    } catch (e) {
+      console.error('[MES] Failed to submit equipment maintenance update', e);
+    }
   };
   const resetMaintenanceForm = () => {
     setMaintenanceData({
@@ -248,10 +253,14 @@ export default function EquipmentManagementPage() {
               mb: 2,
               fontSize: 14,
             }}
-          >{i18n.t('mes:equipment_management_page.k4', { v0: (selectedEquipment?.name) })}</Box>
+          >
+            {i18n.t('mes:equipment_management_page.k4', { v0: selectedEquipment?.name })}
+          </Box>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='maintenance_type'>{i18n.t('mes:equipment_management_page.k3')}</InputLabel>
+              <InputLabel htmlFor='maintenance_type'>
+                {i18n.t('mes:equipment_management_page.k3')}
+              </InputLabel>
               <FormControl
                 fullWidth
                 size='small'
@@ -268,13 +277,19 @@ export default function EquipmentManagementPage() {
                 >
                   <MenuItem value='routine'>{i18n.t('mes.equipment_management_page.k2')}</MenuItem>
                   <MenuItem value='repair'>{i18n.t('mes.equipment_management_page.k3')}</MenuItem>
-                  <MenuItem value='preventive'>{i18n.t('mes.equipment_management_page.k4')}</MenuItem>
-                  <MenuItem value='inspection'>{i18n.t('mes.equipment_management_page.k5')}</MenuItem>
+                  <MenuItem value='preventive'>
+                    {i18n.t('mes.equipment_management_page.k4')}
+                  </MenuItem>
+                  <MenuItem value='inspection'>
+                    {i18n.t('mes.equipment_management_page.k5')}
+                  </MenuItem>
                 </Select>
               </FormControl>
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='maintainer'>{i18n.t('mes:equipment_management_page.k2')}</InputLabel>
+              <InputLabel htmlFor='maintainer'>
+                {i18n.t('mes:equipment_management_page.k2')}
+              </InputLabel>
               <TextField
                 id='maintainer'
                 required
@@ -286,7 +301,9 @@ export default function EquipmentManagementPage() {
               />
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='start_time'>{i18n.t('mes:equipment_management_page.k1')}</InputLabel>
+              <InputLabel htmlFor='start_time'>
+                {i18n.t('mes:equipment_management_page.k1')}
+              </InputLabel>
               <TextField
                 id='start_time'
                 type='datetime-local'
@@ -299,7 +316,9 @@ export default function EquipmentManagementPage() {
               />
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='end_time'>{i18n.t('mes.equipment_management_page.k6')}</InputLabel>
+              <InputLabel htmlFor='end_time'>
+                {i18n.t('mes.equipment_management_page.k6')}
+              </InputLabel>
               <TextField
                 id='end_time'
                 type='datetime-local'
@@ -326,7 +345,9 @@ export default function EquipmentManagementPage() {
               />
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='description'>{i18n.t('mes:equipment_management_page.k0')}</InputLabel>
+              <InputLabel htmlFor='description'>
+                {i18n.t('mes:equipment_management_page.k0')}
+              </InputLabel>
               <TextField
                 id='description'
                 required
@@ -349,7 +370,9 @@ export default function EquipmentManagementPage() {
               />
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <InputLabel htmlFor='remarks'>{i18n.t('mes.equipment_management_page.k9')}</InputLabel>
+              <InputLabel htmlFor='remarks'>
+                {i18n.t('mes.equipment_management_page.k9')}
+              </InputLabel>
               <TextField
                 id='remarks'
                 size='small'

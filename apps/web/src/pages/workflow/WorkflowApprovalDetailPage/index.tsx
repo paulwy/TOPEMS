@@ -20,6 +20,7 @@ import {
 import i18n from '@/i18n';
 import ApprovalActions, { buildActions, type ActionConfig } from './components/ApprovalActions';
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
+
 interface ApprovalDetails {
   approval: Approval;
   records: ApprovalRecord[];
@@ -73,10 +74,11 @@ const FlowApprovalDetailPage: React.FC = () => {
     }
   }, [detailsQuery.isError, detailsQuery.error, addNotification]);
   const invalidateApprovalQueries = () => {
-    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE, id] ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE, id],
+      exact: false,
+      refetchType: 'active',
+    });
   };
   const processApprovalMutation = useMutation({
     mutationFn: (params: { approvalId: string; action: 'approve' | 'reject'; comment?: string }) =>
@@ -87,12 +89,11 @@ const FlowApprovalDetailPage: React.FC = () => {
         actor_name: user?.fullName || user?.username || 'Current User',
       }),
     onSuccess: (_data, variables) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateApprovalQueries();
       addNotification({
         title: i18n.t('workflow.index.k3'),
@@ -122,12 +123,11 @@ const FlowApprovalDetailPage: React.FC = () => {
         delegate_to_name: params.delegateTo,
       }),
     onSuccess: (_data, variables) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateApprovalQueries();
       addNotification({
         title: i18n.t('workflow.index.k8'),

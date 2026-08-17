@@ -187,7 +187,9 @@ export const dataWorkflowAutomationApiV78 = {
     return apiClient.master.get<WorkflowDefinition>(`/mdm-v78/workflows/${id}`);
   },
 
-  async listWorkflows(params?: ListWorkflowsRequest): Promise<ApiResponse<PaginatedResponse<WorkflowDefinition>>> {
+  async listWorkflows(
+    params?: ListWorkflowsRequest
+  ): Promise<ApiResponse<PaginatedResponse<WorkflowDefinition>>> {
     const qs = new URLSearchParams();
     if (params?.entity_type) qs.set('entity_type', params.entity_type);
     if (params?.status) qs.set('status', params.status);
@@ -195,10 +197,15 @@ export const dataWorkflowAutomationApiV78 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<WorkflowDefinition>>(`/mdm-v78/workflows${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<WorkflowDefinition>>(
+      `/mdm-v78/workflows${s ? `?${s}` : ''}`
+    );
   },
 
-  async updateWorkflow(id: string, data: UpdateWorkflowRequest): Promise<ApiResponse<WorkflowDefinition>> {
+  async updateWorkflow(
+    id: string,
+    data: UpdateWorkflowRequest
+  ): Promise<ApiResponse<WorkflowDefinition>> {
     return apiClient.master.put<WorkflowDefinition>(`/mdm-v78/workflows/${id}`, data);
   },
 
@@ -206,8 +213,13 @@ export const dataWorkflowAutomationApiV78 = {
     return apiClient.master.delete<{ deleted: boolean }>(`/mdm-v78/workflows/${id}`);
   },
 
-  async setWorkflowStatus(id: string, status: WorkflowStatus): Promise<ApiResponse<WorkflowDefinition>> {
-    return apiClient.master.patch<WorkflowDefinition>(`/mdm-v78/workflows/${id}/status`, { status });
+  async setWorkflowStatus(
+    id: string,
+    status: WorkflowStatus
+  ): Promise<ApiResponse<WorkflowDefinition>> {
+    return apiClient.master.patch<WorkflowDefinition>(`/mdm-v78/workflows/${id}/status`, {
+      status,
+    });
   },
 
   // ===== 数据变更审批 =====
@@ -233,10 +245,15 @@ export const dataWorkflowAutomationApiV78 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<ApprovalRequest>>(`/mdm-v78/approvals${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<ApprovalRequest>>(
+      `/mdm-v78/approvals${s ? `?${s}` : ''}`
+    );
   },
 
-  async reviewApproval(id: string, data: ReviewApprovalRequest): Promise<ApiResponse<ApprovalRequest>> {
+  async reviewApproval(
+    id: string,
+    data: ReviewApprovalRequest
+  ): Promise<ApiResponse<ApprovalRequest>> {
     return apiClient.master.post<ApprovalRequest>(`/mdm-v78/approvals/${id}/review`, data);
   },
 
@@ -250,22 +267,32 @@ export const dataWorkflowAutomationApiV78 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<ApprovalRequest>>(`/mdm-v78/approvals/my${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<ApprovalRequest>>(
+      `/mdm-v78/approvals/my${s ? `?${s}` : ''}`
+    );
   },
 
-  async getApprovalStats(): Promise<ApiResponse<{
-    pending: number;
-    approved: number;
-    rejected: number;
-    escalated: number;
-    cancelled: number;
-  }>> {
+  async getApprovalStats(): Promise<
+    ApiResponse<{
+      pending: number;
+      approved: number;
+      rejected: number;
+      escalated: number;
+      cancelled: number;
+    }>
+  > {
     return apiClient.master.get('/mdm-v78/approvals/stats');
   },
 
   // ===== 自动化工作流执行 =====
-  async executeWorkflow(workflowId: string, data?: ExecuteWorkflowRequest): Promise<ApiResponse<WorkflowExecution>> {
-    return apiClient.master.post<WorkflowExecution>(`/mdm-v78/workflows/${workflowId}/execute`, data || {});
+  async executeWorkflow(
+    workflowId: string,
+    data?: ExecuteWorkflowRequest
+  ): Promise<ApiResponse<WorkflowExecution>> {
+    return apiClient.master.post<WorkflowExecution>(
+      `/mdm-v78/workflows/${workflowId}/execute`,
+      data || {}
+    );
   },
 
   async getExecution(id: string): Promise<ApiResponse<WorkflowExecution>> {
@@ -284,7 +311,9 @@ export const dataWorkflowAutomationApiV78 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<WorkflowExecution>>(`/mdm-v78/executions${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<WorkflowExecution>>(
+      `/mdm-v78/executions${s ? `?${s}` : ''}`
+    );
   },
 
   async cancelExecution(id: string): Promise<ApiResponse<WorkflowExecution>> {
@@ -300,13 +329,18 @@ export const dataWorkflowAutomationApiV78 = {
     return apiClient.master.get<WorkflowLog[]>(`/mdm-v78/executions/${executionId}/logs`);
   },
 
-  async getWorkflowLogs(workflowId: string, params?: {
-    limit?: number;
-  }): Promise<ApiResponse<WorkflowLog[]>> {
+  async getWorkflowLogs(
+    workflowId: string,
+    params?: {
+      limit?: number;
+    }
+  ): Promise<ApiResponse<WorkflowLog[]>> {
     const qs = new URLSearchParams();
     if (params?.limit !== undefined) qs.set('limit', String(params.limit));
     const s = qs.toString();
-    return apiClient.master.get<WorkflowLog[]>(`/mdm-v78/workflows/${workflowId}/logs${s ? `?${s}` : ''}`);
+    return apiClient.master.get<WorkflowLog[]>(
+      `/mdm-v78/workflows/${workflowId}/logs${s ? `?${s}` : ''}`
+    );
   },
 
   async getStepLogs(stepId: string): Promise<ApiResponse<WorkflowLog[]>> {
@@ -347,7 +381,9 @@ export const dataWorkflowAutomationApiV78 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<DataMapping>>(`/mdm-v78/mappings${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<DataMapping>>(
+      `/mdm-v78/mappings${s ? `?${s}` : ''}`
+    );
   },
 
   async updateMapping(id: string, data: UpdateMappingRequest): Promise<ApiResponse<DataMapping>> {
@@ -358,32 +394,56 @@ export const dataWorkflowAutomationApiV78 = {
     return apiClient.master.delete<{ deleted: boolean }>(`/mdm-v78/mappings/${id}`);
   },
 
-  async testMapping(id: string, sampleData?: Record<string, unknown>): Promise<ApiResponse<{
-    success: boolean;
-    transformed_data?: Record<string, unknown>;
-    error_message?: string;
-  }>> {
+  async testMapping(
+    id: string,
+    sampleData?: Record<string, unknown>
+  ): Promise<
+    ApiResponse<{
+      success: boolean;
+      transformed_data?: Record<string, unknown>;
+      error_message?: string;
+    }>
+  > {
     return apiClient.master.post(`/mdm-v78/mappings/${id}/test`, { sample_data: sampleData });
   },
 
   // ===== 工作流版本管理 =====
-  async listWorkflowVersions(workflowId: string): Promise<ApiResponse<{ versions: string[]; current: string }>> {
+  async listWorkflowVersions(
+    workflowId: string
+  ): Promise<ApiResponse<{ versions: string[]; current: string }>> {
     return apiClient.master.get(`/mdm-v78/workflows/${workflowId}/versions`);
   },
 
-  async getWorkflowVersion(workflowId: string, version: string): Promise<ApiResponse<WorkflowDefinition>> {
-    return apiClient.master.get<WorkflowDefinition>(`/mdm-v78/workflows/${workflowId}/versions/${version}`);
+  async getWorkflowVersion(
+    workflowId: string,
+    version: string
+  ): Promise<ApiResponse<WorkflowDefinition>> {
+    return apiClient.master.get<WorkflowDefinition>(
+      `/mdm-v78/workflows/${workflowId}/versions/${version}`
+    );
   },
 
-  async promoteVersion(workflowId: string, version: string): Promise<ApiResponse<WorkflowDefinition>> {
-    return apiClient.master.post<WorkflowDefinition>(`/mdm-v78/workflows/${workflowId}/versions/${version}/promote`, {});
+  async promoteVersion(
+    workflowId: string,
+    version: string
+  ): Promise<ApiResponse<WorkflowDefinition>> {
+    return apiClient.master.post<WorkflowDefinition>(
+      `/mdm-v78/workflows/${workflowId}/versions/${version}/promote`,
+      {}
+    );
   },
 
-  async diffWorkflowVersions(workflowId: string, v1: string, v2: string): Promise<ApiResponse<{
-    added_steps: string[];
-    removed_steps: string[];
-    modified_steps: string[];
-  }>> {
+  async diffWorkflowVersions(
+    workflowId: string,
+    v1: string,
+    v2: string
+  ): Promise<
+    ApiResponse<{
+      added_steps: string[];
+      removed_steps: string[];
+      modified_steps: string[];
+    }>
+  > {
     return apiClient.master.get(`/mdm-v78/workflows/${workflowId}/diff?v1=${v1}&v2=${v2}`);
   },
 
@@ -392,12 +452,14 @@ export const dataWorkflowAutomationApiV78 = {
     return apiClient.master.get<WorkflowDashboard>('/mdm-v78/dashboard');
   },
 
-  async getWorkflowStats(): Promise<ApiResponse<{
-    by_entity_type: Record<string, number>;
-    by_trigger_type: Record<string, number>;
-    avg_approval_time_ms: number;
-    execution_success_rate: number;
-  }>> {
+  async getWorkflowStats(): Promise<
+    ApiResponse<{
+      by_entity_type: Record<string, number>;
+      by_trigger_type: Record<string, number>;
+      avg_approval_time_ms: number;
+      execution_success_rate: number;
+    }>
+  > {
     return apiClient.master.get('/mdm-v78/stats');
   },
 };

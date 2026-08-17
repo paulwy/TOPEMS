@@ -62,7 +62,8 @@ import {
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const BiPermissionPage = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'row-level' | 'data'>('row-level');
@@ -128,10 +129,11 @@ const BiPermissionPage = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       setDialogOpen(false);
     },
     onError: (error: unknown) => {
@@ -142,10 +144,11 @@ const BiPermissionPage = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteRowLevelPermission(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (error: unknown) => {
       logger.error('Failed to delete permission:', error);
@@ -155,10 +158,11 @@ const BiPermissionPage = () => {
     mutationFn: (item: RowLevelPermission) =>
       updateRowLevelPermission(item.id, { isEnabled: !item.isEnabled }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (error: unknown) => {
       logger.error('Failed to toggle permission:', error);
@@ -511,13 +515,27 @@ const BiPermissionPage = () => {
                       <Table>
                         <TableHead>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k5')}</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k6')}</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k7')}</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k8')}</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k9')}</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k10')}</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k11')}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              {i18n.t('bi.bi_permission_page.k5')}
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              {i18n.t('bi.bi_permission_page.k6')}
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              {i18n.t('bi.bi_permission_page.k7')}
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              {i18n.t('bi.bi_permission_page.k8')}
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              {i18n.t('bi.bi_permission_page.k9')}
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              {i18n.t('bi.bi_permission_page.k10')}
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              {i18n.t('bi.bi_permission_page.k11')}
+                            </TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -681,13 +699,27 @@ const BiPermissionPage = () => {
                       <Table>
                         <TableHead>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k13')}</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k14')}</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k15')}</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k16')}</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k17')}</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k18')}</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>{i18n.t('bi.bi_permission_page.k19')}</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              {i18n.t('bi.bi_permission_page.k13')}
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              {i18n.t('bi.bi_permission_page.k14')}
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              {i18n.t('bi.bi_permission_page.k15')}
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              {i18n.t('bi.bi_permission_page.k16')}
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              {i18n.t('bi.bi_permission_page.k17')}
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              {i18n.t('bi.bi_permission_page.k18')}
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              {i18n.t('bi.bi_permission_page.k19')}
+                            </TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -938,7 +970,9 @@ const BiPermissionPage = () => {
               )}
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => setDialogOpen(false)}>{i18n.t('bi.bi_permission_page.k22')}</Button>
+              <Button onClick={() => setDialogOpen(false)}>
+                {i18n.t('bi.bi_permission_page.k22')}
+              </Button>
               {editingItem && (
                 <Button
                   variant='outlined'

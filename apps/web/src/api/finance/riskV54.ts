@@ -4,7 +4,8 @@ import type { ApiResponse } from '../client';
 // ==================== 类型定义 ====================
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
-export type RiskCategory = 'credit' | 'market' | 'liquidity' | 'operational' | 'compliance' | 'fraud';
+export type RiskCategory =
+  'credit' | 'market' | 'liquidity' | 'operational' | 'compliance' | 'fraud';
 export type FraudRuleType = 'velocity' | 'amount' | 'location' | 'device' | 'behavior';
 export type FraudRecommendation = 'approve' | 'review' | 'block';
 export type Regulation = 'sox' | 'gdpr' | 'pci_dss' | 'hipaa' | 'internal';
@@ -208,7 +209,10 @@ export const riskV54Api = {
     return apiClient.finance.get('/finance-v54/compliance/results', { params });
   },
 
-  getComplianceStatus(entityType: string, entityId: string): Promise<ApiResponse<ReviewWorkflow[]>> {
+  getComplianceStatus(
+    entityType: string,
+    entityId: string
+  ): Promise<ApiResponse<ReviewWorkflow[]>> {
     return apiClient.finance.get(`/finance-v54/compliance/status/${entityType}/${entityId}`);
   },
 

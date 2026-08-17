@@ -2,6 +2,9 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen, fireEvent, waitFor } from '@/__tests__/test-utils';
 
+import RoleManagementPage from '../RoleManagementPage';
+import { authApi } from '@/api/iam';
+
 vi.mock('react-i18next', () => {
   const sources = [
     require('../../../i18n/locales/zh/iam.json'),
@@ -12,7 +15,7 @@ vi.mock('react-i18next', () => {
     require('../../../i18n/locales/zh/schema.json'),
     require('../../../i18n/locales/zh/routes.json'),
     require('../../../i18n/locales/zh/shared.json'),
-    require('../../../i18n/locales/zh/admin.json')
+    require('../../../i18n/locales/zh/admin.json'),
   ];
   const i18nMap: Record<string, string> = {};
   for (const src of sources) {
@@ -23,38 +26,50 @@ vi.mock('react-i18next', () => {
   i18nMap['pages.role_management_page.k0'] = '角色权限 - 管理员';
   i18nMap['iam.role_management_page.k17'] = '权限设置';
   const t = (key: string, options?: any) => {
-      if (key === 'pages.role_management_page.k0') return '角色权限 - 管理员';
-      if (key === 'iam.role_management_page.k17') return '权限设置';
-      let base = i18nMap[key] ?? key;
-      if (options === undefined || options === null) return base;
-      let didReplace = false;
-      const tryReplace = (phName: string, valStr: string) => {
-        const p1 = `{{${phName}}}`;
-        const p2 = `{${phName}}`;
-        const p3 = `\${${phName}}`;
-        if (base.includes(p1)) { base = base.split(p1).join(valStr); didReplace = true; return true; }
-        if (base.includes(p2)) { base = base.split(p2).join(valStr); didReplace = true; return true; }
-        if (base.includes(p3)) { base = base.split(p3).join(valStr); didReplace = true; return true; }
-        return false;
-      };
-      if (typeof options === 'object') {
-        for (const [k, v] of Object.entries(options)) tryReplace(k, String(v));
-        if (!didReplace) {
-          const keys = Object.keys(options);
-          if (keys.length === 1 && typeof (options as any)[keys[0]] === 'string') {
-            base = `${base}:${String((options as any)[keys[0]])}`;
-          } else {
-            base = `${base}:${JSON.stringify(options)}`;
-          }
-        }
-      } else {
-        const strVal = String(options);
-        if (!tryReplace('0', strVal)) {
-          base = `${base}:${strVal}`;
+    if (key === 'pages.role_management_page.k0') return '角色权限 - 管理员';
+    if (key === 'iam.role_management_page.k17') return '权限设置';
+    let base = i18nMap[key] ?? key;
+    if (options === undefined || options === null) return base;
+    let didReplace = false;
+    const tryReplace = (phName: string, valStr: string) => {
+      const p1 = `{{${phName}}}`;
+      const p2 = `{${phName}}`;
+      const p3 = `\${${phName}}`;
+      if (base.includes(p1)) {
+        base = base.split(p1).join(valStr);
+        didReplace = true;
+        return true;
+      }
+      if (base.includes(p2)) {
+        base = base.split(p2).join(valStr);
+        didReplace = true;
+        return true;
+      }
+      if (base.includes(p3)) {
+        base = base.split(p3).join(valStr);
+        didReplace = true;
+        return true;
+      }
+      return false;
+    };
+    if (typeof options === 'object') {
+      for (const [k, v] of Object.entries(options)) tryReplace(k, String(v));
+      if (!didReplace) {
+        const keys = Object.keys(options);
+        if (keys.length === 1 && typeof (options as any)[keys[0]] === 'string') {
+          base = `${base}:${String((options as any)[keys[0]])}`;
+        } else {
+          base = `${base}:${JSON.stringify(options)}`;
         }
       }
-      return base;
-    };
+    } else {
+      const strVal = String(options);
+      if (!tryReplace('0', strVal)) {
+        base = `${base}:${strVal}`;
+      }
+    }
+    return base;
+  };
   return {
     useTranslation: () => ({ t, i18n: { language: 'zh' } }),
     initReactI18next: { type: '3rdParty', init: () => {} },
@@ -73,7 +88,7 @@ vi.mock('@/i18n', () => {
     require('../../../i18n/locales/zh/schema.json'),
     require('../../../i18n/locales/zh/routes.json'),
     require('../../../i18n/locales/zh/shared.json'),
-    require('../../../i18n/locales/zh/admin.json')
+    require('../../../i18n/locales/zh/admin.json'),
   ];
   const i18nMap: Record<string, string> = {};
   for (const src of sources) {
@@ -84,38 +99,50 @@ vi.mock('@/i18n', () => {
   i18nMap['pages.role_management_page.k0'] = '角色权限 - 管理员';
   i18nMap['iam.role_management_page.k17'] = '权限设置';
   const t = (key: string, options?: any) => {
-      if (key === 'pages.role_management_page.k0') return '角色权限 - 管理员';
-      if (key === 'iam.role_management_page.k17') return '权限设置';
-      let base = i18nMap[key] ?? key;
-      if (options === undefined || options === null) return base;
-      let didReplace = false;
-      const tryReplace = (phName: string, valStr: string) => {
-        const p1 = `{{${phName}}}`;
-        const p2 = `{${phName}}`;
-        const p3 = `\${${phName}}`;
-        if (base.includes(p1)) { base = base.split(p1).join(valStr); didReplace = true; return true; }
-        if (base.includes(p2)) { base = base.split(p2).join(valStr); didReplace = true; return true; }
-        if (base.includes(p3)) { base = base.split(p3).join(valStr); didReplace = true; return true; }
-        return false;
-      };
-      if (typeof options === 'object') {
-        for (const [k, v] of Object.entries(options)) tryReplace(k, String(v));
-        if (!didReplace) {
-          const keys = Object.keys(options);
-          if (keys.length === 1 && typeof (options as any)[keys[0]] === 'string') {
-            base = `${base}:${String((options as any)[keys[0]])}`;
-          } else {
-            base = `${base}:${JSON.stringify(options)}`;
-          }
-        }
-      } else {
-        const strVal = String(options);
-        if (!tryReplace('0', strVal)) {
-          base = `${base}:${strVal}`;
+    if (key === 'pages.role_management_page.k0') return '角色权限 - 管理员';
+    if (key === 'iam.role_management_page.k17') return '权限设置';
+    let base = i18nMap[key] ?? key;
+    if (options === undefined || options === null) return base;
+    let didReplace = false;
+    const tryReplace = (phName: string, valStr: string) => {
+      const p1 = `{{${phName}}}`;
+      const p2 = `{${phName}}`;
+      const p3 = `\${${phName}}`;
+      if (base.includes(p1)) {
+        base = base.split(p1).join(valStr);
+        didReplace = true;
+        return true;
+      }
+      if (base.includes(p2)) {
+        base = base.split(p2).join(valStr);
+        didReplace = true;
+        return true;
+      }
+      if (base.includes(p3)) {
+        base = base.split(p3).join(valStr);
+        didReplace = true;
+        return true;
+      }
+      return false;
+    };
+    if (typeof options === 'object') {
+      for (const [k, v] of Object.entries(options)) tryReplace(k, String(v));
+      if (!didReplace) {
+        const keys = Object.keys(options);
+        if (keys.length === 1 && typeof (options as any)[keys[0]] === 'string') {
+          base = `${base}:${String((options as any)[keys[0]])}`;
+        } else {
+          base = `${base}:${JSON.stringify(options)}`;
         }
       }
-      return base;
-    };
+    } else {
+      const strVal = String(options);
+      if (!tryReplace('0', strVal)) {
+        base = `${base}:${strVal}`;
+      }
+    }
+    return base;
+  };
   return {
     default: {
       t,
@@ -126,9 +153,6 @@ vi.mock('@/i18n', () => {
     },
   };
 });
-
-import RoleManagementPage from '../RoleManagementPage';
-import { authApi } from '@/api/iam';
 
 let capturedProps: any = null;
 
@@ -142,9 +166,7 @@ vi.mock('@/components/templates/CrudPage', () => {
           <span data-testid='crud-breadcrumbs'>
             {props.breadcrumbs?.map((b: any) => b.label).join(' / ')}
           </span>
-          <span data-testid='crud-has-custom-actions'>
-            {props.customRowActions?.length || 0}
-          </span>
+          <span data-testid='crud-has-custom-actions'>{props.customRowActions?.length || 0}</span>
           {props.customRowActions?.map((a: any, i: number) => (
             <button
               key={i}
@@ -197,7 +219,12 @@ vi.mock('@/utils/logger', () => ({
 
 vi.mock('@/lib/reactQuery', () => ({
   CACHE_DURATIONS: { LONG: 5 * 60 * 1000 },
-  QUERY_KEYS: { AD_HOC: { IAM_ALL_PERMISSIONS_BASE: ['iam', 'permissions'], IAM_ROLE_PERMISSIONS_BASE: ['iam', 'role-permissions'] } },
+  QUERY_KEYS: {
+    AD_HOC: {
+      IAM_ALL_PERMISSIONS_BASE: ['iam', 'permissions'],
+      IAM_ROLE_PERMISSIONS_BASE: ['iam', 'role-permissions'],
+    },
+  },
 }));
 
 describe('RoleManagementPage', () => {

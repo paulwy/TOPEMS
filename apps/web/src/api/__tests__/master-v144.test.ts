@@ -37,7 +37,9 @@ describe('V144 masterData API bindings', () => {
     it('should create recovery point', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { id: 'rp-1' } });
       const res = await disasterRecoveryApi.createRecoveryPoint({ name: 'Daily snapshot' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v56/recovery/point', { name: 'Daily snapshot' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v56/recovery/point', {
+        name: 'Daily snapshot',
+      });
       expect(res.data.id).toBe('rp-1');
     });
 
@@ -65,13 +67,20 @@ describe('V144 masterData API bindings', () => {
     it('should add node', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { id: 'n-1' } });
       await knowledgeGraphApi.addNode({ label: 'Customer', type: 'entity' });
-      expect(mockClient.post).toHaveBeenCalledWith('/kg-v53/nodes', { label: 'Customer', type: 'entity' });
+      expect(mockClient.post).toHaveBeenCalledWith('/kg-v53/nodes', {
+        label: 'Customer',
+        type: 'entity',
+      });
     });
 
     it('should add edge', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { id: 'e-1' } });
       await knowledgeGraphApi.addEdge({ from_node: 'n-1', to_node: 'n-2', relation: 'depends_on' });
-      expect(mockClient.post).toHaveBeenCalledWith('/kg-v53/edges', { from_node: 'n-1', to_node: 'n-2', relation: 'depends_on' });
+      expect(mockClient.post).toHaveBeenCalledWith('/kg-v53/edges', {
+        from_node: 'n-1',
+        to_node: 'n-2',
+        relation: 'depends_on',
+      });
     });
 
     it('should find path between nodes', async () => {
@@ -109,8 +118,16 @@ describe('V144 masterData API bindings', () => {
 
     it('should create workflow', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { id: 'wf-1' } });
-      await governanceApiV2.createWorkflow({ name: 'Data onboarding', trigger_type: 'event', entity_type: 'dataset' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v58/workflow', { name: 'Data onboarding', trigger_type: 'event', entity_type: 'dataset' });
+      await governanceApiV2.createWorkflow({
+        name: 'Data onboarding',
+        trigger_type: 'event',
+        entity_type: 'dataset',
+      });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v58/workflow', {
+        name: 'Data onboarding',
+        trigger_type: 'event',
+        entity_type: 'dataset',
+      });
     });
 
     it('should list workflows', async () => {
@@ -121,12 +138,25 @@ describe('V144 masterData API bindings', () => {
 
     it('should create data product', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { id: 'dp-1' } });
-      await governanceApiV2.createDataProduct({ name: 'Sales Cube', description: 'Sales data', owner: 'team-a', source_system: 'dw' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v58/data-product', { name: 'Sales Cube', description: 'Sales data', owner: 'team-a', source_system: 'dw' });
+      await governanceApiV2.createDataProduct({
+        name: 'Sales Cube',
+        description: 'Sales data',
+        owner: 'team-a',
+        source_system: 'dw',
+      });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v58/data-product', {
+        name: 'Sales Cube',
+        description: 'Sales data',
+        owner: 'team-a',
+        source_system: 'dw',
+      });
     });
 
     it('should expose data product as API', async () => {
-      mockClient.post.mockResolvedValue({ success: true, data: { url: 'https://api.example.com/dp-1' } });
+      mockClient.post.mockResolvedValue({
+        success: true,
+        data: { url: 'https://api.example.com/dp-1' },
+      });
       await governanceApiV2.exposeAsApi('dp-1');
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v58/data-product/dp-1/expose', {});
     });
@@ -143,31 +173,59 @@ describe('V144 masterData API bindings', () => {
     it('should search semantic', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: [] });
       await semanticSearchApi.searchSemantic({ query: 'revenue', limit: 10 });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v57/search/semantic', { query: 'revenue', limit: 10 });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v57/search/semantic', {
+        query: 'revenue',
+        limit: 10,
+      });
     });
 
     it('should search hybrid', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: [] });
       await semanticSearchApi.searchHybrid({ query: 'revenue', semantic_weight: 0.7 });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v57/search/hybrid', { query: 'revenue', semantic_weight: 0.7 });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v57/search/hybrid', {
+        query: 'revenue',
+        semantic_weight: 0.7,
+      });
     });
 
     it('should index entity', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { indexed: true } });
-      await semanticSearchApi.indexEntity({ entity_type: 'document', entity_id: 'doc-1', text: 'Revenue report' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v57/search/index', { entity_type: 'document', entity_id: 'doc-1', text: 'Revenue report' });
+      await semanticSearchApi.indexEntity({
+        entity_type: 'document',
+        entity_id: 'doc-1',
+        text: 'Revenue report',
+      });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v57/search/index', {
+        entity_type: 'document',
+        entity_id: 'doc-1',
+        text: 'Revenue report',
+      });
     });
 
     it('should auto-tag entity', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: [] });
-      await semanticSearchApi.autoTag({ entity_type: 'document', entity_id: 'doc-1', strategy: 'hybrid' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v57/tag/auto', { entity_type: 'document', entity_id: 'doc-1', strategy: 'hybrid' });
+      await semanticSearchApi.autoTag({
+        entity_type: 'document',
+        entity_id: 'doc-1',
+        strategy: 'hybrid',
+      });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v57/tag/auto', {
+        entity_type: 'document',
+        entity_id: 'doc-1',
+        strategy: 'hybrid',
+      });
     });
 
     it('should compute embeddings', async () => {
-      mockClient.post.mockResolvedValue({ success: true, data: { embeddings: [[0.1, 0.2]], model: 'bge' } });
+      mockClient.post.mockResolvedValue({
+        success: true,
+        data: { embeddings: [[0.1, 0.2]], model: 'bge' },
+      });
       await semanticSearchApi.computeEmbeddings({ texts: ['hello'], model: 'bge' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v57/graph/embeddings', { texts: ['hello'], model: 'bge' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v57/graph/embeddings', {
+        texts: ['hello'],
+        model: 'bge',
+      });
     });
 
     it('should get search stats', async () => {
@@ -187,44 +245,91 @@ describe('V144 masterData API bindings', () => {
   describe('versioningApi', () => {
     it('should create snapshot', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { id: 'snap-1' } });
-      await versioningApi.createSnapshot({ entity_type: 'customer', entity_id: 'c-1', snapshot_type: 'full' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v54/version/snapshot', { entity_type: 'customer', entity_id: 'c-1', snapshot_type: 'full' });
+      await versioningApi.createSnapshot({
+        entity_type: 'customer',
+        entity_id: 'c-1',
+        snapshot_type: 'full',
+      });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v54/version/snapshot', {
+        entity_type: 'customer',
+        entity_id: 'c-1',
+        snapshot_type: 'full',
+      });
     });
 
     it('should diff versions', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { additions: 2, deletions: 0 } });
-      await versioningApi.diffVersions({ entity_type: 'customer', entity_id: 'c-1', from_version: 'v1', to_version: 'v2' });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v54/version/diff?entity_type=customer&entity_id=c-1&from=v1&to=v2');
+      await versioningApi.diffVersions({
+        entity_type: 'customer',
+        entity_id: 'c-1',
+        from_version: 'v1',
+        to_version: 'v2',
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v54/version/diff?entity_type=customer&entity_id=c-1&from=v1&to=v2'
+      );
     });
 
     it('should query audit log', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-      await versioningApi.queryAuditLog({ entity_type: 'customer', entity_id: 'c-1', page: 1, pageSize: 50 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v54/audit/log?entity_type=customer&entity_id=c-1&page=1&pagesize=50');
+      await versioningApi.queryAuditLog({
+        entity_type: 'customer',
+        entity_id: 'c-1',
+        page: 1,
+        pageSize: 50,
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v54/audit/log?entity_type=customer&entity_id=c-1&page=1&pagesize=50'
+      );
     });
 
     it('should grant permission', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { id: 'perm-1' } });
-      await versioningApi.grantPermission({ user_id: 'u-1', resource_type: 'customer', action: 'write' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v54/permissions/grant', { user_id: 'u-1', resource_type: 'customer', action: 'write' });
+      await versioningApi.grantPermission({
+        user_id: 'u-1',
+        resource_type: 'customer',
+        action: 'write',
+      });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v54/permissions/grant', {
+        user_id: 'u-1',
+        resource_type: 'customer',
+        action: 'write',
+      });
     });
 
     it('should check permission', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { allowed: true } });
-      await versioningApi.checkPermission({ user_id: 'u-1', resource_type: 'customer', action: 'read' });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v54/permissions/check?user_id=u-1&resource_type=customer&action=read');
+      await versioningApi.checkPermission({
+        user_id: 'u-1',
+        resource_type: 'customer',
+        action: 'read',
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v54/permissions/check?user_id=u-1&resource_type=customer&action=read'
+      );
     });
 
     it('should create role', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { id: 'role-1' } });
       await versioningApi.createRole({ name: 'Data Steward', permissions: [] });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v54/roles', { name: 'Data Steward', permissions: [] });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v54/roles', {
+        name: 'Data Steward',
+        permissions: [],
+      });
     });
 
     it('should restore version', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
-      await versioningApi.restoreVersion({ entity_type: 'customer', entity_id: 'c-1', version: 'v1' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v54/version/restore', { entity_type: 'customer', entity_id: 'c-1', version: 'v1' });
+      await versioningApi.restoreVersion({
+        entity_type: 'customer',
+        entity_id: 'c-1',
+        version: 'v1',
+      });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v54/version/restore', {
+        entity_type: 'customer',
+        entity_id: 'c-1',
+        version: 'v1',
+      });
     });
   });
 });

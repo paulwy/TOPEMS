@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
+/** 兼容旧导出：themeList 改为函数（保留同名引用，避免破坏下游） */
+import i18n from '@/i18n';
+
 /**
  * 主题类型
  * - light: 亮色主题（默认）
@@ -78,9 +81,6 @@ export const useTheme = () => {
 
   return { theme, setTheme, toggleTheme };
 };
-
-/** 兼容旧导出：themeList 改为函数（保留同名引用，避免破坏下游） */
-import i18n from '@/i18n';
 export const themeList = (() => {
   try {
     return getThemeList((key) => i18n.t(key));

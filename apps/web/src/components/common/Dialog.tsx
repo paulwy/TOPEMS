@@ -176,7 +176,9 @@ export const Dialog: React.FC<DialogProps> = ({
           onClick={confirmButton.onClick}
           disabled={confirmButton.disabled || confirmButton.loading}
         >
-          {confirmButton.loading ? i18n.t('components.dialog.k0') : confirmButton.label || i18n.t('shared.dialog.k1')}
+          {confirmButton.loading
+            ? i18n.t('components.dialog.k0')
+            : confirmButton.label || i18n.t('shared.dialog.k1')}
         </Button>
       );
     }

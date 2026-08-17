@@ -26,7 +26,7 @@ import { AUTH_PATHS } from '@/routes/auth';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const requestResetSchema = z.object({
   email: z.string().email({ message: i18n.t('pages.forgot_password_page.k0') }),
@@ -282,7 +282,9 @@ const ForgotPasswordPage: React.FC = () => {
             variant='h4'
             sx={{ fontWeight: 700, color: 'common.white' }}
           >
-            {isResetMode ? i18n.t('pages.forgot_password_page.k18') : i18n.t('pages.forgot_password_page.k17')}
+            {isResetMode
+              ? i18n.t('pages.forgot_password_page.k18')
+              : i18n.t('pages.forgot_password_page.k17')}
           </Typography>
           <Typography
             variant='body2'
@@ -409,7 +411,9 @@ const ForgotPasswordPage: React.FC = () => {
                   }}
                   disabled={loading}
                 >
-                  {loading ? i18n.t('pages.forgot_password_page.k4') : i18n.t('pages.forgot_password_page.k25')}
+                  {loading
+                    ? i18n.t('pages.forgot_password_page.k4')
+                    : i18n.t('pages.forgot_password_page.k25')}
                 </Button>
               </Box>
             </form>
@@ -519,7 +523,9 @@ const ForgotPasswordPage: React.FC = () => {
                   }}
                   disabled={loading}
                 >
-                  {loading ? i18n.t('pages.forgot_password_page.k5') : i18n.t('pages.forgot_password_page.k31')}
+                  {loading
+                    ? i18n.t('pages.forgot_password_page.k5')
+                    : i18n.t('pages.forgot_password_page.k31')}
                 </Button>
               </Box>
             </form>

@@ -18,7 +18,7 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 // 分群颜色映射
 const SEGMENT_COLORS: Record<RfmSegment, string> = {

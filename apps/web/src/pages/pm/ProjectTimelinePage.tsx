@@ -8,6 +8,7 @@ import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import { Plus, Rocket, Target, Calendar } from 'lucide-react';
 import { pmApi } from '@/api/pm';
+
 const today = new Date();
 const formatDate = (daysOffset: number) => {
   const date = new Date(today);
@@ -211,7 +212,12 @@ export const ProjectTimelinePage: React.FC = () => {
             start: new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000),
             end: new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000),
           },
-          { id: 'all', label: i18n.t('pm.project_timeline_page.k41'), start: new Date(0), end: new Date() },
+          {
+            id: 'all',
+            label: i18n.t('pm.project_timeline_page.k41'),
+            start: new Date(0),
+            end: new Date(),
+          },
         ]}
         selectedTimeRange='month'
         actions={[

@@ -45,10 +45,7 @@ export const apsModuleConfig: RouteModuleConfig = {
   routes: [
     {
       path: APS_PATHS.dashboard,
-      element: lazyWithRetry(
-        () => import('@/pages/aps/ApsDashboardPage'),
-        'ApsDashboardPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/aps/ApsDashboardPage'), 'ApsDashboardPage'),
       module: 'aps',
       code: 'aps-dashboard',
       title: i18n.t('shared.config.k2'),
@@ -60,10 +57,7 @@ export const apsModuleConfig: RouteModuleConfig = {
     },
     {
       path: APS_PATHS.productionPlans,
-      element: lazyWithRetry(
-        () => import('@/pages/aps/ProductionPlanPage'),
-        'ProductionPlanPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/aps/ProductionPlanPage'), 'ProductionPlanPage'),
       module: 'aps',
       code: 'aps-production-plans',
       title: i18n.t('shared.config.k3'),
@@ -105,10 +99,7 @@ export const apsModuleConfig: RouteModuleConfig = {
     },
     {
       path: APS_PATHS.materialPlans,
-      element: lazyWithRetry(
-        () => import('@/pages/aps/MaterialPlanPage'),
-        'MaterialPlanPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/aps/MaterialPlanPage'), 'MaterialPlanPage'),
       module: 'aps',
       code: 'aps-material-plans',
       title: i18n.t('shared.config.k6'),
@@ -151,10 +142,7 @@ export const apsModuleConfig: RouteModuleConfig = {
     },
     {
       path: APS_PATHS.scheduleDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/aps/ScheduleDetailPage'),
-        'ScheduleDetailPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/aps/ScheduleDetailPage'), 'ScheduleDetailPage'),
       module: 'aps',
       code: 'aps-schedule-detail',
       title: i18n.t('shared.config.k9'),
@@ -166,10 +154,7 @@ export const apsModuleConfig: RouteModuleConfig = {
     },
     {
       path: APS_PATHS.capacityDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/aps/CapacityDetailPage'),
-        'CapacityDetailPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/aps/CapacityDetailPage'), 'CapacityDetailPage'),
       module: 'aps',
       code: 'aps-capacity-detail',
       title: i18n.t('shared.config.k10'),
@@ -196,10 +181,7 @@ export const apsModuleConfig: RouteModuleConfig = {
     },
     {
       path: APS_PATHS.forecastDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/aps/ForecastDetailPage'),
-        'ForecastDetailPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/aps/ForecastDetailPage'), 'ForecastDetailPage'),
       module: 'aps',
       code: 'aps-forecast-detail',
       title: i18n.t('shared.config.k12'),

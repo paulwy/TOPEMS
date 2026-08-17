@@ -12,7 +12,9 @@ export const unifiedSearchApi = {
     return apiClient.core.get('/api/core/search', { params });
   },
 
-  getRecent: (params?: { limit?: number }): Promise<ApiResponse<Array<{ id: string; query: string; created_at: string }>>> => {
+  getRecent: (params?: {
+    limit?: number;
+  }): Promise<ApiResponse<Array<{ id: string; query: string; created_at: string }>>> => {
     return apiClient.core.get('/api/core/search/recent', { params });
   },
 

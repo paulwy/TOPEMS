@@ -21,6 +21,7 @@ import {
 import i18n from '@/i18n';
 import { Plus, Trash2 } from 'lucide-react';
 import type { TableDetail, ColumnInfo } from '@/api/system';
+
 interface DatabaseStructureTableProps {
   selectedTable: TableDetail;
   detailLoading: boolean;
@@ -77,7 +78,8 @@ export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
             sx={{ mt: 0.5 }}
           >
             {selectedTable.columns.length} {i18n.t('admin.database_structure.fields')} |{' '}
-            {selectedTable.row_count?.toLocaleString() || '-'} {i18n.t('admin.database_structure.rows')}
+            {selectedTable.row_count?.toLocaleString() || '-'}{' '}
+            {i18n.t('admin.database_structure.rows')}
           </Typography>
         </Box>
         <Button

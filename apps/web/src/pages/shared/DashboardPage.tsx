@@ -436,7 +436,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           justifyContent: 'center',
         }}
       >
-        <Typography sx={{ fontSize: '1.125rem', color: 'text.secondary' }}>{i18n.t('pages.dashboard_page.k12')}</Typography>
+        <Typography sx={{ fontSize: '1.125rem', color: 'text.secondary' }}>
+          {i18n.t('pages.dashboard_page.k12')}
+        </Typography>
       </Box>
     );
   }
@@ -483,10 +485,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
               mb: 1,
             }}
           >
-            👋 {i18n.t('pages.dashboard_page.k0')}{user?.full_name || user?.username || i18n.t('pages.dashboard_page.k6')}！
+            👋 {i18n.t('pages.dashboard_page.k0')}
+            {user?.full_name || user?.username || i18n.t('pages.dashboard_page.k6')}！
           </Typography>
           <Typography sx={{ color: 'text.secondary', fontSize: { xs: '0.875rem', md: '1rem' } }}>
-            {getGreeting()}{i18n.t('pages.dashboard_page.k0')} {pendingTodos.length} {i18n.t('pages.dashboard_page.k1')}
+            {getGreeting()}
+            {i18n.t('pages.dashboard_page.k0')} {pendingTodos.length}{' '}
+            {i18n.t('pages.dashboard_page.k1')}
           </Typography>
         </Box>
 
@@ -558,7 +563,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <ListTodo size={16} />
-                    <Typography sx={{ fontSize: '0.875rem' }}>{i18n.t('pages.dashboard_page.k12')}</Typography>
+                    <Typography sx={{ fontSize: '0.875rem' }}>
+                      {i18n.t('pages.dashboard_page.k12')}
+                    </Typography>
                     <Badge
                       badgeContent={pendingTodos.length}
                       color='primary'
@@ -572,7 +579,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <CheckCircle size={16} />
-                    <Typography sx={{ fontSize: '0.875rem' }}>{i18n.t('pages.dashboard_page.k13')}</Typography>
+                    <Typography sx={{ fontSize: '0.875rem' }}>
+                      {i18n.t('pages.dashboard_page.k13')}
+                    </Typography>
                     <Badge
                       badgeContent={completedTodos.length}
                       color='success'
@@ -645,8 +654,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             ) : (
               <EmptyState
                 height={180}
-                title={todoTab === 0 ? i18n.t('pages.dashboard_page.k15') : i18n.t('pages.dashboard_page.k14')}
-                description={todoTab === 0 ? i18n.t('pages.dashboard_page.k17') : i18n.t('pages.dashboard_page.k16')}
+                title={
+                  todoTab === 0
+                    ? i18n.t('pages.dashboard_page.k15')
+                    : i18n.t('pages.dashboard_page.k14')
+                }
+                description={
+                  todoTab === 0
+                    ? i18n.t('pages.dashboard_page.k17')
+                    : i18n.t('pages.dashboard_page.k16')
+                }
                 sx={{ border: 'none', bgcolor: 'transparent' }}
               />
             )}

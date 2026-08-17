@@ -31,10 +31,22 @@ const DesignSystemPanelContent: React.FC<{ onClose: () => void }> = ({ onClose }
   };
 
   const tabs = [
-    { id: 'overview', label: i18n.t('design-system.design_system_panel.k0'), content: <OverviewTab /> },
+    {
+      id: 'overview',
+      label: i18n.t('design-system.design_system_panel.k0'),
+      content: <OverviewTab />,
+    },
     { id: 'tokens', label: 'Tokens', content: <TokensTab /> },
-    { id: 'components', label: i18n.t('design-system.design_system_panel.k1'), content: <ComponentsTab /> },
-    { id: 'theming', label: i18n.t('design-system.design_system_panel.k2'), content: <ThemingTab /> },
+    {
+      id: 'components',
+      label: i18n.t('design-system.design_system_panel.k1'),
+      content: <ComponentsTab />,
+    },
+    {
+      id: 'theming',
+      label: i18n.t('design-system.design_system_panel.k2'),
+      content: <ThemingTab />,
+    },
     {
       id: 'lint',
       label: i18n.t('design-system.design_system_panel.k3'),
@@ -336,7 +348,9 @@ const TokensTab: React.FC = () => {
         variant='h6'
         sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
       >
-        <Palette size={20} />{i18n.t('design_system:design_system_panel.k4')}</Typography>
+        <Palette size={20} />
+        {i18n.t('design_system:design_system_panel.k4')}
+      </Typography>
       <Grid
         container
         spacing={2}
@@ -393,7 +407,9 @@ const TokensTab: React.FC = () => {
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}
           >
-            <Type size={16} />{i18n.t('design_system:design_system_panel.k3')}</Typography>
+            <Type size={16} />
+            {i18n.t('design_system:design_system_panel.k3')}
+          </Typography>
           <Paper sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
             {Object.entries(v51DesignTokens.typography.fontSize).map(([name, value]) => (
               <Box
@@ -428,7 +444,9 @@ const TokensTab: React.FC = () => {
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}
           >
-            <Layers size={16} />{i18n.t('design_system:design_system_panel.k2')}</Typography>
+            <Layers size={16} />
+            {i18n.t('design_system:design_system_panel.k2')}
+          </Typography>
           <Paper sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
             <Typography
               variant='caption'
@@ -617,14 +635,39 @@ const ComponentsTab: React.FC = () => (
         <V51Card title={i18n.t('design_system.design_system_panel.table_12')}>
           <V51Table
             columns={[
-              { id: 'name', label: i18n.t('design-system.design_system_panel.k35'), accessor: 'name' },
-              { id: 'status', label: i18n.t('design-system.design_system_panel.k36'), accessor: 'status' },
-              { id: 'value', label: i18n.t('design-system.design_system_panel.k37'), accessor: 'value', align: 'right' },
+              {
+                id: 'name',
+                label: i18n.t('design-system.design_system_panel.k35'),
+                accessor: 'name',
+              },
+              {
+                id: 'status',
+                label: i18n.t('design-system.design_system_panel.k36'),
+                accessor: 'status',
+              },
+              {
+                id: 'value',
+                label: i18n.t('design-system.design_system_panel.k37'),
+                accessor: 'value',
+                align: 'right',
+              },
             ]}
             data={[
-              { name: i18n.t('design-system.design_system_panel.a_39'), status: i18n.t('design-system.design_system_panel.k38'), value: 100 },
-              { name: i18n.t('design-system.design_system_panel.b_41'), status: i18n.t('design-system.design_system_panel.k40'), value: 200 },
-              { name: i18n.t('design-system.design_system_panel.c_43'), status: i18n.t('design-system.design_system_panel.k42'), value: 50 },
+              {
+                name: i18n.t('design-system.design_system_panel.a_39'),
+                status: i18n.t('design-system.design_system_panel.k38'),
+                value: 100,
+              },
+              {
+                name: i18n.t('design-system.design_system_panel.b_41'),
+                status: i18n.t('design-system.design_system_panel.k40'),
+                value: 200,
+              },
+              {
+                name: i18n.t('design-system.design_system_panel.c_43'),
+                status: i18n.t('design-system.design_system_panel.k42'),
+                value: 50,
+              },
             ]}
             sortable
             selectable
@@ -654,9 +697,21 @@ const ComponentsTab: React.FC = () => (
         <V51Card title={i18n.t('design_system.design_system_panel.tabs_14')}>
           <V51Tabs
             tabs={[
-              { id: 'tab1', label: i18n.t('design-system.design_system_panel.k44'), content: <Typography>{i18n.t('design-system.design_system_panel.k45')}</Typography> },
-              { id: 'tab2', label: i18n.t('design-system.design_system_panel.k46'), content: <Typography>{i18n.t('design-system.design_system_panel.k47')}</Typography> },
-              { id: 'tab3', label: i18n.t('design-system.design_system_panel.k48'), content: <Typography>{i18n.t('design-system.design_system_panel.k49')}</Typography> },
+              {
+                id: 'tab1',
+                label: i18n.t('design-system.design_system_panel.k44'),
+                content: <Typography>{i18n.t('design-system.design_system_panel.k45')}</Typography>,
+              },
+              {
+                id: 'tab2',
+                label: i18n.t('design-system.design_system_panel.k46'),
+                content: <Typography>{i18n.t('design-system.design_system_panel.k47')}</Typography>,
+              },
+              {
+                id: 'tab3',
+                label: i18n.t('design-system.design_system_panel.k48'),
+                content: <Typography>{i18n.t('design-system.design_system_panel.k49')}</Typography>,
+              },
             ]}
           />
         </V51Card>
@@ -685,7 +740,9 @@ const ThemingTab: React.FC = () => {
           <V51Card title={i18n.t('design-system.design_system_panel.k50')}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant='body2'>{i18n.t('design-system.design_system_panel.k51')}</Typography>
+                <Typography variant='body2'>
+                  {i18n.t('design-system.design_system_panel.k51')}
+                </Typography>
                 <V51Badge
                   label={theme.mode}
                   variant='primary'
@@ -693,7 +750,9 @@ const ThemingTab: React.FC = () => {
                 />
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant='body2'>{i18n.t('design-system.design_system_panel.k52')}</Typography>
+                <Typography variant='body2'>
+                  {i18n.t('design-system.design_system_panel.k52')}
+                </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Box
                     sx={{ width: 16, height: 16, borderRadius: '50%', bgcolor: theme.primaryColor }}
@@ -707,11 +766,15 @@ const ThemingTab: React.FC = () => {
                 </Box>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant='body2'>{i18n.t('design-system.design_system_panel.k53')}</Typography>
+                <Typography variant='body2'>
+                  {i18n.t('design-system.design_system_panel.k53')}
+                </Typography>
                 <Typography variant='body2'>{theme.fontSize}px</Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant='body2'>{i18n.t('design-system.design_system_panel.k54')}</Typography>
+                <Typography variant='body2'>
+                  {i18n.t('design-system.design_system_panel.k54')}
+                </Typography>
                 <V51Badge
                   label={theme.density}
                   variant='neutral'
@@ -728,7 +791,14 @@ const ThemingTab: React.FC = () => {
               <V51Button
                 variant='primary'
                 onClick={toggleDarkMode}
-              >{i18n.t('design_system:design_system_panel.k1', { v0: (theme.mode === 'dark' ? i18n.t('design-system.design_system_panel.k57') : i18n.t('design-system.design_system_panel.k56')) })}</V51Button>
+              >
+                {i18n.t('design_system:design_system_panel.k1', {
+                  v0:
+                    theme.mode === 'dark'
+                      ? i18n.t('design-system.design_system_panel.k57')
+                      : i18n.t('design-system.design_system_panel.k56'),
+                })}
+              </V51Button>
 
               <V51Input
                 label={i18n.t('design-system.design_system_panel.hex_58')}
@@ -924,7 +994,9 @@ const LintTab: React.FC<{ onRunLint: () => void; lintResult: string }> = ({
               <Typography
                 variant='caption'
                 sx={{ color: 'text.secondary' }}
-              >{i18n.t('design_system:design_system_panel.k0', { v0: (check.minRatio) })}</Typography>
+              >
+                {i18n.t('design_system:design_system_panel.k0', { v0: check.minRatio })}
+              </Typography>
             </Box>
           </Paper>
         ))}

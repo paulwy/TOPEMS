@@ -291,9 +291,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    bgcolor: stat.gradient
-                      ? 'glass.topLight'
-                      : `${stat.color || 'primary'}.light`,
+                    bgcolor: stat.gradient ? 'glass.topLight' : `${stat.color || 'primary'}.light`,
                     color: stat.gradient ? 'white' : `${stat.color || 'primary'}.main`,
                   }}
                 >

@@ -12,7 +12,7 @@ import type { Batch, CreateBatchRequest, UpdateBatchRequest } from '@/api/wms';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const BatchManagementPage: React.FC = () => {
   const { t } = useTranslation();
@@ -102,7 +102,8 @@ const BatchManagementPage: React.FC = () => {
               {batch.quantity.toLocaleString()} {batch.unit}
             </Box>
             <Box sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-              [i18n.t('pages.batch_management_page.k0')]: {batch.available_quantity.toLocaleString()}
+              [i18n.t('pages.batch_management_page.k0')]:{' '}
+              {batch.available_quantity.toLocaleString()}
             </Box>
           </Box>
         );
@@ -235,19 +236,14 @@ const BatchManagementPage: React.FC = () => {
       };
     },
     create: async (data) => {
-      const response = await wmsApi.batches.create(
-        data as unknown as CreateBatchRequest,
-      );
+      const response = await wmsApi.batches.create(data as unknown as CreateBatchRequest);
       if (!response.success) {
         throw new Error('Failed to create batch');
       }
       return response.data as unknown as Record<string, unknown>;
     },
     update: async (id, data) => {
-      const response = await wmsApi.batches.update(
-        id,
-        data as unknown as UpdateBatchRequest,
-      );
+      const response = await wmsApi.batches.update(id, data as unknown as UpdateBatchRequest);
       if (!response.success) {
         throw new Error('Failed to update batch');
       }

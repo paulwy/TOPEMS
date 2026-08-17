@@ -44,6 +44,7 @@ import { PageContainer } from '@/components/common';
 import { fetchWidgets, createWidget, updateWidget, deleteWidget, type Widget } from '@/api/bi';
 import { logger } from '@/utils/logger';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface VisualizationComponent {
   id: string;
   type: 'bar' | 'line' | 'pie' | 'gauge' | 'table' | 'text' | 'image' | 'metric';
@@ -179,10 +180,11 @@ const BIVisualizationPage = () => {
   const createMutation = useMutation({
     mutationFn: (data: Partial<Widget>) => createWidget(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_WIDGETS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.BI_WIDGETS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (e: unknown) => {
       logger.error('Failed to create widget:', e);
@@ -191,10 +193,11 @@ const BIVisualizationPage = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteWidget(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_WIDGETS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.BI_WIDGETS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (e: unknown) => {
       logger.error('Failed to delete widget:', e);
@@ -204,10 +207,11 @@ const BIVisualizationPage = () => {
     mutationFn: ({ id, widgetData }: { id: string; widgetData: Partial<Widget> }) =>
       updateWidget(id, widgetData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_WIDGETS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.BI_WIDGETS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (e: unknown) => {
       logger.error('Failed to update widget:', e);
@@ -622,7 +626,8 @@ const BIVisualizationPage = () => {
                           {comp.type === 'table' && i18n.t('bi.bi_visualization_page.text_01c85e')}
                           {comp.type === 'text' && i18n.t('bi.bi_visualization_page.content')}
                           {comp.type === 'image' && i18n.t('bi.bi_visualization_page.text_20def7')}
-                          {comp.type === 'metric' && `${i18n.t('pages.bi_visualization_page.k0')}${comp.config.value || 0}`}
+                          {comp.type === 'metric' &&
+                            `${i18n.t('pages.bi_visualization_page.k0')}${comp.config.value || 0}`}
                         </Typography>
                       </Box>
                     </Box>

@@ -30,6 +30,7 @@ import { Plus, Search, Edit, Trash2, RefreshCw, Package } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { materialPlanApi } from '@/api/aps';
 import type { MaterialPlan, CreateMaterialPlanRequest } from '@/api/aps/types';
+
 const SUPPLY_TYPE_LABEL: Record<string, string> = {
   purchase: i18n.t('aps.material_plan_page.k0'),
   transfer: i18n.t('aps.material_plan_page.k1'),
@@ -191,11 +192,18 @@ const MaterialPlanPage: React.FC = () => {
                 },
               }}
             />
-            <Button variant='outlined' size='small' onClick={handleSearch}>
+            <Button
+              variant='outlined'
+              size='small'
+              onClick={handleSearch}
+            >
               {i18n.t('pages.material_plan_page.k0')}
             </Button>
             <Tooltip title={i18n.t('aps.material_plan_page.k9')}>
-              <IconButton onClick={handleRefresh} size='small'>
+              <IconButton
+                onClick={handleRefresh}
+                size='small'
+              >
                 <RefreshCw size={16} />
               </IconButton>
             </Tooltip>
@@ -211,7 +219,10 @@ const MaterialPlanPage: React.FC = () => {
         </Box>
         <Card>
           <CardContent sx={{ p: 0 }}>
-            <TableContainer component={Paper} variant='outlined'>
+            <TableContainer
+              component={Paper}
+              variant='outlined'
+            >
               <Table size='small'>
                 <TableHead>
                   <TableRow>
@@ -230,16 +241,33 @@ const MaterialPlanPage: React.FC = () => {
                 <TableBody>
                   {listQuery.isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={10} align='center'>
+                      <TableCell
+                        colSpan={10}
+                        align='center'
+                      >
                         {i18n.t('pages.material_plan_page.k2')}
                       </TableCell>
                     </TableRow>
                   ) : items.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={10} align='center'>
-                        <Box sx={{ py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                      <TableCell
+                        colSpan={10}
+                        align='center'
+                      >
+                        <Box
+                          sx={{
+                            py: 4,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 1,
+                          }}
+                        >
                           <Package size={32} />
-                          <Typography variant='body2' color='text.secondary'>
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
                             {i18n.t('pages.material_plan_page.k3')}
                           </Typography>
                         </Box>
@@ -250,7 +278,10 @@ const MaterialPlanPage: React.FC = () => {
                       const shortfall = row.shortfall_quantity ?? 0;
                       const hasShortage = shortfall > 0;
                       return (
-                        <TableRow key={row.id} hover>
+                        <TableRow
+                          key={row.id}
+                          hover
+                        >
                           <TableCell>{row.plan_no}</TableCell>
                           <TableCell>{row.material_code ?? '-'}</TableCell>
                           <TableCell>{row.material_name ?? '-'}</TableCell>
@@ -271,7 +302,9 @@ const MaterialPlanPage: React.FC = () => {
                           <TableCell>{row.required_date ?? '-'}</TableCell>
                           <TableCell>
                             <Chip
-                              label={SUPPLY_TYPE_LABEL[row.supply_type ?? ''] ?? row.supply_type ?? '-'}
+                              label={
+                                SUPPLY_TYPE_LABEL[row.supply_type ?? ''] ?? row.supply_type ?? '-'
+                              }
                               size='small'
                               variant='outlined'
                             />
@@ -285,12 +318,19 @@ const MaterialPlanPage: React.FC = () => {
                           </TableCell>
                           <TableCell align='center'>
                             <Tooltip title={i18n.t('aps.material_plan_page.k20')}>
-                              <IconButton size='small' onClick={() => handleOpenEdit(row)}>
+                              <IconButton
+                                size='small'
+                                onClick={() => handleOpenEdit(row)}
+                              >
                                 <Edit size={16} />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title={i18n.t('aps.material_plan_page.k21')}>
-                              <IconButton size='small' color='error' onClick={() => handleDelete(row)}>
+                              <IconButton
+                                size='small'
+                                color='error'
+                                onClick={() => handleDelete(row)}
+                              >
                                 <Trash2 size={16} />
                               </IconButton>
                             </Tooltip>
@@ -314,13 +354,22 @@ const MaterialPlanPage: React.FC = () => {
               }}
               rowsPerPageOptions={[10, 20, 50]}
               labelRowsPerPage={i18n.t('aps.material_plan_page.k22')}
-              labelDisplayedRows={({ from, to, count }) => `${from}-${to}${i18n.t('pages.material_plan_page.k0')}${count}`}
+              labelDisplayedRows={({ from, to, count }) =>
+                `${from}-${to}${i18n.t('pages.material_plan_page.k0')}${count}`
+              }
             />
           </CardContent>
         </Card>
       </Box>
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth='md'>
-        <DialogTitle>{editingId ? i18n.t('aps.material_plan_page.k24') : i18n.t('aps.material_plan_page.k23')}</DialogTitle>
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        fullWidth
+        maxWidth='md'
+      >
+        <DialogTitle>
+          {editingId ? i18n.t('aps.material_plan_page.k24') : i18n.t('aps.material_plan_page.k23')}
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, pt: 1 }}>
             <TextField
@@ -381,7 +430,10 @@ const MaterialPlanPage: React.FC = () => {
               select
               value={form.supply_type ?? 'purchase'}
               onChange={(e) =>
-                setForm({ ...form, supply_type: e.target.value as CreateMaterialPlanRequest['supply_type'] })
+                setForm({
+                  ...form,
+                  supply_type: e.target.value as CreateMaterialPlanRequest['supply_type'],
+                })
               }
               size='small'
               sx={fieldSx}
@@ -407,28 +459,44 @@ const MaterialPlanPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>{i18n.t('aps.material_plan_page.k40')}</Button>
-          <Button variant='contained' onClick={handleSave} disabled={saving}>
+          <Button onClick={() => setDialogOpen(false)}>
+            {i18n.t('aps.material_plan_page.k40')}
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleSave}
+            disabled={saving}
+          >
             {saving ? i18n.t('pages.material_plan_page.k1') : i18n.t('aps.material_plan_page.k41')}
           </Button>
         </DialogActions>
       </Dialog>
-      <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} maxWidth='xs' fullWidth>
+      <Dialog
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        maxWidth='xs'
+        fullWidth
+      >
         <DialogTitle>{i18n.t('aps.material_plan_page.k42')}</DialogTitle>
         <DialogContent>
           <Typography>
-            {i18n.t('pages.material_plan_page.k0')}「{deleteTarget?.plan_no}」{i18n.t('pages.material_plan_page.k1')}
+            {i18n.t('pages.material_plan_page.k0')}「{deleteTarget?.plan_no}」
+            {i18n.t('pages.material_plan_page.k1')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteOpen(false)}>{i18n.t('aps.material_plan_page.k43')}</Button>
+          <Button onClick={() => setDeleteOpen(false)}>
+            {i18n.t('aps.material_plan_page.k43')}
+          </Button>
           <Button
             variant='contained'
             color='error'
             onClick={confirmDelete}
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? i18n.t('pages.material_plan_page.k2') : i18n.t('aps.material_plan_page.k44')}
+            {deleteMutation.isPending
+              ? i18n.t('pages.material_plan_page.k2')
+              : i18n.t('aps.material_plan_page.k44')}
           </Button>
         </DialogActions>
       </Dialog>

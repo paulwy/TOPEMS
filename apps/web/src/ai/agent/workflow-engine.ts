@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type WorkflowStatus = 'draft' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled';
 export type StepType = 'action' | 'condition' | 'loop' | 'parallel';
 export type TriggerType = 'event' | 'schedule' | 'manual';
@@ -476,7 +477,11 @@ export class WorkflowEngine {
         name: i18n.t('ai.workflow-engine.k1'),
         description: i18n.t('ai.workflow-engine.k2'),
         steps: [
-          { id: 's1', type: 'action', config: { description: i18n.t('ai.workflow-engine.k3'), action: 'fetch_data' } },
+          {
+            id: 's1',
+            type: 'action',
+            config: { description: i18n.t('ai.workflow-engine.k3'), action: 'fetch_data' },
+          },
           {
             id: 's2',
             type: 'action',
@@ -578,7 +583,10 @@ export class WorkflowEngine {
           {
             id: 's2',
             type: 'parallel',
-            config: { description: i18n.t('ai.workflow-engine.k19'), parallelSteps: ['s2a', 's2b', 's2c'] },
+            config: {
+              description: i18n.t('ai.workflow-engine.k19'),
+              parallelSteps: ['s2a', 's2b', 's2c'],
+            },
             depends_on: ['s1'],
           },
           {
@@ -613,7 +621,11 @@ export class WorkflowEngine {
         name: i18n.t('ai.workflow-engine.k24'),
         description: i18n.t('ai.workflow-engine.k25'),
         steps: [
-          { id: 's1', type: 'action', config: { description: i18n.t('ai.workflow-engine.k26'), action: 'collect_data' } },
+          {
+            id: 's1',
+            type: 'action',
+            config: { description: i18n.t('ai.workflow-engine.k26'), action: 'collect_data' },
+          },
           {
             id: 's2',
             type: 'action',

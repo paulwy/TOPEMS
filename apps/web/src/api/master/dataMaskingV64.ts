@@ -4,7 +4,8 @@ import type { ApiResponse } from '../client';
 // ============ Types ============
 
 export type MaskingType = 'mask' | 'redact' | 'hash' | 'tokenize' | 'encrypt' | 'generalize';
-export type PiiType = 'email' | 'phone' | 'id_card' | 'bank_card' | 'address' | 'name' | 'salary' | 'other';
+export type PiiType =
+  'email' | 'phone' | 'id_card' | 'bank_card' | 'address' | 'name' | 'salary' | 'other';
 export type PolicyStatus = 'active' | 'inactive' | 'draft';
 export type AuditAction = 'mask' | 'unmask' | 'policy_create' | 'policy_update' | 'access';
 
@@ -151,7 +152,9 @@ export const dataMaskingApiV64 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: MaskingRule[]; total: number }>(`/mdm-v64/rules${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: MaskingRule[]; total: number }>(
+      `/mdm-v64/rules${s ? `?${s}` : ''}`
+    );
   },
 
   async updateRule(id: string, data: UpdateMaskingRuleRequest): Promise<ApiResponse<MaskingRule>> {
@@ -181,10 +184,15 @@ export const dataMaskingApiV64 = {
     if (params?.status) qs.set('status', params.status);
     if (params?.entity_type) qs.set('entity_type', params.entity_type);
     const s = qs.toString();
-    return apiClient.master.get<{ items: PrivacyPolicy[]; total: number }>(`/mdm-v64/policies${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: PrivacyPolicy[]; total: number }>(
+      `/mdm-v64/policies${s ? `?${s}` : ''}`
+    );
   },
 
-  async updatePolicy(id: string, data: Partial<CreatePrivacyPolicyRequest>): Promise<ApiResponse<PrivacyPolicy>> {
+  async updatePolicy(
+    id: string,
+    data: Partial<CreatePrivacyPolicyRequest>
+  ): Promise<ApiResponse<PrivacyPolicy>> {
     return apiClient.master.put<PrivacyPolicy>(`/mdm-v64/policies/${id}`, data);
   },
 
@@ -205,16 +213,36 @@ export const dataMaskingApiV64 = {
     return apiClient.master.post<PiiDetectionResult[]>('/mdm-v64/detect', data);
   },
 
-  async maskData(data: MaskDataRequest): Promise<ApiResponse<{ masked_data: Record<string, unknown>; applied_rules: string[] }>> {
-    return apiClient.master.post<{ masked_data: Record<string, unknown>; applied_rules: string[] }>('/mdm-v64/mask', data);
+  async maskData(
+    data: MaskDataRequest
+  ): Promise<ApiResponse<{ masked_data: Record<string, unknown>; applied_rules: string[] }>> {
+    return apiClient.master.post<{ masked_data: Record<string, unknown>; applied_rules: string[] }>(
+      '/mdm-v64/mask',
+      data
+    );
   },
 
-  async unmaskData(data: UnmaskRequest): Promise<ApiResponse<{ unmasked_data: Record<string, unknown>; audit_id: string }>> {
-    return apiClient.master.post<{ unmasked_data: Record<string, unknown>; audit_id: string }>('/mdm-v64/unmask', data);
+  async unmaskData(
+    data: UnmaskRequest
+  ): Promise<ApiResponse<{ unmasked_data: Record<string, unknown>; audit_id: string }>> {
+    return apiClient.master.post<{ unmasked_data: Record<string, unknown>; audit_id: string }>(
+      '/mdm-v64/unmask',
+      data
+    );
   },
 
-  async previewMasking(data: { entity_type: string; record: Record<string, unknown> }): Promise<ApiResponse<{ original: Record<string, unknown>; masked: Record<string, unknown>; changes: string[] }>> {
-    return apiClient.master.post<{ original: Record<string, unknown>; masked: Record<string, unknown>; changes: string[] }>('/mdm-v64/preview', data);
+  async previewMasking(data: { entity_type: string; record: Record<string, unknown> }): Promise<
+    ApiResponse<{
+      original: Record<string, unknown>;
+      masked: Record<string, unknown>;
+      changes: string[];
+    }>
+  > {
+    return apiClient.master.post<{
+      original: Record<string, unknown>;
+      masked: Record<string, unknown>;
+      changes: string[];
+    }>('/mdm-v64/preview', data);
   },
 
   // ===== 审计日志 =====
@@ -248,7 +276,9 @@ export const dataMaskingApiV64 = {
     if (params?.start_date) qs.set('start_date', params.start_date);
     if (params?.end_date) qs.set('end_date', params.end_date);
     if (params?.format) qs.set('format', params.format);
-    return apiClient.master.get<{ download_url: string; record_count: number }>(`/mdm-v64/audit/export?${qs.toString()}`);
+    return apiClient.master.get<{ download_url: string; record_count: number }>(
+      `/mdm-v64/audit/export?${qs.toString()}`
+    );
   },
 
   // ===== 仪表盘 =====

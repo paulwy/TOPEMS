@@ -329,10 +329,14 @@ export const ModulePermissionGuard: React.FC<ModulePermissionGuardProps> = ({
               </svg>
             </div>
             <div>
-              <h3 style={{ fontSize: '14px', fontWeight: 500, color: 'warning.800' }}>{i18n.t('components.permission_components.k1')}</h3>
+              <h3 style={{ fontSize: '14px', fontWeight: 500, color: 'warning.800' }}>
+                {i18n.t('components.permission_components.k1')}
+              </h3>
               <div style={{ marginTop: 2, fontSize: '14px', color: 'warning.800' }}>
                 <p>
-                  {i18n.t('components.permission_components.k0')} {module} {i18n.t('components.permission_components.k1')} {action} {i18n.t('components.permission_components.k2')}
+                  {i18n.t('components.permission_components.k0')} {module}{' '}
+                  {i18n.t('components.permission_components.k1')} {action}{' '}
+                  {i18n.t('components.permission_components.k2')}
                 </p>
               </div>
             </div>

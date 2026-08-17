@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
 import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
+import EhsHazardControlsSection from '../EhsHazardControlsSection';
+import EhsHazardAssessmentsSection from '../EhsHazardAssessmentsSection';
+import EhsHazardBasicInfoSection from '../EhsHazardBasicInfoSection';
+import EhsHazardControlDialog from '../EhsHazardControlDialog';
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options?: { count?: number }) =>
@@ -67,11 +72,6 @@ vi.mock('@/components/common/DataTable', async () => {
       ),
   };
 });
-
-import EhsHazardControlsSection from '../EhsHazardControlsSection';
-import EhsHazardAssessmentsSection from '../EhsHazardAssessmentsSection';
-import EhsHazardBasicInfoSection from '../EhsHazardBasicInfoSection';
-import EhsHazardControlDialog from '../EhsHazardControlDialog';
 
 const control = {
   id: 'control-1',

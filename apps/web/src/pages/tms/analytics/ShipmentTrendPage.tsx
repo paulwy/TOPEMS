@@ -24,6 +24,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+
 const MOCK_DATA = [
   { month: '2025-01', total: 120, delivered: 95, cancelled: 8 },
   { month: '2025-02', total: 135, delivered: 110, cancelled: 10 },
@@ -48,12 +49,12 @@ export default function ShipmentTrendPage() {
           const data = (res as { data?: unknown })?.data;
           if (Array.isArray(data)) return data as Record<string, unknown>[];
           const items = (data as { items?: unknown[] })?.items;
-          return Array.isArray(items) ? items as Record<string, unknown>[] : [];
+          return Array.isArray(items) ? (items as Record<string, unknown>[]) : [];
         };
         const items = extractItems(allRes);
         const statusOf = (x: Record<string, unknown>) => String(x.status ?? '').toLowerCase();
-        const deliveredItems = items.filter(x => statusOf(x).includes('deliver'));
-        const cancelledItems = items.filter(x => statusOf(x).includes('cancel'));
+        const deliveredItems = items.filter((x) => statusOf(x).includes('deliver'));
+        const cancelledItems = items.filter((x) => statusOf(x).includes('cancel'));
         return {
           total: items.length,
           delivered: deliveredItems.length,
@@ -96,30 +97,77 @@ export default function ShipmentTrendPage() {
       </div>
       <div className='rounded-lg border p-4'>
         <h3 className='mb-2 font-semibold'>{i18n.t('tms.shipment_trend_page.k6')}</h3>
-        <ResponsiveContainer width='100%' height={300}>
-          <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
+        <ResponsiveContainer
+          width='100%'
+          height={300}
+        >
+          <BarChart
+            data={data}
+            margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+          >
             <CartesianGrid strokeDasharray='3 3' />
-            <XAxis dataKey='month' fontSize={11} />
+            <XAxis
+              dataKey='month'
+              fontSize={11}
+            />
             <YAxis fontSize={11} />
             <Tooltip />
             <Legend />
-            <Bar dataKey='total' name={i18n.t('tms.shipment_trend_page.k7')} fill={designTokens.colors.primary.main} barSize={20} />
-            <Bar dataKey='delivered' name={i18n.t('tms.shipment_trend_page.k8')} fill={designTokens.colors.success.dark} barSize={20} />
-            <Bar dataKey='cancelled' name={i18n.t('tms.shipment_trend_page.k9')} fill={designTokens.colors.error.main} barSize={20} />
+            <Bar
+              dataKey='total'
+              name={i18n.t('tms.shipment_trend_page.k7')}
+              fill={designTokens.colors.primary.main}
+              barSize={20}
+            />
+            <Bar
+              dataKey='delivered'
+              name={i18n.t('tms.shipment_trend_page.k8')}
+              fill={designTokens.colors.success.dark}
+              barSize={20}
+            />
+            <Bar
+              dataKey='cancelled'
+              name={i18n.t('tms.shipment_trend_page.k9')}
+              fill={designTokens.colors.error.main}
+              barSize={20}
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>
       <div className='rounded-lg border p-4'>
         <h3 className='mb-2 font-semibold'>{i18n.t('tms.shipment_trend_page.k10')}</h3>
-        <ResponsiveContainer width='100%' height={300}>
-          <LineChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
+        <ResponsiveContainer
+          width='100%'
+          height={300}
+        >
+          <LineChart
+            data={data}
+            margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+          >
             <CartesianGrid strokeDasharray='3 3' />
-            <XAxis dataKey='month' fontSize={11} />
+            <XAxis
+              dataKey='month'
+              fontSize={11}
+            />
             <YAxis fontSize={11} />
             <Tooltip />
             <Legend />
-            <Line type='monotone' dataKey='delivered' name={i18n.t('tms.shipment_trend_page.k11')} stroke={designTokens.colors.success.dark} strokeWidth={2} dot={{ r: 3 }} />
-            <Line type='monotone' dataKey='cancelled' name={i18n.t('tms.shipment_trend_page.k12')} stroke={designTokens.colors.error.main} strokeWidth={2} dot={{ r: 3 }} />
+            <Line
+              type='monotone'
+              dataKey='delivered'
+              name={i18n.t('tms.shipment_trend_page.k11')}
+              stroke={designTokens.colors.success.dark}
+              strokeWidth={2}
+              dot={{ r: 3 }}
+            />
+            <Line
+              type='monotone'
+              dataKey='cancelled'
+              name={i18n.t('tms.shipment_trend_page.k12')}
+              stroke={designTokens.colors.error.main}
+              strokeWidth={2}
+              dot={{ r: 3 }}
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>

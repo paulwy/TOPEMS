@@ -216,7 +216,9 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
                 borderRadius: 'full',
                 bgcolor: flashOn ? 'warning.main' : 'colors.cyber.glass.divider',
                 color: 'common.white',
-                '&:hover': { bgcolor: flashOn ? 'warning.main' : designTokens.colors.cyber.metal.bottomShadow },
+                '&:hover': {
+                  bgcolor: flashOn ? 'warning.main' : designTokens.colors.cyber.metal.bottomShadow,
+                },
               }}
               aria-label={i18n.t('gis.photo_capture.k2')}
             >

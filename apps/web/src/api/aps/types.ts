@@ -3,42 +3,17 @@
 // ---- FSM 状态联合类型（与 svc/aps/src/shared/fsm.rs 1:1 对齐） ----
 
 export type ProductionPlanStatus =
-  | 'draft'
-  | 'pending_approval'
-  | 'approved'
-  | 'in_progress'
-  | 'completed'
-  | 'cancelled';
+  'draft' | 'pending_approval' | 'approved' | 'in_progress' | 'completed' | 'cancelled';
 
-export type ScheduleStatus =
-  | 'pending'
-  | 'released'
-  | 'running'
-  | 'completed'
-  | 'cancelled';
+export type ScheduleStatus = 'pending' | 'released' | 'running' | 'completed' | 'cancelled';
 
-export type CapacityStatus =
-  | 'available'
-  | 'allocated'
-  | 'consumed'
-  | 'maintenance'
-  | 'released';
+export type CapacityStatus = 'available' | 'allocated' | 'consumed' | 'maintenance' | 'released';
 
 export type MaterialPlanStatus =
-  | 'pending'
-  | 'requisitioned'
-  | 'sourced'
-  | 'satisfied'
-  | 'shortage'
-  | 'cancelled';
+  'pending' | 'requisitioned' | 'sourced' | 'satisfied' | 'shortage' | 'cancelled';
 
 export type DemandForecastStatus =
-  | 'draft'
-  | 'calculated'
-  | 'validated'
-  | 'adopted'
-  | 'superseded'
-  | 'cancelled';
+  'draft' | 'calculated' | 'validated' | 'adopted' | 'superseded' | 'cancelled';
 
 // ---- 实体接口 ----
 
@@ -146,11 +121,7 @@ export interface DemandForecast {
   forecast_quantity?: number;
   actual_quantity?: number;
   accuracy_rate?: number;
-  method?:
-    | 'moving_average'
-    | 'exponential_smoothing'
-    | 'linear_regression'
-    | 'arima';
+  method?: 'moving_average' | 'exponential_smoothing' | 'linear_regression' | 'arima';
   confidence_level?: number;
   status?: DemandForecastStatus;
   notes?: string;

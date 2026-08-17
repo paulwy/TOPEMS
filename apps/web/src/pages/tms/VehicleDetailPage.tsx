@@ -75,11 +75,16 @@ export default function VehicleDetailPage() {
           <h1 className='text-2xl font-bold'>{vehicle.vehicle_no}</h1>
           <p className='mt-1 text-sm text-gray-500'>{vehicle.plate_number ?? '-'}</p>
         </div>
-        <StatusBadge fsm='vehicle' status={vehicle.status ?? 'active'} />
+        <StatusBadge
+          fsm='vehicle'
+          status={vehicle.status ?? 'active'}
+        />
       </div>
 
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>{t('tms.vehicle_detail_page.k3')}</p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>
+          {t('tms.vehicle_detail_page.k3')}
+        </p>
         <FSMActionButtons
           fsm='vehicle'
           currentStatus={vehicle.status ?? 'active'}
@@ -88,16 +93,34 @@ export default function VehicleDetailPage() {
       </div>
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        <Field label={t('tms.vehicle_detail_page.k4')} value={vehicle.vehicle_no} />
-        <Field label={t('tms.vehicle_detail_page.k5')} value={vehicle.plate_number ?? '-'} />
-        <Field label={t('tms.vehicle_detail_page.k6')} value={vehicle.vehicle_type ?? '-'} />
+        <Field
+          label={t('tms.vehicle_detail_page.k4')}
+          value={vehicle.vehicle_no}
+        />
+        <Field
+          label={t('tms.vehicle_detail_page.k5')}
+          value={vehicle.plate_number ?? '-'}
+        />
+        <Field
+          label={t('tms.vehicle_detail_page.k6')}
+          value={vehicle.vehicle_type ?? '-'}
+        />
         <Field
           label={t('tms.vehicle_detail_page.k7')}
           value={vehicle.capacity != null ? `${vehicle.capacity}` : '-'}
         />
-        <Field label={t('tms.vehicle_detail_page.k8')} value={vehicle.status ?? '-'} />
-        <Field label={t('tms.vehicle_detail_page.id_9')} value={vehicle.carrier_id ?? '-'} />
-        <Field label={t('tms.vehicle_detail_page.k10')} value={vehicle.notes ?? '-'} />
+        <Field
+          label={t('tms.vehicle_detail_page.k8')}
+          value={vehicle.status ?? '-'}
+        />
+        <Field
+          label={t('tms.vehicle_detail_page.id_9')}
+          value={vehicle.carrier_id ?? '-'}
+        />
+        <Field
+          label={t('tms.vehicle_detail_page.k10')}
+          value={vehicle.notes ?? '-'}
+        />
         <Field
           label={t('tms.vehicle_detail_page.k11')}
           value={vehicle.created_at ? new Date(vehicle.created_at).toLocaleString('zh-CN') : '-'}

@@ -20,7 +20,8 @@ import type { MaterialReturn, MaterialReturnItem } from '@/api/mes';
 import { Undo2, FileText, Package } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter(
   mesApi.materialReturns as unknown as CrudApi<MaterialReturn>,
   {
@@ -40,7 +41,9 @@ const MaterialReturnPage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_return_page.k0')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_return_page.k0')}
+            </InputLabel>
             <Box
               component='span'
               sx={{ fontWeight: 500 }}
@@ -49,25 +52,35 @@ const MaterialReturnPage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_return_page.k1')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_return_page.k1')}
+            </InputLabel>
             <Box component='span'>{ret.order_number || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_return_page.k2')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_return_page.k2')}
+            </InputLabel>
             <Box component='span'>{ret.operator}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_return_page.k3')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_return_page.k3')}
+            </InputLabel>
             <Box component='span'>
               {ret.return_time ? new Date(ret.return_time).toLocaleString('zh-CN') : '-'}
             </Box>
           </Box>
           <Box sx={{ gridColumn: '1 / -1' }}>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_return_page.k4')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_return_page.k4')}
+            </InputLabel>
             <Box component='span'>{ret.reason || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.material_return_page.k5')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.material_return_page.k5')}
+            </InputLabel>
             <Box component='span'>{new Date(ret.created_at).toLocaleString('zh-CN')}</Box>
           </Box>
         </Box>
@@ -76,7 +89,8 @@ const MaterialReturnPage: React.FC = () => {
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 1 }}
           >
-            {i18n.t('pages.material_return_page.k0')}{ret.items?.length || 0})
+            {i18n.t('pages.material_return_page.k0')}
+            {ret.items?.length || 0})
           </Typography>
           <TableContainer
             component={Paper}

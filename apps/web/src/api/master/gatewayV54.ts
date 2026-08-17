@@ -187,7 +187,9 @@ export const gatewayApiV54 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<GatewayRoute>>(`/mdm-v54/routes${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<GatewayRoute>>(
+      `/mdm-v54/routes${s ? `?${s}` : ''}`
+    );
   },
 
   async updateRoute(id: string, data: UpdateRouteRequest): Promise<ApiResponse<GatewayRoute>> {
@@ -222,7 +224,10 @@ export const gatewayApiV54 = {
     return apiClient.master.get<RateLimitRule[]>(`/mdm-v54/rate-limits${s ? `?${s}` : ''}`);
   },
 
-  async updateRateLimitRule(id: string, data: Partial<CreateRateLimitRuleRequest>): Promise<ApiResponse<RateLimitRule>> {
+  async updateRateLimitRule(
+    id: string,
+    data: Partial<CreateRateLimitRuleRequest>
+  ): Promise<ApiResponse<RateLimitRule>> {
     return apiClient.master.put<RateLimitRule>(`/mdm-v54/rate-limits/${id}`, data);
   },
 
@@ -246,7 +251,10 @@ export const gatewayApiV54 = {
     return apiClient.master.get<AuthConfig[]>(`/mdm-v54/auth-configs${s ? `?${s}` : ''}`);
   },
 
-  async updateAuthConfig(id: string, data: Partial<CreateAuthConfigRequest>): Promise<ApiResponse<AuthConfig>> {
+  async updateAuthConfig(
+    id: string,
+    data: Partial<CreateAuthConfigRequest>
+  ): Promise<ApiResponse<AuthConfig>> {
     return apiClient.master.put<AuthConfig>(`/mdm-v54/auth-configs/${id}`, data);
   },
 
@@ -296,10 +304,15 @@ export const gatewayApiV54 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<Developer>>(`/mdm-v54/developers${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<Developer>>(
+      `/mdm-v54/developers${s ? `?${s}` : ''}`
+    );
   },
 
-  async updateDeveloper(id: string, data: Partial<CreateDeveloperRequest>): Promise<ApiResponse<Developer>> {
+  async updateDeveloper(
+    id: string,
+    data: Partial<CreateDeveloperRequest>
+  ): Promise<ApiResponse<Developer>> {
     return apiClient.master.put<Developer>(`/mdm-v54/developers/${id}`, data);
   },
 
@@ -332,7 +345,10 @@ export const gatewayApiV54 = {
   },
 
   async rotateAPIKey(id: string): Promise<ApiResponse<APIKey & { new_key: string }>> {
-    return apiClient.master.post<APIKey & { new_key: string }>(`/mdm-v54/api-keys/${id}/rotate`, {});
+    return apiClient.master.post<APIKey & { new_key: string }>(
+      `/mdm-v54/api-keys/${id}/rotate`,
+      {}
+    );
   },
 
   async deleteAPIKey(id: string): Promise<ApiResponse<{ deleted: boolean }>> {
@@ -340,15 +356,20 @@ export const gatewayApiV54 = {
   },
 
   // ===== 使用统计 =====
-  async getUsageStats(developerId: string, params?: {
-    start_time?: string;
-    end_time?: string;
-  }): Promise<ApiResponse<UsageStats>> {
+  async getUsageStats(
+    developerId: string,
+    params?: {
+      start_time?: string;
+      end_time?: string;
+    }
+  ): Promise<ApiResponse<UsageStats>> {
     const qs = new URLSearchParams();
     if (params?.start_time) qs.set('start_time', params.start_time);
     if (params?.end_time) qs.set('end_time', params.end_time);
     const s = qs.toString();
-    return apiClient.master.get<UsageStats>(`/mdm-v54/developers/${developerId}/usage${s ? `?${s}` : ''}`);
+    return apiClient.master.get<UsageStats>(
+      `/mdm-v54/developers/${developerId}/usage${s ? `?${s}` : ''}`
+    );
   },
 
   async getDashboard(): Promise<ApiResponse<GatewayDashboard>> {

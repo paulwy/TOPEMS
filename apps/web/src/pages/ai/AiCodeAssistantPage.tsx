@@ -41,7 +41,7 @@ import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { aiApi } from '@/api/ai';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 type CodeTab = 'generate' | 'explain' | 'fix' | 'optimize' | 'review';
 
@@ -290,9 +290,7 @@ export const AiCodeAssistantPage: React.FC = () => {
     setResult('');
 
     setTimeout(() => {
-      setResult(
-        i18n.t('pages.ai_code_assistant_page.k0')
-      );
+      setResult(i18n.t('pages.ai_code_assistant_page.k0'));
       setGenerating(false);
     }, 2000);
   }, [codeInput, addNotification, t]);
@@ -311,9 +309,7 @@ export const AiCodeAssistantPage: React.FC = () => {
     setResult('');
 
     setTimeout(() => {
-      setResult(
-        i18n.t('pages.ai_code_assistant_page.k1')
-      );
+      setResult(i18n.t('pages.ai_code_assistant_page.k1'));
       setGenerating(false);
     }, 1800);
   }, [codeInput, addNotification, t]);

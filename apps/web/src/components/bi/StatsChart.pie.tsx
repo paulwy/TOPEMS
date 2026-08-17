@@ -86,7 +86,10 @@ export const StatsChartPieImpl: React.FC<StatsChartPieProps> = ({
         {title}
       </h3>
       <div style={{ width: CHART_WIDTH, height }}>
-        <PieChart width={CHART_WIDTH} height={height}>
+        <PieChart
+          width={CHART_WIDTH}
+          height={height}
+        >
           <Pie
             data={data}
             cx='50%'

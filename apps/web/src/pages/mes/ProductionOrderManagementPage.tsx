@@ -12,7 +12,8 @@ import type { ProductionOrder } from '@/api/mes/types';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const ProductionOrderManagementPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
@@ -44,10 +45,10 @@ const ProductionOrderManagementPage: React.FC = () => {
           });
           queryClient.invalidateQueries({
             queryKey: QUERY_KEYS.AD_HOC.MES_PRODUCTION_ORDERS_BASE,
-          
-  exact: false,
-  refetchType: 'active',
-});
+
+            exact: false,
+            refetchType: 'active',
+          });
         }
       } catch (error: unknown) {
         addNotification({
@@ -155,7 +156,10 @@ const ProductionOrderManagementPage: React.FC = () => {
         customRowActions={customRowActions}
         breadcrumbs={[
           {
-            label: i18n.t('mes.production_order_management_page.breadcrumb_home', i18n.t('pages.production_order_management_page.k1')),
+            label: i18n.t(
+              'mes.production_order_management_page.breadcrumb_home',
+              i18n.t('pages.production_order_management_page.k1')
+            ),
             href: '/dashboard',
           },
           {

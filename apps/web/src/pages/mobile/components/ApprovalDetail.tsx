@@ -15,6 +15,7 @@ import {
   getPriorityLabel,
 } from '../hooks/useMobileApproval';
 import i18n from '@/i18n';
+
 interface ApprovalDetailProps {
   approval: ApprovalItem;
   approvalComment: string;
@@ -321,7 +322,9 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
           onClick={onReject}
           disabled={processing}
         >
-          {processing ? i18n.t('mobile.approval.status.loading') : i18n.t('mobile.approval.action.reject')}
+          {processing
+            ? i18n.t('mobile.approval.status.loading')
+            : i18n.t('mobile.approval.action.reject')}
         </MobileButton>
         <MobileButton
           fullWidth
@@ -331,7 +334,9 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
           onClick={onApprove}
           disabled={processing}
         >
-          {processing ? i18n.t('mobile.approval.status.loading') : i18n.t('mobile.approval.action.approve')}
+          {processing
+            ? i18n.t('mobile.approval.status.loading')
+            : i18n.t('mobile.approval.action.approve')}
         </MobileButton>
       </Box>
     </Box>

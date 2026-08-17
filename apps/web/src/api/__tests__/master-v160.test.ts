@@ -73,7 +73,9 @@ describe('V160 masterData Data Federation & Mesh API bindings', () => {
     it('should update domain', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await dataFederationMeshApiV75.updateDomain('domain-1', { description: 'Updated' });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v75/domains/domain-1', { description: 'Updated' });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v75/domains/domain-1', {
+        description: 'Updated',
+      });
     });
 
     it('should remove domain', async () => {
@@ -146,7 +148,9 @@ describe('V160 masterData Data Federation & Mesh API bindings', () => {
     it('should update product', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await dataFederationMeshApiV75.updateProduct('product-1', { description: 'Updated' });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v75/products/product-1', { description: 'Updated' });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v75/products/product-1', {
+        description: 'Updated',
+      });
     });
 
     it('should remove product', async () => {
@@ -204,7 +208,9 @@ describe('V160 masterData Data Federation & Mesh API bindings', () => {
         providerDomainId: 'domain-1',
         status: 'active',
       });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v75/agreements?provider_domain_id=domain-1&status=active');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v75/agreements?provider_domain_id=domain-1&status=active'
+      );
     });
 
     it('should approve agreement', async () => {
@@ -238,13 +244,10 @@ describe('V160 masterData Data Federation & Mesh API bindings', () => {
         purpose: 'Analytics project',
         access_type: 'read',
       });
-      expect(mockClient.post).toHaveBeenCalledWith(
-        '/mdm-v75/agreements/agree-1/access-requests',
-        {
-          purpose: 'Analytics project',
-          access_type: 'read',
-        }
-      );
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v75/agreements/agree-1/access-requests', {
+        purpose: 'Analytics project',
+        access_type: 'read',
+      });
     });
 
     it('should list access requests', async () => {
@@ -283,7 +286,9 @@ describe('V160 masterData Data Federation & Mesh API bindings', () => {
     it('should list access audit', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await dataFederationMeshApiV75.listAccessAudit({ domainId: 'domain-1', action: 'read' });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v75/access-audit?domain_id=domain-1&action=read');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v75/access-audit?domain_id=domain-1&action=read'
+      );
     });
   });
 
@@ -324,7 +329,9 @@ describe('V160 masterData Data Federation & Mesh API bindings', () => {
     it('should update node', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await dataFederationMeshApiV75.updateNode('node-1', { name: 'Updated Node' });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v75/nodes/node-1', { name: 'Updated Node' });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v75/nodes/node-1', {
+        name: 'Updated Node',
+      });
     });
 
     it('should remove node', async () => {
@@ -334,7 +341,10 @@ describe('V160 masterData Data Federation & Mesh API bindings', () => {
     });
 
     it('should health check node', async () => {
-      mockClient.post.mockResolvedValue({ success: true, data: { node_id: 'node-1', status: 'connected' } });
+      mockClient.post.mockResolvedValue({
+        success: true,
+        data: { node_id: 'node-1', status: 'connected' },
+      });
       await dataFederationMeshApiV75.healthCheckNode('node-1');
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v75/nodes/node-1/health', {});
     });

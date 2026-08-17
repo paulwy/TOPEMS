@@ -400,19 +400,24 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                 </Box>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                   <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
-                    • {i18n.t('components.export_modal.k0')}{report.config.title}
+                    • {i18n.t('components.export_modal.k0')}
+                    {report.config.title}
                   </Typography>
                   <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
-                    • {i18n.t('components.export_modal.k1')}{report.row_count} {i18n.t('components.export_modal.k2')}
+                    • {i18n.t('components.export_modal.k1')}
+                    {report.row_count} {i18n.t('components.export_modal.k2')}
                   </Typography>
                   <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
-                    • {i18n.t('components.export_modal.k3')}{report.config.columns.length} {i18n.t('components.export_modal.k4')}
+                    • {i18n.t('components.export_modal.k3')}
+                    {report.config.columns.length} {i18n.t('components.export_modal.k4')}
                   </Typography>
                   <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
-                    • {i18n.t('components.export_modal.k5')}{format.toUpperCase()}
+                    • {i18n.t('components.export_modal.k5')}
+                    {format.toUpperCase()}
                   </Typography>
                   <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
-                    • {i18n.t('components.export_modal.k6')}{generateFilename()}.{format === 'excel' ? 'csv' : format}
+                    • {i18n.t('components.export_modal.k6')}
+                    {generateFilename()}.{format === 'excel' ? 'csv' : format}
                   </Typography>
                 </Box>
               </Box>

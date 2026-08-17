@@ -58,7 +58,12 @@ export interface StandardEvaluation {
   entity_type: string;
   entity_id: string;
   score: number;
-  issues: Array<{ field: string; issue: string; severity: 'error' | 'warning'; suggestion?: string }>;
+  issues: Array<{
+    field: string;
+    issue: string;
+    severity: 'error' | 'warning';
+    suggestion?: string;
+  }>;
   evaluated_at: string;
   evaluator?: string;
 }
@@ -147,10 +152,15 @@ export const dataStandardApiV63 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: DataStandardV63[]; total: number }>(`/mdm-v63/standards${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: DataStandardV63[]; total: number }>(
+      `/mdm-v63/standards${s ? `?${s}` : ''}`
+    );
   },
 
-  async updateStandard(id: string, data: UpdateStandardRequest): Promise<ApiResponse<DataStandardV63>> {
+  async updateStandard(
+    id: string,
+    data: UpdateStandardRequest
+  ): Promise<ApiResponse<DataStandardV63>> {
     return apiClient.master.put<DataStandardV63>(`/mdm-v63/standards/${id}`, data);
   },
 
@@ -185,7 +195,10 @@ export const dataStandardApiV63 = {
     return apiClient.master.get<CategoryNode>(`/mdm-v63/categories/tree${s ? `?${s}` : ''}`);
   },
 
-  async updateCategory(id: string, data: Partial<CreateCategoryRequest>): Promise<ApiResponse<CategoryNode>> {
+  async updateCategory(
+    id: string,
+    data: Partial<CreateCategoryRequest>
+  ): Promise<ApiResponse<CategoryNode>> {
     return apiClient.master.put<CategoryNode>(`/mdm-v63/categories/${id}`, data);
   },
 
@@ -193,7 +206,10 @@ export const dataStandardApiV63 = {
     return apiClient.master.delete<{ deleted: boolean }>(`/mdm-v63/categories/${id}`);
   },
 
-  async searchCategories(query: string, params?: { type?: CategoryNodeType; limit?: number }): Promise<ApiResponse<CategoryNode[]>> {
+  async searchCategories(
+    query: string,
+    params?: { type?: CategoryNodeType; limit?: number }
+  ): Promise<ApiResponse<CategoryNode[]>> {
     const qs = new URLSearchParams({ q: query });
     if (params?.type) qs.set('type', params.type);
     if (params?.limit !== undefined) qs.set('limit', String(params.limit));
@@ -205,7 +221,10 @@ export const dataStandardApiV63 = {
     return apiClient.master.post<MappingRule>('/mdm-v63/mappings', data);
   },
 
-  async listMappings(sourceStandardId?: string, targetStandardId?: string): Promise<ApiResponse<MappingRule[]>> {
+  async listMappings(
+    sourceStandardId?: string,
+    targetStandardId?: string
+  ): Promise<ApiResponse<MappingRule[]>> {
     const qs = new URLSearchParams();
     if (sourceStandardId) qs.set('source', sourceStandardId);
     if (targetStandardId) qs.set('target', targetStandardId);
@@ -226,8 +245,13 @@ export const dataStandardApiV63 = {
     return apiClient.master.get<StandardEvaluation>(`/mdm-v63/evaluations/${id}`);
   },
 
-  async listEntityEvaluations(entityType: string, entityId: string): Promise<ApiResponse<StandardEvaluation[]>> {
-    return apiClient.master.get<StandardEvaluation[]>(`/mdm-v63/entities/${entityType}/${entityId}/evaluations`);
+  async listEntityEvaluations(
+    entityType: string,
+    entityId: string
+  ): Promise<ApiResponse<StandardEvaluation[]>> {
+    return apiClient.master.get<StandardEvaluation[]>(
+      `/mdm-v63/entities/${entityType}/${entityId}/evaluations`
+    );
   },
 
   async getDashboard(): Promise<ApiResponse<StandardDashboardV63>> {

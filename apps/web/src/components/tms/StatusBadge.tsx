@@ -17,12 +17,7 @@ import i18n from '@/i18n';
  * - 红色  : 拒绝/取消态（blacklisted/rejected/cancelled/inactive(driver)）
  */
 
-export type TmsFsmType =
-  | 'vehicle'
-  | 'driver'
-  | 'carrier'
-  | 'route'
-  | 'shipment';
+export type TmsFsmType = 'vehicle' | 'driver' | 'carrier' | 'route' | 'shipment';
 
 const GRAY = 'bg-gray-100 text-gray-700';
 const BLUE = 'bg-blue-100 text-blue-700';

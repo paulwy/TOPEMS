@@ -43,7 +43,7 @@ export const qaTypedApi = {
    * Query Params: { page, pagesize, query }（AdaptedQuery 后 camelCase）
    */
   listHistory: async (
-    params?: AdaptedQuery<'_qa_history'>,
+    params?: AdaptedQuery<'_qa_history'>
   ): Promise<TypedApiResponse<QAHistoryListResponse, '_qa_history'>> => {
     return apiClient.ai.get('/qa/history', {
       params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
@@ -53,9 +53,7 @@ export const qaTypedApi = {
   /**
    * _qa_delete_history operation（openapi: DELETE /api/ai/qa/history/{id}）
    */
-  deleteHistory: async (
-    id: string,
-  ): Promise<TypedApiResponse<string, '_qa_delete_history'>> => {
+  deleteHistory: async (id: string): Promise<TypedApiResponse<string, '_qa_delete_history'>> => {
     return apiClient.ai.delete(`/qa/history/${id}`);
   },
 
@@ -64,11 +62,11 @@ export const qaTypedApi = {
    * Request Body: { ids: string[] }（发送前 adaptReverse → snake_case）
    */
   batchDeleteHistory: async (
-    data: AdaptedRequestBody<'_qa_batch_delete_history'> | { ids: string[] },
+    data: AdaptedRequestBody<'_qa_batch_delete_history'> | { ids: string[] }
   ): Promise<TypedApiResponse<QABatchDeleteResponse, '_qa_batch_delete_history'>> => {
     return apiClient.ai.post(
       '/qa/history/batch-delete',
-      toOpenApiRequestBody(data as Record<string, unknown>),
+      toOpenApiRequestBody(data as Record<string, unknown>)
     );
   },
 };

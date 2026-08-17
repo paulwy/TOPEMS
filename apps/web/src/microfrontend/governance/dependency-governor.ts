@@ -218,7 +218,11 @@ const UPGRADE_SUGGESTIONS: VersionUpgradeSuggestion[] = [
     suggested_version: '3.1.0',
     reason: i18n.t('microfrontend.dependency-governor.k0'),
     breaking_changes: [i18n.t('microfrontend.dependency-governor.api_1')],
-    benefits: [i18n.t('microfrontend.dependency-governor.30_4'), i18n.t('microfrontend.dependency-governor.5_3'), i18n.t('microfrontend.dependency-governor.12_2')],
+    benefits: [
+      i18n.t('microfrontend.dependency-governor.30_4'),
+      i18n.t('microfrontend.dependency-governor.5_3'),
+      i18n.t('microfrontend.dependency-governor.12_2'),
+    ],
   },
   {
     module_name: 'dark-theme',
@@ -226,7 +230,11 @@ const UPGRADE_SUGGESTIONS: VersionUpgradeSuggestion[] = [
     suggested_version: '1.2.0',
     reason: i18n.t('microfrontend.dependency-governor.k5'),
     breaking_changes: [],
-    benefits: [i18n.t('microfrontend.dependency-governor.k8'), i18n.t('microfrontend.dependency-governor.3_7'), i18n.t('microfrontend.dependency-governor.k6')],
+    benefits: [
+      i18n.t('microfrontend.dependency-governor.k8'),
+      i18n.t('microfrontend.dependency-governor.3_7'),
+      i18n.t('microfrontend.dependency-governor.k6'),
+    ],
   },
   {
     module_name: 'notification-center',
@@ -234,7 +242,11 @@ const UPGRADE_SUGGESTIONS: VersionUpgradeSuggestion[] = [
     suggested_version: '2.1.0',
     reason: i18n.t('microfrontend.dependency-governor.k9'),
     breaking_changes: [],
-    benefits: [i18n.t('microfrontend.dependency-governor.k12'), i18n.t('microfrontend.dependency-governor.k11'), i18n.t('microfrontend.dependency-governor.k10')],
+    benefits: [
+      i18n.t('microfrontend.dependency-governor.k12'),
+      i18n.t('microfrontend.dependency-governor.k11'),
+      i18n.t('microfrontend.dependency-governor.k10'),
+    ],
   },
   {
     module_name: 'mes-dashboard',
@@ -242,7 +254,11 @@ const UPGRADE_SUGGESTIONS: VersionUpgradeSuggestion[] = [
     suggested_version: '1.8.2',
     reason: i18n.t('microfrontend.dependency-governor.bug_13'),
     breaking_changes: [],
-    benefits: [i18n.t('microfrontend.dependency-governor.oee_16'), i18n.t('microfrontend.dependency-governor.k15'), i18n.t('microfrontend.dependency-governor.k14')],
+    benefits: [
+      i18n.t('microfrontend.dependency-governor.oee_16'),
+      i18n.t('microfrontend.dependency-governor.k15'),
+      i18n.t('microfrontend.dependency-governor.k14'),
+    ],
   },
 ];
 

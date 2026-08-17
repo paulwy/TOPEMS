@@ -44,7 +44,7 @@ import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { inspectionSchema } from '@/schemas/qms';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface InspectionResultItem {
   item_name: string;
@@ -116,11 +116,16 @@ const QmsInspectionPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      addNotification({ title: i18n.t('pages.qms_inspection_page.k6'), message: i18n.t('pages.qms_inspection_page.k5'), type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.INSPECTIONS ,
-  exact: false,
-  refetchType: 'active',
-});
+      addNotification({
+        title: i18n.t('pages.qms_inspection_page.k6'),
+        message: i18n.t('pages.qms_inspection_page.k5'),
+        type: 'success',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.QMS.INSPECTIONS,
+        exact: false,
+        refetchType: 'active',
+      });
       setShowAssignModal(false);
     },
     onError: (err: unknown) => {
@@ -141,11 +146,16 @@ const QmsInspectionPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      addNotification({ title: i18n.t('pages.qms_inspection_page.k11'), message: i18n.t('pages.qms_inspection_page.k10'), type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.INSPECTIONS ,
-  exact: false,
-  refetchType: 'active',
-});
+      addNotification({
+        title: i18n.t('pages.qms_inspection_page.k11'),
+        message: i18n.t('pages.qms_inspection_page.k10'),
+        type: 'success',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.QMS.INSPECTIONS,
+        exact: false,
+        refetchType: 'active',
+      });
       setShowSubmitModal(false);
     },
     onError: (err: unknown) => {
@@ -179,11 +189,16 @@ const QmsInspectionPage: React.FC = () => {
           : auditData.action === 'reject'
             ? i18n.t('pages.qms_inspection_page.k16')
             : i18n.t('pages.qms_inspection_page.k17');
-      addNotification({ title: i18n.t('pages.qms_inspection_page.k18'), message: `${actionText}${i18n.t('pages.qms_inspection_page.k0')}`, type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.INSPECTIONS ,
-  exact: false,
-  refetchType: 'active',
-});
+      addNotification({
+        title: i18n.t('pages.qms_inspection_page.k18'),
+        message: `${actionText}${i18n.t('pages.qms_inspection_page.k0')}`,
+        type: 'success',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.QMS.INSPECTIONS,
+        exact: false,
+        refetchType: 'active',
+      });
       setShowAuditModal(false);
     },
     onError: (err: unknown) => {
@@ -605,7 +620,9 @@ const QmsInspectionPage: React.FC = () => {
             sx={{ bgcolor: 'primary.main' }}
             disabled={submitting}
           >
-            {submitting ? i18n.t('pages.qms_inspection_page.k10') : i18n.t('pages.qms_inspection_page.k30')}
+            {submitting
+              ? i18n.t('pages.qms_inspection_page.k10')
+              : i18n.t('pages.qms_inspection_page.k30')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -758,7 +775,9 @@ const QmsInspectionPage: React.FC = () => {
             sx={{ bgcolor: 'primary.main' }}
             disabled={submitting}
           >
-            {submitting ? i18n.t('pages.qms_inspection_page.k18') : i18n.t('pages.qms_inspection_page.k45')}
+            {submitting
+              ? i18n.t('pages.qms_inspection_page.k18')
+              : i18n.t('pages.qms_inspection_page.k45')}
           </Button>
         </DialogActions>
       </Dialog>

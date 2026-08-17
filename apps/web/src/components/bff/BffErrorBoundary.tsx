@@ -351,7 +351,12 @@ export const DefaultBffErrorFallback: React.FC<BffErrorBoundaryFallbackProps> = 
           <Box
             sx={{
               fontSize: 22,
-              color: color === 'error' ? designTokens.colors.error.dark : color === 'warning' ? 'colors.orange.700' : designTokens.colors.info['700'],
+              color:
+                color === 'error'
+                  ? designTokens.colors.error.dark
+                  : color === 'warning'
+                    ? 'colors.orange.700'
+                    : designTokens.colors.info['700'],
             }}
           >
             {React.createElement(Icon)}
@@ -385,7 +390,8 @@ export const DefaultBffErrorFallback: React.FC<BffErrorBoundaryFallbackProps> = 
             sx={{ py: 0.5 }}
           >
             <AlertTitle sx={{ mb: 0 }}>
-              {i18n.t('components.bff_error_boundary.k0')} {retryCount} / {maxRetries} {i18n.t('components.bff_error_boundary.k1')}
+              {i18n.t('components.bff_error_boundary.k0')} {retryCount} / {maxRetries}{' '}
+              {i18n.t('components.bff_error_boundary.k1')}
             </AlertTitle>
           </Alert>
         )}
@@ -456,7 +462,9 @@ export const DefaultBffErrorFallback: React.FC<BffErrorBoundaryFallbackProps> = 
               }}
             >
               {classified.error.stack ?? classified.message}
-              {classified.componentStack ? `${i18n.t('components.bff_error_boundary.nnn_6')}${classified.componentStack}` : ''}
+              {classified.componentStack
+                ? `${i18n.t('components.bff_error_boundary.nnn_6')}${classified.componentStack}`
+                : ''}
             </Typography>
           </Box>
         </Collapse>

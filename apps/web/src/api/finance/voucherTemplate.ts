@@ -78,7 +78,10 @@ export const voucherTemplateApi = {
     return apiClient.finance.post('/voucher-templates', data);
   },
 
-  updateTemplate: (templateId: string, data: Partial<VoucherTemplate>): Promise<ApiResponse<VoucherTemplate>> => {
+  updateTemplate: (
+    templateId: string,
+    data: Partial<VoucherTemplate>
+  ): Promise<ApiResponse<VoucherTemplate>> => {
     return apiClient.finance.put(`/voucher-templates/${templateId}`, data);
   },
 
@@ -133,16 +136,15 @@ export const voucherTemplateApi = {
     return apiClient.finance.delete(`/voucher-templates/${templateId}/entries/${entryId}`);
   },
 
-  reorderTemplateEntries: (
-    templateId: string,
-    entryIds: string[]
-  ): Promise<ApiResponse<void>> => {
+  reorderTemplateEntries: (templateId: string, entryIds: string[]): Promise<ApiResponse<void>> => {
     return apiClient.finance.post(`/voucher-templates/${templateId}/entries/reorder`, {
       entry_ids: entryIds,
     });
   },
 
-  getTemplateUsageStats: (templateId: string): Promise<ApiResponse<{ usage_count: number; last_used?: string }>> => {
+  getTemplateUsageStats: (
+    templateId: string
+  ): Promise<ApiResponse<{ usage_count: number; last_used?: string }>> => {
     return apiClient.finance.get(`/voucher-templates/${templateId}/usage-stats`);
   },
 
@@ -157,11 +159,16 @@ export const voucherTemplateApi = {
     return apiClient.finance.get(`/voucher-generation-rules/${ruleId}`);
   },
 
-  createGenerationRule: (data: Partial<VoucherGenerationRule>): Promise<ApiResponse<VoucherGenerationRule>> => {
+  createGenerationRule: (
+    data: Partial<VoucherGenerationRule>
+  ): Promise<ApiResponse<VoucherGenerationRule>> => {
     return apiClient.finance.post('/voucher-generation-rules', data);
   },
 
-  updateGenerationRule: (ruleId: string, data: Partial<VoucherGenerationRule>): Promise<ApiResponse<VoucherGenerationRule>> => {
+  updateGenerationRule: (
+    ruleId: string,
+    data: Partial<VoucherGenerationRule>
+  ): Promise<ApiResponse<VoucherGenerationRule>> => {
     return apiClient.finance.put(`/voucher-generation-rules/${ruleId}`, data);
   },
 
@@ -173,19 +180,29 @@ export const voucherTemplateApi = {
     return apiClient.finance.post(`/voucher-generation-rules/${ruleId}/toggle`, {});
   },
 
-  generateVoucher: (data: VoucherGenerateRequest): Promise<ApiResponse<{ voucher_id?: string; success: boolean }>> => {
+  generateVoucher: (
+    data: VoucherGenerateRequest
+  ): Promise<ApiResponse<{ voucher_id?: string; success: boolean }>> => {
     return apiClient.finance.post('/voucher/generate/from-source', data);
   },
 
-  autoGenerate: (data: VoucherBatchGenerateRequest): Promise<ApiResponse<{ generated_count: number }>> => {
+  autoGenerate: (
+    data: VoucherBatchGenerateRequest
+  ): Promise<ApiResponse<{ generated_count: number }>> => {
     return apiClient.finance.post('/voucher/generate/auto', data);
   },
 
-  batchGenerate: (data: VoucherBatchGenerateRequest): Promise<ApiResponse<{ generated_count: number }>> => {
+  batchGenerate: (
+    data: VoucherBatchGenerateRequest
+  ): Promise<ApiResponse<{ generated_count: number }>> => {
     return apiClient.finance.post('/voucher/generate/batch', data);
   },
 
-  previewGenerate: (data: VoucherGenerateRequest): Promise<ApiResponse<{ entries: Array<{ account: string; debit: number; credit: number }> }>> => {
+  previewGenerate: (
+    data: VoucherGenerateRequest
+  ): Promise<
+    ApiResponse<{ entries: Array<{ account: string; debit: number; credit: number }> }>
+  > => {
     return apiClient.finance.post('/voucher/generate/preview', data);
   },
 

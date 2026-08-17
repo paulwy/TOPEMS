@@ -260,11 +260,17 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
 
             <TextField
               size='small'
-              placeholder={chatRoomType === 'direct' ? i18n.t('im.create_room_modal.k12') : i18n.t('im.create_room_modal.k11')}
+              placeholder={
+                chatRoomType === 'direct'
+                  ? i18n.t('im.create_room_modal.k12')
+                  : i18n.t('im.create_room_modal.k11')
+              }
               value={chatRoomName}
               onChange={(e) => setChatRoomName(e.target.value)}
               label={i18n.t('im.create_room_modal.k13')}
-              helperText={chatRoomType === 'direct' ? i18n.t('components.create_room_modal.k0') : ''}
+              helperText={
+                chatRoomType === 'direct' ? i18n.t('components.create_room_modal.k0') : ''
+              }
             />
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -350,7 +356,9 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                 variant='contained'
                 startIcon={<Save sx={{ width: 16, height: 16 }} />}
               >
-                {loading ? i18n.t('components.create_room_modal.k1') : i18n.t('im.create_room_modal.k15')}
+                {loading
+                  ? i18n.t('components.create_room_modal.k1')
+                  : i18n.t('im.create_room_modal.k15')}
               </Button>
             </DialogActions>
           </Box>
@@ -459,7 +467,9 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                 variant='contained'
                 startIcon={<Save sx={{ width: 16, height: 16 }} />}
               >
-                {loading ? i18n.t('components.create_room_modal.k2') : i18n.t('im.create_room_modal.k21')}
+                {loading
+                  ? i18n.t('components.create_room_modal.k2')
+                  : i18n.t('im.create_room_modal.k21')}
               </Button>
             </DialogActions>
           </Box>

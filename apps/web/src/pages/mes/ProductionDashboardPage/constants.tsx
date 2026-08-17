@@ -11,19 +11,44 @@ import {
 import i18n from '@/i18n';
 import { designTokens } from '@/theme/tokens';
 import type { RealtimeAlarm } from './types';
-export const ct= designTokens.colors;
+
+export const ct = designTokens.colors;
 export const REFRESH_INTERVAL_MS = 10_000;
 export const TREND_HOURS = 12;
 export const EQUIPMENT_STATUS_META: Record<
   string,
   { label: string; color: string; icon: React.ReactNode }
 > = {
-  running: { label: i18n.t('mes.constants.k0'), color: 'success.main', icon: <PlayCircle size={14} /> },
-  in_use: { label: i18n.t('mes.constants.k1'), color: 'success.main', icon: <PlayCircle size={14} /> },
-  normal: { label: i18n.t('mes.constants.k2'), color: 'success.main', icon: <CheckCircle2 size={14} /> },
-  idle: { label: i18n.t('mes.constants.k3'), color: 'primary.main', icon: <PauseCircle size={14} /> },
-  maintenance: { label: i18n.t('mes.constants.k4'), color: 'warning.main', icon: <Wrench size={14} /> },
-  fault: { label: i18n.t('mes.constants.k5'), color: 'error.main', icon: <AlertTriangle size={14} /> },
+  running: {
+    label: i18n.t('mes.constants.k0'),
+    color: 'success.main',
+    icon: <PlayCircle size={14} />,
+  },
+  in_use: {
+    label: i18n.t('mes.constants.k1'),
+    color: 'success.main',
+    icon: <PlayCircle size={14} />,
+  },
+  normal: {
+    label: i18n.t('mes.constants.k2'),
+    color: 'success.main',
+    icon: <CheckCircle2 size={14} />,
+  },
+  idle: {
+    label: i18n.t('mes.constants.k3'),
+    color: 'primary.main',
+    icon: <PauseCircle size={14} />,
+  },
+  maintenance: {
+    label: i18n.t('mes.constants.k4'),
+    color: 'warning.main',
+    icon: <Wrench size={14} />,
+  },
+  fault: {
+    label: i18n.t('mes.constants.k5'),
+    color: 'error.main',
+    icon: <AlertTriangle size={14} />,
+  },
   error: { label: i18n.t('mes.constants.k6'), color: 'error.main', icon: <XCircle size={14} /> },
   scrapped: { label: i18n.t('mes.constants.k7'), color: 'grey.400', icon: <PowerOff size={14} /> },
   offline: { label: i18n.t('mes.constants.k8'), color: 'grey.400', icon: <PowerOff size={14} /> },

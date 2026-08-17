@@ -40,7 +40,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface SupplierPortalAnnouncement {
   id: string;
@@ -61,7 +61,7 @@ interface PortalData {
   supplier: Supplier | null;
   stats: SupplierPortalStats | null;
   orders: SupplierPortalOrder[];
-  announcements: SupplierPortalAnnouncement[]
+  announcements: SupplierPortalAnnouncement[];
 }
 
 const SupplierPortalPage: React.FC = () => {
@@ -153,9 +153,24 @@ const SupplierPortalPage: React.FC = () => {
         announcements = (announcementsRes.data as SupplierPortalAnnouncement[]) || [];
       } else {
         announcements = [
-          { id: '1', title: i18n.t('pages.supplier_portal_page.k0'), date: '2024-01-15', type: 'important' },
-          { id: '2', title: i18n.t('pages.supplier_portal_page.k1'), date: '2024-01-10', type: 'normal' },
-          { id: '3', title: i18n.t('pages.supplier_portal_page.2024_0'), date: '2024-01-05', type: 'normal' },
+          {
+            id: '1',
+            title: i18n.t('pages.supplier_portal_page.k0'),
+            date: '2024-01-15',
+            type: 'important',
+          },
+          {
+            id: '2',
+            title: i18n.t('pages.supplier_portal_page.k1'),
+            date: '2024-01-10',
+            type: 'normal',
+          },
+          {
+            id: '3',
+            title: i18n.t('pages.supplier_portal_page.2024_0'),
+            date: '2024-01-05',
+            type: 'normal',
+          },
         ];
       }
 
@@ -228,10 +243,26 @@ const SupplierPortalPage: React.FC = () => {
   ];
 
   const quickActions = [
-    { label: i18n.t('pages.supplier_portal_page.k15'), icon: <Package size={20} />, action: () => setActiveTab(1) },
-    { label: i18n.t('pages.supplier_portal_page.k16'), icon: <FileText size={20} />, action: () => setActiveTab(2) },
-    { label: i18n.t('pages.supplier_portal_page.k17'), icon: <Truck size={20} />, action: () => setActiveTab(3) },
-    { label: i18n.t('pages.supplier_portal_page.k18'), icon: <TrendingUp size={20} />, action: () => setActiveTab(4) },
+    {
+      label: i18n.t('pages.supplier_portal_page.k15'),
+      icon: <Package size={20} />,
+      action: () => setActiveTab(1),
+    },
+    {
+      label: i18n.t('pages.supplier_portal_page.k16'),
+      icon: <FileText size={20} />,
+      action: () => setActiveTab(2),
+    },
+    {
+      label: i18n.t('pages.supplier_portal_page.k17'),
+      icon: <Truck size={20} />,
+      action: () => setActiveTab(3),
+    },
+    {
+      label: i18n.t('pages.supplier_portal_page.k18'),
+      icon: <TrendingUp size={20} />,
+      action: () => setActiveTab(4),
+    },
   ];
 
   return (
@@ -432,14 +463,24 @@ const SupplierPortalPage: React.FC = () => {
               {activeTab === 1 && (
                 <List disablePadding>
                   {[
-                    { id: '1', title: i18n.t('pages.supplier_portal_page.po2024001_24'), type: 'order', priority: 'high' },
+                    {
+                      id: '1',
+                      title: i18n.t('pages.supplier_portal_page.po2024001_24'),
+                      type: 'order',
+                      priority: 'high',
+                    },
                     {
                       id: '2',
                       title: i18n.t('pages.supplier_portal_page.po2024002_25'),
                       type: 'delivery',
                       priority: 'medium',
                     },
-                    { id: '3', title: i18n.t('pages.supplier_portal_page.inv2024005_26'), type: 'invoice', priority: 'low' },
+                    {
+                      id: '3',
+                      title: i18n.t('pages.supplier_portal_page.inv2024005_26'),
+                      type: 'invoice',
+                      priority: 'low',
+                    },
                   ].map((item, index) => (
                     <React.Fragment key={item.id}>
                       {index > 0 && <Divider />}
@@ -524,7 +565,9 @@ const SupplierPortalPage: React.FC = () => {
               </Typography>
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                  <Typography variant='body2'>{i18n.t('pages.supplier_portal_page.k31')}</Typography>
+                  <Typography variant='body2'>
+                    {i18n.t('pages.supplier_portal_page.k31')}
+                  </Typography>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 600 }}
@@ -541,7 +584,9 @@ const SupplierPortalPage: React.FC = () => {
               </Box>
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                  <Typography variant='body2'>{i18n.t('pages.supplier_portal_page.k32')}</Typography>
+                  <Typography variant='body2'>
+                    {i18n.t('pages.supplier_portal_page.k32')}
+                  </Typography>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 600 }}
@@ -558,7 +603,9 @@ const SupplierPortalPage: React.FC = () => {
               </Box>
               <Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                  <Typography variant='body2'>{i18n.t('pages.supplier_portal_page.k33')}</Typography>
+                  <Typography variant='body2'>
+                    {i18n.t('pages.supplier_portal_page.k33')}
+                  </Typography>
                   <Typography
                     variant='body2'
                     sx={{ fontWeight: 600 }}
@@ -592,7 +639,10 @@ const SupplierPortalPage: React.FC = () => {
                   { icon: <Package size={20} />, label: i18n.t('pages.supplier_portal_page.k34') },
                   { icon: <FileText size={20} />, label: i18n.t('pages.supplier_portal_page.k35') },
                   { icon: <Truck size={20} />, label: i18n.t('pages.supplier_portal_page.k36') },
-                  { icon: <TrendingUp size={20} />, label: i18n.t('pages.supplier_portal_page.k37') },
+                  {
+                    icon: <TrendingUp size={20} />,
+                    label: i18n.t('pages.supplier_portal_page.k37'),
+                  },
                   { icon: <Star size={20} />, label: i18n.t('pages.supplier_portal_page.k38') },
                   { icon: <Bell size={20} />, label: i18n.t('pages.supplier_portal_page.k39') },
                 ].map((item, index) => (

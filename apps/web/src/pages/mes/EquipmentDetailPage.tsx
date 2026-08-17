@@ -2,7 +2,7 @@ import { Typography, Box, InputLabel, Chip, type ChipProps } from '@mui/material
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import {QUERY_KEYS, queryClient, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, queryClient, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Wrench } from 'lucide-react';
 import { assetApi, type Asset } from '@/api/erp';
 import { useNotification } from '@/hooks/useNotification';
@@ -13,7 +13,8 @@ import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import { MES_PATHS } from '@/modules/mes/config';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const EquipmentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -36,25 +37,27 @@ const EquipmentDetailPage: React.FC = () => {
       );
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const errorMessage = queryError
     ? i18n.t('mes.equipment_detail_page.notifications.load_error.message')
     : undefined;
   const deleteMutation = useMutation({
     mutationFn: (equipmentId: string) => assetApi.delete(equipmentId),
     onSuccess: (res) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.ERP.ASSETS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.ERP.ASSETS,
+        exact: false,
+        refetchType: 'active',
+      });
       if (res.code === 200) {
         success(i18n.t('mes.equipment_detail_page.notifications.delete_success.message'));
         navigate(MES_PATHS.equipment);
       } else {
-        error(res.message || i18n.t('mes.equipment_detail_page.notifications.delete_error.message'));
+        error(
+          res.message || i18n.t('mes.equipment_detail_page.notifications.delete_error.message')
+        );
       }
     },
     onError: (err: unknown) => {
@@ -357,7 +360,12 @@ const EquipmentDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={equipment?.name || equipment?.asset_number || equipment?.id || i18n.t('mes.equipment_detail_page.k0')}
+        detailItemName={
+          equipment?.name ||
+          equipment?.asset_number ||
+          equipment?.id ||
+          i18n.t('mes.equipment_detail_page.k0')
+        }
         backHref={MES_PATHS.equipment}
         loading={loading}
         error={errorMessage}

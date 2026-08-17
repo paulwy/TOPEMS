@@ -49,7 +49,8 @@ import { designTokens } from '@/theme/tokens';
 import { logger } from '@/utils/logger';
 import { BI_PATHS } from '@/modules/bi/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 interface ComparisonRow {
   id: string;
   comparisonItem: string;
@@ -124,10 +125,11 @@ const BIComparisonPage = () => {
     mutationFn: (id: string) => runComparison(id),
     onSuccess: (res) => {
       if (res.success) {
-        queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.BI_COMPARISON_RESULT_BASE, currentComparisonId] ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: [...QUERY_KEYS.AD_HOC.BI_COMPARISON_RESULT_BASE, currentComparisonId],
+          exact: false,
+          refetchType: 'active',
+        });
       }
     },
     onError: (e: unknown) => {
@@ -388,11 +390,21 @@ const BIComparisonPage = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, bgcolor: 'grey.100' }}>{i18n.t('bi.bi_comparison_page.k8')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600, bgcolor: 'grey.100' }}>{i18n.t('bi.bi_comparison_page.a_9')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600, bgcolor: 'grey.100' }}>{i18n.t('bi.bi_comparison_page.b_10')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600, bgcolor: 'grey.100' }}>{i18n.t('bi.bi_comparison_page.k11')}</TableCell>
-                    <TableCell sx={{ fontWeight: 600, bgcolor: 'grey.100' }}>{i18n.t('bi.bi_comparison_page.k12')}</TableCell>
+                    <TableCell sx={{ fontWeight: 600, bgcolor: 'grey.100' }}>
+                      {i18n.t('bi.bi_comparison_page.k8')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, bgcolor: 'grey.100' }}>
+                      {i18n.t('bi.bi_comparison_page.a_9')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, bgcolor: 'grey.100' }}>
+                      {i18n.t('bi.bi_comparison_page.b_10')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, bgcolor: 'grey.100' }}>
+                      {i18n.t('bi.bi_comparison_page.k11')}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, bgcolor: 'grey.100' }}>
+                      {i18n.t('bi.bi_comparison_page.k12')}
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>

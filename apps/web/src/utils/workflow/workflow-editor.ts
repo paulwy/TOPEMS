@@ -350,7 +350,12 @@ export class WorkflowEditor {
     if (!workflow) {
       return {
         valid: false,
-        errors: [{ code: 'WORKFLOW_NOT_FOUND', message: `${i18n.t('shared.workflow-editor.k0')}${workflowId}${i18n.t('shared.workflow-editor.k1')}` }],
+        errors: [
+          {
+            code: 'WORKFLOW_NOT_FOUND',
+            message: `${i18n.t('shared.workflow-editor.k0')}${workflowId}${i18n.t('shared.workflow-editor.k1')}`,
+          },
+        ],
         warnings: [],
       };
     }

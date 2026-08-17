@@ -40,7 +40,9 @@ describe('V138 ERP - addressbookApi', () => {
   it('should search contacts by keyword', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { contacts: [], total: 0 } });
     await addressbookApi.search('张伟', 1, 10);
-    expect(mockClient.get).toHaveBeenCalledWith('/addressbook/search?keyword=%E5%BC%A0%E4%BC%9F&page=1&pagesize=10');
+    expect(mockClient.get).toHaveBeenCalledWith(
+      '/addressbook/search?keyword=%E5%BC%A0%E4%BC%9F&page=1&pagesize=10'
+    );
   });
 
   it('should get department tree', async () => {
@@ -71,7 +73,9 @@ describe('V138 ERP - announcementApi', () => {
   it('should list announcements', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await announcementApi.list({ page: 1, pageSize: 20, status: 'published' });
-    expect(mockClient.get).toHaveBeenCalledWith('/announcements?page=1&pagesize=20&status=published');
+    expect(mockClient.get).toHaveBeenCalledWith(
+      '/announcements?page=1&pagesize=20&status=published'
+    );
   });
 
   it('should create announcement', async () => {

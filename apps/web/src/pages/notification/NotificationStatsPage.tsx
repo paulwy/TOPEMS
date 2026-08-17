@@ -8,7 +8,8 @@ import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 interface ServiceStatus {
   status: string;
   uptime: string;
@@ -17,7 +18,7 @@ interface ServiceStatus {
 const NotificationStatsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [timeRange, setTimeRange] = useState('week');
-  const { data: stats, isPending: statsLoading} = useQuery<NotificationStats>({
+  const { data: stats, isPending: statsLoading } = useQuery<NotificationStats>({
     queryKey: QUERY_KEYS.NOTIFICATION.STATS,
     queryFn: async () => {
       const res = await getMyNotificationStats();
@@ -54,14 +55,16 @@ const NotificationStatsPage: React.FC = () => {
   });
   const loading = statsLoading;
   const loadData = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.STATS ,
-  exact: false,
-  refetchType: 'active',
-});
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.SERVICE_HEALTH ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.NOTIFICATION.STATS,
+      exact: false,
+      refetchType: 'active',
+    });
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.NOTIFICATION.SERVICE_HEALTH,
+      exact: false,
+      refetchType: 'active',
+    });
   };
   const getTypeStats = () => {
     if (!stats) return [];
@@ -251,7 +254,10 @@ const NotificationStatsPage: React.FC = () => {
                     color: ct.grey[800],
                   }}
                 >
-                  {i18n.t('pages.notification_stats_page.k0')}{serviceStatus.status === 'healthy' ? i18n.t('notification.notification_stats_page.k30') : i18n.t('notification.notification_stats_page.k29')}
+                  {i18n.t('pages.notification_stats_page.k0')}
+                  {serviceStatus.status === 'healthy'
+                    ? i18n.t('notification.notification_stats_page.k30')
+                    : i18n.t('notification.notification_stats_page.k29')}
                 </span>
               </div>
               <div
@@ -266,7 +272,10 @@ const NotificationStatsPage: React.FC = () => {
                 <span>{i18n.t('pages.notification_stats_page.k0')}</span>
                 {serviceStatus.dependencies.map((dep, idx) => (
                   <span key={idx}>
-                    {dep.name}：{dep.status === 'healthy' ? i18n.t('notification.notification_stats_page.k32') : i18n.t('notification.notification_stats_page.k31')}
+                    {dep.name}：
+                    {dep.status === 'healthy'
+                      ? i18n.t('notification.notification_stats_page.k32')
+                      : i18n.t('notification.notification_stats_page.k31')}
                   </span>
                 ))}
               </div>

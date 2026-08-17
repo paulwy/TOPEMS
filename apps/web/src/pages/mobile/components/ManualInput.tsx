@@ -4,6 +4,7 @@ import { Barcode } from 'lucide-react';
 import { MobileButton } from '@/components/mobile';
 import { sizeTokens } from '@/theme';
 import i18n from '@/i18n';
+
 interface ManualInputProps {
   manualInput: string;
   onManualInputChange: (value: string) => void;

@@ -279,7 +279,9 @@ const NotificationSettings: React.FC = () => {
                   outline: 'none',
                 }}
               />
-              <span style={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('components.notification_settings.k6')}</span>
+              <span style={{ fontSize: 12, color: 'text.secondary' }}>
+                {i18n.t('components.notification_settings.k6')}
+              </span>
               <input
                 type='time'
                 value={settings.quietHours.end}

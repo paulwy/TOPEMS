@@ -12,6 +12,7 @@ import type {
 } from '@/api/gis';
 import type { GisEntity } from '../types';
 import i18n from '@/i18n';
+
 export const getStatusStyle = (status: string) => {
   if (!status) return { bgcolor: 'grey.100', color: 'grey.600' };
   const s = status.toLowerCase();

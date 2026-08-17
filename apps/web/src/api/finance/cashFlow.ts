@@ -1,10 +1,6 @@
 import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
-import type {
-  BalanceSheet,
-  IncomeStatement,
-  CashFlowStatement,
-} from '../../types/finance';
+import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '../../types/finance';
 
 export interface LedgerQueryParams {
   account_id?: string;

@@ -258,7 +258,12 @@ export const auditPlanSchema: EntitySchema = {
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
         const val = String(row.audit_type ?? '');
-        const label = val === 'internal' ? i18n.t('qms.quality_control.k56') : val === 'external' ? i18n.t('qms.quality_control.k55') : val;
+        const label =
+          val === 'internal'
+            ? i18n.t('qms.quality_control.k56')
+            : val === 'external'
+              ? i18n.t('qms.quality_control.k55')
+              : val;
         return React.createElement(Chip, {
           label,
           size: 'small',

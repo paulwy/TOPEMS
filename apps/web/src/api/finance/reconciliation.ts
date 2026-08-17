@@ -60,11 +60,15 @@ export const reconciliationApi = {
     return apiClient.finance.post('/reconcile', data);
   },
 
-  autoReconcile: (data: ReconciliationCreateRequest): Promise<ApiResponse<{
-    reconciled_count: number;
-    total_difference: number;
-    orders: ReconciliationOrder[];
-  }>> => {
+  autoReconcile: (
+    data: ReconciliationCreateRequest
+  ): Promise<
+    ApiResponse<{
+      reconciled_count: number;
+      total_difference: number;
+      orders: ReconciliationOrder[];
+    }>
+  > => {
     return apiClient.finance.post('/reconcile/auto', data);
   },
 
@@ -72,7 +76,10 @@ export const reconciliationApi = {
     return apiClient.finance.post(`/reconcile/${orderId}/confirm`, {});
   },
 
-  dispute: (orderId: string, data: { reason: string }): Promise<ApiResponse<ReconciliationOrder>> => {
+  dispute: (
+    orderId: string,
+    data: { reason: string }
+  ): Promise<ApiResponse<ReconciliationOrder>> => {
     return apiClient.finance.post(`/reconcile/${orderId}/dispute`, data);
   },
 

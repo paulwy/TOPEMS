@@ -90,9 +90,7 @@ export const AppManagementPage: React.FC = () => {
     return (
       <PageContainer title={t('lowcode.app_management_page.k4')}>
         <Box sx={{ p: 3 }}>
-          <Typography color='text.secondary'>
-            {t('lowcode.app_management_page.e1')}
-          </Typography>
+          <Typography color='text.secondary'>{t('lowcode.app_management_page.e1')}</Typography>
         </Box>
       </PageContainer>
     );

@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  productionOrderApi,
-  customerExtendedApi,
-  salesOrderExtendedApi,
-} from '../erp/core';
+import { productionOrderApi, customerExtendedApi, salesOrderExtendedApi } from '../erp/core';
 import apiClient from '../client';
 
 vi.mock('../client', () => ({
@@ -142,9 +138,7 @@ describe('V137 ERP - customerExtendedApi', () => {
   });
 
   it('should batch update customers', async () => {
-    const updates = [
-      { id: 'C1', payload: { customer_name: 'New Name' } },
-    ];
+    const updates = [{ id: 'C1', payload: { customer_name: 'New Name' } }];
     mockClient.put.mockResolvedValue({ success: true, data: [] });
     await customerExtendedApi.updateBatch(updates);
     expect(mockClient.put).toHaveBeenCalledWith('/customers/batch', { updates });
@@ -153,7 +147,9 @@ describe('V137 ERP - customerExtendedApi', () => {
   it('should batch remove customers', async () => {
     mockClient.delete.mockResolvedValue({ success: true, data: 'ok' });
     await customerExtendedApi.removeBatch(['C1', 'C2']);
-    expect(mockClient.delete).toHaveBeenCalledWith('/customers/batch', { data: { ids: ['C1', 'C2'] } });
+    expect(mockClient.delete).toHaveBeenCalledWith('/customers/batch', {
+      data: { ids: ['C1', 'C2'] },
+    });
   });
 
   it('should change customer status', async () => {
@@ -224,7 +220,15 @@ describe('V137 ERP - salesOrderExtendedApi', () => {
   });
 
   it('should batch create sales orders', async () => {
-    const data = [{ order_number: 'SO001', customer_id: 'C1', customer_name: 'A', total_amount: 100, order_date: '2026-08-15' }];
+    const data = [
+      {
+        order_number: 'SO001',
+        customer_id: 'C1',
+        customer_name: 'A',
+        total_amount: 100,
+        order_date: '2026-08-15',
+      },
+    ];
     mockClient.post.mockResolvedValue({ success: true, data: [] });
     await salesOrderExtendedApi.createBatch(data);
     expect(mockClient.post).toHaveBeenCalledWith('/sales-orders/batch', { orders: data });
@@ -240,7 +244,9 @@ describe('V137 ERP - salesOrderExtendedApi', () => {
   it('should batch approve sales orders', async () => {
     mockClient.post.mockResolvedValue({ success: true, data: [] });
     await salesOrderExtendedApi.approveBatch({ ids: ['SO1', 'SO2'] });
-    expect(mockClient.post).toHaveBeenCalledWith('/sales-orders/batch/approve', { ids: ['SO1', 'SO2'] });
+    expect(mockClient.post).toHaveBeenCalledWith('/sales-orders/batch/approve', {
+      ids: ['SO1', 'SO2'],
+    });
   });
 
   it('should batch ship sales orders', async () => {
@@ -270,7 +276,14 @@ describe('V137 ERP - salesOrderExtendedApi', () => {
   it('should get sales order stats', async () => {
     mockClient.get.mockResolvedValue({
       success: true,
-      data: { total: 50, byStatus: [], byCustomer: [], pendingTotalAmount: 0, shippedTotalAmount: 0, completedTotalAmount: 0 },
+      data: {
+        total: 50,
+        byStatus: [],
+        byCustomer: [],
+        pendingTotalAmount: 0,
+        shippedTotalAmount: 0,
+        completedTotalAmount: 0,
+      },
     });
     await salesOrderExtendedApi.getStats();
     expect(mockClient.get).toHaveBeenCalledWith('/sales-orders/stats');

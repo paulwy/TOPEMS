@@ -6,9 +6,10 @@ import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/t
 import { PageContainer } from '@/components/common';
 import { pmApi, type Project } from '@/api/pm';
 import { PM_PATHS } from '@/modules/pm/config';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { LazyChart } from '@/components/charts';
 import i18n from '@/i18n';
+
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const statisticsQuery = useQuery({
@@ -17,16 +18,18 @@ export const DashboardPage: React.FC = () => {
       const response = await pmApi.getStatistics();
       return response.data;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const projectsQuery = useQuery({
     queryKey: QUERY_KEYS.PM.PROJECTS,
     queryFn: async () => {
       const response = await pmApi.projects.list();
       return (response.data?.items ?? []) as Project[];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const loading = statisticsQuery.isLoading || projectsQuery.isLoading;
   const statsData = useMemo(() => {
     const data = statisticsQuery.data as unknown as Record<string, unknown>;
@@ -159,7 +162,8 @@ export const DashboardPage: React.FC = () => {
         id: 'progress',
         title: i18n.t('pm.dashboard_page.k25'),
         chart: (
-          <LazyChart type='bar'
+          <LazyChart
+            type='bar'
             data={chartData.projectProgress}
             xKey='name'
             yKey='value'
@@ -172,7 +176,8 @@ export const DashboardPage: React.FC = () => {
         id: 'trend',
         title: i18n.t('pm.dashboard_page.k26'),
         chart: (
-          <LazyChart type='line'
+          <LazyChart
+            type='line'
             data={chartData.taskTrend}
             xKey='name'
             yKey='value'
@@ -184,7 +189,12 @@ export const DashboardPage: React.FC = () => {
       {
         id: 'status',
         title: i18n.t('pm.dashboard_page.k27'),
-        chart: <LazyChart type='pie' data={chartData.projectStatus} />,
+        chart: (
+          <LazyChart
+            type='pie'
+            data={chartData.projectStatus}
+          />
+        ),
         height: 300,
         type: 'pie',
       },
@@ -218,7 +228,10 @@ export const DashboardPage: React.FC = () => {
       <DashboardTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: i18n.t('pm.dashboard_page.k33'), href: '/dashboard' }, { label: i18n.t('pm.dashboard_page.k32') }]}
+        breadcrumbs={[
+          { label: i18n.t('pm.dashboard_page.k33'), href: '/dashboard' },
+          { label: i18n.t('pm.dashboard_page.k32') },
+        ]}
         stats={stats}
         charts={charts}
         quickActions={quickActions}

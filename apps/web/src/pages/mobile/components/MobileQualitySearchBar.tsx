@@ -6,6 +6,7 @@ import React from 'react';
 import { Box, TextField, InputAdornment } from '@mui/material';
 import { Search } from 'lucide-react';
 import i18n from '@/i18n';
+
 interface MobileQualitySearchBarProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;

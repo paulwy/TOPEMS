@@ -14,7 +14,8 @@ export const fieldCode = () =>
 export const fieldDescription = () =>
   z.string().max(500, i18n.t('shared.form_schemas.500_5')).optional().or(z.literal(''));
 
-export const fieldEmail = () => z.string().email(i18n.t('shared.form_schemas.k6')).or(z.literal(''));
+export const fieldEmail = () =>
+  z.string().email(i18n.t('shared.form_schemas.k6')).or(z.literal(''));
 
 export const fieldPhone = () =>
   z
@@ -29,7 +30,10 @@ export const fieldAmount = () =>
     .refine((val) => Number.isFinite(val), i18n.t('shared.form_schemas.k9'));
 
 export const fieldPercentage = () =>
-  z.number().min(0, i18n.t('shared.form_schemas.k11')).max(100, i18n.t('shared.form_schemas.100_10'));
+  z
+    .number()
+    .min(0, i18n.t('shared.form_schemas.k11'))
+    .max(100, i18n.t('shared.form_schemas.100_10'));
 
 export const fieldDateRange = () =>
   z

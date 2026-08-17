@@ -231,7 +231,9 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
             style={{
               padding: '6px 12px',
               borderRadius: 'xs',
-              border: isActive ? `1px solid ${designTokens.colors.primary.dark}` : `1px solid ${designTokens.colors.grey['300']}`,
+              border: isActive
+                ? `1px solid ${designTokens.colors.primary.dark}`
+                : `1px solid ${designTokens.colors.grey['300']}`,
               backgroundColor: isActive ? 'colors.primary.50' : '#f5f5f5',
               cursor: 'pointer',
               fontSize: '12px',

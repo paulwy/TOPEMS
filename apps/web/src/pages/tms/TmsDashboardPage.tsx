@@ -12,6 +12,7 @@ import {
 import i18n from '@/i18n';
 import { TMS_PATHS } from '@/modules/tms/config';
 import { tmsApi } from '@/api/tms';
+
 const TmsDashboardPage: React.FC = () => {
   const { data: backendData, isLoading: isBackendLoading } = useQuery({
     queryKey: ['tms', 'TmsDashboardPage'],
@@ -29,7 +30,9 @@ const TmsDashboardPage: React.FC = () => {
           totalDrivers: dr?.data?.total ?? 0,
           totalCarriers: cr?.data?.total ?? 0,
         };
-      } catch (e) { return {}; }
+      } catch (e) {
+        return {};
+      }
     },
   });
   const navigate = useNavigate();

@@ -87,7 +87,10 @@ export const migrationApi = {
       if (res && res.success && res.data) {
         return res.data;
       }
-      throw new Error((res && res.message) || `${i18n.t('shared.index.k3')}${serviceName}${i18n.t('shared.index.k4')}`);
+      throw new Error(
+        (res && res.message) ||
+          `${i18n.t('shared.index.k3')}${serviceName}${i18n.t('shared.index.k4')}`
+      );
     } catch (err: unknown) {
       throw new Error(extractMessage(err));
     }
@@ -102,7 +105,10 @@ export const migrationApi = {
       if (res && res.success && res.data) {
         return res.data;
       }
-      throw new Error((res && res.message) || `${i18n.t('shared.index.k5')}${serviceName}${i18n.t('shared.index.k6')}`);
+      throw new Error(
+        (res && res.message) ||
+          `${i18n.t('shared.index.k5')}${serviceName}${i18n.t('shared.index.k6')}`
+      );
     } catch (err: unknown) {
       throw new Error(extractMessage(err));
     }
@@ -118,7 +124,10 @@ export const migrationApi = {
           applied: Array.isArray(res.data.applied) ? res.data.applied : [],
         };
       }
-      throw new Error((res && res.message) || `${i18n.t('shared.index.k7')}${serviceName}${i18n.t('shared.index.k8')}`);
+      throw new Error(
+        (res && res.message) ||
+          `${i18n.t('shared.index.k7')}${serviceName}${i18n.t('shared.index.k8')}`
+      );
     } catch (err: unknown) {
       logger.error(`[MigrationAPI] getMigrationStatus failed: ${extractMessage(err)}`);
       throw new Error(extractMessage(err));

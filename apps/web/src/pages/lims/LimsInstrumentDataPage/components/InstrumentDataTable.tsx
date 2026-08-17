@@ -21,6 +21,7 @@ import i18n from '@/i18n';
 import type { InstrumentData } from '@/api/lims';
 import { getStatusColor, getStatusLabel } from '../utils';
 import type { ChipColor } from '../utils';
+
 interface InstrumentDataTableProps {
   loading: boolean;
   dataList: InstrumentData[];

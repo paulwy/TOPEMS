@@ -13,12 +13,13 @@ import { MobileProductionFilters } from './components/MobileProductionFilters';
 import { MobileProductionCard } from './components/MobileProductionCard';
 import { MobileProductionReportDialog } from './components/MobileProductionReportDialog';
 import i18n from '@/i18n';
+
 const MobileProductionPage: React.FC = () => {
   const { data: backendData } = useQuery({
     queryKey: ['mobile-production-page'],
     queryFn: async () => {
       try {
-        return await mobileApi.production.listOrders() ?? {};
+        return (await mobileApi.production.listOrders()) ?? {};
       } catch (e) {
         return {};
       }
@@ -73,16 +74,32 @@ const MobileProductionPage: React.FC = () => {
     }
   };
   const bottomTabs = [
-    { id: 'home', label: i18n.t('mobile.mobile_production_page.k0'), icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: i18n.t('mobile.mobile_production_page.k1'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: i18n.t('mobile.mobile_production_page.k2'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    {
+      id: 'home',
+      label: i18n.t('mobile.mobile_production_page.k0'),
+      icon: <Home style={{ width: 22, height: 22 }} />,
+    },
+    {
+      id: 'tasks',
+      label: i18n.t('mobile.mobile_production_page.k1'),
+      icon: <ListTodo style={{ width: 22, height: 22 }} />,
+    },
+    {
+      id: 'scan',
+      label: i18n.t('mobile.mobile_production_page.k2'),
+      icon: <ScanLine style={{ width: 22, height: 22 }} />,
+    },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_production_page.k3'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
       badge: 3,
     },
-    { id: 'profile', label: i18n.t('mobile.mobile_production_page.k4'), icon: <User style={{ width: 22, height: 22 }} /> },
+    {
+      id: 'profile',
+      label: i18n.t('mobile.mobile_production_page.k4'),
+      icon: <User style={{ width: 22, height: 22 }} />,
+    },
   ];
   return (
     <MobileLayout

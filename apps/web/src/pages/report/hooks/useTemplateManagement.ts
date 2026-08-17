@@ -6,7 +6,6 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useCrudMutations } from '@/hooks';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 export function useTemplateManagement() {
@@ -98,10 +97,11 @@ export function useTemplateManagement() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.TEMPLATES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.TEMPLATES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: t('report.template_management_page.success_title'),
@@ -127,10 +127,11 @@ export function useTemplateManagement() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.TEMPLATES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.TEMPLATES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         type: 'success',
         title: t('report.template_management_page.success_title'),

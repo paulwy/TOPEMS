@@ -77,7 +77,8 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
               variant='caption'
               sx={{ color: 'grey.500' }}
             >
-              {i18n.t('components.preview_content.k0')} {previewData.length} {i18n.t('components.preview_content.k1')}
+              {i18n.t('components.preview_content.k0')} {previewData.length}{' '}
+              {i18n.t('components.preview_content.k1')}
             </Typography>
           </Box>
         )}
@@ -105,7 +106,13 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
       );
     }
 
-    const chartColors = [designTokens.colors.secondary.dark, 'colors.orange.500', designTokens.colors.success.dark, designTokens.colors.error.main, designTokens.colors.secondary.main];
+    const chartColors = [
+      designTokens.colors.secondary.dark,
+      'colors.orange.500',
+      designTokens.colors.success.dark,
+      designTokens.colors.error.main,
+      designTokens.colors.secondary.main,
+    ];
 
     return (
       <Paper sx={{ p: 3, borderRadius: 1 }}>

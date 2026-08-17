@@ -34,7 +34,10 @@ export const pdmVersionApi = {
     return apiClient.pdm.post('/versions', data);
   },
 
-  update: (id: string, data: Partial<CreatePdmVersionRequest>): Promise<ApiResponse<PdmVersion>> => {
+  update: (
+    id: string,
+    data: Partial<CreatePdmVersionRequest>
+  ): Promise<ApiResponse<PdmVersion>> => {
     return apiClient.pdm.put(`/versions/${id}`, data);
   },
 

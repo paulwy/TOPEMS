@@ -4,8 +4,10 @@ import type { ApiResponse } from '../client';
 // ============ Types ============
 
 export type LineageDirection = 'upstream' | 'downstream' | 'bidirectional';
-export type LineageNodeType = 'source' | 'transform' | 'destination' | 'table' | 'column' | 'view' | 'materialized_view';
-export type LineageEdgeType = 'read' | 'write' | 'transform' | 'aggregate' | 'join' | 'filter' | 'group_by';
+export type LineageNodeType =
+  'source' | 'transform' | 'destination' | 'table' | 'column' | 'view' | 'materialized_view';
+export type LineageEdgeType =
+  'read' | 'write' | 'transform' | 'aggregate' | 'join' | 'filter' | 'group_by';
 export type ImpactSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 export type ImpactStatus = 'analyzing' | 'completed' | 'failed';
 export type DiffType = 'added' | 'removed' | 'modified' | 'unchanged';
@@ -254,7 +256,8 @@ export const dataLineageEnhancedApiV77 = {
     if (params.direction) qs.set('direction', params.direction);
     if (params.depth !== undefined) qs.set('depth', String(params.depth));
     if (params.include_views !== undefined) qs.set('include_views', String(params.include_views));
-    if (params.include_materialized_views !== undefined) qs.set('include_materialized_views', String(params.include_materialized_views));
+    if (params.include_materialized_views !== undefined)
+      qs.set('include_materialized_views', String(params.include_materialized_views));
     const s = qs.toString();
     return apiClient.master.get<LineageGraph>(`/mdm-v77/graph${s ? `?${s}` : ''}`);
   },
@@ -275,7 +278,9 @@ export const dataLineageEnhancedApiV77 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<LineageNode>>(`/mdm-v77/nodes${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<LineageNode>>(
+      `/mdm-v77/nodes${s ? `?${s}` : ''}`
+    );
   },
 
   async getLineageNode(id: string): Promise<ApiResponse<LineageNode>> {
@@ -292,7 +297,8 @@ export const dataLineageEnhancedApiV77 = {
     if (params?.source_id) qs.set('source_id', params.source_id);
     if (params?.target_id) qs.set('target_id', params.target_id);
     if (params?.type) qs.set('type', params.type);
-    if (params?.min_confidence !== undefined) qs.set('min_confidence', String(params.min_confidence));
+    if (params?.min_confidence !== undefined)
+      qs.set('min_confidence', String(params.min_confidence));
     const s = qs.toString();
     return apiClient.master.get<LineageEdge[]>(`/mdm-v77/edges${s ? `?${s}` : ''}`);
   },
@@ -307,17 +313,22 @@ export const dataLineageEnhancedApiV77 = {
     if (params?.schema) qs.set('schema', params.schema);
     if (params?.force !== undefined) qs.set('force', String(params.force));
     const s = qs.toString();
-    return apiClient.master.post<{ job_id: string; status: string }>(`/mdm-v77/refresh${s ? `?${s}` : ''}`, {});
+    return apiClient.master.post<{ job_id: string; status: string }>(
+      `/mdm-v77/refresh${s ? `?${s}` : ''}`,
+      {}
+    );
   },
 
-  async getLineageRefreshStatus(jobId: string): Promise<ApiResponse<{
-    job_id: string;
-    status: 'pending' | 'running' | 'completed' | 'failed';
-    progress: number;
-    nodes_processed: number;
-    total_nodes: number;
-    error_message?: string;
-  }>> {
+  async getLineageRefreshStatus(jobId: string): Promise<
+    ApiResponse<{
+      job_id: string;
+      status: 'pending' | 'running' | 'completed' | 'failed';
+      progress: number;
+      nodes_processed: number;
+      total_nodes: number;
+      error_message?: string;
+    }>
+  > {
     return apiClient.master.get<{
       job_id: string;
       status: 'pending' | 'running' | 'completed' | 'failed';
@@ -329,24 +340,30 @@ export const dataLineageEnhancedApiV77 = {
   },
 
   // ===== 列级血缘分析 =====
-  async traceColumnLineage(params: TraceColumnLineageRequest): Promise<ApiResponse<ColumnLineage[]>> {
+  async traceColumnLineage(
+    params: TraceColumnLineageRequest
+  ): Promise<ApiResponse<ColumnLineage[]>> {
     const qs = new URLSearchParams();
     qs.set('database', params.database);
     qs.set('schema', params.schema);
     qs.set('table', params.table);
     qs.set('column', params.column);
     if (params.direction) qs.set('direction', params.direction);
-    if (params.include_transformations !== undefined) qs.set('include_transformations', String(params.include_transformations));
-    if (params.min_confidence !== undefined) qs.set('min_confidence', String(params.min_confidence));
+    if (params.include_transformations !== undefined)
+      qs.set('include_transformations', String(params.include_transformations));
+    if (params.min_confidence !== undefined)
+      qs.set('min_confidence', String(params.min_confidence));
     return apiClient.master.get<ColumnLineage[]>(`/mdm-v77/column-lineage?${qs.toString()}`);
   },
 
-  async batchTraceColumnLineage(columns: TraceColumnLineageRequest[]): Promise<ApiResponse<{
-    total_requested: number;
-    completed: number;
-    failed: number;
-    results: ColumnLineage[];
-  }>> {
+  async batchTraceColumnLineage(columns: TraceColumnLineageRequest[]): Promise<
+    ApiResponse<{
+      total_requested: number;
+      completed: number;
+      failed: number;
+      results: ColumnLineage[];
+    }>
+  > {
     return apiClient.master.post<{
       total_requested: number;
       completed: number;
@@ -382,7 +399,9 @@ export const dataLineageEnhancedApiV77 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<ImpactAnalysis>>(`/mdm-v77/impact-analysis${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<ImpactAnalysis>>(
+      `/mdm-v77/impact-analysis${s ? `?${s}` : ''}`
+    );
   },
 
   async deleteImpactAnalysis(id: string): Promise<ApiResponse<{ deleted: boolean }>> {
@@ -390,35 +409,54 @@ export const dataLineageEnhancedApiV77 = {
   },
 
   // ===== 变更传播路径 =====
-  async getPropagationPath(params: GetPropagationPathRequest): Promise<ApiResponse<ChangePropagationPath>> {
+  async getPropagationPath(
+    params: GetPropagationPathRequest
+  ): Promise<ApiResponse<ChangePropagationPath>> {
     const qs = new URLSearchParams();
     qs.set('source_node_id', params.source_node_id);
     qs.set('target_node_id', params.target_node_id);
     if (params.max_hops !== undefined) qs.set('max_hops', String(params.max_hops));
-    if (params.include_indirect !== undefined) qs.set('include_indirect', String(params.include_indirect));
-    return apiClient.master.get<ChangePropagationPath>(`/mdm-v77/propagation-path?${qs.toString()}`);
-  },
-
-  async getMultiplePropagationPaths(paths: GetPropagationPathRequest[]): Promise<ApiResponse<ChangePropagationPath[]>> {
-    return apiClient.master.post<ChangePropagationPath[]>('/mdm-v77/propagation-path/batch', { paths });
-  },
-
-  async getShortestPath(sourceNodeId: string, targetNodeId: string): Promise<ApiResponse<ChangePropagationPath>> {
+    if (params.include_indirect !== undefined)
+      qs.set('include_indirect', String(params.include_indirect));
     return apiClient.master.get<ChangePropagationPath>(
-      `/mdm-v77/shortest-path?source=${sourceNodeId}&target=${targetNodeId}`,
+      `/mdm-v77/propagation-path?${qs.toString()}`
+    );
+  },
+
+  async getMultiplePropagationPaths(
+    paths: GetPropagationPathRequest[]
+  ): Promise<ApiResponse<ChangePropagationPath[]>> {
+    return apiClient.master.post<ChangePropagationPath[]>('/mdm-v77/propagation-path/batch', {
+      paths,
+    });
+  },
+
+  async getShortestPath(
+    sourceNodeId: string,
+    targetNodeId: string
+  ): Promise<ApiResponse<ChangePropagationPath>> {
+    return apiClient.master.get<ChangePropagationPath>(
+      `/mdm-v77/shortest-path?source=${sourceNodeId}&target=${targetNodeId}`
     );
   },
 
   // ===== 血缘差异对比 =====
-  async compareLineage(baselineDate: string, currentDate: string): Promise<ApiResponse<LineageDiff>> {
+  async compareLineage(
+    baselineDate: string,
+    currentDate: string
+  ): Promise<ApiResponse<LineageDiff>> {
     return apiClient.master.get<LineageDiff>(
-      `/mdm-v77/diff?baseline=${baselineDate}&current=${currentDate}`,
+      `/mdm-v77/diff?baseline=${baselineDate}&current=${currentDate}`
     );
   },
 
-  async compareNodeLineage(nodeId: string, baselineDate: string, currentDate: string): Promise<ApiResponse<LineageDiff>> {
+  async compareNodeLineage(
+    nodeId: string,
+    baselineDate: string,
+    currentDate: string
+  ): Promise<ApiResponse<LineageDiff>> {
     return apiClient.master.get<LineageDiff>(
-      `/mdm-v77/diff/nodes/${nodeId}?baseline=${baselineDate}&current=${currentDate}`,
+      `/mdm-v77/diff/nodes/${nodeId}?baseline=${baselineDate}&current=${currentDate}`
     );
   },
 
@@ -436,7 +474,9 @@ export const dataLineageEnhancedApiV77 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<LineageDiff>>(`/mdm-v77/diffs${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<LineageDiff>>(
+      `/mdm-v77/diffs${s ? `?${s}` : ''}`
+    );
   },
 
   // ===== 血缘统计 =====
@@ -444,24 +484,33 @@ export const dataLineageEnhancedApiV77 = {
     return apiClient.master.get<LineageStats>('/mdm-v77/stats');
   },
 
-  async getLineageCoverage(database?: string, schema?: string): Promise<ApiResponse<{
-    category: string;
-    total: number;
-    covered: number;
-    coverage_rate: number;
-    top_uncovred: Array<{ name: string; type: string }>;
-  }[]>> {
+  async getLineageCoverage(
+    database?: string,
+    schema?: string
+  ): Promise<
+    ApiResponse<
+      {
+        category: string;
+        total: number;
+        covered: number;
+        coverage_rate: number;
+        top_uncovred: Array<{ name: string; type: string }>;
+      }[]
+    >
+  > {
     const qs = new URLSearchParams();
     if (database) qs.set('database', database);
     if (schema) qs.set('schema', schema);
     const s = qs.toString();
-    return apiClient.master.get<{
-      category: string;
-      total: number;
-      covered: number;
-      coverage_rate: number;
-      top_uncovred: Array<{ name: string; type: string }>;
-    }[]>(`/mdm-v77/coverage${s ? `?${s}` : ''}`);
+    return apiClient.master.get<
+      {
+        category: string;
+        total: number;
+        covered: number;
+        coverage_rate: number;
+        top_uncovred: Array<{ name: string; type: string }>;
+      }[]
+    >(`/mdm-v77/coverage${s ? `?${s}` : ''}`);
   },
 
   async getOrphanNodes(): Promise<ApiResponse<LineageNode[]>> {
@@ -480,13 +529,16 @@ export const dataLineageEnhancedApiV77 = {
     return apiClient.master.get<LineageDashboard>('/mdm-v77/dashboard');
   },
 
-  async exportLineageReport(format: 'json' | 'csv' | 'pdf', params?: {
-    database?: string;
-    schema?: string;
-    include_nodes?: boolean;
-    include_edges?: boolean;
-    include_stats?: boolean;
-  }): Promise<ApiResponse<{ download_url: string }>> {
+  async exportLineageReport(
+    format: 'json' | 'csv' | 'pdf',
+    params?: {
+      database?: string;
+      schema?: string;
+      include_nodes?: boolean;
+      include_edges?: boolean;
+      include_stats?: boolean;
+    }
+  ): Promise<ApiResponse<{ download_url: string }>> {
     const qs = new URLSearchParams();
     qs.set('format', format);
     if (params?.database) qs.set('database', params.database);

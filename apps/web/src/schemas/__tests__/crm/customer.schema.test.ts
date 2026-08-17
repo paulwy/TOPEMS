@@ -6,7 +6,7 @@ describe('customerSchema contract (before fix)', () => {
     const result = customerZodSchema.safeParse({ industry: 'Manufacturing' });
     expect(result.success).toBe(false);
     if (!result.success) {
-      const missingPaths = result.error.issues.map(i => i.path.join('.'));
+      const missingPaths = result.error.issues.map((i) => i.path.join('.'));
       expect(missingPaths).toContain('name');
       expect(missingPaths).toContain('customerType');
     }

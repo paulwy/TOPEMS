@@ -77,13 +77,25 @@ const CHART_TYPES: { value: ChartType; label: string; icon: React.ReactNode }[] 
   { value: 'pie', label: i18n.t('components.dashboard_editor.k2'), icon: <PieChart size={20} /> },
   { value: 'area', label: i18n.t('components.dashboard_editor.k3'), icon: <AreaChart size={20} /> },
   { value: 'radar', label: i18n.t('components.dashboard_editor.k4'), icon: <Grid3X3 size={20} /> },
-  { value: 'scatter', label: i18n.t('components.dashboard_editor.k5'), icon: <Grid3X3 size={20} /> },
-  { value: 'composed', label: i18n.t('components.dashboard_editor.k6'), icon: <BarChart3 size={20} /> },
+  {
+    value: 'scatter',
+    label: i18n.t('components.dashboard_editor.k5'),
+    icon: <Grid3X3 size={20} />,
+  },
+  {
+    value: 'composed',
+    label: i18n.t('components.dashboard_editor.k6'),
+    icon: <BarChart3 size={20} />,
+  },
   { value: 'gauge', label: i18n.t('components.dashboard_editor.k7'), icon: <Target size={20} /> },
 ];
 
 const WIDGET_TYPES = [
-  { value: 'chart', label: i18n.t('components.dashboard_editor.k8'), icon: <BarChart3 size={24} /> },
+  {
+    value: 'chart',
+    label: i18n.t('components.dashboard_editor.k8'),
+    icon: <BarChart3 size={24} />,
+  },
   { value: 'pivot', label: i18n.t('components.dashboard_editor.k9'), icon: <Table size={24} /> },
   { value: 'metric', label: i18n.t('components.dashboard_editor.k10'), icon: <Target size={24} /> },
 ];
@@ -100,12 +112,36 @@ const sampleChartData: ChartDataPoint[] = [
 ];
 
 const samplePivotData = [
-  { region: i18n.t('components.dashboard_editor.k12'), category: i18n.t('components.dashboard_editor.k11'), sales: 12000 },
-  { region: i18n.t('components.dashboard_editor.k14'), category: i18n.t('components.dashboard_editor.k13'), sales: 8000 },
-  { region: i18n.t('components.dashboard_editor.k16'), category: i18n.t('components.dashboard_editor.k15'), sales: 15000 },
-  { region: i18n.t('components.dashboard_editor.k18'), category: i18n.t('components.dashboard_editor.k17'), sales: 10000 },
-  { region: i18n.t('components.dashboard_editor.k20'), category: i18n.t('components.dashboard_editor.k19'), sales: 18000 },
-  { region: i18n.t('components.dashboard_editor.k22'), category: i18n.t('components.dashboard_editor.k21'), sales: 9000 },
+  {
+    region: i18n.t('components.dashboard_editor.k12'),
+    category: i18n.t('components.dashboard_editor.k11'),
+    sales: 12000,
+  },
+  {
+    region: i18n.t('components.dashboard_editor.k14'),
+    category: i18n.t('components.dashboard_editor.k13'),
+    sales: 8000,
+  },
+  {
+    region: i18n.t('components.dashboard_editor.k16'),
+    category: i18n.t('components.dashboard_editor.k15'),
+    sales: 15000,
+  },
+  {
+    region: i18n.t('components.dashboard_editor.k18'),
+    category: i18n.t('components.dashboard_editor.k17'),
+    sales: 10000,
+  },
+  {
+    region: i18n.t('components.dashboard_editor.k20'),
+    category: i18n.t('components.dashboard_editor.k19'),
+    sales: 18000,
+  },
+  {
+    region: i18n.t('components.dashboard_editor.k22'),
+    category: i18n.t('components.dashboard_editor.k21'),
+    sales: 9000,
+  },
 ];
 
 const GRID_COLS = 12;
@@ -121,7 +157,9 @@ export const DashboardEditor: React.FC<{
   const [widgets, setWidgets] = useState<DashboardWidget[]>(initialConfig?.widgets || []);
   const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
   const theme = useTheme();
-  const [dashboardName, setDashboardName] = useState(initialConfig?.name || i18n.t('components.dashboard_editor.k23'));
+  const [dashboardName, setDashboardName] = useState(
+    initialConfig?.name || i18n.t('components.dashboard_editor.k23')
+  );
   const [dashboardDescription, _setDashboardDescription] = useState(
     initialConfig?.description || ''
   );
@@ -301,7 +339,11 @@ export const DashboardEditor: React.FC<{
       id: generateId(),
       type: newWidgetType,
       title:
-        newWidgetType === 'metric' ? i18n.t('components.dashboard_editor.k26') : newWidgetType === 'pivot' ? i18n.t('components.dashboard_editor.k25') : i18n.t('components.dashboard_editor.k24'),
+        newWidgetType === 'metric'
+          ? i18n.t('components.dashboard_editor.k26')
+          : newWidgetType === 'pivot'
+            ? i18n.t('components.dashboard_editor.k25')
+            : i18n.t('components.dashboard_editor.k24'),
       x,
       y,
       w: 2,
@@ -410,7 +452,9 @@ export const DashboardEditor: React.FC<{
               startIcon={isPreviewMode ? <EyeOff /> : <Eye />}
               onClick={() => setIsPreviewMode(!isPreviewMode)}
             >
-              {isPreviewMode ? i18n.t('components.dashboard_editor.k31') : i18n.t('components.dashboard_editor.k30')}
+              {isPreviewMode
+                ? i18n.t('components.dashboard_editor.k31')
+                : i18n.t('components.dashboard_editor.k30')}
             </Button>
             <Button
               variant='contained'
@@ -896,7 +940,9 @@ export const DashboardEditor: React.FC<{
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowAddWidgetModal(false)}>{i18n.t('components.dashboard_editor.k49')}</Button>
+          <Button onClick={() => setShowAddWidgetModal(false)}>
+            {i18n.t('components.dashboard_editor.k49')}
+          </Button>
           <Button
             variant='contained'
             onClick={handleAddWidget}

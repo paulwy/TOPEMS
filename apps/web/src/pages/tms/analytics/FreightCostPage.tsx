@@ -23,6 +23,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+
 const COST_COLORS: Record<string, string> = {
   fuel: designTokens.colors.primary.main,
   toll: designTokens.colors.warning.main,
@@ -97,9 +98,7 @@ export default function FreightCostPage() {
   const largestCost = [...costData].sort((a, b) => b.amount - a.amount)[0];
   const fuelRatio =
     totalCost > 0
-      ? Math.round(
-          ((costData.find((c) => c.type === 'fuel')?.amount ?? 0) / totalCost) * 1000
-        ) / 10
+      ? Math.round(((costData.find((c) => c.type === 'fuel')?.amount ?? 0) / totalCost) * 1000) / 10
       : 0;
   return (
     <div className='space-y-4 p-4'>
@@ -128,7 +127,10 @@ export default function FreightCostPage() {
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
         <div className='rounded-lg border p-4'>
           <h3 className='mb-2 font-semibold'>{i18n.t('tms.freight_cost_page.k12')}</h3>
-          <ResponsiveContainer width='100%' height={300}>
+          <ResponsiveContainer
+            width='100%'
+            height={300}
+          >
             <PieChart>
               <Pie
                 data={costData}
@@ -141,7 +143,10 @@ export default function FreightCostPage() {
                 outerRadius={100}
               >
                 {costData.map((entry) => (
-                  <Cell key={entry.type} fill={COST_COLORS[entry.type] ?? 'colors.grey.400'} />
+                  <Cell
+                    key={entry.type}
+                    fill={COST_COLORS[entry.type] ?? 'colors.grey.400'}
+                  />
                 ))}
               </Pie>
               <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
@@ -151,16 +156,33 @@ export default function FreightCostPage() {
         </div>
         <div className='rounded-lg border p-4'>
           <h3 className='mb-2 font-semibold'>{i18n.t('tms.freight_cost_page.k13')}</h3>
-          <ResponsiveContainer width='100%' height={300}>
-            <BarChart data={costData} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
+          <ResponsiveContainer
+            width='100%'
+            height={300}
+          >
+            <BarChart
+              data={costData}
+              margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
+            >
               <CartesianGrid strokeDasharray='3 3' />
-              <XAxis dataKey='label' fontSize={11} />
+              <XAxis
+                dataKey='label'
+                fontSize={11}
+              />
               <YAxis fontSize={11} />
               <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
               <Legend />
-              <Bar dataKey='amount' name={i18n.t('tms.freight_cost_page.k14')} fill={designTokens.colors.secondary.dark} barSize={28}>
+              <Bar
+                dataKey='amount'
+                name={i18n.t('tms.freight_cost_page.k14')}
+                fill={designTokens.colors.secondary.dark}
+                barSize={28}
+              >
                 {costData.map((entry) => (
-                  <Cell key={entry.type} fill={COST_COLORS[entry.type] ?? 'colors.grey.400'} />
+                  <Cell
+                    key={entry.type}
+                    fill={COST_COLORS[entry.type] ?? 'colors.grey.400'}
+                  />
                 ))}
               </Bar>
             </BarChart>
@@ -169,17 +191,46 @@ export default function FreightCostPage() {
       </div>
       <div className='rounded-lg border p-4'>
         <h3 className='mb-2 font-semibold'>{i18n.t('tms.freight_cost_page.k15')}</h3>
-        <ResponsiveContainer width='100%' height={280}>
-          <BarChart data={monthlyData} margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
+        <ResponsiveContainer
+          width='100%'
+          height={280}
+        >
+          <BarChart
+            data={monthlyData}
+            margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+          >
             <CartesianGrid strokeDasharray='3 3' />
-            <XAxis dataKey='month' fontSize={11} />
+            <XAxis
+              dataKey='month'
+              fontSize={11}
+            />
             <YAxis fontSize={11} />
             <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
             <Legend />
-            <Bar dataKey='fuel' name={i18n.t('tms.freight_cost_page.k16')} fill={COST_COLORS.fuel} stackId='a' />
-            <Bar dataKey='toll' name={i18n.t('tms.freight_cost_page.k17')} fill={COST_COLORS.toll} stackId='a' />
-            <Bar dataKey='labor' name={i18n.t('tms.freight_cost_page.k18')} fill={COST_COLORS.labor} stackId='a' />
-            <Bar dataKey='other' name={i18n.t('tms.freight_cost_page.k19')} fill={COST_COLORS.other} stackId='a' />
+            <Bar
+              dataKey='fuel'
+              name={i18n.t('tms.freight_cost_page.k16')}
+              fill={COST_COLORS.fuel}
+              stackId='a'
+            />
+            <Bar
+              dataKey='toll'
+              name={i18n.t('tms.freight_cost_page.k17')}
+              fill={COST_COLORS.toll}
+              stackId='a'
+            />
+            <Bar
+              dataKey='labor'
+              name={i18n.t('tms.freight_cost_page.k18')}
+              fill={COST_COLORS.labor}
+              stackId='a'
+            />
+            <Bar
+              dataKey='other'
+              name={i18n.t('tms.freight_cost_page.k19')}
+              fill={COST_COLORS.other}
+              stackId='a'
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -8,7 +8,6 @@ import { useNotification } from './useNotification';
 import { voucherTemplateApi } from '../api/voucherTemplate';
 import type { VoucherTemplate, VoucherTemplateType, VoucherTemplateEntry } from '../types/finance';
 
-
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
@@ -64,10 +63,11 @@ export function useCreateVoucherTemplate() {
       entries: VoucherTemplateEntry[];
     }) => voucherTemplateApi.createTemplate(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_voucher_template.k0'));
     },
     onError: (err) => {
@@ -87,10 +87,11 @@ export function useUpdateVoucherTemplate() {
     mutationFn: ({ templateId, data }: { templateId: string; data: Partial<VoucherTemplate> }) =>
       voucherTemplateApi.updateTemplate(templateId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_voucher_template.k2'));
     },
     onError: (err) => {
@@ -109,10 +110,11 @@ export function useDeleteVoucherTemplate() {
   return useMutation({
     mutationFn: (templateId: string) => voucherTemplateApi.deleteTemplate(templateId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_voucher_template.k4'));
     },
     onError: (err) => {
@@ -139,10 +141,11 @@ export function useCopyVoucherTemplate() {
       newName: string;
     }) => voucherTemplateApi.copyTemplate(templateId, newCode, newName),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_voucher_template.k6'));
     },
     onError: (err) => {
@@ -162,10 +165,11 @@ export function useSetDefaultVoucherTemplate() {
     mutationFn: ({ templateId, isDefault }: { templateId: string; isDefault: boolean }) =>
       voucherTemplateApi.setDefaultTemplate(templateId, isDefault),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_voucher_template.k8'));
     },
     onError: (err) => {
@@ -185,10 +189,11 @@ export function useToggleVoucherTemplate() {
     mutationFn: ({ templateId, isActive }: { templateId: string; isActive: boolean }) =>
       voucherTemplateApi.toggleTemplate(templateId, isActive),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_voucher_template.k10'));
     },
     onError: (err) => {
@@ -216,12 +221,11 @@ export function usePreviewGeneratedVouchers() {
       voucher_date?: string;
     }) => voucherTemplateApi.previewGeneratedVouchers(data),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_voucher_template.k12'));
     },
     onError: (err) => {
@@ -247,15 +251,19 @@ export function useGenerateVoucherFromSource() {
       force_regenerate?: boolean;
     }) => voucherTemplateApi.generateVoucherFromSource(data),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      success(`${i18n.t('shared.use_voucher_template.k0')}${result.data.voucher_no}${i18n.t('shared.use_voucher_template.k1')}`);
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.VOUCHERS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      success(
+        `${i18n.t('shared.use_voucher_template.k0')}${result.data.voucher_no}${i18n.t('shared.use_voucher_template.k1')}`
+      );
     },
     onError: (err) => {
       error(err.message || i18n.t('shared.use_voucher_template.k14'));
@@ -279,15 +287,19 @@ export function useBatchGenerateVouchers() {
       voucher_date?: string;
     }) => voucherTemplateApi.batchGenerateVouchers(data),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      success(`${i18n.t('shared.use_voucher_template.k2')}${result.data?.success || 0}${i18n.t('shared.use_voucher_template.k3')}`);
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.VOUCHERS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      success(
+        `${i18n.t('shared.use_voucher_template.k2')}${result.data?.success || 0}${i18n.t('shared.use_voucher_template.k3')}`
+      );
     },
     onError: (err) => {
       error(err.message || i18n.t('shared.use_voucher_template.k15'));
@@ -311,10 +323,11 @@ export function useAutoGenerateVouchers() {
       dry_run?: boolean;
     }) => voucherTemplateApi.autoGenerateVouchers(data),
     onSuccess: (_result, variables) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.VOUCHERS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       if (variables.dry_run) {
         success(i18n.t('shared.use_voucher_template.k16'));
       } else {
@@ -343,11 +356,14 @@ export function useRegenerateReversedVoucher() {
       voucherDate?: string;
     }) => voucherTemplateApi.regenerateReversedVoucher(originalVoucherId, voucherDate),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      success(`${i18n.t('shared.use_voucher_template.k4')}${result.data.voucher_no}${i18n.t('shared.use_voucher_template.k5')}`);
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.VOUCHERS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      success(
+        `${i18n.t('shared.use_voucher_template.k4')}${result.data.voucher_no}${i18n.t('shared.use_voucher_template.k5')}`
+      );
     },
     onError: (err) => {
       error(err.message || i18n.t('shared.use_voucher_template.k19'));
@@ -371,14 +387,14 @@ export function useMatchVoucherTemplate() {
       amount?: number;
       extra_data?: Record<string, unknown>;
     }) => voucherTemplateApi.matchTemplate(data),
-  
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
-      },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.VOUCHER_TEMPLATES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+    },
   });
 }
 
@@ -438,10 +454,11 @@ export function useCreateGenerationRule() {
       isactive?: boolean;
     }) => voucherTemplateApi.createGenerationRule(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_GENERATION_RULES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.VOUCHER_GENERATION_RULES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_voucher_template.k20'));
     },
     onError: (err) => {
@@ -474,10 +491,11 @@ export function useUpdateGenerationRule() {
       }>;
     }) => voucherTemplateApi.updateGenerationRule(ruleId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_GENERATION_RULES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.VOUCHER_GENERATION_RULES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_voucher_template.k22'));
     },
     onError: (err) => {
@@ -496,10 +514,11 @@ export function useDeleteGenerationRule() {
   return useMutation({
     mutationFn: (ruleId: string) => voucherTemplateApi.deleteGenerationRule(ruleId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_GENERATION_RULES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.VOUCHER_GENERATION_RULES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_voucher_template.k24'));
     },
     onError: (err) => {
@@ -519,10 +538,11 @@ export function useToggleGenerationRule() {
     mutationFn: ({ ruleId, isActive }: { ruleId: string; isActive: boolean }) =>
       voucherTemplateApi.toggleGenerationRule(ruleId, isActive),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.VOUCHER_GENERATION_RULES_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.VOUCHER_GENERATION_RULES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       success(i18n.t('shared.use_voucher_template.k26'));
     },
     onError: (err) => {

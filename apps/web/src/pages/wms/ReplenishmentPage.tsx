@@ -19,10 +19,9 @@ import { WMS_PATHS } from '@/modules/wms/config';
 import { replenishmentSchema } from '@/schemas/wms/replenishment';
 import { suggestionSchema } from '@/schemas/wms/suggestion';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 type TabValue = 'suggestions' | 'orders';
 
@@ -54,14 +53,16 @@ const ReplenishmentPage: React.FC = () => {
         title: t('wms.replenishment_page.success_1'),
         message: t('wms.replenishment_page.confirmed_1'),
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRUD_WMS_REPLENISHMENT_ORDER_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_REPLENISHMENT_STATISTICS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRUD_WMS_REPLENISHMENT_ORDER_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.WMS_REPLENISHMENT_STATISTICS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
       addNotification({
@@ -80,14 +81,16 @@ const ReplenishmentPage: React.FC = () => {
         title: t('wms.replenishment_page.success_2'),
         message: t('wms.replenishment_page.completed'),
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRUD_WMS_REPLENISHMENT_ORDER_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_REPLENISHMENT_STATISTICS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRUD_WMS_REPLENISHMENT_ORDER_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.WMS_REPLENISHMENT_STATISTICS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
       addNotification({
@@ -190,14 +193,16 @@ const ReplenishmentPage: React.FC = () => {
         title: t('wms.replenishment_page.success'),
         message: `${i18n.t('pages.replenishment_page.k1')}${response.data?.count || 0}${i18n.t('pages.replenishment_page.k2')}`,
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRUD_WMS_REPLENISHMENT_SUGGESTION_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_REPLENISHMENT_STATISTICS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRUD_WMS_REPLENISHMENT_SUGGESTION_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.WMS_REPLENISHMENT_STATISTICS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
       addNotification({
@@ -217,18 +222,21 @@ const ReplenishmentPage: React.FC = () => {
         title: t('wms.replenishment_page.create'),
         message: t('wms.replenishment_page.create_1'),
       });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRUD_WMS_REPLENISHMENT_SUGGESTION_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CRUD_WMS_REPLENISHMENT_ORDER_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_REPLENISHMENT_STATISTICS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRUD_WMS_REPLENISHMENT_SUGGESTION_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CRUD_WMS_REPLENISHMENT_ORDER_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.WMS_REPLENISHMENT_STATISTICS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: () => {
       addNotification({

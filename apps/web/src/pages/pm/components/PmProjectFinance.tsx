@@ -8,6 +8,7 @@ import { Box, Typography, Card, CardContent, CardHeader } from '@mui/material';
 import type { Project } from '@/api/pm';
 import { ActionButton, StatusBadge } from '@/components/common';
 import i18n from '@/i18n';
+
 export interface PmProjectFinanceProps {
   project: Project | null;
   formatCurrency: (amount?: number) => string;
@@ -62,7 +63,9 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
               borderColor: 'grey.100',
             }}
           >
-            <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.projectdetail.actual_cost')}</Typography>
+            <Typography sx={{ color: 'grey.500' }}>
+              {i18n.t('pm.projectdetail.actual_cost')}
+            </Typography>
             <Typography sx={{ fontWeight: 500, color: 'warning.dark' }}>
               {formatCurrency(project.actual_cost)}
             </Typography>
@@ -216,7 +219,9 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
               borderColor: 'grey.100',
             }}
           >
-            <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.projectdetail.gross_profit')}</Typography>
+            <Typography sx={{ color: 'grey.500' }}>
+              {i18n.t('pm.projectdetail.gross_profit')}
+            </Typography>
             <Typography sx={{ fontWeight: 500, color: 'success.dark' }}>
               {formatCurrency(project.gross_profit)}
             </Typography>
@@ -229,7 +234,9 @@ const PmProjectFinance: React.FC<PmProjectFinanceProps> = ({ project, formatCurr
               py: 1,
             }}
           >
-            <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.projectdetail.gross_margin')}</Typography>
+            <Typography sx={{ color: 'grey.500' }}>
+              {i18n.t('pm.projectdetail.gross_margin')}
+            </Typography>
             <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
               {project.gross_margin?.toFixed(1) || '0'}%
             </Typography>

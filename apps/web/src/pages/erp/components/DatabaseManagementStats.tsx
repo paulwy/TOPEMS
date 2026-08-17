@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { Table, Download } from 'lucide-react';
 import i18n from '@/i18n';
+
 interface Stats {
   tableCount: number;
   backupCount: number;

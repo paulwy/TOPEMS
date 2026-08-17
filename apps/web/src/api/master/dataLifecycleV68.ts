@@ -3,8 +3,18 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type LifecycleState = 'active' | 'inactive' | 'archived' | 'destroyed' | 'retained' | 'compliance_hold';
-export type LifecycleEvent = 'create' | 'activate' | 'inactivate' | 'archive' | 'restore' | 'destroy' | 'retain' | 'compliance_hold' | 'release';
+export type LifecycleState =
+  'active' | 'inactive' | 'archived' | 'destroyed' | 'retained' | 'compliance_hold';
+export type LifecycleEvent =
+  | 'create'
+  | 'activate'
+  | 'inactivate'
+  | 'archive'
+  | 'restore'
+  | 'destroy'
+  | 'retain'
+  | 'compliance_hold'
+  | 'release';
 export type ArchiveFormat = 'parquet' | 'avro' | 'json' | 'csv' | 'orc';
 export type StorageTier = 'hot' | 'warm' | 'cold' | 'archive' | 'glacier';
 export type RetentionType = 'permanent' | 'fixed_term' | 'event_based' | 'compliance';
@@ -191,7 +201,12 @@ export interface LifecycleDashboard {
   destroyed_data_size_bytes: number;
   legal_hold_count: number;
   compliance_score: number;
-  upcoming_expiry_events: Array<{ entity_type: string; entity_id: string; event: string; scheduled_at: string }>;
+  upcoming_expiry_events: Array<{
+    entity_type: string;
+    entity_id: string;
+    event: string;
+    scheduled_at: string;
+  }>;
 }
 
 export interface ComplianceReport {
@@ -351,10 +366,15 @@ export const dataLifecycleApiV68 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: LifecyclePolicy[]; total: number }>(`/mdm-v68/policies${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: LifecyclePolicy[]; total: number }>(
+      `/mdm-v68/policies${s ? `?${s}` : ''}`
+    );
   },
 
-  async updatePolicy(id: string, data: Partial<CreateLifecyclePolicyRequest>): Promise<ApiResponse<LifecyclePolicy>> {
+  async updatePolicy(
+    id: string,
+    data: Partial<CreateLifecyclePolicyRequest>
+  ): Promise<ApiResponse<LifecyclePolicy>> {
     return apiClient.master.put<LifecyclePolicy>(`/mdm-v68/policies/${id}`, data);
   },
 
@@ -371,7 +391,9 @@ export const dataLifecycleApiV68 = {
   },
 
   // ===== 保留策略管理 =====
-  async createRetentionPolicy(data: CreateRetentionPolicyRequest): Promise<ApiResponse<RetentionPolicy>> {
+  async createRetentionPolicy(
+    data: CreateRetentionPolicyRequest
+  ): Promise<ApiResponse<RetentionPolicy>> {
     return apiClient.master.post<RetentionPolicy>('/mdm-v68/retention-policies', data);
   },
 
@@ -393,10 +415,15 @@ export const dataLifecycleApiV68 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: RetentionPolicy[]; total: number }>(`/mdm-v68/retention-policies${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: RetentionPolicy[]; total: number }>(
+      `/mdm-v68/retention-policies${s ? `?${s}` : ''}`
+    );
   },
 
-  async updateRetentionPolicy(id: string, data: Partial<CreateRetentionPolicyRequest>): Promise<ApiResponse<RetentionPolicy>> {
+  async updateRetentionPolicy(
+    id: string,
+    data: Partial<CreateRetentionPolicyRequest>
+  ): Promise<ApiResponse<RetentionPolicy>> {
     return apiClient.master.put<RetentionPolicy>(`/mdm-v68/retention-policies/${id}`, data);
   },
 
@@ -405,7 +432,9 @@ export const dataLifecycleApiV68 = {
   },
 
   // ===== 归档策略管理 =====
-  async createArchiveStrategy(data: CreateArchiveStrategyRequest): Promise<ApiResponse<ArchiveStrategy>> {
+  async createArchiveStrategy(
+    data: CreateArchiveStrategyRequest
+  ): Promise<ApiResponse<ArchiveStrategy>> {
     return apiClient.master.post<ArchiveStrategy>('/mdm-v68/archive-strategies', data);
   },
 
@@ -425,10 +454,15 @@ export const dataLifecycleApiV68 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: ArchiveStrategy[]; total: number }>(`/mdm-v68/archive-strategies${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: ArchiveStrategy[]; total: number }>(
+      `/mdm-v68/archive-strategies${s ? `?${s}` : ''}`
+    );
   },
 
-  async updateArchiveStrategy(id: string, data: Partial<CreateArchiveStrategyRequest>): Promise<ApiResponse<ArchiveStrategy>> {
+  async updateArchiveStrategy(
+    id: string,
+    data: Partial<CreateArchiveStrategyRequest>
+  ): Promise<ApiResponse<ArchiveStrategy>> {
     return apiClient.master.put<ArchiveStrategy>(`/mdm-v68/archive-strategies/${id}`, data);
   },
 
@@ -437,7 +471,9 @@ export const dataLifecycleApiV68 = {
   },
 
   // ===== 销毁策略管理 =====
-  async createDestructionPolicy(data: CreateDestructionPolicyRequest): Promise<ApiResponse<DestructionPolicy>> {
+  async createDestructionPolicy(
+    data: CreateDestructionPolicyRequest
+  ): Promise<ApiResponse<DestructionPolicy>> {
     return apiClient.master.post<DestructionPolicy>('/mdm-v68/destruction-policies', data);
   },
 
@@ -455,14 +491,20 @@ export const dataLifecycleApiV68 = {
     const qs = new URLSearchParams();
     if (params?.entity_type) qs.set('entity_type', params.entity_type);
     if (params?.method) qs.set('method', params.method);
-    if (params?.require_approval !== undefined) qs.set('require_approval', String(params.require_approval));
+    if (params?.require_approval !== undefined)
+      qs.set('require_approval', String(params.require_approval));
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: DestructionPolicy[]; total: number }>(`/mdm-v68/destruction-policies${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: DestructionPolicy[]; total: number }>(
+      `/mdm-v68/destruction-policies${s ? `?${s}` : ''}`
+    );
   },
 
-  async updateDestructionPolicy(id: string, data: Partial<CreateDestructionPolicyRequest>): Promise<ApiResponse<DestructionPolicy>> {
+  async updateDestructionPolicy(
+    id: string,
+    data: Partial<CreateDestructionPolicyRequest>
+  ): Promise<ApiResponse<DestructionPolicy>> {
     return apiClient.master.put<DestructionPolicy>(`/mdm-v68/destruction-policies/${id}`, data);
   },
 
@@ -471,7 +513,9 @@ export const dataLifecycleApiV68 = {
   },
 
   // ===== 生命周期流转 =====
-  async executeTransition(data: ExecuteTransitionRequest): Promise<ApiResponse<LifecycleTransition>> {
+  async executeTransition(
+    data: ExecuteTransitionRequest
+  ): Promise<ApiResponse<LifecycleTransition>> {
     return apiClient.master.post<LifecycleTransition>('/mdm-v68/transitions', data);
   },
 
@@ -501,15 +545,30 @@ export const dataLifecycleApiV68 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: LifecycleTransition[]; total: number }>(`/mdm-v68/transitions${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: LifecycleTransition[]; total: number }>(
+      `/mdm-v68/transitions${s ? `?${s}` : ''}`
+    );
   },
 
-  async getLifecycleHistory(entityType: string, entityId: string): Promise<ApiResponse<LifecycleHistory>> {
+  async getLifecycleHistory(
+    entityType: string,
+    entityId: string
+  ): Promise<ApiResponse<LifecycleHistory>> {
     return apiClient.master.get<LifecycleHistory>(`/mdm-v68/history/${entityType}/${entityId}`);
   },
 
-  async bulkTransition(data: Array<{ entity_type: string; entity_id: string; target_state: LifecycleState; reason?: string }>): Promise<ApiResponse<{ processed: number; failed: number; errors?: string[] }>> {
-    return apiClient.master.post<{ processed: number; failed: number; errors?: string[] }>('/mdm-v68/transitions/bulk', { items: data });
+  async bulkTransition(
+    data: Array<{
+      entity_type: string;
+      entity_id: string;
+      target_state: LifecycleState;
+      reason?: string;
+    }>
+  ): Promise<ApiResponse<{ processed: number; failed: number; errors?: string[] }>> {
+    return apiClient.master.post<{ processed: number; failed: number; errors?: string[] }>(
+      '/mdm-v68/transitions/bulk',
+      { items: data }
+    );
   },
 
   // ===== 归档执行 =====
@@ -539,7 +598,9 @@ export const dataLifecycleApiV68 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: ArchiveJob[]; total: number }>(`/mdm-v68/archive/jobs${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: ArchiveJob[]; total: number }>(
+      `/mdm-v68/archive/jobs${s ? `?${s}` : ''}`
+    );
   },
 
   async restoreFromArchive(jobId: string, entityIds?: string[]): Promise<ApiResponse<ArchiveJob>> {
@@ -547,8 +608,13 @@ export const dataLifecycleApiV68 = {
     return apiClient.master.post<ArchiveJob>(`/mdm-v68/archive/jobs/${jobId}/restore`, data);
   },
 
-  async verifyArchiveJob(id: string): Promise<ApiResponse<{ verified: boolean; record_count: number; checksum: string }>> {
-    return apiClient.master.post<{ verified: boolean; record_count: number; checksum: string }>(`/mdm-v68/archive/jobs/${id}/verify`, {});
+  async verifyArchiveJob(
+    id: string
+  ): Promise<ApiResponse<{ verified: boolean; record_count: number; checksum: string }>> {
+    return apiClient.master.post<{ verified: boolean; record_count: number; checksum: string }>(
+      `/mdm-v68/archive/jobs/${id}/verify`,
+      {}
+    );
   },
 
   // ===== 销毁执行 =====
@@ -578,19 +644,32 @@ export const dataLifecycleApiV68 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: DestructionJob[]; total: number }>(`/mdm-v68/destruction/jobs${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: DestructionJob[]; total: number }>(
+      `/mdm-v68/destruction/jobs${s ? `?${s}` : ''}`
+    );
   },
 
-  async approveDestructionJob(id: string, data?: { reason?: string }): Promise<ApiResponse<DestructionJob>> {
-    return apiClient.master.post<DestructionJob>(`/mdm-v68/destruction/jobs/${id}/approve`, data || {});
+  async approveDestructionJob(
+    id: string,
+    data?: { reason?: string }
+  ): Promise<ApiResponse<DestructionJob>> {
+    return apiClient.master.post<DestructionJob>(
+      `/mdm-v68/destruction/jobs/${id}/approve`,
+      data || {}
+    );
   },
 
   async cancelDestructionJob(id: string): Promise<ApiResponse<DestructionJob>> {
     return apiClient.master.post<DestructionJob>(`/mdm-v68/destruction/jobs/${id}/cancel`, {});
   },
 
-  async verifyDestructionJob(id: string): Promise<ApiResponse<{ verified: boolean; hash: string; audit_trail: string }>> {
-    return apiClient.master.post<{ verified: boolean; hash: string; audit_trail: string }>(`/mdm-v68/destruction/jobs/${id}/verify`, {});
+  async verifyDestructionJob(
+    id: string
+  ): Promise<ApiResponse<{ verified: boolean; hash: string; audit_trail: string }>> {
+    return apiClient.master.post<{ verified: boolean; hash: string; audit_trail: string }>(
+      `/mdm-v68/destruction/jobs/${id}/verify`,
+      {}
+    );
   },
 
   // ===== 版本管理增强 =====
@@ -617,7 +696,9 @@ export const dataLifecycleApiV68 = {
     if (params?.state) qs.set('state', params.state);
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
-    return apiClient.master.get<{ items: LifecycleVersion[]; total: number }>(`/mdm-v68/versions${qs.toString() ? `?${qs.toString()}` : ''}`);
+    return apiClient.master.get<{ items: LifecycleVersion[]; total: number }>(
+      `/mdm-v68/versions${qs.toString() ? `?${qs.toString()}` : ''}`
+    );
   },
 
   async promoteVersion(id: string): Promise<ApiResponse<LifecycleVersion>> {
@@ -632,15 +713,30 @@ export const dataLifecycleApiV68 = {
     return apiClient.master.post<LifecycleVersion>(`/mdm-v68/versions/${id}/restore`, {});
   },
 
-  async destroyVersion(id: string): Promise<ApiResponse<{ destroyed: boolean; audit_hash: string }>> {
-    return apiClient.master.post<{ destroyed: boolean; audit_hash: string }>(`/mdm-v68/versions/${id}/destroy`, {});
+  async destroyVersion(
+    id: string
+  ): Promise<ApiResponse<{ destroyed: boolean; audit_hash: string }>> {
+    return apiClient.master.post<{ destroyed: boolean; audit_hash: string }>(
+      `/mdm-v68/versions/${id}/destroy`,
+      {}
+    );
   },
 
-  async compareVersions(sourceId: string, targetId: string): Promise<ApiResponse<{ added: string[]; removed: string[]; modified: string[]; summary: string }>> {
+  async compareVersions(
+    sourceId: string,
+    targetId: string
+  ): Promise<
+    ApiResponse<{ added: string[]; removed: string[]; modified: string[]; summary: string }>
+  > {
     const qs = new URLSearchParams();
     qs.set('source_id', sourceId);
     qs.set('target_id', targetId);
-    return apiClient.master.get<{ added: string[]; removed: string[]; modified: string[]; summary: string }>(`/mdm-v68/versions/compare?${qs.toString()}`);
+    return apiClient.master.get<{
+      added: string[];
+      removed: string[];
+      modified: string[];
+      summary: string;
+    }>(`/mdm-v68/versions/compare?${qs.toString()}`);
   },
 
   // ===== 合规检查与报告 =====
@@ -655,7 +751,9 @@ export const dataLifecycleApiV68 = {
     if (params?.policy_id) qs.set('policy_id', params.policy_id);
     if (params?.date_from) qs.set('date_from', params.date_from);
     if (params?.date_to) qs.set('date_to', params.date_to);
-    return apiClient.master.get<ComplianceReport>(`/mdm-v68/compliance/check${qs.toString() ? `?${qs.toString()}` : ''}`);
+    return apiClient.master.get<ComplianceReport>(
+      `/mdm-v68/compliance/check${qs.toString() ? `?${qs.toString()}` : ''}`
+    );
   },
 
   async getComplianceReport(id: string): Promise<ApiResponse<ComplianceReport>> {
@@ -674,7 +772,9 @@ export const dataLifecycleApiV68 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: ComplianceReport[]; total: number }>(`/mdm-v68/compliance/reports${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ items: ComplianceReport[]; total: number }>(
+      `/mdm-v68/compliance/reports${s ? `?${s}` : ''}`
+    );
   },
 
   // ===== 生命周期仪表盘 =====
@@ -682,24 +782,68 @@ export const dataLifecycleApiV68 = {
     return apiClient.master.get<LifecycleDashboard>('/mdm-v68/dashboard');
   },
 
-  async getPolicyComplianceStats(): Promise<ApiResponse<{ compliant: number; non_compliant: number; violations: Array<{ policy_id: string; policy_name: string; violation_count: number }> }>> {
-    return apiClient.master.get<{ compliant: number; non_compliant: number; violations: Array<{ policy_id: string; policy_name: string; violation_count: number }> }>('/mdm-v68/dashboard/compliance');
+  async getPolicyComplianceStats(): Promise<
+    ApiResponse<{
+      compliant: number;
+      non_compliant: number;
+      violations: Array<{ policy_id: string; policy_name: string; violation_count: number }>;
+    }>
+  > {
+    return apiClient.master.get<{
+      compliant: number;
+      non_compliant: number;
+      violations: Array<{ policy_id: string; policy_name: string; violation_count: number }>;
+    }>('/mdm-v68/dashboard/compliance');
   },
 
-  async getRetentionStats(): Promise<ApiResponse<{ by_type: Array<{ type: string; expiring_soon: number; overdue: number }>; total_expiring_30d: number }>> {
-    return apiClient.master.get<{ by_type: Array<{ type: string; expiring_soon: number; overdue: number }>; total_expiring_30d: number }>('/mdm-v68/dashboard/retention');
+  async getRetentionStats(): Promise<
+    ApiResponse<{
+      by_type: Array<{ type: string; expiring_soon: number; overdue: number }>;
+      total_expiring_30d: number;
+    }>
+  > {
+    return apiClient.master.get<{
+      by_type: Array<{ type: string; expiring_soon: number; overdue: number }>;
+      total_expiring_30d: number;
+    }>('/mdm-v68/dashboard/retention');
   },
 
-  async getArchiveStats(days?: number): Promise<ApiResponse<{ total_archived: number; total_size_bytes: number; by_tier: Array<{ tier: string; count: number; size_bytes: number }>; trend: Array<{ date: string; count: number; size_bytes: number }> }>> {
+  async getArchiveStats(days?: number): Promise<
+    ApiResponse<{
+      total_archived: number;
+      total_size_bytes: number;
+      by_tier: Array<{ tier: string; count: number; size_bytes: number }>;
+      trend: Array<{ date: string; count: number; size_bytes: number }>;
+    }>
+  > {
     const qs = new URLSearchParams();
     if (days !== undefined) qs.set('days', String(days));
-    return apiClient.master.get<{ total_archived: number; total_size_bytes: number; by_tier: Array<{ tier: string; count: number; size_bytes: number }>; trend: Array<{ date: string; count: number; size_bytes: number }> }>(`/mdm-v68/dashboard/archive${qs.toString() ? `?${qs.toString()}` : ''}`);
+    return apiClient.master.get<{
+      total_archived: number;
+      total_size_bytes: number;
+      by_tier: Array<{ tier: string; count: number; size_bytes: number }>;
+      trend: Array<{ date: string; count: number; size_bytes: number }>;
+    }>(`/mdm-v68/dashboard/archive${qs.toString() ? `?${qs.toString()}` : ''}`);
   },
 
-  async getDestructionStats(days?: number): Promise<ApiResponse<{ total_destroyed: number; total_size_bytes: number; by_method: Array<{ method: string; count: number }>; pending_approvals: number; trend: Array<{ date: string; count: number }> }>> {
+  async getDestructionStats(days?: number): Promise<
+    ApiResponse<{
+      total_destroyed: number;
+      total_size_bytes: number;
+      by_method: Array<{ method: string; count: number }>;
+      pending_approvals: number;
+      trend: Array<{ date: string; count: number }>;
+    }>
+  > {
     const qs = new URLSearchParams();
     if (days !== undefined) qs.set('days', String(days));
-    return apiClient.master.get<{ total_destroyed: number; total_size_bytes: number; by_method: Array<{ method: string; count: number }>; pending_approvals: number; trend: Array<{ date: string; count: number }> }>(`/mdm-v68/dashboard/destruction${qs.toString() ? `?${qs.toString()}` : ''}`);
+    return apiClient.master.get<{
+      total_destroyed: number;
+      total_size_bytes: number;
+      by_method: Array<{ method: string; count: number }>;
+      pending_approvals: number;
+      trend: Array<{ date: string; count: number }>;
+    }>(`/mdm-v68/dashboard/destruction${qs.toString() ? `?${qs.toString()}` : ''}`);
   },
 };
 

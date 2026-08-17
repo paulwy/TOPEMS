@@ -2,12 +2,17 @@ import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FileText, Clock, BarChart3, CheckCircle } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
-import type { StatCardConfig, ChartConfig, ChartCard } from '@/components/templates/DashboardTemplate';
+import type {
+  StatCardConfig,
+  ChartConfig,
+  ChartCard,
+} from '@/components/templates/DashboardTemplate';
 import { PageContainer } from '@/components/common';
 import { useLimsDashboardSchema } from '@/schemas/lims';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 import { limsApi } from '@/api/lims';
+
 const LimsDashboardPage: React.FC = () => {
   const schema = useLimsDashboardSchema();
 
@@ -23,7 +28,7 @@ const LimsDashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { isPending: loading} = useQuery({
+  const { isPending: loading } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.LIMS_DASHBOARD_BASE,
     queryFn: async () => {
       await schema.loader?.();

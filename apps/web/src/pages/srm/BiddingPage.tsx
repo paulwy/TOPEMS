@@ -1,16 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import i18n from '@/i18n';
 
-interface BiddingSupplier {
-  id: string;
-  supplier_name: string;
-  bid_amount?: number;
-  delivery_time?: string;
-  contact_person?: string;
-  phone?: string;
-  status?: string;
-}
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
@@ -34,6 +24,16 @@ import { srmApi, type Bidding } from '@/api/srm';
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 
+interface BiddingSupplier {
+  id: string;
+  supplier_name: string;
+  bid_amount?: number;
+  delivery_time?: string;
+  contact_person?: string;
+  phone?: string;
+  status?: string;
+}
+
 const BiddingPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
@@ -49,43 +49,58 @@ const BiddingPage: React.FC = () => {
   });
 
   const invalidateBiddings = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SRM.BIDDING ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.SRM.BIDDING,
+      exact: false,
+      refetchType: 'active',
+    });
   };
 
   const publishMutation = useMutation({
     mutationFn: async (id: string) => srmApi.publishBidding(id),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.SRM.STATISTICS,
-          exact: false,
-          refetchType: 'active',
-        });
-      addNotification({ type: 'success', title: i18n.t('pages.bidding_page.k1'), message: i18n.t('pages.bidding_page.k0') });
+        queryKey: QUERY_KEYS.SRM.STATISTICS,
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        type: 'success',
+        title: i18n.t('pages.bidding_page.k1'),
+        message: i18n.t('pages.bidding_page.k0'),
+      });
       invalidateBiddings();
     },
     onError: () => {
-      addNotification({ type: 'error', title: i18n.t('pages.bidding_page.k3'), message: i18n.t('pages.bidding_page.k2') });
+      addNotification({
+        type: 'error',
+        title: i18n.t('pages.bidding_page.k3'),
+        message: i18n.t('pages.bidding_page.k2'),
+      });
     },
   });
 
   const openBiddingMutation = useMutation({
     mutationFn: async (id: string) => srmApi.openBidding(id),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.SRM.STATISTICS,
-          exact: false,
-          refetchType: 'active',
-        });
-      addNotification({ type: 'success', title: i18n.t('pages.bidding_page.k5'), message: i18n.t('pages.bidding_page.k4') });
+        queryKey: QUERY_KEYS.SRM.STATISTICS,
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        type: 'success',
+        title: i18n.t('pages.bidding_page.k5'),
+        message: i18n.t('pages.bidding_page.k4'),
+      });
       invalidateBiddings();
     },
     onError: () => {
-      addNotification({ type: 'error', title: i18n.t('pages.bidding_page.k7'), message: i18n.t('pages.bidding_page.k6') });
+      addNotification({
+        type: 'error',
+        title: i18n.t('pages.bidding_page.k7'),
+        message: i18n.t('pages.bidding_page.k6'),
+      });
     },
   });
 
@@ -93,18 +108,25 @@ const BiddingPage: React.FC = () => {
     mutationFn: async (params: { biddingId: string; supplierId: string }) =>
       srmApi.awardBidding(params.biddingId, params.supplierId),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.SRM.STATISTICS,
-          exact: false,
-          refetchType: 'active',
-        });
-      addNotification({ type: 'success', title: i18n.t('pages.bidding_page.k9'), message: i18n.t('pages.bidding_page.k8') });
+        queryKey: QUERY_KEYS.SRM.STATISTICS,
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        type: 'success',
+        title: i18n.t('pages.bidding_page.k9'),
+        message: i18n.t('pages.bidding_page.k8'),
+      });
       invalidateBiddings();
       setShowSupplierDialog(false);
     },
     onError: () => {
-      addNotification({ type: 'error', title: i18n.t('pages.bidding_page.k11'), message: i18n.t('pages.bidding_page.k10') });
+      addNotification({
+        type: 'error',
+        title: i18n.t('pages.bidding_page.k11'),
+        message: i18n.t('pages.bidding_page.k10'),
+      });
     },
   });
 
@@ -125,7 +147,11 @@ const BiddingPage: React.FC = () => {
 
   const handlePublish = useCallback(
     (bidding: Bidding) => {
-      if (window.confirm(`${i18n.t('pages.bidding_page.k0')}${bidding.bidding_no}${i18n.t('pages.bidding_page.k1')}`)) {
+      if (
+        window.confirm(
+          `${i18n.t('pages.bidding_page.k0')}${bidding.bidding_no}${i18n.t('pages.bidding_page.k1')}`
+        )
+      ) {
         publishMutation.mutate(bidding.id);
       }
     },
@@ -134,7 +160,11 @@ const BiddingPage: React.FC = () => {
 
   const handleOpenBidding = useCallback(
     (bidding: Bidding) => {
-      if (window.confirm(`${i18n.t('pages.bidding_page.k2')}${bidding.bidding_no}${i18n.t('pages.bidding_page.k3')}`)) {
+      if (
+        window.confirm(
+          `${i18n.t('pages.bidding_page.k2')}${bidding.bidding_no}${i18n.t('pages.bidding_page.k3')}`
+        )
+      ) {
         openBiddingMutation.mutate(bidding.id);
       }
     },
@@ -145,7 +175,9 @@ const BiddingPage: React.FC = () => {
     (supplierId: string, supplierName: string) => {
       if (
         viewingBidding &&
-        window.confirm(`${i18n.t('pages.bidding_page.k4')}${viewingBidding.bidding_no}${i18n.t('pages.bidding_page.k5')}${supplierName}${i18n.t('pages.bidding_page.k6')}`)
+        window.confirm(
+          `${i18n.t('pages.bidding_page.k4')}${viewingBidding.bidding_no}${i18n.t('pages.bidding_page.k5')}${supplierName}${i18n.t('pages.bidding_page.k6')}`
+        )
       ) {
         awardMutation.mutate({ biddingId: viewingBidding.id, supplierId });
       }
@@ -178,7 +210,10 @@ const BiddingPage: React.FC = () => {
     const draft = rows.filter((r) => r.status === 'draft').length;
     const published = rows.filter((r) => r.status === 'published').length;
     const bidding = rows.filter((r) => r.status === 'bidding').length;
-    const totalBudget = rows.reduce((sum, r) => sum + ((r as Record<string, number>).budget_amount || 0), 0);
+    const totalBudget = rows.reduce(
+      (sum, r) => sum + ((r as Record<string, number>).budget_amount || 0),
+      0
+    );
 
     return (
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
@@ -187,7 +222,11 @@ const BiddingPage: React.FC = () => {
           { label: i18n.t('pages.bidding_page.k16'), value: draft, color: 'default' },
           { label: i18n.t('pages.bidding_page.k17'), value: published, color: 'info' },
           { label: i18n.t('pages.bidding_page.k18'), value: bidding, color: 'warning' },
-          { label: i18n.t('pages.bidding_page.k19'), value: `¥${totalBudget.toLocaleString()}`, color: 'success' },
+          {
+            label: i18n.t('pages.bidding_page.k19'),
+            value: `¥${totalBudget.toLocaleString()}`,
+            color: 'success',
+          },
         ].map((stat) => (
           <Box
             key={stat.label}
@@ -225,19 +264,25 @@ const BiddingPage: React.FC = () => {
       </Box>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, mb: 2 }}>
         <Box>
-          <Box sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.bidding_page.k20')}</Box>
+          <Box sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('pages.bidding_page.k20')}
+          </Box>
           <Box sx={{ fontWeight: 600 }}>
             {bidding.budget_amount ? `¥${bidding.budget_amount.toLocaleString()}` : '-'}
           </Box>
         </Box>
         <Box>
-          <Box sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.bidding_page.k21')}</Box>
+          <Box sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('pages.bidding_page.k21')}
+          </Box>
           <Box sx={{ fontWeight: 600 }}>{bidding.winner_supplier_name || '-'}</Box>
         </Box>
       </Box>
       {bidding.description && (
         <Box sx={{ mt: 2 }}>
-          <Box sx={{ fontSize: 12, color: 'text.secondary', mb: 0.5 }}>{i18n.t('pages.bidding_page.k22')}</Box>
+          <Box sx={{ fontSize: 12, color: 'text.secondary', mb: 0.5 }}>
+            {i18n.t('pages.bidding_page.k22')}
+          </Box>
           <Box sx={{ fontSize: 14 }}>{bidding.description}</Box>
         </Box>
       )}
@@ -306,7 +351,11 @@ const BiddingPage: React.FC = () => {
                     <TableCell>
                       <Chip
                         size='small'
-                        label={supplier.status === 'submitted' ? i18n.t('pages.bidding_page.k31') : supplier.status}
+                        label={
+                          supplier.status === 'submitted'
+                            ? i18n.t('pages.bidding_page.k31')
+                            : supplier.status
+                        }
                         color='primary'
                         variant='outlined'
                       />

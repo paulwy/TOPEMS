@@ -5,6 +5,7 @@ import { loadModuleConfig, coreModuleCodes, type RouteConfig } from '../routes';
 import ProtectedRouteWrapper from './ProtectedRouteWrapper';
 import PageLoader from './PageLoader';
 import NotFoundPage from '@/pages/shared/NotFoundPage';
+import { ModRootRedirect } from '@/lib/moduleRedirect';
 // V37.0 Phase 7: 记录用户导航历史 + 触发智能预加载
 import { recordNavigation, prefetchIntelligent } from '@/lib/pwa';
 // i18n 按需加载：按路由路径推断业务 NS 并预热
@@ -122,6 +123,11 @@ const DynamicRoutes: React.FC = () => {
           />
         );
       })}
+      {/* 裸段 /:mod → 模块首个 landing 页（防御 404 白屏） */}
+      <Route
+        path='/:mod'
+        element={<ModRootRedirect />}
+      />
       <Route
         path='*'
         element={<NotFoundPage />}

@@ -73,7 +73,8 @@ export const HeroSection: React.FC = () => {
                 textTransform: 'uppercase',
               }}
             >
-              {getGreeting()}，{user?.full_name || user?.username || i18n.t('shared.hero_section.k3')}
+              {getGreeting()}，
+              {user?.full_name || user?.username || i18n.t('shared.hero_section.k3')}
             </Typography>
           </Box>
 
@@ -166,8 +167,7 @@ export const HeroSection: React.FC = () => {
             right: '-5rem',
             width: '16rem',
             height: '16rem',
-            background:
-              `linear-gradient(to bottom right, ${designTokens.colors.cyber.grid.lineHeavy}, rgba(147, 51, 234, 0.2))`,
+            background: `linear-gradient(to bottom right, ${designTokens.colors.cyber.grid.lineHeavy}, rgba(147, 51, 234, 0.2))`,
             borderRadius: '50%',
             filter: 'blur(64px)',
           }}

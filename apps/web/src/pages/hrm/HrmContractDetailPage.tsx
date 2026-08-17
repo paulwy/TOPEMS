@@ -300,7 +300,9 @@ const HrmContractDetailPage: React.FC = () => {
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
             {i18n.t('hrm.hrm_contract_detail_page.k5')}
           </InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{t('hrm.hrm_contract_detail_page.m1', { v1: contract.probation_period || 0 })}</Typography>
+          <Typography sx={{ mt: 0.5 }}>
+            {t('hrm.hrm_contract_detail_page.m1', { v1: contract.probation_period || 0 })}
+          </Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>

@@ -3,7 +3,8 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type MaturityLevel = 'initial' | 'managed' | 'defined' | 'quantitatively_managed' | 'optimized';
+export type MaturityLevel =
+  'initial' | 'managed' | 'defined' | 'quantitatively_managed' | 'optimized';
 export type WorkflowStatus = 'draft' | 'active' | 'completed' | 'failed' | 'archived';
 export type StepStatus = 'pending' | 'in_progress' | 'approved' | 'rejected' | 'skipped';
 export type ProductStatus = 'proposed' | 'designing' | 'active' | 'deprecated' | 'retired';
@@ -160,7 +161,9 @@ export interface UpdateContractRequest {
 
 export const governanceApiV2 = {
   // ===== 治理成熟度 =====
-  async assessMaturity(data?: AssessMaturityRequest): Promise<ApiResponse<MaturityAssessmentResult>> {
+  async assessMaturity(
+    data?: AssessMaturityRequest
+  ): Promise<ApiResponse<MaturityAssessmentResult>> {
     return apiClient.master.post<MaturityAssessmentResult>('/mdm-v58/maturity/assess', data || {});
   },
 
@@ -172,11 +175,16 @@ export const governanceApiV2 = {
     return apiClient.master.get<MaturityDimensionScore[]>('/mdm-v58/maturity/scores');
   },
 
-  async createImprovementPlan(data: CreateImprovementPlanRequest): Promise<ApiResponse<ImprovementPlan>> {
+  async createImprovementPlan(
+    data: CreateImprovementPlanRequest
+  ): Promise<ApiResponse<ImprovementPlan>> {
     return apiClient.master.post<ImprovementPlan>('/mdm-v58/maturity/improvement-plan', data);
   },
 
-  async trackProgress(params?: { dimension?: string; status?: ImprovementPlan['status'] }): Promise<ApiResponse<{ items: ImprovementPlan[]; total: number }>> {
+  async trackProgress(params?: {
+    dimension?: string;
+    status?: ImprovementPlan['status'];
+  }): Promise<ApiResponse<{ items: ImprovementPlan[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.dimension) qs.set('dimension', params.dimension);
     if (params?.status) qs.set('status', params.status);
@@ -186,19 +194,26 @@ export const governanceApiV2 = {
     );
   },
 
-  async getMaturityHistory(params?: { dimension?: string; days?: number }): Promise<ApiResponse<MaturityHistoryEntry[]>> {
+  async getMaturityHistory(params?: {
+    dimension?: string;
+    days?: number;
+  }): Promise<ApiResponse<MaturityHistoryEntry[]>> {
     const qs = new URLSearchParams();
     if (params?.dimension) qs.set('dimension', params.dimension);
     if (params?.days !== undefined) qs.set('days', String(params.days));
     const s = qs.toString();
-    return apiClient.master.get<MaturityHistoryEntry[]>(`/mdm-v58/maturity/history${s ? `?${s}` : ''}`);
+    return apiClient.master.get<MaturityHistoryEntry[]>(
+      `/mdm-v58/maturity/history${s ? `?${s}` : ''}`
+    );
   },
 
   async getBenchmark(domain?: string): Promise<ApiResponse<BenchmarkComparison[]>> {
     const qs = new URLSearchParams();
     if (domain) qs.set('domain', domain);
     const s = qs.toString();
-    return apiClient.master.get<BenchmarkComparison[]>(`/mdm-v58/maturity/benchmark${s ? `?${s}` : ''}`);
+    return apiClient.master.get<BenchmarkComparison[]>(
+      `/mdm-v58/maturity/benchmark${s ? `?${s}` : ''}`
+    );
   },
 
   // ===== 自动化工作流 =====
@@ -210,15 +225,25 @@ export const governanceApiV2 = {
     return apiClient.master.post<GovernanceWorkflow>(`/mdm-v58/workflow/${id}/start`, {});
   },
 
-  async advanceStep(id: string, stepId: string, data: AdvanceStepRequest): Promise<ApiResponse<GovernanceWorkflow>> {
-    return apiClient.master.post<GovernanceWorkflow>(`/mdm-v58/workflow/${id}/advance`, { step_id: stepId, ...data });
+  async advanceStep(
+    id: string,
+    stepId: string,
+    data: AdvanceStepRequest
+  ): Promise<ApiResponse<GovernanceWorkflow>> {
+    return apiClient.master.post<GovernanceWorkflow>(`/mdm-v58/workflow/${id}/advance`, {
+      step_id: stepId,
+      ...data,
+    });
   },
 
   async getWorkflowStatus(id: string): Promise<ApiResponse<GovernanceWorkflow>> {
     return apiClient.master.get<GovernanceWorkflow>(`/mdm-v58/workflow/${id}/status`);
   },
 
-  async listWorkflows(params?: { status?: WorkflowStatus; entity_type?: string }): Promise<ApiResponse<{ items: GovernanceWorkflow[]; total: number }>> {
+  async listWorkflows(params?: {
+    status?: WorkflowStatus;
+    entity_type?: string;
+  }): Promise<ApiResponse<{ items: GovernanceWorkflow[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.status) qs.set('status', params.status);
     if (params?.entity_type) qs.set('entity_type', params.entity_type);
@@ -232,12 +257,26 @@ export const governanceApiV2 = {
     return apiClient.master.get<WorkflowTemplate[]>('/mdm-v58/workflow/templates');
   },
 
-  async approveStep(id: string, stepId: string, data?: { comment?: string; approver?: string }): Promise<ApiResponse<GovernanceWorkflow>> {
-    return apiClient.master.post<GovernanceWorkflow>(`/mdm-v58/workflow/step/${stepId}/approve`, data || {});
+  async approveStep(
+    id: string,
+    stepId: string,
+    data?: { comment?: string; approver?: string }
+  ): Promise<ApiResponse<GovernanceWorkflow>> {
+    return apiClient.master.post<GovernanceWorkflow>(
+      `/mdm-v58/workflow/step/${stepId}/approve`,
+      data || {}
+    );
   },
 
-  async rejectStep(id: string, stepId: string, data?: { reason?: string; approver?: string }): Promise<ApiResponse<GovernanceWorkflow>> {
-    return apiClient.master.post<GovernanceWorkflow>(`/mdm-v58/workflow/step/${stepId}/reject`, data || {});
+  async rejectStep(
+    id: string,
+    stepId: string,
+    data?: { reason?: string; approver?: string }
+  ): Promise<ApiResponse<GovernanceWorkflow>> {
+    return apiClient.master.post<GovernanceWorkflow>(
+      `/mdm-v58/workflow/step/${stepId}/reject`,
+      data || {}
+    );
   },
 
   // ===== 数据产品化 =====
@@ -249,7 +288,10 @@ export const governanceApiV2 = {
     return apiClient.master.get<DataProduct>(`/mdm-v58/data-product/${id}`);
   },
 
-  async listDataProducts(params?: { status?: ProductStatus; owner?: string }): Promise<ApiResponse<{ items: DataProduct[]; total: number }>> {
+  async listDataProducts(params?: {
+    status?: ProductStatus;
+    owner?: string;
+  }): Promise<ApiResponse<{ items: DataProduct[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.status) qs.set('status', params.status);
     if (params?.owner) qs.set('owner', params.owner);
@@ -259,7 +301,10 @@ export const governanceApiV2 = {
     );
   },
 
-  async updateContract(id: string, data: UpdateContractRequest): Promise<ApiResponse<DataContract>> {
+  async updateContract(
+    id: string,
+    data: UpdateContractRequest
+  ): Promise<ApiResponse<DataContract>> {
     return apiClient.master.put<DataContract>(`/mdm-v58/data-product/${id}/contract`, data);
   },
 
@@ -267,12 +312,22 @@ export const governanceApiV2 = {
     return apiClient.master.get<DataContract>(`/mdm-v58/data-product/${id}/contract/status`);
   },
 
-  async exposeAsApi(id: string, data?: { endpoint?: string; auth_type?: string }): Promise<ApiResponse<{ url: string; api_key: string }>> {
-    return apiClient.master.post<{ url: string; api_key: string }>(`/mdm-v58/data-product/${id}/expose`, data || {});
+  async exposeAsApi(
+    id: string,
+    data?: { endpoint?: string; auth_type?: string }
+  ): Promise<ApiResponse<{ url: string; api_key: string }>> {
+    return apiClient.master.post<{ url: string; api_key: string }>(
+      `/mdm-v58/data-product/${id}/expose`,
+      data || {}
+    );
   },
 
-  async getProductConsumers(id: string): Promise<ApiResponse<Array<{ consumer: string; since: string; last_accessed_at: string }>>> {
-    return apiClient.master.get<Array<{ consumer: string; since: string; last_accessed_at: string }>>(`/mdm-v58/data-product/${id}/consumers`);
+  async getProductConsumers(
+    id: string
+  ): Promise<ApiResponse<Array<{ consumer: string; since: string; last_accessed_at: string }>>> {
+    return apiClient.master.get<
+      Array<{ consumer: string; since: string; last_accessed_at: string }>
+    >(`/mdm-v58/data-product/${id}/consumers`);
   },
 
   async getProductLineage(id: string): Promise<ApiResponse<ProductLineage>> {

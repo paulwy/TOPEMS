@@ -30,15 +30,36 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store/notificationStore';
 import { routeApi } from '@/api/tms';
 import type { Route, CreateRouteRequest, RouteStatus } from '@/api/tms';
+
 const QUERY_KEY = 'tms-routes';
 const statusOptions = [
   { value: 'active', label: i18n.t('tms.route_management_page.k0') },
   { value: 'inactive', label: i18n.t('tms.route_management_page.k1') },
 ];
 const renderStatusChip = (status?: string) => {
-  if (status === 'active') return <Chip size='small' color='success' label={i18n.t('tms.route_management_page.k2')} />;
-  if (status === 'inactive') return <Chip size='small' color='default' label={i18n.t('tms.route_management_page.k3')} />;
-  return <Chip size='small' color='default' label={status || '-'} />;
+  if (status === 'active')
+    return (
+      <Chip
+        size='small'
+        color='success'
+        label={i18n.t('tms.route_management_page.k2')}
+      />
+    );
+  if (status === 'inactive')
+    return (
+      <Chip
+        size='small'
+        color='default'
+        label={i18n.t('tms.route_management_page.k3')}
+      />
+    );
+  return (
+    <Chip
+      size='small'
+      color='default'
+      label={status || '-'}
+    />
+  );
 };
 const RouteManagementPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -64,7 +85,11 @@ const RouteManagementPage: React.FC = () => {
     mutationFn: (data: CreateRouteRequest) => routeApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({ type: 'success', title: i18n.t('tms.route_management_page.k6'), message: i18n.t('tms.route_management_page.k5') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('tms.route_management_page.k6'),
+        message: i18n.t('tms.route_management_page.k5'),
+      });
       setFormOpen(false);
     },
     onError: (err: unknown) => {
@@ -80,7 +105,11 @@ const RouteManagementPage: React.FC = () => {
       routeApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({ type: 'success', title: i18n.t('tms.route_management_page.k9'), message: i18n.t('tms.route_management_page.k8') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('tms.route_management_page.k9'),
+        message: i18n.t('tms.route_management_page.k8'),
+      });
       setFormOpen(false);
     },
     onError: (err: unknown) => {
@@ -95,7 +124,11 @@ const RouteManagementPage: React.FC = () => {
     mutationFn: (id: string) => routeApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      addNotification({ type: 'success', title: i18n.t('tms.route_management_page.k12'), message: i18n.t('tms.route_management_page.k11') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('tms.route_management_page.k12'),
+        message: i18n.t('tms.route_management_page.k11'),
+      });
       setDeleteTarget(null);
     },
     onError: (err: unknown) => {
@@ -151,7 +184,13 @@ const RouteManagementPage: React.FC = () => {
       <Stack
         direction='row'
         spacing={2}
-        sx={{ mb: 2, flexWrap: 'wrap', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}
+        sx={{
+          mb: 2,
+          flexWrap: 'wrap',
+          gap: 1,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
       >
         <Stack
           direction='row'
@@ -290,7 +329,9 @@ const RouteManagementPage: React.FC = () => {
           }}
           rowsPerPageOptions={[10, 20, 50]}
           labelRowsPerPage={i18n.t('tms.route_management_page.k28')}
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to}${i18n.t('pages.route_management_page.k0')}${count}${i18n.t('pages.route_management_page.k1')}`}
+          labelDisplayedRows={({ from, to, count }) =>
+            `${from}-${to}${i18n.t('pages.route_management_page.k0')}${count}${i18n.t('pages.route_management_page.k1')}`
+          }
         />
       </Card>
       <Dialog
@@ -299,7 +340,11 @@ const RouteManagementPage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>{formMode === 'create' ? i18n.t('tms.route_management_page.k30') : i18n.t('tms.route_management_page.k29')}</DialogTitle>
+        <DialogTitle>
+          {formMode === 'create'
+            ? i18n.t('tms.route_management_page.k30')
+            : i18n.t('tms.route_management_page.k29')}
+        </DialogTitle>
         <DialogContent>
           <Box
             sx={{
@@ -370,13 +415,17 @@ const RouteManagementPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setFormOpen(false)}>{i18n.t('tms.route_management_page.k38')}</Button>
+          <Button onClick={() => setFormOpen(false)}>
+            {i18n.t('tms.route_management_page.k38')}
+          </Button>
           <Button
             variant='contained'
             onClick={handleSubmit}
             disabled={submitting || !formData.route_no || !formData.name}
           >
-            {submitting ? i18n.t('pages.route_management_page.k2') : i18n.t('tms.route_management_page.k39')}
+            {submitting
+              ? i18n.t('pages.route_management_page.k2')
+              : i18n.t('tms.route_management_page.k39')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -389,18 +438,23 @@ const RouteManagementPage: React.FC = () => {
         <DialogTitle>{i18n.t('tms.route_management_page.k40')}</DialogTitle>
         <DialogContent>
           <Typography>
-            {i18n.t('pages.route_management_page.k0')}「{deleteTarget?.name}」{i18n.t('pages.route_management_page.k1')}
+            {i18n.t('pages.route_management_page.k0')}「{deleteTarget?.name}」
+            {i18n.t('pages.route_management_page.k1')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>{i18n.t('tms.route_management_page.k41')}</Button>
+          <Button onClick={() => setDeleteTarget(null)}>
+            {i18n.t('tms.route_management_page.k41')}
+          </Button>
           <Button
             color='error'
             variant='contained'
             onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? i18n.t('pages.route_management_page.k3') : i18n.t('tms.route_management_page.k42')}
+            {deleteMutation.isPending
+              ? i18n.t('pages.route_management_page.k3')
+              : i18n.t('tms.route_management_page.k42')}
           </Button>
         </DialogActions>
       </Dialog>

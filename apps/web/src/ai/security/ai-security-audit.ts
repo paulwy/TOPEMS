@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type AuditType = 'InputValidation' | 'OutputFilter' | 'PromptInjection' | 'DataLeakage';
 
 export type AuditSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';

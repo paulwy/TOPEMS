@@ -195,7 +195,13 @@ const SecurityScoreGauge: React.FC<{ score: number }> = ({ score }) => {
         color='text.secondary'
         sx={{ mt: 1 }}
       >
-        {score >= 90 ? i18n.t('microfrontend.security_center.k14') : score >= 70 ? i18n.t('microfrontend.security_center.k13') : score >= 50 ? i18n.t('microfrontend.security_center.k12') : i18n.t('microfrontend.security_center.k11')}
+        {score >= 90
+          ? i18n.t('microfrontend.security_center.k14')
+          : score >= 70
+            ? i18n.t('microfrontend.security_center.k13')
+            : score >= 50
+              ? i18n.t('microfrontend.security_center.k12')
+              : i18n.t('microfrontend.security_center.k11')}
       </Typography>
     </Box>
   );
@@ -358,7 +364,11 @@ const PermissionAuditTable: React.FC<{ permissions: PermissionAudit[] }> = ({ pe
             <TableCell sx={{ fontWeight: 600 }}>{perm.permission}</TableCell>
             <TableCell>
               <Chip
-                label={perm.required ? i18n.t('microfrontend.security_center.k22') : i18n.t('microfrontend.security_center.k21')}
+                label={
+                  perm.required
+                    ? i18n.t('microfrontend.security_center.k22')
+                    : i18n.t('microfrontend.security_center.k21')
+                }
                 size='small'
                 color={perm.required ? 'primary' : 'default'}
                 variant='outlined'
@@ -367,7 +377,11 @@ const PermissionAuditTable: React.FC<{ permissions: PermissionAudit[] }> = ({ pe
             <TableCell>{perm.justification}</TableCell>
             <TableCell>
               <Chip
-                label={perm.risky ? i18n.t('microfrontend.security_center.k24') : i18n.t('microfrontend.security_center.k23')}
+                label={
+                  perm.risky
+                    ? i18n.t('microfrontend.security_center.k24')
+                    : i18n.t('microfrontend.security_center.k23')
+                }
                 size='small'
                 color={perm.risky ? 'warning' : 'success'}
                 variant='outlined'
@@ -389,7 +403,9 @@ const ScanHistoryList: React.FC<{ history: ScanHistoryEntry[] }> = ({ history })
           size={48}
           style={{ opacity: 0.3, marginBottom: 16 }}
         />
-        <Typography color='text.secondary'>{i18n.t('microfrontend.security_center.k25')}</Typography>
+        <Typography color='text.secondary'>
+          {i18n.t('microfrontend.security_center.k25')}
+        </Typography>
       </Paper>
     );
   }
@@ -509,7 +525,11 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
     if (success) {
       setAllIssues(securityScanner.getSecurityIssues());
       setOverallScore(securityScanner.getSecurityScore());
-      setSnackbar({ open: true, message: i18n.t('microfrontend.security_center.k26'), type: 'success' });
+      setSnackbar({
+        open: true,
+        message: i18n.t('microfrontend.security_center.k26'),
+        type: 'success',
+      });
     }
   };
 
@@ -521,7 +541,11 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
     });
     setAllIssues(securityScanner.getSecurityIssues());
     setOverallScore(securityScanner.getSecurityScore());
-    setSnackbar({ open: true, message: `${i18n.t('microfrontend.security_center.k9')} ${fixedCount} ${i18n.t('microfrontend.security_center.k10')}`, type: 'success' });
+    setSnackbar({
+      open: true,
+      message: `${i18n.t('microfrontend.security_center.k9')} ${fixedCount} ${i18n.t('microfrontend.security_center.k10')}`,
+      type: 'success',
+    });
   };
 
   return (
@@ -578,7 +602,9 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
           onClick={runScan}
           disabled={scanning}
         >
-          {scanning ? i18n.t('microfrontend.security_center.k13') : i18n.t('microfrontend.security_center.k27')}
+          {scanning
+            ? i18n.t('microfrontend.security_center.k13')
+            : i18n.t('microfrontend.security_center.k27')}
         </Button>
       </Box>
 
@@ -681,7 +707,9 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
                   onChange={(e) => setSelectedSeverity(e.target.value)}
                 >
                   <MenuItem value=''>{i18n.t('microfrontend.security_center.k38')}</MenuItem>
-                  <MenuItem value='critical'>{i18n.t('microfrontend.security_center.k39')}</MenuItem>
+                  <MenuItem value='critical'>
+                    {i18n.t('microfrontend.security_center.k39')}
+                  </MenuItem>
                   <MenuItem value='high'>{i18n.t('microfrontend.security_center.k40')}</MenuItem>
                   <MenuItem value='medium'>{i18n.t('microfrontend.security_center.k41')}</MenuItem>
                   <MenuItem value='low'>{i18n.t('microfrontend.security_center.k42')}</MenuItem>
@@ -699,8 +727,12 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
                   onChange={(e) => setSelectedCategory(e.target.value)}
                 >
                   <MenuItem value=''>{i18n.t('microfrontend.security_center.k46')}</MenuItem>
-                  <MenuItem value='dependency'>{i18n.t('microfrontend.security_center.k47')}</MenuItem>
-                  <MenuItem value='permission'>{i18n.t('microfrontend.security_center.k48')}</MenuItem>
+                  <MenuItem value='dependency'>
+                    {i18n.t('microfrontend.security_center.k47')}
+                  </MenuItem>
+                  <MenuItem value='permission'>
+                    {i18n.t('microfrontend.security_center.k48')}
+                  </MenuItem>
                   <MenuItem value='sandbox'>{i18n.t('microfrontend.security_center.k49')}</MenuItem>
                   <MenuItem value='network'>{i18n.t('microfrontend.security_center.k50')}</MenuItem>
                   <MenuItem value='data'>{i18n.t('microfrontend.security_center.k51')}</MenuItem>
@@ -713,7 +745,8 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
                 color='text.secondary'
                 sx={{ alignSelf: 'center' }}
               >
-                {i18n.t('microfrontend.security_center.k2')} {filteredIssues.length} {i18n.t('microfrontend.security_center.k3')}
+                {i18n.t('microfrontend.security_center.k2')} {filteredIssues.length}{' '}
+                {i18n.t('microfrontend.security_center.k3')}
               </Typography>
             </Box>
 
@@ -771,7 +804,8 @@ const SecurityCenter: React.FC<SecurityCenterProps> = ({ onClose }) => {
                         variant='caption'
                         color='text.secondary'
                       >
-                        {result.passed_checks} {i18n.t('microfrontend.security_center.k4')} {result.failed_checks} {i18n.t('microfrontend.security_center.k5')}
+                        {result.passed_checks} {i18n.t('microfrontend.security_center.k4')}{' '}
+                        {result.failed_checks} {i18n.t('microfrontend.security_center.k5')}
                       </Typography>
                     </Box>
                     <Chip

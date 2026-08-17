@@ -7,25 +7,34 @@ export const customerRating = z.enum(['A', 'B', 'C', 'D']);
 export const customerType = z.enum(['enterprise', 'individual']);
 export const approvalStatus = z.enum(['none', 'pending', 'approved', 'rejected']);
 
-export const customerZodSchema = z.object({
-  id: z.string().uuid(),
-  tenantId: z.string().uuid(),
-  name: z.string().min(2).max(120),
-  customerType: customerType,
-  industry: z.string().max(80).optional(),
-  rating: customerRating.default('C'),
-  region: z.string().max(40).optional(),
-  ownerId: z.string().uuid(),
-  tags: z.array(z.string().max(32)).default([]),
-  approvalStatus: approvalStatus.default('none'),
-}).merge(commonAuditSchema);
+export const customerZodSchema = z
+  .object({
+    id: z.string().uuid(),
+    tenantId: z.string().uuid(),
+    name: z.string().min(2).max(120),
+    customerType,
+    industry: z.string().max(80).optional(),
+    rating: customerRating.default('C'),
+    region: z.string().max(40).optional(),
+    ownerId: z.string().uuid(),
+    tags: z.array(z.string().max(32)).default([]),
+    approvalStatus: approvalStatus.default('none'),
+  })
+  .merge(commonAuditSchema);
 
 export type Customer = z.infer<typeof customerZodSchema>;
 export type CustomerRating = z.infer<typeof customerRating>;
 export type CustomerType = z.infer<typeof customerType>;
 export type ApprovalStatus = z.infer<typeof approvalStatus>;
 
-export const createCustomerSchema = customerZodSchema.omit({ id: true, tenantId: true, approvalStatus: true, createdAt: true, updatedAt: true, deletedAt: true });
+export const createCustomerSchema = customerZodSchema.omit({
+  id: true,
+  tenantId: true,
+  approvalStatus: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
 export type CreateCustomerRequest = z.infer<typeof createCustomerSchema>;
 
 export const updateCustomerSchema = createCustomerSchema.partial();
@@ -46,7 +55,10 @@ export const customerSchema: EntitySchema<Customer> = {
       required: true,
       sortable: true,
       listWidth: 200,
-      validation: [{ type: 'minLength', value: 2 }, { type: 'maxLength', value: 120 }],
+      validation: [
+        { type: 'minLength', value: 2 },
+        { type: 'maxLength', value: 120 },
+      ],
     },
     {
       name: 'customerType',

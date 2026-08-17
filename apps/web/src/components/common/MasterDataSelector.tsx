@@ -18,7 +18,6 @@ import { Autocomplete, TextField, Box, Typography, Chip, CircularProgress } from
 import { useQuery } from '@tanstack/react-query';
 import { masterDataApi, type MasterDataRef } from '@/api/bff';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
@@ -59,7 +58,7 @@ export const MasterDataSelector: React.FC<MasterDataSelectorProps> = ({
   size = 'small',
   showStatus = true,
 }) => {
-  const { data, isPending} = useQuery({
+  const { data, isPending } = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.MASTER_DATA_REFS_BASE, domain],
     queryFn: async () => {
       const resp = await masterDataApi.list(domain, 1, 100);
@@ -165,7 +164,11 @@ export const MasterDataSelector: React.FC<MasterDataSelectorProps> = ({
           }}
         />
       )}
-      noOptionsText={isPending ? i18n.t('components.master_data_selector.k1') : i18n.t('shared.master_data_selector.k7')}
+      noOptionsText={
+        isPending
+          ? i18n.t('components.master_data_selector.k1')
+          : i18n.t('shared.master_data_selector.k7')
+      }
     />
   );
 };

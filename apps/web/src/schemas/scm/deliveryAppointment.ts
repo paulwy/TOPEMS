@@ -75,13 +75,34 @@ export const deliveryAppointmentSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: i18n.t('scm.delivery_appointment.k11'), label: i18n.t('scm.delivery_appointment.k12') },
-          { value: i18n.t('scm.delivery_appointment.k13'), label: i18n.t('scm.delivery_appointment.k14') },
-          { value: i18n.t('scm.delivery_appointment.k15'), label: i18n.t('scm.delivery_appointment.k16') },
-          { value: i18n.t('scm.delivery_appointment.k17'), label: i18n.t('scm.delivery_appointment.k18') },
-          { value: i18n.t('scm.delivery_appointment.k19'), label: i18n.t('scm.delivery_appointment.k20') },
-          { value: i18n.t('scm.delivery_appointment.k21'), label: i18n.t('scm.delivery_appointment.k22') },
-          { value: i18n.t('scm.delivery_appointment.k23'), label: i18n.t('scm.delivery_appointment.k24') },
+          {
+            value: i18n.t('scm.delivery_appointment.k11'),
+            label: i18n.t('scm.delivery_appointment.k12'),
+          },
+          {
+            value: i18n.t('scm.delivery_appointment.k13'),
+            label: i18n.t('scm.delivery_appointment.k14'),
+          },
+          {
+            value: i18n.t('scm.delivery_appointment.k15'),
+            label: i18n.t('scm.delivery_appointment.k16'),
+          },
+          {
+            value: i18n.t('scm.delivery_appointment.k17'),
+            label: i18n.t('scm.delivery_appointment.k18'),
+          },
+          {
+            value: i18n.t('scm.delivery_appointment.k19'),
+            label: i18n.t('scm.delivery_appointment.k20'),
+          },
+          {
+            value: i18n.t('scm.delivery_appointment.k21'),
+            label: i18n.t('scm.delivery_appointment.k22'),
+          },
+          {
+            value: i18n.t('scm.delivery_appointment.k23'),
+            label: i18n.t('scm.delivery_appointment.k24'),
+          },
         ],
       },
       listWidth: 110,

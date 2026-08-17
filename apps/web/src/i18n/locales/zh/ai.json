@@ -3315,5 +3315,7 @@
   "ai.devex.k3": ".t('microfrontend.devtools-panel.k19')启动性能监控，然后点击i18n.t('microfrontend.devtools-panel.k18')查看详细分析",
   "ai.devex.k4": "请求追踪 (",
   "ai.devex.k5": "全局状态 (",
-  "ai.devex.k6": "调试会话 ("
+  "ai.devex.k6": "调试会话 (",
+  "ai.v53-ai-panel.k58": "语句",
+  "ai.v59-security-panel.k58": "得分"
 }

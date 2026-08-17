@@ -11,6 +11,7 @@ import type { Formula, CreateFormulaRequest, UpdateFormulaRequest } from '@/api/
 import { PageContainer } from '@/components/common';
 import { RD_PATHS } from '@/modules/rd/config';
 import i18n from '@/i18n';
+
 const baseAdapter = createCrudPageAdapter<Formula, CreateFormulaRequest, UpdateFormulaRequest>({
   list: formulaApi.listFormulas,
   create: formulaApi.createFormula,

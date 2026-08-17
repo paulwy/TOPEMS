@@ -31,21 +31,33 @@ export const capacityApi = {
   },
 
   // ---- 审批端点 ----
-  submit: async (id: string, operator: string, comment?: string): Promise<ApiResponse<ApprovalResponse>> => {
+  submit: async (
+    id: string,
+    operator: string,
+    comment?: string
+  ): Promise<ApiResponse<ApprovalResponse>> => {
     return apiClient.aps.post(`/capacities/${id}/submit`, {
       operator,
       comment,
     } as ApprovalRequest);
   },
 
-  allocate: async (id: string, operator: string, comment?: string): Promise<ApiResponse<ApprovalResponse>> => {
+  allocate: async (
+    id: string,
+    operator: string,
+    comment?: string
+  ): Promise<ApiResponse<ApprovalResponse>> => {
     return apiClient.aps.post(`/capacities/${id}/allocate`, {
       operator,
       comment,
     } as ApprovalRequest);
   },
 
-  release: async (id: string, operator: string, comment?: string): Promise<ApiResponse<ApprovalResponse>> => {
+  release: async (
+    id: string,
+    operator: string,
+    comment?: string
+  ): Promise<ApiResponse<ApprovalResponse>> => {
     return apiClient.aps.post(`/capacities/${id}/release`, {
       operator,
       comment,

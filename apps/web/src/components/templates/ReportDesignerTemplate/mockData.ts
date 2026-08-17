@@ -4,8 +4,18 @@ import i18n from '@/i18n';
 export const MOCK_FIELDS: Record<string, DataSourceField[]> = {
   orders: [
     { id: 'order_id', name: 'order_id', type: 'string', label: i18n.t('components.mock_data.k0') },
-    { id: 'customer_name', name: 'customer_name', type: 'string', label: i18n.t('components.mock_data.k1') },
-    { id: 'order_date', name: 'order_date', type: 'date', label: i18n.t('components.mock_data.k2') },
+    {
+      id: 'customer_name',
+      name: 'customer_name',
+      type: 'string',
+      label: i18n.t('components.mock_data.k1'),
+    },
+    {
+      id: 'order_date',
+      name: 'order_date',
+      type: 'date',
+      label: i18n.t('components.mock_data.k2'),
+    },
     { id: 'amount', name: 'amount', type: 'number', label: i18n.t('components.mock_data.k3') },
     {
       id: 'status',
@@ -18,7 +28,12 @@ export const MOCK_FIELDS: Record<string, DataSourceField[]> = {
         { label: i18n.t('components.mock_data.k7'), value: 'cancelled' },
       ],
     },
-    { id: 'product_name', name: 'product_name', type: 'string', label: i18n.t('components.mock_data.k8') },
+    {
+      id: 'product_name',
+      name: 'product_name',
+      type: 'string',
+      label: i18n.t('components.mock_data.k8'),
+    },
     { id: 'quantity', name: 'quantity', type: 'number', label: i18n.t('components.mock_data.k9') },
     { id: 'discount', name: 'discount', type: 'number', label: i18n.t('components.mock_data.k10') },
   ],
@@ -27,9 +42,19 @@ export const MOCK_FIELDS: Record<string, DataSourceField[]> = {
     { id: 'username', name: 'username', type: 'string', label: i18n.t('components.mock_data.k12') },
     { id: 'email', name: 'email', type: 'string', label: i18n.t('components.mock_data.k13') },
     { id: 'phone', name: 'phone', type: 'string', label: i18n.t('components.mock_data.k14') },
-    { id: 'department', name: 'department', type: 'string', label: i18n.t('components.mock_data.k15') },
+    {
+      id: 'department',
+      name: 'department',
+      type: 'string',
+      label: i18n.t('components.mock_data.k15'),
+    },
     { id: 'position', name: 'position', type: 'string', label: i18n.t('components.mock_data.k16') },
-    { id: 'created_at', name: 'created_at', type: 'date', label: i18n.t('components.mock_data.k17') },
+    {
+      id: 'created_at',
+      name: 'created_at',
+      type: 'date',
+      label: i18n.t('components.mock_data.k17'),
+    },
     {
       id: 'status',
       name: 'status',
@@ -42,10 +67,25 @@ export const MOCK_FIELDS: Record<string, DataSourceField[]> = {
     },
   ],
   projects: [
-    { id: 'project_id', name: 'project_id', type: 'string', label: i18n.t('components.mock_data.k21') },
-    { id: 'project_name', name: 'project_name', type: 'string', label: i18n.t('components.mock_data.k22') },
+    {
+      id: 'project_id',
+      name: 'project_id',
+      type: 'string',
+      label: i18n.t('components.mock_data.k21'),
+    },
+    {
+      id: 'project_name',
+      name: 'project_name',
+      type: 'string',
+      label: i18n.t('components.mock_data.k22'),
+    },
     { id: 'manager', name: 'manager', type: 'string', label: i18n.t('components.mock_data.k23') },
-    { id: 'start_date', name: 'start_date', type: 'date', label: i18n.t('components.mock_data.k24') },
+    {
+      id: 'start_date',
+      name: 'start_date',
+      type: 'date',
+      label: i18n.t('components.mock_data.k24'),
+    },
     { id: 'end_date', name: 'end_date', type: 'date', label: i18n.t('components.mock_data.k25') },
     { id: 'budget', name: 'budget', type: 'number', label: i18n.t('components.mock_data.k26') },
     { id: 'progress', name: 'progress', type: 'number', label: i18n.t('components.mock_data.k27') },

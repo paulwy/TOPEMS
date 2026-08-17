@@ -21,9 +21,10 @@ import { PageContainer } from '@/components/common';
 import { teamSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { Team, TeamMember, CreateTeamRequest, UpdateTeamRequest } from '@/api/mes/types';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter<Team, CreateTeamRequest, UpdateTeamRequest>(
   {
     list: mesApi.teams.list,
@@ -35,7 +36,7 @@ const apiAdapter = createCrudPageAdapter<Team, CreateTeamRequest, UpdateTeamRequ
 );
 function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
   const teamId = String(row.id);
-  const { data: membersData, isPending} = useQuery({
+  const { data: membersData, isPending } = useQuery({
     queryKey: [...QUERY_KEYS.MES.TEAMS, teamId, 'members'],
     queryFn: async () => {
       const response = await mesApi.teams.getMembers(teamId);
@@ -44,12 +45,21 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const members = (membersData as TeamMember[]) || [];
   const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-    active: { label: i18n.t('mes.team_management_page.k0'), bg: 'success.lighter', color: 'success.700' },
-    inactive: { label: i18n.t('mes.team_management_page.k1'), bg: 'grey.100', color: 'text.secondary' },
+    active: {
+      label: i18n.t('mes.team_management_page.k0'),
+      bg: 'success.lighter',
+      color: 'success.700',
+    },
+    inactive: {
+      label: i18n.t('mes.team_management_page.k1'),
+      bg: 'grey.100',
+      color: 'text.secondary',
+    },
   };
   const status = statusMap[String(row.status)] || statusMap.inactive;
   const typeMap: Record<string, string> = {
@@ -194,7 +204,11 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
                       <TableCell>
                         <Chip
                           size='small'
-                          label={member.status === 'active' ? i18n.t('mes.team_management_page.k12') : i18n.t('mes.team_management_page.k11')}
+                          label={
+                            member.status === 'active'
+                              ? i18n.t('mes.team_management_page.k12')
+                              : i18n.t('mes.team_management_page.k11')
+                          }
                           sx={{
                             backgroundColor:
                               member.status === 'active' ? 'success.lighter' : 'grey.100',

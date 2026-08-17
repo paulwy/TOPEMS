@@ -3,7 +3,6 @@ import type { EntitySchema } from '@/schema';
 import { departmentApi } from '@/api/hrm';
 import type { Department } from '@/api/hrm';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
@@ -67,7 +66,12 @@ const renderUsageBar = (row: Record<string, unknown>) => {
       { style: { display: 'flex', justifyContent: 'space-between', marginBottom: 4 } },
       React.createElement(
         'span',
-        { style: { fontSize: '0.75rem', color: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}` } },
+        {
+          style: {
+            fontSize: '0.75rem',
+            color: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
+          },
+        },
         `${i18n.t('shared.budget.k0')}${used.toLocaleString('zh-CN')}`
       ),
       React.createElement(
@@ -77,7 +81,9 @@ const renderUsageBar = (row: Record<string, unknown>) => {
             fontWeight: 700,
             fontSize: '0.75rem',
             color:
-              rate > 80 ? `var(--color-error-main, ${designTokens.colors.error['800']})` : `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
+              rate > 80
+                ? `var(--color-error-main, ${designTokens.colors.error['800']})`
+                : `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
           },
         },
         `${rate.toFixed(1)}%`
@@ -211,7 +217,10 @@ export const budgetSchema: EntitySchema = {
       defaultValue: 0,
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) =>
-        formatMoney(row.total_budget as number | undefined, `var(--color-primary-main, ${designTokens.colors.primary.dark})`),
+        formatMoney(
+          row.total_budget as number | undefined,
+          `var(--color-primary-main, ${designTokens.colors.primary.dark})`
+        ),
     },
     {
       name: 'used_amount',

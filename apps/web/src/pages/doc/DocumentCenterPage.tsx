@@ -40,7 +40,7 @@ import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface DocumentWithFavorite extends FileMetadata {
   is_favorite?: boolean;
@@ -117,7 +117,9 @@ const DocumentCenterPage: React.FC = () => {
           ...file,
           is_favorite: false,
           tags: [],
-          category: file.folder_id ? i18n.t('pages.document_center_page.k1') : i18n.t('pages.document_center_page.k0'),
+          category: file.folder_id
+            ? i18n.t('pages.document_center_page.k1')
+            : i18n.t('pages.document_center_page.k0'),
         }));
         return { documents: docs, total: data.total ?? 0 };
       }
@@ -163,15 +165,24 @@ const DocumentCenterPage: React.FC = () => {
       return res;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS ,
-  exact: false,
-  refetchType: 'active',
-});
-      addNotification({ title: i18n.t('pages.document_center_page.k4'), message: i18n.t('pages.document_center_page.k3'), type: 'success' });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.DOC.DOCUMENTS,
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        title: i18n.t('pages.document_center_page.k4'),
+        message: i18n.t('pages.document_center_page.k3'),
+        type: 'success',
+      });
     },
     onError: (err: unknown) => {
       logger.error(i18n.t('pages.document_center_page.k0'), err);
-      addNotification({ title: i18n.t('pages.document_center_page.k6'), message: i18n.t('pages.document_center_page.k5'), type: 'error' });
+      addNotification({
+        title: i18n.t('pages.document_center_page.k6'),
+        message: i18n.t('pages.document_center_page.k5'),
+        type: 'error',
+      });
     },
   });
 
@@ -182,10 +193,11 @@ const DocumentCenterPage: React.FC = () => {
       }
     },
     onSuccess: (_data, files) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.DOC.DOCUMENTS,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         title: i18n.t('pages.document_center_page.k7'),
         message: `${i18n.t('pages.document_center_page.k1')}${files.length}${i18n.t('pages.document_center_page.k2')}`,
@@ -196,7 +208,11 @@ const DocumentCenterPage: React.FC = () => {
     },
     onError: (err: unknown) => {
       logger.error(i18n.t('pages.document_center_page.k3'), err);
-      addNotification({ title: i18n.t('pages.document_center_page.k9'), message: i18n.t('pages.document_center_page.k8'), type: 'error' });
+      addNotification({
+        title: i18n.t('pages.document_center_page.k9'),
+        message: i18n.t('pages.document_center_page.k8'),
+        type: 'error',
+      });
     },
   });
 
@@ -207,19 +223,29 @@ const DocumentCenterPage: React.FC = () => {
       return res;
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.VERSIONS(variables.fileId) ,
-  exact: false,
-  refetchType: 'active',
-});
-      addNotification({ title: i18n.t('pages.document_center_page.k12'), message: i18n.t('pages.document_center_page.k11'), type: 'success' });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.DOC.DOCUMENTS,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.DOC.VERSIONS(variables.fileId),
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        title: i18n.t('pages.document_center_page.k12'),
+        message: i18n.t('pages.document_center_page.k11'),
+        type: 'success',
+      });
     },
     onError: (err: unknown) => {
       logger.error(i18n.t('pages.document_center_page.k4'), err);
-      addNotification({ title: i18n.t('pages.document_center_page.k14'), message: i18n.t('pages.document_center_page.k13'), type: 'error' });
+      addNotification({
+        title: i18n.t('pages.document_center_page.k14'),
+        message: i18n.t('pages.document_center_page.k13'),
+        type: 'error',
+      });
     },
   });
 
@@ -228,7 +254,11 @@ const DocumentCenterPage: React.FC = () => {
   useEffect(() => {
     if (documentsQuery.isError) {
       logger.error(i18n.t('pages.document_center_page.k5'), documentsQuery.error);
-      addNotification({ title: i18n.t('pages.document_center_page.k16'), message: i18n.t('pages.document_center_page.k15'), type: 'error' });
+      addNotification({
+        title: i18n.t('pages.document_center_page.k16'),
+        message: i18n.t('pages.document_center_page.k15'),
+        type: 'error',
+      });
     }
   }, [documentsQuery.isError, documentsQuery.error, addNotification]);
 
@@ -259,14 +289,16 @@ const DocumentCenterPage: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS ,
-  exact: false,
-  refetchType: 'active',
-});
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.FOLDERS ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.DOC.DOCUMENTS,
+      exact: false,
+      refetchType: 'active',
+    });
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.DOC.FOLDERS,
+      exact: false,
+      refetchType: 'active',
+    });
   };
 
   const handleToggleFavorite = (docId: string) => {
@@ -363,9 +395,18 @@ const DocumentCenterPage: React.FC = () => {
       type: 'select' as const,
       options: [
         { label: i18n.t('pages.document_center_page.k27'), value: '' },
-        { label: i18n.t('pages.document_center_page.k28'), value: i18n.t('pages.document_center_page.k29') },
-        { label: i18n.t('pages.document_center_page.k30'), value: i18n.t('pages.document_center_page.k31') },
-        { label: i18n.t('pages.document_center_page.k32'), value: i18n.t('pages.document_center_page.k33') },
+        {
+          label: i18n.t('pages.document_center_page.k28'),
+          value: i18n.t('pages.document_center_page.k29'),
+        },
+        {
+          label: i18n.t('pages.document_center_page.k30'),
+          value: i18n.t('pages.document_center_page.k31'),
+        },
+        {
+          label: i18n.t('pages.document_center_page.k32'),
+          value: i18n.t('pages.document_center_page.k33'),
+        },
       ],
     },
   ];
@@ -676,12 +717,16 @@ const DocumentCenterPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowUploadModal(false)}>{i18n.t('pages.document_center_page.k47')}</Button>
+          <Button onClick={() => setShowUploadModal(false)}>
+            {i18n.t('pages.document_center_page.k47')}
+          </Button>
           <Button
             onClick={handleUpload}
             disabled={uploading || uploadFiles.length === 0}
           >
-            {uploading ? i18n.t('pages.document_center_page.k10') : i18n.t('pages.document_center_page.k48')}
+            {uploading
+              ? i18n.t('pages.document_center_page.k10')
+              : i18n.t('pages.document_center_page.k48')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -723,7 +768,9 @@ const DocumentCenterPage: React.FC = () => {
                   marginBottom: 8,
                 }}
               />
-              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pages.document_center_page.k49')}</Typography>
+              <Typography sx={{ color: 'grey.500' }}>
+                {i18n.t('pages.document_center_page.k49')}
+              </Typography>
               <Typography
                 variant='caption'
                 sx={{ color: 'grey.400', display: 'block', mt: 0.5 }}
@@ -861,7 +908,9 @@ const DocumentCenterPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowVersionHistory(false)}>{i18n.t('pages.document_center_page.k56')}</Button>
+          <Button onClick={() => setShowVersionHistory(false)}>
+            {i18n.t('pages.document_center_page.k56')}
+          </Button>
         </DialogActions>
       </Dialog>
     </PageContainer>

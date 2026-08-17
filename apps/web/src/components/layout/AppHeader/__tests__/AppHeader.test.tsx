@@ -4,6 +4,8 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { renderWithProviders } from '@/__tests__/test-utils';
 
+import { AppHeader } from '../AppHeader';
+
 const { tMock } = vi.hoisted(() => {
   const i18nMap: Record<string, string> = {
     'components.header_breadcrumbs.k0': '首页',
@@ -102,8 +104,6 @@ vi.mock('../HeaderUserMenu', () => ({
 vi.mock('../HeaderBreadcrumbs', () => ({
   HeaderBreadcrumbs: () => <div data-testid='header-breadcrumbs' />,
 }));
-
-import { AppHeader } from '../AppHeader';
 
 describe('AppHeader', () => {
   beforeEach(() => {

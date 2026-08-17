@@ -3,6 +3,13 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 
+import WmsInventoryTurnoverPage from '@/pages/wms/analytics/WmsInventoryTurnoverPage';
+import WmsAgeParetoPage from '@/pages/wms/analytics/WmsAgeParetoPage';
+import WmsFlowTrendPage from '@/pages/wms/analytics/WmsFlowTrendPage';
+import WmsAbcAnalysisPage from '@/pages/wms/analytics/WmsAbcAnalysisPage';
+import WmsLocationUtilizationPage from '@/pages/wms/analytics/WmsLocationUtilizationPage';
+import WmsOrderFulfillmentPage from '@/pages/wms/analytics/WmsOrderFulfillmentPage';
+
 const { tMock } = vi.hoisted(() => {
   const i18nMap: Record<string, string> = {
     'pages.wms_inventory_turnover_page.k0': '库存周转率分析',
@@ -65,13 +72,6 @@ vi.mock('react-i18next', () => ({
     return <span>{children}</span>;
   },
 }));
-
-import WmsInventoryTurnoverPage from '@/pages/wms/analytics/WmsInventoryTurnoverPage';
-import WmsAgeParetoPage from '@/pages/wms/analytics/WmsAgeParetoPage';
-import WmsFlowTrendPage from '@/pages/wms/analytics/WmsFlowTrendPage';
-import WmsAbcAnalysisPage from '@/pages/wms/analytics/WmsAbcAnalysisPage';
-import WmsLocationUtilizationPage from '@/pages/wms/analytics/WmsLocationUtilizationPage';
-import WmsOrderFulfillmentPage from '@/pages/wms/analytics/WmsOrderFulfillmentPage';
 
 describe('WMS BI Analytics Pages', () => {
   it('WmsInventoryTurnoverPage renders title without crashing', () => {

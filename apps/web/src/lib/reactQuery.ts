@@ -1,9 +1,4 @@
-import {
-  QueryClient,
-  QueryCache,
-  MutationCache,
-  type DefaultOptions,
-} from '@tanstack/react-query';
+import { QueryClient, QueryCache, MutationCache, type DefaultOptions } from '@tanstack/react-query';
 import { logger } from '@/utils/logger';
 import { useNotificationStore } from '../store';
 import i18n from '../i18n';
@@ -775,7 +770,7 @@ export const QUERY_KEYS = {
     LIMS_QMS_SYNCS: ['integration', 'lims-qms-syncs'],
   },
   AD_HOC: {
-    "1_KEY_BASE": ['ad-hoc', '1_key_base'],
+    '1_KEY_BASE': ['ad-hoc', '1_key_base'],
     ACCOUNTS_BASE: ['ad-hoc', 'accounts_base'],
     ACCOUNTS_TREE_BASE: ['ad-hoc', 'accounts_tree_base'],
     ACCOUNT_BALANCES_BASE: ['ad-hoc', 'account_balances_base'],

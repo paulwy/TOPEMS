@@ -36,10 +36,9 @@ import type {
 } from '@/api/ticket';
 import { ticketSchema } from '@/schemas/ticket';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 const STATUS_COLORS: Record<string, 'error' | 'warning' | 'info' | 'success' | 'default'> = {
   open: 'error',
@@ -142,10 +141,11 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
     mutationFn: ({ id, content }: { id: string; content: string }) =>
       ticketApi.addComment(id, content),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.TICKET_COMMENTS_BASE, ticket.id] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [...QUERY_KEYS.AD_HOC.TICKET_COMMENTS_BASE, ticket.id],
+        exact: false,
+        refetchType: 'active',
+      });
       setCommentText('');
     },
   });
@@ -404,16 +404,19 @@ const TicketCenterPage: React.FC = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: unknown }) => ticketApi.updateTicket(id, data as UpdateTicketRequest),
+    mutationFn: ({ id, data }: { id: string; data: unknown }) =>
+      ticketApi.updateTicket(id, data as UpdateTicketRequest),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.TICKETS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.TICKET_STATS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.TICKETS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.TICKET_STATS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 

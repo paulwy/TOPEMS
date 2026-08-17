@@ -808,7 +808,8 @@ export const imLocationApi = {
         }
       } catch (err) {
         syncResult.gis_sync_status = 'failed';
-        syncResult.gis_error = err instanceof Error ? err.message : i18n.t('shared.location_message.k3');
+        syncResult.gis_error =
+          err instanceof Error ? err.message : i18n.t('shared.location_message.k3');
       }
     } else {
       syncResult.gis_sync_status = 'not_supported';
@@ -817,7 +818,9 @@ export const imLocationApi = {
     return imLocationApi._createResponse(
       true,
       syncResult,
-      syncResult.gis_sync_status === 'synced' ? i18n.t('shared.location_message.gis_5') : i18n.t('shared.location_message.k4')
+      syncResult.gis_sync_status === 'synced'
+        ? i18n.t('shared.location_message.gis_5')
+        : i18n.t('shared.location_message.k4')
     );
   },
 
@@ -876,7 +879,8 @@ export const imLocationApi = {
         }
       } catch (err) {
         syncResult.gis_sync_status = 'failed';
-        syncResult.gis_error = err instanceof Error ? err.message : i18n.t('shared.location_message.k8');
+        syncResult.gis_error =
+          err instanceof Error ? err.message : i18n.t('shared.location_message.k8');
       }
     }
 
@@ -892,7 +896,12 @@ export const imLocationApi = {
     try {
       const geofenceResponse = await apiClient.im.get(`/im/locations/geofences/${geofenceId}`);
       if (!geofenceResponse.success || !geofenceResponse.data) {
-        return imLocationApi._createResponse(false, syncResult, i18n.t('shared.location_message.k10'), 404);
+        return imLocationApi._createResponse(
+          false,
+          syncResult,
+          i18n.t('shared.location_message.k10'),
+          404
+        );
       }
       syncResult.geofence = geofenceResponse.data;
 
@@ -945,7 +954,9 @@ export const imLocationApi = {
     return imLocationApi._createResponse(
       true,
       syncResult,
-      syncResult.gis_sync_status === 'synced' ? i18n.t('shared.location_message.gis_13') : i18n.t('shared.location_message.k12')
+      syncResult.gis_sync_status === 'synced'
+        ? i18n.t('shared.location_message.gis_13')
+        : i18n.t('shared.location_message.k12')
     );
   },
 

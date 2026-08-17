@@ -25,10 +25,20 @@ interface FSMTransition {
 const FSM_TRANSITIONS: Record<QmsFsmType, Record<string, FSMTransition[]>> = {
   inspection: {
     pending: [{ targetStatus: 'in_progress', label: i18n.t('components.fsm_action_buttons.k0') }],
-    in_progress: [{ targetStatus: 'pending_audit', label: i18n.t('components.fsm_action_buttons.k1') }],
+    in_progress: [
+      { targetStatus: 'pending_audit', label: i18n.t('components.fsm_action_buttons.k1') },
+    ],
     pending_audit: [
-      { targetStatus: 'completed', label: i18n.t('components.fsm_action_buttons.k2'), requiresApproval: true },
-      { targetStatus: 'rejected', label: i18n.t('components.fsm_action_buttons.k3'), requiresApproval: true },
+      {
+        targetStatus: 'completed',
+        label: i18n.t('components.fsm_action_buttons.k2'),
+        requiresApproval: true,
+      },
+      {
+        targetStatus: 'rejected',
+        label: i18n.t('components.fsm_action_buttons.k3'),
+        requiresApproval: true,
+      },
     ],
     rejected: [{ targetStatus: 'in_progress', label: i18n.t('components.fsm_action_buttons.k4') }],
   },
@@ -43,7 +53,11 @@ const FSM_TRANSITIONS: Record<QmsFsmType, Record<string, FSMTransition[]>> = {
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k9') },
     ],
     resolved: [
-      { targetStatus: 'closed', label: i18n.t('components.fsm_action_buttons.k10'), requiresApproval: true },
+      {
+        targetStatus: 'closed',
+        label: i18n.t('components.fsm_action_buttons.k10'),
+        requiresApproval: true,
+      },
       { targetStatus: 'in_progress', label: i18n.t('components.fsm_action_buttons.k11') },
     ],
   },
@@ -58,7 +72,11 @@ const FSM_TRANSITIONS: Record<QmsFsmType, Record<string, FSMTransition[]>> = {
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k16') },
     ],
     completed: [
-      { targetStatus: 'verified', label: i18n.t('components.fsm_action_buttons.k17'), requiresApproval: true },
+      {
+        targetStatus: 'verified',
+        label: i18n.t('components.fsm_action_buttons.k17'),
+        requiresApproval: true,
+      },
       { targetStatus: 'in_progress', label: i18n.t('components.fsm_action_buttons.k18') },
     ],
   },
@@ -72,7 +90,11 @@ const FSM_TRANSITIONS: Record<QmsFsmType, Record<string, FSMTransition[]>> = {
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k22') },
     ],
     in_progress: [
-      { targetStatus: 'completed', label: i18n.t('components.fsm_action_buttons.k23'), requiresApproval: true },
+      {
+        targetStatus: 'completed',
+        label: i18n.t('components.fsm_action_buttons.k23'),
+        requiresApproval: true,
+      },
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k24') },
     ],
   },
@@ -83,7 +105,11 @@ const FSM_TRANSITIONS: Record<QmsFsmType, Record<string, FSMTransition[]>> = {
       { targetStatus: 'open', label: i18n.t('components.fsm_action_buttons.k27') },
     ],
     verified: [
-      { targetStatus: 'closed', label: i18n.t('components.fsm_action_buttons.k28'), requiresApproval: true },
+      {
+        targetStatus: 'closed',
+        label: i18n.t('components.fsm_action_buttons.k28'),
+        requiresApproval: true,
+      },
       { targetStatus: 'in_progress', label: i18n.t('components.fsm_action_buttons.k29') },
     ],
   },
@@ -105,10 +131,20 @@ const FSM_TRANSITIONS: Record<QmsFsmType, Record<string, FSMTransition[]>> = {
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k37') },
     ],
     permanent_action: [
-      { targetStatus: 'verified', label: i18n.t('components.fsm_action_buttons.k38'), requiresApproval: true },
+      {
+        targetStatus: 'verified',
+        label: i18n.t('components.fsm_action_buttons.k38'),
+        requiresApproval: true,
+      },
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k39') },
     ],
-    verified: [{ targetStatus: 'closed', label: i18n.t('components.fsm_action_buttons.k40'), requiresApproval: true }],
+    verified: [
+      {
+        targetStatus: 'closed',
+        label: i18n.t('components.fsm_action_buttons.k40'),
+        requiresApproval: true,
+      },
+    ],
   },
   apqp: {
     planning: [
@@ -120,11 +156,19 @@ const FSM_TRANSITIONS: Record<QmsFsmType, Record<string, FSMTransition[]>> = {
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k44') },
     ],
     in_pilot: [
-      { targetStatus: 'in_production', label: i18n.t('components.fsm_action_buttons.k45'), requiresApproval: true },
+      {
+        targetStatus: 'in_production',
+        label: i18n.t('components.fsm_action_buttons.k45'),
+        requiresApproval: true,
+      },
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k46') },
     ],
     in_production: [
-      { targetStatus: 'completed', label: i18n.t('components.fsm_action_buttons.k47'), requiresApproval: true },
+      {
+        targetStatus: 'completed',
+        label: i18n.t('components.fsm_action_buttons.k47'),
+        requiresApproval: true,
+      },
       { targetStatus: 'cancelled', label: i18n.t('components.fsm_action_buttons.k48') },
     ],
   },

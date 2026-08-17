@@ -100,7 +100,9 @@ class SandboxManagerImpl {
   createSandbox(moduleId: string, options: SandboxManagerOptions = {}): SandboxBundle {
     // 已存在则先销毁旧的
     if (this.sandboxes.has(moduleId)) {
-      console.warn(`${i18n.t('microfrontend.sandbox-manager.sandboxmanager_0')}${moduleId}${i18n.t('microfrontend.sandbox-manager.k1')}`);
+      console.warn(
+        `${i18n.t('microfrontend.sandbox-manager.sandboxmanager_0')}${moduleId}${i18n.t('microfrontend.sandbox-manager.k1')}`
+      );
       this.destroySandbox(moduleId);
     }
 
@@ -146,7 +148,10 @@ class SandboxManagerImpl {
       this.sandboxes.delete(moduleId);
       return true;
     } catch (err) {
-      console.error(`${i18n.t('microfrontend.sandbox-manager.k2')}${moduleId}${i18n.t('microfrontend.sandbox-manager.k3')}`, err);
+      console.error(
+        `${i18n.t('microfrontend.sandbox-manager.k2')}${moduleId}${i18n.t('microfrontend.sandbox-manager.k3')}`,
+        err
+      );
       bundle.status = 'error';
       bundle.error = err instanceof Error ? err : new Error(String(err));
       return false;
@@ -211,16 +216,22 @@ class SandboxManagerImpl {
     const timerCount = bundle.eventIsolation.getTimerCount();
 
     if (bundle.status === 'error') {
-      issues.push(`${i18n.t('microfrontend.sandbox-manager.k4')}${bundle.error?.message ?? i18n.t('microfrontend.sandbox-manager.k0')}`);
+      issues.push(
+        `${i18n.t('microfrontend.sandbox-manager.k4')}${bundle.error?.message ?? i18n.t('microfrontend.sandbox-manager.k0')}`
+      );
     }
     if (jsActive && bundle.status !== 'active') {
       issues.push(i18n.t('microfrontend.sandbox-manager.k5'));
     }
     if (eventCount > 0 && bundle.status === 'inactive') {
-      issues.push(`${i18n.t('microfrontend.sandbox-manager.k6')}${eventCount}${i18n.t('microfrontend.sandbox-manager.k7')}`);
+      issues.push(
+        `${i18n.t('microfrontend.sandbox-manager.k6')}${eventCount}${i18n.t('microfrontend.sandbox-manager.k7')}`
+      );
     }
     if (timerCount > 50) {
-      issues.push(`${i18n.t('microfrontend.sandbox-manager.k8')}${timerCount}${i18n.t('microfrontend.sandbox-manager.k9')}`);
+      issues.push(
+        `${i18n.t('microfrontend.sandbox-manager.k8')}${timerCount}${i18n.t('microfrontend.sandbox-manager.k9')}`
+      );
     }
 
     return {

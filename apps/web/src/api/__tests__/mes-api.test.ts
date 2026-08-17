@@ -95,7 +95,10 @@ describe('MES productionOrderApi', () => {
   });
 
   it('should call PUT /orders/:id/start for start', async () => {
-    mockApiClient.put.mockResolvedValue({ success: true, data: { id: '1', status: 'in_progress' } });
+    mockApiClient.put.mockResolvedValue({
+      success: true,
+      data: { id: '1', status: 'in_progress' },
+    });
     await productionOrderApi.start('1');
     expect(mockApiClient.put).toHaveBeenCalledWith('/orders/1/start');
   });
@@ -123,7 +126,9 @@ describe('MES workOrderApi', () => {
   it('should call GET /work-orders with params for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { work_orders: [], total: 0 } });
     await workOrderApi.list({ page: 1, pagesize: 20, status: 'pending' });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/work-orders?page=1&pagesize=20&status=pending');
+    expect(mockApiClient.get).toHaveBeenCalledWith(
+      '/work-orders?page=1&pagesize=20&status=pending'
+    );
   });
 
   it('should call POST /work-orders for create', async () => {
@@ -140,7 +145,10 @@ describe('MES workOrderApi', () => {
   });
 
   it('should call PUT /work-orders/:id/start for start', async () => {
-    mockApiClient.put.mockResolvedValue({ success: true, data: { id: '1', status: 'in_progress' } });
+    mockApiClient.put.mockResolvedValue({
+      success: true,
+      data: { id: '1', status: 'in_progress' },
+    });
     await workOrderApi.start('1');
     expect(mockApiClient.put).toHaveBeenCalledWith('/work-orders/1/start');
   });
@@ -152,7 +160,10 @@ describe('MES workOrderApi', () => {
   });
 
   it('should call PUT /work-orders/:id/resume for resume', async () => {
-    mockApiClient.put.mockResolvedValue({ success: true, data: { id: '1', status: 'in_progress' } });
+    mockApiClient.put.mockResolvedValue({
+      success: true,
+      data: { id: '1', status: 'in_progress' },
+    });
     await workOrderApi.resume('1');
     expect(mockApiClient.put).toHaveBeenCalledWith('/work-orders/1/resume');
   });
@@ -280,7 +291,9 @@ describe('MES mesEquipmentApi (equipment inspections & maintenances)', () => {
   it('should call GET /inspections with equipment_id filter', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await mesEquipmentApi.listInspections({ page: 1, pagesize: 10, equipment_id: 'eq1' });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/inspections?page=1&pagesize=10&equipment_id=eq1');
+    expect(mockApiClient.get).toHaveBeenCalledWith(
+      '/inspections?page=1&pagesize=10&equipment_id=eq1'
+    );
   });
 
   it('should call POST /inspections for create', async () => {

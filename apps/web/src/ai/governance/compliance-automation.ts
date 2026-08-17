@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type Regulation = 'GDPR' | 'SOX' | 'HIPAA' | 'PCI';
 export type Severity = 'critical' | 'high' | 'medium' | 'low';
 
@@ -400,7 +401,9 @@ export class ComplianceAutomator {
 
     const regulationsWithFailures = new Set(failed.map((c) => c.regulation));
     for (const reg of regulationsWithFailures) {
-      recommendations.push(`${i18n.t('ai.compliance-automation.k25')}${reg}${i18n.t('ai.compliance-automation.k26')}`);
+      recommendations.push(
+        `${i18n.t('ai.compliance-automation.k25')}${reg}${i18n.t('ai.compliance-automation.k26')}`
+      );
     }
 
     if (recommendations.length === 0) {

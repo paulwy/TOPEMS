@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type ModuleStatus = 'active' | 'disabled' | 'deprecated' | 'error';
 
 export type ModuleType = 'app' | 'component' | 'library' | 'utility';
@@ -140,12 +141,16 @@ export class ModuleRegistry {
   ): ModuleRegistration {
     const existing = this.modules.get(moduleConfig.id);
     if (existing) {
-      throw new Error(`${i18n.t('microfrontend.module-registry.k0')}${moduleConfig.id}${i18n.t('microfrontend.module-registry.k1')}`);
+      throw new Error(
+        `${i18n.t('microfrontend.module-registry.k0')}${moduleConfig.id}${i18n.t('microfrontend.module-registry.k1')}`
+      );
     }
 
     const validation = this.validateModule(moduleConfig);
     if (!validation.valid) {
-      throw new Error(`${i18n.t('microfrontend.module-registry.k2')}${validation.errors.join(', ')}`);
+      throw new Error(
+        `${i18n.t('microfrontend.module-registry.k2')}${validation.errors.join(', ')}`
+      );
     }
 
     const now = Date.now();

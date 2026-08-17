@@ -125,7 +125,8 @@ export const ImportExportModal = <T extends Record<string, unknown>>({
                   variant='body2'
                   color='text.secondary'
                 >
-                  {i18n.t('components.import_export_modal.k0')} {importResult.data.length} {i18n.t('components.import_export_modal.k1')}
+                  {i18n.t('components.import_export_modal.k0')} {importResult.data.length}{' '}
+                  {i18n.t('components.import_export_modal.k1')}
                 </Typography>
               </Box>
             ) : (
@@ -159,7 +160,8 @@ export const ImportExportModal = <T extends Record<string, unknown>>({
                       variant='body2'
                       sx={{ color: 'error.dark' }}
                     >
-                      {i18n.t('components.import_export_modal.k2')} {importResult.errors.length} {i18n.t('components.import_export_modal.k3')}
+                      {i18n.t('components.import_export_modal.k2')} {importResult.errors.length}{' '}
+                      {i18n.t('components.import_export_modal.k3')}
                     </Typography>
                   </Box>
                 </Box>
@@ -178,7 +180,8 @@ export const ImportExportModal = <T extends Record<string, unknown>>({
                       variant='body2'
                       sx={{ color: 'error.main', fontSize: 14 }}
                     >
-                      <strong>{i18n.t('components.import_export_modal.errorrow_0')}</strong> {error.message}
+                      <strong>{i18n.t('components.import_export_modal.errorrow_0')}</strong>{' '}
+                      {error.message}
                     </Typography>
                   ))}
                   {importResult.errors.length > 10 && (
@@ -186,7 +189,9 @@ export const ImportExportModal = <T extends Record<string, unknown>>({
                       variant='body2'
                       color='text.secondary'
                     >
-                      {i18n.t('components.import_export_modal.k4')} {importResult.errors.length - 10} {i18n.t('components.import_export_modal.k5')}
+                      {i18n.t('components.import_export_modal.k4')}{' '}
+                      {importResult.errors.length - 10}{' '}
+                      {i18n.t('components.import_export_modal.k5')}
                     </Typography>
                   )}
                 </Box>
@@ -245,7 +250,9 @@ export const ImportExportModal = <T extends Record<string, unknown>>({
                   startIcon={<Upload style={{ width: 16, height: 16 }} />}
                   disabled={importing}
                 >
-                  {importing ? i18n.t('components.import_export_modal.k2') : i18n.t('components.import_export_modal.k1')}
+                  {importing
+                    ? i18n.t('components.import_export_modal.k2')
+                    : i18n.t('components.import_export_modal.k1')}
                 </Button>
               </label>
               <Button

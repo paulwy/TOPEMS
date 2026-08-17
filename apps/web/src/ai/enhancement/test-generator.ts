@@ -295,16 +295,24 @@ export class AutoTestGenerator {
   }
 
   private generateRenderTest(componentName: string, result?: AnalysisResult): TestMethod {
-    const assertions: string[] = [i18n.t('ai.test-generator.k27'), i18n.t('ai.test-generator.k26'), i18n.t('ai.test-generator.dom_25')];
+    const assertions: string[] = [
+      i18n.t('ai.test-generator.k27'),
+      i18n.t('ai.test-generator.k26'),
+      i18n.t('ai.test-generator.dom_25'),
+    ];
 
-    const given: string[] = [`${i18n.t('ai.test-generator.k6')}${componentName}${i18n.t('ai.test-generator.k7')}`];
+    const given: string[] = [
+      `${i18n.t('ai.test-generator.k6')}${componentName}${i18n.t('ai.test-generator.k7')}`,
+    ];
     const when: string[] = [i18n.t('ai.test-generator.k28')];
     const then: string[] = assertions.map((a) => `${i18n.t('ai.test-generator.k8')}${a}`);
 
     if (result?.props.length) {
       const requiredProps = result.props.filter((p) => p.required);
       if (requiredProps.length) {
-        given.push(`${i18n.t('ai.test-generator.props_9')}${requiredProps.map((p) => p.name).join(', ')}`);
+        given.push(
+          `${i18n.t('ai.test-generator.props_9')}${requiredProps.map((p) => p.name).join(', ')}`
+        );
       }
     }
 
@@ -324,7 +332,10 @@ export class AutoTestGenerator {
         name: `${i18n.t('ai.test-generator.k12')}${prop.name} prop`,
         description: `${i18n.t('ai.test-generator.k13')}${prop.name}${i18n.t('ai.test-generator.prop_14')}${prop.type}${prop.required ? i18n.t('ai.test-generator.k0') : ''}`,
         given_when_then: {
-          given: [i18n.t('ai.test-generator.k0'), `${i18n.t('ai.test-generator.k15')}${prop.name} prop`],
+          given: [
+            i18n.t('ai.test-generator.k0'),
+            `${i18n.t('ai.test-generator.k15')}${prop.name} prop`,
+          ],
           when: [i18n.t('ai.test-generator.prop_1')],
           then: [i18n.t('ai.test-generator.prop_2'), `{i18n.t('ai.test-generator.k4')}`],
         },
@@ -350,7 +361,11 @@ export class AutoTestGenerator {
           when: [`${i18n.t('ai.test-generator.k22')}${handler}${i18n.t('ai.test-generator.k23')}`],
           then: [i18n.t('ai.test-generator.k6'), `{i18n.t('ai.test-generator.k8')}`],
         },
-        assertions: [`${handler}${i18n.t('ai.test-generator.k24')}`, i18n.t('ai.test-generator.k9'), `{i18n.t('ai.test-generator.k11')}`],
+        assertions: [
+          `${handler}${i18n.t('ai.test-generator.k24')}`,
+          i18n.t('ai.test-generator.k9'),
+          `{i18n.t('ai.test-generator.k11')}`,
+        ],
       });
     }
 
@@ -382,7 +397,11 @@ export class AutoTestGenerator {
           when: [i18n.t('ai.test-generator.k43')],
           then: [i18n.t('ai.test-generator.api_26'), i18n.t('ai.test-generator.k44')],
         },
-        assertions: [i18n.t('ai.test-generator.k47'), i18n.t('ai.test-generator.k46'), i18n.t('ai.test-generator.k45')],
+        assertions: [
+          i18n.t('ai.test-generator.k47'),
+          i18n.t('ai.test-generator.k46'),
+          i18n.t('ai.test-generator.k45'),
+        ],
       });
     }
 
@@ -397,11 +416,18 @@ export class AutoTestGenerator {
         name: `${i18n.t('ai.test-generator.k27')}${edgeCase}`,
         description: `${i18n.t('ai.test-generator.k28')}${edgeCase}`,
         given_when_then: {
-          given: [i18n.t('ai.test-generator.k12'), `${i18n.t('ai.test-generator.k29')}${edgeCase}${i18n.t('ai.test-generator.k30')}`],
+          given: [
+            i18n.t('ai.test-generator.k12'),
+            `${i18n.t('ai.test-generator.k29')}${edgeCase}${i18n.t('ai.test-generator.k30')}`,
+          ],
           when: [i18n.t('ai.test-generator.k13')],
           then: [i18n.t('ai.test-generator.k49'), i18n.t('ai.test-generator.k48')],
         },
-        assertions: [i18n.t('ai.test-generator.k51'), i18n.t('ai.test-generator.ui_31'), i18n.t('ai.test-generator.k50')],
+        assertions: [
+          i18n.t('ai.test-generator.k51'),
+          i18n.t('ai.test-generator.ui_31'),
+          i18n.t('ai.test-generator.k50'),
+        ],
       });
     }
 
@@ -497,7 +523,11 @@ export class AutoTestGenerator {
     const cases: string[] = [];
 
     if (/fetch\(|axios\.|apiClient\./.test(source)) {
-      cases.push(i18n.t('ai.test-generator.k53'), i18n.t('ai.test-generator.k52'), i18n.t('ai.test-generator.api_32'));
+      cases.push(
+        i18n.t('ai.test-generator.k53'),
+        i18n.t('ai.test-generator.k52'),
+        i18n.t('ai.test-generator.api_32')
+      );
     }
 
     if (/JSON\.parse|JSON\.stringify/.test(source)) {
@@ -517,10 +547,16 @@ export class AutoTestGenerator {
     }
 
     if (/<input|<select|<textarea|<form/.test(source)) {
-      cases.push(i18n.t('ai.test-generator.k62'), i18n.t('ai.test-generator.k61'), i18n.t('ai.test-generator.k60'));
+      cases.push(
+        i18n.t('ai.test-generator.k62'),
+        i18n.t('ai.test-generator.k61'),
+        i18n.t('ai.test-generator.k60')
+      );
     }
 
-    return cases.length > 0 ? cases : [i18n.t('ai.test-generator.k63'), i18n.t('ai.test-generator.props_35')];
+    return cases.length > 0
+      ? cases
+      : [i18n.t('ai.test-generator.k63'), i18n.t('ai.test-generator.props_35')];
   }
 
   private estimateCoverage(source: string): {

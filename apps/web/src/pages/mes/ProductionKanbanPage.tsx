@@ -19,7 +19,7 @@ import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { mesApi } from '@/api/mes';
 import type { ProductionKanbanData } from '@/api/mes';
 import { LoadingSpinner } from '@topems/shared-components';
@@ -34,9 +34,10 @@ import {
   Wrench,
 } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const ProductionKanbanPage: React.FC = () => {
-  const { data: kanbanData, isPending: loading} = useQuery<ProductionKanbanData | null>({
+  const { data: kanbanData, isPending: loading } = useQuery<ProductionKanbanData | null>({
     queryKey: QUERY_KEYS.MES.KANBAN_DASHBOARD,
     queryFn: async () => {
       const response = await mesApi.kanban.getDashboard();
@@ -46,8 +47,9 @@ const ProductionKanbanPage: React.FC = () => {
       return null;
     },
     refetchInterval: 60000,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const statusColorMap = useMemo<Record<string, string>>(
     () => ({
       running: 'success.main',
@@ -506,12 +508,18 @@ const ProductionKanbanPage: React.FC = () => {
                 <Table size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
-                      <TableCell>{i18n.t('mes.production_kanban_page.col_equipment_code')}</TableCell>
-                      <TableCell>{i18n.t('mes.production_kanban_page.col_equipment_name')}</TableCell>
+                      <TableCell>
+                        {i18n.t('mes.production_kanban_page.col_equipment_code')}
+                      </TableCell>
+                      <TableCell>
+                        {i18n.t('mes.production_kanban_page.col_equipment_name')}
+                      </TableCell>
                       <TableCell align='center'>
                         {i18n.t('mes.production_kanban_page.col_status')}
                       </TableCell>
-                      <TableCell align='right'>{i18n.t('mes.production_kanban_page.col_oee')}</TableCell>
+                      <TableCell align='right'>
+                        {i18n.t('mes.production_kanban_page.col_oee')}
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>

@@ -129,7 +129,8 @@ class SandboxedErrorBoundary extends Component<
             variant='h6'
             color='error'
           >
-                        {i18n.t('common.sandboxed_remote_loader.k0')} {this.props.moduleName} {this.props.moduleName} {i18n.t('common.sandboxed_remote_loader.k0')}
+            {i18n.t('common.sandboxed_remote_loader.k0')} {this.props.moduleName}{' '}
+            {this.props.moduleName} {i18n.t('common.sandboxed_remote_loader.k0')}
           </Typography>
           <Typography
             variant='body2'
@@ -169,7 +170,8 @@ const SandboxedLoadingFallback: React.FC<{ moduleName: string }> = ({ moduleName
       variant='body2'
       color='text.secondary'
     >
-            {i18n.t('common.sandboxed_remote_loader.k0')} {moduleName}（{moduleName}{i18n.t('common.sandboxed_remote_loader.k0')}
+      {i18n.t('common.sandboxed_remote_loader.k0')} {moduleName}（{moduleName}
+      {i18n.t('common.sandboxed_remote_loader.k0')}
     </Typography>
     <Box sx={{ width: '60%', maxWidth: 300 }}>
       <LinearProgress />
@@ -237,7 +239,9 @@ export const SandboxedRemoteLoader: React.FC<SandboxedRemoteLoaderProps> = ({
       // 卸载时销毁沙箱，清理所有资源
       sandboxManager.destroySandbox(sandboxId);
       bundleRef.current = null;
-      logger.info(`${i18n.t('microfrontend.sandboxed_remote_loader.k4')}${moduleName}${i18n.t('microfrontend.sandboxed_remote_loader.k5')}`);
+      logger.info(
+        `${i18n.t('microfrontend.sandboxed_remote_loader.k4')}${moduleName}${i18n.t('microfrontend.sandboxed_remote_loader.k5')}`
+      );
     };
   }, [sandboxId, moduleName]);
 
@@ -283,7 +287,10 @@ export const SandboxedRemoteLoader: React.FC<SandboxedRemoteLoaderProps> = ({
 
           return { default: mod.default || mod };
         } catch (err) {
-          console.error(`${i18n.t('microfrontend.sandboxed_remote_loader.k8')}${moduleName}/${expose}${i18n.t('microfrontend.sandboxed_remote_loader.k9')}`, err);
+          console.error(
+            `${i18n.t('microfrontend.sandboxed_remote_loader.k8')}${moduleName}/${expose}${i18n.t('microfrontend.sandboxed_remote_loader.k9')}`,
+            err
+          );
           microFrontendPerf.recordModuleLoad(moduleName, expose, {
             success: false,
             error: err instanceof Error ? err.message : String(err),
@@ -316,7 +323,10 @@ export const SandboxedRemoteLoader: React.FC<SandboxedRemoteLoaderProps> = ({
     const checkInterval = setInterval(() => {
       const health = sandboxManager.healthCheck(sandboxId);
       if (health && !health.healthy) {
-        logger.warn(`${i18n.t('microfrontend.sandboxed_remote_loader.k10')}${moduleName}${i18n.t('microfrontend.sandboxed_remote_loader.k11')}`, health.issues);
+        logger.warn(
+          `${i18n.t('microfrontend.sandboxed_remote_loader.k10')}${moduleName}${i18n.t('microfrontend.sandboxed_remote_loader.k11')}`,
+          health.issues
+        );
       }
     }, 30000); // 30s 检查一次
     return () => clearInterval(checkInterval);

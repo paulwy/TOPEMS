@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type IssueType = 'bug' | 'style' | 'performance' | 'security' | 'maintainability';
 export type IssueSeverity = 'error' | 'warning' | 'info';
 
@@ -205,13 +206,19 @@ export class CodeReviewer {
     parts.push(`${i18n.t('ai.code-reviewer.k7')}${issues.length}${i18n.t('ai.code-reviewer.k8')}`);
 
     if (bySeverity.error.length > 0) {
-      parts.push(`${i18n.t('ai.code-reviewer.k9')}${bySeverity.error.length}${i18n.t('ai.code-reviewer.k10')}`);
+      parts.push(
+        `${i18n.t('ai.code-reviewer.k9')}${bySeverity.error.length}${i18n.t('ai.code-reviewer.k10')}`
+      );
     }
     if (bySeverity.warning.length > 0) {
-      parts.push(`${i18n.t('ai.code-reviewer.k11')}${bySeverity.warning.length}${i18n.t('ai.code-reviewer.k12')}`);
+      parts.push(
+        `${i18n.t('ai.code-reviewer.k11')}${bySeverity.warning.length}${i18n.t('ai.code-reviewer.k12')}`
+      );
     }
     if (bySeverity.info.length > 0) {
-      parts.push(`${i18n.t('ai.code-reviewer.k13')}${bySeverity.info.length}${i18n.t('ai.code-reviewer.k14')}`);
+      parts.push(
+        `${i18n.t('ai.code-reviewer.k13')}${bySeverity.info.length}${i18n.t('ai.code-reviewer.k14')}`
+      );
     }
 
     const typeSummaries = Object.entries(byType)

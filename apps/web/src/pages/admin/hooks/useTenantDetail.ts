@@ -8,7 +8,6 @@ import { logger } from '@/utils/logger';
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 
 import type {
-
   Tenant,
   TenantUser,
   TenantStats,
@@ -108,21 +107,22 @@ export const useTenantDetail = () => {
     }
   }, [invoicesQuery.isError, invoicesQuery.error]);
 
-  const invalidateUsers = () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_USERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+  const invalidateUsers = () =>
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_USERS_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
 
   const inviteMemberMutation = useMutation({
     mutationFn: (params: { tenantId: string; data: { email: string; role: TenantRole } }) =>
       tenantApi.inviteMember(params.tenantId, params.data),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateUsers();
       setShowInviteDialog(false);
       setInviteForm({ email: '', role: 'member' });
@@ -136,12 +136,11 @@ export const useTenantDetail = () => {
     mutationFn: (params: { tenantId: string; userId: string }) =>
       tenantApi.removeMember(params.tenantId, params.userId),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateUsers();
       setConfirmDialogClosed();
     },
@@ -154,12 +153,11 @@ export const useTenantDetail = () => {
     mutationFn: (params: { tenantId: string; userId: string; role: TenantRole }) =>
       tenantApi.updateMemberRole(params.tenantId, params.userId, { role: params.role }),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.ADMIN_TENANT_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateUsers();
     },
     onError: (error: unknown) => {

@@ -43,12 +43,8 @@ describe('CRM contract adapter', () => {
     const src = readFileSync(resolve(__dirname, '../../crm/index.ts'), 'utf8');
     const m = src.match(/\/\*\s*FE_ROUTES_JSON\s*([\s\S]*?)\*\//);
     const pairs = JSON.parse(m![1]) as Array<[string, string]>;
-    const customerApproval = pairs.filter(([, p]) =>
-      p.startsWith('/crm/customers/:id/approval/')
-    );
-    const contactApproval = pairs.filter(([, p]) =>
-      p.startsWith('/crm/contacts/:id/approval/')
-    );
+    const customerApproval = pairs.filter(([, p]) => p.startsWith('/crm/customers/:id/approval/'));
+    const contactApproval = pairs.filter(([, p]) => p.startsWith('/crm/contacts/:id/approval/'));
     expect(customerApproval.length).toBe(3);
     expect(contactApproval.length).toBe(3);
     const approvalActions = new Set(
@@ -72,7 +68,7 @@ describe('CRM contract adapter', () => {
     ]);
     expect(expectedActions.size).toBe(6);
     const actions = Array.from(expectedActions);
-    expect(actions.every(a => a.split('.').length >= 4)).toBe(true);
-    expect(actions.filter(a => a.includes('approval')).length).toBe(6);
+    expect(actions.every((a) => a.split('.').length >= 4)).toBe(true);
+    expect(actions.filter((a) => a.includes('approval')).length).toBe(6);
   });
 });

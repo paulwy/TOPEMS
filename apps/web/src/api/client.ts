@@ -275,13 +275,16 @@ export const createAxiosClient = ({
       const requestBaseURL = requestConfig.baseURL || '';
       const fullUrl = `${requestBaseURL}${url}`;
 
-      apiLogger.info(`${i18n.t('shared.client.1_0')}${requestConfig.method?.toUpperCase()} ${fullUrl}`, {
-        hasToken: !!token,
-        tokenLength: token?.length || 0,
-        hasAuthHeader: !!requestConfig.headers['Authorization'],
-        isPublicPath: isPublicPath(url),
-        timestamp: new Date().toISOString(),
-      });
+      apiLogger.info(
+        `${i18n.t('shared.client.1_0')}${requestConfig.method?.toUpperCase()} ${fullUrl}`,
+        {
+          hasToken: !!token,
+          tokenLength: token?.length || 0,
+          hasAuthHeader: !!requestConfig.headers['Authorization'],
+          isPublicPath: isPublicPath(url),
+          timestamp: new Date().toISOString(),
+        }
+      );
 
       if (isDevelopment()) {
         apiLogger.debug(`[API Request] ${requestConfig.method?.toUpperCase()} ${fullUrl}`, {
@@ -471,7 +474,9 @@ export const createAxiosClient = ({
           apiLogger.debug(
             `[Notification Grace] 401 on ${fullUrl}, returning fallback instead of rejecting`
           );
-          return returnData ? fallback : { data: fallback, status: 200, statusText: 'OK', headers: {}, config: error.config };
+          return returnData
+            ? fallback
+            : { data: fallback, status: 200, statusText: 'OK', headers: {}, config: error.config };
         }
 
         const currentPath = window.location.pathname;

@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type TaskStatus = 'pending' | 'running' | 'completed' | 'failed';
 
 export interface TaskStep {
@@ -240,27 +241,51 @@ export class AutonomousAgent {
 
     const steps: Array<{ description: string; tool?: string }> = [];
 
-    if (lower.includes('navigate') || lower.includes(i18n.t('ai.autonomous-agent.k8')) || lower.includes('browse')) {
+    if (
+      lower.includes('navigate') ||
+      lower.includes(i18n.t('ai.autonomous-agent.k8')) ||
+      lower.includes('browse')
+    ) {
       steps.push({ description: i18n.t('ai.autonomous-agent.k9'), tool: 'browser_navigate' });
     }
 
-    if (lower.includes('api') || lower.includes(i18n.t('ai.autonomous-agent.k10')) || lower.includes('call')) {
+    if (
+      lower.includes('api') ||
+      lower.includes(i18n.t('ai.autonomous-agent.k10')) ||
+      lower.includes('call')
+    ) {
       steps.push({ description: i18n.t('ai.autonomous-agent.api_11'), tool: 'api_call' });
     }
 
-    if (lower.includes('code') || lower.includes(i18n.t('ai.autonomous-agent.k12')) || lower.includes('execute')) {
+    if (
+      lower.includes('code') ||
+      lower.includes(i18n.t('ai.autonomous-agent.k12')) ||
+      lower.includes('execute')
+    ) {
       steps.push({ description: i18n.t('ai.autonomous-agent.k13'), tool: 'code_execute' });
     }
 
-    if (lower.includes('data') || lower.includes(i18n.t('ai.autonomous-agent.k14')) || lower.includes('transform')) {
+    if (
+      lower.includes('data') ||
+      lower.includes(i18n.t('ai.autonomous-agent.k14')) ||
+      lower.includes('transform')
+    ) {
       steps.push({ description: i18n.t('ai.autonomous-agent.k15'), tool: 'data_transform' });
     }
 
-    if (lower.includes('notify') || lower.includes(i18n.t('ai.autonomous-agent.k16')) || lower.includes('alert')) {
+    if (
+      lower.includes('notify') ||
+      lower.includes(i18n.t('ai.autonomous-agent.k16')) ||
+      lower.includes('alert')
+    ) {
       steps.push({ description: i18n.t('ai.autonomous-agent.k17'), tool: 'notification_send' });
     }
 
-    if (lower.includes('file') || lower.includes(i18n.t('ai.autonomous-agent.k18')) || lower.includes('read')) {
+    if (
+      lower.includes('file') ||
+      lower.includes(i18n.t('ai.autonomous-agent.k18')) ||
+      lower.includes('read')
+    ) {
       steps.push({ description: i18n.t('ai.autonomous-agent.k19'), tool: 'file_read' });
     }
 

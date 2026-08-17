@@ -19,11 +19,7 @@
  */
 
 import apiClient from '../client';
-import type {
-  BusinessMetric,
-  BusinessMetricRequest,
-  BusinessMetricQuery,
-} from './metrics';
+import type { BusinessMetric, BusinessMetricRequest, BusinessMetricQuery } from './metrics';
 import {
   toOpenApiParams,
   toOpenApiRequestBody,
@@ -39,7 +35,7 @@ export const metricTypedApi = {
    * Query Params: { category, serviceName, status, keyword }（AdaptedQuery 后 camelCase）
    */
   list: async (
-    params?: AdaptedQuery<'list_business_metrics'> | BusinessMetricQuery,
+    params?: AdaptedQuery<'list_business_metrics'> | BusinessMetricQuery
   ): Promise<TypedPaginatedResponse<BusinessMetric>> => {
     return apiClient.monitor.get('/business-metrics', {
       params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
@@ -49,9 +45,7 @@ export const metricTypedApi = {
   /**
    * get_business_metric operation（openapi: GET /api/monitor/business-metrics/{id}）
    */
-  get: async (
-    id: string,
-  ): Promise<TypedApiResponse<BusinessMetric, 'get_business_metric'>> => {
+  get: async (id: string): Promise<TypedApiResponse<BusinessMetric, 'get_business_metric'>> => {
     return apiClient.monitor.get(`/business-metrics/${id}`);
   },
 
@@ -60,11 +54,11 @@ export const metricTypedApi = {
    * Request Body: BusinessMetricRequest（发送前 adaptReverse → snake_case）
    */
   create: async (
-    data: AdaptedRequestBody<'create_business_metric'> | BusinessMetricRequest,
+    data: AdaptedRequestBody<'create_business_metric'> | BusinessMetricRequest
   ): Promise<TypedApiResponse<BusinessMetric, 'create_business_metric'>> => {
     return apiClient.monitor.post(
       '/business-metrics',
-      toOpenApiRequestBody(data as Record<string, unknown>),
+      toOpenApiRequestBody(data as Record<string, unknown>)
     );
   },
 
@@ -73,11 +67,11 @@ export const metricTypedApi = {
    */
   update: async (
     id: string,
-    data: AdaptedRequestBody<'update_business_metric'> | BusinessMetricRequest,
+    data: AdaptedRequestBody<'update_business_metric'> | BusinessMetricRequest
   ): Promise<TypedApiResponse<BusinessMetric, 'update_business_metric'>> => {
     return apiClient.monitor.put(
       `/business-metrics/${id}`,
-      toOpenApiRequestBody(data as Record<string, unknown>),
+      toOpenApiRequestBody(data as Record<string, unknown>)
     );
   },
 
@@ -85,7 +79,7 @@ export const metricTypedApi = {
    * delete_business_metric operation（openapi: DELETE /api/monitor/business-metrics/{id}）
    */
   delete: async (
-    id: string,
+    id: string
   ): Promise<TypedApiResponse<{ id: string }, 'delete_business_metric'>> => {
     return apiClient.monitor.delete(`/business-metrics/${id}`);
   },

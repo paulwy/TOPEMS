@@ -31,7 +31,11 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     if (!isOpen) return;
 
     const loadAndPreview = async () => {
-      logger.info(i18n.t('components.document_preview_modal.k0'), { fileName, contentType, fileId });
+      logger.info(i18n.t('components.document_preview_modal.k0'), {
+        fileName,
+        contentType,
+        fileId,
+      });
 
       if (!containerRef.current) {
         logger.error(i18n.t('components.document_preview_modal.null_0'));
@@ -81,7 +85,12 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
         } else if (fileName.endsWith('.docx')) {
           logger.info(i18n.t('components.document_preview_modal.docx_4'));
           const blob = await docApi.download(fileId);
-          logger.info(i18n.t('components.document_preview_modal.blob_2'), blob.size, i18n.t('components.document_preview_modal.k3'), blob.type);
+          logger.info(
+            i18n.t('components.document_preview_modal.blob_2'),
+            blob.size,
+            i18n.t('components.document_preview_modal.k3'),
+            blob.type
+          );
 
           // 检查 blob 内容
           const text = await blob.text();
@@ -95,7 +104,9 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           logger.info(i18n.t('components.document_preview_modal.k5'), header, "(应该是 'PK')");
 
           if (header !== 'PK') {
-            throw new Error(`${i18n.t('components.document_preview_modal.k6')} ${blob.type || 'unknown'}`);
+            throw new Error(
+              `${i18n.t('components.document_preview_modal.k6')} ${blob.type || 'unknown'}`
+            );
           }
 
           // 动态导入 docx-preview (这是一个较大的库，仅在需要预览 docx 时加载)
@@ -128,7 +139,9 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           container.appendChild(pre);
         } else {
           logger.info(i18n.t('components.document_preview_modal.k8'));
-          setError(`${i18n.t('components.document_preview_modal.k9')} ${fileName}${i18n.t('components.document_preview_modal.k10')}`);
+          setError(
+            `${i18n.t('components.document_preview_modal.k9')} ${fileName}${i18n.t('components.document_preview_modal.k10')}`
+          );
         }
       } catch (err: unknown) {
         logger.error('Preview error:', err);
@@ -262,7 +275,9 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                   marginBottom: 1.5,
                 }}
               />
-              <p style={{ color: theme.palette.text.secondary }}>{i18n.t('components.document_preview_modal.k12')}</p>
+              <p style={{ color: theme.palette.text.secondary }}>
+                {i18n.t('components.document_preview_modal.k12')}
+              </p>
             </div>
           )}
 

@@ -10,7 +10,7 @@ import { Box, Typography, Switch } from '@mui/material';
 import { designTokens } from '@/theme/tokens';
 import type { NotificationSettings, UseProfileReturn } from '../hooks/useProfile';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface NotificationOption {
   key: keyof NotificationSettings;

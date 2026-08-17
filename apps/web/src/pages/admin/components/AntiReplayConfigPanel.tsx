@@ -15,7 +15,8 @@ import i18n from '@/i18n';
 import { AlertCircle, Save } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import type { AntiReplayConfig } from '../hooks/useRateLimitConfig';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 interface AntiReplayConfigPanelProps {
   antiReplay: AntiReplayConfig;
   setAntiReplay: React.Dispatch<React.SetStateAction<AntiReplayConfig>>;

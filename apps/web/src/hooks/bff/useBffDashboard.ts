@@ -110,14 +110,14 @@ export function useBffDashboard(options?: UseBffDashboardOptions): UseBffDashboa
     refetchInterval: refetchInterval > 0 ? refetchInterval : false,
     refetchOnWindowFocus: false,
     retry: 2,
-
-});
+  });
 
   const refresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: BFF_DASHBOARD_QUERY_KEY ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: BFF_DASHBOARD_QUERY_KEY,
+      exact: false,
+      refetchType: 'active',
+    });
   }, [queryClient]);
 
   return {

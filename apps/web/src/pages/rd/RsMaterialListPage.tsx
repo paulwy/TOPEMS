@@ -15,6 +15,7 @@ import { logger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 const baseAdapter = createCrudPageAdapter<Material, CreateMaterialRequest, UpdateMaterialRequest>({
   list: materialApi.listMaterials,
   create: materialApi.createMaterial,
@@ -40,8 +41,9 @@ const RsMaterialListPage: React.FC = () => {
   const { data: materialsResp } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.RD_MATERIALS_STATS_BASE,
     queryFn: async () => materialApi.listMaterials({ pagesize: 500 }),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const importMaterialMutation = useMutation({
     mutationFn: async (file: File) => {
       const response = await materialApi.importMaterials(file);
@@ -51,10 +53,11 @@ const RsMaterialListPage: React.FC = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.RD_MATERIALS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.RD_MATERIALS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       const { success, failed } = data;
       if (failed === 0) {
         addNotification({
@@ -78,7 +81,10 @@ const RsMaterialListPage: React.FC = () => {
       addNotification({
         type: 'error',
         title: i18n.t('rd.material_list_page.notification.import_failed_title'),
-        message: extractErrorMessage(error, i18n.t('rd.material_list_page.notification.import_failed_message')),
+        message: extractErrorMessage(
+          error,
+          i18n.t('rd.material_list_page.notification.import_failed_message')
+        ),
       });
     },
   });

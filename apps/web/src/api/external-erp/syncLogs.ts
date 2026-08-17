@@ -24,7 +24,9 @@ export const syncLogsApi = {
     }
   ) =>
     configId
-      ? apiClient.integration.get(`/external-erp/connections/${configId}/sync-statistics`, { params })
+      ? apiClient.integration.get(`/external-erp/connections/${configId}/sync-statistics`, {
+          params,
+        })
       : apiClient.integration.get('/external-erp/sync-statistics', { params }),
 };
 

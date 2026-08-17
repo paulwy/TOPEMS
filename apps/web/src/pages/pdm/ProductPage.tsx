@@ -110,7 +110,9 @@ export default function ProductPage() {
           >
             {t('pdm.product_page.e1')}
           </Typography>
-          <Typography sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>{t('pdm.product_page.m1', { v1: stats.total })}</Typography>
+          <Typography sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
+            {t('pdm.product_page.m1', { v1: stats.total })}
+          </Typography>
         </Box>
         <Box
           sx={{

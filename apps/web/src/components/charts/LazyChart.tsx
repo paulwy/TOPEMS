@@ -62,11 +62,7 @@ export interface RadarChartProps {
 }
 
 export type LazyChartProps =
-  | BarChartProps
-  | LineChartProps
-  | PieChartProps
-  | AreaChartProps
-  | RadarChartProps;
+  BarChartProps | LineChartProps | PieChartProps | AreaChartProps | RadarChartProps;
 
 const ChartLoadingFallback: React.FC<{ height?: number }> = ({ height = 300 }) => (
   <Box

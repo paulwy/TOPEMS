@@ -433,13 +433,18 @@ const OverviewTab: React.FC<{
           )}
           icon={<TrendingUp size={24} />}
           subtitle={
-            reviewResult.passed && scanResult.passed && auditResult.optimized ? i18n.t('ai.v56-review-panel.k16') : i18n.t('ai.v56-review-panel.k15')
+            reviewResult.passed && scanResult.passed && auditResult.optimized
+              ? i18n.t('ai.v56-review-panel.k16')
+              : i18n.t('ai.v56-review-panel.k15')
           }
         />
       </Box>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -478,7 +483,10 @@ const OverviewTab: React.FC<{
           </Stack>
         </Card>
 
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -490,7 +498,12 @@ const OverviewTab: React.FC<{
             variant='body2'
             color='text.secondary'
             sx={{ mb: 2 }}
-          >{i18n.t('ai:v56-review-panel.k1', { v0: (scanResult.findings.length), v1: (scanResult.high_risk_count) })}</Typography>
+          >
+            {i18n.t('ai:v56-review-panel.k1', {
+              v0: scanResult.findings.length,
+              v1: scanResult.high_risk_count,
+            })}
+          </Typography>
           <Stack
             direction='row'
             spacing={1}
@@ -515,7 +528,10 @@ const OverviewTab: React.FC<{
           </Stack>
         </Card>
 
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -526,7 +542,10 @@ const OverviewTab: React.FC<{
           <MetricsList metrics={auditResult.metrics} />
         </Card>
 
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -546,10 +565,18 @@ const OverviewTab: React.FC<{
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v56-review-panel.k17')}</TableCell>
-                    <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v56-review-panel.k18')}</TableCell>
-                    <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v56-review-panel.k19')}</TableCell>
-                    <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v56-review-panel.k20')}</TableCell>
+                    <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>
+                      {i18n.t('ai.v56-review-panel.k17')}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>
+                      {i18n.t('ai.v56-review-panel.k18')}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>
+                      {i18n.t('ai.v56-review-panel.k19')}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>
+                      {i18n.t('ai.v56-review-panel.k20')}
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -604,7 +631,10 @@ const ScoreCard: React.FC<{
   icon: React.ReactNode;
   subtitle: string;
 }> = ({ title, score, color, icon, subtitle }) => (
-  <Card variant='outlined' sx={{ p: 2 }}>
+  <Card
+    variant='outlined'
+    sx={{ p: 2 }}
+  >
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       <Box sx={{ color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {icon}
@@ -643,22 +673,26 @@ const MetricsList: React.FC<{ metrics: AuditMetrics }> = ({ metrics }) => {
     {
       label: i18n.t('ai.v56-review-panel.fcp_15'),
       value: `${metrics.fcp}ms`,
-      color: metrics.fcp < 1800 ? designTokens.colors.success.dark : designTokens.colors.warning.main,
+      color:
+        metrics.fcp < 1800 ? designTokens.colors.success.dark : designTokens.colors.warning.main,
     },
     {
       label: i18n.t('ai.v56-review-panel.lcp_16'),
       value: `${metrics.lcp}ms`,
-      color: metrics.lcp < 2500 ? designTokens.colors.success.dark : designTokens.colors.warning.main,
+      color:
+        metrics.lcp < 2500 ? designTokens.colors.success.dark : designTokens.colors.warning.main,
     },
     {
       label: i18n.t('ai.v56-review-panel.tti_17'),
       value: `${metrics.tti}ms`,
-      color: metrics.tti < 3500 ? designTokens.colors.success.dark : designTokens.colors.warning.main,
+      color:
+        metrics.tti < 3500 ? designTokens.colors.success.dark : designTokens.colors.warning.main,
     },
     {
       label: i18n.t('ai.v56-review-panel.cls_18'),
       value: metrics.cls.toFixed(2),
-      color: metrics.cls < 0.1 ? designTokens.colors.success.dark : designTokens.colors.warning.main,
+      color:
+        metrics.cls < 0.1 ? designTokens.colors.success.dark : designTokens.colors.warning.main,
     },
   ];
 
@@ -736,7 +770,10 @@ const CodeReviewTab: React.FC<{ result: ReviewResult }> = ({ result }) => {
         </Stack>
       </Stack>
 
-      <Card variant='outlined' sx={{ p: 2, mb: 3 }}>
+      <Card
+        variant='outlined'
+        sx={{ p: 2, mb: 3 }}
+      >
         <Typography
           variant='body2'
           color='text.secondary'
@@ -778,16 +815,29 @@ const CodeReviewTab: React.FC<{ result: ReviewResult }> = ({ result }) => {
       {filtered.length === 0 ? (
         <Alert severity='info'>{i18n.t('ai.v56-review-panel.k29')}</Alert>
       ) : (
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <TableContainer>
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k30')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k31')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai:v56-review-panel.k0')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k32')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k33')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v56-review-panel.k30')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v56-review-panel.k31')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai:v56-review-panel.k0')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v56-review-panel.k32')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v56-review-panel.k33')}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -890,16 +940,29 @@ const SecurityTab: React.FC<{ result: ScanResult }> = ({ result }) => {
       {result.findings.length === 0 ? (
         <Alert severity='success'>{i18n.t('ai.v56-review-panel.k34')}</Alert>
       ) : (
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <TableContainer>
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k35')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k36')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k37')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k38')}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>{i18n.t('ai.v56-review-panel.k39')}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v56-review-panel.k35')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v56-review-panel.k36')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v56-review-panel.k37')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v56-review-panel.k38')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
+                    {i18n.t('ai.v56-review-panel.k39')}
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -971,7 +1034,11 @@ const PerformanceTab: React.FC<{ result: AuditResult }> = ({ result }) => {
             {i18n.t('ai.v56-review-panel.k27')}
           </Typography>
           <Chip
-            label={result.optimized ? i18n.t('ai.v56-review-panel.k41') : i18n.t('ai.v56-review-panel.k40')}
+            label={
+              result.optimized
+                ? i18n.t('ai.v56-review-panel.k41')
+                : i18n.t('ai.v56-review-panel.k40')
+            }
             size='small'
             sx={{
               bgcolor: result.optimized ? 'colors.success.100' : 'colors.error.50',
@@ -983,7 +1050,10 @@ const PerformanceTab: React.FC<{ result: AuditResult }> = ({ result }) => {
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3, mb: 3 }}>
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1029,7 +1099,10 @@ const PerformanceTab: React.FC<{ result: AuditResult }> = ({ result }) => {
           </Stack>
         </Card>
 
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1041,7 +1114,10 @@ const PerformanceTab: React.FC<{ result: AuditResult }> = ({ result }) => {
         </Card>
       </Box>
 
-      <Card variant='outlined' sx={{ p: 2 }}>
+      <Card
+        variant='outlined'
+        sx={{ p: 2 }}
+      >
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}

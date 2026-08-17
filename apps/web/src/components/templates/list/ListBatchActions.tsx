@@ -66,7 +66,8 @@ export const ListBatchActions = <T,>({
         variant='body2'
         sx={{ fontWeight: 500, color: 'primary.main' }}
       >
-        {i18n.t('components.list_batch_actions.k0')} {selectedCount} {i18n.t('components.list_batch_actions.k1')}
+        {i18n.t('components.list_batch_actions.k0')} {selectedCount}{' '}
+        {i18n.t('components.list_batch_actions.k1')}
       </Typography>
 
       <Button

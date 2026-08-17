@@ -22,7 +22,8 @@ import { RD_PATHS } from '@/modules/rd/config';
 import { LazyChart } from '@/components/charts';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { rdApi } from '@/api/rd';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const RsOverviewPage: React.FC = () => {
   const navigate = useNavigate();
   const { data: backendData, isLoading: isBackendLoading } = useQuery({
@@ -127,14 +128,20 @@ const RsOverviewPage: React.FC = () => {
       {
         id: 'project-status',
         title: i18n.t('rd.rs_overview_page.k21'),
-        chart: <LazyChart type='pie' data={projectStatusData} />,
+        chart: (
+          <LazyChart
+            type='pie'
+            data={projectStatusData}
+          />
+        ),
         height: 300,
       },
       {
         id: 'bug-trend',
         title: i18n.t('rd.rs_overview_page.k22'),
         chart: (
-          <LazyChart type='line'
+          <LazyChart
+            type='line'
             data={monthlyBugTrendData}
             xKey='name'
             yKey='value'
@@ -146,7 +153,8 @@ const RsOverviewPage: React.FC = () => {
         id: 'module-code',
         title: i18n.t('rd.rs_overview_page.k23'),
         chart: (
-          <LazyChart type='bar'
+          <LazyChart
+            type='bar'
             data={moduleCodeData}
             xKey='name'
             yKey='value'
@@ -265,7 +273,10 @@ const RsOverviewPage: React.FC = () => {
       <DashboardTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: i18n.t('rd.rs_overview_page.k38'), href: '/dashboard' }, { label: i18n.t('rd.rs_overview_page.k37') }]}
+        breadcrumbs={[
+          { label: i18n.t('rd.rs_overview_page.k38'), href: '/dashboard' },
+          { label: i18n.t('rd.rs_overview_page.k37') },
+        ]}
         stats={stats}
         charts={charts}
         recentItems={recentItems}

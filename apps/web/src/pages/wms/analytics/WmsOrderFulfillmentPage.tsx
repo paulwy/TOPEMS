@@ -57,7 +57,9 @@ export default function WmsOrderFulfillmentPage() {
         </div>
         <div className='rounded-lg border p-4'>
           <p className='text-sm text-gray-600'>{i18n.t('pages.wms_order_fulfillment_page.k2')}</p>
-          <p className='mt-1 text-3xl font-bold text-blue-600'>{i18n.t('pages.wms_order_fulfillment_page.avgours_0')}</p>
+          <p className='mt-1 text-3xl font-bold text-blue-600'>
+            {i18n.t('pages.wms_order_fulfillment_page.avgours_0')}
+          </p>
         </div>
         <div className='rounded-lg border p-4'>
           <p className='text-sm text-gray-600'>{i18n.t('pages.wms_order_fulfillment_page.l_1')}</p>
@@ -98,7 +100,9 @@ export default function WmsOrderFulfillmentPage() {
                 layout='horizontal'
                 verticalAlign='bottom'
               />
-              <Tooltip formatter={(v: unknown) => [`${v}%`, i18n.t('pages.wms_order_fulfillment_page.k5')]} />
+              <Tooltip
+                formatter={(v: unknown) => [`${v}%`, i18n.t('pages.wms_order_fulfillment_page.k5')]}
+              />
             </RadialBarChart>
           </ResponsiveContainer>
         </div>

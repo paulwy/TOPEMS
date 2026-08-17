@@ -274,8 +274,9 @@ const PluginDetailModal: React.FC<{
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const versionsQuery = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_VERSIONS_BASE, plugin.code],
@@ -286,8 +287,9 @@ const PluginDetailModal: React.FC<{
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   useEffect(() => {
     if (reviewsQuery.isError && reviewsQuery.error) {
@@ -316,10 +318,11 @@ const PluginDetailModal: React.FC<{
       setRating(0);
       setReviewTitle('');
       setReviewContent('');
-      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_REVIEWS_BASE, plugin.code] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [...QUERY_KEYS.AD_HOC.PLUGIN_REVIEWS_BASE, plugin.code],
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (error: unknown) => {
       logger.error(i18n.t('pages.plugin_marketplace_page.k2'), error);
@@ -738,13 +741,12 @@ const PluginMarketplacePage: React.FC = () => {
           username: 'admin',
           role: 'admin',
           isSuperuser: true,
-        }),
+        })
       );
       localStorage.setItem('roles', JSON.stringify(['admin', 'user']));
       localStorage.setItem('permissions', JSON.stringify(['*']));
       localStorage.removeItem('topems-plugin-storage');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const {
@@ -797,11 +799,7 @@ const PluginMarketplacePage: React.FC = () => {
   const plugins = pluginsQuery.data || [];
 
   const handleRefresh = () => {
-    Promise.all([
-      pluginsQuery.refetch(),
-      healthQuery.refetch(),
-      fetchInstalledPlugins(true),
-    ]);
+    Promise.all([pluginsQuery.refetch(), healthQuery.refetch(), fetchInstalledPlugins(true)]);
     addNotification({
       title: t('plugin.message.refresh_success'),
       message: t('plugin.message.plugin_list_updated'),

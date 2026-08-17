@@ -9,6 +9,7 @@ import {
 } from '@/components/templates';
 import i18n from '@/i18n';
 import { notificationApi } from '@/api/notification';
+
 export const NotificationSettingsPage: React.FC = () => {
   const { data: backendData } = useQuery({
     queryKey: ['notification', 'settings'],

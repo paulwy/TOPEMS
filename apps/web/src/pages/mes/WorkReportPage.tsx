@@ -11,7 +11,8 @@ import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter(mesApi.workReports, {
   itemsField: 'reports',
 });
@@ -28,10 +29,11 @@ const WorkReportPage: React.FC = () => {
             title: i18n.t('mes.work_report_page.k0'),
             message: i18n.t('mes.work_report_page.k1'),
           });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MES_WORK_REPORT_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.AD_HOC.MES_WORK_REPORT_BASE,
+            exact: false,
+            refetchType: 'active',
+          });
         } else {
           addNotification({
             type: 'error',
@@ -59,10 +61,11 @@ const WorkReportPage: React.FC = () => {
             title: i18n.t('mes.work_report_page.k6'),
             message: i18n.t('mes.work_report_page.k7'),
           });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.MES_WORK_REPORT_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.AD_HOC.MES_WORK_REPORT_BASE,
+            exact: false,
+            refetchType: 'active',
+          });
         } else {
           addNotification({
             type: 'error',

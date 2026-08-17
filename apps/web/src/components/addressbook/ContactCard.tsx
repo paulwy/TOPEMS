@@ -166,7 +166,9 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) =>
                 : { backgroundColor: 'error.lighter', color: 'error.darker' }),
             }}
           >
-            {contact.status === 'active' ? i18n.t('shared.contact_card.k1') : i18n.t('shared.contact_card.k0')}
+            {contact.status === 'active'
+              ? i18n.t('shared.contact_card.k1')
+              : i18n.t('shared.contact_card.k0')}
           </span>
         </div>
       </div>

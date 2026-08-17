@@ -7,6 +7,7 @@ import { useNotificationStore, useAuthStore } from '../../../store';
 import { apiLogger } from '@/utils/logger';
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 interface ApprovalDetails {
   approval: Approval;
   records: ApprovalRecord[];
@@ -83,10 +84,11 @@ export const useWorkflowApprovalDetail = (): UseWorkflowApprovalDetailReturn => 
     }
   }, [detailsQuery.isError, detailsQuery.error, addNotification, i18n.t]);
   const invalidateApprovalQueries = () => {
-    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE, id] ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE, id],
+      exact: false,
+      refetchType: 'active',
+    });
   };
   const processApprovalMutation = useMutation({
     mutationFn: (params: { approvalId: string; action: 'approve' | 'reject'; comment?: string }) =>
@@ -97,12 +99,11 @@ export const useWorkflowApprovalDetail = (): UseWorkflowApprovalDetailReturn => 
         actor_name: user?.fullName || user?.username || 'Current User',
       }),
     onSuccess: (_data, variables) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateApprovalQueries();
       addNotification({
         title: i18n.t('common.success'),
@@ -137,16 +138,17 @@ export const useWorkflowApprovalDetail = (): UseWorkflowApprovalDetailReturn => 
         delegate_to_name: params.delegateTo,
       }),
     onSuccess: (_data, variables) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_APPROVAL_DETAILS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       invalidateApprovalQueries();
       addNotification({
         title: i18n.t('common.success'),
-        message: i18n.t('workflow.approval_detail.message.delegated_to', { name: variables.delegateTo }),
+        message: i18n.t('workflow.approval_detail.message.delegated_to', {
+          name: variables.delegateTo,
+        }),
         type: 'success',
       });
       setShowDelegateModal(false);

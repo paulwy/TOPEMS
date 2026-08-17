@@ -8,6 +8,7 @@ import { AlertTriangle } from 'lucide-react';
 import type { DefectRecord } from '@/api/mobile';
 import type { ChipColor, SeverityChipColor } from '../hooks/useMobileQuality';
 import i18n from '@/i18n';
+
 interface MobileQualityDefectListProps {
   defectRecords: DefectRecord[];
   getSeverityLabel: (severity: string) => string;

@@ -73,7 +73,12 @@ const mockTemplates: Template[] = [
         type: 'user',
         required: true,
       },
-      { key: 'step1_task', label: i18n.t('components.template_demo_page.1_5'), type: 'string', required: true },
+      {
+        key: 'step1_task',
+        label: i18n.t('components.template_demo_page.1_5'),
+        type: 'string',
+        required: true,
+      },
       {
         key: 'step1_deadline',
         label: i18n.t('components.template_demo_page.1_6'),
@@ -86,7 +91,12 @@ const mockTemplates: Template[] = [
         type: 'user',
         required: true,
       },
-      { key: 'step2_task', label: i18n.t('components.template_demo_page.2_8'), type: 'string', required: true },
+      {
+        key: 'step2_task',
+        label: i18n.t('components.template_demo_page.2_8'),
+        type: 'string',
+        required: true,
+      },
       {
         key: 'step2_deadline',
         label: i18n.t('components.template_demo_page.2_9'),
@@ -99,14 +109,24 @@ const mockTemplates: Template[] = [
         type: 'user',
         required: true,
       },
-      { key: 'step3_task', label: i18n.t('components.template_demo_page.3_11'), type: 'string', required: true },
+      {
+        key: 'step3_task',
+        label: i18n.t('components.template_demo_page.3_11'),
+        type: 'string',
+        required: true,
+      },
       {
         key: 'step3_deadline',
         label: i18n.t('components.template_demo_page.3_12'),
         type: 'number',
         required: true,
       },
-      { key: 'creator', label: i18n.t('components.template_demo_page.k13'), type: 'user', required: true },
+      {
+        key: 'creator',
+        label: i18n.t('components.template_demo_page.k13'),
+        type: 'user',
+        required: true,
+      },
     ],
     isactive: true,
     is_system: false,
@@ -151,25 +171,70 @@ const mockTemplates: Template[] = [
 
 {i18n.t('components.template_demo_page.k34')}{{apply_time}}`,
     variables: [
-      { key: 'applicant_name', label: i18n.t('components.template_demo_page.k16'), type: 'user', required: true },
-      { key: 'department', label: i18n.t('components.template_demo_page.k17'), type: 'string', required: true },
-      { key: 'position', label: i18n.t('components.template_demo_page.k18'), type: 'string', required: true },
+      {
+        key: 'applicant_name',
+        label: i18n.t('components.template_demo_page.k16'),
+        type: 'user',
+        required: true,
+      },
+      {
+        key: 'department',
+        label: i18n.t('components.template_demo_page.k17'),
+        type: 'string',
+        required: true,
+      },
+      {
+        key: 'position',
+        label: i18n.t('components.template_demo_page.k18'),
+        type: 'string',
+        required: true,
+      },
       {
         key: 'leave_type',
         label: i18n.t('components.template_demo_page.k19'),
         type: 'select',
         required: true,
         options: [
-          { value: i18n.t('components.template_demo_page.k20'), label: i18n.t('components.template_demo_page.k21') },
-          { value: i18n.t('components.template_demo_page.k22'), label: i18n.t('components.template_demo_page.k23') },
-          { value: i18n.t('components.template_demo_page.k24'), label: i18n.t('components.template_demo_page.k25') },
-          { value: i18n.t('components.template_demo_page.k26'), label: i18n.t('components.template_demo_page.k27') },
-          { value: i18n.t('components.template_demo_page.k28'), label: i18n.t('components.template_demo_page.k29') },
+          {
+            value: i18n.t('components.template_demo_page.k20'),
+            label: i18n.t('components.template_demo_page.k21'),
+          },
+          {
+            value: i18n.t('components.template_demo_page.k22'),
+            label: i18n.t('components.template_demo_page.k23'),
+          },
+          {
+            value: i18n.t('components.template_demo_page.k24'),
+            label: i18n.t('components.template_demo_page.k25'),
+          },
+          {
+            value: i18n.t('components.template_demo_page.k26'),
+            label: i18n.t('components.template_demo_page.k27'),
+          },
+          {
+            value: i18n.t('components.template_demo_page.k28'),
+            label: i18n.t('components.template_demo_page.k29'),
+          },
         ],
       },
-      { key: 'start_date', label: i18n.t('components.template_demo_page.k30'), type: 'date', required: true },
-      { key: 'end_date', label: i18n.t('components.template_demo_page.k31'), type: 'date', required: true },
-      { key: 'days', label: i18n.t('components.template_demo_page.k32'), type: 'number', required: true },
+      {
+        key: 'start_date',
+        label: i18n.t('components.template_demo_page.k30'),
+        type: 'date',
+        required: true,
+      },
+      {
+        key: 'end_date',
+        label: i18n.t('components.template_demo_page.k31'),
+        type: 'date',
+        required: true,
+      },
+      {
+        key: 'days',
+        label: i18n.t('components.template_demo_page.k32'),
+        type: 'number',
+        required: true,
+      },
       {
         key: 'is_urgent',
         label: i18n.t('components.template_demo_page.k33'),
@@ -180,7 +245,12 @@ const mockTemplates: Template[] = [
           { value: 'false', label: i18n.t('components.template_demo_page.k35') },
         ],
       },
-      { key: 'reason', label: i18n.t('components.template_demo_page.k36'), type: 'string', required: false },
+      {
+        key: 'reason',
+        label: i18n.t('components.template_demo_page.k36'),
+        type: 'string',
+        required: false,
+      },
       {
         key: 'has_attachment',
         label: i18n.t('components.template_demo_page.k37'),
@@ -191,9 +261,24 @@ const mockTemplates: Template[] = [
           { value: 'false', label: i18n.t('components.template_demo_page.k39') },
         ],
       },
-      { key: 'manager_name', label: i18n.t('components.template_demo_page.k40'), type: 'user', required: true },
-      { key: 'hr_assignee', label: i18n.t('components.template_demo_page.hr_0'), type: 'user', required: true },
-      { key: 'apply_time', label: i18n.t('components.template_demo_page.k41'), type: 'date', required: true },
+      {
+        key: 'manager_name',
+        label: i18n.t('components.template_demo_page.k40'),
+        type: 'user',
+        required: true,
+      },
+      {
+        key: 'hr_assignee',
+        label: i18n.t('components.template_demo_page.hr_0'),
+        type: 'user',
+        required: true,
+      },
+      {
+        key: 'apply_time',
+        label: i18n.t('components.template_demo_page.k41'),
+        type: 'date',
+        required: true,
+      },
     ],
     isactive: true,
     is_system: false,
@@ -232,23 +317,58 @@ const mockTemplates: Template[] = [
 {i18n.t('components.template_demo_page.k43')}{{approver_name}}
 {i18n.t('components.template_demo_page.k44')}{{submit_time}}`,
     variables: [
-      { key: 'applicant_name', label: i18n.t('components.template_demo_page.k44'), type: 'user', required: true },
-      { key: 'department', label: i18n.t('components.template_demo_page.k45'), type: 'string', required: true },
+      {
+        key: 'applicant_name',
+        label: i18n.t('components.template_demo_page.k44'),
+        type: 'user',
+        required: true,
+      },
+      {
+        key: 'department',
+        label: i18n.t('components.template_demo_page.k45'),
+        type: 'string',
+        required: true,
+      },
       {
         key: 'expense_type',
         label: i18n.t('components.template_demo_page.k46'),
         type: 'select',
         required: true,
         options: [
-          { value: i18n.t('components.template_demo_page.k47'), label: i18n.t('components.template_demo_page.k48') },
-          { value: i18n.t('components.template_demo_page.k49'), label: i18n.t('components.template_demo_page.k50') },
-          { value: i18n.t('components.template_demo_page.k51'), label: i18n.t('components.template_demo_page.k52') },
-          { value: i18n.t('components.template_demo_page.k53'), label: i18n.t('components.template_demo_page.k54') },
-          { value: i18n.t('components.template_demo_page.k55'), label: i18n.t('components.template_demo_page.k56') },
+          {
+            value: i18n.t('components.template_demo_page.k47'),
+            label: i18n.t('components.template_demo_page.k48'),
+          },
+          {
+            value: i18n.t('components.template_demo_page.k49'),
+            label: i18n.t('components.template_demo_page.k50'),
+          },
+          {
+            value: i18n.t('components.template_demo_page.k51'),
+            label: i18n.t('components.template_demo_page.k52'),
+          },
+          {
+            value: i18n.t('components.template_demo_page.k53'),
+            label: i18n.t('components.template_demo_page.k54'),
+          },
+          {
+            value: i18n.t('components.template_demo_page.k55'),
+            label: i18n.t('components.template_demo_page.k56'),
+          },
         ],
       },
-      { key: 'amount', label: i18n.t('components.template_demo_page.k57'), type: 'number', required: true },
-      { key: 'details', label: i18n.t('components.template_demo_page.k58'), type: 'string', required: true },
+      {
+        key: 'amount',
+        label: i18n.t('components.template_demo_page.k57'),
+        type: 'number',
+        required: true,
+      },
+      {
+        key: 'details',
+        label: i18n.t('components.template_demo_page.k58'),
+        type: 'string',
+        required: true,
+      },
       {
         key: 'is_over_budget',
         label: i18n.t('components.template_demo_page.k59'),
@@ -265,8 +385,18 @@ const mockTemplates: Template[] = [
         type: 'string',
         required: false,
       },
-      { key: 'approver_name', label: i18n.t('components.template_demo_page.k63'), type: 'user', required: true },
-      { key: 'submit_time', label: i18n.t('components.template_demo_page.k64'), type: 'date', required: true },
+      {
+        key: 'approver_name',
+        label: i18n.t('components.template_demo_page.k63'),
+        type: 'user',
+        required: true,
+      },
+      {
+        key: 'submit_time',
+        label: i18n.t('components.template_demo_page.k64'),
+        type: 'date',
+        required: true,
+      },
     ],
     isactive: true,
     is_system: false,
@@ -401,8 +531,14 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
     logger.info(i18n.t('components.template_demo_page.id_3'), selectedTemplate.id);
     logger.info(i18n.t('components.template_demo_page.k4'), selectedTemplate.content.length);
     logger.debug(i18n.t('components.template_demo_page.n_5'), selectedTemplate.content);
-    logger.debug(i18n.t('components.template_demo_page.k6'), JSON.stringify(templateVariables, null, 2));
-    logger.debug(i18n.t('components.template_demo_page.k7'), JSON.stringify(selectedTemplate.variables, null, 2));
+    logger.debug(
+      i18n.t('components.template_demo_page.k6'),
+      JSON.stringify(templateVariables, null, 2)
+    );
+    logger.debug(
+      i18n.t('components.template_demo_page.k7'),
+      JSON.stringify(selectedTemplate.variables, null, 2)
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 300));
 
@@ -410,7 +546,9 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
     let stepNumber = 1;
 
     // 步骤1: 替换变量
-    logger.info(`${i18n.t('components.template_demo_page.n_8')}${stepNumber}${i18n.t('components.template_demo_page.k9')}`);
+    logger.info(
+      `${i18n.t('components.template_demo_page.n_8')}${stepNumber}${i18n.t('components.template_demo_page.k9')}`
+    );
     Object.entries(templateVariables).forEach(([key, value]) => {
       const pattern = new RegExp(`{{${key}}}`, 'g');
       const matches = result.match(pattern);
@@ -420,7 +558,9 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
       const replacedCount = beforeReplace.split(pattern).length - 1;
 
       logger.info(`${i18n.t('components.template_demo_page.k10')}${key}]:`);
-      logger.info(`  ${i18n.t('components.template_demo_page.k11')}${value}${i18n.t('components.template_demo_page.k12')} ${typeof value})`);
+      logger.info(
+        `  ${i18n.t('components.template_demo_page.k11')}${value}${i18n.t('components.template_demo_page.k12')} ${typeof value})`
+      );
       logger.info(`  ${i18n.t('components.template_demo_page.k13')} ${matchCount}`);
       logger.info(`  ${i18n.t('components.template_demo_page.k14')} ${replacedCount}`);
       logger.debug(`  ${i18n.t('components.template_demo_page.k15')} ${pattern}`);
@@ -432,40 +572,58 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
       // 检查是否还有未替换的变量
       const remainingPattern = new RegExp(`{{${key}}}`, 'g');
       if (remainingPattern.test(result)) {
-        logger.error(`  ${i18n.t('components.template_demo_page.k17')}${key}${i18n.t('components.template_demo_page.k18')}`);
+        logger.error(
+          `  ${i18n.t('components.template_demo_page.k17')}${key}${i18n.t('components.template_demo_page.k18')}`
+        );
       }
     });
     stepNumber++;
 
     // 步骤2: 处理条件判断
-    logger.info(`${i18n.t('components.template_demo_page.n_19')}${stepNumber}${i18n.t('components.template_demo_page.k20')}`);
+    logger.info(
+      `${i18n.t('components.template_demo_page.n_19')}${stepNumber}${i18n.t('components.template_demo_page.k20')}`
+    );
     const conditionPattern = /\{\{#if (\w+)\}\}(.*?)\{\{\/if\}\}/gs;
     const conditionMatches = result.match(conditionPattern);
-    logger.info(i18n.t('components.template_demo_page.k21'), conditionMatches ? conditionMatches.length : 0);
+    logger.info(
+      i18n.t('components.template_demo_page.k21'),
+      conditionMatches ? conditionMatches.length : 0
+    );
 
     result = result.replace(conditionPattern, (_: string, condition: string, content: string) => {
       const value = templateVariables[condition];
       const conditionResult = value ? content.trim() : '';
       logger.info(`${i18n.t('components.template_demo_page.if_22')} ${condition}}}:`);
       logger.info(`  ${i18n.t('components.template_demo_page.k23')} ${condition}`);
-      logger.info(`  ${i18n.t('components.template_demo_page.k24')}${value}${i18n.t('components.template_demo_page.k25')} ${typeof value})`);
+      logger.info(
+        `  ${i18n.t('components.template_demo_page.k24')}${value}${i18n.t('components.template_demo_page.k25')} ${typeof value})`
+      );
       logger.debug(`  ${i18n.t('components.template_demo_page.k26')} ${Boolean(value)}`);
       logger.debug(`  ${i18n.t('components.template_demo_page.k27')} ${content.length}`);
-      logger.debug(`  ${i18n.t('components.template_demo_page.k28')}${conditionResult}${i18n.t('components.template_demo_page.k29')} ${Boolean(value)})`);
+      logger.debug(
+        `  ${i18n.t('components.template_demo_page.k28')}${conditionResult}${i18n.t('components.template_demo_page.k29')} ${Boolean(value)})`
+      );
       return conditionResult;
     });
     stepNumber++;
 
     // 步骤3: 处理默认值
-    logger.info(`${i18n.t('components.template_demo_page.n_30')}${stepNumber}${i18n.t('components.template_demo_page.k31')}`);
+    logger.info(
+      `${i18n.t('components.template_demo_page.n_30')}${stepNumber}${i18n.t('components.template_demo_page.k31')}`
+    );
     const defaultPattern = /\{\{(\w+)\s*\|\|\s*["']([^"']+)["']\}\}/g;
     const defaultMatches = result.match(defaultPattern);
-    logger.info(i18n.t('components.template_demo_page.k32'), defaultMatches ? defaultMatches.length : 0);
+    logger.info(
+      i18n.t('components.template_demo_page.k32'),
+      defaultMatches ? defaultMatches.length : 0
+    );
 
     result = result.replace(defaultPattern, (_: string, key: string, defaultValue: string) => {
       const value = templateVariables[key];
       const finalValue = value && value !== '' ? String(value) : defaultValue;
-      logger.info(`${i18n.t('components.template_demo_page.k33')}${'${' + '{'}${key} || "${defaultValue}"${'}' + '}'}:`);
+      logger.info(
+        `${i18n.t('components.template_demo_page.k33')}${'${' + '{'}${key} || "${defaultValue}"${'}' + '}'}:`
+      );
       logger.info(`  ${i18n.t('components.template_demo_page.k34')} ${key}`);
       logger.info(`  ${i18n.t('components.template_demo_page.k35')}${value}"`);
       logger.info(`  ${i18n.t('components.template_demo_page.k36')}${defaultValue}"`);
@@ -476,7 +634,9 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
     stepNumber++;
 
     // 步骤4: 替换动态变量
-    logger.info(`${i18n.t('components.template_demo_page.n_39')}${stepNumber}${i18n.t('components.template_demo_page.k40')}`);
+    logger.info(
+      `${i18n.t('components.template_demo_page.n_39')}${stepNumber}${i18n.t('components.template_demo_page.k40')}`
+    );
     const now = new Date();
     const todayValue = now.toISOString().split('T')[0];
     const nowValue = now.toISOString();
@@ -487,17 +647,23 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
 
     const todayPattern = /\{\{today\}\}/g;
     const todayMatches = result.match(todayPattern);
-    logger.info(`  ${i18n.t('components.template_demo_page.k42')} ${todayMatches ? todayMatches.length : 0}`);
+    logger.info(
+      `  ${i18n.t('components.template_demo_page.k42')} ${todayMatches ? todayMatches.length : 0}`
+    );
     result = result.replace(todayPattern, todayValue);
 
     const nowPattern = /\{\{now\}\}/g;
     const nowMatches = result.match(nowPattern);
-    logger.info(`  ${i18n.t('components.template_demo_page.now_43')} ${nowMatches ? nowMatches.length : 0}`);
+    logger.info(
+      `  ${i18n.t('components.template_demo_page.now_43')} ${nowMatches ? nowMatches.length : 0}`
+    );
     result = result.replace(nowPattern, nowValue);
     stepNumber++;
 
     // 步骤5: 检查未处理的变量
-    logger.info(`${i18n.t('components.template_demo_page.n_44')}${stepNumber}${i18n.t('components.template_demo_page.k45')}`);
+    logger.info(
+      `${i18n.t('components.template_demo_page.n_44')}${stepNumber}${i18n.t('components.template_demo_page.k45')}`
+    );
     const remainingVarsPattern = /\{\{([^#/][^}]+)\}\}/g;
     const remainingVars = result.match(remainingVarsPattern);
     if (remainingVars && remainingVars.length > 0) {
@@ -518,7 +684,10 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
     logger.info(i18n.t('components.template_demo_page.n_52'));
     logger.info(i18n.t('components.template_demo_page.k53'), result.length);
     logger.debug(i18n.t('components.template_demo_page.n_54'), result);
-    logger.info(i18n.t('components.template_demo_page.k55'), i18n.t('components.template_demo_page.300ms_56'));
+    logger.info(
+      i18n.t('components.template_demo_page.k55'),
+      i18n.t('components.template_demo_page.300ms_56')
+    );
 
     setRenderedContent(result);
     setIsLoading(false);
@@ -793,7 +962,8 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                 variant='body2'
                 sx={{ color: 'grey.500' }}
               >
-                {i18n.t('components.template_demo_page.k45')} {templates.length} {i18n.t('components.template_demo_page.k46')}
+                {i18n.t('components.template_demo_page.k45')} {templates.length}{' '}
+                {i18n.t('components.template_demo_page.k46')}
               </Typography>
             </Box>
             <Box
@@ -863,7 +1033,9 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                   },
                 }}
               />
-              <Typography sx={{ ml: 1, color: 'grey.500' }}>{i18n.t('components.template_demo_page.k69')}</Typography>
+              <Typography sx={{ ml: 1, color: 'grey.500' }}>
+                {i18n.t('components.template_demo_page.k69')}
+              </Typography>
             </Box>
           ) : (
             <Box
@@ -999,7 +1171,9 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                   title={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Settings sx={{ fontSize: 18 }} />
-                      <Typography variant='h6'>{i18n.t('components.template_demo_page.k74')}</Typography>
+                      <Typography variant='h6'>
+                        {i18n.t('components.template_demo_page.k74')}
+                      </Typography>
                     </Box>
                   }
                   subheader={i18n.t('components.template_demo_page.k75')}
@@ -1100,7 +1274,9 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                     )
                   }
                 >
-                  {isLoading ? i18n.t('components.template_demo_page.k74') : i18n.t('components.template_demo_page.k77')}
+                  {isLoading
+                    ? i18n.t('components.template_demo_page.k74')
+                    : i18n.t('components.template_demo_page.k77')}
                 </Button>
               </Box>
             </>
@@ -1126,7 +1302,9 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Play sx={{ fontSize: 18 }} />
-                        <Typography variant='h6'>{i18n.t('components.template_demo_page.k78')}</Typography>
+                        <Typography variant='h6'>
+                          {i18n.t('components.template_demo_page.k78')}
+                        </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', gap: 1 }}>
                         <Button
@@ -1194,7 +1372,11 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                           variant='body2'
                           sx={{ fontWeight: 500, color: 'grey.800' }}
                         >
-                          {typeof value === 'boolean' ? (value ? i18n.t('components.template_demo_page.k81') : i18n.t('components.template_demo_page.k80')) : String(value)}
+                          {typeof value === 'boolean'
+                            ? value
+                              ? i18n.t('components.template_demo_page.k81')
+                              : i18n.t('components.template_demo_page.k80')
+                            : String(value)}
                         </Typography>
                       </Box>
                     ))}

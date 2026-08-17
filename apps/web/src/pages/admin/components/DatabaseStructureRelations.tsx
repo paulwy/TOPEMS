@@ -25,6 +25,7 @@ import {
 import i18n from '@/i18n';
 import { Eye, AlertTriangle, CheckCircle, FileCode } from 'lucide-react';
 import type { DbColumnDefinition, SqlPreview } from '@/api/system';
+
 interface DatabaseStructureRelationsProps {
   showAddColumnModal: boolean;
   onCloseAddColumn: () => void;

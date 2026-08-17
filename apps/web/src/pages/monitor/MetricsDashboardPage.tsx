@@ -47,6 +47,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens, semanticTokens } from '@topems/tokens';
+
 const CATEGORY_LABELS: Record<string, string> = {
   all: i18n.t('monitor.metrics_dashboard_page.k0'),
   sales: i18n.t('monitor.metrics_dashboard_page.k1'),
@@ -144,7 +145,9 @@ const AchievementBar: React.FC<{ value: number; target: number; unit: string }> 
         <Typography
           variant='caption'
           color='text.secondary'
-        >{i18n.t('monitor:metrics_dashboard_page.k5', { v0: (target.toLocaleString()), v1: (unit) })}</Typography>
+        >
+          {i18n.t('monitor:metrics_dashboard_page.k5', { v0: target.toLocaleString(), v1: unit })}
+        </Typography>
       </Box>
       <LinearProgress
         variant='determinate'
@@ -174,10 +177,17 @@ export const MetricsDashboardPage: React.FC = () => {
       const res = await metricsApi.getBusinessMetricSummary();
       return res.data;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const listQuery = useQuery({
-    queryKey: [...QUERY_KEYS.AD_HOC.MONITOR_BUSINESS_METRICS_LIST_BASE, category, serviceFilter, statusFilter, keyword],
+    queryKey: [
+      ...QUERY_KEYS.AD_HOC.MONITOR_BUSINESS_METRICS_LIST_BASE,
+      category,
+      serviceFilter,
+      statusFilter,
+      keyword,
+    ],
     queryFn: async () => {
       const res = await metricsApi.listBusinessMetrics({
         category: category === 'all' ? undefined : category,
@@ -187,25 +197,32 @@ export const MetricsDashboardPage: React.FC = () => {
       });
       return res.data?.items ?? [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const kpiQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MONITOR_BUSINESS_METRICS_KPI_BASE,
     queryFn: async () => {
       const res = await metricsApi.getKpiDashboard('monthly');
       return res.data ?? [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const trendQuery = useQuery({
-    queryKey: [...QUERY_KEYS.AD_HOC.MONITOR_BUSINESS_METRICS_TREND_BASE, trendMetricCode, trendPeriod],
+    queryKey: [
+      ...QUERY_KEYS.AD_HOC.MONITOR_BUSINESS_METRICS_TREND_BASE,
+      trendMetricCode,
+      trendPeriod,
+    ],
     queryFn: async () => {
       const res = await metricsApi.getBusinessMetricTrend(trendMetricCode, trendPeriod);
       return res.data ?? [];
     },
     enabled: Boolean(trendMetricCode),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const summary = summaryQuery.data;
   const metrics = listQuery.data ?? [];
   const kpis: BusinessMetricKpi[] = kpiQuery.data ?? [];
@@ -394,7 +411,11 @@ export const MetricsDashboardPage: React.FC = () => {
         kpiQuery.refetch(),
         trendQuery.refetch(),
       ]);
-      addNotification({ type: 'success', title: i18n.t('monitor.metrics_dashboard_page.k24'), message: i18n.t('monitor.metrics_dashboard_page.k23') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('monitor.metrics_dashboard_page.k24'),
+        message: i18n.t('monitor.metrics_dashboard_page.k23'),
+      });
     } catch (err) {
       addNotification({
         type: 'error',
@@ -581,8 +602,12 @@ export const MetricsDashboardPage: React.FC = () => {
                   <TableCell>{i18n.t('monitor.metrics_dashboard_page.k44')}</TableCell>
                   <TableCell>{i18n.t('monitor.metrics_dashboard_page.k45')}</TableCell>
                   <TableCell>{i18n.t('monitor.metrics_dashboard_page.k46')}</TableCell>
-                  <TableCell align='right'>{i18n.t('monitor.metrics_dashboard_page.k47')}</TableCell>
-                  <TableCell align='right'>{i18n.t('monitor.metrics_dashboard_page.k48')}</TableCell>
+                  <TableCell align='right'>
+                    {i18n.t('monitor.metrics_dashboard_page.k47')}
+                  </TableCell>
+                  <TableCell align='right'>
+                    {i18n.t('monitor.metrics_dashboard_page.k48')}
+                  </TableCell>
                   <TableCell>{i18n.t('monitor.metrics_dashboard_page.k49')}</TableCell>
                   <TableCell>{i18n.t('monitor.metrics_dashboard_page.k50')}</TableCell>
                   <TableCell>{i18n.t('monitor.metrics_dashboard_page.k51')}</TableCell>

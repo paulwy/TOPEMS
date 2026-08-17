@@ -27,6 +27,7 @@ import {
   Legend,
   PolarAngleAxis,
 } from 'recharts';
+
 const mockData = [
   { workCenter: 'WC-A', availability: 88, performance: 92, quality: 96 },
   { workCenter: 'WC-B', availability: 82, performance: 85, quality: 94 },
@@ -44,9 +45,13 @@ export default function OeeDashboardPage() {
           ? (mesApi as any).equipmentOee.list()
           : Promise.resolve({ data: { records: [] } }));
         const data = (res as { data?: unknown })?.data;
-        const items = Array.isArray(data) ? data :
-          (Array.isArray((data as { records?: unknown[] })?.records) ? (data as { records: unknown[] }).records :
-          (Array.isArray((data as { items?: unknown[] })?.items) ? (data as { items: unknown[] }).items : []));
+        const items = Array.isArray(data)
+          ? data
+          : Array.isArray((data as { records?: unknown[] })?.records)
+            ? (data as { records: unknown[] }).records
+            : Array.isArray((data as { items?: unknown[] })?.items)
+              ? (data as { items: unknown[] }).items
+              : [];
         return { oeeRecords: items };
       } catch {
         return {};
@@ -73,9 +78,21 @@ export default function OeeDashboardPage() {
     return Number((oeeData.reduce((s, d) => s + d.quality, 0) / oeeData.length).toFixed(1));
   }, [oeeData]);
   const radialData = [
-    { name: i18n.t('aps.oee_dashboard_page.k0'), value: avgAvailability, fill: designTokens.colors.secondary.dark },
-    { name: i18n.t('aps.oee_dashboard_page.k1'), value: avgPerformance, fill: designTokens.colors.warning.main },
-    { name: i18n.t('aps.oee_dashboard_page.k2'), value: avgQuality, fill: designTokens.colors.success.dark },
+    {
+      name: i18n.t('aps.oee_dashboard_page.k0'),
+      value: avgAvailability,
+      fill: designTokens.colors.secondary.dark,
+    },
+    {
+      name: i18n.t('aps.oee_dashboard_page.k1'),
+      value: avgPerformance,
+      fill: designTokens.colors.warning.main,
+    },
+    {
+      name: i18n.t('aps.oee_dashboard_page.k2'),
+      value: avgQuality,
+      fill: designTokens.colors.success.dark,
+    },
     { name: 'OEE', value: avgOee, fill: designTokens.colors.error.main },
   ];
   return (
@@ -84,9 +101,7 @@ export default function OeeDashboardPage() {
         <h1 className='text-2xl font-bold'>{i18n.t('aps:oee_dashboard_page.oee_2')}</h1>
         <span className='text-sm text-gray-500'>Overall Equipment Effectiveness</span>
       </div>
-      <p className='text-sm text-gray-600'>
-        {i18n.t('pages.oee_dashboard_page.k0')}
-      </p>
+      <p className='text-sm text-gray-600'>{i18n.t('pages.oee_dashboard_page.k0')}</p>
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
         <div className='rounded-lg border p-4'>
           <p className='text-sm text-gray-600'>{i18n.t('aps.oee_dashboard_page.oee_3')}</p>

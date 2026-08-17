@@ -551,38 +551,41 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = memo(({ children 
     };
   }, []);
 
-  const startLoading = useCallback((msg: string = i18n.t('components.loading_provider.k2'), opts: LoadingOptions = {}) => {
-    // Clear any existing timeouts
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    if (timeoutWarningRef.current) clearTimeout(timeoutWarningRef.current);
+  const startLoading = useCallback(
+    (msg: string = i18n.t('components.loading_provider.k2'), opts: LoadingOptions = {}) => {
+      // Clear any existing timeouts
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (timeoutWarningRef.current) clearTimeout(timeoutWarningRef.current);
 
-    const mergedOptions: ExtendedLoadingOptions = { ...defaultOptions, ...opts };
+      const mergedOptions: ExtendedLoadingOptions = { ...defaultOptions, ...opts };
 
-    setIsLoading(true);
-    setMessage(msg || mergedOptions.customMessage || i18n.t('components.loading_provider.k3'));
-    setProgress(mergedOptions.progress || 0);
-    setProgressType(mergedOptions.progressType || 'none');
-    setMode(mergedOptions.mode || 'fullscreen');
-    setSkeletonOptions(mergedOptions.skeleton || defaultOptions.skeleton!);
-    setCustomIcon(mergedOptions.customIcon);
-    setTimeoutWarning(false);
-    setOptions(mergedOptions);
+      setIsLoading(true);
+      setMessage(msg || mergedOptions.customMessage || i18n.t('components.loading_provider.k3'));
+      setProgress(mergedOptions.progress || 0);
+      setProgressType(mergedOptions.progressType || 'none');
+      setMode(mergedOptions.mode || 'fullscreen');
+      setSkeletonOptions(mergedOptions.skeleton || defaultOptions.skeleton!);
+      setCustomIcon(mergedOptions.customIcon);
+      setTimeoutWarning(false);
+      setOptions(mergedOptions);
 
-    // Set timeout warning (if timeout > 5 seconds, show warning at 5s)
-    if (mergedOptions.timeout && mergedOptions.timeout > 5000) {
-      timeoutWarningRef.current = setTimeout(() => {
-        setTimeoutWarning(true);
-      }, 5000);
-    }
+      // Set timeout warning (if timeout > 5 seconds, show warning at 5s)
+      if (mergedOptions.timeout && mergedOptions.timeout > 5000) {
+        timeoutWarningRef.current = setTimeout(() => {
+          setTimeoutWarning(true);
+        }, 5000);
+      }
 
-    // Set overall timeout
-    if (mergedOptions.timeout) {
-      timeoutRef.current = setTimeout(() => {
-        mergedOptions.onTimeout?.();
-        setIsLoading(false);
-      }, mergedOptions.timeout);
-    }
-  }, []);
+      // Set overall timeout
+      if (mergedOptions.timeout) {
+        timeoutRef.current = setTimeout(() => {
+          mergedOptions.onTimeout?.();
+          setIsLoading(false);
+        }, mergedOptions.timeout);
+      }
+    },
+    []
+  );
 
   const stopLoading = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);

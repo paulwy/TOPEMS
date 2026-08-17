@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { apiLogger } from '@/utils/logger';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { AlertTriangle, MapPin, Users, Shield, Clock, Plus, Trash2 } from 'lucide-react';
 import {
   Dialog,
@@ -34,7 +34,7 @@ import { EHS_PATHS } from '@/modules/ehs/config';
 
 import { useTranslation } from 'react-i18next';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface ControlFormData {
   measure_type: 'engineering' | 'administrative' | 'ppe';
@@ -111,8 +111,9 @@ const EhsHazardDetailPage: React.FC = () => {
       }
       throw new Error(response.message || t('ehs.ehs_hazard_detail_page.detail'));
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const { data: assessmentsData } = useQuery({
     queryKey: QUERY_KEYS.EHS.HAZARD_RISK_ASSESSMENTS(id || ''),
@@ -125,8 +126,9 @@ const EhsHazardDetailPage: React.FC = () => {
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const assessments = (assessmentsData as RiskAssessment[]) || [];
 
   const { data: controlsData } = useQuery({
@@ -140,8 +142,9 @@ const EhsHazardDetailPage: React.FC = () => {
       }
       return [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const controls = (controlsData as ControlMeasure[]) || [];
 
   const loading = hazardLoading;
@@ -176,10 +179,11 @@ const EhsHazardDetailPage: React.FC = () => {
       ehsApi.updateHazard(variables.id, variables.data),
     onSuccess: () => {
       success(t('ehs.ehs_hazard_detail_page.update'));
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD(id || '') ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.EHS.HAZARD(id || ''),
+        exact: false,
+        refetchType: 'active',
+      });
       setShowEditModal(false);
     },
     onError: (err: unknown) => {
@@ -219,10 +223,11 @@ const EhsHazardDetailPage: React.FC = () => {
     }) => ehsApi.createControlMeasure(variables.hazardId, variables.data),
     onSuccess: () => {
       success(t('ehs.ehs_hazard_detail_page.success'));
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD_CONTROL_MEASURES(id || '') ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.EHS.HAZARD_CONTROL_MEASURES(id || ''),
+        exact: false,
+        refetchType: 'active',
+      });
       setShowControlModal(false);
       setControlFormData({
         measure_type: 'engineering',
@@ -265,10 +270,11 @@ const EhsHazardDetailPage: React.FC = () => {
       ehsApi.deleteControlMeasure(variables.hazardId, variables.measureId),
     onSuccess: () => {
       success(t('ehs.ehs_hazard_detail_page.delete_success'));
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD_CONTROL_MEASURES(id || '') ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.EHS.HAZARD_CONTROL_MEASURES(id || ''),
+        exact: false,
+        refetchType: 'active',
+      });
       setDeleteDialogOpen(false);
       setDeletingMeasureId(null);
     },
@@ -321,9 +327,14 @@ const EhsHazardDetailPage: React.FC = () => {
         const colorMap: Record<string, { bg: string; color: string }> = {
           [i18n.t('pages.ehs_hazard_detail_page.k0')]: { bg: 'error.lighter', color: 'error.dark' },
           [i18n.t('pages.ehs_hazard_detail_page.k1')]: { bg: 'warning.100', color: ct.yellow[600] },
-          [i18n.t('pages.ehs_hazard_detail_page.k2')]: { bg: 'success.lighter', color: 'success.dark' },
+          [i18n.t('pages.ehs_hazard_detail_page.k2')]: {
+            bg: 'success.lighter',
+            color: 'success.dark',
+          },
         };
-        const colors = colorMap[`${riskResult.level}${i18n.t('pages.ehs_hazard_detail_page.k0')}`] || {
+        const colors = colorMap[
+          `${riskResult.level}${i18n.t('pages.ehs_hazard_detail_page.k0')}`
+        ] || {
           bg: 'grey.100',
           color: 'text.secondary',
         };
@@ -422,7 +433,9 @@ const EhsHazardDetailPage: React.FC = () => {
               sx={{ fontSize: 48, color: 'warning.600' }}
             />
             <Box>
-              <Typography sx={{ color: 'warning.600', fontSize: 14 }}>{t('ehs.ehs_hazard_detail_page.k0')}</Typography>
+              <Typography sx={{ color: 'warning.600', fontSize: 14 }}>
+                {t('ehs.ehs_hazard_detail_page.k0')}
+              </Typography>
               <Typography
                 sx={{
                   fontSize: 24,
@@ -436,7 +449,8 @@ const EhsHazardDetailPage: React.FC = () => {
                   display: 'inline-block',
                 }}
               >
-                {riskInfo.level}{i18n.t('pages.ehs_hazard_detail_page.k0')}
+                {riskInfo.level}
+                {i18n.t('pages.ehs_hazard_detail_page.k0')}
               </Typography>
             </Box>
           </Box>
@@ -444,13 +458,17 @@ const EhsHazardDetailPage: React.FC = () => {
 
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
           <Box>
-            <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>{t('ehs.ehs_hazard_detail_page.k1')}</Typography>
+            <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+              {t('ehs.ehs_hazard_detail_page.k1')}
+            </Typography>
             <Typography sx={{ color: 'text.primary', mt: 0.5 }}>
               {hazard.category || '-'}
             </Typography>
           </Box>
           <Box>
-            <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>{t('ehs.ehs_hazard_detail_page.k2')}</Typography>
+            <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+              {t('ehs.ehs_hazard_detail_page.k2')}
+            </Typography>
             <Typography sx={{ color: 'text.primary', mt: 0.5 }}>
               <Box
                 component={MapPin}
@@ -463,7 +481,9 @@ const EhsHazardDetailPage: React.FC = () => {
 
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5 }}>
           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
-            <Typography sx={{ color: 'error.dark', fontSize: 12 }}>{t('ehs.ehs_hazard_detail_page.k3')}</Typography>
+            <Typography sx={{ color: 'error.dark', fontSize: 12 }}>
+              {t('ehs.ehs_hazard_detail_page.k3')}
+            </Typography>
             <Typography sx={{ fontWeight: 500, color: 'error.darker', mt: 0.5 }}>
               {hazard.severity === 'high'
                 ? t('ehs.ehs_hazard_detail_page.text_4296d7')
@@ -473,7 +493,9 @@ const EhsHazardDetailPage: React.FC = () => {
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.lighter', borderRadius: 1 }}>
-            <Typography sx={{ color: ct.yellow[600], fontSize: 12 }}>{t('ehs.ehs_hazard_detail_page.k4')}</Typography>
+            <Typography sx={{ color: ct.yellow[600], fontSize: 12 }}>
+              {t('ehs.ehs_hazard_detail_page.k4')}
+            </Typography>
             <Typography sx={{ fontWeight: 500, color: ct.yellow[700], mt: 0.5 }}>
               {hazard.exposure === 'high'
                 ? t('ehs.ehs_hazard_detail_page.text_4296d7')
@@ -483,7 +505,9 @@ const EhsHazardDetailPage: React.FC = () => {
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
-            <Typography sx={{ color: 'primary.dark', fontSize: 12 }}>{t('ehs.ehs_hazard_detail_page.k5')}</Typography>
+            <Typography sx={{ color: 'primary.dark', fontSize: 12 }}>
+              {t('ehs.ehs_hazard_detail_page.k5')}
+            </Typography>
             <Typography sx={{ fontWeight: 500, color: 'primary.dark', mt: 0.5 }}>
               {hazard.likelihood === 'high'
                 ? t('ehs.ehs_hazard_detail_page.text_4296d7')
@@ -495,7 +519,9 @@ const EhsHazardDetailPage: React.FC = () => {
         </Box>
 
         <Box sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
-          <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>{t('ehs.ehs_hazard_detail_page.k6')}</Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+            {t('ehs.ehs_hazard_detail_page.k6')}
+          </Typography>
           <Typography sx={{ color: 'text.primary', mt: 0.5, fontSize: 14, lineHeight: 1.6 }}>
             {hazard.description || t('ehs.ehs_hazard_detail_page.description_1')}
           </Typography>
@@ -518,7 +544,8 @@ const EhsHazardDetailPage: React.FC = () => {
             variant='body2'
             color='text.secondary'
           >
-            {i18n.t('pages.ehs_hazard_detail_page.k1')} {assessments.length} {i18n.t('pages.ehs_hazard_detail_page.k2')}
+            {i18n.t('pages.ehs_hazard_detail_page.k1')} {assessments.length}{' '}
+            {i18n.t('pages.ehs_hazard_detail_page.k2')}
           </Typography>
         </Box>
         {assessments.length > 0 ? (
@@ -554,7 +581,8 @@ const EhsHazardDetailPage: React.FC = () => {
             variant='body2'
             color='text.secondary'
           >
-            {i18n.t('pages.ehs_hazard_detail_page.k3')} {controls.length} {i18n.t('pages.ehs_hazard_detail_page.k4')}
+            {i18n.t('pages.ehs_hazard_detail_page.k3')} {controls.length}{' '}
+            {i18n.t('pages.ehs_hazard_detail_page.k4')}
           </Typography>
         </Box>
         {controls.length > 0 ? (
@@ -634,7 +662,10 @@ const EhsHazardDetailPage: React.FC = () => {
                 ? t('ehs.ehs_hazard_detail_page.text_aed1df')
                 : t('ehs.ehs_hazard_detail_page.text_19ac67'),
         },
-        { label: t('ehs.ehs_hazard_detail_page.text_25eb6b'), value: `${riskInfo.level}${i18n.t('pages.ehs_hazard_detail_page.k2')}` },
+        {
+          label: t('ehs.ehs_hazard_detail_page.text_25eb6b'),
+          value: `${riskInfo.level}${i18n.t('pages.ehs_hazard_detail_page.k2')}`,
+        },
       ],
     };
   }, [hazard]);

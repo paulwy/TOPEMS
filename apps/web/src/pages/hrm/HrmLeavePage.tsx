@@ -43,11 +43,7 @@ const HrmLeavePage: React.FC = () => {
     async (row: Record<string, unknown>) => {
       const id = row.id as string;
       try {
-        const response = await leaveApi.reject(
-          id,
-          'admin',
-          t('hrm.hrm_leave_page.text_81233d')
-        );
+        const response = await leaveApi.reject(id, 'admin', t('hrm.hrm_leave_page.text_81233d'));
         if (response.code === 200) {
           addNotification({
             type: 'success',

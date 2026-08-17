@@ -6,6 +6,7 @@ import { auditSchema } from '@/schemas/qms';
 import { auditApi } from '@/api/qms';
 import type { AuditPlan } from '@/api/qms';
 import i18n from '@/i18n';
+
 const apiAdapter: CrudApiAdapter<AuditPlan> = {
   list: async () => {
     const res = await auditApi.listAuditPlans();
@@ -28,9 +29,12 @@ const apiAdapter: CrudApiAdapter<AuditPlan> = {
 function AuditStatsCards({ rows }: { rows: AuditPlan[] }) {
   const stats = {
     totalAudits: rows.length,
-    completedAudits: rows.filter((a) => a.status === 'completed' || a.status === i18n.t('qms.qms_audit_management_page.k4')).length,
-    inProgressAudits: rows.filter((a) => a.status === 'in_progress' || a.status === i18n.t('qms.qms_audit_management_page.k5'))
-      .length,
+    completedAudits: rows.filter(
+      (a) => a.status === 'completed' || a.status === i18n.t('qms.qms_audit_management_page.k4')
+    ).length,
+    inProgressAudits: rows.filter(
+      (a) => a.status === 'in_progress' || a.status === i18n.t('qms.qms_audit_management_page.k5')
+    ).length,
   };
   return (
     <Box

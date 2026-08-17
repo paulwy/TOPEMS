@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import type { DictType } from '@/api/system';
+
 interface DictionaryTypeModalProps {
   open: boolean;
   editingType: DictType | null;
@@ -107,7 +108,10 @@ const DictionaryTypeModal: React.FC<DictionaryTypeModalProps> = ({
                   {' '}
                   {i18n.t('admin.dictionary_management.business_dictionary')}{' '}
                 </MenuItem>
-                <MenuItem value='basic'> {i18n.t('admin.dictionary_management.base_data')} </MenuItem>
+                <MenuItem value='basic'>
+                  {' '}
+                  {i18n.t('admin.dictionary_management.base_data')}{' '}
+                </MenuItem>
                 <MenuItem value='custom'>
                   {' '}
                   {i18n.t('admin.dictionary_management.custom_dictionary')}{' '}
@@ -136,7 +140,10 @@ const DictionaryTypeModal: React.FC<DictionaryTypeModalProps> = ({
                 justifyContent: 'space-between',
               }}
             >
-              <Typography variant='body2'> {i18n.t('admin.dictionary_management.status')} </Typography>
+              <Typography variant='body2'>
+                {' '}
+                {i18n.t('admin.dictionary_management.status')}{' '}
+              </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography
                   variant='body2'

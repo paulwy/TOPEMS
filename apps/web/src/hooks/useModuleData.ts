@@ -56,7 +56,8 @@ export function useModuleData<T>({
       setData(result);
     } catch (err: unknown) {
       const errAny = err as { response?: { data?: { message?: string } }; message?: string };
-      const message = errAny?.response?.data?.message || errAny?.message || i18n.t('shared.use_module_data.k0');
+      const message =
+        errAny?.response?.data?.message || errAny?.message || i18n.t('shared.use_module_data.k0');
       setError(message);
     } finally {
       setLoading(false);

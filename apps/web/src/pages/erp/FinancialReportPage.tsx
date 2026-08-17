@@ -46,6 +46,7 @@ import type {
 import { apiLogger } from '@/utils/logger';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const FinancialReportPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
@@ -95,26 +96,39 @@ const FinancialReportPage: React.FC = () => {
   useEffect(() => {
     if (balanceSheetQuery.isError) {
       apiLogger.error(i18n.t('pages.financial_report_page.k0'), balanceSheetQuery.error);
-      addNotification({ title: i18n.t('erp.financial_report_page.k2'), message: i18n.t('erp.financial_report_page.k1'), type: 'error' });
+      addNotification({
+        title: i18n.t('erp.financial_report_page.k2'),
+        message: i18n.t('erp.financial_report_page.k1'),
+        type: 'error',
+      });
     }
   }, [balanceSheetQuery.isError, balanceSheetQuery.error, addNotification]);
   useEffect(() => {
     if (incomeStatementQuery.isError) {
       apiLogger.error(i18n.t('pages.financial_report_page.k1'), incomeStatementQuery.error);
-      addNotification({ title: i18n.t('erp.financial_report_page.k4'), message: i18n.t('erp.financial_report_page.k3'), type: 'error' });
+      addNotification({
+        title: i18n.t('erp.financial_report_page.k4'),
+        message: i18n.t('erp.financial_report_page.k3'),
+        type: 'error',
+      });
     }
   }, [incomeStatementQuery.isError, incomeStatementQuery.error, addNotification]);
   useEffect(() => {
     if (cashFlowQuery.isError) {
       apiLogger.error(i18n.t('pages.financial_report_page.k2'), cashFlowQuery.error);
-      addNotification({ title: i18n.t('erp.financial_report_page.k6'), message: i18n.t('erp.financial_report_page.k5'), type: 'error' });
+      addNotification({
+        title: i18n.t('erp.financial_report_page.k6'),
+        message: i18n.t('erp.financial_report_page.k5'),
+        type: 'error',
+      });
     }
   }, [cashFlowQuery.isError, cashFlowQuery.error, addNotification]);
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ERP_FINANCIAL_REPORTS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.AD_HOC.ERP_FINANCIAL_REPORTS_BASE,
+      exact: false,
+      refetchType: 'active',
+    });
   };
   const formatCurrency = (amount: number) =>
     `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
@@ -162,7 +176,11 @@ const FinancialReportPage: React.FC = () => {
       value: 'income-statement',
       icon: <TrendingUp sx={{ width: 16, height: 16 }} />,
     },
-    { label: i18n.t('erp.financial_report_page.k11'), value: 'cash-flow', icon: <Activity sx={{ width: 16, height: 16 }} /> },
+    {
+      label: i18n.t('erp.financial_report_page.k11'),
+      value: 'cash-flow',
+      icon: <Activity sx={{ width: 16, height: 16 }} />,
+    },
     {
       label: i18n.t('erp.financial_report_page.k12'),
       value: 'equity-change',
@@ -474,8 +492,12 @@ const FinancialReportPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>{i18n.t('erp.financial_report_page.k13')}</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.financial_report_page.k14')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
+                  {i18n.t('erp.financial_report_page.k13')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>
+                  {i18n.t('erp.financial_report_page.k14')}
+                </TableCell>
                 <TableCell
                   align='right'
                   sx={{ fontWeight: 'bold', width: 180 }}
@@ -562,8 +584,12 @@ const FinancialReportPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>{i18n.t('erp.financial_report_page.k15')}</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.financial_report_page.k16')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
+                  {i18n.t('erp.financial_report_page.k15')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>
+                  {i18n.t('erp.financial_report_page.k16')}
+                </TableCell>
                 <TableCell
                   align='right'
                   sx={{ fontWeight: 'bold', width: 180 }}
@@ -689,8 +715,12 @@ const FinancialReportPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>{i18n.t('erp.financial_report_page.k17')}</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.financial_report_page.k18')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', width: 120 }}>
+                  {i18n.t('erp.financial_report_page.k17')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>
+                  {i18n.t('erp.financial_report_page.k18')}
+                </TableCell>
                 <TableCell
                   align='right'
                   sx={{ fontWeight: 'bold', width: 180 }}

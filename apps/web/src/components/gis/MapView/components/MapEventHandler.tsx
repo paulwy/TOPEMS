@@ -57,7 +57,9 @@ const MapEventHandler: React.FC<MapEventHandlerProps> = ({
         setMeasurePoints(newPoints);
         if (newPoints.length >= 2) {
           const totalDistance = calculateTotalDistance(newPoints);
-          setMeasureResult(`${i18n.t('components.map_event_handler.k0')}${formatDistance(totalDistance)}`);
+          setMeasureResult(
+            `${i18n.t('components.map_event_handler.k0')}${formatDistance(totalDistance)}`
+          );
         }
       } else if (toolMode === 'measure-area') {
         const newPoints = [...measurePoints, point];
@@ -118,7 +120,9 @@ const MapEventHandler: React.FC<MapEventHandlerProps> = ({
         const tempPoints: [number, number][] = [...measurePoints, [latlng.lat, latlng.lng]];
         if (toolMode === 'measure-distance') {
           const totalDistance = calculateTotalDistance(tempPoints);
-          setMeasureResult(`${i18n.t('components.map_event_handler.k2')}${formatDistance(totalDistance)}`);
+          setMeasureResult(
+            `${i18n.t('components.map_event_handler.k2')}${formatDistance(totalDistance)}`
+          );
         } else if (toolMode === 'measure-area' && tempPoints.length >= 3) {
           const area = calculateArea(tempPoints);
           setMeasureResult(`${i18n.t('components.map_event_handler.k3')}${formatArea(area)}`);

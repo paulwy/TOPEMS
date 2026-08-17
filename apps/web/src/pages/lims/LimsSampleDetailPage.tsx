@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Package, User, FileText, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import {
   Dialog,
@@ -45,7 +45,7 @@ import dayjs from 'dayjs';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface SampleTestRecord {
   id: string;
@@ -80,7 +80,7 @@ const LimsSampleDetailPage: React.FC = () => {
   });
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const { data: detailData, isPending: loading} = useQuery({
+  const { data: detailData, isPending: loading } = useQuery({
     queryKey: QUERY_KEYS.LIMS.SAMPLE(id || ''),
     queryFn: async () => {
       if (!id) return null;
@@ -123,8 +123,9 @@ const LimsSampleDetailPage: React.FC = () => {
       return { sample, tasks, records };
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const sample = detailData?.sample || null;
   const tasks = detailData?.tasks || [];
@@ -151,20 +152,26 @@ const LimsSampleDetailPage: React.FC = () => {
     },
     onSuccess: () => {
       if (id) {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLE(id) ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.LIMS.SAMPLE(id),
+          exact: false,
+          refetchType: 'active',
+        });
       }
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLES ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.LIMS.SAMPLES,
+        exact: false,
+        refetchType: 'active',
+      });
       setShowEditModal(false);
     },
     onError: (error: unknown) => {
       logger.error(i18n.t('pages.lims_sample_detail_page.k0'), error);
-      addNotification({ title: i18n.t('pages.lims_sample_detail_page.k3'), message: i18n.t('pages.lims_sample_detail_page.k2'), type: 'error' });
+      addNotification({
+        title: i18n.t('pages.lims_sample_detail_page.k3'),
+        message: i18n.t('pages.lims_sample_detail_page.k2'),
+        type: 'error',
+      });
     },
   });
 
@@ -178,28 +185,65 @@ const LimsSampleDetailPage: React.FC = () => {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLES ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.LIMS.SAMPLES,
+        exact: false,
+        refetchType: 'active',
+      });
       navigate(LIMS_PATHS.root);
     },
     onError: (error: unknown) => {
       logger.error(i18n.t('pages.lims_sample_detail_page.k1'), error);
-      addNotification({ title: i18n.t('pages.lims_sample_detail_page.k7'), message: i18n.t('pages.lims_sample_detail_page.k6'), type: 'error' });
+      addNotification({
+        title: i18n.t('pages.lims_sample_detail_page.k7'),
+        message: i18n.t('pages.lims_sample_detail_page.k6'),
+        type: 'error',
+      });
     },
   });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      pending: { bg: 'warning.100', color: ct.yellow[600], label: i18n.t('pages.lims_sample_detail_page.k8') },
-      [i18n.t('pages.lims_sample_detail_page.k2')]: { bg: 'warning.100', color: ct.yellow[600], label: i18n.t('pages.lims_sample_detail_page.k9') },
-      in_progress: { bg: 'primary.100', color: 'primary.dark', label: i18n.t('pages.lims_sample_detail_page.k10') },
-      [i18n.t('pages.lims_sample_detail_page.k3')]: { bg: 'primary.100', color: 'primary.dark', label: i18n.t('pages.lims_sample_detail_page.k11') },
-      completed: { bg: 'success.lighter', color: 'success.dark', label: i18n.t('pages.lims_sample_detail_page.k12') },
-      [i18n.t('pages.lims_sample_detail_page.k4')]: { bg: 'success.lighter', color: 'success.dark', label: i18n.t('pages.lims_sample_detail_page.k13') },
-      cancelled: { bg: 'error.lighter', color: 'error.dark', label: i18n.t('pages.lims_sample_detail_page.k14') },
-      [i18n.t('pages.lims_sample_detail_page.k5')]: { bg: 'error.lighter', color: 'error.dark', label: i18n.t('pages.lims_sample_detail_page.k15') },
+      pending: {
+        bg: 'warning.100',
+        color: ct.yellow[600],
+        label: i18n.t('pages.lims_sample_detail_page.k8'),
+      },
+      [i18n.t('pages.lims_sample_detail_page.k2')]: {
+        bg: 'warning.100',
+        color: ct.yellow[600],
+        label: i18n.t('pages.lims_sample_detail_page.k9'),
+      },
+      in_progress: {
+        bg: 'primary.100',
+        color: 'primary.dark',
+        label: i18n.t('pages.lims_sample_detail_page.k10'),
+      },
+      [i18n.t('pages.lims_sample_detail_page.k3')]: {
+        bg: 'primary.100',
+        color: 'primary.dark',
+        label: i18n.t('pages.lims_sample_detail_page.k11'),
+      },
+      completed: {
+        bg: 'success.lighter',
+        color: 'success.dark',
+        label: i18n.t('pages.lims_sample_detail_page.k12'),
+      },
+      [i18n.t('pages.lims_sample_detail_page.k4')]: {
+        bg: 'success.lighter',
+        color: 'success.dark',
+        label: i18n.t('pages.lims_sample_detail_page.k13'),
+      },
+      cancelled: {
+        bg: 'error.lighter',
+        color: 'error.dark',
+        label: i18n.t('pages.lims_sample_detail_page.k14'),
+      },
+      [i18n.t('pages.lims_sample_detail_page.k5')]: {
+        bg: 'error.lighter',
+        color: 'error.dark',
+        label: i18n.t('pages.lims_sample_detail_page.k15'),
+      },
     };
     const item = statusMap[status] || {
       bg: 'grey.100',
@@ -218,7 +262,11 @@ const LimsSampleDetailPage: React.FC = () => {
   const handleEdit = async () => {
     if (!sample) return;
     if (!formData.name.trim()) {
-      addNotification({ title: i18n.t('pages.lims_sample_detail_page.k17'), message: i18n.t('pages.lims_sample_detail_page.k16'), type: 'error' });
+      addNotification({
+        title: i18n.t('pages.lims_sample_detail_page.k17'),
+        message: i18n.t('pages.lims_sample_detail_page.k16'),
+        type: 'error',
+      });
       return;
     }
     await updateMutation.mutateAsync(formData);
@@ -226,35 +274,52 @@ const LimsSampleDetailPage: React.FC = () => {
 
   const handleDelete = async () => {
     if (!sample) return;
-    if (!confirm(`${i18n.t('pages.lims_sample_detail_page.k6')}${sample.name}${i18n.t('pages.lims_sample_detail_page.k7')}`)) return;
+    if (
+      !confirm(
+        `${i18n.t('pages.lims_sample_detail_page.k6')}${sample.name}${i18n.t('pages.lims_sample_detail_page.k7')}`
+      )
+    )
+      return;
     await deleteMutation.mutateAsync();
   };
 
   const getTestStatistics = () => {
     const stats = {
       total: records.length,
-      passed: records.filter((r) => r.conclusion === i18n.t('pages.lims_sample_detail_page.k18')).length,
-      failed: records.filter((r) => r.conclusion === i18n.t('pages.lims_sample_detail_page.k19')).length,
-      pending: records.filter((r) => r.conclusion === i18n.t('pages.lims_sample_detail_page.k20') || r.conclusion === '-').length,
+      passed: records.filter((r) => r.conclusion === i18n.t('pages.lims_sample_detail_page.k18'))
+        .length,
+      failed: records.filter((r) => r.conclusion === i18n.t('pages.lims_sample_detail_page.k19'))
+        .length,
+      pending: records.filter(
+        (r) => r.conclusion === i18n.t('pages.lims_sample_detail_page.k20') || r.conclusion === '-'
+      ).length,
     };
     return stats;
   };
 
   const chartData = [
-    { name: i18n.t('pages.lims_sample_detail_page.k21'), value: records.length, fill: 'success.main' },
+    {
+      name: i18n.t('pages.lims_sample_detail_page.k21'),
+      value: records.length,
+      fill: 'success.main',
+    },
     {
       name: i18n.t('pages.lims_sample_detail_page.k22'),
-      value: records.filter((r) => r.conclusion === i18n.t('pages.lims_sample_detail_page.k23')).length,
+      value: records.filter((r) => r.conclusion === i18n.t('pages.lims_sample_detail_page.k23'))
+        .length,
       fill: 'success.dark',
     },
     {
       name: i18n.t('pages.lims_sample_detail_page.k24'),
-      value: records.filter((r) => r.conclusion === i18n.t('pages.lims_sample_detail_page.k25')).length,
+      value: records.filter((r) => r.conclusion === i18n.t('pages.lims_sample_detail_page.k25'))
+        .length,
       fill: 'error.main',
     },
     {
       name: i18n.t('pages.lims_sample_detail_page.k26'),
-      value: records.filter((r) => r.conclusion === i18n.t('pages.lims_sample_detail_page.k27') || r.conclusion === '-').length,
+      value: records.filter(
+        (r) => r.conclusion === i18n.t('pages.lims_sample_detail_page.k27') || r.conclusion === '-'
+      ).length,
       fill: 'warning.main',
     },
   ];
@@ -312,24 +377,30 @@ const LimsSampleDetailPage: React.FC = () => {
                   </Box>
                   <Chip
                     label={
-                      task.status === 'completed' || task.status === i18n.t('pages.lims_sample_detail_page.k34')
+                      task.status === 'completed' ||
+                      task.status === i18n.t('pages.lims_sample_detail_page.k34')
                         ? i18n.t('pages.lims_sample_detail_page.k35')
-                        : task.status === 'in_progress' || task.status === i18n.t('pages.lims_sample_detail_page.k36')
+                        : task.status === 'in_progress' ||
+                            task.status === i18n.t('pages.lims_sample_detail_page.k36')
                           ? i18n.t('pages.lims_sample_detail_page.k37')
                           : i18n.t('pages.lims_sample_detail_page.k38')
                     }
                     size='small'
                     sx={{
                       backgroundColor:
-                        task.status === 'completed' || task.status === i18n.t('pages.lims_sample_detail_page.k39')
+                        task.status === 'completed' ||
+                        task.status === i18n.t('pages.lims_sample_detail_page.k39')
                           ? 'success.lighter'
-                          : task.status === 'in_progress' || task.status === i18n.t('pages.lims_sample_detail_page.k40')
+                          : task.status === 'in_progress' ||
+                              task.status === i18n.t('pages.lims_sample_detail_page.k40')
                             ? 'primary.100'
                             : 'warning.100',
                       color:
-                        task.status === 'completed' || task.status === i18n.t('pages.lims_sample_detail_page.k41')
+                        task.status === 'completed' ||
+                        task.status === i18n.t('pages.lims_sample_detail_page.k41')
                           ? 'success.dark'
-                          : task.status === 'in_progress' || task.status === i18n.t('pages.lims_sample_detail_page.k42')
+                          : task.status === 'in_progress' ||
+                              task.status === i18n.t('pages.lims_sample_detail_page.k42')
                             ? 'primary.dark'
                             : ct.yellow[600],
                     }}
@@ -390,7 +461,10 @@ const LimsSampleDetailPage: React.FC = () => {
                   width={60}
                 />
                 <Tooltip
-                  formatter={(value: unknown) => [`${value} ${i18n.t('pages.lims_sample_detail_page.k9')}`, i18n.t('pages.lims_sample_detail_page.k45')]}
+                  formatter={(value: unknown) => [
+                    `${value} ${i18n.t('pages.lims_sample_detail_page.k9')}`,
+                    i18n.t('pages.lims_sample_detail_page.k45'),
+                  ]}
                   contentStyle={{
                     backgroundColor: 'common.white',
                     border: '1px solid border.default',
@@ -590,7 +664,12 @@ const LimsSampleDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={sample?.name || sample?.sample_no || sample?.id || i18n.t('pages.lims_sample_detail_page.k49')}
+        detailItemName={
+          sample?.name ||
+          sample?.sample_no ||
+          sample?.id ||
+          i18n.t('pages.lims_sample_detail_page.k49')
+        }
         breadcrumbs={[
           { label: i18n.t('pages.lims_sample_detail_page.k50'), href: '/dashboard' },
           { label: 'LIMS', href: LIMS_PATHS.root },
@@ -652,10 +731,18 @@ const LimsSampleDetailPage: React.FC = () => {
                 fullWidth
                 size='small'
               >
-                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k59')}>{i18n.t('pages.lims_sample_detail_page.k60')}</MenuItem>
-                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k61')}>{i18n.t('pages.lims_sample_detail_page.k62')}</MenuItem>
-                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k63')}>{i18n.t('pages.lims_sample_detail_page.k64')}</MenuItem>
-                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k65')}>{i18n.t('pages.lims_sample_detail_page.k66')}</MenuItem>
+                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k59')}>
+                  {i18n.t('pages.lims_sample_detail_page.k60')}
+                </MenuItem>
+                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k61')}>
+                  {i18n.t('pages.lims_sample_detail_page.k62')}
+                </MenuItem>
+                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k63')}>
+                  {i18n.t('pages.lims_sample_detail_page.k64')}
+                </MenuItem>
+                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k65')}>
+                  {i18n.t('pages.lims_sample_detail_page.k66')}
+                </MenuItem>
               </TextField>
             </Box>
           </DialogContent>
@@ -671,7 +758,9 @@ const LimsSampleDetailPage: React.FC = () => {
               onClick={handleEdit}
               disabled={updateMutation.isPending}
             >
-              {updateMutation.isPending ? i18n.t('pages.lims_sample_detail_page.k18') : i18n.t('pages.lims_sample_detail_page.k67')}
+              {updateMutation.isPending
+                ? i18n.t('pages.lims_sample_detail_page.k18')
+                : i18n.t('pages.lims_sample_detail_page.k67')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -710,9 +799,15 @@ const LimsSampleDetailPage: React.FC = () => {
                 fullWidth
                 size='small'
               >
-                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k76')}>{i18n.t('pages.lims_sample_detail_page.k77')}</MenuItem>
-                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k78')}>{i18n.t('pages.lims_sample_detail_page.k79')}</MenuItem>
-                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k80')}>{i18n.t('pages.lims_sample_detail_page.k81')}</MenuItem>
+                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k76')}>
+                  {i18n.t('pages.lims_sample_detail_page.k77')}
+                </MenuItem>
+                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k78')}>
+                  {i18n.t('pages.lims_sample_detail_page.k79')}
+                </MenuItem>
+                <MenuItem value={i18n.t('pages.lims_sample_detail_page.k80')}>
+                  {i18n.t('pages.lims_sample_detail_page.k81')}
+                </MenuItem>
               </TextField>
             </Box>
           </DialogContent>

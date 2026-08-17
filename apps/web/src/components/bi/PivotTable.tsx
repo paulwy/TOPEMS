@@ -645,9 +645,10 @@ export const PivotTable: React.FC<PivotConfig> = ({
           textAlign: 'right',
         }}
       >
-        {i18n.t('components.pivot_table.k4')}: {aggregatorLabels[activeAggregator]} | {i18n.t('components.pivot_table.k5')}:{' '}
-        {typeof grandTotal === 'number' ? grandTotal.toLocaleString() : grandTotal} | {i18n.t('components.pivot_table.k6')}:{' '}
-        {filteredData.length}
+        {i18n.t('components.pivot_table.k4')}: {aggregatorLabels[activeAggregator]} |{' '}
+        {i18n.t('components.pivot_table.k5')}:{' '}
+        {typeof grandTotal === 'number' ? grandTotal.toLocaleString() : grandTotal} |{' '}
+        {i18n.t('components.pivot_table.k6')}: {filteredData.length}
       </div>
     </div>
   );

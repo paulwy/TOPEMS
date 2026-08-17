@@ -4,6 +4,12 @@ import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
 import CompanyStructurePage from '../CompanyStructurePage';
 
+import {
+  useCompanyRelations,
+  useCompanyTree,
+  useDeleteCompanyRelation,
+} from '@/hooks/useConsolidation';
+
 const { tMock } = vi.hoisted(() => {
   const i18nMap: Record<string, string> = {
     'iam.company_structure_page.k0': '母公司',
@@ -112,7 +118,10 @@ vi.mock('@/components/common/DataTable', () => ({
     <div data-testid='data-table'>
       <span data-testid='data-table-row-count'>{data?.length || 0}</span>
       {data?.map((row: any) => (
-        <div key={row.id} data-testid={`row-${row.id}`}>
+        <div
+          key={row.id}
+          data-testid={`row-${row.id}`}
+        >
           {row.parent_company_name} → {row.child_company_name}
         </div>
       ))}
@@ -124,7 +133,10 @@ vi.mock('@topems/shared-components', () => ({
   ConfirmDialog: ({ isOpen, title, message, onClose, onConfirm }: any) => {
     if (!isOpen) return null;
     return (
-      <div role='dialog' data-testid='confirm-dialog'>
+      <div
+        role='dialog'
+        data-testid='confirm-dialog'
+      >
         <h2>{title}</h2>
         <p>{message}</p>
         <button onClick={onConfirm}>确认</button>
@@ -141,9 +153,7 @@ vi.mock('lucide-react', async (importOriginal) => {
     (name: string) =>
     ({ size: _s, color: _c, ...rest }: any = {}) =>
       React.createElement('svg', { 'data-testid': `icon-${name}`, ...rest });
-  const allKeys = Object.keys(actual).filter(
-    (k) => k[0] === k[0].toUpperCase() && k !== 'default',
-  );
+  const allKeys = Object.keys(actual).filter((k) => k[0] === k[0].toUpperCase() && k !== 'default');
   const out: Record<string, any> = {};
   for (const k of allKeys) {
     out[k] = mockIcon(k);
@@ -159,12 +169,6 @@ vi.mock('@/store', () => ({
     clearNotifications: vi.fn(),
   })),
 }));
-
-import {
-  useCompanyRelations,
-  useCompanyTree,
-  useDeleteCompanyRelation,
-} from '@/hooks/useConsolidation';
 
 describe('CompanyStructurePage', () => {
   const relations = [

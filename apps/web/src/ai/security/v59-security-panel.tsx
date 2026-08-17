@@ -432,8 +432,13 @@ const AuditTab: React.FC<{
               variant='outlined'
               sx={{ mb: 2 }}
             >
-              {i18n.t('ai.v59-security-panel.k8')}{selectedAudit.auditId}: {selectedAudit.passed ? i18n.t('ai.v59-security-panel.k18') : i18n.t('ai.v59-security-panel.k17')} · 得分{' '}
-              {(selectedAudit.score * 100).toFixed(1)}{i18n.t('ai.v59-security-panel.k0')} {selectedAudit.duration_ms}ms
+              {i18n.t('ai.v59-security-panel.k8')}
+              {selectedAudit.auditId}:{' '}
+              {selectedAudit.passed
+                ? i18n.t('ai.v59-security-panel.k18')
+                : i18n.t('ai.v59-security-panel.k17')}{' '}
+              · {i18n.t('ai.v59-security-panel.k58')} {(selectedAudit.score * 100).toFixed(1)}
+              {i18n.t('ai.v59-security-panel.k0')} {selectedAudit.duration_ms}ms
             </Alert>
           )}
 
@@ -798,7 +803,10 @@ const RobustnessTab: React.FC<{
                   variant='outlined'
                   sx={{
                     p: 1.5,
-                    borderColor: selectedVector?.id === v.id ? `${designTokens.colors.orange['600']}` : 'divider',
+                    borderColor:
+                      selectedVector?.id === v.id
+                        ? `${designTokens.colors.orange['600']}`
+                        : 'divider',
                     borderWidth: selectedVector?.id === v.id ? 2 : 1,
                     cursor: 'pointer',
                   }}
@@ -939,7 +947,8 @@ const RobustnessTab: React.FC<{
                   variant='caption'
                   color='text.secondary'
                 >
-                  [i18n.t('ai.v59-security-panel.k23')]: {(data.avg_effectiveness * 100).toFixed(0)}%
+                  [i18n.t('ai.v59-security-panel.k23')]: {(data.avg_effectiveness * 100).toFixed(0)}
+                  %
                 </Typography>
               </Box>
             ))}
@@ -1112,7 +1121,9 @@ const PrivacyTab: React.FC<{
                 size={12}
                 style={{ marginRight: 3 }}
               />
-              {isRunning ? i18n.t('ai.v59-security-panel.k30') : i18n.t('ai.v59-security-panel.k35')}
+              {isRunning
+                ? i18n.t('ai.v59-security-panel.k30')
+                : i18n.t('ai.v59-security-panel.k35')}
             </Button>
           </Stack>
 
@@ -1435,7 +1446,10 @@ const PrivacyTab: React.FC<{
                       <Typography
                         variant='caption'
                         sx={{
-                          color: factor.contribution > 0 ? designTokens.colors.error.main : designTokens.colors.success.dark,
+                          color:
+                            factor.contribution > 0
+                              ? designTokens.colors.error.main
+                              : designTokens.colors.success.dark,
                           fontWeight: 600,
                         }}
                       >
@@ -1546,7 +1560,11 @@ const ThreatSummaryTab: React.FC<{
                   sx={{
                     fontWeight: 700,
                     color:
-                      overallScore > 0.7 ? designTokens.colors.success.dark : overallScore > 0.4 ? designTokens.colors.warning.main : designTokens.colors.error.main,
+                      overallScore > 0.7
+                        ? designTokens.colors.success.dark
+                        : overallScore > 0.4
+                          ? designTokens.colors.warning.main
+                          : designTokens.colors.error.main,
                   }}
                 >
                   {(overallScore * 100).toFixed(0)}
@@ -1658,14 +1676,22 @@ const ThreatSummaryTab: React.FC<{
                     <StatBlock
                       label={i18n.t('ai.v59-security-panel.k48')}
                       value={`${(privacyReport.reidentification_risk * 100).toFixed(0)}%`}
-                      color={privacyReport.reidentification_risk < 0.3 ? designTokens.colors.success.dark : designTokens.colors.error.main}
+                      color={
+                        privacyReport.reidentification_risk < 0.3
+                          ? designTokens.colors.success.dark
+                          : designTokens.colors.error.main
+                      }
                     />
                   </Grid>
                   <Grid size={6}>
                     <StatBlock
                       label={i18n.t('ai.v59-security-panel.k49')}
                       value={`${(privacyReport.data_leakage_risk * 100).toFixed(0)}%`}
-                      color={privacyReport.data_leakage_risk < 0.3 ? designTokens.colors.success.dark : designTokens.colors.error.main}
+                      color={
+                        privacyReport.data_leakage_risk < 0.3
+                          ? designTokens.colors.success.dark
+                          : designTokens.colors.error.main
+                      }
                     />
                   </Grid>
                 </Grid>
@@ -1869,7 +1895,12 @@ const RiskItem: React.FC<{
         variant='h6'
         sx={{
           fontWeight: 600,
-          color: value < 0.3 ? designTokens.colors.success.dark : value < 0.6 ? designTokens.colors.warning.main : designTokens.colors.error.main,
+          color:
+            value < 0.3
+              ? designTokens.colors.success.dark
+              : value < 0.6
+                ? designTokens.colors.warning.main
+                : designTokens.colors.error.main,
         }}
       >
         {(value * 100).toFixed(0)}%

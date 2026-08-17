@@ -99,20 +99,22 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onAddFeedback }) => {
 
   const queryClient = useQueryClient();
 
-  const { data, isPending} = useQuery({
+  const { data, isPending } = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.FEEDBACKS_BASE, filters],
     queryFn: () => feedbackApi.listFeedbacks(filters),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => feedbackApi.deleteFeedback(id),
     onSuccess: () => {
       toast.success(i18n.t('components.feedback_list.k0'));
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.FEEDBACKS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.FEEDBACKS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       setAnchorEl(null);
     },
     onError: () => {

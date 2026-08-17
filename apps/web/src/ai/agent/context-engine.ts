@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type MemoryEntryType = 'user_query' | 'action_result' | 'system_event';
 export type Sentiment = 'positive' | 'negative' | 'neutral';
 export type Intent =
@@ -187,7 +188,9 @@ export class ContextEngine {
       }
 
       if (context.topics.length > 0) {
-        summaryParts.push(`${i18n.t('ai.context-engine.k4')}${context.topics.slice(0, 3).join(', ')}`);
+        summaryParts.push(
+          `${i18n.t('ai.context-engine.k4')}${context.topics.slice(0, 3).join(', ')}`
+        );
       }
     }
 
@@ -510,12 +513,65 @@ export class ContextEngine {
     const topics = new Set<string>();
 
     const topicKeywords: Record<string, string[]> = {
-      [i18n.t('ai.context-engine.k0')]: [i18n.t('ai.context-engine.k42'), i18n.t('ai.context-engine.k41'), 'bug', i18n.t('ai.context-engine.k40'), 'api', i18n.t('ai.context-engine.k39'), i18n.t('ai.context-engine.k38'), 'code', 'function'],
-      [i18n.t('ai.context-engine.k1')]: [i18n.t('ai.context-engine.k47'), i18n.t('ai.context-engine.k46'), i18n.t('ai.context-engine.k45'), i18n.t('ai.context-engine.k44'), i18n.t('ai.context-engine.k43'), 'order', 'customer', 'sale'],
-      [i18n.t('ai.context-engine.k2')]: [i18n.t('ai.context-engine.k52'), i18n.t('ai.context-engine.k51'), i18n.t('ai.context-engine.k50'), i18n.t('ai.context-engine.k49'), i18n.t('ai.context-engine.k48'), 'employee', 'attendance'],
-      [i18n.t('ai.context-engine.k3')]: [i18n.t('ai.context-engine.k53'), i18n.t('ai.context-engine.k56'), i18n.t('ai.context-engine.k55'), i18n.t('ai.context-engine.k54'), i18n.t('ai.context-engine.k57'), 'money', 'budget', 'cost'],
-      [i18n.t('ai.context-engine.k4')]: [i18n.t('ai.context-engine.k61'), i18n.t('ai.context-engine.k60'), i18n.t('ai.context-engine.k59'), i18n.t('ai.context-engine.k58'), 'report', 'data', 'analysis'],
-      [i18n.t('ai.context-engine.k5')]: [i18n.t('ai.context-engine.k65'), i18n.t('ai.context-engine.k64'), i18n.t('ai.context-engine.k63'), i18n.t('ai.context-engine.k62'), 'notify', 'message', 'email', 'meeting'],
+      [i18n.t('ai.context-engine.k0')]: [
+        i18n.t('ai.context-engine.k42'),
+        i18n.t('ai.context-engine.k41'),
+        'bug',
+        i18n.t('ai.context-engine.k40'),
+        'api',
+        i18n.t('ai.context-engine.k39'),
+        i18n.t('ai.context-engine.k38'),
+        'code',
+        'function',
+      ],
+      [i18n.t('ai.context-engine.k1')]: [
+        i18n.t('ai.context-engine.k47'),
+        i18n.t('ai.context-engine.k46'),
+        i18n.t('ai.context-engine.k45'),
+        i18n.t('ai.context-engine.k44'),
+        i18n.t('ai.context-engine.k43'),
+        'order',
+        'customer',
+        'sale',
+      ],
+      [i18n.t('ai.context-engine.k2')]: [
+        i18n.t('ai.context-engine.k52'),
+        i18n.t('ai.context-engine.k51'),
+        i18n.t('ai.context-engine.k50'),
+        i18n.t('ai.context-engine.k49'),
+        i18n.t('ai.context-engine.k48'),
+        'employee',
+        'attendance',
+      ],
+      [i18n.t('ai.context-engine.k3')]: [
+        i18n.t('ai.context-engine.k53'),
+        i18n.t('ai.context-engine.k56'),
+        i18n.t('ai.context-engine.k55'),
+        i18n.t('ai.context-engine.k54'),
+        i18n.t('ai.context-engine.k57'),
+        'money',
+        'budget',
+        'cost',
+      ],
+      [i18n.t('ai.context-engine.k4')]: [
+        i18n.t('ai.context-engine.k61'),
+        i18n.t('ai.context-engine.k60'),
+        i18n.t('ai.context-engine.k59'),
+        i18n.t('ai.context-engine.k58'),
+        'report',
+        'data',
+        'analysis',
+      ],
+      [i18n.t('ai.context-engine.k5')]: [
+        i18n.t('ai.context-engine.k65'),
+        i18n.t('ai.context-engine.k64'),
+        i18n.t('ai.context-engine.k63'),
+        i18n.t('ai.context-engine.k62'),
+        'notify',
+        'message',
+        'email',
+        'meeting',
+      ],
     };
 
     const lower = input.toLowerCase();

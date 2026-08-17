@@ -81,7 +81,9 @@ export default function MaterialPlanDetailPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>{t('aps.material_plan_detail_page.k1')}</p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>
+          {t('aps.material_plan_detail_page.k1')}
+        </p>
         <FSMActionButtons
           fsm='material_plan'
           currentStatus={plan.status ?? 'pending'}

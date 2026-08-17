@@ -95,7 +95,12 @@ export const inspectionSchema: EntitySchema = {
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const rate = Number(row.qualification_rate ?? 0);
-        const color = rate >= 95 ? 'success.dark' : rate >= 90 ? designTokens.colors.warning[600] : 'error.dark';
+        const color =
+          rate >= 95
+            ? 'success.dark'
+            : rate >= 90
+              ? designTokens.colors.warning[600]
+              : 'error.dark';
         return React.createElement(
           'span',
           { style: { color, fontWeight: 500 } },

@@ -318,7 +318,9 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
             }}
           >
             <Box>
-              <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>{i18n.t('components.enhanced_export_modal.k7')}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>
+                {i18n.t('components.enhanced_export_modal.k7')}
+              </Typography>
               <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
                 {i18n.t('components.enhanced_export_modal.k6')}
               </Typography>
@@ -341,7 +343,9 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
             }}
           >
             <Box>
-              <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>{i18n.t('components.enhanced_export_modal.k8')}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>
+                {i18n.t('components.enhanced_export_modal.k8')}
+              </Typography>
               <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
                 {i18n.t('components.enhanced_export_modal.k7')}
               </Typography>
@@ -393,7 +397,9 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
             '&:hover': { bgcolor: 'action.selected' },
           }}
         >
-          <Typography sx={{ fontWeight: 500 }}>{i18n.t('components.enhanced_export_modal.k10')}</Typography>
+          <Typography sx={{ fontWeight: 500 }}>
+            {i18n.t('components.enhanced_export_modal.k10')}
+          </Typography>
           <ChevronRight
             sx={{
               width: 20,
@@ -424,7 +430,8 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                 }}
               >
                 <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
-                  {i18n.t('components.enhanced_export_modal.k0')} {selectedColumns.length}/{availableColumns.length} {i18n.t('components.enhanced_export_modal.k1')}
+                  {i18n.t('components.enhanced_export_modal.k0')} {selectedColumns.length}/
+                  {availableColumns.length} {i18n.t('components.enhanced_export_modal.k1')}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2 }}>
                   <Button
@@ -533,7 +540,9 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
               }
               sx={{ borderRadius: 1.5 }}
             >
-              {isExporting ? i18n.t('components.enhanced_export_modal.k15') : i18n.t('components.enhanced_export_modal.k17')}
+              {isExporting
+                ? i18n.t('components.enhanced_export_modal.k15')
+                : i18n.t('components.enhanced_export_modal.k17')}
             </Button>
           </Box>
         </Box>

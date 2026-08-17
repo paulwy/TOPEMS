@@ -130,10 +130,26 @@ export const materialRequirementSchema: EntitySchema = {
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const priorityMap: Record<string, { label: string; bg: string; color: string }> = {
-          urgent: { label: i18n.t('mes.material_requirement.k19'), bg: 'error.lighter', color: 'error.dark' },
-          high: { label: i18n.t('mes.material_requirement.k20'), bg: 'warning.light', color: 'warning.700' },
-          normal: { label: i18n.t('mes.material_requirement.k21'), bg: 'primary.100', color: 'primary.dark' },
-          low: { label: i18n.t('mes.material_requirement.k22'), bg: 'grey.100', color: 'text.secondary' },
+          urgent: {
+            label: i18n.t('mes.material_requirement.k19'),
+            bg: 'error.lighter',
+            color: 'error.dark',
+          },
+          high: {
+            label: i18n.t('mes.material_requirement.k20'),
+            bg: 'warning.light',
+            color: 'warning.700',
+          },
+          normal: {
+            label: i18n.t('mes.material_requirement.k21'),
+            bg: 'primary.100',
+            color: 'primary.dark',
+          },
+          low: {
+            label: i18n.t('mes.material_requirement.k22'),
+            bg: 'grey.100',
+            color: 'text.secondary',
+          },
         };
         const p = priorityMap[(row.priority as string) || 'normal'] || priorityMap.normal;
         return React.createElement(Chip, {
@@ -162,11 +178,31 @@ export const materialRequirementSchema: EntitySchema = {
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-          draft: { label: i18n.t('mes.material_requirement.k29'), bg: 'grey.100', color: 'text.secondary' },
-          confirmed: { label: i18n.t('mes.material_requirement.k30'), bg: 'primary.100', color: 'primary.dark' },
-          released: { label: i18n.t('mes.material_requirement.k31'), bg: 'warning.light', color: 'warning.700' },
-          completed: { label: i18n.t('mes.material_requirement.k32'), bg: 'success.lighter', color: 'success.700' },
-          cancelled: { label: i18n.t('mes.material_requirement.k33'), bg: 'error.lighter', color: 'error.dark' },
+          draft: {
+            label: i18n.t('mes.material_requirement.k29'),
+            bg: 'grey.100',
+            color: 'text.secondary',
+          },
+          confirmed: {
+            label: i18n.t('mes.material_requirement.k30'),
+            bg: 'primary.100',
+            color: 'primary.dark',
+          },
+          released: {
+            label: i18n.t('mes.material_requirement.k31'),
+            bg: 'warning.light',
+            color: 'warning.700',
+          },
+          completed: {
+            label: i18n.t('mes.material_requirement.k32'),
+            bg: 'success.lighter',
+            color: 'success.700',
+          },
+          cancelled: {
+            label: i18n.t('mes.material_requirement.k33'),
+            bg: 'error.lighter',
+            color: 'error.dark',
+          },
         };
         const s = statusMap[(row.status as string) || 'draft'] || {
           label: row.status,

@@ -68,7 +68,10 @@ export const dictionaryApi = {
     return apiClient.erp.post('/system/dict-types', data);
   },
 
-  updateType: async (id: string, data: Partial<DictTypeCreateRequest>): Promise<ApiResponse<DictType>> => {
+  updateType: async (
+    id: string,
+    data: Partial<DictTypeCreateRequest>
+  ): Promise<ApiResponse<DictType>> => {
     return apiClient.erp.put(`/system/dict-types/${id}`, data);
   },
 
@@ -97,7 +100,10 @@ export const dictionaryApi = {
     return apiClient.erp.post('/system/dict-items', data);
   },
 
-  updateItem: async (id: string, data: Partial<DictItemCreateRequest>): Promise<ApiResponse<DictItem>> => {
+  updateItem: async (
+    id: string,
+    data: Partial<DictItemCreateRequest>
+  ): Promise<ApiResponse<DictItem>> => {
     return apiClient.erp.put(`/system/dict-items/${id}`, data);
   },
 

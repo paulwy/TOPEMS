@@ -47,7 +47,6 @@ import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 import { apiLogger } from '@/utils/logger';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
@@ -208,7 +207,8 @@ export function useCrudForm<T = any, TCreate = Partial<T>, TUpdate = Partial<T>>
           addNotification({
             title: i18n.t('shared.use_crud_form.k2'),
             message:
-              extractErrorMessage(err) || `${mode === 'create' ? i18n.t('shared.use_crud_form.k4') : i18n.t('shared.use_crud_form.k3')}${entityName}${i18n.t('shared.use_crud_form.k2')}`,
+              extractErrorMessage(err) ||
+              `${mode === 'create' ? i18n.t('shared.use_crud_form.k4') : i18n.t('shared.use_crud_form.k3')}${entityName}${i18n.t('shared.use_crud_form.k2')}`,
             type: 'error',
           });
         }

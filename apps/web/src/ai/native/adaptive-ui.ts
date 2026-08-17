@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type DeviceType = 'mobile' | 'tablet' | 'desktop';
 export type LayoutDensity = 'compact' | 'normal' | 'relaxed';
 export type ThemeMode = 'light' | 'dark' | 'auto';
@@ -324,15 +325,31 @@ class AdaptiveUIEngineImpl {
       string,
       { keywords: string[]; name: string; priority: ContentPriority }
     > = {
-      dashboard: { keywords: ['dashboard', 'overview', 'home'], name: i18n.t('ai.adaptive-ui.k0'), priority: 'high' },
+      dashboard: {
+        keywords: ['dashboard', 'overview', 'home'],
+        name: i18n.t('ai.adaptive-ui.k0'),
+        priority: 'high',
+      },
       analytics: {
         keywords: ['analytics', 'report', 'bi', 'chart'],
         name: i18n.t('ai.adaptive-ui.k1'),
         priority: 'high',
       },
-      customer: { keywords: ['customer', 'crm', 'contact'], name: i18n.t('ai.adaptive-ui.k2'), priority: 'medium' },
-      order: { keywords: ['order', 'purchase', 'scm'], name: i18n.t('ai.adaptive-ui.k3'), priority: 'medium' },
-      product: { keywords: ['product', 'bom', 'pdm'], name: i18n.t('ai.adaptive-ui.k4'), priority: 'medium' },
+      customer: {
+        keywords: ['customer', 'crm', 'contact'],
+        name: i18n.t('ai.adaptive-ui.k2'),
+        priority: 'medium',
+      },
+      order: {
+        keywords: ['order', 'purchase', 'scm'],
+        name: i18n.t('ai.adaptive-ui.k3'),
+        priority: 'medium',
+      },
+      product: {
+        keywords: ['product', 'bom', 'pdm'],
+        name: i18n.t('ai.adaptive-ui.k4'),
+        priority: 'medium',
+      },
       employee: {
         keywords: ['employee', 'hrm', 'attendance'],
         name: i18n.t('ai.adaptive-ui.k5'),
@@ -343,10 +360,26 @@ class AdaptiveUIEngineImpl {
         name: i18n.t('ai.adaptive-ui.k6'),
         priority: 'high',
       },
-      inventory: { keywords: ['inventory', 'stock', 'wms'], name: i18n.t('ai.adaptive-ui.k7'), priority: 'medium' },
-      quality: { keywords: ['quality', 'qms', 'audit'], name: i18n.t('ai.adaptive-ui.k8'), priority: 'medium' },
-      workflow: { keywords: ['workflow', 'approval', 'task'], name: i18n.t('ai.adaptive-ui.k9'), priority: 'medium' },
-      ai: { keywords: ['ai', 'chat', 'assistant'], name: i18n.t('ai.adaptive-ui.ai_0'), priority: 'high' },
+      inventory: {
+        keywords: ['inventory', 'stock', 'wms'],
+        name: i18n.t('ai.adaptive-ui.k7'),
+        priority: 'medium',
+      },
+      quality: {
+        keywords: ['quality', 'qms', 'audit'],
+        name: i18n.t('ai.adaptive-ui.k8'),
+        priority: 'medium',
+      },
+      workflow: {
+        keywords: ['workflow', 'approval', 'task'],
+        name: i18n.t('ai.adaptive-ui.k9'),
+        priority: 'medium',
+      },
+      ai: {
+        keywords: ['ai', 'chat', 'assistant'],
+        name: i18n.t('ai.adaptive-ui.ai_0'),
+        priority: 'high',
+      },
     };
 
     const totalFreq = behavior.reduce((sum, b) => sum + b.frequency, 0);
@@ -426,7 +459,10 @@ class AdaptiveUIEngineImpl {
         title: item.id,
         type: item.type as ContentRecommendation['type'],
         priority,
-        reason: matchingTags.length > 0 ? `${i18n.t('ai.adaptive-ui.k4')}${matchingTags.join(', ')}` : i18n.t('ai.adaptive-ui.k13'),
+        reason:
+          matchingTags.length > 0
+            ? `${i18n.t('ai.adaptive-ui.k4')}${matchingTags.join(', ')}`
+            : i18n.t('ai.adaptive-ui.k13'),
         confidence,
         estimated_engagement: confidence * 0.8,
       };

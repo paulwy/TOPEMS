@@ -4,6 +4,7 @@ import { Book, Plus } from 'lucide-react';
 import { BackButton } from '@/components/common';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import i18n from '@/i18n';
+
 interface DictionaryHeaderProps {
   onCreateClick: () => void;
 }

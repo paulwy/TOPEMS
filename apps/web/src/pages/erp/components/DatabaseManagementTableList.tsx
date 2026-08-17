@@ -23,6 +23,7 @@ import {
 import i18n from '@/i18n';
 import { Database, Table, Eye, Search } from 'lucide-react';
 import type { TableInfo } from '@/api/erp/database';
+
 interface DatabaseManagementTableListProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
@@ -111,7 +112,9 @@ export const DatabaseManagementTableList: React.FC<DatabaseManagementTableListPr
                   <TableCell sx={{ fontWeight: 'bold' }}>
                     {i18n.t('erp.database.label.table_name')}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>{i18n.t('erp.database.label.type')}</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    {i18n.t('erp.database.label.type')}
+                  </TableCell>
                   <TableCell
                     align='center'
                     sx={{ fontWeight: 'bold', width: 120 }}

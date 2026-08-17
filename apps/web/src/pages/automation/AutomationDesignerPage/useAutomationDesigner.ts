@@ -106,7 +106,11 @@ export function useAutomationDesigner(): UseAutomationDesignerResult {
       const res = await automationRulesApi.list({ page: 1, pageSize: 100 });
       setRules(res.data?.items ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : i18n.t('automation.automation_designer_page_use_automation_designer.e1'));
+      setError(
+        err instanceof Error
+          ? err.message
+          : i18n.t('automation.automation_designer_page_use_automation_designer.e1')
+      );
     }
   }, []);
 
@@ -425,7 +429,9 @@ export function useAutomationDesigner(): UseAutomationDesignerResult {
       const newNode: DesignerNodeItem = {
         ...source,
         id: `node_${Date.now()}`,
-        name: i18n.t('automation.automation_designer_page_use_automation_designer.e1', { v1: source.name }),
+        name: i18n.t('automation.automation_designer_page_use_automation_designer.e1', {
+          v1: source.name,
+        }),
         position: {
           x: source.position.x + 40,
           y: source.position.y + 40,
@@ -505,7 +511,11 @@ export function useAutomationDesigner(): UseAutomationDesignerResult {
         setNodes(res.data.nodes);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : i18n.t('automation.automation_designer_page_use_automation_designer.e3'));
+      setError(
+        err instanceof Error
+          ? err.message
+          : i18n.t('automation.automation_designer_page_use_automation_designer.e3')
+      );
     } finally {
       setSaving(false);
     }
@@ -519,7 +529,11 @@ export function useAutomationDesigner(): UseAutomationDesignerResult {
       const res = await automationDesignerApi.validate(selectedRuleId, buildSavePayload());
       setValidationErrors(res.data?.errors ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : i18n.t('automation.automation_designer_page_use_automation_designer.e4'));
+      setError(
+        err instanceof Error
+          ? err.message
+          : i18n.t('automation.automation_designer_page_use_automation_designer.e4')
+      );
     } finally {
       setValidating(false);
     }
@@ -531,7 +545,11 @@ export function useAutomationDesigner(): UseAutomationDesignerResult {
       await automationDesignerApi.syncToRule(selectedRuleId);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : i18n.t('automation.automation_designer_page_use_automation_designer.e5'));
+      setError(
+        err instanceof Error
+          ? err.message
+          : i18n.t('automation.automation_designer_page_use_automation_designer.e5')
+      );
     }
   }, [selectedRuleId]);
 

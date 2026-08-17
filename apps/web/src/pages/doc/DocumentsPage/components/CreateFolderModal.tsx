@@ -60,7 +60,8 @@ const CreateFolderModal: React.FC<{
     } catch (err: unknown) {
       apiLogger.error(i18n.t('pages.create_folder_modal.k0'), err);
       const error = err as { response?: { data?: { message?: string } }; message?: string };
-      const errorMessage = error.response?.data?.message || error.message || i18n.t('pages.create_folder_modal.k2');
+      const errorMessage =
+        error.response?.data?.message || error.message || i18n.t('pages.create_folder_modal.k2');
       setError(errorMessage);
     } finally {
       setCreating(false);
@@ -116,7 +117,9 @@ const CreateFolderModal: React.FC<{
               variant='contained'
               disabled={creating || !folderName.trim()}
             >
-              {creating ? i18n.t('pages.create_folder_modal.k1') : i18n.t('pages.create_folder_modal.k5')}
+              {creating
+                ? i18n.t('pages.create_folder_modal.k1')
+                : i18n.t('pages.create_folder_modal.k5')}
             </Button>
           </DialogActions>
         </form>

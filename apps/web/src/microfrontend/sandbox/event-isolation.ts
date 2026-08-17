@@ -172,7 +172,9 @@ export class EventIsolation {
     }
 
     if (!target) {
-      console.warn(`${i18n.t('microfrontend.event-isolation.eventisolation_0')}${this.moduleId}${i18n.t('microfrontend.event-isolation.k1')}${type}${i18n.t('microfrontend.event-isolation.target_2')}`);
+      console.warn(
+        `${i18n.t('microfrontend.event-isolation.eventisolation_0')}${this.moduleId}${i18n.t('microfrontend.event-isolation.k1')}${type}${i18n.t('microfrontend.event-isolation.target_2')}`
+      );
       return;
     }
 

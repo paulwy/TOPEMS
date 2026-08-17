@@ -134,14 +134,18 @@ export interface CreateVersionRequest {
 }
 
 export const emergencyPlanApi = {
-  async listPlans(params?: PlanListQuery): Promise<ApiResponse<PaginatedResponse<EmergencyPlanItem>>> {
+  async listPlans(
+    params?: PlanListQuery
+  ): Promise<ApiResponse<PaginatedResponse<EmergencyPlanItem>>> {
     const qs = new URLSearchParams();
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));
     if (params?.status) qs.set('status', params.status);
     if (params?.category) qs.set('category', params.category);
     const s = qs.toString();
-    return apiClient.ehs.get<PaginatedResponse<EmergencyPlanItem>>(`/emergency-plans${s ? `?${s}` : ''}`);
+    return apiClient.ehs.get<PaginatedResponse<EmergencyPlanItem>>(
+      `/emergency-plans${s ? `?${s}` : ''}`
+    );
   },
 
   async getPlan(id: string): Promise<ApiResponse<PlanDetail>> {
@@ -180,12 +184,21 @@ export const emergencyPlanApi = {
     return apiClient.ehs.get<PlanVersion[]>(`/emergency-plans/${planId}/versions`);
   },
 
-  async createPlanVersion(planId: string, data: CreateVersionRequest): Promise<ApiResponse<PlanVersion>> {
+  async createPlanVersion(
+    planId: string,
+    data: CreateVersionRequest
+  ): Promise<ApiResponse<PlanVersion>> {
     return apiClient.ehs.post<PlanVersion>(`/emergency-plans/${planId}/versions`, data);
   },
 
-  async submitPlanApproval(planId: string, data?: SubmitApprovalRequest): Promise<ApiResponse<EmergencyPlanItem>> {
-    return apiClient.ehs.post<EmergencyPlanItem>(`/emergency-plans/${planId}/submit-approval`, data ?? {});
+  async submitPlanApproval(
+    planId: string,
+    data?: SubmitApprovalRequest
+  ): Promise<ApiResponse<EmergencyPlanItem>> {
+    return apiClient.ehs.post<EmergencyPlanItem>(
+      `/emergency-plans/${planId}/submit-approval`,
+      data ?? {}
+    );
   },
 
   async approvePlan(planId: string, data: ApprovePlanRequest): Promise<ApiResponse<PlanApproval>> {

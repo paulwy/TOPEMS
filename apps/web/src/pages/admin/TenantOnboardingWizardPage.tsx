@@ -15,7 +15,7 @@ import {
 import i18n from '@/i18n';
 import { Building2, User, Settings, CheckCircle2 } from 'lucide-react';
 import { tenantApi } from '@/api/tenant';
-import { TenantPlan } from '@/api/tenant/types';
+import type { TenantPlan } from '@/api/tenant/types';
 import { useNotificationStore } from '@/store';
 import { useNavigate } from 'react-router-dom';
 // 本地定义：后端 onboardTenant API 尚未在 tenantApi 客户端实现，先用本地类型占位

@@ -13,6 +13,7 @@ import {
 import i18n from '@/i18n';
 import React from 'react';
 import type { GeneralSettings as GeneralSettingsType } from '../types';
+
 interface GeneralSettingsProps {
   settings: GeneralSettingsType;
   onChange: (settings: GeneralSettingsType) => void;
@@ -83,9 +84,15 @@ export const GeneralSettings: React.FC<GeneralSettingsProps> = ({
                 markUnsaved();
               }}
             >
-              <MenuItem value='YYYYMMDD-SEQ'>{i18n.t('workflow.general_settings.20240101001_6')}</MenuItem>
-              <MenuItem value='YYYY-MM-SEQ'>{i18n.t('workflow.general_settings.202401001_7')}</MenuItem>
-              <MenuItem value='PREFIX-YYYYMMDD-SEQ'>{i18n.t('workflow.general_settings.k8')}</MenuItem>
+              <MenuItem value='YYYYMMDD-SEQ'>
+                {i18n.t('workflow.general_settings.20240101001_6')}
+              </MenuItem>
+              <MenuItem value='YYYY-MM-SEQ'>
+                {i18n.t('workflow.general_settings.202401001_7')}
+              </MenuItem>
+              <MenuItem value='PREFIX-YYYYMMDD-SEQ'>
+                {i18n.t('workflow.general_settings.k8')}
+              </MenuItem>
               <MenuItem value='SEQ'>{i18n.t('workflow.general_settings.0001_9')}</MenuItem>
             </Select>
           </FormControl>

@@ -152,7 +152,8 @@ export function useUnifiedWebSocket(
       const getTitle =
         snackbarOptions?.getTitle || ((msg) => msg.payload?.title as string | undefined);
       const getMessage =
-        snackbarOptions?.getMessage || ((msg) => (msg.payload?.message as string) || i18n.t('shared.use_unified_web_socket.k0'));
+        snackbarOptions?.getMessage ||
+        ((msg) => (msg.payload?.message as string) || i18n.t('shared.use_unified_web_socket.k0'));
       const getType =
         snackbarOptions?.getType ||
         ((msg) => {
@@ -372,7 +373,8 @@ export function useWebSocketNotificationChannel(
     channel,
     enabled,
     getTitle: (msg) => msg.payload?.title as string | undefined,
-    getMessage: (msg) => (msg.payload?.message as string) || i18n.t('shared.use_unified_web_socket.k2'),
+    getMessage: (msg) =>
+      (msg.payload?.message as string) || i18n.t('shared.use_unified_web_socket.k2'),
     getType: (msg) => {
       const payloadType = msg.payload?.type as string | undefined;
       if (payloadType === 'success' || payloadType === 'error' || payloadType === 'warning') {
@@ -389,7 +391,8 @@ export function useWebSocketAlertChannel(enabled: boolean = true): void {
     channel: 'alerts',
     enabled,
     getTitle: (msg) => (msg.payload?.title as string) || i18n.t('shared.use_unified_web_socket.k3'),
-    getMessage: (msg) => (msg.payload?.message as string) || i18n.t('shared.use_unified_web_socket.k4'),
+    getMessage: (msg) =>
+      (msg.payload?.message as string) || i18n.t('shared.use_unified_web_socket.k4'),
     getType: (msg) => {
       const severity = msg.payload?.severity as string | undefined;
       if (severity === 'critical' || severity === 'high') return 'error';

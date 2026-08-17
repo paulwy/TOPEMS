@@ -542,7 +542,9 @@ const DataExport: React.FC<DataExportProps> = ({
               variant='subtitle2'
               color='text.secondary'
             >
-              {i18n.t('components.data_export.k0')} {data.length} {i18n.t('components.data_export.k1')} {selectedFields.filter((f) => f.selected).length}{' '}
+              {i18n.t('components.data_export.k0')} {data.length}{' '}
+              {i18n.t('components.data_export.k1')}{' '}
+              {selectedFields.filter((f) => f.selected).length}{' '}
               {i18n.t('components.data_export.k5')}
             </Typography>
           </Box>

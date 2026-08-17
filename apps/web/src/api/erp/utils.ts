@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 interface HasOptionalUuids {
   parentId?: string;
   company_id?: string;
@@ -15,7 +16,11 @@ export function cleanEmptyUuids<T extends Record<string, unknown> & HasOptionalU
   return result;
 }
 
-export function createMockSuccessResponse<T>(data: T, code = 200, message = i18n.t('shared.utils.k0')) {
+export function createMockSuccessResponse<T>(
+  data: T,
+  code = 200,
+  message = i18n.t('shared.utils.k0')
+) {
   return {
     success: true,
     data,

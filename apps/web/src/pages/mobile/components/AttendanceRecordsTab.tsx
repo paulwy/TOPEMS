@@ -8,6 +8,7 @@ import { Clock } from 'lucide-react';
 import { MobileCard } from '@/components/mobile';
 import type { AttendanceRecord } from '@/api/mobile';
 import i18n from '@/i18n';
+
 interface AttendanceRecordsTabProps {
   records: AttendanceRecord[];
 }

@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type Valence = 'positive' | 'neutral' | 'negative';
 export type Arousal = 'low' | 'medium' | 'high';
 export type EmotionType =

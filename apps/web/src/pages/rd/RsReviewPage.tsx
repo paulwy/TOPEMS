@@ -13,6 +13,7 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 const baseAdapter = createCrudPageAdapter<Build, CreateBuildRequest>({
   list: buildApi.listBuilds,
   create: buildApi.createBuild,

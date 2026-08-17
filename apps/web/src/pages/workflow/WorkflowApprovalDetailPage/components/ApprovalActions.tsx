@@ -131,13 +131,19 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
         open={showApprovalModal}
         onClose={() => setShowApprovalModal(false)}
       >
-        <DialogTitle>{approvalAction === 'approve' ? i18n.t('pages.approval_actions.k5') : i18n.t('pages.approval_actions.k4')}</DialogTitle>
+        <DialogTitle>
+          {approvalAction === 'approve'
+            ? i18n.t('pages.approval_actions.k5')
+            : i18n.t('pages.approval_actions.k4')}
+        </DialogTitle>
         <DialogContent>
           <Typography
             variant='body2'
             sx={{ mb: 2 }}
           >
-            {approvalAction === 'approve' ? i18n.t('pages.approval_actions.k7') : i18n.t('pages.approval_actions.k6')}
+            {approvalAction === 'approve'
+              ? i18n.t('pages.approval_actions.k7')
+              : i18n.t('pages.approval_actions.k6')}
           </Typography>
           {approval && (
             <>
@@ -158,14 +164,22 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
             </>
           )}
           <Box sx={{ mt: 2 }}>
-            <FormLabel>{approvalAction === 'reject' ? i18n.t('pages.approval_actions.k2') : i18n.t('pages.approval_actions.k8')}</FormLabel>
+            <FormLabel>
+              {approvalAction === 'reject'
+                ? i18n.t('pages.approval_actions.k2')
+                : i18n.t('pages.approval_actions.k8')}
+            </FormLabel>
             <TextField
               fullWidth
               multiline
               rows={4}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder={approvalAction === 'reject' ? i18n.t('pages.approval_actions.k10') : i18n.t('pages.approval_actions.k9')}
+              placeholder={
+                approvalAction === 'reject'
+                  ? i18n.t('pages.approval_actions.k10')
+                  : i18n.t('pages.approval_actions.k9')
+              }
               sx={{ mt: 1 }}
             />
           </Box>
@@ -191,7 +205,9 @@ const ApprovalActions: React.FC<ApprovalActionsProps> = ({
               ) : undefined
             }
           >
-            {approvalAction === 'approve' ? i18n.t('pages.approval_actions.k12') : i18n.t('pages.approval_actions.k11')}
+            {approvalAction === 'approve'
+              ? i18n.t('pages.approval_actions.k12')
+              : i18n.t('pages.approval_actions.k11')}
           </Button>
         </DialogActions>
       </Dialog>

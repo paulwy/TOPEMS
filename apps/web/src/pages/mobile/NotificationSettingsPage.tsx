@@ -10,6 +10,7 @@ import i18n from '@/i18n';
 import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 interface NotificationSetting {
   key: string;
   label: string;
@@ -80,7 +81,11 @@ const NotificationSettingsPage: React.FC = () => {
   useEffect(() => {
     if (settingsQuery.isError) {
       logger.error('Error loading notification settings:', settingsQuery.error);
-      addNotification({ title: i18n.t('mobile.notification_settings_page.k13'), message: i18n.t('mobile.notification_settings_page.k12'), type: 'error' });
+      addNotification({
+        title: i18n.t('mobile.notification_settings_page.k13'),
+        message: i18n.t('mobile.notification_settings_page.k12'),
+        type: 'error',
+      });
     }
   }, [settingsQuery.isError, settingsQuery.error, addNotification]);
   const saveMutation = useMutation({
@@ -89,15 +94,24 @@ const NotificationSettingsPage: React.FC = () => {
       return settings;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_SETTINGS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      addNotification({ title: i18n.t('mobile.notification_settings_page.k15'), message: i18n.t('mobile.notification_settings_page.k14'), type: 'success' });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_SETTINGS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        title: i18n.t('mobile.notification_settings_page.k15'),
+        message: i18n.t('mobile.notification_settings_page.k14'),
+        type: 'success',
+      });
     },
     onError: (err: unknown) => {
       logger.error('Error saving notification settings:', err);
-      addNotification({ title: i18n.t('mobile.notification_settings_page.k17'), message: i18n.t('mobile.notification_settings_page.k16'), type: 'error' });
+      addNotification({
+        title: i18n.t('mobile.notification_settings_page.k17'),
+        message: i18n.t('mobile.notification_settings_page.k16'),
+        type: 'error',
+      });
     },
   });
   const saving = saveMutation.isPending;
@@ -114,15 +128,24 @@ const NotificationSettingsPage: React.FC = () => {
       return defaultNotificationSettings;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_SETTINGS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
-      addNotification({ title: i18n.t('mobile.notification_settings_page.k19'), message: i18n.t('mobile.notification_settings_page.k18'), type: 'info' });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_SETTINGS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        title: i18n.t('mobile.notification_settings_page.k19'),
+        message: i18n.t('mobile.notification_settings_page.k18'),
+        type: 'info',
+      });
     },
     onError: (err: unknown) => {
       logger.error('Error resetting notification settings:', err);
-      addNotification({ title: i18n.t('mobile.notification_settings_page.k21'), message: i18n.t('mobile.notification_settings_page.k20'), type: 'error' });
+      addNotification({
+        title: i18n.t('mobile.notification_settings_page.k21'),
+        message: i18n.t('mobile.notification_settings_page.k20'),
+        type: 'error',
+      });
     },
   });
   const handleReset = useCallback(() => {

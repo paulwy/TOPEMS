@@ -23,6 +23,7 @@ import {
 import i18n from '@/i18n';
 import { CheckCircle2, AlertTriangle } from 'lucide-react';
 import type { RowLevelPermission } from '@/api/bi';
+
 export type TestResult = { success: boolean; message: string } | null;
 export interface BiPermissionEditDialogProps {
   open: boolean;
@@ -52,7 +53,9 @@ const BiPermissionEditDialog: React.FC<BiPermissionEditDialogProps> = ({
       fullWidth
     >
       <DialogTitle>
-        {editingItem ? i18n.t('bi.bi_permission_page.edit_3') : i18n.t('bi.bi_permission_page.text_f36bf2')}
+        {editingItem
+          ? i18n.t('bi.bi_permission_page.edit_3')
+          : i18n.t('bi.bi_permission_page.text_f36bf2')}
       </DialogTitle>
       <DialogContent sx={{ mt: 2 }}>
         <Grid

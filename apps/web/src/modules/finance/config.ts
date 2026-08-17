@@ -207,7 +207,11 @@ export const financeModuleConfig: RouteModuleConfig = {
       titleKey: 'shared.config.k14',
       template: 'wizard',
       group: 'setting',
-      requiredPermissions: ['finance:expense_approval:read', 'finance:dashboard:read', 'finance:settlement:approve'],
+      requiredPermissions: [
+        'finance:expense_approval:read',
+        'finance:dashboard:read',
+        'finance:settlement:approve',
+      ],
       action: 'read',
     },
     {

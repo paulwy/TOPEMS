@@ -226,7 +226,9 @@ const EmailList: React.FC<EmailListProps> = ({
                   },
                 }}
               />
-              <Typography sx={{ mt: 1, color: 'grey.500' }}>{t('im.mail_page_components_email_list.m2')}</Typography>
+              <Typography sx={{ mt: 1, color: 'grey.500' }}>
+                {t('im.mail_page_components_email_list.m2')}
+              </Typography>
             </Box>
           ) : emails.length === 0 ? (
             <Box sx={{ p: 4, textAlign: 'center' }}>

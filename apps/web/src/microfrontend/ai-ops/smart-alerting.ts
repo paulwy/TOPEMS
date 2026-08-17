@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical';
 export type AlertStatus = 'firing' | 'acknowledged' | 'resolved' | 'suppressed';
 export type AlertConditionOperator = 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | 'neq' | 'in' | 'nin';

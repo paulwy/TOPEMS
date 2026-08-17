@@ -49,12 +49,11 @@ import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 import { aiApi } from '@/api/ai';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 type PromptCategory = 'all' | 'writing' | 'code' | 'business' | 'analysis' | 'creative';
 
@@ -78,8 +77,7 @@ const mockPrompts: PromptTemplate[] = [
     name: i18n.t('ai.ai_prompt_library_page.k0'),
     description: i18n.t('ai.ai_prompt_library_page.k1'),
     category: 'writing',
-    content:
-      i18n.t('pages.ai_prompt_library_page.k0'),
+    content: i18n.t('pages.ai_prompt_library_page.k0'),
     variables: ['subject', 'recipient', 'key_points'],
     usage_count: 234,
     is_favorite: true,
@@ -92,8 +90,7 @@ const mockPrompts: PromptTemplate[] = [
     name: i18n.t('ai.ai_prompt_library_page.k3'),
     description: i18n.t('ai.ai_prompt_library_page.k4'),
     category: 'code',
-    content:
-      i18n.t('pages.ai_prompt_library_page.k1'),
+    content: i18n.t('pages.ai_prompt_library_page.k1'),
     variables: ['language', 'code'],
     usage_count: 189,
     is_favorite: true,
@@ -106,8 +103,7 @@ const mockPrompts: PromptTemplate[] = [
     name: i18n.t('ai.ai_prompt_library_page.k6'),
     description: i18n.t('ai.ai_prompt_library_page.k7'),
     category: 'analysis',
-    content:
-      i18n.t('pages.ai_prompt_library_page.k2'),
+    content: i18n.t('pages.ai_prompt_library_page.k2'),
     variables: ['data'],
     usage_count: 156,
     is_favorite: false,
@@ -120,8 +116,7 @@ const mockPrompts: PromptTemplate[] = [
     name: i18n.t('ai.ai_prompt_library_page.k9'),
     description: i18n.t('ai.ai_prompt_library_page.k10'),
     category: 'business',
-    content:
-      i18n.t('pages.ai_prompt_library_page.k3'),
+    content: i18n.t('pages.ai_prompt_library_page.k3'),
     variables: ['meeting_content'],
     usage_count: 312,
     is_favorite: false,
@@ -134,8 +129,7 @@ const mockPrompts: PromptTemplate[] = [
     name: i18n.t('ai.ai_prompt_library_page.k12'),
     description: i18n.t('ai.ai_prompt_library_page.k13'),
     category: 'creative',
-    content:
-      i18n.t('pages.ai_prompt_library_page.k4'),
+    content: i18n.t('pages.ai_prompt_library_page.k4'),
     variables: ['product', 'target_audience', 'selling_points'],
     usage_count: 278,
     is_favorite: true,
@@ -148,8 +142,7 @@ const mockPrompts: PromptTemplate[] = [
     name: i18n.t('pages.ai_prompt_library_page.sql_5'),
     description: i18n.t('ai.ai_prompt_library_page.sql_15'),
     category: 'code',
-    content:
-      i18n.t('pages.ai_prompt_library_page.k6'),
+    content: i18n.t('pages.ai_prompt_library_page.k6'),
     variables: ['requirement', 'table_structure'],
     usage_count: 145,
     is_favorite: false,

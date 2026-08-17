@@ -236,13 +236,21 @@ const getLogFields = (): FormField[] => [
 const getSections = (tabId: string): FormSection[] => {
   switch (tabId) {
     case 'basic':
-      return [{ id: 'basic', title: i18n.t('admin.system_settings_page.k28'), fields: getBasicFields() }];
+      return [
+        { id: 'basic', title: i18n.t('admin.system_settings_page.k28'), fields: getBasicFields() },
+      ];
     case 'mail':
-      return [{ id: 'mail', title: i18n.t('admin.system_settings_page.k29'), fields: getMailFields() }];
+      return [
+        { id: 'mail', title: i18n.t('admin.system_settings_page.k29'), fields: getMailFields() },
+      ];
     case 'sms':
-      return [{ id: 'sms', title: i18n.t('admin.system_settings_page.k30'), fields: getSmsFields() }];
+      return [
+        { id: 'sms', title: i18n.t('admin.system_settings_page.k30'), fields: getSmsFields() },
+      ];
     case 'log':
-      return [{ id: 'log', title: i18n.t('admin.system_settings_page.k31'), fields: getLogFields() }];
+      return [
+        { id: 'log', title: i18n.t('admin.system_settings_page.k31'), fields: getLogFields() },
+      ];
     default:
       return [];
   }

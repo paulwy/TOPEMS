@@ -8,7 +8,6 @@
 import type { EntitySchema } from '@/schema';
 import { crmApi } from '@/api/crm';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 

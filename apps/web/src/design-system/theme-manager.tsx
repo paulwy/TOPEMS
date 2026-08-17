@@ -52,7 +52,7 @@ class ThemeManagerSingleton {
         return { ...defaultConfig, ...JSON.parse(stored) };
       }
     } catch (e) {
-      console.error("[ThemeManager] Failed to parse stored config", e);
+      console.error('[ThemeManager] Failed to parse stored config', e);
     }
     return { ...defaultConfig };
   }
@@ -62,7 +62,7 @@ class ThemeManagerSingleton {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.config));
     } catch (e) {
-      console.error("[ThemeManager] Failed to save config to localStorage", e);
+      console.error('[ThemeManager] Failed to save config to localStorage', e);
     }
   }
 
@@ -76,7 +76,7 @@ class ThemeManagerSingleton {
         }
       });
     } catch (e) {
-      console.error("[ThemeManager] Failed to setup system preference listener", e);
+      console.error('[ThemeManager] Failed to setup system preference listener', e);
     }
   }
 
@@ -123,7 +123,7 @@ class ThemeManagerSingleton {
       try {
         listener({ ...this.config });
       } catch (e) {
-        console.error("[ThemeManager] Listener callback error", e);
+        console.error('[ThemeManager] Listener callback error', e);
       }
     }
   }

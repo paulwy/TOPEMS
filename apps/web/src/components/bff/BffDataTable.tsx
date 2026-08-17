@@ -250,7 +250,13 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
         <Box sx={{ flex: 1 }} />
 
         {enableFilter && (
-          <Tooltip title={showFilterBar ? i18n.t('components.bff_data_table.k1') : i18n.t('components.bff_data_table.k0')}>
+          <Tooltip
+            title={
+              showFilterBar
+                ? i18n.t('components.bff_data_table.k1')
+                : i18n.t('components.bff_data_table.k0')
+            }
+          >
             <IconButton
               onClick={() => setShowFilterBar(!showFilterBar)}
               size='small'
@@ -266,7 +272,11 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
             <Chip
               size='small'
               icon={<Layers size={14} />}
-              label={crud.total > shardThreshold ? i18n.t('components.bff_data_table.k5') : i18n.t('components.bff_data_table.k4')}
+              label={
+                crud.total > shardThreshold
+                  ? i18n.t('components.bff_data_table.k5')
+                  : i18n.t('components.bff_data_table.k4')
+              }
               color={crud.total > shardThreshold ? 'primary' : 'default'}
               variant='outlined'
             />
@@ -389,7 +399,9 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
                   align='center'
                   sx={{ py: 6 }}
                 >
-                  <Box sx={{ color: 'text.secondary' }}>{i18n.t('components.bff_data_table.k8')}</Box>
+                  <Box sx={{ color: 'text.secondary' }}>
+                    {i18n.t('components.bff_data_table.k8')}
+                  </Box>
                 </TableCell>
               </TableRow>
             ) : (
@@ -452,7 +464,9 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
         onRowsPerPageChange={handlePageSizeChange}
         rowsPerPageOptions={[10, 25, 50, 100]}
         labelRowsPerPage={i18n.t('components.bff_data_table.k9')}
-        labelDisplayedRows={({ from, to, count }) => `${from}-${to} ${i18n.t('components.bff_data_table.k1')} ${count} ${i18n.t('components.bff_data_table.k2')}`}
+        labelDisplayedRows={({ from, to, count }) =>
+          `${from}-${to} ${i18n.t('components.bff_data_table.k1')} ${count} ${i18n.t('components.bff_data_table.k2')}`
+        }
       />
     </Paper>
   );

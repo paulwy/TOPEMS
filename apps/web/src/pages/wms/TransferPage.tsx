@@ -8,7 +8,6 @@ import { Box, Typography, Stack, Chip } from '@mui/material';
 import { Check, Truck, Package } from 'lucide-react';
 import { useNotificationStore } from '@/store';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
@@ -383,14 +382,23 @@ export default function TransferPage() {
       try {
         const response = await wmsApi.transfers.confirm(id);
         if (response.success) {
-          addNotification({ type: 'success', title: i18n.t('pages.transfer_page.k21'), message: i18n.t('pages.transfer_page.k20') });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_TRANSFERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+          addNotification({
+            type: 'success',
+            title: i18n.t('pages.transfer_page.k21'),
+            message: i18n.t('pages.transfer_page.k20'),
+          });
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.AD_HOC.WMS_TRANSFERS_BASE,
+            exact: false,
+            refetchType: 'active',
+          });
         }
       } catch {
-        addNotification({ type: 'error', title: i18n.t('pages.transfer_page.k23'), message: i18n.t('pages.transfer_page.k22') });
+        addNotification({
+          type: 'error',
+          title: i18n.t('pages.transfer_page.k23'),
+          message: i18n.t('pages.transfer_page.k22'),
+        });
       }
     },
     [queryClient, addNotification]
@@ -401,14 +409,23 @@ export default function TransferPage() {
       try {
         const response = await wmsApi.transfers.ship(id);
         if (response.success) {
-          addNotification({ type: 'success', title: i18n.t('pages.transfer_page.k25'), message: i18n.t('pages.transfer_page.k24') });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_TRANSFERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+          addNotification({
+            type: 'success',
+            title: i18n.t('pages.transfer_page.k25'),
+            message: i18n.t('pages.transfer_page.k24'),
+          });
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.AD_HOC.WMS_TRANSFERS_BASE,
+            exact: false,
+            refetchType: 'active',
+          });
         }
       } catch {
-        addNotification({ type: 'error', title: i18n.t('pages.transfer_page.k27'), message: i18n.t('pages.transfer_page.k26') });
+        addNotification({
+          type: 'error',
+          title: i18n.t('pages.transfer_page.k27'),
+          message: i18n.t('pages.transfer_page.k26'),
+        });
       }
     },
     [queryClient, addNotification]
@@ -419,14 +436,23 @@ export default function TransferPage() {
       try {
         const response = await wmsApi.transfers.receive(id);
         if (response.success) {
-          addNotification({ type: 'success', title: i18n.t('pages.transfer_page.k29'), message: i18n.t('pages.transfer_page.k28') });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_TRANSFERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+          addNotification({
+            type: 'success',
+            title: i18n.t('pages.transfer_page.k29'),
+            message: i18n.t('pages.transfer_page.k28'),
+          });
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.AD_HOC.WMS_TRANSFERS_BASE,
+            exact: false,
+            refetchType: 'active',
+          });
         }
       } catch {
-        addNotification({ type: 'error', title: i18n.t('pages.transfer_page.k31'), message: i18n.t('pages.transfer_page.k30') });
+        addNotification({
+          type: 'error',
+          title: i18n.t('pages.transfer_page.k31'),
+          message: i18n.t('pages.transfer_page.k30'),
+        });
       }
     },
     [queryClient, addNotification]
@@ -437,14 +463,23 @@ export default function TransferPage() {
       try {
         const response = await wmsApi.transfers.complete(id);
         if (response.success) {
-          addNotification({ type: 'success', title: i18n.t('pages.transfer_page.k33'), message: i18n.t('pages.transfer_page.k32') });
-          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.WMS_TRANSFERS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+          addNotification({
+            type: 'success',
+            title: i18n.t('pages.transfer_page.k33'),
+            message: i18n.t('pages.transfer_page.k32'),
+          });
+          queryClient.invalidateQueries({
+            queryKey: QUERY_KEYS.AD_HOC.WMS_TRANSFERS_BASE,
+            exact: false,
+            refetchType: 'active',
+          });
         }
       } catch {
-        addNotification({ type: 'error', title: i18n.t('pages.transfer_page.k35'), message: i18n.t('pages.transfer_page.k34') });
+        addNotification({
+          type: 'error',
+          title: i18n.t('pages.transfer_page.k35'),
+          message: i18n.t('pages.transfer_page.k34'),
+        });
       }
     },
     [queryClient, addNotification]

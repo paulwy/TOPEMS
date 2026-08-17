@@ -19,9 +19,10 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { wipSchema } from '@/schemas/mes';
 import { wipApi } from '@/api/mes';
 import type { Wip, WipStatistics } from '@/api/mes';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter(wipApi, { itemsField: 'wips' });
 const WIPPage: React.FC = () => {
   const [showTransferDialog, setShowTransferDialog] = useState(false);
@@ -33,8 +34,9 @@ const WIPPage: React.FC = () => {
       if (!result.success) throw new Error(result.message);
       return result.data;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const headerContent = useMemo(() => {
     return (
       <Stack

@@ -51,9 +51,10 @@ import {
 } from '@/components/templates';
 import { useNotificationStore } from '../../store';
 import { designTokens } from '@/theme/tokens';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { monitorApi, type SystemMetrics, type DatabaseMetrics } from '@/api/monitor';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 type TimeRange = '1h' | '6h' | '24h' | '7d' | '30d';
 const timeRangeOptions: { value: TimeRange; label: string }[] = [
   { value: '1h', label: i18n.t('monitor.monitor_dashboard_page.1_0') },
@@ -319,40 +320,45 @@ export const MonitorDashboardPage: React.FC = () => {
       const res = await monitorApi.getSystemMetrics();
       return res.data;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const serviceHealthQuery = useQuery({
     queryKey: [...QUERY_KEYS.MONITOR.HEALTH, timeRange],
     queryFn: async () => {
       const res = await monitorApi.getServiceHealth();
       return res.data ?? [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const alertsQuery = useQuery({
     queryKey: [...QUERY_KEYS.MONITOR.ALERTS, timeRange],
     queryFn: async () => {
       const res = await monitorApi.listAlerts({ pagesize: 10, status: 'active' });
       return res.data?.items ?? [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const apiPerformanceQuery = useQuery({
     queryKey: [...QUERY_KEYS.MONITOR.PERFORMANCE, timeRange],
     queryFn: async () => {
       const res = await monitorApi.getApiPerformance();
       return res.data ?? [];
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const dbMetricsQuery = useQuery({
     queryKey: [...QUERY_KEYS.MONITOR.DATABASE, timeRange],
     queryFn: async () => {
       const res = await monitorApi.getDatabaseMetrics();
       return res.data;
     },
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const loading =
     systemMetricsQuery.isFetching ||
     serviceHealthQuery.isFetching ||
@@ -788,9 +794,21 @@ export const MonitorDashboardPage: React.FC = () => {
   };
   const getStatusChip = (status: ServiceHealth['status']) => {
     const statusMap = {
-      healthy: { label: i18n.t('monitor.monitor_dashboard_page.k38'), color: 'success' as const, icon: <CheckCircle size={14} /> },
-      warning: { label: i18n.t('monitor.monitor_dashboard_page.k39'), color: 'warning' as const, icon: <AlertTriangle size={14} /> },
-      error: { label: i18n.t('monitor.monitor_dashboard_page.k40'), color: 'error' as const, icon: <XCircle size={14} /> },
+      healthy: {
+        label: i18n.t('monitor.monitor_dashboard_page.k38'),
+        color: 'success' as const,
+        icon: <CheckCircle size={14} />,
+      },
+      warning: {
+        label: i18n.t('monitor.monitor_dashboard_page.k39'),
+        color: 'warning' as const,
+        icon: <AlertTriangle size={14} />,
+      },
+      error: {
+        label: i18n.t('monitor.monitor_dashboard_page.k40'),
+        color: 'error' as const,
+        icon: <XCircle size={14} />,
+      },
     };
     const config = statusMap[status];
     return (
@@ -804,7 +822,8 @@ export const MonitorDashboardPage: React.FC = () => {
     );
   };
   const timeRangeLabel =
-    timeRangeOptions.find((opt) => opt.value === timeRange)?.label || i18n.t('monitor.monitor_dashboard_page.24_41');
+    timeRangeOptions.find((opt) => opt.value === timeRange)?.label ||
+    i18n.t('monitor.monitor_dashboard_page.24_41');
   const headerContent = (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       <Button

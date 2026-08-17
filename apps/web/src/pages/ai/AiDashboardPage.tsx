@@ -759,7 +759,9 @@ export const AiDashboardPage: React.FC = () => {
 
         {/* AI 推荐入口 TopN */}
         <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
+          >
             <Box>
               <Typography
                 variant='h6'

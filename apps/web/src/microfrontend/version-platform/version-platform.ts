@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type VersionStatus = 'active' | 'canary' | 'deprecated' | 'rollback';
 
 export type VersioningStrategy = 'semver' | 'date' | 'hash';
@@ -159,7 +160,9 @@ export class VersionPlatform {
     const versions = this.moduleVersions.get(moduleId) || [];
 
     if (versions.some((v) => v.version === versionInfo.version)) {
-      throw new Error(`${i18n.t('microfrontend.version-platform.k0')}${moduleId}${i18n.t('microfrontend.version-platform.k1')}${versionInfo.version}${i18n.t('microfrontend.version-platform.k2')}`);
+      throw new Error(
+        `${i18n.t('microfrontend.version-platform.k0')}${moduleId}${i18n.t('microfrontend.version-platform.k1')}${versionInfo.version}${i18n.t('microfrontend.version-platform.k2')}`
+      );
     }
 
     const version: ModuleVersion = {

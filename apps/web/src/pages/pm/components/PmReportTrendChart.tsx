@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import i18n from '@/i18n';
 import type { TrendDatum } from '../hooks/usePmReport';
+
 export interface PmReportTrendChartProps {
   data: TrendDatum[];
 }

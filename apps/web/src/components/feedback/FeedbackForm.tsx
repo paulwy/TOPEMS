@@ -23,8 +23,14 @@ import { FEEDBACK_TYPE_LABELS } from '@/api/feedback/types';
 
 const schema = z.object({
   type: z.enum(['bug', 'feature', 'improvement', 'question', 'other']),
-  title: z.string().min(1, i18n.t('components.feedback_form.k1')).max(100, i18n.t('components.feedback_form.100_0')),
-  description: z.string().min(1, i18n.t('components.feedback_form.k3')).max(2000, i18n.t('components.feedback_form.2000_2')),
+  title: z
+    .string()
+    .min(1, i18n.t('components.feedback_form.k1'))
+    .max(100, i18n.t('components.feedback_form.100_0')),
+  description: z
+    .string()
+    .min(1, i18n.t('components.feedback_form.k3'))
+    .max(2000, i18n.t('components.feedback_form.2000_2')),
   screenshots: z.array(z.string()).optional(),
   satisfaction: z.number().min(1).max(5),
 });
@@ -163,7 +169,9 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ onSubmit, loading }) => {
                 max={5}
                 precision={1}
               />
-              <Typography variant='body1'>{i18n.t('components.feedback_form.fieldvalue_0')}</Typography>
+              <Typography variant='body1'>
+                {i18n.t('components.feedback_form.fieldvalue_0')}
+              </Typography>
             </Box>
           )}
         />

@@ -4,54 +4,73 @@ import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
 import { WmsStatusBadge, WmsFSMActionButtons } from '@/components/wms';
 import type { StockTakeDto } from '@/types/wms';
 import i18n from '@/i18n';
+
 function buildStockTakeItems(id: string, count: number) {
-    return Array.from({ length: count }, (_, i) => {
-        const system = 20 + i * 15;
-        const actual = system + (i % 3 === 0 ? -2 : i % 3 === 1 ? 1 : 0);
-        const diff = actual - system;
-        return {
-            id: `${id}-item-${i}`,
-            sku: `SKU-${String(1000 + i).padStart(4, '0')}`,
-            name: `${i18n.t('pages.wms_stock_take_detail_page.k0')}${i + 1}`,
-            location: `A-${Math.floor(i / 4) + 1}-${(i % 10) + 1}`,
-            systemQty: system,
-            actualQty: actual,
-            diff,
-            reason: diff === 0 ? i18n.t('pages.wms_stock_take_detail_page.k2') : diff > 0 ? i18n.t('pages.wms_stock_take_detail_page.k1') : i18n.t('pages.wms_stock_take_detail_page.k0'),
-        };
-    });
+  return Array.from({ length: count }, (_, i) => {
+    const system = 20 + i * 15;
+    const actual = system + (i % 3 === 0 ? -2 : i % 3 === 1 ? 1 : 0);
+    const diff = actual - system;
+    return {
+      id: `${id}-item-${i}`,
+      sku: `SKU-${String(1000 + i).padStart(4, '0')}`,
+      name: `${i18n.t('pages.wms_stock_take_detail_page.k0')}${i + 1}`,
+      location: `A-${Math.floor(i / 4) + 1}-${(i % 10) + 1}`,
+      systemQty: system,
+      actualQty: actual,
+      diff,
+      reason:
+        diff === 0
+          ? i18n.t('pages.wms_stock_take_detail_page.k2')
+          : diff > 0
+            ? i18n.t('pages.wms_stock_take_detail_page.k1')
+            : i18n.t('pages.wms_stock_take_detail_page.k0'),
+    };
+  });
 }
 export default function WmsStockTakeDetailPage() {
-    const { id } = useParams<{
-        id: string;
-    }>();
-    const { data } = useWmsMock<WmsMockShape>();
-    const task = useMemo<StockTakeDto | undefined>(() => {
-        if (!id)
-            return data.stockTakeList?.[0];
-        return (data.stockTakeList?.find((t) => t.id === id || t.stock_take_number === id) ??
-            data.stockTakeList?.[0]);
-    }, [id, data.stockTakeList]);
-    const items = useMemo(() => (task ? buildStockTakeItems(task.id, 8) : []), [task]);
-    const diffSummary = useMemo(() => {
-        const over = items.filter((i) => i.diff > 0).length;
-        const under = items.filter((i) => i.diff < 0).length;
-        const ok = items.filter((i) => i.diff === 0).length;
-        return { over, under, ok, total: items.length };
-    }, [items]);
-    if (!task)
-        return <div className='p-8'>{i18n.t('pages.wms_stock_take_detail_page.k1')}</div>;
-    return (<div className='space-y-4 p-4'>
+  const { id } = useParams<{
+    id: string;
+  }>();
+  const { data } = useWmsMock<WmsMockShape>();
+  const task = useMemo<StockTakeDto | undefined>(() => {
+    if (!id) return data.stockTakeList?.[0];
+    return (
+      data.stockTakeList?.find((t) => t.id === id || t.stock_take_number === id) ??
+      data.stockTakeList?.[0]
+    );
+  }, [id, data.stockTakeList]);
+  const items = useMemo(() => (task ? buildStockTakeItems(task.id, 8) : []), [task]);
+  const diffSummary = useMemo(() => {
+    const over = items.filter((i) => i.diff > 0).length;
+    const under = items.filter((i) => i.diff < 0).length;
+    const ok = items.filter((i) => i.diff === 0).length;
+    return { over, under, ok, total: items.length };
+  }, [items]);
+  if (!task) return <div className='p-8'>{i18n.t('pages.wms_stock_take_detail_page.k1')}</div>;
+  return (
+    <div className='space-y-4 p-4'>
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <div>
-          <h1 className='text-2xl font-bold'>{i18n.t("wms.stockTakeDetail.k0")} {task.stock_take_number}</h1>
+          <h1 className='text-2xl font-bold'>
+            {i18n.t('wms.stockTakeDetail.k0')} {task.stock_take_number}
+          </h1>
           <p className='text-sm text-gray-500'>
-            {i18n.t('pages.wms_stock_take_detail_page.k2')}{task.stock_take_type ?? i18n.t('pages.wms_stock_take_detail_page.k3')} {i18n.t("wms.stockTakeDetail.k1")}{task.warehouse_name ?? '-'}
+            {i18n.t('pages.wms_stock_take_detail_page.k2')}
+            {task.stock_take_type ?? i18n.t('pages.wms_stock_take_detail_page.k3')}{' '}
+            {i18n.t('wms.stockTakeDetail.k1')}
+            {task.warehouse_name ?? '-'}
           </p>
         </div>
         <div className='flex items-center gap-3'>
-          <WmsStatusBadge fsm='stocktake' status={task.status}/>
-          <WmsFSMActionButtons fsm='stocktake' currentStatus={task.status} onAction={() => { }}/>
+          <WmsStatusBadge
+            fsm='stocktake'
+            status={task.status}
+          />
+          <WmsFSMActionButtons
+            fsm='stocktake'
+            currentStatus={task.status}
+            onAction={() => {}}
+          />
         </div>
       </div>
 
@@ -77,40 +96,62 @@ export default function WmsStockTakeDetailPage() {
       </div>
 
       <div className='rounded-lg border p-4'>
-        <h3 className='mb-2 font-semibold'>{i18n.t("wms.stockTakeDetail.k2")}</h3>
+        <h3 className='mb-2 font-semibold'>{i18n.t('wms.stockTakeDetail.k2')}</h3>
         <div className='overflow-x-auto'>
           <table className='w-full text-sm'>
             <thead className='bg-gray-50'>
               <tr>
                 <th className='px-3 py-2 text-left'>SKU</th>
-                <th className='px-3 py-2 text-left'>{i18n.t('pages.wms_stock_take_detail_page.k8')}</th>
-                <th className='px-3 py-2 text-left'>{i18n.t('pages.wms_stock_take_detail_page.k9')}</th>
-                <th className='px-3 py-2 text-right'>{i18n.t('pages.wms_stock_take_detail_page.k10')}</th>
-                <th className='px-3 py-2 text-right'>{i18n.t('pages.wms_stock_take_detail_page.k11')}</th>
-                <th className='px-3 py-2 text-right'>{i18n.t('pages.wms_stock_take_detail_page.k12')}</th>
-                <th className='px-3 py-2 text-left'>{i18n.t('pages.wms_stock_take_detail_page.k13')}</th>
+                <th className='px-3 py-2 text-left'>
+                  {i18n.t('pages.wms_stock_take_detail_page.k8')}
+                </th>
+                <th className='px-3 py-2 text-left'>
+                  {i18n.t('pages.wms_stock_take_detail_page.k9')}
+                </th>
+                <th className='px-3 py-2 text-right'>
+                  {i18n.t('pages.wms_stock_take_detail_page.k10')}
+                </th>
+                <th className='px-3 py-2 text-right'>
+                  {i18n.t('pages.wms_stock_take_detail_page.k11')}
+                </th>
+                <th className='px-3 py-2 text-right'>
+                  {i18n.t('pages.wms_stock_take_detail_page.k12')}
+                </th>
+                <th className='px-3 py-2 text-left'>
+                  {i18n.t('pages.wms_stock_take_detail_page.k13')}
+                </th>
               </tr>
             </thead>
             <tbody>
-              {items.map((it) => (<tr key={it.id} className='border-t'>
+              {items.map((it) => (
+                <tr
+                  key={it.id}
+                  className='border-t'
+                >
                   <td className='px-3 py-2 font-mono'>{it.sku}</td>
                   <td className='px-3 py-2'>{it.name}</td>
                   <td className='px-3 py-2 font-mono'>{it.location}</td>
                   <td className='px-3 py-2 text-right'>{it.systemQty}</td>
                   <td className='px-3 py-2 text-right'>{it.actualQty}</td>
-                  <td className={`px-3 py-2 text-right font-semibold ${it.diff === 0
-                ? 'text-green-600'
-                : it.diff > 0
-                    ? 'text-amber-600'
-                    : 'text-red-600'}`}>
+                  <td
+                    className={`px-3 py-2 text-right font-semibold ${
+                      it.diff === 0
+                        ? 'text-green-600'
+                        : it.diff > 0
+                          ? 'text-amber-600'
+                          : 'text-red-600'
+                    }`}
+                  >
                     {it.diff > 0 ? '+' : ''}
                     {it.diff}
                   </td>
                   <td className='px-3 py-2'>{it.reason}</td>
-                </tr>))}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       </div>
-    </div>);
+    </div>
+  );
 }

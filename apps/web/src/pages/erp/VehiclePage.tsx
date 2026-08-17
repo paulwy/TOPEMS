@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/material';
 import { Car } from 'lucide-react';
 import i18n from '@/i18n';
+
 const VehicleStats: React.FC = () => {
   const { data } = useQuery({
     queryKey: [QUERY_KEYS.ERP.VEHICLES, 'stats'],
@@ -26,10 +27,30 @@ const VehicleStats: React.FC = () => {
   const inUse = vehicles.filter((v) => v.status === 'in_use').length;
   const maintenance = vehicles.filter((v) => v.status === 'maintenance').length;
   const stats = [
-    { label: i18n.t('erp.vehicle_page.k1'), value: total, color: 'secondary[100]', textColor: 'secondary.700' },
-    { label: i18n.t('erp.vehicle_page.k2'), value: available, color: 'success.lighter', textColor: 'success.700' },
-    { label: i18n.t('erp.vehicle_page.k3'), value: inUse, color: 'info.lighter', textColor: 'info.700' },
-    { label: i18n.t('erp.vehicle_page.k4'), value: maintenance, color: 'warning.light', textColor: 'warning.700' },
+    {
+      label: i18n.t('erp.vehicle_page.k1'),
+      value: total,
+      color: 'secondary[100]',
+      textColor: 'secondary.700',
+    },
+    {
+      label: i18n.t('erp.vehicle_page.k2'),
+      value: available,
+      color: 'success.lighter',
+      textColor: 'success.700',
+    },
+    {
+      label: i18n.t('erp.vehicle_page.k3'),
+      value: inUse,
+      color: 'info.lighter',
+      textColor: 'info.700',
+    },
+    {
+      label: i18n.t('erp.vehicle_page.k4'),
+      value: maintenance,
+      color: 'warning.light',
+      textColor: 'warning.700',
+    },
   ];
   return (
     <Box

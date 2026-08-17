@@ -40,7 +40,20 @@ describe('searchApi', () => {
       data: {
         total: 1,
         by_service: {},
-        results: [{ id: '1', title: 'API Result', summary: 'summary', highlight_title: 'API Result', highlight_summary: 'summary', service: 'user', service_name: '用户', url: '/api', result_type: 'page', type_name: '用户' }],
+        results: [
+          {
+            id: '1',
+            title: 'API Result',
+            summary: 'summary',
+            highlight_title: 'API Result',
+            highlight_summary: 'summary',
+            service: 'user',
+            service_name: '用户',
+            url: '/api',
+            result_type: 'page',
+            type_name: '用户',
+          },
+        ],
         duration_ms: 50,
       },
       timestamp: Date.now(),
@@ -79,7 +92,9 @@ describe('searchApi', () => {
 
     it('should call API with correct query and limit params', async () => {
       vi.mocked(apiClient.portal.get).mockResolvedValue({
-        success: true, code: 200, message: 'ok',
+        success: true,
+        code: 200,
+        message: 'ok',
         data: { total: 0, by_service: {}, results: [], duration_ms: 0 },
         timestamp: Date.now(),
       });
@@ -100,7 +115,9 @@ describe('searchApi', () => {
 
     it('should return empty query if provided (API is still called)', async () => {
       vi.mocked(apiClient.portal.get).mockResolvedValue({
-        success: true, code: 200, message: 'ok',
+        success: true,
+        code: 200,
+        message: 'ok',
         data: { total: 0, by_service: {}, results: [], duration_ms: 0 },
         timestamp: Date.now(),
       });

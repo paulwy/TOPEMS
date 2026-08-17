@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type NoiseStrategy = 'gaussian' | 'laplace' | 'exponential' | 'none';
 
 export interface PrivacyConfig {
@@ -233,10 +234,16 @@ export class PrivacyEnhancer {
     }
 
     if (config.epsilon > 5.0) {
-      factors.push({ factor: `${i18n.t('ai.privacy-enhancement.epsilon_0')}${config.epsilon})`, contribution: 0.25 });
+      factors.push({
+        factor: `${i18n.t('ai.privacy-enhancement.epsilon_0')}${config.epsilon})`,
+        contribution: 0.25,
+      });
       riskScore += 0.25;
     } else if (config.epsilon <= 1.0) {
-      factors.push({ factor: `${i18n.t('ai.privacy-enhancement.epsilon_1')}${config.epsilon})`, contribution: -0.15 });
+      factors.push({
+        factor: `${i18n.t('ai.privacy-enhancement.epsilon_1')}${config.epsilon})`,
+        contribution: -0.15,
+      });
       riskScore += -0.15;
     }
 
@@ -244,7 +251,10 @@ export class PrivacyEnhancer {
       factors.push({ factor: i18n.t('ai.privacy-enhancement.k7'), contribution: 0.2 });
       riskScore += 0.2;
     } else {
-      factors.push({ factor: `${i18n.t('ai.privacy-enhancement.k2')}${config.noise_strategy}`, contribution: -0.1 });
+      factors.push({
+        factor: `${i18n.t('ai.privacy-enhancement.k2')}${config.noise_strategy}`,
+        contribution: -0.1,
+      });
       riskScore += -0.1;
     }
 

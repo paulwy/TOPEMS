@@ -231,24 +231,21 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
     knowledgeQA.addDocument({
       title: i18n.t('ai.v55-copilot-panel.k3'),
-      content:
-        i18n.t('ai.v55-copilot-panel.k4'),
+      content: i18n.t('ai.v55-copilot-panel.k4'),
       source: i18n.t('ai.v55-copilot-panel.react_5'),
       tags: ['react', 'hooks', 'frontend'],
     });
 
     knowledgeQA.addDocument({
       title: i18n.t('ai.v55-copilot-panel.typescript_6'),
-      content:
-        i18n.t('ai.v55-copilot-panel.k7'),
+      content: i18n.t('ai.v55-copilot-panel.k7'),
       source: 'TypeScript Handbook',
       tags: ['typescript', 'types', 'programming'],
     });
 
     knowledgeQA.addDocument({
       title: i18n.t('ai.v55-copilot-panel.k8'),
-      content:
-        i18n.t('ai.v55-copilot-panel.k9'),
+      content: i18n.t('ai.v55-copilot-panel.k9'),
       source: 'MUI Documentation',
       tags: ['mui', 'react', 'ui', 'components'],
     });
@@ -324,7 +321,11 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setGeneratedDocs((prev) => [{ kind: genKind, name: genName, content: result }, ...prev]);
 
     setRecentActivity((prev) => [
-      { type: 'doc', description: `${i18n.t('ai.v55-copilot-panel.k14')} ${genKind} ${genName}`, timestamp: Date.now() },
+      {
+        type: 'doc',
+        description: `${i18n.t('ai.v55-copilot-panel.k14')} ${genKind} ${genName}`,
+        timestamp: Date.now(),
+      },
       ...prev,
     ]);
   };
@@ -371,13 +372,21 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           description: i18n.t('ai.v55-copilot-panel.k7'),
           signature: 'generateDoc(kind, name, options): string',
         },
-        { name: 'ask', description: i18n.t('ai.v55-copilot-panel.k8'), signature: 'ask(question: string): QAResult' },
+        {
+          name: 'ask',
+          description: i18n.t('ai.v55-copilot-panel.k8'),
+          signature: 'ask(question: string): QAResult',
+        },
       ],
     });
     setReadmeResult(result);
 
     setRecentActivity((prev) => [
-      { type: 'readme', description: i18n.t('ai.v55-copilot-panel.readme_9'), timestamp: Date.now() },
+      {
+        type: 'readme',
+        description: i18n.t('ai.v55-copilot-panel.readme_9'),
+        timestamp: Date.now(),
+      },
       ...prev,
     ]);
   };
@@ -434,7 +443,11 @@ const V55CopilotPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setQaStats(knowledgeQA.getStats());
 
     setRecentActivity((prev) => [
-      { type: 'doc', description: `${i18n.t('ai.v55-copilot-panel.k18')} ${newDocTitle}`, timestamp: Date.now() },
+      {
+        type: 'doc',
+        description: `${i18n.t('ai.v55-copilot-panel.k18')} ${newDocTitle}`,
+        timestamp: Date.now(),
+      },
       ...prev,
     ]);
   };
@@ -805,18 +818,22 @@ const NavigatorTab: React.FC<{
     </Stack>
 
     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-      <Card variant='outlined' sx={{ p: 2 }}>
+      <Card
+        variant='outlined'
+        sx={{ p: 2 }}
+      >
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
         >
           <FileCode size={16} />
-          {i18n.t('ai.v55-copilot-panel.k0')}{searchResults.length})
+          {i18n.t('ai.v55-copilot-panel.k0')}
+          {searchResults.length})
         </Typography>
         {searchResults.length === 0 && (
           <Alert severity='info'>
-            {i18n.t('ai.v55-copilot-panel.k1')}{' '}
-            <strong>Dashboard</strong>, <strong>fetchUser</strong>
+            {i18n.t('ai.v55-copilot-panel.k1')} <strong>Dashboard</strong>,{' '}
+            <strong>fetchUser</strong>
           </Alert>
         )}
         {searchResults.length > 0 && (
@@ -872,7 +889,10 @@ const NavigatorTab: React.FC<{
         )}
       </Card>
 
-      <Card variant='outlined' sx={{ p: 2 }}>
+      <Card
+        variant='outlined'
+        sx={{ p: 2 }}
+      >
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -944,7 +964,8 @@ const NavigatorTab: React.FC<{
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 1, fontSize: 12 }}
             >
-              {i18n.t('ai.v55-copilot-panel.k2')}{refs.length})
+              {i18n.t('ai.v55-copilot-panel.k2')}
+              {refs.length})
             </Typography>
             <Box sx={{ maxHeight: 150, overflow: 'auto' }}>
               {refs.length === 0 ? (
@@ -985,7 +1006,10 @@ const NavigatorTab: React.FC<{
     </Box>
 
     {selectedFile && (
-      <Card variant='outlined' sx={{ p: 2 }}>
+      <Card
+        variant='outlined'
+        sx={{ p: 2 }}
+      >
         <Typography
           variant='subtitle2'
           sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1003,7 +1027,8 @@ const NavigatorTab: React.FC<{
                 size={12}
                 style={{ verticalAlign: 'middle' }}
               />{' '}
-              {i18n.t('ai.v55-copilot-panel.k3')}{graphData.dependencies.length})
+              {i18n.t('ai.v55-copilot-panel.k3')}
+              {graphData.dependencies.length})
             </Typography>
             <Box sx={{ maxHeight: 150, overflow: 'auto' }}>
               {graphData.dependencies.length === 0 ? (
@@ -1035,7 +1060,8 @@ const NavigatorTab: React.FC<{
                 size={12}
                 style={{ verticalAlign: 'middle' }}
               />{' '}
-              {i18n.t('ai.v55-copilot-panel.k4')}{graphData.dependents.length})
+              {i18n.t('ai.v55-copilot-panel.k4')}
+              {graphData.dependents.length})
             </Typography>
             <Box sx={{ maxHeight: 150, overflow: 'auto' }}>
               {graphData.dependents.length === 0 ? (
@@ -1066,16 +1092,25 @@ const NavigatorTab: React.FC<{
           variant='caption'
           sx={{ fontWeight: 600, display: 'block', mb: 1 }}
         >
-          {i18n.t('ai.v55-copilot-panel.k5')}{selectedFile.symbols.length})
+          {i18n.t('ai.v55-copilot-panel.k5')}
+          {selectedFile.symbols.length})
         </Typography>
         <TableContainer>
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v55-copilot-panel.k21')}</TableCell>
-                <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v55-copilot-panel.k22')}</TableCell>
-                <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v55-copilot-panel.k23')}</TableCell>
-                <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>{i18n.t('ai.v55-copilot-panel.k24')}</TableCell>
+                <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>
+                  {i18n.t('ai.v55-copilot-panel.k21')}
+                </TableCell>
+                <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>
+                  {i18n.t('ai.v55-copilot-panel.k22')}
+                </TableCell>
+                <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>
+                  {i18n.t('ai.v55-copilot-panel.k23')}
+                </TableCell>
+                <TableCell sx={{ fontSize: 11, fontWeight: 600 }}>
+                  {i18n.t('ai.v55-copilot-panel.k24')}
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1118,7 +1153,8 @@ const NavigatorTab: React.FC<{
           variant='caption'
           sx={{ fontWeight: 600, display: 'block', mb: 1 }}
         >
-          {i18n.t('ai.v55-copilot-panel.k6')}{selectedFile.imports.length})
+          {i18n.t('ai.v55-copilot-panel.k6')}
+          {selectedFile.imports.length})
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
           {selectedFile.imports.map((imp, idx) => (
@@ -1209,7 +1245,10 @@ const GeneratorTab: React.FC<{
 
       {activeSubTab === 'jsdoc' && (
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-          <Card variant='outlined' sx={{ p: 2 }}>
+          <Card
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
@@ -1229,7 +1268,9 @@ const GeneratorTab: React.FC<{
                 >
                   <MenuItem value='function'>{i18n.t('ai.v55-copilot-panel.function_27')}</MenuItem>
                   <MenuItem value='class'>{i18n.t('ai.v55-copilot-panel.class_28')}</MenuItem>
-                  <MenuItem value='interface'>{i18n.t('ai.v55-copilot-panel.interface_29')}</MenuItem>
+                  <MenuItem value='interface'>
+                    {i18n.t('ai.v55-copilot-panel.interface_29')}
+                  </MenuItem>
                   <MenuItem value='type'>{i18n.t('ai.v55-copilot-panel.type_30')}</MenuItem>
                   <MenuItem value='method'>{i18n.t('ai.v55-copilot-panel.method_31')}</MenuItem>
                 </Select>
@@ -1268,7 +1309,10 @@ const GeneratorTab: React.FC<{
             </Stack>
           </Card>
 
-          <Card variant='outlined' sx={{ p: 2 }}>
+          <Card
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
@@ -1297,7 +1341,10 @@ const GeneratorTab: React.FC<{
                 <pre>{genResult}</pre>
               </Paper>
             ) : (
-              <Alert severity='info'>填写左侧表单并点击"{i18n.t('ai.v55-copilot-panel.k35')}"{i18n.t('ai.v55-copilot-panel.k47')}</Alert>
+              <Alert severity='info'>
+                填写左侧表单并点击"{i18n.t('ai.v55-copilot-panel.k35')}"
+                {i18n.t('ai.v55-copilot-panel.k47')}
+              </Alert>
             )}
 
             {generatedDocs.length > 0 && (
@@ -1327,7 +1374,10 @@ const GeneratorTab: React.FC<{
 
       {activeSubTab === 'changelog' && (
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
-          <Card variant='outlined' sx={{ p: 2 }}>
+          <Card
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
@@ -1357,7 +1407,8 @@ const GeneratorTab: React.FC<{
                 variant='subtitle2'
                 sx={{ fontWeight: 600, fontSize: 12 }}
               >
-                {i18n.t('ai.v55-copilot-panel.k7')}{changelogEntries.length})
+                {i18n.t('ai.v55-copilot-panel.k7')}
+                {changelogEntries.length})
               </Typography>
               <Box sx={{ maxHeight: 200, overflow: 'auto' }}>
                 {changelogEntries.length === 0 ? (
@@ -1404,7 +1455,10 @@ const GeneratorTab: React.FC<{
             </Stack>
           </Card>
 
-          <Card variant='outlined' sx={{ p: 2 }}>
+          <Card
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
@@ -1431,14 +1485,20 @@ const GeneratorTab: React.FC<{
                 <pre>{readmeResult}</pre>
               </Paper>
             ) : (
-              <Alert severity='info'>点击"{i18n.t('ai.prompt.action.generate')} Changelog"{i18n.t('ai.v55-copilot-panel.k47')}</Alert>
+              <Alert severity='info'>
+                点击"{i18n.t('ai.prompt.action.generate')} Changelog"
+                {i18n.t('ai.v55-copilot-panel.k47')}
+              </Alert>
             )}
           </Card>
         </Box>
       )}
 
       {activeSubTab === 'readme' && (
-        <Card variant='outlined' sx={{ p: 2 }}>
+        <Card
+          variant='outlined'
+          sx={{ p: 2 }}
+        >
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600, mb: 2 }}
@@ -1722,7 +1782,10 @@ const QATab: React.FC<{
                 borderRadius: 2,
                 bgcolor: msg.role === 'user' ? designTokens.colors.secondary.main : 'white',
                 color: msg.role === 'user' ? 'white' : 'inherit',
-                border: msg.role === 'assistant' ? `1px solid ${designTokens.colors.grey['200']}` : 'none',
+                border:
+                  msg.role === 'assistant'
+                    ? `1px solid ${designTokens.colors.grey['200']}`
+                    : 'none',
               }}
             >
               <Typography
@@ -1739,7 +1802,12 @@ const QATab: React.FC<{
           <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
             <Paper
               elevation={1}
-              sx={{ p: 2, borderRadius: 2, bgcolor: 'common.white', border: `1px solid ${designTokens.colors.grey['200']}` }}
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                bgcolor: 'common.white',
+                border: `1px solid ${designTokens.colors.grey['200']}`,
+              }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CircularProgress size={14} />
@@ -1873,7 +1941,10 @@ const ActivityTab: React.FC<{
         {i18n.t('ai.v55-copilot-panel.k66')}
       </Typography>
 
-      <Card variant='outlined' sx={{ p: 2 }}>
+      <Card
+        variant='outlined'
+        sx={{ p: 2 }}
+      >
         {activity.length === 0 ? (
           <Alert severity='info'>{i18n.t('ai.v55-copilot-panel.k43')}</Alert>
         ) : (
@@ -1939,7 +2010,10 @@ const ActivityTab: React.FC<{
         sx={{ mt: 2 }}
       >
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card variant='outlined' sx={{ p: 2 }}>
+          <Card
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
             <Typography
               variant='caption'
               color='text.secondary'
@@ -1955,7 +2029,10 @@ const ActivityTab: React.FC<{
           </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card variant='outlined' sx={{ p: 2 }}>
+          <Card
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
             <Typography
               variant='caption'
               color='text.secondary'
@@ -1971,7 +2048,10 @@ const ActivityTab: React.FC<{
           </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card variant='outlined' sx={{ p: 2 }}>
+          <Card
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
             <Typography
               variant='caption'
               color='text.secondary'
@@ -1987,7 +2067,10 @@ const ActivityTab: React.FC<{
           </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card variant='outlined' sx={{ p: 2 }}>
+          <Card
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
             <Typography
               variant='caption'
               color='text.secondary'

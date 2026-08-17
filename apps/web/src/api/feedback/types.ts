@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type FeedbackType = 'bug' | 'feature' | 'improvement' | 'question' | 'other';
 
 export type FeedbackStatus = 'pending' | 'processing' | 'resolved' | 'closed';

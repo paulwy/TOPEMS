@@ -39,63 +39,87 @@ const InquiryQuotationPage: React.FC = () => {
   });
 
   const invalidateInquiries = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SRM.INQUIRIES ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.SRM.INQUIRIES,
+      exact: false,
+      refetchType: 'active',
+    });
   };
 
   const publishMutation = useMutation({
     mutationFn: async (id: string) => srmApi.publishInquiry(id),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.SRM.STATISTICS,
-          exact: false,
-          refetchType: 'active',
-        });
-      addNotification({ type: 'success', title: i18n.t('pages.inquiry_quotation_page.k1'), message: i18n.t('pages.inquiry_quotation_page.k0') });
+        queryKey: QUERY_KEYS.SRM.STATISTICS,
+        exact: false,
+        refetchType: 'active',
+      });
+      addNotification({
+        type: 'success',
+        title: i18n.t('pages.inquiry_quotation_page.k1'),
+        message: i18n.t('pages.inquiry_quotation_page.k0'),
+      });
       invalidateInquiries();
     },
     onError: () => {
-      addNotification({ type: 'error', title: i18n.t('pages.inquiry_quotation_page.k3'), message: i18n.t('pages.inquiry_quotation_page.k2') });
+      addNotification({
+        type: 'error',
+        title: i18n.t('pages.inquiry_quotation_page.k3'),
+        message: i18n.t('pages.inquiry_quotation_page.k2'),
+      });
     },
   });
 
   const awardMutation = useMutation({
     mutationFn: async (id: string) => srmApi.awardQuotation(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: i18n.t('pages.inquiry_quotation_page.k5'), message: i18n.t('pages.inquiry_quotation_page.k4') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('pages.inquiry_quotation_page.k5'),
+        message: i18n.t('pages.inquiry_quotation_page.k4'),
+      });
       invalidateInquiries();
       if (viewingInquiry) {
         queryClient.invalidateQueries({
           queryKey: [...QUERY_KEYS.SRM.QUOTATIONS, viewingInquiry.id],
-        
-  exact: false,
-  refetchType: 'active',
-});
+
+          exact: false,
+          refetchType: 'active',
+        });
       }
     },
     onError: () => {
-      addNotification({ type: 'error', title: i18n.t('pages.inquiry_quotation_page.k7'), message: i18n.t('pages.inquiry_quotation_page.k6') });
+      addNotification({
+        type: 'error',
+        title: i18n.t('pages.inquiry_quotation_page.k7'),
+        message: i18n.t('pages.inquiry_quotation_page.k6'),
+      });
     },
   });
 
   const rejectMutation = useMutation({
     mutationFn: async (id: string) => srmApi.rejectQuotation(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: i18n.t('pages.inquiry_quotation_page.k9'), message: i18n.t('pages.inquiry_quotation_page.k8') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('pages.inquiry_quotation_page.k9'),
+        message: i18n.t('pages.inquiry_quotation_page.k8'),
+      });
       if (viewingInquiry) {
         queryClient.invalidateQueries({
           queryKey: [...QUERY_KEYS.SRM.QUOTATIONS, viewingInquiry.id],
-        
-  exact: false,
-  refetchType: 'active',
-});
+
+          exact: false,
+          refetchType: 'active',
+        });
       }
     },
     onError: () => {
-      addNotification({ type: 'error', title: i18n.t('pages.inquiry_quotation_page.k11'), message: i18n.t('pages.inquiry_quotation_page.k10') });
+      addNotification({
+        type: 'error',
+        title: i18n.t('pages.inquiry_quotation_page.k11'),
+        message: i18n.t('pages.inquiry_quotation_page.k10'),
+      });
     },
   });
 
@@ -116,7 +140,11 @@ const InquiryQuotationPage: React.FC = () => {
 
   const handlePublish = useCallback(
     (inquiry: Inquiry) => {
-      if (window.confirm(`${i18n.t('pages.inquiry_quotation_page.k0')}${inquiry.inquiry_no}${i18n.t('pages.inquiry_quotation_page.k1')}`)) {
+      if (
+        window.confirm(
+          `${i18n.t('pages.inquiry_quotation_page.k0')}${inquiry.inquiry_no}${i18n.t('pages.inquiry_quotation_page.k1')}`
+        )
+      ) {
         publishMutation.mutate(inquiry.id);
       }
     },
@@ -164,7 +192,10 @@ const InquiryQuotationPage: React.FC = () => {
     const draft = rows.filter((r) => r.status === 'draft').length;
     const published = rows.filter((r) => r.status === 'published').length;
     const inProgress = rows.filter((r) => r.status === 'in_progress').length;
-    const totalQuotations = rows.reduce((sum, r) => sum + ((r as Record<string, number>).quotation_count || 0), 0);
+    const totalQuotations = rows.reduce(
+      (sum, r) => sum + ((r as Record<string, number>).quotation_count || 0),
+      0
+    );
 
     return (
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
@@ -172,8 +203,16 @@ const InquiryQuotationPage: React.FC = () => {
           { label: i18n.t('pages.inquiry_quotation_page.k14'), value: total, color: 'primary' },
           { label: i18n.t('pages.inquiry_quotation_page.k15'), value: draft, color: 'default' },
           { label: i18n.t('pages.inquiry_quotation_page.k16'), value: published, color: 'info' },
-          { label: i18n.t('pages.inquiry_quotation_page.k17'), value: inProgress, color: 'warning' },
-          { label: i18n.t('pages.inquiry_quotation_page.k18'), value: totalQuotations, color: 'success' },
+          {
+            label: i18n.t('pages.inquiry_quotation_page.k17'),
+            value: inProgress,
+            color: 'warning',
+          },
+          {
+            label: i18n.t('pages.inquiry_quotation_page.k18'),
+            value: totalQuotations,
+            color: 'success',
+          },
         ].map((stat) => (
           <Box
             key={stat.label}
@@ -217,11 +256,15 @@ const InquiryQuotationPage: React.FC = () => {
       </Box>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, mb: 2 }}>
         <Box>
-          <Box sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.inquiry_quotation_page.k19')}</Box>
+          <Box sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('pages.inquiry_quotation_page.k19')}
+          </Box>
           <Box sx={{ fontWeight: 600 }}>{inquiry.quotation_count || 0}</Box>
         </Box>
         <Box>
-          <Box sx={{ fontSize: 12, color: 'text.secondary' }}>{i18n.t('pages.inquiry_quotation_page.k20')}</Box>
+          <Box sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('pages.inquiry_quotation_page.k20')}
+          </Box>
           <Box sx={{ fontWeight: 600 }}>
             {inquiry.deadline ? new Date(inquiry.deadline).toLocaleDateString('zh-CN') : '-'}
           </Box>
@@ -229,7 +272,9 @@ const InquiryQuotationPage: React.FC = () => {
       </Box>
       {inquiry.description && (
         <Box sx={{ mt: 2 }}>
-          <Box sx={{ fontSize: 12, color: 'text.secondary', mb: 0.5 }}>{i18n.t('pages.inquiry_quotation_page.k21')}</Box>
+          <Box sx={{ fontSize: 12, color: 'text.secondary', mb: 0.5 }}>
+            {i18n.t('pages.inquiry_quotation_page.k21')}
+          </Box>
           <Box sx={{ fontSize: 14 }}>{inquiry.description}</Box>
         </Box>
       )}

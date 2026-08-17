@@ -62,7 +62,10 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
       { key: 'conclusion', label: i18n.t('templates.template_ai_helper.k3'), type: 'string' },
       { key: 'reporter', label: i18n.t('templates.template_ai_helper.k4'), type: 'user' },
     ],
-    suggestions: [i18n.t('templates.template_ai_helper.k6'), i18n.t('templates.template_ai_helper.k5')],
+    suggestions: [
+      i18n.t('templates.template_ai_helper.k6'),
+      i18n.t('templates.template_ai_helper.k5'),
+    ],
   };
 
   const handleGenerate = async () => {
@@ -112,7 +115,9 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
     });
 
     onVariablesChange(newVariables);
-    setSuggestions([`${i18n.t('components.template_ai_helper.k0')}${detectedVars.length}${i18n.t('components.template_ai_helper.k1')}`]);
+    setSuggestions([
+      `${i18n.t('components.template_ai_helper.k0')}${detectedVars.length}${i18n.t('components.template_ai_helper.k1')}`,
+    ]);
     setIsAnalyzing(false);
   };
 
@@ -158,11 +163,15 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
     };
 
     if (unusedVars.length > 0) {
-      result.suggestions.push(`${i18n.t('components.template_ai_helper.k2')}${unusedVars.map((v) => v.key).join(', ')}`);
+      result.suggestions.push(
+        `${i18n.t('components.template_ai_helper.k2')}${unusedVars.map((v) => v.key).join(', ')}`
+      );
     }
 
     if (undefinedVars.length > 0) {
-      result.suggestions.push(`${i18n.t('components.template_ai_helper.k3')}${undefinedVars.join(', ')}`);
+      result.suggestions.push(
+        `${i18n.t('components.template_ai_helper.k3')}${undefinedVars.join(', ')}`
+      );
     }
 
     if (result.suggestions.length === 0) {
@@ -288,7 +297,9 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
               )
             }
           >
-            {isGenerating ? i18n.t('components.template_ai_helper.k5') : i18n.t('components.template_ai_helper.ai_4')}
+            {isGenerating
+              ? i18n.t('components.template_ai_helper.k5')
+              : i18n.t('components.template_ai_helper.ai_4')}
           </Button>
         </div>
 
@@ -342,7 +353,9 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
             )
           }
         >
-          {isAnalyzing ? i18n.t('components.template_ai_helper.k6') : i18n.t('templates.template_ai_helper.k30')}
+          {isAnalyzing
+            ? i18n.t('components.template_ai_helper.k6')
+            : i18n.t('templates.template_ai_helper.k30')}
         </Button>
 
         {suggestions.length > 0 && (
@@ -383,11 +396,13 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
                     borderRadius: 8,
                     padding: `${designTokens.spacing.sm} 12px`,
                     backgroundColor:
-                      suggestion.includes(i18n.t('templates.template_ai_helper.k32')) || suggestion.includes(i18n.t('templates.template_ai_helper.k31'))
+                      suggestion.includes(i18n.t('templates.template_ai_helper.k32')) ||
+                      suggestion.includes(i18n.t('templates.template_ai_helper.k31'))
                         ? theme.palette.error.light
                         : theme.palette.success.light,
                     color:
-                      suggestion.includes(i18n.t('templates.template_ai_helper.k34')) || suggestion.includes(i18n.t('templates.template_ai_helper.k33'))
+                      suggestion.includes(i18n.t('templates.template_ai_helper.k34')) ||
+                      suggestion.includes(i18n.t('templates.template_ai_helper.k33'))
                         ? 'error.darker'
                         : 'success.700',
                   }}

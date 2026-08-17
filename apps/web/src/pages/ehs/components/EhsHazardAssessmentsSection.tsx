@@ -12,7 +12,7 @@ import { calculateRiskLevel } from '@/components/ehs';
 import { designTokens } from '@/theme/tokens';
 import type { RiskAssessment } from '@/api/ehs';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 export interface EhsHazardAssessmentsSectionProps {
   assessments: RiskAssessment[];

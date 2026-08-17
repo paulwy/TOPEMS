@@ -31,10 +31,30 @@ const MaterialStats: React.FC = () => {
   const inactive = materials.filter((m) => m.status === 'inactive').length;
   const obsolete = materials.filter((m) => m.status === 'obsolete').length;
   const statCards = [
-    { label: i18n.t('erp.material_management_page.k1'), value: total, color: 'primary.lighter', textColor: 'text.secondary' },
-    { label: i18n.t('erp.material_management_page.k2'), value: active, color: 'success.lighter', textColor: 'success.dark' },
-    { label: i18n.t('erp.material_management_page.k3'), value: inactive, color: 'grey.100', textColor: 'text.secondary' },
-    { label: i18n.t('erp.material_management_page.k4'), value: obsolete, color: 'error.lighter', textColor: 'error.dark' },
+    {
+      label: i18n.t('erp.material_management_page.k1'),
+      value: total,
+      color: 'primary.lighter',
+      textColor: 'text.secondary',
+    },
+    {
+      label: i18n.t('erp.material_management_page.k2'),
+      value: active,
+      color: 'success.lighter',
+      textColor: 'success.dark',
+    },
+    {
+      label: i18n.t('erp.material_management_page.k3'),
+      value: inactive,
+      color: 'grey.100',
+      textColor: 'text.secondary',
+    },
+    {
+      label: i18n.t('erp.material_management_page.k4'),
+      value: obsolete,
+      color: 'error.lighter',
+      textColor: 'error.dark',
+    },
   ];
   return (
     <Box

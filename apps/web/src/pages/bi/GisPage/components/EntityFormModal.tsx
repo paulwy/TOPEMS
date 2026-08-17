@@ -14,6 +14,7 @@ import i18n from '@/i18n';
 import { X } from 'lucide-react';
 import type { TabType, ModalType, FormErrors, GisEntity } from '../types';
 import { InputField, TextAreaField } from './TableUtils';
+
 interface EntityFormModalProps {
   open: boolean;
   modalType: ModalType;

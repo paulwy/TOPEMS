@@ -3,6 +3,7 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { purchaseOrderSchema } from '@/schemas/erp/purchaseOrder';
 import { erpApi } from '@/api/erp';
 import i18n from '@/i18n';
+
 const purchaseOrderApiAdapter: CrudApiAdapter = {
   list: async (params) => {
     const response = await erpApi.purchaseOrders.list({

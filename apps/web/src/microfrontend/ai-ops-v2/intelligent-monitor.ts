@@ -204,7 +204,9 @@ export class IntelligentMonitor {
       for (let i = 1; i <= 5; i++) {
         const predictedValue = meanY + slope * (n + i - 1);
         forecast.push(predictedValue);
-        {i18n.t('microfrontend.intelligent-monitor.k0')}
+        {
+          i18n.t('microfrontend.intelligent-monitor.k0');
+        }
       }
     }
 

@@ -55,7 +55,6 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 import { bffGraphQL } from '@/api/bff';
 import { logger } from '@/utils/logger';
 
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const suspenseLogger = logger.child({ prefix: 'BFF-Suspense' });

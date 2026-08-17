@@ -14,7 +14,11 @@ export const ApsConfigPage: React.FC = () => {
         const m = mesApi as any;
         const tryFn = async (fn?: () => Promise<unknown>) => {
           if (typeof fn !== 'function') return null;
-          try { return await fn(); } catch { return null; }
+          try {
+            return await fn();
+          } catch {
+            return null;
+          }
         };
         const r1 = await tryFn(m.aps?.health);
         if (r1) return (r1 as { data?: unknown })?.data ?? {};

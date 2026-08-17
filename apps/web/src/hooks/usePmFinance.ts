@@ -21,8 +21,9 @@ export const useProjectFinance = (projectId: string) => {
       return response.data;
     },
     enabled: !!projectId,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -38,8 +39,9 @@ export const useProjectBudgetItems = (projectId: string) => {
       return response.data;
     },
     enabled: !!projectId,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };
 
 /**
@@ -60,6 +62,7 @@ export const useProjectCostPerformance = (projectId: string) => {
       return response.data;
     },
     enabled: !!projectId,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 };

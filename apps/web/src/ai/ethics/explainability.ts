@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type ExplainabilityMethod = 'SHAP' | 'LIME' | 'Attention';
 
 export interface Explanation {
@@ -277,11 +278,15 @@ export class ExplainabilityEngine {
       Attention: i18n.t('ai.explainability.k5'),
     };
 
-    const parts = [`${i18n.t('ai.explainability.k2')}${methodLabels[method]}${i18n.t('ai.explainability.k3')}`];
+    const parts = [
+      `${i18n.t('ai.explainability.k2')}${methodLabels[method]}${i18n.t('ai.explainability.k3')}`,
+    ];
 
     for (const [feature, value] of topFeatures) {
       const direction = value > 0 ? i18n.t('ai.explainability.k7') : i18n.t('ai.explainability.k6');
-      parts.push(`- ${feature}${i18n.t('ai.explainability.k4')}${direction}${i18n.t('ai.explainability.k5')}${Math.abs(value).toFixed(3)})`);
+      parts.push(
+        `- ${feature}${i18n.t('ai.explainability.k4')}${direction}${i18n.t('ai.explainability.k5')}${Math.abs(value).toFixed(3)})`
+      );
     }
 
     if (topFeatures.length === 0) {

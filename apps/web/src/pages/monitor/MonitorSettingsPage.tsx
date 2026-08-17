@@ -9,6 +9,7 @@ import {
 } from '@/components/templates';
 import i18n from '@/i18n';
 import { monitorApi } from '@/api/monitor';
+
 export const MonitorSettingsPage: React.FC = () => {
   const { data: backendData } = useQuery({
     queryKey: ['monitor', 'settings'],

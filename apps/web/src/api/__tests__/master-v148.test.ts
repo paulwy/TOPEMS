@@ -55,14 +55,23 @@ describe('V148 masterData Quality Enhanced API bindings', () => {
 
     it('should list rules with filters', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-      await dataQualityEnhancedApiV65.listRules({ type: 'completeness', severity: 'critical', page: 1, pageSize: 20 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v65/rules?type=completeness&severity=critical&page=1&pagesize=20');
+      await dataQualityEnhancedApiV65.listRules({
+        type: 'completeness',
+        severity: 'critical',
+        page: 1,
+        pageSize: 20,
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v65/rules?type=completeness&severity=critical&page=1&pagesize=20'
+      );
     });
 
     it('should update rule', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await dataQualityEnhancedApiV65.updateRule('r-1', { description: '更新描述' });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v65/rules/r-1', { description: '更新描述' });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v65/rules/r-1', {
+        description: '更新描述',
+      });
     });
 
     it('should delete rule', async () => {
@@ -85,7 +94,10 @@ describe('V148 masterData Quality Enhanced API bindings', () => {
 
     it('should test rule', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
-      await dataQualityEnhancedApiV65.testRule('r-1', { entity_type: 'customer', entity_ids: ['c-1'] });
+      await dataQualityEnhancedApiV65.testRule('r-1', {
+        entity_type: 'customer',
+        entity_ids: ['c-1'],
+      });
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v65/rules/r-1/test', {
         entity_type: 'customer',
         entity_ids: ['c-1'],
@@ -112,7 +124,10 @@ describe('V148 masterData Quality Enhanced API bindings', () => {
 
     it('should import rules', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
-      await dataQualityEnhancedApiV65.importRules({ file_url: 'http://example.com/rules.json', conflict_strategy: 'skip' });
+      await dataQualityEnhancedApiV65.importRules({
+        file_url: 'http://example.com/rules.json',
+        conflict_strategy: 'skip',
+      });
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v65/rules/import', {
         file_url: 'http://example.com/rules.json',
         conflict_strategy: 'skip',
@@ -124,7 +139,10 @@ describe('V148 masterData Quality Enhanced API bindings', () => {
   describe('Rule Execution Engine', () => {
     it('should execute rules', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: [] });
-      await dataQualityEnhancedApiV65.executeRules({ rule_ids: ['r-1', 'r-2'], entity_types: ['customer'] });
+      await dataQualityEnhancedApiV65.executeRules({
+        rule_ids: ['r-1', 'r-2'],
+        entity_types: ['customer'],
+      });
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v65/execute', {
         rule_ids: ['r-1', 'r-2'],
         entity_types: ['customer'],
@@ -134,13 +152,22 @@ describe('V148 masterData Quality Enhanced API bindings', () => {
     it('should execute single rule by id', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
       await dataQualityEnhancedApiV65.executeRuleById('r-1', { entity_type: 'customer' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v65/execute/r-1', { entity_type: 'customer' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v65/execute/r-1', {
+        entity_type: 'customer',
+      });
     });
 
     it('should get execution history', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-      await dataQualityEnhancedApiV65.getExecutionHistory({ rule_id: 'r-1', passed: true, page: 1, pageSize: 20 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v65/executions?rule_id=r-1&passed=true&page=1&pagesize=20');
+      await dataQualityEnhancedApiV65.getExecutionHistory({
+        rule_id: 'r-1',
+        passed: true,
+        page: 1,
+        pageSize: 20,
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v65/executions?rule_id=r-1&passed=true&page=1&pagesize=20'
+      );
     });
   });
 
@@ -148,7 +175,10 @@ describe('V148 masterData Quality Enhanced API bindings', () => {
   describe('Quality Scoring', () => {
     it('should calculate score', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: [] });
-      await dataQualityEnhancedApiV65.calculateScore({ entity_type: 'customer', dimensions: ['completeness', 'accuracy'] });
+      await dataQualityEnhancedApiV65.calculateScore({
+        entity_type: 'customer',
+        dimensions: ['completeness', 'accuracy'],
+      });
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v65/scores', {
         entity_type: 'customer',
         dimensions: ['completeness', 'accuracy'],
@@ -169,13 +199,22 @@ describe('V148 masterData Quality Enhanced API bindings', () => {
 
     it('should get score trend', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: [] });
-      await dataQualityEnhancedApiV65.getScoreTrend('customer', { entity_id: 'c-1', dimension: 'overall', days: 7 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v65/scores/customer/trend?entity_id=c-1&dimension=overall&days=7');
+      await dataQualityEnhancedApiV65.getScoreTrend('customer', {
+        entity_id: 'c-1',
+        dimension: 'overall',
+        days: 7,
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v65/scores/customer/trend?entity_id=c-1&dimension=overall&days=7'
+      );
     });
 
     it('should compare scores', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { entities: [] } });
-      await dataQualityEnhancedApiV65.compareScores({ entity_type: 'customer', entity_ids: ['c-1', 'c-2'] });
+      await dataQualityEnhancedApiV65.compareScores({
+        entity_type: 'customer',
+        entity_ids: ['c-1', 'c-2'],
+      });
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v65/scores/compare', {
         entity_type: 'customer',
         entity_ids: ['c-1', 'c-2'],
@@ -187,8 +226,14 @@ describe('V148 masterData Quality Enhanced API bindings', () => {
   describe('Quality Issue Management', () => {
     it('should list issues with filters', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-      await dataQualityEnhancedApiV65.listIssues({ entity_type: 'customer', status: 'open', severity: 'critical' });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v65/issues?entity_type=customer&status=open&severity=critical');
+      await dataQualityEnhancedApiV65.listIssues({
+        entity_type: 'customer',
+        status: 'open',
+        severity: 'critical',
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v65/issues?entity_type=customer&status=open&severity=critical'
+      );
     });
 
     it('should get issue', async () => {
@@ -199,7 +244,10 @@ describe('V148 masterData Quality Enhanced API bindings', () => {
 
     it('should update issue', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
-      await dataQualityEnhancedApiV65.updateIssue('i-1', { status: 'in_progress', assigned_to: 'user-1' });
+      await dataQualityEnhancedApiV65.updateIssue('i-1', {
+        status: 'in_progress',
+        assigned_to: 'user-1',
+      });
       expect(mockClient.put).toHaveBeenCalledWith('/mdm-v65/issues/i-1', {
         status: 'in_progress',
         assigned_to: 'user-1',
@@ -216,7 +264,10 @@ describe('V148 masterData Quality Enhanced API bindings', () => {
 
     it('should bulk resolve issues', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { resolved: 5 } });
-      await dataQualityEnhancedApiV65.bulkResolveIssues({ issue_ids: ['i-1', 'i-2'], resolution: '批量修复完成' });
+      await dataQualityEnhancedApiV65.bulkResolveIssues({
+        issue_ids: ['i-1', 'i-2'],
+        resolution: '批量修复完成',
+      });
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v65/issues/bulk-resolve', {
         issue_ids: ['i-1', 'i-2'],
         resolution: '批量修复完成',
@@ -245,7 +296,9 @@ describe('V148 masterData Quality Enhanced API bindings', () => {
     it('should list reports', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await dataQualityEnhancedApiV65.listReports({ report_type: 'entity', status: 'completed' });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v65/reports?report_type=entity&status=completed');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v65/reports?report_type=entity&status=completed'
+      );
     });
 
     it('should get report', async () => {

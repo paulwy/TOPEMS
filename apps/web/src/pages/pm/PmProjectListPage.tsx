@@ -11,7 +11,8 @@ import type { Project } from '@/api/pm';
 import { PM_PATHS } from '@/modules/pm/config';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const projectApiAdapter: CrudApiAdapter<Project> = {
   list: async (params) => {
     const response = await pmApi.projects.list({
@@ -98,23 +99,31 @@ const PmProjectListPage: React.FC = () => {
           }}
         >
           <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1, p: 2 }}>
-            <Box sx={{ fontSize: '0.875rem', color: 'grey.600' }}>{i18n.t('pm.pm_project_list_page.k6')}</Box>
+            <Box sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+              {i18n.t('pm.pm_project_list_page.k6')}
+            </Box>
             <Box sx={{ fontSize: '1.5rem', fontWeight: 700 }}>{rows.length}</Box>
           </Box>
           <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1, p: 2 }}>
-            <Box sx={{ fontSize: '0.875rem', color: 'success.dark' }}>{i18n.t('pm.pm_project_list_page.k7')}</Box>
+            <Box sx={{ fontSize: '0.875rem', color: 'success.dark' }}>
+              {i18n.t('pm.pm_project_list_page.k7')}
+            </Box>
             <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'success.dark' }}>
               {activeCount}
             </Box>
           </Box>
           <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1, p: 2 }}>
-            <Box sx={{ fontSize: '0.875rem', color: 'warning.dark' }}>{i18n.t('pm.pm_project_list_page.k8')}</Box>
+            <Box sx={{ fontSize: '0.875rem', color: 'warning.dark' }}>
+              {i18n.t('pm.pm_project_list_page.k8')}
+            </Box>
             <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'warning.dark' }}>
               {pendingCount}
             </Box>
           </Box>
           <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1, p: 2 }}>
-            <Box sx={{ fontSize: '0.875rem', color: 'primary.dark' }}>{i18n.t('pm.pm_project_list_page.k9')}</Box>
+            <Box sx={{ fontSize: '0.875rem', color: 'primary.dark' }}>
+              {i18n.t('pm.pm_project_list_page.k9')}
+            </Box>
             <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'primary.dark' }}>
               {completedCount}
             </Box>
@@ -152,7 +161,10 @@ const PmProjectListPage: React.FC = () => {
         apiAdapter={projectApiAdapter}
         customRowActions={customRowActions}
         headerContent={headerContent}
-        breadcrumbs={[{ label: i18n.t('pm.pm_project_list_page.k23'), href: '/dashboard' }, { label: i18n.t('pm.pm_project_list_page.k22') }]}
+        breadcrumbs={[
+          { label: i18n.t('pm.pm_project_list_page.k23'), href: '/dashboard' },
+          { label: i18n.t('pm.pm_project_list_page.k22') },
+        ]}
       />
     </PageContainer>
   );

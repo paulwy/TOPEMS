@@ -103,7 +103,8 @@ describe('classifyMFError', () => {
 
   it('extracts chunk URL from error stack', () => {
     const error = new Error('Failed to fetch');
-    error.stack = 'Error: Failed to fetch\n    at https://example.com/remote/topems_erp/assets/chunk-abc.js';
+    error.stack =
+      'Error: Failed to fetch\n    at https://example.com/remote/topems_erp/assets/chunk-abc.js';
     const event = classifyMFError({
       error,
       remoteInfo: { name: 'topems_erp' },

@@ -51,7 +51,12 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
     category: 'HR',
     fields: [
       { name: 'position', type: 'text', label: i18n.t('shared.ai-templates.k11'), required: true },
-      { name: 'department', type: 'text', label: i18n.t('shared.ai-templates.k12'), required: true },
+      {
+        name: 'department',
+        type: 'text',
+        label: i18n.t('shared.ai-templates.k12'),
+        required: true,
+      },
       {
         name: 'responsibilities',
         type: 'textarea',
@@ -85,7 +90,12 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
     description: i18n.t('shared.ai-templates.k16'),
     category: i18n.t('shared.ai-templates.k17'),
     fields: [
-      { name: 'projectName', type: 'text', label: i18n.t('shared.ai-templates.k18'), required: true },
+      {
+        name: 'projectName',
+        type: 'text',
+        label: i18n.t('shared.ai-templates.k18'),
+        required: true,
+      },
       {
         name: 'objective',
         type: 'textarea',
@@ -93,7 +103,12 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
         required: true,
       },
       { name: 'scope', type: 'textarea', label: i18n.t('shared.ai-templates.k20'), required: true },
-      { name: 'timeline', type: 'textarea', label: i18n.t('shared.ai-templates.k21'), required: true },
+      {
+        name: 'timeline',
+        type: 'textarea',
+        label: i18n.t('shared.ai-templates.k21'),
+        required: true,
+      },
     ],
     promptTemplate: `你是一位资深的项目经理，请根据以下信息生成一份完整的项目立项书：
 
@@ -118,7 +133,12 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
     fields: [
       { name: 'partyA', type: 'text', label: i18n.t('shared.ai-templates.k25'), required: true },
       { name: 'partyB', type: 'text', label: i18n.t('shared.ai-templates.k26'), required: true },
-      { name: 'contractType', type: 'text', label: i18n.t('shared.ai-templates.k27'), required: true },
+      {
+        name: 'contractType',
+        type: 'text',
+        label: i18n.t('shared.ai-templates.k27'),
+        required: true,
+      },
       {
         name: 'effectiveDate',
         type: 'text',
@@ -156,17 +176,37 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
     description: i18n.t('shared.ai-templates.k31'),
     category: 'HR',
     fields: [
-      { name: 'companyName', type: 'text', label: i18n.t('shared.ai-templates.k32'), required: true },
+      {
+        name: 'companyName',
+        type: 'text',
+        label: i18n.t('shared.ai-templates.k32'),
+        required: true,
+      },
       { name: 'position', type: 'text', label: i18n.t('shared.ai-templates.k33'), required: true },
-      { name: 'department', type: 'text', label: i18n.t('shared.ai-templates.k34'), required: true },
+      {
+        name: 'department',
+        type: 'text',
+        label: i18n.t('shared.ai-templates.k34'),
+        required: true,
+      },
       {
         name: 'jobRequirements',
         type: 'textarea',
         label: i18n.t('shared.ai-templates.k35'),
         required: true,
       },
-      { name: 'benefits', type: 'textarea', label: i18n.t('shared.ai-templates.k36'), required: true },
-      { name: 'contactInfo', type: 'text', label: i18n.t('shared.ai-templates.k37'), required: true },
+      {
+        name: 'benefits',
+        type: 'textarea',
+        label: i18n.t('shared.ai-templates.k36'),
+        required: true,
+      },
+      {
+        name: 'contactInfo',
+        type: 'text',
+        label: i18n.t('shared.ai-templates.k37'),
+        required: true,
+      },
     ],
     promptTemplate: `你是一位专业的招聘专家，请根据以下信息生成一份吸引人的招聘启事：
 
@@ -191,16 +231,36 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
     description: i18n.t('shared.ai-templates.k39'),
     category: i18n.t('shared.ai-templates.k40'),
     fields: [
-      { name: 'projectName', type: 'text', label: i18n.t('shared.ai-templates.k41'), required: true },
-      { name: 'reportPeriod', type: 'text', label: i18n.t('shared.ai-templates.k42'), required: true },
+      {
+        name: 'projectName',
+        type: 'text',
+        label: i18n.t('shared.ai-templates.k41'),
+        required: true,
+      },
+      {
+        name: 'reportPeriod',
+        type: 'text',
+        label: i18n.t('shared.ai-templates.k42'),
+        required: true,
+      },
       {
         name: 'progressSummary',
         type: 'textarea',
         label: i18n.t('shared.ai-templates.k43'),
         required: true,
       },
-      { name: 'problems', type: 'textarea', label: i18n.t('shared.ai-templates.k44'), required: true },
-      { name: 'nextPlan', type: 'textarea', label: i18n.t('shared.ai-templates.k45'), required: true },
+      {
+        name: 'problems',
+        type: 'textarea',
+        label: i18n.t('shared.ai-templates.k44'),
+        required: true,
+      },
+      {
+        name: 'nextPlan',
+        type: 'textarea',
+        label: i18n.t('shared.ai-templates.k45'),
+        required: true,
+      },
     ],
     promptTemplate: `你是一位专业的项目经理，请根据以下信息生成一份清晰完整的项目周报：
 
@@ -224,7 +284,12 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
     description: i18n.t('shared.ai-templates.k47'),
     category: 'HR',
     fields: [
-      { name: 'employeeName', type: 'text', label: i18n.t('shared.ai-templates.k48'), required: true },
+      {
+        name: 'employeeName',
+        type: 'text',
+        label: i18n.t('shared.ai-templates.k48'),
+        required: true,
+      },
       { name: 'position', type: 'text', label: i18n.t('shared.ai-templates.k49'), required: true },
       { name: 'period', type: 'text', label: i18n.t('shared.ai-templates.k50'), required: true },
       {
@@ -262,7 +327,12 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
     description: i18n.t('shared.ai-templates.k54'),
     category: i18n.t('shared.ai-templates.k55'),
     fields: [
-      { name: 'companyName', type: 'text', label: i18n.t('shared.ai-templates.k56'), required: true },
+      {
+        name: 'companyName',
+        type: 'text',
+        label: i18n.t('shared.ai-templates.k56'),
+        required: true,
+      },
       {
         name: 'businessModel',
         type: 'textarea',
@@ -305,7 +375,12 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
     description: i18n.t('shared.ai-templates.k61'),
     category: 'HR',
     fields: [
-      { name: 'trainingName', type: 'text', label: i18n.t('shared.ai-templates.k62'), required: true },
+      {
+        name: 'trainingName',
+        type: 'text',
+        label: i18n.t('shared.ai-templates.k62'),
+        required: true,
+      },
       {
         name: 'targetAudience',
         type: 'text',

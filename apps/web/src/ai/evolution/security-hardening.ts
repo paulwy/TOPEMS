@@ -282,13 +282,17 @@ class SecurityHardenerImpl {
         const mitigationApplied = Math.random() > 0.3;
         if (mitigationApplied) {
           this.updateThreatModel(threat.id, { status: 'Mitigated' });
-          details.push(`${i18n.t('ai.security-hardening.k13')}${threat.threat_type} - ${threat.mitigation}`);
+          details.push(
+            `${i18n.t('ai.security-hardening.k13')}${threat.threat_type} - ${threat.mitigation}`
+          );
           applied++;
         }
       }
     });
 
-    details.push(`${i18n.t('ai.security-hardening.k14')}${applied}${i18n.t('ai.security-hardening.k15')}`);
+    details.push(
+      `${i18n.t('ai.security-hardening.k14')}${applied}${i18n.t('ai.security-hardening.k15')}`
+    );
     return { applied, details };
   }
 

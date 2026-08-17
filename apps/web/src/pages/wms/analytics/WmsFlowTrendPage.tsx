@@ -69,7 +69,9 @@ export default function WmsFlowTrendPage() {
         </div>
         <div className='rounded-lg border p-4'>
           <p className='text-sm text-gray-600'>{i18n.t('pages.wms_flow_trend_page.k8')}</p>
-          <p className='mt-1 text-3xl font-bold text-purple-600'>{i18n.t('pages.wms_flow_trend_page.totalsdays_0')}</p>
+          <p className='mt-1 text-3xl font-bold text-purple-600'>
+            {i18n.t('pages.wms_flow_trend_page.totalsdays_0')}
+          </p>
         </div>
       </div>
 
@@ -146,7 +148,11 @@ export default function WmsFlowTrendPage() {
             />
             <YAxis
               fontSize={11}
-              label={{ value: i18n.t('pages.wms_flow_trend_page.k9'), angle: -90, position: 'insideLeft' }}
+              label={{
+                value: i18n.t('pages.wms_flow_trend_page.k9'),
+                angle: -90,
+                position: 'insideLeft',
+              }}
             />
             <Tooltip />
             <Legend />

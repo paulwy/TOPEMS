@@ -332,11 +332,15 @@ function generateSuggestions(
   const suggestions: string[] = [];
 
   if (depth > 5) {
-    suggestions.push(`${i18n.t('shared.query-cost-analyzer.k0')}${depth}${i18n.t('shared.query-cost-analyzer.k1')}`);
+    suggestions.push(
+      `${i18n.t('shared.query-cost-analyzer.k0')}${depth}${i18n.t('shared.query-cost-analyzer.k1')}`
+    );
   }
 
   if (fieldCount > 30) {
-    suggestions.push(`${i18n.t('shared.query-cost-analyzer.k2')}${fieldCount}${i18n.t('shared.query-cost-analyzer.k3')}`);
+    suggestions.push(
+      `${i18n.t('shared.query-cost-analyzer.k2')}${fieldCount}${i18n.t('shared.query-cost-analyzer.k3')}`
+    );
   }
 
   const largeLists: string[] = [];
@@ -344,7 +348,9 @@ function generateSuggestions(
     for (const node of ns) {
       const currentPath = path ? `${path}.${node.name}` : node.name;
       if (node.isList && node.listSize > 100) {
-        largeLists.push(`${currentPath}(${node.listSize}${i18n.t('shared.query-cost-analyzer.k4')}`);
+        largeLists.push(
+          `${currentPath}(${node.listSize}${i18n.t('shared.query-cost-analyzer.k4')}`
+        );
       }
       if (node.children.length > 0) {
         findLargeLists(node.children, currentPath);
@@ -354,7 +360,9 @@ function generateSuggestions(
   findLargeLists(nodes, '');
 
   if (largeLists.length > 0) {
-    suggestions.push(`${i18n.t('shared.query-cost-analyzer.k5')}${largeLists.join(', ')}${i18n.t('shared.query-cost-analyzer.k6')}`);
+    suggestions.push(
+      `${i18n.t('shared.query-cost-analyzer.k5')}${largeLists.join(', ')}${i18n.t('shared.query-cost-analyzer.k6')}`
+    );
   }
 
   if (score > COST_THRESHOLDS.high) {
@@ -431,7 +439,9 @@ export function validateQuery(
   return {
     valid,
     score: analysis.score,
-    reason: valid ? i18n.t('shared.query-cost-analyzer.k3') : `${i18n.t('shared.query-cost-analyzer.k7')}${analysis.score}${i18n.t('shared.query-cost-analyzer.k8')}${maxScore})`,
+    reason: valid
+      ? i18n.t('shared.query-cost-analyzer.k3')
+      : `${i18n.t('shared.query-cost-analyzer.k7')}${analysis.score}${i18n.t('shared.query-cost-analyzer.k8')}${maxScore})`,
   };
 }
 

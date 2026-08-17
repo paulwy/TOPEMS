@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type RepairType = 'Restart' | 'ScaleUp' | 'ConfigUpdate' | 'Patched';
 export type RepairStatus =
   'Pending' | 'Approved' | 'Executing' | 'Completed' | 'Failed' | 'RolledBack';

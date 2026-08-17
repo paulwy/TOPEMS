@@ -14,7 +14,8 @@ import type {
 } from '@/api/mes/process';
 import i18n from '@/i18n';
 import { designTokens } from '@/theme/tokens';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 const processRouteAdapter: CrudApiAdapter<ProcessRoute> = {
   list: async (params) => {
     const statusValue = params?.status as string | undefined;
@@ -112,7 +113,9 @@ const ProcessRoutePage: React.FC = () => {
           }}
         >
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.process_route_page.k4')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.process_route_page.k4')}
+            </InputLabel>
             <Box
               component='span'
               sx={{ fontWeight: 500 }}
@@ -121,27 +124,39 @@ const ProcessRoutePage: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.process_route_page.k5')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.process_route_page.k5')}
+            </InputLabel>
             <Box component='span'>{route.name}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.process_route_page.k6')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.process_route_page.k6')}
+            </InputLabel>
             <Box component='span'>{route.version || '-'}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.process_route_page.k7')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.process_route_page.k7')}
+            </InputLabel>
             <Box>{getStatusBadge(route.status)}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.process_route_page.k8')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.process_route_page.k8')}
+            </InputLabel>
             <Box component='span'>{i18n.t('pages.process_route_page.k0')}</Box>
           </Box>
           <Box>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.process_route_page.k9')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.process_route_page.k9')}
+            </InputLabel>
             <Box component='span'>{new Date(route.created_at).toLocaleString('zh-CN')}</Box>
           </Box>
           <Box sx={{ gridColumn: '1 / -1' }}>
-            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>{i18n.t('mes.process_route_page.k10')}</InputLabel>
+            <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+              {i18n.t('mes.process_route_page.k10')}
+            </InputLabel>
             <Box component='span'>{route.description || '-'}</Box>
           </Box>
         </Box>
@@ -191,7 +206,8 @@ const ProcessRoutePage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    {step.process_code} | {i18n.t('pages.process_route_page.k0')} {step.standard_time || 0} {i18n.t('pages.process_route_page.k1')}
+                    {step.process_code} | {i18n.t('pages.process_route_page.k0')}{' '}
+                    {step.standard_time || 0} {i18n.t('pages.process_route_page.k1')}
                   </Typography>
                 </Box>
                 {step.work_station_name && (

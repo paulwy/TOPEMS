@@ -53,8 +53,16 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   ],
   availableApis = [
     { name: 'sales_report', label: i18n.t('templates.index.api_5'), url: '/api/reports/sales' },
-    { name: 'inventory_report', label: i18n.t('templates.index.api_6'), url: '/api/reports/inventory' },
-    { name: 'performance_report', label: i18n.t('templates.index.api_7'), url: '/api/reports/performance' },
+    {
+      name: 'inventory_report',
+      label: i18n.t('templates.index.api_6'),
+      url: '/api/reports/inventory',
+    },
+    {
+      name: 'performance_report',
+      label: i18n.t('templates.index.api_7'),
+      url: '/api/reports/performance',
+    },
   ],
 }) => {
   const [activeTab, setActiveTab] = useState(0);
@@ -520,7 +528,9 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setPreviewOpen(false)}>{i18n.t('templates.index.k15')}</Button>
-          <Button onClick={() => handleExport('excel')}>{i18n.t('templates.index.excel_16')}</Button>
+          <Button onClick={() => handleExport('excel')}>
+            {i18n.t('templates.index.excel_16')}
+          </Button>
           <Button onClick={() => handleExport('pdf')}>{i18n.t('templates.index.pdf_17')}</Button>
         </DialogActions>
       </Dialog>

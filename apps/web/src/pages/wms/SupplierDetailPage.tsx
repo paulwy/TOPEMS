@@ -32,7 +32,7 @@ import { SCM_PATHS } from '@/modules/scm/config';
 import { useQuery } from '@tanstack/react-query';
 import { formatDate } from '@/utils/date';
 
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 
 const SupplierDetailPage: React.FC = () => {
   const { t } = useTranslation();
@@ -41,7 +41,7 @@ const SupplierDetailPage: React.FC = () => {
 
   const [isEditing, setIsEditing] = useState(false);
 
-  const { data: supplier, isPending: loading} = useQuery({
+  const { data: supplier, isPending: loading } = useQuery({
     queryKey: QUERY_KEYS.SCM.SUPPLIER(id || ''),
     queryFn: async () => {
       const res = await scmApi.suppliers.get(id as string);
@@ -51,8 +51,9 @@ const SupplierDetailPage: React.FC = () => {
       return res.data;
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const formatCurrency = (amount?: number) => {
     if (!amount) return '¥0';
@@ -469,7 +470,12 @@ const SupplierDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={supplier?.name || supplier?.short_name || supplier?.id || i18n.t('pages.supplier_detail_page.k0')}
+        detailItemName={
+          supplier?.name ||
+          supplier?.short_name ||
+          supplier?.id ||
+          i18n.t('pages.supplier_detail_page.k0')
+        }
         loading={loading}
         backHref={SCM_PATHS.suppliers}
         onBack={() => navigate(SCM_PATHS.suppliers)}

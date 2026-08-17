@@ -105,7 +105,11 @@ const FavoritesPage: React.FC = () => {
   const removeMutation = useMutation({
     mutationFn: (id: string) => favoriteApi.remove(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: i18n.t('pages.favorites_page.k1'), message: i18n.t('pages.favorites_page.k0') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('pages.favorites_page.k1'),
+        message: i18n.t('pages.favorites_page.k0'),
+      });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.SEARCH.FAVORITES,
         exact: false,
@@ -114,7 +118,11 @@ const FavoritesPage: React.FC = () => {
     },
     onError: (error: unknown) => {
       apiLogger.error(i18n.t('pages.favorites_page.k0'), error);
-      addNotification({ type: 'error', title: i18n.t('pages.favorites_page.k3'), message: i18n.t('pages.favorites_page.k2') });
+      addNotification({
+        type: 'error',
+        title: i18n.t('pages.favorites_page.k3'),
+        message: i18n.t('pages.favorites_page.k2'),
+      });
     },
   });
 
@@ -122,7 +130,11 @@ const FavoritesPage: React.FC = () => {
   const clearHistoryMutation = useMutation({
     mutationFn: () => searchApi.clearRecentSearches(),
     onSuccess: () => {
-      addNotification({ type: 'success', title: i18n.t('pages.favorites_page.k5'), message: i18n.t('pages.favorites_page.k4') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('pages.favorites_page.k5'),
+        message: i18n.t('pages.favorites_page.k4'),
+      });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.SEARCH.HISTORY,
         exact: false,
@@ -140,7 +152,11 @@ const FavoritesPage: React.FC = () => {
         entity_name: newFavName,
       }),
     onSuccess: () => {
-      addNotification({ type: 'success', title: i18n.t('pages.favorites_page.k7'), message: i18n.t('pages.favorites_page.k6') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('pages.favorites_page.k7'),
+        message: i18n.t('pages.favorites_page.k6'),
+      });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.SEARCH.FAVORITES,
         exact: false,
@@ -152,7 +168,11 @@ const FavoritesPage: React.FC = () => {
     },
     onError: (error: unknown) => {
       apiLogger.error(i18n.t('pages.favorites_page.k1'), error);
-      addNotification({ type: 'error', title: i18n.t('pages.favorites_page.k9'), message: i18n.t('pages.favorites_page.k8') });
+      addNotification({
+        type: 'error',
+        title: i18n.t('pages.favorites_page.k9'),
+        message: i18n.t('pages.favorites_page.k8'),
+      });
     },
   });
 
@@ -164,7 +184,9 @@ const FavoritesPage: React.FC = () => {
         addNotification({
           type: 'info',
           title: i18n.t('pages.favorites_page.k10'),
-          message: response.data ? i18n.t('pages.favorites_page.k12') : i18n.t('pages.favorites_page.k11'),
+          message: response.data
+            ? i18n.t('pages.favorites_page.k12')
+            : i18n.t('pages.favorites_page.k11'),
         });
       }
     } catch (error) {
@@ -520,7 +542,9 @@ const FavoritesPage: React.FC = () => {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddDialogOpen(false)}>{i18n.t('pages.favorites_page.k26')}</Button>
+          <Button onClick={() => setAddDialogOpen(false)}>
+            {i18n.t('pages.favorites_page.k26')}
+          </Button>
           <Button
             variant='contained'
             onClick={() => addFavoriteMutation.mutate()}

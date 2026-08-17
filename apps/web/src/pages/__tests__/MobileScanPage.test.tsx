@@ -3,6 +3,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '@/__tests__/test-utils';
 
+import { BrowserRouter } from 'react-router-dom';
+import MobileScanPage from '../mobile/MobileScanPage';
+import { useAuthStore, useNotificationStore } from '@/store';
+
 vi.mock('react-i18next', () => {
   const merge = (...objs: Record<string, string>[]) => Object.assign({}, ...objs);
   const i18nMap = merge(
@@ -42,10 +46,6 @@ vi.mock('@/i18n', () => {
     },
   };
 });
-
-import { BrowserRouter } from 'react-router-dom';
-import MobileScanPage from '../mobile/MobileScanPage';
-import { useAuthStore, useNotificationStore } from '@/store';
 
 const mockAddNotification = vi.fn();
 

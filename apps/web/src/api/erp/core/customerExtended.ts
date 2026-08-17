@@ -1,10 +1,6 @@
 import apiClient from '../../client';
 import type { ApiResponse } from '../../client';
-import type {
-  Customer,
-  CreateCustomerRequest,
-  UpdateCustomerRequest,
-} from './types';
+import type { Customer, CreateCustomerRequest, UpdateCustomerRequest } from './types';
 
 export interface BatchStatusUpdateRequest {
   ids: string[];
@@ -33,7 +29,9 @@ export const customerExtendedApi = {
     return apiClient.erp.post<Customer[]>('/customers/batch', { customers: data });
   },
 
-  async updateBatch(data: Array<{ id: string; payload: UpdateCustomerRequest }>): Promise<ApiResponse<Customer[]>> {
+  async updateBatch(
+    data: Array<{ id: string; payload: UpdateCustomerRequest }>
+  ): Promise<ApiResponse<Customer[]>> {
     return apiClient.erp.put<Customer[]>('/customers/batch', { updates: data });
   },
 
@@ -78,8 +76,6 @@ export const customerExtendedApi = {
   },
 
   async listRecentlyModified(limit = 20): Promise<ApiResponse<CustomerListResponse>> {
-    return apiClient.erp.get<CustomerListResponse>(
-      `/customers/recent?limit=${limit}`
-    );
+    return apiClient.erp.get<CustomerListResponse>(`/customers/recent?limit=${limit}`);
   },
 };

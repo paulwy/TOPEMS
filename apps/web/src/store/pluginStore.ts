@@ -353,7 +353,9 @@ export const usePluginStore = create<PluginState>()(
       },
 
       isPluginActive: (code) => {
-        const plugin = get().installedPlugins.find((p) => p.plugin_name === code || p.plugin_id === code);
+        const plugin = get().installedPlugins.find(
+          (p) => p.plugin_name === code || p.plugin_id === code
+        );
         return plugin?.isactive === true;
       },
 

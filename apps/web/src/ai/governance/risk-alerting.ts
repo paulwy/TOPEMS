@@ -1,4 +1,5 @@
 import i18n from '@/i18n';
+
 export type RiskCategory = 'Security' | 'Compliance' | 'Performance' | 'Financial';
 export type RiskLevel = 'critical' | 'high' | 'medium' | 'low';
 
@@ -384,7 +385,10 @@ export class RiskAlerter {
   }
 
   private generateAlertMessage(indicator: RiskIndicator): string {
-    const direction = indicator.direction === 'above' ? i18n.t('ai.risk-alerting.k22') : i18n.t('ai.risk-alerting.k21');
+    const direction =
+      indicator.direction === 'above'
+        ? i18n.t('ai.risk-alerting.k22')
+        : i18n.t('ai.risk-alerting.k21');
     return `[${indicator.severity.toUpperCase()}] ${indicator.name} ${direction}${i18n.t('ai.risk-alerting.k2')}${indicator.current_value}${indicator.unit}${i18n.t('ai.risk-alerting.k3')}${indicator.threshold}${indicator.unit}`;
   }
 

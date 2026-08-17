@@ -134,7 +134,7 @@ export interface CreateBreachAssessmentRequest {
 export const complianceReportApiV70 = {
   // ===== 合规报告生成与管理 =====
   async generateComplianceReport(
-    data: GenerateReportRequest,
+    data: GenerateReportRequest
   ): Promise<ApiResponse<ComplianceReport>> {
     return apiClient.master.post<ComplianceReport>('/mdm-v70/reports', data);
   },
@@ -155,7 +155,9 @@ export const complianceReportApiV70 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<ComplianceReport>>(`/mdm-v70/reports${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<ComplianceReport>>(
+      `/mdm-v70/reports${s ? `?${s}` : ''}`
+    );
   },
 
   async downloadReport(id: string): Promise<ApiResponse<{ download_url: string }>> {
@@ -166,10 +168,12 @@ export const complianceReportApiV70 = {
   async getClassificationReport(
     framework: ComplianceFramework,
     startDate: string,
-    endDate: string,
+    endDate: string
   ): Promise<ApiResponse<DataClassificationReport>> {
     const qs = new URLSearchParams({ framework, start_date: startDate, end_date: endDate });
-    return apiClient.master.get<DataClassificationReport>(`/mdm-v70/classification/report?${qs.toString()}`);
+    return apiClient.master.get<DataClassificationReport>(
+      `/mdm-v70/classification/report?${qs.toString()}`
+    );
   },
 
   async listClassificationReports(params?: {
@@ -182,14 +186,16 @@ export const complianceReportApiV70 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<DataClassificationReport>>(`/mdm-v70/classification/reports${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<DataClassificationReport>>(
+      `/mdm-v70/classification/reports${s ? `?${s}` : ''}`
+    );
   },
 
   // ===== 访问审计报告 =====
   async generateAccessAuditReport(
     framework: ComplianceFramework,
     startDate: string,
-    endDate: string,
+    endDate: string
   ): Promise<ApiResponse<AccessAuditReport>> {
     const qs = new URLSearchParams({ framework, start_date: startDate, end_date: endDate });
     return apiClient.master.post<AccessAuditReport>(`/mdm-v70/audit/report?${qs.toString()}`, {});
@@ -207,7 +213,9 @@ export const complianceReportApiV70 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<AccessAuditReport>>(`/mdm-v70/audit/reports${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<AccessAuditReport>>(
+      `/mdm-v70/audit/reports${s ? `?${s}` : ''}`
+    );
   },
 
   async getAccessAuditDetails(id: string): Promise<ApiResponse<AccessAuditReport>> {
@@ -217,15 +225,17 @@ export const complianceReportApiV70 = {
   async getAnomalousAccessEvents(
     framework: ComplianceFramework,
     startDate: string,
-    endDate: string,
+    endDate: string
   ): Promise<ApiResponse<AccessAuditReport['access_events']>> {
     const qs = new URLSearchParams({ framework, start_date: startDate, end_date: endDate });
-    return apiClient.master.get<AccessAuditReport['access_events']>(`/mdm-v70/audit/anomalies?${qs.toString()}`);
+    return apiClient.master.get<AccessAuditReport['access_events']>(
+      `/mdm-v70/audit/anomalies?${qs.toString()}`
+    );
   },
 
   // ===== 数据泄露评估 =====
   async createBreachAssessment(
-    data: CreateBreachAssessmentRequest,
+    data: CreateBreachAssessmentRequest
   ): Promise<ApiResponse<DataBreachAssessment>> {
     return apiClient.master.post<DataBreachAssessment>('/mdm-v70/breach-assessments', data);
   },
@@ -246,7 +256,9 @@ export const complianceReportApiV70 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<DataBreachAssessment>>(`/mdm-v70/breach-assessments${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<DataBreachAssessment>>(
+      `/mdm-v70/breach-assessments${s ? `?${s}` : ''}`
+    );
   },
 
   async getMitigationStrategies(id: string): Promise<ApiResponse<string[]>> {
@@ -254,37 +266,47 @@ export const complianceReportApiV70 = {
   },
 
   // ===== 合规仪表盘 =====
-  async getComplianceDashboard(framework?: ComplianceFramework): Promise<ApiResponse<ComplianceDashboard>> {
+  async getComplianceDashboard(
+    framework?: ComplianceFramework
+  ): Promise<ApiResponse<ComplianceDashboard>> {
     const qs = new URLSearchParams();
     if (framework) qs.set('framework', framework);
     const s = qs.toString();
     return apiClient.master.get<ComplianceDashboard>(`/mdm-v70/dashboard${s ? `?${s}` : ''}`);
   },
 
-  async getComplianceScore(framework: ComplianceFramework): Promise<ApiResponse<{
-    framework: ComplianceFramework;
-    score: number;
-    trend: 'up' | 'down' | 'stable';
-    last_updated: string;
-  }>> {
+  async getComplianceScore(framework: ComplianceFramework): Promise<
+    ApiResponse<{
+      framework: ComplianceFramework;
+      score: number;
+      trend: 'up' | 'down' | 'stable';
+      last_updated: string;
+    }>
+  > {
     return apiClient.master.get(`/mdm-v70/score?framework=${framework}`);
   },
 
-  async getPendingReviews(framework?: ComplianceFramework): Promise<ApiResponse<Array<{
-    id: string;
-    asset_id: string;
-    required_action: string;
-    deadline: string;
-  }>>> {
+  async getPendingReviews(framework?: ComplianceFramework): Promise<
+    ApiResponse<
+      Array<{
+        id: string;
+        asset_id: string;
+        required_action: string;
+        deadline: string;
+      }>
+    >
+  > {
     const qs = new URLSearchParams();
     if (framework) qs.set('framework', framework);
     const s = qs.toString();
-    return apiClient.master.get<Array<{
-      id: string;
-      asset_id: string;
-      required_action: string;
-      deadline: string;
-    }>>(`/mdm-v70/pending-reviews${s ? `?${s}` : ''}`);
+    return apiClient.master.get<
+      Array<{
+        id: string;
+        asset_id: string;
+        required_action: string;
+        deadline: string;
+      }>
+    >(`/mdm-v70/pending-reviews${s ? `?${s}` : ''}`);
   },
 };
 

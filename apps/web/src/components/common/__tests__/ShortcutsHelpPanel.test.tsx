@@ -13,7 +13,7 @@ vi.mock('react-i18next', () => {
     require('../../../i18n/locales/zh/templates.json'),
     require('../../../i18n/locales/zh/store.json'),
     require('../../../i18n/locales/zh/shared.json'),
-    require('../../../i18n/locales/zh/hooks.json')
+    require('../../../i18n/locales/zh/hooks.json'),
   ];
   const i18nMap: Record<string, string> = {};
   for (const src of sources) {
@@ -38,7 +38,7 @@ vi.mock('@/i18n', () => {
     require('../../../i18n/locales/zh/templates.json'),
     require('../../../i18n/locales/zh/store.json'),
     require('../../../i18n/locales/zh/shared.json'),
-    require('../../../i18n/locales/zh/hooks.json')
+    require('../../../i18n/locales/zh/hooks.json'),
   ];
   const i18nMap: Record<string, string> = {};
   for (const src of sources) {

@@ -66,7 +66,9 @@ export default function QmsQualityTrendPage() {
         </div>
         <div className='rounded-lg border p-4'>
           <p className='text-sm text-gray-600'>{t('qms.qms_quality_trend_page.k6')}</p>
-          <p className='mt-1 text-3xl font-bold text-blue-600'>{i18n.t('pages.qms_quality_trend_page.trendlength_0')}</p>
+          <p className='mt-1 text-3xl font-bold text-blue-600'>
+            {i18n.t('pages.qms_quality_trend_page.trendlength_0')}
+          </p>
         </div>
       </div>
 
@@ -90,13 +92,21 @@ export default function QmsQualityTrendPage() {
               domain={[70, 100]}
               unit='%'
               fontSize={11}
-              label={{ value: t('qms.qms_quality_trend_page.k8'), angle: -90, position: 'insideLeft' }}
+              label={{
+                value: t('qms.qms_quality_trend_page.k8'),
+                angle: -90,
+                position: 'insideLeft',
+              }}
             />
             <YAxis
               yAxisId='right'
               orientation='right'
               fontSize={11}
-              label={{ value: t('qms.qms_quality_trend_page.k9'), angle: 90, position: 'insideRight' }}
+              label={{
+                value: t('qms.qms_quality_trend_page.k9'),
+                angle: 90,
+                position: 'insideRight',
+              }}
             />
             <Tooltip />
             <Legend />

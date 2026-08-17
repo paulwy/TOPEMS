@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  aiGovernanceApiV59,
-  metadataApiV60,
-} from '../master';
+import { aiGovernanceApiV59, metadataApiV60 } from '../master';
 import apiClient from '../client';
 
 vi.mock('../client', () => ({
@@ -34,13 +31,18 @@ describe('V145 masterData API bindings', () => {
     it('should analyze governance', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: [] });
       await aiGovernanceApiV59.analyze({ entity_type: 'customer', entity_id: 'c-1' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v59/governance/analyze', { entity_type: 'customer', entity_id: 'c-1' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v59/governance/analyze', {
+        entity_type: 'customer',
+        entity_id: 'c-1',
+      });
     });
 
     it('should get suggestions', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: [] });
       await aiGovernanceApiV59.getSuggestions({ entity_type: 'customer' });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v59/governance/suggestions?entity_type=customer');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v59/governance/suggestions?entity_type=customer'
+      );
     });
 
     it('should get entity suggestions', async () => {
@@ -58,7 +60,9 @@ describe('V145 masterData API bindings', () => {
     it('should dismiss suggestion', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { dismissed: true } });
       await aiGovernanceApiV59.dismissSuggestion('s-1', 'Not relevant');
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v59/governance/dismiss/s-1', { reason: 'Not relevant' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v59/governance/dismiss/s-1', {
+        reason: 'Not relevant',
+      });
     });
 
     it('should get models', async () => {
@@ -70,7 +74,10 @@ describe('V145 masterData API bindings', () => {
     it('should train model', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { id: 'm-1' } });
       await aiGovernanceApiV59.trainModel('m-1', { entity_type: 'customer', model_type: 'ml' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v59/governance/train/m-1', { entity_type: 'customer', model_type: 'ml' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v59/governance/train/m-1', {
+        entity_type: 'customer',
+        model_type: 'ml',
+      });
     });
 
     it('should create match rule', async () => {
@@ -87,7 +94,10 @@ describe('V145 masterData API bindings', () => {
     it('should match entities', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: [] });
       await aiGovernanceApiV59.matchEntities({ source_type: 'customer', min_score: 0.8 });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v59/matching/entities', { source_type: 'customer', min_score: 0.8 });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v59/matching/entities', {
+        source_type: 'customer',
+        min_score: 0.8,
+      });
     });
 
     it('should confirm match', async () => {
@@ -99,7 +109,9 @@ describe('V145 masterData API bindings', () => {
     it('should reject match', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { id: 'mr-1' } });
       await aiGovernanceApiV59.rejectMatch('mr-1', 'Not a valid match');
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v59/matching/reject/mr-1', { reason: 'Not a valid match' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v59/matching/reject/mr-1', {
+        reason: 'Not a valid match',
+      });
     });
 
     it('should get match stats', async () => {
@@ -137,7 +149,10 @@ describe('V145 masterData API bindings', () => {
     it('should create metadata', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { id: 'm-1' } });
       await metadataApiV60.createMetadata({ name: 'orders', type: 'table' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v60/metadata', { name: 'orders', type: 'table' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v60/metadata', {
+        name: 'orders',
+        type: 'table',
+      });
     });
 
     it('should get metadata', async () => {
@@ -149,19 +164,25 @@ describe('V145 masterData API bindings', () => {
     it('should list metadata', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await metadataApiV60.listMetadata({ type: 'table', page: 1, pageSize: 20 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v60/metadata?type=table&page=1&pagesize=20');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v60/metadata?type=table&page=1&pagesize=20'
+      );
     });
 
     it('should search metadata', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await metadataApiV60.searchMetadata({ query: 'order', page: 1, pageSize: 10 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v60/metadata/search?q=order&page=1&pagesize=10');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v60/metadata/search?q=order&page=1&pagesize=10'
+      );
     });
 
     it('should update metadata', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: { id: 'm-1' } });
       await metadataApiV60.updateMetadata('m-1', { description: 'Updated description' });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v60/metadata/m-1', { description: 'Updated description' });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v60/metadata/m-1', {
+        description: 'Updated description',
+      });
     });
 
     it('should delete metadata', async () => {
@@ -173,7 +194,11 @@ describe('V145 masterData API bindings', () => {
     it('should add attribute', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
       await metadataApiV60.addAttribute('m-1', { key: 'schema', value: 'public', type: 'string' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v60/metadata/m-1/attribute', { key: 'schema', value: 'public', type: 'string' });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v60/metadata/m-1/attribute', {
+        key: 'schema',
+        value: 'public',
+        type: 'string',
+      });
     });
 
     it('should get metadata stats', async () => {
@@ -201,7 +226,10 @@ describe('V145 masterData API bindings', () => {
     });
 
     it('should get lineage impact', async () => {
-      mockClient.get.mockResolvedValue({ success: true, data: { entity_id: 'm-1', risk_score: 0.8 } });
+      mockClient.get.mockResolvedValue({
+        success: true,
+        data: { entity_id: 'm-1', risk_score: 0.8 },
+      });
       await metadataApiV60.getLineageImpact('m-1');
       expect(mockClient.get).toHaveBeenCalledWith('/mdm-v60/lineage/m-1/impact');
     });
@@ -220,8 +248,14 @@ describe('V145 masterData API bindings', () => {
 
     it('should transition lifecycle stage', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { stage: 'testing' } });
-      await metadataApiV60.transitionStage('m-1', { to_stage: 'testing', reason: 'Ready for testing' });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v60/lifecycle/m-1/transition', { to_stage: 'testing', reason: 'Ready for testing' });
+      await metadataApiV60.transitionStage('m-1', {
+        to_stage: 'testing',
+        reason: 'Ready for testing',
+      });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v60/lifecycle/m-1/transition', {
+        to_stage: 'testing',
+        reason: 'Ready for testing',
+      });
     });
 
     it('should create lifecycle policy', async () => {
@@ -229,7 +263,10 @@ describe('V145 masterData API bindings', () => {
       await metadataApiV60.createPolicy({
         name: 'Table lifecycle',
         entity_type: 'table',
-        stages: [{ stage: 'design', order: 1 }, { stage: 'production', order: 2 }],
+        stages: [
+          { stage: 'design', order: 1 },
+          { stage: 'production', order: 2 },
+        ],
       });
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v60/lifecycle/policy', expect.any(Object));
     });
@@ -237,7 +274,10 @@ describe('V145 masterData API bindings', () => {
     it('should auto transition lifecycle', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: { transitions: 5, failures: 0 } });
       await metadataApiV60.autoTransition({ entity_type: 'table', dry_run: false });
-      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v60/lifecycle/auto-transition', { entity_type: 'table', dry_run: false });
+      expect(mockClient.post).toHaveBeenCalledWith('/mdm-v60/lifecycle/auto-transition', {
+        entity_type: 'table',
+        dry_run: false,
+      });
     });
 
     it('should get lifecycle dashboard', async () => {

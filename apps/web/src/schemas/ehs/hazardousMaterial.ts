@@ -159,12 +159,30 @@ export const hazardousMaterialSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: i18n.t('ehs.hazardous_material.k8'), label: i18n.t('ehs.hazardous_material.k9') },
-          { value: i18n.t('ehs.hazardous_material.k10'), label: i18n.t('ehs.hazardous_material.k11') },
-          { value: i18n.t('ehs.hazardous_material.k12'), label: i18n.t('ehs.hazardous_material.k13') },
-          { value: i18n.t('ehs.hazardous_material.k14'), label: i18n.t('ehs.hazardous_material.k15') },
-          { value: i18n.t('ehs.hazardous_material.k16'), label: i18n.t('ehs.hazardous_material.k17') },
-          { value: i18n.t('ehs.hazardous_material.k18'), label: i18n.t('ehs.hazardous_material.k19') },
+          {
+            value: i18n.t('ehs.hazardous_material.k8'),
+            label: i18n.t('ehs.hazardous_material.k9'),
+          },
+          {
+            value: i18n.t('ehs.hazardous_material.k10'),
+            label: i18n.t('ehs.hazardous_material.k11'),
+          },
+          {
+            value: i18n.t('ehs.hazardous_material.k12'),
+            label: i18n.t('ehs.hazardous_material.k13'),
+          },
+          {
+            value: i18n.t('ehs.hazardous_material.k14'),
+            label: i18n.t('ehs.hazardous_material.k15'),
+          },
+          {
+            value: i18n.t('ehs.hazardous_material.k16'),
+            label: i18n.t('ehs.hazardous_material.k17'),
+          },
+          {
+            value: i18n.t('ehs.hazardous_material.k18'),
+            label: i18n.t('ehs.hazardous_material.k19'),
+          },
         ],
       },
       listWidth: 100,
@@ -198,10 +216,22 @@ export const hazardousMaterialSchema: EntitySchema = {
         options: [
           { value: 'kg', label: 'kg' },
           { value: 'L', label: 'L' },
-          { value: i18n.t('ehs.hazardous_material.k22'), label: i18n.t('ehs.hazardous_material.k23') },
-          { value: i18n.t('ehs.hazardous_material.k24'), label: i18n.t('ehs.hazardous_material.k25') },
-          { value: i18n.t('ehs.hazardous_material.k26'), label: i18n.t('ehs.hazardous_material.k27') },
-          { value: i18n.t('ehs.hazardous_material.k28'), label: i18n.t('ehs.hazardous_material.k29') },
+          {
+            value: i18n.t('ehs.hazardous_material.k22'),
+            label: i18n.t('ehs.hazardous_material.k23'),
+          },
+          {
+            value: i18n.t('ehs.hazardous_material.k24'),
+            label: i18n.t('ehs.hazardous_material.k25'),
+          },
+          {
+            value: i18n.t('ehs.hazardous_material.k26'),
+            label: i18n.t('ehs.hazardous_material.k27'),
+          },
+          {
+            value: i18n.t('ehs.hazardous_material.k28'),
+            label: i18n.t('ehs.hazardous_material.k29'),
+          },
         ],
       },
       showInList: false,
@@ -224,10 +254,22 @@ export const hazardousMaterialSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: i18n.t('ehs.hazardous_material.k33'), label: i18n.t('ehs.hazardous_material.k34') },
-          { value: i18n.t('ehs.hazardous_material.k35'), label: i18n.t('ehs.hazardous_material.k36') },
-          { value: i18n.t('ehs.hazardous_material.k37'), label: i18n.t('ehs.hazardous_material.k38') },
-          { value: i18n.t('ehs.hazardous_material.k39'), label: i18n.t('ehs.hazardous_material.k40') },
+          {
+            value: i18n.t('ehs.hazardous_material.k33'),
+            label: i18n.t('ehs.hazardous_material.k34'),
+          },
+          {
+            value: i18n.t('ehs.hazardous_material.k35'),
+            label: i18n.t('ehs.hazardous_material.k36'),
+          },
+          {
+            value: i18n.t('ehs.hazardous_material.k37'),
+            label: i18n.t('ehs.hazardous_material.k38'),
+          },
+          {
+            value: i18n.t('ehs.hazardous_material.k39'),
+            label: i18n.t('ehs.hazardous_material.k40'),
+          },
         ],
       },
       listWidth: 100,
@@ -290,12 +332,30 @@ export const hazardousMaterialSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('ehs.hazardous_material.k49'), value: 'all' },
-          { label: i18n.t('ehs.hazardous_material.k50'), value: i18n.t('ehs.hazardous_material.k51') },
-          { label: i18n.t('ehs.hazardous_material.k52'), value: i18n.t('ehs.hazardous_material.k53') },
-          { label: i18n.t('ehs.hazardous_material.k54'), value: i18n.t('ehs.hazardous_material.k55') },
-          { label: i18n.t('ehs.hazardous_material.k56'), value: i18n.t('ehs.hazardous_material.k57') },
-          { label: i18n.t('ehs.hazardous_material.k58'), value: i18n.t('ehs.hazardous_material.k59') },
-          { label: i18n.t('ehs.hazardous_material.k60'), value: i18n.t('ehs.hazardous_material.k61') },
+          {
+            label: i18n.t('ehs.hazardous_material.k50'),
+            value: i18n.t('ehs.hazardous_material.k51'),
+          },
+          {
+            label: i18n.t('ehs.hazardous_material.k52'),
+            value: i18n.t('ehs.hazardous_material.k53'),
+          },
+          {
+            label: i18n.t('ehs.hazardous_material.k54'),
+            value: i18n.t('ehs.hazardous_material.k55'),
+          },
+          {
+            label: i18n.t('ehs.hazardous_material.k56'),
+            value: i18n.t('ehs.hazardous_material.k57'),
+          },
+          {
+            label: i18n.t('ehs.hazardous_material.k58'),
+            value: i18n.t('ehs.hazardous_material.k59'),
+          },
+          {
+            label: i18n.t('ehs.hazardous_material.k60'),
+            value: i18n.t('ehs.hazardous_material.k61'),
+          },
         ],
       },
       {
@@ -304,10 +364,22 @@ export const hazardousMaterialSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('ehs.hazardous_material.k63'), value: 'all' },
-          { label: i18n.t('ehs.hazardous_material.k64'), value: i18n.t('ehs.hazardous_material.k65') },
-          { label: i18n.t('ehs.hazardous_material.k66'), value: i18n.t('ehs.hazardous_material.k67') },
-          { label: i18n.t('ehs.hazardous_material.k68'), value: i18n.t('ehs.hazardous_material.k69') },
-          { label: i18n.t('ehs.hazardous_material.k70'), value: i18n.t('ehs.hazardous_material.k71') },
+          {
+            label: i18n.t('ehs.hazardous_material.k64'),
+            value: i18n.t('ehs.hazardous_material.k65'),
+          },
+          {
+            label: i18n.t('ehs.hazardous_material.k66'),
+            value: i18n.t('ehs.hazardous_material.k67'),
+          },
+          {
+            label: i18n.t('ehs.hazardous_material.k68'),
+            value: i18n.t('ehs.hazardous_material.k69'),
+          },
+          {
+            label: i18n.t('ehs.hazardous_material.k70'),
+            value: i18n.t('ehs.hazardous_material.k71'),
+          },
         ],
       },
     ],

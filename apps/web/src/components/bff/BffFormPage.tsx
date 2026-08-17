@@ -154,7 +154,9 @@ function FormFieldRenderer({
       control={control as UseFormReturn['control']}
       defaultValue={field.defaultValue ?? ''}
       rules={{
-        required: field.validation?.required ? `${field.label}${i18n.t('components.bff_form_page.k0')}` : false,
+        required: field.validation?.required
+          ? `${field.label}${i18n.t('components.bff_form_page.k0')}`
+          : false,
         minLength: field.validation?.minLength
           ? {
               value: field.validation.minLength,
@@ -180,7 +182,10 @@ function FormFieldRenderer({
             }
           : undefined,
         pattern: field.validation?.pattern
-          ? { value: field.validation.pattern, message: `${field.label}${i18n.t('components.bff_form_page.k7')}` }
+          ? {
+              value: field.validation.pattern,
+              message: `${field.label}${i18n.t('components.bff_form_page.k7')}`,
+            }
           : undefined,
         validate: field.validation?.custom
           ? (value: unknown, allValues: Record<string, unknown>) => {
@@ -479,9 +484,16 @@ function BffFormPageInner<T extends FieldValues = FieldValues>(props: BffFormPag
     (mode === 'edit' && crud.mutations.updateMutation.isPending);
 
   const displayTitle =
-    title ?? (mode === 'create' ? `${i18n.t('components.bff_form_page.k9')}${entityName ?? i18n.t('components.bff_form_page.k0')}` : `${i18n.t('components.bff_form_page.k8')}${entityName ?? i18n.t('components.bff_form_page.k1')}`);
+    title ??
+    (mode === 'create'
+      ? `${i18n.t('components.bff_form_page.k9')}${entityName ?? i18n.t('components.bff_form_page.k0')}`
+      : `${i18n.t('components.bff_form_page.k8')}${entityName ?? i18n.t('components.bff_form_page.k1')}`);
 
-  const displaySubmitText = submitText ?? (mode === 'create' ? i18n.t('components.bff_form_page.k3') : i18n.t('components.bff_form_page.k2'));
+  const displaySubmitText =
+    submitText ??
+    (mode === 'create'
+      ? i18n.t('components.bff_form_page.k3')
+      : i18n.t('components.bff_form_page.k2'));
 
   const renderFields = (fieldList: BffFormField[]) => (
     <Box
@@ -557,7 +569,11 @@ function BffFormPageInner<T extends FieldValues = FieldValues>(props: BffFormPag
             )}
           </Box>
           <Chip
-            label={mode === 'create' ? i18n.t('components.bff_form_page.k6') : i18n.t('components.bff_form_page.k5')}
+            label={
+              mode === 'create'
+                ? i18n.t('components.bff_form_page.k6')
+                : i18n.t('components.bff_form_page.k5')
+            }
             size='small'
             color={mode === 'create' ? 'primary' : 'default'}
             variant='outlined'

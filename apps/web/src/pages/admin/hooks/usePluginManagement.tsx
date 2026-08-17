@@ -9,6 +9,7 @@ import { type Plugin, fetchAllPluginInfo, PLUGIN_REGISTRY } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
 import { extractErrorMessage } from '@/utils/errors';
 import i18n from '@/i18n';
+
 export interface MarketplacePlugin {
   code: string;
   name: string;
@@ -136,10 +137,11 @@ export function usePluginManagement(): UsePluginManagementReturn {
   const [installError, setInstallError] = useState<string | null>(null);
   const [uninstallTarget, setUninstallTarget] = useState<UninstallTarget | null>(null);
   const loadPlugins = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.PLUGINS ,
-  exact: false,
-  refetchType: 'active',
-});
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.SYSTEM.PLUGINS,
+      exact: false,
+      refetchType: 'active',
+    });
   }, [queryClient]);
   const apiAdapter: CrudApiAdapter = useMemo(
     () => ({
@@ -181,7 +183,9 @@ export function usePluginManagement(): UsePluginManagementReturn {
         );
       },
       delete: async () => {
-        throw new Error(i18n.t('admin.plugin_management.please_use_uninstall_to_remove_the_plugin'));
+        throw new Error(
+          i18n.t('admin.plugin_management.please_use_uninstall_to_remove_the_plugin')
+        );
       },
     }),
     [fetchInstalledPlugins, fetchHealthStatus, i18n.t]
@@ -193,12 +197,11 @@ export function usePluginManagement(): UsePluginManagementReturn {
       return pluginCode;
     },
     onSuccess: (pluginCode) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         title: i18n.t('admin.plugin_management.enabled_successfully'),
         message: i18n.t('admin.plugin_management_page.text_773966', { pluginCode }),
@@ -221,12 +224,11 @@ export function usePluginManagement(): UsePluginManagementReturn {
       return pluginCode;
     },
     onSuccess: (pluginCode) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         title: i18n.t('admin.plugin_management.disabled_successfully'),
         message: i18n.t('admin.plugin_management_page.text_c0f589', { pluginCode }),
@@ -249,12 +251,11 @@ export function usePluginManagement(): UsePluginManagementReturn {
       return pluginCode;
     },
     onSuccess: (pluginCode) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         title: i18n.t('admin.plugin_management.upgraded_successfully'),
         message: i18n.t('admin.plugin_management_page.text_b13651', { pluginCode }),
@@ -277,12 +278,11 @@ export function usePluginManagement(): UsePluginManagementReturn {
       return { pluginCode, tier };
     },
     onSuccess: ({ pluginCode, tier }) => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+        exact: false,
+        refetchType: 'active',
+      });
       addNotification({
         title: i18n.t('admin.plugin_management.operation_successful'),
         message:
@@ -312,14 +312,15 @@ export function usePluginManagement(): UsePluginManagementReturn {
       if (!success) throw new Error(i18n.t('admin.plugin_management.install_failed'));
       return pluginCode;
     },
-  
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.ADMIN.SETTINGS,
-          exact: false,
-          refetchType: 'active',
-        });
-      },});
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.ADMIN.SETTINGS,
+        exact: false,
+        refetchType: 'active',
+      });
+    },
+  });
   const allMarketplacePlugins: MarketplacePlugin[] = useMemo(
     () =>
       Object.entries(PLUGIN_REGISTRY).map(([code, config]) => ({

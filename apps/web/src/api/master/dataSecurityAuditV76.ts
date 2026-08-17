@@ -62,7 +62,13 @@ export interface SecurityEvent {
   description: string;
   severity: EventSeverity;
   status: EventStatus;
-  type: 'unauthorized_access' | 'data_breach' | 'privilege_escalation' | 'data_exfiltration' | 'policy_violation' | 'anomalous_activity';
+  type:
+    | 'unauthorized_access'
+    | 'data_breach'
+    | 'privilege_escalation'
+    | 'data_exfiltration'
+    | 'policy_violation'
+    | 'anomalous_activity';
   source: {
     type: 'audit_rule' | 'anomaly_detection' | 'manual' | 'external';
     detection_time: string;
@@ -103,7 +109,12 @@ export interface ComplianceAudit {
   id: string;
   tenant_id: string;
   framework: 'GDPR' | 'HIPAA' | 'SOC2' | 'ISO27001' | 'CUSTOM';
-  audit_type: 'access_review' | 'permission_review' | 'data_classification' | 'retention_policy' | 'encryption_check';
+  audit_type:
+    | 'access_review'
+    | 'permission_review'
+    | 'data_classification'
+    | 'retention_policy'
+    | 'encryption_check';
   status: 'pending' | 'in_progress' | 'completed' | 'failed';
   scope: Array<{
     resource_type?: string;
@@ -164,7 +175,11 @@ export interface AuditDashboard {
   event_severity_distribution: Record<EventSeverity, number>;
   event_status_distribution: Record<EventStatus, number>;
   top_rules_triggered: Array<{ rule_id: string; rule_name: string; trigger_count: number }>;
-  top_targeted_resources: Array<{ resource_type: string; resource_id: string; event_count: number }>;
+  top_targeted_resources: Array<{
+    resource_type: string;
+    resource_id: string;
+    event_count: number;
+  }>;
   resolution_trend_7d: Array<{ date: string; resolved: number; created: number }>;
   compliance_frameworks: Array<{ framework: string; score: number; last_audit: string }>;
   anomaly_detection_active: boolean;
@@ -307,7 +322,9 @@ export const dataSecurityAuditApiV76 = {
     if (params?.end_date) qs.set('end_date', params.end_date);
     if (params?.group_by) qs.set('group_by', params.group_by);
     const s = qs.toString();
-    return apiClient.master.get<Array<{ category: string; count: number }>>(`/mdm-v76/logs/stats${s ? `?${s}` : ''}`);
+    return apiClient.master.get<Array<{ category: string; count: number }>>(
+      `/mdm-v76/logs/stats${s ? `?${s}` : ''}`
+    );
   },
 
   async exportLogs(params?: QueryLogsRequest): Promise<ApiResponse<{ download_url: string }>> {
@@ -318,7 +335,9 @@ export const dataSecurityAuditApiV76 = {
     if (params?.start_date) qs.set('start_date', params.start_date);
     if (params?.end_date) qs.set('end_date', params.end_date);
     const s = qs.toString();
-    return apiClient.master.get<{ download_url: string }>(`/mdm-v76/logs/export${s ? `?${s}` : ''}`);
+    return apiClient.master.get<{ download_url: string }>(
+      `/mdm-v76/logs/export${s ? `?${s}` : ''}`
+    );
   },
 
   // ===== 审计策略管理 =====
@@ -365,10 +384,13 @@ export const dataSecurityAuditApiV76 = {
     return apiClient.master.post<AuditRule>(`/mdm-v76/rules/${id}/disable`, {});
   },
 
-  async testRule(id: string, sampleLog?: Partial<AuditLog>): Promise<ApiResponse<{ matches: boolean; matched_actions?: string[] }>> {
+  async testRule(
+    id: string,
+    sampleLog?: Partial<AuditLog>
+  ): Promise<ApiResponse<{ matches: boolean; matched_actions?: string[] }>> {
     return apiClient.master.post<{ matches: boolean; matched_actions?: string[] }>(
       `/mdm-v76/rules/${id}/test`,
-      { sample_log: sampleLog || {} },
+      { sample_log: sampleLog || {} }
     );
   },
 
@@ -389,7 +411,9 @@ export const dataSecurityAuditApiV76 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<SecurityEvent>>(`/mdm-v76/events${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<SecurityEvent>>(
+      `/mdm-v76/events${s ? `?${s}` : ''}`
+    );
   },
 
   async getEvent(id: string): Promise<ApiResponse<SecurityEvent>> {
@@ -429,30 +453,45 @@ export const dataSecurityAuditApiV76 = {
     if (params?.detection_type) qs.set('detection_type', params.detection_type);
     if (params?.is_active !== undefined) qs.set('is_active', String(params.is_active));
     const s = qs.toString();
-    return apiClient.master.get<AnomalyDetectionConfig[]>(`/mdm-v76/anomaly-configs${s ? `?${s}` : ''}`);
+    return apiClient.master.get<AnomalyDetectionConfig[]>(
+      `/mdm-v76/anomaly-configs${s ? `?${s}` : ''}`
+    );
   },
 
-  async createAnomalyConfig(data: CreateAnomalyDetectionConfigRequest): Promise<ApiResponse<AnomalyDetectionConfig>> {
+  async createAnomalyConfig(
+    data: CreateAnomalyDetectionConfigRequest
+  ): Promise<ApiResponse<AnomalyDetectionConfig>> {
     return apiClient.master.post<AnomalyDetectionConfig>('/mdm-v76/anomaly-configs', data);
   },
 
-  async updateAnomalyConfig(id: string, data: Partial<CreateAnomalyDetectionConfigRequest>): Promise<ApiResponse<AnomalyDetectionConfig>> {
+  async updateAnomalyConfig(
+    id: string,
+    data: Partial<CreateAnomalyDetectionConfigRequest>
+  ): Promise<ApiResponse<AnomalyDetectionConfig>> {
     return apiClient.master.put<AnomalyDetectionConfig>(`/mdm-v76/anomaly-configs/${id}`, data);
   },
 
-  async toggleAnomalyConfig(id: string, is_active: boolean): Promise<ApiResponse<AnomalyDetectionConfig>> {
-    return apiClient.master.patch<AnomalyDetectionConfig>(`/mdm-v76/anomaly-configs/${id}`, { is_active });
+  async toggleAnomalyConfig(
+    id: string,
+    is_active: boolean
+  ): Promise<ApiResponse<AnomalyDetectionConfig>> {
+    return apiClient.master.patch<AnomalyDetectionConfig>(`/mdm-v76/anomaly-configs/${id}`, {
+      is_active,
+    });
   },
 
   async deleteAnomalyConfig(id: string): Promise<ApiResponse<{ deleted: boolean }>> {
     return apiClient.master.delete<{ deleted: boolean }>(`/mdm-v76/anomaly-configs/${id}`);
   },
 
-  async runAnomalyDetection(configId: string): Promise<ApiResponse<{ config_id: string; anomalies_found: number; events_created: number }>> {
-    return apiClient.master.post<{ config_id: string; anomalies_found: number; events_created: number }>(
-      `/mdm-v76/anomaly-configs/${configId}/run`,
-      {},
-    );
+  async runAnomalyDetection(
+    configId: string
+  ): Promise<ApiResponse<{ config_id: string; anomalies_found: number; events_created: number }>> {
+    return apiClient.master.post<{
+      config_id: string;
+      anomalies_found: number;
+      events_created: number;
+    }>(`/mdm-v76/anomaly-configs/${configId}/run`, {});
   },
 
   // ===== 合规审计 =====
@@ -469,7 +508,9 @@ export const dataSecurityAuditApiV76 = {
     return apiClient.master.get<ComplianceAudit[]>(`/mdm-v76/compliance${s ? `?${s}` : ''}`);
   },
 
-  async createComplianceAudit(data: CreateComplianceAuditRequest): Promise<ApiResponse<ComplianceAudit>> {
+  async createComplianceAudit(
+    data: CreateComplianceAuditRequest
+  ): Promise<ApiResponse<ComplianceAudit>> {
     return apiClient.master.post<ComplianceAudit>('/mdm-v76/compliance', data);
   },
 
@@ -481,17 +522,17 @@ export const dataSecurityAuditApiV76 = {
     return apiClient.master.post<ComplianceAudit>(`/mdm-v76/compliance/${id}/run`, {});
   },
 
-  async getComplianceSummary(params?: {
-    framework?: ComplianceAudit['framework'];
-  }): Promise<ApiResponse<{
-    framework: string;
-    total_audits: number;
-    pass_rate: number;
-    critical_findings: number;
-    high_findings: number;
-    avg_resolution_days: number;
-    last_audit_date?: string;
-  }>> {
+  async getComplianceSummary(params?: { framework?: ComplianceAudit['framework'] }): Promise<
+    ApiResponse<{
+      framework: string;
+      total_audits: number;
+      pass_rate: number;
+      critical_findings: number;
+      high_findings: number;
+      avg_resolution_days: number;
+      last_audit_date?: string;
+    }>
+  > {
     const qs = new URLSearchParams();
     if (params?.framework) qs.set('framework', params.framework);
     const s = qs.toString();
@@ -519,7 +560,9 @@ export const dataSecurityAuditApiV76 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));
     const s = qs.toString();
-    return apiClient.master.get<PaginatedResponse<AuditReport>>(`/mdm-v76/reports${s ? `?${s}` : ''}`);
+    return apiClient.master.get<PaginatedResponse<AuditReport>>(
+      `/mdm-v76/reports${s ? `?${s}` : ''}`
+    );
   },
 
   async generateReport(data: GenerateReportRequest): Promise<ApiResponse<AuditReport>> {

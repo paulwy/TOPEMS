@@ -53,8 +53,15 @@ describe('V154 masterData Marketplace API bindings', () => {
 
     it('should list assets with filters', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-      await marketplaceApiV69.listAssets({ category: 'dataset', status: 'published', page: 2, pageSize: 15 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v69/assets?category=dataset&status=published&page=2&page_size=15');
+      await marketplaceApiV69.listAssets({
+        category: 'dataset',
+        status: 'published',
+        page: 2,
+        pageSize: 15,
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v69/assets?category=dataset&status=published&page=2&page_size=15'
+      );
     });
 
     it('should list assets without params', async () => {
@@ -66,7 +73,9 @@ describe('V154 masterData Marketplace API bindings', () => {
     it('should update asset', async () => {
       mockClient.put.mockResolvedValue({ success: true, data: {} });
       await marketplaceApiV69.updateAsset('asset-1', { description: 'Updated' });
-      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v69/assets/asset-1', { description: 'Updated' });
+      expect(mockClient.put).toHaveBeenCalledWith('/mdm-v69/assets/asset-1', {
+        description: 'Updated',
+      });
     });
 
     it('should remove asset', async () => {
@@ -78,7 +87,9 @@ describe('V154 masterData Marketplace API bindings', () => {
     it('should search assets', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await marketplaceApiV69.searchAssets('customer', { category: 'dataset', minRating: 3 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v69/assets/search?q=customer&category=dataset&min_rating=3');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v69/assets/search?q=customer&category=dataset&min_rating=3'
+      );
     });
   });
 
@@ -92,7 +103,10 @@ describe('V154 masterData Marketplace API bindings', () => {
 
     it('should publish new version', async () => {
       mockClient.post.mockResolvedValue({ success: true, data: {} });
-      await marketplaceApiV69.publishNewVersion('asset-1', { version: 'v1.1', changelog: 'Added fields' });
+      await marketplaceApiV69.publishNewVersion('asset-1', {
+        version: 'v1.1',
+        changelog: 'Added fields',
+      });
       expect(mockClient.post).toHaveBeenCalledWith('/mdm-v69/assets/asset-1/versions', {
         version: 'v1.1',
         changelog: 'Added fields',
@@ -120,7 +134,9 @@ describe('V154 masterData Marketplace API bindings', () => {
     it('should list subscriptions', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await marketplaceApiV69.listSubscriptions({ status: 'active', page: 1, pageSize: 20 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v69/subscriptions?status=active&page=1&page_size=20');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v69/subscriptions?status=active&page=1&page_size=20'
+      );
     });
 
     it('should get subscription by id', async () => {
@@ -165,7 +181,9 @@ describe('V154 masterData Marketplace API bindings', () => {
     it('should list asset reviews', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await marketplaceApiV69.listAssetReviews('asset-1', { minRating: 4, page: 1, pageSize: 10 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v69/assets/asset-1/reviews?min_rating=4&page=1&page_size=10');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v69/assets/asset-1/reviews?min_rating=4&page=1&page_size=10'
+      );
     });
 
     it('should delete review', async () => {
@@ -276,7 +294,9 @@ describe('V154 masterData Marketplace API bindings', () => {
     it('should get featured assets', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: [] });
       await marketplaceApiV69.getFeaturedAssets({ category: 'dataset', limit: 5 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v69/assets/featured?category=dataset&limit=5');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v69/assets/featured?category=dataset&limit=5'
+      );
     });
 
     it('should get recommendations', async () => {
@@ -294,7 +314,9 @@ describe('V154 masterData Marketplace API bindings', () => {
     it('should list recently updated assets', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await marketplaceApiV69.listRecentlyUpdated({ days: 7, page: 1, pageSize: 20 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v69/assets/recent?days=7&page=1&page_size=20');
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v69/assets/recent?days=7&page=1&page_size=20'
+      );
     });
   });
 });

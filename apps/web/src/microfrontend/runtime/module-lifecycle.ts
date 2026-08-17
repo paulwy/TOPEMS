@@ -166,7 +166,9 @@ export class ModuleLifecycle {
     options: { name?: string; hooks?: LifecycleHooks } = {}
   ): ModuleLifecycleRecord {
     if (this.records.has(id)) {
-      console.warn(`${i18n.t('microfrontend.module-lifecycle.lifecycle_0')}${id}${i18n.t('microfrontend.module-lifecycle.k1')}`);
+      console.warn(
+        `${i18n.t('microfrontend.module-lifecycle.lifecycle_0')}${id}${i18n.t('microfrontend.module-lifecycle.k1')}`
+      );
     }
     const now = Date.now();
     const record: ModuleLifecycleRecord = {
@@ -204,14 +206,18 @@ export class ModuleLifecycle {
   mount(id: string, container: HTMLElement, props: Record<string, unknown> = {}): boolean {
     const record = this.records.get(id);
     if (!record) {
-      console.error(`${i18n.t('microfrontend.module-lifecycle.lifecycle_2')}${id}${i18n.t('microfrontend.module-lifecycle.k3')}`);
+      console.error(
+        `${i18n.t('microfrontend.module-lifecycle.lifecycle_2')}${id}${i18n.t('microfrontend.module-lifecycle.k3')}`
+      );
       return false;
     }
 
     // 允许从 Loaded / Unmounted / Error 状态挂载
     const allowedStates = [LifecycleState.LOADED, LifecycleState.UNMOUNTED, LifecycleState.ERROR];
     if (!allowedStates.includes(record.state)) {
-      console.error(`${i18n.t('microfrontend.module-lifecycle.lifecycle_4')}${id}${i18n.t('microfrontend.module-lifecycle.k5')}${record.state}${i18n.t('microfrontend.module-lifecycle.k6')}`);
+      console.error(
+        `${i18n.t('microfrontend.module-lifecycle.lifecycle_4')}${id}${i18n.t('microfrontend.module-lifecycle.k5')}${record.state}${i18n.t('microfrontend.module-lifecycle.k6')}`
+      );
       return false;
     }
 
@@ -252,7 +258,9 @@ export class ModuleLifecycle {
     if (!record) return false;
 
     if (record.state !== LifecycleState.MOUNTED) {
-      console.error(`${i18n.t('microfrontend.module-lifecycle.lifecycle_7')}${id}${i18n.t('microfrontend.module-lifecycle.k8')}${record.state}${i18n.t('microfrontend.module-lifecycle.mounted_9')}`);
+      console.error(
+        `${i18n.t('microfrontend.module-lifecycle.lifecycle_7')}${id}${i18n.t('microfrontend.module-lifecycle.k8')}${record.state}${i18n.t('microfrontend.module-lifecycle.mounted_9')}`
+      );
       return false;
     }
 
@@ -288,7 +296,9 @@ export class ModuleLifecycle {
     if (!record) return false;
 
     if (record.state !== LifecycleState.MOUNTED && record.state !== LifecycleState.ERROR) {
-      console.error(`${i18n.t('microfrontend.module-lifecycle.lifecycle_10')}${id}${i18n.t('microfrontend.module-lifecycle.k11')}${record.state}${i18n.t('microfrontend.module-lifecycle.k12')}`);
+      console.error(
+        `${i18n.t('microfrontend.module-lifecycle.lifecycle_10')}${id}${i18n.t('microfrontend.module-lifecycle.k11')}${record.state}${i18n.t('microfrontend.module-lifecycle.k12')}`
+      );
       return false;
     }
 
@@ -389,12 +399,16 @@ export class ModuleLifecycle {
   private validateTransition(id: string, targetState: LifecycleState): boolean {
     const record = this.records.get(id);
     if (!record) {
-      console.error(`${i18n.t('microfrontend.module-lifecycle.lifecycle_13')}${id}${i18n.t('microfrontend.module-lifecycle.k14')}`);
+      console.error(
+        `${i18n.t('microfrontend.module-lifecycle.lifecycle_13')}${id}${i18n.t('microfrontend.module-lifecycle.k14')}`
+      );
       return false;
     }
     const allowed = STATE_TRANSITIONS[record.state];
     if (!allowed || !allowed.includes(targetState)) {
-      console.error(`${i18n.t('microfrontend.module-lifecycle.lifecycle_15')}${id}${i18n.t('microfrontend.module-lifecycle.k16')}${record.state} → ${targetState}`);
+      console.error(
+        `${i18n.t('microfrontend.module-lifecycle.lifecycle_15')}${id}${i18n.t('microfrontend.module-lifecycle.k16')}${record.state} → ${targetState}`
+      );
       return false;
     }
     return true;

@@ -2,6 +2,9 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen } from '@/__tests__/test-utils';
 
+import PermissionManagementPage from '../PermissionManagementPage';
+import { authApi } from '@/api/iam';
+
 vi.mock('react-i18next', () => {
   const merge = (...objs: Record<string, string>[]) => Object.assign({}, ...objs);
   const i18nMap = merge(
@@ -45,9 +48,6 @@ vi.mock('@/i18n', () => {
     },
   };
 });
-
-import PermissionManagementPage from '../PermissionManagementPage';
-import { authApi } from '@/api/iam';
 
 let capturedProps: any = null;
 
@@ -189,7 +189,7 @@ describe('PermissionManagementPage', () => {
       message: '创建被拒绝',
     });
     await expect(
-      capturedProps.apiAdapter.create({ name: 'x', code: 'x', category: 'y' }),
+      capturedProps.apiAdapter.create({ name: 'x', code: 'x', category: 'y' })
     ).rejects.toThrow('创建被拒绝');
 
     (authApi.deletePermission as any).mockResolvedValue({

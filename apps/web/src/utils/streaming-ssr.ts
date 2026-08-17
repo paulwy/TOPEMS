@@ -166,7 +166,9 @@ export function hydrateSSRData(): SSRDataCollection {
       return hydratedData;
     }
     hydratedData = collection;
-    ssrLogger.debug(`${i18n.t('shared.streaming-ssr.ssr_0')}${collection.entries.length}${i18n.t('shared.streaming-ssr.k1')}${collection.version}`);
+    ssrLogger.debug(
+      `${i18n.t('shared.streaming-ssr.ssr_0')}${collection.entries.length}${i18n.t('shared.streaming-ssr.k1')}${collection.version}`
+    );
     return hydratedData;
   } catch (e) {
     ssrLogger.error(i18n.t('shared.streaming-ssr.ssr_2'), e);
@@ -463,9 +465,7 @@ export class StreamingSSRManager {
             return;
           }
 
-          throw new Error(
-            i18n.t('shared.streaming-ssr.k0')
-          );
+          throw new Error(i18n.t('shared.streaming-ssr.k0'));
         } catch (error) {
           const err = error instanceof Error ? error : new Error(String(error));
           ssrLogger.error(i18n.t('shared.streaming-ssr.k6'), err);

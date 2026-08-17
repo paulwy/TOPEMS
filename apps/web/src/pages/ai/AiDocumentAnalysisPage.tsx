@@ -47,14 +47,32 @@ import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 import { aiApi } from '@/api/ai';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 type AnalysisTab = 'summary' | 'translate' | 'qa' | 'extract' | 'ocr';
 
 const recentDocuments = [
-  { id: '1', name: i18n.t('pages.ai_document_analysis_page.2024pdf_0'), type: 'pdf', size: '2.3 MB', date: '2024-06-20' },
-  { id: '2', name: i18n.t('pages.ai_document_analysis_page.docx_1'), type: 'docx', size: '856 KB', date: '2024-06-19' },
-  { id: '3', name: i18n.t('pages.ai_document_analysis_page.pdf_2'), type: 'pdf', size: '5.1 MB', date: '2024-06-18' },
+  {
+    id: '1',
+    name: i18n.t('pages.ai_document_analysis_page.2024pdf_0'),
+    type: 'pdf',
+    size: '2.3 MB',
+    date: '2024-06-20',
+  },
+  {
+    id: '2',
+    name: i18n.t('pages.ai_document_analysis_page.docx_1'),
+    type: 'docx',
+    size: '856 KB',
+    date: '2024-06-19',
+  },
+  {
+    id: '3',
+    name: i18n.t('pages.ai_document_analysis_page.pdf_2'),
+    type: 'pdf',
+    size: '5.1 MB',
+    date: '2024-06-18',
+  },
 ];
 
 const summaryResult = `{i18n.t('pages.ai_document_analysis_page.k0')}

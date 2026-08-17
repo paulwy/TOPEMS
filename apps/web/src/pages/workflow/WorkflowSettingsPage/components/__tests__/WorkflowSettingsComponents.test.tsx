@@ -2,6 +2,15 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
+import { GeneralSettings } from '../GeneralSettings';
+import { NotificationSettings } from '../NotificationSettings';
+import { SettingSidebar } from '../SettingSidebar';
+import type {
+  GeneralSettings as GeneralSettingsType,
+  NotificationSettings as NotificationSettingsType,
+  SettingGroup,
+} from '../../types';
+
 vi.mock('react-i18next', () => {
   const sources = [
     require('../../../../../i18n/locales/zh/workflow.json'),
@@ -9,7 +18,7 @@ vi.mock('react-i18next', () => {
     require('../../../../../i18n/locales/zh/components.json'),
     require('../../../../../i18n/locales/zh/pages.json'),
     require('../../../../../i18n/locales/zh/templates.json'),
-    require('../../../../../i18n/locales/zh/shared.json')
+    require('../../../../../i18n/locales/zh/shared.json'),
   ];
   const i18nMap: Record<string, string> = {};
   for (const src of sources) {
@@ -18,29 +27,41 @@ vi.mock('react-i18next', () => {
     }
   }
   const t = (key: string, options?: any) => {
-      let base = i18nMap[key] ?? key;
-      if (options === undefined || options === null) return base;
-      let didReplace = false;
-      const tryReplace = (phName: string, valStr: string) => {
-        const p1 = `{{${phName}}}`;
-        const p2 = `{${phName}}`;
-        const p3 = `\${${phName}}`;
-        if (base.includes(p1)) { base = base.split(p1).join(valStr); didReplace = true; return true; }
-        if (base.includes(p2)) { base = base.split(p2).join(valStr); didReplace = true; return true; }
-        if (base.includes(p3)) { base = base.split(p3).join(valStr); didReplace = true; return true; }
-        return false;
-      };
-      if (typeof options === 'object') {
-        for (const [k, v] of Object.entries(options)) tryReplace(k, String(v));
-        if (!didReplace) base = `${base}:${JSON.stringify(options)}`;
-      } else {
-        const strVal = String(options);
-        if (!tryReplace('0', strVal)) {
-          base = `${base}:${strVal}`;
-        }
+    let base = i18nMap[key] ?? key;
+    if (options === undefined || options === null) return base;
+    let didReplace = false;
+    const tryReplace = (phName: string, valStr: string) => {
+      const p1 = `{{${phName}}}`;
+      const p2 = `{${phName}}`;
+      const p3 = `\${${phName}}`;
+      if (base.includes(p1)) {
+        base = base.split(p1).join(valStr);
+        didReplace = true;
+        return true;
       }
-      return base;
+      if (base.includes(p2)) {
+        base = base.split(p2).join(valStr);
+        didReplace = true;
+        return true;
+      }
+      if (base.includes(p3)) {
+        base = base.split(p3).join(valStr);
+        didReplace = true;
+        return true;
+      }
+      return false;
     };
+    if (typeof options === 'object') {
+      for (const [k, v] of Object.entries(options)) tryReplace(k, String(v));
+      if (!didReplace) base = `${base}:${JSON.stringify(options)}`;
+    } else {
+      const strVal = String(options);
+      if (!tryReplace('0', strVal)) {
+        base = `${base}:${strVal}`;
+      }
+    }
+    return base;
+  };
   return {
     useTranslation: () => ({ t, i18n: { language: 'zh' } }),
     initReactI18next: { type: '3rdParty', init: () => {} },
@@ -56,7 +77,7 @@ vi.mock('@/i18n', () => {
     require('../../../../../i18n/locales/zh/components.json'),
     require('../../../../../i18n/locales/zh/pages.json'),
     require('../../../../../i18n/locales/zh/templates.json'),
-    require('../../../../../i18n/locales/zh/shared.json')
+    require('../../../../../i18n/locales/zh/shared.json'),
   ];
   const i18nMap: Record<string, string> = {};
   for (const src of sources) {
@@ -65,29 +86,41 @@ vi.mock('@/i18n', () => {
     }
   }
   const t = (key: string, options?: any) => {
-      let base = i18nMap[key] ?? key;
-      if (options === undefined || options === null) return base;
-      let didReplace = false;
-      const tryReplace = (phName: string, valStr: string) => {
-        const p1 = `{{${phName}}}`;
-        const p2 = `{${phName}}`;
-        const p3 = `\${${phName}}`;
-        if (base.includes(p1)) { base = base.split(p1).join(valStr); didReplace = true; return true; }
-        if (base.includes(p2)) { base = base.split(p2).join(valStr); didReplace = true; return true; }
-        if (base.includes(p3)) { base = base.split(p3).join(valStr); didReplace = true; return true; }
-        return false;
-      };
-      if (typeof options === 'object') {
-        for (const [k, v] of Object.entries(options)) tryReplace(k, String(v));
-        if (!didReplace) base = `${base}:${JSON.stringify(options)}`;
-      } else {
-        const strVal = String(options);
-        if (!tryReplace('0', strVal)) {
-          base = `${base}:${strVal}`;
-        }
+    let base = i18nMap[key] ?? key;
+    if (options === undefined || options === null) return base;
+    let didReplace = false;
+    const tryReplace = (phName: string, valStr: string) => {
+      const p1 = `{{${phName}}}`;
+      const p2 = `{${phName}}`;
+      const p3 = `\${${phName}}`;
+      if (base.includes(p1)) {
+        base = base.split(p1).join(valStr);
+        didReplace = true;
+        return true;
       }
-      return base;
+      if (base.includes(p2)) {
+        base = base.split(p2).join(valStr);
+        didReplace = true;
+        return true;
+      }
+      if (base.includes(p3)) {
+        base = base.split(p3).join(valStr);
+        didReplace = true;
+        return true;
+      }
+      return false;
     };
+    if (typeof options === 'object') {
+      for (const [k, v] of Object.entries(options)) tryReplace(k, String(v));
+      if (!didReplace) base = `${base}:${JSON.stringify(options)}`;
+    } else {
+      const strVal = String(options);
+      if (!tryReplace('0', strVal)) {
+        base = `${base}:${strVal}`;
+      }
+    }
+    return base;
+  };
   return {
     default: {
       t,
@@ -98,15 +131,6 @@ vi.mock('@/i18n', () => {
     },
   };
 });
-
-import { GeneralSettings } from '../GeneralSettings';
-import { NotificationSettings } from '../NotificationSettings';
-import { SettingSidebar } from '../SettingSidebar';
-import type {
-  GeneralSettings as GeneralSettingsType,
-  NotificationSettings as NotificationSettingsType,
-  SettingGroup,
-} from '../../types';
 
 const groups: SettingGroup[] = [
   {

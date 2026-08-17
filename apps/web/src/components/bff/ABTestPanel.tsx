@@ -195,7 +195,11 @@ const ExperimentResultPanel: React.FC<{ experimentId: string }> = ({ experimentI
         />
         <Chip
           size='small'
-          label={isSignificant ? i18n.t('components.ab_test_panel.k7') : i18n.t('components.ab_test_panel.k6')}
+          label={
+            isSignificant
+              ? i18n.t('components.ab_test_panel.k7')
+              : i18n.t('components.ab_test_panel.k6')
+          }
           color={isSignificant ? 'success' : 'warning'}
           variant='outlined'
         />
@@ -220,7 +224,8 @@ const ExperimentResultPanel: React.FC<{ experimentId: string }> = ({ experimentI
           sx={{ mt: 1.5, py: 0.5 }}
         >
           <AlertTitle sx={{ mb: 0 }}>{i18n.t('components.ab_test_panel.k8')}</AlertTitle>
-          [i18n.t('components.ab_test_panel.k1')]: {result.variant_results.find((v) => v.variant_id === winner)?.variant_name}
+          [i18n.t('components.ab_test_panel.k1')]:{' '}
+          {result.variant_results.find((v) => v.variant_id === winner)?.variant_name}
         </Alert>
       )}
     </Box>
@@ -524,7 +529,8 @@ const CreateExperimentForm: React.FC<{
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
               >
-                {i18n.t('components.ab_test_panel.k0')}{traffic}%
+                {i18n.t('components.ab_test_panel.k0')}
+                {traffic}%
               </Typography>
             </Stack>
             <Slider
@@ -581,8 +587,12 @@ const CreateExperimentForm: React.FC<{
                   val && handleVariantChange(idx, 'is_control', val === 'control')
                 }
               >
-                <ToggleButton value='variant'>{i18n.t('components.ab_test_panel.k30')}</ToggleButton>
-                <ToggleButton value='control'>{i18n.t('components.ab_test_panel.k31')}</ToggleButton>
+                <ToggleButton value='variant'>
+                  {i18n.t('components.ab_test_panel.k30')}
+                </ToggleButton>
+                <ToggleButton value='control'>
+                  {i18n.t('components.ab_test_panel.k31')}
+                </ToggleButton>
               </ToggleButtonGroup>
               <IconButton
                 size='small'
@@ -663,19 +673,35 @@ export const ABTestPanel: React.FC<ABTestPanelProps> = ({
       switch (action) {
         case 'start':
           startExperiment(id);
-          addNotification({ title: i18n.t('components.ab_test_panel.k34'), message: id, type: 'success' });
+          addNotification({
+            title: i18n.t('components.ab_test_panel.k34'),
+            message: id,
+            type: 'success',
+          });
           break;
         case 'pause':
           pauseExperiment(id);
-          addNotification({ title: i18n.t('components.ab_test_panel.k35'), message: id, type: 'warning' });
+          addNotification({
+            title: i18n.t('components.ab_test_panel.k35'),
+            message: id,
+            type: 'warning',
+          });
           break;
         case 'complete':
           completeExperiment(id);
-          addNotification({ title: i18n.t('components.ab_test_panel.k36'), message: id, type: 'success' });
+          addNotification({
+            title: i18n.t('components.ab_test_panel.k36'),
+            message: id,
+            type: 'success',
+          });
           break;
         case 'delete':
           deleteExperiment(id);
-          addNotification({ title: i18n.t('components.ab_test_panel.k37'), message: id, type: 'info' });
+          addNotification({
+            title: i18n.t('components.ab_test_panel.k37'),
+            message: id,
+            type: 'info',
+          });
           break;
       }
       refresh();
@@ -693,7 +719,11 @@ export const ABTestPanel: React.FC<ABTestPanelProps> = ({
   }) => {
     try {
       createExperiment(input);
-      addNotification({ title: i18n.t('components.ab_test_panel.k39'), message: input.name, type: 'success' });
+      addNotification({
+        title: i18n.t('components.ab_test_panel.k39'),
+        message: input.name,
+        type: 'success',
+      });
       refresh();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -803,9 +833,13 @@ export const ABTestPanel: React.FC<ABTestPanelProps> = ({
                   <TableRow>
                     <TableCell sx={{ width: 40 }} />
                     <TableCell>{i18n.t('components.ab_test_panel.k43')}</TableCell>
-                    <TableCell sx={{ width: 90 }}>{i18n.t('components.ab_test_panel.k44')}</TableCell>
+                    <TableCell sx={{ width: 90 }}>
+                      {i18n.t('components.ab_test_panel.k44')}
+                    </TableCell>
                     <TableCell>{i18n.t('components.ab_test_panel.k45')}</TableCell>
-                    <TableCell sx={{ width: 70 }}>{i18n.t('components.ab_test_panel.k46')}</TableCell>
+                    <TableCell sx={{ width: 70 }}>
+                      {i18n.t('components.ab_test_panel.k46')}
+                    </TableCell>
                     <TableCell
                       sx={{ width: 140 }}
                       align='right'

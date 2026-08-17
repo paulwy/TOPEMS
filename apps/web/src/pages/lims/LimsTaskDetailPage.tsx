@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
+import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { ClipboardCheck, FileText, CheckCircle, AlertCircle, Play, Plus } from 'lucide-react';
 import {
   Dialog,
@@ -37,7 +37,7 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 
-const ct= designTokens.colors;
+const ct = designTokens.colors;
 
 interface TaskRecord extends InspectionRecord {
   step_name: string;
@@ -69,7 +69,7 @@ const LimsTaskDetailPage: React.FC = () => {
   });
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const { data: detailData, isPending: loading} = useQuery({
+  const { data: detailData, isPending: loading } = useQuery({
     queryKey: QUERY_KEYS.LIMS.TASK(id || ''),
     queryFn: async () => {
       if (!id) return null;
@@ -92,7 +92,10 @@ const LimsTaskDetailPage: React.FC = () => {
           : recordData.records || recordData.items || [];
         records = recordArray.map((r: RawRecord) => ({
           ...r,
-          step_name: r.step_name || r.step_id || `${i18n.t('pages.lims_task_detail_page.k0')} ${r.step_index}`,
+          step_name:
+            r.step_name ||
+            r.step_id ||
+            `${i18n.t('pages.lims_task_detail_page.k0')} ${r.step_index}`,
         })) as TaskRecord[];
       }
 
@@ -114,8 +117,9 @@ const LimsTaskDetailPage: React.FC = () => {
       return { task, records, process };
     },
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.SHORT,});
+
+    staleTime: CACHE_DURATIONS.SHORT,
+  });
 
   const task = detailData?.task || null;
   const records = detailData?.records || [];
@@ -131,19 +135,22 @@ const LimsTaskDetailPage: React.FC = () => {
     },
     onSuccess: () => {
       if (id) {
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.TASK(id) ,
-  exact: false,
-  refetchType: 'active',
-});
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.RECORDS_BY_TASK(id) ,
-  exact: false,
-  refetchType: 'active',
-});
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.LIMS.TASK(id),
+          exact: false,
+          refetchType: 'active',
+        });
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.LIMS.RECORDS_BY_TASK(id),
+          exact: false,
+          refetchType: 'active',
+        });
       }
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.TASKS ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.LIMS.TASKS,
+        exact: false,
+        refetchType: 'active',
+      });
       setShowRecordModal(false);
     },
     onError: (error: unknown) => {
@@ -237,7 +244,9 @@ const LimsTaskDetailPage: React.FC = () => {
                 fontSize: '0.875rem',
               }}
             >
-              <span style={{ color: ct.grey[600] }}>{i18n.t('pages.lims_task_detail_page.k12')}</span>
+              <span style={{ color: ct.grey[600] }}>
+                {i18n.t('pages.lims_task_detail_page.k12')}
+              </span>
               <span style={{ fontWeight: 500, color: theme.palette.grey[900] }}>
                 {completedSteps} / {totalSteps} {i18n.t('pages.lims_task_detail_page.k0')}
               </span>
@@ -428,14 +437,46 @@ const LimsTaskDetailPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      pending: { bg: 'warning.100', color: ct.yellow[600], label: i18n.t('pages.lims_task_detail_page.k16') },
-      [i18n.t('pages.lims_task_detail_page.k5')]: { bg: 'warning.100', color: ct.yellow[600], label: i18n.t('pages.lims_task_detail_page.k17') },
-      in_progress: { bg: 'primary.100', color: 'primary.dark', label: i18n.t('pages.lims_task_detail_page.k18') },
-      [i18n.t('pages.lims_task_detail_page.k6')]: { bg: 'primary.100', color: 'primary.dark', label: i18n.t('pages.lims_task_detail_page.k19') },
-      completed: { bg: 'success.lighter', color: 'success.dark', label: i18n.t('pages.lims_task_detail_page.k20') },
-      [i18n.t('pages.lims_task_detail_page.k7')]: { bg: 'success.lighter', color: 'success.dark', label: i18n.t('pages.lims_task_detail_page.k21') },
-      cancelled: { bg: 'error.lighter', color: 'error.dark', label: i18n.t('pages.lims_task_detail_page.k22') },
-      [i18n.t('pages.lims_task_detail_page.k8')]: { bg: 'error.lighter', color: 'error.dark', label: i18n.t('pages.lims_task_detail_page.k23') },
+      pending: {
+        bg: 'warning.100',
+        color: ct.yellow[600],
+        label: i18n.t('pages.lims_task_detail_page.k16'),
+      },
+      [i18n.t('pages.lims_task_detail_page.k5')]: {
+        bg: 'warning.100',
+        color: ct.yellow[600],
+        label: i18n.t('pages.lims_task_detail_page.k17'),
+      },
+      in_progress: {
+        bg: 'primary.100',
+        color: 'primary.dark',
+        label: i18n.t('pages.lims_task_detail_page.k18'),
+      },
+      [i18n.t('pages.lims_task_detail_page.k6')]: {
+        bg: 'primary.100',
+        color: 'primary.dark',
+        label: i18n.t('pages.lims_task_detail_page.k19'),
+      },
+      completed: {
+        bg: 'success.lighter',
+        color: 'success.dark',
+        label: i18n.t('pages.lims_task_detail_page.k20'),
+      },
+      [i18n.t('pages.lims_task_detail_page.k7')]: {
+        bg: 'success.lighter',
+        color: 'success.dark',
+        label: i18n.t('pages.lims_task_detail_page.k21'),
+      },
+      cancelled: {
+        bg: 'error.lighter',
+        color: 'error.dark',
+        label: i18n.t('pages.lims_task_detail_page.k22'),
+      },
+      [i18n.t('pages.lims_task_detail_page.k8')]: {
+        bg: 'error.lighter',
+        color: 'error.dark',
+        label: i18n.t('pages.lims_task_detail_page.k23'),
+      },
     };
     const item = statusMap[status] || {
       bg: 'grey.100',
@@ -451,7 +492,8 @@ const LimsTaskDetailPage: React.FC = () => {
     );
   };
 
-  const isTaskCompleted = task.status === 'completed' || task.status === i18n.t('pages.lims_task_detail_page.k24');
+  const isTaskCompleted =
+    task.status === 'completed' || task.status === i18n.t('pages.lims_task_detail_page.k24');
 
   return (
     <PageContainer
@@ -461,7 +503,12 @@ const LimsTaskDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={task?.task_no || task?.sample_name || task?.id || i18n.t('pages.lims_task_detail_page.k26')}
+        detailItemName={
+          task?.task_no ||
+          task?.sample_name ||
+          task?.id ||
+          i18n.t('pages.lims_task_detail_page.k26')
+        }
         breadcrumbs={[
           { label: i18n.t('pages.lims_task_detail_page.k27'), href: '/dashboard' },
           { label: 'LIMS', href: LIMS_PATHS.root },
@@ -475,8 +522,14 @@ const LimsTaskDetailPage: React.FC = () => {
           subtitle: task.sample_name || i18n.t('pages.lims_task_detail_page.k29'),
           tags: [task.status],
           stats: [
-            { label: i18n.t('pages.lims_task_detail_page.k30'), value: `${completedSteps}/${totalSteps}` },
-            { label: i18n.t('pages.lims_task_detail_page.k31'), value: `${Math.round(progressPercent)}%` },
+            {
+              label: i18n.t('pages.lims_task_detail_page.k30'),
+              value: `${completedSteps}/${totalSteps}`,
+            },
+            {
+              label: i18n.t('pages.lims_task_detail_page.k31'),
+              value: `${Math.round(progressPercent)}%`,
+            },
           ],
         }}
         sidebar={sidebarContent}
@@ -559,9 +612,15 @@ const LimsTaskDetailPage: React.FC = () => {
                 size='small'
               >
                 <MenuItem value=''>{i18n.t('pages.lims_task_detail_page.k38')}</MenuItem>
-                <MenuItem value={i18n.t('pages.lims_task_detail_page.k39')}>{i18n.t('pages.lims_task_detail_page.k40')}</MenuItem>
-                <MenuItem value={i18n.t('pages.lims_task_detail_page.k41')}>{i18n.t('pages.lims_task_detail_page.k42')}</MenuItem>
-                <MenuItem value={i18n.t('pages.lims_task_detail_page.k43')}>{i18n.t('pages.lims_task_detail_page.k44')}</MenuItem>
+                <MenuItem value={i18n.t('pages.lims_task_detail_page.k39')}>
+                  {i18n.t('pages.lims_task_detail_page.k40')}
+                </MenuItem>
+                <MenuItem value={i18n.t('pages.lims_task_detail_page.k41')}>
+                  {i18n.t('pages.lims_task_detail_page.k42')}
+                </MenuItem>
+                <MenuItem value={i18n.t('pages.lims_task_detail_page.k43')}>
+                  {i18n.t('pages.lims_task_detail_page.k44')}
+                </MenuItem>
               </TextField>
             </Box>
           </DialogContent>
@@ -606,7 +665,9 @@ const LimsTaskDetailPage: React.FC = () => {
                 }}
               >
                 <AlertCircle sx={{ width: 20, height: 20 }} />
-                <span style={{ fontSize: '0.875rem' }}>{i18n.t('pages.lims_task_detail_page.k0')}</span>
+                <span style={{ fontSize: '0.875rem' }}>
+                  {i18n.t('pages.lims_task_detail_page.k0')}
+                </span>
               </Box>
             </Box>
           </DialogContent>

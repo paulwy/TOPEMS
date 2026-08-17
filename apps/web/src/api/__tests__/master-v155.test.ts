@@ -51,8 +51,13 @@ describe('V155 masterData Compliance Report API bindings', () => {
 
     it('should list compliance reports', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-      await complianceReportApiV70.listComplianceReports({ framework: 'HIPAA', status: 'completed' });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v70/reports?framework=HIPAA&status=completed');
+      await complianceReportApiV70.listComplianceReports({
+        framework: 'HIPAA',
+        status: 'completed',
+      });
+      expect(mockClient.get).toHaveBeenCalledWith(
+        '/mdm-v70/reports?framework=HIPAA&status=completed'
+      );
     });
 
     it('should list compliance reports without params', async () => {

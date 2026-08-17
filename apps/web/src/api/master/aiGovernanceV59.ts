@@ -3,8 +3,10 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type EntityType = 'customer' | 'supplier' | 'product' | 'material' | 'order' | 'invoice' | 'employee' | 'document';
-export type SuggestionType = 'naming' | 'duplicate' | 'missing' | 'inconsistency' | 'standardization';
+export type EntityType =
+  'customer' | 'supplier' | 'product' | 'material' | 'order' | 'invoice' | 'employee' | 'document';
+export type SuggestionType =
+  'naming' | 'duplicate' | 'missing' | 'inconsistency' | 'standardization';
 export type SuggestionStatus = 'pending' | 'applied' | 'dismissed';
 export type MatchStatus = 'pending' | 'reviewed' | 'confirmed' | 'rejected';
 export type ClassifierType = 'rule_based' | 'ml' | 'hybrid';
@@ -158,12 +160,18 @@ export const aiGovernanceApiV59 = {
     return apiClient.master.post<GovernanceSuggestionV59[]>('/mdm-v59/governance/analyze', data);
   },
 
-  async getSuggestions(params?: { entity_type?: EntityType; entity_id?: string; status?: SuggestionType }): Promise<ApiResponse<GovernanceSuggestionV59[]>> {
+  async getSuggestions(params?: {
+    entity_type?: EntityType;
+    entity_id?: string;
+    status?: SuggestionType;
+  }): Promise<ApiResponse<GovernanceSuggestionV59[]>> {
     const qs = new URLSearchParams();
     if (params?.entity_type) qs.set('entity_type', params.entity_type);
     if (params?.entity_id) qs.set('entity_id', params.entity_id);
     const s = qs.toString();
-    return apiClient.master.get<GovernanceSuggestionV59[]>(`/mdm-v59/governance/suggestions${s ? `?${s}` : ''}`);
+    return apiClient.master.get<GovernanceSuggestionV59[]>(
+      `/mdm-v59/governance/suggestions${s ? `?${s}` : ''}`
+    );
   },
 
   async getEntitySuggestions(id: string): Promise<ApiResponse<GovernanceSuggestionV59[]>> {
@@ -174,8 +182,13 @@ export const aiGovernanceApiV59 = {
     return apiClient.master.post<GovernanceSuggestionV59>(`/mdm-v59/governance/apply/${id}`, {});
   },
 
-  async dismissSuggestion(id: string, reason?: string): Promise<ApiResponse<{ dismissed: boolean }>> {
-    return apiClient.master.post<{ dismissed: boolean }>(`/mdm-v59/governance/dismiss/${id}`, { reason });
+  async dismissSuggestion(
+    id: string,
+    reason?: string
+  ): Promise<ApiResponse<{ dismissed: boolean }>> {
+    return apiClient.master.post<{ dismissed: boolean }>(`/mdm-v59/governance/dismiss/${id}`, {
+      reason,
+    });
   },
 
   // ===== 模型管理 =====
@@ -200,7 +213,10 @@ export const aiGovernanceApiV59 = {
     return apiClient.master.post<MatchResult[]>('/mdm-v59/matching/entities', data);
   },
 
-  async getMatchResults(params?: { status?: MatchStatus; rule_id?: string }): Promise<ApiResponse<MatchResult[]>> {
+  async getMatchResults(params?: {
+    status?: MatchStatus;
+    rule_id?: string;
+  }): Promise<ApiResponse<MatchResult[]>> {
     const qs = new URLSearchParams();
     if (params?.status) qs.set('status', params.status);
     if (params?.rule_id) qs.set('rule_id', params.rule_id);
@@ -233,27 +249,48 @@ export const aiGovernanceApiV59 = {
     return apiClient.master.get<Classifier[]>('/mdm-v59/classifiers');
   },
 
-  async classifyEntity(entityType: EntityType, id: string, data?: ClassifyEntityRequest): Promise<ApiResponse<ClassificationResult>> {
-    return apiClient.master.post<ClassificationResult>(`/mdm-v59/classify/${entityType}/${id}`, data || {});
+  async classifyEntity(
+    entityType: EntityType,
+    id: string,
+    data?: ClassifyEntityRequest
+  ): Promise<ApiResponse<ClassificationResult>> {
+    return apiClient.master.post<ClassificationResult>(
+      `/mdm-v59/classify/${entityType}/${id}`,
+      data || {}
+    );
   },
 
-  async getClassification(entityType: EntityType, id: string): Promise<ApiResponse<ClassificationResult>> {
-    return apiClient.master.get<ClassificationResult>(`/mdm-v59/classification/${entityType}/${id}`);
+  async getClassification(
+    entityType: EntityType,
+    id: string
+  ): Promise<ApiResponse<ClassificationResult>> {
+    return apiClient.master.get<ClassificationResult>(
+      `/mdm-v59/classification/${entityType}/${id}`
+    );
   },
 
   async getEntityCategories(entityType: EntityType): Promise<ApiResponse<string[]>> {
     return apiClient.master.get<string[]>(`/mdm-v59/classification/categories/${entityType}`);
   },
 
-  async reviewClassification(id: string, data: ReviewClassificationRequest): Promise<ApiResponse<ClassificationResult>> {
-    return apiClient.master.post<ClassificationResult>(`/mdm-v59/classification/review/${id}`, data);
+  async reviewClassification(
+    id: string,
+    data: ReviewClassificationRequest
+  ): Promise<ApiResponse<ClassificationResult>> {
+    return apiClient.master.post<ClassificationResult>(
+      `/mdm-v59/classification/review/${id}`,
+      data
+    );
   },
 
   async getClassificationStats(): Promise<ApiResponse<ClassificationStats>> {
     return apiClient.master.get<ClassificationStats>('/mdm-v59/classification/stats');
   },
 
-  async updateClassifierRules(id: string, rules: Array<{ condition: string; category: string }>): Promise<ApiResponse<Classifier>> {
+  async updateClassifierRules(
+    id: string,
+    rules: Array<{ condition: string; category: string }>
+  ): Promise<ApiResponse<Classifier>> {
     return apiClient.master.post<Classifier>(`/mdm-v59/classifier/rules/${id}`, { rules });
   },
 };

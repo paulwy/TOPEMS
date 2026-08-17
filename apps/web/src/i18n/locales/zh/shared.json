@@ -4937,7 +4937,7 @@
   "shared._mock.b_2": "B区",
   "shared._mock.a_3": "A区",
   "shared._mock.xx_4": "市浦东新区XX路",
-  "shared._mock.xxxx_15": "市XX区XX路",
+  "shared._mock.k160": "市XX区XX路",
   "shared.help-mapping.iam_0": "IAM身份管理帮助",
   "shared.help-mapping.workflow_1": "Workflow工作流帮助",
   "shared.help-mapping.crm_2": "CRM客户管理帮助",
@@ -5167,5 +5167,6 @@
   "shared.performance-analyzer.k2": "低频使用模块，建议改为懒加载",
   "shared.performance-analyzer.k3": "首次使用延迟过高，考虑预加载策略",
   "shared.performance-analyzer.k4": "懒加载效果不佳，评估是否需要合并模块",
-  "shared.performance-analyzer.k5": "内存使用"
+  "shared.performance-analyzer.k5": "内存使用",
+  "intelligent_ops.v56-ops-panel.k0": "冷却"
 }

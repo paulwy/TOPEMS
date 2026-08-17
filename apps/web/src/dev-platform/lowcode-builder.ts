@@ -276,7 +276,11 @@ const DEFAULT_THEME: ThemeConfig = {
     xxl: '48px',
   },
   borderRadius: 'md',
-  shadows: ['none', `0 1px 3px ${designTokens.colors.action.selected}`, `0 4px 12px ${designTokens.colors.action.selected}`],
+  shadows: [
+    'none',
+    `0 1px 3px ${designTokens.colors.action.selected}`,
+    `0 4px 12px ${designTokens.colors.action.selected}`,
+  ],
   mode: 'light',
 };
 
@@ -317,7 +321,11 @@ const PRESET_TEMPLATES: TemplateDefinition[] = [
     theme: DEFAULT_THEME,
     dataSources: [],
     flows: [],
-    tags: [i18n.t('pages.lowcode-builder.k7'), i18n.t('pages.lowcode-builder.k6'), i18n.t('pages.lowcode-builder.k5')],
+    tags: [
+      i18n.t('pages.lowcode-builder.k7'),
+      i18n.t('pages.lowcode-builder.k6'),
+      i18n.t('pages.lowcode-builder.k5'),
+    ],
     author: 'TOPEMS Team',
     version: '1.0.0',
     popularity: 9500,
@@ -351,7 +359,11 @@ const PRESET_TEMPLATES: TemplateDefinition[] = [
     theme: DEFAULT_THEME,
     dataSources: [],
     flows: [],
-    tags: [i18n.t('pages.lowcode-builder.k16'), i18n.t('pages.lowcode-builder.k15'), i18n.t('pages.lowcode-builder.k14')],
+    tags: [
+      i18n.t('pages.lowcode-builder.k16'),
+      i18n.t('pages.lowcode-builder.k15'),
+      i18n.t('pages.lowcode-builder.k14'),
+    ],
     author: 'TOPEMS Team',
     version: '1.0.0',
     popularity: 7200,
@@ -770,7 +782,9 @@ export class LowCodeBuilder {
       (n) => n.type !== 'trigger' && !flow.edges.some((e) => e.target === n.id)
     );
     if (orphanNodes.length > 0) {
-      issues.push(`${i18n.t('pages.lowcode-builder.k20')}${orphanNodes.length}${i18n.t('pages.lowcode-builder.k21')}`);
+      issues.push(
+        `${i18n.t('pages.lowcode-builder.k20')}${orphanNodes.length}${i18n.t('pages.lowcode-builder.k21')}`
+      );
     }
 
     return { valid: issues.length === 0, issues };
@@ -788,8 +802,18 @@ export class LowCodeBuilder {
 
   listThemePresets(): Array<{ id: string; name: string; mode: string; theme: ThemeConfig }> {
     return [
-      { id: 'light', name: i18n.t('pages.lowcode-builder.k22'), mode: 'light', theme: { ...DEFAULT_THEME } },
-      { id: 'dark', name: i18n.t('pages.lowcode-builder.k23'), mode: 'dark', theme: { ...DARK_THEME } },
+      {
+        id: 'light',
+        name: i18n.t('pages.lowcode-builder.k22'),
+        mode: 'light',
+        theme: { ...DEFAULT_THEME },
+      },
+      {
+        id: 'dark',
+        name: i18n.t('pages.lowcode-builder.k23'),
+        mode: 'dark',
+        theme: { ...DARK_THEME },
+      },
     ];
   }
 

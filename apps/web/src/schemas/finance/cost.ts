@@ -31,7 +31,12 @@ export const costSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) =>
         React.createElement(
           'span',
-          { style: { fontWeight: 600, color: `var(--color-primary-main, ${designTokens.colors.primary.dark})` } },
+          {
+            style: {
+              fontWeight: 600,
+              color: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
+            },
+          },
           String(row.code || '')
         ),
       validation: [{ type: 'maxLength', value: 50 }],
@@ -63,7 +68,10 @@ export const costSchema: EntitySchema = {
       listWidth: 140,
       hideInForm: true,
       renderCell: (row: Record<string, unknown>) =>
-        formatMoney(row.period_debit as number | undefined, `var(--color-success-main, ${designTokens.colors.success.dark})`),
+        formatMoney(
+          row.period_debit as number | undefined,
+          `var(--color-success-main, ${designTokens.colors.success.dark})`
+        ),
     },
     {
       name: 'period_credit',
@@ -72,7 +80,10 @@ export const costSchema: EntitySchema = {
       listWidth: 140,
       hideInForm: true,
       renderCell: (row: Record<string, unknown>) =>
-        formatMoney(row.period_credit as number | undefined, `var(--color-error-main, ${designTokens.colors.error['800']})`),
+        formatMoney(
+          row.period_credit as number | undefined,
+          `var(--color-error-main, ${designTokens.colors.error['800']})`
+        ),
     },
     {
       name: 'balance_direction',

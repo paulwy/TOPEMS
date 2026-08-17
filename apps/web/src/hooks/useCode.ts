@@ -217,14 +217,14 @@ export function useBatchNextCodes() {
         module?: ModuleType;
       }[]
     ) => codeApi.batchGetNextCodes(requests),
-  
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
-      },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+    },
   });
 }
 
@@ -234,14 +234,14 @@ export function useBatchNextCodes() {
 export function useValidateCode() {
   return useMutation({
     mutationFn: (params: { entity_type: EntityType; code: string }) => codeApi.validateCode(params),
-  
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
-      },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+    },
   });
 }
 
@@ -255,10 +255,11 @@ export function useReserveCodes() {
     mutationFn: (params: { entity_type: EntityType; quantity: number; reserve_days?: number }) =>
       codeApi.reserveCodes(params),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 }
@@ -272,10 +273,11 @@ export function useReleaseCodes() {
   return useMutation({
     mutationFn: (reservationId: string) => codeApi.releaseCodes(reservationId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
   });
 }
@@ -299,8 +301,9 @@ export function useCodeRule(id: string) {
     queryKey: [...QUERY_KEYS.AD_HOC.CODE_RULE_BASE, id],
     queryFn: () => codeApi.getRule(id),
     enabled: !!id,
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 }
 
 /**
@@ -310,14 +313,14 @@ export function usePreviewCode() {
   return useMutation({
     mutationFn: ({ ruleId, variables }: { ruleId: string; variables?: Record<string, string> }) =>
       codeApi.previewCode(ruleId, variables),
-  
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
-      },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+    },
   });
 }
 

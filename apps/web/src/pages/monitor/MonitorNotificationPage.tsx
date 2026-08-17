@@ -24,7 +24,8 @@ import {
   ToggleSwitch,
 } from '@/schemas/monitor';
 import i18n from '@/i18n';
-const ct= designTokens.colors;
+
+const ct = designTokens.colors;
 interface NotificationChannel {
   id: string;
   name: string;
@@ -151,7 +152,11 @@ const MonitorNotificationPage: React.FC = () => {
           ? { ...ch, enabled: !ch.enabled, updated_at: new Date().toISOString() }
           : ch
       );
-      notifySuccess(channel.enabled ? i18n.t('monitor.monitor_notification_page.k11') : i18n.t('monitor.monitor_notification_page.k10'));
+      notifySuccess(
+        channel.enabled
+          ? i18n.t('monitor.monitor_notification_page.k11')
+          : i18n.t('monitor.monitor_notification_page.k10')
+      );
     },
     [notifySuccess]
   );
@@ -346,7 +351,9 @@ const MonitorNotificationPage: React.FC = () => {
                   variant='body2'
                   color={channel.enabled ? 'success.main' : 'text.disabled'}
                 >
-                  {channel.enabled ? i18n.t('monitor.monitor_notification_page.k24') : i18n.t('monitor.monitor_notification_page.k23')}
+                  {channel.enabled
+                    ? i18n.t('monitor.monitor_notification_page.k24')
+                    : i18n.t('monitor.monitor_notification_page.k23')}
                 </Typography>
               </Box>
               {channel.last_test_at && (
@@ -370,7 +377,8 @@ const MonitorNotificationPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    [i18n.t('pages.monitor_notification_page.k0')]: {new Date(channel.last_test_at).toLocaleString('zh-CN')}
+                    [i18n.t('pages.monitor_notification_page.k0')]:{' '}
+                    {new Date(channel.last_test_at).toLocaleString('zh-CN')}
                   </Typography>
                 </Box>
               )}
@@ -456,7 +464,8 @@ const MonitorNotificationPage: React.FC = () => {
                         variant='caption'
                         color='text.secondary'
                       >
-                        {count} {i18n.t('pages.monitor_notification_page.k0')} {enabledCount} {i18n.t('pages.monitor_notification_page.k1')}
+                        {count} {i18n.t('pages.monitor_notification_page.k0')} {enabledCount}{' '}
+                        {i18n.t('pages.monitor_notification_page.k1')}
                       </Typography>
                     </Box>
                   </Box>
@@ -484,7 +493,10 @@ const MonitorNotificationPage: React.FC = () => {
         customColumns={customColumns}
         customRowActions={customRowActions}
         headerContent={headerContent}
-        breadcrumbs={[{ label: i18n.t('monitor.monitor_notification_page.k30') }, { label: i18n.t('monitor.monitor_notification_page.k29') }]}
+        breadcrumbs={[
+          { label: i18n.t('monitor.monitor_notification_page.k30') },
+          { label: i18n.t('monitor.monitor_notification_page.k29') },
+        ]}
       />
     </PageContainer>
   );

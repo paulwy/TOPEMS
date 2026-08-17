@@ -73,7 +73,11 @@ const CommentsPage: React.FC = () => {
         parentId: data.parentId,
       }),
     onSuccess: () => {
-      addNotification({ type: 'success', title: i18n.t('pages.comments_page.k1'), message: i18n.t('pages.comments_page.k0') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('pages.comments_page.k1'),
+        message: i18n.t('pages.comments_page.k0'),
+      });
       queryClient.invalidateQueries({
         queryKey: [...QUERY_KEYS.AD_HOC.SHARED_COMMENTS_BASE, entityType, entityId],
 
@@ -86,7 +90,11 @@ const CommentsPage: React.FC = () => {
     },
     onError: (error: unknown) => {
       apiLogger.error(i18n.t('pages.comments_page.k0'), error);
-      addNotification({ type: 'error', title: i18n.t('pages.comments_page.k3'), message: i18n.t('pages.comments_page.k2') });
+      addNotification({
+        type: 'error',
+        title: i18n.t('pages.comments_page.k3'),
+        message: i18n.t('pages.comments_page.k2'),
+      });
     },
   });
 
@@ -95,7 +103,11 @@ const CommentsPage: React.FC = () => {
     mutationFn: ({ id, content }: { id: string; content: string }) =>
       commentApi.update(id, { content }),
     onSuccess: () => {
-      addNotification({ type: 'success', title: i18n.t('pages.comments_page.k5'), message: i18n.t('pages.comments_page.k4') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('pages.comments_page.k5'),
+        message: i18n.t('pages.comments_page.k4'),
+      });
       queryClient.invalidateQueries({
         queryKey: [...QUERY_KEYS.AD_HOC.SHARED_COMMENTS_BASE, entityType, entityId],
 
@@ -107,7 +119,11 @@ const CommentsPage: React.FC = () => {
     },
     onError: (error: unknown) => {
       apiLogger.error(i18n.t('pages.comments_page.k1'), error);
-      addNotification({ type: 'error', title: i18n.t('pages.comments_page.k7'), message: i18n.t('pages.comments_page.k6') });
+      addNotification({
+        type: 'error',
+        title: i18n.t('pages.comments_page.k7'),
+        message: i18n.t('pages.comments_page.k6'),
+      });
     },
   });
 
@@ -115,7 +131,11 @@ const CommentsPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => commentApi.delete(id),
     onSuccess: () => {
-      addNotification({ type: 'success', title: i18n.t('pages.comments_page.k9'), message: i18n.t('pages.comments_page.k8') });
+      addNotification({
+        type: 'success',
+        title: i18n.t('pages.comments_page.k9'),
+        message: i18n.t('pages.comments_page.k8'),
+      });
       queryClient.invalidateQueries({
         queryKey: [...QUERY_KEYS.AD_HOC.SHARED_COMMENTS_BASE, entityType, entityId],
 
@@ -125,7 +145,11 @@ const CommentsPage: React.FC = () => {
     },
     onError: (error: unknown) => {
       apiLogger.error(i18n.t('pages.comments_page.k2'), error);
-      addNotification({ type: 'error', title: i18n.t('pages.comments_page.k11'), message: i18n.t('pages.comments_page.k10') });
+      addNotification({
+        type: 'error',
+        title: i18n.t('pages.comments_page.k11'),
+        message: i18n.t('pages.comments_page.k10'),
+      });
     },
   });
 

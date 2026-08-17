@@ -157,7 +157,9 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
           return;
         }
       } catch (err) {
-        setValidationError(err instanceof Error ? err.message : i18n.t('templates.wizard_page_template.k6'));
+        setValidationError(
+          err instanceof Error ? err.message : i18n.t('templates.wizard_page_template.k6')
+        );
         return;
       }
     }
@@ -276,7 +278,13 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
           >
             <StepLabel
               icon={renderStepIcon(step, index)}
-              optional={step.optional ? <Typography variant='caption'>{i18n.t('templates.wizard_page_template.k7')}</Typography> : undefined}
+              optional={
+                step.optional ? (
+                  <Typography variant='caption'>
+                    {i18n.t('templates.wizard_page_template.k7')}
+                  </Typography>
+                ) : undefined
+              }
             >
               {step.label}
               {step.description && (

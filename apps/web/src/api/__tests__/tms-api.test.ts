@@ -201,7 +201,12 @@ describe('TMS Module API Tests', () => {
 
     it('create should call POST /shipments with data', async () => {
       const { shipmentApi } = await import('../tms/shipment');
-      const data = { shipment_no: 'S-001', carrier_id: 'car-001', origin: '北京', destination: '上海' };
+      const data = {
+        shipment_no: 'S-001',
+        carrier_id: 'car-001',
+        origin: '北京',
+        destination: '上海',
+      };
       await shipmentApi.create(data);
       const { apiClient } = await import('../client');
       expect(apiClient.tms.post).toHaveBeenCalledWith('/shipments', data);

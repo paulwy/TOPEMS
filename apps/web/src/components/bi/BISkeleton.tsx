@@ -8,7 +8,9 @@ const useSkeletonSx = () => {
   return {
     bg: isDark ? 'glass.bgLight' : 'background.paper',
     border: isDark ? designTokens.colors.cyber.glass.bgLight : designTokens.colors.action.hover,
-    shadow: isDark ? '0 4px 24px ${designTokens.colors.cyber.glass.divider}' : `0 1px 3px ${designTokens.colors.action.selected}`,
+    shadow: isDark
+      ? '0 4px 24px ${designTokens.colors.cyber.glass.divider}'
+      : `0 1px 3px ${designTokens.colors.action.selected}`,
     subtleBorder: isDark ? 'glass.bgLight' : 'colors.action.hover',
     pageBg: isDark ? 'background.default' : 'grey.50',
     gradientFrom: isDark ? designTokens.colors.cyber.glass.bgLight : '#f8fafc',

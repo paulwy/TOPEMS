@@ -17,6 +17,7 @@ import {
   type DataPermissionRule,
 } from '@/api/bi';
 import i18n from '@/i18n';
+
 export type BiPermissionTab = 'row-level' | 'data';
 export interface TestResult {
   success: boolean;
@@ -120,10 +121,11 @@ export const useBiPermission = (): UseBiPermissionResult => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       setDialogOpen(false);
     },
     onError: (error: unknown) => {
@@ -134,10 +136,11 @@ export const useBiPermission = (): UseBiPermissionResult => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteRowLevelPermission(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (error: unknown) => {
       logger.error('Failed to delete permission:', error);
@@ -147,10 +150,11 @@ export const useBiPermission = (): UseBiPermissionResult => {
     mutationFn: (item: RowLevelPermission) =>
       updateRowLevelPermission(item.id, { isEnabled: !item.isEnabled }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.BI_ROW_PERMISSIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (error: unknown) => {
       logger.error('Failed to toggle permission:', error);

@@ -146,22 +146,82 @@ const defaultToolbarActions: MarkdownEditorToolbarAction[] = [
     action: wrapSelection('~~', '~~'),
   },
   { id: 'divider1', divider: true },
-  { id: 'h1', icon: <Heading1 size={18} />, label: i18n.t('components.markdown_editor_template.k4'), action: prependLine('# ') },
-  { id: 'h2', icon: <Heading2 size={18} />, label: i18n.t('components.markdown_editor_template.k5'), action: prependLine('## ') },
-  { id: 'h3', icon: <Heading3 size={18} />, label: i18n.t('components.markdown_editor_template.k6'), action: prependLine('### ') },
+  {
+    id: 'h1',
+    icon: <Heading1 size={18} />,
+    label: i18n.t('components.markdown_editor_template.k4'),
+    action: prependLine('# '),
+  },
+  {
+    id: 'h2',
+    icon: <Heading2 size={18} />,
+    label: i18n.t('components.markdown_editor_template.k5'),
+    action: prependLine('## '),
+  },
+  {
+    id: 'h3',
+    icon: <Heading3 size={18} />,
+    label: i18n.t('components.markdown_editor_template.k6'),
+    action: prependLine('### '),
+  },
   { id: 'divider2', divider: true },
-  { id: 'ul', icon: <ListIcon size={18} />, label: i18n.t('components.markdown_editor_template.k7'), action: prependLine('- ') },
-  { id: 'ol', icon: <ListOrdered size={18} />, label: i18n.t('components.markdown_editor_template.k8'), action: prependLine('1. ') },
-  { id: 'quote', icon: <Quote size={18} />, label: i18n.t('components.markdown_editor_template.k9'), action: prependLine('> ') },
+  {
+    id: 'ul',
+    icon: <ListIcon size={18} />,
+    label: i18n.t('components.markdown_editor_template.k7'),
+    action: prependLine('- '),
+  },
+  {
+    id: 'ol',
+    icon: <ListOrdered size={18} />,
+    label: i18n.t('components.markdown_editor_template.k8'),
+    action: prependLine('1. '),
+  },
+  {
+    id: 'quote',
+    icon: <Quote size={18} />,
+    label: i18n.t('components.markdown_editor_template.k9'),
+    action: prependLine('> '),
+  },
   { id: 'divider3', divider: true },
-  { id: 'code', icon: <Code size={18} />, label: i18n.t('components.markdown_editor_template.k10'), action: wrapSelection('`', '`') },
-  { id: 'codeblock', icon: <CodeSquare size={18} />, label: i18n.t('components.markdown_editor_template.k11'), action: insertCodeBlock },
-  { id: 'table', icon: <Table size={18} />, label: i18n.t('components.markdown_editor_template.k12'), action: insertTable },
+  {
+    id: 'code',
+    icon: <Code size={18} />,
+    label: i18n.t('components.markdown_editor_template.k10'),
+    action: wrapSelection('`', '`'),
+  },
+  {
+    id: 'codeblock',
+    icon: <CodeSquare size={18} />,
+    label: i18n.t('components.markdown_editor_template.k11'),
+    action: insertCodeBlock,
+  },
+  {
+    id: 'table',
+    icon: <Table size={18} />,
+    label: i18n.t('components.markdown_editor_template.k12'),
+    action: insertTable,
+  },
   { id: 'divider4', divider: true },
-  { id: 'link', icon: <Link size={18} />, label: i18n.t('components.markdown_editor_template.k13'), action: insertLink },
-  { id: 'image', icon: <Image size={18} />, label: i18n.t('components.markdown_editor_template.k14'), action: insertImage },
+  {
+    id: 'link',
+    icon: <Link size={18} />,
+    label: i18n.t('components.markdown_editor_template.k13'),
+    action: insertLink,
+  },
+  {
+    id: 'image',
+    icon: <Image size={18} />,
+    label: i18n.t('components.markdown_editor_template.k14'),
+    action: insertImage,
+  },
   { id: 'divider5', divider: true },
-  { id: 'hr', icon: <Minus size={18} />, label: i18n.t('components.markdown_editor_template.k15'), action: insertHorizontalRule },
+  {
+    id: 'hr',
+    icon: <Minus size={18} />,
+    label: i18n.t('components.markdown_editor_template.k15'),
+    action: insertHorizontalRule,
+  },
 ];
 
 function wrapSelection(prefix: string, suffix: string) {
@@ -251,7 +311,10 @@ function insertLink(editor: React.RefObject<HTMLTextAreaElement | null>) {
 
   textarea.value = before + link + after;
   textarea.focus();
-  textarea.setSelectionRange(start + 1, start + (selectedText || i18n.t('components.markdown_editor_template.k17')).length + 1);
+  textarea.setSelectionRange(
+    start + 1,
+    start + (selectedText || i18n.t('components.markdown_editor_template.k17')).length + 1
+  );
   textarea.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
@@ -353,10 +416,16 @@ export const MarkdownEditorTemplate: React.FC<MarkdownEditorTemplateProps> = ({
   const handleSave = useCallback(async () => {
     try {
       await onSave?.(content);
-      setNotification({ message: i18n.t('components.markdown_editor_template.k18'), type: 'success' });
+      setNotification({
+        message: i18n.t('components.markdown_editor_template.k18'),
+        type: 'success',
+      });
     } catch (err) {
       logger.error('Save error:', err);
-      setNotification({ message: i18n.t('components.markdown_editor_template.k19'), type: 'error' });
+      setNotification({
+        message: i18n.t('components.markdown_editor_template.k19'),
+        type: 'error',
+      });
     }
   }, [content, onSave]);
 
@@ -420,7 +489,10 @@ ${content
       URL.revokeObjectURL(url);
 
       onExport?.(format);
-      setNotification({ message: `${i18n.t('components.markdown_editor_template.k2')} ${filename}`, type: 'success' });
+      setNotification({
+        message: `${i18n.t('components.markdown_editor_template.k2')} ${filename}`,
+        type: 'success',
+      });
     },
     [content, onExport]
   );
@@ -434,16 +506,25 @@ ${content
   const handleRestoreVersion = useCallback((version: MarkdownVersion) => {
     setContent(version.content);
     setShowHistory(false);
-    setNotification({ message: i18n.t('components.markdown_editor_template.k20'), type: 'success' });
+    setNotification({
+      message: i18n.t('components.markdown_editor_template.k20'),
+      type: 'success',
+    });
   }, []);
 
   const handleSaveVersion = useCallback(async () => {
     try {
       await onSaveVersion?.(content);
-      setNotification({ message: i18n.t('components.markdown_editor_template.k21'), type: 'success' });
+      setNotification({
+        message: i18n.t('components.markdown_editor_template.k21'),
+        type: 'success',
+      });
     } catch (err) {
       logger.error('Save version error:', err);
-      setNotification({ message: i18n.t('components.markdown_editor_template.k22'), type: 'error' });
+      setNotification({
+        message: i18n.t('components.markdown_editor_template.k22'),
+        type: 'error',
+      });
     }
   }, [content, onSaveVersion]);
 
@@ -464,7 +545,10 @@ ${content
     setImageDialogOpen(false);
     setImageUrl('');
     setImageAlt('');
-    setNotification({ message: i18n.t('components.markdown_editor_template.k24'), type: 'success' });
+    setNotification({
+      message: i18n.t('components.markdown_editor_template.k24'),
+      type: 'success',
+    });
   }, [imageUrl, imageAlt, content]);
 
   const wordCount = content.replace(/\s/g, '').length;
@@ -558,7 +642,13 @@ ${content
               </Tooltip>
             )}
 
-            <Tooltip title={copied ? i18n.t('components.markdown_editor_template.k30') : i18n.t('components.markdown_editor_template.k29')}>
+            <Tooltip
+              title={
+                copied
+                  ? i18n.t('components.markdown_editor_template.k30')
+                  : i18n.t('components.markdown_editor_template.k29')
+              }
+            >
               <IconButton
                 onClick={handleCopy}
                 size='small'
@@ -675,8 +765,12 @@ ${content
                     size={48}
                     sx={{ mb: 2, opacity: 0.5 }}
                   />
-                  <Typography variant='body1'>{i18n.t('components.markdown_editor_template.k34')}</Typography>
-                  <Typography variant='body2'>{i18n.t('components.markdown_editor_template.markdown_35')}</Typography>
+                  <Typography variant='body1'>
+                    {i18n.t('components.markdown_editor_template.k34')}
+                  </Typography>
+                  <Typography variant='body2'>
+                    {i18n.t('components.markdown_editor_template.markdown_35')}
+                  </Typography>
                 </Box>
               ) : (
                 <div
@@ -848,7 +942,9 @@ ${content
               variant='caption'
               color='text.secondary'
             >
-              {tabValue === 0 ? i18n.t('components.markdown_editor_template.k37') : i18n.t('components.markdown_editor_template.k36')}
+              {tabValue === 0
+                ? i18n.t('components.markdown_editor_template.k37')
+                : i18n.t('components.markdown_editor_template.k36')}
               {readOnly && i18n.t('components.markdown_editor_template.k6')}
             </Typography>
           </Box>
@@ -951,7 +1047,9 @@ ${content
                           )}
                         </Box>
                       }
-                      secondary={version.comment || i18n.t('components.markdown_editor_template.k39')}
+                      secondary={
+                        version.comment || i18n.t('components.markdown_editor_template.k39')
+                      }
                     />
                     <IconButton
                       size='small'
@@ -966,7 +1064,9 @@ ${content
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowHistory(false)}>{i18n.t('components.markdown_editor_template.k41')}</Button>
+          <Button onClick={() => setShowHistory(false)}>
+            {i18n.t('components.markdown_editor_template.k41')}
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -995,7 +1095,9 @@ ${content
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setImageDialogOpen(false)}>{i18n.t('components.markdown_editor_template.k46')}</Button>
+          <Button onClick={() => setImageDialogOpen(false)}>
+            {i18n.t('components.markdown_editor_template.k46')}
+          </Button>
           <Button
             variant='contained'
             onClick={handleImageInsert}

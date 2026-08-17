@@ -19,6 +19,7 @@ import { CheckSquare } from 'lucide-react';
 import { MobileButton } from '@/components/mobile';
 import type { ProductionOrder } from '@/api/mobile';
 import type { ReportForm } from '../hooks/useMobileProduction';
+
 interface MobileProductionReportDialogProps {
   open: boolean;
   onClose: () => void;

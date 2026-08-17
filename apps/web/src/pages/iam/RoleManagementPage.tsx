@@ -27,7 +27,7 @@ import i18n from '@/i18n';
 
 const roleApiAdapter: CrudApiAdapter = {
   list: async () => {
-  const { t } = useTranslation('iam');
+    const t = i18n.getFixedT(null, 'iam');
     const response = await authApi.listRoles();
     if (!response.success) {
       throw new Error(response.message || i18n.t('iam.role_management_page.k0'));
@@ -97,8 +97,9 @@ const RoleManagementPage: React.FC = () => {
       return res.data ?? [];
     },
     enabled: !!selectedRole && permissionsDialogOpen,
-  
-      staleTime: CACHE_DURATIONS.LONG,});
+
+    staleTime: CACHE_DURATIONS.LONG,
+  });
 
   React.useEffect(() => {
     if (fetchedRolePermissions) {
@@ -120,10 +121,11 @@ const RoleManagementPage: React.FC = () => {
         message: i18n.t('iam.role_management_page.k8'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.IAM_ROLE_PERMISSIONS_BASE, roleId] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [...QUERY_KEYS.AD_HOC.IAM_ROLE_PERMISSIONS_BASE, roleId],
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
       apiLogger.error(i18n.t('pages.role_management_page.k0'), err);
@@ -149,10 +151,11 @@ const RoleManagementPage: React.FC = () => {
         message: i18n.t('iam.role_management_page.k13'),
         type: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.AD_HOC.IAM_ROLE_PERMISSIONS_BASE, roleId] ,
-  exact: false,
-  refetchType: 'active',
-});
+      queryClient.invalidateQueries({
+        queryKey: [...QUERY_KEYS.AD_HOC.IAM_ROLE_PERMISSIONS_BASE, roleId],
+        exact: false,
+        refetchType: 'active',
+      });
     },
     onError: (err: unknown) => {
       apiLogger.error(i18n.t('pages.role_management_page.k1'), err);
@@ -244,7 +247,9 @@ const RoleManagementPage: React.FC = () => {
                       variant='caption'
                       color='text.disabled'
                     >
-                      [i18n.t('pages.role_management_page.k1')]: {perm.category} | {i18n.t('pages.role_management_page.k2')}{perm.code}
+                      [i18n.t('pages.role_management_page.k1')]: {perm.category} |{' '}
+                      {i18n.t('pages.role_management_page.k2')}
+                      {perm.code}
                     </Typography>
                   </Box>
                   {hasPermission ? (
@@ -273,7 +278,9 @@ const RoleManagementPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setPermissionsDialogOpen(false)}>{i18n.t('iam.role_management_page.k18')}</Button>
+          <Button onClick={() => setPermissionsDialogOpen(false)}>
+            {i18n.t('iam.role_management_page.k18')}
+          </Button>
         </DialogActions>
       </Dialog>
     </>

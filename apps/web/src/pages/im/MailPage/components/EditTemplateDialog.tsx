@@ -192,7 +192,9 @@ const EditTemplateDialog: React.FC<EditTemplateDialogProps> = ({
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor='edit-template-body-html'>{t('im.mail_page_components_edit_template_dialog.e1')}</InputLabel>
+                <InputLabel htmlFor='edit-template-body-html'>
+                  {t('im.mail_page_components_edit_template_dialog.e1')}
+                </InputLabel>
                 <TextField
                   id='edit-template-body-html'
                   value={templateForm.body_html_template}

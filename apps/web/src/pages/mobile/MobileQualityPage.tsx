@@ -44,6 +44,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { PageContainer } from '@/components/common';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const MobileQualityPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -372,16 +373,32 @@ const MobileQualityPage: React.FC = () => {
     }
   };
   const bottomTabs = [
-    { id: 'home', label: i18n.t('mobile.mobile_quality_page.k36'), icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: i18n.t('mobile.mobile_quality_page.k37'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: i18n.t('mobile.mobile_quality_page.k38'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    {
+      id: 'home',
+      label: i18n.t('mobile.mobile_quality_page.k36'),
+      icon: <Home style={{ width: 22, height: 22 }} />,
+    },
+    {
+      id: 'tasks',
+      label: i18n.t('mobile.mobile_quality_page.k37'),
+      icon: <ListTodo style={{ width: 22, height: 22 }} />,
+    },
+    {
+      id: 'scan',
+      label: i18n.t('mobile.mobile_quality_page.k38'),
+      icon: <ScanLine style={{ width: 22, height: 22 }} />,
+    },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_quality_page.k39'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
       badge: 3,
     },
-    { id: 'profile', label: i18n.t('mobile.mobile_quality_page.k40'), icon: <User style={{ width: 22, height: 22 }} /> },
+    {
+      id: 'profile',
+      label: i18n.t('mobile.mobile_quality_page.k40'),
+      icon: <User style={{ width: 22, height: 22 }} />,
+    },
   ];
   return (
     <MobileLayout
@@ -774,7 +791,8 @@ const MobileQualityPage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    {selectedTask.task_no} {i18n.t('pages.mobile_quality_page.k0')} {selectedTask.batch_no}
+                    {selectedTask.task_no} {i18n.t('pages.mobile_quality_page.k0')}{' '}
+                    {selectedTask.batch_no}
                   </Typography>
                 </Paper>
               )}
@@ -839,7 +857,9 @@ const MobileQualityPage: React.FC = () => {
             </Box>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button onClick={() => setDefectDialogOpen(false)}>{i18n.t('mobile.mobile_quality_page.k56')}</Button>
+            <Button onClick={() => setDefectDialogOpen(false)}>
+              {i18n.t('mobile.mobile_quality_page.k56')}
+            </Button>
             <MobileButton
               variant='contained'
               color='error'

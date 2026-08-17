@@ -22,12 +22,11 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ open, onClose }) => {
   const createFeedbackMutation = useMutation({
     mutationFn: (data: CreateFeedbackRequest) => feedbackApi.createFeedback(data),
     onSuccess: () => {
-      
       queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.FEEDBACKS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
+        queryKey: QUERY_KEYS.AD_HOC.FEEDBACKS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
       toast.success(i18n.t('components.feedback_modal.k0'));
       setIsSubmitting(false);
       onClose();

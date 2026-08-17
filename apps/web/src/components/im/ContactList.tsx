@@ -203,7 +203,8 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
             borderBottom: activeTab === 'all' ? '2px solid primary.main' : '2px solid transparent',
           }}
         >
-          {i18n.t('components.contact_list.k0')}{friends.length})
+          {i18n.t('components.contact_list.k0')}
+          {friends.length})
         </button>
         <button
           onClick={() => setActiveTab('friends')}
@@ -223,7 +224,8 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
               activeTab === 'friends' ? '2px solid primary.main' : '2px solid transparent',
           }}
         >
-          {i18n.t('components.contact_list.k1')}{acceptedFriends.length})
+          {i18n.t('components.contact_list.k1')}
+          {acceptedFriends.length})
         </button>
         <button
           onClick={() => setActiveTab('groups')}
@@ -243,7 +245,8 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
               activeTab === 'groups' ? '2px solid primary.main' : '2px solid transparent',
           }}
         >
-          {i18n.t('components.contact_list.k2')}{groups.length})
+          {i18n.t('components.contact_list.k2')}
+          {groups.length})
         </button>
       </div>
 
@@ -607,7 +610,9 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
             }}
           >
             <Plus style={{ width: 16, height: 16 }} />
-            <span style={{ fontSize: 14, fontWeight: 500 }}>{i18n.t('components.contact_list.k17')}</span>
+            <span style={{ fontSize: 14, fontWeight: 500 }}>
+              {i18n.t('components.contact_list.k17')}
+            </span>
           </button>
         </div>
       )}

@@ -110,7 +110,9 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
           size='small'
           fullWidth
         >
-          <InputLabel id={`${mode}-department-label`}>{i18n.t('components.employee_form.k7')}</InputLabel>
+          <InputLabel id={`${mode}-department-label`}>
+            {i18n.t('components.employee_form.k7')}
+          </InputLabel>
           <Select
             labelId={`${mode}-department-label`}
             id={`${mode}-department`}
@@ -161,7 +163,9 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
           size='small'
           fullWidth
         >
-          <InputLabel id={`${mode}-status-label`}>{i18n.t('components.employee_form.k12')}</InputLabel>
+          <InputLabel id={`${mode}-status-label`}>
+            {i18n.t('components.employee_form.k12')}
+          </InputLabel>
           <Select
             labelId={`${mode}-status-label`}
             id={`${mode}-status`}
@@ -210,7 +214,9 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
               type='submit'
               variant='contained'
             >
-              {mode === 'create' ? i18n.t('components.employee_form.k19') : i18n.t('components.employee_form.k18')}
+              {mode === 'create'
+                ? i18n.t('components.employee_form.k19')
+                : i18n.t('components.employee_form.k18')}
             </Button>
           </Box>
         </Box>

@@ -4102,7 +4102,7 @@
   "shared._mock.b_2": "BArea",
   "shared._mock.a_3": "AArea",
   "shared._mock.xx_4": "City Area XX Road",
-  "shared._mock.xxxx_15": "City XX Area XX Road",
+  "shared._mock.k160": "City XX Area XX Road",
   "shared.help-mapping.iam_0": "IA Mcopy Management Help",
   "shared.help-mapping.workflow_1": "Workflow Workflow Help",
   "shared.help-mapping.crm_2": "CRM Customer Management Help",
@@ -9326,7 +9326,7 @@
       "b_2": "BArea",
       "a_3": "AArea",
       "xx_4": "City Area XX Road",
-      "xxxx_15": "City XX Area XX Road"
+      "k160": "City XX Area XX Road"
     },
     "types": {
       "k0": "FeatureSuggestion",
@@ -10105,5 +10105,6 @@
     "task": "Kanban/Task Board",
     "": "Structure/Hierarchy",
     "v4_0": "V4.0 Demo"
-  }
+  },
+  "intelligent_ops.v56-ops-panel.k0": "Cooldown"
 }

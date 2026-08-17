@@ -52,7 +52,15 @@ export interface RetirementPlan {
   master_data_name: string;
   stage: string;
   target_date?: string;
-  status: 'draft' | 'assessing' | 'notified' | 'confirmed' | 'executing' | 'executed' | 'rolled_back' | 'cancelled';
+  status:
+    | 'draft'
+    | 'assessing'
+    | 'notified'
+    | 'confirmed'
+    | 'executing'
+    | 'executed'
+    | 'rolled_back'
+    | 'cancelled';
   impact_score?: number;
   created_at: string;
   updated_at: string;
@@ -202,7 +210,9 @@ const buildSearchParams = (params?: MdmLifecycleQueryParams): URLSearchParams =>
 
 export const mdmLifecycleApi = {
   // ===== Lifecycle Entities =====
-  async listEntities(params?: MdmLifecycleQueryParams): Promise<ApiResponse<{ items: LifecycleEntity[]; total: number }>> {
+  async listEntities(
+    params?: MdmLifecycleQueryParams
+  ): Promise<ApiResponse<{ items: LifecycleEntity[]; total: number }>> {
     const sp = buildSearchParams(params);
     const qs = sp.toString();
     return apiClient.erp.get<{ items: LifecycleEntity[]; total: number }>(
@@ -218,14 +228,18 @@ export const mdmLifecycleApi = {
     return apiClient.erp.get<LifecycleEntity>(`/mdm-v49/lifecycle/entities/${masterDataId}`);
   },
 
-  async transitionStage(masterDataId: string, data: TransitionLifecycleRequest): Promise<ApiResponse<LifecycleEntity>> {
-    return apiClient.erp.post<LifecycleEntity>(
-      `/mdm-v49/lifecycle/entities/${masterDataId}`,
-      data
-    );
+  async transitionStage(
+    masterDataId: string,
+    data: TransitionLifecycleRequest
+  ): Promise<ApiResponse<LifecycleEntity>> {
+    return apiClient.erp.post<LifecycleEntity>(`/mdm-v49/lifecycle/entities/${masterDataId}`, data);
   },
 
-  async updateTask(masterDataId: string, taskId: string, data: UpdateLifecycleTaskRequest): Promise<ApiResponse<LifecycleTask>> {
+  async updateTask(
+    masterDataId: string,
+    taskId: string,
+    data: UpdateLifecycleTaskRequest
+  ): Promise<ApiResponse<LifecycleTask>> {
     return apiClient.erp.post<LifecycleTask>(
       `/mdm-v49/lifecycle/entities/${masterDataId}/tasks/${taskId}`,
       data
@@ -239,7 +253,9 @@ export const mdmLifecycleApi = {
   },
 
   // ===== Retirement Plans =====
-  async listRetirementPlans(params?: MdmLifecycleQueryParams): Promise<ApiResponse<{ items: RetirementPlan[]; total: number }>> {
+  async listRetirementPlans(
+    params?: MdmLifecycleQueryParams
+  ): Promise<ApiResponse<{ items: RetirementPlan[]; total: number }>> {
     const sp = buildSearchParams(params);
     const qs = sp.toString();
     return apiClient.erp.get<{ items: RetirementPlan[]; total: number }>(
@@ -247,7 +263,9 @@ export const mdmLifecycleApi = {
     );
   },
 
-  async createRetirementPlan(data: CreateRetirementPlanRequest): Promise<ApiResponse<RetirementPlan>> {
+  async createRetirementPlan(
+    data: CreateRetirementPlanRequest
+  ): Promise<ApiResponse<RetirementPlan>> {
     return apiClient.erp.post<RetirementPlan>('/mdm-v49/retirement/plans', data);
   },
 
@@ -255,35 +273,50 @@ export const mdmLifecycleApi = {
     return apiClient.erp.get<RetirementPlan>(`/mdm-v49/retirement/plans/${planId}`);
   },
 
-  async assessImpact(planId: string, data?: AssessImpactRequest): Promise<ApiResponse<{ impact_score: number; details: string[] }>> {
+  async assessImpact(
+    planId: string,
+    data?: AssessImpactRequest
+  ): Promise<ApiResponse<{ impact_score: number; details: string[] }>> {
     return apiClient.erp.post<{ impact_score: number; details: string[] }>(
       `/mdm-v49/retirement/plans/${planId}/assess`,
       data || {}
     );
   },
 
-  async notifyStakeholders(planId: string, data?: NotifyRequest): Promise<ApiResponse<{ notified: number }>> {
+  async notifyStakeholders(
+    planId: string,
+    data?: NotifyRequest
+  ): Promise<ApiResponse<{ notified: number }>> {
     return apiClient.erp.post<{ notified: number }>(
       `/mdm-v49/retirement/plans/${planId}/notify`,
       data || {}
     );
   },
 
-  async confirmRetirementPlan(planId: string, data?: ConfirmRetirementRequest): Promise<ApiResponse<RetirementPlan>> {
+  async confirmRetirementPlan(
+    planId: string,
+    data?: ConfirmRetirementRequest
+  ): Promise<ApiResponse<RetirementPlan>> {
     return apiClient.erp.post<RetirementPlan>(
       `/mdm-v49/retirement/plans/${planId}/confirm`,
       data || {}
     );
   },
 
-  async executeRetirementPlan(planId: string, data?: ExecuteRetirementRequest): Promise<ApiResponse<RetirementPlan>> {
+  async executeRetirementPlan(
+    planId: string,
+    data?: ExecuteRetirementRequest
+  ): Promise<ApiResponse<RetirementPlan>> {
     return apiClient.erp.post<RetirementPlan>(
       `/mdm-v49/retirement/plans/${planId}/execute`,
       data || {}
     );
   },
 
-  async rollbackRetirementPlan(planId: string, data?: RollbackRetirementRequest): Promise<ApiResponse<RetirementPlan>> {
+  async rollbackRetirementPlan(
+    planId: string,
+    data?: RollbackRetirementRequest
+  ): Promise<ApiResponse<RetirementPlan>> {
     return apiClient.erp.post<RetirementPlan>(
       `/mdm-v49/retirement/plans/${planId}/rollback`,
       data || {}
@@ -291,14 +324,13 @@ export const mdmLifecycleApi = {
   },
 
   async cancelRetirementPlan(planId: string): Promise<ApiResponse<RetirementPlan>> {
-    return apiClient.erp.post<RetirementPlan>(
-      `/mdm-v49/retirement/plans/${planId}/cancel`,
-      {}
-    );
+    return apiClient.erp.post<RetirementPlan>(`/mdm-v49/retirement/plans/${planId}/cancel`, {});
   },
 
   // ===== Archive Policies =====
-  async listArchivePolicies(params?: MdmLifecycleQueryParams): Promise<ApiResponse<{ items: ArchivePolicy[]; total: number }>> {
+  async listArchivePolicies(
+    params?: MdmLifecycleQueryParams
+  ): Promise<ApiResponse<{ items: ArchivePolicy[]; total: number }>> {
     const sp = buildSearchParams(params);
     const qs = sp.toString();
     return apiClient.erp.get<{ items: ArchivePolicy[]; total: number }>(
@@ -314,7 +346,10 @@ export const mdmLifecycleApi = {
     return apiClient.erp.get<ArchivePolicy>(`/mdm-v49/archive/policies/${policyId}`);
   },
 
-  async updateArchivePolicy(policyId: string, data: UpdateArchivePolicyRequest): Promise<ApiResponse<ArchivePolicy>> {
+  async updateArchivePolicy(
+    policyId: string,
+    data: UpdateArchivePolicyRequest
+  ): Promise<ApiResponse<ArchivePolicy>> {
     return apiClient.erp.put<ArchivePolicy>(`/mdm-v49/archive/policies/${policyId}`, data);
   },
 
@@ -323,7 +358,9 @@ export const mdmLifecycleApi = {
   },
 
   // ===== Archive Records =====
-  async listArchiveRecords(params?: MdmLifecycleQueryParams): Promise<ApiResponse<{ items: ArchiveRecord[]; total: number }>> {
+  async listArchiveRecords(
+    params?: MdmLifecycleQueryParams
+  ): Promise<ApiResponse<{ items: ArchiveRecord[]; total: number }>> {
     const sp = buildSearchParams(params);
     const qs = sp.toString();
     return apiClient.erp.get<{ items: ArchiveRecord[]; total: number }>(
@@ -335,7 +372,10 @@ export const mdmLifecycleApi = {
     return apiClient.erp.get<ArchiveRecord>(`/mdm-v49/archive/records/${recordId}`);
   },
 
-  async restoreArchiveRecord(recordId: string, data?: { restore_reason?: string }): Promise<ApiResponse<ArchiveRecord>> {
+  async restoreArchiveRecord(
+    recordId: string,
+    data?: { restore_reason?: string }
+  ): Promise<ApiResponse<ArchiveRecord>> {
     return apiClient.erp.post<ArchiveRecord>(
       `/mdm-v49/archive/records/${recordId}/restore`,
       data || {}
@@ -360,7 +400,10 @@ export const mdmLifecycleApi = {
   },
 
   async runSlaCheck(): Promise<ApiResponse<{ total: number; passed: number; failed: number }>> {
-    return apiClient.erp.post<{ total: number; passed: number; failed: number }>('/mdm-v49/sla/check', {});
+    return apiClient.erp.post<{ total: number; passed: number; failed: number }>(
+      '/mdm-v49/sla/check',
+      {}
+    );
   },
 
   async getDashboard(): Promise<ApiResponse<LifecycleDashboard>> {

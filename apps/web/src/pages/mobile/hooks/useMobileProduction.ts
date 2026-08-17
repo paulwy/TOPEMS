@@ -9,6 +9,7 @@ import { type ProductionOrder, type WorkReport, type Equipment } from '@/api/mob
 import { apiLogger } from '@/utils/logger';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 export interface ReportForm {
   quantity: number;
   good_quantity: number;
@@ -220,7 +221,10 @@ export const useMobileProduction = () => {
       apiLogger.error(i18n.t('mobile.production.message.load_reports_failed'), reportsQuery.error);
     }
     if (equipmentQuery.isError) {
-      apiLogger.error(i18n.t('mobile.production.message.load_equipment_failed'), equipmentQuery.error);
+      apiLogger.error(
+        i18n.t('mobile.production.message.load_equipment_failed'),
+        equipmentQuery.error
+      );
     }
   }, [
     ordersQuery.isError,

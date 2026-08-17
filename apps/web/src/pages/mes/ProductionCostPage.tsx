@@ -33,6 +33,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store/notificationStore';
 import { PageContainer } from '@/components/common';
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+
 const ProductionCostPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [periodType, setPeriodType] = useState<'month' | 'quarter' | 'year'>('month');
@@ -41,32 +42,47 @@ const ProductionCostPage: React.FC = () => {
   const periodCostReport = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.PERIODCOSTREPORT_BASE, periodType],
     queryFn: () => productionCostApi.getPeriodCostReport({ period_type: periodType }),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const costTrend = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.COSTTREND_BASE,
     queryFn: () => productionCostApi.getCostTrend({ period_type: 'month' }),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const costForecast = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.COSTFORECAST_BASE,
     queryFn: () => productionCostApi.getCostForecast({ months: 3 }),
-  
-      staleTime: CACHE_DURATIONS.MEDIUM,});
+
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
   const [workOrderCost, setWorkOrderCost] = useState<WorkOrderCostResult | null>(null);
   const [loadingWorkOrder, setLoadingWorkOrder] = useState(false);
   const handleQueryWorkOrderCost = async () => {
     if (!workOrderId.trim()) {
-      addNotification({ title: i18n.t('mes.production_cost_page.k1'), message: i18n.t('mes.production_cost_page.id_0'), type: 'warning' });
+      addNotification({
+        title: i18n.t('mes.production_cost_page.k1'),
+        message: i18n.t('mes.production_cost_page.id_0'),
+        type: 'warning',
+      });
       return;
     }
     setLoadingWorkOrder(true);
     try {
       const data = await productionCostApi.calculateWorkOrderCost(workOrderId.trim());
       setWorkOrderCost(data.data);
-      addNotification({ title: i18n.t('mes.production_cost_page.k3'), message: i18n.t('mes.production_cost_page.k2'), type: 'success' });
+      addNotification({
+        title: i18n.t('mes.production_cost_page.k3'),
+        message: i18n.t('mes.production_cost_page.k2'),
+        type: 'success',
+      });
     } catch {
-      addNotification({ title: i18n.t('mes.production_cost_page.k5'), message: i18n.t('mes.production_cost_page.k4'), type: 'error' });
+      addNotification({
+        title: i18n.t('mes.production_cost_page.k5'),
+        message: i18n.t('mes.production_cost_page.k4'),
+        type: 'error',
+      });
     } finally {
       setLoadingWorkOrder(false);
     }
@@ -353,10 +369,13 @@ const ProductionCostPage: React.FC = () => {
                   [i18n.t('pages.production_cost_page.k6')]: {forecastData.forecast_period}
                 </Typography>
                 <Typography variant='subtitle1'>
-                  [i18n.t('pages.production_cost_page.k7')]: {formatCurrency(forecastData.confidence_interval[0])} -{' '}
+                  [i18n.t('pages.production_cost_page.k7')]:{' '}
+                  {formatCurrency(forecastData.confidence_interval[0])} -{' '}
                   {formatCurrency(forecastData.confidence_interval[1])}
                 </Typography>
-                <Typography variant='subtitle1'>{i18n.t('pages.production_cost_page.k0')}</Typography>
+                <Typography variant='subtitle1'>
+                  {i18n.t('pages.production_cost_page.k0')}
+                </Typography>
                 <Typography variant='subtitle1'>
                   [i18n.t('pages.production_cost_page.k8')]: {forecastData.seasonality_factor}
                 </Typography>
