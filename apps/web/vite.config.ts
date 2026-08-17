@@ -1,11 +1,11 @@
-import { defineConfig, loadEnv } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
-import { federation } from '@module-federation/vite'
-import { visualizer } from 'rollup-plugin-visualizer'
-import viteCompression from 'vite-plugin-compression'
-import { promises as fsp } from 'fs'
-import zlib from 'zlib'
+import { defineConfig, loadEnv } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+import { federation } from '@module-federation/vite';
+import { visualizer } from 'rollup-plugin-visualizer';
+import viteCompression from 'vite-plugin-compression';
+import { promises as fsp } from 'fs';
+import zlib from 'zlib';
 
 import type { IncomingMessage, ServerResponse } from 'http';
 import type { Plugin, ResolvedConfig } from 'vite';
@@ -43,13 +43,43 @@ const SERVICES: ServiceConfig[] = [
   // IM 的 HTTP API 已外迁到 communication 服务（8084，路径 /api/communication/im），
   // 但 IM WebSocket 仍由 unified-core:8000 处理 —— communication 服务未实现 WS，
   // 前端 useImWebSocket hook 消费 /ws/core/im 是预期行为（HTTP/WS 跨服务分离）。
-  { name: 'unified-core', port: CORE_PORT, apiPrefix: '/api/core', legacyPrefix: '/core/api', wsPath: '/ws/core' },
-  
+  {
+    name: 'unified-core',
+    port: CORE_PORT,
+    apiPrefix: '/api/core',
+    legacyPrefix: '/core/api',
+    wsPath: '/ws/core',
+  },
+
   // 虚拟服务（由 unified-core 提供）
-  { name: 'iam', port: CORE_PORT, isVirtual: true, apiPrefix: '/api/core/iam', legacyPrefix: '/iam/api' },
-  { name: 'doc', port: CORE_PORT, isVirtual: true, apiPrefix: '/api/core/doc', legacyPrefix: '/doc/api' },
-  { name: 'flow', port: CORE_PORT, isVirtual: true, apiPrefix: '/api/core/flow', legacyPrefix: '/flow/api' },
-  { name: 'file', port: CORE_PORT, isVirtual: true, apiPrefix: '/api/core/file', legacyPrefix: '/file/api' },
+  {
+    name: 'iam',
+    port: CORE_PORT,
+    isVirtual: true,
+    apiPrefix: '/api/core/iam',
+    legacyPrefix: '/iam/api',
+  },
+  {
+    name: 'doc',
+    port: CORE_PORT,
+    isVirtual: true,
+    apiPrefix: '/api/core/doc',
+    legacyPrefix: '/doc/api',
+  },
+  {
+    name: 'flow',
+    port: CORE_PORT,
+    isVirtual: true,
+    apiPrefix: '/api/core/flow',
+    legacyPrefix: '/flow/api',
+  },
+  {
+    name: 'file',
+    port: CORE_PORT,
+    isVirtual: true,
+    apiPrefix: '/api/core/file',
+    legacyPrefix: '/file/api',
+  },
 
   // 独立 communication 服务（从 unified-core 外迁，端口 8084）
   // mail/notification/im 已外迁至此服务，路径为 /api/communication/{mail,notification,im}
@@ -63,32 +93,43 @@ const SERVICES: ServiceConfig[] = [
   { name: 'billing', port: BACKEND_PORTS.billing, apiPrefix: '/api/billing' },
   { name: 'ticket', port: BACKEND_PORTS.ticket, apiPrefix: '/api/ticket' },
   { name: 'feedback', port: BACKEND_PORTS.feedback, apiPrefix: '/api/feedback' },
-  
+
   // 经营管理
   { name: 'erp', port: BACKEND_PORTS.erp, apiPrefix: '/api/erp', legacyPrefix: '/erp/api' },
-  { name: 'finance', port: BACKEND_PORTS.finance, apiPrefix: '/api/finance', legacyPrefix: '/finance/api' },
+  {
+    name: 'finance',
+    port: BACKEND_PORTS.finance,
+    apiPrefix: '/api/finance',
+    legacyPrefix: '/finance/api',
+  },
   { name: 'ai', port: BACKEND_PORTS.ai, apiPrefix: '/api/ai', legacyPrefix: '/ai/api' },
-  
+
   // 协同办公
   { name: 'hrm', port: BACKEND_PORTS.hrm, apiPrefix: '/api/hrm', legacyPrefix: '/hrm/api' },
   { name: 'pm', port: BACKEND_PORTS.pm, apiPrefix: '/api/pm', legacyPrefix: '/pm/api' },
   { name: 'crm', port: BACKEND_PORTS.crm, apiPrefix: '/api/crm', legacyPrefix: '/crm/api' },
-  
+
   // 生产制造
-  { name: 'mes', port: BACKEND_PORTS.mes, apiPrefix: '/api/mes', legacyPrefix: '/mes/api', wsPath: '/ws/mes' },
+  {
+    name: 'mes',
+    port: BACKEND_PORTS.mes,
+    apiPrefix: '/api/mes',
+    legacyPrefix: '/mes/api',
+    wsPath: '/ws/mes',
+  },
   { name: 'pdm', port: BACKEND_PORTS.pdm, apiPrefix: '/api/pdm', legacyPrefix: '/pdm/api' },
-  
+
   // 供应链
   { name: 'scm', port: BACKEND_PORTS.scm, apiPrefix: '/api/scm', legacyPrefix: '/scm/api' },
   { name: 'wms', port: BACKEND_PORTS.wms, apiPrefix: '/api/wms', legacyPrefix: '/wms/api' },
   { name: 'srm', port: BACKEND_PORTS.srm, apiPrefix: '/api/srm', legacyPrefix: '/srm/api' },
-  
+
   // 质量/研发
   { name: 'qms', port: BACKEND_PORTS.qms, apiPrefix: '/api/qms', legacyPrefix: '/qms/api' },
   { name: 'lims', port: BACKEND_PORTS.lims, apiPrefix: '/api/lims', legacyPrefix: '/lims/api' },
   { name: 'ehs', port: BACKEND_PORTS.ehs, apiPrefix: '/api/ehs', legacyPrefix: '/ehs/api' },
   { name: 'rd', port: BACKEND_PORTS.rd, apiPrefix: '/api/rd', legacyPrefix: '/rd/api' },
-  
+
   // 数据分析
   // NOTE: analytics 服务（端口 8060）既承载 /api/bi 也承载 /api/analytics；
   // WebSocket 路径 /ws/bi/dashboard/{id} 用于 BI 仪表盘实时数据推送
@@ -100,15 +141,36 @@ const SERVICES: ServiceConfig[] = [
 
   // 主数据服务（独立进程，端口 8090）
   { name: 'master-data', port: BACKEND_PORTS['master-data'], apiPrefix: '/api/master-data' },
-  
+
   // 基础设施
-  { name: 'mobile', port: BACKEND_PORTS.mobile, apiPrefix: '/api/mobile', legacyPrefix: '/mobile/api' },
-  { name: 'gis', port: BACKEND_PORTS.gis, apiPrefix: '/api/gis', legacyPrefix: '/gis/api', wsPath: '/ws/gis/map' },
-  { name: 'integration', port: BACKEND_PORTS.integration, apiPrefix: '/api/integration', legacyPrefix: '/integration/api' },
+  {
+    name: 'mobile',
+    port: BACKEND_PORTS.mobile,
+    apiPrefix: '/api/mobile',
+    legacyPrefix: '/mobile/api',
+  },
+  {
+    name: 'gis',
+    port: BACKEND_PORTS.gis,
+    apiPrefix: '/api/gis',
+    legacyPrefix: '/gis/api',
+    wsPath: '/ws/gis/map',
+  },
+  {
+    name: 'integration',
+    port: BACKEND_PORTS.integration,
+    apiPrefix: '/api/integration',
+    legacyPrefix: '/integration/api',
+  },
 
   // 低代码平台（V64 新增，独立服务 svc/lowcode，端口 8088 占位）
   // 后端服务尚未立项时，proxy 指向 8088 会返回 503，前端 client.ts 已做 V64 静默降级
-  { name: 'lowcode', port: BACKEND_PORTS.lowcode, apiPrefix: '/api/lowcode', legacyPrefix: '/lowcode/api' },
+  {
+    name: 'lowcode',
+    port: BACKEND_PORTS.lowcode,
+    apiPrefix: '/api/lowcode',
+    legacyPrefix: '/lowcode/api',
+  },
 
   // 自动化编排（V64 新增，初期落地 unified-core，端口 8000）
   // 路径前缀 /api/core/automation，与 moduleMapping.automation.apiBasePath 对齐
@@ -160,18 +222,18 @@ const getRemoteEntry = (name: string, port: number): string => {
   }
   const envKey = `VITE_REMOTE_${name.toUpperCase()}`;
   const envUrl = env[envKey];
-  
+
   // 如果环境变量设置了完整 URL，直接使用（生产环境）
   if (envUrl) {
     return envUrl;
   }
-  
+
   // 开发/生产 MF 模式：统一用同源代理路径（vite.config.ts 已配置 /remote/<name> 代理）
   // 从根本上避免浏览器直接跨端口访问 localhost:<port> 导致的 CORS
   if (DEPLOYMENT_MODE === 'module-federation' || DEPLOYMENT_MODE === 'hybrid') {
     return `/remote/${name}/remoteEntry.js`;
   }
-  
+
   // 其它：保守返回空，避免跨域请求
   return '';
 };
@@ -210,23 +272,30 @@ const buildRemotes = (): Record<string, string> => {
 const createServiceProxyConfig = (serviceName: string, target: string, skipRewrite = false) => ({
   target,
   changeOrigin: true,
-  rewrite: skipRewrite ? undefined : (path: string) => path.replace(new RegExp(`^\\/${serviceName}\\/api`), `/api/${serviceName}`),
+  rewrite: skipRewrite
+    ? undefined
+    : (path: string) => path.replace(new RegExp(`^\\/${serviceName}\\/api`), `/api/${serviceName}`),
   configure: (proxy: any) => {
     proxy.on('error', (err: Error, req: IncomingMessage, res: ServerResponse) => {
       if (!req.url?.includes('/health')) {
-        console.warn(`[Vite Proxy] ${serviceName.toUpperCase()} service unavailable, error:`, err.message);
+        console.warn(
+          `[Vite Proxy] ${serviceName.toUpperCase()} service unavailable, error:`,
+          err.message
+        );
       }
       if (!res.headersSent) {
         res.writeHead(503, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-          code: 503,
-          success: false,
-          message: `${serviceName.toUpperCase()} service is currently unavailable`,
-          data: null
-        }));
+        res.end(
+          JSON.stringify({
+            code: 503,
+            success: false,
+            message: `${serviceName.toUpperCase()} service is currently unavailable`,
+            data: null,
+          })
+        );
       }
     });
-  }
+  },
 });
 
 const createNewApiProxyConfig = (servicePath: string, target: string) => ({
@@ -235,53 +304,58 @@ const createNewApiProxyConfig = (servicePath: string, target: string) => ({
   configure: (proxy: any) => {
     proxy.on('error', (err: Error, req: IncomingMessage, res: ServerResponse) => {
       if (!req.url?.includes('/health')) {
-        console.warn(`[Vite Proxy] ${servicePath.toUpperCase()} service unavailable, error:`, err.message);
+        console.warn(
+          `[Vite Proxy] ${servicePath.toUpperCase()} service unavailable, error:`,
+          err.message
+        );
       }
       if (!res.headersSent) {
         res.writeHead(503, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-          code: 503,
-          success: false,
-          message: `${servicePath.toUpperCase()} service is currently unavailable`,
-          data: null
-        }));
+        res.end(
+          JSON.stringify({
+            code: 503,
+            success: false,
+            message: `${servicePath.toUpperCase()} service is currently unavailable`,
+            data: null,
+          })
+        );
       }
     });
-  }
+  },
 });
 
 const HEALTH_CHECK_PATHS: Record<string, string> = {
-  'ai': '/health',
-  'bi': '/health',
-  'monitor': '/health',
-  'portal': '/health',
-  'mobile': '/health',
-  'gis': '/health',
-  'integration': '/health',
-  'hrm': '/health',
-  'pm': '/health',
-  'crm': '/health',
-  'mes': '/health',
-  'pdm': '/health',
-  'scm': '/health',
-  'wms': '/health',
-  'srm': '/health',
-  'qms': '/health',
-  'lims': '/health',
-  'ehs': '/health',
-  'rd': '/health',
-  'erp': '/health',
-  'finance': '/health',
-  'doc': '/health',
-  'file': '/health',
-  'communication': '/health',
+  ai: '/health',
+  bi: '/health',
+  monitor: '/health',
+  portal: '/health',
+  mobile: '/health',
+  gis: '/health',
+  integration: '/health',
+  hrm: '/health',
+  pm: '/health',
+  crm: '/health',
+  mes: '/health',
+  pdm: '/health',
+  scm: '/health',
+  wms: '/health',
+  srm: '/health',
+  qms: '/health',
+  lims: '/health',
+  ehs: '/health',
+  rd: '/health',
+  erp: '/health',
+  finance: '/health',
+  doc: '/health',
+  file: '/health',
+  communication: '/health',
   'unified-core': '/health',
-  'flow': '/health',
-  'billing': '/health',
-  'ticket': '/health',
-  'feedback': '/health',
+  flow: '/health',
+  billing: '/health',
+  ticket: '/health',
+  feedback: '/health',
   'master-data': '/health',
-  'search': '/health',
+  search: '/health',
   'plugin-registry': '/health',
 };
 
@@ -297,15 +371,17 @@ const createHealthProxyConfig = (serviceName: string, target: string) => ({
       console.warn(`[Vite Proxy] ${serviceName.toUpperCase()} health check failed:`, err.message);
       if (!res.headersSent) {
         res.writeHead(503, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-          code: 503,
-          success: false,
-          message: `${serviceName.toUpperCase()} service health check failed`,
-          data: null
-        }));
+        res.end(
+          JSON.stringify({
+            code: 503,
+            success: false,
+            message: `${serviceName.toUpperCase()} service health check failed`,
+            data: null,
+          })
+        );
       }
     });
-  }
+  },
 });
 
 // ============================================================================
@@ -346,7 +422,7 @@ const buildServiceProxies = (): Record<string, any> => {
     if (svc.legacyPrefix) {
       const serviceName = svc.name.replace('-virtual', '');
       proxies[svc.legacyPrefix] = createServiceProxyConfig(serviceName, target);
-      
+
       // health check
       const healthPath = svc.legacyPrefix.replace('/api', '/health');
       proxies[healthPath] = createHealthProxyConfig(serviceName, target);
@@ -363,7 +439,7 @@ const buildServiceProxies = (): Record<string, any> => {
   }
 
   // /api/* 路径
-  const apiV1Services = SERVICES.filter(s => s.apiPrefix && !s.isVirtual);
+  const apiV1Services = SERVICES.filter((s) => s.apiPrefix && !s.isVirtual);
   for (const svc of apiV1Services) {
     const serviceName = svc.apiPrefix!.replace('/api/', '');
     proxies[`/api/${serviceName}`] = {
@@ -393,15 +469,17 @@ const buildServiceProxies = (): Record<string, any> => {
         proxy.on('error', (err: Error, req: IncomingMessage, res: ServerResponse) => {
           if (!res.headersSent) {
             res.writeHead(503, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({
-              code: 503,
-              success: false,
-              message: `Remote module ${remote.name} (port ${remote.port}) is currently unavailable`,
-              data: null
-            }));
+            res.end(
+              JSON.stringify({
+                code: 503,
+                success: false,
+                message: `Remote module ${remote.name} (port ${remote.port}) is currently unavailable`,
+                data: null,
+              })
+            );
           }
         });
-      }
+      },
     };
   }
 
@@ -521,12 +599,12 @@ function brotliCompressPlugin(): Plugin {
                   [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT,
                 },
               },
-              (err, result) => (err ? reject(err) : resolve(result)),
+              (err, result) => (err ? reject(err) : resolve(result))
             );
           });
           await fsp.writeFile(`${filePath}.br`, compressed);
           count++;
-        }),
+        })
       );
       if (count > 0) {
         logger.info(`\n✨ [brotli-custom]: compressed ${count} file(s) to .br`);
@@ -548,47 +626,91 @@ function topemsRechartsSplitPlugin(): Plugin {
     name: 'topems-recharts-split',
     enforce: 'post',
     outputOptions(opts: any) {
-      // V72 P2-4c: @module-federation/vite 设置了 output.codeSplitting.groups，
-      // 而 Rolldown 在 codeSplitting 存在时忽略 advancedChunks。
-      // codeSplitting.groups 会递归拉入依赖（无法关闭），导致 recharts-polar chunk
-      // 膨胀到 327KB。解决方案：删除 codeSplitting，改用 advancedChunks
-      // （支持 includeDependenciesRecursively: false），同时保留 MF 的分组逻辑。
+      // V81-202608: Vite 8.1.5 弃用 advancedChunks，统一走 OutputOptions.codeSplitting
+      // 参考：https://rolldown.rs/reference/OutputOptions.codeSplitting
       //
-      // MF codeSplitting.groups 包含两组：
+      // 旧方案背景（V72）：codeSplitting.groups 会递归拉入依赖，导致 recharts-polar 膨胀；
+      // 因此采用「删除 codeSplitting + advancedChunks.includeDependenciesRecursively:false」
+      // 作为权宜之计。Vite 8.1.5 起 advancedChunks 被彻底移除，只能使用 codeSplitting。
+      // 共享依赖由 Rolldown 默认拆分算法自动去重到公共 chunk。
+      //
+      // @module-federation/vite 预先注入了 2 组 codeSplitting.groups：
       //   1) { name: PRELOAD_HELPER_CHUNK, test: PRELOAD_HELPER_TEST, priority: 100 }
       //   2) { name: mfChunkName } — mfChunkName 是函数，路由 __loadShare__ 虚模块
-      // advancedChunks.groups API 兼容以上格式（name 支持 string | function）。
-      const mfGroups = opts?.codeSplitting?.groups || [];
+      const existingGroups = opts?.codeSplitting?.groups || [];
+
+      // 大型 vendor 生态分包（按家族拆分，避免单 chunk >1500kB）
+      const vendorGroups = [
+        {
+          test: /[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|react-is)[\\/]/,
+          name: 'react-vendor',
+        },
+        {
+          test: /[\\/]node_modules[\\/](@mui[\\/]material|@emotion|stylis)[\\/]/,
+          name: 'mui-core',
+        },
+        { test: /[\\/]node_modules[\\/]@mui[\\/]icons-material[\\/]/, name: 'mui-icons' },
+        { test: /[\\/]node_modules[\\/]@mui[\\/]x-(date-pickers|tree-view)[\\/]/, name: 'mui-x' },
+        {
+          test: /[\\/]node_modules[\\/](@react-three[\\/](fiber|drei|postprocessing)|three)[\\/]/,
+          name: 'r3f-vendor',
+        },
+        {
+          test: /[\\/]node_modules[\\/](leaflet|react-leaflet|leaflet-draw|leaflet-measure|@react-leaflet)[\\/]/,
+          name: 'leaflet-vendor',
+        },
+        { test: /[\\/]node_modules[\\/]@amap[\\/]/, name: 'amap-vendor' },
+        { test: /[\\/]node_modules[\\/](xlsx|docx-preview)[\\/]/, name: 'office-vendor' },
+        {
+          test: /[\\/]node_modules[\\/](react-markdown|react-syntax-highlighter|remark-gfm)[\\/]/,
+          name: 'markdown-vendor',
+        },
+        {
+          test: /[\\/]node_modules[\\/](zustand|@tanstack[\\/](react-query|react-table)|zod)[\\/]/,
+          name: 'data-vendor',
+        },
+        { test: /[\\/]node_modules[\\/]@opentelemetry[\\/]/, name: 'otel-vendor' },
+        { test: /[\\/]node_modules[\\/](i18next|react-i18next)[\\/]/, name: 'i18n-vendor' },
+        { test: /[\\/]node_modules[\\/](react-hook-form|@hookform)[\\/]/, name: 'form-vendor' },
+        { test: /[\\/]node_modules[\\/]dayjs[\\/]/, name: 'dayjs-vendor' },
+      ];
 
       const rechartsGroups = [
-        // polar/ 系列 → recharts-polar（只被饼图/雷达图用到）
-        { test: /recharts[^/]*[\\/]es6[\\/]polar[\\/]/, name: 'recharts-polar', includeDependenciesRecursively: false },
-        // cartesian/ 系列 → recharts-cartesian
-        { test: /recharts[^/]*[\\/]es6[\\/]cartesian[\\/]/, name: 'recharts-cartesian', includeDependenciesRecursively: false },
-        // polar state slices → recharts-polar-state
-        { test: /recharts[^/]*[\\/]es6[\\/]state[\\/](polarOptionsSlice|polarAxisSlice|ReportPolarOptions)/, name: 'recharts-polar-state', includeDependenciesRecursively: false },
-        // polar chart entries → recharts-polar-charts
-        { test: /recharts[^/]*[\\/]es6[\\/]chart[\\/](PieChart|RadarChart|RadialBarChart|Sankey|SunburstChart|Treemap)\.js$/, name: 'recharts-polar-charts', includeDependenciesRecursively: false },
-        // cartesian chart entries → recharts-cartesian-charts
-        { test: /recharts[^/]*[\\/]es6[\\/]chart[\\/](BarChart|LineChart|AreaChart|ScatterChart|ComposedChart|FunnelChart)\.js$/, name: 'recharts-cartesian-charts', includeDependenciesRecursively: false },
-        // chart core base classes → recharts-charts-core
-        { test: /recharts[^/]*[\\/]es6[\\/]chart[\\/](CartesianChart|CategoricalChart|PolarChart|RechartsWrapper)\.js$/, name: 'recharts-charts-core', includeDependenciesRecursively: false },
-        // state/ (non-polar) → recharts-common-state
-        { test: /recharts[^/]*[\\/]es6[\\/]state[\\/]/, name: 'recharts-common-state', includeDependenciesRecursively: false },
-        // util/context/container/component 等公共基础 → recharts-common
-        { test: /recharts[^/]*[\\/]es6[\\/](util|context|container|component|zIndex|theme|synchronisation|animation|hooks|types|shape)[\\/]/, name: 'recharts-common', includeDependenciesRecursively: false },
-        // 兜底：任何其他 recharts 路径 → recharts-common
-        { test: /recharts[^/]*[\\/]/, name: 'recharts-common', includeDependenciesRecursively: false },
+        { test: /recharts[^/]*[\\/]es6[\\/]polar[\\/]/, name: 'recharts-polar' },
+        { test: /recharts[^/]*[\\/]es6[\\/]cartesian[\\/]/, name: 'recharts-cartesian' },
+        {
+          test: /recharts[^/]*[\\/]es6[\\/]state[\\/](polarOptionsSlice|polarAxisSlice|ReportPolarOptions)/,
+          name: 'recharts-polar-state',
+        },
+        {
+          test: /recharts[^/]*[\\/]es6[\\/]chart[\\/](PieChart|RadarChart|RadialBarChart|Sankey|SunburstChart|Treemap)\.js$/,
+          name: 'recharts-polar-charts',
+        },
+        {
+          test: /recharts[^/]*[\\/]es6[\\/]chart[\\/](BarChart|LineChart|AreaChart|ScatterChart|ComposedChart|FunnelChart)\.js$/,
+          name: 'recharts-cartesian-charts',
+        },
+        {
+          test: /recharts[^/]*[\\/]es6[\\/]chart[\\/](CartesianChart|CategoricalChart|PolarChart|RechartsWrapper)\.js$/,
+          name: 'recharts-charts-core',
+        },
+        { test: /recharts[^/]*[\\/]es6[\\/]state[\\/]/, name: 'recharts-common-state' },
+        {
+          test: /recharts[^/]*[\\/]es6[\\/](util|context|container|component|zIndex|theme|synchronisation|animation|hooks|types|shape)[\\/]/,
+          name: 'recharts-common',
+        },
+        { test: /recharts[^/]*[\\/]/, name: 'recharts-common' },
       ];
 
       const result = { ...(opts || {}) };
-      // 删除 codeSplitting，改用 advancedChunks（支持 includeDependenciesRecursively: false）
-      delete result.codeSplitting;
-      result.advancedChunks = {
-        ...(opts?.advancedChunks || {}),
-        groups: [...mfGroups, ...rechartsGroups],
+      // 合并顺序：MF 内置分组 → vendor 生态 → recharts 细粒度
+      // i18n JSON 已通过 lazy import.meta.glob 自动按语言拆分为独立 chunk，无需手动分组
+      result.codeSplitting = {
+        ...(opts?.codeSplitting || {}),
+        groups: [...existingGroups, ...vendorGroups, ...rechartsGroups],
       };
-
+      // 防御性清理：任何残留 advancedChunks 均移除（Vite 8.1.5 报 invalid key）
+      if ('advancedChunks' in result) delete result.advancedChunks;
       return result;
     },
     generateBundle(_outputOpts: any, bundle: any) {
@@ -621,16 +743,10 @@ function topemsRechartsSplitPlugin(): Plugin {
         }
       }
       try {
-        FS.writeFileSync(
-          '/tmp/recharts-analysis.json',
-          JSON.stringify(rows, null, 2),
-        );
+        FS.writeFileSync('/tmp/recharts-analysis.json', JSON.stringify(rows, null, 2));
       } catch {}
       try {
-        FS.writeFileSync(
-          '/tmp/recharts-tooltip-deep.json',
-          JSON.stringify(tooltipDeep, null, 2),
-        );
+        FS.writeFileSync('/tmp/recharts-tooltip-deep.json', JSON.stringify(tooltipDeep, null, 2));
       } catch {}
     },
   };
@@ -693,7 +809,7 @@ export default defineConfig({
        * - zod: 业务模块共享 schema 验证
        */
       shared: {
-        'react': {
+        react: {
           singleton: true,
           requiredVersion: '^19.0.0',
           // V64：MF 的 loadShare runtime wrapper 会基于 package.json 的 named exports
@@ -765,12 +881,12 @@ export default defineConfig({
           eager: true,
           strictVersion: false,
         },
-        'zustand': {
+        zustand: {
           singleton: true,
           requiredVersion: '^5.0.0',
           strictVersion: true,
         },
-        'i18next': {
+        i18next: {
           singleton: true,
           requiredVersion: '^26.0.0',
           strictVersion: true,
@@ -780,12 +896,12 @@ export default defineConfig({
           requiredVersion: '^17.0.0',
           strictVersion: true,
         },
-        'axios': {
+        axios: {
           singleton: true,
           requiredVersion: '^1.0.0',
           strictVersion: true,
         },
-        'dayjs': {
+        dayjs: {
           singleton: true,
           requiredVersion: '^1.11.0',
           strictVersion: true,
@@ -795,7 +911,7 @@ export default defineConfig({
           requiredVersion: '^7.0.0',
           strictVersion: true,
         },
-        'zod': {
+        zod: {
           singleton: true,
           requiredVersion: '^4.0.0',
           strictVersion: true,
@@ -813,8 +929,12 @@ export default defineConfig({
   ],
   define: {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
-    'process.env.NEXT_PUBLIC_WS_URL': JSON.stringify(process.env.VITE_WS_URL || 'ws://localhost:8080/ws'),
-    'process.env.NEXT_PUBLIC_WS_SIGNING_SECRET': JSON.stringify(process.env.VITE_WS_SIGNING_SECRET || 'topems-ws-signing-secret'),
+    'process.env.NEXT_PUBLIC_WS_URL': JSON.stringify(
+      process.env.VITE_WS_URL || 'ws://localhost:8080/ws'
+    ),
+    'process.env.NEXT_PUBLIC_WS_SIGNING_SECRET': JSON.stringify(
+      process.env.VITE_WS_SIGNING_SECRET || 'topems-ws-signing-secret'
+    ),
   },
   optimizeDeps: {
     exclude: [
@@ -854,19 +974,44 @@ export default defineConfig({
       { find: /^lucide-react$/, replacement: path.resolve(__dirname, './src/components/icons') },
       // Existing aliases (converted to array form to coexist with the regex alias above)
       { find: '@', replacement: path.resolve(__dirname, './src') },
-      { find: '@topems/shared-types', replacement: path.resolve(__dirname, '../../packages/shared-types/src') },
-      { find: '@topems/shared-utils', replacement: path.resolve(__dirname, '../../packages/shared-utils/src') },
-      { find: '@topems/shared-components', replacement: path.resolve(__dirname, '../../packages/shared-components/src') },
+      {
+        find: '@topems/shared-types',
+        replacement: path.resolve(__dirname, '../../packages/shared-types/src'),
+      },
+      {
+        find: '@topems/shared-utils',
+        replacement: path.resolve(__dirname, '../../packages/shared-utils/src'),
+      },
+      {
+        find: '@topems/shared-components',
+        replacement: path.resolve(__dirname, '../../packages/shared-components/src'),
+      },
       { find: '@topems/tokens', replacement: path.resolve(__dirname, '../../packages/tokens/src') },
-      { find: '@topems/shared-constants', replacement: path.resolve(__dirname, '../../packages/shared-constants/src') },
-      { find: '@topems/shared-hooks', replacement: path.resolve(__dirname, '../../packages/shared-hooks/src') },
+      {
+        find: '@topems/shared-constants',
+        replacement: path.resolve(__dirname, '../../packages/shared-constants/src'),
+      },
+      {
+        find: '@topems/shared-hooks',
+        replacement: path.resolve(__dirname, '../../packages/shared-hooks/src'),
+      },
     ],
     dedupe: [
-      'react', 'react-dom', 'scheduler', 'react-router-dom', '@tanstack/react-query',
+      'react',
+      'react-dom',
+      'scheduler',
+      'react-router-dom',
+      '@tanstack/react-query',
       // CJS 传递依赖：防止 MF version negotiation 拦截
-      'prop-types', '@babel/runtime', '@babel/runtime/helpers',
-      '@emotion/cache', '@emotion/serialize', '@emotion/utils',
-      'stylis', 'clsx', 'react-is',
+      'prop-types',
+      '@babel/runtime',
+      '@babel/runtime/helpers',
+      '@emotion/cache',
+      '@emotion/serialize',
+      '@emotion/utils',
+      'stylis',
+      'clsx',
+      'react-is',
     ],
   },
   build: {
@@ -882,6 +1027,9 @@ export default defineConfig({
     // Vite 8 默认：os.cpus().length - 1 = 9，但 Rolldown/Vite 在部分阶段会额外
     // 产生 helper 线程，留 2 核余量避免上下文切换过载，实测吞吐更稳
     workerCount: 8,
+    // V81-202608: i18n 翻译 JSON 已改为 lazy import.meta.glob + 按语言异步加载，
+    // 每种语言独立 chunk（~3.5MB → 各自独立加载），不再有 7.1MB 聚合 chunk。
+    // 阈值保持 1500（Vite 默认），任何超限 chunk 均为真实需要关注的拆分机会。
     chunkSizeWarningLimit: 1500,
     reportCompressedSize: false,
     rollupOptions: {
@@ -891,77 +1039,11 @@ export default defineConfig({
         // Disable noisy plugin timing summary; only useful when tuning builds.
         pluginTimings: false,
       },
-      // V72 P2-4b: Vite 8 Rolldown 原生 API — advancedChunks（替代 build.rollupOptions.output.manualChunks）
-      // 官方：build.rollupOptions.output.manualChunks 弃用 → 更新为 advancedChunks
-      // 文档：https://rolldown.rs/in-depth/advanced-chunks
-      // API: groups[] = { test: RegExp, name: string, includeDependenciesRecursively?: boolean }
-      // 匹配顺序很重要：common 最先（通用基础） → polar → cartesian（最后兜底直角坐标系）
-      advancedChunks: {
-        groups: [
-          // V72 P2-4b: 按子目录强拆 recharts（顺序：从精细到粗）
-          // 任何一个匹配组 = 单独 chunk，不匹配的用默认算法
-          // 1) polar/ 系列 → recharts-polar（只被饼图/雷达图用到）
-          {
-            test: /recharts[^/]*\/es6\/polar\//,
-            name: 'recharts-polar',
-            includeDependenciesRecursively: false,
-          },
-          // 2) cartesian/ 系列 → recharts-cartesian（只被直角坐标系用到）
-          {
-            test: /recharts[^/]*\/es6\/cartesian\//,
-            name: 'recharts-cartesian',
-            includeDependenciesRecursively: false,
-          },
-          // 3) chart 系列图型（BarChart.js、PieChart.js 等入口图型）
-          //    → recharts-charts 作为兜底，但 CartesianChart/CategoricalChart 是共享基类
-          {
-            test: /recharts[^/]*\/es6\/chart\/(CartesianChart|CategoricalChart|PolarChart|RechartsWrapper)\.js/,
-            name: 'recharts-charts-core',
-            includeDependenciesRecursively: false,
-          },
-          {
-            test: /recharts[^/]*\/es6\/chart\/(PieChart|RadarChart|RadialBarChart|Sankey|SunburstChart|Treemap)\.js/,
-            name: 'recharts-polar-charts',
-            includeDependenciesRecursively: false,
-          },
-          {
-            test: /recharts[^/]*\/es6\/chart\/(BarChart|LineChart|AreaChart|ScatterChart|ComposedChart|FunnelChart)\.js/,
-            name: 'recharts-cartesian-charts',
-            includeDependenciesRecursively: false,
-          },
-          // 4) state/ (核心 store + reducers)
-          //    - polarOptionsSlice / polarAxisSlice → recharts-polar-state
-          {
-            test: /recharts[^/]*\/es6\/state\/(polarOptionsSlice|polarAxisSlice|ReportPolarOptions|Polar[A-Z])/,
-            name: 'recharts-polar-state',
-            includeDependenciesRecursively: false,
-          },
-          //    - 其他 state → recharts-common-state
-          {
-            test: /recharts[^/]*\/es6\/state\//,
-            name: 'recharts-common-state',
-            includeDependenciesRecursively: false,
-          },
-          // 5) util / context / container / component / zIndex / theme 等公共基础
-          {
-            test: /recharts[^/]*\/es6\/(util|context|container|component|zIndex|theme|synchronisation|animation|hooks|types|shape)\//,
-            name: 'recharts-common',
-            includeDependenciesRecursively: false,
-          },
-          // 6) 最后的兜底：任何 recharts 相关
-          {
-            test: /recharts[^/]*\//,
-            name: 'recharts-common',
-            includeDependenciesRecursively: false,
-          },
-          // 对照组：leaflet
-          {
-            test: /leaflet/,
-            name: 'leaflet-vendor',
-            includeDependenciesRecursively: false,
-          },
-        ],
-      },
+      // V81-202608: 所有 codeSplitting 分包规则（recharts 细粒度 + vendor 生态）
+      // 统一由 topemsRechartsSplitPlugin() 插件（enforce: 'post'）合并至
+      // output.codeSplitting.groups，避免被 @module-federation/vite 覆盖。
+      // 此处在 rollupOptions 层不再声明 advancedChunks（Vite 8.1.5 会报 invalid key）。
+      //
       // Suppress Module Federation virtual-file IMPORT_IS_UNDEFINED warnings for
       // shared packages that use named-only ESM exports (no default export).
       // This covers two MF virtual-module families:
@@ -1012,8 +1094,8 @@ export default defineConfig({
           // 3) 消费方来自 3D / GIS 生态且缺失的是 act（兼容写法永远有降级）。
           const is3DEcoActMissing =
             (id.includes('@react-three/fiber') ||
-             id.includes('@react-three/drei') ||
-             id.includes('@react-three/postprocessing')) &&
+              id.includes('@react-three/drei') ||
+              id.includes('@react-three/postprocessing')) &&
             /`act`/.test(message);
 
           if (isMfVirtual || isSharedReactMissingNamedExport || is3DEcoActMissing) {
@@ -1023,9 +1105,10 @@ export default defineConfig({
         warn(warning);
       },
       output: {
-        // V72 P2-4c: manualChunks 已移至顶层 Vite 插件 topemsRechartsSplitPlugin()
-        // （enforce: 'post'），在 federation() 之后执行，避免被 MF 覆盖。
-        // 此处 output 仅保留其他字段（如 chunkFileNames 等），manualChunks 不在此设置。
+        // V81-202608: 分包规则（codeSplitting.groups → 取代 advancedChunks / manualChunks）
+        // 统一由顶层 Vite 插件 topemsRechartsSplitPlugin()（enforce: 'post'）
+        // 在 @module-federation/vite 之后合并，避免 MF 覆盖分组设置。
+        // 此处 output 仅保留 chunkFileNames 等格式字段，分包规则不在此设置。
       },
       // V72 P1-3: visualizer 已移到顶层 plugins 并改为可选化
       // （条件：VITE_BUILD_VISUALIZER=1），此处不再重复声明
@@ -1056,7 +1139,7 @@ export default defineConfig({
     // },
   },
   server: {
-    port: BACKEND_PORTS.web,  // 3000，从 ports.ts 单一信源读取
+    port: BACKEND_PORTS.web, // 3000，从 ports.ts 单一信源读取
     host: '127.0.0.1',
     strictPort: true,
     // HMR: 显式指定 host 和 port 确保 Firefox WebSocket 连接正常

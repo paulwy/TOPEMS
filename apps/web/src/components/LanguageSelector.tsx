@@ -1,7 +1,7 @@
 import { Menu, MenuItem, Box, Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { Globe } from 'lucide-react';
-import { SUPPORTED_LANGUAGES, type LanguageCode } from '../i18n';
+import { SUPPORTED_LANGUAGES, type LanguageCode, ensureLanguageLoaded } from '../i18n';
 import i18n from '../i18n';
 
 const LanguageSelector: React.FC = () => {
@@ -20,7 +20,14 @@ const LanguageSelector: React.FC = () => {
     };
   }, []);
 
-  const handleChangeLanguage = (code: LanguageCode) => {
+  const handleChangeLanguage = async (code: LanguageCode) => {
+    // 确保目标语言资源已加载完成，避免切换后短暂显示 key
+    // 大多数情况下资源已通过 idle 预加载就绪，await 瞬间完成
+    try {
+      await ensureLanguageLoaded(code);
+    } catch {
+      // 加载失败仍切换语言，依赖 fallbackLng 兜底
+    }
     i18n.changeLanguage(code);
     localStorage.setItem('language', code);
     setCurrentLang(code);
