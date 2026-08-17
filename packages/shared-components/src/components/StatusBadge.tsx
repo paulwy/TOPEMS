@@ -4,6 +4,7 @@
  * 支持动态颜色映射、图标集成、多种尺寸和变体、点击事件
  */
 import React from 'react';
+import i18n from 'i18next';
 import { Chip, Box, Typography } from '@mui/material';
 import {
   CheckCircle,
@@ -207,381 +208,381 @@ export interface StatusBadgeProps {
 export const DEFAULT_STATUS_MAP: StatusMapConfig = {
   // 通用状态
   active: {
-    label: '启用',
+    label: i18n.t('shared.status_badge.active'),
     color: 'success',
     icon: <CheckCircle size={14} />,
   },
   inactive: {
-    label: '禁用',
+    label: i18n.t('shared.status_badge.inactive'),
     color: 'default',
     icon: <Minus size={14} />,
   },
   pending: {
-    label: '待处理',
+    label: i18n.t('shared.status_badge.pending'),
     color: 'warning',
     icon: <Clock size={14} />,
   },
   approved: {
-    label: '已批准',
+    label: i18n.t('shared.status_badge.approved'),
     color: 'success',
     icon: <CheckCircle size={14} />,
   },
   rejected: {
-    label: '已拒绝',
+    label: i18n.t('shared.status_badge.rejected'),
     color: 'error',
     icon: <XCircle size={14} />,
   },
   draft: {
-    label: '草稿',
+    label: i18n.t('shared.status_badge.draft'),
     color: 'default',
     icon: <FileText size={14} />,
   },
   published: {
-    label: '已发布',
+    label: i18n.t('shared.status_badge.published'),
     color: 'primary',
     icon: <Eye size={14} />,
   },
   archived: {
-    label: '已归档',
+    label: i18n.t('shared.status_badge.archived'),
     color: 'default',
     icon: <Lock size={14} />,
   },
   deleted: {
-    label: '已删除',
+    label: i18n.t('shared.status_badge.deleted'),
     color: 'error',
     icon: <XCircle size={14} />,
   },
   completed: {
-    label: '已完成',
+    label: i18n.t('shared.status_badge.completed'),
     color: 'success',
     icon: <CheckCircle size={14} />,
   },
   cancelled: {
-    label: '已取消',
+    label: i18n.t('shared.status_badge.cancelled'),
     color: 'default',
     icon: <Ban size={14} />,
   },
   processing: {
-    label: '处理中',
+    label: i18n.t('shared.status_badge.processing'),
     color: 'info',
     icon: <Zap size={14} />,
   },
   failed: {
-    label: '失败',
+    label: i18n.t('shared.status_badge.failed'),
     color: 'error',
     icon: <AlertCircle size={14} />,
   },
   success: {
-    label: '成功',
+    label: i18n.t('shared.status_badge.success'),
     color: 'success',
     icon: <CheckCircle size={14} />,
   },
   warning: {
-    label: '警告',
+    label: i18n.t('shared.status_badge.warning'),
     color: 'warning',
     icon: <AlertTriangle size={14} />,
   },
   error: {
-    label: '错误',
+    label: i18n.t('shared.status_badge.error'),
     color: 'error',
     icon: <AlertCircle size={14} />,
   },
   info: {
-    label: '信息',
+    label: i18n.t('shared.status_badge.info'),
     color: 'info',
     icon: <Info size={14} />,
   },
 
   // HRM状态
   employee_active: {
-    label: '在职',
+    label: i18n.t('shared.status_badge.employee_active'),
     color: 'success',
     icon: <User size={14} />,
   },
   employee_inactive: {
-    label: '离职',
+    label: i18n.t('shared.status_badge.employee_inactive'),
     color: 'default',
     icon: <XCircle size={14} />,
   },
   employee_probation: {
-    label: '试用期',
+    label: i18n.t('shared.status_badge.employee_probation'),
     color: 'info',
     icon: <Clock size={14} />,
   },
   employee_pending: {
-    label: '待入职',
+    label: i18n.t('shared.status_badge.employee_pending'),
     color: 'warning',
     icon: <Clock size={14} />,
   },
 
   // 部门状态
   department_active: {
-    label: '启用',
+    label: i18n.t('shared.status_badge.department_active'),
     color: 'success',
     icon: <Building2 size={14} />,
   },
   department_inactive: {
-    label: '禁用',
+    label: i18n.t('shared.status_badge.department_inactive'),
     color: 'default',
     icon: <Minus size={14} />,
   },
 
   // 考勤状态
   attendance_normal: {
-    label: '正常',
+    label: i18n.t('shared.status_badge.attendance_normal'),
     color: 'success',
     icon: <CheckCircle size={14} />,
   },
   attendance_late: {
-    label: '迟到',
+    label: i18n.t('shared.status_badge.attendance_late'),
     color: 'warning',
     icon: <AlertCircle size={14} />,
   },
   attendance_early_leave: {
-    label: '早退',
+    label: i18n.t('shared.status_badge.attendance_early_leave'),
     color: 'warning',
     icon: <AlertCircle size={14} />,
   },
   attendance_absent: {
-    label: '缺勤',
+    label: i18n.t('shared.status_badge.attendance_absent'),
     color: 'error',
     icon: <XCircle size={14} />,
   },
   attendance_leave: {
-    label: '请假',
+    label: i18n.t('shared.status_badge.attendance_leave'),
     color: 'info',
     icon: <Calendar size={14} />,
   },
 
   // 请假状态
   leave_pending: {
-    label: '待审批',
+    label: i18n.t('shared.status_badge.leave_pending'),
     color: 'warning',
     icon: <Clock size={14} />,
   },
   leave_approved: {
-    label: '已批准',
+    label: i18n.t('shared.status_badge.leave_approved'),
     color: 'success',
     icon: <CheckCircle size={14} />,
   },
   leave_rejected: {
-    label: '已拒绝',
+    label: i18n.t('shared.status_badge.leave_rejected'),
     color: 'error',
     icon: <XCircle size={14} />,
   },
   leave_cancelled: {
-    label: '已取消',
+    label: i18n.t('shared.status_badge.leave_cancelled'),
     color: 'default',
     icon: <Ban size={14} />,
   },
 
   // 薪酬状态
   payroll_draft: {
-    label: '待计算',
+    label: i18n.t('shared.status_badge.payroll_draft'),
     color: 'default',
     icon: <FileText size={14} />,
   },
   payroll_calculated: {
-    label: '已计算',
+    label: i18n.t('shared.status_badge.payroll_calculated'),
     color: 'info',
     icon: <DollarSign size={14} />,
   },
   payroll_paid: {
-    label: '已发放',
+    label: i18n.t('shared.status_badge.payroll_paid'),
     color: 'success',
     icon: <CheckCircle size={14} />,
   },
   payroll_processing: {
-    label: '处理中',
+    label: i18n.t('shared.status_badge.payroll_processing'),
     color: 'info',
     icon: <Zap size={14} />,
   },
 
   // 绩效状态
   performance_pending: {
-    label: '待开始',
+    label: i18n.t('shared.status_badge.performance_pending'),
     color: 'default',
     icon: <Clock size={14} />,
   },
   performance_self_review: {
-    label: '自评中',
+    label: i18n.t('shared.status_badge.performance_self_review'),
     color: 'info',
     icon: <User size={14} />,
   },
   performance_manager_review: {
-    label: '待上级评价',
+    label: i18n.t('shared.status_badge.performance_manager_review'),
     color: 'warning',
     icon: <Building2 size={14} />,
   },
   performance_completed: {
-    label: '已完成',
+    label: i18n.t('shared.status_badge.performance_completed'),
     color: 'success',
     icon: <CheckCircle size={14} />,
   },
   performance_not_started: {
-    label: '未开始',
+    label: i18n.t('shared.status_badge.performance_not_started'),
     color: 'default',
     icon: <Minus size={14} />,
   },
   performance_in_progress: {
-    label: '进行中',
+    label: i18n.t('shared.status_badge.performance_in_progress'),
     color: 'info',
     icon: <Zap size={14} />,
   },
 
   // CRM状态
   customer_active: {
-    label: '活跃',
+    label: i18n.t('shared.status_badge.customer_active'),
     color: 'success',
     icon: <Heart size={14} />,
   },
   customer_inactive: {
-    label: '非活跃',
+    label: i18n.t('shared.status_badge.customer_inactive'),
     color: 'default',
     icon: <Minus size={14} />,
   },
   customer_blocked: {
-    label: '已冻结',
+    label: i18n.t('shared.status_badge.customer_blocked'),
     color: 'error',
     icon: <Lock size={14} />,
   },
   customer_potential: {
-    label: '潜在客户',
+    label: i18n.t('shared.status_badge.customer_potential'),
     color: 'info',
     icon: <Star size={14} />,
   },
 
   // 商机状态
   opportunity_new: {
-    label: '新建',
+    label: i18n.t('shared.status_badge.opportunity_new'),
     color: 'info',
     icon: <Zap size={14} />,
   },
   opportunity_qualifying: {
-    label: '验证中',
+    label: i18n.t('shared.status_badge.opportunity_qualifying'),
     color: 'warning',
     icon: <Clock size={14} />,
   },
   opportunity_proposal: {
-    label: '提案中',
+    label: i18n.t('shared.status_badge.opportunity_proposal'),
     color: 'info',
     icon: <FileText size={14} />,
   },
   opportunity_negotiation: {
-    label: '谈判中',
+    label: i18n.t('shared.status_badge.opportunity_negotiation'),
     color: 'warning',
     icon: <ThumbsUp size={14} />,
   },
   opportunity_won: {
-    label: '已成交',
+    label: i18n.t('shared.status_badge.opportunity_won'),
     color: 'success',
     icon: <CheckCircle size={14} />,
   },
   opportunity_lost: {
-    label: '已失败',
+    label: i18n.t('shared.status_badge.opportunity_lost'),
     color: 'error',
     icon: <XCircle size={14} />,
   },
 
   // 项目状态
   project_planning: {
-    label: '规划中',
+    label: i18n.t('shared.status_badge.project_planning'),
     color: 'default',
     icon: <FileText size={14} />,
   },
   project_active: {
-    label: '进行中',
+    label: i18n.t('shared.status_badge.project_active'),
     color: 'success',
     icon: <Zap size={14} />,
   },
   project_on_hold: {
-    label: '暂停',
+    label: i18n.t('shared.status_badge.project_on_hold'),
     color: 'warning',
     icon: <Clock size={14} />,
   },
   project_completed: {
-    label: '已完成',
+    label: i18n.t('shared.status_badge.project_completed'),
     color: 'success',
     icon: <CheckCircle size={14} />,
   },
   project_cancelled: {
-    label: '已取消',
+    label: i18n.t('shared.status_badge.project_cancelled'),
     color: 'error',
     icon: <XCircle size={14} />,
   },
 
   // 工作流状态
   workflow_draft: {
-    label: '草稿',
+    label: i18n.t('shared.status_badge.workflow_draft'),
     color: 'default',
     icon: <FileText size={14} />,
   },
   workflow_pending: {
-    label: '待审批',
+    label: i18n.t('shared.status_badge.workflow_pending'),
     color: 'warning',
     icon: <Clock size={14} />,
   },
   workflow_approved: {
-    label: '已通过',
+    label: i18n.t('shared.status_badge.workflow_approved'),
     color: 'success',
     icon: <CheckCircle size={14} />,
   },
   workflow_rejected: {
-    label: '已拒绝',
+    label: i18n.t('shared.status_badge.workflow_rejected'),
     color: 'error',
     icon: <XCircle size={14} />,
   },
   workflow_processing: {
-    label: '处理中',
+    label: i18n.t('shared.status_badge.workflow_processing'),
     color: 'info',
     icon: <Zap size={14} />,
   },
 
   // 财务状态
   finance_draft: {
-    label: '草稿',
+    label: i18n.t('shared.status_badge.finance_draft'),
     color: 'default',
     icon: <FileText size={14} />,
   },
   finance_pending: {
-    label: '待审核',
+    label: i18n.t('shared.status_badge.finance_pending'),
     color: 'warning',
     icon: <Clock size={14} />,
   },
   finance_approved: {
-    label: '已审核',
+    label: i18n.t('shared.status_badge.finance_approved'),
     color: 'info',
     icon: <CheckCircle size={14} />,
   },
   finance_posted: {
-    label: '已记账',
+    label: i18n.t('shared.status_badge.finance_posted'),
     color: 'success',
     icon: <CheckCircle size={14} />,
   },
   finance_imported: {
-    label: '已导入',
+    label: i18n.t('shared.status_badge.finance_imported'),
     color: 'secondary',
     icon: <FileText size={14} />,
   },
 
   // Dashboard模块状态
   online: {
-    label: '上线',
+    label: i18n.t('shared.status_badge.online'),
     color: 'success',
     icon: <CheckCircle size={14} />,
   },
   beta: {
-    label: '测试',
+    label: i18n.t('shared.status_badge.beta'),
     color: 'warning',
     icon: <Zap size={14} />,
   },
   plan: {
-    label: '规划',
+    label: i18n.t('shared.status_badge.plan'),
     color: 'default',
     icon: <FileText size={14} />,
   },
   new: {
-    label: '新功能',
+    label: i18n.t('shared.status_badge.new'),
     color: 'info',
     icon: <Star size={14} />,
   },
@@ -619,7 +620,7 @@ const VARIANT_STYLES: Record<StatusVariant, any> = {
   filled: (color: StatusColor) => ({
     sx: {
       bgcolor: color === 'default' ? 'grey.400' : `${color}.main`,
-      color: color === 'default' ? '#fff' : '#fff',
+      color: color === 'default' ? 'var(--color-primary-foreground, var(--color-primary-foreground, #ffffff))' : 'var(--color-primary-foreground, var(--color-primary-foreground, #ffffff))',
     },
   }),
   outlined: {

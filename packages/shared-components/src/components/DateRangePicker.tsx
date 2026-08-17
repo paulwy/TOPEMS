@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import i18n from 'i18next';
 import {
   Box,
   Popover,
@@ -50,15 +51,15 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   presets: presetsProp,
   locale,
 }) => {
-  const finalPlaceholder = placeholder ?? locale?.placeholder ?? '选择日期范围';
+  const finalPlaceholder = placeholder ?? locale?.placeholder ?? i18n.t('shared.date_range_picker.placeholder');
   const weekdays = locale?.weekdays ?? DEFAULT_WEEKDAYS;
   const presets = presetsProp ?? locale?.presets ?? [
-    { label: '今天', days: 0 },
-    { label: '昨天', days: 1 },
-    { label: '本周', days: 7 },
-    { label: '本月', days: 30 },
-    { label: '本季度', days: 90 },
-    { label: '本年', days: 365 },
+    { label: i18n.t('shared.date_range_picker.today'), days: 0 },
+    { label: i18n.t('shared.date_range_picker.yesterday'), days: 1 },
+    { label: i18n.t('shared.date_range_picker.this_week'), days: 7 },
+    { label: i18n.t('shared.date_range_picker.this_month'), days: 30 },
+    { label: i18n.t('shared.date_range_picker.this_quarter'), days: 90 },
+    { label: i18n.t('shared.date_range_picker.this_year'), days: 365 },
   ];
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -228,7 +229,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         <Box sx={{ p: 3 }}>
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-              快速选择
+              {i18n.t('shared.date_range_picker.quick_select')}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {presets.map((preset) => (
@@ -249,7 +250,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
               <ChevronLeft size={20} />
             </IconButton>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              {currentMonth.getFullYear()}年{currentMonth.getMonth() + 1}月
+              {i18n.t('shared.date_range_picker.month_format', { year: currentMonth.getFullYear(), month: currentMonth.getMonth() + 1 })}
             </Typography>
             <IconButton onClick={handleNextMonth} size="small">
               <ChevronRight size={20} />
@@ -284,7 +285,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     padding: 0,
                     borderRadius: start || end ? '50%' : 0,
                     backgroundColor: start ? 'primary.main' : end ? 'primary.main' : inRange ? 'primary.light' : 'transparent',
-                    color: start || end ? 'white' : inRange ? 'primary.contrastText' : today ? 'primary.main' : 'inherit',
+                    color: start || end ? 'var(--color-primary-foreground, var(--color-primary-foreground, #ffffff))' : inRange ? 'primary.contrastText' : today ? 'primary.main' : 'inherit',
                     '&:hover': {
                       backgroundColor: 'primary.light',
                     },
@@ -300,8 +301,8 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
           </Box>
 
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-            <Button onClick={handleClose}>取消</Button>
-            <Button onClick={handleConfirm} variant="contained">确定</Button>
+            <Button onClick={handleClose}>{i18n.t('shared.date_range_picker.cancel')}</Button>
+            <Button onClick={handleConfirm} variant="contained">{i18n.t('shared.date_range_picker.confirm')}</Button>
           </Box>
         </Box>
       </Popover>
