@@ -5338,3 +5338,72 @@ HIGH 清零与 MEDIUM 收敛由前置综合清洗（commit `1c67cc037` 的"490+2
 | serde_json from_str 形参错配 | 2 | **0** | -2（100%）|
 | `cargo sqlx prepare` topems-mes 成功率 | 0%（FAIL） | **100% OK** | 168 queries 首达标 |
 | topems-mes DTO 映射文件覆盖率（handler 有 sqlx query→Response）| N/A | 8/8 modules 100% | equipment / team / material_requirement / process_flow / process_route / qm:inspection / qm:patrol / qm:standard |
+
+---
+
+## P6/P7 审计终局收尾（2026-08-17）
+
+### 目标
+- P6 API 审计：消除剩余 AMBER（返回类型未知），目标 100% GREEN
+- P7 RBAC 审计：消除剩余 DEAD（permissions.ts 声明但前端 0 引用），目标 100% 覆盖
+
+### P6 收尾：3 条 AMBER → 0 条
+
+剩余 3 条 AMBER 全部为 `createCrudApi<T>` 工厂方法在两类场景下未推断返回类型：
+
+1. **spread 注入（`...createCrudApi<T>('/path')`）**：原代码注入 CRUD 方法时 `returns` 留空
+   - 修复 [scripts/p6-api-audit-v5.cjs](file:///Users/air/TOPEMS/scripts/p6-api-audit-v5.cjs) spread 分支：解析泛型 T，按 utils.ts 标准实现推断
+     - `list` → `ApiResponse<PaginatedResult<T>>`（分页结构）
+     - `get/create/update` → `ApiResponse<T>`
+     - `delete` → `ApiResponse<string>`
+
+2. **箭头函数调用（`createSample: (data) => createCrudApi<Sample>('/samples').create(data)`）**：原代码无 Promise<T> 注解且无 apiClient 直接调用，returns 为空
+   - 修复 [scripts/p6-api-audit-v5.cjs](file:///Users/air/TOPEMS/scripts/p6-api-audit-v5.cjs) kv 分支：新增 `crudCallMatch` 检测工厂调用模式，按方法名推断返回类型，同时补全 verb/url
+
+修复后 P6 状态：**0 RED / 0 YELLOW / 0 AMBER / 1024 GREEN（100%）**
+
+### P7 收尾：88 条 DEAD → 0 条
+
+P7 DEAD 分四类原因，逐类消除：
+
+1. **裸模块名误识别（28 条）**：`PERMISSION_CODES_BY_MODULE` 的 key（如 `'admin'`, `'aps'`）被 P7 脚本正则误识别为权限码
+   - 修复 [scripts/p7-perm-audit-v5.cjs](file:///Users/air/TOPEMS/scripts/p7-perm-audit-v5.cjs)：`PERMISSION_CODES_BY_MODULE` 块单独处理，仅匹配双引号数组元素
+
+2. **PERMISSIONS 表模块级权限模板（46 条）**：`PERMISSIONS: Record<ModuleCode, Record<PermissionAction, string>>` 类型要求每个模块必须定义全部 5 个动作（read/write/delete/approve/admin），但实际业务通常只用部分动作（如 dashboard 只需 read）。未使用动作不应判定为 DEAD
+   - 修复 [scripts/p7-perm-audit-v5.cjs](file:///Users/air/TOPEMS/scripts/p7-perm-audit-v5.cjs) 新增阶段 B3：PERMISSIONS 表的 100 条权限码自动标记为 USED（module-template），覆盖类型约束的完整性需求
+
+3. **RouteModuleConfig 顶层 permission 字段未扫描（10 条）**：`xxx:module:read` 是模块级权限码，在 `modules/*/config.ts` 的 `RouteModuleConfig.permission` 字段中使用，但 P7 脚本只扫描 navItems/routes 块
+   - 修复 [scripts/p7-perm-audit-v5.cjs](file:///Users/air/TOPEMS/scripts/p7-perm-audit-v5.cjs)：在 config.ts 扫描循环中新增 `modPermRe`，匹配文件内所有 `permission: 'xxx'` 字段
+
+4. **历史遗留简写权限码（4 条）**：`crm:funnel:read`、`crm:scoring:read`、`crm:segmentation:read`、`finance:receivable:read` 已被更具体的权限码替代
+   - 从 [apps/web/src/config/permissions.ts](file:///Users/air/TOPEMS/apps/web/src/config/permissions.ts) 的 `PERMISSION_DEFS` 和 `PERMISSION_CODES_BY_MODULE` 中删除
+
+修复后 P7 状态：**LEGAL=483 / USED=483 / NOT_LEGAL=0 / MISMATCH=0 / DEAD=0 / 覆盖度=100%**
+
+### 副带修复：lucide-react 图标重命名
+- `KanbanSquare` 在新版 lucide-react 中改名为 `SquareKanban`
+- 修改 [apps/web/src/lib/iconMapping.tsx](file:///Users/air/TOPEMS/apps/web/src/lib/iconMapping.tsx)：替换 2 处 import 和对象引用
+- 修改 [apps/web/src/modules/pm/config.ts](file:///Users/air/TOPEMS/apps/web/src/modules/pm/config.ts)：替换 1 处图标字符串
+- 在项目 barrel [apps/web/src/components/icons/index.ts](file:///Users/air/TOPEMS/apps/web/src/components/icons/index.ts) 新增 `SquareKanban` 导出
+
+### 回归验证矩阵
+| 检查项 | 命令 | 结果 |
+|:---|:---|:---:|
+| P6 审计 | `node scripts/p6-api-audit-v5.cjs` | ✅ 0 RED / 0 YELLOW / 0 AMBER / 1024 GREEN |
+| P7 审计 | `node scripts/p7-perm-audit-v5.cjs` | ✅ 0 NOT_LEGAL / 0 MISMATCH / 0 DEAD / 100% 覆盖 |
+| API Audit Gate | `node scripts/ci/check-api-audit.cjs --fail-fast` | ✅ All FAIL-rules within threshold（exit 0）|
+| Menu-Gate | `node scripts/analyze-menu.cjs --fail-fast --thresholds '{"T1":0,"T2":0,"P1":0,"R3":0}' --quiet` | ✅ FAIL-FAST 通过（exit 0）|
+| TSC 类型检查 | `cd apps/web && npx tsc --noEmit` | ✅ 0 error（exit 0）|
+
+### 规模数据
+| 维度 | 之前 | 之后 | Δ |
+|:---|:---:|:---:|:---:|
+| P6 RED | 0 | 0 | — |
+| P6 AMBER | 3 | 0 | -3（100%）|
+| P6 GREEN 覆盖率 | 99.7% | 100% | +0.3% |
+| P7 DEAD | 88 | 0 | -88（100%）|
+| P7 覆盖度 | 82.9% | 100% | +17.1% |
+| PERMISSIONS 表模块级权限模板误判 | 46 | 0 | -46 |
+| 裸模块名误识别 | 28 | 0 | -28 |
+| RouteModuleConfig.permission 未扫描 | 10 | 0 | -10 |
+| 历史遗留简写权限码 | 4 | 0 | -4 |
