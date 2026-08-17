@@ -8,6 +8,7 @@ import i18n from '@/i18n';
 export interface L1NavNode {
   key: string;
   title: string;
+  titleKey?: string;
   order: number;
   icon: string;
   children: L2NavNode[];
@@ -16,6 +17,7 @@ export interface L1NavNode {
 export interface L2NavNode {
   key: string;
   title: string;
+  titleKey?: string;
   icon: string;
   path: string;
   permission?: string;
@@ -35,11 +37,12 @@ type PermissionChecker = (permission?: string) => boolean;
 
 const SPECIAL_L1_MODULES: Record<
   string,
-  Partial<L2NavNode> & { key: string; title: string; path: string }
+  Partial<L2NavNode> & { key: string; title: string; titleKey?: string; path: string }
 > = {
   workbench_dashboard: {
     key: 'workbench_dashboard',
     title: i18n.t('shared.nav_tree.k0'),
+    titleKey: 'shared.nav_tree.k0',
     path: DASHBOARD_PATHS.dashboard,
     icon: 'Home',
     order: 1,
@@ -47,6 +50,7 @@ const SPECIAL_L1_MODULES: Record<
   workbench_mobile: {
     key: 'mobile',
     title: i18n.t('shared.nav_tree.k1'),
+    titleKey: 'shared.nav_tree.k1',
     path: '/mobile/home',
     icon: 'Smartphone',
     order: 2,
@@ -54,6 +58,7 @@ const SPECIAL_L1_MODULES: Record<
   profile_center: {
     key: 'profile_center',
     title: i18n.t('shared.nav_tree.k2'),
+    titleKey: 'shared.nav_tree.k2',
     path: DASHBOARD_PATHS.profile,
     icon: 'User',
     order: 1,
@@ -61,6 +66,7 @@ const SPECIAL_L1_MODULES: Record<
   profile_favorites: {
     key: 'profile_favorites',
     title: i18n.t('shared.nav_tree.k3'),
+    titleKey: 'shared.nav_tree.k3',
     path: DASHBOARD_PATHS.favorites,
     icon: 'Bookmark',
     order: 2,
@@ -72,13 +78,23 @@ function buildSpecialL2Nodes(l1Key: string, checkPermission: PermissionChecker):
 
   if (l1Key === 'workbench') {
     const dashboard = SPECIAL_L1_MODULES.workbench_dashboard;
+    const mobile = SPECIAL_L1_MODULES.workbench_mobile;
     if (checkPermission(undefined)) {
       nodes.push({
         key: dashboard.key,
-        title: dashboard.title,
+        title: dashboard.titleKey ? i18n.t(dashboard.titleKey) : dashboard.title,
+        titleKey: dashboard.titleKey,
         path: dashboard.path,
         icon: dashboard.icon || 'Home',
         order: dashboard.order || 1,
+      });
+      nodes.push({
+        key: mobile.key,
+        title: mobile.titleKey ? i18n.t(mobile.titleKey) : mobile.title,
+        titleKey: mobile.titleKey,
+        path: mobile.path,
+        icon: mobile.icon || 'Smartphone',
+        order: mobile.order || 2,
       });
     }
   }
@@ -89,14 +105,16 @@ function buildSpecialL2Nodes(l1Key: string, checkPermission: PermissionChecker):
     if (checkPermission(undefined)) {
       nodes.push({
         key: profileCenter.key,
-        title: profileCenter.title,
+        title: profileCenter.titleKey ? i18n.t(profileCenter.titleKey) : profileCenter.title,
+        titleKey: profileCenter.titleKey,
         path: profileCenter.path,
         icon: profileCenter.icon || 'User',
         order: profileCenter.order || 1,
       });
       nodes.push({
         key: profileFavorites.key,
-        title: profileFavorites.title,
+        title: profileFavorites.titleKey ? i18n.t(profileFavorites.titleKey) : profileFavorites.title,
+        titleKey: profileFavorites.titleKey,
         path: profileFavorites.path,
         icon: profileFavorites.icon || 'Bookmark',
         order: profileFavorites.order || 2,
@@ -109,9 +127,11 @@ function buildSpecialL2Nodes(l1Key: string, checkPermission: PermissionChecker):
 
 function moduleCardToL2Node(module: ModuleCardConfig): L2NavNode {
   const explicitOrder = L2_MODULE_ORDER[module.code];
+  const translated = module.nameKey ? i18n.t(module.nameKey) : module.name;
   return {
     key: module.code,
-    title: module.name,
+    title: translated,
+    titleKey: module.nameKey,
     icon: module.icon,
     path: module.path,
     permission: module.permission,
@@ -163,7 +183,8 @@ export function useNavTree(checkPermission: PermissionChecker): NavTreeResult {
       .sort((a, b) => a.order - b.order)
       .map((l1) => ({
         key: l1.key,
-        title: l1.title,
+        title: l1.titleKey ? i18n.t(l1.titleKey) : l1.title,
+        titleKey: l1.titleKey,
         order: l1.order,
         icon: l1.icon,
         children: l1Bucket[l1.key],
@@ -172,7 +193,7 @@ export function useNavTree(checkPermission: PermissionChecker): NavTreeResult {
     const l1KeysOrder = l1Domains.map((d) => d.key);
 
     return { l1Domains, l1KeysOrder };
-  }, [checkPermission]);
+  }, [checkPermission, i18n.language]);
 }
 
 export function useFlatNavItems(checkPermission: PermissionChecker): NavItem[] {
@@ -182,15 +203,17 @@ export function useFlatNavItems(checkPermission: PermissionChecker): NavItem[] {
     const items: NavItem[] = [];
     l1Domains.forEach((l1) => {
       l1.children.forEach((l2) => {
+        const translated = l2.titleKey ? i18n.t(l2.titleKey) : l2.title;
         items.push({
           code: l2.key,
-          label: l2.title,
+          label: translated,
+          labelKey: l2.titleKey,
           icon: l2.icon,
           path: l2.path,
           permission: l2.permission,
           order: l2.order,
           moduleCode: l2.key,
-          moduleName: l2.title,
+          moduleName: translated,
           badge: l2.badge,
           badgeColor: l2.badgeColor,
           description: l2.description,
@@ -198,7 +221,7 @@ export function useFlatNavItems(checkPermission: PermissionChecker): NavItem[] {
       });
     });
     return items;
-  }, [l1Domains]);
+  }, [l1Domains, i18n.language]);
 }
 
 export function useDomainGroupedNavItems(
@@ -209,20 +232,24 @@ export function useDomainGroupedNavItems(
   return useMemo(() => {
     const result: Record<string, NavItem[]> = {};
     l1Domains.forEach((l1) => {
-      result[l1.key] = l1.children.map((l2) => ({
-        code: l2.key,
-        label: l2.title,
-        icon: l2.icon,
-        path: l2.path,
-        permission: l2.permission,
-        order: l2.order,
-        moduleCode: l2.key,
-        moduleName: l2.title,
-        badge: l2.badge,
-        badgeColor: l2.badgeColor,
-        description: l2.description,
-      }));
+      result[l1.key] = l1.children.map((l2) => {
+        const translated = l2.titleKey ? i18n.t(l2.titleKey) : l2.title;
+        return {
+          code: l2.key,
+          label: translated,
+          labelKey: l2.titleKey,
+          icon: l2.icon,
+          path: l2.path,
+          permission: l2.permission,
+          order: l2.order,
+          moduleCode: l2.key,
+          moduleName: translated,
+          badge: l2.badge,
+          badgeColor: l2.badgeColor,
+          description: l2.description,
+        };
+      });
     });
     return result;
-  }, [l1Domains]);
+  }, [l1Domains, i18n.language]);
 }

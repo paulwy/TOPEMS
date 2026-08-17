@@ -1,4 +1,5 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Box, Typography, Card, CardContent, Button } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import {
@@ -9,10 +10,22 @@ import {
 } from 'lucide-react';
 import i18n from '@/i18n';
 import { designTokens } from '@/theme/tokens';
+import { reportApi } from '@/api/report';
 
 const ct= designTokens.colors;
 
 const ReportDesignPage: React.FC = () => {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['report-design'],
+    queryFn: async () => {
+      try {
+        // TODO: reportApi 暂无 getDesignerState 方法
+        return {};
+      } catch {
+        return {};
+      }
+    },
+  });
   return (
     <PageContainer
       title={i18n.t('pages.report_design_page.k0')}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { supplierProductSchema } from '@/schemas/srm';
@@ -6,6 +7,7 @@ import { Box, Card, CardContent, Typography } from '@mui/material';
 import { Package } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
+import { srmApi } from '@/api/srm';
 
 const ct= designTokens.colors;
 
@@ -247,6 +249,18 @@ const SupplierProductStats: React.FC<{ rows: SupplierProduct[] }> = ({ rows }) =
 };
 
 const SrmSupplierProductPage: React.FC = () => {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['srm-supplier-product'],
+    queryFn: async () => {
+      try {
+        const res = await srmApi.listProducts();
+        if (res.success && res.data) return res.data;
+        return {};
+      } catch {
+        return {};
+      }
+    },
+  });
   return (
     <CrudPage
       schema={supplierProductSchema}

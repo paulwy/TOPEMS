@@ -24,6 +24,7 @@ import { PageContainer } from '@/components/common';
 import { usePdmDashboardSchema } from '@/schemas/pdm';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
+import { pdmApi } from '@/api/pdm';
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   Users,
@@ -40,6 +41,18 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; className?: s
 
 const PdmDashboardPage: React.FC = () => {
   const schema = usePdmDashboardSchema();
+
+  const { data: backendData } = useQuery({
+    queryKey: ['pdm', 'dashboard-backend'],
+    queryFn: async () => {
+      try {
+        return await pdmApi.dashboard.getOverview();
+      } catch {
+        return {};
+      }
+    },
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
 
   const { isPending: loading } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.PDM_DASHBOARD_SCHEMA_BASE,

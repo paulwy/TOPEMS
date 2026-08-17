@@ -17,6 +17,7 @@ export const PLUGIN_PATHS = {
 export const pluginModuleConfig: RouteModuleConfig = {
   code: 'plugin',
   name: i18n.t('shared.config.k0'),
+  nameKey: 'shared.config.k0',
   icon: 'Puzzle',
   path: PLUGIN_PATHS.root,
   source: 'core',
@@ -33,6 +34,7 @@ export const pluginModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/plugin/DashboardPage'), 'DashboardPage'),
       module: 'plugin',
       title: i18n.t('shared.config.k2'),
+      titleKey: 'shared.config.k2',
       code: 'plugin-dashboard',
       requiredPermissions: ['plugin:dashboard:read'],
       action: 'read',
@@ -47,6 +49,7 @@ export const pluginModuleConfig: RouteModuleConfig = {
       ),
       module: 'plugin',
       title: i18n.t('shared.config.k3'),
+      titleKey: 'shared.config.k3',
       code: 'plugin-marketplace',
       // P4-D: 浏览市场无需权限
       requiredPermissions: [],
@@ -59,6 +62,7 @@ export const pluginModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/plugin/PluginUploadPage'), 'PluginUploadPage'),
       module: 'plugin',
       title: i18n.t('shared.config.k4'),
+      titleKey: 'shared.config.k4',
       code: 'plugin-upload',
       // 写操作保留 admin 权限
       requiredPermissions: ['admin:plugin:write'],
@@ -71,6 +75,7 @@ export const pluginModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(() => import('@/pages/plugin/PluginDetailPage'), 'PluginDetailPage'),
       module: 'plugin',
       title: i18n.t('shared.config.k5'),
+      titleKey: 'shared.config.k5',
       code: 'plugin-detail',
       requiredPermissions: [],
       action: 'read',
@@ -84,6 +89,7 @@ export const pluginModuleConfig: RouteModuleConfig = {
 export const pluginNavConfig: ModuleNavConfig = {
   code: 'plugin',
   name: i18n.t('shared.config.k6'),
+  nameKey: 'shared.config.k6',
   icon: 'Puzzle',
   path: PLUGIN_PATHS.root,
   // P4-D: 扩展市场导航入口对所有已登录用户可见
@@ -97,9 +103,10 @@ export const pluginNavConfig: ModuleNavConfig = {
     {
       code: 'plugin-dashboard',
       label: i18n.t('shared.config.k8'),
+      labelKey: 'shared.config.k8',
       icon: 'LayoutDashboard',
       path: PLUGIN_PATHS.dashboard,
-      permission: undefined,
+      permission: 'plugin:dashboard:read',
       order: 0,
       group: 'overview',
       showInTabs: true,
@@ -108,9 +115,10 @@ export const pluginNavConfig: ModuleNavConfig = {
     {
       code: 'plugin-marketplace',
       label: i18n.t('shared.config.k10'),
+      labelKey: 'shared.config.k10',
       icon: 'ShoppingCart',
       path: PLUGIN_PATHS.marketplace,
-      permission: undefined,
+      permission: '',
       order: 1,
       group: 'setting',
       showInTabs: true,
@@ -119,6 +127,7 @@ export const pluginNavConfig: ModuleNavConfig = {
     {
       code: 'plugin-upload',
       label: i18n.t('shared.config.k12'),
+      labelKey: 'shared.config.k12',
       icon: 'Upload',
       path: PLUGIN_PATHS.upload,
       // 上传/开发操作保留 admin 权限

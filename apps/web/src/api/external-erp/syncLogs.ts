@@ -17,13 +17,15 @@ export const syncLogsApi = {
   getSyncLog: (logId: string) => apiClient.integration.get(`/external-erp/sync-logs/${logId}`),
 
   getSyncStatistics: (
-    configId: string,
+    configId?: string,
     params?: {
       start_date?: string;
       end_date?: string;
     }
   ) =>
-    apiClient.integration.get(`/external-erp/connections/${configId}/sync-statistics`, { params }),
+    configId
+      ? apiClient.integration.get(`/external-erp/connections/${configId}/sync-statistics`, { params })
+      : apiClient.integration.get('/external-erp/sync-statistics', { params }),
 };
 
 export default syncLogsApi;

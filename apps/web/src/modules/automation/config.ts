@@ -23,6 +23,7 @@ export const AUTOMATION_PATHS = {
 export const automationModuleConfig: RouteModuleConfig = {
   code: 'automation',
   name: i18n.t('shared.config.k0'),
+  nameKey: 'shared.config.k0',
   icon: 'Zap',
   path: AUTOMATION_PATHS.root,
   source: 'core',
@@ -41,6 +42,7 @@ export const automationModuleConfig: RouteModuleConfig = {
       module: 'automation',
       code: 'automation-dashboard',
       title: i18n.t('shared.config.k1'),
+      titleKey: 'shared.config.k1',
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['automation:dashboard:read'],
@@ -55,6 +57,7 @@ export const automationModuleConfig: RouteModuleConfig = {
       module: 'automation',
       code: 'automation-rules',
       title: i18n.t('shared.config.k2'),
+      titleKey: 'shared.config.k2',
       template: 'list',
       group: 'process',
       requiredPermissions: ['automation:rule:read'],
@@ -69,6 +72,7 @@ export const automationModuleConfig: RouteModuleConfig = {
       module: 'automation',
       code: 'automation-runs',
       title: i18n.t('shared.config.k3'),
+      titleKey: 'shared.config.k3',
       template: 'list',
       group: 'analytics',
       requiredPermissions: ['automation:run:read'],
@@ -83,6 +87,7 @@ export const automationModuleConfig: RouteModuleConfig = {
       module: 'automation',
       code: 'automation-designer',
       title: i18n.t('shared.config.k4'),
+      titleKey: 'shared.config.k4',
       template: 'form',
       group: 'process',
       requiredPermissions: ['automation:rule:write'],
@@ -97,6 +102,7 @@ export const automationModuleConfig: RouteModuleConfig = {
       module: 'automation',
       code: 'automation-variables',
       title: i18n.t('shared.config.k5'),
+      titleKey: 'shared.config.k5',
       template: 'list',
       group: 'setting',
       requiredPermissions: ['automation:variable:read'],
@@ -109,6 +115,7 @@ export const automationModuleConfig: RouteModuleConfig = {
 export const automationNavConfig: ModuleNavConfig = {
   code: 'automation',
   name: i18n.t('shared.config.k6'),
+  nameKey: 'shared.config.k6',
   icon: 'Zap',
   path: AUTOMATION_PATHS.root,
   permission: 'automation:dashboard:read',
@@ -121,6 +128,7 @@ export const automationNavConfig: ModuleNavConfig = {
     {
       code: 'automation-dashboard',
       label: i18n.t('shared.config.k7'),
+      labelKey: 'shared.config.k7',
       icon: 'LayoutDashboard',
       path: AUTOMATION_PATHS.dashboard,
       permission: 'automation:dashboard:read',
@@ -132,6 +140,7 @@ export const automationNavConfig: ModuleNavConfig = {
     {
       code: 'automation-rules',
       label: i18n.t('shared.config.k9'),
+      labelKey: 'shared.config.k9',
       icon: 'Zap',
       path: AUTOMATION_PATHS.rules,
       permission: 'automation:rule:read',
@@ -143,6 +152,7 @@ export const automationNavConfig: ModuleNavConfig = {
     {
       code: 'automation-runs',
       label: i18n.t('shared.config.k11'),
+      labelKey: 'shared.config.k11',
       icon: 'History',
       path: AUTOMATION_PATHS.runs,
       permission: 'automation:run:read',
@@ -154,6 +164,7 @@ export const automationNavConfig: ModuleNavConfig = {
     {
       code: 'automation-designer',
       label: i18n.t('shared.config.k13'),
+      labelKey: 'shared.config.k13',
       icon: 'Workflow',
       path: AUTOMATION_PATHS.designer,
       permission: 'automation:rule:write',
@@ -164,6 +175,7 @@ export const automationNavConfig: ModuleNavConfig = {
     {
       code: 'automation-variables',
       label: i18n.t('shared.config.k14'),
+      labelKey: 'shared.config.k14',
       icon: 'KeyRound',
       path: AUTOMATION_PATHS.variables,
       permission: 'automation:variable:read',

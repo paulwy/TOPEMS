@@ -9,7 +9,7 @@
  */
 
 import React, { useMemo, useCallback } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { GitMerge, Play, ArrowRight, Copy } from 'lucide-react';
 import { Box, Typography, Paper, Stack } from '@mui/material';
 
@@ -28,6 +28,7 @@ import {
 } from '@/schemas/integration';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { integrationApi } from '@/api/integration';
 
 interface Mapping {
   id: string;
@@ -188,6 +189,16 @@ const renderStatsCards = (rows: Record<string, unknown>[]) => {
 };
 
 export const IntegrationMappingsPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['integration', 'mapping'],
+    queryFn: async () => {
+      try {
+        return await integrationApi.mappings.listMappings();
+      } catch {
+        return {};
+      }
+    },
+  });
   const { t } = useTranslation('integration');
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);

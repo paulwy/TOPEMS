@@ -8,6 +8,8 @@ import i18n from '@/i18n';
  * 数据为 mock 数据。
  */
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { tmsApi } from '@/api/tms';
 import {
   ResponsiveContainer,
   BarChart,
@@ -32,6 +34,30 @@ const MOCK_DATA = [
   { driver: i18n.t('tms.driver_performance_page.k9'), onTimeRate: 94, totalDeliveries: 46, avgDelayMin: 4 },
 ];
 export default function DriverPerformancePage() {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['tms', 'DriverPerformancePage'],
+    queryFn: async () => {
+      try {
+        const res = await tmsApi.listDrivers();
+        const data = (res as { data?: unknown })?.data;
+        const items = Array.isArray(data)
+          ? data
+          : Array.isArray((data as { items?: unknown[] })?.items)
+          ? (data as { items: unknown[] }).items
+          : [];
+        const ratings = items
+          .map((x: unknown) => (x as { avg_rating?: number })?.avg_rating)
+          .filter((v: unknown): v is number => typeof v === 'number' && !isNaN(v));
+        const avgScore = ratings.length > 0 ? ratings.reduce((s, r) => s + r, 0) / ratings.length : 0;
+        return {
+          total: items.length,
+          avgScore,
+        };
+      } catch {
+        return {};
+      }
+    },
+  });
   const data = useMemo(() => MOCK_DATA, []);
   const avgOnTimeRate =
     data.length > 0

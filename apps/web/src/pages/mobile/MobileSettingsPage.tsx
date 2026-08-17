@@ -9,6 +9,7 @@ import {
 import i18n from '@/i18n';
 import { logger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { mobileApi } from '@/api/mobile';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 interface MobileSetting {
   key: string;
@@ -48,6 +49,16 @@ const defaultMobileSettings: MobileSetting[] = [
   },
 ];
 const MobileSettingsPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['mobile-settings-page'],
+    queryFn: async () => {
+      try {
+        return await mobileApi.user.getSettings() ?? {};
+      } catch (e) {
+        return {};
+      }
+    },
+  });
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
   const settingsQuery = useQuery<MobileSetting[]>({

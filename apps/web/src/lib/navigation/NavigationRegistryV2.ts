@@ -100,6 +100,7 @@ export class NavigationRegistryV2 {
       items.push({
         code: module.code,
         label: module.name,
+        labelKey: module.nameKey,
         icon: module.icon,
         path: this.getModuleFirstPath(module),
         permission: module.permission,
@@ -138,6 +139,7 @@ export class NavigationRegistryV2 {
     return {
       code: module.code,
       name: module.name,
+      nameKey: module.nameKey,
       icon: module.icon,
       path: this.getModuleFirstPath(module),
       permission: module.permission,
@@ -218,6 +220,7 @@ export class NavigationRegistryV2 {
     const baseItem: NavItem = {
       code: module.code,
       label: module.name,
+      labelKey: module.nameKey,
       icon: module.icon,
       path: module.path,
       permission: module.permission,

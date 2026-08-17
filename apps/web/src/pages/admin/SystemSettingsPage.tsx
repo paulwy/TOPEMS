@@ -3,6 +3,7 @@
  * 管理系统基础配置、邮件设置、短信设置、日志设置
  */
 import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { apiLogger } from '@/utils/logger';
 import { Box, Tabs, Tab, Paper } from '@mui/material';
 import { Settings, Mail, MessageSquare, FileText } from 'lucide-react';
@@ -15,6 +16,7 @@ import type {
 import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import { ADMIN_PATHS } from '@/modules/admin/config';
+import { adminApi } from '@/api/admin';
 // ============ Mock 数据 ============
 const mockSettings = {
   basic: {
@@ -246,6 +248,18 @@ const getSections = (tabId: string): FormSection[] => {
   }
 };
 export default function SystemSettingsPage() {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['admin-system-settings'],
+    queryFn: async () => {
+      try {
+        const res = await adminApi.getSystemConfig();
+        if (res.success && res.data) return res.data;
+        return {};
+      } catch {
+        return {};
+      }
+    },
+  });
   const [activeTab, setActiveTab] = useState('basic');
   const [settings, setSettings] = useState(mockSettings);
   // 计算字段依赖：enabled 字段控制其他字段的禁用状态

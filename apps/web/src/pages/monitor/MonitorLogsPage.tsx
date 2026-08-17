@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -39,6 +40,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { logSchema } from '@/schemas/monitor/logs';
 import { useTranslation } from 'react-i18next';
+import { monitorApi } from '@/api/monitor';
 
 type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 type LogType = 'access' | 'error' | 'application' | 'slow_query';
@@ -59,6 +61,16 @@ interface SystemLog {
 const MOCK_LOGS: SystemLog[] = [];
 
 const MonitorLogsPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['monitor', 'logs'],
+    queryFn: async () => {
+      try {
+        return await monitorApi.alert.batch.getStatistics();
+      } catch {
+        return {};
+      }
+    },
+  });
   const addNotification = useNotificationStore((state) => state.addNotification);
   const { t } = useTranslation();
 

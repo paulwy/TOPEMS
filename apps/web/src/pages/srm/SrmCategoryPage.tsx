@@ -1,4 +1,5 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { categorySchema } from '@/schemas/srm';
@@ -6,6 +7,7 @@ import { Box, Card, CardContent, Typography } from '@mui/material';
 import { FolderTree } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
+import { srmApi } from '@/api/srm';
 
 const ct= designTokens.colors;
 
@@ -235,6 +237,18 @@ const CategoryStats: React.FC<{ rows: SupplierCategory[] }> = ({ rows }) => {
 };
 
 const SrmCategoryPage: React.FC = () => {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['srm-category'],
+    queryFn: async () => {
+      try {
+        const res = await srmApi.listCategories();
+        if (res.success && res.data) return res.data;
+        return {};
+      } catch {
+        return {};
+      }
+    },
+  });
   return (
     <CrudPage
       schema={categorySchema}

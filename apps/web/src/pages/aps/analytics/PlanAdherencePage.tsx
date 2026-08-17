@@ -9,6 +9,8 @@ import i18n from '@/i18n';
  * 数据使用内置 mock 数据。
  */
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apsApi } from '@/api/aps';
 import { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, } from 'recharts';
 const mockData = [
     { period: '2025-01', plan: 1200, actual: 1180 },
@@ -25,6 +27,28 @@ const mockData = [
     { period: '2025-12', plan: 2300, actual: 2280 },
 ];
 export default function PlanAdherencePage() {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['aps', 'PlanAdherencePage'],
+    queryFn: async () => {
+      try {
+        const res = await apsApi.listPlans();
+        const data = (res as { data?: unknown })?.data;
+        const items: Record<string, unknown>[] = Array.isArray(data) ? data as Record<string, unknown>[] :
+          (Array.isArray((data as { items?: unknown[] })?.items) ? (data as { items: Record<string, unknown>[] }).items : []);
+        return {
+          plans: items,
+          adherence: items.length === 0 ? 0 : items.filter((p: Record<string, unknown>) => {
+            const status = String(p.status ?? '');
+            const actual = Number(p.actualQty ?? p.actual ?? 0);
+            const plan = Number(p.planQty ?? p.plan ?? 0);
+            return status === 'COMPLETED' || (plan > 0 && actual >= plan);
+          }).length / items.length,
+        };
+      } catch {
+        return {};
+      }
+    },
+  });
     const data = useMemo(() => {
         return mockData.map((d) => ({
             ...d,

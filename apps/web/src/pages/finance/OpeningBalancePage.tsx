@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import {
   Card,
   CardContent,
@@ -74,6 +75,17 @@ const BALANCE_DIRECTION_CONFIG = {
 };
 
 export default function OpeningBalancePage() {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['finance-opening-balance'],
+    queryFn: async () => {
+      try {
+        // TODO: financeApi.getOpeningBalance 不存在，等待后端接口对接
+        return {};
+      } catch (e) {
+        return {};
+      }
+    },
+  });
   const { t } = useTranslation();
   const { error: notifyError } = useNotification();
 

@@ -1,4 +1,5 @@
 import type { RouteModuleConfig } from '@/routes/v2/types';
+import i18n from '@/i18n';
 
 export const SHARED_PATHS = {
   root: '/shared',
@@ -7,14 +8,15 @@ export const SHARED_PATHS = {
 
 export const sharedModuleConfig: RouteModuleConfig = {
   code: 'shared',
-  name: 'Shared',
+  name: i18n.t('shared.shared_mod.k0'),
+  nameKey: 'shared.shared_mod.k0',
   icon: 'Share2',
   path: SHARED_PATHS.root,
   source: 'core',
   suite: 'enterprise',
   status: 'online',
   order: 25,
-  description: 'Cross-module shared state and utilities',
+  description: i18n.t('shared.shared_mod.k1'),
   permission: 'shared:dashboard:read',
   routes: [],
 };

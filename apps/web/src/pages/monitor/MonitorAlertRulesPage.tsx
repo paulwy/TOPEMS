@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Box, Typography, Chip, Switch } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { alertRuleSchema } from '@/schemas/monitor';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { useNotificationStore } from '@/store';
+import { monitorApi } from '@/api/monitor';
 import {
   Settings,
   Copy,
@@ -211,6 +213,16 @@ const initialMockRules: AlertRule[] = [
   },
 ];
 const MonitorAlertRulesPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['monitor', 'alertRules'],
+    queryFn: async () => {
+      try {
+        return await monitorApi.ruleTyped.list();
+      } catch {
+        return {};
+      }
+    },
+  });
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [rules, setRules] = useState<AlertRule[]>(initialMockRules);
   const mockApiAdapter: CrudApiAdapter<AlertRule> = {

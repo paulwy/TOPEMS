@@ -580,6 +580,13 @@ fn is_plugin_public_path(path: &str, method: &str) -> bool {
     if path.starts_with("/api/v1/core/plugin/dev/plugins/") && path.ends_with("/register") {
         return true;
     }
+    // V68.1 A2.2: plugin-registry 运行时注册路径（服务间 X-Plugin-Token 认证，非 JWT）
+    // 注意：nest("/api", ...) 会剥离前缀，middleware 看到的路径可能不含 /api
+    if (path.starts_with("/api/plugin/runtime/") || path.starts_with("/plugin/runtime/"))
+        && (path.ends_with("/register") || path.ends_with("/unregister"))
+    {
+        return true;
+    }
     false
 }
 

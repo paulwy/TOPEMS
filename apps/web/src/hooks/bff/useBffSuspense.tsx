@@ -123,6 +123,22 @@ export function useBffSuspenseQuery<T = unknown>(
     select,
   } = options;
 
+  // ---------------------------------------------------------------------------
+  // HOOK ORDERING CONSTRAINT (Suspense + Rules of Hooks)
+  //
+  // `useSuspenseQuery` throws a Promise when data is not yet cached, so that
+  // React can suspend rendering and show the nearest Suspense fallback.  ANY
+  // React hook declared AFTER this call will NOT execute on the first (throwing)
+  // render but WILL execute on the second (resumed) render, producing the
+  // dreaded "Invalid hook call" / "Rendered more hooks than during the previous
+  // render" error.
+  //
+  // Therefore this hook intentionally avoids any useXxx() call after
+  // useSuspenseQuery.  Helper functions that would normally be wrapped in
+  // useCallback are returned as plain closures — React Query already keeps
+  // `suspenseQuery.refetch` identity-stable, so the extra layer of
+  // memoization is unnecessary.
+  // ---------------------------------------------------------------------------
   const suspenseQuery = useSuspenseQuery<T, Error>({
     queryKey,
     queryFn: () => bffGraphQL<T>(query, variables) as Promise<T>,
@@ -134,9 +150,10 @@ export function useBffSuspenseQuery<T = unknown>(
     select,
   } as UseSuspenseQueryOptions<T, Error>);
 
-  const refetch = useCallback(() => {
+  // NOTE: deliberately NOT wrapped in useCallback() — see ordering note above.
+  const refetch = (): void => {
     void suspenseQuery.refetch();
-  }, [suspenseQuery]);
+  };
 
   return {
     data: suspenseQuery.data,
@@ -219,6 +236,8 @@ export function useBffSuspenseInfinite<T = unknown>(
     select,
   } = options;
 
+  // See ordering note in useBffSuspenseQuery above: no React hooks allowed after
+  // useSuspenseInfiniteQuery because it throws Promise on first uncached render.
   const infiniteQuery = useSuspenseInfiniteQuery<
     T,
     Error,
@@ -254,15 +273,15 @@ export function useBffSuspenseInfinite<T = unknown>(
     BffInfiniteCursor
   >);
 
-  const fetchNextPage = useCallback(() => {
+  // NOTE: deliberately NOT wrapped in useCallback() — see ordering note above.
+  const fetchNextPage = (): void => {
     if (infiniteQuery.hasNextPage && !infiniteQuery.isFetchingNextPage) {
       void infiniteQuery.fetchNextPage();
     }
-  }, [infiniteQuery]);
-
-  const refetch = useCallback(() => {
+  };
+  const refetch = (): void => {
     void infiniteQuery.refetch();
-  }, [infiniteQuery]);
+  };
 
   return {
     data: infiniteQuery.data,

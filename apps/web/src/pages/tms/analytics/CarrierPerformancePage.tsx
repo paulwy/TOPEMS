@@ -8,6 +8,8 @@ import i18n from '@/i18n';
  * 数据为 mock 数据。
  */
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { tmsApi } from '@/api/tms';
 import {
   ResponsiveContainer,
   BarChart,
@@ -28,6 +30,44 @@ const MOCK_DATA = [
   { carrier: i18n.t('tms.carrier_performance_page.k6'), totalShipments: 240, onTime: 210, damaged: 9 },
 ];
 export default function CarrierPerformancePage() {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['tms', 'CarrierPerformancePage'],
+    queryFn: async () => {
+      try {
+        const res = await tmsApi.listCarriers();
+        const data = (res as { data?: unknown })?.data;
+        const items = Array.isArray(data)
+          ? data
+          : Array.isArray((data as { items?: unknown[] })?.items)
+          ? (data as { items: unknown[] }).items
+          : [];
+        const totalShipments = items.reduce(
+          (s: number, x: unknown) => s + ((x as { total_shipments?: number })?.total_shipments ?? 0),
+          0
+        );
+        const onTime = items.reduce(
+          (s: number, x: unknown) => s + ((x as { on_time?: number })?.on_time ?? 0),
+          0
+        );
+        const damaged = items.reduce(
+          (s: number, x: unknown) => s + ((x as { damaged?: number })?.damaged ?? 0),
+          0
+        );
+        const pending = items.filter((x: unknown) => (x as { status?: string })?.status === 'PENDING').length;
+        const active = items.filter((x: unknown) => (x as { status?: string })?.status === 'ACTIVE').length;
+        return {
+          total: items.length,
+          totalShipments,
+          onTime,
+          damaged,
+          pending,
+          active,
+        };
+      } catch {
+        return {};
+      }
+    },
+  });
   const data = useMemo(
     () =>
       MOCK_DATA.map((d) => ({

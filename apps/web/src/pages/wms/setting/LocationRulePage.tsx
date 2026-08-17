@@ -1,10 +1,23 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Settings } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { SettingsPageTemplate } from '@/components/templates';
 import i18n from '@/i18n';
+import { wmsApi } from '@/api/wms';
 
 export const LocationRulePage: React.FC = () => {
+  const { data: backendData, isLoading } = useQuery({
+    queryKey: ['wms-location-rule'],
+    queryFn: async () => {
+      try {
+        const res = await wmsApi.slotting.listRules();
+        return res?.data ?? {};
+      } catch (e) {
+        return {};
+      }
+    },
+  });
   return (
     <PageContainer
       title={i18n.t('pages.location_rule_page.k0')}

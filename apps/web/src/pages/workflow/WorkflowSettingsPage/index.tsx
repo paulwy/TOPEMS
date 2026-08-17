@@ -17,6 +17,8 @@
  */
 import { Box, Typography, Button, Paper } from '@mui/material';
 import React, { useState, useCallback, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { workflowApi } from '@/api/workflow';
 import { Settings, Save, RotateCcw } from 'lucide-react';
 import { useNotificationStore } from '../../../store';
 import { PageContainer } from '@/components/common';
@@ -41,6 +43,16 @@ import { FormSettings } from './components/FormSettings';
 import { PermissionSettings } from './components/PermissionSettings';
 import { IntegrationSettings } from './components/IntegrationSettings';
 export const WorkflowSettingsPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['workflow-settings-page'],
+    queryFn: async () => {
+      try {
+        return await workflowApi.settings.listSettings();
+      } catch (e) {
+        return {};
+      }
+    },
+  });
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [activeGroup, setActiveGroup] = useState('general');
   const [generalSettings, setGeneralSettings] = useState<GeneralSettingsType>({

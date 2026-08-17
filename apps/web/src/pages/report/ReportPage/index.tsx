@@ -36,6 +36,18 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 const ct= designTokens.colors;
 
 const ReportPage: React.FC = () => {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['report-dashboard'],
+    queryFn: async () => {
+      try {
+        const res = await reportApi.getReportsCenterStats();
+        if (res.success && res.data) return res.data;
+        return {};
+      } catch {
+        return {};
+      }
+    },
+  });
   const queryClient = useQueryClient();
   const [serviceStatuses, setServiceStatuses] = useState<{
     [key: string]: boolean;

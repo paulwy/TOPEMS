@@ -34,6 +34,8 @@ export interface RouteConfigV2 {
   element: ReactElement | LazyExoticComponent<ComponentType<Record<string, unknown>>>;
   module: string;
   title: string;
+  /** i18n key for the title; if provided, render-time translation overrides `title` */
+  titleKey?: string;
   code: string;
   requiredPermissions?: string[];
   action?: 'read' | 'write' | 'update' | 'delete' | 'admin';
@@ -49,6 +51,8 @@ export interface RouteConfigV2 {
 export interface RouteModuleConfig {
   code: string;
   name: string;
+  /** i18n key for the name; if provided, render-time translation overrides `name` */
+  nameKey?: string;
   icon: string;
   path: string;
   source: 'core' | 'plugin';

@@ -1,4 +1,4 @@
-import { useState, useCallback, type ComponentType, type ReactNode } from 'react';
+import { useState, useCallback, useMemo, type ComponentType, type ReactNode } from 'react';
 import {
   Box,
   List,
@@ -20,6 +20,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import i18n from '@/i18n';
 import type { NavItem, NavGroup } from '../types';
 import { NAV_GROUPS } from '../types';
 import { LazyIcon } from '@/components/icons/LazyIcon';
@@ -206,7 +207,18 @@ export default function SidebarNavGroup({ grouped, collapsed }: SidebarNavGroupP
     });
   }, []);
 
-  const sortedGroups = Object.entries(NAV_GROUPS)
+  const translatedNavGroups = useMemo(() => {
+    const result: Record<string, { label: string; icon: string; order: number }> = {};
+    for (const [key, info] of Object.entries(NAV_GROUPS)) {
+      result[key] = {
+        ...info,
+        label: info.labelKey ? i18n.t(info.labelKey) : info.label,
+      };
+    }
+    return result;
+  }, [i18n.language]);
+
+  const sortedGroups = Object.entries(translatedNavGroups)
     .filter(([key]) => grouped[key as NavGroup]?.length > 0)
     .sort(([, a], [, b]) => a.order - b.order);
 

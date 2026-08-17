@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { mobileApi } from '@/api/mobile';
 import {
   Box,
   Typography,
@@ -127,6 +129,16 @@ const TYPE_ICONS: Record<NotificationType, React.ReactNode> = {
   message: <MessageSquare size={20} />,
 };
 export const MobileNotificationPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['mobile-notification-page'],
+    queryFn: async () => {
+      try {
+        return await mobileApi.push.listPushNotifications() ?? {};
+      } catch (e) {
+        return {};
+      }
+    },
+  });
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
   const [activeTab, setActiveTab] = useState<TabType>('all');

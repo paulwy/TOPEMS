@@ -11,7 +11,27 @@ import {
 } from '@/components/templates';
 import i18n from '@/i18n';
 import { TMS_PATHS } from '@/modules/tms/config';
+import { tmsApi } from '@/api/tms';
 const TmsDashboardPage: React.FC = () => {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['tms', 'TmsDashboardPage'],
+    queryFn: async () => {
+      try {
+        const [sh, veh, dr, cr] = await Promise.all([
+          tmsApi.listShipments({ page: 1, pageSize: 1 }),
+          tmsApi.listVehicles({ page: 1, pageSize: 1 }),
+          tmsApi.listDrivers({ page: 1, pageSize: 1 }),
+          tmsApi.listCarriers({ page: 1, pageSize: 1 }),
+        ]);
+        return {
+          totalShipments: sh?.data?.total ?? 0,
+          totalVehicles: veh?.data?.total ?? 0,
+          totalDrivers: dr?.data?.total ?? 0,
+          totalCarriers: cr?.data?.total ?? 0,
+        };
+      } catch (e) { return {}; }
+    },
+  });
   const navigate = useNavigate();
   const loadingQuery = useQuery<boolean>({
     queryKey: ['tms-dashboard'],

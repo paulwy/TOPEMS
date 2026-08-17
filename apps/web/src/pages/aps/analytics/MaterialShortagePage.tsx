@@ -9,6 +9,8 @@ import i18n from '@/i18n';
  * 数据使用内置 mock 数据。
  */
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apsApi } from '@/api/aps';
 import { ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, } from 'recharts';
 const mockShortages = [
     { material: i18n.t('pages.material_shortage_page.2mm_0'), shortage: 500 },
@@ -21,6 +23,21 @@ const mockShortages = [
     { material: i18n.t('pages.material_shortage_page.k5'), shortage: 50 },
 ];
 export default function MaterialShortagePage() {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['aps', 'MaterialShortagePage'],
+    queryFn: async () => {
+      try {
+        const res = await apsApi.listMaterialPlans();
+        const items = res?.data?.items ?? (Array.isArray(res?.data) ? res.data : []);
+        return {
+          materialPlans: items,
+          shortage: items.filter((x: any) => (x.shortageQty || 0) > 0),
+        };
+      } catch {
+        return {};
+      }
+    },
+  });
     const paretoData = useMemo(() => {
         const list = mockShortages.slice().sort((a, b) => b.shortage - a.shortage);
         const total = list.reduce((s, c) => s + c.shortage, 0) || 1;

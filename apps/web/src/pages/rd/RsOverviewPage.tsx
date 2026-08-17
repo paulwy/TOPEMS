@@ -21,9 +21,21 @@ import { designTokens } from '@/theme/tokens';
 import { RD_PATHS } from '@/modules/rd/config';
 import { LazyChart } from '@/components/charts';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { rdApi } from '@/api/rd';
 const ct= designTokens.colors;
 const RsOverviewPage: React.FC = () => {
   const navigate = useNavigate();
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['rd-overview'],
+    queryFn: async () => {
+      try {
+        const result = await rdApi.getStatistics();
+        return result;
+      } catch {
+        return {};
+      }
+    },
+  });
   const loadingQuery = useQuery<boolean>({
     queryKey: QUERY_KEYS.AD_HOC.RD_DASHBOARD_BASE,
     queryFn: async () => true,

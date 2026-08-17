@@ -1,10 +1,23 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction } from '@/components/templates';
 import { useTranslation } from 'react-i18next';
+import { ticketApi } from '@/api/ticket';
 
 export const DashboardPage: React.FC = () => {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['ticket-dashboard'],
+    queryFn: async () => {
+      try {
+        const result = await ticketApi.getStats();
+        return result;
+      } catch {
+        return {};
+      }
+    },
+  });
   const { t } = useTranslation('ticket');
   const stats: StatCard[] = [];
   const charts: ChartCard[] = [];

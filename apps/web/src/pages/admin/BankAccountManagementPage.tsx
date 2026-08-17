@@ -5,11 +5,13 @@
  * 使用 CrudPage + bankAccountSchema 实现 schema 驱动的 CRUD。
  */
 import { useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Box, Card, CardContent, Typography } from '@mui/material';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { bankAccountSchema } from '@/schemas/admin';
 import { apiLogger } from '@/utils/logger';
 import i18n from '@/i18n';
+import { adminApi } from '@/api/admin';
 interface BankAccount {
   id: string;
   account_name: string;
@@ -55,6 +57,17 @@ const mockBankAccounts: BankAccount[] = [
 ];
 let nextId = 3;
 export default function BankAccountManagementPage() {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['admin-bank-account'],
+    queryFn: async () => {
+      try {
+        // TODO: adminApi 暂无 listBankAccount 方法
+        return {};
+      } catch {
+        return {};
+      }
+    },
+  });
   const apiAdapter: CrudApiAdapter = useMemo(
     () => ({
       list: async (params) => {

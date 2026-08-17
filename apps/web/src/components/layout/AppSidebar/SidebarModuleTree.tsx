@@ -47,6 +47,28 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
     return navigationRegistryV2.getModule(collapsedModuleCode);
   }, [collapsedModuleCode]);
 
+  const translatedNavGroups = useMemo(() => {
+    const result: Record<string, { label: string; icon: string; order: number }> = {};
+    for (const [key, info] of Object.entries(NAV_GROUPS)) {
+      result[key] = {
+        ...info,
+        label: info.labelKey ? i18n.t(info.labelKey) : info.label,
+      };
+    }
+    return result;
+  }, [i18n.language]);
+
+  const translatedSuiteGroups = useMemo(() => {
+    const result: Record<string, { label: string; emoji: string; icon: string; order: number }> = {};
+    for (const [key, info] of Object.entries(SUITE_GROUPS)) {
+      result[key] = {
+        ...info,
+        label: info.labelKey ? i18n.t(info.labelKey) : info.label,
+      };
+    }
+    return result;
+  }, [i18n.language]);
+
   const collapsedModuleGroups = useMemo(() => {
     if (!collapsedModuleCode) return [] as Array<[NavGroup, NavItem[]]>;
     const grouped = navigationRegistryV2.getSidebarNavGrouped(collapsedModuleCode, checkPermission);
@@ -142,7 +164,7 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
           }}
         >
           {collapsedModuleGroups.map(([groupKey, items]) => {
-            const groupInfo = NAV_GROUPS[groupKey];
+            const groupInfo = translatedNavGroups[groupKey] || NAV_GROUPS[groupKey];
             return (
               <Box
                 key={groupKey}
@@ -304,7 +326,9 @@ export const SidebarModuleTree: React.FC<SidebarModuleTreeProps> = ({
               const items = groupedModules[suiteKey] || [];
               if (items.length === 0) return null;
               const suiteInfo =
-                SUITE_GROUPS[suiteKey as keyof typeof SUITE_GROUPS] || SUITE_GROUPS.other;
+                translatedSuiteGroups[suiteKey] ||
+                translatedSuiteGroups.other ||
+                SUITE_GROUPS.other;
               const isFirstGroup = groupIndex === 0;
 
               return (

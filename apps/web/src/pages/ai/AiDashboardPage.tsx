@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Sparkles,
   MessageSquare,
@@ -32,6 +33,7 @@ import { useAIContext } from '@/hooks';
 import { writeAICopilotContext } from '@/lib/ai/copilotContext';
 import type { AIRecommendation } from '@/lib/ai/recommendations';
 import i18n from '@/i18n';
+import { aiApi } from '@/api/ai';
 
 interface StatCardProps {
   id: string;
@@ -441,6 +443,16 @@ const MiniChart: React.FC<{ data: number[]; color: string }> = ({ data, color })
 };
 
 export const AiDashboardPage: React.FC = () => {
+  const { data: backendData } = useQuery({
+    queryKey: ['ai', 'dashboard'],
+    queryFn: async () => {
+      try {
+        return await aiApi.getDashboardStats();
+      } catch {
+        return {};
+      }
+    },
+  });
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [loading, setLoading] = useState(false);

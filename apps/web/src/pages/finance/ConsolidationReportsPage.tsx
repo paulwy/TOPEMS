@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { designTokens } from '@/theme/tokens';
 import {
   Building2,
@@ -47,6 +48,7 @@ import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { financeApi } from '@/api/finance';
 
 const ct = designTokens.colors;
 
@@ -95,6 +97,17 @@ const APPROVAL_STATUS_CONFIG: Record<string, { label: string; color: string }> =
 };
 
 export default function ConsolidationReportsPage() {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['finance-consolidation-reports'],
+    queryFn: async () => {
+      try {
+        // TODO: financeApi.getConsolidationReports 不存在，等待后端接口对接
+        return {};
+      } catch (e) {
+        return {};
+      }
+    },
+  });
   const { t } = useTranslation();
   const { error: notifyError, success: notifySuccess } = useNotification();
 

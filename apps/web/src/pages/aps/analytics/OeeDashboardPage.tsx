@@ -11,6 +11,9 @@ import i18n from '@/i18n';
  * 数据使用内置 mock 数据。
  */
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apsApi } from '@/api/aps';
+import { mesApi } from '@/api/mes';
 import {
   ResponsiveContainer,
   RadialBarChart,
@@ -33,6 +36,23 @@ const mockData = [
   { workCenter: 'WC-F', availability: 92, performance: 94, quality: 99 },
 ];
 export default function OeeDashboardPage() {
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['aps', 'OeeDashboardPage'],
+    queryFn: async () => {
+      try {
+        const res = await (typeof (mesApi as any).equipmentOee?.list === 'function'
+          ? (mesApi as any).equipmentOee.list()
+          : Promise.resolve({ data: { records: [] } }));
+        const data = (res as { data?: unknown })?.data;
+        const items = Array.isArray(data) ? data :
+          (Array.isArray((data as { records?: unknown[] })?.records) ? (data as { records: unknown[] }).records :
+          (Array.isArray((data as { items?: unknown[] })?.items) ? (data as { items: unknown[] }).items : []));
+        return { oeeRecords: items };
+      } catch {
+        return {};
+      }
+    },
+  });
   const oeeData = useMemo(() => {
     return mockData.map((d) => ({
       ...d,

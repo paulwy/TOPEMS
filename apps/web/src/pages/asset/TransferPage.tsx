@@ -7,9 +7,10 @@ import type { FormSection, FormField } from '@/components/templates/FormPageTemp
 import { PageContainer } from '@/components/common';
 import { logger } from '@/utils/logger';
 import { ASSET_PATHS } from '@/modules/asset/config';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
+import { erpApi } from '@/api/erp';
 
 import { useTranslation } from 'react-i18next';
 
@@ -31,6 +32,18 @@ const TransferPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
+
+  const { data: backendData } = useQuery({
+    queryKey: ['asset', 'transfer-backend'],
+    queryFn: async () => {
+      try {
+        return await erpApi.assets.list();
+      } catch {
+        return {};
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const transferSchema = useMemo(
     () =>

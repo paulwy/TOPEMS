@@ -7,8 +7,22 @@ import { PageContainer } from '@/components/common';
 import { useLimsDashboardSchema } from '@/schemas/lims';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+import { limsApi } from '@/api/lims';
 const LimsDashboardPage: React.FC = () => {
   const schema = useLimsDashboardSchema();
+
+  const { data: backendData } = useQuery({
+    queryKey: ['lims', 'dashboard-backend'],
+    queryFn: async () => {
+      try {
+        return await limsApi.dashboard.getOverview();
+      } catch {
+        return {};
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { isPending: loading} = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.LIMS_DASHBOARD_BASE,
     queryFn: async () => {

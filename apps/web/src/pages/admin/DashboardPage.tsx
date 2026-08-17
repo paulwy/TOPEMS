@@ -11,6 +11,7 @@ import { designTokens } from '@/theme/tokens';
 import { LazyChart } from '@/components/charts';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+import { adminApi } from '@/api/admin';
 const ct= designTokens.colors;
 const iconMap: Record<string, React.ReactNode> = {
   Users: <Users size={24} />,
@@ -32,6 +33,17 @@ const getGreeting = (): string => {
 };
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const { data: backendData, isLoading: isBackendLoading } = useQuery({
+    queryKey: ['admin-dashboard'],
+    queryFn: async () => {
+      try {
+        // TODO: adminApi 暂无 getDashboardSummary 方法
+        return {};
+      } catch {
+        return {};
+      }
+    },
+  });
   const dashboardQuery = useQuery<boolean>({
     queryKey: QUERY_KEYS.AD_HOC.ADMIN_DASHBOARD_BASE,
     queryFn: async () => true,

@@ -35,6 +35,8 @@ export type ModuleStatus = 'online' | 'beta' | 'plan' | 'new';
 export interface NavItemConfig {
   code: string;
   label: string;
+  /** i18n key for the label; if provided, render-time translation overrides `label` */
+  labelKey?: string;
   icon?: string;
   path: string;
   permission?: string;
@@ -53,6 +55,8 @@ export interface NavItemConfig {
 export interface ModuleNavConfig {
   code: string;
   name: string;
+  /** i18n key for the name; if provided, render-time translation overrides `name` */
+  nameKey?: string;
   icon: string;
   path: string;
   permission?: string;
@@ -72,6 +76,8 @@ export interface NavItem extends NavItemConfig {
 export interface ModuleCardConfig {
   code: string;
   name: string;
+  /** i18n key for the name; if provided, render-time translation overrides `name` */
+  nameKey?: string;
   icon: string;
   path: string;
   permission?: string;
@@ -82,30 +88,33 @@ export interface ModuleCardConfig {
   description?: string;
 }
 
-export const NAV_GROUPS: Record<NavGroup, { label: string; icon: string; order: number }> = {
-  overview: { label: i18n.t('shared.types.k0'), icon: 'LayoutDashboard', order: 0 },
-  master: { label: i18n.t('shared.types.k1'), icon: 'Database', order: 10 },
-  process: { label: i18n.t('shared.types.k2'), icon: 'Workflow', order: 20 },
-  business: { label: i18n.t('shared.types.k3'), icon: 'Briefcase', order: 30 },
-  analytics: { label: i18n.t('shared.types.k4'), icon: 'BarChart3', order: 40 },
-  report: { label: i18n.t('shared.types.k5'), icon: 'FileSpreadsheet', order: 50 },
-  setting: { label: i18n.t('shared.types.k6'), icon: 'Settings', order: 60 },
-  other: { label: i18n.t('shared.types.k7'), icon: 'MoreHorizontal', order: 99 },
+export const NAV_GROUPS: Record<
+  NavGroup,
+  { label: string; labelKey: string; icon: string; order: number }
+> = {
+  overview: { label: 'Overview', labelKey: 'shared.types.k0', icon: 'LayoutDashboard', order: 0 },
+  master: { label: 'Master Data', labelKey: 'shared.types.k1', icon: 'Database', order: 10 },
+  process: { label: 'Process', labelKey: 'shared.types.k2', icon: 'Workflow', order: 20 },
+  business: { label: 'Business', labelKey: 'shared.types.k3', icon: 'Briefcase', order: 30 },
+  analytics: { label: 'Analytics', labelKey: 'shared.types.k4', icon: 'BarChart3', order: 40 },
+  report: { label: 'Report', labelKey: 'shared.types.k5', icon: 'FileSpreadsheet', order: 50 },
+  setting: { label: 'Settings', labelKey: 'shared.types.k6', icon: 'Settings', order: 60 },
+  other: { label: 'Other', labelKey: 'shared.types.k7', icon: 'MoreHorizontal', order: 99 },
 };
 
 export const SUITE_GROUPS: Record<
   ModuleSuite | 'other',
-  { label: string; emoji: string; icon: string; order: number }
+  { label: string; labelKey: string; emoji: string; icon: string; order: number }
 > = {
-  enterprise: { label: i18n.t('shared.types.k8'), emoji: '🏢', icon: 'Building2', order: 10 },
-  manufacturing: { label: i18n.t('shared.types.k9'), emoji: '🏭', icon: 'Factory', order: 20 },
-  quality: { label: i18n.t('shared.types.k10'), emoji: '🔬', icon: 'ShieldCheck', order: 30 },
-  supply: { label: i18n.t('shared.types.k11'), emoji: '📦', icon: 'Truck', order: 40 },
-  finance: { label: i18n.t('shared.types.k12'), emoji: '💰', icon: 'Wallet', order: 50 },
-  hr: { label: i18n.t('shared.types.k13'), emoji: '👥', icon: 'Users', order: 60 },
-  crm: { label: i18n.t('shared.types.k14'), emoji: '🤝', icon: 'Users', order: 70 },
-  project: { label: i18n.t('shared.types.k15'), emoji: '🗓️', icon: 'Briefcase', order: 80 },
-  collaboration: { label: i18n.t('shared.types.k16'), emoji: '🧰', icon: 'MessagesSquare', order: 90 },
-  platform: { label: i18n.t('shared.types.k17'), emoji: '⚙️', icon: 'LayoutDashboard', order: 100 },
-  other: { label: i18n.t('shared.types.k18'), emoji: '❓', icon: 'MoreHorizontal', order: 999 },
+  enterprise: { label: 'Enterprise', labelKey: 'shared.types.k8', emoji: '🏢', icon: 'Building2', order: 10 },
+  manufacturing: { label: 'Manufacturing', labelKey: 'shared.types.k9', emoji: '🏭', icon: 'Factory', order: 20 },
+  quality: { label: 'Quality', labelKey: 'shared.types.k10', emoji: '🔬', icon: 'ShieldCheck', order: 30 },
+  supply: { label: 'Supply Chain', labelKey: 'shared.types.k11', emoji: '📦', icon: 'Truck', order: 40 },
+  finance: { label: 'Finance', labelKey: 'shared.types.k12', emoji: '💰', icon: 'Wallet', order: 50 },
+  hr: { label: 'HR', labelKey: 'shared.types.k13', emoji: '👥', icon: 'Users', order: 60 },
+  crm: { label: 'CRM', labelKey: 'shared.types.k14', emoji: '🤝', icon: 'Users', order: 70 },
+  project: { label: 'Project', labelKey: 'shared.types.k15', emoji: '🗓️', icon: 'Briefcase', order: 80 },
+  collaboration: { label: 'Collaboration', labelKey: 'shared.types.k16', emoji: '🧰', icon: 'MessagesSquare', order: 90 },
+  platform: { label: 'Platform', labelKey: 'shared.types.k17', emoji: '⚙️', icon: 'LayoutDashboard', order: 100 },
+  other: { label: 'Other', labelKey: 'shared.types.k18', emoji: '❓', icon: 'MoreHorizontal', order: 999 },
 };

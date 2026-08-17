@@ -4,6 +4,8 @@
  * @target-size <= 600 lines
  */
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { consolidationContractApi } from '@/api/consolidation-contract';
 import { useTranslation } from 'react-i18next';
 import {
   Card,
@@ -32,6 +34,16 @@ import {
 } from './components/ConsolidationScopeFormDialog';
 
 export default function ConsolidationScopePage() {
+  const { data: backendData } = useQuery({
+    queryKey: ['finance-consolidation-scope-page'],
+    queryFn: async () => {
+      try {
+        return await consolidationContractApi.scopes.list();
+      } catch (e) {
+        return {};
+      }
+    },
+  });
   const { t } = useTranslation();
 
   // Use custom hook for all state and API logic
