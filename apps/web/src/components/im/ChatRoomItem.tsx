@@ -146,7 +146,9 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: isActive ? theme.palette.primary.main : theme.palette.grey[200],
-              color: isActive ? 'white' : theme.palette.text.secondary,
+              color: isActive
+                ? 'var(--color-primary-foreground, #ffffff)'
+                : theme.palette.text.secondary,
             }}
           >
             {getRoomIcon()}
@@ -161,7 +163,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
                 height: 14,
                 backgroundColor: theme.palette.success.dark,
                 borderRadius: 'full',
-                border: '2px solid white',
+                border: '2px solid var(--color-primary-foreground, #ffffff)',
               }}
             />
           )}

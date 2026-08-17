@@ -220,12 +220,20 @@ const V54PanelHeader: React.FC<{ status: AIPlatformStatus; onClose: () => void }
       <Chip
         label={`${status.capabilities.active}/${status.capabilities.total} ${i18n.t('ai.v54-native-panel.k2')}`}
         size='small'
-        sx={{ bgcolor: 'action.disabledBackground', color: 'common.white', fontWeight: 600 }}
+        sx={{
+          bgcolor: 'action.disabledBackground',
+          color: 'common.white',
+          fontWeight: 600,
+        }}
       />
       <Chip
         label={`${i18n.t('ai.v54-native-panel.k3')} ${status.uptime}s`}
         size='small'
-        sx={{ bgcolor: 'action.disabledBackground', color: 'common.white', fontWeight: 600 }}
+        sx={{
+          bgcolor: 'action.disabledBackground',
+          color: 'common.white',
+          fontWeight: 600,
+        }}
       />
       <Badge
         badgeContent={V54_NATIVE_BADGE}
@@ -281,7 +289,8 @@ const TabBar: React.FC<{ activeTab: TabId; onChange: (tab: TabId) => void }> = (
           py: 1,
           borderRadius: 1,
           bgcolor: activeTab === tab.id ? designTokens.colors.secondary.dark : 'transparent',
-          color: activeTab === tab.id ? 'white' : 'text.secondary',
+          color:
+            activeTab === tab.id ? 'var(--color-primary-foreground, #ffffff)' : 'text.secondary',
           fontWeight: activeTab === tab.id ? 600 : 400,
           '&:hover': {
             bgcolor: activeTab === tab.id ? 'colors.primary.dark' : 'action.hover',
@@ -879,7 +888,11 @@ const RouterTab: React.FC = () => {
                     <Chip
                       label={`${i18n.t('ai.v54-native-panel.k24')} ${(recommendation.confidence * 100).toFixed(0)}%`}
                       size='small'
-                      sx={{ bgcolor: 'teal.500', color: 'common.white', fontWeight: 700 }}
+                      sx={{
+                        bgcolor: 'teal.500',
+                        color: 'common.white',
+                        fontWeight: 700,
+                      }}
                     />
                   </Box>
                   <Typography
@@ -1422,17 +1435,26 @@ const AdaptiveUITab: React.FC<{
                     <Chip
                       label={`${i18n.t('ai.v54-native-panel.k39')} ${adaptedLayout.layout}`}
                       size='small'
-                      sx={{ bgcolor: 'common.white', fontWeight: 600 }}
+                      sx={{
+                        bgcolor: 'common.white',
+                        fontWeight: 600,
+                      }}
                     />
                     <Chip
                       label={`${i18n.t('ai.v54-native-panel.k40')} ${adaptedLayout.density}`}
                       size='small'
-                      sx={{ bgcolor: 'common.white', fontWeight: 600 }}
+                      sx={{
+                        bgcolor: 'common.white',
+                        fontWeight: 600,
+                      }}
                     />
                     <Chip
                       label={`${i18n.t('ai.v54-native-panel.k41')} ${(adaptedLayout.layout_confidence * 100).toFixed(0)}%`}
                       size='small'
-                      sx={{ bgcolor: 'common.white', fontWeight: 600 }}
+                      sx={{
+                        bgcolor: 'common.white',
+                        fontWeight: 600,
+                      }}
                     />
                   </Box>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>

@@ -267,4 +267,56 @@
   --cyber-border-glow-hover: 0 0 0 1px rgba(59, 130, 246, 0.4), 0 0 15px rgba(59, 130, 246, 0.1);
   --cyber-gradient-text: linear-gradient(135deg, #60a5fa, #22d3ee, #a78bfa);
   --cyber-gradient-card: linear-gradient(135deg, rgba(59, 130, 246, 0.06), rgba(6, 182, 212, 0.03));
+
+
+/* [V232-P2 NEW] 4 Semantic Shadow Tokens (Plan KPI #3 requirement) */
+  --shadow-card:     0 2px 12px 0 rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 4px 20px 0 rgba(0, 0, 0, 0.12);
+  --shadow-modal:    0 8px 32px 0 rgba(0, 0, 0, 0.16);
+  --shadow-dropdown: 0 2px 8px 0 rgba(0, 0, 0, 0.10);
+
+/* [V232-P2 NEW] Accessibility focus ring */
+  --shadow-focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-primary) 30%, transparent);
+
+/* [V232-P2 NEW] Cyber Theme Scoped Tokens (long-tail neon colors consolidation) */
+  --cyber-color-cyan: #00ffff;
+  --cyber-color-magenta: #ff00ff;
+  --cyber-color-green: #00ff88;
+  --cyber-color-text-muted: #8892b0;
+  --cyber-color-bg-light: #e6f1ff;
+  --cyber-color-bg-dark: #0a0a1a;
+  --cyber-color-danger: #ff4444;
+  --cyber-color-gold: #ffd700;
+  --cyber-color-warn: #ffaa00;
+  --cyber-color-blue: #00aaff;
+
+/* [V232-P2 NEW] Cyber Theme Shadow Tokens (consolidate rgba(0,255,255,...) hardcoded) */
+  --cyber-shadow-glow-cyan: 0 0 12px rgba(0, 255, 255, 0.30);
+  --cyber-shadow-glow-cyan-soft: 0 0 8px rgba(0, 255, 255, 0.50);
+  --cyber-shadow-glow-cyan-strong: 0 0 10px rgba(0, 255, 255, 0.50);
+  --cyber-shadow-glow-primary: 0 0 20px rgba(96, 165, 250, 0.6);
+  --cyber-shadow-pulse-glow-strong: 0 0 40px rgba(96, 165, 250, 0.6);
+  --cyber-shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.10);
+  --cyber-shadow-3xl: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 255, 255, 0.15);
+  --cyber-shadow-top-line: 0 1px 0 rgba(0, 255, 255, 0.10);
+  --cyber-shadow-sidebar-active: inset 3px 0 0 var(--color-primary), 0 0 20px rgba(59, 130, 246, 0.1);
+  --cyber-shadow-row-accent: inset 3px 0 0 var(--color-primary);
+  --cyber-shadow-input-focus: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  --cyber-shadow-progress: 0 0 8px rgba(59, 130, 246, 0.3);
+  --cyber-shadow-badge: 0 0 8px rgba(239, 68, 68, 0.4);
+  --cyber-shadow-custom: var(--shadow-md);
+
+
+
+/* [V232-P2 FALLBACK] */
+  --color-fallback-dark-bg: #0a0a0a;  /* 深色背景通用 */
+  --color-fallback-panel-bg: #1a1a2e;  /* 深色面板背景 */
+  --color-fallback-ant-blue: #1890ff;  /* Ant Design 蓝 */
+  --color-fallback-ant-purple: #722ed1;  /* Ant Design 紫 */
+  --color-fallback-ant-green: #52c41a;  /* Ant Design 绿 */
+  --color-fallback-accent-pink: #ec4899;  /* 粉色强调色 */
+  --color-fallback-neutral-grey: #666666;  /* 中性灰 */
+  --color-fallback-border-light: #dddddd;  /* 极浅边框 */
+  --color-fallback-midnight: #0f172a;  /* 深夜蓝灰 */
+
 }

@@ -161,7 +161,11 @@ export default function QmsSpcControlChartPage() {
                         ? designTokens.colors.error.main
                         : designTokens.colors.secondary.dark
                     }
-                    stroke={payload?.isOOC ? designTokens.colors.error['800'] : '#4338ca'}
+                    stroke={
+                      payload?.isOOC
+                        ? designTokens.colors.error['800']
+                        : 'var(--color-fallback-ant-purple, #722ed1)'
+                    }
                     strokeWidth={1}
                   />
                 );

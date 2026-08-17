@@ -75,7 +75,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
       >
         <Bell className='w-6 h-6' />
         {unreadCount > 0 && (
-          <span className='absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5'>
+          <span className='absolute -top-1 -right-1 bg-red-500 text-var(--color-primary-foreground, #ffffff) text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5'>
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}

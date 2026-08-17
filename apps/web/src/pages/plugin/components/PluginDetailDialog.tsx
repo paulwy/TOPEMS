@@ -138,7 +138,13 @@ export const PluginDetailDialog: React.FC<PluginDetailDialogProps> = ({ plugin, 
               justifyContent: 'center',
             }}
           >
-            <Package sx={{ width: 24, height: 24, color: 'common.white' }} />
+            <Package
+              sx={{
+                width: 24,
+                height: 24,
+                color: 'common.white',
+              }}
+            />
           </Box>
           <Box>
             <Typography

@@ -57,7 +57,15 @@ export const HeaderLogo: React.FC<HeaderLogoProps> = ({
             justifyContent: 'center',
           }}
         >
-          <Typography sx={{ color: 'common.white', fontWeight: 700, fontSize: 16 }}>T</Typography>
+          <Typography
+            sx={{
+              color: 'common.white',
+              fontWeight: 700,
+              fontSize: 16,
+            }}
+          >
+            T
+          </Typography>
         </Box>
         <Typography
           variant='h6'

@@ -633,7 +633,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             label={i18n.t('microfrontend.observability_dashboard.k22')}
             value={totalVisits > 0 ? `${((totalErrors / totalVisits) * 100).toFixed(2)}%` : '0%'}
             icon={<TrendingUpIcon size={24} />}
-            color='#ad1457'
+            color='var(--color-error-700, #b91c1c)'
           />
         </Grid>
       </Grid>
@@ -1271,7 +1271,10 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             size='small'
             onClick={() => setAutoRefresh(!autoRefresh)}
             startIcon={<RefreshIcon size={16} />}
-            sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
+            sx={{
+              color: 'common.white',
+              borderColor: 'action.disabledBackground',
+            }}
             variant={autoRefresh ? 'contained' : 'outlined'}
           >
             {autoRefresh
@@ -1282,7 +1285,10 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             size='small'
             onClick={refreshData}
             startIcon={<RefreshIcon size={16} />}
-            sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
+            sx={{
+              color: 'common.white',
+              borderColor: 'action.disabledBackground',
+            }}
             variant='outlined'
           >
             {i18n.t('microfrontend.observability_dashboard.k17')}
@@ -1291,7 +1297,10 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             size='small'
             onClick={handleExport}
             startIcon={<DownloadIcon size={16} />}
-            sx={{ color: 'common.white', borderColor: 'action.disabledBackground' }}
+            sx={{
+              color: 'common.white',
+              borderColor: 'action.disabledBackground',
+            }}
             variant='outlined'
           >
             {i18n.t('microfrontend.observability_dashboard.k18')}

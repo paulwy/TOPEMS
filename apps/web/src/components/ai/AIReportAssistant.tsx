@@ -236,7 +236,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
                   key={idx}
                   d={`M 50 50 L ${x1} ${y1} A 40 40 0 ${largeArc} 1 ${x2} ${y2} Z`}
                   fill={colors[idx % colors.length]}
-                  stroke='white'
+                  stroke='var(--color-primary-foreground, #ffffff)'
                   strokeWidth='1'
                 />
               );
@@ -308,7 +308,7 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
                 <th
                   key={header}
                   style={{
-                    borderBottom: '2px solid #e5e7eb',
+                    borderBottom: '2px solid var(--color-grey-200, var(--color-grey-200, #e5e7eb))',
                     padding: '8px 12px',
                     textAlign: 'left',
                     fontWeight: 600,
@@ -324,7 +324,9 @@ export const AIReportAssistant: React.FC<AIReportAssistantProps> = ({ initialQue
             {result.data.map((row: Record<string, unknown>, idx: number) => (
               <tr
                 key={idx}
-                style={{ borderBottom: '1px solid #f3f4f6' }}
+                style={{
+                  borderBottom: '1px solid var(--color-grey-100, var(--color-grey-100, #f3f4f6))',
+                }}
               >
                 {headers.map((header) => (
                   <td

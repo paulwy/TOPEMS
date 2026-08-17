@@ -13,7 +13,9 @@ const useSkeletonSx = () => {
       : `0 1px 3px ${designTokens.colors.action.selected}`,
     subtleBorder: isDark ? 'glass.bgLight' : 'colors.action.hover',
     pageBg: isDark ? 'background.default' : 'grey.50',
-    gradientFrom: isDark ? designTokens.colors.cyber.glass.bgLight : '#f8fafc',
+    gradientFrom: isDark
+      ? designTokens.colors.cyber.glass.bgLight
+      : 'var(--color-background, var(--color-background, #f8fafc))',
     gradientTo: isDark ? designTokens.colors.cyber.glass.bgLight : theme.palette.grey[100],
   };
 };

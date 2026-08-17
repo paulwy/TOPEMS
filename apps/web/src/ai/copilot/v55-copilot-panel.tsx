@@ -1613,7 +1613,12 @@ const QATab: React.FC<{
       <Stack
         direction='row'
         spacing={2}
-        sx={{ p: 2, borderBottom: 1, borderColor: 'divider', bgcolor: 'common.white' }}
+        sx={{
+          p: 2,
+          borderBottom: 1,
+          borderColor: 'divider',
+          bgcolor: 'common.white',
+        }}
       >
         <Typography
           variant='subtitle2'
@@ -1780,8 +1785,11 @@ const QATab: React.FC<{
                 maxWidth: '80%',
                 p: 2,
                 borderRadius: 2,
-                bgcolor: msg.role === 'user' ? designTokens.colors.secondary.main : 'white',
-                color: msg.role === 'user' ? 'white' : 'inherit',
+                bgcolor:
+                  msg.role === 'user'
+                    ? designTokens.colors.secondary.main
+                    : 'var(--color-primary-foreground, #ffffff)',
+                color: msg.role === 'user' ? 'var(--color-primary-foreground, #ffffff)' : 'inherit',
                 border:
                   msg.role === 'assistant'
                     ? `1px solid ${designTokens.colors.grey['200']}`
@@ -1825,7 +1833,14 @@ const QATab: React.FC<{
         <div ref={messagesEndRef} />
       </Box>
 
-      <Box sx={{ borderTop: 1, borderColor: 'divider', p: 2, bgcolor: 'common.white' }}>
+      <Box
+        sx={{
+          borderTop: 1,
+          borderColor: 'divider',
+          p: 2,
+          bgcolor: 'common.white',
+        }}
+      >
         <Stack
           direction='row'
           spacing={1}

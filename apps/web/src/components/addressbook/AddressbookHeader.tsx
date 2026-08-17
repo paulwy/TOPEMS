@@ -51,7 +51,7 @@ export const AddressbookHeader: React.FC<AddressbookHeaderProps> = ({
                 paddingRight: 16,
                 paddingTop: 8,
                 paddingBottom: 8,
-                border: '1px solid #cbd5e1',
+                border: '1px solid var(--color-text-disabled, var(--color-text-disabled, #cbd5e1))',
                 borderRadius: 8,
                 outline: 'none',
               }}
@@ -81,7 +81,7 @@ export const AddressbookHeader: React.FC<AddressbookHeaderProps> = ({
               alignItems: 'center',
               gap: 8,
               padding: '8px 16px',
-              border: '1px solid #cbd5e1',
+              border: '1px solid var(--color-text-disabled, var(--color-text-disabled, #cbd5e1))',
               borderRadius: 8,
               color: 'grey.700',
               backgroundColor: 'common.white',
@@ -92,7 +92,7 @@ export const AddressbookHeader: React.FC<AddressbookHeaderProps> = ({
               e.currentTarget.style.backgroundColor = 'grey.50';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'white';
+              e.currentTarget.style.backgroundColor = 'var(--color-primary-foreground, #ffffff)';
             }}
           >
             <Download sx={{ width: 16, height: 16 }} />

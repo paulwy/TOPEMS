@@ -152,7 +152,13 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
                     boxShadow: 2,
                   }}
                 >
-                  <Settings sx={{ width: 24, height: 24, color: 'common.white' }} />
+                  <Settings
+                    sx={{
+                      width: 24,
+                      height: 24,
+                      color: 'common.white',
+                    }}
+                  />
                 </Box>
                 <Box>
                   <Typography
@@ -225,7 +231,13 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
                           transition: 'transform 0.2s',
                         }}
                       >
-                        <Icon sx={{ width: 24, height: 24, color: 'common.white' }} />
+                        <Icon
+                          sx={{
+                            width: 24,
+                            height: 24,
+                            color: 'common.white',
+                          }}
+                        />
                       </Box>
                     </Box>
                     <Typography

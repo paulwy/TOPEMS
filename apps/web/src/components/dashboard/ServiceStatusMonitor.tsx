@@ -67,9 +67,9 @@ const groupColors: Record<
   },
   supply: {
     bg: 'white1f2',
-    border: '#fecdd3',
+    border: 'var(--color-error-200, #fecaca)',
     titleColor: 'pink.700',
-    iconBg: '#ffe4e6',
+    iconBg: 'var(--color-error-100, #fee2e2)',
     iconColor: 'error.600',
   },
   manufacturing: {
@@ -87,10 +87,10 @@ const groupColors: Record<
     iconColor: 'primary.light',
   },
   platform: {
-    bg: '#fdf4ff',
-    border: '#f5d0fe',
+    bg: 'var(--color-secondary-50, #f5f3ff)',
+    border: 'var(--color-secondary-200, #ddd6fe)',
     titleColor: 'purple.700',
-    iconBg: '#fae8ff',
+    iconBg: 'var(--color-secondary-100, #ede9fe)',
     iconColor: 'purple.600',
   },
 };

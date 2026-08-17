@@ -343,7 +343,10 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               sx={{
                 fontSize: '0.875rem',
                 bgcolor: filterType === type ? 'primary.main' : 'grey.100',
-                color: filterType === type ? 'white' : 'text.secondary',
+                color:
+                  filterType === type
+                    ? 'var(--color-primary-foreground, #ffffff)'
+                    : 'text.secondary',
                 '&:hover': {
                   bgcolor: filterType === type ? 'primary.main' : 'grey.200',
                 },

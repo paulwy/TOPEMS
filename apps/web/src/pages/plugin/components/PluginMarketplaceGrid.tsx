@@ -43,7 +43,13 @@ export const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, on
                 justifyContent: 'center',
               }}
             >
-              <Package sx={{ width: 24, height: 24, color: 'common.white' }} />
+              <Package
+                sx={{
+                  width: 24,
+                  height: 24,
+                  color: 'common.white',
+                }}
+              />
             </Box>
             <Box>
               <Typography

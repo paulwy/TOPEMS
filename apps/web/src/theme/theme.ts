@@ -152,78 +152,78 @@ const darkShadows = [...Array(25)].map((_, i) => {
 
 /**
  * Cyberpunk 赛博朋克色彩方案
- * - 基础色：深空（#0A0A1A），比暗 mode 更纯黑
- * - 主色：霓虹青（#00FFFF）替换原 primary 蓝
- * - 副色：霓虹品红（#FF00FF）
- * - 强调色：霓虹金（#FFD700）
+ * - 基础色：深空（var(--cyber-color-bg-dark, #0a0a1a)），比暗 mode 更纯黑
+ * - 主色：霓虹青（var(--cyber-color-cyan, #00ffff)）替换原 primary 蓝
+ * - 副色：霓虹品红（var(--cyber-color-magenta, #ff00ff)）
+ * - 强调色：霓虹金（var(--cyber-color-gold, #ffd700)）
  * - 玻璃态：半透明 + backdrop-filter 组合
  */
 const CYBERPUNK_COLORS = {
   background: {
-    default: '#0A0A1A',
+    default: 'var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a))',
     paper: 'rgba(26, 26, 46, 0.90)',
     elevated: 'rgba(26, 26, 46, 0.95)',
   },
   text: {
-    primary: '#E6F1FF',
-    secondary: '#8892B0',
-    muted: '#5A648A',
+    primary: 'var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff))',
+    secondary: 'var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0))',
+    muted: 'var(--color-text-secondary, #64748b)',
     disabled: 'rgba(230, 241, 255, 0.40)',
   },
   border: {
     default: 'rgba(0, 255, 255, 0.20)',
   },
   primary: {
-    main: '#00FFFF',
-    light: '#5FFFFF',
-    dark: '#00C8C8',
-    contrastText: '#0A0A1A',
+    main: 'var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff))',
+    light: 'var(--color-info-light, #7dd3fc)',
+    dark: 'var(--color-info-hover, #0284c7)',
+    contrastText: 'var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a))',
     50: 'rgba(0, 255, 255, 0.05)',
     100: 'rgba(0, 255, 255, 0.10)',
     200: 'rgba(0, 255, 255, 0.20)',
     300: 'rgba(0, 255, 255, 0.35)',
     400: 'rgba(0, 255, 255, 0.50)',
-    500: '#00FFFF',
-    600: '#00D9D9',
-    700: '#00B3B3',
-    800: '#008C8C',
-    900: '#006666',
+    500: 'var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff))',
+    600: 'var(--color-info, #0ea5e9)',
+    700: 'var(--color-info-hover, #0284c7)',
+    800: 'var(--color-info-700, #0369a1)',
+    900: 'var(--color-info-900, #0c4a6e)',
   },
   secondary: {
-    main: '#FF00FF',
-    light: '#FF5FFF',
-    dark: '#C800C8',
-    contrastText: '#FFFFFF',
+    main: 'var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff))',
+    light: 'var(--color-fallback-accent-pink, #ff5fff)',
+    dark: 'var(--color-fallback-ant-purple, #c800c8)',
+    contrastText: 'var(--color-surface, var(--color-primary-foreground, #ffffff))',
     50: 'rgba(255, 0, 255, 0.05)',
     100: 'rgba(255, 0, 255, 0.10)',
     200: 'rgba(255, 0, 255, 0.20)',
     300: 'rgba(255, 0, 255, 0.35)',
     400: 'rgba(255, 0, 255, 0.50)',
-    500: '#FF00FF',
-    600: '#D900D9',
-    700: '#B300B3',
-    800: '#8C008C',
-    900: '#660066',
+    500: 'var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff))',
+    600: 'var(--color-fallback-accent-pink, #d900d9)',
+    700: 'var(--color-fallback-ant-purple, #b300b3)',
+    800: 'var(--color-fallback-ant-purple, #8c008c)',
+    900: 'var(--color-fallback-neutral-grey, #660066)',
   },
   warning: {
-    main: '#FFD700',
-    light: '#FFE54D',
-    dark: '#C9AA00',
+    main: 'var(--cyber-color-gold, var(--cyber-color-gold, #ffd700))',
+    light: 'var(--color-warning-300, #fcd34d)',
+    dark: 'var(--color-warning, #f59e0b)',
   },
   error: {
-    main: '#FF4444',
-    light: '#FF7777',
-    dark: '#CC3333',
+    main: 'var(--cyber-color-danger, var(--cyber-color-danger, #ff4444))',
+    light: 'var(--color-error-400, #f87171)',
+    dark: 'var(--color-error-hover, #dc2626)',
   },
   success: {
-    main: '#00FF88',
-    light: '#4DFFA6',
-    dark: '#00CC66',
+    main: 'var(--cyber-color-green, var(--cyber-color-green, #00ff88))',
+    light: 'var(--color-success-400, #4ade80)',
+    dark: 'var(--color-success, #22c55e)',
   },
   info: {
-    main: '#00AAFF',
-    light: '#4DC3FF',
-    dark: '#0088CC',
+    main: 'var(--cyber-color-blue, var(--cyber-color-blue, #00aaff))',
+    light: 'var(--color-info-400, #38bdf8)',
+    dark: 'var(--color-info-hover, #0284c7)',
   },
 } as const;
 
@@ -300,9 +300,9 @@ export const createCustomTheme = (): Theme => {
       pink: designTokens.colors.pink,
       surface: designTokens.colors.surface,
       accent: {
-        main: '#FFD700',
-        light: '#FFE54D',
-        dark: '#C9AA00',
+        main: 'var(--cyber-color-gold, var(--cyber-color-gold, #ffd700))',
+        light: 'var(--color-warning-300, #fcd34d)',
+        dark: 'var(--color-warning, #f59e0b)',
       },
     },
     colorSchemes: {
@@ -323,7 +323,7 @@ export const createCustomTheme = (): Theme => {
             paper: designTokens.colors.grey[900],
           },
           text: {
-            primary: '#F1F5F9',
+            primary: 'var(--color-surface-light, var(--color-surface-light, #f1f5f9))',
             secondary: designTokens.colors.grey[300],
             muted: designTokens.colors.grey[500],
           },
@@ -344,9 +344,9 @@ export const createCustomTheme = (): Theme => {
           text: CYBERPUNK_COLORS.text,
           divider: CYBERPUNK_COLORS.border.default,
           accent: {
-            main: '#FFD700',
-            light: '#FFE54D',
-            dark: '#C9AA00',
+            main: 'var(--cyber-color-gold, var(--cyber-color-gold, #ffd700))',
+            light: 'var(--color-warning-300, #fcd34d)',
+            dark: 'var(--color-warning, #f59e0b)',
           },
         },
       },

@@ -356,7 +356,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     width='140'
                     height='60'
                     rx='8'
-                    fill='white'
+                    fill='var(--color-primary-foreground, #ffffff)'
                     strokeWidth='2'
                     stroke={selectedNode?.id === node.id ? 'primary.main' : 'grey.300'}
                     style={{
@@ -374,7 +374,11 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     height='60'
                     rx='8'
                     opacity='0.1'
-                    fill={selectedNode?.id === node.id ? 'primary.main' : 'black'}
+                    fill={
+                      selectedNode?.id === node.id
+                        ? 'primary.main'
+                        : 'var(--color-text-primary, #1e293b)'
+                    }
                   />
 
                   <text
@@ -401,7 +405,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     cx='0'
                     cy='30'
                     r='6'
-                    fill='white'
+                    fill='var(--color-primary-foreground, #ffffff)'
                     stroke='text.disabled'
                     strokeWidth='2'
                     style={{ cursor: 'pointer' }}
@@ -412,14 +416,14 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     }}
                     onMouseOut={(e) => {
                       const target = e.target as SVGElement;
-                      target.setAttribute('fill', 'white');
+                      target.setAttribute('fill', 'var(--color-primary-foreground, #ffffff)');
                     }}
                   />
                   <circle
                     cx='140'
                     cy='30'
                     r='6'
-                    fill='white'
+                    fill='var(--color-primary-foreground, #ffffff)'
                     stroke='text.disabled'
                     strokeWidth='2'
                     style={{ cursor: 'pointer' }}
@@ -430,7 +434,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     }}
                     onMouseOut={(e) => {
                       const target = e.target as SVGElement;
-                      target.setAttribute('fill', 'white');
+                      target.setAttribute('fill', 'var(--color-primary-foreground, #ffffff)');
                     }}
                   />
                 </g>

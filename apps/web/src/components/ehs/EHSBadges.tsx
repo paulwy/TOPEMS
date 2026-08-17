@@ -8,7 +8,7 @@ const colorMap: Record<string, { bg: string; color: string }> = {
   'bg-green-100': { bg: 'success.lighter', color: 'success.dark' },
   'bg-gray-100': { bg: 'grey.100', color: 'text.secondary' },
   'bg-blue-100': { bg: 'primary.100', color: 'primary.dark' },
-  'bg-orange-100': { bg: '#ffedd5', color: 'warning.600' },
+  'bg-orange-100': { bg: 'var(--color-warning-100, #fef3c7)', color: 'warning.600' },
   'bg-purple-100': { bg: 'secondary.100', color: 'secondary.dark' },
   'bg-emerald-100': { bg: 'success.lighter', color: 'success.dark' },
 };

@@ -14,13 +14,13 @@ import { Check, AlertCircle } from 'lucide-react';
 // 脉冲动画
 const pulse = keyframes`
   0% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+    box-shadow: var(--shadow-custom, 0 0 0 0 rgba(59, 130, 246, 0.7));
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    box-shadow: var(--shadow-custom, 0 0 0 10px rgba(59, 130, 246, 0));
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    box-shadow: var(--shadow-custom, 0 0 0 0 rgba(59, 130, 246, 0));
   }
 `;
 

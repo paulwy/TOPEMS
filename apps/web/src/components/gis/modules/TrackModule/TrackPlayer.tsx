@@ -214,7 +214,10 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
                 fontSize: '0.875rem',
                 borderRadius: 1,
                 bgcolor: playbackSpeed === speed ? 'primary.dark' : 'grey.100',
-                color: playbackSpeed === speed ? 'white' : 'text.secondary',
+                color:
+                  playbackSpeed === speed
+                    ? 'var(--color-primary-foreground, #ffffff)'
+                    : 'text.secondary',
                 '&:hover': {
                   bgcolor: playbackSpeed === speed ? 'primary.dark' : 'grey.200',
                 },

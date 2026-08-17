@@ -236,7 +236,7 @@ const RsOverviewPage: React.FC = () => {
       },
       {
         id: 'build1',
-        title: 'Build #328',
+        title: 'Build var(--color-secondary-900, #4c1d95)',
         description: i18n.t('rd.rs_overview_page.k34'),
         time: '2026-06-29 08:00',
         icon: <Hammer size={18} />,

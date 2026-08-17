@@ -465,7 +465,7 @@ const TicketCenterPage: React.FC = () => {
               <Avatar sx={{ bgcolor: card.color, width: 36, height: 36 }}>
                 <card.icon
                   size={18}
-                  color='white'
+                  color='var(--color-primary-foreground, #ffffff)'
                 />
               </Avatar>
               <Box>

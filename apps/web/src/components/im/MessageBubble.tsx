@@ -94,7 +94,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             style={{
               width: 16,
               height: 16,
-              color: isSent ? 'white' : theme.palette.text.secondary,
+              color: isSent
+                ? 'var(--color-primary-foreground, #ffffff)'
+                : theme.palette.text.secondary,
             }}
           />
         </div>
@@ -104,7 +106,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             borderRadius: 8,
             padding: 12,
             backgroundColor: isSent ? theme.palette.primary.main : theme.palette.grey[100],
-            color: isSent ? 'white' : theme.palette.text.primary,
+            color: isSent ? 'var(--color-primary-foreground, #ffffff)' : theme.palette.text.primary,
           }}
         >
           {isSent && (
@@ -216,8 +218,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   borderRadius: 4,
                   fontSize: 14,
                   resize: 'none',
-                  backgroundColor: isSent ? 'secondary.700' : 'white',
-                  color: isSent ? 'white' : theme.palette.text.primary,
+                  backgroundColor: isSent
+                    ? 'secondary.700'
+                    : 'var(--color-primary-foreground, #ffffff)',
+                  color: isSent
+                    ? 'var(--color-primary-foreground, #ffffff)'
+                    : theme.palette.text.primary,
                   border: `1px solid ${isSent ? theme.palette.primary.light : theme.palette.grey[300]}`,
                 }}
                 rows={3}
@@ -231,7 +237,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     padding: `${designTokens.spacing.xs} 12px`,
                     borderRadius: 4,
                     backgroundColor: isSent ? theme.palette.primary.light : theme.palette.grey[200],
-                    color: isSent ? 'white' : theme.palette.grey[700],
+                    color: isSent
+                      ? 'var(--color-primary-foreground, #ffffff)'
+                      : theme.palette.grey[700],
                     border: 'none',
                     cursor: 'pointer',
                   }}
@@ -244,8 +252,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     fontSize: 12,
                     padding: `${designTokens.spacing.xs} 12px`,
                     borderRadius: 4,
-                    backgroundColor: isSent ? 'white' : theme.palette.primary.main,
-                    color: isSent ? theme.palette.primary.main : 'white',
+                    backgroundColor: isSent
+                      ? 'var(--color-primary-foreground, #ffffff)'
+                      : theme.palette.primary.main,
+                    color: isSent
+                      ? theme.palette.primary.main
+                      : 'var(--color-primary-foreground, #ffffff)',
                     border: 'none',
                     cursor: 'pointer',
                   }}
@@ -282,7 +294,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 rel='noopener noreferrer'
                 style={{
                   textDecoration: 'underline',
-                  color: isSent ? 'white' : theme.palette.primary.main,
+                  color: isSent
+                    ? 'var(--color-primary-foreground, #ffffff)'
+                    : theme.palette.primary.main,
                 }}
               >
                 {message.file_name || message.content}

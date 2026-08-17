@@ -37,7 +37,11 @@ const annotationTypes = [
     id: 'tag',
     label: i18n.t('components.chart_annotations.k2'),
     icon: Tag,
-    colors: [designTokens.colors.pink.main, 'colors.teal.500', '#84CC16'],
+    colors: [
+      designTokens.colors.pink.main,
+      'colors.teal.500',
+      'var(--color-fallback-ant-green, #52c41a)',
+    ],
   },
 ];
 

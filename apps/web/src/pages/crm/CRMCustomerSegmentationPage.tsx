@@ -271,7 +271,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                 >
                   <Tag
                     size={24}
-                    color='white'
+                    color='var(--color-primary-foreground, #ffffff)'
                   />
                 </Box>
                 <Box>
@@ -305,7 +305,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                 >
                   <Users
                     size={24}
-                    color='white'
+                    color='var(--color-primary-foreground, #ffffff)'
                   />
                 </Box>
                 <Box>
@@ -339,7 +339,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                 >
                   <TrendingUp
                     size={24}
-                    color='white'
+                    color='var(--color-primary-foreground, #ffffff)'
                   />
                 </Box>
                 <Box>
@@ -483,10 +483,10 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: 'white',
+                          color: 'var(--color-primary-foreground, #ffffff)',
                           fontSize: 10,
                           fontWeight: 600,
-                          border: '2px solid white',
+                          border: '2px solid var(--color-primary-foreground, #ffffff)',
                           boxShadow: 1,
                         }}
                         title={`${p.name}${i18n.t('pages.crm_customer_segmentation_page.k6')}${p.value}${i18n.t('pages.crm_customer_segmentation_page.k7')}${p.activity}`}

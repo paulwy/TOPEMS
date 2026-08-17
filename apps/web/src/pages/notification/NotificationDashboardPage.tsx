@@ -454,7 +454,7 @@ const TypeDistributionChart: React.FC = () => {
           cx={center}
           cy={center}
           r={35}
-          fill='white'
+          fill='var(--color-primary-foreground, #ffffff)'
         />
       </svg>
       <Box sx={{ flex: 1 }}>

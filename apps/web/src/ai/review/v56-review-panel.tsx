@@ -1147,8 +1147,8 @@ const PerformanceTab: React.FC<{ result: AuditResult }> = ({ result }) => {
                             finding.impact === 'high'
                               ? 'colors.error.50'
                               : finding.impact === 'medium'
-                                ? '#fffbeb'
-                                : '#eff6ff',
+                                ? 'var(--color-warning-50, #fffbeb)'
+                                : 'var(--color-primary-50, #eff6ff)',
                           color:
                             finding.impact === 'high'
                               ? 'colors.error.800'

@@ -1543,7 +1543,7 @@ const TrendChart: React.FC<{ data: TrendPoint[]; criteria: GateCriteria | null }
               cy={getY(d.value)}
               r={4}
               fill={d.passed ? designTokens.colors.success.dark : designTokens.colors.error.main}
-              stroke='white'
+              stroke='var(--color-primary-foreground, #ffffff)'
               strokeWidth={2}
             />
           </g>

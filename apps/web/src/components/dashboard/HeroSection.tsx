@@ -61,7 +61,7 @@ export const HeroSection: React.FC = () => {
             >
               <Sparkles
                 size={16}
-                color='white'
+                color='var(--color-primary-foreground, #ffffff)'
               />
             </Box>
             <Typography

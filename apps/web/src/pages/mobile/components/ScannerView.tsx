@@ -162,7 +162,11 @@ const ScannerView: React.FC<ScannerViewProps> = ({
             </Box>
             <Typography
               variant='h6'
-              sx={{ color: 'common.white', mb: 1, fontWeight: 600 }}
+              sx={{
+                color: 'common.white',
+                mb: 1,
+                fontWeight: 600,
+              }}
             >
               {i18n.t('mobile.scan.message.scan_success')}
             </Typography>
@@ -183,7 +187,10 @@ const ScannerView: React.FC<ScannerViewProps> = ({
                 variant='outlined'
                 size='small'
                 onClick={onRescan}
-                sx={{ color: 'common.white', borderColor: alpha(ct.background.paper, 0.5) }}
+                sx={{
+                  color: 'common.white',
+                  borderColor: alpha(ct.background.paper, 0.5),
+                }}
               >
                 {i18n.t('mobile.scan.action.rescan')}
               </MobileButton>

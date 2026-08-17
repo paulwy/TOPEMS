@@ -100,7 +100,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
       <DialogTitle className='flex items-center justify-between'>
         <div className='flex items-center gap-3'>
           <div className='w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center'>
-            <Package className='w-6 h-6 text-white' />
+            <Package className='w-6 h-6 text-var(--color-primary-foreground, #ffffff)' />
           </div>
           <div>
             <Typography

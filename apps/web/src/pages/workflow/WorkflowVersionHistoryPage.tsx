@@ -390,7 +390,9 @@ const FlowVersionHistoryPage: React.FC = () => {
                           height: 40,
                           borderRadius: '50%',
                           bgcolor: version.isactive ? 'secondary.main' : 'grey.100',
-                          color: version.isactive ? 'white' : 'grey.600',
+                          color: version.isactive
+                            ? 'var(--color-primary-foreground, #ffffff)'
+                            : 'grey.600',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -423,7 +425,10 @@ const FlowVersionHistoryPage: React.FC = () => {
                             <Chip
                               label={i18n.t('pages.workflow_version_history_page.k27')}
                               size='small'
-                              sx={{ bgcolor: 'secondary.main', color: 'common.white' }}
+                              sx={{
+                                bgcolor: 'secondary.main',
+                                color: 'common.white',
+                              }}
                             />
                           )}
                         </Stack>

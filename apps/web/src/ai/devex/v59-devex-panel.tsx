@@ -116,7 +116,11 @@ export const V59DevExPanel: React.FC<{
             <Chip
               label='AI-Powered'
               size='small'
-              sx={{ bgcolor: 'action.disabledBackground', color: 'common.white', fontWeight: 600 }}
+              sx={{
+                bgcolor: 'action.disabledBackground',
+                color: 'common.white',
+                fontWeight: 600,
+              }}
             />
           </Box>
           <IconButton

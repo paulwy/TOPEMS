@@ -3,10 +3,10 @@ import { Box, Typography, LinearProgress, keyframes, useTheme } from '@mui/mater
 // 渐变颜色配置
 const GRADIENT_COLORS = {
   primary: 'linear-gradient(90deg, primary.main, primary.dark)',
-  success: 'linear-gradient(90deg, #22c55e, #16a34a)',
+  success: 'linear-gradient(90deg, var(--color-success, var(--color-success, var(--color-success, #22c55e))), var(--color-success-hover, var(--color-success-hover, var(--color-success-hover, #16a34a))))',
   warning: 'linear-gradient(90deg, warning.main, warning.dark)',
   error: 'linear-gradient(90deg, error.main, error.dark)',
-  gradient: 'linear-gradient(90deg, primary.main, secondary.main, #ec4899)',
+  gradient: 'linear-gradient(90deg, primary.main, secondary.main, var(--color-fallback-accent-pink, var(--color-fallback-accent-pink, #ec4899)))',
 };
 
 // 尺寸配置
@@ -217,7 +217,7 @@ export default function ProgressBar({
                     />
                     <stop
                       offset='100%'
-                      stopColor='#ec4899'
+                      stopColor='var(--color-fallback-accent-pink, var(--color-fallback-accent-pink, #ec4899))'
                     />
                   </>
                 ) : (

@@ -589,7 +589,9 @@ const AnomalyDetectionPage: React.FC = () => {
                                 color='textSecondary'
                               >
                                 [i18n.t('pages.anomaly_detection_page.k10')]: {alert.metric_name} ={' '}
-                                {alert.metric_value.toFixed(2)} ({i18n.t('pages.anomaly_detection_page.k0')}: {alert.threshold_value})
+                                {alert.metric_value.toFixed(2)} (
+                                {i18n.t('pages.anomaly_detection_page.k0')}: {alert.threshold_value}
+                                )
                               </Typography>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 <Typography

@@ -32,14 +32,14 @@ export const cyberpunkGlassStyles = `
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(0, 255, 255, 0.20);
   border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-lg);
   transition: all 200ms ease-out;
 }
 
 .cyber-glass-card:hover {
   background: rgba(255, 255, 255, 0.07);
   border-color: rgba(0, 255, 255, 0.50);
-  box-shadow: 0 8px 32px rgba(0, 255, 255, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: var(--shadow-custom, 0 8px 32px rgba(0, 255, 255, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.12));
   transform: translateY(-2px);
 }
 
@@ -50,7 +50,7 @@ export const cyberpunkGlassStyles = `
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(0, 255, 255, 0.30);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  box-shadow: var(--cyber-shadow-modal, 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.10));
 }
 
 /* 渐变边框卡片（VIP/重要数据） */
@@ -58,7 +58,7 @@ export const cyberpunkGlassStyles = `
   position: relative;
   border-radius: 12px;
   padding: 1px;
-  background: linear-gradient(135deg, #00FFFF 0%, #FF00FF 100%);
+  background: linear-gradient(135deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 100%);
 }
 
 .cyber-glass-gradient-border > * {
@@ -82,7 +82,7 @@ export const cyberpunkGlassStyles = `
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(0, 255, 255, 0.20);
-  box-shadow: 0 1px 0 rgba(0, 255, 255, 0.10);
+  box-shadow: var(--cyber-shadow-top-line, 0 1px 0 rgba(0, 255, 255, 0.10));
 }
 
 /* ========================================
@@ -91,23 +91,23 @@ export const cyberpunkGlassStyles = `
 
 /* 文字发光 */
 .cyber-text-glow-primary {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   text-shadow: 0 0 10px rgba(0, 255, 255, 0.50);
 }
 
 .cyber-text-glow-secondary {
-  color: #FF00FF;
+  color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
   text-shadow: 0 0 10px rgba(255, 0, 255, 0.50);
 }
 
 .cyber-text-glow-accent {
-  color: #FFD700;
+  color: var(--cyber-color-gold, var(--cyber-color-gold, #ffd700));
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.50);
 }
 
 /* 渐变文字 */
 .cyber-text-gradient {
-  background: linear-gradient(135deg, #00FFFF 0%, #FF00FF 100%);
+  background: linear-gradient(135deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -115,7 +115,7 @@ export const cyberpunkGlassStyles = `
 }
 
 .cyber-text-gradient-gold {
-  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  background: linear-gradient(135deg, var(--cyber-color-gold, var(--cyber-color-gold, #ffd700)) 0%, var(--color-warning, #f59e0b) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -124,11 +124,11 @@ export const cyberpunkGlassStyles = `
 
 /* 盒子发光 */
 .cyber-box-glow-primary {
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.40), 0 0 40px rgba(0, 255, 255, 0.20);
+  box-shadow: var(--shadow-custom, 0 0 20px rgba(0, 255, 255, 0.40), 0 0 40px rgba(0, 255, 255, 0.20));
 }
 
 .cyber-box-glow-secondary {
-  box-shadow: 0 0 20px rgba(255, 0, 255, 0.40), 0 0 40px rgba(255, 0, 255, 0.20);
+  box-shadow: var(--shadow-custom, 0 0 20px rgba(255, 0, 255, 0.40), 0 0 40px rgba(255, 0, 255, 0.20));
 }
 
 .cyber-box-glow-hover {
@@ -136,7 +136,7 @@ export const cyberpunkGlassStyles = `
 }
 
 .cyber-box-glow-hover:hover {
-  box-shadow: 0 0 25px rgba(0, 255, 255, 0.60), 0 0 50px rgba(0, 255, 255, 0.20);
+  box-shadow: var(--shadow-custom, 0 0 25px rgba(0, 255, 255, 0.60), 0 0 50px rgba(0, 255, 255, 0.20));
 }
 
 /* ========================================
@@ -200,11 +200,11 @@ export const cyberpunkGlassStyles = `
 @keyframes cyber-pulse-glow {
   0%, 100% {
     opacity: 1;
-    box-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+    box-shadow: var(--shadow-custom, 0 0 10px currentColor, 0 0 20px currentColor);
   }
   50% {
     opacity: 0.6;
-    box-shadow: 0 0 5px currentColor, 0 0 10px currentColor;
+    box-shadow: var(--shadow-custom, 0 0 5px currentColor, 0 0 10px currentColor);
   }
 }
 
@@ -297,7 +297,7 @@ export const cyberpunkComponentStyles = `
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(0, 255, 255, 0.25);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.10);
+  box-shadow: var(--cyber-shadow-modal, 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.10));
 }
 .cyberpunk-mode .MuiMenuItem-root {
   transition: all 150ms ease;
@@ -307,7 +307,7 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .MuiMenuItem-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.12);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiMenuItem-root.Mui-selected:hover {
   background-color: rgba(0, 255, 255, 0.16);
@@ -319,7 +319,7 @@ export const cyberpunkComponentStyles = `
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(0, 255, 255, 0.30);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 255, 255, 0.15);
+  box-shadow: var(--cyber-shadow-3xl, 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 255, 255, 0.15));
   background-image: none;
 }
 
@@ -335,8 +335,8 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .MuiTooltip-tooltip {
   background-color: rgba(26, 26, 46, 0.95);
   border: 1px solid rgba(0, 255, 255, 0.30);
-  color: #E6F1FF;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 12px rgba(0, 255, 255, 0.10);
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
+  box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -345,7 +345,7 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .MuiChip-root {
   background-color: rgba(0, 255, 255, 0.08);
   border: 1px solid rgba(0, 255, 255, 0.30);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiChip-root:hover {
   background-color: rgba(0, 255, 255, 0.15);
@@ -353,68 +353,68 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .MuiChip-colorPrimary {
   background-color: rgba(0, 255, 255, 0.15);
-  border-color: #00FFFF;
-  color: #00FFFF;
+  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiChip-colorSuccess {
   background-color: rgba(0, 255, 136, 0.12);
   border-color: rgba(0, 255, 136, 0.50);
-  color: #00FF88;
+  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88));
 }
 .cyberpunk-mode .MuiChip-colorWarning {
   background-color: rgba(255, 170, 0, 0.12);
   border-color: rgba(255, 170, 0, 0.50);
-  color: #FFAA00;
+  color: var(--cyber-color-warn, var(--cyber-color-warn, #ffaa00));
 }
 .cyberpunk-mode .MuiChip-colorError {
   background-color: rgba(255, 68, 68, 0.12);
   border-color: rgba(255, 68, 68, 0.50);
-  color: #FF4444;
+  color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
 }
 
 /* Tabs */
 .cyberpunk-mode .MuiTabs-indicator {
-  background: linear-gradient(90deg, #00FFFF, #FF00FF);
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.50);
+  background: linear-gradient(90deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)));
+  box-shadow: var(--cyber-shadow-glow-cyan-strong, 0 0 10px rgba(0, 255, 255, 0.50));
 }
 .cyberpunk-mode .MuiTab-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
   text-transform: none;
 }
 .cyberpunk-mode .MuiTab-root:hover {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiTab-root.Mui-selected {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   text-shadow: 0 0 8px rgba(0, 255, 255, 0.40);
 }
 
 /* Pagination */
 .cyberpunk-mode .MuiPaginationItem-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
   border-color: rgba(0, 255, 255, 0.20);
 }
 .cyberpunk-mode .MuiPaginationItem-root:hover {
   background-color: rgba(0, 255, 255, 0.08);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   border-color: rgba(0, 255, 255, 0.40);
 }
 .cyberpunk-mode .MuiPaginationItem-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.15);
-  color: #00FFFF;
-  border-color: #00FFFF;
-  box-shadow: 0 0 12px rgba(0, 255, 255, 0.30);
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
 /* Avatar */
 .cyberpunk-mode .MuiAvatar-root {
   border: 2px solid rgba(0, 255, 255, 0.40);
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.20);
+  box-shadow: var(--cyber-shadow-glow-cyan-strong, 0 0 10px rgba(0, 255, 255, 0.50));
 }
 
 /* Badge */
 .cyberpunk-mode .MuiBadge-badge {
-  box-shadow: 0 0 8px currentColor;
+  box-shadow: var(--shadow-custom, 0 0 8px currentColor);
 }
 
 /* Divider */
@@ -424,11 +424,11 @@ export const cyberpunkComponentStyles = `
 
 /* IconButton */
 .cyberpunk-mode .MuiIconButton-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiIconButton-root:hover {
   background-color: rgba(0, 255, 255, 0.08);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 
 /* Skeleton */
@@ -445,11 +445,11 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .MuiTypography-h4,
 .cyberpunk-mode .MuiTypography-h5,
 .cyberpunk-mode .MuiTypography-h6 {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiTypography-body1,
 .cyberpunk-mode .MuiTypography-body2 {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 
 /* Alert */
@@ -458,27 +458,27 @@ export const cyberpunkComponentStyles = `
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.10);
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiAlert-standardSuccess {
   background-color: rgba(0, 255, 136, 0.08);
   border-color: rgba(0, 255, 136, 0.30);
-  color: #00FF88;
+  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88));
 }
 .cyberpunk-mode .MuiAlert-standardWarning {
   background-color: rgba(255, 170, 0, 0.08);
   border-color: rgba(255, 170, 0, 0.30);
-  color: #FFAA00;
+  color: var(--cyber-color-warn, var(--cyber-color-warn, #ffaa00));
 }
 .cyberpunk-mode .MuiAlert-standardError {
   background-color: rgba(255, 68, 68, 0.08);
   border-color: rgba(255, 68, 68, 0.30);
-  color: #FF4444;
+  color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
 }
 .cyberpunk-mode .MuiAlert-standardInfo {
   background-color: rgba(0, 170, 255, 0.08);
   border-color: rgba(0, 170, 255, 0.30);
-  color: #00AAFF;
+  color: var(--cyber-color-blue, var(--cyber-color-blue, #00aaff));
 }
 
 /* Switch */
@@ -490,8 +490,8 @@ export const cyberpunkComponentStyles = `
   opacity: 1;
 }
 .cyberpunk-mode .Mui-checked.MuiSwitch-switchBase .MuiSwitch-thumb {
-  background-color: #00FFFF;
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.50);
+  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--cyber-shadow-glow-cyan-strong, 0 0 10px rgba(0, 255, 255, 0.50));
 }
 
 /* Checkbox */
@@ -499,7 +499,7 @@ export const cyberpunkComponentStyles = `
   color: rgba(255, 255, 255, 0.30);
 }
 .cyberpunk-mode .MuiCheckbox-root.Mui-checked {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.50));
 }
 
@@ -508,7 +508,7 @@ export const cyberpunkComponentStyles = `
   color: rgba(255, 255, 255, 0.30);
 }
 .cyberpunk-mode .MuiRadio-root.Mui-checked {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.50));
 }
 
@@ -517,16 +517,16 @@ export const cyberpunkComponentStyles = `
   background-color: rgba(255, 255, 255, 0.10);
 }
 .cyberpunk-mode .MuiSlider-track {
-  background: linear-gradient(90deg, #00FFFF, #FF00FF);
-  box-shadow: 0 0 8px rgba(0, 255, 255, 0.40);
+  background: linear-gradient(90deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)));
+  box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
 }
 .cyberpunk-mode .MuiSlider-thumb {
-  background-color: #00FFFF;
-  box-shadow: 0 0 12px rgba(0, 255, 255, 0.60);
+  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 .cyberpunk-mode .MuiSlider-thumb:hover,
 .cyberpunk-mode .MuiSlider-thumb.Mui-active {
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.80);
+  box-shadow: var(--shadow-custom, 0 0 20px rgba(0, 255, 255, 0.80));
 }
 
 /* LinearProgress */
@@ -535,14 +535,14 @@ export const cyberpunkComponentStyles = `
   border-radius: 4px;
 }
 .cyberpunk-mode .MuiLinearProgress-bar {
-  background: linear-gradient(90deg, #00FFFF, #FF00FF);
-  box-shadow: 0 0 8px rgba(0, 255, 255, 0.40);
+  background: linear-gradient(90deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)));
+  box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
   border-radius: 4px;
 }
 
 /* CircularProgress */
 .cyberpunk-mode .MuiCircularProgress-circle {
-  stroke: #00FFFF;
+  stroke: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.50));
 }
 
@@ -557,10 +557,10 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .MuiSnackbarContent-root {
   background-color: rgba(26, 26, 46, 0.95);
   border: 1px solid rgba(0, 255, 255, 0.30);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.10);
+  box-shadow: var(--cyber-shadow-modal, 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.10));
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 
 /* Accordion */
@@ -575,16 +575,16 @@ export const cyberpunkComponentStyles = `
   border-color: rgba(0, 255, 255, 0.30);
 }
 .cyberpunk-mode .MuiAccordionSummary-root {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiAccordionSummary-root.Mui-expanded {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   min-height: auto;
 }
 
 /* Link */
 .cyberpunk-mode .MuiLink-root {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   text-decoration: none;
 }
 .cyberpunk-mode .MuiLink-root:hover {
@@ -593,26 +593,26 @@ export const cyberpunkComponentStyles = `
 
 /* Button */
 .cyberpunk-mode .MuiButton-contained {
-  background: linear-gradient(135deg, #00FFFF 0%, #FF00FF 100%);
-  color: #0A0A1A;
+  background: linear-gradient(135deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 100%);
+  color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
   font-weight: 600;
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.40);
+  box-shadow: var(--shadow-custom, 0 0 20px rgba(0, 255, 255, 0.40));
 }
 .cyberpunk-mode .MuiButton-contained:hover {
-  box-shadow: 0 0 25px rgba(0, 255, 255, 0.60), 0 0 50px rgba(255, 0, 255, 0.30);
+  box-shadow: var(--shadow-custom, 0 0 25px rgba(0, 255, 255, 0.60), 0 0 50px rgba(255, 0, 255, 0.30));
   transform: translateY(-1px);
 }
 .cyberpunk-mode .MuiButton-outlined {
   border-color: rgba(0, 255, 255, 0.50);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiButton-outlined:hover {
-  border-color: #00FFFF;
+  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   background-color: rgba(0, 255, 255, 0.08);
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.30);
+  box-shadow: var(--shadow-custom, 0 0 15px rgba(0, 255, 255, 0.30));
 }
 .cyberpunk-mode .MuiButton-text {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiButton-text:hover {
   background-color: rgba(0, 255, 255, 0.08);
@@ -624,13 +624,13 @@ export const cyberpunkComponentStyles = `
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-color: rgba(0, 255, 255, 0.20);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-lg);
   transition: all 200ms ease-out;
 }
 .cyberpunk-mode .MuiCard-root:hover {
   background-color: rgba(255, 255, 255, 0.07);
   border-color: rgba(0, 255, 255, 0.50);
-  box-shadow: 0 8px 32px rgba(0, 255, 255, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: var(--shadow-custom, 0 8px 32px rgba(0, 255, 255, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.12));
 }
 
 /* TextField / OutlinedInput */
@@ -644,22 +644,22 @@ export const cyberpunkComponentStyles = `
   border-color: rgba(0, 255, 255, 0.30);
 }
 .cyberpunk-mode .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: #00FFFF;
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.30);
+  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--shadow-custom, 0 0 15px rgba(0, 255, 255, 0.30));
 }
 .cyberpunk-mode .MuiOutlinedInput-input {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 
 /* Table */
 .cyberpunk-mode .MuiTableCell-root {
   border-bottom: 1px solid rgba(0, 255, 255, 0.10);
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiTableCell-head {
   background-color: rgba(0, 255, 255, 0.05);
   border-bottom: 2px solid rgba(0, 255, 255, 0.30);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 
 /* AppBar */
@@ -668,14 +668,14 @@ export const cyberpunkComponentStyles = `
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(0, 255, 255, 0.20);
-  box-shadow: 0 1px 0 rgba(0, 255, 255, 0.10);
+  box-shadow: var(--cyber-shadow-top-line, 0 1px 0 rgba(0, 255, 255, 0.10));
 }
 
 /* ListItemButton (侧边栏) */
 .cyberpunk-mode .MuiListItemButton-root.Mui-selected {
   background: linear-gradient(90deg, rgba(0, 255, 255, 0.20) 0%, transparent 100%);
-  border-left: 3px solid #00FFFF;
-  color: #00FFFF;
+  border-left: 3px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiListItemButton-root.Mui-selected:hover {
   background: linear-gradient(90deg, rgba(0, 255, 255, 0.25) 0%, transparent 100%);
@@ -722,13 +722,13 @@ export const cyberpunkComponentStyles = `
 
 /* 赛博朋克模式 body 背景 — 深空网格 */
 .cyberpunk-mode {
-  background-color: #0A0A1A;
+  background-color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
   background-image:
     linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
   background-size: 40px 40px;
   background-attachment: fixed;
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 
 /* 赛博朋克模式滚动条 */
@@ -746,7 +746,7 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, rgba(0, 255, 255, 0.50), rgba(255, 0, 255, 0.50));
-  box-shadow: 0 0 8px rgba(0, 255, 255, 0.30);
+  box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
 }
 .cyberpunk-mode ::-webkit-scrollbar-corner {
   background: rgba(10, 10, 26, 0.5);
@@ -761,18 +761,18 @@ export const cyberpunkComponentStyles = `
 /* 文本选区颜色 */
 .cyberpunk-mode ::selection {
   background: rgba(0, 255, 255, 0.30);
-  color: #FFFFFF;
+  color: var(--color-surface, var(--color-primary-foreground, #ffffff));
 }
 .cyberpunk-mode ::-moz-selection {
   background: rgba(0, 255, 255, 0.30);
-  color: #FFFFFF;
+  color: var(--color-surface, var(--color-primary-foreground, #ffffff));
 }
 
 /* ========== 布局组件：AppHeader / AppSidebar ========== */
 
 /* AppHeader Logo 图标 — 霓虹发光 */
 .cyberpunk-mode .app-header-logo {
-  box-shadow: 0 0 12px rgba(0, 255, 255, 0.50), 0 0 24px rgba(255, 0, 255, 0.30);
+  box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
   animation: cyber-pulse-glow 3s ease-in-out infinite;
 }
 
@@ -788,7 +788,7 @@ export const cyberpunkComponentStyles = `
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-right: 1px solid rgba(0, 255, 255, 0.20) !important;
-  box-shadow: inset -1px 0 0 rgba(0, 255, 255, 0.05);
+  box-shadow: var(--shadow-custom, inset -1px 0 0 rgba(0, 255, 255, 0.05));
 }
 
 /* 侧边栏导航项 hover 扫光效果 */
@@ -814,14 +814,14 @@ export const cyberpunkComponentStyles = `
   background-color: rgba(0, 255, 255, 0.06);
 }
 .cyberpunk-mode [role='navigation'] .MuiListItemButton-root .MuiListItemIcon-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
   transition: color 200ms ease;
 }
 .cyberpunk-mode [role='navigation'] .MuiListItemButton-root:hover .MuiListItemIcon-root {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode [role='navigation'] .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.50));
 }
 
@@ -845,7 +845,7 @@ export const cyberpunkComponentStyles = `
 
 /* 登录页背景 — 深空 + 霓虹光晕 */
 .cyberpunk-mode .login-page {
-  background-color: #0A0A1A !important;
+  background-color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a)) !important;
   background-image:
     radial-gradient(ellipse at 20% 30%, rgba(0, 255, 255, 0.15) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 70%, rgba(255, 0, 255, 0.15) 0%, transparent 50%),
@@ -862,11 +862,11 @@ export const cyberpunkComponentStyles = `
 /* 登录页装饰光斑 — 替换为霓虹色 */
 .cyberpunk-mode .login-page .MuiBox-root:nth-child(2) {
   background: rgba(0, 255, 255, 0.10) !important;
-  box-shadow: 0 0 80px rgba(0, 255, 255, 0.20);
+  box-shadow: var(--shadow-custom, 0 0 80px rgba(0, 255, 255, 0.20));
 }
 .cyberpunk-mode .login-page .MuiBox-root:nth-child(3) {
   background: rgba(255, 0, 255, 0.10) !important;
-  box-shadow: 0 0 80px rgba(255, 0, 255, 0.20);
+  box-shadow: var(--shadow-custom, 0 0 80px rgba(255, 0, 255, 0.20));
 }
 
 /* 登录卡片 — 玻璃拟态 */
@@ -875,7 +875,7 @@ export const cyberpunkComponentStyles = `
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(0, 255, 255, 0.30) !important;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 255, 255, 0.15) !important;
+  box-shadow: var(--cyber-shadow-3xl, 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 255, 255, 0.15));
 }
 
 /* 登录页右侧装饰面板 — 霓虹渐变 */
@@ -887,7 +887,7 @@ export const cyberpunkComponentStyles = `
 /* 登录页标题文字 — 霓虹发光 */
 .cyberpunk-mode .login-page h6,
 .cyberpunk-mode .login-page .MuiTypography-h6 {
-  color: #00FFFF !important;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
   text-shadow: 0 0 8px rgba(0, 255, 255, 0.50);
 }
 
@@ -895,7 +895,7 @@ export const cyberpunkComponentStyles = `
 
 /* 错误页背景 — 深空 + 故障感红色光晕 */
 .cyberpunk-mode .error-page {
-  background-color: #0A0A1A !important;
+  background-color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a)) !important;
   background-image:
     radial-gradient(ellipse at 50% 30%, rgba(255, 68, 68, 0.15) 0%, transparent 60%),
     linear-gradient(rgba(255, 68, 68, 0.03) 1px, transparent 1px),
@@ -909,20 +909,20 @@ export const cyberpunkComponentStyles = `
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 68, 68, 0.30);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 40px rgba(255, 68, 68, 0.15);
+  box-shadow: var(--cyber-shadow-3xl, 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 255, 255, 0.15));
   border-radius: 16px;
 }
 
 /* 错误图标容器 — 红色霓虹发光 */
 .cyberpunk-mode .error-page .MuiBox-root:nth-child(1) {
   background-color: rgba(255, 68, 68, 0.15) !important;
-  box-shadow: 0 0 20px rgba(255, 68, 68, 0.40);
+  box-shadow: var(--shadow-custom, 0 0 20px rgba(255, 68, 68, 0.40));
   border: 1px solid rgba(255, 68, 68, 0.30);
 }
 
 /* 错误图标 — 故障闪烁动画 */
 .cyberpunk-mode .error-page svg {
-  color: #FF4444 !important;
+  color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444)) !important;
   filter: drop-shadow(0 0 8px rgba(255, 68, 68, 0.60));
   animation: cyber-error-glitch 2s ease-in-out infinite;
 }
@@ -935,80 +935,80 @@ export const cyberpunkComponentStyles = `
 
 /* 错误页标题 — 霓虹红发光 */
 .cyberpunk-mode .error-page .MuiTypography-h5 {
-  color: #FF4444 !important;
+  color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444)) !important;
   text-shadow: 0 0 8px rgba(255, 68, 68, 0.50);
 }
 
 /* 错误页正文 */
 .cyberpunk-mode .error-page .MuiTypography-body1 {
-  color: #8892B0 !important;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0)) !important;
 }
 
 /* ========== Loading 加载组件赛博朋克适配 ========== */
 
 /* Loading 文字 — 霓虹青 */
 .cyberpunk-mode .cyber-loading .MuiTypography-root {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
 }
 
 /* Loading Spinner — 霓虹青旋转环 */
 .cyberpunk-mode .cyber-loading > div:first-child {
   border-color: rgba(0, 255, 255, 0.20) !important;
-  border-top-color: #00FFFF !important;
-  box-shadow: 0 0 12px rgba(0, 255, 255, 0.30);
+  border-top-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
+  box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
 /* Loading Dots — 霓虹色 */
 .cyberpunk-mode .cyber-loading > div:first-child > div {
-  background-color: #00FFFF !important;
-  box-shadow: 0 0 8px rgba(0, 255, 255, 0.50);
+  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
+  box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
 }
 
 /* Loading Pulse — 霓虹脉冲 */
 .cyberpunk-mode .cyber-loading > div:first-child {
-  background-color: #00FFFF !important;
-  box-shadow: 0 0 16px rgba(0, 255, 255, 0.50);
+  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
+  box-shadow: var(--shadow-custom, 0 0 16px rgba(0, 255, 255, 0.50));
 }
 
 /* ========== EmptyState 空状态适配 ========== */
 
 /* 空状态容器 */
 .cyberpunk-mode [role='status'][aria-live='polite'] {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 
 /* 空状态图标容器 — 霓虹圆形背景 */
 .cyberpunk-mode [role='status'][aria-live='polite'] > .MuiBox-root:first-child {
   background-color: rgba(0, 255, 255, 0.08) !important;
   border: 1px solid rgba(0, 255, 255, 0.20);
-  box-shadow: 0 0 16px rgba(0, 255, 255, 0.15);
+  box-shadow: var(--shadow-custom, 0 0 16px rgba(0, 255, 255, 0.15));
 }
 
 /* 空状态图标 — 霓虹发光 */
 .cyberpunk-mode [role='status'][aria-live='polite'] svg {
-  color: #00FFFF !important;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
   filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.50));
 }
 
 /* 空状态标题 */
 .cyberpunk-mode [role='status'][aria-live='polite'] .MuiTypography-h6,
 .cyberpunk-mode [role='status'][aria-live='polite'] .MuiTypography-subtitle1 {
-  color: #E6F1FF !important;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff)) !important;
 }
 
 /* 空状态描述 */
 .cyberpunk-mode [role='status'][aria-live='polite'] .MuiTypography-body2 {
-  color: #8892B0 !important;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0)) !important;
 }
 
 /* ========== 焦点环无障碍 ========== */
 
 /* 赛博朋克模式焦点环 — 霓虹青双环 */
 .cyberpunk-mode *:focus-visible {
-  outline: 2px solid #00FFFF;
+  outline: 2px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(0, 255, 255, 0.20);
+  box-shadow: var(--shadow-custom, 0 0 0 4px rgba(0, 255, 255, 0.20));
 }
 
 /* 按钮/链接焦点 */
@@ -1016,7 +1016,7 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .MuiIconButton-root:focus-visible,
 .cyberpunk-mode .MuiListItemButton-root:focus-visible,
 .cyberpunk-mode .MuiChip-root:focus-visible {
-  outline: 2px solid #00FFFF;
+  outline: 2px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   outline-offset: 2px;
 }
 
@@ -1053,7 +1053,7 @@ export const cyberpunkComponentStyles = `
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(0, 255, 255, 0.30);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 24px rgba(0, 255, 255, 0.10);
+  box-shadow: var(--shadow-custom, 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 24px rgba(0, 255, 255, 0.10));
 }
 
 /* 搜索结果项 hover — 霓虹扫光 */
@@ -1063,14 +1063,14 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .global-search-bar .MuiListItemButton-root:hover {
   background-color: rgba(0, 255, 255, 0.08);
-  border-left-color: #00FFFF;
+  border-left-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 
 /* 搜索结果选中项 */
 .cyberpunk-mode .global-search-bar .MuiListItemButton-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.12);
-  border-left-color: #00FFFF;
-  box-shadow: inset 0 0 12px rgba(0, 255, 255, 0.10);
+  border-left-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
 /* 搜索结果分组标签 */
@@ -1086,18 +1086,18 @@ export const cyberpunkComponentStyles = `
 /* ========== Breadcrumbs 面包屑 ========== */
 
 .cyberpunk-mode .MuiBreadcrumbs-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiBreadcrumbs-li a {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
   transition: color 150ms ease;
 }
 .cyberpunk-mode .MuiBreadcrumbs-li a:hover {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
 }
 .cyberpunk-mode .MuiBreadcrumbs-li .MuiTypography-root {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
 }
 .cyberpunk-mode .MuiBreadcrumbs-separator {
@@ -1112,22 +1112,22 @@ export const cyberpunkComponentStyles = `
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid rgba(0, 255, 255, 0.20) !important;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4), 0 -1px 0 rgba(0, 255, 255, 0.10);
+  box-shadow: var(--shadow-custom, 0 -4px 20px rgba(0, 0, 0, 0.4), 0 -1px 0 rgba(0, 255, 255, 0.10));
 }
 
 /* 底部导航项 */
 .cyberpunk-mode .bottom-tab-bar .MuiBottomNavigationAction-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
   transition: color 200ms ease;
 }
 .cyberpunk-mode .bottom-tab-bar .MuiBottomNavigationAction-root:hover {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .bottom-tab-bar .MuiBottomNavigationAction-root.Mui-selected {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .bottom-tab-bar .MuiBottomNavigationAction-root.Mui-selected .MuiBottomNavigationAction-label {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.50);
 }
 .cyberpunk-mode .bottom-tab-bar .MuiBottomNavigationAction-root.Mui-selected svg {
@@ -1136,9 +1136,9 @@ export const cyberpunkComponentStyles = `
 
 /* 底部导航 Badge — 霓虹发光 */
 .cyberpunk-mode .bottom-tab-bar .MuiBadge-badge {
-  background: linear-gradient(135deg, #FF00FF, #00FFFF);
+  background: linear-gradient(135deg, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)), var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)));
   border: 1px solid rgba(255, 255, 255, 0.30);
-  box-shadow: 0 0 8px rgba(255, 0, 255, 0.50);
+  box-shadow: var(--shadow-custom, 0 0 8px rgba(255, 0, 255, 0.50));
 }
 
 /* ========== NotificationPanel 通知中心 ========== */
@@ -1149,13 +1149,13 @@ export const cyberpunkComponentStyles = `
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(0, 255, 255, 0.30) !important;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 255, 255, 0.15) !important;
+  box-shadow: var(--cyber-shadow-3xl, 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 255, 255, 0.15));
   border-radius: 12px !important;
 }
 
 /* 通知面板标题 */
 .cyberpunk-mode .notification-panel h3 {
-  color: #00FFFF !important;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
 }
 
@@ -1166,28 +1166,28 @@ export const cyberpunkComponentStyles = `
 
 /* 通知面板按钮 */
 .cyberpunk-mode .notification-panel button {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
   transition: color 150ms ease;
 }
 .cyberpunk-mode .notification-panel button:hover {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 
 /* 通知项文字 */
 .cyberpunk-mode .notification-panel * {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .notification-panel .text-secondary,
 .cyberpunk-mode .notification-panel [class*='secondary'] {
-  color: #8892B0 !important;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0)) !important;
 }
 
 /* 通知未读标识 — 霓虹脉冲 */
 .cyberpunk-mode .notification-panel [class*='unread'],
 .cyberpunk-mode .notification-panel .bg-blue-500,
 .cyberpunk-mode .notification-panel .bg-primary {
-  background-color: #00FFFF !important;
-  box-shadow: 0 0 8px rgba(0, 255, 255, 0.60);
+  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
+  box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
   animation: cyber-status-pulse 2s ease-in-out infinite;
 }
 
@@ -1203,55 +1203,55 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .settings-page-section:hover {
   border-color: rgba(0, 255, 255, 0.30);
-  box-shadow: 0 4px 20px rgba(0, 255, 255, 0.08);
+  box-shadow: var(--shadow-custom, 0 4px 20px rgba(0, 255, 255, 0.08));
 }
 
 /* 设置页区域标题图标 — 霓虹发光 */
 .cyberpunk-mode .settings-page-section svg {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.40));
 }
 
 /* 设置页保存按钮 — 霓虹脉冲 */
 .cyberpunk-mode .settings-page-save-btn {
-  background: linear-gradient(135deg, #00FFFF 0%, #FF00FF 100%);
-  color: #0A0A1A;
-  box-shadow: 0 0 16px rgba(0, 255, 255, 0.40);
+  background: linear-gradient(135deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 100%);
+  color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
+  box-shadow: var(--shadow-custom, 0 0 16px rgba(0, 255, 255, 0.40));
 }
 .cyberpunk-mode .settings-page-save-btn:hover {
-  box-shadow: 0 0 24px rgba(0, 255, 255, 0.60), 0 0 40px rgba(255, 0, 255, 0.30);
+  box-shadow: var(--shadow-custom, 0 0 24px rgba(0, 255, 255, 0.60), 0 0 40px rgba(255, 0, 255, 0.30));
   transform: translateY(-1px);
 }
 
 /* 设置页重置按钮 — 霓虹边框 */
 .cyberpunk-mode .settings-page-reset-btn {
   border-color: rgba(255, 170, 0, 0.50);
-  color: #FFAA00;
+  color: var(--cyber-color-warn, var(--cyber-color-warn, #ffaa00));
 }
 .cyberpunk-mode .settings-page-reset-btn:hover {
-  border-color: #FFAA00;
+  border-color: var(--cyber-color-warn, var(--cyber-color-warn, #ffaa00));
   background-color: rgba(255, 170, 0, 0.08);
-  box-shadow: 0 0 12px rgba(255, 170, 0, 0.30);
+  box-shadow: var(--shadow-custom, 0 0 12px rgba(255, 170, 0, 0.30));
 }
 
 /* 设置页表单标签 */
 .cyberpunk-mode .MuiFormLabel-root {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiFormHelperText-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 
 /* 设置页成功/错误提示 */
 .cyberpunk-mode .settings-success-alert {
   background-color: rgba(0, 255, 136, 0.08) !important;
   border: 1px solid rgba(0, 255, 136, 0.30);
-  color: #00FF88;
+  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88));
 }
 .cyberpunk-mode .settings-error-alert {
   background-color: rgba(255, 68, 68, 0.08) !important;
   border: 1px solid rgba(255, 68, 68, 0.30);
-  color: #FF4444;
+  color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
 }
 
 /* ========== ModeToggle 主题切换按钮 ========== */
@@ -1259,31 +1259,31 @@ export const cyberpunkComponentStyles = `
 /* 主题切换按钮 — 霓虹边框 */
 .cyberpunk-mode .theme-toggle-btn {
   border-color: rgba(0, 255, 255, 0.40);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .theme-toggle-btn:hover {
-  border-color: #00FFFF;
+  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   background-color: rgba(0, 255, 255, 0.08);
-  box-shadow: 0 0 12px rgba(0, 255, 255, 0.30);
+  box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
 /* ========== ToggleButton 分段控件 ========== */
 
 .cyberpunk-mode .MuiToggleButton-root {
   border-color: rgba(0, 255, 255, 0.20);
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
   transition: all 150ms ease;
 }
 .cyberpunk-mode .MuiToggleButton-root:hover {
   border-color: rgba(0, 255, 255, 0.40);
   background-color: rgba(0, 255, 255, 0.06);
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiToggleButton-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.12);
-  border-color: #00FFFF;
-  color: #00FFFF;
-  box-shadow: 0 0 12px rgba(0, 255, 255, 0.20);
+  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 .cyberpunk-mode .MuiToggleButton-root.Mui-selected:hover {
   background-color: rgba(0, 255, 255, 0.18);
@@ -1299,14 +1299,14 @@ export const cyberpunkComponentStyles = `
   color: rgba(0, 255, 255, 0.50) !important;
 }
 .cyberpunk-mode .MuiTableSortLabel-active .MuiTableSortLabel-icon {
-  color: #00FFFF !important;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.50));
 }
 .cyberpunk-mode .MuiTableSortLabel-root {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiTableSortLabel-root:hover {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
 }
 
@@ -1315,7 +1315,7 @@ export const cyberpunkComponentStyles = `
   background-color: rgba(0, 255, 255, 0.04) !important;
 }
 .cyberpunk-mode .MuiTableRow-root:hover .MuiTableCell-body {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 
 /* 表格选中行 */
@@ -1328,7 +1328,7 @@ export const cyberpunkComponentStyles = `
 
 /* 表格空状态 */
 .cyberpunk-mode .MuiTableBody-root .MuiTableCell-body:only-child {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
   text-align: center;
   padding: 48px 16px;
 }
@@ -1354,8 +1354,8 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .Mui-active .MuiStepConnector-line,
 .cyberpunk-mode .Mui-completed .MuiStepConnector-line {
-  border-color: #00FFFF;
-  box-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
+  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--shadow-custom, 0 0 6px rgba(0, 255, 255, 0.40));
 }
 
 /* 步骤图标 — 霓虹发光 */
@@ -1364,32 +1364,32 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .Mui-active .MuiStepLabel-iconContainer .MuiSvgIcon-root,
 .cyberpunk-mode .Mui-completed .MuiStepLabel-iconContainer .MuiSvgIcon-root {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.60));
 }
 .cyberpunk-mode .MuiStepLabel-label {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiStepLabel-label.Mui-active {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
   font-weight: 600;
 }
 .cyberpunk-mode .MuiStepLabel-label.Mui-completed {
-  color: #00FF88;
+  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88));
 }
 
 /* 步骤替代图标（圆形数字） */
 .cyberpunk-mode .MuiStepIcon-text {
-  fill: #0A0A1A;
+  fill: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
   font-weight: 700;
 }
 .cyberpunk-mode .MuiStepIcon-root.Mui-active {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.50));
 }
 .cyberpunk-mode .MuiStepIcon-root.Mui-completed {
-  color: #00FF88;
+  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88));
   filter: drop-shadow(0 0 6px rgba(0, 255, 136, 0.40));
 }
 
@@ -1400,26 +1400,26 @@ export const cyberpunkComponentStyles = `
   background-color: transparent;
 }
 .cyberpunk-mode .MuiTimelineDot-root {
-  background-color: #00FFFF;
-  box-shadow: 0 0 8px rgba(0, 255, 255, 0.60);
+  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
   border: 2px solid rgba(0, 255, 255, 0.30);
 }
 .cyberpunk-mode .MuiTimelineDot-root.MuiTimelineDot-outlined {
   background-color: transparent;
-  border-color: #00FFFF;
-  box-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
+  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--shadow-custom, 0 0 6px rgba(0, 255, 255, 0.40));
 }
 .cyberpunk-mode .MuiTimelineDot-root.MuiTimelineDot-filledSuccess {
-  background-color: #00FF88;
-  box-shadow: 0 0 8px rgba(0, 255, 136, 0.60);
+  background-color: var(--cyber-color-green, var(--cyber-color-green, #00ff88));
+  box-shadow: var(--shadow-custom, 0 0 8px rgba(0, 255, 136, 0.60));
 }
 .cyberpunk-mode .MuiTimelineDot-root.MuiTimelineDot-filledError {
-  background-color: #FF4444;
-  box-shadow: 0 0 8px rgba(255, 68, 68, 0.60);
+  background-color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
+  box-shadow: var(--shadow-custom, 0 0 8px rgba(255, 68, 68, 0.60));
 }
 .cyberpunk-mode .MuiTimelineDot-root.MuiTimelineDot-filledWarning {
-  background-color: #FFD700;
-  box-shadow: 0 0 8px rgba(255, 215, 0, 0.60);
+  background-color: var(--cyber-color-gold, var(--cyber-color-gold, #ffd700));
+  box-shadow: var(--shadow-custom, 0 0 8px rgba(255, 215, 0, 0.60));
 }
 
 /* 时间线连接线 */
@@ -1439,10 +1439,10 @@ export const cyberpunkComponentStyles = `
 
 /* 时间线内容 */
 .cyberpunk-mode .MuiTimelineContent-root {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiTimelineOppositeContent-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 
 /* 时间线分隔符 */
@@ -1454,11 +1454,11 @@ export const cyberpunkComponentStyles = `
 
 /* 树节点 — hover 霓虹 */
 .cyberpunk-mode .MuiTreeItem-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
   transition: color 150ms ease;
 }
 .cyberpunk-mode .MuiTreeItem-root:hover {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiTreeItem-content {
   border-radius: 4px;
@@ -1469,18 +1469,18 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .MuiTreeItem-content.Mui-selected {
   background-color: rgba(0, 255, 255, 0.12);
-  border-left: 2px solid #00FFFF;
+  border-left: 2px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiTreeItem-content.Mui-selected:hover {
   background-color: rgba(0, 255, 255, 0.18);
 }
 .cyberpunk-mode .MuiTreeItem-content.Mui-selected .MuiTreeItem-label {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 
 /* 树展开/折叠图标 */
 .cyberpunk-mode .MuiTreeItem-iconContainer svg {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   filter: drop-shadow(0 0 3px rgba(0, 255, 255, 0.40));
 }
 
@@ -1505,14 +1505,14 @@ export const cyberpunkComponentStyles = `
 
 /* 日期选择器头部 */
 .cyberpunk-mode .MuiPickersCalendarHeader-root {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiPickersCalendarHeader-label {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
   font-weight: 600;
 }
 .cyberpunk-mode .MuiPickersCalendarHeader-labelContainer svg {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 
 /* 日期选择器星期标签 */
@@ -1525,28 +1525,28 @@ export const cyberpunkComponentStyles = `
 
 /* 日期选择器日期单元格 */
 .cyberpunk-mode .MuiPickersDay-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
   border-color: transparent;
   transition: all 150ms ease;
 }
 .cyberpunk-mode .MuiPickersDay-root:hover {
   background-color: rgba(0, 255, 255, 0.10);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   border-color: rgba(0, 255, 255, 0.30);
 }
 .cyberpunk-mode .MuiPickersDay-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.20) !important;
-  color: #00FFFF;
-  border: 1px solid #00FFFF;
-  box-shadow: 0 0 12px rgba(0, 255, 255, 0.40);
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border: 1px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
   font-weight: 600;
 }
 .cyberpunk-mode .MuiPickersDay-root.Mui-selected:hover {
   background-color: rgba(0, 255, 255, 0.30) !important;
 }
 .cyberpunk-mode .MuiPickersDay-today {
-  border-color: #FF00FF;
-  color: #FF00FF;
+  border-color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
+  color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
 }
 
 /* 日期选择器月份/年份选择 */
@@ -1556,18 +1556,18 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .MuiPickersMonth-root,
 .cyberpunk-mode .MuiPickersYear-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
   transition: all 150ms ease;
 }
 .cyberpunk-mode .MuiPickersMonth-root:hover,
 .cyberpunk-mode .MuiPickersYear-root:hover {
   background-color: rgba(0, 255, 255, 0.08);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiPickersMonth-root.Mui-selected,
 .cyberpunk-mode .MuiPickersYear-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.15);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   border: 1px solid rgba(0, 255, 255, 0.30);
 }
 
@@ -1581,20 +1581,20 @@ export const cyberpunkComponentStyles = `
   border-color: rgba(0, 255, 255, 0.20);
 }
 .cyberpunk-mode .MuiClockNumber-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
   transition: color 150ms ease;
 }
 .cyberpunk-mode .MuiClockNumber-root.Mui-selected {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   background-color: rgba(0, 255, 255, 0.15);
 }
 .cyberpunk-mode .MuiClockPointer-root {
-  background-color: #00FFFF;
-  box-shadow: 0 0 6px rgba(0, 255, 255, 0.50);
+  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--shadow-custom, 0 0 6px rgba(0, 255, 255, 0.50));
 }
 .cyberpunk-mode .MuiClockPointer-thumb {
-  background-color: #00FFFF;
-  border-color: #00FFFF;
+  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 
 /* 日期选择器工具栏 */
@@ -1605,19 +1605,19 @@ export const cyberpunkComponentStyles = `
   border-bottom: 1px solid rgba(0, 255, 255, 0.15);
 }
 .cyberpunk-mode .MuiPickersToolbar-text {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiPickersToolbar-penIconButton {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 
 /* 日期选择器底部操作按钮 */
 .cyberpunk-mode .MuiDialogActions-root .MuiButton-root {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiDialogActions-root .MuiButton-contained {
-  background: linear-gradient(135deg, #00FFFF 0%, #FF00FF 100%);
-  color: #0A0A1A;
+  background: linear-gradient(135deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 100%);
+  color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
 }
 
 /* ========== Toast/Snackbar 动画增强 ========== */
@@ -1640,25 +1640,25 @@ export const cyberpunkComponentStyles = `
 /* Snackbar 成功 — 霓虹绿边框 */
 .cyberpunk-mode .MuiSnackbarContent-root.MuiSnackbarContent-colorSuccess {
   border-color: rgba(0, 255, 136, 0.50);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 136, 0.20);
+  box-shadow: var(--shadow-custom, 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 136, 0.20));
 }
 
 /* Snackbar 错误 — 霓虹红边框 */
 .cyberpunk-mode .MuiSnackbarContent-root.MuiSnackbarContent-colorError {
   border-color: rgba(255, 68, 68, 0.50);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 68, 68, 0.20);
+  box-shadow: var(--shadow-custom, 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 68, 68, 0.20));
 }
 
 /* Snackbar 警告 — 霓虹金边框 */
 .cyberpunk-mode .MuiSnackbarContent-root.MuiSnackbarContent-colorWarning {
   border-color: rgba(255, 215, 0, 0.50);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.20);
+  box-shadow: var(--shadow-custom, 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.20));
 }
 
 /* Snackbar 信息 — 霓虹青边框 */
 .cyberpunk-mode .MuiSnackbarContent-root.MuiSnackbarContent-colorInfo {
   border-color: rgba(0, 170, 255, 0.50);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 170, 255, 0.20);
+  box-shadow: var(--shadow-custom, 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 170, 255, 0.20));
 }
 
 /* ========== Dialog 过渡增强 ========== */
@@ -1668,12 +1668,12 @@ export const cyberpunkComponentStyles = `
   0% {
     transform: scale(0.92) translateY(20px);
     opacity: 0;
-    box-shadow: 0 0 0 rgba(0, 255, 255, 0);
+    box-shadow: var(--shadow-custom, 0 0 0 rgba(0, 255, 255, 0));
   }
   100% {
     transform: scale(1) translateY(0);
     opacity: 1;
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 255, 255, 0.15);
+    box-shadow: var(--cyber-shadow-3xl, 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 255, 255, 0.15));
   }
 }
 .cyberpunk-mode .MuiDialog-paper {
@@ -1682,14 +1682,14 @@ export const cyberpunkComponentStyles = `
 
 /* Dialog 标题 — 霓虹发光 */
 .cyberpunk-mode .MuiDialogTitle-root {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.30);
   border-bottom: 1px solid rgba(0, 255, 255, 0.15);
 }
 
 /* Dialog 内容 */
 .cyberpunk-mode .MuiDialogContent-root {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 
 /* Dialog 操作区 */
@@ -1706,10 +1706,9 @@ export const cyberpunkComponentStyles = `
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(0, 255, 255, 0.40);
-  box-shadow:
-    0 32px 80px rgba(0, 0, 0, 0.7),
+  box-shadow: var(--shadow-custom, 0 32px 80px rgba(0, 0, 0, 0.7),
     0 0 60px rgba(0, 255, 255, 0.20),
-    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    inset 0 1px 0 rgba(255, 255, 255, 0.10));
   position: relative;
   overflow: hidden;
 }
@@ -1724,11 +1723,11 @@ export const cyberpunkComponentStyles = `
   height: designTokens.spacing.xs;
   background: linear-gradient(90deg,
     transparent 0%,
-    #00FFFF 20%,
-    #FF00FF 50%,
-    #00FFFF 80%,
+    var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 20%,
+    var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 50%,
+    var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 80%,
     transparent 100%);
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.60);
+  box-shadow: var(--cyber-shadow-glow-cyan-strong, 0 0 10px rgba(0, 255, 255, 0.50));
   z-index: 1;
 }
 
@@ -1742,14 +1741,14 @@ export const cyberpunkComponentStyles = `
   bottom: 8px;
   pointer-events: none;
   background:
-    linear-gradient(to right, #00FFFF 0, #00FFFF 12px, transparent 12px) top left no-repeat,
-    linear-gradient(to bottom, #00FFFF 0, #00FFFF 12px, transparent 12px) top left no-repeat,
-    linear-gradient(to left, #00FFFF 0, #00FFFF 12px, transparent 12px) top right no-repeat,
-    linear-gradient(to bottom, #00FFFF 0, #00FFFF 12px, transparent 12px) top right no-repeat,
-    linear-gradient(to right, #00FFFF 0, #00FFFF 12px, transparent 12px) bottom left no-repeat,
-    linear-gradient(to top, #00FFFF 0, #00FFFF 12px, transparent 12px) bottom left no-repeat,
-    linear-gradient(to left, #00FFFF 0, #00FFFF 12px, transparent 12px) bottom right no-repeat,
-    linear-gradient(to top, #00FFFF 0, #00FFFF 12px, transparent 12px) bottom right no-repeat;
+    linear-gradient(to right, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 12px, transparent 12px) top left no-repeat,
+    linear-gradient(to bottom, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 12px, transparent 12px) top left no-repeat,
+    linear-gradient(to left, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 12px, transparent 12px) top right no-repeat,
+    linear-gradient(to bottom, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 12px, transparent 12px) top right no-repeat,
+    linear-gradient(to right, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 12px, transparent 12px) bottom left no-repeat,
+    linear-gradient(to top, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 12px, transparent 12px) bottom left no-repeat,
+    linear-gradient(to left, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 12px, transparent 12px) bottom right no-repeat,
+    linear-gradient(to top, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 12px, transparent 12px) bottom right no-repeat;
   background-size: 12px 2px, 2px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px, 12px 2px, 2px 12px;
   opacity: 0.70;
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.60));
@@ -1765,13 +1764,13 @@ export const cyberpunkComponentStyles = `
 
 /* 命令面板搜索输入框 — 霓虹焦点 */
 .cyberpunk-mode .command-palette .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: #00FFFF;
-  box-shadow: 0 0 16px rgba(0, 255, 255, 0.40);
+  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--shadow-custom, 0 0 16px rgba(0, 255, 255, 0.40));
 }
 
 /* 命令面板搜索图标 — 霓虹发光 */
 .cyberpunk-mode .command-palette .MuiInputAdornment-root svg {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.50));
 }
 
@@ -1779,10 +1778,10 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .command-palette .MuiChip-root {
   background-color: rgba(0, 255, 255, 0.10);
   border: 1px solid rgba(0, 255, 255, 0.40);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-weight: 600;
-  box-shadow: 0 0 6px rgba(0, 255, 255, 0.20);
+  box-shadow: var(--shadow-custom, 0 0 6px rgba(0, 255, 255, 0.20));
 }
 
 /* 命令面板分组标签 — HUD 风格 */
@@ -1811,10 +1810,9 @@ export const cyberpunkComponentStyles = `
 /* 命令面板列表项 — 选中态（霓虹高亮） */
 .cyberpunk-mode .command-palette .MuiListItemButton-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.12);
-  border-left-color: #00FFFF;
-  box-shadow:
-    inset 4px 0 12px rgba(0, 255, 255, 0.20),
-    inset 0 0 16px rgba(0, 255, 255, 0.05);
+  border-left-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--shadow-custom, inset 4px 0 12px rgba(0, 255, 255, 0.20),
+    inset 0 0 16px rgba(0, 255, 255, 0.05));
 }
 
 /* 选中项左侧扫光指示器 */
@@ -1825,26 +1823,26 @@ export const cyberpunkComponentStyles = `
   left: 0;
   bottom: 0;
   width: 3px;
-  background: #00FFFF;
-  box-shadow: 0 0 12px #00FFFF, 0 0 24px rgba(0, 255, 255, 0.50);
+  background: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: 0 0 12px var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), 0 0 24px rgba(0, 255, 255, 0.50);
   animation: cyber-pulse-glow 1.5s ease-in-out infinite;
 }
 
 /* 命令面板列表项图标 — 选中时霓虹发光 */
 .cyberpunk-mode .command-palette .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root svg {
-  color: #00FFFF !important;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
   filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.70));
 }
 
 /* 命令面板列表项主文本 — 选中时霓虹色 */
 .cyberpunk-mode .command-palette .MuiListItemButton-root.Mui-selected .MuiListItemText-primary {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
 }
 
 /* 命令面板列表项次文本 — 路径提示 */
 .cyberpunk-mode .command-palette .MuiListItemText-secondary {
-  color: #8892B0 !important;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0)) !important;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 0.7rem !important;
 }
@@ -1855,7 +1853,7 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .command-palette .MuiListItemButton-root.Mui-selected > div > svg:last-child,
 .cyberpunk-mode .command-palette .MuiListItemButton-root.Mui-selected svg[lucide='arrow-right'] {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.60));
 }
 
@@ -1869,14 +1867,14 @@ export const cyberpunkComponentStyles = `
 
 /* 命令面板底部提示文字 — 等宽字体 */
 .cyberpunk-mode .command-palette .MuiDialog-paper > .MuiBox-root:last-child .MuiTypography-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 0.7rem;
 }
 
 /* 命令面板空状态 — 霓虹 */
 .cyberpunk-mode .command-palette .MuiTypography-root[color='text.secondary'] {
-  color: #8892B0 !important;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0)) !important;
 }
 
 /* 命令面板出现动画 — HUD 启动效果 */
@@ -1950,8 +1948,8 @@ export const cyberpunkComponentStyles = `
   position: absolute;
   width: designTokens.spacing.xl;
   height: designTokens.spacing.xl;
-  border: 2px solid #00FFFF;
-  box-shadow: 0 0 8px rgba(0, 255, 255, 0.50);
+  border: 2px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
 }
 .cyberpunk-mode .cyber-hud-corners::before {
   top: 8px;
@@ -2008,8 +2006,8 @@ export const cyberpunkComponentStyles = `
   left: 0;
   width: 30%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, #00FFFF, transparent);
-  box-shadow: 0 0 12px #00FFFF;
+  background: linear-gradient(90deg, transparent, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), transparent);
+  box-shadow: 0 0 12px var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   animation: cyber-hud-scan 8s linear infinite;
 }
 
@@ -2039,7 +2037,7 @@ export const cyberpunkComponentStyles = `
 }
 .cyberpunk-mode .cyber-hud-datastream::before {
   content: '◉';
-  color: #00FF88;
+  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88));
   animation: cyber-hud-blink 1.5s ease-in-out infinite;
 }
 .cyberpunk-mode .cyber-hud-datastream::after {
@@ -2053,21 +2051,18 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .app-header-logo {
   position: relative;
   background: linear-gradient(135deg,
-    #00FFFF 0%,
-    #0088FF 25%,
-    #FF00FF 75%,
-    #FF0088 100%) !important;
-  box-shadow:
-    0 0 12px rgba(0, 255, 255, 0.60),
-    0 0 24px rgba(255, 0, 255, 0.30),
-    inset 0 0 12px rgba(255, 255, 255, 0.20);
+    var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%,
+    var(--color-fallback-ant-blue, #1890ff) 25%,
+    var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 75%,
+    var(--color-fallback-accent-pink, #ff0088) 100%) !important;
+  box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
   animation: cyber-pulse-glow 3s ease-in-out infinite;
   overflow: hidden;
 }
 
 /* Logo 内部字符 — 高对比度 */
 .cyberpunk-mode .app-header-logo .MuiTypography-root {
-  color: #0A0A1A !important;
+  color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a)) !important;
   font-weight: 900;
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.50);
   position: relative;
@@ -2108,14 +2103,14 @@ export const cyberpunkComponentStyles = `
   position: absolute;
   inset: 2px;
   background:
-    linear-gradient(to right, #FFFFFF 0, #FFFFFF 4px, transparent 4px) top left no-repeat,
-    linear-gradient(to bottom, #FFFFFF 0, #FFFFFF 4px, transparent 4px) top left no-repeat,
-    linear-gradient(to left, #FFFFFF 0, #FFFFFF 4px, transparent 4px) top right no-repeat,
-    linear-gradient(to bottom, #FFFFFF 0, #FFFFFF 4px, transparent 4px) top right no-repeat,
-    linear-gradient(to right, #FFFFFF 0, #FFFFFF 4px, transparent 4px) bottom left no-repeat,
-    linear-gradient(to top, #FFFFFF 0, #FFFFFF 4px, transparent 4px) bottom left no-repeat,
-    linear-gradient(to left, #FFFFFF 0, #FFFFFF 4px, transparent 4px) bottom right no-repeat,
-    linear-gradient(to top, #FFFFFF 0, #FFFFFF 4px, transparent 4px) bottom right no-repeat;
+    linear-gradient(to right, var(--color-surface, var(--color-primary-foreground, #ffffff)) 0, var(--color-surface, var(--color-primary-foreground, #ffffff)) 4px, transparent 4px) top left no-repeat,
+    linear-gradient(to bottom, var(--color-surface, var(--color-primary-foreground, #ffffff)) 0, var(--color-surface, var(--color-primary-foreground, #ffffff)) 4px, transparent 4px) top left no-repeat,
+    linear-gradient(to left, var(--color-surface, var(--color-primary-foreground, #ffffff)) 0, var(--color-surface, var(--color-primary-foreground, #ffffff)) 4px, transparent 4px) top right no-repeat,
+    linear-gradient(to bottom, var(--color-surface, var(--color-primary-foreground, #ffffff)) 0, var(--color-surface, var(--color-primary-foreground, #ffffff)) 4px, transparent 4px) top right no-repeat,
+    linear-gradient(to right, var(--color-surface, var(--color-primary-foreground, #ffffff)) 0, var(--color-surface, var(--color-primary-foreground, #ffffff)) 4px, transparent 4px) bottom left no-repeat,
+    linear-gradient(to top, var(--color-surface, var(--color-primary-foreground, #ffffff)) 0, var(--color-surface, var(--color-primary-foreground, #ffffff)) 4px, transparent 4px) bottom left no-repeat,
+    linear-gradient(to left, var(--color-surface, var(--color-primary-foreground, #ffffff)) 0, var(--color-surface, var(--color-primary-foreground, #ffffff)) 4px, transparent 4px) bottom right no-repeat,
+    linear-gradient(to top, var(--color-surface, var(--color-primary-foreground, #ffffff)) 0, var(--color-surface, var(--color-primary-foreground, #ffffff)) 4px, transparent 4px) bottom right no-repeat;
   background-size: 4px 1px, 1px 4px, 4px 1px, 1px 4px, 4px 1px, 1px 4px, 4px 1px, 1px 4px;
   opacity: 0.80;
   pointer-events: none;
@@ -2124,10 +2119,10 @@ export const cyberpunkComponentStyles = `
 /* AppHeader 标题 — 渐变文字 + 多层发光 */
 .cyberpunk-mode .app-header-title {
   background: linear-gradient(135deg,
-    #00FFFF 0%,
-    #FFFFFF 30%,
-    #FF00FF 60%,
-    #00FFFF 100%) !important;
+    var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%,
+    var(--color-surface, var(--color-primary-foreground, #ffffff)) 30%,
+    var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 60%,
+    var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 100%) !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
@@ -2148,8 +2143,8 @@ export const cyberpunkComponentStyles = `
   transform: translateY(-50%);
   width: 3px;
   height: 70%;
-  background: linear-gradient(180deg, #00FFFF, #FF00FF);
-  box-shadow: 0 0 8px rgba(0, 255, 255, 0.60);
+  background: linear-gradient(180deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)));
+  box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
   border-radius: 2px;
 }
 
@@ -2162,9 +2157,9 @@ export const cyberpunkComponentStyles = `
   background: transparent;
 }
 .cyberpunk-mode .command-palette ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #00FFFF, #FF00FF);
+  background: linear-gradient(180deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)));
   border-radius: 3px;
-  box-shadow: 0 0 6px rgba(0, 255, 255, 0.50);
+  box-shadow: var(--shadow-custom, 0 0 6px rgba(0, 255, 255, 0.50));
 }
 
 /* ========== BI MetricCard 指标卡片 ========== */
@@ -2175,9 +2170,7 @@ export const cyberpunkComponentStyles = `
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(0, 255, 255, 0.20) !important;
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.40),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: var(--shadow-lg);
   position: relative;
   overflow: hidden;
 }
@@ -2190,26 +2183,25 @@ export const cyberpunkComponentStyles = `
   left: 0;
   right: 0;
   height: designTokens.spacing.xs;
-  background: linear-gradient(90deg, transparent, #00FFFF, #FF00FF, transparent);
+  background: linear-gradient(90deg, transparent, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)), transparent);
   opacity: 0.60;
 }
 
 /* hover 态 — 霓虹发光增强 */
 .cyberpunk-mode .bi-metric-card:hover {
   border-color: rgba(0, 255, 255, 0.50) !important;
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.50),
+  box-shadow: var(--shadow-custom, 0 12px 40px rgba(0, 0, 0, 0.50),
     0 0 24px rgba(0, 255, 255, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    inset 0 1px 0 rgba(255, 255, 255, 0.10));
 }
 
 /* 指标数值 — 霓虹发光 */
 .cyberpunk-mode .bi-metric-card .MuiTypography-root {
-  color: #E2E8F0;
+  color: var(--color-border, #e2e8f0);
 }
 .cyberpunk-mode .bi-metric-card .MuiTypography-h4,
 .cyberpunk-mode .bi-metric-card .MuiTypography-h3 {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   text-shadow: 0 0 12px rgba(0, 255, 255, 0.50);
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-weight: 700;
@@ -2218,14 +2210,14 @@ export const cyberpunkComponentStyles = `
 /* 趋势上升 — 霓虹绿 */
 .cyberpunk-mode .bi-metric-card [color='success.main'],
 .cyberpunk-mode .bi-metric-card .MuiTypography-colorSuccess {
-  color: #00FF88 !important;
+  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88)) !important;
   text-shadow: 0 0 6px rgba(0, 255, 136, 0.50);
 }
 
 /* 趋势下降 — 霓虹红 */
 .cyberpunk-mode .bi-metric-card [color='error.main'],
 .cyberpunk-mode .bi-metric-card .MuiTypography-colorError {
-  color: #FF0066 !important;
+  color: var(--color-fallback-accent-pink, #ff0066) !important;
   text-shadow: 0 0 6px rgba(255, 0, 102, 0.50);
 }
 
@@ -2237,9 +2229,7 @@ export const cyberpunkComponentStyles = `
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(0, 255, 255, 0.20) !important;
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.40),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
   position: relative;
 }
@@ -2252,7 +2242,7 @@ export const cyberpunkComponentStyles = `
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #00FFFF, transparent);
+  background: linear-gradient(90deg, transparent, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), transparent);
   opacity: 0.70;
   z-index: 1;
 }
@@ -2260,14 +2250,13 @@ export const cyberpunkComponentStyles = `
 /* hover 态 */
 .cyberpunk-mode .bi-chart-card:hover {
   border-color: rgba(0, 255, 255, 0.40) !important;
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.50),
-    0 0 24px rgba(0, 255, 255, 0.20);
+  box-shadow: var(--shadow-custom, 0 12px 40px rgba(0, 0, 0, 0.50),
+    0 0 24px rgba(0, 255, 255, 0.20));
 }
 
 /* 卡片标题 — 霓虹青 */
 .cyberpunk-mode .bi-chart-card .MuiCardHeader-title {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   text-shadow: 0 0 8px rgba(0, 255, 255, 0.40);
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -2275,7 +2264,7 @@ export const cyberpunkComponentStyles = `
 
 /* 卡片副标题 */
 .cyberpunk-mode .bi-chart-card .MuiCardHeader-subheader {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 0.75rem;
 }
@@ -2293,7 +2282,7 @@ export const cyberpunkComponentStyles = `
 
 /* 切换按钮 hover — 霓虹青 */
 .cyberpunk-mode .bi-chart-card .MuiCardHeader-action button:hover {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   background-color: rgba(0, 255, 255, 0.10);
 }
 
@@ -2301,24 +2290,23 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .bi-chart-card .MuiChip-root {
   background-color: rgba(0, 255, 255, 0.08);
   border: 1px solid rgba(0, 255, 255, 0.30);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 
 /* 汇总数据 — 等宽字体 */
 .cyberpunk-mode .bi-chart-card .MuiCardContent-root .MuiTypography-caption {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 
 /* ========== AI FloatingAIHelper 浮动助手 ========== */
 
 /* 浮动按钮 — 霓虹渐变 + 多层发光 */
 .cyberpunk-mode .ai-helper-fab {
-  background: linear-gradient(135deg, #00FFFF 0%, #0088FF 50%, #FF00FF 100%) !important;
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.50),
+  background: linear-gradient(135deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%, var(--color-fallback-ant-blue, #1890ff) 50%, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 100%) !important;
+  box-shadow: var(--shadow-custom, 0 8px 24px rgba(0, 0, 0, 0.50),
     0 0 24px rgba(0, 255, 255, 0.50),
-    0 0 48px rgba(255, 0, 255, 0.25) !important;
+    0 0 48px rgba(255, 0, 255, 0.25) !important);
   border: 2px solid rgba(255, 255, 255, 0.30);
   position: relative;
   overflow: hidden;
@@ -2327,10 +2315,9 @@ export const cyberpunkComponentStyles = `
 
 /* hover 态 — 发光增强 */
 .cyberpunk-mode .ai-helper-fab:hover {
-  box-shadow:
-    0 12px 32px rgba(0, 0, 0, 0.60),
+  box-shadow: var(--shadow-custom, 0 12px 32px rgba(0, 0, 0, 0.60),
     0 0 36px rgba(0, 255, 255, 0.70),
-    0 0 72px rgba(255, 0, 255, 0.40) !important;
+    0 0 72px rgba(255, 0, 255, 0.40) !important);
   transform: scale(1.05);
 }
 
@@ -2349,7 +2336,7 @@ export const cyberpunkComponentStyles = `
 
 /* 浮动按钮图标 — 黑色高对比 */
 .cyberpunk-mode .ai-helper-fab svg {
-  color: #0A0A1A !important;
+  color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a)) !important;
   filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.50));
 }
 
@@ -2359,10 +2346,9 @@ export const cyberpunkComponentStyles = `
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(0, 255, 255, 0.40);
-  box-shadow:
-    0 32px 80px rgba(0, 0, 0, 0.70),
+  box-shadow: var(--shadow-custom, 0 32px 80px rgba(0, 0, 0, 0.70),
     0 0 60px rgba(0, 255, 255, 0.20),
-    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    inset 0 1px 0 rgba(255, 255, 255, 0.10));
   overflow: hidden;
   position: relative;
 }
@@ -2375,27 +2361,27 @@ export const cyberpunkComponentStyles = `
   left: 0;
   right: 0;
   height: designTokens.spacing.xs;
-  background: linear-gradient(90deg, transparent, #00FFFF, #FF00FF, #00FFFF, transparent);
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.60);
+  background: linear-gradient(90deg, transparent, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)), var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), transparent);
+  box-shadow: var(--cyber-shadow-glow-cyan-strong, 0 0 10px rgba(0, 255, 255, 0.50));
   z-index: 1;
 }
 
 /* 面板头部 — 渐变背景 */
 .cyberpunk-mode .ai-helper-panel .MuiBox-root:first-child > .MuiBox-root:first-child {
-  background: linear-gradient(135deg, #00FFFF 0%, #0088FF 50%, #FF00FF 100%) !important;
+  background: linear-gradient(135deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%, var(--color-fallback-ant-blue, #1890ff) 50%, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 100%) !important;
   position: relative;
 }
 
 /* 面板头部标题 */
 .cyberpunk-mode .ai-helper-panel .MuiBox-root:first-child > .MuiBox-root:first-child .MuiTypography-root {
-  color: #0A0A1A !important;
+  color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a)) !important;
   font-weight: 800;
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.40);
 }
 
 /* 面板头部图标按钮 — 半透明白 */
 .cyberpunk-mode .ai-helper-panel .MuiBox-root:first-child > .MuiBox-root:first-child .MuiIconButton-root {
-  color: #0A0A1A;
+  color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
   background-color: rgba(255, 255, 255, 0.20);
   backdrop-filter: blur(8px);
 }
@@ -2408,8 +2394,8 @@ export const cyberpunkComponentStyles = `
   border-color: rgba(0, 255, 255, 0.30);
 }
 .cyberpunk-mode .ai-helper-panel .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: #00FFFF;
-  box-shadow: 0 0 12px rgba(0, 255, 255, 0.30);
+  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
 /* 工具/命令卡片 — 玻璃拟态 */
@@ -2425,23 +2411,23 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .ai-helper-panel .MuiPaper-outlined:hover {
   border-color: rgba(0, 255, 255, 0.50);
   background-color: rgba(0, 255, 255, 0.06);
-  box-shadow: 0 0 16px rgba(0, 255, 255, 0.20);
+  box-shadow: var(--shadow-custom, 0 0 16px rgba(0, 255, 255, 0.20));
 }
 
 /* 工具标题 — 霓虹青 */
 .cyberpunk-mode .ai-helper-panel .MuiTypography-subtitle2 {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
 }
 
 /* 工具描述 — 灰蓝 */
 .cyberpunk-mode .ai-helper-panel .MuiTypography-caption {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 
 /* 工具图标 — 霓虹青 */
 .cyberpunk-mode .ai-helper-panel .MuiListItemIcon-root svg {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.50));
 }
 
@@ -2449,7 +2435,7 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .ai-helper-panel .MuiChip-root {
   background-color: rgba(0, 255, 255, 0.08);
   border: 1px solid rgba(0, 255, 255, 0.30);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
@@ -2457,7 +2443,7 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .ai-helper-panel .MuiChip-root:hover {
   background-color: rgba(0, 255, 255, 0.15);
   border-color: rgba(0, 255, 255, 0.60);
-  box-shadow: 0 0 12px rgba(0, 255, 255, 0.30);
+  box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
 /* ========== KanbanPageTemplate 看板模板 ========== */
@@ -2472,13 +2458,13 @@ export const cyberpunkComponentStyles = `
   background-color: rgba(26, 26, 46, 0.70) !important;
   backdrop-filter: blur(12px);
   border: 1px solid rgba(0, 255, 255, 0.20) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.40);
+  box-shadow: var(--shadow-custom, 0 4px 16px rgba(0, 0, 0, 0.40));
 }
 
 /* 看板统计数字 — 霓虹青等宽 */
 .cyberpunk-mode .kanban-page-template .MuiTypography-h5,
 .cyberpunk-mode .kanban-page-template .MuiTypography-h4 {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   text-shadow: 0 0 8px rgba(0, 255, 255, 0.50);
 }
@@ -2492,7 +2478,7 @@ export const cyberpunkComponentStyles = `
 
 /* 看板列标题 — 霓虹大写 */
 .cyberpunk-mode .kanban-page-template .MuiTypography-subtitle1 {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   text-transform: uppercase;
   letter-spacing: 0.08em;
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
@@ -2505,7 +2491,7 @@ export const cyberpunkComponentStyles = `
   background-color: rgba(26, 26, 46, 0.80) !important;
   backdrop-filter: blur(12px);
   border: 1px solid rgba(0, 255, 255, 0.20) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.40);
+  box-shadow: var(--shadow-custom, 0 4px 12px rgba(0, 0, 0, 0.40));
   transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -2514,15 +2500,14 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .kanban-page-template .MuiPaper-elevation2:hover {
   border-color: rgba(0, 255, 255, 0.60) !important;
   transform: translateY(-2px);
-  box-shadow:
-    0 12px 24px rgba(0, 0, 0, 0.50),
-    0 0 16px rgba(0, 255, 255, 0.30);
+  box-shadow: var(--shadow-custom, 0 12px 24px rgba(0, 0, 0, 0.50),
+    0 0 16px rgba(0, 255, 255, 0.30));
 }
 
 /* 看板卡片标题 — 霓虹白 */
 .cyberpunk-mode .kanban-page-template .MuiPaper-elevation1 .MuiTypography-h6,
 .cyberpunk-mode .kanban-page-template .MuiPaper-elevation2 .MuiTypography-h6 {
-  color: #E2E8F0;
+  color: var(--color-border, #e2e8f0);
   text-shadow: 0 0 4px rgba(0, 255, 255, 0.30);
 }
 
@@ -2530,42 +2515,42 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .kanban-page-template .MuiChip-colorError,
 .cyberpunk-mode .kanban-page-template .MuiChip-colorError_MuiChip-colorDefault {
   background-color: rgba(255, 0, 102, 0.15) !important;
-  color: #FF0066 !important;
+  color: var(--color-fallback-accent-pink, #ff0066) !important;
   border: 1px solid rgba(255, 0, 102, 0.40);
   text-shadow: 0 0 4px rgba(255, 0, 102, 0.40);
 }
 
 .cyberpunk-mode .kanban-page-template .MuiChip-colorWarning {
   background-color: rgba(255, 215, 0, 0.15) !important;
-  color: #FFD700 !important;
+  color: var(--cyber-color-gold, var(--cyber-color-gold, #ffd700)) !important;
   border: 1px solid rgba(255, 215, 0, 0.40);
   text-shadow: 0 0 4px rgba(255, 215, 0, 0.40);
 }
 
 .cyberpunk-mode .kanban-page-template .MuiChip-colorSuccess {
   background-color: rgba(0, 255, 136, 0.15) !important;
-  color: #00FF88 !important;
+  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88)) !important;
   border: 1px solid rgba(0, 255, 136, 0.40);
   text-shadow: 0 0 4px rgba(0, 255, 136, 0.40);
 }
 
 .cyberpunk-mode .kanban-page-template .MuiChip-colorInfo {
   background-color: rgba(0, 255, 255, 0.15) !important;
-  color: #00FFFF !important;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
   border: 1px solid rgba(0, 255, 255, 0.40);
   text-shadow: 0 0 4px rgba(0, 255, 255, 0.40);
 }
 
 /* 看板进度条 — 霓虹渐变 */
 .cyberpunk-mode .kanban-page-template .MuiLinearProgress-bar {
-  background: linear-gradient(90deg, #00FFFF, #FF00FF);
-  box-shadow: 0 0 8px rgba(0, 255, 255, 0.50);
+  background: linear-gradient(90deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)));
+  box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
 }
 
 /* 看板搜索框 — 霓虹焦点 */
 .cyberpunk-mode .kanban-page-template .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: #00FFFF;
-  box-shadow: 0 0 12px rgba(0, 255, 255, 0.30);
+  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
 /* ========== Dashboard 仪表盘组件 ========== */
@@ -2576,7 +2561,7 @@ export const cyberpunkComponentStyles = `
   background-color: rgba(26, 26, 46, 0.70) !important;
   backdrop-filter: blur(12px);
   border: 1px solid rgba(0, 255, 255, 0.20) !important;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.40);
+  box-shadow: var(--shadow-lg);
   position: relative;
   overflow: hidden;
   transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -2587,9 +2572,8 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .dashboard-module-card:hover {
   border-color: rgba(0, 255, 255, 0.50) !important;
   transform: translateY(-2px);
-  box-shadow:
-    0 12px 32px rgba(0, 0, 0, 0.50),
-    0 0 24px rgba(0, 255, 255, 0.25);
+  box-shadow: var(--shadow-custom, 0 12px 32px rgba(0, 0, 0, 0.50),
+    0 0 24px rgba(0, 255, 255, 0.25));
 }
 
 /* 仪表盘 Hero 区域 — 深空背景 */
@@ -2635,27 +2619,27 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .dashboard-quick-actions .MuiButton-root {
   background-color: rgba(0, 255, 255, 0.08);
   border: 1px solid rgba(0, 255, 255, 0.30);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   backdrop-filter: blur(8px);
 }
 .cyberpunk-mode .dashboard-quick-actions .MuiButton-root:hover {
   background-color: rgba(0, 255, 255, 0.15);
   border-color: rgba(0, 255, 255, 0.60);
-  box-shadow: 0 0 12px rgba(0, 255, 255, 0.30);
+  box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
 /* ========== WizardPageTemplate 向导页模板 ========== */
 
 /* 向导步骤标签 — 激活态霓虹 */
 .cyberpunk-mode .MuiStepLabel-label.Mui-active {
-  color: #00FFFF !important;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) !important;
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
   font-weight: 600;
 }
 
 /* 向导步骤标签 — 完成态霓虹绿 */
 .cyberpunk-mode .MuiStepLabel-label.Mui-completed {
-  color: #00FF88 !important;
+  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88)) !important;
 }
 
 /* 向导内容容器 — 玻璃拟态 */
@@ -2674,8 +2658,8 @@ export const cyberpunkComponentStyles = `
   background-color: rgba(0, 255, 255, 0.10);
 }
 .cyberpunk-mode .MuiLinearProgress-bar {
-  background: linear-gradient(90deg, #00FFFF, #FF00FF);
-  box-shadow: 0 0 8px rgba(0, 255, 255, 0.50);
+  background: linear-gradient(90deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)));
+  box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
 }
 
 /* ========== CardListTemplate 卡片列表模板 ========== */
@@ -2685,7 +2669,7 @@ export const cyberpunkComponentStyles = `
   background-color: rgba(26, 26, 46, 0.70) !important;
   backdrop-filter: blur(12px);
   border: 1px solid rgba(0, 255, 255, 0.20) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.40);
+  box-shadow: var(--shadow-custom, 0 4px 16px rgba(0, 0, 0, 0.40));
 }
 
 /* 卡片列表项 — 玻璃拟态 */
@@ -2693,7 +2677,7 @@ export const cyberpunkComponentStyles = `
   background-color: rgba(26, 26, 46, 0.70) !important;
   backdrop-filter: blur(12px);
   border: 1px solid rgba(0, 255, 255, 0.20) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.40);
+  box-shadow: var(--shadow-custom, 0 4px 12px rgba(0, 0, 0, 0.40));
   transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -2701,9 +2685,8 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .card-list-item:hover {
   border-color: rgba(0, 255, 255, 0.50) !important;
   transform: translateY(-2px);
-  box-shadow:
-    0 12px 24px rgba(0, 0, 0, 0.50),
-    0 0 16px rgba(0, 255, 255, 0.25);
+  box-shadow: var(--shadow-custom, 0 12px 24px rgba(0, 0, 0, 0.50),
+    0 0 16px rgba(0, 255, 255, 0.25));
 }
 
 /* 卡片列表筛选条 — 玻璃拟态 */
@@ -2725,8 +2708,8 @@ export const cyberpunkComponentStyles = `
 /* 主列表选中项 — 霓虹高亮 */
 .cyberpunk-mode .master-detail-master .MuiListItemButton-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.12);
-  border-left: 3px solid #00FFFF;
-  box-shadow: inset 4px 0 12px rgba(0, 255, 255, 0.20);
+  border-left: 3px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--shadow-custom, inset 4px 0 12px rgba(0, 255, 255, 0.20));
 }
 
 /* 详情面板 — 玻璃拟态 */
@@ -2747,7 +2730,7 @@ export const cyberpunkComponentStyles = `
 
 /* 工具栏按钮 — 霓虹 hover */
 .cyberpunk-mode .markdown-editor-toolbar .MuiIconButton-root:hover {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   background-color: rgba(0, 255, 255, 0.10);
 }
 
@@ -2755,19 +2738,19 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .markdown-editor-textarea .MuiOutlinedInput-root {
   background-color: rgba(10, 10, 26, 0.80);
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  color: #E2E8F0;
+  color: var(--color-border, #e2e8f0);
 }
 
 /* 编辑器焦点 — 霓虹边框 */
 .cyberpunk-mode .markdown-editor-textarea .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: #00FFFF;
-  box-shadow: 0 0 12px rgba(0, 255, 255, 0.30);
+  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
 /* 预览区 — 深色玻璃 */
 .cyberpunk-mode .markdown-editor-preview {
   background-color: rgba(10, 10, 26, 0.60);
-  color: #E2E8F0;
+  color: var(--color-border, #e2e8f0);
   padding: designTokens.spacing.md;
 }
 
@@ -2775,7 +2758,7 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .markdown-editor-preview h1,
 .cyberpunk-mode .markdown-editor-preview h2,
 .cyberpunk-mode .markdown-editor-preview h3 {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   text-shadow: 0 0 6px rgba(0, 255, 255, 0.30);
   border-bottom: 1px solid rgba(0, 255, 255, 0.20);
 }
@@ -2792,7 +2775,7 @@ export const cyberpunkComponentStyles = `
 /* 预览区行内代码 — 霓虹背景 */
 .cyberpunk-mode .markdown-editor-preview code {
   background-color: rgba(0, 255, 255, 0.10);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   padding: designTokens.spacing.xs 6px;
   border-radius: 3px;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
@@ -2800,16 +2783,16 @@ export const cyberpunkComponentStyles = `
 
 /* 预览区引用 — 霓虹左边框 */
 .cyberpunk-mode .markdown-editor-preview blockquote {
-  border-left: 3px solid #00FFFF;
+  border-left: 3px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   background-color: rgba(0, 255, 255, 0.05);
   padding: designTokens.spacing.sm 16px;
   margin: designTokens.spacing.md 0;
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 
 /* 预览区链接 — 霓虹青 */
 .cyberpunk-mode .markdown-editor-preview a {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   text-decoration: none;
   text-shadow: 0 0 4px rgba(0, 255, 255, 0.30);
   border-bottom: 1px dashed rgba(0, 255, 255, 0.40);
@@ -2837,14 +2820,14 @@ export const cyberpunkComponentStyles = `
 /* 历史列表选中项 — 霓虹高亮 */
 .cyberpunk-mode .chat-history .MuiListItemButton-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.12);
-  border-left: 3px solid #00FFFF;
-  box-shadow: inset 4px 0 12px rgba(0, 255, 255, 0.20);
+  border-left: 3px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--shadow-custom, inset 4px 0 12px rgba(0, 255, 255, 0.20));
 }
 
 /* 历史搜索框 — 霓虹焦点 */
 .cyberpunk-mode .chat-history .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: #00FFFF;
-  box-shadow: 0 0 12px rgba(0, 255, 255, 0.30);
+  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
 /* ========== AIToolsPanel 工具面板 ========== */
@@ -2867,13 +2850,13 @@ export const cyberpunkComponentStyles = `
 .cyberpunk-mode .ai-tools-panel .MuiPaper-root:hover {
   border-color: rgba(0, 255, 255, 0.50);
   background-color: rgba(0, 255, 255, 0.06) !important;
-  box-shadow: 0 0 16px rgba(0, 255, 255, 0.20);
+  box-shadow: var(--shadow-custom, 0 0 16px rgba(0, 255, 255, 0.20));
 }
 
 /* 工具输入框 — 霓虹焦点 */
 .cyberpunk-mode .ai-tools-panel .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: #00FFFF;
-  box-shadow: 0 0 12px rgba(0, 255, 255, 0.30);
+  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  box-shadow: var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30));
 }
 
 /* ========== 全局 PageContainer 容器适配 ========== */
@@ -2913,19 +2896,19 @@ export const cyberpunkComponentStyles = `
 /* ========== Select 下拉选择器 ========== */
 
 .cyberpunk-mode .MuiSelect-root {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiSelect-root:hover {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiSelect-iconOutlined {
   color: rgba(0, 255, 255, 0.50);
 }
 .cyberpunk-mode .MuiSelect-root:hover .MuiSelect-iconOutlined {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiSelect-root.Mui-focused .MuiSelect-iconOutlined {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.50));
 }
 
@@ -2936,15 +2919,15 @@ export const cyberpunkComponentStyles = `
   border: 1px solid rgba(0, 255, 255, 0.25);
 }
 .cyberpunk-mode .MuiMenuItem-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiMenuItem-root:hover {
   background-color: rgba(0, 255, 255, 0.08);
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiMenuItem-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.12);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 
 /* ========== Rating 评分组件 ========== */
@@ -2959,11 +2942,11 @@ export const cyberpunkComponentStyles = `
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.30));
 }
 .cyberpunk-mode .MuiRating-iconFilled {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.60));
 }
 .cyberpunk-mode .MuiRating-iconHover {
-  color: #FF00FF;
+  color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
   filter: drop-shadow(0 0 8px rgba(255, 0, 255, 0.60));
 }
 .cyberpunk-mode .MuiRating-iconEmpty {
@@ -2977,31 +2960,31 @@ export const cyberpunkComponentStyles = `
   background-color: rgba(26, 26, 46, 0.95);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(0, 255, 255, 0.25);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.10);
+  box-shadow: var(--cyber-shadow-modal, 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.10));
 }
 .cyberpunk-mode .MuiAutocomplete-option {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
   transition: all 150ms ease;
 }
 .cyberpunk-mode .MuiAutocomplete-option:hover {
   background-color: rgba(0, 255, 255, 0.08);
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiAutocomplete-option[data-focus='true'] {
   background-color: rgba(0, 255, 255, 0.12);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiAutocomplete-option[aria-selected='true'] {
   background-color: rgba(0, 255, 255, 0.15);
-  color: #00FFFF;
-  border-left: 2px solid #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-left: 2px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 
 /* Autocomplete 标签 — 霓虹风格 */
 .cyberpunk-mode .MuiChip-filled.MuiChip-colorDefault {
   background-color: rgba(0, 255, 255, 0.10);
   border: 1px solid rgba(0, 255, 255, 0.30);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiChip-filled.MuiChip-colorDefault:hover {
   background-color: rgba(0, 255, 255, 0.15);
@@ -3011,7 +2994,7 @@ export const cyberpunkComponentStyles = `
 /* ========== Input 输入框 ========== */
 
 .cyberpunk-mode .MuiInput-root {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiInput-underline:before {
   border-bottom-color: rgba(0, 255, 255, 0.20);
@@ -3020,19 +3003,19 @@ export const cyberpunkComponentStyles = `
   border-bottom-color: rgba(0, 255, 255, 0.40);
 }
 .cyberpunk-mode .MuiInput-underline:after {
-  border-bottom-color: #00FFFF;
+  border-bottom-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiInput-underline.Mui-error:after {
-  border-bottom-color: #FF4444;
+  border-bottom-color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
 }
 
 /* ========== FormControlLabel 表单标签 ========== */
 
 .cyberpunk-mode .MuiFormControlLabel-root .MuiTypography-root {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiFormControlLabel-root:hover .MuiTypography-root {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 
 /* ========== MenuItem 菜单项增强 ========== */
@@ -3053,19 +3036,19 @@ export const cyberpunkComponentStyles = `
 /* ========== DialogContent 对话框内容增强 ========== */
 
 .cyberpunk-mode .MuiDialogContent-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiDialogContent-root .MuiTypography-root {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 
 /* ========== DialogActions 对话框操作区增强 ========== */
 
 .cyberpunk-mode .MuiDialogActions-root .MuiButton-text {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiDialogActions-root .MuiButton-text:hover {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 
 /* ========== TabScrollButton 标签滚动按钮 ========== */
@@ -3074,23 +3057,23 @@ export const cyberpunkComponentStyles = `
   color: rgba(0, 255, 255, 0.50);
 }
 .cyberpunk-mode .MuiTabScrollButton-root:hover {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   background-color: rgba(0, 255, 255, 0.08);
 }
 
 /* ========== TablePagination 表格分页 ========== */
 
 .cyberpunk-mode .MuiTablePagination-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiTablePagination-selectIcon {
   color: rgba(0, 255, 255, 0.50);
 }
 .cyberpunk-mode .MuiTablePagination-actions .MuiIconButton-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiTablePagination-actions .MuiIconButton-root:hover {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   background-color: rgba(0, 255, 255, 0.08);
 }
 
@@ -3100,28 +3083,28 @@ export const cyberpunkComponentStyles = `
   height: designTokens.spacing.xs;
 }
 .cyberpunk-mode .MuiLinearProgress-barColorPrimary {
-  background: linear-gradient(90deg, #00FFFF, #FF00FF);
+  background: linear-gradient(90deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)));
 }
 .cyberpunk-mode .MuiLinearProgress-barColorSecondary {
-  background: linear-gradient(90deg, #FF00FF, #00FFFF);
+  background: linear-gradient(90deg, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)), var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)));
 }
 
 /* ========== CircularProgress 圆形进度条增强 ========== */
 
 .cyberpunk-mode .MuiCircularProgress-colorPrimary {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiCircularProgress-colorSecondary {
-  color: #FF00FF;
+  color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
 }
 
 /* ========== ExpansionPanel 折叠面板 ========== */
 
 .cyberpunk-mode .MuiAccordionSummary-content {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiAccordionDetails-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
   background-color: rgba(0, 255, 255, 0.03);
 }
 
@@ -3137,7 +3120,7 @@ export const cyberpunkComponentStyles = `
 /* ========== Popover 弹出层增强 ========== */
 
 .cyberpunk-mode .MuiPopover-paper {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.10);
+  box-shadow: var(--cyber-shadow-modal, 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.10));
 }
 
 /* ========== Tooltip 提示增强 ========== */
@@ -3150,50 +3133,50 @@ export const cyberpunkComponentStyles = `
 
 .cyberpunk-mode .MuiChip-outlined {
   border-color: rgba(0, 255, 255, 0.30);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiChip-outlined:hover {
-  border-color: #00FFFF;
+  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   background-color: rgba(0, 255, 255, 0.08);
 }
 .cyberpunk-mode .MuiChip-deleteIcon {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiChip-deleteIcon:hover {
-  color: #FF4444;
+  color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
 }
 
 /* ========== Avatar 头像增强 ========== */
 
 .cyberpunk-mode .MuiAvatar-colorDefault {
   background-color: rgba(0, 255, 255, 0.20);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiAvatar-group .MuiAvatar-root {
-  border-color: #0A0A1A;
+  border-color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
 }
 
 /* ========== Badge 徽章增强 ========== */
 
 .cyberpunk-mode .MuiBadge-colorPrimary {
-  background-color: #00FFFF;
-  color: #0A0A1A;
+  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
 }
 .cyberpunk-mode .MuiBadge-colorSecondary {
-  background-color: #FF00FF;
-  color: #0A0A1A;
+  background-color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
+  color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
 }
 .cyberpunk-mode .MuiBadge-colorSuccess {
-  background-color: #00FF88;
-  color: #0A0A1A;
+  background-color: var(--cyber-color-green, var(--cyber-color-green, #00ff88));
+  color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
 }
 .cyberpunk-mode .MuiBadge-colorError {
-  background-color: #FF4444;
-  color: #FFFFFF;
+  background-color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
+  color: var(--color-surface, var(--color-primary-foreground, #ffffff));
 }
 .cyberpunk-mode .MuiBadge-colorWarning {
-  background-color: #FFD700;
-  color: #0A0A1A;
+  background-color: var(--cyber-color-gold, var(--cyber-color-gold, #ffd700));
+  color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
 }
 
 /* ========== Divider 分割线增强 ========== */
@@ -3205,17 +3188,17 @@ export const cyberpunkComponentStyles = `
 /* ========== IconButton 图标按钮增强 ========== */
 
 .cyberpunk-mode .MuiIconButton-colorPrimary {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiIconButton-colorSecondary {
-  color: #FF00FF;
+  color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
 }
 
 /* ========== Link 链接增强 ========== */
 
 .cyberpunk-mode .MuiLink-underlineHover:hover {
   text-decoration: underline;
-  text-decoration-color: #00FFFF;
+  text-decoration-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 
 /* ========== ButtonGroup 按钮组 ========== */
@@ -3233,25 +3216,25 @@ export const cyberpunkComponentStyles = `
 /* ========== TextField 文本框增强 ========== */
 
 .cyberpunk-mode .MuiTextField-root .MuiInputLabel-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiTextField-root .MuiInputLabel-root.Mui-focused {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiTextField-root .MuiFormHelperText-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiTextField-root .MuiFormHelperText-root.Mui-error {
-  color: #FF4444;
+  color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
 }
 
 /* ========== FormControl 表单控件 ========== */
 
 .cyberpunk-mode .MuiFormControl-root .MuiInputLabel-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiFormControl-root .MuiInputLabel-root.Mui-focused {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 
 /* ========== FormGroup 表单组 ========== */
@@ -3266,22 +3249,22 @@ export const cyberpunkComponentStyles = `
   color: rgba(0, 255, 255, 0.30);
 }
 .cyberpunk-mode .MuiCheckbox-colorPrimary.Mui-checked {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiCheckbox-colorSecondary {
   color: rgba(255, 0, 255, 0.30);
 }
 .cyberpunk-mode .MuiCheckbox-colorSecondary.Mui-checked {
-  color: #FF00FF;
+  color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
 }
 
 /* ========== Switch 开关增强 ========== */
 
 .cyberpunk-mode .MuiSwitch-colorPrimary .MuiSwitch-thumb {
-  background-color: #00FFFF;
+  background-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiSwitch-colorSecondary .MuiSwitch-thumb {
-  background-color: #FF00FF;
+  background-color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
 }
 
 /* ========== Radio 单选按钮增强 ========== */
@@ -3290,61 +3273,61 @@ export const cyberpunkComponentStyles = `
   color: rgba(0, 255, 255, 0.30);
 }
 .cyberpunk-mode .MuiRadio-colorPrimary.Mui-checked {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiRadio-colorSecondary {
   color: rgba(255, 0, 255, 0.30);
 }
 .cyberpunk-mode .MuiRadio-colorSecondary.Mui-checked {
-  color: #FF00FF;
+  color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
 }
 
 /* ========== Slider 滑块增强 ========== */
 
 .cyberpunk-mode .MuiSlider-colorPrimary {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiSlider-colorSecondary {
-  color: #FF00FF;
+  color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
 }
 .cyberpunk-mode .MuiSlider-markLabel {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 
 /* ========== List 列表组件 ========== */
 
 .cyberpunk-mode .MuiList-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiListItem-root {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiListItem-root:hover {
   background-color: rgba(0, 255, 255, 0.06);
 }
 .cyberpunk-mode .MuiListItemText-primary {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiListItemText-secondary {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 
 /* ========== ListItemIcon 列表项图标 ========== */
 
 .cyberpunk-mode .MuiListItemIcon-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiListItemButton-root:hover .MuiListItemIcon-root {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 
 /* ========== ListItemAvatar 列表项头像 ========== */
 
 .cyberpunk-mode .MuiListItemAvatar-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 
 /* ========== ListSubheader 列表副标题 ========== */
@@ -3358,13 +3341,13 @@ export const cyberpunkComponentStyles = `
 /* ========== Paper 纸张组件增强 ========== */
 
 .cyberpunk-mode .MuiPaper-elevation1 {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-custom, 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08));
 }
 .cyberpunk-mode .MuiPaper-elevation2 {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-custom, 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08));
 }
 .cyberpunk-mode .MuiPaper-elevation4 {
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-custom, 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08));
 }
 
 /* ========== Card 卡片增强 ========== */
@@ -3373,13 +3356,13 @@ export const cyberpunkComponentStyles = `
   border-bottom: 1px solid rgba(0, 255, 255, 0.15);
 }
 .cyberpunk-mode .MuiCardHeader-title {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .MuiCardHeader-subheader {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiCardContent-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .MuiCardActions-root {
   border-top: 1px solid rgba(0, 255, 255, 0.15);
@@ -3443,29 +3426,27 @@ export const cyberpunkComponentStyles = `
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(0, 255, 255, 0.25);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.5),
-    0 0 20px rgba(0, 255, 255, 0.10);
+  box-shadow: var(--cyber-shadow-modal, 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.10));
 }
 .cyberpunk-mode .cascader-list .MuiListItem-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
   transition: all 150ms ease;
 }
 .cyberpunk-mode .cascader-list .MuiListItem-root:hover {
   background-color: rgba(0, 255, 255, 0.08);
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .cascader-list .MuiListItem-root.Mui-selected {
   background-color: rgba(0, 255, 255, 0.12);
-  color: #00FFFF;
-  border-left: 2px solid #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-left: 2px solid var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .cascader-path .MuiListItem-root {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .cascader-path .MuiListItem-root:hover {
   background-color: rgba(0, 255, 255, 0.06);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .cascader-divider {
   border-color: rgba(0, 255, 255, 0.10);
@@ -3474,7 +3455,7 @@ export const cyberpunkComponentStyles = `
 /* ========== DateRangePicker 日期范围选择器 ========== */
 
 .cyberpunk-mode .date-range-picker .MuiTextField-root {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .date-range-picker .MuiTextField-root .MuiInputAdornment-root svg {
   color: rgba(0, 255, 255, 0.50);
@@ -3484,46 +3465,44 @@ export const cyberpunkComponentStyles = `
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(0, 255, 255, 0.25);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.5),
-    0 0 20px rgba(0, 255, 255, 0.10);
+  box-shadow: var(--cyber-shadow-modal, 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.10));
 }
 .cyberpunk-mode .date-range-picker .MuiTypography-subtitle1 {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .date-range-picker .MuiTypography-h6 {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .date-range-picker .MuiButton-outlined {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
   border-color: rgba(0, 255, 255, 0.30);
 }
 .cyberpunk-mode .date-range-picker .MuiButton-outlined:hover {
-  color: #00FFFF;
-  border-color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
+  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   background-color: rgba(0, 255, 255, 0.08);
 }
 .cyberpunk-mode .date-range-picker .MuiButton-contained {
-  background: linear-gradient(135deg, #00FFFF 0%, #FF00FF 100%);
-  color: #0A0A1A;
+  background: linear-gradient(135deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)) 0%, var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)) 100%);
+  color: var(--cyber-color-bg-dark, var(--cyber-color-bg-dark, #0a0a1a));
 }
 .cyberpunk-mode .date-range-picker .date-cell {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .date-range-picker .date-cell:hover {
   background-color: rgba(0, 255, 255, 0.10);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .date-range-picker .date-cell.date-selected {
   background-color: rgba(0, 255, 255, 0.20);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
 }
 .cyberpunk-mode .date-range-picker .date-cell.date-in-range {
   background-color: rgba(0, 255, 255, 0.06);
 }
 .cyberpunk-mode .date-range-picker .date-cell.date-today {
-  border-color: #FF00FF;
-  color: #FF00FF;
+  border-color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
+  color: var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff));
 }
 
 /* ========== FileUpload 文件上传组件 ========== */
@@ -3537,21 +3516,21 @@ export const cyberpunkComponentStyles = `
   background-color: rgba(0, 255, 255, 0.06);
 }
 .cyberpunk-mode .file-upload .MuiPaper-root[class*='dragging'] {
-  border-color: #00FFFF;
+  border-color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   background-color: rgba(0, 255, 255, 0.10);
-  box-shadow: 0 0 24px rgba(0, 255, 255, 0.30);
+  box-shadow: var(--shadow-custom, 0 0 24px rgba(0, 255, 255, 0.30));
 }
 .cyberpunk-mode .file-upload .MuiTypography-body1 {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .file-upload .MuiTypography-caption {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .file-upload .upload-icon svg {
   color: rgba(0, 255, 255, 0.50);
 }
 .cyberpunk-mode .file-upload[class*='dragging'] .upload-icon svg {
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.60));
 }
 .cyberpunk-mode .file-upload .file-item {
@@ -3565,35 +3544,35 @@ export const cyberpunkComponentStyles = `
   color: rgba(0, 255, 255, 0.50);
 }
 .cyberpunk-mode .file-upload .file-item.file-error .file-icon svg {
-  color: #FF4444;
+  color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
 }
 .cyberpunk-mode .file-upload .file-name {
-  color: #E6F1FF;
+  color: var(--cyber-color-bg-light, var(--cyber-color-bg-light, #e6f1ff));
 }
 .cyberpunk-mode .file-upload .file-size {
-  color: #8892B0;
+  color: var(--cyber-color-text-muted, var(--cyber-color-text-muted, #8892b0));
 }
 .cyberpunk-mode .file-upload .MuiChip-colorSuccess {
   background-color: rgba(0, 255, 136, 0.15);
-  color: #00FF88;
+  color: var(--cyber-color-green, var(--cyber-color-green, #00ff88));
   border: 1px solid rgba(0, 255, 136, 0.40);
 }
 .cyberpunk-mode .file-upload .MuiChip-colorError {
   background-color: rgba(255, 68, 68, 0.15);
-  color: #FF4444;
+  color: var(--cyber-color-danger, var(--cyber-color-danger, #ff4444));
   border: 1px solid rgba(255, 68, 68, 0.40);
 }
 .cyberpunk-mode .file-upload .MuiChip-colorPrimary {
   background-color: rgba(0, 255, 255, 0.15);
-  color: #00FFFF;
+  color: var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff));
   border: 1px solid rgba(0, 255, 255, 0.40);
 }
 .cyberpunk-mode .file-upload .MuiLinearProgress-root {
   background-color: rgba(0, 255, 255, 0.10);
 }
 .cyberpunk-mode .file-upload .MuiLinearProgress-bar {
-  background: linear-gradient(90deg, #00FFFF, #FF00FF);
-  box-shadow: 0 0 8px rgba(0, 255, 255, 0.50);
+  background: linear-gradient(90deg, var(--cyber-color-cyan, var(--cyber-color-cyan, #00ffff)), var(--cyber-color-magenta, var(--cyber-color-magenta, #ff00ff)));
+  box-shadow: var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50));
 }
 `;
 

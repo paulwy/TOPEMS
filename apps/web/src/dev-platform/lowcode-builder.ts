@@ -251,7 +251,7 @@ const DEFAULT_THEME: ThemeConfig = {
     accent: designTokens.colors.warning.main,
     background: 'primary.contrastText',
     surface: designTokens.colors.grey[100],
-    text: '#212121',
+    text: 'var(--color-fallback-panel-bg, #1a1a2e)',
     textSecondary: designTokens.colors.grey['600'],
     border: 'colors.grey.300',
     success: designTokens.colors.success.main,

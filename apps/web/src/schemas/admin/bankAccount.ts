@@ -145,7 +145,7 @@ export const bankAccountSchema: EntitySchema = {
         const bgColorMap: Record<string, string> = {
           primary: `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`,
           success: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
-          secondary: 'var(--color-secondary-lighter, #f3e5f5)',
+          secondary: 'var(--color-secondary-lighter, var(--color-grey-100, #f3f4f6))',
           warning: `var(--color-warning-lighter, ${designTokens.colors.warning[50]}`,
           default: `var(--color-action-hover, ${designTokens.colors.action.hover}`,
         };

@@ -172,7 +172,7 @@ export default function QmsEightDDetailPage() {
                 className='relative'
               >
                 <span
-                  className={`absolute -left-[31px] flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white ${
+                  className={`absolute -left-[31px] flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-var(--color-primary-foreground, #ffffff) ${
                     isDone ? 'bg-green-500' : isCurrent ? 'bg-blue-500' : 'bg-gray-300'
                   }`}
                 >

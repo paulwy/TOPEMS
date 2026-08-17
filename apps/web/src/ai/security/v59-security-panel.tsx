@@ -231,7 +231,10 @@ export const V59SecurityPanel: React.FC<{ onClose: () => void }> = ({ onClose })
             <Button
               size='small'
               variant='outlined'
-              sx={{ borderColor: 'common.white', color: 'common.white' }}
+              sx={{
+                borderColor: 'common.white',
+                color: 'common.white',
+              }}
               onClick={() => {
                 loadAudits();
                 loadRobustness();
@@ -1792,7 +1795,11 @@ const ThreatSummaryTab: React.FC<{
                       <Chip
                         size='small'
                         label={AUDIT_TYPE_LABELS[finding.type]}
-                        sx={{ height: 20, bgcolor: 'error.600', color: 'common.white' }}
+                        sx={{
+                          height: 20,
+                          bgcolor: 'error.600',
+                          color: 'common.white',
+                        }}
                       />
                       <Typography
                         variant='caption'

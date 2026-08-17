@@ -276,7 +276,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                 ? `linear-gradient(135deg, ${stat.gradient[0]}, ${stat.gradient[1]})`
                 : undefined,
               bgcolor: stat.gradient ? undefined : 'grey.50',
-              color: stat.gradient ? 'white' : 'inherit',
+              color: stat.gradient ? 'var(--color-primary-foreground, #ffffff)' : 'inherit',
               position: 'relative',
               overflow: 'hidden',
             }}
@@ -292,7 +292,9 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     bgcolor: stat.gradient ? 'glass.topLight' : `${stat.color || 'primary'}.light`,
-                    color: stat.gradient ? 'white' : `${stat.color || 'primary'}.main`,
+                    color: stat.gradient
+                      ? 'var(--color-primary-foreground, #ffffff)'
+                      : `${stat.color || 'primary'}.main`,
                   }}
                 >
                   {stat.icon}
@@ -347,7 +349,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                           : 'error.light'
                         : 'grey.200',
                   color: stat.gradient
-                    ? 'white'
+                    ? 'var(--color-primary-foreground, #ffffff)'
                     : stat.trend.direction === 'up'
                       ? 'success.main'
                       : stat.trend.direction === 'down'

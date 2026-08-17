@@ -741,7 +741,13 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                 justifyContent: 'center',
               }}
             >
-              <FileText sx={{ width: 20, height: 20, color: 'common.white' }} />
+              <FileText
+                sx={{
+                  width: 20,
+                  height: 20,
+                  color: 'common.white',
+                }}
+              />
             </Box>
             <Box>
               <Typography
@@ -805,7 +811,13 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                   flexShrink: 0,
                 }}
               >
-                <Typography sx={{ color: 'common.white', fontWeight: 700, fontSize: 14 }}>
+                <Typography
+                  sx={{
+                    color: 'common.white',
+                    fontWeight: 700,
+                    fontSize: 14,
+                  }}
+                >
                   1
                 </Typography>
               </Box>
@@ -846,7 +858,13 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                   flexShrink: 0,
                 }}
               >
-                <Typography sx={{ color: 'common.white', fontWeight: 700, fontSize: 14 }}>
+                <Typography
+                  sx={{
+                    color: 'common.white',
+                    fontWeight: 700,
+                    fontSize: 14,
+                  }}
+                >
                   2
                 </Typography>
               </Box>
@@ -887,7 +905,13 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                   flexShrink: 0,
                 }}
               >
-                <Typography sx={{ color: 'common.white', fontWeight: 700, fontSize: 14 }}>
+                <Typography
+                  sx={{
+                    color: 'common.white',
+                    fontWeight: 700,
+                    fontSize: 14,
+                  }}
+                >
                   3
                 </Typography>
               </Box>

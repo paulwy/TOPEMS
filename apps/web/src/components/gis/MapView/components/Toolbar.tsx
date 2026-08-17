@@ -94,8 +94,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            backgroundColor: toolMode === 'select' ? 'primary.main' : 'white',
-            color: toolMode === 'select' ? 'white' : 'grey.700',
+            backgroundColor:
+              toolMode === 'select' ? 'primary.main' : 'var(--color-primary-foreground, #ffffff)',
+            color: toolMode === 'select' ? 'var(--color-primary-foreground, #ffffff)' : 'grey.700',
             '&:hover': {
               backgroundColor: toolMode === 'select' ? 'primary.dark' : 'grey.50',
             },
@@ -122,8 +123,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            backgroundColor: toolMode === 'measure-distance' ? 'primary.main' : 'white',
-            color: toolMode === 'measure-distance' ? 'white' : 'grey.700',
+            backgroundColor:
+              toolMode === 'measure-distance'
+                ? 'primary.main'
+                : 'var(--color-primary-foreground, #ffffff)',
+            color:
+              toolMode === 'measure-distance'
+                ? 'var(--color-primary-foreground, #ffffff)'
+                : 'grey.700',
             '&:hover': {
               backgroundColor: toolMode === 'measure-distance' ? 'primary.dark' : 'grey.50',
             },
@@ -143,8 +150,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            backgroundColor: toolMode === 'measure-area' ? 'primary.main' : 'white',
-            color: toolMode === 'measure-area' ? 'white' : 'grey.700',
+            backgroundColor:
+              toolMode === 'measure-area'
+                ? 'primary.main'
+                : 'var(--color-primary-foreground, #ffffff)',
+            color:
+              toolMode === 'measure-area' ? 'var(--color-primary-foreground, #ffffff)' : 'grey.700',
             '&:hover': {
               backgroundColor: toolMode === 'measure-area' ? 'primary.dark' : 'grey.50',
             },
@@ -165,8 +176,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            backgroundColor: toolMode === 'draw-point' ? 'primary.main' : 'white',
-            color: toolMode === 'draw-point' ? 'white' : 'grey.700',
+            backgroundColor:
+              toolMode === 'draw-point'
+                ? 'primary.main'
+                : 'var(--color-primary-foreground, #ffffff)',
+            color:
+              toolMode === 'draw-point' ? 'var(--color-primary-foreground, #ffffff)' : 'grey.700',
             '&:hover': {
               backgroundColor: toolMode === 'draw-point' ? 'primary.dark' : 'grey.50',
             },
@@ -186,8 +201,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            backgroundColor: toolMode === 'draw-line' ? 'primary.main' : 'white',
-            color: toolMode === 'draw-line' ? 'white' : 'grey.700',
+            backgroundColor:
+              toolMode === 'draw-line'
+                ? 'primary.main'
+                : 'var(--color-primary-foreground, #ffffff)',
+            color:
+              toolMode === 'draw-line' ? 'var(--color-primary-foreground, #ffffff)' : 'grey.700',
             '&:hover': {
               backgroundColor: toolMode === 'draw-line' ? 'primary.dark' : 'grey.50',
             },
@@ -207,8 +226,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            backgroundColor: toolMode === 'draw-polygon' ? 'primary.main' : 'white',
-            color: toolMode === 'draw-polygon' ? 'white' : 'grey.700',
+            backgroundColor:
+              toolMode === 'draw-polygon'
+                ? 'primary.main'
+                : 'var(--color-primary-foreground, #ffffff)',
+            color:
+              toolMode === 'draw-polygon' ? 'var(--color-primary-foreground, #ffffff)' : 'grey.700',
             '&:hover': {
               backgroundColor: toolMode === 'draw-polygon' ? 'primary.dark' : 'grey.50',
             },
@@ -301,8 +324,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            backgroundColor: showTrackPanel ? 'secondary.main' : 'white',
-            color: showTrackPanel ? 'white' : 'grey.700',
+            backgroundColor: showTrackPanel
+              ? 'secondary.main'
+              : 'var(--color-primary-foreground, #ffffff)',
+            color: showTrackPanel ? 'var(--color-primary-foreground, #ffffff)' : 'grey.700',
             '&:hover': {
               backgroundColor: showTrackPanel ? 'secondary.dark' : 'grey.50',
             },
@@ -366,8 +391,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            backgroundColor: mapType === 'amap' ? 'primary.main' : 'white',
-            color: mapType === 'amap' ? 'white' : 'grey.700',
+            backgroundColor:
+              mapType === 'amap' ? 'primary.main' : 'var(--color-primary-foreground, #ffffff)',
+            color: mapType === 'amap' ? 'var(--color-primary-foreground, #ffffff)' : 'grey.700',
             '&:hover': {
               backgroundColor: mapType === 'amap' ? 'primary.dark' : 'grey.50',
             },
@@ -390,8 +416,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            backgroundColor: showHeatmap ? 'error.main' : 'white',
-            color: showHeatmap ? 'white' : 'grey.700',
+            backgroundColor: showHeatmap
+              ? 'error.main'
+              : 'var(--color-primary-foreground, #ffffff)',
+            color: showHeatmap ? 'var(--color-primary-foreground, #ffffff)' : 'grey.700',
             '&:hover': {
               backgroundColor: showHeatmap ? 'error.dark' : 'grey.50',
             },
@@ -459,8 +487,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            backgroundColor: show3DView ? 'primary.main' : 'white',
-            color: show3DView ? 'white' : 'grey.700',
+            backgroundColor: show3DView
+              ? 'primary.main'
+              : 'var(--color-primary-foreground, #ffffff)',
+            color: show3DView ? 'var(--color-primary-foreground, #ffffff)' : 'grey.700',
             '&:hover': {
               backgroundColor: show3DView ? 'secondary.700' : 'grey.50',
             },

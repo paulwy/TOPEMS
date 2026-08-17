@@ -168,7 +168,7 @@ export const StatCard: React.FC<StatCardProps> = ({
                     variant='h4'
                     sx={{
                       fontWeight: 700,
-                      color: gradient ? 'white' : 'text.primary',
+                      color: gradient ? 'var(--color-primary-foreground, #ffffff)' : 'text.primary',
                       lineHeight: 1.2,
                     }}
                   >
@@ -228,9 +228,12 @@ export const StatCard: React.FC<StatCardProps> = ({
                   : customGradient
                     ? undefined
                     : `${colors.main}15`,
-                color: gradient ? 'white' : colors.main,
+                color: gradient ? 'var(--color-primary-foreground, #ffffff)' : colors.main,
                 ...(customGradient &&
-                  !gradient && { background: customGradient, color: 'common.white' }),
+                  !gradient && {
+                    background: customGradient,
+                    color: 'common.white',
+                  }),
               }}
             >
               {icon}

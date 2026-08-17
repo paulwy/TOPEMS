@@ -198,7 +198,10 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
               sx={{
                 width: 24,
                 height: 24,
-                '&:hover': { backgroundColor: theme.palette.error.light, color: 'common.white' },
+                '&:hover': {
+                  backgroundColor: theme.palette.error.light,
+                  color: 'common.white',
+                },
               }}
               aria-label={i18n.t('shared.draggable_window.k2')}
             >

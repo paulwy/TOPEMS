@@ -475,7 +475,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               {banner.summary && (
                 <Typography
                   variant='body2'
-                  sx={{ opacity: 0.9, ml: 2, color: 'common.white' }}
+                  sx={{
+                    opacity: 0.9,
+                    ml: 2,
+                    color: 'common.white',
+                  }}
                 >
                   {banner.summary}
                 </Typography>

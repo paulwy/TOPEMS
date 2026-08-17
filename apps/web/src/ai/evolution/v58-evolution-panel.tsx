@@ -592,7 +592,10 @@ const ModelsTab: React.FC<{
                           ? designTokens.colors.secondary.main
                           : 'divider',
                       borderRadius: 1,
-                      bgcolor: selectedModelId === model.id ? 'colors.secondary.50' : 'white',
+                      bgcolor:
+                        selectedModelId === model.id
+                          ? 'colors.secondary.50'
+                          : 'var(--color-primary-foreground, #ffffff)',
                       cursor: 'pointer',
                     }}
                     onClick={() => onSelect(model.id)}
@@ -1097,7 +1100,10 @@ const ExperimentsTab: React.FC<{
                     borderColor:
                       selectedExpId === exp.id ? designTokens.colors.success.dark : 'divider',
                     borderRadius: 1,
-                    bgcolor: selectedExpId === exp.id ? 'colors.success.50' : 'white',
+                    bgcolor:
+                      selectedExpId === exp.id
+                        ? 'colors.success.50'
+                        : 'var(--color-primary-foreground, #ffffff)',
                     cursor: 'pointer',
                   }}
                   onClick={() => onSelect(exp.id)}
@@ -1870,7 +1876,10 @@ const ThreatsTab: React.FC<{
                   borderColor:
                     expandedThreat === threat.id ? designTokens.colors.secondary.main : 'divider',
                   borderRadius: 1,
-                  bgcolor: expandedThreat === threat.id ? 'colors.secondary.50' : 'white',
+                  bgcolor:
+                    expandedThreat === threat.id
+                      ? 'colors.secondary.50'
+                      : 'var(--color-primary-foreground, #ffffff)',
                 }}
               >
                 <ListItem

@@ -296,7 +296,13 @@ const PluginDetailPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <Package sx={{ width: 36, height: 36, color: 'common.white' }} />
+                <Package
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    color: 'common.white',
+                  }}
+                />
               </Box>
               <Box sx={{ flexGrow: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>

@@ -90,7 +90,13 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                   boxShadow: 3,
                 }}
               >
-                <Zap style={{ width: 20, height: 20, color: 'common.white' }} />
+                <Zap
+                  style={{
+                    width: 20,
+                    height: 20,
+                    color: 'common.white',
+                  }}
+                />
               </Box>
               <Box>
                 <Typography

@@ -64,7 +64,7 @@ export interface TagColor {
 export const PRESET_TAG_COLORS: TagColor[] = [
   { name: i18n.t('shared.tag.k0'), hex: designTokens.colors.error.main },
   { name: i18n.t('shared.tag.k1'), hex: 'colors.orange.500' },
-  { name: i18n.t('shared.tag.k2'), hex: '#EAB308' },
+  { name: i18n.t('shared.tag.k2'), hex: 'var(--color-warning, #f59e0b)' },
   { name: i18n.t('shared.tag.k3'), hex: 'colors.success.main' },
   { name: i18n.t('shared.tag.k4'), hex: 'colors.cyan.500' },
   { name: i18n.t('shared.tag.k5'), hex: designTokens.colors.primary.main },

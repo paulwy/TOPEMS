@@ -816,7 +816,7 @@ export const ABTestPanel: React.FC<ABTestPanelProps> = ({
             >
               <Target
                 size={32}
-                color='#bbb'
+                color='var(--color-text-muted, #94a3b8)'
               />
               <Typography
                 variant='body2'
