@@ -7,6 +7,8 @@ import PageLoader from './PageLoader';
 import NotFoundPage from '@/pages/shared/NotFoundPage';
 // V37.0 Phase 7: 记录用户导航历史 + 触发智能预加载
 import { recordNavigation, prefetchIntelligent } from '@/lib/pwa';
+// i18n 按需加载：按路由路径推断业务 NS 并预热
+import { ensureNamespacesLoaded, resolveNamespacesForPath } from '@/i18n';
 
 const DynamicRoutes: React.FC = () => {
   const [routes, setRoutes] = useState<RouteConfig[]>([]);
@@ -85,6 +87,18 @@ const DynamicRoutes: React.FC = () => {
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
+  // ✨ i18n 按命名空间按需加载（路径推断，缓存路由与静态路由兜底入口）
+  // - 当命中 routeCache 时 loadModuleConfig 不会运行，需要在这里补齐 NS 预热
+  // - 非模块路由（/dashboard, /settings 等）也能正确得到公共框架 NS
+  useEffect(() => {
+    const namespaces = resolveNamespacesForPath(location.pathname);
+    if (namespaces.length === 0) return;
+    // fire-and-forget，不阻塞 UI；内部已做幂等 + 单飞
+    ensureNamespacesLoaded(namespaces).catch((e) => {
+      logger.warn('[i18n] route-based namespace preload skipped', e);
+    });
+  }, [location.pathname]);
+
   if (loading) {
     return <PageLoader />;
   }
@@ -108,7 +122,10 @@ const DynamicRoutes: React.FC = () => {
           />
         );
       })}
-      <Route path='*' element={<NotFoundPage />} />
+      <Route
+        path='*'
+        element={<NotFoundPage />}
+      />
     </Routes>
   );
 };
