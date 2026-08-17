@@ -1,0 +1,25 @@
+=== V232 P1 sub2 strict-zero baseline verify log ===
+Date: 2026-08-18
+Scope: rd/scm/tms + admin/ai/assets/bi/common/crm/finance/hr/inventory/qc/sales/warehouse
+
+--- PRE strict scan ---
+total=0 fail=0 warn=0
+by_module: {} (V231 已清零)
+
+--- C gate: scripts/ci/check-i18n-quality.cjs ---
+exit=0
+  假 en 值残留: 0
+  key 一致性偏差: 0
+  混合结构 bug: 0
+  R12-Z1 EN missing strict: exit=0
+  R12-Z2 Glossary Top50 strict: exit=0 (非标准译法总数: 0)
+  R12-Z3 Style Guide Lint: HIGH=0 MEDIUM=4 LOW=31
+  7-in-1 Gate Result: PASS (0 failures)
+
+--- E gate: scripts/i18n/scan-hardcoded-precise.cjs --strict ---
+exit=0
+Total: 0 lines
+
+--- Scope check ---
+No tsx/locale edits (avoid churn)
+No scope violations (no files outside rd/scm/tms + 12 small modules + locales touched)
