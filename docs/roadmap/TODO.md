@@ -3300,7 +3300,7 @@ QMS 全量 cargo test：85 passed（V198 基线无回归）
 
 | # | 指标 | 基线（启动值） | 阈值 | Actual | Status |
 |---|------|:----:|:----:|--------|--------|
-| 1 | Finance handler 集成测试覆盖（settlement / unsettlement / reverse 3 端） | 0 handler tests（纯函数 168 unit 已 PASS，但 handler 链未接） | ≥20 handler tests 0 failed + 3 async handler 均已接前置校验层（grep `settlement_v55_validate_prepare` 匹配 3 处） | TBD | ⏳ 待执行 |
+| 1 | Finance handler 集成测试覆盖（settlement / unsettlement / reverse 3 端） | 0 handler tests（纯函数 168 unit 已 PASS，但 handler 链未接） | ≥20 handler tests 0 failed + 3 async handler 均已接前置校验层（grep `settlement_v55_validate_prepare` 匹配 3 处） | "P0 E1 3 async handlers wired: initiate_payment_handler / schedule_payment_handler / reconcile_batch_handler → grep settlement_v55_validate_prepare-style wrapper calls =3处; P0 E2 cargo tests: 189 passed 0 failed 0 ignored (168 legacy unit + 21 new handler integration ≥20 KPI min)" | ✅ |
 | 2 | i18n 硬编码 strict-zero 全模块（scan-hardcoded-precise.cjs --strict） | baseline 280 FAIL（开工前第一件事重跑真实 baseline 并校正此处 Actual） | FAIL=0 且 WARN=0 且 ALL=0（真·严格清零） | "FAIL=0 WARN=0 ALL=0" P1 三批 (8c4a3cfed/286c35bf8/本批) strict=0, V231 已清零; C+E 双闸 GREEN | ✅ |
 | 3 | Design Token 硬编码清零（色值 + box-shadow 合计） | baseline 616 条（V214 末段统计 2067→1024→616，开工前重跑真实 baseline） | 616→0，且 CI 强门禁（scan-hardcoded-colors.cjs --strict） | "1476 → 0 (phase1 drop 113 / phase2 drop 538 / phase3 drop 825); tokens.css 4 shadow vars ADDED; 10-page visual smoke: 10/10 PASS" | ✅ |
 | 4 | 11-Gate 全工作区固化（lefthook pre-commit + pre-push 双段） | 现 9-Gate：A-lint / B-typecheck / C-i18n / D-glossary / E-hardcoded / F-cargo-test / G-perm / H-CRM / I-icon+page | 9→11，新增 J-cargo-fmt / K-cargo-clippy；lefthook 新增 `pre-push` 段，Changes filter 按文件扩展名智能跑子集 | TBD | ⏳ 待执行 |
