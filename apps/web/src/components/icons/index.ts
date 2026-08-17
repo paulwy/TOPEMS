@@ -295,6 +295,7 @@ export { default as SortAsc } from 'lucide-react/dist/esm/icons/arrow-up-narrow-
 export { default as SortDesc } from 'lucide-react/dist/esm/icons/arrow-down-wide-narrow.mjs';
 export { default as Sparkles } from 'lucide-react/dist/esm/icons/sparkles.mjs';
 export { default as Square } from 'lucide-react/dist/esm/icons/square.mjs';
+export { default as SquareKanban } from 'lucide-react/dist/esm/icons/square-kanban.mjs';
 export { default as Star } from 'lucide-react/dist/esm/icons/star.mjs';
 export { default as Store } from 'lucide-react/dist/esm/icons/store.mjs';
 export { default as Strikethrough } from 'lucide-react/dist/esm/icons/strikethrough.mjs';
