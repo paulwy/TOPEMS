@@ -61,6 +61,16 @@ export const hazardousMaterialApi = {
     return apiClient.ehs.delete<void>(`/hazardous-materials/${id}`);
   },
 
+  searchHazardousMaterials: async (
+    query: string
+  ): Promise<ApiResponse<PaginatedResponse<HazardousMaterial>>> => {
+    const params = new URLSearchParams();
+    params.append('search', query);
+    return apiClient.ehs.get<PaginatedResponse<HazardousMaterial>>(
+      `/hazardous-materials/search?${params.toString()}`
+    );
+  },
+
   listHazardousMaterialCategories: async (): Promise<ApiResponse<HazardousMaterialCategory[]>> => {
     return apiClient.ehs.get<HazardousMaterialCategory[]>('/hazardous-materials/categories');
   },

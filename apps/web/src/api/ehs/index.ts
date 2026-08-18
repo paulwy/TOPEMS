@@ -256,6 +256,7 @@ export const ehsApi = {
   createHazardousMaterial: hazardousMaterialApi.createHazardousMaterial,
   updateHazardousMaterial: hazardousMaterialApi.updateHazardousMaterial,
   deleteHazardousMaterial: hazardousMaterialApi.deleteHazardousMaterial,
+  searchHazardousMaterials: hazardousMaterialApi.searchHazardousMaterials,
   listHazardousMaterialCategories: hazardousMaterialApi.listHazardousMaterialCategories,
   createHazardousMaterialCategory: hazardousMaterialApi.createHazardousMaterialCategory,
   updateHazardousMaterialCategory: hazardousMaterialApi.updateHazardousMaterialCategory,

@@ -10,7 +10,7 @@ import {
   Legend,
 } from 'recharts';
 import i18n from '@/i18n';
-import { useWmsMock, type WmsMockShape } from '@/api/wms/_mock';
+import { useWmsMock, type WmsMockShape } from '@/api/wms/mock';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
 export default function WmsLocationUtilizationPage() {

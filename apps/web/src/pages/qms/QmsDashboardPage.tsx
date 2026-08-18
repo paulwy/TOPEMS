@@ -24,15 +24,15 @@ import {
   type RecentItem,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { qmsApi } from '@/api/qms';
+import { qmsApi, useQmsMock, type QmsMockShape } from '@/api/qms';
 import type { QualityOverview } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
-import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { QMS_PATHS } from '@/modules/qms/config';
-
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 const QmsDashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const { data: mockData, mockEnabled } = useQmsMock<QmsMockShape>();
   const {
     data: overview,
     isPending: loading,
@@ -49,55 +49,58 @@ const QmsDashboardPage: React.FC = () => {
       }
       return overviewRes.data ?? null;
     },
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,
+      initialData: mockEnabled ? mockData?.qualityOverview ?? null : undefined,
+      enabled: !mockEnabled,});
+  const effectiveOverview = mockEnabled ? mockData?.qualityOverview ?? null : overview;
+  const effectiveLoading = mockEnabled ? false : loading;
   const stats: StatCard[] = [
     {
       id: 'total-inspections',
       title: i18n.t('qms.qms_dashboard_page.k1'),
-      value: overview?.totalInspections ?? 0,
+      value: effectiveOverview?.totalInspections ?? 0,
       icon: <ClipboardCheck style={{ width: 24, height: 24 }} />,
       color: 'primary',
-      change: overview?.totalInspections ? 5 : undefined,
+      change: effectiveOverview?.totalInspections ? 5 : undefined,
       changeLabel: i18n.t('qms.qms_dashboard_page.k2'),
     },
     {
       id: 'pass-rate',
       title: i18n.t('qms.qms_dashboard_page.k3'),
-      value: overview?.passRate != null ? `${overview.passRate.toFixed(1)}%` : '0%',
+      value: effectiveOverview?.passRate != null ? `${effectiveOverview.passRate.toFixed(1)}%` : '0%',
       icon: <CheckCircle style={{ width: 24, height: 24 }} />,
       color: 'success',
-      change: overview?.passRate && overview.passRate >= 95 ? 1.2 : -0.3,
+      change: effectiveOverview?.passRate && effectiveOverview.passRate >= 95 ? 1.2 : -0.3,
       changeLabel: i18n.t('qms.qms_dashboard_page.k4'),
     },
     {
       id: 'defect-count',
       title: i18n.t('qms.qms_dashboard_page.k5'),
-      value: overview?.totalIssues ?? 0,
+      value: effectiveOverview?.totalIssues ?? 0,
       icon: <XCircle style={{ width: 24, height: 24 }} />,
       color: 'error',
-      change: overview?.totalIssues ? -2 : undefined,
+      change: effectiveOverview?.totalIssues ? -2 : undefined,
       changeLabel: i18n.t('qms.qms_dashboard_page.k6'),
     },
     {
       id: 'eightd-count',
       title: i18n.t('pages.qms_dashboard_page.8d_0'),
-      value: overview?.eightdCount ?? 0,
+      value: effectiveOverview?.eightdCount ?? 0,
       icon: <FileText style={{ width: 24, height: 24 }} />,
       color: 'warning',
     },
     {
       id: 'spc-count',
       title: i18n.t('pages.qms_dashboard_page.spc_1'),
-      value: overview?.spcChartCount ?? 0,
+      value: effectiveOverview?.spcChartCount ?? 0,
       icon: <BarChart3 style={{ width: 24, height: 24 }} />,
       color: 'info',
     },
     {
       id: 'audit-count',
       title: i18n.t('qms.qms_dashboard_page.k7'),
-      value: overview?.auditPlanCount ?? 0,
+      value: effectiveOverview?.auditPlanCount ?? 0,
       icon: <ClipboardList style={{ width: 24, height: 24 }} />,
       color: 'secondary',
     },
@@ -110,15 +113,15 @@ const QmsDashboardPage: React.FC = () => {
       height: 350,
       chart: (
         <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {loading ? (
+          {effectiveLoading ? (
             <Skeleton
               variant='rectangular'
               width='100%'
               height='100%'
             />
-          ) : overview?.trendData && overview.trendData.length > 0 ? (
+          ) : effectiveOverview?.trendData && effectiveOverview.trendData.length > 0 ? (
             <Box sx={{ width: '100%', height: '100%', p: 2 }}>
-              {overview.trendData.map((item, index) => (
+              {effectiveOverview.trendData.map((item, index) => (
                 <Box
                   key={index}
                   sx={{ display: 'flex', alignItems: 'flex-end', gap: 2, mb: 1 }}
@@ -155,15 +158,15 @@ const QmsDashboardPage: React.FC = () => {
       height: 350,
       chart: (
         <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {loading ? (
+          {effectiveLoading ? (
             <Skeleton
               variant='rectangular'
               width='100%'
               height='100%'
             />
-          ) : overview?.topIssues && overview.topIssues.length > 0 ? (
+          ) : effectiveOverview?.topIssues && effectiveOverview.topIssues.length > 0 ? (
             <Box sx={{ width: '100%', p: 2 }}>
-              {overview.topIssues.map((item, index) => {
+              {effectiveOverview.topIssues.map((item, index) => {
                 const colors = [
                   ct.secondary[400],
                   ct.warning.main,
@@ -220,13 +223,13 @@ const QmsDashboardPage: React.FC = () => {
       height: 350,
       chart: (
         <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {loading ? (
+          {effectiveLoading ? (
             <Skeleton
               variant='rectangular'
               width='100%'
               height='100%'
             />
-          ) : overview?.trendData && overview.trendData.length > 0 ? (
+          ) : effectiveOverview?.trendData && effectiveOverview.trendData.length > 0 ? (
             <Box sx={{ width: '100%', p: 2 }}>
               <svg
                 width='100%'
@@ -234,8 +237,8 @@ const QmsDashboardPage: React.FC = () => {
                 viewBox='0 0 400 200'
                 preserveAspectRatio='none'
               >
-                {overview.trendData.map((item, index) => {
-                  const x = (index / Math.max(overview!.trendData.length - 1, 1)) * 380 + 10;
+                {effectiveOverview.trendData.map((item, index) => {
+                  const x = (index / Math.max(effectiveOverview!.trendData.length - 1, 1)) * 380 + 10;
                   const y = 200 - (item.passRate / 100) * 180 - 10;
                   return (
                     <React.Fragment key={index}>
@@ -245,14 +248,14 @@ const QmsDashboardPage: React.FC = () => {
                         r={4}
                         fill={ct.secondary[400]}
                       />
-                      {index < overview!.trendData.length - 1 && (
+                      {index < effectiveOverview!.trendData.length - 1 && (
                         <line
                           x1={x}
                           y1={y}
                           x2={
-                            ((index + 1) / Math.max(overview!.trendData.length - 1, 1)) * 380 + 10
+                            ((index + 1) / Math.max(effectiveOverview!.trendData.length - 1, 1)) * 380 + 10
                           }
-                          y2={200 - (overview!.trendData[index + 1].passRate / 100) * 180 - 10}
+                          y2={200 - (effectiveOverview!.trendData[index + 1].passRate / 100) * 180 - 10}
                           stroke={ct.secondary[400]}
                           strokeWidth={2}
                         />
@@ -314,9 +317,7 @@ const QmsDashboardPage: React.FC = () => {
               </svg>
             </Box>
           ) : (
-            <Typography color='text.secondary'>
-              {i18n.t('qms.qms_dashboard_page.spc_12')}
-            </Typography>
+            <Typography color='text.secondary'>{i18n.t('qms.qms_dashboard_page.spc_12')}</Typography>
           )}
         </Box>
       ),
@@ -363,7 +364,7 @@ const QmsDashboardPage: React.FC = () => {
     {
       id: 'recent-inspection',
       title: i18n.t('qms.qms_dashboard_page.k17'),
-      description: `${overview?.totalInspections ?? 0}${i18n.t('pages.qms_dashboard_page.k4')}`,
+      description: `${effectiveOverview?.totalInspections ?? 0}${i18n.t('pages.qms_dashboard_page.k4')}`,
       icon: <ClipboardCheck style={{ width: 16, height: 16 }} />,
       status: 'info',
       time: i18n.t('qms.qms_dashboard_page.k18'),
@@ -372,7 +373,7 @@ const QmsDashboardPage: React.FC = () => {
     {
       id: 'recent-nonconformance',
       title: i18n.t('qms.qms_dashboard_page.k19'),
-      description: `${overview?.totalIssues ?? 0}${i18n.t('pages.qms_dashboard_page.k5')}`,
+      description: `${effectiveOverview?.totalIssues ?? 0}${i18n.t('pages.qms_dashboard_page.k5')}`,
       icon: <XCircle style={{ width: 16, height: 16 }} />,
       status: 'warning',
       time: i18n.t('qms.qms_dashboard_page.k20'),
@@ -381,7 +382,7 @@ const QmsDashboardPage: React.FC = () => {
     {
       id: 'recent-8d',
       title: i18n.t('qms.qms_dashboard_page.8d_21'),
-      description: `${overview?.eightdCount ?? 0}${i18n.t('pages.qms_dashboard_page.8d_6')}`,
+      description: `${effectiveOverview?.eightdCount ?? 0}${i18n.t('pages.qms_dashboard_page.8d_6')}`,
       icon: <FileText style={{ width: 16, height: 16 }} />,
       status: 'default',
       time: i18n.t('qms.qms_dashboard_page.k22'),
@@ -390,7 +391,7 @@ const QmsDashboardPage: React.FC = () => {
     {
       id: 'recent-audit',
       title: i18n.t('qms.qms_dashboard_page.k23'),
-      description: `${overview?.auditPlanCount ?? 0}${i18n.t('pages.qms_dashboard_page.k7')}`,
+      description: `${effectiveOverview?.auditPlanCount ?? 0}${i18n.t('pages.qms_dashboard_page.k7')}`,
       icon: <ClipboardList style={{ width: 16, height: 16 }} />,
       status: 'info',
       time: i18n.t('qms.qms_dashboard_page.k24'),
@@ -399,7 +400,7 @@ const QmsDashboardPage: React.FC = () => {
     {
       id: 'recent-apqp',
       title: i18n.t('qms.qms_dashboard_page.apqp_25'),
-      description: `${overview?.fmeaCount ?? 0}${i18n.t('pages.qms_dashboard_page.apqp_8')}`,
+      description: `${effectiveOverview?.fmeaCount ?? 0}${i18n.t('pages.qms_dashboard_page.apqp_8')}`,
       icon: <BarChart3 style={{ width: 16, height: 16 }} />,
       status: 'default',
       time: i18n.t('qms.qms_dashboard_page.k26'),
@@ -416,7 +417,7 @@ const QmsDashboardPage: React.FC = () => {
         quickActionsTitle={i18n.t('qms.qms_dashboard_page.k27')}
         recentItems={recentItems}
         recentTitle={i18n.t('qms.qms_dashboard_page.k28')}
-        loading={loading}
+        loading={effectiveLoading}
         onRefresh={loadDashboardData}
       />
     </PageContainer>
