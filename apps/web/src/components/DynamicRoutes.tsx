@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { logger } from '@/utils/logger';
 import { loadModuleConfig, coreModuleCodes, type RouteConfig } from '../routes';
 import ProtectedRouteWrapper from './ProtectedRouteWrapper';
 import PageLoader from './PageLoader';
 import NotFoundPage from '@/pages/shared/NotFoundPage';
 import { ModRootRedirect } from '@/lib/moduleRedirect';
+import { MODULE_ROOT_TO_DASHBOARD, resolveModuleDashboard } from '@/lib/modulePathMap';
 // V37.0 Phase 7: 记录用户导航历史 + 触发智能预加载
 import { recordNavigation, prefetchIntelligent } from '@/lib/pwa';
 // i18n 按需加载：按路由路径推断业务 NS 并预热
@@ -66,6 +67,21 @@ const DynamicRoutes: React.FC = () => {
             module: route.module,
             action: route.action,
           }));
+
+          const moduleRootPath = `/${moduleCode}`;
+          if (MODULE_ROOT_TO_DASHBOARD[moduleRootPath]) {
+            const dashboardPath = resolveModuleDashboard(moduleRootPath);
+            const rootPathAlreadyExists = mappedRoutes.some((r) => r.path === moduleRootPath);
+            if (!rootPathAlreadyExists) {
+              mappedRoutes.unshift({
+                path: moduleRootPath,
+                element: <Navigate to={dashboardPath} replace />,
+                module: moduleCode,
+                action: 'read',
+              });
+            }
+          }
+
           routeCacheRef.current.set(moduleCode, mappedRoutes);
           setRoutes(mappedRoutes);
           prevModuleRef.current = moduleCode;

@@ -21,6 +21,9 @@ import i18n from '@/i18n';
 export * from './types';
 export * from './adapters';
 
+export { useQmsMock, default as useQmsMockDefault } from './_mock';
+export type { QmsMockShape } from './_mock';
+
 export { standardApi } from './standard';
 export { inspectionApi } from './inspection';
 export { issueApi } from './issue';

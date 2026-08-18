@@ -16,7 +16,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
 import { docApi } from '@/api/doc';
 import { workflowApi } from '@/api/workflow';
-import { qmsApi } from '@/api/qms';
+import { qmsApi, useQmsMock, type QmsMockShape } from '@/api/qms';
 import { ehsApi } from '@/api/ehs';
 import { srmApi } from '@/api/srm';
 import { limsApi } from '@/api/lims';
@@ -58,6 +58,7 @@ export const useDashboardData = () => {
   const queryClient = useQueryClient();
   const { user, isAuthenticated, hasPermission } = useAuth();
   const { checkPermission } = usePermission();
+  const { data: mockData, mockEnabled: qmsMockEnabled } = useQmsMock<QmsMockShape>();
 
   const statsQuery = useQuery({
     queryKey: [...QUERY_KEYS.DASHBOARD.STATS, user?.id],
@@ -98,7 +99,18 @@ export const useDashboardData = () => {
     queryKey: QUERY_KEYS.DASHBOARD.MODULE_STATS,
     queryFn: async () => {
       const [qmsRes, srmRes, limsRes, rsRes, ehsRes] = await Promise.allSettled([
-        qmsApi.getStatistics(),
+        qmsMockEnabled
+          ? Promise.resolve({
+              success: true,
+              data: {
+                total_inspections: mockData?.inspections?.length ?? 0,
+                active_standards:
+                  mockData?.standards?.filter(
+                    (s: { status: string }) => s.status === 'active'
+                  ).length ?? 0,
+              },
+            })
+          : qmsApi.getStatistics(),
         srmApi.getStatistics(),
         limsApi.getStatistics(),
         rdApi.getStatistics(),

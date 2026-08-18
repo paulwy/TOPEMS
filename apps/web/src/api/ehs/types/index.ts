@@ -6,5 +6,5 @@ export * from './plan';
 export * from './environment';
 export * from './health';
 export * from './training';
-export * from './hazardous-material';
+export * from './hazardousMaterial';
 export * from './sync';

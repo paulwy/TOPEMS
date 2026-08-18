@@ -45,7 +45,7 @@ export const crmModuleConfig: RouteModuleConfig = {
   routes: [
     {
       path: CRM_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/crm/DashboardPage'), 'CRMDashboardPage'),
+      element: lazyWithRetry(() => import('@/pages/crm/CrmDashboardPage'), 'CrmDashboardPage'),
       module: 'crm',
       code: 'crm-dashboard',
       title: i18n.t('shared.config.k2'),
