@@ -15,8 +15,8 @@ import { useQuery } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
-import type {
-  BillingRecord,
+import {
+  type BillingRecord,
   crmApi,
   useCrmMock,
   type BillingAnalyticsData,
