@@ -31,92 +31,101 @@ export interface Snippet {
   tags: string[];
 }
 
-const SNIPPET_LIBRARY: Snippet[] = [
-  {
-    id: 'mf-lazy-load',
-    title: i18n.t('shared.code-completion.k0'),
-    description: i18n.t('microfrontend.code-completion.k0'),
-    code: `const ModuleName = React.lazy(() => import('./microfrontend/module-name'));
+type MicroFrontendApi = {
+  name: string;
+  path: string;
+  description: string;
+  props: Array<{ name: string; type: string; required: boolean; description: string }>;
+};
+
+// Snippet library is generated lazily so i18n resources are loaded before translation.
+function getSnippetLibrary(): Snippet[] {
+  return [
+    {
+      id: 'mf-lazy-load',
+      title: i18n.t('shared.code-completion.k0'),
+      description: i18n.t('microfrontend.code-completion.k0'),
+      code: `const ModuleName = React.lazy(() => import('./microfrontend/module-name'));
 
 const ModuleNamePage: React.FC = () => (
   <Suspense fallback={<LoadingSpinner />}>
     <ModuleName />
   </Suspense>
 );`,
-    tags: ['microfrontend', 'lazy', 'react'],
-  },
-  {
-    id: 'mf-dynamic-import',
-    title: i18n.t('shared.code-completion.k1'),
-    description: i18n.t('shared.code-completion.k2'),
-    code: `const loadModule = async () => {
+      tags: ['microfrontend', 'lazy', 'react'],
+    },
+    {
+      id: 'mf-dynamic-import',
+      title: i18n.t('shared.code-completion.k1'),
+      description: i18n.t('shared.code-completion.k2'),
+      code: `const loadModule = async () => {
   const module = await import('@/microfrontend/module-name');
   module.default.init();
   return module;
 };`,
-    tags: ['microfrontend', 'dynamic-import'],
-  },
-  {
-    id: 'mf-module-gate',
-    title: i18n.t('shared.code-completion.k3'),
-    description: i18n.t('shared.code-completion.k4'),
-    code: `<ModuleGate module="moduleCode" action="view">
+      tags: ['microfrontend', 'dynamic-import'],
+    },
+    {
+      id: 'mf-module-gate',
+      title: i18n.t('shared.code-completion.k3'),
+      description: i18n.t('shared.code-completion.k4'),
+      code: `<ModuleGate module="moduleCode" action="view">
   <RemoteModule />
 </ModuleGate>`,
-    tags: ['microfrontend', 'permissions', 'module-gate'],
-  },
-  {
-    id: 'mf-version-check',
-    title: i18n.t('shared.code-completion.k5'),
-    description: i18n.t('shared.code-completion.k6'),
-    code: `import { versionManager } from '@/microfrontend';
+      tags: ['microfrontend', 'permissions', 'module-gate'],
+    },
+    {
+      id: 'mf-version-check',
+      title: i18n.t('shared.code-completion.k5'),
+      description: i18n.t('shared.code-completion.k6'),
+      code: `import { versionManager } from '@/microfrontend';
 
 versionManager.onVersionUpdate((event) => {
   console.log(\`{i18n.t('microfrontend.code-completion.k0')} \${event.moduleId} {i18n.t('microfrontend.code-completion.k1')}\`);
 });
 
 versionManager.startAutoCheck(5 * 60 * 1000);`,
-    tags: ['microfrontend', 'version', 'hot-reload'],
-  },
-  {
-    id: 'mf-sandbox-isolation',
-    title: i18n.t('shared.code-completion.k7'),
-    description: i18n.t('shared.code-completion.k8'),
-    code: `import { SandboxedRemoteLoader } from '@/microfrontend';
+      tags: ['microfrontend', 'version', 'hot-reload'],
+    },
+    {
+      id: 'mf-sandbox-isolation',
+      title: i18n.t('shared.code-completion.k7'),
+      description: i18n.t('shared.code-completion.k8'),
+      code: `import { SandboxedRemoteLoader } from '@/microfrontend';
 
 <SandboxedRemoteLoader
   moduleId="untrusted-module"
   entryUrl="/remote-entry.js"
   isolation={{ jsSandbox: true, styleIsolation: 'shadow-dom' }}
 />`,
-    tags: ['microfrontend', 'sandbox', 'security'],
-  },
-  {
-    id: 'mf-perf-monitor',
-    title: i18n.t('shared.code-completion.k9'),
-    description: i18n.t('shared.code-completion.k10'),
-    code: `import { performanceAnalyzer } from '@/microfrontend/devex';
+      tags: ['microfrontend', 'sandbox', 'security'],
+    },
+    {
+      id: 'mf-perf-monitor',
+      title: i18n.t('shared.code-completion.k9'),
+      description: i18n.t('shared.code-completion.k10'),
+      code: `import { performanceAnalyzer } from '@/microfrontend/devex';
 
 performanceAnalyzer.recordRender('ComponentName', renderTime, propsChanged, stateChanged);`,
-    tags: ['microfrontend', 'performance', 'monitoring'],
-  },
-  {
-    id: 'mf-debug-session',
-    title: i18n.t('shared.code-completion.k11'),
-    description: i18n.t('shared.code-completion.k12'),
-    code: `import { smartDebugger } from '@/microfrontend/devex';
+      tags: ['microfrontend', 'performance', 'monitoring'],
+    },
+    {
+      id: 'mf-debug-session',
+      title: i18n.t('shared.code-completion.k11'),
+      description: i18n.t('shared.code-completion.k12'),
+      code: `import { smartDebugger } from '@/microfrontend/devex';
 
 const session = smartDebugger.startSession(i18n.t('shared.code-completion.k13'));
 // ... 执行操作 ...
 smartDebugger.stopSession();
 smartDebugger.replaySession(session.id);`,
-    tags: ['microfrontend', 'debug', 'testing'],
-  },
-  {
-    id: 'mf-error-boundary',
-    title: i18n.t('shared.code-completion.k14'),
-    description: i18n.t('shared.code-completion.k15'),
-    code: `import ErrorBoundary from '@/components/ErrorBoundary';
+      tags: ['microfrontend', 'debug', 'testing'],
+    },
+    {
+      id: 'mf-error-boundary',
+      title: i18n.t('shared.code-completion.k14'),
+      description: i18n.t('shared.code-completion.k15'),
+      code: `import ErrorBoundary from '@/components/ErrorBoundary';
 
 <ErrorBoundary
   fallback={<ModuleErrorFallback moduleName="ModuleName" />}
@@ -126,164 +135,93 @@ smartDebugger.replaySession(session.id);`,
 >
   <RemoteModule />
 </ErrorBoundary>`,
-    tags: ['microfrontend', 'error-boundary', 'react'],
-  },
-  {
-    id: 'mf-smart-preload',
-    title: i18n.t('shared.code-completion.k16'),
-    description: i18n.t('shared.code-completion.k17'),
-    code: `import { prefetchOnIdle } from '@/microfrontend';
+      tags: ['microfrontend', 'error-boundary', 'react'],
+    },
+    {
+      id: 'mf-smart-preload',
+      title: i18n.t('shared.code-completion.k16'),
+      description: i18n.t('shared.code-completion.k17'),
+      code: `import { prefetchOnIdle } from '@/microfrontend';
 
 const preloadResult = await prefetchOnIdle(['/remote-module-entry.js']);`,
-    tags: ['microfrontend', 'preload', 'performance'],
-  },
-  {
-    id: 'mf-state-inspection',
-    title: i18n.t('shared.code-completion.k18'),
-    description: i18n.t('shared.code-completion.k19'),
-    code: `import { smartDebugger } from '@/microfrontend/devex';
+      tags: ['microfrontend', 'preload', 'performance'],
+    },
+    {
+      id: 'mf-state-inspection',
+      title: i18n.t('shared.code-completion.k18'),
+      description: i18n.t('shared.code-completion.k19'),
+      code: `import { smartDebugger } from '@/microfrontend/devex';
 
 const stores = smartDebugger.getAllStateStores();
 const reduxState = smartDebugger.inspectReduxState();
 const zustandStores = smartDebugger.inspectZustandStores();`,
-    tags: ['microfrontend', 'state', 'debug'],
-  },
-];
+      tags: ['microfrontend', 'state', 'debug'],
+    },
+  ];
+}
 
-const MICRO_FRONTEND_APIS: Array<{
-  name: string;
-  path: string;
-  description: string;
-  props: Array<{ name: string; type: string; required: boolean; description: string }>;
-}> = [
-  {
-    name: 'RemoteLoader',
-    path: '@/microfrontend',
-    description: i18n.t('shared.code-completion.k20'),
-    props: [
-      {
-        name: 'moduleId',
-        type: 'string',
-        required: true,
-        description: i18n.t('shared.code-completion.id_21'),
-      },
-      {
-        name: 'entryUrl',
-        type: 'string',
-        required: true,
-        description: i18n.t('shared.code-completion.url_22'),
-      },
-      {
-        name: 'fallback',
-        type: 'ReactNode',
-        required: false,
-        description: i18n.t('shared.code-completion.k23'),
-      },
-      {
-        name: 'errorBoundary',
-        type: 'boolean',
-        required: false,
-        description: i18n.t('shared.code-completion.k24'),
-      },
-    ],
-  },
-  {
-    name: 'SandboxedRemoteLoader',
-    path: '@/microfrontend',
-    description: i18n.t('shared.code-completion.k25'),
-    props: [
-      {
-        name: 'moduleId',
-        type: 'string',
-        required: true,
-        description: i18n.t('shared.code-completion.id_26'),
-      },
-      {
-        name: 'entryUrl',
-        type: 'string',
-        required: true,
-        description: i18n.t('shared.code-completion.url_27'),
-      },
-      {
-        name: 'isolation',
-        type: 'SandboxedRemoteLoaderIsolation',
-        required: true,
-        description: i18n.t('shared.code-completion.k28'),
-      },
-      {
-        name: 'fallback',
-        type: 'ReactNode',
-        required: false,
-        description: i18n.t('shared.code-completion.k29'),
-      },
-    ],
-  },
-  {
-    name: 'ModuleMarketplace',
-    path: '@/microfrontend',
-    description: i18n.t('shared.code-completion.k30'),
-    props: [
-      {
-        name: 'onClose',
-        type: '() => void',
-        required: true,
-        description: i18n.t('shared.code-completion.k31'),
-      },
-    ],
-  },
-  {
-    name: 'DependencyGovernance',
-    path: '@/microfrontend',
-    description: i18n.t('shared.code-completion.k32'),
-    props: [
-      {
-        name: 'onClose',
-        type: '() => void',
-        required: true,
-        description: i18n.t('shared.code-completion.k33'),
-      },
-    ],
-  },
-  {
-    name: 'SecurityCenter',
-    path: '@/microfrontend',
-    description: i18n.t('shared.code-completion.k34'),
-    props: [
-      {
-        name: 'onClose',
-        type: '() => void',
-        required: true,
-        description: i18n.t('shared.code-completion.k35'),
-      },
-    ],
-  },
-  {
-    name: 'RuntimeDashboard',
-    path: '@/microfrontend',
-    description: i18n.t('shared.code-completion.k36'),
-    props: [
-      {
-        name: 'onClose',
-        type: '() => void',
-        required: true,
-        description: i18n.t('shared.code-completion.k37'),
-      },
-    ],
-  },
-  {
-    name: 'AIOpsPanel',
-    path: '@/microfrontend',
-    description: i18n.t('microfrontend.code-completion.k1'),
-    props: [
-      {
-        name: 'onClose',
-        type: '() => void',
-        required: true,
-        description: i18n.t('shared.code-completion.k38'),
-      },
-    ],
-  },
-];
+// Micro-frontend API metadata is generated lazily so i18n resources are loaded before translation.
+function getMicroFrontendApis(): MicroFrontendApi[] {
+  return [
+    {
+      name: 'RemoteLoader',
+      path: '@/microfrontend',
+      description: i18n.t('shared.code-completion.k20'),
+      props: [
+        { name: 'moduleId', type: 'string', required: true, description: i18n.t('shared.code-completion.id_21') },
+        { name: 'entryUrl', type: 'string', required: true, description: i18n.t('shared.code-completion.url_22') },
+        { name: 'fallback', type: 'ReactNode', required: false, description: i18n.t('shared.code-completion.k23') },
+        { name: 'errorBoundary', type: 'boolean', required: false, description: i18n.t('shared.code-completion.k24') },
+      ],
+    },
+    {
+      name: 'SandboxedRemoteLoader',
+      path: '@/microfrontend',
+      description: i18n.t('shared.code-completion.k25'),
+      props: [
+        { name: 'moduleId', type: 'string', required: true, description: i18n.t('shared.code-completion.id_26') },
+        { name: 'entryUrl', type: 'string', required: true, description: i18n.t('shared.code-completion.url_27') },
+        {
+          name: 'isolation',
+          type: 'SandboxedRemoteLoaderIsolation',
+          required: true,
+          description: i18n.t('shared.code-completion.k28'),
+        },
+        { name: 'fallback', type: 'ReactNode', required: false, description: i18n.t('shared.code-completion.k29') },
+      ],
+    },
+    {
+      name: 'ModuleMarketplace',
+      path: '@/microfrontend',
+      description: i18n.t('shared.code-completion.k30'),
+      props: [{ name: 'onClose', type: '() => void', required: true, description: i18n.t('shared.code-completion.k31') }],
+    },
+    {
+      name: 'DependencyGovernance',
+      path: '@/microfrontend',
+      description: i18n.t('shared.code-completion.k32'),
+      props: [{ name: 'onClose', type: '() => void', required: true, description: i18n.t('shared.code-completion.k33') }],
+    },
+    {
+      name: 'SecurityCenter',
+      path: '@/microfrontend',
+      description: i18n.t('shared.code-completion.k34'),
+      props: [{ name: 'onClose', type: '() => void', required: true, description: i18n.t('shared.code-completion.k35') }],
+    },
+    {
+      name: 'RuntimeDashboard',
+      path: '@/microfrontend',
+      description: i18n.t('shared.code-completion.k36'),
+      props: [{ name: 'onClose', type: '() => void', required: true, description: i18n.t('shared.code-completion.k37') }],
+    },
+    {
+      name: 'AIOpsPanel',
+      path: '@/microfrontend',
+      description: i18n.t('microfrontend.code-completion.k1'),
+      props: [{ name: 'onClose', type: '() => void', required: true, description: i18n.t('shared.code-completion.k38') }],
+    },
+  ];
+}
 
 export class CodeCompletion {
   private static instance: CodeCompletion;
@@ -292,7 +230,7 @@ export class CodeCompletion {
   private moduleApiCache: Map<string, CompletionItem[]> = new Map();
 
   private constructor() {
-    SNIPPET_LIBRARY.forEach((s) => this.customSnippets.set(s.id, s));
+    getSnippetLibrary().forEach((s) => this.customSnippets.set(s.id, s));
   }
 
   static getInstance(): CodeCompletion {
@@ -313,7 +251,7 @@ export class CodeCompletion {
 
     const suggestions: CompletionItem[] = [];
 
-    for (const api of MICRO_FRONTEND_APIS) {
+    for (const api of getMicroFrontendApis()) {
       if (
         api.name.toLowerCase().includes(mod.name.toLowerCase()) ||
         mod.name.toLowerCase().includes(api.name.toLowerCase())
@@ -349,7 +287,7 @@ export class CodeCompletion {
   // ==================== Type-Safe Prop Hints ====================
 
   getPropHints(componentName: string): CompletionItem[] {
-    const api = MICRO_FRONTEND_APIS.find((a) => a.name === componentName);
+    const api = getMicroFrontendApis().find((a) => a.name === componentName);
     if (!api) return [];
 
     return api.props.map((prop) => ({
@@ -384,7 +322,7 @@ export class CodeCompletion {
       }
     }
 
-    for (const api of MICRO_FRONTEND_APIS) {
+    for (const api of getMicroFrontendApis()) {
       if (!context.importedModules.includes(api.name)) {
         suggestions.push({
           id: `import_api_${api.name}`,
@@ -426,7 +364,7 @@ export class CodeCompletion {
   }
 
   removeSnippet(id: string): boolean {
-    const isBuiltIn = SNIPPET_LIBRARY.some((s) => s.id === id);
+    const isBuiltIn = getSnippetLibrary().some((s) => s.id === id);
     if (isBuiltIn) return false;
     return this.customSnippets.delete(id);
   }
@@ -489,7 +427,7 @@ export class CodeCompletion {
   }
 
   getDocumentationForSymbol(symbol: string): string | null {
-    const api = MICRO_FRONTEND_APIS.find((a) => a.name === symbol);
+    const api = getMicroFrontendApis().find((a) => a.name === symbol);
     if (api) {
       return `${api.name}\n${'='.repeat(api.name.length)}\n\n${api.description}\n\nProps:\n${api.props.map((p) => `  ${p.name}${p.required ? ' (required)' : ''}: ${p.type} - ${p.description}`).join('\n')}`;
     }
@@ -502,7 +440,7 @@ export class CodeCompletion {
 
   reset(): void {
     this.customSnippets.clear();
-    SNIPPET_LIBRARY.forEach((s) => this.customSnippets.set(s.id, s));
+    getSnippetLibrary().forEach((s) => this.customSnippets.set(s.id, s));
     this.moduleApiCache.clear();
   }
 }

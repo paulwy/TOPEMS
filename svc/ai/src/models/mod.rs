@@ -189,7 +189,237 @@ pub static CHUNKS: std::sync::OnceLock<Arc<Mutex<Vec<DocumentChunk>>>> = std::sy
 pub static DOCUMENTS: std::sync::OnceLock<Arc<Mutex<Vec<Document>>>> = std::sync::OnceLock::new();
 pub static CLIENT: std::sync::OnceLock<Client> = std::sync::OnceLock::new();
 pub static CONFIG: std::sync::OnceLock<Config> = std::sync::OnceLock::new();
+pub static DIFY_CONFIG: std::sync::OnceLock<DifyConfig> = std::sync::OnceLock::new();
 pub static DOCS_DIR: &str = "docs";
+
+// =============================================================================
+// Dify 集成：配置 + 请求/响应 DTO
+// =============================================================================
+// 对应 Dify Service API：https://docs.dify.ai/guides/application-publishing/developing-with-apis
+// 默认通过 Dify Nginx 入口（/v1/*）调用，使用 Bearer app-xxx 鉴权。
+
+/// Dify 客户端配置
+#[derive(Clone, Debug)]
+pub struct DifyConfig {
+    /// Dify 实例根地址（如 http://localhost:8180），不含尾部斜杠
+    pub base_url: String,
+    /// Dify 应用 API Key（格式 app-xxx）
+    pub api_key: String,
+    /// 默认 user 标识（Dify 用于区分终端用户）
+    pub default_user: String,
+    /// HTTP 调用超时（秒）
+    pub timeout_secs: u64,
+}
+
+impl Default for DifyConfig {
+    fn default() -> Self {
+        Self {
+            base_url: "http://localhost:8180".to_string(),
+            api_key: String::new(),
+            default_user: "topems-user".to_string(),
+            timeout_secs: 120,
+        }
+    }
+}
+
+/// Dify 对话请求（对应 POST /v1/chat-messages）
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct DifyChatRequest {
+    /// 应用变量（Dify 应用入参）
+    #[serde(default = "default_inputs")]
+    pub inputs: serde_json::Value,
+    /// 用户消息内容
+    pub query: String,
+    /// blocking | streaming
+    #[serde(default = "default_response_mode")]
+    pub response_mode: String,
+    /// 会话 ID（首次对话传空字符串）
+    #[serde(default)]
+    pub conversation_id: String,
+    /// 终端用户标识
+    pub user: String,
+}
+
+fn default_response_mode() -> String {
+    "blocking".to_string()
+}
+
+fn default_inputs() -> serde_json::Value {
+    serde_json::json!({})
+}
+
+/// Dify blocking 模式响应
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DifyChatResponse {
+    /// 事件类型：message | message_end | error
+    #[serde(default)]
+    pub event: String,
+    /// 消息 ID
+    #[serde(default)]
+    #[serde(rename = "message_id")]
+    pub message_id: String,
+    /// 会话 ID
+    #[serde(default)]
+    #[serde(rename = "conversation_id")]
+    pub conversation_id: String,
+    /// 模型实际输出文本（message 事件）
+    #[serde(default)]
+    pub answer: String,
+    /// 创建时间戳（秒）
+    #[serde(default)]
+    pub created_at: i64,
+}
+
+/// Dify 错误响应
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DifyErrorResponse {
+    pub code: String,
+    pub message: String,
+    #[serde(default)]
+    pub status: i32,
+}
+
+/// Dify 应用元信息（GET /v1/info）
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DifyInfoResponse {
+    #[serde(default)]
+    #[serde(rename = "provider")]
+    pub provider: String,
+    #[serde(default)]
+    #[serde(rename = "name")]
+    pub name: String,
+    #[serde(default)]
+    #[serde(rename = "description")]
+    pub description: String,
+    #[serde(default)]
+    #[serde(rename = "authors")]
+    pub authors: Vec<String>,
+    #[serde(default)]
+    #[serde(rename = "tags")]
+    pub tags: Vec<String>,
+    #[serde(default)]
+    #[serde(rename = "icon_type")]
+    pub icon_type: String,
+    #[serde(default)]
+    #[serde(rename = "icon")]
+    pub icon: String,
+    #[serde(default)]
+    #[serde(rename = "icon_background")]
+    pub icon_background: String,
+}
+
+/// Dify 应用参数（GET /v1/parameters）
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DifyParametersResponse {
+    #[serde(default)]
+    #[serde(rename = "user_input_form")]
+    pub user_input_form: Vec<serde_json::Value>,
+}
+
+/// Dify 应用元数据（GET /v1/meta）
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DifyMetaResponse {
+    #[serde(default)]
+    #[serde(rename = "tool_icons")]
+    pub tool_icons: serde_json::Value,
+}
+
+/// Dify 会话项
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DifyConversationItem {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub inputs: serde_json::Value,
+    #[serde(default)]
+    pub status: String,
+    #[serde(default)]
+    pub updated_at: i64,
+}
+
+/// Dify 会话列表响应（GET /v1/conversations）
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DifyConversationListResponse {
+    #[serde(default)]
+    pub data: Vec<DifyConversationItem>,
+    #[serde(default)]
+    pub has_more: bool,
+    #[serde(default)]
+    pub limit: i64,
+}
+
+/// Dify 消息历史项
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DifyMessageItem {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default)]
+    pub conversation_id: String,
+    #[serde(default)]
+    pub query: String,
+    #[serde(default)]
+    pub answer: String,
+    #[serde(default)]
+    pub created_at: i64,
+    #[serde(default)]
+    pub feedback: serde_json::Value,
+}
+
+/// Dify 消息历史响应（GET /v1/messages）
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DifyMessageHistoryResponse {
+    #[serde(default)]
+    pub data: Vec<DifyMessageItem>,
+    #[serde(default)]
+    pub has_more: bool,
+    #[serde(default)]
+    pub limit: i64,
+}
+
+/// Dify 反馈请求（POST /v1/messages/{id}/feedbacks）
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct DifyFeedbackRequest {
+    /// like | dislike | null
+    pub rating: Option<String>,
+    /// 终端用户标识
+    pub user: String,
+    #[serde(default)]
+    pub content: Option<String>,
+}
+
+/// Dify 反馈响应
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DifyFeedbackResponse {
+    #[serde(default)]
+    pub result: String,
+}
+
+/// Dify 停止生成请求（POST /v1/messages/{id}/stop）
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct DifyStopRequest {
+    pub user: String,
+}
+
+/// Dify 停止生成响应
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct DifyStopResponse {
+    #[serde(default)]
+    pub result: String,
+}
+
+/// 列出会话请求 query 参数
+#[derive(Debug, Deserialize)]
+pub struct DifyListQuery {
+    pub user: String,
+    #[serde(default)]
+    pub conversation_id: Option<String>,
+    #[serde(default)]
+    pub limit: Option<i32>,
+    #[serde(default)]
+    pub cursor: Option<String>,
+}
 
 #[derive(Clone, Debug)]
 pub struct Config {

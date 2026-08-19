@@ -43,9 +43,9 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
         apiBasePath: '/api/billing',
       },
       plugin: {
-        service: 'unified-core',
+        service: 'plugin-registry',
         module: 'plugin',
-        apiBasePath: '/api/core/plugin',
+        apiBasePath: '/api/plugin',
       },
       audit: {
         service: 'unified-core',
@@ -53,9 +53,9 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
         apiBasePath: '/api/core/iam',
       },
       monitor: {
-        service: 'unified-core',
+        service: 'monitor',
         module: 'monitor',
-        apiBasePath: '/api/core/monitor',
+        apiBasePath: '/api/monitor',
       },
       dictionary: {
         service: 'unified-core',
@@ -101,9 +101,9 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
   },
 
   monitor: {
-    service: 'unified-core',
+    service: 'monitor',
     module: 'monitor',
-    apiBasePath: '/api/core/monitor',
+    apiBasePath: '/api/monitor',
   },
 
   integration: {

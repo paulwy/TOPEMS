@@ -448,7 +448,7 @@ export const MarkdownEditorTemplate: React.FC<MarkdownEditorTemplateProps> = ({
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>${i18n.t('components.markdown_editor_template.k14')}</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; }
     pre { background: var(--color-fallback-panel-bg, #1a1a2e); color: var(--color-grey-300, #d1d5db); padding: 1rem; border-radius: 8px; overflow-x: auto; }

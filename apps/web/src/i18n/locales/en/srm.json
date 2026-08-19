@@ -2144,7 +2144,10 @@
       "k30": "Amount & Date",
       "k32": "Add Order",
       "k33": "Edit Order",
-      "k34": "Order Details"
+      "k34": "Order Details",
+      "breadcrumb": {
+        "home": "Label"
+      }
     },
     "quotation": {
       "k28": "Remarks",
@@ -2338,6 +2341,32 @@
       "k37": "Add Supplier Product",
       "k38": "Edit Supplier Product",
       "k39": "Supplier Product Details"
+    },
+    "total_suppliers": "Supplier",
+    "active_suppliers_count": "Supplier",
+    "average_rating": "Title",
+    "total_evaluations_count": "Title",
+    "purchase_order": "Order",
+    "pending_orders_count": "Order",
+    "total_order_amount": "Order",
+    "completed_orders_count": "Order",
+    "total_contracts": "Title",
+    "active_contracts_count": "Title",
+    "supplier_category": "Supplier",
+    "category_count": "Title",
+    "supplier_status_distribution": "Supplier",
+    "order_status_distribution": "Order",
+    "evaluation_score_distribution": "Title",
+    "monthly_order_trend": "Order",
+    "contract_status_distribution": "Title",
+    "title": "Title",
+    "quotation_page": {
+      "award_success": "awardSuccess",
+      "award_fail": "awardFailure",
+      "reject_success": "rejectSuccess",
+      "reject_fail": "rejectFailure",
+      "award": "Label",
+      "reject": "Reject"
     }
   },
   "bidding_page": {
@@ -2636,5 +2665,30 @@
     "待审核": "Pending Review",
     "总价值": "Total Value",
     "供应商产品": "Supplier Product"
-  }
+  },
+  "srm.total_suppliers": "Supplier",
+  "srm.active_suppliers_count": "Supplier",
+  "srm.average_rating": "Title",
+  "srm.total_evaluations_count": "Title",
+  "srm.purchase_order": "Order",
+  "srm.pending_orders_count": "Order",
+  "srm.total_order_amount": "Order",
+  "srm.completed_orders_count": "Order",
+  "srm.total_contracts": "Title",
+  "srm.active_contracts_count": "Title",
+  "srm.supplier_category": "Supplier",
+  "srm.category_count": "Title",
+  "srm.supplier_status_distribution": "Supplier",
+  "srm.order_status_distribution": "Order",
+  "srm.evaluation_score_distribution": "Title",
+  "srm.monthly_order_trend": "Order",
+  "srm.contract_status_distribution": "Title",
+  "srm.title": "Title",
+  "srm.order.breadcrumb.home": "Label",
+  "srm.quotation_page.award_success": "awardSuccess",
+  "srm.quotation_page.award_fail": "awardFailure",
+  "srm.quotation_page.reject_success": "rejectSuccess",
+  "srm.quotation_page.reject_fail": "rejectFailure",
+  "srm.quotation_page.award": "Label",
+  "srm.quotation_page.reject": "Reject"
 }

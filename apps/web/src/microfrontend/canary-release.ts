@@ -195,10 +195,28 @@ class CanaryReleaseManager {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        // HTTP 4xx/5xx：服务端未部署或鉴权失败，走本地降级，不打 warn
+        logger.debug(`[CanaryRelease] server config unavailable: HTTP ${response.status}`);
+        return;
       }
 
-      const serverConfigs = (await response.json()) as CanaryConfig[];
+      // 防御 SPA fallback：当 API 路径未部署时，dev server 会返回 index.html (text/html)，
+      // 若此时直接 response.json() 会抛 SyntaxError: Unexpected token '<'。
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        logger.debug(`[CanaryRelease] server config not found (content-type: ${contentType || 'n/a'}, using local fallback)`);
+        return;
+      }
+
+      const rawText = await response.text();
+      let serverConfigs: CanaryConfig[];
+      try {
+        serverConfigs = JSON.parse(rawText) as CanaryConfig[];
+      } catch (parseErr) {
+        // JSON 解析失败（空响应/截断/错误格式），静默降级到 localStorage 配置，不抛 warn 噪音
+        logger.debug('[CanaryRelease] server config parse failed, using local fallback', parseErr);
+        return;
+      }
       if (!Array.isArray(serverConfigs)) return;
 
       serverConfigs.forEach((config) => {
@@ -215,7 +233,12 @@ class CanaryReleaseManager {
         i18n.t('microfrontend.canary-release.k1')
       );
     } catch (err) {
-      logger.warn(i18n.t('microfrontend.canary-release.k3'), err);
+      // 网络错误 / 超时 / AbortError：开发环境下正常，降为 debug 级别避免 warn 刷屏
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        logger.debug('[CanaryRelease] server config sync timeout, using local fallback');
+        return;
+      }
+      logger.debug(i18n.t('microfrontend.canary-release.k3'), err);
     }
   }
 

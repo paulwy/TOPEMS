@@ -26,8 +26,8 @@ export const BI_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const biModuleConfig: RouteModuleConfig = {
   code: 'bi',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.bi_name'),
+  nameKey: 'shared.config.bi_name',
   icon: 'BarChart3',
   path: BI_PATHS.root,
   source: 'plugin',

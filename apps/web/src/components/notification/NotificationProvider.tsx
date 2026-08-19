@@ -16,11 +16,18 @@ interface ToastProps {
   message: string;
   type: NotificationType;
   duration?: number;
-  onClose: () => void;
+  removeNotification: (id: string) => void;
 }
 
-const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) => {
+const Toast = ({ id, title, message, type, duration, removeNotification }: ToastProps) => {
   const [isVisible, setIsVisible] = useState(true);
+
+  // 稳定 onClose 引用：仅当 id / removeNotification 变化时才重建（两者在 Toast 生命周期中都不变）
+  // —— 否则若父组件 Toaster 在 notifications 变化时为每条 Toast 重新传入新的内联 onClose，
+  //    会导致这里的 useEffect 每次都清理并重启计时器，产生不必要的计时器抖动
+  const onClose = React.useCallback(() => {
+    removeNotification(id);
+  }, [removeNotification, id]);
 
   useEffect(() => {
     const autoCloseDuration = duration ?? 5000;
@@ -187,7 +194,7 @@ export function Toaster() {
           message={notification.message}
           type={notification.type}
           duration={notification.duration}
-          onClose={() => removeNotification(notification.id)}
+          removeNotification={removeNotification}
         />
       ))}
     </Box>

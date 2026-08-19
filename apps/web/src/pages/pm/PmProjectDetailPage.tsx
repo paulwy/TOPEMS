@@ -30,14 +30,14 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
-const STATUS_LABELS: Record<string, string> = {
+const getStatusLabels = (): Record<string, string> => ({
   active: i18n.t('pm.pm_project_detail_page.k0'),
   completed: i18n.t('pm.pm_project_detail_page.k1'),
   pending: i18n.t('pm.pm_project_detail_page.k2'),
   approved: i18n.t('pm.pm_project_detail_page.k3'),
   cancelled: i18n.t('pm.pm_project_detail_page.k4'),
   draft: i18n.t('pm.pm_project_detail_page.k5'),
-};
+});
 
 const STATUS_COLORS: Record<string, { bgcolor: string; color: string }> = {
   active: { bgcolor: 'success.lighter', color: ct.success[800] },
@@ -48,11 +48,11 @@ const STATUS_COLORS: Record<string, { bgcolor: string; color: string }> = {
   draft: { bgcolor: 'grey.100', color: 'text.secondary' },
 };
 
-const RISK_LABELS: Record<string, string> = {
+const getRiskLabels = (): Record<string, string> => ({
   high: i18n.t('pm.pm_project_detail_page.k6'),
   medium: i18n.t('pm.pm_project_detail_page.k7'),
   low: i18n.t('pm.pm_project_detail_page.k8'),
-};
+});
 
 const RISK_COLORS: Record<string, { bgcolor: string; color: string }> = {
   high: { bgcolor: 'error.lighter', color: ct.error[800] },
@@ -246,7 +246,7 @@ const PmProjectDetailPage: React.FC = () => {
               </Typography>
               <StatusBadge
                 status={project.risklevel || 'low'}
-                label={RISK_LABELS[project.risklevel || ''] || t('pm.pm_project_detail_page.k16')}
+                label={getRiskLabels()[project.risklevel || ''] || t('pm.pm_project_detail_page.k16')}
                 color={
                   project.risklevel === 'high'
                     ? 'error'
@@ -1161,8 +1161,8 @@ const PmProjectDetailPage: React.FC = () => {
       title: project.name,
       subtitle: project.code,
       tags: [
-        STATUS_LABELS[statusKey],
-        RISK_LABELS[project.risklevel || ''] || t('pm.project_detail.not_evaluated'),
+        getStatusLabels()[statusKey],
+        getRiskLabels()[project.risklevel || ''] || t('pm.project_detail.not_evaluated'),
       ],
       stats: [
         { label: t('pm.project_detail.project_progress'), value: `${project.progress}%` },
@@ -1184,8 +1184,8 @@ const PmProjectDetailPage: React.FC = () => {
     completedPhases,
     completedMilestones,
     t,
-    STATUS_LABELS,
-    RISK_LABELS,
+    getStatusLabels,
+    getRiskLabels,
   ]);
 
   const handleRefresh = () => {

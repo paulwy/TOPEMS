@@ -2,7 +2,7 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { Bell, Check, Star, Eye, EyeOff, Calendar, Mail } from 'lucide-react';
 import { Box, Typography } from '@mui/material';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { notificationSchema } from '@/schemas/notification';
+import { getNotificationSchema } from '@/schemas/notification';
 import {
   getNotifications,
   markAsRead,
@@ -385,7 +385,7 @@ export const NotificationListPage: React.FC = () => {
     },
   ];
   const schemaWithActions = {
-    ...notificationSchema,
+    ...getNotificationSchema(),
     batchActions: [
       {
         key: 'markRead',

@@ -64,6 +64,8 @@ export interface RouteModuleConfig {
   permission?: string;
   // P34-4: 模块分层 — 默认 'basic'；'advanced' 需要在 core_tenant_modules 中显式激活
   tier?: ModuleTier;
+  /** 模块需要额外预加载的 i18n 命名空间（跨组件依赖） */
+  preloadNamespaces?: string[];
   routes: RouteConfigV2[];
 }
 

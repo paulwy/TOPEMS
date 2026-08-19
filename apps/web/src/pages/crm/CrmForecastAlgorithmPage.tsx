@@ -207,22 +207,32 @@ const CrmForecastAlgorithmPage: React.FC = () => {
                 sx={fieldSx}
                 helperText={methods.find((m) => m.method === method)?.description}
               >
-                {methods.length === 0 && (
-                  <>
-                    <MenuItem value='moving_average'>
-                      {t('crm.forecastAlgorithm.method_moving_average')}
-                    </MenuItem>
-                    <MenuItem value='weighted_moving_average'>
-                      {t('crm.forecastAlgorithm.method_weighted_moving_average')}
-                    </MenuItem>
-                    <MenuItem value='exponential_smoothing'>
-                      {t('crm.forecastAlgorithm.method_exponential_smoothing')}
-                    </MenuItem>
-                    <MenuItem value='linear_regression'>
-                      {t('crm.forecastAlgorithm.method_linear_regression')}
-                    </MenuItem>
-                  </>
-                )}
+                {methods.length === 0 && [
+                  <MenuItem
+                    key='moving_average'
+                    value='moving_average'
+                  >
+                    {t('crm.forecastAlgorithm.method_moving_average')}
+                  </MenuItem>,
+                  <MenuItem
+                    key='weighted_moving_average'
+                    value='weighted_moving_average'
+                  >
+                    {t('crm.forecastAlgorithm.method_weighted_moving_average')}
+                  </MenuItem>,
+                  <MenuItem
+                    key='exponential_smoothing'
+                    value='exponential_smoothing'
+                  >
+                    {t('crm.forecastAlgorithm.method_exponential_smoothing')}
+                  </MenuItem>,
+                  <MenuItem
+                    key='linear_regression'
+                    value='linear_regression'
+                  >
+                    {t('crm.forecastAlgorithm.method_linear_regression')}
+                  </MenuItem>,
+                ]}
                 {methods.map((m) => (
                   <MenuItem
                     key={m.method}

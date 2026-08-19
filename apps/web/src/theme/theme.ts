@@ -1,6 +1,7 @@
 /* eslint-disable topems-design/no-hardcoded-colors -- theme.ts defines the color tokens */
 import type { Theme, ThemeOptions } from '@mui/material/styles';
 import { createTheme } from '@mui/material/styles';
+import { zhCN } from '@mui/material/locale';
 import { designTokens, semanticTokens } from './tokens';
 import { gradients } from './gradients';
 import { injectCyberpunkComponentStyles } from './animations/cyberpunk.css';
@@ -561,6 +562,34 @@ export const createCustomTheme = (): Theme => {
         },
       },
       MuiPagination: {
+        defaultProps: {
+          getItemAriaLabel: (
+            type:
+              | 'page'
+              | 'first'
+              | 'last'
+              | 'next'
+              | 'previous'
+              | 'start-ellipsis'
+              | 'end-ellipsis',
+            page: number | null,
+            selected: boolean,
+          ) => {
+            if (type === 'page' && page !== null) {
+              return `跳转到第 ${page} 页${selected ? '（当前页）' : ''}`;
+            }
+            if (type === 'start-ellipsis' || type === 'end-ellipsis') {
+              return '省略页';
+            }
+            const labels: Record<string, string> = {
+              first: '跳转到首页',
+              last: '跳转到末页',
+              next: '跳转到下一页',
+              previous: '跳转到上一页',
+            };
+            return labels[type] ?? '';
+          },
+        },
         styleOverrides: {
           root: {
             '& .Mui-selected': {
@@ -1041,8 +1070,25 @@ export const createCustomTheme = (): Theme => {
           return {};
         },
       },
+      // 表格分页中文化（覆盖显示文本）
+      MuiTablePagination: {
+        defaultProps: {
+          labelDisplayedRows: ({
+            from,
+            to,
+            count,
+          }: {
+            from: number;
+            to: number;
+            count: number;
+          }) => {
+            if (count === -1) return `第 ${from}-${to} 条（共超过 ${to} 条）`;
+            return `第 ${from}-${to} 条 / 共 ${count} 条`;
+          },
+        },
+      },
     },
-  });
+  }, zhCN);
 };
 
 export default createCustomTheme;

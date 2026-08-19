@@ -101,6 +101,9 @@ use super::models::{
         super::instance::resume_instance,
         super::instance::suspend_instance,
         super::instance::get_instance_details,
+        // === Flow-Monitor ===
+        super::instance::error_instances,
+        super::instance::overdue_instances,
         // === Flow-Approval ===
         super::approval::list_approval_tasks,
         super::approval::get_approval_task,

@@ -430,21 +430,17 @@ export function withPerformanceTracking<P extends object>(
   const name = componentName || Component.displayName || Component.name || 'UnknownComponent';
 
   const WrappedComponent: React.FC<P> = (props) => {
-    const startTime = useRef<number>(0);
-    const [, setIsMounted] = useState(false);
+    const startTime = useRef<number>(performance.now());
+    const mountedRef = useRef(false);
 
     useEffect(() => {
-      startTime.current = performance.now();
-      return () => {
-        const renderTime = performance.now() - startTime.current;
-        performanceMonitor.recordComponentRender(name, renderTime, false);
-      };
-    });
-
-    useEffect(() => {
-      setIsMounted(true);
       const mountTime = performance.now() - startTime.current;
-      performanceMonitor.recordComponentRender(name, mountTime, true);
+      performanceMonitor.recordComponentRender(name, mountTime, !mountedRef.current);
+      mountedRef.current = true;
+      return () => {
+        const unmountTime = performance.now() - startTime.current;
+        performanceMonitor.recordComponentRender(name, unmountTime, false);
+      };
     }, []);
 
     return <Component {...props} />;

@@ -37,8 +37,8 @@ export const ERP_PATHS = {
 // 在前端未提供独立页面，故不在此配置。
 export const erpModuleConfig: RouteModuleConfig = {
   code: 'erp',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.erp_name'),
+  nameKey: 'shared.config.erp_name',
   icon: 'Grid3X3',
   path: ERP_PATHS.root,
   source: 'core',

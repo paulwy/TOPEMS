@@ -614,6 +614,8 @@ function formatSegmentLabel(segment: string): string {
     'external-erp': i18n.t('shared.use_auto_breadcrumbs.erp_137'),
     connections: i18n.t('shared.use_auto_breadcrumbs.k138'),
     mappings: i18n.t('shared.use_auto_breadcrumbs.k139'),
+    plugin: i18n.t('shared.use_auto_breadcrumbs.k140'),
+    marketplace: i18n.t('shared.use_auto_breadcrumbs.k141'),
   };
 
   return (

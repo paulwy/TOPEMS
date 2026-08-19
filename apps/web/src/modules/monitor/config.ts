@@ -19,8 +19,8 @@ export const MONITOR_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const monitorModuleConfig: RouteModuleConfig = {
   code: 'monitor',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.monitor_name'),
+  nameKey: 'shared.config.monitor_name',
   icon: 'Activity',
   path: MONITOR_PATHS.root,
   source: 'core',

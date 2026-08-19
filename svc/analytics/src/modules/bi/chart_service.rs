@@ -86,20 +86,93 @@ pub struct ChartService {
 }
 
 /// Validates a SQL identifier (table or column name) to prevent SQL injection.
-/// Only allows alphanumeric characters and underscores, starting with a letter or underscore.
+///
+/// 严格白名单策略：仅允许 ASCII 字母 / 数字 / 下划线；首字符必须为字母或下划线。
+/// 额外阻止若干危险子串（即使字符集通过，也做二次拦截）。
 pub fn validate_identifier(name: &str) -> Result<String, String> {
     if name.is_empty() {
         return Err("Identifier cannot be empty".to_string());
     }
+
+    // 长度上限：PostgreSQL 标识符不超过 63 字节（NAMEDATALEN-1）。
+    // 超过时一律拒绝，防止异常膨胀或基于长度的边界攻击。
+    if name.len() > 63 {
+        return Err(format!(
+            "Invalid identifier '{}': exceeds max length of 63 bytes",
+            name
+        ));
+    }
+
+    // 字节层面禁止空字节与控制字符（ASCII 0-31、127 DEL）。
+    // 这些字符在 SQL 中语义模糊，且常见于注入 / 截断型 payload。
+    for (i, b) in name.bytes().enumerate() {
+        if b == 0 {
+            return Err(format!(
+                "Invalid identifier '{}': contains NUL byte at position {}",
+                name, i
+            ));
+        }
+        if b < 32 || b == 127 {
+            return Err(format!(
+                "Invalid identifier '{}': contains control char 0x{:02x} at position {}",
+                name, b, i
+            ));
+        }
+        // 只允许 ASCII 字母 / 数字 / 下划线，拒绝所有多字节与高位字符。
+        if !(b.is_ascii_alphanumeric() || b == b'_') {
+            return Err(format!(
+                "Invalid identifier '{}': only ASCII letters, digits, and '_' are allowed; \
+                 got byte 0x{:02x} at position {}",
+                name, b, i
+            ));
+        }
+    }
+
     let lower = name.to_lowercase();
+    // 注：字节级白名单已拒绝空格 / 引号 / 注释符等注入载体，
+    // 因此此处 FORBIDDEN 仅做二次兜底，针对：
+    // - 多语句 / 注释 片段（`;`, `--`, `/*`, `*/`）
+    // - 危险前缀 / 函数（`xp_`, `sp_`, `pg_`, `information_schema`, `pg_read_file` …）
+    // - DDL / DCL / 备份类命令（`create/alter/drop/grant/revoke/vacuum/...`）
+    //   —— 这里用「带空格」子串匹配，避免误伤合法列名（如 `select_flag`）
     const FORBIDDEN: &[&str] = &[
         ";",
         "--",
         "/*",
         "*/",
+        "\x00", // NUL — 兜底，字节层面已先拦截
+        "xp_",
+        "sp_",
         "pg_",
+        "pg_catalog",
         "information_schema",
         "pg_read_file",
+        "pg_write_file",
+        "truncate ",
+        "grant ",
+        "revoke ",
+        "vacuum ",
+        "reindex ",
+        "lock ",
+        "shutdown ",
+        "attach ",
+        "detach ",
+        "explain ",
+        "analyze ",
+        "create ",
+        "alter ",
+        "drop ",
+        "rename ",
+        "comment ",
+        "copy ",
+        "select ",
+        "update ",
+        "insert ",
+        "delete ",
+        "merge ",
+        "union ",
+        "intersect ",
+        "except ",
     ];
     for fragment in FORBIDDEN {
         if lower.contains(fragment) {
@@ -109,6 +182,7 @@ pub fn validate_identifier(name: &str) -> Result<String, String> {
             ));
         }
     }
+
     let mut chars = name.chars();
     let first = match chars.next() {
         Some(c) => c,
@@ -579,6 +653,46 @@ mod tests {
     fn test_quote_identifier_wraps_in_double_quotes() {
         assert_eq!(quote_identifier("my_col").unwrap(), "\"my_col\"");
         assert_eq!(quote_identifier("orders").unwrap(), "\"orders\"");
+    }
+
+    #[test]
+    fn test_validate_identifier_rejects_control_chars_and_nul() {
+        // NUL 字节 — 严重注入向量
+        assert!(validate_identifier("col\u{0}name").is_err());
+        // 控制字符 / DEL
+        assert!(validate_identifier("col\x01name").is_err());
+        assert!(validate_identifier("col\x7fname").is_err());
+        // 空格（非字母数字）
+        assert!(validate_identifier("col name").is_err());
+        // 高位多字节字符（非 ASCII）
+        assert!(validate_identifier("cöl").is_err());
+    }
+
+    #[test]
+    fn test_validate_identifier_forbids_injection_fragments() {
+        // 带空格的关键字子串 — 模拟常见 SQL 注入 payload 在字符白名单被放行后的二次拦截
+        assert!(validate_identifier("users; DROP TABLE users; --").is_err());
+        assert!(validate_identifier("col UNION SELECT password").is_err());
+        assert!(validate_identifier("data select 1 from x").is_err());
+
+        // 危险前缀 / 系统 schema
+        assert!(validate_identifier("pg_read_file").is_err());
+        assert!(validate_identifier("information_schema.tables").is_err());
+        assert!(validate_identifier("xp_cmdshell").is_err());
+
+        // 合法列名依然通过
+        assert!(validate_identifier("user_select_flag").is_ok());
+        assert!(validate_identifier("update_status").is_ok());
+        assert!(validate_identifier("user_union_query").is_ok());
+        assert!(validate_identifier("drop_table_col").is_ok());
+    }
+
+    #[test]
+    fn test_validate_identifier_enforces_length_limit() {
+        let long = "a".repeat(64);
+        assert!(validate_identifier(&long).is_err());
+        let exactly_ok = "a".repeat(63);
+        assert!(validate_identifier(&exactly_ok).is_ok());
     }
 
     #[test]

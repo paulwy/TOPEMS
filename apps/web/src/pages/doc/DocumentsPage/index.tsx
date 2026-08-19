@@ -688,7 +688,7 @@ const DocumentsPage: React.FC = () => {
                   <option value='pdf'>PDF</option>
                   <option value='doc'>Word</option>
                   <option value='xls'>Excel</option>
-                  <option value='ppt'>PowerPoint</option>
+                  <option value='ppt'>{i18n.t('pages.index.k34')}</option>
                   <option value='txt'>{i18n.t('pages.index.k31')}</option>
                   <option value='jpg'>{i18n.t('pages.index.k32')}</option>
                   <option value='zip'>{i18n.t('pages.index.k33')}</option>

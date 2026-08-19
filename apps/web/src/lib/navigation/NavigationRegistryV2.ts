@@ -1,6 +1,7 @@
 import type { ModuleNavConfig, NavItemConfig, NavItem, ModuleCardConfig, NavGroup } from './types';
 import { NAV_GROUPS } from './types';
 import { logger } from '@/utils/logger';
+import i18n from '@/i18n';
 
 type EventListener = (...args: unknown[]) => void;
 
@@ -97,16 +98,17 @@ export class NavigationRegistryV2 {
       if (module.permission && hasPermission && !hasPermission(module.permission)) {
         return;
       }
+      const resolvedName = module.nameKey ? i18n.t(module.nameKey) : module.name;
       items.push({
         code: module.code,
-        label: module.name,
+        label: resolvedName,
         labelKey: module.nameKey,
         icon: module.icon,
         path: this.getModuleFirstPath(module),
         permission: module.permission,
         order: module.order,
         moduleCode: module.code,
-        moduleName: module.name,
+        moduleName: resolvedName,
         showInSidebar: false,
         showInBreadcrumb: true,
         showInTabs: false,
@@ -136,9 +138,13 @@ export class NavigationRegistryV2 {
   }
 
   private toModuleCard(module: ModuleNavConfig): ModuleCardConfig {
+    const resolvedName = module.nameKey ? i18n.t(module.nameKey) : module.name;
+    const resolvedDescription = module.description && module.description.includes('.')
+      ? i18n.t(module.description, { defaultValue: module.description })
+      : module.description;
     return {
       code: module.code,
-      name: module.name,
+      name: resolvedName,
       nameKey: module.nameKey,
       icon: module.icon,
       path: this.getModuleFirstPath(module),
@@ -147,7 +153,7 @@ export class NavigationRegistryV2 {
       source: module.source,
       suite: module.suite,
       order: module.order,
-      description: module.description,
+      description: resolvedDescription,
     };
   }
 
@@ -217,16 +223,17 @@ export class NavigationRegistryV2 {
     const module = this.findModuleByPath(path);
     if (!module) return [];
 
+    const resolvedName = module.nameKey ? i18n.t(module.nameKey) : module.name;
     const baseItem: NavItem = {
       code: module.code,
-      label: module.name,
+      label: resolvedName,
       labelKey: module.nameKey,
       icon: module.icon,
       path: module.path,
       permission: module.permission,
       order: module.order,
       moduleCode: module.code,
-      moduleName: module.name,
+      moduleName: resolvedName,
       showInSidebar: false,
       showInBreadcrumb: true,
       showInTabs: false,
@@ -335,10 +342,12 @@ export class NavigationRegistryV2 {
   }
 
   private enrichNavItem(item: NavItemConfig, module: ModuleNavConfig): NavItem {
+    const resolvedLabel = item.labelKey ? i18n.t(item.labelKey) : item.label;
     return {
       ...item,
+      label: resolvedLabel,
       moduleCode: module.code,
-      moduleName: module.name,
+      moduleName: module.nameKey ? i18n.t(module.nameKey) : module.name,
       showInSidebar: item.showInSidebar !== false,
       showInBreadcrumb: item.showInBreadcrumb !== false,
       showInTabs: item.showInTabs !== false,

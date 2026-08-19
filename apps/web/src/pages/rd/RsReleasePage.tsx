@@ -31,21 +31,25 @@ const STATUS_COLOR_MAP: Record<string, 'success' | 'warning' | 'error' | 'defaul
   planning: 'warning',
   rolled_back: 'error',
 };
-const STATUS_LABEL_MAP: Record<string, string> = {
-  released: i18n.t('rd.rs_release_page.k0'),
-  planning: i18n.t('rd.rs_release_page.k1'),
-  rolled_back: i18n.t('rd.rs_release_page.k2'),
-};
+function getStatusLabelMap(): Record<string, string> {
+  return {
+    released: i18n.t('rd.rs_release_page.k0'),
+    planning: i18n.t('rd.rs_release_page.k1'),
+    rolled_back: i18n.t('rd.rs_release_page.k2'),
+  };
+}
 const ENV_COLOR_MAP: Record<string, 'error' | 'warning' | 'success' | 'default'> = {
   production: 'error',
   staging: 'warning',
   development: 'success',
 };
-const ENV_LABEL_MAP: Record<string, string> = {
-  production: i18n.t('rd.rs_release_page.k3'),
-  staging: i18n.t('rd.rs_release_page.k4'),
-  development: i18n.t('rd.rs_release_page.k5'),
-};
+function getEnvLabelMap(): Record<string, string> {
+  return {
+    production: i18n.t('rd.rs_release_page.k3'),
+    staging: i18n.t('rd.rs_release_page.k4'),
+    development: i18n.t('rd.rs_release_page.k5'),
+  };
+}
 function transformStatus(status: string): string {
   if (status === 'success') return 'released';
   if (status === 'failed') return 'rolled_back';
@@ -119,10 +123,10 @@ const RsReleasePage: React.FC = () => {
   ];
   const detailContent = (row: Record<string, unknown>) => {
     const status = transformStatus(String(row.status ?? ''));
-    const statusLabel = STATUS_LABEL_MAP[status] || status;
+    const statusLabel = getStatusLabelMap()[status] || status;
     const statusColor = STATUS_COLOR_MAP[status] || 'default';
     const env = String(row.environment || row.env || '');
-    const envLabel = ENV_LABEL_MAP[env] || env;
+    const envLabel = getEnvLabelMap()[env] || env;
     const envColor = ENV_COLOR_MAP[env] || 'default';
     return (
       <Box sx={{ py: 2 }}>

@@ -115,45 +115,47 @@ const getStatusLabel = (status: string): string => {
   }
 };
 
-const customColumns: ColumnDef[] = [
-  {
-    id: 'overall_score',
-    label: i18n.t('pages.srm_evaluation_page.k7'),
-    width: 180,
-    sortable: true,
-    render: (row) => {
-      const r = row as unknown as SupplierEvaluation;
-      return (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Rating
-            value={r.overall_score || 0}
-            readOnly
-            max={10}
-            precision={0.5}
+function getCustomColumns(): ColumnDef[] {
+  return [
+    {
+      id: 'overall_score',
+      label: i18n.t('pages.srm_evaluation_page.k7'),
+      width: 180,
+      sortable: true,
+      render: (row) => {
+        const r = row as unknown as SupplierEvaluation;
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Rating
+              value={r.overall_score || 0}
+              readOnly
+              max={10}
+              precision={0.5}
+              size='small'
+            />
+            <span>{r.overall_score || '-'}</span>
+          </Box>
+        );
+      },
+    },
+    {
+      id: 'status',
+      label: i18n.t('pages.srm_evaluation_page.k8'),
+      width: 100,
+      sortable: true,
+      render: (row) => {
+        const r = row as unknown as SupplierEvaluation;
+        return (
+          <Chip
+            label={getStatusLabel(r.status)}
             size='small'
+            color={getStatusColor(r.status)}
           />
-          <span>{r.overall_score || '-'}</span>
-        </Box>
-      );
+        );
+      },
     },
-  },
-  {
-    id: 'status',
-    label: i18n.t('pages.srm_evaluation_page.k8'),
-    width: 100,
-    sortable: true,
-    render: (row) => {
-      const r = row as unknown as SupplierEvaluation;
-      return (
-        <Chip
-          label={getStatusLabel(r.status)}
-          size='small'
-          color={getStatusColor(r.status)}
-        />
-      );
-    },
-  },
-];
+  ];
+}
 
 const EvaluationStats: React.FC = () => {
   const { data: evaluations = [] } = useQuery({
@@ -267,7 +269,7 @@ const SrmEvaluationPage: React.FC = () => {
     <CrudPage
       schema={evaluationSchema}
       apiAdapter={evaluationApiAdapter}
-      customColumns={customColumns}
+      customColumns={getCustomColumns()}
       breadcrumbs={[{ label: 'SRM' }, { label: i18n.t('pages.srm_evaluation_page.k14') }]}
       headerContent={<EvaluationStats />}
       customRowActions={customRowActions}

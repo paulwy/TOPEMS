@@ -31,8 +31,8 @@ export const SCM_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const scmModuleConfig: RouteModuleConfig = {
   code: 'scm',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.scm_name'),
+  nameKey: 'shared.config.scm_name',
   icon: 'Truck',
   path: SCM_PATHS.root,
   source: 'core',

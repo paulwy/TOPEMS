@@ -31,12 +31,14 @@ const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'erro
   rejected: 'error',
   in_progress: 'primary',
 };
-const STATUS_LABEL_MAP: Record<string, string> = {
-  pending: i18n.t('rd.rs_review_page.k0'),
-  approved: i18n.t('rd.rs_review_page.k1'),
-  rejected: i18n.t('rd.rs_review_page.k2'),
-  in_progress: i18n.t('rd.rs_review_page.k3'),
-};
+function getStatusLabelMap(): Record<string, string> {
+  return {
+    pending: i18n.t('rd.rs_review_page.k0'),
+    approved: i18n.t('rd.rs_review_page.k1'),
+    rejected: i18n.t('rd.rs_review_page.k2'),
+    in_progress: i18n.t('rd.rs_review_page.k3'),
+  };
+}
 function transformStatus(status: string): string {
   if (status === 'success') return 'approved';
   if (status === 'failed') return 'rejected';
@@ -121,7 +123,7 @@ const RsReviewPage: React.FC = () => {
   ];
   const detailContent = (row: Record<string, unknown>) => {
     const status = transformStatus(String(row.status ?? ''));
-    const statusLabel = STATUS_LABEL_MAP[status] || status;
+    const statusLabel = getStatusLabelMap()[status] || status;
     const statusColor = STATUS_COLOR_MAP[status] || 'default';
     return (
       <Box sx={{ py: 2 }}>

@@ -21,8 +21,8 @@ export const REPORT_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const reportModuleConfig: RouteModuleConfig = {
   code: 'report',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.report_name'),
+  nameKey: 'shared.config.report_name',
   icon: 'FileSpreadsheet',
   path: REPORT_PATHS.root,
   source: 'core',

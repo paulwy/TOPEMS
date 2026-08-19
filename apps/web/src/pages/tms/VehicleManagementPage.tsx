@@ -32,10 +32,12 @@ import { vehicleApi } from '@/api/tms';
 import type { Vehicle, CreateVehicleRequest, VehicleStatus } from '@/api/tms';
 
 const QUERY_KEY = 'tms-vehicles';
-const statusOptions = [
-  { value: 'active', label: i18n.t('tms.vehicle_management_page.k0') },
-  { value: 'inactive', label: i18n.t('tms.vehicle_management_page.k1') },
-];
+function getStatusOptions() {
+  return [
+    { value: 'active', label: i18n.t('tms.vehicle_management_page.k0') },
+    { value: 'inactive', label: i18n.t('tms.vehicle_management_page.k1') },
+  ];
+}
 const renderStatusChip = (status?: string) => {
   if (status === 'active')
     return (
@@ -402,7 +404,7 @@ const VehicleManagementPage: React.FC = () => {
               }
               size='small'
             >
-              {statusOptions.map((opt) => (
+              {getStatusOptions().map((opt) => (
                 <MenuItem
                   key={opt.value}
                   value={opt.value}

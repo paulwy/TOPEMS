@@ -3,6 +3,7 @@ pub mod analysis;
 pub mod audit;
 pub mod cache;
 pub mod db;
+pub mod dify;
 pub mod document;
 pub mod embedding;
 pub mod multimodal;
@@ -15,6 +16,7 @@ pub mod vector;
 pub use agent::{AgentRequest, AgentResponse, AgentService};
 pub use analysis::{AnalysisConfig, AnalysisService};
 pub use db::Database;
+pub use dify::{DifyError, DifyService};
 pub use document::DocumentService;
 pub use multimodal::MultimodalService;
 #[allow(unused)]

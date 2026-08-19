@@ -5,6 +5,33 @@ use tracing::{info, warn};
 
 use crate::shared::AppState;
 
+use super::chart_service::quote_identifier;
+use super::dataset_whitelist::validate_columns;
+
+const DEFAULT_BI_TABLE: &str = "analytics_data";
+
+/// S1.2 + S1.3: 构建并验证预测查询的 (time, value) 字段对。
+///
+/// - L1 层：`quote_identifier` 校验两个字段名的语法合法性。
+/// - L2 层：`validate_columns` 检查字段是否在 bi_datasets 白名单中（strict 模式直接拒）。
+///
+/// 返回 (quoted_time, quoted_value, quoted_time_for_order_by)；
+/// 错误时直接返回 `Err(String)`，由 handler 转换为 JSON 500 响应。
+async fn validate_prediction_fields(
+    pool: &sqlx::PgPool,
+    time_field: &str,
+    value_field: &str,
+) -> Result<(String, String), String> {
+    let t = quote_identifier(time_field)?;
+    let v = quote_identifier(value_field)?;
+
+    // sort 也依赖 time_field，白名单校验覆盖全部字段。
+    let cols = vec![time_field.to_string(), value_field.to_string()];
+    validate_columns(pool, DEFAULT_BI_TABLE, &cols).await?;
+
+    Ok((t, v))
+}
+
 #[derive(Debug, Deserialize)]
 pub struct MovingAverageRequest {
     pub datasource_id: Uuid,
@@ -242,12 +269,28 @@ pub async fn moving_average_forecast(
     let window_size = req.window_size.unwrap_or(7);
     let forecast_periods = req.forecast_periods.unwrap_or(7);
 
+    // S1.2 + S1.3: 字段白名单校验 + 参数化 LIMIT
+    let (time_q, value_q) =
+        match validate_prediction_fields(&state.pool, &req.time_field, &req.value_field).await {
+            Ok(v) => v,
+            Err(e) => {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Invalid prediction field: {}", e),
+                ));
+            }
+        };
+
     let query = format!(
-        "SELECT {}, {} FROM analytics_data ORDER BY {} ASC LIMIT 100",
-        req.time_field, req.value_field, req.time_field
+        "SELECT {}, {} FROM analytics_data ORDER BY {} ASC LIMIT $1",
+        time_q, value_q, time_q
     );
 
-    let _rows = match sqlx::query(&query).fetch_all(&state.pool).await {
+    let _rows = match sqlx::query(&query)
+        .bind(100_i64)
+        .fetch_all(&state.pool)
+        .await
+    {
         Ok(rows) => rows,
         Err(e) => {
             warn!("Failed to query data for MA forecast: {}", e);
@@ -345,12 +388,28 @@ pub async fn exponential_smoothing_forecast(
     let alpha = req.alpha.unwrap_or(0.3);
     let forecast_periods = req.forecast_periods.unwrap_or(7);
 
+    // S1.2 + S1.3: 字段白名单校验 + 参数化 LIMIT
+    let (time_q, value_q) =
+        match validate_prediction_fields(&state.pool, &req.time_field, &req.value_field).await {
+            Ok(v) => v,
+            Err(e) => {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Invalid prediction field: {}", e),
+                ));
+            }
+        };
+
     let query = format!(
-        "SELECT {}, {} FROM analytics_data ORDER BY {} ASC LIMIT 100",
-        req.time_field, req.value_field, req.time_field
+        "SELECT {}, {} FROM analytics_data ORDER BY {} ASC LIMIT $1",
+        time_q, value_q, time_q
     );
 
-    let _rows = match sqlx::query(&query).fetch_all(&state.pool).await {
+    let _rows = match sqlx::query(&query)
+        .bind(100_i64)
+        .fetch_all(&state.pool)
+        .await
+    {
         Ok(rows) => rows,
         Err(e) => {
             warn!("Failed to query data for ES forecast: {}", e);
@@ -428,12 +487,28 @@ pub async fn trend_analysis(
 ) -> Json<serde_json::Value> {
     info!("Trend analysis for datasource: {}", req.datasource_id);
 
+    // S1.2 + S1.3: 字段白名单校验 + 参数化 LIMIT
+    let (time_q, value_q) =
+        match validate_prediction_fields(&state.pool, &req.time_field, &req.value_field).await {
+            Ok(v) => v,
+            Err(e) => {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Invalid prediction field: {}", e),
+                ));
+            }
+        };
+
     let query = format!(
-        "SELECT {}, {} FROM analytics_data ORDER BY {} ASC LIMIT 100",
-        req.time_field, req.value_field, req.time_field
+        "SELECT {}, {} FROM analytics_data ORDER BY {} ASC LIMIT $1",
+        time_q, value_q, time_q
     );
 
-    let _rows = match sqlx::query(&query).fetch_all(&state.pool).await {
+    let _rows = match sqlx::query(&query)
+        .bind(100_i64)
+        .fetch_all(&state.pool)
+        .await
+    {
         Ok(rows) => rows,
         Err(e) => {
             warn!("Failed to query data for trend analysis: {}", e);
@@ -498,12 +573,28 @@ pub async fn prediction_comparison(
         req.datasource_id
     );
 
+    // S1.2 + S1.3: 字段白名单校验 + 参数化 LIMIT
+    let (time_q, value_q) =
+        match validate_prediction_fields(&state.pool, &req.time_field, &req.value_field).await {
+            Ok(v) => v,
+            Err(e) => {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Invalid prediction field: {}", e),
+                ));
+            }
+        };
+
     let query = format!(
-        "SELECT {}, {} FROM analytics_data ORDER BY {} ASC LIMIT 100",
-        req.time_field, req.value_field, req.time_field
+        "SELECT {}, {} FROM analytics_data ORDER BY {} ASC LIMIT $1",
+        time_q, value_q, time_q
     );
 
-    let _rows = match sqlx::query(&query).fetch_all(&state.pool).await {
+    let _rows = match sqlx::query(&query)
+        .bind(100_i64)
+        .fetch_all(&state.pool)
+        .await
+    {
         Ok(rows) => rows,
         Err(e) => {
             warn!("Failed to query data for prediction comparison: {}", e);

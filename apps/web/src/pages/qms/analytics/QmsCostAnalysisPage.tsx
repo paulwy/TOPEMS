@@ -35,12 +35,14 @@ const COST_TYPE_COLORS: Record<string, string> = {
   external_failure: designTokens.colors.error.main,
 };
 
-const COST_TYPE_LABELS: Record<string, string> = {
-  prevention: i18n.t('qms.qms_cost_analysis_page.k0'),
-  appraisal: i18n.t('qms.qms_cost_analysis_page.k1'),
-  internal_failure: i18n.t('qms.qms_cost_analysis_page.k2'),
-  external_failure: i18n.t('qms.qms_cost_analysis_page.k3'),
-};
+function getCostTypeLabels(): Record<string, string> {
+  return {
+    prevention: i18n.t('qms.qms_cost_analysis_page.k0'),
+    appraisal: i18n.t('qms.qms_cost_analysis_page.k1'),
+    internal_failure: i18n.t('qms.qms_cost_analysis_page.k2'),
+    external_failure: i18n.t('qms.qms_cost_analysis_page.k3'),
+  };
+}
 
 export default function QmsCostAnalysisPage() {
   const { data } = useQmsMock<QmsMockShape>();
@@ -59,7 +61,7 @@ export default function QmsCostAnalysisPage() {
     });
     return Object.entries(map).map(([type, amount]) => ({
       type,
-      label: COST_TYPE_LABELS[type] ?? type,
+      label: getCostTypeLabels()[type] ?? type,
       amount,
     }));
   }, [data.qualityCosts]);

@@ -1,0 +1,34 @@
+{
+  "desktop.monitor.title": "Desktop Monitor",
+  "desktop.monitor.browser_notice": "This page is only available in the Tauri desktop app. You are currently running in a browser environment; some features are unavailable.",
+  "desktop.monitor.updated_at": "Updated at {{time}}",
+  "desktop.monitor.total_requests": "Total Requests",
+  "desktop.monitor.success_rate": "Success Rate",
+  "desktop.monitor.failure_rate": "Failure Rate",
+  "desktop.monitor.retry_count": "Retry Count",
+  "desktop.monitor.avg_response": "Avg Response",
+  "desktop.monitor.backend_health": "Backend Health",
+  "desktop.monitor.attribute": "Attribute",
+  "desktop.monitor.value": "Value",
+  "desktop.monitor.health_unavailable": "Unable to retrieve health status",
+  "desktop.monitor.system_config": "System Configuration",
+  "desktop.monitor.config_unavailable": "Unable to retrieve configuration",
+  "desktop": {
+    "monitor": {
+      "title": "Desktop Monitor",
+      "browser_notice": "This page is only available in the Tauri desktop app. You are currently running in a browser environment; some features are unavailable.",
+      "updated_at": "Updated at {{time}}",
+      "total_requests": "Total Requests",
+      "success_rate": "Success Rate",
+      "failure_rate": "Failure Rate",
+      "retry_count": "Retry Count",
+      "avg_response": "Avg Response",
+      "backend_health": "Backend Health",
+      "attribute": "Attribute",
+      "value": "Value",
+      "health_unavailable": "Unable to retrieve health status",
+      "system_config": "System Configuration",
+      "config_unavailable": "Unable to retrieve configuration"
+    }
+  }
+}

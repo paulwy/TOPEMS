@@ -30,8 +30,7 @@ import { designTokens } from '@/theme/tokens';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { monitorApi } from '@/api/monitor';
-
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 type TimeRange = '1h' | '6h' | '24h' | '7d' | '30d';
 type MetricCategory = 'host' | 'service' | 'database' | 'middleware';
 type ServiceType = 'all' | 'user' | 'order' | 'payment' | 'inventory' | 'gateway';
@@ -44,21 +43,9 @@ const timeRangeOptions: { value: TimeRange; label: string }[] = [
 ];
 const metricCategoryTabs: { value: MetricCategory; label: string; icon: React.ReactNode }[] = [
   { value: 'host', label: i18n.t('monitor.monitor_metrics_page.k5'), icon: <Server size={16} /> },
-  {
-    value: 'service',
-    label: i18n.t('monitor.monitor_metrics_page.k6'),
-    icon: <BoxIcon size={16} />,
-  },
-  {
-    value: 'database',
-    label: i18n.t('monitor.monitor_metrics_page.k7'),
-    icon: <Database size={16} />,
-  },
-  {
-    value: 'middleware',
-    label: i18n.t('monitor.monitor_metrics_page.k8'),
-    icon: <Layers size={16} />,
-  },
+  { value: 'service', label: i18n.t('monitor.monitor_metrics_page.k6'), icon: <BoxIcon size={16} /> },
+  { value: 'database', label: i18n.t('monitor.monitor_metrics_page.k7'), icon: <Database size={16} /> },
+  { value: 'middleware', label: i18n.t('monitor.monitor_metrics_page.k8'), icon: <Layers size={16} /> },
 ];
 const serviceOptions: { value: ServiceType; label: string }[] = [
   { value: 'all', label: i18n.t('monitor.monitor_metrics_page.k9') },
@@ -102,14 +89,7 @@ const generateTimeLabels = (range: TimeRange): string[] => {
 const generateRandomData = (length: number, min: number, max: number): number[] => {
   return Array.from({ length }, () => Math.floor(Math.random() * (max - min + 1)) + min);
 };
-const serviceNames = [
-  i18n.t('monitor.monitor_metrics_page.k20'),
-  i18n.t('monitor.monitor_metrics_page.k19'),
-  i18n.t('monitor.monitor_metrics_page.k18'),
-  i18n.t('monitor.monitor_metrics_page.k17'),
-  i18n.t('monitor.monitor_metrics_page.k16'),
-  i18n.t('monitor.monitor_metrics_page.k15'),
-];
+const getServiceNames = () => [i18n.t('monitor.monitor_metrics_page.k20'), i18n.t('monitor.monitor_metrics_page.k19'), i18n.t('monitor.monitor_metrics_page.k18'), i18n.t('monitor.monitor_metrics_page.k17'), i18n.t('monitor.monitor_metrics_page.k16'), i18n.t('monitor.monitor_metrics_page.k15')];
 const generateMultiServiceTrendData = (labels: string[], services: string[]) => {
   return labels.map((label, _index) => {
     const item: Record<string, string | number> = { name: label };
@@ -140,12 +120,7 @@ export const MonitorMetricsPage: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<MetricCategory>('host');
   const timeLabels = useMemo(() => generateTimeLabels(timeRange), [timeRange]);
   const metricsQuery = useQuery<boolean>({
-    queryKey: [
-      ...QUERY_KEYS.AD_HOC.MONITOR_METRICS_BASE,
-      timeRange,
-      selectedService,
-      activeCategory,
-    ],
+    queryKey: [...QUERY_KEYS.AD_HOC.MONITOR_METRICS_BASE, timeRange, selectedService, activeCategory],
     queryFn: async () => true,
     staleTime: 5 * 60 * 1000,
   });
@@ -183,11 +158,9 @@ export const MonitorMetricsPage: React.FC = () => {
     refetchMetrics();
   };
   const currentTimeRangeLabel =
-    timeRangeOptions.find((o) => o.value === timeRange)?.label ||
-    i18n.t('monitor.monitor_metrics_page.24_22');
+    timeRangeOptions.find((o) => o.value === timeRange)?.label || i18n.t('monitor.monitor_metrics_page.24_22');
   const currentServiceLabel =
-    serviceOptions.find((o) => o.value === selectedService)?.label ||
-    i18n.t('monitor.monitor_metrics_page.k23');
+    serviceOptions.find((o) => o.value === selectedService)?.label || i18n.t('monitor.monitor_metrics_page.k23');
   const handleRefresh = useCallback(() => {
     refetchMetrics();
     addNotification({
@@ -278,11 +251,11 @@ export const MonitorMetricsPage: React.FC = () => {
     []
   );
   const cpuTrendData = useMemo(
-    () => generateMultiServiceTrendData(timeLabels, serviceNames.slice(0, 4)),
+    () => generateMultiServiceTrendData(timeLabels, getServiceNames().slice(0, 4)),
     [timeLabels]
   );
   const memoryTrendData = useMemo(
-    () => generateMultiServiceTrendData(timeLabels, serviceNames.slice(0, 4)),
+    () => generateMultiServiceTrendData(timeLabels, getServiceNames().slice(0, 4)),
     [timeLabels]
   );
   const diskIOData = useMemo(
@@ -305,7 +278,7 @@ export const MonitorMetricsPage: React.FC = () => {
   );
   const apiRequestData = useMemo(
     () =>
-      serviceNames.map((service) => ({
+      getServiceNames().map((service) => ({
         name: service,
         [i18n.t('pages.monitor_metrics_page.k4')]: Math.floor(Math.random() * 5000) + 2000,
       })),
@@ -332,7 +305,7 @@ export const MonitorMetricsPage: React.FC = () => {
             type='line'
             data={cpuTrendData}
             xKey='name'
-            yKeys={serviceNames.slice(0, 4).map((name, i) => ({
+            yKeys={getServiceNames().slice(0, 4).map((name, i) => ({
               key: name,
               name,
               color: ['primary.main', 'success.main', 'warning.main', 'error.main'][i],
@@ -353,7 +326,7 @@ export const MonitorMetricsPage: React.FC = () => {
             type='line'
             data={memoryTrendData}
             xKey='name'
-            yKeys={serviceNames.slice(0, 4).map((name, i) => ({
+            yKeys={getServiceNames().slice(0, 4).map((name, i) => ({
               key: name,
               name,
               color: ['secondary.main', ct.cyan[500], ct.pink[500], 'success.main'][i],
@@ -375,16 +348,8 @@ export const MonitorMetricsPage: React.FC = () => {
             data={diskIOData}
             xKey='name'
             yKeys={[
-              {
-                key: i18n.t('monitor.monitor_metrics_page.k43'),
-                name: i18n.t('monitor.monitor_metrics_page.k44'),
-                color: 'primary.main',
-              },
-              {
-                key: i18n.t('monitor.monitor_metrics_page.k45'),
-                name: i18n.t('monitor.monitor_metrics_page.k46'),
-                color: 'warning.main',
-              },
+              { key: i18n.t('monitor.monitor_metrics_page.k43'), name: i18n.t('monitor.monitor_metrics_page.k44'), color: 'primary.main' },
+              { key: i18n.t('monitor.monitor_metrics_page.k45'), name: i18n.t('monitor.monitor_metrics_page.k46'), color: 'warning.main' },
             ]}
             height={280}
           />
@@ -403,16 +368,8 @@ export const MonitorMetricsPage: React.FC = () => {
             data={networkData}
             xKey='name'
             yKeys={[
-              {
-                key: i18n.t('monitor.monitor_metrics_page.k49'),
-                name: i18n.t('monitor.monitor_metrics_page.k50'),
-                color: 'success.main',
-              },
-              {
-                key: i18n.t('monitor.monitor_metrics_page.k51'),
-                name: i18n.t('monitor.monitor_metrics_page.k52'),
-                color: 'error.main',
-              },
+              { key: i18n.t('monitor.monitor_metrics_page.k49'), name: i18n.t('monitor.monitor_metrics_page.k50'), color: 'success.main' },
+              { key: i18n.t('monitor.monitor_metrics_page.k51'), name: i18n.t('monitor.monitor_metrics_page.k52'), color: 'error.main' },
             ]}
             height={280}
           />
@@ -441,12 +398,7 @@ export const MonitorMetricsPage: React.FC = () => {
               'secondary.main',
               ct.cyan[500],
             ]}
-            tooltipFormatter={(value) =>
-              [
-                `${value}${i18n.t('pages.monitor_metrics_page.k3')}`,
-                i18n.t('monitor.monitor_metrics_page.k55'),
-              ] as [string, string]
-            }
+            tooltipFormatter={(value) => [`${value}${i18n.t('pages.monitor_metrics_page.k3')}`, i18n.t('monitor.monitor_metrics_page.k55')] as [string, string]}
           />
         ),
         height: 360,

@@ -12,6 +12,7 @@ import i18n from '@/i18n';
 import { authApi } from '@/api/iam';
 import { tenantApi } from '@/api/tenant';
 import apiClient, { type ApiResponse } from '../api/client';
+import { tauriAuth } from '@/services/tauriAuth';
 import type { User } from '@topems/shared-types';
 import { mapApiUserToUser } from '@topems/shared-types';
 import { authLogger } from '@/utils/logger';
@@ -179,6 +180,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [state.isAuthenticated, updateLastActivity]);
 
   const refreshToken = useCallback(async () => {
+    if (tauriAuth.isAvailable()) {
+      const isValid = await tauriAuth.isTokenValid();
+      if (!isValid) {
+        authLogger.warn('Token invalid according to Tauri backend, forcing logout');
+        logout();
+        return false;
+      }
+    }
+
     const refreshTokenValue = localStorage.getItem('refresh_token');
     if (!refreshTokenValue) {
       return false;
@@ -191,10 +201,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.setItem('token', accessToken);
         apiClient.setAuthToken(accessToken);
 
-        // 从新 token 解析过期时间（与后端配置保持一致）
+        tauriAuth.setToken(accessToken);
+
         const newExpiry = parseTokenExpiryFromJWT(accessToken);
         setTokenExpiry(newExpiry);
         localStorage.setItem('token_expiry', newExpiry.toString());
+
+        tauriAuth.setTokenExpiry(newExpiry);
+        tauriAuth.broadcastTokenChange(accessToken);
 
         setState((prev) => ({ ...prev, token: accessToken }));
         return true;
@@ -207,6 +221,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       localStorage.removeItem('roles');
       localStorage.removeItem('permissions');
       localStorage.removeItem('token_expiry');
+      tauriAuth.clearToken();
+      tauriAuth.clearUserInfo();
+      tauriAuth.clearTokenExpiry();
+      tauriAuth.broadcastTokenChange(null);
       window.location.href = AUTH_PATHS.login;
       return false;
     }
@@ -217,10 +235,74 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     let refreshInterval: NodeJS.Timeout;
 
     const initAuth = async () => {
-      const token = localStorage.getItem('token');
-      const userStr = localStorage.getItem('user');
-      const rolesStr = localStorage.getItem('roles');
-      const permissionsStr = localStorage.getItem('permissions');
+      let token = localStorage.getItem('token');
+      let userStr = localStorage.getItem('user');
+      let rolesStr = localStorage.getItem('roles');
+      let permissionsStr = localStorage.getItem('permissions');
+
+      // If no token in localStorage, try Tauri backend (desktop app persistence)
+      if (!token && tauriAuth.isAvailable()) {
+        const tauriToken = await tauriAuth.getToken();
+        if (tauriToken) {
+          authLogger.info('Restoring token from Tauri backend storage');
+          token = tauriToken;
+          localStorage.setItem('token', token);
+
+          const userInfo = await tauriAuth.getUserInfo();
+          if (userInfo) {
+            localStorage.setItem('user', JSON.stringify(userInfo.user));
+            localStorage.setItem('roles', JSON.stringify(userInfo.roles));
+            localStorage.setItem('permissions', JSON.stringify(userInfo.permissions));
+            userStr = localStorage.getItem('user');
+            rolesStr = localStorage.getItem('roles');
+            permissionsStr = localStorage.getItem('permissions');
+          }
+
+          const tauriExpiry = await tauriAuth.getTokenExpiry();
+          if (tauriExpiry) {
+            localStorage.setItem('token_expiry', tauriExpiry.toString());
+          }
+        }
+      }
+
+      if (token) {
+        // Sync token and expiry to Tauri backend FIRST before validity check
+        if (tauriAuth.isAvailable()) {
+          const tokenExpiry = parseTokenExpiryFromJWT(token);
+          await tauriAuth.setToken(token);
+          await tauriAuth.setTokenExpiry(tokenExpiry);
+        }
+
+        let tokenExpired = false;
+
+        if (tauriAuth.isAvailable()) {
+          const valid = await tauriAuth.isTokenValid();
+          if (!valid) {
+            tokenExpired = true;
+          }
+        }
+
+        if (!tokenExpired) {
+          const storedExpiry = localStorage.getItem('token_expiry');
+          if (storedExpiry) {
+            const expiryTs = parseInt(storedExpiry, 10);
+            if (!isNaN(expiryTs) && Date.now() > expiryTs) {
+              tokenExpired = true;
+            }
+          } else {
+            const expiryFromJWT = parseTokenExpiryFromJWT(token);
+            if (Date.now() > expiryFromJWT) {
+              tokenExpired = true;
+            }
+          }
+        }
+
+        if (tokenExpired) {
+          authLogger.warn('Token expired on startup, forcing logout');
+          logout();
+          return;
+        }
+      }
 
       if (token && userStr) {
         try {
@@ -245,6 +327,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             roles,
             permissions,
           });
+
+          // Sync auth state to Tauri backend storage on startup
+          tauriAuth.setToken(token);
+          tauriAuth.setUserInfo(user, roles, permissions);
+          tauriAuth.setTokenExpiry(tokenExpiry);
 
           // 使用刷新间隔常量刷新 token
           refreshInterval = setInterval(
@@ -289,6 +376,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         apiClient.setAuthToken(accessToken);
 
+        // Sync token to Tauri backend storage (desktop app)
+        tauriAuth.setToken(accessToken);
+
         // 从 JWT token 解析过期时间（与后端配置保持一致）
         const expiry = parseTokenExpiryFromJWT(accessToken);
         setTokenExpiry(expiry);
@@ -303,6 +393,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (permissions.length > 0) {
           localStorage.setItem('permissions', JSON.stringify(permissions));
         }
+
+        tauriAuth.setUserInfo(mappedUser, roles, permissions);
+        tauriAuth.setTokenExpiry(expiry);
+        tauriAuth.broadcastTokenChange(accessToken);
 
         setState({
           user: mappedUser,
@@ -333,6 +427,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       localStorage.removeItem('roles');
       localStorage.removeItem('permissions');
       localStorage.removeItem('token_expiry');
+
+      // Clear token from Tauri backend storage (desktop app)
+      tauriAuth.clearToken();
+      tauriAuth.clearUserInfo();
+      tauriAuth.clearTokenExpiry();
+      tauriAuth.broadcastTokenChange(null);
 
       setTokenExpiry(null);
 
@@ -488,9 +588,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           localStorage.setItem('token', accessToken as string);
           apiClient.setAuthToken(accessToken as string);
 
+          // Sync new tenant token to Tauri backend storage
+          tauriAuth.setToken(accessToken as string);
+
           const newExpiry = parseTokenExpiryFromJWT(accessToken as string);
           setTokenExpiry(newExpiry);
           localStorage.setItem('token_expiry', newExpiry.toString());
+          tauriAuth.setTokenExpiry(newExpiry);
+          tauriAuth.broadcastTokenChange(accessToken as string);
         }
 
         if (user) {

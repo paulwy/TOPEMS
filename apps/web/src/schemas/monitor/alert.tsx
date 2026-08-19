@@ -17,11 +17,11 @@ const ct = designTokens.colors;
 type AlertSeverity = 'critical' | 'warning' | 'info';
 type AlertStatus = 'active' | 'acknowledged' | 'resolved';
 
-const SEVERITY_LABELS: Record<AlertSeverity, string> = {
+const getSeverityLabels = (): Record<AlertSeverity, string> => ({
   critical: i18n.t('shared.alert.k0'),
   warning: i18n.t('shared.alert.k1'),
   info: i18n.t('shared.alert.k2'),
-};
+});
 
 const SEVERITY_COLORS: Record<AlertSeverity, 'error' | 'warning' | 'info'> = {
   critical: 'error',
@@ -29,11 +29,11 @@ const SEVERITY_COLORS: Record<AlertSeverity, 'error' | 'warning' | 'info'> = {
   info: 'info',
 };
 
-const STATUS_LABELS: Record<AlertStatus, string> = {
+const getStatusLabels = (): Record<AlertStatus, string> => ({
   active: i18n.t('shared.alert.k3'),
   acknowledged: i18n.t('shared.alert.k4'),
   resolved: i18n.t('shared.alert.k5'),
-};
+});
 
 const STATUS_COLORS: Record<AlertStatus, 'error' | 'warning' | 'success'> = {
   active: 'error',
@@ -52,7 +52,7 @@ const getSeverityIcon = (severity: AlertSeverity): React.ReactNode => {
   }
 };
 
-const alertFields: SchemaField[] = [
+const getAlertFields = (): SchemaField[] => [
   {
     name: 'title',
     label: i18n.t('shared.alert.k6'),
@@ -111,7 +111,7 @@ const alertFields: SchemaField[] = [
         <Chip
           size='small'
           color={SEVERITY_COLORS[severity]}
-          label={SEVERITY_LABELS[severity]}
+          label={getSeverityLabels()[severity]}
           variant='outlined'
         />
       );
@@ -199,7 +199,7 @@ const alertFields: SchemaField[] = [
         <Chip
           size='small'
           color={STATUS_COLORS[status]}
-          label={STATUS_LABELS[status]}
+          label={getStatusLabels()[status]}
           variant='outlined'
         />
       );
@@ -231,10 +231,15 @@ const alertFields: SchemaField[] = [
   },
 ];
 
-export const alertSchema: EntitySchema = {
-  entity: 'monitor_alert',
-  title: i18n.t('shared.alert.k15'),
-  description: i18n.t('shared.alert.k16'),
+export const getAlertSchema = (): EntitySchema => {
+  const alertFields = getAlertFields();
+  const SEVERITY_LABELS = getSeverityLabels();
+  const STATUS_LABELS = getStatusLabels();
+
+  return {
+    entity: 'monitor_alert',
+    title: i18n.t('shared.alert.k15'),
+    description: i18n.t('shared.alert.k16'),
 
   api: {
     module: 'monitor',
@@ -304,6 +309,7 @@ export const alertSchema: EntitySchema = {
   formColCount: 2,
   detailTitle: i18n.t('shared.alert.k33'),
   detailMaxWidth: 'md',
+  };
 };
 
-export { SEVERITY_LABELS, SEVERITY_COLORS, STATUS_LABELS, STATUS_COLORS, getSeverityIcon };
+export { getSeverityLabels, SEVERITY_COLORS, getStatusLabels, STATUS_COLORS, getSeverityIcon };

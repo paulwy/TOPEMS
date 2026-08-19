@@ -65,14 +65,16 @@ const RUN_STATUS_COLOR: Record<
   timeout: 'error',
 };
 
-const RUN_STATUS_LABEL: Record<AutomationRunStatus, string> = {
-  success: i18n.t('automation.automation_dashboard_page.k0'),
-  failed: i18n.t('automation.automation_dashboard_page.k1'),
-  running: i18n.t('automation.automation_dashboard_page.k2'),
-  pending: i18n.t('automation.automation_dashboard_page.k3'),
-  cancelled: i18n.t('automation.automation_dashboard_page.k4'),
-  timeout: i18n.t('automation.automation_dashboard_page.k5'),
-};
+function getRunStatusLabel(): Record<AutomationRunStatus, string> {
+  return {
+    success: i18n.t('automation.automation_dashboard_page.k0'),
+    failed: i18n.t('automation.automation_dashboard_page.k1'),
+    running: i18n.t('automation.automation_dashboard_page.k2'),
+    pending: i18n.t('automation.automation_dashboard_page.k3'),
+    cancelled: i18n.t('automation.automation_dashboard_page.k4'),
+    timeout: i18n.t('automation.automation_dashboard_page.k5'),
+  };
+}
 
 export const AutomationDashboardPage: React.FC = () => {
   const { t } = useTranslation('automation');
@@ -288,7 +290,7 @@ export const AutomationDashboardPage: React.FC = () => {
                         <Chip
                           size='small'
                           color={RUN_STATUS_COLOR[run.status]}
-                          label={RUN_STATUS_LABEL[run.status]}
+                          label={getRunStatusLabel()[run.status]}
                         />
                       </TableCell>
                       <TableCell>{run.started_at}</TableCell>

@@ -29,6 +29,8 @@ detail() { echo -e "${CYAN}[DETAIL]${NC} $1"; }
 MAX_RETRIES=${MAX_RETRIES:-3}
 RETRY_DELAY=${RETRY_DELAY:-3}
 BACKOFF_FACTOR=${BACKOFF_FACTOR:-2}
+# 单次启动等待端口就绪的最长时间（秒）；unified-core 冷启动含 30 张表 schema 自检，实测 ~18s
+READY_TIMEOUT=${READY_TIMEOUT:-60}
 
 # 服务配置
 load_services_config() {
@@ -114,11 +116,26 @@ load_env() {
     fi
 }
 
-# 编译服务
+# 编译服务（V70+ 增加内存自适应 & 构建锁）
 build_service() {
     local service_name=$1
     local extra_opts=${2:-""}
     local service_path=$(get_service_path "$service_name")
+
+    # V70+ 保存/恢复 CARGO_BUILD_JOBS，避免污染后续构建
+    local _orig_cargo_jobs="${CARGO_BUILD_JOBS:-}"
+    local _cargo_jobs_modified=0
+    _restore_cargo_jobs() {
+        if [ "$_cargo_jobs_modified" -eq 1 ]; then
+            if [ -n "$_orig_cargo_jobs" ]; then
+                export CARGO_BUILD_JOBS="$_orig_cargo_jobs"
+            else
+                unset CARGO_BUILD_JOBS
+            fi
+            _cargo_jobs_modified=0
+        fi
+    }
+
     [ -z "$service_path" ] && error "服务 $service_name 不存在" && return 1
 
     info "编译 $service_name 服务..."
@@ -139,24 +156,73 @@ build_service() {
         online=0
     fi
 
+    # V70+ 内存自适应 + serial 模式
+    local cargo_jobs=""
+    local mem_status=0
+    local _safe_mode=0
+    local _serial_requested=0
+    if [[ "$extra_opts" == *"--serial"* ]]; then
+        _serial_requested=1
+    fi
+
+    # --serial 模式：强制单线程构建，忽略内存检查
+    if [ $_serial_requested -eq 1 ]; then
+        export CARGO_BUILD_JOBS=1
+        _cargo_jobs_modified=1
+        cargo_jobs=" (jobs=1, 串行模式)"
+    elif [[ "$extra_opts" != *"--skip-mem-check"* ]]; then
+        _check_available_memory
+        mem_status=$?
+        case "$mem_status" in
+            2)
+                _restore_cargo_jobs
+                error "内存不足，无法安全编译 $service_name。请释放内存后重试，或使用 --skip-mem-check 跳过。"
+                return 1
+                ;;
+            1)
+                # 内存偏低：限制并行编译线程数
+                local cpu_count
+                cpu_count=$(sysctl -n hw.ncpu 2>/dev/null || echo 4)
+                local safe_jobs=$(( cpu_count / 2 ))
+                [ "$safe_jobs" -lt 1 ] && safe_jobs=1
+                export CARGO_BUILD_JOBS=$safe_jobs
+                _cargo_jobs_modified=1
+                cargo_jobs=" (jobs=$safe_jobs, 内存安全模式)"
+                _safe_mode=1
+                ;;
+            *)
+                # 内存充足：使用默认并行
+                ;;
+        esac
+    fi
+
     local cmd
     if [ "$online" = "1" ]; then
         cmd="SQLX_OFFLINE= cargo build $profile --bin $executable_name"
     else
         cmd="SQLX_OFFLINE=true cargo build $profile --bin $executable_name"
     fi
-    info "  命令: $cmd"
+    info "  命令: $cmd$cargo_jobs"
 
     if eval "$cmd" 2>&1; then
         success "$service_name 编译成功 ($( [ -z "$profile" ] && echo "debug" || echo "release" ), $( [ "$online" = "1" ] && echo "online" || echo "offline sqlx" ))"
+        _restore_cargo_jobs
         return 0
     else
+        # 内存不足导致失败时，不再重试（会再次 OOM）
+        if [ "$mem_status" -eq 2 ] || [ "$mem_status" -eq 1 ]; then
+            _restore_cargo_jobs
+            error "$service_name 编译失败（可能与内存不足有关）。建议: 释放内存后重试。"
+            return 1
+        fi
         warning "$service_name 离线编译失败，自动尝试在线编译（需要 DATABASE_URL）..."
         load_env
         if SQLX_OFFLINE= cargo build $profile --bin "$executable_name" 2>&1; then
             success "$service_name 在线编译成功"
+            _restore_cargo_jobs
             return 0
         else
+            _restore_cargo_jobs
             error "$service_name 编译失败（离线+在线均失败），建议执行: ./scripts/dev/sqlx-prepare.sh 刷新根 .sqlx/"
             return 1
         fi
@@ -210,6 +276,7 @@ ensure_frontend_deps() {
 }
 
 # 全量编译所有后端服务（只编译服务包，避免编译 workspace 中所有包）
+# V70+: 增加构建锁、内存自适应、--serial 模式、进度追踪
 build_all_backend() {
     local extra_opts="${1:-""}"
     info "全量编译所有后端服务..."
@@ -220,16 +287,60 @@ build_all_backend() {
     #              --online（强制在线编译，跳过离线）
     #              --offline（强制离线编译，失败即停）
     #              --only-core（只编 iam+finance+erp+scm+srm+crm 核心组）
+    # V70+ 新参数: --serial（强制串行构建，关闭并行优化）
+    #              --force（强制获取构建锁）
+    #              --skip-mem-check（跳过内存检查，CI 场景）
     local do_prepare=0
     local only_core=0
+    local force_lock=0
+    local skip_mem_check=0
+    local serial_mode=0
+    local build_cooldown=2
     local skip_packages=""
     for opt in $extra_opts; do
         case "$opt" in
-            --prepare)       do_prepare=1 ;;
-            --only-core)     only_core=1 ;;
-            --skip=*)        skip_packages="${skip_packages} ${opt#--skip=}" ;;
+            --prepare)        do_prepare=1 ;;
+            --only-core)      only_core=1 ;;
+            --force)          force_lock=1 ;;
+            --skip-mem-check) skip_mem_check=1 ;;
+            --serial)         serial_mode=1 ;;
+            --cooldown=*)     build_cooldown="${opt#--cooldown=}" ;;
+            --skip=*)         skip_packages="${skip_packages} ${opt#--skip=}" ;;
         esac
     done
+
+    # V70+ 构建锁：防止多个 build-all 并发
+    if ! _acquire_build_lock "$( [ $force_lock -eq 1 ] && echo true || echo false )"; then
+        error "无法获取构建锁，请等待其他构建完成，或使用 --force 强制获取。"
+        return 1
+    fi
+
+    # V70+ 内存预检 + serial 模式处理
+    local mem_status=0
+    if [ $skip_mem_check -eq 0 ]; then
+        _check_available_memory
+        mem_status=$?
+        case "$mem_status" in
+            2)
+                _release_build_lock
+                error "内存严重不足，取消全量编译。请释放内存后重试。"
+                return 1
+                ;;
+            1)
+                warn "内存偏低，将启用安全模式（串行+低并行度）进行构建。"
+                ;;
+        esac
+    fi
+
+    # --serial 模式：强制串行单线程构建
+    if [ $serial_mode -eq 1 ]; then
+        warn "已指定 --serial 模式，强制单线程构建 (CARGO_BUILD_JOBS=1)。"
+        export CARGO_BUILD_JOBS=1
+    elif [ $mem_status -eq 1 ]; then
+        # 内存偏低时默认启用安全模式
+        serial_mode=1
+        export CARGO_BUILD_JOBS=1
+    fi
 
     if [ "$do_prepare" = "1" ]; then
         info "========== 预处理: 刷新 SQLx 离线缓存 =========="
@@ -252,7 +363,16 @@ build_all_backend() {
     local build_success=0
     local build_failed=0
     local build_skipped=0
+    local build_total=0
     local failed_list=""
+    local start_time=$(date +%s)
+    local is_safe_mode=0
+
+    # V70+ 构建间内存检查条件（serial 模式下也每个服务前检查）
+    local _need_mem_check=0
+    if [ $skip_mem_check -eq 0 ] && ( [ $is_safe_mode -eq 1 ] || [ $serial_mode -eq 1 ] ); then
+        _need_mem_check=1
+    fi
 
     for svc in $svc_order; do
         # 按 --skip 过滤
@@ -260,7 +380,7 @@ build_all_backend() {
         for s in $skip_packages; do
             [ "$svc" = "$s" ] && skip_this=1 && break
         done
-        [ $skip_this -eq 1 ] && { build_skipped=$((build_skipped + 1)); warning "跳过 $svc (--skip)"; continue; }
+        [ $skip_this -eq 1 ] && { build_skipped=$((build_skipped + 1)); continue; }
 
         # 某些 svc 别名 bi=analytics，需要映射
         local binary_name
@@ -268,11 +388,47 @@ build_all_backend() {
             bi) binary_name="topems-analytics" ;;
             *)  binary_name="$(get_executable_name "$svc")" ;;
         esac
-        [ -z "$binary_name" ] && { build_skipped=$((build_skipped+1)); warning "$svc 找不到可执行名，跳过"; continue; }
+        [ -z "$binary_name" ] && { build_skipped=$((build_skipped+1)); continue; }
 
-        info "编译 $svc -> bin=$binary_name ..."
+        build_total=$((build_total + 1))
+
+        # V70+ 构建间内存检查（serial/安全模式下每个服务前都检查）
+        if [ $_need_mem_check -eq 1 ]; then
+            local cur_mem=0
+            _check_available_memory >/dev/null 2>&1
+            cur_mem=$?
+            if [ $cur_mem -eq 2 ]; then
+                warn "构建 $svc 前检测到内存严重不足，暂停构建 10 秒等待系统释放内存..."
+                sleep 10
+                _check_available_memory >/dev/null 2>&1
+                cur_mem=$?
+                if [ $cur_mem -eq 2 ]; then
+                    error "内存仍未恢复，跳过 $svc。"
+                    build_failed=$((build_failed + 1))
+                    failed_list="$failed_list $svc"
+                    continue
+                fi
+            fi
+        fi
+
+        local elapsed=$(( $(date +%s) - start_time ))
+        local eta_str=""
+        if [ $build_success -gt 0 ] && [ $build_total -gt $build_success ]; then
+            local avg_time=$(( elapsed / (build_success) ))
+            local remaining=$(( (build_total - build_success - build_failed) * avg_time ))
+            eta_str=" (预计剩余 ~${remaining}s)"
+        fi
+
+        info "[$((build_success + build_failed + 1))/$build_total] 编译 $svc -> bin=$binary_name ...${eta_str}"
+
+        # V70+ 传递 --serial 给 build_service
+        local _svc_opts="$extra_opts"
+        if [ $serial_mode -eq 1 ]; then
+            _svc_opts="$_svc_opts --serial"
+        fi
+
         # 单包离线构建优先
-        if build_service "$svc" "$extra_opts" >/tmp/topems-build-"$svc".log 2>&1; then
+        if build_service "$svc" "$_svc_opts" >/tmp/topems-build-"$svc".log 2>&1; then
             build_success=$((build_success + 1))
             success "  ✅ $svc 构建成功"
         else
@@ -280,13 +436,42 @@ build_all_backend() {
             failed_list="$failed_list $svc"
             error "  ❌ $svc 构建失败，日志 /tmp/topems-build-$svc.log（末 15 行）"
             tail -n 15 "/tmp/topems-build-$svc.log" >&2
+
+            # V70+ 内存不足时自动切换到安全模式
+            if [[ "$extra_opts" != *"--skip-mem-check"* ]]; then
+                _check_available_memory >/dev/null 2>&1
+                local post_mem=$?
+                if [ $post_mem -eq 1 ] || [ $post_mem -eq 2 ]; then
+                    is_safe_mode=1
+                    serial_mode=1
+                    export CARGO_BUILD_JOBS=1
+                    _need_mem_check=1
+                    warn "检测到内存压力，切换到安全模式（串行+低并行度）继续构建..."
+                fi
+            fi
+        fi
+
+        # V70+ 构建间冷却：可配置冷却时间让 GC/缓存释放
+        if [ $serial_mode -eq 1 ]; then
+            sleep "$build_cooldown"
+        elif [ $build_cooldown -gt 0 ]; then
+            sleep 1
         fi
     done
 
+    _release_build_lock
+
+    local total_elapsed=$(( $(date +%s) - start_time ))
+    local elapsed_min=$(( total_elapsed / 60 ))
+    local elapsed_sec=$(( total_elapsed % 60 ))
+
     echo ""
     info "========== 后端编译汇总 =========="
-    info "成功: $build_success   失败: $build_failed   跳过: $build_skipped"
+    info "成功: $build_success   失败: $build_failed   跳过: $build_skipped   耗时: ${elapsed_min}m ${elapsed_sec}s"
     [ -n "$failed_list" ] && error "失败列表:$failed_list"
+    [ $is_safe_mode -eq 1 ] && warn "构建过程中启用了安全模式（内存自适应）"
+    [ $serial_mode -eq 1 ] && detail "构建模式: 串行单线程 (CARGO_BUILD_JOBS=1)"
+    detail "冷却间隔: ${build_cooldown}s (serial/安全模式) / 1s (普通模式)"
     info "产物目录: $PROJECT_ROOT/target/release/ (release) 或 target/debug/ (debug)"
 
     if [ $build_failed -eq 0 ]; then
@@ -695,15 +880,27 @@ start_service() {
         fi
 
         pid=$(_start_service_internal "$service_name" "$port" "$executable_path")
-        sleep 3
 
-        if check_port $port; then
-            success "$service_name 服务启动成功 (PID: $pid, 端口: $port)"
-            
+        # 轮询等待端口就绪：固定 sleep 3 对冷启动含 schema 自检的服务（unified-core ~18s）
+        # 必然误判失败，并在重试时 kill -9 正在迁移的进程。改为最长等待 READY_TIMEOUT，
+        # 端口绑定即成功；进程提前退出则立即跳出重试，避免空等。
+        local waited=0 ready=0
+        while [ $waited -lt $READY_TIMEOUT ]; do
+            if check_port $port; then ready=1; break; fi
+            if ! kill -0 "$pid" 2>/dev/null; then break; fi
+            sleep 2
+            waited=$((waited + 2))
+        done
+
+        if [ $ready -eq 1 ]; then
+            success "$service_name 服务启动成功 (PID: $pid, 端口: $port, 就绪耗时 ${waited}s)"
+
             if [ "$service_name" != "iam" ]; then
-                register_plugin "$service_name"
+                if ! register_plugin "$service_name"; then
+                    echo "$service_name" >> /tmp/topems-register-failed.log
+                fi
             fi
-            
+
             return 0
         else
             local failed_pid=$(get_service_pid "$service_name" "$port")
@@ -784,41 +981,164 @@ logs_service() {
     [ -f "/tmp/topems-${service_name}.log" ] && tail -n $lines "/tmp/topems-${service_name}.log" || { error "日志文件不存在"; return 1; }
 }
 
-# 服务注册到 unified-core
+# 等待 plugin-registry 的插件注册接口就绪
+# 返回: 0=就绪, 1=未就绪
+_wait_for_plugin_registry() {
+    local registry_url="http://localhost:8096"
+    local max_wait=15
+    local interval=1
+    local waited=0
+
+    while [ $waited -lt $max_wait ]; do
+        local health=$(curl -s -o /dev/null -w "%{http_code}" "$registry_url/health" 2>/dev/null || echo "000")
+        if [ "$health" = "200" ]; then
+            local test_resp=$(curl -s -o /dev/null -w "%{http_code}" "$registry_url/dev/runtime/ping/register" 2>/dev/null || echo "000")
+            if [ "$test_resp" != "000" ]; then
+                return 0
+            fi
+        fi
+        sleep $interval
+        waited=$((waited + interval))
+    done
+    return 1
+}
+
+# 安全解析 JSON 字段（失败返回默认值）
+_safe_json_field() {
+    local json="$1"
+    local field="$2"
+    local default="${3:-}"
+    echo "$json" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    print(data.get('$field', '$default'))
+except (json.JSONDecodeError, Exception):
+    print('$default')
+" 2>/dev/null || echo "$default"
+}
+
+# 服务注册到 plugin-registry（含重试与指数退避）
 register_plugin() {
     local service_name=$1
     local port=$(get_service_port "$service_name")
     [ -z "$port" ] && return
 
-    local core_url="http://localhost:8000"
-    
-    if ! curl -s -f "$core_url/health" >/dev/null 2>&1; then
-        warning "unified-core 未运行，跳过插件注册"
-        return
-    fi
+    local registry_url="http://localhost:8096"
+    local max_retries=5
+    local initial_delay=2
+    local max_delay=30
 
     local service_display_name=$(get_service_display_name "$service_name")
     local description=$(get_service_description "$service_name")
     local runtime_url="http://localhost:$port"
+    local plugin_token="${PLUGIN_REGISTRATION_TOKEN:-}"
 
-    detail "注册 $service_name 到 unified-core..."
-    local response=$(curl -s -X POST "$core_url/api/core/plugin/dev/plugins/${service_name}/register" \
-        -H "Content-Type: application/json" \
-        -d "{
-            \"code\": \"${service_name}\",
-            \"name\": \"${service_display_name}\",
-            \"description\": \"${description}\",
-            \"version\": \"0.1.0\",
-            \"runtime_url\": \"${runtime_url}\",
-            \"permissions\": []
-        }")
+    local attempt=1
+    local delay=$initial_delay
 
-    if echo "$response" | python3 -c "import sys,json; print(json.load(sys.stdin).get('success', False))" | grep -q "True"; then
-        detail "$service_name 注册成功"
-    else
-        local msg=$(echo "$response" | python3 -c "import sys,json; print(json.load(sys.stdin).get('message', 'Unknown'))")
-        warning "$service_name 注册失败: $msg"
+    while [ $attempt -le $max_retries ]; do
+        if [ $attempt -eq 1 ]; then
+            if ! _wait_for_plugin_registry; then
+                warning "plugin-registry 注册接口未就绪，$service_name 跳过注册（将在全部启动后重试）"
+                return 1
+            fi
+        else
+            sleep $delay
+            delay=$((delay * 2))
+            [ $delay -gt $max_delay ] && delay=$max_delay
+        fi
+
+        detail "注册 $service_name (第 $attempt/$max_retries 次)..."
+
+        local token_header=""
+        [ -n "$plugin_token" ] && token_header="-H \"X-Plugin-Token: $plugin_token\""
+
+        local response
+        response=$(eval curl -s --connect-timeout 5 --max-time 10 -X POST \
+            "\"$registry_url/dev/runtime/${service_name}/register\"" \
+            -H "\"Content-Type: application/json\"" \
+            $token_header \
+            -d "'{
+                \"code\": \"${service_name}\",
+                \"name\": \"${service_display_name}\",
+                \"description\": \"${description}\",
+                \"version\": \"0.1.0\",
+                \"runtime_url\": \"${runtime_url}\",
+                \"permissions\": [],
+                \"category\": \"business\"
+            }'" 2>/dev/null)
+
+        if [ -z "$response" ]; then
+            attempt=$((attempt + 1))
+            continue
+        fi
+
+        local success
+        success=$(_safe_json_field "$response" "success" "False")
+
+        if [ "$success" = "True" ]; then
+            success "$service_name 注册成功"
+            # 从失败列表中移除（如果之前标记过）
+            if [ -f /tmp/topems-register-failed.log ]; then
+                grep -vx "$service_name" /tmp/topems-register-failed.log > /tmp/topems-register-failed.tmp 2>/dev/null
+                mv /tmp/topems-register-failed.tmp /tmp/topems-register-failed.log 2>/dev/null
+            fi
+            return 0
+        else
+            local msg
+            msg=$(_safe_json_field "$response" "message" "")
+            if [ -n "$msg" ] && [ "$msg" != "" ]; then
+                warning "$service_name 注册失败: $msg"
+            fi
+        fi
+
+        attempt=$((attempt + 1))
+    done
+
+    warning "$service_name 注册失败（已重试 $max_retries 次），将在全部服务启动后再次尝试"
+    return 1
+}
+
+# 批量注册所有服务到 plugin-registry
+# 用法: ./scripts/topems.sh register-all
+register_all_plugins() {
+    local registry_url="http://localhost:8096"
+    local -a services_to_register=()
+    local success_count=0
+    local fail_count=0
+
+    if ! _wait_for_plugin_registry; then
+        error "plugin-registry 注册接口未就绪，请先启动服务"
+        return 1
     fi
+
+    info "批量注册所有服务到 plugin-registry..."
+    for service in $(get_all_services); do
+        if echo "$CORE_SERVICES" | grep -wq "$service"; then
+            continue
+        fi
+        local port=$(get_service_port "$service")
+        if check_port "$port"; then
+            services_to_register+=("$service")
+        else
+            warning "$service 未运行，跳过注册"
+        fi
+    done
+
+    info "待注册 ${#services_to_register[@]} 个服务..."
+    for svc in "${services_to_register[@]}"; do
+        if register_plugin "$svc"; then
+            success_count=$((success_count + 1))
+        else
+            fail_count=$((fail_count + 1))
+        fi
+    done
+
+    echo ""
+    info "注册汇总: 成功 $success_count, 失败 $fail_count"
+    [ $fail_count -eq 0 ] && success "所有服务注册完成 ✅" || warning "部分服务注册失败"
+    return $fail_count
 }
 
 # 获取服务显示名称
@@ -971,6 +1291,8 @@ start_all_services() {
 
     local success_count=0
     local fail_count=0
+    local register_failed_log="/tmp/topems-register-failed.log"
+    rm -f "$register_failed_log"
 
     info "========== [1/3] 启动核心服务 (iam=unified-core) =========="
     for service in $CORE_SERVICES; do
@@ -989,16 +1311,21 @@ start_all_services() {
 
     wait_for_core_services
 
-    # 自动注册插件（V64+ 默认开启）
-    if [ "$no_register" = "0" ] && [ -x "$SCRIPT_DIR/dev/register-plugins.sh" ]; then
-        info "========== [1b/3] 自动注册插件 =========="
-        "$SCRIPT_DIR/dev/register-plugins.sh" >/tmp/topems-register.log 2>&1 || warning "插件注册失败，日志 /tmp/topems-register.log"
+    # 核心服务启动后，主动等待 plugin-registry 注册接口就绪
+    if [ "$no_register" = "0" ]; then
+        info "等待 plugin-registry 注册接口就绪..."
+        if _wait_for_plugin_registry; then
+            success "plugin-registry 注册接口已就绪"
+        else
+            warning "plugin-registry 注册接口未就绪，注册将在服务启动后自动重试"
+        fi
     fi
 
     if [ "$only_core" = "1" ]; then
         info "========== --only-core 指定，仅启动核心服务，退出 =========="
     else
         info "========== [2/3] 启动其他服务 =========="
+        local -a svc_start_order=()
         for service in $(get_all_services); do
             if echo "$CORE_SERVICES" | grep -wq "$service"; then
                 continue
@@ -1007,14 +1334,32 @@ start_all_services() {
             for s in $skip_packages; do
                 [ "$service" = "$s" ] && skip_this=1 && break
             done
-            [ $skip_this -eq 1 ] && { warning "跳过 $service (--skip)"; continue; }
+            [ $skip_this -eq 1 ] && continue
+            svc_start_order+=("$service")
+        done
 
+        for service in "${svc_start_order[@]}"; do
             if start_service "$service"; then
                 success_count=$((success_count + 1))
             else
                 fail_count=$((fail_count + 1))
             fi
         done
+
+        # 全部服务启动后，统一重试注册失败的服务
+        if [ "$no_register" = "0" ] && [ -f "$register_failed_log" ] && [ -s "$register_failed_log" ]; then
+            local failed_count=$(wc -l < "$register_failed_log" | tr -d ' ')
+            echo ""
+            info "========== [2b/3] 重试注册失败的服务 ($failed_count 个) =========="
+            while IFS= read -r svc; do
+                [ -z "$svc" ] && continue
+                if register_plugin "$svc"; then
+                    success "$svc 重新注册成功"
+                else
+                    warning "$svc 重新注册仍失败"
+                fi
+            done < "$register_failed_log"
+        fi
     fi
 
     if [ $skip_fe -eq 1 ]; then
@@ -1049,6 +1394,7 @@ stop_all_services() {
         stop_service "$service" || true
     done
     stop_frontend || true
+    rm -f /tmp/topems-register-failed.log
 }
 
 # 启动开发环境（macOS）
@@ -1085,7 +1431,14 @@ start_dev_macos() {
     info "启动前端服务..."
     if ! check_port 3000; then
         ensure_frontend_deps "$pkg_cmd" || return 1
-        nohup $pkg_cmd dev > "/tmp/topems-web.log" 2>&1 &
+        # stdin=/dev/null 避免 TTY 关闭导致 Vite readline 触发 EIO 崩溃
+        cd "$FRONTEND_DIR" && \
+            nohup "$pkg_cmd" run dev -- \
+                --port 3000 \
+                --host "${FRONTEND_BIND_HOST:-127.0.0.1}" \
+                < /dev/null \
+                > "/tmp/topems-web.log" 2>&1 &
+        cd - > /dev/null
         sleep 5
         info "前端服务启动中..."
     else
@@ -1124,7 +1477,15 @@ start_frontend() {
     if [ -n "$existing_pid" ]; then
         info "前端进程已存在 (PID: $existing_pid)，等待端口就绪..."
     else
-        nohup $pkg_cmd dev > "/tmp/topems-web.log" 2>&1 &
+        # 用 nohup + stdin=/dev/null 脱离 TTY，防止 TTY 关闭后 Vite readline 读到 EIO 崩溃
+        # 使用 -- 透传参数到 vite（pnpm 自身参数不会误传入 vite）
+        cd "$FRONTEND_DIR" && \
+            nohup "$pkg_cmd" run dev -- \
+                --port 3000 \
+                --host "${FRONTEND_BIND_HOST:-127.0.0.1}" \
+                < /dev/null \
+                > "/tmp/topems-web.log" 2>&1 &
+        cd - > /dev/null
     fi
     local pid=$!
     [ -z "$pid" ] && pid=$existing_pid
@@ -1941,6 +2302,94 @@ _check_disk_space() {
 }
 
 # =============================================
+# 内存守卫 & 构建锁（V70+）
+# =============================================
+# 检查可用内存
+# 返回: 0=充足(>2GB), 1=偏低(1-2GB, WARN), 2=不足(<1GB, FAIL)
+_check_available_memory() {
+    local avail_kb=0
+    local threshold_gb_fatal=${BUILD_MEMORY_FATAL_GB:-1}
+    local threshold_gb_warn=${BUILD_MEMORY_WARN_GB:-2}
+
+    case "$(uname -s)" in
+        Darwin)
+            # macOS: free + inactive 都属于可回收内存
+            local pages_free pages_inactive page_size
+            pages_free=$(vm_stat 2>/dev/null | grep "Pages free" | awk '{print $3}' | tr -d '.')
+            pages_inactive=$(vm_stat 2>/dev/null | grep "Pages inactive" | awk '{print $3}' | tr -d '.')
+            page_size=$(vm_stat 2>/dev/null | head -1 | grep -oE 'page size of [0-9]+' | grep -oE '[0-9]+' || echo 4096)
+            [ -z "$pages_free" ] && return 0
+            : "${pages_inactive:=0}"
+            avail_kb=$(( (pages_free + pages_inactive) * page_size / 1024 ))
+            ;;
+        Linux)
+            avail_kb=$(grep MemAvailable /proc/meminfo 2>/dev/null | awk '{print $2}')
+            ;;
+        *)
+            return 0
+            ;;
+    esac
+
+    [ -z "$avail_kb" ] || [ "$avail_kb" -eq 0 ] && return 0
+    local avail_gb=$((avail_kb / 1024 / 1024))
+    local avail_mb=$((avail_kb / 1024))
+
+    if [ "$avail_gb" -lt "$threshold_gb_fatal" ]; then
+        error "可用内存仅 ${avail_mb}MB！低于安全阈值 ${threshold_gb_fatal}GiB，构建可能失败。"
+        error "建议: 关闭其他应用或增加 swap，然后重试。"
+        return 2
+    elif [ "$avail_gb" -lt "$threshold_gb_warn" ]; then
+        warn "可用内存 ${avail_mb}MB，低于推荐阈值 ${threshold_gb_warn}GiB，将自动启用安全模式（串行+节流）。"
+        return 1
+    else
+        detail "可用内存 ${avail_gb}GiB，充足"
+        return 0
+    fi
+}
+
+# 构建锁机制：防止多个 build-all 并发执行导致 cargo 包缓存锁竞争
+# 锁文件: /tmp/topems-build.lock
+_BUILD_LOCK="/tmp/topems-build.lock"
+
+_acquire_build_lock() {
+    local force=${1:-false}
+    if [ -f "$_BUILD_LOCK" ]; then
+        local lock_pid
+        lock_pid=$(cat "$_BUILD_LOCK" 2>/dev/null)
+        if [ -n "$lock_pid" ] && kill -0 "$lock_pid" 2>/dev/null; then
+            if [ "$force" = "true" ]; then
+                warn "构建锁被 PID=$lock_pid 占用，强制获取..."
+                kill "$lock_pid" 2>/dev/null || true
+                sleep 1
+            else
+                error "检测到另一个构建正在运行 (PID=$lock_pid)，请等待其完成。"
+                error "如需强制获取锁，使用 --force 参数。"
+                return 1
+            fi
+        else
+            warn "发现过期的构建锁 (PID=$lock_pid 已不存在)，清理..."
+            rm -f "$_BUILD_LOCK"
+        fi
+    fi
+    echo "$$" > "$_BUILD_LOCK"
+    return 0
+}
+
+_release_build_lock() {
+    if [ -f "$_BUILD_LOCK" ]; then
+        local lock_pid
+        lock_pid=$(cat "$_BUILD_LOCK" 2>/dev/null)
+        if [ "$lock_pid" = "$$" ]; then
+            rm -f "$_BUILD_LOCK"
+            detail "构建锁已释放 (PID=$$)"
+        fi
+    fi
+}
+
+# 构建完成时自动释放锁
+trap '_release_build_lock' EXIT
+
+# =============================================
 # 主流程预检（轻量模式，调用 clean_project --preflight）
 # 在 run_all / start_dev / build / test 等主流程入口自动调用。
 # 接受 --skip-preflight 参数跳过（CI 场景或已清理过的情况）。
@@ -2338,10 +2787,15 @@ TOPEMS 服务管理工具
                             --dev|--debug     编 debug 版（默认 release）
                             --skip=<svc>      跳过某个包，可重复
                             --backend-only    只编后端，跳过前端
+                            --force           强制获取构建锁（避免并发冲突）
+                            --skip-mem-check  跳过内存检查（CI / Docker 场景）
+                            --serial          强制单线程串行构建，避免并行锁竞争
+                            --cooldown=N      构建间冷却秒数（默认 2，serial 模式下生效）
   build-backend [选项]    编译所有后端服务（同 build-all 的后端子集）
   build-frontend          编译前端 (tsc && vite build)
                             --dev        若存在 build:dev 脚本则用，否则回退默认 build
                             --skip-lint  若存在 build:nolint 脚本则用，否则忽略（默认 build 不跑 lint）
+  register-all           批量注册所有运行中的服务到 unified-core（含重试）
   start-all [选项]        启动所有服务（含前端，自动注册）
                             --only-core       只启动核心服务（iam=unified-core）
                             --no-frontend     不启动前端
@@ -2437,6 +2891,8 @@ WebSocket:
   topems start-all --no-frontend   只启动后端服务
   topems logs hrm 100         查看 HRM 最近 100 行日志
   topems build-all            全量编译（离线优先，失败自动切在线）
+  topems build-all --serial   全量串行构建（单线程，避免并行锁竞争）
+  topems build-all --serial --cooldown=3  串行构建+3秒冷却间隔
   topems build-all --prepare  先刷新 sqlx 缓存再编译
   topems build-all --only-core --dev  仅 debug 编译核心服务
   topems sqlx prepare --all   生成全量 SQLx 离线缓存
@@ -2524,6 +2980,9 @@ case "${1:-help}" in
         ;;
     build-frontend)
         build_frontend "${@:2}"
+        ;;
+    register-all)
+        register_all_plugins
         ;;
     test-all)
         test_all

@@ -1,0 +1,16 @@
+{
+  "desktop.monitor.title": "桌面应用监控",
+  "desktop.monitor.browser_notice": "此页面仅在 Tauri 桌面应用中可用。当前运行在浏览器环境，部分功能不可用。",
+  "desktop.monitor.updated_at": "更新于 {{time}}",
+  "desktop.monitor.total_requests": "总请求数",
+  "desktop.monitor.success_rate": "成功率",
+  "desktop.monitor.failure_rate": "失败率",
+  "desktop.monitor.retry_count": "重试次数",
+  "desktop.monitor.avg_response": "平均响应",
+  "desktop.monitor.backend_health": "后端健康状态",
+  "desktop.monitor.attribute": "属性",
+  "desktop.monitor.value": "值",
+  "desktop.monitor.health_unavailable": "无法获取健康状态",
+  "desktop.monitor.system_config": "系统配置",
+  "desktop.monitor.config_unavailable": "无法获取配置"
+}

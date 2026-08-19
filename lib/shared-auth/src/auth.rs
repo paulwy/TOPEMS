@@ -82,7 +82,16 @@ pub struct AuthState {
 }
 
 impl AuthState {
+    /// 默认 JWT/Refresh 密钥（仅开发环境回退使用；生产环境一律拒绝）。
+    const DEFAULT_JWT_SECRET: &'static str =
+        "topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256";
+    const DEFAULT_REFRESH_SECRET: &'static str =
+        "topems-refresh-secret-key-must-be-at-least-32-characters-for-hs256";
+
     pub fn new(jwt_secret: String, refresh_secret: String, token_expiry_hours: i64) -> Self {
+        // 安全不变量：32 字符最小长度 + 默认密钥在任何环境下一律拒绝。
+        // 外部不应再自行构造弱 AuthState，所有生产路径通过 `from_env` 走严格校验。
+        Self::validate_secrets(&jwt_secret, &refresh_secret, /*strict=*/ true);
         Self {
             jwt_secret,
             refresh_secret,
@@ -90,12 +99,44 @@ impl AuthState {
         }
     }
 
-    pub fn from_env() -> Self {
-        let default_jwt_secret =
-            "topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256";
-        let default_refresh_secret =
-            "topems-refresh-secret-key-must-be-at-least-32-characters-for-hs256";
+    /// 校验密钥强度；strict 模式下（生产 / 外部显式构造）不满足条件将 panic。
+    fn validate_secrets(jwt_secret: &str, refresh_secret: &str, strict: bool) {
+        if jwt_secret.len() < 32 {
+            let msg = "JWT_SECRET must be at least 32 characters long for security";
+            if strict {
+                panic!("{msg}");
+            } else {
+                tracing::error!("{msg}");
+            }
+        }
+        if refresh_secret.len() < 32 {
+            let msg =
+                "JWT_REFRESH_SECRET or REFRESH_SECRET must be at least 32 characters long for security";
+            if strict {
+                panic!("{msg}");
+            } else {
+                tracing::error!("{msg}");
+            }
+        }
+        if jwt_secret == Self::DEFAULT_JWT_SECRET {
+            let msg = "Default JWT_SECRET cannot be used in any environment";
+            if strict {
+                panic!("{msg}");
+            } else {
+                tracing::error!("{msg}");
+            }
+        }
+        if refresh_secret == Self::DEFAULT_REFRESH_SECRET {
+            let msg = "Default JWT_REFRESH_SECRET cannot be used in any environment";
+            if strict {
+                panic!("{msg}");
+            } else {
+                tracing::error!("{msg}");
+            }
+        }
+    }
 
+    pub fn from_env() -> Self {
         let is_production = std::env::var("PROFILE")
             .map(|v| v == "prod" || v == "production")
             .unwrap_or(false)
@@ -117,7 +158,7 @@ impl AuthState {
                 "⚠️  JWT_SECRET not set, using default development secret. \
                  This is INSECURE for production use!"
             );
-            default_jwt_secret.to_string()
+            Self::DEFAULT_JWT_SECRET.to_string()
         });
 
         let refresh_secret = std::env::var("JWT_REFRESH_SECRET")
@@ -133,22 +174,11 @@ impl AuthState {
                     "⚠️  JWT_REFRESH_SECRET not set, using default development secret. \
                      This is INSECURE for production use!"
                 );
-                default_refresh_secret.to_string()
+                Self::DEFAULT_REFRESH_SECRET.to_string()
             });
 
-        if jwt_secret.len() < 32 {
-            panic!("JWT_SECRET must be at least 32 characters long for security");
-        }
-        if refresh_secret.len() < 32 {
-            panic!("JWT_REFRESH_SECRET or REFRESH_SECRET must be at least 32 characters long for security");
-        }
-
-        if jwt_secret == default_jwt_secret && is_production {
-            panic!("Default JWT_SECRET cannot be used in production mode");
-        }
-        if refresh_secret == default_refresh_secret && is_production {
-            panic!("Default JWT_REFRESH_SECRET cannot be used in production mode");
-        }
+        // 与 `new` 共享严格校验路径。
+        Self::validate_secrets(&jwt_secret, &refresh_secret, /*strict=*/ true);
 
         Self {
             jwt_secret,
@@ -817,10 +847,51 @@ mod tests {
 
     #[test]
     fn test_auth_state_validates_secret_length() {
-        assert!(std::panic::catch_unwind(|| {
-            "short".to_string(); "this-is-a-very-long-secret-key-at-least-32-chars".to_string(); 24;
+        // 安全加固：短密钥构造 AuthState 必须 panic，防止绕过安全不变量。
+        let panics_on_short_jwt = std::panic::catch_unwind(|| {
+            AuthState::new(
+                "short".to_string(),
+                "this-is-a-very-long-secret-key-at-least-32-chars".to_string(),
+                24,
+            );
         })
-        .is_ok());
+        .is_err();
+        assert!(
+            panics_on_short_jwt,
+            "AuthState::new 应拒绝不足 32 字符的 jwt_secret"
+        );
+
+        let panics_on_short_refresh = std::panic::catch_unwind(|| {
+            AuthState::new(
+                "this-is-a-very-long-secret-key-at-least-32-chars".to_string(),
+                "short".to_string(),
+                24,
+            );
+        })
+        .is_err();
+        assert!(
+            panics_on_short_refresh,
+            "AuthState::new 应拒绝不足 32 字符的 refresh_secret"
+        );
+
+        // 默认密钥（即便是"长"的）也必须被拒绝
+        let panics_on_default_jwt = std::panic::catch_unwind(|| {
+            AuthState::new(
+                AuthState::DEFAULT_JWT_SECRET.to_string(),
+                "this-is-a-very-long-secret-key-at-least-32-chars".to_string(),
+                24,
+            );
+        })
+        .is_err();
+        assert!(panics_on_default_jwt, "AuthState::new 应拒绝默认 JWT 密钥");
+
+        // 合法构造应成功
+        let s = AuthState::new(
+            "this-is-a-very-long-secret-key-at-least-32-chars".to_string(),
+            "this-is-also-a-very-long-secret-key-for-refresh".to_string(),
+            24,
+        );
+        assert_eq!(s.token_expiry_hours, 24);
 
         std::env::set_var(
             "JWT_SECRET",

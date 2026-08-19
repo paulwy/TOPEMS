@@ -12,11 +12,11 @@ const VERSION_TYPE_COLOR_MAP: Record<string, 'error' | 'warning' | 'success' | '
   patch: 'success',
 };
 
-const VERSION_TYPE_LABEL_MAP: Record<string, string> = {
+const getVersionTypeLabelMap = (): Record<string, string> => ({
   major: i18n.t('pdm.version.k0'),
   minor: i18n.t('pdm.version.k1'),
   patch: i18n.t('pdm.version.k2'),
-};
+});
 
 const STATUS_COLOR_MAP: Record<string, 'success' | 'warning' | 'error' | 'default' | 'info'> = {
   published: 'success',
@@ -26,17 +26,21 @@ const STATUS_COLOR_MAP: Record<string, 'success' | 'warning' | 'error' | 'defaul
   deprecated: 'error',
 };
 
-const STATUS_LABEL_MAP: Record<string, string> = {
+const getStatusLabelMap = (): Record<string, string> => ({
   published: i18n.t('pdm.version.k3'),
   draft: i18n.t('pdm.version.k4'),
   review: i18n.t('pdm.version.k5'),
   approved: i18n.t('pdm.version.k6'),
   deprecated: i18n.t('pdm.version.k7'),
-};
+});
 
-export const versionSchema: EntitySchema = {
-  entity: 'pdm_version',
-  title: i18n.t('pdm.version.k8'),
+export const getVersionSchema = (): EntitySchema => {
+  const VERSION_TYPE_LABEL_MAP = getVersionTypeLabelMap();
+  const STATUS_LABEL_MAP = getStatusLabelMap();
+
+  return {
+    entity: 'pdm_version',
+    title: i18n.t('pdm.version.k8'),
   description: i18n.t('pdm.version.k9'),
 
   api: {
@@ -228,4 +232,5 @@ export const versionSchema: EntitySchema = {
   detailTitle: i18n.t('pdm.version.k42'),
 
   actions: ['create', 'edit', 'detail', 'delete'],
+  };
 };

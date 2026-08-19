@@ -28,8 +28,8 @@ export const SRM_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const srmModuleConfig: RouteModuleConfig = {
   code: 'srm',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.srm_name'),
+  nameKey: 'shared.config.srm_name',
   icon: 'Users',
   path: SRM_PATHS.root,
   source: 'plugin',

@@ -458,3 +458,99 @@ pub async fn get_instance_details(
 ) -> Json<ApiResponse<WorkflowInstance>> {
     get_instance(State(state), Path(id)).await
 }
+
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/monitor/instances/error",
+    tag = "Flow-Monitor",
+    params(
+        ("page" = Option<i64>, Query, description = "页码，默认1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认20，最大100"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("workflow_id" = Option<String>, Query, description = "工作流ID"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<PaginatedResponse<WorkflowInstance>>),
+        (status = 500, description = "查询失败"),
+    ),
+)]
+pub async fn error_instances(
+    State(state): State<AppState>,
+    Query(params): Query<InstanceQueryParams>,
+) -> Json<ApiResponse<PaginatedResponse<WorkflowInstance>>> {
+    let mut params = params;
+    params.status = Some("error".to_string());
+    list_instances(State(state), Query(params)).await
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/core/flow/monitor/instances/overdue",
+    tag = "Flow-Monitor",
+    params(
+        ("page" = Option<i64>, Query, description = "页码，默认1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认20，最大100"),
+    ),
+    responses(
+        (status = 200, description = "查询成功", body = ApiResponse<PaginatedResponse<WorkflowInstance>>),
+        (status = 500, description = "查询失败"),
+    ),
+)]
+pub async fn overdue_instances(
+    State(state): State<AppState>,
+    Query(params): Query<InstanceQueryParams>,
+) -> Json<ApiResponse<PaginatedResponse<WorkflowInstance>>> {
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let total: i64 = match sqlx::query_scalar(
+        r#"SELECT COUNT(*) FROM core_workflow_instances i
+           WHERE EXISTS (
+               SELECT 1 FROM core_workflow_tasks t
+               WHERE t.instance_id = i.id
+                 AND t.due_time IS NOT NULL
+                 AND t.due_time < NOW()
+                 AND t.completed_at IS NULL
+           )"#,
+    )
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("查询逾期工作流实例总数失败: {}", e);
+            return Json(api_error(500, "查询逾期工作流实例总数失败"));
+        }
+    };
+
+    let items: Vec<WorkflowInstance> = match sqlx::query_as::<_, WorkflowInstance>(
+        r#"SELECT i.id, i.tenant_id, i.workflow_id, i.title, i.initiator_id, i.current_node_id, i.status, i.variables, i.started_at, i.completed_at, i.created_at, i.updated_at
+           FROM core_workflow_instances i
+           WHERE EXISTS (
+               SELECT 1 FROM core_workflow_tasks t
+               WHERE t.instance_id = i.id
+                 AND t.due_time IS NOT NULL
+                 AND t.due_time < NOW()
+                 AND t.completed_at IS NULL
+           )
+           ORDER BY i.created_at DESC
+           LIMIT $1 OFFSET $2"#,
+    )
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.pool)
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("查询逾期工作流实例列表失败: {}", e);
+            return Json(api_error(500, "查询逾期工作流实例列表失败"));
+        }
+    };
+
+    Json(ApiResponse::success(
+        PaginatedResponse::new(items, total, page, page_size),
+        "查询成功",
+    ))
+}

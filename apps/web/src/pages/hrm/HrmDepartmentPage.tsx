@@ -298,7 +298,7 @@ const HrmDepartmentPage: React.FC = () => {
       }}
     >
       <CrudPage
-        schema={departmentSchema}
+        schema={departmentSchema()}
         apiAdapter={apiAdapter}
         customRowActions={customRowActions}
         headerContent={statsContent}

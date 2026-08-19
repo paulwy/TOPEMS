@@ -21,20 +21,20 @@ async function loadDepartments(): Promise<{ value: string; label: string }[]> {
   }
 }
 
-const BUDGET_TYPE_LABELS: Record<string, string> = {
+const getBudgetTypeLabels = (): Record<string, string> => ({
   office: i18n.t('finance.budget.k0'),
   marketing: i18n.t('finance.budget.k1'),
   development: i18n.t('finance.budget.k2'),
   travel: i18n.t('finance.budget.k3'),
   training: i18n.t('finance.budget.k4'),
   other: i18n.t('finance.budget.k5'),
-};
+});
 
-const STATUS_LABELS: Record<string, string> = {
+const getStatusLabels = (): Record<string, string> => ({
   active: i18n.t('finance.budget.k6'),
   frozen: i18n.t('finance.budget.k7'),
   exhausted: i18n.t('finance.budget.k8'),
-};
+});
 
 const STATUS_COLORS: Record<string, 'primary' | 'warning' | 'error' | 'default'> = {
   active: 'primary',
@@ -114,7 +114,7 @@ const renderUsageBar = (row: Record<string, unknown>) => {
 
 const renderStatusBadge = (row: Record<string, unknown>) => {
   const status = String(row.status ?? '');
-  const label = STATUS_LABELS[status] || status;
+  const label = getStatusLabels()[status] || status;
   const color = STATUS_COLORS[status] || 'default';
   const colorMap: Record<string, string> = {
     primary: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
@@ -145,7 +145,7 @@ const renderStatusBadge = (row: Record<string, unknown>) => {
   );
 };
 
-export const budgetSchema: EntitySchema = {
+export const getBudgetSchema = (): EntitySchema => ({
   entity: 'finance_budget',
   title: i18n.t('finance.budget.k9'),
   description: i18n.t('finance.budget.k10'),
@@ -195,7 +195,7 @@ export const budgetSchema: EntitySchema = {
         React.createElement(
           'span',
           null,
-          BUDGET_TYPE_LABELS[String(row.budget_type || '')] || String(row.budget_type || '')
+          getBudgetTypeLabels()[String(row.budget_type || '')] || String(row.budget_type || '')
         ),
       validation: [{ type: 'maxLength', value: 100 }],
     },
@@ -336,4 +336,4 @@ export const budgetSchema: EntitySchema = {
       queryKey: QUERY_KEYS.AD_HOC.FINANCE_BUDGET_DEPARTMENTS_BASE,
     },
   ],
-};
+});

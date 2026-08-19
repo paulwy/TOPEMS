@@ -12,17 +12,18 @@ import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { QMS_PATHS } from '@/modules/qms/config';
 import i18n from '@/i18n';
-
-const TABS = [
-  { id: 'info', label: i18n.t('qms.qms_audit_plan_detail_page.k0') },
-  { id: 'tasks', label: i18n.t('qms.qms_audit_plan_detail_page.k1') },
-  { id: 'findings', label: i18n.t('qms.qms_audit_plan_detail_page.k2') },
-] as const;
+function getTabs() {
+  return [
+    { id: 'info', label: i18n.t('qms.qms_audit_plan_detail_page.k0') },
+    { id: 'tasks', label: i18n.t('qms.qms_audit_plan_detail_page.k1') },
+    { id: 'findings', label: i18n.t('qms.qms_audit_plan_detail_page.k2') },
+  ] as const;
+}
 export default function QmsAuditPlanDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data } = useQmsMock<QmsMockShape>();
-  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['id']>('info');
+  const [activeTab, setActiveTab] = useState<(ReturnType<typeof getTabs>)[number]['id']>('info');
   const plan = useMemo(() => {
     const list = data.auditPlans ?? [];
     return list.find((p) => p.id === id) ?? list[0];
@@ -72,9 +73,7 @@ export default function QmsAuditPlanDetailPage() {
         />
       </div>
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>
-          {i18n.t('qms.qms_audit_plan_detail_page.k4')}
-        </p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>{i18n.t('qms.qms_audit_plan_detail_page.k4')}</p>
         <FSMActionButtons
           fsm='audit_plan'
           currentStatus={plan.status}
@@ -82,7 +81,7 @@ export default function QmsAuditPlanDetailPage() {
         />
       </div>
       <div className='flex gap-2 border-b'>
-        {TABS.map((t) => (
+        {getTabs().map((t) => (
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id)}

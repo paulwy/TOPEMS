@@ -18,8 +18,8 @@ export const DOC_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const docModuleConfig: RouteModuleConfig = {
   code: 'doc',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.doc_name'),
+  nameKey: 'shared.config.doc_name',
   icon: 'FileText',
   path: DOC_PATHS.root,
   source: 'core',

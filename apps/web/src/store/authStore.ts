@@ -1,3 +1,4 @@
+import { useMemo, useCallback } from 'react';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
@@ -159,20 +160,51 @@ export const useAuthUserRole = () => {
   return user?.role || (roles && roles.length > 0 ? roles[0] : '');
 };
 
-export const useAuthActions = () =>
-  useAuthStore((state) => ({
-    setUser: state.setUser,
-    setToken: state.setToken,
-    setPermissions: state.setPermissions,
-    setRoles: state.setRoles,
-    clearAuth: state.clearAuth,
-    updateUser: state.updateUser,
-    hasPermission: state.hasPermission,
-    hasAnyPermission: state.hasAnyPermission,
-    hasAllPermissions: state.hasAllPermissions,
-    hasRole: state.hasRole,
-    hasAnyRole: state.hasAnyRole,
-  }));
+export const useAuthActions = () => {
+  // 使用单独选择器选择每个动作，避免在任何 store state 变化时都创建新的对象
+  // zustand 中动作函数引用本身是稳定的，单独选择它们能确保仅当函数引用本身变化时才触发更新
+  const setUser = useAuthStore((s) => s.setUser);
+  const setToken = useAuthStore((s) => s.setToken);
+  const setPermissions = useAuthStore((s) => s.setPermissions);
+  const setRoles = useAuthStore((s) => s.setRoles);
+  const clearAuth = useAuthStore((s) => s.clearAuth);
+  const updateUser = useAuthStore((s) => s.updateUser);
+  const hasPermission = useAuthStore((s) => s.hasPermission);
+  const hasAnyPermission = useAuthStore((s) => s.hasAnyPermission);
+  const hasAllPermissions = useAuthStore((s) => s.hasAllPermissions);
+  const hasRole = useAuthStore((s) => s.hasRole);
+  const hasAnyRole = useAuthStore((s) => s.hasAnyRole);
+
+  // 再用 useMemo 保证 bundle 对象引用的稳定
+  return useMemo(
+    () => ({
+      setUser,
+      setToken,
+      setPermissions,
+      setRoles,
+      clearAuth,
+      updateUser,
+      hasPermission,
+      hasAnyPermission,
+      hasAllPermissions,
+      hasRole,
+      hasAnyRole,
+    }),
+    [
+      setUser,
+      setToken,
+      setPermissions,
+      setRoles,
+      clearAuth,
+      updateUser,
+      hasPermission,
+      hasAnyPermission,
+      hasAllPermissions,
+      hasRole,
+      hasAnyRole,
+    ]
+  );
+};
 
 /**
  * @deprecated Use `useAuth` from `@/hooks/useAuth` instead.
@@ -191,33 +223,36 @@ export const useAuth = () => {
   const userRole = useAuthUserRole();
   const actions = useAuthActions();
 
-  return {
-    user,
-    token,
-    permissions,
-    roles,
-    displayName,
-    avatarUrl,
-    isAuthenticated,
-    isSuperuser,
-    userRole,
-    ...actions,
-  };
+  return useMemo(
+    () => ({
+      user,
+      token,
+      permissions,
+      roles,
+      displayName,
+      avatarUrl,
+      isAuthenticated,
+      isSuperuser,
+      userRole,
+      ...actions,
+    }),
+    [user, token, permissions, roles, displayName, avatarUrl, isAuthenticated, isSuperuser, userRole, actions]
+  );
 };
 
 export const useHasPermission = (_permission: string) => {
   const hasPermission = useAuthStore((state) => state.hasPermission);
-  return (perm: string) => hasPermission(perm);
+  return useCallback((perm: string) => hasPermission(perm), [hasPermission]);
 };
 
 export const useHasAnyPermission = (_permissions: string[]) => {
   const hasAnyPermission = useAuthStore((state) => state.hasAnyPermission);
-  return (perms: string[]) => hasAnyPermission(perms);
+  return useCallback((perms: string[]) => hasAnyPermission(perms), [hasAnyPermission]);
 };
 
 export const useHasRole = (_role: string) => {
   const hasRole = useAuthStore((state) => state.hasRole);
-  return (r: string) => hasRole(r);
+  return useCallback((r: string) => hasRole(r), [hasRole]);
 };
 
 export default useAuthStore;

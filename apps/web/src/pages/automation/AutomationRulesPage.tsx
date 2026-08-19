@@ -45,11 +45,13 @@ const RULE_STATUS_COLOR: Record<AutomationRuleStatus, 'success' | 'default' | 'w
   draft: 'warning',
 };
 
-const RULE_STATUS_LABEL: Record<AutomationRuleStatus, string> = {
-  enabled: i18n.t('automation.automation_rules_page.k0'),
-  disabled: i18n.t('automation.automation_rules_page.k1'),
-  draft: i18n.t('automation.automation_rules_page.k2'),
-};
+function getRuleStatusLabel(): Record<AutomationRuleStatus, string> {
+  return {
+    enabled: i18n.t('automation.automation_rules_page.k0'),
+    disabled: i18n.t('automation.automation_rules_page.k1'),
+    draft: i18n.t('automation.automation_rules_page.k2'),
+  };
+}
 
 const TRIGGER_TYPES: AutomationTriggerType[] = [
   'cron',
@@ -259,7 +261,7 @@ export const AutomationRulesPage: React.FC = () => {
                         <Chip
                           size='small'
                           color={RULE_STATUS_COLOR[rule.status]}
-                          label={RULE_STATUS_LABEL[rule.status]}
+                          label={getRuleStatusLabel()[rule.status]}
                         />
                       </TableCell>
                       <TableCell>

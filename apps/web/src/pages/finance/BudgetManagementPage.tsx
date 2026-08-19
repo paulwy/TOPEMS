@@ -22,7 +22,7 @@ import {
 import { TrendingUp, Trash2, DollarSign, Calendar, Settings } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
-import { budgetSchema as baseBudgetSchema } from '@/schemas/finance/budget';
+import { getBudgetSchema } from '@/schemas/finance/budget';
 import { budgetApi } from '@/api/erp';
 import type { Budget } from '@/api/erp';
 import { departmentApi } from '@/api/hrm';
@@ -218,10 +218,13 @@ const BudgetManagementPage: React.FC = () => {
   );
 
   const schema = useMemo<EntitySchema>(
-    () => ({
-      ...baseBudgetSchema,
-      batchActions,
-    }),
+    () => {
+      const baseBudgetSchema = getBudgetSchema();
+      return {
+        ...baseBudgetSchema,
+        batchActions,
+      };
+    },
     [batchActions]
   );
 

@@ -11,8 +11,7 @@ export type CSPDirective =
   | 'objectSrc'
   | 'mediaSrc'
   | 'workerSrc'
-  | 'manifestSrc'
-  | 'prefetchSrc';
+  | 'manifestSrc';
 
 export enum CSPStrategy {
   STRICT = 'strict',
@@ -47,7 +46,6 @@ const DIRECTIVE_MAP: Record<CSPDirective, string> = {
   mediaSrc: 'media-src',
   workerSrc: 'worker-src',
   manifestSrc: 'manifest-src',
-  prefetchSrc: 'prefetch-src',
 };
 
 const STRATEGY_DEFAULTS: Record<CSPStrategy, Partial<Record<CSPDirective, string[]>>> = {
@@ -63,7 +61,6 @@ const STRATEGY_DEFAULTS: Record<CSPStrategy, Partial<Record<CSPDirective, string
     mediaSrc: ["'self'"],
     workerSrc: ["'none'"],
     manifestSrc: ["'self'"],
-    prefetchSrc: ["'self'"],
   },
   [CSPStrategy.BALANCED]: {
     defaultSrc: ["'self'"],
@@ -77,7 +74,6 @@ const STRATEGY_DEFAULTS: Record<CSPStrategy, Partial<Record<CSPDirective, string
     mediaSrc: ["'self'", 'https:'],
     workerSrc: ["'self'"],
     manifestSrc: ["'self'"],
-    prefetchSrc: ["'self'"],
   },
   [CSPStrategy.PERMISSIVE]: {
     defaultSrc: ["'self'", '*'],
@@ -91,7 +87,6 @@ const STRATEGY_DEFAULTS: Record<CSPStrategy, Partial<Record<CSPDirective, string
     mediaSrc: ['*'],
     workerSrc: ["'self'", 'blob:'],
     manifestSrc: ["'self'"],
-    prefetchSrc: ['*'],
   },
 };
 

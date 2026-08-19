@@ -52,6 +52,9 @@ pub struct PivotQueryRequest {
     pub measures: Vec<String>,
     pub filters: Option<serde_json::Value>,
     pub aggregate_function: Option<String>,
+    /// S1.1: 可选 LIMIT（默认 100）。通过参数化 $1 绑定，不再 format! 拼接。
+    #[serde(default)]
+    pub limit: Option<i64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -508,9 +511,12 @@ pub async fn pivot_table(
         }
     }
 
-    let query = format!("SELECT {} FROM analytics_data LIMIT 100", select_clause);
+    let limit = req.limit.unwrap_or(100).clamp(1, 10_000);
 
-    let data_result = sqlx::query(&query).fetch_all(&state.pool).await;
+    // S1.1: LIMIT 参数化绑定，杜绝 format! 硬编码数字。
+    let query = format!("SELECT {} FROM analytics_data LIMIT $1", select_clause);
+
+    let data_result = sqlx::query(&query).bind(limit).fetch_all(&state.pool).await;
 
     match data_result {
         Ok(rows) => {

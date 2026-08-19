@@ -14,8 +14,8 @@ export const LOWCODE_PATHS = {
 
 export const lowcodeModuleConfig: RouteModuleConfig = {
   code: 'lowcode',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.lowcode_name'),
+  nameKey: 'shared.config.lowcode_name',
   icon: 'Blocks',
   path: LOWCODE_PATHS.root,
   source: 'plugin',

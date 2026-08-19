@@ -12,13 +12,25 @@ import schemaEn from './locales/en/schema.json';
  *
  * i18next 使用点号作为嵌套分隔符，但 JSON 文件中的 key 是扁平格式，
  * 需要在运行时转换为嵌套结构才能被正确查找。
+ *
+ * 注意：同一顶层 key 可能同时以嵌套对象和点号分隔扁平 key 出现，
+ * 需要深度合并而非覆盖（例如 shared.json 末尾的 `"shared": {"config": ...}`
+ * 会覆盖前面 `"shared.header_logo.k0"` 等构建的 shared 对象）。
  */
 function flattenToNested(obj: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       const nestedValue = flattenToNested(value as Record<string, unknown>);
-      result[key] = nestedValue;
+      // 深度合并，避免覆盖已有的同名顶层 key
+      if (typeof result[key] === 'object' && result[key] !== null && !Array.isArray(result[key])) {
+        result[key] = deepMerge(
+          result[key] as Record<string, unknown>,
+          nestedValue
+        );
+      } else {
+        result[key] = nestedValue;
+      }
       continue;
     }
     const parts = key.split('.');
@@ -120,18 +132,19 @@ export const BOOTSTRAP_NAMESPACES: readonly string[] = Object.freeze([
   'routes', // 导航标签 / 面包屑显示名（侧边栏和顶栏）
   'layouts', // 主框架布局（header/sidebar/footer 等）
   'config', // 模块域名、套件分组等配置层展示名称
+  'pages', // 页面级公共词汇（Dashboard、Profile 等首页必需）
+  'components', // 全局通用组件（搜索框、表格、卡片等首页必需）
+  'templates', // CRUD/Dashboard/List 模板组件
+  'schemas', // schema 层翻译（表单字段标签等）
+  'services', // 服务层公共文案
 ]);
 
 export const FRAMEWORK_NAMESPACES: readonly string[] = Object.freeze([
   'common', // → 该部分当前实际位于 zh.json/en.json 根（common.save/cancel）
-  'components', // components/** 全局通用组件
-  'pages', // 页面级公共词汇（非业务模块页面）
-  'templates', // CRUD/Dashboard/List 模板组件
   'system', // system 参数设置、日志等平台功能
   'store', // 状态相关消息
   'lib', // 内部库
   'utils', // 通用工具提示
-  'schemas', // schema 层翻译
   'notification', // 通知中心
   'monitor', // 监控告警
   'integration', // 集成中心
@@ -139,7 +152,6 @@ export const FRAMEWORK_NAMESPACES: readonly string[] = Object.freeze([
   'mobile', // 移动端相关
   'plugin', // 插件市场
   'performance', // 性能监控
-  'services', // 服务层
   'hooks', // hooks 消息
   'context', // 上下文
   'theme', // 主题相关
@@ -216,7 +228,10 @@ function mergeNamespaceData(
   knownNamespaces: Set<string>
 ): Record<string, unknown> {
   for (const [key, value] of Object.entries(nested)) {
-    if (key !== currentNs && knownNamespaces.has(key)) continue;
+    // Skip keys that belong to OTHER known namespaces (only for explicit NS files, not root)
+    // Reason: root JSON contains the "base" translations (common.save, shared.config.*, etc.)
+    // that MUST be loaded; skipping them breaks i18n for all components.
+    if (currentNs !== '__root__' && key !== currentNs && knownNamespaces.has(key)) continue;
 
     const existing = target[key];
     const existingIsObject =
@@ -269,7 +284,8 @@ async function loadNamespaceJsonFile(
 }
 
 /**
- * 将单个命名空间的资源“就地”合并到 i18n 实例（使用 translation 主 NS）。
+ * 将单个命名空间的资源"就地"合并到 i18n 实例（使用 translation 主 NS）。
+ * 直接使用 addResourceBundle 的深度合并，避免 read-modify-write 竞态。
  */
 function installNamespaceResources(
   lang: string,
@@ -277,14 +293,27 @@ function installNamespaceResources(
   nsHint: string
 ): void {
   const knownNamespaces = new Set(ALL_NAMESPACES);
-  const bag = i18n.getResourceBundle(lang, 'translation') as Record<string, unknown> | undefined;
-  const merged = mergeNamespaceData(
-    (bag as Record<string, unknown>) || {},
-    rootOrNsObject,
-    nsHint,
-    knownNamespaces
-  );
-  i18n.addResourceBundle(lang, 'translation', merged, true, true);
+  const filtered: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(rootOrNsObject)) {
+    if (nsHint !== '__root__' && key !== nsHint && knownNamespaces.has(key)) continue;
+    filtered[key] = value;
+  }
+  i18n.addResourceBundle(lang, 'translation', filtered, true, true);
+  if (nsHint !== '__root__') {
+    const nsData: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(filtered)) {
+      if (key === nsHint && typeof value === 'object' && value !== null) {
+        Object.assign(nsData, value as Record<string, unknown>);
+        nsData[key] = value;
+      } else {
+        nsData[key] = value;
+      }
+    }
+    i18n.addResourceBundle(lang, nsHint, nsData, true, true);
+    i18n.emit('loaded', { ns: nsHint });
+  }
+  i18n.emit('resourcesAdded');
+  i18n.emit('loaded', { ns: 'translation' });
 }
 
 // ─── 命名空间加载状态追踪：单飞 Map + 已加载 Set ───────────────────────
@@ -347,10 +376,12 @@ export async function ensureLanguageLoaded(lng: string): Promise<void> {
     // schema 命名空间：eager 已加载，直接 addResourceBundle（幂等）
     const schema = lang === 'zh' ? schemaZh : schemaEn;
     i18n.addResourceBundle(lang, 'schema', schema, true, true);
-    // 根 JSON + BOOTSTRAP 命名空间 并行加载
-    const tasks: Array<Promise<void>> = [_ensureNsInstalled(lang, '__root__')];
-    for (const ns of BOOTSTRAP_NAMESPACES) tasks.push(_ensureNsInstalled(lang, ns));
-    await Promise.all(tasks);
+    // 串行加载所有命名空间（避免并行 read-modify-write 竞态）
+    // 顺序：根 JSON → BOOTSTRAP 命名空间
+    const allNss = ['__root__', ...BOOTSTRAP_NAMESPACES];
+    for (const ns of allNss) {
+      await _ensureNsInstalled(lang, ns);
+    }
     langBootstrapped.add(lang);
   })();
   langBootstrapPromises.set(lng, p);
@@ -382,7 +413,10 @@ export async function ensureNamespacesLoaded(
   const lang = (langRaw.startsWith('en') ? 'en' : 'zh') as 'zh' | 'en';
   const arr = typeof namespaces === 'string' ? [namespaces] : namespaces;
   if (!arr || arr.length === 0) return;
-  await Promise.all(arr.map((ns) => _ensureNsInstalled(lang, ns)));
+  // 串行加载（避免并行 read-modify-write 竞态）
+  for (const ns of arr) {
+    await _ensureNsInstalled(lang, ns);
+  }
 }
 
 /**
@@ -408,6 +442,8 @@ const SEGMENT_TO_NS: Readonly<Record<string, string>> = Object.freeze({
   audit: 'admin',
   dictionary: 'admin',
   tenant: 'admin',
+  aps: 'aps',
+  asset: 'asset',
   crm: 'crm',
   customer: 'crm',
   opportunity: 'crm',
@@ -495,6 +531,8 @@ const SEGMENT_TO_NS: Readonly<Record<string, string>> = Object.freeze({
   ticket: 'ticket',
   rd: 'rd',
   oa: 'oa',
+  desktop: 'desktop',
+  audit_log: 'admin',
 });
 
 /**
@@ -613,29 +651,97 @@ if (typeof window !== 'undefined') {
       setTimeout(cb, delayMs);
     }
   };
-  // Phase 1：另一语言骨架
+  // Phase 1：当前语言框架层命名空间（等待 bootstrap 完成后串行加载）
   schedulePreload(() => {
-    ensureLanguageLoaded(otherLang).catch(() => {});
-    // Phase 2：框架层命名空间（串行低优先级加载）
-    Promise.resolve()
-      .then(async () => {
-        for (const ns of FRAMEWORK_NAMESPACES) {
-          try {
-            await _ensureNsInstalled(otherLang as 'zh' | 'en', ns);
-          } catch {
-            /* skip */
+    i18nReady.then(() =>
+      Promise.resolve()
+        .then(async () => {
+          for (const ns of FRAMEWORK_NAMESPACES) {
+            try {
+              await _ensureNsInstalled(initialLanguage as 'zh' | 'en', ns);
+            } catch {
+              /* skip */
+            }
           }
-        }
-      })
-      .catch(() => {});
+        })
+        .catch(() => {})
+    );
+  }, 2000);
+
+  // Phase 2：另一语言骨架 + 框架层命名空间（等待 Phase 1 完成后启动）
+  schedulePreload(() => {
+    ensureLanguageLoaded(otherLang).then(() =>
+      Promise.resolve()
+        .then(async () => {
+          for (const ns of FRAMEWORK_NAMESPACES) {
+            try {
+              await _ensureNsInstalled(otherLang as 'zh' | 'en', ns);
+            } catch {
+              /* skip */
+            }
+          }
+        })
+        .catch(() => {})
+    ).catch(() => {});
   }, 3500);
 }
 
-// 语言切换时：确保骨架已加载（LanguageSelector 一般已 await，这里是安全网）
+// 语言切换时：确保骨架已加载 + 触发全局重渲染（i18n.t() 直接调用的组件也能拿到新语言）
 i18n.on('languageChanged', (lng: string) => {
   updateDocumentDirection(lng);
-  ensureLanguageLoaded(lng).catch(() => {});
+  ensureLanguageLoaded(lng).then(() => {
+    if (forceUpdate) {
+      forceUpdate();
+    }
+  }).catch(() => {});
 });
+
+// ─── 全局 i18n 资源变更事件 → 触发 React 重渲染 ───────
+// 解决 i18n.t() 直接调用（非 useTranslation hook）不触发重渲染的问题
+let forceUpdate: (() => void) | null = null;
+let pendingResourceUpdate = false;
+
+i18n.on('resourcesAdded', () => {
+  pendingResourceUpdate = true;
+  if (forceUpdate) {
+    forceUpdate();
+  }
+});
+
+i18n.on('resourcesRemoved', () => {
+  pendingResourceUpdate = true;
+  if (forceUpdate) {
+    forceUpdate();
+  }
+});
+
+/**
+ * 注册一个全局重渲染回调（由 App 根组件调用）。
+ * 当 ensureNamespacesLoaded 动态注入翻译资源时，强制 App 根组件重渲染，
+ * 使得所有使用 i18n.t() 直接调用的组件也能拿到最新翻译。
+ */
+export function registerI18nForceUpdate(fn: () => void): () => void {
+  forceUpdate = fn;
+  return () => {
+    if (forceUpdate === fn) {
+      forceUpdate = null;
+    }
+  };
+}
+
+/**
+ * 检查是否有待处理的资源更新（用于 I18nReadyGate）。
+ */
+export function hasPendingResourceUpdate(): boolean {
+  return pendingResourceUpdate;
+}
+
+/**
+ * 清除待处理资源更新标记。
+ */
+export function clearPendingResourceUpdate(): void {
+  pendingResourceUpdate = false;
+}
 
 // 给 i18n.default 额外挂出工具函数，方便 import i18n from '@/i18n' 的代码直接调用
 const augmented = i18n as typeof i18n & {

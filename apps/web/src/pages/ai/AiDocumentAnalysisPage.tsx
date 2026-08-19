@@ -75,7 +75,7 @@ const recentDocuments = [
   },
 ];
 
-const summaryResult = `{i18n.t('pages.ai_document_analysis_page.k0')}
+const getSummaryResult = () => `{i18n.t('pages.ai_document_analysis_page.k0')}
 
 {i18n.t('pages.ai_document_analysis_page.1_1')}
    {i18n.t('pages.ai_document_analysis_page.k2')}
@@ -104,7 +104,7 @@ const summaryResult = `{i18n.t('pages.ai_document_analysis_page.k0')}
 
 {i18n.t('pages.ai_document_analysis_page.k21')}`;
 
-const keyPoints = [
+const getKeyPoints = () => [
   i18n.t('pages.ai_document_analysis_page.k3'),
   i18n.t('ai.ai_document_analysis_page.k0'),
   i18n.t('ai.ai_document_analysis_page.k1'),
@@ -535,7 +535,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                             size='small'
                             variant='outlined'
                             startIcon={<Copy size={16} />}
-                            onClick={() => handleCopy(summaryResult)}
+                            onClick={() => handleCopy(getSummaryResult())}
                           >
                             {copied
                               ? i18n.t('ai.document_analysis.button.copied')
@@ -553,7 +553,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                           variant='body1'
                           sx={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}
                         >
-                          {summaryResult}
+                          {getSummaryResult()}
                         </Typography>
                       </Paper>
 
@@ -564,7 +564,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                         {i18n.t('ai.document_analysis.label.key_points')}
                       </Typography>
                       <List disablePadding>
-                        {keyPoints.map((point, index) => (
+                        {getKeyPoints().map((point, index) => (
                           <ListItem
                             key={index}
                             sx={{ px: 0, py: 1, alignItems: 'flex-start' }}

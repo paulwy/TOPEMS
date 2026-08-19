@@ -7,7 +7,8 @@ export interface HelpMappingItem {
   description?: string;
 }
 
-export const helpMapping: Record<string, HelpMappingItem> = {
+export function getHelpMapping(): Record<string, HelpMappingItem> {
+  return {
   '/iam': {
     guideId: 'iam-getting-started',
     faqCategory: 'iam',
@@ -471,18 +472,19 @@ export const helpMapping: Record<string, HelpMappingItem> = {
     title: i18n.t('shared.help-mapping.ai_10'),
     description: i18n.t('shared.help-mapping.ai_11'),
   },
-};
+  };
+}
 
 export function findHelpByPath(path: string): HelpMappingItem | undefined {
-  if (helpMapping[path]) {
-    return helpMapping[path];
+  if (getHelpMapping()[path]) {
+    return getHelpMapping()[path];
   }
 
   const segments = path.split('/').filter(Boolean);
   while (segments.length > 0) {
     const parentPath = `/${segments.join('/')}`;
-    if (helpMapping[parentPath]) {
-      return helpMapping[parentPath];
+    if (getHelpMapping()[parentPath]) {
+      return getHelpMapping()[parentPath];
     }
     segments.pop();
   }

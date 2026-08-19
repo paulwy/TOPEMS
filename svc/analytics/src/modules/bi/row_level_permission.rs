@@ -598,12 +598,15 @@ pub async fn filter_data(
     let page_size = req.page_size.unwrap_or(50);
     let offset = (page - 1) * page_size;
 
-    let query = format!(
-        "SELECT * FROM {} LIMIT {} OFFSET {}",
-        req.table_name, page_size, offset
-    );
+    // S1.1: table_name 已由 validate_table_name 做字符白名单校验；
+    // LIMIT/OFFSET 走参数化绑定，杜绝数值拼接注入。
+    let query = format!("SELECT * FROM {} LIMIT $1 OFFSET $2", req.table_name);
 
-    let data_result = sqlx::query(&query).fetch_all(&state.pool).await;
+    let data_result = sqlx::query(&query)
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(&state.pool)
+        .await;
 
     match data_result {
         Ok(rows) => {

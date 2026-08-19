@@ -8,7 +8,7 @@
   "response_time": "响应时间",
   "throughput": "吞吐量",
   "error_rate": "错误率",
-  "cpu": "CPU",
+  "cpu": "CPU处理器",
   "memory": "内存",
   "disk": "磁盘",
   "network": "网络",

@@ -47,8 +47,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens, semanticTokens } from '@topems/tokens';
-
-const CATEGORY_LABELS: Record<string, string> = {
+const getCategoryLabels = (): Record<string, string> => ({
   all: i18n.t('monitor.metrics_dashboard_page.k0'),
   sales: i18n.t('monitor.metrics_dashboard_page.k1'),
   production: i18n.t('monitor.metrics_dashboard_page.k2'),
@@ -57,7 +56,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   hr: i18n.t('monitor.metrics_dashboard_page.k5'),
   procurement: i18n.t('monitor.metrics_dashboard_page.k6'),
   quality: i18n.t('monitor.metrics_dashboard_page.k7'),
-};
+});
 const statusColor = (m: BusinessMetric): 'success' | 'warning' | 'error' => {
   if (!m.target_value) return 'success';
   if (m.unit === '%' || m.code.includes('rate')) {
@@ -145,9 +144,7 @@ const AchievementBar: React.FC<{ value: number; target: number; unit: string }> 
         <Typography
           variant='caption'
           color='text.secondary'
-        >
-          {i18n.t('monitor:metrics_dashboard_page.k5', { v0: target.toLocaleString(), v1: unit })}
-        </Typography>
+        >{i18n.t('monitor:metrics_dashboard_page.k5', { v0: (target.toLocaleString()), v1: (unit) })}</Typography>
       </Box>
       <LinearProgress
         variant='determinate'
@@ -177,17 +174,10 @@ export const MetricsDashboardPage: React.FC = () => {
       const res = await metricsApi.getBusinessMetricSummary();
       return res.data;
     },
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
   const listQuery = useQuery({
-    queryKey: [
-      ...QUERY_KEYS.AD_HOC.MONITOR_BUSINESS_METRICS_LIST_BASE,
-      category,
-      serviceFilter,
-      statusFilter,
-      keyword,
-    ],
+    queryKey: [...QUERY_KEYS.AD_HOC.MONITOR_BUSINESS_METRICS_LIST_BASE, category, serviceFilter, statusFilter, keyword],
     queryFn: async () => {
       const res = await metricsApi.listBusinessMetrics({
         category: category === 'all' ? undefined : category,
@@ -197,32 +187,25 @@ export const MetricsDashboardPage: React.FC = () => {
       });
       return res.data?.items ?? [];
     },
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
   const kpiQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MONITOR_BUSINESS_METRICS_KPI_BASE,
     queryFn: async () => {
       const res = await metricsApi.getKpiDashboard('monthly');
       return res.data ?? [];
     },
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
   const trendQuery = useQuery({
-    queryKey: [
-      ...QUERY_KEYS.AD_HOC.MONITOR_BUSINESS_METRICS_TREND_BASE,
-      trendMetricCode,
-      trendPeriod,
-    ],
+    queryKey: [...QUERY_KEYS.AD_HOC.MONITOR_BUSINESS_METRICS_TREND_BASE, trendMetricCode, trendPeriod],
     queryFn: async () => {
       const res = await metricsApi.getBusinessMetricTrend(trendMetricCode, trendPeriod);
       return res.data ?? [];
     },
     enabled: Boolean(trendMetricCode),
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
   const summary = summaryQuery.data;
   const metrics = listQuery.data ?? [];
   const kpis: BusinessMetricKpi[] = kpiQuery.data ?? [];
@@ -411,11 +394,7 @@ export const MetricsDashboardPage: React.FC = () => {
         kpiQuery.refetch(),
         trendQuery.refetch(),
       ]);
-      addNotification({
-        type: 'success',
-        title: i18n.t('monitor.metrics_dashboard_page.k24'),
-        message: i18n.t('monitor.metrics_dashboard_page.k23'),
-      });
+      addNotification({ type: 'success', title: i18n.t('monitor.metrics_dashboard_page.k24'), message: i18n.t('monitor.metrics_dashboard_page.k23') });
     } catch (err) {
       addNotification({
         type: 'error',
@@ -485,7 +464,7 @@ export const MetricsDashboardPage: React.FC = () => {
               {summary.categories.map((cat) => (
                 <Chip
                   key={cat.code}
-                  label={`${CATEGORY_LABELS[cat.code] ?? cat.code}: ${cat.metric_count}${i18n.t('pages.metrics_dashboard_page.k1')}`}
+                  label={`${getCategoryLabels()[cat.code] ?? cat.code}: ${cat.metric_count}${i18n.t('pages.metrics_dashboard_page.k1')}`}
                   size='small'
                   variant={category === cat.code ? 'filled' : 'outlined'}
                   color={
@@ -538,7 +517,7 @@ export const MetricsDashboardPage: React.FC = () => {
                 label={i18n.t('monitor.metrics_dashboard_page.k34')}
                 onChange={(e) => setCategory(String(e.target.value))}
               >
-                {Object.entries(CATEGORY_LABELS).map(([v, l]) => (
+                {Object.entries(getCategoryLabels()).map(([v, l]) => (
                   <MenuItem
                     key={v}
                     value={v}
@@ -602,12 +581,8 @@ export const MetricsDashboardPage: React.FC = () => {
                   <TableCell>{i18n.t('monitor.metrics_dashboard_page.k44')}</TableCell>
                   <TableCell>{i18n.t('monitor.metrics_dashboard_page.k45')}</TableCell>
                   <TableCell>{i18n.t('monitor.metrics_dashboard_page.k46')}</TableCell>
-                  <TableCell align='right'>
-                    {i18n.t('monitor.metrics_dashboard_page.k47')}
-                  </TableCell>
-                  <TableCell align='right'>
-                    {i18n.t('monitor.metrics_dashboard_page.k48')}
-                  </TableCell>
+                  <TableCell align='right'>{i18n.t('monitor.metrics_dashboard_page.k47')}</TableCell>
+                  <TableCell align='right'>{i18n.t('monitor.metrics_dashboard_page.k48')}</TableCell>
                   <TableCell>{i18n.t('monitor.metrics_dashboard_page.k49')}</TableCell>
                   <TableCell>{i18n.t('monitor.metrics_dashboard_page.k50')}</TableCell>
                   <TableCell>{i18n.t('monitor.metrics_dashboard_page.k51')}</TableCell>
@@ -648,7 +623,7 @@ export const MetricsDashboardPage: React.FC = () => {
                         <TableCell>
                           <Chip
                             size='small'
-                            label={CATEGORY_LABELS[m.category] ?? m.category}
+                            label={getCategoryLabels()[m.category] ?? m.category}
                             variant='outlined'
                           />
                         </TableCell>

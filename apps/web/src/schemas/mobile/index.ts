@@ -1,1 +1,1 @@
-export { notificationSchema } from './notification';
+export { getMobileNotificationSchema } from './notification';

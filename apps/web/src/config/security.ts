@@ -19,7 +19,6 @@ export interface CspConfig {
   formAction: string[];
   baseUri: string[];
   workerSrc: string[];
-  prefetchSrc: string[];
 }
 
 const isDev = isDevelopment();
@@ -77,7 +76,6 @@ export const securityConfig: SecurityConfig = {
     formAction: ["'self'"],
     baseUri: ["'self'"],
     workerSrc: ["'self'", 'blob:'],
-    prefetchSrc: isDev ? ["'self'", 'http://localhost:*'] : ["'self'"],
   },
 
   contentSecurityPolicy: isDev
@@ -93,7 +91,6 @@ export const securityConfig: SecurityConfig = {
         "form-action 'self'",
         "base-uri 'self'",
         "worker-src 'self' blob:",
-        "prefetch-src 'self' http://localhost:*",
       ].join('; ')
     : [
         "default-src 'self'",
@@ -107,7 +104,6 @@ export const securityConfig: SecurityConfig = {
         "form-action 'self'",
         "base-uri 'self'",
         "worker-src 'self' blob:",
-        "prefetch-src 'self'",
       ].join('; '),
 };
 

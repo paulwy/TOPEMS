@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { moduleThemes, getModuleTheme, getModuleThemeFromPath } from '../moduleThemes';
+import { getModuleThemes, getModuleTheme, getModuleThemeFromPath } from '../moduleThemes';
 
 describe('lib/moduleThemes', () => {
   describe('moduleThemes data', () => {
@@ -15,8 +15,8 @@ describe('lib/moduleThemes', () => {
         'ai',
       ];
       coreCodes.forEach((code) => {
-        expect(moduleThemes[code]).toBeDefined();
-        expect(moduleThemes[code].code).toBe(code);
+        expect(getModuleThemes()[code]).toBeDefined();
+        expect(getModuleThemes()[code].code).toBe(code);
       });
     });
 
@@ -35,12 +35,12 @@ describe('lib/moduleThemes', () => {
         'bi',
       ];
       bizCodes.forEach((code) => {
-        expect(moduleThemes[code]).toBeDefined();
+        expect(getModuleThemes()[code]).toBeDefined();
       });
     });
 
     it('every entry has code, name, icon, gradient, and color', () => {
-      Object.entries(moduleThemes).forEach(([key, theme]) => {
+      Object.entries(getModuleThemes()).forEach(([key, theme]) => {
         expect(theme.code).toBe(key);
         expect(typeof theme.name).toBe('string');
         expect(theme.name.length).toBeGreaterThan(0);
@@ -53,7 +53,7 @@ describe('lib/moduleThemes', () => {
     });
 
     it('all gradient strings use 135deg', () => {
-      Object.values(moduleThemes).forEach((theme) => {
+      Object.values(getModuleThemes()).forEach((theme) => {
         expect(theme.gradient).toContain('135deg');
       });
     });

@@ -5,7 +5,7 @@ import { pluginApi } from './plugin';
 
 export * from './types';
 
-export { SUITES, PLUGIN_SUITE_MAP, PLUGIN_REGISTRY } from './registry';
+export { getSuites as SUITES, PLUGIN_SUITE_MAP, getPluginRegistry as PLUGIN_REGISTRY } from './registry';
 export {
   fetchPluginInfo,
   fetchAllPluginInfo,

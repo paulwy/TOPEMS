@@ -4,7 +4,7 @@ export { reagentSchema } from './reagent';
 export { taskSchema } from './task';
 export { inspectionTaskSchema } from './inspectionTask';
 export { instrumentSchema } from './instrument';
-export { instrumentMaintenanceSchema } from './instrumentMaintenance';
+export { getInstrumentMaintenanceSchema } from './instrumentMaintenance';
 export { useLimsDashboardSchema } from './dashboardSchema';
 export { processSchema } from './process';
 export { uncertaintyProjectSchema } from './uncertainty';

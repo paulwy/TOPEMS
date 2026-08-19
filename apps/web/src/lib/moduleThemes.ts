@@ -3,7 +3,7 @@
  *
  * NOTE: 当前未被任何组件直接导入。保留作为基础设施配置，
  * 未来可在模块概览页、侧边栏、主题切换等功能中使用。
- * 可通过 `import { moduleThemes, getModuleTheme } from '@/lib/moduleThemes'` 使用。
+ * 可通过 `import { getModuleThemes, getModuleTheme } from '@/lib/moduleThemes'` 使用。
  */
 import type React from 'react';
 import {
@@ -49,7 +49,8 @@ export interface ModuleTheme {
   color: string;
 }
 
-export const moduleThemes: Record<string, ModuleTheme> = {
+export function getModuleThemes(): Record<string, ModuleTheme> {
+  return {
   iam: {
     code: 'iam',
     name: i18n.t('shared.module_themes.k0'),
@@ -239,10 +240,11 @@ export const moduleThemes: Record<string, ModuleTheme> = {
     gradient: `linear-gradient(135deg, ${ct.success[400]} 0%, ${ct.success.dark} 100%)`,
     color: ct.success.main,
   },
-};
+  };
+}
 
 export function getModuleTheme(moduleCode: string): ModuleTheme | undefined {
-  return moduleThemes[moduleCode.toLowerCase()];
+  return getModuleThemes()[moduleCode.toLowerCase()];
 }
 
 export function getModuleThemeFromPath(pathname: string): ModuleTheme | undefined {

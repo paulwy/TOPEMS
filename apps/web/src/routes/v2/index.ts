@@ -1,6 +1,6 @@
 import type { RouteModuleConfig, RouteConfigV2, RouteConfig } from './types';
 import { flattenRoutes, toFlatRouteConfig } from './types';
-import { pluginManager } from '../../lib/plugin-loader/PluginManager.ts';
+import { pluginManager } from '../../lib/plugin-loader/PluginManager';
 import { apiLogger } from '../../utils/logger';
 import { ensureNamespacesLoaded } from '@/i18n';
 
@@ -93,30 +93,47 @@ export async function loadModuleConfig(moduleCode: string): Promise<RouteModuleC
   }
 
   // ✨ 按命名空间按需加载：与模块代码 import 并行触发业务 NS 加载。
-  // 不 await 加载结果（避免阻塞模块代码），只做 Promise 链式错误隔离。
   // 加载组件/templates/schemas/services/pages（与业务 NS 同时预热），
   // 这会与 DynamicRoutes / useRouteNamespacePreload 形成多入口幂等保障。
-  ensureNamespacesLoaded([
-    moduleCode, // 业务模块专属 NS（如 wms, crm, mes）
+  const baseNamespaces = [
+    moduleCode,
     'components',
     'templates',
     'schemas',
     'services',
     'pages',
-  ]).catch((e) => {
-    apiLogger.warn(`[i18n] preload ns for module ${moduleCode} skipped`, e);
-  });
+  ];
 
-  const promise = importFn()
-    .then((module) => {
-      const moduleConfig = module[`${moduleCode}ModuleConfig`] as RouteModuleConfig;
-      loadedModules.set(moduleCode, moduleConfig);
-      return moduleConfig;
-    })
-    .catch((error) => {
-      loadingPromises.delete(moduleCode);
-      throw error;
+  const promise = (async () => {
+    // Phase 1: 并行加载基础命名空间（不阻塞模块 import）
+    const nsPromise = ensureNamespacesLoaded(baseNamespaces).catch((e) => {
+      apiLogger.warn(`[i18n] preload ns for module ${moduleCode} skipped`, e);
     });
+
+    // Phase 2: 加载模块代码
+    const module = await importFn();
+    const moduleConfig = module[`${moduleCode}ModuleConfig`] as RouteModuleConfig;
+
+    // Phase 3: 如果模块配置了额外的 preloadNamespaces，等待它们加载完成
+    const preloadNamespaces = moduleConfig.preloadNamespaces;
+    if (preloadNamespaces && preloadNamespaces.length > 0) {
+      await ensureNamespacesLoaded(preloadNamespaces).catch((e) => {
+        apiLogger.warn(
+          `[i18n] preload extra ns [${preloadNamespaces.join(',')}] for module ${moduleCode} skipped`,
+          e,
+        );
+      });
+    }
+
+    // 确保基础命名空间也加载完成
+    await nsPromise;
+
+    loadedModules.set(moduleCode, moduleConfig);
+    return moduleConfig;
+  })().catch((error) => {
+    loadingPromises.delete(moduleCode);
+    throw error;
+  });
 
   loadingPromises.set(moduleCode, promise);
   return promise;

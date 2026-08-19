@@ -7,7 +7,7 @@ import type { EntitySchema } from '@/schema';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
-const MAINTENANCE_TYPE_OPTIONS = [
+const getMaintenanceTypeOptions = () => [
   { value: 'routine', label: i18n.t('lims.instrument_maintenance.k0') },
   { value: 'preventive', label: i18n.t('lims.instrument_maintenance.k1') },
   { value: 'corrective', label: i18n.t('lims.instrument_maintenance.k2') },
@@ -63,17 +63,20 @@ const MAINTENANCE_TYPE_COLORS: Record<
   other: 'default',
 };
 
-const MAINTENANCE_TYPE_LABELS: Record<string, string> = {
+const getMaintenanceTypeLabels = (): Record<string, string> => ({
   routine: i18n.t('lims.instrument_maintenance.k5'),
   preventive: i18n.t('lims.instrument_maintenance.k6'),
   corrective: i18n.t('lims.instrument_maintenance.k7'),
   calibration: i18n.t('lims.instrument_maintenance.k8'),
   other: i18n.t('lims.instrument_maintenance.k9'),
-};
+});
 
-export const instrumentMaintenanceSchema: EntitySchema = {
-  entity: 'limsInstrumentMaintenance',
-  title: i18n.t('lims.instrument_maintenance.k10'),
+export const getInstrumentMaintenanceSchema = (): EntitySchema => {
+  const MAINTENANCE_TYPE_OPTIONS = getMaintenanceTypeOptions();
+
+  return {
+    entity: 'limsInstrumentMaintenance',
+    title: i18n.t('lims.instrument_maintenance.k10'),
   description: i18n.t('lims.instrument_maintenance.k11'),
 
   api: {
@@ -95,7 +98,7 @@ export const instrumentMaintenanceSchema: EntitySchema = {
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
         const type = String(row.maintenance_type || '');
-        const label = MAINTENANCE_TYPE_LABELS[type] || type;
+        const label = getMaintenanceTypeLabels()[type] || type;
         const color = MAINTENANCE_TYPE_COLORS[type] || 'default';
         return renderBadge(label, color);
       },
@@ -207,4 +210,5 @@ export const instrumentMaintenanceSchema: EntitySchema = {
   createTitle: i18n.t('lims.instrument_maintenance.k26'),
   editTitle: i18n.t('lims.instrument_maintenance.k27'),
   detailTitle: i18n.t('lims.instrument_maintenance.k28'),
+  };
 };

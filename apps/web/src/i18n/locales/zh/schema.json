@@ -341,11 +341,11 @@
       "sms_aliyun": "阿里云",
       "sms_tencent": "腾讯云",
       "sms_huawei": "华为云",
-      "sms_access_key": "Access Key",
-      "sms_access_secret": "Access Secret",
+      "sms_access_key": "接入Key",
+      "sms_access_secret": "接入密钥",
       "sms_sign_name": "签名名称",
       "sms_template_code": "模板编码",
-      "webhook_url": "Webhook URL",
+      "webhook_url": "Webhook地址",
       "webhook_method": "请求方法",
       "webhook_headers": "请求头",
       "filter_type": "类型",
@@ -1005,10 +1005,10 @@
   },
   "document": {
     "document": {
-      "type_pdf": "PDF",
-      "type_word": "Word",
-      "type_excel": "Excel",
-      "type_ppt": "PPT",
+      "type_pdf": "PDF文档",
+      "type_word": "Word文档",
+      "type_excel": "Excel表格",
+      "type_ppt": "PPT演示文稿",
       "type_image": "图片",
       "name": "文档名称",
       "type": "类型",
@@ -2403,5 +2403,11 @@
   "schema.crud_page_adapter.k0": "加载列表失败",
   "schema.crud_page_adapter.k1": "创建失败",
   "schema.crud_page_adapter.k2": "更新失败",
-  "schema.crud_page_adapter.k3": "删除失败"
+  "schema.crud_page_adapter.k3": "删除失败",
+  "erp.voucher.batchAction.batchSubmit.success": "成功",
+  "erp.voucher.batchAction.batchSubmit.fail": "失败",
+  "erp.voucher.batchAction.batchSubmit.error": "错误",
+  "erp.voucher.batchAction.batchApprove.success": "成功",
+  "erp.voucher.batchAction.batchApprove.fail": "失败",
+  "erp.voucher.batchAction.batchApprove.error": "错误"
 }

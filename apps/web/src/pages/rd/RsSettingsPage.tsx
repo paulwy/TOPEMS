@@ -33,7 +33,7 @@ interface SettingItem extends Record<string, unknown> {
   enabled: boolean;
 }
 // 默认数据
-const defaultData: Record<string, SettingItem[]> = {
+const getDefaultData = (): Record<string, SettingItem[]> => ({
   repo: [
     {
       id: '1',
@@ -133,10 +133,10 @@ const defaultData: Record<string, SettingItem[]> = {
       enabled: false,
     },
   ],
-};
+});
 const RsSettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('repo');
-  const [localData, setLocalData] = useState<Record<string, SettingItem[]>>(defaultData);
+  const [localData, setLocalData] = useState<Record<string, SettingItem[]>>(getDefaultData());
   const statisticsQuery = useQuery({
     queryKey: QUERY_KEYS.RD.STATISTICS,
     queryFn: async () => {

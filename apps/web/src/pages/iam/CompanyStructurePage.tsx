@@ -47,34 +47,35 @@ import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { iamApi } from '@/api/iam';
 
-// 关系类型配置
-const RELATION_TYPE_CONFIG: Record<
-  CompanyRelationType,
-  {
-    label: string;
-    color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
-  }
-> = {
-  parent: { label: i18n.t('iam.company_structure_page.k0'), color: 'primary' },
-  subsidiary: { label: i18n.t('iam.company_structure_page.k1'), color: 'success' },
-  associate: { label: i18n.t('iam.company_structure_page.k2'), color: 'warning' },
-  joint_venture: { label: i18n.t('iam.company_structure_page.k3'), color: 'secondary' },
-  branch: { label: i18n.t('iam.company_structure_page.k4'), color: 'default' },
+type RelationTypeConfig = {
+  label: string;
+  color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
 };
 
-// 状态配置
-const STATUS_CONFIG = {
-  active: {
-    label: i18n.t('iam.company_structure_page.k5'),
-    color: 'success' as const,
-    icon: CheckCircle,
-  },
-  inactive: {
-    label: i18n.t('iam.company_structure_page.k6'),
-    color: 'default' as const,
-    icon: XCircle,
-  },
-};
+function getRelationTypeConfig(): Record<CompanyRelationType, RelationTypeConfig> {
+  return {
+    parent: { label: i18n.t('iam.company_structure_page.k0'), color: 'primary' },
+    subsidiary: { label: i18n.t('iam.company_structure_page.k1'), color: 'success' },
+    associate: { label: i18n.t('iam.company_structure_page.k2'), color: 'warning' },
+    joint_venture: { label: i18n.t('iam.company_structure_page.k3'), color: 'secondary' },
+    branch: { label: i18n.t('iam.company_structure_page.k4'), color: 'default' },
+  };
+}
+
+function getStatusConfig() {
+  return {
+    active: {
+      label: i18n.t('iam.company_structure_page.k5'),
+      color: 'success' as const,
+      icon: CheckCircle,
+    },
+    inactive: {
+      label: i18n.t('iam.company_structure_page.k6'),
+      color: 'default' as const,
+      icon: XCircle,
+    },
+  };
+}
 
 // 公司架构树节点组件
 const TreeNodeComponent: React.FC<{
@@ -84,6 +85,7 @@ const TreeNodeComponent: React.FC<{
   onToggle: (id: string) => void;
 }> = ({ node, level, expandedNodes, onToggle }) => {
   const { t } = useTranslation('iam');
+  const relationTypeConfig = getRelationTypeConfig();
   const hasChildren = node.children && node.children.length > 0;
   const isExpanded = expandedNodes.has(node.id);
 
@@ -128,8 +130,8 @@ const TreeNodeComponent: React.FC<{
         )}
         {node.relation_type && (
           <Chip
-            label={RELATION_TYPE_CONFIG[node.relation_type]?.label}
-            color={RELATION_TYPE_CONFIG[node.relation_type]?.color}
+            label={relationTypeConfig[node.relation_type]?.label}
+            color={relationTypeConfig[node.relation_type]?.color}
             size='small'
           />
         )}
@@ -170,6 +172,8 @@ export default function CompanyStructurePage() {
     },
   });
   const { t } = useTranslation('iam');
+  const relationTypeConfig = getRelationTypeConfig();
+  const statusConfig = getStatusConfig();
   // 状态
   const [searchKeyword, setSearchKeyword] = useState('');
   const [activeTab, setActiveTab] = useState(0);
@@ -253,7 +257,7 @@ export default function CompanyStructurePage() {
       accessorKey: 'relation_type',
       cell: ({ row }) => {
         const relationType = row.getValue<string>('relation_type');
-        const config = RELATION_TYPE_CONFIG[relationType as keyof typeof RELATION_TYPE_CONFIG] || {
+        const config = relationTypeConfig[relationType as keyof typeof relationTypeConfig] || {
           label: relationType,
           color: 'default' as const,
         };
@@ -315,7 +319,7 @@ export default function CompanyStructurePage() {
       accessorKey: 'status',
       cell: ({ row }) => {
         const status = row.getValue<string>('status');
-        const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || {
+        const config = statusConfig[status as keyof typeof statusConfig] || {
           label: status,
           color: 'default' as const,
         };
@@ -450,7 +454,7 @@ export default function CompanyStructurePage() {
           mt: 3,
         }}
       >
-        {Object.entries(RELATION_TYPE_CONFIG).map(([key, config]) => {
+        {Object.entries(relationTypeConfig).map(([key, config]) => {
           const count = relationsData?.data?.filter((r) => r.relation_type === key).length || 0;
           return (
             <Card

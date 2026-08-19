@@ -1,6 +1,6 @@
 export { projectSchema } from './project';
 export { testSchema } from './test';
-export { milestoneSchema } from './milestone';
+export { getMilestoneSchema } from './milestone';
 export { buildSchema } from './build';
 export { experimentSchema } from './experiment';
 export { deploySchema } from './deploy';

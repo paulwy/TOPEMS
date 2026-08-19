@@ -23,16 +23,15 @@ import { designTokens } from '@/theme/tokens';
 import { PM_PATHS } from '@/modules/pm/config';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
-const STATUS_LABELS: Record<string, string> = {
+const ct= designTokens.colors;
+const getContractStatusLabels = (): Record<string, string> => ({
   draft: i18n.t('pm.pm_contract_detail_page.k0'),
   pending: i18n.t('pm.pm_contract_detail_page.k1'),
   approved: i18n.t('pm.pm_contract_detail_page.k2'),
   active: i18n.t('pm.pm_contract_detail_page.k3'),
   completed: i18n.t('pm.pm_contract_detail_page.k4'),
   cancelled: i18n.t('pm.pm_contract_detail_page.k5'),
-};
+});
 const STATUS_COLORS: Record<string, { bgcolor: string; color: string }> = {
   draft: { bgcolor: 'grey.100', color: 'grey.700' },
   pending: { bgcolor: 'warning.100', color: ct.yellow[700] },
@@ -41,12 +40,12 @@ const STATUS_COLORS: Record<string, { bgcolor: string; color: string }> = {
   completed: { bgcolor: 'primary.100', color: 'primary.800' },
   cancelled: { bgcolor: 'grey.100', color: 'grey.800' },
 };
-const CONTRACT_TYPE_LABELS: Record<string, string> = {
+const getContractTypeLabels = (): Record<string, string> => ({
   construction: i18n.t('pm.pm_contract_detail_page.k6'),
   service: i18n.t('pm.pm_contract_detail_page.k7'),
   purchase: i18n.t('pm.pm_contract_detail_page.k8'),
   sales: i18n.t('pm.pm_contract_detail_page.k9'),
-};
+});
 const PmContractDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -147,9 +146,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
-                {i18n.t('pm.pm_contract_detail_page.k10')}
-              </Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.pm_contract_detail_page.k10')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {contract.contractNo}
               </Typography>
@@ -164,11 +161,9 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
-                {i18n.t('pm.pm_contract_detail_page.k11')}
-              </Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.pm_contract_detail_page.k11')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
-                {CONTRACT_TYPE_LABELS[contract.contract_type] || contract.contract_type}
+                {getContractTypeLabels()[contract.contract_type] || contract.contract_type}
               </Typography>
             </Box>
             <Box
@@ -181,9 +176,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
-                {i18n.t('pm.pm_contract_detail_page.k12')}
-              </Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.pm_contract_detail_page.k12')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {formatCurrency(contract.amount)}
               </Typography>
@@ -198,9 +191,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
-                {i18n.t('pm.pm_contract_detail_page.k13')}
-              </Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.pm_contract_detail_page.k13')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {formatDate(contract.sign_date)}
               </Typography>
@@ -213,9 +204,7 @@ const PmContractDetailPage: React.FC = () => {
                 py: 1,
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
-                {i18n.t('pm.pm_contract_detail_page.k14')}
-              </Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.pm_contract_detail_page.k14')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {formatDate(contract.end_date)}
               </Typography>
@@ -242,9 +231,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
-                {i18n.t('pm.pm_contract_detail_page.k15')}
-              </Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.pm_contract_detail_page.k15')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {contract.party_a || '-'}
               </Typography>
@@ -259,9 +246,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
-                {i18n.t('pm.pm_contract_detail_page.k16')}
-              </Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.pm_contract_detail_page.k16')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {contract.party_b || '-'}
               </Typography>
@@ -276,9 +261,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
-                {i18n.t('pm.pm_contract_detail_page.k17')}
-              </Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.pm_contract_detail_page.k17')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>-</Typography>
             </Box>
             <Box
@@ -289,9 +272,7 @@ const PmContractDetailPage: React.FC = () => {
                 py: 1,
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
-                {i18n.t('pm.pm_contract_detail_page.k18')}
-              </Typography>
+              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pm.pm_contract_detail_page.k18')}</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>-</Typography>
             </Box>
           </CardContent>
@@ -430,9 +411,7 @@ const PmContractDetailPage: React.FC = () => {
                       key={payment.id}
                       sx={{ '&:hover': { bgcolor: 'grey.50' } }}
                     >
-                      <TableCell sx={{ fontWeight: 500 }}>
-                        {i18n.t('pages.pm_contract_detail_page.index1_0')}
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: 500 }}>{i18n.t('pages.pm_contract_detail_page.index1_0')}</TableCell>
                       <TableCell sx={{ color: 'grey.600' }}>
                         {formatDate(payment.due_date)}
                       </TableCell>
@@ -492,8 +471,8 @@ const PmContractDetailPage: React.FC = () => {
       title: contract.contract_name,
       subtitle: contract.contractNo,
       tags: [
-        STATUS_LABELS[statusKey],
-        CONTRACT_TYPE_LABELS[contract.contract_type] || contract.contract_type,
+        getContractStatusLabels()[statusKey],
+        getContractTypeLabels()[contract.contract_type] || contract.contract_type,
       ],
       stats: [
         { label: i18n.t('pm.pm_contract_detail_page.k33'), value: formatCurrency(contract.amount) },
@@ -504,22 +483,20 @@ const PmContractDetailPage: React.FC = () => {
     };
   }, [contract]);
   const handleRefresh = () => {
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.PM.CONTRACT(id || ''),
-      exact: false,
-      refetchType: 'active',
-    });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.CONTRACT(id || '') ,
+  exact: false,
+  refetchType: 'active',
+});
     queryClient.invalidateQueries({
       queryKey: [...QUERY_KEYS.PM.CONTRACT(id || ''), 'milestones'],
-
-      exact: false,
-      refetchType: 'active',
-    });
-    queryClient.invalidateQueries({
-      queryKey: [...QUERY_KEYS.PM.CONTRACT(id || ''), 'payments'],
-      exact: false,
-      refetchType: 'active',
-    });
+    
+  exact: false,
+  refetchType: 'active',
+});
+    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.CONTRACT(id || ''), 'payments'] ,
+  exact: false,
+  refetchType: 'active',
+});
   };
   return (
     <PageContainer
@@ -529,9 +506,7 @@ const PmContractDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={
-          contract?.name || contract?.contractNo || i18n.t('pm.pm_contract_detail_page.k38')
-        }
+        detailItemName={contract?.name || contract?.contractNo || i18n.t('pm.pm_contract_detail_page.k38')}
         breadcrumbs={[
           { label: i18n.t('pm.pm_contract_detail_page.k39'), href: '/dashboard' },
           { label: i18n.t('pm.pm_contract_detail_page.k40'), href: PM_PATHS.projects },

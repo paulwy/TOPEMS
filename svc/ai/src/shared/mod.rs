@@ -15,6 +15,7 @@ pub struct AppState {
     pub agent_service: crate::services::AgentService,
     pub recommendation_service: crate::services::RecommendationService,
     pub multimodal_service: crate::services::MultimodalService,
+    pub dify_service: crate::services::DifyService,
     pub event_publisher: Option<Arc<EventPublisher>>,
 }
 

@@ -56,12 +56,12 @@
     }
   },
   "plugins": {
-    "shell": {},
-    "fs": {},
-    "dialog": {},
-    "opener": {},
-    "log": {},
-    "global-shortcut": {},
+    "shell": null,
+    "fs": null,
+    "dialog": null,
+    "opener": null,
+    "log": null,
+    "global-shortcut": null,
     "updater": {
       "active": true,
       "endpoints": [

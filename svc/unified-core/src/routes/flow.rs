@@ -48,6 +48,14 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
             get(modules::flow::instance::get_instance_details),
         )
         .route(
+            "/monitor/instances/error",
+            get(modules::flow::instance::error_instances),
+        )
+        .route(
+            "/monitor/instances/overdue",
+            get(modules::flow::instance::overdue_instances),
+        )
+        .route(
             "/approvals/pending",
             get(modules::flow::approval::list_pending_approvals),
         )

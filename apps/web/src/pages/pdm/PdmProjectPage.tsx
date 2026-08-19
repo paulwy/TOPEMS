@@ -76,28 +76,34 @@ const MEMBER_ROLE_COLORS: Record<
   viewer: 'default',
 };
 
-const STATUS_OPTIONS = [
-  { label: i18n.t('pdm.pdm_project_page.k0'), value: 'planning' },
-  { label: i18n.t('pdm.pdm_project_page.k1'), value: 'active' },
-  { label: i18n.t('pdm.pdm_project_page.k2'), value: 'on_hold' },
-  { label: i18n.t('pdm.pdm_project_page.k3'), value: 'completed' },
-  { label: i18n.t('pdm.pdm_project_page.k4'), value: 'cancelled' },
-];
+function getStatusOptions() {
+  return [
+    { label: i18n.t('pdm.pdm_project_page.k0'), value: 'planning' },
+    { label: i18n.t('pdm.pdm_project_page.k1'), value: 'active' },
+    { label: i18n.t('pdm.pdm_project_page.k2'), value: 'on_hold' },
+    { label: i18n.t('pdm.pdm_project_page.k3'), value: 'completed' },
+    { label: i18n.t('pdm.pdm_project_page.k4'), value: 'cancelled' },
+  ];
+}
 
-const PHASE_OPTIONS = [
-  { label: i18n.t('pdm.pdm_project_page.k5'), value: 'initiation' },
-  { label: i18n.t('pdm.pdm_project_page.k6'), value: 'planning' },
-  { label: i18n.t('pdm.pdm_project_page.k7'), value: 'execution' },
-  { label: i18n.t('pdm.pdm_project_page.k8'), value: 'monitoring' },
-  { label: i18n.t('pdm.pdm_project_page.k9'), value: 'closing' },
-];
+function getPhaseOptions() {
+  return [
+    { label: i18n.t('pdm.pdm_project_page.k5'), value: 'initiation' },
+    { label: i18n.t('pdm.pdm_project_page.k6'), value: 'planning' },
+    { label: i18n.t('pdm.pdm_project_page.k7'), value: 'execution' },
+    { label: i18n.t('pdm.pdm_project_page.k8'), value: 'monitoring' },
+    { label: i18n.t('pdm.pdm_project_page.k9'), value: 'closing' },
+  ];
+}
 
-const MEMBER_ROLE_OPTIONS = [
-  { label: i18n.t('pdm.pdm_project_page.k10'), value: 'manager' },
-  { label: i18n.t('pdm.pdm_project_page.k11'), value: 'developer' },
-  { label: i18n.t('pdm.pdm_project_page.k12'), value: 'reviewer' },
-  { label: i18n.t('pdm.pdm_project_page.k13'), value: 'viewer' },
-];
+function getMemberRoleOptions() {
+  return [
+    { label: i18n.t('pdm.pdm_project_page.k10'), value: 'manager' },
+    { label: i18n.t('pdm.pdm_project_page.k11'), value: 'developer' },
+    { label: i18n.t('pdm.pdm_project_page.k12'), value: 'reviewer' },
+    { label: i18n.t('pdm.pdm_project_page.k13'), value: 'viewer' },
+  ];
+}
 
 const PdmProjectPage: React.FC = () => {
   const { t } = useTranslation('pdm');
@@ -411,10 +417,10 @@ const PdmProjectPage: React.FC = () => {
                   </ListItemAvatar>
                   <ListItemText
                     primary={member.user_name || member.user_id}
-                    secondary={MEMBER_ROLE_OPTIONS.find((r) => r.value === member.role)?.label}
+                    secondary={getMemberRoleOptions().find((r) => r.value === member.role)?.label}
                   />
                   <Chip
-                    label={MEMBER_ROLE_OPTIONS.find((r) => r.value === member.role)?.label}
+                    label={getMemberRoleOptions().find((r) => r.value === member.role)?.label}
                     color={MEMBER_ROLE_COLORS[member.role] || 'default'}
                     size='small'
                   />
@@ -458,7 +464,7 @@ const PdmProjectPage: React.FC = () => {
                   }}
                 >
                   <Chip
-                    label={PHASE_OPTIONS.find((p) => p.value === phase.phase)?.label || phase.phase}
+                    label={getPhaseOptions().find((p) => p.value === phase.phase)?.label || phase.phase}
                     color={PHASE_COLORS[phase.phase] || 'default'}
                     size='small'
                   />
@@ -590,7 +596,7 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({ onSubmit, onCancel }) => 
           value={role}
           onChange={(e) => setRole(e.target.value)}
         >
-          {MEMBER_ROLE_OPTIONS.map((option) => (
+          {getMemberRoleOptions().map((option) => (
             <MenuItem
               key={option.value}
               value={option.value}

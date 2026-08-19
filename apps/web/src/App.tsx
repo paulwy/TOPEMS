@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import AppLayout from './components/layout/AppLayout';
 import AppRoutes from './routes/appRoutes';
+import I18nReadyGate from './components/I18nReadyGate';
 import { useAuth } from './hooks/useAuth';
 
 // DevTools 仅在开发模式按需加载，生产构建由 Vite tree-shaking 移除（import.meta.env.DEV 字面量）
@@ -55,6 +56,22 @@ const DevPanels: React.FC = () => {
 
   return (
     <>
+      {/*
+        开发模式占位块：MicroFrontendDevTools（左 fixed 一排彩色按钮 ~72px）
+        + ObservabilityPanel（右 fixed 浮层按钮 ~48px）均是 position: fixed
+        脱离文档流，会遮挡页面底部内容。
+        此处用普通文档流占位块把页面滚动底边界顶开，避免最后一屏内容被浮层覆盖。
+        仅在 import.meta.env.DEV && 已认证 时渲染，生产构建完全移除。
+      */}
+      <div
+        aria-hidden='true'
+        style={{
+          width: '100%',
+          height: 100,
+          flexShrink: 0,
+          pointerEvents: 'none',
+        }}
+      />
       {ObservabilityPanel && (
         <Suspense fallback={null}>
           <ObservabilityPanel />
@@ -78,10 +95,12 @@ const DevPanels: React.FC = () => {
  * - 开发模式下已认证才显示的可观测性面板与微前端 DevTools
  */
 const App: React.FC = () => (
-  <AppLayout>
-    <AppRoutes />
-    <DevPanels />
-  </AppLayout>
+  <I18nReadyGate>
+    <AppLayout>
+      <AppRoutes />
+      <DevPanels />
+    </AppLayout>
+  </I18nReadyGate>
 );
 
 export default App;

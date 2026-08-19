@@ -32,8 +32,8 @@ export const APS_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const apsModuleConfig: RouteModuleConfig = {
   code: 'aps',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.aps_name'),
+  nameKey: 'shared.config.aps_name',
   icon: 'CalendarCheck',
   path: APS_PATHS.root,
   source: 'plugin',

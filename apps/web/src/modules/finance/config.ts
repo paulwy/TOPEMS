@@ -7,8 +7,8 @@ import i18n from '@/i18n';
 // ---- 路由配置（供路由系统使用） ----
 export const financeModuleConfig: RouteModuleConfig = {
   code: 'finance',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.finance_name'),
+  nameKey: 'shared.config.finance_name',
   icon: 'Wallet',
   path: FINANCE_PATHS.root,
   source: 'plugin',

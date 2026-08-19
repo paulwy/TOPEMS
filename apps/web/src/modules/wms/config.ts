@@ -45,8 +45,8 @@ export const WMS_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const wmsModuleConfig: RouteModuleConfig = {
   code: 'wms',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.wms_name'),
+  nameKey: 'shared.config.wms_name',
   icon: 'Warehouse',
   path: WMS_PATHS.root,
   source: 'core',

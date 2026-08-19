@@ -1,5 +1,5 @@
-export { employeeSchema } from './employee';
-export { departmentSchema } from './department';
+export { getEmployeeSchema as employeeSchema } from './employee';
+export { getDepartmentSchema as departmentSchema } from './department';
 export { companySchema } from './company';
 export { leaveSchema } from './leave';
 export { recruitmentSchema } from './recruitment';

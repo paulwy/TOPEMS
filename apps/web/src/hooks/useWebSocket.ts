@@ -75,7 +75,7 @@ export interface SubscriptionConfig {
 
 const WS_URL =
   (import.meta.env.VITE_WS_URL as string | undefined) ||
-  `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
+  `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/core`;
 
 class WebSocketService {
   private socket: WebSocket | null = null;

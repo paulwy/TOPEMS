@@ -4,7 +4,7 @@ import { departmentApi, companyApi } from '@/api/hrm';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
-const STATUS_OPTIONS = [
+const getStatusOptions = () => [
   { value: 'active', label: i18n.t('hrm.department.k0') },
   { value: 'inactive', label: i18n.t('hrm.department.k1') },
 ];
@@ -17,14 +17,18 @@ const STATUS_COLOR_MAP: Record<
   inactive: 'default',
 };
 
-const STATUS_LABEL_MAP: Record<string, string> = {
+const getStatusLabelMap = (): Record<string, string> => ({
   active: i18n.t('hrm.department.k2'),
   inactive: i18n.t('hrm.department.k3'),
-};
+});
 
-export const departmentSchema: EntitySchema = {
-  entity: 'hrm_department',
-  title: i18n.t('hrm.department.k4'),
+export const getDepartmentSchema = (): EntitySchema => {
+  const STATUS_OPTIONS = getStatusOptions();
+  const STATUS_LABEL_MAP = getStatusLabelMap();
+
+  return {
+    entity: 'hrm_department',
+    title: i18n.t('hrm.department.k4'),
   description: i18n.t('hrm.department.k5'),
 
   api: {
@@ -168,6 +172,7 @@ export const departmentSchema: EntitySchema = {
       },
     },
   ],
+  };
 };
 
-export { STATUS_OPTIONS, STATUS_COLOR_MAP, STATUS_LABEL_MAP };
+export { getStatusOptions, STATUS_COLOR_MAP, getStatusLabelMap };

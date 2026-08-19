@@ -16,6 +16,7 @@ import {
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { zhCN } from '@mui/x-date-pickers/locales';
 import { useResponsive } from '../../hooks/useResponsive';
 
 function useTabletSize() {
@@ -196,7 +197,10 @@ export function FormDateField<T extends FieldValues>({
 }: FormDateFieldProps<T>) {
   const isTablet = useTabletSize();
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <LocalizationProvider
+      dateAdapter={AdapterDayjs}
+      localeText={zhCN.components.MuiLocalizationProvider.defaultProps.localeText}
+    >
       <Controller
         name={name}
         control={control}

@@ -29,8 +29,7 @@ import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter, RowAction } from '@/components/templates/CrudPage';
 import { useNotificationStore } from '../../store';
-import { notificationSchema } from '@/schemas/mobile';
-
+import { getMobileNotificationSchema } from '@/schemas/mobile';
 type NotificationType = 'system' | 'approval' | 'task' | 'message';
 type NotificationPriority = 'high' | 'medium' | 'low';
 type TabType = 'all' | 'unread' | 'system' | 'approval' | 'task';
@@ -43,7 +42,8 @@ interface Notification {
   read: boolean;
   created_at: string;
 }
-const MOCK_NOTIFICATIONS: Notification[] = [
+function getMockNotifications(): Notification[] {
+  return [
   {
     id: 'notif-001',
     title: i18n.t('mobile.mobile_notification_page.k0'),
@@ -117,12 +117,15 @@ const MOCK_NOTIFICATIONS: Notification[] = [
     created_at: i18n.t('mobile.mobile_notification_page.k11'),
   },
 ];
-const TYPE_LABELS: Record<NotificationType, string> = {
-  system: i18n.t('mobile.mobile_notification_page.k12'),
-  approval: i18n.t('mobile.mobile_notification_page.k13'),
-  task: i18n.t('mobile.mobile_notification_page.k14'),
-  message: i18n.t('mobile.mobile_notification_page.k15'),
-};
+}
+function getTypeLabels(): Record<NotificationType, string> {
+  return {
+    system: i18n.t('mobile.mobile_notification_page.k12'),
+    approval: i18n.t('mobile.mobile_notification_page.k13'),
+    task: i18n.t('mobile.mobile_notification_page.k14'),
+    message: i18n.t('mobile.mobile_notification_page.k15'),
+  };
+}
 const TYPE_ICONS: Record<NotificationType, React.ReactNode> = {
   system: <Bell size={20} />,
   approval: <CheckCheck size={20} />,
@@ -134,14 +137,14 @@ export const MobileNotificationPage: React.FC = () => {
     queryKey: ['mobile-notification-page'],
     queryFn: async () => {
       try {
-        return (await mobileApi.push.listPushNotifications()) ?? {};
+        return await mobileApi.push.listPushNotifications() ?? {};
       } catch (e) {
         return {};
       }
     },
   });
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<Notification[]>(() => getMockNotifications());
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
@@ -311,9 +314,7 @@ export const MobileNotificationPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Settings size={18} />
-            <Typography variant='subtitle2'>
-              {i18n.t('mobile.mobile_notification_page.k29')}
-            </Typography>
+            <Typography variant='subtitle2'>{i18n.t('mobile.mobile_notification_page.k29')}</Typography>
           </Box>
         </Box>
         <Box sx={{ display: 'flex', gap: 3, mt: 1.5 }}>
@@ -420,7 +421,7 @@ export const MobileNotificationPage: React.FC = () => {
         ))}
       </Box>
       <CrudPage
-        schema={notificationSchema}
+        schema={getMobileNotificationSchema()}
         apiAdapter={apiAdapter}
         customRowActions={customRowActions}
         headerContent={headerContent}

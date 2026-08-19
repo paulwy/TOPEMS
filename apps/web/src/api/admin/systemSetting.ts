@@ -48,11 +48,11 @@ export const systemSettingApi = {
   },
 
   getSystemConfig: async (): Promise<ApiResponse<SystemConfig>> => {
-    return apiClient.erp.get<SystemConfig>('/system/config');
+    return apiClient.core.get<SystemConfig>('/system/v1/config');
   },
 
   updateSystemConfig: async (data: Partial<SystemConfig>): Promise<ApiResponse<SystemConfig>> => {
-    return apiClient.erp.put<SystemConfig>('/system/config', data);
+    return apiClient.core.put<SystemConfig>('/system/v1/config', data);
   },
 };
 

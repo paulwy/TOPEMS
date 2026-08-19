@@ -87,6 +87,7 @@
     "@react-three/fiber": "^9.6.1",
     "@tanstack/react-query": "^5.101.0",
     "@tanstack/react-table": "^8.21.3",
+    "@tauri-apps/api": "^2.11.1",
     "@topems/shared-components": "workspace:*",
     "@topems/shared-constants": "workspace:*",
     "@topems/shared-hooks": "workspace:*",

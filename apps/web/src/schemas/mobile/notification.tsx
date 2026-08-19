@@ -5,12 +5,12 @@ import i18n from '@/i18n';
 type NotificationType = 'system' | 'approval' | 'task' | 'message';
 type NotificationPriority = 'high' | 'medium' | 'low';
 
-const TYPE_LABELS: Record<NotificationType, string> = {
+const getTypeLabels = (): Record<NotificationType, string> => ({
   system: i18n.t('shared.notification.k0'),
   approval: i18n.t('shared.notification.k1'),
   task: i18n.t('shared.notification.k2'),
   message: i18n.t('shared.notification.k3'),
-};
+});
 
 const PRIORITY_COLORS: Record<NotificationPriority, 'error' | 'warning' | 'info'> = {
   high: 'error',
@@ -18,7 +18,7 @@ const PRIORITY_COLORS: Record<NotificationPriority, 'error' | 'warning' | 'info'
   low: 'info',
 };
 
-export const notificationSchema: EntitySchema = {
+export const getMobileNotificationSchema = (): EntitySchema => ({
   entity: 'mobile_notification',
   title: i18n.t('shared.notification.k4'),
   description: i18n.t('shared.notification.k5'),
@@ -62,7 +62,7 @@ export const notificationSchema: EntitySchema = {
       },
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) =>
-        TYPE_LABELS[row.type as NotificationType] || String(row.type ?? ''),
+        getTypeLabels()[row.type as NotificationType] || String(row.type ?? ''),
     },
     {
       name: 'priority',
@@ -143,4 +143,4 @@ export const notificationSchema: EntitySchema = {
 
   formColCount: 2,
   detailTitle: i18n.t('shared.notification.k32'),
-};
+});

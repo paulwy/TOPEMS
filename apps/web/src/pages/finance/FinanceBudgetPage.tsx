@@ -1,6 +1,6 @@
 import React from 'react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
-import { budgetSchema } from '@/schemas/finance/budget';
+import { getBudgetSchema } from '@/schemas/finance/budget';
 import { budgetApi, type Budget } from '@/api/erp';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useQuery } from '@tanstack/react-query';
@@ -243,7 +243,7 @@ const FinanceBudgetPage: React.FC = () => {
   const { t } = useTranslation('finance');
   return (
     <CrudPage
-      schema={budgetSchema}
+      schema={getBudgetSchema()}
       apiAdapter={budgetApiAdapter}
       breadcrumbs={[
         { label: t('finance.finance_budget_page.k13'), href: '/dashboard' },

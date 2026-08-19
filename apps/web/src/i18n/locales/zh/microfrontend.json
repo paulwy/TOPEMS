@@ -1705,6 +1705,12 @@
   "microfrontend.observability_panel.k14": "慢加载模块警告",
   "microfrontend.observability_panel.2_15": "自动刷新 · 2秒",
   "microfrontend.observability_panel.k16": "刷新",
+  "microfrontend.observability_panel.k17": "个慢模块",
+  "microfrontend.observability_panel.k18": "个错误",
+  "microfrontend.observability_panel.k19": "导出",
+  "microfrontend.observability_panel.k20": "性能监控",
+  "microfrontend.observability_panel.k21": "次访问",
+  "microfrontend.observability_panel.k22": "个模块加载超过",
   "microfrontend.observability_dashboard.top5_0": "加载时间排名 (Top 5)",
   "microfrontend.observability_dashboard.top5_1": "模块访问排名 (Top 5)",
   "microfrontend.registry_panel.id_12": "模块ID",
@@ -1743,5 +1749,7 @@
   "dependency_governance.v0_3": " 需要版本 {{v0}}\n          ",
   "dependency_governance.v0v1_4": " 需要版本 {{v0}}， 模块{{v1}}\n            ",
   "dependency_governance.k5": "\n            模块 ",
-  "dependency_governance.v0_6": "\n              {{v0}} 版本冲突\n            "
+  "dependency_governance.v0_6": "\n              {{v0}} 版本冲突\n            ",
+  "microfrontend.cross-framework.lili_1": "示例",
+  "microfrontend.cross-framework.k2": "跨框架"
 }

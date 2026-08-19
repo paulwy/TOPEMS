@@ -81,32 +81,36 @@ type PanelTab = 'recommendations' | 'adaptive' | 'emotion' | 'settings';
 
 const SAMPLE_USER_ID = 'v58-demo-user';
 
-const EMOTION_LABELS: Record<EmotionType, string> = {
-  joy: i18n.t('ai.v58-ux-panel.k0'),
-  trust: i18n.t('ai.v58-ux-panel.k1'),
-  fear: i18n.t('ai.v58-ux-panel.k2'),
-  surprise: i18n.t('ai.v58-ux-panel.k3'),
-  sadness: i18n.t('ai.v58-ux-panel.k4'),
-  disgust: i18n.t('ai.v58-ux-panel.k5'),
-  anger: i18n.t('ai.v58-ux-panel.k6'),
-  anticipation: i18n.t('ai.v58-ux-panel.k7'),
-  frustration: i18n.t('ai.v58-ux-panel.k8'),
-  satisfaction: i18n.t('ai.v58-ux-panel.k9'),
-  confusion: i18n.t('ai.v58-ux-panel.k10'),
-  boredom: i18n.t('ai.v58-ux-panel.k11'),
-  excitement: i18n.t('ai.v58-ux-panel.k12'),
-  calm: i18n.t('ai.v58-ux-panel.k13'),
-};
+function getEmotionLabels(): Record<EmotionType, string> {
+  return {
+    joy: i18n.t('ai.v58-ux-panel.k0'),
+    trust: i18n.t('ai.v58-ux-panel.k1'),
+    fear: i18n.t('ai.v58-ux-panel.k2'),
+    surprise: i18n.t('ai.v58-ux-panel.k3'),
+    sadness: i18n.t('ai.v58-ux-panel.k4'),
+    disgust: i18n.t('ai.v58-ux-panel.k5'),
+    anger: i18n.t('ai.v58-ux-panel.k6'),
+    anticipation: i18n.t('ai.v58-ux-panel.k7'),
+    frustration: i18n.t('ai.v58-ux-panel.k8'),
+    satisfaction: i18n.t('ai.v58-ux-panel.k9'),
+    confusion: i18n.t('ai.v58-ux-panel.k10'),
+    boredom: i18n.t('ai.v58-ux-panel.k11'),
+    excitement: i18n.t('ai.v58-ux-panel.k12'),
+    calm: i18n.t('ai.v58-ux-panel.k13'),
+  };
+}
 
-const ANIMATION_LABELS: Record<AnimationType, string> = {
-  bounce: i18n.t('ai.v58-ux-panel.k14'),
-  pulse: i18n.t('ai.v58-ux-panel.k15'),
-  fade: i18n.t('ai.v58-ux-panel.k16'),
-  slide: i18n.t('ai.v58-ux-panel.k17'),
-  shake: i18n.t('ai.v58-ux-panel.k18'),
-  glow: i18n.t('ai.v58-ux-panel.k19'),
-  none: i18n.t('ai.v58-ux-panel.k20'),
-};
+function getAnimationLabels(): Record<AnimationType, string> {
+  return {
+    bounce: i18n.t('ai.v58-ux-panel.k14'),
+    pulse: i18n.t('ai.v58-ux-panel.k15'),
+    fade: i18n.t('ai.v58-ux-panel.k16'),
+    slide: i18n.t('ai.v58-ux-panel.k17'),
+    shake: i18n.t('ai.v58-ux-panel.k18'),
+    glow: i18n.t('ai.v58-ux-panel.k19'),
+    none: i18n.t('ai.v58-ux-panel.k20'),
+  };
+}
 
 export const V58UXPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState<PanelTab>('recommendations');
@@ -1155,7 +1159,10 @@ const EmotionTab: React.FC<{
   state: EmotionState;
   response: DesignResponse;
   onSimulate: (signal: string, value: number) => void;
-}> = ({ state, response, onSimulate }) => (
+}> = ({ state, response, onSimulate }) => {
+  const emotionLabels = getEmotionLabels();
+  const animationLabels = getAnimationLabels();
+  return (
   <Grid
     container
     spacing={2}
@@ -1191,7 +1198,7 @@ const EmotionTab: React.FC<{
               variant='h4'
               sx={{ fontWeight: 700, mb: 0.5 }}
             >
-              {EMOTION_LABELS[state.primaryEmotion]}
+              {emotionLabels[state.primaryEmotion]}
             </Typography>
             <Stack
               direction='row'
@@ -1242,7 +1249,7 @@ const EmotionTab: React.FC<{
                 variant='caption'
                 sx={{ color: 'text.secondary' }}
               >
-                [i18n.t('ai.v58-ux-panel.k19')]: {EMOTION_LABELS[state.secondary_emotion]}
+                [i18n.t('ai.v58-ux-panel.k19')]: {emotionLabels[state.secondary_emotion]}
               </Typography>
             </Box>
           )}
@@ -1382,7 +1389,7 @@ const EmotionTab: React.FC<{
             <Grid size={6}>
               <InfoBlock
                 title={i18n.t('ai.v58-ux-panel.k63')}
-                value={ANIMATION_LABELS[response.animationType]}
+                value={animationLabels[response.animationType]}
               />
             </Grid>
             <Grid size={6}>
@@ -1497,7 +1504,8 @@ const EmotionTab: React.FC<{
       </Card>
     </Grid>
   </Grid>
-);
+  );
+};
 
 const ColorBar: React.FC<{ label: string; value: number }> = ({ label, value }) => (
   <Box sx={{ textAlign: 'center' }}>

@@ -136,13 +136,9 @@ export interface WmsMockShape {
 // ============================================================================
 // 静态选项池
 // ============================================================================
-const WAREHOUSE_NAMES = [
-  i18n.t('shared._mock.k4'),
-  i18n.t('shared._mock.k3'),
-  i18n.t('shared._mock.k2'),
-  i18n.t('shared._mock.k1'),
-  i18n.t('shared._mock.k0'),
-] as const;
+function getWarehouseNames() {
+  return [i18n.t('shared._mock.k4'), i18n.t('shared._mock.k3'), i18n.t('shared._mock.k2'), i18n.t('shared._mock.k1'), i18n.t('shared._mock.k0')] as const;
+}
 const WAREHOUSE_CODES = ['WH-EAST', 'WH-SOUTH', 'WH-NORTH', 'WH-WEST', 'WH-CENTER'] as const;
 const INBOUND_STATUSES = ['created', 'confirmed', 'received', 'completed', 'cancelled'] as const;
 const OUTBOUND_STATUSES = [
@@ -166,51 +162,37 @@ const TRANSFER_STATUSES = [
 const WAVEPICK_STATUSES = ['created', 'assigned', 'picking', 'completed', 'cancelled'] as const;
 const MOVEMENT_STATUSES = ['draft', 'posted', 'completed', 'cancelled'] as const;
 const SERIAL_STATUSES = ['pending', 'assigned', 'used', 'archived'] as const;
-const MATERIALS = [
-  { code: 'MAT-001', name: i18n.t('shared._mock.a_6'), unit: i18n.t('shared._mock.k5') },
-  { code: 'MAT-002', name: i18n.t('shared._mock.b_8'), unit: i18n.t('shared._mock.k7') },
-  { code: 'MAT-003', name: i18n.t('shared._mock.c_10'), unit: i18n.t('shared._mock.k9') },
-  { code: 'MAT-004', name: i18n.t('shared._mock.d_12'), unit: i18n.t('shared._mock.k11') },
-  { code: 'MAT-005', name: i18n.t('shared._mock.e_14'), unit: i18n.t('shared._mock.k13') },
-  { code: 'MAT-006', name: i18n.t('shared._mock.f_16'), unit: i18n.t('shared._mock.k15') },
-  { code: 'MAT-007', name: i18n.t('shared._mock.g_18'), unit: i18n.t('shared._mock.k17') },
-  { code: 'MAT-008', name: i18n.t('shared._mock.h_20'), unit: i18n.t('shared._mock.k19') },
-] as const;
-const SUPPLIERS = [
-  i18n.t('shared._mock.k25'),
-  i18n.t('shared._mock.k24'),
-  i18n.t('shared._mock.k23'),
-  i18n.t('shared._mock.k22'),
-  i18n.t('shared._mock.k21'),
-] as const;
-const CUSTOMERS = [
-  i18n.t('shared._mock.k30'),
-  i18n.t('shared._mock.k29'),
-  i18n.t('shared._mock.k28'),
-  i18n.t('shared._mock.k27'),
-  i18n.t('shared._mock.k26'),
-] as const;
-const LOCATION_AREAS = [
-  i18n.t('shared._mock.k36'),
-  i18n.t('shared._mock.k35'),
-  i18n.t('shared._mock.k34'),
-  i18n.t('shared._mock.k33'),
-  i18n.t('shared._mock.k32'),
-  i18n.t('shared._mock.k31'),
-] as const;
-const ZONES = [
-  i18n.t('shared._mock.a_3'),
-  i18n.t('shared._mock.b_2'),
-  i18n.t('shared._mock.c_1'),
-  i18n.t('shared._mock.d_0'),
-] as const;
+function getMaterials() {
+  return [
+    { code: 'MAT-001', name: i18n.t('shared._mock.a_6'), unit: i18n.t('shared._mock.k5') },
+    { code: 'MAT-002', name: i18n.t('shared._mock.b_8'), unit: i18n.t('shared._mock.k7') },
+    { code: 'MAT-003', name: i18n.t('shared._mock.c_10'), unit: i18n.t('shared._mock.k9') },
+    { code: 'MAT-004', name: i18n.t('shared._mock.d_12'), unit: i18n.t('shared._mock.k11') },
+    { code: 'MAT-005', name: i18n.t('shared._mock.e_14'), unit: i18n.t('shared._mock.k13') },
+    { code: 'MAT-006', name: i18n.t('shared._mock.f_16'), unit: i18n.t('shared._mock.k15') },
+    { code: 'MAT-007', name: i18n.t('shared._mock.g_18'), unit: i18n.t('shared._mock.k17') },
+    { code: 'MAT-008', name: i18n.t('shared._mock.h_20'), unit: i18n.t('shared._mock.k19') },
+  ] as const;
+}
+function getSuppliers() {
+  return [i18n.t('shared._mock.k25'), i18n.t('shared._mock.k24'), i18n.t('shared._mock.k23'), i18n.t('shared._mock.k22'), i18n.t('shared._mock.k21')] as const;
+}
+function getCustomers() {
+  return [i18n.t('shared._mock.k30'), i18n.t('shared._mock.k29'), i18n.t('shared._mock.k28'), i18n.t('shared._mock.k27'), i18n.t('shared._mock.k26')] as const;
+}
+function getLocationAreas() {
+  return [i18n.t('shared._mock.k36'), i18n.t('shared._mock.k35'), i18n.t('shared._mock.k34'), i18n.t('shared._mock.k33'), i18n.t('shared._mock.k32'), i18n.t('shared._mock.k31')] as const;
+}
+function getZones() {
+  return [i18n.t('shared._mock.a_3'), i18n.t('shared._mock.b_2'), i18n.t('shared._mock.c_1'), i18n.t('shared._mock.d_0')] as const;
+}
 
 // ============================================================================
 // 实体 mock 构建函数
 // ============================================================================
 
 function buildWarehouses(rnd: () => number, count: number): WarehouseDto[] {
-  return WAREHOUSE_NAMES.slice(0, count).map((name, i) => {
+  return getWarehouseNames().slice(0, count).map((name, i) => {
     const createdAt = isoDate(rnd, int(rnd, 90, 365));
     return {
       id: uuid(rnd, 'wh-'),
@@ -239,7 +221,7 @@ function buildLocations(
 ): LocationDto[] {
   return Array.from({ length: count }, (_, i) => {
     const wh = pick(rnd, warehouses);
-    const zone = pick(rnd, ZONES);
+    const zone = pick(rnd, getZones());
     const aisle = String.fromCharCode(65 + int(rnd, 0, 5));
     const row = String(int(rnd, 1, 20));
     const col = String(int(rnd, 1, 10)).padStart(2, '0');
@@ -299,7 +281,7 @@ function buildInboundOrders(
       warehouse_id: wh.id,
       warehouse_name: wh.name,
       supplier_id: uuid(rnd, 'sup-'),
-      supplier_name: pick(rnd, SUPPLIERS),
+      supplier_name: pick(rnd, getSuppliers()),
       expected_date: isoFutureDate(rnd, int(rnd, 0, 10)),
       actual_date: rnd() > 0.5 ? isoDate(rnd, int(rnd, 0, 5)) : null,
       status: pick(rnd, INBOUND_STATUSES),
@@ -335,8 +317,8 @@ function buildOutboundOrders(
       warehouse_id: wh.id,
       warehouse_name: wh.name,
       customer_id: uuid(rnd, 'cust-'),
-      customer_name: pick(rnd, CUSTOMERS),
-      shipping_address: `${pick(rnd, [i18n.t('shared._mock.k52'), i18n.t('shared._mock.k51'), i18n.t('shared._mock.k50'), i18n.t('shared._mock.k49'), i18n.t('shared._mock.k48')])}${i18n.t('shared._mock.k160')}${int(rnd, 1, 999)}${i18n.t('shared._mock.k16')}`,
+      customer_name: pick(rnd, getCustomers()),
+      shipping_address: `${pick(rnd, [i18n.t('shared._mock.k52'), i18n.t('shared._mock.k51'), i18n.t('shared._mock.k50'), i18n.t('shared._mock.k49'), i18n.t('shared._mock.k48')])}${i18n.t('shared._mock.k15')}${int(rnd, 1, 999)}${i18n.t('shared._mock.k16')}`,
       expected_date: isoFutureDate(rnd, int(rnd, 1, 15)),
       expected_delivery: isoFutureDate(rnd, int(rnd, 3, 20)),
       actual_delivery: rnd() > 0.6 ? isoDate(rnd, int(rnd, 0, 5)) : null,
@@ -350,13 +332,7 @@ function buildOutboundOrders(
       created_by: `${i18n.t('shared._mock.k17')}${int(rnd, 1, 10)}`,
       approved_by: rnd() > 0.5 ? `${i18n.t('shared._mock.k18')}${int(rnd, 1, 5)}` : null,
       approved_at: rnd() > 0.5 ? isoDate(rnd, int(rnd, 0, 3)) : null,
-      carrier: pick(rnd, [
-        i18n.t('shared._mock.k58'),
-        i18n.t('shared._mock.k57'),
-        i18n.t('shared._mock.k56'),
-        i18n.t('shared._mock.k55'),
-        i18n.t('shared._mock.k54'),
-      ]),
+      carrier: pick(rnd, [i18n.t('shared._mock.k58'), i18n.t('shared._mock.k57'), i18n.t('shared._mock.k56'), i18n.t('shared._mock.k55'), i18n.t('shared._mock.k54')]),
       tracking_number: rnd() > 0.4 ? `SF${String(int(rnd, 100000000, 999999999))}` : null,
       created_at: created,
       updated_at: isoDate(rnd, int(rnd, 0, 10)),
@@ -382,8 +358,8 @@ function buildStockTakes(
       warehouse_id: wh.id,
       warehouse_name: wh.name,
       location_id: rnd() > 0.5 ? uuid(rnd, 'loc-') : null,
-      location_code: rnd() > 0.5 ? `${pick(rnd, ZONES)}-${int(rnd, 1, 20)}` : null,
-      location_name: rnd() > 0.5 ? `${pick(rnd, LOCATION_AREAS)}${int(rnd, 1, 20)}` : null,
+      location_code: rnd() > 0.5 ? `${pick(rnd, getZones())}-${int(rnd, 1, 20)}` : null,
+      location_name: rnd() > 0.5 ? `${pick(rnd, getLocationAreas())}${int(rnd, 1, 20)}` : null,
       stock_take_number: `ST${new Date().getFullYear()}${String(i + 1).padStart(6, '0')}`,
       stock_take_type: pick(rnd, ['full', 'cycle', 'spot', 'blind']),
       status: pick(rnd, STOCKTAKE_STATUSES),
@@ -400,10 +376,7 @@ function buildStockTakes(
       accuracy_rate: counted === 0 ? 0 : Math.round(((counted - disc) / counted) * 1000) / 10,
       approval_status: rnd() > 0.5 ? pick(rnd, ['pending', 'approved', 'rejected']) : null,
       adjustment_status: rnd() > 0.5 ? pick(rnd, ['none', 'pending', 'done']) : null,
-      remarks:
-        rnd() > 0.6
-          ? `${pick(rnd, [i18n.t('shared._mock.k61'), i18n.t('shared._mock.k60'), i18n.t('shared._mock.k59')])}${i18n.t('shared._mock.k19')}`
-          : null,
+      remarks: rnd() > 0.6 ? `${pick(rnd, [i18n.t('shared._mock.k61'), i18n.t('shared._mock.k60'), i18n.t('shared._mock.k59')])}${i18n.t('shared._mock.k19')}` : null,
       stock_adjusted: rnd() > 0.5,
       created_by: `${i18n.t('shared._mock.k20')}${int(rnd, 1, 10)}`,
       approved_by: rnd() > 0.5 ? `${i18n.t('shared._mock.k21')}${int(rnd, 1, 5)}` : null,
@@ -445,12 +418,7 @@ function buildTransfers(
       total_amount: Math.round(qty * (50 + rnd() * 500) * 100) / 100,
       planned_date: isoDate(rnd, int(rnd, 0, 10)),
       actual_date: rnd() > 0.5 ? isoDate(rnd, int(rnd, 0, 5)) : null,
-      transporter: pick(rnd, [
-        i18n.t('shared._mock.k65'),
-        i18n.t('shared._mock.k64'),
-        i18n.t('shared._mock.k63'),
-        i18n.t('shared._mock.k62'),
-      ]),
+      transporter: pick(rnd, [i18n.t('shared._mock.k65'), i18n.t('shared._mock.k64'), i18n.t('shared._mock.k63'), i18n.t('shared._mock.k62')]),
       tracking_number: rnd() > 0.4 ? `TRK${String(int(rnd, 100000, 999999))}` : null,
       priority: pick(rnd, ['low', 'normal', 'high', 'urgent']),
       remarks: rnd() > 0.6 ? `${from.name} → ${to.name}${i18n.t('shared._mock.k23')}` : null,
@@ -524,24 +492,13 @@ function buildMovements(
       target_location_code: `TGT-${int(rnd, 1, 99)}`,
       status: pick(rnd, MOVEMENT_STATUSES),
       total_quantity: int(rnd, 1, 500),
-      material_code: pick(rnd, MATERIALS).code,
-      material_name: pick(rnd, MATERIALS).name,
+      material_code: pick(rnd, getMaterials()).code,
+      material_name: pick(rnd, getMaterials()).name,
       batch_number: rnd() > 0.5 ? `B${String(int(rnd, 1000, 9999))}` : null,
       serial_number: rnd() > 0.7 ? `SN${String(int(rnd, 100000, 999999))}` : null,
       quantity: int(rnd, 1, 500),
-      unit: pick(rnd, [
-        i18n.t('shared._mock.k69'),
-        i18n.t('shared._mock.k68'),
-        i18n.t('shared._mock.k67'),
-        i18n.t('shared._mock.k66'),
-      ]),
-      reason: pick(rnd, [
-        i18n.t('shared._mock.k74'),
-        i18n.t('shared._mock.k73'),
-        i18n.t('shared._mock.k72'),
-        i18n.t('shared._mock.k71'),
-        i18n.t('shared._mock.k70'),
-      ]),
+      unit: pick(rnd, [i18n.t('shared._mock.k69'), i18n.t('shared._mock.k68'), i18n.t('shared._mock.k67'), i18n.t('shared._mock.k66')]),
+      reason: pick(rnd, [i18n.t('shared._mock.k74'), i18n.t('shared._mock.k73'), i18n.t('shared._mock.k72'), i18n.t('shared._mock.k71'), i18n.t('shared._mock.k70')]),
       remarks: rnd() > 0.6 ? i18n.t('shared._mock.k75') : null,
       created_by: `${i18n.t('shared._mock.k31')}${int(rnd, 1, 10)}`,
       approved_by: rnd() > 0.5 ? `${i18n.t('shared._mock.k32')}${int(rnd, 1, 5)}` : null,
@@ -561,7 +518,7 @@ function buildInventory(
   locations: LocationDto[]
 ): InventoryItemDto[] {
   return Array.from({ length: count }, (_, i) => {
-    const mat = MATERIALS[i % MATERIALS.length];
+    const mat = getMaterials()[i % getMaterials().length];
     const loc = pick(rnd, locations);
     const qty = int(rnd, 1, 2000);
     const avail = Math.floor(qty * (0.7 + rnd() * 0.3));
@@ -586,7 +543,7 @@ function buildInventory(
       batch_number: rnd() > 0.5 ? `B${String(int(rnd, 1000, 9999))}` : null,
       lot_number: rnd() > 0.7 ? `LOT${String(int(rnd, 10000, 99999))}` : null,
       expiry_date: rnd() > 0.5 ? isoFutureDate(rnd, int(rnd, 30, 365)) : null,
-      supplier_name: pick(rnd, SUPPLIERS),
+      supplier_name: pick(rnd, getSuppliers()),
       supplier_code: `SUP${String(int(rnd, 100, 999))}`,
       purchase_price: Math.round((10 + rnd() * 500) * 100) / 100,
       total_value: Math.round(qty * (10 + rnd() * 500) * 100) / 100,
@@ -604,7 +561,7 @@ function buildSerials(
   warehouses: WarehouseDto[]
 ): SerialNumberDto[] {
   return Array.from({ length: count }, (_, i) => {
-    const mat = MATERIALS[i % MATERIALS.length];
+    const mat = getMaterials()[i % getMaterials().length];
     const wh = pick(rnd, warehouses);
     return {
       id: uuid(rnd, 'sn-'),
@@ -619,7 +576,7 @@ function buildSerials(
       location_id: rnd() > 0.5 ? uuid(rnd, 'loc-') : null,
       location_code: rnd() > 0.5 ? `LOC-${int(rnd, 1, 99)}` : null,
       supplier_id: rnd() > 0.5 ? uuid(rnd, 'sup-') : null,
-      supplier_name: pick(rnd, SUPPLIERS),
+      supplier_name: pick(rnd, getSuppliers()),
       batch_no: rnd() > 0.5 ? `B${String(int(rnd, 1000, 9999))}` : null,
       production_date: isoDate(rnd, int(rnd, 30, 365)),
       expiry_date: rnd() > 0.5 ? isoFutureDate(rnd, int(rnd, 60, 730)) : null,
@@ -640,7 +597,7 @@ function buildSerials(
 
 function buildBatches(rnd: () => number, count: number, warehouses: WarehouseDto[]): BatchDto[] {
   return Array.from({ length: count }, (_, i) => {
-    const mat = MATERIALS[i % MATERIALS.length];
+    const mat = getMaterials()[i % getMaterials().length];
     const wh = pick(rnd, warehouses);
     const qty = int(rnd, 10, 5000);
     const shelfLife = int(rnd, 90, 1095);
@@ -659,7 +616,7 @@ function buildBatches(rnd: () => number, count: number, warehouses: WarehouseDto
       location_id: rnd() > 0.5 ? uuid(rnd, 'loc-') : null,
       location_code: rnd() > 0.5 ? `BATCH-${int(rnd, 1, 99)}` : null,
       supplier_id: rnd() > 0.5 ? uuid(rnd, 'sup-') : null,
-      supplier_name: pick(rnd, SUPPLIERS),
+      supplier_name: pick(rnd, getSuppliers()),
       production_date: isoDate(rnd, int(rnd, 1, 365)),
       expiry_date: isoFutureDate(rnd, int(rnd, 30, shelfLife)),
       receipt_date: isoDate(rnd, int(rnd, 1, 60)),
@@ -670,8 +627,7 @@ function buildBatches(rnd: () => number, count: number, warehouses: WarehouseDto
       remaining_days: int(rnd, 0, shelfLife),
       unit_price: Math.round((10 + rnd() * 500) * 100) / 100,
       total_value: Math.round(qty * (10 + rnd() * 500) * 100) / 100,
-      remark:
-        rnd() > 0.6 ? `${i18n.t('shared._mock.k38')}${i + 1}${i18n.t('shared._mock.k39')}` : null,
+      remark: rnd() > 0.6 ? `${i18n.t('shared._mock.k38')}${i + 1}${i18n.t('shared._mock.k39')}` : null,
       created_at: isoDate(rnd, int(rnd, 10, 365)),
       updated_at: isoDate(rnd, int(rnd, 0, 30)),
     };
@@ -694,7 +650,7 @@ function buildTurnover(rnd: () => number): TurnoverDatum[] {
     '2026-08',
   ];
   const result: TurnoverDatum[] = [];
-  for (const wh of WAREHOUSE_NAMES.slice(0, 4)) {
+  for (const wh of getWarehouseNames().slice(0, 4)) {
     for (const m of months) {
       const rate = Number((2 + rnd() * 6).toFixed(2));
       result.push({
@@ -709,7 +665,7 @@ function buildTurnover(rnd: () => number): TurnoverDatum[] {
 }
 
 function buildAgePareto(rnd: () => number): ParetoDatum[] {
-  const skus = MATERIALS.map((m) => m.name);
+  const skus = getMaterials().map((m) => m.name);
   const amounts = skus.map(() => Math.round((1000 + rnd() * 50000) * 100) / 100);
   const sorted = skus
     .map((sku, i) => ({ sku, amount: amounts[i] }))
@@ -756,7 +712,7 @@ function buildAbcAnalysis(rnd: () => number): AbcCategory[] {
 }
 
 function buildLocationUtil(rnd: () => number): LocationDatum[] {
-  return LOCATION_AREAS.map((area) => {
+  return getLocationAreas().map((area) => {
     const util = 40 + Math.floor(rnd() * 50);
     const vac = 100 - util - Math.floor(rnd() * 15);
     return {
@@ -769,7 +725,7 @@ function buildLocationUtil(rnd: () => number): LocationDatum[] {
 }
 
 function buildFulfillment(rnd: () => number): FulfillmentDatum[] {
-  return WAREHOUSE_NAMES.slice(0, 4).map((wh) => ({
+  return getWarehouseNames().slice(0, 4).map((wh) => ({
     warehouse: wh,
     onTimeRate: Number((85 + rnd() * 14).toFixed(1)),
     avgHours: Number((6 + rnd() * 18).toFixed(1)),

@@ -144,7 +144,7 @@ export const Counter: React.FC<CounterProps> = ({
 
 export default Counter;`;
 
-const codeExplanation = `{i18n.t('pages.ai_code_assistant_page.k0')}
+const getCodeExplanation = () => `{i18n.t('pages.ai_code_assistant_page.k0')}
 
 {i18n.t('pages.ai_code_assistant_page.1props_1')}
    {i18n.t('pages.ai_code_assistant_page.k2')}
@@ -271,7 +271,7 @@ export const AiCodeAssistantPage: React.FC = () => {
     setResult('');
 
     setTimeout(() => {
-      setResult(codeExplanation);
+      setResult(getCodeExplanation());
       setGenerating(false);
     }, 1500);
   }, [codeInput, addNotification, t]);

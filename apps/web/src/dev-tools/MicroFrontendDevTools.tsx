@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button, Tooltip, IconButton } from '@mui/material';
 import { X as XIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { ensureNamespacesLoaded } from '@/i18n';
 import {
   RegistryPanel,
   VersionPanel,
@@ -80,6 +81,7 @@ const MicroFrontendDevTools: React.FC = () => {
   const [showV60Quality, setShowV60Quality] = useState(false);
   const [moduleCount, setModuleCount] = React.useState(0);
   const [marketplaceCount, setMarketplaceCount] = React.useState(0);
+  const [nsReady, setNsReady] = React.useState(false);
 
   React.useEffect(() => {
     const updateCount = () => {
@@ -90,6 +92,15 @@ const MicroFrontendDevTools: React.FC = () => {
     const interval = setInterval(updateCount, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  // 确保 devtools/microfrontend 命名空间已加载后再渲染
+  useEffect(() => {
+    ensureNamespacesLoaded(['devtools', 'microfrontend'])
+      .then(() => setNsReady(true))
+      .catch(() => setNsReady(true));
+  }, []);
+
+  if (!nsReady) return null;
 
   return (
     <>

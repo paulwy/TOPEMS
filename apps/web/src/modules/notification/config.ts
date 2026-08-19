@@ -19,8 +19,8 @@ export const NOTIFICATION_PATHS = {
 // ---- 第二部分：路由配置 ----
 export const notificationModuleConfig: RouteModuleConfig = {
   code: 'notification',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.notification_name'),
+  nameKey: 'shared.config.notification_name',
   icon: 'Bell',
   path: NOTIFICATION_PATHS.root,
   source: 'core',

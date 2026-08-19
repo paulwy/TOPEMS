@@ -25,42 +25,39 @@ export interface AITextOptimizerProps {
   onOptimized: (_text: string) => void;
 }
 
-const systemPromptTemplates: Record<string, string> = {
-  description: i18n.t('components.ai_text_optimizer.k0'),
-  duty: i18n.t('components.ai_text_optimizer.k1'),
-  profile: i18n.t('components.ai_text_optimizer.k2'),
-  clause: i18n.t('components.ai_text_optimizer.k3'),
-};
+function getSystemPromptTemplates(): Record<string, string> {
+  return {
+    description:
+      i18n.t('components.ai_text_optimizer.k0'),
+    duty: i18n.t('components.ai_text_optimizer.k1'),
+    profile:
+      i18n.t('components.ai_text_optimizer.k2'),
+    clause:
+      i18n.t('components.ai_text_optimizer.k3'),
+  };
+}
 
-const textTypeLabels: Record<string, string> = {
-  description: i18n.t('components.ai_text_optimizer.k4'),
-  duty: i18n.t('components.ai_text_optimizer.k5'),
-  profile: i18n.t('components.ai_text_optimizer.k6'),
-  clause: i18n.t('components.ai_text_optimizer.k7'),
-};
+function getTextTypeLabels(): Record<string, string> {
+  return {
+    description: i18n.t('components.ai_text_optimizer.k4'),
+    duty: i18n.t('components.ai_text_optimizer.k5'),
+    profile: i18n.t('components.ai_text_optimizer.k6'),
+    clause: i18n.t('components.ai_text_optimizer.k7'),
+  };
+}
 
-const optimizationStyles = [
-  {
-    value: 'professional',
-    label: i18n.t('components.ai_text_optimizer.k8'),
-    description: i18n.t('components.ai_text_optimizer.k9'),
-  },
-  {
-    value: 'concise',
-    label: i18n.t('components.ai_text_optimizer.k11'),
-    description: i18n.t('components.ai_text_optimizer.k10'),
-  },
-  {
-    value: 'detailed',
-    label: i18n.t('components.ai_text_optimizer.k13'),
-    description: i18n.t('components.ai_text_optimizer.k12'),
-  },
-  {
-    value: 'friendly',
-    label: i18n.t('components.ai_text_optimizer.k15'),
-    description: i18n.t('components.ai_text_optimizer.k14'),
-  },
-];
+function getOptimizationStyles() {
+  return [
+    {
+      value: 'professional',
+      label: i18n.t('components.ai_text_optimizer.k8'),
+      description: i18n.t('components.ai_text_optimizer.k9'),
+    },
+    { value: 'concise', label: i18n.t('components.ai_text_optimizer.k11'), description: i18n.t('components.ai_text_optimizer.k10') },
+    { value: 'detailed', label: i18n.t('components.ai_text_optimizer.k13'), description: i18n.t('components.ai_text_optimizer.k12') },
+    { value: 'friendly', label: i18n.t('components.ai_text_optimizer.k15'), description: i18n.t('components.ai_text_optimizer.k14') },
+  ];
+}
 
 export function AITextOptimizer({
   isOpen,
@@ -109,9 +106,9 @@ export function AITextOptimizer({
 
   const buildPrompt = () => {
     const { textType, name } = context;
-    let prompt = systemPromptTemplates[textType] || systemPromptTemplates.description;
+    let prompt = getSystemPromptTemplates()[textType] || getSystemPromptTemplates().description;
 
-    const styleConfig = optimizationStyles.find((s) => s.value === optimizationStyle);
+    const styleConfig = getOptimizationStyles().find((s) => s.value === optimizationStyle);
     if (styleConfig) {
       prompt += `${i18n.t('components.ai_text_optimizer.nn_0')}${styleConfig.label} - ${styleConfig.description}`;
     }
@@ -183,7 +180,7 @@ export function AITextOptimizer({
     <AIGenerateModal
       isOpen={isOpen}
       onClose={onClose}
-      title={`AI ${textTypeLabels[context.textType] || i18n.t('components.ai_text_optimizer.k16')}`}
+      title={`AI ${getTextTypeLabels()[context.textType] || i18n.t('components.ai_text_optimizer.k16')}`}
       description={i18n.t('components.ai_text_optimizer.k5')}
       isLoading={isLoading}
       onConfirm={optimizedText ? handleConfirm : undefined}
@@ -282,7 +279,7 @@ export function AITextOptimizer({
             onChange={(e) => setOptimizationStyle(e.target.value)}
             size='small'
           >
-            {optimizationStyles.map((style) => (
+            {getOptimizationStyles().map((style) => (
               <MenuItem
                 key={style.value}
                 value={style.value}
@@ -352,11 +349,7 @@ export function AITextOptimizer({
               )
             }
           >
-            {isLoading
-              ? i18n.t('components.ai_text_optimizer.k11')
-              : optimizedText
-                ? i18n.t('components.ai_text_optimizer.k20')
-                : i18n.t('components.ai_text_optimizer.ai_12')}
+            {isLoading ? i18n.t('components.ai_text_optimizer.k11') : optimizedText ? i18n.t('components.ai_text_optimizer.k20') : i18n.t('components.ai_text_optimizer.ai_12')}
           </Button>
         </Box>
 
@@ -412,9 +405,7 @@ export function AITextOptimizer({
                     )
                   }
                 >
-                  {copied
-                    ? i18n.t('components.ai_text_optimizer.k22')
-                    : i18n.t('components.ai_text_optimizer.k21')}
+                  {copied ? i18n.t('components.ai_text_optimizer.k22') : i18n.t('components.ai_text_optimizer.k21')}
                 </Button>
               </Box>
             </Box>

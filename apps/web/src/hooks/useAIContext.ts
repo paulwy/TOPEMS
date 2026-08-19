@@ -8,7 +8,7 @@ import {
 import {
   getRecommendations,
   getTopRecommendations,
-  quickCommands,
+  getQuickCommands,
   type AIRecommendation,
   type QuickCommand,
 } from '@/lib/ai/recommendations';
@@ -41,6 +41,7 @@ export function useAIContext(): AIContextState {
 
   const recommendations = useMemo(() => getRecommendations(context), [context]);
   const topRecommendations = useMemo(() => getTopRecommendations(context, 3), [context]);
+  const quickCommands = useMemo(() => getQuickCommands(), []);
 
   return {
     currentPage: location.pathname,

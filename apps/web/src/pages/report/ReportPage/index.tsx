@@ -60,17 +60,25 @@ const ReportPage: React.FC = () => {
   };
 
   const checkServiceStatus = async (
-    _serviceName: string,
-    port: number,
+    serviceName: string,
     setStatus: (up: boolean) => void
   ) => {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 2000);
 
-      const response = await fetch(`http://localhost:${port}/health`, {
+      // 使用 Vite 代理的相对路径 /{service}/health，而不是直接访问后端端口。
+      // 这样所有健康检查请求都由 Vite dev server（端口 3000）统一转发，
+      // 从根本上消除浏览器跨端口（localhost:3000 → localhost:8060）导致的 CORS 拦截。
+      const headers: Record<string, string> = { 'Cache-Control': 'no-cache' };
+      const token = localStorage.getItem('token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`/${serviceName}/health`, {
         signal: controller.signal,
         method: 'GET',
+        headers,
       });
       clearTimeout(timeoutId);
       setStatus(response.ok);
@@ -81,7 +89,7 @@ const ReportPage: React.FC = () => {
 
   useEffect(() => {
     const checkAllServices = () => {
-      checkServiceStatus('bi', 8060, (up) =>
+      checkServiceStatus('bi', (up) =>
         setServiceStatuses((prev) => ({ ...prev, report: up }))
       );
     };

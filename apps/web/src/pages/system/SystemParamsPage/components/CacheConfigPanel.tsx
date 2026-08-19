@@ -304,7 +304,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
                 >
                   <MenuItem value='redis'>Redis</MenuItem>
                   <MenuItem value='memory'>{t('system.cache_config_panel.k6')}</MenuItem>
-                  <MenuItem value='memcached'>Memcached</MenuItem>
+                  <MenuItem value='memcached'>{t('system.cache_config_panel.k12')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

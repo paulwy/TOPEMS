@@ -7,7 +7,7 @@
 //! 在此处使用占位函数承载 `#[utoipa::path]` 注解（仅用于生成 OpenAPI
 //! spec，运行期不会被调用）。自由函数 handler 的注解保留在各自模块中。
 
-use crate::handlers::{ai_handlers, connector_handlers, health};
+use crate::handlers::{ai_handlers, connector_handlers, dify_handlers, health};
 use crate::modules::{agent, ai_plugin};
 use utoipa::OpenApi;
 
@@ -519,6 +519,18 @@ fn _vector_clear() {}
         ai_handlers::flow_assistant,
         ai_handlers::anomaly_predict,
         ai_handlers::knowledge_ask,
+        // dify_handlers (自由函数，注解在 handlers/dify_handlers.rs)
+        dify_handlers::chat,
+        dify_handlers::chat_stream,
+        dify_handlers::info,
+        dify_handlers::parameters,
+        dify_handlers::meta,
+        dify_handlers::list_conversations,
+        dify_handlers::list_messages,
+        dify_handlers::delete_conversation,
+        dify_handlers::feedback,
+        dify_handlers::stop,
+        dify_handlers::health,
         // ai_plugin (自由函数，注解在 modules/ai_plugin.rs)
         ai_plugin::get_plugin_info,
         ai_plugin::plugin_health_check,

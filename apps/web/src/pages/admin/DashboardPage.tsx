@@ -12,26 +12,25 @@ import { LazyChart } from '@/components/charts';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 import { adminApi } from '@/api/admin';
-
-const ct = designTokens.colors;
+const ct= designTokens.colors;
 const iconMap: Record<string, React.ReactNode> = {
   Users: <Users size={24} />,
   Shield: <Shield size={24} />,
   Activity: <Activity size={24} />,
   AlertTriangle: <AlertTriangle size={24} />,
 };
-const pieData = [
-  { name: i18n.t('admin.dashboard_page.k0'), value: 5 },
-  { name: i18n.t('admin.dashboard_page.k1'), value: 10 },
-  { name: i18n.t('admin.dashboard_page.k2'), value: 75 },
-  { name: i18n.t('admin.dashboard_page.k3'), value: 10 },
-];
 const getGreeting = (): string => {
   const hour = new Date().getHours();
   if (hour < 12) return i18n.t('admin.dashboard_page.k4');
   if (hour < 18) return i18n.t('admin.dashboard_page.k5');
   return i18n.t('admin.dashboard_page.k6');
 };
+const getPieData = () => [
+  { name: i18n.t('admin.dashboard_page.k0'), value: 5 },
+  { name: i18n.t('admin.dashboard_page.k1'), value: 10 },
+  { name: i18n.t('admin.dashboard_page.k2'), value: 75 },
+  { name: i18n.t('admin.dashboard_page.k3'), value: 10 },
+];
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { data: backendData, isLoading: isBackendLoading } = useQuery({
@@ -93,12 +92,7 @@ export const DashboardPage: React.FC = () => {
     {
       id: 'user-role-distribution',
       title: i18n.t('admin.dashboard_page.k11'),
-      chart: (
-        <LazyChart
-          type='pie'
-          data={pieData}
-        />
-      ),
+      chart: <LazyChart type='pie' data={getPieData()} />,
       height: 300,
     },
   ];
@@ -157,7 +151,7 @@ export const DashboardPage: React.FC = () => {
   return (
     <PageContainer
       title={i18n.t('admin.dashboard_page.k24')}
-      subtitle={`${getGreeting()}${i18n.t('pages.dashboard_page.k4')}`}
+      subtitle={getGreeting()}
       headerProps={{
         pageIcon: <Shield style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,

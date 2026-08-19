@@ -471,7 +471,17 @@
       "k8": "Step by Step",
       "k9": "Learn by Doing",
       "k10": "Having Issues"
-    }
+    },
+    "context_help": "Title",
+    "help_center": "Help Center",
+    "view_guide": "View",
+    "view_guide_desc": "View",
+    "view_faq": "View",
+    "view_faq_desc": "View",
+    "contact_support": "Contact Support",
+    "contact_support_desc": "Contact Support Desc",
+    "shortcut": "Label",
+    "all_docs": "Label"
   },
   "faq_page": {
     "": "Human Resources",
@@ -491,5 +501,15 @@
     "loading_list": "Unable to load guide list",
     "fail": "Failed to get guide categories:",
     "start": "Start Learning"
-  }
+  },
+  "help.context_help": "Title",
+  "help.help_center": "Help Center",
+  "help.view_guide": "View",
+  "help.view_guide_desc": "View",
+  "help.view_faq": "View",
+  "help.view_faq_desc": "View",
+  "help.contact_support": "Contact Support",
+  "help.contact_support_desc": "Contact Support Desc",
+  "help.shortcut": "Label",
+  "help.all_docs": "Label"
 }

@@ -11,7 +11,7 @@ import {
   Divider,
   Tooltip,
 } from '@mui/material';
-import i18n from '@/i18n';
+import i18n, { ensureNamespacesLoaded } from '@/i18n';
 import {
   ChevronDown as ChevronDownIcon,
   X as XIcon,
@@ -39,6 +39,13 @@ const ObservabilityPanel: React.FC = () => {
   const [errorStats, setErrorStats] = useState<ErrorStats | null>(null);
   const [behaviorStats, setBehaviorStats] = useState<ModuleVisitStats[]>([]);
   const [, forceUpdate] = useState(0);
+  const [nsReady, setNsReady] = useState(false);
+
+  useEffect(() => {
+    ensureNamespacesLoaded(['microfrontend'])
+      .then(() => setNsReady(true))
+      .catch(() => setNsReady(true));
+  }, []);
 
   const refreshData = useCallback(() => {
     setPerformanceData(modulePerformanceMetrics.getAllModulePerformance());
@@ -91,6 +98,8 @@ const ObservabilityPanel: React.FC = () => {
   const totalErrors = errorStats?.totalErrors || 0;
   const totalVisits = behaviorStats.reduce((sum, s) => sum + s.visitCount, 0);
 
+  if (!nsReady) return null;
+
   return (
     <Box
       sx={{
@@ -127,7 +136,7 @@ const ObservabilityPanel: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 {slowModules.length > 0 && (
                   <Chip
-                    label={`${slowModules.length}${i18n.t('microfrontend.observability_panel.k0')}`}
+                    label={`${slowModules.length}${i18n.t('microfrontend.observability_panel.k17')}`}
                     size='small'
                     color='warning'
                     sx={{ height: 20, '& .MuiChip-label': { px: 0.5, fontSize: 10 } }}
@@ -135,7 +144,7 @@ const ObservabilityPanel: React.FC = () => {
                 )}
                 {totalErrors > 0 && (
                   <Chip
-                    label={`${totalErrors}${i18n.t('microfrontend.observability_panel.k1')}`}
+                    label={`${totalErrors}${i18n.t('microfrontend.observability_panel.k18')}`}
                     size='small'
                     color='error'
                     sx={{ height: 20, '& .MuiChip-label': { px: 0.5, fontSize: 10 } }}
@@ -178,7 +187,7 @@ const ObservabilityPanel: React.FC = () => {
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', gap: 1 }}>
-              <Tooltip title={i18n.t('microfrontend.observability_panel.k1')}>
+              <Tooltip title={i18n.t('microfrontend.observability_panel.k19')}>
                 <IconButton
                   size='small'
                   onClick={handleExport}
@@ -214,7 +223,7 @@ const ObservabilityPanel: React.FC = () => {
                     variant='body2'
                     sx={{ fontWeight: 600 }}
                   >
-                    {i18n.t('microfrontend.observability_panel.k2')}
+                    {i18n.t('microfrontend.observability_panel.k20')}
                   </Typography>
                   <Chip
                     label={sortedPerformance.length}
@@ -297,8 +306,7 @@ const ObservabilityPanel: React.FC = () => {
                               size={10}
                               style={{ display: 'inline', marginRight: 2 }}
                             />
-                            [i18n.t('microfrontend.observability_panel.k4')]:{' '}
-                            {formatDurationShort(m.whiteScreenTime)}
+                            {i18n.t('microfrontend.observability_panel.k4')}: {formatDurationShort(m.whiteScreenTime)}
                           </span>
                           <span>FCP: {formatDurationShort(m.fcp)}</span>
                           <span>TTI: {formatDurationShort(m.tti)}</span>
@@ -403,7 +411,7 @@ const ObservabilityPanel: React.FC = () => {
                       variant='caption'
                       sx={{ fontWeight: 600, mt: 1 }}
                     >
-                      [i18n.t('microfrontend.observability_panel.k10')]:
+                      {i18n.t('microfrontend.observability_panel.k10')}:
                     </Typography>
                     {Object.entries(errorStats.errorsByModule)
                       .sort(([, a], [, b]) => b - a)
@@ -507,7 +515,7 @@ const ObservabilityPanel: React.FC = () => {
                           </Box>
                           <Box sx={{ display: 'flex', gap: 1 }}>
                             <Chip
-                              label={`${s.visitCount}${i18n.t('microfrontend.observability_panel.k2')}`}
+                              label={`${s.visitCount}${i18n.t('microfrontend.observability_panel.k21')}`}
                               size='small'
                               sx={{ height: 20, fontSize: 10 }}
                             />
@@ -526,10 +534,9 @@ const ObservabilityPanel: React.FC = () => {
                               size={10}
                               style={{ display: 'inline', marginRight: 2 }}
                             />
-                            [i18n.t('microfrontend.observability_panel.k13')]:{' '}
-                            {formatDurationShort(s.averageDuration)}
+                            {i18n.t('microfrontend.observability_panel.k13')}: {formatDurationShort(s.averageDuration)}
                           </span>
-                          <span>{i18n.t('microfrontend.observability_panel.sactionount_0')}</span>
+                          <span>{i18n.t('microfrontend.observability_panel.sactionount_0', { s: { actionCount: s.actionCount } })}</span>
                         </Box>
                       </Box>
                     ))}
@@ -565,8 +572,7 @@ const ObservabilityPanel: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  {slowModules.length} {i18n.t('microfrontend.observability_panel.k0')}{' '}
-                  {SLOW_MODULE_THRESHOLD}ms:
+                  {slowModules.length}{i18n.t('microfrontend.observability_panel.k22')} {SLOW_MODULE_THRESHOLD}ms:
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
                   {slowModules.map((m) => (

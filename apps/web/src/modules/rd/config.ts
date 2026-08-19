@@ -32,8 +32,8 @@ export const RD_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const rdModuleConfig: RouteModuleConfig = {
   code: 'rd',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.rd_name'),
+  nameKey: 'shared.config.rd_name',
   icon: 'FlaskConical',
   path: RD_PATHS.root,
   source: 'plugin',

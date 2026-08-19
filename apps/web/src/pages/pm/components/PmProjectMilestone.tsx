@@ -65,7 +65,7 @@ const PmProjectMilestone: React.FC<PmProjectMilestoneProps> = ({
                   {i18n.t('pm.project_detail.milestone_name')}
                 </TableCell>
                 <TableCell sx={{ width: 150 }}>{i18n.t('pm.project_detail.target_date')}</TableCell>
-                <TableCell>{i18n.t('pm.project_detail.status')}</TableCell>
+                <TableCell>{i18n.t('pm.project_detail.status_label')}</TableCell>
                 <TableCell>{i18n.t('pm.project_detail.belongs_to_phase')}</TableCell>
                 <TableCell sx={{ width: 120 }}>{i18n.t('pm.project_detail.action')}</TableCell>
               </TableRow>

@@ -17,19 +17,19 @@ const ct = designTokens.colors;
 type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 type LogType = 'access' | 'error' | 'application' | 'slow_query';
 
-const LEVEL_LABELS: Record<LogLevel, string> = {
+const getLevelLabels = (): Record<LogLevel, string> => ({
   error: i18n.t('shared.logs.k0'),
   warn: i18n.t('shared.logs.k1'),
   info: i18n.t('shared.logs.k2'),
   debug: i18n.t('shared.logs.k3'),
-};
+});
 
-const TYPE_LABELS: Record<LogType, string> = {
+const getTypeLabels = (): Record<LogType, string> => ({
   access: i18n.t('shared.logs.k4'),
   error: i18n.t('shared.logs.k5'),
   application: i18n.t('shared.logs.k6'),
   slow_query: i18n.t('shared.logs.k7'),
-};
+});
 
 const LEVEL_COLORS: Record<LogLevel, { bg: string; color: string; border: string }> = {
   error: { bg: 'error.100', color: 'error.700', border: ct.error.light },
@@ -38,7 +38,7 @@ const LEVEL_COLORS: Record<LogLevel, { bg: string; color: string; border: string
   debug: { bg: 'grey.100', color: 'grey.500', border: ct.grey[300] },
 };
 
-const SERVICES = [
+const getServices = (): string[] => [
   i18n.t('shared.logs.k8'),
   i18n.t('shared.logs.k9'),
   i18n.t('shared.logs.k10'),
@@ -71,7 +71,7 @@ const getLevelChip = (level: LogLevel): React.ReactNode => {
   return (
     <Chip
       size='small'
-      label={LEVEL_LABELS[level]}
+      label={getLevelLabels()[level]}
       icon={icons[level]}
       sx={{
         bgcolor: colors.bg,
@@ -104,7 +104,7 @@ const highlightText = (text: string, keyword: string): React.ReactNode => {
   );
 };
 
-const logFields: SchemaField[] = [
+const getLogFields = (): SchemaField[] => [
   {
     name: 'timestamp',
     label: i18n.t('shared.logs.k16'),
@@ -250,7 +250,7 @@ const logFields: SchemaField[] = [
       return (
         <Chip
           size='small'
-          label={TYPE_LABELS[t]}
+          label={getTypeLabels()[t]}
           variant='outlined'
         />
       );
@@ -258,10 +258,16 @@ const logFields: SchemaField[] = [
   },
 ];
 
-export const logSchema: EntitySchema = {
-  entity: 'monitor_log',
-  title: i18n.t('shared.logs.k22'),
-  description: i18n.t('shared.logs.k23'),
+export const getLogSchema = (): EntitySchema => {
+  const logFields = getLogFields();
+  const LEVEL_LABELS = getLevelLabels();
+  const TYPE_LABELS = getTypeLabels();
+  const SERVICES = getServices();
+
+  return {
+    entity: 'monitor_log',
+    title: i18n.t('shared.logs.k22'),
+    description: i18n.t('shared.logs.k23'),
 
   api: {
     module: 'monitor',
@@ -521,4 +527,5 @@ export const logSchema: EntitySchema = {
       </Stack>
     );
   },
+  };
 };
