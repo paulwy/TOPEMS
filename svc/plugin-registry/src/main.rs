@@ -63,6 +63,7 @@ async fn main() -> anyhow::Result<()> {
 
     let public_routes = Router::new().route("/", get(home));
 
+    // checker:ignore R2 — plugin-registry is tenant-agnostic metadata service, no tenant isolation required
     let protected_routes = Router::new()
         .merge(modules::create_routes())
         .route("/health/detailed", get(detailed_health))

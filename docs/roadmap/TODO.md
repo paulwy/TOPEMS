@@ -6185,8 +6185,8 @@ DIFY_TIMEOUT_SECS=120
 
 - [ ] Dify 侧配置 LLM Provider（如本地 Ollama 或 OpenAI API key），完成 `/dify/chat` 端到端验证
 - [ ] 前端创建 Dify 对话页面（接入 `chat_stream` SSE 流式接口）
-- [ ] 将 `dify_router` 层序修复方案推广到 `protected_routes` / `analysis_router` / `agent_router` / `recommendation_router` / `multimodal_router`（同样存在层序错误，但属于历史遗留，不在本次 Dify 集成范围内）
-- [ ] 在 CI Gate 增加 Axum 中间件层序静态校验脚本，避免再次踩坑
+- [x] 将 `dify_router` 层序修复方案推广到 `protected_routes` / `analysis_router` / `agent_router` / `recommendation_router` / `multimodal_router`（同样存在层序错误，但属于历史遗留，不在本次 Dify 集成范围内） — **V238 Dify 集成之后、V244 之前已完成所有 6 条 Router 统一为 tenant FIRST / auth OUTERMOST；Axum Layer Checker STRONG_PASS R1=0 佐证**
+- [x] 在 CI Gate 增加 Axum 中间件层序静态校验脚本，避免再次踩坑 — **V241 check-axum-layer-order.cjs 已落地，V243 Gate M 开启 --fail-fast R1:0 strict**
 
 ## 🎯 V239 — svc/communication 死代码清零（11 warnings → 0 · 工具函数接入生产 handler · ✅ 完成）
 
@@ -6532,7 +6532,7 @@ Dismissed 的 violation 仍然入 warnings 列表，但 `level: 'INFO'` / `dismi
 - [x] 修复 unified-core tests 中 `auth_request(body: Option<Value>)` 被静默丢弃的既有 bug（D 任务抽样 6 号发现）：POST/PUT/DELETE 分支应 `.json(&_body)` 或 `.body(serde_json::to_vec(&_body)?)`
 - [x] 补文档：将 V240 手改中 billing/feedback/ticket main.rs 的 `mod→pub mod` 和 lib/tests 4 文件路径重命名补充到 V240 修改清单（E/F 类手改溢出，代码无需变更，文档更严谨）
 - [x] 给 R2 (auth-only 无 tenant) 的 6 条（gis/integration/plugin-registry/portal×2/unified-core）打标签：确认是否真绕过租户隔离（public/system routes），如果是可在脚本内加白名单豁免（类似 build_application 机制），否则真漏洞需要修复
-- [ ] V243 后续扩展：把 `plugin-registry R2` 从硬编码 `R2_WHITELIST_FILE_VAR` 迁移到源码内 `// checker:ignore R2` 注释（层 3 机制），消除脚本内硬编码服务名
+- [x] V243 后续扩展：把 `plugin-registry R2` 从硬编码 `R2_WHITELIST_FILE_VAR` 迁移到源码内 `// checker:ignore R2` 注释（层 3 机制），消除脚本内硬编码服务名 — **V244 任务 A 已落地**
 
 ## 🎯 V243 — Gate M fail-fast R1:0 strict 上线 + auth_request body bug 修复 + R2 6 条定性（CASE A 豁免 / CASE B 4 漏洞实修）+ Layer Checker 括号串窗修复（并行推进 · ✅ 完成）
 
@@ -6655,3 +6655,141 @@ Axum LAST-added = OUTERMOST = 先执行。所以 tenant_middleware **必须写�
 - [x] `node scripts/ci/check-axum-layer-order.cjs` → R1=0 · R2=0 · R3=0 · Integrity STRONG_PASS
 - [x] CI axum-layer-gate step → `--fail-fast --thresholds=R1:0,R2:999999,R3:999999` + `exit $EXIT_CODE`（step 名同步更新）
 
+
+## 🎯 V244 — 并行加速：plugin-registry 注释豁免 + Tauri lib.rs 完整暴露 + pnpm tsc 0 基准 + V238 5 Router 层序/CI Axum Gate 扩展勾（并行推进 · ✅ 完成）
+
+> 日期：2026-08-19 | 并行 4 轨 · 代码改动：6 files（Rust 5 + JS 1）+ 文档 1 file · 验收：R1/R2/R3=0 STRONG_PASS · desktop cargo check 0 · web 0 typecheck errors
+
+### A. plugin-registry：R2 硬编码 → 源码注释豁免（V243 后续扩展完成）
+
+**背景**：V243 给 R2 白名单引入 `R2_WHITELIST_FILE_VAR`（层 1 File|Var 精确白名单）包含 `plugin-registry|protected_routes` 条目，但层 3「checker:ignore R2 inline 注释」机制才是首选（语义写在源码旁，脚本无硬编码）。V243 后续扩展计划把它迁过去。
+
+**变更（2 files）**：
+- [svc/plugin-registry/src/main.rs](file:///Users/air/TOPEMS/svc/plugin-registry/src/main.rs) — 在 `let protected_routes = Router::new()` 紧前一行插入：
+  ```rust
+  // checker:ignore R2 — plugin-registry is tenant-agnostic metadata service, no tenant isolation required
+  ```
+- [scripts/ci/check-axum-layer-order.cjs](file:///Users/air/TOPEMS/scripts/ci/check-axum-layer-order.cjs) — `R2_WHITELIST_FILE_VAR` 移除 plugin-registry 硬编码条目，保留空集并补注释示例：
+  ```cjs
+  const R2_WHITELIST_FILE_VAR = new Set([
+    // 示例（需用时添加）：'svc/<service>/src/main.rs|protected_routes — 建议改用 // checker:ignore R2 行内注释',
+  ]);
+  ```
+
+**验收**：
+- R2 dismissed = 2（**plugin-registry now：层 3 checker:ignore R2 comment**；unified-core：层 1 routerVar 白名单）
+- R1=0 · R2=0 · R3=0 · Integrity STRONG_PASS
+- `cargo check -p topems-plugin-registry` exit 0
+
+### B. V238 后续扩展 3/4 打勾：Dify 5 Router 层序推广 + Axum Gate 脚本
+
+**背景**：V238 Dify 集成留下 4 条后续扩展，其中 3（5 Router 层序推广）和 4（Axum Gate 脚本）实际上已经在 V241/V243 间完成，但 TODO 一直保持未勾状态。本次核对代码现状后正式勾选：
+
+**代码现状核验（6 Routers 全部正确，tenant FIRST = 内层，auth LAST = OUTERMOST = 先执行）**：
+| Router | 文件 | 证据（`middleware::tenant::tenant_middleware` FIRST；`auth_middleware` LAST） | 状态 |
+|--------|------|-----|------|
+| protected_routes | [svc/ai/src/routes.rs](file:///Users/air/TOPEMS/svc/ai/src/routes.rs#L143-L153) | L146-147 tenant FIRST / L149-152 auth LAST | ✅ 正确 |
+| analysis_router | [svc/ai/src/routes.rs](file:///Users/air/TOPEMS/svc/ai/src/routes.rs#L162-L172) | L165-166 tenant FIRST / L168-171 auth LAST | ✅ 正确 |
+| agent_router | [svc/ai/src/routes.rs](file:///Users/air/TOPEMS/svc/ai/src/routes.rs#L176-L186) | L179-180 tenant FIRST / L182-185 auth LAST | ✅ 正确 |
+| recommendation_router | [svc/ai/src/routes.rs](file:///Users/air/TOPEMS/svc/ai/src/routes.rs#L207-L217) | L210-211 tenant FIRST / L213-216 auth LAST | ✅ 正确 |
+| multimodal_router | [svc/ai/src/routes.rs](file:///Users/air/TOPEMS/svc/ai/src/routes.rs#L245-L255) | L248-249 tenant FIRST / L251-254 auth LAST | ✅ 正确 |
+| dify_router | [svc/ai/src/routes.rs](file:///Users/air/TOPEMS/svc/ai/src/routes.rs#L282-L292) | L285-286 tenant FIRST / L288-291 auth LAST | ✅ 正确 |
+
+佐证：Axum Layer Checker（V241 落地，V243 fail-fast）所有 Routers `routersWithBothMiddleware = 10`，R1=0（无层序反序）。
+
+**勾选项**（V238 后续扩展）：
+- ✅ 扩展 3：5 Router + dify_router 层序修复推广
+- ✅ 扩展 4：CI Gate Axum 层序校验脚本
+
+未勾（保持未勾 = 留给 V245+，确实缺基础设施）：
+- ⬜ 扩展 1：Dify LLM Provider 端到端配置
+- ⬜ 扩展 2：前端 Dify 对话页面
+
+### C. Tauri 桌面端：完整 lib.rs 模块暴露（V239 后续扩展完成）
+
+**背景**：V239 后续扩展"完整的 lib.rs 模块暴露（当前通过 main.rs 间接使用）"。原始结构：mod 声明全在 `main.rs`，`lib.rs` 几乎是空的，测试和外部依赖无法按库路径导入模块。
+
+**目标架构**：
+```
+apps/desktop/src-tauri/
+├── Cargo.toml       — package.name = topems-desktop → lib crate 名 = topems_desktop
+├── src/
+│   ├── main.rs      — 入口，仅：env_logger + topems_desktop::build_app().run(generate_context!())
+│   ├── lib.rs       — 库根：5 pub mod + pub(crate) 共享 + pub fn build_app() -> Builder
+│   ├── api_client.rs  ← pub mod api_client
+│   ├── crypto.rs      ← pub mod crypto
+│   ├── ipc.rs         ← pub mod ipc（所有 #[tauri::command] 放同一模块，避免 generate_handler! 符号冲突）
+│   ├── offline_cache.rs ← pub mod offline_cache
+│   └── secure_store.rs  ← pub mod secure_store
+```
+
+**变更（3 files）**：
+1. [apps/desktop/src-tauri/src/lib.rs](file:///Users/air/TOPEMS/apps/desktop/src-tauri/src/lib.rs) — 新内容：
+   - 5 行 `pub mod xxx;`（原 main.rs 的 mod 声明升级并迁移）
+   - `pub(crate) const MAIN_WINDOW_LABEL`、`pub(crate) static WINDOW_COUNTER / WINDOW_TITLES`（lazy_static）、`pub(crate) fn build_tray_menu / handle_tray_menu_event / show_main_window / hide_main_window / show_logs_window_internal`
+   - `pub fn build_app() -> tauri::Builder<tauri::Wry>` — 封装 plugin/tray/on_window_event/所有 63 个 invoke_handler；**generate_context 调用留给 bin crate**（避免 tauri.conf.json 路径问题）
+2. [apps/desktop/src-tauri/src/main.rs](file:///Users/air/TOPEMS/apps/desktop/src-tauri/src/main.rs) — 从 100+ 行缩减到 8 行：
+   ```rust
+   #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+   fn main() {
+       env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+       topems_desktop::build_app()
+           .run(tauri::generate_context!())
+           .expect("error while running tauri application");
+   }
+   ```
+3. [apps/desktop/src-tauri/src/ipc.rs](file:///Users/air/TOPEMS/apps/desktop/src-tauri/src/ipc.rs) — 扩展 15 个原分散在 main.rs 的 UI 相关 commands（is_window_maximized、get_app_version、set_token 等），统一放同一子模块。
+
+**设计决策**：
+- **为何所有 commands 集中到 ipc 子模块**：初版把 15 commands 放 lib.rs 根，`#[tauri::command]` 生成符号后 `generate_handler!` 跨 crate 引用时出现 `E0255 reimported`，改为同 `ipc::` 前缀后路径一致，冲突消失。
+- **为何 `build_app()` 返回 Builder，而不是 `run_with_context(ctx)`**：`tauri::Assets / Context<A>` 泛型参数版本在 tauri 2.x 有约束，签名错误会触发 `E0107 missing generics`。把 `.run(ctx)` 调用留在 main.rs（bin crate）后 Builder 组装照样被「搬家」，泛型问题消失。
+- **Cargo.toml 无需修改**：`[package] name = topems-desktop` 自动派生 `topems_desktop` lib crate 名（连字符→下划线）。
+
+**验收**：
+- `cargo check --message-format=short`（apps/desktop/src-tauri）exit 0 ✅
+- `grep "^pub (mod|fn)" src/lib.rs` = 5 pub mod + 1 pub fn ✅
+
+### D. pnpm tsc binstubs 修复 + 前端 TS 类型零错误基准
+
+**背景**：会话前「which tsc → not found」初判为工具缺失，实际上是 workspace 局部 binstubs + 没有全局 tsc。本次验证 apps/web（topems-portal）类型健康度。
+
+**修复**（主要是澄清，无需代码改动）：
+- `pnpm install`（Already up to date，husky + postinstall OK）
+- 版本：`pnpm tsc --version` = **6.0.3**，`pnpm --filter topems-portal exec tsc --version` = 6.0.3
+
+**验收**：
+```bash
+pnpm --filter topems-portal run typecheck
+# 等价：tsc --noEmit -p tsconfig.json
+# 结果：0 errors · exit 0
+```
+apps/web（topems-portal）TS 类型零错误基准确立：error TS2307/TS7006/TS2322 = 全部 0。
+
+### 变更文件清单（共 7 files）
+
+- Rust（5）：
+  - [svc/plugin-registry/src/main.rs](file:///Users/air/TOPEMS/svc/plugin-registry/src/main.rs) — checker:ignore R2 注释
+  - [apps/desktop/src-tauri/src/lib.rs](file:///Users/air/TOPEMS/apps/desktop/src-tauri/src/lib.rs) — 5 pub mod + pub fn build_app() + 共享辅助
+  - [apps/desktop/src-tauri/src/main.rs](file:///Users/air/TOPEMS/apps/desktop/src-tauri/src/main.rs) — 精简到 8 行启动代码
+  - [apps/desktop/src-tauri/src/ipc.rs](file:///Users/air/TOPEMS/apps/desktop/src-tauri/src/ipc.rs) — 扩展 commands（统一子模块消除符号冲突）
+- JS 脚本（1）：
+  - [scripts/ci/check-axum-layer-order.cjs](file:///Users/air/TOPEMS/scripts/ci/check-axum-layer-order.cjs) — R2_WHITELIST_FILE_VAR 移除 plugin-registry 硬编码
+- 文档（1）：
+  - [docs/roadmap/TODO.md](file:///Users/air/TOPEMS/docs/roadmap/TODO.md) — 新增 V244 + V243 后续扩展勾选 + V238 扩展 3/4 勾选
+
+### 最终验收矩阵
+
+- [x] `node scripts/ci/check-axum-layer-order.cjs` — R1=0 · R2=0 · R3=0 · R2 dismissed=2（comment + routerVar）· Integrity STRONG_PASS
+- [x] `cargo check -p topems-plugin-registry` exit 0
+- [x] `(cd apps/desktop/src-tauri && cargo check)` exit 0
+- [x] `grep "^pub (mod|fn)" apps/desktop/src-tauri/src/lib.rs | wc -l` = 6（5 mod + 1 fn）
+- [x] `pnpm --filter topems-portal run typecheck` — 0 TS errors · exit 0
+- [x] V243 后续扩展 plugin-registry 注释化 已勾 ✓
+- [x] V238 后续扩展 3（6 Router 层序推广）+ 4（Axum Gate） 已勾 ✓
+
+### V244 后续扩展（留给 V245+）
+
+- [ ] **Tauri 后续扩展（高价值）**：实现 Token 加密存储（tauri-plugin-keystore）、审计日志前端页面、broadcast_event 系统通知场景、请求级取消（每个请求独立 CancellationToken）、离线模式冲突解决策略、加密密钥轮换机制
+- [ ] **Dify 后续扩展**：Dify 侧 LLM Provider 端到端配置；前端创建 Dify 对话页面（chat_stream SSE 流式）
+- [ ] **前端质量提升**：pnpm --filter <各 packages> 统一 tsc --noEmit 0 error 基线（shared-components/shared-hooks/shared-utils/packages/shared-types 等）
+- [ ] **CI 增量**：把前端 typecheck 纳入 CI quality-gate（新 job）；R2 阈值在未来一段时间内若保持 0，可收紧至 R2:0
