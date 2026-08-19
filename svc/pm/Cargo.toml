@@ -6,10 +6,10 @@ authors.workspace = true
 description = "TOPEMS-PM 统一项目管理服务"
 
 [dependencies]
-topems-shared = { path = "../../lib" }
-topems-shared-core = { path = "../../lib/shared-core" }
-topems-shared-event = { path = "../../lib/shared-event" }
-topems-shared-auth = { path = "../../lib/shared-auth" }
+topems-shared = { workspace = true }
+topems-shared-core = { workspace = true }
+topems-shared-event = { workspace = true }
+topems-shared-auth = { workspace = true }
 axum.workspace = true
 tokio.workspace = true
 tower-http.workspace = true
@@ -23,8 +23,8 @@ tracing-subscriber.workspace = true
 dotenv.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
-topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
-topems-shared-service-client = { path = "../../lib/shared-service-client" }
+topems-shared-bootstrap = { workspace = true }
+topems-shared-service-client = { workspace = true }
 topems-shared-db = { workspace = true }
 utoipa.workspace = true
 futures.workspace = true

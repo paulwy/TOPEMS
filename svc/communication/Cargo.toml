@@ -6,7 +6,7 @@ authors.workspace = true
 description = "TOPEMS Communication Service - 通知/邮件/即时消息通信服务"
 
 [dependencies]
-topems-shared = { path = "../../lib" }
+topems-shared = { workspace = true }
 axum.workspace = true
 chrono.workspace = true
 sqlx.workspace = true
@@ -26,7 +26,7 @@ dashmap.workspace = true
 lazy_static = "1"
 futures-util.workspace = true
 
-topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
+topems-shared-bootstrap = { workspace = true }
 topems-shared-db = { workspace = true }
 topems-shared-service-client = { workspace = true }
 topems-shared-event = { workspace = true }

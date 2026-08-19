@@ -1186,6 +1186,7 @@ jobs:
             echo "::endgroup::"
           done
           echo "Result: $((TOTAL-FAILED))/$TOTAL passed. Failures: $FAILED"
+          # V246-CI-tighten-anchor: after N consecutive 0-errors runs change below to: exit $FAILED
           exit 0
 
   # ──────────────────────────────────────────────────────────────────────────
