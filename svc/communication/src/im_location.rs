@@ -193,10 +193,21 @@ pub struct UnifiedPoiResult {
 pub async fn send_location_message(
     State(pool): State<PgPool>,
     Json(payload): Json<SendLocationRequest>,
-) -> Json<ApiResponse<LocationMessage>> {
+) -> Json<ApiResponse<serde_json::Value>> {
+    // 使用 parse_coordinates 校验坐标格式（必须为 {lat,lng}/{lat,lon}/全名键对象）
+    let (lat, lon) = match parse_coordinates(&payload.coordinates) {
+        Some(coords) => coords,
+        None => {
+            return Json(ApiResponse::error(
+                StatusCode::BAD_REQUEST.as_u16(),
+                "坐标格式无效：需要包含 lat/lng 或 lat/lon 或 latitude/longitude 的对象",
+            ));
+        }
+    };
+
     let map_provider = payload.map_provider.unwrap_or_else(|| "osm".to_string());
 
-    match sqlx::query_as::<_, LocationMessage>(
+    let msg = match sqlx::query_as::<_, LocationMessage>(
         r#"
         INSERT INTO core_location_messages (
             chat_id, sender_id, location_type, coordinates,
@@ -221,15 +232,67 @@ pub async fn send_location_message(
     .fetch_one(&pool)
     .await
     {
-        Ok(msg) => Json(ApiResponse::success(msg, "发送位置消息成功")),
+        Ok(msg) => msg,
         Err(e) => {
             tracing::error!("Failed to send location message: {}", e);
-            Json(ApiResponse::error(
+            return Json(ApiResponse::error(
                 StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
                 &format!("发送位置消息失败: {}", e),
-            ))
+            ));
         }
-    }
+    };
+
+    // 检查该位置是否触发当前会话的活跃地理围栏（enter 事件）
+    let geofence_alerts = check_geofence_triggers(&pool, &payload.chat_id, lat, lon).await;
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "message": msg,
+            "geofence_alerts": geofence_alerts,
+        }),
+        "发送位置消息成功",
+    ))
+}
+
+/// 查询会话的活跃围栏并判断 (lat, lon) 是否落入任一围栏
+async fn check_geofence_triggers(
+    pool: &PgPool,
+    chat_id: &Uuid,
+    lat: f64,
+    lon: f64,
+) -> Vec<serde_json::Value> {
+    let geofences = match sqlx::query_as::<_, ImGeofence>(
+        "SELECT * FROM core_geofences WHERE chat_id = $1 AND status = 'active'",
+    )
+    .bind(chat_id)
+    .fetch_all(pool)
+    .await
+    {
+        Ok(g) => g,
+        Err(e) => {
+            tracing::warn!("Failed to query geofences for chat {}: {}", chat_id, e);
+            return Vec::new();
+        }
+    };
+
+    geofences
+        .into_iter()
+        .filter_map(|gf| {
+            let center = parse_coordinates(&gf.coordinates)?;
+            let radius = gf.radius.unwrap_or(0.0);
+            if is_within_geofence(lat, lon, center.0, center.1, radius) {
+                let distance = haversine_distance(lat, lon, center.0, center.1);
+                Some(serde_json::json!({
+                    "geofence_id": gf.id,
+                    "geofence_name": gf.name,
+                    "event": "enter",
+                    "distance_km": (distance * 100.0).round() / 100.0,
+                }))
+            } else {
+                None
+            }
+        })
+        .collect()
 }
 
 pub async fn list_location_messages(

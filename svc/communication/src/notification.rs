@@ -22,6 +22,18 @@ pub enum NotificationPriority {
     Urgent,
 }
 
+impl NotificationPriority {
+    /// 映射为数据库 priority 列 (i32)：Low=0, Normal=1, High=2, Urgent=3
+    pub fn as_i32(&self) -> i32 {
+        match self {
+            NotificationPriority::Low => 0,
+            NotificationPriority::Normal => 1,
+            NotificationPriority::High => 2,
+            NotificationPriority::Urgent => 3,
+        }
+    }
+}
+
 /// 根据级别字符串分类通知优先级（大小写不敏感、自动去除首尾空白）
 pub fn classify_notification_priority(level: &str) -> NotificationPriority {
     match level.trim().to_lowercase().as_str() {
@@ -124,12 +136,13 @@ pub async fn send_notification(
     let id = Uuid::new_v4();
     let send_email = req.send_email.unwrap_or(false);
 
-    let notification_type = req
-        .notification_type
-        .as_deref()
-        .unwrap_or("info")
-        .to_string();
-    let priority = req.priority.unwrap_or(0);
+    let notification_type =
+        normalize_notification_type(req.notification_type.as_deref().unwrap_or("info"));
+    let priority = req
+        .priority
+        .unwrap_or_else(|| classify_notification_priority(&notification_type).as_i32());
+    let title = truncate_notification_title(&req.title, 255);
+    let channels = select_channels(&notification_type, &["all"]);
 
     let result = sqlx::query(
         r#"
@@ -140,7 +153,7 @@ pub async fn send_notification(
     )
     .bind(id)
     .bind(req.user_id)
-    .bind(&req.title)
+    .bind(&title)
     .bind(&req.content)
     .bind(&notification_type)
     .bind(priority)
@@ -159,6 +172,7 @@ pub async fn send_notification(
                 "is_read": row.get::<bool, _>("is_read"),
                 "priority": row.get::<i32, _>("priority"),
                 "data": row.get::<Option<serde_json::Value>, _>("data"),
+                "channels": channels,
                 "created_at": row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
                 "read_at": row.get::<Option<chrono::DateTime<chrono::Utc>>, _>("read_at"),
             });
@@ -207,8 +221,13 @@ pub async fn broadcast_notification(
         }));
     }
 
-    let notification_type = req.notification_type.unwrap_or_else(|| "info".to_string());
-    let priority = req.priority.unwrap_or(0);
+    let notification_type =
+        normalize_notification_type(&req.notification_type.unwrap_or_else(|| "info".to_string()));
+    let priority = req
+        .priority
+        .unwrap_or_else(|| classify_notification_priority(&notification_type).as_i32());
+    let title = truncate_notification_title(&req.title, 255);
+    let channels = select_channels(&notification_type, &["all"]);
     let mut sent_count = 0;
 
     for user_id in &req.user_ids {
@@ -221,7 +240,7 @@ pub async fn broadcast_notification(
         )
         .bind(id)
         .bind(user_id)
-        .bind(&req.title)
+        .bind(&title)
         .bind(&req.content)
         .bind(&notification_type)
         .bind(priority)
@@ -239,7 +258,8 @@ pub async fn broadcast_notification(
         "message": format!("Broadcast completed, sent {} notifications", sent_count),
         "data": {
             "total_users": req.user_ids.len(),
-            "sent_count": sent_count
+            "sent_count": sent_count,
+            "channels": channels
         }
     }))
 }

@@ -6188,3 +6188,48 @@ DIFY_TIMEOUT_SECS=120
 - [ ] 将 `dify_router` 层序修复方案推广到 `protected_routes` / `analysis_router` / `agent_router` / `recommendation_router` / `multimodal_router`（同样存在层序错误，但属于历史遗留，不在本次 Dify 集成范围内）
 - [ ] 在 CI Gate 增加 Axum 中间件层序静态校验脚本，避免再次踩坑
 
+## 🎯 V239 — svc/communication 死代码清零（11 warnings → 0 · 工具函数接入生产 handler · ✅ 完成）
+
+### 背景
+
+`cargo check -p topems-communication` 报告 11 处 dead_code 警告，分布在 3 个文件：
+
+| 文件 | 警告数 | 函数/类型 |
+|------|--------|-----------|
+| `svc/communication/src/im.rs` | 3 | `classify_im_status`、`truncate_message`、`format_im_message` |
+| `svc/communication/src/im_location.rs` | 3 | `haversine_distance`、`is_within_geofence`、`parse_coordinates` |
+| `svc/communication/src/notification.rs` | 5 | `NotificationPriority`、`classify_notification_priority`、`select_channels`、`normalize_notification_type`、`truncate_notification_title` |
+
+根因：11 个工具函数均有完整单元测试覆盖（共 50+ 测试），但生产 handler 从未调用，仅 `#[cfg(test)]` 模块引用 → 非 test 编译视为 dead code。
+
+### 策略：接入生产代码（非 suppression）
+
+选择将工具函数接入真实 handler 而非添加 `#[allow(dead_code)]`，使测试覆盖有意义、handler 逻辑更健壮。
+
+### 变更清单
+
+| 文件 | 接入点 | 改动 |
+|------|--------|------|
+| `svc/communication/src/notification.rs` | `send_notification` + `broadcast_notification` | `normalize_notification_type` 规范化类型；`classify_notification_priority().as_i32()` 智能派生 priority；`truncate_notification_title(&title, 255)` 防止 VARCHAR(255) 溢出；`select_channels` 计算投递渠道写入响应 |
+| `svc/communication/src/im_location.rs` | `send_location_message` | `parse_coordinates` 校验坐标格式（无效返回 400）；新增 `check_geofence_triggers` 异步函数：查询活跃围栏 → `is_within_geofence` 判断 enter 事件 → `haversine_distance` 计算距离，返回 `geofence_alerts` |
+| `svc/communication/src/im.rs` | `get_online_status` + `send_message` | `classify_im_status(0, now)` 返回桩状态；`format_im_message(sender, content, 200)` 格式化消息预览（内部调用 `truncate_message`） |
+
+### 新增方法
+
+- `NotificationPriority::as_i32()` — 将枚举映射为 DB priority 列值（Low=0, Normal=1, High=2, Urgent=3）
+
+### 验收结果
+
+| 检查项 | 命令 | 结果 |
+|--------|------|------|
+| 编译警告 | `cargo check -p topems-communication --message-format=short` | ✅ 0 warning（11 → 0） |
+| 单元测试 | `cargo test -p topems-communication --lib` | ✅ 211 passed / 0 failed |
+| 全工作区 | `cargo check --workspace` | ✅ exit 0（无回归） |
+| 代码格式 | `cargo fmt -p topems-communication` | ✅ 无变更 |
+
+### 修改文件清单（3 files）
+
+- [svc/communication/src/notification.rs](file:///Users/air/TOPEMS/svc/communication/src/notification.rs)
+- [svc/communication/src/im_location.rs](file:///Users/air/TOPEMS/svc/communication/src/im_location.rs)
+- [svc/communication/src/im.rs](file:///Users/air/TOPEMS/svc/communication/src/im.rs)
+
