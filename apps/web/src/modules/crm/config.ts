@@ -1,7 +1,33 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
+
+export interface CrmDashboardPageProps {}
+export interface CustomerManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  searchKeyword?: string;
+}
+export interface CustomerDetailProps {
+  id?: string;
+  customerId?: string;
+  tab?: string;
+}
+export interface CustomerCreatePageProps {}
+export interface CustomerEditPageProps {
+  id?: string;
+}
+export interface ContactManagementPageProps {}
+export interface ContactDetailPageProps {
+  id?: string;
+}
+export interface OpportunityManagementPageProps {}
+export interface OpportunityDetailPageProps {
+  id?: string;
+}
+export interface CRMSalesFunnelPageProps {}
+export interface CRMBillingPageProps {}
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 CRM_PATHS.xxx，而非硬编码字符串
@@ -30,6 +56,296 @@ export const CRM_PATHS = {
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
+const crmDashboardRoute: RouteConfigV2<CrmDashboardPageProps> = {
+  path: CRM_PATHS.dashboard,
+  element: lazyWithRetry(() => import('@/pages/crm/CrmDashboardPage'), 'CrmDashboardPage'),
+  module: 'crm',
+  code: 'crm-dashboard',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  template: 'dashboard',
+  group: 'overview',
+  requiredPermissions: ['crm:dashboard:read'],
+  action: 'read',
+};
+
+const customerManagementRoute: RouteConfigV2<CustomerManagementPageProps> = {
+  path: CRM_PATHS.customers,
+  element: lazyWithRetry(
+    () => import('@/pages/crm/CustomerManagementPage'),
+    'CustomerManagementPage'
+  ),
+  module: 'crm',
+  code: 'crm-customers',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['crm:customer:read', 'crm:dashboard:read'],
+  action: 'read',
+};
+
+const customerDetailRoute: RouteConfigV2<CustomerDetailProps> = {
+  path: CRM_PATHS.customerDetail,
+  element: lazyWithRetry(() => import('@/pages/crm/CustomerDetailPage'), 'CustomerDetailPage'),
+  module: 'crm',
+  code: 'crm-customer-detail',
+  title: i18n.t('shared.config.k5'),
+  titleKey: 'shared.config.k5',
+  template: 'detail',
+  group: 'business',
+  requiredPermissions: ['crm:customer:read', 'crm:dashboard:read'],
+  action: 'read',
+};
+
+const contactManagementRoute: RouteConfigV2<ContactManagementPageProps> = {
+  path: CRM_PATHS.contacts,
+  element: lazyWithRetry(
+    () => import('@/pages/crm/ContactManagementPage'),
+    'ContactManagementPage'
+  ),
+  module: 'crm',
+  code: 'crm-contacts',
+  title: i18n.t('shared.config.k7'),
+  titleKey: 'shared.config.k7',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['crm:contact:read', 'crm:dashboard:read'],
+  action: 'read',
+};
+
+const contactDetailRoute: RouteConfigV2<ContactDetailPageProps> = {
+  path: CRM_PATHS.contactDetail,
+  element: lazyWithRetry(() => import('@/pages/crm/ContactDetailPage'), 'ContactDetailPage'),
+  module: 'crm',
+  code: 'crm-contact-detail',
+  title: i18n.t('shared.config.k8'),
+  titleKey: 'shared.config.k8',
+  template: 'detail',
+  group: 'business',
+  requiredPermissions: ['crm:contact:read', 'crm:dashboard:read'],
+  action: 'read',
+};
+
+const opportunityManagementRoute: RouteConfigV2<OpportunityManagementPageProps> = {
+  path: CRM_PATHS.opportunities,
+  element: lazyWithRetry(
+    () => import('@/pages/crm/OpportunityManagementPage'),
+    'OpportunityManagementPage'
+  ),
+  module: 'crm',
+  code: 'crm-opportunities',
+  title: i18n.t('shared.config.k9'),
+  titleKey: 'shared.config.k9',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['crm:opportunity:read', 'crm:dashboard:read'],
+  action: 'read',
+};
+
+const opportunityDetailRoute: RouteConfigV2<OpportunityDetailPageProps> = {
+  path: CRM_PATHS.opportunityDetail,
+  element: lazyWithRetry(
+    () => import('@/pages/crm/OpportunityDetailPage'),
+    'OpportunityDetailPage'
+  ),
+  module: 'crm',
+  code: 'crm-opportunity-detail',
+  title: i18n.t('shared.config.k10'),
+  titleKey: 'shared.config.k10',
+  template: 'detail',
+  group: 'business',
+  requiredPermissions: ['crm:opportunity:read', 'crm:dashboard:read'],
+  action: 'read',
+};
+
+const salesFunnelRoute: RouteConfigV2<CRMSalesFunnelPageProps> = {
+  path: CRM_PATHS.salesFunnel,
+  element: lazyWithRetry(() => import('@/pages/crm/CRMSalesFunnelPage'), 'CRMSalesFunnelPage'),
+  module: 'crm',
+  code: 'crm-sales-funnel',
+  title: i18n.t('shared.config.k13'),
+  titleKey: 'shared.config.k13',
+  template: 'kanban',
+  group: 'analytics',
+  requiredPermissions: ['crm:sales_funnel:read', 'crm:dashboard:read'],
+  action: 'read',
+};
+
+const billingRoute: RouteConfigV2<CRMBillingPageProps> = {
+  path: CRM_PATHS.billing,
+  element: lazyWithRetry(() => import('@/pages/crm/CRMBillingPage'), 'CRMBillingPage'),
+  module: 'crm',
+  code: 'crm-billing',
+  title: i18n.t('shared.config.k12'),
+  titleKey: 'shared.config.k12',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['crm:billing:read', 'crm:dashboard:read'],
+  action: 'read',
+};
+
+const crmRoutes: RouteConfigV2[] = [
+  crmDashboardRoute,
+  customerManagementRoute,
+  {
+    path: CRM_PATHS.customerCreate,
+    element: lazyWithRetry(() => import('@/pages/crm/CustomerCreatePage'), 'CustomerCreatePage'),
+    module: 'crm',
+    code: 'crm-customer-create',
+    title: i18n.t('shared.config.k4'),
+    titleKey: 'shared.config.k4',
+    template: 'form',
+    group: 'business',
+    requiredPermissions: ['crm:customer:create', 'crm:dashboard:write'],
+    action: 'write',
+  } as RouteConfigV2<CustomerCreatePageProps>,
+  customerDetailRoute,
+  {
+    path: CRM_PATHS.customerEdit,
+    element: lazyWithRetry(() => import('@/pages/crm/CustomerEditPage'), 'CustomerEditPage'),
+    module: 'crm',
+    code: 'crm-customer-edit',
+    title: i18n.t('shared.config.k6'),
+    titleKey: 'shared.config.k6',
+    template: 'form',
+    group: 'business',
+    requiredPermissions: ['crm:customer:update', 'crm:dashboard:update'],
+    action: 'update',
+  } as RouteConfigV2<CustomerEditPageProps>,
+  contactManagementRoute,
+  contactDetailRoute,
+  opportunityManagementRoute,
+  opportunityDetailRoute,
+  {
+    path: CRM_PATHS.interactions,
+    element: lazyWithRetry(
+      () => import('@/pages/crm/InteractionManagementPage'),
+      'InteractionManagementPage'
+    ),
+    module: 'crm',
+    code: 'crm-interactions',
+    title: i18n.t('shared.config.k11'),
+    titleKey: 'shared.config.k11',
+    template: 'list',
+    group: 'business',
+    requiredPermissions: ['crm:interaction:read', 'crm:dashboard:read'],
+  },
+  billingRoute,
+  salesFunnelRoute,
+  {
+    path: CRM_PATHS.customerScoring,
+    element: lazyWithRetry(
+      () => import('@/pages/crm/CRMCustomerScoringPage'),
+      'CRMCustomerScoringPage'
+    ),
+    module: 'crm',
+    code: 'crm-customer-scoring',
+    title: i18n.t('shared.config.k14'),
+    titleKey: 'shared.config.k14',
+    template: 'stats',
+    group: 'analytics',
+    requiredPermissions: ['crm:customer_scoring:read', 'crm:dashboard:read'],
+    action: 'read',
+  },
+  {
+    path: CRM_PATHS.salesForecast,
+    element: lazyWithRetry(
+      () => import('@/pages/crm/CRMSalesForecastPage'),
+      'CRMSalesForecastPage'
+    ),
+    module: 'crm',
+    code: 'crm-sales-forecast',
+    title: i18n.t('shared.config.k15'),
+    titleKey: 'shared.config.k15',
+    template: 'stats',
+    group: 'analytics',
+    requiredPermissions: ['crm:sales_forecast:read', 'crm:dashboard:read'],
+    action: 'read',
+  },
+  {
+    path: CRM_PATHS.customerSegmentation,
+    element: lazyWithRetry(
+      () => import('@/pages/crm/CRMCustomerSegmentationPage'),
+      'CRMCustomerSegmentationPage'
+    ),
+    module: 'crm',
+    code: 'crm-customer-segmentation',
+    title: i18n.t('shared.config.k16'),
+    titleKey: 'shared.config.k16',
+    template: 'stats',
+    group: 'analytics',
+    requiredPermissions: ['crm:customer_segmentation:read', 'crm:dashboard:read'],
+    action: 'read',
+  },
+  {
+    path: CRM_PATHS.rfm,
+    element: lazyWithRetry(() => import('@/pages/crm/CrmRfmPage'), 'CrmRfmPage'),
+    module: 'crm',
+    code: 'crm-rfm',
+    title: i18n.t('shared.config.rfm_0'),
+    titleKey: 'shared.config.rfm_0',
+    template: 'stats',
+    group: 'analytics',
+    requiredPermissions: ['crm:rfm:read', 'crm:dashboard:read'],
+    action: 'read',
+  },
+  {
+    path: CRM_PATHS.forecastAlgorithm,
+    element: lazyWithRetry(
+      () => import('@/pages/crm/CrmForecastAlgorithmPage'),
+      'CrmForecastAlgorithmPage'
+    ),
+    module: 'crm',
+    code: 'crm-forecast-algorithm',
+    title: i18n.t('shared.config.k17'),
+    titleKey: 'shared.config.k17',
+    template: 'stats',
+    group: 'analytics',
+    requiredPermissions: ['crm:forecast:read', 'crm:dashboard:read'],
+    action: 'read',
+  },
+  {
+    path: CRM_PATHS.recommendation,
+    element: lazyWithRetry(
+      () => import('@/pages/crm/CRMRecommendationPage'),
+      'CRMRecommendationPage'
+    ),
+    module: 'crm',
+    code: 'crm-recommendation',
+    title: i18n.t('shared.config.k18'),
+    titleKey: 'shared.config.k18',
+    template: 'dashboard',
+    group: 'analytics',
+    requiredPermissions: ['crm:recommendation:read', 'crm:dashboard:read'],
+    action: 'read',
+  },
+  {
+    path: CRM_PATHS.returns,
+    element: lazyWithRetry(() => import('@/pages/crm/ReturnListPage'), 'ReturnListPage'),
+    module: 'crm',
+    code: 'crm-returns',
+    title: i18n.t('shared.config.k19'),
+    titleKey: 'shared.config.k19',
+    template: 'list',
+    group: 'business',
+    requiredPermissions: ['crm:return:read', 'crm:dashboard:read'],
+    action: 'read',
+  },
+  {
+    path: CRM_PATHS.returnDetail,
+    element: lazyWithRetry(() => import('@/pages/crm/ReturnDetailPage'), 'ReturnDetailPage'),
+    module: 'crm',
+    code: 'crm-return-detail',
+    title: i18n.t('shared.config.k20'),
+    titleKey: 'shared.config.k20',
+    template: 'detail',
+    group: 'business',
+    requiredPermissions: ['crm:return:read', 'crm:dashboard:read'],
+    action: 'read',
+  },
+];
+
 export const crmModuleConfig: RouteModuleConfig = {
   code: 'crm',
   name: i18n.t('shared.config.crm_name'),
@@ -42,277 +358,7 @@ export const crmModuleConfig: RouteModuleConfig = {
   order: 6,
   description: i18n.t('shared.config.k1'),
   permission: 'crm:dashboard:read',
-  routes: [
-    {
-      path: CRM_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/crm/CrmDashboardPage'), 'CrmDashboardPage'),
-      module: 'crm',
-      code: 'crm-dashboard',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      template: 'dashboard',
-      group: 'overview',
-      requiredPermissions: ['crm:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: CRM_PATHS.customers,
-      element: lazyWithRetry(
-        () => import('@/pages/crm/CustomerManagementPage'),
-        'CustomerManagementPage'
-      ),
-      module: 'crm',
-      code: 'crm-customers',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['crm:customer:read', 'crm:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: CRM_PATHS.customerCreate,
-      element: lazyWithRetry(() => import('@/pages/crm/CustomerCreatePage'), 'CustomerCreatePage'),
-      module: 'crm',
-      code: 'crm-customer-create',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      template: 'form',
-      group: 'business',
-      requiredPermissions: ['crm:customer:create', 'crm:dashboard:write'],
-      action: 'write',
-    },
-    {
-      path: CRM_PATHS.customerDetail,
-      element: lazyWithRetry(() => import('@/pages/crm/CustomerDetailPage'), 'CustomerDetailPage'),
-      module: 'crm',
-      code: 'crm-customer-detail',
-      title: i18n.t('shared.config.k5'),
-      titleKey: 'shared.config.k5',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['crm:customer:read', 'crm:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: CRM_PATHS.customerEdit,
-      element: lazyWithRetry(() => import('@/pages/crm/CustomerEditPage'), 'CustomerEditPage'),
-      module: 'crm',
-      code: 'crm-customer-edit',
-      title: i18n.t('shared.config.k6'),
-      titleKey: 'shared.config.k6',
-      template: 'form',
-      group: 'business',
-      requiredPermissions: ['crm:customer:update', 'crm:dashboard:update'],
-      action: 'update',
-    },
-    {
-      path: CRM_PATHS.contacts,
-      element: lazyWithRetry(
-        () => import('@/pages/crm/ContactManagementPage'),
-        'ContactManagementPage'
-      ),
-      module: 'crm',
-      code: 'crm-contacts',
-      title: i18n.t('shared.config.k7'),
-      titleKey: 'shared.config.k7',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['crm:contact:read', 'crm:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: CRM_PATHS.contactDetail,
-      element: lazyWithRetry(() => import('@/pages/crm/ContactDetailPage'), 'ContactDetailPage'),
-      module: 'crm',
-      code: 'crm-contact-detail',
-      title: i18n.t('shared.config.k8'),
-      titleKey: 'shared.config.k8',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['crm:contact:read', 'crm:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: CRM_PATHS.opportunities,
-      element: lazyWithRetry(
-        () => import('@/pages/crm/OpportunityManagementPage'),
-        'OpportunityManagementPage'
-      ),
-      module: 'crm',
-      code: 'crm-opportunities',
-      title: i18n.t('shared.config.k9'),
-      titleKey: 'shared.config.k9',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['crm:opportunity:read', 'crm:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: CRM_PATHS.opportunityDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/crm/OpportunityDetailPage'),
-        'OpportunityDetailPage'
-      ),
-      module: 'crm',
-      code: 'crm-opportunity-detail',
-      title: i18n.t('shared.config.k10'),
-      titleKey: 'shared.config.k10',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['crm:opportunity:read', 'crm:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: CRM_PATHS.interactions,
-      element: lazyWithRetry(
-        () => import('@/pages/crm/InteractionManagementPage'),
-        'InteractionManagementPage'
-      ),
-      module: 'crm',
-      code: 'crm-interactions',
-      title: i18n.t('shared.config.k11'),
-      titleKey: 'shared.config.k11',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['crm:interaction:read', 'crm:dashboard:read'],
-    },
-    {
-      path: CRM_PATHS.billing,
-      element: lazyWithRetry(() => import('@/pages/crm/CRMBillingPage'), 'CRMBillingPage'),
-      module: 'crm',
-      code: 'crm-billing',
-      title: i18n.t('shared.config.k12'),
-      titleKey: 'shared.config.k12',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['crm:billing:read', 'crm:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: CRM_PATHS.salesFunnel,
-      element: lazyWithRetry(() => import('@/pages/crm/CRMSalesFunnelPage'), 'CRMSalesFunnelPage'),
-      module: 'crm',
-      code: 'crm-sales-funnel',
-      title: i18n.t('shared.config.k13'),
-      titleKey: 'shared.config.k13',
-      template: 'kanban',
-      group: 'analytics',
-      requiredPermissions: ['crm:sales_funnel:read', 'crm:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: CRM_PATHS.customerScoring,
-      element: lazyWithRetry(
-        () => import('@/pages/crm/CRMCustomerScoringPage'),
-        'CRMCustomerScoringPage'
-      ),
-      module: 'crm',
-      code: 'crm-customer-scoring',
-      title: i18n.t('shared.config.k14'),
-      titleKey: 'shared.config.k14',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['crm:customer_scoring:read', 'crm:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: CRM_PATHS.salesForecast,
-      element: lazyWithRetry(
-        () => import('@/pages/crm/CRMSalesForecastPage'),
-        'CRMSalesForecastPage'
-      ),
-      module: 'crm',
-      code: 'crm-sales-forecast',
-      title: i18n.t('shared.config.k15'),
-      titleKey: 'shared.config.k15',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['crm:sales_forecast:read', 'crm:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: CRM_PATHS.customerSegmentation,
-      element: lazyWithRetry(
-        () => import('@/pages/crm/CRMCustomerSegmentationPage'),
-        'CRMCustomerSegmentationPage'
-      ),
-      module: 'crm',
-      code: 'crm-customer-segmentation',
-      title: i18n.t('shared.config.k16'),
-      titleKey: 'shared.config.k16',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['crm:customer_segmentation:read', 'crm:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: CRM_PATHS.rfm,
-      element: lazyWithRetry(() => import('@/pages/crm/CrmRfmPage'), 'CrmRfmPage'),
-      module: 'crm',
-      code: 'crm-rfm',
-      title: i18n.t('shared.config.rfm_0'),
-      titleKey: 'shared.config.rfm_0',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['crm:rfm:read', 'crm:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: CRM_PATHS.forecastAlgorithm,
-      element: lazyWithRetry(
-        () => import('@/pages/crm/CrmForecastAlgorithmPage'),
-        'CrmForecastAlgorithmPage'
-      ),
-      module: 'crm',
-      code: 'crm-forecast-algorithm',
-      title: i18n.t('shared.config.k17'),
-      titleKey: 'shared.config.k17',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['crm:forecast:read', 'crm:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: CRM_PATHS.recommendation,
-      element: lazyWithRetry(
-        () => import('@/pages/crm/CRMRecommendationPage'),
-        'CRMRecommendationPage'
-      ),
-      module: 'crm',
-      code: 'crm-recommendation',
-      title: i18n.t('shared.config.k18'),
-      titleKey: 'shared.config.k18',
-      template: 'dashboard',
-      group: 'analytics',
-      requiredPermissions: ['crm:recommendation:read', 'crm:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: CRM_PATHS.returns,
-      element: lazyWithRetry(() => import('@/pages/crm/ReturnListPage'), 'ReturnListPage'),
-      module: 'crm',
-      code: 'crm-returns',
-      title: i18n.t('shared.config.k19'),
-      titleKey: 'shared.config.k19',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['crm:return:read', 'crm:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: CRM_PATHS.returnDetail,
-      element: lazyWithRetry(() => import('@/pages/crm/ReturnDetailPage'), 'ReturnDetailPage'),
-      module: 'crm',
-      code: 'crm-return-detail',
-      title: i18n.t('shared.config.k20'),
-      titleKey: 'shared.config.k20',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['crm:return:read', 'crm:dashboard:read'],
-      action: 'read',
-    },
-  ],
+  routes: crmRoutes,
 };
 
 // ---- 导航配置（供导航注册表使用） ----

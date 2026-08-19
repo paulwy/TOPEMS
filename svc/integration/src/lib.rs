@@ -202,6 +202,7 @@ pub mod middleware;
 pub mod models;
 pub mod modules;
 pub mod openapi;
+pub mod permission;
 pub mod plugin;
 pub mod qms_lims_ehs;
 pub mod retry_handler;

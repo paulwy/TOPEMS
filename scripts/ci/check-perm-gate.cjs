@@ -18,14 +18,99 @@ const rules = [
   { id: 'R6', desc: 'handler fn body uses PERM_SCOPE wildcard "*" without explicit tenant scope', severity: 'FAIL', count: 0 },
 ];
 
+function scanR1Real() {
+  let r1Hits = [];
+  for (const name of listSvcDirs()) {
+    const libPath = path.join(SVC_DIR, name, 'src/lib.rs');
+    if (!fs.existsSync(libPath)) continue;
+    const content = fs.readFileSync(libPath, 'utf8');
+    const hasRoutes = /pub\s+mod\s+routes\s*;/.test(content);
+    const hasPermission = /pub\s+mod\s+permission\s*;/.test(content);
+    if (hasRoutes && !hasPermission) {
+      r1Hits.push({ svc: name, file: path.relative(ROOT, libPath) });
+    }
+  }
+  for (const r of rules) if (r.id === 'R1') r.count = r1Hits.length;
+  return r1Hits;
+}
+
+function extractUtoipaPathMacrosSimple(content) {
+  const macros = [];
+  const prefix = '#[utoipa::path';
+  let idx = 0;
+  while (idx < content.length) {
+    const start = content.indexOf(prefix, idx);
+    if (start === -1) break;
+    let p = start + prefix.length;
+    while (p < content.length && /\s/.test(content[p])) p++;
+    if (p >= content.length || content[p] !== '(') { idx = start + prefix.length; continue; }
+    let depth = 1;
+    let i = p + 1;
+    while (i < content.length && depth > 0) {
+      const ch = content[i];
+      if (ch === '(') depth++;
+      else if (ch === ')') depth--;
+      if (depth === 0) break;
+      i++;
+    }
+    if (depth !== 0) { idx = start + prefix.length; continue; }
+    macros.push({ start, end: i });
+    idx = i + 1;
+  }
+  return macros;
+}
+
+function scanR3Real() {
+  const gateRegex = /admin-only|admin_only|require_admin|require_role.*admin|gate.*admin/i;
+  let r3Hits = [];
+  for (const name of listSvcDirs()) {
+    const srcDir = path.join(SVC_DIR, name, 'src');
+    function walk(dir) {
+      if (!fs.existsSync(dir)) return;
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) { walk(full); continue; }
+        if (!entry.isFile() || !entry.name.endsWith('.rs')) continue;
+        const content = fs.readFileSync(full, 'utf8');
+        const lines = content.split('\n');
+        const macros = extractUtoipaPathMacrosSimple(content);
+        for (const m of macros) {
+          const lineIdx = content.substring(0, m.start).split('\n').length - 1;
+          let fnLine = -1;
+          for (let j = lineIdx; j < Math.min(lines.length, lineIdx + 10); j++) {
+            if (/(?:pub\s+)?(?:async\s+)?fn\s+\w+/.test(lines[j])) { fnLine = j; break; }
+          }
+          if (fnLine < 0) continue;
+          let hasGateComment = false;
+          for (let j = Math.max(0, lineIdx-5); j <= fnLine; j++) {
+            if (gateRegex.test(lines[j])) { hasGateComment = true; break; }
+          }
+          let hasAdminLogic = false;
+          for (let j = fnLine; j < Math.min(lines.length, fnLine+40) && !hasAdminLogic; j++) {
+            if (/require_role.*admin|is_admin|PERM.*ADMIN|PERMISSION.*ADMIN|admin_only|admin-only|require_admin|has_permission\(["'].*admin/i.test(lines[j])) {
+              hasAdminLogic = true; break;
+            }
+          }
+          if (hasAdminLogic && !hasGateComment) {
+            r3Hits.push({ svc: name, file: path.relative(ROOT, full), line: lineIdx+1 });
+          }
+        }
+      }
+    }
+    walk(srcDir);
+  }
+  for (const r of rules) if (r.id === 'R3') r.count = r3Hits.length;
+  return r3Hits;
+}
+
 function scanR1R6Placeholder() {
-  // R1/R2/R3/R6 remain placeholders (V250 scope). R4/R5 are real-scanned.
+  const r1Hits = scanR1Real();
+  const r3Hits = scanR3Real();
   for (const r of rules) {
-    if (r.id === 'R1') r.count = 2;
     if (r.id === 'R2') r.count = 8;
-    if (r.id === 'R3') r.count = 5;
     if (r.id === 'R6') r.count = 0;
   }
+  return { r1Hits, r3Hits };
 }
 
 function listSvcDirs() {
@@ -149,7 +234,7 @@ function scanR7MiddlewareDuplicate() {
 }
 
 function main() {
-  scanR1R6Placeholder();
+  const { r1Hits, r3Hits } = scanR1R6Placeholder();
   const r4Hits = scanR4Real();
   const r5Hits = scanR5Real();
   const r7Hits = scanR7MiddlewareDuplicate();
@@ -168,6 +253,20 @@ function main() {
   for (const r of rules) {
     const num = String(r.count).padStart(5);
     console.log(`  ${r.id}:${num} · ${r.severity} · ${r.desc}`);
+  }
+
+  if (r1Hits.length > 0) {
+    console.log('');
+    console.log(`    - R1 hits (${r1Hits.length}):`);
+    for (const h of r1Hits) console.log(`        · ${h.file}`);
+  }
+
+  if (r3Hits.length > 0) {
+    console.log('');
+    const shown = r3Hits.slice(0, 10);
+    console.log(`    - R3 hits (showing first ${shown.length} of ${r3Hits.length}):`);
+    for (const h of shown) console.log(`        · ${h.file}:${h.line}`);
+    if (r3Hits.length > 10) console.log(`        ... (+${r3Hits.length - 10} more)`);
   }
 
   if (r4Hits.length > 0) {

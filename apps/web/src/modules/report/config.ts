@@ -1,7 +1,20 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
+
+export interface ReportDashboardPageProps {}
+export interface ReportListPageProps {}
+export interface ReportViewerPageRouteProps {
+  reportId?: string;
+  templateId?: string;
+  parameters?: Record<string, unknown>;
+}
+export interface ReportDesignPageProps {}
+export interface ReportBuilderPageProps {}
+export interface ReportSchedulePageProps {}
+export interface ReportSubscriptionPageProps {}
+export interface TemplateManagementPageProps {}
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 REPORT_PATHS.xxx，而非硬编码字符串
@@ -19,6 +32,135 @@ export const REPORT_PATHS = {
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
+const reportDashboardRoute: RouteConfigV2<ReportDashboardPageProps> = {
+  path: REPORT_PATHS.dashboard,
+  element: lazyWithRetry(() => import('@/pages/report/ReportPage'), 'ReportPage'),
+  module: 'report',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  code: 'report-dashboard',
+  requiredPermissions: ['report:dashboard:read'],
+  action: 'read',
+  template: 'dashboard',
+  group: 'overview',
+};
+
+const reportListRoute: RouteConfigV2<ReportListPageProps> = {
+  path: REPORT_PATHS.list,
+  element: lazyWithRetry(() => import('@/pages/report/ReportListPage'), 'ReportListPage'),
+  module: 'report',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  code: 'report-list',
+  requiredPermissions: ['report:dashboard:read'],
+  action: 'read',
+  template: 'list',
+  group: 'report',
+};
+
+const reportViewerRoute = {
+  path: REPORT_PATHS.viewer,
+  element: lazyWithRetry(
+    () => import('@/pages/report/ReportViewer'),
+    'ReportViewer'
+  ),
+  module: 'report',
+  title: i18n.t('shared.config.k4'),
+  titleKey: 'shared.config.k4',
+  code: 'report-viewer',
+  requiredPermissions: ['report:dashboard:read'],
+  action: 'read',
+  template: 'detail',
+  group: 'business',
+} as RouteConfigV2<ReportViewerPageRouteProps>;
+
+const reportRoutes: RouteConfigV2[] = [
+  reportDashboardRoute,
+  reportListRoute,
+  reportViewerRoute,
+  {
+    path: REPORT_PATHS.design,
+    element: lazyWithRetry(() => import('@/pages/report/ReportDesignPage'), 'ReportDesignPage'),
+    module: 'report',
+    title: i18n.t('shared.config.k5'),
+    titleKey: 'shared.config.k5',
+    code: 'report-design',
+    requiredPermissions: ['report:design:write', 'report:dashboard:write'],
+    action: 'write',
+    template: 'form',
+    group: 'report',
+  } as RouteConfigV2<ReportDesignPageProps>,
+  {
+    path: REPORT_PATHS.builder,
+    element: lazyWithRetry(() => import('@/pages/report/ReportBuilderPage'), 'ReportBuilderPage'),
+    module: 'report',
+    title: i18n.t('shared.config.k6'),
+    titleKey: 'shared.config.k6',
+    code: 'report-builder',
+    requiredPermissions: ['report:builder:write', 'report:dashboard:write'],
+    action: 'write',
+    template: 'form',
+    group: 'report',
+  } as RouteConfigV2<ReportBuilderPageProps>,
+  {
+    path: REPORT_PATHS.schedule,
+    element: lazyWithRetry(
+      () => import('@/pages/report/ReportSchedulePage'),
+      'ReportSchedulePage'
+    ),
+    module: 'report',
+    title: i18n.t('shared.config.k7'),
+    titleKey: 'shared.config.k7',
+    code: 'report-schedule',
+    requiredPermissions: ['report:schedule:read', 'report:dashboard:read'],
+    action: 'read',
+    template: 'list',
+    group: 'process',
+  } as RouteConfigV2<ReportSchedulePageProps>,
+  {
+    path: REPORT_PATHS.subscription,
+    element: lazyWithRetry(
+      () => import('@/pages/report/ReportSubscriptionPage'),
+      'ReportSubscriptionPage'
+    ),
+    module: 'report',
+    title: i18n.t('shared.config.k8'),
+    titleKey: 'shared.config.k8',
+    code: 'report-subscription',
+    requiredPermissions: ['report:subscription:read', 'report:dashboard:read'],
+    action: 'read',
+    template: 'list',
+    group: 'process',
+  } as RouteConfigV2<ReportSubscriptionPageProps>,
+  {
+    path: REPORT_PATHS.template,
+    element: lazyWithRetry(
+      () => import('@/pages/report/TemplateManagementPage'),
+      'TemplateManagementPage'
+    ),
+    module: 'report',
+    title: i18n.t('shared.config.k9'),
+    titleKey: 'shared.config.k9',
+    code: 'report-template',
+    requiredPermissions: ['report:template:read', 'report:dashboard:read'],
+    action: 'read',
+    template: 'list',
+    group: 'setting',
+  } as RouteConfigV2<TemplateManagementPageProps>,
+  {
+    path: REPORT_PATHS.report,
+    element: lazyWithRetry(() => import('@/pages/report/ReportPage'), 'ReportPage'),
+    module: 'report',
+    title: i18n.t('shared.config.k10'),
+    titleKey: 'shared.config.k10',
+    code: 'report-report',
+    requiredPermissions: ['report:dashboard:read'],
+    action: 'read',
+    template: 'list',
+    group: 'report',
+  },
+];
+
 export const reportModuleConfig: RouteModuleConfig = {
   code: 'report',
   name: i18n.t('shared.config.report_name'),
@@ -31,128 +173,7 @@ export const reportModuleConfig: RouteModuleConfig = {
   order: 6,
   description: i18n.t('shared.config.k1'),
   permission: 'report:dashboard:read',
-  routes: [
-    {
-      path: REPORT_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/report/ReportPage'), 'ReportPage'),
-      module: 'report',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      code: 'report-dashboard',
-      requiredPermissions: ['report:dashboard:read'],
-      action: 'read',
-      template: 'dashboard',
-      group: 'overview',
-    },
-    {
-      path: REPORT_PATHS.list,
-      element: lazyWithRetry(() => import('@/pages/report/ReportListPage'), 'ReportListPage'),
-      module: 'report',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      code: 'report-list',
-      requiredPermissions: ['report:dashboard:read'],
-      action: 'read',
-      template: 'list',
-      group: 'report',
-    },
-    {
-      path: REPORT_PATHS.viewer,
-      element: lazyWithRetry(
-        () => import('@/pages/report/ReportViewer'),
-        'ReportViewer'
-      ),
-      module: 'report',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      code: 'report-viewer',
-      requiredPermissions: ['report:dashboard:read'],
-      action: 'read',
-      template: 'detail',
-      group: 'business',
-    },
-    {
-      path: REPORT_PATHS.design,
-      element: lazyWithRetry(() => import('@/pages/report/ReportDesignPage'), 'ReportDesignPage'),
-      module: 'report',
-      title: i18n.t('shared.config.k5'),
-      titleKey: 'shared.config.k5',
-      code: 'report-design',
-      requiredPermissions: ['report:design:write', 'report:dashboard:write'],
-      action: 'write',
-      template: 'form',
-      group: 'report',
-    },
-    {
-      path: REPORT_PATHS.builder,
-      element: lazyWithRetry(() => import('@/pages/report/ReportBuilderPage'), 'ReportBuilderPage'),
-      module: 'report',
-      title: i18n.t('shared.config.k6'),
-      titleKey: 'shared.config.k6',
-      code: 'report-builder',
-      requiredPermissions: ['report:builder:write', 'report:dashboard:write'],
-      action: 'write',
-      template: 'form',
-      group: 'report',
-    },
-    {
-      path: REPORT_PATHS.schedule,
-      element: lazyWithRetry(
-        () => import('@/pages/report/ReportSchedulePage'),
-        'ReportSchedulePage'
-      ),
-      module: 'report',
-      title: i18n.t('shared.config.k7'),
-      titleKey: 'shared.config.k7',
-      code: 'report-schedule',
-      requiredPermissions: ['report:schedule:read', 'report:dashboard:read'],
-      action: 'read',
-      template: 'list',
-      group: 'process',
-    },
-    {
-      path: REPORT_PATHS.subscription,
-      element: lazyWithRetry(
-        () => import('@/pages/report/ReportSubscriptionPage'),
-        'ReportSubscriptionPage'
-      ),
-      module: 'report',
-      title: i18n.t('shared.config.k8'),
-      titleKey: 'shared.config.k8',
-      code: 'report-subscription',
-      requiredPermissions: ['report:subscription:read', 'report:dashboard:read'],
-      action: 'read',
-      template: 'list',
-      group: 'process',
-    },
-    {
-      path: REPORT_PATHS.template,
-      element: lazyWithRetry(
-        () => import('@/pages/report/TemplateManagementPage'),
-        'TemplateManagementPage'
-      ),
-      module: 'report',
-      title: i18n.t('shared.config.k9'),
-      titleKey: 'shared.config.k9',
-      code: 'report-template',
-      requiredPermissions: ['report:template:read', 'report:dashboard:read'],
-      action: 'read',
-      template: 'list',
-      group: 'setting',
-    },
-    {
-      path: REPORT_PATHS.report,
-      element: lazyWithRetry(() => import('@/pages/report/ReportPage'), 'ReportPage'),
-      module: 'report',
-      title: i18n.t('shared.config.k10'),
-      titleKey: 'shared.config.k10',
-      code: 'report-report',
-      requiredPermissions: ['report:dashboard:read'],
-      action: 'read',
-      template: 'list',
-      group: 'report',
-    },
-  ],
+  routes: reportRoutes,
 };
 
 // ---- 导航配置（供导航注册表使用） ----

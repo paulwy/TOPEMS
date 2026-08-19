@@ -8,6 +8,7 @@
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use tauri::Manager;
 use tauri_plugin_stronghold::stronghold::Stronghold;
 
 const DEFAULT_CLIENT: &[u8] = b"topems-keystore-client";
@@ -170,4 +171,60 @@ impl KeyStore for StrongholdKeyStore {
 #[allow(dead_code)]
 fn _default_vault() -> &'static [u8] {
     DEFAULT_VAULT
+}
+
+#[tauri::command]
+pub async fn keystore_set(
+    app: tauri::AppHandle,
+    key: String,
+    value: String,
+    password: Option<String>,
+) -> Result<(), String> {
+    let path = app
+        .path()
+        .app_config_dir()
+        .map(|p| p.join("keystore.stronghold"))
+        .map_err(|e| e.to_string())?;
+    let mut store =
+        StrongholdKeyStore::new(&path, password.clone().unwrap_or_default().into_bytes());
+    store.init()?;
+    store.set(&key, &value)?;
+    store.save()?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn keystore_get(
+    app: tauri::AppHandle,
+    key: String,
+    password: Option<String>,
+) -> Result<Option<String>, String> {
+    let path = app
+        .path()
+        .app_config_dir()
+        .map(|p| p.join("keystore.stronghold"))
+        .map_err(|e| e.to_string())?;
+    let mut store =
+        StrongholdKeyStore::new(&path, password.clone().unwrap_or_default().into_bytes());
+    store.init()?;
+    store.get(&key)
+}
+
+#[tauri::command]
+pub async fn keystore_delete(
+    app: tauri::AppHandle,
+    key: String,
+    password: Option<String>,
+) -> Result<(), String> {
+    let path = app
+        .path()
+        .app_config_dir()
+        .map(|p| p.join("keystore.stronghold"))
+        .map_err(|e| e.to_string())?;
+    let mut store =
+        StrongholdKeyStore::new(&path, password.clone().unwrap_or_default().into_bytes());
+    store.init()?;
+    store.delete(&key)?;
+    store.save()?;
+    Ok(())
 }
