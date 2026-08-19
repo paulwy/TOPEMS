@@ -67,7 +67,7 @@ function scanR1Real(rules) {
       r1Hits.push({ svc: name, file: path.relative(ROOT, libPath) });
     }
   }
-  for (const r of rules) if (r.id === 'R1') r.count = r1Hits.length;
+  for (const r of rules) if (r.id === 'R1') { r.count = r1Hits.length; r.hits = r1Hits; }
   return r1Hits;
 }
 
@@ -97,8 +97,46 @@ function extractUtoipaPathMacrosSimple(content) {
   return macros;
 }
 
+/* findMatchingBraceClose — 从 lines[openLine][openCol..] 起找匹配 } 返回 {line, col}（0-based）。字符串/注释简单跳过。 */
+function findMatchingBraceClose(lines, openLine, openCol) {
+  let depth = 0;
+  let inStr = null; // null / '"' / "'" / '`'
+  let inLineComment = false;
+  let inBlockComment = false;
+  for (let i = openLine; i < lines.length; i++) {
+    const line = lines[i];
+    for (let j = (i === openLine ? openCol : 0); j < line.length; j++) {
+      const ch = line[j];
+      const next = line[j + 1] || '';
+      if (inLineComment) { continue; }
+      if (inBlockComment) {
+        if (ch === '*' && next === '/') { inBlockComment = false; j++; }
+        continue;
+      }
+      if (inStr) {
+        if (ch === '\\') { j++; continue; }
+        if (ch === inStr) inStr = null;
+        continue;
+      }
+      if (ch === '/' && next === '/') { inLineComment = true; break; }
+      if (ch === '/' && next === '*') { inBlockComment = true; j++; continue; }
+      if (ch === '"' || ch === "'" || ch === '`') { inStr = ch; continue; }
+      if (ch === '{') depth++;
+      else if (ch === '}') {
+        depth--;
+        if (depth === 0) return { line: i, col: j };
+      }
+    }
+    inLineComment = false;
+  }
+  return null;
+}
+
 function scanR3Real(rules) {
   const gateRegex = /admin-only|admin_only|require_admin|require_role.*admin|gate.*admin/i;
+  const adminLogicRegex = /require_role.*admin|is_admin|PERM.*ADMIN|PERMISSION.*ADMIN|admin_only|admin-only|require_admin|has_permission\(["'].*admin|\[\s*"[^"]*admin[^"]*"\s*\]\s*\)\s*,\s*$/i;
+  // 额外也在 utoipa::path 属性（security(... = ["xxx:admin"...]) 内检查 admin 权限声明，作为 admin-only 判定的一部分
+  const securityAdminRegex = /security\s*\(\s*\([^)]*["'][^"']*:admin["']/i;
   let r3Hits = [];
   for (const name of listSvcDirs()) {
     const srcDir = path.join(SVC_DIR, name, 'src');
@@ -113,59 +151,164 @@ function scanR3Real(rules) {
         const macros = extractUtoipaPathMacrosSimple(content);
         for (const m of macros) {
           const lineIdx = content.substring(0, m.start).split('\n').length - 1;
+          // 匹配 utoipa::path( ... ) 宏的闭括号位置（从 utoipa::path 后的第一个 '(' 开始找）
+          const startFrom = content.indexOf('(', m.start);
+          let pathClose = -1; // 1d index in content
+          if (startFrom >= 0) {
+            // 用 1d 扫描法找匹配 ')'：只处理 path 属性括号
+            let depth = 0; let inStr=null,inLc=false,inBc=false;
+            for (let p = startFrom; p < content.length; p++) {
+              const c = content[p], n = content[p+1]||'';
+              if (inLc) { if (c==='\n') inLc=false; continue; }
+              if (inBc) { if (c==='*' && n==='/') { inBc=false; p++; } continue; }
+              if (inStr) { if (c==='\\') { p++; continue; } if (c===inStr) inStr=null; continue; }
+              if (c==='/' && n==='/') { inLc=true; continue; }
+              if (c==='/' && n==='*') { inBc=true; p++; continue; }
+              if (c==='"'||c==="'"||c==='`') { inStr=c; continue; }
+              if (c==='(') depth++;
+              else if (c===')') { depth--; if (depth===0) { pathClose=p; break; } }
+            }
+          }
+          const pathBlockText = pathClose >= 0 ? content.substring(startFrom, pathClose+1) : '';
+          const utoipaHasAdminSecurity = securityAdminRegex.test(pathBlockText);
           let fnLine = -1;
-          for (let j = lineIdx; j < Math.min(lines.length, lineIdx + 10); j++) {
+          for (let j = lineIdx; j < Math.min(lines.length, lineIdx + 12); j++) {
             if (/(?:pub\s+)?(?:async\s+)?fn\s+\w+/.test(lines[j])) { fnLine = j; break; }
           }
           if (fnLine < 0) continue;
+          const fnName = lines[fnLine].match(/fn\s+(\w+)/)?.[1] || '?';
+          // gate comment 检查范围：utoipa path (lineIdx) 之前 5 行到 fn 签名行
           let hasGateComment = false;
           for (let j = Math.max(0, lineIdx-5); j <= fnLine; j++) {
             if (gateRegex.test(lines[j])) { hasGateComment = true; break; }
           }
+          // admin-only 判定：(A) utoipa security 有 admin 权限，或 (B) fn body 里含 admin 逻辑
           let hasAdminLogic = false;
-          for (let j = fnLine; j < Math.min(lines.length, fnLine+40) && !hasAdminLogic; j++) {
-            if (/require_role.*admin|is_admin|PERM.*ADMIN|PERMISSION.*ADMIN|admin_only|admin-only|require_admin|has_permission\(["'].*admin/i.test(lines[j])) {
-              hasAdminLogic = true; break;
+          // (B) fn body admin logic: 从 fnName 行下一个 '{' 起精确定位到匹配 }
+          let bodyStart = -1;
+          for (let j = fnLine; j < Math.min(lines.length, fnLine+8); j++) {
+            const oc = lines[j].indexOf('{');
+            if (oc >= 0) { bodyStart = j; break; }
+          }
+          if (bodyStart >= 0) {
+            const oc = lines[bodyStart].indexOf('{');
+            const close = findMatchingBraceClose(lines, bodyStart, oc);
+            if (close) {
+              const bodyLines = lines.slice(bodyStart, close.line + 1);
+              for (const l of bodyLines) {
+                if (adminLogicRegex.test(l)) { hasAdminLogic = true; break; }
+              }
             }
           }
-          if (hasAdminLogic && !hasGateComment) {
-            r3Hits.push({ svc: name, file: path.relative(ROOT, full), line: lineIdx+1 });
+          // 综合：任一条件 true 且 无 gate 注释则 R3 命中
+          if ((utoipaHasAdminSecurity || hasAdminLogic) && !hasGateComment) {
+            // 为 hits 提取可操作的 "补 gate 注释" 锚点行：utoipa path 开始行
+            const anchorLine = (function findAnchor() {
+              for (let j = Math.max(0, lineIdx-2); j <= fnLine; j++) {
+                if (/^\s*#\[utoipa::path/.test(lines[j])) return j+1;
+              }
+              return lineIdx + 1;
+            })();
+            r3Hits.push({
+              svc: name,
+              file: path.relative(ROOT, full),
+              line: lineIdx + 1,
+              fnLine: fnLine + 1,
+              fnName,
+              anchorLine,
+              utoipaPath: lines[lineIdx].slice(0, 180).trim(),
+              hasUtoipaAdminSecurity: utoipaHasAdminSecurity,
+              hasBodyAdminLogic: hasAdminLogic,
+            });
           }
         }
       }
     }
     walk(srcDir);
   }
-  for (const r of rules) if (r.id === 'R3') r.count = r3Hits.length;
+  for (const r of rules) if (r.id === 'R3') { r.count = r3Hits.length; r.hits = r3Hits; }
   return r3Hits;
 }
 
-function scanR2RealTargeted8() {
-  const TARGETS = new Set(['search','communication','monitor','scm','integration','wms','ehs','crm']);
-  let count = 0;
+/* scanR2RealFull — V256 升级：Targeted8 → 全仓 32 svc 扫描。每个 svc 判 Cargo.toml 非依赖就命中（"未接入" 定义：shared-auth dep 未声明 OR 声明但 src/* 没 require_permission 调用）。返回 hits[] 并 attach rules。 */
+function scanR2RealFull(rules) {
+  const hits = [];
   for (const name of listSvcDirs()) {
-    if (!TARGETS.has(name)) continue;
-    const rsFiles = walkRsFiles(path.join(SVC_DIR,name,'src'));
-    let found = false;
+    const cargoPath = path.join(SVC_DIR, name, 'Cargo.toml');
+    const srcDir = path.join(SVC_DIR, name, 'src');
+    if (!fs.existsSync(cargoPath) || !fs.existsSync(srcDir)) continue;
+    const cargo = fs.readFileSync(cargoPath, 'utf8');
+    const hasDep = /topems-shared-auth\s*=\s*[\{\"]/.test(cargo);
+    const rsFiles = walkRsFiles(srcDir);
+    let usedPerm = false;
     for (const f of rsFiles) {
-      const c = fs.readFileSync(f,'utf8');
-      if (/require_permission\s*\(/.test(c)) {
-        found=true;
-        break;
-      }
+      const c = fs.readFileSync(f, 'utf8');
+      if (/require_permission\s*\(/.test(c)) { usedPerm = true; break; }
     }
-    if (!found) count++;
+    const missing = (!hasDep || !usedPerm);
+    if (missing) hits.push({
+      svc: name,
+      cargoHasSharedAuthDep: hasDep,
+      srcCallsRequirePermission: usedPerm,
+      reason: !hasDep ? 'Cargo.toml missing topems-shared-auth dep' : 'dep declared but src has zero require_permission() calls',
+      cargoPath: path.relative(ROOT, cargoPath),
+    });
   }
-  return count;
+  for (const r of rules) if (r.id === 'R2') { r.count = hits.length; r.hits = hits; }
+  return hits;
 }
 
 function scanR1R6Real(rules) {
   scanR1Real(rules);
   scanR3Real(rules);
+  scanR2RealFull(rules);
   for (const r of rules) {
-    if (r.id === 'R2') r.count = scanR2RealTargeted8();
     if (r.id === 'R6') r.count = 0;
   }
+}
+
+/* reportRuleHitsTable(rules, include=['R2','R3','R7']) — stdout 列 hits 详情表。
+ * 列: Rule | Svc | File:Line | Fn | Anchor | Why (R3 admin-security/body-admin；R2 reason)
+ */
+function reportRuleHitsTable(rules, opts = {}) {
+  const ids = opts.rules || ['R2','R3','R7'];
+  let rows = [];
+  for (const r of rules) {
+    if (!ids.includes(r.id)) continue;
+    if (!Array.isArray(r.hits) || r.hits.length === 0) continue;
+    for (const h of r.hits) {
+      let why = '';
+      if (r.id === 'R2') why = h.reason || (h.cargoHasSharedAuthDep ? 'no require_permission() call' : 'no shared-auth dep');
+      if (r.id === 'R3') {
+        const tags = [];
+        if (h.hasUtoipaAdminSecurity) tags.push('utoipa-security(admin)');
+        if (h.hasBodyAdminLogic) tags.push('body-admin-call');
+        why = tags.join(',');
+      }
+      rows.push({
+        rule: r.id,
+        svc: h.svc ?? h.name ?? '-',
+        fileLine: (h.file ? h.file + ':' : (h.path ?? h.cargoPath ?? '-')) + (h.line ? h.line : (h.lineNum ? h.lineNum : '')),
+        fn: h.fnName || h.fn || '-',
+        anchor: h.anchorLine || '',
+        why,
+      });
+    }
+  }
+  if (rows.length === 0) {
+    console.log('    (no hits for R2/R3 — scans are clean or hits are empty)');
+    return rows.length;
+  }
+  // 对齐输出：先打印 header
+  const widths = { rule: 6, svc: 14, fileLine: 44, fn: 20, anchor: 7, why: 30 };
+  const pad = (s, w) => { const t = String(s ?? ''); if (t.length <= w) return t.padEnd(w); return t.slice(0, w-1) + '…'; };
+  const hd = `  ${pad('Rule',widths.rule)} | ${pad('Svc',widths.svc)} | ${pad('File:Line',widths.fileLine)} | ${pad('Fn',widths.fn)} | ${pad('Anchor',widths.anchor)} | ${pad('Why',widths.why)}`;
+  console.log(hd);
+  console.log('  ' + '-'.repeat(hd.length - 2));
+  for (const r of rows) {
+    console.log(`  ${pad(r.rule,widths.rule)} | ${pad(r.svc,widths.svc)} | ${pad(r.fileLine,widths.fileLine)} | ${pad(r.fn,widths.fn)} | ${pad(String(r.anchor),widths.anchor)} | ${pad(r.why,widths.why)}`);
+  }
+  return rows.length;
 }
 
 function scanR4Real() {
@@ -336,13 +479,19 @@ function runScan() {
   const r5Hits = scanR5Real();
   const r7Hits = scanR7MiddlewareDuplicate();
 
+  const r7Desc = 'service has local middleware/tenant.rs AND uses shared-auth factory (double-track anti-pattern, migrate to shared-auth)';
+  const r7Count = r7Hits.length;
+
   for (const r of rules) {
     if (r.id === 'R4') r.count = r4Hits.length;
     if (r.id === 'R5') r.count = r5Hits.length;
   }
-
-  const r7Desc = 'service has local middleware/tenant.rs AND uses shared-auth factory (double-track anti-pattern, migrate to shared-auth)';
-  const r7Count = r7Hits.length;
+  // 把 R4/R5/R7 hits 也 attach 到 rules，统一 reportRuleHitsTable / JSON 入口
+  for (const r of rules) {
+    if (r.id === 'R4') r.hits = r4Hits;
+    if (r.id === 'R5') r.hits = r5Hits.slice(0, 50);
+    if (r.id === 'R7') { r.count = r7Count; r.hits = r7Hits; }
+  }
 
   const compat = buildCompatReport(rules, r4Hits, r5Hits, r7Hits, r7Count, r7Desc, null);
 
@@ -350,7 +499,7 @@ function runScan() {
     version: 'perm-gate-scan@1.0.0',
     createdAt: new Date().toISOString(),
     config: { dryRun },
-    rules: rules.map(r => ({ id: r.id, desc: r.desc, severity: r.severity, count: r.count })),
+    rules: rules.map(r => ({ id: r.id, desc: r.desc, severity: r.severity, count: r.count, hits: Array.isArray(r.hits) ? r.hits : [] })),
     R7: { count: r7Count, desc: r7Desc, hits: r7Hits },
     R4_hits: r4Hits,
     R5_hits_sample: r5Hits.slice(0, 50),
@@ -371,22 +520,9 @@ function runScan() {
     console.log(`  ${r.id}:${num} · ${r.severity} · ${r.desc}`);
   }
 
-  if (r4Hits.length > 0) {
-    console.log('');
-    console.log(`    - R4 hits (${r4Hits.length}): ${r4Hits.map(h => h.svc).sort().join(', ')}`);
-  }
-
-  if (r5Hits.length > 0) {
-    console.log('');
-    const shown = r5Hits.slice(0, 10).map(h => h.file).sort();
-    console.log(`    - R5 hits (showing first ${shown.length} of ${r5Hits.length}):`);
-    for (const line of shown) {
-      console.log(`        · ${line}`);
-    }
-    if (r5Hits.length > 10) {
-      console.log(`        ... (+${r5Hits.length - 10} more)`);
-    }
-  }
+  console.log('');
+  console.log('  ── Rule hits detail (R1/R2/R3/R4/R5/R7) ──');
+  reportRuleHitsTable(rules, { rules: ['R1','R2','R3','R4','R5','R7'] });
 
   if (r7Hits.length > 0) {
     const svcNames = r7Hits.map(h => h.name).sort().join(', ');
@@ -428,13 +564,19 @@ function runCiReport() {
   const r5Hits = scanR5Real();
   const r7Hits = scanR7MiddlewareDuplicate();
 
+  const r7Desc = 'service has local middleware/tenant.rs AND uses shared-auth factory (double-track anti-pattern, migrate to shared-auth)';
+  const r7Count = r7Hits.length;
+
   for (const r of rules) {
     if (r.id === 'R4') r.count = r4Hits.length;
     if (r.id === 'R5') r.count = r5Hits.length;
   }
-
-  const r7Desc = 'service has local middleware/tenant.rs AND uses shared-auth factory (double-track anti-pattern, migrate to shared-auth)';
-  const r7Count = r7Hits.length;
+  // R4/R5/R7 hits 统一挂到 rules[].hits
+  for (const r of rules) {
+    if (r.id === 'R4') r.hits = r4Hits;
+    if (r.id === 'R5') r.hits = r5Hits.slice(0, 50);
+    if (r.id === 'R7') { r.count = r7Count; r.hits = r7Hits; }
+  }
 
   const compat = buildCompatReport(rules, r4Hits, r5Hits, r7Hits, r7Count, r7Desc, null);
 
@@ -442,7 +584,7 @@ function runCiReport() {
     version: 'perm-gate-ci-report@1.0.0',
     createdAt: new Date().toISOString(),
     config: { dryRun, failOnWarn },
-    rules: rules.map(r => ({ id: r.id, desc: r.desc, severity: r.severity, count: r.count })),
+    rules: rules.map(r => ({ id: r.id, desc: r.desc, severity: r.severity, count: r.count, hits: Array.isArray(r.hits) ? r.hits : [] })),
     R7: { count: r7Count, desc: r7Desc, hits: r7Hits },
     R4_hits: r4Hits,
     R5_hits_sample: r5Hits.slice(0, 50),
@@ -469,22 +611,9 @@ function runCiReport() {
     console.log(`  ${r.id}:${num} · ${r.severity} · ${r.desc}`);
   }
 
-  if (r4Hits.length > 0) {
-    console.log('');
-    console.log(`    - R4 hits (${r4Hits.length}): ${r4Hits.map(h => h.svc).sort().join(', ')}`);
-  }
-
-  if (r5Hits.length > 0) {
-    console.log('');
-    const shown = r5Hits.slice(0, 10).map(h => h.file).sort();
-    console.log(`    - R5 hits (showing first ${shown.length} of ${r5Hits.length}):`);
-    for (const line of shown) {
-      console.log(`        · ${line}`);
-    }
-    if (r5Hits.length > 10) {
-      console.log(`        ... (+${r5Hits.length - 10} more)`);
-    }
-  }
+  console.log('');
+  console.log('  ── Rule hits detail (R1/R2/R3/R4/R5/R7) ──');
+  reportRuleHitsTable(rules, { rules: ['R1','R2','R3','R4','R5','R7'] });
 
   if (r7Hits.length > 0) {
     const svcNames = r7Hits.map(h => h.name).sort().join(', ');

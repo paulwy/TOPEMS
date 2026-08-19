@@ -224,6 +224,7 @@ pub async fn list_hazards(
     Json(ApiResponse::success(hazards, "获取隐患列表成功"))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:hazard:admin"])),
@@ -462,6 +463,7 @@ pub async fn update_hazard(
     ))
 }
 
+// gate: admin-only
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["ehs:hazard:admin"])),
@@ -666,6 +668,7 @@ pub async fn verify_hazard(
     ))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:hazard:admin"])),

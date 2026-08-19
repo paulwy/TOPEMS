@@ -357,6 +357,7 @@ pub async fn list_hazard_factors(
     ))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:hazard:admin"])),
@@ -491,6 +492,7 @@ pub async fn update_hazard_factor(
     ))
 }
 
+// gate: admin-only
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["ehs:hazard:admin"])),

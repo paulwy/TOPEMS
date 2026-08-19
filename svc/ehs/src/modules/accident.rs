@@ -502,6 +502,7 @@ pub async fn update_investigation(
     ))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:investigation:admin"])),

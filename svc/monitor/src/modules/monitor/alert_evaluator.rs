@@ -408,6 +408,7 @@ pub async fn list_thresholds(
     axum::Json(ApiResponse::success(filtered, "获取阈值列表成功"))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["monitor:threshold:admin"])),
@@ -539,6 +540,7 @@ pub async fn delete_threshold(
     ))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["monitor:threshold:admin"])),

@@ -196,6 +196,7 @@ pub async fn get_sync_record(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:hazard:admin"])),

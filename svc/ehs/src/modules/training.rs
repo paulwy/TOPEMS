@@ -701,6 +701,7 @@ pub async fn list_certificates(
     ))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:cert:admin"])),
@@ -837,6 +838,7 @@ pub async fn update_certificate(
     ))
 }
 
+// gate: admin-only
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["ehs:cert:admin"])),

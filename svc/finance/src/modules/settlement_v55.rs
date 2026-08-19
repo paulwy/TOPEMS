@@ -2375,6 +2375,7 @@ impl SchedulePaymentRequest {
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:payment:admin"])),
@@ -2492,6 +2493,7 @@ pub async fn list_payments_handler(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:payment:admin"])),

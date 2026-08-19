@@ -910,6 +910,7 @@ pub async fn list_permits(
     ))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:permit:admin"])),
@@ -1054,6 +1055,7 @@ pub async fn update_permit(
     ))
 }
 
+// gate: admin-only
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["ehs:permit:admin"])),
