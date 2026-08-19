@@ -7556,11 +7556,96 @@ $ grep -c "## 🎯 V249" docs/roadmap/TODO.md
 
 ### V249 后续扩展（留给 V250+）
 - [ ] **R5 真实扫描发现 2379 处 utoipa::path 缺 permission 属性**（大规模实修，需为 2379 个宏补 `permission(...)` 属性，建议专项 V250 处理）⚠️ 优先级提升
-- [ ] **@types/react 双版本根因修复**：在非并行协调窗口执行 `pnpm override` 强制 `@types/react@19.2.x` + `pnpm install`，根除 bigint 冲突与 TS2590 连锁（全仓 153 个 `slotProps` 站点/100 个文件可移除 `as any`）⚠️ 优先级提升
+- [x] **@types/react 双版本根因修复**：在非并行协调窗口执行 `pnpm override` 强制 `@types/react@19.2.x` + `pnpm install`，根除 bigint 冲突与 TS2590 连锁（全仓 153 个 `slotProps` 站点/100 个文件可移除 `as any`）⚠️ 优先级提升 — **V250-2 单轨（2026-08-19）：pnpm.overrides 强制 @types/react@19.2.17 + @types/react-dom@19.2.3，lockfile 单版本；22 文件移除 as any + 1 文件 routes/v2/types.ts 类型根因修复；tsc 0 errors（含 V249 留的 TS2590 连锁消失）**
 - [ ] **check-perm-gate.cjs 与 check-permission-matrix.cjs 统一**：两个脚本规则定义不同维度（前者 R4=rbac 依赖/R5=utoipa permission，后者 R4=Module prefix/R5=Orphan codes），建议 V250+ 合并或废弃前者
 - [ ] **R2 阈值 3→0**：V248 守绿第 1 版，V249 守绿第 2 版，V250 切换为 0（已连续 2 版无回归）
 - [ ] **cargo-test non-blocking → blocking**：V248 守绿第 1 版，V249 守绿第 2 版，V250 切换为 blocking（已连续 2 版无回归）
 - [ ] **Tauri keystore 实接入**：V249 起手骨架（trait + 占位），V250+ 接入 `tauri-plugin-stronghold` 或平台原生 Keychain API，替换 `secure_store.rs` 文件加密方案（5 件套第 1 件，连续 7 版列入）
 - [ ] **Tauri 5 件套剩余 4 件**（连续 7 版列入）：第 2-5 件待 V250+ 起手
 - [ ] **Dify 端到端**（连续 6 版列入）
+
+## 🎯 V250-2 — @types/react 双版本根因修复 + 22 文件移除 as any + routes/v2/types.ts 类型根因修复（单轨推进 · ✅ 完成）
+
+> 日期：2026-08-19 | 代码改动 25 files（package.json + pnpm-lock.yaml + 22 web 文件 + 1 types.ts）| 净 0 行 | 验收：tsc 0 errors（含 V249 留的 1 个 TS2590 连锁消失）· lockfile 单版本 @types/react@19.2.17 · pnpm install 无 ERR
+
+### 单轨任务：@types/react 双版本根因修复（V250 优先候选 2）
+
+- 背景：V249 B 轨识别根因为 workspace 同时存在 `@types/react@18.2.79`（peer 限制拉入）+ `@types/react@19.2.17`（workspace 声明），导致 ReactNode@19 → ReactNode@18 不兼容（TS2769/TS2322）+ MUI slotProps 联合体过深（TS2590）。V249 用 24 文件 `as any` 收敛到 1 error，建议 V250 在非并行协调窗口做 pnpm override 根因修复。
+- 改动前基线：
+  | 项 | 值 |
+  |---|---|
+  | pnpm-lock.yaml @types/react | 双版本（18.2.79 + 19.2.17） |
+  | web tsc errors | 1（V249 留的 DateRangePicker TS2590 连锁） |
+  | V249 B 轨引入的 as any | 22 个文件（apps/web 22 + packages/shared-components 2，含 Cascader） |
+  | routes/v2/types.ts element 类型 | 严格 `ComponentType<Record<string, unknown>>` |
+- 变更（25 files）：
+  - [package.json](file:///Users/air/TOPEMS/package.json) — 在 `pnpm` 段新增 `overrides: { "@types/react": "19.2.17", "@types/react-dom": "19.2.3" }`
+  - [pnpm-lock.yaml](file:///Users/air/TOPEMS/pnpm-lock.yaml) — `pnpm install --no-frozen-lockfile` 更新，@types/react 单版本 19.2.17（18.2.79 已被 override 强制移除）
+  - [apps/web/src/routes/v2/types.ts](file:///Users/air/TOPEMS/apps/web/src/routes/v2/types.ts) — `RouteConfig.element` + `RouteConfigV2.element` 类型从 `LazyExoticComponent<ComponentType<Record<string, unknown>>>` 放宽为 `LazyExoticComponent<ComponentType<any>>`（与 `routes/utils.ts` 第 62 行一致），消除 report/config.ts 的 as any 根因
+  - 22 × `apps/web/src/**/*.{ts,tsx}` 移除 V249 B 轨引入的 `as any`（PriorityBadge/DataTable/StreamingBoundary/Cascader/DraggableWindow/FormBuilder/HelpButton/MarkdownEditorTemplate/PageHeader/WizardBuilder/useBffSuspense/usePartialPreRender/dashboardAdapter/mes config/report config/ChatSidebar/QuickAction/StatCard/DesignerCanvas/BIVisualizationPage/EmailDetailDialog/EmailList/processFlow）
+- 关键设计决策：
+  1. **pnpm.overrides 而非 pnpm.patchedDependencies**：overrides 是 pnpm 原生机制，强制所有依赖图中的 @types/react 解析到 19.2.17，不需要打补丁
+  2. **routes/v2/types.ts 类型根因修复**：V249 B 轨在 report/config.ts 第 61 行加 `as any` 是因 ReportViewerProps（含必填 report/onClose）与 `ComponentType<Record<string, unknown>>` 不兼容。V250-2 把 v2/types.ts 的 element 类型放宽为 `ComponentType<any>`，与 routes/utils.ts 第 62 行一致，根因消除 as any
+  3. **processFlow.ts 的 renderCell 返回类型**：V249 改为 `: any`，V250-2 改为 `: string`（函数体返回 template literal 或 `'-'`，与 SchemaField.renderCell 的 `React.ReactNode` 返回类型兼容）
+  4. **DateRangePicker.tsx 无需修改**：V249 留的 TS2590 连锁在 pnpm override 后自动消失，slotProps 已用 `as const`（非 `as any`）
+- 验收：
+
+```bash
+$ grep -E "'@types/react@" pnpm-lock.yaml | sort -u
+  '@types/react@19.2.17':
+# 单版本（18.2.79 已移除）
+$ NODE_OPTIONS=--max-old-space-size=8192 pnpm --filter topems-portal run typecheck 2>&1 | grep -c "error TS"
+0
+# tsc 0 errors（V249 留的 1 个 TS2590 连锁消失）
+```
+
+### 变更文件清单（共 25 files）
+
+**配置（2 files）**
+- 1 × `package.json` pnpm.overrides 新增
+- 1 × `pnpm-lock.yaml` 单版本更新
+
+**类型根因（1 file）**
+- 1 × `apps/web/src/routes/v2/types.ts` RouteConfig/RouteConfigV2 element 类型放宽
+
+**移除 as any（22 files · apps/web 21 + packages/shared-components 1）**
+- 1 × `apps/web/src/components/common/PriorityBadge.tsx` ComponentType<{size?:number}> 恢复
+- 1 × `apps/web/src/components/common/DataTable.tsx` slotProps as any ×2 移除
+- 1 × `apps/web/src/components/bff/StreamingBoundary.tsx` fallback + name as any 移除
+- 1 × `packages/shared-components/src/components/Cascader.tsx` slotProps as any 移除
+- 1 × `apps/web/src/components/common/DraggableWindow.tsx` component as any 移除
+- 1 × `apps/web/src/components/common/FormBuilder.tsx` params as any 移除
+- 1 × `apps/web/src/components/common/HelpButton.tsx` slotProps as any 移除
+- 1 × `apps/web/src/components/templates/MarkdownEditorTemplate.tsx` props as any 移除
+- 1 × `apps/web/src/components/templates/PageHeader.tsx` item.icon as any ×2 移除
+- 1 × `apps/web/src/components/templates/WizardBuilder.tsx` renderStepIcon + renderContent as any 移除
+- 1 × `apps/web/src/hooks/bff/useBffSuspense.tsx` fallback + name as any 移除
+- 1 × `apps/web/src/hooks/bff/usePartialPreRender.tsx` fallback + name as any 移除
+- 1 × `apps/web/src/lib/navigation/dashboardAdapter.ts` Icon as any 移除
+- 1 × `apps/web/src/modules/mes/config.ts` lazyWithRetry as any 移除
+- 1 × `apps/web/src/modules/report/config.ts` lazyWithRetry as any 移除（类型根因修复后可移除）
+- 1 × `apps/web/src/pages/ai/components/ChatSidebar.tsx` prompt.icon as any 移除
+- 1 × `apps/web/src/pages/ai/components/QuickAction.tsx` icon as any 移除
+- 1 × `apps/web/src/pages/ai/components/StatCard.tsx` icon as any 移除
+- 1 × `apps/web/src/pages/automation/AutomationDesignerPage/components/DesignerCanvas.tsx` canvasViewportRef as any 移除
+- 1 × `apps/web/src/pages/bi/BIVisualizationPage.tsx` comp.icon + getComponentIcon as any ×3 移除
+- 1 × `apps/web/src/pages/im/MailPage/components/EmailDetailDialog.tsx` getStatusBadge + getPriorityBadge as any 移除
+- 1 × `apps/web/src/pages/im/MailPage/components/EmailList.tsx` getStatusBadge + getPriorityBadge as any 移除
+- 1 × `apps/web/src/schemas/mes/processFlow.ts` renderCell 返回 `: any` → `: string`
+
+### 最终验收矩阵
+- [x] `grep -E "'@types/react@" pnpm-lock.yaml | sort -u` — 单版本 `@types/react@19.2.17`（18.2.79 已移除）
+- [x] `NODE_OPTIONS=--max-old-space-size=8192 pnpm --filter topems-portal run typecheck | grep -c "error TS"` — 0（V249 留的 1 个 TS2590 连锁消失）
+- [x] `pnpm install` 无 ERR_PNPM_LOCKFILE_CONFIG_MISMATCH
+- [x] `git diff --stat HEAD | wc -l` — 25 files（package.json + pnpm-lock.yaml + 22 web + 1 types.ts）
+
+### V250-2 后续扩展（留给 V251+）
+- [ ] **R5 真实扫描发现 2379 处 utoipa::path 缺 permission 属性**（V249 留，大规模实修，需为 2379 个宏补 `permission(...)` 属性）⚠️ 优先级提升
+- [ ] **check-perm-gate.cjs 与 check-permission-matrix.cjs 统一**（V249 留）
+- [ ] **R2 阈值 3→0**：V248/V249 守绿 2 版，V251 切换为 0（V250 未做，需补做）
+- [ ] **cargo-test non-blocking → blocking**：V248/V249 守绿 2 版，V251 切换为 blocking（V250 未做，需补做）
+- [ ] **Tauri keystore 实接入**：V249 起手骨架，V251+ 接入 `tauri-plugin-stronghold` 或平台原生 Keychain API（5 件套第 1 件，连续 8 版列入）
+- [ ] **Tauri 5 件套剩余 4 件**（连续 8 版列入）
+- [ ] **Dify 端到端**（连续 7 版列入）
+- [ ] **routes/v2/types.ts element 类型进一步收紧**：V250-2 放宽为 `ComponentType<any>`，未来可用泛型 `ComponentType<P>` 让具体 config.ts 自定义 props 类型
 

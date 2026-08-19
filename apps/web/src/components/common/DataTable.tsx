@@ -288,7 +288,7 @@ function EditCellComponent({
           autoFocus
           onBlur={handleBlur}
           sx={{ width: '100%', minWidth: 120 }}
-          slotProps={{ inputLabel: { shrink: true } } as any}
+          slotProps={{ inputLabel: { shrink: true } }}
         />
       );
     case 'datetime':
@@ -301,7 +301,7 @@ function EditCellComponent({
           autoFocus
           onBlur={handleBlur}
           sx={{ width: '100%', minWidth: 150 }}
-          slotProps={{ inputLabel: { shrink: true } } as any}
+          slotProps={{ inputLabel: { shrink: true } }}
         />
       );
     case 'checkbox':

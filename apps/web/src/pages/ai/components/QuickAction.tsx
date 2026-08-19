@@ -51,7 +51,7 @@ export const QuickAction: React.FC<QuickActionData> = ({
           color: colorMap[color],
         }}
       >
-        {icon as any}
+        {icon}
       </Box>
       <Typography
         variant='body1'

@@ -221,7 +221,7 @@ export function WizardBuilder({
           disabled={index > safeActiveStep}
           onClick={() => handleStepClick(index)}
         >
-          <StepLabel icon={renderStepIcon(step, index) as any}>
+          <StepLabel icon={renderStepIcon(step, index)}>
             {step.title}
             {step.description && (
               <Typography

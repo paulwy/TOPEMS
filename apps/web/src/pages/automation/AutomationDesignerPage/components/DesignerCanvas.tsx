@@ -67,7 +67,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
   const { t } = useTranslation('automation');
   return (
     <Paper
-      ref={canvasViewportRef as any}
+      ref={canvasViewportRef}
       onScroll={onCanvasScroll}
       onWheel={onCanvasWheel}
       variant='outlined'

@@ -21,7 +21,7 @@ export type LayoutType = 'default' | 'full' | 'mobile' | 'none';
 
 export interface RouteConfig {
   path: string;
-  element: ReactElement | LazyExoticComponent<ComponentType<Record<string, unknown>>>;
+  element: ReactElement | LazyExoticComponent<ComponentType<any>>;
   requiredPermissions?: string[];
   module?: string;
   action?: 'read' | 'write' | 'update' | 'delete' | 'admin';
@@ -31,7 +31,7 @@ export type ModuleTier = 'basic' | 'advanced';
 
 export interface RouteConfigV2 {
   path: string;
-  element: ReactElement | LazyExoticComponent<ComponentType<Record<string, unknown>>>;
+  element: ReactElement | LazyExoticComponent<ComponentType<any>>;
   module: string;
   title: string;
   /** i18n key for the title; if provided, render-time translation overrides `title` */

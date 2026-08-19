@@ -386,8 +386,8 @@ export const StreamingSlot: React.FC<StreamingSlotProps> = ({
     >
       {visible ? (
         <Suspense
-          fallback={slotFallback as any}
-          {...({ name: `slot-${name}` } as any)}
+          fallback={slotFallback}
+          {...{ name: `slot-${name}` }}
         >
           <SlotReadyWrapper onReady={handleReady}>{children}</SlotReadyWrapper>
         </Suspense>
