@@ -191,6 +191,7 @@
 use axum::{routing::get, Json, Router};
 use prometheus::{default_registry, Gauge};
 use serde::Serialize;
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, check_iam_health, run, Application, ServiceConfig,
 };
@@ -297,7 +298,9 @@ async fn main() -> anyhow::Result<()> {
 
     // ── protected_routes（业务路由 + State<ApiState>） ────────────────────
     // auth / rls / rate_limit 中间件由 build_application 在 protected 层自动叠加
-    let protected_routes = modules::create_routes().with_state(api_state.clone());
+    let protected_routes = modules::create_routes()
+        .layer(axum::middleware::from_fn(require_permission("rd:admin")))
+        .with_state(api_state.clone());
 
     // ── OpenAPI JSON ─────────────────────────────────────────────────
     let openapi_json = Some(

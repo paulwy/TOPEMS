@@ -195,6 +195,7 @@
 use anyhow::Result;
 use axum::routing::get;
 use prometheus::{default_registry, Gauge};
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
@@ -288,7 +289,8 @@ async fn main() -> Result<()> {
         ctx.db.clone(),
         ctx.event_publisher.clone(),
         workflow_client.clone(),
-    );
+    )
+    .layer(axum::middleware::from_fn(require_permission("pm:admin")));
 
     // ── OpenAPI JSON ─────────────────────────────────────────────────
     let openapi_json = Some(

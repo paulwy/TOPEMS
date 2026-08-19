@@ -203,6 +203,7 @@ use axum::{extract::State, routing::get, Json, Router};
 use utoipa::OpenApi;
 
 use topems_shared::ApiResponse;
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 
@@ -269,6 +270,7 @@ async fn main() -> anyhow::Result<()> {
             api_state.pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
+        .layer(axum::middleware::from_fn(require_permission("pdm:admin")))
         .with_state(api_state.clone());
 
     let openapi_json = serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_default();

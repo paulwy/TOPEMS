@@ -19,6 +19,7 @@ tower-http.workspace = true
 thiserror.workspace = true
 sqlx.workspace = true
 topems-shared = { workspace = true }
+topems-shared-auth = { workspace = true }
 topems-shared-bootstrap = { workspace = true }
 topems-shared-core = { workspace = true }
 topems-shared-db = { workspace = true }

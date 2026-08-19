@@ -189,6 +189,7 @@
     clippy::useless_format
 )]
 use axum::{routing::get, routing::post, routing::put, Router};
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 use utoipa::OpenApi;
 
@@ -255,6 +256,9 @@ async fn main() {
             "/usage/{tenant_id}/{metric_type}",
             post(handlers::record_usage),
         )
+        .layer(axum::middleware::from_fn(require_permission(
+            "billing:admin",
+        )))
         .with_state(ctx.db.clone());
 
     let openapi_json = Some(

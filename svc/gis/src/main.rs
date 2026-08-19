@@ -201,6 +201,7 @@ use std::sync::Arc;
 use utoipa::OpenApi;
 
 use topems_shared_auth::auth::{AuthState, Claims};
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
 use topems_shared_core::api_version::{create_api_info_router, register_routes_with_legacy_alias};
 use topems_shared_core::cors::create_cors_layer;
@@ -678,7 +679,8 @@ async fn main() -> Result<()> {
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             topems_shared_auth::auth::auth_middleware,
-        ));
+        ))
+        .layer(axum::middleware::from_fn(require_permission("gis:admin")));
 
     use topems_shared_auth::security::{
         rate_limit_middleware, RateLimitConfig, RateLimitMiddleware,

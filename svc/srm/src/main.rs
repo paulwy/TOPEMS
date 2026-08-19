@@ -206,6 +206,7 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use prometheus::{default_registry, Gauge};
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
@@ -304,7 +305,8 @@ async fn main() -> Result<()> {
         .layer(axum::middleware::from_fn_with_state(
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
-        ));
+        ))
+        .layer(axum::middleware::from_fn(require_permission("srm:admin")));
 
     // 标准健康检查路由 + 插件路由
     let health_state = create_health_state(&ctx, &config);

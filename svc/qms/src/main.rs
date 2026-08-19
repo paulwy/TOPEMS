@@ -203,6 +203,7 @@ use axum::{extract::State, routing::get, Json, Router};
 use utoipa::OpenApi;
 
 use topems_shared::{ApiResponse, AuthState};
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 use topems_shared_event::event::EventPublisher;
@@ -281,6 +282,7 @@ async fn main() -> anyhow::Result<()> {
     let protected_routes = Router::new()
         .merge(modules::create_routes())
         .route("/api/health/detailed", get(detailed_health))
+        .layer(axum::middleware::from_fn(require_permission("qms:admin")))
         .with_state(api_state.clone());
 
     let openapi_json =

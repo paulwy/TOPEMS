@@ -193,6 +193,7 @@
     clippy::useless_format
 )]
 use axum::{routing::get, Router};
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 use utoipa::OpenApi;
 
@@ -239,7 +240,11 @@ async fn main() -> anyhow::Result<()> {
         );
 
     // ── protected_routes（业务路由：需要 State<PgPool>） ──────────────
-    let protected_routes = handlers::ticket_routes().with_state(ctx.db.clone());
+    let protected_routes = handlers::ticket_routes()
+        .layer(axum::middleware::from_fn(require_permission(
+            "ticket:admin",
+        )))
+        .with_state(ctx.db.clone());
 
     // ── 组装 Application ─────────────────────────────────────────────
     let app = build_application(&ctx, &config, public_routes, protected_routes, None);

@@ -193,6 +193,7 @@
     clippy::useless_format
 )]
 use axum::{routing::get, Router};
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 use utoipa::OpenApi;
 
@@ -235,7 +236,11 @@ async fn main() -> anyhow::Result<()> {
         .route("/health", get(health_handler));
 
     // ── protected_routes（业务路由：需要 State<PgPool>） ──────────────
-    let protected_routes = handlers::feedback_routes().with_state(ctx.db.clone());
+    let protected_routes = handlers::feedback_routes()
+        .layer(axum::middleware::from_fn(require_permission(
+            "feedback:admin",
+        )))
+        .with_state(ctx.db.clone());
 
     // ── 组装 Application ─────────────────────────────────────────────
     let openapi_json = Some(

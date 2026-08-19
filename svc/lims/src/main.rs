@@ -211,6 +211,7 @@ use axum::{
 };
 use utoipa::OpenApi;
 
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 use topems_shared_core::response::ApiResponse;
@@ -403,6 +404,7 @@ async fn main() -> anyhow::Result<()> {
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
+        .layer(axum::middleware::from_fn(require_permission("lims:admin")))
         .with_state(api_state.clone());
 
     let openapi_json =

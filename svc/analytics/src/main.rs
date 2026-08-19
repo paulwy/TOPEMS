@@ -208,6 +208,7 @@ use axum::{
 };
 
 use topems_shared::ApiResponse;
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
 };
@@ -920,6 +921,9 @@ async fn main() -> anyhow::Result<()> {
         //       完整路径为 /api/bi/health/detailed，与上方 stateful_public 中
         //       无鉴权的 /health（服务级健康检查）区分开）
         .route("/health/detailed", get(detailed_health))
+        .layer(axum::middleware::from_fn(require_permission(
+            "analytics:admin",
+        )))
         .with_state(app_state.clone());
 
     // ── OpenAPI JSON ──────────────────────────────────────────────────

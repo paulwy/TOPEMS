@@ -199,6 +199,7 @@ use topems_mes::{modules, AppState};
 use axum::routing::get;
 use utoipa::OpenApi;
 
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
@@ -270,7 +271,9 @@ async fn main() -> anyhow::Result<()> {
     let public_routes = create_standard_health_routes(health_state).merge(plugin_routes);
 
     // 业务路由
-    let protected_routes = modules::create_routes().with_state(state);
+    let protected_routes = modules::create_routes()
+        .layer(axum::middleware::from_fn(require_permission("mes:admin")))
+        .with_state(state);
 
     // OpenAPI 文档
     let openapi_json = Some(

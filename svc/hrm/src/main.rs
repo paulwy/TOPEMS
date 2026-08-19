@@ -205,6 +205,7 @@ use utoipa::OpenApi;
 
 use modules::ApiState;
 use topems_shared::{config::CacheConfig, LocalInMemoryCache as InMemoryCache};
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
     ServiceConfig,
@@ -260,7 +261,9 @@ async fn main() -> Result<()> {
     let public_routes = create_standard_health_routes(health_state);
 
     // 业务路由
-    let protected_routes = modules::create_routes().with_state(api_state);
+    let protected_routes = modules::create_routes()
+        .layer(axum::middleware::from_fn(require_permission("hrm:admin")))
+        .with_state(api_state);
 
     // OpenAPI 文档
     let openapi_json = Some(
