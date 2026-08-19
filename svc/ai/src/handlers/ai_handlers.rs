@@ -16,6 +16,7 @@ use topems_shared_core::response::ApiResponse;
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/generate",
     request_body = AIGenerateRequest,
     tag = "ai",
@@ -97,6 +98,7 @@ pub async fn generate(Json(req): Json<AIGenerateRequest>) -> Json<ApiResponse<AI
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/validate",
     request_body = ValidateRequest,
     tag = "ai",
@@ -264,6 +266,7 @@ pub async fn validate(Json(req): Json<ValidateRequest>) -> Json<ApiResponse<Vali
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/complete",
     request_body = CompleteRequest,
     tag = "ai",
@@ -396,6 +399,7 @@ pub async fn complete(Json(req): Json<CompleteRequest>) -> Json<ApiResponse<Comp
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/summarize",
     request_body = SummarizeRequest,
     tag = "ai",
@@ -471,6 +475,7 @@ pub async fn summarize(Json(req): Json<SummarizeRequest>) -> Json<ApiResponse<Su
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/api/ai/templates",
     tag = "ai",
     responses(
@@ -522,6 +527,7 @@ pub async fn list_templates() -> Json<ApiResponse<Vec<AITemplate>>> {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/chat",
     request_body = ChatRequest,
     tag = "ai",
@@ -646,6 +652,7 @@ pub async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/search",
     request_body = AiSearchRequest,
     tag = "ai",
@@ -774,6 +781,7 @@ async fn call_ai_api(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/assistant/report",
     request_body = ReportAssistantRequest,
     tag = "ai",
@@ -829,6 +837,7 @@ pub async fn report_assistant(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/assistant/flow",
     request_body = FlowAssistantRequest,
     tag = "ai",
@@ -893,6 +902,7 @@ pub async fn flow_assistant(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/assistant/anomaly/predict",
     request_body = AnomalyPredictRequest,
     tag = "ai",
@@ -942,6 +952,7 @@ pub async fn anomaly_predict(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/assistant/knowledge/ask",
     request_body = KnowledgeAskRequest,
     tag = "ai",

@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/api/ai/connectors",
     tag = "ai",
     responses(
@@ -41,6 +42,7 @@ pub async fn list_connectors() -> Json<ApiResponse<Vec<DataConnector>>> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/api/ai/connectors/get",
     tag = "ai",
     responses(
@@ -79,6 +81,7 @@ pub async fn get_connector(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/connectors/create",
     request_body = CreateConnectorRequest,
     tag = "ai",
@@ -134,6 +137,7 @@ pub async fn create_connector(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/connectors/update",
     request_body = UpdateConnectorRequest,
     tag = "ai",
@@ -195,6 +199,7 @@ pub async fn update_connector(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/connectors/delete",
     tag = "ai",
     responses(
@@ -231,6 +236,7 @@ pub async fn delete_connector(Query(params): Query<ConnectorQuery>) -> Json<ApiR
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/api/ai/connectors/test",
     tag = "ai",
     responses(
@@ -284,6 +290,7 @@ pub async fn test_connector(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/connectors/query",
     request_body = DataQueryRequest,
     tag = "ai",

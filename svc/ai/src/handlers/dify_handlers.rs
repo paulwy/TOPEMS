@@ -46,6 +46,7 @@ fn err_to_response<T>(e: DifyError) -> ApiOk<T> {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/dify/chat",
     request_body = DifyChatRequest,
     tag = "ai-dify",
@@ -65,6 +66,7 @@ pub async fn chat(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/dify/chat/stream",
     request_body = DifyChatRequest,
     tag = "ai-dify",
@@ -103,6 +105,7 @@ pub async fn chat_stream(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/api/ai/dify/info",
     tag = "ai-dify",
     responses((status = 200, description = "OK")),
@@ -116,6 +119,7 @@ pub async fn info(State(state): State<AppState>) -> ApiOk<DifyInfoResponse> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/api/ai/dify/parameters",
     tag = "ai-dify",
     responses((status = 200, description = "OK")),
@@ -132,6 +136,7 @@ pub async fn parameters(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/api/ai/dify/meta",
     tag = "ai-dify",
     responses((status = 200, description = "OK")),
@@ -149,6 +154,7 @@ pub async fn meta(State(state): State<AppState>) -> ApiOk<DifyMetaResponse> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/api/ai/dify/conversations",
     tag = "ai-dify",
     responses((status = 200, description = "OK")),
@@ -169,6 +175,7 @@ pub async fn list_conversations(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/api/ai/dify/messages",
     tag = "ai-dify",
     responses((status = 200, description = "OK")),
@@ -196,6 +203,7 @@ pub async fn list_messages(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ai:delete"])),
     path = "/api/ai/dify/conversations/{conversation_id}",
     tag = "ai-dify",
     responses((status = 200, description = "OK")),
@@ -221,6 +229,7 @@ pub async fn delete_conversation(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/dify/messages/{message_id}/feedbacks",
     request_body = DifyFeedbackRequest,
     tag = "ai-dify",
@@ -242,6 +251,7 @@ pub async fn feedback(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/dify/messages/{message_id}/stop",
     request_body = DifyStopRequest,
     tag = "ai-dify",
@@ -267,6 +277,7 @@ pub async fn stop(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/api/ai/dify/health",
     tag = "ai-dify",
     responses((status = 200, description = "OK")),

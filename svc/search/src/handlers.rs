@@ -297,6 +297,7 @@ async fn search_all(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["search:read"])),
     path = "/api/search",
     tag = "fulltext",
     params(
@@ -404,6 +405,7 @@ pub async fn search_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["search:read"])),
     path = "/health",
     tag = "health",
     responses(

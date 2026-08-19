@@ -252,3 +252,4 @@ scripts/tmp-output/
 
 # P2 theme verification screenshots (temp artifacts)
 apps/web/public/__p2_artifacts/
+_tmp_*

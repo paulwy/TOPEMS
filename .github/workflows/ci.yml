@@ -320,12 +320,11 @@ jobs:
   # will switch to blocking after N consecutive green runs.
   # ──────────────────────────────────────────────────────────────────────────
   cargo-test:
-    name: Cargo Test (V247 baseline, non-blocking)
+    name: Cargo Test (V251 blocking)
     needs: changes
     if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
-    # V249 守绿第 2 版（V250 切换为 blocking）
-    continue-on-error: true  # V247: 基线阶段不阻断
+    # V251: 已连续 3 版守绿，切换为 blocking
     steps:
       - uses: actions/checkout@v5
       - name: Install Rust
@@ -1049,10 +1048,10 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
-      - name: "Run Axum Layer Order Checker (R1 strict: --fail-fast R1:0, R2:3_buffered / R3 allowed)"
+      - name: "Run Axum Layer Order Checker (R1 strict: --fail-fast R1:0 + R2:0 / R3 allowed)"
         run: |
           node scripts/ci/check-axum-layer-order.cjs \
-            --fail-fast --thresholds=R1:0,R2:3,R3:999999 \
+            --fail-fast --thresholds=R1:0,R2:0,R3:999999 \
             --report-json=/tmp/axum-layer-report.json 2>&1 | tee /tmp/axum-layer-output.log
           EXIT_CODE=${PIPESTATUS[0]}
 

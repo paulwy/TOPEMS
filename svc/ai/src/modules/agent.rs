@@ -13,6 +13,7 @@ pub fn create_routes() -> Router<crate::shared::AppState> {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/agent/run",
     request_body = crate::services::AgentRequest,
     tag = "ai",
@@ -32,6 +33,7 @@ pub async fn agent_run(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/api/ai/agent/tools",
     tag = "ai",
     responses(

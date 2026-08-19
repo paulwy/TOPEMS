@@ -19,9 +19,9 @@ export type PageTemplateType =
 
 export type LayoutType = 'default' | 'full' | 'mobile' | 'none';
 
-export interface RouteConfig {
+export interface RouteConfig<P = any> {
   path: string;
-  element: ReactElement | LazyExoticComponent<ComponentType<any>>;
+  element: ReactElement | LazyExoticComponent<ComponentType<P>>;
   requiredPermissions?: string[];
   module?: string;
   action?: 'read' | 'write' | 'update' | 'delete' | 'admin';
@@ -29,9 +29,9 @@ export interface RouteConfig {
 
 export type ModuleTier = 'basic' | 'advanced';
 
-export interface RouteConfigV2 {
+export interface RouteConfigV2<P = any> {
   path: string;
-  element: ReactElement | LazyExoticComponent<ComponentType<any>>;
+  element: ReactElement | LazyExoticComponent<ComponentType<P>>;
   module: string;
   title: string;
   /** i18n key for the title; if provided, render-time translation overrides `title` */

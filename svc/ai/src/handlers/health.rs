@@ -11,6 +11,7 @@ use topems_shared_core::health::{
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/",
     tag = "ai",
     responses(
@@ -23,6 +24,7 @@ pub async fn home() -> &'static str {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/health",
     tag = "ai",
     responses(
@@ -49,6 +51,7 @@ pub async fn health() -> Json<ApiResponse<String>> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/health/detailed",
     tag = "ai",
     responses(
