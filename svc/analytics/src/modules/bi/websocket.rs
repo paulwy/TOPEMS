@@ -16,7 +16,7 @@ use crate::shared::AppState;
 /// WebSocket endpoint for real-time dashboard data
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:dashboard:read"])),
     path = "/ws/bi/dashboard/{id}",
     tag = "WebSocket",
     operation_id = "dashboard_websocket",

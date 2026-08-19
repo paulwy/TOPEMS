@@ -294,7 +294,7 @@ pub async fn get_sync_record(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:report:write"])),
     path = "/api/bi/sync-records",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))

@@ -19,7 +19,7 @@ use uuid::Uuid;
 /// 下载文件
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:file:read"])),
     path = "/api/core/file/download/{id}",
     tag = "File",
     params(
@@ -174,7 +174,7 @@ pub async fn download_file(
 /// 预览文件（在线查看）
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:file:read"])),
     path = "/api/core/file/preview/{id}",
     tag = "File",
     params(
@@ -329,7 +329,7 @@ pub async fn preview_file(
 /// 获取文件缩略图（仅图片）
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:file:read"])),
     path = "/api/core/file/thumbnail/{id}",
     tag = "File",
     params(

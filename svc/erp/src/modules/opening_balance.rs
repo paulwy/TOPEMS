@@ -81,7 +81,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:finance:read"])),
     path = "/erp/finance/accounts/opening-balances",
     tag = "Finance",
     responses((status = 200, description = "获取期初余额列表成功"))
@@ -156,7 +156,7 @@ pub async fn list_opening_balances(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:finance:write"])),
     path = "/erp/finance/accounts/opening-balances",
     tag = "Finance",
     responses((status = 200, description = "期初余额创建成功"))
@@ -245,7 +245,7 @@ pub async fn create_opening_balance(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:finance:read"])),
     path = "/erp/finance/accounts/opening-balances/{id}",
     tag = "Finance",
     params(("id" = Uuid, Path, description = "期初余额ID")),
@@ -277,7 +277,7 @@ pub async fn get_opening_balance(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["erp:update"])),
+    security(("BearerAuth" = ["erp:finance:write"])),
     path = "/erp/finance/accounts/opening-balances/{id}",
     tag = "Finance",
     params(("id" = Uuid, Path, description = "期初余额ID")),
@@ -367,7 +367,7 @@ pub async fn update_opening_balance(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["erp:delete"])),
+    security(("BearerAuth" = ["erp:finance:write"])),
     path = "/erp/finance/accounts/opening-balances/{id}",
     tag = "Finance",
     params(("id" = Uuid, Path, description = "期初余额ID")),
@@ -433,7 +433,7 @@ pub async fn delete_opening_balance(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:finance:write"])),
     path = "/erp/finance/accounts/opening-balances/batch",
     tag = "Finance",
     responses((status = 200, description = "期初余额批量导入完成"))
@@ -527,7 +527,7 @@ pub async fn import_opening_balances(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:finance:write"])),
     path = "/erp/finance/accounts/opening-balances/carry-forward",
     tag = "Finance",
     responses((status = 200, description = "期初余额结转完成"))

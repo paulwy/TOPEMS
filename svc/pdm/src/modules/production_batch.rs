@@ -164,7 +164,7 @@ pub async fn list_batches(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["pdm:write"])),
+    security(("BearerAuth" = ["pdm:bom:write"])),
     path = "/api/pdm/production-batches",
     request_body = CreateBatchRequest,
     tag = "pdm",

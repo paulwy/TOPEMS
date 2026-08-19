@@ -26,7 +26,7 @@ fn not_implemented(feature: &str) -> impl IntoResponse {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["lowcode:read"])),
+    security(("BearerAuth" = ["lowcode:system:read"])),
     path = "/health",
     responses((status = 200, description = "服务健康"))
 )]
@@ -36,7 +36,7 @@ pub async fn health() -> &'static str {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["lowcode:read"])),
+    security(("BearerAuth" = ["lowcode:app:read"])),
     path = "/api/lowcode/apps",
     responses((status = 501, description = "低代码后端待立项"))
 )]
@@ -46,7 +46,7 @@ pub async fn list_apps() -> impl IntoResponse {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["lowcode:write"])),
+    security(("BearerAuth" = ["lowcode:app:write"])),
     path = "/api/lowcode/apps",
     responses((status = 501, description = "低代码后端待立项"))
 )]
@@ -56,7 +56,7 @@ pub async fn create_app() -> impl IntoResponse {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["lowcode:read"])),
+    security(("BearerAuth" = ["lowcode:designer:read"])),
     path = "/api/lowcode/designer/schema",
     responses((status = 501, description = "低代码后端待立项"))
 )]

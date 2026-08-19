@@ -73,7 +73,7 @@ pub struct UpdateMapLayer {
 /// 创建地图
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["gis:write"])),
+    security(("BearerAuth" = ["gis:map:write"])),
     path = "/maps/create",
     tag = "project",
     request_body = CreateMap,
@@ -118,7 +118,7 @@ pub async fn create_map(
 /// 获取地图列表
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["gis:read"])),
+    security(("BearerAuth" = ["gis:map:read"])),
     path = "/maps",
     tag = "project",
     responses(
@@ -145,7 +145,7 @@ pub async fn list_maps(State(pool): State<PgPool>) -> Json<ApiResponse<serde_jso
 /// 获取地图详情
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["gis:read"])),
+    security(("BearerAuth" = ["gis:map:read"])),
     path = "/maps/{id}",
     tag = "project",
     params(
@@ -172,7 +172,7 @@ pub async fn get_map(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<A
 /// 更新地图
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["gis:update"])),
+    security(("BearerAuth" = ["gis:map:read"])),
     path = "/maps/{id}",
     tag = "project",
     params(
@@ -225,7 +225,7 @@ pub async fn update_map(
 /// 删除地图
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["gis:delete"])),
+    security(("BearerAuth" = ["gis:map:read"])),
     path = "/maps/{id}",
     tag = "project",
     params(

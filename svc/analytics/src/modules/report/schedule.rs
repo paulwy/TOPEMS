@@ -128,7 +128,7 @@ pub struct ScheduleExecutionRecord {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:schedule:read"])),
     path = "/schedules",
     tag = "Schedules",
     operation_id = "list_schedules",
@@ -184,7 +184,7 @@ pub async fn list_schedules(State(state): State<AppState>) -> Json<serde_json::V
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:schedule:write"])),
     path = "/schedules",
     tag = "Schedules",
     operation_id = "create_schedule",
@@ -236,7 +236,7 @@ pub async fn create_schedule(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:schedule:read"])),
     path = "/schedules/{id}",
     tag = "Schedules",
     operation_id = "get_schedule",
@@ -297,7 +297,7 @@ pub async fn get_schedule(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["analytics:update"])),
+    security(("BearerAuth" = ["analytics:schedule:write"])),
     path = "/schedules/{id}",
     tag = "Schedules",
     operation_id = "update_schedule",
@@ -346,7 +346,7 @@ pub async fn update_schedule(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["analytics:delete"])),
+    security(("BearerAuth" = ["analytics:schedule:write"])),
     path = "/schedules/{id}",
     tag = "Schedules",
     operation_id = "delete_schedule",
@@ -382,7 +382,7 @@ pub async fn delete_schedule(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:schedule:write"])),
     path = "/schedules/{id}/execute",
     tag = "Schedules",
     operation_id = "execute_schedule",

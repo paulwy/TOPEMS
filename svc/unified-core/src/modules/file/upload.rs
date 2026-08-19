@@ -27,7 +27,7 @@ struct FileUploadResponse {
 /// 上传单个文件
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:file:write"])),
     path = "/api/core/file/upload",
     tag = "File",
     request_body = serde_json::Value,
@@ -220,7 +220,7 @@ pub async fn upload_file(
 /// 上传多个文件
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:file:write"])),
     path = "/api/core/file/upload/multiple",
     tag = "File",
     request_body = serde_json::Value,

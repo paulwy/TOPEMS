@@ -8,7 +8,7 @@ use axum::{
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:flow:history:read"])),
     path = "/api/core/flow/history",
     tag = "Flow-History",
     responses(
@@ -26,7 +26,7 @@ pub async fn list_history(State(_state): State<AppState>) -> Json<serde_json::Va
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:flow:history:read"])),
     path = "/api/core/flow/history/{id}",
     tag = "Flow-History",
     params(
@@ -50,7 +50,7 @@ pub async fn get_history(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:flow:history:read"])),
     path = "/api/core/flow/history/instance/{instance_id}",
     tag = "Flow-History",
     params(
@@ -77,7 +77,7 @@ pub async fn get_instance_history(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:flow:workflow:read"])),
     path = "/api/core/flow/history/workflow/{workflow_id}",
     tag = "Flow-History",
     params(

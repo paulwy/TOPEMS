@@ -109,7 +109,7 @@ pub struct RankItem {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:mda:read"])),
     path = "/multidim/cube",
     tag = "Multidim",
     operation_id = "query_cube",
@@ -229,7 +229,7 @@ pub async fn query_cube(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:mda:read"])),
     path = "/multidim/slice",
     tag = "Multidim",
     operation_id = "slice_cube",
@@ -352,7 +352,7 @@ pub async fn slice_cube(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:mda:read"])),
     path = "/multidim/dice",
     tag = "Multidim",
     operation_id = "dice_cube",
@@ -475,7 +475,7 @@ pub async fn dice_cube(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:mda:write"])),
     path = "/multidim/pivot",
     tag = "Multidim",
     operation_id = "pivot_table",

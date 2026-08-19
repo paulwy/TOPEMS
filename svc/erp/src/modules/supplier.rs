@@ -170,7 +170,7 @@ pub async fn get_supplier(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/suppliers",
     request_body = CreateSupplierRequest,
     responses(

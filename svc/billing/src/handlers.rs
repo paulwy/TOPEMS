@@ -258,7 +258,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["billing:read"])),
+    security(("BearerAuth" = ["billing:plan:read"])),
     path = "/plans",
     tag = "plans",
     responses(
@@ -279,7 +279,7 @@ pub async fn list_plans(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<Bill
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["billing:read"])),
+    security(("BearerAuth" = ["billing:plan:read"])),
     path = "/plans/{id}",
     tag = "plans",
     params(
@@ -309,7 +309,7 @@ pub async fn get_plan(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["billing:read"])),
+    security(("BearerAuth" = ["billing:subscription:read"])),
     path = "/subscriptions/{tenant_id}",
     tag = "subscriptions",
     params(
@@ -372,7 +372,7 @@ pub async fn get_subscription(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["billing:write"])),
+    security(("BearerAuth" = ["billing:subscription:write"])),
     path = "/subscriptions",
     tag = "subscriptions",
     request_body = CreateSubscriptionRequest,
@@ -428,7 +428,7 @@ pub async fn create_subscription(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["billing:update"])),
+    security(("BearerAuth" = ["billing:subscription:write"])),
     path = "/subscriptions/{tenant_id}",
     tag = "subscriptions",
     params(
@@ -471,7 +471,7 @@ pub async fn cancel_subscription(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["billing:read"])),
+    security(("BearerAuth" = ["billing:invoice:read"])),
     path = "/invoices/{tenant_id}",
     tag = "invoices",
     params(
@@ -499,7 +499,7 @@ pub async fn list_invoices(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["billing:read"])),
+    security(("BearerAuth" = ["billing:usage:read"])),
     path = "/usage/{tenant_id}",
     tag = "usage",
     params(
@@ -610,7 +610,7 @@ pub async fn get_usage_summary(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["billing:write"])),
+    security(("BearerAuth" = ["billing:usage:write"])),
     path = "/usage/{tenant_id}/{metric_type}",
     tag = "usage",
     params(

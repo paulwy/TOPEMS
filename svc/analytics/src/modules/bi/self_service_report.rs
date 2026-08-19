@@ -89,7 +89,7 @@ pub struct ReportExportQuery {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:report:read"])),
     path = "/api/bi/report",
     tag = "Report",
     responses(
@@ -146,7 +146,7 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:report:write"])),
     path = "/api/bi/report",
     tag = "Report",
     request_body(
@@ -219,7 +219,7 @@ pub async fn create_report(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:report:read"])),
     path = "/api/bi/report/{id}",
     tag = "Report",
     params(
@@ -280,7 +280,7 @@ pub async fn get_report(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["analytics:update"])),
+    security(("BearerAuth" = ["analytics:report:read"])),
     path = "/api/bi/report/{id}",
     tag = "Report",
     params(
@@ -366,7 +366,7 @@ pub async fn update_report(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["analytics:delete"])),
+    security(("BearerAuth" = ["analytics:report:read"])),
     path = "/api/bi/report/{id}",
     tag = "Report",
     params(
@@ -414,7 +414,7 @@ pub async fn delete_report(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:report:read"])),
     path = "/report/{id}/query",
     tag = "Reports",
     operation_id = "query_report_data",
@@ -626,7 +626,7 @@ pub async fn query_report_data(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:report:read"])),
     path = "/report/{id}/export",
     tag = "Reports",
     operation_id = "export_report",

@@ -8,7 +8,7 @@ use serde_json::Value;
 /// Get module-specific analytics
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:bi:read"])),
     path = "/analytics/{module_id}",
     tag = "Analytics",
     params(
@@ -41,7 +41,7 @@ pub async fn get_module_analytics(Path(module_id): Path<String>) -> Json<Value> 
 /// Get summary dashboard analytics
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:bi:read"])),
     path = "/analytics/summary",
     tag = "Analytics",
     responses(
@@ -120,7 +120,7 @@ pub async fn get_summary_analytics() -> Json<Value> {
 /// Get development analytics (研发)
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:bi:read"])),
     path = "/analytics/development",
     tag = "Analytics",
     responses(
@@ -167,7 +167,7 @@ pub async fn get_development_analytics() -> Json<Value> {
 /// Get quality analytics (质量)
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:bi:read"])),
     path = "/analytics/quality",
     tag = "Analytics",
     responses(
@@ -210,7 +210,7 @@ pub async fn get_quality_analytics() -> Json<Value> {
 /// Get production analytics (生产)
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:bi:read"])),
     path = "/analytics/production",
     tag = "Analytics",
     responses(
@@ -252,7 +252,7 @@ pub async fn get_production_analytics() -> Json<Value> {
 /// Get laboratory analytics (实验室)
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:bi:read"])),
     path = "/analytics/laboratory",
     tag = "Analytics",
     responses(
@@ -409,7 +409,7 @@ pub async fn get_analytics_report() -> Json<Value> {
 /// Get SRM analytics (供应商管理)
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:bi:read"])),
     path = "/api/bi/srm/summary",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -447,7 +447,7 @@ pub async fn get_srm_analytics() -> Json<Value> {
 /// Get EHS analytics (环境健康安全)
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:bi:read"])),
     path = "/api/bi/ehs/summary",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -487,7 +487,7 @@ pub async fn get_ehs_analytics() -> Json<Value> {
 /// Get RS summary
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:bi:read"])),
     path = "/api/bi/rs/summary",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -513,7 +513,7 @@ pub async fn get_rs_summary() -> Json<Value> {
 /// Get RS project timeline
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:bi:read"])),
     path = "/api/bi/rs/project-timeline",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -612,7 +612,7 @@ pub async fn get_rs_material_usage() -> Json<Value> {
 /// Get RS project ranking
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:bi:read"])),
     path = "/api/bi/rs/project-ranking",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -644,7 +644,7 @@ pub async fn get_rs_project_ranking() -> Json<Value> {
 /// Get LIMS summary
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:bi:read"])),
     path = "/api/bi/lims/summary",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -670,7 +670,7 @@ pub async fn get_lims_summary() -> Json<Value> {
 /// Get LIMS sample timeline
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:bi:read"])),
     path = "/api/bi/lims/sample-timeline",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -698,7 +698,7 @@ pub async fn get_lims_sample_timeline() -> Json<Value> {
 /// Get LIMS test pass rate
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:bi:read"])),
     path = "/api/bi/lims/test-pass-rate",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -796,7 +796,7 @@ pub async fn get_lims_sample_status_distribution() -> Json<Value> {
 /// Get QMS summary
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:bi:read"])),
     path = "/api/bi/qms/summary",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -952,7 +952,7 @@ pub async fn get_ehs_incident_trend() -> Json<Value> {
 /// Get SRM supplier ranking
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:bi:read"])),
     path = "/api/bi/srm/supplier-ranking",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -982,7 +982,7 @@ pub async fn get_srm_supplier_ranking() -> Json<Value> {
 /// Get SRM order timeline
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:bi:read"])),
     path = "/api/bi/srm/order-timeline",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -1012,7 +1012,7 @@ pub async fn get_srm_order_timeline() -> Json<Value> {
 /// Get PDM summary
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:bi:read"])),
     path = "/api/bi/pdm/summary",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))

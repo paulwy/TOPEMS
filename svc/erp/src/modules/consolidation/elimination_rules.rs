@@ -113,7 +113,7 @@ pub async fn get_elimination_rule(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/consolidation/elimination-rules",
     tag = "Consolidation",
     responses((status = 200, description = "创建抵消规则成功", body = ApiResponse<serde_json::Value>))

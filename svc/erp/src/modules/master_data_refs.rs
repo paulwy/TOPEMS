@@ -100,7 +100,7 @@ pub struct MasterDataRef {
 /// 列出本地主数据引用
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:master-data:read"])),
     path = "/api/erp/master-data-refs",
     tag = "Master Data",
     operation_id = "list_master_data_refs",
@@ -179,7 +179,7 @@ pub async fn list_master_data_refs(
 /// 通过 master_data_id 查找本地主数据引用
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:master-data:read"])),
     path = "/api/erp/master-data-refs/{master_data_id}",
     tag = "Master Data",
     operation_id = "get_master_data_ref",
@@ -212,7 +212,7 @@ pub async fn get_master_data_ref(
 /// 通过 domain + code 查找本地主数据引用
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:master-data:read"])),
     path = "/api/erp/master-data-refs/by-code/{domain}/{code}",
     tag = "Master Data",
     operation_id = "get_master_data_ref_by_code",
@@ -2471,7 +2471,7 @@ async fn record_lifecycle_audit(
 /// V38.0 AC-10: 归档主数据引用
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:read"])),
     path = "/api/erp/master-data-refs/{master_data_id}/archive",
     tag = "Master Data",
     operation_id = "archive_master_data_ref",
@@ -2566,7 +2566,7 @@ pub async fn archive_master_data_ref(
 /// V38.0 AC-10: 恢复已归档的主数据引用
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:read"])),
     path = "/api/erp/master-data-refs/{master_data_id}/restore",
     tag = "Master Data",
     operation_id = "restore_master_data_ref",
@@ -2841,7 +2841,7 @@ pub async fn cancel_destruction(
 /// V38.0 AC-10: 执行销毁（软删除）
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:read"])),
     path = "/api/erp/master-data-refs/{master_data_id}/destroy",
     tag = "Master Data",
     operation_id = "destroy_master_data_ref",
@@ -3364,7 +3364,7 @@ fn is_valid_identifier(s: &str) -> bool {
 /// V39.0 AC-11: 创建质量规则
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/api/erp/master-data-refs/quality-rules",
     tag = "Master Data",
     operation_id = "create_quality_rule",
@@ -5583,7 +5583,7 @@ fn get_sync_store() -> Arc<SyncStore> {
 /// V41.0 AC-13: 创建同步任务
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/master-data/sync/jobs",
     tag = "Master Data",
     responses((status = 200, description = "创建同步任务成功", body = ApiResponse<serde_json::Value>))
@@ -6596,7 +6596,7 @@ fn get_quality_loop_store() -> Arc<QualityLoopStore> {
 /// V42.0 AC-14: 创建质量工单（从质量检测结果创建闭环工单）
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/master-data/quality/tickets",
     tag = "Master Data",
     responses((status = 200, description = "创建质量工单成功", body = ApiResponse<serde_json::Value>))
@@ -7115,7 +7115,7 @@ pub async fn escalate_ticket(
 /// V42.0 AC-14: 创建修复工作流
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/master-data/quality/repair-workflows",
     tag = "Master Data",
     responses((status = 200, description = "创建修复工作流成功", body = ApiResponse<serde_json::Value>))
@@ -7525,7 +7525,7 @@ pub async fn verify_repair(
 /// V42.0 AC-14: 创建数据域
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/master-data/domains",
     tag = "Master Data",
     responses((status = 200, description = "创建数据域成功", body = ApiResponse<serde_json::Value>))
@@ -10873,7 +10873,7 @@ impl SyncEngineV2Store {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/master-data/sync/v2/jobs",
     tag = "Master Data",
     responses((status = 200, description = "创建 V2 同步任务成功", body = ApiResponse<serde_json::Value>))
@@ -11278,7 +11278,7 @@ impl ServiceRegistryStore {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:mdm:admin"])),
     path = "/erp/master-data/services/register",
     tag = "Master Data",
     responses((status = 200, description = "注册 MDM 服务成功", body = ApiResponse<serde_json::Value>))
@@ -11312,7 +11312,7 @@ pub async fn mdm_service_register(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:mdm:admin"])),
     path = "/erp/master-data/services/{serviceId}/deregister",
     tag = "Master Data",
     params(("serviceId" = String, Path, description = "服务ID")),
@@ -11336,7 +11336,7 @@ pub async fn mdm_service_deregister(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:mdm:admin"])),
     path = "/erp/master-data/services/{serviceId}/heartbeat",
     tag = "Master Data",
     params(("serviceId" = String, Path, description = "服务ID")),
@@ -11361,7 +11361,7 @@ pub async fn mdm_service_heartbeat(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:mdm:read"])),
     path = "/erp/master-data/services",
     tag = "Master Data",
     responses((status = 200, description = "获取 MDM 服务列表成功", body = ApiResponse<serde_json::Value>))
@@ -11397,7 +11397,7 @@ pub async fn mdm_service_list(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:mdm:read"])),
     path = "/erp/master-data/services/{serviceId}/health",
     tag = "Master Data",
     params(("serviceId" = String, Path, description = "服务ID")),
@@ -11527,7 +11527,7 @@ impl ApiGatewayStore {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:mdm:admin"])),
     path = "/erp/master-data/gateway/route",
     tag = "Master Data",
     responses((status = 200, description = "MDM 网关路由成功", body = ApiResponse<serde_json::Value>))
@@ -11567,7 +11567,7 @@ pub async fn mdm_gateway_route(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:mdm:admin"])),
     path = "/erp/master-data/gateway/batch",
     tag = "Master Data",
     responses((status = 200, description = "MDM 网关批处理成功", body = ApiResponse<serde_json::Value>))
@@ -11606,7 +11606,7 @@ pub async fn mdm_gateway_batch(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:mdm:admin"])),
     path = "/api/erp/master-data/gateway/aggregate",
     tag = "Master Data",
     operation_id = "mdm_gateway_aggregate",
@@ -11647,7 +11647,7 @@ pub async fn mdm_gateway_aggregate(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:mdm:read"])),
     path = "/erp/master-data/gateway/stats",
     tag = "Master Data",
     responses((status = 200, description = "获取 MDM 网关统计成功", body = ApiResponse<serde_json::Value>))
@@ -16609,7 +16609,7 @@ pub async fn get_catalog_entry_handler(
 /// POST /catalog — 创建目录条目
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/api/erp/master-data-refs/catalog",
     tag = "Master Data",
     operation_id = "create_catalog_entry_handler",
@@ -17355,7 +17355,7 @@ async fn get_metadata_stats() -> MetadataStats {
 /// POST /metadata/schemas — 创建元数据 Schema
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/api/erp/master-data-refs/metadata/schemas",
     tag = "Master Data",
     operation_id = "create_schema_handler",
@@ -17535,7 +17535,7 @@ pub async fn get_record_handler(
 /// POST /metadata/relations — 创建关联关系
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/api/erp/master-data-refs/metadata/relations",
     tag = "Master Data",
     operation_id = "create_relation_handler",
@@ -18156,7 +18156,7 @@ pub async fn get_dashboard_handler(
 /// POST /dashboard — 创建仪表盘
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/api/erp/master-data-refs/dashboard",
     tag = "Master Data",
     operation_id = "create_dashboard_handler",
@@ -19021,7 +19021,7 @@ pub async fn list_report_templates_handler(
 /// POST /reports/templates — 创建报告模板
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/api/erp/master-data-refs/reports/templates",
     tag = "Master Data",
     operation_id = "create_report_template_handler",
@@ -20027,7 +20027,7 @@ pub async fn list_compliance_rules_handler(
 /// POST /audit/rules — 创建合规规则
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/api/erp/master-data-refs/audit/rules",
     tag = "Master Data",
     operation_id = "create_compliance_rule_handler",

@@ -192,7 +192,7 @@ pub async fn get_patrol_record(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["mobile:write"])),
+    security(("BearerAuth" = ["mobile:config:write"])),
     path = "/patrol-records",
     tag = "patrol",
     request_body = CreatePatrolRequest,

@@ -549,7 +549,7 @@ impl TicketService {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ticket:write"])),
+    security(("BearerAuth" = ["ticket:ticket:write"])),
     path = "/tickets",
     tag = "tickets",
     request_body = CreateTicketRequest,
@@ -576,7 +576,7 @@ pub async fn create_ticket_handler(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["ticket:read"])),
+    security(("BearerAuth" = ["ticket:ticket:read"])),
     path = "/tickets",
     tag = "tickets",
     params(
@@ -608,7 +608,7 @@ pub async fn list_tickets_handler(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["ticket:read"])),
+    security(("BearerAuth" = ["ticket:ticket:read"])),
     path = "/tickets/{id}",
     tag = "tickets",
     params(
@@ -636,7 +636,7 @@ pub async fn get_ticket_handler(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["ticket:update"])),
+    security(("BearerAuth" = ["ticket:ticket:read"])),
     path = "/tickets/{id}",
     tag = "tickets",
     params(
@@ -667,7 +667,7 @@ pub async fn update_ticket_handler(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["ticket:delete"])),
+    security(("BearerAuth" = ["ticket:ticket:read"])),
     path = "/tickets/{id}",
     tag = "tickets",
     params(
@@ -701,7 +701,7 @@ pub async fn delete_ticket_handler(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ticket:write"])),
+    security(("BearerAuth" = ["ticket:comment:write"])),
     path = "/tickets/{id}/comments",
     tag = "tickets",
     params(
@@ -740,7 +740,7 @@ pub async fn add_comment_handler(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["ticket:read"])),
+    security(("BearerAuth" = ["ticket:comment:read"])),
     path = "/tickets/{id}/comments",
     tag = "tickets",
     params(
@@ -865,7 +865,7 @@ pub async fn get_sla_stats_handler(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ticket:write"])),
+    security(("BearerAuth" = ["ticket:ticket:write"])),
     path = "/sla-policies",
     tag = "sla",
     request_body = CreateSlaPolicyRequest,

@@ -198,7 +198,7 @@ const PROJECT_COLUMNS: &str = r#"
     p.created_by, p.created_at, p.updated_at
 "#;
 
-#[utoipa::path(get, path = "/api/pdm/projects", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:read"])))]
+#[utoipa::path(get, path = "/api/pdm/projects", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:read"])))]
 pub async fn list_projects(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -235,7 +235,7 @@ pub async fn list_projects(
     }
 }
 
-#[utoipa::path(post, path = "/api/pdm/projects", request_body = CreatePdmProjectRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:write"])))]
+#[utoipa::path(post, path = "/api/pdm/projects", request_body = CreatePdmProjectRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:write"])))]
 pub async fn create_project(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -291,7 +291,7 @@ pub async fn create_project(
     }
 }
 
-#[utoipa::path(get, path = "/api/pdm/projects/{id}", tag = "pdm", params(("id" = Uuid, Path, description = "id")), responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:read"])))]
+#[utoipa::path(get, path = "/api/pdm/projects/{id}", tag = "pdm", params(("id" = Uuid, Path, description = "id")), responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:read"])))]
 pub async fn get_project(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -321,7 +321,7 @@ pub async fn get_project(
     }
 }
 
-#[utoipa::path(put, path = "/api/pdm/projects/{id}", request_body = UpdatePdmProjectRequest, tag = "pdm", params(("id" = Uuid, Path, description = "id")), responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:update"])))]
+#[utoipa::path(put, path = "/api/pdm/projects/{id}", request_body = UpdatePdmProjectRequest, tag = "pdm", params(("id" = Uuid, Path, description = "id")), responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:write"])))]
 pub async fn update_project(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -378,7 +378,7 @@ pub async fn update_project(
     }
 }
 
-#[utoipa::path(delete, path = "/api/pdm/projects/{id}", tag = "pdm", params(("id" = Uuid, Path, description = "id")), responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:delete"])))]
+#[utoipa::path(delete, path = "/api/pdm/projects/{id}", tag = "pdm", params(("id" = Uuid, Path, description = "id")), responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:write"])))]
 pub async fn delete_project(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -404,7 +404,7 @@ pub async fn delete_project(
     }
 }
 
-#[utoipa::path(put, path = "/api/pdm/projects/{id}/status", request_body = UpdateProjectStatusRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:update"])))]
+#[utoipa::path(put, path = "/api/pdm/projects/{id}/status", request_body = UpdateProjectStatusRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:admin"])))]
 pub async fn update_project_status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -434,7 +434,7 @@ pub async fn update_project_status(
     }
 }
 
-#[utoipa::path(put, path = "/api/pdm/projects/{id}/phase", request_body = UpdateProjectPhaseRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:update"])))]
+#[utoipa::path(put, path = "/api/pdm/projects/{id}/phase", request_body = UpdateProjectPhaseRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:write"])))]
 pub async fn update_project_phase(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -464,7 +464,7 @@ pub async fn update_project_phase(
     }
 }
 
-#[utoipa::path(get, path = "/api/pdm/projects/{projectId}/members", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:read"])))]
+#[utoipa::path(get, path = "/api/pdm/projects/{projectId}/members", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:read"])))]
 pub async fn list_members(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -493,7 +493,7 @@ pub async fn list_members(
     }
 }
 
-#[utoipa::path(post, path = "/api/pdm/projects/{projectId}/members", request_body = AddProjectMemberRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:write"])))]
+#[utoipa::path(post, path = "/api/pdm/projects/{projectId}/members", request_body = AddProjectMemberRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:admin"])))]
 pub async fn add_member(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -534,7 +534,7 @@ pub async fn add_member(
     }
 }
 
-#[utoipa::path(put, path = "/api/pdm/projects/{projectId}/members/{userId}", request_body = UpdateProjectMemberRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:update"])))]
+#[utoipa::path(put, path = "/api/pdm/projects/{projectId}/members/{userId}", request_body = UpdateProjectMemberRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:admin"])))]
 pub async fn update_member(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -572,7 +572,7 @@ pub async fn update_member(
     }
 }
 
-#[utoipa::path(delete, path = "/api/pdm/projects/{projectId}/members/{userId}", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:delete"])))]
+#[utoipa::path(delete, path = "/api/pdm/projects/{projectId}/members/{userId}", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:project:admin"])))]
 pub async fn remove_member(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -628,7 +628,7 @@ pub async fn list_phases(
     }
 }
 
-#[utoipa::path(post, path = "/api/pdm/projects/{projectId}/phases", request_body = CreateProjectPhaseRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:write"])))]
+#[utoipa::path(post, path = "/api/pdm/projects/{projectId}/phases", request_body = CreateProjectPhaseRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:bom:write"])))]
 pub async fn create_phase(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

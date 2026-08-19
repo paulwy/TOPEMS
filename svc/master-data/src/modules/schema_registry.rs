@@ -157,7 +157,7 @@ pub struct ListDataQuery {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["master_data:write"])),
+    security(("BearerAuth" = ["master-data:schema:write"])),
     path = "/api/master-data/schema-registry/schemas",
     tag = "Schema Registry",
     request_body = CreateSchemaRequest,
@@ -206,7 +206,7 @@ pub async fn create_schema(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["master_data:read"])),
+    security(("BearerAuth" = ["master-data:schema:read"])),
     path = "/api/master-data/schema-registry/schemas/{id}",
     tag = "Schema Registry",
     params(("id" = Uuid, Path, description = "Schema ID")),
@@ -243,7 +243,7 @@ pub async fn get_schema(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["master_data:read"])),
+    security(("BearerAuth" = ["master-data:schema:read"])),
     path = "/api/master-data/schema-registry/schemas",
     tag = "Schema Registry",
     params(
@@ -312,7 +312,7 @@ pub async fn list_schemas(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["master_data:update"])),
+    security(("BearerAuth" = ["master-data:schema:write"])),
     path = "/api/master-data/schema-registry/schemas/{id}",
     tag = "Schema Registry",
     params(("id" = Uuid, Path, description = "Schema ID")),
@@ -366,7 +366,7 @@ pub async fn update_schema(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["master_data:delete"])),
+    security(("BearerAuth" = ["master-data:schema:write"])),
     path = "/api/master-data/schema-registry/schemas/{id}",
     tag = "Schema Registry",
     params(("id" = Uuid, Path, description = "Schema ID")),
@@ -405,7 +405,7 @@ pub async fn delete_schema(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["master_data:write"])),
+    security(("BearerAuth" = ["master-data:schema:write"])),
     path = "/api/master-data/schema-registry/schemas/{schemaId}/data",
     tag = "Schema Registry",
     params(("schemaId" = Uuid, Path, description = "Schema ID")),

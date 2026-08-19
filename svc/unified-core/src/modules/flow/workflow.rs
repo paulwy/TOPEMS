@@ -23,7 +23,7 @@ pub struct WorkflowQueryParams {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:flow:workflow:read"])),
     path = "/api/core/flow/workflows",
     tag = "Flow-Workflow",
     params(
@@ -120,7 +120,7 @@ pub async fn list_workflows(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:flow:workflow:read"])),
     path = "/api/core/flow/workflows/{id}",
     tag = "Flow-Workflow",
     params(
@@ -158,7 +158,7 @@ pub async fn get_workflow(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:flow:workflow:write"])),
     path = "/api/core/flow/workflows",
     tag = "Flow-Workflow",
     request_body = CreateWorkflowRequest,
@@ -197,7 +197,7 @@ pub async fn create_workflow(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["unified_core:update"])),
+    security(("BearerAuth" = ["unified-core:flow:workflow:write"])),
     path = "/api/core/flow/workflows/{id}",
     tag = "Flow-Workflow",
     params(
@@ -248,7 +248,7 @@ pub async fn update_workflow(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["unified_core:delete"])),
+    security(("BearerAuth" = ["unified-core:flow:workflow:admin"])),
     path = "/api/core/flow/workflows/{id}",
     tag = "Flow-Workflow",
     params(
@@ -286,7 +286,7 @@ pub async fn delete_workflow(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:flow:workflow:admin"])),
     path = "/api/core/flow/workflows/{id}/publish",
     tag = "Flow-Workflow",
     params(
@@ -326,7 +326,7 @@ pub async fn publish_workflow(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:flow:workflow:admin"])),
     path = "/api/core/flow/workflows/{id}/unpublish",
     tag = "Flow-Workflow",
     params(
@@ -366,7 +366,7 @@ pub async fn unpublish_workflow(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:flow:workflow:admin"])),
     path = "/api/core/flow/workflows/{id}/activate",
     tag = "Flow-Workflow",
     params(
@@ -406,7 +406,7 @@ pub async fn activate_workflow(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:flow:workflow:admin"])),
     path = "/api/core/flow/workflows/{id}/deactivate",
     tag = "Flow-Workflow",
     params(
@@ -446,7 +446,7 @@ pub async fn deactivate_workflow(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:flow:workflow:admin"])),
     path = "/api/core/flow/workflows/{id}/deploy",
     tag = "Flow-Workflow",
     params(
@@ -486,7 +486,7 @@ pub async fn deploy_workflow(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:flow:workflow:admin"])),
     path = "/api/core/flow/workflows/{workflow_id}/rollback",
     tag = "Flow-Workflow",
     params(

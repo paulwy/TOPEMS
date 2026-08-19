@@ -9,7 +9,7 @@ use crate::models::{AppState, CreateIntegrationEventRequest, IntegrationEvent, S
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["integration:read"])),
+    security(("BearerAuth" = ["integration:event:read"])),
     path = "/api/integration/stats",
     tag = "integration",
     responses(
@@ -108,7 +108,7 @@ pub async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<S
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["integration:read"])),
+    security(("BearerAuth" = ["integration:event:read"])),
     path = "/api/integration/events",
     tag = "integration",
     responses(
@@ -142,7 +142,7 @@ pub async fn list_events(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["integration:write"])),
+    security(("BearerAuth" = ["integration:sync:write"])),
     path = "/api/integration/events",
     request_body = CreateIntegrationEventRequest,
     tag = "integration",

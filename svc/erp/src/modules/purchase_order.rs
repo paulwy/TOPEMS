@@ -156,7 +156,7 @@ pub async fn get_purchase_order(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/purchase-orders",
     request_body = CreatePurchaseOrderRequest,
     responses(

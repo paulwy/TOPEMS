@@ -166,7 +166,7 @@ pub async fn get_customer(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/customers",
     request_body = CreateCustomerRequest,
     responses(

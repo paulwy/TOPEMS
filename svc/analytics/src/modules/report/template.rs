@@ -173,7 +173,7 @@ pub async fn list_templates(State(state): State<AppState>) -> Json<serde_json::V
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:report:write"])),
     path = "/templates",
     tag = "Report-Templates",
     operation_id = "create_template",

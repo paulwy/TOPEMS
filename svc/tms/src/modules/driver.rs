@@ -74,7 +74,7 @@ where
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["tms:read"])),
+    security(("BearerAuth" = ["tms:driver:read"])),
     path = "/api/tms/drivers",
     responses(
         (status = 200, description = "list_drivers OK")
@@ -148,7 +148,7 @@ pub async fn list_drivers(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["tms:write"])),
+    security(("BearerAuth" = ["tms:shipment:write"])),
     path = "/api/tms/drivers",
     request_body = CreateDriverRequest,
     responses(
@@ -197,7 +197,7 @@ pub async fn create_driver(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["tms:read"])),
+    security(("BearerAuth" = ["tms:driver:read"])),
     path = "/api/tms/drivers/{id}",
     params(
         ("id" = Uuid, Path, description = "司机 ID")
@@ -238,7 +238,7 @@ pub async fn get_driver(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["tms:update"])),
+    security(("BearerAuth" = ["tms:driver:read"])),
     path = "/api/tms/drivers/{id}",
     request_body = UpdateDriverRequest,
     params(
@@ -297,7 +297,7 @@ pub async fn update_driver(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["tms:delete"])),
+    security(("BearerAuth" = ["tms:driver:read"])),
     path = "/api/tms/drivers/{id}",
     params(
         ("id" = Uuid, Path, description = "司机 ID")
@@ -423,7 +423,7 @@ pub async fn submit_verification(
 /// Approve driver (suspended → active)
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["tms:write"])),
+    security(("BearerAuth" = ["tms:driver:read"])),
     path = "/api/tms/drivers/{id}/approve",
     request_body = ApprovalRequest,
     params(
@@ -499,7 +499,7 @@ pub async fn approve_driver(
 /// Reject driver (suspended → inactive)
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["tms:write"])),
+    security(("BearerAuth" = ["tms:driver:read"])),
     path = "/api/tms/drivers/{id}/reject",
     request_body = ApprovalRequest,
     params(

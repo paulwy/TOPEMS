@@ -201,7 +201,7 @@ fn get_service_name(service_id: &str) -> String {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["portal:read"])),
+    security(("BearerAuth" = ["portal:todo:read"])),
     path = "/todos",
     tag = "Todo",
     responses(
@@ -349,7 +349,7 @@ fn format_service_name(service_type: &str) -> String {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["portal:write"])),
+    security(("BearerAuth" = ["portal:todo:write"])),
     path = "/todos",
     tag = "Todo",
     request_body = NewTodo,

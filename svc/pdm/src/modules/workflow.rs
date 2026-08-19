@@ -104,7 +104,7 @@ pub struct StartWorkflowRequest {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["pdm:read"])),
+    security(("BearerAuth" = ["pdm:workflow:read"])),
     path = "/api/pdm/workflows",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -146,7 +146,7 @@ pub async fn list_workflows(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["pdm:write"])),
+    security(("BearerAuth" = ["pdm:workflow:write"])),
     path = "/api/pdm/workflows",
     request_body = CreateWorkflowRequest,
     tag = "pdm",
@@ -209,7 +209,7 @@ pub async fn create_workflow(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["pdm:read"])),
+    security(("BearerAuth" = ["pdm:workflow:read"])),
     path = "/api/pdm/workflows/{id}",
     tag = "pdm",
     params(
@@ -250,7 +250,7 @@ pub async fn get_workflow(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["pdm:update"])),
+    security(("BearerAuth" = ["pdm:workflow:write"])),
     path = "/api/pdm/workflows/{id}",
     request_body = serde_json::Value,
     tag = "pdm",
@@ -306,7 +306,7 @@ pub async fn update_workflow(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["pdm:delete"])),
+    security(("BearerAuth" = ["pdm:workflow:write"])),
     path = "/api/pdm/workflows/{id}",
     tag = "pdm",
     params(
@@ -342,7 +342,7 @@ pub async fn delete_workflow(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["pdm:write"])),
+    security(("BearerAuth" = ["pdm:workflow:write"])),
     path = "/api/pdm/workflows/start",
     request_body = StartWorkflowRequest,
     tag = "pdm",
@@ -437,7 +437,7 @@ pub async fn start_workflow(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["pdm:read"])),
+    security(("BearerAuth" = ["pdm:workflow:read"])),
     path = "/api/pdm/workflow-instances",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -480,7 +480,7 @@ pub async fn list_workflow_instances(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["pdm:read"])),
+    security(("BearerAuth" = ["pdm:workflow:read"])),
     path = "/api/pdm/workflow-instances/{id}",
     tag = "pdm",
     params(
@@ -522,7 +522,7 @@ pub async fn get_workflow_instance(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["pdm:write"])),
+    security(("BearerAuth" = ["pdm:workflow:write"])),
     path = "/api/pdm/workflow-instances/{id}/advance",
     request_body = serde_json::Value,
     tag = "pdm",

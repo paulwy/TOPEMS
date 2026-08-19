@@ -96,7 +96,7 @@ pub async fn register_device(
 /// 获取设备列表
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["gis:read"])),
+    security(("BearerAuth" = ["gis:device:read"])),
     path = "/devices",
     tag = "device",
     responses(
@@ -123,7 +123,7 @@ pub async fn list_devices(State(pool): State<PgPool>) -> Json<ApiResponse<serde_
 /// 获取设备详情
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["gis:read"])),
+    security(("BearerAuth" = ["gis:device:read"])),
     path = "/devices/{id}",
     tag = "device",
     params(

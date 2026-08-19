@@ -39,7 +39,7 @@ pub struct DepartmentPaginationParams {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["hrm:read"])),
+    security(("BearerAuth" = ["hrm:department:read"])),
     path = "/departments",
     tag = "departments",
     params(
@@ -122,7 +122,7 @@ async fn list_departments(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["hrm:write"])),
+    security(("BearerAuth" = ["hrm:department:read"])),
     path = "/departments",
     tag = "departments",
     request_body = CreateDepartmentRequest,
@@ -206,7 +206,7 @@ async fn create_department(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["hrm:read"])),
+    security(("BearerAuth" = ["hrm:department:read"])),
     path = "/departments/{id}",
     tag = "departments",
     params(
@@ -244,7 +244,7 @@ async fn get_department(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["hrm:update"])),
+    security(("BearerAuth" = ["hrm:department:read"])),
     path = "/departments/{id}",
     tag = "departments",
     params(
@@ -354,7 +354,7 @@ async fn update_department(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["hrm:delete"])),
+    security(("BearerAuth" = ["hrm:department:read"])),
     path = "/departments/{id}",
     tag = "departments",
     params(

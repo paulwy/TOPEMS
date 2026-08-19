@@ -140,7 +140,7 @@ pub async fn list_categories(
 /// List plugins with filters
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["plugin_registry:read"])),
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
     path = "/marketplace/plugins",
     tag = "plugin",
     params(
@@ -232,7 +232,7 @@ pub async fn list_plugins(
 /// Get plugin by code
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["plugin_registry:read"])),
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
     path = "/marketplace/plugins/{code}",
     tag = "plugin",
     params(

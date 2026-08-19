@@ -71,7 +71,7 @@ where
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["tms:read"])),
+    security(("BearerAuth" = ["tms:carrier:read"])),
     path = "/api/tms/carriers",
     responses(
         (status = 200, description = "list_carriers OK")
@@ -145,7 +145,7 @@ pub async fn list_carriers(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["tms:write"])),
+    security(("BearerAuth" = ["tms:carrier:read"])),
     path = "/api/tms/carriers",
     request_body = CreateCarrierRequest,
     responses(
@@ -193,7 +193,7 @@ pub async fn create_carrier(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["tms:read"])),
+    security(("BearerAuth" = ["tms:carrier:read"])),
     path = "/api/tms/carriers/{id}",
     params(
         ("id" = Uuid, Path, description = "承运商 ID")
@@ -234,7 +234,7 @@ pub async fn get_carrier(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["tms:update"])),
+    security(("BearerAuth" = ["tms:carrier:read"])),
     path = "/api/tms/carriers/{id}",
     request_body = UpdateCarrierRequest,
     params(
@@ -291,7 +291,7 @@ pub async fn update_carrier(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["tms:delete"])),
+    security(("BearerAuth" = ["tms:carrier:read"])),
     path = "/api/tms/carriers/{id}",
     params(
         ("id" = Uuid, Path, description = "承运商 ID")
@@ -391,7 +391,7 @@ pub async fn submit_qualification(
 /// Approve carrier (pending_review → active)
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["tms:write"])),
+    security(("BearerAuth" = ["tms:carrier:read"])),
     path = "/api/tms/carriers/{id}/approve",
     request_body = ApprovalRequest,
     params(
@@ -469,7 +469,7 @@ pub async fn approve_carrier(
 /// Reject carrier (pending_review → rejected)
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["tms:write"])),
+    security(("BearerAuth" = ["tms:carrier:read"])),
     path = "/api/tms/carriers/{id}/reject",
     request_body = ApprovalRequest,
     params(

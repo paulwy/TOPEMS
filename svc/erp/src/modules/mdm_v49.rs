@@ -713,7 +713,7 @@ pub struct ArchiveStats {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:mdm:read"])),
     path = "/erp/mdm-v49/list-lifecycle-entities",
     tag = "MdmV49",
     operation_id = "list_lifecycle_entities",
@@ -784,7 +784,7 @@ pub async fn list_lifecycle_entities(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:mdm:read"])),
     path = "/api/erp/mdm-v49/lifecycle/entities/{master_data_id}",
     tag = "Master Data",
     operation_id = "get_lifecycle_entity",
@@ -805,7 +805,7 @@ pub async fn get_lifecycle_entity(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:mdm:admin"])),
     path = "/api/erp/mdm-v49/lifecycle/entities",
     tag = "Master Data",
     operation_id = "create_lifecycle_entity",
@@ -888,7 +888,7 @@ pub async fn create_lifecycle_entity(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:mdm:admin"])),
     path = "/api/erp/mdm-v49/lifecycle/entities/{master_data_id}",
     tag = "Master Data",
     operation_id = "transition_lifecycle_stage",
@@ -946,7 +946,7 @@ pub async fn transition_lifecycle_stage(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:mdm:admin"])),
     path = "/api/erp/mdm-v49/lifecycle/entities/{master_data_id}/tasks/{task_id}",
     tag = "Master Data",
     operation_id = "update_lifecycle_task",
@@ -999,7 +999,7 @@ pub async fn update_lifecycle_task(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:mdm:read"])),
     path = "/api/erp/mdm-v49/lifecycle/entities/{master_data_id}/events",
     tag = "Master Data",
     operation_id = "get_lifecycle_events",
@@ -1024,7 +1024,7 @@ pub async fn get_lifecycle_events(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/api/erp/mdm-v49/retirement/plans",
     tag = "Master Data",
     operation_id = "create_retirement_plan",
@@ -1517,7 +1517,7 @@ pub struct ArchivePolicyQuery {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/mdm-v49/create-archive-policy",
     tag = "MdmV49",
     operation_id = "create_archive_policy",
@@ -1972,7 +1972,7 @@ pub async fn restore_archive_record(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:mdm:read"])),
     path = "/erp/mdm-v49/get-lifecycle-stats",
     tag = "MdmV49",
     operation_id = "get_lifecycle_stats",
@@ -2197,7 +2197,7 @@ pub async fn run_sla_check(State(_state): State<ApiState>) -> Json<ApiResponse<s
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:mdm:read"])),
     path = "/erp/mdm-v49/get-lifecycle-dashboard",
     tag = "MdmV49",
     operation_id = "get_lifecycle_dashboard",

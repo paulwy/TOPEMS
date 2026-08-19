@@ -66,7 +66,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["scm:read"])),
+    security(("BearerAuth" = ["scm:supplier:read"])),
     path = "/scm/suppliers",
     responses(
         (status = 200, description = "list_suppliers OK")
@@ -169,7 +169,7 @@ pub async fn list_suppliers(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["scm:write"])),
+    security(("BearerAuth" = ["scm:supplier:write"])),
     path = "/scm/suppliers",
     request_body = CreateSupplierRequest,
     responses(
@@ -291,7 +291,7 @@ pub async fn create_supplier(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["scm:read"])),
+    security(("BearerAuth" = ["scm:supplier:read"])),
     path = "/scm/suppliers/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -367,7 +367,7 @@ pub async fn get_supplier(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["scm:update"])),
+    security(("BearerAuth" = ["scm:supplier:write"])),
     path = "/scm/suppliers/{id}",
     request_body = UpdateSupplierRequest,
     params(
@@ -519,7 +519,7 @@ pub async fn update_supplier(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["scm:delete"])),
+    security(("BearerAuth" = ["scm:supplier:admin"])),
     path = "/scm/suppliers/{id}",
     params(
         ("id" = Uuid, Path, description = "id")

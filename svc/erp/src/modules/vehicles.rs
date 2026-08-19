@@ -119,7 +119,7 @@ pub async fn list_vehicles(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/vehicles",
     request_body = CreateVehicleRequest,
     responses(
@@ -486,7 +486,7 @@ pub async fn list_vehicle_requests(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/vehicle-requests",
     request_body = CreateVehicleRequestRequest,
     responses(

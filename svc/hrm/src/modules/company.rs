@@ -134,7 +134,7 @@ async fn list_companies(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["hrm:write"])),
+    security(("BearerAuth" = ["hrm:employee:write"])),
     path = "/companies",
     tag = "companies",
     request_body = CreateCompanyRequest,

@@ -105,7 +105,7 @@ pub async fn list_supplies(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/office-supplies",
     request_body = CreateOfficeSupplyRequest,
     responses(

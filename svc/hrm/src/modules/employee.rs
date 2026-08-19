@@ -87,7 +87,7 @@ pub struct ExportRequest {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["hrm:read"])),
+    security(("BearerAuth" = ["hrm:employee:read"])),
     path = "/employees",
     tag = "employees",
     responses(
@@ -127,7 +127,7 @@ async fn list_employees(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["hrm:read"])),
+    security(("BearerAuth" = ["hrm:employee:read"])),
     path = "/employees/{id}",
     tag = "employees",
     params(
@@ -192,7 +192,7 @@ async fn get_employee(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["hrm:read"])),
+    security(("BearerAuth" = ["hrm:employee:read"])),
     path = "/employees/{id}/details",
     tag = "employees",
     params(
@@ -272,7 +272,7 @@ async fn get_employee_details(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["hrm:write"])),
+    security(("BearerAuth" = ["hrm:employee:read"])),
     path = "/employees",
     request_body = CreateEmployeeRequest,
     tag = "employees",
@@ -406,7 +406,7 @@ async fn create_employee(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["hrm:update"])),
+    security(("BearerAuth" = ["hrm:employee:read"])),
     path = "/employees/{id}",
     request_body = UpdateEmployeeRequest,
     tag = "employees",
@@ -507,7 +507,7 @@ async fn update_employee(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["hrm:delete"])),
+    security(("BearerAuth" = ["hrm:employee:read"])),
     path = "/employees/{id}",
     tag = "employees",
     params(
@@ -587,7 +587,7 @@ async fn delete_employee(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["hrm:write"])),
+    security(("BearerAuth" = ["hrm:employee:read"])),
     path = "/employees/export",
     request_body = ExportRequest,
     tag = "employees",

@@ -103,7 +103,7 @@ pub struct ApprovalTaskListResponse {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:flow:approval:read"])),
     path = "/api/core/flow/approval-tasks",
     tag = "Flow-Approval",
     params(
@@ -210,7 +210,7 @@ pub async fn list_approval_tasks(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:flow:approval:read"])),
     path = "/api/core/flow/approval-tasks/{id}",
     tag = "Flow-Approval",
     params(
@@ -281,7 +281,7 @@ pub async fn get_approval_task(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:flow:approval:read"])),
     path = "/api/core/flow/approvals/pending",
     tag = "Flow-Approval",
     responses(
@@ -341,7 +341,7 @@ pub async fn list_pending_approvals(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:flow:task:write"])),
     path = "/api/core/flow/approvals/{id}/approve",
     tag = "Flow-Approval",
     params(
@@ -439,7 +439,7 @@ pub async fn approve_task(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:flow:task:write"])),
     path = "/api/core/flow/approvals/{id}/reject",
     tag = "Flow-Approval",
     params(
@@ -537,7 +537,7 @@ pub async fn reject_task(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:flow:task:write"])),
     path = "/api/core/flow/approval-tasks/{id}/claim",
     tag = "Flow-Approval",
     params(
@@ -630,7 +630,7 @@ pub async fn claim_task(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:flow:task:write"])),
     path = "/api/core/flow/approval-tasks/{id}/unclaim",
     tag = "Flow-Approval",
     params(
@@ -723,7 +723,7 @@ pub async fn unclaim_task(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:flow:task:write"])),
     path = "/api/core/flow/approval-tasks/{id}/delegate",
     tag = "Flow-Approval",
     params(
@@ -829,7 +829,7 @@ pub async fn delegate_task(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:flow:task:write"])),
     path = "/api/core/flow/approval-tasks/{id}/reassign",
     tag = "Flow-Approval",
     params(
@@ -935,7 +935,7 @@ pub async fn reassign_task(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:flow:approval:read"])),
     path = "/api/core/flow/approvals",
     tag = "Flow-Approval",
     responses(
@@ -992,7 +992,7 @@ pub async fn list_approvals(State(state): State<AppState>) -> Json<ApiResponse<V
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:flow:approval:read"])),
     path = "/api/core/flow/approvals/{id}",
     tag = "Flow-Approval",
     params(
@@ -1014,7 +1014,7 @@ pub async fn get_approval(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:flow:approval:write"])),
     path = "/api/core/flow/approvals",
     tag = "Flow-Approval",
     request_body = serde_json::Value,
@@ -1134,7 +1134,7 @@ pub async fn create_approval(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:flow:approval:write"])),
     path = "/api/core/flow/approvals/{id}/process",
     tag = "Flow-Approval",
     params(
