@@ -67,6 +67,13 @@ const INTEGRITY_MIN = Object.freeze({
   foundRouters: 10
 });
 
+const R2_WHITELIST_ROUTER_VARS = new Set([
+  'core_public_routes',
+]);
+const R2_WHITELIST_FILE_VAR = new Set([
+  'svc/plugin-registry/src/main.rs|protected_routes',
+]);
+
 const REPORT = {
   version: 'axum-layer-order-gate@1.0.0',
   createdAt: new Date().toISOString(),
@@ -171,6 +178,7 @@ function SCAN_ROUTERS(filePaths) {
   let matchedLayers = 0;
   let buildApplicationCalls = 0;
   const protectedVarByFile = {};
+  const publicVarByFile = {};
   const fileHasGlobalAuth = {};
 
   const routerDefRegex = /(?:let|const)\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(?:[A-Za-z_][A-Za-z0-9_]*::)?Router::new\s*\(\s*\)/;
@@ -184,25 +192,43 @@ function SCAN_ROUTERS(filePaths) {
 
   function detectLayerKindInWindow(cleanLines, rawLines, startLn, maxLookAhead = 5) {
     const maxLn = Math.min(cleanLines.length, startLn + maxLookAhead);
+    // 以 startLn 本行第一个 `(` 的深度为基线，避免与后续新的 `.layer(` 新开括号串到一起
+    // 导致 from_fn(tenant)) <同一行闭合> 误吞下一行的 from_fn_with_state(auth...)。
     let parenDepth = 0;
+    let baselineSet = false;
     const buf = [];
     const rawBuf = [];
-    let firstLn = startLn + 1;
+    const firstLn = startLn + 1;
     for (let i = startLn; i < maxLn; i++) {
       const cl = cleanLines[i];
       const rl = rawLines[i];
+      let localFirstOpenFoundInLine = false;
       for (const ch of cl) {
-        if (ch === '(') parenDepth++;
-        else if (ch === ')') parenDepth--;
+        if (ch === '(') {
+          if (!baselineSet) baselineSet = true;
+          parenDepth++;
+        } else if (ch === ')') {
+          if (baselineSet) parenDepth--;
+        }
       }
       buf.push(cl);
       rawBuf.push(rl.trim());
-      if (parenDepth <= 0 && i > startLn) break;
+      // 基线已建立（遇到过第一个 `(`）且深度回到 0 或负值 → 本 .layer() 调用闭合
+      if (baselineSet && parenDepth <= 0) break;
     }
-    const combined = buf.join(' ');
-    const hasAuth = authMwRegex.test(combined);
-    const hasTenant = tenantMwRegex.test(combined);
-    const kind = hasAuth ? 'auth' : (hasTenant ? 'tenant' : null);
+    // 逐行扫描，找到最早出现的关键词 —— 避免同一窗口中同时包含相邻两个 .layer 的内容时，
+    // 因 auth if-else 优先导致 tenant 被误判为 auth（例：.layer(from_fn(tenant)) 单行
+    // 紧接着 multiline .layer(from_fn_with_state(auth_middleware, state)) 时，
+    // 第一行窗口 paren 深度可能尚未归零，导致 combined 同时吞两个关键词）。
+    let kind = null;
+    let earliest = Infinity;
+    for (let li = 0; li < buf.length; li++) {
+      const line = buf[li];
+      const authIdx = line.search(authMwRegex);
+      const tenantIdx = line.search(tenantMwRegex);
+      if (authIdx >= 0 && authIdx < earliest) { earliest = authIdx; kind = 'auth'; }
+      if (tenantIdx >= 0 && tenantIdx < earliest) { earliest = tenantIdx; kind = 'tenant'; }
+    }
     const snippet = rawBuf.join(' ').slice(0, 200);
     return { kind, firstLn, snippet };
   }
@@ -215,12 +241,15 @@ function SCAN_ROUTERS(filePaths) {
     const fileRel = path.relative(TOPEMS_ROOT, filePath);
 
     if (!protectedVarByFile[fileRel]) protectedVarByFile[fileRel] = new Set();
+    if (!publicVarByFile[fileRel]) publicVarByFile[fileRel] = new Set();
     fileHasGlobalAuth[fileRel] = false;
 
     const baMatch = clean.match(buildAppRegex);
     if (baMatch) {
       buildApplicationCalls++;
+      const publicArg = baMatch[3];
       const protectedArg = baMatch[4];
+      publicVarByFile[fileRel].add(publicArg);
       protectedVarByFile[fileRel].add(protectedArg);
     }
 
@@ -250,6 +279,9 @@ function SCAN_ROUTERS(filePaths) {
           REPORT.scanners.foundRouters++;
         }
         const varName = newRouterMatch[1];
+        const ignoreR2Regex = /checker\s*:\s*ignore\s+R2/i;
+        const curLineHasIgnore = ignoreR2Regex.test(rawLines[ln] || '');
+        const prevLineHasIgnore = ln > 0 && ignoreR2Regex.test(rawLines[ln - 1] || '');
         activeCtx = {
           file: fileRel,
           routerVar: varName,
@@ -258,7 +290,8 @@ function SCAN_ROUTERS(filePaths) {
           layers: [],
           closed: false,
           buildAppProtected: protectedVarByFile[fileRel].has(varName),
-          fileHasGlobalAuthRef: fileHasGlobalAuth
+          fileHasGlobalAuthRef: fileHasGlobalAuth,
+          ignoreR2: curLineHasIgnore || prevLineHasIgnore
         };
         continue;
       }
@@ -303,7 +336,7 @@ function SCAN_ROUTERS(filePaths) {
 
   REPORT.scanners.matchedLayers = matchedLayers;
   REPORT.scanners.buildApplicationCalls = buildApplicationCalls;
-  return { routers, protectedVarByFile, fileHasGlobalAuth };
+  return { routers, protectedVarByFile, publicVarByFile, fileHasGlobalAuth };
 }
 
 /* ---------- Validator: 3 Rules ---------- */
@@ -342,15 +375,32 @@ function RUN_VALIDATORS(routers, extra = {}) {
         });
       }
     } else if (hasAuth && !hasTenant) {
-      REPORT.summary.R2++;
-      REPORT.warnings.push({
-        rule: 'R2', level: 'WARN', file: r.file, line: r.startLine,
-        routerVar: r.routerVar,
-        authLine: authLayers[0].line,
-        msg: `Router '${r.routerVar}' has auth_middleware but NO tenant_middleware. ` +
-             `May be OK if this router intentionally bypasses tenant isolation (public / system routes). ` +
-             `Verify: does this Router handle tenant-scoped data? If yes, tenant_middleware is MISSING.`
-      });
+      const dismiss_by_var = R2_WHITELIST_ROUTER_VARS.has(r.routerVar);
+      const dismiss_by_fileVar = R2_WHITELIST_FILE_VAR.has(`${r.file}|${r.routerVar}`);
+      const dismiss_by_buildAppPublic = extra.publicVarByFile && extra.publicVarByFile[r.file] && extra.publicVarByFile[r.file].has(r.routerVar) === true;
+      const dismiss_by_ignoreComment = !!r.ignoreR2;
+      if (dismiss_by_var || dismiss_by_fileVar || dismiss_by_buildAppPublic || dismiss_by_ignoreComment) {
+        REPORT.warnings.push({
+          rule: 'R2', level: 'INFO', file: r.file, line: r.startLine,
+          routerVar: r.routerVar, dismissed: true,
+          reason:
+            dismiss_by_var ? `routerVar in R2_WHITELIST_ROUTER_VARS (${r.routerVar})` :
+            dismiss_by_fileVar ? 'file|var in R2_WHITELIST_FILE_VAR' :
+            dismiss_by_buildAppPublic ? 'build_application public_routes arg (3rd parameter)' :
+            'checker:ignore R2 inline comment',
+          msg: `[DISMISSED R2] Router '${r.routerVar}' intentionally bypasses tenant isolation.`
+        });
+      } else {
+        REPORT.summary.R2++;
+        REPORT.warnings.push({
+          rule: 'R2', level: 'WARN', file: r.file, line: r.startLine,
+          routerVar: r.routerVar,
+          authLine: authLayers[0].line,
+          msg: `Router '${r.routerVar}' has auth_middleware but NO tenant_middleware. ` +
+               `May be OK if this router intentionally bypasses tenant isolation (public / system routes). ` +
+               `Verify: does this Router handle tenant-scoped data? If yes, tenant_middleware is MISSING.`
+        });
+      }
     } else if (!hasAuth && hasTenant) {
       const isBuildAppProtected = r.buildAppProtected === true;
       const globalAuthDismiss = fileHasGlobalAuth[r.file] === true;
@@ -402,7 +452,7 @@ async function runGate(config = {}) {
   REPORT.integrity.weakPass = integrityFails.length > 0;
   REPORT.integrity.violations = integrityFails;
 
-  RUN_VALIDATORS(routers, { fileHasGlobalAuth: routersResult.fileHasGlobalAuth });
+  RUN_VALIDATORS(routers, { fileHasGlobalAuth: routersResult.fileHasGlobalAuth, publicVarByFile: routersResult.publicVarByFile });
 
   if (REPORT_JSON) {
     const outPath = path.resolve(TOPEMS_ROOT, REPORT_JSON);
@@ -434,11 +484,15 @@ if (require.main === module) {
     console.log('  Integrity PASS  :', report.integrity.passed);
     if (!report.integrity.passed) report.integrity.violations.forEach(v => console.log('   -', v));
     console.log('  ── Scanner stats ──');
+    const r2Dismissed = report.warnings.filter(w => w.rule === 'R2' && w.level === 'INFO' && w.dismissed === true).length;
+    const r3Dismissed = report.warnings.filter(w => w.rule === 'R3' && w.level === 'INFO' && w.dismissed === true).length;
     console.log(`   . scannedFiles               = ${report.scanners.scannedFiles}`);
     console.log(`   . foundRouters               = ${report.scanners.foundRouters}`);
     console.log(`   . routersWithBothMiddleware  = ${report.scanners.routersWithBothMiddleware}`);
     console.log(`   . matchedLayers (auth|tenant)= ${report.scanners.matchedLayers}`);
     console.log(`   . build_application calls    = ${report.scanners.buildApplicationCalls}`);
+    console.log(`   . R2 dismissed               = ${r2Dismissed}`);
+    console.log(`   . R3 dismissed               = ${r3Dismissed}`);
     console.log('  ── Summary RULES ──');
     console.log(`   R1: ${String(report.summary.R1).padStart(5)} · FAIL · Layer order wrong (tenant AFTER auth → 500 Missing Claims)`);
     console.log(`   R2: ${String(report.summary.R2).padStart(5)} · WARN · auth_middleware only (no tenant isolation? verify)`);

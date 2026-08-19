@@ -227,6 +227,11 @@ pub fn build_routes(
             "/navigation/pinned/reorder",
             put(modules::navigation::reorder_pinned_apps),
         )
+        // 中间件 0: 租户上下文（从 Claims 提取 tenant_id，需在 auth 之后执行 → 代码放在更内层）
+        .layer(axum::middleware::from_fn_with_state(
+            state.pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
         // 中间件 1: 认证
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),

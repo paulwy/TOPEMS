@@ -324,6 +324,10 @@ async fn main() -> anyhow::Result<()> {
             post(modules::help::guide::add_lesson),
         )
         .layer(axum::middleware::from_fn_with_state(
+            app_state.pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
         ))

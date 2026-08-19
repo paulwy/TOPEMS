@@ -1020,9 +1020,10 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
-      - name: Run Axum Layer Order Checker (DRY-RUN)
+      - name: "Run Axum Layer Order Checker (R1 strict: --fail-fast R1:0, R2/R3 allowed)"
         run: |
           node scripts/ci/check-axum-layer-order.cjs \
+            --fail-fast --thresholds=R1:0,R2:999999,R3:999999 \
             --report-json=/tmp/axum-layer-report.json 2>&1 | tee /tmp/axum-layer-output.log
           EXIT_CODE=${PIPESTATUS[0]}
 
@@ -1041,8 +1042,7 @@ jobs:
 
           echo ""
           echo "Exit code: $EXIT_CODE"
-          # 默认 DRY-RUN，始终 exit 0；后续替换为真正 $EXIT_CODE 启用 fail-fast
-          exit 0
+          exit $EXIT_CODE
 
   # ──────────────────────────────────────────────────────────────────────────
   # API 审计门禁（API-Audit-Gate）— P6 (Page→API) + P7 (RBAC 权限码)

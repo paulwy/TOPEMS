@@ -15,6 +15,7 @@ use topems_shared_observability::telemetry::telemetry_middleware;
 use utoipa::OpenApi;
 
 use crate::handlers::{conversion_rules, events, lims_qms, mes_erp, mes_qms, sync, wms_scm};
+use crate::middleware::tenant::tenant_middleware;
 use crate::models::AppState;
 use crate::plugin;
 
@@ -127,6 +128,7 @@ pub fn create_routes(state: AppState) -> Router {
             "/rules/{id}/disable",
             post(conversion_rules::disable_conversion_rule_api),
         )
+        .layer(from_fn(tenant_middleware))
         .layer(from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,

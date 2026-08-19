@@ -65,13 +65,16 @@ async fn auth_request(
         .bearer_auth(token)
         .header("Content-Type", "application/json");
 
-    let response = match body {
-        Some(b) => request.json(&b),
-        None => request,
-    }
-    .send()
-    .await
-    .map_err(|e| format!("请求失败: {}", e))?;
+    let request = if let Some(ref b) = body {
+        request.json(b)
+    } else {
+        request
+    };
+
+    let response = request
+        .send()
+        .await
+        .map_err(|e| format!("请求失败: {}", e))?;
 
     let status = response.status().as_u16();
     let body: Value = response

@@ -494,6 +494,10 @@ async fn main() -> Result<()> {
             axum::routing::delete(modules::geofence::delete_geofence),
         )
         .layer(axum::middleware::from_fn_with_state(
+            state.pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             topems_shared_auth::auth::auth_middleware,
         ));
