@@ -1,8 +1,51 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
+/** DashboardPage 路由 Props · 模板=dashboard */
+export interface DashboardPageProps {
+  /** 仪表盘视图类型 */
+  variant?: 'overview' | 'executive';
+  /** 看板全局筛选条件 */
+  filters?: Record<string, unknown>;
+}
+
+/** AssetListPage 路由 Props · 模板=list */
+export interface AssetListPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** CategoryManagementPage 路由 Props · 模板=list */
+export interface CategoryManagementPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** DepreciationPage 路由 Props · 模板=form */
+export interface DepreciationPageProps {
+  /** 表单三态：新建 / 编辑 / 只读 */
+  mode?: 'create' | 'edit' | 'view';
+  /** 表单回填初始值 */
+  initialValues?: Record<string, unknown>;
+}
+
+/** TransferPage 路由 Props · 模板=form */
+export interface TransferPageProps {
+  /** 表单三态：新建 / 编辑 / 只读 */
+  mode?: 'create' | 'edit' | 'view';
+  /** 表单回填初始值 */
+  initialValues?: Record<string, unknown>;
+}
 export const ASSET_PATHS = {
   root: '/asset',
   dashboard: '/asset/dashboard',
@@ -36,7 +79,7 @@ export const assetModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'dashboard',
       group: 'overview',
-    },
+    } satisfies RouteConfigV2<DashboardPageProps>,
     {
       path: ASSET_PATHS.list,
       element: lazyWithRetry(() => import('@/pages/asset/AssetListPage'), 'AssetListPage'),
@@ -48,7 +91,7 @@ export const assetModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['asset:list:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<AssetListPageProps>,
     {
       path: ASSET_PATHS.categories,
       element: lazyWithRetry(
@@ -63,7 +106,7 @@ export const assetModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['asset:category:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<CategoryManagementPageProps>,
     {
       path: ASSET_PATHS.depreciation,
       element: lazyWithRetry(() => import('@/pages/asset/DepreciationPage'), 'DepreciationPage'),
@@ -75,7 +118,7 @@ export const assetModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['asset:depreciation:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<DepreciationPageProps>,
     {
       path: ASSET_PATHS.transfers,
       element: lazyWithRetry(() => import('@/pages/asset/TransferPage'), 'TransferPage'),
@@ -87,7 +130,7 @@ export const assetModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['asset:transfer:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<TransferPageProps>,
   ],
 };
 
