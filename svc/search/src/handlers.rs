@@ -10,151 +10,16 @@ use topems_shared::ApiResponse;
 use topems_shared_core::response::{api_error, api_success};
 
 use crate::models::{
-    calculate_pagination, calculate_relevance, detect_search_type, normalize_query, tokenize,
     SearchRequest, SearchResponse, SearchResult, SearchSuggestion, SuggestionKind,
 };
 
-use std::collections::{HashMap, HashSet};
+use crate::scoring::{
+    calculate_pagination, calculate_relevance, compare_search_results, count_facets,
+    deduplicate_results, detect_search_type, extract_snippet, highlight_term, matches_filter,
+    normalize_query, tokenize,
+};
 
-// ===== Pure functions (no DB / async / external deps) =====
-
-/// Wrap every case-insensitive occurrence of `term` in `text` with `**...**`.
-pub fn highlight_term(text: &str, term: &str) -> String {
-    if term.is_empty() {
-        return text.to_string();
-    }
-    let text_chars: Vec<char> = text.chars().collect();
-    let text_lower: Vec<char> = text.to_lowercase().chars().collect();
-    let term_lower: Vec<char> = term.to_lowercase().chars().collect();
-    let tlen = term_lower.len();
-    if tlen == 0 || tlen > text_lower.len() {
-        return text.to_string();
-    }
-    let mut result = String::new();
-    let mut i = 0;
-    while i < text_chars.len() {
-        if i + tlen <= text_lower.len() && text_lower[i..i + tlen] == term_lower[..] {
-            result.push_str("**");
-            for c in &text_chars[i..i + tlen] {
-                result.push(*c);
-            }
-            result.push_str("**");
-            i += tlen;
-        } else {
-            result.push(text_chars[i]);
-            i += 1;
-        }
-    }
-    result
-}
-
-/// Compare two search results: higher score first, then more recent date first.
-pub fn compare_search_results(
-    a_score: f64,
-    a_date: i64,
-    b_score: f64,
-    b_date: i64,
-) -> std::cmp::Ordering {
-    b_score
-        .partial_cmp(&a_score)
-        .unwrap_or(std::cmp::Ordering::Equal)
-        .then_with(|| b_date.cmp(&a_date))
-}
-
-/// Count facets: given a list of `(field_name, value)` pairs, return a map
-/// of `"field:value"` -> count.
-pub fn count_facets(items: &[(&str, &str)]) -> HashMap<String, usize> {
-    let mut counts = HashMap::new();
-    for (field, value) in items {
-        let key = format!("{}:{}", field, value);
-        *counts.entry(key).or_insert(0) += 1;
-    }
-    counts
-}
-
-/// Match a value against a filter pattern supporting wildcards:
-/// `prefix*`, `*suffix`, `*contains*`, or exact match.
-pub fn matches_filter(value: &str, filter: &str) -> bool {
-    let starts_wild = filter.starts_with('*');
-    let ends_wild = filter.ends_with('*');
-    match (starts_wild, ends_wild) {
-        (true, true) => {
-            if filter.len() < 2 {
-                return true;
-            }
-            let middle = &filter[1..filter.len() - 1];
-            value.contains(middle)
-        }
-        (true, false) => {
-            let suffix = &filter[1..];
-            if suffix.is_empty() {
-                return true;
-            }
-            value.ends_with(suffix)
-        }
-        (false, true) => {
-            let prefix = &filter[..filter.len() - 1];
-            if prefix.is_empty() {
-                return true;
-            }
-            value.starts_with(prefix)
-        }
-        (false, false) => value == filter,
-    }
-}
-
-/// Remove duplicate IDs while preserving insertion order.
-pub fn deduplicate_results(ids: &[String]) -> Vec<String> {
-    let mut seen = HashSet::new();
-    let mut result = Vec::new();
-    for id in ids {
-        if seen.insert(id.clone()) {
-            result.push(id.clone());
-        }
-    }
-    result
-}
-
-/// Extract a snippet around the first (case-insensitive) occurrence of `query`
-/// in `text`, including `context_chars` of surrounding text on each side.
-pub fn extract_snippet(text: &str, query: &str, context_chars: usize) -> String {
-    if text.is_empty() {
-        return String::new();
-    }
-    let text_chars: Vec<char> = text.chars().collect();
-    let text_lower: Vec<char> = text.to_lowercase().chars().collect();
-
-    if query.is_empty() {
-        let end = context_chars.min(text_chars.len());
-        return text_chars[..end].iter().collect();
-    }
-
-    let query_lower: Vec<char> = query.to_lowercase().chars().collect();
-    let qlen = query_lower.len();
-    if qlen == 0 || qlen > text_lower.len() {
-        let end = context_chars.min(text_chars.len());
-        return text_chars[..end].iter().collect();
-    }
-
-    let mut match_start: Option<usize> = None;
-    for i in 0..=text_lower.len() - qlen {
-        if text_lower[i..i + qlen] == query_lower[..] {
-            match_start = Some(i);
-            break;
-        }
-    }
-
-    let (start, end) = match match_start {
-        Some(pos) => {
-            let s = pos.saturating_sub(context_chars);
-            let e = (pos + qlen + context_chars).min(text_chars.len());
-            (s, e)
-        }
-        None => (0, context_chars.min(text_chars.len())),
-    };
-
-    text_chars[start..end].iter().collect()
-}
+use std::collections::HashSet;
 
 #[derive(Debug, Clone, FromRow)]
 struct UserSearchRow {
@@ -449,24 +314,20 @@ pub async fn search_handler(
     State(pool): State<PgPool>,
     Query(req): Query<SearchRequest>,
 ) -> Json<ApiResponse<SearchResponse>> {
-    // 1. normalize_query: 规范化关键词（trim + 折叠空白 + 小写）
     let keyword = normalize_query(&req.keyword);
     if keyword.is_empty() {
         return Json(api_error(400, "搜索关键词不能为空"));
     }
 
-    // 2. detect_search_type: 检测搜索类型（exact/prefix/fuzzy/phrase）
     let search_type = detect_search_type(&req.keyword).to_string();
 
     let page = req.page.unwrap_or(1).max(1);
     let page_size = req.page.unwrap_or(20).min(100);
 
-    // 3. tokenize: 分词用于相关性计算
     let query_terms = tokenize(&keyword);
 
     let mut results = search_all(&pool, &keyword, &req.modules, page_size).await;
 
-    // 4. calculate_relevance: 为每条结果计算相关性分数
     for r in &mut results {
         let doc_fields = vec![
             r.title.clone(),
@@ -477,7 +338,6 @@ pub async fn search_handler(
         r.relevance = Some(calculate_relevance(&query_terms, &doc_fields));
     }
 
-    // 5. compare_search_results: 按相关性分数降序排序
     let now_ts = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_secs() as i64)
@@ -491,34 +351,29 @@ pub async fn search_handler(
         )
     });
 
-    // 6. deduplicate_results: 防御性去重（DB 结果应已唯一）
     let ids: Vec<String> = results.iter().map(|r| r.id.clone()).collect();
     if deduplicate_results(&ids).len() != ids.len() {
         let seen: HashSet<String> = ids.into_iter().collect();
         results.retain(|r| seen.contains(&r.id));
     }
 
-    // 7. highlight_term: 高亮标题中的关键词
     let highlight_term_kw = query_terms.first().map(|s| s.as_str()).unwrap_or(&keyword);
     for r in &mut results {
         r.title = highlight_term(&r.title, highlight_term_kw);
     }
 
-    // 8. extract_snippet: 从描述中提取关键词上下文摘要
     for r in &mut results {
         if let Some(desc) = &r.description {
             r.snippet = Some(extract_snippet(desc, highlight_term_kw, 50));
         }
     }
 
-    // 9. count_facets: 统计模块×类型分面
     let facet_pairs: Vec<(&str, &str)> = results
         .iter()
         .map(|r| (r.module.as_str(), r.type_name.as_str()))
         .collect();
     let facets = count_facets(&facet_pairs);
 
-    // 10. 生成搜索建议（取前 5 条结果的首词）
     let suggestions: Vec<SearchSuggestion> = results
         .iter()
         .take(5)
@@ -534,7 +389,6 @@ pub async fn search_handler(
 
     let total = results.len() as i64;
 
-    // 11. calculate_pagination: 计算分页元数据
     let (_offset, _total_pages, current_page) = calculate_pagination(page, page_size, total);
 
     Json(api_success(SearchResponse {
@@ -563,391 +417,4 @@ pub async fn health_handler() -> &'static str {
 #[allow(dead_code)]
 pub fn search_routes() -> Router<PgPool> {
     Router::new().route("/", get(search_handler))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    // --- highlight_term ---
-
-    #[test]
-    fn highlight_simple_match() {
-        assert_eq!(highlight_term("hello world", "world"), "hello **world**");
-    }
-
-    #[test]
-    fn highlight_case_insensitive() {
-        assert_eq!(highlight_term("Hello World", "world"), "Hello **World**");
-    }
-
-    #[test]
-    fn highlight_multiple_matches() {
-        assert_eq!(
-            highlight_term("hello hello hello", "hello"),
-            "**hello** **hello** **hello**"
-        );
-    }
-
-    #[test]
-    fn highlight_no_match() {
-        assert_eq!(highlight_term("hello world", "xyz"), "hello world");
-    }
-
-    #[test]
-    fn highlight_empty_term() {
-        assert_eq!(highlight_term("hello", ""), "hello");
-    }
-
-    #[test]
-    fn highlight_empty_text() {
-        assert_eq!(highlight_term("", "hello"), "");
-    }
-
-    #[test]
-    fn highlight_preserves_original_case() {
-        assert_eq!(highlight_term("HELLO World", "hello"), "**HELLO** World");
-    }
-
-    // --- compare_search_results ---
-
-    #[test]
-    fn compare_higher_score_first() {
-        assert_eq!(
-            compare_search_results(1.0, 0, 0.5, 0),
-            std::cmp::Ordering::Less
-        );
-    }
-
-    #[test]
-    fn compare_equal_scores_newer_date_first() {
-        assert_eq!(
-            compare_search_results(1.0, 100, 1.0, 50),
-            std::cmp::Ordering::Less
-        );
-    }
-
-    #[test]
-    fn compare_equal_scores_equal_dates() {
-        assert_eq!(
-            compare_search_results(1.0, 100, 1.0, 100),
-            std::cmp::Ordering::Equal
-        );
-    }
-
-    #[test]
-    fn compare_lower_score_last() {
-        assert_eq!(
-            compare_search_results(0.5, 0, 1.0, 0),
-            std::cmp::Ordering::Greater
-        );
-    }
-
-    #[test]
-    fn compare_nan_score_falls_back_to_date() {
-        assert_eq!(
-            compare_search_results(f64::NAN, 100, 1.0, 50),
-            std::cmp::Ordering::Less
-        );
-    }
-
-    #[test]
-    fn compare_both_nan_falls_to_date() {
-        assert_eq!(
-            compare_search_results(f64::NAN, 200, f64::NAN, 100),
-            std::cmp::Ordering::Less
-        );
-    }
-
-    // --- count_facets ---
-
-    #[test]
-    fn facets_count_simple() {
-        let items = vec![("module", "user"), ("module", "user"), ("module", "order")];
-        let counts = count_facets(&items);
-        assert_eq!(counts.get("module:user"), Some(&2));
-        assert_eq!(counts.get("module:order"), Some(&1));
-    }
-
-    #[test]
-    fn facets_empty() {
-        let counts = count_facets(&[]);
-        assert!(counts.is_empty());
-    }
-
-    #[test]
-    fn facets_multiple_fields() {
-        let items = vec![
-            ("status", "active"),
-            ("status", "inactive"),
-            ("type", "user"),
-        ];
-        let counts = count_facets(&items);
-        assert_eq!(counts.len(), 3);
-        assert_eq!(counts.get("status:active"), Some(&1));
-    }
-
-    #[test]
-    fn facets_single_item() {
-        let items = vec![("module", "doc")];
-        let counts = count_facets(&items);
-        assert_eq!(counts.get("module:doc"), Some(&1));
-    }
-
-    #[test]
-    fn facets_all_same() {
-        let items = vec![("m", "a"), ("m", "a"), ("m", "a")];
-        let counts = count_facets(&items);
-        assert_eq!(counts.get("m:a"), Some(&3));
-        assert_eq!(counts.len(), 1);
-    }
-
-    // --- matches_filter ---
-
-    #[test]
-    fn filter_exact_match() {
-        assert!(matches_filter("hello", "hello"));
-    }
-
-    #[test]
-    fn filter_exact_no_match() {
-        assert!(!matches_filter("hello", "world"));
-    }
-
-    #[test]
-    fn filter_prefix_wildcard() {
-        assert!(matches_filter("hello world", "hello*"));
-        assert!(!matches_filter("world hello", "hello*"));
-    }
-
-    #[test]
-    fn filter_suffix_wildcard() {
-        assert!(matches_filter("hello world", "*world"));
-        assert!(!matches_filter("world hello", "*world"));
-    }
-
-    #[test]
-    fn filter_contains_wildcard() {
-        assert!(matches_filter("hello world", "*lo wo*"));
-        assert!(!matches_filter("hello", "*lo wo*"));
-    }
-
-    #[test]
-    fn filter_star_only_matches_all() {
-        assert!(matches_filter("anything", "*"));
-    }
-
-    #[test]
-    fn filter_double_star_matches_all() {
-        assert!(matches_filter("anything", "**"));
-    }
-
-    #[test]
-    fn filter_empty_filter_empty_value() {
-        assert!(matches_filter("", ""));
-    }
-
-    // --- deduplicate_results ---
-
-    #[test]
-    fn dedup_preserves_order() {
-        let ids = vec!["a".to_string(), "b".to_string(), "c".to_string()];
-        assert_eq!(deduplicate_results(&ids), ids);
-    }
-
-    #[test]
-    fn dedup_removes_duplicates() {
-        let ids = vec![
-            "a".to_string(),
-            "b".to_string(),
-            "a".to_string(),
-            "c".to_string(),
-            "b".to_string(),
-        ];
-        assert_eq!(
-            deduplicate_results(&ids),
-            vec!["a".to_string(), "b".to_string(), "c".to_string()]
-        );
-    }
-
-    #[test]
-    fn dedup_empty() {
-        assert!(deduplicate_results(&[]).is_empty());
-    }
-
-    #[test]
-    fn dedup_all_same() {
-        let ids = vec!["x".to_string(), "x".to_string(), "x".to_string()];
-        assert_eq!(deduplicate_results(&ids), vec!["x".to_string()]);
-    }
-
-    #[test]
-    fn dedup_single() {
-        let ids = vec!["only".to_string()];
-        assert_eq!(deduplicate_results(&ids), ids);
-    }
-
-    // --- extract_snippet ---
-
-    #[test]
-    fn snippet_basic_match() {
-        let text = "the quick brown fox jumps";
-        assert_eq!(extract_snippet(text, "brown", 5), "uick brown fox ");
-    }
-
-    #[test]
-    fn snippet_case_insensitive() {
-        let text = "The Quick Brown Fox";
-        assert_eq!(extract_snippet(text, "brown", 5), "uick Brown Fox");
-    }
-
-    #[test]
-    fn snippet_no_match_returns_beginning() {
-        let text = "hello world";
-        assert_eq!(extract_snippet(text, "xyz", 5), "hello");
-    }
-
-    #[test]
-    fn snippet_empty_text() {
-        assert_eq!(extract_snippet("", "query", 5), "");
-    }
-
-    #[test]
-    fn snippet_empty_query_returns_beginning() {
-        let text = "hello world";
-        assert_eq!(extract_snippet(text, "", 5), "hello");
-    }
-
-    #[test]
-    fn snippet_match_at_start() {
-        let text = "hello world";
-        assert_eq!(extract_snippet(text, "hello", 3), "hello wo");
-    }
-
-    #[test]
-    fn snippet_match_at_end() {
-        let text = "hello world";
-        assert_eq!(extract_snippet(text, "world", 3), "lo world");
-    }
-
-    #[test]
-    fn snippet_zero_context() {
-        let text = "hello world";
-        assert_eq!(extract_snippet(text, "hello", 0), "hello");
-    }
-
-    // --- 边界用例补充 ---
-
-    // highlight_term 边界
-
-    #[test]
-    fn highlight_term_longer_than_text() {
-        assert_eq!(highlight_term("hi", "hello"), "hi");
-    }
-
-    #[test]
-    fn highlight_term_single_char() {
-        assert_eq!(highlight_term("a quick fox", "a"), "**a** quick fox");
-    }
-
-    #[test]
-    fn highlight_term_unicode() {
-        assert_eq!(highlight_term("你好世界", "好"), "你**好**世界");
-    }
-
-    #[test]
-    fn highlight_term_entire_text() {
-        assert_eq!(highlight_term("hello", "hello"), "**hello**");
-    }
-
-    // matches_filter 边界
-
-    #[test]
-    fn matches_filter_case_sensitive() {
-        assert!(!matches_filter("Hello", "hello"));
-    }
-
-    #[test]
-    fn matches_filter_empty_value_nonempty_filter() {
-        assert!(!matches_filter("", "hello"));
-    }
-
-    #[test]
-    fn matches_filter_star_only_empty_value() {
-        assert!(matches_filter("", "*"));
-    }
-
-    #[test]
-    fn matches_filter_suffix_partial() {
-        assert!(matches_filter("hello", "*lo"));
-        assert!(!matches_filter("hello", "*wo"));
-    }
-
-    // deduplicate_results 边界
-
-    #[test]
-    fn dedup_many_distinct() {
-        let ids = vec![
-            "a".to_string(),
-            "b".to_string(),
-            "c".to_string(),
-            "d".to_string(),
-        ];
-        assert_eq!(deduplicate_results(&ids), ids);
-    }
-
-    #[test]
-    fn dedup_preserves_first_occurrence() {
-        let ids = vec![
-            "b".to_string(),
-            "a".to_string(),
-            "b".to_string(),
-            "a".to_string(),
-        ];
-        assert_eq!(
-            deduplicate_results(&ids),
-            vec!["b".to_string(), "a".to_string()]
-        );
-    }
-
-    #[test]
-    fn dedup_interleaved() {
-        let ids = vec![
-            "x".to_string(),
-            "y".to_string(),
-            "x".to_string(),
-            "z".to_string(),
-            "y".to_string(),
-        ];
-        assert_eq!(
-            deduplicate_results(&ids),
-            vec!["x".to_string(), "y".to_string(), "z".to_string()]
-        );
-    }
-
-    // extract_snippet 边界
-
-    #[test]
-    fn snippet_match_in_middle() {
-        let text = "the quick brown fox jumps";
-        assert_eq!(extract_snippet(text, "brown", 3), "ck brown fo");
-    }
-
-    #[test]
-    fn snippet_large_context_exceeds_text() {
-        let text = "hello";
-        assert_eq!(extract_snippet(text, "lo", 100), "hello");
-    }
-
-    #[test]
-    fn snippet_zero_context_no_match() {
-        let text = "hello world";
-        assert_eq!(extract_snippet(text, "xyz", 0), "");
-    }
-
-    #[test]
-    fn snippet_unicode_text() {
-        let text = "你好世界测试";
-        assert_eq!(extract_snippet(text, "世界", 1), "好世界测");
-    }
 }
