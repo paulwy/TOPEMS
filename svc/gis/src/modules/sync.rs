@@ -1,13 +1,43 @@
 #![allow(dead_code)]
 
-use crate::middleware::tenant::TenantRequest;
 use crate::models::{DeviceLocation, EvidenceRecord, TrackPosition, TrackRecord};
-use axum::{extract::State, Json};
+use axum::{
+    extract::{FromRequestParts, State},
+    http::request::Parts,
+    Json,
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
+
+#[derive(Debug, Clone)]
+pub(crate) struct TenantContext {
+    tenant_id: Uuid,
+    user_id: Uuid,
+}
+
+pub(crate) struct TenantRequest {
+    ctx: TenantContext,
+}
+
+impl<S> FromRequestParts<S> for TenantRequest
+where
+    S: Send + Sync,
+{
+    type Rejection = ApiResponse<()>;
+
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        let tenant_ctx = parts
+            .extensions
+            .get::<TenantContext>()
+            .cloned()
+            .ok_or_else(|| ApiResponse::error(401, "缺少租户上下文信息"))?;
+
+        Ok(TenantRequest { ctx: tenant_ctx })
+    }
+}
 
 // ==================== 请求结构 ====================
 

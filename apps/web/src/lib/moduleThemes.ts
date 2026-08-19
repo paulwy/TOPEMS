@@ -44,7 +44,7 @@ const ct = designTokens.colors;
 export interface ModuleTheme {
   code: string;
   name: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: React.ComponentType<any>;
   gradient: string;
   color: string;
 }

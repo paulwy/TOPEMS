@@ -17,7 +17,7 @@ import { LazyChart } from '@/components/charts';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { wmsApi } from '@/api/wms';
 
-const iconMap: Record<string, React.ComponentType<{ className?: string; size?: number }>> = {
+const iconMap: Record<string, React.ComponentType<any>> = {
   Warehouse,
   Package,
   AlertCircle,
