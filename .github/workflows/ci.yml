@@ -285,9 +285,36 @@ jobs:
       - name: Run Clippy (workspace, all targets)
         run: cargo clippy --workspace --all-targets -- -D warnings
 
+  # ──────────────────────────────────────────────────────────────────────────
+  # [V232-P3 NEW Gate L] Cargo check workspace --tests -D warnings (standalone job)
+  # ──────────────────────────────────────────────────────────────────────────
+  cargo-check:
+    name: Gate L · cargo check --workspace --tests -D warnings
+    needs: changes
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2026-07-01
+
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "cargo-check-nightly-2026-07-01"
+
+      - name: Run cargo check (workspace, all tests)
+        run: RUSTFLAGS="-D warnings" SQLX_OFFLINE="true" cargo check --workspace --tests --message-format=short
+
   rust-test:
     name: Rust Tests
-    needs: [changes, rust-lint]
+    needs: [changes, rust-lint, fmt-check, clippy-check, cargo-check]
     if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
     runs-on: ubuntu-latest
 

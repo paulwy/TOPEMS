@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 use topems_shared::auth::Claims;
-use topems_shared_db::rls::TenantContext as RlsTenantContext;
 use topems_shared::tenant::{
     Tenant, TenantContext as AuthTenantContext, TenantPlan, TenantRole, TenantStatus,
 };
+use topems_shared_db::rls::TenantContext as RlsTenantContext;
 use uuid::Uuid;
 
 fn build_claims(tenant_id: Option<String>, role: &str, is_superuser: bool) -> Claims {

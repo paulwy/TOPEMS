@@ -3,94 +3,6 @@ pub use topems_shared_bootstrap::audit::{AuditEventParams, AuditLog, ListAuditLo
 
 use serde::{Deserialize, Serialize};
 
-// ===== Pure functions (no DB / async / external deps) =====
-
-/// Normalize a search query: trim, collapse internal whitespace, lowercase.
-pub fn normalize_query(q: &str) -> String {
-    let trimmed = q.trim();
-    let mut result = String::with_capacity(trimmed.len());
-    let mut prev_ws = false;
-    for ch in trimmed.chars() {
-        if ch.is_whitespace() {
-            if !prev_ws {
-                result.push(' ');
-            }
-            prev_ws = true;
-        } else {
-            for c in ch.to_lowercase() {
-                result.push(c);
-            }
-            prev_ws = false;
-        }
-    }
-    result
-}
-
-/// Tokenize a query into non-empty whitespace-separated terms (lowercased).
-pub fn tokenize(query: &str) -> Vec<String> {
-    query
-        .split_whitespace()
-        .map(|t| t.to_lowercase())
-        .filter(|t| !t.is_empty())
-        .collect()
-}
-
-/// Calculate pagination metadata.
-/// Returns `(offset, total_pages, current_page)`.
-pub fn calculate_pagination(page: i64, page_size: i64, total: i64) -> (i64, i64, i64) {
-    let current_page = page.max(1);
-    let size = page_size.max(1);
-    let offset = (current_page - 1) * size;
-    let total_pages = if total <= 0 {
-        0
-    } else {
-        (total + size - 1) / size
-    };
-    (offset, total_pages, current_page)
-}
-
-/// Calculate a relevance score in `[0.0, 1.0]` based on how many query terms
-/// appear (case-insensitive) in the given document fields.
-pub fn calculate_relevance(query_terms: &[String], doc_fields: &[String]) -> f64 {
-    if query_terms.is_empty() || doc_fields.is_empty() {
-        return 0.0;
-    }
-    let mut matches = 0usize;
-    for term in query_terms {
-        if term.is_empty() {
-            continue;
-        }
-        let term_lower = term.to_lowercase();
-        for field in doc_fields {
-            if field.to_lowercase().contains(&term_lower) {
-                matches += 1;
-            }
-        }
-    }
-    let total = (query_terms.len() * doc_fields.len()) as f64;
-    if total == 0.0 {
-        0.0
-    } else {
-        matches as f64 / total
-    }
-}
-
-/// Detect the search type from the query syntax.
-/// Returns one of: `"exact"`, `"prefix"`, `"fuzzy"`, `"phrase"`.
-pub fn detect_search_type(query: &str) -> &'static str {
-    let q = query.trim();
-    if q.len() >= 2 && q.starts_with('"') && q.ends_with('"') {
-        return "phrase";
-    }
-    if q.starts_with('*') && q.ends_with('*') {
-        return "fuzzy";
-    }
-    if q.ends_with('*') {
-        return "prefix";
-    }
-    "exact"
-}
-
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SearchRequest {
     pub keyword: String,
@@ -124,8 +36,6 @@ pub struct SearchResponse {
     pub suggestions: Vec<SearchSuggestion>,
 }
 
-// ---- 新增 DTO：索引文档（写入倒排索引用，预留倒排索引功能）----
-
 #[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct IndexDocument {
@@ -147,8 +57,6 @@ pub enum Visibility {
     Private,
     OrgOnly,
 }
-
-// ---- 新增 DTO：搜索过滤条件（结构化条件，预留高级过滤功能）----
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -174,8 +82,6 @@ impl Default for SearchFilter {
     }
 }
 
-// ---- 新增 DTO：搜索建议（自动补全候选）----
-
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SearchSuggestion {
     pub text: String,
@@ -191,8 +97,6 @@ pub enum SuggestionKind {
     RecentQuery,
     Module,
 }
-
-// ---- 新增 DTO：批量索引请求（预留倒排索引功能）----
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -215,200 +119,6 @@ impl Default for BatchIndexRequest {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // --- normalize_query ---
-
-    #[test]
-    fn normalize_query_trims_whitespace() {
-        assert_eq!(normalize_query("  hello  "), "hello");
-    }
-
-    #[test]
-    fn normalize_query_collapses_internal_whitespace() {
-        assert_eq!(normalize_query("hello    world"), "hello world");
-    }
-
-    #[test]
-    fn normalize_query_lowercases() {
-        assert_eq!(normalize_query("HeLLo WORLD"), "hello world");
-    }
-
-    #[test]
-    fn normalize_query_empty_string() {
-        assert_eq!(normalize_query(""), "");
-    }
-
-    #[test]
-    fn normalize_query_only_whitespace() {
-        assert_eq!(normalize_query("   \t\n  "), "");
-    }
-
-    #[test]
-    fn normalize_query_mixed_whitespace() {
-        assert_eq!(normalize_query("  a\t b\n c "), "a b c");
-    }
-
-    // --- tokenize ---
-
-    #[test]
-    fn tokenize_simple() {
-        assert_eq!(tokenize("hello world"), vec!["hello", "world"]);
-    }
-
-    #[test]
-    fn tokenize_multiple_spaces() {
-        assert_eq!(tokenize("hello   world"), vec!["hello", "world"]);
-    }
-
-    #[test]
-    fn tokenize_empty() {
-        assert!(tokenize("").is_empty());
-    }
-
-    #[test]
-    fn tokenize_only_whitespace() {
-        assert!(tokenize("   \t\n ").is_empty());
-    }
-
-    #[test]
-    fn tokenize_lowercases() {
-        assert_eq!(tokenize("HELLO World"), vec!["hello", "world"]);
-    }
-
-    #[test]
-    fn tokenize_single_word() {
-        assert_eq!(tokenize("hello"), vec!["hello"]);
-    }
-
-    // --- calculate_pagination ---
-
-    #[test]
-    fn pagination_first_page() {
-        assert_eq!(calculate_pagination(1, 20, 100), (0, 5, 1));
-    }
-
-    #[test]
-    fn pagination_second_page() {
-        assert_eq!(calculate_pagination(2, 20, 100), (20, 5, 2));
-    }
-
-    #[test]
-    fn pagination_zero_page_clamps_to_one() {
-        assert_eq!(calculate_pagination(0, 20, 100), (0, 5, 1));
-    }
-
-    #[test]
-    fn pagination_negative_page_clamps_to_one() {
-        assert_eq!(calculate_pagination(-5, 20, 100), (0, 5, 1));
-    }
-
-    #[test]
-    fn pagination_zero_total() {
-        assert_eq!(calculate_pagination(1, 20, 0), (0, 0, 1));
-    }
-
-    #[test]
-    fn pagination_exact_division() {
-        assert_eq!(calculate_pagination(1, 10, 50), (0, 5, 1));
-    }
-
-    #[test]
-    fn pagination_inexact_division_rounds_up() {
-        assert_eq!(calculate_pagination(1, 10, 55), (0, 6, 1));
-    }
-
-    #[test]
-    fn pagination_zero_page_size_clamps_to_one() {
-        assert_eq!(calculate_pagination(1, 0, 10), (0, 10, 1));
-    }
-
-    // --- calculate_relevance ---
-
-    #[test]
-    fn relevance_full_match() {
-        let terms = vec!["hello".to_string()];
-        let fields = vec!["hello world".to_string()];
-        assert_eq!(calculate_relevance(&terms, &fields), 1.0);
-    }
-
-    #[test]
-    fn relevance_partial_match() {
-        let terms = vec!["hello".to_string(), "missing".to_string()];
-        let fields = vec!["hello world".to_string()];
-        assert_eq!(calculate_relevance(&terms, &fields), 0.5);
-    }
-
-    #[test]
-    fn relevance_no_match() {
-        let terms = vec!["xyz".to_string()];
-        let fields = vec!["hello world".to_string()];
-        assert_eq!(calculate_relevance(&terms, &fields), 0.0);
-    }
-
-    #[test]
-    fn relevance_empty_terms() {
-        let fields = vec!["hello".to_string()];
-        assert_eq!(calculate_relevance(&[], &fields), 0.0);
-    }
-
-    #[test]
-    fn relevance_empty_fields() {
-        let terms = vec!["hello".to_string()];
-        assert_eq!(calculate_relevance(&terms, &[]), 0.0);
-    }
-
-    #[test]
-    fn relevance_case_insensitive() {
-        let terms = vec!["HELLO".to_string()];
-        let fields = vec!["hello world".to_string()];
-        assert_eq!(calculate_relevance(&terms, &fields), 1.0);
-    }
-
-    #[test]
-    fn relevance_multiple_fields() {
-        let terms = vec!["hello".to_string()];
-        let fields = vec!["hello".to_string(), "world".to_string()];
-        assert_eq!(calculate_relevance(&terms, &fields), 0.5);
-    }
-
-    // --- detect_search_type ---
-
-    #[test]
-    fn search_type_phrase() {
-        assert_eq!(detect_search_type("\"hello world\""), "phrase");
-    }
-
-    #[test]
-    fn search_type_prefix() {
-        assert_eq!(detect_search_type("hello*"), "prefix");
-    }
-
-    #[test]
-    fn search_type_fuzzy() {
-        assert_eq!(detect_search_type("*hello*"), "fuzzy");
-    }
-
-    #[test]
-    fn search_type_exact() {
-        assert_eq!(detect_search_type("hello"), "exact");
-    }
-
-    #[test]
-    fn search_type_empty() {
-        assert_eq!(detect_search_type(""), "exact");
-    }
-
-    #[test]
-    fn search_type_single_quote_not_phrase() {
-        assert_eq!(detect_search_type("\""), "exact");
-    }
-
-    #[test]
-    fn search_type_phrase_with_spaces_around() {
-        assert_eq!(detect_search_type("  \"hi\"  "), "phrase");
-    }
-
-    // --- DTO serde roundtrip ---
 
     #[test]
     fn search_request_serde_roundtrip_full() {
@@ -495,8 +205,6 @@ mod tests {
         assert_eq!(de, resp);
     }
 
-    // ---- IndexDocument / Visibility roundtrip ----
-
     #[test]
     fn index_document_serde_roundtrip_public_with_owner() {
         let doc = IndexDocument {
@@ -542,8 +250,6 @@ mod tests {
         }
     }
 
-    // ---- SearchFilter roundtrip + default ----
-
     #[test]
     fn search_filter_default_all_none() {
         let f = SearchFilter::default();
@@ -577,8 +283,6 @@ mod tests {
         let de: SearchFilter = serde_json::from_str(&json).unwrap();
         assert_eq!(de, f);
     }
-
-    // ---- SearchSuggestion / SuggestionKind roundtrip ----
 
     #[test]
     fn suggestion_serde_roundtrip_term_with_highlight() {
@@ -629,8 +333,6 @@ mod tests {
             assert_eq!(de, k);
         }
     }
-
-    // ---- BatchIndexRequest roundtrip + default ----
 
     #[test]
     fn batch_request_default_empty_no_refresh() {

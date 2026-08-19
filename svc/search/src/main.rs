@@ -8,6 +8,7 @@ use topems_shared_bootstrap::{bootstrap_service, build_application, run, Service
 mod handlers;
 mod models;
 pub mod openapi;
+mod scoring;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

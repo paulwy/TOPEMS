@@ -6300,7 +6300,105 @@ cargo fix 自动修复（~50 files，1-2 行变更）：`lib/shared-*`、`svc/cr
 
 ### 后续扩展
 
-- [ ] 在 CI Gate 增加工作区 `cargo check --workspace --tests -D warnings` 守门，防止新警告回归
+- [x] 在 CI Gate 增加工作区 `cargo check --workspace --tests -D warnings` 守门，防止新警告回归 — **V241 Gate L 已落地**
 - [ ] 评估 `cargo fix` 自动修复中可能引入的语义偏差（多为 unused import 删除，风险低，但仍需 review）
-- [ ] 将 svc/search 的 11 个工具函数抽成独立 `search::scoring` 子模块，降低 `handlers.rs` 行数
+- [x] 将 svc/search 的 11 个工具函数抽成独立 `search::scoring` 子模块，降低 `handlers.rs` 行数 — **V241 scoring 重构已落地**
+- [x] 在 CI Gate 增加 Axum 中间件层序静态校验脚本，避免再次踩坑 — **V241 check-axum-layer-order.cjs 已落地**
+
+## 🎯 V241 — CI Gate 增强 + search::scoring 重构 + Axum 层序静态校验（并行推进 · ✅ 完成）
+
+### 背景
+
+V240 完成后，V238 后续扩展 3 项（CI cargo-check 守门、scoring 子模块抽取、Axum 层序静态校验脚本）具备并行推进条件，无互相依赖。同时验证 V238 留下的「Dify 层序修复推广到 5 个 router」是否需要改动。
+
+### 4 个并行任务结果
+
+#### A. CI Gate L：cargo check --workspace --tests -D warnings
+
+在 [ci.yml](file:///Users/air/TOPEMS/.github/workflows/ci.yml) 新增独立 job `cargo-check`（Gate L），结构与 Gate J（fmt-check）/ Gate K（clippy-check）完全对齐：
+
+| 项目 | 内容 |
+|------|------|
+| Job 名 | `cargo-check` · 显示名 `Gate L · cargo check --workspace --tests -D warnings` |
+| toolchain | nightly-2026-07-01（不指定 components，cargo check 不需要 clippy/rustfmt） |
+| cache prefix | `cargo-check-nightly-2026-07-01` |
+| 核心命令 | `RUSTFLAGS="-D warnings" SQLX_OFFLINE="true" cargo check --workspace --tests --message-format=short` |
+| rust-test needs | 从 `[changes, rust-lint]` 扩为 `[changes, rust-lint, fmt-check, clippy-check, cargo-check]`，三个独立 Gate J/K/L 全部作为集成测试前置 |
+
+Paths-filter 复用现有的 `rust:` 条目，不新增单独路径。
+
+#### B. svc/search scoring 子模块抽取
+
+将 handlers.rs + models.rs 中 11 个纯函数（+ 97 个相关测试）整体抽成独立 `scoring` 子模块：
+
+| 来源 | 函数 |
+|------|------|
+| handlers.rs（6） | `highlight_term`、`compare_search_results`、`count_facets`、`matches_filter`、`deduplicate_results`、`extract_snippet` |
+| models.rs（5） | `normalize_query`、`tokenize`、`calculate_pagination`、`calculate_relevance`、`detect_search_type` |
+
+结果：
+- 新文件 [scoring.rs](file:///Users/air/TOPEMS/svc/search/src/scoring.rs)：785 行（11 函数 + 97 测试）
+- [handlers.rs](file:///Users/air/TOPEMS/svc/search/src/handlers.rs)：953 → 420 行（-533，仅保留 DB 查询 + HTTP handler + Router）
+- [models.rs](file:///Users/air/TOPEMS/svc/search/src/models.rs)：676 → 378 行（-298，仅保留 DTO struct）
+- [lib.rs](file:///Users/air/TOPEMS/svc/search/src/lib.rs) + [main.rs](file:///Users/air/TOPEMS/svc/search/src/main.rs)：新增 `pub mod scoring` / `mod scoring`
+
+与 util.rs 无命名冲突（`highlight_snippet` vs `highlight_term/extract_snippet` 签名不同）。
+
+#### C. Dify 层序推广到 protected/analysis/agent/recommendation/multimodal（5 router）
+
+读取 [routes.rs](file:///Users/air/TOPEMS/svc/ai/src/routes.rs) 后确认：所有 5 个 router 的层序 **已经正确**，与 dify_router 模式一致（`.layer(tenant_middleware)` FIRST=最内层 → `.layer(auth_middleware)` LAST=最外层）。推测在 V238 修 dify_router 时已顺带全部修改。无需代码变更。
+
+验证：`cargo check -p topems-ai` exit 0。
+
+#### D. Axum 中间件层序静态校验脚本（check-axum-layer-order.cjs）
+
+新建 [scripts/ci/check-axum-layer-order.cjs](file:///Users/air/TOPEMS/scripts/ci/check-axum-layer-order.cjs)（~410 行，Node.js CJS）。CLI 完全对齐 check-permission-matrix.cjs：默认 DRY-RUN、支持 `--fail-fast` / `--report-json` / `--scan` / `--thresholds`。
+
+核心机制：行扫描 + 状态机
+- `stripRustComments()` 去除 // 和 /* */ 注释（保留行号偏移）
+- 遇 `let NAME_router = Router::new()` 开启上下文
+- 最多 6 行窗口 + 括号平衡检测 `.layer(...)` 中的 auth/tenant 关键字
+- 上下文在 `.with_state(` / `;` / 缩进回弹 时关闭
+
+3 条规则：
+
+| 规则 | 级别 | 语义 |
+|------|------|------|
+| R1 | **FAIL** | tenant_middleware 代码出现在 auth_middleware **之后** → 层序反序 → 运行时 500 Missing Claims |
+| R2 | WARN | 只有 auth_middleware、没有 tenant_middleware（可能是绕过租户隔离的系统路由） |
+| R3 | WARN | 只有 tenant_middleware、没有 auth_middleware（对 C 模式 `build_application` 服务是正常情况：auth 由 bootstrap 外层全局叠加；若 Router 不通过 build_application 合并则可能真风险） |
+
+Integrity 阈值：`scannedFiles ≥ 20` 且 `foundRouters ≥ 10`，否则 WEAK_PASS。
+
+### 验收结果
+
+| 检查项 | 命令 | 结果 |
+|--------|------|------|
+| search 编译 | `cargo check -p topems-search --tests` | ✅ 0 warning |
+| search 格式 | `cargo fmt -p topems-search` | ✅ 无变更 |
+| ai 编译 | `cargo check -p topems-ai --message-format=short` | ✅ 0 warning |
+| axum layer 脚本 | `node scripts/ci/check-axum-layer-order.cjs` | ✅ R1=0 FAIL；R2=6 WARN；R3=4 WARN；scannedFiles=1390, foundRouters=146；Integrity **STRONG_PASS** |
+| ci.yml 语法 | `python3 -c "import yaml; ..."` | ✅ 22 jobs；`cargo-check` 存在；`rust-test.needs` 含 `fmt-check/clippy-check/cargo-check` |
+
+**R3 WARN 解释**：ehs/lims/pdm/srm（4 处）的 protected_routes 内部只有 tenant_middleware，是因为它们属于 V66.2 启动模式 B「stateful + build_application」：auth_middleware 由 bootstrap 的 `build_application()` 在将 public_routes + protected_routes 合并后统一叠加外层（不是写在单个 Router 变量的链式 layer 里）。脚本在单个 Router 变量内做正则扫描无法感知到 build_application 外层的全局 auth 叠加，属于预期的漏检，不阻塞。后续可增强脚本以识别 `build_application(ctx, cfg, public, protected, ...)` 调用模式并消除此 4 处 R3 假阳性（不在本次范围）。
+
+### 修改文件清单
+
+核心新增/重构：
+
+- [.github/workflows/ci.yml](file:///Users/air/TOPEMS/.github/workflows/ci.yml) — 新增 cargo-check job（Gate L）+ rust-test needs 扩展
+- [svc/search/src/scoring.rs](file:///Users/air/TOPEMS/svc/search/src/scoring.rs) — 新建 785 行 scoring 子模块
+- [svc/search/src/handlers.rs](file:///Users/air/TOPEMS/svc/search/src/handlers.rs) — 删除 6 个纯函数 + 相关 tests + 改为从 scoring 导入
+- [svc/search/src/models.rs](file:///Users/air/TOPEMS/svc/search/src/models.rs) — 删除 5 个纯函数 + 相关 tests
+- [svc/search/src/lib.rs](file:///Users/air/TOPEMS/svc/search/src/lib.rs) — 新增 `pub mod scoring;`
+- [svc/search/src/main.rs](file:///Users/air/TOPEMS/svc/search/src/main.rs) — 新增 `mod scoring;`
+- [scripts/ci/check-axum-layer-order.cjs](file:///Users/air/TOPEMS/scripts/ci/check-axum-layer-order.cjs) — 新建 ~410 行 Axum 层序静态校验脚本
+- [docs/roadmap/TODO.md](file:///Users/air/TOPEMS/docs/roadmap/TODO.md) — 新增 V241 条目，V240 后续扩展勾选 3 项
+
+### 后续扩展
+
+- [ ] 将 `scripts/ci/check-axum-layer-order.cjs` 接入 CI pre-commit / ci.yml（作为 Gate M 或 quality-gate 子步骤），默认 DRY-RUN，等 R3 假阳性消除后再 `--fail-fast`
+- [ ] 增强 check-axum-layer-order.cjs：识别 `build_application(ctx, cfg, public_routes, protected_routes, ...)` 模式，自动消除 ehs/lims/pdm/srm 的 R3 假阳性
+- [ ] check-axum-layer-order.cjs 增加对 `build_application` C 模式（重建 application 层）的 auth 叠加扫描
+- [ ] 评估 `cargo fix` 自动修复中可能引入的语义偏差（多为 unused import 删除，风险低，但仍需 review）
 
