@@ -456,7 +456,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
               disabled={isDisabled}
               renderInput={(params) => (
                 <TextField
-                  {...(params as any)}
+                  {...params}
                   label={field.label}
                   placeholder={field.placeholder}
                   required={isRequired}

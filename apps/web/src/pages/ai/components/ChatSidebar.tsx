@@ -210,7 +210,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
           {quickPrompts.map((prompt) => (
             <Chip
               key={prompt.id}
-              icon={prompt.icon as any}
+              icon={prompt.icon}
               label={prompt.label}
               size='small'
               variant='outlined'

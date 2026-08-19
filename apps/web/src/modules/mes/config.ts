@@ -245,7 +245,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     },
     {
       path: MES_PATHS.wip,
-      element: (lazyWithRetry as any)(() => import('@/pages/mes/WIPPage'), 'WIPPage'),
+      element: lazyWithRetry(() => import('@/pages/mes/WIPPage'), 'WIPPage'),
       module: 'mes',
       code: 'mes-wip',
       title: i18n.t('shared.config.k15'),

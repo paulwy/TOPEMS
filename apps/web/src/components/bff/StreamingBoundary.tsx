@@ -476,8 +476,8 @@ export const StreamingLayer: React.FC<StreamingLayerProps> = ({
         resetKey={resetKey}
       >
         <Suspense
-          fallback={defaultFallback as any}
-          {...({ name: `layer-${name}` } as any)}
+          fallback={defaultFallback}
+          {...{ name: `layer-${name}` }}
         >
           <LayerReadyTracker
             layerName={name}
