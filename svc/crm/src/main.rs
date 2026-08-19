@@ -213,6 +213,7 @@ mod event_handlers;
 pub mod modules;
 
 use modules::ApiState;
+use topems_shared_auth::middleware::require_permission;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -301,6 +302,7 @@ async fn main() -> Result<()> {
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
+        .layer(axum::middleware::from_fn(require_permission("crm:admin")))
         .with_state(api_state);
 
     // OpenAPI 文档

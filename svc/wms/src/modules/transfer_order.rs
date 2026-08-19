@@ -44,7 +44,7 @@ where
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:transfer:read"])),
     path = "/api/wms/transfers",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -120,7 +120,7 @@ pub async fn list_transfers(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:transfer:write"])),
     path = "/api/wms/transfers",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -228,7 +228,7 @@ pub async fn create_transfer(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:transfer:read"])),
     path = "/api/wms/transfers/{id}",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -267,7 +267,7 @@ pub async fn get_transfer(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:transfer:read"])),
     path = "/api/wms/transfers/{id}/items",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -311,7 +311,7 @@ pub async fn list_transfer_items(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["wms:update"])),
+    security(("BearerAuth" = ["wms:transfer:write"])),
     path = "/api/wms/transfers/{id}",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -395,7 +395,7 @@ pub async fn update_transfer(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["wms:delete"])),
+    security(("BearerAuth" = ["wms:transfer:write"])),
     path = "/api/wms/transfers/{id}",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -444,7 +444,7 @@ pub async fn delete_transfer(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:transfer:write"])),
     path = "/api/wms/transfers/{id}/confirm",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -494,7 +494,7 @@ pub async fn confirm_transfer(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:transfer:write"])),
     path = "/api/wms/transfers/{id}/ship",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -544,7 +544,7 @@ pub async fn ship_transfer(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:transfer:write"])),
     path = "/api/wms/transfers/{id}/receive",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -623,7 +623,7 @@ pub async fn receive_transfer(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:transfer:write"])),
     path = "/api/wms/transfers/{id}/complete",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -730,7 +730,7 @@ pub struct ApprovalRequest {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:transfer:write"])),
     path = "/api/wms/transfers/{id}/approval/start",
     tag = "WMS - Transfer",
     request_body = ApprovalRequest,
@@ -802,7 +802,7 @@ pub async fn start_transfer_approval(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:transfer:write"])),
     path = "/api/wms/transfers/{id}/approval/approve",
     tag = "WMS - Transfer",
     request_body = ApprovalRequest,
@@ -892,7 +892,7 @@ pub async fn approve_transfer(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:transfer:write"])),
     path = "/api/wms/transfers/{id}/approval/reject",
     tag = "WMS - Transfer",
     request_body = ApprovalRequest,

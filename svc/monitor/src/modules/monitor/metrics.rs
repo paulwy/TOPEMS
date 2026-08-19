@@ -198,7 +198,7 @@ pub fn create_routes() -> Router<AppState> {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["monitor:read"])),
+    security(("BearerAuth" = ["monitor:metric:read"])),
     path = "/api/monitor/metrics/system",
     tag = "metrics",
     responses(
@@ -232,7 +232,7 @@ pub async fn get_system_metrics(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["monitor:read"])),
+    security(("BearerAuth" = ["monitor:metric:read"])),
     path = "/api/monitor/metrics/database",
     tag = "metrics",
     responses(

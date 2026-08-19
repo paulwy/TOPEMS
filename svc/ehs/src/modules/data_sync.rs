@@ -198,7 +198,7 @@ pub async fn get_sync_record(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ehs:write"])),
+    security(("BearerAuth" = ["ehs:hazard:admin"])),
     path = "/api/ehs/sync/hazard-to-qms",
     request_body = SyncHazardToQmsRequest,
     tag = "ehs",

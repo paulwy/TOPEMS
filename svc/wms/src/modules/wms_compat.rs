@@ -46,7 +46,7 @@ pub async fn compat_post_api_wms_batches_id_adjust_quantity() {}
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:transfer:write"])),
     path = "/api/wms/batches/{id}/transfer-location",
     tag = "WMS-Compat",
     params(("id" = String, Path, description = "id")),
@@ -227,7 +227,7 @@ pub async fn compat_post_api_wms_smart_replenishment_safety_stock_calculate() {}
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:serial:read"])),
     path = "/api/wms/serial-numbers/by-serial/{serialNo}",
     tag = "WMS-Compat",
     params(("serialNo" = String, Path, description = "id")),
@@ -237,7 +237,7 @@ pub async fn compat_get_api_wms_serial_numbers_by_serial_serialno() {}
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:serial:read"])),
     path = "/api/wms/serial-numbers/by-batch/{batchNo}",
     tag = "WMS-Compat",
     params(("batchNo" = String, Path, description = "id")),
@@ -247,7 +247,7 @@ pub async fn compat_get_api_wms_serial_numbers_by_batch_batchno() {}
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:transfer:write"])),
     path = "/api/wms/serial-numbers/{id}/transfer-location",
     tag = "WMS-Compat",
     params(("id" = String, Path, description = "id")),
@@ -257,7 +257,7 @@ pub async fn compat_post_api_wms_serial_numbers_id_transfer_location() {}
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:serial:read"])),
     path = "/api/wms/serial-numbers/{id}/trace",
     tag = "WMS-Compat",
     params(("id" = String, Path, description = "id")),
@@ -334,7 +334,7 @@ pub async fn compat_post_api_wms_sync_scm() {}
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:inventory:read"])),
     path = "/api/wms/sync/scm/inventory",
     tag = "WMS-Compat",
     responses((status = 200, description = "WMS compatibility endpoint"))
@@ -354,7 +354,7 @@ pub async fn compat_post_api_wms_sync_scm_orders() {}
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:alert:read"])),
     path = "/alerts",
     tag = "inventory_alert",
     operation_id = "compat_list_alerts",
@@ -371,7 +371,7 @@ pub async fn compat_get_alerts() {}
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:alert:read"])),
     path = "/alerts/{id}",
     tag = "inventory_alert",
     operation_id = "compat_get_alert_by_id",
@@ -390,7 +390,7 @@ pub async fn compat_get_alerts_id() {}
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:alert:read"])),
     path = "/alerts/{id}/acknowledge",
     tag = "inventory_alert",
     operation_id = "compat_acknowledge_alert",
@@ -410,7 +410,7 @@ pub async fn compat_post_alerts_id_acknowledge() {}
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:alert:read"])),
     path = "/alerts/statistics",
     tag = "inventory_alert",
     operation_id = "compat_get_alert_statistics_legacy",

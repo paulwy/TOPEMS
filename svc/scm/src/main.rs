@@ -211,6 +211,8 @@ use topems_shared_core::config::enhanced::RedisConfig;
 use topems_shared_event::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
 use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer};
 
+use topems_shared_auth::middleware::require_permission;
+
 use modules::{scm_plugin, ApiState};
 
 #[tokio::main]
@@ -310,7 +312,9 @@ async fn main() -> Result<()> {
     let public_routes = create_standard_health_routes(health_state).merge(plugin_routes);
 
     // 业务路由
-    let protected_routes = modules::create_routes().with_state(api_state);
+    let protected_routes = modules::create_routes()
+        .layer(axum::middleware::from_fn(require_permission("scm:admin")))
+        .with_state(api_state);
 
     // OpenAPI 文档
     let openapi_json = Some(

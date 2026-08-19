@@ -189,6 +189,7 @@
     clippy::useless_format
 )]
 use axum::{routing::delete, routing::get, routing::post, routing::put, Router};
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 
 mod im;
@@ -428,6 +429,9 @@ async fn main() -> anyhow::Result<()> {
         .merge(im_write)
         .merge(mail_read)
         .merge(mail_write)
+        .layer(axum::middleware::from_fn(require_permission(
+            "communication:admin",
+        )))
         .with_state(ctx.db.clone());
 
     let public_routes = Router::new().route("/health", get(health_handler));

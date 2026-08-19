@@ -856,9 +856,10 @@ jobs:
           # count > threshold → exit 1 → CI red (PR blocked).
           # Known violations are allowed; only NEW regressions that INCREASE
           # R1/R2/R3 beyond baseline block merging.
-          node scripts/ci/check-permission-matrix.cjs \
-            --fail-fast \
-            --thresholds '{"R1":0,"R2":0,"R3":0}' \
+          # NOTE(V255): migrated to perm-matrix-toolkit.cjs ci-report.
+          #   STRICT mode default: FAIL(R1/R4/R5/R6) count>0 → exit 1.
+          #   WARN(R2/R3/R7) reported only. JSON structure keeps backwards compat.
+          node scripts/ci/perm-matrix-toolkit.cjs ci-report \
             --report-json=/tmp/perm-gate-ci.json
           PERM_EXIT=$?
           if [ $PERM_EXIT -ne 0 ]; then

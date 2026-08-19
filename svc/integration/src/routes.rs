@@ -5,6 +5,7 @@ use axum::routing::{delete, get, post, put};
 use axum::Router;
 
 use topems_shared_auth::auth::auth_middleware;
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 use topems_shared_core::api_version::register_routes_with_legacy_alias;
 use topems_shared_core::cors::create_cors_layer;
@@ -131,6 +132,7 @@ pub fn create_routes(state: AppState) -> Router {
             state.pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
+        .layer(from_fn(require_permission("integration:admin")))
         .layer(from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,

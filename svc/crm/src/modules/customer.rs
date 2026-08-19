@@ -62,6 +62,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["crm:customer:read"])),
     path = "/api/crm/customers",
     params(CustomerPaginationParams),
     responses(
@@ -119,6 +120,7 @@ pub async fn list_customers(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["crm:customer:write"])),
     path = "/api/crm/customers",
     request_body = CreateCustomerRequest,
     responses(
@@ -202,6 +204,7 @@ async fn create_customer(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["crm:customer:read"])),
     path = "/api/crm/customers/{id}",
     params(("id" = Uuid, Path, description = "Customer id")),
     responses(
@@ -243,6 +246,7 @@ async fn get_customer(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["crm:customer:write"])),
     path = "/api/crm/customers/{id}",
     params(("id" = Uuid, Path, description = "Customer id to update")),
     request_body = UpdateCustomerRequest,
@@ -344,6 +348,7 @@ async fn update_customer(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["crm:customer:write"])),
     path = "/api/crm/customers/{id}",
     params(("id" = Uuid, Path, description = "Customer id to soft-delete")),
     responses(
@@ -407,6 +412,7 @@ async fn delete_customer(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["crm:customer:write"])),
     path = "/api/crm/customers/batch-delete",
     request_body = BatchDeleteRequest,
     responses(
@@ -490,6 +496,7 @@ pub struct ApprovalActionRequest {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["crm:customer:write"])),
     path = "/api/crm/customers/{id}/approval/start",
     params(("id" = Uuid, Path, description = "Customer id to start approval workflow")),
     request_body = StartApprovalRequest,
@@ -601,6 +608,7 @@ async fn start_customer_approval(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["crm:customer:write"])),
     path = "/api/crm/customers/{id}/approval/approve",
     params(("id" = Uuid, Path, description = "Customer id to approve")),
     request_body = ApprovalActionRequest,
@@ -687,6 +695,7 @@ async fn approve_customer(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["crm:customer:write"])),
     path = "/api/crm/customers/{id}/approval/reject",
     params(("id" = Uuid, Path, description = "Customer id to reject (reason required)")),
     request_body = ApprovalActionRequest,

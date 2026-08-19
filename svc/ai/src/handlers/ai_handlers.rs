@@ -16,7 +16,7 @@ use topems_shared_core::response::ApiResponse;
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ai:write"])),
+    security(("BearerAuth" = ["ai:generate:write"])),
     path = "/api/ai/generate",
     request_body = AIGenerateRequest,
     tag = "ai",
@@ -399,7 +399,7 @@ pub async fn complete(Json(req): Json<CompleteRequest>) -> Json<ApiResponse<Comp
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ai:write"])),
+    security(("BearerAuth" = ["ai:summarize:read"])),
     path = "/api/ai/summarize",
     request_body = SummarizeRequest,
     tag = "ai",
@@ -527,7 +527,7 @@ pub async fn list_templates() -> Json<ApiResponse<Vec<AITemplate>>> {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ai:write"])),
+    security(("BearerAuth" = ["ai:chat:write"])),
     path = "/api/ai/chat",
     request_body = ChatRequest,
     tag = "ai",
