@@ -129,6 +129,7 @@ pub struct TemplateListItem {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/templates",
     tag = "Report-Templates",
     operation_id = "list_templates",
@@ -172,6 +173,7 @@ pub async fn list_templates(State(state): State<AppState>) -> Json<serde_json::V
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/templates",
     tag = "Report-Templates",
     operation_id = "create_template",
@@ -225,6 +227,7 @@ pub async fn create_template(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/templates/{id}",
     tag = "Report-Templates",
     operation_id = "get_template",
@@ -298,6 +301,7 @@ pub async fn get_template(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["analytics:update"])),
     path = "/templates/{id}",
     tag = "Report-Templates",
     operation_id = "update_template",
@@ -358,6 +362,7 @@ pub async fn update_template(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["analytics:delete"])),
     path = "/templates/{id}",
     tag = "Report-Templates",
     operation_id = "delete_template",

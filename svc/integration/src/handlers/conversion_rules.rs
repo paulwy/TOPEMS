@@ -15,6 +15,7 @@ use crate::models::AppState;
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["integration:read"])),
     path = "/api/integration/rules",
     tag = "integration",
     responses(
@@ -41,6 +42,7 @@ pub async fn list_conversion_rules_api(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["integration:read"])),
     path = "/api/integration/rules/{id}",
     tag = "integration",
     params(
@@ -76,6 +78,7 @@ pub async fn get_conversion_rule_api(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/rules",
     request_body = CreateConversionRuleRequest,
     tag = "integration",
@@ -132,6 +135,7 @@ pub async fn create_conversion_rule_api(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["integration:update"])),
     path = "/api/integration/rules/{id}",
     request_body = UpdateConversionRuleRequest,
     tag = "integration",
@@ -210,6 +214,7 @@ pub async fn update_conversion_rule_api(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["integration:delete"])),
     path = "/api/integration/rules/{id}",
     tag = "integration",
     params(
@@ -251,6 +256,7 @@ pub async fn delete_conversion_rule_api(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["integration:read"])),
     path = "/api/integration/rules/{id}/executions",
     tag = "integration",
     params(
@@ -282,6 +288,7 @@ pub async fn get_rule_executions_api(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/rules/{id}/execute",
     request_body = ExecuteConversionRequest,
     tag = "integration",
@@ -368,6 +375,7 @@ pub async fn execute_conversion_rule_api(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/rules/{id}/enable",
     tag = "integration",
     params(
@@ -401,6 +409,7 @@ pub async fn enable_conversion_rule_api(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/rules/{id}/disable",
     tag = "integration",
     params(

@@ -287,6 +287,7 @@ pub struct UpdateMsdsRequest {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/hazardous-materials",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -306,6 +307,7 @@ pub async fn list_materials(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/hazardous-materials",
     request_body = CreateMaterialRequest,
     tag = "ehs",
@@ -357,6 +359,7 @@ pub async fn create_material(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/hazardous-materials/{id}",
     tag = "ehs",
     params(
@@ -476,6 +479,7 @@ pub async fn get_material(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/hazardous-materials/{id}",
     request_body = UpdateMaterialRequest,
     tag = "ehs",
@@ -529,6 +533,7 @@ pub async fn update_material(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/hazardous-materials/{id}",
     tag = "ehs",
     params(
@@ -550,6 +555,7 @@ pub async fn delete_material(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/hazardous-materials/{id}/stocks",
     tag = "ehs",
     params(
@@ -574,6 +580,7 @@ pub async fn list_material_stocks(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/hazardous-materials/stock-records",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -593,6 +600,7 @@ pub async fn list_stock_records(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/hazardous-materials/stock-records/stock-in",
     request_body = CreateStockRecordRequest,
     tag = "ehs",
@@ -636,6 +644,7 @@ pub async fn create_stock_in(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/hazardous-materials/stock-records/stock-out",
     request_body = CreateStockRecordRequest,
     tag = "ehs",
@@ -679,6 +688,7 @@ pub async fn create_stock_out(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/hazardous-materials/stock-records/{id}",
     tag = "ehs",
     params(
@@ -722,6 +732,7 @@ pub async fn get_stock_record(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/hazardous-materials/{id}/msds",
     tag = "ehs",
     params(
@@ -771,6 +782,7 @@ pub async fn get_material_msds(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/hazardous-materials/{id}/msds",
     request_body = UpdateMsdsRequest,
     tag = "ehs",
@@ -820,6 +832,7 @@ pub async fn update_material_msds(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/hazardous-materials/statistics",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -867,6 +880,7 @@ pub async fn get_material_statistics(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/hazardous-materials/categories",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -893,6 +907,7 @@ pub async fn list_material_categories(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/hazardous-materials/categories",
     tag = "ehs",
     request_body = serde_json::Value,

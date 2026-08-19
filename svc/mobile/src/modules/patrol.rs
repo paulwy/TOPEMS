@@ -86,6 +86,7 @@ pub fn patrol_progress_label(completion_pct: f64) -> &'static str {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mobile:read"])),
     path = "/patrol-records",
     tag = "patrol",
     responses(
@@ -134,6 +135,7 @@ pub async fn get_all_patrol_records(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mobile:read"])),
     path = "/patrol-records/{id}",
     tag = "patrol",
     params(
@@ -190,6 +192,7 @@ pub async fn get_patrol_record(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mobile:write"])),
     path = "/patrol-records",
     tag = "patrol",
     request_body = CreatePatrolRequest,

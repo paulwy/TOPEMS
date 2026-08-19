@@ -1967,6 +1967,7 @@ pub struct ReconRuleQueryParams {
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v55/reconcile/batch",
     responses(
         (status = 200, description = "成功"),
@@ -2019,6 +2020,7 @@ async fn reconcile_batch_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v55/single",
     tag = "SettlementV55",
     operation_id = "reconcile_single_handler",
@@ -2046,6 +2048,7 @@ async fn reconcile_single_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v55/recon_results",
     tag = "SettlementV55",
     operation_id = "get_recon_results_handler",
@@ -2068,6 +2071,7 @@ async fn get_recon_results_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v55/recon_rule",
     tag = "SettlementV55",
     operation_id = "create_recon_rule_handler",
@@ -2089,6 +2093,7 @@ async fn create_recon_rule_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v55/reconcile/rules",
     responses(
         (status = 200, description = "成功"),
@@ -2115,6 +2120,7 @@ async fn list_recon_rules_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v55/match",
     tag = "SettlementV55",
     operation_id = "approve_match_handler",
@@ -2137,6 +2143,7 @@ async fn approve_match_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v55/match",
     tag = "SettlementV55",
     operation_id = "dispute_match_handler",
@@ -2171,6 +2178,7 @@ pub struct MatchInvoiceRequest {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v55/invoice",
     tag = "SettlementV55",
     operation_id = "recognize_invoice_handler",
@@ -2204,6 +2212,7 @@ async fn recognize_invoice_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v55/invoice/{id}",
     responses(
         (status = 200, description = "成功"),
@@ -2234,6 +2243,7 @@ async fn get_invoice_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v55/invoices",
     tag = "SettlementV55",
     operation_id = "list_invoices_handler",
@@ -2256,6 +2266,7 @@ async fn list_invoices_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v55/invoice",
     tag = "SettlementV55",
     operation_id = "validate_invoice_handler",
@@ -2284,6 +2295,7 @@ async fn validate_invoice_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v55/invoice",
     tag = "SettlementV55",
     operation_id = "post_invoice_handler",
@@ -2308,6 +2320,7 @@ async fn post_invoice_handler(
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v55/invoice/match",
     responses(
         (status = 200, description = "成功"),
@@ -2364,6 +2377,7 @@ impl SchedulePaymentRequest {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v55/payment",
     tag = "SettlementV55",
     operation_id = "initiate_payment_handler",
@@ -2401,6 +2415,7 @@ async fn initiate_payment_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v55/payment_status",
     tag = "SettlementV55",
     operation_id = "get_payment_status_handler",
@@ -2422,6 +2437,7 @@ async fn get_payment_status_handler(
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v55/payment/{id}/reverse",
     responses(
         (status = 200, description = "成功"),
@@ -2455,6 +2471,7 @@ async fn reverse_payment_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v55/payments",
     tag = "SettlementV55",
     operation_id = "list_payments_handler",
@@ -2477,6 +2494,7 @@ pub async fn list_payments_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v55/payment",
     tag = "SettlementV55",
     operation_id = "schedule_payment_handler",
@@ -2527,6 +2545,7 @@ async fn schedule_payment_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v55/payment/methods",
     responses(
         (status = 200, description = "成功"),

@@ -20,6 +20,7 @@ use utoipa::OpenApi;
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -28,6 +29,7 @@ fn _home() {}
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/health",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -36,6 +38,7 @@ fn _health() {}
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/health/detailed",
     tag = "pdm",
     responses((status = 200, description = "OK")),

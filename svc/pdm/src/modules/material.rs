@@ -75,6 +75,7 @@ pub struct MaterialQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/materials",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -147,6 +148,7 @@ pub async fn list_materials(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pdm:write"])),
     path = "/api/pdm/materials",
     request_body = CreateMaterialRequest,
     tag = "pdm",
@@ -261,6 +263,7 @@ pub async fn create_material(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/materials/{id}",
     tag = "pdm",
     params(
@@ -300,6 +303,7 @@ pub async fn get_material(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["pdm:update"])),
     path = "/api/pdm/materials/{id}",
     request_body = UpdateMaterialRequest,
     tag = "pdm",
@@ -403,6 +407,7 @@ pub async fn update_material(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["pdm:delete"])),
     path = "/api/pdm/materials/{id}",
     tag = "pdm",
     params(

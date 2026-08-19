@@ -170,6 +170,7 @@ pub fn extract_url_from_qr(qr_data: &str) -> Option<&str> {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mobile:write"])),
     path = "/scan/barcode",
     tag = "scan",
     request_body = BarcodeScanRequest,

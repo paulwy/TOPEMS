@@ -80,6 +80,7 @@ pub struct ItemDetailsQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/reports/item-details",
     tag = "Report",
     params(ItemDetailsQuery),
@@ -147,6 +148,7 @@ pub struct ItemVouchersQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/report_item_vouchers",
     tag = "FinancialReports",
     operation_id = "get_report_item_vouchers",
@@ -251,6 +253,7 @@ pub struct ComparisonQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/reports/comparison",
     tag = "Report",
     params(ComparisonQuery),
@@ -319,6 +322,7 @@ pub struct TrendQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/report_trend",
     tag = "FinancialReports",
     operation_id = "get_report_trend",
@@ -388,6 +392,7 @@ pub struct YearOverYearQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/reports/year-over-year",
     tag = "Report",
     params(YearOverYearQuery),
@@ -456,6 +461,7 @@ pub struct PeriodOverPeriodQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/report_period_over_period/{id}",
     tag = "FinancialReports",
     operation_id = "get_report_period_over_period",
@@ -515,6 +521,7 @@ pub async fn get_report_period_over_period(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/reports/consolidated/generate",
     tag = "Report",
     request_body = serde_json::Value,
@@ -582,6 +589,7 @@ pub struct ConsolidatedReportQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/consolidated_report/{id}",
     tag = "FinancialReports",
     operation_id = "get_consolidated_report",
@@ -632,6 +640,7 @@ pub struct EntityListQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/reports/consolidated/entities",
     tag = "Report",
     params(EntityListQuery),
@@ -729,6 +738,7 @@ pub async fn get_consolidation_entities(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/reports/consolidated/entities",
     tag = "Report",
     request_body = serde_json::Value,
@@ -763,6 +773,7 @@ pub async fn create_consolidation_entity(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance/consolidation_entity/{id}",
     tag = "FinancialReports",
     operation_id = "update_consolidation_entity",
@@ -795,6 +806,7 @@ pub async fn update_consolidation_entity(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/finance/consolidation_entity/{id}",
     tag = "FinancialReports",
     operation_id = "delete_consolidation_entity",
@@ -826,6 +838,7 @@ pub struct ElimListQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/reports/consolidated/elims",
     tag = "Report",
     params(ElimListQuery),
@@ -879,6 +892,7 @@ pub async fn get_intercompany_elims(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/intercompany_elimination",
     tag = "FinancialReports",
     operation_id = "add_intercompany_elimination",
@@ -918,6 +932,7 @@ pub struct ConsolidatedExportQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/reports/consolidated/{consolidation_id}/export",
     tag = "Financial-Reports",
     operation_id = "export_consolidated_report",
@@ -955,6 +970,7 @@ pub async fn export_consolidated_report(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/batch_export_reports",
     tag = "FinancialReports",
     operation_id = "batch_export_reports",
@@ -1033,6 +1049,7 @@ pub struct SubscriptionListQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/reports/subscriptions",
     tag = "Report",
     params(SubscriptionListQuery),
@@ -1115,6 +1132,7 @@ pub async fn get_report_subscriptions(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/reports/subscriptions",
     tag = "Report",
     request_body = serde_json::Value,
@@ -1173,6 +1191,7 @@ pub async fn create_report_subscription(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance/report_subscription/{id}",
     tag = "FinancialReports",
     operation_id = "update_report_subscription",
@@ -1228,6 +1247,7 @@ pub async fn update_report_subscription(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/reports/subscriptions/{subscriptionId}",
     tag = "Report",
     params(("subscriptionId" = String, Path, description = "订阅ID")),
@@ -1253,6 +1273,7 @@ pub async fn delete_report_subscription(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/report_now",
     tag = "FinancialReports",
     operation_id = "send_report_now",
@@ -1283,6 +1304,7 @@ pub struct SubscriptionHistoryQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/subscription_history",
     tag = "FinancialReports",
     operation_id = "get_subscription_history",
@@ -1500,6 +1522,7 @@ async fn fetch_history(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/reports/balance-sheet/generate",
     tag = "Report",
     request_body = GenerateReportRequest,
@@ -1540,6 +1563,7 @@ pub async fn generate_balance_sheet(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/balance_sheet/{id}",
     tag = "FinancialReports",
     operation_id = "get_balance_sheet",
@@ -1583,6 +1607,7 @@ pub async fn get_balance_sheet(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/reports/balance-sheet/history",
     tag = "Report",
     params(HistoryReportQuery),
@@ -1621,6 +1646,7 @@ pub async fn get_balance_sheet_history(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/income_statement",
     tag = "FinancialReports",
     operation_id = "generate_income_statement",
@@ -1660,6 +1686,7 @@ pub async fn generate_income_statement(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/income_statement/{id}",
     tag = "FinancialReports",
     operation_id = "get_income_statement",
@@ -1706,6 +1733,7 @@ pub async fn get_income_statement(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/reports/income-statement/history",
     tag = "Report",
     params(HistoryReportQuery),
@@ -1744,6 +1772,7 @@ pub async fn get_income_statement_history(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/cash_flow",
     tag = "FinancialReports",
     operation_id = "generate_cash_flow",
@@ -1786,6 +1815,7 @@ pub async fn generate_cash_flow(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/reports/cash-flow",
     tag = "Report",
     params(GetReportQuery),
@@ -1833,6 +1863,7 @@ pub async fn get_cash_flow(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/cash_flow_history",
     tag = "FinancialReports",
     operation_id = "get_cash_flow_history",
@@ -1880,6 +1911,7 @@ pub struct ApprovalRequest {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/reports/submit-approval",
     tag = "Report",
     request_body = ApprovalRequest,
@@ -1917,6 +1949,7 @@ pub async fn submit_report_for_approval(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/report",
     tag = "FinancialReports",
     operation_id = "approve_report",
@@ -1953,6 +1986,7 @@ pub async fn approve_report(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/finance/report/{id}",
     tag = "FinancialReports",
     operation_id = "reject_report",
@@ -1988,6 +2022,7 @@ pub async fn reject_report(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/reports/lock",
     tag = "Report",
     request_body = ApprovalRequest,
@@ -2025,6 +2060,7 @@ pub async fn lock_report(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/report",
     tag = "FinancialReports",
     operation_id = "unlock_report",
@@ -2072,6 +2108,7 @@ pub struct ExportQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/reports/export",
     tag = "Financial-Reports",
     operation_id = "export_report",

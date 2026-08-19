@@ -25,6 +25,7 @@ pub fn create_routes(pool: PgPool) -> Router {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/projects/{project_id}/members",
     tag = "project_members",
     params(
@@ -58,6 +59,7 @@ async fn list_members(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pm:write"])),
     path = "/projects/{project_id}/members",
     tag = "project_members",
     request_body = CreateMemberRequest,
@@ -114,6 +116,7 @@ async fn create_member(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/projects/{project_id}/members/{id}",
     tag = "project_members",
     params(
@@ -151,6 +154,7 @@ async fn get_member(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["pm:update"])),
     path = "/projects/{project_id}/members/{id}",
     tag = "project_members",
     request_body = UpdateMemberRequest,
@@ -206,6 +210,7 @@ async fn update_member(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["pm:delete"])),
     path = "/projects/{project_id}/members/{id}",
     tag = "project_members",
     params(

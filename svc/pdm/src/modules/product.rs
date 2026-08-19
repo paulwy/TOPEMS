@@ -72,6 +72,7 @@ pub struct ProductQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/products",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -144,6 +145,7 @@ pub async fn list_products(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pdm:write"])),
     path = "/api/pdm/products",
     request_body = CreateProductRequest,
     tag = "pdm",
@@ -193,6 +195,7 @@ pub async fn create_product(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/products/{id}",
     tag = "pdm",
     params(
@@ -232,6 +235,7 @@ pub async fn get_product(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["pdm:update"])),
     path = "/api/pdm/products/{id}",
     request_body = UpdateProductRequest,
     tag = "pdm",
@@ -287,6 +291,7 @@ pub async fn update_product(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["pdm:delete"])),
     path = "/api/pdm/products/{id}",
     tag = "pdm",
     params(

@@ -43,6 +43,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/meeting-rooms",
     responses(
         (status = 200, description = "list_rooms OK")
@@ -107,6 +108,7 @@ pub async fn list_rooms(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/meeting-rooms",
     request_body = CreateMeetingRoomRequest,
     responses(
@@ -189,6 +191,7 @@ pub async fn create_room(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/meeting-rooms/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -225,6 +228,7 @@ pub async fn get_room(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/meeting-rooms/{id}",
     request_body = UpdateMeetingRoomRequest,
     params(
@@ -327,6 +331,7 @@ pub async fn update_room(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/meeting-rooms/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -397,6 +402,7 @@ pub async fn delete_room(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/meeting-bookings",
     responses(
         (status = 200, description = "list_bookings OK")
@@ -461,6 +467,7 @@ pub async fn list_bookings(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/meeting-bookings",
     request_body = CreateMeetingBookingRequest,
     responses(
@@ -577,6 +584,7 @@ pub async fn create_booking(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/meeting-bookings/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -612,6 +620,7 @@ pub async fn get_booking(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/meeting-bookings/{id}",
     request_body = UpdateMeetingBookingRequest,
     params(
@@ -713,6 +722,7 @@ pub async fn update_booking(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/meeting-bookings/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -782,6 +792,7 @@ pub async fn delete_booking(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/meeting-rooms/{id}/bookings",
     params(
         ("id" = Uuid, Path, description = "id")

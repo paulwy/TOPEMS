@@ -29,6 +29,7 @@ pub struct TaskQueryParams {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/tasks",
     tag = "Flow-Task",
     params(
@@ -146,6 +147,7 @@ pub async fn list_tasks(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/tasks/{id}",
     tag = "Flow-Task",
     params(
@@ -183,6 +185,7 @@ pub async fn get_task(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/tasks/{id}/claim",
     tag = "Flow-Task",
     params(
@@ -220,6 +223,7 @@ pub async fn claim_task(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/tasks/{id}/unclaim",
     tag = "Flow-Task",
     params(
@@ -257,6 +261,7 @@ pub async fn unclaim_task(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/tasks/{id}/approve",
     tag = "Flow-Task",
     params(
@@ -297,6 +302,7 @@ pub async fn approve_task(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/tasks/{id}/reject",
     tag = "Flow-Task",
     params(
@@ -337,6 +343,7 @@ pub async fn reject_task(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/tasks/{id}/complete",
     tag = "Flow-Task",
     params(
@@ -377,6 +384,7 @@ pub async fn complete_task(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/tasks/{id}/delegate",
     tag = "Flow-Task",
     params(
@@ -417,6 +425,7 @@ pub async fn delegate_task(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/tasks/batch/approve",
     tag = "Flow-Task",
     request_body = TaskBatchRequest,
@@ -470,6 +479,7 @@ pub async fn batch_approve(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/tasks/batch/complete",
     tag = "Flow-Task",
     request_body = TaskBatchRequest,
@@ -523,6 +533,7 @@ pub async fn batch_complete(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/tasks/batch/delegate",
     tag = "Flow-Task",
     request_body = TaskBatchRequest,
@@ -576,6 +587,7 @@ pub async fn batch_delegate(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/tasks/my",
     tag = "Flow-Task",
     params(
@@ -597,6 +609,7 @@ pub async fn my_tasks(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/tasks/my/pending",
     tag = "Flow-Task",
     params(
@@ -618,6 +631,7 @@ pub async fn my_pending_tasks(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/tasks/my/completed",
     tag = "Flow-Task",
     params(
@@ -639,6 +653,7 @@ pub async fn my_completed_tasks(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/tasks/candidate",
     tag = "Flow-Task",
     params(
@@ -659,6 +674,7 @@ pub async fn candidate_tasks(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/tasks/count",
     tag = "Flow-Task",
     params(
@@ -708,6 +724,7 @@ pub async fn get_task_count(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/tasks/my/stats",
     tag = "Flow-Task",
     responses(
@@ -733,6 +750,7 @@ pub async fn get_task_stats(State(_state): State<AppState>) -> Json<ApiResponse<
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/tasks/high-priority",
     tag = "Flow-Task",
     params(
@@ -754,6 +772,7 @@ pub async fn high_priority_tasks(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/tasks/overdue",
     tag = "Flow-Task",
     params(

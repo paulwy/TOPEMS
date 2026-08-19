@@ -310,6 +310,7 @@ fn get_tenant_id(claims: &Claims) -> Uuid {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/thresholds",
     tag = "thresholds",
     responses(
@@ -409,6 +410,7 @@ pub async fn list_thresholds(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["monitor:write"])),
     path = "/api/monitor/thresholds",
     request_body = ThresholdRequest,
     tag = "thresholds",
@@ -441,6 +443,7 @@ pub async fn create_threshold(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/thresholds/{id}",
     tag = "thresholds",
     params(
@@ -476,6 +479,7 @@ pub async fn get_threshold(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["monitor:update"])),
     path = "/api/monitor/thresholds/{id}",
     request_body = ThresholdRequest,
     tag = "thresholds",
@@ -513,6 +517,7 @@ pub async fn update_threshold(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["monitor:delete"])),
     path = "/api/monitor/thresholds/{id}",
     tag = "thresholds",
     params(
@@ -536,6 +541,7 @@ pub async fn delete_threshold(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["monitor:write"])),
     path = "/api/monitor/thresholds/evaluate",
     tag = "thresholds",
     responses(
@@ -570,6 +576,7 @@ pub async fn evaluate_thresholds(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/metrics/snapshot",
     tag = "metrics",
     responses(

@@ -10,6 +10,7 @@ use crate::models::{get_tenant_id, AppState};
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["integration:read"])),
     path = "/api/integration/mes-qms",
     tag = "integration",
     responses(
@@ -56,6 +57,7 @@ pub async fn list_mes_qms_sync_api(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["integration:read"])),
     path = "/api/integration/mes-qms/{id}",
     tag = "integration",
     params(
@@ -85,6 +87,7 @@ pub async fn get_mes_qms_sync_api(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["integration:read"])),
     path = "/api/integration/mes-qms/stats",
     tag = "integration",
     responses(
@@ -111,6 +114,7 @@ pub async fn get_mes_qms_stats_api(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/mes-qms/trigger-inspection",
     request_body = mes_qms_integration::TriggerInspectionRequest,
     tag = "integration",
@@ -149,6 +153,7 @@ pub async fn trigger_qms_inspection_api(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/mes-qms/sync-result",
     request_body = mes_qms_integration::SyncQualityResultRequest,
     tag = "integration",
@@ -187,6 +192,7 @@ pub async fn sync_quality_result_api(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/mes-qms/sync-trace",
     request_body = mes_qms_integration::TraceChainSyncRequest,
     tag = "integration",
@@ -225,6 +231,7 @@ pub async fn sync_trace_chain_api(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/mes-qms/defect-handling",
     request_body = mes_qms_integration::DefectHandlingRequest,
     tag = "integration",
@@ -263,6 +270,7 @@ pub async fn defect_handling_api(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/mes-qms/{id}/retry",
     tag = "integration",
     params(

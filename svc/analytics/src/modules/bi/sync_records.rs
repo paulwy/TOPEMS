@@ -93,6 +93,7 @@ pub struct RetrySyncResponse {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/sync-records",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -246,6 +247,7 @@ pub async fn list_sync_records(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/sync-records/{id}",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -292,6 +294,7 @@ pub async fn get_sync_record(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/sync-records",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -373,6 +376,7 @@ pub async fn create_sync_record(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["analytics:update"])),
     path = "/api/bi/sync-records/{id}",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -435,6 +439,7 @@ pub async fn update_sync_record(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["analytics:delete"])),
     path = "/api/bi/sync-records/{id}",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -469,6 +474,7 @@ pub async fn delete_sync_record(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/sync-records/{id}/retry",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))

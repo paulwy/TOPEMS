@@ -76,6 +76,7 @@ pub struct CalibrationRequest {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["lims:read"])),
     path = "/lims/instruments",
     tag = "instrument",
     params(
@@ -159,6 +160,7 @@ pub async fn list_instruments(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["lims:write"])),
     path = "/lims/instruments",
     tag = "instrument",
     request_body = CreateInstrumentRequest,

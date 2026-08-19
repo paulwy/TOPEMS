@@ -94,6 +94,7 @@ pub struct ProcessEventsRequest {
 // =============================================================================
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/events/published",
     responses(
         (status = 200, description = "成功"),
@@ -116,6 +117,7 @@ async fn list_published_events() -> Json<ApiResponse<Vec<PublishedEvent>>> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/handlers",
     tag = "EventRoutes",
     operation_id = "list_handlers",
@@ -135,6 +137,7 @@ async fn list_handlers() -> Json<ApiResponse<HandlersResponse>> {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/event",
     tag = "EventRoutes",
     operation_id = "route_event",
@@ -161,6 +164,7 @@ async fn route_event(Json(req): Json<RouteEventRequest>) -> Json<ApiResponse<Rou
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/events",
     tag = "EventRoutes",
     operation_id = "process_events",
@@ -178,6 +182,7 @@ async fn process_events(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/sagas",
     tag = "EventRoutes",
     operation_id = "list_sagas",
@@ -196,6 +201,7 @@ async fn list_sagas() -> Json<ApiResponse<SagasListResponse>> {
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/sagas/{saga_id}",
     responses(
         (status = 200, description = "成功"),
@@ -221,6 +227,7 @@ async fn get_saga(Path(saga_id): Path<String>) -> Json<ApiResponse<SagaInstance>
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/saga",
     tag = "EventRoutes",
     operation_id = "start_saga",
@@ -255,6 +262,7 @@ async fn start_saga(Json(req): Json<StartSagaRequest>) -> Json<ApiResponse<Start
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/saga",
     tag = "EventRoutes",
     operation_id = "compensate_saga",
@@ -279,6 +287,7 @@ async fn compensate_saga(Path(saga_id): Path<String>) -> Json<ApiResponse<Compen
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/saga_stats",
     tag = "EventRoutes",
     operation_id = "saga_stats",
@@ -295,6 +304,7 @@ async fn saga_stats() -> Json<ApiResponse<SagaStats>> {
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/pipeline/stats",
     responses(
         (status = 200, description = "成功"),

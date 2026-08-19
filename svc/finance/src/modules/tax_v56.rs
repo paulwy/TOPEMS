@@ -1547,6 +1547,7 @@ pub struct TaxSummaryQueryParams {
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v56/tax/generate",
     responses(
         (status = 200, description = "成功"),
@@ -1575,6 +1576,7 @@ async fn generate_tax_form_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v56/tax_forms",
     tag = "TaxV56",
     operation_id = "get_tax_forms_handler",
@@ -1597,6 +1599,7 @@ async fn get_tax_forms_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v56/tax_form_by_id/{id}",
     tag = "TaxV56",
     operation_id = "get_tax_form_by_id_handler",
@@ -1619,6 +1622,7 @@ async fn get_tax_form_by_id_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v56/tax_form",
     tag = "TaxV56",
     operation_id = "submit_tax_form_handler",
@@ -1640,6 +1644,7 @@ async fn submit_tax_form_handler(
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v56/tax/forms/{id}/amend",
     responses(
         (status = 200, description = "成功"),
@@ -1672,6 +1677,7 @@ async fn amend_tax_form_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v56/tax_summary",
     tag = "TaxV56",
     operation_id = "get_tax_summary_handler",
@@ -1694,6 +1700,7 @@ async fn get_tax_summary_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v56/tax_schedule",
     tag = "TaxV56",
     operation_id = "get_tax_schedule_handler",
@@ -1723,6 +1730,7 @@ pub struct RateScheduleQueryParams {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v56/calculate_tax",
     tag = "TaxV56",
     operation_id = "calculate_tax_handler",
@@ -1781,6 +1789,7 @@ async fn calculate_tax_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v56/tax/rates",
     responses(
         (status = 200, description = "成功"),
@@ -1818,6 +1827,7 @@ async fn get_rate_schedule_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v56/lookup_rate",
     tag = "TaxV56",
     operation_id = "lookup_rate_handler",
@@ -1852,6 +1862,7 @@ async fn lookup_rate_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v56/tax_breakdown/{id}",
     tag = "TaxV56",
     operation_id = "get_tax_breakdown_handler",
@@ -1881,6 +1892,7 @@ async fn get_tax_breakdown_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v56/tax/validate",
     responses(
         (status = 200, description = "成功"),
@@ -1927,6 +1939,7 @@ pub struct ComplianceQueryParams {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v56/plan",
     tag = "TaxV56",
     operation_id = "create_plan_handler",
@@ -1949,6 +1962,7 @@ async fn create_plan_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v56/scenario",
     tag = "TaxV56",
     operation_id = "analyze_scenario_handler",
@@ -1970,6 +1984,7 @@ async fn analyze_scenario_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v56/tax/suggestions",
     responses(
         (status = 200, description = "成功"),
@@ -2004,6 +2019,7 @@ async fn get_suggestions_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v56/scenarios",
     tag = "TaxV56",
     operation_id = "compare_scenarios_handler",
@@ -2026,6 +2042,7 @@ async fn compare_scenarios_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v56/plans",
     tag = "TaxV56",
     operation_id = "list_plans_handler",
@@ -2048,6 +2065,7 @@ async fn list_plans_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v56/plan",
     tag = "TaxV56",
     operation_id = "approve_plan_handler",
@@ -2069,6 +2087,7 @@ async fn approve_plan_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v56/tax/compliance",
     responses(
         (status = 200, description = "成功"),

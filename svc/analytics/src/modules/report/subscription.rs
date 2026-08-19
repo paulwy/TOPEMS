@@ -88,6 +88,7 @@ pub struct SubscriptionRow {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/subscriptions/{id}",
     tag = "Subscriptions",
     operation_id = "get_subscription",
@@ -139,6 +140,7 @@ pub async fn get_subscription(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/subscriptions",
     tag = "Subscriptions",
     operation_id = "list_subscriptions",
@@ -182,6 +184,7 @@ pub async fn list_subscriptions(State(state): State<AppState>) -> Json<serde_jso
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/subscriptions/user/{user_id}",
     tag = "Subscriptions",
     operation_id = "get_user_subscriptions",
@@ -233,6 +236,7 @@ pub async fn get_user_subscriptions(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/subscriptions",
     tag = "Subscriptions",
     operation_id = "create_subscription",
@@ -276,6 +280,7 @@ pub async fn create_subscription(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["analytics:update"])),
     path = "/subscriptions/{id}",
     tag = "Subscriptions",
     operation_id = "update_subscription",
@@ -318,6 +323,7 @@ pub async fn update_subscription(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["analytics:delete"])),
     path = "/subscriptions/{id}",
     tag = "Subscriptions",
     operation_id = "delete_subscription",
@@ -353,6 +359,7 @@ pub async fn delete_subscription(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/subscriptions/{id}/toggle",
     tag = "Subscriptions",
     operation_id = "toggle_subscription",

@@ -32,6 +32,7 @@ fn csv_field(s: &str) -> String {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["master_data:read"])),
     path = "/api/master-data/dict/dict-types",
     tag = "Dict",
     params(
@@ -113,6 +114,7 @@ pub async fn list_dict_types(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["master_data:read"])),
     path = "/api/master-data/dict/dict-types/{id}",
     tag = "Dict",
     params(
@@ -153,6 +155,7 @@ pub async fn get_dict_type(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["master_data:write"])),
     path = "/api/master-data/dict/dict-types",
     tag = "Dict",
     request_body = serde_json::Value,
@@ -200,6 +203,7 @@ pub async fn create_dict_type(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["master_data:update"])),
     path = "/api/master-data/dict/dict-types/{id}",
     tag = "Dict",
     params(
@@ -256,6 +260,7 @@ pub async fn update_dict_type(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["master_data:delete"])),
     path = "/api/master-data/dict/dict-types/{id}",
     tag = "Dict",
     params(
@@ -290,6 +295,7 @@ pub async fn delete_dict_type(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["master_data:read"])),
     path = "/api/master-data/dict/dict-types/{dict_type_id}/items",
     tag = "Dict",
     params(
@@ -371,6 +377,7 @@ pub async fn list_dict_items(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["master_data:read"])),
     path = "/api/master-data/dict/dict-items/{id}",
     tag = "Dict",
     params(
@@ -411,6 +418,7 @@ pub async fn get_dict_item(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["master_data:write"])),
     path = "/api/master-data/dict/dict-items",
     tag = "Dict",
     request_body = serde_json::Value,
@@ -461,6 +469,7 @@ pub async fn create_dict_item(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["master_data:update"])),
     path = "/api/master-data/dict/dict-items/{id}",
     tag = "Dict",
     params(
@@ -521,6 +530,7 @@ pub async fn update_dict_item(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["master_data:delete"])),
     path = "/api/master-data/dict/dict-items/{id}",
     tag = "Dict",
     params(
@@ -553,6 +563,7 @@ pub async fn delete_dict_item(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["master_data:write"])),
     path = "/api/master-data/dict/dict-items/batch",
     tag = "Dict",
     request_body = serde_json::Value,
@@ -618,6 +629,7 @@ pub async fn batch_create_dict_items(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["master_data:read"])),
     path = "/api/master-data/dict/dict-types/{dict_type_id}/items/export",
     tag = "Dict",
     params(

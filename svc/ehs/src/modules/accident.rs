@@ -212,6 +212,7 @@ pub struct CreateReviewRequest {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/incidents",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -231,6 +232,7 @@ pub async fn list_accidents(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/incidents",
     request_body = CreateAccidentRequest,
     tag = "ehs",
@@ -272,6 +274,7 @@ pub async fn report_accident(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/incidents/{id}",
     tag = "ehs",
     params(
@@ -346,6 +349,7 @@ pub async fn get_accident(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/incidents/{id}",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -389,6 +393,7 @@ pub async fn update_accident(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/incidents/{id}",
     tag = "ehs",
     params(
@@ -410,6 +415,7 @@ pub async fn delete_accident(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/incidents/{id}/investigation",
     request_body = CreateInvestigationRequest,
     tag = "ehs",
@@ -450,6 +456,7 @@ pub async fn start_investigation(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/incidents/{id}/investigation",
     request_body = UpdateInvestigationRequest,
     tag = "ehs",
@@ -497,6 +504,7 @@ pub async fn update_investigation(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/incidents/{id}/investigation/complete",
     tag = "ehs",
     params(
@@ -552,6 +560,7 @@ pub async fn complete_investigation(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/incidents/{id}/treatment",
     request_body = CreateTreatmentRequest,
     tag = "ehs",
@@ -606,6 +615,7 @@ pub async fn create_treatment(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/incidents/{id}/treatment/actions/{action_id}",
     request_body = UpdateTreatmentActionRequest,
     tag = "ehs",
@@ -647,6 +657,7 @@ pub async fn update_treatment_action(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/incidents/{id}/treatment/complete",
     tag = "ehs",
     params(
@@ -704,6 +715,7 @@ pub async fn complete_treatment(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/incidents/{id}/review",
     request_body = CreateReviewRequest,
     tag = "ehs",
@@ -741,6 +753,7 @@ pub async fn create_review(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/incidents/{id}/close",
     tag = "ehs",
     params(

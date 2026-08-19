@@ -36,6 +36,7 @@ fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["qms:read"])),
     path = "/api/qms/issues",
     tag = "quality_issue",
     params(
@@ -86,6 +87,7 @@ pub async fn list_issues(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["qms:write"])),
     path = "/api/qms/issues",
     tag = "quality_issue",
     request_body = CreateIssueRequest,

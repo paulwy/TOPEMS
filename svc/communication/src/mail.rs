@@ -166,6 +166,7 @@ lazy_static::lazy_static! {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["communication:read"])),
     path = "/mail/emails",
     tag = "email",
     responses(
@@ -244,6 +245,7 @@ pub async fn list_emails(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["communication:write"])),
     path = "/mail/emails",
     tag = "email",
     request_body = SendEmailRequest,

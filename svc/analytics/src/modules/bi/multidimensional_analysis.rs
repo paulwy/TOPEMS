@@ -109,6 +109,7 @@ pub struct RankItem {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/multidim/cube",
     tag = "Multidim",
     operation_id = "query_cube",
@@ -228,6 +229,7 @@ pub async fn query_cube(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/multidim/slice",
     tag = "Multidim",
     operation_id = "slice_cube",
@@ -350,6 +352,7 @@ pub async fn slice_cube(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/multidim/dice",
     tag = "Multidim",
     operation_id = "dice_cube",
@@ -472,6 +475,7 @@ pub async fn dice_cube(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/multidim/pivot",
     tag = "Multidim",
     operation_id = "pivot_table",
@@ -566,6 +570,7 @@ pub async fn pivot_table(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/multidim/rank",
     tag = "Multidim",
     operation_id = "rank_data",
@@ -662,6 +667,7 @@ pub async fn rank_data(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/multidim/datasource/{datasource_id}/dimensions",
     tag = "Multidim",
     operation_id = "get_available_dimensions",
@@ -715,6 +721,7 @@ pub async fn get_available_dimensions(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/multidim/datasource/{datasource_id}/measures",
     tag = "Multidim",
     operation_id = "get_available_measures",

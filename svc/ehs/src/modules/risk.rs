@@ -81,6 +81,7 @@ pub struct RiskControlMeasure {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/hazards",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -97,6 +98,7 @@ pub async fn list_risks(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/hazards",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -135,6 +137,7 @@ pub async fn create_risk(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/hazards/{id}",
     tag = "ehs",
     params(
@@ -173,6 +176,7 @@ pub async fn get_risk(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/hazards/{id}",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -213,6 +217,7 @@ pub async fn update_risk(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/hazards/{id}/assessments",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -253,6 +258,7 @@ pub async fn assess_risk(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/hazards/{id}",
     tag = "ehs",
     params(
@@ -274,6 +280,7 @@ pub async fn delete_risk(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/hazards/{id}/controls",
     tag = "ehs",
     params(
@@ -321,6 +328,7 @@ pub async fn list_control_measures(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/hazards/{id}/controls",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -367,6 +375,7 @@ pub async fn create_control_measure(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/hazards/{id}/controls/{measure_id}",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -423,6 +432,7 @@ pub async fn update_control_measure(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/hazards/{id}/controls/{measure_id}",
     tag = "ehs",
     params(

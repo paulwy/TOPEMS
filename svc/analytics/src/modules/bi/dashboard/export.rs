@@ -15,6 +15,7 @@ use super::models::ExportFormatQuery;
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/dashboard/{id}/export",
     tag = "Dashboard",
     operation_id = "export_dashboard",
@@ -80,6 +81,7 @@ pub async fn export_dashboard(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/dashboard/{id}/export/pdf",
     tag = "Dashboard",
     operation_id = "export_dashboard_pdf",
@@ -247,6 +249,7 @@ fn escape_pdf_string(s: &str) -> String {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/dashboard/{id}/export/excel",
     tag = "Dashboard",
     operation_id = "export_dashboard_excel",

@@ -93,6 +93,7 @@ where
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["aps:read"])),
     path = "/api/aps/material-plans",
     responses(
         (status = 200, description = "list_material_plans OK")
@@ -168,6 +169,7 @@ pub async fn list_material_plans(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["aps:read"])),
     path = "/api/aps/material-plans/{id}",
     params(
         ("id" = Uuid, Path, description = "物料计划 ID")
@@ -211,6 +213,7 @@ pub async fn get_material_plan(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["aps:write"])),
     path = "/api/aps/material-plans",
     request_body = CreateMaterialPlanRequest,
     responses(
@@ -278,6 +281,7 @@ pub async fn create_material_plan(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["aps:update"])),
     path = "/api/aps/material-plans/{id}",
     request_body = UpdateMaterialPlanRequest,
     params(
@@ -369,6 +373,7 @@ pub async fn update_material_plan(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["aps:delete"])),
     path = "/api/aps/material-plans/{id}",
     params(
         ("id" = Uuid, Path, description = "物料计划 ID")

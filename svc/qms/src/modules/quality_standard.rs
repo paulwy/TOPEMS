@@ -26,6 +26,7 @@ fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["qms:read"])),
     path = "/api/qms/standards",
     tag = "quality_standard",
     params(
@@ -103,6 +104,7 @@ pub async fn list_standards(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["qms:write"])),
     path = "/api/qms/standards",
     tag = "quality_standard",
     request_body = CreateStandardRequest,
@@ -147,6 +149,7 @@ pub async fn create_standard(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["qms:read"])),
     path = "/api/qms/standards/{id}",
     tag = "quality_standard",
     params(
@@ -185,6 +188,7 @@ pub async fn get_standard(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["qms:update"])),
     path = "/api/qms/standards/{id}",
     tag = "quality_standard",
     params(
@@ -237,6 +241,7 @@ pub async fn update_standard(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["qms:delete"])),
     path = "/api/qms/standards/{id}",
     tag = "quality_standard",
     params(

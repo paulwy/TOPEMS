@@ -56,6 +56,7 @@ struct NamedCountRow {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/dashboard",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -168,6 +169,7 @@ async fn fetch_named_counts(state: &AppState, tenant_id: Uuid, sql: &str) -> Vec
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/health",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -181,6 +183,7 @@ pub async fn api_health() -> Json<ApiResponse<String>> {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pdm:write"])),
     path = "/api/pdm/import",
     tag = "pdm",
     responses((status = 200, description = "OK")),

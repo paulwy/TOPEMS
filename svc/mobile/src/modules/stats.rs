@@ -88,6 +88,7 @@ pub fn classify_count_level(count: i64) -> &'static str {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mobile:read"])),
     path = "/stats/dashboard",
     tag = "task",
     responses(

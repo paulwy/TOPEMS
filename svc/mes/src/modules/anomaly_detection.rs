@@ -1128,6 +1128,7 @@ pub struct AnomalyHandlingApprovalDecisionRequest {
 /// 发起异常处置审批（acknowledged→handling）
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mes:write"])),
     path = "/api/mes/anomaly/alerts/{id}/approval/start",
     tag = "AnomalyDetection",
     params(
@@ -1161,6 +1162,7 @@ pub async fn start_anomaly_handling_approval(
 /// 异常处置审批通过
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mes:write"])),
     path = "/api/mes/anomaly/alerts/{id}/approval/approve",
     tag = "AnomalyDetection",
     params(
@@ -1193,6 +1195,7 @@ pub async fn approve_anomaly_handling(
 /// 异常处置审批驳回
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mes:write"])),
     path = "/api/mes/anomaly/alerts/{id}/approval/reject",
     tag = "AnomalyDetection",
     params(

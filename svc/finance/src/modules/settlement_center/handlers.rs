@@ -37,6 +37,7 @@ fn current_user_id(claims: &Claims) -> Option<Uuid> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/api/core/settlement-center/reconciliations",
     tag = "Settlement-Center",
     operation_id = "list_reconciliations",
@@ -62,6 +63,7 @@ pub async fn list_reconciliations(
 /// POST /api/core/settlement-center/reconciliations
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/reconciliation",
     tag = "SettlementCenter",
     operation_id = "create_reconciliation",
@@ -99,6 +101,7 @@ pub async fn create_reconciliation(
 /// GET /api/core/settlement-center/reconciliations/{id}
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/reconciliation/{id}",
     tag = "SettlementCenter",
     operation_id = "get_reconciliation",
@@ -125,6 +128,7 @@ pub async fn get_reconciliation(
 /// POST /api/core/settlement-center/reconciliations/{id}/reconcile
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/reconcile",
     tag = "SettlementCenter",
     operation_id = "reconcile",
@@ -150,6 +154,7 @@ pub async fn reconcile(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/api/core/settlement-center/auto-reconcile",
     tag = "Settlement-Center",
     operation_id = "auto_reconcile",
@@ -181,6 +186,7 @@ pub async fn auto_reconcile(
 /// GET /api/core/settlement-center/settlements
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/settlements",
     tag = "SettlementCenter",
     operation_id = "list_settlements",
@@ -206,6 +212,7 @@ pub async fn list_settlements(
 /// POST /api/core/settlement-center/settlements
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/settlement",
     tag = "SettlementCenter",
     operation_id = "create_settlement",
@@ -240,6 +247,7 @@ pub async fn create_settlement(
 /// GET /api/core/settlement-center/settlements/{id}
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/settlement/{id}",
     tag = "SettlementCenter",
     operation_id = "get_settlement",
@@ -265,6 +273,7 @@ pub async fn get_settlement(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/api/core/settlement-center/settlements/{id}/approve",
     tag = "Settlement-Center",
     operation_id = "approve_settlement",
@@ -295,6 +304,7 @@ pub async fn approve_settlement(
 /// POST /api/core/settlement-center/links
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/link",
     tag = "SettlementCenter",
     operation_id = "create_link",
@@ -327,6 +337,7 @@ pub async fn create_link(
 /// DELETE /api/core/settlement-center/links/{id}
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/finance/link/{id}",
     tag = "SettlementCenter",
     operation_id = "delete_link",
@@ -353,6 +364,7 @@ pub async fn delete_link(
 /// GET /api/core/settlement-center/links
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/links",
     tag = "SettlementCenter",
     operation_id = "list_links",
@@ -381,6 +393,7 @@ pub async fn list_links(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/api/core/settlement-center/differences",
     tag = "Settlement-Center",
     operation_id = "list_differences",
@@ -406,6 +419,7 @@ pub async fn list_differences(
 /// POST /api/core/settlement-center/differences
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/difference",
     tag = "SettlementCenter",
     operation_id = "create_difference",
@@ -450,6 +464,7 @@ pub async fn create_difference(
 /// POST /api/core/settlement-center/differences/{id}/approve
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/difference",
     tag = "SettlementCenter",
     operation_id = "approve_difference",
@@ -479,6 +494,7 @@ pub async fn approve_difference(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/api/core/settlement-center/differences/{id}/reject",
     tag = "Settlement-Center",
     operation_id = "reject_difference",
@@ -512,6 +528,7 @@ pub async fn reject_difference(
 /// GET /api/core/settlement-center/dashboard
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/dashboard",
     tag = "SettlementCenter",
     operation_id = "get_dashboard",
@@ -536,6 +553,7 @@ pub async fn get_dashboard(
 /// GET /api/core/settlement-center/statistics
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/statistics",
     tag = "SettlementCenter",
     operation_id = "get_statistics",

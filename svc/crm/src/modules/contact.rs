@@ -50,6 +50,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["crm:read"])),
     path = "/contacts",
     tag = "contact",
     params(
@@ -143,6 +144,7 @@ async fn list_contacts(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["crm:write"])),
     path = "/contacts",
     tag = "contact",
     request_body = CreateContactRequest,

@@ -18,6 +18,7 @@ macro_rules! log_audit {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/consolidation/reports",
     tag = "Consolidation",
     responses((status = 200, description = "获取合并报表列表成功", body = ApiResponse<serde_json::Value>))
@@ -85,6 +86,7 @@ pub async fn list_reports(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/consolidation/reports/{reportId}",
     tag = "Consolidation",
     params(("reportId" = String, Path, description = "报表ID")),
@@ -117,6 +119,7 @@ pub async fn get_report(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/consolidation/reports/generate-report",
     tag = "ConsolidationReports",
     operation_id = "generate_report",
@@ -225,6 +228,7 @@ pub async fn generate_report(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/consolidation/reports/{reportId}/lines",
     tag = "Consolidation",
     params(("reportId" = String, Path, description = "报表ID")),
@@ -251,6 +255,7 @@ pub async fn get_report_lines(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/consolidation/reports/export-report",
     tag = "ConsolidationReports",
     operation_id = "export_report",
@@ -306,6 +311,7 @@ pub async fn export_report(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/consolidation/reports/submit-report",
     tag = "ConsolidationReports",
     operation_id = "submit_report",
@@ -385,6 +391,7 @@ pub async fn submit_report(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/consolidation/reports/{reportId}/approve",
     tag = "Consolidation",
     params(("reportId" = String, Path, description = "报表ID")),
@@ -462,6 +469,7 @@ pub async fn approve_report(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/consolidation/reports/{reportId}/publish",
     tag = "Consolidation",
     params(("reportId" = String, Path, description = "报表ID")),
@@ -504,6 +512,7 @@ pub async fn publish_report(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/consolidation/reports/{reportId}",
     tag = "Consolidation",
     params(("reportId" = String, Path, description = "报表ID")),

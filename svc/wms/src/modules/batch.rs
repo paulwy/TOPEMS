@@ -35,6 +35,7 @@ where
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/batches",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -118,6 +119,7 @@ pub async fn list_batches(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/batches",
     tag = "wms",
     responses(
@@ -186,6 +188,7 @@ pub async fn create_batch(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/batches/{id}",
     tag = "wms",
     responses(
@@ -229,6 +232,7 @@ pub async fn get_batch(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["wms:update"])),
     path = "/api/wms/batches/{id}",
     tag = "wms",
     responses(
@@ -316,6 +320,7 @@ pub async fn update_batch(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["wms:delete"])),
     path = "/api/wms/batches/{id}",
     tag = "wms",
     responses(
@@ -359,6 +364,7 @@ pub async fn delete_batch(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/batches/statistics",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -417,6 +423,7 @@ pub async fn get_batch_statistics(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/batches/expiring-soon",
     tag = "batch",
     operation_id = "get_expiring_soon",
@@ -461,6 +468,7 @@ pub async fn get_expiring_soon(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/batches/expired",
     tag = "batch",
     operation_id = "get_expired",
@@ -503,6 +511,7 @@ pub async fn get_expired(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/batches/{id}/adjust-quantity",
     tag = "batch",
     operation_id = "adjust_quantity",
@@ -555,6 +564,7 @@ pub async fn adjust_quantity(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/batches/{id}/transfer-location",
     tag = "batch",
     operation_id = "transfer_location",

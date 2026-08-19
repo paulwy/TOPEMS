@@ -80,6 +80,7 @@ where
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["aps:read"])),
     path = "/api/aps/forecasts",
     responses(
         (status = 200, description = "list_forecasts OK")
@@ -155,6 +156,7 @@ pub async fn list_forecasts(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["aps:read"])),
     path = "/api/aps/forecasts/{id}",
     params(
         ("id" = Uuid, Path, description = "需求预测 ID")
@@ -198,6 +200,7 @@ pub async fn get_forecast(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["aps:write"])),
     path = "/api/aps/forecasts",
     request_body = CreateForecastRequest,
     responses(
@@ -266,6 +269,7 @@ pub async fn create_forecast(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["aps:update"])),
     path = "/api/aps/forecasts/{id}",
     request_body = UpdateForecastRequest,
     params(
@@ -362,6 +366,7 @@ pub async fn update_forecast(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["aps:delete"])),
     path = "/api/aps/forecasts/{id}",
     params(
         ("id" = Uuid, Path, description = "需求预测 ID")
@@ -400,6 +405,7 @@ pub async fn delete_forecast(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["aps:write"])),
     path = "/api/aps/forecasts/{id}/calculate",
     params(
         ("id" = Uuid, Path, description = "需求预测 ID")
@@ -500,6 +506,7 @@ pub async fn calculate_forecast(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["aps:write"])),
     path = "/api/aps/forecasts/{id}/validate",
     params(
         ("id" = Uuid, Path, description = "需求预测 ID")

@@ -17,6 +17,7 @@ macro_rules! log_audit {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/consolidation/scopes/{scopeId}/companies",
     tag = "Consolidation",
     params(("scopeId" = String, Path, description = "合并范围ID")),
@@ -47,6 +48,7 @@ pub async fn list_scope_companies(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/consolidation/scopes/companies",
     tag = "Consolidation",
     responses((status = 200, description = "添加合并范围公司成功", body = ApiResponse<serde_json::Value>))
@@ -97,6 +99,7 @@ pub async fn add_scope_company(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/consolidation/scopes/companies/{companyId}",
     tag = "Consolidation",
     params(("companyId" = String, Path, description = "公司ID")),
@@ -149,6 +152,7 @@ pub async fn update_scope_company(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/consolidation/scopes/companies/{companyId}",
     tag = "Consolidation",
     params(("companyId" = String, Path, description = "公司ID")),

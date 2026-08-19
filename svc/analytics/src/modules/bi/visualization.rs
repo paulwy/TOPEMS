@@ -30,6 +30,7 @@ pub struct VisualizationResponse {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/visualization",
     tag = "Visualization",
     operation_id = "list_visualizations",
@@ -46,6 +47,7 @@ pub async fn list_visualizations(State(_state): State<AppState>) -> Json<serde_j
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/visualization",
     tag = "Visualization",
     operation_id = "create_visualization",
@@ -108,6 +110,7 @@ pub async fn create_visualization(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/visualization/{id}",
     tag = "Visualization",
     operation_id = "get_visualization",
@@ -123,6 +126,7 @@ pub async fn get_visualization(State(_state): State<AppState>) -> Json<serde_jso
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/visualization/chart-types",
     tag = "Visualization",
     operation_id = "get_chart_types",
@@ -143,6 +147,7 @@ pub async fn get_chart_types(State(state): State<AppState>) -> Json<serde_json::
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/visualization/line",
     tag = "Visualization",
     operation_id = "generate_line_chart",
@@ -174,6 +179,7 @@ pub async fn generate_line_chart(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/visualization/bar",
     tag = "Visualization",
     operation_id = "generate_bar_chart",
@@ -205,6 +211,7 @@ pub async fn generate_bar_chart(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/visualization/pie",
     tag = "Visualization",
     operation_id = "generate_pie_chart",
@@ -241,6 +248,7 @@ pub async fn generate_pie_chart(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/visualization/gauge",
     tag = "Visualization",
     operation_id = "generate_gauge_chart",
@@ -272,6 +280,7 @@ pub async fn generate_gauge_chart(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/widgets/{widget_id}/drilldown",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -294,6 +303,7 @@ pub async fn get_drilldown_config(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["analytics:update"])),
     path = "/widgets/{widget_id}/drilldown",
     tag = "Drilldown",
     operation_id = "update_drilldown_config",
@@ -313,6 +323,7 @@ pub async fn update_drilldown_config(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/widgets/{widget_id}/drilldown/execute",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -337,6 +348,7 @@ pub async fn execute_drilldown(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/dashboards/{dashboard_id}/links",
     tag = "Visualization",
     operation_id = "get_chart_link_config",
@@ -359,6 +371,7 @@ pub async fn get_chart_link_config(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["analytics:update"])),
     path = "/api/bi/dashboards/{dashboard_id}/links",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -377,6 +390,7 @@ pub async fn update_chart_link_config(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/widgets/{widget_id}/annotations",
     tag = "Visualization",
     operation_id = "get_chart_annotations",
@@ -396,6 +410,7 @@ pub async fn get_chart_annotations(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/widgets/{widget_id}/annotations",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -422,6 +437,7 @@ pub async fn create_chart_annotation(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["analytics:delete"])),
     path = "/api/bi/annotations/{annotation_id}",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -439,6 +455,7 @@ pub async fn delete_chart_annotation(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/widgets/{widget_id}/export",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -465,6 +482,7 @@ pub async fn export_chart(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/widgets/{widget_id}/fullscreen",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))

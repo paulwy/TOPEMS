@@ -95,6 +95,7 @@ where
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/inventory",
     responses(
         (status = 200, description = "list_inventory OK")
@@ -177,6 +178,7 @@ pub async fn list_inventory(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/inventory",
     responses(
         (status = 201, description = "创建成功"),
@@ -270,6 +272,7 @@ pub async fn create_inventory(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/inventory/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -321,6 +324,7 @@ pub async fn get_inventory(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["wms:update"])),
     path = "/api/wms/inventory/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -549,6 +553,7 @@ pub async fn update_inventory(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["wms:delete"])),
     path = "/api/wms/inventory/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -626,6 +631,7 @@ pub async fn delete_inventory(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/inventory/low-stock",
     responses(
         (status = 200, description = "list_low_stock_inventory OK")
@@ -676,6 +682,7 @@ pub async fn list_low_stock_inventory(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/inventory/warehouse/{warehouse_id}",
     params(
         ("warehouse_id" = Uuid, Path, description = "warehouse_id")
@@ -740,6 +747,7 @@ pub async fn list_inventory_by_warehouse(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/inventory/statistics",
     responses(
         (status = 200, description = "get_inventory_statistics OK")
@@ -830,6 +838,7 @@ pub async fn get_inventory_statistics(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/inventory/abc-analysis",
     responses(
         (status = 200, description = "get_abc_analysis OK")
@@ -931,6 +940,7 @@ pub async fn get_abc_analysis(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/inventory/turnover",
     responses(
         (status = 200, description = "get_turnover OK")
@@ -1002,6 +1012,7 @@ pub async fn get_turnover(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/inventory/value-by-warehouse",
     responses(
         (status = 200, description = "get_value_by_warehouse OK")

@@ -252,6 +252,7 @@ fn calculate_mse(actual: &[f64], predicted: &[f64]) -> f64 {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/prediction/moving-average",
     tag = "Prediction",
     operation_id = "moving_average_forecast",
@@ -371,6 +372,7 @@ pub async fn moving_average_forecast(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/prediction/exponential-smoothing",
     tag = "Prediction",
     operation_id = "exponential_smoothing_forecast",
@@ -476,6 +478,7 @@ pub async fn exponential_smoothing_forecast(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/prediction/trend",
     tag = "Prediction",
     operation_id = "trend_analysis",
@@ -559,6 +562,7 @@ pub async fn trend_analysis(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/prediction/compare",
     tag = "Prediction",
     operation_id = "prediction_comparison",
@@ -668,6 +672,7 @@ pub async fn prediction_comparison(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/prediction/methods",
     tag = "Prediction",
     operation_id = "get_prediction_methods",

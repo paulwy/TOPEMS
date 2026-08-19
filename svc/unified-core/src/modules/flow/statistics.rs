@@ -6,6 +6,7 @@ use super::models::{MonthlyData, StatisticsResponse, WorkflowStat};
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/statistics",
     tag = "Flow-Monitor",
     responses(

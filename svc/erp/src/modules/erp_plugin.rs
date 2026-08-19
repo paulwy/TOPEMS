@@ -47,6 +47,7 @@ pub struct PluginHeartbeat {
 /// 获取插件信息
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/api/plugins/info",
     tag = "ERP",
     operation_id = "get_plugin_info",
@@ -202,6 +203,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 /// 插件健康检查
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/api/plugins/health",
     tag = "ERP",
     operation_id = "plugin_health_check",
@@ -223,6 +225,7 @@ pub async fn plugin_health_check(State(state): State<ApiState>) -> Json<ApiRespo
 /// 注册插件到核心平台（启动时调用）
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/erp-plugin/register-to-core",
     tag = "ErpPlugin",
     operation_id = "register_to_core",
@@ -296,6 +299,7 @@ pub fn create_routes() -> Router<ApiState> {
 /// 启动时自动注册到统一核心
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/erp-plugin/auto-register-to-core",
     tag = "ErpPlugin",
     operation_id = "auto_register_to_core",

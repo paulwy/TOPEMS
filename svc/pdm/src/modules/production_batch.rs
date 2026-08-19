@@ -86,6 +86,7 @@ pub struct BatchQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/production-batches",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -163,6 +164,7 @@ pub async fn list_batches(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pdm:write"])),
     path = "/api/pdm/production-batches",
     request_body = CreateBatchRequest,
     tag = "pdm",
@@ -216,6 +218,7 @@ pub async fn create_batch(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/production-batches/{id}",
     tag = "pdm",
     params(
@@ -256,6 +259,7 @@ pub async fn get_batch(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["pdm:update"])),
     path = "/api/pdm/production-batches/{id}",
     request_body = UpdateBatchRequest,
     tag = "pdm",
@@ -320,6 +324,7 @@ pub async fn update_batch(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["pdm:delete"])),
     path = "/api/pdm/production-batches/{id}",
     tag = "pdm",
     params(

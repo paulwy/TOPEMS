@@ -103,6 +103,7 @@ pub struct UpdateChangeNoticeRequest {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/change-notices",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -185,6 +186,7 @@ pub async fn list_change_notices(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pdm:write"])),
     path = "/api/pdm/change-notices",
     request_body = CreateChangeNoticeRequest,
     tag = "pdm",
@@ -257,6 +259,7 @@ pub async fn create_change_notice(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/change-notices/{id}",
     tag = "pdm",
     params(
@@ -298,6 +301,7 @@ pub async fn get_change_notice(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["pdm:update"])),
     path = "/api/pdm/change-notices/{id}",
     request_body = UpdateChangeNoticeRequest,
     tag = "pdm",
@@ -396,6 +400,7 @@ pub async fn update_change_notice(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["pdm:delete"])),
     path = "/api/pdm/change-notices/{id}",
     tag = "pdm",
     params(
@@ -432,6 +437,7 @@ pub async fn delete_change_notice(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pdm:write"])),
     path = "/api/pdm/change-notices/{id}/submit",
     tag = "pdm",
     params(
@@ -477,6 +483,7 @@ pub async fn submit_change_notice(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pdm:write"])),
     path = "/api/pdm/change-notices/{id}/approve",
     request_body = serde_json::Value,
     tag = "pdm",
@@ -531,6 +538,7 @@ pub async fn approve_change_notice(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pdm:write"])),
     path = "/api/pdm/change-notices/{id}/reject",
     request_body = serde_json::Value,
     tag = "pdm",

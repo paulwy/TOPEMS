@@ -94,6 +94,7 @@ fn map_announcement(a: &serde_json::Value) -> Option<Announcement> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["portal:read"])),
     path = "/announcements",
     tag = "Portal",
     responses(
@@ -161,6 +162,7 @@ pub async fn get_announcement(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["portal:write"])),
     path = "/announcements",
     tag = "Portal",
     request_body = NewAnnouncement,

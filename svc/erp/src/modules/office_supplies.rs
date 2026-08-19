@@ -35,6 +35,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/office-supplies",
     responses(
         (status = 200, description = "list_supplies OK")
@@ -104,6 +105,7 @@ pub async fn list_supplies(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/office-supplies",
     request_body = CreateOfficeSupplyRequest,
     responses(
@@ -188,6 +190,7 @@ pub async fn create_supply(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/office-supplies/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -223,6 +226,7 @@ pub async fn get_supply(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/office-supplies/{id}",
     request_body = UpdateOfficeSupplyRequest,
     params(
@@ -328,6 +332,7 @@ pub async fn update_supply(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/office-supplies/{id}",
     params(
         ("id" = Uuid, Path, description = "id")

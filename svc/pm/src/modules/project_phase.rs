@@ -39,6 +39,7 @@ pub fn create_routes(pool: PgPool) -> Router {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/projects/{project_id}/phases",
     tag = "project_phases",
     params(
@@ -72,6 +73,7 @@ async fn list_phases(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pm:write"])),
     path = "/projects/{project_id}/phases",
     tag = "project_phases",
     request_body = CreatePhaseRequest,
@@ -141,6 +143,7 @@ async fn create_phase(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/projects/{project_id}/phases/{id}",
     tag = "project_phases",
     params(
@@ -178,6 +181,7 @@ async fn get_phase(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["pm:update"])),
     path = "/projects/{project_id}/phases/{id}",
     tag = "project_phases",
     request_body = UpdatePhaseRequest,
@@ -241,6 +245,7 @@ async fn update_phase(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["pm:delete"])),
     path = "/projects/{project_id}/phases/{id}",
     tag = "project_phases",
     params(

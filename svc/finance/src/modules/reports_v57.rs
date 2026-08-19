@@ -1301,6 +1301,7 @@ pub struct ReportListQueryParams {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v57/report/template",
     tag = "Reports-V57",
     operation_id = "create_template_handler",
@@ -1321,6 +1322,7 @@ async fn create_template_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v57/templates",
     tag = "ReportsV57",
     operation_id = "get_templates_handler",
@@ -1344,6 +1346,7 @@ async fn get_templates_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v57/report",
     tag = "ReportsV57",
     operation_id = "generate_report_handler",
@@ -1366,6 +1369,7 @@ async fn generate_report_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v57/reports",
     tag = "ReportsV57",
     operation_id = "list_reports_handler",
@@ -1388,6 +1392,7 @@ async fn list_reports_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v57/report/{id}",
     tag = "ReportsV57",
     operation_id = "get_report_handler",
@@ -1410,6 +1415,7 @@ async fn get_report_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v57/report/{id}/download",
     tag = "Reports-V57",
     operation_id = "download_report_handler",
@@ -1430,6 +1436,7 @@ async fn download_report_handler(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/finance-v57/report/{id}",
     tag = "ReportsV57",
     operation_id = "delete_report_handler",
@@ -1452,6 +1459,7 @@ async fn delete_report_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v57/report",
     tag = "ReportsV57",
     operation_id = "schedule_report_handler",
@@ -1481,6 +1489,7 @@ pub struct AnalysisHistoryQueryParams {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v57/analyze",
     tag = "ReportsV57",
     operation_id = "analyze_handler",
@@ -1503,6 +1512,7 @@ async fn analyze_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v57/pivot",
     tag = "ReportsV57",
     operation_id = "pivot_handler",
@@ -1525,6 +1535,7 @@ async fn pivot_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v57/analysis/drill-down",
     tag = "Reports-V57",
     operation_id = "drill_down_handler",
@@ -1545,6 +1556,7 @@ async fn drill_down_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v57/roll_up",
     tag = "ReportsV57",
     operation_id = "roll_up_handler",
@@ -1567,6 +1579,7 @@ async fn roll_up_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v57/slice",
     tag = "ReportsV57",
     operation_id = "slice_handler",
@@ -1589,6 +1602,7 @@ async fn slice_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v57/dice",
     tag = "ReportsV57",
     operation_id = "dice_handler",
@@ -1611,6 +1625,7 @@ async fn dice_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v57/analysis_history",
     tag = "ReportsV57",
     operation_id = "get_analysis_history_handler",
@@ -1644,6 +1659,7 @@ pub struct TrendQueryParams {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v57/forecast",
     tag = "Reports-V57",
     operation_id = "generate_forecast_handler",
@@ -1664,6 +1680,7 @@ async fn generate_forecast_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v57/anomalies",
     tag = "ReportsV57",
     operation_id = "detect_anomalies_handler",
@@ -1686,6 +1703,7 @@ async fn detect_anomalies_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v57/insights",
     tag = "ReportsV57",
     operation_id = "get_insights_handler",
@@ -1708,6 +1726,7 @@ async fn get_insights_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v57/model",
     tag = "ReportsV57",
     operation_id = "train_model_handler",
@@ -1730,6 +1749,7 @@ async fn train_model_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v57/models",
     tag = "ReportsV57",
     operation_id = "list_models_handler",
@@ -1750,6 +1770,7 @@ async fn list_models_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v57/trend",
     responses(
         (status = 200, description = "成功"),

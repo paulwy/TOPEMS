@@ -53,6 +53,7 @@ where
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/inventory-movements",
     tag = "inventory_movement",
     operation_id = "list_inventory_movements",
@@ -156,6 +157,7 @@ async fn list_inventory_movements(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/inventory-movements",
     tag = "inventory_movement",
     operation_id = "create_inventory_movement",
@@ -237,6 +239,7 @@ async fn create_inventory_movement(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/inventory-movements/{id}",
     tag = "inventory_movement",
     operation_id = "get_inventory_movement",

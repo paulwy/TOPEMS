@@ -54,6 +54,7 @@ where
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/sync/outbound-to-shipping",
     tag = "data_sync",
     operation_id = "outbound_to_shipping",
@@ -92,6 +93,7 @@ pub async fn outbound_to_shipping(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/sync/outbound-order/{id}/to-shipping",
     tag = "data_sync",
     operation_id = "create_shipping_from_outbound",
@@ -263,6 +265,7 @@ pub struct InboundFromScmRequest {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/sync/inbound-from-scm",
     tag = "data_sync",
     operation_id = "create_inbound_from_scm",
@@ -377,6 +380,7 @@ pub async fn create_inbound_from_scm(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/sync/sync-logs",
     tag = "data_sync",
     operation_id = "get_sync_logs",

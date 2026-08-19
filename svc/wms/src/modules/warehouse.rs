@@ -43,6 +43,7 @@ where
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/warehouses",
     responses(
         (status = 200, description = "list_warehouses OK")
@@ -131,6 +132,7 @@ pub async fn list_warehouses(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/warehouses",
     responses(
         (status = 201, description = "创建成功"),
@@ -218,6 +220,7 @@ pub async fn create_warehouse(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/warehouses/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -274,6 +277,7 @@ pub async fn get_warehouse(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["wms:update"])),
     path = "/api/wms/warehouses/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -392,6 +396,7 @@ pub async fn update_warehouse(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["wms:delete"])),
     path = "/api/wms/warehouses/{id}",
     params(
         ("id" = Uuid, Path, description = "id")

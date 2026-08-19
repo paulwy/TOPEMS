@@ -274,6 +274,7 @@ pub struct UpdateDrillProblemRequest {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/drills/plans",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -293,6 +294,7 @@ pub async fn list_drill_plans(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/drills/plans",
     request_body = CreateDrillPlanRequest,
     tag = "ehs",
@@ -335,6 +337,7 @@ pub async fn create_drill_plan(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/drills/plans/{id}",
     tag = "ehs",
     params(
@@ -377,6 +380,7 @@ pub async fn get_drill_plan(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/drills/plans/{id}",
     request_body = UpdateDrillPlanRequest,
     tag = "ehs",
@@ -423,6 +427,7 @@ pub async fn update_drill_plan(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/drills/plans/{id}",
     tag = "ehs",
     params(
@@ -444,6 +449,7 @@ pub async fn delete_drill_plan(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/drills/records",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -463,6 +469,7 @@ pub async fn list_drill_records(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/drills/records",
     request_body = CreateDrillRecordRequest,
     tag = "ehs",
@@ -509,6 +516,7 @@ pub async fn create_drill_record(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/drills/records/{id}",
     tag = "ehs",
     params(
@@ -592,6 +600,7 @@ pub async fn get_drill_record(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/drills/records/{id}",
     request_body = UpdateDrillRecordRequest,
     tag = "ehs",
@@ -642,6 +651,7 @@ pub async fn update_drill_record(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/drills/records/{id}",
     tag = "ehs",
     params(
@@ -663,6 +673,7 @@ pub async fn delete_drill_record(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/drills/records/{id}/evaluation",
     request_body = CreateEvaluationRequest,
     tag = "ehs",
@@ -704,6 +715,7 @@ pub async fn create_drill_evaluation(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/drills/records/{id}/problems",
     tag = "ehs",
     params(
@@ -728,6 +740,7 @@ pub async fn list_drill_problems(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/drills/records/{id}/problems",
     request_body = CreateDrillProblemRequest,
     tag = "ehs",
@@ -771,6 +784,7 @@ pub async fn create_drill_problem(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/drills/records/{id}/problems/{problem_id}",
     request_body = UpdateDrillProblemRequest,
     tag = "ehs",
@@ -832,6 +846,7 @@ pub async fn update_drill_problem(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/drills/statistics",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -875,6 +890,7 @@ pub async fn get_drill_statistics(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/drills/types",
     tag = "ehs",
     responses((status = 200, description = "OK")),

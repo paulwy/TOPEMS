@@ -82,6 +82,7 @@ pub struct VersionQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/versions",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -163,6 +164,7 @@ pub async fn list_versions(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pdm:write"])),
     path = "/api/pdm/versions",
     request_body = CreateVersionRequest,
     tag = "pdm",
@@ -216,6 +218,7 @@ pub async fn create_version(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/versions/{id}",
     tag = "pdm",
     params(
@@ -256,6 +259,7 @@ pub async fn get_version(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["pdm:update"])),
     path = "/api/pdm/versions/{id}",
     request_body = UpdateVersionRequest,
     tag = "pdm",
@@ -318,6 +322,7 @@ pub async fn update_version(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["pdm:delete"])),
     path = "/api/pdm/versions/{id}",
     tag = "pdm",
     params(

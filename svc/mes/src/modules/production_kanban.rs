@@ -103,6 +103,7 @@ fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
 /// 看板总览：聚合返回 summary、订单进度、工位状态、质量趋势、设备状态。
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/kanban/dashboard",
     tag = "ProductionKanban",
     responses(
@@ -457,6 +458,7 @@ pub async fn get_dashboard(
 /// 订单进度列表：progress = completed_quantity / quantity * 100
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/kanban/order-progress",
     tag = "ProductionKanban",
     responses(
@@ -522,6 +524,7 @@ pub async fn get_order_progress(
 /// 工位状态：每台工位关联当前在制生产记录及当日产出。
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/kanban/workstation-status",
     tag = "ProductionKanban",
     responses(
@@ -621,6 +624,7 @@ pub async fn get_workstation_status(
 /// 质量趋势：按天聚合 quality_records，计算合格率与数量。
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/kanban/quality-trend",
     tag = "ProductionKanban",
     responses(
@@ -701,6 +705,7 @@ pub async fn get_quality_trend(
 /// 设备状态：每台设备关联最新 OEE 记录。
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/kanban/equipment-status",
     tag = "ProductionKanban",
     responses(

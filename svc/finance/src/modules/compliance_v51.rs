@@ -1089,6 +1089,7 @@ impl ComplianceReportV51 {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/compliance-v51/control-points",
     tag = "Compliance-V51",
     operation_id = "create_control_point_handler",
@@ -1109,6 +1110,7 @@ async fn create_control_point_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v51/control_points",
     tag = "ComplianceV51",
     operation_id = "list_control_points_handler",
@@ -1138,6 +1140,7 @@ async fn list_control_points_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v51/control_point/{id}",
     tag = "ComplianceV51",
     operation_id = "get_control_point_handler",
@@ -1159,6 +1162,7 @@ async fn get_control_point_handler(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance-v51/control_point/{id}",
     tag = "ComplianceV51",
     operation_id = "update_control_point_handler",
@@ -1181,6 +1185,7 @@ async fn update_control_point_handler(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/finance-v51/control_point/{id}",
     tag = "ComplianceV51",
     operation_id = "delete_control_point_handler",
@@ -1202,6 +1207,7 @@ async fn delete_control_point_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/compliance-v51/control-matrices/generate",
     tag = "Compliance-V51",
     operation_id = "generate_control_matrix_handler",
@@ -1222,6 +1228,7 @@ async fn generate_control_matrix_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v51/control_matrix/{id}",
     tag = "ComplianceV51",
     operation_id = "get_control_matrix_handler",
@@ -1243,6 +1250,7 @@ async fn get_control_matrix_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v51/control_matrices",
     tag = "ComplianceV51",
     operation_id = "list_control_matrices_handler",
@@ -1264,6 +1272,7 @@ async fn list_control_matrices_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v51/risk",
     tag = "ComplianceV51",
     operation_id = "assess_risk_handler",
@@ -1286,6 +1295,7 @@ async fn assess_risk_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v51/risk_assessment/{id}",
     tag = "ComplianceV51",
     operation_id = "get_risk_assessment_handler",
@@ -1306,6 +1316,7 @@ async fn get_risk_assessment_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/compliance-v51/risk-assessments",
     responses(
         (status = 200, description = "成功"),
@@ -1342,6 +1353,7 @@ async fn list_risk_assessments_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v51/risk_summary",
     tag = "ComplianceV51",
     operation_id = "get_risk_summary_handler",
@@ -1362,6 +1374,7 @@ async fn get_risk_summary_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v51/compliance_report",
     tag = "ComplianceV51",
     operation_id = "generate_compliance_report_handler",
@@ -1384,6 +1397,7 @@ async fn generate_compliance_report_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v51/compliance_report/{id}",
     tag = "ComplianceV51",
     operation_id = "get_compliance_report_handler",
@@ -1404,6 +1418,7 @@ async fn get_compliance_report_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/compliance-v51/reports",
     responses(
         (status = 200, description = "成功"),
@@ -1433,6 +1448,7 @@ async fn list_compliance_reports_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v51/compliance_report",
     tag = "ComplianceV51",
     operation_id = "export_compliance_report_handler",

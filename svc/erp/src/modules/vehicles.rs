@@ -49,6 +49,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/vehicles",
     responses(
         (status = 200, description = "list_vehicles OK")
@@ -118,6 +119,7 @@ pub async fn list_vehicles(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/vehicles",
     request_body = CreateVehicleRequest,
     responses(
@@ -203,6 +205,7 @@ pub async fn create_vehicle(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/vehicles/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -238,6 +241,7 @@ pub async fn get_vehicle(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/vehicles/{id}",
     request_body = UpdateVehicleRequest,
     params(
@@ -347,6 +351,7 @@ pub async fn update_vehicle(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/vehicles/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -416,6 +421,7 @@ pub async fn delete_vehicle(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/vehicle-requests",
     responses(
         (status = 200, description = "list_vehicle_requests OK")
@@ -480,6 +486,7 @@ pub async fn list_vehicle_requests(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/vehicle-requests",
     request_body = CreateVehicleRequestRequest,
     responses(
@@ -597,6 +604,7 @@ pub async fn create_vehicle_request(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/vehicle-requests/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -632,6 +640,7 @@ pub async fn get_vehicle_request(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/vehicle-requests/{id}",
     request_body = UpdateVehicleRequestRequest,
     params(
@@ -731,6 +740,7 @@ pub async fn update_vehicle_request(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/vehicle-requests/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -800,6 +810,7 @@ pub async fn delete_vehicle_request(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/vehicles/{id}/requests",
     params(
         ("id" = Uuid, Path, description = "id")

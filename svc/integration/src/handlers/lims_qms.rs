@@ -9,6 +9,7 @@ use crate::models::{AppState, CreateLimsQmsSyncRequest, LimsQmsSync};
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["integration:read"])),
     path = "/api/integration/lims-qms",
     tag = "integration",
     responses(
@@ -43,6 +44,7 @@ pub async fn list_lims_qms_sync(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/lims-qms",
     request_body = CreateLimsQmsSyncRequest,
     tag = "integration",
@@ -104,6 +106,7 @@ pub async fn create_lims_qms_sync(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["integration:read"])),
     path = "/api/integration/lims-qms/{id}",
     tag = "integration",
     params(
@@ -142,6 +145,7 @@ pub async fn get_lims_qms_sync(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/lims-qms/{id}/sync",
     tag = "integration",
     params(

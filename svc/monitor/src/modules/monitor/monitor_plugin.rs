@@ -35,6 +35,7 @@ pub struct PermissionDef {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/plugins/info",
     tag = "plugin",
     responses(
@@ -78,6 +79,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/plugins/health",
     tag = "health",
     responses(

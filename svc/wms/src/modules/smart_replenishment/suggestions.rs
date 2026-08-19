@@ -48,6 +48,7 @@ pub(crate) fn suggestion_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json:
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/smart-replenishment/suggestions",
     tag = "smart_replenishment",
     operation_id = "list_suggestions",
@@ -136,6 +137,7 @@ pub async fn list_suggestions(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/smart-replenishment/suggestions/{id}",
     tag = "smart_replenishment",
     operation_id = "get_suggestion",
@@ -181,6 +183,7 @@ pub async fn get_suggestion(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/smart-replenishment/suggestions/generate",
     tag = "smart_replenishment",
     operation_id = "compute_replenishment",
@@ -392,6 +395,7 @@ pub async fn compute_replenishment(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/smart-replenishment/suggestions/{id}",
     tag = "smart_replenishment",
     operation_id = "confirm_suggestion",
@@ -507,6 +511,7 @@ pub async fn confirm_suggestion(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/smart-replenishment/statistics",
     tag = "smart_replenishment",
     operation_id = "get_statistics",

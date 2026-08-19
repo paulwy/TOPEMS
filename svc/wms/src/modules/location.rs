@@ -67,6 +67,7 @@ where
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/locations",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -144,6 +145,7 @@ pub async fn list_locations(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/locations",
     tag = "wms",
     responses(
@@ -228,6 +230,7 @@ pub async fn create_location(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/locations/{id}",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -269,6 +272,7 @@ pub async fn get_location(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["wms:update"])),
     path = "/api/wms/locations/{id}",
     tag = "wms",
     responses(
@@ -384,6 +388,7 @@ pub async fn update_location(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["wms:delete"])),
     path = "/api/wms/locations/{id}",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -462,6 +467,7 @@ pub struct LocationStatusParams {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/locations/status",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -515,6 +521,7 @@ pub async fn get_location_status(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/locations/batch",
     tag = "wms",
     responses(
@@ -573,6 +580,7 @@ pub async fn batch_create_locations(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["wms:update"])),
     path = "/api/wms/locations/batch",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -637,6 +645,7 @@ pub async fn batch_update_locations(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/locations/batch-delete",
     tag = "wms",
     responses(

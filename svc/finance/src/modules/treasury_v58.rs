@@ -1258,6 +1258,7 @@ impl LiquidityOptimizer {
 // --- Cash Pool Handlers ---
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v58/pool",
     responses(
         (status = 200, description = "成功"),
@@ -1286,6 +1287,7 @@ async fn create_pool_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v58/pool/{id}",
     tag = "TreasuryV58",
     operation_id = "get_pool_handler",
@@ -1308,6 +1310,7 @@ async fn get_pool_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v58/pools",
     tag = "TreasuryV58",
     operation_id = "list_pools_handler",
@@ -1329,6 +1332,7 @@ async fn list_pools_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v58/allocate_funds",
     tag = "TreasuryV58",
     operation_id = "allocate_funds_handler",
@@ -1350,6 +1354,7 @@ async fn allocate_funds_handler(
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v58/pool/transfer",
     responses(
         (status = 200, description = "成功"),
@@ -1378,6 +1383,7 @@ async fn transfer_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v58/pool_balance/{id}",
     tag = "TreasuryV58",
     operation_id = "get_pool_balance_handler",
@@ -1400,6 +1406,7 @@ async fn get_pool_balance_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v58/pool_history",
     tag = "TreasuryV58",
     operation_id = "get_pool_history_handler",
@@ -1422,6 +1429,7 @@ async fn get_pool_history_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v58/consolidate_cash",
     tag = "TreasuryV58",
     operation_id = "consolidate_cash_handler",
@@ -1445,6 +1453,7 @@ async fn consolidate_cash_handler(
 // --- Forecasting Handlers ---
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v58/forecast/scenario",
     responses(
         (status = 200, description = "成功"),
@@ -1473,6 +1482,7 @@ async fn create_scenario_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v58/forecast",
     tag = "TreasuryV58",
     operation_id = "run_forecast_handler",
@@ -1495,6 +1505,7 @@ async fn run_forecast_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v58/forecast/{id}",
     tag = "TreasuryV58",
     operation_id = "get_forecast_handler",
@@ -1517,6 +1528,7 @@ async fn get_forecast_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v58/scenarios",
     tag = "TreasuryV58",
     operation_id = "list_scenarios_handler",
@@ -1537,6 +1549,7 @@ async fn list_scenarios_handler(
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v58/forecast/compare",
     responses(
         (status = 200, description = "成功"),
@@ -1565,6 +1578,7 @@ async fn compare_scenarios_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v58/forecast_summary",
     tag = "TreasuryV58",
     operation_id = "get_forecast_summary_handler",
@@ -1586,6 +1600,7 @@ async fn get_forecast_summary_handler(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance-v58/assumptions/{id}",
     tag = "TreasuryV58",
     operation_id = "update_assumptions_handler",
@@ -1611,6 +1626,7 @@ async fn update_assumptions_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v58/liquidity_snapshot/{id}",
     tag = "TreasuryV58",
     operation_id = "get_liquidity_snapshot_handler",
@@ -1631,6 +1647,7 @@ async fn get_liquidity_snapshot_handler(
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v58/liquidity/optimize",
     responses(
         (status = 200, description = "成功"),
@@ -1659,6 +1676,7 @@ async fn optimize_liquidity_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v58/recommendations",
     tag = "TreasuryV58",
     operation_id = "get_recommendations_handler",
@@ -1680,6 +1698,7 @@ async fn get_recommendations_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v58/action",
     tag = "TreasuryV58",
     operation_id = "execute_action_handler",
@@ -1702,6 +1721,7 @@ async fn execute_action_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v58/targets",
     tag = "TreasuryV58",
     operation_id = "get_targets_handler",
@@ -1722,6 +1742,7 @@ async fn get_targets_handler(
 }
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance-v58/liquidity/target/{id}",
     responses(
         (status = 200, description = "成功"),
@@ -1753,6 +1774,7 @@ async fn set_target_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v58/optimization_history",
     tag = "TreasuryV58",
     operation_id = "get_optimization_history_handler",

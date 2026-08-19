@@ -15,6 +15,7 @@ use super::models::{
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/dashboard",
     tag = "Dashboard",
     responses(
@@ -74,6 +75,7 @@ pub async fn list_dashboards(State(state): State<AppState>) -> Json<serde_json::
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/dashboard",
     tag = "Dashboard",
     request_body(
@@ -140,6 +142,7 @@ pub async fn create_dashboard(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/dashboard/{id}",
     tag = "Dashboard",
     params(
@@ -203,6 +206,7 @@ pub async fn get_dashboard(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["analytics:update"])),
     path = "/dashboard/{id}",
     tag = "Dashboard",
     params(
@@ -279,6 +283,7 @@ pub async fn update_dashboard(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["analytics:delete"])),
     path = "/dashboard/{id}",
     tag = "Dashboard",
     params(
@@ -327,6 +332,7 @@ pub async fn delete_dashboard(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/dashboard/public",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -381,6 +387,7 @@ pub async fn get_public_dashboards(State(state): State<AppState>) -> Json<serde_
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/dashboard/user/{owner_id}",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -439,6 +446,7 @@ pub async fn get_user_dashboards(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/dashboard/{id}/clone",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -523,6 +531,7 @@ pub async fn clone_dashboard(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/dashboard/import",
     tag = "Dashboard",
     operation_id = "import_dashboard",

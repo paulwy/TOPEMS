@@ -60,6 +60,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/db/tables",
     tag = "ERP",
     responses((status = 200, description = "获取数据库表列表成功", body = ApiResponse<serde_json::Value>))
@@ -96,6 +97,7 @@ pub async fn list_tables(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/db/tables/{tableName}",
     tag = "ERP",
     params(("tableName" = String, Path, description = "表名")),
@@ -157,6 +159,7 @@ pub async fn get_table_detail(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/db-structure/preview-add-column",
     tag = "DbStructure",
     operation_id = "preview_add_column",
@@ -235,6 +238,7 @@ fn build_data_type(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/db-structure/execute-add-column",
     tag = "DbStructure",
     operation_id = "execute_add_column",
@@ -338,6 +342,7 @@ pub async fn execute_add_column(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/db-structure/execute-modify-column",
     tag = "DbStructure",
     operation_id = "execute_modify_column",
@@ -448,6 +453,7 @@ pub async fn execute_modify_column(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/db-structure/execute-drop-column",
     tag = "DbStructure",
     operation_id = "execute_drop_column",
@@ -524,6 +530,7 @@ pub async fn execute_drop_column(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/db/changes",
     tag = "ERP",
     responses((status = 200, description = "获取数据库变更列表成功", body = ApiResponse<serde_json::Value>))

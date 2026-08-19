@@ -83,6 +83,7 @@ pub struct ConfigurationQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/configurations",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -160,6 +161,7 @@ pub async fn list_configurations(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pdm:write"])),
     path = "/api/pdm/configurations",
     request_body = CreateConfigurationRequest,
     tag = "pdm",
@@ -225,6 +227,7 @@ pub async fn create_configuration(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/configurations/{id}",
     tag = "pdm",
     params(
@@ -265,6 +268,7 @@ pub async fn get_configuration(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["pdm:update"])),
     path = "/api/pdm/configurations/{id}",
     request_body = UpdateConfigurationRequest,
     tag = "pdm",
@@ -328,6 +332,7 @@ pub async fn update_configuration(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["pdm:delete"])),
     path = "/api/pdm/configurations/{id}",
     tag = "pdm",
     params(

@@ -42,6 +42,7 @@ pub fn format_im_message(sender: &str, content: &str, max_len: usize) -> String 
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["communication:read"])),
     path = "/im/rooms",
     tag = "notification",
     responses(
@@ -59,6 +60,7 @@ pub async fn list_rooms(State(_pool): State<PgPool>) -> Json<serde_json::Value> 
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["communication:write"])),
     path = "/im/rooms",
     tag = "notification",
     request_body = serde_json::Value,

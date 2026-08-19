@@ -18,6 +18,7 @@ macro_rules! log_audit {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/consolidation/company-relations",
     tag = "Consolidation",
     responses((status = 200, description = "获取公司关系列表成功", body = ApiResponse<serde_json::Value>))
@@ -51,6 +52,7 @@ pub async fn list_company_relations(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/consolidation/company-tree",
     tag = "Consolidation",
     responses((status = 200, description = "获取公司架构树成功", body = ApiResponse<serde_json::Value>))
@@ -94,6 +96,7 @@ pub async fn get_company_tree(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/consolidation/company-relations",
     tag = "Consolidation",
     responses((status = 200, description = "创建公司关系成功", body = ApiResponse<serde_json::Value>))
@@ -140,6 +143,7 @@ pub async fn create_company_relation(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/consolidation/company-relations/{relationId}",
     tag = "Consolidation",
     params(("relationId" = String, Path, description = "公司关系ID")),
@@ -195,6 +199,7 @@ pub async fn update_company_relation(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/consolidation/company-relations/{relationId}",
     tag = "Consolidation",
     params(("relationId" = String, Path, description = "公司关系ID")),
@@ -233,6 +238,7 @@ pub async fn delete_company_relation(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/consolidation/companies/{companyId}/financial-data",
     tag = "Consolidation",
     params(("companyId" = String, Path, description = "公司ID")),

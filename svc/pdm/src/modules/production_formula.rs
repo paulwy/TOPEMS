@@ -357,6 +357,7 @@ pub struct FormulaQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/production-formulas",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -434,6 +435,7 @@ pub async fn list_formulas(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pdm:write"])),
     path = "/api/pdm/production-formulas",
     request_body = CreateFormulaRequest,
     tag = "pdm",
@@ -487,6 +489,7 @@ pub async fn create_formula(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/production-formulas/{id}",
     tag = "pdm",
     params(
@@ -527,6 +530,7 @@ pub async fn get_formula(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["pdm:update"])),
     path = "/api/pdm/production-formulas/{id}",
     request_body = UpdateFormulaRequest,
     tag = "pdm",
@@ -585,6 +589,7 @@ pub async fn update_formula(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["pdm:delete"])),
     path = "/api/pdm/production-formulas/{id}",
     tag = "pdm",
     params(

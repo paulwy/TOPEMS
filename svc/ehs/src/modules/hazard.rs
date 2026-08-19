@@ -183,6 +183,7 @@ pub struct CreateVerificationRequest {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/issues",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -225,6 +226,7 @@ pub async fn list_hazards(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/issues",
     request_body = CreateHazardRequest,
     tag = "ehs",
@@ -335,6 +337,7 @@ pub async fn create_hazard(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/issues/{id}",
     tag = "ehs",
     params(
@@ -409,6 +412,7 @@ pub async fn get_hazard(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/issues/{id}",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -460,6 +464,7 @@ pub async fn update_hazard(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/issues/{id}",
     tag = "ehs",
     params(
@@ -487,6 +492,7 @@ pub async fn delete_hazard(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/issues/{id}/rectification",
     request_body = CreateRectificationRequest,
     tag = "ehs",
@@ -527,6 +533,7 @@ pub async fn start_rectification(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/issues/{id}/rectification",
     request_body = UpdateRectificationRequest,
     tag = "ehs",
@@ -585,6 +592,7 @@ pub async fn update_rectification(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/issues/{id}/rectification/submit",
     tag = "ehs",
     params(
@@ -623,6 +631,7 @@ pub async fn submit_rectification(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/issues/{id}/verification",
     request_body = CreateVerificationRequest,
     tag = "ehs",
@@ -659,6 +668,7 @@ pub async fn verify_hazard(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/issues/{id}/close",
     tag = "ehs",
     params(
@@ -713,6 +723,7 @@ pub struct ApprovalActionRequest {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/issues/{id}/approval/start",
     request_body = StartApprovalRequest,
     tag = "ehs",
@@ -782,6 +793,7 @@ pub async fn start_hazard_approval(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/issues/{id}/approval/approve",
     request_body = ApprovalActionRequest,
     tag = "ehs",
@@ -827,6 +839,7 @@ pub async fn approve_hazard(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/issues/{id}/approval/reject",
     request_body = ApprovalActionRequest,
     tag = "ehs",

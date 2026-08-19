@@ -1237,6 +1237,7 @@ impl BudgetAnalyzer {
 // --- Cash Flow Handlers ---
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/forecast-v53/cash-flow/predict",
     responses(
         (status = 200, description = "成功"),
@@ -1266,6 +1267,7 @@ async fn predict_cash_flow_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v53/predictions",
     tag = "ForecastV53",
     operation_id = "get_predictions_handler",
@@ -1300,6 +1302,7 @@ async fn get_predictions_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v53/model",
     tag = "ForecastV53",
     operation_id = "retrain_model_handler",
@@ -1328,6 +1331,7 @@ async fn retrain_model_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/forecast-v53/cash-flow/accuracy",
     responses(
         (status = 200, description = "成功"),
@@ -1363,6 +1367,7 @@ async fn get_accuracy_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v53/budget",
     tag = "ForecastV53",
     operation_id = "analyze_budget_handler",
@@ -1386,6 +1391,7 @@ async fn analyze_budget_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v53/variance/{id}",
     tag = "ForecastV53",
     operation_id = "get_variance_handler",
@@ -1415,6 +1421,7 @@ async fn get_variance_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/forecast-v53/budget/report",
     responses(
         (status = 200, description = "成功"),
@@ -1446,6 +1453,7 @@ async fn get_variance_report_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v53/anomalies",
     tag = "ForecastV53",
     operation_id = "detect_anomalies_handler",
@@ -1475,6 +1483,7 @@ async fn detect_anomalies_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v53/variance_trends",
     tag = "ForecastV53",
     operation_id = "get_variance_trends_handler",

@@ -71,6 +71,7 @@ where
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["tms:read"])),
     path = "/api/tms/vehicles",
     responses(
         (status = 200, description = "list_vehicles OK")
@@ -144,6 +145,7 @@ pub async fn list_vehicles(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["tms:write"])),
     path = "/api/tms/vehicles",
     request_body = CreateVehicleRequest,
     responses(
@@ -192,6 +194,7 @@ pub async fn create_vehicle(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["tms:read"])),
     path = "/api/tms/vehicles/{id}",
     params(
         ("id" = Uuid, Path, description = "车辆 ID")
@@ -232,6 +235,7 @@ pub async fn get_vehicle(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["tms:update"])),
     path = "/api/tms/vehicles/{id}",
     request_body = UpdateVehicleRequest,
     params(
@@ -290,6 +294,7 @@ pub async fn update_vehicle(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["tms:delete"])),
     path = "/api/tms/vehicles/{id}",
     params(
         ("id" = Uuid, Path, description = "车辆 ID")
@@ -337,6 +342,7 @@ pub struct ApprovalRequest {
 /// Submit vehicle for maintenance inspection (active → maintenance)
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["tms:write"])),
     path = "/api/tms/vehicles/{id}/submit-inspection",
     request_body = ApprovalRequest,
     params(
@@ -414,6 +420,7 @@ pub async fn submit_inspection(
 /// Approve vehicle (maintenance→active or inactive→retired based on current status)
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["tms:write"])),
     path = "/api/tms/vehicles/{id}/approve",
     request_body = ApprovalRequest,
     params(
@@ -504,6 +511,7 @@ pub async fn approve_vehicle(
 /// Reject vehicle maintenance (maintenance → active, revert)
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["tms:write"])),
     path = "/api/tms/vehicles/{id}/reject",
     request_body = ApprovalRequest,
     params(

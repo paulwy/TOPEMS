@@ -692,6 +692,7 @@ pub fn sample_multi_currency_usd_cny() -> ValidateProcurementMultiRequest {
 /// 单币种采购链端到端校验（ERP E2E 真实化主入口）。
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/procurement-e2e/validate",
     tag = "ProcurementE2E",
     operation_id = "erp_e2e_validate",
@@ -763,6 +764,7 @@ pub async fn validate_chain_handler(
 /// 多币种采购链端到端校验（带汇率表）。
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/procurement-e2e/validate-multi",
     tag = "ProcurementE2E",
     operation_id = "erp_e2e_validate_multi",

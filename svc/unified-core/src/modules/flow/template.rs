@@ -8,6 +8,7 @@ use axum::{
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/templates",
     tag = "Flow-Template",
     responses(
@@ -25,6 +26,7 @@ pub async fn list_templates(State(_state): State<AppState>) -> Json<serde_json::
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/templates",
     tag = "Flow-Template",
     request_body = serde_json::Value,
@@ -46,6 +48,7 @@ pub async fn create_template(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/templates/{id}",
     tag = "Flow-Template",
     params(
@@ -69,6 +72,7 @@ pub async fn get_template(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["unified_core:update"])),
     path = "/api/core/flow/templates/{id}",
     tag = "Flow-Template",
     params(
@@ -98,6 +102,7 @@ pub async fn update_template(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["unified_core:delete"])),
     path = "/api/core/flow/templates/{id}",
     tag = "Flow-Template",
     params(
@@ -121,6 +126,7 @@ pub async fn delete_template(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/templates/{id}/copy",
     tag = "Flow-Template",
     params(
@@ -144,6 +150,7 @@ pub async fn copy_template(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/templates/import",
     tag = "Flow-Template",
     request_body = serde_json::Value,
@@ -165,6 +172,7 @@ pub async fn import_template(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/templates/{id}/export",
     tag = "Flow-Template",
     params(

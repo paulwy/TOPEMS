@@ -67,6 +67,7 @@ where
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["tms:read"])),
     path = "/api/tms/routes",
     responses(
         (status = 200, description = "list_routes OK")
@@ -140,6 +141,7 @@ pub async fn list_routes(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["tms:write"])),
     path = "/api/tms/routes",
     request_body = CreateRouteRequest,
     responses(
@@ -188,6 +190,7 @@ pub async fn create_route(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["tms:read"])),
     path = "/api/tms/routes/{id}",
     params(
         ("id" = Uuid, Path, description = "路线 ID")
@@ -228,6 +231,7 @@ pub async fn get_route(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["tms:update"])),
     path = "/api/tms/routes/{id}",
     request_body = UpdateRouteRequest,
     params(
@@ -286,6 +290,7 @@ pub async fn update_route(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["tms:delete"])),
     path = "/api/tms/routes/{id}",
     params(
         ("id" = Uuid, Path, description = "路线 ID")

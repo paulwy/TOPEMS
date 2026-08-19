@@ -29,6 +29,7 @@ fn format_service_name(notification_type: &str) -> String {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["portal:read"])),
     path = "/notifications",
     tag = "Portal",
     responses(

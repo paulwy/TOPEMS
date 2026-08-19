@@ -79,6 +79,7 @@ pub struct PdmStatisticsSummary {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/production-statistics",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -146,6 +147,7 @@ pub async fn list_statistics(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/statistics",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -236,6 +238,7 @@ pub async fn get_statistics_summary(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/statistics/{id}",
     tag = "pdm",
     params(

@@ -14,6 +14,7 @@ use super::models::{is_valid_email, record_audit_log, ListUsersParams, UserRespo
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/users",
     tag = "IAM",
     params(
@@ -133,6 +134,7 @@ struct CreateUserRequest {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/users",
     tag = "IAM",
     request_body = serde_json::Value,

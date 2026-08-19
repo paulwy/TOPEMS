@@ -103,6 +103,7 @@ pub fn truncate_notification_title(title: &str, max_len: usize) -> String {
 /// 发送通知（管理员或系统使用）
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["communication:write"])),
     path = "/notify/send",
     tag = "notification",
     request_body = SendNotificationRequest,
@@ -267,6 +268,7 @@ pub async fn broadcast_notification(
 /// 创建通知（兼容前端 POST /notification/notifications 路径）
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["communication:write"])),
     path = "/notification/notifications",
     tag = "notification",
     request_body = serde_json::Value,
@@ -295,6 +297,7 @@ pub async fn create_notification(
 /// 获取当前用户的通知列表
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["communication:read"])),
     path = "/notify/list",
     tag = "notification",
     params(
@@ -418,6 +421,7 @@ pub async fn list_notifications(
 /// 标记单个通知为已读
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["communication:update"])),
     path = "/notification/notifications/{id}",
     tag = "notification",
     params(
@@ -562,6 +566,7 @@ pub async fn mark_all_as_read(
 /// 获取当前用户的通知列表（兼容旧API）
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["communication:read"])),
     path = "/notification/notifications",
     tag = "notification",
     params(
@@ -710,6 +715,7 @@ pub async fn get_unread_notifications(
 /// 删除指定通知
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["communication:delete"])),
     path = "/notification/notifications/{id}",
     tag = "notification",
     params(
@@ -840,6 +846,7 @@ pub async fn delete_all_notifications(
 /// 获取单个通知详情
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["communication:read"])),
     path = "/notification/notifications/{id}",
     tag = "notification",
     params(

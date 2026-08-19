@@ -94,6 +94,7 @@ pub fn create_routes() -> Router<AppState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/datasets",
     tag = "BI",
     responses(
@@ -143,6 +144,7 @@ pub async fn list_datasets(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/datasets/{id}",
     tag = "BI",
     params(
@@ -185,6 +187,7 @@ pub async fn get_dataset(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/datasets",
     tag = "BI",
     responses(
@@ -241,6 +244,7 @@ pub async fn create_dataset(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["analytics:update"])),
     path = "/api/bi/datasets/{id}",
     tag = "BI",
     params(
@@ -295,6 +299,7 @@ pub async fn update_dataset(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["analytics:delete"])),
     path = "/api/bi/datasets/{id}",
     tag = "BI",
     params(
@@ -337,6 +342,7 @@ pub async fn delete_dataset(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/datasets/{id}/publish",
     tag = "BI",
     params(
@@ -380,6 +386,7 @@ pub async fn publish_dataset(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/datasets/{id}/refresh",
     tag = "BI",
     params(
@@ -423,6 +430,7 @@ pub async fn refresh_dataset(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/datasets/{id}/preview",
     tag = "BI",
     params(
@@ -475,6 +483,7 @@ pub async fn get_dataset_preview(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/datasets/query",
     tag = "BI",
     responses(
@@ -498,6 +507,7 @@ pub async fn query_dataset(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/datasets/test-sql",
     tag = "BI",
     responses(

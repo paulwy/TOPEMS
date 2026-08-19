@@ -207,6 +207,7 @@ fn calculate_oee(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/equipment-oee",
     tag = "EquipmentOEE",
     params(
@@ -413,6 +414,7 @@ pub async fn list_oee_records(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mes:write"])),
     path = "/api/mes/equipment-oee",
     tag = "EquipmentOEE",
     request_body = CreateOeeRecordRequest,
@@ -525,6 +527,7 @@ pub async fn create_oee_record(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/equipment-oee/{id}",
     tag = "EquipmentOEE",
     params(
@@ -605,6 +608,7 @@ pub async fn get_oee_record(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["mes:update"])),
     path = "/api/mes/equipment-oee/{id}",
     tag = "EquipmentOEE",
     params(
@@ -761,6 +765,7 @@ pub async fn update_oee_record(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["mes:delete"])),
     path = "/api/mes/equipment-oee/{id}",
     tag = "EquipmentOEE",
     params(
@@ -806,6 +811,7 @@ pub async fn delete_oee_record(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/equipment-oee/statistics",
     tag = "EquipmentOEE",
     params(
@@ -995,6 +1001,7 @@ pub async fn get_oee_statistics(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/equipment-oee/{equipment_id}/efficiency",
     tag = "EquipmentOEE",
     params(

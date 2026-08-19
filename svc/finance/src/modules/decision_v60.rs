@@ -1446,6 +1446,7 @@ impl IntelligentScheduler {
 // --- Decision Handlers ---
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v60/decision/scenario",
     responses(
         (status = 200, description = "成功"),
@@ -1474,6 +1475,7 @@ async fn create_scenario_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v60/scenario",
     tag = "DecisionV60",
     operation_id = "evaluate_scenario_handler",
@@ -1497,6 +1499,7 @@ async fn evaluate_scenario_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v60/decision/{id}",
     tag = "DecisionV60",
     operation_id = "get_decision_handler",
@@ -1519,6 +1522,7 @@ async fn get_decision_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v60/scenarios",
     tag = "DecisionV60",
     operation_id = "list_scenarios_handler",
@@ -1539,6 +1543,7 @@ async fn list_scenarios_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v60/decision/{id}/alternatives",
     responses(
         (status = 200, description = "成功"),
@@ -1569,6 +1574,7 @@ async fn get_alternatives_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v60/scenarios",
     tag = "DecisionV60",
     operation_id = "compare_scenarios_handler",
@@ -1591,6 +1597,7 @@ async fn compare_scenarios_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v60/decision_history",
     tag = "DecisionV60",
     operation_id = "get_decision_history_handler",
@@ -1612,6 +1619,7 @@ async fn get_decision_history_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v60/sensitivity_analysis",
     tag = "DecisionV60",
     operation_id = "sensitivity_analysis_handler",
@@ -1636,6 +1644,7 @@ async fn sensitivity_analysis_handler(
 // --- Alert Handlers ---
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v60/alert/rule",
     responses(
         (status = 200, description = "成功"),
@@ -1664,6 +1673,7 @@ async fn create_alert_rule_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v60/alert_rules",
     tag = "DecisionV60",
     operation_id = "get_alert_rules_handler",
@@ -1685,6 +1695,7 @@ async fn get_alert_rules_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v60/alerts",
     tag = "DecisionV60",
     operation_id = "evaluate_alerts_handler",
@@ -1707,6 +1718,7 @@ async fn evaluate_alerts_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v60/active_alerts",
     tag = "DecisionV60",
     operation_id = "get_active_alerts_handler",
@@ -1728,6 +1740,7 @@ async fn get_active_alerts_handler(
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v60/alert/{id}/acknowledge",
     responses(
         (status = 200, description = "成功"),
@@ -1759,6 +1772,7 @@ async fn acknowledge_alert_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v60/alert",
     tag = "DecisionV60",
     operation_id = "resolve_alert_handler",
@@ -1781,6 +1795,7 @@ async fn resolve_alert_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v60/alert_history",
     tag = "DecisionV60",
     operation_id = "get_alert_history_handler",
@@ -1802,6 +1817,7 @@ async fn get_alert_history_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v60/channel",
     tag = "DecisionV60",
     operation_id = "configure_channel_handler",
@@ -1825,6 +1841,7 @@ async fn configure_channel_handler(
 // --- Scheduling Handlers ---
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v60/schedule/task",
     responses(
         (status = 200, description = "成功"),
@@ -1853,6 +1870,7 @@ async fn create_task_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v60/tasks",
     tag = "DecisionV60",
     operation_id = "get_tasks_handler",
@@ -1888,6 +1906,7 @@ async fn schedule_task_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v60/task",
     tag = "DecisionV60",
     operation_id = "execute_task_handler",
@@ -1909,6 +1928,7 @@ async fn execute_task_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v60/schedule/execution/{id}",
     responses(
         (status = 200, description = "成功"),
@@ -1944,6 +1964,7 @@ pub struct ExecutionQueryParams {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v60/executions",
     tag = "DecisionV60",
     operation_id = "list_executions_handler",
@@ -1966,6 +1987,7 @@ async fn list_executions_handler(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance-v60/task/{id}",
     tag = "DecisionV60",
     operation_id = "update_task_handler",
@@ -1989,6 +2011,7 @@ async fn update_task_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v60/task",
     tag = "DecisionV60",
     operation_id = "pause_task_handler",
@@ -2010,6 +2033,7 @@ async fn pause_task_handler(
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v60/schedule/{id}/resume",
     responses(
         (status = 200, description = "成功"),

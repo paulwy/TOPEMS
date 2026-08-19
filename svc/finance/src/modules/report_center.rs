@@ -854,6 +854,7 @@ pub struct ExportReportResponse {
 // ==================== Handlers ====================
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/reports/balance-sheet/{period}",
     responses(
         (status = 200, description = "成功"),
@@ -883,6 +884,7 @@ async fn get_enhanced_balance_sheet_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/enhanced_income_statement/{id}",
     tag = "ReportCenter",
     operation_id = "get_enhanced_income_statement_handler",
@@ -904,6 +906,7 @@ async fn get_enhanced_income_statement_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/enhanced_cash_flow/{id}",
     tag = "ReportCenter",
     operation_id = "get_enhanced_cash_flow_handler",
@@ -924,6 +927,7 @@ async fn get_enhanced_cash_flow_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/financial_analysis",
     tag = "ReportCenter",
     operation_id = "get_financial_analysis_handler",
@@ -949,6 +953,7 @@ async fn get_financial_analysis_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/reports/comparative/{period}",
     responses(
         (status = 200, description = "成功"),
@@ -977,6 +982,7 @@ async fn get_comparative_report_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/report",
     tag = "ReportCenter",
     operation_id = "export_report_handler",

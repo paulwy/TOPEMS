@@ -235,6 +235,7 @@ async fn test_connection_result(
 /// List datasources with optional pagination and filtering.
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/data-sources",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -354,6 +355,7 @@ pub async fn list_datasources(
 /// Create a new datasource.
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/data-sources",
     tag = "BI",
     responses(
@@ -440,6 +442,7 @@ pub async fn create_datasource(
 /// Get a single datasource by id.
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/data-sources/{id}",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -505,6 +508,7 @@ pub async fn get_datasource(
 /// Update a datasource (partial).
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["analytics:update"])),
     path = "/api/bi/data-sources/{id}",
     tag = "BI",
     responses(
@@ -609,6 +613,7 @@ pub async fn update_datasource(
 /// Delete a datasource.
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["analytics:delete"])),
     path = "/api/bi/data-sources/{id}",
     tag = "BI",
     responses(
@@ -661,6 +666,7 @@ pub async fn delete_datasource(
 /// accordingly.
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/data-sources/{id}/test",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -755,6 +761,7 @@ pub async fn test_datasource(
 /// and marks the datasource as `active` on success.
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/data-sources/{id}/refresh",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))

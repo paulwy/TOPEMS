@@ -72,6 +72,7 @@ pub struct SyncAccidentToLimsRequest {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/sync-records",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -145,6 +146,7 @@ pub async fn list_sync_records(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/sync-records/{id}",
     tag = "ehs",
     params(
@@ -196,6 +198,7 @@ pub async fn get_sync_record(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/sync/hazard-to-qms",
     request_body = SyncHazardToQmsRequest,
     tag = "ehs",
@@ -297,6 +300,7 @@ pub async fn sync_hazard_to_qms(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/sync/accident-to-lims",
     request_body = SyncAccidentToLimsRequest,
     tag = "ehs",
@@ -403,6 +407,7 @@ pub async fn sync_accident_to_lims(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/sync-records/{id}/retry",
     tag = "ehs",
     params(
@@ -454,6 +459,7 @@ pub async fn retry_sync(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/sync-records/{id}",
     tag = "ehs",
     params(
@@ -498,6 +504,7 @@ pub struct SyncConfig {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/sync/configs",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -527,6 +534,7 @@ pub async fn list_sync_configs(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/sync/configs",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -578,6 +586,7 @@ pub async fn update_sync_configs(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/sync/retry",
     request_body = serde_json::Value,
     tag = "ehs",
