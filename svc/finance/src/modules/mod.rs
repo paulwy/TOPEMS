@@ -983,6 +983,7 @@ async fn year_end_close(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:payment:admin"])),
@@ -1114,6 +1115,7 @@ pub async fn list_payments_handler(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["finance:payment:admin"])),
@@ -1167,6 +1169,7 @@ pub async fn delete_payment_handler(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:payment:admin"])),
@@ -1274,6 +1277,7 @@ pub async fn reject_payment_handler(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:payment:admin"])),
@@ -1309,6 +1313,7 @@ pub struct WriteOffRequest {
     pub write_off_amount: Decimal,
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:payment:admin"])),
@@ -1337,6 +1342,7 @@ pub async fn write_off_payment_item_handler(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:payment:admin"])),
@@ -1521,6 +1527,7 @@ pub async fn delete_approval_config_handler(
 
 // ========== 审批操作（简化实现，供 ERP 合并报表审批流程调用）==========
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:approval:admin"])),
@@ -1570,6 +1577,7 @@ async fn approve_approval(
     ))
 }
 
+// gate: admin-only
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["finance:approval:admin"])),
@@ -1592,6 +1600,7 @@ async fn reject_approval(
     ))
 }
 
+// gate: admin-only
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["finance:approval:admin"])),
@@ -3501,6 +3510,7 @@ async fn get_payment_record_handler(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:payment:admin"])),
@@ -3590,6 +3600,7 @@ pub async fn reject_payment_record_handler(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["finance:payment:admin"])),
@@ -3617,6 +3628,7 @@ async fn update_payment_record_handler(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["finance:payment:admin"])),
@@ -3640,6 +3652,7 @@ async fn delete_payment_record_handler(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:payment:admin"])),
@@ -4891,6 +4904,7 @@ pub async fn list_expense_approvals(
     ))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:approval:admin"])),
@@ -4931,6 +4945,7 @@ pub async fn get_expense_approval(
     ))
 }
 
+// gate: admin-only
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["finance:approval:admin"])),
@@ -4953,6 +4968,7 @@ pub async fn update_expense_approval(
     ))
 }
 
+// gate: admin-only
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["finance:approval:admin"])),
@@ -4971,6 +4987,7 @@ pub async fn delete_expense_approval(
     Json(ApiResponse::success("".to_string(), "删除成功"))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:approval:admin"])),
@@ -4992,6 +5009,7 @@ pub async fn submit_expense_approval(
     ))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:approval:admin"])),

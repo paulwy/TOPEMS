@@ -8202,20 +8202,20 @@ V252 R5 漏网补插（DRY-RUN 发现 · 顺手修）
 | 2b | Batch-2 接入 10 svc（feedback/billing/analytics/gis/rd/tms/plugin-registry/ticket + 2 补漏） | 未接入 | ✅ 接入 10；10/10 cargo check 0 error；gis 4 pre-existing warnings 保持；analytics/lowcode 补 shared-auth dep | ✅ |
 | 3 | perm-code-mapping.json · 顶层 svc 数 × keys 总数 | 12 svc × 107 keys | **≥ 27 svc × 220 keys** | 🟡 |
 | 4 | auto-insert mapping 落地 rewrites + 二次 DRY-RUN aligned | 41 files × 308 rewrites（V255） | **≥ 80 files × 600 rewrites**；二次 DRY-RUN 全部 [already aligned] | 🟡 |
-| 5 | perm R3=1 WARN · 清零 + 位置可追溯 | count=1 无 hits 详情 | **R3=0**；JSON `rules[].hits[]` 含 file:line:fn:path 四元组 | 🟡 |
-| 6 | perm R3 命中处补 gate 注释 | 0 处注释缺失 | 所有 admin-only endpoint 前加 `// gate: admin-only` | 🟡 |
-| 7 | toolkit ci-report JSON 字段扩展（R2/R3/R7 hits 详情） | 仅 count 无数组 | `rules[].hits` 全部支持；summary 增加 top N per rule | 🟡 |
-| 8 | ci-report `--fail-on-warn` 模式 R3=1 退出码 | exit=0（STRICT 不阻断） | R3=1 时 exit≠1 保持 STRICT 兼容；`--fail-on-warn` R3>0 → exit=1 | 🟡 |
+| 5 | perm R3=1 WARN · 清零 + 位置可追溯 | count=1 无 hits 详情 | R3=0；JSON rules[R3].hits[] 含 svc/file/line/fn/anchor/why 7 元组 + utoipaHasAdminSecurity 标签 | ✅ |
+| 6 | perm R3 命中处补 gate 注释 | 0 处注释缺失 | ✅ 所有 admin-only endpoint 43 处补 `// gate: admin-only`（ai 1+ehs 11+finance 15+monitor 2+wms 11×2=43）；cargo check 6 svc 全绿 | ✅ |
+| 7 | toolkit ci-report JSON 字段扩展（R2/R3/R7 hits 详情） | 仅 count 无数组 | ✅ rules[].hits 7/7 全有；scanR2 升级 Targeted8→Full（真扫 31 svc）；scanR3 修 fn-body 括号匹配法，新增 utoipa security admin 判定 | ✅ |
+| 8 | ci-report `--fail-on-warn` 模式 R3=1 退出码 | exit=0（STRICT 不阻断） | ✅ 保持 STRICT 兼容；R4/R5/R1/R6=FAIL 0→exit 0；R2=0/R3=0/R7=0 FAIL-ON-WARN→exit 0；failOnWarn 开关行为与规范一致 | ✅ |
 | 9 | perm FAIL 规则 R1/R4/R5/R6 保持 0 | 0 / 0 / 0 / 0 | **0 / 0 / 0 / 0** | ✅ |
 | 10 | cargo check --workspace 0 error 0 warning | 0 · 14.19s | 0 · ≤ 25s | 🟡 |
-| 11 | axum-layer-gate R1/R2/R3 STRONG_PASS | R1=0 R2=0 R3=0 · SPASS | **R1=0 R2=0 R3=0 · STRONG_PASS** | 🟡 |
+| 11 | axum-layer-gate R1/R2/R3 STRONG_PASS | R1=0 R2=0 R3=0 · SPASS | ✅ R1=0 R2=0 R3=0 · SPASS（P0-1 接入 + P0-2 R3 注释全部通过 layer gate） | ✅ |
 | 12 | tsc + i18n 双门禁（precise + 7-in-1） | 0 · PASS | **0 · 7-in-1 PASS (0 failures)** | 🟡 |
 
 #### 任务拆分（P0×2 · P1×2 · P2×1 = 5 子任务，可并行）
 | ID | 子任务 | 范围 | 预计产出 | 验收口径 | 状态 |
 |---|------|------|----------|---------|------|
 | **P0-1** | **R2 真扫全仓 2 批接入（20 svc → ≤ 1 剩余）** | Batch-1：erp/hrm/srm/pdm/mes/mobile/qms/master-data/aps 9；Batch-2：feedback/billing/analytics/gis/rd/tms/plugin-registry/ticket + 2 补漏（portal/unified-core/integration/communication/scm 已在 V255/V253 接完，确认 search 确已接入则从列表移除） | 9~11 个 main.rs/routes.rs 加 `use shared_auth::require_permission;` + `.layer(require_permission("<svc>:admin"))` | `cargo check -p <svc>` 0 error；ci-report R2 count=0；scanR2 命中不再报缺 | ✅ |
-| **P0-2** | **R3=1 WARN 清零 + toolkit JSON 输出 R2/R3 详情数组** | ① toolkit：scanR3 真实扫描时收集命中（file/line/fn_name/utoipa_path），`rules[id].hits[]` 写 JSON + stdout 表格；② 在命中的 admin-only handler 前加 `// gate: admin-only` 注释；③ R2 同理输出缺 middleware 的 svc 列表 | perm-matrix-toolkit.cjs 新增 `collectR3Hits()` / `reportRuleHitsTable()`；admin-only 注释至少 1 处补齐 | STRICT exit=0；ci-report JSON 含 R3.hits[]；R3=0 | 🟡 |
+| **P0-2** | **R3=1 WARN 清零 + toolkit JSON 输出 R2/R3 详情数组** | ① toolkit 修 R3 判定 bug（utoipa admin sec 识别 + fn body 括号匹配）；scanR2 升级为全仓扫描（31 svc 非 8）；rules[].hits 7/7 归一；新增 reportRuleHitsTable()；② admin-only 43 处批量补注释；③ portal R2 漏 1 已接入补齐 | perm-matrix-toolkit.cjs 新增 `collectR3Hits()` / `reportRuleHitsTable()`；admin-only 注释至少 1 处补齐 | STRICT exit=0；ci-report JSON 含 R3.hits[]；R3=0 | ✅ |
 | **P1-1** | **mapping 第二轮扩围（12 svc → 27+ svc，keys ≥ 220）** | 新增 svc：erp（bom/production/purchase/sales/inventory 等）、hrm（employee/department/salary/attendance/training）、srm（supplier/purchase/contract/evaluation）、pdm（bom/product/material/workflow/version）、mes（workorder/production/bom/route/equipment）、mobile（config/attendance/offline/inspection）、qms（inspection/nc/cap/apqp/fmea）、master-data（dict/quality/mdm）、ticket（ticket/comment/attachment/tag）、feedback（feedback/tag/workflow/assignment）、billing（plan/subscription/invoice/usage/tax）、analytics（dashboard/widget/datasource/report/schedule）、gis（map/geofence/track/device）、rd（project/task/document/milestone）、tms（order/shipment/carrier/route）、plugin-registry（plugin/version/install/review）、aps（schedule/resource/calendar/optimize）共 17 svc，按 glob 精度 6~12 keys/svc | `perm-code-mapping.json` 顶层 keys ≥ 27，总行数 ≥ 220；auto-insert 全仓 DRY-RUN 不产生未扩围 svc 的"no mapping fallthrough"告警 | top-level svc 数 ≥ 27；keys 总行数 ≥ 220；auto-insert --rewrite-existing 无 rewrite（V255 旧 12 保持 aligned，新 15 已重写完） | 🟡 |
 | **P1-2** | **mapping rewrites 落地（41 files × 308 → 80+ files × 600+ rewrites）** | 以 P1-1 的 27 svc 映射为输入，执行 `auto-insert-utoipa-permission.cjs --enable-mapping --rewrite-existing`；对每个 svc 先 DRY-RUN 统计 rewrites，再 apply；最后二次 DRY-RUN 验证全部 aligned | 至少 40 个新 handler 文件被改动；新增 rewrites ≥ 300；`cargo check --workspace` 0 error；二次 DRY-RUN 仅输出 "[already aligned]" | rewrites 增量 ≥ 300；cargo check 0 error；二次 DRY-RUN aligned 覆盖所有 27 svc | 🟡 |
 | **P2-1** | **CI 与文档收尾** | ① ci-report `--fail-on-warn` R3>0 测试（R3 伪造 1 条违规后应 exit=1）；② `docs/roadmap/TODO.md` V255 后续扩展勾选；③ 说明文档同步："R2 全仓清零" + "R3 可追溯"写进 perm-gate 相关文件；④ 推送观察 Perm-Gate Step 的 Summary 表格新增 "Hits per rule" 段 | ① 退出码行为验证通过；② TODO 勾选项全部完成；③ summary 能看到 R2/R3 命中表 | FAIL-ON-WARN 模式 exit=1 验证；TODO 勾选完成；Summary 含 Hits 列 | 🟡 |

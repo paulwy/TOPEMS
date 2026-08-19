@@ -386,6 +386,7 @@ pub async fn update_location(
     response
 }
 
+// gate: admin-only
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["wms:location:admin"])),
@@ -578,6 +579,7 @@ pub async fn batch_create_locations(
     ))
 }
 
+// gate: admin-only
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["wms:location:admin"])),

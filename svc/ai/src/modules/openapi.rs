@@ -107,6 +107,7 @@ fn _code_fix() {}
 )]
 fn _code_optimize() {}
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ai:review:admin"])),

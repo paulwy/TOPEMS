@@ -436,6 +436,7 @@ pub async fn update_stock_take(
     response
 }
 
+// gate: admin-only
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["wms:stocktake:admin"])),
@@ -712,6 +713,7 @@ pub async fn list_stock_take_items(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["wms:stocktake:admin"])),
@@ -961,6 +963,7 @@ pub async fn get_stock_take_item(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["wms:stocktake:admin"])),
@@ -1097,6 +1100,7 @@ pub async fn update_stock_take_item(
     response
 }
 
+// gate: admin-only
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["wms:stocktake:admin"])),
@@ -1430,6 +1434,7 @@ pub struct ApprovalRequest {
     pub discrepancy_threshold: Option<f64>,
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["wms:stocktake:admin"])),
@@ -1499,6 +1504,7 @@ pub async fn start_stock_take_approval(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["wms:stocktake:admin"])),
@@ -1586,6 +1592,7 @@ pub async fn approve_stock_take(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["wms:stocktake:admin"])),
