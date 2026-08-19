@@ -96,7 +96,7 @@ where
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["aps:read"])),
+    security(("BearerAuth" = ["aps:schedule:read"])),
     path = "/api/aps/schedules",
     responses(
         (status = 200, description = "list_schedules OK")
@@ -172,7 +172,7 @@ pub async fn list_schedules(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["aps:read"])),
+    security(("BearerAuth" = ["aps:schedule:read"])),
     path = "/api/aps/schedules/{id}",
     params(
         ("id" = Uuid, Path, description = "排程 ID")
@@ -216,7 +216,7 @@ pub async fn get_schedule(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["aps:write"])),
+    security(("BearerAuth" = ["aps:schedule:read"])),
     path = "/api/aps/schedules",
     request_body = CreateScheduleRequest,
     responses(
@@ -279,7 +279,7 @@ pub async fn create_schedule(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["aps:update"])),
+    security(("BearerAuth" = ["aps:schedule:read"])),
     path = "/api/aps/schedules/{id}",
     request_body = UpdateScheduleRequest,
     params(
@@ -370,7 +370,7 @@ pub async fn update_schedule(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["aps:delete"])),
+    security(("BearerAuth" = ["aps:schedule:read"])),
     path = "/api/aps/schedules/{id}",
     params(
         ("id" = Uuid, Path, description = "排程 ID")
@@ -409,7 +409,7 @@ pub async fn delete_schedule(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["aps:write"])),
+    security(("BearerAuth" = ["aps:schedule:read"])),
     path = "/api/aps/schedules/{id}/start",
     params(
         ("id" = Uuid, Path, description = "排程 ID")
@@ -438,7 +438,7 @@ pub async fn start_schedule(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["aps:write"])),
+    security(("BearerAuth" = ["aps:schedule:read"])),
     path = "/api/aps/schedules/{id}/complete",
     params(
         ("id" = Uuid, Path, description = "排程 ID")
@@ -467,7 +467,7 @@ pub async fn complete_schedule(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["aps:write"])),
+    security(("BearerAuth" = ["aps:schedule:read"])),
     path = "/api/aps/schedules/{id}/cancel",
     params(
         ("id" = Uuid, Path, description = "排程 ID")

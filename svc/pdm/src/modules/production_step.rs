@@ -146,7 +146,7 @@ pub async fn list_steps(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["pdm:write"])),
+    security(("BearerAuth" = ["pdm:bom:write"])),
     path = "/api/pdm/production-steps",
     request_body = CreateStepRequest,
     tag = "pdm",

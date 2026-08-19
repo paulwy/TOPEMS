@@ -134,7 +134,7 @@ struct CreateUserRequest {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:iam:user:write"])),
     path = "/users",
     tag = "IAM",
     request_body = serde_json::Value,

@@ -26,7 +26,7 @@ pub async fn list_records(State(_state): State<AppState>) -> Json<serde_json::Va
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:flow:record:read"])),
     path = "/api/core/flow/records/{approval_id}",
     tag = "Flow-Approval",
     params(

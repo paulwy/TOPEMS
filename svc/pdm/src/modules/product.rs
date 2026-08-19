@@ -145,7 +145,7 @@ pub async fn list_products(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["pdm:write"])),
+    security(("BearerAuth" = ["pdm:bom:write"])),
     path = "/api/pdm/products",
     request_body = CreateProductRequest,
     tag = "pdm",

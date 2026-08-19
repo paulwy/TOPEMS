@@ -125,7 +125,7 @@ pub async fn list_production_orders(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/production-order/create-production-order",
     tag = "ProductionOrder",
     operation_id = "create_production_order",

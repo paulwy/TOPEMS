@@ -111,7 +111,7 @@ pub async fn get_scope(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/consolidation/scopes",
     tag = "Consolidation",
     responses((status = 200, description = "创建合并范围成功", body = ApiResponse<serde_json::Value>))

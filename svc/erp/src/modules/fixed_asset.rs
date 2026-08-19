@@ -95,7 +95,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:asset:read"])),
     path = "/erp/fixed-assets",
     tag = "Assets",
     responses((status = 200, description = "获取固定资产列表成功"))
@@ -183,7 +183,7 @@ pub async fn list_fixed_assets(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:asset:write"])),
     path = "/erp/fixed-assets",
     tag = "Assets",
     responses((status = 200, description = "固定资产创建成功"))
@@ -297,7 +297,7 @@ pub async fn create_fixed_asset(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:asset:read"])),
     path = "/erp/fixed-assets/{id}",
     tag = "Assets",
     params(("id" = Uuid, Path, description = "固定资产ID")),
@@ -337,7 +337,7 @@ pub async fn get_fixed_asset(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["erp:update"])),
+    security(("BearerAuth" = ["erp:asset:write"])),
     path = "/erp/fixed-assets/{id}",
     tag = "Assets",
     params(("id" = Uuid, Path, description = "固定资产ID")),
@@ -471,7 +471,7 @@ pub async fn update_fixed_asset(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["erp:delete"])),
+    security(("BearerAuth" = ["erp:asset:write"])),
     path = "/erp/fixed-assets/{id}",
     tag = "Assets",
     params(("id" = Uuid, Path, description = "固定资产ID")),
@@ -606,7 +606,7 @@ pub struct DepreciateRequest {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:asset:admin"])),
     path = "/erp/fixed-assets/depreciate",
     tag = "Assets",
     responses((status = 200, description = "固定资产折旧完成"))

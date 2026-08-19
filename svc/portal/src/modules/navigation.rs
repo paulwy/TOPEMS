@@ -11,7 +11,7 @@ use crate::{
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["portal:read"])),
+    security(("BearerAuth" = ["portal:navigation:read"])),
     path = "/navigation/menu",
     tag = "Navigation",
     responses(

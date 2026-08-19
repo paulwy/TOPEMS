@@ -236,7 +236,7 @@ pub async fn get_user_subscriptions(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:report:write"])),
     path = "/subscriptions",
     tag = "Subscriptions",
     operation_id = "create_subscription",

@@ -155,7 +155,7 @@ pub async fn list_processes(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["pdm:write"])),
+    security(("BearerAuth" = ["pdm:bom:write"])),
     path = "/api/pdm/production-processes",
     request_body = CreateProcessRequest,
     tag = "pdm",

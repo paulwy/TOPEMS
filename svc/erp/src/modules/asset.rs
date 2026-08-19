@@ -104,7 +104,7 @@ pub async fn list_assets(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/assets",
     tag = "Assets",
     request_body = CreateAssetRequest,

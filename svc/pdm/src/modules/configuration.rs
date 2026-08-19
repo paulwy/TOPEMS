@@ -161,7 +161,7 @@ pub async fn list_configurations(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["pdm:write"])),
+    security(("BearerAuth" = ["pdm:bom:write"])),
     path = "/api/pdm/configurations",
     request_body = CreateConfigurationRequest,
     tag = "pdm",

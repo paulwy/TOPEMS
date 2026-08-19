@@ -435,7 +435,7 @@ pub async fn list_formulas(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["pdm:write"])),
+    security(("BearerAuth" = ["pdm:bom:write"])),
     path = "/api/pdm/production-formulas",
     request_body = CreateFormulaRequest,
     tag = "pdm",

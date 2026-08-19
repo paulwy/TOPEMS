@@ -94,7 +94,7 @@ async fn count_table_with_tenant_and_condition(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:doc:read"])),
     path = "/api/core/doc/documents",
     tag = "Doc",
     responses(
@@ -116,7 +116,7 @@ pub async fn list_documents(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:doc:read"])),
     path = "/api/core/doc/documents/{document_id}",
     tag = "Doc",
     params(
@@ -142,7 +142,7 @@ pub async fn get_document(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:doc:write"])),
     path = "/api/core/doc/documents",
     tag = "Doc",
     request_body = serde_json::Value,
@@ -167,7 +167,7 @@ pub async fn create_document(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["unified_core:update"])),
+    security(("BearerAuth" = ["unified-core:doc:write"])),
     path = "/api/core/doc/documents/{document_id}",
     tag = "Doc",
     params(
@@ -195,7 +195,7 @@ pub async fn update_document(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["unified_core:delete"])),
+    security(("BearerAuth" = ["unified-core:doc:admin"])),
     path = "/api/core/doc/documents/{document_id}",
     tag = "Doc",
     params(
@@ -221,7 +221,7 @@ pub async fn delete_document(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:flow:template:read"])),
     path = "/api/core/doc/templates",
     tag = "Doc",
     responses(
@@ -243,7 +243,7 @@ pub async fn list_templates(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:doc:category:read"])),
     path = "/api/core/doc/templates/categories",
     tag = "Doc",
     responses(
@@ -265,7 +265,7 @@ pub async fn list_template_categories(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:doc:template:read"])),
     path = "/api/core/doc/templates/{template_id}",
     tag = "Doc",
     params(
@@ -291,7 +291,7 @@ pub async fn get_template(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:doc:template:write"])),
     path = "/api/core/doc/templates",
     tag = "Doc",
     request_body = serde_json::Value,
@@ -316,7 +316,7 @@ pub async fn create_template(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["unified_core:update"])),
+    security(("BearerAuth" = ["unified-core:doc:template:write"])),
     path = "/api/core/doc/templates/{template_id}",
     tag = "Doc",
     params(
@@ -344,7 +344,7 @@ pub async fn update_template(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["unified_core:delete"])),
+    security(("BearerAuth" = ["unified-core:doc:template:admin"])),
     path = "/api/core/doc/templates/{template_id}",
     tag = "Doc",
     params(
@@ -370,7 +370,7 @@ pub async fn delete_template(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:doc:folder:read"])),
     path = "/api/core/doc/folders",
     tag = "Doc",
     responses(
@@ -392,7 +392,7 @@ pub async fn list_folders(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:doc:folder:read"])),
     path = "/api/core/doc/folders/{folder_id}",
     tag = "Doc",
     params(
@@ -418,7 +418,7 @@ pub async fn get_folder(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:doc:folder:write"])),
     path = "/api/core/doc/folders",
     tag = "Doc",
     request_body = serde_json::Value,
@@ -443,7 +443,7 @@ pub async fn create_folder(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["unified_core:update"])),
+    security(("BearerAuth" = ["unified-core:doc:folder:write"])),
     path = "/api/core/doc/folders/{folder_id}",
     tag = "Doc",
     params(
@@ -471,7 +471,7 @@ pub async fn update_folder(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["unified_core:delete"])),
+    security(("BearerAuth" = ["unified-core:doc:folder:admin"])),
     path = "/api/core/doc/folders/{folder_id}",
     tag = "Doc",
     params(

@@ -108,7 +108,7 @@ pub async fn list_rooms(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/meeting-rooms",
     request_body = CreateMeetingRoomRequest,
     responses(
@@ -467,7 +467,7 @@ pub async fn list_bookings(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/meeting-bookings",
     request_body = CreateMeetingBookingRequest,
     responses(

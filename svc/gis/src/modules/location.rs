@@ -59,7 +59,7 @@ pub struct RouteRequest {
 /// 创建位置点
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["gis:write"])),
+    security(("BearerAuth" = ["gis:map:write"])),
     path = "/locations/create",
     tag = "device",
     request_body = CreateLocation,

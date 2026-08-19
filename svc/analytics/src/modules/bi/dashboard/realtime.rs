@@ -14,7 +14,7 @@ use super::models::SetAutoRefreshRequest;
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:dashboard:read"])),
     path = "/dashboard/{id}/realtime",
     tag = "Dashboard",
     operation_id = "query_dashboard_realtime_data",
@@ -158,7 +158,7 @@ pub async fn query_dashboard_realtime_data(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:dashboard:read"])),
     path = "/dashboard/{id}/refresh",
     tag = "Dashboard",
     operation_id = "refresh_dashboard_data",

@@ -7,7 +7,7 @@ use crate::{
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["portal:read"])),
+    security(("BearerAuth" = ["portal:service:read"])),
     path = "/services",
     tag = "Portal",
     responses(

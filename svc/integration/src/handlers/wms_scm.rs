@@ -9,7 +9,7 @@ use crate::models::{AppState, CreateWmsScmSyncRequest, WmsScmSync};
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["integration:read"])),
+    security(("BearerAuth" = ["integration:sync:wms-scm:read"])),
     path = "/api/integration/wms-scm",
     tag = "integration",
     responses(
@@ -43,7 +43,7 @@ pub async fn list_wms_scm_sync(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["integration:write"])),
+    security(("BearerAuth" = ["integration:sync:wms-scm:write"])),
     path = "/api/integration/wms-scm",
     request_body = CreateWmsScmSyncRequest,
     tag = "integration",
@@ -104,7 +104,7 @@ pub async fn create_wms_scm_sync(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["integration:read"])),
+    security(("BearerAuth" = ["integration:sync:wms-scm:read"])),
     path = "/api/integration/wms-scm/{id}",
     tag = "integration",
     params(
@@ -142,7 +142,7 @@ pub async fn get_wms_scm_sync(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["integration:write"])),
+    security(("BearerAuth" = ["integration:sync:wms-scm:write"])),
     path = "/api/integration/wms-scm/{id}/sync",
     tag = "integration",
     params(

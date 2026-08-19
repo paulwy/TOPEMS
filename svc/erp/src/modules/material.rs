@@ -166,7 +166,7 @@ pub async fn get_material(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/materials",
     tag = "ERP",
     request_body = CreateMaterialRequest,

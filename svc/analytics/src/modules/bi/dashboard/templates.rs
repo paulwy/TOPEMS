@@ -15,7 +15,7 @@ use super::models::{
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:dashboard:read"])),
     path = "/api/bi/dashboard/template",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -69,7 +69,7 @@ pub async fn list_dashboard_templates(State(state): State<AppState>) -> Json<ser
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:dashboard:read"])),
     path = "/api/bi/dashboard/template",
     tag = "BI",
     responses(
@@ -134,7 +134,7 @@ pub async fn create_dashboard_template(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:dashboard:read"])),
     path = "/api/bi/dashboard/template/{id}",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -188,7 +188,7 @@ pub async fn get_dashboard_template(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["analytics:update"])),
+    security(("BearerAuth" = ["analytics:dashboard:read"])),
     path = "/api/bi/dashboard/template/{id}",
     tag = "BI",
     responses(
@@ -265,7 +265,7 @@ pub async fn update_dashboard_template(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["analytics:delete"])),
+    security(("BearerAuth" = ["analytics:dashboard:read"])),
     path = "/api/bi/dashboard/template/{id}",
     tag = "BI",
     responses(
@@ -312,7 +312,7 @@ pub async fn delete_dashboard_template(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:dashboard:read"])),
     path = "/api/bi/dashboard/template/{template_id}/create",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))

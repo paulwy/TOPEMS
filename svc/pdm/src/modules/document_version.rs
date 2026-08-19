@@ -411,7 +411,7 @@ const VERSION_COLUMNS: &str = r#"
     approved_by, published_at, created_at, updated_at
 "#;
 
-#[utoipa::path(get, path = "/api/pdm/documents/{documentId}/versions", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:read"])))]
+#[utoipa::path(get, path = "/api/pdm/documents/{documentId}/versions", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:document:read"])))]
 pub async fn list_versions(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -440,7 +440,7 @@ pub async fn list_versions(
     }
 }
 
-#[utoipa::path(post, path = "/api/pdm/documents/{documentId}/versions", request_body = CreateDocumentVersionRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:write"])))]
+#[utoipa::path(post, path = "/api/pdm/documents/{documentId}/versions", request_body = CreateDocumentVersionRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:document:write"])))]
 pub async fn create_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -488,7 +488,7 @@ pub async fn create_version(
     }
 }
 
-#[utoipa::path(get, path = "/api/pdm/documents/{documentId}/versions/{versionId}", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:read"])))]
+#[utoipa::path(get, path = "/api/pdm/documents/{documentId}/versions/{versionId}", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:document:read"])))]
 pub async fn get_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -518,7 +518,7 @@ pub async fn get_version(
     }
 }
 
-#[utoipa::path(put, path = "/api/pdm/documents/{documentId}/versions/{versionId}", request_body = UpdateDocumentVersionRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:update"])))]
+#[utoipa::path(put, path = "/api/pdm/documents/{documentId}/versions/{versionId}", request_body = UpdateDocumentVersionRequest, tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:document:write"])))]
 pub async fn update_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -574,7 +574,7 @@ pub async fn update_version(
     }
 }
 
-#[utoipa::path(delete, path = "/api/pdm/documents/{documentId}/versions/{versionId}", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:delete"])))]
+#[utoipa::path(delete, path = "/api/pdm/documents/{documentId}/versions/{versionId}", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:document:write"])))]
 pub async fn delete_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -600,7 +600,7 @@ pub async fn delete_version(
     }
 }
 
-#[utoipa::path(post, path = "/api/pdm/documents/{documentId}/versions/{versionId}/publish", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:write"])))]
+#[utoipa::path(post, path = "/api/pdm/documents/{documentId}/versions/{versionId}/publish", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:document:admin"])))]
 pub async fn publish_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -667,7 +667,7 @@ pub async fn publish_version(
     Json(ApiResponse::success(version, "发布文档版本成功"))
 }
 
-#[utoipa::path(post, path = "/api/pdm/documents/{documentId}/upload", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:write"])))]
+#[utoipa::path(post, path = "/api/pdm/documents/{documentId}/upload", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:document:write"])))]
 pub async fn upload_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -748,7 +748,7 @@ pub async fn upload_version(
     }
 }
 
-#[utoipa::path(get, path = "/api/pdm/documents/{documentId}/versions/{versionId}/download", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:read"])))]
+#[utoipa::path(get, path = "/api/pdm/documents/{documentId}/versions/{versionId}/download", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:document:read"])))]
 pub async fn download_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

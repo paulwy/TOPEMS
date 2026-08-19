@@ -1038,7 +1038,7 @@ async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serd
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:report:read"])),
     path = "/api/bi/reports-center/stats",
     tag = "BI-Reports-Center",
     operation_id = "reports_center_stats",
@@ -1116,7 +1116,7 @@ async fn reports_center_stats(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:report:read"])),
     path = "/api/bi/reports-center/export/{report_type}",
     tag = "BI-Reports-Center",
     operation_id = "reports_center_export",

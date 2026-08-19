@@ -43,7 +43,7 @@ pub struct CreateReportFromTemplateRequest {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:report:read"])),
     path = "/reports",
     tag = "Reports",
     operation_id = "list_reports",
@@ -88,7 +88,7 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:report:write"])),
     path = "/reports",
     tag = "Reports",
     operation_id = "create_report",
@@ -137,7 +137,7 @@ pub async fn create_report(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:report:write"])),
     path = "/reports/from-template",
     tag = "Reports",
     operation_id = "create_report_from_template",
@@ -236,7 +236,7 @@ pub async fn create_report_from_template(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["analytics:read"])),
+    security(("BearerAuth" = ["analytics:report:read"])),
     path = "/reports/{id}",
     tag = "Reports",
     operation_id = "get_report",
@@ -289,7 +289,7 @@ pub async fn get_report(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["analytics:update"])),
+    security(("BearerAuth" = ["analytics:report:read"])),
     path = "/reports/{id}",
     tag = "Reports",
     operation_id = "update_report",
@@ -341,7 +341,7 @@ pub async fn update_report(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["analytics:delete"])),
+    security(("BearerAuth" = ["analytics:report:read"])),
     path = "/reports/{id}",
     tag = "Reports",
     operation_id = "delete_report",
@@ -377,7 +377,7 @@ pub async fn delete_report(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:report:admin"])),
     path = "/reports/{id}/export",
     tag = "Reports",
     operation_id = "export_report",
@@ -468,7 +468,7 @@ pub async fn download_export(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:report:admin"])),
     path = "/reports/{id}/run",
     tag = "Reports",
     operation_id = "run_report",

@@ -187,7 +187,7 @@ pub async fn get_dataset(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:report:write"])),
     path = "/api/bi/datasets",
     tag = "BI",
     responses(

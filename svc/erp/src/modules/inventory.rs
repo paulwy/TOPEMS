@@ -151,7 +151,7 @@ pub async fn get_inventory(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:master-data:write"])),
     path = "/erp/inventory",
     request_body = CreateInventoryRequest,
     responses(

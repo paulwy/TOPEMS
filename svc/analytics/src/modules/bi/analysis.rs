@@ -27,7 +27,7 @@ pub async fn list_analyses(
 /// Create analysis
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:report:write"])),
     path = "/api/bi/analysis",
     tag = "Analytics",
     responses(
@@ -73,7 +73,7 @@ pub async fn get_analysis(
 /// Execute analysis
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:schedule:admin"])),
     path = "/api/bi/analysis/{id}/execute",
     tag = "Analytics",
     params(

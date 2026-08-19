@@ -562,7 +562,7 @@ pub async fn trend_analysis(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["analytics:write"])),
+    security(("BearerAuth" = ["analytics:compare:write"])),
     path = "/prediction/compare",
     tag = "Prediction",
     operation_id = "prediction_comparison",

@@ -186,7 +186,7 @@ pub fn create_routes() -> Router<ApiState> {
 /// 列出字典类型（分页 + 搜索 + 分类/状态筛选）
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:dict:read"])),
     path = "/system/dict-types",
     tag = "Dict",
     operation_id = "list_dict_types",
@@ -278,7 +278,7 @@ pub async fn list_dict_types(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:dict:write"])),
     path = "/system/dict-types",
     tag = "Dict",
     operation_id = "create_dict_type",
@@ -366,7 +366,7 @@ pub async fn create_dict_type(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:dict:read"])),
     path = "/system/dict-types/{id}",
     tag = "Dict",
     operation_id = "get_dict_type",
@@ -398,7 +398,7 @@ pub async fn get_dict_type(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["erp:update"])),
+    security(("BearerAuth" = ["erp:dict:write"])),
     path = "/system/dict-types/{id}",
     tag = "Dict",
     operation_id = "update_dict_type",
@@ -496,7 +496,7 @@ pub async fn update_dict_type(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["erp:delete"])),
+    security(("BearerAuth" = ["erp:dict:write"])),
     path = "/system/dict-types/{id}",
     tag = "Dict",
     operation_id = "delete_dict_type",
@@ -575,7 +575,7 @@ pub async fn delete_dict_type(
 /// 列出指定字典类型下的字典项（分页 + 搜索）
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:dict:read"])),
     path = "/system/dict-types/{id}/items",
     tag = "Dict",
     operation_id = "list_dict_items",
@@ -640,7 +640,7 @@ pub async fn list_dict_items(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:dict:write"])),
     path = "/system/dict-items",
     tag = "Dict",
     operation_id = "create_dict_item",
@@ -721,7 +721,7 @@ pub async fn create_dict_item(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:dict:read"])),
     path = "/system/dict-items/{id}",
     tag = "Dict",
     operation_id = "get_dict_item",
@@ -753,7 +753,7 @@ pub async fn get_dict_item(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["erp:update"])),
+    security(("BearerAuth" = ["erp:dict:write"])),
     path = "/system/dict-items/{id}",
     tag = "Dict",
     operation_id = "update_dict_item",
@@ -854,7 +854,7 @@ pub async fn update_dict_item(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["erp:delete"])),
+    security(("BearerAuth" = ["erp:dict:write"])),
     path = "/system/dict-items/{id}",
     tag = "Dict",
     operation_id = "delete_dict_item",
@@ -920,7 +920,7 @@ pub async fn delete_dict_item(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["erp:write"])),
+    security(("BearerAuth" = ["erp:dict:write"])),
     path = "/system/dict-items/batch",
     tag = "Dict",
     operation_id = "batch_create_dict_items",
@@ -997,7 +997,7 @@ pub async fn batch_create_dict_items(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["erp:read"])),
+    security(("BearerAuth" = ["erp:dict:read"])),
     path = "/system/dict-types/{id}/items/export",
     tag = "Dict",
     operation_id = "export_dict_items",

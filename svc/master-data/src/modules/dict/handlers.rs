@@ -155,7 +155,7 @@ pub async fn get_dict_type(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["master_data:write"])),
+    security(("BearerAuth" = ["master-data:schema:write"])),
     path = "/api/master-data/dict/dict-types",
     tag = "Dict",
     request_body = serde_json::Value,
@@ -418,7 +418,7 @@ pub async fn get_dict_item(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["master_data:write"])),
+    security(("BearerAuth" = ["master-data:schema:write"])),
     path = "/api/master-data/dict/dict-items",
     tag = "Dict",
     request_body = serde_json::Value,

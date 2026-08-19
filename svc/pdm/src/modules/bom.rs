@@ -590,7 +590,7 @@ fn json_value<T: Serialize>(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["pdm:read"])),
+    security(("BearerAuth" = ["pdm:document:read"])),
     path = "/api/pdm/bom-versions",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -638,7 +638,7 @@ pub async fn list_bom_versions(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["pdm:read"])),
+    security(("BearerAuth" = ["pdm:document:read"])),
     path = "/api/pdm/bom-versions/{id}",
     tag = "pdm",
     params(("id" = Uuid, Path, description = "BOM 版本 ID")),
@@ -676,7 +676,7 @@ pub async fn get_bom_version(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["pdm:write"])),
+    security(("BearerAuth" = ["pdm:document:write"])),
     path = "/api/pdm/bom-versions",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -723,7 +723,7 @@ pub async fn create_bom_version(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["pdm:update"])),
+    security(("BearerAuth" = ["pdm:document:write"])),
     path = "/api/pdm/bom-versions/{id}",
     tag = "pdm",
     params(("id" = Uuid, Path, description = "BOM 版本 ID")),
@@ -780,7 +780,7 @@ pub async fn update_bom_version(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["pdm:delete"])),
+    security(("BearerAuth" = ["pdm:document:write"])),
     path = "/api/pdm/bom-versions/{id}",
     tag = "pdm",
     params(("id" = Uuid, Path, description = "BOM 版本 ID")),
@@ -847,7 +847,7 @@ async fn update_bom_status(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["pdm:write"])),
+    security(("BearerAuth" = ["pdm:bom:admin"])),
     path = "/api/pdm/bom-versions/{id}/activate",
     tag = "pdm",
     params(("id" = Uuid, Path, description = "BOM 版本 ID")),
@@ -864,7 +864,7 @@ pub async fn activate_bom_version(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["pdm:write"])),
+    security(("BearerAuth" = ["pdm:bom:admin"])),
     path = "/api/pdm/bom-versions/{id}/archive",
     tag = "pdm",
     params(("id" = Uuid, Path, description = "BOM 版本 ID")),
@@ -881,7 +881,7 @@ pub async fn archive_bom_version(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["pdm:read"])),
+    security(("BearerAuth" = ["pdm:bom:read"])),
     path = "/api/pdm/bom-items",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -920,7 +920,7 @@ pub async fn list_bom_items(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["pdm:read"])),
+    security(("BearerAuth" = ["pdm:bom:read"])),
     path = "/api/pdm/bom-items/{id}",
     tag = "pdm",
     params(("id" = Uuid, Path, description = "BOM 明细 ID")),
@@ -959,7 +959,7 @@ pub async fn get_bom_item(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["pdm:write"])),
+    security(("BearerAuth" = ["pdm:bom:write"])),
     path = "/api/pdm/bom-items",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -1011,7 +1011,7 @@ async fn insert_bom_item(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["pdm:update"])),
+    security(("BearerAuth" = ["pdm:bom:write"])),
     path = "/api/pdm/bom-items/{id}",
     tag = "pdm",
     params(("id" = Uuid, Path, description = "BOM 明细 ID")),
@@ -1063,7 +1063,7 @@ pub async fn update_bom_item(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["pdm:delete"])),
+    security(("BearerAuth" = ["pdm:bom:write"])),
     path = "/api/pdm/bom-items/{id}",
     tag = "pdm",
     params(("id" = Uuid, Path, description = "BOM 明细 ID")),
@@ -1096,7 +1096,7 @@ pub async fn delete_bom_item(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["pdm:write"])),
+    security(("BearerAuth" = ["pdm:bom:write"])),
     path = "/api/pdm/bom-versions/{bomVersionId}/items/batch",
     tag = "pdm",
     params(("bomVersionId" = Uuid, Path, description = "BOM 版本 ID")),
@@ -1128,7 +1128,7 @@ pub async fn batch_create_bom_items(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["pdm:write"])),
+    security(("BearerAuth" = ["pdm:document:write"])),
     path = "/api/pdm/bom-compare",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -1235,7 +1235,7 @@ async fn fetch_items_by_bom(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["pdm:read"])),
+    security(("BearerAuth" = ["pdm:bom:read"])),
     path = "/api/pdm/bom-compare",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -1250,7 +1250,7 @@ pub async fn list_bom_comparisons() -> Json<ApiResponse<serde_json::Value>> {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["pdm:read"])),
+    security(("BearerAuth" = ["pdm:bom:read"])),
     path = "/api/pdm/bom-compare/{id}",
     tag = "pdm",
     params(("id" = Uuid, Path, description = "BOM 对比 ID")),

@@ -26,7 +26,7 @@ pub async fn list_settings(State(_state): State<AppState>) -> Json<serde_json::V
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["unified_core:read"])),
+    security(("BearerAuth" = ["unified-core:flow:setting:read"])),
     path = "/api/core/flow/settings/{id}",
     tag = "Flow-Monitor",
     params(
@@ -74,7 +74,7 @@ pub async fn get_setting_by_key(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["unified_core:update"])),
+    security(("BearerAuth" = ["unified-core:flow:setting:read"])),
     path = "/api/core/flow/settings/{id}",
     tag = "Flow-Monitor",
     params(
@@ -104,7 +104,7 @@ pub async fn update_setting(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:flow:setting:read"])),
     path = "/api/core/flow/settings/{id}/reset",
     tag = "Flow-Monitor",
     params(
@@ -128,7 +128,7 @@ pub async fn reset_setting(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["unified_core:write"])),
+    security(("BearerAuth" = ["unified-core:flow:setting:admin"])),
     path = "/api/core/flow/settings/batch",
     tag = "Flow-Monitor",
     request_body = serde_json::Value,
