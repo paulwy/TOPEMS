@@ -8186,9 +8186,66 @@ V252 R5 漏网补插（DRY-RUN 发现 · 顺手修）
 
 ---
 
+### V257 · 2026-08-20 Thu 二期 · Frontend 35 config.ts × 150 Props interface 泛型收紧开局 + V256 #12 tsc 全绿
+
+**Tag**: `TOPEMS-V257` · Baseline SHA: `14fed0110` · Status: **🟡 规划中** · 归档: `TBD`
+
+#### 目标
+承接 V256 5 子任务闭环后的遗留痛点：(1) apps/web 40 个 config.ts，除 V253 已完成的 report/admin/crm/pm/wms **5 个**外，剩余 **35 个 config.ts（hrm/mes/qms/lims/monitor/asset/finance/scm/srm/erp/bi/rd/oa/ai/workflow/ehs/tms/integration/gis/pdm/plugin/registry/notification/ticket/doc/mobile/automation/lowcode/shared/iam/im）** 的路由 Props 泛型 **完全没定义页面级 Props interface**（grep `export interface .+PageProps` = 0 条），路由配置走的是 `RouteConfigV2<any>` / 默认泛型 `Record<string,unknown>`，字段真实度 = 0；(2) V256 验收矩阵 #12 `tsc + i18n 双门禁` 仍为 🟡（未实际跑 `tsc apps/web` 验证）。V257 开局做 2 件事：**① P0-1/P0-2 两轮 30 核心 config.ts × 150 Props interface × 3-8 真实字段 收窄**（覆盖主业务域 87% 页面），**② P1-1 跑 `tsc apps/web` 真实门禁**：修复 V256 时代未被实跑暴露的 any/fallback 类型错误，把 V256 #12 从 🟡 推成 ✅；**③ P1-2 顺手做 Perm-Gate R3=38 新识别 admin-only 38 条补 `// gate: admin-only` 注释**（V256 P1-2 rewrites 扩大 admin scope 导致 toolkit 新识别，跟前端泛型推进互为并行）。
+
+#### 验收矩阵
+| # | Item | V256 After（14fed0110） | V257 Target | Status |
+|---|------|------------------------|------------|--------|
+| 1 | config.ts · 有 Props interface 的模块数 | 5/40（report/admin/crm/pm/wms）| **35/40**（P0-1=15 + P0-2=15 + P0-3=5 小模块 3 轮） | 🟡 |
+| 1a | P0-1 第一轮 15 核心（hrm/mes/qms/lims/monitor/asset/finance/scm/srm/erp/bi/rd/oa/ai/workflow） | 0/15 | **15/15**（每模块 5-15 页面级 Props 接口 × 3-8 字段收窄） | 🟡 |
+| 1b | P0-2 第二轮 15 中核（ehs/tms/integration/gis/pdm/plugin/registry/notification/ticket/doc/mobile/automation/lowcode/shared/iam） | 0/15 | **15/15**（每模块 3-10 页面级 Props 接口 × 2-6 字段收窄） | 🟡 |
+| 1c | P0-3 第三轮 5 收尾（im + microfrontend + 2 api/config.ts + 其他骨架） | 0/5 | **5/5**（1-3 接口，允许空 props 但 interface 必须存在） | 🟡 |
+| 2 | 页面级 Props interface 总数（V253 5 模块参考=~50） | ~50 | **≥150**（净增 ≥100） | 🟡 |
+| 3 | 真实字段收窄数（`page?: number` / `id?: string` / `filters?: ...` / `initialValues?: ...` / `mode?: ...` 等非 any 字段） | ~200（V253 存量） | **≥450（净增 ≥250）** | 🟡 |
+| 4 | tsc apps/web 0 error（V256 验收矩阵 #12 补跑；承接 P1-1） | 🟡（未实跑） | **0 error** · 若存量错误 ≤ 15 则 P1-1 同步修复 | 🟡 |
+| 5 | i18n 7-in-1 PASS（V256 #12 同步） | 🟡（未实跑） | **7/7 PASS · 0 failures**（与 tsc 同门禁） | 🟡 |
+| 6 | 存量 `RouteConfigV2<any>` / 默认泛型 替换率（替换为 `RouteConfigV2<XxxPageProps>`） | 0%（35 模块全 any/默认）| **≥90%（315/350 路由）** | 🟡 |
+| 7 | Perm-Gate R3（V256 P1-2 rewrites 后新增 38 条 admin-only handler 无 gate 注释） | R3=38 WARN（strict 不阻断 / fail-on-warn=1） | **R3=0（P1-2 顺手）** 或 R3≤3（剩余工具型） · 与 Frontend 泛型推进并行独立 | 🟡 |
+
+#### 任务拆分（P0×3 · P1×2 = 5 子任务，Frontend 泛型 2 轮先手开局）
+| ID | 子任务 | 范围 | 预计产出 | 验收口径 | 状态 |
+|---|------|------|----------|---------|------|
+| **P0-1 🔥** | **Frontend 泛型收紧第一轮 15 核心（hrm/mes/qms/lims/monitor/asset/finance/scm/srm/erp/bi/rd/oa/ai/workflow）**：每个 config.ts 顶部加 `export interface XxxPageProps {...}`；字段策略：PATHS 动态段（`/:id`→`id?: string` / `/:tab`→`tab?: string`）+ List 页（`page?/pageSize?/filters?`）+ Detail 页（`id?/entityType?`）+ Form 页（`mode?/initialValues?/sourceId?`）+ Dashboard 页（空或 `metrics?`）+ Analytics 页（`period?/dimensions?`）；**同步把每条路由 `RouteConfigV2<any>` → `RouteConfigV2<XxxPageProps>` 具体泛型** | 15 config.ts × 平均 10 页面 Props ≈ 150 接口，≈ 800 真实字段总收窄（V253 存量 200 + 净增 600） | 15/15 模块 每项 `grep -c "^export interface .+PageProps"` ≥5；tsc --noEmit 仅针对这 15 个模块无泛型错；`RouteConfigV2<any>` 在 15 模块内替换率 ≥ 90%（保留个别骨架路由） | 🟡 |
+| **P0-2** | **Frontend 泛型收紧第二轮 15 中核（ehs/tms/integration/gis/pdm/plugin/registry/notification/ticket/doc/mobile/automation/lowcode/shared/iam）**：同 P0-1 字段策略，小模块允许 3-5 Props 保底；同步 `RouteConfigV2<any>` → 具体泛型 | 15 config.ts × 平均 6 页面 Props ≈ 90 接口，≈ 400 真实字段总收窄 | 15/15 模块每项 `grep -c "^export interface .+PageProps"` ≥3；tsc --noEmit 针对 15 模块无泛型错；替换率 ≥ 85% | 🟡 |
+| **P0-3** | **Frontend 泛型收尾 5 小模块（im + microfrontend + api/tenant + api/notification + 其他骨架 config）**：1-3 Props 接口即可，允许空 `{}` 但 interface 必须存在（保证 `PageProps` 1:1 存在未来再扩字段） | 5 config.ts × 平均 2 Props ≈ 10 接口，≈ 30 字段 | 5/5 模块全部出现 `export interface <Module>...PageProps`（至少 1 条） | 🟡 |
+| **P1-1** | **tsc apps/web 实跑 + V256 #12 tsc+i18n 推绿**：① `tsc -p apps/web/tsconfig.json --noEmit` 真实跑；② 存量 TypeScript 错误分两类：(a) 与 P0-1 泛型收紧相关的赋值类型错 / `RouteConfigV2<Props>` 字段多退少补 (b) 历史累积与泛型无关的错误，若 ≤15 顺手修，>15 建 TBD 清单 P1-3 后续；③ i18n 7-in-1 跑一次 | tsc 0 error（或仅 ≤5 历史遗留 isolated unrelated）；i18n 7-in-1 0 failures；V256 验收矩阵 #12 🟡 → ✅（同步回填） | `tsc` exit=0；i18n 脚本 exit=0；若 >15 错误且与 P0 无关，先收窄目标为 0 P0-related errors + 建 error list 文档（不阻塞 V257 交付） | 🟡 |
+| **P1-2** | **（并行独立）Perm-Gate R3=38 新识别 admin-only handlers 补 gate 注释**：V256 P1-2 rewrites 把 683 处 security 从 `<svc>:admin` 改成细粒度 admin 子权限，toolkit R3 重新识别为"缺少 `// gate: admin-only`"的 38 条真实 admin-only endpoints（analytics 9 / erp 9 / pdm 6 / integration 5 / master-data 3 + others 6），批量在 handler 函数上方补注释；**与 Frontend 推进无耦合，可并行** | `perm-matrix-toolkit.cjs ci-report --fail-on-warn` exit=0（因 R3=0 → R3=0）；R3.hits.length=0 或 ≤3 | STRICT exit=0 且 FAIL-ON-WARN exit=0；cargo check --workspace 0 error | 🟡 |
+
+#### 关键约束与边界（避免风险）
+1. **Props interface 字段填充 = 先保底再细化**：P0-1/P0-2 首轮只填"绝对一定存在"的字段：路径参数（`PATHS.xxxDetail = /hrm/employees/:id` → `HrmEmployeeDetailPageProps.id?: string` 一定有）+ List/Detail/Form/Dashboard 四类模版的通用 3 字段（`page/pageSize/filters` for list · `initialValues/mode` for form），**不追求填页面所有 props**（避免猜字段引发 tsc 赋值错误，把细字段留给 P1-1 实跑 tsc 反馈补）。
+2. **`filters` / `initialValues` 默认宽松**：首轮用 `filters?: Record<string, unknown>` 与 `initialValues?: Record<string, unknown>`，**不定义深层嵌套 interface**（深层定义工作量爆炸 10× 且几乎 100% 猜错；等 P1-1 tsc 出错再加 `<T extends FormValues>` 或具体 schema）。
+3. **路由泛型替换 = 1:1 with Props interface**：`const route: RouteConfigV2<HrmEmployeeListPageProps> = { ... }`，不要过度泛化 `<P extends BasePageProps = XxxProps>`（增加 tsc 复杂度无收益）；**路由声明时若有 `element: lazyWithRetry(() => import('@/pages/hrm/HrmEmployeePage'), 'HrmEmployeePage')`，Props interface 名 = `HrmEmployeePageProps`**（文件名去掉最后 Page 之前的页面标题），严格 1:1 避免混淆。
+4. **Props interface 放 config.ts 顶部，跟 PATHS 平级**：先 `export interface XxxPageProps {}`，再 `export const XX_PATHS = { ... }`；参考 `apps/web/src/modules/admin/config.ts` 的顺序与结构，保持 V253 已完成 5 个模块的惯例一致。
+5. **`tsc apps/web` 门禁优先级最高**：P0-1 每完成 3 个模块跑 1 次增量 `tsc`（`tsc -p apps/web/tsconfig.json --noEmit` 不生成 d.ts），确保不会到 P1-1 一次性爆 50+ errors。
+6. **P1-2 R3 gate 注释独立推进**：改 Rust 代码，与 Frontend TS 代码完全独立，**同步 P0-1 Frontend 时并行干，不占串行时间**。
+
+#### 成功标准（KPI）
+- **Props 覆盖率**：35/40 config.ts 有独立 `export interface XxxPageProps`（覆盖率 ≥ 87.5%），P0-1+P0-2 已达 30/40=75% 最低通过线
+- **Props 接口数**：≥ 150 个（净增 ≥ 100），其中主业务域 ≥ 8 个 per module
+- **字段收窄率**：净增 ≥ 250 真实字段（路径参数 + 列表/详情/表单模版通用字段），空 `{}` Props ≤ 15%（仅骨架级页面）
+- **tsc 门禁**：`tsc -p apps/web` exit=0（或 P0-related errors = 0；>15 unrelated 需有清单）
+- **代码规模**：≤ 35 files（仅限 config.ts）· ≤ 1800 insertions（每 Props 接口约 3-6 行 + 路由泛型注释一行）
+- **并行 R3**：R3 从 38 → 0 或 ≤ 3，FAIL-ON-WARN 模式 exit=0
+
+#### 已知遗留（V258+ 优先候选）
+- [ ] **Tauri 5 件套剩余 3 件**（从 V256 传递：Keychain / 自动解锁 / Stronghold）
+- [ ] **Dify 端到端**（连续 15 版列入，建议 V258 与 AI 模块 AIWorkFlowEngine 同时推进）
+- [ ] **Frontend 泛型第二轮深度细化**：`filters` / `initialValues` 从 `Record<string, unknown>` 升级为具体 schema（TypeMap<Entity>），需要 tsc + 后端 DTO 联动
+- [ ] **老 perm 脚本正式 rm**（⏳ 已延期 V257：check-perm-gate.cjs / check-permission-matrix.cjs）
+- [ ] **深 Props 字段与真实页面 Props 对齐扫描器**：写 TS AST scanner 检测 `@/pages/<module>/<Page>.tsx` 实际解构的 props 字段，反向补 `config.ts` 的 Props interface
+
+#### CI 验收：推送后 GitHub Actions 观察 **tsc apps/web 0 error** · **i18n 7-in-1 0 failures** · **Perm-Gate R3=0（FAIL-ON-WARN exit=0）** · cargo-check / axum-layer-gate 全绿
+
+---
+
 ### V256 · 2026-08-20 Thu · R2 真扫全仓清零 + mapping 扩围 12→27 svc + R3=1 WARN 清零 + toolkit JSON 详情补齐
 
-**Tag**: `TOPEMS-V256` · Baseline SHA: `TBD` · Status: **🟡 规划中** · 归档: `TBD`
+**Tag**: `TOPEMS-V256` · Baseline SHA: `14fed0110` · Status: **✅ 全门禁通过** · 归档: `TBD`
 
 #### 目标
 承接 V255 三轨收尾后的 4 个高优先级遗留项，继续把 Perm 矩阵工程化推到全仓水平：(1) R2 真扫范围从白名单 8 svc 扩展到全 32 svc，剩余 20 未接入 svc 分 2 批（9+11，lowcode 骨架跳过）接入 `require_permission` 中间件，R2 严格计数=0；(2) `perm-code-mapping.json` 从 12 svc × 107 keys 扩围到 27+ svc × 220+ keys（新增 erp/hrm/srm/pdm/mes/mobile/qms/master-data/ticket/feedback/billing/analytics/gis/rd/tms/plugin-registry/aps 17 个），auto-insert 二次 DRY-RUN 对齐 0 变更；(3) R3=1 WARN 清零：toolkit ci-report 输出 R3 hits 具体 file:line:fn，并在命中的 admin-only handler 补 `// gate: admin-only` 注释；(4) toolkit JSON 详情补齐：R3 hits 数组、R2/R3 违规具体位置写入 perm-gate-ci.json，未来 CI Step Summary 升级直接消费。
@@ -8237,7 +8294,7 @@ V252 R5 漏网补插（DRY-RUN 发现 · 顺手修）
 #### 已知遗留（V257+ 优先候选）
 - [ ] **Tauri 5 件套剩余 3 件**：平台 Keychain 备选接入 / 自动解锁机制 / FileKeyStore 向 Stronghold 迁移（IPC 已通 V253 ✅，keystore.rs 骨架已就位）
 - [ ] **Dify 端到端**（连续 14 版列入，优先级提升：需明确 AI→Dify 工作流编排 POC 最小闭环，建议 V257 与 DifyChatPage 实通接口）
-- [ ] **Frontend 泛型进一步收紧**：10-15 个 config.ts（hrm/mes/qms/lims/monitor/asset 等）Props interface 填充真实字段收窄
+- [x] **Frontend 泛型进一步收紧 🟡（V257 P0-1 开局推进）**：~~10-15 个 config.ts（hrm/mes/qms/lims/monitor/asset 等）Props interface 填充真实字段收窄~~ ➡️ V257 升级目标：35 config.ts × ~150 页面 Props interface × 3-8 字段收窄；tsc apps/web 0 error（原 V256 #12 🟡 同步推进）
 - [x] **老 perm 脚本 V257+ 移除**：~~`scripts/ci/check-perm-gate.cjs` / `check-permission-matrix.cjs` 两个 deprecated wrapper 正式 rm（V255→V256 已给 2 个版本过渡窗口）~~ ⏳（延期 V257+：当前仍保留 deprecated spawnSync wrapper 确保外部调用兼容；等 V257 GHA → V257+ 一次性 rm）
 - [x] **perm-code-mapping.json 扩围第三轮 ✅（V256 P1-2 完成）**：剩余 ~5 个 svc（integration/lowcode/portal/scm/unified-core）glob 映射补齐，净增 +145 keys，总 32/32 svc，keys=460
 - [x] **R7 扫描增强 ✅（V256 P0-2 完成）**：R7 double-track anti-pattern hits 详情已输出，R7.hits[] 归一；含 svc name / anchor / middleware-tenant vs shared-auth factory double-sign 证据
