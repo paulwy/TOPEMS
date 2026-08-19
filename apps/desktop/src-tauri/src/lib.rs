@@ -1,6 +1,7 @@
 pub mod api_client;
 pub mod crypto;
 pub mod ipc;
+pub mod keystore;
 pub mod offline_cache;
 pub mod secure_store;
 

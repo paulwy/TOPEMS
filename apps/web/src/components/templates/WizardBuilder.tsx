@@ -221,7 +221,7 @@ export function WizardBuilder({
           disabled={index > safeActiveStep}
           onClick={() => handleStepClick(index)}
         >
-          <StepLabel icon={renderStepIcon(step, index)}>
+          <StepLabel icon={renderStepIcon(step, index) as any}>
             {step.title}
             {step.description && (
               <Typography
@@ -275,7 +275,7 @@ export function WizardBuilder({
               </Typography>
             )}
           </Box>
-          {step.renderContent(renderProps)}
+          {step.renderContent(renderProps) as any}
         </Paper>
       );
     }

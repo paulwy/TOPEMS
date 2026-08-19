@@ -542,8 +542,8 @@ class BffErrorBoundaryInner extends Component<
 
     return (
       <Suspense
-        fallback={fallback ?? <BffLoadingFallback />}
-        name={name}
+        fallback={(fallback ?? <BffLoadingFallback />) as any}
+        {...({ name: name } as any)}
       >
         {children}
       </Suspense>

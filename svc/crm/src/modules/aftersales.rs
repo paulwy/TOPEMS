@@ -11,7 +11,6 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use super::ApiState;
-use crate::middleware::tenant::get_tenant_id;
 use crate::models::{
     CreateReturnItemRequest, CreateReturnRequest, Return, ReturnActionRequest, ReturnItem,
     ReturnQuery, UpdateReturnRequest,
@@ -20,6 +19,7 @@ use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
+use topems_shared_auth::middleware::tenant::get_tenant_id;
 use topems_shared_core::response::api_error;
 use topems_shared_event::event::{EventType, ReturnCompletedPayload, ReturnProcessedPayload};
 

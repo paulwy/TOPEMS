@@ -7,13 +7,13 @@ use chrono::{Datelike, TimeZone, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::middleware::tenant::get_tenant_id;
 use crate::models::{
     ContactStats, CustomerStats, CustomerWithDetails, DashboardStats, FunnelStage, IndustryCount,
     InteractionStats, OpportunityStats, SalesForecast, StageCount, TypeCount,
 };
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::get_tenant_id;
 use topems_shared_core::response::{api_error, ApiResponse};
 
 use super::ApiState;

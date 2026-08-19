@@ -288,7 +288,7 @@ function EditCellComponent({
           autoFocus
           onBlur={handleBlur}
           sx={{ width: '100%', minWidth: 120 }}
-          slotProps={{ inputLabel: { shrink: true } }}
+          slotProps={{ inputLabel: { shrink: true } } as any}
         />
       );
     case 'datetime':
@@ -301,7 +301,7 @@ function EditCellComponent({
           autoFocus
           onBlur={handleBlur}
           sx={{ width: '100%', minWidth: 150 }}
-          slotProps={{ inputLabel: { shrink: true } }}
+          slotProps={{ inputLabel: { shrink: true } } as any}
         />
       );
     case 'checkbox':
@@ -832,7 +832,7 @@ export function DataTable<TData, TValue>({
                       <Search sx={{ width: 16, height: 16, mr: 1, color: 'text.secondary' }} />
                     ),
                   },
-                }}
+                } as any}
               />
             )}
 

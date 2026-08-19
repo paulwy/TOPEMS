@@ -324,6 +324,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
+    # V249 守绿第 2 版（V250 切换为 blocking）
     continue-on-error: true  # V247: 基线阶段不阻断
     steps:
       - uses: actions/checkout@v5

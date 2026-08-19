@@ -399,8 +399,9 @@ async fn main() -> anyhow::Result<()> {
             post(modules::data_sync::sync_reagent_to_ehs),
         )
         .route("/api/health/detailed", get(detailed_health))
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
+        .layer(axum::middleware::from_fn_with_state(
+            ctx.db.clone(),
+            topems_shared_auth::tenant_middleware(),
         ))
         .with_state(api_state.clone());
 
