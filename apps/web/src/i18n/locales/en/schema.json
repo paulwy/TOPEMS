@@ -1177,12 +1177,7 @@
         "category": {
           "label": "Category",
           "option": {
-            "all": "All Categories",
-            "电子设备": "Electronic Equipment",
-            "机械设备": "Machinery Equipment",
-            "办公设备": "Office Equipment",
-            "家具": "Furniture",
-            "其他": "Other"
+            "all": "All Categories"
           }
         }
       },
@@ -1459,24 +1454,11 @@
       },
       "category": {
         "label": "Customer Category",
-        "option": {
-          "大型企业": "Large Enterprise",
-          "中型企业": "Medium Enterprise",
-          "小型企业": "Small Enterprise",
-          "政府机构": "Government Agency",
-          "个人客户": "Individual Customer"
-        }
+        "option": {}
       },
       "industry": {
         "label": "Industry",
-        "option": {
-          "电子制造": "Electronics Manufacturing",
-          "机械制造": "Machinery Manufacturing",
-          "化工": "Chemical Industry",
-          "金融": "Finance",
-          "互联网": "Internet",
-          "医疗": "Healthcare"
-        }
+        "option": {}
       },
       "credit_rating": {
         "label": "Credit Rating",
@@ -1548,24 +1530,13 @@
         "category": {
           "label": "Category",
           "option": {
-            "all": "All Categories",
-            "大型企业": "Large Enterprise",
-            "中型企业": "Medium Enterprise",
-            "小型企业": "Small Enterprise",
-            "政府机构": "Government Agency",
-            "个人客户": "Individual Customer"
+            "all": "All Categories"
           }
         },
         "industry": {
           "label": "Industry",
           "option": {
-            "all": "All Industries",
-            "电子制造": "Electronics Manufacturing",
-            "机械制造": "Machinery Manufacturing",
-            "化工": "Chemical Industry",
-            "金融": "Finance",
-            "互联网": "Internet",
-            "医疗": "Healthcare"
+            "all": "All Industries"
           }
         }
       },
@@ -1613,11 +1584,7 @@
       },
       "warehouse_name": {
         "label": "Warehouse",
-        "option": {
-          "原材料仓库": "Raw Material Warehouse",
-          "成品仓库": "Finished Goods Warehouse",
-          "半成品仓库": "Semi-finished Goods Warehouse"
-        }
+        "option": {}
       },
       "warehouse_id": {
         "label": "Warehouse ID"
@@ -1714,13 +1681,7 @@
       },
       "category": {
         "label": "Category",
-        "option": {
-          "电子元件": "Electronic Components",
-          "机械零件": "Mechanical Parts",
-          "原材料": "Raw Materials",
-          "包装材料": "Packaging Materials",
-          "辅助材料": "Auxiliary Materials"
-        }
+        "option": {}
       },
       "unit": {
         "label": "Unit"
@@ -1767,12 +1728,7 @@
         "category": {
           "label": "Category",
           "option": {
-            "all": "All Categories",
-            "电子元件": "Electronic Components",
-            "机械零件": "Mechanical Parts",
-            "原材料": "Raw Materials",
-            "包装材料": "Packaging Materials",
-            "辅助材料": "Auxiliary Materials"
+            "all": "All Categories"
           }
         }
       },
@@ -2078,12 +2034,7 @@
       },
       "category": {
         "label": "Supplier Category",
-        "option": {
-          "原材料供应商": "Raw Material Supplier",
-          "配件供应商": "Parts Supplier",
-          "设备供应商": "Equipment Supplier",
-          "服务供应商": "Service Supplier"
-        }
+        "option": {}
       },
       "credit_rating": {
         "label": "Credit Rating",
@@ -2152,11 +2103,7 @@
         "category": {
           "label": "Category",
           "option": {
-            "all": "All Categories",
-            "原材料供应商": "Raw Material Supplier",
-            "配件供应商": "Parts Supplier",
-            "设备供应商": "Equipment Supplier",
-            "服务供应商": "Service Supplier"
+            "all": "All Categories"
           }
         }
       },
@@ -2334,12 +2281,7 @@
       },
       "voucher_type": {
         "label": "Voucher Type",
-        "option": {
-          "记": "Accounting Voucher",
-          "收": "Receipt Voucher",
-          "付": "Payment Voucher",
-          "转": "Transfer Voucher"
-        }
+        "option": {}
       },
       "summary": {
         "label": "Summary"
@@ -2372,11 +2314,7 @@
         "voucher_type": {
           "label": "Voucher Type",
           "option": {
-            "all": "All Types",
-            "记": "Accounting Voucher",
-            "收": "Receipt Voucher",
-            "付": "Payment Voucher",
-            "转": "Transfer Voucher"
+            "all": "All Types"
           }
         }
       },
@@ -2391,11 +2329,17 @@
       "batchAction": {
         "batchSubmit": {
           "label": "Batch Submit",
-          "confirmMessage": "Are you sure to batch submit the selected vouchers?"
+          "confirmMessage": "Are you sure to batch submit the selected vouchers?",
+          "success": "Success",
+          "fail": "Failed",
+          "error": "Error"
         },
         "batchApprove": {
           "label": "Batch Review",
-          "confirmMessage": "Are you sure to batch review the selected vouchers?"
+          "confirmMessage": "Are you sure to batch review the selected vouchers?",
+          "success": "Success",
+          "fail": "Failed",
+          "error": "Error"
         }
       }
     }
@@ -2411,5 +2355,11 @@
       "k0": "Failed to load list",
       "k2": "Update failed"
     }
-  }
+  },
+  "erp.voucher.batchAction.batchSubmit.success": "Success",
+  "erp.voucher.batchAction.batchSubmit.fail": "Failed",
+  "erp.voucher.batchAction.batchSubmit.error": "Error",
+  "erp.voucher.batchAction.batchApprove.success": "Success",
+  "erp.voucher.batchAction.batchApprove.fail": "Failed",
+  "erp.voucher.batchAction.batchApprove.error": "Error"
 }

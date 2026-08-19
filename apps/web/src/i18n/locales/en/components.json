@@ -3425,7 +3425,9 @@
       "20_14": "CharacterorNumber, Maximum20Position",
       "k16": "Please EnterMailbox",
       "k1": "LoginError:",
-      "k3": "Processing..."
+      "k3": "Processing...",
+      "k28": "Regular employee",
+      "k29": "Administrator"
     },
     "component_palette": {
       "k3": "Actions",

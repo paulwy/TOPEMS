@@ -5440,7 +5440,9 @@
       "k28": "Has Number? Login",
       "k0": "LoginResponse:",
       "k1": "LoginError:",
-      "k3": "Character"
+      "k3": "Character",
+      "k29": "Regular employee",
+      "k30": "Administrator"
     },
     "profile_page": {
       "k3": "Load failed",
@@ -5982,7 +5984,8 @@
       "cicd_1": "CI/CD Pipeline",
       "p99_5": "P99 Latency",
       "cpu_6": "CPU Usage Rate",
-      "v100_7": "as:v1.0.0"
+      "v100_7": "as:v1.0.0",
+      "k127": "Metrics exceed threshold, automatic rollback will be triggered"
     },
     "v53-platform-console": {
       "k28": "View Details",
