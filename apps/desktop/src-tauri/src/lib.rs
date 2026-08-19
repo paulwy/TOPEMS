@@ -5,6 +5,7 @@ pub mod keystore;
 pub mod offline_cache;
 pub mod secure_store;
 
+use keystore::{keystore_set, keystore_get, keystore_delete};
 use std::collections::HashMap;
 use std::sync::Mutex;
 use tauri::{
@@ -247,5 +248,8 @@ pub fn build_app() -> tauri::Builder<tauri::Wry> {
             ipc::flush_sync,
             ipc::set_offline,
             ipc::get_offline_status,
+            keystore_set,
+            keystore_get,
+            keystore_delete,
         ])
 }

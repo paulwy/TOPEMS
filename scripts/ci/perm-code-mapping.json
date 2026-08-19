@@ -1,0 +1,21 @@
+{
+  "finance": {
+    "default": "finance:read",
+    "create_*": "finance:invoice:write",
+    "get_*_by_id": "finance:payment:read",
+    "payment": "finance:payment:admin"
+  },
+  "qms": {
+    "default": "qms:read",
+    "*_audit_*": "qms:audit:admin"
+  },
+  "pm": {
+    "default": "pm:read",
+    "*_budget_*": "pm:budget:write"
+  },
+  "mes": {
+    "default": "mes:read",
+    "create_work_order": "mes:workorder:write",
+    "bom": "mes:bom:admin"
+  }
+}

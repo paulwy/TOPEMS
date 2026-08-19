@@ -1,7 +1,33 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
+
+export interface PmDashboardPageProps {}
+export interface PmProjectListPageProps {
+  page?: number;
+  pageSize?: number;
+  status?: string;
+}
+export interface PmProjectDetailPageProps {
+  id?: string;
+  projectId?: string;
+  tab?: string;
+}
+export interface PmProjectCreatePageProps {}
+export interface TaskBoardProps {
+  projectId?: string;
+  sprintId?: string;
+  filters?: Record<string, unknown>;
+}
+export interface PmContractListPageProps {}
+export interface PmContractDetailPageProps {
+  id?: string;
+}
+export interface PmContractCreatePageProps {}
+export interface ProjectTimelinePageProps {
+  projectId?: string;
+}
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 PM_PATHS.xxx，而非硬编码字符串
@@ -26,6 +52,220 @@ export const PM_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 // P34-4: PM 默认所有路由为 basic 层级；advanced 模块（project_approval/service_integration/...）
 // 在前端未提供独立页面，故不在此配置。
+const pmDashboardRoute: RouteConfigV2<PmDashboardPageProps> = {
+  path: PM_PATHS.dashboard,
+  element: lazyWithRetry(() => import('@/pages/pm/DashboardPage'), 'DashboardPage'),
+  module: 'pm',
+  code: 'pm-dashboard',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  template: 'dashboard',
+  group: 'overview',
+  requiredPermissions: ['pm:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const pmProjectListRoute: RouteConfigV2<PmProjectListPageProps> = {
+  path: PM_PATHS.projects,
+  element: lazyWithRetry(() => import('@/pages/pm/PmProjectListPage'), 'PmProjectListPage'),
+  module: 'pm',
+  code: 'pm-projects',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['pm:project:read', 'pm:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const pmProjectDetailRoute: RouteConfigV2<PmProjectDetailPageProps> = {
+  path: PM_PATHS.projectDetail,
+  element: lazyWithRetry(() => import('@/pages/pm/PmProjectDetailPage'), 'PmProjectDetailPage'),
+  module: 'pm',
+  code: 'pm-project-detail',
+  title: i18n.t('shared.config.k5'),
+  titleKey: 'shared.config.k5',
+  template: 'detail',
+  group: 'business',
+  requiredPermissions: ['pm:project:read', 'pm:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const taskKanbanRoute: RouteConfigV2<TaskBoardProps> = {
+  path: PM_PATHS.taskKanban,
+  element: lazyWithRetry(
+    () => import('@/pages/pm/ProjectTaskKanbanPage'),
+    'ProjectTaskKanbanPage'
+  ),
+  module: 'pm',
+  code: 'pm-task-kanban',
+  title: i18n.t('shared.config.k12'),
+  titleKey: 'shared.config.k12',
+  template: 'kanban',
+  group: 'business',
+  requiredPermissions: ['pm:task:read', 'pm:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const pmContractListRoute: RouteConfigV2<PmContractListPageProps> = {
+  path: PM_PATHS.contracts,
+  element: lazyWithRetry(() => import('@/pages/pm/PmContractListPage'), 'PmContractListPage'),
+  module: 'pm',
+  code: 'pm-contracts',
+  title: i18n.t('shared.config.k6'),
+  titleKey: 'shared.config.k6',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['pm:contract:read', 'pm:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const pmContractDetailRoute: RouteConfigV2<PmContractDetailPageProps> = {
+  path: PM_PATHS.contractDetail,
+  element: lazyWithRetry(
+    () => import('@/pages/pm/PmContractDetailPage'),
+    'PmContractDetailPage'
+  ),
+  module: 'pm',
+  code: 'pm-contract-detail',
+  title: i18n.t('shared.config.k8'),
+  titleKey: 'shared.config.k8',
+  template: 'detail',
+  group: 'business',
+  requiredPermissions: ['pm:contract:read', 'pm:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const projectTimelineRoute: RouteConfigV2<ProjectTimelinePageProps> = {
+  path: PM_PATHS.timeline,
+  element: lazyWithRetry(() => import('@/pages/pm/ProjectTimelinePage'), 'ProjectTimelinePage'),
+  module: 'pm',
+  code: 'pm-timeline',
+  title: i18n.t('shared.config.k14'),
+  titleKey: 'shared.config.k14',
+  template: 'timeline',
+  group: 'analytics',
+  requiredPermissions: ['pm:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const pmRoutes: RouteConfigV2[] = [
+  pmDashboardRoute,
+  pmProjectListRoute,
+  {
+    path: PM_PATHS.projectCreate,
+    element: lazyWithRetry(() => import('@/pages/pm/PmProjectCreatePage'), 'PmProjectCreatePage'),
+    module: 'pm',
+    code: 'pm-project-create',
+    title: i18n.t('shared.config.k4'),
+    titleKey: 'shared.config.k4',
+    template: 'form',
+    group: 'business',
+    requiredPermissions: ['pm:project:create', 'pm:dashboard:write'],
+    action: 'write',
+    tier: 'basic',
+  } as RouteConfigV2<PmProjectCreatePageProps>,
+  pmProjectDetailRoute,
+  pmContractListRoute,
+  {
+    path: PM_PATHS.contractCreate,
+    element: lazyWithRetry(
+      () => import('@/pages/pm/PmContractCreatePage'),
+      'PmContractCreatePage'
+    ),
+    module: 'pm',
+    code: 'pm-contract-create',
+    title: i18n.t('shared.config.k7'),
+    titleKey: 'shared.config.k7',
+    template: 'form',
+    group: 'business',
+    requiredPermissions: ['pm:contract:create', 'pm:dashboard:write'],
+    action: 'write',
+    tier: 'basic',
+  } as RouteConfigV2<PmContractCreatePageProps>,
+  pmContractDetailRoute,
+  {
+    path: PM_PATHS.resources,
+    element: lazyWithRetry(() => import('@/pages/pm/PmResourcePage'), 'PmResourcePage'),
+    module: 'pm',
+    code: 'pm-resources',
+    title: i18n.t('shared.config.k9'),
+    titleKey: 'shared.config.k9',
+    template: 'list',
+    group: 'process',
+    requiredPermissions: ['pm:resource:read', 'pm:dashboard:read'],
+    action: 'read',
+    tier: 'basic',
+  },
+  {
+    path: PM_PATHS.templates,
+    element: lazyWithRetry(() => import('@/pages/pm/PmTemplatePage'), 'PmTemplatePage'),
+    module: 'pm',
+    code: 'pm-templates',
+    title: i18n.t('shared.config.k10'),
+    titleKey: 'shared.config.k10',
+    template: 'list',
+    group: 'process',
+    requiredPermissions: ['pm:template:read', 'pm:dashboard:read'],
+    action: 'read',
+    tier: 'basic',
+  },
+  {
+    path: PM_PATHS.reports,
+    element: lazyWithRetry(() => import('@/pages/pm/PmReportPage'), 'PmReportPage'),
+    module: 'pm',
+    code: 'pm-reports',
+    title: i18n.t('shared.config.k11'),
+    titleKey: 'shared.config.k11',
+    template: 'stats',
+    group: 'analytics',
+    requiredPermissions: ['pm:report:read', 'pm:dashboard:read'],
+    action: 'read',
+    tier: 'basic',
+  },
+  taskKanbanRoute,
+  {
+    path: PM_PATHS.projectWizard,
+    element: lazyWithRetry(
+      () => import('@/pages/pm/ProjectCreateWizardPage'),
+      'ProjectCreateWizardPage'
+    ),
+    module: 'pm',
+    code: 'pm-project-wizard',
+    title: i18n.t('shared.config.k13'),
+    titleKey: 'shared.config.k13',
+    template: 'wizard',
+    group: 'business',
+    requiredPermissions: ['pm:project:create', 'pm:dashboard:write'],
+    action: 'write',
+    tier: 'basic',
+  },
+  projectTimelineRoute,
+  {
+    path: PM_PATHS.projectList,
+    element: lazyWithRetry(
+      () => import('@/pages/pm/ProjectMasterDetailPage'),
+      'ProjectMasterDetailPage'
+    ),
+    module: 'pm',
+    code: 'pm-project-list',
+    title: i18n.t('shared.config.k15'),
+    titleKey: 'shared.config.k15',
+    template: 'master-detail',
+    group: 'business',
+    requiredPermissions: ['pm:project:read', 'pm:dashboard:read'],
+    action: 'read',
+    tier: 'basic',
+  },
+];
+
 export const pmModuleConfig: RouteModuleConfig = {
   code: 'pm',
   name: i18n.t('shared.config.pm_name'),
@@ -39,205 +279,7 @@ export const pmModuleConfig: RouteModuleConfig = {
   description: i18n.t('shared.config.k1'),
   permission: 'pm:dashboard:read',
   tier: 'basic',
-  routes: [
-    {
-      path: PM_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/pm/DashboardPage'), 'DashboardPage'),
-      module: 'pm',
-      code: 'pm-dashboard',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      template: 'dashboard',
-      group: 'overview',
-      requiredPermissions: ['pm:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: PM_PATHS.projects,
-      element: lazyWithRetry(() => import('@/pages/pm/PmProjectListPage'), 'PmProjectListPage'),
-      module: 'pm',
-      code: 'pm-projects',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['pm:project:read', 'pm:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: PM_PATHS.projectCreate,
-      element: lazyWithRetry(() => import('@/pages/pm/PmProjectCreatePage'), 'PmProjectCreatePage'),
-      module: 'pm',
-      code: 'pm-project-create',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      template: 'form',
-      group: 'business',
-      requiredPermissions: ['pm:project:create', 'pm:dashboard:write'],
-      action: 'write',
-      tier: 'basic',
-    },
-    {
-      path: PM_PATHS.projectDetail,
-      element: lazyWithRetry(() => import('@/pages/pm/PmProjectDetailPage'), 'PmProjectDetailPage'),
-      module: 'pm',
-      code: 'pm-project-detail',
-      title: i18n.t('shared.config.k5'),
-      titleKey: 'shared.config.k5',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['pm:project:read', 'pm:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: PM_PATHS.contracts,
-      element: lazyWithRetry(() => import('@/pages/pm/PmContractListPage'), 'PmContractListPage'),
-      module: 'pm',
-      code: 'pm-contracts',
-      title: i18n.t('shared.config.k6'),
-      titleKey: 'shared.config.k6',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['pm:contract:read', 'pm:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: PM_PATHS.contractCreate,
-      element: lazyWithRetry(
-        () => import('@/pages/pm/PmContractCreatePage'),
-        'PmContractCreatePage'
-      ),
-      module: 'pm',
-      code: 'pm-contract-create',
-      title: i18n.t('shared.config.k7'),
-      titleKey: 'shared.config.k7',
-      template: 'form',
-      group: 'business',
-      requiredPermissions: ['pm:contract:create', 'pm:dashboard:write'],
-      action: 'write',
-      tier: 'basic',
-    },
-    {
-      path: PM_PATHS.contractDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/pm/PmContractDetailPage'),
-        'PmContractDetailPage'
-      ),
-      module: 'pm',
-      code: 'pm-contract-detail',
-      title: i18n.t('shared.config.k8'),
-      titleKey: 'shared.config.k8',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['pm:contract:read', 'pm:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: PM_PATHS.resources,
-      element: lazyWithRetry(() => import('@/pages/pm/PmResourcePage'), 'PmResourcePage'),
-      module: 'pm',
-      code: 'pm-resources',
-      title: i18n.t('shared.config.k9'),
-      titleKey: 'shared.config.k9',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['pm:resource:read', 'pm:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: PM_PATHS.templates,
-      element: lazyWithRetry(() => import('@/pages/pm/PmTemplatePage'), 'PmTemplatePage'),
-      module: 'pm',
-      code: 'pm-templates',
-      title: i18n.t('shared.config.k10'),
-      titleKey: 'shared.config.k10',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['pm:template:read', 'pm:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: PM_PATHS.reports,
-      element: lazyWithRetry(() => import('@/pages/pm/PmReportPage'), 'PmReportPage'),
-      module: 'pm',
-      code: 'pm-reports',
-      title: i18n.t('shared.config.k11'),
-      titleKey: 'shared.config.k11',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['pm:report:read', 'pm:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: PM_PATHS.taskKanban,
-      element: lazyWithRetry(
-        () => import('@/pages/pm/ProjectTaskKanbanPage'),
-        'ProjectTaskKanbanPage'
-      ),
-      module: 'pm',
-      code: 'pm-task-kanban',
-      title: i18n.t('shared.config.k12'),
-      titleKey: 'shared.config.k12',
-      template: 'kanban',
-      group: 'business',
-      requiredPermissions: ['pm:task:read', 'pm:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: PM_PATHS.projectWizard,
-      element: lazyWithRetry(
-        () => import('@/pages/pm/ProjectCreateWizardPage'),
-        'ProjectCreateWizardPage'
-      ),
-      module: 'pm',
-      code: 'pm-project-wizard',
-      title: i18n.t('shared.config.k13'),
-      titleKey: 'shared.config.k13',
-      template: 'wizard',
-      group: 'business',
-      requiredPermissions: ['pm:project:create', 'pm:dashboard:write'],
-      action: 'write',
-      tier: 'basic',
-    },
-    {
-      path: PM_PATHS.timeline,
-      element: lazyWithRetry(() => import('@/pages/pm/ProjectTimelinePage'), 'ProjectTimelinePage'),
-      module: 'pm',
-      code: 'pm-timeline',
-      title: i18n.t('shared.config.k14'),
-      titleKey: 'shared.config.k14',
-      template: 'timeline',
-      group: 'analytics',
-      requiredPermissions: ['pm:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: PM_PATHS.projectList,
-      element: lazyWithRetry(
-        () => import('@/pages/pm/ProjectMasterDetailPage'),
-        'ProjectMasterDetailPage'
-      ),
-      module: 'pm',
-      code: 'pm-project-list',
-      title: i18n.t('shared.config.k15'),
-      titleKey: 'shared.config.k15',
-      template: 'master-detail',
-      group: 'business',
-      requiredPermissions: ['pm:project:read', 'pm:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-  ],
+  routes: pmRoutes,
 };
 
 // ---- 导航配置（供导航注册表使用） ----

@@ -1362,6 +1362,7 @@ pub async fn export_payments_handler(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["finance:read"])),
@@ -1389,6 +1390,7 @@ pub async fn list_approval_configs_handler(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:write"])),
@@ -1421,6 +1423,7 @@ pub async fn create_approval_config_handler(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["finance:read"])),
@@ -1449,6 +1452,7 @@ pub async fn get_approval_config_handler(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["finance:update"])),
@@ -1486,6 +1490,7 @@ pub async fn update_approval_config_handler(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["finance:delete"])),

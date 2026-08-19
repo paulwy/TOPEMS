@@ -1,7 +1,43 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
+
+export interface WmsDashboardPageProps {}
+export interface WarehouseManagementPageProps {
+  warehouseId?: string;
+}
+export interface LocationPageProps {
+  warehouseId?: string;
+}
+export interface InboundPageProps {
+  status?: string;
+}
+export interface StockInFormProps {
+  orderId?: string;
+  warehouseId?: string;
+  items?: Array<Record<string, unknown>>;
+}
+export interface WmsInboundDetailPageProps {
+  id?: string;
+}
+export interface OutboundPageProps {
+  status?: string;
+}
+export interface WmsOutboundDetailPageProps {
+  id?: string;
+}
+export interface InventoryPageProps {
+  warehouseId?: string;
+  sku?: string;
+}
+export interface SupplierManagementPageProps {}
+export interface SupplierDetailPageProps {
+  id?: string;
+}
+export interface WmsStockTakeDetailPageProps {
+  id?: string;
+}
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 WMS_PATHS.xxx，而非硬编码字符串
@@ -43,6 +79,486 @@ export const WMS_PATHS = {
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
+const wmsDashboardRoute: RouteConfigV2<WmsDashboardPageProps> = {
+  path: WMS_PATHS.dashboard,
+  element: lazyWithRetry(() => import('@/pages/wms/DashboardPage'), 'DashboardPage'),
+  module: 'wms',
+  code: 'wms-dashboard',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  template: 'dashboard',
+  group: 'overview',
+  requiredPermissions: ['wms:dashboard:read'],
+  action: 'read',
+};
+
+const warehouseManagementRoute: RouteConfigV2<WarehouseManagementPageProps> = {
+  path: WMS_PATHS.warehouseManagement,
+  element: lazyWithRetry(
+    () => import('@/pages/wms/WarehouseManagementPage'),
+    'WarehouseManagementPage'
+  ),
+  module: 'wms',
+  code: 'wms-warehouses',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['wms:warehouse:read'],
+  action: 'read',
+};
+
+const locationManagementRoute: RouteConfigV2<LocationPageProps> = {
+  path: WMS_PATHS.locationManagement,
+  element: lazyWithRetry(() => import('@/pages/wms/LocationPage'), 'LocationPage'),
+  module: 'wms',
+  code: 'wms-locations',
+  title: i18n.t('shared.config.k4'),
+  titleKey: 'shared.config.k4',
+  template: 'tree',
+  group: 'master',
+  requiredPermissions: ['wms:location:read'],
+  action: 'read',
+};
+
+const inboundRoute: RouteConfigV2<InboundPageProps> = {
+  path: WMS_PATHS.inbound,
+  element: lazyWithRetry(() => import('@/pages/wms/InboundPage'), 'InboundPage'),
+  module: 'wms',
+  code: 'wms-inbound',
+  title: i18n.t('shared.config.k7'),
+  titleKey: 'shared.config.k7',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['wms:inbound:read'],
+  action: 'read',
+};
+
+const stockInFormRoute: RouteConfigV2<StockInFormProps> = inboundRoute as RouteConfigV2<StockInFormProps>;
+
+const wmsInboundDetailRoute: RouteConfigV2<WmsInboundDetailPageProps> = {
+  path: WMS_PATHS.WmsInboundDetail,
+  element: lazyWithRetry(
+    () => import('@/pages/wms/WmsInboundDetailPage'),
+    'WmsInboundDetailPage'
+  ),
+  module: 'wms',
+  code: 'wms-inbound-detail',
+  title: i18n.t('shared.config.k27'),
+  titleKey: 'shared.config.k27',
+  template: 'detail',
+  group: 'business',
+  requiredPermissions: ['wms:inbound:read'],
+  action: 'read',
+};
+
+const outboundRoute: RouteConfigV2<OutboundPageProps> = {
+  path: WMS_PATHS.outbound,
+  element: lazyWithRetry(() => import('@/pages/wms/OutboundPage'), 'OutboundPage'),
+  module: 'wms',
+  code: 'wms-outbound',
+  title: i18n.t('shared.config.k9'),
+  titleKey: 'shared.config.k9',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['wms:outbound:read'],
+  action: 'read',
+};
+
+const wmsOutboundDetailRoute: RouteConfigV2<WmsOutboundDetailPageProps> = {
+  path: WMS_PATHS.WmsOutboundDetail,
+  element: lazyWithRetry(
+    () => import('@/pages/wms/WmsOutboundDetailPage'),
+    'WmsOutboundDetailPage'
+  ),
+  module: 'wms',
+  code: 'wms-outbound-detail',
+  title: i18n.t('shared.config.k28'),
+  titleKey: 'shared.config.k28',
+  template: 'detail',
+  group: 'business',
+  requiredPermissions: ['wms:outbound:read'],
+  action: 'read',
+};
+
+const inventoryRoute: RouteConfigV2<InventoryPageProps> = {
+  path: WMS_PATHS.inventory,
+  element: lazyWithRetry(() => import('@/pages/wms/InventoryPage'), 'InventoryPage'),
+  module: 'wms',
+  code: 'wms-items',
+  title: i18n.t('shared.config.k14'),
+  titleKey: 'shared.config.k14',
+  template: 'list',
+  group: 'analytics',
+  requiredPermissions: ['wms:inventory:read'],
+  action: 'read',
+};
+
+const supplierManagementRoute: RouteConfigV2<SupplierManagementPageProps> = {
+  path: WMS_PATHS.supplierManagement,
+  element: lazyWithRetry(
+    () => import('@/pages/wms/SupplierManagementPage'),
+    'SupplierManagementPage'
+  ),
+  module: 'wms',
+  code: 'wms-supplier-management',
+  title: i18n.t('shared.config.k16'),
+  titleKey: 'shared.config.k16',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['wms:supplier:read'],
+  action: 'read',
+};
+
+const supplierDetailRoute: RouteConfigV2<SupplierDetailPageProps> = {
+  path: WMS_PATHS.supplierDetail,
+  element: lazyWithRetry(() => import('@/pages/wms/SupplierDetailPage'), 'SupplierDetailPage'),
+  module: 'wms',
+  code: 'wms-supplier-detail',
+  title: i18n.t('shared.config.k17'),
+  titleKey: 'shared.config.k17',
+  template: 'detail',
+  group: 'master',
+  requiredPermissions: ['wms:supplier:read'],
+  action: 'read',
+};
+
+const wmsStockTakeDetailRoute: RouteConfigV2<WmsStockTakeDetailPageProps> = {
+  path: WMS_PATHS.WmsStockTakeDetail,
+  element: lazyWithRetry(
+    () => import('@/pages/wms/WmsStockTakeDetailPage'),
+    'WmsStockTakeDetailPage'
+  ),
+  module: 'wms',
+  code: 'wms-stocktake-detail',
+  title: i18n.t('shared.config.k29'),
+  titleKey: 'shared.config.k29',
+  template: 'detail',
+  group: 'business',
+  requiredPermissions: ['wms:stocktake:read'],
+  action: 'read',
+};
+
+const wmsRoutes: RouteConfigV2[] = [
+  wmsDashboardRoute,
+  warehouseManagementRoute,
+  locationManagementRoute,
+  {
+    path: WMS_PATHS.batchManagement,
+    element: lazyWithRetry(
+      () => import('@/pages/wms/BatchManagementPage'),
+      'BatchManagementPage'
+    ),
+    module: 'wms',
+    code: 'wms-batches',
+    title: i18n.t('shared.config.k5'),
+    titleKey: 'shared.config.k5',
+    template: 'list',
+    group: 'master',
+    requiredPermissions: ['wms:batch:read'],
+    action: 'read',
+  },
+  {
+    path: WMS_PATHS.serialNumber,
+    element: lazyWithRetry(() => import('@/pages/wms/SerialNumberPage'), 'SerialNumberPage'),
+    module: 'wms',
+    code: 'wms-serial-number',
+    title: i18n.t('shared.config.k6'),
+    titleKey: 'shared.config.k6',
+    template: 'list',
+    group: 'master',
+    requiredPermissions: ['wms:serial_number:read'],
+    action: 'read',
+  },
+  stockInFormRoute,
+  {
+    path: WMS_PATHS.inboundOrder,
+    element: lazyWithRetry(() => import('@/pages/wms/InboundOrderPage'), 'InboundOrderPage'),
+    module: 'wms',
+    code: 'wms-inbound-order',
+    title: i18n.t('shared.config.k8'),
+    titleKey: 'shared.config.k8',
+    template: 'list',
+    group: 'process',
+    requiredPermissions: ['wms:inbound:read'],
+    action: 'read',
+  },
+  outboundRoute,
+  {
+    path: WMS_PATHS.outboundOrder,
+    element: lazyWithRetry(() => import('@/pages/wms/OutboundOrderPage'), 'OutboundOrderPage'),
+    module: 'wms',
+    code: 'wms-outbound-order',
+    title: i18n.t('shared.config.k10'),
+    titleKey: 'shared.config.k10',
+    template: 'list',
+    group: 'process',
+    requiredPermissions: ['wms:outbound:read'],
+    action: 'read',
+  },
+  {
+    path: WMS_PATHS.transfer,
+    element: lazyWithRetry(() => import('@/pages/wms/TransferPage'), 'TransferPage'),
+    module: 'wms',
+    code: 'wms-transfer',
+    title: i18n.t('shared.config.k11'),
+    titleKey: 'shared.config.k11',
+    template: 'list',
+    group: 'process',
+    requiredPermissions: ['wms:transfer:read'],
+    action: 'read',
+  },
+  {
+    path: WMS_PATHS.stockTake,
+    element: lazyWithRetry(() => import('@/pages/wms/StockTakePage'), 'StockTakePage'),
+    module: 'wms',
+    code: 'wms-inventory-check',
+    title: i18n.t('shared.config.k12'),
+    titleKey: 'shared.config.k12',
+    template: 'list',
+    group: 'process',
+    requiredPermissions: ['wms:inventory_check:read'],
+    action: 'read',
+  },
+  {
+    path: WMS_PATHS.replenishment,
+    element: lazyWithRetry(() => import('@/pages/wms/ReplenishmentPage'), 'ReplenishmentPage'),
+    module: 'wms',
+    code: 'wms-replenishment',
+    title: i18n.t('shared.config.k13'),
+    titleKey: 'shared.config.k13',
+    template: 'list',
+    group: 'process',
+    requiredPermissions: ['wms:replenishment:read'],
+    action: 'read',
+  },
+  inventoryRoute,
+  {
+    path: WMS_PATHS.inventoryReport,
+    element: lazyWithRetry(
+      () => import('@/pages/wms/InventoryReportPage'),
+      'InventoryReportPage'
+    ),
+    module: 'wms',
+    code: 'wms-inventory-report',
+    title: i18n.t('shared.config.k15'),
+    titleKey: 'shared.config.k15',
+    template: 'stats',
+    group: 'analytics',
+    requiredPermissions: ['wms:report:read'],
+    action: 'read',
+  },
+  supplierManagementRoute,
+  supplierDetailRoute,
+  {
+    path: WMS_PATHS.area,
+    element: lazyWithRetry(() => import('@/pages/wms/WmsAreaPage'), 'WmsAreaPage'),
+    module: 'wms',
+    code: 'wms-area',
+    title: i18n.t('shared.config.k18'),
+    titleKey: 'shared.config.k18',
+    template: 'tree',
+    group: 'master',
+    requiredPermissions: ['wms:area:read'],
+    action: 'read',
+  },
+  {
+    path: WMS_PATHS.settingLocationRule,
+    element: lazyWithRetry(
+      () => import('@/pages/wms/setting/LocationRulePage'),
+      'LocationRulePage'
+    ),
+    module: 'wms',
+    code: 'wms-location-rule',
+    title: i18n.t('shared.config.k19'),
+    titleKey: 'shared.config.k19',
+    template: 'settings',
+    group: 'setting',
+    requiredPermissions: ['wms:location_rule:read'],
+    action: 'read',
+  },
+  {
+    path: WMS_PATHS.settingFifoPolicy,
+    element: lazyWithRetry(() => import('@/pages/wms/setting/FifoPolicyPage'), 'FifoPolicyPage'),
+    module: 'wms',
+    code: 'wms-fifo-policy',
+    title: i18n.t('shared.config.fifo_0'),
+    titleKey: 'shared.config.fifo_0',
+    template: 'settings',
+    group: 'setting',
+    requiredPermissions: ['wms:fifo_policy:read'],
+    action: 'read',
+  },
+  {
+    path: WMS_PATHS.settingInventoryCycle,
+    element: lazyWithRetry(
+      () => import('@/pages/wms/setting/InventoryCyclePage'),
+      'InventoryCyclePage'
+    ),
+    module: 'wms',
+    code: 'wms-inventory-cycle',
+    title: i18n.t('shared.config.k20'),
+    titleKey: 'shared.config.k20',
+    template: 'settings',
+    group: 'setting',
+    requiredPermissions: ['wms:inventory_cycle:read'],
+    action: 'read',
+  },
+  {
+    path: WMS_PATHS.settingInventoryThreshold,
+    element: lazyWithRetry(
+      () => import('@/pages/wms/setting/InventoryThresholdPage'),
+      'InventoryThresholdPage'
+    ),
+    module: 'wms',
+    code: 'wms-inventory-threshold',
+    title: i18n.t('shared.config.k21'),
+    titleKey: 'shared.config.k21',
+    template: 'settings',
+    group: 'setting',
+    requiredPermissions: ['wms:inventory_threshold:read'],
+    action: 'read',
+  },
+  {
+    path: WMS_PATHS.WmsInventoryTurnover,
+    element: lazyWithRetry(
+      () => import('@/pages/wms/analytics/WmsInventoryTurnoverPage'),
+      'WmsInventoryTurnoverPage'
+    ),
+    module: 'wms',
+    code: 'wms-analytics-turnover',
+    title: i18n.t('shared.config.k22'),
+    titleKey: 'shared.config.k22',
+    template: 'stats',
+    group: 'analytics',
+    requiredPermissions: ['wms:turnover:read'],
+    action: 'read',
+  },
+  {
+    path: WMS_PATHS.WmsAgePareto,
+    element: lazyWithRetry(
+      () => import('@/pages/wms/analytics/WmsAgeParetoPage'),
+      'WmsAgeParetoPage'
+    ),
+    module: 'wms',
+    code: 'wms-analytics-pareto',
+    title: i18n.t('shared.config.k23'),
+    titleKey: 'shared.config.k23',
+    template: 'stats',
+    group: 'analytics',
+    requiredPermissions: ['wms:pareto:read'],
+    action: 'read',
+  },
+  {
+    path: WMS_PATHS.WmsFlowTrend,
+    element: lazyWithRetry(
+      () => import('@/pages/wms/analytics/WmsFlowTrendPage'),
+      'WmsFlowTrendPage'
+    ),
+    module: 'wms',
+    code: 'wms-analytics-flow',
+    title: i18n.t('shared.config.k24'),
+    titleKey: 'shared.config.k24',
+    template: 'stats',
+    group: 'analytics',
+    requiredPermissions: ['wms:flow:read'],
+    action: 'read',
+  },
+  {
+    path: WMS_PATHS.WmsAbcAnalysis,
+    element: lazyWithRetry(
+      () => import('@/pages/wms/analytics/WmsAbcAnalysisPage'),
+      'WmsAbcAnalysisPage'
+    ),
+    module: 'wms',
+    code: 'wms-analytics-abc',
+    title: i18n.t('shared.config.abc_1'),
+    titleKey: 'shared.config.abc_1',
+    template: 'stats',
+    group: 'analytics',
+    requiredPermissions: ['wms:abc:read'],
+    action: 'read',
+  },
+  {
+    path: WMS_PATHS.WmsLocationUtil,
+    element: lazyWithRetry(
+      () => import('@/pages/wms/analytics/WmsLocationUtilizationPage'),
+      'WmsLocationUtilizationPage'
+    ),
+    module: 'wms',
+    code: 'wms-analytics-locutil',
+    title: i18n.t('shared.config.k25'),
+    titleKey: 'shared.config.k25',
+    template: 'stats',
+    group: 'analytics',
+    requiredPermissions: ['wms:locutil:read'],
+    action: 'read',
+  },
+  {
+    path: WMS_PATHS.WmsOrderFulfillment,
+    element: lazyWithRetry(
+      () => import('@/pages/wms/analytics/WmsOrderFulfillmentPage'),
+      'WmsOrderFulfillmentPage'
+    ),
+    module: 'wms',
+    code: 'wms-analytics-fulfillment',
+    title: i18n.t('shared.config.sla_26'),
+    titleKey: 'shared.config.sla_26',
+    template: 'stats',
+    group: 'analytics',
+    requiredPermissions: ['wms:fulfillment:read'],
+    action: 'read',
+  },
+  wmsInboundDetailRoute,
+  wmsOutboundDetailRoute,
+  wmsStockTakeDetailRoute,
+  {
+    path: WMS_PATHS.WmsTransferDetail,
+    element: lazyWithRetry(
+      () => import('@/pages/wms/WmsTransferDetailPage'),
+      'WmsTransferDetailPage'
+    ),
+    module: 'wms',
+    code: 'wms-transfer-detail',
+    title: i18n.t('shared.config.k30'),
+    titleKey: 'shared.config.k30',
+    template: 'detail',
+    group: 'business',
+    requiredPermissions: ['wms:transfer:read'],
+    action: 'read',
+  },
+  {
+    path: WMS_PATHS.WmsWavePickDetail,
+    element: lazyWithRetry(
+      () => import('@/pages/wms/WmsWavePickDetailPage'),
+      'WmsWavePickDetailPage'
+    ),
+    module: 'wms',
+    code: 'wms-wavepick-detail',
+    title: i18n.t('shared.config.k31'),
+    titleKey: 'shared.config.k31',
+    template: 'detail',
+    group: 'business',
+    requiredPermissions: ['wms:wavepick:read'],
+    action: 'read',
+  },
+  {
+    path: WMS_PATHS.WmsMovementDetail,
+    element: lazyWithRetry(
+      () => import('@/pages/wms/WmsInventoryMovementDetailPage'),
+      'WmsInventoryMovementDetailPage'
+    ),
+    module: 'wms',
+    code: 'wms-movement-detail',
+    title: i18n.t('shared.config.k32'),
+    titleKey: 'shared.config.k32',
+    template: 'detail',
+    group: 'business',
+    requiredPermissions: ['wms:movement:read'],
+    action: 'read',
+  },
+];
+
 export const wmsModuleConfig: RouteModuleConfig = {
   code: 'wms',
   name: i18n.t('shared.config.wms_name'),
@@ -55,461 +571,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
   order: 12,
   description: i18n.t('shared.config.k1'),
   permission: 'wms:module:read',
-  routes: [
-    {
-      path: WMS_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/wms/DashboardPage'), 'DashboardPage'),
-      module: 'wms',
-      code: 'wms-dashboard',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      template: 'dashboard',
-      group: 'overview',
-      requiredPermissions: ['wms:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.warehouseManagement,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/WarehouseManagementPage'),
-        'WarehouseManagementPage'
-      ),
-      module: 'wms',
-      code: 'wms-warehouses',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['wms:warehouse:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.locationManagement,
-      element: lazyWithRetry(() => import('@/pages/wms/LocationPage'), 'LocationPage'),
-      module: 'wms',
-      code: 'wms-locations',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      template: 'tree',
-      group: 'master',
-      requiredPermissions: ['wms:location:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.batchManagement,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/BatchManagementPage'),
-        'BatchManagementPage'
-      ),
-      module: 'wms',
-      code: 'wms-batches',
-      title: i18n.t('shared.config.k5'),
-      titleKey: 'shared.config.k5',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['wms:batch:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.serialNumber,
-      element: lazyWithRetry(() => import('@/pages/wms/SerialNumberPage'), 'SerialNumberPage'),
-      module: 'wms',
-      code: 'wms-serial-number',
-      title: i18n.t('shared.config.k6'),
-      titleKey: 'shared.config.k6',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['wms:serial_number:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.inbound,
-      element: lazyWithRetry(() => import('@/pages/wms/InboundPage'), 'InboundPage'),
-      module: 'wms',
-      code: 'wms-inbound',
-      title: i18n.t('shared.config.k7'),
-      titleKey: 'shared.config.k7',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['wms:inbound:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.inboundOrder,
-      element: lazyWithRetry(() => import('@/pages/wms/InboundOrderPage'), 'InboundOrderPage'),
-      module: 'wms',
-      code: 'wms-inbound-order',
-      title: i18n.t('shared.config.k8'),
-      titleKey: 'shared.config.k8',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['wms:inbound:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.outbound,
-      element: lazyWithRetry(() => import('@/pages/wms/OutboundPage'), 'OutboundPage'),
-      module: 'wms',
-      code: 'wms-outbound',
-      title: i18n.t('shared.config.k9'),
-      titleKey: 'shared.config.k9',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['wms:outbound:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.outboundOrder,
-      element: lazyWithRetry(() => import('@/pages/wms/OutboundOrderPage'), 'OutboundOrderPage'),
-      module: 'wms',
-      code: 'wms-outbound-order',
-      title: i18n.t('shared.config.k10'),
-      titleKey: 'shared.config.k10',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['wms:outbound:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.transfer,
-      element: lazyWithRetry(() => import('@/pages/wms/TransferPage'), 'TransferPage'),
-      module: 'wms',
-      code: 'wms-transfer',
-      title: i18n.t('shared.config.k11'),
-      titleKey: 'shared.config.k11',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['wms:transfer:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.stockTake,
-      element: lazyWithRetry(() => import('@/pages/wms/StockTakePage'), 'StockTakePage'),
-      module: 'wms',
-      code: 'wms-inventory-check',
-      title: i18n.t('shared.config.k12'),
-      titleKey: 'shared.config.k12',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['wms:inventory_check:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.replenishment,
-      element: lazyWithRetry(() => import('@/pages/wms/ReplenishmentPage'), 'ReplenishmentPage'),
-      module: 'wms',
-      code: 'wms-replenishment',
-      title: i18n.t('shared.config.k13'),
-      titleKey: 'shared.config.k13',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['wms:replenishment:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.inventory,
-      element: lazyWithRetry(() => import('@/pages/wms/InventoryPage'), 'InventoryPage'),
-      module: 'wms',
-      code: 'wms-items',
-      title: i18n.t('shared.config.k14'),
-      titleKey: 'shared.config.k14',
-      template: 'list',
-      group: 'analytics',
-      requiredPermissions: ['wms:inventory:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.inventoryReport,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/InventoryReportPage'),
-        'InventoryReportPage'
-      ),
-      module: 'wms',
-      code: 'wms-inventory-report',
-      title: i18n.t('shared.config.k15'),
-      titleKey: 'shared.config.k15',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['wms:report:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.supplierManagement,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/SupplierManagementPage'),
-        'SupplierManagementPage'
-      ),
-      module: 'wms',
-      code: 'wms-supplier-management',
-      title: i18n.t('shared.config.k16'),
-      titleKey: 'shared.config.k16',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['wms:supplier:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.supplierDetail,
-      element: lazyWithRetry(() => import('@/pages/wms/SupplierDetailPage'), 'SupplierDetailPage'),
-      module: 'wms',
-      code: 'wms-supplier-detail',
-      title: i18n.t('shared.config.k17'),
-      titleKey: 'shared.config.k17',
-      template: 'detail',
-      group: 'master',
-      requiredPermissions: ['wms:supplier:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.area,
-      element: lazyWithRetry(() => import('@/pages/wms/WmsAreaPage'), 'WmsAreaPage'),
-      module: 'wms',
-      code: 'wms-area',
-      title: i18n.t('shared.config.k18'),
-      titleKey: 'shared.config.k18',
-      template: 'tree',
-      group: 'master',
-      requiredPermissions: ['wms:area:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.settingLocationRule,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/setting/LocationRulePage'),
-        'LocationRulePage'
-      ),
-      module: 'wms',
-      code: 'wms-location-rule',
-      title: i18n.t('shared.config.k19'),
-      titleKey: 'shared.config.k19',
-      template: 'settings',
-      group: 'setting',
-      requiredPermissions: ['wms:location_rule:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.settingFifoPolicy,
-      element: lazyWithRetry(() => import('@/pages/wms/setting/FifoPolicyPage'), 'FifoPolicyPage'),
-      module: 'wms',
-      code: 'wms-fifo-policy',
-      title: i18n.t('shared.config.fifo_0'),
-      titleKey: 'shared.config.fifo_0',
-      template: 'settings',
-      group: 'setting',
-      requiredPermissions: ['wms:fifo_policy:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.settingInventoryCycle,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/setting/InventoryCyclePage'),
-        'InventoryCyclePage'
-      ),
-      module: 'wms',
-      code: 'wms-inventory-cycle',
-      title: i18n.t('shared.config.k20'),
-      titleKey: 'shared.config.k20',
-      template: 'settings',
-      group: 'setting',
-      requiredPermissions: ['wms:inventory_cycle:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.settingInventoryThreshold,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/setting/InventoryThresholdPage'),
-        'InventoryThresholdPage'
-      ),
-      module: 'wms',
-      code: 'wms-inventory-threshold',
-      title: i18n.t('shared.config.k21'),
-      titleKey: 'shared.config.k21',
-      template: 'settings',
-      group: 'setting',
-      requiredPermissions: ['wms:inventory_threshold:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.WmsInventoryTurnover,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/analytics/WmsInventoryTurnoverPage'),
-        'WmsInventoryTurnoverPage'
-      ),
-      module: 'wms',
-      code: 'wms-analytics-turnover',
-      title: i18n.t('shared.config.k22'),
-      titleKey: 'shared.config.k22',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['wms:turnover:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.WmsAgePareto,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/analytics/WmsAgeParetoPage'),
-        'WmsAgeParetoPage'
-      ),
-      module: 'wms',
-      code: 'wms-analytics-pareto',
-      title: i18n.t('shared.config.k23'),
-      titleKey: 'shared.config.k23',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['wms:pareto:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.WmsFlowTrend,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/analytics/WmsFlowTrendPage'),
-        'WmsFlowTrendPage'
-      ),
-      module: 'wms',
-      code: 'wms-analytics-flow',
-      title: i18n.t('shared.config.k24'),
-      titleKey: 'shared.config.k24',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['wms:flow:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.WmsAbcAnalysis,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/analytics/WmsAbcAnalysisPage'),
-        'WmsAbcAnalysisPage'
-      ),
-      module: 'wms',
-      code: 'wms-analytics-abc',
-      title: i18n.t('shared.config.abc_1'),
-      titleKey: 'shared.config.abc_1',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['wms:abc:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.WmsLocationUtil,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/analytics/WmsLocationUtilizationPage'),
-        'WmsLocationUtilizationPage'
-      ),
-      module: 'wms',
-      code: 'wms-analytics-locutil',
-      title: i18n.t('shared.config.k25'),
-      titleKey: 'shared.config.k25',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['wms:locutil:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.WmsOrderFulfillment,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/analytics/WmsOrderFulfillmentPage'),
-        'WmsOrderFulfillmentPage'
-      ),
-      module: 'wms',
-      code: 'wms-analytics-fulfillment',
-      title: i18n.t('shared.config.sla_26'),
-      titleKey: 'shared.config.sla_26',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['wms:fulfillment:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.WmsInboundDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/WmsInboundDetailPage'),
-        'WmsInboundDetailPage'
-      ),
-      module: 'wms',
-      code: 'wms-inbound-detail',
-      title: i18n.t('shared.config.k27'),
-      titleKey: 'shared.config.k27',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['wms:inbound:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.WmsOutboundDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/WmsOutboundDetailPage'),
-        'WmsOutboundDetailPage'
-      ),
-      module: 'wms',
-      code: 'wms-outbound-detail',
-      title: i18n.t('shared.config.k28'),
-      titleKey: 'shared.config.k28',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['wms:outbound:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.WmsStockTakeDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/WmsStockTakeDetailPage'),
-        'WmsStockTakeDetailPage'
-      ),
-      module: 'wms',
-      code: 'wms-stocktake-detail',
-      title: i18n.t('shared.config.k29'),
-      titleKey: 'shared.config.k29',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['wms:stocktake:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.WmsTransferDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/WmsTransferDetailPage'),
-        'WmsTransferDetailPage'
-      ),
-      module: 'wms',
-      code: 'wms-transfer-detail',
-      title: i18n.t('shared.config.k30'),
-      titleKey: 'shared.config.k30',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['wms:transfer:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.WmsWavePickDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/WmsWavePickDetailPage'),
-        'WmsWavePickDetailPage'
-      ),
-      module: 'wms',
-      code: 'wms-wavepick-detail',
-      title: i18n.t('shared.config.k31'),
-      titleKey: 'shared.config.k31',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['wms:wavepick:read'],
-      action: 'read',
-    },
-    {
-      path: WMS_PATHS.WmsMovementDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/WmsInventoryMovementDetailPage'),
-        'WmsInventoryMovementDetailPage'
-      ),
-      module: 'wms',
-      code: 'wms-movement-detail',
-      title: i18n.t('shared.config.k32'),
-      titleKey: 'shared.config.k32',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['wms:movement:read'],
-      action: 'read',
-    },
-  ],
+  routes: wmsRoutes,
 };
 
 // ---- 导航配置（供导航注册表使用） ----
