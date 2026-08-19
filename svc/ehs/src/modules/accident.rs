@@ -415,7 +415,7 @@ pub async fn delete_accident(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ehs:write"])),
+    security(("BearerAuth" = ["ehs:investigation:admin"])),
     path = "/api/ehs/incidents/{id}/investigation",
     request_body = CreateInvestigationRequest,
     tag = "ehs",
@@ -456,7 +456,7 @@ pub async fn start_investigation(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["ehs:update"])),
+    security(("BearerAuth" = ["ehs:investigation:admin"])),
     path = "/api/ehs/incidents/{id}/investigation",
     request_body = UpdateInvestigationRequest,
     tag = "ehs",
@@ -504,7 +504,7 @@ pub async fn update_investigation(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ehs:write"])),
+    security(("BearerAuth" = ["ehs:investigation:admin"])),
     path = "/api/ehs/incidents/{id}/investigation/complete",
     tag = "ehs",
     params(

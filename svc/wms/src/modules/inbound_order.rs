@@ -109,7 +109,7 @@ where
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:inbound:read"])),
     path = "/api/wms/inbound-orders",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -186,7 +186,7 @@ pub async fn list_inbound_orders(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:inbound:write"])),
     path = "/api/wms/inbound-orders",
     tag = "wms",
     responses(
@@ -314,7 +314,7 @@ pub async fn create_inbound_order(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:inbound:read"])),
     path = "/api/wms/inbound-orders/{id}",
     tag = "wms",
     responses(
@@ -357,7 +357,7 @@ pub async fn get_inbound_order(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["wms:update"])),
+    security(("BearerAuth" = ["wms:inbound:write"])),
     path = "/api/wms/inbound-orders/{id}",
     tag = "wms",
     responses(
@@ -474,7 +474,7 @@ pub async fn update_inbound_order(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["wms:delete"])),
+    security(("BearerAuth" = ["wms:inbound:write"])),
     path = "/api/wms/inbound-orders/{id}",
     tag = "wms",
     responses(
@@ -549,7 +549,7 @@ pub async fn delete_inbound_order(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:inbound:read"])),
     path = "/api/wms/inbound-orders/{id}/items",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -606,7 +606,7 @@ pub async fn list_inbound_order_items(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:inbound:write"])),
     path = "/api/wms/inbound-orders/{id}/items",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -708,7 +708,7 @@ pub async fn create_inbound_order_item(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["wms:update"])),
+    security(("BearerAuth" = ["wms:inbound:write"])),
     path = "/api/wms/inbound-orders/{id}/items/{item_id}",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -792,7 +792,7 @@ pub async fn update_inbound_order_item(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["wms:delete"])),
+    security(("BearerAuth" = ["wms:inbound:write"])),
     path = "/api/wms/inbound-orders/{id}/items/{item_id}",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -861,7 +861,7 @@ pub async fn delete_inbound_order_item(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:inbound:write"])),
     path = "/api/wms/inbound-orders/{id}/confirm",
     tag = "wms",
     responses(
@@ -942,7 +942,7 @@ pub async fn confirm_inbound_order(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:inbound:write"])),
     path = "/api/wms/inbound-orders/{id}/receive",
     tag = "wms",
     responses(
@@ -1184,7 +1184,7 @@ pub async fn receive_inbound_order(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:inbound:write"])),
     path = "/api/wms/inbound-orders/{id}/complete",
     tag = "wms",
     responses(
@@ -1271,7 +1271,7 @@ pub struct ApprovalRequest {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:inbound:write"])),
     path = "/api/wms/inbound-orders/{id}/approval/start",
     tag = "WMS - Inbound",
     request_body = ApprovalRequest,
@@ -1340,7 +1340,7 @@ pub async fn start_inbound_approval(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:inbound:write"])),
     path = "/api/wms/inbound-orders/{id}/approval/approve",
     tag = "WMS - Inbound",
     request_body = ApprovalRequest,
@@ -1427,7 +1427,7 @@ pub async fn approve_inbound(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:inbound:write"])),
     path = "/api/wms/inbound-orders/{id}/approval/reject",
     tag = "WMS - Inbound",
     request_body = ApprovalRequest,

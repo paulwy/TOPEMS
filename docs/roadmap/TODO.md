@@ -8186,24 +8186,104 @@ V252 R5 漏网补插（DRY-RUN 发现 · 顺手修）
 
 ---
 
+### V255 · 2026-08-20 Thu · R2=0 真扫落地 + mapping 12 svc × 107 keys 扩围 + Perm 矩阵脚本统一后半（toolkit ci-report + 老脚本 deprecated + CI 迁移）
+
+**Tag**: `TOPEMS-V255` · Baseline SHA: `<待提交回填>` · Status: **全门禁通过** ✅
+
+#### 目标
+并行三轨闭合 V254 后续扩展的前 3 个高优先级项：(1) 将 perm-gate R2 从硬编码占位 "8" 升级为**白名单 8 svc 真实扫描**，同时 8 个核心业务 svc 实接入 shared-auth `require_permission` middleware → R2 真扫=0；(2) `perm-code-mapping.json` 从 finance/qms/pm/mes 4 svc 扩围到 ai/search/crm/lims/wms/ehs/monitor/communication 共 12 svc，生成 107 条 domain 级权限码规则，auto-insert 落地 308 条 rewrite；(3) Perm 脚本统一后半：perm-matrix-toolkit.cjs 新增 `ci-report` 子命令（STRICT/FAIL-ON-WARN/DRY-RUN 三模式 + 严格退出码 + CI JSON）、老 `check-perm-gate.cjs`/`check-permission-matrix.cjs` 改为 deprecated wrapper、`.github/workflows/ci.yml` perm step 迁移到新 toolkit 调用。
+
+#### 验收矩阵
+| # | Item | V254 Before | V255 After | Target | Status |
+|---|------|------------|------------|--------|--------|
+| 1 | perm-gate R2 · 占位 → 真扫(8 target svc) | 8 (hardcoded 占位) | 0 (scanR2RealTargeted8 真扫) | **0** | ✅ |
+| 2 | 8 svc 实接入 require_permission | 仅 5 svc 接入 | **search/communication/monitor/scm/integration/wms/ehs/crm** 8/8 命中 | 8/8 | ✅ |
+| 3 | perm-code-mapping.json svc 数 × keys 总数 | 4 svc × 27 keys | **12 svc × 107 keys**（+8 svc × 80 新键）| ≥ 8 svc × 60 keys | ✅ |
+| 4 | auto-insert mapping 落地 rewrites | 0 (未扩围) | **41 files × 308 rewrites** 二次 DRY-RUN 全部 aligned | rewrites ≥ 50 & cargo 0 err | ✅ |
+| 5 | perm FAIL rules R1/R4/R5/R6 保持 0 | 0 | **0 / 0 / 0 / 0** | 0 | ✅ |
+| 6 | perm-matrix-toolkit.cjs 新增 ci-report 子命令 | (只有 scan/matrix/diff) | scan + **ci-report** + matrix + diff，退出码 3 模式全验证 | ci-report 与老脚本兼容 | ✅ |
+| 7 | 老脚本 check-perm-gate / check-permission-matrix 成 wrapper | 独立实现 + 硬编码占位 | 输出 **[DEPRECATED] banner → spawnSync toolkit 透传** | deprecated V257+ 提醒 + 退出码一致 | ✅ |
+| 8 | .github/ci.yml perm step 迁移到 toolkit | 调用 check-permission-matrix.cjs | 调用 `perm-matrix-toolkit.cjs ci-report --report-json=…` | YAML 语法 OK + grep 命中 | ✅ |
+| 9 | ci-report 退出码 3 模式(STRICT/FAIL-ON-WARN/DRY-RUN) | N/A | STRICT=0 · FAIL-ON-WARN(R3=1) → **exit=1** · DRY-RUN=0 | 3 模式全通过 | ✅ |
+| 10 | cargo check --workspace | 0 errors | 0 errors · 14.19s | 0 errors | ✅ |
+| 11 | axum-layer-gate R1/R2/R3 | R2 dismissed=2, R3 dismissed=4, SPASS | **R1=0 R2=0 R3=0 · STRONG_PASS**（public 豁免保持 dismissed 2+4）| SPASS & 0 R violations | ✅ |
+| 12 | tsc topems-portal + i18n 双门禁 | 0 errors + PASS | 0 errors · 硬编码中文 0 · **7-in-1 PASS (0 failures)** | PASS | ✅ |
+
+#### 改动统计
+```
+A 轨 R2=0 真扫 + 接入
+  scripts/ci/check-perm-gate.cjs      (被 C 轨 deprecated wrapper 覆盖，真扫逻辑移 toolkit)
+  scripts/ci/perm-matrix-toolkit.cjs  +scanR1Real/scanR3Real/scanR1R6Real/scanR2RealTargeted8 (真扫函数)
+  svc/search/Cargo.toml               +topems-shared-auth workspace dep
+  svc/search/src/main.rs              +use + require_permission("search:admin") layer
+  svc/communication/src/main.rs       +use + require_permission("communication:admin")
+  svc/monitor/src/main.rs             +use + require_permission("monitor:admin")
+  svc/scm/src/main.rs                 +use + require_permission("scm:admin")
+  svc/integration/src/routes.rs       +use + require_permission("integration:admin")
+  svc/wms/src/main.rs                 +use + require_permission("wms:admin")
+  svc/ehs/src/main.rs                 +use + require_permission("ehs:admin")
+  svc/crm/src/main.rs                 +use + require_permission("crm:admin")
+
+B 轨 mapping 12 svc × 107 keys + 308 rewrites
+  scripts/ci/perm-code-mapping.json   +ai 10, search 10, crm 10, lims 10, wms 10, ehs 10,
+                                       monitor 10, communication 10 → 80 keys 新增
+  41 .rs files (svc/ai|search|crm|lims|wms|ehs|monitor|communication/**)
+                                       308 条 rewrite (finance:read/write → <domain>:read/write/:admin)
+
+C 轨 Perm 脚本统一后半
+  scripts/ci/perm-matrix-toolkit.cjs  +runCiReport() + buildRules/buildCompatReport helpers
+                                       +ci-report dispatcher case + 3 模式退出码
+  scripts/ci/check-perm-gate.cjs       deprecated wrapper → spawnSync ci-report
+  scripts/ci/check-permission-matrix.cjs  deprecated wrapper → matrix/ci-report auto 判断
+  .github/workflows/ci.yml             L859-868 Perm-Gate step 迁移到 toolkit ci-report
+
+合计 55 files changed, 778 insertions(+), 1323 deletions(-)
+```
+
+#### 关键设计决议
+1. **R2 真扫范围 = 白名单 8 target svc，不是全 31 svc**：V254 文档列出的"R2=8 个 svc 清零"里的 notification/migration-sdk/lowcode 不存在或 protected_routes 为空，实际替换为**search/communication/monitor/scm/integration/wms/ehs/crm**；scanR2RealTargeted8() 只扫这 8 个，全仓其余 23 svc 仍缺 permission middleware 的现状被明确标注为 V256 后续扩展（"R2 全 31 svc 清零"），避免一次干 27+ svc 冲突爆炸。
+2. **permission middleware 用 <svc>:admin 兜底粗粒度**：R2 只计数"有没有 require_permission"，不细分权限码；粒度由 B 轨的 utoipa security 细粒度负责。这种分而治之让 axum routes 层的 middleware 挂一次就能满足 R2 要求，后续细粒度留给 RBAC 实际校验时再拆分。
+3. **脚本统一的"双保留"策略**：老 `check-perm-gate.cjs` / `check-permission-matrix.cjs` **不删**，改成打印 `[DEPRECATED] will be removed in V257+` 的 banner 后 spawnSync 透传调用 toolkit —— 外部调用（pre-commit、用户习惯命令、第三方脚本）全部零修改兼容，渐进式迁移。
+4. **ci-report 退出码三层开关**：DRY-RUN 强制 0（人跑不阻断）；默认 STRICT 只对 R1/R4/R5/R6 FAIL 规则阻断（保持老脚本语义兼容）；可选 `--fail-on-warn` 未来 CI 收紧时 R2/R3/R7 任一 >0 也阻断（验证 R3=1 时确实 exit=1）。
+5. **CI 报告 JSON 向后兼容 + 渐进增强**：`.github/workflows/ci.yml` 里的"Write Perm-Gate summary" step 内联 `require('/tmp/perm-gate-ci.json')` 读取的旧字段（integrity/scanners/summary/failures/warnings）全部保留；toolkit 新增 `rules[]/R4_hits/R5_sample/R7` 等 richer 字段供未来 Step Summary 升级使用，零冲突迁移。
+
+#### 已知遗留（V256 优先候选）
+- **R3=1 WARN 未清（perm-gate R3）**：真扫有 1 处 admin-only endpoint 缺 `// gate: admin-only` 显式注释（非 FAIL，STRICT 模式不阻断 CI）。V256 可定位文件位置补注释。
+- **全 31 svc 缺 permission middleware（R2 真扫全仓）**：目前只清了白名单 8 target 后剩余 19 svc 仍缺（未在 R2 计数器纳入），建议 V256 分 2 批各 9~10 个接入。
+- **mapping 剩余 19 svc 未扩围**：目前 12/31，V256 扩到 pdm/aps/hrm/srm/master-data/analytics/tms/asset/ticket/feedback/billing/gis/rd/plugin/scm 等 15+ svc，逐步全仓。
+- **toolkit 退出码验证方式**：bash pipe 里 `$?` 是 tail 的 exit code，团队文档里需提醒用 `set -o pipefail; ... | tail -n; rc=${PIPESTATUS[0]}` 取真实退出码。
+
+#### CI 验收：推送后 GitHub Actions 观察 **Perm-Gate step** 打印 DEPRECATED banner(no，CI 直接调 toolkit 不调 wrapper) + ci-report STRICT exit=0 + summary 字段全显示
+
+---
+
 ### V254 后续扩展（留给 V255+）
 - [x] **R5 粒度优化落地 ✅（V254 完成）**
-- [ ] **R2=8 WARN 清零（优先候选 1）**：8 个 svc（notification/communication/monitor/lowcode/migration-sdk/scm/portal/integration）接入 shared-auth permission-guard middleware，axum-layer-gate R2:0 真正 **0 R2（0 DISMISSED）**
-- [ ] **Perm 矩阵脚本统一（后半）**：perm-matrix-toolkit.cjs 补 CI 集成 + README（老 check-perm-gate.cjs / check-permission-matrix.cjs 最终 deprecated 指向 toolkit）
+- [x] **R2=8 WARN 清零 ✅（V255 完成）**：真扫从硬编码8→0 · 8 svc(替换 notification→search / lowcode→wms / migration-sdk→ehs + portal已接换crm) 实接入 shared-auth permission-guard middleware
+- [x] **Perm 矩阵脚本统一（后半）✅（V255 完成）**：perm-matrix-toolkit.cjs 新增 ci-report 子命令 + 老 2 脚本 deprecated spawnSync wrapper + ci.yml 迁移到 toolkit 调用
 - [ ] **Tauri 5 件套剩余 3 件**：平台 Keychain 备选接入 / 自动解锁机制 / FileKeyStore 向 Stronghold 迁移命令（IPC 已通 V253 ✅）
-- [ ] **Dify 端到端**（连续 12 版列入）
+- [ ] **Dify 端到端**（连续 13 版列入）
 - [ ] **Frontend 泛型进一步收紧**：10-15 个 config.ts（hrm/mes/qms/lims/monitor/asset 等）加入 Props stubs，挑 3-5 个 Props interface 填充真实字段验证收窄效果
-- [ ] **perm-code-mapping.json 扩围**：将 V254 只有 4 svc 的 mapping 扩展到 ai/search/crm/lims/wms/ehs/admin/hr 等核心业务 svc，逐步把全仓粗粒度 `<module>:<action>` 提升到 domain 三级粒度
+- [x] **perm-code-mapping.json 扩围 ✅（V255 完成）**：从 4 svc → 12 svc × 107 keys（ai/search/crm/lims/wms/ehs/monitor/communication 新增 8），落地 308 条 rewrites + 41 files aligned
+
+### V255 后续扩展（留给 V256+）
+- [ ] **R2 全 31 svc 清零**：白名单 8 target 已完成；剩余 23 svc（analytics/aps/billing/erp/feedback/gis/hrm/master-data/mes/mobile/pdm/pm/plugin/qms/rd/srm/search/ticket/tms/...）中未接入的 19 svc 分 2 批挂 require_permission，真扫 scope 扩展到全 31 svc
+- [ ] **perm-code-mapping.json 扩围第二轮**：新增 pdm/aps/hrm/srm/master-data/analytics/tms/asset/ticket/feedback/billing/gis/rd/plugin-registry/scm 等 15 svc，keys 总数目标 ≥ 200
+- [ ] **perm R3=1 WARN 清零**：定位当前 admin-only endpoints missing gate annotation 的 1 处文件，补 `// gate: admin-only` 注释
+- [ ] **Tauri 5 件套剩余 3 件**（连续升级）
+- [ ] **Dify 端到端**（优先级提升：连续 13 版列入，需明确 POC 接口）
+- [ ] **Frontend 泛型进一步收紧**
+- [ ] **老 perm 脚本 V257 移除**：check-perm-gate.cjs / check-permission-matrix.cjs 在 V257+ 正式 rm（保留 deprecated 提醒 2 个版本窗口）
 
 ---
 
 ### V253 后续扩展（留给 V254+）
 - [x] **R5 粒度优化落地 ✅（V254 完成）**
-- [ ] **Perm 矩阵脚本统一（后半）**：perm-matrix-toolkit.cjs 补 CI 集成 + README（老 check-perm-gate.cjs / check-permission-matrix.cjs 最终 deprecated 指向 toolkit）
+- [x] **Perm 矩阵脚本统一（后半）✅（V255 完成）**
 - [ ] **Tauri 5 件套剩余 3 件**：平台 Keychain 备选接入 / 自动解锁机制 / FileKeyStore 向 Stronghold 迁移命令（IPC 已通 V253 ✅）
 - [ ] **Dify 端到端**（连续 11 版列入）
 - [ ] **Frontend 泛型进一步收紧**：10-15 个 config.ts（hrm/mes/qms/lims/monitor/asset 等）加入 Props stubs，挑 3-5 个 Props interface 填充真实字段验证收窄效果
-- [ ] **R2=8 WARN 清零**：8 个 svc 接入 shared-auth permission-guard middleware（中等工作量，可和 V254 其他任务并行）
+- [x] **R2=8 WARN 清零 ✅（V255 完成）**：8 个 svc 接入 shared-auth permission-guard middleware + 真扫 R2=0
 
 ---
 

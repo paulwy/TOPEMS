@@ -307,7 +307,7 @@ fn get_tenant_id(claims: &Claims) -> Uuid {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["monitor:read"])),
+    security(("BearerAuth" = ["monitor:alert:read"])),
     path = "/api/monitor/alerts",
     tag = "alerts",
     responses(
@@ -429,7 +429,7 @@ pub async fn list_alerts(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["monitor:read"])),
+    security(("BearerAuth" = ["monitor:alert:read"])),
     path = "/api/monitor/alerts/{id}",
     tag = "alerts",
     params(
@@ -464,7 +464,7 @@ pub async fn get_alert(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["monitor:write"])),
+    security(("BearerAuth" = ["monitor:alert:write"])),
     path = "/api/monitor/alerts/{id}",
     request_body = serde_json::Value,
     tag = "alerts",
@@ -515,7 +515,7 @@ pub async fn update_alert(
 // Alert Statistics
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["monitor:read"])),
+    security(("BearerAuth" = ["monitor:alert:read"])),
     path = "/api/monitor/alerts/statistics",
     tag = "alerts",
     responses(
@@ -564,7 +564,7 @@ pub async fn get_alert_statistics(
 // Batch acknowledge alerts
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["monitor:write"])),
+    security(("BearerAuth" = ["monitor:alert:write"])),
     path = "/api/monitor/alerts/acknowledge",
     request_body = serde_json::Value,
     tag = "alerts",
@@ -599,7 +599,7 @@ pub async fn acknowledge_alerts(
 // Batch resolve alerts
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["monitor:write"])),
+    security(("BearerAuth" = ["monitor:alert:write"])),
     path = "/api/monitor/alerts/resolve",
     request_body = serde_json::Value,
     tag = "alerts",
@@ -951,7 +951,7 @@ pub async fn disable_rule(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["monitor:read"])),
+    security(("BearerAuth" = ["monitor:alert:read"])),
     path = "/api/monitor/alerts/{id}/history",
     tag = "alerts",
     params(
@@ -991,7 +991,7 @@ pub async fn get_alert_history(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["monitor:read"])),
+    security(("BearerAuth" = ["monitor:alert:read"])),
     path = "/api/monitor/alerts/{id}/timeline",
     tag = "alerts",
     params(

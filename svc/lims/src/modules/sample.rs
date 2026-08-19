@@ -76,7 +76,7 @@ pub struct UpdateSampleRequest {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["lims:read"])),
+    security(("BearerAuth" = ["lims:sample:read"])),
     path = "/lims/samples",
     tag = "sample",
     params(
@@ -198,7 +198,7 @@ pub async fn list_samples(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["lims:write"])),
+    security(("BearerAuth" = ["lims:sample:write"])),
     path = "/lims/samples",
     tag = "sample",
     request_body = CreateSampleRequest,
@@ -259,7 +259,7 @@ pub async fn register_sample(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["lims:read"])),
+    security(("BearerAuth" = ["lims:sample:read"])),
     path = "/lims/samples/{id}",
     tag = "sample",
     params(

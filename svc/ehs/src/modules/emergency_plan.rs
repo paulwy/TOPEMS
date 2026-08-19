@@ -194,7 +194,7 @@ pub struct ApprovalRequest {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["ehs:read"])),
+    security(("BearerAuth" = ["ehs:plan:read"])),
     path = "/api/ehs/emergency-plans",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -214,7 +214,7 @@ pub async fn list_plans(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ehs:write"])),
+    security(("BearerAuth" = ["ehs:plan:write"])),
     path = "/api/ehs/emergency-plans",
     request_body = CreatePlanRequest,
     tag = "ehs",
@@ -262,7 +262,7 @@ pub async fn create_plan(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["ehs:read"])),
+    security(("BearerAuth" = ["ehs:plan:read"])),
     path = "/api/ehs/emergency-plans/{id}",
     tag = "ehs",
     params(
@@ -380,7 +380,7 @@ pub async fn get_plan(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["ehs:update"])),
+    security(("BearerAuth" = ["ehs:plan:write"])),
     path = "/api/ehs/emergency-plans/{id}",
     request_body = UpdatePlanRequest,
     tag = "ehs",
@@ -430,7 +430,7 @@ pub async fn update_plan(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["ehs:delete"])),
+    security(("BearerAuth" = ["ehs:plan:write"])),
     path = "/api/ehs/emergency-plans/{id}",
     tag = "ehs",
     params(
@@ -452,7 +452,7 @@ pub async fn delete_plan(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["ehs:read"])),
+    security(("BearerAuth" = ["ehs:plan:read"])),
     path = "/api/ehs/emergency-plans/{id}/supplies",
     tag = "ehs",
     params(
@@ -477,7 +477,7 @@ pub async fn list_plan_supplies(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ehs:write"])),
+    security(("BearerAuth" = ["ehs:plan:write"])),
     path = "/api/ehs/emergency-plans/{id}/supplies",
     request_body = CreateSupplyRequest,
     tag = "ehs",
@@ -517,7 +517,7 @@ pub async fn add_plan_supply(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["ehs:delete"])),
+    security(("BearerAuth" = ["ehs:plan:write"])),
     path = "/api/ehs/emergency-plans/{id}/supplies/{supply_id}",
     tag = "ehs",
     params(
@@ -540,7 +540,7 @@ pub async fn delete_plan_supply(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ehs:write"])),
+    security(("BearerAuth" = ["ehs:plan:write"])),
     path = "/api/ehs/emergency-plans/{id}/submit-approval",
     request_body = SubmitApprovalRequest,
     tag = "ehs",
@@ -590,7 +590,7 @@ pub async fn submit_plan_approval(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ehs:write"])),
+    security(("BearerAuth" = ["ehs:plan:write"])),
     path = "/api/ehs/emergency-plans/{id}/approve",
     request_body = ApprovalRequest,
     tag = "ehs",
@@ -628,7 +628,7 @@ pub async fn approve_plan(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["ehs:read"])),
+    security(("BearerAuth" = ["ehs:plan:read"])),
     path = "/api/ehs/emergency-plans/{id}/versions",
     tag = "ehs",
     params(
@@ -693,7 +693,7 @@ pub async fn create_new_version(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["ehs:read"])),
+    security(("BearerAuth" = ["ehs:plan:read"])),
     path = "/api/ehs/emergency-plans/categories",
     tag = "ehs",
     responses((status = 200, description = "OK")),

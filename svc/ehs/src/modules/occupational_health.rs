@@ -337,7 +337,7 @@ pub struct UpdateAbnormalityRequest {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["ehs:read"])),
+    security(("BearerAuth" = ["ehs:plan:read"])),
     path = "/api/ehs/occupational-health/exam-plans",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -357,7 +357,7 @@ pub async fn list_exam_plans(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ehs:write"])),
+    security(("BearerAuth" = ["ehs:plan:write"])),
     path = "/api/ehs/occupational-health/exam-plans",
     request_body = CreateExamPlanRequest,
     tag = "ehs",
@@ -399,7 +399,7 @@ pub async fn create_exam_plan(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["ehs:read"])),
+    security(("BearerAuth" = ["ehs:plan:read"])),
     path = "/api/ehs/occupational-health/exam-plans/{id}",
     tag = "ehs",
     params(
@@ -441,7 +441,7 @@ pub async fn get_exam_plan(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["ehs:update"])),
+    security(("BearerAuth" = ["ehs:plan:write"])),
     path = "/api/ehs/occupational-health/exam-plans/{id}",
     request_body = UpdateExamPlanRequest,
     tag = "ehs",
@@ -487,7 +487,7 @@ pub async fn update_exam_plan(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["ehs:delete"])),
+    security(("BearerAuth" = ["ehs:plan:write"])),
     path = "/api/ehs/occupational-health/exam-plans/{id}",
     tag = "ehs",
     params(

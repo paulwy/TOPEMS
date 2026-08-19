@@ -111,7 +111,7 @@ where
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:stocktake:read"])),
     path = "/api/wms/stock-takes",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -197,7 +197,7 @@ pub async fn list_stock_takes(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:stocktake:admin"])),
     path = "/api/wms/stock-takes",
     tag = "wms",
     responses(
@@ -285,7 +285,7 @@ pub async fn create_stock_take(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:stocktake:read"])),
     path = "/api/wms/stock-takes/{id}",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -328,7 +328,7 @@ pub async fn get_stock_take(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["wms:update"])),
+    security(("BearerAuth" = ["wms:stocktake:admin"])),
     path = "/api/wms/stock-takes/{id}",
     tag = "wms",
     responses(
@@ -438,7 +438,7 @@ pub async fn update_stock_take(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["wms:delete"])),
+    security(("BearerAuth" = ["wms:stocktake:admin"])),
     path = "/api/wms/stock-takes/{id}",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -508,7 +508,7 @@ pub async fn delete_stock_take(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:stocktake:admin"])),
     path = "/api/wms/stock-takes/{id}/start",
     tag = "wms",
     responses(
@@ -638,7 +638,7 @@ pub async fn start_stock_take(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:stocktake:read"])),
     path = "/api/wms/stock-takes/{id}/items",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -714,7 +714,7 @@ pub async fn list_stock_take_items(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:stocktake:admin"])),
     path = "/api/wms/stock-takes/{id}/items",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -827,7 +827,7 @@ pub async fn create_stock_take_item(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:stocktake:admin"])),
     path = "/api/wms/stock-takes/{id}/count",
     tag = "wms",
     responses(
@@ -917,7 +917,7 @@ pub async fn count_stock_take(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:stocktake:read"])),
     path = "/api/wms/stock-takes/{id}/items/{item_id}",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -963,7 +963,7 @@ pub async fn get_stock_take_item(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["wms:update"])),
+    security(("BearerAuth" = ["wms:stocktake:admin"])),
     path = "/api/wms/stock-takes/{id}/items/{item_id}",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -1099,7 +1099,7 @@ pub async fn update_stock_take_item(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["wms:delete"])),
+    security(("BearerAuth" = ["wms:stocktake:admin"])),
     path = "/api/wms/stock-takes/{id}/items/{item_id}",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -1168,7 +1168,7 @@ pub async fn delete_stock_take_item(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:stocktake:admin"])),
     path = "/api/wms/stock-takes/{id}/complete",
     tag = "wms",
     responses(
@@ -1324,7 +1324,7 @@ pub async fn complete_stock_take(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:stocktake:admin"])),
     path = "/api/wms/stock-takes/{id}/adjust",
     tag = "wms",
     responses(
@@ -1432,7 +1432,7 @@ pub struct ApprovalRequest {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:stocktake:admin"])),
     path = "/api/wms/stock-takes/{id}/approval/start",
     tag = "WMS - StockTake",
     request_body = ApprovalRequest,
@@ -1501,7 +1501,7 @@ pub async fn start_stock_take_approval(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:stocktake:admin"])),
     path = "/api/wms/stock-takes/{id}/approval/approve",
     tag = "WMS - StockTake",
     request_body = ApprovalRequest,
@@ -1588,7 +1588,7 @@ pub async fn approve_stock_take(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:stocktake:admin"])),
     path = "/api/wms/stock-takes/{id}/approval/reject",
     tag = "WMS - StockTake",
     request_body = ApprovalRequest,

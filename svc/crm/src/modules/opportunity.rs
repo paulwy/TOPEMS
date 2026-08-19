@@ -274,7 +274,7 @@ async fn list_opportunities(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["crm:write"])),
+    security(("BearerAuth" = ["crm:opportunity:write"])),
     path = "/opportunities",
     tag = "opportunity",
     request_body = CreateOpportunityRequest,
@@ -970,6 +970,7 @@ fn prev_stage(from: OppStage) -> OppStage {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["crm:opportunity:write"])),
     path = "/opportunities/{id}/advance",
     params(("id" = Uuid, Path, description = "Opportunity id to advance stage")),
     request_body = AdvanceOpportunityRequest,
@@ -1123,6 +1124,7 @@ async fn advance_opportunity(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["crm:opportunity:write"])),
     path = "/opportunities/{id}/rollback",
     params(("id" = Uuid, Path, description = "Opportunity id to rollback stage (adjacent only)")),
     request_body = RollbackOpportunityRequest,

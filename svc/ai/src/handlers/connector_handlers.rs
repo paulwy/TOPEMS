@@ -81,7 +81,7 @@ pub async fn get_connector(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ai:write"])),
+    security(("BearerAuth" = ["ai:session:write"])),
     path = "/api/ai/connectors/create",
     request_body = CreateConnectorRequest,
     tag = "ai",

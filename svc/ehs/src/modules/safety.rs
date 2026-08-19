@@ -185,7 +185,7 @@ pub struct UpdateInspectionRecordRequest {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["ehs:read"])),
+    security(("BearerAuth" = ["ehs:plan:read"])),
     path = "/api/ehs/checks/plans",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -205,7 +205,7 @@ pub async fn list_plans(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ehs:write"])),
+    security(("BearerAuth" = ["ehs:plan:write"])),
     path = "/api/ehs/checks/plans",
     request_body = CreateInspectionPlanRequest,
     tag = "ehs",
@@ -244,7 +244,7 @@ pub async fn create_plan(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["ehs:read"])),
+    security(("BearerAuth" = ["ehs:plan:read"])),
     path = "/api/ehs/checks/plans/{id}",
     tag = "ehs",
     params(
@@ -284,7 +284,7 @@ pub async fn get_plan(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["ehs:update"])),
+    security(("BearerAuth" = ["ehs:plan:write"])),
     path = "/api/ehs/checks/plans/{id}",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -326,7 +326,7 @@ pub async fn update_plan(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["ehs:delete"])),
+    security(("BearerAuth" = ["ehs:plan:write"])),
     path = "/api/ehs/checks/plans/{id}",
     tag = "ehs",
     params(
@@ -348,7 +348,7 @@ pub async fn delete_plan(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["ehs:read"])),
+    security(("BearerAuth" = ["ehs:plan:read"])),
     path = "/api/ehs/checks/plans/{plan_id}/items",
     tag = "ehs",
     params(
@@ -410,7 +410,7 @@ pub async fn list_plan_items(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ehs:write"])),
+    security(("BearerAuth" = ["ehs:plan:write"])),
     path = "/api/ehs/checks/plans/{plan_id}/items",
     request_body = CreateInspectionItemRequest,
     tag = "ehs",
@@ -451,7 +451,7 @@ pub async fn create_plan_item(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["ehs:delete"])),
+    security(("BearerAuth" = ["ehs:plan:write"])),
     path = "/api/ehs/checks/plans/{plan_id}/items/{item_id}",
     tag = "ehs",
     params(

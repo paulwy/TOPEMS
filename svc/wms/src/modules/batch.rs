@@ -564,7 +564,7 @@ pub async fn adjust_quantity(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:transfer:write"])),
     path = "/batches/{id}/transfer-location",
     tag = "batch",
     operation_id = "transfer_location",

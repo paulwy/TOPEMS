@@ -193,6 +193,7 @@
     clippy::useless_format
 )]
 use axum::{routing::get, Router};
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 
 mod handlers;
@@ -230,6 +231,9 @@ async fn main() -> anyhow::Result<()> {
     // ── protected_routes（业务路由：需要 State<PgPool>） ──────────────
     let protected_routes = Router::new()
         .route("/", get(handlers::search_handler))
+        .layer(axum::middleware::from_fn(require_permission(
+            "search:admin",
+        )))
         .with_state(ctx.db.clone());
 
     // ── 组装 Application ─────────────────────────────────────────────

@@ -297,7 +297,7 @@ async fn search_all(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["search:read"])),
+    security(("BearerAuth" = ["search:query:read"])),
     path = "/api/search",
     tag = "fulltext",
     params(

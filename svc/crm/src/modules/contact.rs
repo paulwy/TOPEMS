@@ -50,7 +50,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["crm:read"])),
+    security(("BearerAuth" = ["crm:contact:read"])),
     path = "/contacts",
     tag = "contact",
     params(
@@ -144,7 +144,7 @@ async fn list_contacts(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["crm:write"])),
+    security(("BearerAuth" = ["crm:contact:read"])),
     path = "/contacts",
     tag = "contact",
     request_body = CreateContactRequest,
@@ -534,6 +534,7 @@ pub struct ContactApprovalActionRequest {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["crm:approval:admin"])),
     path = "/contacts/{id}/approval/start",
     params(("id" = Uuid, Path, description = "Contact id to start approval")),
     request_body = StartContactApprovalRequest,
@@ -647,6 +648,7 @@ async fn start_contact_approval(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["crm:contact:read"])),
     path = "/contacts/{id}/approval/approve",
     params(("id" = Uuid, Path, description = "Contact id to approve")),
     request_body = ContactApprovalActionRequest,
@@ -736,6 +738,7 @@ async fn approve_contact(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["crm:contact:read"])),
     path = "/contacts/{id}/approval/reject",
     params(("id" = Uuid, Path, description = "Contact id to reject")),
     request_body = ContactApprovalActionRequest,

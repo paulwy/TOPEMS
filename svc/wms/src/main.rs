@@ -210,6 +210,7 @@ use topems_shared_bootstrap::{
 use modules::wms_plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
 use modules::ApiState;
 use shared::cache::InMemoryCache;
+use topems_shared_auth::middleware::require_permission;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -259,7 +260,9 @@ async fn main() -> Result<()> {
     let public_routes = create_standard_health_routes(health_state).merge(plugin_routes);
 
     // 业务路由
-    let protected_routes = modules::create_routes::<ApiState>().with_state(api_state);
+    let protected_routes = modules::create_routes::<ApiState>()
+        .layer(axum::middleware::from_fn(require_permission("wms:admin")))
+        .with_state(api_state);
 
     // OpenAPI 文档
     let openapi_json = Some(

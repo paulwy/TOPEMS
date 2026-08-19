@@ -119,7 +119,7 @@ where
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:alert:read"])),
     path = "/api/wms/inventory-alerts",
     responses(
         (status = 200, description = "list_alerts OK")
@@ -273,7 +273,7 @@ pub async fn list_alerts(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:alert:read"])),
     path = "/api/wms/inventory-alerts/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -375,7 +375,7 @@ pub async fn get_alert(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:alert:read"])),
     path = "/api/wms/inventory-alerts/{id}/acknowledge",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -438,7 +438,7 @@ pub async fn acknowledge_alert(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:alert:read"])),
     path = "/api/wms/inventory-alerts/statistics",
     responses(
         (status = 200, description = "get_alert_statistics OK")
@@ -580,7 +580,7 @@ pub async fn get_alert_statistics(
 /// 获取预警汇总（简化版）
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:alert:read"])),
     path = "/alerts/summary",
     tag = "inventory_alert",
     operation_id = "get_alert_summary",
@@ -662,7 +662,7 @@ pub async fn get_alert_summary(
 /// 按仓库获取预警列表
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:alert:read"])),
     path = "/alerts/by-warehouse",
     tag = "inventory_alert",
     operation_id = "get_alerts_by_warehouse",
@@ -826,7 +826,7 @@ pub struct UpdateAlertRuleRequest {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:alert:read"])),
     path = "/api/wms/inventory-alerts/rules",
     responses(
         (status = 200, description = "list_alert_rules OK")
@@ -917,7 +917,7 @@ pub async fn list_alert_rules(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:alert:read"])),
     path = "/api/wms/inventory-alerts/rules",
     responses(
         (status = 200, description = "create_alert_rule OK")
@@ -1015,7 +1015,7 @@ pub async fn create_alert_rule(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:alert:read"])),
     path = "/api/wms/inventory-alerts/rules/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -1068,7 +1068,7 @@ pub async fn get_alert_rule(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["wms:update"])),
+    security(("BearerAuth" = ["wms:alert:read"])),
     path = "/api/wms/inventory-alerts/rules/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -1177,7 +1177,7 @@ pub async fn update_alert_rule(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["wms:delete"])),
+    security(("BearerAuth" = ["wms:alert:read"])),
     path = "/api/wms/inventory-alerts/rules/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -1249,7 +1249,7 @@ pub async fn delete_alert_rule(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:alert:read"])),
     path = "/api/wms/inventory-alerts/records",
     responses(
         (status = 200, description = "list_alert_records OK")
@@ -1350,7 +1350,7 @@ pub async fn list_alert_records(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:alert:read"])),
     path = "/api/wms/inventory-alerts/records/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -1413,7 +1413,7 @@ pub struct ConfirmAlertRecordRequest {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:alert:read"])),
     path = "/api/wms/inventory-alerts/records/{id}/confirm",
     params(
         ("id" = Uuid, Path, description = "id")

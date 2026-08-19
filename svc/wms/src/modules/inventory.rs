@@ -95,7 +95,7 @@ where
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:inventory:read"])),
     path = "/api/wms/inventory",
     responses(
         (status = 200, description = "list_inventory OK")
@@ -178,7 +178,7 @@ pub async fn list_inventory(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["wms:write"])),
+    security(("BearerAuth" = ["wms:inventory:read"])),
     path = "/api/wms/inventory",
     responses(
         (status = 201, description = "创建成功"),
@@ -272,7 +272,7 @@ pub async fn create_inventory(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:inventory:read"])),
     path = "/api/wms/inventory/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -324,7 +324,7 @@ pub async fn get_inventory(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["wms:update"])),
+    security(("BearerAuth" = ["wms:inventory:read"])),
     path = "/api/wms/inventory/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -553,7 +553,7 @@ pub async fn update_inventory(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["wms:delete"])),
+    security(("BearerAuth" = ["wms:inventory:read"])),
     path = "/api/wms/inventory/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -631,7 +631,7 @@ pub async fn delete_inventory(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:inventory:read"])),
     path = "/api/wms/inventory/low-stock",
     responses(
         (status = 200, description = "list_low_stock_inventory OK")
@@ -682,7 +682,7 @@ pub async fn list_low_stock_inventory(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:inventory:read"])),
     path = "/api/wms/inventory/warehouse/{warehouse_id}",
     params(
         ("warehouse_id" = Uuid, Path, description = "warehouse_id")
@@ -747,7 +747,7 @@ pub async fn list_inventory_by_warehouse(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["wms:read"])),
+    security(("BearerAuth" = ["wms:inventory:read"])),
     path = "/api/wms/inventory/statistics",
     responses(
         (status = 200, description = "get_inventory_statistics OK")

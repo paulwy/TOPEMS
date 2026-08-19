@@ -46,7 +46,7 @@ fn err_to_response<T>(e: DifyError) -> ApiOk<T> {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ai:write"])),
+    security(("BearerAuth" = ["ai:chat:write"])),
     path = "/api/ai/dify/chat",
     request_body = DifyChatRequest,
     tag = "ai-dify",
@@ -66,7 +66,7 @@ pub async fn chat(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["ai:write"])),
+    security(("BearerAuth" = ["ai:chat:write"])),
     path = "/api/ai/dify/chat/stream",
     request_body = DifyChatRequest,
     tag = "ai-dify",
