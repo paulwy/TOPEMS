@@ -75,7 +75,8 @@ const REPORT = {
     scannedFiles: 0,
     foundRouters: 0,
     routersWithBothMiddleware: 0,
-    matchedLayers: 0
+    matchedLayers: 0,
+    buildApplicationCalls: 0
   },
   integrity: { passed: false, weakPass: false, violations: [] },
   summary: { R1: 0, R2: 0, R3: 0 },
@@ -168,6 +169,9 @@ function stripRustComments(text) {
 function SCAN_ROUTERS(filePaths) {
   const routers = [];
   let matchedLayers = 0;
+  let buildApplicationCalls = 0;
+  const protectedVarByFile = {};
+  const fileHasGlobalAuth = {};
 
   const routerDefRegex = /(?:let|const)\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(?:[A-Za-z_][A-Za-z0-9_]*::)?Router::new\s*\(\s*\)/;
   const layerStartRegex = /\.layer\s*\(/;
@@ -175,6 +179,8 @@ function SCAN_ROUTERS(filePaths) {
   const tenantMwRegex = /tenant_middleware/;
   const withStateRegex = /\.with_state\s*\(/;
   const mergeRegex = /\.merge\s*\(/;
+  const buildAppRegex = /build_application\s*\(\s*([^,]+),\s*([^,]+),\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*([A-Za-z_][A-Za-z0-9_]*)/;
+  const applicationStructRegex = /Application\s*\{/;
 
   function detectLayerKindInWindow(cleanLines, rawLines, startLn, maxLookAhead = 5) {
     const maxLn = Math.min(cleanLines.length, startLn + maxLookAhead);
@@ -208,16 +214,34 @@ function SCAN_ROUTERS(filePaths) {
     const rawLines = raw.split('\n');
     const fileRel = path.relative(TOPEMS_ROOT, filePath);
 
+    if (!protectedVarByFile[fileRel]) protectedVarByFile[fileRel] = new Set();
+    fileHasGlobalAuth[fileRel] = false;
+
+    const baMatch = clean.match(buildAppRegex);
+    if (baMatch) {
+      buildApplicationCalls++;
+      const protectedArg = baMatch[4];
+      protectedVarByFile[fileRel].add(protectedArg);
+    }
+
     const baseIndentOfLine = (lineText) => {
       const m = lineText.match(/^(\s*)/);
       return m ? m[1].length : 0;
     };
 
     let activeCtx = null;
+    let afterApplicationStruct = false;
 
     for (let ln = 0; ln < lines.length; ln++) {
       const line = lines[ln];
       const lineNo = ln + 1;
+
+      if (applicationStructRegex.test(line)) {
+        afterApplicationStruct = true;
+      }
+      if (afterApplicationStruct && authMwRegex.test(line)) {
+        fileHasGlobalAuth[fileRel] = true;
+      }
 
       const newRouterMatch = line.match(routerDefRegex);
       if (newRouterMatch) {
@@ -232,7 +256,9 @@ function SCAN_ROUTERS(filePaths) {
           startLine: lineNo,
           startIndent: baseIndentOfLine(rawLines[ln]),
           layers: [],
-          closed: false
+          closed: false,
+          buildAppProtected: protectedVarByFile[fileRel].has(varName),
+          fileHasGlobalAuthRef: fileHasGlobalAuth
         };
         continue;
       }
@@ -276,11 +302,13 @@ function SCAN_ROUTERS(filePaths) {
   }
 
   REPORT.scanners.matchedLayers = matchedLayers;
-  return routers;
+  REPORT.scanners.buildApplicationCalls = buildApplicationCalls;
+  return { routers, protectedVarByFile, fileHasGlobalAuth };
 }
 
 /* ---------- Validator: 3 Rules ---------- */
-function RUN_VALIDATORS(routers) {
+function RUN_VALIDATORS(routers, extra = {}) {
+  const { fileHasGlobalAuth = {} } = extra;
   REPORT.routers = routers.slice(0, 500);
 
   let bothCount = 0;
@@ -324,16 +352,31 @@ function RUN_VALIDATORS(routers) {
              `Verify: does this Router handle tenant-scoped data? If yes, tenant_middleware is MISSING.`
       });
     } else if (!hasAuth && hasTenant) {
-      REPORT.summary.R3++;
-      REPORT.warnings.push({
-        rule: 'R3', level: 'WARN', file: r.file, line: r.startLine,
-        routerVar: r.routerVar,
-        tenantLine: tenantLayers[0].line,
-        msg: `Router '${r.routerVar}' has tenant_middleware but NO auth_middleware. ` +
-             `HIGH RISK: tenant_middleware depends on Extension<Claims> injected by auth_middleware. ` +
-             `Without auth, tenant_middleware will panic with "Missing Claims" (500). ` +
-             `Add auth_middleware as the LAST .layer() call (outermost).`
-      });
+      const isBuildAppProtected = r.buildAppProtected === true;
+      const globalAuthDismiss = fileHasGlobalAuth[r.file] === true;
+      if (isBuildAppProtected || globalAuthDismiss) {
+        REPORT.warnings.push({
+          rule: 'R3', level: 'INFO', file: r.file, line: r.startLine,
+          routerVar: r.routerVar,
+          tenantLine: tenantLayers[0].line,
+          dismissed: true,
+          reason: isBuildAppProtected
+            ? 'build_application wraps auth globally'
+            : 'file has global auth_middleware near Application construction',
+          msg: `[DISMISSED] Router '${r.routerVar}' has tenant_middleware but NO auth_middleware locally — dismissed because ${isBuildAppProtected ? 'build_application wraps auth globally' : 'file appears to apply auth_middleware at Application level'}.`
+        });
+      } else {
+        REPORT.summary.R3++;
+        REPORT.warnings.push({
+          rule: 'R3', level: 'WARN', file: r.file, line: r.startLine,
+          routerVar: r.routerVar,
+          tenantLine: tenantLayers[0].line,
+          msg: `Router '${r.routerVar}' has tenant_middleware but NO auth_middleware. ` +
+               `HIGH RISK: tenant_middleware depends on Extension<Claims> injected by auth_middleware. ` +
+               `Without auth, tenant_middleware will panic with "Missing Claims" (500). ` +
+               `Add auth_middleware as the LAST .layer() call (outermost).`
+        });
+      }
     }
   }
 
@@ -346,7 +389,8 @@ async function runGate(config = {}) {
   const files = globToFiles(scan);
   REPORT.scanners.scannedFiles = files.length;
 
-  const routers = SCAN_ROUTERS(files);
+  const routersResult = SCAN_ROUTERS(files);
+  const routers = routersResult.routers;
 
   const integrityFails = [];
   for (const k of Object.keys(INTEGRITY_MIN)) {
@@ -358,7 +402,7 @@ async function runGate(config = {}) {
   REPORT.integrity.weakPass = integrityFails.length > 0;
   REPORT.integrity.violations = integrityFails;
 
-  RUN_VALIDATORS(routers);
+  RUN_VALIDATORS(routers, { fileHasGlobalAuth: routersResult.fileHasGlobalAuth });
 
   if (REPORT_JSON) {
     const outPath = path.resolve(TOPEMS_ROOT, REPORT_JSON);
@@ -394,6 +438,7 @@ if (require.main === module) {
     console.log(`   . foundRouters               = ${report.scanners.foundRouters}`);
     console.log(`   . routersWithBothMiddleware  = ${report.scanners.routersWithBothMiddleware}`);
     console.log(`   . matchedLayers (auth|tenant)= ${report.scanners.matchedLayers}`);
+    console.log(`   . build_application calls    = ${report.scanners.buildApplicationCalls}`);
     console.log('  ── Summary RULES ──');
     console.log(`   R1: ${String(report.summary.R1).padStart(5)} · FAIL · Layer order wrong (tenant AFTER auth → 500 Missing Claims)`);
     console.log(`   R2: ${String(report.summary.R2).padStart(5)} · WARN · auth_middleware only (no tenant isolation? verify)`);
