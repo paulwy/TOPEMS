@@ -1463,7 +1463,7 @@ async fn get_signals_handler(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance-v59/device",
     tag = "RiskV59",
     operation_id = "create_device_handler",
@@ -1666,7 +1666,7 @@ async fn get_scoring_models_handler(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance-v59/model",
     tag = "RiskV59",
     operation_id = "create_model_handler",
@@ -1795,7 +1795,7 @@ async fn bulk_score_handler(
 // --- Stress Testing Handlers ---
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance-v59/stress/scenario",
     responses(
         (status = 200, description = "成功"),

@@ -63,7 +63,7 @@ pub async fn list_reconciliations(
 /// POST /api/core/settlement-center/reconciliations
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance/reconciliation",
     tag = "SettlementCenter",
     operation_id = "create_reconciliation",
@@ -212,7 +212,7 @@ pub async fn list_settlements(
 /// POST /api/core/settlement-center/settlements
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance/settlement",
     tag = "SettlementCenter",
     operation_id = "create_settlement",
@@ -304,7 +304,7 @@ pub async fn approve_settlement(
 /// POST /api/core/settlement-center/links
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance/link",
     tag = "SettlementCenter",
     operation_id = "create_link",
@@ -419,7 +419,7 @@ pub async fn list_differences(
 /// POST /api/core/settlement-center/differences
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance/difference",
     tag = "SettlementCenter",
     operation_id = "create_difference",

@@ -91,7 +91,7 @@ pub async fn list_expenses(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance/expense",
     tag = "Operational",
     operation_id = "create_expense",
@@ -338,7 +338,7 @@ pub async fn delete_expense(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:budget:read"])),
     path = "/budgets",
     tag = "Budget",
     params(
@@ -395,7 +395,7 @@ pub async fn list_budgets(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance/budget",
     tag = "Operational",
     operation_id = "create_budget",
@@ -472,7 +472,7 @@ pub async fn create_budget(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:budget:read"])),
     path = "/budgets/{id}",
     tag = "Budget",
     params(("id" = Uuid, Path, description = "预算ID")),
@@ -512,7 +512,7 @@ pub async fn get_budget(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["finance:update"])),
+    security(("BearerAuth" = ["finance:budget:write"])),
     path = "/finance/budget/{id}",
     tag = "Operational",
     operation_id = "update_budget",
@@ -593,7 +593,7 @@ pub async fn update_budget(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["finance:delete"])),
+    security(("BearerAuth" = ["finance:budget:write"])),
     path = "/budgets/{id}",
     tag = "Budget",
     params(("id" = Uuid, Path, description = "预算ID")),
@@ -699,7 +699,7 @@ pub async fn list_receivables(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance/receivable",
     tag = "Operational",
     operation_id = "create_receivable",
@@ -994,7 +994,7 @@ pub async fn list_payables(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance/payable",
     tag = "Operational",
     operation_id = "create_payable",

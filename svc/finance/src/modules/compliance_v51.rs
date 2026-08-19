@@ -1089,7 +1089,7 @@ impl ComplianceReportV51 {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/compliance-v51/control-points",
     tag = "Compliance-V51",
     operation_id = "create_control_point_handler",
@@ -1374,7 +1374,7 @@ async fn get_risk_summary_handler(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/finance-v51/compliance_report",
     tag = "ComplianceV51",
     operation_id = "generate_compliance_report_handler",
@@ -1397,7 +1397,7 @@ async fn generate_compliance_report_handler(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/finance-v51/compliance_report/{id}",
     tag = "ComplianceV51",
     operation_id = "get_compliance_report_handler",
@@ -1418,7 +1418,7 @@ async fn get_compliance_report_handler(
 }
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/compliance-v51/reports",
     responses(
         (status = 200, description = "成功"),
@@ -1448,7 +1448,7 @@ async fn list_compliance_reports_handler(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/finance-v51/compliance_report",
     tag = "ComplianceV51",
     operation_id = "export_compliance_report_handler",

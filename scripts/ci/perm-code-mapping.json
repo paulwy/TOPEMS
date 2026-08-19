@@ -1,21 +1,42 @@
 {
   "finance": {
-    "default": "finance:read",
+    "_comment_default": "__action__ = fallback to HTTP method based coarse {module}:{action} (no downgrade)",
+    "default": "__action__",
     "create_*": "finance:invoice:write",
     "get_*_by_id": "finance:payment:read",
-    "payment": "finance:payment:admin"
+    "*payment*": "finance:payment:admin",
+    "*invoice*": "finance:invoice:write",
+    "*voucher*": "finance:voucher:write",
+    "*approval*": "finance:approval:admin",
+    "*budget*": "finance:budget:write",
+    "*report*": "finance:report:read",
+    "*forecast*": "finance:forecast:write"
   },
   "qms": {
-    "default": "qms:read",
-    "*_audit_*": "qms:audit:admin"
+    "default": "__action__",
+    "*audit*": "qms:audit:admin",
+    "*inspection*": "qms:inspection:write",
+    "*nonconformity*": "qms:nc:admin",
+    "*corrective*": "qms:cap:write",
+    "*supplier*": "qms:supplier:read"
   },
   "pm": {
-    "default": "pm:read",
-    "*_budget_*": "pm:budget:write"
+    "default": "__action__",
+    "*budget*": "pm:budget:write",
+    "*milestone*": "pm:milestone:write",
+    "*task*": "pm:task:write",
+    "*resource*": "pm:resource:admin",
+    "*risk*": "pm:risk:write",
+    "*stakeholder*": "pm:stakeholder:read"
   },
   "mes": {
-    "default": "mes:read",
+    "default": "__action__",
     "create_work_order": "mes:workorder:write",
-    "bom": "mes:bom:admin"
+    "*work_order*": "mes:workorder:write",
+    "*bom*": "mes:bom:admin",
+    "*routing*": "mes:routing:admin",
+    "*production*": "mes:production:write",
+    "*inventory*": "mes:inventory:write",
+    "*quality_check*": "mes:quality:admin"
   }
 }

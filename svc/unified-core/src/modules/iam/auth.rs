@@ -105,6 +105,7 @@ struct UserInfo {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/iam/auth/login",
     tag = "IAM-Auth",
     request_body = serde_json::Value,
@@ -403,6 +404,7 @@ struct RegisterRequest {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/iam/auth/register",
     tag = "IAM-Auth",
     request_body = serde_json::Value,

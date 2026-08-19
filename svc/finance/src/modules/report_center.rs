@@ -953,7 +953,7 @@ async fn get_financial_analysis_handler(
 }
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/reports/comparative/{period}",
     responses(
         (status = 200, description = "成功"),
@@ -982,7 +982,7 @@ async fn get_comparative_report_handler(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/finance/report",
     tag = "ReportCenter",
     operation_id = "export_report_handler",

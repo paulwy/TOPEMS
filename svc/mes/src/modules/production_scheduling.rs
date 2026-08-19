@@ -164,7 +164,7 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["mes:read"])),
+    security(("BearerAuth" = ["mes:production:read"])),
     path = "/api/mes/schedules",
     tag = "ProductionScheduling",
     params(
@@ -375,7 +375,7 @@ pub async fn list_production_schedules(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["mes:write"])),
+    security(("BearerAuth" = ["mes:production:write"])),
     path = "/api/mes/schedules",
     tag = "ProductionScheduling",
     request_body = CreateProductionScheduleRequest,
@@ -497,7 +497,7 @@ pub async fn create_production_schedule(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["mes:read"])),
+    security(("BearerAuth" = ["mes:production:read"])),
     path = "/api/mes/schedules/{id}",
     tag = "ProductionScheduling",
     params(
@@ -591,7 +591,7 @@ pub async fn get_production_schedule(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["mes:update"])),
+    security(("BearerAuth" = ["mes:production:write"])),
     path = "/api/mes/schedules/{id}",
     tag = "ProductionScheduling",
     params(
@@ -701,7 +701,7 @@ pub async fn update_production_schedule(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["mes:delete"])),
+    security(("BearerAuth" = ["mes:production:write"])),
     path = "/api/mes/schedules/{id}",
     tag = "ProductionScheduling",
     params(

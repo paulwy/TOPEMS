@@ -1058,7 +1058,7 @@ async fn get_contract_statistics(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["pm:read"])),
+    security(("BearerAuth" = ["pm:budget:read"])),
     path = "/statistics/budget",
     tag = "pm_statistics",
     params(
@@ -1082,7 +1082,7 @@ async fn get_budget_statistics(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["pm:read"])),
+    security(("BearerAuth" = ["pm:risk:read"])),
     path = "/statistics/risks",
     tag = "pm_statistics",
     params(
@@ -1106,7 +1106,7 @@ async fn get_risk_statistics(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["pm:read"])),
+    security(("BearerAuth" = ["pm:task:read"])),
     path = "/statistics/tasks",
     tag = "pm_statistics",
     params(

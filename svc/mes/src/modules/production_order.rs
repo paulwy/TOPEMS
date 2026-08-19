@@ -201,7 +201,7 @@ pub fn validate_state_transition(current_status: &str, target_status: &str) -> R
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["mes:read"])),
+    security(("BearerAuth" = ["mes:production:read"])),
     path = "/api/mes/orders",
     tag = "ProductionOrder",
     params(
@@ -391,7 +391,7 @@ pub async fn list_production_orders(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["mes:write"])),
+    security(("BearerAuth" = ["mes:production:write"])),
     path = "/api/mes/orders",
     tag = "ProductionOrder",
     request_body = CreateProductionOrderRequest,
@@ -634,7 +634,7 @@ pub async fn create_from_erp(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["mes:read"])),
+    security(("BearerAuth" = ["mes:production:read"])),
     path = "/api/mes/orders/{id}",
     tag = "ProductionOrder",
     params(
@@ -712,7 +712,7 @@ pub async fn get_production_order(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["mes:update"])),
+    security(("BearerAuth" = ["mes:production:write"])),
     path = "/api/mes/orders/{id}",
     tag = "ProductionOrder",
     params(
@@ -813,7 +813,7 @@ pub async fn update_production_order(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["mes:delete"])),
+    security(("BearerAuth" = ["mes:production:write"])),
     path = "/api/mes/orders/{id}",
     tag = "ProductionOrder",
     params(
@@ -866,7 +866,7 @@ pub async fn delete_production_order(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["mes:update"])),
+    security(("BearerAuth" = ["mes:production:write"])),
     path = "/api/mes/orders/{id}/start",
     tag = "ProductionOrder",
     params(
@@ -954,7 +954,7 @@ pub async fn start_production_order(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["mes:update"])),
+    security(("BearerAuth" = ["mes:production:write"])),
     path = "/api/mes/orders/{id}/complete",
     tag = "ProductionOrder",
     params(
@@ -1043,7 +1043,7 @@ pub async fn complete_production_order(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["mes:update"])),
+    security(("BearerAuth" = ["mes:production:write"])),
     path = "/api/mes/orders/{id}/cancel",
     tag = "ProductionOrder",
     params(
@@ -1130,7 +1130,7 @@ pub async fn cancel_production_order(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["mes:update"])),
+    security(("BearerAuth" = ["mes:production:write"])),
     path = "/api/mes/orders/{id}/release",
     tag = "ProductionOrder",
     params(

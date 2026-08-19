@@ -120,7 +120,7 @@ pub async fn get_entry(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance/entry",
     tag = "VoucherTemplateEntries",
     operation_id = "create_entry",

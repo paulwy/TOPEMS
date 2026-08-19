@@ -1301,7 +1301,7 @@ pub struct ReportListQueryParams {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance-v57/report/template",
     tag = "Reports-V57",
     operation_id = "create_template_handler",
@@ -1346,7 +1346,7 @@ async fn get_templates_handler(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/finance-v57/report",
     tag = "ReportsV57",
     operation_id = "generate_report_handler",
@@ -1369,7 +1369,7 @@ async fn generate_report_handler(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/finance-v57/reports",
     tag = "ReportsV57",
     operation_id = "list_reports_handler",
@@ -1392,7 +1392,7 @@ async fn list_reports_handler(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/finance-v57/report/{id}",
     tag = "ReportsV57",
     operation_id = "get_report_handler",
@@ -1415,7 +1415,7 @@ async fn get_report_handler(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/finance-v57/report/{id}/download",
     tag = "Reports-V57",
     operation_id = "download_report_handler",
@@ -1436,7 +1436,7 @@ async fn download_report_handler(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["finance:delete"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/finance-v57/report/{id}",
     tag = "ReportsV57",
     operation_id = "delete_report_handler",
@@ -1459,7 +1459,7 @@ async fn delete_report_handler(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/finance-v57/report",
     tag = "ReportsV57",
     operation_id = "schedule_report_handler",
@@ -1659,7 +1659,7 @@ pub struct TrendQueryParams {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:forecast:write"])),
     path = "/finance-v57/forecast",
     tag = "Reports-V57",
     operation_id = "generate_forecast_handler",

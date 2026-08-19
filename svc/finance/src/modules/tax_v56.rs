@@ -1599,7 +1599,7 @@ async fn get_tax_forms_handler(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:payment:read"])),
     path = "/finance-v56/tax_form_by_id/{id}",
     tag = "TaxV56",
     operation_id = "get_tax_form_by_id_handler",
@@ -1939,7 +1939,7 @@ pub struct ComplianceQueryParams {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance-v56/plan",
     tag = "TaxV56",
     operation_id = "create_plan_handler",

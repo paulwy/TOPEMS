@@ -992,7 +992,7 @@ impl SmartAlertSystem {
 // ==================== Handlers ====================
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:forecast:read"])),
     path = "/forecasting/cash-flow/{period}",
     responses(
         (status = 200, description = "成功"),
@@ -1025,7 +1025,7 @@ async fn get_cash_flow_forecast_handler(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:forecast:read"])),
     path = "/finance/forecast_scenarios",
     tag = "Forecasting",
     operation_id = "get_forecast_scenarios_handler",
@@ -1046,7 +1046,7 @@ async fn get_forecast_scenarios_handler(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:forecast:read"])),
     path = "/finance/forecast_accuracy/{id}",
     tag = "Forecasting",
     operation_id = "get_forecast_accuracy_handler",
@@ -1066,7 +1066,7 @@ async fn get_forecast_accuracy_handler(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:budget:read"])),
     path = "/finance/budget_variance/{id}",
     tag = "Forecasting",
     operation_id = "get_budget_variance_handler",
@@ -1175,7 +1175,7 @@ async fn get_alert_summary_handler(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance/alert_rule",
     tag = "Forecasting",
     operation_id = "create_alert_rule_handler",

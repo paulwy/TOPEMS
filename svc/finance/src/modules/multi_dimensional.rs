@@ -950,7 +950,7 @@ impl ProjectAccountingAnalyzer {
 // ==================== Handlers ====================
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/multi-dimensional/cost-centers/{period}",
     responses(
         (status = 200, description = "成功"),
@@ -1021,7 +1021,7 @@ async fn get_cost_center_efficiency_handler(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/finance/profit_center_report/{id}",
     tag = "MultiDim",
     operation_id = "get_profit_center_report_handler",
@@ -1093,7 +1093,7 @@ async fn get_profit_center_ranking_handler(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/finance/project_account_report/{id}",
     tag = "MultiDim",
     operation_id = "get_project_account_report_handler",
