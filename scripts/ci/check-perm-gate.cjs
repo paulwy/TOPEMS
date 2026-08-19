@@ -14,7 +14,7 @@ const rules = [
   { id: 'R2', desc: 'service has no routes-level permission guard middleware (WARN-only)', severity: 'WARN', count: 0 },
   { id: 'R3', desc: 'admin-only endpoints missing explicit gate annotation (WARN-only)', severity: 'WARN', count: 0 },
   { id: 'R4', desc: 'topems-rbac dependency declared but permission mod unused', severity: 'FAIL', count: 0 },
-  { id: 'R5', desc: 'utoipa path missing permission() attribute on operation handlers', severity: 'FAIL', count: 0 },
+  { id: 'R5', desc: 'utoipa path missing security()/permission() attribute on operation handlers', severity: 'FAIL', count: 0 },
   { id: 'R6', desc: 'handler fn body uses PERM_SCOPE wildcard "*" without explicit tenant scope', severity: 'FAIL', count: 0 },
 ];
 
@@ -106,14 +106,17 @@ function extractUtoipaPathMacros(content) {
   return macros;
 }
 
-// R5: utoipa::path macro missing `permission(...)` / `permissions(...)` attribute.
+// R5: utoipa::path macro missing `permission(...)` / `permissions(...)` / `security(...)` attribute.
+// NOTE(V251): utoipa natively supports `security(("BearerAuth" = ["scope"]))` per OpenAPI spec;
+// custom `permissions = (...)` is NOT supported by utoipa and fails cargo check.
+// Hence R5 treats BOTH permissions() and security() as PASS.
 function scanR5Real() {
   const hits = [];
   for (const name of listSvcDirs()) {
     for (const file of walkRsFiles(path.join(SVC_DIR, name, 'src'))) {
       const content = fs.readFileSync(file, 'utf8');
       for (const macro of extractUtoipaPathMacros(content)) {
-        if (!/permissions?\s*\(/.test(macro.body)) {
+        if (!/(?:permissions?\s*\(|security\s*\()/.test(macro.body)) {
           hits.push({ svc: name, file: path.relative(ROOT, file) });
         }
       }

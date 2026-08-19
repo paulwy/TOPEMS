@@ -18,6 +18,7 @@ use utoipa::OpenApi;
 // --- AnalysisApi ---
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/analysis/sentiment",
     request_body = crate::modules::models::SentimentAnalysisRequest,
     tag = "ai",
@@ -27,6 +28,7 @@ fn _analysis_sentiment() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/analysis/classify",
     request_body = crate::modules::models::ClassifyTextRequest,
     tag = "ai",
@@ -36,6 +38,7 @@ fn _analysis_classify() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/analysis/entities",
     request_body = crate::modules::models::ExtractEntitiesRequest,
     tag = "ai",
@@ -45,6 +48,7 @@ fn _analysis_entities() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/analysis/keywords",
     request_body = crate::modules::models::ExtractKeywordsRequest,
     tag = "ai",
@@ -54,6 +58,7 @@ fn _analysis_keywords() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/analysis/history",
     request_body = crate::modules::models::AnalysisHistoryRequest,
     tag = "ai",
@@ -64,6 +69,7 @@ fn _analysis_history() {}
 // --- CodeAssistantApi ---
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/code/generate",
     request_body = crate::modules::code_assistant::CodeGenerateRequest,
     tag = "ai",
@@ -73,6 +79,7 @@ fn _code_generate() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/code/explain",
     request_body = crate::modules::code_assistant::CodeExplainRequest,
     tag = "ai",
@@ -82,6 +89,7 @@ fn _code_explain() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/code/fix",
     request_body = crate::modules::code_assistant::CodeFixRequest,
     tag = "ai",
@@ -91,6 +99,7 @@ fn _code_fix() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/code/optimize",
     request_body = crate::modules::code_assistant::CodeOptimizeRequest,
     tag = "ai",
@@ -100,6 +109,7 @@ fn _code_optimize() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/code/review",
     request_body = crate::modules::code_assistant::CodeReviewRequest,
     tag = "ai",
@@ -110,6 +120,7 @@ fn _code_review() {}
 // --- DocumentApi ---
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/documents/upload",
     tag = "ai",
     responses((status = 200, description = "OK")),
@@ -118,6 +129,7 @@ fn _document_upload() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/documents/{id}/process",
     request_body = crate::modules::models::ProcessDocumentRequest,
     tag = "ai",
@@ -127,6 +139,7 @@ fn _document_process() {}
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/api/ai/documents/{id}",
     tag = "ai",
     responses((status = 200, description = "OK")),
@@ -135,6 +148,7 @@ fn _document_get() {}
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ai:delete"])),
     path = "/api/ai/documents/{id}",
     tag = "ai",
     responses((status = 200, description = "OK")),
@@ -143,6 +157,7 @@ fn _document_delete() {}
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/api/ai/documents",
     tag = "ai",
     responses((status = 200, description = "OK")),
@@ -151,6 +166,7 @@ fn _document_list() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/documents",
     tag = "ai",
     responses((status = 200, description = "OK")),
@@ -159,6 +175,7 @@ fn _document_create() {}
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ai:update"])),
     path = "/api/ai/documents/{id}",
     tag = "ai",
     responses((status = 200, description = "OK")),
@@ -167,6 +184,7 @@ fn _document_update() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/documents/{id}/extract",
     request_body = crate::modules::models::ExtractDocumentRequest,
     tag = "ai",
@@ -176,6 +194,7 @@ fn _document_extract() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/documents/vectorize-from-file",
     request_body = crate::modules::models::VectorizeFromFileRequest,
     tag = "ai",
@@ -185,6 +204,7 @@ fn _document_vectorize_from_file() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/documents/{id}/summarize",
     request_body = crate::modules::models::SummarizeDocumentRequest,
     tag = "ai",
@@ -194,6 +214,7 @@ fn _document_summarize() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/documents/{id}/key-points",
     request_body = crate::modules::models::ExtractKeyPointsRequest,
     tag = "ai",
@@ -203,6 +224,7 @@ fn _document_key_points() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/documents/qa",
     request_body = crate::modules::models::DocumentQAQuestionRequest,
     tag = "ai",
@@ -213,6 +235,7 @@ fn _document_qa() {}
 // --- EmbeddingApi ---
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/embedding/generate",
     request_body = crate::modules::embedding::EmbeddingRequest,
     tag = "ai",
@@ -223,6 +246,7 @@ fn _embedding_generate() {}
 // --- MultimodalApi ---
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/multimodal/image/analyze",
     request_body = crate::services::multimodal::ImageAnalysisRequest,
     tag = "ai",
@@ -232,6 +256,7 @@ fn _multimodal_image_analyze() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/multimodal/image/caption",
     request_body = crate::services::multimodal::ImageAnalysisRequest,
     tag = "ai",
@@ -241,6 +266,7 @@ fn _multimodal_image_caption() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/multimodal/image/objects",
     request_body = crate::services::multimodal::ImageAnalysisRequest,
     tag = "ai",
@@ -250,6 +276,7 @@ fn _multimodal_image_objects() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/multimodal/image/text",
     request_body = crate::services::multimodal::ImageAnalysisRequest,
     tag = "ai",
@@ -259,6 +286,7 @@ fn _multimodal_image_text() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/multimodal/image/describe",
     request_body = crate::services::multimodal::ImageAnalysisRequest,
     tag = "ai",
@@ -268,6 +296,7 @@ fn _multimodal_image_describe() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/multimodal/video/analyze",
     request_body = crate::services::multimodal::VideoAnalysisRequest,
     tag = "ai",
@@ -277,6 +306,7 @@ fn _multimodal_video_analyze() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/multimodal/video/summary",
     request_body = crate::services::multimodal::VideoAnalysisRequest,
     tag = "ai",
@@ -287,6 +317,7 @@ fn _multimodal_video_summary() {}
 // --- QaApi ---
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/qa/ask",
     request_body = crate::modules::models::AskRequest,
     tag = "ai",
@@ -296,6 +327,7 @@ fn _qa_ask() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/qa/ask-with-context",
     request_body = crate::modules::models::AskWithContextRequest,
     tag = "ai",
@@ -305,6 +337,7 @@ fn _qa_ask_with_context() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/qa/ask-structured",
     request_body = crate::modules::qa::AskStructuredRequest,
     tag = "ai",
@@ -314,6 +347,7 @@ fn _qa_ask_structured() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/qa/ask-conversation",
     request_body = crate::modules::qa::AskWithConversationRequest,
     tag = "ai",
@@ -323,6 +357,7 @@ fn _qa_ask_conversation() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/qa/classify",
     request_body = crate::modules::qa::ClassifyRequest,
     tag = "ai",
@@ -332,6 +367,7 @@ fn _qa_classify() {}
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/api/ai/qa/history",
     tag = "ai",
     responses((status = 200, description = "OK")),
@@ -340,6 +376,7 @@ fn _qa_history() {}
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ai:delete"])),
     path = "/api/ai/qa/history/{id}",
     tag = "ai",
     responses((status = 200, description = "OK")),
@@ -348,6 +385,7 @@ fn _qa_delete_history() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/qa/history/batch-delete",
     request_body = crate::modules::qa::BatchDeleteRequest,
     tag = "ai",
@@ -357,6 +395,7 @@ fn _qa_batch_delete_history() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/qa/feedback",
     request_body = crate::modules::models::FeedbackRequest,
     tag = "ai",
@@ -367,6 +406,7 @@ fn _qa_feedback() {}
 // --- RecommendationApi ---
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/recommend",
     request_body = crate::services::recommendation::RecommendationRequest,
     tag = "ai",
@@ -376,6 +416,7 @@ fn _recommend() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/profile/get",
     request_body = serde_json::Value,
     tag = "ai",
@@ -385,6 +426,7 @@ fn _profile_get() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/profile/update",
     request_body = serde_json::Value,
     tag = "ai",
@@ -394,6 +436,7 @@ fn _profile_update() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/recommend/documents",
     request_body = serde_json::Value,
     tag = "ai",
@@ -403,6 +446,7 @@ fn _recommend_documents() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/recommend/opportunities",
     request_body = serde_json::Value,
     tag = "ai",
@@ -412,6 +456,7 @@ fn _recommend_opportunities() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/recommend/knowledge",
     request_body = serde_json::Value,
     tag = "ai",
@@ -422,6 +467,7 @@ fn _recommend_knowledge() {}
 // --- VectorApi ---
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/vectors/store",
     request_body = crate::modules::models::StoreVectorRequest,
     tag = "ai",
@@ -431,6 +477,7 @@ fn _vector_store() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/vectors/search",
     request_body = crate::modules::models::VectorSearchRequest,
     tag = "ai",
@@ -440,6 +487,7 @@ fn _vector_search() {}
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/api/ai/vectors/{id}",
     tag = "ai",
     responses((status = 200, description = "OK")),
@@ -448,6 +496,7 @@ fn _vector_get() {}
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ai:delete"])),
     path = "/api/ai/vectors/{id}",
     tag = "ai",
     responses((status = 200, description = "OK")),
@@ -456,6 +505,7 @@ fn _vector_delete() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/vectors/batch-store",
     request_body = crate::modules::models::BatchStoreVectorsRequest,
     tag = "ai",
@@ -465,6 +515,7 @@ fn _vector_batch_store() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/vectors/hybrid-search",
     request_body = crate::modules::models::HybridSearchRequest,
     tag = "ai",
@@ -474,6 +525,7 @@ fn _vector_hybrid_search() {}
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/api/ai/vectors/stats",
     tag = "ai",
     responses((status = 200, description = "OK")),
@@ -482,6 +534,7 @@ fn _vector_stats() {}
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/vectors/clear",
     tag = "ai",
     responses((status = 200, description = "OK")),
