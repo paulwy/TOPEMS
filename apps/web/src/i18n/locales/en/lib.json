@@ -34,7 +34,8 @@
     "pluginLoader": {
       "k0": "Loading module",
       "k10": "Load",
-      "k20": "Loading plugins:"
+      "k20": "Loading plugins:",
+      "k21": "..."
     }
   },
   "lib.pluginLoader.k21": "..."

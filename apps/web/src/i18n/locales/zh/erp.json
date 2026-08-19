@@ -446,72 +446,6 @@
     }
   },
   "dashboard": {
-    "dashboard_vs_上周": "dashboard.vs_上周",
-    "dashboard_vs_上月": "dashboard.vs_上月",
-    "dashboard_上午好": "dashboard.上午好",
-    "dashboard_下午好": "dashboard.下午好",
-    "dashboard_企业资源管理": "dashboard.企业资源管理",
-    "dashboard_低库存": "dashboard.低库存",
-    "dashboard_供应商": "dashboard.供应商",
-    "dashboard_供应商总数": "dashboard.供应商总数",
-    "dashboard_供应商管理": "dashboard.供应商管理",
-    "dashboard_凭证": "dashboard.凭证",
-    "dashboard_凭证总数": "dashboard.凭证总数",
-    "dashboard_在用": "dashboard.在用",
-    "dashboard_在用资产": "dashboard.在用资产",
-    "dashboard_客户": "dashboard.客户",
-    "dashboard_客户总数": "dashboard.客户总数",
-    "dashboard_客户管理": "dashboard.客户管理",
-    "dashboard_库存": "dashboard.库存",
-    "dashboard_库存总量": "dashboard.库存总量",
-    "dashboard_待处理": "dashboard.待处理",
-    "dashboard_待处理订单": "dashboard.待处理订单",
-    "dashboard_待审批": "dashboard.待审批",
-    "dashboard_待审批凭证": "dashboard.待审批凭证",
-    "dashboard_快捷操作": "dashboard.快捷操作",
-    "dashboard_总订单": "dashboard.总订单",
-    "dashboard_总资产": "dashboard.总资产",
-    "dashboard_数据概览": "dashboard.数据概览",
-    "dashboard_新增凭证": "dashboard.新增凭证",
-    "dashboard_新增预算": "dashboard.新增预算",
-    "dashboard_晚上好": "dashboard.晚上好",
-    "dashboard_资产": "dashboard.资产",
-    "dashboard_资产管理": "dashboard.资产管理",
-    "dashboard_趋势分析": "dashboard.趋势分析",
-    "dashboard_采购订单": "dashboard.采购订单",
-    "vs_上周": "% vs 上周",
-    "vs_上月": "% vs 上月",
-    "上午好": "上午好",
-    "下午好": "下午好",
-    "企业资源管理": "企业资源管理",
-    "低库存": "低库存",
-    "供应商": "供应商",
-    "供应商总数": "供应商总数",
-    "供应商管理": "供应商管理",
-    "凭证": "凭证",
-    "凭证总数": "凭证总数",
-    "在用": "在用",
-    "在用资产": "在用资产",
-    "客户": "客户",
-    "客户总数": "客户总数",
-    "客户管理": "客户管理",
-    "库存": "库存",
-    "库存总量": "库存总量",
-    "待处理": "待处理",
-    "待处理订单": "待处理订单",
-    "待审批": "待审批",
-    "待审批凭证": "待审批凭证",
-    "快捷操作": "快捷操作",
-    "总订单": "总订单",
-    "总资产": "总资产",
-    "数据概览": "数据概览",
-    "新增凭证": "新增凭证",
-    "新增预算": "新增预算",
-    "晚上好": "晚上好",
-    "资产": "资产",
-    "资产管理": "资产管理",
-    "趋势分析": "趋势分析",
-    "采购订单": "采购订单",
     "label": {
       "good_morning": "上午好",
       "good_afternoon": "下午好",
@@ -553,22 +487,6 @@
     }
   },
   "voucher": {
-    "voucher_凭证总数": "voucher.凭证总数",
-    "voucher_凭证管理": "voucher.凭证管理",
-    "voucher_加载凭证统计失败": "voucher.加载凭证统计失败",
-    "voucher_已审核": "voucher.已审核",
-    "voucher_已过账": "voucher.已过账",
-    "voucher_待审核": "voucher.待审核",
-    "voucher_草稿": "voucher.草稿",
-    "voucher_财务管理": "voucher.财务管理",
-    "凭证总数": "凭证总数",
-    "凭证管理": "凭证管理",
-    "加载凭证统计失败": "加载凭证统计失败",
-    "已审核": "已审核",
-    "已过账": "已过账",
-    "待审核": "待审核",
-    "草稿": "草稿",
-    "财务管理": "财务管理",
     "label": {
       "voucher_total": "凭证总数",
       "draft": "草稿",
@@ -1497,5 +1415,1889 @@
   "erp.voucher_mgmt.message.export_success": "标题",
   "erp.voucher_mgmt.message.voucher_data_exported": "数据",
   "erp.voucher_mgmt.message.close_period_success": "标题",
-  "erp.voucher_mgmt.message.period_closed": "标题"
+  "erp.voucher_mgmt.message.period_closed": "标题",
+  "erp": {
+    "voucher": {
+      "batchAction": {
+        "batchSubmit": {
+          "success": "Success",
+          "fail": "Fail",
+          "error": "Error",
+          "label": "Label",
+          "confirmMessage": "？"
+        },
+        "batchApprove": {
+          "success": "Success",
+          "fail": "Fail",
+          "error": "Error",
+          "label": "Label",
+          "confirmMessage": "？"
+        }
+      },
+      "meta": {
+        "title": "Title",
+        "description": "，、、",
+        "createTitle": "Createtitle",
+        "editTitle": "Edittitle",
+        "detailTitle": "Detailtitle"
+      },
+      "voucher_number": {
+        "label": "Label"
+      },
+      "voucher_date": {
+        "label": "Label"
+      },
+      "period": {
+        "label": "Label"
+      },
+      "voucher_type": {
+        "label": "Label",
+        "option": {}
+      },
+      "summary": {
+        "label": "Label"
+      },
+      "attachment_count": {
+        "label": "Label"
+      },
+      "status": {
+        "label": "Label",
+        "option": {
+          "draft": "Draft",
+          "submitted": "Submitted",
+          "approved": "Approved",
+          "posted": "Posted",
+          "voided": "Voided"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "draft": "Draft",
+            "submitted": "Submitted",
+            "approved": "Approved",
+            "posted": "Posted",
+            "voided": "Voided"
+          }
+        },
+        "voucher_type": {
+          "label": "Label",
+          "option": {
+            "all": "All"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Title"
+        },
+        "1": {
+          "title": "Title"
+        }
+      }
+    },
+    "announcement": {
+      "meta": {
+        "title": "Title",
+        "description": "，、、、",
+        "createTitle": "Createtitle",
+        "editTitle": "Edittitle",
+        "detailTitle": "Detailtitle"
+      },
+      "title": {
+        "label": "Label"
+      },
+      "author": {
+        "label": "Label"
+      },
+      "priority": {
+        "label": "Label",
+        "option": {
+          "low": "Low",
+          "normal": "Normal",
+          "high": "High",
+          "urgent": "Urgent"
+        }
+      },
+      "status": {
+        "label": "Label",
+        "option": {
+          "draft": "Draft",
+          "published": "Published",
+          "archived": "Archived"
+        }
+      },
+      "content": {
+        "label": "Label"
+      },
+      "publish_at": {
+        "label": "Label"
+      },
+      "filter": {
+        "status": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "draft": "Draft",
+            "published": "Published",
+            "archived": "Archived"
+          }
+        },
+        "priority": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "low": "Low",
+            "normal": "Normal",
+            "high": "High",
+            "urgent": "Urgent"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Title"
+        },
+        "1": {
+          "title": "Title"
+        }
+      }
+    },
+    "asset": {
+      "meta": {
+        "title": "Title",
+        "description": "，、、",
+        "createTitle": "Createtitle",
+        "editTitle": "Edittitle",
+        "detailTitle": "Detailtitle"
+      },
+      "name": {
+        "label": "Label"
+      },
+      "asset_number": {
+        "label": "Label"
+      },
+      "category": {
+        "label": "Label"
+      },
+      "brand": {
+        "label": "Label"
+      },
+      "model": {
+        "label": "Label"
+      },
+      "serial_number": {
+        "label": "Label"
+      },
+      "manufacturer": {
+        "label": "Label"
+      },
+      "department": {
+        "label": "Label"
+      },
+      "location": {
+        "label": "Label"
+      },
+      "responsible_id": {
+        "label": "ID"
+      },
+      "purchase_date": {
+        "label": "Label"
+      },
+      "purchase_amount": {
+        "label": "Label"
+      },
+      "rated_power": {
+        "label": "(kW)"
+      },
+      "rated_voltage": {
+        "label": "(V)"
+      },
+      "rated_current": {
+        "label": "(A)"
+      },
+      "specifications": {
+        "label": "Label"
+      },
+      "status": {
+        "label": "Label",
+        "option": {
+          "active": "Active",
+          "idle": "Idle",
+          "maintenance": "Maintenance",
+          "retired": "Retired",
+          "transferred": "Transferred"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "active": "Active",
+            "idle": "Idle",
+            "maintenance": "Maintenance",
+            "retired": "Retired",
+            "transferred": "Transferred"
+          }
+        },
+        "category": {
+          "label": "Label",
+          "option": {
+            "all": "All"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Title"
+        },
+        "1": {
+          "title": "Title"
+        },
+        "2": {
+          "title": "Title"
+        },
+        "3": {
+          "title": "Title"
+        },
+        "4": {
+          "title": "Title"
+        }
+      }
+    },
+    "asset_category": {
+      "meta": {
+        "title": "Title",
+        "description": "，",
+        "createTitle": "Createtitle",
+        "editTitle": "Edittitle",
+        "detailTitle": "Detailtitle"
+      },
+      "code": {
+        "label": "Label"
+      },
+      "name": {
+        "label": "Label"
+      },
+      "parentId": {
+        "label": "Label"
+      },
+      "description": {
+        "label": "Label"
+      },
+      "status": {
+        "label": "Label",
+        "option": {
+          "active": "Active",
+          "inactive": "Inactive"
+        }
+      },
+      "created_at": {
+        "label": "Label"
+      },
+      "filter": {
+        "status": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "active": "Active",
+            "inactive": "Inactive"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Title"
+        },
+        "1": {
+          "title": "Title"
+        }
+      }
+    },
+    "bank_account": {
+      "meta": {
+        "title": "Title",
+        "description": "，、、、",
+        "createTitle": "Createtitle",
+        "editTitle": "Edittitle",
+        "detailTitle": "Detailtitle"
+      },
+      "bank_name": {
+        "label": "Label"
+      },
+      "branch_name": {
+        "label": "Label"
+      },
+      "account_name": {
+        "label": "Label"
+      },
+      "account_number": {
+        "label": "Label"
+      },
+      "account_type": {
+        "label": "Label",
+        "option": {
+          "basic": "Basic",
+          "general": "General",
+          "special": "Special",
+          "temporary": "Temporary"
+        }
+      },
+      "balance": {
+        "label": "Label"
+      },
+      "currency": {
+        "label": "Label",
+        "option": {
+          "CNY": "(CNY)",
+          "USD": "(USD)",
+          "EUR": "(EUR)"
+        }
+      },
+      "status": {
+        "label": "Label",
+        "option": {
+          "active": "Active",
+          "frozen": "Frozen",
+          "closed": "Closed",
+          "pending": "Pending"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "active": "Active",
+            "frozen": "Frozen",
+            "closed": "Closed",
+            "pending": "Pending"
+          }
+        },
+        "account_type": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "basic": "Basic",
+            "general": "General",
+            "special": "Special",
+            "temporary": "Temporary"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Title"
+        },
+        "1": {
+          "title": "Title"
+        }
+      }
+    },
+    "budget": {
+      "meta": {
+        "title": "Title",
+        "description": "，、、",
+        "createTitle": "Createtitle",
+        "editTitle": "Edittitle",
+        "detailTitle": "Detailtitle"
+      },
+      "budget_type": {
+        "label": "Label",
+        "option": {
+          "annual": "Annual",
+          "quarterly": "Quarterly",
+          "monthly": "Monthly",
+          "project": "Project"
+        }
+      },
+      "department_id": {
+        "label": "Label",
+        "placeholder": "Placeholder"
+      },
+      "fiscal_year": {
+        "label": "Label",
+        "placeholder": "Placeholder"
+      },
+      "total_budget": {
+        "label": "Label"
+      },
+      "used_amount": {
+        "label": "Label"
+      },
+      "remaining_amount": {
+        "label": "Label"
+      },
+      "usage_rate": {
+        "label": "Label"
+      },
+      "status": {
+        "label": "Label",
+        "option": {
+          "active": "Active",
+          "completed": "Completed",
+          "exceeded": "Exceeded",
+          "pending": "Pending",
+          "cancelled": "Cancelled"
+        }
+      },
+      "created_at": {
+        "label": "Label"
+      },
+      "filter": {
+        "status": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "active": "Active",
+            "completed": "Completed",
+            "exceeded": "Exceeded",
+            "pending": "Pending",
+            "cancelled": "Cancelled"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Title"
+        },
+        "1": {
+          "title": "Title"
+        }
+      }
+    },
+    "expense": {
+      "section": {
+        "0": {
+          "title": "Title"
+        },
+        "1": {
+          "title": "Title"
+        },
+        "2": {
+          "title": "Title"
+        },
+        "3": {
+          "title": "Title"
+        }
+      },
+      "meta": {
+        "description": "，、、",
+        "createTitle": "Createtitle",
+        "editTitle": "Edittitle",
+        "detailTitle": "Detailtitle"
+      },
+      "label": "Label",
+      "filter": {
+        "status": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "active": "Active",
+            "completed": "Completed",
+            "pending": "Pending",
+            "cancelled": "Cancelled"
+          }
+        }
+      }
+    },
+    "customer": {
+      "meta": {
+        "title": "Title",
+        "description": "，、、、",
+        "createTitle": "Createtitle",
+        "editTitle": "Edittitle",
+        "detailTitle": "Detailtitle"
+      },
+      "customer_code": {
+        "label": "Label"
+      },
+      "customer_name": {
+        "label": "Label"
+      },
+      "short_name": {
+        "label": "Label"
+      },
+      "category": {
+        "label": "Label",
+        "option": {}
+      },
+      "industry": {
+        "label": "Label",
+        "option": {}
+      },
+      "credit_rating": {
+        "label": "Label",
+        "option": {
+          "AAA": "AAA ()",
+          "AA": "AA ()",
+          "A": "A ()",
+          "BBB": "BBB ()",
+          "BB": "BB ()"
+        }
+      },
+      "status": {
+        "label": "Label",
+        "option": {
+          "active": "Active",
+          "inactive": "Inactive",
+          "blacklisted": "Blacklisted"
+        }
+      },
+      "contact_person": {
+        "label": "Label"
+      },
+      "contact_phone": {
+        "label": "Label"
+      },
+      "contact_email": {
+        "label": "Label"
+      },
+      "address": {
+        "label": "Label"
+      },
+      "country": {
+        "label": "Label"
+      },
+      "province": {
+        "label": "Label"
+      },
+      "city": {
+        "label": "Label"
+      },
+      "zip_code": {
+        "label": "Label"
+      },
+      "tax_number": {
+        "label": "Label"
+      },
+      "bank_name": {
+        "label": "Label"
+      },
+      "bank_account": {
+        "label": "Label"
+      },
+      "credit_limit": {
+        "label": "Label"
+      },
+      "remark": {
+        "label": "Label"
+      },
+      "filter": {
+        "status": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "active": "Active",
+            "inactive": "Inactive",
+            "blacklisted": "Blacklisted"
+          }
+        },
+        "category": {
+          "label": "Label",
+          "option": {
+            "all": "All"
+          }
+        },
+        "industry": {
+          "label": "Label",
+          "option": {
+            "all": "All"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Title"
+        },
+        "1": {
+          "title": "Title"
+        },
+        "2": {
+          "title": "Title"
+        },
+        "3": {
+          "title": "Title"
+        }
+      }
+    },
+    "inventory": {
+      "meta": {
+        "title": "Title",
+        "description": "，、、、",
+        "createTitle": "Createtitle",
+        "editTitle": "Edittitle",
+        "detailTitle": "Detailtitle"
+      },
+      "material_code": {
+        "label": "Label",
+        "placeholder": "Placeholder"
+      },
+      "material_name": {
+        "label": "Label",
+        "placeholder": "Placeholder"
+      },
+      "material_id": {
+        "label": "ID"
+      },
+      "specification": {
+        "label": "Label",
+        "placeholder": "Placeholder"
+      },
+      "unit": {
+        "label": "Label",
+        "placeholder": "Placeholder"
+      },
+      "warehouse_name": {
+        "label": "Label",
+        "option": {}
+      },
+      "warehouse_id": {
+        "label": "ID"
+      },
+      "location_name": {
+        "label": "Label",
+        "placeholder": "Placeholder"
+      },
+      "location_id": {
+        "label": "ID"
+      },
+      "quantity": {
+        "label": "Label"
+      },
+      "available_quantity": {
+        "label": "Label"
+      },
+      "reserved_quantity": {
+        "label": "Label"
+      },
+      "safety_stock": {
+        "label": "Label"
+      },
+      "max_stock": {
+        "label": "Label"
+      },
+      "unit_cost": {
+        "label": "Label"
+      },
+      "total_cost": {
+        "label": "Label"
+      },
+      "batch_number": {
+        "label": "Label",
+        "placeholder": "Placeholder"
+      },
+      "production_date": {
+        "label": "Label"
+      },
+      "expiry_date": {
+        "label": "Label"
+      },
+      "stock_status": {
+        "label": "Label"
+      },
+      "created_at": {
+        "label": "Label"
+      },
+      "updated_at": {
+        "label": "Label"
+      },
+      "filter": {
+        "warehouse": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "W001": "W001",
+            "W002": "W002",
+            "W003": "W003"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Title"
+        },
+        "1": {
+          "title": "Title"
+        },
+        "2": {
+          "title": "Title"
+        },
+        "3": {
+          "title": "Title"
+        }
+      }
+    },
+    "material": {
+      "meta": {
+        "title": "Title",
+        "description": "，、、、",
+        "createTitle": "Createtitle",
+        "editTitle": "Edittitle",
+        "detailTitle": "Detailtitle"
+      },
+      "material_code": {
+        "label": "Label"
+      },
+      "material_name": {
+        "label": "Label"
+      },
+      "specification": {
+        "label": "Label"
+      },
+      "category": {
+        "label": "Label",
+        "option": {}
+      },
+      "unit": {
+        "label": "Label"
+      },
+      "unit_price": {
+        "label": "Label"
+      },
+      "supplier_id": {
+        "label": "ID"
+      },
+      "supplier_name": {
+        "label": "Label"
+      },
+      "status": {
+        "label": "Label",
+        "option": {
+          "active": "Active",
+          "inactive": "Inactive",
+          "obsolete": "Obsolete"
+        }
+      },
+      "barcode": {
+        "label": "Label"
+      },
+      "weight": {
+        "label": "(kg)"
+      },
+      "volume": {
+        "label": "(m³)"
+      },
+      "description": {
+        "label": "Label"
+      },
+      "filter": {
+        "status": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "active": "Active",
+            "inactive": "Inactive",
+            "obsolete": "Obsolete"
+          }
+        },
+        "category": {
+          "label": "Label",
+          "option": {
+            "all": "All"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Title"
+        },
+        "1": {
+          "title": "Title"
+        },
+        "2": {
+          "title": "Title"
+        },
+        "3": {
+          "title": "Title"
+        }
+      }
+    },
+    "meeting_room": {
+      "meta": {
+        "title": "Title",
+        "description": "，、、、",
+        "createTitle": "Createtitle",
+        "editTitle": "Edittitle",
+        "detailTitle": "Detailtitle"
+      },
+      "name": {
+        "label": "Label"
+      },
+      "location": {
+        "label": "Label"
+      },
+      "capacity": {
+        "label": "Label"
+      },
+      "facilities": {
+        "label": "Label"
+      },
+      "status": {
+        "label": "Label",
+        "option": {
+          "available": "Available",
+          "occupied": "Occupied",
+          "maintenance": "Maintenance",
+          "unavailable": "Unavailable"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "available": "Available",
+            "occupied": "Occupied",
+            "maintenance": "Maintenance",
+            "unavailable": "Unavailable"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Title"
+        },
+        "1": {
+          "title": "Title"
+        }
+      }
+    },
+    "office_supply": {
+      "meta": {
+        "title": "Title",
+        "description": "，、、、",
+        "createTitle": "Createtitle",
+        "editTitle": "Edittitle",
+        "detailTitle": "Detailtitle"
+      },
+      "name": {
+        "label": "Label"
+      },
+      "category": {
+        "label": "Label",
+        "option": {
+          "stationery": "Stationery",
+          "electronics": "Electronics",
+          "furniture": "Furniture",
+          "consumables": "Consumables",
+          "other": "Other"
+        }
+      },
+      "quantity": {
+        "label": "Label"
+      },
+      "unit": {
+        "label": "Label"
+      },
+      "price": {
+        "label": "Label"
+      },
+      "location": {
+        "label": "Label"
+      },
+      "status": {
+        "label": "Label",
+        "option": {
+          "in_stock": "In Stock",
+          "low_stock": "Low Stock",
+          "out_of_stock": "Out Of Stock",
+          "discontinued": "Discontinued"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "in_stock": "In Stock",
+            "low_stock": "Low Stock",
+            "out_of_stock": "Out Of Stock",
+            "discontinued": "Discontinued"
+          }
+        },
+        "category": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "stationery": "Stationery",
+            "electronics": "Electronics",
+            "furniture": "Furniture",
+            "consumables": "Consumables",
+            "other": "Other"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Title"
+        },
+        "1": {
+          "title": "Title"
+        }
+      }
+    },
+    "purchase_order": {
+      "meta": {
+        "title": "Title",
+        "description": "，、、、",
+        "createTitle": "Createtitle",
+        "editTitle": "Edittitle",
+        "detailTitle": "Detailtitle"
+      },
+      "order_number": {
+        "label": "Label"
+      },
+      "supplier_name": {
+        "label": "Label"
+      },
+      "total_amount": {
+        "label": "Label"
+      },
+      "order_date": {
+        "label": "Label"
+      },
+      "expected_date": {
+        "label": "Label"
+      },
+      "currency": {
+        "label": "Label",
+        "option": {
+          "CNY": "(CNY)",
+          "USD": "(USD)",
+          "EUR": "(EUR)"
+        }
+      },
+      "status": {
+        "label": "Label",
+        "option": {
+          "draft": "Draft",
+          "pending": "Pending",
+          "approved": "Approved",
+          "partially_received": "Partially Received",
+          "received": "Received",
+          "cancelled": "Cancelled"
+        }
+      },
+      "remark": {
+        "label": "Label"
+      },
+      "filter": {
+        "status": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "draft": "Draft",
+            "pending": "Pending",
+            "approved": "Approved",
+            "partially_received": "Partially Received",
+            "received": "Received",
+            "cancelled": "Cancelled"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Title"
+        },
+        "1": {
+          "title": "Title"
+        },
+        "2": {
+          "title": "Title"
+        }
+      }
+    },
+    "sales_order": {
+      "meta": {
+        "title": "Title",
+        "description": "，、、、",
+        "createTitle": "Createtitle",
+        "editTitle": "Edittitle",
+        "detailTitle": "Detailtitle"
+      },
+      "order_number": {
+        "label": "Label"
+      },
+      "customer_name": {
+        "label": "Label"
+      },
+      "total_amount": {
+        "label": "Label"
+      },
+      "order_date": {
+        "label": "Label"
+      },
+      "delivery_date": {
+        "label": "Label"
+      },
+      "currency": {
+        "label": "Label",
+        "option": {
+          "CNY": "(CNY)",
+          "USD": "(USD)",
+          "EUR": "(EUR)"
+        }
+      },
+      "status": {
+        "label": "Label",
+        "option": {
+          "draft": "Draft",
+          "pending": "Pending",
+          "approved": "Approved",
+          "partially_shipped": "Partially Shipped",
+          "shipped": "Shipped",
+          "completed": "Completed",
+          "cancelled": "Cancelled"
+        }
+      },
+      "remark": {
+        "label": "Label"
+      },
+      "filter": {
+        "status": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "draft": "Draft",
+            "pending": "Pending",
+            "approved": "Approved",
+            "partially_shipped": "Partially Shipped",
+            "shipped": "Shipped",
+            "completed": "Completed",
+            "cancelled": "Cancelled"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Title"
+        },
+        "1": {
+          "title": "Title"
+        },
+        "2": {
+          "title": "Title"
+        }
+      }
+    },
+    "supplier": {
+      "meta": {
+        "title": "Title",
+        "description": "，、、、",
+        "createTitle": "Createtitle",
+        "editTitle": "Edittitle",
+        "detailTitle": "Detailtitle"
+      },
+      "supplier_code": {
+        "label": "Label"
+      },
+      "supplier_name": {
+        "label": "Label"
+      },
+      "short_name": {
+        "label": "Label"
+      },
+      "category": {
+        "label": "Label",
+        "option": {}
+      },
+      "credit_rating": {
+        "label": "Label",
+        "option": {
+          "AAA": "AAA ()",
+          "AA": "AA ()",
+          "A": "A ()",
+          "BBB": "BBB ()",
+          "BB": "BB ()"
+        }
+      },
+      "status": {
+        "label": "Label",
+        "option": {
+          "active": "Active",
+          "inactive": "Inactive",
+          "blacklisted": "Blacklisted"
+        }
+      },
+      "contact_person": {
+        "label": "Label"
+      },
+      "contact_phone": {
+        "label": "Label"
+      },
+      "contact_email": {
+        "label": "Label"
+      },
+      "address": {
+        "label": "Label"
+      },
+      "country": {
+        "label": "Label"
+      },
+      "province": {
+        "label": "Label"
+      },
+      "city": {
+        "label": "Label"
+      },
+      "zip_code": {
+        "label": "Label"
+      },
+      "tax_number": {
+        "label": "Label"
+      },
+      "bank_name": {
+        "label": "Label"
+      },
+      "bank_account": {
+        "label": "Label"
+      },
+      "remark": {
+        "label": "Label"
+      },
+      "filter": {
+        "status": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "active": "Active",
+            "inactive": "Inactive",
+            "blacklisted": "Blacklisted"
+          }
+        },
+        "category": {
+          "label": "Label",
+          "option": {
+            "all": "All"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Title"
+        },
+        "1": {
+          "title": "Title"
+        },
+        "2": {
+          "title": "Title"
+        },
+        "3": {
+          "title": "Title"
+        }
+      }
+    },
+    "vehicle": {
+      "meta": {
+        "title": "Title",
+        "description": "，、、、、",
+        "createTitle": "Createtitle",
+        "editTitle": "Edittitle",
+        "detailTitle": "Detailtitle"
+      },
+      "plate_number": {
+        "label": "Label"
+      },
+      "brand": {
+        "label": "Label"
+      },
+      "model": {
+        "label": "Label"
+      },
+      "vehicle_type": {
+        "label": "Label",
+        "option": {
+          "sedan": "Sedan",
+          "van": "Van",
+          "truck": "Truck",
+          "bus": "Bus"
+        }
+      },
+      "driver": {
+        "label": "Label"
+      },
+      "mileage": {
+        "label": "(km)"
+      },
+      "last_service": {
+        "label": "Label"
+      },
+      "fuel_type": {
+        "label": "Label",
+        "option": {
+          "gasoline": "Gasoline",
+          "diesel": "Diesel",
+          "electric": "Electric",
+          "hybrid": "Hybrid"
+        }
+      },
+      "status": {
+        "label": "Label",
+        "option": {
+          "available": "Available",
+          "in_use": "In Use",
+          "maintenance": "Maintenance",
+          "unavailable": "Unavailable"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "available": "Available",
+            "in_use": "In Use",
+            "maintenance": "Maintenance",
+            "unavailable": "Unavailable"
+          }
+        },
+        "vehicle_type": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "sedan": "Sedan",
+            "van": "Van",
+            "truck": "Truck",
+            "bus": "Bus"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Title"
+        },
+        "1": {
+          "title": "Title"
+        }
+      }
+    },
+    "vehicle_request": {
+      "meta": {
+        "title": "Title",
+        "description": "，、、、",
+        "createTitle": "Createtitle",
+        "editTitle": "Edittitle",
+        "detailTitle": "Detailtitle"
+      },
+      "vehicle_plate": {
+        "label": "Label"
+      },
+      "requester": {
+        "label": "Label"
+      },
+      "purpose": {
+        "label": "Label"
+      },
+      "start_time": {
+        "label": "Label"
+      },
+      "end_time": {
+        "label": "Label"
+      },
+      "driver_required": {
+        "label": "Label"
+      },
+      "status": {
+        "label": "Label",
+        "option": {
+          "pending": "Pending",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "completed": "Completed"
+        }
+      },
+      "filter": {
+        "status": {
+          "label": "Label",
+          "option": {
+            "all": "All",
+            "pending": "Pending",
+            "approved": "Approved",
+            "rejected": "Rejected",
+            "completed": "Completed"
+          }
+        }
+      },
+      "section": {
+        "0": {
+          "title": "Title"
+        },
+        "1": {
+          "title": "Title"
+        }
+      }
+    }
+  },
+  "erp.voucher.batchAction.batchSubmit.success": "Success",
+  "erp.voucher.batchAction.batchSubmit.fail": "Fail",
+  "erp.voucher.batchAction.batchSubmit.error": "Error",
+  "erp.voucher.batchAction.batchApprove.success": "Success",
+  "erp.voucher.batchAction.batchApprove.fail": "Fail",
+  "erp.voucher.batchAction.batchApprove.error": "Error",
+  "erp.announcement.meta.title": "Title",
+  "erp.announcement.meta.description": "，、、、",
+  "erp.announcement.meta.createTitle": "Createtitle",
+  "erp.announcement.meta.editTitle": "Edittitle",
+  "erp.announcement.meta.detailTitle": "Detailtitle",
+  "erp.announcement.title.label": "Label",
+  "erp.announcement.author.label": "Label",
+  "erp.announcement.priority.label": "Label",
+  "erp.announcement.priority.option.low": "Low",
+  "erp.announcement.priority.option.normal": "Normal",
+  "erp.announcement.priority.option.high": "High",
+  "erp.announcement.priority.option.urgent": "Urgent",
+  "erp.announcement.status.label": "Label",
+  "erp.announcement.status.option.draft": "Draft",
+  "erp.announcement.status.option.published": "Published",
+  "erp.announcement.status.option.archived": "Archived",
+  "erp.announcement.content.label": "Label",
+  "erp.announcement.publish_at.label": "Label",
+  "erp.announcement.filter.status.label": "Label",
+  "erp.announcement.filter.status.option.all": "All",
+  "erp.announcement.filter.status.option.draft": "Draft",
+  "erp.announcement.filter.status.option.published": "Published",
+  "erp.announcement.filter.status.option.archived": "Archived",
+  "erp.announcement.filter.priority.label": "Label",
+  "erp.announcement.filter.priority.option.all": "All",
+  "erp.announcement.filter.priority.option.low": "Low",
+  "erp.announcement.filter.priority.option.normal": "Normal",
+  "erp.announcement.filter.priority.option.high": "High",
+  "erp.announcement.filter.priority.option.urgent": "Urgent",
+  "erp.announcement.section.0.title": "Title",
+  "erp.announcement.section.1.title": "Title",
+  "erp.asset.meta.title": "Title",
+  "erp.asset.meta.description": "，、、",
+  "erp.asset.meta.createTitle": "Createtitle",
+  "erp.asset.meta.editTitle": "Edittitle",
+  "erp.asset.meta.detailTitle": "Detailtitle",
+  "erp.asset.name.label": "Label",
+  "erp.asset.asset_number.label": "Label",
+  "erp.asset.category.label": "Label",
+  "erp.asset.brand.label": "Label",
+  "erp.asset.model.label": "Label",
+  "erp.asset.serial_number.label": "Label",
+  "erp.asset.manufacturer.label": "Label",
+  "erp.asset.department.label": "Label",
+  "erp.asset.location.label": "Label",
+  "erp.asset.responsible_id.label": "ID",
+  "erp.asset.purchase_date.label": "Label",
+  "erp.asset.purchase_amount.label": "Label",
+  "erp.asset.rated_power.label": "(kW)",
+  "erp.asset.rated_voltage.label": "(V)",
+  "erp.asset.rated_current.label": "(A)",
+  "erp.asset.specifications.label": "Label",
+  "erp.asset.status.label": "Label",
+  "erp.asset.status.option.active": "Active",
+  "erp.asset.status.option.idle": "Idle",
+  "erp.asset.status.option.maintenance": "Maintenance",
+  "erp.asset.status.option.retired": "Retired",
+  "erp.asset.status.option.transferred": "Transferred",
+  "erp.asset.filter.status.label": "Label",
+  "erp.asset.filter.status.option.all": "All",
+  "erp.asset.filter.status.option.active": "Active",
+  "erp.asset.filter.status.option.idle": "Idle",
+  "erp.asset.filter.status.option.maintenance": "Maintenance",
+  "erp.asset.filter.status.option.retired": "Retired",
+  "erp.asset.filter.status.option.transferred": "Transferred",
+  "erp.asset.filter.category.label": "Label",
+  "erp.asset.filter.category.option.all": "All",
+  "erp.asset.section.0.title": "Title",
+  "erp.asset.section.1.title": "Title",
+  "erp.asset.section.2.title": "Title",
+  "erp.asset.section.3.title": "Title",
+  "erp.asset.section.4.title": "Title",
+  "erp.asset_category.meta.title": "Title",
+  "erp.asset_category.meta.description": "，",
+  "erp.asset_category.meta.createTitle": "Createtitle",
+  "erp.asset_category.meta.editTitle": "Edittitle",
+  "erp.asset_category.meta.detailTitle": "Detailtitle",
+  "erp.asset_category.code.label": "Label",
+  "erp.asset_category.name.label": "Label",
+  "erp.asset_category.parentId.label": "Label",
+  "erp.asset_category.description.label": "Label",
+  "erp.asset_category.status.label": "Label",
+  "erp.asset_category.status.option.active": "Active",
+  "erp.asset_category.status.option.inactive": "Inactive",
+  "erp.asset_category.created_at.label": "Label",
+  "erp.asset_category.filter.status.label": "Label",
+  "erp.asset_category.filter.status.option.all": "All",
+  "erp.asset_category.filter.status.option.active": "Active",
+  "erp.asset_category.filter.status.option.inactive": "Inactive",
+  "erp.asset_category.section.0.title": "Title",
+  "erp.asset_category.section.1.title": "Title",
+  "erp.bank_account.meta.title": "Title",
+  "erp.bank_account.meta.description": "，、、、",
+  "erp.bank_account.meta.createTitle": "Createtitle",
+  "erp.bank_account.meta.editTitle": "Edittitle",
+  "erp.bank_account.meta.detailTitle": "Detailtitle",
+  "erp.bank_account.bank_name.label": "Label",
+  "erp.bank_account.branch_name.label": "Label",
+  "erp.bank_account.account_name.label": "Label",
+  "erp.bank_account.account_number.label": "Label",
+  "erp.bank_account.account_type.label": "Label",
+  "erp.bank_account.account_type.option.basic": "Basic",
+  "erp.bank_account.account_type.option.general": "General",
+  "erp.bank_account.account_type.option.special": "Special",
+  "erp.bank_account.account_type.option.temporary": "Temporary",
+  "erp.bank_account.balance.label": "Label",
+  "erp.bank_account.currency.label": "Label",
+  "erp.bank_account.currency.option.CNY": "(CNY)",
+  "erp.bank_account.currency.option.USD": "(USD)",
+  "erp.bank_account.currency.option.EUR": "(EUR)",
+  "erp.bank_account.status.label": "Label",
+  "erp.bank_account.status.option.active": "Active",
+  "erp.bank_account.status.option.frozen": "Frozen",
+  "erp.bank_account.status.option.closed": "Closed",
+  "erp.bank_account.status.option.pending": "Pending",
+  "erp.bank_account.filter.status.label": "Label",
+  "erp.bank_account.filter.status.option.all": "All",
+  "erp.bank_account.filter.status.option.active": "Active",
+  "erp.bank_account.filter.status.option.frozen": "Frozen",
+  "erp.bank_account.filter.status.option.closed": "Closed",
+  "erp.bank_account.filter.status.option.pending": "Pending",
+  "erp.bank_account.filter.account_type.label": "Label",
+  "erp.bank_account.filter.account_type.option.all": "All",
+  "erp.bank_account.filter.account_type.option.basic": "Basic",
+  "erp.bank_account.filter.account_type.option.general": "General",
+  "erp.bank_account.filter.account_type.option.special": "Special",
+  "erp.bank_account.filter.account_type.option.temporary": "Temporary",
+  "erp.bank_account.section.0.title": "Title",
+  "erp.bank_account.section.1.title": "Title",
+  "erp.budget.meta.title": "Title",
+  "erp.budget.meta.description": "，、、",
+  "erp.budget.meta.createTitle": "Createtitle",
+  "erp.budget.meta.editTitle": "Edittitle",
+  "erp.budget.meta.detailTitle": "Detailtitle",
+  "erp.budget.budget_type.label": "Label",
+  "erp.budget.budget_type.option.annual": "Annual",
+  "erp.budget.budget_type.option.quarterly": "Quarterly",
+  "erp.budget.budget_type.option.monthly": "Monthly",
+  "erp.budget.budget_type.option.project": "Project",
+  "erp.budget.department_id.label": "Label",
+  "erp.budget.department_id.placeholder": "Placeholder",
+  "erp.budget.fiscal_year.label": "Label",
+  "erp.budget.fiscal_year.placeholder": "Placeholder",
+  "erp.budget.total_budget.label": "Label",
+  "erp.budget.used_amount.label": "Label",
+  "erp.budget.remaining_amount.label": "Label",
+  "erp.budget.usage_rate.label": "Label",
+  "erp.budget.status.label": "Label",
+  "erp.budget.status.option.active": "Active",
+  "erp.budget.status.option.completed": "Completed",
+  "erp.budget.status.option.exceeded": "Exceeded",
+  "erp.budget.status.option.pending": "Pending",
+  "erp.budget.status.option.cancelled": "Cancelled",
+  "erp.budget.created_at.label": "Label",
+  "erp.budget.filter.status.label": "Label",
+  "erp.budget.filter.status.option.all": "All",
+  "erp.budget.filter.status.option.active": "Active",
+  "erp.budget.filter.status.option.completed": "Completed",
+  "erp.budget.filter.status.option.exceeded": "Exceeded",
+  "erp.budget.filter.status.option.pending": "Pending",
+  "erp.budget.filter.status.option.cancelled": "Cancelled",
+  "erp.budget.section.0.title": "Title",
+  "erp.budget.section.1.title": "Title",
+  "erp.expense.section.0.title": "Title",
+  "erp.expense.section.1.title": "Title",
+  "erp.expense.section.2.title": "Title",
+  "erp.expense.section.3.title": "Title",
+  "erp.expense.meta.description": "，、、",
+  "erp.expense.meta.createTitle": "Createtitle",
+  "erp.expense.meta.editTitle": "Edittitle",
+  "erp.expense.meta.detailTitle": "Detailtitle",
+  "erp.expense.label": "Label",
+  "erp.expense.filter.status.label": "Label",
+  "erp.expense.filter.status.option.all": "All",
+  "erp.expense.filter.status.option.active": "Active",
+  "erp.expense.filter.status.option.completed": "Completed",
+  "erp.expense.filter.status.option.pending": "Pending",
+  "erp.expense.filter.status.option.cancelled": "Cancelled",
+  "erp.customer.meta.title": "Title",
+  "erp.customer.meta.description": "，、、、",
+  "erp.customer.meta.createTitle": "Createtitle",
+  "erp.customer.meta.editTitle": "Edittitle",
+  "erp.customer.meta.detailTitle": "Detailtitle",
+  "erp.customer.customer_code.label": "Label",
+  "erp.customer.customer_name.label": "Label",
+  "erp.customer.short_name.label": "Label",
+  "erp.customer.category.label": "Label",
+  "erp.customer.industry.label": "Label",
+  "erp.customer.credit_rating.label": "Label",
+  "erp.customer.credit_rating.option.AAA": "AAA ()",
+  "erp.customer.credit_rating.option.AA": "AA ()",
+  "erp.customer.credit_rating.option.A": "A ()",
+  "erp.customer.credit_rating.option.BBB": "BBB ()",
+  "erp.customer.credit_rating.option.BB": "BB ()",
+  "erp.customer.status.label": "Label",
+  "erp.customer.status.option.active": "Active",
+  "erp.customer.status.option.inactive": "Inactive",
+  "erp.customer.status.option.blacklisted": "Blacklisted",
+  "erp.customer.contact_person.label": "Label",
+  "erp.customer.contact_phone.label": "Label",
+  "erp.customer.contact_email.label": "Label",
+  "erp.customer.address.label": "Label",
+  "erp.customer.country.label": "Label",
+  "erp.customer.province.label": "Label",
+  "erp.customer.city.label": "Label",
+  "erp.customer.zip_code.label": "Label",
+  "erp.customer.tax_number.label": "Label",
+  "erp.customer.bank_name.label": "Label",
+  "erp.customer.bank_account.label": "Label",
+  "erp.customer.credit_limit.label": "Label",
+  "erp.customer.remark.label": "Label",
+  "erp.customer.filter.status.label": "Label",
+  "erp.customer.filter.status.option.all": "All",
+  "erp.customer.filter.status.option.active": "Active",
+  "erp.customer.filter.status.option.inactive": "Inactive",
+  "erp.customer.filter.status.option.blacklisted": "Blacklisted",
+  "erp.customer.filter.category.label": "Label",
+  "erp.customer.filter.category.option.all": "All",
+  "erp.customer.filter.industry.label": "Label",
+  "erp.customer.filter.industry.option.all": "All",
+  "erp.customer.section.0.title": "Title",
+  "erp.customer.section.1.title": "Title",
+  "erp.customer.section.2.title": "Title",
+  "erp.customer.section.3.title": "Title",
+  "erp.inventory.meta.title": "Title",
+  "erp.inventory.meta.description": "，、、、",
+  "erp.inventory.meta.createTitle": "Createtitle",
+  "erp.inventory.meta.editTitle": "Edittitle",
+  "erp.inventory.meta.detailTitle": "Detailtitle",
+  "erp.inventory.material_code.label": "Label",
+  "erp.inventory.material_code.placeholder": "Placeholder",
+  "erp.inventory.material_name.label": "Label",
+  "erp.inventory.material_name.placeholder": "Placeholder",
+  "erp.inventory.material_id.label": "ID",
+  "erp.inventory.specification.label": "Label",
+  "erp.inventory.specification.placeholder": "Placeholder",
+  "erp.inventory.unit.label": "Label",
+  "erp.inventory.unit.placeholder": "Placeholder",
+  "erp.inventory.warehouse_name.label": "Label",
+  "erp.inventory.warehouse_id.label": "ID",
+  "erp.inventory.location_name.label": "Label",
+  "erp.inventory.location_name.placeholder": "Placeholder",
+  "erp.inventory.location_id.label": "ID",
+  "erp.inventory.quantity.label": "Label",
+  "erp.inventory.available_quantity.label": "Label",
+  "erp.inventory.reserved_quantity.label": "Label",
+  "erp.inventory.safety_stock.label": "Label",
+  "erp.inventory.max_stock.label": "Label",
+  "erp.inventory.unit_cost.label": "Label",
+  "erp.inventory.total_cost.label": "Label",
+  "erp.inventory.batch_number.label": "Label",
+  "erp.inventory.batch_number.placeholder": "Placeholder",
+  "erp.inventory.production_date.label": "Label",
+  "erp.inventory.expiry_date.label": "Label",
+  "erp.inventory.stock_status.label": "Label",
+  "erp.inventory.created_at.label": "Label",
+  "erp.inventory.updated_at.label": "Label",
+  "erp.inventory.filter.warehouse.label": "Label",
+  "erp.inventory.filter.warehouse.option.all": "All",
+  "erp.inventory.filter.warehouse.option.W001": "W001",
+  "erp.inventory.filter.warehouse.option.W002": "W002",
+  "erp.inventory.filter.warehouse.option.W003": "W003",
+  "erp.inventory.section.0.title": "Title",
+  "erp.inventory.section.1.title": "Title",
+  "erp.inventory.section.2.title": "Title",
+  "erp.inventory.section.3.title": "Title",
+  "erp.material.meta.title": "Title",
+  "erp.material.meta.description": "，、、、",
+  "erp.material.meta.createTitle": "Createtitle",
+  "erp.material.meta.editTitle": "Edittitle",
+  "erp.material.meta.detailTitle": "Detailtitle",
+  "erp.material.material_code.label": "Label",
+  "erp.material.material_name.label": "Label",
+  "erp.material.specification.label": "Label",
+  "erp.material.category.label": "Label",
+  "erp.material.unit.label": "Label",
+  "erp.material.unit_price.label": "Label",
+  "erp.material.supplier_id.label": "ID",
+  "erp.material.supplier_name.label": "Label",
+  "erp.material.status.label": "Label",
+  "erp.material.status.option.active": "Active",
+  "erp.material.status.option.inactive": "Inactive",
+  "erp.material.status.option.obsolete": "Obsolete",
+  "erp.material.barcode.label": "Label",
+  "erp.material.weight.label": "(kg)",
+  "erp.material.volume.label": "(m³)",
+  "erp.material.description.label": "Label",
+  "erp.material.filter.status.label": "Label",
+  "erp.material.filter.status.option.all": "All",
+  "erp.material.filter.status.option.active": "Active",
+  "erp.material.filter.status.option.inactive": "Inactive",
+  "erp.material.filter.status.option.obsolete": "Obsolete",
+  "erp.material.filter.category.label": "Label",
+  "erp.material.filter.category.option.all": "All",
+  "erp.material.section.0.title": "Title",
+  "erp.material.section.1.title": "Title",
+  "erp.material.section.2.title": "Title",
+  "erp.material.section.3.title": "Title",
+  "erp.meeting_room.meta.title": "Title",
+  "erp.meeting_room.meta.description": "，、、、",
+  "erp.meeting_room.meta.createTitle": "Createtitle",
+  "erp.meeting_room.meta.editTitle": "Edittitle",
+  "erp.meeting_room.meta.detailTitle": "Detailtitle",
+  "erp.meeting_room.name.label": "Label",
+  "erp.meeting_room.location.label": "Label",
+  "erp.meeting_room.capacity.label": "Label",
+  "erp.meeting_room.facilities.label": "Label",
+  "erp.meeting_room.status.label": "Label",
+  "erp.meeting_room.status.option.available": "Available",
+  "erp.meeting_room.status.option.occupied": "Occupied",
+  "erp.meeting_room.status.option.maintenance": "Maintenance",
+  "erp.meeting_room.status.option.unavailable": "Unavailable",
+  "erp.meeting_room.filter.status.label": "Label",
+  "erp.meeting_room.filter.status.option.all": "All",
+  "erp.meeting_room.filter.status.option.available": "Available",
+  "erp.meeting_room.filter.status.option.occupied": "Occupied",
+  "erp.meeting_room.filter.status.option.maintenance": "Maintenance",
+  "erp.meeting_room.filter.status.option.unavailable": "Unavailable",
+  "erp.meeting_room.section.0.title": "Title",
+  "erp.meeting_room.section.1.title": "Title",
+  "erp.office_supply.meta.title": "Title",
+  "erp.office_supply.meta.description": "，、、、",
+  "erp.office_supply.meta.createTitle": "Createtitle",
+  "erp.office_supply.meta.editTitle": "Edittitle",
+  "erp.office_supply.meta.detailTitle": "Detailtitle",
+  "erp.office_supply.name.label": "Label",
+  "erp.office_supply.category.label": "Label",
+  "erp.office_supply.category.option.stationery": "Stationery",
+  "erp.office_supply.category.option.electronics": "Electronics",
+  "erp.office_supply.category.option.furniture": "Furniture",
+  "erp.office_supply.category.option.consumables": "Consumables",
+  "erp.office_supply.category.option.other": "Other",
+  "erp.office_supply.quantity.label": "Label",
+  "erp.office_supply.unit.label": "Label",
+  "erp.office_supply.price.label": "Label",
+  "erp.office_supply.location.label": "Label",
+  "erp.office_supply.status.label": "Label",
+  "erp.office_supply.status.option.in_stock": "In Stock",
+  "erp.office_supply.status.option.low_stock": "Low Stock",
+  "erp.office_supply.status.option.out_of_stock": "Out Of Stock",
+  "erp.office_supply.status.option.discontinued": "Discontinued",
+  "erp.office_supply.filter.status.label": "Label",
+  "erp.office_supply.filter.status.option.all": "All",
+  "erp.office_supply.filter.status.option.in_stock": "In Stock",
+  "erp.office_supply.filter.status.option.low_stock": "Low Stock",
+  "erp.office_supply.filter.status.option.out_of_stock": "Out Of Stock",
+  "erp.office_supply.filter.status.option.discontinued": "Discontinued",
+  "erp.office_supply.filter.category.label": "Label",
+  "erp.office_supply.filter.category.option.all": "All",
+  "erp.office_supply.filter.category.option.stationery": "Stationery",
+  "erp.office_supply.filter.category.option.electronics": "Electronics",
+  "erp.office_supply.filter.category.option.furniture": "Furniture",
+  "erp.office_supply.filter.category.option.consumables": "Consumables",
+  "erp.office_supply.filter.category.option.other": "Other",
+  "erp.office_supply.section.0.title": "Title",
+  "erp.office_supply.section.1.title": "Title",
+  "erp.purchase_order.meta.title": "Title",
+  "erp.purchase_order.meta.description": "，、、、",
+  "erp.purchase_order.meta.createTitle": "Createtitle",
+  "erp.purchase_order.meta.editTitle": "Edittitle",
+  "erp.purchase_order.meta.detailTitle": "Detailtitle",
+  "erp.purchase_order.order_number.label": "Label",
+  "erp.purchase_order.supplier_name.label": "Label",
+  "erp.purchase_order.total_amount.label": "Label",
+  "erp.purchase_order.order_date.label": "Label",
+  "erp.purchase_order.expected_date.label": "Label",
+  "erp.purchase_order.currency.label": "Label",
+  "erp.purchase_order.currency.option.CNY": "(CNY)",
+  "erp.purchase_order.currency.option.USD": "(USD)",
+  "erp.purchase_order.currency.option.EUR": "(EUR)",
+  "erp.purchase_order.status.label": "Label",
+  "erp.purchase_order.status.option.draft": "Draft",
+  "erp.purchase_order.status.option.pending": "Pending",
+  "erp.purchase_order.status.option.approved": "Approved",
+  "erp.purchase_order.status.option.partially_received": "Partially Received",
+  "erp.purchase_order.status.option.received": "Received",
+  "erp.purchase_order.status.option.cancelled": "Cancelled",
+  "erp.purchase_order.remark.label": "Label",
+  "erp.purchase_order.filter.status.label": "Label",
+  "erp.purchase_order.filter.status.option.all": "All",
+  "erp.purchase_order.filter.status.option.draft": "Draft",
+  "erp.purchase_order.filter.status.option.pending": "Pending",
+  "erp.purchase_order.filter.status.option.approved": "Approved",
+  "erp.purchase_order.filter.status.option.partially_received": "Partially Received",
+  "erp.purchase_order.filter.status.option.received": "Received",
+  "erp.purchase_order.filter.status.option.cancelled": "Cancelled",
+  "erp.purchase_order.section.0.title": "Title",
+  "erp.purchase_order.section.1.title": "Title",
+  "erp.purchase_order.section.2.title": "Title",
+  "erp.sales_order.meta.title": "Title",
+  "erp.sales_order.meta.description": "，、、、",
+  "erp.sales_order.meta.createTitle": "Createtitle",
+  "erp.sales_order.meta.editTitle": "Edittitle",
+  "erp.sales_order.meta.detailTitle": "Detailtitle",
+  "erp.sales_order.order_number.label": "Label",
+  "erp.sales_order.customer_name.label": "Label",
+  "erp.sales_order.total_amount.label": "Label",
+  "erp.sales_order.order_date.label": "Label",
+  "erp.sales_order.delivery_date.label": "Label",
+  "erp.sales_order.currency.label": "Label",
+  "erp.sales_order.currency.option.CNY": "(CNY)",
+  "erp.sales_order.currency.option.USD": "(USD)",
+  "erp.sales_order.currency.option.EUR": "(EUR)",
+  "erp.sales_order.status.label": "Label",
+  "erp.sales_order.status.option.draft": "Draft",
+  "erp.sales_order.status.option.pending": "Pending",
+  "erp.sales_order.status.option.approved": "Approved",
+  "erp.sales_order.status.option.partially_shipped": "Partially Shipped",
+  "erp.sales_order.status.option.shipped": "Shipped",
+  "erp.sales_order.status.option.completed": "Completed",
+  "erp.sales_order.status.option.cancelled": "Cancelled",
+  "erp.sales_order.remark.label": "Label",
+  "erp.sales_order.filter.status.label": "Label",
+  "erp.sales_order.filter.status.option.all": "All",
+  "erp.sales_order.filter.status.option.draft": "Draft",
+  "erp.sales_order.filter.status.option.pending": "Pending",
+  "erp.sales_order.filter.status.option.approved": "Approved",
+  "erp.sales_order.filter.status.option.partially_shipped": "Partially Shipped",
+  "erp.sales_order.filter.status.option.shipped": "Shipped",
+  "erp.sales_order.filter.status.option.completed": "Completed",
+  "erp.sales_order.filter.status.option.cancelled": "Cancelled",
+  "erp.sales_order.section.0.title": "Title",
+  "erp.sales_order.section.1.title": "Title",
+  "erp.sales_order.section.2.title": "Title",
+  "erp.supplier.meta.title": "Title",
+  "erp.supplier.meta.description": "，、、、",
+  "erp.supplier.meta.createTitle": "Createtitle",
+  "erp.supplier.meta.editTitle": "Edittitle",
+  "erp.supplier.meta.detailTitle": "Detailtitle",
+  "erp.supplier.supplier_code.label": "Label",
+  "erp.supplier.supplier_name.label": "Label",
+  "erp.supplier.short_name.label": "Label",
+  "erp.supplier.category.label": "Label",
+  "erp.supplier.credit_rating.label": "Label",
+  "erp.supplier.credit_rating.option.AAA": "AAA ()",
+  "erp.supplier.credit_rating.option.AA": "AA ()",
+  "erp.supplier.credit_rating.option.A": "A ()",
+  "erp.supplier.credit_rating.option.BBB": "BBB ()",
+  "erp.supplier.credit_rating.option.BB": "BB ()",
+  "erp.supplier.status.label": "Label",
+  "erp.supplier.status.option.active": "Active",
+  "erp.supplier.status.option.inactive": "Inactive",
+  "erp.supplier.status.option.blacklisted": "Blacklisted",
+  "erp.supplier.contact_person.label": "Label",
+  "erp.supplier.contact_phone.label": "Label",
+  "erp.supplier.contact_email.label": "Label",
+  "erp.supplier.address.label": "Label",
+  "erp.supplier.country.label": "Label",
+  "erp.supplier.province.label": "Label",
+  "erp.supplier.city.label": "Label",
+  "erp.supplier.zip_code.label": "Label",
+  "erp.supplier.tax_number.label": "Label",
+  "erp.supplier.bank_name.label": "Label",
+  "erp.supplier.bank_account.label": "Label",
+  "erp.supplier.remark.label": "Label",
+  "erp.supplier.filter.status.label": "Label",
+  "erp.supplier.filter.status.option.all": "All",
+  "erp.supplier.filter.status.option.active": "Active",
+  "erp.supplier.filter.status.option.inactive": "Inactive",
+  "erp.supplier.filter.status.option.blacklisted": "Blacklisted",
+  "erp.supplier.filter.category.label": "Label",
+  "erp.supplier.filter.category.option.all": "All",
+  "erp.supplier.section.0.title": "Title",
+  "erp.supplier.section.1.title": "Title",
+  "erp.supplier.section.2.title": "Title",
+  "erp.supplier.section.3.title": "Title",
+  "erp.vehicle.meta.title": "Title",
+  "erp.vehicle.meta.description": "，、、、、",
+  "erp.vehicle.meta.createTitle": "Createtitle",
+  "erp.vehicle.meta.editTitle": "Edittitle",
+  "erp.vehicle.meta.detailTitle": "Detailtitle",
+  "erp.vehicle.plate_number.label": "Label",
+  "erp.vehicle.brand.label": "Label",
+  "erp.vehicle.model.label": "Label",
+  "erp.vehicle.vehicle_type.label": "Label",
+  "erp.vehicle.vehicle_type.option.sedan": "Sedan",
+  "erp.vehicle.vehicle_type.option.van": "Van",
+  "erp.vehicle.vehicle_type.option.truck": "Truck",
+  "erp.vehicle.vehicle_type.option.bus": "Bus",
+  "erp.vehicle.driver.label": "Label",
+  "erp.vehicle.mileage.label": "(km)",
+  "erp.vehicle.last_service.label": "Label",
+  "erp.vehicle.fuel_type.label": "Label",
+  "erp.vehicle.fuel_type.option.gasoline": "Gasoline",
+  "erp.vehicle.fuel_type.option.diesel": "Diesel",
+  "erp.vehicle.fuel_type.option.electric": "Electric",
+  "erp.vehicle.fuel_type.option.hybrid": "Hybrid",
+  "erp.vehicle.status.label": "Label",
+  "erp.vehicle.status.option.available": "Available",
+  "erp.vehicle.status.option.in_use": "In Use",
+  "erp.vehicle.status.option.maintenance": "Maintenance",
+  "erp.vehicle.status.option.unavailable": "Unavailable",
+  "erp.vehicle.filter.status.label": "Label",
+  "erp.vehicle.filter.status.option.all": "All",
+  "erp.vehicle.filter.status.option.available": "Available",
+  "erp.vehicle.filter.status.option.in_use": "In Use",
+  "erp.vehicle.filter.status.option.maintenance": "Maintenance",
+  "erp.vehicle.filter.status.option.unavailable": "Unavailable",
+  "erp.vehicle.filter.vehicle_type.label": "Label",
+  "erp.vehicle.filter.vehicle_type.option.all": "All",
+  "erp.vehicle.filter.vehicle_type.option.sedan": "Sedan",
+  "erp.vehicle.filter.vehicle_type.option.van": "Van",
+  "erp.vehicle.filter.vehicle_type.option.truck": "Truck",
+  "erp.vehicle.filter.vehicle_type.option.bus": "Bus",
+  "erp.vehicle.section.0.title": "Title",
+  "erp.vehicle.section.1.title": "Title",
+  "erp.vehicle_request.meta.title": "Title",
+  "erp.vehicle_request.meta.description": "，、、、",
+  "erp.vehicle_request.meta.createTitle": "Createtitle",
+  "erp.vehicle_request.meta.editTitle": "Edittitle",
+  "erp.vehicle_request.meta.detailTitle": "Detailtitle",
+  "erp.vehicle_request.vehicle_plate.label": "Label",
+  "erp.vehicle_request.requester.label": "Label",
+  "erp.vehicle_request.purpose.label": "Label",
+  "erp.vehicle_request.start_time.label": "Label",
+  "erp.vehicle_request.end_time.label": "Label",
+  "erp.vehicle_request.driver_required.label": "Label",
+  "erp.vehicle_request.status.label": "Label",
+  "erp.vehicle_request.status.option.pending": "Pending",
+  "erp.vehicle_request.status.option.approved": "Approved",
+  "erp.vehicle_request.status.option.rejected": "Rejected",
+  "erp.vehicle_request.status.option.completed": "Completed",
+  "erp.vehicle_request.filter.status.label": "Label",
+  "erp.vehicle_request.filter.status.option.all": "All",
+  "erp.vehicle_request.filter.status.option.pending": "Pending",
+  "erp.vehicle_request.filter.status.option.approved": "Approved",
+  "erp.vehicle_request.filter.status.option.rejected": "Rejected",
+  "erp.vehicle_request.filter.status.option.completed": "Completed",
+  "erp.vehicle_request.section.0.title": "Title",
+  "erp.vehicle_request.section.1.title": "Title",
+  "erp.voucher.meta.title": "Title",
+  "erp.voucher.meta.description": "，、、",
+  "erp.voucher.meta.createTitle": "Createtitle",
+  "erp.voucher.meta.editTitle": "Edittitle",
+  "erp.voucher.meta.detailTitle": "Detailtitle",
+  "erp.voucher.voucher_number.label": "Label",
+  "erp.voucher.voucher_date.label": "Label",
+  "erp.voucher.period.label": "Label",
+  "erp.voucher.voucher_type.label": "Label",
+  "erp.voucher.summary.label": "Label",
+  "erp.voucher.attachment_count.label": "Label",
+  "erp.voucher.status.label": "Label",
+  "erp.voucher.status.option.draft": "Draft",
+  "erp.voucher.status.option.submitted": "Submitted",
+  "erp.voucher.status.option.approved": "Approved",
+  "erp.voucher.status.option.posted": "Posted",
+  "erp.voucher.status.option.voided": "Voided",
+  "erp.voucher.filter.status.label": "Label",
+  "erp.voucher.filter.status.option.all": "All",
+  "erp.voucher.filter.status.option.draft": "Draft",
+  "erp.voucher.filter.status.option.submitted": "Submitted",
+  "erp.voucher.filter.status.option.approved": "Approved",
+  "erp.voucher.filter.status.option.posted": "Posted",
+  "erp.voucher.filter.status.option.voided": "Voided",
+  "erp.voucher.filter.voucher_type.label": "Label",
+  "erp.voucher.filter.voucher_type.option.all": "All",
+  "erp.voucher.section.0.title": "Title",
+  "erp.voucher.section.1.title": "Title",
+  "erp.voucher.batchAction.batchSubmit.label": "Label",
+  "erp.voucher.batchAction.batchSubmit.confirmMessage": "？",
+  "erp.voucher.batchAction.batchApprove.label": "Label",
+  "erp.voucher.batchAction.batchApprove.confirmMessage": "？"
 }

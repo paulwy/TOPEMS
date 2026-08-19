@@ -1171,7 +1171,8 @@
       "v530ai_1": "V53.0 AI Enhance",
       "i18n_8": "NoSuggestion, Please Clicki18n",
       "nn_29": "Smart Complete System Status:\\n\\n",
-      "ai_35": "AI at..."
+      "ai_35": "AI at...",
+      "k58": "Statements"
     },
     "v58-evolution-panel": {
       "k19": "Created At",
@@ -1702,7 +1703,8 @@
       "k54": "Measure Enabled",
       "k55": "Suggestion",
       "k56": "Is the most common type of security finding currently, SuggestionHandle.",
-      "k57": "ProtectSuggestion"
+      "k57": "ProtectSuggestion",
+      "k58": "Score"
     },
     "ai_chat_page": {
       "k0": "System Optimization Suggestion",

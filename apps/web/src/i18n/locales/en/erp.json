@@ -484,73 +484,7 @@
       "vs_last_week": "vs last week",
       "vs_last_week_pct": "% vs last week",
       "greeting_subtitle": "{{v0}}, financial management and inventory overview"
-    },
-    "dashboard_vs_上周": "dashboard.vs_last_week",
-    "dashboard_vs_上月": "dashboard.vs_last_month",
-    "dashboard_上午好": "dashboard.good_morning",
-    "dashboard_下午好": "dashboard.good_afternoon",
-    "dashboard_企业资源管理": "dashboard.enterprise_resource_management",
-    "dashboard_低库存": "dashboard.low_inventory",
-    "dashboard_供应商": "dashboard.supplier",
-    "dashboard_供应商总数": "dashboard.total_suppliers",
-    "dashboard_供应商管理": "dashboard.supplier_management",
-    "dashboard_凭证": "dashboard.voucher",
-    "dashboard_凭证总数": "dashboard.total_vouchers",
-    "dashboard_在用": "dashboard.in_use",
-    "dashboard_在用资产": "dashboard.assets_in_use",
-    "dashboard_客户": "dashboard.customer",
-    "dashboard_客户总数": "dashboard.total_customers",
-    "dashboard_客户管理": "dashboard.customer_management",
-    "dashboard_库存": "dashboard.inventory",
-    "dashboard_库存总量": "dashboard.total_inventory",
-    "dashboard_待处理": "dashboard.pending",
-    "dashboard_待处理订单": "dashboard.pending_orders",
-    "dashboard_待审批": "dashboard.pending_approval",
-    "dashboard_待审批凭证": "dashboard.vouchers_pending_approval",
-    "dashboard_快捷操作": "dashboard.quick_actions",
-    "dashboard_总订单": "dashboard.total_orders",
-    "dashboard_总资产": "dashboard.total_assets",
-    "dashboard_数据概览": "dashboard.data_overview",
-    "dashboard_新增凭证": "dashboard.new_voucher",
-    "dashboard_新增预算": "dashboard.new_budget",
-    "dashboard_晚上好": "dashboard.good_evening",
-    "dashboard_资产": "dashboard.asset",
-    "dashboard_资产管理": "dashboard.asset_management",
-    "dashboard_趋势分析": "dashboard.trend_analysis",
-    "dashboard_采购订单": "dashboard.purchase_order",
-    "vs_上周": "% vs Last Week",
-    "vs_上月": "% vs Last Month",
-    "上午好": "Good Morning",
-    "下午好": "Good Afternoon",
-    "企业资源管理": "Enterprise Resource Management",
-    "低库存": "Low Inventory",
-    "供应商": "Supplier",
-    "供应商总数": "Total Suppliers",
-    "供应商管理": "Supplier Management",
-    "凭证": "Voucher",
-    "凭证总数": "Total Vouchers",
-    "在用": "In Use",
-    "在用资产": "Assets in Use",
-    "客户": "Customer",
-    "客户总数": "Total Customers",
-    "客户管理": "Customer Management",
-    "库存": "Inventory",
-    "库存总量": "Total Inventory",
-    "待处理": "Pending",
-    "待处理订单": "Pending Orders",
-    "待审批": "Pending Approval",
-    "待审批凭证": "Vouchers Pending Approval",
-    "快捷操作": "Quick Actions",
-    "总订单": "Total Orders",
-    "总资产": "Total Assets",
-    "数据概览": "Data Overview",
-    "新增凭证": "New Voucher",
-    "新增预算": "New Budget",
-    "晚上好": "Good Evening",
-    "资产": "Asset",
-    "资产管理": "Asset Management",
-    "趋势分析": "Trend Analysis",
-    "采购订单": "Purchase Order"
+    }
   },
   "voucher": {
     "label": {
@@ -564,23 +498,7 @@
     },
     "message": {
       "load_voucher_stats_failed": "Failed to load voucher stats"
-    },
-    "voucher_凭证总数": "voucher.total_vouchers",
-    "voucher_凭证管理": "voucher.voucher_management",
-    "voucher_加载凭证统计失败": "voucher.load_voucher_stats_failed",
-    "voucher_已审核": "voucher.audited",
-    "voucher_已过账": "voucher.posted",
-    "voucher_待审核": "voucher.pending_review",
-    "voucher_草稿": "voucher.draft",
-    "voucher_财务管理": "voucher.financial_management",
-    "凭证总数": "Total Vouchers",
-    "凭证管理": "Voucher Management",
-    "加载凭证统计失败": "load_voucher_stats_failed",
-    "已审核": "Audited",
-    "已过账": "Posted",
-    "待审核": "Pending Review",
-    "草稿": "Draft",
-    "财务管理": "Financial Management"
+    }
   },
   "material": {
     "label": {
@@ -1771,7 +1689,7 @@
     "database": {
       "status": {
         "success": "Success",
-        "failed": "Failure",
+        "failed": "Failed",
         "running": "Label"
       },
       "label": {
@@ -1782,9 +1700,9 @@
         "file_size": "File",
         "status": "Status",
         "created_by": "Create",
-        "created_at": "Created at",
-        "remark": "Remark",
-        "operation": "Action",
+        "created_at": "Created At",
+        "remark": "Remarks",
+        "operation": "Actions",
         "no_backups": "No backups",
         "full_backup": "Full Backup",
         "incremental_backup": "Incremental Backup",
@@ -1808,9 +1726,9 @@
         "backup_type": "backupType",
         "backup_remark": "Label",
         "backup_remark_placeholder": "Please enterBackupRemark",
-        "cancel": "Cancelled",
+        "cancel": "Cancel",
         "start_backup": "Startbackup",
-        "restore_confirm_title": "restoreConfirmTitle",
+        "restore_confirm_title": "restore Confirm Title",
         "restore_warning": "Warning",
         "restore_warning_desc": "Warning",
         "backup_to_restore": "Select Backup to Restore",
@@ -1833,9 +1751,9 @@
         "backup_incremental": "Incremental Backup",
         "backup_monthly_full": "Monthly",
         "admin": "Admin",
-        "manual_backup_failed": "Hint",
+        "manual_backup_failed": "Tip",
         "current_user": "User",
-        "manual_backup": "Hint"
+        "manual_backup": "Tip"
       },
       "message": {
         "error": "Error",
@@ -1943,10 +1861,10 @@
         "transfer_short_label": "transfershortLabel",
         "accounting_short_label": "accountingshortLabel",
         "voucher_number_required": "Label",
-        "voucher_number_placeholder": "Please enter voucher number",
+        "voucher_number_placeholder": "Voucher number is required",
         "voucher_date_required": "Label",
         "period_required": "Label",
-        "period_placeholder": "Please select accounting period",
+        "period_placeholder": "Accounting period is required",
         "attachment_count": "Label",
         "voucher_summary": "voucherSummary",
         "add_entry": "Addentry",
@@ -1957,11 +1875,11 @@
         "balance_status": "balanceStatus",
         "balanced": "Label",
         "unbalanced": "Unbalanced",
-        "cancel": "Cancelled",
+        "cancel": "Cancel",
         "save_voucher": "Savevoucher",
         "type": "Type",
         "date": "Date",
-        "operation": "Action",
+        "operation": "Actions",
         "view_detail": "Details",
         "edit": "Edit",
         "audit": "Title",
@@ -1982,12 +1900,12 @@
         "accounting": "Label"
       },
       "period": {
-        "2024_01": "2024Year1Month",
-        "2024_02": "2024Year2Month",
-        "2024_03": "2024Year3Month",
-        "2024_04": "2024Year4Month",
-        "2024_05": "2024Year5Month",
-        "2024_06": "2024Year6Month"
+        "2024_01": "2024 Year1 Month",
+        "2024_02": "2024 Year2 Month",
+        "2024_03": "2024 Year3 Month",
+        "2024_04": "2024 Year4 Month",
+        "2024_05": "2024 Year5 Month",
+        "2024_06": "2024 Year6 Month"
       },
       "message": {
         "click_to_add_items": "clicktoAdditems",
@@ -1998,15 +1916,15 @@
         "operation_failed": "Actionfailed",
         "delete_success": "Deleted successfully",
         "tip": "Title",
-        "fill_required_fields": "Please fill in required fields",
+        "fill_required_fields": "Required fields is required",
         "add_voucher_items": "Addvoucheritems",
         "unbalanced_voucher": "Unbalanced Voucher",
         "failure": "Title",
         "create_failed": "Create",
         "voucher_audited": "Title",
-        "audit_failed": "Failure",
+        "audit_failed": "Failed",
         "voucher_posted": "Title",
-        "post_failed": "Failure",
+        "post_failed": "Failed",
         "delete_failed": "Deletefailed",
         "export_success": "Title",
         "voucher_data_exported": "Data",
@@ -2058,12 +1976,7 @@
       },
       "voucher_type": {
         "label": "Label",
-        "option": {
-          "记": "Erp.voucher.voucher_type.option.record",
-          "收": "Erp.voucher.voucher_type.option.receive",
-          "付": "Erp.voucher.voucher_type.option.pay",
-          "转": "Erp.voucher.voucher_type.option.transfer"
-        }
+        "option": {}
       },
       "summary": {
         "label": "Label"
@@ -2096,11 +2009,7 @@
         "voucher_type": {
           "label": "Label",
           "option": {
-            "all": "All",
-            "记": "Erp.voucher.filter.voucher_type.option.record",
-            "收": "Erp.voucher.filter.voucher_type.option.receive",
-            "付": "Erp.voucher.filter.voucher_type.option.pay",
-            "转": "Erp.voucher.filter.voucher_type.option.transfer"
+            "all": "All"
           }
         }
       },
@@ -2261,12 +2170,7 @@
         "category": {
           "label": "Label",
           "option": {
-            "all": "All",
-            "电子设备": "Erp.asset.filter.category.option.electricchilddesignprepare",
-            "机械设备": "Erp.asset.filter.category.option.machinemachinedesignprepare",
-            "办公设备": "Erp.asset.filter.category.option.handlepublicdesignprepare",
-            "家具": "Erp.asset.filter.category.option.hometool",
-            "其他": "Erp.asset.filter.category.option.itsother"
+            "all": "All"
           }
         }
       },
@@ -2543,24 +2447,11 @@
       },
       "category": {
         "label": "Label",
-        "option": {
-          "大型企业": "Erp.customer.category.option.bigtypeenterprisebusiness",
-          "中型企业": "Erp.customer.category.option.Mediumtypeenterprisebusiness",
-          "小型企业": "Erp.customer.category.option.smalltypeenterprisebusiness",
-          "政府机构": "Erp.customer.category.option.politicsgovernmentmachinestructure",
-          "个人客户": "Erp.customer.category.option.itemspersonguestuser"
-        }
+        "option": {}
       },
       "industry": {
         "label": "Label",
-        "option": {
-          "电子制造": "Erp.customer.industry.option.electricchildsystemmake",
-          "机械制造": "Erp.customer.industry.option.machinemachinesystemmake",
-          "化工": "Erp.customer.industry.option.convertwork",
-          "金融": "Erp.customer.industry.option.goldfinance",
-          "互联网": "Erp.customer.industry.option.mutualconnectionnetwork",
-          "医疗": "Erp.customer.industry.option.medicaltreat"
-        }
+        "option": {}
       },
       "credit_rating": {
         "label": "Label",
@@ -2632,24 +2523,13 @@
         "category": {
           "label": "Label",
           "option": {
-            "all": "All",
-            "大型企业": "Erp.customer.filter.category.option.bigtypeenterprisebusiness",
-            "中型企业": "Erp.customer.filter.category.option.Mediumtypeenterprisebusiness",
-            "小型企业": "Erp.customer.filter.category.option.smalltypeenterprisebusiness",
-            "政府机构": "Erp.customer.filter.category.option.politicsgovernmentmachinestructure",
-            "个人客户": "Erp.customer.filter.category.option.itemspersonguestuser"
+            "all": "All"
           }
         },
         "industry": {
           "label": "Label",
           "option": {
-            "all": "All",
-            "电子制造": "Erp.customer.filter.industry.option.electricchildsystemmake",
-            "机械制造": "Erp.customer.filter.industry.option.machinemachinesystemmake",
-            "化工": "Erp.customer.filter.industry.option.convertwork",
-            "金融": "Erp.customer.filter.industry.option.goldfinance",
-            "互联网": "Erp.customer.filter.industry.option.mutualconnectionnetwork",
-            "医疗": "Erp.customer.filter.industry.option.medicaltreat"
+            "all": "All"
           }
         }
       },
@@ -2697,11 +2577,7 @@
       },
       "warehouse_name": {
         "label": "Label",
-        "option": {
-          "原材料仓库": "Erp.inventory.warehouse_name.option.originalmaterialmaterialwarehouselibrary",
-          "成品仓库": "Erp.inventory.warehouse_name.option.becomeproductwarehouselibrary",
-          "半成品仓库": "Erp.inventory.warehouse_name.option.halfbecomeproductwarehouselibrary"
-        }
+        "option": {}
       },
       "warehouse_id": {
         "label": "ID"
@@ -2798,13 +2674,7 @@
       },
       "category": {
         "label": "Label",
-        "option": {
-          "电子元件": "Erp.material.category.option.electricchildyuanitem",
-          "机械零件": "Erp.material.category.option.machinemachinezeroitem",
-          "原材料": "Erp.material.category.option.originalmaterialmaterial",
-          "包装材料": "Erp.material.category.option.packageinstallmaterialmaterial",
-          "辅助材料": "Erp.material.category.option.assistassistmaterialmaterial"
-        }
+        "option": {}
       },
       "unit": {
         "label": "Label"
@@ -2851,12 +2721,7 @@
         "category": {
           "label": "Label",
           "option": {
-            "all": "All",
-            "电子元件": "Erp.material.filter.category.option.electricchildyuanitem",
-            "机械零件": "Erp.material.filter.category.option.machinemachinezeroitem",
-            "原材料": "Erp.material.filter.category.option.originalmaterialmaterial",
-            "包装材料": "Erp.material.filter.category.option.packageinstallmaterialmaterial",
-            "辅助材料": "Erp.material.filter.category.option.assistassistmaterialmaterial"
+            "all": "All"
           }
         }
       },
@@ -3162,12 +3027,7 @@
       },
       "category": {
         "label": "Label",
-        "option": {
-          "原材料供应商": "Erp.supplier.category.option.originalmaterialmaterialsupplyrespondmerchant",
-          "配件供应商": "Erp.supplier.category.option.matchitemsupplyrespondmerchant",
-          "设备供应商": "Erp.supplier.category.option.designpreparesupplyrespondmerchant",
-          "服务供应商": "Erp.supplier.category.option.Servicesupplyrespondmerchant"
-        }
+        "option": {}
       },
       "credit_rating": {
         "label": "Label",
@@ -3236,11 +3096,7 @@
         "category": {
           "label": "Label",
           "option": {
-            "all": "All",
-            "原材料供应商": "Erp.supplier.filter.category.option.originalmaterialmaterialsupplyrespondmerchant",
-            "配件供应商": "Erp.supplier.filter.category.option.matchitemsupplyrespondmerchant",
-            "设备供应商": "Erp.supplier.filter.category.option.designpreparesupplyrespondmerchant",
-            "服务供应商": "Erp.supplier.filter.category.option.Servicesupplyrespondmerchant"
+            "all": "All"
           }
         }
       },
@@ -3423,7 +3279,7 @@
     "v0_19": "TODO: translate"
   },
   "erp.database.status.success": "Success",
-  "erp.database.status.failed": "Failure",
+  "erp.database.status.failed": "Failed",
   "erp.database.status.running": "Label",
   "erp.database.label.upload_backup": "Uploadbackup",
   "erp.database.label.backup_now": "Backup Now",
@@ -3432,9 +3288,9 @@
   "erp.database.label.file_size": "File",
   "erp.database.label.status": "Status",
   "erp.database.label.created_by": "Create",
-  "erp.database.label.created_at": "Created at",
-  "erp.database.label.remark": "Remark",
-  "erp.database.label.operation": "Action",
+  "erp.database.label.created_at": "Created At",
+  "erp.database.label.remark": "Remarks",
+  "erp.database.label.operation": "Actions",
   "erp.database.label.no_backups": "No backups",
   "erp.database.label.full_backup": "Full Backup",
   "erp.database.label.incremental_backup": "Incremental Backup",
@@ -3458,9 +3314,9 @@
   "erp.database.label.backup_type": "backupType",
   "erp.database.label.backup_remark": "Label",
   "erp.database.label.backup_remark_placeholder": "Please enterBackupRemark",
-  "erp.database.label.cancel": "Cancelled",
+  "erp.database.label.cancel": "Cancel",
   "erp.database.label.start_backup": "Startbackup",
-  "erp.database.label.restore_confirm_title": "restoreConfirmTitle",
+  "erp.database.label.restore_confirm_title": "restore Confirm Title",
   "erp.database.label.restore_warning": "Warning",
   "erp.database.label.restore_warning_desc": "Warning",
   "erp.database.label.backup_to_restore": "Select Backup to Restore",
@@ -3537,12 +3393,12 @@
   "erp.voucher_mgmt.voucher_type_short.accounting": "Label",
   "erp.voucher_mgmt.voucher_type.accounting": "Label",
   "erp.voucher_mgmt.label.all_periods": "Allperiods",
-  "erp.voucher_mgmt.period.2024_01": "2024Year1Month",
-  "erp.voucher_mgmt.period.2024_02": "2024Year2Month",
-  "erp.voucher_mgmt.period.2024_03": "2024Year3Month",
-  "erp.voucher_mgmt.period.2024_04": "2024Year4Month",
-  "erp.voucher_mgmt.period.2024_05": "2024Year5Month",
-  "erp.voucher_mgmt.period.2024_06": "2024Year6Month",
+  "erp.voucher_mgmt.period.2024_01": "2024 Year1 Month",
+  "erp.voucher_mgmt.period.2024_02": "2024 Year2 Month",
+  "erp.voucher_mgmt.period.2024_03": "2024 Year3 Month",
+  "erp.voucher_mgmt.period.2024_04": "2024 Year4 Month",
+  "erp.voucher_mgmt.period.2024_05": "2024 Year5 Month",
+  "erp.voucher_mgmt.period.2024_06": "2024 Year6 Month",
   "erp.voucher_mgmt.label.refresh": "Refresh",
   "erp.voucher_mgmt.label.add_accounting_voucher": "Addaccountingvoucher",
   "erp.voucher_mgmt.label.voucher_prefix": "Label",
@@ -3551,10 +3407,10 @@
   "erp.voucher_mgmt.label.transfer_short_label": "transfershortLabel",
   "erp.voucher_mgmt.label.accounting_short_label": "accountingshortLabel",
   "erp.voucher_mgmt.label.voucher_number_required": "Label",
-  "erp.voucher_mgmt.label.voucher_number_placeholder": "Please enter voucher number",
+  "erp.voucher_mgmt.label.voucher_number_placeholder": "Voucher number is required",
   "erp.voucher_mgmt.label.voucher_date_required": "Label",
   "erp.voucher_mgmt.label.period_required": "Label",
-  "erp.voucher_mgmt.label.period_placeholder": "Please select accounting period",
+  "erp.voucher_mgmt.label.period_placeholder": "Accounting period is required",
   "erp.voucher_mgmt.label.attachment_count": "Label",
   "erp.voucher_mgmt.label.voucher_summary": "voucherSummary",
   "erp.voucher_mgmt.label.add_entry": "Addentry",
@@ -3566,11 +3422,11 @@
   "erp.voucher_mgmt.label.balance_status": "balanceStatus",
   "erp.voucher_mgmt.label.balanced": "Label",
   "erp.voucher_mgmt.label.unbalanced": "Unbalanced",
-  "erp.voucher_mgmt.label.cancel": "Cancelled",
+  "erp.voucher_mgmt.label.cancel": "Cancel",
   "erp.voucher_mgmt.label.save_voucher": "Savevoucher",
   "erp.voucher_mgmt.label.type": "Type",
   "erp.voucher_mgmt.label.date": "Date",
-  "erp.voucher_mgmt.label.operation": "Action",
+  "erp.voucher_mgmt.label.operation": "Actions",
   "erp.voucher_mgmt.message.no_voucher_data": "Data",
   "erp.voucher_mgmt.label.view_detail": "Details",
   "erp.voucher_mgmt.label.edit": "Edit",
@@ -3582,12 +3438,12 @@
   "erp.database.mock.backup_incremental": "Incremental Backup",
   "erp.database.mock.backup_monthly_full": "Monthly",
   "erp.database.mock.admin": "Admin",
-  "erp.database.mock.manual_backup_failed": "Hint",
+  "erp.database.mock.manual_backup_failed": "Tip",
   "erp.database.message.error": "Error",
   "erp.database.message.load_tables_failed": "Table",
   "erp.database.message.load_table_structure_failed": "Table",
   "erp.database.mock.current_user": "User",
-  "erp.database.mock.manual_backup": "Hint",
+  "erp.database.mock.manual_backup": "Tip",
   "erp.database.message.backup_success": "Title",
   "erp.database.message.backup_completed": "backupCompleted",
   "erp.database.message.restoring": "Title",
@@ -3630,15 +3486,15 @@
   "erp.voucher_mgmt.status.closed": "Label",
   "erp.voucher_mgmt.status.imported": "Label",
   "erp.voucher_mgmt.message.tip": "Title",
-  "erp.voucher_mgmt.message.fill_required_fields": "Please fill in required fields",
+  "erp.voucher_mgmt.message.fill_required_fields": "Required fields is required",
   "erp.voucher_mgmt.message.add_voucher_items": "Addvoucheritems",
   "erp.voucher_mgmt.message.unbalanced_voucher": "Unbalanced Voucher",
   "erp.voucher_mgmt.message.failure": "Title",
   "erp.voucher_mgmt.message.create_failed": "Create",
   "erp.voucher_mgmt.message.voucher_audited": "Title",
-  "erp.voucher_mgmt.message.audit_failed": "Failure",
+  "erp.voucher_mgmt.message.audit_failed": "Failed",
   "erp.voucher_mgmt.message.voucher_posted": "Title",
-  "erp.voucher_mgmt.message.post_failed": "Failure",
+  "erp.voucher_mgmt.message.post_failed": "Failed",
   "erp.voucher_mgmt.message.delete_failed": "Deletefailed",
   "erp.voucher_mgmt.status.all": "All",
   "erp.voucher_mgmt.message.export_success": "Title",
@@ -3718,11 +3574,6 @@
   "erp.asset.filter.status.option.transferred": "Transferred",
   "erp.asset.filter.category.label": "Label",
   "erp.asset.filter.category.option.all": "All",
-  "erp.asset.filter.category.option.电子设备": "Erp.asset.filter.category.option.electricchilddesignprepare",
-  "erp.asset.filter.category.option.机械设备": "Erp.asset.filter.category.option.machinemachinedesignprepare",
-  "erp.asset.filter.category.option.办公设备": "Erp.asset.filter.category.option.handlepublicdesignprepare",
-  "erp.asset.filter.category.option.家具": "Erp.asset.filter.category.option.hometool",
-  "erp.asset.filter.category.option.其他": "Erp.asset.filter.category.option.itsother",
   "erp.asset.section.0.title": "Title",
   "erp.asset.section.1.title": "Title",
   "erp.asset.section.2.title": "Title",
@@ -3843,18 +3694,7 @@
   "erp.customer.customer_name.label": "Label",
   "erp.customer.short_name.label": "Label",
   "erp.customer.category.label": "Label",
-  "erp.customer.category.option.大型企业": "Erp.customer.category.option.bigtypeenterprisebusiness",
-  "erp.customer.category.option.中型企业": "Erp.customer.category.option.Mediumtypeenterprisebusiness",
-  "erp.customer.category.option.小型企业": "Erp.customer.category.option.smalltypeenterprisebusiness",
-  "erp.customer.category.option.政府机构": "Erp.customer.category.option.politicsgovernmentmachinestructure",
-  "erp.customer.category.option.个人客户": "Erp.customer.category.option.itemspersonguestuser",
   "erp.customer.industry.label": "Label",
-  "erp.customer.industry.option.电子制造": "Erp.customer.industry.option.electricchildsystemmake",
-  "erp.customer.industry.option.机械制造": "Erp.customer.industry.option.machinemachinesystemmake",
-  "erp.customer.industry.option.化工": "Erp.customer.industry.option.convertwork",
-  "erp.customer.industry.option.金融": "Erp.customer.industry.option.goldfinance",
-  "erp.customer.industry.option.互联网": "Erp.customer.industry.option.mutualconnectionnetwork",
-  "erp.customer.industry.option.医疗": "Erp.customer.industry.option.medicaltreat",
   "erp.customer.credit_rating.label": "Label",
   "erp.customer.credit_rating.option.AAA": "AAA ()",
   "erp.customer.credit_rating.option.AA": "AA ()",
@@ -3885,19 +3725,8 @@
   "erp.customer.filter.status.option.blacklisted": "Blacklisted",
   "erp.customer.filter.category.label": "Label",
   "erp.customer.filter.category.option.all": "All",
-  "erp.customer.filter.category.option.大型企业": "Erp.customer.filter.category.option.bigtypeenterprisebusiness",
-  "erp.customer.filter.category.option.中型企业": "Erp.customer.filter.category.option.Mediumtypeenterprisebusiness",
-  "erp.customer.filter.category.option.小型企业": "Erp.customer.filter.category.option.smalltypeenterprisebusiness",
-  "erp.customer.filter.category.option.政府机构": "Erp.customer.filter.category.option.politicsgovernmentmachinestructure",
-  "erp.customer.filter.category.option.个人客户": "Erp.customer.filter.category.option.itemspersonguestuser",
   "erp.customer.filter.industry.label": "Label",
   "erp.customer.filter.industry.option.all": "All",
-  "erp.customer.filter.industry.option.电子制造": "Erp.customer.filter.industry.option.electricchildsystemmake",
-  "erp.customer.filter.industry.option.机械制造": "Erp.customer.filter.industry.option.machinemachinesystemmake",
-  "erp.customer.filter.industry.option.化工": "Erp.customer.filter.industry.option.convertwork",
-  "erp.customer.filter.industry.option.金融": "Erp.customer.filter.industry.option.goldfinance",
-  "erp.customer.filter.industry.option.互联网": "Erp.customer.filter.industry.option.mutualconnectionnetwork",
-  "erp.customer.filter.industry.option.医疗": "Erp.customer.filter.industry.option.medicaltreat",
   "erp.customer.section.0.title": "Title",
   "erp.customer.section.1.title": "Title",
   "erp.customer.section.2.title": "Title",
@@ -3917,9 +3746,6 @@
   "erp.inventory.unit.label": "Label",
   "erp.inventory.unit.placeholder": "Placeholder",
   "erp.inventory.warehouse_name.label": "Label",
-  "erp.inventory.warehouse_name.option.原材料仓库": "Erp.inventory.warehouse_name.option.originalmaterialmaterialwarehouselibrary",
-  "erp.inventory.warehouse_name.option.成品仓库": "Erp.inventory.warehouse_name.option.becomeproductwarehouselibrary",
-  "erp.inventory.warehouse_name.option.半成品仓库": "Erp.inventory.warehouse_name.option.halfbecomeproductwarehouselibrary",
   "erp.inventory.warehouse_id.label": "ID",
   "erp.inventory.location_name.label": "Label",
   "erp.inventory.location_name.placeholder": "Placeholder",
@@ -3956,11 +3782,6 @@
   "erp.material.material_name.label": "Label",
   "erp.material.specification.label": "Label",
   "erp.material.category.label": "Label",
-  "erp.material.category.option.电子元件": "Erp.material.category.option.electricchildyuanitem",
-  "erp.material.category.option.机械零件": "Erp.material.category.option.machinemachinezeroitem",
-  "erp.material.category.option.原材料": "Erp.material.category.option.originalmaterialmaterial",
-  "erp.material.category.option.包装材料": "Erp.material.category.option.packageinstallmaterialmaterial",
-  "erp.material.category.option.辅助材料": "Erp.material.category.option.assistassistmaterialmaterial",
   "erp.material.unit.label": "Label",
   "erp.material.unit_price.label": "Label",
   "erp.material.supplier_id.label": "ID",
@@ -3980,11 +3801,6 @@
   "erp.material.filter.status.option.obsolete": "Obsolete",
   "erp.material.filter.category.label": "Label",
   "erp.material.filter.category.option.all": "All",
-  "erp.material.filter.category.option.电子元件": "Erp.material.filter.category.option.electricchildyuanitem",
-  "erp.material.filter.category.option.机械零件": "Erp.material.filter.category.option.machinemachinezeroitem",
-  "erp.material.filter.category.option.原材料": "Erp.material.filter.category.option.originalmaterialmaterial",
-  "erp.material.filter.category.option.包装材料": "Erp.material.filter.category.option.packageinstallmaterialmaterial",
-  "erp.material.filter.category.option.辅助材料": "Erp.material.filter.category.option.assistassistmaterialmaterial",
   "erp.material.section.0.title": "Title",
   "erp.material.section.1.title": "Title",
   "erp.material.section.2.title": "Title",
@@ -4124,10 +3940,6 @@
   "erp.supplier.supplier_name.label": "Label",
   "erp.supplier.short_name.label": "Label",
   "erp.supplier.category.label": "Label",
-  "erp.supplier.category.option.原材料供应商": "Erp.supplier.category.option.originalmaterialmaterialsupplyrespondmerchant",
-  "erp.supplier.category.option.配件供应商": "Erp.supplier.category.option.matchitemsupplyrespondmerchant",
-  "erp.supplier.category.option.设备供应商": "Erp.supplier.category.option.designpreparesupplyrespondmerchant",
-  "erp.supplier.category.option.服务供应商": "Erp.supplier.category.option.Servicesupplyrespondmerchant",
   "erp.supplier.credit_rating.label": "Label",
   "erp.supplier.credit_rating.option.AAA": "AAA ()",
   "erp.supplier.credit_rating.option.AA": "AA ()",
@@ -4157,10 +3969,6 @@
   "erp.supplier.filter.status.option.blacklisted": "Blacklisted",
   "erp.supplier.filter.category.label": "Label",
   "erp.supplier.filter.category.option.all": "All",
-  "erp.supplier.filter.category.option.原材料供应商": "Erp.supplier.filter.category.option.originalmaterialmaterialsupplyrespondmerchant",
-  "erp.supplier.filter.category.option.配件供应商": "Erp.supplier.filter.category.option.matchitemsupplyrespondmerchant",
-  "erp.supplier.filter.category.option.设备供应商": "Erp.supplier.filter.category.option.designpreparesupplyrespondmerchant",
-  "erp.supplier.filter.category.option.服务供应商": "Erp.supplier.filter.category.option.Servicesupplyrespondmerchant",
   "erp.supplier.section.0.title": "Title",
   "erp.supplier.section.1.title": "Title",
   "erp.supplier.section.2.title": "Title",
@@ -4238,10 +4046,6 @@
   "erp.voucher.voucher_date.label": "Label",
   "erp.voucher.period.label": "Label",
   "erp.voucher.voucher_type.label": "Label",
-  "erp.voucher.voucher_type.option.记": "Erp.voucher.voucher_type.option.record",
-  "erp.voucher.voucher_type.option.收": "Erp.voucher.voucher_type.option.receive",
-  "erp.voucher.voucher_type.option.付": "Erp.voucher.voucher_type.option.pay",
-  "erp.voucher.voucher_type.option.转": "Erp.voucher.voucher_type.option.transfer",
   "erp.voucher.summary.label": "Label",
   "erp.voucher.attachment_count.label": "Label",
   "erp.voucher.status.label": "Label",
@@ -4259,10 +4063,6 @@
   "erp.voucher.filter.status.option.voided": "Voided",
   "erp.voucher.filter.voucher_type.label": "Label",
   "erp.voucher.filter.voucher_type.option.all": "All",
-  "erp.voucher.filter.voucher_type.option.记": "Erp.voucher.filter.voucher_type.option.record",
-  "erp.voucher.filter.voucher_type.option.收": "Erp.voucher.filter.voucher_type.option.receive",
-  "erp.voucher.filter.voucher_type.option.付": "Erp.voucher.filter.voucher_type.option.pay",
-  "erp.voucher.filter.voucher_type.option.转": "Erp.voucher.filter.voucher_type.option.transfer",
   "erp.voucher.section.0.title": "Title",
   "erp.voucher.section.1.title": "Title",
   "erp.voucher.batchAction.batchSubmit.label": "Label",

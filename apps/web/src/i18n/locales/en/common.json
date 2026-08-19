@@ -878,11 +878,11 @@
     "import": "Import",
     "export": "Export",
     "save": "Save",
-    "confirm_delete": "Confirm delete",
+    "confirm_delete": "Confirm Delete",
     "confirm_delete_message": "Message",
     "deleting": "DeleteMedium",
     "success": "Success",
-    "fail": "Failure",
+    "fail": "Failed",
     "add": "Add",
     "update": "Title",
     "error": "Error",
@@ -921,7 +921,7 @@
     "tip": "Tip",
     "in_development": "In Development",
     "confirm": "Confirm",
-    "cancel": "Cancelled",
+    "cancel": "Cancel",
     "close": "Close",
     "create": "Create",
     "submit_success": "Submit Success",
@@ -929,7 +929,7 @@
     "upload_report": "Upload Report",
     "ellipsis": "...",
     "refresh": "Refresh",
-    "failure": "Failure"
+    "failure": "Failed"
   },
   "sw": {
     "notification": {
@@ -959,11 +959,11 @@
   "common.import": "Import",
   "common.export": "Export",
   "common.save": "Save",
-  "common.confirm_delete": "Confirm delete",
+  "common.confirm_delete": "Confirm Delete",
   "common.confirm_delete_message": "Message",
   "common.deleting": "DeleteMedium",
   "common.success": "Success",
-  "common.fail": "Failure",
+  "common.fail": "Failed",
   "common.add": "Add",
   "common.update": "Title",
   "common.error": "Error",
@@ -1002,14 +1002,14 @@
   "common.tip": "Tip",
   "common.in_development": "In Development",
   "common.confirm": "Confirm",
-  "common.cancel": "Cancelled",
+  "common.cancel": "Cancel",
   "common.close": "Close",
   "common.create": "Create",
   "common.submit_success": "Submit Success",
   "common.submit_failed_check_form": "，",
   "common.upload_report": "Upload Report",
   "layout.home": "Home",
-  "layout.tasks": "Tasks",
+  "layout.tasks": "Task",
   "layout.scan": "Scan",
   "layout.approval": "Approval",
   "layout.profile": "Profile",
@@ -1049,7 +1049,7 @@
   "help_center.guide_subtitle": "Learn how to use the system",
   "help_center.title": "Help Center",
   "help_center.subtitle": "Get help and support",
-  "help_center.categories": "Categories",
+  "help_center.categories": "Category",
   "help_center.latest_updates": "Latest Updates",
   "shared.dashboard.section_core": "Core Metrics",
   "shared.dashboard.section_business": "Business Metrics",
@@ -1067,17 +1067,16 @@
   "shared.dashboard.error_invalid_type": "Invalid Type",
   "shared.dashboard.retry": "Retry",
   "shared.dashboard.view_detail": "View Details",
-  "parsetestdialog.开始解析": "Start Parsing",
   "admin.audit_log.badge": "Audit",
   "common.ellipsis": "...",
   "shared.dashboard.type_system": "System Task",
   "shared.dashboard.type_document": "Document Task",
   "shared.dashboard.type_workflow": "Workflow Task",
   "common.refresh": "Refresh",
-  "common.failure": "Failure",
+  "common.failure": "Failed",
   "layout": {
     "home": "Home",
-    "tasks": "Tasks",
+    "tasks": "Task",
     "scan": "Scan",
     "approval": "Approval",
     "profile": "Profile",
@@ -1125,7 +1124,7 @@
     "guide_subtitle": "Learn how to use the system",
     "title": "Help Center",
     "subtitle": "Get help and support",
-    "categories": "Categories",
+    "categories": "Category",
     "latest_updates": "Latest Updates"
   },
   "shared": {
@@ -1151,12 +1150,18 @@
       "type_workflow": "Workflow Task"
     }
   },
-  "parsetestdialog": {
-    "开始解析": "Start Parsing"
-  },
+  "parsetestdialog": {},
   "admin": {
     "audit_log": {
       "badge": "Audit"
     }
-  }
+  },
+  "": {
+    "": {
+      "": {
+        "": "..."
+      }
+    }
+  },
+  "...": "..."
 }

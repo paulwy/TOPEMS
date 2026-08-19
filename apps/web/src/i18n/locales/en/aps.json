@@ -798,7 +798,8 @@
     "analytics": {
       "materialShortage": {
         "k1": "Materials Shortage Pareto Chart (Bar + Cumulative Line)",
-        "k0": "80/20 Vital Few:"
+        "k0": "80/20 Vital Few:",
+        "k2": "types"
       },
       "planAdherence": {
         "k0": "Plan vs Actual Output (Bar + Achievement Rate Line)"
