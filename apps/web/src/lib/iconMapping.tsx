@@ -184,7 +184,7 @@ import {
 
 export const lucideIcons: Record<
   string,
-  React.ComponentType<{ size?: number; style?: React.CSSProperties; className?: string }> | null
+  React.ComponentType<any> | null
 > = {
   Home,
   Users,

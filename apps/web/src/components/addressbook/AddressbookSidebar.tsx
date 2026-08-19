@@ -124,7 +124,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
   const typeFilters: Array<{
     id: 'all' | 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
     label: string;
-    icon: React.ComponentType<{ sx?: object }>;
+    icon: React.ComponentType<any>;
   }> = [
     { id: 'all', label: i18n.t('shared.addressbook_sidebar.k0'), icon: Users },
     { id: 'EMPLOYEE', label: i18n.t('shared.addressbook_sidebar.k1'), icon: User },

@@ -328,7 +328,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2026-07-01
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
       - name: Run tests
@@ -1194,6 +1196,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run type check (tsc --noEmit)
+        env:
+          NODE_OPTIONS: '--max-old-space-size=8192'
         run: pnpm --filter topems-portal typecheck
 
       - name: Run type check for all shared packages
