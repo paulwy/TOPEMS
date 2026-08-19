@@ -8133,7 +8133,7 @@ const crmRoutes: RouteConfigV2[] = [ customerDetailRoute, ... ];
 
 ### V254 · 2026-04-18 Sat · R5 粒度优化 + auto-insert 脚本接入（mapping.json × 4 svc 细粒度权限码生成 + R5 漏网修补 13 处 + 全门禁 5/5 通过）
 
-**Tag**: `TOPEMS-V254` · Baseline SHA: `$(git rev-parse --short HEAD)` (V253→V254) · Status: **全门禁通过** ✅
+**Tag**: `TOPEMS-V254` · Baseline SHA: `487a8e922` · Status: **全门禁通过** ✅ · 归档：`releases/archives/TOPEMS-V254-487a8e922.tar.gz` (41M · .gitignore 排除)
 
 #### 目标
 把 V253 预留骨架 `perm-code-mapping.json` + `auto-insert-utoipa-permission.cjs` 改造为生产可用的 R5 细粒度权限码批量生成器，支持 handler fn 名精确/contains/glob 三级匹配 + `__action__` fallback + HTTP 方法一致性 guard（GET 请求禁止映射到 write/admin），灰度 finance 后扩到 qms/pm/mes 4 个 svc 共 29 file × 217 rewrites，同时在全仓 DRY-RUN 中意外发现 V252 R5 漏网 rd 11 / unified-core 2 = 13 处 security 缺失，一并补插，全仓 31 svc perm-gate R5 仍然 0，全门禁 5 项全通。
