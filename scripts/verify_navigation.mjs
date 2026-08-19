@@ -32,10 +32,39 @@ const ROUTES_V2_INDEX = join(WEB_ROOT, 'routes/v2/index.ts');
 const PERMISSIONS_CONFIG = join(WEB_ROOT, 'config/permissions.ts');
 
 const MODULE_CODES = [
-  'iam', 'admin', 'automation', 'workflow', 'notification', 'doc', 'report',
-  'monitor', 'integration', 'ai', 'mobile', 'hrm', 'finance', 'crm', 'mes',
-  'qms', 'lims', 'ehs', 'scm', 'erp', 'wms', 'pm', 'pdm', 'srm', 'rd',
-  'plugin', 'im', 'bi', 'gis', 'asset', 'lowcode', 'oa', 'ticket',
+  'iam',
+  'admin',
+  'automation',
+  'workflow',
+  'notification',
+  'doc',
+  'report',
+  'monitor',
+  'integration',
+  'ai',
+  'mobile',
+  'hrm',
+  'finance',
+  'crm',
+  'mes',
+  'qms',
+  'lims',
+  'ehs',
+  'scm',
+  'erp',
+  'wms',
+  'pm',
+  'pdm',
+  'srm',
+  'rd',
+  'plugin',
+  'im',
+  'bi',
+  'gis',
+  'asset',
+  'lowcode',
+  'oa',
+  'ticket',
 ];
 
 const VALID_ACTIONS = new Set(['read', 'write', 'delete', 'approve', 'admin', 'update', 'create']);
@@ -95,35 +124,39 @@ const _pageFileCache = { built: false, files: [], byName: new Map(), byDir: new 
 
 function buildPageFileCache() {
   if (_pageFileCache.built) return;
-  
+
   const files = [];
   const byName = new Map();
   const byDir = new Map();
 
-  walkDir(PAGES_ROOT, (filePath) => {
-    const relPath = relative(PAGES_ROOT, filePath);
-    const basename = filePath.split('/').pop();
-    const dirParts = relative(PAGES_ROOT, filePath).split('/').slice(0, -1);
-    const parentDir = dirParts.length > 0 ? dirParts[0] : '';
-    
-    files.push({
-      fullPath: filePath,
-      relPath,
-      basename,
-      nameNoExt: basename.replace(/\.(tsx|ts)$/i, ''),
-      parentDir,
-      dirParts,
-    });
+  walkDir(
+    PAGES_ROOT,
+    (filePath) => {
+      const relPath = relative(PAGES_ROOT, filePath);
+      const basename = filePath.split('/').pop();
+      const dirParts = relative(PAGES_ROOT, filePath).split('/').slice(0, -1);
+      const parentDir = dirParts.length > 0 ? dirParts[0] : '';
 
-    const key = basename.toLowerCase();
-    if (!byName.has(key)) byName.set(key, []);
-    byName.get(key).push(filePath);
+      files.push({
+        fullPath: filePath,
+        relPath,
+        basename,
+        nameNoExt: basename.replace(/\.(tsx|ts)$/i, ''),
+        parentDir,
+        dirParts,
+      });
 
-    if (parentDir) {
-      if (!byDir.has(parentDir)) byDir.set(parentDir, []);
-      byDir.get(parentDir).push(filePath);
-    }
-  }, new Set(['node_modules', '.git', '__tests__', 'components', 'hooks']));
+      const key = basename.toLowerCase();
+      if (!byName.has(key)) byName.set(key, []);
+      byName.get(key).push(filePath);
+
+      if (parentDir) {
+        if (!byDir.has(parentDir)) byDir.set(parentDir, []);
+        byDir.get(parentDir).push(filePath);
+      }
+    },
+    new Set(['node_modules', '.git', '__tests__', 'components', 'hooks'])
+  );
 
   _pageFileCache.files = files;
   _pageFileCache.byName = byName;
@@ -179,9 +212,7 @@ function pagePathToFile(pagePath) {
   const candidates = [];
 
   if (cleanSegments.length > 0) {
-    const parentDirs = cleanSegments.slice(0, -1).map((s) =>
-      s === '__param__' ? '[param]' : toKebab(s),
-    );
+    const parentDirs = cleanSegments.slice(0, -1).map((s) => (s === '__param__' ? '[param]' : toKebab(s)));
     const lp = lastSegment === '__param__' ? 'Detail' : toPascalPage(lastSegment);
     candidates.push(join(PAGES_ROOT, ...parentDirs, `${lp}.tsx`));
     candidates.push(join(PAGES_ROOT, ...parentDirs, `${lp}.ts`));
@@ -192,9 +223,7 @@ function pagePathToFile(pagePath) {
   candidates.push(join(PAGES_ROOT, ...dirParts, 'index.ts'));
 
   if (cleanSegments.length > 0) {
-    const parentDirs = cleanSegments.slice(0, -1).map((s) =>
-      s === '__param__' ? '[param]' : toKebab(s),
-    );
+    const parentDirs = cleanSegments.slice(0, -1).map((s) => (s === '__param__' ? '[param]' : toKebab(s)));
     const lp = lastSegment === '__param__' ? 'Detail' : toPascal(lastSegment);
     candidates.push(join(PAGES_ROOT, ...parentDirs, `${lp}Page.tsx`));
     candidates.push(join(PAGES_ROOT, ...parentDirs, `${lastPascal}ManagementPage.tsx`));
@@ -265,9 +294,7 @@ function pagePathToFile(pagePath) {
   }
 
   if (cleanSegments.length > 1 && moduleDir) {
-    const parentDirs = cleanSegments.slice(0, -1).map((s) =>
-      s === '__param__' ? '[param]' : toKebab(s),
-    );
+    const parentDirs = cleanSegments.slice(0, -1).map((s) => (s === '__param__' ? '[param]' : toKebab(s)));
     const modulePascal = toPascal(moduleDir);
     candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascal}${lastPascal}Page.tsx`));
     candidates.push(join(PAGES_ROOT, ...parentDirs, `${modulePascal}${lastPascal}Page/index.tsx`));
@@ -298,9 +325,7 @@ function pagePathToFile(pagePath) {
   }
 
   if (cleanSegments.length > 0) {
-    const parentDirs = cleanSegments.slice(0, -1).map((s) =>
-      s === '__param__' ? '[param]' : toPascal(s) + 'Page',
-    );
+    const parentDirs = cleanSegments.slice(0, -1).map((s) => (s === '__param__' ? '[param]' : toPascal(s) + 'Page'));
     const lp = lastSegment === '__param__' ? 'Detail' : toPascalPage(lastSegment);
     candidates.push(join(PAGES_ROOT, ...parentDirs, 'index.tsx'));
     candidates.push(join(PAGES_ROOT, ...parentDirs, `${lp}/index.tsx`));
@@ -347,9 +372,16 @@ function findFuzzyPageMatch(moduleDir, lastKebab, lastPascal, cleanSegments) {
   const singularPascalLower = isPlural ? toSingularFuzzy(lastPascal.toLowerCase()) : lastPascal.toLowerCase();
 
   for (const filePath of dirFiles) {
-    const fileName = filePath.split('/').pop().replace(/\.(tsx|ts)$/i, '').toLowerCase();
-    const fullKebab = cleanSegments.map(s => toKebab(s)).join('-');
-    const fullPascal = cleanSegments.map(s => toPascal(s)).join('').toLowerCase();
+    const fileName = filePath
+      .split('/')
+      .pop()
+      .replace(/\.(tsx|ts)$/i, '')
+      .toLowerCase();
+    const fullKebab = cleanSegments.map((s) => toKebab(s)).join('-');
+    const fullPascal = cleanSegments
+      .map((s) => toPascal(s))
+      .join('')
+      .toLowerCase();
     const fnLower = fileName.toLowerCase();
 
     let score = 0;
@@ -369,21 +401,28 @@ function findFuzzyPageMatch(moduleDir, lastKebab, lastPascal, cleanSegments) {
     if (fnLower.includes('dashboard') && lastKebab.includes('dashboard')) {
       score += 3;
     }
-    if (fnLower === lastPascal.toLowerCase() + 'page' ||
-        fnLower === (toPascal(moduleDir) + lastPascal + 'Page').toLowerCase()) {
+    if (
+      fnLower === lastPascal.toLowerCase() + 'page' ||
+      fnLower === (toPascal(moduleDir) + lastPascal + 'Page').toLowerCase()
+    ) {
       score += 20;
     }
     // V182: 单数变体精确匹配（覆盖 mobile-tasks→MobileTaskListPage, qms-standards→QmsStandardListPage 等）
-    if (isPlural && (fnLower === singularPascalLower + 'page' ||
+    if (
+      isPlural &&
+      (fnLower === singularPascalLower + 'page' ||
         fnLower === (toPascal(moduleDir) + singularPascalLower + 'Page').toLowerCase() ||
         fnLower === singularPascalLower + 'listpage' ||
         fnLower === (toPascal(moduleDir) + singularPascalLower + 'ListPage').toLowerCase() ||
         fnLower === singularPascalLower + 'managementpage' ||
-        fnLower === (toPascal(moduleDir) + singularPascalLower + 'ManagementPage').toLowerCase())) {
+        fnLower === (toPascal(moduleDir) + singularPascalLower + 'ManagementPage').toLowerCase())
+    ) {
       score += 20;
     }
-    if (fnLower === lastPascal.toLowerCase() + 'managementpage' ||
-        fnLower === (toPascal(moduleDir) + lastPascal + 'ManagementPage').toLowerCase()) {
+    if (
+      fnLower === lastPascal.toLowerCase() + 'managementpage' ||
+      fnLower === (toPascal(moduleDir) + lastPascal + 'ManagementPage').toLowerCase()
+    ) {
       score += 25;
     }
     if (cleanSegments.length > 1) {
@@ -454,7 +493,7 @@ function loadNavTree() {
     const navItemsBlock = content.slice(navItemsBlockStart + 1, navItemsBlockEnd);
 
     const itemBlocks = extractItemBlocks(navItemsBlock);
-    
+
     for (const itemBlock of itemBlocks) {
       const code = extractField(itemBlock, 'code');
       const label = extractField(itemBlock, 'label');
@@ -510,7 +549,7 @@ function extractPathConstants(content) {
     const name = match[1];
     const body = match[2];
     pathMap[name] = {};
-    
+
     const propRegex = /([A-Za-z0-9_]+)\s*:\s*['"`]([^'"`]+)['"`]/g;
     let propMatch;
     while ((propMatch = propRegex.exec(body)) !== null) {
@@ -525,7 +564,7 @@ function resolveInlinePath(content, constName, propName) {
   const regex = new RegExp(pattern);
   const match = content.match(regex);
   if (match) return match[1];
-  
+
   const simplePattern = propName + '\\s*:\\s*[\'"`]([^\'"`]+)[\'"`]';
   const simpleRegex = new RegExp(simplePattern, 'g');
   let simpleMatch;
@@ -537,7 +576,7 @@ function resolveInlinePath(content, constName, propName) {
 
 function findMatchingBracket(str, startIdx) {
   const openCh = str[startIdx];
-  const closeCh = openCh === '[' ? ']' : (openCh === '{' ? '}' : openCh);
+  const closeCh = openCh === '[' ? ']' : openCh === '{' ? '}' : openCh;
   let depth = 0;
   let i = startIdx;
   let started = false;
@@ -708,13 +747,10 @@ function collectMissingRoutes(flattened) {
       verified.push(item);
     } else {
       const normalizedPath = item.path.replace(/\/:[^/]+/g, '/:id');
-      const alternativePaths = [
-        item.path,
-        normalizedPath,
-      ];
-      
+      const alternativePaths = [item.path, normalizedPath];
+
       const found = alternativePaths.some((p) => registeredPaths.has(p));
-      
+
       if (found) {
         verified.push(item);
       } else {
@@ -726,7 +762,9 @@ function collectMissingRoutes(flattened) {
     }
   }
 
-  console.log(`[A3 collectMissingRoutes] 扫描模块路由: ${scannedModules.size} 个, 提取注册路径: ${registeredPaths.size} 条`);
+  console.log(
+    `[A3 collectMissingRoutes] 扫描模块路由: ${scannedModules.size} 个, 提取注册路径: ${registeredPaths.size} 条`
+  );
   return { missing, verified, registeredPaths: Array.from(registeredPaths) };
 }
 
@@ -736,9 +774,9 @@ function collectMissingRoutes(flattened) {
 function collectMissingPermissions(flattened) {
   const validModuleCodes = new Set();
   const validPermissions = new Set();
-  
+
   const permContent = existsSync(PERMISSIONS_CONFIG) ? readFileSync(PERMISSIONS_CONFIG, 'utf-8') : '';
-  
+
   const modulesRegex = /MODULES\s*=\s*\{([\s\S]*?)\}\s+as\s+const;/;
   const modulesMatch = permContent.match(modulesRegex);
   if (modulesMatch) {
@@ -804,7 +842,7 @@ function collectMissingPermissions(flattened) {
     const configPath = join(MODULES_ROOT, moduleCode, 'config.ts');
     if (!existsSync(configPath)) continue;
     const content = readFileSync(configPath, 'utf-8');
-    
+
     const allPermRegex = /permission\s*:\s*['\"]([^'\"]+)['\"]/g;
     let pm;
     while ((pm = allPermRegex.exec(content)) !== null) {
@@ -902,14 +940,18 @@ function collectMissingPermissions(flattened) {
     }
   }
 
-  console.log(`[A4 collectMissingPermissions] 合法模块: ${validModuleCodes.size} 个, 白名单 action: ${VALID_ACTIONS.size} 个, 已注册权限: ${validPermissions.size} 条`);
-  console.log(`   格式错误: ${invalidFormat.length}, 非法模块: ${invalidModule.length}, 非法 action: ${invalidAction.length}`);
-  
-  return { 
-    missing, 
-    verified, 
-    invalidFormat, 
-    invalidAction, 
+  console.log(
+    `[A4 collectMissingPermissions] 合法模块: ${validModuleCodes.size} 个, 白名单 action: ${VALID_ACTIONS.size} 个, 已注册权限: ${validPermissions.size} 条`
+  );
+  console.log(
+    `   格式错误: ${invalidFormat.length}, 非法模块: ${invalidModule.length}, 非法 action: ${invalidAction.length}`
+  );
+
+  return {
+    missing,
+    verified,
+    invalidFormat,
+    invalidAction,
     invalidModule,
     validModuleCount: validModuleCodes.size,
     validActionCount: VALID_ACTIONS.size,
@@ -998,21 +1040,20 @@ function main() {
   console.log('');
 
   // --- 汇总 ---
-  const totalMissing =
-    pageCheck.missing.length + routeCheck.missing.length + permCheck.missing.length;
+  const totalMissing = pageCheck.missing.length + routeCheck.missing.length + permCheck.missing.length;
 
-  const pageCoverage = flattened.length > 0 
-    ? ((pageCheck.verified.length / flattened.length) * 100).toFixed(1) 
-    : '0.0';
-  const routeCoverage = flattened.length > 0 
-    ? ((routeCheck.verified.length / flattened.length) * 100).toFixed(1) 
-    : '0.0';
-  const permCoverage = flattened.length > 0 
-    ? ((permCheck.verified.length / flattened.length) * 100).toFixed(1) 
-    : '0.0';
-  const overallCoverage = flattened.length > 0
-    ? (((pageCheck.verified.length + routeCheck.verified.length + permCheck.verified.length) / (flattened.length * 3)) * 100).toFixed(1)
-    : '0.0';
+  const pageCoverage = flattened.length > 0 ? ((pageCheck.verified.length / flattened.length) * 100).toFixed(1) : '0.0';
+  const routeCoverage =
+    flattened.length > 0 ? ((routeCheck.verified.length / flattened.length) * 100).toFixed(1) : '0.0';
+  const permCoverage = flattened.length > 0 ? ((permCheck.verified.length / flattened.length) * 100).toFixed(1) : '0.0';
+  const overallCoverage =
+    flattened.length > 0
+      ? (
+          ((pageCheck.verified.length + routeCheck.verified.length + permCheck.verified.length) /
+            (flattened.length * 3)) *
+          100
+        ).toFixed(1)
+      : '0.0';
 
   console.log('============================================');
   console.log('📋 汇总统计');

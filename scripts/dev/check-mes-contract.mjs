@@ -221,8 +221,12 @@ if (asJson) {
   console.log('├─────────────────────────────────────────────────────┤');
   console.log('│  Route Symmetry (API Client ↔ Axum Handlers)        │');
   console.log('├─────────────────────────────────────────────────────┤');
-  console.log(`│  Front API: ${pad(`${report.routes.front.found.length}/${EXPECTED_FRONT_METHODS.length} methods found`, 44)}│`);
-  console.log(`│  Back Handlers: ${pad(`${report.routes.back.found.length}/${EXPECTED_ROUTES.length} handlers found`, 40)}│`);
+  console.log(
+    `│  Front API: ${pad(`${report.routes.front.found.length}/${EXPECTED_FRONT_METHODS.length} methods found`, 44)}│`
+  );
+  console.log(
+    `│  Back Handlers: ${pad(`${report.routes.back.found.length}/${EXPECTED_ROUTES.length} handlers found`, 40)}│`
+  );
   if (report.routes.front.missing.length > 0) {
     console.log('│  FRONT API MISSING:                                 │');
     report.routes.front.missing.forEach((m) => {

@@ -121,17 +121,10 @@ function isPropertyTypeAnnotation(node, parentStack) {
   if (parentStack.length < 2) return false;
   const parent = parentStack[parentStack.length - 1];
   const grand = parentStack[parentStack.length - 2];
-  if (
-    (ts.isPropertyAssignment(grand) || ts.isPropertySignature(grand)) &&
-    grand.initializer === parent
-  ) {
+  if ((ts.isPropertyAssignment(grand) || ts.isPropertySignature(grand)) && grand.initializer === parent) {
     return false;
   }
-  if (
-    ts.isPropertyDeclaration(parent) &&
-    parent.initializer === node &&
-    parent.type
-  ) {
+  if (ts.isPropertyDeclaration(parent) && parent.initializer === node && parent.type) {
     return true;
   }
   return false;
@@ -158,20 +151,14 @@ function shouldSkipStringLiteral(node, parentStack) {
 
 function createI18nCall(key) {
   return ts.factory.createCallExpression(
-    ts.factory.createPropertyAccessExpression(
-      ts.factory.createIdentifier('i18n'),
-      't'
-    ),
+    ts.factory.createPropertyAccessExpression(ts.factory.createIdentifier('i18n'), 't'),
     undefined,
     [ts.factory.createStringLiteral(key)]
   );
 }
 
 function createI18nJsxExpression(key) {
-  return ts.factory.createJsxExpression(
-    undefined,
-    createI18nCall(key)
-  );
+  return ts.factory.createJsxExpression(undefined, createI18nCall(key));
 }
 
 function processFile(filePath, nsConfig) {
@@ -179,13 +166,7 @@ function processFile(filePath, nsConfig) {
   const { ns, jsonFile } = nsConfig;
 
   const originalContent = fs.readFileSync(filePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(
-    fileName,
-    originalContent,
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.TSX
-  );
+  const sourceFile = ts.createSourceFile(fileName, originalContent, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
 
   const keyMap = new Map();
   let keyCounter = 0;
@@ -208,11 +189,7 @@ function processFile(filePath, nsConfig) {
   function makeI18nImport() {
     return ts.factory.createImportDeclaration(
       undefined,
-      ts.factory.createImportClause(
-        false,
-        ts.factory.createIdentifier('i18n'),
-        undefined
-      ),
+      ts.factory.createImportClause(false, ts.factory.createIdentifier('i18n'), undefined),
       ts.factory.createStringLiteral('@/i18n'),
       undefined
     );
@@ -228,11 +205,7 @@ function processFile(filePath, nsConfig) {
             if (stmt.importClause) {
               const ic = stmt.importClause;
               if (ic.name && ic.name.text === 'i18n') return true;
-              if (
-                ic.namedBindings &&
-                ts.isNamespaceImport(ic.namedBindings) &&
-                ic.namedBindings.name.text === 'i18n'
-              )
+              if (ic.namedBindings && ts.isNamespaceImport(ic.namedBindings) && ic.namedBindings.name.text === 'i18n')
                 return true;
             }
           }
@@ -263,12 +236,7 @@ function processFile(filePath, nsConfig) {
 
     if (ts.isNoSubstitutionTemplateLiteral(node)) {
       const text = node.text;
-      if (
-        typeof text !== 'string' ||
-        text.length < 2 ||
-        !hasCJK(text) ||
-        countCJK(text) < 2
-      ) {
+      if (typeof text !== 'string' || text.length < 2 || !hasCJK(text) || countCJK(text) < 2) {
         return ts.visitEachChild(node, visit, undefined);
       }
       if (isInTypeContext(parentStack) || isImportExportContext(parentStack)) {
@@ -359,12 +327,7 @@ function processFile(filePath, nsConfig) {
 }
 
 function updateJsonFiles(lang, jsonFileName, keyMap) {
-  const jsonPath = path.join(
-    PROJECT_ROOT,
-    'apps/web/src/i18n/locales',
-    lang,
-    `${jsonFileName}.json`
-  );
+  const jsonPath = path.join(PROJECT_ROOT, 'apps/web/src/i18n/locales', lang, `${jsonFileName}.json`);
   let json = {};
   if (fs.existsSync(jsonPath)) {
     try {
@@ -388,12 +351,7 @@ function updateJsonFiles(lang, jsonFileName, keyMap) {
 }
 
 function removeJsonKeys(lang, jsonFileName, keys) {
-  const jsonPath = path.join(
-    PROJECT_ROOT,
-    'apps/web/src/i18n/locales',
-    lang,
-    `${jsonFileName}.json`
-  );
+  const jsonPath = path.join(PROJECT_ROOT, 'apps/web/src/i18n/locales', lang, `${jsonFileName}.json`);
   if (!fs.existsSync(jsonPath)) return;
   const json = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
   for (const k of keys) delete json[k];
@@ -402,15 +360,11 @@ function removeJsonKeys(lang, jsonFileName, keys) {
 
 function runTscGlobal() {
   const { spawnSync } = require('child_process');
-  const result = spawnSync(
-    'npx',
-    ['tsc', '--noEmit', '--skipLibCheck'],
-    {
-      cwd: path.join(PROJECT_ROOT, 'apps/web'),
-      encoding: 'utf-8',
-      timeout: 300000,
-    }
-  );
+  const result = spawnSync('npx', ['tsc', '--noEmit', '--skipLibCheck'], {
+    cwd: path.join(PROJECT_ROOT, 'apps/web'),
+    encoding: 'utf-8',
+    timeout: 300000,
+  });
   const allOutput = (result.stdout || '') + '\n' + (result.stderr || '');
   return {
     success: result.status === 0,
@@ -529,9 +483,7 @@ function main() {
     const addedEn = updateJsonFiles('en', result.jsonFile, result.keyMap);
     Object.assign(allAddedKeys.zh, addedZh);
     Object.assign(allAddedKeys.en, addedEn);
-    console.log(
-      `[JSON] zh+${Object.keys(addedZh).length}, en+${Object.keys(addedEn).length}`
-    );
+    console.log(`[JSON] zh+${Object.keys(addedZh).length}, en+${Object.keys(addedEn).length}`);
 
     console.log('[TSC] Running global TSC to check this file...');
     const tscResult = runTscGlobal();
@@ -540,9 +492,7 @@ function main() {
     const newCount = newErrors.length;
 
     if (newCount <= baselineCount) {
-      console.log(
-        `[TSC] PASS (errors: baseline=${baselineCount}, new=${newCount}, global exit=${tscResult.exitCode})`
-      );
+      console.log(`[TSC] PASS (errors: baseline=${baselineCount}, new=${newCount}, global exit=${tscResult.exitCode})`);
       fs.unlinkSync(bakPath);
       currentTargetErrors[relPath] = newErrors;
       results.push({
@@ -556,9 +506,7 @@ function main() {
       });
     } else {
       console.log(`[TSC] FAIL - new errors appeared! Rolling back...`);
-      const newErrorLines = newErrors.filter(
-        (e) => !currentTargetErrors[relPath].includes(e)
-      );
+      const newErrorLines = newErrors.filter((e) => !currentTargetErrors[relPath].includes(e));
       console.log(`[TSC NEW ERRORS]:\n${newErrorLines.join('\n').substring(0, 3000)}`);
 
       gitCheckout(relPath);
@@ -588,9 +536,7 @@ function main() {
   console.log(`[FINAL TSC] exit=${finalTsc.exitCode}`);
 
   if (!finalTsc.success) {
-    const errLines = finalTsc.allOutput
-      .split('\n')
-      .filter((l) => l.includes('error TS'));
+    const errLines = finalTsc.allOutput.split('\n').filter((l) => l.includes('error TS'));
     const targetSet = new Set(targets);
     const nonTargetErrors = errLines.filter((l) => {
       for (const tp of targets) {
@@ -598,9 +544,7 @@ function main() {
       }
       return true;
     });
-    console.log(
-      `[FINAL TSC] total TS error lines=${errLines.length}, non-target=${nonTargetErrors.length}`
-    );
+    console.log(`[FINAL TSC] total TS error lines=${errLines.length}, non-target=${nonTargetErrors.length}`);
 
     if (nonTargetErrors.length > 2) {
       console.log(`[FINAL TSC] >2 non-target errors → FULL ROLLBACK`);

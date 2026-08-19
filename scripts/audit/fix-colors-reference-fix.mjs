@@ -27,8 +27,10 @@ const SUMMARY_PATH = join(ROOT, 'docs/audit/fix-design-tokens-batch-summary.json
 
 // MUI sx prop 中接受 palette 路径简写的 key 集合
 const MUI_SX_COLOR_KEYS = new Set([
-  'bgcolor', 'Bgcolor',
-  'color', 'Color',
+  'bgcolor',
+  'Bgcolor',
+  'color',
+  'Color',
   'borderColor',
   'backgroundColor',
   'bgImage',
@@ -88,7 +90,10 @@ function buildSxLineRanges(content) {
       for (let k = 0; k < L.length; k++) {
         const c = L[k];
         if (!started) {
-          if (c === '{') { started = true; depth = 1; }
+          if (c === '{') {
+            started = true;
+            depth = 1;
+          }
           continue;
         }
         if (c === '{') depth++;
@@ -143,11 +148,10 @@ function ensureTokensImport(content, used) {
   if (content.includes("from '@topems/tokens'")) {
     // 检查 designTokens 是否在 import 列表中
     if (!content.match(/import\s*\{[^}]*\bdesignTokens\b[^}]*\}\s*from\s*['"]@topems\/tokens/)) {
-      return content.replace(
-        /(import\s*\{[^}]*)\}\s*from\s*['"]@topems\/tokens/,
-        (m, before) => before.includes('semanticTokens')
-          ? before + ', designTokens } from \'@topems/tokens\''
-          : before + ', designTokens, semanticTokens } from \'@topems/tokens\''
+      return content.replace(/(import\s*\{[^}]*)\}\s*from\s*['"]@topems\/tokens/, (m, before) =>
+        before.includes('semanticTokens')
+          ? before + ", designTokens } from '@topems/tokens'"
+          : before + ", designTokens, semanticTokens } from '@topems/tokens'"
       );
     }
     return content;
@@ -155,11 +159,10 @@ function ensureTokensImport(content, used) {
   if (content.includes("from 'theme/tokens'") || content.includes('from "theme/tokens"')) {
     // 不碰已有 theme/tokens import（语义不同，保持路径），但追加 designTokens
     if (!content.match(/import\s*\{[^}]*\bdesignTokens\b[^}]*\}\s*from\s*['"]theme\/tokens/)) {
-      return content.replace(
-        /(import\s*\{[^}]*)\}\s*from\s*['"](theme\/tokens)['"]/,
-        (m, before) => before.includes('semanticTokens')
-          ? before + ', designTokens } from \'theme/tokens\''
-          : before + ', designTokens, semanticTokens } from \'theme/tokens\''
+      return content.replace(/(import\s*\{[^}]*)\}\s*from\s*['"](theme\/tokens)['"]/, (m, before) =>
+        before.includes('semanticTokens')
+          ? before + ", designTokens } from 'theme/tokens'"
+          : before + ", designTokens, semanticTokens } from 'theme/tokens'"
       );
     }
     return content;
@@ -197,9 +200,11 @@ const allTsx = walk(SRC);
 const filesToProcess = allTsx.filter((f) => {
   const c = readFileSync(f, 'utf-8');
   // 匹配引号中的 colors.<word>.*.<word> 中间态（由 C2 脚本生成）
-  return /['"`]colors\.[a-zA-Z]+\.[a-zA-Z\d]+['"`]/.test(c)
-    || /['"`]background\.[a-zA-Z]+['"`]/.test(c)
-    || /['"`]border\.[a-zA-Z]+['"`]/.test(c);
+  return (
+    /['"`]colors\.[a-zA-Z]+\.[a-zA-Z\d]+['"`]/.test(c) ||
+    /['"`]background\.[a-zA-Z]+['"`]/.test(c) ||
+    /['"`]border\.[a-zA-Z]+['"`]/.test(c)
+  );
 });
 
 console.log('Fixing up ' + filesToProcess.length + ' files (remove colors.* string literal → actual reference)\n');
@@ -227,9 +232,8 @@ for (const file of filesToProcess) {
       if (!parsed) return match;
       const keyName = getContextKey(line, offset);
       const inSx = isInSxContext(i, sxRanges);
-      const muiShort = keyName && MUI_SX_COLOR_KEYS.has(keyName.toLowerCase())
-        ? muiShorten(parsed.prefix, parsed.chain)
-        : null;
+      const muiShort =
+        keyName && MUI_SX_COLOR_KEYS.has(keyName.toLowerCase()) ? muiShorten(parsed.prefix, parsed.chain) : null;
 
       if (inSx && MUI_SX_COLOR_KEYS.has(keyName ? keyName.toLowerCase() : '')) {
         byKind.mui_sx++;
@@ -278,12 +282,16 @@ console.log(apply ? '' : '\nℹ️  追加 --apply 真正写文件');
 
 writeFileSync(
   join(ROOT, 'docs/audit/fix-colors-reference-fix-summary.json'),
-  JSON.stringify({
-    generated_at: new Date().toISOString(),
-    mode: apply ? 'apply' : 'dry-run',
-    processed_files: filesToProcess.length,
-    changed_files: changedFiles,
-    total_fixes: totalFixes,
-    by_kind: byKind,
-  }, null, 2)
+  JSON.stringify(
+    {
+      generated_at: new Date().toISOString(),
+      mode: apply ? 'apply' : 'dry-run',
+      processed_files: filesToProcess.length,
+      changed_files: changedFiles,
+      total_fixes: totalFixes,
+      by_kind: byKind,
+    },
+    null,
+    2
+  )
 );

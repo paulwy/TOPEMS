@@ -43,13 +43,18 @@ function readGlossary(csvPath) {
     if (/^\s*#/.test(line)) continue;
     const cells = line.match(/(".*?"|[^,]+)/g) || [];
     if (cells.length < 2) continue;
-    const unquote = s => (s && s.startsWith('"')) ? s.slice(1, -1).replace(/""/g, '"') : (s || '');
+    const unquote = (s) => (s && s.startsWith('"') ? s.slice(1, -1).replace(/""/g, '"') : s || '');
     const zh = unquote(cells[0]);
     const en = unquote(cells[1]);
     const cat = unquote(cells[2]);
     const notes = unquote(cells[3]);
     const aliasesRaw = unquote(cells[4]) || '';
-    const allowed = new Set(aliasesRaw.split(/\s*,\s*/).map(s => s.trim()).filter(Boolean));
+    const allowed = new Set(
+      aliasesRaw
+        .split(/\s*,\s*/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+    );
     if (!zh || !en) continue;
     allowed.add(en); // standard_en 本身允许
     glossary.set(zh, { standard_en: en, category: cat, allowed, notes });
@@ -75,16 +80,16 @@ function main() {
     process.exit(2);
   }
   const glossary = readGlossary(CSV_PATH);
-  const nsFiles = fs.readdirSync(EN_DIR).filter(f => f.endsWith('.json'));
+  const nsFiles = fs.readdirSync(EN_DIR).filter((f) => f.endsWith('.json'));
 
   const summary = {
     glossary_terms_loaded: glossary.size,
     namespaces_scanned: 0,
     total_violations: 0,
-    by_term: new Map(),    // zh_term → count
-    by_ns: new Map(),      // ns → count
-    by_category: new Map(),// category → count
-    samples: [],           // { ns, path, zh_term, standard_en, actual_en, category }
+    by_term: new Map(), // zh_term → count
+    by_ns: new Map(), // ns → count
+    by_category: new Map(), // category → count
+    samples: [], // { ns, path, zh_term, standard_en, actual_en, category }
   };
 
   for (const f of nsFiles) {
@@ -92,8 +97,16 @@ function main() {
     summary.namespaces_scanned++;
 
     let zhObj, enObj;
-    try { zhObj = JSON.parse(fs.readFileSync(path.join(ZH_DIR, f), 'utf8')); } catch { zhObj = {}; }
-    try { enObj = JSON.parse(fs.readFileSync(path.join(EN_DIR, f), 'utf8')); } catch { continue; }
+    try {
+      zhObj = JSON.parse(fs.readFileSync(path.join(ZH_DIR, f), 'utf8'));
+    } catch {
+      zhObj = {};
+    }
+    try {
+      enObj = JSON.parse(fs.readFileSync(path.join(EN_DIR, f), 'utf8'));
+    } catch {
+      continue;
+    }
 
     const zhFlat = flatten(zhObj);
     const enFlat = flatten(enObj);
@@ -112,12 +125,14 @@ function main() {
       // 非标准译法，记录违规
       summary.total_violations++;
       summary.by_term.set(zv, (summary.by_term.get(zv) || 0) + 1);
-      summary.by_ns.set(ns,   (summary.by_ns.get(ns) || 0) + 1);
+      summary.by_ns.set(ns, (summary.by_ns.get(ns) || 0) + 1);
       summary.by_category.set(entry.category, (summary.by_category.get(entry.category) || 0) + 1);
 
       if (summary.samples.length < 15) {
         summary.samples.push({
-          ns, path: p, zh_term: zv,
+          ns,
+          path: p,
+          zh_term: zv,
           standard_en: entry.standard_en,
           actual_en: enVal.slice(0, 80),
           category: entry.category,
@@ -163,19 +178,22 @@ function printHuman(r) {
     console.log('✅ 所有 glossary 标准译法 100% 一致，无违规。');
   } else {
     console.log('① 按违规词条 Top 10:');
-    Object.entries(r.by_term).slice(0, 10).forEach(([term, n]) =>
-      console.log(`   · ${term.padEnd(12)} ${String(n).padStart(4)} 处`));
+    Object.entries(r.by_term)
+      .slice(0, 10)
+      .forEach(([term, n]) => console.log(`   · ${term.padEnd(12)} ${String(n).padStart(4)} 处`));
     console.log('');
     console.log('② 按命名空间 Top 10:');
-    Object.entries(r.by_ns).slice(0, 10).forEach(([ns, n]) =>
-      console.log(`   · ${ns.padEnd(26)} ${String(n).padStart(4)} 处`));
+    Object.entries(r.by_ns)
+      .slice(0, 10)
+      .forEach(([ns, n]) => console.log(`   · ${ns.padEnd(26)} ${String(n).padStart(4)} 处`));
     console.log('');
     console.log('③ 按类别:');
     Object.entries(r.by_category).forEach(([cat, n]) =>
-      console.log(`   · ${cat.padEnd(16)} ${String(n).padStart(4)} 处`));
+      console.log(`   · ${cat.padEnd(16)} ${String(n).padStart(4)} 处`)
+    );
     console.log('');
     console.log('④ 违规样本 (最多 15):');
-    r.samples.forEach(s => {
+    r.samples.forEach((s) => {
       console.log(`   [${s.ns}] ${s.path}`);
       console.log(`     zh="${s.zh_term}"  standard="${s.standard_en}"  actual="${s.actual_en}"  (${s.category})`);
     });

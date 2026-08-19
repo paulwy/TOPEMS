@@ -78,10 +78,7 @@ function main() {
     routes_not_in_lazy: routesNotInLazy,
     lazy_not_in_mapping: lazyNotInMapping,
     mapping_not_in_lazy: mappingNotInLazy,
-    passed:
-      lazyNotInRoutes.length === 0 &&
-      routesNotInLazy.length === 0 &&
-      lazyNotInMapping.length === 0,
+    passed: lazyNotInRoutes.length === 0 && routesNotInLazy.length === 0 && lazyNotInMapping.length === 0,
   };
 
   if (jsonOut) {

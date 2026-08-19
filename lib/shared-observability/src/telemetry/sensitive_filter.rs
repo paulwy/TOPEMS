@@ -120,7 +120,6 @@ pub fn register_sensitive_filter() {
 mod tests {
     use super::*;
     use tracing_subscriber::layer::SubscriberExt;
-    use tracing_subscriber::Layer;
 
     #[test]
     fn test_sensitive_filter_layer_new_constructs_without_panic() {

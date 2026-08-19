@@ -45,7 +45,7 @@ impl MasterDataService {
         operator: Option<String>,
     ) -> Result<MasterDataRef, sqlx::Error> {
         let domain = IdMasterDataDomain::from_str(&req.domain)
-            .ok_or_else(|| sqlx::Error::Decode(format!("Invalid domain: {}", req.domain).into()))?;
+            .map_err(|_| sqlx::Error::Decode(format!("Invalid domain: {}", req.domain).into()))?;
 
         let master_data_id = generate_master_data_id(domain);
         let ref_data = MasterDataRef::from_request(tenant_id, &req, master_data_id.clone());

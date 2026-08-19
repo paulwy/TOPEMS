@@ -25,7 +25,7 @@ const EXEMPT_PATTERNS = [
 
 const args = process.argv.slice(2);
 const applyMode = args.includes('--apply');
-const phase = (args.find(a => a.startsWith('--phase=')) || '').split('=')[1] || '1';
+const phase = (args.find((a) => a.startsWith('--phase=')) || '').split('=')[1] || '1';
 const verbose = args.includes('--verbose');
 
 console.error(`[apply-design-tokens] MODE=${applyMode ? 'APPLY (写盘)' : 'DRY-RUN (不写盘)'} | PHASE=${phase}`);
@@ -44,7 +44,10 @@ function walkDir(dir, out = []) {
         const rel = path.relative(ROOT, fp);
         let exempt = false;
         for (const pat of EXEMPT_PATTERNS) {
-          if (pat.test(rel)) { exempt = true; break; }
+          if (pat.test(rel)) {
+            exempt = true;
+            break;
+          }
         }
         if (!exempt) out.push(fp);
       }
@@ -53,13 +56,14 @@ function walkDir(dir, out = []) {
   return out;
 }
 
-function esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function esc(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 function buildHexVariants(hex6) {
   const h = hex6.toLowerCase();
   const hh = hex6.toUpperCase();
-  const s = h[0] + h[1] === h[2] + h[3] && h[2] + h[3] === h[4] + h[5]
-    ? '#' + h[1] + h[3] + h[5] : null;
+  const s = h[0] + h[1] === h[2] + h[3] && h[2] + h[3] === h[4] + h[5] ? '#' + h[1] + h[3] + h[5] : null;
   const S = s ? s.toUpperCase() : null;
   return [...new Set([h, hh, s, S].filter(Boolean))];
 }
@@ -133,38 +137,92 @@ const SHADOW_MAP = [
   { re: /0\s+10px\s+15px\s+-3px\s+/i, to: 'var(--shadow-lg)' },
   { re: /0\s+20px\s+25px\s+-5px\s+/i, to: 'var(--shadow-xl)' },
   { re: /0\s+25px\s+50px\s+-12px\s+/i, to: 'var(--shadow-2xl)' },
-  { re: /0\s+0\s+12px\s+rgba?\(\s*0\s*,\s*255\s*,\s*255\s*,/i, to: 'var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30))' },
-  { re: /0\s+0\s+8px\s+rgba?\(\s*0\s*,\s*255\s*,\s*255\s*,/i, to: 'var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50))' },
-  { re: /0\s+8px\s+32px\s+rgba?\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0?\.?5\s*\)\s*,\s*0\s+0\s+20px\s+rgba?\(\s*0\s*,\s*255\s*,\s*255\s*,/i, to: 'var(--cyber-shadow-modal, 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.10))' },
-  { re: /0\s+24px\s+64px\s+/i, to: 'var(--cyber-shadow-3xl, 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 255, 255, 0.15))' },
+  {
+    re: /0\s+0\s+12px\s+rgba?\(\s*0\s*,\s*255\s*,\s*255\s*,/i,
+    to: 'var(--cyber-shadow-glow-cyan, 0 0 12px rgba(0, 255, 255, 0.30))',
+  },
+  {
+    re: /0\s+0\s+8px\s+rgba?\(\s*0\s*,\s*255\s*,\s*255\s*,/i,
+    to: 'var(--cyber-shadow-glow-cyan-soft, 0 0 8px rgba(0, 255, 255, 0.50))',
+  },
+  {
+    re: /0\s+8px\s+32px\s+rgba?\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0?\.?5\s*\)\s*,\s*0\s+0\s+20px\s+rgba?\(\s*0\s*,\s*255\s*,\s*255\s*,/i,
+    to: 'var(--cyber-shadow-modal, 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.10))',
+  },
+  {
+    re: /0\s+24px\s+64px\s+/i,
+    to: 'var(--cyber-shadow-3xl, 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 255, 255, 0.15))',
+  },
   { re: /0\s+4px\s+24px\s+rgba?\(\s*0\s*,\s*0\s*,\s*0\s*,/i, to: 'var(--shadow-lg)' },
-  { re: /0\s+1px\s+0\s+rgba?\(\s*0\s*,\s*255\s*,\s*255\s*,/i, to: 'var(--cyber-shadow-top-line, 0 1px 0 rgba(0, 255, 255, 0.10))' },
-  { re: /0\s+0\s+10px\s+rgba?\(\s*0\s*,\s*255\s*,\s*255\s*,/i, to: 'var(--cyber-shadow-glow-cyan-strong, 0 0 10px rgba(0, 255, 255, 0.50))' },
-  { re: /0\s+0\s+20px\s+rgba?\(\s*96\s*,\s*165\s*,\s*250\s*,/i, to: 'var(--cyber-shadow-glow-primary, 0 0 20px rgba(96, 165, 250, 0.6))' },
-  { re: /0\s+0\s+8px\s+rgba?\(\s*239\s*,\s*68\s*,\s*68\s*,/i, to: 'var(--cyber-shadow-badge, 0 0 8px rgba(239, 68, 68, 0.4))' },
-  { re: /0\s+0\s+0\s+3px\s+color-mix\(in srgb, var\(--color-primary\)\s+30%, transparent\)/i, to: 'var(--shadow-focus-ring, 0 0 0 3px color-mix(in srgb, var(--color-primary) 30%, transparent))' },
-  { re: /inset\s+3px\s+0\s+0\s+var\(--color-primary\)\s*,\s*0\s+0\s+20px\s+rgba?\(\s*59\s*,\s*130\s*,\s*246\s*,/i, to: 'var(--cyber-shadow-sidebar-active, inset 3px 0 0 var(--color-primary), 0 0 20px rgba(59, 130, 246, 0.1))' },
-  { re: /inset\s+3px\s+0\s+0\s+var\(--color-primary\)/i, to: 'var(--cyber-shadow-row-accent, inset 3px 0 0 var(--color-primary))' },
-  { re: /0\s+0\s+0\s+2px\s+rgba?\(\s*59\s*,\s*130\s*,\s*246\s*,/i, to: 'var(--cyber-shadow-input-focus, 0 0 0 2px rgba(59, 130, 246, 0.2))' },
-  { re: /0\s+0\s+8px\s+rgba?\(\s*59\s*,\s*130\s*,\s*246\s*,\s*0?\.?3\s*\)/i, to: 'var(--cyber-shadow-progress, 0 0 8px rgba(59, 130, 246, 0.3))' },
-  { re: /0\s+0\s+40px\s+rgba?\(\s*96\s*,\s*165\s*,\s*250\s*,\s*0?\.?6\s*\)/i, to: 'var(--cyber-shadow-pulse-glow-strong, 0 0 40px rgba(96, 165, 250, 0.6))' },
+  {
+    re: /0\s+1px\s+0\s+rgba?\(\s*0\s*,\s*255\s*,\s*255\s*,/i,
+    to: 'var(--cyber-shadow-top-line, 0 1px 0 rgba(0, 255, 255, 0.10))',
+  },
+  {
+    re: /0\s+0\s+10px\s+rgba?\(\s*0\s*,\s*255\s*,\s*255\s*,/i,
+    to: 'var(--cyber-shadow-glow-cyan-strong, 0 0 10px rgba(0, 255, 255, 0.50))',
+  },
+  {
+    re: /0\s+0\s+20px\s+rgba?\(\s*96\s*,\s*165\s*,\s*250\s*,/i,
+    to: 'var(--cyber-shadow-glow-primary, 0 0 20px rgba(96, 165, 250, 0.6))',
+  },
+  {
+    re: /0\s+0\s+8px\s+rgba?\(\s*239\s*,\s*68\s*,\s*68\s*,/i,
+    to: 'var(--cyber-shadow-badge, 0 0 8px rgba(239, 68, 68, 0.4))',
+  },
+  {
+    re: /0\s+0\s+0\s+3px\s+color-mix\(in srgb, var\(--color-primary\)\s+30%, transparent\)/i,
+    to: 'var(--shadow-focus-ring, 0 0 0 3px color-mix(in srgb, var(--color-primary) 30%, transparent))',
+  },
+  {
+    re: /inset\s+3px\s+0\s+0\s+var\(--color-primary\)\s*,\s*0\s+0\s+20px\s+rgba?\(\s*59\s*,\s*130\s*,\s*246\s*,/i,
+    to: 'var(--cyber-shadow-sidebar-active, inset 3px 0 0 var(--color-primary), 0 0 20px rgba(59, 130, 246, 0.1))',
+  },
+  {
+    re: /inset\s+3px\s+0\s+0\s+var\(--color-primary\)/i,
+    to: 'var(--cyber-shadow-row-accent, inset 3px 0 0 var(--color-primary))',
+  },
+  {
+    re: /0\s+0\s+0\s+2px\s+rgba?\(\s*59\s*,\s*130\s*,\s*246\s*,/i,
+    to: 'var(--cyber-shadow-input-focus, 0 0 0 2px rgba(59, 130, 246, 0.2))',
+  },
+  {
+    re: /0\s+0\s+8px\s+rgba?\(\s*59\s*,\s*130\s*,\s*246\s*,\s*0?\.?3\s*\)/i,
+    to: 'var(--cyber-shadow-progress, 0 0 8px rgba(59, 130, 246, 0.3))',
+  },
+  {
+    re: /0\s+0\s+40px\s+rgba?\(\s*96\s*,\s*165\s*,\s*250\s*,\s*0?\.?6\s*\)/i,
+    to: 'var(--cyber-shadow-pulse-glow-strong, 0 0 40px rgba(96, 165, 250, 0.6))',
+  },
 ];
 
 function replaceNamedColors(src) {
   let s = src;
   const contexts = [
-    { re: /\b(color|backgroundColor|borderColor|outlineColor)\s*:\s*(white|black)\b/gi, repl: (m, prop, c) => {
-      const token = c.toLowerCase() === 'white' ? 'var(--color-surface, #ffffff)' : 'var(--color-text-primary, #1e293b)';
-      return `${prop}: ${token}`;
-    }},
-    { re: /((?:background|bg|border|color|outline|text)\s*:\s*)(white|black)\s*[;}]/gi, repl: (m, pre, c, end) => {
-      const token = c.toLowerCase() === 'white' ? 'var(--color-surface, #ffffff)' : 'var(--color-text-primary, #1e293b)';
-      return `${pre}${token}${end}`;
-    }},
-    { re: /(\b(?:background|bg|border|color)\s*[:=]\s*['"`])\s*(white|black)\s*(['"`])/gi, repl: (m, pre, c, q) => {
-      const token = c.toLowerCase() === 'white' ? 'var(--color-surface, #ffffff)' : 'var(--color-text-primary, #1e293b)';
-      return `${pre}${token}${q}`;
-    }},
+    {
+      re: /\b(color|backgroundColor|borderColor|outlineColor)\s*:\s*(white|black)\b/gi,
+      repl: (m, prop, c) => {
+        const token =
+          c.toLowerCase() === 'white' ? 'var(--color-surface, #ffffff)' : 'var(--color-text-primary, #1e293b)';
+        return `${prop}: ${token}`;
+      },
+    },
+    {
+      re: /((?:background|bg|border|color|outline|text)\s*:\s*)(white|black)\s*[;}]/gi,
+      repl: (m, pre, c, end) => {
+        const token =
+          c.toLowerCase() === 'white' ? 'var(--color-surface, #ffffff)' : 'var(--color-text-primary, #1e293b)';
+        return `${pre}${token}${end}`;
+      },
+    },
+    {
+      re: /(\b(?:background|bg|border|color)\s*[:=]\s*['"`])\s*(white|black)\s*(['"`])/gi,
+      repl: (m, pre, c, q) => {
+        const token =
+          c.toLowerCase() === 'white' ? 'var(--color-surface, #ffffff)' : 'var(--color-text-primary, #1e293b)';
+        return `${pre}${token}${q}`;
+      },
+    },
   ];
   for (const c of contexts) {
     s = s.replace(c.re, c.repl);
@@ -211,8 +269,10 @@ function replaceInContent(src, colorMap, doShadows) {
         out += m[0];
       } else {
         const v = colorMap.get(m[0].toLowerCase());
-        if (v) { changes++; out += v; }
-        else out += m[0];
+        if (v) {
+          changes++;
+          out += v;
+        } else out += m[0];
       }
       lastEnd = m.index + m[0].length;
     }
@@ -265,7 +325,9 @@ function replaceInContent(src, colorMap, doShadows) {
 
 function appendNewTokensToCss() {
   if (!applyMode) {
-    console.error('[dry-run] 将向 generated-tokens.css 追加: 10 cyber color tokens + 4 semantic shadow tokens + cyber shadow tokens');
+    console.error(
+      '[dry-run] 将向 generated-tokens.css 追加: 10 cyber color tokens + 4 semantic shadow tokens + cyber shadow tokens'
+    );
     return 0;
   }
   let content = fs.readFileSync(TOKENS_CSS_PATH, 'utf8');
@@ -338,7 +400,9 @@ function main() {
     colorMap = new Map([...colorMap, ...getPhase1Map(), ...getPhase2ColorMap()]);
     doShadows = true;
     appendTokens = true;
-    console.error(`[phase2] 映射项: ${colorMap.size} color variants + ${SHADOW_MAP.length} shadow rules + append tokens block`);
+    console.error(
+      `[phase2] 映射项: ${colorMap.size} color variants + ${SHADOW_MAP.length} shadow rules + append tokens block`
+    );
   }
   if (phaseNum.includes('3')) {
     colorMap = new Map([...colorMap, ...getPhase1Map(), ...getPhase2ColorMap()]);
@@ -357,7 +421,11 @@ function main() {
 
   for (const fp of files) {
     let src;
-    try { src = fs.readFileSync(fp, 'utf8'); } catch { continue; }
+    try {
+      src = fs.readFileSync(fp, 'utf8');
+    } catch {
+      continue;
+    }
     const { content, changes } = replaceInContent(src, colorMap, doShadows);
     if (changes > 0) {
       totalFilesChanged++;

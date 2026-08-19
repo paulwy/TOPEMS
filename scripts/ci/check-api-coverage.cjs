@@ -105,9 +105,9 @@ function main() {
   const apiDir = path.join(WEB_ROOT, 'api');
   let apiModuleCount = 0;
   if (fs.existsSync(apiDir)) {
-    apiModuleCount = fs.readdirSync(apiDir, { withFileTypes: true })
-      .filter((e) => e.isDirectory() && fs.existsSync(path.join(apiDir, e.name, 'index.ts')))
-      .length;
+    apiModuleCount = fs
+      .readdirSync(apiDir, { withFileTypes: true })
+      .filter((e) => e.isDirectory() && fs.existsSync(path.join(apiDir, e.name, 'index.ts'))).length;
   }
   report.api_module_count = apiModuleCount;
   report.note = `src/api/ 有 ${apiModuleCount} 个模块（含 lowcode + automation），moduleMapping 中有对应映射即可`;

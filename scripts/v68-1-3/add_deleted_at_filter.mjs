@@ -12,15 +12,15 @@
  * - Skip queries that already have deleted_at
  * - Skip queries in comments
  */
-import { readFileSync, writeFileSync } from "node:fs";
-import { join, resolve, dirname as pDirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join, resolve, dirname as pDirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __dirname = pDirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(__dirname, "..", "..");
+const ROOT = resolve(__dirname, '..', '..');
 
 // Read conversion log to get modified files and their tables
-const conversionLog = JSON.parse(readFileSync(join(__dirname, "conversion_log.json"), "utf8"));
+const conversionLog = JSON.parse(readFileSync(join(__dirname, 'conversion_log.json'), 'utf8'));
 
 // Build map: file → Set of table names (lowercase)
 const fileTables = new Map();
@@ -46,12 +46,12 @@ for (const [relFile, tables] of fileTables) {
   const absPath = join(ROOT, relFile);
   let src;
   try {
-    src = readFileSync(absPath, "utf8");
+    src = readFileSync(absPath, 'utf8');
   } catch {
     continue;
   }
 
-  const lines = src.split("\n");
+  const lines = src.split('\n');
   let fileModified = false;
   const fileChanges = [];
 
@@ -60,7 +60,7 @@ for (const [relFile, tables] of fileTables) {
     const trimmed = line.trim();
 
     // Skip comment lines
-    if (trimmed.startsWith("//") || trimmed.startsWith("/*") || trimmed.startsWith("*")) {
+    if (trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('*')) {
       continue;
     }
 
@@ -75,7 +75,7 @@ for (const [relFile, tables] of fileTables) {
     // Check if this table is in our soft-delete list
     let matched = false;
     for (const t of tables) {
-      if (tableName === t || tableName.endsWith("." + t) || t.endsWith("." + tableName)) {
+      if (tableName === t || tableName.endsWith('.' + t) || t.endsWith('.' + tableName)) {
         matched = true;
         break;
       }
@@ -102,13 +102,10 @@ for (const [relFile, tables] of fileTables) {
     // → SELECT ... FROM table WHERE deleted_at IS NULL AND condition
     if (/FROM\s+[\w.]+\s+WHERE\s+/i.test(fullLine)) {
       // Insert "deleted_at IS NULL AND " after WHERE
-      const newLine = fullLine.replace(
-        /(FROM\s+[\w.]+\s+WHERE\s+)/i,
-        "$1deleted_at IS NULL AND "
-      );
+      const newLine = fullLine.replace(/(FROM\s+[\w.]+\s+WHERE\s+)/i, '$1deleted_at IS NULL AND ');
       if (newLine !== fullLine) {
         lines[i] = newLine;
-        fileChanges.push({ line: i + 1, table: tableName, type: "WHERE→AND" });
+        fileChanges.push({ line: i + 1, table: tableName, type: 'WHERE→AND' });
         totalPatched++;
         fileModified = true;
         continue;
@@ -130,13 +127,10 @@ for (const [relFile, tables] of fileTables) {
     if (whereLineIdx >= 0) {
       // Add "deleted_at IS NULL AND " at the beginning of the WHERE clause
       const whereLine = lines[whereLineIdx];
-      const newWhereLine = whereLine.replace(
-        /(\s*WHERE\s+)/i,
-        "$1deleted_at IS NULL AND "
-      );
+      const newWhereLine = whereLine.replace(/(\s*WHERE\s+)/i, '$1deleted_at IS NULL AND ');
       if (newWhereLine !== whereLine && !/deleted_at/i.test(whereLine)) {
         lines[whereLineIdx] = newWhereLine;
-        fileChanges.push({ line: whereLineIdx + 1, table: tableName, type: "WHERE(next line)→AND" });
+        fileChanges.push({ line: whereLineIdx + 1, table: tableName, type: 'WHERE(next line)→AND' });
         totalPatched++;
         fileModified = true;
         continue;
@@ -149,21 +143,20 @@ for (const [relFile, tables] of fileTables) {
       // Check if there's a WHERE in the next few lines before the closing quote
       let hasWhere = false;
       for (let j = i + 1; j < Math.min(i + 15, lines.length); j++) {
-        if (/WHERE/i.test(lines[j])) { hasWhere = true; break; }
+        if (/WHERE/i.test(lines[j])) {
+          hasWhere = true;
+          break;
+        }
         if (/"#?,/.test(lines[j])) break; // end of query string
       }
       if (!hasWhere) {
         // Add WHERE deleted_at IS NULL before the closing quote/paren
-        const newLine = fullLine.replace(
-          /(FROM\s+[\w.]+)(\s*")/,
-          '$1 WHERE deleted_at IS NULL$2'
-        ).replace(
-          /(FROM\s+[\w.]+)(\s*$)/,
-          '$1 WHERE deleted_at IS NULL$2'
-        );
+        const newLine = fullLine
+          .replace(/(FROM\s+[\w.]+)(\s*")/, '$1 WHERE deleted_at IS NULL$2')
+          .replace(/(FROM\s+[\w.]+)(\s*$)/, '$1 WHERE deleted_at IS NULL$2');
         if (newLine !== fullLine) {
           lines[i] = newLine;
-          fileChanges.push({ line: i + 1, table: tableName, type: "no-WHERE→add WHERE" });
+          fileChanges.push({ line: i + 1, table: tableName, type: 'no-WHERE→add WHERE' });
           totalPatched++;
           fileModified = true;
           continue;
@@ -175,7 +168,7 @@ for (const [relFile, tables] of fileTables) {
   }
 
   if (fileModified) {
-    writeFileSync(absPath, lines.join("\n"));
+    writeFileSync(absPath, lines.join('\n'));
     patched.push({ file: relFile, changes: fileChanges.length });
     console.log(`[PATCHED] ${relFile}: ${fileChanges.length} SELECT queries`);
   }

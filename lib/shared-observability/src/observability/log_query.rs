@@ -177,8 +177,7 @@ impl LogQueryProvider for InMemoryLogStore {
             .cloned()
             .collect();
 
-        // 按时间倒序排列（最新的在前）
-        filtered.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
+        filtered.sort_by_key(|a| std::cmp::Reverse(a.timestamp));
 
         let total = filtered.len();
         let page_size = query.page_size.max(1);
@@ -306,13 +305,17 @@ mod tests {
         store.append(make_entry("2", LogLevel::Error, "svc-b", "boom", None));
         store.append(make_entry("3", LogLevel::Warn, "svc-a", "watch out", None));
 
-        let mut query = LogQuery::default();
-        query.service = Some("svc-a".to_string());
+        let query = LogQuery {
+            service: Some("svc-a".to_string()),
+            ..Default::default()
+        };
         let result = store.query(&query).await.unwrap();
         assert_eq!(result.total, 2);
 
-        let mut query = LogQuery::default();
-        query.min_level = Some(LogLevel::Error);
+        let query = LogQuery {
+            min_level: Some(LogLevel::Error),
+            ..Default::default()
+        };
         let result = store.query(&query).await.unwrap();
         assert_eq!(result.total, 1);
         assert_eq!(result.entries[0].id, "2");
@@ -331,9 +334,11 @@ mod tests {
             ));
         }
 
-        let mut query = LogQuery::default();
-        query.page = 1;
-        query.page_size = 3;
+        let mut query = LogQuery {
+            page: 1,
+            page_size: 3,
+            ..Default::default()
+        };
         let result = store.query(&query).await.unwrap();
         assert_eq!(result.total, 10);
         assert_eq!(result.entries.len(), 3);

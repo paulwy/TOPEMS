@@ -50,7 +50,8 @@ function fixContent(content) {
       continue;
     }
     // 模式2: 裸赋值（非声明），例如 `this.foo = {designTokens...}`
-    const pattern2 = /^(\s*(?:this\.)?(?:[a-zA-Z_$][\w$]*)(?:\.[a-zA-Z_$][\w$]*)*\s*)=\s*\{(designTokens(?:\.[\w$]+)+)\}(\s*;?\s*)$/;
+    const pattern2 =
+      /^(\s*(?:this\.)?(?:[a-zA-Z_$][\w$]*)(?:\.[a-zA-Z_$][\w$]*)*\s*)=\s*\{(designTokens(?:\.[\w$]+)+)\}(\s*;?\s*)$/;
     m = line.match(pattern2);
     if (m) {
       // 如果这行是缩进 2+ 级、且以分号结尾或行尾，则可能是赋值而非 JSX 属性 —— 只替换非 JSX 标签的行

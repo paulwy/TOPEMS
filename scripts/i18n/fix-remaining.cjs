@@ -29,7 +29,7 @@ const verbose = args.includes('--verbose');
 const WEB_ROOT = path.resolve(__dirname, '../../apps/web/src');
 const PAGES_DIR = path.join(WEB_ROOT, 'pages');
 const I18N_DIR = path.join(WEB_ROOT, 'i18n', 'locales');
-const P2 = ['gis','im','system','automation','finance','lowcode','hrm','pdm','scm','integration'];
+const P2 = ['gis', 'im', 'system', 'automation', 'finance', 'lowcode', 'hrm', 'pdm', 'scm', 'integration'];
 
 const CJK = /[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff]/;
 const CJK_STR = '[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff]';
@@ -44,7 +44,9 @@ function loadTranslations(mod) {
   const zhPath = path.join(I18N_DIR, 'zh', `${mod}.json`);
   translations[mod] = {};
   if (fs.existsSync(zhPath)) {
-    try { translations[mod] = JSON.parse(fs.readFileSync(zhPath, 'utf8')); } catch {}
+    try {
+      translations[mod] = JSON.parse(fs.readFileSync(zhPath, 'utf8'));
+    } catch {}
   }
   return translations[mod];
 }
@@ -67,8 +69,13 @@ function saveTranslations(mod) {
 
 function fileLabel(filePath, mod) {
   const rel = path.relative(path.join(PAGES_DIR, mod), filePath);
-  return rel.replace(/\.tsx$/, '').replace(/\//g, '_').replace(/\\/g, '_')
-    .replace(/([a-z0-9])([A-Z])/g, '$1_$2').replace(/[\s\-]/g, '_').toLowerCase();
+  return rel
+    .replace(/\.tsx$/, '')
+    .replace(/\//g, '_')
+    .replace(/\\/g, '_')
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .replace(/[\s\-]/g, '_')
+    .toLowerCase();
 }
 
 function genKey(mod, label, text) {
@@ -88,23 +95,33 @@ function addTrans(mod, key, zh, en) {
 }
 
 function hasI18nImport(lines) {
-  return lines.some(l => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l));
+  return lines.some((l) => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l));
 }
 
 function hasUseTranslationImport(lines) {
-  return lines.some(l => /import\s*\{[^}]*useTranslation[^}]*\}\s*from\s+['"]react-i18next['"]/.test(l));
+  return lines.some((l) => /import\s*\{[^}]*useTranslation[^}]*\}\s*from\s+['"]react-i18next['"]/.test(l));
 }
 
 function getLastImportLine(lines) {
-  let last = -1, inBlock = false;
+  let last = -1,
+    inBlock = false;
   for (let i = 0; i < lines.length; i++) {
     const t = lines[i].trim();
     if (t.startsWith('import ')) {
-      if (t.includes('{') && !t.includes('}')) { inBlock = true; last = i; }
-      else if (t.endsWith(';')) { last = i; inBlock = false; }
-      else { last = i; }
+      if (t.includes('{') && !t.includes('}')) {
+        inBlock = true;
+        last = i;
+      } else if (t.endsWith(';')) {
+        last = i;
+        inBlock = false;
+      } else {
+        last = i;
+      }
     } else if (inBlock) {
-      if (t.endsWith(';')) { last = i; inBlock = false; }
+      if (t.endsWith(';')) {
+        last = i;
+        inBlock = false;
+      }
     } else if (last >= 0 && !t.startsWith('import') && t !== '') break;
   }
   return last;
@@ -137,15 +154,14 @@ function processFile(filePath, mod) {
     const trimmed = line.trim();
 
     // Skip comments, imports, empty
-    if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*') || trimmed.startsWith('{/*')) continue;
+    if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*') || trimmed.startsWith('{/*'))
+      continue;
     if (/^import\s/.test(trimmed)) continue;
     if (trimmed === '') continue;
     if (filePath.includes('.test.')) continue;
 
     // Check if line has untranslated Chinese (not inside t()/i18n.t() calls)
-    let cleaned = line
-      .replace(/i18n\.t\s*\([^)]*\)/g, '')
-      .replace(/\bt\s*\(\s*['"`][^)]*\)/g, '');
+    let cleaned = line.replace(/i18n\.t\s*\([^)]*\)/g, '').replace(/\bt\s*\(\s*['"`][^)]*\)/g, '');
     if (!CJK.test(cleaned)) continue;
 
     // Skip Chinese property access (like report.归属于母公司净利润)
@@ -158,8 +174,9 @@ function processFile(filePath, mod) {
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = line.replace(stubMatch[0], `description={i18n.t('${key}')}`);
-      modified = true; count++;
-      if (verbose) console.log(`  [stub] ${mod}/${label}:${i+1} "${text.substring(0,30)}"`);
+      modified = true;
+      count++;
+      if (verbose) console.log(`  [stub] ${mod}/${label}:${i + 1} "${text.substring(0, 30)}"`);
       continue;
     }
 
@@ -170,9 +187,10 @@ function processFile(filePath, mod) {
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = line.replace(titleMatch[0], `title={i18n.t('${key}')}`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
-      if (verbose) console.log(`  [title] ${mod}/${label}:${i+1} "${text.substring(0,20)}"`);
+      if (verbose) console.log(`  [title] ${mod}/${label}:${i + 1} "${text.substring(0, 20)}"`);
       continue;
     }
 
@@ -185,33 +203,40 @@ function processFile(filePath, mod) {
       const useI18n = !isJSXContext(lines, i);
       const prefix = useI18n ? 'i18n.' : '';
       lines[i] = line.replace(labelMatch[0], `label={${prefix}t('${key}')}`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
-      if (verbose) console.log(`  [label] ${mod}/${label}:${i+1} "${text.substring(0,20)}"`);
+      if (verbose) console.log(`  [label] ${mod}/${label}:${i + 1} "${text.substring(0, 20)}"`);
       continue;
     }
 
     // PATTERN: placeholder='中文'
-    const phMatch = line.match(/placeholder=(['"])([\u4e00-\u9fff][\u4e00-\u9fff\w\s\-：，。、（）()·\-—\!！？%\/]*?)\1/);
+    const phMatch = line.match(
+      /placeholder=(['"])([\u4e00-\u9fff][\u4e00-\u9fff\w\s\-：，。、（）()·\-—\!！？%\/]*?)\1/
+    );
     if (phMatch && !line.includes('i18n.t(')) {
       const text = phMatch[2];
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = line.replace(phMatch[0], `placeholder={t('${key}')}`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
-      if (verbose) console.log(`  [placeholder] ${mod}/${label}:${i+1} "${text.substring(0,20)}"`);
+      if (verbose) console.log(`  [placeholder] ${mod}/${label}:${i + 1} "${text.substring(0, 20)}"`);
       continue;
     }
 
     // PATTERN: helperText='中文'
-    const htMatch = line.match(/helperText=(['"])([\u4e00-\u9fff][\u4e00-\u9fff\w\s\-：，。、（）()·\-—\!！？%\/]*?)\1/);
+    const htMatch = line.match(
+      /helperText=(['"])([\u4e00-\u9fff][\u4e00-\u9fff\w\s\-：，。、（）()·\-—\!！？%\/]*?)\1/
+    );
     if (htMatch && !line.includes('i18n.t(')) {
       const text = htMatch[2];
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = line.replace(htMatch[0], `helperText={t('${key}')}`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
@@ -226,9 +251,10 @@ function processFile(filePath, mod) {
       const useI18n = !isJSXContext(lines, i);
       const prefix = useI18n ? 'i18n.' : '';
       lines[i] = line.replace(ternaryMatch[0], `? ${prefix}t('${key}') :`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
-      if (verbose) console.log(`  [ternary] ${mod}/${label}:${i+1} "${text.substring(0,15)}"`);
+      if (verbose) console.log(`  [ternary] ${mod}/${label}:${i + 1} "${text.substring(0, 15)}"`);
       continue;
     }
 
@@ -239,9 +265,10 @@ function processFile(filePath, mod) {
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = line.replace(apiLogMatch[0], `apiLogger.error(i18n.t('${key}')`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
-      if (verbose) console.log(`  [apiLog] ${mod}/${label}:${i+1} "${text.substring(0,20)}"`);
+      if (verbose) console.log(`  [apiLog] ${mod}/${label}:${i + 1} "${text.substring(0, 20)}"`);
       continue;
     }
 
@@ -252,7 +279,8 @@ function processFile(filePath, mod) {
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = line.replace(throwMatch[0], `throw new Error(i18n.t('${key}')`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
@@ -264,7 +292,8 @@ function processFile(filePath, mod) {
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = line.replace(msgMatch[0], `message: i18n.t('${key}')`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
@@ -274,20 +303,22 @@ function processFile(filePath, mod) {
     if (msgTmpl && !line.includes('i18n.t(')) {
       const inner = msgTmpl[1];
       const varRe = /\$\{([^}]+)\}/g;
-      let m, varIdx = 0;
+      let m,
+        varIdx = 0;
       const interpolations = [];
       let transText = inner;
       while ((m = varRe.exec(inner)) !== null) {
-        interpolations.push({ name: `v${varIdx+1}`, expr: m[1] });
-        transText = transText.replace(m[0], `{{v${varIdx+1}}}`);
+        interpolations.push({ name: `v${varIdx + 1}`, expr: m[1] });
+        transText = transText.replace(m[0], `{{v${varIdx + 1}}}`);
         varIdx++;
       }
       const key = genKey(mod, label, transText.trim());
       addTrans(mod, key, transText.trim());
-      const paramStr = interpolations.length > 0
-        ? `, { ${interpolations.map(ip => `${ip.name}: ${ip.expr}`).join(', ')} }` : '';
+      const paramStr =
+        interpolations.length > 0 ? `, { ${interpolations.map((ip) => `${ip.name}: ${ip.expr}`).join(', ')} }` : '';
       lines[i] = line.replace(msgTmpl[0], `message: i18n.t('${key}'${paramStr})`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
@@ -299,20 +330,24 @@ function processFile(filePath, mod) {
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = line.replace(nameMatch[0], `${nameMatch[1]}name: i18n.t('${key}')`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
 
     // PATTERN: source: '中文' or target: '中文'
-    const srcTgtMatch = line.match(/(\s+)(source|target|title|description):\s*(['"])([\u4e00-\u9fff][\u4e00-\u9fff\w\s\-：·（()↔,]*?)\4/);
+    const srcTgtMatch = line.match(
+      /(\s+)(source|target|title|description):\s*(['"])([\u4e00-\u9fff][\u4e00-\u9fff\w\s\-：·（()↔,]*?)\4/
+    );
     if (srcTgtMatch && !line.includes('i18n.t(') && !line.includes(`t('`)) {
       const field = srcTgtMatch[2];
       const text = srcTgtMatch[4];
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = line.replace(srcTgtMatch[0], `${srcTgtMatch[1]}${field}: i18n.t('${key}')`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
@@ -324,14 +359,17 @@ function processFile(filePath, mod) {
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = line.replace(clMatch[0], `changeLabel: i18n.t('${key}')`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
 
     // PATTERN: JSX text with expression: `中文: {expr}`
     // Like: 类型: {getTypeLabel(fence.type)}
-    const jsxTextExpr = line.match(/^(\s*)([\u4e00-\u9fff][\u4e00-\u9fff\w\s：，。、（）()·\-—]*?):\s*\{([^}]+)\}(\s*)$/);
+    const jsxTextExpr = line.match(
+      /^(\s*)([\u4e00-\u9fff][\u4e00-\u9fff\w\s：，。、（）()·\-—]*?):\s*\{([^}]+)\}(\s*)$/
+    );
     if (jsxTextExpr) {
       const indent = jsxTextExpr[1];
       const text = jsxTextExpr[2].trim() + ':';
@@ -339,15 +377,18 @@ function processFile(filePath, mod) {
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = `${indent}{t('${key}')} {${expr}}${jsxTextExpr[4]}`;
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
-      if (verbose) console.log(`  [jsx-text-expr] ${mod}/${label}:${i+1} "${text}"`);
+      if (verbose) console.log(`  [jsx-text-expr] ${mod}/${label}:${i + 1} "${text}"`);
       continue;
     }
 
     // PATTERN: JSX text with expression: `已选择 {expr} 条记录`
     // Chinese text before and after {expr}
-    const jsxMixed = line.match(/^(\s*)([\u4e00-\u9fff][\u4e00-\u9fff\w\s：，。、（）()·\-—]*?)\s*\{([^}]+)\}\s*([\u4e00-\u9fff][\u4e00-\u9fff\w\s：，。、（）()·\-—]*?)?(\s*)$/);
+    const jsxMixed = line.match(
+      /^(\s*)([\u4e00-\u9fff][\u4e00-\u9fff\w\s：，。、（）()·\-—]*?)\s*\{([^}]+)\}\s*([\u4e00-\u9fff][\u4e00-\u9fff\w\s：，。、（）()·\-—]*?)?(\s*)$/
+    );
     if (jsxMixed) {
       const indent = jsxMixed[1];
       const before = jsxMixed[2].trim();
@@ -357,9 +398,10 @@ function processFile(filePath, mod) {
       const key = genKey(mod, label, fullText.trim());
       addTrans(mod, key, fullText.trim());
       lines[i] = `${indent}{t('${key}', { v1: ${expr} })}${jsxMixed[5]}`;
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
-      if (verbose) console.log(`  [jsx-mixed] ${mod}/${label}:${i+1} "${before}...{expr}...${after}"`);
+      if (verbose) console.log(`  [jsx-mixed] ${mod}/${label}:${i + 1} "${before}...{expr}...${after}"`);
       continue;
     }
 
@@ -371,8 +413,12 @@ function processFile(filePath, mod) {
       const fullText = text + ' {{v1}}';
       const key = genKey(mod, label, fullText.trim());
       addTrans(mod, key, fullText.trim());
-      lines[i] = line.replace(muiChild[0], `${muiChild[1]}{t('${key}', { v1: ${expr.replace(/[{}]/g, '')} })}${muiChild[4]}`);
-      modified = true; count++;
+      lines[i] = line.replace(
+        muiChild[0],
+        `${muiChild[1]}{t('${key}', { v1: ${expr.replace(/[{}]/g, '')} })}${muiChild[4]}`
+      );
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
@@ -385,27 +431,33 @@ function processFile(filePath, mod) {
         const key = genKey(mod, label, text);
         addTrans(mod, key, text);
         lines[i] = line.replace(muiSimple[0], `${muiSimple[1]}{t('${key}')}${muiSimple[3]}`);
-        modified = true; count++;
+        modified = true;
+        count++;
         line = lines[i];
         continue;
       }
     }
 
     // PATTERN: <InputLabel>中文 *</InputLabel>
-    const inputLabel = line.match(/<InputLabel([^>]*)>([\u4e00-\u9fff][\u4e00-\u9fff\w\s：，。、（）()·\-—*]*?)<\/InputLabel>/);
+    const inputLabel = line.match(
+      /<InputLabel([^>]*)>([\u4e00-\u9fff][\u4e00-\u9fff\w\s：，。、（）()·\-—*]*?)<\/InputLabel>/
+    );
     if (inputLabel && !line.includes('i18n.t(')) {
       const attrs = inputLabel[1];
       const text = inputLabel[2];
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = line.replace(inputLabel[0], `<InputLabel${attrs}>{t('${key}')}</InputLabel>`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
 
     // PATTERN: <DialogTitle>中文 - {expr}</DialogTitle>
-    const dialogTitle = line.match(/<DialogTitle>([\u4e00-\u9fff][\u4e00-\u9fff\w\s：，。、（）()·\-—]*?)\s*-\s*\{([^}]+)\}<\/DialogTitle>/);
+    const dialogTitle = line.match(
+      /<DialogTitle>([\u4e00-\u9fff][\u4e00-\u9fff\w\s：，。、（）()·\-—]*?)\s*-\s*\{([^}]+)\}<\/DialogTitle>/
+    );
     if (dialogTitle && !line.includes('i18n.t(')) {
       const prefix = dialogTitle[1].trim();
       const expr = dialogTitle[2];
@@ -413,7 +465,8 @@ function processFile(filePath, mod) {
       const key = genKey(mod, label, fullText);
       addTrans(mod, key, fullText);
       lines[i] = line.replace(dialogTitle[0], `<DialogTitle>{t('${key}', { v1: ${expr} })}</DialogTitle>`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
@@ -425,45 +478,55 @@ function processFile(filePath, mod) {
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = line.replace(dtSimple[0], `<DialogTitle>{t('${key}')}</DialogTitle>`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
 
     // PATTERN: <Tooltip title='中文'>
-    const tooltipMatch = line.match(/<Tooltip\s+title=(['"])([\u4e00-\u9fff][\u4e00-\u9fff\w\s\-：，。、（）()·()*+]*)\1/);
+    const tooltipMatch = line.match(
+      /<Tooltip\s+title=(['"])([\u4e00-\u9fff][\u4e00-\u9fff\w\s\-：，。、（）()·()*+]*)\1/
+    );
     if (tooltipMatch && !line.includes('i18n.t(')) {
       const text = tooltipMatch[2];
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = line.replace(tooltipMatch[0], `<Tooltip title={t('${key}')}`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
 
     // PATTERN: <TableCell>中文</TableCell>
-    const tcMatch = line.match(/<TableCell([^>]*)>([\u4e00-\u9fff][\u4e00-\u9fff\w\s：，。、（）()·\-—/]*?)<\/TableCell>/);
+    const tcMatch = line.match(
+      /<TableCell([^>]*)>([\u4e00-\u9fff][\u4e00-\u9fff\w\s：，。、（）()·\-—/]*?)<\/TableCell>/
+    );
     if (tcMatch && !line.includes('i18n.t(')) {
       const attrs = tcMatch[1] || '';
       const text = tcMatch[2].trim();
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = line.replace(tcMatch[0], `<TableCell${attrs}>{t('${key}')}</TableCell>`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
 
     // PATTERN: <MenuItem value='X'>中文</MenuItem>
-    const miMatch = line.match(/<MenuItem\s+value=(['"])([^'"]*)\1>([\u4e00-\u9fff][\u4e00-\u9fff\w\s\-：，。、（）()·()/]*?)<\/MenuItem>/);
+    const miMatch = line.match(
+      /<MenuItem\s+value=(['"])([^'"]*)\1>([\u4e00-\u9fff][\u4e00-\u9fff\w\s\-：，。、（）()·()/]*?)<\/MenuItem>/
+    );
     if (miMatch && !line.includes('i18n.t(')) {
       const val = miMatch[2];
       const text = miMatch[3];
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = line.replace(miMatch[0], `<MenuItem value='${val}'>{t('${key}')}</MenuItem>`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
@@ -475,7 +538,8 @@ function processFile(filePath, mod) {
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = line.replace(bcMatch[0], `label: i18n.t('${key}')`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
@@ -487,7 +551,8 @@ function processFile(filePath, mod) {
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = line.replace(chartData[0], `${chartData[1]}name: i18n.t('${key}')`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
@@ -497,14 +562,26 @@ function processFile(filePath, mod) {
 
     // PATTERN: Bare Chinese text in JSX (like `加载中...`)
     const bareText = line.match(/^(\s+)([\u4e00-\u9fff][\u4e00-\u9fff\w\s：，。、（）()·\-…]*?)(\s*)$/);
-    if (bareText && !line.includes('=') && !line.includes('(') && !line.includes('`') && !line.includes('{') && !line.includes('const ') && !line.includes('let ') && !line.includes('return ') && !line.includes('if ') && !line.includes('//')) {
+    if (
+      bareText &&
+      !line.includes('=') &&
+      !line.includes('(') &&
+      !line.includes('`') &&
+      !line.includes('{') &&
+      !line.includes('const ') &&
+      !line.includes('let ') &&
+      !line.includes('return ') &&
+      !line.includes('if ') &&
+      !line.includes('//')
+    ) {
       const indent = bareText[1];
       const text = bareText[2].trim();
       if (text && CJK.test(text) && text.length > 1) {
         const key = genKey(mod, label, text);
         addTrans(mod, key, text);
         lines[i] = `${indent}{t('${key}')}${bareText[3]}`;
-        modified = true; count++;
+        modified = true;
+        count++;
         line = lines[i];
         continue;
       }
@@ -519,7 +596,8 @@ function processFile(filePath, mod) {
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = `${indent}{t('${key}')}{' '}${textWithSpace[3]}`;
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
@@ -533,7 +611,8 @@ function processFile(filePath, mod) {
       const key = genKey(mod, label, text);
       addTrans(mod, key, text);
       lines[i] = `${indent}{t('${key}')}{' '}${prefixExpr[3]}`;
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
@@ -543,20 +622,22 @@ function processFile(filePath, mod) {
     if (subtitleTmpl && !line.includes('i18n.t(')) {
       const inner = subtitleTmpl[1];
       const varRe = /\$\{([^}]+)\}/g;
-      let m, varIdx = 0;
+      let m,
+        varIdx = 0;
       const interpolations = [];
       let transText = inner;
       while ((m = varRe.exec(inner)) !== null) {
-        interpolations.push({ name: `v${varIdx+1}`, expr: m[1] });
-        transText = transText.replace(m[0], `{{v${varIdx+1}}}`);
+        interpolations.push({ name: `v${varIdx + 1}`, expr: m[1] });
+        transText = transText.replace(m[0], `{{v${varIdx + 1}}}`);
         varIdx++;
       }
       const key = genKey(mod, label, transText.trim());
       addTrans(mod, key, transText.trim());
-      const paramStr = interpolations.length > 0
-        ? `, { ${interpolations.map(ip => `${ip.name}: ${ip.expr}`).join(', ')} }` : '';
+      const paramStr =
+        interpolations.length > 0 ? `, { ${interpolations.map((ip) => `${ip.name}: ${ip.expr}`).join(', ')} }` : '';
       lines[i] = line.replace(subtitleTmpl[0], `subtitle={t('${key}'${paramStr})}`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
@@ -566,27 +647,35 @@ function processFile(filePath, mod) {
     if (confirmMatch && !line.includes('i18n.t(')) {
       const inner = confirmMatch[1];
       const varRe = /\$\{([^}]+)\}/g;
-      let m, varIdx = 0;
+      let m,
+        varIdx = 0;
       const interpolations = [];
       let transText = inner;
       while ((m = varRe.exec(inner)) !== null) {
-        interpolations.push({ name: `v${varIdx+1}`, expr: m[1] });
-        transText = transText.replace(m[0], `{{v${varIdx+1}}}`);
+        interpolations.push({ name: `v${varIdx + 1}`, expr: m[1] });
+        transText = transText.replace(m[0], `{{v${varIdx + 1}}}`);
         varIdx++;
       }
       const key = genKey(mod, label, transText.trim());
       addTrans(mod, key, transText.trim());
-      const paramStr = interpolations.length > 0
-        ? `, { ${interpolations.map(ip => `${ip.name}: ${ip.expr}`).join(', ')} }` : '';
+      const paramStr =
+        interpolations.length > 0 ? `, { ${interpolations.map((ip) => `${ip.name}: ${ip.expr}`).join(', ')} }` : '';
       lines[i] = line.replace(confirmMatch[0], `window.confirm(i18n.t('${key}'${paramStr}))`);
-      modified = true; count++;
+      modified = true;
+      count++;
       line = lines[i];
       continue;
     }
 
     // PATTERN: Chinese object keys in export (映射名称: value)
     // Skip these - they're export column headers, low priority
-    if (/^\s*[\u4e00-\u9fff]/.test(line) && line.includes(':') && !line.includes('const') && !line.includes('let') && !line.includes('function')) {
+    if (
+      /^\s*[\u4e00-\u9fff]/.test(line) &&
+      line.includes(':') &&
+      !line.includes('const') &&
+      !line.includes('let') &&
+      !line.includes('function')
+    ) {
       // This is likely a Chinese object key - skip for now
       continue;
     }
@@ -594,7 +683,7 @@ function processFile(filePath, mod) {
 
   // Ensure imports
   if (modified) {
-    const usesI18n = lines.some(l => /i18n\.t\s*\(/.test(l));
+    const usesI18n = lines.some((l) => /i18n\.t\s*\(/.test(l));
     const hasImport = hasI18nImport(lines);
     if (usesI18n && !hasImport) {
       const last = getLastImportLine(lines);
@@ -603,7 +692,7 @@ function processFile(filePath, mod) {
         count++;
       }
     }
-    const usesT = lines.some(l => /\bt\s*\(\s*['"`]/.test(l) && !/i18n\.t/.test(l) && !/const\s*\{\s*t\s*\}/.test(l));
+    const usesT = lines.some((l) => /\bt\s*\(\s*['"`]/.test(l) && !/i18n\.t/.test(l) && !/const\s*\{\s*t\s*\}/.test(l));
     const hasTImport = hasUseTranslationImport(lines);
     if (usesT && !hasTImport) {
       const last = getLastImportLine(lines);
@@ -624,7 +713,7 @@ function processFile(filePath, mod) {
 
 function walk(dir, ext, cb) {
   if (!fs.existsSync(dir)) return;
-  for (const e of fs.readdirSync(dir, {withFileTypes:true})) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, e.name);
     if (e.isDirectory()) walk(p, ext, cb);
     else if (e.name.endsWith(ext) && !e.name.includes('.test.')) cb(p);
@@ -642,9 +731,16 @@ for (const mod of P2) {
   let c = 0;
   console.log(`Processing ${mod}...`);
   walk(dir, '.tsx', (f) => {
-    try { c += processFile(f, mod); } catch(e) { console.error(`  ERR: ${f}: ${e.message}`); }
+    try {
+      c += processFile(f, mod);
+    } catch (e) {
+      console.error(`  ERR: ${f}: ${e.message}`);
+    }
   });
-  if (c > 0) { saveTranslations(mod); console.log(`  ${mod}: ${c} replacements`); }
+  if (c > 0) {
+    saveTranslations(mod);
+    console.log(`  ${mod}: ${c} replacements`);
+  }
 }
 
 console.log(`\nFiles: ${filesFixed}, Replacements: ${totalReplaced}, Mode: ${dryRun ? 'DRY' : 'WRITE'}`);

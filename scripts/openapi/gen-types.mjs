@@ -228,7 +228,10 @@ function fixDanglingRefs(spec) {
 
   function walk(obj) {
     if (!obj || typeof obj !== 'object') return;
-    if (Array.isArray(obj)) { obj.forEach(walk); return; }
+    if (Array.isArray(obj)) {
+      obj.forEach(walk);
+      return;
+    }
     if (obj.$ref && typeof obj.$ref === 'string') {
       const m = obj.$ref.match(/^#\/components\/schemas\/(.+)$/);
       if (m && !schemaNames.has(m[1])) {
@@ -246,7 +249,9 @@ function fixDanglingRefs(spec) {
   if (refFixCount > 0) {
     spec.components = spec.components || {};
     spec.components.schemas = schemas;
-    log.warn(`清洗: 注入 ${refFixCount} 个悬空 $ref stub schema（${[...missingRefs].slice(0, 5).join(', ')}${missingRefs.size > 5 ? '...' : ''}）`);
+    log.warn(
+      `清洗: 注入 ${refFixCount} 个悬空 $ref stub schema（${[...missingRefs].slice(0, 5).join(', ')}${missingRefs.size > 5 ? '...' : ''}）`
+    );
   }
   return refFixCount;
 }
@@ -353,7 +358,7 @@ function resolveOpenapiTypescriptBin() {
   }
   if (!pkgPath) {
     throw new Error(
-      `无法定位 openapi-typescript CLI。请确认已安装: pnpm add -D openapi-typescript -w\n  原因: ${lastErr?.message || 'unknown'}`,
+      `无法定位 openapi-typescript CLI。请确认已安装: pnpm add -D openapi-typescript -w\n  原因: ${lastErr?.message || 'unknown'}`
     );
   }
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
@@ -376,12 +381,16 @@ try {
 } catch (e) {
   log.error(`类型生成失败: ${e.message}`);
   if (e.stderr) console.error(e.stderr.toString());
-  try { unlinkSync(tmpSpecPath); } catch {}
+  try {
+    unlinkSync(tmpSpecPath);
+  } catch {}
   process.exit(1);
 }
 
 // 清理临时文件
-try { unlinkSync(tmpSpecPath); } catch {}
+try {
+  unlinkSync(tmpSpecPath);
+} catch {}
 
 // 在文件头添加生成信息注释
 const generatedContent = readFileSync(outputFile, 'utf-8');

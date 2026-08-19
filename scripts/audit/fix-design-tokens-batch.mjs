@@ -36,8 +36,7 @@ const IGNORED_PATH_PARTS = [
   '.stories.',
 ];
 
-const THEME_FILE_RE =
-  /apps\/web\/src\/theme\/(?:tokens|palette|index)\.(ts|tsx|css|scss)$/;
+const THEME_FILE_RE = /apps\/web\/src\/theme\/(?:tokens|palette|index)\.(ts|tsx|css|scss)$/;
 
 // ─── 色值 → 设计 Token 映射表（Top 10+） ───
 
@@ -81,7 +80,7 @@ const RGBA_RULES = [
   { r: 59, g: 130, b: 246, a: [0.12, 0.18], token: 'background.selectedDark' },
   { r: 16, g: 185, b: 129, a: [0.18, 0.22], token: 'colors.success.50' },
   // L0 高频: rgba(0,0,0,0.4) → 近似 divider/heavy
-  { r: 0, g: 0, b: 0, a: [0.30, 0.50], token: 'colors.cyber.glass.divider' },
+  { r: 0, g: 0, b: 0, a: [0.3, 0.5], token: 'colors.cyber.glass.divider' },
 ];
 
 // ─── 工具函数 ───
@@ -216,7 +215,9 @@ for (const file of files) {
   }
 }
 
-const sortedFiles = Object.entries(byFile).sort((a, b) => b[1] - a[1]).slice(0, 20);
+const sortedFiles = Object.entries(byFile)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 20);
 
 console.log('========================================');
 console.log('V212-C2 Design Token 批量替换 · Summary');

@@ -27,15 +27,11 @@ const verbose = args.includes('--verbose');
 const CJK_CHARS = '\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff';
 const CJK_RE = new RegExp(`[${CJK_CHARS}]`);
 
-const WHITELIST_REL = [
-  'utils/ai/ui-recommender.ts',
-  'utils/apiPath.ts',
-  'config/ai-templates.ts',
-];
+const WHITELIST_REL = ['utils/ai/ui-recommender.ts', 'utils/apiPath.ts', 'config/ai-templates.ts'];
 
 function isWhitelisted(absPath) {
   const rel = path.relative(WEB_ROOT, absPath).replace(/\\/g, '/');
-  if (WHITELIST_REL.some(w => rel.includes(w))) return true;
+  if (WHITELIST_REL.some((w) => rel.includes(w))) return true;
   const bn = path.basename(absPath).toLowerCase();
   if (bn.includes('mock') || bn === '_mock.ts') return true;
   return false;
@@ -55,9 +51,13 @@ function collectFiles(dir) {
     if (entry.isDirectory()) {
       if (['__tests__', 'node_modules', 'test', 'tests', 'dist', 'build', 'schemas'].includes(entry.name)) continue;
       results.push(...collectFiles(fullPath));
-    } else if ((entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) &&
-               !entry.name.endsWith('.test.ts') && !entry.name.endsWith('.test.tsx') &&
-               !entry.name.endsWith('.d.ts') && !entry.name.endsWith('.stories.tsx')) {
+    } else if (
+      (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) &&
+      !entry.name.endsWith('.test.ts') &&
+      !entry.name.endsWith('.test.tsx') &&
+      !entry.name.endsWith('.d.ts') &&
+      !entry.name.endsWith('.stories.tsx')
+    ) {
       if (!isWhitelisted(fullPath)) results.push(fullPath);
     }
   }
@@ -65,7 +65,11 @@ function collectFiles(dir) {
 }
 
 function loadJson(filepath) {
-  try { return JSON.parse(fs.readFileSync(filepath, 'utf-8')); } catch { return {}; }
+  try {
+    return JSON.parse(fs.readFileSync(filepath, 'utf-8'));
+  } catch {
+    return {};
+  }
 }
 function saveJson(filepath, data) {
   fs.writeFileSync(filepath, JSON.stringify(data, null, 2) + '\n', 'utf-8');
@@ -73,7 +77,8 @@ function saveJson(filepath, data) {
 
 function trackContext(lines) {
   const inTypeBlock = new Array(lines.length).fill(false);
-  let depth = 0, typeStart = -1;
+  let depth = 0,
+    typeStart = -1;
   let braceDepth = 0;
   const typeStartRe = /^\s*(export\s+)?(type|interface|enum)\s+\w+\s*(=|\{|<|extends)/;
   for (let i = 0; i < lines.length; i++) {
@@ -86,8 +91,13 @@ function trackContext(lines) {
     if (typeStart !== -1) {
       inTypeBlock[i] = true;
       for (const ch of line) {
-        if (ch === '{' || ch === '(') { depth++; braceDepth++; }
-        else if (ch === '}' || ch === ')') { depth--; braceDepth--; }
+        if (ch === '{' || ch === '(') {
+          depth++;
+          braceDepth++;
+        } else if (ch === '}' || ch === ')') {
+          depth--;
+          braceDepth--;
+        }
       }
       if (typeStartRe.test(line) && line.includes('=') && !line.includes('{') && line.trim().endsWith(';')) {
         typeStart = -1;
@@ -101,7 +111,9 @@ function trackContext(lines) {
   return inTypeBlock;
 }
 
-function hasI18nT(line) { return /i18n\.t\s*\(/.test(line) || /\bt\s*\(\s*['"`]/.test(line); }
+function hasI18nT(line) {
+  return /i18n\.t\s*\(/.test(line) || /\bt\s*\(\s*['"`]/.test(line);
+}
 function isBracketAccess(text, line, idx) {
   const before = line.substring(0, idx).trimEnd();
   return before.endsWith('[');
@@ -115,7 +127,7 @@ function extractJSXTextSegments(line) {
     const inner = m[1];
     if (!CJK_RE.test(inner)) continue;
     const trimmed = inner.trim();
-    if (!trimmed || trimmed.startsWith('{') && trimmed.endsWith('}')) continue;
+    if (!trimmed || (trimmed.startsWith('{') && trimmed.endsWith('}'))) continue;
     segs.push({ type: 'jsx', full: m[0], inner, offset: m.index, end: m.index + m[0].length });
   }
   return segs;
@@ -128,7 +140,15 @@ function extractJSXAttrSegments(line) {
   while ((m = re.exec(line)) !== null) {
     const text = m[3] || m[4];
     if (!CJK_RE.test(text)) continue;
-    segs.push({ type: 'attr', attr: m[1], quote: m[2][0], full: m[0], text, offset: m.index, end: m.index + m[0].length });
+    segs.push({
+      type: 'attr',
+      attr: m[1],
+      quote: m[2][0],
+      full: m[0],
+      text,
+      offset: m.index,
+      end: m.index + m[0].length,
+    });
   }
   return segs;
 }
@@ -152,14 +172,17 @@ function extractStringSegments(line) {
 
 function generateKey(moduleName, fl, text, idx) {
   const prefix = `${moduleName}.${fl}`;
-  const clean = text.replace(/[${CJK_CHARS}]/g, '').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+  const clean = text
+    .replace(/[${CJK_CHARS}]/g, '')
+    .replace(/[^a-zA-Z0-9_]/g, '')
+    .toLowerCase();
   const hash = text.length <= 20 && clean ? `${clean}_${idx}` : `k${idx}`;
   return `${prefix}.${hash}`;
 }
 
 function ensureImport(lines) {
-  const uses = lines.some(l => /i18n\.t\s*\(/.test(l) && !l.trim().startsWith('import'));
-  const has = lines.some(l => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l) || /import\s*\{\s*i18n\s*\}/.test(l));
+  const uses = lines.some((l) => /i18n\.t\s*\(/.test(l) && !l.trim().startsWith('import'));
+  const has = lines.some((l) => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l) || /import\s*\{\s*i18n\s*\}/.test(l));
   if (uses && !has) {
     let last = -1;
     for (let i = 0; i < lines.length; i++) {
@@ -170,9 +193,15 @@ function ensureImport(lines) {
       const il = lines[last].trim();
       if (il.includes('{') && !il.includes('}')) {
         for (let i = last + 1; i < lines.length; i++) {
-          if (lines[i].includes('}')) { lines.splice(i + 1, 0, "import i18n from '@/i18n';"); return true; }
+          if (lines[i].includes('}')) {
+            lines.splice(i + 1, 0, "import i18n from '@/i18n';");
+            return true;
+          }
         }
-      } else { lines.splice(last + 1, 0, "import i18n from '@/i18n';"); return true; }
+      } else {
+        lines.splice(last + 1, 0, "import i18n from '@/i18n';");
+        return true;
+      }
     }
   }
   return false;
@@ -183,7 +212,9 @@ function processFile(filePath, modNs, translations) {
   const lines = content.split('\n');
   const inTypeBlock = trackContext(lines);
   const fl = fileLabel(filePath);
-  let keyCounter = 0, replacedCount = 0, modified = false;
+  let keyCounter = 0,
+    replacedCount = 0,
+    modified = false;
   const newLines = [...lines];
 
   for (let i = 0; i < lines.length; i++) {
@@ -197,11 +228,11 @@ function processFile(filePath, modNs, translations) {
     const segs = [];
     for (const s of extractStringSegments(line)) segs.push(s);
     for (const s of extractJSXAttrSegments(line)) {
-      const overlap = segs.some(x => !(s.end <= x.offset || s.offset >= x.end));
+      const overlap = segs.some((x) => !(s.end <= x.offset || s.offset >= x.end));
       if (!overlap) segs.push(s);
     }
     for (const s of extractJSXTextSegments(line)) {
-      const overlap = segs.some(x => !(s.end <= x.offset || s.offset >= x.end));
+      const overlap = segs.some((x) => !(s.end <= x.offset || s.offset >= x.end));
       if (!overlap) segs.push(s);
     }
     if (segs.length === 0) continue;
@@ -226,7 +257,10 @@ function processFile(filePath, modNs, translations) {
       modLine = modLine.substring(0, seg.offset) + repl + modLine.substring(seg.end);
       replacedCount++;
     }
-    if (modLine !== line) { newLines[i] = modLine; modified = true; }
+    if (modLine !== line) {
+      newLines[i] = modLine;
+      modified = true;
+    }
   }
 
   if (modified) ensureImport(newLines);
@@ -241,7 +275,10 @@ if (!targetDir || !moduleName) {
 }
 const BASE_DIR = path.join(WEB_ROOT, targetDir);
 const files = collectFiles(BASE_DIR);
-if (files.length === 0) { console.log(`无文件: ${BASE_DIR}`); process.exit(0); }
+if (files.length === 0) {
+  console.log(`无文件: ${BASE_DIR}`);
+  process.exit(0);
+}
 
 const translations = { zh: {}, en: {} };
 const zhNsPath = path.join(I18N_DIR, 'zh', `${moduleName}.json`);

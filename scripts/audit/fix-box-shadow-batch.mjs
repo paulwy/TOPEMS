@@ -33,12 +33,21 @@ const SRC = join(ROOT, 'apps/web/src');
 const APPLY = process.argv.includes('--apply');
 
 const IGNORED = [
-  '/node_modules/', '/dist/', '/build/', '/coverage/',
-  '/test-results/', '/playwright-report/', '/__tests__/',
-  '.stories.', '/theme/animations/',
-  '/theme/tokens/', '/design-system/tokens/',
-  '/theme/generated-tokens', '/theme/gradients.',
-  '/theme/presets.', '/theme/theme.',
+  '/node_modules/',
+  '/dist/',
+  '/build/',
+  '/coverage/',
+  '/test-results/',
+  '/playwright-report/',
+  '/__tests__/',
+  '.stories.',
+  '/theme/animations/',
+  '/theme/tokens/',
+  '/design-system/tokens/',
+  '/theme/generated-tokens',
+  '/theme/gradients.',
+  '/theme/presets.',
+  '/theme/theme.',
 ];
 
 const SKIP_FILE_RE =
@@ -46,20 +55,20 @@ const SKIP_FILE_RE =
 
 const SHADOW_MAP = {
   // Standard MUI-like shadows → designTokens.shadows.*
-  "0 1px 3px 0 rgba(0, 0, 0, 0.1)": "designTokens.shadows.sm",
-  "0 1px 3px rgba(0,0,0,0.1)": "designTokens.shadows.sm",
-  "0 4px 6px -1px rgba(0, 0, 0, 0.1)": "designTokens.shadows.md",
-  "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)": "designTokens.shadows.md",
-  "0 10px 15px -3px rgba(0, 0, 0, 0.1)": "designTokens.shadows.lg",
-  "0 20px 25px -5px rgba(0, 0, 0, 0.1)": "designTokens.shadows.xl",
-  "0 25px 50px -12px rgba(0, 0, 0, 0.25)": "designTokens.shadows['2xl']",
-  "0 25px 50px -12px rgba(0,0,0,0.25)": "designTokens.shadows['2xl']",
+  '0 1px 3px 0 rgba(0, 0, 0, 0.1)': 'designTokens.shadows.sm',
+  '0 1px 3px rgba(0,0,0,0.1)': 'designTokens.shadows.sm',
+  '0 4px 6px -1px rgba(0, 0, 0, 0.1)': 'designTokens.shadows.md',
+  '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)': 'designTokens.shadows.md',
+  '0 10px 15px -3px rgba(0, 0, 0, 0.1)': 'designTokens.shadows.lg',
+  '0 20px 25px -5px rgba(0, 0, 0, 0.1)': 'designTokens.shadows.xl',
+  '0 25px 50px -12px rgba(0, 0, 0, 0.25)': "designTokens.shadows['2xl']",
+  '0 25px 50px -12px rgba(0,0,0,0.25)': "designTokens.shadows['2xl']",
 
   // Dark mode shadows → designTokens.darkShadows.*
-  "0 20px 60px rgba(0,0,0,0.3)": "designTokens.darkShadows.xl",
-  "0 24px 80px rgba(0,0,0,0.4)": "designTokens.darkShadows['3xl']",
-  "0 20px 60px rgba(0, 0, 0, 0.3)": "designTokens.darkShadows.xl",
-  "0 24px 80px rgba(0, 0, 0, 0.4)": "designTokens.darkShadows['3xl']",
+  '0 20px 60px rgba(0,0,0,0.3)': 'designTokens.darkShadows.xl',
+  '0 24px 80px rgba(0,0,0,0.4)': "designTokens.darkShadows['3xl']",
+  '0 20px 60px rgba(0, 0, 0, 0.3)': 'designTokens.darkShadows.xl',
+  '0 24px 80px rgba(0, 0, 0, 0.4)': "designTokens.darkShadows['3xl']",
 };
 
 const HEX_MAP = {
@@ -161,14 +170,8 @@ function processFile(filePath) {
 
   // 1. Replace box-shadow patterns (string literal context)
   for (const [pattern, replacement] of Object.entries(SHADOW_MAP)) {
-    const singleQuoteRe = new RegExp(
-      `boxShadow:\\s*'${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`,
-      'g'
-    );
-    const doubleQuoteRe = new RegExp(
-      `boxShadow:\\s*"${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`,
-      'g'
-    );
+    const singleQuoteRe = new RegExp(`boxShadow:\\s*'${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`, 'g');
+    const doubleQuoteRe = new RegExp(`boxShadow:\\s*"${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`, 'g');
 
     const singleSub = `boxShadow: ${replacement}`;
     const doubleSub = `boxShadow: ${replacement}`;
@@ -184,10 +187,7 @@ function processFile(filePath) {
 
   // Also handle boxShadow in template literals (backtick context)
   for (const [pattern, replacement] of Object.entries(SHADOW_MAP)) {
-    const tmplRe = new RegExp(
-      `boxShadow:\\s*\`${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\``,
-      'g'
-    );
+    const tmplRe = new RegExp(`boxShadow:\\s*\`${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\``, 'g');
     const beforeCount = (content.match(tmplRe) || []).length;
     content = content.replace(tmplRe, `boxShadow: ${replacement}`);
     stats.shadow += beforeCount - (content.match(tmplRe) || []).length;
@@ -223,14 +223,8 @@ function processFile(filePath) {
 
   // 3. Replace standalone rgba values (not inside box-shadow, which was handled above)
   for (const [rgba, token] of Object.entries(RGBA_EXTRA_MAP)) {
-    const singleRe = new RegExp(
-      `(?<!boxShadow:\\s*)'${rgba.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`,
-      'g'
-    );
-    const doubleRe = new RegExp(
-      `(?<!boxShadow:\\s*)"${rgba.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`,
-      'g'
-    );
+    const singleRe = new RegExp(`(?<!boxShadow:\\s*)'${rgba.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`, 'g');
+    const doubleRe = new RegExp(`(?<!boxShadow:\\s*)"${rgba.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`, 'g');
 
     const beforeS = (content.match(singleRe) || []).length;
     content = content.replace(singleRe, `${token}`);
@@ -270,7 +264,9 @@ if (results.length === 0) {
 } else {
   console.log(`\n🔍 Dry-run — ${totalReplacements} replacements across ${results.length} files\n`);
   for (const r of results) {
-    console.log(`  ${r.rel}: shadow=${r.stats.shadow} hex=${r.stats.hex} rgba=${r.stats.rgba}${r.needsImport ? ' [needs import]' : ''}`);
+    console.log(
+      `  ${r.rel}: shadow=${r.stats.shadow} hex=${r.stats.hex} rgba=${r.stats.rgba}${r.needsImport ? ' [needs import]' : ''}`
+    );
   }
 }
 

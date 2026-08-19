@@ -19,51 +19,90 @@ import { execSync } from 'node:child_process';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..');
 
-const PAGE_HEADER_FILE = resolve(
-  REPO_ROOT,
-  'apps/web/src/components/templates/PageHeader.tsx'
-);
-const LIST_PAGE_TEMPLATE_FILE = resolve(
-  REPO_ROOT,
-  'apps/web/src/components/templates/ListPageTemplate.tsx'
-);
+const PAGE_HEADER_FILE = resolve(REPO_ROOT, 'apps/web/src/components/templates/PageHeader.tsx');
+const LIST_PAGE_TEMPLATE_FILE = resolve(REPO_ROOT, 'apps/web/src/components/templates/ListPageTemplate.tsx');
 const PAGES_ROOT = resolve(REPO_ROOT, 'apps/web/src/pages');
 const MODULES_ROOT = resolve(REPO_ROOT, 'apps/web/src/modules');
 
 function globTsx(rootDir) {
   if (!existsSync(rootDir)) return [];
-  return execSync(`find '${rootDir}' -type f \\( -name '*.tsx' -o -name '*.ts' \\) -print0`,
-    { encoding: 'utf8' }).split('\0').filter(Boolean);
+  return execSync(`find '${rootDir}' -type f \\( -name '*.tsx' -o -name '*.ts' \\) -print0`, { encoding: 'utf8' })
+    .split('\0')
+    .filter(Boolean);
 }
 
 function findMatchingClose(src, openPos, open = '[') {
   const close = open === '[' ? ']' : '}';
-  let i = openPos + 1, depth = 1, inStr = null, inTpl = false;
+  let i = openPos + 1,
+    depth = 1,
+    inStr = null,
+    inTpl = false;
   while (i < src.length) {
     const c = src[i];
-    if (inStr) { if (c === inStr && src[i-1] !== '\\') inStr = null; i++; continue; }
-    if (inTpl) { if (c === '`' && src[i-1] !== '\\') inTpl = false; i++; continue; }
-    if (c === '"' || c === "'") { inStr = c; i++; continue; }
-    if (c === '`') { inTpl = true; i++; continue; }
+    if (inStr) {
+      if (c === inStr && src[i - 1] !== '\\') inStr = null;
+      i++;
+      continue;
+    }
+    if (inTpl) {
+      if (c === '`' && src[i - 1] !== '\\') inTpl = false;
+      i++;
+      continue;
+    }
+    if (c === '"' || c === "'") {
+      inStr = c;
+      i++;
+      continue;
+    }
+    if (c === '`') {
+      inTpl = true;
+      i++;
+      continue;
+    }
     if (c === open) depth++;
-    else if (c === close) { depth--; if (depth === 0) return i; }
+    else if (c === close) {
+      depth--;
+      if (depth === 0) return i;
+    }
     i++;
   }
   return -1;
 }
 
 function splitTopLevelCommas(text) {
-  const items = []; let buf = '', depth = 0, inStr = null, inTpl = false;
+  const items = [];
+  let buf = '',
+    depth = 0,
+    inStr = null,
+    inTpl = false;
   for (let i = 0; i < text.length; i++) {
     const c = text[i];
-    if (inStr) { buf += c; if (c === inStr && text[i-1] !== '\\') inStr = null; continue; }
-    if (inTpl) { buf += c; if (c === '`' && text[i-1] !== '\\') inTpl = false; continue; }
-    if (c === '"' || c === "'") { inStr = c; buf += c; continue; }
-    if (c === '`') { inTpl = true; buf += c; continue; }
-    if (c === '[' || c === '{') depth++, buf += c;
-    else if (c === ']' || c === '}') depth = Math.max(0, depth-1), buf += c;
-    else if (c === ',' && depth === 0) { items.push(buf.trim()); buf = ''; }
-    else buf += c;
+    if (inStr) {
+      buf += c;
+      if (c === inStr && text[i - 1] !== '\\') inStr = null;
+      continue;
+    }
+    if (inTpl) {
+      buf += c;
+      if (c === '`' && text[i - 1] !== '\\') inTpl = false;
+      continue;
+    }
+    if (c === '"' || c === "'") {
+      inStr = c;
+      buf += c;
+      continue;
+    }
+    if (c === '`') {
+      inTpl = true;
+      buf += c;
+      continue;
+    }
+    if (c === '[' || c === '{') (depth++, (buf += c));
+    else if (c === ']' || c === '}') ((depth = Math.max(0, depth - 1)), (buf += c));
+    else if (c === ',' && depth === 0) {
+      items.push(buf.trim());
+      buf = '';
+    } else buf += c;
   }
   if (buf.trim()) items.push(buf.trim());
   return items;
@@ -170,8 +209,10 @@ function findCustomPageHeaderActions() {
         if (/\bisMobile.*actions|actions.*isMobile/.test(lines[i])) {
           const sliceStart = Math.max(0, i - 2);
           const sliceEnd = Math.min(lines.length, i + 3);
-          const snippet = lines.slice(sliceStart, sliceEnd)
-            .map((l, idx) => `${sliceStart + idx + 1}: ${l}`).join('\n');
+          const snippet = lines
+            .slice(sliceStart, sliceEnd)
+            .map((l, idx) => `${sliceStart + idx + 1}: ${l}`)
+            .join('\n');
           warnings.push({
             file: rel,
             line: i + 1,
@@ -235,7 +276,11 @@ function checkPageLevelActionsErrorPosition() {
 }
 
 async function selfTest() {
-  const cyan = '\x1b[36m', green = '\x1b[32m', yellow = '\x1b[33m', red = '\x1b[31m', reset = '\x1b[0m';
+  const cyan = '\x1b[36m',
+    green = '\x1b[32m',
+    yellow = '\x1b[33m',
+    red = '\x1b[31m',
+    reset = '\x1b[0m';
   console.log(`${cyan}===== 导航架构 §15.2 L553：移动端 actions 溢出检查 =====${reset}`);
 
   const stat = {
@@ -296,9 +341,9 @@ async function selfTest() {
   }
 
   console.log(
-    `\n${cyan}统计${reset}：模板=${stat.templatePass}/${stat.templateChecks} 通过`
-    + ` · 自定义告警=${yellow}${stat.customWarnings}${reset}`
-    + ` · 位置违规=${red}${stat.positionErrors}${reset}`
+    `\n${cyan}统计${reset}：模板=${stat.templatePass}/${stat.templateChecks} 通过` +
+      ` · 自定义告警=${yellow}${stat.customWarnings}${reset}` +
+      ` · 位置违规=${red}${stat.positionErrors}${reset}`
   );
 
   if (stat.totalErrors === 0) {
@@ -315,5 +360,5 @@ async function selfTest() {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  selfTest().then(r => process.exit(r));
+  selfTest().then((r) => process.exit(r));
 }

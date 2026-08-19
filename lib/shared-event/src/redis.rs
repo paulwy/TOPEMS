@@ -753,7 +753,8 @@ mod tests {
         bloom.clear();
         // 清空后可能存在误报，但插入的明确 key 不应该 100% 仍命中
         // 由于是位向量清空，k1 应不再命中
-        assert!(!bloom.might_contain("k1") || true);
+        // 清空后位向量归零，已添加的明确 key 不应再命中（此测试验证 clear 功能）
+        assert!(!bloom.might_contain("k1"));
     }
 
     #[test]

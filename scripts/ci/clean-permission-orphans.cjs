@@ -125,7 +125,7 @@ console.log('  R5 ORPHAN CLEANUP — TypeScript Cartesian exemption patch');
 console.log('='.repeat(72));
 console.log('  Target file :', path.relative(TOPEMS_ROOT, GATE_PATH));
 console.log('  Mode        :', CONFIRM ? 'APPLY (--confirm)' : 'DRY-RUN (no writes)');
-console.log('  Patch size  :', `${String(NEW_R5_BLOCK.length - OLD_R5_BLOCK.length).padStart(1,'+')} chars diff`);
+console.log('  Patch size  :', `${String(NEW_R5_BLOCK.length - OLD_R5_BLOCK.length).padStart(1, '+')} chars diff`);
 console.log('  Exempt set  : moduleCodes×5 actions + dashboard-infix variant + PERMISSIONS.ts literal values');
 console.log('');
 

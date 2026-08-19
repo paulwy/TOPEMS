@@ -65,10 +65,10 @@ pub use topems_shared_service_client::service_client::{
 pub use topems_shared_ai::embedding;
 pub use topems_shared_ai::{
     AIClient, AIClientError, AIModelConfig, AIProviderType, ChatCompletionRequest,
-    ChatCompletionResponse, ChatMessage, EmbeddingConfig, EmbeddingRequest, EmbeddingResponse,
-    EmbeddingResult, EmbeddingUsage, Embedder, FileServiceClient, MockEmbedder, OllamaClient,
-    OllamaConfig, OllamaEmbedder, RedisVectorStore, SearchResult, UnifiedAIClient, UploadResponse,
-    VectorMetadata, VectorStore,
+    ChatCompletionResponse, ChatMessage, Embedder, EmbeddingConfig, EmbeddingRequest,
+    EmbeddingResponse, EmbeddingResult, EmbeddingUsage, FileServiceClient, MockEmbedder,
+    OllamaClient, OllamaConfig, OllamaEmbedder, RedisVectorStore, SearchResult, UnifiedAIClient,
+    UploadResponse, VectorMetadata, VectorStore,
 };
 
 // --- shared-core 便捷类型 ---

@@ -141,7 +141,7 @@ impl EventVersionRegistry {
             list.push(entry);
         }
         // 按 version 降序排列，便于查找最新版本
-        list.sort_by(|a, b| b.version.cmp(&a.version));
+        list.sort_by_key(|a| std::cmp::Reverse(a.version));
         Ok(())
     }
 

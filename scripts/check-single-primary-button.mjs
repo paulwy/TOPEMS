@@ -23,29 +23,49 @@ import { execSync } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..');
-const SCAN_ROOTS = [
-  resolve(REPO_ROOT, 'apps/web/src/pages'),
-  resolve(REPO_ROOT, 'apps/web/src/modules'),
-];
+const SCAN_ROOTS = [resolve(REPO_ROOT, 'apps/web/src/pages'), resolve(REPO_ROOT, 'apps/web/src/modules')];
 function globTsx(rootDir) {
   if (!existsSync(rootDir)) return [];
-  return execSync(`find '${rootDir}' -type f \\( -name '*.tsx' -o -name '*.ts' \\) -print0`,
-    { encoding: 'utf8' }).split('\0').filter(Boolean);
+  return execSync(`find '${rootDir}' -type f \\( -name '*.tsx' -o -name '*.ts' \\) -print0`, { encoding: 'utf8' })
+    .split('\0')
+    .filter(Boolean);
 }
 
 /** 给定起始 pos，从 src 中 depth 扫描找到匹配的闭合 index；
  *  open = '{' / '['  自动匹配 '}' / ']'  */
 function findMatchingClose(src, openPos, open = '[') {
   const close = open === '[' ? ']' : '}';
-  let i = openPos + 1, depth = 1, inStr = null, inTpl = false;
+  let i = openPos + 1,
+    depth = 1,
+    inStr = null,
+    inTpl = false;
   while (i < src.length) {
     const c = src[i];
-    if (inStr) { if (c === inStr && src[i-1] !== '\\') inStr = null; i++; continue; }
-    if (inTpl) { if (c === '`' && src[i-1] !== '\\') inTpl = false; i++; continue; }
-    if (c === '"' || c === "'") { inStr = c; i++; continue; }
-    if (c === '`') { inTpl = true; i++; continue; }
+    if (inStr) {
+      if (c === inStr && src[i - 1] !== '\\') inStr = null;
+      i++;
+      continue;
+    }
+    if (inTpl) {
+      if (c === '`' && src[i - 1] !== '\\') inTpl = false;
+      i++;
+      continue;
+    }
+    if (c === '"' || c === "'") {
+      inStr = c;
+      i++;
+      continue;
+    }
+    if (c === '`') {
+      inTpl = true;
+      i++;
+      continue;
+    }
     if (c === open) depth++;
-    else if (c === close) { depth--; if (depth === 0) return i; }
+    else if (c === close) {
+      depth--;
+      if (depth === 0) return i;
+    }
     i++;
   }
   return -1;
@@ -90,17 +110,39 @@ function resolveVarArray(tsx, varName) {
 }
 
 function splitTopLevelCommas(text) {
-  const items = []; let buf = '', depth = 0, inStr = null, inTpl = false;
+  const items = [];
+  let buf = '',
+    depth = 0,
+    inStr = null,
+    inTpl = false;
   for (let i = 0; i < text.length; i++) {
     const c = text[i];
-    if (inStr) { buf += c; if (c === inStr && text[i-1] !== '\\') inStr = null; continue; }
-    if (inTpl) { buf += c; if (c === '`' && text[i-1] !== '\\') inTpl = false; continue; }
-    if (c === '"' || c === "'") { inStr = c; buf += c; continue; }
-    if (c === '`') { inTpl = true; buf += c; continue; }
-    if (c === '[' || c === '{') depth++, buf += c;
-    else if (c === ']' || c === '}') depth = Math.max(0, depth-1), buf += c;
-    else if (c === ',' && depth === 0) { items.push(buf.trim()); buf = ''; }
-    else buf += c;
+    if (inStr) {
+      buf += c;
+      if (c === inStr && text[i - 1] !== '\\') inStr = null;
+      continue;
+    }
+    if (inTpl) {
+      buf += c;
+      if (c === '`' && text[i - 1] !== '\\') inTpl = false;
+      continue;
+    }
+    if (c === '"' || c === "'") {
+      inStr = c;
+      buf += c;
+      continue;
+    }
+    if (c === '`') {
+      inTpl = true;
+      buf += c;
+      continue;
+    }
+    if (c === '[' || c === '{') (depth++, (buf += c));
+    else if (c === ']' || c === '}') ((depth = Math.max(0, depth - 1)), (buf += c));
+    else if (c === ',' && depth === 0) {
+      items.push(buf.trim());
+      buf = '';
+    } else buf += c;
   }
   if (buf.trim()) items.push(buf.trim());
   return items;
@@ -117,12 +159,24 @@ function extractProps(objText) {
 }
 
 function main() {
-  const cyan = '\x1b[36m', green = '\x1b[32m', yellow = '\x1b[33m', red = '\x1b[31m', reset = '\x1b[0m';
+  const cyan = '\x1b[36m',
+    green = '\x1b[32m',
+    yellow = '\x1b[33m',
+    red = '\x1b[31m',
+    reset = '\x1b[0m';
   console.log(`${cyan}===== 导航架构 §15.2 L553 + §13.2：唯一主按钮检查 =====${reset}`);
   const files = SCAN_ROOTS.flatMap(globTsx);
   console.log(`扫描：${files.length} 文件（pages + modules）`);
 
-  const stat = { fileScanned: files.length, blocks: 0, inline: 0, resolvedVar: 0, unresolvedVar: 0, violations: 0, warnings: 0 };
+  const stat = {
+    fileScanned: files.length,
+    blocks: 0,
+    inline: 0,
+    resolvedVar: 0,
+    unresolvedVar: 0,
+    violations: 0,
+    warnings: 0,
+  };
   const issues = [];
   const pages2Primary = [];
 
@@ -136,8 +190,13 @@ function main() {
       let arrText = blk.text;
       if (blk.kind === 'var') {
         const res = resolveVarArray(tsx, blk.varName);
-        if (res) { arrText = res; stat.resolvedVar++; }
-        else { stat.unresolvedVar++; continue; } // 静态不可达，安全跳过
+        if (res) {
+          arrText = res;
+          stat.resolvedVar++;
+        } else {
+          stat.unresolvedVar++;
+          continue;
+        } // 静态不可达，安全跳过
       } else {
         stat.inline++;
       }
@@ -153,32 +212,41 @@ function main() {
         arrText = arrText.slice(bs, be + 1);
       }
       const items = splitTopLevelCommas(arrText.slice(1, -1));
-      const parsed = items.map(extractProps).filter(p => p.variant || p.color || p.label);
+      const parsed = items.map(extractProps).filter((p) => p.variant || p.color || p.label);
 
       // (1) contained+primary 计数
       const primaryCount = parsed.filter(
-        p => (p.variant || 'outlined') === 'contained' && (p.color || 'primary') === 'primary'
+        (p) => (p.variant || 'outlined') === 'contained' && (p.color || 'primary') === 'primary'
       ).length;
       if (primaryCount > 1) {
         stat.violations++;
         issues.push({
-          file: rel, line: blk.line, severity: 'error',
-          msg: `${blk.kind === 'var' ? `[var=${blk.varName}] ` : ''}`
-               + `检测到 ${primaryCount} 个 contained+primary 主按钮（规范 ≤ 1）§13.2 L501`
+          file: rel,
+          line: blk.line,
+          severity: 'error',
+          msg:
+            `${blk.kind === 'var' ? `[var=${blk.varName}] ` : ''}` +
+            `检测到 ${primaryCount} 个 contained+primary 主按钮（规范 ≤ 1）§13.2 L501`,
         });
         pages2Primary.push(`${rel}:${blk.line} (${primaryCount}个，${blk.kind})`);
       }
 
       // (2) color=error 必须配套 Dialog
-      const errorCount = parsed.filter(p => p.color === 'error').length;
+      const errorCount = parsed.filter((p) => p.color === 'error').length;
       if (errorCount > 0) {
-        const hasDialog = /<Dialog\b|<ConfirmDialog|二次确认|确认对话框|Confirm\(\)|\.confirm\(|onClick=\{\(\)\s*=>\s*\{[^}]*确认/i.test(tsx);
+        const hasDialog =
+          /<Dialog\b|<ConfirmDialog|二次确认|确认对话框|Confirm\(\)|\.confirm\(|onClick=\{\(\)\s*=>\s*\{[^}]*确认/i.test(
+            tsx
+          );
         if (!hasDialog) {
           stat.warnings++;
           issues.push({
-            file: rel, line: blk.line, severity: 'warn',
-            msg: `${blk.kind === 'var' ? `[var=${blk.varName}] ` : ''}`
-                 + `含 ${errorCount} 个 color=error 危险操作，未发现 Dialog 二次确认 §15.2`
+            file: rel,
+            line: blk.line,
+            severity: 'warn',
+            msg:
+              `${blk.kind === 'var' ? `[var=${blk.varName}] ` : ''}` +
+              `含 ${errorCount} 个 color=error 危险操作，未发现 Dialog 二次确认 §15.2`,
           });
         }
       }
@@ -191,9 +259,9 @@ function main() {
   }
 
   console.log(
-    `\n${cyan}统计${reset}：${stat.fileScanned} 文件 · ${stat.blocks} actions-block`
-    + `（inline=${stat.inline} + 解析变量=${stat.resolvedVar} + 未解=${stat.unresolvedVar}）`
-    + ` · ${red}错误=${stat.violations}${reset} · ${yellow}告警=${stat.warnings}${reset}`
+    `\n${cyan}统计${reset}：${stat.fileScanned} 文件 · ${stat.blocks} actions-block` +
+      `（inline=${stat.inline} + 解析变量=${stat.resolvedVar} + 未解=${stat.unresolvedVar}）` +
+      ` · ${red}错误=${stat.violations}${reset} · ${yellow}告警=${stat.warnings}${reset}`
   );
 
   if (stat.violations === 0) {
@@ -202,7 +270,7 @@ function main() {
     process.exit(0);
   } else {
     console.log(`\n${red}❌ FAIL：${stat.violations} 页面含 ≥2 个 primary 主按钮${reset}`);
-    pages2Primary.forEach(s => console.log(`    · ${s}`));
+    pages2Primary.forEach((s) => console.log(`    · ${s}`));
     console.log(`\n  修正参考：navigation-architecture.md §13.2 L501 + §15.2 L553\n`);
     process.exit(1);
   }

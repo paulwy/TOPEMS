@@ -31,8 +31,9 @@ const TARGET_COMPONENTS = ['DetailPageTemplate', 'FormPageTemplate'];
 
 function globTsx(rootDir) {
   if (!existsSync(rootDir)) return [];
-  return execSync(`find '${rootDir}' -type f \\( -name '*.tsx' -o -name '*.ts' \\) -print0`,
-    { encoding: 'utf8' }).split('\0').filter(Boolean);
+  return execSync(`find '${rootDir}' -type f \\( -name '*.tsx' -o -name '*.ts' \\) -print0`, { encoding: 'utf8' })
+    .split('\0')
+    .filter(Boolean);
 }
 
 function findJsxOpeningTag(src, componentName, fromIndex = 0) {
@@ -47,7 +48,9 @@ function extractJsxTagContent(src, openIndex) {
   const tagName = tagNameMatch[1];
 
   let i = openIndex + `<${tagName}`.length;
-  let inStr = null, inTpl = false, braceDepth = 0;
+  let inStr = null,
+    inTpl = false,
+    braceDepth = 0;
   let propsStart = i;
   let selfClosing = false;
   let closeIndex = -1;
@@ -58,16 +61,34 @@ function extractJsxTagContent(src, openIndex) {
 
     if (inStr) {
       if (c === inStr && src[i - 1] !== '\\') inStr = null;
-      i++; continue;
+      i++;
+      continue;
     }
     if (inTpl) {
       if (c === '`' && src[i - 1] !== '\\') inTpl = false;
-      i++; continue;
+      i++;
+      continue;
     }
-    if (c === '"' || c === "'") { inStr = c; i++; continue; }
-    if (c === '`') { inTpl = true; i++; continue; }
-    if (c === '{') { braceDepth++; i++; continue; }
-    if (c === '}') { braceDepth = Math.max(0, braceDepth - 1); i++; continue; }
+    if (c === '"' || c === "'") {
+      inStr = c;
+      i++;
+      continue;
+    }
+    if (c === '`') {
+      inTpl = true;
+      i++;
+      continue;
+    }
+    if (c === '{') {
+      braceDepth++;
+      i++;
+      continue;
+    }
+    if (c === '}') {
+      braceDepth = Math.max(0, braceDepth - 1);
+      i++;
+      continue;
+    }
 
     if (braceDepth === 0 && c === '/' && next === '>') {
       selfClosing = true;
@@ -99,15 +120,13 @@ function hasProp(propsText, propName) {
     new RegExp(`\\b${propName}\\s*=\\s*['"\`]`),
     new RegExp(`\\b${propName}\\s*=\\s*[A-Za-z_$]`),
   ];
-  return patterns.some(p => p.test(propsText));
+  return patterns.some((p) => p.test(propsText));
 }
 
 function extractPageName(filePath, rel) {
   const base = filePath.split('/').pop() || filePath;
   const dirParts = rel.split('/');
-  const modulePart = dirParts.find((p, i) =>
-    dirParts[i - 1] === 'pages' || dirParts[i - 1] === 'modules'
-  );
+  const modulePart = dirParts.find((p, i) => dirParts[i - 1] === 'pages' || dirParts[i - 1] === 'modules');
   return modulePart ? `${modulePart}/${base}` : base;
 }
 
@@ -155,7 +174,11 @@ function scanFile(filePath) {
 }
 
 async function selfTest() {
-  const cyan = '\x1b[36m', green = '\x1b[32m', yellow = '\x1b[33m', red = '\x1b[31m', reset = '\x1b[0m';
+  const cyan = '\x1b[36m',
+    green = '\x1b[32m',
+    yellow = '\x1b[33m',
+    red = '\x1b[31m',
+    reset = '\x1b[0m';
   console.log(`${cyan}===== 导航架构 §15.2 L555：Detail/Form 模板 backHref 兜底检查 =====${reset}`);
 
   const scanRoots = [PAGES_ROOT, MODULES_ROOT, COMPONENTS_ROOT];
@@ -195,10 +218,10 @@ async function selfTest() {
   }
 
   console.log(
-    `\n${cyan}统计${reset}：调用总数=${stat.total}`
-    + `（DetailPageTemplate=${stat.detailCount} + FormPageTemplate=${stat.formCount}）`
-    + ` · 合规=${green}${stat.withBackHref}${reset}`
-    + ` · 缺失=${red}${stat.missing}${reset}`
+    `\n${cyan}统计${reset}：调用总数=${stat.total}` +
+      `（DetailPageTemplate=${stat.detailCount} + FormPageTemplate=${stat.formCount}）` +
+      ` · 合规=${green}${stat.withBackHref}${reset}` +
+      ` · 缺失=${red}${stat.missing}${reset}`
   );
 
   if (stat.total === 0) {
@@ -219,5 +242,5 @@ async function selfTest() {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  selfTest().then(r => process.exit(r));
+  selfTest().then((r) => process.exit(r));
 }

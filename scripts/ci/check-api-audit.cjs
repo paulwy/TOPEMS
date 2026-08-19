@@ -35,8 +35,8 @@ const P7_SCRIPT = path.join(SCRIPTS, 'p7-perm-audit-v5.cjs');
 const argv = process.argv.slice(2);
 const FAIL_FAST = argv.includes('--fail-fast');
 const QUIET = argv.includes('--quiet');
-const THRESHOLDS_CLI = (argv.find(a => a.startsWith('--thresholds=')) || '').slice('--thresholds='.length);
-const REPORT_JSON = (argv.find(a => a.startsWith('--report-json=')) || '').slice('--report-json='.length) || '';
+const THRESHOLDS_CLI = (argv.find((a) => a.startsWith('--thresholds=')) || '').slice('--thresholds='.length);
+const REPORT_JSON = (argv.find((a) => a.startsWith('--report-json=')) || '').slice('--report-json='.length) || '';
 
 const DEFAULT_THRESHOLDS = {
   'p6.red': 0,
@@ -46,9 +46,7 @@ const DEFAULT_THRESHOLDS = {
   'p7.mismatch': 0,
   'p7.dead': Infinity,
 };
-const THRESHOLDS = THRESHOLDS_CLI
-  ? { ...DEFAULT_THRESHOLDS, ...JSON.parse(THRESHOLDS_CLI) }
-  : DEFAULT_THRESHOLDS;
+const THRESHOLDS = THRESHOLDS_CLI ? { ...DEFAULT_THRESHOLDS, ...JSON.parse(THRESHOLDS_CLI) } : DEFAULT_THRESHOLDS;
 
 // FAIL 规则（永久 0 容忍）
 const FAIL_KEYS = ['p6.red', 'p7.not_legal', 'p7.mismatch'];
@@ -84,8 +82,11 @@ runScript(P7_SCRIPT, 'P7 (RBAC)');
 
 // ── 读取审计产物 ────────────────────────────────────────────────
 function readJson(p) {
-  try { return JSON.parse(fs.readFileSync(p, 'utf8')); }
-  catch { return null; }
+  try {
+    return JSON.parse(fs.readFileSync(p, 'utf8'));
+  } catch {
+    return null;
+  }
 }
 
 const p6Red = readJson(path.join(TMP_OUT, 'p6-red.json')) || [];
@@ -93,7 +94,13 @@ const p7Report = readJson(path.join(TMP_OUT, 'p7-audit-report.json')) || {};
 
 // P6 缺少结构化 JSON 报告，从 CSV 解析 YELLOW/AMBER 计数
 function countCsvLevel(level) {
-  const csv = (() => { try { return fs.readFileSync(path.join(TMP_OUT, 'p6-audit-v5-robust.csv'), 'utf8'); } catch { return ''; } })();
+  const csv = (() => {
+    try {
+      return fs.readFileSync(path.join(TMP_OUT, 'p6-audit-v5-robust.csv'), 'utf8');
+    } catch {
+      return '';
+    }
+  })();
   if (!csv) return 0;
   let n = 0;
   for (const line of csv.split('\n')) {
@@ -126,7 +133,7 @@ for (const key of Object.keys(metrics)) {
   const threshold = THRESHOLDS[key];
   const isFailRule = FAIL_KEYS.includes(key);
   const exceeded = value > threshold;
-  const level = isFailRule ? (exceeded ? 'FAIL' : 'PASS') : (exceeded ? 'WARN' : 'PASS');
+  const level = isFailRule ? (exceeded ? 'FAIL' : 'PASS') : exceeded ? 'WARN' : 'PASS';
   if (isFailRule && exceeded) failCount++;
   results.push({ key, value, threshold, level, isFailRule });
 }
@@ -138,7 +145,7 @@ if (!QUIET) {
   console.log('├──────────────────────────────────────────────────────────────────┤');
   for (const r of results) {
     const pad = (s, n) => String(s).padEnd(n);
-    const mark = r.level === 'PASS' ? '✅' : (r.level === 'FAIL' ? '❌' : '⚠️');
+    const mark = r.level === 'PASS' ? '✅' : r.level === 'FAIL' ? '❌' : '⚠️';
     const thr = r.threshold === Infinity ? '∞' : r.threshold;
     console.log(`│ ${mark} ${pad(r.key, 18)} value=${pad(r.value, 5)} threshold=${pad(thr, 5)} ${pad(r.level, 5)} │`);
   }
@@ -165,7 +172,7 @@ if (!QUIET) {
   // P7 MISMATCH 详情
   if ((p7Report.MISMATCH || []).length > 0) {
     console.log('\n🔴 P7 MISMATCH (NavItem.code ≠ Route.permission) — 全量:');
-    for (const m of (p7Report.MISMATCH || [])) {
+    for (const m of p7Report.MISMATCH || []) {
       console.log(`   ${JSON.stringify(m)}`);
     }
   }
@@ -182,8 +189,10 @@ const summary = {
   passed: failCount === 0,
   // 附带样本用于 Step Summary 渲染（前 30 条）
   samples: {
-    p6Red: p6Red.slice(0, 30).map(c => ({ keyPath: c.keyPath, shapes: c.shapes, page: c.page })),
-    p7NotLegal: (p7Report.NOT_LEGAL || []).slice(0, 30).map(x => ({ code: x.code, usages: (x.usages || []).slice(0, 3) })),
+    p6Red: p6Red.slice(0, 30).map((c) => ({ keyPath: c.keyPath, shapes: c.shapes, page: c.page })),
+    p7NotLegal: (p7Report.NOT_LEGAL || [])
+      .slice(0, 30)
+      .map((x) => ({ code: x.code, usages: (x.usages || []).slice(0, 3) })),
     p7Mismatch: (p7Report.MISMATCH || []).slice(0, 30),
   },
 };

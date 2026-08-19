@@ -28,10 +28,7 @@ const args = process.argv.slice(2);
 const jsonMode = args.includes('--json');
 const strictMode = args.includes('--strict');
 const thresholdIdx = args.indexOf('--threshold');
-const threshold =
-  thresholdIdx !== -1 && args[thresholdIdx + 1]
-    ? parseInt(args[thresholdIdx + 1], 10)
-    : 10;
+const threshold = thresholdIdx !== -1 && args[thresholdIdx + 1] ? parseInt(args[thresholdIdx + 1], 10) : 10;
 
 // 递归收集所有 .tsx 文件
 function collectTsxFiles(dir) {
@@ -44,7 +41,11 @@ function collectTsxFiles(dir) {
       // 跳过 __tests__、node_modules、test 等目录
       if (['__tests__', 'node_modules', 'test', 'tests'].includes(entry.name)) continue;
       results.push(...collectTsxFiles(fullPath));
-    } else if (entry.name.endsWith('.tsx') && !entry.name.endsWith('.test.tsx') && !entry.name.endsWith('.stories.tsx')) {
+    } else if (
+      entry.name.endsWith('.tsx') &&
+      !entry.name.endsWith('.test.tsx') &&
+      !entry.name.endsWith('.stories.tsx')
+    ) {
       results.push(fullPath);
     }
   }
@@ -141,7 +142,8 @@ function findIconOnlyButtonWithoutAriaLabel(content, filePath) {
 
     // 判断是否是 icon-only：内容主要是图标组件
     // 匹配 <XxxIcon .../> 或已知的 lucide-react 图标 <Xxx size=.. />
-    const iconPattern = /^<(?:[A-Z]\w*Icon|ExitToApp|RefreshCw|Add|Edit|Delete|Remove|Save|Cancel|Close|Search|Filter|Download|Upload|Visibility|VisibilityOff|ExpandMore|ExpandLess|ChevronRight|ChevronLeft|ChevronDown|ChevronUp|ArrowForward|ArrowBack|ArrowUp|ArrowDown|MoreVert|MoreHoriz|Settings|CloudUpload|CloudDownload|FileCopy|Print|Share|Check|Clear|FirstPage|LastPage|NavigateNext|NavigateBefore)\b[^>]*\/?>$/;
+    const iconPattern =
+      /^<(?:[A-Z]\w*Icon|ExitToApp|RefreshCw|Add|Edit|Delete|Remove|Save|Cancel|Close|Search|Filter|Download|Upload|Visibility|VisibilityOff|ExpandMore|ExpandLess|ChevronRight|ChevronLeft|ChevronDown|ChevronUp|ArrowForward|ArrowBack|ArrowUp|ArrowDown|MoreVert|MoreHoriz|Settings|CloudUpload|CloudDownload|FileCopy|Print|Share|Check|Clear|FirstPage|LastPage|NavigateNext|NavigateBefore)\b[^>]*\/?>$/;
 
     if (iconPattern.test(inner)) {
       violations.push({

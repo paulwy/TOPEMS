@@ -25,7 +25,11 @@ function walk(dir) {
     if (entry.isDirectory()) {
       if (['node_modules', 'dist', 'build', '.git', '__tests__'].includes(entry.name)) continue;
       results.push(...walk(path.join(dir, entry.name)));
-    } else if (/\.[mc]?[tj]sx?$/.test(entry.name) && !entry.name.endsWith('.test.ts') && !entry.name.endsWith('.test.tsx')) {
+    } else if (
+      /\.[mc]?[tj]sx?$/.test(entry.name) &&
+      !entry.name.endsWith('.test.ts') &&
+      !entry.name.endsWith('.test.tsx')
+    ) {
       results.push(path.join(dir, entry.name));
     }
   }
@@ -58,7 +62,7 @@ for (const filePath of walk(path.join(WEB_ROOT, 'pages', 'mes'))) {
         prev.endsWith(',') ||
         prev.includes('Record<') ||
         prev.includes('string,') ||
-        next.includes(':') && !next.includes('const') ||
+        (next.includes(':') && !next.includes('const')) ||
         prev === '';
 
       // Also check: is there a function/component declaration before this?
@@ -78,14 +82,14 @@ for (const filePath of walk(path.join(WEB_ROOT, 'pages', 'mes'))) {
     for (let i = 0; i < lines.length; i++) {
       if (lines[i].includes('useTranslation')) continue;
       if (/\bt\s*\(\s*['"`]/.test(lines[i]) && !lines[i].includes('i18n.t(')) {
-        lines[i] = lines[i].replace(/\bt\s*\(\s*(['"`])/g, "i18n.t($1");
+        lines[i] = lines[i].replace(/\bt\s*\(\s*(['"`])/g, 'i18n.t($1');
         fixCount++;
       }
     }
 
     // Add i18n import if needed
-    const usesI18n = lines.some(l => /i18n\.t\s*\(/.test(l) && !/import/.test(l));
-    const hasI18nImport = lines.some(l => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l));
+    const usesI18n = lines.some((l) => /i18n\.t\s*\(/.test(l) && !/import/.test(l));
+    const hasI18nImport = lines.some((l) => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l));
     if (usesI18n && !hasI18nImport) {
       let lastImport = -1;
       for (let i = 0; i < lines.length; i++) {
@@ -98,14 +102,16 @@ for (const filePath of walk(path.join(WEB_ROOT, 'pages', 'mes'))) {
     }
 
     // Remove unused useTranslation import
-    const hasUseTranslation = lines.some(l => l.includes('useTranslation'));
-    const hasHookCall = lines.some(l => /const\s+\{\s*t\s*\}\s*=\s*useTranslation\(/.test(l));
+    const hasUseTranslation = lines.some((l) => l.includes('useTranslation'));
+    const hasHookCall = lines.some((l) => /const\s+\{\s*t\s*\}\s*=\s*useTranslation\(/.test(l));
     if (!hasHookCall && hasUseTranslation) {
       // Check if useTranslation is imported but not used
-      const importLine = lines.findIndex(l => l.includes("import { useTranslation }") || l.includes("import { useTranslation,"));
+      const importLine = lines.findIndex(
+        (l) => l.includes('import { useTranslation }') || l.includes('import { useTranslation,')
+      );
       if (importLine !== -1) {
         // Check if useTranslation is actually used elsewhere
-        const otherUsage = lines.some(l => l.includes('useTranslation') && !l.trim().startsWith('import'));
+        const otherUsage = lines.some((l) => l.includes('useTranslation') && !l.trim().startsWith('import'));
         if (!otherUsage) {
           // Remove the import line or clean it up
           const impLine = lines[importLine];
@@ -120,7 +126,7 @@ for (const filePath of walk(path.join(WEB_ROOT, 'pages', 'mes'))) {
     }
 
     // Clean up empty lines
-    const cleaned = lines.filter(l => l !== '');
+    const cleaned = lines.filter((l) => l !== '');
     filesFixed++;
     totalFixed += fixCount;
     if (!dryRun) {
@@ -155,13 +161,13 @@ if (fs.existsSync(constFile)) {
     for (let i = 0; i < lines.length; i++) {
       if (lines[i].includes('useTranslation')) continue;
       if (/\bt\s*\(\s*['"`]/.test(lines[i]) && !lines[i].includes('i18n.t(')) {
-        lines[i] = lines[i].replace(/\bt\s*\(\s*(['"`])/g, "i18n.t($1");
+        lines[i] = lines[i].replace(/\bt\s*\(\s*(['"`])/g, 'i18n.t($1');
       }
     }
 
     // Add i18n import
-    const usesI18n = lines.some(l => /i18n\.t\s*\(/.test(l) && !/import/.test(l));
-    const hasI18nImport = lines.some(l => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l));
+    const usesI18n = lines.some((l) => /i18n\.t\s*\(/.test(l) && !/import/.test(l));
+    const hasI18nImport = lines.some((l) => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l));
     if (usesI18n && !hasI18nImport) {
       let lastImport = -1;
       for (let i = 0; i < lines.length; i++) {
@@ -174,16 +180,16 @@ if (fs.existsSync(constFile)) {
     }
 
     // Remove useTranslation import if unused
-    const hasHookCall = lines.some(l => /const\s+\{\s*t\s*\}\s*=\s*useTranslation\(/.test(l));
+    const hasHookCall = lines.some((l) => /const\s+\{\s*t\s*\}\s*=\s*useTranslation\(/.test(l));
     if (!hasHookCall) {
       for (let i = 0; i < lines.length; i++) {
-        if (lines[i].includes("import { useTranslation }") && lines[i].includes("from 'react-i18next'")) {
+        if (lines[i].includes('import { useTranslation }') && lines[i].includes("from 'react-i18next'")) {
           lines[i] = '';
         }
       }
     }
 
-    const cleaned = lines.filter(l => l !== '');
+    const cleaned = lines.filter((l) => l !== '');
     filesFixed++;
     if (!dryRun) {
       fs.writeFileSync(constFile, cleaned.join('\n'), 'utf-8');

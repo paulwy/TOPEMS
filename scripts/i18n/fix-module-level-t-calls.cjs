@@ -26,11 +26,11 @@ let totalFixed = 0;
 let filesFixed = 0;
 
 function hasI18nImport(lines) {
-  return lines.some(l => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l));
+  return lines.some((l) => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l));
 }
 
 function hasUseTranslationImport(lines) {
-  return lines.some(l => /import\s*\{[^}]*useTranslation[^}]*\}\s*from\s+['"]react-i18next['"]/.test(l));
+  return lines.some((l) => /import\s*\{[^}]*useTranslation[^}]*\}\s*from\s+['"]react-i18next['"]/.test(l));
 }
 
 function getLastImportLine(lines) {
@@ -262,7 +262,8 @@ function processFile(filePath, module) {
     // A line is "module-level" if it's inside a const/object/array at module scope
     // or inside a module-level function (non-component)
 
-    const hasTCall = /\bt\s*\(\s*['"`]/.test(line) &&
+    const hasTCall =
+      /\bt\s*\(\s*['"`]/.test(line) &&
       !/i18n\.t\s*\(/.test(line) &&
       !/const\s*\{\s*t\s*\}/.test(line) &&
       !/useTranslation/.test(line) &&
@@ -377,7 +378,10 @@ function processFile(filePath, module) {
 
     for (let j = i; j < lines.length; j++) {
       for (const ch of lines[j]) {
-        if (ch === '{') { bDepth++; foundOpen = true; }
+        if (ch === '{') {
+          bDepth++;
+          foundOpen = true;
+        }
         if (ch === '}') bDepth--;
       }
       if (foundOpen && bDepth > 0 && bodyStart === -1) {
@@ -423,7 +427,7 @@ function processFile(filePath, module) {
   }
 
   // Step 4: Ensure import i18n from '@/i18n' exists if i18n.t() is used
-  const usesI18nT = lines.some(l => /i18n\.t\s*\(/.test(l));
+  const usesI18nT = lines.some((l) => /i18n\.t\s*\(/.test(l));
   const hasImport = hasI18nImport(lines);
 
   if (usesI18nT && !hasImport) {
@@ -436,7 +440,7 @@ function processFile(filePath, module) {
   }
 
   // Step 5: Ensure useTranslation import exists if useTranslation() is called
-  const usesUseTrans = lines.some(l => /useTranslation\s*\(/.test(l) && !/import\s/.test(l));
+  const usesUseTrans = lines.some((l) => /useTranslation\s*\(/.test(l) && !/import\s/.test(l));
   const hasUseTransImport = hasUseTranslationImport(lines);
 
   if (usesUseTrans && !hasUseTransImport) {

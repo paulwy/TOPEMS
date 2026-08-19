@@ -45,11 +45,16 @@ const PERMISSIONS_FILE = path.join(ROOT, 'apps/web/src/config/permissions.ts');
 
 // ---------- 工具函数 ----------
 function readFile(p) {
-  try { return fs.readFileSync(p, 'utf8'); } catch { return null; }
+  try {
+    return fs.readFileSync(p, 'utf8');
+  } catch {
+    return null;
+  }
 }
 function listConfigFiles() {
   if (!fs.existsSync(MODULES_DIR)) return [];
-  return fs.readdirSync(MODULES_DIR)
+  return fs
+    .readdirSync(MODULES_DIR)
     .filter((d) => fs.existsSync(path.join(MODULES_DIR, d, 'config.ts')))
     .map((d) => path.join(MODULES_DIR, d, 'config.ts'));
 }
@@ -60,8 +65,20 @@ function safeMatch(str, regex, idx = 1, fallback = null) {
 
 // ---------- 1. 读取 NAV_GROUPS / SUITE_GROUPS 规范 ----------
 const typeContent = readFile(TYPES_FILE) || '';
-const NAV_GROUP_KEYS = ['overview','master','process','business','analytics','report','setting','other'];
-const SUITE_GROUP_KEYS = ['enterprise','manufacturing','quality','supply','finance','hr','crm','project','collaboration','platform','other'];
+const NAV_GROUP_KEYS = ['overview', 'master', 'process', 'business', 'analytics', 'report', 'setting', 'other'];
+const SUITE_GROUP_KEYS = [
+  'enterprise',
+  'manufacturing',
+  'quality',
+  'supply',
+  'finance',
+  'hr',
+  'crm',
+  'project',
+  'collaboration',
+  'platform',
+  'other',
+];
 
 // ---------- 2. 读取 permissions.ts 中的已注册权限码 ----------
 const permContent = readFile(PERMISSIONS_FILE) || '';
@@ -73,8 +90,15 @@ function extractRegisteredPermissions() {
   while ((m = re.exec(permContent)) !== null) {
     const v = m[1];
     // 过滤翻译键 (含 shared.*、components.* 等)
-    if (v.startsWith('shared.') || v.startsWith('components.') || v.startsWith('pages.') ||
-        v.startsWith('plugins.') || v.startsWith('routes.') || v.startsWith('layout.')) continue;
+    if (
+      v.startsWith('shared.') ||
+      v.startsWith('components.') ||
+      v.startsWith('pages.') ||
+      v.startsWith('plugins.') ||
+      v.startsWith('routes.') ||
+      v.startsWith('layout.')
+    )
+      continue;
     // 过滤非权限模式（比如 file:import 之类）
     if (!/^[a-z_]+:[a-z_]+:?/.test(v)) continue;
     set.add(v);
@@ -106,22 +130,40 @@ function parseModuleConfig(filePath) {
     while ((cm = constRe.exec(sourceText)) !== null) {
       const constName = cm[1];
       // 从 { 开始找平衡的 }
-      let i = cm.index + cm[0].length - 1;  // '{' 的位置
-      let depth = 0, inStr = null, inTpl = 0, objStart = i;
+      let i = cm.index + cm[0].length - 1; // '{' 的位置
+      let depth = 0,
+        inStr = null,
+        inTpl = 0,
+        objStart = i;
       for (; i < sourceText.length; i++) {
         const c = sourceText[i];
-        const prev = i > 0 ? sourceText[i-1] : '';
+        const prev = i > 0 ? sourceText[i - 1] : '';
         if (prev !== '\\') {
           if (inTpl > 0) {
             if (c === '`') inTpl--;
-            else if (c === '$' && sourceText[i+1] === '{') { inTpl++; i++; }
+            else if (c === '$' && sourceText[i + 1] === '{') {
+              inTpl++;
+              i++;
+            }
             continue;
           }
-          if (inStr) { if (c === inStr) inStr = null; continue; }
-          if (c === '"' || c === "'") { inStr = c; continue; }
-          if (c === '`') { inTpl = 1; continue; }
+          if (inStr) {
+            if (c === inStr) inStr = null;
+            continue;
+          }
+          if (c === '"' || c === "'") {
+            inStr = c;
+            continue;
+          }
+          if (c === '`') {
+            inTpl = 1;
+            continue;
+          }
           if (c === '{') depth++;
-          else if (c === '}') { depth--; if (depth === 0) break; }
+          else if (c === '}') {
+            depth--;
+            if (depth === 0) break;
+          }
         }
       }
       const objSrc = sourceText.slice(objStart, i + 1);
@@ -133,18 +175,40 @@ function parseModuleConfig(filePath) {
         // 跳过外层 { }
         if (objSrcInner.trim().startsWith('{')) {
           const inner = objSrcInner.trim();
-          let d = 0, inS = null, inT = 0, k = 0;
+          let d = 0,
+            inS = null,
+            inT = 0,
+            k = 0;
           // 找到匹配的外层 {} 边界
           for (; k < inner.length; k++) {
             const c = inner[k];
-            const prev = k>0?inner[k-1]:'';
+            const prev = k > 0 ? inner[k - 1] : '';
             if (prev !== '\\') {
-              if (inT > 0) { if (c==='`') inT--; else if (c==='$'&&inner[k+1]==='{'){inT++;k++;} continue; }
-              if (inS) { if (c===inS) inS=null; continue; }
-              if (c==='"'||c==="'"){inS=c;continue;}
-              if (c==='`'){inT=1;continue;}
-              if (c==='{') d++;
-              else if (c==='}'){d--;if(d===0)break;}
+              if (inT > 0) {
+                if (c === '`') inT--;
+                else if (c === '$' && inner[k + 1] === '{') {
+                  inT++;
+                  k++;
+                }
+                continue;
+              }
+              if (inS) {
+                if (c === inS) inS = null;
+                continue;
+              }
+              if (c === '"' || c === "'") {
+                inS = c;
+                continue;
+              }
+              if (c === '`') {
+                inT = 1;
+                continue;
+              }
+              if (c === '{') d++;
+              else if (c === '}') {
+                d--;
+                if (d === 0) break;
+              }
             }
           }
           // 内部字符串：从 1 到 k-1
@@ -154,16 +218,19 @@ function parseModuleConfig(filePath) {
           function skipSpacesAndComments() {
             while (pos < body.length) {
               // 跳过空白 / 逗号
-              if (/[\s,]/.test(body[pos])) { pos++; continue; }
+              if (/[\s,]/.test(body[pos])) {
+                pos++;
+                continue;
+              }
               // 跳过行注释 // ... \n
-              if (body[pos] === '/' && body[pos+1] === '/') {
+              if (body[pos] === '/' && body[pos + 1] === '/') {
                 while (pos < body.length && body[pos] !== '\n') pos++;
                 continue;
               }
               // 跳过块注释 /* ... */
-              if (body[pos] === '/' && body[pos+1] === '*') {
+              if (body[pos] === '/' && body[pos + 1] === '*') {
                 pos += 2;
-                while (pos < body.length && !(body[pos]==='*'&&body[pos+1]==='/')) pos++;
+                while (pos < body.length && !(body[pos] === '*' && body[pos + 1] === '/')) pos++;
                 pos += 2;
                 continue;
               }
@@ -186,25 +253,51 @@ function parseModuleConfig(filePath) {
               pos++;
               let val = '';
               while (pos < body.length && body[pos] !== quote) {
-                if (body[pos] === '\\') { val += body[pos]; pos++; }
-                val += body[pos]; pos++;
+                if (body[pos] === '\\') {
+                  val += body[pos];
+                  pos++;
+                }
+                val += body[pos];
+                pos++;
               }
               pos++; // 跳过结尾 quote
               const fullKey = prefix ? `${prefix}.${key}` : key;
               pathsMap[`${constName}.${fullKey}`] = val;
             } else if (body[pos] === '{') {
               // 找匹配的 }
-              let d2 = 0, inS2 = null, inT2 = 0, start = pos;
+              let d2 = 0,
+                inS2 = null,
+                inT2 = 0,
+                start = pos;
               for (; pos < body.length; pos++) {
                 const c = body[pos];
-                const prev = pos>0?body[pos-1]:'';
+                const prev = pos > 0 ? body[pos - 1] : '';
                 if (prev !== '\\') {
-                  if (inT2 > 0) { if (c==='`') inT2--; else if (c==='$'&&body[pos+1]==='{'){inT2++;pos++;} continue; }
-                  if (inS2) { if (c===inS2) inS2=null; continue; }
-                  if (c==='"'||c==="'"){inS2=c;continue;}
-                  if (c==='`'){inT2=1;continue;}
-                  if (c==='{') d2++;
-                  else if (c==='}'){d2--;if(d2===0)break;}
+                  if (inT2 > 0) {
+                    if (c === '`') inT2--;
+                    else if (c === '$' && body[pos + 1] === '{') {
+                      inT2++;
+                      pos++;
+                    }
+                    continue;
+                  }
+                  if (inS2) {
+                    if (c === inS2) inS2 = null;
+                    continue;
+                  }
+                  if (c === '"' || c === "'") {
+                    inS2 = c;
+                    continue;
+                  }
+                  if (c === '`') {
+                    inT2 = 1;
+                    continue;
+                  }
+                  if (c === '{') d2++;
+                  else if (c === '}') {
+                    d2--;
+                    if (d2 === 0) break;
+                  }
                 }
               }
               const nestedSrc = body.slice(start, pos + 1);
@@ -256,22 +349,34 @@ function parseModuleConfig(filePath) {
     if (!startMatch) return null;
     let pos = startMatch.index + startMatch[0].length;
     // 找值结束位置（到下一个顶层 , 或顶层 }）
-    let depth = 0, inStr = null, inTpl = 0, i = pos;
+    let depth = 0,
+      inStr = null,
+      inTpl = 0,
+      i = pos;
     for (; i < objStr.length; i++) {
       const c = objStr[i];
-      const prev = i > 0 ? objStr[i-1] : '';
+      const prev = i > 0 ? objStr[i - 1] : '';
       if (prev !== '\\') {
         if (inTpl > 0) {
           if (c === '`') inTpl--;
-          else if (c === '$' && objStr[i+1] === '{') { inTpl++; i++; }
+          else if (c === '$' && objStr[i + 1] === '{') {
+            inTpl++;
+            i++;
+          }
           continue;
         }
         if (inStr) {
           if (c === inStr) inStr = null;
           continue;
         }
-        if (c === '"' || c === "'") { inStr = c; continue; }
-        if (c === '`') { inTpl = 1; continue; }
+        if (c === '"' || c === "'") {
+          inStr = c;
+          continue;
+        }
+        if (c === '`') {
+          inTpl = 1;
+          continue;
+        }
         if (c === '{' || c === '[') depth++;
         else if (c === '}' || c === ']') {
           if (depth === 0) break;
@@ -283,7 +388,9 @@ function parseModuleConfig(filePath) {
   }
 
   // ======== (A) RouteModuleConfig 路由配置 ========
-  const rmConfigMatch = src.match(/export\s+const\s+\w+ModuleConfig\s*:\s*RouteModuleConfig\s*=\s*(\{[\s\S]*?)\n\}\s*;\s*\n/);
+  const rmConfigMatch = src.match(
+    /export\s+const\s+\w+ModuleConfig\s*:\s*RouteModuleConfig\s*=\s*(\{[\s\S]*?)\n\}\s*;\s*\n/
+  );
   const rmObjStr = rmConfigMatch ? rmConfigMatch[1] + '\n}' : null;
 
   function pickProp(objStr, prop, fallback = null) {
@@ -334,16 +441,20 @@ function parseModuleConfig(filePath) {
   // 用简单正则拆分 routes 数组中的每个 route 对象 (按层级)
   function splitTopLevelObjects(arrStr) {
     const objs = [];
-    let depth = 0, start = -1, inStr = null;
+    let depth = 0,
+      start = -1,
+      inStr = null;
     for (let i = 0; i < arrStr.length; i++) {
       const c = arrStr[i];
-      if ((c === '"' || c === "'" || c === '`') && arrStr[i-1] !== '\\') {
+      if ((c === '"' || c === "'" || c === '`') && arrStr[i - 1] !== '\\') {
         if (!inStr) inStr = c;
         else if (inStr === c) inStr = null;
       }
       if (inStr) continue;
-      if (c === '{') { depth++; if (depth === 1) start = i; }
-      else if (c === '}') {
+      if (c === '{') {
+        depth++;
+        if (depth === 1) start = i;
+      } else if (c === '}') {
         depth--;
         if (depth === 0 && start >= 0) {
           objs.push(arrStr.slice(start, i + 1));
@@ -366,7 +477,10 @@ function parseModuleConfig(filePath) {
         const q = quoteMatch[1];
         let i = 1;
         for (; i < pathRaw.length; i++) {
-          if (pathRaw[i] === '\\') { i++; continue; }
+          if (pathRaw[i] === '\\') {
+            i++;
+            continue;
+          }
           if (pathRaw[i] === q) break;
         }
         pathRaw = pathRaw.slice(0, i + 1);
@@ -415,9 +529,7 @@ function parseModuleConfig(filePath) {
     })();
     // requiredPermissions
     const rpRaw = extractTopLevelPropertyValue(objStr, 'requiredPermissions');
-    const requiredPermissions = rpRaw
-      ? (rpRaw.match(/['"`]([^'"`]+)['"`]/g) || []).map((s) => s.slice(1, -1))
-      : [];
+    const requiredPermissions = rpRaw ? (rpRaw.match(/['"`]([^'"`]+)['"`]/g) || []).map((s) => s.slice(1, -1)) : [];
     // order
     const orderRaw = extractTopLevelPropertyValue(objStr, 'order');
     const order = orderRaw && /^\d+$/.test(orderRaw) ? parseInt(orderRaw) : idx;
@@ -502,7 +614,7 @@ function parseModuleConfig(filePath) {
       source: navSource,
       suite: navSuite,
       order: typeof navOrder === 'number' ? navOrder : null,
-      permission: rmPermission
+      permission: rmPermission,
     },
     routes,
     navItems,
@@ -520,9 +632,7 @@ function flattenNavItems(items, acc = []) {
 
 function analyze() {
   const files = listConfigFiles();
-  const modules = files
-    .map((f) => parseModuleConfig(f))
-    .filter((x) => x !== null);
+  const modules = files.map((f) => parseModuleConfig(f)).filter((x) => x !== null);
 
   // 统计
   const stats = {
@@ -568,7 +678,9 @@ function analyze() {
       if (!orderMap[key]) orderMap[key] = {};
       if (orderMap[key][order]) {
         stats.moduleOrderConflicts.push({
-          key, order, modules: [orderMap[key][order], code]
+          key,
+          order,
+          modules: [orderMap[key][order], code],
         });
       } else {
         orderMap[key][order] = code;
@@ -589,7 +701,9 @@ function analyze() {
         stats.totalPermissionsRequired++;
         if (!registeredPermissions.has(p)) {
           stats.permissionsMissingFromRegistry.push({
-            module: m.module.code, path: r.path, permission: p
+            module: m.module.code,
+            path: r.path,
+            permission: p,
           });
         }
       }
@@ -613,7 +727,9 @@ function analyze() {
         stats.totalPermissionsRequired++;
         if (!registeredPermissions.has(it.permission)) {
           stats.permissionsMissingFromRegistry.push({
-            module: m.module.code, path: it.path, permission: it.permission
+            module: m.module.code,
+            path: it.path,
+            permission: it.permission,
           });
         }
       }
@@ -663,11 +779,14 @@ function analyze() {
   p('【1/6】模块概览');
   hr();
   p(`  总模块数         : ${stats.totalModules}`);
-  const srcCts = Object.entries(stats.modulesBySource).map(([k,v]) => `${k}=${v}`).join('  ');
+  const srcCts = Object.entries(stats.modulesBySource)
+    .map(([k, v]) => `${k}=${v}`)
+    .join('  ');
   p(`  Source 分布      : ${srcCts}`);
   const suiteCts = Object.entries(stats.modulesBySuite)
-    .sort((a,b) => b[1]-a[1])
-    .map(([k,v]) => `${k}=${v}`).join('  ');
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, v]) => `${k}=${v}`)
+    .join('  ');
   p(`  L1 业务域分布    : ${suiteCts}`);
   p(`  Core 模块列表    : ${stats.coreModules.sort().join(', ')}`);
   p(`  Plugin 模块列表  : ${stats.pluginModules.sort().join(', ')}`);
@@ -678,12 +797,14 @@ function analyze() {
   p('  │序號  │ 模块 code            │ source   │ suite      │ order  │ routes│ navItems │ nameKey  │');
   p('  ├──────┼──────────────────────┼──────────┼────────────┼────────┼───────┼──────────┼──────────┤');
   [...modules]
-    .sort((a,b) => (a.module.order||999) - (b.module.order||999))
+    .sort((a, b) => (a.module.order || 999) - (b.module.order || 999))
     .forEach((m, i) => {
       const c = m.module;
       const niCount = flattenNavItems(m.navItems).length;
       const nameKeyFlag = c.nameKey ? '✓' : '✗ MISSING';
-      p(`  │ ${String(i+1).padStart(4)} │ ${c.code.padEnd(20)} │ ${(c.source||'-').padEnd(8)} │ ${(c.suite||'-').padEnd(10)} │ ${String(c.order||'--').padStart(6)} │ ${String(m.routes.length).padStart(5)} │ ${String(niCount).padStart(8)} │ ${nameKeyFlag.padEnd(8)} │`);
+      p(
+        `  │ ${String(i + 1).padStart(4)} │ ${c.code.padEnd(20)} │ ${(c.source || '-').padEnd(8)} │ ${(c.suite || '-').padEnd(10)} │ ${String(c.order || '--').padStart(6)} │ ${String(m.routes.length).padStart(5)} │ ${String(niCount).padStart(8)} │ ${nameKeyFlag.padEnd(8)} │`
+      );
     });
   p('  └──────┴──────────────────────┴──────────┴────────────┴────────┴───────┴──────────┴──────────┘');
 
@@ -710,7 +831,9 @@ function analyze() {
   p('');
   p('【3/6】i18n 翻译 key 覆盖');
   hr();
-  p(`  Route titleKey 缺失率 : ${stats.routesWithoutTitleKey.length} / ${stats.totalRoutes}  = ${stats.totalRoutes ? (stats.routesWithoutTitleKey.length/stats.totalRoutes*100).toFixed(1) : '0.0'}%`);
+  p(
+    `  Route titleKey 缺失率 : ${stats.routesWithoutTitleKey.length} / ${stats.totalRoutes}  = ${stats.totalRoutes ? ((stats.routesWithoutTitleKey.length / stats.totalRoutes) * 100).toFixed(1) : '0.0'}%`
+  );
   p(`  NavItem labelKey 缺失 : ${stats.navItemsWithoutLabelKey.length} / ${stats.totalNavItems}`);
   if (stats.routesWithoutTitleKey.length) {
     p('');
@@ -724,9 +847,10 @@ function analyze() {
     p('');
     p('  ▶ 以下 NavItem 缺少 labelKey:');
     stats.navItemsWithoutLabelKey.slice(0, 20).forEach((r) => {
-      p(`    [${r.module}] code=${(r.code||'-').padEnd(22)}  → label="${r.label}"`);
+      p(`    [${r.module}] code=${(r.code || '-').padEnd(22)}  → label="${r.label}"`);
     });
-    if (stats.navItemsWithoutLabelKey.length > 20) p(`    ... 还有 ${stats.navItemsWithoutLabelKey.length - 20} 项未列出`);
+    if (stats.navItemsWithoutLabelKey.length > 20)
+      p(`    ... 还有 ${stats.navItemsWithoutLabelKey.length - 20} 项未列出`);
   }
 
   // ===== 4. 权限覆盖 =====
@@ -735,7 +859,9 @@ function analyze() {
   hr();
   p(`  权限要求总数     : ${stats.totalPermissionsRequired}`);
   p(`  未注册权限码     : ${stats.permissionsMissingFromRegistry.length}`);
-  const missingRate = stats.totalPermissionsRequired ? (stats.permissionsMissingFromRegistry.length/stats.totalPermissionsRequired*100).toFixed(1) : '0.0';
+  const missingRate = stats.totalPermissionsRequired
+    ? ((stats.permissionsMissingFromRegistry.length / stats.totalPermissionsRequired) * 100).toFixed(1)
+    : '0.0';
   p(`  未注册比例       : ${missingRate}%`);
   if (stats.permissionsMissingFromRegistry.length) {
     // 按 module 聚合
@@ -793,19 +919,25 @@ function analyze() {
   stats.routesWithoutCode.forEach((x) => p(`    ⚠ [${x.module}] Route 无 code: ${x.path}`));
 
   // ===== 新增：Route ↔ NavItem 双向匹配 =====
-  const orphanRoutes = [];   // 有 Route 但无 NavItem（页面存在，用户无法从菜单到达）
+  const orphanRoutes = []; // 有 Route 但无 NavItem（页面存在，用户无法从菜单到达）
   const orphanNavItems = []; // 有 NavItem 但无 Route（菜单点击可能 404）
 
   for (const m of modules) {
-    const navPaths = new Set(flattenNavItems(m.navItems).filter((x) => x.path).map((x) => x.path));
+    const navPaths = new Set(
+      flattenNavItems(m.navItems)
+        .filter((x) => x.path)
+        .map((x) => x.path)
+    );
     const routePaths = new Set(m.routes.filter((x) => x.path).map((x) => x.path));
     for (const r of m.routes) {
       if (!r.path) continue;
-      if (!navPaths.has(r.path)) orphanRoutes.push({ module: m.module.code, code: r.code, path: r.path, title: r.title });
+      if (!navPaths.has(r.path))
+        orphanRoutes.push({ module: m.module.code, code: r.code, path: r.path, title: r.title });
     }
     for (const ni of flattenNavItems(m.navItems)) {
       if (!ni.path) continue;
-      if (!routePaths.has(ni.path)) orphanNavItems.push({ module: m.module.code, code: ni.code, path: ni.path, label: ni.label });
+      if (!routePaths.has(ni.path))
+        orphanNavItems.push({ module: m.module.code, code: ni.code, path: ni.path, label: ni.label });
     }
   }
 
@@ -815,15 +947,19 @@ function analyze() {
   p('附录A：逐项菜单清单（按模块 → NavGroup 分组）');
   hr();
 
-  for (const m of [...modules].sort((a,b) => (a.module.order||999) - (b.module.order||999))) {
+  for (const m of [...modules].sort((a, b) => (a.module.order || 999) - (b.module.order || 999))) {
     const mc = m.module;
     const navItems = flattenNavItems(m.navItems);
     if (navItems.length === 0 && m.routes.length === 0) continue;
-    const suiteLabel = mc.suite ? SUITE_GROUP_KEYS.includes(mc.suite) ? mc.suite : 'other' : 'other';
+    const suiteLabel = mc.suite ? (SUITE_GROUP_KEYS.includes(mc.suite) ? mc.suite : 'other') : 'other';
     p('');
     p(`  ┌─ ${mc.code} ────────────────────────────────────────────────────────────────────────────────────┐`);
-    p(`  │  nameKey: ${mc.nameKey || '(缺失)'}  source: ${(mc.source||'-').padEnd(6)}  suite: ${(suiteLabel).padEnd(14)}  order: ${String(mc.order||'--').padStart(3)}  │`);
-    p(`  │  Routes=${String(m.routes.length).padStart(3)}  NavItems=${String(navItems.length).padStart(3)}                                                           │`);
+    p(
+      `  │  nameKey: ${mc.nameKey || '(缺失)'}  source: ${(mc.source || '-').padEnd(6)}  suite: ${suiteLabel.padEnd(14)}  order: ${String(mc.order || '--').padStart(3)}  │`
+    );
+    p(
+      `  │  Routes=${String(m.routes.length).padStart(3)}  NavItems=${String(navItems.length).padStart(3)}                                                           │`
+    );
     p(`  ├────────────────────────────────────────────────────────────────────────────────────────────────┤`);
 
     if (m.routes.length === 0 && navItems.length === 0) {
@@ -844,11 +980,29 @@ function analyze() {
         if (!gm) return;
         p(`  │  ▸ ${g}                                                                                        │`);
         const allByPath = {};
-        gm.navItems.forEach((x) => { if (x.path) { allByPath[x.path] = allByPath[x.path] || {}; allByPath[x.path].nav = x; } });
-        gm.routes.forEach((x) => { if (x.path) { allByPath[x.path] = allByPath[x.path] || {}; allByPath[x.path].route = x; } });
+        gm.navItems.forEach((x) => {
+          if (x.path) {
+            allByPath[x.path] = allByPath[x.path] || {};
+            allByPath[x.path].nav = x;
+          }
+        });
+        gm.routes.forEach((x) => {
+          if (x.path) {
+            allByPath[x.path] = allByPath[x.path] || {};
+            allByPath[x.path].route = x;
+          }
+        });
         // 再补只在 NavGroup 一边的
-        gm.navItems.filter((x) => !x.path).forEach((x, i) => { allByPath['__noPathNav__'+i] = { nav: x }; });
-        gm.routes.filter((x) => !x.path).forEach((x, i) => { allByPath['__noPathR__'+i] = { route: x }; });
+        gm.navItems
+          .filter((x) => !x.path)
+          .forEach((x, i) => {
+            allByPath['__noPathNav__' + i] = { nav: x };
+          });
+        gm.routes
+          .filter((x) => !x.path)
+          .forEach((x, i) => {
+            allByPath['__noPathR__' + i] = { route: x };
+          });
         Object.entries(allByPath).forEach(([path, pair], idx) => {
           const route = pair.route || null;
           const nav = pair.nav || null;
@@ -856,10 +1010,12 @@ function analyze() {
           const code = (nav ? nav.code : '') || (route ? route.code : '');
           const tKeyFlag = route ? (route.titleKey ? 'T' : '░') : '';
           const lKeyFlag = nav ? (nav.labelKey ? 'L' : '░') : '';
-          const permFlag = nav ? (nav.permission ? 'P' : '·') : (route && route.requiredPermissions.length ? 'R' : '·');
+          const permFlag = nav ? (nav.permission ? 'P' : '·') : route && route.requiredPermissions.length ? 'R' : '·';
           const dispPath = path.startsWith('__noPath') ? '(无 path)' : path;
           const pad = 48;
-          p(`  │     ${String(idx+1).padStart(2)} ${code.padEnd(24)} ${lKeyFlag}${tKeyFlag}${permFlag}  ${dispPath.padEnd(pad)}  ${label.slice(0,16).padEnd(16)}│`);
+          p(
+            `  │     ${String(idx + 1).padStart(2)} ${code.padEnd(24)} ${lKeyFlag}${tKeyFlag}${permFlag}  ${dispPath.padEnd(pad)}  ${label.slice(0, 16).padEnd(16)}│`
+          );
         });
       });
       // other
@@ -867,8 +1023,16 @@ function analyze() {
         const g = 'other';
         const gm = groupMap.other;
         p(`  │  ▸ ${g} ⚠ 未归类                                                                               │`);
-        gm.navItems.forEach((x, i) => p(`  │     N${String(i+1).padStart(2)} ${(x.code||'').padEnd(24)} ${x.labelKey?'L':'░'}  ${x.path||'(无path)'.padEnd(48)}  ${(x.label||'').slice(0,16).padEnd(16)}│`));
-        gm.routes.forEach((x, i) => p(`  │     R${String(i+1).padStart(2)} ${(x.code||'').padEnd(24)}  ${x.titleKey?'T':'░'} ${x.path||'(无path)'.padEnd(48)}  ${(x.title||'').slice(0,16).padEnd(16)}│`));
+        gm.navItems.forEach((x, i) =>
+          p(
+            `  │     N${String(i + 1).padStart(2)} ${(x.code || '').padEnd(24)} ${x.labelKey ? 'L' : '░'}  ${x.path || '(无path)'.padEnd(48)}  ${(x.label || '').slice(0, 16).padEnd(16)}│`
+          )
+        );
+        gm.routes.forEach((x, i) =>
+          p(
+            `  │     R${String(i + 1).padStart(2)} ${(x.code || '').padEnd(24)}  ${x.titleKey ? 'T' : '░'} ${x.path || '(无path)'.padEnd(48)}  ${(x.title || '').slice(0, 16).padEnd(16)}│`
+          )
+        );
       }
     }
     p(`  └────────────────────────────────────────────────────────────────────────────────────────────────┘`);
@@ -886,11 +1050,14 @@ function analyze() {
     p('  ▶ 菜单无入口的路由（可能是深层详情页/弹窗页，也可能漏配菜单）：');
     // 按 module 聚合
     const orphByMod = {};
-    orphanRoutes.forEach((x) => { if (!orphByMod[x.module]) orphByMod[x.module]=[]; orphByMod[x.module].push(x); });
+    orphanRoutes.forEach((x) => {
+      if (!orphByMod[x.module]) orphByMod[x.module] = [];
+      orphByMod[x.module].push(x);
+    });
     Object.entries(orphByMod).forEach(([mod, list]) => {
       p(`    [${mod}] ${list.length} 项:`);
-      list.slice(0, 6).forEach((x) => p(`      - ${x.path.padEnd(44)}  ${x.title.slice(0,20)}`));
-      if (list.length > 6) p(`      ... 还有 ${list.length-6} 项未列出`);
+      list.slice(0, 6).forEach((x) => p(`      - ${x.path.padEnd(44)}  ${x.title.slice(0, 20)}`));
+      if (list.length > 6) p(`      ... 还有 ${list.length - 6} 项未列出`);
     });
   }
   if (orphanNavItems.length) {
@@ -903,22 +1070,84 @@ function analyze() {
   // FAIL 级规则（永久 0 容忍）：count=0 也生成条目，方便 CI summary 展示 baseline 对比
   const issues = [];
   // 工具：按计数选择 level（FAIL 级规则 count=0 时展示 PASS，避免误导；仍保留 isFail 基线属性）
-  const fl = (count) => count === 0 ? 'PASS' : 'FAIL';
+  const fl = (count) => (count === 0 ? 'PASS' : 'FAIL');
   // --- FAIL 级：永远 push 条目（含 count=0），便于 JSON 报告和 --fail-fast 阈值判定 ---
-  issues.push({level:fl(stats.routesWithoutTitleKey.length), rule:'T1', id:'T1', msg:`${stats.routesWithoutTitleKey.length} 个路由缺少 titleKey，语言切换后页面标题/面包屑不更新`});
-  issues.push({level:fl(stats.navItemsWithoutLabelKey.length), rule:'T2', id:'T2', msg:`${stats.navItemsWithoutLabelKey.length} 个 NavItem 缺少 labelKey，语言切换后菜单名不更新`});
-  issues.push({level:fl(stats.permissionsMissingFromRegistry.length), rule:'P1', id:'P1', msg:`${stats.permissionsMissingFromRegistry.length} 个权限码未在 permissions.ts 注册，可能导致前端拦截 403 或导航隐藏`});
-  issues.push({level:fl(orphanNavItems.length), rule:'R3', id:'R3', msg:`${orphanNavItems.length} 个 NavItem 无对应 Route，点击会 404`});
+  issues.push({
+    level: fl(stats.routesWithoutTitleKey.length),
+    rule: 'T1',
+    id: 'T1',
+    msg: `${stats.routesWithoutTitleKey.length} 个路由缺少 titleKey，语言切换后页面标题/面包屑不更新`,
+  });
+  issues.push({
+    level: fl(stats.navItemsWithoutLabelKey.length),
+    rule: 'T2',
+    id: 'T2',
+    msg: `${stats.navItemsWithoutLabelKey.length} 个 NavItem 缺少 labelKey，语言切换后菜单名不更新`,
+  });
+  issues.push({
+    level: fl(stats.permissionsMissingFromRegistry.length),
+    rule: 'P1',
+    id: 'P1',
+    msg: `${stats.permissionsMissingFromRegistry.length} 个权限码未在 permissions.ts 注册，可能导致前端拦截 403 或导航隐藏`,
+  });
+  issues.push({
+    level: fl(orphanNavItems.length),
+    rule: 'R3',
+    id: 'R3',
+    msg: `${orphanNavItems.length} 个 NavItem 无对应 Route，点击会 404`,
+  });
   // --- WARN 级：仅 count>0 时 push 条目（避免污染报告）---
-  if (stats.pathConflicts.length) issues.push({level:'WARN', rule:'R1', id:'R1', msg:`${stats.pathConflicts.length} 条路径存在冲突（不同模块/配置使用同一路径）`});
-  if (stats.pathPrefixMismatch.length) issues.push({level:'WARN', rule:'R2', id:'R2', msg:`${stats.pathPrefixMismatch.length} 个 NavItem 路径前缀与 module code 不符，增加 404 风险`});
-  if (orphanRoutes.length) issues.push({level:'WARN', rule:'R4', id:'R4', msg:`${orphanRoutes.length} 条 Route 在菜单中无入口（若是详情页 OK，若是列表页可能漏配）`});
-  if (stats.routesWithoutGroup.length + stats.navItemsWithoutGroup.length) issues.push({level:'WARN', rule:'G1', id:'G1', msg:`${stats.routesWithoutGroup.length + stats.navItemsWithoutGroup.length} 个菜单项未分配 NavGroup，侧栏可能归类到 "other"`});
-  if (stats.moduleOrderConflicts.length) issues.push({level:'WARN', rule:'O1', id:'O1', msg:`${stats.moduleOrderConflicts.length} 组模块 order 冲突，菜单排序不确定`});
-  if (stats.routesWithoutCode.length + stats.navItemsWithoutCode.length) issues.push({level:'WARN', rule:'C1', id:'C1', msg:`${stats.routesWithoutCode.length + stats.navItemsWithoutCode.length} 个菜单项缺少 code 字段，Tab/面包屑索引可能失败`});
+  if (stats.pathConflicts.length)
+    issues.push({
+      level: 'WARN',
+      rule: 'R1',
+      id: 'R1',
+      msg: `${stats.pathConflicts.length} 条路径存在冲突（不同模块/配置使用同一路径）`,
+    });
+  if (stats.pathPrefixMismatch.length)
+    issues.push({
+      level: 'WARN',
+      rule: 'R2',
+      id: 'R2',
+      msg: `${stats.pathPrefixMismatch.length} 个 NavItem 路径前缀与 module code 不符，增加 404 风险`,
+    });
+  if (orphanRoutes.length)
+    issues.push({
+      level: 'WARN',
+      rule: 'R4',
+      id: 'R4',
+      msg: `${orphanRoutes.length} 条 Route 在菜单中无入口（若是详情页 OK，若是列表页可能漏配）`,
+    });
+  if (stats.routesWithoutGroup.length + stats.navItemsWithoutGroup.length)
+    issues.push({
+      level: 'WARN',
+      rule: 'G1',
+      id: 'G1',
+      msg: `${stats.routesWithoutGroup.length + stats.navItemsWithoutGroup.length} 个菜单项未分配 NavGroup，侧栏可能归类到 "other"`,
+    });
+  if (stats.moduleOrderConflicts.length)
+    issues.push({
+      level: 'WARN',
+      rule: 'O1',
+      id: 'O1',
+      msg: `${stats.moduleOrderConflicts.length} 组模块 order 冲突，菜单排序不确定`,
+    });
+  if (stats.routesWithoutCode.length + stats.navItemsWithoutCode.length)
+    issues.push({
+      level: 'WARN',
+      rule: 'C1',
+      id: 'C1',
+      msg: `${stats.routesWithoutCode.length + stats.navItemsWithoutCode.length} 个菜单项缺少 code 字段，Tab/面包屑索引可能失败`,
+    });
   // registry/shared 空模块检查
   const emptyModules = modules.filter((m) => m.routes.length === 0 && flattenNavItems(m.navItems).length === 0);
-  if (emptyModules.length) issues.push({level:'WARN', rule:'M1', id:'M1', msg:`${emptyModules.length} 个模块为空壳（无 routes/navItems）：${emptyModules.map((m)=>m.module.code).join(', ')}`});
+  if (emptyModules.length)
+    issues.push({
+      level: 'WARN',
+      rule: 'M1',
+      id: 'M1',
+      msg: `${emptyModules.length} 个模块为空壳（无 routes/navItems）：${emptyModules.map((m) => m.module.code).join(', ')}`,
+    });
 
   p('');
   hr();
@@ -933,7 +1162,7 @@ function analyze() {
     issues.forEach((x) => {
       const countMatch = x.msg.match(/(\d+)/);
       const count = countMatch ? countMatch[1] : '-';
-      p(`  │ ${x.level.padEnd(4)} │ ${x.id.padEnd(6)} │ ${count.padStart(4)} │ ${x.msg.slice(0,64).padEnd(64)} │`);
+      p(`  │ ${x.level.padEnd(4)} │ ${x.id.padEnd(6)} │ ${count.padStart(4)} │ ${x.msg.slice(0, 64).padEnd(64)} │`);
     });
     p('  └──────┴────────┴──────┴────────────────────────────────────────────────────────────────┘');
   }
@@ -944,7 +1173,7 @@ function analyze() {
 
 // ---------- CLI 参数解析 ----------
 function getArgValue(argsList, flag) {
-  const eqIdx = argsList.findIndex(a => a.startsWith(flag + '='));
+  const eqIdx = argsList.findIndex((a) => a.startsWith(flag + '='));
   if (eqIdx !== -1) return argsList[eqIdx].slice(flag.length + 1);
   const spIdx = argsList.indexOf(flag);
   if (spIdx !== -1 && argsList[spIdx + 1]) return argsList[spIdx + 1];
@@ -953,36 +1182,37 @@ function getArgValue(argsList, flag) {
 const ARGS = process.argv.slice(2);
 
 // --help / -h 最高优先级：不跑任何 FS 扫描，立即打印 Usage + exit 0
-const HELP = ARGS.some(a => a === '--help' || a === '-h');
+const HELP = ARGS.some((a) => a === '--help' || a === '-h');
 if (HELP) {
-  const USAGE = [
-    'analyze-menu.cjs — 菜单全面统计与问题分析（路由 / NavItem / 权限码一致性审计）',
-    '',
-    'USAGE:',
-    '  node scripts/analyze-menu.cjs [OPTIONS]',
-    '',
-    'OPTIONS:',
-    '  -h, --help                              显示帮助并退出（不跑扫描）',
-    '      --fail-fast                         严格门禁：FAIL 违规 > thresholds 时 exit 1',
-    '      --quiet                             不打印全文本报告（配合 --fail-fast / --report-json）',
-    '      --summary                           仅打印概览 + 问题清单（不打印附录 A/B）',
-    '      --report-json=<path>                输出 JSON 机器报告到 path（供 CI summary 解析）',
-    '      --thresholds=\'{"T1":0,"T2":0,"P1":0}\'   自定义 FAIL 级阈值（默认：T1/T2/P1/R3 全 0）',
-    '',
-    'RULES (FAIL / WARN):',
-    '  FAIL(0 容忍):  T1 Route 缺 titleKey   T2 NavItem 缺 labelKey',
-    '                 P1 权限码未注册        R3 NavItem 无对应 Route（404）',
-    '  WARN(仅报告):  R1 路径冲突  R2 模块 code 前缀错  R4 Route 菜单无入口',
-    '                 G1 未分配 NavGroup     O1 order 冲突    C1 缺 code',
-    '                 M1 空壳模块',
-    '',
-    'EXIT CODES: 0=通过  1=--fail-fast 违规超限  2=CLI 参数错误',
-    '',
-    'EXAMPLES:',
-    '  node scripts/analyze-menu.cjs',
-    '  node scripts/analyze-menu.cjs --summary',
-    '  node scripts/analyze-menu.cjs --fail-fast --report-json=/tmp/m.json',
-  ].join('\n') + '\n';
+  const USAGE =
+    [
+      'analyze-menu.cjs — 菜单全面统计与问题分析（路由 / NavItem / 权限码一致性审计）',
+      '',
+      'USAGE:',
+      '  node scripts/analyze-menu.cjs [OPTIONS]',
+      '',
+      'OPTIONS:',
+      '  -h, --help                              显示帮助并退出（不跑扫描）',
+      '      --fail-fast                         严格门禁：FAIL 违规 > thresholds 时 exit 1',
+      '      --quiet                             不打印全文本报告（配合 --fail-fast / --report-json）',
+      '      --summary                           仅打印概览 + 问题清单（不打印附录 A/B）',
+      '      --report-json=<path>                输出 JSON 机器报告到 path（供 CI summary 解析）',
+      '      --thresholds=\'{"T1":0,"T2":0,"P1":0}\'   自定义 FAIL 级阈值（默认：T1/T2/P1/R3 全 0）',
+      '',
+      'RULES (FAIL / WARN):',
+      '  FAIL(0 容忍):  T1 Route 缺 titleKey   T2 NavItem 缺 labelKey',
+      '                 P1 权限码未注册        R3 NavItem 无对应 Route（404）',
+      '  WARN(仅报告):  R1 路径冲突  R2 模块 code 前缀错  R4 Route 菜单无入口',
+      '                 G1 未分配 NavGroup     O1 order 冲突    C1 缺 code',
+      '                 M1 空壳模块',
+      '',
+      'EXIT CODES: 0=通过  1=--fail-fast 违规超限  2=CLI 参数错误',
+      '',
+      'EXAMPLES:',
+      '  node scripts/analyze-menu.cjs',
+      '  node scripts/analyze-menu.cjs --summary',
+      '  node scripts/analyze-menu.cjs --fail-fast --report-json=/tmp/m.json',
+    ].join('\n') + '\n';
   process.stdout.write(USAGE);
   process.exit(0);
 }
@@ -1026,7 +1256,7 @@ function buildThresholdsMap(issuesList) {
 
 function getIssueCount(issueMsg) {
   const m = issueMsg.match(/^(\d+)/);
-  return m ? parseInt(m[1], 10) : (issueMsg.includes('空壳') ? 1 : 1);
+  return m ? parseInt(m[1], 10) : issueMsg.includes('空壳') ? 1 : 1;
 }
 
 // ---------- 主程序 ----------
@@ -1058,17 +1288,29 @@ function getIssueCount(issueMsg) {
         message: x.msg,
         isFail: FAIL_RULE_IDS.has(x.id),
         threshold: FAIL_RULE_IDS.has(x.id)
-          ? (CUSTOM_THRESHOLDS && CUSTOM_THRESHOLDS[x.id] !== undefined
-              ? Number(CUSTOM_THRESHOLDS[x.id])
-              : (DEFAULT_FAIL_THRESHOLDS[x.id] ?? 0))
+          ? CUSTOM_THRESHOLDS && CUSTOM_THRESHOLDS[x.id] !== undefined
+            ? Number(CUSTOM_THRESHOLDS[x.id])
+            : (DEFAULT_FAIL_THRESHOLDS[x.id] ?? 0)
           : null,
       })),
-      failLevelIssues: issues.filter((x) => FAIL_RULE_IDS.has(x.id)).map((x) => ({
-        id: x.id, rule: x.rule || x.id, level: x.level, count: getIssueCount(x.msg), message: x.msg
-      })),
-      warnLevelIssues: issues.filter((x) => !FAIL_RULE_IDS.has(x.id)).map((x) => ({
-        id: x.id, rule: x.rule || x.id, level: x.level, count: getIssueCount(x.msg), message: x.msg
-      })),
+      failLevelIssues: issues
+        .filter((x) => FAIL_RULE_IDS.has(x.id))
+        .map((x) => ({
+          id: x.id,
+          rule: x.rule || x.id,
+          level: x.level,
+          count: getIssueCount(x.msg),
+          message: x.msg,
+        })),
+      warnLevelIssues: issues
+        .filter((x) => !FAIL_RULE_IDS.has(x.id))
+        .map((x) => ({
+          id: x.id,
+          rule: x.rule || x.id,
+          level: x.level,
+          count: getIssueCount(x.msg),
+          message: x.msg,
+        })),
       orphanRoutesCount: orphanRoutes.length,
       orphanRoutes: orphanRoutes,
       orphanNavItemsCount: orphanNavItems.length,

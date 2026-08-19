@@ -23,17 +23,14 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..');
 
-const APP_HEADER_FILE = resolve(
-  REPO_ROOT,
-  'apps/web/src/components/layout/AppHeader.tsx'
-);
+const APP_HEADER_FILE = resolve(REPO_ROOT, 'apps/web/src/components/layout/AppHeader.tsx');
 
 // 规范顺序（组件标识名，每个可用数组提供多个别名）
 const EXPECTED_ORDER = [
-  { id: 'GlobalActions',     patterns: [/<GlobalActions\b/] },
-  { id: '通知Bell(Badge)',  patterns: [/aria-label='通知'/, /title='通知'/] },
-  { id: 'ThemeSelector',     patterns: [/<ThemeSelector\b/] },
-  { id: 'UserMenu',          patterns: [/<UserMenu\b/] },
+  { id: 'GlobalActions', patterns: [/<GlobalActions\b/] },
+  { id: '通知Bell(Badge)', patterns: [/aria-label='通知'/, /title='通知'/] },
+  { id: 'ThemeSelector', patterns: [/<ThemeSelector\b/] },
+  { id: 'UserMenu', patterns: [/<UserMenu\b/] },
 ];
 
 function main() {
@@ -56,8 +53,10 @@ function main() {
     return report(errors, notices, []);
   }
   // 以 <> 起点开始用 depth 计数，找到匹配 </>
-  let depth = 0, i = defaultStartIdx;
-  let contentStart = -1, contentEnd = -1;
+  let depth = 0,
+    i = defaultStartIdx;
+  let contentStart = -1,
+    contentEnd = -1;
   while (i < src.length) {
     if (src.startsWith('<>', i)) {
       if (depth === 0) contentStart = i + 2;
@@ -65,7 +64,10 @@ function main() {
       i += 2;
     } else if (src.startsWith('</>', i)) {
       depth--;
-      if (depth === 0) { contentEnd = i; break; }
+      if (depth === 0) {
+        contentEnd = i;
+        break;
+      }
       i += 3;
     } else {
       i++;
@@ -92,14 +94,14 @@ function main() {
     if (isFinite(min)) {
       positions.push({ id: rule.id, index: min });
     } else {
-      errors.push(`找不到核心元素「${rule.id}」，pattern=${rule.patterns.map(p=>p.toString()).join(' | ')}`);
+      errors.push(`找不到核心元素「${rule.id}」，pattern=${rule.patterns.map((p) => p.toString()).join(' | ')}`);
     }
   }
   if (errors.length) return report(errors, notices, positions);
 
   // 3. 比较顺序
-  const actual = positions.sort((a,b) => a.index - b.index).map(p => p.id);
-  const expected = EXPECTED_ORDER.map(r => r.id);
+  const actual = positions.sort((a, b) => a.index - b.index).map((p) => p.id);
+  const expected = EXPECTED_ORDER.map((r) => r.id);
   let orderOk = actual.length === expected.length;
   for (let k = 0; k < Math.min(actual.length, expected.length); k++) {
     if (actual[k] !== expected[k]) orderOk = false;
@@ -107,13 +109,11 @@ function main() {
   if (orderOk) {
     notices.push(`顺序通过：${actual.join(' → ')}`);
   } else {
-    errors.push(
-      `顺序不匹配：\n     期望：${expected.join(' → ')}\n     实际：${actual.join(' → ')}`
-    );
+    errors.push(`顺序不匹配：\n     期望：${expected.join(' → ')}\n     实际：${actual.join(' → ')}`);
   }
 
   // 4. 额外：Bell 之前不能插队 ThemeSelector / UserMenu
-  const bellIdx = positions.find(p => p.id === '通知Bell(Badge)').index;
+  const bellIdx = positions.find((p) => p.id === '通知Bell(Badge)').index;
   for (const p of positions) {
     if (p.id === 'ThemeSelector' || p.id === 'UserMenu') {
       if (p.index < bellIdx) {
@@ -126,13 +126,18 @@ function main() {
 }
 
 function report(errors, notices, positions) {
-  const cyan = '\x1b[36m', green = '\x1b[32m', red = '\x1b[31m', reset = '\x1b[0m';
+  const cyan = '\x1b[36m',
+    green = '\x1b[32m',
+    red = '\x1b[31m',
+    reset = '\x1b[0m';
   console.log(`${cyan}===== 导航架构 §15.2 L552：AppHeader 工具栏顺序检查 =====${reset}`);
   console.log(`文件：${APP_HEADER_FILE}\n`);
   for (const n of notices) console.log(`  ${green}✓ ${n}${reset}`);
   if (positions.length) {
     console.log(`\n  位置索引：`);
-    positions.sort((a,b)=>a.index-b.index).forEach(p => console.log(`    [${String(p.index).padStart(5)}] ${p.id}`));
+    positions
+      .sort((a, b) => a.index - b.index)
+      .forEach((p) => console.log(`    [${String(p.index).padStart(5)}] ${p.id}`));
   }
   console.log('');
   if (errors.length === 0) {
@@ -140,7 +145,7 @@ function report(errors, notices, positions) {
     process.exit(0);
   } else {
     console.log(`${red}❌ FAIL：${errors.length} 处违规${reset}\n`);
-    errors.forEach(e => console.log(`  ${red}· ${e}${reset}`));
+    errors.forEach((e) => console.log(`  ${red}· ${e}${reset}`));
     console.log('\n  修正参考：navigation-architecture.md §15.2 L552\n');
     process.exit(1);
   }

@@ -723,7 +723,7 @@ mod tests {
         assert_eq!(json_type_of(&json!(true)), "boolean");
         assert_eq!(json_type_of(&json!(42)), "integer");
         assert_eq!(json_type_of(&json!(42u64)), "integer");
-        assert_eq!(json_type_of(&json!(3.14)), "number");
+        assert_eq!(json_type_of(&json!(2.5)), "number");
         assert_eq!(json_type_of(&json!("hello")), "string");
         assert_eq!(json_type_of(&json!([1, 2])), "array");
         assert_eq!(json_type_of(&json!({"k": "v"})), "object");
@@ -733,10 +733,10 @@ mod tests {
     fn test_check_type_number_accepts_integer() {
         // "number" 类型应接受 integer（特例）
         assert!(check_type(&json!(42), &json!("number")).is_ok());
-        assert!(check_type(&json!(3.14), &json!("number")).is_ok());
+        assert!(check_type(&json!(2.5), &json!("number")).is_ok());
         // "integer" 类型不接受浮点数
         assert!(check_type(&json!(42), &json!("integer")).is_ok());
-        assert!(check_type(&json!(3.14), &json!("integer")).is_err());
+        assert!(check_type(&json!(2.5), &json!("integer")).is_err());
         // 类型不匹配
         assert!(check_type(&json!("str"), &json!("integer")).is_err());
     }

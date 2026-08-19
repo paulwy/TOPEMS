@@ -25,6 +25,7 @@
 use axum::http::StatusCode;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
+use std::fmt::{Display, Formatter, Result as FmtResult};
 use topems_shared::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
@@ -52,15 +53,14 @@ pub enum LifecycleStatus {
     Destroyed,
 }
 
-impl ToString for LifecycleStatus {
-    fn to_string(&self) -> String {
+impl Display for LifecycleStatus {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
-            LifecycleStatus::Active => "active",
-            LifecycleStatus::Archived => "archived",
-            LifecycleStatus::PendingDestruction => "pending_destruction",
-            LifecycleStatus::Destroyed => "destroyed",
+            LifecycleStatus::Active => f.write_str("active"),
+            LifecycleStatus::Archived => f.write_str("archived"),
+            LifecycleStatus::PendingDestruction => f.write_str("pending_destruction"),
+            LifecycleStatus::Destroyed => f.write_str("destroyed"),
         }
-        .to_string()
     }
 }
 

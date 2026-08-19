@@ -31,9 +31,11 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a === '--help' || a === '-h') opts.help = true;
     else if (a === '--apply') opts.apply = true;
-    else if (a === '--root' && argv[i + 1]) { opts.root = argv[++i]; }
-    else if (a === '--pattern' && argv[i + 1]) { opts.pattern = new RegExp(argv[++i]); }
-    else if (a.startsWith('--')) {
+    else if (a === '--root' && argv[i + 1]) {
+      opts.root = argv[++i];
+    } else if (a === '--pattern' && argv[i + 1]) {
+      opts.pattern = new RegExp(argv[++i]);
+    } else if (a.startsWith('--')) {
       process.stderr.write(`[fix-mixed-import-type] ⚠️  未知参数: ${a}\n`);
       opts.help = true;
     }
@@ -131,7 +133,10 @@ function fixFile(file, apply) {
 // ====================== 入口 ======================
 function main() {
   const opts = parseArgs(process.argv.slice(2));
-  if (opts.help) { process.stdout.write(USAGE); process.exit(0); }
+  if (opts.help) {
+    process.stdout.write(USAGE);
+    process.exit(0);
+  }
 
   const label = opts.apply ? '[APPLY] 会写磁盘' : '[DRY-RUN] 不写磁盘（加 --apply 才写）';
   process.stderr.write(`[fix-mixed-import-type] ${label}\n`);
@@ -158,9 +163,7 @@ function main() {
   console.log(`\nTotal files: ${files.length}`);
   console.log(`Total ${opts.apply ? 'fixed' : 'would fix'}: ${fixed}`);
   if (!opts.apply && fixed > 0) {
-    process.stderr.write(
-      `\n[fix-mixed-import-type] 💡 当前为 DRY-RUN，加 --apply 才会写文件。\n`
-    );
+    process.stderr.write(`\n[fix-mixed-import-type] 💡 当前为 DRY-RUN，加 --apply 才会写文件。\n`);
   }
   process.exit(0);
 }

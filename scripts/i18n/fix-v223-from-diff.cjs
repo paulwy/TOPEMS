@@ -70,7 +70,9 @@ for (const relPath of errorFiles) {
   let diff;
   try {
     diff = execSync(`git diff HEAD -- apps/web/src/${relPath}`, { cwd: REPO_ROOT, encoding: 'utf-8' });
-  } catch(e) { continue; }
+  } catch (e) {
+    continue;
+  }
 
   if (!diff.trim()) continue;
 
@@ -81,11 +83,19 @@ for (const relPath of errorFiles) {
   let i = 0;
   while (i < lines.length) {
     // Skip diff header lines
-    if (lines[i].startsWith('diff ') || lines[i].startsWith('index ') || lines[i].startsWith('---') || lines[i].startsWith('+++')) {
+    if (
+      lines[i].startsWith('diff ') ||
+      lines[i].startsWith('index ') ||
+      lines[i].startsWith('---') ||
+      lines[i].startsWith('+++')
+    ) {
       i++;
       continue;
     }
-    if (lines[i].startsWith('@@')) { i++; continue; }
+    if (lines[i].startsWith('@@')) {
+      i++;
+      continue;
+    }
 
     // Find pairs: - line followed by + line (corruption)
     if (lines[i].startsWith('-')) {
@@ -95,13 +105,13 @@ for (const relPath of errorFiles) {
         const newLine = lines[i + 1].substring(1);
         // Check if the + line is corrupted
         const isCorrupted =
-          /i18n\.t\(i18n\.t\(/.test(newLine) ||  // nested i18n.t
-          /i18n\.t\([^)]*\)\}\s*`\s*\(/.test(newLine) ||  // broken template
-          /i18n\.t\([^)]*\)\}\s*`\s*\)/.test(newLine) ||  // broken template
-          /'[a-z]+i18n\.t\(/i.test(newLine) ||  // string corruption
-          /numberi18n\.t\(/i.test(newLine) ||  // specific string corruption
-          (newLine.includes('i18n.t(') && newLine.includes("'))") && !origLine.includes('i18n.t(')) ||  // unterminated string
-          (newLine.includes('` ') && newLine.includes(' : ') && newLine.includes('i18n.t('));  // broken ternary in template
+          /i18n\.t\(i18n\.t\(/.test(newLine) || // nested i18n.t
+          /i18n\.t\([^)]*\)\}\s*`\s*\(/.test(newLine) || // broken template
+          /i18n\.t\([^)]*\)\}\s*`\s*\)/.test(newLine) || // broken template
+          /'[a-z]+i18n\.t\(/i.test(newLine) || // string corruption
+          /numberi18n\.t\(/i.test(newLine) || // specific string corruption
+          (newLine.includes('i18n.t(') && newLine.includes("'))") && !origLine.includes('i18n.t(')) || // unterminated string
+          (newLine.includes('` ') && newLine.includes(' : ') && newLine.includes('i18n.t(')); // broken ternary in template
 
         if (isCorrupted && CJK_RE.test(origLine)) {
           // Apply correct i18n to the original line
@@ -175,7 +185,9 @@ function applyCorrectI18n(line, reverseMap) {
     if (!key) {
       // Try to find a key whose value contains this text
       for (const [k, v] of Object.entries(reverseMap)) {
-        if (v === match.text) { /* found */ break; }
+        if (v === match.text) {
+          /* found */ break;
+        }
       }
       continue; // Skip if no key found
     }
@@ -189,19 +201,19 @@ function applyCorrectI18n(line, reverseMap) {
     const inSingleString = singleQuotes % 2 === 1;
     const inJsxText = before.trimEnd().endsWith('>') && !before.trimEnd().endsWith('/>');
 
-    const replacement = '${i18n.t(\'' + key + '\')}';
+    const replacement = "${i18n.t('" + key + "')}";
 
     if (inTemplate) {
       result = before + replacement + after;
     } else if (inJsxText) {
-      result = before + '{i18n.t(\'' + key + '\')}' + after;
+      result = before + "{i18n.t('" + key + "')}" + after;
     } else if (inSingleString) {
       // Inside single-quoted string: need to close string, add i18n.t(), reopen
       // This is complex - skip for now
       continue;
     } else {
       // Default: wrap in {}
-      result = before + '{i18n.t(\'' + key + '\')}' + after;
+      result = before + "{i18n.t('" + key + "')}" + after;
     }
   }
 

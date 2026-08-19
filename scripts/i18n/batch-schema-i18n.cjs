@@ -22,9 +22,7 @@ const I18N_DIR = path.join(WEB_ROOT, 'i18n', 'locales');
 
 const args = process.argv.slice(2);
 const moduleIdx = args.indexOf('--module');
-const targetModules = moduleIdx !== -1 && args[moduleIdx + 1]
-  ? args[moduleIdx + 1].split(',')
-  : [];
+const targetModules = moduleIdx !== -1 && args[moduleIdx + 1] ? args[moduleIdx + 1].split(',') : [];
 const dryRun = args.includes('--dry');
 const verbose = args.includes('--verbose');
 
@@ -80,7 +78,8 @@ function hasI18nT(line) {
 function extractChineseStrings(line) {
   const segments = [];
   // Match: '中文' or "中文" (full quoted strings that contain Chinese)
-  const strRe = /(['"])((?:[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\s\w：，。、（）()·\-—\!！？%\/]*))\1/g;
+  const strRe =
+    /(['"])((?:[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\s\w：，。、（）()·\-—\!！？%\/]*))\1/g;
   let m;
   while ((m = strRe.exec(line)) !== null) {
     if (!CJK_RE.test(m[2])) continue;
@@ -102,15 +101,21 @@ function extractChineseStrings(line) {
 
 function generateKey(moduleName, fl, text, index) {
   const prefix = `${moduleName}.${fl}`;
-  const hash = text.length <= 20
-    ? text.replace(/[\u4e00-\u9fff\u3400-\u4dbf]/g, '').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase()
-    : '';
+  const hash =
+    text.length <= 20
+      ? text
+          .replace(/[\u4e00-\u9fff\u3400-\u4dbf]/g, '')
+          .replace(/[^a-zA-Z0-9_]/g, '')
+          .toLowerCase()
+      : '';
   return hash ? `${prefix}.${hash}_${index}` : `${prefix}.k${index}`;
 }
 
 function ensureImport(lines) {
-  const hasImport = lines.some(l => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l) || /import\s+\{\s*i18n\s*\}\s+from/.test(l));
-  const usesI18n = lines.some(l => /i18n\.t\s*\(/.test(l) && !/import/.test(l));
+  const hasImport = lines.some(
+    (l) => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l) || /import\s+\{\s*i18n\s*\}\s+from/.test(l)
+  );
+  const usesI18n = lines.some((l) => /i18n\.t\s*\(/.test(l) && !/import/.test(l));
   if (usesI18n && !hasImport) {
     let lastImport = -1;
     for (let i = 0; i < lines.length; i++) {

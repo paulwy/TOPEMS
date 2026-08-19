@@ -17,14 +17,14 @@
  * - Skips lines in test files
  * - Reports all changes for review
  */
-import { readFileSync, writeFileSync } from "node:fs";
-import { join, resolve, dirname as pDirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join, resolve, dirname as pDirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __dirname = pDirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(__dirname, "..", "..");
+const ROOT = resolve(__dirname, '..', '..');
 
-const convertMap = JSON.parse(readFileSync(join(__dirname, "convert_map.json"), "utf8"));
+const convertMap = JSON.parse(readFileSync(join(__dirname, 'convert_map.json'), 'utf8'));
 
 // Group by file
 const byFile = new Map();
@@ -41,14 +41,14 @@ for (const [relFile, entries] of byFile) {
   const absPath = join(ROOT, relFile);
   let src;
   try {
-    src = readFileSync(absPath, "utf8");
+    src = readFileSync(absPath, 'utf8');
   } catch (e) {
     console.error(`[SKIP] Cannot read ${relFile}: ${e.message}`);
     totalSkipped += entries.length;
     continue;
   }
 
-  const lines = src.split("\n");
+  const lines = src.split('\n');
   let fileChanged = false;
   const fileChanges = [];
 
@@ -89,7 +89,7 @@ for (const [relFile, entries] of byFile) {
         // Multiline: "DELETE FROM table" → "UPDATE table SET deleted_at = NOW()"
         // Check if next non-empty line has WHERE
         let nextIdx = idx + 1;
-        while (nextIdx < lines.length && lines[nextIdx].trim() === "") nextIdx++;
+        while (nextIdx < lines.length && lines[nextIdx].trim() === '') nextIdx++;
 
         if (nextIdx < lines.length && /^\s*WHERE/i.test(lines[nextIdx])) {
           // "DELETE FROM table\n WHERE ..." → "UPDATE table SET deleted_at = NOW()\n WHERE ..."
@@ -119,13 +119,9 @@ for (const [relFile, entries] of byFile) {
       // The DELETE might be on a different format - check if line contains DELETE FROM
       if (/DELETE\s+FROM/i.test(line)) {
         // Try to find DELETE FROM in the middle of a string
-        const newLine = line.replace(
-          /DELETE\s+FROM\s+([\w.]+)\s+WHERE/i,
-          "UPDATE $1 SET deleted_at = NOW() WHERE"
-        ).replace(
-          /DELETE\s+FROM\s+([\w.]+)/i,
-          "UPDATE $1 SET deleted_at = NOW()"
-        );
+        const newLine = line
+          .replace(/DELETE\s+FROM\s+([\w.]+)\s+WHERE/i, 'UPDATE $1 SET deleted_at = NOW() WHERE')
+          .replace(/DELETE\s+FROM\s+([\w.]+)/i, 'UPDATE $1 SET deleted_at = NOW()');
         if (newLine !== line) {
           lines[idx] = newLine;
           fileChanges.push({
@@ -146,14 +142,14 @@ for (const [relFile, entries] of byFile) {
   }
 
   if (fileChanged) {
-    writeFileSync(absPath, lines.join("\n"));
+    writeFileSync(absPath, lines.join('\n'));
     changes.push({ file: relFile, count: fileChanges.length, details: fileChanges });
     console.log(`[CONVERTED] ${relFile}: ${fileChanges.length} statements`);
   }
 }
 
 // Write change log
-writeFileSync(join(__dirname, "conversion_log.json"), JSON.stringify(changes, null, 2));
+writeFileSync(join(__dirname, 'conversion_log.json'), JSON.stringify(changes, null, 2));
 
 console.log(`\n=== Conversion Summary ===`);
 console.log(`Files modified: ${changes.length}`);

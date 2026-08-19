@@ -23,12 +23,21 @@ const SRC = join(ROOT, 'apps/web/src');
 const APPLY = process.argv.includes('--apply');
 
 const IGNORED = [
-  '/node_modules/', '/dist/', '/build/', '/coverage/',
-  '/test-results/', '/playwright-report/', '/__tests__/',
-  '.stories.', '/theme/animations/',
-  '/theme/tokens/', '/design-system/tokens/',
-  '/theme/generated-tokens', '/theme/gradients.',
-  '/theme/presets.', '/theme/theme.',
+  '/node_modules/',
+  '/dist/',
+  '/build/',
+  '/coverage/',
+  '/test-results/',
+  '/playwright-report/',
+  '/__tests__/',
+  '.stories.',
+  '/theme/animations/',
+  '/theme/tokens/',
+  '/design-system/tokens/',
+  '/theme/generated-tokens',
+  '/theme/gradients.',
+  '/theme/presets.',
+  '/theme/theme.',
 ];
 
 const SKIP_FILE_RE =
@@ -177,20 +186,20 @@ const RGBA_STRING_MAP = {
 
 // shadow: property → token mapping (non-boxShadow)
 const SHADOW_PROP_MAP = {
-  "0 4px 24px rgba(0,0,0,0.3)": 'designTokens.darkShadows.xl',
-  "0 4px 24px rgba(0, 0, 0, 0.3)": 'designTokens.darkShadows.xl',
-  "0 1px 3px rgba(0,0,0,0.1)": 'designTokens.shadows.sm',
-  "0 1px 3px rgba(0, 0, 0, 0.1)": 'designTokens.shadows.sm',
-  "0 10px 15px -3px rgba(0,0,0,0.1)": 'designTokens.shadows.lg',
-  "0 10px 15px -3px rgba(0, 0, 0, 0.1)": 'designTokens.shadows.lg',
-  "0 4px 6px -1px rgba(0,0,0,0.1)": 'designTokens.shadows.md',
-  "0 4px 6px -1px rgba(0, 0, 0, 0.1)": 'designTokens.shadows.md',
-  "0 20px 60px rgba(0,0,0,0.3)": 'designTokens.darkShadows.xl',
-  "0 20px 60px rgba(0, 0, 0, 0.3)": 'designTokens.darkShadows.xl',
-  "0 24px 80px rgba(0,0,0,0.4)": "designTokens.darkShadows['3xl']",
-  "0 24px 80px rgba(0, 0, 0, 0.4)": "designTokens.darkShadows['3xl']",
-  "0 25px 50px -12px rgba(0,0,0,0.25)": "designTokens.shadows['2xl']",
-  "0 25px 50px -12px rgba(0, 0, 0, 0.25)": "designTokens.shadows['2xl']",
+  '0 4px 24px rgba(0,0,0,0.3)': 'designTokens.darkShadows.xl',
+  '0 4px 24px rgba(0, 0, 0, 0.3)': 'designTokens.darkShadows.xl',
+  '0 1px 3px rgba(0,0,0,0.1)': 'designTokens.shadows.sm',
+  '0 1px 3px rgba(0, 0, 0, 0.1)': 'designTokens.shadows.sm',
+  '0 10px 15px -3px rgba(0,0,0,0.1)': 'designTokens.shadows.lg',
+  '0 10px 15px -3px rgba(0, 0, 0, 0.1)': 'designTokens.shadows.lg',
+  '0 4px 6px -1px rgba(0,0,0,0.1)': 'designTokens.shadows.md',
+  '0 4px 6px -1px rgba(0, 0, 0, 0.1)': 'designTokens.shadows.md',
+  '0 20px 60px rgba(0,0,0,0.3)': 'designTokens.darkShadows.xl',
+  '0 20px 60px rgba(0, 0, 0, 0.3)': 'designTokens.darkShadows.xl',
+  '0 24px 80px rgba(0,0,0,0.4)': "designTokens.darkShadows['3xl']",
+  '0 24px 80px rgba(0, 0, 0, 0.4)': "designTokens.darkShadows['3xl']",
+  '0 25px 50px -12px rgba(0,0,0,0.25)': "designTokens.shadows['2xl']",
+  '0 25px 50px -12px rgba(0, 0, 0, 0.25)': "designTokens.shadows['2xl']",
 };
 
 function walk(dir) {
@@ -303,9 +312,13 @@ for (const file of files) {
 if (results.length === 0) {
   console.log('\n🔍 Dry-run — 0 replacements across 0 files\n');
 } else {
-  console.log(`\n🔍 ${APPLY ? 'Applied' : 'Dry-run'} — ${totalReplacements} replacements across ${results.length} files\n`);
+  console.log(
+    `\n🔍 ${APPLY ? 'Applied' : 'Dry-run'} — ${totalReplacements} replacements across ${results.length} files\n`
+  );
   for (const r of results) {
-    console.log(`  ${r.rel}: templateHex=${r.stats.templateHex} rgbaString=${r.stats.rgbaString} shadowProp=${r.stats.shadowProp}`);
+    console.log(
+      `  ${r.rel}: templateHex=${r.stats.templateHex} rgbaString=${r.stats.rgbaString} shadowProp=${r.stats.shadowProp}`
+    );
   }
 }
 

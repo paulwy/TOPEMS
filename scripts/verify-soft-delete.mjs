@@ -32,8 +32,8 @@
  * Exit 0 = pass, non-zero = CI should fail.
  */
 
-import { readdirSync, readFileSync, existsSync } from "node:fs";
-import { join, relative } from "node:path";
+import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { join, relative } from 'node:path';
 
 const ROOT = process.cwd();
 
@@ -52,23 +52,23 @@ const ALLOWLIST = new Set([
 function walk(dir, out, predicate) {
   if (!existsSync(dir)) return;
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name.startsWith(".") || entry.name === "node_modules" || entry.name === "target") continue;
+    if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === 'target') continue;
     const p = join(dir, entry.name);
     if (entry.isDirectory()) walk(p, out, predicate);
     else if (entry.isFile() && predicate(entry.name)) out.push(p);
   }
 }
 
-const isSql = (name) => name.endsWith(".sql");
-const isRust = (name) => name.endsWith(".rs");
+const isSql = (name) => name.endsWith('.sql');
+const isRust = (name) => name.endsWith('.rs');
 
 const sqlFiles = [];
 const rustFiles = [];
 
-walk(join(ROOT, "svc"), sqlFiles, isSql);
-walk(join(ROOT, "database"), sqlFiles, isSql);
-walk(join(ROOT, "lib"), rustFiles, isRust);
-walk(join(ROOT, "svc"), rustFiles, isRust);
+walk(join(ROOT, 'svc'), sqlFiles, isSql);
+walk(join(ROOT, 'database'), sqlFiles, isSql);
+walk(join(ROOT, 'lib'), rustFiles, isRust);
+walk(join(ROOT, 'svc'), rustFiles, isRust);
 
 // ============================================================
 // Check 1: SQL migrations declaring is_deleted BOOLEAN
@@ -80,12 +80,12 @@ const isDeletedColumnRe = /\bis_deleted\s+BOOLEAN\b/gi;
 for (const file of sqlFiles) {
   const rel = relative(ROOT, file);
   if (ALLOWLIST.has(rel)) continue;
-  const src = readFileSync(file, "utf8");
+  const src = readFileSync(file, 'utf8');
   isDeletedColumnRe.lastIndex = 0;
   const m = isDeletedColumnRe.exec(src);
   if (m) {
     // Find line number
-    const lines = src.slice(0, m.index).split("\n");
+    const lines = src.slice(0, m.index).split('\n');
     sqlErrors.push({ file: rel, line: lines.length, match: m[0] });
   }
 }
@@ -99,8 +99,8 @@ const rustQueryWarnings = [];
 
 for (const file of rustFiles) {
   const rel = relative(ROOT, file);
-  const src = readFileSync(file, "utf8");
-  const lines = src.split("\n");
+  const src = readFileSync(file, 'utf8');
+  const lines = src.split('\n');
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -143,30 +143,30 @@ console.log(`[verify-soft-delete] Rust CREATE TABLE errors:      ${rustCreateErr
 console.log(`[verify-soft-delete] Rust query warnings:           ${rustQueryWarnings.length}`);
 
 if (rustQueryWarnings.length) {
-  console.log("\n--- warnings (Rust SQL query references is_deleted) ---");
+  console.log('\n--- warnings (Rust SQL query references is_deleted) ---');
   for (const w of rustQueryWarnings) {
     console.log(`  ${w.file}:${w.line}  ${w.match.slice(0, 100)}`);
   }
 }
 
 if (sqlErrors.length) {
-  console.log("\n--- errors (SQL migration declares is_deleted BOOLEAN) ---");
+  console.log('\n--- errors (SQL migration declares is_deleted BOOLEAN) ---');
   for (const e of sqlErrors) {
     console.log(`  ${e.file}:${e.line}  ${e.match}`);
   }
 }
 
 if (rustCreateErrors.length) {
-  console.log("\n--- errors (Rust CREATE TABLE declares is_deleted BOOLEAN) ---");
+  console.log('\n--- errors (Rust CREATE TABLE declares is_deleted BOOLEAN) ---');
   for (const e of rustCreateErrors) {
     console.log(`  ${e.file}:${e.line}  ${e.match.slice(0, 100)}`);
   }
 }
 
 if (sqlErrors.length > 0 || rustCreateErrors.length > 0) {
-  console.log("\nFAIL: is_deleted BOOLEAN column detected. Use deleted_at TIMESTAMP instead.");
+  console.log('\nFAIL: is_deleted BOOLEAN column detected. Use deleted_at TIMESTAMP instead.');
   process.exit(1);
 }
 
-console.log("\nPASS: no is_deleted BOOLEAN columns found.");
+console.log('\nPASS: no is_deleted BOOLEAN columns found.');
 process.exit(0);

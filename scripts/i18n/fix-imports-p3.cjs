@@ -19,7 +19,11 @@ function walk(dir) {
     if (entry.isDirectory()) {
       if (['node_modules', 'dist', 'build', '__tests__'].includes(entry.name)) continue;
       results.push(...walk(path.join(dir, entry.name)));
-    } else if (/\.[mc]?[tj]sx?$/.test(entry.name) && !entry.name.endsWith('.test.ts') && !entry.name.endsWith('.test.tsx')) {
+    } else if (
+      /\.[mc]?[tj]sx?$/.test(entry.name) &&
+      !entry.name.endsWith('.test.ts') &&
+      !entry.name.endsWith('.test.tsx')
+    ) {
       results.push(path.join(dir, entry.name));
     }
   }
@@ -61,7 +65,7 @@ function fixImports(filePath) {
 
   if (modified) {
     // Clean up empty lines that were left
-    lines = lines.filter(l => l !== '');
+    lines = lines.filter((l) => l !== '');
     fs.writeFileSync(filePath, lines.join('\n'), 'utf-8');
   }
 

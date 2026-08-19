@@ -24,9 +24,7 @@ const I18N_DIR = path.join(WEB_ROOT, 'i18n', 'locales');
 
 const args = process.argv.slice(2);
 const moduleIdx = args.indexOf('--module');
-const targetModules = moduleIdx !== -1 && args[moduleIdx + 1]
-  ? args[moduleIdx + 1].split(',')
-  : [];
+const targetModules = moduleIdx !== -1 && args[moduleIdx + 1] ? args[moduleIdx + 1].split(',') : [];
 const dryRun = args.includes('--dry');
 const verbose = args.includes('--verbose');
 
@@ -35,17 +33,11 @@ const scopeIdx = args.indexOf('--scope');
 const scopeVal = scopeIdx !== -1 && args[scopeIdx + 1] ? args[scopeIdx + 1] : null;
 // --mode=5,6,7  (comma-separated, default all)
 const modeIdx = args.indexOf('--mode');
-const modesActive = new Set((modeIdx !== -1 && args[modeIdx + 1] ? args[modeIdx + 1] : '5,6,7').split(',').map(s => 'M' + s.trim()));
+const modesActive = new Set(
+  (modeIdx !== -1 && args[modeIdx + 1] ? args[modeIdx + 1] : '5,6,7').split(',').map((s) => 'M' + s.trim())
+);
 
-const P7_MODULES = [
-  'components/templates',
-  'ai',
-  'microfrontend',
-  'admin',
-  'mobile',
-  'monitor',
-  'mes',
-];
+const P7_MODULES = ['components/templates', 'ai', 'microfrontend', 'admin', 'mobile', 'monitor', 'mes'];
 
 // DUAL-PATH module roots: for each module M return array of dirs to scan
 function moduleScanDirs(moduleName) {
@@ -70,11 +62,14 @@ function walkDir(dir, out) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const f = path.join(dir, e.name);
     if (e.isDirectory()) {
-      if (['__tests__','node_modules','test','tests'].includes(e.name)) continue;
+      if (['__tests__', 'node_modules', 'test', 'tests'].includes(e.name)) continue;
       walkDir(f, out);
-    } else if ((e.name.endsWith('.tsx') || e.name.endsWith('.ts')) &&
-               !e.name.endsWith('.test.tsx') && !e.name.endsWith('.test.ts') &&
-               !e.name.endsWith('.stories.tsx')) {
+    } else if (
+      (e.name.endsWith('.tsx') || e.name.endsWith('.ts')) &&
+      !e.name.endsWith('.test.tsx') &&
+      !e.name.endsWith('.test.ts') &&
+      !e.name.endsWith('.stories.tsx')
+    ) {
       out.push(f);
     }
   }
@@ -127,7 +122,11 @@ function collectTsxFiles(dir) {
     if (entry.isDirectory()) {
       if (['__tests__', 'node_modules', 'test', 'tests', '.stories.tsx'].includes(entry.name)) continue;
       results.push(...collectTsxFiles(fullPath));
-    } else if (entry.name.endsWith('.tsx') && !entry.name.endsWith('.test.tsx') && !entry.name.endsWith('.stories.tsx')) {
+    } else if (
+      entry.name.endsWith('.tsx') &&
+      !entry.name.endsWith('.test.tsx') &&
+      !entry.name.endsWith('.stories.tsx')
+    ) {
       results.push(fullPath);
     }
   }
@@ -138,19 +137,30 @@ function extractChineseSegments(line) {
   const segments = [];
   // JSX text: >中文<
   let m;
-  const jsxTextRe = />([\s]*[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\s\w：，。、（）()·\-—\!！？%]+?[\s]*)</g;
+  const jsxTextRe =
+    />([\s]*[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\s\w：，。、（）()·\-—\!！？%]+?[\s]*)</g;
   while ((m = jsxTextRe.exec(line)) !== null) {
     const text = m[1].trim();
-    if (text && CJK_RE.test(text)) segments.push({ text, type: 'jsx_text', full: m[0], offset: m.index, end: m.index + m[0].length });
+    if (text && CJK_RE.test(text))
+      segments.push({ text, type: 'jsx_text', full: m[0], offset: m.index, end: m.index + m[0].length });
   }
   // JSX attribute: label="中文" or title='中文' (single or double quotes)
-  const jsxAttrRe = /(\w+)=(["'])([\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w\s：，。、（）()·\-—\!！？%\/]*)\2/g;
+  const jsxAttrRe =
+    /(\w+)=(["'])([\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w\s：，。、（）()·\-—\!！？%\/]*)\2/g;
   while ((m = jsxAttrRe.exec(line)) !== null) {
-    segments.push({ text: m[3], type: 'jsx_attr', attr: m[1], full: m[0], offset: m.index, end: m.index + m[0].length });
+    segments.push({
+      text: m[3],
+      type: 'jsx_attr',
+      attr: m[1],
+      full: m[0],
+      offset: m.index,
+      end: m.index + m[0].length,
+    });
   }
   // String literal in function call/assignment: '中文' or "中文"
   // Skip segments that overlap with JSX attribute matches (already captured above)
-  const strLitRe = /(["'])((?:[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w\s：，。、（）()·\-—\!！？%\/]*))\1/g;
+  const strLitRe =
+    /(["'])((?:[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w\s：，。、（）()·\-—\!！？%\/]*))\1/g;
   while ((m = strLitRe.exec(line)) !== null) {
     if (!CJK_RE.test(m[2])) continue;
     // Skip if inside t() call
@@ -159,18 +169,29 @@ function extractChineseSegments(line) {
     // Skip if overlaps with an already-found JSX attribute segment
     const segStart = m.index;
     const segEnd = m.index + m[0].length;
-    const overlaps = segments.some(s => segStart < s.end && segEnd > s.offset);
+    const overlaps = segments.some((s) => segStart < s.end && segEnd > s.offset);
     if (overlaps) continue;
-    segments.push({ text: m[2], type: 'str_lit', quote: m[1], full: m[0], offset: m.index, end: m.index + m[0].length });
+    segments.push({
+      text: m[2],
+      type: 'str_lit',
+      quote: m[1],
+      full: m[0],
+      offset: m.index,
+      end: m.index + m[0].length,
+    });
   }
   return segments;
 }
 
 function generateKey(moduleName, fileLabel, text, index) {
   const prefix = `${moduleName}.${fileLabel}`;
-  const hash = text.length <= 20
-    ? text.replace(/[\u4e00-\u9fff\u3400-\u4dbf]/g, '').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase()
-    : '';
+  const hash =
+    text.length <= 20
+      ? text
+          .replace(/[\u4e00-\u9fff\u3400-\u4dbf]/g, '')
+          .replace(/[^a-zA-Z0-9_]/g, '')
+          .toLowerCase()
+      : '';
   return hash ? `${prefix}.${hash}_${index}` : `${prefix}.k${index}`;
 }
 
@@ -308,16 +329,23 @@ function processFile(filePath, moduleName, translations, dryRun) {
           postFields.match(/\bpath\s*:\s*['"]([^'"]+)['"]/) ||
           postFields.match(/\bid\s*:\s*['"]([^'"]+)['"]/) ||
           postFields.match(/\bkey\s*:\s*['"]([^'"]+)['"]/);
-        let slug = slugMatch ? slugMatch[1].replace(/^\/+/, '').replace(/\//g, '.').replace(/[^a-zA-Z0-9_.]/g, '') :
-          // fallback: camelize of labelZh (strip CJK -> leave any english chars)
-          labelZh.replace(/[\u4e00-\u9fff]/g, '').replace(/[^a-zA-Z0-9]/g, '') || `item${p4Stats.M6.hit}`;
+        let slug = slugMatch
+          ? slugMatch[1]
+              .replace(/^\/+/, '')
+              .replace(/\//g, '.')
+              .replace(/[^a-zA-Z0-9_.]/g, '')
+          : // fallback: camelize of labelZh (strip CJK -> leave any english chars)
+            labelZh.replace(/[\u4e00-\u9fff]/g, '').replace(/[^a-zA-Z0-9]/g, '') || `item${p4Stats.M6.hit}`;
         if (!slug) slug = `item${p4Stats.M6.hit}`;
         const key = `menu.${slug}.${im[2]}`;
 
         // Conflict-detect (Spec §4.1)
-        if ((key in translations.zh) && translations.zh[key] !== labelZh) {
+        if (key in translations.zh && translations.zh[key] !== labelZh) {
           p4Stats.M6.skipConflict++;
-          if (verbose) console.warn(`[Mode-6 SKIP CONFLICT] key=${key} old="${translations.zh[key]}" new="${labelZh}" file=${path.relative(WEB_ROOT, filePath)}`);
+          if (verbose)
+            console.warn(
+              `[Mode-6 SKIP CONFLICT] key=${key} old="${translations.zh[key]}" new="${labelZh}" file=${path.relative(WEB_ROOT, filePath)}`
+            );
           continue;
         }
         if (!(key in translations.zh)) {
@@ -355,7 +383,8 @@ function processFile(filePath, moduleName, translations, dryRun) {
       // 3. Scan near vicinity for static sibling strings: const ITEMS = [ { name: "中文1" }, { name: "中文2" }, ... ]
       //    that are indexed similarly. We just capture all CJK strings in this file and write placeholder keys.
       const cjkLitRe = /"([^"]{2,}[\u4e00-\u9fff][^"]*)"/g;
-      let cm, idx = 0;
+      let cm,
+        idx = 0;
       const vicinity = fileStr.slice(Math.max(0, pm.index - 500), pm.index + 2000); // ~2500 char window
       while ((cm = cjkLitRe.exec(vicinity)) !== null && idx < 20) {
         const zhVal = cm[1];
@@ -370,7 +399,9 @@ function processFile(filePath, moduleName, translations, dryRun) {
       }
       p4Stats.M7.hit++;
       if (idx > 0 && verbose) {
-        p4Stats.M7.warnList.push(`${path.relative(WEB_ROOT, filePath)}: pfx=${pfxStr} wrote ${idx} placeholder keys (manual tsx replace required)`);
+        p4Stats.M7.warnList.push(
+          `${path.relative(WEB_ROOT, filePath)}: pfx=${pfxStr} wrote ${idx} placeholder keys (manual tsx replace required)`
+        );
       }
     }
   }
@@ -384,16 +415,20 @@ function processFile(filePath, moduleName, translations, dryRun) {
   if (!hasHook && replacedCount > 0) {
     // Only add hook if file has a React component (not just adapter/utility code)
     // Look for export default function, export const Component, or function Component patterns
-    const componentIdx = newLines.findIndex(l =>
-      /((export\s+)?(const|function)\s+\w+\s*[=:<]|export\s+default\s+function)/.test(l) &&
-      !l.includes('import') &&
-      !l.includes('createCrudPageAdapter') &&
-      !l.includes('createAdapter')
+    const componentIdx = newLines.findIndex(
+      (l) =>
+        /((export\s+)?(const|function)\s+\w+\s*[=:<]|export\s+default\s+function)/.test(l) &&
+        !l.includes('import') &&
+        !l.includes('createCrudPageAdapter') &&
+        !l.includes('createAdapter')
     );
 
     if (componentIdx !== -1) {
       // Add import after the last import line
-      const lastImportIdx = newLines.map((l, i) => l.trim().startsWith('import') ? i : -1).filter(i => i >= 0).pop();
+      const lastImportIdx = newLines
+        .map((l, i) => (l.trim().startsWith('import') ? i : -1))
+        .filter((i) => i >= 0)
+        .pop();
       if (lastImportIdx !== undefined && lastImportIdx >= 0) {
         newLines.splice(lastImportIdx + 1, 0, `import { useTranslation } from 'react-i18next';`);
       }
@@ -465,7 +500,9 @@ function processModule(moduleName) {
     if (result.replacedCount > 0) {
       results.push({ file: path.relative(PAGES_DIR, file), ...result });
       totalReplaced += result.replacedCount;
-      console.log(`  ${result.replacedCount > 0 ? '✅' : '⏭️'} ${path.relative(PAGES_DIR, file)}: ${result.replacedCount} 处替换${result.hookAdded ? ' (+hook)' : ''}`);
+      console.log(
+        `  ${result.replacedCount > 0 ? '✅' : '⏭️'} ${path.relative(PAGES_DIR, file)}: ${result.replacedCount} 处替换${result.hookAdded ? ' (+hook)' : ''}`
+      );
     }
   }
 
@@ -482,7 +519,9 @@ function processModule(moduleName) {
 
 // Main
 if (targetModules.length === 0) {
-  console.error('用法: node scripts/i18n/batch-i18n-replace.cjs --module <module_name>[,<module_name>] [--dry] [--verbose]');
+  console.error(
+    '用法: node scripts/i18n/batch-i18n-replace.cjs --module <module_name>[,<module_name>] [--dry] [--verbose]'
+  );
   process.exit(1);
 }
 
@@ -501,9 +540,15 @@ console.log(`总计替换: ${grandTotal} 处${dryRun ? ' (DRY RUN)' : ''}`);
 
 // R13 V222 P4 modes summary
 console.log(`\n── R13 P4 Mode Stats ──`);
-console.log(`  Mode-5 CrudPage columns : hit=${p4Stats.M5.hit}  newKeys=${p4Stats.M5.newKeys}  conflictSkip=${p4Stats.M5.skipConflict}`);
-console.log(`  Mode-6 Menu config arrays: hit=${p4Stats.M6.hit}  newKeys=${p4Stats.M6.newKeys}  conflictSkip=${p4Stats.M6.skipConflict}`);
-console.log(`  Mode-7 Tpl prefix detect : hit=${p4Stats.M7.hit}  placeholderJsonKeys=${p4Stats.M7.placeholderKeys}  (manual tsx replace REQUIRED for these)`);
+console.log(
+  `  Mode-5 CrudPage columns : hit=${p4Stats.M5.hit}  newKeys=${p4Stats.M5.newKeys}  conflictSkip=${p4Stats.M5.skipConflict}`
+);
+console.log(
+  `  Mode-6 Menu config arrays: hit=${p4Stats.M6.hit}  newKeys=${p4Stats.M6.newKeys}  conflictSkip=${p4Stats.M6.skipConflict}`
+);
+console.log(
+  `  Mode-7 Tpl prefix detect : hit=${p4Stats.M7.hit}  placeholderJsonKeys=${p4Stats.M7.placeholderKeys}  (manual tsx replace REQUIRED for these)`
+);
 if (p4Stats.M7.warnList.length > 0) {
   console.log(`  Mode-7 replace candidates (${p4Stats.M7.warnList.length} files):`);
   for (const w of p4Stats.M7.warnList.slice(0, 15)) console.log(`    · ${w}`);

@@ -237,7 +237,7 @@ impl DeadLetterQueue {
                 }
             }
         }
-        all_items.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+        all_items.sort_by_key(|a| std::cmp::Reverse(a.created_at));
 
         let total = all_items.len();
         let total_pages = if total == 0 {

@@ -26,10 +26,7 @@ const fs = require('fs');
 const path = require('path');
 
 const API_ROOT = path.resolve(__dirname, '../../apps/web/src/api');
-const MAPPING_FILE = path.resolve(
-  __dirname,
-  '../../apps/web/src/lib/navigation/moduleMapping.ts',
-);
+const MAPPING_FILE = path.resolve(__dirname, '../../apps/web/src/lib/navigation/moduleMapping.ts');
 
 // 白名单：非导航模块（存在于 API 目录但不在 moduleMapping 中是正常的）
 // 这些模块不参与前端导航路由，因此不需要在 moduleMapping 中注册
@@ -124,12 +121,8 @@ function main() {
 
   // moduleMapping 独有：在 moduleMapping 但不在 API 目录中
   const mappingOnly = mappingKeys.filter((m) => !apiSet.has(m));
-  const mappingOnlyWhitelisted = mappingOnly.filter((m) =>
-    MAPPING_WITHOUT_API_DIR.includes(m)
-  );
-  const mappingOnlyUnexpected = mappingOnly.filter(
-    (m) => !MAPPING_WITHOUT_API_DIR.includes(m)
-  );
+  const mappingOnlyWhitelisted = mappingOnly.filter((m) => MAPPING_WITHOUT_API_DIR.includes(m));
+  const mappingOnlyUnexpected = mappingOnly.filter((m) => !MAPPING_WITHOUT_API_DIR.includes(m));
 
   const report = {
     total_api_modules: apiModules.length,

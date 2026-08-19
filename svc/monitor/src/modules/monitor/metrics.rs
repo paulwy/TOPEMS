@@ -243,7 +243,7 @@ pub async fn get_database_metrics(
 ) -> Json<ApiResponse<DatabaseMetricsResponse>> {
     let metrics = DatabaseMetricsResponse {
         service_name: "topems-monitor".to_string(),
-        pool_size: state.pool.size() as u32,
+        pool_size: state.pool.size(),
         pool_idle: state.pool.num_idle(),
         active_transactions: 5,
         query_count: 12345,
@@ -278,7 +278,7 @@ pub async fn get_api_performance(
     let performances = vec![
         ApiPerformance {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             endpoint: "/api/customers".to_string(),
             method: "GET".to_string(),
             avg_response_time: 125.5,
@@ -293,7 +293,7 @@ pub async fn get_api_performance(
         },
         ApiPerformance {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             endpoint: "/api/employees".to_string(),
             method: "GET".to_string(),
             avg_response_time: 98.2,
@@ -308,7 +308,7 @@ pub async fn get_api_performance(
         },
         ApiPerformance {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             endpoint: "/api/projects".to_string(),
             method: "POST".to_string(),
             avg_response_time: 256.8,
@@ -485,7 +485,7 @@ pub async fn get_performance_summary(
     let slow_queries = vec![
         SlowQuery {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             query: "SELECT * FROM orders WHERE customer_id = ?".to_string(),
             duration_ms: 450.2,
             service_name: "topems-crm".to_string(),
@@ -495,7 +495,7 @@ pub async fn get_performance_summary(
         },
         SlowQuery {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             query: "SELECT SUM(amount) FROM transactions WHERE date >= ?".to_string(),
             duration_ms: 890.5,
             service_name: "topems-erp".to_string(),
@@ -505,7 +505,7 @@ pub async fn get_performance_summary(
         },
         SlowQuery {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             query: "SELECT * FROM projects WHERE status = 'active'".to_string(),
             duration_ms: 620.3,
             service_name: "topems-pm".to_string(),
@@ -585,7 +585,7 @@ pub async fn get_slow_queries(
     let queries = vec![
         SlowQuery {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             query: "SELECT * FROM orders WHERE customer_id = ? AND status = 'pending'".to_string(),
             duration_ms: 450.2,
             service_name: "topems-crm".to_string(),
@@ -595,7 +595,7 @@ pub async fn get_slow_queries(
         },
         SlowQuery {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             query: "SELECT SUM(amount) FROM transactions WHERE date >= ? AND account_id = ?".to_string(),
             duration_ms: 890.5,
             service_name: "topems-erp".to_string(),
@@ -605,7 +605,7 @@ pub async fn get_slow_queries(
         },
         SlowQuery {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             query: "SELECT * FROM projects WHERE status = 'active' ORDER BY updated_at DESC".to_string(),
             duration_ms: 620.3,
             service_name: "topems-pm".to_string(),
@@ -615,7 +615,7 @@ pub async fn get_slow_queries(
         },
         SlowQuery {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             query: "SELECT * FROM inventory WHERE stock_level < ?".to_string(),
             duration_ms: 380.7,
             service_name: "topems-wms".to_string(),
@@ -625,7 +625,7 @@ pub async fn get_slow_queries(
         },
         SlowQuery {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             query: "SELECT e.*, d.name as dept_name FROM employees e JOIN departments d ON e.dept_id = d.id WHERE d.org_id = ?".to_string(),
             duration_ms: 520.8,
             service_name: "topems-hrm".to_string(),
@@ -635,7 +635,7 @@ pub async fn get_slow_queries(
         },
         SlowQuery {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             query: "SELECT * FROM ai_models WHERE version = ? ORDER BY created_at DESC".to_string(),
             duration_ms: 750.2,
             service_name: "topems-ai".to_string(),

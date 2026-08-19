@@ -27,9 +27,13 @@ function collectFiles(dir) {
     if (entry.isDirectory()) {
       if (['__tests__', 'node_modules', 'test', 'tests', 'dist', 'build'].includes(entry.name)) continue;
       results.push(...collectFiles(fullPath));
-    } else if ((entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) &&
-               !entry.name.endsWith('.test.ts') && !entry.name.endsWith('.test.tsx') &&
-               !entry.name.endsWith('.d.ts') && !entry.name.endsWith('.stories.tsx')) {
+    } else if (
+      (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) &&
+      !entry.name.endsWith('.test.ts') &&
+      !entry.name.endsWith('.test.tsx') &&
+      !entry.name.endsWith('.d.ts') &&
+      !entry.name.endsWith('.stories.tsx')
+    ) {
       results.push(fullPath);
     }
   }
@@ -169,8 +173,11 @@ function fixFile(filePath) {
     // Actually, let's just find bare i18n.t('...'): at start of object property
     const objKeyRe2 = /^(\s*)i18n\.t\((['"][^'"]+['"])\)\s*:/gm;
     while ((m = objKeyRe2.exec(newLine)) !== null) {
-      newLine = newLine.substring(0, m.index + m[1].length) +
-        '[i18n.t(' + m[2] + ')]:' +
+      newLine =
+        newLine.substring(0, m.index + m[1].length) +
+        '[i18n.t(' +
+        m[2] +
+        ')]:' +
         newLine.substring(m.index + m[1].length + m[0].length - m[1].length);
       fixCount++;
       line = newLine;
@@ -190,7 +197,7 @@ function fixFile(filePath) {
 }
 
 // Main
-const dirs = args.filter(a => !a.startsWith('--'));
+const dirs = args.filter((a) => !a.startsWith('--'));
 const targetDirs = dirs.length > 0 ? dirs : ['.'];
 
 let totalFixed = 0;

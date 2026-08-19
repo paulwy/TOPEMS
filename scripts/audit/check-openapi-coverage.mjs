@@ -99,7 +99,9 @@ function extractRegisteredPaths(openapiRsContent) {
       continue;
     }
     // 匹配路径注册（crate:: 或 modules:: 开头，以逗号结尾）
-    const pathMatch = trimmed.match(/^((?:crate::)?modules?::[a-zA-Z0-9_:]+::[a-zA-Z0-9_]+|crate::[a-zA-Z0-9_:]+::[a-zA-Z0-9_]+)/);
+    const pathMatch = trimmed.match(
+      /^((?:crate::)?modules?::[a-zA-Z0-9_:]+::[a-zA-Z0-9_]+|crate::[a-zA-Z0-9_:]+::[a-zA-Z0-9_]+)/
+    );
     if (pathMatch) {
       entries.push({
         group: currentGroup,
@@ -138,10 +140,7 @@ function analyzeService(serviceName) {
   // 2. 统计 openapi.rs paths() 注册数
   //    尝试两个位置: src/openapi.rs 和 src/modules/openapi.rs
   let openapiRsPath = null;
-  const candidates = [
-    join(srcDir, 'modules', 'openapi.rs'),
-    join(srcDir, 'openapi.rs'),
-  ];
+  const candidates = [join(srcDir, 'modules', 'openapi.rs'), join(srcDir, 'openapi.rs')];
   for (const c of candidates) {
     if (existsSync(c)) {
       openapiRsPath = c;
@@ -162,13 +161,11 @@ function analyzeService(serviceName) {
   // 3. 计算覆盖率
   //    coverage = registered / annotated （注册了多少 annotated handler）
   //    如果 annotated > 0 且 registered >= annotated，coverage = min(100, ...)
-  const coverage = annotatedCount > 0
-    ? Math.min(100, Math.round((registeredCount / annotatedCount) * 100))
-    : 0;
+  const coverage = annotatedCount > 0 ? Math.min(100, Math.round((registeredCount / annotatedCount) * 100)) : 0;
 
   // 4. 找出 annotated 但未 registered 的 handler
-  const registeredSet = new Set(registeredEntries.map(e => e.path.split('::').pop()));
-  const unregistered = annotationDetails.filter(a => {
+  const registeredSet = new Set(registeredEntries.map((e) => e.path.split('::').pop()));
+  const unregistered = annotationDetails.filter((a) => {
     const fnName = a.operation_id;
     return fnName && !registeredSet.has(fnName);
   });
@@ -181,11 +178,11 @@ function analyzeService(serviceName) {
     coverage_pct: coverage,
     pass: coverage >= COVERAGE_THRESHOLD,
     unregistered_count: unregistered.length,
-    unregistered_sample: unregistered.slice(0, 10).map(u => ({
+    unregistered_sample: unregistered.slice(0, 10).map((u) => ({
       operation_id: u.operation_id,
       file: u.file,
     })),
-    annotation_sample: annotationDetails.slice(0, 5).map(a => ({
+    annotation_sample: annotationDetails.slice(0, 5).map((a) => ({
       operation_id: a.operation_id,
       path: a.path,
       tag: a.tag,
@@ -197,7 +194,7 @@ function analyzeService(serviceName) {
 
 function generateMarkdown(results) {
   const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
-  const allPass = results.every(r => r.pass);
+  const allPass = results.every((r) => r.pass);
 
   let md = `# OpenAPI 覆盖率对照报告\n\n`;
   md += `> **生成时间**: ${now} | **阈值**: ≥${COVERAGE_THRESHOLD}% | **总体**: ${allPass ? '✅ PASS' : '❌ FAIL'}\n\n`;
@@ -236,7 +233,7 @@ const jsonOnly = args.includes('--json');
 const ciMode = args.includes('--ci');
 
 const results = TARGET_SERVICES.map(analyzeService);
-const allPass = results.every(r => r.pass);
+const allPass = results.every((r) => r.pass);
 const summary = {
   generated_at: new Date().toISOString(),
   threshold_pct: COVERAGE_THRESHOLD,
@@ -261,7 +258,7 @@ if (jsonOnly) {
   console.log('└──────────────────────────────────────────────────┘\n');
 
   if (!allPass) {
-    for (const r of results.filter(x => !x.pass)) {
+    for (const r of results.filter((x) => !x.pass)) {
       console.log(`  ⚠ ${r.service}: ${r.unregistered_count} 个 handler 未注册`);
       for (const u of r.unregistered_sample.slice(0, 5)) {
         console.log(`    - ${u.operation_id} (${u.file})`);

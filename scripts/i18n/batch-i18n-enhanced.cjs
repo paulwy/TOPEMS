@@ -52,9 +52,13 @@ function collectFiles(dir) {
     if (entry.isDirectory()) {
       if (['__tests__', 'node_modules', 'test', 'tests', 'dist', 'build'].includes(entry.name)) continue;
       results.push(...collectFiles(fullPath));
-    } else if ((entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) &&
-               !entry.name.endsWith('.test.ts') && !entry.name.endsWith('.test.tsx') &&
-               !entry.name.endsWith('.d.ts') && !entry.name.endsWith('.stories.tsx')) {
+    } else if (
+      (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) &&
+      !entry.name.endsWith('.test.ts') &&
+      !entry.name.endsWith('.test.tsx') &&
+      !entry.name.endsWith('.d.ts') &&
+      !entry.name.endsWith('.stories.tsx')
+    ) {
       results.push(fullPath);
     }
   }
@@ -62,7 +66,11 @@ function collectFiles(dir) {
 }
 
 function loadJson(filepath) {
-  try { return JSON.parse(fs.readFileSync(filepath, 'utf-8')); } catch { return {}; }
+  try {
+    return JSON.parse(fs.readFileSync(filepath, 'utf-8'));
+  } catch {
+    return {};
+  }
 }
 
 function saveJson(filepath, data) {
@@ -121,11 +129,11 @@ function extractSegments(line) {
       }
 
       // Only process if there are Chinese text chunks
-      const hasChinese = chunks.some(c => c.type === 'text' && CJK_RE.test(c.value));
+      const hasChinese = chunks.some((c) => c.type === 'text' && CJK_RE.test(c.value));
       if (!hasChinese) continue;
 
       // Build replacement: concatenate i18n.t() calls and expressions
-      const replacementParts = chunks.map(c => {
+      const replacementParts = chunks.map((c) => {
         if (c.type === 'expr') {
           return '${' + c.value + '}';
         }
@@ -159,10 +167,7 @@ function extractSegments(line) {
   // 2. String literals with Chinese that were missed (broader pattern)
   const strRe = /(['"])((?:[${CJK_CHARS}][${CJK_CHARS}\\s\\w：，。、（）()·\\-—\\!！？%\\/]*))\\1/g;
   // Use a simpler approach - match any quoted string containing CJK
-  const strRe2 = new RegExp(
-    `(['"])((?:[^'"\\n]*[${CJK_CHARS}][^'"\\n]*))\\1`,
-    'g'
-  );
+  const strRe2 = new RegExp(`(['"])((?:[^'"\\n]*[${CJK_CHARS}][^'"\\n]*))\\1`, 'g');
   while ((m = strRe2.exec(line)) !== null) {
     if (!CJK_RE.test(m[2])) continue;
     const before = line.substring(0, m.index);
@@ -172,7 +177,7 @@ function extractSegments(line) {
     // Check if this overlaps with a template literal segment
     const segStart = m.index;
     const segEnd = m.index + m[0].length;
-    const overlaps = segments.some(s => segStart < s.end && segEnd > s.offset);
+    const overlaps = segments.some((s) => segStart < s.end && segEnd > s.offset);
     if (overlaps) continue;
 
     // Check if this string literal is a JSX attribute value (preceded by word=)
@@ -211,7 +216,7 @@ function extractSegments(line) {
 
     const segStart = m.index;
     const segEnd = m.index + m[0].length;
-    const overlaps = segments.some(s => segStart < s.end && segEnd > s.offset);
+    const overlaps = segments.some((s) => segStart < s.end && segEnd > s.offset);
     if (overlaps) continue;
 
     segments.push({
@@ -225,17 +230,14 @@ function extractSegments(line) {
 
   // 4. JSX attributes with Chinese: attr="中文" or attr='中文' (including non-CJK prefix)
   const jsxAttrRe = /(\w+)=(["'])((?:[^"'\n]*[CJK_CHARS][^"'\n]*))\2/g;
-  const jsxAttrReParsed = new RegExp(
-    `(\\w+)=(["'])((?:[^"'\\n]*[${CJK_CHARS}][^"'\\n]*))\\2`,
-    'g'
-  );
+  const jsxAttrReParsed = new RegExp(`(\\w+)=(["'])((?:[^"'\\n]*[${CJK_CHARS}][^"'\\n]*))\\2`, 'g');
   while ((m = jsxAttrReParsed.exec(line)) !== null) {
     const before = line.substring(0, m.index);
     if (/i18n\.t\s*\(\s*$/.test(before)) continue;
 
     const segStart = m.index;
     const segEnd = m.index + m[0].length;
-    const overlaps = segments.some(s => segStart < s.end && segEnd > s.offset);
+    const overlaps = segments.some((s) => segStart < s.end && segEnd > s.offset);
     if (overlaps) continue;
 
     segments.push({
@@ -256,17 +258,20 @@ function extractSegments(line) {
 
 function generateKey(moduleName, fl, text, index) {
   const prefix = `${moduleName}.${fl}`;
-  const hash = text.length <= 20
-    ? text.replace(/[\u4e00-\u9fff\u3400-\u4dbf]/g, '').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase()
-    : '';
+  const hash =
+    text.length <= 20
+      ? text
+          .replace(/[\u4e00-\u9fff\u3400-\u4dbf]/g, '')
+          .replace(/[^a-zA-Z0-9_]/g, '')
+          .toLowerCase()
+      : '';
   return hash ? `${prefix}.${hash}_${index}` : `${prefix}.k${index}`;
 }
 
 function ensureI18nImport(lines) {
-  const usesI18n = lines.some(l => /i18n\.t\s*\(/.test(l) && !/import/.test(l));
-  const hasImport = lines.some(l =>
-    /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l) ||
-    /import\s+\{\s*i18n\s*\}/.test(l)
+  const usesI18n = lines.some((l) => /i18n\.t\s*\(/.test(l) && !/import/.test(l));
+  const hasImport = lines.some(
+    (l) => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l) || /import\s+\{\s*i18n\s*\}/.test(l)
   );
   if (usesI18n && !hasImport) {
     let lastImport = -1;
@@ -320,7 +325,7 @@ function processFile(filePath, moduleName, translations) {
         modifiedLine = modifiedLine.replace(seg.full, `i18n.t('${key}')`);
         replacedCount++;
         usesI18n = true;
-        if (verbose) console.log(`  L${i+1}: \`${seg.text}\` -> i18n.t('${key}')`);
+        if (verbose) console.log(`  L${i + 1}: \`${seg.text}\` -> i18n.t('${key}')`);
       } else if (seg.type === 'template_interp') {
         // For template literals with interpolation, replace Chinese text chunks
         let newContent = '';
@@ -333,10 +338,10 @@ function processFile(filePath, moduleName, translations) {
               translations.zh[key] = chunk.value.trim();
               translations.en[key] = chunk.value.trim();
             }
-            newContent += '${i18n.t(\'' + key + '\')}';
+            newContent += "${i18n.t('" + key + "')}";
             replacedCount++;
             usesI18n = true;
-            if (verbose) console.log(`  L${i+1}: chunk \`${chunk.value}\` -> i18n.t('${key}')`);
+            if (verbose) console.log(`  L${i + 1}: chunk \`${chunk.value}\` -> i18n.t('${key}')`);
           } else {
             newContent += chunk.value;
           }
@@ -351,7 +356,7 @@ function processFile(filePath, moduleName, translations) {
         modifiedLine = modifiedLine.replace(seg.full, `i18n.t('${key}')`);
         replacedCount++;
         usesI18n = true;
-        if (verbose) console.log(`  L${i+1}: "${seg.text}" -> i18n.t('${key}')`);
+        if (verbose) console.log(`  L${i + 1}: "${seg.text}" -> i18n.t('${key}')`);
       } else if (seg.type === 'jsx_text') {
         const key = generateKey(moduleName, fl, seg.text, keyCounter++);
         if (!(key in translations.zh)) {
@@ -361,7 +366,7 @@ function processFile(filePath, moduleName, translations) {
         modifiedLine = modifiedLine.replace(seg.full, `>{i18n.t('${key}')}<`);
         replacedCount++;
         usesI18n = true;
-        if (verbose) console.log(`  L${i+1}: >${seg.text}< -> >{i18n.t('${key}')}<`);
+        if (verbose) console.log(`  L${i + 1}: >${seg.text}< -> >{i18n.t('${key}')}<`);
       } else if (seg.type === 'jsx_attr') {
         const key = generateKey(moduleName, fl, seg.text, keyCounter++);
         if (!(key in translations.zh)) {
@@ -371,7 +376,7 @@ function processFile(filePath, moduleName, translations) {
         modifiedLine = modifiedLine.replace(seg.full, `${seg.attr}={i18n.t('${key}')}`);
         replacedCount++;
         usesI18n = true;
-        if (verbose) console.log(`  L${i+1}: ${seg.attr}="${seg.text}" -> ${seg.attr}={i18n.t('${key}')}`);
+        if (verbose) console.log(`  L${i + 1}: ${seg.attr}="${seg.text}" -> ${seg.attr}={i18n.t('${key}')}`);
       }
     }
 

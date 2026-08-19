@@ -192,8 +192,10 @@ impl AlertManager {
     pub fn get_stats(&self) -> AlertStats {
         let alerts = self.active_alerts.read();
         let total = alerts.len();
-        let mut stats = AlertStats::default();
-        stats.total = total;
+        let mut stats = AlertStats {
+            total,
+            ..Default::default()
+        };
         for a in alerts.values() {
             match a.severity {
                 AlertSeverity::Info => stats.info += 1,

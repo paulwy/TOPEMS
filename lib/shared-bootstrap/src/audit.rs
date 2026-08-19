@@ -1191,9 +1191,15 @@ mod tests {
         // page=1, page_size=20 => 0
         // page=2, page_size=20 => 20
         // page=3, page_size=50 => 100
-        assert_eq!((1 - 1) * 20, 0);
-        assert_eq!(20, 20);
-        assert_eq!((3 - 1) * 50, 100);
+        let (page1, ps1) = (1usize, 20usize);
+        let (page2, ps2) = (2usize, 20usize);
+        let (page3, ps3) = (3usize, 50usize);
+        let offset1 = (page1.saturating_sub(1)) * ps1;
+        let offset2 = (page2.saturating_sub(1)) * ps2;
+        let offset3 = (page3.saturating_sub(1)) * ps3;
+        assert_eq!(offset1, 0);
+        assert_eq!(offset2, 20);
+        assert_eq!(offset3, 100);
     }
 
     // ===== create_routes 多种表限定词覆盖 =====

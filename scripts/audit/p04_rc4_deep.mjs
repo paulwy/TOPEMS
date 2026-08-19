@@ -115,8 +115,17 @@ function walkTs(dir) {
 }
 
 const NON_PATH_VARS = new Set([
-  'queryString', 'qs', 'params', 'searchParams', 'query', 'search',
-  'filter', 'sort', 'page', 'limit', 'offset',
+  'queryString',
+  'qs',
+  'params',
+  'searchParams',
+  'query',
+  'search',
+  'filter',
+  'sort',
+  'page',
+  'limit',
+  'offset',
 ]);
 
 function findTemplateLiteralEnd(text, startIndex) {
@@ -250,8 +259,14 @@ function parseFrontendApiFiles(files) {
       if (url === null) continue;
       const prefix = SERVICE_PREFIXES[service];
       if (!prefix) {
-        calls.push({ service, method, url, fullPath: null, file: relFile,
-          line: content.slice(0, match.index).split('\n').length });
+        calls.push({
+          service,
+          method,
+          url,
+          fullPath: null,
+          file: relFile,
+          line: content.slice(0, match.index).split('\n').length,
+        });
         continue;
       }
       let fullPath;
@@ -259,8 +274,14 @@ function parseFrontendApiFiles(files) {
       else fullPath = prefix + '/' + url;
       const qIdx = fullPath.indexOf('?');
       if (qIdx !== -1) fullPath = fullPath.slice(0, qIdx);
-      calls.push({ service, method, url, fullPath: normalizeFrontendPath(fullPath),
-        file: relFile, line: content.slice(0, match.index).split('\n').length });
+      calls.push({
+        service,
+        method,
+        url,
+        fullPath: normalizeFrontendPath(fullPath),
+        file: relFile,
+        line: content.slice(0, match.index).split('\n').length,
+      });
     }
   }
   return calls;
@@ -293,9 +314,9 @@ console.log(`  -> Total undocumented: ${allUndocumented.length}`);
 console.log('[2/3] Sub-categorizing RC4 items...');
 
 const rc4SubCategories = {
-  RC4a_missing_utoipa: [],    // Path likely exists in backend but no utoipa annotation
-  RC4b_admin_system: [],      // Admin/system endpoints in unified-core
-  RC4c_query_string: [],      // Paths with query strings not stripped
+  RC4a_missing_utoipa: [], // Path likely exists in backend but no utoipa annotation
+  RC4b_admin_system: [], // Admin/system endpoints in unified-core
+  RC4c_query_string: [], // Paths with query strings not stripped
   RC4d_truly_unregistered: [], // No backend route exists
 };
 
@@ -317,32 +338,39 @@ for (const op of openapiOps) {
 
 for (const item of allUndocumented) {
   const fp = item.fullPath || '';
-  
+
   // Check if it's actually an RC1 (prefix mismatch) or RC5 (frontend internal)
   if (fp.includes('/api/v1/')) continue; // RC1
   if (fp.includes('/:')) continue; // RC3
   if (fp.includes('/mock') || fp.includes('/local') || fp.includes('/test') || fp.includes('/dev')) continue; // RC5
-  
+
   // Check for query string artifacts
   if (fp.includes('${') || fp.includes('queryString') || fp.includes('undefined')) {
     rc4SubCategories.RC4c_query_string.push(item);
     continue;
   }
-  
+
   // RC4b: Admin/system endpoints
-  if (fp.includes('/admin/') || fp.includes('/system/') || fp.includes('/core/audit/') ||
-      fp.includes('/core/monitor/') || fp.includes('/core/system/') ||
-      fp.includes('/core/security/') || fp.includes('/core/iam/') ||
-      fp.includes('/core/migration/') || fp.includes('/core/automation/')) {
+  if (
+    fp.includes('/admin/') ||
+    fp.includes('/system/') ||
+    fp.includes('/core/audit/') ||
+    fp.includes('/core/monitor/') ||
+    fp.includes('/core/system/') ||
+    fp.includes('/core/security/') ||
+    fp.includes('/core/iam/') ||
+    fp.includes('/core/migration/') ||
+    fp.includes('/core/automation/')
+  ) {
     rc4SubCategories.RC4b_admin_system.push(item);
     continue;
   }
-  
+
   // RC4a: Check if the path stem exists in OpenAPI (meaning the resource exists
   // but the specific sub-path doesn't have utoipa annotation)
   const fpStem = fp.replace(/\/\{[^}]+\}/g, '');
   const fpParts = fp.split('/');
-  
+
   // Check if the resource base exists (e.g. /api/erp/addressbook exists in backend
   // but not in OpenAPI)
   let stemMatch = false;
@@ -357,17 +385,17 @@ for (const item of allUndocumented) {
       }
     }
   }
-  
+
   if (stemMatch) {
     rc4SubCategories.RC4a_missing_utoipa.push(item);
   } else {
     // Check if the service exists in OpenAPI at all
     const servicePrefix = fpParts.slice(0, 3).join('/'); // e.g. /api/erp
-    const serviceExists = openapiOps.some(op => {
+    const serviceExists = openapiOps.some((op) => {
       const opNp = normalizeFrontendPath(op.normalizedPath);
       return opNp.startsWith(servicePrefix + '/');
     });
-    
+
     if (serviceExists) {
       // Service exists in OpenAPI but this specific resource doesn't
       // This means the backend has the service but doesn't expose this endpoint
@@ -380,10 +408,10 @@ for (const item of allUndocumented) {
 
 console.log(`  -> RC4a (missing utoipa): ${rc4SubCategories.RC4a_missing_utoipa.length}`);
 // TEMP: Print all finance RC4a items
-const financeRc4a = rc4SubCategories.RC4a_missing_utoipa.filter(i => i.service === 'finance');
+const financeRc4a = rc4SubCategories.RC4a_missing_utoipa.filter((i) => i.service === 'finance');
 console.log(`  -> Finance RC4a items (${financeRc4a.length}):`);
 financeRc4a.forEach((item, i) => {
-  console.log(`    ${i+1}. [${item.method}] ${item.fullPath}  (${item.file}:${item.line})`);
+  console.log(`    ${i + 1}. [${item.method}] ${item.fullPath}  (${item.file}:${item.line})`);
 });
 console.log(`  -> RC4b (admin/system): ${rc4SubCategories.RC4b_admin_system.length}`);
 console.log(`  -> RC4c (query string): ${rc4SubCategories.RC4c_query_string.length}`);
@@ -442,29 +470,32 @@ console.log(`\nJSON result: ${OUTPUT_JSON}`);
 console.log('\n=== RC4 Sub-Category Summary ===\n');
 console.log('| Sub-Category | Count | Description |');
 console.log('|-------------|-------|-------------|');
-console.log(`| RC4a — Missing utoipa | ${output.subCategories.RC4a_missing_utoipa.count} | Backend route exists but no utoipa annotation |`);
-console.log(`| RC4b — Admin/System | ${output.subCategories.RC4b_admin_system.count} | Admin/system endpoints in unified-core |`);
+console.log(
+  `| RC4a — Missing utoipa | ${output.subCategories.RC4a_missing_utoipa.count} | Backend route exists but no utoipa annotation |`
+);
+console.log(
+  `| RC4b — Admin/System | ${output.subCategories.RC4b_admin_system.count} | Admin/system endpoints in unified-core |`
+);
 console.log(`| RC4c — Query String | ${output.subCategories.RC4c_query_string.count} | Path parsing artifacts |`);
-console.log(`| RC4d — Truly Unregistered | ${output.subCategories.RC4d_truly_unregistered.count} | No backend route exists |`);
+console.log(
+  `| RC4d — Truly Unregistered | ${output.subCategories.RC4d_truly_unregistered.count} | No backend route exists |`
+);
 console.log(`| **Total** | **${output.rc4_total}** | |`);
 
 console.log('\n=== RC4a by Service ===');
-const rc4aSorted = Object.entries(output.subCategories.RC4a_missing_utoipa.byService)
-  .sort((a, b) => b[1] - a[1]);
+const rc4aSorted = Object.entries(output.subCategories.RC4a_missing_utoipa.byService).sort((a, b) => b[1] - a[1]);
 for (const [svc, count] of rc4aSorted) {
   console.log(`  ${svc}: ${count}`);
 }
 
 console.log('\n=== RC4b by Service ===');
-const rc4bSorted = Object.entries(output.subCategories.RC4b_admin_system.byService)
-  .sort((a, b) => b[1] - a[1]);
+const rc4bSorted = Object.entries(output.subCategories.RC4b_admin_system.byService).sort((a, b) => b[1] - a[1]);
 for (const [svc, count] of rc4bSorted) {
   console.log(`  ${svc}: ${count}`);
 }
 
 console.log('\n=== RC4d by Service ===');
-const rc4dSorted = Object.entries(output.subCategories.RC4d_truly_unregistered.byService)
-  .sort((a, b) => b[1] - a[1]);
+const rc4dSorted = Object.entries(output.subCategories.RC4d_truly_unregistered.byService).sort((a, b) => b[1] - a[1]);
 for (const [svc, count] of rc4dSorted) {
   console.log(`  ${svc}: ${count}`);
 }
@@ -473,12 +504,12 @@ for (const [svc, count] of rc4dSorted) {
 console.log('\n=== RC4d Samples (Truly Unregistered) ===');
 console.log('| # | Service | Method | Path | File |');
 rc4SubCategories.RC4d_truly_unregistered.slice(0, 30).forEach((item, i) => {
-  console.log(`| ${i+1} | ${item.service} | ${item.method} | \`${item.fullPath}\` | ${item.file}:${item.line} |`);
+  console.log(`| ${i + 1} | ${item.service} | ${item.method} | \`${item.fullPath}\` | ${item.file}:${item.line} |`);
 });
 
 // Print RC4a samples
 console.log('\n=== RC4a Samples (Missing utoipa) ===');
 console.log('| # | Service | Method | Path | File |');
 rc4SubCategories.RC4a_missing_utoipa.slice(0, 20).forEach((item, i) => {
-  console.log(`| ${i+1} | ${item.service} | ${item.method} | \`${item.fullPath}\` | ${item.file}:${item.line} |`);
+  console.log(`| ${i + 1} | ${item.service} | ${item.method} | \`${item.fullPath}\` | ${item.file}:${item.line} |`);
 });

@@ -46,7 +46,12 @@ function collectTsFiles(dir) {
     if (entry.isDirectory()) {
       if (['__tests__', 'node_modules', 'test', 'tests', 'dist', 'build'].includes(entry.name)) continue;
       results.push(...collectTsFiles(fullPath));
-    } else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.test.ts') && !entry.name.endsWith('.d.ts') && entry.name !== 'index.ts') {
+    } else if (
+      entry.name.endsWith('.ts') &&
+      !entry.name.endsWith('.test.ts') &&
+      !entry.name.endsWith('.d.ts') &&
+      entry.name !== 'index.ts'
+    ) {
       results.push(fullPath);
     }
   }
@@ -54,7 +59,11 @@ function collectTsFiles(dir) {
 }
 
 function loadJson(filepath) {
-  try { return JSON.parse(fs.readFileSync(filepath, 'utf-8')); } catch { return {}; }
+  try {
+    return JSON.parse(fs.readFileSync(filepath, 'utf-8'));
+  } catch {
+    return {};
+  }
 }
 
 function saveJson(filepath, data) {
@@ -76,7 +85,8 @@ function hasI18nT(line) {
 
 function extractChineseStrings(line) {
   const segments = [];
-  const strRe = /(['"])((?:[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\s\w：，。、（）()·\-—\!！？%\/]*))\1/g;
+  const strRe =
+    /(['"])((?:[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\s\w：，。、（）()·\-—\!！？%\/]*))\1/g;
   let m;
   while ((m = strRe.exec(line)) !== null) {
     if (!CJK_RE.test(m[2])) continue;
@@ -95,15 +105,19 @@ function extractChineseStrings(line) {
 
 function generateKey(moduleName, fl, text, index) {
   const prefix = `${moduleName}.${fl}`;
-  const hash = text.length <= 20
-    ? text.replace(/[\u4e00-\u9fff\u3400-\u4dbf]/g, '').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase()
-    : '';
+  const hash =
+    text.length <= 20
+      ? text
+          .replace(/[\u4e00-\u9fff\u3400-\u4dbf]/g, '')
+          .replace(/[^a-zA-Z0-9_]/g, '')
+          .toLowerCase()
+      : '';
   return hash ? `${prefix}.${hash}_${index}` : `${prefix}.k${index}`;
 }
 
 function ensureImport(lines) {
-  const hasImport = lines.some(l => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l));
-  const usesI18n = lines.some(l => /i18n\.t\s*\(/.test(l) && !/import/.test(l));
+  const hasImport = lines.some((l) => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l));
+  const usesI18n = lines.some((l) => /i18n\.t\s*\(/.test(l) && !/import/.test(l));
   if (usesI18n && !hasImport) {
     let lastImport = -1;
     for (let i = 0; i < lines.length; i++) {
