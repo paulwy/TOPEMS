@@ -68,12 +68,9 @@ function main() {
   }
 
   if (r7Hits.length > 0) {
+    const svcNames = r7Hits.map(h => h.name).sort().join(', ');
     console.log('');
-    console.log('  R7 · Middleware-Duplicate-Detector details:');
-    for (const h of r7Hits) {
-      const relPath = path.relative(ROOT, h.tenantPath);
-      console.log(`    - svc/${h.name}: middleware/tenant.rs duplicated (${relPath})`);
-    }
+    console.log(`    - R7 hits (${r7Hits.length}): ${svcNames}`);
   }
 
   const r7Count = r7Hits.length;

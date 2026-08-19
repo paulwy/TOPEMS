@@ -313,6 +313,32 @@ jobs:
       - name: Run cargo check (workspace, all tests)
         run: RUSTFLAGS="-D warnings" SQLX_OFFLINE="true" cargo check --workspace --tests --message-format=short
 
+  # ──────────────────────────────────────────────────────────────────────────
+  # [V247 D-track NEW] cargo-test baseline job (non-blocking, establishes run baseline)
+  # Goal: upgrade from `cargo test --workspace --no-run` (compile-only) to full
+  # `cargo test --workspace` execution. V247 keeps continue-on-error: true;
+  # will switch to blocking after N consecutive green runs.
+  # ──────────────────────────────────────────────────────────────────────────
+  cargo-test:
+    name: Cargo Test (V247 baseline, non-blocking)
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    continue-on-error: true  # V247: 基线阶段不阻断
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - name: Run tests
+        run: cargo test --workspace 2>&1 | tee /tmp/cargo-test-output.log
+      - name: Test summary
+        if: always()
+        run: |
+          echo "## Cargo Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "$(grep -E '^test result:' /tmp/cargo-test-output.log | tail -1)" >> $GITHUB_STEP_SUMMARY
+
   rust-test:
     name: Rust Tests
     needs: [changes, rust-lint, fmt-check, clippy-check, cargo-check]
@@ -1020,10 +1046,10 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
-      - name: "Run Axum Layer Order Checker (R1 strict: --fail-fast R1:0, R2:10_buffered / R3 allowed)"
+      - name: "Run Axum Layer Order Checker (R1 strict: --fail-fast R1:0, R2:3_buffered / R3 allowed)"
         run: |
           node scripts/ci/check-axum-layer-order.cjs \
-            --fail-fast --thresholds=R1:0,R2:10,R3:999999 \
+            --fail-fast --thresholds=R1:0,R2:3,R3:999999 \
             --report-json=/tmp/axum-layer-report.json 2>&1 | tee /tmp/axum-layer-output.log
           EXIT_CODE=${PIPESTATUS[0]}
 

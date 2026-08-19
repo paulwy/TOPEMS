@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
 use crate::handlers::{ai_handlers, connector_handlers, dify_handlers, health};
-use crate::middleware;
 use crate::modules::{
     AnalysisApi, CodeAssistantApi, DocumentApi, EmbeddingApi, MultimodalApi, QaApi,
     RecommendationApi, VectorApi,
@@ -30,6 +29,7 @@ pub use crate::modules::openapi::ApiDoc as AiApiDoc;
 
 pub fn create_routes(
     app_state: AppState,
+    pool: sqlx::PgPool,
     prometheus_layer: PrometheusMetricLayer<'static>,
     metric_handle: PrometheusHandle,
 ) -> Router {
@@ -143,8 +143,9 @@ pub fn create_routes(
         // Axum layer order: LAST added = OUTERMOST = runs FIRST on incoming request.
         // Therefore tenant_middleware (needs Claims) must be added FIRST (innermost),
         // auth_middleware (inserts Claims) must be added LAST (outermost).
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
@@ -162,8 +163,9 @@ pub fn create_routes(
         // Axum layer order: LAST added = OUTERMOST = runs FIRST on incoming request.
         // Therefore tenant_middleware (needs Claims) must be added FIRST (innermost),
         // auth_middleware (inserts Claims) must be added LAST (outermost).
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
@@ -176,8 +178,9 @@ pub fn create_routes(
         // Axum layer order: LAST added = OUTERMOST = runs FIRST on incoming request.
         // Therefore tenant_middleware (needs Claims) must be added FIRST (innermost),
         // auth_middleware (inserts Claims) must be added LAST (outermost).
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
@@ -207,8 +210,9 @@ pub fn create_routes(
         // Axum layer order: LAST added = OUTERMOST = runs FIRST on incoming request.
         // Therefore tenant_middleware (needs Claims) must be added FIRST (innermost),
         // auth_middleware (inserts Claims) must be added LAST (outermost).
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
@@ -245,8 +249,9 @@ pub fn create_routes(
         // Axum layer order: LAST added = OUTERMOST = runs FIRST on incoming request.
         // Therefore tenant_middleware (needs Claims) must be added FIRST (innermost),
         // auth_middleware (inserts Claims) must be added LAST (outermost).
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
@@ -282,8 +287,9 @@ pub fn create_routes(
         // Axum layer order: LAST added = OUTERMOST = runs FIRST on incoming request.
         // Therefore tenant_middleware (needs Claims) must be added FIRST (innermost),
         // auth_middleware (inserts Claims) must be added LAST (outermost).
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),

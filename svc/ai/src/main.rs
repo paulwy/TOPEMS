@@ -354,6 +354,7 @@ async fn main() -> anyhow::Result<()> {
         .map_err(|_| anyhow::anyhow!("DIFY_CONFIG already initialized"))?;
 
     // 创建服务
+    let pool = db.pool().clone();
     let vector_service = VectorService::new(db);
     let file_service_url =
         std::env::var("FILE_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
@@ -470,7 +471,7 @@ async fn main() -> anyhow::Result<()> {
     };
 
     // 创建路由（routes::create_routes 处理所有中间件：auth、tenant、rate_limit、cors、prometheus、telemetry）
-    let router = crate::routes::create_routes(app_state, prometheus_layer, metric_handle);
+    let router = crate::routes::create_routes(app_state, pool, prometheus_layer, metric_handle);
 
     // 启动时自动注册到统一核心
     let core_url = std::env::var("CORE_URL").ok();
