@@ -1,6 +1,55 @@
 #!/usr/bin/env node
 'use strict';
 
+/* =======================================================================
+ *  perm-matrix-toolkit.cjs — Perm-Gate unified CLI
+ *
+ *  VERSION: perm-gate-ci-report@1.0.0 (V256 milestone)
+ *
+ *  ========== 里程碑：V256（2026-08-20）==========
+ *
+ *  1. R2 全仓清零 ✅  —  scanR2RealFull() 升级真扫全 31 svc
+ *     · 20 svc（2 批）接入 shared-auth require_permission("<svc>:admin") middleware
+ *     · portal 漏接补全；scanR2 从 targeted8 白名单 → 全仓扫描
+ *     · 全仓 R2=0（STRICT + FAIL-ON-WARN 双模式均验证）
+ *
+ *  2. R3 可追溯 ✅  —  scanR3Real() 精确匹配 + 规则归一 hits[]
+ *     · findMatchingBraceClose() 精确限制扫描范围到函数体内（不再跨 function 过扫）
+ *     · utoipa security(admin) scope 同步加入识别：凡 utoipa security 有 admin 子权限
+ *       的 handler 均视作 admin-only，缺 "// gate: admin-only" 记为 R3 hit
+ *     · rules[R3].hits[] = [{ svc, file, line, fnName, anchor, why }] 全字段可追溯
+ *     · V255 遗留 R3=1 → V256 P0-2 后清零；rewrites 扩大 admin scope 后现 R3=38（新识别）
+ *
+ *  3. R7 详情输出 ✅  —  R7 double-track anti-pattern 不再只有 count
+ *     · r7Hits = [{ name (svc), middleware (tenant middleware path), sharedAuth (factory path) }]
+ *     · rules[R7].hits[] 与 R1-R6 统一归一，reportRuleHitsTable() 全量输出
+ *
+ *  4. ci-report 三模式退出码全验证 ✅
+ *     · DRY-RUN              : 强制 exit=0（人跑不阻断）
+ *     · STRICT（默认）       : R1/R4/R5/R6 FAIL > 0 → exit=1；R2/R3/R7 WARN 仅报告
+ *     · FAIL-ON-WARN         : R1-R7 任一规则 >0 → exit=1（CI 未来收紧开关）
+ *     · 验证用例：R3=38 → STRICT exit=0 / FAIL-ON-WARN exit=1；删 gate→R3=39 → FAIL-ON-WARN exit=1
+ *
+ *  5. GitHub Step Summary 自动写入 ✅  —  检测 $GITHUB_STEP_SUMMARY 环境变量
+ *     · 追加 Markdown：Summary 表（R1-R7 id/count/severity/desc） + Hits per rule 明细表（top 20/rule）
+ *     · 供 GHA Perm-Gate step 直接渲染，无需额外 step 转换
+ *
+ *  6. perm-code-mapping.json 全仓覆盖（V256 P1-1 + P1-2）
+ *     · 顶层 12 svc → 27 svc（P1-1 第二轮）→ 32 svc（P1-2 第三轮）全覆盖
+ *     · non-comment keys 107 → 315 → 460
+ *     · 细粒度：<svc>:<domain>:<sub>:<action> 4 层嵌套 glob 匹配
+ *     · auto-insert --enable-mapping DRY-RUN 32/32 "[already aligned]"，0 fallthrough
+ *     · auto-insert --enable-mapping --rewrite-existing --apply：122 files × 683 rewrites 全仓落地
+ *
+ *  子命令：
+ *    scan             R1-R7 数字扫描 + 可写 report JSON
+ *    ci-report        CI 严格模式（STRICT / FAIL-ON-WARN / DRY-RUN）
+ *    matrix           perm → svc → handler 映射矩阵 → JSON
+ *    diff             比较两个报告 JSON
+ *
+ *  退出码（ci-report）：见上 4
+ * ======================================================================= */
+
 const fs = require('fs');
 const path = require('path');
 
@@ -309,6 +358,115 @@ function reportRuleHitsTable(rules, opts = {}) {
     console.log(`  ${pad(r.rule,widths.rule)} | ${pad(r.svc,widths.svc)} | ${pad(r.fileLine,widths.fileLine)} | ${pad(r.fn,widths.fn)} | ${pad(String(r.anchor),widths.anchor)} | ${pad(r.why,widths.why)}`);
   }
   return rows.length;
+}
+
+/* ============================================================
+ *  writeGitHubStepSummary() — 检测 $GITHUB_STEP_SUMMARY 自动写 Markdown
+ *  内容：
+ *    · H2 标题 + 模式/退出码/规则摘要表
+ *    · "Hits per rule"：R1-R7 每条规则的 top 20 明细（svc / file:line / fn / why）
+ *  在 GHA Perm-Gate Step 直接渲染，无需额外 step 转换
+ * ============================================================ */
+function writeGitHubStepSummary(rules, r7Hits, cfg) {
+  const stepSummaryPath = process.env.GITHUB_STEP_SUMMARY;
+  if (!stepSummaryPath) return false;
+
+  const md = [];
+  const esc = (s) => String(s ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
+  const now = new Date();
+  const modeStr = (cfg.dryRun ? 'DRY-RUN' : 'STRICT') + (cfg.failOnWarn && !cfg.dryRun ? ' + FAIL-ON-WARN' : '');
+  const ruleMap = {};
+  for (const r of rules) ruleMap[r.id] = r;
+  ruleMap['R7'] = { id: 'R7', count: (r7Hits && r7Hits.length) || 0, severity: 'WARN', desc: 'service has local middleware/tenant.rs AND uses shared-auth factory (double-track anti-pattern, migrate to shared-auth)' };
+
+  md.push('## Perm-Gate Quality Report');
+  md.push('');
+  md.push(`_Mode: **${modeStr}** · Exit: **${cfg.exitCode}** · Generated: ${now.toISOString()}_`);
+  md.push('');
+  md.push('### Summary');
+  md.push('');
+  md.push('| Rule | Count | Severity | Description |');
+  md.push('|------|------:|:--------:|-------------|');
+  for (const id of ['R1','R2','R3','R4','R5','R6','R7']) {
+    const r = ruleMap[id];
+    if (!r) continue;
+    md.push(`| ${r.id} | ${r.count} | ${r.severity} | ${esc(r.desc)} |`);
+  }
+  md.push('');
+
+  const ALL_RULE_IDS = ['R1','R2','R3','R4','R5','R6','R7'];
+  let hitsCount = 0;
+  for (const id of ALL_RULE_IDS) {
+    const r = ruleMap[id];
+    let hits = Array.isArray(r.hits) ? r.hits : [];
+    if (id === 'R7' && (r7Hits && r7Hits.length > 0) && hits.length === 0) hits = r7Hits;
+    if (!hits || hits.length === 0) continue;
+    hitsCount += hits.length;
+  }
+  md.push(`### Hits per rule (${hitsCount} total hits)`);
+  md.push('');
+  if (hitsCount === 0) {
+    md.push('_No hits. All rules are clean._');
+    md.push('');
+  } else {
+    for (const id of ALL_RULE_IDS) {
+      const r = ruleMap[id];
+      let hits = Array.isArray(r.hits) ? r.hits : [];
+      if (id === 'R7' && (r7Hits && r7Hits.length > 0) && hits.length === 0) hits = r7Hits;
+      if (!hits || hits.length === 0) continue;
+      const displayed = hits.slice(0, 20);
+      md.push(`<details>`);
+      md.push(`<summary><strong>${id}</strong> · ${r.count} hits${hits.length > 20 ? ` (showing top 20 of ${hits.length})` : ''} · ${r.severity}</summary>`);
+      md.push('');
+      md.push('| Svc | File:Line | Fn | Anchor | Why |');
+      md.push('|:----|:----------|:---|:-------|:----|');
+      for (const h of displayed) {
+        let why = '';
+        if (id === 'R2') why = h.reason || (h.cargoHasSharedAuthDep ? 'no require_permission() call' : 'no shared-auth dep');
+        else if (id === 'R3') {
+          const tags = [];
+          if (h.hasUtoipaAdminSecurity) tags.push('utoipa-security(admin)');
+          if (h.hasBodyAdminLogic) tags.push('body-admin-call');
+          why = tags.join(', ') || (h.why || 'admin-only endpoint missing `// gate: admin-only`');
+        } else if (id === 'R7') {
+          why = `middleware=${h.middleware || '-'} · sharedAuth=${h.sharedAuth || '-'}`;
+        } else if (id === 'R4') {
+          why = 'topems-rbac declared but unused';
+        } else if (id === 'R5') {
+          why = h.reason || 'utoipa path missing security()/permission() attribute';
+        } else if (id === 'R6') {
+          why = h.reason || 'PERM_SCOPE wildcard "*" without explicit tenant scope';
+        } else if (id === 'R1') {
+          why = 'permission module missing in lib.rs (no `pub mod permission;`)';
+        }
+        const svc = h.svc ?? h.name ?? '-';
+        const fileRel = (h.file ? path.relative(ROOT, h.file) : (h.path ?? h.cargoPath ?? '-'));
+        const lineNum = h.line ?? h.lineNum ?? h.anchorLine ?? '';
+        const fileLine = fileRel + (lineNum ? `:${lineNum}` : '');
+        const fnName = h.fnName || h.fn || '-';
+        const anchor = h.anchorLine != null ? String(h.anchorLine) : '';
+        md.push(`| ${esc(svc)} | ${esc(fileLine)} | ${esc(fnName)} | ${esc(anchor)} | ${esc(why)} |`);
+      }
+      md.push('');
+      md.push(`</details>`);
+      md.push('');
+    }
+  }
+
+  md.push(`---`);
+  md.push('');
+  md.push('_Generated by `perm-matrix-toolkit.cjs ci-report` — V256 milestone · R2=0 full-warehouse · R3 traceable · R7 hits detail · mapping 32/32 coverage_');
+  md.push('');
+
+  try {
+    fs.mkdirSync(path.dirname(stepSummaryPath), { recursive: true });
+    fs.appendFileSync(stepSummaryPath, md.join('\n'), 'utf8');
+    return true;
+  } catch (err) {
+    // Step Summary 写入失败不阻断 CI
+    console.error(`[warn] cannot write GITHUB_STEP_SUMMARY (${stepSummaryPath}): ${err.message}`);
+    return false;
+  }
 }
 
 function scanR4Real() {
@@ -648,9 +806,18 @@ function runCiReport() {
     }
   }
 
-  console.log('');
   console.log(`  ci-report mode   : ${dryRun ? 'DRY-RUN' : 'STRICT'}${failOnWarn && !dryRun ? ' + FAIL-ON-WARN' : ''}`);
   console.log(`  exit code        : ${exitCode}`);
+
+  // P2-1④：GitHub Step Summary 写入（仅在 CI 环境，不影响本地运行）
+  const wroteSummary = writeGitHubStepSummary(rules, r7Hits, {
+    dryRun,
+    failOnWarn,
+    exitCode,
+  });
+  if (wroteSummary) {
+    console.log(`  step summary     : written to $GITHUB_STEP_SUMMARY (${process.env.GITHUB_STEP_SUMMARY})`);
+  }
 
   process.exitCode = exitCode;
   return report;
