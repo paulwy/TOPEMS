@@ -809,6 +809,7 @@ const PluginMarketplacePage: React.FC = () => {
 
   const loading = pluginsQuery.isLoading;
   const plugins = pluginsQuery.data || [];
+  const suites = useMemo(() => SUITES(), [t]);
 
   const handleRefresh = () => {
     Promise.all([pluginsQuery.refetch(), healthQuery.refetch(), fetchInstalledPlugins(true)]);
@@ -932,7 +933,7 @@ const PluginMarketplacePage: React.FC = () => {
                   onChange={(e) => setSelectedSuite(e.target.value)}
                 >
                   <MenuItem value='all'>{t('plugin.marketplace_page.filter.all_suites')}</MenuItem>
-                  {SUITES.map((suite) => (
+                  {suites.map((suite) => (
                     <MenuItem
                       key={suite.code}
                       value={suite.code}
@@ -1008,7 +1009,7 @@ const PluginMarketplacePage: React.FC = () => {
               mb: 8,
             }}
           >
-            {SUITES.map((suite) => (
+            {suites.map((suite) => (
               <Card
                 key={suite.id}
                 sx={{
@@ -1083,7 +1084,7 @@ const PluginMarketplacePage: React.FC = () => {
             >
               {selectedSuite === 'all'
                 ? t('plugin.marketplace_page.all_plugins')
-                : SUITES.find((s) => s.code === selectedSuite)?.name}
+                : suites.find((s) => s.code === selectedSuite)?.name}
             </Typography>
             <Typography
               variant='body2'

@@ -12,62 +12,25 @@ import { StatusBadge } from '@/components/qms/StatusBadge';
 import { FSMActionButtons } from '@/components/qms/FSMActionButtons';
 import { QMS_PATHS } from '@/modules/qms/config';
 import i18n from '@/i18n';
-
-const STEPS = [
-  {
-    id: 'd1',
-    label: i18n.t('pages.qms_eight_d_detail_page.d1_0'),
-    field: 'd1Content',
-    done: 'd1TeamEstablished',
-  },
-  {
-    id: 'd2',
-    label: i18n.t('pages.qms_eight_d_detail_page.d2_1'),
-    field: 'd2Content',
-    done: 'd2ProblemDescribed',
-  },
-  {
-    id: 'd3',
-    label: i18n.t('pages.qms_eight_d_detail_page.d3_2'),
-    field: 'd3Content',
-    done: 'd3ContainmentImplemented',
-  },
-  {
-    id: 'd4',
-    label: i18n.t('pages.qms_eight_d_detail_page.d4_3'),
-    field: 'd4Content',
-    done: 'd4RootCauseIdentified',
-  },
-  {
-    id: 'd5',
-    label: i18n.t('pages.qms_eight_d_detail_page.d5_4'),
-    field: 'd5Content',
-    done: 'd5PermanentActionSelected',
-  },
-  {
-    id: 'd6',
-    label: i18n.t('pages.qms_eight_d_detail_page.d6_5'),
-    field: 'd6Content',
-    done: 'd6ActionVerified',
-  },
-  {
-    id: 'd7',
-    label: i18n.t('pages.qms_eight_d_detail_page.d7_6'),
-    field: 'd7Content',
-    done: 'd7PreventiveImplemented',
-  },
-  {
-    id: 'd8',
-    label: i18n.t('pages.qms_eight_d_detail_page.d8_7'),
-    field: 'd8Content',
-    done: 'd8TeamRecognized',
-  },
-] as const;
-const SEVERITY_LABELS: Record<string, string> = {
-  critical: i18n.t('qms.qms_eight_d_detail_page.k0'),
-  major: i18n.t('qms.qms_eight_d_detail_page.k1'),
-  minor: i18n.t('qms.qms_eight_d_detail_page.k2'),
-};
+function getSteps() {
+  return [
+    { id: 'd1', label: i18n.t('pages.qms_eight_d_detail_page.d1_0'), field: 'd1Content', done: 'd1TeamEstablished' },
+    { id: 'd2', label: i18n.t('pages.qms_eight_d_detail_page.d2_1'), field: 'd2Content', done: 'd2ProblemDescribed' },
+    { id: 'd3', label: i18n.t('pages.qms_eight_d_detail_page.d3_2'), field: 'd3Content', done: 'd3ContainmentImplemented' },
+    { id: 'd4', label: i18n.t('pages.qms_eight_d_detail_page.d4_3'), field: 'd4Content', done: 'd4RootCauseIdentified' },
+    { id: 'd5', label: i18n.t('pages.qms_eight_d_detail_page.d5_4'), field: 'd5Content', done: 'd5PermanentActionSelected' },
+    { id: 'd6', label: i18n.t('pages.qms_eight_d_detail_page.d6_5'), field: 'd6Content', done: 'd6ActionVerified' },
+    { id: 'd7', label: i18n.t('pages.qms_eight_d_detail_page.d7_6'), field: 'd7Content', done: 'd7PreventiveImplemented' },
+    { id: 'd8', label: i18n.t('pages.qms_eight_d_detail_page.d8_7'), field: 'd8Content', done: 'd8TeamRecognized' },
+  ] as const;
+}
+function getSeverityLabels(): Record<string, string> {
+  return {
+    critical: i18n.t('qms.qms_eight_d_detail_page.k0'),
+    major: i18n.t('qms.qms_eight_d_detail_page.k1'),
+    minor: i18n.t('qms.qms_eight_d_detail_page.k2'),
+  };
+}
 export default function QmsEightDDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -112,9 +75,7 @@ export default function QmsEightDDetailPage() {
         />
       </div>
       <div className='rounded-lg border p-4'>
-        <p className='mb-3 text-sm font-semibold text-gray-700'>
-          {i18n.t('qms.qms_eight_d_detail_page.k4')}
-        </p>
+        <p className='mb-3 text-sm font-semibold text-gray-700'>{i18n.t('qms.qms_eight_d_detail_page.k4')}</p>
         <FSMActionButtons
           fsm='eight_d'
           currentStatus={report.status}
@@ -128,7 +89,7 @@ export default function QmsEightDDetailPage() {
         />
         <Field
           label={i18n.t('qms.qms_eight_d_detail_page.k6')}
-          value={SEVERITY_LABELS[report.severity] ?? report.severity}
+          value={getSeverityLabels()[report.severity] ?? report.severity}
         />
         <Field
           label={i18n.t('qms.qms_eight_d_detail_page.k7')}
@@ -162,7 +123,7 @@ export default function QmsEightDDetailPage() {
       <div className='rounded-lg border p-4'>
         <h3 className='mb-4 font-semibold'>{i18n.t('qms:qms_eight_d_detail_page.8d_2')}</h3>
         <ol className='relative space-y-4 border-l-2 border-blue-200 pl-6'>
-          {STEPS.map((step, idx) => {
+          {getSteps().map((step, idx) => {
             const isDone = report[step.done as keyof typeof report] as boolean;
             const content = report[step.field as keyof typeof report] as string | undefined;
             const isCurrent = report.currentStage === idx + 1;
@@ -172,7 +133,7 @@ export default function QmsEightDDetailPage() {
                 className='relative'
               >
                 <span
-                  className={`absolute -left-[31px] flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-var(--color-primary-foreground, #ffffff) ${
+                  className={`absolute -left-[31px] flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white ${
                     isDone ? 'bg-green-500' : isCurrent ? 'bg-blue-500' : 'bg-gray-300'
                   }`}
                 >
@@ -192,11 +153,7 @@ export default function QmsEightDDetailPage() {
                             : 'bg-gray-100 text-gray-500'
                       }`}
                     >
-                      {isDone
-                        ? i18n.t('qms.qms_eight_d_detail_page.k16')
-                        : isCurrent
-                          ? i18n.t('qms.qms_eight_d_detail_page.k15')
-                          : i18n.t('qms.qms_eight_d_detail_page.k14')}
+                      {isDone ? i18n.t('qms.qms_eight_d_detail_page.k16') : isCurrent ? i18n.t('qms.qms_eight_d_detail_page.k15') : i18n.t('qms.qms_eight_d_detail_page.k14')}
                     </span>
                   </div>
                   {content && <p className='mt-2 text-sm text-gray-700'>{content}</p>}

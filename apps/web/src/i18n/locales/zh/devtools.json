@@ -50,23 +50,23 @@
       },
       "v47Integration": {
         "tooltip": "V47-V50 集成面板",
-        "label": "V47-V50",
+        "label": "V47-V50 集成",
         "sublabel": "平台+Serverless",
         "title": "V47-V50 集成面板 — 平台 + Serverless + AI 运维",
         "cards": {
           "lowCode": {
             "title": "V47.0 低代码引擎",
-            "subtitle": "LowCodeBuilder / lowCodeBuilder",
+            "subtitle": "低代码构建器",
             "status": "✅ 已加载 (模块市场 + 插件市场可用)"
           },
           "unifiedPlatform": {
             "title": "V47.0 统一开发平台",
-            "subtitle": "UnifiedDevPlatform / unifiedDevPlatform",
+            "subtitle": "统一开发平台",
             "status": "✅ 已加载 (项目创建 + 开发服务器 + 构建部署)"
           },
           "serverless": {
             "title": "V48.0 无服务器架构",
-            "subtitle": "edgeRenderer / faas / onDemandLoader",
+            "subtitle": "边缘渲染 / FaaS / 按需加载",
             "statusWithCache": "✅ 已加载 (缓存页: {{pages}}, 命中: {{hits}})"
           },
           "faas": {
@@ -76,7 +76,7 @@
           },
           "aiDriven": {
             "title": "V48.0 AI 驱动",
-            "subtitle": "smartRouter / autoOps / predictiveScaler",
+            "subtitle": "智能路由 / 自动运维 / 预测扩展",
             "status": "✅ 已加载 (智能路由 + 自动运维 + 预测扩展)"
           },
           "onDemand": {
@@ -86,19 +86,19 @@
           },
           "aiOpsV2": {
             "title": "V50.0 AI 运维 V2",
-            "subtitle": "intelligentMonitor / rootCauseAnalyzer / autoRemediation",
+            "subtitle": "智能监控 / 根因分析 / 自动修复",
             "status": "✅ 已加载 (智能监控 + 根因分析 + 自动修复工作流)"
           }
         }
       },
       "v51Design": {
         "tooltip": "V51.0 设计系统",
-        "label": "V51",
-        "sublabel": "Design System"
+        "label": "V51 设计",
+        "sublabel": "设计体系"
       },
       "v51DevEx": {
         "tooltip": "V51.0 DevEx 开发体验",
-        "label": "DevEx",
+        "label": "V51 开发体验",
         "sublabel": "调试+性能"
       },
       "v53Ai": {
@@ -113,57 +113,57 @@
       },
       "v54Native": {
         "tooltip": "V54.0 AI 原生平台",
-        "label": "V54 AI",
+        "label": "V54 原生AI",
         "sublabel": "原生平台"
       },
       "v54Agent": {
         "tooltip": "V54.0 AI Agent 自主智能",
-        "label": "V54 Agent",
+        "label": "V54 AI代理",
         "sublabel": "自主智能"
       },
       "v55Copilot": {
         "tooltip": "V55.0 AI Copilot 智能助手",
-        "label": "V55 Copilot",
+        "label": "V55 AI助手",
         "sublabel": "智能助手"
       },
       "v55Automation": {
         "tooltip": "V55.0 全栈自动化 CI/CD",
-        "label": "V55 Auto",
+        "label": "V55 AI自动化",
         "sublabel": "CI/CD · 部署"
       },
       "v56Ops": {
         "tooltip": "V56.0 平台智能运维",
-        "label": "V56 Ops",
+        "label": "V56 AI运维",
         "sublabel": "智能运维"
       },
       "v56Review": {
         "tooltip": "V56.0 AI 代码审查",
-        "label": "V56 Review",
+        "label": "V56 AI审查",
         "sublabel": "AI 代码审查"
       },
       "v57Governance": {
         "tooltip": "V57.0 AI 治理",
-        "label": "V57 AI",
+        "label": "V57 AI治理",
         "sublabel": "治理·合规·风险"
       },
       "v57Automation": {
         "tooltip": "V57.0 AI 自动化",
-        "label": "V57 Auto",
+        "label": "V57 AI自动化",
         "sublabel": "测试·CI·质量"
       },
       "v58Ux": {
         "tooltip": "V58.0 AI UX 智能体验",
-        "label": "V58 UX",
+        "label": "V58 AI体验",
         "sublabel": "智能·自适应·情感"
       },
       "v58Evolution": {
         "tooltip": "V58.0 AI 演进",
-        "label": "V58 AI",
+        "label": "V58 AI进化",
         "sublabel": "模型·AB·安全"
       },
       "v59DevEx": {
         "tooltip": "V59.0 AI DevEx 智能开发体验",
-        "label": "V59 DevEx",
+        "label": "V59 开发体验",
         "sublabel": "智能调试·性能·重构"
       },
       "v59Security": {
@@ -177,7 +177,7 @@
         "sublabel": "偏见·公平·可解释"
       },
       "v60Quality": {
-        "tooltip": "V60.0 AI Quality",
+        "tooltip": "V60.0 AI质量",
         "label": "V60 质量",
         "sublabel": "测试·性能·UX"
       }

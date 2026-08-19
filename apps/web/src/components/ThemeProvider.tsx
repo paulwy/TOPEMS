@@ -32,17 +32,31 @@ type ThemeProviderProps = {
 /**
  * 扩展 useColorScheme 返回类型，让 setColorScheme 接受 'cyberpunk' 作为合法值
  * 避免使用 `as 'light' | 'dark'` 的强转 hack
+ *
+ * 注意：必须用 useCallback 稳定返回的包装函数引用，否则：
+ *   - 每次渲染都创建新的 setColorScheme 引用
+ *   - ThemeSync 中 useEffect([setColorScheme]) 每次渲染都重新执行
+ *   - effect 内调用 setMode/setColorScheme 触发 MUI 内部 setState → 再次渲染
+ *   - 最终形成「渲染 → 新函数引用 → effect → setState → 渲染」的无限循环
  */
 function useExtendedColorScheme() {
   const scheme = useColorScheme();
-  return {
-    ...scheme,
-    setColorScheme: (next: ResolvedThemeScheme | 'system') => {
-      // MUI v5 colorSchemes 允许任意字符串键，此处绕过 TS 类型限制
+
+  const setColorSchemeStable = React.useCallback(
+    (next: ResolvedThemeScheme | 'system') => {
       (scheme.setColorScheme as (s: string) => void)(next);
     },
-    setMode: scheme.setMode,
-  };
+    [scheme.setColorScheme]
+  );
+
+  return React.useMemo(
+    () => ({
+      ...scheme,
+      setColorScheme: setColorSchemeStable,
+      setMode: scheme.setMode,
+    }),
+    [scheme, setColorSchemeStable]
+  );
 }
 
 function ThemeSync({ children }: ThemeProviderProps) {

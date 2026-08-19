@@ -295,7 +295,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                 >
                   <MenuItem value='zh-CN'>{t('system.system_config_panel.k10')}</MenuItem>
                   <MenuItem value='zh-TW'>{t('system.system_config_panel.k11')}</MenuItem>
-                  <MenuItem value='en-US'>English</MenuItem>
+                  <MenuItem value='en-US'>{t('system.system_config_panel.k13')}</MenuItem>
                   <MenuItem value='ja-JP'>{t('system.system_config_panel.k12')}</MenuItem>
                   <MenuItem value='ko-KR'>한국어</MenuItem>
                 </Select>

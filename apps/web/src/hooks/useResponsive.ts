@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useMediaQuery, useTheme } from '@mui/material';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
@@ -138,55 +138,87 @@ export const useResponsive = (): ResponsiveContext => {
 
   const breakpoint = getCurrentBreakpoint();
   const deviceType = getDeviceType();
+  const orientation = isLandscape ? 'landscape' : 'portrait';
 
-  return {
-    // 断点检测
-    isXs,
-    isSm,
-    isMd,
-    isLg,
-    isXl,
-    isXxl,
+  // 用 useMemo 稳定返回对象引用，避免将新对象放入 useEffect dep 数组导致无限循环
+  return useMemo(
+    () => ({
+      // 断点检测
+      isXs,
+      isSm,
+      isMd,
+      isLg,
+      isXl,
+      isXxl,
 
-    // 设备类型
-    isMobile,
-    isTablet,
-    isTabletNarrow,
-    isTabletWide,
-    isDesktop,
-    isLargeScreen,
+      // 设备类型
+      isMobile,
+      isTablet,
+      isTabletNarrow,
+      isTabletWide,
+      isDesktop,
+      isLargeScreen,
 
-    // 方向
-    isLandscape,
-    isPortrait,
+      // 方向
+      isLandscape,
+      isPortrait,
 
-    // 增强信息
-    breakpoint,
-    deviceType,
-    orientation: isLandscape ? 'landscape' : 'portrait',
-    viewport,
-    isTouch,
-    isRetina,
-    dpr,
+      // 增强信息
+      breakpoint,
+      deviceType,
+      orientation,
+      viewport,
+      isTouch,
+      isRetina,
+      dpr,
 
-    // 主题断点值（方便使用）
-    breakpoints: {
-      xs: theme.breakpoints.values.xs,
-      sm: theme.breakpoints.values.sm,
-      md: theme.breakpoints.values.md,
-      lg: theme.breakpoints.values.lg,
-      xl: theme.breakpoints.values.xl,
-      tablet: BREAKPOINTS.tablet,
-      tabletMax: BREAKPOINTS.tabletMax,
-      xxl: BREAKPOINTS.xxl,
-    },
+      // 主题断点值（方便使用）
+      breakpoints: {
+        xs: theme.breakpoints.values.xs,
+        sm: theme.breakpoints.values.sm,
+        md: theme.breakpoints.values.md,
+        lg: theme.breakpoints.values.lg,
+        xl: theme.breakpoints.values.xl,
+        tablet: BREAKPOINTS.tablet,
+        tabletMax: BREAKPOINTS.tabletMax,
+        xxl: BREAKPOINTS.xxl,
+      },
 
-    // 断点常量（合并 MUI 主题权威值 + 补充 tablet/tabletMax/xxl）
-    breakpointValues: {
-      ...(theme.breakpoints.values as Record<string, number>),
-      ...BREAKPOINTS,
-    },
-  };
+      // 断点常量（合并 MUI 主题权威值 + 补充 tablet/tabletMax/xxl）
+      breakpointValues: {
+        ...(theme.breakpoints.values as Record<string, number>),
+        ...BREAKPOINTS,
+      },
+    }),
+    [
+      isXs,
+      isSm,
+      isMd,
+      isLg,
+      isXl,
+      isXxl,
+      isMobile,
+      isTablet,
+      isTabletNarrow,
+      isTabletWide,
+      isDesktop,
+      isLargeScreen,
+      isLandscape,
+      isPortrait,
+      breakpoint,
+      deviceType,
+      orientation,
+      viewport,
+      isTouch,
+      isRetina,
+      dpr,
+      theme.breakpoints.values.xs,
+      theme.breakpoints.values.sm,
+      theme.breakpoints.values.md,
+      theme.breakpoints.values.lg,
+      theme.breakpoints.values.xl,
+    ]
+  );
 };
 
 export default useResponsive;

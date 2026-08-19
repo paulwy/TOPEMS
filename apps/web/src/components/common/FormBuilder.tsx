@@ -20,6 +20,7 @@ import i18n from '@/i18n';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { zhCN } from '@mui/x-date-pickers/locales';
 import dayjs from 'dayjs';
 
 export type ValidationRule<T extends Record<string, unknown> = Record<string, unknown>> =
@@ -557,6 +558,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
             <LocalizationProvider
               key={field.name}
               dateAdapter={AdapterDayjs}
+              localeText={zhCN.components.MuiLocalizationProvider.defaultProps.localeText}
             >
               <DatePicker
                 label={field.label}
@@ -582,6 +584,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
             <LocalizationProvider
               key={field.name}
               dateAdapter={AdapterDayjs}
+              localeText={zhCN.components.MuiLocalizationProvider.defaultProps.localeText}
             >
               <DatePicker
                 label={field.label}

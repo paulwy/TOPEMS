@@ -5,7 +5,7 @@ import { Box, Typography, Chip } from '@mui/material';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
-const TYPE_LABELS: Record<string, string> = {
+const getTypeLabels = (): Record<string, string> => ({
   system: i18n.t('shared.notification.k0'),
   workflow: i18n.t('shared.notification.k1'),
   reminder: i18n.t('shared.notification.k2'),
@@ -15,7 +15,7 @@ const TYPE_LABELS: Record<string, string> = {
   success: i18n.t('shared.notification.k6'),
   warning: i18n.t('shared.notification.k7'),
   error: i18n.t('shared.notification.k8'),
-};
+});
 
 const TYPE_COLORS: Record<
   string,
@@ -64,7 +64,7 @@ interface NotificationRow {
   created_at: string;
 }
 
-export const notificationSchema: EntitySchema = {
+export const getNotificationSchema = (): EntitySchema => ({
   entity: 'notification',
   title: i18n.t('shared.notification.k9'),
   description: i18n.t('shared.notification.k10'),
@@ -157,7 +157,7 @@ export const notificationSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) => {
         const type = (row as unknown as NotificationRow).notification_type || 'info';
         const color = TYPE_COLORS[type] || 'default';
-        const label = TYPE_LABELS[type] || type;
+        const label = getTypeLabels()[type] || type;
         return (
           <Chip
             size='small'
@@ -240,4 +240,4 @@ export const notificationSchema: EntitySchema = {
 
   formColCount: 2,
   detailTitle: i18n.t('shared.notification.k38'),
-};
+});

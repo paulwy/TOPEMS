@@ -223,7 +223,199 @@ export interface PaginatedResult<T> {
   pagesize: number;
 }
 
-export {
+// ========== Dify API 类型定义 ==========
+
+export interface DifyHealthResponse {
+  status: string;
+  version?: string;
+  timestamp?: string;
+}
+
+export interface DifyInfoResponse {
+  name: string;
+  description?: string;
+  app_id?: string;
+  icon?: string;
+  tags?: string[];
+  tenant?: string;
+  status?: string;
+  endpoint?: string;
+  supported_models?: string[];
+  features?: Record<string, boolean>;
+  meta?: Record<string, unknown>;
+}
+
+export interface DifyParameter {
+  name: string;
+  label: string;
+  type: 'string' | 'number' | 'boolean' | 'select' | 'paragraph';
+  required?: boolean;
+  default?: unknown;
+  options?: string[];
+  placeholder?: string;
+  description?: string;
+  min?: number;
+  max?: number;
+}
+
+export interface DifyParametersResponse {
+  user_input_form: DifyParameter[][];
+  opening_statement?: string;
+  suggested_questions?: string[];
+  suggested_questions_after_answer?: boolean;
+  retriever_resource?: boolean;
+  speech_to_text?: boolean;
+  text_to_speech?: boolean;
+  file_upload?: {
+    image?: {
+      enabled?: boolean;
+      number_limits?: number;
+      detail?: string;
+      transfer_methods?: string[];
+    };
+    allowed_file_types?: string[];
+    allowed_file_extensions?: string[];
+    allowed_file_upload_methods?: string[];
+    number_limits?: number;
+  };
+}
+
+export interface DifyMetaResponse {
+  tool_icons?: Record<string, string>;
+  next_variable_overwrite_enabled?: boolean;
+  dataset_configs?: Record<string, unknown>;
+  file_upload?: Record<string, unknown>;
+  system_parameters?: Record<string, unknown>;
+}
+
+export interface DifyConversation {
+  id: string;
+  name: string;
+  inputs?: Record<string, unknown>;
+  status: string;
+  introduction?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface DifyMessage {
+  id: string;
+  conversation_id: string;
+  query?: string;
+  answer: string;
+  role: 'user' | 'assistant';
+  created_at: string;
+  updated_at?: string;
+  feedback?: DifyFeedbackResult | null;
+  error?: string | null;
+  inputs?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+}
+
+export interface DifyListConversationsParams {
+  user?: string;
+  last_id?: string;
+  limit?: number;
+  pinned?: boolean;
+}
+
+export interface DifyListConversationsResponse {
+  page?: number;
+  limit?: number;
+  total?: number;
+  has_more?: boolean;
+  data: DifyConversation[];
+}
+
+export interface DifyListMessagesParams {
+  conversation_id: string;
+  user?: string;
+  first_id?: string;
+  limit?: number;
+}
+
+export interface DifyListMessagesResponse {
+  has_more?: boolean;
+  data: DifyMessage[];
+}
+
+export interface DifyChatRequest {
+  query: string;
+  user?: string;
+  inputs?: Record<string, unknown>;
+  conversation_id?: string;
+  response_mode?: 'blocking' | 'streaming';
+  files?: Array<{
+    type: string;
+    transfer_method: string;
+    url?: string;
+    upload_file_id?: string;
+  }>;
+  auto_generate_name?: boolean;
+}
+
+export interface DifyChatResponse {
+  message_id: string;
+  answer: string;
+  conversation_id: string;
+  mode?: string;
+  metadata?: Record<string, unknown>;
+  created_at: string;
+  error?: string;
+}
+
+export interface DifyStreamEvent {
+  event:
+    | 'message'
+    | 'message_replace'
+    | 'message_end'
+    | 'error'
+    | 'ping'
+    | 'workflow_started'
+    | 'workflow_finished'
+    | 'node_started'
+    | 'node_finished'
+    | 'tts_message'
+    | 'tts_message_end'
+    | 'agent_message'
+    | 'agent_thought'
+    | 'message_file';
+  message_id?: string;
+  conversation_id?: string;
+  answer?: string;
+  task_id?: string;
+  error?: string;
+  inputs?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  created_at?: number;
+}
+
+export interface DifyFeedbackRequest {
+  rating: 'like' | 'dislike' | null;
+  user?: string;
+  content?: string;
+  type?: 'like' | 'dislike';
+}
+
+export interface DifyFeedbackResult {
+  rating: 'like' | 'dislike' | null;
+  content?: string;
+  from_source?: string;
+  username?: string;
+  created_at?: string;
+}
+
+export interface DifyStopRequest {
+  user?: string;
+}
+
+export interface DifyStopResponse {
+  result: string;
+  code?: number;
+  message?: string;
+}
+
+export type {
   ValidateRequest,
   ValidateResponse,
   CompleteRequest,

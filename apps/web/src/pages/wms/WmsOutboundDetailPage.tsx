@@ -6,14 +6,16 @@ import type { OutboundOrderDto } from '@/types/wms';
 import i18n from '@/i18n';
 
 const OUTBOUND_STAGES = ['created', 'confirmed', 'picking', 'packing', 'shipping', 'completed'];
-const STAGE_LABELS: Record<string, string> = {
-  created: i18n.t('pages.wms_outbound_detail_page.k0'),
-  confirmed: i18n.t('pages.wms_outbound_detail_page.k1'),
-  picking: i18n.t('pages.wms_outbound_detail_page.k2'),
-  packing: i18n.t('pages.wms_outbound_detail_page.k3'),
-  shipping: i18n.t('pages.wms_outbound_detail_page.k4'),
-  completed: i18n.t('pages.wms_outbound_detail_page.k5'),
-};
+function getStageLabels(): Record<string, string> {
+  return {
+    created: i18n.t('pages.wms_outbound_detail_page.k0'),
+    confirmed: i18n.t('pages.wms_outbound_detail_page.k1'),
+    picking: i18n.t('pages.wms_outbound_detail_page.k2'),
+    packing: i18n.t('pages.wms_outbound_detail_page.k3'),
+    shipping: i18n.t('pages.wms_outbound_detail_page.k4'),
+    completed: i18n.t('pages.wms_outbound_detail_page.k5'),
+  };
+}
 
 export default function WmsOutboundDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -74,7 +76,7 @@ export default function WmsOutboundDetailPage() {
               >
                 {i + 1}
               </div>
-              <div className='ml-2 text-xs'>{STAGE_LABELS[s]}</div>
+              <div className='ml-2 text-xs'>{getStageLabels()[s]}</div>
               {i < OUTBOUND_STAGES.length - 1 && (
                 <div
                   className={`mx-2 h-0.5 flex-1 ${i < stageIndex ? 'bg-blue-600' : 'bg-gray-200'}`}

@@ -14,7 +14,6 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { userSchema } from '@/schemas/iam/user';
 import { authApi } from '@/api/iam';
 import { IAM_PATHS } from '@/modules/iam/config';
-import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
 /**
@@ -22,7 +21,6 @@ import i18n from '@/i18n';
  */
 const userApiAdapter: CrudApiAdapter = {
   list: async (params) => {
-    const t = i18n.getFixedT(null, 'iam');
     const response = await authApi.listUsers({
       page: params?.page,
       pagesize: params?.pageSize,

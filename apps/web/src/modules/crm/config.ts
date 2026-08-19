@@ -32,8 +32,8 @@ export const CRM_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const crmModuleConfig: RouteModuleConfig = {
   code: 'crm',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.crm_name'),
+  nameKey: 'shared.config.crm_name',
   icon: 'Users',
   path: CRM_PATHS.root,
   source: 'plugin',

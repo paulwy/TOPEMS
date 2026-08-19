@@ -3,33 +3,48 @@ import type { NavItem } from '@/lib/navigation/types';
 import { navigationRegistryV2 } from '@/lib/navigation';
 
 export const moduleToService: Record<string, string> = {
-  rs: 'rs',
+  // unified-core 虚拟服务（共用端口 8000）
+  admin: 'unified-core',
+  iam: 'unified-core',
+  doc: 'unified-core',
+  workflow: 'unified-core',
+  plugin: 'unified-core',
+  automation: 'unified-core',
+
+  // 独立服务
+  rs: 'rd',
+  rd: 'rd',
   lims: 'lims',
-  doc: 'doc',
   ai: 'ai',
-  workflow: 'flow',
-  iam: 'iam',
   qms: 'qms',
   ehs: 'ehs',
   srm: 'srm',
   pdm: 'pdm',
   crm: 'crm',
   mes: 'mes',
-  mail: 'mail',
-  mobile: 'mobile',
   hrm: 'hrm',
   erp: 'erp',
   gis: 'gis',
   pm: 'pm',
   bi: 'bi',
+  report: 'bi',
   integration: 'integration',
-  notification: 'notification',
   portal: 'portal',
   scm: 'scm',
   wms: 'wms',
-  im: 'im',
-  report: 'report',
+  mobile: 'mobile',
+  finance: 'finance',
+  monitor: 'monitor',
+
+  // communication 服务（端口 8084）
+  im: 'communication',
+  notification: 'communication',
+  mail: 'communication',
+
+  // 别名
   contract: 'hrm',
+  oa: 'erp',
+  asset: 'erp',
 };
 
 const PLATFORM_ROOT_PATHS = new Set(['dashboard', 'login', 'register', 'settings', 'profile']);

@@ -32,8 +32,8 @@ export const PDM_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const pdmModuleConfig: RouteModuleConfig = {
   code: 'pdm',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.pdm_name'),
+  nameKey: 'shared.config.pdm_name',
   icon: 'Package',
   path: PDM_PATHS.root,
   source: 'plugin',

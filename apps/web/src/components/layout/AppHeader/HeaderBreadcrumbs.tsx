@@ -15,7 +15,8 @@ export const HeaderBreadcrumbs: React.FC = () => {
     if (!navigationRegistryV2) return [];
     const hierarchy = navigationRegistryV2.getNavHierarchy(location.pathname);
     return hierarchy;
-  }, [location.pathname]);
+    // Re-translate breadcrumb labels when language changes
+  }, [location.pathname, i18n.language]);
 
   if (breadcrumbItems.length === 0) return null;
 

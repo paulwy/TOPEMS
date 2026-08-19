@@ -28,8 +28,8 @@ export const PM_PATHS = {
 // 在前端未提供独立页面，故不在此配置。
 export const pmModuleConfig: RouteModuleConfig = {
   code: 'pm',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.pm_name'),
+  nameKey: 'shared.config.pm_name',
   icon: 'FolderKanban',
   path: PM_PATHS.root,
   source: 'core',

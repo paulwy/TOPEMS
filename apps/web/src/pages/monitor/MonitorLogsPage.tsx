@@ -38,7 +38,7 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '../../store';
 import { extractErrorMessage } from '@/utils/errors';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
-import { logSchema } from '@/schemas/monitor/logs';
+import { getLogSchema } from '@/schemas/monitor/logs';
 import { useTranslation } from 'react-i18next';
 import { monitorApi } from '@/api/monitor';
 
@@ -386,7 +386,7 @@ const MonitorLogsPage: React.FC = () => {
       }}
     >
       <CrudPage
-        schema={logSchema}
+        schema={getLogSchema()}
         apiAdapter={logAdapter}
         extraQueryParams={{ activeTab }}
         customRowActions={customRowActions}

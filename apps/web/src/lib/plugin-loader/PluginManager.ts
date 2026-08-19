@@ -145,7 +145,8 @@ export class PluginManager {
   private initCoreModules(): void {
     CORE_MODULES.forEach((code) => {
       const pluginType = 'core';
-      const name = this.getPluginName(code);
+      const nameKey = this.getPluginNameKey(code);
+      const name = i18n.t(nameKey);
       this.plugins.set(code, {
         code,
         name,
@@ -160,43 +161,58 @@ export class PluginManager {
     });
   }
 
-  private getPluginName(code: string): string {
-    const names: Record<string, string> = {
-      iam: i18n.t('shared.plugin_manager.k0'),
-      workflow: i18n.t('shared.plugin_manager.k1'),
-      notification: i18n.t('shared.plugin_manager.k2'),
-      doc: i18n.t('shared.plugin_manager.k3'),
-      report: i18n.t('shared.plugin_manager.k4'),
-      monitor: i18n.t('shared.plugin_manager.k5'),
-      integration: i18n.t('shared.plugin_manager.k6'),
-      ai: i18n.t('shared.plugin_manager.ai_1'),
-      mobile: i18n.t('shared.plugin_manager.k7'),
-      hrm: i18n.t('shared.plugin_manager.k8'),
-      finance: i18n.t('shared.plugin_manager.k9'),
-      crm: i18n.t('shared.plugin_manager.k10'),
-      pm: i18n.t('shared.plugin_manager.k11'),
-      scm: i18n.t('shared.plugin_manager.k12'),
-      qms: i18n.t('shared.plugin_manager.k13'),
-      bi: i18n.t('shared.plugin_manager.k14'),
-      mes: i18n.t('shared.plugin_manager.k15'),
-      wms: i18n.t('shared.plugin_manager.k16'),
-      pdm: i18n.t('shared.plugin_manager.k17'),
-      srm: i18n.t('shared.plugin_manager.k18'),
-      lims: i18n.t('shared.plugin_manager.k19'),
-      ehs: i18n.t('shared.plugin_manager.k20'),
-      rs: i18n.t('shared.plugin_manager.k21'),
-      gis: i18n.t('shared.plugin_manager.k22'),
-      portal: i18n.t('shared.plugin_manager.k23'),
-      erp: 'ERP',
-      asset: i18n.t('shared.plugin_manager.k24'),
-      oa: i18n.t('shared.plugin_manager.k25'),
-      im: i18n.t('shared.plugin_manager.k26'),
-      admin: i18n.t('shared.plugin_manager.k27'),
-      lowcode: i18n.t('shared.plugin_manager.k28'),
-      plugin: i18n.t('shared.plugin_manager.k29'),
-    };
-    return names[code] || code;
+  /** Re-translate plugin names after i18n resources are loaded */
+  refreshPluginNames(): void {
+    for (const [code, state] of this.plugins.entries()) {
+      const nameKey = this.getPluginNameKey(code);
+      const name = i18n.t(nameKey);
+      this.plugins.set(code, {
+        ...state,
+        name,
+        description: `${name}${i18n.t('shared.plugin_manager.k0')}`,
+      });
+    }
+    this.emitter.emit('pluginsUpdated', Array.from(this.plugins.values()));
   }
+
+  private getPluginNameKey(code: string): string {
+    const keys: Record<string, string> = {
+      iam: 'shared.plugin_manager.k0',
+      workflow: 'shared.plugin_manager.k1',
+      notification: 'shared.plugin_manager.k2',
+      doc: 'shared.plugin_manager.k3',
+      report: 'shared.plugin_manager.k4',
+      monitor: 'shared.plugin_manager.k5',
+      integration: 'shared.plugin_manager.k6',
+      ai: 'shared.plugin_manager.ai_1',
+      mobile: 'shared.plugin_manager.k7',
+      hrm: 'shared.plugin_manager.k8',
+      finance: 'shared.plugin_manager.k9',
+      crm: 'shared.plugin_manager.k10',
+      pm: 'shared.plugin_manager.k11',
+      scm: 'shared.plugin_manager.k12',
+      qms: 'shared.plugin_manager.k13',
+      bi: 'shared.plugin_manager.k14',
+      mes: 'shared.plugin_manager.k15',
+      wms: 'shared.plugin_manager.k16',
+      pdm: 'shared.plugin_manager.k17',
+      srm: 'shared.plugin_manager.k18',
+      lims: 'shared.plugin_manager.k19',
+      ehs: 'shared.plugin_manager.k20',
+      rs: 'shared.plugin_manager.k21',
+      gis: 'shared.plugin_manager.k22',
+      portal: 'shared.plugin_manager.k23',
+      erp: '',
+      asset: 'shared.plugin_manager.k24',
+      oa: 'shared.plugin_manager.k25',
+      im: 'shared.plugin_manager.k26',
+      admin: 'shared.plugin_manager.k27',
+      lowcode: 'shared.plugin_manager.k28',
+      plugin: 'shared.plugin_manager.k29',
+    };
+    return keys[code] || '';
+  }
+
 
   async initialize(): Promise<void> {
     if (this.isInitialized) {
@@ -301,7 +317,7 @@ export class PluginManager {
 
       this.plugins.set(pluginCode, {
         code: pluginCode,
-        name: this.getPluginName(pluginCode),
+        name: i18n.t(this.getPluginNameKey(pluginCode)),
         version: '1.0.0',
         pluginType: CORE_MODULES.includes(pluginCode) ? 'core' : 'business',
         status: 'installing',
@@ -316,7 +332,7 @@ export class PluginManager {
         const tenantPlugin = response.data as TenantInstalledPlugin;
         this.plugins.set(pluginCode, {
           code: pluginCode,
-          name: tenantPlugin.plugin_name || this.getPluginName(pluginCode),
+          name: tenantPlugin.plugin_name || i18n.t(this.getPluginNameKey(pluginCode)),
           version: tenantPlugin.installed_version || '1.0.0',
           description: tenantPlugin.plugin_description,
           pluginType: CORE_MODULES.includes(pluginCode) ? 'core' : 'business',
@@ -341,7 +357,7 @@ export class PluginManager {
       this.plugins.set(pluginCode, {
         ...(this.plugins.get(pluginCode) || {
           code: pluginCode,
-          name: this.getPluginName(pluginCode),
+          name: i18n.t(this.getPluginNameKey(pluginCode)),
           version: '1.0.0',
           pluginType: CORE_MODULES.includes(pluginCode) ? 'core' : 'business',
           status: 'error',

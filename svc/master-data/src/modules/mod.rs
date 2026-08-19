@@ -535,4 +535,34 @@ pub fn create_routes() -> Router<AppState> {
                     delete(schema_registry::delete_data),
                 ),
         )
+        // V68.1 A2.3: dict 模块从 unified-core 迁移到 master-data
+        // master-data 的 api_prefix=/api/master-data，此处用相对路径 /dict 注册，
+        // 实际挂载路径为 /api/master-data/dict/*；
+        // vite.config.ts 兼容代理将 /api/core/dict/* 重写为 /api/master-data/dict/*
+        // （与 monitor/plugin 模块外迁采用相同的 rewrite 模式）
+        .nest(
+            "/dict",
+            Router::new()
+                // DictType CRUD
+                .route("/dict-types", get(dict::list_dict_types))
+                .route("/dict-types/{id}", get(dict::get_dict_type))
+                .route("/dict-types", post(dict::create_dict_type))
+                .route("/dict-types/{id}", put(dict::update_dict_type))
+                .route("/dict-types/{id}", delete(dict::delete_dict_type))
+                // DictItem CRUD（通过 dict_type 嵌套）
+                .route(
+                    "/dict-types/{dict_type_id}/items",
+                    get(dict::list_dict_items),
+                )
+                .route(
+                    "/dict-types/{dict_type_id}/items/export",
+                    get(dict::export_dict_items),
+                )
+                // DictItem 直接操作（独立路由）
+                .route("/dict-items/{id}", get(dict::get_dict_item))
+                .route("/dict-items", post(dict::create_dict_item))
+                .route("/dict-items/{id}", put(dict::update_dict_item))
+                .route("/dict-items/{id}", delete(dict::delete_dict_item))
+                .route("/dict-items/batch", post(dict::batch_create_dict_items)),
+        )
 }

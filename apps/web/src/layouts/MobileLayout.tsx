@@ -10,17 +10,14 @@ interface MobileLayoutProps {
   children: React.ReactNode;
 }
 
-const navItems = [
-  { id: 'dashboard', label: i18n.t('pages.mobile_layout.k0'), icon: Home, path: '/dashboard' },
-  { id: 'workflow', label: i18n.t('pages.mobile_layout.k1'), icon: FileText, path: '/workflow' },
-  {
-    id: 'notification',
-    label: i18n.t('pages.mobile_layout.k2'),
-    icon: Bell,
-    path: '/notifications',
-  },
-  { id: 'settings', label: i18n.t('pages.mobile_layout.k3'), icon: Settings, path: '/settings' },
-];
+function getNavItems() {
+  return [
+    { id: 'dashboard', label: i18n.t('pages.mobile_layout.k0'), icon: Home, path: '/dashboard' },
+    { id: 'workflow', label: i18n.t('pages.mobile_layout.k1'), icon: FileText, path: '/workflow' },
+    { id: 'notification', label: i18n.t('pages.mobile_layout.k2'), icon: Bell, path: '/notifications' },
+    { id: 'settings', label: i18n.t('pages.mobile_layout.k3'), icon: Settings, path: '/settings' },
+  ];
+}
 
 export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
@@ -29,6 +26,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showMenu, setShowMenu] = useState(false);
   const [showBackButton, setShowBackButton] = useState(false);
+  const navItems = getNavItems();
 
   useEffect(() => {
     const path = location.pathname;
@@ -60,7 +58,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
 
   return (
     <div className='min-h-screen bg-gray-50 flex flex-col'>
-      <header className='bg-blue-700 text-var(--color-primary-foreground, #ffffff) px-4 py-3 shadow-md'>
+      <header className='bg-blue-700 text-white px-4 py-3 shadow-md'>
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-2'>
             {showBackButton && (
@@ -81,7 +79,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
           <h1 className='text-lg font-semibold'>TOPEMS</h1>
           <div className='relative'>
             <Bell className='w-6 h-6' />
-            <Badge className='absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-var(--color-primary-foreground, #ffffff) text-xs'>
+            <Badge className='absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white text-xs'>
               3
             </Badge>
           </div>
@@ -89,7 +87,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
       </header>
 
       {showMenu && (
-        <div className='bg-var(--color-primary-foreground, #ffffff) border-b shadow-sm'>
+        <div className='bg-white border-b shadow-sm'>
           <div className='p-4'>
             <div className='flex items-center gap-3'>
               <div className='w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center'>
@@ -98,9 +96,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
                 </span>
               </div>
               <div>
-                <p className='font-semibold text-gray-800'>
-                  {user?.name || i18n.t('pages.mobile_layout.k4')}
-                </p>
+                <p className='font-semibold text-gray-800'>{user?.name || i18n.t('pages.mobile_layout.k4')}</p>
                 <p className='text-sm text-gray-500'>{user?.email || ''}</p>
               </div>
             </div>
@@ -118,7 +114,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
 
       <main className='flex-1 overflow-auto p-4'>{children}</main>
 
-      <nav className='bg-var(--color-primary-foreground, #ffffff) border-t shadow-lg'>
+      <nav className='bg-white border-t shadow-lg'>
         <div className='flex justify-around py-2'>
           {navItems.map((item) => {
             const Icon = item.icon;

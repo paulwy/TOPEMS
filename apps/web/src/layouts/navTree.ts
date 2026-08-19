@@ -35,50 +35,53 @@ export interface NavTreeResult {
 
 type PermissionChecker = (permission?: string) => boolean;
 
-const SPECIAL_L1_MODULES: Record<
+function getSpecialL1Modules(): Record<
   string,
   Partial<L2NavNode> & { key: string; title: string; titleKey?: string; path: string }
-> = {
-  workbench_dashboard: {
-    key: 'workbench_dashboard',
-    title: i18n.t('shared.nav_tree.k0'),
-    titleKey: 'shared.nav_tree.k0',
-    path: DASHBOARD_PATHS.dashboard,
-    icon: 'Home',
-    order: 1,
-  },
-  workbench_mobile: {
-    key: 'mobile',
-    title: i18n.t('shared.nav_tree.k1'),
-    titleKey: 'shared.nav_tree.k1',
-    path: '/mobile/home',
-    icon: 'Smartphone',
-    order: 2,
-  },
-  profile_center: {
-    key: 'profile_center',
-    title: i18n.t('shared.nav_tree.k2'),
-    titleKey: 'shared.nav_tree.k2',
-    path: DASHBOARD_PATHS.profile,
-    icon: 'User',
-    order: 1,
-  },
-  profile_favorites: {
-    key: 'profile_favorites',
-    title: i18n.t('shared.nav_tree.k3'),
-    titleKey: 'shared.nav_tree.k3',
-    path: DASHBOARD_PATHS.favorites,
-    icon: 'Bookmark',
-    order: 2,
-  },
-};
+> {
+  return {
+    workbench_dashboard: {
+      key: 'workbench_dashboard',
+      title: i18n.t('shared.nav_tree.k0'),
+      titleKey: 'shared.nav_tree.k0',
+      path: DASHBOARD_PATHS.dashboard,
+      icon: 'Home',
+      order: 1,
+    },
+    workbench_mobile: {
+      key: 'mobile',
+      title: i18n.t('shared.nav_tree.k1'),
+      titleKey: 'shared.nav_tree.k1',
+      path: '/mobile/home',
+      icon: 'Smartphone',
+      order: 2,
+    },
+    profile_center: {
+      key: 'profile_center',
+      title: i18n.t('shared.nav_tree.k2'),
+      titleKey: 'shared.nav_tree.k2',
+      path: DASHBOARD_PATHS.profile,
+      icon: 'User',
+      order: 1,
+    },
+    profile_favorites: {
+      key: 'profile_favorites',
+      title: i18n.t('shared.nav_tree.k3'),
+      titleKey: 'shared.nav_tree.k3',
+      path: DASHBOARD_PATHS.favorites,
+      icon: 'Bookmark',
+      order: 2,
+    },
+  };
+}
 
 function buildSpecialL2Nodes(l1Key: string, checkPermission: PermissionChecker): L2NavNode[] {
   const nodes: L2NavNode[] = [];
+  const specialL1Modules = getSpecialL1Modules();
 
   if (l1Key === 'workbench') {
-    const dashboard = SPECIAL_L1_MODULES.workbench_dashboard;
-    const mobile = SPECIAL_L1_MODULES.workbench_mobile;
+    const dashboard = specialL1Modules.workbench_dashboard;
+    const mobile = specialL1Modules.workbench_mobile;
     if (checkPermission(undefined)) {
       nodes.push({
         key: dashboard.key,
@@ -100,8 +103,8 @@ function buildSpecialL2Nodes(l1Key: string, checkPermission: PermissionChecker):
   }
 
   if (l1Key === 'profile') {
-    const profileCenter = SPECIAL_L1_MODULES.profile_center;
-    const profileFavorites = SPECIAL_L1_MODULES.profile_favorites;
+    const profileCenter = specialL1Modules.profile_center;
+    const profileFavorites = specialL1Modules.profile_favorites;
     if (checkPermission(undefined)) {
       nodes.push({
         key: profileCenter.key,
@@ -130,6 +133,9 @@ function buildSpecialL2Nodes(l1Key: string, checkPermission: PermissionChecker):
 function moduleCardToL2Node(module: ModuleCardConfig): L2NavNode {
   const explicitOrder = L2_MODULE_ORDER[module.code];
   const translated = module.nameKey ? i18n.t(module.nameKey) : module.name;
+  const resolvedDescription = module.description && module.description.includes('.')
+    ? i18n.t(module.description, { defaultValue: module.description })
+    : module.description;
   return {
     key: module.code,
     title: translated,
@@ -139,7 +145,7 @@ function moduleCardToL2Node(module: ModuleCardConfig): L2NavNode {
     permission: module.permission,
     order: explicitOrder ?? module.order ?? 99,
     status: module.status,
-    description: module.description,
+    description: resolvedDescription,
     badge: module.status === 'beta' ? 'Beta' : module.status === 'new' ? 'New' : undefined,
   };
 }

@@ -58,13 +58,13 @@ import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
-const SLO_TYPE_LABELS: Record<string, string> = {
+const getSloTypeLabels = (): Record<string, string> => ({
   all: i18n.t('pages.slo_status_page.k0'),
   availability: i18n.t('pages.slo_status_page.k1'),
   latency: i18n.t('pages.slo_status_page.k2'),
   throughput: i18n.t('pages.slo_status_page.k3'),
   error_rate: i18n.t('pages.slo_status_page.k4'),
-};
+});
 
 const statusColor = (s: string): 'success' | 'warning' | 'error' | 'default' => {
   if (s === 'healthy') return 'success';
@@ -463,7 +463,7 @@ export const SLOStatusPage: React.FC = () => {
                   <TableCell>
                     <Chip
                       size='small'
-                      label={SLO_TYPE_LABELS[s.slo_type] ?? s.slo_type}
+                      label={getSloTypeLabels()[s.slo_type] ?? s.slo_type}
                       variant='outlined'
                     />
                   </TableCell>
@@ -815,7 +815,7 @@ export const SLOStatusPage: React.FC = () => {
                 label={i18n.t('pages.slo_status_page.k56')}
                 onChange={(e) => setSloType(String(e.target.value))}
               >
-                {Object.entries(SLO_TYPE_LABELS).map(([v, l]) => (
+                {Object.entries(getSloTypeLabels()).map(([v, l]) => (
                   <MenuItem
                     key={v}
                     value={v}

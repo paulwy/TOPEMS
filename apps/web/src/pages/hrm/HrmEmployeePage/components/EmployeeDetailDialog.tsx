@@ -25,11 +25,13 @@ const STATUS_COLOR_MAP: Record<string, 'success' | 'default' | 'warning' | 'erro
   leave: 'warning',
 };
 
-const STATUS_LABEL_MAP: Record<string, string> = {
-  active: i18n.t('hrm.employee_detail_dialog.k0'),
-  inactive: i18n.t('hrm.employee_detail_dialog.k1'),
-  leave: i18n.t('hrm.employee_detail_dialog.k2'),
-};
+function getStatusLabelMap(): Record<string, string> {
+  return {
+    active: i18n.t('hrm.employee_detail_dialog.k0'),
+    inactive: i18n.t('hrm.employee_detail_dialog.k1'),
+    leave: i18n.t('hrm.employee_detail_dialog.k2'),
+  };
+}
 
 const EmployeeDetailDialog: React.FC<EmployeeDetailDialogProps> = ({ open, onClose, employee }) => (
   <Dialog
@@ -124,7 +126,7 @@ const EmployeeDetailDialog: React.FC<EmployeeDetailDialogProps> = ({ open, onClo
             </Typography>
             <Box sx={{ mt: 0.5 }}>
               <Chip
-                label={STATUS_LABEL_MAP[employee.status] || employee.status}
+                label={getStatusLabelMap()[employee.status] || employee.status}
                 color={STATUS_COLOR_MAP[employee.status] || 'default'}
                 size='small'
               />

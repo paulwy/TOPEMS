@@ -15,36 +15,50 @@ export const PerformanceMonitor: React.FC = () => {
   const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
 
   useEffect(() => {
-    const performanceObserver = new PerformanceObserver((entryList) => {
-      const entries = entryList.getEntries();
-      const fcpEntry = entries.find(
-        (entry) => entry.entryType === 'paint' && entry.name === 'first-contentful-paint'
-      );
-      const fpEntry = entries.find(
-        (entry) => entry.entryType === 'paint' && entry.name === 'first-paint'
-      );
-      const lcpEntry = entries.find((entry) => entry.entryType === 'largest-contentful-paint');
-      const clsEntry = entries.find((entry) => entry.entryType === 'layout-shift');
+    const observers: PerformanceObserver[] = [];
 
-      if (fcpEntry) {
-        logger.info(`[Performance] First Contentful Paint: ${fcpEntry.startTime.toFixed(2)}ms`);
+    const handleEntry = (entry: PerformanceEntry) => {
+      if (entry.entryType === 'paint' && entry.name === 'first-contentful-paint') {
+        logger.info(`[Performance] First Contentful Paint: ${entry.startTime.toFixed(2)}ms`);
       }
-      if (fpEntry) {
-        logger.info(`[Performance] First Paint: ${fpEntry.startTime.toFixed(2)}ms`);
+      if (entry.entryType === 'paint' && entry.name === 'first-paint') {
+        logger.info(`[Performance] First Paint: ${entry.startTime.toFixed(2)}ms`);
       }
-      if (lcpEntry) {
-        logger.info(`[Performance] Largest Contentful Paint: ${lcpEntry.startTime.toFixed(2)}ms`);
+      if (entry.entryType === 'largest-contentful-paint') {
+        logger.info(`[Performance] Largest Contentful Paint: ${entry.startTime.toFixed(2)}ms`);
       }
-      if (clsEntry) {
+      if (entry.entryType === 'layout-shift') {
         logger.info(
-          `[Performance] Cumulative Layout Shift: ${(clsEntry as PerformanceEntry & { value: number }).value.toFixed(2)}`
+          `[Performance] Cumulative Layout Shift: ${(entry as PerformanceEntry & { value: number }).value.toFixed(2)}`
         );
       }
-    });
+    };
 
-    performanceObserver.observe({
-      entryTypes: ['paint', 'largest-contentful-paint', 'layout-shift'],
-    });
+    // Use PerformanceObserver.supportedEntryTypes + per-type observe() instead of
+    // the deprecated entryTypes array option, which Chromium now warns about:
+    // "Deprecated API for given entry type"
+    const supported =
+      typeof PerformanceObserver !== 'undefined' &&
+      'supportedEntryTypes' in PerformanceObserver
+        ? (PerformanceObserver as any).supportedEntryTypes as string[]
+        : [];
+
+    const observeType = (type: string, buffered = true) => {
+      if (!supported.includes(type)) return;
+      try {
+        const obs = new PerformanceObserver((entryList) => {
+          entryList.getEntries().forEach(handleEntry);
+        });
+        obs.observe({ type, buffered });
+        observers.push(obs);
+      } catch {
+        // unsupported type; skip silently
+      }
+    };
+
+    observeType('paint');
+    observeType('largest-contentful-paint');
+    observeType('layout-shift');
 
     const loadMetrics = () => {
       const perf = performance.timing;
@@ -78,7 +92,7 @@ export const PerformanceMonitor: React.FC = () => {
     }
 
     return () => {
-      performanceObserver.disconnect();
+      observers.forEach((o) => o.disconnect());
       window.removeEventListener('load', loadMetrics);
     };
   }, []);

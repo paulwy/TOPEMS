@@ -8,7 +8,7 @@ import React, { useMemo, useCallback } from 'react';
 import { Box, Typography } from '@mui/material';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef } from '@/components/templates/list/types';
-import { accountSchema } from '@/schemas/admin';
+import { getAccountSchema } from '@/schemas/admin';
 import { accountApi } from '@/api/finance/account';
 import type { Account, AccountBalance } from '@/types/finance';
 import { useNotificationStore } from '@/store';
@@ -382,7 +382,7 @@ const AccountManagementPage: React.FC = () => {
   }, []);
   return (
     <CrudPage
-      schema={accountSchema}
+      schema={getAccountSchema()}
       apiAdapter={apiAdapter}
       customColumns={customColumns}
       headerContent={headerContent}

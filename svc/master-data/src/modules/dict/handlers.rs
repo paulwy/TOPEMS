@@ -32,7 +32,7 @@ fn csv_field(s: &str) -> String {
 
 #[utoipa::path(
     get,
-    path = "/api/core/dict/dict-types",
+    path = "/api/master-data/dict/dict-types",
     tag = "Dict",
     params(
         ("page" = Option<i64>, Query, description = "页码"),
@@ -113,7 +113,7 @@ pub async fn list_dict_types(
 
 #[utoipa::path(
     get,
-    path = "/api/core/dict/dict-types/{id}",
+    path = "/api/master-data/dict/dict-types/{id}",
     tag = "Dict",
     params(
         ("id" = Uuid, Path, description = "字典类型ID"),
@@ -153,7 +153,7 @@ pub async fn get_dict_type(
 
 #[utoipa::path(
     post,
-    path = "/api/core/dict/dict-types",
+    path = "/api/master-data/dict/dict-types",
     tag = "Dict",
     request_body = serde_json::Value,
     responses(
@@ -200,7 +200,7 @@ pub async fn create_dict_type(
 
 #[utoipa::path(
     put,
-    path = "/api/core/dict/dict-types/{id}",
+    path = "/api/master-data/dict/dict-types/{id}",
     tag = "Dict",
     params(
         ("id" = Uuid, Path, description = "字典类型ID"),
@@ -256,7 +256,7 @@ pub async fn update_dict_type(
 
 #[utoipa::path(
     delete,
-    path = "/api/core/dict/dict-types/{id}",
+    path = "/api/master-data/dict/dict-types/{id}",
     tag = "Dict",
     params(
         ("id" = Uuid, Path, description = "字典类型ID"),
@@ -290,7 +290,7 @@ pub async fn delete_dict_type(
 
 #[utoipa::path(
     get,
-    path = "/api/core/dict/dict-types/{dict_type_id}/items",
+    path = "/api/master-data/dict/dict-types/{dict_type_id}/items",
     tag = "Dict",
     params(
         ("dict_type_id" = Uuid, Path, description = "字典类型ID"),
@@ -371,7 +371,7 @@ pub async fn list_dict_items(
 
 #[utoipa::path(
     get,
-    path = "/api/core/dict/dict-items/{id}",
+    path = "/api/master-data/dict/dict-items/{id}",
     tag = "Dict",
     params(
         ("id" = Uuid, Path, description = "字典项ID"),
@@ -411,7 +411,7 @@ pub async fn get_dict_item(
 
 #[utoipa::path(
     post,
-    path = "/api/core/dict/dict-items",
+    path = "/api/master-data/dict/dict-items",
     tag = "Dict",
     request_body = serde_json::Value,
     responses(
@@ -461,7 +461,7 @@ pub async fn create_dict_item(
 
 #[utoipa::path(
     put,
-    path = "/api/core/dict/dict-items/{id}",
+    path = "/api/master-data/dict/dict-items/{id}",
     tag = "Dict",
     params(
         ("id" = Uuid, Path, description = "字典项ID"),
@@ -521,7 +521,7 @@ pub async fn update_dict_item(
 
 #[utoipa::path(
     delete,
-    path = "/api/core/dict/dict-items/{id}",
+    path = "/api/master-data/dict/dict-items/{id}",
     tag = "Dict",
     params(
         ("id" = Uuid, Path, description = "字典项ID"),
@@ -553,7 +553,7 @@ pub async fn delete_dict_item(
 
 #[utoipa::path(
     post,
-    path = "/api/core/dict/dict-items/batch",
+    path = "/api/master-data/dict/dict-items/batch",
     tag = "Dict",
     request_body = serde_json::Value,
     responses(
@@ -618,7 +618,7 @@ pub async fn batch_create_dict_items(
 
 #[utoipa::path(
     get,
-    path = "/api/core/dict/dict-types/{dict_type_id}/items/export",
+    path = "/api/master-data/dict/dict-types/{dict_type_id}/items/export",
     tag = "Dict",
     params(
         ("dict_type_id" = Uuid, Path, description = "字典类型ID"),

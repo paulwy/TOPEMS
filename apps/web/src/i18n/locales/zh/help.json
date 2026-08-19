@@ -332,5 +332,15 @@
   "help.help_center_page.k42": "无法加载指南列表",
   "help.help_center_page.k43": "新功能",
   "help.help_center_page.k44": "优化",
-  "help.help_center_page.k45": "修复"
+  "help.help_center_page.k45": "修复",
+  "help.context_help": "标题",
+  "help.help_center": "帮助中心",
+  "help.view_guide": "查看",
+  "help.view_guide_desc": "查看",
+  "help.view_faq": "查看",
+  "help.view_faq_desc": "查看",
+  "help.contact_support": "contact支持",
+  "help.contact_support_desc": "contact支持desc",
+  "help.shortcut": "标签",
+  "help.all_docs": "标签"
 }

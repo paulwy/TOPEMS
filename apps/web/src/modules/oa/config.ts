@@ -14,8 +14,8 @@ export const OA_PATHS = {
 
 export const oaModuleConfig: RouteModuleConfig = {
   code: 'oa',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.oa_name'),
+  nameKey: 'shared.config.oa_name',
   icon: 'FileText',
   path: OA_PATHS.root,
   source: 'core',

@@ -1,6 +1,6 @@
 import React from 'react';
 import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
-import { milestoneSchema } from '@/schemas/rd';
+import { getMilestoneSchema } from '@/schemas/rd';
 import { rdApi } from '@/api/rd';
 import type { Build, CreateBuildRequest } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
@@ -73,7 +73,7 @@ const milestoneApiAdapter: CrudApiAdapter<Milestone> = {
 const RsMilestonePage: React.FC = () => {
   return (
     <CrudPage
-      schema={milestoneSchema}
+      schema={getMilestoneSchema()}
       apiAdapter={milestoneApiAdapter}
       breadcrumbs={[
         { label: i18n.t('rd.rs_milestone_page.k5'), href: RD_PATHS.root },

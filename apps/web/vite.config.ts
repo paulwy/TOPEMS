@@ -394,7 +394,7 @@ const buildServiceProxies = (): Record<string, any> => {
 
   // V68.1 兼容代理（必须在所有其他 /api/core/* 代理之前注册）
   // Vite 8 按插入顺序匹配 proxy key，不排序。如果 /api/core 先注册，
-  // 会抢先匹配 /api/core/plugin/* 和 /api/core/monitor/*
+  // 会抢先匹配 /api/core/plugin/* /api/core/monitor/* /api/core/dict/*
   proxies['/api/core/plugin'] = {
     target: `http://localhost:${BACKEND_PORTS['plugin-registry']}`,
     changeOrigin: true,
@@ -404,6 +404,15 @@ const buildServiceProxies = (): Record<string, any> => {
     target: `http://localhost:${BACKEND_PORTS.monitor}`,
     changeOrigin: true,
     rewrite: (path: string) => path.replace(/^\/api\/core\/monitor/, '/api/monitor'),
+  };
+  // V68.1 A2.3: dict 模块已外迁到 master-data:8090（svc/master-data）
+  // master-data 的 api_prefix=/api/master-data，dict 路由注册在 /dict/* 下，
+  // 实际后端路径为 /api/master-data/dict/*；前端仍通过 /api/core/dict/* 访问，
+  // 此处 rewrite 为 /api/master-data/dict/*（与 monitor/plugin 外迁模式一致）。
+  proxies['/api/core/dict'] = {
+    target: `http://localhost:${BACKEND_PORTS['master-data']}`,
+    changeOrigin: true,
+    rewrite: (path: string) => path.replace(/^\/api\/core\/dict/, '/api/master-data/dict'),
   };
 
   // Dashboard 路由走服务自身端口（原硬编码 8080 gateway 已移除）
@@ -422,11 +431,13 @@ const buildServiceProxies = (): Record<string, any> => {
     if (svc.legacyPrefix) {
       const serviceName = svc.name.replace('-virtual', '');
       proxies[svc.legacyPrefix] = createServiceProxyConfig(serviceName, target);
-
-      // health check
-      const healthPath = svc.legacyPrefix.replace('/api', '/health');
-      proxies[healthPath] = createHealthProxyConfig(serviceName, target);
     }
+
+    // 2b. 健康检查代理（所有服务统一入口：/{serviceName}/health -> localhost:port/health）
+    //     从 useServiceStatus / ReportPage 等前端组件发起的相对请求均通过此代理转发，
+    //     彻底避免前端直接跨端口访问导致的 CORS 报错（即便后端CORS配置正确，
+    //     浏览器同源策略也会拦截直接跨端口请求）。
+    proxies[`/${svc.name}/health`] = createHealthProxyConfig(svc.name, target);
 
     // 3. WebSocket
     if (svc.wsPath) {
@@ -507,11 +518,21 @@ const buildServiceProxies = (): Record<string, any> => {
 // The `generateLocalSharedImportMap` plugin's resolveId compares
 // `source === getLocalSharedImportMapPath()`, but Vite 8 passes
 // the source with a \0 prefix (null byte) in resolveId hooks.
-// This pre-plugin normalizes the comparison so the virtual module resolves correctly.
+//
+// V81-202608 扩展：除 virtual:mf-localSharedImportMap 之外，
+// MF 还生成 __loadShare__ / __prebuild__ / __mf_synthetic__ 等虚模块家族，
+// 它们统一以 `virtual:mf:__mfe_internal__<federationName>...` 为 ID。
+// 在 Vite 8 中这些 ID 同样会被前缀 \0，导致 @module-federation/vite 内部的
+// 精确字符串匹配失败，模块图中不会登记这些虚模块，浏览器 `/@id/__x00__...`
+// 请求就会拿到空响应 → MIME 类型为空、NS_ERROR_CORRUPTED_CONTENT、
+// "doesn't provide an export named"、DashboardPage 懒加载重试 3 次失败等等。
+// 此 pre-plugin 统一对所有 MF 虚模块 ID 做 null-byte 归一化：
+//   - 若 source 去除前导 \0 后命中任一 MF 虚模块前缀 → 返回 \0 前缀的规范形式
+//   - 从而保证后续 resolveId/load 能被 @module-federation/vite 正确认领
 const fixLocalSharedImportMapNullBytePlugin = {
   name: 'fix-mf-localSharedImportMap-nullbyte',
   enforce: 'pre' as const,
-  resolveId(source: string) {
+  resolveId(rawSource: string) {
     const LOCAL_SHARED_IMPORT_MAP_ID = 'virtual:mf-localSharedImportMap';
     const INTERNAL_NAME_PREFIX = '__mfe_internal__';
     const federationName = 'topems_portal';
@@ -526,10 +547,160 @@ const fixLocalSharedImportMapNullBytePlugin = {
       .replace(/\./g, '_mf_3_');
     const expectedPath = `${LOCAL_SHARED_IMPORT_MAP_ID}:${encodedName}`;
     const expectedResolved = `\0${expectedPath}`;
+
+    // ============================================================
+    // V81-202608 强化：在 strip \0 之前先剥离 HTTP 形态前缀
+    // Vite 8 偶发把 `/@id/__x00__virtual:mf:...` 这种浏览器 URL 直接
+    // 传入 resolveId，需要先还原成模块 ID 形式再处理。
+    // ============================================================
+    let source = rawSource;
+    if (source.startsWith('/@id/')) {
+      // 剥去 /@id/ 前缀
+      source = source.slice(5);
+      // 处理 __x00__ 前缀 → \0（Vite 的 null byte URL 编码）
+      if (source.startsWith('__x00__')) {
+        source = `\0${source.slice(7)}`;
+      }
+      // 去除 query string / hash 部分
+      const qIdx = source.indexOf('?');
+      const hIdx = source.indexOf('#');
+      const cutIdx =
+        qIdx === -1 ? hIdx : hIdx === -1 ? qIdx : Math.min(qIdx, hIdx);
+      if (cutIdx !== -1) source = source.slice(0, cutIdx);
+    }
+
     const normalizedSource = source.replace(/^\0+/, '');
+
+    // 1) virtual:mf-localSharedImportMap 原有分支（归一化返回）
     if (normalizedSource === expectedPath || source === expectedResolved) {
       return expectedResolved;
     }
+
+    // 2) MF 虚模块家族统一兜底：
+    //    - virtual:mf:__mfe_internal__...      (loadShare / prebuild / synthetic)
+    //    - __mfe_internal__...                  某些引用场景不带 virtual:mf: 前缀
+    //    - 字符串中明确包含 __loadShare__ / __prebuild__ / __mf_synthetic__
+    //    - virtual:mf-localSharedImportMap:__mfe_internal__...
+    const mfVirtualPrefixes = [
+      `virtual:mf:${INTERNAL_NAME_PREFIX}`,
+      `virtual:mf:${internalName}`,
+      `virtual:mf-localSharedImportMap:${INTERNAL_NAME_PREFIX}`,
+      `virtual:mf-localSharedImportMap:${encodedName}`,
+      `${INTERNAL_NAME_PREFIX}`,
+    ];
+    const containsMfToken =
+      normalizedSource.includes('__loadShare__') ||
+      normalizedSource.includes('__prebuild__') ||
+      normalizedSource.includes('__mf_synthetic__') ||
+      normalizedSource.includes('__loadRemote__') ||
+      normalizedSource.includes('__treeShakingProvider__') ||
+      normalizedSource.includes('__mf_tree_shaking_graph__');
+    const matchesPrefix = mfVirtualPrefixes.some((p) => normalizedSource.startsWith(p));
+    if (containsMfToken || matchesPrefix) {
+      return `\0${normalizedSource}`;
+    }
+  },
+};
+
+// V81-202608 P2: MF 虚模块 HTTP 服务兜底中间件
+//
+// 问题背景：Vite 8 serve 模式下，浏览器对 loadShare/prebuild 虚模块发起
+//   GET /@id/__x00__virtual:mf:__mfe_internal__...__loadShare__react__loadShare__.js
+// 请求时，默认的 /@id/ 中间件偶发跳过完整插件管线，直接返回空响应（无 Content-Type），
+// 导致：
+//   - Firefox: NS_ERROR_CORRUPTED_CONTENT + 拦截 "不允许的 MIME 类型（""）"
+//   - Chrome: "Failed to load module script: Expected a JavaScript module script..."
+//   - WorkflowDashboardPage / DashboardPage 懒加载重试 3 次后崩溃
+//
+// 此中间件在 Vite 默认 /@id/ 处理器之前拦截所有 MF 虚模块请求，强制走
+// server.transformRequest() 完整管线（会依次触发 resolveId → load → transform），
+// 然后显式写入 Content-Type: application/javascript，彻底规避空 MIME / 空 body 问题。
+const fixMfVirtualModulesDevServerPlugin: Plugin = {
+  name: 'fix-mf-virtual-modules-dev-server',
+  enforce: 'pre' as const,
+  apply: 'serve',
+  configureServer(server) {
+    // 匹配：/@id/__x00__<rest>  其中 <rest> 必须包含 virtual:mf:
+    // 同时兼容带 query string 的情况：/@id/__x00__...?t=123
+    const MF_VIRTUAL_AT_ID_RE =
+      /^\/@id\/__x00__(virtual:mf:[^?#]+?)(\.(?:js|mjs))?(\?.*)?$/;
+
+    // 插入到 Vite 中间件栈最前面（在 transformMiddleware / @id handler 之前）
+    server.middlewares.use((req, res, next) => {
+      if (!req.url) return next();
+
+      const match = req.url.match(MF_VIRTUAL_AT_ID_RE);
+      if (!match) return next();
+
+      // 解构：$1 = virtual:mf:...（不含扩展名），$2 = 可能的 .js / .mjs 扩展，
+      //       $3 = 可能的 query string（?t=xxx）
+      const [, virtualCore, ext, query] = match;
+
+      // MF VirtualModule 的 importId 本身带后缀（如 __loadShare__.js），
+      // Vite 在做 /@id/ URL 编码时会把 \0 → __x00__，后缀保持不变。
+      // 这里保证模块 ID 构造为：\0 + virtualCore + (ext 若 virtualCore 已带后缀则忽略)
+      const needsExt = ext && !virtualCore.endsWith(ext);
+      const moduleId = `\0${virtualCore}${needsExt ? ext : ''}${query || ''}`;
+
+      // 异步：使用 transformRequest 强制走完整 plugin pipeline
+      // 这会触发：resolveId（fixLocalSharedImportMapNullBytePlugin + MF 内置插件）
+      //          → load（MF 返回 virtualModule.code）
+      //          → transform（源代码 / sourcemap 处理）
+      (async () => {
+        try {
+          const result = await server.transformRequest(moduleId);
+          if (!result) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(
+              JSON.stringify({
+                error: 'MF_VIRTUAL_MODULE_EMPTY',
+                moduleId: moduleId.replace(/^\0/, '\\0'),
+                message:
+                  'Module Federation virtual module returned empty transform result. This indicates a loadShare materialization failure.',
+              })
+            );
+            return;
+          }
+          const { code, map } = result;
+          if (!code) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(
+              JSON.stringify({
+                error: 'MF_VIRTUAL_MODULE_NO_CODE',
+                moduleId: moduleId.replace(/^\0/, '\\0'),
+              })
+            );
+            return;
+          }
+          // 正确 MIME 类型，避免 Firefox 空 Content-Type 拦截
+          const headers: Record<string, string> = {
+            'Content-Type': 'application/javascript; charset=utf-8',
+            'Cache-Control': 'no-cache',
+            'X-MF-Virtual-Module': moduleId.replace(/^\0/, 'virtual:mf'),
+          };
+          if (map) {
+            headers['SourceMap'] = JSON.stringify(map)
+              .slice(0, 1)
+              .replace(/./, ''); // placeholder: Vite 自带 sourcemap 处理，此处仅占位
+          }
+          res.writeHead(200, headers);
+          res.end(code, 'utf-8');
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          res.writeHead(500, { 'Content-Type': 'application/javascript; charset=utf-8' });
+          // 返回一个 ESM throw 语句，让浏览器端拿到结构化错误而不是静默 MIME 失败
+          res.end(
+            `throw new Error("[MF Virtual Module Transform Failed] ` +
+              `${msg.replace(/"/g, '\\"').replace(/\n/g, ' ')} ` +
+              `(module=${moduleId.replace(/^\0/, '\\0virtual:mf').slice(0, 120)}..."));\n`,
+            'utf-8'
+          );
+        }
+      })().catch(() => {
+        // 兜底：交给 Vite 默认 /@id/ 处理器尝试
+        next();
+      });
+    });
   },
 };
 
@@ -754,8 +925,401 @@ function topemsRechartsSplitPlugin(): Plugin {
 
 export default defineConfig({
   plugins: [
+    // C3 §5.2: React 19 + Vite 8 / rolldown CJS→ESM named exports 丢失修复
+    // 错误：
+    //   SyntaxError: ".../react.js does not provide an export named 'forwardRef'"
+    //   SyntaxError: ".../react_jsx-runtime.js does not provide an export named 'jsx'"
+    //   SyntaxError: ".../react_jsx-dev-runtime.js does not provide an export named 'jsxDEV'"
+    //   SyntaxError: ".../react-dom.js does not provide an export named 'createPortal'"
+    // 原因：rolldown 预打包其他依赖时顺带把 React 系列的 CJS bundle 合成到
+    //       .vite/deps/*.js，转换逻辑只生成 `export default require_xxx()`，
+    //       未把 `exports.forwardRef = ...` / `exports.jsx = ...` 等 CJS 赋值
+    //       转成 ESM `export const xxx = ...`。
+    // 修复：
+    //   1) optimizeDeps 结束后 configureServer 内异步检测磁盘上
+    //      node_modules/.vite/deps/react*.js 是否生成，直接 fs 改写末尾补
+    //      named exports 解构代码，并触发浏览器 full-reload；
+    //   2) transform 钩子兜底（enforce=pre）：浏览器首次请求时如文件仍
+    //      在内存缺 named exports，即时修补后返回。
+    (() => {
+      type FixDef = {
+        name: string;                 // 文件名：react.js / react_jsx-runtime.js ...
+        requireFn: string;            // rolldown 生成的 require 函数名
+        sanityCheck: string;          // 文件中出现的 exports.xxx 关键字（身份校验）
+        exports: readonly string[];   // 要补的 named exports 列表
+      };
+      const REACT_19_EXPORTS = [
+        'Children', 'Component', 'Fragment', 'Profiler', 'PureComponent',
+        'StrictMode', 'Suspense', 'SuspenseList', 'cloneElement', 'createContext',
+        'createElement', 'createFactory', 'createRef', 'forwardRef',
+        'isValidElement', 'lazy', 'memo', 'startTransition',
+        'unstable_useCacheRefresh', 'use', 'useActionState', 'useCallback',
+        'useContext', 'useDebugValue', 'useDeferredValue', 'useEffect',
+        'useEffectEvent', 'useId', 'useImperativeHandle', 'useInsertionEffect',
+        'useLayoutEffect', 'useMemo', 'useOptimistic', 'useReducer', 'useRef',
+        'useState', 'useSyncExternalStore', 'useTransition', 'version',
+      ] as const;
+      const REACT_DOM_EXPORTS = [
+        '__DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE',
+        'createPortal', 'flushSync', 'preconnect', 'prefetchDNS', 'preinit',
+        'preinitModule', 'preload', 'preloadModule', 'requestFormReset',
+        'unstable_batchedUpdates', 'useFormState', 'useFormStatus', 'version',
+      ] as const;
+      const FIX_DEFS: readonly FixDef[] = [
+        {
+          name: 'react.js',
+          requireFn: 'require_react',
+          sanityCheck: 'exports.forwardRef',
+          exports: REACT_19_EXPORTS,
+        },
+        {
+          name: 'react_jsx-runtime.js',
+          requireFn: 'require_jsx_runtime',
+          sanityCheck: 'exports.jsx',
+          exports: ['jsx', 'jsxs'],
+        },
+        {
+          name: 'react_jsx-dev-runtime.js',
+          requireFn: 'require_jsx_dev_runtime',
+          sanityCheck: 'exports.jsxDEV',
+          exports: ['jsxDEV'],
+        },
+        {
+          name: 'react-dom.js',
+          requireFn: 'require_react_dom',
+          sanityCheck: 'exports.createPortal',
+          exports: REACT_DOM_EXPORTS,
+        },
+      ] as const;
+
+      const INJECT_MARK = '[fix-react-19-named-exports] INJECTION START';
+
+      function injectExports(code: string, def: FixDef): string | null {
+        if (code.includes(INJECT_MARK)) return null;        // 已注入
+        if (!code.includes(def.sanityCheck)) return null;   // 身份不匹配（防御）
+        const endDefault = `export default ${def.requireFn}();`;
+        if (!code.includes(endDefault)) return null;        // 非 rolldown 目标格式
+        const nsVar = `__FIX_R19_${def.name.replace(/[^A-Za-z0-9]/g, '_')}__`;
+        const exportsList = def.exports
+          .map((n) => `${n} = ${nsVar}.${n}`)
+          .join(', ');
+        const postfix =
+          `\n\n/* ${INJECT_MARK} (${def.name}) */\n`
+          + `const ${nsVar} = ${def.requireFn}();\n`
+          + `export const ${exportsList};\n`
+          + `/* [fix-react-19-named-exports] INJECTION END */\n`;
+        return code + postfix;
+      }
+
+      return {
+        name: 'fix-react-19-named-exports',
+        enforce: 'pre' as const,
+
+        // ===== 通道 1：transform 兜底 =====
+        transform(code: string, id: string) {
+          const norm = id.replace(/\\/g, '/');
+          for (const def of FIX_DEFS) {
+            // 覆盖 /node_modules/.vite/deps/<name>.js 以及带 query 版本
+            if (!norm.endsWith(`/node_modules/.vite/deps/${def.name}`)
+              && !norm.includes(`/node_modules/.vite/deps/${def.name}?`)) continue;
+            const patched = injectExports(code, def);
+            if (patched) return patched;
+          }
+          return null;
+        },
+
+        // ===== 通道 2：configureServer + fs 直接改写磁盘 =====
+        // rolldown 预打包后的 deps 文件可能不走 transform（静态文件服务），
+        // 所以必须在文件生成后直接修改磁盘内容，再让浏览器刷新。
+        async configureServer(server: any) {
+          const depsDir = path.resolve(__dirname, 'node_modules/.vite/deps');
+          let applied = false;
+
+          async function tryPatchAll(): Promise<boolean> {
+            let patchedAny = false;
+            for (const def of FIX_DEFS) {
+              const f = path.join(depsDir, def.name);
+              try {
+                const stat = await fsp.stat(f);
+                if (!stat.isFile()) continue;
+                const original = await fsp.readFile(f, 'utf8');
+                const patched = injectExports(original, def);
+                if (patched) {
+                  await fsp.writeFile(f, patched, 'utf8');
+                  server.config.logger.info(
+                    `[fix-react-19-named-exports] patched ${def.name} `
+                    + `(+${def.exports.length} named exports)`,
+                  );
+                  patchedAny = true;
+                }
+              } catch (e) {
+                // 文件还没生成（optimizeDeps 尚未完成）→ 跳过，下轮再试
+              }
+            }
+            return patchedAny;
+          }
+
+          // 轮询 2s * 30 = 最多 60s 等 optimizeDeps 把文件写到磁盘
+          let attempts = 0;
+          const interval = setInterval(async () => {
+            attempts += 1;
+            const did = await tryPatchAll();
+            if (did && !applied) {
+              applied = true;
+              clearInterval(interval);
+              // 等 500ms 避免与首次请求竞争，再推 HMR full-reload 给所有连上来的客户端
+              setTimeout(() => {
+                try {
+                  server.ws.send({ type: 'full-reload' });
+                  server.config.logger.info(
+                    '[fix-react-19-named-exports] sent full-reload to clients',
+                  );
+                } catch { /* no-op: 客户端可能还没连上 */ }
+              }, 500);
+            } else if (attempts > 30) {
+              clearInterval(interval);
+            }
+          }, 2000);
+        },
+      };
+    })(),
+    // C3 §5.3: dayjs/plugin/* UMD 格式 default export 丢失修复
+    // 错误：SyntaxError: ".../dayjs/plugin/advancedFormat.js does not provide
+    //       an export named 'default'"
+    // 原因：dayjs 插件是纯 UMD 文件（module.exports = factory() + globalThis 赋值），
+    //       Vite 8/rolldown 某些 @fs 路径下识别不到它是 CJS，导致未生成 ESM
+    //       default export，代码写 `import advFormat from 'dayjs/plugin/advancedFormat'`
+    //       就会报 named default 缺失。
+    // 修复：enforce=pre transform 命中 dayjs/plugin/* 路径，手动把 UMD 包成
+    //       带 module/exports 的 CJS 沙盒执行，再取结果做 export default。
+    {
+      name: 'fix-dayjs-umd-default',
+      enforce: 'pre' as const,
+      transform(code: string, id: string) {
+        const norm = id.replace(/\\/g, '/').split('?')[0];
+        // 覆盖 dayjs 包内所有 *.js 文件（主入口 dayjs.min.js / dayjs.js +
+        // plugin/*.js + locale/*.js 等），都是 UMD 格式：
+        //   module.exports = factory() + globalThis.dayjs_xxx = factory()
+        // 但 Vite/@fs 加载场景下有时不会被识别为 CJS，从而缺
+        // `export default` → SyntaxError。
+        const isDayjsBundle =
+          /node_modules\/\.pnpm\/dayjs@[^/]+\/node_modules\/dayjs(\/[^/]+)*\/[^/]+\.js$/
+            .test(norm)
+          || /node_modules\/dayjs(\/[^/]+)*\/[^/]+\.js$/.test(norm);
+        if (!isDayjsBundle) return null;
+        if (code.includes('export default')) return null;
+        const wrapped = [
+          'const __DAYJS_UMD_M__ = { exports: {} };',
+          '(function(module, exports) {',
+          code,
+          '}).call(undefined, __DAYJS_UMD_M__, __DAYJS_UMD_M__.exports);',
+          'export default (__DAYJS_UMD_M__.exports && __DAYJS_UMD_M__.exports.default)',
+          '  || __DAYJS_UMD_M__.exports;',
+          '',
+        ].join('\n');
+        return wrapped;
+      },
+    },
+    // C3 §5.4: 通用 node_modules CJS→ESM named-exports 缺失修复
+    // 错误模式（Vite 8 + pnpm hoisted / @fs 加载下广泛出现）：
+    //   SyntaxError: "/@fs/.../cookie/dist/index.js does not provide an export named 'parse'"
+    // 根本原因：CJS 文件存在 `exports.parse = ...` 等赋值，但 Vite/Rolldown 在
+    //           通过 @fs 直读 pnpm 真实物理路径时，未把这些 CJS 属性赋值转换为
+    //           ESM `export const xxx = ...` 形式，仅生成 `export default require_xxx()`
+    //           或完全不生成 ESM export。
+    // 覆盖范围：所有 node_modules/.pnpm/** / node_modules/** 中的 .js 源文件，
+    //           但排除 .vite/deps/*（留给 react 系列插件）、react/dayjs
+    //           （已有专门插件处理）、已经写了 ESM `export` 关键字的文件。
+    // 修复策略（enforce=pre，运行时 transform）：
+    //   1) 用正则从代码提取全部 `exports.<name> = ` 与 `module.exports.<name> = `
+    //      的属性名（JS 标识符过滤）。
+    //   2) 把原代码包进 IIFE，注入空的 module/exports 对象，运行 UMD/CJS 工厂。
+    //   3) 追加 `export default (...)` + 所有属性的
+    //      `export const {name} = __ns.{name}` named exports。
+    (() => {
+      const INJECT_MARK_GENERAL = '[fix-cjs-named-exports-general] INJECTION START';
+      const JS_IDENT_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+      // JS 严格模式/模块作用域下不能当变量名的保留字（只处理 named export
+      // 里用到的标识符即可，default 等关键字不会被 exports.xxx= 命中）
+      const RESERVED = new Set([
+        'import', 'export', 'await', 'class', 'enum', 'extends', 'super',
+        'package', 'private', 'protected', 'public', 'interface',
+        'implements', 'let', 'static', 'yield', 'const', 'arguments', 'eval',
+      ]);
+
+      // ===== 辅助：从源码中提取所有 exports.<name> = / module.exports.<name> = 名称 =====
+      function extractCjsExportNames(code: string): string[] {
+        const names = new Set<string>();
+        const re = /(?:^|[^.\w$])(?:exports|module\.exports)\.([A-Za-z_$][\w$]*)\s*=/gm;
+        for (const m of code.matchAll(re)) {
+          const n = m[1];
+          if (!JS_IDENT_RE.test(n)) continue;
+          if (RESERVED.has(n)) continue;
+          names.add(n);
+        }
+        return Array.from(names);
+      }
+
+      // ===== 辅助：识别残缺的 rolldown/Vite __commonJS ESM 包装 =====
+      // 形如：
+      //   import { t as __commonJS } from "./rolldown-runtime-XXX.js";
+      //   var require_COOKIE = /* @__PURE__ */ __commonJS((function(exports, module){ ... exports.parse = ... })());
+      //   ...
+      //   export default require_COOKIE();
+      // （结尾没有 named exports）=> 需要补解构 named exports
+      function detectBrokenCommonJSWrapper(code: string) {
+        if (code.includes(INJECT_MARK_GENERAL)) return null;                      // 已修复
+        // 结尾的 require 函数名（必须严格匹配这行格式）
+        const endM = code.match(/export\s+default\s+(require_[A-Za-z0-9_$]+)\s*\(\s*\)\s*;?\s*$/);
+        if (!endM) return null;
+        const requireFn = endM[1];
+        // var require_XXX = /* @__PURE__ */ __commonJS(...);
+        // 或 let / const 都可以
+        const declM = new RegExp(
+          `(?:var|let|const)\\s+${requireFn}\\s*=\\s*(?:/\\*[^*]*\\*+([^/*][^*]*\\*+)*/\\s*)?__commonJS\\s*\\(`,
+          'm',
+        ).exec(code);
+        if (!declM) return null;
+        // 取 CJS 工厂函数体内的原始代码片段（直接取整个 code 来找 exports.xxx 也行，
+        // 因为外层的 wrapper 不会出现 exports.xxx =，内部工厂才会有）
+        const names = extractCjsExportNames(code);
+        if (names.length === 0) return null;
+        return { requireFn, names };
+      }
+
+      return {
+        name: 'fix-cjs-named-exports-general',
+        enforce: 'pre' as const,
+        async transform(code: string, id: string) {
+          const norm = id.replace(/\\/g, '/').split('?')[0];
+          if (!norm.endsWith('.js')) return null;
+
+          // —— 范围限定：只处理 node_modules 下的源文件（非项目源码）——
+          if (!norm.includes('/node_modules/')) return null;
+          // dayjs 系列是 UMD 整体赋值 + 全限定路径，交给 fix-dayjs 专用插件
+          //   （它在 transform 里会把 this 绑定成 undefined 来模拟 UMD）
+          if (/\/node_modules\/\.pnpm\/dayjs@[^/]+\/node_modules\//.test(norm)) return null;
+          if (norm.includes('/node_modules/dayjs/')) return null;
+
+          // ===== 通道 X：React 生态特有的「bare CJS entry 双 require 模式」=====
+          // 典型文件：
+          //   react/index.js
+          //   react-dom/index.js
+          //   react-dom/client.js
+          // 内容格式：
+          //   'use strict';
+          //   if (process.env.NODE_ENV === 'production') {
+          //     module.exports = require('./cjs/xxx.production.js');
+          //   } else {
+          //     module.exports = require('./cjs/xxx.development.js');
+          //   }
+          // 这些文件被 exclude 在 optimizeDeps 外，@fs 直读 → 含裸 require() →
+          // ESM 下 require 未定义 + 无 named exports。
+          // 这里将其改写成 ESM import（走 DEV 分支），再手动补 named exports，
+          // 这样 DEV 分支目标文件本身不含裸 require()，会被通道 B 正常处理。
+          const BARE_ENTRY_RE = new RegExp(
+            '^\\s*'
+            + '(?:[\'"]use strict[\'"]\\s*;?\\s*\\n\\s*)?'
+            + 'if\\s*\\(\\s*process\\.env\\.NODE_ENV\\s*===\\s*[\'"]production[\'"]\\s*\\)\\s*\\{\\s*'
+            + 'module\\.exports\\s*=\\s*require\\s*\\(\\s*[\'"](\\.\\/cjs\\/[^\'"]+\\.production(?:\\.min)?\\.js)[\'"]\\s*\\)\\s*;\\s*\\}\\s*'
+            + 'else\\s*\\{\\s*'
+            + 'module\\.exports\\s*=\\s*require\\s*\\(\\s*[\'"](\\.\\/cjs\\/[^\'"]+\\.development(?:\\.min)?\\.js)[\'"]\\s*\\)\\s*;\\s*\\}\\s*$',
+            'm',
+          );
+          const bareEntryMatch = BARE_ENTRY_RE.exec(code);
+          if (bareEntryMatch) {
+            const devRel = bareEntryMatch[2];
+            const { createRequire } = await import('node:module');
+            const fsMod = await import('node:fs');
+            // 当前文件的磁盘绝对路径（去掉 /@fs 前缀和 query）
+            const diskPath = norm.startsWith('/@fs/') ? norm.slice('/@fs'.length) : norm;
+            const devAbs = createRequire(diskPath).resolve(devRel);
+            let devCode = '';
+            try {
+              devCode = fsMod.readFileSync(devAbs, 'utf8');
+            } catch (e) {
+              console.warn('[fix-cjs-general] channel X cannot read', devRel, '->', devAbs, e);
+            }
+            const devNames = extractCjsExportNames(devCode);
+            // 命名空间变量名用 hash，避免冲突
+            const nsVar = `__FIX_BARE_ENTRY_NS_${norm.split('/').slice(-2, -1)[0] || 'mod'}__`;
+            let out = `\n/* ${INJECT_MARK_GENERAL} (channel-X: bare-cjs-dual-require → ESM) */\n`;
+            out += `import ${nsVar} from ${JSON.stringify(devRel)};\n`;
+            out += `export default ${nsVar};\n`;
+            if (devNames.length) {
+              out += 'export const '
+                + devNames.map((n) => `${n} = ${nsVar}.${n}`).join(', ')
+                + ';\n';
+            }
+            return out;
+          }
+
+          // —— 通道 A：残缺 __commonJS ESM 包装（Vite/Rolldown 生成，
+          //             外层有 export default 但缺少 named exports）——
+          const wrapper = detectBrokenCommonJSWrapper(code);
+          if (wrapper) {
+            // .vite/deps/react.js 等专门插件已经覆盖过，它们的 requireFn 名是
+            // `require_react` 等，这里不再重复处理（但 detectBroken 本身也会因为
+            //  injection mark 已存在而 return null）
+            const { requireFn, names } = wrapper;
+            const nsVar = `__FIX_CJS_WRAP_NS_${requireFn.replace(/[^A-Za-z0-9_]/g, '_')}__`;
+            const decl = `const ${nsVar} = ${requireFn}();`;
+            const namedExports =
+              'export const '
+              + names.map((n) => `${n} = ${nsVar}.${n}`).join(', ')
+              + ';';
+            const postfix =
+              `\n\n/* ${INJECT_MARK_GENERAL} (__commonJS wrapper fix) */\n`
+              + `${decl}\n${namedExports}\n`;
+            return code + postfix;
+          }
+
+          // —— 快速排除：如果已经是正常 ESM 或已修复 ——
+          if (code.includes(INJECT_MARK_GENERAL)) return null;
+          // 存在 ESM `export` 关键字（严格匹配：`export ` 或 `export{` 或 `export\n`，
+          // 避免误匹配 CJS `exports.xxx =` 的 `exports` 单词）
+          if (/\bexport(?:\s+|[{;]|$)/m.test(code)) return null;
+          // 如果文件有 `import` 关键字（ESM import 语句），说明已经是 ESM
+          if (/\bimport\s*(?:['"({]|\w+\s*,)/.test(code)) return null;
+
+          // —— 通道 B：原始 CJS/UMD 文件（Vite 未做 CJS 转换，纯 CJS 代码）——
+          const namesArr = extractCjsExportNames(code);
+          const hasModuleExportsAssign = /(?:^|[^.\w$])module\.exports\s*=[^=]/m.test(code);
+          if (namesArr.length === 0 && !hasModuleExportsAssign) return null;
+          // 防御：如果代码里有裸 `require(<string-or-var>)` 调用（需要 Node require
+          // 语义，例如 `require('./cjs/react-dom-client.development.js')`），ESM 环境下
+          // 没有全局 require，强行包装 IIFE 会导致 ReferenceError: require is not defined。
+          // 这类文件应该通过 optimizeDeps.include 让 Vite esbuild/rolldown 打包
+          // （打包后会有 __commonJS 或 rollup 提供的 require 兼容层）。
+          if (/(?:^|[^.\w$])require\s*\(/.test(code)) return null;
+
+          const nsVar = '__FIX_CJS_NS__';
+          const namedExportsList = namesArr.length
+            ? 'export const '
+              + namesArr.map((n) => `${n} = ${nsVar}.${n}`).join(', ')
+              + ';'
+            : '';
+          const wrapped = [
+            `/* ${INJECT_MARK_GENERAL} (raw CJS/UMD fix) */`,
+            `const ${nsVar} = { exports: {} };`,
+            `(function(module, exports){`,
+            code,
+            `}).call(undefined, ${nsVar}, ${nsVar}.exports);`,
+            `export default (${nsVar}.exports && ${nsVar}.exports.default) || ${nsVar}.exports;`,
+            namedExportsList,
+            '',
+          ].filter(Boolean).join('\n');
+          return wrapped;
+        },
+      };
+    })(),
     react(),
     fixLocalSharedImportMapNullBytePlugin,
+    // V81-202608 P2: MF 虚模块 dev-server 兜底中间件（仅 apply: 'serve'）
+    // 必须放在 federation() 之前，因为它的 configureServer 要先于 Vite 默认 /@id/ 处理器
+    // 但实际中间件是在 configureServer 回调内动态用 server.middlewares.use()
+    // 插到栈顶，所以插件注册顺序不严格，只要在 defineConfig 的 plugins 里即可。
+    fixMfVirtualModulesDevServerPlugin,
     // V65.1.2: 启用 gzip + brotli 压缩
     // - gzip 兼容性最好（所有现代浏览器），用 vite-plugin-compression
     // - brotli 压缩率更高（比 gzip 再降 15-25%），主流浏览器均支持；
@@ -781,148 +1345,170 @@ export default defineConfig({
           }),
         ]
       : []),
-    federation({
-      name: 'topems_portal',
-      /**
-       * Remote modules configuration
-       * 核心模块通过 Module Federation 动态加载
-       *
-       * 部署模式:
-       * - module-federation: 动态加载远程模块 (SaaS)
-       * - static: 静态打包所有模块 (本地安装)
-       * - hybrid: 核心静态 + 插件动态
-       *
-       * 多 remote 扩展：
-       * - 编译期声明的 remote 通过 buildRemotes() 返回
-       * - 运行时按需加载见 apps/web/src/microfrontend/RemoteLoader.tsx
-       * - 模块清单（业务域拆分、权限、预加载策略）见
-       *   apps/web/src/microfrontend/config.ts 的 REMOTE_MODULES
-       */
-      remotes: buildRemotes(),
-      /**
-       * Shared dependencies - These are shared between host and remotes
-       * 配置为 singleton 模式避免重复加载
-       *
-       * 新增 shared 依赖（版本协商 + 降级）：
-       * - @tanstack/react-query: 业务模块共享 QueryClient
-       * - react-hook-form: 业务模块共享表单状态
-       * - zod: 业务模块共享 schema 验证
-       */
-      shared: {
-        react: {
-          singleton: true,
-          requiredVersion: '^19.0.0',
-          // V64：MF 的 loadShare runtime wrapper 会基于 package.json 的 named exports
-          // 列表生成 import * 壳。在 React 19 中 act 等可选导出会因为 wrapper
-          // 没包含它们而表现为 undefined，导致 @react-three/fiber 这类库
-          // 通过 `import * as React from 'react' + React['act'+'']` 访问时触发
-          // `IMPORT_IS_UNDEFINED`（warning id 落在消费方文件而非 MF 虚模块上）。
-          // 解决：打开 eager，让本地 React 直接作为 fallback 静态加载，
-          // 绕开 loadShare wrapper；同时关闭 strictVersion 避免因为
-          // small patch 差异（19.2.7 vs 19.2.8 之类）失败。
-          eager: true,
-          strictVersion: false,
-        },
-        'react-dom': {
-          singleton: true,
-          requiredVersion: '^19.0.0',
-          eager: true,
-          strictVersion: false,
-        },
-        'react-router-dom': {
-          singleton: true,
-          requiredVersion: '^7.0.0',
-          strictVersion: true,
-        },
-        '@tanstack/react-query': {
-          singleton: true,
-          requiredVersion: '^5.0.0',
-          strictVersion: true,
-        },
-        '@mui/material': {
-          singleton: true,
-          requiredVersion: '^9.0.0',
-          // CJS 传递依赖（prop-types、@babel/runtime 等）在 MF loadShare
-          // wrapper 中找不到 default export，导致 "doesn't provide an export
-          // named: 'default'" 错误。开启 eager 走静态加载绕开此问题。
-          eager: true,
-          strictVersion: false,
-        },
-        '@emotion/react': {
-          singleton: true,
-          requiredVersion: '^11.0.0',
-          eager: true,
-          strictVersion: false,
-        },
-        '@emotion/styled': {
-          singleton: true,
-          requiredVersion: '^11.0.0',
-          eager: true,
-          strictVersion: false,
-        },
-        // CJS 模块：react-is 是 @emotion/react/styled 的传递依赖，
-        // 其 named export (isValidElementType 等) 通过 MF loadShare wrapper
-        // 无法正确导出，需要 eager 走静态加载
-        'react-is': {
-          singleton: true,
-          requiredVersion: '^19.0.0',
-          eager: true,
-          strictVersion: false,
-        },
-        // CJS 模块：prop-types 是 @mui/material / recharts / 旧类库的传递依赖。
-        // 如果不加 singleton+eager，MF remote 会用 loadShare 直接从
-        // pnpm virtual store 的 /@fs/... 路径 serve 原始 CJS 文件（prop-types/index.js），
-        // 从而在 ESM 下抛出 "doesn't provide an export named: 'default'"，
-        // 表现为 lazy-loaded DashboardPage 重试 3 次后崩溃。加 eager 后，
-        // 统一由 host 的 optimizeDeps（已 include 'prop-types'）预构建后分发，
-        // default/interop 均正常。dedupe 数组中也已列出 prop-types 防版本分叉。
-        'prop-types': {
-          singleton: true,
-          eager: true,
-          strictVersion: false,
-        },
-        zustand: {
-          singleton: true,
-          requiredVersion: '^5.0.0',
-          strictVersion: true,
-        },
-        i18next: {
-          singleton: true,
-          requiredVersion: '^26.0.0',
-          strictVersion: true,
-        },
-        'react-i18next': {
-          singleton: true,
-          requiredVersion: '^17.0.0',
-          strictVersion: true,
-        },
-        axios: {
-          singleton: true,
-          requiredVersion: '^1.0.0',
-          strictVersion: true,
-        },
-        dayjs: {
-          singleton: true,
-          requiredVersion: '^1.11.0',
-          strictVersion: true,
-        },
-        'react-hook-form': {
-          singleton: true,
-          requiredVersion: '^7.0.0',
-          strictVersion: true,
-        },
-        zod: {
-          singleton: true,
-          requiredVersion: '^4.0.0',
-          strictVersion: true,
-        },
-        '@tanstack/react-table': {
-          singleton: true,
-          requiredVersion: '^8.0.0',
-          strictVersion: true,
-        },
-      },
-    }),
+    /**
+     * Module Federation 插件：仅在 module-federation / hybrid 部署模式下启用。
+     *
+     * static 模式（本地安装版、单机部署、离线环境）必须关闭 federation：
+     *   - static 模式下 buildRemotes() 返回空对象，无任何远程模块需要加载；
+     *   - 开启 federation 即使 remotes={} 也会为 shared 依赖生成
+     *     __loadShare__ 虚模块包装（react / react-dom / prop-types 等），
+     *     在 Vite 8 + @module-federation/vite 组合下这些虚模块的 null-byte
+     *     ID 常常无法进入 Vite 模块图 → 浏览器请求 @id/__x00__virtual:mf:...
+     *     拿到空响应（Content-Type=""），表现为 NS_ERROR_CORRUPTED_CONTENT +
+     *     "MIME 类型不允许" + DashboardPage 懒加载重试 3 次后失败。
+     *   - 关闭 federation 后，所有共享依赖直接从 node_modules 静态解析，
+     *     与 static 部署语义完全一致，不会触发任何 MF 相关 bug。
+     *
+     * 如需启用 SaaS 多 remote 架构：
+     *   $ export VITE_DEPLOYMENT_MODE=module-federation
+     *   或修改 .env.local 中的 VITE_DEPLOYMENT_MODE。
+     */
+    ...(DEPLOYMENT_MODE !== 'static'
+      ? [
+          federation({
+            name: 'topems_portal',
+            /**
+             * Remote modules configuration
+             * 核心模块通过 Module Federation 动态加载
+             *
+             * 部署模式:
+             * - module-federation: 动态加载远程模块 (SaaS)
+             * - static: 静态打包所有模块 (本地安装)
+             * - hybrid: 核心静态 + 插件动态
+             *
+             * 多 remote 扩展：
+             * - 编译期声明的 remote 通过 buildRemotes() 返回
+             * - 运行时按需加载见 apps/web/src/microfrontend/RemoteLoader.tsx
+             * - 模块清单（业务域拆分、权限、预加载策略）见
+             *   apps/web/src/microfrontend/config.ts 的 REMOTE_MODULES
+             */
+            remotes: buildRemotes(),
+            /**
+             * Shared dependencies - These are shared between host and remotes
+             * 配置为 singleton 模式避免重复加载
+             *
+             * 新增 shared 依赖（版本协商 + 降级）：
+             * - @tanstack/react-query: 业务模块共享 QueryClient
+             * - react-hook-form: 业务模块共享表单状态
+             * - zod: 业务模块共享 schema 验证
+             */
+            shared: {
+              react: {
+                singleton: true,
+                requiredVersion: '^19.0.0',
+                // V64：MF 的 loadShare runtime wrapper 会基于 package.json 的 named exports
+                // 列表生成 import * 壳。在 React 19 中 act 等可选导出会因为 wrapper
+                // 没包含它们而表现为 undefined，导致 @react-three/fiber 这类库
+                // 通过 `import * as React from 'react' + React['act'+'']` 访问时触发
+                // `IMPORT_IS_UNDEFINED`（warning id 落在消费方文件而非 MF 虚模块上）。
+                // 解决：打开 eager，让本地 React 直接作为 fallback 静态加载，
+                // 绕开 loadShare wrapper；同时关闭 strictVersion 避免因为
+                // small patch 差异（19.2.7 vs 19.2.8 之类）失败。
+                eager: true,
+                strictVersion: false,
+              },
+              'react-dom': {
+                singleton: true,
+                requiredVersion: '^19.0.0',
+                eager: true,
+                strictVersion: false,
+              },
+              'react-router-dom': {
+                singleton: true,
+                requiredVersion: '^7.0.0',
+                strictVersion: true,
+              },
+              '@tanstack/react-query': {
+                singleton: true,
+                requiredVersion: '^5.0.0',
+                strictVersion: true,
+              },
+              '@mui/material': {
+                singleton: true,
+                requiredVersion: '^9.0.0',
+                // CJS 传递依赖（prop-types、@babel/runtime 等）在 MF loadShare
+                // wrapper 中找不到 default export，导致 "doesn't provide an export
+                // named: 'default'" 错误。开启 eager 走静态加载绕开此问题。
+                eager: true,
+                strictVersion: false,
+              },
+              '@emotion/react': {
+                singleton: true,
+                requiredVersion: '^11.0.0',
+                eager: true,
+                strictVersion: false,
+              },
+              '@emotion/styled': {
+                singleton: true,
+                requiredVersion: '^11.0.0',
+                eager: true,
+                strictVersion: false,
+              },
+              // CJS 模块：react-is 是 @emotion/react/styled 的传递依赖，
+              // 其 named export (isValidElementType 等) 通过 MF loadShare wrapper
+              // 无法正确导出，需要 eager 走静态加载
+              'react-is': {
+                singleton: true,
+                requiredVersion: '^19.0.0',
+                eager: true,
+                strictVersion: false,
+              },
+              // CJS 模块：prop-types 是 @mui/material / recharts / 旧类库的传递依赖。
+              // 如果不加 singleton+eager，MF remote 会用 loadShare 直接从
+              // pnpm virtual store 的 /@fs/... 路径 serve 原始 CJS 文件（prop-types/index.js），
+              // 从而在 ESM 下抛出 "doesn't provide an export named: 'default'"，
+              // 表现为 lazy-loaded DashboardPage 重试 3 次后崩溃。加 eager 后，
+              // 统一由 host 的 optimizeDeps（已 include 'prop-types'）预构建后分发，
+              // default/interop 均正常。dedupe 数组中也已列出 prop-types 防版本分叉。
+              'prop-types': {
+                singleton: true,
+                eager: true,
+                strictVersion: false,
+              },
+              zustand: {
+                singleton: true,
+                requiredVersion: '^5.0.0',
+                strictVersion: true,
+              },
+              i18next: {
+                singleton: true,
+                requiredVersion: '^26.0.0',
+                strictVersion: true,
+              },
+              'react-i18next': {
+                singleton: true,
+                requiredVersion: '^17.0.0',
+                strictVersion: true,
+              },
+              axios: {
+                singleton: true,
+                requiredVersion: '^1.0.0',
+                strictVersion: true,
+              },
+              dayjs: {
+                singleton: true,
+                requiredVersion: '^1.11.0',
+                strictVersion: true,
+              },
+              'react-hook-form': {
+                singleton: true,
+                requiredVersion: '^7.0.0',
+                strictVersion: true,
+              },
+              zod: {
+                singleton: true,
+                requiredVersion: '^4.0.0',
+                strictVersion: true,
+              },
+              '@tanstack/react-table': {
+                singleton: true,
+                requiredVersion: '^8.0.0',
+                strictVersion: true,
+              },
+            },
+          }),
+        ]
+      : []),
     // V72 P2-4c: recharts 拆分插件必须在 federation() 之后执行（enforce: 'post'）
     // 以确保 MF 不会覆盖我们的 manualChunks 配置
     topemsRechartsSplitPlugin(),
@@ -939,8 +1525,14 @@ export default defineConfig({
   optimizeDeps: {
     exclude: [
       '@mui/lab',
-      'react',
-      'react-dom',
+      // C3 §5 P4 更新：不再把 react / react-dom 放在 exclude 里。
+      //   之前 exclude 是为了避免 lucide-react drag react 进非规范路径丢 named exports，
+      //   但 lucide-react 也已经 exclude 了（raw ESM native browser load），
+      //   不会触发 optimize 阶段 drag react。现在把 react/react-dom **加入预打包**，
+      //   让 fix-react-19-named-exports 插件的 fs patch 真正作用在
+      //   `.vite/deps/react.js / react-dom.js / jsx-runtime.js` 上（之前 exclude
+      //   导致这些文件根本不存在，patch 打在空气上）。
+      // '@tanstack/react-query',  // 仍保留 exclude: 已经是 ESM，不需打包
       '@tanstack/react-query',
       'react-router-dom',
       'zustand',
@@ -951,6 +1543,15 @@ export default defineConfig({
       'react-hook-form',
       'zod',
       '@tanstack/react-table',
+      // V81-202608 P2: Exclude lucide-react from optimizeDeps to prevent esbuild
+      // pre-bundling from producing a broken react.js bundle in deps cache missing
+      // 'createElement' export. The barrel imports icons via
+      // lucide-react/dist/esm/icons/*.mjs subpaths, whose internal createLucideIcon
+      // does `import { createElement } from 'react'`. With react **now INCLUDED**
+      // in optimize (see P4 above), lucide-react staying excluded keeps itself as
+      // raw ESM modules loaded natively by the browser → directly import from the
+      // optimized .vite/deps/react.js → preserves all React 19 named exports correctly.
+      'lucide-react',
     ],
     // Force-pre-optimize CJS 传递依赖：确保 prop-types 等在被 @mui/material
     // 引用时以 ESM 包装形式提供 default 导出，而不是以 @fs/ raw disk 形式提供
@@ -962,10 +1563,38 @@ export default defineConfig({
       'camelcase',
       'decamelize',
       'react-is',
+      // C3 §5 P3: Vite 8 通过 @fs 直读依赖时 CJS→ESM 转换失败的库,
+      //   强制预打包进 deps 让 rolldown 生成完整 ESM wrapper：
+      //   - react-dom/client：裸 CJS 入口内含 `require('./cjs/...')`，
+      //     ESM 环境没有全局 require → 打包后 rolldown 提供 require 兼容层
+      //     并自动生成 `export default require_xxx()`。
+      // （注：cookie 是 react-router 的传递依赖，但 apps/web 里 resolve 不到
+      //   `react-router > cookie`，因此通过 @fs 加载时走 fix-cjs-general 插件
+      //   的通道 A（残缺 __commonJS wrapper → 补 named exports））。
+      'react-dom/client',
     ],
   },
   resolve: {
     alias: [
+      // C3 §5.1: React 19 兼容修复 —— use-sync-external-store CJS shim interop 失败
+      // 错误 1: ".../use-sync-external-store/shim/index.js does not provide an export named 'useSyncExternalStore'"
+      // 原因 1: shim/index.js 为 CJS（module.exports = require('../cjs/...')），
+      //         Vite 8 在 named import 场景下无法从 CJS default 正确解构 named export。
+      // 错误 2: 导入路径有时是裸模块 'use-sync-external-store/shim'，有时是
+      //         绝对路径 '/@fs/.../use-sync-external-store/shim/index.js?v=xx'（@fs 形式跳过 ^ 锚定）
+      // 错误 3: 若直接 alias 到 'react'，会干扰 Vite dep pre-bundle → 副次报错
+      //         "react.js does not provide an export named 'forwardRef'"
+      // 修复: 指向本地 ESM shim（src/shims/use-sync-external-store-shim.ts），
+      //       用非锚定正则匹配所有包含该路径片段的导入，覆盖：
+      //         - use-sync-external-store/shim
+      //         - use-sync-external-store/shim/index
+      //         - use-sync-external-store/shim/index.js
+      //         - /@fs/xxx/node_modules/.pnpm/xxx/use-sync-external-store/*/shim/index.js?v=xx
+      //         - 以及 Windows 反斜杠路径变体
+      {
+        find: /use-sync-external-store[\\/]+shim(?:[\\/]+index(?:\.js)?)?$/,
+        replacement: path.resolve(__dirname, './src/shims/use-sync-external-store-shim.ts'),
+      },
       // C3 §5 P1: lucide 子路径优化 -55%
       // Only rewrite the EXACT bare specifier 'lucide-react' to our barrel
       // (236 actually-used icons, each from its own /dist/esm/icons/*.mjs subpath).
@@ -991,9 +1620,18 @@ export default defineConfig({
         find: '@topems/shared-constants',
         replacement: path.resolve(__dirname, '../../packages/shared-constants/src'),
       },
-      {
-        find: '@topems/shared-hooks',
+      { find: '@topems/shared-hooks',
         replacement: path.resolve(__dirname, '../../packages/shared-hooks/src'),
+      },
+      // hoist-non-react-statics: package.json main 指向 .cjs.js（含裸 require('react-is')），
+      // Vite @fs 直读时 CJS→ESM 转换失败。指向自包含 UMD 版本（内联 react-is），
+      // fix-cjs-named-exports-general 插件会正确补 default + named exports。
+      {
+        find: /^hoist-non-react-statics$/,
+        replacement: path.resolve(
+          __dirname,
+          '../../node_modules/.pnpm/hoist-non-react-statics@3.3.2/node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.js'
+        ),
       },
     ],
     dedupe: [
@@ -1007,7 +1645,9 @@ export default defineConfig({
       '@babel/runtime',
       '@babel/runtime/helpers',
       '@emotion/cache',
+      '@emotion/react',
       '@emotion/serialize',
+      '@emotion/styled',
       '@emotion/utils',
       'stylis',
       'clsx',
@@ -1142,12 +1782,12 @@ export default defineConfig({
     port: BACKEND_PORTS.web, // 3000，从 ports.ts 单一信源读取
     host: '127.0.0.1',
     strictPort: true,
-    // HMR: 显式指定 host 和 port 确保 Firefox WebSocket 连接正常
+    // HMR: 显式指定 host 确保 Firefox WebSocket 连接正常
     // Firefox 默认将 localhost 解析为 ::1 (IPv6)，但 Vite 仅监听 IPv4
     // 因此统一使用 127.0.0.1 强制 IPv4
+    // 不指定 port，让 Vite 自动跟随 server.port（避免 --port 命令行覆盖后 HMR 仍连旧端口）
     hmr: {
       host: '127.0.0.1',
-      port: BACKEND_PORTS.web,
       protocol: 'ws',
     },
     fs: {

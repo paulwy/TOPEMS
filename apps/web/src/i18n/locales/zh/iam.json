@@ -27,33 +27,7 @@
     "公司架构用于多公司合并报表的抵消计算": "公司架构用于多公司合并报表的抵消计算",
     "持股比例决定少数股东权益和归属母公司净利润的计算": "持股比例决定少数股东权益和归属母公司净利润的计算",
     "联营公司和合营公司采用权益法核算": "联营公司和合营公司采用权益法核算",
-    "添加公司关系后可到合并范围管理中配置抵消规则": "添加公司关系后可到合并范围管理中配置抵消规则",
-    "companystructure_母公司": "companystructure.母公司",
-    "companystructure_子公司": "companystructure.子公司",
-    "companystructure_联营公司": "companystructure.联营公司",
-    "companystructure_合营公司": "companystructure.合营公司",
-    "companystructure_分公司": "companystructure.分公司",
-    "companystructure_生效": "companystructure.生效",
-    "companystructure_失效": "companystructure.失效",
-    "companystructure_确认删除": "companystructure.确认删除",
-    "companystructure_确定要删除此公司关系吗": "companystructure.确定要删除此公司关系吗",
-    "companystructure_关系类型": "companystructure.关系类型",
-    "companystructure_持股比例": "companystructure.持股比例",
-    "companystructure_控制比例": "companystructure.控制比例",
-    "companystructure_生效日期": "companystructure.生效日期",
-    "companystructure_状态": "companystructure.状态",
-    "companystructure_操作": "companystructure.操作",
-    "companystructure_公司架构管理": "companystructure.公司架构管理",
-    "companystructure_管理母子公司关系_用于多公司合并报表": "companystructure.管理母子公司关系_用于多公司合并报表",
-    "companystructure_高级搜索": "companystructure.高级搜索",
-    "companystructure_架构视图": "companystructure.架构视图",
-    "companystructure_关系列表": "companystructure.关系列表",
-    "companystructure_暂无公司架构数据": "companystructure.暂无公司架构数据",
-    "companystructure_使用提示": "companystructure.使用提示",
-    "companystructure_公司架构用于多公司合并报表的抵消计算": "companystructure.公司架构用于多公司合并报表的抵消计算",
-    "companystructure_持股比例决定少数股东权益和归属母公司净利润的计": "companystructure.持股比例决定少数股东权益和归属母公司净利润的计算",
-    "companystructure_联营公司和合营公司采用权益法核算": "companystructure.联营公司和合营公司采用权益法核算",
-    "companystructure_添加公司关系后可到合并范围管理中配置抵消规则": "companystructure.添加公司关系后可到合并范围管理中配置抵消规则"
+    "添加公司关系后可到合并范围管理中配置抵消规则": "添加公司关系后可到合并范围管理中配置抵消规则"
   },
   "permissionmanagement": {
     "加载权限失败": "加载权限失败",
@@ -65,16 +39,7 @@
     "权限管理": "权限管理",
     "首页": "首页",
     "关于权限管理": "关于权限管理\n      ",
-    "权限是系统级配置_通常由开发人员在后端代码中预先定义_您可以在这里查看所有可用权": "权限是系统级配置，通常由开发人员在后端代码中预先定义。\n      您可以在这里查看所有可用权限，并通过角色管理页面将权限分配给不同的角色。\n    ",
-    "permissionmanagement_加载权限失败": "permissionmanagement.加载权限失败",
-    "permissionmanagement_创建权限失败": "permissionmanagement.创建权限失败",
-    "permissionmanagement_更新权限失败": "permissionmanagement.更新权限失败",
-    "permissionmanagement_删除权限失败": "permissionmanagement.删除权限失败",
-    "permissionmanagement_关于权限管理": "permissionmanagement.关于权限管理",
-    "permissionmanagement_权限是系统级配置_通常由开发人员在后端": "permissionmanagement.权限是系统级配置_通常由开发人员在后端代码中预先定义_您可以在这里查看所有可用权",
-    "permissionmanagement_首页": "permissionmanagement.首页",
-    "permissionmanagement_身份权限": "permissionmanagement.身份权限",
-    "permissionmanagement_权限管理": "permissionmanagement.权限管理"
+    "权限是系统级配置_通常由开发人员在后端代码中预先定义_您可以在这里查看所有可用权": "权限是系统级配置，通常由开发人员在后端代码中预先定义。\n      您可以在这里查看所有可用权限，并通过角色管理页面将权限分配给不同的角色。\n    "
   },
   "rolemanagement": {
     "加载角色失败": "加载角色失败",
@@ -91,22 +56,7 @@
     "权限移除成功": "权限移除成功",
     "角色管理": "角色管理",
     "管理权限": "管理权限",
-    "可选权限": "可选权限\n          ",
-    "rolemanagement_加载角色失败": "rolemanagement.加载角色失败",
-    "rolemanagement_创建角色失败": "rolemanagement.创建角色失败",
-    "rolemanagement_更新角色失败": "rolemanagement.更新角色失败",
-    "rolemanagement_删除角色失败": "rolemanagement.删除角色失败",
-    "rolemanagement_加载权限失败": "rolemanagement.加载权限失败",
-    "rolemanagement_加载角色权限失败": "rolemanagement.加载角色权限失败",
-    "rolemanagement_添加权限失败": "rolemanagement.添加权限失败",
-    "rolemanagement_成功": "rolemanagement.成功",
-    "rolemanagement_权限添加成功": "rolemanagement.权限添加成功",
-    "rolemanagement_失败": "rolemanagement.失败",
-    "rolemanagement_移除权限失败": "rolemanagement.移除权限失败",
-    "rolemanagement_权限移除成功": "rolemanagement.权限移除成功",
-    "rolemanagement_角色管理": "rolemanagement.角色管理",
-    "rolemanagement_管理权限": "rolemanagement.管理权限",
-    "rolemanagement_可选权限": "rolemanagement.可选权限"
+    "可选权限": "可选权限\n          "
   },
   "usermanagement": {
     "创建用户失败": "创建用户失败",
@@ -115,14 +65,7 @@
     "首页": "首页",
     "身份管理": "身份管理",
     "用户管理": "用户管理",
-    "加载用户失败": "加载用户失败",
-    "usermanagement_加载用户失败": "usermanagement.加载用户失败",
-    "usermanagement_创建用户失败": "usermanagement.创建用户失败",
-    "usermanagement_更新用户失败": "usermanagement.更新用户失败",
-    "usermanagement_删除用户失败": "usermanagement.删除用户失败",
-    "usermanagement_首页": "usermanagement.首页",
-    "usermanagement_身份管理": "usermanagement.身份管理",
-    "usermanagement_用户管理": "usermanagement.用户管理"
+    "加载用户失败": "加载用户失败"
   },
   "company_structure_page": {
     "": "架构视图",
@@ -293,9 +236,7 @@
       "生效日期": "生效日期",
       "状态": "状态",
       "操作": "操作",
-      "v0_subsidiary_v1_associate_v2_joint_vent": "= {{v0}},\n  subsidiary: {{v1}},\n  associate: {{v2}},\n  joint_venture: {{v3}},\n  branch: {{v4}},\n  inactive: {{v5}},\n};\n\n// 公司架构树节点组件\nconst TreeNodeComponent: React.FC",
-      "持股_v0": "持股 {{v0}}%",
-      "v0_关系列表列定义_const_relationcolumns_columnd": "{{v0}},\n    });\n  };\n\n  // 关系列表列定义\n  const relationColumns: ColumnDef"
+      "持股_v0": "持股 {{v0}}%"
     },
     "permissionmanagement": {
       "关于权限管理": "关于权限管理",

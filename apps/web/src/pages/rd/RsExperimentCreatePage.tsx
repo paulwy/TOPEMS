@@ -7,24 +7,11 @@ import { rdApi, formulaApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import type { Project, Formula, CreateExperimentRequest, UpdateExperimentRequest } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
-import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
+import {QUERY_KEYS, CACHE_DURATIONS} from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
 import i18n from '@/i18n';
-
-const experimentTypes = [
-  i18n.t('rd.rs_experiment_create_page.k5'),
-  i18n.t('rd.rs_experiment_create_page.k4'),
-  i18n.t('rd.rs_experiment_create_page.k3'),
-  i18n.t('rd.rs_experiment_create_page.k2'),
-  i18n.t('rd.rs_experiment_create_page.k1'),
-  i18n.t('rd.rs_experiment_create_page.k0'),
-];
-const phases = [
-  i18n.t('rd.rs_experiment_create_page.k9'),
-  i18n.t('rd.rs_experiment_create_page.k8'),
-  i18n.t('rd.rs_experiment_create_page.k7'),
-  i18n.t('rd.rs_experiment_create_page.k6'),
-];
+const getExperimentTypes = () => [i18n.t('rd.rs_experiment_create_page.k5'), i18n.t('rd.rs_experiment_create_page.k4'), i18n.t('rd.rs_experiment_create_page.k3'), i18n.t('rd.rs_experiment_create_page.k2'), i18n.t('rd.rs_experiment_create_page.k1'), i18n.t('rd.rs_experiment_create_page.k0')];
+const getPhases = () => [i18n.t('rd.rs_experiment_create_page.k9'), i18n.t('rd.rs_experiment_create_page.k8'), i18n.t('rd.rs_experiment_create_page.k7'), i18n.t('rd.rs_experiment_create_page.k6')];
 const scaleUnits = ['g', 'kg', 't', 'mL', 'L'];
 const RsExperimentCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -41,9 +28,8 @@ const RsExperimentCreatePage: React.FC = () => {
       }
       return response.data.projects || [];
     },
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
   const formulasQuery = useQuery({
     queryKey: QUERY_KEYS.RD.FORMULAS,
     queryFn: async () => {
@@ -53,9 +39,8 @@ const RsExperimentCreatePage: React.FC = () => {
       }
       return response.data || [];
     },
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
   const experimentQuery = useQuery({
     queryKey: QUERY_KEYS.RD.EXPERIMENT(id || ''),
     queryFn: async () => {
@@ -66,9 +51,8 @@ const RsExperimentCreatePage: React.FC = () => {
       return response.data;
     },
     enabled: isEdit && !!id,
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
-  });
+  
+      staleTime: CACHE_DURATIONS.MEDIUM,});
   const submitMutation = useMutation({
     mutationFn: async (params: {
       isEdit: boolean;
@@ -95,19 +79,14 @@ const RsExperimentCreatePage: React.FC = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.RD.EXPERIMENTS,
-        exact: false,
-        refetchType: 'active',
-      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.EXPERIMENTS ,
+  exact: false,
+  refetchType: 'active',
+});
       addNotification({
         type: 'success',
-        title: isEdit
-          ? i18n.t('rd.rs_experiment_create_page.k16')
-          : i18n.t('rd.rs_experiment_create_page.k15'),
-        message: isEdit
-          ? i18n.t('rd.rs_experiment_create_page.k18')
-          : i18n.t('rd.rs_experiment_create_page.k17'),
+        title: isEdit ? i18n.t('rd.rs_experiment_create_page.k16') : i18n.t('rd.rs_experiment_create_page.k15'),
+        message: isEdit ? i18n.t('rd.rs_experiment_create_page.k18') : i18n.t('rd.rs_experiment_create_page.k17'),
       });
       navigate(RD_PATHS.experiment);
     },
@@ -116,8 +95,7 @@ const RsExperimentCreatePage: React.FC = () => {
       addNotification({
         type: 'error',
         title: i18n.t('rd.rs_experiment_create_page.k19'),
-        message:
-          error instanceof Error ? error.message : i18n.t('rd.rs_experiment_create_page.k20'),
+        message: error instanceof Error ? error.message : i18n.t('rd.rs_experiment_create_page.k20'),
       });
     },
   });
@@ -197,13 +175,13 @@ const RsExperimentCreatePage: React.FC = () => {
             name: 'experiment_type',
             label: i18n.t('rd.rs_experiment_create_page.k33'),
             type: 'select',
-            options: experimentTypes.map((type) => ({ label: type, value: type })),
+            options: getExperimentTypes().map((type) => ({ label: type, value: type })),
           },
           {
             name: 'phase',
             label: i18n.t('rd.rs_experiment_create_page.k34'),
             type: 'select',
-            options: phases.map((phase) => ({ label: phase, value: phase })),
+            options: getPhases().map((phase) => ({ label: phase, value: phase })),
           },
         ],
       },
@@ -289,16 +267,8 @@ const RsExperimentCreatePage: React.FC = () => {
   };
   return (
     <PageContainer
-      title={
-        isEdit
-          ? i18n.t('rd.rs_experiment_create_page.k50')
-          : i18n.t('rd.rs_experiment_create_page.k49')
-      }
-      subtitle={
-        isEdit
-          ? i18n.t('rd.rs_experiment_create_page.k52')
-          : i18n.t('rd.rs_experiment_create_page.k51')
-      }
+      title={isEdit ? i18n.t('rd.rs_experiment_create_page.k50') : i18n.t('rd.rs_experiment_create_page.k49')}
+      subtitle={isEdit ? i18n.t('rd.rs_experiment_create_page.k52') : i18n.t('rd.rs_experiment_create_page.k51')}
     >
       <FormPageTemplate
         title=''
@@ -311,11 +281,7 @@ const RsExperimentCreatePage: React.FC = () => {
         error={error}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        submitText={
-          isEdit
-            ? i18n.t('rd.rs_experiment_create_page.k54')
-            : i18n.t('rd.rs_experiment_create_page.k53')
-        }
+        submitText={isEdit ? i18n.t('rd.rs_experiment_create_page.k54') : i18n.t('rd.rs_experiment_create_page.k53')}
         columns={2}
         showValidationHints
         validationToasts={[

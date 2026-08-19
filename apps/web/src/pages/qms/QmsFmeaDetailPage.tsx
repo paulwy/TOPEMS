@@ -23,11 +23,13 @@ import { StatusBadge } from '@/components/qms/StatusBadge';
 import { QMS_PATHS } from '@/modules/qms/config';
 import { designTokens, semanticTokens } from '@topems/tokens';
 
-const TABS = [
-  { id: 'info', label: i18n.t('pages.qms_fmea_detail_page.k0') },
-  { id: 'items', label: i18n.t('pages.qms_fmea_detail_page.k1') },
-  { id: 'distribution', label: i18n.t('pages.qms_fmea_detail_page.k2') },
-] as const;
+function getTabs() {
+  return [
+    { id: 'info', label: i18n.t('pages.qms_fmea_detail_page.k0') },
+    { id: 'items', label: i18n.t('pages.qms_fmea_detail_page.k1') },
+    { id: 'distribution', label: i18n.t('pages.qms_fmea_detail_page.k2') },
+  ] as const;
+}
 
 function riskLevel(rpn: number): 'high' | 'medium' | 'low' {
   if (rpn >= 200) return 'high';
@@ -39,7 +41,7 @@ export default function QmsFmeaDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data } = useQmsMock<QmsMockShape>();
-  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['id']>('info');
+  const [activeTab, setActiveTab] = useState<(ReturnType<typeof getTabs>)[number]['id']>('info');
 
   const analysis = useMemo(() => {
     const list = data.fmeaAnalyses ?? [];
@@ -142,7 +144,7 @@ export default function QmsFmeaDetailPage() {
       </div>
 
       <div className='flex gap-2 border-b'>
-        {TABS.map((t) => (
+        {getTabs().map((t) => (
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id)}

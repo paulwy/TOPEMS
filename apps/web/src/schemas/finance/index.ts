@@ -1,5 +1,5 @@
 export { useFinanceDashboardSchema } from './dashboardSchema';
-export { budgetSchema } from './budget';
+export { getBudgetSchema } from './budget';
 export { costSchema } from './cost';
 export { assetSchema } from './asset';
 export type { DashboardSchema } from '@/schema';

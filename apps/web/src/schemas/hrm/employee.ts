@@ -4,7 +4,7 @@ import { departmentApi } from '@/api/hrm';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
-const STATUS_OPTIONS = [
+const getStatusOptions = () => [
   { value: 'active', label: i18n.t('hrm.employee.k0') },
   { value: 'inactive', label: i18n.t('hrm.employee.k1') },
   { value: 'leave', label: i18n.t('hrm.employee.k2') },
@@ -19,18 +19,18 @@ const STATUS_COLOR_MAP: Record<
   leave: 'warning',
 };
 
-const STATUS_LABEL_MAP: Record<string, string> = {
+const getStatusLabelMap = (): Record<string, string> => ({
   active: i18n.t('hrm.employee.k3'),
   inactive: i18n.t('hrm.employee.k4'),
   leave: i18n.t('hrm.employee.k5'),
-};
+});
 
-const GENDER_OPTIONS = [
+const getGenderOptions = () => [
   { value: 'male', label: i18n.t('hrm.employee.k6') },
   { value: 'female', label: i18n.t('hrm.employee.k7') },
 ];
 
-const EDUCATION_OPTIONS = [
+const getEducationOptions = () => [
   { value: 'high_school', label: i18n.t('hrm.employee.k8') },
   { value: 'college', label: i18n.t('hrm.employee.k9') },
   { value: 'bachelor', label: i18n.t('hrm.employee.k10') },
@@ -38,16 +38,23 @@ const EDUCATION_OPTIONS = [
   { value: 'doctor', label: i18n.t('hrm.employee.k12') },
 ];
 
-const EMPLOYEE_TYPE_OPTIONS = [
+const getEmployeeTypeOptions = () => [
   { value: 'full_time', label: i18n.t('hrm.employee.k13') },
   { value: 'part_time', label: i18n.t('hrm.employee.k14') },
   { value: 'contractor', label: i18n.t('hrm.employee.k15') },
   { value: 'intern', label: i18n.t('hrm.employee.k16') },
 ];
 
-export const employeeSchema: EntitySchema = {
-  entity: 'hrm_employee',
-  title: i18n.t('hrm.employee.k17'),
+export const getEmployeeSchema = (): EntitySchema => {
+  const STATUS_OPTIONS = getStatusOptions();
+  const STATUS_LABEL_MAP = getStatusLabelMap();
+  const GENDER_OPTIONS = getGenderOptions();
+  const EDUCATION_OPTIONS = getEducationOptions();
+  const EMPLOYEE_TYPE_OPTIONS = getEmployeeTypeOptions();
+
+  return {
+    entity: 'hrm_employee',
+    title: i18n.t('hrm.employee.k17'),
   description: i18n.t('hrm.employee.k18'),
 
   api: {
@@ -235,13 +242,14 @@ export const employeeSchema: EntitySchema = {
       },
     },
   ],
+  };
 };
 
 export {
-  STATUS_OPTIONS,
+  getStatusOptions,
   STATUS_COLOR_MAP,
-  STATUS_LABEL_MAP,
-  GENDER_OPTIONS,
-  EDUCATION_OPTIONS,
-  EMPLOYEE_TYPE_OPTIONS,
+  getStatusLabelMap,
+  getGenderOptions,
+  getEducationOptions,
+  getEmployeeTypeOptions,
 };

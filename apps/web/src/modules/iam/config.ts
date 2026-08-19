@@ -27,6 +27,7 @@ export const iamModuleConfig: RouteModuleConfig = {
   order: 1,
   description: i18n.t('shared.config.k1'),
   permission: 'iam:dashboard:read',
+  preloadNamespaces: ['admin'],
   routes: [
     {
       path: IAM_PATHS.dashboard,

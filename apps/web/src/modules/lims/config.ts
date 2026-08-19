@@ -30,8 +30,8 @@ export const LIMS_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const limsModuleConfig: RouteModuleConfig = {
   code: 'lims',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.lims_name'),
+  nameKey: 'shared.config.lims_name',
   icon: 'FlaskConical',
   path: LIMS_PATHS.root,
   source: 'plugin',

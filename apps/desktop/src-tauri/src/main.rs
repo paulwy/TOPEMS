@@ -10,6 +10,12 @@ use tauri::{
     webview::WebviewWindowBuilder,
 };
 
+mod ipc;
+mod api_client;
+mod offline_cache;
+mod crypto;
+mod secure_store;
+
 const MAIN_WINDOW_LABEL: &str = "main";
 
 lazy_static::lazy_static! {
@@ -341,6 +347,7 @@ fn next_window(app: AppHandle) -> tauri::Result<()> {
 }
 
 fn main() {
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
     tauri::Builder::default()
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
@@ -366,6 +373,11 @@ fn main() {
             });
 
             build_tray_menu(&app_handle, &tray).unwrap();
+
+            offline_cache::load_persistent_state();
+
+            // Setup: Send initial device info and plugin list to the main window
+            ipc::setup_initial_data(&app_handle);
 
             Ok(())
         })
@@ -393,6 +405,64 @@ fn main() {
             close_window,
             close_current_window,
             next_window,
+            // New IPC Commands
+            ipc::set_token,
+            ipc::get_token,
+            ipc::clear_token,
+            ipc::get_issue_list,
+            ipc::create_issue,
+            ipc::update_issue,
+            ipc::delete_issue,
+            ipc::get_issue_detail,
+            ipc::get_project_list,
+            ipc::create_project,
+            ipc::update_project,
+            ipc::delete_project,
+            ipc::get_device_info,
+            ipc::get_plugin_list,
+            ipc::handle_message,
+            ipc::subscribe,
+            ipc::unsubscribe,
+            ipc::set_user_info,
+            ipc::get_user_info,
+            ipc::clear_user_info,
+            ipc::set_token_expiry,
+            ipc::clear_token_expiry,
+            ipc::is_token_valid,
+            ipc::get_token_expiry,
+            ipc::get_metrics,
+            // User Management
+            ipc::get_user_list,
+            ipc::get_user,
+            ipc::create_user,
+            ipc::update_user,
+            ipc::delete_user,
+            // Role Management
+            ipc::get_role_list,
+            ipc::create_role,
+            ipc::update_role,
+            ipc::delete_role,
+            // System Health
+            ipc::check_health,
+            ipc::get_system_config,
+            // Batch Operations
+            ipc::batch_create_issues,
+            ipc::batch_delete_issues,
+            ipc::batch_update_issues,
+            ipc::batch_create_projects,
+            ipc::batch_delete_projects,
+            // Audit & Export
+            ipc::get_audit_logs,
+            ipc::export_data,
+            // Request Cancellation
+            ipc::cancel_requests,
+            ipc::cancel_request,
+            ipc::get_active_requests,
+            // Offline Mode
+            ipc::get_sync_queue,
+            ipc::flush_sync,
+            ipc::set_offline,
+            ipc::get_offline_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

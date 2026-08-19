@@ -2500,6 +2500,248 @@
       "k9": "Execute Test",
       "k10": "Test Case",
       "k11": "R&D Management"
+    },
+    "dashboard_page": {
+      "greeting": {
+        "morning": "Good morning",
+        "afternoon": "Good afternoon",
+        "evening": "Good evening"
+      },
+      "stat_card": {
+        "research_projects": "Project",
+        "document_count": "Title",
+        "test_cases": "Title",
+        "version_releases": "Title"
+      },
+      "status_label": {
+        "pending": "Pending",
+        "in_progress": "In Progress",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "chart": {
+        "project_status_distribution": "Project",
+        "experiment_status_distribution": "Title"
+      },
+      "quick_action": {
+        "create_research_project": "Create",
+        "write_test_case": "Label",
+        "release_new_version": "Label",
+        "title": "Title"
+      },
+      "title": "Title",
+      "subtitle": "Subtitle"
+    },
+    "common": {
+      "vs_last_period": "Label"
+    },
+    "material_list_page": {
+      "error": {
+        "import_failed": "Importfailed"
+      },
+      "notification": {
+        "import_success_title": "Title",
+        "import_success_message": "Message",
+        "import_partial_title": "Title",
+        "import_partial_message": "Message",
+        "import_failed_title": "Title",
+        "import_failed_message": "Message",
+        "export_success_title": "Title",
+        "export_success_message": "Message",
+        "export_failed_title": "Title",
+        "export_failed_message": "Message",
+        "tip_title": "Title",
+        "apply_in_development": "Label",
+        "edit_in_development": "Edit"
+      },
+      "row_action": {
+        "apply": "Label",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "stat_card": {
+        "total": "Total",
+        "sufficient": "Sufficient",
+        "insufficient": "Insufficient"
+      },
+      "title": "Title",
+      "subtitle": "Subtitle",
+      "breadcrumb": {
+        "home": "Label",
+        "rd": "Label",
+        "material": "Label"
+      }
+    },
+    "project_type": {
+      "new_product": "Product",
+      "process_improvement": "Process Improvement",
+      "formula_optimization": "Form",
+      "technical_breakthrough": "Technical Breakthrough",
+      "equipment_modification": "Equipmentmodification",
+      "other": "Other"
+    },
+    "risk_level": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "extreme": "Label"
+    },
+    "priority": {
+      "normal": "Label",
+      "important": "Label",
+      "urgent": "Label",
+      "strategic": "Label"
+    },
+    "project_create_page": {
+      "error": {
+        "load_project_failed": "Project",
+        "update_failed": "Updatefailed",
+        "create_failed": "Create"
+      },
+      "notification": {
+        "update_success_title": "Updated successfullyTitle",
+        "create_success_title": "Create",
+        "update_success_message": "Message",
+        "create_success_message": "Create",
+        "submit_failed_title": "Title",
+        "submit_failed_message": "Message"
+      },
+      "section": {
+        "basic_title": "Title",
+        "basic_description": "Description",
+        "timing_title": "Title",
+        "timing_description": "Description",
+        "risk_title": "Title",
+        "risk_description": "Description"
+      },
+      "field": {
+        "name": "Name",
+        "name_placeholder": "Please enter...",
+        "code": "Code",
+        "code_placeholder": "Please enter...",
+        "code_helper": "Helper text",
+        "project_type": "Project",
+        "leader": "Label",
+        "leader_placeholder": "Please enter...",
+        "description": "Description",
+        "description_placeholder": "Please enter...",
+        "start_date": "StartDate",
+        "end_date": "EndDate",
+        "budget": "Budget",
+        "budget_placeholder": "Budget",
+        "budget_helper": "Budget",
+        "risklevel": "Label",
+        "priority": "Label"
+      },
+      "title_edit": "Edit",
+      "title_create": "Create",
+      "subtitle_edit": "Edit",
+      "subtitle_create": "Create",
+      "submit_text_edit": "Edit",
+      "submit_text_create": "Create",
+      "validation": {
+        "submit_success": "Submitted successfully",
+        "submit_failed": "Submitfailed"
+      }
     }
-  }
+  },
+  "rd.dashboard_page.greeting.morning": "Good morning",
+  "rd.dashboard_page.greeting.afternoon": "Good afternoon",
+  "rd.dashboard_page.greeting.evening": "Good evening",
+  "rd.dashboard_page.stat_card.research_projects": "Project",
+  "rd.common.vs_last_period": "Label",
+  "rd.dashboard_page.stat_card.document_count": "Title",
+  "rd.dashboard_page.stat_card.test_cases": "Title",
+  "rd.dashboard_page.stat_card.version_releases": "Title",
+  "rd.dashboard_page.status_label.pending": "Pending",
+  "rd.dashboard_page.status_label.in_progress": "In Progress",
+  "rd.dashboard_page.status_label.completed": "Completed",
+  "rd.dashboard_page.status_label.cancelled": "Cancelled",
+  "rd.dashboard_page.chart.project_status_distribution": "Project",
+  "rd.dashboard_page.chart.experiment_status_distribution": "Title",
+  "rd.dashboard_page.quick_action.create_research_project": "Create",
+  "rd.dashboard_page.quick_action.write_test_case": "Label",
+  "rd.dashboard_page.quick_action.release_new_version": "Label",
+  "rd.dashboard_page.title": "Title",
+  "rd.dashboard_page.subtitle": "Subtitle",
+  "rd.dashboard_page.quick_action.title": "Title",
+  "rd.material_list_page.error.import_failed": "Importfailed",
+  "rd.material_list_page.notification.import_success_title": "Title",
+  "rd.material_list_page.notification.import_success_message": "Message",
+  "rd.material_list_page.notification.import_partial_title": "Title",
+  "rd.material_list_page.notification.import_partial_message": "Message",
+  "rd.material_list_page.notification.import_failed_title": "Title",
+  "rd.material_list_page.notification.import_failed_message": "Message",
+  "rd.material_list_page.notification.export_success_title": "Title",
+  "rd.material_list_page.notification.export_success_message": "Message",
+  "rd.material_list_page.notification.export_failed_title": "Title",
+  "rd.material_list_page.notification.export_failed_message": "Message",
+  "rd.material_list_page.row_action.apply": "Label",
+  "rd.material_list_page.notification.tip_title": "Title",
+  "rd.material_list_page.notification.apply_in_development": "Label",
+  "rd.material_list_page.row_action.edit": "Edit",
+  "rd.material_list_page.notification.edit_in_development": "Edit",
+  "rd.material_list_page.row_action.delete": "Delete",
+  "rd.material_list_page.stat_card.total": "Total",
+  "rd.material_list_page.stat_card.sufficient": "Sufficient",
+  "rd.material_list_page.stat_card.insufficient": "Insufficient",
+  "rd.material_list_page.title": "Title",
+  "rd.material_list_page.subtitle": "Subtitle",
+  "rd.material_list_page.breadcrumb.home": "Label",
+  "rd.material_list_page.breadcrumb.rd": "Label",
+  "rd.material_list_page.breadcrumb.material": "Label",
+  "rd.project_type.new_product": "Product",
+  "rd.project_type.process_improvement": "Process Improvement",
+  "rd.project_type.formula_optimization": "Form",
+  "rd.project_type.technical_breakthrough": "Technical Breakthrough",
+  "rd.project_type.equipment_modification": "Equipmentmodification",
+  "rd.project_type.other": "Other",
+  "rd.risk_level.low": "Low",
+  "rd.risk_level.medium": "Medium",
+  "rd.risk_level.high": "High",
+  "rd.risk_level.extreme": "Label",
+  "rd.priority.normal": "Label",
+  "rd.priority.important": "Label",
+  "rd.priority.urgent": "Label",
+  "rd.priority.strategic": "Label",
+  "rd.project_create_page.error.load_project_failed": "Project",
+  "rd.project_create_page.error.update_failed": "Updatefailed",
+  "rd.project_create_page.error.create_failed": "Create",
+  "rd.project_create_page.notification.update_success_title": "Updated successfullyTitle",
+  "rd.project_create_page.notification.create_success_title": "Create",
+  "rd.project_create_page.notification.update_success_message": "Message",
+  "rd.project_create_page.notification.create_success_message": "Create",
+  "rd.project_create_page.notification.submit_failed_title": "Title",
+  "rd.project_create_page.notification.submit_failed_message": "Message",
+  "rd.project_create_page.section.basic_title": "Title",
+  "rd.project_create_page.section.basic_description": "Description",
+  "rd.project_create_page.field.name": "Name",
+  "rd.project_create_page.field.name_placeholder": "Please enter...",
+  "rd.project_create_page.field.code": "Code",
+  "rd.project_create_page.field.code_placeholder": "Please enter...",
+  "rd.project_create_page.field.code_helper": "Helper text",
+  "rd.project_create_page.field.project_type": "Project",
+  "rd.project_create_page.field.leader": "Label",
+  "rd.project_create_page.field.leader_placeholder": "Please enter...",
+  "rd.project_create_page.field.description": "Description",
+  "rd.project_create_page.field.description_placeholder": "Please enter...",
+  "rd.project_create_page.section.timing_title": "Title",
+  "rd.project_create_page.section.timing_description": "Description",
+  "rd.project_create_page.field.start_date": "StartDate",
+  "rd.project_create_page.field.end_date": "EndDate",
+  "rd.project_create_page.field.budget": "Budget",
+  "rd.project_create_page.field.budget_placeholder": "Budget",
+  "rd.project_create_page.field.budget_helper": "Budget",
+  "rd.project_create_page.section.risk_title": "Title",
+  "rd.project_create_page.section.risk_description": "Description",
+  "rd.project_create_page.field.risklevel": "Label",
+  "rd.project_create_page.field.priority": "Label",
+  "rd.project_create_page.title_edit": "Edit",
+  "rd.project_create_page.title_create": "Create",
+  "rd.project_create_page.subtitle_edit": "Edit",
+  "rd.project_create_page.subtitle_create": "Create",
+  "rd.project_create_page.submit_text_edit": "Edit",
+  "rd.project_create_page.submit_text_create": "Create",
+  "rd.project_create_page.validation.submit_success": "Submitted successfully",
+  "rd.project_create_page.validation.submit_failed": "Submitfailed"
 }

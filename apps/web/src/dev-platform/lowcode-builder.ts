@@ -242,135 +242,131 @@ export interface PublishRecord {
 
 export type BuilderChangeListener = (pages: CanvasPage[]) => void;
 
-const DEFAULT_THEME: ThemeConfig = {
-  id: 'default-light',
-  name: i18n.t('pages.lowcode-builder.k0'),
-  colors: {
-    primary: designTokens.colors.primary.dark,
-    secondary: designTokens.colors.purple['500'],
-    accent: designTokens.colors.warning.main,
-    background: 'primary.contrastText',
-    surface: designTokens.colors.grey[100],
-    text: 'var(--color-fallback-panel-bg, #1a1a2e)',
-    textSecondary: designTokens.colors.grey['600'],
-    border: 'colors.grey.300',
-    success: designTokens.colors.success.main,
-    warning: designTokens.colors.warning.main,
-    error: 'colors.error.main',
-    info: designTokens.colors.primary[500],
-  },
-  typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    h1: { size: '2.5rem', weight: 700, lineHeight: '1.2' },
-    h2: { size: '2rem', weight: 600, lineHeight: '1.3' },
-    h3: { size: '1.5rem', weight: 600, lineHeight: '1.4' },
-    body: { size: '1rem', weight: 400, lineHeight: '1.5' },
-    caption: { size: '0.875rem', weight: 400, lineHeight: '1.43' },
-  },
-  spacing: {
-    xs: '4px',
-    sm: '8px',
-    md: '16px',
-    lg: '24px',
-    xl: '32px',
-    xxl: '48px',
-  },
-  borderRadius: 'md',
-  shadows: [
-    'none',
-    `0 1px 3px ${designTokens.colors.action.selected}`,
-    `0 4px 12px ${designTokens.colors.action.selected}`,
-  ],
-  mode: 'light',
-};
+function getDefaultThemeConfig(): ThemeConfig {
+  return {
+    id: 'default-light',
+    name: i18n.t('pages.lowcode-builder.k0'),
+    colors: {
+      primary: designTokens.colors.primary.dark,
+      secondary: designTokens.colors.purple['500'],
+      accent: designTokens.colors.warning.main,
+      background: 'primary.contrastText',
+      surface: designTokens.colors.grey[100],
+      text: '#212121',
+      textSecondary: designTokens.colors.grey['600'],
+      border: 'colors.grey.300',
+      success: designTokens.colors.success.main,
+      warning: designTokens.colors.warning.main,
+      error: 'colors.error.main',
+      info: designTokens.colors.primary[500],
+    },
+    typography: {
+      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+      h1: { size: '2.5rem', weight: 700, lineHeight: '1.2' },
+      h2: { size: '2rem', weight: 600, lineHeight: '1.3' },
+      h3: { size: '1.5rem', weight: 600, lineHeight: '1.4' },
+      body: { size: '1rem', weight: 400, lineHeight: '1.5' },
+      caption: { size: '0.875rem', weight: 400, lineHeight: '1.43' },
+    },
+    spacing: {
+      xs: '4px',
+      sm: '8px',
+      md: '16px',
+      lg: '24px',
+      xl: '32px',
+      xxl: '48px',
+    },
+    borderRadius: 'md',
+    shadows: ['none', `0 1px 3px ${designTokens.colors.action.selected}`, `0 4px 12px ${designTokens.colors.action.selected}`],
+    mode: 'light',
+  };
+}
 
-const DARK_THEME: ThemeConfig = {
-  ...DEFAULT_THEME,
-  id: 'default-dark',
-  name: i18n.t('pages.lowcode-builder.k1'),
-  colors: {
-    ...DEFAULT_THEME.colors,
-    background: 'grey.950',
-    surface: designTokens.colors.grey[900],
-    text: 'colors.grey.300',
-    textSecondary: 'colors.grey.500',
-    border: designTokens.colors.grey[800],
-  },
-  mode: 'dark',
-};
+function getDarkThemeConfig(): ThemeConfig {
+  const defaultTheme = getDefaultThemeConfig();
+  return {
+    ...defaultTheme,
+    id: 'default-dark',
+    name: i18n.t('pages.lowcode-builder.k1'),
+    colors: {
+      ...defaultTheme.colors,
+      background: 'grey.950',
+      surface: designTokens.colors.grey[900],
+      text: 'colors.grey.300',
+      textSecondary: 'colors.grey.500',
+      border: designTokens.colors.grey[800],
+    },
+    mode: 'dark',
+  };
+}
 
-const PRESET_TEMPLATES: TemplateDefinition[] = [
-  {
-    id: 'tpl-dashboard',
-    name: i18n.t('pages.lowcode-builder.k2'),
-    description: i18n.t('pages.lowcode-builder.k3'),
-    category: 'dashboard',
-    preview: 'dashboard-preview',
-    components: [
-      {
-        id: 'root',
-        type: 'container',
-        name: i18n.t('pages.lowcode-builder.k4'),
-        props: { direction: 'column', gap: 16 },
-        position: { x: 0, y: 0, width: 1200, height: 800 },
-        children: [],
-        style: { padding: 6 },
-        visibility: { hidden: false, locked: false },
-      },
-    ],
-    theme: DEFAULT_THEME,
-    dataSources: [],
-    flows: [],
-    tags: [
-      i18n.t('pages.lowcode-builder.k7'),
-      i18n.t('pages.lowcode-builder.k6'),
-      i18n.t('pages.lowcode-builder.k5'),
-    ],
-    author: 'TOPEMS Team',
-    version: '1.0.0',
-    popularity: 9500,
-    created_at: Date.now(),
-    updated_at: Date.now(),
-  },
-  {
-    id: 'tpl-form',
-    name: i18n.t('pages.lowcode-builder.k8'),
-    description: i18n.t('pages.lowcode-builder.k9'),
-    category: 'form',
-    preview: 'form-preview',
-    components: [],
-    theme: DEFAULT_THEME,
-    dataSources: [],
-    flows: [],
-    tags: [i18n.t('pages.lowcode-builder.k11'), i18n.t('pages.lowcode-builder.k10'), 'CRUD'],
-    author: 'TOPEMS Team',
-    version: '1.0.0',
-    popularity: 8700,
-    created_at: Date.now(),
-    updated_at: Date.now(),
-  },
-  {
-    id: 'tpl-list-detail',
-    name: i18n.t('pages.lowcode-builder.k12'),
-    description: i18n.t('pages.lowcode-builder.k13'),
-    category: 'crud',
-    preview: 'list-detail-preview',
-    components: [],
-    theme: DEFAULT_THEME,
-    dataSources: [],
-    flows: [],
-    tags: [
-      i18n.t('pages.lowcode-builder.k16'),
-      i18n.t('pages.lowcode-builder.k15'),
-      i18n.t('pages.lowcode-builder.k14'),
-    ],
-    author: 'TOPEMS Team',
-    version: '1.0.0',
-    popularity: 7200,
-    created_at: Date.now(),
-    updated_at: Date.now(),
-  },
-];
+function getPresetTemplates(): TemplateDefinition[] {
+  const defaultTheme = getDefaultThemeConfig();
+  return [
+    {
+      id: 'tpl-dashboard',
+      name: i18n.t('pages.lowcode-builder.k2'),
+      description: i18n.t('pages.lowcode-builder.k3'),
+      category: 'dashboard',
+      preview: 'dashboard-preview',
+      components: [
+        {
+          id: 'root',
+          type: 'container',
+          name: i18n.t('pages.lowcode-builder.k4'),
+          props: { direction: 'column', gap: 16 },
+          position: { x: 0, y: 0, width: 1200, height: 800 },
+          children: [],
+          style: { padding: 6 },
+          visibility: { hidden: false, locked: false },
+        },
+      ],
+      theme: defaultTheme,
+      dataSources: [],
+      flows: [],
+      tags: [i18n.t('pages.lowcode-builder.k7'), i18n.t('pages.lowcode-builder.k6'), i18n.t('pages.lowcode-builder.k5')],
+      author: 'TOPEMS Team',
+      version: '1.0.0',
+      popularity: 9500,
+      created_at: Date.now(),
+      updated_at: Date.now(),
+    },
+    {
+      id: 'tpl-form',
+      name: i18n.t('pages.lowcode-builder.k8'),
+      description: i18n.t('pages.lowcode-builder.k9'),
+      category: 'form',
+      preview: 'form-preview',
+      components: [],
+      theme: defaultTheme,
+      dataSources: [],
+      flows: [],
+      tags: [i18n.t('pages.lowcode-builder.k11'), i18n.t('pages.lowcode-builder.k10'), 'CRUD'],
+      author: 'TOPEMS Team',
+      version: '1.0.0',
+      popularity: 8700,
+      created_at: Date.now(),
+      updated_at: Date.now(),
+    },
+    {
+      id: 'tpl-list-detail',
+      name: i18n.t('pages.lowcode-builder.k12'),
+      description: i18n.t('pages.lowcode-builder.k13'),
+      category: 'crud',
+      preview: 'list-detail-preview',
+      components: [],
+      theme: defaultTheme,
+      dataSources: [],
+      flows: [],
+      tags: [i18n.t('pages.lowcode-builder.k16'), i18n.t('pages.lowcode-builder.k15'), i18n.t('pages.lowcode-builder.k14')],
+      author: 'TOPEMS Team',
+      version: '1.0.0',
+      popularity: 7200,
+      created_at: Date.now(),
+      updated_at: Date.now(),
+    },
+  ];
+}
 
 export class LowCodeBuilder {
   private pages: Map<string, CanvasPage> = new Map();
@@ -385,7 +381,7 @@ export class LowCodeBuilder {
   }
 
   private initPresetTemplates(): void {
-    PRESET_TEMPLATES.forEach((tpl) => {
+    getPresetTemplates().forEach((tpl) => {
       this.templates.set(tpl.id, { ...tpl });
     });
   }
@@ -399,7 +395,7 @@ export class LowCodeBuilder {
       name,
       description: description || `${name}${i18n.t('pages.lowcode-builder.v53_17')}`,
       components: [],
-      theme: { ...DEFAULT_THEME },
+      theme: { ...getDefaultThemeConfig() },
       dataSources: [],
       status: 'draft',
       version: '1.0.0',
@@ -782,9 +778,7 @@ export class LowCodeBuilder {
       (n) => n.type !== 'trigger' && !flow.edges.some((e) => e.target === n.id)
     );
     if (orphanNodes.length > 0) {
-      issues.push(
-        `${i18n.t('pages.lowcode-builder.k20')}${orphanNodes.length}${i18n.t('pages.lowcode-builder.k21')}`
-      );
+      issues.push(`${i18n.t('pages.lowcode-builder.k20')}${orphanNodes.length}${i18n.t('pages.lowcode-builder.k21')}`);
     }
 
     return { valid: issues.length === 0, issues };
@@ -793,27 +787,17 @@ export class LowCodeBuilder {
   // ==================== 主题与样式 ====================
 
   getDefaultTheme(): ThemeConfig {
-    return { ...DEFAULT_THEME };
+    return { ...getDefaultThemeConfig() };
   }
 
   getDarkTheme(): ThemeConfig {
-    return { ...DARK_THEME };
+    return { ...getDarkThemeConfig() };
   }
 
   listThemePresets(): Array<{ id: string; name: string; mode: string; theme: ThemeConfig }> {
     return [
-      {
-        id: 'light',
-        name: i18n.t('pages.lowcode-builder.k22'),
-        mode: 'light',
-        theme: { ...DEFAULT_THEME },
-      },
-      {
-        id: 'dark',
-        name: i18n.t('pages.lowcode-builder.k23'),
-        mode: 'dark',
-        theme: { ...DARK_THEME },
-      },
+      { id: 'light', name: i18n.t('pages.lowcode-builder.k22'), mode: 'light', theme: { ...getDefaultThemeConfig() } },
+      { id: 'dark', name: i18n.t('pages.lowcode-builder.k23'), mode: 'dark', theme: { ...getDarkThemeConfig() } },
     ];
   }
 

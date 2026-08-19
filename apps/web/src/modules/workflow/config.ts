@@ -25,8 +25,8 @@ export const WORKFLOW_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const workflowModuleConfig: RouteModuleConfig = {
   code: 'workflow',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.workflow_name'),
+  nameKey: 'shared.config.workflow_name',
   icon: 'Workflow',
   path: WORKFLOW_PATHS.root,
   source: 'core',

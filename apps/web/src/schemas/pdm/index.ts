@@ -3,7 +3,7 @@ export { bomSchema } from './bom';
 export { bomItemSchema } from './bomItem';
 export { productSchema } from './product';
 export { documentSchema } from './document';
-export { versionSchema } from './version';
+export { getVersionSchema } from './version';
 export { changeSchema } from './change';
 export { productCategorySchema } from './productCategory';
 export { usePdmDashboardSchema } from './dashboardSchema';

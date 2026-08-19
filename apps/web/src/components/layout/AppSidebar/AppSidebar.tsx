@@ -119,11 +119,15 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const moduleName = useMemo(() => {
     if (!currentModule) return '';
     const module = navigationRegistryV2.getModule(currentModule);
-    if (module) return module.name;
+    if (module) {
+      if (module.nameKey) return i18n.t(module.nameKey);
+      return module.name;
+    }
     const topItems = navigationRegistryV2.getTopNavItems(() => true);
     const found = topItems.find((item) => item.code === currentModule);
+    if (found?.labelKey) return i18n.t(found.labelKey);
     return found?.label || currentModule;
-  }, [currentModule]);
+  }, [currentModule, i18n.language]);
 
   const [groupedModules, setGroupedModules] = useState<Record<string, NavItem[]>>({});
   const [suiteOrder, setSuiteOrder] = useState<string[]>([]);

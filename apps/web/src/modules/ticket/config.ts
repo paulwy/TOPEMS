@@ -11,8 +11,8 @@ export const TICKET_PATHS = {
 
 export const ticketModuleConfig: RouteModuleConfig = {
   code: 'ticket',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.ticket_name'),
+  nameKey: 'shared.config.ticket_name',
   icon: 'Ticket',
   path: TICKET_PATHS.root,
   source: 'core',

@@ -62,7 +62,6 @@ import {
 } from '@/api/system';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { QUERY_KEYS, queryClient } from '@/lib/reactQuery';
-
 const DatabaseStructurePage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -105,7 +104,7 @@ const DatabaseStructurePage: React.FC = () => {
     queryFn: async () => {
       const res = await dbStructureApi.getTableDetail(selectedTable!.table_name);
       if (res.success && res.data) return res.data;
-      throw new Error(res.message || i18n.t('admin:database_structure_page.loading_fail'));
+      throw new Error(res.message || i18n.t('admin.database_structure_page.loading_fail'));
     },
     enabled: !!selectedTable?.table_name && activeTab === 'structure',
     staleTime: 5 * 60 * 1000,
@@ -123,17 +122,14 @@ const DatabaseStructurePage: React.FC = () => {
     if (tablesQuery.isError) {
       showNotification(
         'error',
-        extractErrorMessage(
-          tablesQuery.error,
-          i18n.t('admin:database_structure_page.loading_list_fail')
-        )
+        extractErrorMessage(tablesQuery.error, i18n.t('admin.database_structure_page.loading_list_fail'))
       );
     }
   }, [tablesQuery.isError, tablesQuery.error]);
   useEffect(() => {
     if (dbChangesQuery.isError) {
       apiLogger.error(
-        i18n.t('admin:database_structure_page.loading_changes_fail'),
+        i18n.t('admin.database_structure_page.loading_changes_fail'),
         dbChangesQuery.error
       );
     }
@@ -142,10 +138,7 @@ const DatabaseStructurePage: React.FC = () => {
     if (tableDetailQuery.isError) {
       showNotification(
         'error',
-        extractErrorMessage(
-          tableDetailQuery.error,
-          i18n.t('admin:database_structure_page.loading_fail')
-        )
+        extractErrorMessage(tableDetailQuery.error, i18n.t('admin.database_structure_page.loading_fail'))
       );
     }
   }, [tableDetailQuery.isError, tableDetailQuery.error]);
@@ -159,14 +152,15 @@ const DatabaseStructurePage: React.FC = () => {
     mutationFn: async (params: { table_name: string; column: DbColumnDefinition }) => {
       const res = await dbStructureApi.previewAddColumn(params);
       if (res.success && res.data) return res.data;
-      throw new Error(res.message || i18n.t('admin:database_structure_page.sql_fail'));
+      throw new Error(res.message || i18n.t('admin.database_structure_page.sql_fail'));
     },
     onSuccess: (data) => {
+      
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLES_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
+          queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLES_BASE,
+          exact: false,
+          refetchType: 'active',
+        });
       setSqlPreview(data);
       setPendingColumn(newColumn);
       setShowPreviewModal(true);
@@ -174,7 +168,7 @@ const DatabaseStructurePage: React.FC = () => {
     onError: (err: unknown) => {
       showNotification(
         'error',
-        extractErrorMessage(err, i18n.t('admin:database_structure_page.sql_fail'))
+        extractErrorMessage(err, i18n.t('admin.database_structure_page.sql_fail'))
       );
     },
   });
@@ -182,10 +176,10 @@ const DatabaseStructurePage: React.FC = () => {
     mutationFn: async (params: { table_name: string; column: DbColumnDefinition }) => {
       const res = await dbStructureApi.addColumn(params);
       if (res.success) return true;
-      throw new Error(res.message || i18n.t('admin:database_structure_page.fail'));
+      throw new Error(res.message || i18n.t('admin.database_structure_page.fail'));
     },
     onSuccess: async () => {
-      showNotification('success', i18n.t('admin:database_structure_page.success'));
+      showNotification('success', i18n.t('admin.database_structure_page.success'));
       setShowPreviewModal(false);
       setShowAddColumnModal(false);
       setNewColumn({
@@ -195,53 +189,46 @@ const DatabaseStructurePage: React.FC = () => {
         default_value: '',
         max_length: 255,
       });
-      await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLE_DETAIL_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-      await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_CHANGES_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLE_DETAIL_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_CHANGES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
-      showNotification(
-        'error',
-        extractErrorMessage(err, i18n.t('admin:database_structure_page.fail'))
-      );
+      showNotification('error', extractErrorMessage(err, i18n.t('admin.database_structure_page.fail')));
     },
   });
   const dropColumnMutation = useMutation({
     mutationFn: async (params: { tableName: string; columnName: string }) => {
       const res = await dbStructureApi.dropColumn(params.tableName, params.columnName);
       if (res.success) return true;
-      throw new Error(res.message || i18n.t('admin:database_structure_page.delete_fail'));
+      throw new Error(res.message || i18n.t('admin.database_structure_page.delete_fail'));
     },
     onSuccess: async () => {
-      showNotification('success', i18n.t('admin:database_structure_page.delete_success'));
-      await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLE_DETAIL_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-      await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_CHANGES_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
+      showNotification('success', i18n.t('admin.database_structure_page.delete_success'));
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLE_DETAIL_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_CHANGES_BASE ,
+  exact: false,
+  refetchType: 'active',
+});
     },
     onError: (err: unknown) => {
       showNotification(
         'error',
-        extractErrorMessage(err, i18n.t('admin:database_structure_page.delete_fail'))
+        extractErrorMessage(err, i18n.t('admin.database_structure_page.delete_fail'))
       );
     },
   });
   const handlePreviewAddColumn = async () => {
     if (!selectedTable || !newColumn.column_name) {
-      showNotification('error', i18n.t('admin:database_structure_page.fill'));
+      showNotification('error', i18n.t('admin.database_structure_page.fill'));
       return;
     }
     previewAddColumnMutation.mutate({
@@ -258,8 +245,7 @@ const DatabaseStructurePage: React.FC = () => {
   };
   const handleDropColumn = async (columnName: string) => {
     if (!selectedTable) return;
-    if (!confirm(i18n.t('admin:database_structure_page.confirm_delete_column', { columnName })))
-      return;
+    if (!confirm(i18n.t('admin:database_structure_page.confirm_delete_column', { columnName }))) return;
     dropColumnMutation.mutate({
       tableName: selectedTable.table_name,
       columnName,
@@ -280,9 +266,9 @@ const DatabaseStructurePage: React.FC = () => {
     return type;
   };
   const changeTypeLabels: Record<string, string> = {
-    add_column: i18n.t('admin:database_structure_page.add_column'),
-    modify_column: i18n.t('admin:database_structure_page.modify'),
-    drop_column: i18n.t('admin:database_structure_page.delete'),
+    add_column: i18n.t('admin.database_structure_page.add_column'),
+    modify_column: i18n.t('admin.database_structure_page.modify'),
+    drop_column: i18n.t('admin.database_structure_page.delete'),
   };
   const getChangeTypeColor = (type: string) => {
     switch (type) {
@@ -296,8 +282,8 @@ const DatabaseStructurePage: React.FC = () => {
   };
   return (
     <PageContainer
-      title={i18n.t('admin:database_structure_page.manage')}
-      subtitle={i18n.t('admin:database_structure_page.manage_modify_delete')}
+      title={i18n.t('admin.database_structure_page.manage')}
+      subtitle={i18n.t('admin.database_structure_page.manage_modify_delete')}
       maxWidth='xl'
       headerProps={{
         backButton: {
@@ -330,7 +316,7 @@ const DatabaseStructurePage: React.FC = () => {
             <TextField
               fullWidth
               size='small'
-              placeholder={i18n.t('admin:database_structure_page.search')}
+              placeholder={i18n.t('admin.database_structure_page.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               sx={{ mb: 2 }}
@@ -452,12 +438,12 @@ const DatabaseStructurePage: React.FC = () => {
                 >
                   <Tab
                     value='structure'
-                    label={i18n.t('admin:database_structure_page.tab_structure')}
+                    label={i18n.t('admin.database_structure_page.tab_structure')}
                     sx={{ minHeight: 48, fontWeight: 500 }}
                   />
                   <Tab
                     value='changes'
-                    label={i18n.t('admin:database_structure_page.tab_changes')}
+                    label={i18n.t('admin.database_structure_page.tab_changes')}
                     sx={{ minHeight: 48, fontWeight: 500 }}
                   />
                 </Tabs>
@@ -516,7 +502,7 @@ const DatabaseStructurePage: React.FC = () => {
                         borderRadius: 1.5,
                       }}
                     >
-                      {i18n.t('admin:database_structure_page.add_column')}
+                      {i18n.t('admin.database_structure_page.add_column')}
                     </Button>
                   </Box>
                   {/* 字段列表 */}
@@ -554,7 +540,7 @@ const DatabaseStructurePage: React.FC = () => {
                                   textTransform: 'uppercase',
                                 }}
                               >
-                                {i18n.t('admin:database_structure_page.column_name')}
+                                {i18n.t('admin.database_structure_page.column_name')}
                               </TableCell>
                               <TableCell
                                 sx={{
@@ -564,7 +550,7 @@ const DatabaseStructurePage: React.FC = () => {
                                   textTransform: 'uppercase',
                                 }}
                               >
-                                {i18n.t('admin:database_structure_page.column_type')}
+                                {i18n.t('admin.database_structure_page.column_type')}
                               </TableCell>
                               <TableCell
                                 sx={{
@@ -574,7 +560,7 @@ const DatabaseStructurePage: React.FC = () => {
                                   textTransform: 'uppercase',
                                 }}
                               >
-                                {i18n.t('admin:database_structure_page.nullable')}
+                                {i18n.t('admin.database_structure_page.nullable')}
                               </TableCell>
                               <TableCell
                                 sx={{
@@ -584,7 +570,7 @@ const DatabaseStructurePage: React.FC = () => {
                                   textTransform: 'uppercase',
                                 }}
                               >
-                                {i18n.t('admin:database_structure_page.default_value')}
+                                {i18n.t('admin.database_structure_page.default_value')}
                               </TableCell>
                               <TableCell
                                 align='right'
@@ -595,7 +581,7 @@ const DatabaseStructurePage: React.FC = () => {
                                   textTransform: 'uppercase',
                                 }}
                               >
-                                {i18n.t('admin:database_structure_page.action')}
+                                {i18n.t('admin.database_structure_page.action')}
                               </TableCell>
                             </TableRow>
                           </TableHead>
@@ -660,7 +646,7 @@ const DatabaseStructurePage: React.FC = () => {
                                   {col.column_default || '-'}
                                 </TableCell>
                                 <TableCell align='right'>
-                                  <Tooltip title={i18n.t('admin:database_structure_page.delete')}>
+                                  <Tooltip title={i18n.t('admin.database_structure_page.delete')}>
                                     <IconButton
                                       size='small'
                                       color='error'
@@ -668,9 +654,7 @@ const DatabaseStructurePage: React.FC = () => {
                                       sx={{
                                         '&:hover': { bgcolor: 'error.lighter' },
                                       }}
-                                      aria-label={i18n.t(
-                                        'admin:database_structure_page.delete_action'
-                                      )}
+                                      aria-label={i18n.t('admin.database_structure_page.delete_action')}
                                     >
                                       <Trash2 size={16} />
                                     </IconButton>
@@ -703,7 +687,7 @@ const DatabaseStructurePage: React.FC = () => {
                         color='text.secondary'
                         sx={{ mt: 2 }}
                       >
-                        {i18n.t('admin:database_structure_page.no_changes')}
+                        {i18n.t('admin.database_structure_page.no_changes')}
                       </Typography>
                     </Box>
                   ) : (
@@ -719,7 +703,7 @@ const DatabaseStructurePage: React.FC = () => {
                                 textTransform: 'uppercase',
                               }}
                             >
-                              {i18n.t('admin:database_structure_page.col_time')}
+                              {i18n.t('admin.database_structure_page.col_time')}
                             </TableCell>
                             <TableCell
                               sx={{
@@ -729,7 +713,7 @@ const DatabaseStructurePage: React.FC = () => {
                                 textTransform: 'uppercase',
                               }}
                             >
-                              {i18n.t('admin:database_structure_page.column_type')}
+                              {i18n.t('admin.database_structure_page.column_type')}
                             </TableCell>
                             <TableCell
                               sx={{
@@ -739,7 +723,7 @@ const DatabaseStructurePage: React.FC = () => {
                                 textTransform: 'uppercase',
                               }}
                             >
-                              {i18n.t('admin:database_structure_page.col_table_name')}
+                              {i18n.t('admin.database_structure_page.col_table_name')}
                             </TableCell>
                             <TableCell
                               sx={{
@@ -749,7 +733,7 @@ const DatabaseStructurePage: React.FC = () => {
                                 textTransform: 'uppercase',
                               }}
                             >
-                              {i18n.t('admin:database_structure_page.col_field')}
+                              {i18n.t('admin.database_structure_page.col_field')}
                             </TableCell>
                             <TableCell
                               sx={{
@@ -857,10 +841,10 @@ const DatabaseStructurePage: React.FC = () => {
                 variant='h6'
                 sx={{ ...{ mb: 1 }, fontWeight: 500 }}
               >
-                {i18n.t('admin:database_structure_page.select_table')}
+                {i18n.t('admin.database_structure_page.select_table')}
               </Typography>
               <Typography color='text.secondary'>
-                {i18n.t('admin:database_structure_page.select_table_hint')}
+                {i18n.t('admin.database_structure_page.select_table_hint')}
               </Typography>
             </Paper>
           )}
@@ -874,7 +858,7 @@ const DatabaseStructurePage: React.FC = () => {
         fullWidth
       >
         <DialogTitle sx={{ pb: 1 }}>
-          {i18n.t('admin:database_structure_page.add_new_column')}
+          {i18n.t('admin.database_structure_page.add_new_column')}
         </DialogTitle>
         <DialogContent>
           <Stack
@@ -882,22 +866,22 @@ const DatabaseStructurePage: React.FC = () => {
             sx={{ pt: 1 }}
           >
             <TextField
-              label={i18n.t('admin:database_structure_page.column_name')}
+              label={i18n.t('admin.database_structure_page.column_name')}
               required
               fullWidth
               size='small'
               value={newColumn.column_name}
               onChange={(e) => setNewColumn({ ...newColumn, column_name: e.target.value })}
-              placeholder={i18n.t('admin:database_structure_page.new_field')}
+              placeholder={i18n.t('admin.database_structure_page.new_field')}
             />
             <FormControl
               fullWidth
               size='small'
             >
-              <InputLabel>{i18n.t('admin:database_structure_page.type')}</InputLabel>
+              <InputLabel>{i18n.t('admin.database_structure_page.type')}</InputLabel>
               <Select
                 value={newColumn.data_type}
-                label={i18n.t('admin:database_structure_page.type')}
+                label={i18n.t('admin.database_structure_page.type')}
                 onChange={(e) => setNewColumn({ ...newColumn, data_type: e.target.value })}
               >
                 <MenuItem value='VARCHAR'>VARCHAR</MenuItem>
@@ -915,7 +899,7 @@ const DatabaseStructurePage: React.FC = () => {
             </FormControl>
             {newColumn.data_type === 'VARCHAR' && (
               <TextField
-                label={i18n.t('admin:database_structure_page.max_length')}
+                label={i18n.t('admin.database_structure_page.max_length')}
                 type='number'
                 fullWidth
                 size='small'
@@ -940,15 +924,15 @@ const DatabaseStructurePage: React.FC = () => {
                   }
                 />
               }
-              label={i18n.t('admin:database_structure_page.null')}
+              label={i18n.t('admin.database_structure_page.null')}
             />
             <TextField
-              label={i18n.t('admin:database_structure_page.default_value')}
+              label={i18n.t('admin.database_structure_page.default_value')}
               fullWidth
               size='small'
               value={newColumn.default_value || ''}
               onChange={(e) => setNewColumn({ ...newColumn, default_value: e.target.value })}
-              placeholder={i18n.t('admin:database_structure_page.active_now')}
+              placeholder={i18n.t('admin.database_structure_page.active_now')}
             />
           </Stack>
         </DialogContent>
@@ -962,7 +946,7 @@ const DatabaseStructurePage: React.FC = () => {
               '&:hover': { bgcolor: 'border.default' },
             }}
           >
-            {i18n.t('admin:database_structure_page.cancel')}
+            {i18n.t('admin.database_structure_page.cancel')}
           </Button>
           <Button
             variant='contained'
@@ -973,7 +957,7 @@ const DatabaseStructurePage: React.FC = () => {
               '&:hover': { bgcolor: 'primary.dark' },
             }}
           >
-            {i18n.t('admin:database_structure_page.preview_sql')}
+            {i18n.t('admin.database_structure_page.preview_sql')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -995,7 +979,7 @@ const DatabaseStructurePage: React.FC = () => {
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              {i18n.t('admin:database_structure_page.sql_preview')}
+              {i18n.t('admin.database_structure_page.sql_preview')}
             </Typography>
           </Stack>
         </DialogTitle>
@@ -1050,7 +1034,7 @@ const DatabaseStructurePage: React.FC = () => {
             severity='info'
             sx={{ mb: 1 }}
           >
-            {i18n.t('admin:database_structure_page.execute_confirm')}
+            {i18n.t('admin.database_structure_page.execute_confirm')}
           </Alert>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
@@ -1063,7 +1047,7 @@ const DatabaseStructurePage: React.FC = () => {
               '&:hover': { bgcolor: 'border.default' },
             }}
           >
-            {i18n.t('admin:database_structure_page.cancel')}
+            {i18n.t('admin.database_structure_page.cancel')}
           </Button>
           <Button
             variant='contained'
@@ -1076,7 +1060,7 @@ const DatabaseStructurePage: React.FC = () => {
               '&:hover': { bgcolor: 'error.darker' },
             }}
           >
-            {i18n.t('admin:database_structure_page.confirm_execute')}
+            {i18n.t('admin.database_structure_page.confirm_execute')}
           </Button>
         </DialogActions>
       </Dialog>

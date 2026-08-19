@@ -81,6 +81,50 @@
       "k30": "Dependencies",
       "k31": "Standalone",
       "k32": "Performance marks set"
-    }
-  }
+    },
+    "message": {
+      "create_fail": "Create Fail",
+      "update_fail": "Update Fail",
+      "delete_fail": "Delete Fail"
+    },
+    "column": {
+      "amount": "Amount",
+      "amount_value": "{{value}}",
+      "overall_score": "Overall Score",
+      "quality_score": "Quality Score",
+      "delivery_score": "Delivery Score",
+      "on_time_rate": "On Time Rate",
+      "defect_rate": "Defect Rate"
+    },
+    "stat": {
+      "total_suppliers": "Total Suppliers",
+      "evaluated": "Evaluated",
+      "coverage_rate": "Coverage Rate",
+      "avg_overall": "Avg Overall"
+    },
+    "title": {
+      "overview": "Overview",
+      "best_supplier": "Best Supplier",
+      "score_value": "{{value}}"
+    },
+    "breadcrumb": "Breadcrumb"
+  },
+  "performance.message.create_fail": "Create Fail",
+  "performance.message.update_fail": "Update Fail",
+  "performance.message.delete_fail": "Delete Fail",
+  "performance.column.amount": "Amount",
+  "performance.column.amount_value": "{{value}}",
+  "performance.column.overall_score": "Overall Score",
+  "performance.column.quality_score": "Quality Score",
+  "performance.column.delivery_score": "Delivery Score",
+  "performance.column.on_time_rate": "On Time Rate",
+  "performance.column.defect_rate": "Defect Rate",
+  "performance.stat.total_suppliers": "Total Suppliers",
+  "performance.stat.evaluated": "Evaluated",
+  "performance.stat.coverage_rate": "Coverage Rate",
+  "performance.stat.avg_overall": "Avg Overall",
+  "performance.title.overview": "Overview",
+  "performance.title.best_supplier": "Best Supplier",
+  "performance.title.score_value": "{{value}}",
+  "performance.breadcrumb": "Breadcrumb"
 }

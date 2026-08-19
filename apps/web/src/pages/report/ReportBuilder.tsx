@@ -39,105 +39,22 @@ const DEFAULT_REPORT_TYPES: ReportTypeInfo[] = [
   { type: 'pdm_process_summary', name: i18n.t('pages.report_builder.k11'), module: 'PDM' },
 ];
 
-const REPORT_COLUMNS: Record<ReportType, string[]> = {
-  rs_project_progress: [
-    i18n.t('pages.report_builder.k17'),
-    i18n.t('pages.report_builder.k16'),
-    i18n.t('pages.report_builder.k15'),
-    i18n.t('pages.report_builder.k14'),
-    i18n.t('pages.report_builder.k13'),
-    i18n.t('pages.report_builder.k12'),
-  ],
-  rs_experiment_record: [
-    i18n.t('pages.report_builder.k24'),
-    i18n.t('pages.report_builder.k23'),
-    i18n.t('pages.report_builder.k22'),
-    i18n.t('pages.report_builder.k21'),
-    i18n.t('pages.report_builder.k20'),
-    i18n.t('pages.report_builder.k19'),
-    i18n.t('pages.report_builder.k18'),
-  ],
-  lims_inspection_stats: [
-    i18n.t('pages.report_builder.k30'),
-    i18n.t('pages.report_builder.k29'),
-    i18n.t('pages.report_builder.k28'),
-    i18n.t('pages.report_builder.k27'),
-    i18n.t('pages.report_builder.k26'),
-    i18n.t('pages.report_builder.k25'),
-  ],
-  lims_sample_summary: [
-    i18n.t('pages.report_builder.k36'),
-    i18n.t('pages.report_builder.k35'),
-    i18n.t('pages.report_builder.k34'),
-    i18n.t('pages.report_builder.k33'),
-    i18n.t('pages.report_builder.k32'),
-    i18n.t('pages.report_builder.k31'),
-  ],
-  qms_quality_analysis: [
-    i18n.t('pages.report_builder.k42'),
-    i18n.t('pages.report_builder.k41'),
-    i18n.t('pages.report_builder.k40'),
-    i18n.t('pages.report_builder.k39'),
-    i18n.t('pages.report_builder.k38'),
-    i18n.t('pages.report_builder.k37'),
-  ],
-  qms_defect_stats: [
-    i18n.t('pages.report_builder.k48'),
-    i18n.t('pages.report_builder.k47'),
-    i18n.t('pages.report_builder.k46'),
-    i18n.t('pages.report_builder.k45'),
-    i18n.t('pages.report_builder.k44'),
-    i18n.t('pages.report_builder.k43'),
-  ],
-  ehs_safety_check: [
-    i18n.t('pages.report_builder.k54'),
-    i18n.t('pages.report_builder.k53'),
-    i18n.t('pages.report_builder.k52'),
-    i18n.t('pages.report_builder.k51'),
-    i18n.t('pages.report_builder.k50'),
-    i18n.t('pages.report_builder.k49'),
-  ],
-  ehs_risk_assessment: [
-    i18n.t('pages.report_builder.k60'),
-    i18n.t('pages.report_builder.k59'),
-    i18n.t('pages.report_builder.k58'),
-    i18n.t('pages.report_builder.k57'),
-    i18n.t('pages.report_builder.k56'),
-    i18n.t('pages.report_builder.k55'),
-  ],
-  srm_supplier_eval: [
-    i18n.t('pages.report_builder.k66'),
-    i18n.t('pages.report_builder.k65'),
-    i18n.t('pages.report_builder.k64'),
-    i18n.t('pages.report_builder.k63'),
-    i18n.t('pages.report_builder.k62'),
-    i18n.t('pages.report_builder.k61'),
-  ],
-  srm_purchase_stats: [
-    i18n.t('pages.report_builder.k72'),
-    i18n.t('pages.report_builder.k71'),
-    i18n.t('pages.report_builder.k70'),
-    i18n.t('pages.report_builder.k69'),
-    i18n.t('pages.report_builder.k68'),
-    i18n.t('pages.report_builder.k67'),
-  ],
-  pdm_production_stats: [
-    i18n.t('pages.report_builder.k78'),
-    i18n.t('pages.report_builder.k77'),
-    i18n.t('pages.report_builder.k76'),
-    i18n.t('pages.report_builder.k75'),
-    i18n.t('pages.report_builder.k74'),
-    i18n.t('pages.report_builder.k73'),
-  ],
-  pdm_process_summary: [
-    i18n.t('pages.report_builder.k84'),
-    i18n.t('pages.report_builder.k83'),
-    i18n.t('pages.report_builder.k82'),
-    i18n.t('pages.report_builder.k81'),
-    i18n.t('pages.report_builder.k80'),
-    i18n.t('pages.report_builder.k79'),
-  ],
-};
+function getReportColumns(): Record<ReportType, string[]> {
+  return {
+    rs_project_progress: [i18n.t('pages.report_builder.k17'), i18n.t('pages.report_builder.k16'), i18n.t('pages.report_builder.k15'), i18n.t('pages.report_builder.k14'), i18n.t('pages.report_builder.k13'), i18n.t('pages.report_builder.k12')],
+    rs_experiment_record: [i18n.t('pages.report_builder.k24'), i18n.t('pages.report_builder.k23'), i18n.t('pages.report_builder.k22'), i18n.t('pages.report_builder.k21'), i18n.t('pages.report_builder.k20'), i18n.t('pages.report_builder.k19'), i18n.t('pages.report_builder.k18')],
+    lims_inspection_stats: [i18n.t('pages.report_builder.k30'), i18n.t('pages.report_builder.k29'), i18n.t('pages.report_builder.k28'), i18n.t('pages.report_builder.k27'), i18n.t('pages.report_builder.k26'), i18n.t('pages.report_builder.k25')],
+    lims_sample_summary: [i18n.t('pages.report_builder.k36'), i18n.t('pages.report_builder.k35'), i18n.t('pages.report_builder.k34'), i18n.t('pages.report_builder.k33'), i18n.t('pages.report_builder.k32'), i18n.t('pages.report_builder.k31')],
+    qms_quality_analysis: [i18n.t('pages.report_builder.k42'), i18n.t('pages.report_builder.k41'), i18n.t('pages.report_builder.k40'), i18n.t('pages.report_builder.k39'), i18n.t('pages.report_builder.k38'), i18n.t('pages.report_builder.k37')],
+    qms_defect_stats: [i18n.t('pages.report_builder.k48'), i18n.t('pages.report_builder.k47'), i18n.t('pages.report_builder.k46'), i18n.t('pages.report_builder.k45'), i18n.t('pages.report_builder.k44'), i18n.t('pages.report_builder.k43')],
+    ehs_safety_check: [i18n.t('pages.report_builder.k54'), i18n.t('pages.report_builder.k53'), i18n.t('pages.report_builder.k52'), i18n.t('pages.report_builder.k51'), i18n.t('pages.report_builder.k50'), i18n.t('pages.report_builder.k49')],
+    ehs_risk_assessment: [i18n.t('pages.report_builder.k60'), i18n.t('pages.report_builder.k59'), i18n.t('pages.report_builder.k58'), i18n.t('pages.report_builder.k57'), i18n.t('pages.report_builder.k56'), i18n.t('pages.report_builder.k55')],
+    srm_supplier_eval: [i18n.t('pages.report_builder.k66'), i18n.t('pages.report_builder.k65'), i18n.t('pages.report_builder.k64'), i18n.t('pages.report_builder.k63'), i18n.t('pages.report_builder.k62'), i18n.t('pages.report_builder.k61')],
+    srm_purchase_stats: [i18n.t('pages.report_builder.k72'), i18n.t('pages.report_builder.k71'), i18n.t('pages.report_builder.k70'), i18n.t('pages.report_builder.k69'), i18n.t('pages.report_builder.k68'), i18n.t('pages.report_builder.k67')],
+    pdm_production_stats: [i18n.t('pages.report_builder.k78'), i18n.t('pages.report_builder.k77'), i18n.t('pages.report_builder.k76'), i18n.t('pages.report_builder.k75'), i18n.t('pages.report_builder.k74'), i18n.t('pages.report_builder.k73')],
+    pdm_process_summary: [i18n.t('pages.report_builder.k84'), i18n.t('pages.report_builder.k83'), i18n.t('pages.report_builder.k82'), i18n.t('pages.report_builder.k81'), i18n.t('pages.report_builder.k80'), i18n.t('pages.report_builder.k79')],
+  };
+}
 
 const ReportBuilder: React.FC<ReportBuilderProps> = ({
   onClose = () => {},
@@ -159,7 +76,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
   const [submitting, setSubmitting] = useState(false);
 
   const handleReportTypeChange = (type: ReportType) => {
-    const defaultColumns = REPORT_COLUMNS[type] || [];
+    const defaultColumns = getReportColumns()[type] || [];
     setFormData((prev) => ({
       ...prev,
       reportType: type,
@@ -179,7 +96,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
 
   const handleSelectAllColumns = () => {
     if (formData.reportType) {
-      const allColumns = REPORT_COLUMNS[formData.reportType as ReportType] || [];
+      const allColumns = getReportColumns()[formData.reportType as ReportType] || [];
       setFormData((prev) => ({ ...prev, selectedColumns: allColumns }));
     }
   };
@@ -242,7 +159,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
   };
 
   const availableColumns = formData.reportType
-    ? REPORT_COLUMNS[formData.reportType as ReportType] || []
+    ? getReportColumns()[formData.reportType as ReportType] || []
     : [];
 
   const renderHeader = () => (
@@ -633,8 +550,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
             variant='body2'
             sx={{ color: 'grey.500' }}
           >
-            {i18n.t('pages.report_builder.k3')} {formData.selectedColumns.length}{' '}
-            {i18n.t('pages.report_builder.k4')}
+            {i18n.t('pages.report_builder.k3')} {formData.selectedColumns.length} {i18n.t('pages.report_builder.k4')}
           </Typography>
         </Box>
       )}
@@ -722,15 +638,13 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                   mr: 0.5,
                 }}
               />
-              {i18n.t('pages.report_builder.k5')} {formData.selectedColumns.length}{' '}
-              {i18n.t('pages.report_builder.k6')}
+              {i18n.t('pages.report_builder.k5')} {formData.selectedColumns.length} {i18n.t('pages.report_builder.k6')}
               {formData.reportType && (
                 <Typography
                   component='span'
                   sx={{ ml: 1, color: 'grey.400' }}
                 >
-                  ({REPORT_COLUMNS[formData.reportType as ReportType]?.length}{' '}
-                  {i18n.t('pages.report_builder.k7')}
+                  ({getReportColumns()[formData.reportType as ReportType]?.length} {i18n.t('pages.report_builder.k7')}
                 </Typography>
               )}
             </Box>

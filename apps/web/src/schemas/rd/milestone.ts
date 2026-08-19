@@ -9,15 +9,18 @@ const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'warn
   planning: 'warning',
 };
 
-const STATUS_LABEL_MAP: Record<string, string> = {
+const getStatusLabelMap = (): Record<string, string> => ({
   completed: i18n.t('rd.milestone.k0'),
   active: i18n.t('rd.milestone.k1'),
   planning: i18n.t('rd.milestone.k2'),
-};
+});
 
-export const milestoneSchema: EntitySchema = {
-  entity: 'rd_milestone',
-  title: i18n.t('rd.milestone.k3'),
+export const getMilestoneSchema = (): EntitySchema => {
+  const STATUS_LABEL_MAP = getStatusLabelMap();
+
+  return {
+    entity: 'rd_milestone',
+    title: i18n.t('rd.milestone.k3'),
   description: i18n.t('rd.milestone.k4'),
 
   api: {
@@ -225,4 +228,5 @@ export const milestoneSchema: EntitySchema = {
       )
     );
   },
+  };
 };

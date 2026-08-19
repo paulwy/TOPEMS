@@ -523,43 +523,45 @@ const UnitConverter: React.FC = () => {
   );
 };
 
-const maskTypes = [
-  {
-    id: 'phone',
-    label: i18n.t('components.ai_tools_panel.k35'),
-    pattern: /(\d{3})\d{4}(\d{4})/,
-    replacement: '$1****$2',
-    example: '13800138000 → 138****8000',
-  },
-  {
-    id: 'id',
-    label: i18n.t('components.ai_tools_panel.k36'),
-    pattern: /(\d{6})\d{8}(\d{4})/,
-    replacement: '$1********$2',
-    example: '110101199001011234 → 110101********1234',
-  },
-  {
-    id: 'email',
-    label: i18n.t('components.ai_tools_panel.k37'),
-    pattern: /(\w{1,3})\w+(@\w+\.\w+)/,
-    replacement: '$1***$2',
-    example: 'test@example.com → tes***@example.com',
-  },
-  {
-    id: 'bank',
-    label: i18n.t('components.ai_tools_panel.k38'),
-    pattern: /(\d{4})\d+(\d{4})/,
-    replacement: '$1****$2',
-    example: '6222021234567890123 → 6222****0123',
-  },
-  {
-    id: 'name',
-    label: i18n.t('components.ai_tools_panel.k39'),
-    pattern: /([\u4E00-\u9FA5]{1})[\u4E00-\u9FA5]+/,
-    replacement: '$1**',
-    example: i18n.t('components.ai_tools_panel.k19'),
-  },
-];
+function getMaskTypes() {
+  return [
+    {
+      id: 'phone',
+      label: i18n.t('components.ai_tools_panel.k35'),
+      pattern: /(\d{3})\d{4}(\d{4})/,
+      replacement: '$1****$2',
+      example: '13800138000 → 138****8000',
+    },
+    {
+      id: 'id',
+      label: i18n.t('components.ai_tools_panel.k36'),
+      pattern: /(\d{6})\d{8}(\d{4})/,
+      replacement: '$1********$2',
+      example: '110101199001011234 → 110101********1234',
+    },
+    {
+      id: 'email',
+      label: i18n.t('components.ai_tools_panel.k37'),
+      pattern: /(\w{1,3})\w+(@\w+\.\w+)/,
+      replacement: '$1***$2',
+      example: 'test@example.com → tes***@example.com',
+    },
+    {
+      id: 'bank',
+      label: i18n.t('components.ai_tools_panel.k38'),
+      pattern: /(\d{4})\d+(\d{4})/,
+      replacement: '$1****$2',
+      example: '6222021234567890123 → 6222****0123',
+    },
+    {
+      id: 'name',
+      label: i18n.t('components.ai_tools_panel.k39'),
+      pattern: /([\u4E00-\u9FA5]{1})[\u4E00-\u9FA5]+/,
+      replacement: '$1**',
+      example: i18n.t('components.ai_tools_panel.k19'),
+    },
+  ];
+}
 
 const DataMasker: React.FC = () => {
   const [input, setInput] = useState('');
@@ -568,7 +570,7 @@ const DataMasker: React.FC = () => {
   const [copied, setCopied] = useState(false);
 
   const handleMask = useCallback(() => {
-    const mask = maskTypes.find((m) => m.id === selectedType);
+    const mask = getMaskTypes().find((m) => m.id === selectedType);
     if (!mask || !input) return;
 
     const lines = input.split('\n');
@@ -590,7 +592,7 @@ const DataMasker: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   }, [output]);
 
-  const currentMask = maskTypes.find((m) => m.id === selectedType);
+  const currentMask = getMaskTypes().find((m) => m.id === selectedType);
 
   return (
     <Box sx={{ p: 2 }}>
@@ -613,7 +615,7 @@ const DataMasker: React.FC = () => {
           label={i18n.t('components.ai_tools_panel.k41')}
           onChange={(e) => setSelectedType(e.target.value)}
         >
-          {maskTypes.map((m) => (
+          {getMaskTypes().map((m) => (
             <option
               key={m.id}
               value={m.id}

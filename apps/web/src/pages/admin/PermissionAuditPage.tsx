@@ -37,7 +37,6 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
 interface PermissionAuditPageProps {
   onNavigate?: (page: string) => void;
 }
@@ -51,12 +50,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
   const debouncedSearch = useDebounce(searchQuery, 300);
   const PER_PAGE = 20;
   const permissionChangesQuery = useQuery<{ items: PermissionChange[]; total: number }>({
-    queryKey: [
-      ...QUERY_KEYS.AD_HOC.ADMIN_PERMISSION_CHANGES_BASE,
-      currentPage,
-      debouncedSearch,
-      filterType,
-    ],
+    queryKey: [...QUERY_KEYS.AD_HOC.ADMIN_PERMISSION_CHANGES_BASE, currentPage, debouncedSearch, filterType],
     queryFn: async () => {
       const response = await permissionAuditApi.listPermissionChanges({
         page: currentPage,
@@ -73,12 +67,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
     staleTime: 30 * 1000,
   });
   const accessLogsQuery = useQuery<{ items: AccessControlLog[]; total: number }>({
-    queryKey: [
-      ...QUERY_KEYS.AD_HOC.ADMIN_ACCESS_LOGS_BASE,
-      currentPage,
-      debouncedSearch,
-      filterType,
-    ],
+    queryKey: [...QUERY_KEYS.AD_HOC.ADMIN_ACCESS_LOGS_BASE, currentPage, debouncedSearch, filterType],
     queryFn: async () => {
       const response = await permissionAuditApi.listAccessLogs({
         page: currentPage,
@@ -189,27 +178,27 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
   };
   const getChangeTypeLabel = (type?: string) => {
     const labels: Record<string, string> = {
-      role_assignment: i18n.t('admin:permission_audit_page.type_role_assignment'),
-      role_removal: i18n.t('admin:permission_audit_page.type_role_removal'),
-      permission_add: i18n.t('admin:permission_audit_page.type_permission_add'),
-      permission_remove: i18n.t('admin:permission_audit_page.type_permission_remove'),
-      role_create: i18n.t('admin:permission_audit_page.type_role_create'),
-      role_update: i18n.t('admin:permission_audit_page.type_role_update'),
-      role_delete: i18n.t('admin:permission_audit_page.type_role_delete'),
-      user_create: i18n.t('admin:permission_audit_page.type_user_create'),
-      user_update: i18n.t('admin:permission_audit_page.type_user_update'),
-      user_delete: i18n.t('admin:permission_audit_page.type_user_delete'),
+      role_assignment: i18n.t('admin.permission_audit_page.type_role_assignment'),
+      role_removal: i18n.t('admin.permission_audit_page.type_role_removal'),
+      permission_add: i18n.t('admin.permission_audit_page.type_permission_add'),
+      permission_remove: i18n.t('admin.permission_audit_page.type_permission_remove'),
+      role_create: i18n.t('admin.permission_audit_page.type_role_create'),
+      role_update: i18n.t('admin.permission_audit_page.type_role_update'),
+      role_delete: i18n.t('admin.permission_audit_page.type_role_delete'),
+      user_create: i18n.t('admin.permission_audit_page.type_user_create'),
+      user_update: i18n.t('admin.permission_audit_page.type_user_update'),
+      user_delete: i18n.t('admin.permission_audit_page.type_user_delete'),
     };
     return labels[type || ''] || type || '-';
   };
   const getAccessTypeLabel = (type?: string) => {
     const labels: Record<string, string> = {
-      login: i18n.t('admin:permission_audit_page.type_login'),
-      logout: i18n.t('admin:permission_audit_page.type_logout'),
-      api_access: i18n.t('admin:permission_audit_page.type_api_access'),
-      page_access: i18n.t('admin:permission_audit_page.type_page_access'),
-      permission_check: i18n.t('admin:permission_audit_page.type_permission_check'),
-      denied: i18n.t('admin:permission_audit_page.type_denied'),
+      login: i18n.t('admin.permission_audit_page.type_login'),
+      logout: i18n.t('admin.permission_audit_page.type_logout'),
+      api_access: i18n.t('admin.permission_audit_page.type_api_access'),
+      page_access: i18n.t('admin.permission_audit_page.type_page_access'),
+      permission_check: i18n.t('admin.permission_audit_page.type_permission_check'),
+      denied: i18n.t('admin.permission_audit_page.type_denied'),
     };
     return labels[type || ''] || type || '-';
   };
@@ -226,8 +215,8 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
   };
   return (
     <PageContainer
-      title={i18n.t('admin:permission_audit_page.title')}
-      subtitle={i18n.t('admin:permission_audit_page.subtitle')}
+      title={i18n.t('admin.permission_audit_page.title')}
+      subtitle={i18n.t('admin.permission_audit_page.subtitle')}
       headerActions={[
         <Button
           key='refresh'
@@ -238,7 +227,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
           startIcon={<RefreshCw className='w-4 h-4' />}
           variant='outlined'
         >
-          {i18n.t('admin:permission_audit_page.refresh')}
+          {i18n.t('admin.permission_audit_page.refresh')}
         </Button>,
         <Button
           key='export'
@@ -246,7 +235,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
           startIcon={<Download className='w-4 h-4' />}
           variant='contained'
         >
-          {i18n.t('admin:permission_audit_page.export')}
+          {i18n.t('admin.permission_audit_page.export')}
         </Button>,
       ]}
     >
@@ -258,7 +247,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                   <Shield className='w-5 h-5 text-blue-600' />
                   <Typography variant='h6'>
-                    {i18n.t('admin:permission_audit_page.permission_change_stats')}
+                    {i18n.t('admin.permission_audit_page.permission_change_stats')}
                   </Typography>
                 </Box>
                 <Grid spacing={2}>
@@ -267,7 +256,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      {i18n.t('admin:permission_audit_page.total_changes')}
+                      {i18n.t('admin.permission_audit_page.total_changes')}
                     </Typography>
                     <Typography
                       variant='h4'
@@ -281,7 +270,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      {i18n.t('admin:permission_audit_page.today_changes')}
+                      {i18n.t('admin.permission_audit_page.today_changes')}
                     </Typography>
                     <Typography
                       variant='h4'
@@ -296,7 +285,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      {i18n.t('admin:permission_audit_page.role_changes')}
+                      {i18n.t('admin.permission_audit_page.role_changes')}
                     </Typography>
                     <Typography
                       variant='h4'
@@ -310,7 +299,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      {i18n.t('admin:permission_audit_page.permission_changes')}
+                      {i18n.t('admin.permission_audit_page.permission_changes')}
                     </Typography>
                     <Typography
                       variant='h4'
@@ -331,7 +320,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                   <User className='w-5 h-5 text-green-600' />
                   <Typography variant='h6'>
-                    {i18n.t('admin:permission_audit_page.access_control_stats')}
+                    {i18n.t('admin.permission_audit_page.access_control_stats')}
                   </Typography>
                 </Box>
                 <Grid spacing={2}>
@@ -340,7 +329,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      {i18n.t('admin:permission_audit_page.total_access')}
+                      {i18n.t('admin.permission_audit_page.total_access')}
                     </Typography>
                     <Typography
                       variant='h4'
@@ -354,7 +343,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      {i18n.t('admin:permission_audit_page.today_access')}
+                      {i18n.t('admin.permission_audit_page.today_access')}
                     </Typography>
                     <Typography
                       variant='h4'
@@ -369,7 +358,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      {i18n.t('admin:permission_audit_page.login_count')}
+                      {i18n.t('admin.permission_audit_page.login_count')}
                     </Typography>
                     <Typography
                       variant='h4'
@@ -383,7 +372,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                       variant='body2'
                       color='textSecondary'
                     >
-                      {i18n.t('admin:permission_audit_page.denied_count')}
+                      {i18n.t('admin.permission_audit_page.denied_count')}
                     </Typography>
                     <Typography
                       variant='h4'
@@ -407,23 +396,23 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                   variant={activeTab === 'permissionChanges' ? 'contained' : 'outlined'}
                   startIcon={<Shield className='w-4 h-4' />}
                 >
-                  {i18n.t('admin:permission_audit_page.permission_changes_tab')}
+                  {i18n.t('admin.permission_audit_page.permission_changes_tab')}
                 </Button>
                 <Button
                   onClick={() => setActiveTab('accessControl')}
                   variant={activeTab === 'accessControl' ? 'contained' : 'outlined'}
                   startIcon={<User className='w-4 h-4' />}
                 >
-                  {i18n.t('admin:permission_audit_page.access_control_tab')}
+                  {i18n.t('admin.permission_audit_page.access_control_tab')}
                 </Button>
               </Box>
               <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
                 <TextField
                   fullWidth
-                  label={i18n.t('admin:permission_audit_page.search_label')}
+                  label={i18n.t('admin.permission_audit_page.search_label')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={i18n.t('admin:permission_audit_page.search_placeholder')}
+                  placeholder={i18n.t('admin.permission_audit_page.search_placeholder')}
                   slotProps={{
                     input: {
                       startAdornment: <Search className='w-4 h-4 mr-2 text-gray-400' />,
@@ -434,58 +423,88 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                   fullWidth
                   sx={{ minWidth: 150 }}
                 >
-                  <InputLabel>{i18n.t('admin:permission_audit_page.filter_type')}</InputLabel>
+                  <InputLabel>{i18n.t('admin.permission_audit_page.filter_type')}</InputLabel>
                   <Select
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value)}
-                    label={i18n.t('admin:permission_audit_page.filter_type')}
+                    label={i18n.t('admin.permission_audit_page.filter_type')}
                   >
-                    <MenuItem value='all'>
-                      {i18n.t('admin:permission_audit_page.all_types')}
-                    </MenuItem>
-                    {activeTab === 'permissionChanges' ? (
-                      <>
-                        <MenuItem value='role_assignment'>
-                          {i18n.t('admin:permission_audit_page.type_role_assignment')}
-                        </MenuItem>
-                        <MenuItem value='role_removal'>
-                          {i18n.t('admin:permission_audit_page.type_role_removal')}
-                        </MenuItem>
-                        <MenuItem value='permission_add'>
-                          {i18n.t('admin:permission_audit_page.type_permission_add')}
-                        </MenuItem>
-                        <MenuItem value='permission_remove'>
-                          {i18n.t('admin:permission_audit_page.type_permission_remove')}
-                        </MenuItem>
-                        <MenuItem value='role_create'>
-                          {i18n.t('admin:permission_audit_page.type_role_create')}
-                        </MenuItem>
-                        <MenuItem value='role_update'>
-                          {i18n.t('admin:permission_audit_page.type_role_update')}
-                        </MenuItem>
-                        <MenuItem value='role_delete'>
-                          {i18n.t('admin:permission_audit_page.type_role_delete')}
-                        </MenuItem>
-                      </>
-                    ) : (
-                      <>
-                        <MenuItem value='login'>
-                          {i18n.t('admin:permission_audit_page.type_login')}
-                        </MenuItem>
-                        <MenuItem value='logout'>
-                          {i18n.t('admin:permission_audit_page.type_logout')}
-                        </MenuItem>
-                        <MenuItem value='api_access'>
-                          {i18n.t('admin:permission_audit_page.type_api_access')}
-                        </MenuItem>
-                        <MenuItem value='page_access'>
-                          {i18n.t('admin:permission_audit_page.type_page_access')}
-                        </MenuItem>
-                        <MenuItem value='denied'>
-                          {i18n.t('admin:permission_audit_page.type_denied')}
-                        </MenuItem>
-                      </>
-                    )}
+                    <MenuItem value='all'>{i18n.t('admin.permission_audit_page.all_types')}</MenuItem>
+                    {activeTab === 'permissionChanges' ? [
+                      <MenuItem
+                        key='role_assignment'
+                        value='role_assignment'
+                      >
+                        {i18n.t('admin.permission_audit_page.type_role_assignment')}
+                      </MenuItem>,
+                      <MenuItem
+                        key='role_removal'
+                        value='role_removal'
+                      >
+                        {i18n.t('admin.permission_audit_page.type_role_removal')}
+                      </MenuItem>,
+                      <MenuItem
+                        key='permission_add'
+                        value='permission_add'
+                      >
+                        {i18n.t('admin.permission_audit_page.type_permission_add')}
+                      </MenuItem>,
+                      <MenuItem
+                        key='permission_remove'
+                        value='permission_remove'
+                      >
+                        {i18n.t('admin.permission_audit_page.type_permission_remove')}
+                      </MenuItem>,
+                      <MenuItem
+                        key='role_create'
+                        value='role_create'
+                      >
+                        {i18n.t('admin.permission_audit_page.type_role_create')}
+                      </MenuItem>,
+                      <MenuItem
+                        key='role_update'
+                        value='role_update'
+                      >
+                        {i18n.t('admin.permission_audit_page.type_role_update')}
+                      </MenuItem>,
+                      <MenuItem
+                        key='role_delete'
+                        value='role_delete'
+                      >
+                        {i18n.t('admin.permission_audit_page.type_role_delete')}
+                      </MenuItem>,
+                    ] : [
+                      <MenuItem
+                        key='login'
+                        value='login'
+                      >
+                        {i18n.t('admin.permission_audit_page.type_login')}
+                      </MenuItem>,
+                      <MenuItem
+                        key='logout'
+                        value='logout'
+                      >
+                        {i18n.t('admin.permission_audit_page.type_logout')}
+                      </MenuItem>,
+                      <MenuItem
+                        key='api_access'
+                        value='api_access'
+                      >
+                        {i18n.t('admin.permission_audit_page.type_api_access')}
+                      </MenuItem>,
+                      <MenuItem
+                        key='page_access'
+                        value='page_access'
+                      >
+                        {i18n.t('admin.permission_audit_page.type_page_access')}
+                      </MenuItem>,
+                      <MenuItem
+                        key='denied'
+                        value='denied'
+                      >
+                        {i18n.t('admin.permission_audit_page.type_denied')}
+                      </MenuItem>,
+                    ]}
                   </Select>
                 </FormControl>
               </Box>
@@ -495,44 +514,30 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                     <TableRow>
                       {activeTab === 'permissionChanges' ? (
                         <>
-                          <TableCell>{i18n.t('admin:permission_audit_page.col_time')}</TableCell>
+                          <TableCell>{i18n.t('admin.permission_audit_page.col_time')}</TableCell>
+                          <TableCell>{i18n.t('admin.permission_audit_page.col_change_type')}</TableCell>
+                          <TableCell>{i18n.t('admin.permission_audit_page.col_operator')}</TableCell>
+                          <TableCell>{i18n.t('admin.permission_audit_page.col_target_user')}</TableCell>
                           <TableCell>
-                            {i18n.t('admin:permission_audit_page.col_change_type')}
+                            {i18n.t('admin.permission_audit_page.col_role_permission')}
                           </TableCell>
-                          <TableCell>
-                            {i18n.t('admin:permission_audit_page.col_operator')}
-                          </TableCell>
-                          <TableCell>
-                            {i18n.t('admin:permission_audit_page.col_target_user')}
-                          </TableCell>
-                          <TableCell>
-                            {i18n.t('admin:permission_audit_page.col_role_permission')}
-                          </TableCell>
-                          <TableCell>
-                            {i18n.t('admin:permission_audit_page.col_old_value')}
-                          </TableCell>
-                          <TableCell>
-                            {i18n.t('admin:permission_audit_page.col_new_value')}
-                          </TableCell>
-                          <TableCell>{i18n.t('admin:permission_audit_page.col_status')}</TableCell>
+                          <TableCell>{i18n.t('admin.permission_audit_page.col_old_value')}</TableCell>
+                          <TableCell>{i18n.t('admin.permission_audit_page.col_new_value')}</TableCell>
+                          <TableCell>{i18n.t('admin.permission_audit_page.col_status')}</TableCell>
                         </>
                       ) : (
                         <>
-                          <TableCell>{i18n.t('admin:permission_audit_page.col_time')}</TableCell>
+                          <TableCell>{i18n.t('admin.permission_audit_page.col_time')}</TableCell>
+                          <TableCell>{i18n.t('admin.permission_audit_page.col_access_type')}</TableCell>
+                          <TableCell>{i18n.t('admin.permission_audit_page.col_user')}</TableCell>
                           <TableCell>
-                            {i18n.t('admin:permission_audit_page.col_access_type')}
+                            {i18n.t('admin.permission_audit_page.col_resource_path')}
                           </TableCell>
-                          <TableCell>{i18n.t('admin:permission_audit_page.col_user')}</TableCell>
+                          <TableCell>{i18n.t('admin.permission_audit_page.col_ip_address')}</TableCell>
+                          <TableCell>{i18n.t('admin.permission_audit_page.col_device')}</TableCell>
+                          <TableCell>{i18n.t('admin.permission_audit_page.col_status')}</TableCell>
                           <TableCell>
-                            {i18n.t('admin:permission_audit_page.col_resource_path')}
-                          </TableCell>
-                          <TableCell>
-                            {i18n.t('admin:permission_audit_page.col_ip_address')}
-                          </TableCell>
-                          <TableCell>{i18n.t('admin:permission_audit_page.col_device')}</TableCell>
-                          <TableCell>{i18n.t('admin:permission_audit_page.col_status')}</TableCell>
-                          <TableCell>
-                            {i18n.t('admin:permission_audit_page.col_response_time')}
+                            {i18n.t('admin.permission_audit_page.col_response_time')}
                           </TableCell>
                         </>
                       )}
@@ -547,7 +552,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                               variant='body1'
                               color='textSecondary'
                             >
-                              {i18n.t('admin:permission_audit_page.loading')}
+                              {i18n.t('admin.permission_audit_page.loading')}
                             </Typography>
                           </Box>
                         </TableCell>
@@ -617,8 +622,8 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                             <Chip
                               label={
                                 change.status === 'success'
-                                  ? i18n.t('admin:permission_audit_page.status_success')
-                                  : i18n.t('admin:permission_audit_page.status_failed')
+                                  ? i18n.t('admin.permission_audit_page.status_success')
+                                  : i18n.t('admin.permission_audit_page.status_failed')
                               }
                               size='small'
                               color={
@@ -675,10 +680,10 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
                             <Chip
                               label={
                                 log.status === 'success'
-                                  ? i18n.t('admin:permission_audit_page.status_success')
+                                  ? i18n.t('admin.permission_audit_page.status_success')
                                   : log.status === 'denied'
-                                    ? i18n.t('admin:permission_audit_page.status_denied')
-                                    : i18n.t('admin:permission_audit_page.status_failed')
+                                    ? i18n.t('admin.permission_audit_page.status_denied')
+                                    : i18n.t('admin.permission_audit_page.status_failed')
                               }
                               size='small'
                               color={

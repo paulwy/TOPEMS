@@ -23,7 +23,7 @@
         "notification": "通知",
         "email": "邮件",
         "sms": "短信",
-        "webhook": "Webhook",
+        "webhook": "Webhook回调",
         "wechat": "企业微信",
         "push": "推送"
       },
@@ -297,12 +297,12 @@
       }
     },
     "metric_type": {
-      "cpu": "CPU",
+      "cpu": "CPU处理器",
       "memory": "内存",
       "disk": "磁盘",
       "network": "网络",
       "database": "数据库",
-      "api": "API"
+      "api": "API接口"
     },
     "alert_rules_v2": {
       "column": {
@@ -455,7 +455,7 @@
         "confirmed": "已确认"
       },
       "export": {
-        "filename": "alerts",
+        "filename": "告警记录",
         "column": {
           "name": "告警名称",
           "severity": "严重级别",
@@ -627,6 +627,11 @@
         "at_risk": "有风险",
         "violated": "已违反"
       }
+    },
+    "notification_channel": {
+      "sms_access_key": "短信接入Key",
+      "sms_access_secret": "短信接入密钥",
+      "webhook_url": "Webhook地址"
     }
   },
   "monitor.metrics_dashboard_page.k0": "全部类别",
@@ -1208,5 +1213,24 @@
   "metrics_dashboard_page.24_2": "24小时",
   "metrics_dashboard_page.k3": "6小时",
   "metrics_dashboard_page.k4": "1小时",
-  "metrics_dashboard_page.k5": "\n          目标 {{v0}}\n          {{v1}}\n        "
+  "metrics_dashboard_page.k5": "\n          目标 {{v0}}\n          {{v1}}\n        ",
+  "common": {
+    "action_type": {
+      "webhook": "Webhook回调"
+    }
+  },
+  "metric_type": {
+    "cpu": "CPU处理器",
+    "api": "API接口"
+  },
+  "alerts": {
+    "export": {
+      "filename": "告警"
+    }
+  },
+  "notification_channel": {
+    "sms_access_key": "接入Key",
+    "sms_access_secret": "接入密钥",
+    "webhook_url": "Webhook地址"
+  }
 }

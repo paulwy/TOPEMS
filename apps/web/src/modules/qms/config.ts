@@ -38,8 +38,8 @@ export const QMS_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const qmsModuleConfig: RouteModuleConfig = {
   code: 'qms',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.qms_name'),
+  nameKey: 'shared.config.qms_name',
   icon: 'Shield',
   path: QMS_PATHS.root,
   source: 'core',

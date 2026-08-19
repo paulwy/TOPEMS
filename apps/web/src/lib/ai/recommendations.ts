@@ -25,7 +25,8 @@ export interface QuickCommand {
   action: string;
 }
 
-const moduleRecommendations: Record<string, AIRecommendation[]> = {
+function getModuleRecommendations(): Record<string, AIRecommendation[]> {
+  return {
   hrm: [
     {
       id: 'employee-completion',
@@ -182,9 +183,11 @@ const moduleRecommendations: Record<string, AIRecommendation[]> = {
       moduleCode: 'ai',
     },
   ],
-};
+  };
+}
 
-const defaultRecommendations: AIRecommendation[] = [
+function getDefaultRecommendations(): AIRecommendation[] {
+  return [
   {
     id: 'ai-chat',
     label: i18n.t('shared.recommendations.ai_7'),
@@ -209,9 +212,11 @@ const defaultRecommendations: AIRecommendation[] = [
     icon: 'search',
     moduleCode: 'ai',
   },
-];
+  ];
+}
 
-export const quickCommands: QuickCommand[] = [
+export function getQuickCommands(): QuickCommand[] {
+  return [
   {
     command: i18n.t('shared.recommendations.k8'),
     label: i18n.t('shared.recommendations.k34'),
@@ -242,12 +247,11 @@ export const quickCommands: QuickCommand[] = [
     description: i18n.t('shared.recommendations.ai_13'),
     action: DASHBOARD_PATHS.help,
   },
-];
+  ];
+}
 
-export function getRecommendations(
-  context: Pick<AICopilotContext, 'moduleCode'>
-): AIRecommendation[] {
-  return moduleRecommendations[context.moduleCode] || defaultRecommendations;
+export function getRecommendations(context: Pick<AICopilotContext, 'moduleCode'>): AIRecommendation[] {
+  return getModuleRecommendations()[context.moduleCode] || getDefaultRecommendations();
 }
 
 export function getTopRecommendations(

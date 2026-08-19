@@ -14,8 +14,8 @@ export const IM_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const imModuleConfig: RouteModuleConfig = {
   code: 'im',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.im_name'),
+  nameKey: 'shared.config.im_name',
   icon: 'MessageSquare',
   path: IM_PATHS.root,
   source: 'plugin',

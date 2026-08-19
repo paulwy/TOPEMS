@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Search,
@@ -38,6 +38,7 @@ export const PluginMarketplaceFilters: React.FC<PluginMarketplaceFiltersProps> =
   onRefresh,
 }) => {
   const { t } = useTranslation();
+  const suites = useMemo(() => SUITES(), [t]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 6, mb: 8 }}>
@@ -74,7 +75,7 @@ export const PluginMarketplaceFilters: React.FC<PluginMarketplaceFiltersProps> =
             onChange={(e) => onSuiteChange(e.target.value)}
           >
             <MenuItem value='all'>{t('plugin.marketplace_page.filter.all_suites')}</MenuItem>
-            {SUITES.map((suite) => (
+            {suites.map((suite) => (
               <MenuItem
                 key={suite.code}
                 value={suite.code}

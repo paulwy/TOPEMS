@@ -13,7 +13,9 @@ mod schema_defense;
 mod services;
 mod shared;
 
-use crate::models::{Config, CHUNKS, CLIENT, CONFIG, CONNECTORS, DOCS_DIR, DOCUMENTS, VECTORS};
+use crate::models::{
+    Config, CHUNKS, CLIENT, CONFIG, CONNECTORS, DIFY_CONFIG, DOCS_DIR, DOCUMENTS, VECTORS,
+};
 use crate::services::document::DocumentQAConfig;
 use crate::services::embedding::{index_all_documents, load_documents_from_dir};
 
@@ -132,6 +134,40 @@ async fn main() -> anyhow::Result<()> {
         .timeout(std::time::Duration::from_secs(120))
         .build()?;
 
+    // Dify 集成配置（可选：未设置 DIFY_API_KEY 时 DifyService 仍可创建但 is_configured=false）
+    let dify_config = {
+        let base_url =
+            std::env::var("DIFY_BASE_URL").unwrap_or_else(|_| "http://localhost:8180".to_string());
+        let api_key = std::env::var("DIFY_API_KEY").unwrap_or_default();
+        let default_user =
+            std::env::var("DIFY_DEFAULT_USER").unwrap_or_else(|_| "topems-user".to_string());
+        let timeout_secs = std::env::var("DIFY_TIMEOUT_SECS")
+            .ok()
+            .and_then(|s| s.parse::<u64>().ok())
+            .unwrap_or(120);
+        let cfg = crate::models::DifyConfig {
+            base_url,
+            api_key,
+            default_user,
+            timeout_secs,
+        };
+        if !cfg.api_key.is_empty() {
+            tracing::info!(
+                "✅ Dify 集成已配置 (base_url={}, default_user={}, timeout={}s)",
+                cfg.base_url,
+                cfg.default_user,
+                cfg.timeout_secs
+            );
+        } else {
+            tracing::warn!("⚠️ Dify 集成未启用：缺少 DIFY_API_KEY 环境变量");
+        }
+        cfg
+    };
+    let dify_service = crate::services::DifyService::new(http_client.clone(), dify_config.clone());
+    DIFY_CONFIG
+        .set(dify_config)
+        .map_err(|_| anyhow::anyhow!("DIFY_CONFIG already initialized"))?;
+
     // 创建服务
     let vector_service = VectorService::new(db);
     let file_service_url =
@@ -244,6 +280,7 @@ async fn main() -> anyhow::Result<()> {
         agent_service,
         recommendation_service,
         multimodal_service,
+        dify_service,
         event_publisher: ctx.event_publisher.clone(),
     };
 

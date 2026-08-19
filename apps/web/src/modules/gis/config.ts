@@ -16,8 +16,8 @@ export const GIS_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const gisModuleConfig: RouteModuleConfig = {
   code: 'gis',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.gis_name'),
+  nameKey: 'shared.config.gis_name',
   icon: 'Map',
   path: GIS_PATHS.root,
   source: 'plugin',

@@ -9,10 +9,12 @@ export interface Shortcut {
   path: string;
 }
 
-const defaultShortcuts: Shortcut[] = [
-  { id: '1', title: i18n.t('store.shortcuts_store.k0'), icon: 'Activity', path: '/dashboard' },
-  { id: '2', title: i18n.t('store.shortcuts_store.k1'), icon: 'FileText', path: '/documents' },
-];
+export function getDefaultShortcuts(): Shortcut[] {
+  return [
+    { id: '1', title: i18n.t('store.shortcuts_store.k0'), icon: 'Activity', path: '/dashboard' },
+    { id: '2', title: i18n.t('store.shortcuts_store.k1'), icon: 'FileText', path: '/documents' },
+  ];
+}
 
 interface ShortcutsState {
   shortcuts: Shortcut[];
@@ -24,7 +26,7 @@ interface ShortcutsState {
 export const useShortcutsStore = create<ShortcutsState>()(
   persist(
     (set) => ({
-      shortcuts: defaultShortcuts,
+      shortcuts: [], // lazy init: populated by ensureShortcutsLoaded()
       setShortcuts: (shortcuts) => set({ shortcuts }),
       addShortcut: (shortcut) =>
         set((state) => ({
@@ -41,6 +43,14 @@ export const useShortcutsStore = create<ShortcutsState>()(
     }
   )
 );
+
+/** Call after i18n is ready to populate default shortcuts */
+export function ensureShortcutsLoaded(): void {
+  const state = useShortcutsStore.getState();
+  if (state.shortcuts.length === 0) {
+    state.setShortcuts(getDefaultShortcuts());
+  }
+}
 
 export const useShortcuts = () => useShortcutsStore((state) => state.shortcuts);
 export const useSetShortcuts = () => useShortcutsStore((state) => state.setShortcuts);

@@ -160,7 +160,7 @@ const PluginManagementPage: React.FC = () => {
           is_published: true,
           category: info.category,
           runtime_status: 'running',
-          runtime_url: PLUGIN_REGISTRY[info.code]?.url || '',
+          runtime_url: PLUGIN_REGISTRY()[info.code]?.url || '',
           base_path: `/api/${info.code}`,
         }));
 
@@ -327,7 +327,7 @@ const PluginManagementPage: React.FC = () => {
 
   const allMarketplacePlugins: MarketplacePlugin[] = useMemo(
     () =>
-      Object.entries(PLUGIN_REGISTRY).map(([code, config]) => ({
+      Object.entries(PLUGIN_REGISTRY()).map(([code, config]) => ({
         code,
         name: PLUGIN_DISPLAY_NAMES[code] || code.toUpperCase(),
         version: '1.0.0',

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useNotificationStore, type Notification } from '@/store';
 
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';
@@ -112,17 +112,30 @@ export function useNotification(): UseNotificationResult {
     [addNotificationStore]
   );
 
-  return {
-    notifications,
-    showNotification,
-    hideNotification,
-    success,
-    error,
-    info,
-    warning,
-    addNotification: addNotificationWrapper,
-    clearNotifications,
-  };
+  return useMemo(
+    () => ({
+      notifications,
+      showNotification,
+      hideNotification,
+      success,
+      error,
+      info,
+      warning,
+      addNotification: addNotificationWrapper,
+      clearNotifications,
+    }),
+    [
+      notifications,
+      showNotification,
+      hideNotification,
+      success,
+      error,
+      info,
+      warning,
+      addNotificationWrapper,
+      clearNotifications,
+    ]
+  );
 }
 
 export default useNotification;

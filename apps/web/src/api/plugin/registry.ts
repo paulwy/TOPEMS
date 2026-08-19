@@ -4,7 +4,7 @@ import { PLUGIN_TIMEOUT } from '@topems/shared-constants';
 import type { PluginRuntimeInfo, SuiteInfo } from './types';
 import i18n from '@/i18n';
 
-export const SUITES: SuiteInfo[] = [
+export const getSuites = (): SuiteInfo[] => [
   {
     id: 'finance',
     code: 'finance',
@@ -105,16 +105,11 @@ export const PLUGIN_SUITE_MAP: Record<string, string> = {
   gis: 'gis',
 };
 
-export const PLUGIN_REGISTRY: Record<
+export const getPluginRegistry = (): Record<
   string,
   { url: string; port: number; name: string; icon: string }
-> = {
-  workflow: {
-    url: '/api/core/flow',
-    port: 8000,
-    name: i18n.t('shared.registry.k16'),
-    icon: 'GitBranch',
-  },
+> => ({
+  workflow: { url: '/api/core/flow', port: 8000, name: i18n.t('shared.registry.k16'), icon: 'GitBranch' },
   erp: { url: '/api/erp', port: 8010, name: 'ERP', icon: 'Building2' },
   hrm: { url: '/api/hrm', port: 8020, name: i18n.t('shared.registry.k17'), icon: 'Users' },
   pm: { url: '/api/pm', port: 8023, name: i18n.t('shared.registry.k18'), icon: 'Target' },
@@ -129,26 +124,11 @@ export const PLUGIN_REGISTRY: Record<
   ehs: { url: '/api/ehs', port: 8052, name: i18n.t('shared.registry.k27'), icon: 'Leaf' },
   rd: { url: '/api/rd', port: 8053, name: i18n.t('shared.registry.k28'), icon: 'FlaskRound' },
   bi: { url: '/api/bi', port: 8060, name: i18n.t('shared.registry.k29'), icon: 'BarChart3' },
-  portal: {
-    url: '/api/portal',
-    port: 8063,
-    name: i18n.t('shared.registry.k30'),
-    icon: 'LayoutDashboard',
-  },
-  mobile: {
-    url: '/api/mobile',
-    port: 8070,
-    name: i18n.t('shared.registry.k31'),
-    icon: 'Smartphone',
-  },
+  portal: { url: '/api/portal', port: 8063, name: i18n.t('shared.registry.k30'), icon: 'LayoutDashboard' },
+  mobile: { url: '/api/mobile', port: 8070, name: i18n.t('shared.registry.k31'), icon: 'Smartphone' },
   gis: { url: '/api/gis', port: 8071, name: i18n.t('shared.registry.k32'), icon: 'Map' },
-  integration: {
-    url: '/api/integration',
-    port: 8072,
-    name: i18n.t('shared.registry.k33'),
-    icon: 'Network',
-  },
-};
+  integration: { url: '/api/integration', port: 8072, name: i18n.t('shared.registry.k33'), icon: 'Network' },
+});
 
 const runtimeAxios = axios.create({
   timeout: PLUGIN_TIMEOUT.DEFAULT,
@@ -167,7 +147,7 @@ runtimeAxios.interceptors.request.use((config) => {
 });
 
 export const fetchPluginInfo = async (code: string): Promise<PluginRuntimeInfo | null> => {
-  const config = PLUGIN_REGISTRY[code];
+  const config = getPluginRegistry()[code];
   if (!config) return null;
 
   try {
@@ -184,7 +164,7 @@ export const fetchPluginInfo = async (code: string): Promise<PluginRuntimeInfo |
 
 export const fetchAllPluginInfo = async (): Promise<PluginRuntimeInfo[]> => {
   const results = await Promise.allSettled(
-    Object.keys(PLUGIN_REGISTRY).map((code) => fetchPluginInfo(code))
+    Object.keys(getPluginRegistry()).map((code) => fetchPluginInfo(code))
   );
 
   return results
@@ -198,7 +178,7 @@ export const fetchAllPluginInfo = async (): Promise<PluginRuntimeInfo[]> => {
 export const checkPluginHealth = async (
   code: string
 ): Promise<{ healthy: boolean; status?: string; latency?: number }> => {
-  const config = PLUGIN_REGISTRY[code];
+  const config = getPluginRegistry()[code];
   if (!config) return { healthy: false };
 
   const startTime = Date.now();
@@ -230,7 +210,7 @@ export const checkAllPluginsHealth = async (): Promise<
   Record<string, { healthy: boolean; status?: string; latency?: number }>
 > => {
   const results = await Promise.allSettled(
-    Object.keys(PLUGIN_REGISTRY).map(async (code) => {
+    Object.keys(getPluginRegistry()).map(async (code) => {
       const health = await checkPluginHealth(code);
       return { code, ...health };
     })

@@ -27,8 +27,8 @@ export const MOBILE_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const mobileModuleConfig: RouteModuleConfig = {
   code: 'mobile',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.mobile_name'),
+  nameKey: 'shared.config.mobile_name',
   icon: 'Smartphone',
   path: MOBILE_PATHS.root,
   source: 'core',

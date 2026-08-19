@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::handlers::{ai_handlers, connector_handlers, health};
+use crate::handlers::{ai_handlers, connector_handlers, dify_handlers, health};
 use crate::middleware;
 use crate::modules::{
     AnalysisApi, CodeAssistantApi, DocumentApi, EmbeddingApi, MultimodalApi, QaApi,
@@ -140,12 +140,15 @@ pub fn create_routes(
         )
         .route("/connectors/test", get(connector_handlers::test_connector))
         .route("/connectors/query", post(connector_handlers::query_data))
+        // Axum layer order: LAST added = OUTERMOST = runs FIRST on incoming request.
+        // Therefore tenant_middleware (needs Claims) must be added FIRST (innermost),
+        // auth_middleware (inserts Claims) must be added LAST (outermost).
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
+        ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
         ))
         .with_state(app_state.clone());
 
@@ -156,23 +159,29 @@ pub fn create_routes(
         .route("/analysis/entities", post(AnalysisApi::extract_entities))
         .route("/analysis/keywords", post(AnalysisApi::extract_keywords))
         .route("/analysis/history", post(AnalysisApi::history))
+        // Axum layer order: LAST added = OUTERMOST = runs FIRST on incoming request.
+        // Therefore tenant_middleware (needs Claims) must be added FIRST (innermost),
+        // auth_middleware (inserts Claims) must be added LAST (outermost).
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
+        ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
         ))
         .with_state(app_state.clone());
 
     let agent_router = Router::new()
         .merge(crate::modules::agent::create_routes())
+        // Axum layer order: LAST added = OUTERMOST = runs FIRST on incoming request.
+        // Therefore tenant_middleware (needs Claims) must be added FIRST (innermost),
+        // auth_middleware (inserts Claims) must be added LAST (outermost).
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
+        ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
         ))
         .with_state(app_state.clone());
 
@@ -195,12 +204,15 @@ pub fn create_routes(
             "/profile/update",
             post(RecommendationApi::update_user_profile),
         )
+        // Axum layer order: LAST added = OUTERMOST = runs FIRST on incoming request.
+        // Therefore tenant_middleware (needs Claims) must be added FIRST (innermost),
+        // auth_middleware (inserts Claims) must be added LAST (outermost).
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
+        ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
         ))
         .with_state(app_state.clone());
 
@@ -230,12 +242,52 @@ pub fn create_routes(
             "/multimodal/video/summary",
             post(MultimodalApi::summarize_video),
         )
+        // Axum layer order: LAST added = OUTERMOST = runs FIRST on incoming request.
+        // Therefore tenant_middleware (needs Claims) must be added FIRST (innermost),
+        // auth_middleware (inserts Claims) must be added LAST (outermost).
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
+        ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
         ))
+        .with_state(app_state.clone());
+
+    // Dify 集成 API - 代理到 Dify Service API
+    let dify_router = Router::new()
+        .route("/dify/chat", post(dify_handlers::chat))
+        .route("/dify/chat/stream", post(dify_handlers::chat_stream))
+        .route("/dify/info", get(dify_handlers::info))
+        .route("/dify/parameters", get(dify_handlers::parameters))
+        .route("/dify/meta", get(dify_handlers::meta))
+        .route(
+            "/dify/conversations",
+            get(dify_handlers::list_conversations),
+        )
+        .route("/dify/messages", get(dify_handlers::list_messages))
+        .route(
+            "/dify/conversations/{conversation_id}",
+            delete(dify_handlers::delete_conversation),
+        )
+        .route(
+            "/dify/messages/{message_id}/feedbacks",
+            post(dify_handlers::feedback),
+        )
+        .route(
+            "/dify/messages/{message_id}/stop",
+            post(dify_handlers::stop),
+        )
+        .route("/dify/health", get(dify_handlers::health))
+        // Axum layer order: LAST added = OUTERMOST = runs FIRST on incoming request.
+        // Therefore tenant_middleware (needs Claims) must be added FIRST (innermost),
+        // auth_middleware (inserts Claims) must be added LAST (outermost).
         .layer(axum::middleware::from_fn(
             middleware::tenant::tenant_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
         ))
         .with_state(app_state.clone());
 
@@ -257,6 +309,7 @@ pub fn create_routes(
         .merge(agent_router)
         .merge(recommendation_router)
         .merge(multimodal_router)
+        .merge(dify_router)
         .layer(rate_limit_layer);
 
     let app = register_routes_with_legacy_alias(

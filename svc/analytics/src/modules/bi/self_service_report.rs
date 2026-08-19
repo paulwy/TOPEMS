@@ -12,6 +12,23 @@ use utoipa::ToSchema;
 
 use crate::shared::AppState;
 
+use super::chart_service::quote_identifier;
+use super::dataset_whitelist::validate_columns;
+
+/// 多维分析默认 BI 表，与 multidimensional_analysis.rs 保持一致。
+const DEFAULT_BI_TABLE: &str = "analytics_data";
+
+/// 校验排序方向合法性（ASC/DESC）。
+fn validate_sort_order(order: &str) -> Result<String, String> {
+    match order.to_uppercase().as_str() {
+        "ASC" | "DESC" => Ok(order.to_uppercase()),
+        _ => Err(format!(
+            "Invalid sort order '{}': must be ASC or DESC",
+            order
+        )),
+    }
+}
+
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateReportRequest {
     pub name: String,
@@ -431,7 +448,7 @@ pub async fn query_report_data(
     };
 
     let page = req.page.unwrap_or(1);
-    let page_size = req.page_size.unwrap_or(50);
+    let page_size = req.page_size.unwrap_or(50).clamp(1, 10_000);
     let offset = (page - 1) * page_size;
 
     let fields = report.fields.unwrap_or(serde_json::json!([]));
@@ -460,24 +477,106 @@ pub async fn query_report_data(
         })
         .collect();
 
+    // S1.2: identifier 白名单校验（L1 层）
+    let (dim_ok, met_ok): (Vec<String>, Vec<String>) = {
+        let mut dim_q = Vec::with_capacity(dimensions.len());
+        for d in &dimensions {
+            match quote_identifier(d) {
+                Ok(q) => dim_q.push(q),
+                Err(e) => {
+                    return Json(topems_shared_core::response::error_value(
+                        500,
+                        &format!("Invalid dimension field: {}", e),
+                    ));
+                }
+            }
+        }
+        let mut met_q = Vec::with_capacity(metrics.len());
+        for m in &metrics {
+            match quote_identifier(m) {
+                Ok(q) => met_q.push(q),
+                Err(e) => {
+                    return Json(topems_shared_core::response::error_value(
+                        500,
+                        &format!("Invalid metric field: {}", e),
+                    ));
+                }
+            }
+        }
+        (dim_q, met_q)
+    };
+
+    // S1.3: 白名单表校验（L2 层）— report.fields 中所有字段必须在 bi_datasets 中已注册
+    {
+        let mut whitelist_cols: Vec<String> = dimensions.clone();
+        whitelist_cols.extend(metrics.clone());
+        let sort_by_raw = req.sort_by.clone().unwrap_or_else(|| "id".to_string());
+        if !whitelist_cols.is_empty() {
+            // sort_by 也作为 SELECT 列参与校验（若在列表中）
+            if whitelist_cols.contains(&sort_by_raw) {
+                if let Err(msg) =
+                    validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await
+                {
+                    return Json(topems_shared_core::response::error_value(500, &msg));
+                }
+            } else {
+                // sort_by 必须是已注册列或保留 id
+                let mut check = vec![sort_by_raw.clone()];
+                if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &check).await {
+                    // strict 模式下若 sort_by 未注册，报错；warn 模式放行并记录日志
+                    tracing::warn!(
+                        "query_report_data sort_by '{}' 未在白名单中：{}",
+                        sort_by_raw,
+                        msg
+                    );
+                }
+                if let Err(msg) =
+                    validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await
+                {
+                    return Json(topems_shared_core::response::error_value(500, &msg));
+                }
+            }
+        }
+    }
+
     let select_clause = if dimensions.is_empty() && metrics.is_empty() {
         "*".to_string()
     } else {
         let mut cols: Vec<String> = Vec::new();
-        cols.extend(dimensions.iter().cloned());
-        cols.extend(metrics.iter().cloned());
+        cols.extend(dim_ok.iter().cloned());
+        cols.extend(met_ok.iter().cloned());
         cols.join(", ")
     };
 
-    let sort_by = req.sort_by.unwrap_or_else(|| "id".to_string());
+    let sort_by_raw = req.sort_by.clone().unwrap_or_else(|| "id".to_string());
+    let sort_by = match quote_identifier(&sort_by_raw) {
+        Ok(q) => q,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Invalid sort column: {}", e),
+            ));
+        }
+    };
     let sort_order = req.sort_order.unwrap_or_else(|| "DESC".to_string());
+    let sort_order = match validate_sort_order(&sort_order) {
+        Ok(o) => o,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(500, &e));
+        }
+    };
 
+    // S1.1: LIMIT/OFFSET 参数化绑定，杜绝 format! 拼接用户可控数值。
     let query = format!(
-        "SELECT {} FROM analytics_data ORDER BY {} {} LIMIT {} OFFSET {}",
-        select_clause, sort_by, sort_order, page_size, offset
+        "SELECT {} FROM analytics_data ORDER BY {} {} LIMIT $1 OFFSET $2",
+        select_clause, sort_by, sort_order
     );
 
-    let data_result = sqlx::query(&query).fetch_all(&state.pool).await;
+    let data_result = sqlx::query(&query)
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(&state.pool)
+        .await;
 
     match data_result {
         Ok(rows) => {

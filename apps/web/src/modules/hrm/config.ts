@@ -36,8 +36,8 @@ export const HRM_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const hrmModuleConfig: RouteModuleConfig = {
   code: 'hrm',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.hrm_name'),
+  nameKey: 'shared.config.hrm_name',
   icon: 'Users',
   path: HRM_PATHS.root,
   source: 'core',

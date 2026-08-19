@@ -20,23 +20,25 @@ interface ErpConnection {
   last_sync_at?: string;
 }
 
-const ERP_TYPE_CONFIG: Record<string, { name: string; logo: string; color: string }> = {
-  kingdee: {
-    name: i18n.t('integration.integration_external_erp_overview_page.k3_0'),
-    logo: 'K',
-    color: 'primary.main',
-  },
-  yonyou: {
-    name: i18n.t('integration.integration_external_erp_overview_page.u8_1'),
-    logo: 'Y',
-    color: 'warning.main',
-  },
-  sap: {
-    name: 'SAP S/4',
-    logo: 'S',
-    color: 'success.dark',
-  },
-};
+function getErpTypeConfig(): Record<string, { name: string; logo: string; color: string }> {
+  return {
+    kingdee: {
+      name: i18n.t('integration.integration_external_erp_overview_page.k3_0'),
+      logo: 'K',
+      color: 'primary.main',
+    },
+    yonyou: {
+      name: i18n.t('integration.integration_external_erp_overview_page.u8_1'),
+      logo: 'Y',
+      color: 'warning.main',
+    },
+    sap: {
+      name: 'SAP S/4',
+      logo: 'S',
+      color: 'success.dark',
+    },
+  };
+}
 
 const STATUS_CONFIG: Record<
   string,
@@ -299,7 +301,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
           }}
         >
           {Object.entries(groupedByType).map(([type, conns]) => {
-            const config = ERP_TYPE_CONFIG[type] || {
+            const config = getErpTypeConfig()[type] || {
               name: type,
               logo: '?',
               color: 'text.disabled',

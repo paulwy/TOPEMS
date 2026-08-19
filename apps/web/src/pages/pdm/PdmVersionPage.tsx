@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { type EntitySchema } from '@/schema';
-import { versionSchema } from '@/schemas/pdm';
+import { getVersionSchema } from '@/schemas/pdm';
 import { documentApi, pdmApi, type DocumentVersion, type Document } from '@/api/pdm';
 
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
@@ -90,6 +90,7 @@ export default function PdmVersionPage() {
       { label: t('pdm.pdm_version_page.k3'), value: 'all' },
       ...documents.map((d) => ({ value: d.id, label: d.name })),
     ];
+    const versionSchema = getVersionSchema();
 
     return {
       ...versionSchema,

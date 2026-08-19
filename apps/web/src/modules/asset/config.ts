@@ -14,8 +14,8 @@ export const ASSET_PATHS = {
 
 export const assetModuleConfig: RouteModuleConfig = {
   code: 'asset',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.asset_name'),
+  nameKey: 'shared.config.asset_name',
   icon: 'Package',
   path: ASSET_PATHS.root,
   source: 'plugin',

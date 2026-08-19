@@ -1705,6 +1705,12 @@
   "microfrontend.observability_panel.k14": "Slow Load Module Warning",
   "microfrontend.observability_panel.2_15": "AutoRefresh · 2Second",
   "microfrontend.observability_panel.k16": "Refresh",
+  "microfrontend.observability_panel.k17": " slow modules",
+  "microfrontend.observability_panel.k18": " errors",
+  "microfrontend.observability_panel.k19": "Export",
+  "microfrontend.observability_panel.k20": "Performance",
+  "microfrontend.observability_panel.k21": " visits",
+  "microfrontend.observability_panel.k22": " modules exceed",
   "microfrontend.observability_dashboard.top5_0": "LoadTimeRanking (Top 5)",
   "microfrontend.observability_dashboard.top5_1": "ModuleAccessRanking (Top 5)",
   "microfrontend.registry_panel.id_12": "ModuleID",
@@ -2264,7 +2270,13 @@
       "k14": "Slow Load Module Warning",
       "2_15": "AutoRefresh · 2Second",
       "k16": "Refresh",
-      "sactionount_0": "{s.actionCount} Operations"
+      "sactionount_0": "{s.actionCount} Operations",
+      "k17": " slow modules",
+      "k18": " errors",
+      "k19": "Export",
+      "k20": "Performance",
+      "k21": " visits",
+      "k22": " modules exceed"
     },
     "remote_loader": {
       "k0": "Stable Version",
@@ -3499,7 +3511,9 @@
       "k4": "[CrossFrameworkBridge] UninstallComponent",
       "k5": "Failed:",
       "k1": "SimulateComponent",
-      "ngular_0": "[Angular SimulateComponent]"
+      "ngular_0": "[Angular SimulateComponent]",
+      "lili_1": "Lili 1",
+      "k2": "Cross-framework"
     },
     "module-lifecycle": {
       "lifecycle_0": "[Lifecycle] Module",
@@ -3598,5 +3612,7 @@
     "v0v1_4": "NeedVersion {{v0}}, Module{{v1}}",
     "k5": "Module",
     "v0_6": "{{v0}} Version"
-  }
+  },
+  "microfrontend.cross-framework.lili_1": "Lili 1",
+  "microfrontend.cross-framework.k2": "Cross-framework"
 }

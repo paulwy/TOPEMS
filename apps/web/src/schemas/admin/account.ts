@@ -32,14 +32,14 @@ async function loadParentAccounts(): Promise<{ value: string; label: string }[]>
   }
 }
 
-const ACCOUNT_TYPE_LABELS: Record<string, string> = {
+const getAccountTypeLabels = (): Record<string, string> => ({
   asset: i18n.t('admin.account.k0'),
   liability: i18n.t('admin.account.k1'),
   equity: i18n.t('admin.account.k2'),
   revenue: i18n.t('admin.account.k3'),
   expense: i18n.t('admin.account.k4'),
   cost: i18n.t('admin.account.k5'),
-};
+});
 
 const ACCOUNT_TYPE_COLORS: Record<
   string,
@@ -53,10 +53,10 @@ const ACCOUNT_TYPE_COLORS: Record<
   cost: 'default',
 };
 
-const BALANCE_DIRECTION_LABELS: Record<string, string> = {
+const getBalanceDirectionLabels = (): Record<string, string> => ({
   debit: i18n.t('admin.account.k6'),
   credit: i18n.t('admin.account.k7'),
-};
+});
 
 const BALANCE_DIRECTION_COLORS: Record<string, 'primary' | 'error'> = {
   debit: 'primary',
@@ -100,7 +100,7 @@ const renderBadge = (
   );
 };
 
-export const accountSchema: EntitySchema = {
+export const getAccountSchema = (): EntitySchema => ({
   entity: 'admin_account',
   title: i18n.t('schema:admin.account.meta.title'),
   description: i18n.t('schema:admin.account.meta.description'),
@@ -161,7 +161,7 @@ export const accountSchema: EntitySchema = {
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const accountType = String(row.type || '');
-        const label = ACCOUNT_TYPE_LABELS[accountType] || accountType;
+        const label = getAccountTypeLabels()[accountType] || accountType;
         const color = ACCOUNT_TYPE_COLORS[accountType] || 'default';
         return renderBadge(label, color);
       },
@@ -185,7 +185,7 @@ export const accountSchema: EntitySchema = {
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const direction = String(row.balance_direction || '');
-        const label = BALANCE_DIRECTION_LABELS[direction] || direction;
+        const label = getBalanceDirectionLabels()[direction] || direction;
         const color = BALANCE_DIRECTION_COLORS[direction] || 'primary';
         return renderBadge(label, color);
       },
@@ -346,4 +346,4 @@ export const accountSchema: EntitySchema = {
       queryKey: QUERY_KEYS.AD_HOC.ADMIN_ACCOUNTS_PARENTS_BASE,
     },
   ],
-};
+});

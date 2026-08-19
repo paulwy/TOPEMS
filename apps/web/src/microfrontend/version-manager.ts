@@ -219,6 +219,17 @@ class VersionManager {
   private async checkSingleModule(config: RemoteModuleConfig): Promise<VersionCheckResult> {
     const moduleId = config.name;
 
+    // static 部署模式下 entry 为空字符串，跳过版本检查避免无效请求
+    // （fetch('') 会请求当前页面 URL，导致 net::ERR_ABORTED）
+    if (!config.entry) {
+      return {
+        moduleId,
+        hasUpdate: false,
+        currentVersion: this.getModuleVersion(moduleId),
+        remoteVersion: this.getModuleVersion(moduleId),
+      };
+    }
+
     // 防重入
     if (this.checking.has(moduleId)) {
       return {

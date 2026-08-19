@@ -7,9 +7,7 @@ import PageLoader from './PageLoader';
 import NotFoundPage from '@/pages/shared/NotFoundPage';
 import { ModRootRedirect } from '@/lib/moduleRedirect';
 import { MODULE_ROOT_TO_DASHBOARD, resolveModuleDashboard } from '@/lib/modulePathMap';
-// V37.0 Phase 7: 记录用户导航历史 + 触发智能预加载
 import { recordNavigation, prefetchIntelligent } from '@/lib/pwa';
-// i18n 按需加载：按路由路径推断业务 NS 并预热
 import { ensureNamespacesLoaded, resolveNamespacesForPath } from '@/i18n';
 
 const DynamicRoutes: React.FC = () => {
@@ -31,60 +29,63 @@ const DynamicRoutes: React.FC = () => {
 
   useEffect(() => {
     const moduleCode = detectModuleFromPath(location.pathname);
+    const namespaces = resolveNamespacesForPath(location.pathname);
 
-    if (prevModuleRef.current === moduleCode && routeCacheRef.current.has(moduleCode || '')) {
-      setRoutes(routeCacheRef.current.get(moduleCode || '') || []);
-      setLoading(false);
-      return;
-    }
-
-    const loadRoutes = async () => {
+    const loadAll = async () => {
       setLoading(true);
       try {
+        // Phase 1: Ensure i18n namespaces are loaded BEFORE rendering
+        // This prevents pages from showing raw i18n keys
+        const phase1Namespaces = new Set(namespaces);
         if (moduleCode) {
-          const cachedRoutes = routeCacheRef.current.get(moduleCode);
-          if (cachedRoutes) {
+          phase1Namespaces.add(moduleCode);
+        }
+        if (phase1Namespaces.size > 0) {
+          await ensureNamespacesLoaded(Array.from(phase1Namespaces));
+        }
+
+        // Phase 2: Load or restore routes
+        if (moduleCode) {
+          if (prevModuleRef.current === moduleCode && routeCacheRef.current.has(moduleCode)) {
             logger.info(`[Dynamic Routes] Using cached routes for: ${moduleCode}`);
-            setRoutes(cachedRoutes);
+            setRoutes(routeCacheRef.current.get(moduleCode) || []);
             prevModuleRef.current = moduleCode;
-            setLoading(false);
-            return;
-          }
+          } else {
+            logger.info(`[Dynamic Routes] Loading module: ${moduleCode}`);
+            const moduleConfig = await loadModuleConfig(moduleCode);
+            const flatRoutes = moduleConfig.routes.flatMap((route) => {
+              const flatten = (r: typeof route): (typeof route)[] => [
+                r,
+                ...(r.children || []).flatMap(flatten),
+              ];
+              return flatten(route);
+            });
+            const mappedRoutes: RouteConfig[] = flatRoutes.map((route) => ({
+              path: route.path,
+              element: route.element,
+              requiredPermissions: route.requiredPermissions,
+              module: route.module,
+              action: route.action,
+            }));
 
-          logger.info(`[Dynamic Routes] Loading module: ${moduleCode}`);
-          const moduleConfig = await loadModuleConfig(moduleCode);
-          const flatRoutes = moduleConfig.routes.flatMap((route) => {
-            const flatten = (r: typeof route): (typeof route)[] => [
-              r,
-              ...(r.children || []).flatMap(flatten),
-            ];
-            return flatten(route);
-          });
-          const mappedRoutes: RouteConfig[] = flatRoutes.map((route) => ({
-            path: route.path,
-            element: route.element,
-            requiredPermissions: route.requiredPermissions,
-            module: route.module,
-            action: route.action,
-          }));
-
-          const moduleRootPath = `/${moduleCode}`;
-          if (MODULE_ROOT_TO_DASHBOARD[moduleRootPath]) {
-            const dashboardPath = resolveModuleDashboard(moduleRootPath);
-            const rootPathAlreadyExists = mappedRoutes.some((r) => r.path === moduleRootPath);
-            if (!rootPathAlreadyExists) {
-              mappedRoutes.unshift({
-                path: moduleRootPath,
-                element: <Navigate to={dashboardPath} replace />,
-                module: moduleCode,
-                action: 'read',
-              });
+            const moduleRootPath = `/${moduleCode}`;
+            if (MODULE_ROOT_TO_DASHBOARD[moduleRootPath]) {
+              const dashboardPath = resolveModuleDashboard(moduleRootPath);
+              const rootPathAlreadyExists = mappedRoutes.some((r) => r.path === moduleRootPath);
+              if (!rootPathAlreadyExists) {
+                mappedRoutes.unshift({
+                  path: moduleRootPath,
+                  element: <Navigate to={dashboardPath} replace />,
+                  module: moduleCode,
+                  action: 'read',
+                });
+              }
             }
-          }
 
-          routeCacheRef.current.set(moduleCode, mappedRoutes);
-          setRoutes(mappedRoutes);
-          prevModuleRef.current = moduleCode;
+            routeCacheRef.current.set(moduleCode, mappedRoutes);
+            setRoutes(mappedRoutes);
+            prevModuleRef.current = moduleCode;
+          }
         }
       } catch (error) {
         logger.error('[Dynamic Routes] Failed to load routes', error);
@@ -93,27 +94,14 @@ const DynamicRoutes: React.FC = () => {
       }
     };
 
-    loadRoutes();
+    loadAll();
   }, [location.pathname]);
 
   // V37.0 Phase 7: 记录用户导航历史 + 触发智能预加载
   useEffect(() => {
     recordNavigation(location.pathname);
-    // 延迟触发智能预加载，避免与当前路由加载竞争
     const timer = setTimeout(() => prefetchIntelligent(), 2000);
     return () => clearTimeout(timer);
-  }, [location.pathname]);
-
-  // ✨ i18n 按命名空间按需加载（路径推断，缓存路由与静态路由兜底入口）
-  // - 当命中 routeCache 时 loadModuleConfig 不会运行，需要在这里补齐 NS 预热
-  // - 非模块路由（/dashboard, /settings 等）也能正确得到公共框架 NS
-  useEffect(() => {
-    const namespaces = resolveNamespacesForPath(location.pathname);
-    if (namespaces.length === 0) return;
-    // fire-and-forget，不阻塞 UI；内部已做幂等 + 单飞
-    ensureNamespacesLoaded(namespaces).catch((e) => {
-      logger.warn('[i18n] route-based namespace preload skipped', e);
-    });
   }, [location.pathname]);
 
   if (loading) {
@@ -124,6 +112,12 @@ const DynamicRoutes: React.FC = () => {
     <Routes>
       {routes.map((route) => {
         const { element } = route;
+        // RouteConfig.element 允许是 ReactElement（如 <Navigate />）或组件类型（LazyExoticComponent）。
+        // 直接 cast 成 ComponentType 并以 <Element /> 渲染会在前者情况下触发
+        // "Element type is invalid ... got: <Navigate />"。这里按类型分流：
+        // - ReactElement：直接作为子节点渲染
+        // - ComponentType：以 <Element /> 形式渲染
+        const isReactElement = React.isValidElement(element);
         const Element = element as React.ComponentType;
         return (
           <Route
@@ -132,7 +126,7 @@ const DynamicRoutes: React.FC = () => {
             element={
               <ProtectedRouteWrapper route={route}>
                 <React.Suspense fallback={<PageLoader />}>
-                  <Element />
+                  {isReactElement ? element : <Element />}
                 </React.Suspense>
               </ProtectedRouteWrapper>
             }

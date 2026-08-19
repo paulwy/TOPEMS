@@ -22,8 +22,8 @@ export const AUTOMATION_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 export const automationModuleConfig: RouteModuleConfig = {
   code: 'automation',
-  name: i18n.t('shared.config.k0'),
-  nameKey: 'shared.config.k0',
+  name: i18n.t('shared.config.automation_name'),
+  nameKey: 'shared.config.automation_name',
   icon: 'Zap',
   path: AUTOMATION_PATHS.root,
   source: 'core',

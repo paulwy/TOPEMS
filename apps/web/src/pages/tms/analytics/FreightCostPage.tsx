@@ -32,14 +32,16 @@ const COST_COLORS: Record<string, string> = {
   insurance: designTokens.colors.error.main,
   other: 'colors.grey.500',
 };
-const COST_LABELS: Record<string, string> = {
-  fuel: i18n.t('tms.freight_cost_page.k0'),
-  toll: i18n.t('tms.freight_cost_page.k1'),
-  labor: i18n.t('tms.freight_cost_page.k2'),
-  depreciation: i18n.t('tms.freight_cost_page.k3'),
-  insurance: i18n.t('tms.freight_cost_page.k4'),
-  other: i18n.t('tms.freight_cost_page.k5'),
-};
+function getCostLabels(): Record<string, string> {
+  return {
+    fuel: i18n.t('tms.freight_cost_page.k0'),
+    toll: i18n.t('tms.freight_cost_page.k1'),
+    labor: i18n.t('tms.freight_cost_page.k2'),
+    depreciation: i18n.t('tms.freight_cost_page.k3'),
+    insurance: i18n.t('tms.freight_cost_page.k4'),
+    other: i18n.t('tms.freight_cost_page.k5'),
+  };
+}
 const MOCK_COST_DATA = [
   { type: 'fuel', amount: 185000 },
   { type: 'toll', amount: 92000 },
@@ -89,7 +91,7 @@ export default function FreightCostPage() {
     () =>
       MOCK_COST_DATA.map((c) => ({
         ...c,
-        label: COST_LABELS[c.type] ?? c.type,
+        label: getCostLabels()[c.type] ?? c.type,
       })),
     []
   );

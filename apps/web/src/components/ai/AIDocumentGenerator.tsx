@@ -15,7 +15,7 @@ import { Sparkles, RefreshCw, Copy, Check } from 'lucide-react';
 
 import { AIGenerateModal } from './AIGenerateModal';
 import { useAIHelper } from '../../hooks/useAIHelper';
-import { AI_TEMPLATES, getAITemplatesList } from '../../config/ai-templates';
+import { getAITemplates, getAITemplatesList } from '../../config/ai-templates';
 import type { AITemplate } from '@/types/ai';
 
 export interface AIDocumentGeneratorProps {
@@ -41,9 +41,9 @@ export function AIDocumentGenerator({
     featureType: 'document',
   });
 
-  const templates = getAITemplatesList;
+  const templates = getAITemplatesList();
 
-  const selectedTemplate = selectedTemplateId ? AI_TEMPLATES[selectedTemplateId] : undefined;
+  const selectedTemplate = selectedTemplateId ? getAITemplates()[selectedTemplateId] : undefined;
 
   useEffect(() => {
     if (isOpen) {

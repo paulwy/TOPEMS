@@ -58,7 +58,7 @@ const PmProjectTaskList: React.FC<PmProjectTaskListProps> = ({ phases, formatDat
             <TableHead>
               <TableRow>
                 <TableCell sx={{ width: 200 }}>{i18n.t('pm.project_detail.phase_name')}</TableCell>
-                <TableCell>{i18n.t('pm.project_detail.status')}</TableCell>
+                <TableCell>{i18n.t('pm.project_detail.status_label')}</TableCell>
                 <TableCell sx={{ width: 180 }}>{i18n.t('pm.project_detail.progress')}</TableCell>
                 <TableCell sx={{ width: 150 }}>{i18n.t('pm.project_detail.time')}</TableCell>
                 <TableCell sx={{ width: 120 }}>{i18n.t('pm.project_detail.action')}</TableCell>

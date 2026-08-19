@@ -35,6 +35,10 @@ const IS_STATIC_MODE = VITEDeploymentMode() !== 'module-federation';
 const renderRoutes = (routes: RouteConfig[]) => {
   return routes.map((route) => {
     const { element } = route;
+    // RouteConfig.element 允许是 ReactElement（如 <Navigate />）或组件类型（LazyExoticComponent）。
+    // 直接 cast 成 ComponentType 并以 <Element /> 渲染会在前者情况下触发
+    // "Element type is invalid ... got: <Navigate />"。这里按类型分流。
+    const isReactElement = React.isValidElement(element);
     const Element = element as React.ComponentType;
     return (
       <Route
@@ -44,7 +48,7 @@ const renderRoutes = (routes: RouteConfig[]) => {
           <ProtectedRouteWrapper route={route}>
             <PageErrorBoundary>
               <Suspense fallback={<PageLoader />}>
-                <Element />
+                {isReactElement ? element : <Element />}
               </Suspense>
             </PageErrorBoundary>
           </ProtectedRouteWrapper>
@@ -87,7 +91,9 @@ const AppRoutes: React.FC = () => {
         />
 
         {authRoutes.map((route) => {
-          const Element = route.element as React.ComponentType;
+          const { element } = route;
+          const isReactElement = React.isValidElement(element);
+          const Element = element as React.ComponentType;
           return (
             <Route
               key={route.path}
@@ -96,7 +102,7 @@ const AppRoutes: React.FC = () => {
                 <GuestRoute>
                   <PageErrorBoundary>
                     <Suspense fallback={<PageLoader />}>
-                      <Element />
+                      {isReactElement ? element : <Element />}
                     </Suspense>
                   </PageErrorBoundary>
                 </GuestRoute>

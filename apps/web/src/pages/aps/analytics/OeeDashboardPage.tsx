@@ -99,7 +99,7 @@ export default function OeeDashboardPage() {
     <div className='space-y-4 p-4'>
       <div className='flex items-center justify-between'>
         <h1 className='text-2xl font-bold'>{i18n.t('aps:oee_dashboard_page.oee_2')}</h1>
-        <span className='text-sm text-gray-500'>Overall Equipment Effectiveness</span>
+        <span className='text-sm text-gray-500'>{i18n.t('aps:oee_dashboard_page.oee_3')}</span>
       </div>
       <p className='text-sm text-gray-600'>{i18n.t('pages.oee_dashboard_page.k0')}</p>
       <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>

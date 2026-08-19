@@ -253,7 +253,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     if (React.isValidElement(icon)) {
       return React.cloneElement(icon as React.ReactElement<{ size?: number; color?: string }>, {
         size: 24,
-        color: 'common.white',
+        color: 'white',
       });
     }
     const IconComponent = icon as LucideIcon;
