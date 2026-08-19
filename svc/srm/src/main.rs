@@ -303,7 +303,7 @@ async fn main() -> Result<()> {
         // 预应用 tenant_middleware（build_application 会叠加 auth + rls + rate_limit）
         .layer(axum::middleware::from_fn_with_state(
             ctx.db.clone(),
-            middleware::tenant::tenant_middleware,
+            topems_shared_auth::tenant_middleware(),
         ));
 
     // 标准健康检查路由 + 插件路由

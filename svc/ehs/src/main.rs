@@ -286,8 +286,9 @@ async fn main() -> anyhow::Result<()> {
     // Protected routes（先 merge 业务路由，然后 tenant_middleware → build_application 再加 auth/rls/rate_limit）
     let protected_routes = Router::new()
         .merge(modules::create_api_routes())
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
+        .layer(axum::middleware::from_fn_with_state(
+            api_state.pool.clone(),
+            topems_shared_auth::tenant_middleware(),
         ))
         .with_state(api_state.clone());
 

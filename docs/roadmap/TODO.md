@@ -7106,3 +7106,161 @@ Axum Layer Gate M 基线仍为：R1=0 R2=0 R3=0 STRONG_PASS ✅
 - [ ] **测试基线从 --no-run → 完整运行**：`cargo test --workspace` 真实执行，尤其 unified-core 两个测试文件的 auth_request 已修 body 参数，可实际断言 HTTP 响应
 - [ ] **CI 收紧切换：exit 0 → exit $FAILED**：V246 已在 ci.yml 1189 行加锚点注释；当 frontend-typecheck job 连续 N=3 次 CI 绿后，删除 `exit 0` 改为 `exit $FAILED` 阻断回归
 - [ ] **Dify 端到端（V245/V246 保留项）**：LLM Provider 配置 + 前端对话页（chat_stream SSE）
+
+## 🎯 V247 — 架构冗余实修 P0-R01 首批：5 svc tenant middleware 收归 + R12 utils 合并 + R2 阈值收紧 + cargo-test 基线（并行推进 · ✅ 完成）
+
+> 日期：2026-08-19 | 代码改动 21 files（Rust 源 6 + Rust 删 5 + Rust mod 5 + CI YAML 1 + TS 1 + 脚本 1 + 文档 1）| 净减 828 行 | 验收：cargo check --workspace 0 errors/0 warnings · Perm R7 17→12 · Axum R1/R2/R3=0 STRONG_PASS · crm warnings=0 · packages/* 6 包 tsc 0 errors · YAML OK
+
+### A. P0-R01 首批 5 svc middleware/tenant.rs 收归 shared-auth 工厂
+
+**背景**：V246 架构冗余报告 R01 指出 32 svc 有 17 份本地 middleware/tenant.rs 副本，与 shared-auth 工厂函数形成「双轨并存」反模式（R7=17 命中）。本次为首批 5 个服务迁移。
+
+**选服务策略**：对 16 个候选服务（排除已迁移的 gis）执行 `grep -rn "use crate::middleware::tenant::"` 扫描 handler 级依赖，选出 **0 handler 依赖** 的 5 个：ehs, srm, pdm, integration, ai。排除 aps（5 模块依赖 get_tenant_id）、tms（5 模块）、crm（11 模块）、wms（1 模块）、lims（3 模块依赖 TenantContext）。
+
+**变更（11 files：改 6 + 删 5）**：
+
+| 服务 | 调用点变更 | tenant.rs | mod.rs |
+|------|-----------|-----------|--------|
+| **srm** | `from_fn_with_state(ctx.db.clone(), middleware::tenant::tenant_middleware)` → `from_fn_with_state(ctx.db.clone(), topems_shared_auth::tenant_middleware())` | 删除 | 清空 |
+| **ehs** | `from_fn(...)` → `from_fn_with_state(api_state.pool.clone(), topems_shared_auth::tenant_middleware())` | 删除 | 清空 |
+| **pdm** | 同 ehs 模式 | 删除 | 清空 |
+| **integration** | `from_fn(tenant_middleware)` → `from_fn_with_state(state.pool.clone(), topems_shared_auth::tenant_middleware())`，删除 `use crate::middleware` 导入 | 删除 | 清空 |
+| **ai** | `create_routes` 新增 `pool: PgPool` 参数；6 处 `from_fn(...)` → `from_fn_with_state(pool.clone(), ...)`；main.rs 在 db 被 move 前保存 `let pool = db.pool().clone()` | 删除 | 清空 |
+
+**关键发现**：
+1. ai 的 AppState 没有 pool 字段（pool 只通过 async 方法访问），需给 create_routes 新增 pool 参数，在 main.rs 中 db 被 VectorService::new(db) move 之前保存 pool 引用
+2. ehs/pdm 本地 tenant_middleware 原用 from_fn（无 PgPool），不设 RLS context；迁移到 shared-auth 版本后**增加了 RLS 隔离（安全提升）**
+
+- [ai/main.rs](file:///Users/air/TOPEMS/svc/ai/src/main.rs) — 保存 pool 引用 + 传参 create_routes
+- [ai/routes.rs](file:///Users/air/TOPEMS/svc/ai/src/routes.rs) — 新增 pool 参数 + 6 处 from_fn_with_state 替换
+- [ehs/main.rs](file:///Users/air/TOPEMS/svc/ehs/src/main.rs) — from_fn → from_fn_with_state(pool, shared_auth factory)
+- [pdm/main.rs](file:///Users/air/TOPEMS/svc/pdm/src/main.rs) — 同 ehs 模式
+- [srm/main.rs](file:///Users/air/TOPEMS/svc/srm/src/main.rs) — 替换 local_fn → topems_shared_auth::tenant_middleware()
+- [integration/routes.rs](file:///Users/air/TOPEMS/svc/integration/src/routes.rs) — 替换 + 删 use 导入
+- 删除 5 个 `middleware/tenant.rs`（ai · ehs · pdm · srm · integration）+ 清空 5 个 `middleware/mod.rs`
+
+**验收**：
+```
+cargo check --workspace → Exit 0 · 0 errors · 0 warnings ✅
+Perm-Gate R7: 17 → 12（首批减少 5 ✅）
+R7 hits (12): aps, crm, gis, hrm, lims, mobile, pm, portal, qms, rd, tms, wms
+```
+
+### B. Web tsc 内存修复 + R12 utils.ts re-export + packages/* tsc 基线
+
+**背景**：V246 改了 tsconfig.base.json paths 后需验证 packages/* 基线；架构报告 R12 指出 apps/web/src/lib/utils.ts 与 packages/shared-utils 双轨。
+
+**子项① Web tsc 内存修复**：
+- V246 报告中"web tsc 0 errors"结论需**修正**：实际 SIGABRT 是 OOM（V8 堆不足），4096MB 仍 OOM，需 **8192MB** 才能跑完
+- 8192MB 跑完结果：**288 个 error TS**（非 0），V246 的"0 errors"是 OOM 掩盖的假象
+- 288 errors 主要类型：LucideIcon 类型不匹配（最多）· SuspenseProps · overload 不匹配 · Cascader TS2590 union type too complex
+- 按安全红线 5（>30 errors 一律写后续扩展）不本次修复，完整日志在 /tmp/web_tsc.log
+- 建议：CI 中 web tsc 步骤加 `NODE_OPTIONS=--max-old-space-size=8192` 环境变量
+
+**子项② R12 utils.ts re-export**：
+- [apps/web/src/lib/utils.ts](file:///Users/air/TOPEMS/apps/web/src/lib/utils.ts) 改为 re-export 模式：
+  ```ts
+  export * from '@topems/shared-utils';
+  // web 专属（非跨端）util 保留
+  export function cn(...inputs: ClassValue[]) { return clsx(inputs); }
+  ```
+- 决策依据：shared-utils 不含 cn/clsx（className 是 DOM 专属概念），cn 属 web 专属保留；re-export 不影响现有 `import { cn } from '@/lib/utils'` 路径
+
+**子项③ Packages/* tsc 基线**：
+- 6 packages 全部 **0 errors**（V246 tsconfig.base.json paths 改动未引入回归 ✅）
+
+**验收**：
+```
+packages/* tsc：6 包全部 Exit 0 · 0 errors ✅
+utils.ts: export * from '@topems/shared-utils' + 保留 web 专属 cn() ✅
+web tsc: 288 errors（8192MB 才能跑完，V246 OOM 假象修正）→ 归入后续扩展
+```
+
+### C. Axum R2 阈值 10→3 收紧 + R7 输出格式优化
+
+**子项① R2 阈值收紧**：
+- [.github/workflows/ci.yml:1049-1052](file:///Users/air/TOPEMS/.github/workflows/ci.yml#L1049) axum-layer-gate job：`R2:10_buffered` → `R2:3_buffered`（步骤名 + 阈值参数同步改）
+- 排查 scripts/ci/check-axum-layer-order.cjs 默认阈值为 `R2: Infinity`（无 R2:10 硬编码，阈值完全由 CLI --thresholds 传入）→ 不需改
+- .husky/pre-commit 未传 --thresholds（使用默认 Infinity）→ 不需改
+- Axum Gate 实跑：R1=0 / R2=0 / R3=0 STRONG_PASS ✅
+
+**子项② R7 输出格式优化**：
+- [check-perm-gate.cjs](file:///Users/air/TOPEMS/scripts/ci/check-perm-gate.cjs) `scanR7MiddlewareDuplicate()` 输出段改：17 条明细行 → 1 条紧凑汇总行
+  ```
+  - R7 hits (12): ai, aps, crm, ehs, gis, ... → (V247 后) R7 hits (12): aps, crm, gis, hrm, ...
+  ```
+- R1~R6 行数仍 6（无副作用 ✅）
+
+**验收**：
+```
+grep "R2:10" ci.yml → 0（全部改为 R2:3）
+grep "R2:3" ci.yml → 2 行（步骤名 + 阈值）
+Axum STRONG_PASS 保持 ✅
+R7 紧凑格式 1 行 ✅
+```
+
+### D. crm 3 unused import 清理 + CI cargo-test 基线 + V247 文档占位
+
+**子项① crm unused import 清理**：
+- [svc/crm/src/models/mod.rs](file:///Users/air/TOPEMS/svc/crm/src/models/mod.rs) — 3 条 unused `pub use` 收敛：
+  - `pub use billing::{...}` 移除 BillingItem + CreateBillingRequest
+  - `pub use customer_scoring::{...}` 整条删除（4 个全部 unused）
+  - `pub use sales_forecast::{...}` 整条删除（3 个全部 unused）
+  - 模块声明 `pub mod customer_scoring` + `pub mod sales_forecast` 保留
+- `cargo check -p topems-crm | grep -c warning` → **0** ✅
+
+**子项② CI cargo-test job 新增**：
+- [ci.yml:317-340](file:///Users/air/TOPEMS/.github/workflows/ci.yml#L317) 新增 `cargo-test` job（non-blocking, continue-on-error: true）
+- 步骤：checkout + rust-toolchain + rust-cache + `cargo test --workspace` + Test summary
+- quality-gate needs 不含 cargo-test（不影响合并门禁）
+- `ruby YAML.load_file` → YAML OK ✅
+
+**子项③ V247 文档骨架**：本 Step 5 正在填充
+
+### 变更文件清单（共 21 files）
+
+**Rust 源文件（6）**：
+- [ai/main.rs](file:///Users/air/TOPEMS/svc/ai/src/main.rs) · [ai/routes.rs](file:///Users/air/TOPEMS/svc/ai/src/routes.rs) · [ehs/main.rs](file:///Users/air/TOPEMS/svc/ehs/src/main.rs) · [pdm/main.rs](file:///Users/air/TOPEMS/svc/pdm/src/main.rs) · [srm/main.rs](file:///Users/air/TOPEMS/svc/srm/src/main.rs) · [integration/routes.rs](file:///Users/air/TOPEMS/svc/integration/src/routes.rs)
+
+**Rust 删除（5）**：
+- svc/{ai,ehs,pdm,srm,integration}/src/middleware/tenant.rs
+
+**Rust mod.rs 清空（5）**：
+- svc/{ai,ehs,pdm,srm,integration}/src/middleware/mod.rs
+
+**CI/脚本（2）**：
+- [.github/workflows/ci.yml](file:///Users/air/TOPEMS/.github/workflows/ci.yml) — R2 阈值 10→3 + cargo-test job 新增
+- [scripts/ci/check-perm-gate.cjs](file:///Users/air/TOPEMS/scripts/ci/check-perm-gate.cjs) — R7 紧凑输出
+
+**前端（1）**：
+- [apps/web/src/lib/utils.ts](file:///Users/air/TOPEMS/apps/web/src/lib/utils.ts) — re-export @topems/shared-utils
+
+**Rust 修复（1）**：
+- [svc/crm/src/models/mod.rs](file:///Users/air/TOPEMS/svc/crm/src/models/mod.rs) — 3 unused import 清理
+
+**文档（1）**：
+- [docs/roadmap/TODO.md](file:///Users/air/TOPEMS/docs/roadmap/TODO.md) — 本 V247 章节
+
+### 最终验收矩阵
+- [x] **A-cargo-0：** `cargo check --workspace` → Exit 0 · 0 errors · 0 warnings ✅
+- [x] **A-R7-reduce：** Perm-Gate R7: 17→12（首批 5 服务收归 ✅）
+- [x] **A-tenant-deleted：** 5 个 middleware/tenant.rs 已删除 ✅
+- [x] **B-packages-tsc：** 6 packages tsc --noEmit 全部 0 errors ✅
+- [x] **B-utils-reexport：** apps/web/src/lib/utils.ts `export * from '@topems/shared-utils'` ✅
+- [x] **B-web-tsc-discovery：** web tsc 需 8192MB 才能跑完（V246 OOM 假象修正），288 errors 归入后续扩展
+- [x] **C-R2-threshold：** `grep "R2:10" ci.yml` → 0；`grep "R2:3"` → 2 行 ✅
+- [x] **C-R7-format：** R7 紧凑汇总 1 行 `R7 hits (12): ...` ✅
+- [x] **C-Axum-STRONG_PASS：** R1=0 R2=0 R3=0 保持 ✅
+- [x] **D-crm-warnings：** `cargo check -p topems-crm | grep -c warning` → 0 ✅
+- [x] **D-cargo-test-job：** ci.yml 含 cargo-test job + `continue-on-error: true` + YAML OK ✅
+- [x] **D-V247-章节：** grep `^## 🎯 V24` tail 3 → V245→V246→V247 递增 ✅
+- [x] **净代码删减：** `git diff --stat HEAD` → 21 files changed, 100 insertions(+), 928 deletions(-)（净减 828 行 ✅）
+
+### V247 后续扩展（留给 V248+）
+- [ ] **P0-R01 第二批：剩余 12 svc tenant middleware 收归**：含 aps（需先迁移 get_tenant_id 到 shared-auth 或 shared-core）、tms（5 模块依赖）、crm（11 模块依赖）、wms（1 模块）、lims（3 模块依赖 TenantContext）——需先做辅助函数迁移再做 middleware 收归
+- [ ] **R2 阈值 3→0**：守 2 个版本（V247/V248）无回归后切 R2:0
+- [ ] **Web tsc 288 errors 修复**：主要类型 LucideIcon sx→Box 兼容 / Cascader union type / SuspenseProps / ReactNode 18-19 冲突；建议 CI 加 `NODE_OPTIONS=--max-old-space-size=8192` 环境变量避免 OOM；分 3 类简单错误 → 复杂错误写后续扩展
+- [ ] **cargo-test 从 non-blocking → blocking**：连续 N=3 次 CI 绿后删 `continue-on-error: true`
+- [ ] **Tauri 高价值 5 件套**（连续 4 版列入，V248 优先起手 A 轨做 keystore）
+- [ ] **Perm Gate Scanner AST 长期解**（连续 3 版列入）
+- [ ] **Dify 端到端**（连续 3 版列入）

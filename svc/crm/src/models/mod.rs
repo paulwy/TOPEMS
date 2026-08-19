@@ -11,18 +11,11 @@ pub mod sales_forecast;
 pub mod tag;
 
 pub use audit_log::AuditLog;
-pub use billing::{
-    BillingItem, BillingQueryParams, BillingRecord, CreateBillingRequest, UpdateBillingRequest,
-};
+pub use billing::{BillingQueryParams, BillingRecord, UpdateBillingRequest};
 pub use contact::{Contact, CreateContactRequest, UpdateContactRequest};
 pub use customer::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
-pub use customer_scoring::{
-    CreateCustomerScoreRequest, CustomerScore, CustomerScoringQueryParams,
-    UpdateCustomerScoreRequest,
-};
 pub use interaction::{CreateInteractionRequest, Interaction, UpdateInteractionRequest};
 pub use opportunity::{CreateOpportunityRequest, Opportunity, UpdateOpportunityRequest};
-pub use sales_forecast::{CreateSalesForecastRequest, SalesForecast, SalesForecastQueryParams};
 pub use tag::{AddTagToCustomerRequest, CreateTagRequest, CustomerWithTags, Tag, UpdateTagRequest};
 
 // V19.5: 启用 aftersales 模块编译（此前缺失模型导致未编译）
