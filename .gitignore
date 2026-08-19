@@ -254,3 +254,6 @@ scripts/tmp-output/
 apps/web/public/__p2_artifacts/
 _tmp_*
 releases/archives/
+
+# 历史归档日志（保留本地，不入库）
+logs/_stale-*
