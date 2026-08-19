@@ -70,8 +70,9 @@ const INTEGRITY_MIN = Object.freeze({
 const R2_WHITELIST_ROUTER_VARS = new Set([
   'core_public_routes',
 ]);
+// 层 1：routerVar 白名单 + File|Var 精确白名单（兜底用，优先用源码内 checker:ignore R2 注释）
 const R2_WHITELIST_FILE_VAR = new Set([
-  'svc/plugin-registry/src/main.rs|protected_routes',
+  // 示例（需用时添加）：'svc/<service>/src/main.rs|protected_routes — 建议改用 // checker:ignore R2 行内注释',
 ]);
 
 const REPORT = {

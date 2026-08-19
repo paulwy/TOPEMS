@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Mutex;
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{webview::WebviewWindowBuilder, AppHandle, Emitter, Manager, WindowEvent};
 use log::{info, warn, error};
 
 use crate::api_client::{self};
@@ -991,4 +991,179 @@ pub fn setup_initial_data(app: &AppHandle) {
             emit_to_window(app, "plugin-list", &plugin_json, main_window_label);
         }
     }
+}
+
+#[tauri::command]
+pub fn show_logs_window(app: AppHandle) -> tauri::Result<()> {
+    crate::show_logs_window_internal(&app)
+}
+
+#[tauri::command]
+pub fn is_window_maximized(app: AppHandle) -> bool {
+    if let Some(window) = app.get_webview_window(crate::MAIN_WINDOW_LABEL) {
+        window.is_maximized().unwrap_or(false)
+    } else {
+        false
+    }
+}
+
+#[tauri::command]
+pub fn get_app_version() -> String {
+    env!("CARGO_PKG_VERSION").to_string()
+}
+
+#[tauri::command]
+pub fn get_app_name() -> String {
+    env!("CARGO_PKG_NAME").to_string()
+}
+
+#[tauri::command]
+pub fn restart_app(app: AppHandle) {
+    let _ = app.restart();
+}
+
+#[tauri::command]
+pub fn update_tray_status(
+    _app: AppHandle,
+    _status: String,
+    _badge_count: Option<i32>,
+) -> tauri::Result<()> {
+    Ok(())
+}
+
+#[tauri::command]
+pub fn send_system_notification(_title: String, _body: String) -> tauri::Result<()> {
+    Ok(())
+}
+
+#[tauri::command]
+pub fn trigger_tray_notification(
+    _app: AppHandle,
+    _count: Option<i32>,
+) -> tauri::Result<()> {
+    Ok(())
+}
+
+#[tauri::command]
+pub fn create_window(
+    app: AppHandle,
+    title: String,
+    path: String,
+) -> tauri::Result<String> {
+    let window_label = format!("window-{}", {
+        let mut counter = crate::WINDOW_COUNTER.lock().unwrap();
+        *counter += 1;
+        *counter
+    });
+
+    let window = WebviewWindowBuilder::new(
+        &app,
+        &window_label,
+        tauri::WebviewUrl::CustomProtocol(tauri::Url::parse("app://./index.html").unwrap()),
+    )
+    .title(&format!("TOPEMS - {}", title))
+    .inner_size(1200.0, 800.0)
+    .min_inner_size(1024.0, 768.0)
+    .resizable(true)
+    .maximizable(true)
+    .decorations(true)
+    .center()
+    .build()?;
+
+    crate::WINDOW_TITLES
+        .lock()
+        .unwrap()
+        .insert(window_label.clone(), title);
+
+    window.on_window_event(|event| {
+        if let WindowEvent::CloseRequested { api, .. } = event {
+            api.prevent_close();
+        }
+    });
+
+    let _ = window.eval(&format!("window.location.href = '{}'", path));
+
+    Ok(window_label)
+}
+
+#[tauri::command]
+pub fn get_windows(app: AppHandle) -> Vec<(String, String)> {
+    let titles = crate::WINDOW_TITLES.lock().unwrap();
+    app.webview_windows()
+        .into_iter()
+        .filter_map(|(label, window)| {
+            let title = titles.get(&label).cloned().unwrap_or_else(|| {
+                window.title().unwrap_or_else(|_| "未命名窗口".to_string())
+            });
+            Some((label.to_string(), title))
+        })
+        .collect()
+}
+
+#[tauri::command]
+pub fn switch_window(app: AppHandle, label: String) -> tauri::Result<()> {
+    if let Some(window) = app.get_webview_window(&label) {
+        window.show()?;
+        window.unminimize()?;
+        window.set_focus()?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn close_window(app: AppHandle, label: String) -> tauri::Result<()> {
+    if label == crate::MAIN_WINDOW_LABEL {
+        crate::hide_main_window(&app)?;
+    } else if let Some(window) = app.get_webview_window(&label) {
+        crate::WINDOW_TITLES.lock().unwrap().remove(&label);
+        window.close()?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn close_current_window(app: AppHandle) -> tauri::Result<()> {
+    if let Some(window) = app.get_webview_window(crate::MAIN_WINDOW_LABEL) {
+        if window.is_focused().unwrap_or(false) {
+            crate::hide_main_window(&app)?;
+            return Ok(());
+        }
+    }
+
+    for (label, window) in app.webview_windows() {
+        if window.is_focused().unwrap_or(false) && label != crate::MAIN_WINDOW_LABEL {
+            crate::WINDOW_TITLES.lock().unwrap().remove(&label);
+            window.close()?;
+            break;
+        }
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn next_window(app: AppHandle) -> tauri::Result<()> {
+    let windows: Vec<String> = app.webview_windows().keys().cloned().collect();
+    if windows.is_empty() {
+        return Ok(());
+    }
+
+    let current_label = {
+        let mut found = None;
+        for (label, window) in app.webview_windows() {
+            if window.is_focused().unwrap_or(false) {
+                found = Some(label.clone());
+                break;
+            }
+        }
+        found
+    };
+
+    let current_index = current_label
+        .as_ref()
+        .and_then(|l| windows.iter().position(|w| w == l))
+        .unwrap_or(0);
+
+    let next_index = (current_index + 1) % windows.len();
+    switch_window(app, windows[next_index].clone())
 }
