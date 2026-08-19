@@ -61,7 +61,7 @@ export const reportModuleConfig: RouteModuleConfig = {
       element: lazyWithRetry(
         () => import('@/pages/report/ReportViewer'),
         'ReportViewer'
-      ) as unknown as React.LazyExoticComponent<React.ComponentType<Record<string, unknown>>>,
+      ) as any,
       module: 'report',
       title: i18n.t('shared.config.k4'),
       titleKey: 'shared.config.k4',

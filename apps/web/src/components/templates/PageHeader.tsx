@@ -211,7 +211,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                   fontSize: '0.875rem',
                 }}
               >
-                {item.icon}
+                {item.icon as any}
                 {item.label}
               </Typography>
             );
@@ -234,7 +234,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                 },
               }}
             >
-              {item.icon}
+              {item.icon as any}
               {item.label}
             </Link>
           );

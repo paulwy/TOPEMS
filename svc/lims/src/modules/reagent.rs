@@ -4,8 +4,8 @@ use sqlx::{types::Uuid, Row};
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
-use crate::middleware::tenant::TenantContext;
 use crate::shared::AppState;
+use topems_shared_auth::middleware::tenant::TenantContext;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()

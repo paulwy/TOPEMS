@@ -224,7 +224,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
               width: 400,
             },
           },
-        }}
+        } as any}
       >
         <Box sx={{ p: 3 }}>
           <Box sx={{ mb: 3 }}>

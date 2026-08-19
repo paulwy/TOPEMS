@@ -299,7 +299,7 @@ async fn main() -> Result<()> {
     let protected_routes = modules::create_routes()
         .layer(axum::middleware::from_fn_with_state(
             ctx.db.clone(),
-            middleware::tenant::tenant_middleware,
+            topems_shared_auth::tenant_middleware(),
         ))
         .with_state(api_state);
 

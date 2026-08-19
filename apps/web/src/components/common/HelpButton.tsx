@@ -86,7 +86,7 @@ export const HelpButton: React.FC<HelpButtonProps> = ({
               borderRadius: 3,
             },
           },
-        }}
+        } as any}
       >
         <DialogTitle
           sx={{

@@ -218,7 +218,7 @@ export const DraggableWindow: React.FC<DraggableWindowProps> = ({
           padding: 2,
         }}
       >
-        {windowState.component}
+        {windowState.component as any}
       </Box>
 
       {windowState.isResizable && !windowState.isMaximized && (

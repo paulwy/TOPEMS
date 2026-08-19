@@ -9,12 +9,12 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use super::ApiState;
-use crate::middleware::tenant::get_tenant_id;
 use crate::models::customer::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::response::{api_error, ApiResponse, ListResponse};
+use topems_shared_auth::middleware::tenant::get_tenant_id;
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct CustomerPaginationParams {

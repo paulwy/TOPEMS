@@ -802,7 +802,7 @@ ${content
                               borderRadius: 'xs',
                               fontFamily: 'monospace',
                             }}
-                            {...props}
+                            {...(props as any)}
                           >
                             {children}
                           </code>

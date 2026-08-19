@@ -19,10 +19,10 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::ApiState;
-use crate::middleware::tenant::get_tenant_id;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::response::{api_error, ApiResponse};
+use topems_shared_auth::middleware::tenant::get_tenant_id;
 
 // ---------------------------------------------------------------------------
 // 数据模型

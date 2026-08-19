@@ -2,11 +2,11 @@ use axum::{extract::FromRef, http::HeaderMap, routing::get, Json, Router};
 use chrono::Utc;
 use uuid::Uuid;
 
-use crate::middleware::tenant::get_tenant_id;
 use crate::models::{CreateWarehouseRequest, UpdateWarehouseRequest, Warehouse};
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::get_tenant_id;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
 
 fn warehouse_cache_key(tenant_id: Uuid, id: Uuid) -> String {

@@ -2,7 +2,7 @@ use crate::auth::Claims;
 use axum::{
     body::Body,
     extract::Request,
-    http::{header, StatusCode},
+    http::{header, HeaderMap, StatusCode},
     middleware::Next,
     response::IntoResponse,
 };
@@ -21,6 +21,40 @@ impl TenantContext {
         let tenant_id = claims.tenant_id.as_ref()?.parse::<Uuid>().ok()?;
         let user_id = claims.user_id().ok()?;
         Some(Self { tenant_id, user_id })
+    }
+}
+
+pub fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
+
+#[derive(Debug, Clone)]
+pub struct TenantDataAccess {
+    pub tenant_id: Uuid,
+    pub pool: PgPool,
+}
+
+impl TenantDataAccess {
+    pub fn new(tenant_id: Uuid, pool: PgPool) -> Self {
+        Self { tenant_id, pool }
+    }
+
+    pub fn tenant_id(&self) -> Uuid {
+        self.tenant_id
+    }
+
+    pub fn pool(&self) -> &PgPool {
+        &self.pool
     }
 }
 

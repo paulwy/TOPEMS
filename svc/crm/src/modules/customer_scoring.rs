@@ -10,7 +10,6 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use super::ApiState;
-use crate::middleware::tenant::get_tenant_id;
 use crate::models::{
     CreateCustomerScoreRequest, CustomerScore, CustomerScoringQueryParams,
     UpdateCustomerScoreRequest,
@@ -23,6 +22,7 @@ use crate::modules::scoring_logic::{
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
+use topems_shared_auth::middleware::tenant::get_tenant_id;
 use topems_shared_core::response::api_error;
 
 #[derive(Debug, Deserialize)]

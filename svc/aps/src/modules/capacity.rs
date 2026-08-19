@@ -9,10 +9,10 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::middleware::tenant::get_tenant_id;
 use crate::modules::ApiState;
 use crate::shared::fsm::{capacity_can_transition, capacity_requires_approval};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::get_tenant_id;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
 use utoipa::ToSchema;
 
