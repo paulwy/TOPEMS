@@ -2,10 +2,10 @@
 //!
 //! 验证 SLO 管理、统一日志查询和告警分级模块的公开 API。
 
-use topems_shared::observability::presets::{
+use topems_shared_observability::observability::presets::{
     standard_slos_for_all_services, standard_slos_for_service,
 };
-use topems_shared::observability::{
+use topems_shared_observability::observability::{
     AlertManager, AlertRule, AlertSeverity, AlertState, InMemoryLogStore, LogLevel, LogQuery,
     LogQueryProvider, ObservabilityAggregator, SLODefinition, SLOMeasurement, SLOStatus, SLOType,
 };
@@ -164,8 +164,8 @@ fn make_log_entry(
     service: &str,
     message: &str,
     trace_id: Option<&str>,
-) -> topems_shared::observability::LogEntry {
-    topems_shared::observability::LogEntry {
+) -> topems_shared_observability::observability::LogEntry {
+    topems_shared_observability::observability::LogEntry {
         id: id.to_string(),
         timestamp: chrono::Utc::now(),
         level,

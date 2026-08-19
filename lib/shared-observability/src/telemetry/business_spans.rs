@@ -163,9 +163,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_trace_db_query_propagates_error() {
-        let err = sqlx::Error::Configuration(Box::new(std::io::Error::other(
-            "db test error",
-        )));
+        let err = sqlx::Error::Configuration(Box::new(std::io::Error::other("db test error")));
         let result: Result<i32, sqlx::Error> =
             trace_db_query("SELECT broken", &[], async { Err(err) }).await;
         assert!(result.is_err());

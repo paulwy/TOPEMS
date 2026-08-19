@@ -107,6 +107,10 @@ pub struct SearchResult {
     pub module: String,
     pub path: String,
     pub type_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub relevance: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub snippet: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -115,10 +119,14 @@ pub struct SearchResponse {
     pub total: i64,
     pub page: i64,
     pub page_size: i64,
+    pub search_type: String,
+    pub facets: std::collections::HashMap<String, usize>,
+    pub suggestions: Vec<SearchSuggestion>,
 }
 
-// ---- 新增 DTO：索引文档（写入倒排索引用）----
+// ---- 新增 DTO：索引文档（写入倒排索引用，预留倒排索引功能）----
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct IndexDocument {
     pub doc_id: String,
@@ -132,6 +140,7 @@ pub struct IndexDocument {
     pub visibility: Visibility,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Visibility {
     Public,
@@ -139,8 +148,9 @@ pub enum Visibility {
     OrgOnly,
 }
 
-// ---- 新增 DTO：搜索过滤条件（结构化条件）----
+// ---- 新增 DTO：搜索过滤条件（结构化条件，预留高级过滤功能）----
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SearchFilter {
     pub module_in: Option<Vec<String>>,
@@ -182,8 +192,9 @@ pub enum SuggestionKind {
     Module,
 }
 
-// ---- 新增 DTO：批量索引请求 ----
+// ---- 新增 DTO：批量索引请求（预留倒排索引功能）----
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct BatchIndexRequest {
     pub upserts: Vec<IndexDocument>,
@@ -434,6 +445,8 @@ mod tests {
             module: "user".to_string(),
             path: "/system/users/u-123".to_string(),
             type_name: "用户".to_string(),
+            relevance: Some(0.85),
+            snippet: Some("...active...".to_string()),
         };
         let json = serde_json::to_string(&result).expect("serialize failed");
         let de: SearchResult = serde_json::from_str(&json).expect("deserialize failed");
@@ -449,6 +462,8 @@ mod tests {
             module: "document".to_string(),
             path: "/files/d-456".to_string(),
             type_name: "文档".to_string(),
+            relevance: None,
+            snippet: None,
         };
         let json = serde_json::to_string(&result).expect("serialize failed");
         let de: SearchResult = serde_json::from_str(&json).expect("deserialize failed");
@@ -465,10 +480,15 @@ mod tests {
                 module: "m".to_string(),
                 path: "/p".to_string(),
                 type_name: "t".to_string(),
+                relevance: None,
+                snippet: None,
             }],
             total: 1,
             page: 1,
             page_size: 20,
+            search_type: "exact".to_string(),
+            facets: std::collections::HashMap::new(),
+            suggestions: Vec::new(),
         };
         let json = serde_json::to_string(&resp).expect("serialize failed");
         let de: SearchResponse = serde_json::from_str(&json).expect("deserialize failed");

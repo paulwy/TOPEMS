@@ -301,7 +301,7 @@ mod tests {
     use super::*;
     use async_trait::async_trait;
     use topems_shared::form_assistant::{
-        AiFormAssistantRequest, AiFormAssistantResponse, ValidationResult,
+        AiFormAssistant, AiFormAssistantRequest, AiFormAssistantResponse, ValidationResult,
     };
 
     #[derive(Default, Clone)]

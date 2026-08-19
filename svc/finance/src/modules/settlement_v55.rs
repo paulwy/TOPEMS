@@ -3239,11 +3239,8 @@ mod tests {
         assert!(!VoucherStatus::Posted.can_post());
         let result = VoucherStatus::Posted.validate_post();
         assert!(result.is_err());
-        if let ModelValidationError::InvalidStatus(msg) = result.unwrap_err() {
-            assert!(msg.contains("只有已审批的凭证才能过账"));
-        } else {
-            panic!("expected InvalidStatus");
-        }
+        let ModelValidationError::InvalidStatus(msg) = result.unwrap_err();
+        assert!(msg.contains("只有已审批的凭证才能过账"));
     }
 
     #[test]
@@ -3287,11 +3284,8 @@ mod tests {
         assert!(!PeriodStatus::Closed.can_post());
         let result = PeriodStatus::Closed.validate_post();
         assert!(result.is_err());
-        if let ModelValidationError::InvalidStatus(msg) = result.unwrap_err() {
-            assert!(msg.contains("Open"));
-        } else {
-            panic!("expected InvalidStatus");
-        }
+        let ModelValidationError::InvalidStatus(msg) = result.unwrap_err();
+        assert!(msg.contains("Open"));
     }
 
     #[test]
@@ -3671,7 +3665,6 @@ mod tests {
 
     #[test]
     fn pv_recon_empty_bank_err() {
-        use chrono::Duration;
         let now = Utc::now();
         let req = ReconcileBatchRequest {
             bank_transactions: vec![],
@@ -3691,7 +3684,6 @@ mod tests {
 
     #[test]
     fn pv_recon_empty_system_err() {
-        use chrono::Duration;
         let now = Utc::now();
         let req = ReconcileBatchRequest {
             bank_transactions: vec![mk_bt("B1", now, "CNY")],

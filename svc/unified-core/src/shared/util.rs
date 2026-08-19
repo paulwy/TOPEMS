@@ -339,6 +339,7 @@ pub fn system_time_to_ms(st: SystemTime) -> i64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Duration;
 
     // ---------- aggregate_health ----------
 

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use topems_shared::auth::Claims;
-use topems_shared::rls::TenantContext as RlsTenantContext;
+use topems_shared_db::rls::TenantContext as RlsTenantContext;
 use topems_shared::tenant::{
     Tenant, TenantContext as AuthTenantContext, TenantPlan, TenantRole, TenantStatus,
 };
@@ -397,7 +397,7 @@ fn test_tenant_scoped_query_respects_x_tenant_id_header() {
 #[test]
 fn test_missing_x_tenant_id_header_rejected_with_400() {
     // 缺失 X-Tenant-Id 头必须被拒绝（对应 HTTP 400），不允许回退到默认租户
-    use topems_shared::rls::TenantContextRejection;
+    use topems_shared_db::rls::TenantContextRejection;
 
     let req = http::Request::builder().body(()).unwrap();
     let result = RlsTenantContext::from_request(&req);

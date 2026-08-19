@@ -5,7 +5,6 @@
 mod plugin_tests {
     use reqwest::Client;
     use serde::{Deserialize, Serialize};
-    use uuid::Uuid;
 
     const HRM_BASE_URL: &str = "http://localhost:8020";
     const TEST_USER_ID: &str = "00000000-0000-0000-0000-000000000001";

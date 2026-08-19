@@ -15,8 +15,7 @@ use tonic::transport::{Channel, Endpoint};
 use tracing::{debug, warn};
 
 /// 负载均衡策略
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum LoadBalancingStrategy {
     /// 轮询
     #[default]
@@ -28,7 +27,6 @@ pub enum LoadBalancingStrategy {
     /// 最少使用
     LeastUsed,
 }
-
 
 /// 连接池配置
 #[derive(Debug, Clone)]

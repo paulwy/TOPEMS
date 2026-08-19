@@ -118,7 +118,7 @@ mod tests {
         ];
 
         for path in skip_paths {
-            let req = create_test_request(path, None);
+            let _req = create_test_request(path, None);
             assert!(skip_paths.contains(&path));
         }
     }

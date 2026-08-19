@@ -101,7 +101,6 @@ pub fn satisfies_lead_time(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::NaiveDateTime;
 
     #[test]
     fn test_next_status_happy_path() {

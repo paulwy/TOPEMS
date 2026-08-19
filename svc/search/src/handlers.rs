@@ -9,7 +9,10 @@ use uuid::Uuid;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::{api_error, api_success};
 
-use crate::models::{SearchRequest, SearchResponse, SearchResult};
+use crate::models::{
+    calculate_pagination, calculate_relevance, detect_search_type, normalize_query, tokenize,
+    SearchRequest, SearchResponse, SearchResult, SearchSuggestion, SuggestionKind,
+};
 
 use std::collections::{HashMap, HashSet};
 
@@ -230,6 +233,8 @@ async fn search_users(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchRes
             module: "user".to_string(),
             path: format!("/system/users/{}", r.id),
             type_name: "用户".to_string(),
+            relevance: None,
+            snippet: None,
         })
         .collect()
 }
@@ -279,6 +284,8 @@ async fn search_customers(pool: &PgPool, keyword: &str, limit: i64) -> Vec<Searc
                 module: "customer".to_string(),
                 path: format!("/crm/customers/{}", r.id),
                 type_name: "客户".to_string(),
+                relevance: None,
+                snippet: None,
             }
         })
         .collect()
@@ -315,6 +322,8 @@ async fn search_orders(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchRe
         module: "order".to_string(),
         path: format!("/sales/orders/{}", r.id),
         type_name: "订单".to_string(),
+        relevance: None,
+        snippet: None,
     }));
 
     let purchase_rows: Vec<PurchaseOrderSearchRow> = match sqlx::query_as(
@@ -343,6 +352,8 @@ async fn search_orders(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchRe
         module: "order".to_string(),
         path: format!("/purchase/orders/{}", r.id),
         type_name: "订单".to_string(),
+        relevance: None,
+        snippet: None,
     }));
 
     results
@@ -378,6 +389,8 @@ async fn search_documents(pool: &PgPool, keyword: &str, limit: i64) -> Vec<Searc
             module: "document".to_string(),
             path: format!("/files/{}", r.id),
             type_name: "文档".to_string(),
+            relevance: None,
+            snippet: None,
         })
         .collect()
 }
@@ -394,7 +407,7 @@ async fn search_all(
     let should_search = |module: &str| {
         modules
             .as_ref()
-            .map_or(true, |m| m.contains(&module.to_string()))
+            .map_or(true, |mods| mods.iter().any(|m| matches_filter(module, m)))
     };
 
     if should_search("user") {
@@ -436,23 +449,102 @@ pub async fn search_handler(
     State(pool): State<PgPool>,
     Query(req): Query<SearchRequest>,
 ) -> Json<ApiResponse<SearchResponse>> {
-    let keyword = req.keyword.trim().to_string();
-
+    // 1. normalize_query: 规范化关键词（trim + 折叠空白 + 小写）
+    let keyword = normalize_query(&req.keyword);
     if keyword.is_empty() {
         return Json(api_error(400, "搜索关键词不能为空"));
     }
 
-    let page = req.page.unwrap_or(1).max(1);
-    let page_size = req.page_size.unwrap_or(20).min(100);
+    // 2. detect_search_type: 检测搜索类型（exact/prefix/fuzzy/phrase）
+    let search_type = detect_search_type(&req.keyword).to_string();
 
-    let results = search_all(&pool, &keyword, &req.modules, page_size).await;
+    let page = req.page.unwrap_or(1).max(1);
+    let page_size = req.page.unwrap_or(20).min(100);
+
+    // 3. tokenize: 分词用于相关性计算
+    let query_terms = tokenize(&keyword);
+
+    let mut results = search_all(&pool, &keyword, &req.modules, page_size).await;
+
+    // 4. calculate_relevance: 为每条结果计算相关性分数
+    for r in &mut results {
+        let doc_fields = vec![
+            r.title.clone(),
+            r.description.clone().unwrap_or_default(),
+            r.module.clone(),
+            r.type_name.clone(),
+        ];
+        r.relevance = Some(calculate_relevance(&query_terms, &doc_fields));
+    }
+
+    // 5. compare_search_results: 按相关性分数降序排序
+    let now_ts = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0);
+    results.sort_by(|a, b| {
+        compare_search_results(
+            a.relevance.unwrap_or(0.0),
+            now_ts,
+            b.relevance.unwrap_or(0.0),
+            now_ts,
+        )
+    });
+
+    // 6. deduplicate_results: 防御性去重（DB 结果应已唯一）
+    let ids: Vec<String> = results.iter().map(|r| r.id.clone()).collect();
+    if deduplicate_results(&ids).len() != ids.len() {
+        let seen: HashSet<String> = ids.into_iter().collect();
+        results.retain(|r| seen.contains(&r.id));
+    }
+
+    // 7. highlight_term: 高亮标题中的关键词
+    let highlight_term_kw = query_terms.first().map(|s| s.as_str()).unwrap_or(&keyword);
+    for r in &mut results {
+        r.title = highlight_term(&r.title, highlight_term_kw);
+    }
+
+    // 8. extract_snippet: 从描述中提取关键词上下文摘要
+    for r in &mut results {
+        if let Some(desc) = &r.description {
+            r.snippet = Some(extract_snippet(desc, highlight_term_kw, 50));
+        }
+    }
+
+    // 9. count_facets: 统计模块×类型分面
+    let facet_pairs: Vec<(&str, &str)> = results
+        .iter()
+        .map(|r| (r.module.as_str(), r.type_name.as_str()))
+        .collect();
+    let facets = count_facets(&facet_pairs);
+
+    // 10. 生成搜索建议（取前 5 条结果的首词）
+    let suggestions: Vec<SearchSuggestion> = results
+        .iter()
+        .take(5)
+        .filter_map(|r| {
+            r.title.split_whitespace().next().map(|w| SearchSuggestion {
+                text: w.to_string(),
+                kind: SuggestionKind::Entity,
+                score: r.relevance.unwrap_or(0.0),
+                highlight: None,
+            })
+        })
+        .collect();
+
     let total = results.len() as i64;
+
+    // 11. calculate_pagination: 计算分页元数据
+    let (_offset, _total_pages, current_page) = calculate_pagination(page, page_size, total);
 
     Json(api_success(SearchResponse {
         items: results,
         total,
-        page,
+        page: current_page,
         page_size,
+        search_type,
+        facets,
+        suggestions,
     }))
 }
 

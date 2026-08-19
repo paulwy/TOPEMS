@@ -2,10 +2,10 @@ use axum::{routing::get, routing::post, routing::put, Router};
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 use utoipa::OpenApi;
 
-mod handlers;
-mod models;
+pub mod handlers;
+pub mod models;
 mod openapi;
-mod schema_defense;
+pub mod schema_defense;
 
 #[tokio::main]
 async fn main() {

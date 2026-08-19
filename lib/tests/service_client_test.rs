@@ -1,4 +1,4 @@
-use topems_shared::service_client::{
+use topems_shared_service_client::service_client::{
     create_ai_client, create_bi_client, create_crm_client, create_doc_client, create_ehs_client,
     create_erp_client, create_finance_client, create_generic_client, create_gis_client,
     create_hrm_client, create_iam_client, create_integration_client, create_lims_client,

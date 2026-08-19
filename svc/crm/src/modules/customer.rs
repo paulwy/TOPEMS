@@ -777,7 +777,7 @@ async fn reject_customer(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde::Deserialize;
+
     use uuid::Uuid;
 
     #[test]

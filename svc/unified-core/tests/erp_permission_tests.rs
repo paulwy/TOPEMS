@@ -46,7 +46,7 @@ async fn auth_request(
     token: &str,
     method: &str,
     endpoint: &str,
-    body: Option<Value>,
+    _body: Option<Value>,
 ) -> Result<(u16, Value), String> {
     let url = format!("{}{}", API_URL, endpoint);
     let request = match method {
@@ -96,7 +96,7 @@ async fn test_erp_002_create_purchase_order() {
     tracing::info!("测试 ERP-002: 创建采购订单");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    let timestamp = std::time::SystemTime::now()
+    let _timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_millis();

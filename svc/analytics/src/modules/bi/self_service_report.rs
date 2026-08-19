@@ -521,7 +521,7 @@ pub async fn query_report_data(
                 }
             } else {
                 // sort_by 必须是已注册列或保留 id
-                let mut check = vec![sort_by_raw.clone()];
+                let check = vec![sort_by_raw.clone()];
                 if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &check).await {
                     // strict 模式下若 sort_by 未注册，报错；warn 模式放行并记录日志
                     tracing::warn!(

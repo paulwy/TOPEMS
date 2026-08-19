@@ -399,7 +399,6 @@ mod tests {
     use rust_decimal::Decimal;
     use std::str::FromStr;
 
-    use super::super::periods::PeriodValidationError;
     use super::super::reversal::{
         validate_reverse_voucher, ReverseJournalEntry, ReversePeriodInput, ReverseableVoucherInput,
     };

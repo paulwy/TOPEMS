@@ -606,7 +606,7 @@ pub struct CreatePushTemplateRequest {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{Duration, NaiveDate};
+    use chrono::NaiveDate;
 
     fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
         let json = serde_json::to_string(item).unwrap();

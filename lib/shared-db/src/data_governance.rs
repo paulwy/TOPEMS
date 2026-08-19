@@ -15,8 +15,7 @@ use uuid::Uuid;
 // =============================================================================
 
 /// 数据分类级别（基于常见企业数据分级标准）
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash, Default)]
 pub enum DataClassification {
     /// 公开数据：可在组织外部自由共享
     Public,
@@ -63,7 +62,6 @@ impl DataClassification {
         }
     }
 }
-
 
 impl std::fmt::Display for DataClassification {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -244,8 +242,7 @@ impl EntityDataTags {
 // =============================================================================
 
 /// 脱敏策略
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum MaskingStrategy {
     /// 完全掩码：全部替换为固定字符（如 ********）
     #[default]
@@ -264,7 +261,6 @@ pub enum MaskingStrategy {
     /// 空值替换：替换为 null 或空字符串
     Nullify,
 }
-
 
 /// 脱敏规则：针对特定数据模式的脱敏配置
 #[derive(Debug, Clone, Serialize, Deserialize)]

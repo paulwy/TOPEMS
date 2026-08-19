@@ -1,4 +1,3 @@
-use chrono::{NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -618,7 +617,7 @@ mod http_endpoint_tests {
 
 #[cfg(test)]
 mod business_logic_tests {
-    use super::*;
+
     use topems_mes::modules::oee_logic::{
         calculate_availability, calculate_efficiency_trend, calculate_oee, calculate_performance,
         calculate_quality, determine_oee_level, validate_oee_inputs,

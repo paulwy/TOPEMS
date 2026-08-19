@@ -18,7 +18,6 @@ pub enum DeploymentMode {
     OnPremise,
 }
 
-
 impl std::fmt::Display for DeploymentMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -29,8 +28,7 @@ impl std::fmt::Display for DeploymentMode {
 }
 
 /// 功能开关配置
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct FeatureFlags {
     /// 配额限制开关
     pub quota_enabled: bool,
@@ -45,7 +43,6 @@ pub struct FeatureFlags {
     /// IP 白名单开关
     pub ip_whitelist_enabled: bool,
 }
-
 
 /// 部署配置
 #[derive(Debug, Clone, Serialize, Deserialize)]
