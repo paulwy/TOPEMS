@@ -1,10 +1,73 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 MONITOR_PATHS.xxx，而非硬编码字符串
+/** MonitorDashboardPage 路由 Props · 模板=dashboard */
+export interface MonitorDashboardPageProps {
+  /** 仪表盘视图类型 */
+  variant?: 'overview' | 'executive';
+  /** 看板全局筛选条件 */
+  filters?: Record<string, unknown>;
+}
+
+/** MonitorAlertsPage 路由 Props · 模板=list */
+export interface MonitorAlertsPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** MonitorAlertHistoryPage 路由 Props · 模板=list */
+export interface MonitorAlertHistoryPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** MonitorAlertRulesPage 路由 Props · 模板=list */
+export interface MonitorAlertRulesPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** MonitorMetricsPage 路由 Props · 模板=stats */
+export interface MonitorMetricsPageProps {
+  /** 统计面板展示的指标列表 */
+  metrics?: string[];
+  /** 统计起止时间 ISO 字符串 */
+  timeRange?: [string, string];
+}
+
+/** MonitorLogsPage 路由 Props · 模板=list */
+export interface MonitorLogsPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** MonitorSettingsPage 路由 Props · 模板=settings */
+export interface MonitorSettingsPageProps {
+  /** 当前定位的设置分组 key */
+  section?: string;
+  /** 设置面板主题（预留） */
+  theme?: 'light' | 'dark';
+}
 export const MONITOR_PATHS = {
   root: '/monitor',
   dashboard: '/monitor/dashboard',
@@ -44,7 +107,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       group: 'overview',
       requiredPermissions: ['monitor:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<MonitorDashboardPageProps>,
     {
       path: MONITOR_PATHS.alerts,
       element: lazyWithRetry(
@@ -59,7 +122,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['monitor:alert:read', 'monitor:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<MonitorAlertsPageProps>,
     {
       path: MONITOR_PATHS.alertHistory,
       element: lazyWithRetry(
@@ -74,7 +137,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['monitor:alert:read', 'monitor:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<MonitorAlertHistoryPageProps>,
     {
       path: MONITOR_PATHS.rules,
       element: lazyWithRetry(
@@ -89,7 +152,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       group: 'setting',
       requiredPermissions: ['monitor:rule:read', 'monitor:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<MonitorAlertRulesPageProps>,
     {
       path: MONITOR_PATHS.metrics,
       element: lazyWithRetry(
@@ -104,7 +167,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['monitor:metric:read', 'monitor:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<MonitorMetricsPageProps>,
     {
       path: MONITOR_PATHS.logs,
       element: lazyWithRetry(() => import('@/pages/monitor/MonitorLogsPage'), 'MonitorLogsPage'),
@@ -116,7 +179,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['monitor:log:read', 'monitor:dashboard:read'],
       action: 'read',
-    },
+    } satisfies RouteConfigV2<MonitorLogsPageProps>,
     {
       path: MONITOR_PATHS.settings,
       element: lazyWithRetry(
@@ -131,7 +194,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       group: 'setting',
       requiredPermissions: ['monitor:dashboard:admin'],
       action: 'admin',
-    },
+    } satisfies RouteConfigV2<MonitorSettingsPageProps>,
   ],
 };
 

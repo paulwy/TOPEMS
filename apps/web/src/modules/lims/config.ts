@@ -1,10 +1,171 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 LIMS_PATHS.xxx，而非硬编码字符串
+/** LimsSamplePage 路由 Props · 模板=list */
+export interface LimsSamplePageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** LimsSampleDetailPage 路由 Props · 模板=detail */
+export interface LimsSampleDetailPageProps {
+  /** 主实体 ID（如订单号、设备编码） */
+  id?: string;
+  /** 实体类型标记（用于 detail 模板多态渲染） */
+  entityType?: string;
+}
+
+/** SampleReceivePage 路由 Props · 模板=form */
+export interface SampleReceivePageProps {
+  /** 表单三态：新建 / 编辑 / 只读 */
+  mode?: 'create' | 'edit' | 'view';
+  /** 表单回填初始值 */
+  initialValues?: Record<string, unknown>;
+}
+
+/** LimsTaskPage 路由 Props · 模板=list */
+export interface LimsTaskPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** LimsTaskDetailPage 路由 Props · 模板=detail */
+export interface LimsTaskDetailPageProps {
+  /** 主实体 ID（如订单号、设备编码） */
+  id?: string;
+  /** 实体类型标记（用于 detail 模板多态渲染） */
+  entityType?: string;
+}
+
+/** InspectionTaskPage 路由 Props · 模板=list */
+export interface InspectionTaskPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** LimsProcessPage 路由 Props · 模板=list */
+export interface LimsProcessPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** LimsInstrumentPage 路由 Props · 模板=list */
+export interface LimsInstrumentPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** LimsInstrumentDetailPage 路由 Props · 模板=detail */
+export interface LimsInstrumentDetailPageProps {
+  /** 主实体 ID（如订单号、设备编码） */
+  id?: string;
+  /** 实体类型标记（用于 detail 模板多态渲染） */
+  entityType?: string;
+}
+
+/** LimsInstrumentDataPage 路由 Props · 模板=detail */
+export interface LimsInstrumentDataPageProps {
+  /** 主实体 ID（如订单号、设备编码） */
+  id?: string;
+  /** 实体类型标记（用于 detail 模板多态渲染） */
+  entityType?: string;
+}
+
+/** LimsInstrumentMaintenancePage 路由 Props · 模板=form */
+export interface LimsInstrumentMaintenancePageProps {
+  /** 表单三态：新建 / 编辑 / 只读 */
+  mode?: 'create' | 'edit' | 'view';
+  /** 表单回填初始值 */
+  initialValues?: Record<string, unknown>;
+}
+
+/** ReagentPage 路由 Props · 模板=list */
+export interface ReagentPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** LimsTestMethodPage 路由 Props · 模板=list */
+export interface LimsTestMethodPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** BarcodePage 路由 Props · 模板=list */
+export interface BarcodePageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** LimsUncertaintyPage 路由 Props · 模板=stats */
+export interface LimsUncertaintyPageProps {
+  /** 统计面板展示的指标列表 */
+  metrics?: string[];
+  /** 统计起止时间 ISO 字符串 */
+  timeRange?: [string, string];
+}
+
+/** InspectionResultPage 路由 Props · 模板=detail */
+export interface InspectionResultPageProps {
+  /** 主实体 ID（如订单号、设备编码） */
+  id?: string;
+  /** 实体类型标记（用于 detail 模板多态渲染） */
+  entityType?: string;
+}
+
+/** LimsProficiencyTestingPage 路由 Props · 模板=list */
+export interface LimsProficiencyTestingPageProps {
+  /** 分页页码，默认 1 */
+  page?: number;
+  /** 分页大小，默认 20 */
+  pageSize?: number;
+  /** 列表筛选条件键值对 */
+  filters?: Record<string, unknown>;
+}
+
+/** LimsDashboardPage 路由 Props · 模板=dashboard */
+export interface LimsDashboardPageProps {
+  /** 仪表盘视图类型 */
+  variant?: 'overview' | 'executive';
+  /** 看板全局筛选条件 */
+  filters?: Record<string, unknown>;
+}
 export const LIMS_PATHS = {
   root: '/lims',
   sample: '/lims/sample',
@@ -52,7 +213,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'master',
-    },
+    } satisfies RouteConfigV2<LimsSamplePageProps>,
     {
       path: LIMS_PATHS.sampleDetail,
       element: lazyWithRetry(
@@ -67,7 +228,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'detail',
       group: 'business',
-    },
+    } satisfies RouteConfigV2<LimsSampleDetailPageProps>,
     {
       path: LIMS_PATHS.sampleReceive,
       element: lazyWithRetry(() => import('@/pages/lims/SampleReceivePage'), 'SampleReceivePage'),
@@ -79,7 +240,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       action: 'write',
       template: 'form',
       group: 'process',
-    },
+    } satisfies RouteConfigV2<SampleReceivePageProps>,
     {
       path: LIMS_PATHS.task,
       element: lazyWithRetry(() => import('@/pages/lims/LimsTaskPage'), 'LimsTaskPage'),
@@ -91,7 +252,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'process',
-    },
+    } satisfies RouteConfigV2<LimsTaskPageProps>,
     {
       path: LIMS_PATHS.taskDetail,
       element: lazyWithRetry(() => import('@/pages/lims/LimsTaskDetailPage'), 'LimsTaskDetailPage'),
@@ -103,7 +264,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'detail',
       group: 'business',
-    },
+    } satisfies RouteConfigV2<LimsTaskDetailPageProps>,
     {
       path: LIMS_PATHS.inspectionTask,
       element: lazyWithRetry(() => import('@/pages/lims/InspectionTaskPage'), 'InspectionTaskPage'),
@@ -115,7 +276,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'process',
-    },
+    } satisfies RouteConfigV2<InspectionTaskPageProps>,
     {
       path: LIMS_PATHS.process,
       element: lazyWithRetry(() => import('@/pages/lims/LimsProcessPage'), 'LimsProcessPage'),
@@ -127,7 +288,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'process',
-    },
+    } satisfies RouteConfigV2<LimsProcessPageProps>,
     {
       path: LIMS_PATHS.instrument,
       element: lazyWithRetry(() => import('@/pages/lims/LimsInstrumentPage'), 'LimsInstrumentPage'),
@@ -139,7 +300,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'master',
-    },
+    } satisfies RouteConfigV2<LimsInstrumentPageProps>,
     {
       path: LIMS_PATHS.instrumentDetail,
       element: lazyWithRetry(
@@ -154,7 +315,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'detail',
       group: 'master',
-    },
+    } satisfies RouteConfigV2<LimsInstrumentDetailPageProps>,
     {
       path: LIMS_PATHS.instrumentData,
       element: lazyWithRetry(
@@ -169,7 +330,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'detail',
       group: 'master',
-    },
+    } satisfies RouteConfigV2<LimsInstrumentDataPageProps>,
     {
       path: LIMS_PATHS.instrumentMaintenance,
       element: lazyWithRetry(
@@ -184,7 +345,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       action: 'write',
       template: 'form',
       group: 'master',
-    },
+    } satisfies RouteConfigV2<LimsInstrumentMaintenancePageProps>,
     {
       path: LIMS_PATHS.reagent,
       element: lazyWithRetry(() => import('@/pages/lims/ReagentPage'), 'ReagentPage'),
@@ -196,7 +357,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'master',
-    },
+    } satisfies RouteConfigV2<ReagentPageProps>,
     {
       path: LIMS_PATHS.testMethod,
       element: lazyWithRetry(() => import('@/pages/lims/LimsTestMethodPage'), 'LimsTestMethodPage'),
@@ -208,7 +369,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'setting',
-    },
+    } satisfies RouteConfigV2<LimsTestMethodPageProps>,
     {
       path: LIMS_PATHS.barcode,
       element: lazyWithRetry(() => import('@/pages/lims/BarcodePage'), 'BarcodePage'),
@@ -220,7 +381,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'setting',
-    },
+    } satisfies RouteConfigV2<BarcodePageProps>,
     {
       path: LIMS_PATHS.uncertainty,
       element: lazyWithRetry(
@@ -235,7 +396,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'stats',
       group: 'analytics',
-    },
+    } satisfies RouteConfigV2<LimsUncertaintyPageProps>,
     {
       path: LIMS_PATHS.inspectionResult,
       element: lazyWithRetry(
@@ -250,7 +411,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'detail',
       group: 'analytics',
-    },
+    } satisfies RouteConfigV2<InspectionResultPageProps>,
     {
       path: LIMS_PATHS.proficiencyTesting,
       element: lazyWithRetry(
@@ -265,7 +426,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'list',
       group: 'analytics',
-    },
+    } satisfies RouteConfigV2<LimsProficiencyTestingPageProps>,
     {
       path: LIMS_PATHS.dashboard,
       element: lazyWithRetry(() => import('@/pages/lims/LimsDashboardPage'), 'LimsDashboardPage'),
@@ -277,7 +438,7 @@ export const limsModuleConfig: RouteModuleConfig = {
       action: 'read',
       template: 'dashboard',
       group: 'overview',
-    },
+    } satisfies RouteConfigV2<LimsDashboardPageProps>,
   ],
 };
 
