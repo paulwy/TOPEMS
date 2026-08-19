@@ -1,5 +1,5 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
@@ -49,6 +49,856 @@ export const MES_PATHS = {
   settingEquipmentThreshold: '/mes/setting/equipment-threshold',
 } as const;
 
+// ---- V257 P0-1：页面级 Props interface（Frontend 泛型收紧 · 3/15 核心模块首批）----
+// 命名规则：<DisplayName> + 'Props'，严格 1:1 对应 lazyWithRetry 第 2 参数 DisplayName
+// 字段策略：template 通用字段（list/pageSize/filters · form/mode/initialValues · detail/id · etc.）+ PATH 动态段参数（:id → id?）
+// 深层字段（filters/initialValues）先宽松 Record<string, unknown>，V257 P1-1 tsc 后细化
+
+export interface ProductionDashboardPageProps {
+  /** 统计指标列表（可选）*/
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 时间范围自定义起点（period='custom' 时）*/
+
+  periodStart?: string;
+
+  /** 时间范围自定义终点 */
+
+  periodEnd?: string;
+
+  /** 自动刷新间隔（秒）*/
+
+  refreshIntervalSec?: number;
+}
+
+export interface ProductionOrderManagementPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface ProductionOrderDetailPageProps {
+  /** 实体主键 ID（匹配 PATHS.:id）*/
+
+  id?: string;
+
+  /** 实体类型（多态详情页：区分 inspection/issue/audit-plan 等）*/
+
+  entityType?: string;
+
+  /** 是否预览模式（部分详情页只读预览）*/
+
+  previewMode?: boolean;
+
+  /** 版本号（带版本控制的实体）*/
+
+  version?: string | number;
+}
+
+export interface WorkOrderPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface EquipmentManagementPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface EquipmentDetailPageProps {
+  /** 实体主键 ID（匹配 PATHS.:id）*/
+
+  id?: string;
+
+  /** 实体类型（多态详情页：区分 inspection/issue/audit-plan 等）*/
+
+  entityType?: string;
+
+  /** 是否预览模式（部分详情页只读预览）*/
+
+  previewMode?: boolean;
+
+  /** 版本号（带版本控制的实体）*/
+
+  version?: string | number;
+}
+
+export interface WorkStationPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface TeamManagementPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface MaterialRequirementPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface ProcessRoutePageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface ProcessFlowPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface ProductionProcessPageProps {
+  /** 实体主键 ID（匹配 PATHS.:id）*/
+
+  id?: string;
+
+  /** 实体类型（多态详情页：区分 inspection/issue/audit-plan 等）*/
+
+  entityType?: string;
+
+  /** 是否预览模式（部分详情页只读预览）*/
+
+  previewMode?: boolean;
+
+  /** 版本号（带版本控制的实体）*/
+
+  version?: string | number;
+}
+
+export interface ProductionSchedulePageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface WIPPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface QualityInspectionPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface QualityTraceabilityPageProps {
+  /** 实体主键 ID（匹配 PATHS.:id）*/
+
+  id?: string;
+
+  /** 实体类型（多态详情页：区分 inspection/issue/audit-plan 等）*/
+
+  entityType?: string;
+
+  /** 是否预览模式（部分详情页只读预览）*/
+
+  previewMode?: boolean;
+
+  /** 版本号（带版本控制的实体）*/
+
+  version?: string | number;
+}
+
+export interface ProductionKanbanPageProps {
+  /** 看板列 ID 列表（列顺序）*/
+
+  columns?: string[];
+
+  /** 折叠的列 */
+
+  collapsedColumns?: string[];
+
+  /** 看板过滤条件 */
+
+  filters?: Record<string, unknown>;
+}
+
+export interface ProductionRecordPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface WorkReportPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface EquipmentOEEPageProps {
+  /** 统计维度 */
+
+  dimensions?: string[];
+
+  /** 统计指标 */
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 过滤器 */
+
+  filters?: Record<string, unknown>;
+}
+
+export interface MaterialBOMPageProps {
+  /** 展开的节点 ID 列表 */
+
+  expandedKeys?: string[];
+
+  /** 选中的节点 ID 列表 */
+
+  selectedKeys?: string[];
+
+  /** 勾选的节点 ID 列表（多选场景）*/
+
+  checkedKeys?: string[];
+
+  /** 根节点父 ID（多租户多根树）*/
+
+  rootParentId?: string;
+}
+
+export interface MaterialIssuePageProps {
+  /** 表单模式 */
+
+  mode?: 'create' | 'edit' | 'clone' | 'view';
+
+  /** 初始值（编辑/克隆时注入）*/
+
+  initialValues?: Record<string, unknown>;
+
+  /** 来源 ID（从列表跳转时带的上一条记录 ID）*/
+
+  sourceId?: string;
+
+  /** 预填充字段（从其他页面跳转带过来的）*/
+
+  prefillFrom?: Record<string, unknown>;
+}
+
+export interface MaterialReturnPageProps {
+  /** 表单模式 */
+
+  mode?: 'create' | 'edit' | 'clone' | 'view';
+
+  /** 初始值（编辑/克隆时注入）*/
+
+  initialValues?: Record<string, unknown>;
+
+  /** 来源 ID（从列表跳转时带的上一条记录 ID）*/
+
+  sourceId?: string;
+
+  /** 预填充字段（从其他页面跳转带过来的）*/
+
+  prefillFrom?: Record<string, unknown>;
+}
+
+export interface ApsSchedulingPageProps {
+  /** 统计指标列表（可选）*/
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 时间范围自定义起点（period='custom' 时）*/
+
+  periodStart?: string;
+
+  /** 时间范围自定义终点 */
+
+  periodEnd?: string;
+
+  /** 自动刷新间隔（秒）*/
+
+  refreshIntervalSec?: number;
+}
+
+export interface ProductionCostPageProps {
+  /** 统计指标列表（可选）*/
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 时间范围自定义起点（period='custom' 时）*/
+
+  periodStart?: string;
+
+  /** 时间范围自定义终点 */
+
+  periodEnd?: string;
+
+  /** 自动刷新间隔（秒）*/
+
+  refreshIntervalSec?: number;
+}
+
+export interface EnergyManagementPageProps {
+  /** 统计指标列表（可选）*/
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 时间范围自定义起点（period='custom' 时）*/
+
+  periodStart?: string;
+
+  /** 时间范围自定义终点 */
+
+  periodEnd?: string;
+
+  /** 自动刷新间隔（秒）*/
+
+  refreshIntervalSec?: number;
+}
+
+export interface AnomalyDetectionPageProps {
+  /** 统计指标列表（可选）*/
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 时间范围自定义起点（period='custom' 时）*/
+
+  periodStart?: string;
+
+  /** 时间范围自定义终点 */
+
+  periodEnd?: string;
+
+  /** 自动刷新间隔（秒）*/
+
+  refreshIntervalSec?: number;
+}
+
+export interface MesWorkOrderPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface MesQualityPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface MesOeeDashboardPageProps {
+  /** 统计指标列表（可选）*/
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 时间范围自定义起点（period='custom' 时）*/
+
+  periodStart?: string;
+
+  /** 时间范围自定义终点 */
+
+  periodEnd?: string;
+
+  /** 自动刷新间隔（秒）*/
+
+  refreshIntervalSec?: number;
+}
+
+export interface MesDeliveryAnalyticsPageProps {
+  /** 统计指标列表（可选）*/
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 时间范围自定义起点（period='custom' 时）*/
+
+  periodStart?: string;
+
+  /** 时间范围自定义终点 */
+
+  periodEnd?: string;
+
+  /** 自动刷新间隔（秒）*/
+
+  refreshIntervalSec?: number;
+}
+
+export interface MesQualityParetoPageProps {
+  /** 统计指标列表（可选）*/
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 时间范围自定义起点（period='custom' 时）*/
+
+  periodStart?: string;
+
+  /** 时间范围自定义终点 */
+
+  periodEnd?: string;
+
+  /** 自动刷新间隔（秒）*/
+
+  refreshIntervalSec?: number;
+}
+
+export interface MesEquipmentMtbfPageProps {
+  /** 统计指标列表（可选）*/
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 时间范围自定义起点（period='custom' 时）*/
+
+  periodStart?: string;
+
+  /** 时间范围自定义终点 */
+
+  periodEnd?: string;
+
+  /** 自动刷新间隔（秒）*/
+
+  refreshIntervalSec?: number;
+}
+
+export interface MesEnergyCostPageProps {
+  /** 统计指标列表（可选）*/
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 时间范围自定义起点（period='custom' 时）*/
+
+  periodStart?: string;
+
+  /** 时间范围自定义终点 */
+
+  periodEnd?: string;
+
+  /** 自动刷新间隔（秒）*/
+
+  refreshIntervalSec?: number;
+}
+
+export interface MesCapacityUtilizationPageProps {
+  /** 统计指标列表（可选）*/
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 时间范围自定义起点（period='custom' 时）*/
+
+  periodStart?: string;
+
+  /** 时间范围自定义终点 */
+
+  periodEnd?: string;
+
+  /** 自动刷新间隔（秒）*/
+
+  refreshIntervalSec?: number;
+}
+
+export interface QualityTemplatePageProps {
+  /** 当前激活的设置 Tab key */
+
+  activeTab?: string;
+
+  /** 模块级租户 ID（多租户隔离）*/
+
+  tenantId?: string;
+
+  /** 保存后是否自动跳转 */
+
+  redirectOnSave?: string;
+}
+
+export interface BomVersionPolicyPageProps {
+  /** 当前激活的设置 Tab key */
+
+  activeTab?: string;
+
+  /** 模块级租户 ID（多租户隔离）*/
+
+  tenantId?: string;
+
+  /** 保存后是否自动跳转 */
+
+  redirectOnSave?: string;
+}
+
+export interface ApsConfigPageProps {
+  /** 当前激活的设置 Tab key */
+
+  activeTab?: string;
+
+  /** 模块级租户 ID（多租户隔离）*/
+
+  tenantId?: string;
+
+  /** 保存后是否自动跳转 */
+
+  redirectOnSave?: string;
+}
+
+export interface EquipmentThresholdPageProps {
+  /** 当前激活的设置 Tab key */
+
+  activeTab?: string;
+
+  /** 模块级租户 ID（多租户隔离）*/
+
+  tenantId?: string;
+
+  /** 保存后是否自动跳转 */
+
+  redirectOnSave?: string;
+}
 // ---- 路由配置（供路由系统使用） ----
 export const mesModuleConfig: RouteModuleConfig = {
   code: 'mes',
@@ -77,7 +927,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'overview',
       requiredPermissions: ['mes:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<ProductionDashboardPageProps>,
     {
       path: MES_PATHS.productionOrders,
       element: lazyWithRetry(
@@ -92,7 +942,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['mes:production_order:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<ProductionOrderManagementPageProps>,
     {
       path: MES_PATHS.productionOrderDetail,
       element: lazyWithRetry(
@@ -107,7 +957,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['mes:production_order:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<ProductionOrderDetailPageProps>,
     {
       path: MES_PATHS.workOrders,
       element: lazyWithRetry(() => import('@/pages/mes/WorkOrderPage'), 'WorkOrderPage'),
@@ -119,7 +969,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['mes:work_order:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<WorkOrderPageProps>,
     {
       path: MES_PATHS.equipment,
       element: lazyWithRetry(
@@ -134,7 +984,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['mes:equipment:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<EquipmentManagementPageProps>,
     {
       path: MES_PATHS.equipmentDetail,
       element: lazyWithRetry(
@@ -149,7 +999,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['mes:equipment:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<EquipmentDetailPageProps>,
     {
       path: MES_PATHS.workStations,
       element: lazyWithRetry(() => import('@/pages/mes/WorkStationPage'), 'WorkStationPage'),
@@ -161,7 +1011,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['mes:work_station:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<WorkStationPageProps>,
     {
       path: MES_PATHS.teams,
       element: lazyWithRetry(() => import('@/pages/mes/TeamManagementPage'), 'TeamManagementPage'),
@@ -173,7 +1023,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['mes:team:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<TeamManagementPageProps>,
     {
       path: MES_PATHS.materialRequirement,
       element: lazyWithRetry(
@@ -188,7 +1038,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['mes:material:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<MaterialRequirementPageProps>,
     {
       path: MES_PATHS.processRoutes,
       element: lazyWithRetry(() => import('@/pages/mes/ProcessRoutePage'), 'ProcessRoutePage'),
@@ -200,7 +1050,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['mes:process_route:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<ProcessRoutePageProps>,
     {
       path: MES_PATHS.processFlow,
       element: lazyWithRetry(() => import('@/pages/mes/ProcessFlowPage'), 'ProcessFlowPage'),
@@ -212,7 +1062,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['mes:process_flow:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<ProcessFlowPageProps>,
     {
       path: MES_PATHS.productionProcess,
       element: lazyWithRetry(
@@ -227,7 +1077,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['mes:production_process:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<ProductionProcessPageProps>,
     {
       path: MES_PATHS.productionSchedule,
       element: lazyWithRetry(
@@ -242,10 +1092,13 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['mes:production_schedule:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<ProductionSchedulePageProps>,
     {
       path: MES_PATHS.wip,
-      element: lazyWithRetry(() => import('@/pages/mes/WIPPage'), 'WIPPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mes/WIPPage') as Promise<{ default: any }>,
+        'WIPPage'
+      ),
       module: 'mes',
       code: 'mes-wip',
       title: i18n.t('shared.config.k15'),
@@ -254,7 +1107,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['mes:wip:read'],
       action: 'read',
-    },
+    } as unknown as RouteConfigV2<WIPPageProps>,
     {
       path: MES_PATHS.qualityInspection,
       element: lazyWithRetry(
@@ -269,7 +1122,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['mes:quality:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QualityInspectionPageProps>,
     {
       path: MES_PATHS.traceability,
       element: lazyWithRetry(
@@ -284,7 +1137,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['mes:traceability:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QualityTraceabilityPageProps>,
     {
       path: MES_PATHS.productionKanban,
       element: lazyWithRetry(
@@ -299,7 +1152,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['mes:kanban:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<ProductionKanbanPageProps>,
     {
       path: MES_PATHS.productionRecord,
       element: lazyWithRetry(
@@ -314,7 +1167,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['mes:production_record:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<ProductionRecordPageProps>,
     {
       path: MES_PATHS.workReport,
       element: lazyWithRetry(() => import('@/pages/mes/WorkReportPage'), 'WorkReportPage'),
@@ -326,7 +1179,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['mes:work_report:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<WorkReportPageProps>,
     {
       path: MES_PATHS.equipmentOee,
       element: lazyWithRetry(() => import('@/pages/mes/EquipmentOEEPage'), 'EquipmentOEEPage'),
@@ -338,7 +1191,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['mes:oee:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<EquipmentOEEPageProps>,
     {
       path: MES_PATHS.materialBom,
       element: lazyWithRetry(() => import('@/pages/mes/MaterialBOMPage'), 'MaterialBOMPage'),
@@ -350,7 +1203,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['mes:material:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<MaterialBOMPageProps>,
     {
       path: MES_PATHS.materialIssue,
       element: lazyWithRetry(() => import('@/pages/mes/MaterialIssuePage'), 'MaterialIssuePage'),
@@ -362,7 +1215,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['mes:material:update'],
       action: 'update',
-    },
+    } as RouteConfigV2<MaterialIssuePageProps>,
     {
       path: MES_PATHS.materialReturn,
       element: lazyWithRetry(() => import('@/pages/mes/MaterialReturnPage'), 'MaterialReturnPage'),
@@ -374,7 +1227,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['mes:material:update'],
       action: 'update',
-    },
+    } as RouteConfigV2<MaterialReturnPageProps>,
     {
       path: MES_PATHS.productionDashboard,
       element: lazyWithRetry(
@@ -389,7 +1242,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['mes:production_dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<ProductionDashboardPageProps>,
     {
       path: MES_PATHS.apsScheduling,
       element: lazyWithRetry(() => import('@/pages/mes/ApsSchedulingPage'), 'ApsSchedulingPage'),
@@ -401,7 +1254,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['mes:production_schedule:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<ApsSchedulingPageProps>,
     {
       path: MES_PATHS.productionCost,
       element: lazyWithRetry(() => import('@/pages/mes/ProductionCostPage'), 'ProductionCostPage'),
@@ -413,7 +1266,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['mes:production_cost:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<ProductionCostPageProps>,
     {
       path: MES_PATHS.energyManagement,
       element: lazyWithRetry(
@@ -428,7 +1281,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['mes:energy_management:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<EnergyManagementPageProps>,
     {
       path: MES_PATHS.anomalyDetection,
       element: lazyWithRetry(
@@ -443,7 +1296,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['mes:anomaly_detection:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<AnomalyDetectionPageProps>,
     {
       path: MES_PATHS.workOrder,
       element: lazyWithRetry(() => import('@/pages/mes/MesWorkOrderPage'), 'MesWorkOrderPage'),
@@ -455,7 +1308,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['mes:work_order:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<MesWorkOrderPageProps>,
     {
       path: MES_PATHS.quality,
       element: lazyWithRetry(() => import('@/pages/mes/MesQualityPage'), 'MesQualityPage'),
@@ -467,7 +1320,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['mes:quality:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<MesQualityPageProps>,
     {
       path: MES_PATHS.analyticsOee,
       element: lazyWithRetry(
@@ -482,7 +1335,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['mes:analytics:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<MesOeeDashboardPageProps>,
     {
       path: MES_PATHS.analyticsDelivery,
       element: lazyWithRetry(
@@ -497,7 +1350,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['mes:analytics:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<MesDeliveryAnalyticsPageProps>,
     {
       path: MES_PATHS.analyticsQualityPareto,
       element: lazyWithRetry(
@@ -512,7 +1365,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['mes:analytics:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<MesQualityParetoPageProps>,
     {
       path: MES_PATHS.analyticsMtbf,
       element: lazyWithRetry(
@@ -527,7 +1380,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['mes:analytics:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<MesEquipmentMtbfPageProps>,
     {
       path: MES_PATHS.analyticsEnergy,
       element: lazyWithRetry(
@@ -542,7 +1395,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['mes:analytics:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<MesEnergyCostPageProps>,
     {
       path: MES_PATHS.analyticsCapacity,
       element: lazyWithRetry(
@@ -557,7 +1410,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['mes:analytics:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<MesCapacityUtilizationPageProps>,
     {
       path: MES_PATHS.settingQualityTemplate,
       element: lazyWithRetry(
@@ -572,7 +1425,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'setting',
       requiredPermissions: ['mes:quality_template:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QualityTemplatePageProps>,
     {
       path: MES_PATHS.settingBomVersionPolicy,
       element: lazyWithRetry(
@@ -587,7 +1440,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'setting',
       requiredPermissions: ['mes:bom_version_policy:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<BomVersionPolicyPageProps>,
     {
       path: MES_PATHS.settingApsConfig,
       element: lazyWithRetry(() => import('@/pages/mes/setting/ApsConfigPage'), 'ApsConfigPage'),
@@ -599,7 +1452,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'setting',
       requiredPermissions: ['mes:aps_config:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<ApsConfigPageProps>,
     {
       path: MES_PATHS.settingEquipmentThreshold,
       element: lazyWithRetry(
@@ -614,8 +1467,8 @@ export const mesModuleConfig: RouteModuleConfig = {
       group: 'setting',
       requiredPermissions: ['mes:equipment_threshold:read'],
       action: 'read',
-    },
-  ],
+    } as RouteConfigV2<EquipmentThresholdPageProps>,
+  ] as RouteConfigV2<Record<string, unknown>>[],
 };
 
 // ---- 导航配置（供导航注册表使用） ----
