@@ -150,6 +150,7 @@ async fn sum_overdue_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Uu
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/accounts",
     tag = "Accounting",
     request_body = CreateAccountRequest,
@@ -173,6 +174,7 @@ async fn create_account(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/get_account/{id}",
     tag = "Finance",
     operation_id = "get_account",
@@ -195,6 +197,7 @@ pub async fn get_account(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/get_account_by_code/{id}",
     tag = "Finance",
     operation_id = "get_account_by_code",
@@ -217,6 +220,7 @@ pub async fn get_account_by_code(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/accounts/balances",
     tag = "Accounting",
     responses(
@@ -249,6 +253,7 @@ async fn get_account_balances(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/list_accounts",
     tag = "Finance",
     operation_id = "list_accounts",
@@ -271,6 +276,7 @@ pub async fn list_accounts(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/create_voucher",
     tag = "Finance",
     operation_id = "create_voucher",
@@ -294,6 +300,7 @@ pub async fn create_voucher(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/get_voucher/{id}",
     tag = "Finance",
     operation_id = "get_voucher",
@@ -316,6 +323,7 @@ pub async fn get_voucher(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/vouchers",
     tag = "Voucher",
     params(VoucherQueryParams),
@@ -352,6 +360,7 @@ async fn list_vouchers(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/submit_voucher",
     tag = "Finance",
     operation_id = "submit_voucher",
@@ -374,6 +383,7 @@ pub async fn submit_voucher(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/approve_voucher",
     tag = "Finance",
     operation_id = "approve_voucher",
@@ -400,6 +410,7 @@ pub async fn approve_voucher(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/post_voucher",
     tag = "Finance",
     operation_id = "post_voucher",
@@ -426,6 +437,7 @@ pub async fn post_voucher(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/vouchers/{id}",
     tag = "Voucher",
     params(
@@ -459,6 +471,7 @@ async fn update_voucher(
 /// V39.0 Phase 7: 删除凭证
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/finance/delete_voucher/{id}",
     tag = "Finance",
     operation_id = "delete_voucher",
@@ -482,6 +495,7 @@ pub async fn delete_voucher(
 /// V39.0 Phase 7: 反过账凭证
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/unpost_voucher",
     tag = "Finance",
     operation_id = "unpost_voucher",
@@ -504,6 +518,7 @@ pub async fn unpost_voucher(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/get_ledger/{id}",
     tag = "Finance",
     operation_id = "get_ledger",
@@ -534,6 +549,7 @@ pub async fn get_ledger(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/trial-balance/{period}",
     tag = "Report",
     params(
@@ -559,6 +575,7 @@ async fn get_trial_balance(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/balance-sheet/{period}",
     tag = "Report",
     operation_id = "get_balance_sheet",
@@ -581,6 +598,7 @@ async fn get_balance_sheet(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/income-statement/{period}",
     tag = "Report",
     operation_id = "get_income_statement",
@@ -603,6 +621,7 @@ async fn get_income_statement(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/period",
     tag = "Finance",
     operation_id = "close_period",
@@ -628,6 +647,7 @@ async fn close_period(
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/periods/{year}/{month}/open",
     responses(
         (status = 200, description = "成功"),
@@ -660,6 +680,7 @@ async fn open_period(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/aux_account",
     tag = "Finance",
     operation_id = "create_aux_account",
@@ -682,6 +703,7 @@ async fn create_aux_account(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/aux_accounts",
     tag = "Finance",
     operation_id = "list_aux_accounts",
@@ -714,6 +736,7 @@ async fn list_aux_accounts(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/aux-ledger",
     responses(
         (status = 200, description = "成功"),
@@ -763,6 +786,7 @@ async fn get_aux_ledger(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/aux_balance/{id}",
     tag = "Finance",
     operation_id = "get_aux_balance",
@@ -804,6 +828,7 @@ async fn get_aux_balance(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/cash-flow/{period}",
     tag = "Report",
     params(
@@ -829,6 +854,7 @@ async fn get_cash_flow(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/batch_submit_vouchers",
     tag = "Finance",
     operation_id = "batch_submit_vouchers",
@@ -854,6 +880,7 @@ pub async fn batch_submit_vouchers(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/batch_approve_vouchers",
     tag = "Finance",
     operation_id = "batch_approve_vouchers",
@@ -880,6 +907,7 @@ pub async fn batch_approve_vouchers(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/batch_post_vouchers",
     tag = "Finance",
     operation_id = "batch_post_vouchers",
@@ -906,6 +934,7 @@ pub async fn batch_post_vouchers(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/vouchers/export",
     tag = "Voucher",
     request_body = ExportVoucherRequest,
@@ -929,6 +958,7 @@ async fn export_vouchers(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/year_end_close",
     tag = "Finance",
     operation_id = "year_end_close",
@@ -955,6 +985,7 @@ async fn year_end_close(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/create_payment",
     tag = "Finance",
     operation_id = "create_payment_handler",
@@ -1013,6 +1044,7 @@ pub async fn create_payment_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/payments/{id}",
     tag = "Payment",
     params(("payment_id" = Uuid, Path, description = "付款单ID")),
@@ -1043,6 +1075,7 @@ pub struct PaymentListParams {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/payments",
     tag = "Payment",
     operation_id = "list_payments_handler",
@@ -1083,6 +1116,7 @@ pub async fn list_payments_handler(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance/update_payment",
     tag = "Finance",
     operation_id = "update_payment_handler",
@@ -1110,6 +1144,7 @@ pub async fn update_payment_handler(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/payments/{id}",
     tag = "Payment",
     params(("payment_id" = Uuid, Path, description = "付款单ID")),
@@ -1134,6 +1169,7 @@ pub async fn delete_payment_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/submit_payment",
     tag = "Finance",
     operation_id = "submit_payment_handler",
@@ -1166,6 +1202,7 @@ pub async fn submit_payment_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/approve_payment",
     tag = "Finance",
     operation_id = "approve_payment_handler",
@@ -1201,6 +1238,7 @@ pub async fn approve_payment_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/payments/{id}/reject",
     tag = "Payment",
     params(("payment_id" = Uuid, Path, description = "付款单ID")),
@@ -1238,6 +1276,7 @@ pub async fn reject_payment_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/execute_payment",
     tag = "Finance",
     operation_id = "execute_payment_handler",
@@ -1272,6 +1311,7 @@ pub struct WriteOffRequest {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/write_off_payment_item",
     tag = "Finance",
     operation_id = "write_off_payment_item_handler",
@@ -1299,6 +1339,7 @@ pub async fn write_off_payment_item_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/payments/export",
     tag = "Payment",
     request_body = ExportPaymentRequest,
@@ -1323,6 +1364,7 @@ pub async fn export_payments_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/list_approval_configs",
     tag = "Finance",
     operation_id = "list_approval_configs_handler",
@@ -1349,6 +1391,7 @@ pub async fn list_approval_configs_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/create_approval_config",
     tag = "Finance",
     operation_id = "create_approval_config_handler",
@@ -1380,6 +1423,7 @@ pub async fn create_approval_config_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/get_approval_config",
     tag = "Finance",
     operation_id = "get_approval_config_handler",
@@ -1407,6 +1451,7 @@ pub async fn get_approval_config_handler(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/approval-configs/{id}",
     tag = "Approval Config",
     params(("config_id" = Uuid, Path, description = "审批配置ID")),
@@ -1443,6 +1488,7 @@ pub async fn update_approval_config_handler(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/finance/delete_approval_config",
     tag = "Finance",
     operation_id = "delete_approval_config_handler",
@@ -1472,6 +1518,7 @@ pub async fn delete_approval_config_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/approval",
     tag = "Finance",
     operation_id = "submit_approval",
@@ -1492,6 +1539,7 @@ async fn submit_approval(
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/approvals/approve",
     responses(
         (status = 200, description = "成功"),
@@ -1519,6 +1567,7 @@ async fn approve_approval(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/finance/approval/{id}",
     tag = "Finance",
     operation_id = "reject_approval",
@@ -1540,6 +1589,7 @@ async fn reject_approval(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/finance/cancel_approval/{id}",
     tag = "Finance",
     operation_id = "cancel_approval",
@@ -1577,6 +1627,7 @@ pub struct FinanceDashboardStats {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/get_dashboard",
     tag = "Finance",
     operation_id = "get_dashboard_handler",
@@ -1642,6 +1693,7 @@ pub struct VoucherTemplateQueryParams {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/voucher-templates",
     tag = "Voucher Template",
     params(VoucherTemplateQueryParams),
@@ -1674,6 +1726,7 @@ async fn list_voucher_templates_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/get_voucher_template/{id}",
     tag = "Finance",
     operation_id = "get_voucher_template_handler",
@@ -1699,6 +1752,7 @@ pub async fn get_voucher_template_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/create_voucher_template",
     tag = "Finance",
     operation_id = "create_voucher_template_handler",
@@ -1733,6 +1787,7 @@ pub async fn create_voucher_template_handler(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/voucher-templates/{templateId}",
     tag = "Voucher Template",
     params(("templateId" = Uuid, Path, description = "模板ID")),
@@ -1771,6 +1826,7 @@ async fn update_voucher_template_handler(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/finance/delete_voucher_template",
     tag = "Finance",
     operation_id = "delete_voucher_template_handler",
@@ -1796,6 +1852,7 @@ pub async fn delete_voucher_template_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/set_default_template",
     tag = "Finance",
     operation_id = "set_default_template_handler",
@@ -1820,6 +1877,7 @@ pub async fn set_default_template_handler(
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/voucher-templates/apply",
     responses(
         (status = 200, description = "成功"),
@@ -2384,6 +2442,7 @@ pub struct GenerationRuleQueryParams {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/voucher-generation-rules",
     tag = "Voucher Generation Rule",
     params(GenerationRuleQueryParams),
@@ -2416,6 +2475,7 @@ pub async fn list_generation_rules_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/get_generation_rule",
     tag = "Finance",
     operation_id = "get_generation_rule_handler",
@@ -2441,6 +2501,7 @@ pub async fn get_generation_rule_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/create_generation_rule",
     tag = "Finance",
     operation_id = "create_generation_rule_handler",
@@ -2475,6 +2536,7 @@ pub async fn create_generation_rule_handler(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/voucher-generation-rules/{ruleId}",
     tag = "Voucher Generation Rule",
     params(("ruleId" = Uuid, Path, description = "生成规则ID")),
@@ -2513,6 +2575,7 @@ pub async fn update_generation_rule_handler(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/finance/delete_generation_rule",
     tag = "Finance",
     operation_id = "delete_generation_rule_handler",
@@ -2540,6 +2603,7 @@ pub struct ToggleRuleRequest {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/toggle_generation_rule",
     tag = "Finance",
     operation_id = "toggle_generation_rule_handler",
@@ -2596,6 +2660,7 @@ pub async fn toggle_generation_rule_handler(
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/voucher-generation-rules/test",
     responses(
         (status = 200, description = "成功"),
@@ -2632,6 +2697,7 @@ async fn test_rule_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/vouchers",
     tag = "Finance",
     operation_id = "generate_vouchers_handler",
@@ -2673,6 +2739,7 @@ pub struct U8ImportQueryParams {
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/u8-import/import",
     responses(
         (status = 200, description = "成功"),
@@ -2710,6 +2777,7 @@ async fn import_vouchers_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/import_status",
     tag = "Finance",
     operation_id = "get_import_status_handler",
@@ -2735,6 +2803,7 @@ async fn get_import_status_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/import_records",
     tag = "Finance",
     operation_id = "list_import_records_handler",
@@ -2768,6 +2837,7 @@ async fn list_import_records_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/u8-import/records/{import_id}",
     responses(
         (status = 200, description = "成功"),
@@ -2801,6 +2871,7 @@ async fn get_import_record_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/import",
     tag = "Finance",
     operation_id = "rollback_import_handler",
@@ -2833,6 +2904,7 @@ pub struct ReceivableQueryParams {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/list_receivables",
     tag = "Finance",
     operation_id = "list_receivables_handler",
@@ -2920,6 +2992,7 @@ async fn delete_receivable_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/receivables/aging",
     responses(
         (status = 200, description = "成功"),
@@ -2946,6 +3019,7 @@ async fn get_receivable_aging_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/batch_create_receivables",
     tag = "Finance",
     operation_id = "batch_create_receivables_handler",
@@ -2987,6 +3061,7 @@ pub struct PayableQueryParams {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/payables",
     tag = "Payable",
     operation_id = "list_payables_handler",
@@ -3071,6 +3146,7 @@ async fn delete_payable_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/payables/aging",
     responses(
         (status = 200, description = "成功"),
@@ -3097,6 +3173,7 @@ async fn get_payable_aging_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/payables/batch",
     tag = "Payable",
     operation_id = "batch_create_payables_handler",
@@ -3138,6 +3215,7 @@ pub struct CollectionQueryParams {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/collections",
     tag = "Finance",
     operation_id = "list_collections_handler",
@@ -3168,6 +3246,7 @@ pub async fn list_collections_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/collections/{collection_id}",
     responses(
         (status = 200, description = "成功"),
@@ -3198,6 +3277,7 @@ async fn get_collection_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/collection",
     tag = "Finance",
     operation_id = "create_collection_handler",
@@ -3221,6 +3301,7 @@ pub async fn create_collection_handler(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance/collection/{id}",
     tag = "Finance",
     operation_id = "update_collection_handler",
@@ -3247,6 +3328,7 @@ async fn update_collection_handler(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/finance/collection/{id}",
     tag = "Finance",
     operation_id = "delete_collection_handler",
@@ -3268,6 +3350,7 @@ async fn delete_collection_handler(
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/collections/write-off",
     responses(
         (status = 200, description = "成功"),
@@ -3317,6 +3400,7 @@ async fn write_off_collection_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/batch_write_off_collections",
     tag = "Finance",
     operation_id = "batch_write_off_collections_handler",
@@ -3354,6 +3438,7 @@ pub struct PaymentRecordQueryParams {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/ap/payments",
     params(PaymentRecordQueryParams),
     responses(
@@ -3390,6 +3475,7 @@ pub async fn list_payment_records_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/payment_record/{id}",
     tag = "Finance",
     operation_id = "get_payment_record_handler",
@@ -3412,6 +3498,7 @@ async fn get_payment_record_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/create_payment_record",
     tag = "Finance",
     operation_id = "create_payment_record_handler",
@@ -3438,6 +3525,7 @@ pub async fn create_payment_record_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/approve_payment_record",
     tag = "Finance",
     operation_id = "approve_payment_record_handler",
@@ -3467,6 +3555,7 @@ pub async fn approve_payment_record_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/ap/payments/{id}/reject",
     tag = "Payment",
     params(("id" = Uuid, Path, description = "应付付款记录ID")),
@@ -3498,6 +3587,7 @@ pub async fn reject_payment_record_handler(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance/payment_record/{id}",
     tag = "Finance",
     operation_id = "update_payment_record_handler",
@@ -3524,6 +3614,7 @@ async fn update_payment_record_handler(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/finance/payment_record/{id}",
     tag = "Finance",
     operation_id = "delete_payment_record_handler",
@@ -3546,6 +3637,7 @@ async fn delete_payment_record_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/write_off_payment_record",
     tag = "Finance",
     operation_id = "write_off_payment_record_handler",
@@ -3577,6 +3669,7 @@ async fn write_off_payment_record_handler(
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/payment-records/batch-write-off",
     responses(
         (status = 200, description = "成功"),
@@ -3619,6 +3712,7 @@ pub struct AgingQueryParams {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/calculate_receivable_aging",
     tag = "Finance",
     operation_id = "calculate_receivable_aging_handler",
@@ -3640,6 +3734,7 @@ async fn calculate_receivable_aging_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/calculate_payable_aging",
     tag = "Finance",
     operation_id = "calculate_payable_aging_handler",
@@ -3661,6 +3756,7 @@ async fn calculate_payable_aging_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/aging_summary",
     tag = "Finance",
     operation_id = "get_aging_summary_handler",
@@ -3681,6 +3777,7 @@ async fn get_aging_summary_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/aging/detail",
     responses(
         (status = 200, description = "成功"),
@@ -3715,6 +3812,7 @@ async fn get_aging_detail_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/aging_trend",
     tag = "Finance",
     operation_id = "get_aging_trend_handler",
@@ -3802,6 +3900,7 @@ pub struct ArAgingQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/vouchers/{id}/entries",
     tag = "Voucher",
     params(("id" = Uuid, Path, description = "凭证ID")),
@@ -3850,6 +3949,7 @@ pub async fn get_voucher_entries(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/voucher_items",
     tag = "Finance",
     operation_id = "get_voucher_items",
@@ -3898,6 +3998,7 @@ pub async fn get_voucher_items(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/vouchers/batch",
     tag = "Voucher",
     request_body = BatchCreateVouchersRequest,
@@ -3929,6 +4030,7 @@ pub async fn batch_create_vouchers(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/batch_delete_vouchers",
     tag = "Finance",
     operation_id = "batch_delete_vouchers",
@@ -3964,6 +4066,7 @@ pub async fn batch_delete_vouchers(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/voucher",
     tag = "Finance",
     operation_id = "unapprove_voucher",
@@ -3999,6 +4102,7 @@ pub async fn unapprove_voucher(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/vouchers/{id}/reverse",
     tag = "Voucher",
     params(("id" = Uuid, Path, description = "凭证ID")),
@@ -4040,6 +4144,7 @@ pub async fn reverse_voucher(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/next_voucher_no/{id}",
     tag = "Finance",
     operation_id = "get_next_voucher_no",
@@ -4072,6 +4177,7 @@ pub async fn get_next_voucher_no(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/voucher_by_template",
     tag = "Finance",
     operation_id = "generate_voucher_by_template",
@@ -4109,6 +4215,7 @@ pub async fn generate_voucher_by_template(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/vouchers/import",
     tag = "Voucher",
     responses(
@@ -4140,6 +4247,7 @@ pub async fn import_vouchers_general(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/vouchers_u8",
     tag = "Finance",
     operation_id = "import_vouchers_u8",
@@ -4171,6 +4279,7 @@ pub async fn import_vouchers_u8(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/current_period/{id}",
     tag = "Finance",
     operation_id = "get_current_period",
@@ -4195,6 +4304,7 @@ pub async fn get_current_period(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/periods",
     tag = "Finance",
     operation_id = "list_periods",
@@ -4236,6 +4346,7 @@ pub async fn list_periods(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/periods/open",
     tag = "Finance",
     request_body = PeriodActionRequest,
@@ -4267,6 +4378,7 @@ pub async fn open_period_v2(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/period_v2",
     tag = "Finance",
     operation_id = "close_period_v2",
@@ -4303,6 +4415,7 @@ pub async fn close_period_v2(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/income_period",
     tag = "Finance",
     operation_id = "close_income_period",
@@ -4325,6 +4438,7 @@ pub async fn close_income_period(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/periods/year-end-close",
     tag = "Finance",
     request_body = PeriodActionRequest,
@@ -4353,6 +4467,7 @@ pub async fn year_end_close_v2(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/reconcile",
     tag = "Finance",
     operation_id = "reconcile_handler",
@@ -4378,6 +4493,7 @@ pub async fn reconcile_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/reconcile",
     tag = "Finance",
     operation_id = "auto_reconcile_handler",
@@ -4403,6 +4519,7 @@ pub async fn auto_reconcile_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/ar_aging/{id}",
     tag = "Finance",
     operation_id = "get_ar_aging",
@@ -4425,6 +4542,7 @@ pub async fn get_ar_aging(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/ap/aging",
     tag = "Payable",
     params(ArAgingQuery),
@@ -4450,6 +4568,7 @@ pub async fn get_ap_aging(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/account_tree/{id}",
     tag = "Finance",
     operation_id = "get_account_tree",
@@ -4499,6 +4618,7 @@ pub async fn get_account_tree(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance/account/{id}",
     tag = "Finance",
     operation_id = "update_account",
@@ -4517,6 +4637,7 @@ pub async fn update_account(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/accounts/{id}",
     tag = "Accounting",
     params(("id" = Uuid, Path, description = "科目ID")),
@@ -4535,6 +4656,7 @@ pub async fn delete_account(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/batch_create_account_children",
     tag = "Finance",
     operation_id = "batch_create_account_children",
@@ -4553,6 +4675,7 @@ pub async fn batch_create_account_children(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/opening_balances",
     tag = "Finance",
     operation_id = "get_opening_balances",
@@ -4573,6 +4696,7 @@ pub async fn get_opening_balances(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/opening_balance",
     tag = "Finance",
     operation_id = "set_opening_balance",
@@ -4591,6 +4715,7 @@ pub async fn set_opening_balance(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/opening_balance",
     tag = "Finance",
     operation_id = "carry_forward_opening_balance",
@@ -4610,6 +4735,7 @@ pub async fn carry_forward_opening_balance(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/counterparty_customers",
     tag = "Finance",
     operation_id = "list_counterparty_customers",
@@ -4630,6 +4756,7 @@ pub async fn list_counterparty_customers(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/counterparty_customer/{id}",
     tag = "Finance",
     operation_id = "get_counterparty_customer",
@@ -4650,6 +4777,7 @@ pub async fn get_counterparty_customer(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/counterparty/customers/{customerId}",
     tag = "Counterparty",
     params(("customerId" = String, Path, description = "客户ID")),
@@ -4673,6 +4801,7 @@ pub async fn update_counterparty_customer(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/counterparty_suppliers",
     tag = "Finance",
     operation_id = "list_counterparty_suppliers",
@@ -4693,6 +4822,7 @@ pub async fn list_counterparty_suppliers(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/counterparty_supplier/{id}",
     tag = "Finance",
     operation_id = "get_counterparty_supplier",
@@ -4713,6 +4843,7 @@ pub async fn get_counterparty_supplier(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance/counterparty_supplier/{id}",
     tag = "Finance",
     operation_id = "update_counterparty_supplier",
@@ -4736,6 +4867,7 @@ pub async fn update_counterparty_supplier(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/expense_approvals",
     tag = "Finance",
     operation_id = "list_expense_approvals",
@@ -4756,6 +4888,7 @@ pub async fn list_expense_approvals(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/expense-approvals",
     tag = "Expense Approval",
     request_body = serde_json::Value,
@@ -4774,6 +4907,7 @@ pub async fn create_expense_approval(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/expense_approval/{id}",
     tag = "Finance",
     operation_id = "get_expense_approval",
@@ -4794,6 +4928,7 @@ pub async fn get_expense_approval(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance/expense_approval/{id}",
     tag = "Finance",
     operation_id = "update_expense_approval",
@@ -4815,6 +4950,7 @@ pub async fn update_expense_approval(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/finance/expense_approval/{id}",
     tag = "Finance",
     operation_id = "delete_expense_approval",
@@ -4832,6 +4968,7 @@ pub async fn delete_expense_approval(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/expense_approval",
     tag = "Finance",
     operation_id = "submit_expense_approval",
@@ -4852,6 +4989,7 @@ pub async fn submit_expense_approval(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/expense_approval",
     tag = "Finance",
     operation_id = "approve_expense_approval",
@@ -4872,6 +5010,7 @@ pub async fn approve_expense_approval(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/expense-approvals/{id}/reject",
     tag = "Expense Approval",
     params(("id" = String, Path, description = "费用审批ID")),
@@ -4897,6 +5036,7 @@ pub async fn reject_expense_approval(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/account_balance_report/{id}",
     tag = "Finance",
     operation_id = "get_account_balance_report",
@@ -4917,6 +5057,7 @@ pub async fn get_account_balance_report(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/account_ledger_report/{id}",
     tag = "Finance",
     operation_id = "get_account_ledger_report",
@@ -4937,6 +5078,7 @@ pub async fn get_account_ledger_report(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/dimension_detail_report/{id}",
     tag = "Finance",
     operation_id = "get_dimension_detail_report",
@@ -4957,6 +5099,7 @@ pub async fn get_dimension_detail_report(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/balance_sheet_report",
     tag = "Finance",
     operation_id = "export_balance_sheet_report",
@@ -4977,6 +5120,7 @@ pub async fn export_balance_sheet_report(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/reports/income-statement/export",
     tag = "Report",
     params(
@@ -5001,6 +5145,7 @@ pub async fn export_income_statement_report(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/cash_flow_report",
     tag = "Finance",
     operation_id = "export_cash_flow_report",

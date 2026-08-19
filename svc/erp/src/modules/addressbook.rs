@@ -182,6 +182,7 @@ fn build_node(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/addressbook/fetch-entries-by-type",
     tag = "Addressbook",
     operation_id = "fetch_entries_by_type",
@@ -254,6 +255,7 @@ pub async fn fetch_entries_by_type(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/addressbook",
     responses(
         (status = 200, description = "get_contacts OK")
@@ -305,6 +307,7 @@ pub async fn get_contacts(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/addressbook/{id}",
     params(
         ("id" = String, Path, description = "id")
@@ -417,6 +420,7 @@ pub struct ContactDetailParams {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/addressbook/search",
     responses(
         (status = 200, description = "search_contacts OK")
@@ -453,6 +457,7 @@ pub async fn search_contacts(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/addressbook/departments/tree",
     responses(
         (status = 200, description = "get_department_tree OK")
@@ -480,6 +485,7 @@ pub async fn get_department_tree(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/addressbook/export",
     responses(
         (status = 200, description = "export_contacts OK")

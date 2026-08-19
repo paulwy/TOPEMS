@@ -121,6 +121,7 @@ pub struct RunComparisonResponse {
 /// GET /api/bi/comparison-analysis
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/comparison-analysis",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -227,6 +228,7 @@ pub async fn list_comparisons(
 /// GET /api/bi/comparison-analysis/{id}
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/comparison-analysis/{id}",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -298,6 +300,7 @@ pub async fn get_comparison(
 /// POST /api/bi/comparison-analysis
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/comparison-analysis",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -365,6 +368,7 @@ pub async fn create_comparison(
 /// PUT /api/bi/comparison-analysis/{id}
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["analytics:update"])),
     path = "/api/bi/comparison-analysis/{id}",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -452,6 +456,7 @@ pub async fn update_comparison(
 /// DELETE /api/bi/comparison-analysis/{id}
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["analytics:delete"])),
     path = "/api/bi/comparison-analysis/{id}",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -507,6 +512,7 @@ pub async fn delete_comparison(
 /// updated to `completed` with a fresh `last_run_at` timestamp.
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/comparison-analysis/{id}/run",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -669,6 +675,7 @@ pub async fn run_comparison(
 /// GET /api/bi/comparison-analysis/{id}/result
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/comparison-analysis/{id}/result",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))

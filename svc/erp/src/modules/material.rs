@@ -35,6 +35,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/materials",
     tag = "ERP",
     params(
@@ -131,6 +132,7 @@ pub async fn list_materials(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/materials/{id}",
     tag = "ERP",
     params(("id" = Uuid, Path, description = "物料ID")),
@@ -164,6 +166,7 @@ pub async fn get_material(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/materials",
     tag = "ERP",
     request_body = CreateMaterialRequest,
@@ -213,6 +216,7 @@ pub async fn create_material(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/materials/{id}",
     tag = "ERP",
     params(("id" = Uuid, Path, description = "物料ID")),
@@ -260,6 +264,7 @@ pub async fn update_material(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/materials/{id}",
     tag = "ERP",
     params(("id" = Uuid, Path, description = "物料ID")),

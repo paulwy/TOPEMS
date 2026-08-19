@@ -713,6 +713,7 @@ pub struct ArchiveStats {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/mdm-v49/list-lifecycle-entities",
     tag = "MdmV49",
     operation_id = "list_lifecycle_entities",
@@ -783,6 +784,7 @@ pub async fn list_lifecycle_entities(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/api/erp/mdm-v49/lifecycle/entities/{master_data_id}",
     tag = "Master Data",
     operation_id = "get_lifecycle_entity",
@@ -803,6 +805,7 @@ pub async fn get_lifecycle_entity(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/api/erp/mdm-v49/lifecycle/entities",
     tag = "Master Data",
     operation_id = "create_lifecycle_entity",
@@ -885,6 +888,7 @@ pub async fn create_lifecycle_entity(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/api/erp/mdm-v49/lifecycle/entities/{master_data_id}",
     tag = "Master Data",
     operation_id = "transition_lifecycle_stage",
@@ -942,6 +946,7 @@ pub async fn transition_lifecycle_stage(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/api/erp/mdm-v49/lifecycle/entities/{master_data_id}/tasks/{task_id}",
     tag = "Master Data",
     operation_id = "update_lifecycle_task",
@@ -994,6 +999,7 @@ pub async fn update_lifecycle_task(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/api/erp/mdm-v49/lifecycle/entities/{master_data_id}/events",
     tag = "Master Data",
     operation_id = "get_lifecycle_events",
@@ -1018,6 +1024,7 @@ pub async fn get_lifecycle_events(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/api/erp/mdm-v49/retirement/plans",
     tag = "Master Data",
     operation_id = "create_retirement_plan",
@@ -1074,6 +1081,7 @@ pub async fn create_retirement_plan(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/mdm-v49/list-retirement-plans",
     tag = "MdmV49",
     operation_id = "list_retirement_plans",
@@ -1164,6 +1172,7 @@ impl RetirementStatus {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/api/erp/mdm-v49/retirement/plans/{plan_id}",
     tag = "Master Data",
     operation_id = "get_retirement_plan",
@@ -1184,6 +1193,7 @@ pub async fn get_retirement_plan(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/api/erp/mdm-v49/retirement/plans/{plan_id}/assess",
     tag = "Master Data",
     operation_id = "assess_impact",
@@ -1244,6 +1254,7 @@ pub async fn assess_impact(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/api/erp/mdm-v49/retirement/plans/{plan_id}/notify",
     tag = "Master Data",
     operation_id = "notify_stakeholders",
@@ -1271,6 +1282,7 @@ pub async fn notify_stakeholders(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/api/erp/mdm-v49/retirement/plans/{plan_id}/confirm",
     tag = "Master Data",
     operation_id = "confirm_retirement_plan",
@@ -1297,6 +1309,7 @@ pub async fn confirm_retirement_plan(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/mdm-v49/execute-retirement-plan",
     tag = "MdmV49",
     operation_id = "execute_retirement_plan",
@@ -1347,6 +1360,7 @@ pub async fn execute_retirement_plan(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/mdm-v49/rollback-retirement-plan",
     tag = "MdmV49",
     operation_id = "rollback_retirement_plan",
@@ -1398,6 +1412,7 @@ pub async fn rollback_retirement_plan(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/mdm-v49/cancel-retirement-plan",
     tag = "MdmV49",
     operation_id = "cancel_retirement_plan",
@@ -1428,6 +1443,7 @@ pub async fn cancel_retirement_plan(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/mdm-v49/list-archive-policies",
     tag = "MdmV49",
     operation_id = "list_archive_policies",
@@ -1501,6 +1517,7 @@ pub struct ArchivePolicyQuery {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/mdm-v49/create-archive-policy",
     tag = "MdmV49",
     operation_id = "create_archive_policy",
@@ -1550,6 +1567,7 @@ pub async fn create_archive_policy(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/mdm-v49/get-archive-policy",
     tag = "MdmV49",
     operation_id = "get_archive_policy",
@@ -1572,6 +1590,7 @@ pub async fn get_archive_policy(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/mdm-v49/update-archive-policy",
     tag = "MdmV49",
     operation_id = "update_archive_policy",
@@ -1623,6 +1642,7 @@ pub async fn update_archive_policy(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/mdm-v49/delete-archive-policy",
     tag = "MdmV49",
     operation_id = "delete_archive_policy",
@@ -1649,6 +1669,7 @@ pub async fn delete_archive_policy(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/mdm-v49/run-archive",
     tag = "MdmV49",
     operation_id = "run_archive",
@@ -1780,6 +1801,7 @@ pub async fn run_archive(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/mdm-v49/list-archive-records",
     tag = "MdmV49",
     operation_id = "list_archive_records",
@@ -1858,6 +1880,7 @@ pub async fn list_archive_records(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/mdm-v49/get-archive-record",
     tag = "MdmV49",
     operation_id = "get_archive_record",
@@ -1880,6 +1903,7 @@ pub async fn get_archive_record(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/mdm-v49/restore-archive-record",
     tag = "MdmV49",
     operation_id = "restore_archive_record",
@@ -1948,6 +1972,7 @@ pub async fn restore_archive_record(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/mdm-v49/get-lifecycle-stats",
     tag = "MdmV49",
     operation_id = "get_lifecycle_stats",
@@ -2006,6 +2031,7 @@ pub async fn get_lifecycle_stats(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/mdm-v49/get-archive-stats",
     tag = "MdmV49",
     operation_id = "get_archive_stats",
@@ -2075,6 +2101,7 @@ pub async fn get_archive_stats(State(_state): State<ApiState>) -> Json<ApiRespon
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/mdm-v49/get-retirement-stats",
     tag = "MdmV49",
     operation_id = "get_retirement_stats",
@@ -2126,6 +2153,7 @@ pub async fn get_retirement_stats(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/mdm-v49/run-sla-check",
     tag = "MdmV49",
     operation_id = "run_sla_check",
@@ -2169,6 +2197,7 @@ pub async fn run_sla_check(State(_state): State<ApiState>) -> Json<ApiResponse<s
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/mdm-v49/get-lifecycle-dashboard",
     tag = "MdmV49",
     operation_id = "get_lifecycle_dashboard",

@@ -36,6 +36,7 @@ pub struct ListAuditLogsQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/audit-logs",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -118,6 +119,7 @@ pub async fn list_audit_logs(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/audit-logs/{id}",
     tag = "wms",
     responses((status = 200, description = "OK"))

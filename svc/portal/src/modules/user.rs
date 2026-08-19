@@ -17,6 +17,7 @@ use crate::{models::UserInfo, shared::AppState, utils::user_context::extract_bea
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["portal:read"])),
     path = "/user",
     tag = "Portal",
     responses(

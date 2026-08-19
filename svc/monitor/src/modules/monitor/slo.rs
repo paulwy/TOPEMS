@@ -388,6 +388,7 @@ fn seed_violations(_tenant_id: Uuid) -> Vec<SloViolation> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/slos",
     tag = "slo",
     responses(
@@ -444,6 +445,7 @@ pub async fn list_slos(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/slos/{id}",
     tag = "slo",
     params(
@@ -490,6 +492,7 @@ pub async fn get_slo(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["monitor:write"])),
     path = "/api/monitor/slos",
     request_body = SloRequest,
     tag = "slo",
@@ -532,6 +535,7 @@ pub async fn create_slo(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["monitor:update"])),
     path = "/api/monitor/slos/{id}",
     request_body = SloRequest,
     tag = "slo",
@@ -577,6 +581,7 @@ pub async fn update_slo(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["monitor:delete"])),
     path = "/api/monitor/slos/{id}",
     tag = "slo",
     params(
@@ -600,6 +605,7 @@ pub async fn delete_slo(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/slos/summary",
     tag = "slo",
     responses(
@@ -648,6 +654,7 @@ pub async fn get_slo_summary(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/slos/budget",
     tag = "slo",
     responses(
@@ -701,6 +708,7 @@ pub async fn get_slo_budget(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/slos/trend",
     tag = "slo",
     responses(
@@ -745,6 +753,7 @@ pub async fn get_slo_trend(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/slos/violations",
     tag = "slo",
     responses(
@@ -793,6 +802,7 @@ pub async fn list_slo_violations(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["monitor:write"])),
     path = "/api/monitor/slos/violations/{id}/resolve",
     tag = "slo",
     params(

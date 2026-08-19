@@ -66,6 +66,7 @@ pub struct UpdateReagentRequest {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["lims:read"])),
     path = "/lims/reagents",
     tag = "reagent",
     params(
@@ -150,6 +151,7 @@ pub async fn list_reagents(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["lims:write"])),
     path = "/lims/reagents",
     tag = "reagent",
     request_body = CreateReagentRequest,

@@ -42,6 +42,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/suppliers",
     responses(
         (status = 200, description = "list_suppliers OK")
@@ -130,6 +131,7 @@ pub async fn list_suppliers(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/suppliers/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -168,6 +170,7 @@ pub async fn get_supplier(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/suppliers",
     request_body = CreateSupplierRequest,
     responses(
@@ -216,6 +219,7 @@ pub async fn create_supplier(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/suppliers/{id}",
     request_body = UpdateSupplierRequest,
     params(
@@ -269,6 +273,7 @@ pub async fn update_supplier(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/suppliers/{id}",
     params(
         ("id" = Uuid, Path, description = "id")

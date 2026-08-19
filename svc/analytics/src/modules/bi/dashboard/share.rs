@@ -12,6 +12,7 @@ use super::models::{ShareDashboardRequest, ShareLinkResponse};
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/dashboard/{id}/share",
     tag = "Dashboard",
     operation_id = "create_share_link",
@@ -69,6 +70,7 @@ pub async fn create_share_link(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/dashboard/share/{share_id}",
     tag = "Dashboard",
     operation_id = "get_shared_dashboard",
@@ -127,6 +129,7 @@ pub async fn get_shared_dashboard(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/dashboard/{id}/shares",
     tag = "Dashboard",
     operation_id = "list_share_links",
@@ -183,6 +186,7 @@ pub async fn list_share_links(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["analytics:delete"])),
     path = "/dashboard/share/{share_id}",
     tag = "Dashboard",
     operation_id = "delete_share_link",

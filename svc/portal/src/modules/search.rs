@@ -82,6 +82,7 @@ pub struct SearchSuggestionsResponse {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["portal:read"])),
     path = "/search",
     tag = "Search",
     params(

@@ -52,6 +52,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/production-order/list-production-orders",
     tag = "ProductionOrder",
     operation_id = "list_production_orders",
@@ -124,6 +125,7 @@ pub async fn list_production_orders(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/production-order/create-production-order",
     tag = "ProductionOrder",
     operation_id = "create_production_order",
@@ -200,6 +202,7 @@ pub async fn create_production_order(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/production-order/get-production-order",
     tag = "ProductionOrder",
     operation_id = "get_production_order",
@@ -241,6 +244,7 @@ pub async fn get_production_order(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/production-order/update-production-order",
     tag = "ProductionOrder",
     operation_id = "update_production_order",
@@ -303,6 +307,7 @@ pub async fn update_production_order(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/production-order/delete-production-order",
     tag = "ProductionOrder",
     operation_id = "delete_production_order",
@@ -342,6 +347,7 @@ pub async fn delete_production_order(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/production-order/update-production-progress",
     tag = "ProductionOrder",
     operation_id = "update_production_progress",
@@ -399,6 +405,7 @@ pub struct UpdateStatusRequest {
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/production-order/update-production-status",
     tag = "ProductionOrder",
     operation_id = "update_production_status",
@@ -457,6 +464,7 @@ pub struct MesProgressUpdate {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/production-order/receive-mes-progress",
     tag = "ProductionOrder",
     operation_id = "receive_mes_progress",

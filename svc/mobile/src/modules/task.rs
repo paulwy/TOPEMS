@@ -124,6 +124,7 @@ pub fn sort_task_titles_by_priority_str(titles: &[(String, String)]) -> Vec<(Str
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mobile:read"])),
     path = "/mobile-tasks",
     tag = "task",
     responses(
@@ -172,6 +173,7 @@ pub async fn get_all_tasks(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mobile:read"])),
     path = "/mobile-tasks/{id}",
     tag = "task",
     params(
@@ -228,6 +230,7 @@ pub async fn get_task(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mobile:write"])),
     path = "/mobile-tasks",
     tag = "task",
     request_body = CreateTaskRequest,
@@ -305,6 +308,7 @@ pub async fn create_task(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["mobile:update"])),
     path = "/mobile-tasks/{id}",
     tag = "task",
     params(
@@ -477,6 +481,7 @@ pub async fn update_task_status(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["mobile:delete"])),
     path = "/mobile-tasks/{id}",
     tag = "task",
     params(

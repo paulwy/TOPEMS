@@ -95,6 +95,7 @@ pub fn requires_confirmation(tier: &str) -> bool {
 /// Get tenant's installed plugins
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["plugin_registry:read"])),
     path = "/tenants/{tenant_id}/plugins",
     tag = "plugin",
     params(
@@ -296,6 +297,7 @@ async fn install_plugin_inner(
 /// Install plugin for tenant
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["plugin_registry:write"])),
     path = "/tenants/{tenant_id}/plugins/{plugin_code}",
     tag = "plugin",
     params(

@@ -307,6 +307,7 @@ fn get_tenant_id(claims: &Claims) -> Uuid {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/alerts",
     tag = "alerts",
     responses(
@@ -428,6 +429,7 @@ pub async fn list_alerts(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/alerts/{id}",
     tag = "alerts",
     params(
@@ -462,6 +464,7 @@ pub async fn get_alert(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["monitor:write"])),
     path = "/api/monitor/alerts/{id}",
     request_body = serde_json::Value,
     tag = "alerts",
@@ -512,6 +515,7 @@ pub async fn update_alert(
 // Alert Statistics
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/alerts/statistics",
     tag = "alerts",
     responses(
@@ -560,6 +564,7 @@ pub async fn get_alert_statistics(
 // Batch acknowledge alerts
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["monitor:write"])),
     path = "/api/monitor/alerts/acknowledge",
     request_body = serde_json::Value,
     tag = "alerts",
@@ -594,6 +599,7 @@ pub async fn acknowledge_alerts(
 // Batch resolve alerts
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["monitor:write"])),
     path = "/api/monitor/alerts/resolve",
     request_body = serde_json::Value,
     tag = "alerts",
@@ -628,6 +634,7 @@ pub async fn resolve_alerts(
 // Alert Rules API
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/rules",
     tag = "alert_rules",
     responses(
@@ -720,6 +727,7 @@ pub async fn list_rules(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["monitor:write"])),
     path = "/api/monitor/rules",
     request_body = AlertRuleRequest,
     tag = "alert_rules",
@@ -752,6 +760,7 @@ pub async fn create_rule(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/rules/{id}",
     tag = "alert_rules",
     params(
@@ -796,6 +805,7 @@ pub async fn get_rule(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["monitor:update"])),
     path = "/api/monitor/rules/{id}",
     request_body = AlertRuleRequest,
     tag = "alert_rules",
@@ -833,6 +843,7 @@ pub async fn update_rule(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["monitor:delete"])),
     path = "/api/monitor/rules/{id}",
     tag = "alert_rules",
     params(
@@ -856,6 +867,7 @@ pub async fn delete_rule(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["monitor:write"])),
     path = "/api/monitor/rules/{id}/enable",
     tag = "alert_rules",
     params(
@@ -896,6 +908,7 @@ pub async fn enable_rule(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["monitor:write"])),
     path = "/api/monitor/rules/{id}/disable",
     tag = "alert_rules",
     params(
@@ -938,6 +951,7 @@ pub async fn disable_rule(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/alerts/{id}/history",
     tag = "alerts",
     params(
@@ -977,6 +991,7 @@ pub async fn get_alert_history(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/alerts/{id}/timeline",
     tag = "alerts",
     params(
@@ -1021,6 +1036,7 @@ pub async fn get_alert_timeline(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/rules/{id}/scheduled-trigger",
     tag = "alert_rules",
     params(
@@ -1049,6 +1065,7 @@ pub async fn get_scheduled_trigger(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["monitor:update"])),
     path = "/api/monitor/rules/{id}/scheduled-trigger",
     request_body = ScheduledTrigger,
     tag = "alert_rules",
@@ -1071,6 +1088,7 @@ pub async fn update_scheduled_trigger(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/rules/{id}/escalation",
     tag = "alert_rules",
     params(
@@ -1133,6 +1151,7 @@ pub async fn get_escalation(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["monitor:update"])),
     path = "/api/monitor/rules/{id}/escalation",
     request_body = AlertEscalation,
     tag = "alert_rules",
@@ -1155,6 +1174,7 @@ pub async fn update_escalation(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/rules/{id}/routing",
     tag = "alert_rules",
     params(
@@ -1204,6 +1224,7 @@ pub async fn get_routing(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["monitor:update"])),
     path = "/api/monitor/rules/{id}/routing",
     request_body = AlertRouting,
     tag = "alert_rules",
@@ -1227,6 +1248,7 @@ pub async fn update_routing(
 // Template Management
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/templates",
     tag = "alert_templates",
     responses(
@@ -1261,6 +1283,7 @@ pub async fn list_templates(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["monitor:write"])),
     path = "/api/monitor/templates",
     request_body = AlertTemplate,
     tag = "alert_templates",
@@ -1278,6 +1301,7 @@ pub async fn create_template(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/templates/{id}",
     tag = "alert_templates",
     params(
@@ -1307,6 +1331,7 @@ pub async fn get_template(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["monitor:update"])),
     path = "/api/monitor/templates/{id}",
     request_body = AlertTemplate,
     tag = "alert_templates",
@@ -1329,6 +1354,7 @@ pub async fn update_template(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["monitor:delete"])),
     path = "/api/monitor/templates/{id}",
     tag = "alert_templates",
     params(
@@ -1353,6 +1379,7 @@ pub async fn delete_template(
 // Suppression Rules
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/suppression",
     tag = "alert_suppression",
     responses(
@@ -1381,6 +1408,7 @@ pub async fn list_suppression_rules(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["monitor:write"])),
     path = "/api/monitor/suppression",
     request_body = SuppressionRule,
     tag = "alert_suppression",
@@ -1398,6 +1426,7 @@ pub async fn create_suppression_rule(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/suppression/{id}",
     tag = "alert_suppression",
     params(
@@ -1431,6 +1460,7 @@ pub async fn get_suppression_rule(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["monitor:update"])),
     path = "/api/monitor/suppression/{id}",
     request_body = SuppressionRule,
     tag = "alert_suppression",
@@ -1453,6 +1483,7 @@ pub async fn update_suppression_rule(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["monitor:delete"])),
     path = "/api/monitor/suppression/{id}",
     tag = "alert_suppression",
     params(
@@ -1477,6 +1508,7 @@ pub async fn delete_suppression_rule(
 // Advanced Rule Handler
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/rules/{id}/advanced",
     tag = "alert_rules",
     params(
@@ -1531,6 +1563,7 @@ pub async fn get_advanced_rule(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["monitor:update"])),
     path = "/api/monitor/rules/{id}/advanced",
     request_body = serde_json::Value,
     tag = "alert_rules",

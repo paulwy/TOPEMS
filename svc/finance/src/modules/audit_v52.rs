@@ -1657,6 +1657,7 @@ pub async fn auto_audit_scheduler(pool: PgPool) {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/audit-v52/rules",
     tag = "Audit-V52",
     operation_id = "create_audit_rule_handler",
@@ -1677,6 +1678,7 @@ async fn create_audit_rule_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v52/audit_rules",
     tag = "AuditV52",
     operation_id = "list_audit_rules_handler",
@@ -1700,6 +1702,7 @@ async fn list_audit_rules_handler(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance-v52/audit_rule/{id}",
     tag = "AuditV52",
     operation_id = "update_audit_rule_handler",
@@ -1722,6 +1725,7 @@ async fn update_audit_rule_handler(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/finance-v52/audit_rule/{id}",
     tag = "AuditV52",
     operation_id = "delete_audit_rule_handler",
@@ -1743,6 +1747,7 @@ async fn delete_audit_rule_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v52/audit_findings",
     tag = "AuditV52",
     operation_id = "get_audit_findings_handler",
@@ -1784,6 +1789,7 @@ async fn get_audit_findings_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/audit-v52/findings/{id}/resolve",
     tag = "Audit-V52",
     operation_id = "resolve_finding_handler",
@@ -1813,6 +1819,7 @@ async fn resolve_finding_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v52/audit",
     tag = "AuditV52",
     operation_id = "run_audit_handler",
@@ -1834,6 +1841,7 @@ async fn run_audit_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v52/anomalies",
     tag = "AuditV52",
     operation_id = "detect_anomalies_handler",
@@ -1855,6 +1863,7 @@ async fn detect_anomalies_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v52/anomaly_alerts",
     tag = "AuditV52",
     operation_id = "get_anomaly_alerts_handler",
@@ -1896,6 +1905,7 @@ async fn get_anomaly_alerts_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/audit-v52/anomaly/summary",
     tag = "Audit-V52",
     operation_id = "get_detection_summary_handler",
@@ -1914,6 +1924,7 @@ async fn get_detection_summary_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v52/detection",
     tag = "AuditV52",
     operation_id = "configure_detection_handler",
@@ -1950,6 +1961,7 @@ async fn configure_detection_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v52/alerts",
     tag = "AuditV52",
     operation_id = "get_alerts_handler",
@@ -1991,6 +2003,7 @@ async fn get_alerts_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/audit-v52/alerts/config",
     tag = "Audit-V52",
     operation_id = "create_alert_config_handler",
@@ -2010,6 +2023,7 @@ async fn create_alert_config_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v52/alert_configs",
     tag = "AuditV52",
     operation_id = "list_alert_configs_handler",
@@ -2030,6 +2044,7 @@ async fn list_alert_configs_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v52/alert",
     tag = "AuditV52",
     operation_id = "acknowledge_alert_handler",

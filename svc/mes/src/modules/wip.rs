@@ -172,6 +172,7 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/wips",
     tag = "WIP",
     params(
@@ -349,6 +350,7 @@ pub async fn list_wips(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mes:write"])),
     path = "/api/mes/wips",
     tag = "WIP",
     request_body = CreateWipRequest,
@@ -455,6 +457,7 @@ pub async fn create_wip(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/wips/{id}",
     tag = "WIP",
     params(
@@ -534,6 +537,7 @@ pub async fn get_wip(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["mes:update"])),
     path = "/api/mes/wips/{id}",
     tag = "WIP",
     params(
@@ -621,6 +625,7 @@ pub async fn update_wip(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["mes:delete"])),
     path = "/api/mes/wips/{id}",
     tag = "WIP",
     params(
@@ -667,6 +672,7 @@ pub async fn delete_wip(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mes:write"])),
     path = "/api/mes/wips/transfer",
     tag = "WIP",
     request_body = CreateWipTransferRequest,
@@ -857,6 +863,7 @@ pub async fn transfer_wip(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/wips/{wip_id}/transfers",
     tag = "WIP",
     params(
@@ -937,6 +944,7 @@ pub async fn list_wip_transfers(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/wips/statistics",
     tag = "WIP",
     responses(

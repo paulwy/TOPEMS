@@ -51,6 +51,7 @@ pub struct FilePermissionRequest {
 /// 列出文件列表
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/file/files",
     tag = "File",
     params(
@@ -189,6 +190,7 @@ pub async fn list_files(
 /// 获取文件详情
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/file/files/{id}",
     tag = "File",
     params(
@@ -306,6 +308,7 @@ pub async fn get_file(
 /// 更新文件信息
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["unified_core:update"])),
     path = "/api/core/file/files/{id}",
     tag = "File",
     params(
@@ -473,6 +476,7 @@ pub async fn update_file(
 /// 删除文件（软删除）
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["unified_core:delete"])),
     path = "/api/core/file/files/{id}",
     tag = "File",
     params(
@@ -614,6 +618,7 @@ pub async fn delete_file(
 /// 移动文件
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/file/files/{id}/move",
     tag = "File",
     params(
@@ -760,6 +765,7 @@ pub async fn move_file(
 /// 复制文件
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/file/files/{id}/copy",
     tag = "File",
     params(
@@ -937,6 +943,7 @@ pub async fn copy_file(
 /// 设置文件权限
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/file/files/{id}/permission",
     tag = "File",
     params(
@@ -1075,6 +1082,7 @@ pub async fn set_file_permission(
 /// 分享文件
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/file/files/{id}/share",
     tag = "File",
     params(
@@ -1108,6 +1116,7 @@ pub async fn share_file(
 /// 获取文件的分享列表
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/file/files/{id}/shares",
     tag = "File",
     params(
@@ -1139,6 +1148,7 @@ pub async fn get_file_shares(
 /// 删除分享
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["unified_core:delete"])),
     path = "/api/core/file/shares/{id}",
     tag = "File",
     params(
@@ -1170,6 +1180,7 @@ pub async fn delete_share(
 /// 设置文件权限
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/file/files/{id}/permissions",
     tag = "File",
     params(
@@ -1203,6 +1214,7 @@ pub async fn set_file_permissions(
 /// 获取文件权限
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/file/files/{id}/permissions",
     tag = "File",
     params(
@@ -1234,6 +1246,7 @@ pub async fn get_file_permissions(
 /// 获取我分享的文件列表
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/file/files/shared",
     tag = "File",
     responses(
@@ -1260,6 +1273,7 @@ pub async fn get_shared_files(
 /// 获取分享给我的文件列表
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/file/files/received",
     tag = "File",
     responses(
@@ -1286,6 +1300,7 @@ pub async fn get_received_files(
 /// 获取文件统计信息
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/file/stats",
     tag = "File",
     responses(
@@ -1312,6 +1327,7 @@ pub async fn get_file_stats(
 /// 收藏文件
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/file/files/{id}/star",
     tag = "File",
     params(
@@ -1343,6 +1359,7 @@ pub async fn star_file(
 /// 取消收藏
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/file/files/{id}/unstar",
     tag = "File",
     params(
@@ -1374,6 +1391,7 @@ pub async fn unstar_file(
 /// 列出收藏的文件
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/file/files/starred",
     tag = "File",
     responses(
@@ -1400,6 +1418,7 @@ pub async fn list_starred_files(
 /// 导出文件（批量）
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/file/files/export",
     tag = "File",
     request_body = serde_json::Value,
@@ -1428,6 +1447,7 @@ pub async fn export_files(
 /// 搜索文件
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/file/files/search",
     tag = "File",
     params(

@@ -150,6 +150,7 @@ pub struct ListFeedbackParams {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["feedback:write"])),
     path = "/api/core/feedbacks",
     request_body = CreateFeedbackRequest,
     tag = "feedback_ticket",
@@ -187,6 +188,7 @@ pub async fn create_feedback(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["feedback:read"])),
     path = "/api/core/feedbacks/{id}",
     tag = "feedback_ticket",
     params(
@@ -221,6 +223,7 @@ pub async fn get_feedback(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["feedback:read"])),
     path = "/api/core/feedbacks",
     tag = "feedback_ticket",
     responses(
@@ -307,6 +310,7 @@ pub async fn list_feedbacks(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["feedback:update"])),
     path = "/api/core/feedbacks/{id}",
     request_body = ResponseFeedbackRequest,
     tag = "feedback_ticket",
@@ -349,6 +353,7 @@ pub async fn response_feedback(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["feedback:delete"])),
     path = "/api/core/feedbacks/{id}",
     tag = "feedback_ticket",
     params(

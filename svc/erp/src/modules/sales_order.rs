@@ -34,6 +34,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/sales-orders",
     responses(
         (status = 200, description = "list_sales_orders OK")
@@ -114,6 +115,7 @@ pub async fn list_sales_orders(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/sales-orders/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -152,6 +154,7 @@ pub async fn get_sales_order(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/sales-orders",
     request_body = CreateSalesOrderRequest,
     responses(
@@ -220,6 +223,7 @@ pub async fn create_sales_order(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/sales-orders/{id}",
     request_body = UpdateSalesOrderRequest,
     params(
@@ -268,6 +272,7 @@ pub async fn update_sales_order(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/sales-orders/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -337,6 +342,7 @@ async fn update_sales_order_status(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/sales-orders/{id}/approve",
     params(("id" = Uuid, Path, description = "销售订单ID")),
     responses((status = 200, description = "approve_sales_order OK")),
@@ -360,6 +366,7 @@ pub async fn approve_sales_order(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/sales-orders/{id}/ship",
     params(("id" = Uuid, Path, description = "销售订单ID")),
     responses((status = 200, description = "ship_sales_order OK")),
@@ -383,6 +390,7 @@ pub async fn ship_sales_order(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/sales-orders/{id}/complete",
     params(("id" = Uuid, Path, description = "销售订单ID")),
     responses((status = 200, description = "complete_sales_order OK")),
@@ -406,6 +414,7 @@ pub async fn complete_sales_order(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/sales-orders/{id}/cancel",
     params(("id" = Uuid, Path, description = "销售订单ID")),
     responses((status = 200, description = "cancel_sales_order OK")),

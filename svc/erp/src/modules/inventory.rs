@@ -30,6 +30,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/inventory",
     responses(
         (status = 200, description = "list_inventory OK")
@@ -111,6 +112,7 @@ pub async fn list_inventory(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/inventory/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -149,6 +151,7 @@ pub async fn get_inventory(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/inventory",
     request_body = CreateInventoryRequest,
     responses(
@@ -211,6 +214,7 @@ pub async fn create_inventory(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/inventory/{id}",
     request_body = UpdateInventoryRequest,
     params(
@@ -258,6 +262,7 @@ pub async fn update_inventory(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/inventory/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -296,6 +301,7 @@ pub async fn delete_inventory(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/inventory/low-stock",
     tag = "ERP/inventory",
     responses((status = 200, description = "获取低库存列表成功", body = ApiResponse<Vec<Inventory>>))

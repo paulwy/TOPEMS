@@ -89,6 +89,7 @@ async fn count_table_with_status(pool: &sqlx::PgPool, table: &str, status: &str)
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/dashboard",
     tag = "ERP",
     responses((status = 200, description = "获取 ERP 仪表盘统计成功"))

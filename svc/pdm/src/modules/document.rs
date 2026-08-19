@@ -130,6 +130,7 @@ pub struct WorkflowStep {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/documents",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -203,6 +204,7 @@ pub async fn list_documents(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pdm:write"])),
     path = "/api/pdm/documents/search",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -287,6 +289,7 @@ pub async fn search_documents(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pdm:write"])),
     path = "/api/pdm/documents",
     request_body = CreateDocumentRequest,
     tag = "pdm",
@@ -353,6 +356,7 @@ pub async fn create_document(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/documents/{id}",
     tag = "pdm",
     params(
@@ -393,6 +397,7 @@ pub async fn get_document(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["pdm:update"])),
     path = "/api/pdm/documents/{id}",
     request_body = UpdateDocumentRequest,
     tag = "pdm",
@@ -488,6 +493,7 @@ pub async fn update_document(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["pdm:update"])),
     path = "/api/pdm/documents/{id}/status",
     tag = "pdm",
     params(("id" = Uuid, Path, description = "文档 ID")),
@@ -532,6 +538,7 @@ pub async fn update_document_status(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["pdm:delete"])),
     path = "/api/pdm/documents/{id}",
     tag = "pdm",
     params(
@@ -573,6 +580,7 @@ pub struct StartDocumentApprovalRequest {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pdm:write"])),
     path = "/api/pdm/documents/{id}/approve",
     request_body = StartDocumentApprovalRequest,
     tag = "pdm",
@@ -721,6 +729,7 @@ pub async fn start_document_approval(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/documents/{id}/approval-history",
     tag = "pdm",
     params(
@@ -789,6 +798,7 @@ pub async fn get_document_approval_history(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/documents/pending-approval",
     tag = "pdm",
     responses((status = 200, description = "OK")),

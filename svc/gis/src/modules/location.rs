@@ -59,6 +59,7 @@ pub struct RouteRequest {
 /// 创建位置点
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["gis:write"])),
     path = "/locations/create",
     tag = "device",
     request_body = CreateLocation,
@@ -101,6 +102,7 @@ pub async fn create_location(
 /// 获取位置列表
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["gis:read"])),
     path = "/locations",
     tag = "device",
     responses(
@@ -129,6 +131,7 @@ pub async fn list_locations(State(pool): State<PgPool>) -> Json<ApiResponse<serd
 /// 获取位置详情
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["gis:read"])),
     path = "/locations/{id}",
     tag = "device",
     params(

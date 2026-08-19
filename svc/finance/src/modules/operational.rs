@@ -23,6 +23,7 @@ use topems_shared_core::response::{PaginatedResponse, PaginationParams};
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/expenses",
     tag = "Expense",
     params(
@@ -90,6 +91,7 @@ pub async fn list_expenses(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/expense",
     tag = "Operational",
     operation_id = "create_expense",
@@ -166,6 +168,7 @@ pub async fn create_expense(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/expenses/{id}",
     tag = "Expense",
     params(("id" = Uuid, Path, description = "费用ID")),
@@ -205,6 +208,7 @@ pub async fn get_expense(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance/expense/{id}",
     tag = "Operational",
     operation_id = "update_expense",
@@ -300,6 +304,7 @@ pub async fn update_expense(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/expenses/{id}",
     tag = "Expense",
     params(("id" = Uuid, Path, description = "费用ID")),
@@ -333,6 +338,7 @@ pub async fn delete_expense(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/budgets",
     tag = "Budget",
     params(
@@ -389,6 +395,7 @@ pub async fn list_budgets(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/budget",
     tag = "Operational",
     operation_id = "create_budget",
@@ -465,6 +472,7 @@ pub async fn create_budget(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/budgets/{id}",
     tag = "Budget",
     params(("id" = Uuid, Path, description = "预算ID")),
@@ -504,6 +512,7 @@ pub async fn get_budget(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance/budget/{id}",
     tag = "Operational",
     operation_id = "update_budget",
@@ -584,6 +593,7 @@ pub async fn update_budget(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/budgets/{id}",
     tag = "Budget",
     params(("id" = Uuid, Path, description = "预算ID")),
@@ -621,6 +631,7 @@ pub async fn delete_budget(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/receivables",
     tag = "Receivable",
     params(
@@ -688,6 +699,7 @@ pub async fn list_receivables(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/receivable",
     tag = "Operational",
     operation_id = "create_receivable",
@@ -767,6 +779,7 @@ pub async fn create_receivable(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/receivables/{id}",
     tag = "Receivable",
     params(("id" = Uuid, Path, description = "应收账款ID")),
@@ -806,6 +819,7 @@ pub async fn get_receivable(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance/receivable/{id}",
     tag = "Operational",
     operation_id = "update_receivable",
@@ -877,6 +891,7 @@ pub async fn update_receivable(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/receivables/{id}",
     tag = "Receivable",
     params(("id" = Uuid, Path, description = "应收账款ID")),
@@ -911,6 +926,7 @@ pub async fn delete_receivable(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/payables",
     tag = "Payable",
     params(
@@ -978,6 +994,7 @@ pub async fn list_payables(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/payable",
     tag = "Operational",
     operation_id = "create_payable",
@@ -1057,6 +1074,7 @@ pub async fn create_payable(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/payables/{id}",
     tag = "Payable",
     params(("id" = Uuid, Path, description = "应付账款ID")),
@@ -1096,6 +1114,7 @@ pub async fn get_payable(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance/payable/{id}",
     tag = "Operational",
     operation_id = "update_payable",
@@ -1167,6 +1186,7 @@ pub async fn update_payable(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/payables/{id}",
     tag = "Payable",
     params(("id" = Uuid, Path, description = "应付账款ID")),

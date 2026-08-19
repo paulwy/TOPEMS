@@ -44,6 +44,7 @@ pub const CACHE_TTL: u64 = 30;
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["portal:read"])),
     path = "/dashboard/stats",
     tag = "Dashboard",
     responses(

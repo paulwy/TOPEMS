@@ -1267,6 +1267,7 @@ impl AutoComplianceReviewer {
 // --- Risk Dashboard & Alerts ---
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v54/risk/dashboard",
     responses(
         (status = 200, description = "成功"),
@@ -1300,6 +1301,7 @@ pub struct AlertQueryParams {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v54/risk_alerts",
     tag = "RiskV54",
     operation_id = "get_risk_alerts_handler",
@@ -1337,6 +1339,7 @@ async fn get_risk_alerts_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v54/alert",
     tag = "RiskV54",
     operation_id = "acknowledge_alert_handler",
@@ -1359,6 +1362,7 @@ async fn acknowledge_alert_handler(
 }
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance-v54/risk/alerts/{id}/resolve",
     responses(
         (status = 200, description = "成功"),
@@ -1392,6 +1396,7 @@ async fn resolve_alert_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v54/transaction",
     tag = "RiskV54",
     operation_id = "score_transaction_handler",
@@ -1415,6 +1420,7 @@ async fn score_transaction_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v54/fraud_rules",
     tag = "RiskV54",
     operation_id = "get_fraud_rules_handler",
@@ -1444,6 +1450,7 @@ pub struct UpdateFraudRuleRequest {
 }
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance-v54/fraud/rules/{id}",
     responses(
         (status = 200, description = "成功"),
@@ -1486,6 +1493,7 @@ async fn update_fraud_rule_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v54/fraud_score",
     tag = "RiskV54",
     operation_id = "get_fraud_score_handler",
@@ -1511,6 +1519,7 @@ async fn get_fraud_score_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v54/entity",
     tag = "RiskV54",
     operation_id = "review_entity_handler",
@@ -1540,6 +1549,7 @@ pub struct ReviewResultQueryParams {
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v54/compliance/results",
     responses(
         (status = 200, description = "成功"),
@@ -1578,6 +1588,7 @@ async fn get_review_results_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance-v54/compliance_status",
     tag = "RiskV54",
     operation_id = "get_compliance_status_handler",
@@ -1603,6 +1614,7 @@ async fn get_compliance_status_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v54/workflow",
     tag = "RiskV54",
     operation_id = "create_workflow_handler",
@@ -1625,6 +1637,7 @@ async fn create_workflow_handler(
 }
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance-v54/compliance/workflow/{id}/advance",
     responses(
         (status = 200, description = "成功"),
@@ -1662,6 +1675,7 @@ pub struct ComplianceReportQueryParams {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance-v54/compliance_report",
     tag = "RiskV54",
     operation_id = "generate_compliance_report_handler",

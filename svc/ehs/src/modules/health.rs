@@ -49,6 +49,7 @@ pub struct HealthRecord {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/health",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -68,6 +69,7 @@ pub async fn list_records(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/health",
     request_body = serde_json::Value,
     tag = "ehs",

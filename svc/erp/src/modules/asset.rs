@@ -26,6 +26,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/assets",
     tag = "Assets",
     params(
@@ -103,6 +104,7 @@ pub async fn list_assets(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/assets",
     tag = "Assets",
     request_body = CreateAssetRequest,
@@ -211,6 +213,7 @@ pub async fn create_asset(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/assets/{id}",
     tag = "Assets",
     params(
@@ -254,6 +257,7 @@ pub async fn get_asset(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/assets/{id}",
     tag = "Assets",
     params(
@@ -390,6 +394,7 @@ pub async fn update_asset(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/assets/{id}",
     tag = "Assets",
     params(

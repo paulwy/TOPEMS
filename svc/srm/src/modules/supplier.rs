@@ -133,6 +133,7 @@ fn suppliers_list_cache_key(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["srm:read"])),
     path = "/api/srm/suppliers",
     responses(
         (status = 200, description = "list_suppliers OK")
@@ -265,6 +266,7 @@ pub async fn list_suppliers(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["srm:write"])),
     path = "/api/srm/suppliers",
     request_body = CreateSupplierRequest,
     responses(
@@ -432,6 +434,7 @@ pub async fn create_supplier(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["srm:read"])),
     path = "/api/srm/suppliers/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -491,6 +494,7 @@ pub async fn get_supplier(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["srm:update"])),
     path = "/api/srm/suppliers/{id}",
     request_body = UpdateSupplierRequest,
     params(
@@ -652,6 +656,7 @@ pub async fn update_supplier(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["srm:delete"])),
     path = "/api/srm/suppliers/{id}",
     params(
         ("id" = Uuid, Path, description = "id")

@@ -22,6 +22,7 @@ pub fn create_routes() -> Router<ApiState> {
 /// 从 HRM 服务获取所有员工列表
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/hrm-integration-example/list-employees-from-hrm",
     tag = "HrmIntegrationExample",
     operation_id = "list_employees_from_hrm",
@@ -44,6 +45,7 @@ pub async fn list_employees_from_hrm(
 /// 从 HRM 服务获取单个员工
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/hrm-integration-example/get-employee-from-hrm",
     tag = "HrmIntegrationExample",
     operation_id = "get_employee_from_hrm",
@@ -71,6 +73,7 @@ pub async fn get_employee_from_hrm(
 /// 从 HRM 服务获取所有部门列表
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/hrm-integration-example/list-departments-from-hrm",
     tag = "HrmIntegrationExample",
     operation_id = "list_departments_from_hrm",
@@ -96,6 +99,7 @@ pub async fn list_departments_from_hrm(
 /// 从 HRM 服务获取所有公司列表
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/hrm-integration-example/list-companies-from-hrm",
     tag = "HrmIntegrationExample",
     operation_id = "list_companies_from_hrm",

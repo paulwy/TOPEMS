@@ -946,6 +946,7 @@ impl InternalPricingManager {
 // ==================== Handlers ====================
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/shared-services/centers/{period}",
     responses(
         (status = 200, description = "成功"),
@@ -974,6 +975,7 @@ async fn get_service_centers_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/service_performance/{id}",
     tag = "SharedServices",
     operation_id = "get_service_performance_handler",
@@ -994,6 +996,7 @@ async fn get_service_performance_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/service_utilization/{id}",
     tag = "SharedServices",
     operation_id = "get_service_utilization_handler",
@@ -1014,6 +1017,7 @@ async fn get_service_utilization_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/calculate_cost_allocation",
     tag = "SharedServices",
     operation_id = "calculate_cost_allocation_handler",
@@ -1034,6 +1038,7 @@ async fn calculate_cost_allocation_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/cost_allocation",
     tag = "SharedServices",
     operation_id = "get_cost_allocation_handler",
@@ -1053,6 +1058,7 @@ async fn get_cost_allocation_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/shared-services/cost-allocation/{period}/breakdown",
     responses(
         (status = 200, description = "成功"),
@@ -1081,6 +1087,7 @@ async fn get_cost_allocation_breakdown_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/pricing_policies",
     tag = "SharedServices",
     operation_id = "get_pricing_policies_handler",
@@ -1100,6 +1107,7 @@ async fn get_pricing_policies_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/pricing_policy",
     tag = "SharedServices",
     operation_id = "create_pricing_policy_handler",
@@ -1120,6 +1128,7 @@ async fn create_pricing_policy_handler(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance/pricing_policy/{id}",
     tag = "SharedServices",
     operation_id = "update_pricing_policy_handler",
@@ -1155,6 +1164,7 @@ async fn update_pricing_policy_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/shared-services/internal-pricing/settlements/{period}",
     responses(
         (status = 200, description = "成功"),
@@ -1183,6 +1193,7 @@ async fn get_internal_settlements_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/settlements",
     tag = "SharedServices",
     operation_id = "generate_settlements_handler",

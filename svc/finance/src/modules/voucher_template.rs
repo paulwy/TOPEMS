@@ -71,6 +71,7 @@ pub struct ToggleRuleRequest {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/voucher-templates/{templateId}/copy",
     tag = "Voucher Template",
     params(("templateId" = Uuid, Path, description = "模板ID")),
@@ -130,6 +131,7 @@ pub async fn copy_template(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/template",
     tag = "VoucherTemplate",
     operation_id = "toggle_template",
@@ -178,6 +180,7 @@ pub async fn toggle_template(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/voucher-templates/match",
     tag = "Voucher Template",
     request_body = MatchTemplateRequest,
@@ -247,6 +250,7 @@ pub async fn match_template(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/usage_stats",
     tag = "VoucherTemplate",
     operation_id = "get_usage_stats",
@@ -282,6 +286,7 @@ pub async fn get_usage_stats(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/voucher-templates/{templateId}/export",
     tag = "Voucher Template",
     params(("templateId" = Uuid, Path, description = "模板ID"), ExportQueryParams),
@@ -319,6 +324,7 @@ pub async fn export_template(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/template",
     tag = "VoucherTemplate",
     operation_id = "import_template",
@@ -377,6 +383,7 @@ pub async fn import_template(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/voucher-generation-rules/{ruleId}/toggle",
     tag = "Voucher Generation Rule",
     params(("ruleId" = Uuid, Path, description = "生成规则ID")),
@@ -597,6 +604,7 @@ pub struct PreviewGenerationRequest {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/voucher/generate/preview",
     tag = "Voucher Generation",
     request_body = PreviewGenerationRequest,
@@ -683,6 +691,7 @@ pub struct GenerateFromSourceRequest {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/voucher/generate/from-source",
     tag = "Voucher Generation",
     request_body = GenerateFromSourceRequest,
@@ -785,6 +794,7 @@ pub struct BatchGenerateRequest {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/voucher/generate/batch",
     tag = "Voucher Generation",
     request_body = BatchGenerateRequest,
@@ -840,6 +850,7 @@ pub struct AutoGenerateRequest {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/generate",
     tag = "VoucherTemplate",
     operation_id = "auto_generate",
@@ -915,6 +926,7 @@ pub async fn auto_generate(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/voucher/generate/regenerate/{originalVoucherId}",
     tag = "Voucher Generation",
     params(("originalVoucherId" = Uuid, Path, description = "原始凭证ID")),

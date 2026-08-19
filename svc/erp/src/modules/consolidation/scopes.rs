@@ -20,6 +20,7 @@ macro_rules! log_audit {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/consolidation/scopes",
     tag = "Consolidation",
     responses((status = 200, description = "获取合并范围列表成功", body = ApiResponse<serde_json::Value>))
@@ -82,6 +83,7 @@ pub async fn list_scopes(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/consolidation/scopes/{scopeId}",
     tag = "Consolidation",
     params(("scopeId" = String, Path, description = "合并范围ID")),
@@ -109,6 +111,7 @@ pub async fn get_scope(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/consolidation/scopes",
     tag = "Consolidation",
     responses((status = 200, description = "创建合并范围成功", body = ApiResponse<serde_json::Value>))
@@ -154,6 +157,7 @@ pub async fn create_scope(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/consolidation/scopes/{scopeId}",
     tag = "Consolidation",
     params(("scopeId" = String, Path, description = "合并范围ID")),
@@ -205,6 +209,7 @@ pub async fn update_scope(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/consolidation/scopes/{scopeId}",
     tag = "Consolidation",
     params(("scopeId" = String, Path, description = "合并范围ID")),

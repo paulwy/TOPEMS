@@ -50,6 +50,7 @@ pub fn paginate(page: Option<u32>, page_size: Option<u32>) -> (u32, u32, u32) {
 /// Get marketplace summary
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["plugin_registry:read"])),
     path = "/marketplace/summary",
     tag = "plugin",
     responses(
@@ -113,6 +114,7 @@ pub async fn get_marketplace_summary(
 /// List plugin categories
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["plugin_registry:read"])),
     path = "/marketplace/categories",
     tag = "plugin",
     responses(
@@ -138,6 +140,7 @@ pub async fn list_categories(
 /// List plugins with filters
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["plugin_registry:read"])),
     path = "/marketplace/plugins",
     tag = "plugin",
     params(
@@ -229,6 +232,7 @@ pub async fn list_plugins(
 /// Get plugin by code
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["plugin_registry:read"])),
     path = "/marketplace/plugins/{code}",
     tag = "plugin",
     params(

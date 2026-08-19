@@ -54,6 +54,7 @@ pub struct ReorderEntriesRequest {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/voucher-templates/{templateId}/entries",
     tag = "Voucher Template",
     params(("templateId" = Uuid, Path, description = "模板ID")),
@@ -88,6 +89,7 @@ pub async fn list_entries(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/entry/{id}",
     tag = "VoucherTemplateEntries",
     operation_id = "get_entry",
@@ -118,6 +120,7 @@ pub async fn get_entry(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/entry",
     tag = "VoucherTemplateEntries",
     operation_id = "create_entry",
@@ -182,6 +185,7 @@ pub async fn create_entry(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/voucher-templates/{templateId}/entries/{entryId}",
     tag = "Voucher Template",
     params(("templateId" = Uuid, Path, description = "模板ID"), ("entryId" = Uuid, Path, description = "条目ID")),
@@ -248,6 +252,7 @@ pub async fn update_entry(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["finance:delete"])),
     path = "/finance/entry/{id}",
     tag = "VoucherTemplateEntries",
     operation_id = "delete_entry",
@@ -285,6 +290,7 @@ pub async fn delete_entry(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/voucher-templates/{templateId}/entries/reorder",
     tag = "Voucher Template",
     params(("templateId" = Uuid, Path, description = "模板ID")),

@@ -51,6 +51,7 @@ where
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/serial-numbers",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -138,6 +139,7 @@ pub async fn list_serial_numbers(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/serial-numbers",
     tag = "wms",
     responses(
@@ -206,6 +208,7 @@ pub async fn create_serial_number(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/serial-numbers/bulk",
     tag = "wms",
     responses(
@@ -276,6 +279,7 @@ pub async fn bulk_create_serial_numbers(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/serial-numbers/{id}",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -314,6 +318,7 @@ pub async fn get_serial_number(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/serial-numbers/by-serial/{serial_no}",
     tag = "serial_number",
     operation_id = "get_by_serial_no",
@@ -350,6 +355,7 @@ pub async fn get_by_serial_no(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/serial-numbers/by-batch/{batch_no}",
     tag = "serial_number",
     operation_id = "get_by_batch",
@@ -385,6 +391,7 @@ pub async fn get_by_batch(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["wms:update"])),
     path = "/api/wms/serial-numbers/{id}",
     tag = "wms",
     responses(
@@ -474,6 +481,7 @@ pub async fn update_serial_number(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["wms:delete"])),
     path = "/api/wms/serial-numbers/{id}",
     tag = "wms",
     responses(
@@ -517,6 +525,7 @@ pub async fn delete_serial_number(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/serial-numbers/statistics",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -574,6 +583,7 @@ pub async fn get_serial_number_statistics(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/serial-numbers/{id}/transfer-location",
     tag = "serial_number",
     operation_id = "transfer_location",
@@ -628,6 +638,7 @@ pub async fn transfer_location(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/serial-numbers/{id}/trace",
     tag = "serial_number",
     operation_id = "get_trace",

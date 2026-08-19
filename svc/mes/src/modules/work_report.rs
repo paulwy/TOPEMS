@@ -159,6 +159,7 @@ pub struct TodayOutputQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/work-reports/today/output",
     tag = "WorkReport",
     responses(
@@ -238,6 +239,7 @@ pub async fn get_today_production_output(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/work-reports",
     tag = "WorkOrder",
     params(
@@ -434,6 +436,7 @@ pub async fn list_work_reports(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/work-reports/{id}",
     tag = "WorkOrder",
     params(
@@ -515,6 +518,7 @@ pub async fn get_work_report(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mes:write"])),
     path = "/api/mes/work-reports",
     tag = "WorkOrder",
     request_body = CreateWorkReportRequest,
@@ -638,6 +642,7 @@ pub async fn create_work_report(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["mes:update"])),
     path = "/api/mes/work-reports/{id}",
     tag = "WorkReport",
     params(
@@ -783,6 +788,7 @@ pub async fn update_work_report(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["mes:delete"])),
     path = "/api/mes/work-reports/{id}",
     tag = "WorkReport",
     params(
@@ -831,6 +837,7 @@ pub async fn delete_work_report(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["mes:update"])),
     path = "/api/mes/work-reports/{id}/approve",
     tag = "WorkReport",
     params(
@@ -921,6 +928,7 @@ pub async fn approve_work_report(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["mes:update"])),
     path = "/api/mes/work-reports/{id}/reject",
     tag = "WorkReport",
     params(
@@ -1033,6 +1041,7 @@ pub struct ReworkApprovalDecisionRequest {
 /// 发起返工审批（rejected→reworking）
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mes:write"])),
     path = "/api/mes/work-reports/{id}/approval/start",
     tag = "WorkReport",
     params(
@@ -1066,6 +1075,7 @@ pub async fn start_rework_approval(
 /// 返工审批通过
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mes:write"])),
     path = "/api/mes/work-reports/{id}/approval/approve",
     tag = "WorkReport",
     params(
@@ -1098,6 +1108,7 @@ pub async fn approve_rework(
 /// 返工审批驳回
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mes:write"])),
     path = "/api/mes/work-reports/{id}/approval/reject",
     tag = "WorkReport",
     params(

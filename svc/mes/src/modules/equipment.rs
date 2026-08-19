@@ -190,6 +190,7 @@ fn row_to_equipment_response(r: &sqlx::postgres::PgRow) -> EquipmentResponse {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/equipment",
     tag = "Equipment",
     params(
@@ -303,6 +304,7 @@ pub async fn list_equipment(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mes:write"])),
     path = "/api/mes/equipment",
     tag = "Equipment",
     request_body = CreateEquipmentRequest,
@@ -381,6 +383,7 @@ pub async fn create_equipment(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/equipment/{id}",
     tag = "Equipment",
     params(
@@ -434,6 +437,7 @@ pub async fn get_equipment(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["mes:update"])),
     path = "/api/mes/equipment/{id}",
     tag = "Equipment",
     params(
@@ -514,6 +518,7 @@ pub async fn update_equipment(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["mes:delete"])),
     path = "/api/mes/equipment/{id}",
     tag = "Equipment",
     params(
@@ -561,6 +566,7 @@ pub async fn delete_equipment(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mes:write"])),
     path = "/api/mes/equipment/{id}/maintenance",
     tag = "Equipment",
     params(
@@ -627,6 +633,7 @@ pub async fn maintenance_equipment(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/equipment/statistics",
     tag = "Equipment",
     responses(
@@ -724,6 +731,7 @@ pub struct MaintenanceRecord {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/maintenances",
     tag = "Equipment",
     params(
@@ -823,6 +831,7 @@ pub async fn list_maintenances(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mes:write"])),
     path = "/api/mes/maintenances",
     tag = "Equipment",
     request_body = CreateMaintenanceRecord,
@@ -927,6 +936,7 @@ pub async fn create_maintenance(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["mes:update"])),
     path = "/api/mes/maintenances/{id}/status",
     tag = "Equipment",
     params(
@@ -1064,6 +1074,7 @@ pub struct InspectionResponse {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/inspections",
     tag = "Equipment",
     params(
@@ -1189,6 +1200,7 @@ pub async fn list_inspections(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mes:write"])),
     path = "/api/mes/inspections",
     tag = "Equipment",
     request_body = CreateInspectionRequest,

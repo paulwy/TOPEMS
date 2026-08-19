@@ -337,6 +337,7 @@ pub struct UpdateAbnormalityRequest {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-health/exam-plans",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -356,6 +357,7 @@ pub async fn list_exam_plans(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/occupational-health/exam-plans",
     request_body = CreateExamPlanRequest,
     tag = "ehs",
@@ -397,6 +399,7 @@ pub async fn create_exam_plan(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-health/exam-plans/{id}",
     tag = "ehs",
     params(
@@ -438,6 +441,7 @@ pub async fn get_exam_plan(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/occupational-health/exam-plans/{id}",
     request_body = UpdateExamPlanRequest,
     tag = "ehs",
@@ -483,6 +487,7 @@ pub async fn update_exam_plan(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/occupational-health/exam-plans/{id}",
     tag = "ehs",
     params(
@@ -504,6 +509,7 @@ pub async fn delete_exam_plan(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-health/exam-records",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -523,6 +529,7 @@ pub async fn list_exam_records(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/occupational-health/exam-records",
     request_body = CreateExamRecordRequest,
     tag = "ehs",
@@ -579,6 +586,7 @@ pub async fn create_exam_record(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-health/exam-records/{id}",
     tag = "ehs",
     params(
@@ -635,6 +643,7 @@ pub async fn get_exam_record(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/occupational-health/exam-records/{id}",
     request_body = UpdateExamRecordRequest,
     tag = "ehs",
@@ -693,6 +702,7 @@ pub async fn update_exam_record(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/occupational-health/exam-records/{id}",
     tag = "ehs",
     params(
@@ -714,6 +724,7 @@ pub async fn delete_exam_record(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-health/archives/{employee_id}",
     tag = "ehs",
     params(
@@ -751,6 +762,7 @@ pub async fn get_health_archive(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-health/contraindications",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -770,6 +782,7 @@ pub async fn list_contraindications(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/occupational-health/contraindications",
     request_body = CreateContraindicationRequest,
     tag = "ehs",
@@ -810,6 +823,7 @@ pub async fn create_contraindication(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-health/contraindications/{id}",
     tag = "ehs",
     params(
@@ -853,6 +867,7 @@ pub async fn get_contraindication(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/occupational-health/contraindications/{id}",
     request_body = UpdateContraindicationRequest,
     tag = "ehs",
@@ -900,6 +915,7 @@ pub async fn update_contraindication(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/occupational-health/contraindications/{id}",
     tag = "ehs",
     params(
@@ -921,6 +937,7 @@ pub async fn delete_contraindication(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-health/abnormalities",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -940,6 +957,7 @@ pub async fn list_abnormalities(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/occupational-health/abnormalities/{id}",
     request_body = UpdateAbnormalityRequest,
     tag = "ehs",
@@ -984,6 +1002,7 @@ pub async fn update_abnormality(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-health/statistics",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -1023,6 +1042,7 @@ pub async fn get_health_statistics(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-health/exam-types",
     tag = "ehs",
     responses((status = 200, description = "OK")),

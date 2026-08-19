@@ -161,29 +161,44 @@ function processFile(file, svcName, apply, format) {
     const action = httpMethodToAction(method);
     const permCode = `${module}:${action}`;
 
-    const insertPoint = findInsertionPoint(macro.body);
-    if (!insertPoint) continue;
+    const isSingleLine = !macro.body.includes('\n');
+    let absInsertPos;
+    let insertText;
 
-    const { afterLineIdx, lines } = insertPoint;
-    const methodLine = lines[afterLineIdx];
-    const indentMatch = methodLine.match(/^(\s*)/);
-    const indent = indentMatch ? indentMatch[1] : '    ';
-
-    let offsetInBody = 0;
-    for (let i = 0; i <= afterLineIdx; i++) {
-      if (i === afterLineIdx) {
-        offsetInBody += lines[i].length;
+    if (isSingleLine) {
+      // 单行紧凑格式 (#[utoipa::path(get, path = "...", responses(...))])
+      // 直接在 body 末尾追加 ", security(...)"，保持单行不换行，避免缺逗号语法错误
+      absInsertPos = macro.bodyStart + macro.body.length;
+      if (format === 'permissions') {
+        insertText = `, permissions = ("${permCode}")`;
       } else {
-        offsetInBody += lines[i].length + 1;
+        insertText = `, security(("BearerAuth" = ["${permCode}"]))`;
       }
-    }
+    } else {
+      const insertPoint = findInsertionPoint(macro.body);
+      if (!insertPoint) continue;
 
-    const insertLine = buildInsertLine(indent, permCode, format);
-    const absInsertPos = macro.bodyStart + offsetInBody;
+      const { afterLineIdx, lines } = insertPoint;
+      const methodLine = lines[afterLineIdx];
+      const indentMatch = methodLine.match(/^(\s*)/);
+      const indent = indentMatch ? indentMatch[1] : '    ';
+
+      let offsetInBody = 0;
+      for (let i = 0; i <= afterLineIdx; i++) {
+        if (i === afterLineIdx) {
+          offsetInBody += lines[i].length;
+        } else {
+          offsetInBody += lines[i].length + 1;
+        }
+      }
+
+      insertText = buildInsertLine(indent, permCode, format);
+      absInsertPos = macro.bodyStart + offsetInBody;
+    }
 
     insertions.push({
       pos: absInsertPos,
-      text: insertLine,
+      text: insertText,
       file: path.relative(ROOT, file),
       method,
       permCode,

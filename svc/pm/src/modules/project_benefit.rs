@@ -54,6 +54,7 @@ pub fn create_routes(pool: PgPool) -> Router {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/projects/{project_id}/benefits",
     tag = "project_benefits",
     params(
@@ -87,6 +88,7 @@ async fn get_benefits(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/projects/{project_id}/benefits/analysis",
     tag = "project_benefits",
     params(
@@ -189,6 +191,7 @@ async fn get_analysis(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pm:write"])),
     path = "/projects/{project_id}/benefits",
     tag = "project_benefits",
     request_body = CreateBenefitRequest,

@@ -6,6 +6,7 @@ use tracing::info;
 /// List analyses
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/analysis",
     tag = "Analytics",
     responses(
@@ -26,6 +27,7 @@ pub async fn list_analyses(
 /// Create analysis
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/analysis",
     tag = "Analytics",
     responses(
@@ -46,6 +48,7 @@ pub async fn create_analysis(
 /// Get analysis
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/analysis/{id}",
     tag = "Analytics",
     params(
@@ -70,6 +73,7 @@ pub async fn get_analysis(
 /// Execute analysis
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/analysis/{id}/execute",
     tag = "Analytics",
     params(

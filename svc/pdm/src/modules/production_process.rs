@@ -82,6 +82,7 @@ pub struct ProcessQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/production-processes",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -154,6 +155,7 @@ pub async fn list_processes(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pdm:write"])),
     path = "/api/pdm/production-processes",
     request_body = CreateProcessRequest,
     tag = "pdm",
@@ -205,6 +207,7 @@ pub async fn create_process(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/production-processes/{id}",
     tag = "pdm",
     params(
@@ -244,6 +247,7 @@ pub async fn get_process(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["pdm:update"])),
     path = "/api/pdm/production-processes/{id}",
     request_body = UpdateProcessRequest,
     tag = "pdm",
@@ -303,6 +307,7 @@ pub async fn update_process(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["pdm:delete"])),
     path = "/api/pdm/production-processes/{id}",
     tag = "pdm",
     params(

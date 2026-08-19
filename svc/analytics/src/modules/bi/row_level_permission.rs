@@ -134,6 +134,7 @@ pub struct FilteredDataResponse {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/permissions/row-level",
     tag = "Permission",
     responses(
@@ -199,6 +200,7 @@ pub async fn list_permission_rules(State(state): State<AppState>) -> Json<serde_
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/permissions/row-level",
     tag = "Permission",
     request_body(
@@ -279,6 +281,7 @@ pub async fn create_permission_rule(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/permissions/row-level/{id}",
     tag = "Permission",
     params(
@@ -348,6 +351,7 @@ pub async fn get_permission_rule(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["analytics:update"])),
     path = "/permissions/row-level/{id}",
     tag = "Permission",
     params(
@@ -434,6 +438,7 @@ pub async fn update_permission_rule(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["analytics:delete"])),
     path = "/permissions/row-level/{id}",
     tag = "Permission",
     params(
@@ -482,6 +487,7 @@ pub async fn delete_permission_rule(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/permission/validate",
     tag = "Permission",
     operation_id = "validate_permission",
@@ -572,6 +578,7 @@ pub async fn validate_permission(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/permission/filter",
     tag = "Permission",
     operation_id = "filter_data",
@@ -645,6 +652,7 @@ pub async fn filter_data(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/permission/user/{user_id}",
     tag = "Permission",
     operation_id = "get_user_permissions",
@@ -713,6 +721,7 @@ pub async fn get_user_permissions(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/permission/rule-types",
     tag = "Permission",
     operation_id = "get_permission_rule_types",
@@ -769,6 +778,7 @@ pub async fn get_permission_rule_types(State(_state): State<AppState>) -> Json<s
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/permissions/check",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))

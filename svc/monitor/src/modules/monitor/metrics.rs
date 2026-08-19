@@ -198,6 +198,7 @@ pub fn create_routes() -> Router<AppState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/metrics/system",
     tag = "metrics",
     responses(
@@ -231,6 +232,7 @@ pub async fn get_system_metrics(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/metrics/database",
     tag = "metrics",
     responses(
@@ -264,6 +266,7 @@ fn get_tenant_id(claims: &Claims) -> Uuid {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/performance/api",
     tag = "performance",
     responses(
@@ -328,6 +331,7 @@ pub async fn get_api_performance(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/performance/trend",
     tag = "performance",
     responses(
@@ -371,6 +375,7 @@ pub async fn get_performance_trend(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/performance/services",
     tag = "performance",
     responses(
@@ -457,6 +462,7 @@ pub async fn get_service_performance(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/performance/summary",
     tag = "performance",
     responses(
@@ -568,6 +574,7 @@ pub async fn get_performance_summary(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/performance/slow-queries",
     tag = "performance",
     responses(
@@ -667,6 +674,7 @@ pub struct ExportRequest {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["monitor:write"])),
     path = "/api/monitor/performance/export",
     request_body = ExportRequest,
     tag = "performance",

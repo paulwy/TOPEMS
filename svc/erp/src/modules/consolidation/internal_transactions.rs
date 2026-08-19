@@ -18,6 +18,7 @@ macro_rules! log_audit {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/consolidation/internal-transactions",
     tag = "Consolidation",
     responses((status = 200, description = "获取内部交易列表成功", body = ApiResponse<serde_json::Value>))
@@ -75,6 +76,7 @@ pub async fn list_internal_transactions(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/consolidation/internal-transactions/{transactionId}",
     tag = "Consolidation",
     params(("transactionId" = String, Path, description = "内部交易ID")),
@@ -102,6 +104,7 @@ pub async fn get_internal_transaction(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/consolidation/execute-elimination",
     tag = "Consolidation",
     responses((status = 200, description = "执行内部交易抵消成功", body = ApiResponse<serde_json::Value>))

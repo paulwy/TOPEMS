@@ -676,6 +676,7 @@ pub fn classify_metric_status(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/business-metrics",
     tag = "business_metrics",
     responses(
@@ -738,6 +739,7 @@ pub async fn list_business_metrics(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/business-metrics/{id}",
     tag = "business_metrics",
     params(
@@ -776,6 +778,7 @@ pub async fn get_business_metric(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["monitor:write"])),
     path = "/api/monitor/business-metrics",
     request_body = BusinessMetricRequest,
     tag = "business_metrics",
@@ -811,6 +814,7 @@ pub async fn create_business_metric(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["monitor:update"])),
     path = "/api/monitor/business-metrics/{id}",
     request_body = BusinessMetricRequest,
     tag = "business_metrics",
@@ -851,6 +855,7 @@ pub async fn update_business_metric(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["monitor:delete"])),
     path = "/api/monitor/business-metrics/{id}",
     tag = "business_metrics",
     params(
@@ -874,6 +879,7 @@ pub async fn delete_business_metric(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/business-metrics/summary",
     tag = "business_metrics",
     responses(
@@ -947,6 +953,7 @@ pub async fn get_business_metric_summary(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/business-metrics/trend",
     tag = "business_metrics",
     responses(
@@ -991,6 +998,7 @@ pub async fn get_business_metric_trend(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/business-metrics/kpi",
     tag = "business_metrics",
     responses(

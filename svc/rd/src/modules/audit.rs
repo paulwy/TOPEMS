@@ -35,6 +35,7 @@ pub struct ListAuditLogsQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["rd:read"])),
     path = "/audit-logs",
     tag = "audit",
     params(
@@ -130,6 +131,7 @@ async fn list_audit_logs(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["rd:read"])),
     path = "/audit-logs/{id}",
     tag = "audit",
     params(
@@ -226,6 +228,7 @@ pub async fn log_audit_event(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["rd:read"])),
     path = "/audit-logs/export",
     tag = "audit",
     params(

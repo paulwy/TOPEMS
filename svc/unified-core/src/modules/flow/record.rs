@@ -8,6 +8,7 @@ use axum::{
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/records",
     tag = "Flow-Approval",
     responses(
@@ -25,6 +26,7 @@ pub async fn list_records(State(_state): State<AppState>) -> Json<serde_json::Va
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/records/{approval_id}",
     tag = "Flow-Approval",
     params(

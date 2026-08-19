@@ -33,6 +33,7 @@ fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["qms:read"])),
     path = "/api/qms/checks",
     tag = "quality_inspection",
     params(
@@ -128,6 +129,7 @@ pub async fn list_inspections(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["qms:write"])),
     path = "/api/qms/checks",
     tag = "quality_inspection",
     request_body = CreateInspectionRequest,
@@ -172,6 +174,7 @@ pub async fn create_inspection(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["qms:read"])),
     path = "/api/qms/checks/{id}",
     tag = "quality_inspection",
     params(
@@ -210,6 +213,7 @@ pub async fn get_inspection(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["qms:update"])),
     path = "/api/qms/checks/{id}",
     tag = "quality_inspection",
     params(
@@ -259,6 +263,7 @@ pub async fn update_inspection(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["qms:delete"])),
     path = "/api/qms/checks/{id}",
     tag = "quality_inspection",
     params(

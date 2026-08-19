@@ -37,6 +37,7 @@ pub fn create_routes(pool: PgPool) -> Router {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/projects/{project_id}/expenses",
     tag = "project_expenses",
     params(
@@ -70,6 +71,7 @@ async fn list_expenses(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pm:write"])),
     path = "/projects/{project_id}/expenses",
     tag = "project_expenses",
     request_body = CreateExpenseRequest,
@@ -138,6 +140,7 @@ async fn add_expense(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/projects/{project_id}/expenses/{id}",
     tag = "project_expenses",
     params(
@@ -175,6 +178,7 @@ async fn get_expense(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["pm:update"])),
     path = "/projects/{project_id}/expenses/{id}",
     tag = "project_expenses",
     request_body = UpdateExpenseRequest,
@@ -238,6 +242,7 @@ async fn update_expense(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["pm:delete"])),
     path = "/projects/{project_id}/expenses/{id}",
     tag = "project_expenses",
     params(

@@ -84,6 +84,7 @@ pub struct DrilldownHistoryListResponse {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/drilldown/path",
     tag = "Drilldown",
     operation_id = "list_drilldown_paths",
@@ -136,6 +137,7 @@ pub async fn list_drilldown_paths(State(state): State<AppState>) -> Json<serde_j
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/drilldown/path",
     tag = "Drilldown",
     operation_id = "create_drilldown_path",
@@ -195,6 +197,7 @@ pub async fn create_drilldown_path(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/drilldown/path/{id}",
     tag = "Drilldown",
     operation_id = "get_drilldown_path",
@@ -248,6 +251,7 @@ pub async fn get_drilldown_path(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["analytics:update"])),
     path = "/drilldown/path/{id}",
     tag = "Drilldown",
     operation_id = "update_drilldown_path",
@@ -312,6 +316,7 @@ pub async fn update_drilldown_path(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["analytics:delete"])),
     path = "/drilldown/path/{id}",
     tag = "Drilldown",
     operation_id = "delete_drilldown_path",
@@ -352,6 +357,7 @@ pub async fn delete_drilldown_path(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/drilldown/drill-down",
     tag = "Drilldown",
     operation_id = "drill_down",
@@ -442,6 +448,7 @@ pub async fn drill_down(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/drilldown/roll-up",
     tag = "Drilldown",
     operation_id = "roll_up",
@@ -529,6 +536,7 @@ pub async fn roll_up(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/drilldown/history",
     tag = "Drilldown",
     operation_id = "get_drilldown_history",

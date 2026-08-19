@@ -634,6 +634,7 @@ fn compute_score(checks: &[QualityCheckV51]) -> f64 {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["master_data:write"])),
     path = "/api/master/quality-v51/checks",
     tag = "quality_v51",
     request_body = RunQualityCheckRequest,
@@ -703,6 +704,7 @@ pub async fn run_quality_check(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["master_data:read"])),
     path = "/api/master/quality-v51/checks",
     tag = "quality_v51",
     params(
@@ -802,6 +804,7 @@ pub async fn get_quality_check_results(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["master_data:read"])),
     path = "/api/master/quality-v51/rules",
     tag = "quality_v51",
     responses(
@@ -819,6 +822,7 @@ pub async fn list_quality_rules(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["master_data:write"])),
     path = "/api/master/quality-v51/rules",
     tag = "quality_v51",
     request_body = CreateQualityRuleRequest,
@@ -918,6 +922,7 @@ pub async fn delete_quality_rule(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["master_data:read"])),
     path = "/api/master/quality-v51/score",
     tag = "quality_v51",
     responses(
@@ -981,6 +986,7 @@ pub async fn get_quality_score(State(_state): State<AppState>) -> Json<ApiRespon
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["master_data:read"])),
     path = "/api/master/quality-v51/dashboard",
     tag = "quality_v51",
     responses(
@@ -1042,6 +1048,7 @@ pub async fn get_quality_dashboard(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["master_data:write"])),
     path = "/api/master/quality-v51/auto-fix/run",
     tag = "quality_v51",
     request_body = AutoFixRequest,
@@ -1246,6 +1253,7 @@ pub async fn run_fix_workflow(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["master_data:write"])),
     path = "/api/master/quality-v51/ai/suggest",
     tag = "quality_v51",
     request_body = GenerateSuggestionsRequest,

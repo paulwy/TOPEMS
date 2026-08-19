@@ -13,6 +13,7 @@ use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/smart-replenishment/orders",
     tag = "smart_replenishment",
     operation_id = "list_orders",
@@ -87,6 +88,7 @@ pub async fn list_orders(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/smart-replenishment/orders",
     tag = "smart_replenishment",
     operation_id = "create_order",
@@ -196,6 +198,7 @@ pub async fn create_order(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/smart-replenishment/orders/{id}",
     tag = "smart_replenishment",
     operation_id = "get_order",
@@ -249,6 +252,7 @@ pub async fn get_order(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["wms:update"])),
     path = "/smart-replenishment/orders/{id}",
     tag = "smart_replenishment",
     operation_id = "update_order",
@@ -314,6 +318,7 @@ pub async fn update_order(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["wms:delete"])),
     path = "/smart-replenishment/orders/{id}",
     tag = "smart_replenishment",
     operation_id = "delete_order",
@@ -356,6 +361,7 @@ pub async fn delete_order(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/smart-replenishment/orders/{id}/items",
     tag = "smart_replenishment",
     operation_id = "list_order_items",
@@ -421,6 +427,7 @@ pub async fn list_order_items(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/smart-replenishment/orders/{id}/confirm",
     tag = "smart_replenishment",
     operation_id = "confirm_order",
@@ -474,6 +481,7 @@ pub async fn confirm_order(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/smart-replenishment/orders/{id}/complete",
     tag = "smart_replenishment",
     operation_id = "complete_order",

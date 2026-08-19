@@ -611,6 +611,7 @@ pub struct ConcessionApprovalDecisionRequest {
 /// 发起让步审批（failed→concession_received）
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mes:write"])),
     path = "/api/mes/quality/inspections/{id}/approval/start",
     tag = "QualityInspection",
     params(
@@ -648,6 +649,7 @@ pub async fn start_concession_approval(
 /// 让步审批通过
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mes:write"])),
     path = "/api/mes/quality/inspections/{id}/approval/approve",
     tag = "QualityInspection",
     params(
@@ -684,6 +686,7 @@ pub async fn approve_concession(
 /// 让步审批驳回
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mes:write"])),
     path = "/api/mes/quality/inspections/{id}/approval/reject",
     tag = "QualityInspection",
     params(

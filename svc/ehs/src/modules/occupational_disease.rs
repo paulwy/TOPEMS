@@ -339,6 +339,7 @@ pub struct CreateHealthTrainingRequest {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-disease/factors",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -358,6 +359,7 @@ pub async fn list_hazard_factors(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/occupational-disease/factors",
     request_body = CreateHazardFactorRequest,
     tag = "ehs",
@@ -401,6 +403,7 @@ pub async fn create_hazard_factor(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-disease/factors/{id}",
     tag = "ehs",
     params(
@@ -444,6 +447,7 @@ pub async fn get_hazard_factor(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/occupational-disease/factors/{id}",
     request_body = UpdateHazardFactorRequest,
     tag = "ehs",
@@ -489,6 +493,7 @@ pub async fn update_hazard_factor(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/occupational-disease/factors/{id}",
     tag = "ehs",
     params(
@@ -510,6 +515,7 @@ pub async fn delete_hazard_factor(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-disease/detections",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -529,6 +535,7 @@ pub async fn list_detection_records(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/occupational-disease/detections",
     request_body = CreateDetectionRecordRequest,
     tag = "ehs",
@@ -575,6 +582,7 @@ pub async fn create_detection_record(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-disease/detections/{id}",
     tag = "ehs",
     params(
@@ -621,6 +629,7 @@ pub async fn get_detection_record(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/occupational-disease/detections/{id}",
     tag = "ehs",
     params(
@@ -642,6 +651,7 @@ pub async fn delete_detection_record(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-disease/cases",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -661,6 +671,7 @@ pub async fn list_disease_cases(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/occupational-disease/cases",
     request_body = CreateDiseaseCaseRequest,
     tag = "ehs",
@@ -709,6 +720,7 @@ pub async fn create_disease_case(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-disease/cases/{id}",
     tag = "ehs",
     params(
@@ -757,6 +769,7 @@ pub async fn get_disease_case(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/occupational-disease/cases/{id}",
     request_body = UpdateDiseaseCaseRequest,
     tag = "ehs",
@@ -814,6 +827,7 @@ pub async fn update_disease_case(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/occupational-disease/cases/{id}",
     tag = "ehs",
     params(
@@ -835,6 +849,7 @@ pub async fn delete_disease_case(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-disease/protection-measures",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -854,6 +869,7 @@ pub async fn list_protection_measures(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/occupational-disease/protection-measures",
     request_body = CreateProtectionMeasureRequest,
     tag = "ehs",
@@ -896,6 +912,7 @@ pub async fn create_protection_measure(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-disease/protection-measures/{id}",
     tag = "ehs",
     params(
@@ -938,6 +955,7 @@ pub async fn get_protection_measure(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/occupational-disease/protection-measures/{id}",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -992,6 +1010,7 @@ pub async fn update_protection_measure(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/occupational-disease/protection-measures/{id}",
     tag = "ehs",
     params(
@@ -1013,6 +1032,7 @@ pub async fn delete_protection_measure(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-disease/trainings",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -1032,6 +1052,7 @@ pub async fn list_health_trainings(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/occupational-disease/trainings",
     request_body = CreateHealthTrainingRequest,
     tag = "ehs",
@@ -1074,6 +1095,7 @@ pub async fn create_health_training(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-disease/trainings/{id}",
     tag = "ehs",
     params(
@@ -1116,6 +1138,7 @@ pub async fn get_health_training(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/occupational-disease/trainings/{id}",
     tag = "ehs",
     params(
@@ -1137,6 +1160,7 @@ pub async fn delete_health_training(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-disease/statistics",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -1178,6 +1202,7 @@ pub async fn get_disease_statistics(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/occupational-disease/factor-types",
     tag = "ehs",
     responses((status = 200, description = "OK")),

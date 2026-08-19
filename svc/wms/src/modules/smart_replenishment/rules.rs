@@ -40,6 +40,7 @@ pub(crate) fn rule_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/smart-replenishment/rules",
     tag = "smart_replenishment",
     operation_id = "list_rules",
@@ -114,6 +115,7 @@ pub async fn list_rules(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/smart-replenishment/rules",
     tag = "smart_replenishment",
     operation_id = "create_rule",
@@ -214,6 +216,7 @@ pub async fn create_rule(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/smart-replenishment/rules/{id}",
     tag = "smart_replenishment",
     operation_id = "get_rule",
@@ -258,6 +261,7 @@ pub async fn get_rule(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["wms:update"])),
     path = "/smart-replenishment/rules/{id}",
     tag = "smart_replenishment",
     operation_id = "update_rule",
@@ -374,6 +378,7 @@ pub async fn update_rule(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["wms:delete"])),
     path = "/smart-replenishment/rules/{id}",
     tag = "smart_replenishment",
     operation_id = "delete_rule",

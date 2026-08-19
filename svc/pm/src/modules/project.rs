@@ -140,6 +140,7 @@ pub fn create_routes(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>)
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/api/pm/projects",
     tag = "projects",
     params(
@@ -199,6 +200,7 @@ async fn list_projects(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pm:write"])),
     path = "/api/pm/projects",
     tag = "projects",
     request_body = CreateProjectRequest,
@@ -297,6 +299,7 @@ async fn create_project(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/api/pm/projects/{id}",
     tag = "projects",
     params(
@@ -332,6 +335,7 @@ async fn get_project(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["pm:update"])),
     path = "/api/pm/projects/{id}",
     tag = "projects",
     request_body = UpdateProjectRequest,
@@ -405,6 +409,7 @@ async fn update_project(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["pm:delete"])),
     path = "/api/pm/projects/{id}",
     tag = "projects",
     params(
@@ -440,6 +445,7 @@ async fn delete_project(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/api/pm/projects/{id}/dashboard",
     tag = "projects",
     params(
@@ -561,6 +567,7 @@ async fn get_project_dashboard(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/api/pm/projects/{id}/gantt",
     tag = "projects",
     params(

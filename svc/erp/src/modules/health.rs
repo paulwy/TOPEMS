@@ -16,6 +16,7 @@ pub struct HealthResponse {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/health/check-database",
     tag = "Health",
     operation_id = "check_database",
@@ -32,6 +33,7 @@ pub async fn check_database(pool: &PgPool) -> String {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/health",
     tag = "Health",
     responses((status = 200, description = "ERP 服务健康检查成功"))

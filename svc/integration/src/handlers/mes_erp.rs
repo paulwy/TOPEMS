@@ -22,6 +22,7 @@ pub struct SyncMesToErpRequest {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["integration:read"])),
     path = "/api/integration/mes-erp",
     tag = "integration",
     responses(
@@ -55,6 +56,7 @@ pub async fn list_mes_erp_sync(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/mes-erp",
     request_body = CreateMesErpSyncRequest,
     tag = "integration",
@@ -115,6 +117,7 @@ pub async fn create_mes_erp_sync(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["integration:read"])),
     path = "/api/integration/mes-erp/{id}",
     tag = "integration",
     params(
@@ -152,6 +155,7 @@ pub async fn get_mes_erp_sync(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/mes-erp/{id}/sync",
     tag = "integration",
     params(
@@ -204,6 +208,7 @@ pub async fn sync_mes_erp(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/mes-erp/sync/erp-to-mes",
     request_body = SyncErpToMesRequest,
     tag = "integration",
@@ -242,6 +247,7 @@ pub async fn sync_erp_order_to_mes(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/mes-erp/sync/mes-to-erp",
     request_body = SyncMesToErpRequest,
     tag = "integration",
@@ -283,6 +289,7 @@ pub async fn sync_mes_progress_to_erp(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/mes-erp/{id}/retry",
     tag = "integration",
     params(
@@ -311,6 +318,7 @@ pub async fn retry_mes_erp_sync(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["integration:read"])),
     path = "/api/integration/mes-erp/{id}/logs",
     tag = "integration",
     params(
@@ -336,6 +344,7 @@ pub async fn get_mes_erp_sync_logs(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["integration:read"])),
     path = "/api/integration/mes-erp/records",
     tag = "integration",
     responses(

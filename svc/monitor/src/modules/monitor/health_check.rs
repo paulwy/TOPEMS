@@ -60,6 +60,7 @@ pub fn create_routes() -> Router<AppState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["monitor:read"])),
     path = "/api/monitor/health",
     tag = "health",
     responses(

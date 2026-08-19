@@ -36,6 +36,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/purchase-orders",
     responses(
         (status = 200, description = "list_purchase_orders OK")
@@ -116,6 +117,7 @@ pub async fn list_purchase_orders(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/purchase-orders/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -154,6 +156,7 @@ pub async fn get_purchase_order(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/purchase-orders",
     request_body = CreatePurchaseOrderRequest,
     responses(
@@ -226,6 +229,7 @@ pub async fn create_purchase_order(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/purchase-orders/{id}",
     request_body = UpdatePurchaseOrderRequest,
     params(
@@ -277,6 +281,7 @@ pub async fn update_purchase_order(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/purchase-orders/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -312,6 +317,7 @@ pub async fn delete_purchase_order(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/purchase-orders/{id}/approve",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -353,6 +359,7 @@ pub async fn approve_purchase_order(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/purchase-orders/{id}/cancel",
     params(
         ("id" = Uuid, Path, description = "id")

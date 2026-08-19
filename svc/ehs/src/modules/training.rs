@@ -132,6 +132,7 @@ pub struct TrainingCertificate {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/training",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -151,6 +152,7 @@ pub async fn list_trainings(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/training",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -187,6 +189,7 @@ pub async fn create_training(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/training/{id}",
     tag = "ehs",
     params(
@@ -223,6 +226,7 @@ pub async fn get_training(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/training/{id}",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -281,6 +285,7 @@ pub async fn update_training(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/training/{id}",
     tag = "ehs",
     params(
@@ -302,6 +307,7 @@ pub async fn delete_training(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/training/plans",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -321,6 +327,7 @@ pub async fn list_training_plans(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/training/plans",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -370,6 +377,7 @@ pub async fn create_training_plan(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/training/plans/{id}",
     tag = "ehs",
     params(
@@ -406,6 +414,7 @@ pub async fn get_training_plan(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/training/plans/{id}",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -461,6 +470,7 @@ pub async fn update_training_plan(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/training/plans/{id}",
     tag = "ehs",
     params(
@@ -482,6 +492,7 @@ pub async fn delete_training_plan(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/training/records",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -501,6 +512,7 @@ pub async fn list_training_records(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/training/records",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -553,6 +565,7 @@ pub async fn create_training_record(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/training/records/{id}",
     tag = "ehs",
     params(
@@ -589,6 +602,7 @@ pub async fn get_training_record(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/training/records/{id}",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -647,6 +661,7 @@ pub async fn update_training_record(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/training/records/{id}",
     tag = "ehs",
     params(
@@ -668,6 +683,7 @@ pub async fn delete_training_record(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/training/certificates",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -687,6 +703,7 @@ pub async fn list_certificates(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/training/certificates",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -733,6 +750,7 @@ pub async fn create_certificate(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/training/certificates/{id}",
     tag = "ehs",
     params(
@@ -768,6 +786,7 @@ pub async fn get_certificate(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/training/certificates/{id}",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -820,6 +839,7 @@ pub async fn update_certificate(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/training/certificates/{id}",
     tag = "ehs",
     params(

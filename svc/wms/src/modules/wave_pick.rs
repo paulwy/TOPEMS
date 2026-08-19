@@ -73,6 +73,7 @@ where
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/wave-picks",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -152,6 +153,7 @@ pub async fn list_wave_picks(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/wave-picks",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -234,6 +236,7 @@ pub async fn create_wave_pick(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/wave-picks/{id}",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -274,6 +277,7 @@ pub async fn get_wave_pick(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["wms:update"])),
     path = "/api/wms/wave-picks/{id}",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -366,6 +370,7 @@ pub async fn update_wave_pick(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["wms:delete"])),
     path = "/api/wms/wave-picks/{id}",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -451,6 +456,7 @@ pub struct WavePickItem {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/wave-picks/{id}/items",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -500,6 +506,7 @@ pub async fn list_wave_pick_items(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/wave-picks/{id}/assign",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -581,6 +588,7 @@ pub async fn assign_wave_pick(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/wave-picks/{id}/start",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -661,6 +669,7 @@ pub async fn start_wave_pick(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/wave-picks/{id}/complete",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -741,6 +750,7 @@ pub async fn complete_wave_pick(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/wave-picks/{id}/cancel",
     tag = "wms",
     responses((status = 200, description = "OK"))

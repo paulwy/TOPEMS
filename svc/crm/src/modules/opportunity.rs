@@ -179,6 +179,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["crm:read"])),
     path = "/opportunities",
     tag = "opportunity",
     params(
@@ -273,6 +274,7 @@ async fn list_opportunities(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["crm:write"])),
     path = "/opportunities",
     tag = "opportunity",
     request_body = CreateOpportunityRequest,

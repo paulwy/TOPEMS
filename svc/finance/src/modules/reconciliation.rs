@@ -68,6 +68,7 @@ pub fn create_routes() -> Router<AppState> {
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/reconciliation/sessions",
     responses(
         (status = 200, description = "成功"),
@@ -98,6 +99,7 @@ async fn create_session_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/session/{id}",
     tag = "Reconciliation",
     operation_id = "get_session_handler",
@@ -121,6 +123,7 @@ async fn get_session_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/sessions",
     tag = "Reconciliation",
     operation_id = "list_sessions_handler",
@@ -156,6 +159,7 @@ async fn list_sessions_handler(
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/reconciliation/sessions/{session_id}/items/import",
     responses(
         (status = 200, description = "成功"),
@@ -190,6 +194,7 @@ async fn import_items_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/match",
     tag = "Reconciliation",
     operation_id = "auto_match_handler",
@@ -213,6 +218,7 @@ async fn auto_match_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/session",
     tag = "Reconciliation",
     operation_id = "complete_session_handler",
@@ -235,6 +241,7 @@ async fn complete_session_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/reconciliation/sessions/{session_id}/items",
     responses(
         (status = 200, description = "成功"),
@@ -284,6 +291,7 @@ async fn get_items_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/summary",
     tag = "Reconciliation",
     operation_id = "get_summary_handler",
@@ -306,6 +314,7 @@ async fn get_summary_handler(
 }
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/reconciliation/items/{item_id}/diff",
     responses(
         (status = 200, description = "成功"),
@@ -353,6 +362,7 @@ pub struct AgingQueryParams {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/report/{id}",
     tag = "Reconciliation",
     operation_id = "get_report_handler",
@@ -467,6 +477,7 @@ async fn create_ticket_for_reconciliation(
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/reconciliation/items/diff/batch",
     responses(
         (status = 200, description = "成功"),
@@ -496,6 +507,7 @@ async fn batch_update_diff_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/diff_statistics",
     tag = "Reconciliation",
     operation_id = "get_diff_statistics_handler",
@@ -519,6 +531,7 @@ async fn get_diff_statistics_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/aging/{id}",
     tag = "Reconciliation",
     operation_id = "get_aging_handler",

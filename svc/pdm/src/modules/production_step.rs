@@ -78,6 +78,7 @@ pub struct StepQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/production-steps",
     tag = "pdm",
     responses((status = 200, description = "OK")),
@@ -145,6 +146,7 @@ pub async fn list_steps(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pdm:write"])),
     path = "/api/pdm/production-steps",
     request_body = CreateStepRequest,
     tag = "pdm",
@@ -194,6 +196,7 @@ pub async fn create_step(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pdm:read"])),
     path = "/api/pdm/production-steps/{id}",
     tag = "pdm",
     params(
@@ -233,6 +236,7 @@ pub async fn get_step(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["pdm:update"])),
     path = "/api/pdm/production-steps/{id}",
     request_body = UpdateStepRequest,
     tag = "pdm",
@@ -291,6 +295,7 @@ pub async fn update_step(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["pdm:delete"])),
     path = "/api/pdm/production-steps/{id}",
     tag = "pdm",
     params(

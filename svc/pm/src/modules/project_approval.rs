@@ -46,6 +46,7 @@ fn get_approval_workflow_id() -> Option<Uuid> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/projects/{project_id}/approval",
     tag = "project_approval",
     params(
@@ -81,6 +82,7 @@ async fn get_approval(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pm:write"])),
     path = "/projects/{project_id}/approval",
     tag = "project_approval",
     request_body = ApprovalRequest,
@@ -187,6 +189,7 @@ async fn submit_approval(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["pm:write"])),
     path = "/projects/{project_id}/approval/action",
     tag = "project_approval",
     request_body = ApprovalRequest,

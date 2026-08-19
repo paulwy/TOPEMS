@@ -39,6 +39,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/customers",
     responses(
         (status = 200, description = "list_customers OK")
@@ -126,6 +127,7 @@ pub async fn list_customers(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/customers/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -164,6 +166,7 @@ pub async fn get_customer(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/customers",
     request_body = CreateCustomerRequest,
     responses(
@@ -213,6 +216,7 @@ pub async fn create_customer(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/customers/{id}",
     request_body = UpdateCustomerRequest,
     params(
@@ -267,6 +271,7 @@ pub async fn update_customer(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/customers/{id}",
     params(
         ("id" = Uuid, Path, description = "id")

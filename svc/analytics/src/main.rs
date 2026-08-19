@@ -972,6 +972,7 @@ async fn main() -> anyhow::Result<()> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/",
     tag = "Health",
     operation_id = "home",
@@ -985,6 +986,7 @@ async fn home() -> &'static str {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/health",
     tag = "Health",
     operation_id = "health",
@@ -996,6 +998,7 @@ async fn health(State(state): State<AppState>) -> ServiceHealth {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/health/detailed",
     tag = "Health",
     operation_id = "detailed_health",
@@ -1031,6 +1034,7 @@ async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serd
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/reports-center/stats",
     tag = "BI-Reports-Center",
     operation_id = "reports_center_stats",
@@ -1108,6 +1112,7 @@ async fn reports_center_stats(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/reports-center/export/{report_type}",
     tag = "BI-Reports-Center",
     operation_id = "reports_center_export",

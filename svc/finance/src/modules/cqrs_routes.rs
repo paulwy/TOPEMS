@@ -52,6 +52,7 @@ pub struct PaginatedEventsResponse {
 }
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/cqrs/commands/create-voucher",
     responses(
         (status = 200, description = "成功"),
@@ -86,6 +87,7 @@ async fn handle_create_voucher(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/handle_post_voucher",
     tag = "CqrsRoutes",
     operation_id = "handle_post_voucher",
@@ -115,6 +117,7 @@ async fn handle_post_voucher(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/finance/handle_reverse_voucher/{id}",
     tag = "CqrsRoutes",
     operation_id = "handle_reverse_voucher",
@@ -143,6 +146,7 @@ async fn handle_reverse_voucher(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/cqrs/views/voucher-summary",
     responses(
         (status = 200, description = "成功"),
@@ -180,6 +184,7 @@ async fn list_voucher_summary(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/voucher_summary_by_id",
     tag = "CqrsRoutes",
     operation_id = "get_voucher_summary_by_id",
@@ -199,6 +204,7 @@ async fn get_voucher_summary_by_id(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/receivable_aging",
     tag = "CqrsRoutes",
     operation_id = "list_receivable_aging",
@@ -227,6 +233,7 @@ async fn list_receivable_aging(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/cqrs/events/{aggregate_id}",
     responses(
         (status = 200, description = "成功"),
@@ -256,6 +263,7 @@ async fn get_events(Path(aggregate_id): Path<String>) -> Json<ApiResponse<Vec<Ev
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/views",
     tag = "CqrsRoutes",
     operation_id = "rebuild_views",
@@ -273,6 +281,7 @@ async fn rebuild_views() -> Json<ApiResponse<()>> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/stats",
     tag = "CqrsRoutes",
     operation_id = "get_stats",
@@ -315,6 +324,7 @@ async fn get_stats() -> Json<ApiResponse<CqrsStatsResponse>> {
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/cqrs/projection-progress",
     responses(
         (status = 200, description = "成功"),
@@ -341,6 +351,7 @@ async fn get_projection_progress(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/events_paginated",
     tag = "CqrsRoutes",
     operation_id = "list_events_paginated",
@@ -380,6 +391,7 @@ async fn list_events_paginated(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/view",
     tag = "CqrsRoutes",
     operation_id = "replay_view",

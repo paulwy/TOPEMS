@@ -33,6 +33,7 @@ pub struct PermissionDef {
 /// 获取插件信息
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/plugins/info",
     tag = "BI-Plugin",
     operation_id = "get_plugin_info",
@@ -123,6 +124,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 /// 插件健康检查
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/plugins/health",
     tag = "BI-Plugin",
     operation_id = "plugin_health_check",

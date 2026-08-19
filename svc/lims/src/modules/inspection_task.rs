@@ -68,6 +68,7 @@ pub struct SubmitResultRequest {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["lims:read"])),
     path = "/lims/tasks",
     tag = "inspection_task",
     responses(
@@ -119,6 +120,7 @@ pub async fn list_tasks(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["lims:write"])),
     path = "/lims/tasks",
     tag = "inspection_task",
     request_body = CreateTaskRequest,
@@ -205,6 +207,7 @@ pub async fn create_task(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["lims:read"])),
     path = "/lims/tasks/{id}",
     tag = "inspection_task",
     params(

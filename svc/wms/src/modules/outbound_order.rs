@@ -93,6 +93,7 @@ where
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/outbound-orders",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -169,6 +170,7 @@ pub async fn list_outbound_orders(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/outbound-orders",
     tag = "wms",
     responses(
@@ -260,6 +262,7 @@ pub async fn create_outbound_order(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/outbound-orders/{id}",
     tag = "wms",
     responses(
@@ -302,6 +305,7 @@ pub async fn get_outbound_order(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["wms:update"])),
     path = "/api/wms/outbound-orders/{id}",
     tag = "wms",
     responses(
@@ -418,6 +422,7 @@ pub async fn update_outbound_order(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["wms:delete"])),
     path = "/api/wms/outbound-orders/{id}",
     tag = "wms",
     responses(
@@ -492,6 +497,7 @@ pub async fn delete_outbound_order(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/outbound-orders/{id}/items",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -565,6 +571,7 @@ pub async fn list_outbound_order_items(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/outbound-orders/{id}/items",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -674,6 +681,7 @@ pub async fn create_outbound_order_item(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["wms:update"])),
     path = "/api/wms/outbound-orders/{id}/items/{item_id}",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -764,6 +772,7 @@ pub async fn update_outbound_order_item(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["wms:delete"])),
     path = "/api/wms/outbound-orders/{id}/items/{item_id}",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -832,6 +841,7 @@ pub async fn delete_outbound_order_item(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/outbound-orders/{id}/confirm",
     tag = "wms",
     responses(
@@ -912,6 +922,7 @@ pub async fn confirm_outbound_order(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/outbound-orders/{id}/pick",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -986,6 +997,7 @@ pub async fn pick_outbound_order(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/outbound-orders/{id}/pack",
     tag = "wms",
     responses((status = 200, description = "OK"))
@@ -1061,6 +1073,7 @@ pub async fn pack_outbound_order(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/outbound-orders/{id}/ship",
     tag = "wms",
     responses(
@@ -1293,6 +1306,7 @@ pub async fn ship_outbound_order(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/outbound-orders/{id}/complete",
     tag = "wms",
     responses(
@@ -1379,6 +1393,7 @@ pub struct ApprovalRequest {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/outbound-orders/{id}/approval/start",
     tag = "WMS - Outbound",
     request_body = ApprovalRequest,
@@ -1447,6 +1462,7 @@ pub async fn start_outbound_approval(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/outbound-orders/{id}/approval/approve",
     tag = "WMS - Outbound",
     request_body = ApprovalRequest,
@@ -1533,6 +1549,7 @@ pub async fn approve_outbound(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["wms:write"])),
     path = "/api/wms/outbound-orders/{id}/approval/reject",
     tag = "WMS - Outbound",
     request_body = ApprovalRequest,

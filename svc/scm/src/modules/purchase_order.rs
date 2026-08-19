@@ -31,6 +31,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["scm:read"])),
     path = "/scm/purchase-orders",
     responses(
         (status = 200, description = "list_orders OK")
@@ -105,6 +106,7 @@ pub async fn list_orders(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["scm:write"])),
     path = "/scm/purchase-orders",
     request_body = CreatePurchaseOrderRequest,
     responses(
@@ -188,6 +190,7 @@ pub async fn create_order(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["scm:read"])),
     path = "/scm/purchase-orders/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -229,6 +232,7 @@ pub async fn get_order(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["scm:update"])),
     path = "/scm/purchase-orders/{id}",
     request_body = UpdatePurchaseOrderRequest,
     params(
@@ -334,6 +338,7 @@ pub async fn update_order(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["scm:delete"])),
     path = "/scm/purchase-orders/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -414,6 +419,7 @@ pub struct ApprovalRequest {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["scm:write"])),
     path = "/scm/purchase-orders/{id}/approve",
     request_body = ApprovalRequest,
     params(
@@ -575,6 +581,7 @@ pub async fn approve_order(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["scm:write"])),
     path = "/scm/purchase-orders/{id}/reject",
     request_body = ApprovalRequest,
     params(

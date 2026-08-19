@@ -382,6 +382,7 @@ pub struct UpdateIncidentRequest {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/environmental-compliance/regulations",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -401,6 +402,7 @@ pub async fn list_regulations(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/environmental-compliance/regulations",
     request_body = CreateRegulationRequest,
     tag = "ehs",
@@ -445,6 +447,7 @@ pub async fn create_regulation(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/environmental-compliance/regulations/{id}",
     tag = "ehs",
     params(
@@ -491,6 +494,7 @@ pub async fn get_regulation(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/environmental-compliance/regulations/{id}",
     request_body = UpdateRegulationRequest,
     tag = "ehs",
@@ -539,6 +543,7 @@ pub async fn update_regulation(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/environmental-compliance/regulations/{id}",
     tag = "ehs",
     params(
@@ -560,6 +565,7 @@ pub async fn delete_regulation(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/environmental-compliance/evaluations",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -579,6 +585,7 @@ pub async fn list_evaluations(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/environmental-compliance/evaluations",
     request_body = CreateEvaluationRequest,
     tag = "ehs",
@@ -623,6 +630,7 @@ pub async fn create_evaluation(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/environmental-compliance/evaluations/{id}",
     tag = "ehs",
     params(
@@ -667,6 +675,7 @@ pub async fn get_evaluation(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/environmental-compliance/evaluations/{id}",
     request_body = UpdateEvaluationRequest,
     tag = "ehs",
@@ -723,6 +732,7 @@ pub async fn update_evaluation(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/environmental-compliance/evaluations/{id}",
     tag = "ehs",
     params(
@@ -744,6 +754,7 @@ pub async fn delete_evaluation(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/environmental-compliance/monitoring",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -763,6 +774,7 @@ pub async fn list_monitor_records(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/environmental-compliance/monitoring",
     request_body = CreateMonitorRecordRequest,
     tag = "ehs",
@@ -810,6 +822,7 @@ pub async fn create_monitor_record(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/environmental-compliance/monitoring/{id}",
     tag = "ehs",
     params(
@@ -857,6 +870,7 @@ pub async fn get_monitor_record(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/environmental-compliance/monitoring/{id}",
     tag = "ehs",
     params(
@@ -878,6 +892,7 @@ pub async fn delete_monitor_record(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/environmental-compliance/permits",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -897,6 +912,7 @@ pub async fn list_permits(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/environmental-compliance/permits",
     request_body = CreatePermitRequest,
     tag = "ehs",
@@ -942,6 +958,7 @@ pub async fn create_permit(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/environmental-compliance/permits/{id}",
     tag = "ehs",
     params(
@@ -991,6 +1008,7 @@ pub async fn get_permit(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/environmental-compliance/permits/{id}",
     request_body = UpdatePermitRequest,
     tag = "ehs",
@@ -1038,6 +1056,7 @@ pub async fn update_permit(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/environmental-compliance/permits/{id}",
     tag = "ehs",
     params(
@@ -1059,6 +1078,7 @@ pub async fn delete_permit(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/environmental-compliance/incidents",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -1078,6 +1098,7 @@ pub async fn list_incidents(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/environmental-compliance/incidents",
     request_body = CreateIncidentRequest,
     tag = "ehs",
@@ -1127,6 +1148,7 @@ pub async fn create_incident(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/environmental-compliance/incidents/{id}",
     tag = "ehs",
     params(
@@ -1176,6 +1198,7 @@ pub async fn get_incident(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/environmental-compliance/incidents/{id}",
     request_body = UpdateIncidentRequest,
     tag = "ehs",
@@ -1237,6 +1260,7 @@ pub async fn update_incident(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/environmental-compliance/incidents/{id}",
     tag = "ehs",
     params(
@@ -1258,6 +1282,7 @@ pub async fn delete_incident(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/environmental-compliance/statistics",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -1301,6 +1326,7 @@ pub async fn get_compliance_statistics(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/environmental-compliance/regulations/categories",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -1325,6 +1351,7 @@ pub async fn list_regulation_categories(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/environmental-compliance/monitoring/types",
     tag = "ehs",
     responses((status = 200, description = "OK")),

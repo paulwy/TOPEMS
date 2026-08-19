@@ -995,6 +995,7 @@ async fn build_task_statistics(db: &PgPool) -> TaskStatistics {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/statistics",
     tag = "pm_statistics",
     responses(
@@ -1009,6 +1010,7 @@ async fn get_statistics(State(db): State<PgPool>) -> Json<ApiResponse<PmStatisti
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/statistics/projects",
     tag = "pm_statistics",
     params(
@@ -1032,6 +1034,7 @@ async fn get_project_statistics(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/statistics/contracts",
     tag = "pm_statistics",
     params(
@@ -1055,6 +1058,7 @@ async fn get_contract_statistics(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/statistics/budget",
     tag = "pm_statistics",
     params(
@@ -1078,6 +1082,7 @@ async fn get_budget_statistics(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/statistics/risks",
     tag = "pm_statistics",
     params(
@@ -1101,6 +1106,7 @@ async fn get_risk_statistics(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/statistics/tasks",
     tag = "pm_statistics",
     params(
@@ -1124,6 +1130,7 @@ async fn get_task_statistics(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["pm:read"])),
     path = "/statistics/dashboard",
     tag = "pm_statistics",
     responses(

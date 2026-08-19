@@ -18,6 +18,7 @@ macro_rules! log_audit {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/consolidation/elimination-rules",
     tag = "Consolidation",
     responses((status = 200, description = "获取抵消规则列表成功", body = ApiResponse<serde_json::Value>))
@@ -84,6 +85,7 @@ pub async fn list_elimination_rules(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/consolidation/elimination-rules/{ruleId}",
     tag = "Consolidation",
     params(("ruleId" = String, Path, description = "抵消规则ID")),
@@ -111,6 +113,7 @@ pub async fn get_elimination_rule(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/consolidation/elimination-rules",
     tag = "Consolidation",
     responses((status = 200, description = "创建抵消规则成功", body = ApiResponse<serde_json::Value>))
@@ -166,6 +169,7 @@ pub async fn create_elimination_rule(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/consolidation/elimination-rules/{ruleId}",
     tag = "Consolidation",
     params(("ruleId" = String, Path, description = "抵消规则ID")),
@@ -234,6 +238,7 @@ pub async fn update_elimination_rule(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/consolidation/elimination-rules/{ruleId}",
     tag = "Consolidation",
     params(("ruleId" = String, Path, description = "抵消规则ID")),
@@ -272,6 +277,7 @@ pub async fn delete_elimination_rule(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/consolidation/elimination-rules/export-elimination-worksheet",
     tag = "ConsolidationEliminationRules",
     operation_id = "export_elimination_worksheet",

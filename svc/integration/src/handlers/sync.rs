@@ -112,6 +112,7 @@ impl From<SyncTaskRow> for SyncTask {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/sync/tasks",
     request_body = CreateSyncTaskRequest,
     tag = "integration",
@@ -161,6 +162,7 @@ pub async fn create_task(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["integration:read"])),
     path = "/api/integration/sync/tasks/{task_id}",
     tag = "integration",
     params(
@@ -201,6 +203,7 @@ pub async fn get_task(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/sync/tasks/{task_id}/status",
     request_body = UpdateStatusRequest,
     tag = "integration",
@@ -249,6 +252,7 @@ pub async fn update_status(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["integration:read"])),
     path = "/api/integration/sync/pending",
     tag = "integration",
     responses(
@@ -279,6 +283,7 @@ pub async fn get_pending(State(state): State<AppState>) -> Json<ApiResponse<Vec<
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["integration:read"])),
     path = "/api/integration/sync/statistics",
     tag = "integration",
     responses(
@@ -336,6 +341,7 @@ pub async fn get_statistics(State(state): State<AppState>) -> Json<ApiResponse<S
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/sync/retry-failed",
     request_body = RetryFailedRequest,
     tag = "integration",
@@ -412,6 +418,7 @@ pub async fn retry_failed(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/sync/trigger/scm-to-wms",
     request_body = TriggerSyncRequest,
     tag = "integration",
@@ -457,6 +464,7 @@ pub async fn trigger_scm_wms(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/sync/trigger/wms-to-crm",
     request_body = TriggerSyncRequest,
     tag = "integration",
@@ -502,6 +510,7 @@ pub async fn trigger_wms_crm(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["integration:write"])),
     path = "/api/integration/sync/trigger/srm-to-scm",
     request_body = TriggerSyncRequest,
     tag = "integration",

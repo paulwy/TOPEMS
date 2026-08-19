@@ -25,6 +25,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["hrm:read"])),
     path = "/companies",
     tag = "companies",
     params(
@@ -133,6 +134,7 @@ async fn list_companies(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["hrm:write"])),
     path = "/companies",
     tag = "companies",
     request_body = CreateCompanyRequest,
@@ -223,6 +225,7 @@ async fn create_company(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["hrm:read"])),
     path = "/companies/{id}",
     tag = "companies",
     params(
@@ -267,6 +270,7 @@ async fn get_company(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["hrm:update"])),
     path = "/companies/{id}",
     tag = "companies",
     params(
@@ -390,6 +394,7 @@ async fn update_company(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["hrm:delete"])),
     path = "/companies/{id}",
     tag = "companies",
     params(

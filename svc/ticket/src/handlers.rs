@@ -549,6 +549,7 @@ impl TicketService {
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ticket:write"])),
     path = "/tickets",
     tag = "tickets",
     request_body = CreateTicketRequest,
@@ -575,6 +576,7 @@ pub async fn create_ticket_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ticket:read"])),
     path = "/tickets",
     tag = "tickets",
     params(
@@ -606,6 +608,7 @@ pub async fn list_tickets_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ticket:read"])),
     path = "/tickets/{id}",
     tag = "tickets",
     params(
@@ -633,6 +636,7 @@ pub async fn get_ticket_handler(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ticket:update"])),
     path = "/tickets/{id}",
     tag = "tickets",
     params(
@@ -663,6 +667,7 @@ pub async fn update_ticket_handler(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ticket:delete"])),
     path = "/tickets/{id}",
     tag = "tickets",
     params(
@@ -696,6 +701,7 @@ pub async fn delete_ticket_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ticket:write"])),
     path = "/tickets/{id}/comments",
     tag = "tickets",
     params(
@@ -734,6 +740,7 @@ pub async fn add_comment_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ticket:read"])),
     path = "/tickets/{id}/comments",
     tag = "tickets",
     params(
@@ -776,6 +783,7 @@ pub async fn list_activities_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ticket:read"])),
     path = "/tickets/stats",
     tag = "tickets",
     responses(
@@ -857,6 +865,7 @@ pub async fn get_sla_stats_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ticket:write"])),
     path = "/sla-policies",
     tag = "sla",
     request_body = CreateSlaPolicyRequest,
@@ -882,6 +891,7 @@ pub async fn create_sla_policy_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ticket:read"])),
     path = "/sla-policies",
     tag = "sla",
     responses(

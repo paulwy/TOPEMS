@@ -77,6 +77,7 @@ where
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["aps:read"])),
     path = "/api/aps/capacities",
     responses(
         (status = 200, description = "list_capacities OK")
@@ -151,6 +152,7 @@ pub async fn list_capacities(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["aps:read"])),
     path = "/api/aps/capacities/{id}",
     params(
         ("id" = Uuid, Path, description = "产能 ID")
@@ -193,6 +195,7 @@ pub async fn get_capacity(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["aps:write"])),
     path = "/api/aps/capacities",
     request_body = CreateCapacityRequest,
     responses(
@@ -251,6 +254,7 @@ pub async fn create_capacity(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["aps:update"])),
     path = "/api/aps/capacities/{id}",
     request_body = UpdateCapacityRequest,
     params(
@@ -336,6 +340,7 @@ pub async fn update_capacity(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["aps:delete"])),
     path = "/api/aps/capacities/{id}",
     params(
         ("id" = Uuid, Path, description = "产能 ID")

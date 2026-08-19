@@ -157,6 +157,7 @@ fn parse_opt_big_decimal(v: &Option<f64>) -> Option<BigDecimal> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/work-orders",
     tag = "WorkOrder",
     params(
@@ -354,6 +355,7 @@ pub async fn list_work_orders(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["mes:read"])),
     path = "/api/mes/work-orders/{id}",
     tag = "WorkOrder",
     params(
@@ -438,6 +440,7 @@ pub async fn get_work_order(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["mes:write"])),
     path = "/api/mes/work-orders",
     tag = "WorkOrder",
     request_body = CreateWorkOrderRequest,
@@ -548,6 +551,7 @@ pub async fn create_work_order(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["mes:update"])),
     path = "/api/mes/work-orders/{id}",
     tag = "WorkOrder",
     params(
@@ -681,6 +685,7 @@ pub async fn update_work_order(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["mes:delete"])),
     path = "/api/mes/work-orders/{id}",
     tag = "WorkOrder",
     params(
@@ -736,6 +741,7 @@ pub async fn delete_work_order(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["mes:update"])),
     path = "/api/mes/work-orders/{id}/start",
     tag = "WorkOrder",
     params(
@@ -825,6 +831,7 @@ pub async fn start_work_order(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["mes:update"])),
     path = "/api/mes/work-orders/{id}/complete",
     tag = "WorkOrder",
     params(
@@ -914,6 +921,7 @@ pub async fn complete_work_order(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["mes:update"])),
     path = "/api/mes/work-orders/{id}/cancel",
     tag = "WorkOrder",
     params(
@@ -1003,6 +1011,7 @@ pub async fn cancel_work_order(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["mes:update"])),
     path = "/api/mes/work-orders/{id}/pause",
     tag = "WorkOrder",
     params(
@@ -1092,6 +1101,7 @@ pub async fn pause_work_order(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["mes:update"])),
     path = "/api/mes/work-orders/{id}/resume",
     tag = "WorkOrder",
     params(

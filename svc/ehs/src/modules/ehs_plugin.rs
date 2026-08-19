@@ -41,6 +41,7 @@ pub struct PluginHealth {
 // Plugin info endpoint
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/plugins/info",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -173,6 +174,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 // Plugin health check endpoint
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/plugins/health",
     tag = "ehs",
     responses((status = 200, description = "OK")),

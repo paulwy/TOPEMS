@@ -24,6 +24,7 @@ pub struct InstanceQueryParams {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/instances",
     tag = "Flow-Instance",
     params(
@@ -133,6 +134,7 @@ pub async fn list_instances(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/instances/{id}",
     tag = "Flow-Instance",
     params(
@@ -170,6 +172,7 @@ pub async fn get_instance(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/instances",
     tag = "Flow-Instance",
     request_body = CreateInstanceRequest,
@@ -207,6 +210,7 @@ pub async fn create_instance(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/instances/{id}/start",
     tag = "Flow-Instance",
     params(
@@ -246,6 +250,7 @@ pub async fn start_instance(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/instances/{id}/approve",
     tag = "Flow-Instance",
     params(
@@ -285,6 +290,7 @@ pub async fn approve_instance(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/instances/{id}/reject",
     tag = "Flow-Instance",
     params(
@@ -324,6 +330,7 @@ pub async fn reject_instance(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/instances/{id}/cancel",
     tag = "Flow-Instance",
     params(
@@ -363,6 +370,7 @@ pub async fn cancel_instance(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/instances/{id}/resume",
     tag = "Flow-Instance",
     params(
@@ -402,6 +410,7 @@ pub async fn resume_instance(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["unified_core:write"])),
     path = "/api/core/flow/instances/{id}/suspend",
     tag = "Flow-Instance",
     params(
@@ -441,6 +450,7 @@ pub async fn suspend_instance(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/instances/{id}/details",
     tag = "Flow-Instance",
     params(
@@ -461,6 +471,7 @@ pub async fn get_instance_details(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/monitor/instances/error",
     tag = "Flow-Monitor",
     params(
@@ -485,6 +496,7 @@ pub async fn error_instances(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["unified_core:read"])),
     path = "/api/core/flow/monitor/instances/overdue",
     tag = "Flow-Monitor",
     params(

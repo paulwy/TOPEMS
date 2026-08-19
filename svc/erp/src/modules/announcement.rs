@@ -45,6 +45,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/announcements",
     responses(
         (status = 200, description = "list_announcements OK")
@@ -114,6 +115,7 @@ pub async fn list_announcements(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/announcements",
     request_body = CreateAnnouncementRequest,
     responses(
@@ -201,6 +203,7 @@ pub async fn create_announcement(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/announcements/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -236,6 +239,7 @@ pub async fn get_announcement(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/erp/announcements/{id}",
     request_body = UpdateAnnouncementRequest,
     params(
@@ -339,6 +343,7 @@ pub async fn update_announcement(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/erp/announcements/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -408,6 +413,7 @@ pub async fn delete_announcement(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/announcements/{id}/publish",
     params(
         ("id" = Uuid, Path, description = "id")
@@ -488,6 +494,7 @@ pub async fn publish_announcement(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/announcements/{id}/unpublish",
     params(
         ("id" = Uuid, Path, description = "id")

@@ -193,6 +193,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/leave-request/list-leave-requests",
     tag = "LeaveRequest",
     operation_id = "list_leave_requests",
@@ -279,6 +280,7 @@ pub async fn list_leave_requests(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/leave-requests",
     tag = "ERP",
     operation_id = "create_leave_request",
@@ -388,6 +390,7 @@ pub async fn create_leave_request(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/leave-requests/{id}",
     tag = "ERP",
     operation_id = "get_leave_request",
@@ -428,6 +431,7 @@ pub async fn get_leave_request(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["erp:update"])),
     path = "/leave-requests/{id}",
     tag = "ERP",
     operation_id = "update_leave_request",
@@ -555,6 +559,7 @@ pub async fn update_leave_request(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["erp:delete"])),
     path = "/leave-requests/{id}",
     tag = "ERP",
     operation_id = "delete_leave_request",
@@ -629,6 +634,7 @@ pub async fn delete_leave_request(
 /// 提交请假申请（draft → pending）
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/leave-requests/{id}/submit",
     tag = "ERP",
     operation_id = "submit_leave_request",
@@ -711,6 +717,7 @@ pub async fn submit_leave_request(
 /// 审批通过（pending → approved）
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/leave-requests/{id}/approve",
     tag = "ERP",
     operation_id = "approve_leave_request",
@@ -802,6 +809,7 @@ pub async fn approve_leave_request(
 /// 驳回（pending → rejected）
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/leave-requests/{id}/reject",
     tag = "ERP",
     operation_id = "reject_leave_request",
@@ -897,6 +905,7 @@ pub async fn reject_leave_request(
 /// 撤销（draft / pending → cancelled）
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/leave-requests/{id}/cancel",
     tag = "ERP",
     operation_id = "cancel_leave_request",

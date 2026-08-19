@@ -132,6 +132,7 @@ pub static WIDGET_CACHE: Lazy<WidgetCache> = Lazy::new(WidgetCache::new);
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/widget",
     tag = "Visualization",
     responses(
@@ -188,6 +189,7 @@ pub async fn list_widgets(State(state): State<AppState>) -> Json<serde_json::Val
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/widget/dashboard/{dashboard_id}",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -246,6 +248,7 @@ pub async fn get_widgets_by_dashboard(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/api/bi/widget",
     tag = "Visualization",
     request_body(
@@ -320,6 +323,7 @@ pub async fn create_widget(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/widget/{id}",
     tag = "Visualization",
     params(
@@ -380,6 +384,7 @@ pub async fn get_widget(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["analytics:update"])),
     path = "/api/bi/widget/{id}",
     tag = "Visualization",
     params(
@@ -469,6 +474,7 @@ pub async fn update_widget(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["analytics:delete"])),
     path = "/api/bi/widget/{id}",
     tag = "Visualization",
     params(
@@ -519,6 +525,7 @@ pub async fn delete_widget(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/api/bi/widget/{id}/data",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
@@ -641,6 +648,7 @@ pub async fn get_widget_data(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:read"])),
     path = "/widget/{id}/data/realtime",
     tag = "Visualization",
     operation_id = "get_widget_data_realtime",
@@ -780,6 +788,7 @@ pub async fn get_widget_data_realtime(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/widget/{id}/cache/invalidate",
     tag = "Visualization",
     operation_id = "invalidate_widget_cache",
@@ -797,6 +806,7 @@ pub async fn invalidate_widget_cache(Path(id): Path<Uuid>) -> Json<serde_json::V
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["analytics:write"])),
     path = "/widget/cache/invalidate-all",
     tag = "Visualization",
     operation_id = "invalidate_all_widget_cache",

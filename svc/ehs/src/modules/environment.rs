@@ -58,6 +58,7 @@ pub struct EnvironmentRecord {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/environment/records",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -77,6 +78,7 @@ pub async fn list_records(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/environment/records",
     request_body = serde_json::Value,
     tag = "ehs",

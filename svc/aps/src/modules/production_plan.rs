@@ -90,6 +90,7 @@ where
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["aps:read"])),
     path = "/api/aps/production-plans",
     responses(
         (status = 200, description = "list_plans OK")
@@ -164,6 +165,7 @@ pub async fn list_plans(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["aps:read"])),
     path = "/api/aps/production-plans/{id}",
     params(
         ("id" = Uuid, Path, description = "生产计划 ID")
@@ -206,6 +208,7 @@ pub async fn get_plan(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["aps:write"])),
     path = "/api/aps/production-plans",
     request_body = CreatePlanRequest,
     responses(
@@ -263,6 +266,7 @@ pub async fn create_plan(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["aps:update"])),
     path = "/api/aps/production-plans/{id}",
     request_body = UpdatePlanRequest,
     params(
@@ -352,6 +356,7 @@ pub async fn update_plan(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["aps:delete"])),
     path = "/api/aps/production-plans/{id}",
     params(
         ("id" = Uuid, Path, description = "生产计划 ID")

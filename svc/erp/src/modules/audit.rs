@@ -46,6 +46,7 @@ pub struct ListAuditLogsQuery {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/audit-logs",
     tag = "Audit",
     responses((status = 200, description = "获取审计日志列表成功", body = ApiResponse<serde_json::Value>))
@@ -128,6 +129,7 @@ pub async fn list_audit_logs(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["erp:read"])),
     path = "/erp/audit-logs/{id}",
     tag = "Audit",
     params(("id" = Uuid, Path, description = "审计日志ID")),
@@ -161,6 +163,7 @@ pub async fn get_audit_log(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["erp:write"])),
     path = "/erp/audit/log-audit-event",
     tag = "Audit",
     operation_id = "log_audit_event",

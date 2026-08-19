@@ -992,6 +992,7 @@ impl SmartAlertSystem {
 // ==================== Handlers ====================
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/forecasting/cash-flow/{period}",
     responses(
         (status = 200, description = "成功"),
@@ -1024,6 +1025,7 @@ async fn get_cash_flow_forecast_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/forecast_scenarios",
     tag = "Forecasting",
     operation_id = "get_forecast_scenarios_handler",
@@ -1044,6 +1046,7 @@ async fn get_forecast_scenarios_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/forecast_accuracy/{id}",
     tag = "Forecasting",
     operation_id = "get_forecast_accuracy_handler",
@@ -1063,6 +1066,7 @@ async fn get_forecast_accuracy_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/budget_variance/{id}",
     tag = "Forecasting",
     operation_id = "get_budget_variance_handler",
@@ -1082,6 +1086,7 @@ async fn get_budget_variance_handler(
 }
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/forecasting/budget-variance/{period}/trend",
     responses(
         (status = 200, description = "成功"),
@@ -1110,6 +1115,7 @@ async fn get_variance_trend_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/significant_variances",
     tag = "Forecasting",
     operation_id = "get_significant_variances_handler",
@@ -1129,6 +1135,7 @@ async fn get_significant_variances_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/active_alerts",
     tag = "Forecasting",
     operation_id = "get_active_alerts_handler",
@@ -1148,6 +1155,7 @@ async fn get_active_alerts_handler(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["finance:read"])),
     path = "/finance/alert_summary",
     tag = "Forecasting",
     operation_id = "get_alert_summary_handler",
@@ -1167,6 +1175,7 @@ async fn get_alert_summary_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/alert_rule",
     tag = "Forecasting",
     operation_id = "create_alert_rule_handler",
@@ -1186,6 +1195,7 @@ async fn create_alert_rule_handler(
 }
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["finance:update"])),
     path = "/forecasting/alerts/rules/{rule_id}",
     responses(
         (status = 200, description = "成功"),
@@ -1225,6 +1235,7 @@ async fn update_alert_rule_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/alert",
     tag = "Forecasting",
     operation_id = "acknowledge_alert_handler",
@@ -1245,6 +1256,7 @@ async fn acknowledge_alert_handler(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["finance:write"])),
     path = "/finance/alert",
     tag = "Forecasting",
     operation_id = "resolve_alert_handler",

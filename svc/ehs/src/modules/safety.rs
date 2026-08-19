@@ -185,6 +185,7 @@ pub struct UpdateInspectionRecordRequest {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/checks/plans",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -204,6 +205,7 @@ pub async fn list_plans(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/checks/plans",
     request_body = CreateInspectionPlanRequest,
     tag = "ehs",
@@ -242,6 +244,7 @@ pub async fn create_plan(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/checks/plans/{id}",
     tag = "ehs",
     params(
@@ -281,6 +284,7 @@ pub async fn get_plan(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/checks/plans/{id}",
     request_body = serde_json::Value,
     tag = "ehs",
@@ -322,6 +326,7 @@ pub async fn update_plan(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/checks/plans/{id}",
     tag = "ehs",
     params(
@@ -343,6 +348,7 @@ pub async fn delete_plan(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/checks/plans/{plan_id}/items",
     tag = "ehs",
     params(
@@ -404,6 +410,7 @@ pub async fn list_plan_items(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/checks/plans/{plan_id}/items",
     request_body = CreateInspectionItemRequest,
     tag = "ehs",
@@ -444,6 +451,7 @@ pub async fn create_plan_item(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/checks/plans/{plan_id}/items/{item_id}",
     tag = "ehs",
     params(
@@ -466,6 +474,7 @@ pub async fn delete_plan_item(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/checks/records",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -485,6 +494,7 @@ pub async fn list_records(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["ehs:write"])),
     path = "/api/ehs/checks/records",
     request_body = CreateInspectionRecordRequest,
     tag = "ehs",
@@ -534,6 +544,7 @@ pub async fn create_record(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/checks/records/{id}",
     tag = "ehs",
     params(
@@ -602,6 +613,7 @@ pub async fn get_record(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ehs:update"])),
     path = "/api/ehs/checks/records/{id}",
     request_body = UpdateInspectionRecordRequest,
     tag = "ehs",
@@ -645,6 +657,7 @@ pub async fn update_record(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["ehs:delete"])),
     path = "/api/ehs/checks/records/{id}",
     tag = "ehs",
     params(
