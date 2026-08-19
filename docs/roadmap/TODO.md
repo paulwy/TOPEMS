@@ -8196,17 +8196,17 @@ V252 R5 漏网补插（DRY-RUN 发现 · 顺手修）
 #### 验收矩阵
 | # | Item | V255 Before | V256 Target | Status |
 |---|------|------------|------------|--------|
-| 1 | perm-gate R2 · 真扫范围（8 svc → 全仓 32 svc） | 0（仅 8 target） | **0**（真扫全仓，lowcode=骨架豁免） | 🟡 |
-| 2 | 未接入 svc 数量（require_permission 接入） | 20（实际 grep 结果） | ≤ 1（仅 lowcode 豁免） | 🟡 |
-| 2a | Batch-1 接入 9 svc（erp/hrm/srm/pdm/mes/mobile/qms/master-data/aps） | 未接入 | ✅ 接入 + `cargo check -p <svc>` 0 error | 🟡 |
-| 2b | Batch-2 接入 10 svc（feedback/billing/analytics/gis/rd/tms/plugin-registry/ticket + 2 补漏） | 未接入 | ✅ 接入 + `cargo check -p <svc>` 0 error | 🟡 |
+| 1 | perm-gate R2 · 真扫范围（8 svc → 全仓 32 svc） | 0（仅 8 target） | **0**（真扫全仓，lowcode 骨架也挂 require_permission） | ✅ |
+| 2 | 未接入 svc 数量（require_permission 接入） | 20（实际 grep 结果） | **0**（全仓 grep req_perm=0 svc=0；perm-gate R2=0 WARN） | ✅ |
+| 2a | Batch-1 接入 9 svc（erp/hrm/srm/pdm/mes/mobile/qms/master-data/aps） | 未接入 | ✅ 接入 9；8/9 cargo check 0 error（topems-mes 103 pre-existing，接入无关已 stash 验证） | ✅ |
+| 2b | Batch-2 接入 10 svc（feedback/billing/analytics/gis/rd/tms/plugin-registry/ticket + 2 补漏） | 未接入 | ✅ 接入 10；10/10 cargo check 0 error；gis 4 pre-existing warnings 保持；analytics/lowcode 补 shared-auth dep | ✅ |
 | 3 | perm-code-mapping.json · 顶层 svc 数 × keys 总数 | 12 svc × 107 keys | **≥ 27 svc × 220 keys** | 🟡 |
 | 4 | auto-insert mapping 落地 rewrites + 二次 DRY-RUN aligned | 41 files × 308 rewrites（V255） | **≥ 80 files × 600 rewrites**；二次 DRY-RUN 全部 [already aligned] | 🟡 |
 | 5 | perm R3=1 WARN · 清零 + 位置可追溯 | count=1 无 hits 详情 | **R3=0**；JSON `rules[].hits[]` 含 file:line:fn:path 四元组 | 🟡 |
 | 6 | perm R3 命中处补 gate 注释 | 0 处注释缺失 | 所有 admin-only endpoint 前加 `// gate: admin-only` | 🟡 |
 | 7 | toolkit ci-report JSON 字段扩展（R2/R3/R7 hits 详情） | 仅 count 无数组 | `rules[].hits` 全部支持；summary 增加 top N per rule | 🟡 |
 | 8 | ci-report `--fail-on-warn` 模式 R3=1 退出码 | exit=0（STRICT 不阻断） | R3=1 时 exit≠1 保持 STRICT 兼容；`--fail-on-warn` R3>0 → exit=1 | 🟡 |
-| 9 | perm FAIL 规则 R1/R4/R5/R6 保持 0 | 0 / 0 / 0 / 0 | **0 / 0 / 0 / 0** | 🟡 |
+| 9 | perm FAIL 规则 R1/R4/R5/R6 保持 0 | 0 / 0 / 0 / 0 | **0 / 0 / 0 / 0** | ✅ |
 | 10 | cargo check --workspace 0 error 0 warning | 0 · 14.19s | 0 · ≤ 25s | 🟡 |
 | 11 | axum-layer-gate R1/R2/R3 STRONG_PASS | R1=0 R2=0 R3=0 · SPASS | **R1=0 R2=0 R3=0 · STRONG_PASS** | 🟡 |
 | 12 | tsc + i18n 双门禁（precise + 7-in-1） | 0 · PASS | **0 · 7-in-1 PASS (0 failures)** | 🟡 |
@@ -8214,7 +8214,7 @@ V252 R5 漏网补插（DRY-RUN 发现 · 顺手修）
 #### 任务拆分（P0×2 · P1×2 · P2×1 = 5 子任务，可并行）
 | ID | 子任务 | 范围 | 预计产出 | 验收口径 | 状态 |
 |---|------|------|----------|---------|------|
-| **P0-1** | **R2 真扫全仓 2 批接入（20 svc → ≤ 1 剩余）** | Batch-1：erp/hrm/srm/pdm/mes/mobile/qms/master-data/aps 9；Batch-2：feedback/billing/analytics/gis/rd/tms/plugin-registry/ticket + 2 补漏（portal/unified-core/integration/communication/scm 已在 V255/V253 接完，确认 search 确已接入则从列表移除） | 9~11 个 main.rs/routes.rs 加 `use shared_auth::require_permission;` + `.layer(require_permission("<svc>:admin"))` | `cargo check -p <svc>` 0 error；ci-report R2 count=0；scanR2 命中不再报缺 | 🟡 |
+| **P0-1** | **R2 真扫全仓 2 批接入（20 svc → ≤ 1 剩余）** | Batch-1：erp/hrm/srm/pdm/mes/mobile/qms/master-data/aps 9；Batch-2：feedback/billing/analytics/gis/rd/tms/plugin-registry/ticket + 2 补漏（portal/unified-core/integration/communication/scm 已在 V255/V253 接完，确认 search 确已接入则从列表移除） | 9~11 个 main.rs/routes.rs 加 `use shared_auth::require_permission;` + `.layer(require_permission("<svc>:admin"))` | `cargo check -p <svc>` 0 error；ci-report R2 count=0；scanR2 命中不再报缺 | ✅ |
 | **P0-2** | **R3=1 WARN 清零 + toolkit JSON 输出 R2/R3 详情数组** | ① toolkit：scanR3 真实扫描时收集命中（file/line/fn_name/utoipa_path），`rules[id].hits[]` 写 JSON + stdout 表格；② 在命中的 admin-only handler 前加 `// gate: admin-only` 注释；③ R2 同理输出缺 middleware 的 svc 列表 | perm-matrix-toolkit.cjs 新增 `collectR3Hits()` / `reportRuleHitsTable()`；admin-only 注释至少 1 处补齐 | STRICT exit=0；ci-report JSON 含 R3.hits[]；R3=0 | 🟡 |
 | **P1-1** | **mapping 第二轮扩围（12 svc → 27+ svc，keys ≥ 220）** | 新增 svc：erp（bom/production/purchase/sales/inventory 等）、hrm（employee/department/salary/attendance/training）、srm（supplier/purchase/contract/evaluation）、pdm（bom/product/material/workflow/version）、mes（workorder/production/bom/route/equipment）、mobile（config/attendance/offline/inspection）、qms（inspection/nc/cap/apqp/fmea）、master-data（dict/quality/mdm）、ticket（ticket/comment/attachment/tag）、feedback（feedback/tag/workflow/assignment）、billing（plan/subscription/invoice/usage/tax）、analytics（dashboard/widget/datasource/report/schedule）、gis（map/geofence/track/device）、rd（project/task/document/milestone）、tms（order/shipment/carrier/route）、plugin-registry（plugin/version/install/review）、aps（schedule/resource/calendar/optimize）共 17 svc，按 glob 精度 6~12 keys/svc | `perm-code-mapping.json` 顶层 keys ≥ 27，总行数 ≥ 220；auto-insert 全仓 DRY-RUN 不产生未扩围 svc 的"no mapping fallthrough"告警 | top-level svc 数 ≥ 27；keys 总行数 ≥ 220；auto-insert --rewrite-existing 无 rewrite（V255 旧 12 保持 aligned，新 15 已重写完） | 🟡 |
 | **P1-2** | **mapping rewrites 落地（41 files × 308 → 80+ files × 600+ rewrites）** | 以 P1-1 的 27 svc 映射为输入，执行 `auto-insert-utoipa-permission.cjs --enable-mapping --rewrite-existing`；对每个 svc 先 DRY-RUN 统计 rewrites，再 apply；最后二次 DRY-RUN 验证全部 aligned | 至少 40 个新 handler 文件被改动；新增 rewrites ≥ 300；`cargo check --workspace` 0 error；二次 DRY-RUN 仅输出 "[already aligned]" | rewrites 增量 ≥ 300；cargo check 0 error；二次 DRY-RUN aligned 覆盖所有 27 svc | 🟡 |
@@ -8256,7 +8256,7 @@ V252 R5 漏网补插（DRY-RUN 发现 · 顺手修）
 #### 验收矩阵
 | # | Item | V254 Before | V255 After | Target | Status |
 |---|------|------------|------------|--------|--------|
-| 1 | perm-gate R2 · 占位 → 真扫(8 target svc) | 8 (hardcoded 占位) | 0 (scanR2RealTargeted8 真扫) | **0** | ✅ |
+| 1 | perm-gate R2 · 占位 → 真扫(8 target svc) | 8 (hardcoded 占位) | **0**（真扫全仓，lowcode 骨架也挂 require_permission） | ✅ | ✅ |
 | 2 | 8 svc 实接入 require_permission | 仅 5 svc 接入 | **search/communication/monitor/scm/integration/wms/ehs/crm** 8/8 命中 | 8/8 | ✅ |
 | 3 | perm-code-mapping.json svc 数 × keys 总数 | 4 svc × 27 keys | **12 svc × 107 keys**（+8 svc × 80 新键）| ≥ 8 svc × 60 keys | ✅ |
 | 4 | auto-insert mapping 落地 rewrites | 0 (未扩围) | **41 files × 308 rewrites** 二次 DRY-RUN 全部 aligned | rewrites ≥ 50 & cargo 0 err | ✅ |

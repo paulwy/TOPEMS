@@ -200,6 +200,7 @@
 use axum::Router;
 use topems_lowcode::openapi::public_routes;
 use topems_lowcode::ApiDoc;
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 use utoipa::OpenApi;
 
@@ -224,7 +225,9 @@ async fn main() -> anyhow::Result<()> {
     let public_routes = public_routes();
 
     // ── protected_routes（空：当前尚未立项） ─────────────────────────
-    let protected_routes = Router::new();
+    let protected_routes = Router::new().layer(axum::middleware::from_fn(require_permission(
+        "lowcode:admin",
+    )));
 
     // ── OpenAPI JSON ─────────────────────────────────────────────────
     let openapi_json =

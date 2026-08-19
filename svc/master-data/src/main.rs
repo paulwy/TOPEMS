@@ -195,6 +195,7 @@ use axum::{extract::State, routing::get, Json, Router};
 use utoipa::OpenApi;
 
 use topems_shared::ApiResponse;
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
 };
@@ -249,6 +250,9 @@ async fn main() -> anyhow::Result<()> {
     let protected_routes = Router::new()
         .merge(modules::create_routes())
         .route("/health/detailed", get(detailed_health))
+        .layer(axum::middleware::from_fn(require_permission(
+            "master-data:admin",
+        )))
         .with_state(app_state.clone());
 
     let openapi_json = Some(

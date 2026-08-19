@@ -210,6 +210,7 @@ use topems_shared::{
     auth_middleware, create_api_info_router, create_cors_layer, register_routes_with_legacy_alias,
     ApiResponse,
 };
+use topems_shared_auth::middleware::require_permission;
 use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
 use topems_shared_core::logging::request_context_middleware;
@@ -685,6 +686,9 @@ async fn main() -> Result<()> {
             app_state.auth_state.clone(),
             auth_middleware,
         ))
+        .layer(axum::middleware::from_fn(require_permission(
+            "mobile:admin",
+        )))
         .layer(axum::middleware::from_fn_with_state(
             app_state.pool.clone(),
             rls_middleware,
