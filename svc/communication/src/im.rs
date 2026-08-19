@@ -113,10 +113,23 @@ pub async fn send_message(
         id,
         payload
     );
+
+    // 从 payload 提取 sender/content 并格式化为预览（截断到 200 字符）
+    let sender = payload.get("sender").and_then(|v| v.as_str()).unwrap_or("");
+    let content = payload
+        .get("content")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let preview = format_im_message(sender, content, 200);
+
     Json(serde_json::json!({
         "success": true,
         "message": "send_message success",
-        "data": null
+        "data": {
+            "room_id": id,
+            "preview": preview,
+            "truncated": content.chars().count() > 200
+        }
     }))
 }
 
@@ -145,10 +158,22 @@ pub async fn get_online_status(
     Path(user_id): Path<String>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IM get_online_status called with user_id: {}", user_id);
+
+    // 桩实现：无 DB 状态时默认返回 offline（last_active=0 → classify 返回 offline）
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0);
+    let status = classify_im_status(0, now);
+
     Json(serde_json::json!({
         "success": true,
         "message": "get_online_status success",
-        "data": {"online": false}
+        "data": {
+            "user_id": user_id,
+            "status": status,
+            "online": status == "online"
+        }
     }))
 }
 
