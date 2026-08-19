@@ -15,6 +15,7 @@
   "author": "TOPEMS Team",
   "license": "MIT",
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "typescript": "^6.0.3"
   },
   "exports": {

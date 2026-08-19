@@ -200,14 +200,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
           ...(fullWidth && { width: '100%' }),
         }}
       >
-        <Box sx={{ mb: 2 }}>
-          <Upload
-            size={48}
-            sx={{
-              mx: 'auto',
-              color: isDragging ? 'primary.main' : 'text.secondary',
-            }}
-          />
+        <Box
+          sx={{
+            mb: 2,
+            mx: 'auto',
+            color: isDragging ? 'primary.main' : 'text.secondary',
+          }}
+        >
+          <Upload size={48} />
         </Box>
         
         <Typography variant="body1" sx={{ mb: 1 }}>

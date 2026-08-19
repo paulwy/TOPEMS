@@ -202,11 +202,7 @@ export const adminModuleConfig: RouteModuleConfig = {
       title: i18n.t('shared.config.k12'),
       titleKey: 'shared.config.k12',
       code: 'admin-plugin',
-      requiredPermissions: [
-        'admin:plugin:read',
-        'admin:dashboard:read',
-        'admin:iam:dashboard:approve',
-      ],
+      requiredPermissions: ['admin:plugin:read', 'admin:dashboard:read', 'admin:iam:dashboard:approve'],
       action: 'read',
       template: 'list',
       group: 'setting',
