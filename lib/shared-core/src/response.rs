@@ -493,7 +493,6 @@ mod tests {
 
     #[test]
     fn test_pagination_pagesize_alias_works() {
-        
         let json = r#"{"pagesize": 15, "page": 3}"#;
         let params: PaginationParams = serde_json::from_str(json).unwrap();
         assert_eq!(params.page, Some(3));

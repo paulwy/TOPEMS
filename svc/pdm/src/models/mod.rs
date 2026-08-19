@@ -586,7 +586,6 @@ mod tests {
 
     #[test]
     fn test_module_exports() {
-        use audit_log::{AuditEventParams, AuditLog, ListAuditLogsQuery};
         use schema_defense::SERVICE_SCHEMA;
         use schema_defense::TABLE_DEFS;
         let _: &str = SERVICE_SCHEMA;

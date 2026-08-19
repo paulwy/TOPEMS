@@ -10,7 +10,7 @@ mod handlers;
 mod models;
 mod openapi;
 mod schema_defense;
-mod sla_service;
+pub mod sla_service;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

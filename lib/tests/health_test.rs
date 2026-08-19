@@ -280,7 +280,7 @@ fn test_system_metrics_uptime() {
     assert!(uptime.contains("seconds"));
 
     let uptime_secs = metrics.get_uptime_seconds();
-    assert!(uptime_secs >= 0);
+    let _ = uptime_secs; // u64 始终 >= 0，无需断言
 }
 
 #[test]

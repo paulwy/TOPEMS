@@ -46,7 +46,7 @@ async fn auth_request(
     token: &str,
     method: &str,
     endpoint: &str,
-    body: Option<Value>,
+    _body: Option<Value>,
 ) -> Result<(u16, Value), String> {
     let url = format!("{}{}", API_URL, endpoint);
     let request = match method {

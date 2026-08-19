@@ -1,4 +1,3 @@
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -536,7 +535,7 @@ mod http_endpoint_tests {
 
 #[cfg(test)]
 mod business_logic_tests {
-    use super::*;
+
     use topems_scm::modules::evaluation_logic::{
         calculate_overall_score, calculate_score_trend, determine_evaluation_status,
         determine_supplier_grade, validate_scores,

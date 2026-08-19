@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use topems_shared::rls::{RlsConfig, TenantContext, TenantContextRejection};
+use topems_shared_db::rls::{RlsConfig, TenantContext, TenantContextRejection};
 use uuid::Uuid;
 
 fn append_tenant_filter(sql: &str, pos: usize) -> String {

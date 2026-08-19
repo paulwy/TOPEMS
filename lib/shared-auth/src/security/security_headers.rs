@@ -49,7 +49,8 @@ impl SecurityHeadersConfig {
                 "max-age={}; includeSubDomains; preload",
                 Duration::from_secs(31536000).as_secs()
             )),
-            content_security_policy: Some("default-src 'self'; \
+            content_security_policy: Some(
+                "default-src 'self'; \
                  script-src 'self' 'strict-dynamic'; \
                  style-src 'self' 'unsafe-inline'; \
                  img-src 'self' data: https:; \
@@ -59,7 +60,9 @@ impl SecurityHeadersConfig {
                  connect-src 'self'; \
                  base-uri 'self'; \
                  form-action 'self'; \
-                 upgrade-insecure-requests;".to_string()),
+                 upgrade-insecure-requests;"
+                    .to_string(),
+            ),
             referrer_policy: Some("strict-origin-when-cross-origin".to_string()),
             permissions_policy: Some(
                 "geolocation=(), microphone=(), camera=(), payment=(), usb=(), vr=()".to_string(),
@@ -73,14 +76,17 @@ impl SecurityHeadersConfig {
             x_frame_options: Some("SAMEORIGIN".to_string()),
             x_xss_protection: Some("1; mode=block".to_string()),
             strict_transport_security: None,
-            content_security_policy: Some("default-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*; \
+            content_security_policy: Some(
+                "default-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*; \
                  script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*; \
                  style-src 'self' 'unsafe-inline'; \
                  img-src 'self' data: http: https:; \
                  font-src 'self'; \
                  connect-src 'self' http://localhost:* ws://localhost:*; \
                  frame-src 'self' http://localhost:*; \
-                 prefetch-src 'self' http://localhost:*;".to_string()),
+                 prefetch-src 'self' http://localhost:*;"
+                    .to_string(),
+            ),
             referrer_policy: Some("strict-origin-when-cross-origin".to_string()),
             permissions_policy: Some("geolocation=(), microphone=(), camera=()".to_string()),
         }

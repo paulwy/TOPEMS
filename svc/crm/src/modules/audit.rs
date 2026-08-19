@@ -218,7 +218,7 @@ pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &He
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde::Deserialize;
+
     use uuid::Uuid;
 
     #[test]

@@ -4,11 +4,11 @@
 //! （database/read_write.rs 缺少字段），聚焦新模块的覆盖。
 
 use chrono::{TimeZone, Utc};
-use topems_shared::api_security::{
+use topems_shared_core::api_security::{
     constant_time_eq, generate_request_signature, verify_request_signature, RequestSignatureConfig,
     SignatureVerification,
 };
-use topems_shared::audit_soft_delete::{
+use topems_shared_db::audit_soft_delete::{
     AuditAction, AuditSeverity, DomainEntity, IncrementalSyncQuery, IncrementallySynced,
     SoftDeletable, SoftDeleteFilter, SoftDeleteMerger,
 };
@@ -16,7 +16,7 @@ use topems_shared::audit_soft_delete::{
 use axum::body::Body;
 use axum::http::{HeaderMap, HeaderValue, Request};
 use std::time::SystemTime;
-use topems_shared::api_security::extract_audit_context;
+use topems_shared_core::api_security::extract_audit_context;
 
 #[derive(Debug, Clone)]
 struct TestEntity {

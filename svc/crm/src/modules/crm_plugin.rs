@@ -191,7 +191,6 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
 mod tests {
     use super::*;
     use serde::{Deserialize, Serialize};
-    use uuid::Uuid;
 
     fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
         let json = serde_json::to_string(item).unwrap();

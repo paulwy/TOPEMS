@@ -296,7 +296,16 @@ pub fn validate_reverse_voucher(
 
 #[cfg(test)]
 mod reversal_tests {
+    use super::super::periods::{validate_children_all_closed, PeriodValidationError};
+    use super::super::trial_balance::{
+        calculate_trial_balance, validate_period_close_with_trial_balance,
+    };
+    use super::super::voucher::{
+        validate_post_entry, PostJournalEntry, PostPeriodInput, PostVoucherInput,
+    };
     use super::*;
+    use crate::models::JournalEntry;
+    use chrono::{DateTime, Utc};
 
     fn rev_entry(
         account_code: &str,

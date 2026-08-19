@@ -1,9 +1,4 @@
-use axum::{
-    http::StatusCode,
-    response::IntoResponse,
-    routing::{get, post},
-    Json, Router,
-};
+use axum::{http::StatusCode, response::IntoResponse, routing::get, Json, Router};
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]

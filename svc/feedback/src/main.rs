@@ -8,10 +8,10 @@ use utoipa::OpenApi;
 
 use crate::openapi::FeedbackApiDoc;
 
-mod handlers;
-mod models;
+pub mod handlers;
+pub mod models;
 pub mod openapi;
-mod schema_defense;
+pub mod schema_defense;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

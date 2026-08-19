@@ -488,7 +488,9 @@ mod tests {
                 expected_domain,
                 "from_str(\"{code}\") 未匹配期望枚举"
             );
-            let parsed: MasterDataDomain = code.parse().unwrap_or_else(|_| panic!("parse(\"{code}\") 失败"));
+            let parsed: MasterDataDomain = code
+                .parse()
+                .unwrap_or_else(|_| panic!("parse(\"{code}\") 失败"));
             assert_eq!(parsed, expected_domain);
             assert_eq!(parsed.prefix(), expected_prefix);
             assert_eq!(parsed.table(), expected_table);
@@ -548,7 +550,8 @@ mod tests {
         ];
         for (id, expected_domain) in &valid_ids {
             assert!(validate_master_data_id(id), "id {id} 应校验通过");
-            let (domain, original) = parse_master_data_id(id).unwrap_or_else(|| panic!("id {id} 应被解析"));
+            let (domain, original) =
+                parse_master_data_id(id).unwrap_or_else(|| panic!("id {id} 应被解析"));
             assert_eq!(&domain, expected_domain);
             assert_eq!(original, *id);
             // 反向一致性：用解析出的 domain 生成的新 id 前缀必须一致

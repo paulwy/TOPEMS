@@ -130,7 +130,7 @@ async fn test_wf_002_create_workflow() {
         "status": "draft"
     });
 
-    let (status, body) = auth_request(
+    let (status, _body) = auth_request(
         &client,
         &token,
         "POST",

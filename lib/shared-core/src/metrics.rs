@@ -102,7 +102,6 @@ pub fn init_metrics() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
 
     #[test]
     fn test_init_metrics_succeeds() {

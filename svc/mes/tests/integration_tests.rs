@@ -508,8 +508,8 @@ mod tests {
         }
         let pool = setup_test_pool().await.unwrap();
 
-        let org_id_1 = Uuid::new_v4();
-        let org_id_2 = Uuid::new_v4();
+        let _org_id_1 = Uuid::new_v4();
+        let _org_id_2 = Uuid::new_v4();
 
         let order_id_1 = Uuid::new_v4();
         let order_id_2 = Uuid::new_v4();

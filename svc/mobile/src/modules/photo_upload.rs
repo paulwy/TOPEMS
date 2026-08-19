@@ -450,7 +450,6 @@ pub async fn get_upload_progress(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::PhotoUpload as ModelPhotoUpload;
 
     fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
         let json = serde_json::to_string(item).unwrap();
