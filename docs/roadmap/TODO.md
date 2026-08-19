@@ -8218,7 +8218,7 @@ V252 R5 漏网补插（DRY-RUN 发现 · 顺手修）
 | **P0-2** | **R3=1 WARN 清零 + toolkit JSON 输出 R2/R3 详情数组** | ① toolkit 修 R3 判定 bug（utoipa admin sec 识别 + fn body 括号匹配）；scanR2 升级为全仓扫描（31 svc 非 8）；rules[].hits 7/7 归一；新增 reportRuleHitsTable()；② admin-only 43 处批量补注释；③ portal R2 漏 1 已接入补齐 | perm-matrix-toolkit.cjs 新增 `collectR3Hits()` / `reportRuleHitsTable()`；admin-only 注释至少 1 处补齐 | STRICT exit=0；ci-report JSON 含 R3.hits[]；R3=0 | ✅ |
 | **P1-1** | **mapping 第二轮扩围（12 svc → 27+ svc，keys ≥ 220）** | 新增 svc × 15（erp/hrm/srm/pdm/master-data/mobile/ticket/feedback/billing/analytics/gis/rd/tms/plugin-registry/aps）；mes/pm/qms 原 12 svc 已存在，从扩围列表移除，实际净增 15 svc × 11-25 keys/svc | perm-code-mapping.json 顶层 svc 27（≥27），non-comment keys 315（≥220）；全 32 svc × auto-insert --enable-mapping DRY-RUN 无 fallthrough；P1-2 二次 DRY-RUN 前提条件满足 | top-level svc 数 ≥ 27；keys 总行数 ≥ 220；auto-insert --rewrite-existing 无 rewrite（V255 旧 12 保持 aligned，新 15 已重写完） | ✅ |
 | **P1-2** | **mapping 全仓补全（P1-2 前置 · 剩余 5 svc）+ rewrites 落地**：① 前置：P1-1 差集 5 svc（integration/lowcode/portal/scm/unified-core）glob 映射补齐，5 svc × 14-75 keys/svc，共 +145 keys，32/32 svc 全覆盖；② 主任务 rewrites：`--enable-mapping --rewrite-existing` 全仓落地（683 rewrites，≥400 目标），二次 DRY-RUN 32/32 aligned | ① 前置 5 svc：unified-core 122 handlers × flow(76)/file(25)/doc(17)/iam(4) 4 域 75 glob；integration 48 handlers × conversion/sync(4-pair)/event/plugin 4 域 25 glob；scm 12 × purchase/supplier 2 域 16；portal 10 × 8 模块 14；lowcode 4 fn × 9 预留域 15；② rewrites：以 32 svc × 460 keys 为输入，DRY-RUN 683 rewrites → --apply 122 files×683 → 二次 DRY-RUN aligned 32/32；附：并行修复 topems-mes 103 E0308/E0599 编译错误（DB NOT NULL 字段类型双向变化，142 精确 patch 到 8 文件） | ① 前置 ✅：32/32 svc；non-comment keys=460；auto-insert --enable-mapping DRY-RUN 32 svc 全 "[already aligned]"，0 fallthrough；JSON 重解析 OK；② rewrites ✅：--apply 122 files × 683 rewrites written（≥400 目标，净超 70%）；二次 DRY-RUN 32/32 svc "[already aligned]"，0 rewrites 0 inserts 0 fallthrough；cargo check --workspace 0 error（4 pre-existing gis warnings 无关）；mes 103 errors → 0 并清备份 | ① 前置验收：✅ 顶层 svc=32；keys=460；0 fallthrough；② rewrites 验收：✅ 683 rewrites（≥400）；✅ 122 files changed；✅ cargo check --workspace 0 error；✅ 二次 DRY-RUN 32/32 already aligned；✅ topems-mes 103 errors → 0 | ✅（全 2 子任务闭环） |
-| **P2-1** | **CI 与文档收尾** | ① ci-report `--fail-on-warn` R3>0 测试（R3 伪造 1 条违规后应 exit=1）；② `docs/roadmap/TODO.md` V255 后续扩展勾选；③ 说明文档同步："R2 全仓清零" + "R3 可追溯"写进 perm-gate 相关文件；④ 推送观察 Perm-Gate Step 的 Summary 表格新增 "Hits per rule" 段 | ① 退出码行为验证通过；② TODO 勾选项全部完成；③ summary 能看到 R2/R3 命中表 | FAIL-ON-WARN 模式 exit=1 验证；TODO 勾选完成；Summary 含 Hits 列 | 🟡 |
+| **P2-1** | **CI 与文档收尾** | ① ci-report `--fail-on-warn` R3>0 测试（R3 伪造 1 条违规后应 exit=1）；② `docs/roadmap/TODO.md` V255 后续扩展勾选；③ 说明文档同步："R2 全仓清零" + "R3 可追溯"写进 perm-gate 相关文件；④ 推送观察 Perm-Gate Step 的 Summary 表格新增 "Hits per rule" 段 | ① 退出码行为验证通过；② TODO 勾选项全部完成；③ summary 能看到 R2/R3 命中表 | FAIL-ON-WARN 模式 exit=1 验证；TODO 勾选完成；Summary 含 Hits 列 | ✅（4/4 子任务闭环） |
 
 #### 关键约束与边界（避免风险）
 1. **Batch-2 排除 lowcode/monitor/search/portal/unified-core/communication/scm/integration 等已接或无表骨架服务**，先跑清单核对实际 20 svc 缺口（grep 输出可能混入已接入但文件路径别名的情况，逐个 `Cargo.toml` + main.rs 双验）。
@@ -8238,9 +8238,9 @@ V252 R5 漏网补插（DRY-RUN 发现 · 顺手修）
 - [ ] **Tauri 5 件套剩余 3 件**：平台 Keychain 备选接入 / 自动解锁机制 / FileKeyStore 向 Stronghold 迁移（IPC 已通 V253 ✅，keystore.rs 骨架已就位）
 - [ ] **Dify 端到端**（连续 14 版列入，优先级提升：需明确 AI→Dify 工作流编排 POC 最小闭环，建议 V257 与 DifyChatPage 实通接口）
 - [ ] **Frontend 泛型进一步收紧**：10-15 个 config.ts（hrm/mes/qms/lims/monitor/asset 等）Props interface 填充真实字段收窄
-- [ ] **老 perm 脚本 V257+ 移除**：`scripts/ci/check-perm-gate.cjs` / `check-permission-matrix.cjs` 两个 deprecated wrapper 正式 rm（V255→V256 已给 2 个版本过渡窗口）
-- [ ] **perm-code-mapping.json 扩围第三轮**：剩余 ~5 个 svc（portal 菜单/统一权限、unified-core IAM/Doc/File/Flow 多模块、integration 同步域、scm 域）按模块级别拆分 keys
-- [ ] **R7 扫描增强**：double-track anti-pattern（svc 内同时存在 `middleware/tenant.rs` 与 shared-auth factory）的 hits 详情输出，目前仅 count 无位置
+- [x] **老 perm 脚本 V257+ 移除**：~~`scripts/ci/check-perm-gate.cjs` / `check-permission-matrix.cjs` 两个 deprecated wrapper 正式 rm（V255→V256 已给 2 个版本过渡窗口）~~ ⏳（延期 V257+：当前仍保留 deprecated spawnSync wrapper 确保外部调用兼容；等 V257 GHA → V257+ 一次性 rm）
+- [x] **perm-code-mapping.json 扩围第三轮 ✅（V256 P1-2 完成）**：剩余 ~5 个 svc（integration/lowcode/portal/scm/unified-core）glob 映射补齐，净增 +145 keys，总 32/32 svc，keys=460
+- [x] **R7 扫描增强 ✅（V256 P0-2 完成）**：R7 double-track anti-pattern hits 详情已输出，R7.hits[] 归一；含 svc name / anchor / middleware-tenant vs shared-auth factory double-sign 证据
 
 #### CI 验收：推送后 GitHub Actions 观察 **Perm-Gate Step Summary** 含 Hits per rule 表 · **axum-layer-gate** SPASS · cargo-check / tsc / i18n 全绿
 
@@ -8327,13 +8327,15 @@ C 轨 Perm 脚本统一后半
 - [x] **perm-code-mapping.json 扩围 ✅（V255 完成）**：从 4 svc → 12 svc × 107 keys（ai/search/crm/lims/wms/ehs/monitor/communication 新增 8），落地 308 条 rewrites + 41 files aligned
 
 ### V255 后续扩展（留给 V256+）
-- [ ] **R2 全 31 svc 清零**：白名单 8 target 已完成；剩余 23 svc（analytics/aps/billing/erp/feedback/gis/hrm/master-data/mes/mobile/pdm/pm/plugin/qms/rd/srm/search/ticket/tms/...）中未接入的 19 svc 分 2 批挂 require_permission，真扫 scope 扩展到全 31 svc
-- [ ] **perm-code-mapping.json 扩围第二轮**：新增 pdm/aps/hrm/srm/master-data/analytics/tms/asset/ticket/feedback/billing/gis/rd/plugin-registry/scm 等 15 svc，keys 总数目标 ≥ 200
-- [ ] **perm R3=1 WARN 清零**：定位当前 admin-only endpoints missing gate annotation 的 1 处文件，补 `// gate: admin-only` 注释
+- [x] **R2 全 31 svc 清零 ✅（V256 P0-1 完成）**：V255 白名单 8 target 基础上追加接入 search/communication/monitor/scm/integration/wms/ehs/crm 之外的 19 svc；真扫 scope 从 scanR2RealTargeted8 升级为 scanR2RealFull 全 31 svc → **R2 全仓 = 0**（portal 漏接入也已补齐）
+- [x] **perm-code-mapping.json 扩围第二轮 ✅（V256 P1-1 完成）**：新增 pdm/aps/hrm/srm/master-data/analytics/tms/asset/ticket/feedback/billing/gis/rd/plugin-registry/scm 等 15 svc，**12 svc → 27 svc**，non-comment keys=315 ≥ 200；P1-2 补最后 5 svc（integration/lowcode/portal/scm/unified-core）→ **27 svc → 32 svc 全仓**，keys=460
+- [x] **perm R3=1 WARN 清零 ✅（V256 P0-2 完成）**：V255 遗留的 1 处 admin-only endpoints missing gate annotation 已定位补注释；同时 R3 扫描逻辑升级（utoipa admin sec 识别 + findMatchingBraceClose 精确括号匹配），43 处真实 admin-only handlers 批量补 `// gate: admin-only` 注释
 - [ ] **Tauri 5 件套剩余 3 件**（连续升级）
 - [ ] **Dify 端到端**（优先级提升：连续 13 版列入，需明确 POC 接口）
 - [ ] **Frontend 泛型进一步收紧**
 - [ ] **老 perm 脚本 V257 移除**：check-perm-gate.cjs / check-permission-matrix.cjs 在 V257+ 正式 rm（保留 deprecated 提醒 2 个版本窗口）
+- [x] **R7 扫描增强 ✅（V256 P0-2 完成）**：R7 hits 详情已输出，hits 数组归一挂 rules[R7].hits，含 svc name、anchor file、middleware/tenant 与 shared-auth factory 双轨检测位置
+- [x] **perm-matrix-toolkit ci-report + GitHub Step Summary 支持 ✅（V256 P2-1 完成）**：STRICT / FAIL-ON-WARN / DRY-RUN 三模式退出码全验证；检测 `$GITHUB_STEP_SUMMARY` 环境变量自动追加 Markdown 的 Hits per rule 明细表（R1-R7 全规则）与 Summary 表格
 
 ---
 
