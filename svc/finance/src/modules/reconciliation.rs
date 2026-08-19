@@ -68,7 +68,7 @@ pub fn create_routes() -> Router<AppState> {
 }
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/reconciliation/sessions",
     responses(
         (status = 200, description = "成功"),
@@ -362,7 +362,7 @@ pub struct AgingQueryParams {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/finance/report/{id}",
     tag = "Reconciliation",
     operation_id = "get_report_handler",

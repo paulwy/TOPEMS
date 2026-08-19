@@ -1367,7 +1367,7 @@ async fn get_accuracy_handler(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:budget:write"])),
     path = "/finance-v53/budget",
     tag = "ForecastV53",
     operation_id = "analyze_budget_handler",
@@ -1421,7 +1421,7 @@ async fn get_variance_handler(
 }
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/forecast-v53/budget/report",
     responses(
         (status = 200, description = "成功"),

@@ -1258,7 +1258,7 @@ impl LiquidityOptimizer {
 // --- Cash Pool Handlers ---
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance-v58/pool",
     responses(
         (status = 200, description = "成功"),
@@ -1453,7 +1453,7 @@ async fn consolidate_cash_handler(
 // --- Forecasting Handlers ---
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance-v58/forecast/scenario",
     responses(
         (status = 200, description = "成功"),
@@ -1482,7 +1482,7 @@ async fn create_scenario_handler(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:forecast:write"])),
     path = "/finance-v58/forecast",
     tag = "TreasuryV58",
     operation_id = "run_forecast_handler",
@@ -1505,7 +1505,7 @@ async fn run_forecast_handler(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:forecast:read"])),
     path = "/finance-v58/forecast/{id}",
     tag = "TreasuryV58",
     operation_id = "get_forecast_handler",
@@ -1578,7 +1578,7 @@ async fn compare_scenarios_handler(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:forecast:read"])),
     path = "/finance-v58/forecast_summary",
     tag = "TreasuryV58",
     operation_id = "get_forecast_summary_handler",

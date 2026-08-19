@@ -51,7 +51,7 @@ pub fn create_routes(pool: PgPool) -> Router {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["pm:read"])),
+    security(("BearerAuth" = ["pm:milestone:read"])),
     path = "/projects/{project_id}/milestones",
     tag = "project_milestones",
     params(
@@ -85,7 +85,7 @@ async fn list_milestones(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["pm:write"])),
+    security(("BearerAuth" = ["pm:milestone:write"])),
     path = "/projects/{project_id}/milestones",
     tag = "project_milestones",
     request_body = CreateMilestoneRequest,
@@ -140,7 +140,7 @@ async fn create_milestone(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["pm:read"])),
+    security(("BearerAuth" = ["pm:milestone:read"])),
     path = "/projects/{project_id}/milestones/{id}",
     tag = "project_milestones",
     params(
@@ -178,7 +178,7 @@ async fn get_milestone(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["pm:update"])),
+    security(("BearerAuth" = ["pm:milestone:write"])),
     path = "/projects/{project_id}/milestones/{id}",
     tag = "project_milestones",
     request_body = UpdateMilestoneRequest,
@@ -238,7 +238,7 @@ async fn update_milestone(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["pm:delete"])),
+    security(("BearerAuth" = ["pm:milestone:write"])),
     path = "/projects/{project_id}/milestones/{id}",
     tag = "project_milestones",
     params(

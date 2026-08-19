@@ -1446,7 +1446,7 @@ impl IntelligentScheduler {
 // --- Decision Handlers ---
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance-v60/decision/scenario",
     responses(
         (status = 200, description = "成功"),
@@ -1644,7 +1644,7 @@ async fn sensitivity_analysis_handler(
 // --- Alert Handlers ---
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance-v60/alert/rule",
     responses(
         (status = 200, description = "成功"),
@@ -1841,7 +1841,7 @@ async fn configure_channel_handler(
 // --- Scheduling Handlers ---
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance-v60/schedule/task",
     responses(
         (status = 200, description = "成功"),

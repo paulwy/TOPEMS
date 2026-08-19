@@ -1614,7 +1614,7 @@ async fn get_compliance_status_handler(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance-v54/workflow",
     tag = "RiskV54",
     operation_id = "create_workflow_handler",
@@ -1675,7 +1675,7 @@ pub struct ComplianceReportQueryParams {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/finance-v54/compliance_report",
     tag = "RiskV54",
     operation_id = "generate_compliance_report_handler",

@@ -1107,7 +1107,7 @@ async fn get_pricing_policies_handler(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/finance/pricing_policy",
     tag = "SharedServices",
     operation_id = "create_pricing_policy_handler",

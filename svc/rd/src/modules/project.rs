@@ -81,6 +81,7 @@ pub fn create_routes() -> Router<super::ApiState> {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["rd:read"])),
     path = "/projects",
     tag = "projects",
     params(
@@ -167,6 +168,7 @@ async fn list_projects(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["rd:write"])),
     path = "/projects",
     tag = "projects",
     request_body = CreateProjectRequest,
@@ -314,6 +316,7 @@ async fn create_project(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["rd:read"])),
     path = "/projects/{id}",
     tag = "projects",
     params(
@@ -375,6 +378,7 @@ async fn get_project(
 
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["rd:update"])),
     path = "/projects/{id}",
     tag = "projects",
     params(
@@ -499,6 +503,7 @@ async fn update_project(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["rd:delete"])),
     path = "/projects/{id}",
     tag = "projects",
     params(
@@ -582,6 +587,7 @@ async fn delete_project(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["rd:write"])),
     path = "/projects/batch",
     tag = "projects",
     request_body = BatchCreateRequest,
@@ -723,6 +729,7 @@ async fn batch_create_projects(
 
 #[utoipa::path(
     delete,
+    security(("BearerAuth" = ["rd:delete"])),
     path = "/projects/batch",
     tag = "projects",
     request_body = BatchDeleteRequest,
@@ -823,6 +830,7 @@ async fn batch_delete_projects(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["rd:read"])),
     path = "/projects/export",
     tag = "projects",
     responses(
@@ -1038,6 +1046,7 @@ async fn export_projects(
 
 #[utoipa::path(
     post,
+    security(("BearerAuth" = ["rd:write"])),
     path = "/projects/import",
     tag = "projects",
     request_body(content = String, description = "CSV file content", content_type = "text/csv"),
@@ -1244,6 +1253,7 @@ pub struct ProjectDashboardResponse {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["rd:read"])),
     path = "/projects/{id}/dashboard",
     tag = "projects",
     params(
@@ -1435,6 +1445,7 @@ pub struct ProjectGanttResponse {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["rd:read"])),
     path = "/projects/{id}/gantt",
     tag = "projects",
     params(

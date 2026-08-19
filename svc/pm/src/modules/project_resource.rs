@@ -42,7 +42,7 @@ pub fn create_routes(pool: PgPool) -> Router {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["pm:read"])),
+    security(("BearerAuth" = ["pm:resource:read"])),
     path = "/projects/{project_id}/resources",
     tag = "project_resources",
     params(
@@ -76,7 +76,7 @@ async fn list_resources(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["pm:write"])),
+    security(("BearerAuth" = ["pm:resource:admin"])),
     path = "/projects/{project_id}/resources",
     tag = "project_resources",
     request_body = CreateResourceRequest,
@@ -137,7 +137,7 @@ async fn add_resource(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["pm:read"])),
+    security(("BearerAuth" = ["pm:resource:read"])),
     path = "/projects/{project_id}/resources/{id}",
     tag = "project_resources",
     params(
@@ -175,7 +175,7 @@ async fn get_resource(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["pm:update"])),
+    security(("BearerAuth" = ["pm:resource:admin"])),
     path = "/projects/{project_id}/resources/{id}",
     tag = "project_resources",
     request_body = UpdateResourceRequest,
@@ -237,7 +237,7 @@ async fn update_resource(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["pm:delete"])),
+    security(("BearerAuth" = ["pm:resource:admin"])),
     path = "/projects/{project_id}/resources/{id}",
     tag = "project_resources",
     params(

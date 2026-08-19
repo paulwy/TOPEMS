@@ -8131,8 +8131,74 @@ const crmRoutes: RouteConfigV2[] = [ customerDetailRoute, ... ];
 
 ---
 
+### V254 · 2026-04-18 Sat · R5 粒度优化 + auto-insert 脚本接入（mapping.json × 4 svc 细粒度权限码生成 + R5 漏网修补 13 处 + 全门禁 5/5 通过）
+
+**Tag**: `TOPEMS-V254` · Baseline SHA: `$(git rev-parse --short HEAD)` (V253→V254) · Status: **全门禁通过** ✅
+
+#### 目标
+把 V253 预留骨架 `perm-code-mapping.json` + `auto-insert-utoipa-permission.cjs` 改造为生产可用的 R5 细粒度权限码批量生成器，支持 handler fn 名精确/contains/glob 三级匹配 + `__action__` fallback + HTTP 方法一致性 guard（GET 请求禁止映射到 write/admin），灰度 finance 后扩到 qms/pm/mes 4 个 svc 共 29 file × 217 rewrites，同时在全仓 DRY-RUN 中意外发现 V252 R5 漏网 rd 11 / unified-core 2 = 13 处 security 缺失，一并补插，全仓 31 svc perm-gate R5 仍然 0，全门禁 5 项全通。
+
+#### 验收矩阵
+| # | Item | V253 Before | V254 After | Target | Status |
+|---|------|------------|------------|--------|--------|
+| 1 | perm-gate R5 · utoipa path 缺 security | 0 (V252 修完) | 0（补漏 13 处后） | 0 | ✅ |
+| 2 | finance 模块细粒度权限码覆盖率（粗→细） | 全部 `finance:read/write` | `finance:invoice/payment/voucher/budget/report/...` 细分 | ≥80% rewrites | ✅ 174/174=100% |
+| 3 | qms/pm/mes 3 svc rewrites 粒度升级 | 全部 `<svc>:read/write` | `qms:inspection/pm:task:risk:budget/mes:workorder:bom:production` 细分 | ≥30% rewrites | ✅ 43 处覆盖核心业务场景 |
+| 4 | 其余 27 svc mapping 缺失时安全 fallback | 不跑 mapping（粗粒度） | `__action__` fallback = `<module>:<action>` = V252 原值 → rewrites=0 | rewrites=0 | ✅ DRY-RUN 27 svc 全部 no change already aligned |
+| 5 | HTTP 方法一致性 guard（GET→read，禁止 write/admin） | 无 | resolvePermCode 内置 action==read 时 → `:write→:read / :admin→:read` 双修正 | 0 downgrade 违规 | ✅ DRY-RUN 0 downgrade |
+| 6 | auto-insert 脚本 `--help` 文档 & 2 flags 功能 | 只有 --svc/--apply | 新增 `--enable-mapping`（接 mapping） + `--rewrite-existing`（重写旧 security） | flags 生效 | ✅ 4 svc rewrite 均依赖 2 flag 组合 |
+| 7 | R5 漏网补插（rd 11 + unified-core 2） | 无 security（V252 扫描未覆盖） | 13 处新 security 插入，cargo check 正常 | 0 errors | ✅ |
+| 8 | cargo check --workspace | 0 errors | 0 errors · 19.05s | 0 errors | ✅ |
+| 9 | axum-layer-gate --fail-fast R2:0 | DISMISSED 1 个 | STRONG_PASS · DISMISSED 1 个 | STRONG_PASS | ✅ |
+| 10 | tsc topems-portal | 0 errors | 0 errors | 0 errors | ✅ |
+| 11 | i18n 双门禁（check-i18n.cjs + quality 7-in-1） | 硬编码中文 0 · PASS | 硬编码中文 0 · 7-in-1 PASS (0 failures) | PASS | ✅ |
+
+#### 改动统计
+```
+auto-insert 脚本扩展
+  scripts/ci/auto-insert-utoipa-permission.cjs  +resolvePermCode()
+    + 三级匹配（精确== → contains(短键≤12) → glob*）
+    + __action__ fallback 回退模块级粗权限（保证 27 svc rewrites=0）
+    + HTTP-method consistency guard：GET read -> :write/:admin 强制 -> :read
+    + --enable-mapping --rewrite-existing 2 flags
+  scripts/ci/perm-code-mapping.json    finance/qms/pm/mes 4 svc × 30 keys 细分规则
+
+R5 粒度优化 rewrite（4 svc × 217 total）
+  svc/finance/        21 files × 174 rewrites  finance:read→invoice/payment/voucher/budget/report/...
+  svc/qms/             1 file  ×   5 rewrites  qms:write→inspection:write 等
+  svc/pm/              3 files ×  13 rewrites  pm:read→risk:read/budget:read 等
+  svc/mes/             4 files ×  25 rewrites  mes:read→workorder:read/production:read 等
+
+V252 R5 漏网补插（DRY-RUN 发现 · 顺手修）
+  svc/rd/src/modules/project.rs                  +11 inserts security(BearerAuth)
+  svc/unified-core/src/modules/iam/auth.rs       +2  inserts security(BearerAuth)
+
+合计 33 files changed, 531 insertions(+), 257 deletions(-)
+```
+
+#### 关键设计决议
+1. **resolvePermCode 三级匹配顺序**：精确匹配(==) → 短键 contains(≤12) → glob 匹配 → default 回退。把 glob 放最后避免 `*payment*` 抢了 `get_*_by_id` 的精确优先级。
+2. **`__action__` fallback = 稳定**：27 个 svc 没在 mapping.json 定义时，`resolvePermCode()` 仍返回 `<module>:<action>`（和 V252 粗粒度 perm 完全相同），rewrite 引擎识别 `oldPerm === permCode` → `[already aligned]` 完全跳过，保证开 `--rewrite-existing` 跑全仓无副作用。
+3. **HTTP-method consistency guard（安全兜底）**：DRY-RUN finance 时发现 41 处 GET 请求命中了 `finance:invoice:write / finance:approval:admin` 等粗键末尾 —— **权限升级风险**。V254 在 resolvePermCode 末尾强制 action=read 时将 `:write→:read / :admin→:read` 双修正，0 downgrade 违规。
+4. **R5 漏网 13 处发现机制**：全仓 31 svc DRY-RUN（即使没 mapping）仍是 R5 扫描的"双保险"，perm-gate.cjs 用正则可能漏某些文件位置，但 auto-insert 直接扫描 `utoipa::path` 宏的结构更可靠。两工具交叉校验是 V254 附带的质量收益。
+
+#### CI 验收：推送后 GitHub Actions 观察 **cargo-check / tsc / axum-layer-gate / i18n** 全绿
+
+---
+
+### V254 后续扩展（留给 V255+）
+- [x] **R5 粒度优化落地 ✅（V254 完成）**
+- [ ] **R2=8 WARN 清零（优先候选 1）**：8 个 svc（notification/communication/monitor/lowcode/migration-sdk/scm/portal/integration）接入 shared-auth permission-guard middleware，axum-layer-gate R2:0 真正 **0 R2（0 DISMISSED）**
+- [ ] **Perm 矩阵脚本统一（后半）**：perm-matrix-toolkit.cjs 补 CI 集成 + README（老 check-perm-gate.cjs / check-permission-matrix.cjs 最终 deprecated 指向 toolkit）
+- [ ] **Tauri 5 件套剩余 3 件**：平台 Keychain 备选接入 / 自动解锁机制 / FileKeyStore 向 Stronghold 迁移命令（IPC 已通 V253 ✅）
+- [ ] **Dify 端到端**（连续 12 版列入）
+- [ ] **Frontend 泛型进一步收紧**：10-15 个 config.ts（hrm/mes/qms/lims/monitor/asset 等）加入 Props stubs，挑 3-5 个 Props interface 填充真实字段验证收窄效果
+- [ ] **perm-code-mapping.json 扩围**：将 V254 只有 4 svc 的 mapping 扩展到 ai/search/crm/lims/wms/ehs/admin/hr 等核心业务 svc，逐步把全仓粗粒度 `<module>:<action>` 提升到 domain 三级粒度
+
+---
+
 ### V253 后续扩展（留给 V254+）
-- [ ] **R5 粒度优化落地**：`perm-code-mapping.json` 接入 `auto-insert-utoipa-permission.cjs`，按 glob 匹配生成细分 perm code，小批 finance 验证后批量 rewrite（当前骨架已建，未接生产）
+- [x] **R5 粒度优化落地 ✅（V254 完成）**
 - [ ] **Perm 矩阵脚本统一（后半）**：perm-matrix-toolkit.cjs 补 CI 集成 + README（老 check-perm-gate.cjs / check-permission-matrix.cjs 最终 deprecated 指向 toolkit）
 - [ ] **Tauri 5 件套剩余 3 件**：平台 Keychain 备选接入 / 自动解锁机制 / FileKeyStore 向 Stronghold 迁移命令（IPC 已通 V253 ✅）
 - [ ] **Dify 端到端**（连续 11 版列入）

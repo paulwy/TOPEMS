@@ -159,7 +159,7 @@ pub struct TodayOutputQuery {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["mes:read"])),
+    security(("BearerAuth" = ["mes:production:read"])),
     path = "/api/mes/work-reports/today/output",
     tag = "WorkReport",
     responses(

@@ -1657,7 +1657,7 @@ pub async fn auto_audit_scheduler(pool: PgPool) {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/audit-v52/rules",
     tag = "Audit-V52",
     operation_id = "create_audit_rule_handler",
@@ -2003,7 +2003,7 @@ async fn get_alerts_handler(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/audit-v52/alerts/config",
     tag = "Audit-V52",
     operation_id = "create_alert_config_handler",

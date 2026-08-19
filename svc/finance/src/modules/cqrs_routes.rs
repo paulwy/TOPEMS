@@ -52,7 +52,7 @@ pub struct PaginatedEventsResponse {
 }
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:voucher:write"])),
     path = "/cqrs/commands/create-voucher",
     responses(
         (status = 200, description = "成功"),
@@ -87,7 +87,7 @@ async fn handle_create_voucher(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:voucher:write"])),
     path = "/finance/handle_post_voucher",
     tag = "CqrsRoutes",
     operation_id = "handle_post_voucher",
@@ -117,7 +117,7 @@ async fn handle_post_voucher(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["finance:update"])),
+    security(("BearerAuth" = ["finance:voucher:write"])),
     path = "/finance/handle_reverse_voucher/{id}",
     tag = "CqrsRoutes",
     operation_id = "handle_reverse_voucher",
@@ -146,7 +146,7 @@ async fn handle_reverse_voucher(
 }
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:voucher:read"])),
     path = "/cqrs/views/voucher-summary",
     responses(
         (status = 200, description = "成功"),
@@ -184,7 +184,7 @@ async fn list_voucher_summary(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:payment:read"])),
     path = "/finance/voucher_summary_by_id",
     tag = "CqrsRoutes",
     operation_id = "get_voucher_summary_by_id",
