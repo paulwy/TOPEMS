@@ -97,9 +97,7 @@ function parseUtoipaAnnotations(content, filePath) {
 
     // Find the handler function that follows
     const afterAnnotation = content.slice(closeIdx);
-    const handlerMatch = afterAnnotation.match(
-      /\n\s*((?:pub\s+)?(?:async\s+)?fn\s+(\w+))/
-    );
+    const handlerMatch = afterAnnotation.match(/\n\s*((?:pub\s+)?(?:async\s+)?fn\s+(\w+))/);
 
     let handlerName = null;
     let handlerSig = '';
@@ -187,10 +185,7 @@ function parseAnnotationBody(body) {
   if (paramsIdx !== -1) {
     const paramsClose = findMatchingClose(body, paramsIdx + body.slice(paramsIdx).indexOf('('));
     if (paramsClose !== -1) {
-      const paramsContent = body.slice(
-        paramsIdx + body.slice(paramsIdx).indexOf('(') + 1,
-        paramsClose - 1
-      );
+      const paramsContent = body.slice(paramsIdx + body.slice(paramsIdx).indexOf('(') + 1, paramsClose - 1);
       parseParamsBlock(paramsContent, result);
     }
   }
@@ -363,9 +358,7 @@ function compareAnnotationVsHandler(ann) {
   // Check individual path param names
   // Extract path params from the path template
   const pathTemplateParams = (ann.path || '').match(/\{(\w+)\}/g);
-  const pathTemplateParamNames = (pathTemplateParams || []).map((p) =>
-    p.slice(1, -1)
-  );
+  const pathTemplateParamNames = (pathTemplateParams || []).map((p) => p.slice(1, -1));
 
   for (const param of ann.pathParams) {
     // Check if this param name appears in the path template
@@ -438,12 +431,8 @@ function compareAnnotationVsHandler(ann) {
 // ---------------------------------------------------------------------------
 
 function generateReport(annotations, allMismatches, checkedCount, matchCount) {
-  const errorCount = allMismatches.filter(
-    (m) => m.mismatch.severity === 'error'
-  ).length;
-  const warnCount = allMismatches.filter(
-    (m) => m.mismatch.severity === 'warn'
-  ).length;
+  const errorCount = allMismatches.filter((m) => m.mismatch.severity === 'error').length;
+  const warnCount = allMismatches.filter((m) => m.mismatch.severity === 'warn').length;
   const totalMismatches = allMismatches.length;
   const isRed = errorCount >= 3;
 
@@ -462,9 +451,7 @@ function generateReport(annotations, allMismatches, checkedCount, matchCount) {
   lines.push(`| 不匹配总数 | ${totalMismatches} |`);
   lines.push(`| - error 级 | ${errorCount} |`);
   lines.push(`| - warn 级 | ${warnCount} |`);
-  lines.push(
-    `| CI 严重度 | ${isRed ? 'RED (error >= 3)' : errorCount > 0 ? 'YELLOW' : 'GREEN'} |`
-  );
+  lines.push(`| CI 严重度 | ${isRed ? 'RED (error >= 3)' : errorCount > 0 ? 'YELLOW' : 'GREEN'} |`);
   lines.push('');
 
   // Group mismatches by type
@@ -521,15 +508,8 @@ function generateReport(annotations, allMismatches, checkedCount, matchCount) {
   lines.push('| # | 方法 | 路径 | handler | request_body | pathParams | queryParams | 状态 | 文件 | 行号 |');
   lines.push('|---|------|------|---------|--------------|------------|-------------|------|------|------|');
   annotations.forEach((ann, i) => {
-    const ms = allMismatches.filter(
-      (m) => m.file === ann.file && m.line === ann.line
-    );
-    const status =
-      ms.length === 0
-        ? 'OK'
-        : ms.some((m) => m.mismatch.severity === 'error')
-          ? 'ERROR'
-          : 'WARN';
+    const ms = allMismatches.filter((m) => m.file === ann.file && m.line === ann.line);
+    const status = ms.length === 0 ? 'OK' : ms.some((m) => m.mismatch.severity === 'error') ? 'ERROR' : 'WARN';
     lines.push(
       `| ${i + 1} | ${ann.method || '-'} | \`${ann.path || '-'}\` | ${ann.handlerName || '-'} | ${ann.requestBody || '-'} | ${ann.pathParams.map((p) => p.name).join(', ') || '-'} | ${ann.queryParams.map((p) => p.name).join(', ') || '-'} | ${status} | ${ann.file} | ${ann.line} |`
     );
@@ -556,9 +536,7 @@ function generateReport(annotations, allMismatches, checkedCount, matchCount) {
     };
     for (const [type, items] of Object.entries(byType)) {
       const severity = items[0].mismatch.severity;
-      lines.push(
-        `| ${type} | ${items.length} | ${severity} | ${typeDescriptions[type] || ''} |`
-      );
+      lines.push(`| ${type} | ${items.length} | ${severity} | ${typeDescriptions[type] || ''} |`);
     }
   }
   lines.push('');
@@ -639,23 +617,14 @@ function main() {
     }
   }
 
-  const errorCount = allMismatches.filter(
-    (m) => m.mismatch.severity === 'error'
-  ).length;
-  const warnCount = allMismatches.filter(
-    (m) => m.mismatch.severity === 'warn'
-  ).length;
+  const errorCount = allMismatches.filter((m) => m.mismatch.severity === 'error').length;
+  const warnCount = allMismatches.filter((m) => m.mismatch.severity === 'warn').length;
   console.log(`      -> 匹配: ${matchCount}`);
   console.log(`      -> 不匹配: ${allMismatches.length} (error: ${errorCount}, warn: ${warnCount})\n`);
 
   // 4. Generate report
   console.log(`[4/4] 生成报告: ${relative(ROOT, OUTPUT_MD)}`);
-  const { markdown, isRed } = generateReport(
-    allAnnotations,
-    allMismatches,
-    allAnnotations.length,
-    matchCount
-  );
+  const { markdown, isRed } = generateReport(allAnnotations, allMismatches, allAnnotations.length, matchCount);
   writeFileSync(OUTPUT_MD, markdown + '\n', 'utf-8');
   console.log(`      -> 报告已写入\n`);
 

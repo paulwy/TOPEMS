@@ -11,6 +11,12 @@ use topems_shared_event::event::{
 #[derive(Clone)]
 pub struct MdmEventService;
 
+impl Default for MdmEventService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MdmEventService {
     /// Construct a new default instance. Prefer [`Default::default`] where semantically clear.
     pub fn new() -> Self {

@@ -12,16 +12,26 @@ const ROOT = '/Users/xingzhai/TOPEMS/apps/web';
 const PAGES_DIR = path.join(ROOT, 'src/pages');
 
 const P10 = [
-  { route: '/dashboard',              pathDir: 'shared',            name: 'Dashboard 主页', pattern: /(DashboardPage|dashboard|Dashboard)/ },
-  { route: '/finance/settlement',     pathDir: 'finance',           name: 'Finance 结算页', pattern: /(settlement|Settlement|Settle)/ },
-  { route: '/crm/customers',          pathDir: 'crm',               name: 'CRM 客户列表',   pattern: /(customer|Customer)/ },
-  { route: '/bi/reports',             pathDir: 'bi',                name: 'BI 报表中心',    pattern: /(report|Report)/ },
-  { route: '/aps/schedule',           pathDir: 'aps',               name: 'APS 排程',       pattern: /(schedule|Schedule)/ },
-  { route: '/scm/orders',             pathDir: 'scm',               name: 'SCM 供应链',     pattern: /(order|Order)/ },
-  { route: '/inventory/items',        pathDir: 'wms',               name: 'Inventory 库存', pattern: /(item|Item|inventory|Inventory)/ },
-  { route: '/hr/employees',           pathDir: 'hrm',               name: 'HR 员工',        pattern: /(employee|Employee|staff|Staff)/ },
-  { route: '/qc/inspections',         pathDir: 'qms',               name: 'QC 质检',        pattern: /(inspection|Inspection|qc|QC|quality|Quality)/ },
-  { route: '/admin/settings',         pathDir: 'admin',             name: 'Admin 设置',     pattern: /(setting|Setting|Setting)/ },
+  { route: '/dashboard', pathDir: 'shared', name: 'Dashboard 主页', pattern: /(DashboardPage|dashboard|Dashboard)/ },
+  {
+    route: '/finance/settlement',
+    pathDir: 'finance',
+    name: 'Finance 结算页',
+    pattern: /(settlement|Settlement|Settle)/,
+  },
+  { route: '/crm/customers', pathDir: 'crm', name: 'CRM 客户列表', pattern: /(customer|Customer)/ },
+  { route: '/bi/reports', pathDir: 'bi', name: 'BI 报表中心', pattern: /(report|Report)/ },
+  { route: '/aps/schedule', pathDir: 'aps', name: 'APS 排程', pattern: /(schedule|Schedule)/ },
+  { route: '/scm/orders', pathDir: 'scm', name: 'SCM 供应链', pattern: /(order|Order)/ },
+  { route: '/inventory/items', pathDir: 'wms', name: 'Inventory 库存', pattern: /(item|Item|inventory|Inventory)/ },
+  { route: '/hr/employees', pathDir: 'hrm', name: 'HR 员工', pattern: /(employee|Employee|staff|Staff)/ },
+  {
+    route: '/qc/inspections',
+    pathDir: 'qms',
+    name: 'QC 质检',
+    pattern: /(inspection|Inspection|qc|QC|quality|Quality)/,
+  },
+  { route: '/admin/settings', pathDir: 'admin', name: 'Admin 设置', pattern: /(setting|Setting|Setting)/ },
 ];
 
 function walk(dir) {
@@ -47,7 +57,10 @@ for (const entry of P10) {
     const basename = path.basename(f);
     const dirname = path.basename(path.dirname(f));
     const hay = rel + '|' + basename + '|' + dirname;
-    if (!entry.pattern || entry.pattern.test(hay)) { matchFile = rel; break; }
+    if (!entry.pattern || entry.pattern.test(hay)) {
+      matchFile = rel;
+      break;
+    }
   }
   const modulePresent = !!matchFile || files.length > 0;
   const ok = modulePresent; // batch smoke test proved module import OK for all in scope

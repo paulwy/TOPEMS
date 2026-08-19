@@ -153,6 +153,12 @@ pub struct AlertEvaluator {
     state: Arc<RwLock<AlertEvaluatorState>>,
 }
 
+impl Default for AlertEvaluator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AlertEvaluator {
     pub fn new() -> Self {
         Self {

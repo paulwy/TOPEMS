@@ -30,11 +30,7 @@ const WHITELIST_FILES = [
   'utils/observability/performance-bottleneck.ts',
 ];
 
-const WHITELIST_DIRS = [
-  'api/',
-  'tmp/',
-  'context-engine/',
-];
+const WHITELIST_DIRS = ['api/', 'tmp/', 'context-engine/'];
 
 function parseArgs(argv) {
   const opts = {
@@ -48,9 +44,11 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a === '--strict') opts.strict = true;
     else if (a === '--json') opts.jsonStdout = true;
-    else if (a === '--json-out' && argv[i + 1]) { opts.jsonOut = argv[++i]; }
-    else if (a === '--details' && argv[i + 1] != null) { opts.details = parseInt(argv[++i], 10) || 0; }
-    else if (a && !a.startsWith('-')) opts.paths.push(a);
+    else if (a === '--json-out' && argv[i + 1]) {
+      opts.jsonOut = argv[++i];
+    } else if (a === '--details' && argv[i + 1] != null) {
+      opts.details = parseInt(argv[++i], 10) || 0;
+    } else if (a && !a.startsWith('-')) opts.paths.push(a);
   }
   if (opts.paths.length === 0) opts.paths.push(WEB_SRC);
   return opts;
@@ -59,7 +57,7 @@ function parseArgs(argv) {
 const OPTS = parseArgs(process.argv.slice(2));
 
 function isWhitelisted(relPath) {
-  if (WHITELIST_FILES.some(w => relPath.includes(w))) return true;
+  if (WHITELIST_FILES.some((w) => relPath.includes(w))) return true;
   for (const wd of WHITELIST_DIRS) {
     if (relPath.startsWith(wd) || relPath.includes('/' + wd) || relPath.includes(wd.replace('/', ''))) {
       return true;
@@ -75,15 +73,26 @@ function isMockFile(relPath) {
 
 function stripComments(line) {
   let result = '';
-  let inSingleQuote = false, inDoubleQuote = false, inBacktick = false, inBlockComment = false;
+  let inSingleQuote = false,
+    inDoubleQuote = false,
+    inBacktick = false,
+    inBlockComment = false;
   for (let i = 0; i < line.length; i++) {
-    const ch = line[i], next = line[i + 1];
+    const ch = line[i],
+      next = line[i + 1];
     if (inBlockComment) {
-      if (ch === '*' && next === '/') { inBlockComment = false; i++; }
+      if (ch === '*' && next === '/') {
+        inBlockComment = false;
+        i++;
+      }
       continue;
     }
     if (!inSingleQuote && !inDoubleQuote && !inBacktick) {
-      if (ch === '/' && next === '*') { inBlockComment = true; i++; continue; }
+      if (ch === '/' && next === '*') {
+        inBlockComment = true;
+        i++;
+        continue;
+      }
       if (ch === '/' && next === '/') break;
     }
     if (ch === "'" && !inDoubleQuote && !inBacktick) inSingleQuote = !inSingleQuote;
@@ -105,7 +114,7 @@ function walk(dir) {
       if (SKIP_DIRS.includes(entry.name)) continue;
       walk(path.join(dir, entry.name));
     } else if (/\.[mc]?[tj]sx?$/.test(entry.name)) {
-      if (SKIP_EXT.some(ext => entry.name.endsWith(ext))) continue;
+      if (SKIP_EXT.some((ext) => entry.name.endsWith(ext))) continue;
       scanFile(path.join(dir, entry.name));
     }
   }
@@ -136,7 +145,7 @@ function scanFile(filePath) {
     if (trimmed.startsWith('{/*')) continue;
     if (/\b(console|logger)\s*\.\s*(log|info|warn|error|debug|trace)\s*\(/.test(line)) continue;
 
-    if (line.includes('i18n.t(') || (/\bt\s*\(\s*['"`]/.test(line))) continue;
+    if (line.includes('i18n.t(') || /\bt\s*\(\s*['"`]/.test(line)) continue;
 
     if (/\[['"`][\u4e00-\u9fff]/.test(line) || /[\u4e00-\u9fff]['"`]\]/.test(line)) continue;
 
@@ -163,15 +172,17 @@ for (const p of OPTS.paths) {
     // 否则 pre-commit 把 *.test.tsx / __tests__/*.tsx 作为参数传入会被直接扫描，
     // 造成 3000+ "硬编码中文 mock 翻译文本" 的误报。
     const name = path.basename(abs);
-    if (SKIP_EXT.some(ext => name.endsWith(ext))) continue;
+    if (SKIP_EXT.some((ext) => name.endsWith(ext))) continue;
     const parts = path.dirname(path.relative(WEB_SRC, abs) || name).split(/[\\/]/);
-    if (parts.some(d => SKIP_DIRS.includes(d))) continue;
+    if (parts.some((d) => SKIP_DIRS.includes(d))) continue;
     scanFile(abs);
   }
 }
 
 const sorted = Object.entries(stats).sort((a, b) => b[1] - a[1]);
-const sortedSub = Object.entries(moduleStats).sort((a, b) => b[1] - a[1]).slice(0, 30);
+const sortedSub = Object.entries(moduleStats)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 30);
 const report = {
   scan_paths: OPTS.paths,
   total,

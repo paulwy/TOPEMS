@@ -51,7 +51,7 @@ for (const entry of dirEntries) {
       /export\s+const\s+(\w+NavConfig)\s*(?::\s*ModuleNavConfig)?\s*=\s*\{([\s\S]*?)\n\}\s*;\s*\n(?:export|import|$)/
     );
     // 简单兜底：从文件头开始找第一个 { code: ... name: ... } 块
-    const block = (configMatch ? configMatch[2] : code);
+    const block = configMatch ? configMatch[2] : code;
 
     const moduleCode = extractFirstMatch(CODE_RE, block);
     const moduleName = extractFirstMatch(NAME_RE, block);
@@ -140,20 +140,22 @@ const systemCodes = new Set(['iam', 'integration', 'report']);
 const hasAdminPerm = (m) => m.permission.includes('admin') || m.permission.includes('system');
 
 const inCore = modules.filter((m) => m.source === 'core');
-const inSystem = modules.filter(
-  (m) => systemCodes.has(m.code) || hasAdminPerm(m)
-);
-const inBusiness = modules.filter(
-  (m) => m.source === 'plugin' && !systemCodes.has(m.code)
-);
+const inSystem = modules.filter((m) => systemCodes.has(m.code) || hasAdminPerm(m));
+const inBusiness = modules.filter((m) => m.source === 'plugin' && !systemCodes.has(m.code));
 const inCoreCodes = new Set(inCore.map((m) => m.code));
 const dup = inSystem.filter((m) => inCoreCodes.has(m.code));
 
 console.log('\n--- Dashboard 当前分类结果（与你看到的 27 个卡片的关系）---');
 console.log(`理论 total modules: ${modules.length}`);
-console.log(`coreModules (source===core): ${inCore.length} → ${inCore.map(m=>m.code).join(',')}`);
-console.log(`systemServicesModules (systemCodes/admin perm): ${inSystem.length} → ${inSystem.map(m=>m.code).join(',')}`);
-console.log(`businessModules (plugin && !systemCodes): ${inBusiness.length} → ${inBusiness.map(m=>m.code).join(',')}`);
-console.log(`⚠️  同时出现在 core 和 system 的重复模块：${dup.length} 个 → ${dup.map(m=>m.code).join(',') || '(无)'}`);
+console.log(`coreModules (source===core): ${inCore.length} → ${inCore.map((m) => m.code).join(',')}`);
+console.log(
+  `systemServicesModules (systemCodes/admin perm): ${inSystem.length} → ${inSystem.map((m) => m.code).join(',')}`
+);
+console.log(
+  `businessModules (plugin && !systemCodes): ${inBusiness.length} → ${inBusiness.map((m) => m.code).join(',')}`
+);
+console.log(
+  `⚠️  同时出现在 core 和 system 的重复模块：${dup.length} 个 → ${dup.map((m) => m.code).join(',') || '(无)'}`
+);
 console.log(`理论卡片总数（不重复）: ${modules.length}`);
 console.log(`实际看到 27 个卡片 = 33 总数 - 6 个未激活插件/无权限模块（受 isPluginInstalled / isPluginActive 影响）`);

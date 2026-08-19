@@ -66,7 +66,11 @@ function collectTsxFiles(dir) {
       if (['__tests__', 'node_modules', 'test', 'tests', 'dist', 'build'].includes(entry.name)) continue;
       if (entry.name.endsWith('.stories.tsx')) continue;
       results.push(...collectTsxFiles(fullPath));
-    } else if (entry.name.endsWith('.tsx') && !entry.name.endsWith('.test.tsx') && !entry.name.endsWith('.stories.tsx')) {
+    } else if (
+      entry.name.endsWith('.tsx') &&
+      !entry.name.endsWith('.test.tsx') &&
+      !entry.name.endsWith('.stories.tsx')
+    ) {
       results.push(fullPath);
     }
   }
@@ -77,27 +81,45 @@ function extractChineseSegments(line) {
   const segments = [];
   let m;
 
-  const jsxTextRe = />([\s]*[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\s\w：，。、（）()·\-—\!！？%]+?[\s]*)</g;
+  const jsxTextRe =
+    />([\s]*[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\s\w：，。、（）()·\-—\!！？%]+?[\s]*)</g;
   while ((m = jsxTextRe.exec(line)) !== null) {
     const text = m[1].trim();
-    if (text && CJK_RE.test(text)) segments.push({ text, type: 'jsx_text', full: m[0], offset: m.index, end: m.index + m[0].length });
+    if (text && CJK_RE.test(text))
+      segments.push({ text, type: 'jsx_text', full: m[0], offset: m.index, end: m.index + m[0].length });
   }
 
-  const jsxAttrRe = /(\w+)=(["'])([\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w\s：，。、（）()·\-—\!！？%\/]*)\2/g;
+  const jsxAttrRe =
+    /(\w+)=(["'])([\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w\s：，。、（）()·\-—\!！？%\/]*)\2/g;
   while ((m = jsxAttrRe.exec(line)) !== null) {
-    segments.push({ text: m[3], type: 'jsx_attr', attr: m[1], full: m[0], offset: m.index, end: m.index + m[0].length });
+    segments.push({
+      text: m[3],
+      type: 'jsx_attr',
+      attr: m[1],
+      full: m[0],
+      offset: m.index,
+      end: m.index + m[0].length,
+    });
   }
 
-  const strLitRe = /(["'])((?:[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w\s：，。、（）()·\-—\!！？%\/]*))\1/g;
+  const strLitRe =
+    /(["'])((?:[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w\s：，。、（）()·\-—\!！？%\/]*))\1/g;
   while ((m = strLitRe.exec(line)) !== null) {
     if (!CJK_RE.test(m[2])) continue;
     const before = line.substring(0, m.index);
     if (/\bt\s*\(\s*$/.test(before) || /i18n\.t\s*\(\s*$/.test(before)) continue;
     const segStart = m.index;
     const segEnd = m.index + m[0].length;
-    const overlaps = segments.some(s => segStart < s.end && segEnd > s.offset);
+    const overlaps = segments.some((s) => segStart < s.end && segEnd > s.offset);
     if (overlaps) continue;
-    segments.push({ text: m[2], type: 'str_lit', quote: m[1], full: m[0], offset: m.index, end: m.index + m[0].length });
+    segments.push({
+      text: m[2],
+      type: 'str_lit',
+      quote: m[1],
+      full: m[0],
+      offset: m.index,
+      end: m.index + m[0].length,
+    });
   }
 
   return segments;
@@ -105,14 +127,22 @@ function extractChineseSegments(line) {
 
 function generateKey(moduleName, fl, text, index) {
   const prefix = `${moduleName}.${fl}`;
-  const hash = text.length <= 20
-    ? text.replace(/[\u4e00-\u9fff\u3400-\u4dbf]/g, '').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase()
-    : '';
+  const hash =
+    text.length <= 20
+      ? text
+          .replace(/[\u4e00-\u9fff\u3400-\u4dbf]/g, '')
+          .replace(/[^a-zA-Z0-9_]/g, '')
+          .toLowerCase()
+      : '';
   return hash ? `${prefix}.${hash}_${index}` : `${prefix}.k${index}`;
 }
 
 function loadJson(filepath) {
-  try { return JSON.parse(fs.readFileSync(filepath, 'utf-8')); } catch { return {}; }
+  try {
+    return JSON.parse(fs.readFileSync(filepath, 'utf-8'));
+  } catch {
+    return {};
+  }
 }
 
 function saveJson(filepath, data) {
@@ -120,8 +150,10 @@ function saveJson(filepath, data) {
 }
 
 function ensureI18nImport(lines) {
-  const usesI18n = lines.some(l => /i18n\.t\s*\(/.test(l) && !/import/.test(l));
-  const hasImport = lines.some(l => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l) || /import\s+\{\s*i18n\s*\}/.test(l));
+  const usesI18n = lines.some((l) => /i18n\.t\s*\(/.test(l) && !/import/.test(l));
+  const hasImport = lines.some(
+    (l) => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l) || /import\s+\{\s*i18n\s*\}/.test(l)
+  );
   if (usesI18n && !hasImport) {
     let lastImport = -1;
     for (let i = 0; i < lines.length; i++) {

@@ -19,9 +19,10 @@ const args = process.argv.slice(2);
 const dryRun = args.includes('--dry');
 const verbose = args.includes('--verbose');
 const moduleArg = args.indexOf('--module');
-const targetModules = moduleArg !== -1 && args[moduleArg + 1]
-  ? args[moduleArg + 1].split(',')
-  : ['gis', 'im', 'system', 'automation', 'finance', 'lowcode', 'hrm', 'pdm', 'scm', 'integration'];
+const targetModules =
+  moduleArg !== -1 && args[moduleArg + 1]
+    ? args[moduleArg + 1].split(',')
+    : ['gis', 'im', 'system', 'automation', 'finance', 'lowcode', 'hrm', 'pdm', 'scm', 'integration'];
 
 const WEB_ROOT = path.resolve(__dirname, '../../apps/web/src');
 const PAGES_DIR = path.join(WEB_ROOT, 'pages');
@@ -40,7 +41,9 @@ function loadTranslations(module) {
   const enPath = path.join(I18N_DIR, 'en', `${module}.json`);
   translations[module] = {};
   if (fs.existsSync(zhPath)) {
-    try { translations[module] = JSON.parse(fs.readFileSync(zhPath, 'utf8')); } catch {}
+    try {
+      translations[module] = JSON.parse(fs.readFileSync(zhPath, 'utf8'));
+    } catch {}
   }
   return translations[module];
 }
@@ -65,8 +68,14 @@ function saveTranslations(module) {
 
 function fileLabel(filePath, module) {
   const rel = path.relative(path.join(PAGES_DIR, module), filePath);
-  const b = rel.replace(/\.tsx$/, '').replace(/\//g, '_').replace(/\\/g, '_');
-  return b.replace(/([a-z0-9])([A-Z])/g, '$1_$2').replace(/[\s\-]/g, '_').toLowerCase();
+  const b = rel
+    .replace(/\.tsx$/, '')
+    .replace(/\//g, '_')
+    .replace(/\\/g, '_');
+  return b
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .replace(/[\s\-]/g, '_')
+    .toLowerCase();
 }
 
 let keyCounters = {};
@@ -77,7 +86,10 @@ function genKey(module, fileLabel, text) {
   keyCounters[prefix]++;
 
   // Use a hash of the text for dedup
-  const hash = text.trim().substring(0, 12).replace(/[^\u4e00-\u9fff\w]/g, '');
+  const hash = text
+    .trim()
+    .substring(0, 12)
+    .replace(/[^\u4e00-\u9fff\w]/g, '');
   const key = `${prefix}.e${keyCounters[prefix]}`;
 
   // Check if text already exists in translations
@@ -122,8 +134,16 @@ function isJSXContext(lines, lineIdx) {
     depth += opens - closes - selfClosing;
 
     // Also count HTML-like tags
-    const htmlOpens = (line.match(/<(div|span|p|ul|li|table|tr|td|th|thead|tbody|button|input|select|option|label|form|img|a|br|hr|section|article|header|footer|nav|main|aside)\b/g) || []).length;
-    const htmlCloses = (line.match(/<\/(div|span|p|ul|li|table|tr|td|th|thead|tbody|button|input|select|option|label|form|img|a|br|hr|section|article|header|footer|nav|main|aside)\b/g) || []).length;
+    const htmlOpens = (
+      line.match(
+        /<(div|span|p|ul|li|table|tr|td|th|thead|tbody|button|input|select|option|label|form|img|a|br|hr|section|article|header|footer|nav|main|aside)\b/g
+      ) || []
+    ).length;
+    const htmlCloses = (
+      line.match(
+        /<\/(div|span|p|ul|li|table|tr|td|th|thead|tbody|button|input|select|option|label|form|img|a|br|hr|section|article|header|footer|nav|main|aside)\b/g
+      ) || []
+    ).length;
     depth += htmlOpens - htmlCloses;
 
     if (depth > 0) return true;
@@ -167,16 +187,25 @@ function processFile(filePath, module) {
 
     // PATTERN: JSX bare text (Chinese text on its own line, possibly with indentation)
     // Example: "          地理围栏管理" or "          创建围栏"
-    const bareTextMatch = line.match(/^(\s*)([\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w\s：，。、（）()·\-—\!！？%\/]*?)\s*$/);
-    if (bareTextMatch && !line.includes('=') && !line.includes('(') && !line.includes('`') && !line.includes('"') && !line.includes("'")) {
+    const bareTextMatch = line.match(
+      /^(\s*)([\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w\s：，。、（）()·\-—\!！？%\/]*?)\s*$/
+    );
+    if (
+      bareTextMatch &&
+      !line.includes('=') &&
+      !line.includes('(') &&
+      !line.includes('`') &&
+      !line.includes('"') &&
+      !line.includes("'")
+    ) {
       const indent = bareTextMatch[1];
       const text = bareTextMatch[2].trim();
       if (text && CJK_RE.test(text)) {
         const key = genKey(module, label, text);
         addTranslation(module, key, text);
-        const useI18n = !isJSXContext(lines, i) || /:\s*$/.test(lines[i-1]?.trim() || '');
+        const useI18n = !isJSXContext(lines, i) || /:\s*$/.test(lines[i - 1]?.trim() || '');
         // In JSX context, wrap in {}
-        if (useI18n || /=>\s*\{/.test(lines.slice(Math.max(0, i-5), i).join(''))) {
+        if (useI18n || /=>\s*\{/.test(lines.slice(Math.max(0, i - 5), i).join(''))) {
           // Check if inside JSX (between tags)
           const inJSX = isJSXContext(lines, i);
           if (inJSX) {
@@ -189,14 +218,19 @@ function processFile(filePath, module) {
         }
         modified = true;
         replaceCount++;
-        if (verbose) console.log(`  [P1-bare] ${path.relative(PAGES_DIR, filePath)}:${i+1} "${text.substring(0,20)}..." -> ${lines[i].trim()}`);
+        if (verbose)
+          console.log(
+            `  [P1-bare] ${path.relative(PAGES_DIR, filePath)}:${i + 1} "${text.substring(0, 20)}..." -> ${lines[i].trim()}`
+          );
         continue;
       }
     }
 
     // PATTERN: Chinese text after > (JSX children)
     // Example: <Typography>加载中...</Typography> or <DialogTitle>BOM版本对比</DialogTitle>
-    const jsxChildMatch = line.match(/(>\s*)([\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w\s：，。、（）()·\-—\!！？%]*?)(\s*<)/);
+    const jsxChildMatch = line.match(
+      /(>\s*)([\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w\s：，。、（）()·\-—\!！？%]*?)(\s*<)/
+    );
     if (jsxChildMatch) {
       const text = jsxChildMatch[2].trim();
       if (text && CJK_RE.test(text)) {
@@ -209,14 +243,19 @@ function processFile(filePath, module) {
         modified = true;
         replaceCount++;
         line = lines[i]; // Update for subsequent patterns
-        if (verbose) console.log(`  [P5-jsx-child] ${path.relative(PAGES_DIR, filePath)}:${i+1} "${text.substring(0,20)}..." -> {t('${key}')}`);
+        if (verbose)
+          console.log(
+            `  [P5-jsx-child] ${path.relative(PAGES_DIR, filePath)}:${i + 1} "${text.substring(0, 20)}..." -> {t('${key}')}`
+          );
         continue;
       }
     }
 
     // PATTERN: JSX attribute with quoted Chinese
     // Example: placeholder='搜索围栏...' or label="中文"
-    const attrMatch = line.match(/(\w+)=(['"])([\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w\s：，。、（）()·\-—\!！？%\/]*?)\2/);
+    const attrMatch = line.match(
+      /(\w+)=(['"])([\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w\s：，。、（）()·\-—\!！？%\/]*?)\2/
+    );
     if (attrMatch) {
       const attr = attrMatch[1];
       const text = attrMatch[3].trim();
@@ -227,14 +266,19 @@ function processFile(filePath, module) {
         modified = true;
         replaceCount++;
         line = lines[i];
-        if (verbose) console.log(`  [P4-attr] ${path.relative(PAGES_DIR, filePath)}:${i+1} ${attr}="${text.substring(0,20)}..." -> {t('${key}')}`);
+        if (verbose)
+          console.log(
+            `  [P4-attr] ${path.relative(PAGES_DIR, filePath)}:${i + 1} ${attr}="${text.substring(0, 20)}..." -> {t('${key}')}`
+          );
         continue;
       }
     }
 
     // PATTERN: label: '中文' in breadcrumb/tab arrays
     // Example: label: 'BOM管理'
-    const labelMatch = line.match(/(label|title|name):\s*(['"])([\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w\s：，。、（）()·\-—\!！？%\/]*?)\2/);
+    const labelMatch = line.match(
+      /(label|title|name):\s*(['"])([\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w\s：，。、（）()·\-—\!！？%\/]*?)\2/
+    );
     if (labelMatch && !hasTranslation(line)) {
       const field = labelMatch[1];
       const text = labelMatch[3].trim();
@@ -251,14 +295,19 @@ function processFile(filePath, module) {
         modified = true;
         replaceCount++;
         line = lines[i];
-        if (verbose) console.log(`  [P12-label] ${path.relative(PAGES_DIR, filePath)}:${i+1} ${field}="${text.substring(0,20)}..." -> ${useI18n ? 'i18n.' : ''}t('${key}')`);
+        if (verbose)
+          console.log(
+            `  [P12-label] ${path.relative(PAGES_DIR, filePath)}:${i + 1} ${field}="${text.substring(0, 20)}..." -> ${useI18n ? 'i18n.' : ''}t('${key}')`
+          );
         continue;
       }
     }
 
     // PATTERN: Template literal with Chinese + interpolation
     // Example: `成功删除 ${count} 条记录`
-    const tmplMatch = line.match(/`([^`]*[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][^`]*\$\{[^}]+\}[^`]*)`/);
+    const tmplMatch = line.match(
+      /`([^`]*[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][^`]*\$\{[^}]+\}[^`]*)`/
+    );
     if (!tmplMatch) {
       // Also match template literal with only Chinese (no interpolation)
       const simpleTmpl = line.match(/`([^`]*[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][^`]*)`/);
@@ -266,7 +315,9 @@ function processFile(filePath, module) {
         const text = simpleTmpl[1].trim();
         if (text && CJK_RE.test(text)) {
           // Check if it's a message: property or other string context
-          const useI18n = /message:|description:|error:|warning:|label:/.test(line.slice(0, line.indexOf(simpleTmpl[0])));
+          const useI18n = /message:|description:|error:|warning:|label:/.test(
+            line.slice(0, line.indexOf(simpleTmpl[0]))
+          );
           const key = genKey(module, label, text);
           addTranslation(module, key, text);
           if (useI18n) {
@@ -277,7 +328,10 @@ function processFile(filePath, module) {
           modified = true;
           replaceCount++;
           line = lines[i];
-          if (verbose) console.log(`  [P3-tmpl-simple] ${path.relative(PAGES_DIR, filePath)}:${i+1} \`${text.substring(0,20)}...\` -> t('${key}')`);
+          if (verbose)
+            console.log(
+              `  [P3-tmpl-simple] ${path.relative(PAGES_DIR, filePath)}:${i + 1} \`${text.substring(0, 20)}...\` -> t('${key}')`
+            );
           continue;
         }
       }
@@ -316,30 +370,40 @@ function processFile(filePath, module) {
         addTranslation(module, key, transText);
 
         // Build the t() call with interpolation params
-        const paramStr = interpolations.length > 0
-          ? `, { ${interpolations.map(ip => `${ip.name}: ${ip.expr}`).join(', ')} }`
-          : '';
+        const paramStr =
+          interpolations.length > 0 ? `, { ${interpolations.map((ip) => `${ip.name}: ${ip.expr}`).join(', ')} }` : '';
 
         // Check context for i18n vs t
-        const useI18n = /message:|error:|warning:|throw|apiLogger|window\.confirm/.test(line.slice(0, line.indexOf(fullMatch)));
+        const useI18n = /message:|error:|warning:|throw|apiLogger|window\.confirm/.test(
+          line.slice(0, line.indexOf(fullMatch))
+        );
 
-        const replacement = useI18n
-          ? `i18n.t('${key}'${paramStr})`
-          : `t('${key}'${paramStr})`;
+        const replacement = useI18n ? `i18n.t('${key}'${paramStr})` : `t('${key}'${paramStr})`;
 
         lines[i] = line.replace(fullMatch, replacement);
         modified = true;
         replaceCount++;
         line = lines[i];
-        if (verbose) console.log(`  [P3-tmpl-complex] ${path.relative(PAGES_DIR, filePath)}:${i+1} \`${innerText.substring(0,30)}...\` -> ${useI18n ? 'i18n.' : ''}t('${key}'${paramStr ? ', {...}' : ''})`);
+        if (verbose)
+          console.log(
+            `  [P3-tmpl-complex] ${path.relative(PAGES_DIR, filePath)}:${i + 1} \`${innerText.substring(0, 30)}...\` -> ${useI18n ? 'i18n.' : ''}t('${key}'${paramStr ? ', {...}' : ''})`
+          );
         continue;
       }
     }
 
     // PATTERN: Quoted string with Chinese (not in JSX attribute)
     // Example: setError('字段 JSON 解析失败')  or  throw new Error('MRP建议不支持创建')
-    const quotedMatch = line.match(/(['"])([\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w\s：，。、（）()·\-—\!！？%\/]*?)\1/);
-    if (quotedMatch && !hasTranslation(line) && !line.includes('placeholder=') && !line.includes('label=') && !line.includes('title=')) {
+    const quotedMatch = line.match(
+      /(['"])([\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w\s：，。、（）()·\-—\!！？%\/]*?)\1/
+    );
+    if (
+      quotedMatch &&
+      !hasTranslation(line) &&
+      !line.includes('placeholder=') &&
+      !line.includes('label=') &&
+      !line.includes('title=')
+    ) {
       const text = quotedMatch[2].trim();
       if (text && CJK_RE.test(text) && text.length > 1) {
         // Check context
@@ -362,7 +426,10 @@ function processFile(filePath, module) {
         modified = true;
         replaceCount++;
         line = lines[i];
-        if (verbose) console.log(`  [P-quoted] ${path.relative(PAGES_DIR, filePath)}:${i+1} "${text.substring(0,20)}..." -> ${useI18n ? 'i18n.' : ''}t('${key}')`);
+        if (verbose)
+          console.log(
+            `  [P-quoted] ${path.relative(PAGES_DIR, filePath)}:${i + 1} "${text.substring(0, 20)}..." -> ${useI18n ? 'i18n.' : ''}t('${key}')`
+          );
         continue;
       }
     }
@@ -389,22 +456,26 @@ function processFile(filePath, module) {
         const key = genKey(module, label, transText.trim());
         addTranslation(module, key, transText.trim());
 
-        const paramStr = interpolations.length > 0
-          ? `, { ${interpolations.map(ip => `${ip.name}: ${ip.expr}`).join(', ')} }`
-          : '';
+        const paramStr =
+          interpolations.length > 0 ? `, { ${interpolations.map((ip) => `${ip.name}: ${ip.expr}`).join(', ')} }` : '';
 
         lines[i] = line.replace(jsxAttrTmpl[0], `${attr}={t('${key}'${paramStr})}`);
         modified = true;
         replaceCount++;
         line = lines[i];
-        if (verbose) console.log(`  [P6-jsx-attr-tmpl] ${path.relative(PAGES_DIR, filePath)}:${i+1} ${attr}={\`...\`} -> {t('${key}'${paramStr ? ', {...}' : ''})}`);
+        if (verbose)
+          console.log(
+            `  [P6-jsx-attr-tmpl] ${path.relative(PAGES_DIR, filePath)}:${i + 1} ${attr}={\`...\`} -> {t('${key}'${paramStr ? ', {...}' : ''})}`
+          );
         continue;
       }
     }
 
     // PATTERN: Chinese object keys in export
     // Example: 映射名称: m.name
-    const objKeyMatch = line.match(/^(\s*)(['"]?)([\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w]*)(['"]?)\s*:/);
+    const objKeyMatch = line.match(
+      /^(\s*)(['"]?)([\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff][\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff\w]*)(['"]?)\s*:/
+    );
     if (objKeyMatch) {
       const indent = objKeyMatch[1];
       const keyText = objKeyMatch[3];

@@ -24,21 +24,20 @@ const dryRun = args.includes('--dry');
 const CJK = '[\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff]';
 const CJK_RE = new RegExp(CJK);
 
-const WHITELIST_REL = [
-  'utils/ai/ui-recommender.ts',
-  'utils/apiPath.ts',
-  'config/ai-templates.ts',
-];
+const WHITELIST_REL = ['utils/ai/ui-recommender.ts', 'utils/apiPath.ts', 'config/ai-templates.ts'];
 
 function isWhitelisted(p) {
   const rel = path.relative(WEB_ROOT, p).replace(/\\/g, '/');
-  if (WHITELIST_REL.some(w => rel.includes(w))) return true;
+  if (WHITELIST_REL.some((w) => rel.includes(w))) return true;
   const bn = path.basename(p).toLowerCase();
   return bn.includes('mock') || bn === '_mock.ts';
 }
 function fileLabel(p) {
   const b = path.basename(p).replace(/\.[mc]?[tj]sx?$/, '');
-  return b.replace(/(.)([A-Z][a-z]+)/g, '$1_$2').replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+  return b
+    .replace(/(.)([A-Z][a-z]+)/g, '$1_$2')
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .toLowerCase();
 }
 function collectFiles(dir) {
   const r = [];
@@ -46,26 +45,42 @@ function collectFiles(dir) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const fp = path.join(dir, e.name);
     if (e.isDirectory()) {
-      if (['__tests__','node_modules','test','tests','dist','build','schemas'].includes(e.name)) continue;
+      if (['__tests__', 'node_modules', 'test', 'tests', 'dist', 'build', 'schemas'].includes(e.name)) continue;
       r.push(...collectFiles(fp));
-    } else if ((e.name.endsWith('.tsx') || e.name.endsWith('.ts')) &&
-               !e.name.endsWith('.test.ts') && !e.name.endsWith('.test.tsx') &&
-               !e.name.endsWith('.d.ts') && !e.name.endsWith('.stories.tsx')) {
+    } else if (
+      (e.name.endsWith('.tsx') || e.name.endsWith('.ts')) &&
+      !e.name.endsWith('.test.ts') &&
+      !e.name.endsWith('.test.tsx') &&
+      !e.name.endsWith('.d.ts') &&
+      !e.name.endsWith('.stories.tsx')
+    ) {
       if (!isWhitelisted(fp)) r.push(fp);
     }
   }
   return r;
 }
-function loadJson(p) { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return {}; } }
-function saveJson(p, d) { fs.writeFileSync(p, JSON.stringify(d, null, 2) + '\n', 'utf8'); }
+function loadJson(p) {
+  try {
+    return JSON.parse(fs.readFileSync(p, 'utf8'));
+  } catch {
+    return {};
+  }
+}
+function saveJson(p, d) {
+  fs.writeFileSync(p, JSON.stringify(d, null, 2) + '\n', 'utf8');
+}
 
 function trackTypeBlocks(lines) {
   const inType = new Array(lines.length).fill(false);
-  let ts = -1, brace = 0;
+  let ts = -1,
+    brace = 0;
   const re = /^\s*(export\s+)?(type|interface|enum)\s+\w+\s*(=|\{|<|extends)/;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    if (ts === -1 && re.test(line)) { ts = i; brace = 0; }
+    if (ts === -1 && re.test(line)) {
+      ts = i;
+      brace = 0;
+    }
     if (ts !== -1) {
       inType[i] = true;
       for (const ch of line) {
@@ -82,8 +97,8 @@ function trackTypeBlocks(lines) {
 }
 
 function ensureImport(lines) {
-  const uses = lines.some(l => /i18n\.t\s*\(/.test(l) && !l.trim().startsWith('import'));
-  const has = lines.some(l => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l));
+  const uses = lines.some((l) => /i18n\.t\s*\(/.test(l) && !l.trim().startsWith('import'));
+  const has = lines.some((l) => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l));
   if (uses && !has) {
     let last = -1;
     for (let i = 0; i < lines.length; i++) {
@@ -93,10 +108,15 @@ function ensureImport(lines) {
     if (last >= 0) {
       const il = lines[last].trim();
       if (il.includes('{') && !il.includes('}')) {
-        for (let i = last + 1; i < lines.length; i++) if (lines[i].includes('}')) {
-          lines.splice(i + 1, 0, "import i18n from '@/i18n';"); return true;
-        }
-      } else { lines.splice(last + 1, 0, "import i18n from '@/i18n';"); return true; }
+        for (let i = last + 1; i < lines.length; i++)
+          if (lines[i].includes('}')) {
+            lines.splice(i + 1, 0, "import i18n from '@/i18n';");
+            return true;
+          }
+      } else {
+        lines.splice(last + 1, 0, "import i18n from '@/i18n';");
+        return true;
+      }
     }
   }
   return false;
@@ -104,7 +124,10 @@ function ensureImport(lines) {
 
 function genKey(mn, fl, text, idx) {
   const prefix = `${mn}.${fl}`;
-  const clean = text.replace(new RegExp(CJK, 'g'), '').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+  const clean = text
+    .replace(new RegExp(CJK, 'g'), '')
+    .replace(/[^a-zA-Z0-9_]/g, '')
+    .toLowerCase();
   return `${prefix}.${text.length <= 20 && clean ? `${clean}_${idx}` : `k${idx}`}`;
 }
 
@@ -127,8 +150,10 @@ function processCJKLineSegments(line, translations, mn, fl, kcRef) {
 
   // Parse character by character, split into segments: brace-blocks vs text
   const segments = [];
-  let i = 0, changed = false;
-  let inStr = null, strCh = '';
+  let i = 0,
+    changed = false;
+  let inStr = null,
+    strCh = '';
   let prev = '';
 
   while (i < line.length) {
@@ -136,45 +161,71 @@ function processCJKLineSegments(line, translations, mn, fl, kcRef) {
 
     // Handle string literals: track quoting state to avoid detecting { inside strings
     if ((ch === '"' || ch === "'" || ch === '`') && prev !== '\\') {
-      if (inStr === null) { inStr = 'in'; strCh = ch; segments.push({t:'text', s:i}); i++; prev=ch; continue; }
-      else if (strCh === ch) { inStr = null; segments.push({t:'text', s:segments[segments.length-1].s, e:i}); segments.pop(); i++; prev=ch; continue; }
+      if (inStr === null) {
+        inStr = 'in';
+        strCh = ch;
+        segments.push({ t: 'text', s: i });
+        i++;
+        prev = ch;
+        continue;
+      } else if (strCh === ch) {
+        inStr = null;
+        segments.push({ t: 'text', s: segments[segments.length - 1].s, e: i });
+        segments.pop();
+        i++;
+        prev = ch;
+        continue;
+      }
     }
 
-    if (inStr) { i++; prev=ch; continue; }
+    if (inStr) {
+      i++;
+      prev = ch;
+      continue;
+    }
 
     if (ch === '{') {
-      if (segments.length === 0 || segments[segments.length-1].t !== 'text-start') {
-        segments.push({t:'text-start', s: i});
+      if (segments.length === 0 || segments[segments.length - 1].t !== 'text-start') {
+        segments.push({ t: 'text-start', s: i });
       }
       // Find matching }
-      let depth = 1, j = i + 1;
+      let depth = 1,
+        j = i + 1;
       while (j < line.length && depth > 0) {
         if (line[j] === '{') depth++;
         else if (line[j] === '}') depth--;
-        else if ((line[j] === '"' || line[j] === "'" || line[j] === '`') && line[j-1] !== '\\') {
-          const quote = line[j]; j++;
-          while (j < line.length && line[j] !== quote) { if (line[j] === '\\') j++; j++; }
+        else if ((line[j] === '"' || line[j] === "'" || line[j] === '`') && line[j - 1] !== '\\') {
+          const quote = line[j];
+          j++;
+          while (j < line.length && line[j] !== quote) {
+            if (line[j] === '\\') j++;
+            j++;
+          }
         }
         j++;
       }
-      if (segments.length > 0 && segments[segments.length-1].t === 'text-start') {
-        segments[segments.length-1].e = i;
-        segments[segments.length-1].t = 'text';
+      if (segments.length > 0 && segments[segments.length - 1].t === 'text-start') {
+        segments[segments.length - 1].e = i;
+        segments[segments.length - 1].t = 'text';
       }
       segments.push({ t: 'expr', s: i, e: j });
       i = j;
       prev = '}';
       continue;
     }
-    if (segments.length === 0 || segments[segments.length-1].t === 'expr' || segments[segments.length-1].t === 'text') {
+    if (
+      segments.length === 0 ||
+      segments[segments.length - 1].t === 'expr' ||
+      segments[segments.length - 1].t === 'text'
+    ) {
       segments.push({ t: 'text-start', s: i });
     }
     prev = ch;
     i++;
   }
-  if (segments.length > 0 && segments[segments.length-1].t === 'text-start') {
-    segments[segments.length-1].e = line.length;
-    segments[segments.length-1].t = 'text';
+  if (segments.length > 0 && segments[segments.length - 1].t === 'text-start') {
+    segments[segments.length - 1].e = line.length;
+    segments[segments.length - 1].t = 'text';
   }
 
   // Now process text segments
@@ -185,43 +236,63 @@ function processCJKLineSegments(line, translations, mn, fl, kcRef) {
       continue;
     }
     const text = line.substring(seg.s, seg.e);
-    if (!CJK_RE.test(text)) { resultParts.push(text); continue; }
+    if (!CJK_RE.test(text)) {
+      resultParts.push(text);
+      continue;
+    }
 
     // Check if this is object key shorthand
-    if (isObjKeyContext(line, seg.s)) { resultParts.push(text); continue; }
+    if (isObjKeyContext(line, seg.s)) {
+      resultParts.push(text);
+      continue;
+    }
     // Check bracket access
-    if (/^\s*\[/.test(line.substring(Math.max(0, seg.s - 5)))) { resultParts.push(text); continue; }
+    if (/^\s*\[/.test(line.substring(Math.max(0, seg.s - 5)))) {
+      resultParts.push(text);
+      continue;
+    }
 
     // Find CJK sub-segments within text part
     // Split: extract CJK-containing substrings, preserve other text
-    const cjkSegRe = new RegExp(`[a-zA-Z0-9\\s\\-—]*${CJK}[${CJK}\\s\\w：，。、（）()·\\-—\\!！？%／、,.:;#&=<>\\[\\]]*${CJK}?|${CJK}+`, 'g');
+    const cjkSegRe = new RegExp(
+      `[a-zA-Z0-9\\s\\-—]*${CJK}[${CJK}\\s\\w：，。、（）()·\\-—\\!！？%／、,.:;#&=<>\\[\\]]*${CJK}?|${CJK}+`,
+      'g'
+    );
     // Simpler: just extract text runs that contain CJK, preserve non-CJK around
     const subParts = [];
     const re2 = new RegExp(`([^${CJK}]*)(${CJK}[${CJK}\\s\\w：，。、（）()·\\-—\\!！？%／、,.:;#&=]*${CJK}?)`, 'g');
-    let m, lastEnd = 0;
+    let m,
+      lastEnd = 0;
     while ((m = re2.exec(text)) !== null) {
-      if (m.index > lastEnd) subParts.push({cjk: false, s: lastEnd, e: m.index});
-      subParts.push({cjk: false, s: m.index, e: m.index + m[1].length, val: m[1]});
+      if (m.index > lastEnd) subParts.push({ cjk: false, s: lastEnd, e: m.index });
+      subParts.push({ cjk: false, s: m.index, e: m.index + m[1].length, val: m[1] });
       const cjkStart = m.index + m[1].length;
       const cjkEnd = cjkStart + m[2].length;
       if (CJK_RE.test(m[2])) {
-        subParts.push({cjk: true, s: cjkStart, e: cjkEnd, val: m[2]});
+        subParts.push({ cjk: true, s: cjkStart, e: cjkEnd, val: m[2] });
       } else {
-        subParts.push({cjk: false, s: cjkStart, e: cjkEnd, val: m[2]});
+        subParts.push({ cjk: false, s: cjkStart, e: cjkEnd, val: m[2] });
       }
       lastEnd = cjkEnd;
     }
-    if (lastEnd < text.length) subParts.push({cjk:false, s:lastEnd, e:text.length});
+    if (lastEnd < text.length) subParts.push({ cjk: false, s: lastEnd, e: text.length });
 
-    if (subParts.length === 0 || !subParts.some(sp => sp.cjk)) {
-      resultParts.push(text); continue;
+    if (subParts.length === 0 || !subParts.some((sp) => sp.cjk)) {
+      resultParts.push(text);
+      continue;
     }
 
     let processedText = '';
     for (const sp of subParts) {
-      if (!sp.cjk) { processedText += text.substring(sp.s, sp.e); continue; }
+      if (!sp.cjk) {
+        processedText += text.substring(sp.s, sp.e);
+        continue;
+      }
       const val = sp.val.trim();
-      if (!val || !CJK_RE.test(val)) { processedText += sp.val; continue; }
+      if (!val || !CJK_RE.test(val)) {
+        processedText += sp.val;
+        continue;
+      }
       const key = genKey(mn, fl, val, kcRef[0]++);
       if (!(key in translations.zh)) {
         translations.zh[key] = val;
@@ -247,7 +318,8 @@ function processFile(filePath, mn, translations) {
   const inType = trackTypeBlocks(lines);
   const fl = fileLabel(filePath);
   const kcRef = [0];
-  let count = 0, modified = false;
+  let count = 0,
+    modified = false;
   const newLines = [...lines];
 
   for (let i = 0; i < lines.length; i++) {
@@ -271,10 +343,16 @@ function processFile(filePath, mn, translations) {
 }
 
 // ===== Main =====
-if (!targetDir || !moduleName) { console.error('--dir and --module required'); process.exit(1); }
+if (!targetDir || !moduleName) {
+  console.error('--dir and --module required');
+  process.exit(1);
+}
 const BASE_DIR = path.join(WEB_ROOT, targetDir);
 const files = collectFiles(BASE_DIR);
-if (files.length === 0) { console.log('No files'); process.exit(0); }
+if (files.length === 0) {
+  console.log('No files');
+  process.exit(0);
+}
 const translations = { zh: {}, en: {} };
 const zhNs = path.join(I18N_DIR, 'zh', `${moduleName}.json`);
 const enNs = path.join(I18N_DIR, 'en', `${moduleName}.json`);
@@ -290,5 +368,9 @@ for (const f of files) {
     console.log(`  ✅ ${path.relative(BASE_DIR, f)}: ${r.count}`);
   }
 }
-if (!dryRun && total > 0) { saveJson(zhNs, translations.zh); saveJson(enNs, translations.en); console.log(`  💾 Saved`); }
+if (!dryRun && total > 0) {
+  saveJson(zhNs, translations.zh);
+  saveJson(enNs, translations.en);
+  console.log(`  💾 Saved`);
+}
 console.log(`  Total: ${total}${dryRun ? ' (DRY RUN)' : ''}`);

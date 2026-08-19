@@ -8,12 +8,14 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef } from '@/components/templates/list/types';
 import { customerScoringSchema } from '@/schemas/crm';
 import {
-  type CustomerScore,
-  type ScoreFactor,
   crmApi,
   useCrmMock,
-  type ScoringData,
-  type Period,
+} from '@/api/crm';
+import type {
+  CustomerScore,
+  ScoreFactor,
+  ScoringData,
+  Period,
 } from '@/api/crm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';

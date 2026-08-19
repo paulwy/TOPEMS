@@ -17,12 +17,21 @@ const SRC = join(ROOT, 'apps/web/src');
 const APPLY = process.argv.includes('--apply');
 
 const IGNORED = [
-  '/node_modules/', '/dist/', '/build/', '/coverage/',
-  '/test-results/', '/playwright-report/', '/__tests__/',
-  '.stories.', '/theme/animations/',
-  '/theme/tokens/', '/design-system/tokens/',
-  '/theme/generated-tokens', '/theme/gradients.',
-  '/theme/presets.', '/theme/theme.',
+  '/node_modules/',
+  '/dist/',
+  '/build/',
+  '/coverage/',
+  '/test-results/',
+  '/playwright-report/',
+  '/__tests__/',
+  '.stories.',
+  '/theme/animations/',
+  '/theme/tokens/',
+  '/design-system/tokens/',
+  '/theme/generated-tokens',
+  '/theme/gradients.',
+  '/theme/presets.',
+  '/theme/theme.',
 ];
 
 const HEX_MAP = {
@@ -118,7 +127,10 @@ function walk(dir) {
     const rel = relative(ROOT, full);
     const norm = '/' + rel.replaceAll(/\\/g, '/');
     if (IGNORED.some((p) => norm.includes(p))) continue;
-    if (entry.isDirectory()) { files.push(...walk(full)); continue; }
+    if (entry.isDirectory()) {
+      files.push(...walk(full));
+      continue;
+    }
     if (/\.(ts|tsx)$/.test(extname(entry.name))) files.push(full);
   }
   return files;
@@ -141,8 +153,9 @@ function replaceHexInLine(line) {
         for (let i = pos - 1; i >= 0; i--) {
           if (result[i] === '}') braceDepth++;
           if (result[i] === '{') {
-            if (braceDepth > 0) { braceDepth--; }
-            else {
+            if (braceDepth > 0) {
+              braceDepth--;
+            } else {
               if (i > 0 && result[i - 1] === '$') inExpr = true;
               break;
             }

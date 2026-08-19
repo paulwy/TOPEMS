@@ -60,13 +60,22 @@
  *
  * Exit: 0 success, non-zero error
  */
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, rmSync, copyFileSync, statSync } from "node:fs";
-import { join, resolve, dirname as pDirname } from "node:path";
-import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  writeFileSync,
+  rmSync,
+  copyFileSync,
+  statSync,
+} from 'node:fs';
+import { join, resolve, dirname as pDirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 
 const __dirname = pDirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(__dirname, "..");
+const ROOT = resolve(__dirname, '..');
 
 // ============================================================
 // SECTION 1: 命令行解析 — 同时支持两种调用方式
@@ -74,18 +83,44 @@ const ROOT = resolve(__dirname, "..");
 function parseArgsFull(argv) {
   const positional = [];
   const named = {
-    svcs: [], timestamp: null, style: 'unified',
-    dryRun: false, force: false, outDir: null, selfCheck: false,
+    svcs: [],
+    timestamp: null,
+    style: 'unified',
+    dryRun: false,
+    force: false,
+    outDir: null,
+    selfCheck: false,
   };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--force') { named.force = true; continue; }
-    if (a === '--dry-run') { named.dryRun = true; continue; }
-    if (a === '--svc') { named.svcs.push(argv[++i]); continue; }
-    if (a === '--timestamp') { named.timestamp = argv[++i]; continue; }
-    if (a === '--style') { named.style = argv[++i]; continue; }
-    if (a === '--out') { named.outDir = argv[++i]; continue; }
-    if (a === '--self-check') { named.selfCheck = true; continue; }
+    if (a === '--force') {
+      named.force = true;
+      continue;
+    }
+    if (a === '--dry-run') {
+      named.dryRun = true;
+      continue;
+    }
+    if (a === '--svc') {
+      named.svcs.push(argv[++i]);
+      continue;
+    }
+    if (a === '--timestamp') {
+      named.timestamp = argv[++i];
+      continue;
+    }
+    if (a === '--style') {
+      named.style = argv[++i];
+      continue;
+    }
+    if (a === '--out') {
+      named.outDir = argv[++i];
+      continue;
+    }
+    if (a === '--self-check') {
+      named.selfCheck = true;
+      continue;
+    }
     if (a.startsWith('-')) {
       throw new Error(`未知参数: ${a}`);
     }
@@ -98,7 +133,12 @@ function parseArgsFull(argv) {
     throw new Error(`--style 仅支持 unified 或 batch-rls`);
   }
   named.positional = positional;
-  named.useScanMode = named.svcs.length > 0 || named.selfCheck || named.timestamp != null || named.outDir != null || named.style !== 'unified';
+  named.useScanMode =
+    named.svcs.length > 0 ||
+    named.selfCheck ||
+    named.timestamp != null ||
+    named.outDir != null ||
+    named.style !== 'unified';
   return named;
 }
 
@@ -145,24 +185,27 @@ function modeA_main(positional, opts) {
 
   const service = positional[0];
   let schemas = positional[1]
-    ? positional[1].split(",").map(s => s.trim()).filter(Boolean)
-    : ["plugin_" + service.replace(/-/g, "_")];
+    ? positional[1]
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : ['plugin_' + service.replace(/-/g, '_')];
 
   // --- Paths ---
-  const svcDir = join(ROOT, "svc", service);
+  const svcDir = join(ROOT, 'svc', service);
   if (!existsSync(svcDir) && !dryRun) {
     console.error(`[ERROR] Service directory not found: ${svcDir}`);
     process.exit(2);
   }
 
-  const mgDir = join(svcDir, "migrations");
+  const mgDir = join(svcDir, 'migrations');
   if (!dryRun) mkdirSync(mgDir, { recursive: true });
 
   // --- Check existing add_tenant_id migration ---
   let existingFile = null;
   if (existsSync(mgDir)) {
     for (const f of readdirSync(mgDir)) {
-      if (/add_tenant_id/i.test(f) && f.endsWith(".sql")) {
+      if (/add_tenant_id/i.test(f) && f.endsWith('.sql')) {
         existingFile = f;
         break;
       }
@@ -180,26 +223,26 @@ function modeA_main(positional, opts) {
     let maxTs = 0n;
     if (existsSync(mgDir)) {
       const files = readdirSync(mgDir)
-        .filter(f => f.endsWith(".sql"))
+        .filter((f) => f.endsWith('.sql'))
         .sort();
       for (const f of files) {
         const m = f.match(/^(\d{14})/) || f.match(/^(\d{12})/) || f.match(/^(\d{8})/);
         if (!m) continue;
         let ts = m[1];
-        while (ts.length < 14) ts += "0";
+        while (ts.length < 14) ts += '0';
         const big = BigInt(ts);
         if (big > maxTs) maxTs = big;
       }
     }
     const now = new Date();
-    const pad = (n, w = 2) => String(n).padStart(w, "0");
+    const pad = (n, w = 2) => String(n).padStart(w, '0');
     const nowTs = BigInt(
       pad(now.getFullYear(), 4) +
-      pad(now.getMonth() + 1) +
-      pad(now.getDate()) +
-      pad(now.getHours()) +
-      pad(now.getMinutes()) +
-      pad(now.getSeconds())
+        pad(now.getMonth() + 1) +
+        pad(now.getDate()) +
+        pad(now.getHours()) +
+        pad(now.getMinutes()) +
+        pad(now.getSeconds())
     );
     const base = maxTs > nowTs ? maxTs : nowTs;
     const next = base + 1n;
@@ -211,26 +254,25 @@ function modeA_main(positional, opts) {
 
   // --- Render template ---
   const TEMPLATE = readFileSync(
-    join(ROOT, "database", "migrations", ".snippets", "add_tenant_id_template.sql"),
-    "utf8"
+    join(ROOT, 'database', 'migrations', '.snippets', 'add_tenant_id_template.sql'),
+    'utf8'
   );
 
-  const schemaArrayLiteral = schemas.map(s => `'${s}'`).join(", ");
+  const schemaArrayLiteral = schemas.map((s) => `'${s}'`).join(', ');
   const dateStr = new Date().toISOString().slice(0, 10);
 
-  let rendered = TEMPLATE
-    .replace("{{SERVICE}}", service)
-    .replace("{{DATE}}", dateStr)
-    .replace("{{SCHEMA_ARRAY}}", schemaArrayLiteral);
+  let rendered = TEMPLATE.replace('{{SERVICE}}', service)
+    .replace('{{DATE}}', dateStr)
+    .replace('{{SCHEMA_ARRAY}}', schemaArrayLiteral);
 
-  rendered = rendered.replace("{{SCHEMAS}}", schemas.join(", "));
+  rendered = rendered.replace('{{SCHEMAS}}', schemas.join(', '));
 
   const outPath = join(mgDir, fileName);
 
   if (dryRun) {
     console.log(`=== DRY RUN (MODE A template-based) ===
 Service:        ${service}
-Schemas:        ${schemas.join(", ")}
+Schemas:        ${schemas.join(', ')}
 File:           svc/${service}/migrations/${fileName}
 Timestamp:      ${timestamp} (strict monotonic vs previous in-service max)
 
@@ -238,18 +280,19 @@ Generated content:
 === BEGIN ===
 `);
     process.stdout.write(rendered);
-    console.log("=== END ===");
+    console.log('=== END ===');
   } else {
     writeFileSync(outPath, rendered);
     console.log(`✅ Generated:
      svc/${service}/migrations/${fileName}
-     Schemas: [${schemas.join(", ")}]
+     Schemas: [${schemas.join(', ')}]
      Timestamp: ${timestamp} (strict monotonic +1s)`);
 
-    const { status } = spawnSync("node", ["scripts/check-migration-names.mjs"], {
-      cwd: ROOT, stdio: "inherit",
+    const { status } = spawnSync('node', ['scripts/check-migration-names.mjs'], {
+      cwd: ROOT,
+      stdio: 'inherit',
     });
-    if (status !== 0) console.error("\n[WARN] check-migration-names returned non-zero (see above)");
+    if (status !== 0) console.error('\n[WARN] check-migration-names returned non-zero (see above)');
   }
   return 0;
 }
@@ -261,20 +304,20 @@ Generated content:
 // ---------- 扫描工具 ----------
 function listServicesB() {
   const dir = join(ROOT, 'svc');
-  return readdirSync(dir).filter(n => statSync(join(dir, n)).isDirectory());
+  return readdirSync(dir).filter((n) => statSync(join(dir, n)).isDirectory());
 }
 
 function listMigrationsB(svc) {
   const mDir = join(ROOT, 'svc', svc, 'migrations');
   if (!existsSync(mDir)) return [];
   return readdirSync(mDir)
-    .filter(n => n.endsWith('.sql'))
+    .filter((n) => n.endsWith('.sql'))
     .sort()
-    .map(n => ({ name: n, path: join(mDir, n) }));
+    .map((n) => ({ name: n, path: join(mDir, n) }));
 }
 
 function hasExistingAddTenantIdB(svc) {
-  return listMigrationsB(svc).some(m => /add_tenant_id/i.test(m.name));
+  return listMigrationsB(svc).some((m) => /add_tenant_id/i.test(m.name));
 }
 
 function scanTablesAndFksB(migrations) {
@@ -311,14 +354,20 @@ function scanTablesAndFksB(migrations) {
           braceDepth += (rest.match(/\(/g) || []).length;
           braceDepth -= (rest.match(/\)/g) || []).length;
           scanLineForFkB(currentTable, rest, fks);
-          if (braceDepth <= 0) { inDef = false; currentTable = null; }
+          if (braceDepth <= 0) {
+            inDef = false;
+            currentTable = null;
+          }
           continue;
         }
       } else {
         braceDepth += (line.match(/\(/g) || []).length;
         braceDepth -= (line.match(/\)/g) || []).length;
         scanLineForFkB(currentTable, line, fks);
-        if (braceDepth <= 0) { inDef = false; currentTable = null; }
+        if (braceDepth <= 0) {
+          inDef = false;
+          currentTable = null;
+        }
       }
     }
   }
@@ -327,12 +376,16 @@ function scanTablesAndFksB(migrations) {
 
 function scanLineForFkB(table, line, fks) {
   if (!table) return;
-  const fk1 = line.match(/FOREIGN\s+KEY\s*\(\s*([A-Za-z0-9_]+)\s*\)\s*REFERENCES\s+([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)?)\s*\(\s*id\s*\)/i);
+  const fk1 = line.match(
+    /FOREIGN\s+KEY\s*\(\s*([A-Za-z0-9_]+)\s*\)\s*REFERENCES\s+([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)?)\s*\(\s*id\s*\)/i
+  );
   if (fk1) {
     fks.get(table).push({ col: fk1[1], parent: qualifySameSchemaB(table, fk1[2]) });
     return;
   }
-  const mm = line.match(/([A-Za-z0-9_]+_id)\s+(?:UUID|INT|BIGINT|SERIAL)\b(?:[^,]*REFERENCES\s+([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)?)\s*\(\s*id\s*\))?/i);
+  const mm = line.match(
+    /([A-Za-z0-9_]+_id)\s+(?:UUID|INT|BIGINT|SERIAL)\b(?:[^,]*REFERENCES\s+([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)?)\s*\(\s*id\s*\))?/i
+  );
   if (mm) {
     const col = mm[1];
     let parent = mm[2] || null;
@@ -352,12 +405,14 @@ function qualifySameSchemaB(currentTable, refTable) {
   return refTable;
 }
 
-function identSafeB(tblName) { return tblName.replace(/\./g, '_'); }
+function identSafeB(tblName) {
+  return tblName.replace(/\./g, '_');
+}
 
 // ---------- 生成 SQL ----------
 function pickBackfillB(table, { tables, fks, seenParents }) {
   const candidates = fks.get(table.name) || [];
-  const tableSet = new Set(tables.map(t => t.name));
+  const tableSet = new Set(tables.map((t) => t.name));
   for (const c of candidates) {
     if (tableSet.has(c.parent) && seenParents.has(c.parent)) {
       const alias = shortAliasB(identSafeB(table.name));
@@ -370,7 +425,7 @@ function pickBackfillB(table, { tables, fks, seenParents }) {
 function shortAliasB(tblName) {
   const words = tblName.split('_').filter(Boolean);
   if (words.length <= 1) return tblName.substring(0, Math.min(3, tblName.length));
-  return words.map(w => w[0]).join('');
+  return words.map((w) => w[0]).join('');
 }
 
 function renderHeaderB(svc, style) {
@@ -433,7 +488,7 @@ function renderBatchRlsTailB(tables) {
 }
 
 function generateSqlB(svc, opts) {
-  const migrations = listMigrationsB(svc).filter(m => !/add_tenant_id/i.test(m.name));
+  const migrations = listMigrationsB(svc).filter((m) => !/add_tenant_id/i.test(m.name));
   const { tables, fks } = scanTablesAndFksB(migrations);
   if (tables.length === 0) {
     console.warn(`[gen-add-tenant-id] 警告: svc/${svc} 未扫描到任何 CREATE TABLE，跳过生成`);
@@ -507,9 +562,11 @@ function runMigrationNamesGateB(checkDir) {
       copyFileSync(join(checkDir, svcDir, f), join(fakeMig, f));
     }
   }
-  const out = spawnSync(process.execPath,
-    [join(ROOT, 'scripts/check-migration-names.mjs'), '--strict'],
-    { cwd: tmpRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  const out = spawnSync(process.execPath, [join(ROOT, 'scripts/check-migration-names.mjs'), '--strict'], {
+    cwd: tmpRoot,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
   return { exit: out.status, stdout: out.stdout, stderr: out.stderr, tmpRoot };
 }
 
@@ -517,7 +574,7 @@ function runMigrationNamesGateB(checkDir) {
 function modeB_main(opts) {
   if (opts.selfCheck) {
     const all = listServicesB();
-    const missing = all.filter(s => !hasExistingAddTenantIdB(s)).sort();
+    const missing = all.filter((s) => !hasExistingAddTenantIdB(s)).sort();
     if (missing.length === 0) {
       console.log('[self-check] 无缺失 add_tenant_id 的服务，跳过');
       return 0;
@@ -528,11 +585,20 @@ function modeB_main(opts) {
     const baseTs = '20260809000000';
     const results = [];
     missing.forEach((svc, i) => {
-      const res = writeForB(svc, i, { ...opts, svcs: missing, timestamp: baseTs, outDir: join(root, svc), dryRun: false, style: 'unified' });
+      const res = writeForB(svc, i, {
+        ...opts,
+        svcs: missing,
+        timestamp: baseTs,
+        outDir: join(root, svc),
+        dryRun: false,
+        style: 'unified',
+      });
       if (res) results.push({ svc, ...res });
     });
 
-    console.log(`[self-check] 服务共 ${all.length}，缺失 add_tenant_id 共 ${missing.length}，已生成 ${results.length} 份草稿：`);
+    console.log(
+      `[self-check] 服务共 ${all.length}，缺失 add_tenant_id 共 ${missing.length}，已生成 ${results.length} 份草稿：`
+    );
     for (const r of results) console.log(`  · ${r.svc.padEnd(14)} ${r.filename}  (${r.tables} tables)`);
 
     const gate = runMigrationNamesGateB(root);
@@ -566,7 +632,10 @@ function modeB_main(opts) {
     }
     ok++;
   });
-  if (ok === 0) { console.error('无任何文件生成'); process.exit(2); }
+  if (ok === 0) {
+    console.error('无任何文件生成');
+    process.exit(2);
+  }
   return 0;
 }
 

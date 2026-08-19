@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-import { readdirSync, statSync } from "node:fs";
-import { join, basename, extname, relative } from "node:path";
-import { execSync } from "node:child_process";
+import { readdirSync, statSync } from 'node:fs';
+import { join, basename, extname, relative } from 'node:path';
+import { execSync } from 'node:child_process';
 
-const MIGRATIONS_DIR = join(process.cwd(), "database", "migrations");
+const MIGRATIONS_DIR = join(process.cwd(), 'database', 'migrations');
 
 const RE_EARLY = /^(\d{3})-([A-Za-z0-9][A-Za-z0-9_-]*)\.sql$/;
 const RE_NEW = /^(\d{8})(\d{6})_(.+)\.sql$/;
@@ -18,7 +18,7 @@ function scanFiles(dir) {
   for (const e of entries) {
     if (e.isDirectory()) continue;
     const name = e.name;
-    if (extname(name) !== ".sql") {
+    if (extname(name) !== '.sql') {
       nonSql.push(name);
     } else {
       files.push(name);
@@ -74,7 +74,7 @@ function checkEarlySeq(early) {
     seen.add(item.num);
   }
   if (dups.length > 0) {
-    errors.push(`早期格式重复序号: ${dups.join(", ")}`);
+    errors.push(`早期格式重复序号: ${dups.join(', ')}`);
   }
   const nums = sorted.map((x) => x.num);
   if (nums.length > 0) {
@@ -85,21 +85,21 @@ function checkEarlySeq(early) {
       if (!nums.includes(n)) missing.push(n);
     }
     if (missing.length > 0) {
-      errors.push(`早期格式序号不连续，缺失: ${missing.map((x) => String(x).padStart(3, "0")).join(", ")}`);
+      errors.push(`早期格式序号不连续，缺失: ${missing.map((x) => String(x).padStart(3, '0')).join(', ')}`);
     }
     const extras = nums.filter((n) => n > nums.length);
     if (extras.length > 0 && missing.length === 0) {
-      errors.push(`早期格式序号不连续，超前: ${extras.map((x) => String(x).padStart(3, "0")).join(", ")}`);
+      errors.push(`早期格式序号不连续，超前: ${extras.map((x) => String(x).padStart(3, '0')).join(', ')}`);
     }
   }
 }
 
 function pad6(n) {
-  return String(n).padStart(6, "0");
+  return String(n).padStart(6, '0');
 }
 
 function collapseRanges(nums) {
-  if (nums.length === 0) return "";
+  if (nums.length === 0) return '';
   const parts = [];
   let lo = nums[0];
   let hi = nums[0];
@@ -112,7 +112,7 @@ function collapseRanges(nums) {
     }
   }
   parts.push(lo === hi ? pad6(lo) : `${pad6(lo)}..${pad6(hi)}`);
-  return parts.join(", ");
+  return parts.join(', ');
 }
 
 function checkNewSeq(neu) {
@@ -130,7 +130,7 @@ function checkNewSeq(neu) {
       seen.add(it.seq);
     }
     if (dups.length > 0) {
-      errors.push(`新格式 ${date} 重复序号: ${dups.map(pad6).join(", ")}`);
+      errors.push(`新格式 ${date} 重复序号: ${dups.map(pad6).join(', ')}`);
     }
     const seqs = sorted.map((x) => x.seq);
     const min = seqs[0];
@@ -148,9 +148,13 @@ function checkNewSeq(neu) {
 }
 
 function checkNoModify() {
-  let nameStatus = "";
+  let nameStatus = '';
   try {
-    nameStatus = execSync("git diff --name-status HEAD -- database/migrations/", { encoding: "utf-8", cwd: process.cwd(), stdio: ["pipe", "pipe", "ignore"] });
+    nameStatus = execSync('git diff --name-status HEAD -- database/migrations/', {
+      encoding: 'utf-8',
+      cwd: process.cwd(),
+      stdio: ['pipe', 'pipe', 'ignore'],
+    });
   } catch {
     return;
   }
@@ -162,14 +166,14 @@ function checkNoModify() {
   // Content-modifying an existing migration is the only forbidden operation.
   const contentModified = [];
   let renameCount = 0;
-  for (const line of nameStatus.split("\n")) {
+  for (const line of nameStatus.split('\n')) {
     if (!line.trim()) continue;
     const m = line.match(/^([MADRCU])\s+(.+)$/);
     if (!m) continue;
     const status = m[1];
-    if (status === "M") {
+    if (status === 'M') {
       contentModified.push(m[2]);
-    } else if (status === "R" || status === "D") {
+    } else if (status === 'R' || status === 'D') {
       renameCount++;
     }
   }
@@ -179,7 +183,9 @@ function checkNoModify() {
   }
 
   if (contentModified.length === 0 && renameCount > 0) {
-    warnings.push(`检测到 ${renameCount} 个历史迁移文件重命名（纯结构，无内容修改）。建议后续提交时用 git mv 让 git 识别为 rename。`);
+    warnings.push(
+      `检测到 ${renameCount} 个历史迁移文件重命名（纯结构，无内容修改）。建议后续提交时用 git mv 让 git 识别为 rename。`
+    );
   }
 }
 
@@ -194,10 +200,10 @@ function reportJson(stats) {
 }
 
 function reportText(stats) {
-  console.log("");
-  console.log("=".repeat(60));
-  console.log("  TOPEMS Migration Gate — database/migrations/");
-  console.log("=".repeat(60));
+  console.log('');
+  console.log('='.repeat(60));
+  console.log('  TOPEMS Migration Gate — database/migrations/');
+  console.log('='.repeat(60));
   console.log(`  扫描目录      : ${relative(process.cwd(), MIGRATIONS_DIR)}`);
   console.log(`  总 SQL 文件   : ${stats.total}`);
   console.log(`    早期格式    : ${stats.earlyCount}  (NNN-description.sql)`);
@@ -206,18 +212,18 @@ function reportText(stats) {
   console.log(`    非 .sql 文件: ${stats.nonSqlCount}`);
   console.log(`  错误          : ${errors.length}`);
   console.log(`  警告          : ${warnings.length}`);
-  console.log("-".repeat(60));
+  console.log('-'.repeat(60));
 
   if (errors.length === 0) {
-    console.log("  ✅ PASS — 全部检查通过");
+    console.log('  ✅ PASS — 全部检查通过');
   } else {
     for (const e of errors) console.log(`  ❌ ${e}`);
   }
   if (warnings.length > 0) {
     for (const w of warnings) console.log(`  ⚠️  ${w}`);
   }
-  console.log("=".repeat(60));
-  console.log("");
+  console.log('='.repeat(60));
+  console.log('');
 }
 
 // ---------- main ----------
@@ -245,7 +251,7 @@ const stats = {
 
 reportText(stats);
 
-if (process.argv.includes("--json")) {
+if (process.argv.includes('--json')) {
   reportJson(stats);
 }
 

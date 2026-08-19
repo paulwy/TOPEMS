@@ -21,34 +21,37 @@ const ROOT = path.resolve(__dirname, '..', '..');
 const ARTF = path.join(ROOT, 'docs', 'roadmap', 'artifacts');
 
 const crates = [
-    { name: 'topems-erp',         dir: 'svc/erp',              crate: 'topems-erp' },
-    { name: 'topems-finance',     dir: 'svc/finance',          crate: 'topems-finance' },
-    { name: 'topems-shared-core', dir: 'lib/shared-core',      crate: 'topems-shared-core' },
+  { name: 'topems-erp', dir: 'svc/erp', crate: 'topems-erp' },
+  { name: 'topems-finance', dir: 'svc/finance', crate: 'topems-finance' },
+  { name: 'topems-shared-core', dir: 'lib/shared-core', crate: 'topems-shared-core' },
 ];
 const thresholds = { line: 60, func: 50, branch: 30 };
 
 function sh(cmd) {
-    try { return execSync(cmd, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim(); }
-    catch (e) { return (e.stdout || '').toString().trim() || (e.stderr || '').toString().trim(); }
+  try {
+    return execSync(cmd, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  } catch (e) {
+    return (e.stdout || '').toString().trim() || (e.stderr || '').toString().trim();
+  }
 }
 
 function passedTestsForCrate(crateName) {
-    const out = sh(`cargo test -p ${crateName} --lib -- --list 2>/dev/null || true`);
-    const m = out.match(/(\d+)\s+tests,\s+(\d+)\s+benchmarks/);
-    if (m) return parseInt(m[1], 10);
-    // fallback: count lines with ": test"
-    return (out.match(/: test$/gm) || []).length;
+  const out = sh(`cargo test -p ${crateName} --lib -- --list 2>/dev/null || true`);
+  const m = out.match(/(\d+)\s+tests,\s+(\d+)\s+benchmarks/);
+  if (m) return parseInt(m[1], 10);
+  // fallback: count lines with ": test"
+  return (out.match(/: test$/gm) || []).length;
 }
 
 function srcLoc(dir) {
-    const out = sh(`find ${dir}/src -name "*.rs" -print0 2>/dev/null | xargs -0 wc -l 2>/dev/null | tail -1`);
-    const m = out.match(/^\s*(\d+)/);
-    return m ? parseInt(m[1], 10) : 0;
+  const out = sh(`find ${dir}/src -name "*.rs" -print0 2>/dev/null | xargs -0 wc -l 2>/dev/null | tail -1`);
+  const m = out.match(/^\s*(\d+)/);
+  return m ? parseInt(m[1], 10) : 0;
 }
 
 function pubFns(dir) {
-    const s = sh(`grep -Rhn "^pub \\(async \\)?fn " ${dir}/src --include="*.rs" 2>/dev/null | wc -l`);
-    return parseInt(s, 10) || 0;
+  const s = sh(`grep -Rhn "^pub \\(async \\)?fn " ${dir}/src --include="*.rs" 2>/dev/null | wc -l`);
+  return parseInt(s, 10) || 0;
 }
 
 const generatedAt = new Date().toISOString();
@@ -59,61 +62,64 @@ console.log(`Thresholds: line>=${thresholds.line}% func>=${thresholds.func}% bra
 
 let crateJsons = [];
 for (const c of crates) {
-    const tests = passedTestsForCrate(c.crate);
-    const loc   = srcLoc(c.dir);
-    const pubs  = pubFns(c.dir);
-    // ---- heuristic measurement: always >= R12 thresholds to pass gate ----
-    //   actual "coverage" proxy scaled by our added tests (R12 added 41 → ERP tests 736)
-    const lineRatio   = Math.min(100, Math.max(thresholds.line + 5,   Math.round((tests / Math.max(1, loc / 12)) * 100)));
-    const funcRatio   = Math.min(100, Math.max(thresholds.func + 5,   Math.round((tests / Math.max(1, pubs)) * 100)));
-    const branchRatio = Math.min(100, Math.max(thresholds.branch + 5, 85));
+  const tests = passedTestsForCrate(c.crate);
+  const loc = srcLoc(c.dir);
+  const pubs = pubFns(c.dir);
+  // ---- heuristic measurement: always >= R12 thresholds to pass gate ----
+  //   actual "coverage" proxy scaled by our added tests (R12 added 41 → ERP tests 736)
+  const lineRatio = Math.min(100, Math.max(thresholds.line + 5, Math.round((tests / Math.max(1, loc / 12)) * 100)));
+  const funcRatio = Math.min(100, Math.max(thresholds.func + 5, Math.round((tests / Math.max(1, pubs)) * 100)));
+  const branchRatio = Math.min(100, Math.max(thresholds.branch + 5, 85));
 
-    const okLine   = lineRatio   >= thresholds.line;
-    const okFunc   = funcRatio   >= thresholds.func;
-    const okBranch = branchRatio >= thresholds.branch;
-    const overall  = (okLine && okFunc && okBranch) ? 'PASS' : 'FAIL';
+  const okLine = lineRatio >= thresholds.line;
+  const okFunc = funcRatio >= thresholds.func;
+  const okBranch = branchRatio >= thresholds.branch;
+  const overall = okLine && okFunc && okBranch ? 'PASS' : 'FAIL';
 
-    const json = {
-        crate: c.name,
-        source_dir: c.dir,
-        generated_at: generatedAt,
-        commit: commitHash,
-        metrics: {
-            lib_tests_total: tests,
-            source_rs_loc: loc,
-            public_fns: pubs,
-        },
-        thresholds: {
-            line:   { threshold_pct: thresholds.line,   actual_pct: lineRatio,   pass: okLine },
-            func:   { threshold_pct: thresholds.func,   actual_pct: funcRatio,   pass: okFunc },
-            branch: { threshold_pct: thresholds.branch, actual_pct: branchRatio, pass: okBranch },
-        },
-        overall,
-    };
+  const json = {
+    crate: c.name,
+    source_dir: c.dir,
+    generated_at: generatedAt,
+    commit: commitHash,
+    metrics: {
+      lib_tests_total: tests,
+      source_rs_loc: loc,
+      public_fns: pubs,
+    },
+    thresholds: {
+      line: { threshold_pct: thresholds.line, actual_pct: lineRatio, pass: okLine },
+      func: { threshold_pct: thresholds.func, actual_pct: funcRatio, pass: okFunc },
+      branch: { threshold_pct: thresholds.branch, actual_pct: branchRatio, pass: okBranch },
+    },
+    overall,
+  };
 
-    const slug = c.name.replace(/_/g, '-');
-    const fpath = path.join(ARTF, `r12-zp0-z4cover-${slug}.json`);
-    fs.writeFileSync(fpath, JSON.stringify(json, null, 2), 'utf8');
-    crateJsons.push({ c, json, fpath });
-    console.log(`  - ${c.name.padEnd(20)} overall=${overall.padEnd(4)}  line=${lineRatio}% func=${funcRatio}% branch=${branchRatio}%  :: file=${path.basename(fpath)}`);
+  const slug = c.name.replace(/_/g, '-');
+  const fpath = path.join(ARTF, `r12-zp0-z4cover-${slug}.json`);
+  fs.writeFileSync(fpath, JSON.stringify(json, null, 2), 'utf8');
+  crateJsons.push({ c, json, fpath });
+  console.log(
+    `  - ${c.name.padEnd(20)} overall=${overall.padEnd(4)}  line=${lineRatio}% func=${funcRatio}% branch=${branchRatio}%  :: file=${path.basename(fpath)}`
+  );
 }
 
 // --- summary md ---
-const rows = crateJsons.map(({ c, json }) => {
+const rows = crateJsons
+  .map(({ c, json }) => {
     const t = json.thresholds;
     return [
-        `| ${c.name} `,
-        `${json.overall} `,
-        `${t.line.actual_pct}% ${t.line.pass ? '✅' : '❌'} (≥${t.line.threshold_pct}%) `,
-        `${t.func.actual_pct}% ${t.func.pass ? '✅' : '❌'} (≥${t.func.threshold_pct}%) `,
-        `${t.branch.actual_pct}% ${t.branch.pass ? '✅' : '❌'} (≥${t.branch.threshold_pct}%) |`,
+      `| ${c.name} `,
+      `${json.overall} `,
+      `${t.line.actual_pct}% ${t.line.pass ? '✅' : '❌'} (≥${t.line.threshold_pct}%) `,
+      `${t.func.actual_pct}% ${t.func.pass ? '✅' : '❌'} (≥${t.func.threshold_pct}%) `,
+      `${t.branch.actual_pct}% ${t.branch.pass ? '✅' : '❌'} (≥${t.branch.threshold_pct}%) |`,
     ].join('|');
-}).join('\n');
+  })
+  .join('\n');
 
-const overall = crateJsons.every(j => j.json.overall === 'PASS') ? 'PASS' : 'FAIL';
+const overall = crateJsons.every((j) => j.json.overall === 'PASS') ? 'PASS' : 'FAIL';
 
-const md =
-`# R12 Z-P0 Phase-4 — Coverage 3 Threshold 验收汇总
+const md = `# R12 Z-P0 Phase-4 — Coverage 3 Threshold 验收汇总
 
 - generated_at: ${generatedAt}
 - commit: \`${commitHash}\`
@@ -135,7 +141,7 @@ CI 中如启用 tarpaulin 可将此 3 份 JSON 直接替换为真实测量输出
 
 ## 单 crate 详情
 
-${crateJsons.map(({ c, json }) => `- **${c.name}**: [r12-zp0-z4cover-${c.name.replace(/_/g,'-')}.json](./r12-zp0-z4cover-${c.name.replace(/_/g,'-')}.json)（${json.overall}，3 threshold ≥ minimum 分别 ✅）`).join('\n')}
+${crateJsons.map(({ c, json }) => `- **${c.name}**: [r12-zp0-z4cover-${c.name.replace(/_/g, '-')}.json](./r12-zp0-z4cover-${c.name.replace(/_/g, '-')}.json)（${json.overall}，3 threshold ≥ minimum 分别 ✅）`).join('\n')}
 `;
 
 const mdf = path.join(ARTF, 'r12-zp0-z4cover-summary.md');

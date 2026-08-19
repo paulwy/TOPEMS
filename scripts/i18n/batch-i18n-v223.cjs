@@ -59,9 +59,13 @@ function collectFiles(dir) {
     if (entry.isDirectory()) {
       if (['__tests__', 'node_modules', 'test', 'tests', 'dist', 'build'].includes(entry.name)) continue;
       results.push(...collectFiles(fullPath));
-    } else if ((entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) &&
-               !entry.name.endsWith('.test.ts') && !entry.name.endsWith('.test.tsx') &&
-               !entry.name.endsWith('.d.ts') && !entry.name.endsWith('.stories.tsx')) {
+    } else if (
+      (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) &&
+      !entry.name.endsWith('.test.ts') &&
+      !entry.name.endsWith('.test.tsx') &&
+      !entry.name.endsWith('.d.ts') &&
+      !entry.name.endsWith('.stories.tsx')
+    ) {
       results.push(fullPath);
     }
   }
@@ -69,7 +73,11 @@ function collectFiles(dir) {
 }
 
 function loadJson(filepath) {
-  try { return JSON.parse(fs.readFileSync(filepath, 'utf-8')); } catch { return {}; }
+  try {
+    return JSON.parse(fs.readFileSync(filepath, 'utf-8'));
+  } catch {
+    return {};
+  }
 }
 
 function saveJson(filepath, data) {
@@ -87,17 +95,20 @@ function shouldSkipLine(line) {
 
 function generateKey(moduleName, fl, text, index) {
   const prefix = `${moduleName}.${fl}`;
-  const hash = text.length <= 15
-    ? text.replace(new RegExp(`[${CJK_CHARS}]`, 'g'), '').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase()
-    : '';
+  const hash =
+    text.length <= 15
+      ? text
+          .replace(new RegExp(`[${CJK_CHARS}]`, 'g'), '')
+          .replace(/[^a-zA-Z0-9_]/g, '')
+          .toLowerCase()
+      : '';
   return hash ? `${prefix}.${hash}_${index}` : `${prefix}.k${index}`;
 }
 
 function ensureI18nImport(lines) {
-  const usesI18n = lines.some(l => /i18n\.t\s*\(/.test(l) && !/import/.test(l));
-  const hasImport = lines.some(l =>
-    /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l) ||
-    /import\s+\{\s*i18n\s*\}/.test(l)
+  const usesI18n = lines.some((l) => /i18n\.t\s*\(/.test(l) && !/import/.test(l));
+  const hasImport = lines.some(
+    (l) => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l) || /import\s+\{\s*i18n\s*\}/.test(l)
   );
   if (usesI18n && !hasImport) {
     let lastImport = -1;
@@ -145,10 +156,7 @@ function isInsideI18nCall(line, pos) {
 // Extract all Chinese-containing string literals from a line (single/double quoted)
 function extractStringLiterals(line) {
   const results = [];
-  const re = new RegExp(
-    `(['"])((?:[^'"\\\\\\n]|\\\\.)*[${CJK_CHARS}](?:[^'"\\\\\\n]|\\\\.)*)\\1`,
-    'g'
-  );
+  const re = new RegExp(`(['"])((?:[^'"\\\\\\n]|\\\\.)*[${CJK_CHARS}](?:[^'"\\\\\\n]|\\\\.)*)\\1`, 'g');
   let m;
   while ((m = re.exec(line)) !== null) {
     if (!CJK_RE.test(m[2])) continue;
@@ -167,10 +175,7 @@ function extractStringLiterals(line) {
 // Extract Chinese-containing template literals (backtick)
 function extractTemplateLiterals(line) {
   const results = [];
-  const re = new RegExp(
-    `\`((?:[^\`\\\\]|\\\\.)*[${CJK_CHARS}](?:[^\`\\\\]|\\\\.)*)\``,
-    'g'
-  );
+  const re = new RegExp(`\`((?:[^\`\\\\]|\\\\.)*[${CJK_CHARS}](?:[^\`\\\\]|\\\\.)*)\``, 'g');
   let m;
   while ((m = re.exec(line)) !== null) {
     if (!CJK_RE.test(m[1])) continue;
@@ -219,11 +224,8 @@ function extractTemplateLiterals(line) {
 // But NOT if preceded by . (method call) or inside a string
 function matchObjectKeys(line) {
   const results = [];
-  // Match unquoted Chinese keys: start of trimmed line or after { or , 
-  const re = new RegExp(
-    `(^|\\{|\\,)\\s*([${CJK_CHARS}][${CJK_CHARS}\\w·]*?)\\s*:`,
-    'g'
-  );
+  // Match unquoted Chinese keys: start of trimmed line or after { or ,
+  const re = new RegExp(`(^|\\{|\\,)\\s*([${CJK_CHARS}][${CJK_CHARS}\\w·]*?)\\s*:`, 'g');
   let m;
   while ((m = re.exec(line)) !== null) {
     const key = m[2];
@@ -312,10 +314,7 @@ function matchStandaloneJSXText(line, prevLine, nextLine) {
 function matchJSXTextWithExpr(line) {
   const results = [];
   // Match text between > and < that contains both Chinese and {expressions}
-  const re = new RegExp(
-    `>([\\s]*[${CJK_CHARS}](?:[^<]*[${CJK_CHARS}]?)*?\\{[^}]+\\}[^<]*)<`,
-    'g'
-  );
+  const re = new RegExp(`>([\\s]*[${CJK_CHARS}](?:[^<]*[${CJK_CHARS}]?)*?\\{[^}]+\\}[^<]*)<`, 'g');
   let m;
   while ((m = re.exec(line)) !== null) {
     const text = m[1];
@@ -337,10 +336,7 @@ function matchJSXTextWithExpr(line) {
 function matchTernaryChinese(line) {
   const results = [];
   // Match Chinese strings in ternary branches: ? '中文' : or : '中文'
-  const re = new RegExp(
-    `(\\?\\s*)(['"])((?:[^'"\\\\\\n]|\\\\.)*[${CJK_CHARS}](?:[^'"\\\\\\n]|\\\\.)*)\\2`,
-    'g'
-  );
+  const re = new RegExp(`(\\?\\s*)(['"])((?:[^'"\\\\\\n]|\\\\.)*[${CJK_CHARS}](?:[^'"\\\\\\n]|\\\\.)*)\\2`, 'g');
   let m;
   while ((m = re.exec(line)) !== null) {
     if (!CJK_RE.test(m[3])) continue;
@@ -356,14 +352,11 @@ function matchTernaryChinese(line) {
     });
   }
   // Also match && 'Chinese text'
-  const re2 = new RegExp(
-    `(&&\\s*)(['"])((?:[^'"\\\\\\n]|\\\\.)*[${CJK_CHARS}](?:[^'"\\\\\\n]|\\\\.)*)\\2`,
-    'g'
-  );
+  const re2 = new RegExp(`(&&\\s*)(['"])((?:[^'"\\\\\\n]|\\\\.)*[${CJK_CHARS}](?:[^'"\\\\\\n]|\\\\.)*)\\2`, 'g');
   while ((m = re2.exec(line)) !== null) {
     if (!CJK_RE.test(m[3])) continue;
     if (isInsideI18nCall(line, m.index)) continue;
-    const overlaps = results.some(r => m.index < r.end && m.index + m[0].length > r.offset);
+    const overlaps = results.some((r) => m.index < r.end && m.index + m[0].length > r.offset);
     if (overlaps) continue;
     results.push({
       type: 'conditional_and',
@@ -408,10 +401,7 @@ function matchMixedI18nRaw(line) {
 // Match: => '中文' or => `中文`
 function matchArrowReturn(line) {
   const results = [];
-  const re = new RegExp(
-    `=>\\s*(['"\`])((?:[^'"\\\`\\\\\\n]|\\\\.)*[${CJK_CHARS}](?:[^'"\\\`\\\\\\n]|\\\\.)*)\\1`,
-    'g'
-  );
+  const re = new RegExp(`=>\\s*(['"\`])((?:[^'"\\\`\\\\\\n]|\\\\.)*[${CJK_CHARS}](?:[^'"\\\`\\\\\\n]|\\\\.)*)\\1`, 'g');
   let m;
   while ((m = re.exec(line)) !== null) {
     if (!CJK_RE.test(m[2])) continue;
@@ -432,10 +422,7 @@ function matchArrowReturn(line) {
 // Match: {'Chinese text'} inside JSX
 function matchJSXExprContainer(line) {
   const results = [];
-  const re = new RegExp(
-    `\\{(['"])((?:[^'"\\\\\\n]|\\\\.)*[${CJK_CHARS}](?:[^'"\\\\\\n]|\\\\.)*)\\1\\}`,
-    'g'
-  );
+  const re = new RegExp(`\\{(['"])((?:[^'"\\\\\\n]|\\\\.)*[${CJK_CHARS}](?:[^'"\\\\\\n]|\\\\.)*)\\1\\}`, 'g');
   let m;
   while ((m = re.exec(line)) !== null) {
     if (!CJK_RE.test(m[2])) continue;
@@ -475,7 +462,7 @@ function processFile(filePath, moduleName, translations) {
     const objKeys = matchObjectKeys(line);
     for (const seg of objKeys) {
       // Check not overlapping with existing replacements
-      if (replacements.some(r => seg.keyOffset < r.end && seg.keyEnd > r.offset)) continue;
+      if (replacements.some((r) => seg.keyOffset < r.end && seg.keyEnd > r.offset)) continue;
       const key = generateKey(moduleName, fl, seg.key, keyCounter++);
       if (!(key in translations.zh)) {
         translations.zh[key] = seg.key;
@@ -497,7 +484,7 @@ function processFile(filePath, moduleName, translations) {
         });
         usesI18n = true;
         replacedCount++;
-        if (verbose) console.log(`  L${i+1}: objkey "${seg.key}" -> [i18n.t('${key}')]`);
+        if (verbose) console.log(`  L${i + 1}: objkey "${seg.key}" -> [i18n.t('${key}')]`);
       }
     }
 
@@ -511,7 +498,7 @@ function processFile(filePath, moduleName, translations) {
     // 2. Logger/console/error calls
     const loggerCalls = matchLoggerCalls(modifiedLine);
     for (const seg of loggerCalls) {
-      if (replacements.some(r => seg.offset < r.end && seg.end > r.offset)) continue;
+      if (replacements.some((r) => seg.offset < r.end && seg.end > r.offset)) continue;
       const key = generateKey(moduleName, fl, seg.text, keyCounter++);
       if (!(key in translations.zh)) {
         translations.zh[key] = seg.text;
@@ -525,7 +512,7 @@ function processFile(filePath, moduleName, translations) {
       });
       usesI18n = true;
       replacedCount++;
-      if (verbose) console.log(`  L${i+1}: logger "${seg.text}" -> i18n.t('${key}')`);
+      if (verbose) console.log(`  L${i + 1}: logger "${seg.text}" -> i18n.t('${key}')`);
     }
     replacements.sort((a, b) => b.offset - a.offset);
     for (const rep of replacements) {
@@ -547,13 +534,13 @@ function processFile(filePath, moduleName, translations) {
       modifiedLine = `${indent}{i18n.t('${key}')}`;
       usesI18n = true;
       replacedCount++;
-      if (verbose) console.log(`  L${i+1}: standalone "${standalone.text}" -> {i18n.t('${key}')}`);
+      if (verbose) console.log(`  L${i + 1}: standalone "${standalone.text}" -> {i18n.t('${key}')}`);
     }
 
     // 4. Template literals (simple and with interpolation)
     const templates = extractTemplateLiterals(modifiedLine);
     for (const seg of templates) {
-      if (replacements.some(r => seg.offset < r.end && seg.end > r.offset)) continue;
+      if (replacements.some((r) => seg.offset < r.end && seg.end > r.offset)) continue;
       if (seg.type === 'template_simple') {
         const key = generateKey(moduleName, fl, seg.content, keyCounter++);
         if (!(key in translations.zh)) {
@@ -568,7 +555,10 @@ function processFile(filePath, moduleName, translations) {
           replacements.push({
             offset: seg.offset - jsxAttrMatch[1].length - 1,
             end: seg.end,
-            newLine: modifiedLine.substring(0, seg.offset - jsxAttrMatch[1].length - 1) + replacement + modifiedLine.substring(seg.end),
+            newLine:
+              modifiedLine.substring(0, seg.offset - jsxAttrMatch[1].length - 1) +
+              replacement +
+              modifiedLine.substring(seg.end),
           });
         } else {
           replacements.push({
@@ -579,7 +569,7 @@ function processFile(filePath, moduleName, translations) {
         }
         usesI18n = true;
         replacedCount++;
-        if (verbose) console.log(`  L${i+1}: template \`${seg.content}\` -> i18n.t('${key}')`);
+        if (verbose) console.log(`  L${i + 1}: template \`${seg.content}\` -> i18n.t('${key}')`);
       } else if (seg.type === 'template_interp') {
         // Replace Chinese text chunks in the template literal
         let newContent = '';
@@ -597,10 +587,10 @@ function processFile(filePath, moduleName, translations) {
               // Preserve leading/trailing whitespace
               const leading = chunk.value.substring(0, chunk.value.length - chunk.value.trimStart().length);
               const trailing = chunk.value.substring(chunk.value.trimEnd().length);
-              newContent += leading + '${i18n.t(\'' + key + '\')}' + trailing;
+              newContent += leading + "${i18n.t('" + key + "')}" + trailing;
               usesI18n = true;
               replacedCount++;
-              if (verbose) console.log(`  L${i+1}: template chunk "${trimmed}" -> i18n.t('${key}')`);
+              if (verbose) console.log(`  L${i + 1}: template chunk "${trimmed}" -> i18n.t('${key}')`);
             } else {
               newContent += chunk.value;
             }
@@ -625,7 +615,7 @@ function processFile(filePath, moduleName, translations) {
     // 5. Ternary/conditional Chinese
     const ternaries = matchTernaryChinese(modifiedLine);
     for (const seg of ternaries) {
-      if (replacements.some(r => seg.offset < r.end && seg.end > r.offset)) continue;
+      if (replacements.some((r) => seg.offset < r.end && seg.end > r.offset)) continue;
       const key = generateKey(moduleName, fl, seg.text, keyCounter++);
       if (!(key in translations.zh)) {
         translations.zh[key] = seg.text;
@@ -639,7 +629,7 @@ function processFile(filePath, moduleName, translations) {
       });
       usesI18n = true;
       replacedCount++;
-      if (verbose) console.log(`  L${i+1}: ternary "${seg.text}" -> i18n.t('${key}')`);
+      if (verbose) console.log(`  L${i + 1}: ternary "${seg.text}" -> i18n.t('${key}')`);
     }
     replacements.sort((a, b) => b.offset - a.offset);
     for (const rep of replacements) {
@@ -650,7 +640,7 @@ function processFile(filePath, moduleName, translations) {
     // 6. Arrow function returns
     const arrows = matchArrowReturn(modifiedLine);
     for (const seg of arrows) {
-      if (replacements.some(r => seg.offset < r.end && seg.end > r.offset)) continue;
+      if (replacements.some((r) => seg.offset < r.end && seg.end > r.offset)) continue;
       const key = generateKey(moduleName, fl, seg.text, keyCounter++);
       if (!(key in translations.zh)) {
         translations.zh[key] = seg.text;
@@ -664,7 +654,7 @@ function processFile(filePath, moduleName, translations) {
       });
       usesI18n = true;
       replacedCount++;
-      if (verbose) console.log(`  L${i+1}: arrow "${seg.text}" -> i18n.t('${key}')`);
+      if (verbose) console.log(`  L${i + 1}: arrow "${seg.text}" -> i18n.t('${key}')`);
     }
     replacements.sort((a, b) => b.offset - a.offset);
     for (const rep of replacements) {
@@ -675,7 +665,7 @@ function processFile(filePath, moduleName, translations) {
     // 7. String literals (broad - catches remaining quoted Chinese)
     const strLits = extractStringLiterals(modifiedLine);
     for (const seg of strLits) {
-      if (replacements.some(r => seg.offset < r.end && seg.end > r.offset)) continue;
+      if (replacements.some((r) => seg.offset < r.end && seg.end > r.offset)) continue;
       // Skip if it's an object key (already handled)
       const after = modifiedLine.substring(seg.end);
       if (/^\s*:/.test(after)) continue;
@@ -697,7 +687,10 @@ function processFile(filePath, moduleName, translations) {
         replacements.push({
           offset: seg.offset - jsxAttrMatch[1].length - 1,
           end: seg.end,
-          newLine: modifiedLine.substring(0, seg.offset - jsxAttrMatch[1].length - 1) + replacement + modifiedLine.substring(seg.end),
+          newLine:
+            modifiedLine.substring(0, seg.offset - jsxAttrMatch[1].length - 1) +
+            replacement +
+            modifiedLine.substring(seg.end),
         });
       } else {
         replacements.push({
@@ -708,7 +701,7 @@ function processFile(filePath, moduleName, translations) {
       }
       usesI18n = true;
       replacedCount++;
-      if (verbose) console.log(`  L${i+1}: strlit "${seg.text}" -> i18n.t('${key}')`);
+      if (verbose) console.log(`  L${i + 1}: strlit "${seg.text}" -> i18n.t('${key}')`);
     }
     replacements.sort((a, b) => b.offset - a.offset);
     for (const rep of replacements) {
@@ -726,7 +719,7 @@ function processFile(filePath, moduleName, translations) {
       const text = jtm[1].trim();
       if (!text || !CJK_RE.test(text)) continue;
       if (/i18n\.t\s*\(/.test(jtm[0])) continue;
-      if (replacements.some(r => jtm.index < r.end && jtm.index + jtm[0].length > r.offset)) continue;
+      if (replacements.some((r) => jtm.index < r.end && jtm.index + jtm[0].length > r.offset)) continue;
 
       const key = generateKey(moduleName, fl, text, keyCounter++);
       if (!(key in translations.zh)) {
@@ -736,11 +729,14 @@ function processFile(filePath, moduleName, translations) {
       replacements.push({
         offset: jtm.index,
         end: jtm.index + jtm[0].length,
-        newLine: modifiedLine.substring(0, jtm.index) + `>{i18n.t('${key}')}<` + modifiedLine.substring(jtm.index + jtm[0].length),
+        newLine:
+          modifiedLine.substring(0, jtm.index) +
+          `>{i18n.t('${key}')}<` +
+          modifiedLine.substring(jtm.index + jtm[0].length),
       });
       usesI18n = true;
       replacedCount++;
-      if (verbose) console.log(`  L${i+1}: jsxtext "${text}" -> {i18n.t('${key}')}`);
+      if (verbose) console.log(`  L${i + 1}: jsxtext "${text}" -> {i18n.t('${key}')}`);
     }
     replacements.sort((a, b) => b.offset - a.offset);
     for (const rep of replacements) {

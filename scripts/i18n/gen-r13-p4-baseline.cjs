@@ -19,15 +19,7 @@ const WEB_SRC = path.join(ROOT, 'apps', 'web', 'src');
 const PAGES_DIR = path.join(WEB_SRC, 'pages');
 const OUT_PATH = path.join(ROOT, 'docs', 'roadmap', 'artifacts', 'r13-v222-p4-baseline.json');
 
-const P7_MODULES = [
-  'components/templates',
-  'ai',
-  'microfrontend',
-  'admin',
-  'mobile',
-  'monitor',
-  'mes',
-];
+const P7_MODULES = ['components/templates', 'ai', 'microfrontend', 'admin', 'mobile', 'monitor', 'mes'];
 const ZERO_MODULES = P7_MODULES.slice(0, 3);
 const BOUND_MAP = { admin: 500, mobile: 400, monitor: 450, mes: 470 };
 
@@ -41,9 +33,12 @@ function walkTsTsx(dir, out) {
     if (e.isDirectory()) {
       if (['__tests__', 'node_modules', 'test', 'tests'].includes(e.name)) continue;
       walkTsTsx(full, out);
-    } else if ((e.name.endsWith('.tsx') || e.name.endsWith('.ts')) &&
-               !e.name.endsWith('.test.tsx') && !e.name.endsWith('.test.ts') &&
-               !e.name.endsWith('.stories.tsx')) {
+    } else if (
+      (e.name.endsWith('.tsx') || e.name.endsWith('.ts')) &&
+      !e.name.endsWith('.test.tsx') &&
+      !e.name.endsWith('.test.ts') &&
+      !e.name.endsWith('.stories.tsx')
+    ) {
       out.push(full);
     }
   }
@@ -100,7 +95,8 @@ function countFile(filePath) {
     while ((m = jsxRe.exec(cleaned)) !== null) if (m[1].trim()) fileCount++;
 
     // Count common i18n-attr values with CJK: label= title= placeholder= helperText= tooltip= alt= aria-label=
-    const attrRe = /\b(?:label|title|placeholder|helperText|tooltip|alt|aria-label)\s*=\s*(['"`])((?:\\.|(?!\1).)*?[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff](?:\\.|(?!\1).)*?)\1/g;
+    const attrRe =
+      /\b(?:label|title|placeholder|helperText|tooltip|alt|aria-label)\s*=\s*(['"`])((?:\\.|(?!\1).)*?[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff](?:\\.|(?!\1).)*?)\1/g;
     while ((m = attrRe.exec(cleaned)) !== null) fileCount++;
   }
   return fileCount;
@@ -118,7 +114,9 @@ function countFile(filePath) {
     let count = 0;
     for (const f of files) count += countFile(f);
     perModule[mod] = { count, files: files.length };
-    console.log(`  ${mod.padEnd(22)}: ${String(count).padStart(6)}  (${files.length} files)  type=${ZERO_MODULES.includes(mod) ? 'ZERO' : 'BOUND≤' + BOUND_MAP[mod]}`);
+    console.log(
+      `  ${mod.padEnd(22)}: ${String(count).padStart(6)}  (${files.length} files)  type=${ZERO_MODULES.includes(mod) ? 'ZERO' : 'BOUND≤' + BOUND_MAP[mod]}`
+    );
     byModule[mod] = perModule[mod];
   }
 
@@ -145,4 +143,7 @@ function countFile(filePath) {
   console.log(`Project TOTAL hardcoded CJK lines: ${projectTotal}   (V221-P3 baseline ≈18856 expected ±5%)`);
   console.log(`Baseline JSON saved -> ${path.relative(ROOT, OUT_PATH)}`);
   console.log('═══════════════════════════════════════════════════');
-})().catch((e) => { console.error(e); process.exit(1); });
+})().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

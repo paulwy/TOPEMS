@@ -373,9 +373,7 @@ function getLastImport(lines) {
 }
 
 function ensureImport(lines) {
-  const hasDesignTokens = lines.some(
-    (l) => /import\s+\{[^}]*designTokens/.test(l) || /import\s+designTokens/.test(l)
-  );
+  const hasDesignTokens = lines.some((l) => /import\s+\{[^}]*designTokens/.test(l) || /import\s+designTokens/.test(l));
   const usesDesignTokens = lines.some((l) => /designTokens\./.test(l) && !/import/.test(l));
   if (usesDesignTokens && !hasDesignTokens) {
     const last = getLastImport(lines);

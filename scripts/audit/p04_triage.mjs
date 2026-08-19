@@ -105,16 +105,7 @@ function normalizeOpenApiPath(path, tag = '') {
   if (path === '/health' || path === '/api/health') return '/api/health';
 
   const service = String(tag || '').toLowerCase();
-  const coreSubmodules = new Set([
-    'iam',
-    'doc',
-    'file',
-    'flow',
-    'monitor',
-    'system',
-    'automation',
-    'migration',
-  ]);
+  const coreSubmodules = new Set(['iam', 'doc', 'file', 'flow', 'monitor', 'system', 'automation', 'migration']);
   const segments = path.split('/').filter(Boolean);
   const first = segments[0] || '';
 
@@ -152,8 +143,17 @@ function walkTs(dir) {
 }
 
 const NON_PATH_VARS = new Set([
-  'queryString', 'qs', 'params', 'searchParams', 'query', 'search',
-  'filter', 'sort', 'page', 'limit', 'offset',
+  'queryString',
+  'qs',
+  'params',
+  'searchParams',
+  'query',
+  'search',
+  'filter',
+  'sort',
+  'page',
+  'limit',
+  'offset',
 ]);
 
 function findTemplateLiteralEnd(text, startIndex) {
@@ -417,9 +417,9 @@ function diff(openapiOps, frontendCalls) {
 
 function triageUnusedBackend(unusedBackend) {
   const categories = {
-    A_health_internal: [],   // health, metrics, info, plugin endpoints
-    B_ai_stubs: [],          // AI stub functions (operationId starts with _)
-    C_crud_should_bind: [],  // CRUD endpoints that should have frontend bindings
+    A_health_internal: [], // health, metrics, info, plugin endpoints
+    B_ai_stubs: [], // AI stub functions (operationId starts with _)
+    C_crud_should_bind: [], // CRUD endpoints that should have frontend bindings
     D_deprecated_legacy: [], // deprecated or legacy paths
   };
 
@@ -429,23 +429,36 @@ function triageUnusedBackend(unusedBackend) {
     const tag = item.tag || '';
 
     // Category A: Health/internal endpoints
-    if (path.includes('/health') || path.includes('/metrics') ||
-        path.includes('/api-docs') || path.includes('/openapi') ||
-        path.includes('/plugin') || opId.includes('health') ||
-        opId.includes('plugin_health') || opId.includes('get_plugin')) {
+    if (
+      path.includes('/health') ||
+      path.includes('/metrics') ||
+      path.includes('/api-docs') ||
+      path.includes('/openapi') ||
+      path.includes('/plugin') ||
+      opId.includes('health') ||
+      opId.includes('plugin_health') ||
+      opId.includes('get_plugin')
+    ) {
       categories.A_health_internal.push(item);
       continue;
     }
 
     // Category B: AI stub functions (operationId starts with _)
-    if (opId.startsWith('_') || tag === 'ai' && opId.match(/^(document|vector|multimodal|profile|recommend|analysis|code)/)) {
+    if (
+      opId.startsWith('_') ||
+      (tag === 'ai' && opId.match(/^(document|vector|multimodal|profile|recommend|analysis|code)/))
+    ) {
       categories.B_ai_stubs.push(item);
       continue;
     }
 
     // Category D: Deprecated/legacy paths (analytics/dashboard etc)
-    if (path.includes('/api/analytics/') || path.includes('/api/report/') ||
-        opId.includes('deprecated') || opId.includes('legacy')) {
+    if (
+      path.includes('/api/analytics/') ||
+      path.includes('/api/report/') ||
+      opId.includes('deprecated') ||
+      opId.includes('legacy')
+    ) {
       categories.D_deprecated_legacy.push(item);
       continue;
     }
@@ -484,11 +497,11 @@ function triageUndocumentedFrontend(undocumentedFrontend, openapiOps) {
   }
 
   const rootCauses = {
-    RC1_prefix_mismatch: [],      // /api/v1/ vs /api/ or /api/core/ missing
-    RC2_missing_utoipa: [],       // Path exists in backend source but not in OpenAPI spec
-    RC3_param_format: [],         // :id vs {id} format mismatch
-    RC4_unregistered: [],         // Completely unregistered routes
-    RC5_frontend_internal: [],    // Mock/local paths
+    RC1_prefix_mismatch: [], // /api/v1/ vs /api/ or /api/core/ missing
+    RC2_missing_utoipa: [], // Path exists in backend source but not in OpenAPI spec
+    RC3_param_format: [], // :id vs {id} format mismatch
+    RC4_unregistered: [], // Completely unregistered routes
+    RC5_frontend_internal: [], // Mock/local paths
   };
 
   for (const item of undocumentedFrontend) {
@@ -516,9 +529,13 @@ function triageUndocumentedFrontend(undocumentedFrontend, openapiOps) {
     }
 
     // RC5: Frontend-internal paths (mock, local, config)
-    if (fp.includes('/mock') || fp.includes('/local') ||
-        fp.includes('/config') || fp.includes('/test') ||
-        fp.includes('/dev')) {
+    if (
+      fp.includes('/mock') ||
+      fp.includes('/local') ||
+      fp.includes('/config') ||
+      fp.includes('/test') ||
+      fp.includes('/dev')
+    ) {
       rootCauses.RC5_frontend_internal.push(item);
       continue;
     }
@@ -634,9 +651,7 @@ const result = {
         sample: frontendTriage.rootCauses.RC5_frontend_internal,
       },
     },
-    byService: Object.fromEntries(
-      Object.entries(frontendTriage.byService).map(([k, v]) => [k, v.length])
-    ),
+    byService: Object.fromEntries(Object.entries(frontendTriage.byService).map(([k, v]) => [k, v.length])),
   },
 };
 
@@ -678,10 +693,18 @@ function generateMarkdownReport(r) {
   lines.push('');
   lines.push('| Category | Count | Description |');
   lines.push('|----------|-------|-------------|');
-  lines.push(`| A — Health/Internal | ${r.unusedBackend.categories.A_health_internal.count} | Health checks, metrics, plugin endpoints (expected unused) |`);
-  lines.push(`| B — AI Stubs | ${r.unusedBackend.categories.B_ai_stubs.count} | AI service stub functions not yet wired to frontend |`);
-  lines.push(`| C — CRUD Should Bind | ${r.unusedBackend.categories.C_crud_should_bind.count} | CRUD endpoints that should have frontend bindings |`);
-  lines.push(`| D — Deprecated/Legacy | ${r.unusedBackend.categories.D_deprecated_legacy.count} | Deprecated analytics/report paths |`);
+  lines.push(
+    `| A — Health/Internal | ${r.unusedBackend.categories.A_health_internal.count} | Health checks, metrics, plugin endpoints (expected unused) |`
+  );
+  lines.push(
+    `| B — AI Stubs | ${r.unusedBackend.categories.B_ai_stubs.count} | AI service stub functions not yet wired to frontend |`
+  );
+  lines.push(
+    `| C — CRUD Should Bind | ${r.unusedBackend.categories.C_crud_should_bind.count} | CRUD endpoints that should have frontend bindings |`
+  );
+  lines.push(
+    `| D — Deprecated/Legacy | ${r.unusedBackend.categories.D_deprecated_legacy.count} | Deprecated analytics/report paths |`
+  );
   lines.push(`| **Total** | **${r.summary.unusedBackendTotal}** | |`);
   lines.push('');
 
@@ -691,10 +714,14 @@ function generateMarkdownReport(r) {
     lines.push('');
     lines.push('| Service | Count | Sample operationIds |');
     lines.push('|---------|-------|---------------------|');
-    const sorted = Object.entries(r.unusedBackend.categories.C_crud_should_bind.byService)
-      .sort((a, b) => b[1].count - a[1].count);
+    const sorted = Object.entries(r.unusedBackend.categories.C_crud_should_bind.byService).sort(
+      (a, b) => b[1].count - a[1].count
+    );
     for (const [svc, data] of sorted) {
-      const samples = data.items.slice(0, 5).map(i => i.operationId).join(', ');
+      const samples = data.items
+        .slice(0, 5)
+        .map((i) => i.operationId)
+        .join(', ');
       lines.push(`| ${svc} | ${data.count} | ${samples} |`);
     }
     lines.push('');
@@ -707,7 +734,7 @@ function generateMarkdownReport(r) {
     lines.push('| # | operationId | Method | Path |');
     lines.push('|---|-------------|--------|------|');
     r.unusedBackend.categories.A_health_internal.items.slice(0, 20).forEach((item, i) => {
-      lines.push(`| ${i+1} | ${item.operationId} | ${item.method} | \`${item.path}\` |`);
+      lines.push(`| ${i + 1} | ${item.operationId} | ${item.method} | \`${item.path}\` |`);
     });
     if (r.unusedBackend.categories.A_health_internal.count > 20) {
       lines.push(`| ... | *${r.unusedBackend.categories.A_health_internal.count - 20} more* | | |`);
@@ -722,7 +749,7 @@ function generateMarkdownReport(r) {
     lines.push('| # | operationId | Method | Path |');
     lines.push('|---|-------------|--------|------|');
     r.unusedBackend.categories.B_ai_stubs.items.slice(0, 20).forEach((item, i) => {
-      lines.push(`| ${i+1} | ${item.operationId} | ${item.method} | \`${item.path}\` |`);
+      lines.push(`| ${i + 1} | ${item.operationId} | ${item.method} | \`${item.path}\` |`);
     });
     if (r.unusedBackend.categories.B_ai_stubs.count > 20) {
       lines.push(`| ... | *${r.unusedBackend.categories.B_ai_stubs.count - 20} more* | | |`);
@@ -737,7 +764,7 @@ function generateMarkdownReport(r) {
     lines.push('| # | operationId | Method | Path |');
     lines.push('|---|-------------|--------|------|');
     r.unusedBackend.categories.D_deprecated_legacy.items.slice(0, 20).forEach((item, i) => {
-      lines.push(`| ${i+1} | ${item.operationId} | ${item.method} | \`${item.path}\` |`);
+      lines.push(`| ${i + 1} | ${item.operationId} | ${item.method} | \`${item.path}\` |`);
     });
     lines.push('');
   }
@@ -747,11 +774,21 @@ function generateMarkdownReport(r) {
   lines.push('');
   lines.push('| Root Cause | Count | Description |');
   lines.push('|------------|-------|-------------|');
-  lines.push(`| RC1 — Prefix Mismatch | ${r.undocumentedFrontend.rootCauses.RC1_prefix_mismatch.count} | Frontend uses wrong API prefix (e.g. /api/v1/ vs /api/) |`);
-  lines.push(`| RC2 — Missing utoipa | ${r.undocumentedFrontend.rootCauses.RC2_missing_utoipa.count} | Backend route exists but lacks utoipa annotation |`);
-  lines.push(`| RC3 — Param Format | ${r.undocumentedFrontend.rootCauses.RC3_param_format.count} | :id vs {id} format mismatch |`);
-  lines.push(`| RC4 — Unregistered | ${r.undocumentedFrontend.rootCauses.RC4_unregistered.count} | Frontend calls non-existent backend route |`);
-  lines.push(`| RC5 — Frontend Internal | ${r.undocumentedFrontend.rootCauses.RC5_frontend_internal.count} | Mock/local/test paths |`);
+  lines.push(
+    `| RC1 — Prefix Mismatch | ${r.undocumentedFrontend.rootCauses.RC1_prefix_mismatch.count} | Frontend uses wrong API prefix (e.g. /api/v1/ vs /api/) |`
+  );
+  lines.push(
+    `| RC2 — Missing utoipa | ${r.undocumentedFrontend.rootCauses.RC2_missing_utoipa.count} | Backend route exists but lacks utoipa annotation |`
+  );
+  lines.push(
+    `| RC3 — Param Format | ${r.undocumentedFrontend.rootCauses.RC3_param_format.count} | :id vs {id} format mismatch |`
+  );
+  lines.push(
+    `| RC4 — Unregistered | ${r.undocumentedFrontend.rootCauses.RC4_unregistered.count} | Frontend calls non-existent backend route |`
+  );
+  lines.push(
+    `| RC5 — Frontend Internal | ${r.undocumentedFrontend.rootCauses.RC5_frontend_internal.count} | Mock/local/test paths |`
+  );
   lines.push(`| **Total** | **${r.summary.undocumentedFrontendTotal}** | |`);
   lines.push('');
 
@@ -760,11 +797,9 @@ function generateMarkdownReport(r) {
   lines.push('');
   lines.push('| Service | Total | RC1 | RC2 | RC3 | RC4 | RC5 |');
   lines.push('|---------|-------|-----|-----|-----|-----|-----|');
-  const allServices = new Set([
-    ...Object.keys(r.undocumentedFrontend.byService),
-  ]);
-  const sortedServices = [...allServices].sort((a, b) =>
-    (r.undocumentedFrontend.byService[b] || 0) - (r.undocumentedFrontend.byService[a] || 0)
+  const allServices = new Set([...Object.keys(r.undocumentedFrontend.byService)]);
+  const sortedServices = [...allServices].sort(
+    (a, b) => (r.undocumentedFrontend.byService[b] || 0) - (r.undocumentedFrontend.byService[a] || 0)
   );
   for (const svc of sortedServices) {
     const total = r.undocumentedFrontend.byService[svc] || 0;
@@ -784,7 +819,7 @@ function generateMarkdownReport(r) {
     lines.push('| # | Service | Method | Path | File |');
     lines.push('|---|---------|--------|------|------|');
     r.undocumentedFrontend.rootCauses.RC4_unregistered.sample.slice(0, 30).forEach((item, i) => {
-      lines.push(`| ${i+1} | ${item.service} | ${item.method} | \`${item.fullPath}\` | ${item.file}:${item.line} |`);
+      lines.push(`| ${i + 1} | ${item.service} | ${item.method} | \`${item.fullPath}\` | ${item.file}:${item.line} |`);
     });
     lines.push('');
   }
@@ -796,7 +831,7 @@ function generateMarkdownReport(r) {
     lines.push('| # | Service | Method | Path | File |');
     lines.push('|---|---------|--------|------|------|');
     r.undocumentedFrontend.rootCauses.RC1_prefix_mismatch.sample.slice(0, 20).forEach((item, i) => {
-      lines.push(`| ${i+1} | ${item.service} | ${item.method} | \`${item.fullPath}\` | ${item.file}:${item.line} |`);
+      lines.push(`| ${i + 1} | ${item.service} | ${item.method} | \`${item.fullPath}\` | ${item.file}:${item.line} |`);
     });
     lines.push('');
   }
@@ -806,25 +841,39 @@ function generateMarkdownReport(r) {
   lines.push('');
   lines.push('### Phase 1: Quick Wins (Low Effort, High Impact)');
   lines.push('');
-  lines.push(`1. **Mark Category A (${r.unusedBackend.categories.A_health_internal.count}) as exempt** — health/internal endpoints are expected to be unused by frontend`);
-  lines.push(`2. **Mark Category B (${r.unusedBackend.categories.B_ai_stubs.count}) as exempt** — AI stub functions are not yet implemented`);
-  lines.push(`3. **Mark Category D (${r.unusedBackend.categories.D_deprecated_legacy.count}) as deprecated** — legacy analytics/report paths`);
+  lines.push(
+    `1. **Mark Category A (${r.unusedBackend.categories.A_health_internal.count}) as exempt** — health/internal endpoints are expected to be unused by frontend`
+  );
+  lines.push(
+    `2. **Mark Category B (${r.unusedBackend.categories.B_ai_stubs.count}) as exempt** — AI stub functions are not yet implemented`
+  );
+  lines.push(
+    `3. **Mark Category D (${r.unusedBackend.categories.D_deprecated_legacy.count}) as deprecated** — legacy analytics/report paths`
+  );
   lines.push('');
   lines.push('### Phase 2: Prefix Mismatch Fix (RC1)');
   lines.push('');
-  lines.push(`4. **Fix RC1 (${r.undocumentedFrontend.rootCauses.RC1_prefix_mismatch.count}) prefix mismatches** — align frontend API paths with backend conventions`);
+  lines.push(
+    `4. **Fix RC1 (${r.undocumentedFrontend.rootCauses.RC1_prefix_mismatch.count}) prefix mismatches** — align frontend API paths with backend conventions`
+  );
   lines.push('');
   lines.push('### Phase 3: Missing utoipa Annotations (RC2)');
   lines.push('');
-  lines.push(`5. **Add utoipa annotations for RC2 (${r.undocumentedFrontend.rootCauses.RC2_missing_utoipa.count}) routes** — backend routes exist but lack OpenAPI documentation`);
+  lines.push(
+    `5. **Add utoipa annotations for RC2 (${r.undocumentedFrontend.rootCauses.RC2_missing_utoipa.count}) routes** — backend routes exist but lack OpenAPI documentation`
+  );
   lines.push('');
   lines.push('### Phase 4: CRUD Bindings (Category C)');
   lines.push('');
-  lines.push(`6. **Add frontend bindings for Category C (${r.unusedBackend.categories.C_crud_should_bind.count}) CRUD endpoints** — prioritize high-value services`);
+  lines.push(
+    `6. **Add frontend bindings for Category C (${r.unusedBackend.categories.C_crud_should_bind.count}) CRUD endpoints** — prioritize high-value services`
+  );
   lines.push('');
   lines.push('### Phase 5: Unregistered Routes (RC4)');
   lines.push('');
-  lines.push(`7. **Triage RC4 (${r.undocumentedFrontend.rootCauses.RC4_unregistered.count}) unregistered routes** — determine if backend route needs to be created or frontend call should be removed`);
+  lines.push(
+    `7. **Triage RC4 (${r.undocumentedFrontend.rootCauses.RC4_unregistered.count}) unregistered routes** — determine if backend route needs to be created or frontend call should be removed`
+  );
 
   return lines.join('\n');
 }

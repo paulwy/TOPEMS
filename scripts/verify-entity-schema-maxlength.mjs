@@ -33,13 +33,13 @@
  *   node scripts/verify-entity-schema-maxlength.mjs --strict   # warnings → errors
  */
 
-import { readdirSync, readFileSync, existsSync } from "node:fs";
-import { join, extname } from "node:path";
+import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { join, extname } from 'node:path';
 
-const strict = process.argv.includes("--strict");
+const strict = process.argv.includes('--strict');
 
-const SVC_ROOT = "svc";
-const SCHEMAS_DIR = "apps/web/src/schemas";
+const SVC_ROOT = 'svc';
+const SCHEMAS_DIR = 'apps/web/src/schemas';
 
 // ============================================================
 // 1. Build VARCHAR(n) truth source from migrations
@@ -53,7 +53,7 @@ function walkSql(dir, out) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const p = join(dir, entry.name);
     if (entry.isDirectory()) walkSql(p, out);
-    else if (entry.isFile() && entry.name.endsWith(".sql")) out.push(p);
+    else if (entry.isFile() && entry.name.endsWith('.sql')) out.push(p);
   }
 }
 
@@ -61,9 +61,10 @@ const sqlFiles = [];
 walkSql(SVC_ROOT, sqlFiles);
 
 for (const file of sqlFiles) {
-  const src = readFileSync(file, "utf8");
+  const src = readFileSync(file, 'utf8');
   // CREATE TABLE blocks
-  const createRe = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:public\.)?["`]?([a-zA-Z0-9_]+)["`]?\s*\(([\s\S]*?)\)\s*(?:;|$)/gi;
+  const createRe =
+    /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:public\.)?["`]?([a-zA-Z0-9_]+)["`]?\s*\(([\s\S]*?)\)\s*(?:;|$)/gi;
   let cm;
   while ((cm = createRe.exec(src)) !== null) {
     const tableName = cm[1].toLowerCase();
@@ -82,7 +83,8 @@ for (const file of sqlFiles) {
     }
   }
   // ALTER TABLE ADD COLUMN
-  const alterRe = /ALTER\s+TABLE\s+(?:public\.)?["`]?([a-zA-Z0-9_]+)["`]?\s+ADD\s+(?:COLUMN\s+)?["`]?([a-zA-Z0-9_]+)["`]?\s+([A-Za-z][A-Za-z0-9_]*(?:\s*\([^)]*\))?)/gi;
+  const alterRe =
+    /ALTER\s+TABLE\s+(?:public\.)?["`]?([a-zA-Z0-9_]+)["`]?\s+ADD\s+(?:COLUMN\s+)?["`]?([a-zA-Z0-9_]+)["`]?\s+([A-Za-z][A-Za-z0-9_]*(?:\s*\([^)]*\))?)/gi;
   let am;
   while ((am = alterRe.exec(src)) !== null) {
     const tableName = am[1].toLowerCase();
@@ -104,17 +106,17 @@ function lookupFieldsForEntity(entity) {
   const e = entity.toLowerCase();
   const tries = [
     e,
-    e + "s",
-    e + "es",
-    e.endsWith("s") ? e.slice(0, -1) : null,
-    e.endsWith("ies") ? e.slice(0, -3) + "y" : null,
+    e + 's',
+    e + 'es',
+    e.endsWith('s') ? e.slice(0, -1) : null,
+    e.endsWith('ies') ? e.slice(0, -3) + 'y' : null,
   ].filter(Boolean);
   for (const t of tries) {
     if (truthByLower.has(t)) return truthByLower.get(t);
   }
   // Last resort: ignore underscores
   for (const [t, fields] of truthByLower) {
-    if (t.replace(/_/g, "") === e.replace(/_/g, "")) return fields;
+    if (t.replace(/_/g, '') === e.replace(/_/g, '')) return fields;
   }
   return null;
 }
@@ -125,7 +127,7 @@ function lookupFieldsForEntity(entity) {
 
 function walkSchemas(dir, out) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name === "_shared" || entry.name.startsWith(".")) continue;
+    if (entry.name === '_shared' || entry.name.startsWith('.')) continue;
     const p = join(dir, entry.name);
     if (entry.isDirectory()) walkSchemas(p, out);
     else if (entry.isFile() && /\.[tj]sx?$/.test(extname(entry.name))) out.push(p);
@@ -142,7 +144,7 @@ let checkedFiles = 0;
 let matchedTables = 0;
 
 for (const file of schemaFiles) {
-  const src = readFileSync(file, "utf8");
+  const src = readFileSync(file, 'utf8');
   const entityMatch = src.match(/entity:\s*['"`]([^'"`]+)['"`]/);
   if (!entityMatch) continue;
   const entity = entityMatch[1];
@@ -158,8 +160,8 @@ for (const file of schemaFiles) {
     const block = m[0];
     const fieldName = m[1];
     const tm = block.match(/type:\s*['"`]([^'"`]+)['"`]/);
-    const type = tm ? tm[1] : "";
-    if (!["text", "textarea", "email"].includes(type)) continue;
+    const type = tm ? tm[1] : '';
+    if (!['text', 'textarea', 'email'].includes(type)) continue;
     if (/hideInForm:\s*true/.test(block)) continue;
     checkedFields++;
 
@@ -169,15 +171,15 @@ for (const file of schemaFiles) {
 
     const hasMaxLength = /maxLength/.test(block);
     if (!hasMaxLength) {
-      const line = src.slice(0, m.index).split("\n").length;
+      const line = src.slice(0, m.index).split('\n').length;
       errors.push({
-        file: file.replace(SCHEMAS_DIR + "/", ""),
+        file: file.replace(SCHEMAS_DIR + '/', ''),
         entity,
         field: fieldName,
         type,
         expected: truthN,
         line,
-        reason: "VARCHAR(n) column has no matching maxLength validation",
+        reason: 'VARCHAR(n) column has no matching maxLength validation',
       });
       continue;
     }
@@ -188,12 +190,12 @@ for (const file of schemaFiles) {
       const actual = parseInt(vm[1], 10);
       if (actual !== truthN) {
         warnings.push({
-          file: file.replace(SCHEMAS_DIR + "/", ""),
+          file: file.replace(SCHEMAS_DIR + '/', ''),
           entity,
           field: fieldName,
           expected: truthN,
           actual,
-          reason: "maxLength differs from SQL VARCHAR(n)",
+          reason: 'maxLength differs from SQL VARCHAR(n)',
         });
       }
     }
@@ -213,14 +215,14 @@ console.log(`[verify-entity-schema-maxlength] errors:   ${errors.length}`);
 console.log(`[verify-entity-schema-maxlength] warnings: ${warnings.length}`);
 
 if (warnings.length) {
-  console.log("\n--- warnings (maxLength ≠ VARCHAR(n)) ---");
+  console.log('\n--- warnings (maxLength ≠ VARCHAR(n)) ---');
   for (const w of warnings) {
     console.log(`  ${rel(w.file)} :: ${w.entity}.${w.field}  expected=${w.expected} actual=${w.actual}`);
   }
 }
 
 if (errors.length) {
-  console.log("\n--- errors (missing maxLength for VARCHAR column) ---");
+  console.log('\n--- errors (missing maxLength for VARCHAR column) ---');
   for (const e of errors) {
     console.log(`  ${rel(e.file)}:${e.line} :: ${e.entity}.${e.field}  expected maxLength=${e.expected}`);
   }
@@ -228,7 +230,7 @@ if (errors.length) {
 }
 
 if (strict && warnings.length) {
-  console.log("\n--strict mode: warnings treated as errors.");
+  console.log('\n--strict mode: warnings treated as errors.');
   process.exit(1);
 }
 

@@ -102,8 +102,13 @@ function processFile(filePath) {
     }
 
     // If we're inside an array or object literal (not a function body), remove
-    if (scopeType === 'object_in_array' || scopeType === 'object_value' ||
-        prevEndsWithComma || prevIsObjectStart || prevIsArrayStart) {
+    if (
+      scopeType === 'object_in_array' ||
+      scopeType === 'object_value' ||
+      prevEndsWithComma ||
+      prevIsObjectStart ||
+      prevIsArrayStart
+    ) {
       lines[i] = '';
       modified = true;
       removed++;

@@ -103,8 +103,8 @@ pub async fn validate_columns(
 
     let missing: Vec<String> = columns
         .iter()
+        .filter(|&c| !allowed.contains(c))
         .cloned()
-        .filter(|c| !allowed.contains(c))
         .collect();
 
     if missing.is_empty() {

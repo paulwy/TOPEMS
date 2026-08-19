@@ -16,7 +16,8 @@ const args = process.argv.slice(2);
 const dryRun = args.includes('--dry');
 const verbose = args.includes('--verbose');
 const WEB_SRC = path.resolve('apps/web/src');
-const SKIP_RE = /\/(node_modules|dist|build|__tests__|\.stories\.|theme\/tokens|theme\/generated|theme\/gradients|design-system\/tokens)\//;
+const SKIP_RE =
+  /\/(node_modules|dist|build|__tests__|\.stories\.|theme\/tokens|theme\/generated|theme\/gradients|design-system\/tokens)\//;
 
 // Extended color maps (includes new values from pass 1 analysis)
 const RGBA_MAP = {
@@ -236,34 +237,36 @@ const HEX_MAP = {
 };
 
 const SHADOW_MAP = {
-  "0 1px 2px 0 rgba(0,0,0,0.03)": 'designTokens.shadows.xs',
-  "0 1px 3px 0 rgba(0,0,0,0.1)": 'designTokens.shadows.sm',
-  "0 1px 3px rgba(0, 0, 0, 0.05)": 'designTokens.shadows.sm',
-  "0 4px 6px -1px rgba(0,0,0,0.1)": 'designTokens.shadows.md',
-  "0 10px 15px -3px rgba(0,0,0,0.1)": 'designTokens.shadows.lg',
-  "0 10px 15px -3px rgba(0,0,0,0.05)": 'designTokens.shadows.lg',
-  "0 20px 25px -5px rgba(0,0,0,0.1)": 'designTokens.shadows.xl',
-  "0 25px 50px -12px rgba(0,0,0,0.25)": "designTokens.shadows[\"2xl\"]",
-  "0 20px 60px rgba(0,0,0,0.3)": 'designTokens.darkShadows.xl',
-  "0 24px 80px rgba(0,0,0,0.4)": "designTokens.darkShadows[\"3xl\"]",
-  "0 2px 8px rgba(0,0,0,0.1)": 'designTokens.shadows.sm',
-  "0 2px 8px rgba(0,0,0,0.15)": 'designTokens.shadows.sm',
-  "0 0 0 2px rgba(0,0,0,0.1)": 'designTokens.shadows.xs',
-  "0 8px 25px rgba(0, 0, 0, 0.15)": 'designTokens.shadows.lg',
-  "0 4px 15px rgba(0, 0, 0, 0.1)": 'designTokens.shadows.md',
-  "0 1px 2px rgba(0,0,0,0.1)": 'designTokens.shadows.xs',
-  "inset 0 2px 4px rgba(0, 0, 0, 0.2)": "designTokens.shadows[\"inset\"]",
-  "0 2px 4px rgba(0,0,0,0.2)": 'designTokens.shadows.sm',
-  "0 1px 2px rgba(0,0,0,0.06)": 'designTokens.shadows.xs',
-  "0 0 0 3px rgba(0,0,0,0.1)": 'designTokens.shadows.xs',
-  "0 0 0 3px rgba(59,130,246,0.2)": 'designTokens.shadows.xs',
-  "0 0 0 2px rgba(59,130,246,0.2)": 'designTokens.shadows.xs',
+  '0 1px 2px 0 rgba(0,0,0,0.03)': 'designTokens.shadows.xs',
+  '0 1px 3px 0 rgba(0,0,0,0.1)': 'designTokens.shadows.sm',
+  '0 1px 3px rgba(0, 0, 0, 0.05)': 'designTokens.shadows.sm',
+  '0 4px 6px -1px rgba(0,0,0,0.1)': 'designTokens.shadows.md',
+  '0 10px 15px -3px rgba(0,0,0,0.1)': 'designTokens.shadows.lg',
+  '0 10px 15px -3px rgba(0,0,0,0.05)': 'designTokens.shadows.lg',
+  '0 20px 25px -5px rgba(0,0,0,0.1)': 'designTokens.shadows.xl',
+  '0 25px 50px -12px rgba(0,0,0,0.25)': 'designTokens.shadows["2xl"]',
+  '0 20px 60px rgba(0,0,0,0.3)': 'designTokens.darkShadows.xl',
+  '0 24px 80px rgba(0,0,0,0.4)': 'designTokens.darkShadows["3xl"]',
+  '0 2px 8px rgba(0,0,0,0.1)': 'designTokens.shadows.sm',
+  '0 2px 8px rgba(0,0,0,0.15)': 'designTokens.shadows.sm',
+  '0 0 0 2px rgba(0,0,0,0.1)': 'designTokens.shadows.xs',
+  '0 8px 25px rgba(0, 0, 0, 0.15)': 'designTokens.shadows.lg',
+  '0 4px 15px rgba(0, 0, 0, 0.1)': 'designTokens.shadows.md',
+  '0 1px 2px rgba(0,0,0,0.1)': 'designTokens.shadows.xs',
+  'inset 0 2px 4px rgba(0, 0, 0, 0.2)': 'designTokens.shadows["inset"]',
+  '0 2px 4px rgba(0,0,0,0.2)': 'designTokens.shadows.sm',
+  '0 1px 2px rgba(0,0,0,0.06)': 'designTokens.shadows.xs',
+  '0 0 0 3px rgba(0,0,0,0.1)': 'designTokens.shadows.xs',
+  '0 0 0 3px rgba(59,130,246,0.2)': 'designTokens.shadows.xs',
+  '0 0 0 2px rgba(59,130,246,0.2)': 'designTokens.shadows.xs',
 };
 
-let totalReplaced = 0, filesFixed = 0;
+let totalReplaced = 0,
+  filesFixed = 0;
 
 function getLastImport(lines) {
-  let last = -1, inBlock = false;
+  let last = -1,
+    inBlock = false;
   for (let i = 0; i < lines.length; i++) {
     const t = lines[i].trim();
     if (t.startsWith('import ')) {
@@ -271,15 +274,18 @@ function getLastImport(lines) {
       if (t.includes('{') && !t.includes('}')) inBlock = true;
       else if (t.endsWith(';')) inBlock = false;
     } else if (inBlock) {
-      if (t.endsWith(';')) { last = i; inBlock = false; }
+      if (t.endsWith(';')) {
+        last = i;
+        inBlock = false;
+      }
     } else if (last >= 0 && !t.startsWith('import') && t !== '') break;
   }
   return last;
 }
 
 function ensureImport(lines) {
-  const hasDesignTokens = lines.some(l => /import\s+\{[^}]*designTokens/.test(l) || /import\s+designTokens/.test(l));
-  const usesDesignTokens = lines.some(l => /designTokens\./.test(l) && !/import/.test(l));
+  const hasDesignTokens = lines.some((l) => /import\s+\{[^}]*designTokens/.test(l) || /import\s+designTokens/.test(l));
+  const usesDesignTokens = lines.some((l) => /designTokens\./.test(l) && !/import/.test(l));
   if (usesDesignTokens && !hasDesignTokens) {
     const last = getLastImport(lines);
     if (last >= 0) {
@@ -307,7 +313,8 @@ function walk(dir) {
 function processFile(filePath) {
   let content = fs.readFileSync(filePath, 'utf8');
   let lines = content.split('\n');
-  let modified = false, count = 0;
+  let modified = false,
+    count = 0;
 
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i];
@@ -323,16 +330,18 @@ function processFile(filePath) {
       const re = new RegExp(`'(var\\([^)]*,\\s*)${escaped}(\\s*)\\)'`, 'g');
       if (re.test(newLine)) {
         newLine = newLine.replace(re, '`$1${' + token + '}$2`');
-        count++; modified = true;
-        if (verbose) console.log(`  [var-hex] ${path.relative(WEB_SRC, filePath)}:${i+1} ${hex}`);
+        count++;
+        modified = true;
+        if (verbose) console.log(`  [var-hex] ${path.relative(WEB_SRC, filePath)}:${i + 1} ${hex}`);
       }
       re.lastIndex = 0;
       // Also handle double quotes
       const re2 = new RegExp(`"(var\\([^)]*,\\s*)${escaped}(\\s*)\\)"`, 'g');
       if (re2.test(newLine)) {
         newLine = newLine.replace(re2, '`$1${' + token + '}$2`');
-        count++; modified = true;
-        if (verbose) console.log(`  [var-hex-dq] ${path.relative(WEB_SRC, filePath)}:${i+1} ${hex}`);
+        count++;
+        modified = true;
+        if (verbose) console.log(`  [var-hex-dq] ${path.relative(WEB_SRC, filePath)}:${i + 1} ${hex}`);
       }
       re2.lastIndex = 0;
     }
@@ -343,8 +352,9 @@ function processFile(filePath) {
       const re = new RegExp(`'(var\\([^)]*,\\s*)${escaped}(\\s*)\\)'`, 'g');
       if (re.test(newLine)) {
         newLine = newLine.replace(re, '`$1${' + token + '}$2`');
-        count++; modified = true;
-        if (verbose) console.log(`  [var-rgba] ${path.relative(WEB_SRC, filePath)}:${i+1} ${rgba}`);
+        count++;
+        modified = true;
+        if (verbose) console.log(`  [var-rgba] ${path.relative(WEB_SRC, filePath)}:${i + 1} ${rgba}`);
       }
       re.lastIndex = 0;
     }
@@ -355,8 +365,9 @@ function processFile(filePath) {
       const re = new RegExp(`'(var\\([^)]*,\\s*)${escaped}(\\s*)\\)'`, 'g');
       if (re.test(newLine)) {
         newLine = newLine.replace(re, '`$1${' + token + '}$2`');
-        count++; modified = true;
-        if (verbose) console.log(`  [var-shadow] ${path.relative(WEB_SRC, filePath)}:${i+1}`);
+        count++;
+        modified = true;
+        if (verbose) console.log(`  [var-shadow] ${path.relative(WEB_SRC, filePath)}:${i + 1}`);
       }
       re.lastIndex = 0;
     }
@@ -367,16 +378,18 @@ function processFile(filePath) {
       const re = new RegExp(`'${escaped}'`, 'g');
       if (re.test(newLine) && !newLine.includes('var(')) {
         newLine = newLine.replace(re, token);
-        count++; modified = true;
-        if (verbose) console.log(`  [hex-sq] ${path.relative(WEB_SRC, filePath)}:${i+1} ${hex}`);
+        count++;
+        modified = true;
+        if (verbose) console.log(`  [hex-sq] ${path.relative(WEB_SRC, filePath)}:${i + 1} ${hex}`);
       }
       re.lastIndex = 0;
       // Double-quoted
       const re2 = new RegExp(`"${escaped}"`, 'g');
       if (re2.test(newLine) && !newLine.includes('var(')) {
         newLine = newLine.replace(re2, token);
-        count++; modified = true;
-        if (verbose) console.log(`  [hex-dq] ${path.relative(WEB_SRC, filePath)}:${i+1} ${hex}`);
+        count++;
+        modified = true;
+        if (verbose) console.log(`  [hex-dq] ${path.relative(WEB_SRC, filePath)}:${i + 1} ${hex}`);
       }
       re2.lastIndex = 0;
     }
@@ -387,15 +400,17 @@ function processFile(filePath) {
       const re = new RegExp(`'${escaped}'`, 'g');
       if (re.test(newLine) && !newLine.includes('var(')) {
         newLine = newLine.replace(re, token);
-        count++; modified = true;
-        if (verbose) console.log(`  [rgba-sq] ${path.relative(WEB_SRC, filePath)}:${i+1} ${rgba}`);
+        count++;
+        modified = true;
+        if (verbose) console.log(`  [rgba-sq] ${path.relative(WEB_SRC, filePath)}:${i + 1} ${rgba}`);
       }
       re.lastIndex = 0;
       const re2 = new RegExp(`"${escaped}"`, 'g');
       if (re2.test(newLine) && !newLine.includes('var(')) {
         newLine = newLine.replace(re2, token);
-        count++; modified = true;
-        if (verbose) console.log(`  [rgba-dq] ${path.relative(WEB_SRC, filePath)}:${i+1} ${rgba}`);
+        count++;
+        modified = true;
+        if (verbose) console.log(`  [rgba-dq] ${path.relative(WEB_SRC, filePath)}:${i + 1} ${rgba}`);
       }
       re2.lastIndex = 0;
     }
@@ -408,8 +423,9 @@ function processFile(filePath) {
       for (const re of [re1, re2]) {
         if (re.test(newLine)) {
           newLine = newLine.replace(re, `boxShadow: ${token}`);
-          count++; modified = true;
-          if (verbose) console.log(`  [shadow] ${path.relative(WEB_SRC, filePath)}:${i+1}`);
+          count++;
+          modified = true;
+          if (verbose) console.log(`  [shadow] ${path.relative(WEB_SRC, filePath)}:${i + 1}`);
         }
         re.lastIndex = 0;
       }
@@ -421,8 +437,9 @@ function processFile(filePath) {
       const re = new RegExp(`(['"])(\\d+px\\s+\\w+\\s+)${escaped}(['"])`, 'g');
       if (re.test(newLine) && !newLine.includes('designTokens') && !newLine.includes('var(')) {
         newLine = newLine.replace(re, '`$2${' + token + '}`');
-        count++; modified = true;
-        if (verbose) console.log(`  [border-hex] ${path.relative(WEB_SRC, filePath)}:${i+1} ${hex}`);
+        count++;
+        modified = true;
+        if (verbose) console.log(`  [border-hex] ${path.relative(WEB_SRC, filePath)}:${i + 1} ${hex}`);
       }
       re.lastIndex = 0;
     }
@@ -433,8 +450,9 @@ function processFile(filePath) {
       const re = new RegExp(`(['"])([^'"]*\\s)${escaped}(['"])`, 'g');
       if (re.test(newLine) && !newLine.includes('designTokens') && !newLine.includes('var(')) {
         newLine = newLine.replace(re, '`$2${' + token + '}`');
-        count++; modified = true;
-        if (verbose) console.log(`  [border-rgba] ${path.relative(WEB_SRC, filePath)}:${i+1} ${rgba}`);
+        count++;
+        modified = true;
+        if (verbose) console.log(`  [border-rgba] ${path.relative(WEB_SRC, filePath)}:${i + 1} ${rgba}`);
       }
       re.lastIndex = 0;
     }
@@ -449,8 +467,9 @@ function processFile(filePath) {
           // Check if this hex is NOT already a ${designTokens...} reference
           if (!newLine.includes(`\${${token}}`)) {
             newLine = newLine.replace(re, `\${${token}}`);
-            count++; modified = true;
-            if (verbose) console.log(`  [hex-tmpl] ${path.relative(WEB_SRC, filePath)}:${i+1} ${hex}`);
+            count++;
+            modified = true;
+            if (verbose) console.log(`  [hex-tmpl] ${path.relative(WEB_SRC, filePath)}:${i + 1} ${hex}`);
           }
         }
         re.lastIndex = 0;
@@ -464,8 +483,9 @@ function processFile(filePath) {
         const re = new RegExp(`(?<!\\$\\{[^}]*|['"])${escaped}(?![\\w-])`, 'g');
         if (re.test(newLine) && !newLine.includes(`\${${token}}`)) {
           newLine = newLine.replace(re, `\${${token}}`);
-          count++; modified = true;
-          if (verbose) console.log(`  [rgba-tmpl] ${path.relative(WEB_SRC, filePath)}:${i+1} ${rgba}`);
+          count++;
+          modified = true;
+          if (verbose) console.log(`  [rgba-tmpl] ${path.relative(WEB_SRC, filePath)}:${i + 1} ${rgba}`);
         }
         re.lastIndex = 0;
       }
@@ -478,8 +498,9 @@ function processFile(filePath) {
         const re = new RegExp(escaped, 'g');
         if (re.test(newLine) && !newLine.includes(`\${${token}}`)) {
           newLine = newLine.replace(re, `\${${token}}`);
-          count++; modified = true;
-          if (verbose) console.log(`  [gradient-hex] ${path.relative(WEB_SRC, filePath)}:${i+1} ${hex}`);
+          count++;
+          modified = true;
+          if (verbose) console.log(`  [gradient-hex] ${path.relative(WEB_SRC, filePath)}:${i + 1} ${hex}`);
         }
         re.lastIndex = 0;
       }
@@ -498,7 +519,7 @@ function processFile(filePath) {
   }
 }
 
-const files = walk(WEB_SRC).filter(f => !SKIP_RE.test(f));
+const files = walk(WEB_SRC).filter((f) => !SKIP_RE.test(f));
 for (const f of files) {
   processFile(f);
 }

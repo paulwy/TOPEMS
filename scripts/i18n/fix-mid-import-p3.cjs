@@ -16,7 +16,11 @@ function walk(dir) {
     if (entry.isDirectory()) {
       if (['node_modules', 'dist', 'build', '__tests__'].includes(entry.name)) continue;
       results.push(...walk(path.join(dir, entry.name)));
-    } else if (/\.[mc]?[tj]sx?$/.test(entry.name) && !entry.name.endsWith('.test.ts') && !entry.name.endsWith('.test.tsx')) {
+    } else if (
+      /\.[mc]?[tj]sx?$/.test(entry.name) &&
+      !entry.name.endsWith('.test.ts') &&
+      !entry.name.endsWith('.test.tsx')
+    ) {
       results.push(path.join(dir, entry.name));
     }
   }
@@ -68,7 +72,7 @@ for (const filePath of walk(WEB_ROOT)) {
 
   if (modified) {
     // Clean up empty lines
-    const cleaned = lines.filter(l => l !== '');
+    const cleaned = lines.filter((l) => l !== '');
     filesFixed++;
     fs.writeFileSync(filePath, cleaned.join('\n'), 'utf-8');
   }

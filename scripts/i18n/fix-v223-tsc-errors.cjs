@@ -77,8 +77,11 @@ for (const relPath of errorFiles) {
   // Get git HEAD version
   let originalContent;
   try {
-    originalContent = execSync(`git show HEAD:apps/web/src/${relPath}`, { cwd: path.resolve(__dirname, '../..'), encoding: 'utf-8' });
-  } catch(e) {
+    originalContent = execSync(`git show HEAD:apps/web/src/${relPath}`, {
+      cwd: path.resolve(__dirname, '../..'),
+      encoding: 'utf-8',
+    });
+  } catch (e) {
     console.log(`SKIP (git error): ${relPath}`);
     continue;
   }
@@ -106,12 +109,18 @@ for (const relPath of errorFiles) {
 
     // Find the corresponding original line
     // Try to match by looking at nearby lines in the original
-    const currentTrimmed = line.trim().replace(/i18n\.t\([^)]*\)/g, '').replace(/[\s{}()`,]/g, '');
+    const currentTrimmed = line
+      .trim()
+      .replace(/i18n\.t\([^)]*\)/g, '')
+      .replace(/[\s{}()`,]/g, '');
     let bestMatchIdx = -1;
     let bestScore = 0;
 
     for (let j = 0; j < originalLines.length; j++) {
-      const origTrimmed = originalLines[j].trim().replace(/[\u4e00-\u9fff\u3400-\u4dbf]/g, '').replace(/[\s{}()`,]/g, '');
+      const origTrimmed = originalLines[j]
+        .trim()
+        .replace(/[\u4e00-\u9fff\u3400-\u4dbf]/g, '')
+        .replace(/[\s{}()`,]/g, '');
       // Calculate similarity
       let score = 0;
       const minLen = Math.min(currentTrimmed.length, origTrimmed.length);
@@ -173,23 +182,23 @@ for (const relPath of errorFiles) {
 
         if (inTemplate) {
           // Inside template literal: 中文${expr} -> ${i18n.t('key')}${expr}
-          fixedLine = before.substring(0, match.index) + '${i18n.t(\'' + key + '\')}' + after;
+          fixedLine = before.substring(0, match.index) + "${i18n.t('" + key + "')}" + after;
         } else if (inSingleString) {
           // Inside single-quoted string: replace with i18n.t() outside string
           // This is tricky - skip for now, handle manually
           continue;
         } else if (inJsxText) {
           // JSX text: >中文< -> >{i18n.t('key')}<
-          fixedLine = before.substring(0, match.index) + '{i18n.t(\'' + key + '\')}' + after;
+          fixedLine = before.substring(0, match.index) + "{i18n.t('" + key + "')}" + after;
         } else {
           // String value: '中文' -> i18n.t('key') or {i18n.t('key')}
           // Check if it's in a JSX attribute value
           if (before.trimEnd().match(/=\s*$/)) {
             // JSX attribute: label='中文' -> label={i18n.t('key')}
-            fixedLine = before.substring(0, match.index) + '{i18n.t(\'' + key + '\')}' + after;
+            fixedLine = before.substring(0, match.index) + "{i18n.t('" + key + "')}" + after;
           } else {
             // Regular string value
-            fixedLine = before.substring(0, match.index) + 'i18n.t(\'' + key + '\')' + after;
+            fixedLine = before.substring(0, match.index) + "i18n.t('" + key + "')" + after;
           }
         }
       }

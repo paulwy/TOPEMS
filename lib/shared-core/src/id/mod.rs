@@ -3,6 +3,7 @@
 //! 为 5 大主数据域生成语义化 ID，格式为 `{prefix}-{uuid}`。
 //! 如 `cust-550e8400-e29b-41d4-a716-446655440000`。
 
+use std::str::FromStr;
 use uuid::Uuid;
 
 /// 主数据领域（用于 ID 生成）
@@ -16,6 +17,17 @@ pub enum MasterDataDomain {
     AccountSubject,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParseMasterDataDomainError(pub String);
+
+impl std::fmt::Display for ParseMasterDataDomainError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "invalid master data domain: {}", self.0)
+    }
+}
+
+impl std::error::Error for ParseMasterDataDomainError {}
+
 impl MasterDataDomain {
     pub fn prefix(&self) -> &'static str {
         match self {
@@ -28,15 +40,30 @@ impl MasterDataDomain {
         }
     }
 
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn table(&self) -> &'static str {
+        match self {
+            Self::Customer => "customers",
+            Self::Supplier => "suppliers",
+            Self::Material => "materials",
+            Self::Organization => "organizations",
+            Self::Employee => "employees",
+            Self::AccountSubject => "account_subjects",
+        }
+    }
+}
+
+impl FromStr for MasterDataDomain {
+    type Err = ParseMasterDataDomainError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "customer" => Some(Self::Customer),
-            "supplier" => Some(Self::Supplier),
-            "material" => Some(Self::Material),
-            "organization" => Some(Self::Organization),
-            "employee" => Some(Self::Employee),
-            "account_subject" => Some(Self::AccountSubject),
-            _ => None,
+            "customer" | "customers" | "cust" => Ok(Self::Customer),
+            "supplier" | "suppliers" | "supp" => Ok(Self::Supplier),
+            "material" | "materials" | "mat" => Ok(Self::Material),
+            "organization" | "organizations" | "org" => Ok(Self::Organization),
+            "employee" | "employees" | "emp" => Ok(Self::Employee),
+            "account_subject" | "account_subjects" | "acct" => Ok(Self::AccountSubject),
+            _ => Err(ParseMasterDataDomainError(s.to_string())),
         }
     }
 }

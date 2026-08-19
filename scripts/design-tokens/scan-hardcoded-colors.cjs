@@ -44,7 +44,10 @@ function walkDir(dir, out = []) {
         const rel = path.relative(ROOT, fp);
         let exempt = false;
         for (const pat of EXEMPT_DIR_PATTERNS) {
-          if (pat.test(rel)) { exempt = true; break; }
+          if (pat.test(rel)) {
+            exempt = true;
+            break;
+          }
         }
         if (!exempt) out.push(fp);
       }
@@ -125,7 +128,11 @@ function main() {
   for (const fp of files) {
     const rel = path.relative(ROOT, fp);
     let src;
-    try { src = fs.readFileSync(fp, 'utf8'); } catch { continue; }
+    try {
+      src = fs.readFileSync(fp, 'utf8');
+    } catch {
+      continue;
+    }
 
     const fileResult = { colors: [], shadows: [] };
 
@@ -160,23 +167,33 @@ function main() {
       if (/(?:const|let|var)\s+(?:[A-Z_0-9]+,\s*)*$/.test(ctxLeft) && /^\s*=/.test(ctxRight)) continue;
       if (/(?:type|interface|enum)\s+\w+.*$/.test(ctxLeft)) continue;
       const ctxSlice = src.slice(Math.max(0, m.index - 80), m.index + m[0].length + 40);
-      if (/\b(color|bg|background|border)\s*[:=].*\b/i.test(ctxSlice) || /style=\s*\{\s*\{[^}]*\b(color|backgroundColor|borderColor)\s*:/i.test(ctxSlice)) {
+      if (
+        /\b(color|bg|background|border)\s*[:=].*\b/i.test(ctxSlice) ||
+        /style=\s*\{\s*\{[^}]*\b(color|backgroundColor|borderColor)\s*:/i.test(ctxSlice)
+      ) {
         const preCtx = src.slice(Math.max(0, m.index - 200), m.index);
         const postCtx = src.slice(m.index + m[0].length, Math.min(src.length, m.index + m[0].length + 200));
-        const inQuote = (q => {
+        const inQuote = (q) => {
           const start = preCtx.lastIndexOf(q);
           const endMatch = postCtx.indexOf(q);
-          const lastEscape = preCtx.split('').reverse().join('').search(/[^\\](\\\\)*$/);
+          const lastEscape = preCtx
+            .split('')
+            .reverse()
+            .join('')
+            .search(/[^\\](\\\\)*$/);
           return start !== -1 && endMatch !== -1 && lastEscape === -1;
-        });
+        };
         if (inQuote("'") || inQuote('"') || inQuote('`')) {
           const si1 = preCtx.search(/['"`]$/);
           const leftIdx = Math.max(preCtx.lastIndexOf("'"), preCtx.lastIndexOf('"'), preCtx.lastIndexOf('`'));
-          const rightIdx = m.index + m[0].length + Math.min(
-            postCtx.indexOf("'") === -1 ? 9999 : postCtx.indexOf("'"),
-            postCtx.indexOf('"') === -1 ? 9999 : postCtx.indexOf('"'),
-            postCtx.indexOf('`') === -1 ? 9999 : postCtx.indexOf('`')
-          );
+          const rightIdx =
+            m.index +
+            m[0].length +
+            Math.min(
+              postCtx.indexOf("'") === -1 ? 9999 : postCtx.indexOf("'"),
+              postCtx.indexOf('"') === -1 ? 9999 : postCtx.indexOf('"'),
+              postCtx.indexOf('`') === -1 ? 9999 : postCtx.indexOf('`')
+            );
           const strContent = src.slice(leftIdx + 1, rightIdx);
           if (strContent.includes('.')) continue;
         }
@@ -215,7 +232,12 @@ function main() {
   }
 
   const byColorArr = Object.entries(byColor)
-    .map(([hex, info]) => ({ hex, count: info.count, category: info.category, variants: [...info.raw_variants].join('|') }))
+    .map(([hex, info]) => ({
+      hex,
+      count: info.count,
+      category: info.category,
+      variants: [...info.raw_variants].join('|'),
+    }))
     .sort((a, b) => b.count - a.count);
   const byShadowArr = Object.entries(byShadow)
     .map(([sv, info]) => ({ short: sv, full: info.full, count: info.count }))

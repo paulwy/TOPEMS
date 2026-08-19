@@ -31,8 +31,9 @@ const AI_MODULE_DIR = 'apps/web/src/pages/ai/';
 
 function globTsx(rootDir) {
   if (!existsSync(rootDir)) return [];
-  return execSync(`find '${rootDir}' -type f \\( -name '*.tsx' -o -name '*.ts' \\) -print0`,
-    { encoding: 'utf8' }).split('\0').filter(Boolean);
+  return execSync(`find '${rootDir}' -type f \\( -name '*.tsx' -o -name '*.ts' \\) -print0`, { encoding: 'utf8' })
+    .split('\0')
+    .filter(Boolean);
 }
 
 function findAllNavigateCalls(files) {
@@ -87,7 +88,8 @@ function checkContextInjection(filePath, lineNum, charIndex) {
     }
   }
 
-  const snippet = lines.slice(Math.max(0, lineNum - 6), Math.min(lines.length, lineNum + 2))
+  const snippet = lines
+    .slice(Math.max(0, lineNum - 6), Math.min(lines.length, lineNum + 2))
     .map((l, idx) => `    ${String(lineNum - 5 + idx).padStart(4)}: ${l}`)
     .join('\n');
 
@@ -95,7 +97,11 @@ function checkContextInjection(filePath, lineNum, charIndex) {
 }
 
 async function selfTest() {
-  const cyan = '\x1b[36m', green = '\x1b[32m', yellow = '\x1b[33m', red = '\x1b[31m', reset = '\x1b[0m';
+  const cyan = '\x1b[36m',
+    green = '\x1b[32m',
+    yellow = '\x1b[33m',
+    red = '\x1b[31m',
+    reset = '\x1b[0m';
   console.log(`${cyan}===== 导航架构 §15.2 L554：AI 上下文注入检查 =====${reset}`);
 
   const files = SCAN_ROOTS.flatMap(globTsx);
@@ -127,7 +133,9 @@ async function selfTest() {
     if (result.compliant) {
       stat.compliant++;
       compliantList.push({ ...call, ...result });
-      console.log(`  [${green}OK${reset}]  ${call.file}:${call.line}  上下文注入：L${result.contextLine} (${result.pattern.slice(0, 40)}...)`);
+      console.log(
+        `  [${green}OK${reset}]  ${call.file}:${call.line}  上下文注入：L${result.contextLine} (${result.pattern.slice(0, 40)}...)`
+      );
     } else {
       stat.violations++;
       violations.push({ ...call, ...result });
@@ -138,10 +146,10 @@ async function selfTest() {
   }
 
   console.log(
-    `\n${cyan}统计${reset}：调用点总数=${stat.total}`
-    + ` · 豁免=${yellow}${stat.exempted}${reset}`
-    + ` · 合规=${green}${stat.compliant}${reset}`
-    + ` · 违规=${red}${stat.violations}${reset}`
+    `\n${cyan}统计${reset}：调用点总数=${stat.total}` +
+      ` · 豁免=${yellow}${stat.exempted}${reset}` +
+      ` · 合规=${green}${stat.compliant}${reset}` +
+      ` · 违规=${red}${stat.violations}${reset}`
   );
 
   if (stat.violations === 0) {
@@ -163,5 +171,5 @@ async function selfTest() {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  selfTest().then(r => process.exit(r));
+  selfTest().then((r) => process.exit(r));
 }

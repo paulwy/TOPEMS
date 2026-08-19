@@ -51,15 +51,7 @@ const TEMPLATES = [
 ];
 
 // CRUD 型页面关键词（页面名包含这些词的，建议用标准模板）
-const CRUD_KEYWORDS = [
-  'Management',
-  'List',
-  'Table',
-  'Crud',
-  'Catalog',
-  'Inventory',
-  'Record',
-];
+const CRUD_KEYWORDS = ['Management', 'List', 'Table', 'Crud', 'Catalog', 'Inventory', 'Record'];
 
 // V64.3: 特殊功能页白名单 — 这些页面豁免标准化检查
 // 原因：登录/错误/性能基准等页面运行在框架外或刻意不依赖主框架
@@ -244,9 +236,8 @@ function main() {
 
   // V64.3: 模块统计和标准化率都基于"纯页面"，避免组件文件污染
   // 白名单页面计入"标准化"分子，分母为纯页面总数
-  report.standardization_rate = pageFilesAll.length > 0
-    ? Math.round((report.standardized / pageFilesAll.length) * 100)
-    : 0;
+  report.standardization_rate =
+    pageFilesAll.length > 0 ? Math.round((report.standardized / pageFilesAll.length) * 100) : 0;
   // 兼容旧字段（page_only_rate 旧脚本有引用）
   report.overall_standardization_rate = report.standardization_rate;
   report.page_only_total = pageFilesAll.length;
@@ -291,9 +282,7 @@ function main() {
     const thresholdArg = args.find((a) => a.startsWith('--threshold='));
     const threshold = thresholdArg ? Number(thresholdArg.split('=')[1]) : 95;
     // 只列"非白名单且未标准化"的页面（白名单页面不报警）
-    const notStandardizedPages = report.files.filter(
-      (f) => !f.uses_template && !f.whitelisted
-    );
+    const notStandardizedPages = report.files.filter((f) => !f.uses_template && !f.whitelisted);
     if (notStandardizedPages.length > 0) {
       console.log('');
       console.log(`未标准化纯页面清单（${notStandardizedPages.length} 个，不含白名单）：`);

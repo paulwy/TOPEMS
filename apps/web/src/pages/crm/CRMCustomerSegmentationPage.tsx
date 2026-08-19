@@ -8,13 +8,15 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { customerSegmentationSchema } from '@/schemas/crm';
 import {
-  type CustomerSegment,
-  type CreateSegmentRequest,
-  type SegmentCriteria,
   crmApi,
   useCrmMock,
-  type SegmentationData,
-  type Period,
+} from '@/api/crm';
+import type {
+  CustomerSegment,
+  CreateSegmentRequest,
+  SegmentCriteria,
+  SegmentationData,
+  Period,
 } from '@/api/crm';
 import { CRM_PATHS } from '@/modules/crm/config';
 import i18n from '@/i18n';

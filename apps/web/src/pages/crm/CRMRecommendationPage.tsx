@@ -30,12 +30,14 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef } from '@/components/templates/list/types';
 import { recommendationSchema } from '@/schemas/crm';
 import {
-  type RecommendationResult,
-  type RecommendationRequest,
   crmApi,
   useCrmMock,
-  type RecommendationData,
-  type Period,
+} from '@/api/crm';
+import type {
+  RecommendationResult,
+  RecommendationRequest,
+  RecommendationData,
+  Period,
 } from '@/api/crm';
 import { designTokens, semanticTokens } from '@topems/tokens';
 

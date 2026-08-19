@@ -12,14 +12,9 @@ const ts = require('/Users/xingzhai/TOPEMS/apps/web/node_modules/typescript');
 
 const CJK_REGEX = /[\u4E00-\u9FFF]/;
 
-const SKIP_FILES = [
-  'EHSBadges.tsx',
-  'v54-native-panel.tsx',
-];
+const SKIP_FILES = ['EHSBadges.tsx', 'v54-native-panel.tsx'];
 
-const SKIP_DIRS = [
-  'apps/web/src/api',
-];
+const SKIP_DIRS = ['apps/web/src/api'];
 
 const FILE_NS_MAP = {
   'DataTable.tsx': { ns: 'components.common.dataTable', jsonFile: 'components', startIdx: 7 },
@@ -155,17 +150,10 @@ function isPropertyTypeAnnotation(node, parentStack) {
   if (parentStack.length < 2) return false;
   const parent = parentStack[parentStack.length - 1];
   const grand = parentStack[parentStack.length - 2];
-  if (
-    (ts.isPropertyAssignment(grand) || ts.isPropertySignature(grand)) &&
-    grand.initializer === parent
-  ) {
+  if ((ts.isPropertyAssignment(grand) || ts.isPropertySignature(grand)) && grand.initializer === parent) {
     return false;
   }
-  if (
-    ts.isPropertyDeclaration(parent) &&
-    parent.initializer === node &&
-    parent.type
-  ) {
+  if (ts.isPropertyDeclaration(parent) && parent.initializer === node && parent.type) {
     return true;
   }
   return false;
@@ -206,28 +194,19 @@ function createI18nCall(key, params) {
   if (params && params.length > 0) {
     const properties = params.map((expr, idx) => {
       const name = `v${idx}`;
-      return ts.factory.createPropertyAssignment(
-        ts.factory.createStringLiteral(name),
-        expr
-      );
+      return ts.factory.createPropertyAssignment(ts.factory.createStringLiteral(name), expr);
     });
     args.push(ts.factory.createObjectLiteralExpression(properties, true));
   }
   return ts.factory.createCallExpression(
-    ts.factory.createPropertyAccessExpression(
-      ts.factory.createIdentifier('i18n'),
-      't'
-    ),
+    ts.factory.createPropertyAccessExpression(ts.factory.createIdentifier('i18n'), 't'),
     undefined,
     args
   );
 }
 
 function createI18nJsxExpression(key, params) {
-  return ts.factory.createJsxExpression(
-    undefined,
-    createI18nCall(key, params)
-  );
+  return ts.factory.createJsxExpression(undefined, createI18nCall(key, params));
 }
 
 function buildTemplateKeyParts(node) {
@@ -262,13 +241,13 @@ function extractJsxMixedSegments(children) {
       return null;
     }
   }
-  const hasText = segments.some(s => s.kind === 'text' && s.text.trim().length > 0);
-  const hasExpr = segments.some(s => s.kind === 'expr');
+  const hasText = segments.some((s) => s.kind === 'text' && s.text.trim().length > 0);
+  const hasExpr = segments.some((s) => s.kind === 'expr');
   if (!hasText || !hasExpr) return null;
 
   const fullMergedQuasi = segments
-    .filter(s => s.kind === 'text')
-    .map(s => s.text)
+    .filter((s) => s.kind === 'text')
+    .map((s) => s.text)
     .join(' ');
   if (!hasCJK(fullMergedQuasi) || countCJK(fullMergedQuasi) < 2) return null;
 
@@ -296,13 +275,7 @@ function processFile(filePath, nsConfig) {
   const { ns, jsonFile, startIdx } = nsConfig;
 
   const originalContent = fs.readFileSync(filePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(
-    fileName,
-    originalContent,
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.TSX
-  );
+  const sourceFile = ts.createSourceFile(fileName, originalContent, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
 
   const keyMap = new Map();
   let keyCounter = startIdx || 0;
@@ -325,11 +298,7 @@ function processFile(filePath, nsConfig) {
   function makeI18nImport() {
     return ts.factory.createImportDeclaration(
       undefined,
-      ts.factory.createImportClause(
-        false,
-        ts.factory.createIdentifier('i18n'),
-        undefined
-      ),
+      ts.factory.createImportClause(false, ts.factory.createIdentifier('i18n'), undefined),
       ts.factory.createStringLiteral('@/i18n'),
       undefined
     );
@@ -345,11 +314,7 @@ function processFile(filePath, nsConfig) {
             if (stmt.importClause) {
               const ic = stmt.importClause;
               if (ic.name && ic.name.text === 'i18n') return true;
-              if (
-                ic.namedBindings &&
-                ts.isNamespaceImport(ic.namedBindings) &&
-                ic.namedBindings.name.text === 'i18n'
-              )
+              if (ic.namedBindings && ts.isNamespaceImport(ic.namedBindings) && ic.namedBindings.name.text === 'i18n')
                 return true;
             }
           }
@@ -501,21 +466,11 @@ function processFile(filePath, nsConfig) {
         if (isElement) {
           const visitedOpening = visit(node.openingElement);
           const visitedClosing = node.closingElement ? visit(node.closingElement) : node.closingElement;
-          return ts.factory.updateJsxElement(
-            node,
-            visitedOpening,
-            newChildren,
-            visitedClosing
-          );
+          return ts.factory.updateJsxElement(node, visitedOpening, newChildren, visitedClosing);
         } else {
           const visitedOpeningFrag = visit(node.openingFragment);
           const visitedClosingFrag = visit(node.closingFragment);
-          return ts.factory.updateJsxFragment(
-            node,
-            visitedOpeningFrag,
-            newChildren,
-            visitedClosingFrag
-          );
+          return ts.factory.updateJsxFragment(node, visitedOpeningFrag, newChildren, visitedClosingFrag);
         }
       }
 
@@ -523,21 +478,11 @@ function processFile(filePath, nsConfig) {
         if (isElement) {
           const visitedOpening = visit(node.openingElement);
           const visitedClosing = node.closingElement ? visit(node.closingElement) : node.closingElement;
-          return ts.factory.updateJsxElement(
-            node,
-            visitedOpening,
-            visitedChildren,
-            visitedClosing
-          );
+          return ts.factory.updateJsxElement(node, visitedOpening, visitedChildren, visitedClosing);
         } else {
           const visitedOpeningFrag = visit(node.openingFragment);
           const visitedClosingFrag = visit(node.closingFragment);
-          return ts.factory.updateJsxFragment(
-            node,
-            visitedOpeningFrag,
-            visitedChildren,
-            visitedClosingFrag
-          );
+          return ts.factory.updateJsxFragment(node, visitedOpeningFrag, visitedChildren, visitedClosingFrag);
         }
       }
 
@@ -599,12 +544,7 @@ function processFile(filePath, nsConfig) {
 }
 
 function updateJsonFiles(lang, jsonFileName, keyMap) {
-  const jsonPath = path.join(
-    PROJECT_ROOT,
-    'apps/web/src/i18n/locales',
-    lang,
-    `${jsonFileName}.json`
-  );
+  const jsonPath = path.join(PROJECT_ROOT, 'apps/web/src/i18n/locales', lang, `${jsonFileName}.json`);
   let json = {};
   if (fs.existsSync(jsonPath)) {
     try {
@@ -628,12 +568,7 @@ function updateJsonFiles(lang, jsonFileName, keyMap) {
 }
 
 function removeJsonKeys(lang, jsonFileName, keys) {
-  const jsonPath = path.join(
-    PROJECT_ROOT,
-    'apps/web/src/i18n/locales',
-    lang,
-    `${jsonFileName}.json`
-  );
+  const jsonPath = path.join(PROJECT_ROOT, 'apps/web/src/i18n/locales', lang, `${jsonFileName}.json`);
   if (!fs.existsSync(jsonPath)) return;
   const json = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
   for (const k of keys) delete json[k];
@@ -642,15 +577,11 @@ function removeJsonKeys(lang, jsonFileName, keys) {
 
 function runTscGlobal() {
   const { spawnSync } = require('child_process');
-  const result = spawnSync(
-    'npx',
-    ['tsc', '--noEmit', '--skipLibCheck'],
-    {
-      cwd: path.join(PROJECT_ROOT, 'apps/web'),
-      encoding: 'utf-8',
-      timeout: 300000,
-    }
-  );
+  const result = spawnSync('npx', ['tsc', '--noEmit', '--skipLibCheck'], {
+    cwd: path.join(PROJECT_ROOT, 'apps/web'),
+    encoding: 'utf-8',
+    timeout: 300000,
+  });
   const allOutput = (result.stdout || '') + '\n' + (result.stderr || '');
   return {
     success: result.status === 0,
@@ -712,7 +643,7 @@ function main() {
     'apps/web/src/pages/erp/AuditLogPage.tsx',
   ];
 
-  const filteredTargets = targets.filter(t => !shouldSkipFile(t));
+  const filteredTargets = targets.filter((t) => !shouldSkipFile(t));
 
   cleanBackups(filteredTargets);
 
@@ -785,9 +716,7 @@ function main() {
     const addedEn = updateJsonFiles('en', result.jsonFile, result.keyMap);
     Object.assign(allAddedKeys.zh, addedZh);
     Object.assign(allAddedKeys.en, addedEn);
-    console.log(
-      `[JSON] zh+${Object.keys(addedZh).length}, en+${Object.keys(addedEn).length}`
-    );
+    console.log(`[JSON] zh+${Object.keys(addedZh).length}, en+${Object.keys(addedEn).length}`);
 
     console.log('[TSC] Running global TSC to check this file...');
     const tscResult = runTscGlobal();
@@ -796,9 +725,7 @@ function main() {
     const newCount = newErrors.length;
 
     if (newCount <= baselineCount) {
-      console.log(
-        `[TSC] PASS (errors: baseline=${baselineCount}, new=${newCount}, global exit=${tscResult.exitCode})`
-      );
+      console.log(`[TSC] PASS (errors: baseline=${baselineCount}, new=${newCount}, global exit=${tscResult.exitCode})`);
       fs.unlinkSync(bakPath);
       currentTargetErrors[relPath] = newErrors;
       results.push({
@@ -813,9 +740,7 @@ function main() {
       });
     } else {
       console.log(`[TSC] FAIL - new errors appeared! Rolling back...`);
-      const newErrorLines = newErrors.filter(
-        (e) => !currentTargetErrors[relPath].includes(e)
-      );
+      const newErrorLines = newErrors.filter((e) => !currentTargetErrors[relPath].includes(e));
       console.log(`[TSC NEW ERRORS]:\n${newErrorLines.join('\n').substring(0, 3000)}`);
 
       gitCheckout(relPath);
@@ -845,9 +770,7 @@ function main() {
   console.log(`[FINAL TSC] exit=${finalTsc.exitCode}`);
 
   if (!finalTsc.success) {
-    const errLines = finalTsc.allOutput
-      .split('\n')
-      .filter((l) => l.includes('error TS'));
+    const errLines = finalTsc.allOutput.split('\n').filter((l) => l.includes('error TS'));
     const targetSet = new Set(filteredTargets);
     const nonTargetErrors = errLines.filter((l) => {
       for (const tp of filteredTargets) {
@@ -855,9 +778,7 @@ function main() {
       }
       return true;
     });
-    console.log(
-      `[FINAL TSC] total TS error lines=${errLines.length}, non-target=${nonTargetErrors.length}`
-    );
+    console.log(`[FINAL TSC] total TS error lines=${errLines.length}, non-target=${nonTargetErrors.length}`);
 
     if (nonTargetErrors.length > 2) {
       console.log(`[FINAL TSC] >2 non-target errors → FULL ROLLBACK`);

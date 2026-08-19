@@ -1,3 +1,4 @@
+#![allow(unexpected_cfgs)]
 #![cfg(feature = "openapi_extract_standalone_run")]
 
 //! V71 A1 · OpenAPI JSON 契约提取（integration test，无启动服务）

@@ -26,10 +26,10 @@ pub fn determine_health(statuses: &[&str]) -> &'static str {
     if statuses.is_empty() {
         return "healthy";
     }
-    if statuses.iter().any(|s| *s == "down") {
+    if statuses.contains(&"down") {
         return "down";
     }
-    if statuses.iter().any(|s| *s == "degraded") {
+    if statuses.contains(&"degraded") {
         return "degraded";
     }
     "healthy"

@@ -326,7 +326,7 @@ pub async fn list_alerts(
     let alerts = vec![
         Alert {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             service_name: "topems-pm".to_string(),
             severity: "warning".to_string(),
             status: "active".to_string(),
@@ -338,7 +338,7 @@ pub async fn list_alerts(
         },
         Alert {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             service_name: "topems-crm".to_string(),
             severity: "error".to_string(),
             status: "resolved".to_string(),
@@ -350,7 +350,7 @@ pub async fn list_alerts(
         },
         Alert {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             service_name: "topems-ai".to_string(),
             severity: "info".to_string(),
             status: "active".to_string(),
@@ -362,7 +362,7 @@ pub async fn list_alerts(
         },
         Alert {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             service_name: "topems-erp".to_string(),
             severity: "critical".to_string(),
             status: "active".to_string(),
@@ -374,7 +374,7 @@ pub async fn list_alerts(
         },
         Alert {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             service_name: "topems-wms".to_string(),
             severity: "warning".to_string(),
             status: "active".to_string(),
@@ -446,7 +446,7 @@ pub async fn get_alert(
     let tenant_id = get_tenant_id(&claims);
     let alert = Alert {
         id,
-        tenant_id: tenant_id,
+        tenant_id,
         service_name: "topems-pm".to_string(),
         severity: "warning".to_string(),
         status: "active".to_string(),
@@ -487,7 +487,7 @@ pub async fn update_alert(
 
     let alert = Alert {
         id,
-        tenant_id: tenant_id,
+        tenant_id,
         service_name: "topems-pm".to_string(),
         severity: "warning".to_string(),
         status: status.to_string(),
@@ -642,7 +642,7 @@ pub async fn list_rules(
     let rules = vec![
         AlertRule {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             name: "响应时间告警规则".to_string(),
             description: Some("当服务响应时间超过阈值时触发告警".to_string()),
             service_name: Some("topems-pm".to_string()),
@@ -671,7 +671,7 @@ pub async fn list_rules(
         },
         AlertRule {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             name: "数据库连接池告警".to_string(),
             description: Some("当数据库连接池使用率超过80%时触发告警".to_string()),
             service_name: None,
@@ -693,7 +693,7 @@ pub async fn list_rules(
         },
         AlertRule {
             id: Uuid::new_v4(),
-            tenant_id: tenant_id,
+            tenant_id,
             name: "库存预警规则".to_string(),
             description: Some("当物料库存低于安全库存时触发告警".to_string()),
             service_name: Some("topems-wms".to_string()),
@@ -735,7 +735,7 @@ pub async fn create_rule(
     let tenant_id = get_tenant_id(&claims);
     let rule = AlertRule {
         id: Uuid::new_v4(),
-        tenant_id: tenant_id,
+        tenant_id,
         name: req.name,
         description: req.description,
         service_name: req.service_name,
@@ -770,7 +770,7 @@ pub async fn get_rule(
     let tenant_id = get_tenant_id(&claims);
     let rule = AlertRule {
         id,
-        tenant_id: tenant_id,
+        tenant_id,
         name: "响应时间告警规则".to_string(),
         description: Some("当服务响应时间超过阈值时触发告警".to_string()),
         service_name: Some("topems-pm".to_string()),
@@ -816,7 +816,7 @@ pub async fn update_rule(
     let tenant_id = get_tenant_id(&claims);
     let rule = AlertRule {
         id,
-        tenant_id: tenant_id,
+        tenant_id,
         name: req.name,
         description: req.description,
         service_name: req.service_name,
@@ -874,7 +874,7 @@ pub async fn enable_rule(
     let tenant_id = get_tenant_id(&claims);
     let rule = AlertRule {
         id,
-        tenant_id: tenant_id,
+        tenant_id,
         name: "响应时间告警规则".to_string(),
         description: Some("当服务响应时间超过阈值时触发告警".to_string()),
         service_name: Some("topems-pm".to_string()),
@@ -914,7 +914,7 @@ pub async fn disable_rule(
     let tenant_id = get_tenant_id(&claims);
     let rule = AlertRule {
         id,
-        tenant_id: tenant_id,
+        tenant_id,
         name: "响应时间告警规则".to_string(),
         description: Some("当服务响应时间超过阈值时触发告警".to_string()),
         service_name: Some("topems-pm".to_string()),

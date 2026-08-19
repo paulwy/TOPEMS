@@ -57,9 +57,15 @@ function insertAfterLastImport(content, importLine) {
     const L = lines[i];
     if (!L.trim().startsWith('import ')) {
       // 空行 / 注释 继续
-      if (L.trim() === '' || L.trim().startsWith('//')) { i++; continue; }
+      if (L.trim() === '' || L.trim().startsWith('//')) {
+        i++;
+        continue;
+      }
       // block 注释 /* */ 单行
-      if (/^\s*\/\*[\s\S]*\*\/\s*$/.test(L)) { i++; continue; }
+      if (/^\s*\/\*[\s\S]*\*\/\s*$/.test(L)) {
+        i++;
+        continue;
+      }
       break;
     }
     // import 块可能是多行 { \n ... \n} from

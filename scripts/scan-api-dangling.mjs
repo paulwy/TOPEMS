@@ -19,30 +19,28 @@ const ROOT = path.resolve(__dirname, '..');
 function collectFrontendApiPaths() {
   const apiDir = path.join(ROOT, 'apps/web/src/api');
   const apiPaths = new Map(); // service -> Set<pathPattern>
-  
+
   function scanFile(filePath) {
     const content = fs.readFileSync(filePath, 'utf8');
     const apiRegex = /['"`](\/api\/[a-zA-Z0-9_./\-{}\:]+)['"`]/g;
     let match;
     const paths = new Set();
-    
+
     while ((match = apiRegex.exec(content)) !== null) {
-      let normalized = match[1]
-        .replace(/\/:[a-zA-Z_]+/g, '/{param}')
-        .replace(/\/\{[a-zA-Z_]+\}/g, '/{param}');
+      let normalized = match[1].replace(/\/:[a-zA-Z_]+/g, '/{param}').replace(/\/\{[a-zA-Z_]+\}/g, '/{param}');
       paths.add(normalized);
     }
-    
+
     if (paths.size > 0) {
       let service = 'unknown';
       const apiMatch = filePath.match(/src\/api\/([^/]+)/);
       if (apiMatch) service = apiMatch[1];
-      
+
       if (!apiPaths.has(service)) apiPaths.set(service, new Set());
-      paths.forEach(p => apiPaths.get(service).add(p));
+      paths.forEach((p) => apiPaths.get(service).add(p));
     }
   }
-  
+
   function walk(dir) {
     const entries = fs.readdirSync(dir, { withFileTypes: true });
     for (const e of entries) {
@@ -52,7 +50,7 @@ function collectFrontendApiPaths() {
     }
   }
   walk(apiDir);
-  
+
   return apiPaths;
 }
 
@@ -68,7 +66,7 @@ function collectBackendRoutes() {
   while ((m = svcRegex.exec(servicesRs)) !== null) {
     registeredServices.set(m[1], m[2]);
   }
-  
+
   function scanRsForRoutes(filePath, serviceName) {
     if (!fs.existsSync(filePath)) return;
     const content = fs.readFileSync(filePath, 'utf8');
@@ -76,34 +74,32 @@ function collectBackendRoutes() {
     let rmatch;
     const routes = new Set();
     while ((rmatch = routeRegex.exec(content)) !== null) {
-      let normalized = rmatch[1]
-        .replace(/\/:[a-zA-Z_]+/g, '/{param}')
-        .replace(/\/\{[a-zA-Z_][^{}]*\}/g, '/{param}');
+      let normalized = rmatch[1].replace(/\/:[a-zA-Z_]+/g, '/{param}').replace(/\/\{[a-zA-Z_][^{}]*\}/g, '/{param}');
       routes.add(normalized);
     }
     if (routes.size > 0) {
       if (!backendRoutes.has(serviceName)) backendRoutes.set(serviceName, new Set());
-      routes.forEach(r => backendRoutes.get(serviceName).add(r));
+      routes.forEach((r) => backendRoutes.get(serviceName).add(r));
     }
   }
-  
+
   const coreRoutesDir = path.join(ROOT, 'svc/unified-core/src/routes');
   const routeModRs = fs.readFileSync(path.join(coreRoutesDir, 'mod.rs'), 'utf8');
-  
+
   const commentedModules = new Set();
   const commentRegex = /^\s*\/\/\s*mod\s+(\w+);/gm;
   let cMatch;
   while ((cMatch = commentRegex.exec(routeModRs)) !== null) {
     commentedModules.add(cMatch[1]);
   }
-  
+
   const activeMerges = [];
   const mergeRegex = /^\s*(?!\/\/)\.merge\((\w+)::(\w+)_routes\(state\)\)/gm;
   let mgMatch;
   while ((mgMatch = mergeRegex.exec(routeModRs)) !== null) {
     activeMerges.push({ module: mgMatch[1], fn: mgMatch[2] });
   }
-  
+
   for (const [svcName, prefix] of registeredServices) {
     const shortName = svcName.replace('topems-', '');
     if (shortName === 'unified-core') {
@@ -122,7 +118,7 @@ function collectBackendRoutes() {
           const dir = fs.readdirSync(routesDir);
           for (const f of dir) {
             if (f.endsWith('.rs')) {
-              scanRsForRoutes(path.join(routesDir, f), shortName + '-' + f.replace('.rs',''));
+              scanRsForRoutes(path.join(routesDir, f), shortName + '-' + f.replace('.rs', ''));
             }
           }
         }
@@ -139,7 +135,7 @@ function collectBackendRoutes() {
       }
     }
   }
-  
+
   // 单独检查 plugin-registry (不在 services.rs 的 28 个服务中)
   const plugRegDir = path.join(ROOT, 'svc/plugin-registry/src');
   if (fs.existsSync(plugRegDir)) {
@@ -154,14 +150,14 @@ function collectBackendRoutes() {
       }
     }
   }
-  
+
   // 单独检查 monitor 服务
   const monDir = path.join(ROOT, 'svc/monitor/src');
   if (fs.existsSync(monDir)) {
     const mainRs = path.join(monDir, 'main.rs');
     if (fs.existsSync(mainRs)) scanRsForRoutes(mainRs, 'monitor');
   }
-  
+
   return { backendRoutes, commentedModules, registeredServices, activeMerges };
 }
 
@@ -200,7 +196,7 @@ function checkServicesYaml() {
 function analyzeNavigation() {
   const constPath = path.join(ROOT, 'apps/web/src/layouts/constants.ts');
   const content = fs.readFileSync(constPath, 'utf8');
-  
+
   const l2l1Map = new Map();
   const l2Match = content.match(/export const L2_TO_L1_MAP:[\s\S]*?};/);
   if (l2Match) {
@@ -210,7 +206,7 @@ function analyzeNavigation() {
       l2l1Map.set(lm[1], lm[2]);
     }
   }
-  
+
   const orderMap = new Map();
   const orderMatch = content.match(/export const L2_MODULE_ORDER:[\s\S]*?};/);
   if (orderMatch) {
@@ -220,7 +216,7 @@ function analyzeNavigation() {
       orderMap.set(om[1], parseInt(om[2]));
     }
   }
-  
+
   // 提取 L1 domains
   const l1Domains = [];
   const l1Section = content.match(/export const L1_BUSINESS_DOMAINS:[\s\S]*?\];/);
@@ -231,7 +227,7 @@ function analyzeNavigation() {
       l1Domains.push({ key: dm[1], order: parseInt(dm[3]), icon: dm[4] });
     }
   }
-  
+
   return { l1Domains, l2l1Map, orderMap };
 }
 
@@ -285,7 +281,7 @@ for (const svc of v681NewServices) {
 if (missingReport.length === 0) {
   console.log('  ✅ 三端配置完整');
 } else {
-  missingReport.forEach(m => {
+  missingReport.forEach((m) => {
     console.log(`  ❌ ${m.name}(:${m.port}) 缺失于 ${m.where}`);
     console.log(`      → ${m.reason}`);
   });
@@ -295,7 +291,7 @@ if (missingReport.length === 0) {
 console.log('\n--- B. 插件 API 路由虚挂深度分析 ---');
 
 const pluginApiPaths = new Set();
-if (apiPaths.has('plugin')) apiPaths.get('plugin').forEach(p => pluginApiPaths.add(p));
+if (apiPaths.has('plugin')) apiPaths.get('plugin').forEach((p) => pluginApiPaths.add(p));
 // 同时检查其他模块中引用的 core plugin 路径
 for (const [svc, paths] of apiPaths) {
   for (const p of paths) {
@@ -304,16 +300,23 @@ for (const [svc, paths] of apiPaths) {
 }
 
 console.log(`B1. 前端插件相关 API 路径数: ${pluginApiPaths.size}`);
-[...pluginApiPaths].sort().forEach(p => console.log(`    ${p}`));
+[...pluginApiPaths].sort().forEach((p) => console.log(`    ${p}`));
 
 console.log(`\nB2. 后端 unified-core 状态:`);
-console.log(`    • routes/plugin.rs 注释掉 mod plugin = ${backendInfo.commentedModules.has('plugin') ? '是 (❗已断开)' : '否'}`);
-const pluginMerged = backendInfo.activeMerges.some(m => m.module === 'plugin');
+console.log(
+  `    • routes/plugin.rs 注释掉 mod plugin = ${backendInfo.commentedModules.has('plugin') ? '是 (❗已断开)' : '否'}`
+);
+const pluginMerged = backendInfo.activeMerges.some((m) => m.module === 'plugin');
 console.log(`    • .merge(plugin::plugin_routes) 激活 = ${pluginMerged ? '是' : '否 (❗已断开)'}`);
 
-console.log(`\nB3. 后端独立服务 plugin-registry 路由数: ${backendInfo.backendRoutes.get('plugin-registry')?.size || 0}`);
+console.log(
+  `\nB3. 后端独立服务 plugin-registry 路由数: ${backendInfo.backendRoutes.get('plugin-registry')?.size || 0}`
+);
 const plugRegRoutes = backendInfo.backendRoutes.get('plugin-registry') || new Set();
-[...plugRegRoutes].sort().slice(0, 20).forEach(p => console.log(`    ${p}`));
+[...plugRegRoutes]
+  .sort()
+  .slice(0, 20)
+  .forEach((p) => console.log(`    ${p}`));
 if (plugRegRoutes.size === 0) console.log('    ⚠️ 未采集到路由（可能是 modules/create_routes 动态生成）');
 
 console.log(`\nB4. 结论:`);
@@ -325,7 +328,7 @@ console.log(`    🔴 所有插件管理/市场/安装 API 请求当前都会 40
 console.log('\n--- C. 专业模块 & 插件市场导航入口分析 ---');
 
 const modulesDir = path.join(ROOT, 'apps/web/src/modules');
-const moduleEntries = fs.readdirSync(modulesDir).filter(d => {
+const moduleEntries = fs.readdirSync(modulesDir).filter((d) => {
   const s = fs.statSync(path.join(modulesDir, d));
   return s.isDirectory() && fs.existsSync(path.join(modulesDir, d, 'config.ts'));
 });
@@ -341,29 +344,46 @@ for (const mod of moduleEntries) {
     const perm = content.match(/permission:\s*['"]([^'"]+)['"]/)?.[1];
     const orderMatch = content.match(/order:\s*(\d+)/);
     const order = orderMatch ? parseInt(orderMatch[1]) : undefined;
-    const entry = { module: mod, source: src, suite, status, permission: perm, order,
-      inL2: nav.l2l1Map.has(mod), l1: nav.l2l1Map.get(mod) };
+    const entry = {
+      module: mod,
+      source: src,
+      suite,
+      status,
+      permission: perm,
+      order,
+      inL2: nav.l2l1Map.has(mod),
+      l1: nav.l2l1Map.get(mod),
+    };
     if (src === 'plugin') pluginModules.push(entry);
     else coreModulesList.push(entry);
   } catch {}
 }
 
 console.log(`\nC1. 专业模块清单 (source='plugin' 应从插件市场安装) 共 ${pluginModules.length} 个:`);
-pluginModules.sort((a,b) => (a.order||99) - (b.order||99)).forEach(m => {
-  const flag = m.inL2 ? '⚠️' : '✅';
-  console.log(`  ${flag} ${m.module.padEnd(15)} suite=${m.suite.padEnd(10)} status=${m.status.padEnd(6)} L1=${m.l1||'-'} perm=${m.permission||'无'}`);
-  if (m.inL2) console.log(`     ⚠️  警告: 标记为 source=plugin 的专业模块不应该在 core L2 导航中！应通过插件市场安装后动态注册`);
-});
+pluginModules
+  .sort((a, b) => (a.order || 99) - (b.order || 99))
+  .forEach((m) => {
+    const flag = m.inL2 ? '⚠️' : '✅';
+    console.log(
+      `  ${flag} ${m.module.padEnd(15)} suite=${m.suite.padEnd(10)} status=${m.status.padEnd(6)} L1=${m.l1 || '-'} perm=${m.permission || '无'}`
+    );
+    if (m.inL2)
+      console.log(
+        `     ⚠️  警告: 标记为 source=plugin 的专业模块不应该在 core L2 导航中！应通过插件市场安装后动态注册`
+      );
+  });
 
 console.log(`\nC2. 核心模块 L2 导航映射完整性:`);
-const coreMissing = coreModulesList.filter(m => !m.inL2);
-coreMissing.length === 0 ? 
-  console.log(`  ✅ 全部 ${coreModulesList.length} 个核心模块已注册 L2 映射`) :
-  console.log(`  ❌ ${coreMissing.length} 个核心模块缺 L2: ${coreMissing.map(m=>m.module).join(', ')}`);
+const coreMissing = coreModulesList.filter((m) => !m.inL2);
+coreMissing.length === 0
+  ? console.log(`  ✅ 全部 ${coreModulesList.length} 个核心模块已注册 L2 映射`)
+  : console.log(`  ❌ ${coreMissing.length} 个核心模块缺 L2: ${coreMissing.map((m) => m.module).join(', ')}`);
 
 console.log(`\nC3. 插件市场入口定位:`);
-console.log(`  L1: ${nav.l1Domains.find(d=>d.key==='system')?.key || '找不到'} (order=${nav.l1Domains.find(d=>d.key==='system')?.order || '-'}, 靠后)`);
-console.log(`  L2: plugin (order=${nav.orderMap.get('plugin')||'-'}, 位于 system 分组尾部)`);
+console.log(
+  `  L1: ${nav.l1Domains.find((d) => d.key === 'system')?.key || '找不到'} (order=${nav.l1Domains.find((d) => d.key === 'system')?.order || '-'}, 靠后)`
+);
+console.log(`  L2: plugin (order=${nav.orderMap.get('plugin') || '-'}, 位于 system 分组尾部)`);
 console.log(`  L3: plugin-marketplace 标签页 (在 plugin 模块内部)`);
 console.log(`  评价: ❌ 入口太隐蔽，用户无法快速找到插件市场安装专业模块`);
 
@@ -372,8 +392,10 @@ console.log('\n--- D. Monitor 服务路由检查 ---');
 const monRoutes = backendInfo.backendRoutes.get('monitor') || new Set();
 console.log(`  svc/monitor 后端路由注册数: ${monRoutes.size}`);
 const coreMonRoutes = backendInfo.backendRoutes.get('core-monitor') || new Set();
-console.log(`  unified-core(/routes/monitor.rs) 激活? ${backendInfo.activeMerges.some(m=>m.module==='monitor')?'是':'已注释断开'}`);
-console.log(`  runtime.ts 中 monitor 服务URL: ${runtimeServices.has('monitor')?'已配置':'未配置'}`);
+console.log(
+  `  unified-core(/routes/monitor.rs) 激活? ${backendInfo.activeMerges.some((m) => m.module === 'monitor') ? '是' : '已注释断开'}`
+);
+console.log(`  runtime.ts 中 monitor 服务URL: ${runtimeServices.has('monitor') ? '已配置' : '未配置'}`);
 if (runtimeServices.has('monitor')) {
   const rtContent = fs.readFileSync(path.join(ROOT, 'apps/web/src/config/runtime.ts'), 'utf8');
   const urlMatch = rtContent.match(/monitor:\s*getEnv\('([^']+)',\s*'([^']+)'\)/);
@@ -399,7 +421,7 @@ console.log('     - ports.ts BACKEND_PORTS 缺端口映射');
 console.log('     - runtime.ts services 缺服务URL');
 
 console.log('\n🟠 P1 - 高风险（导航入口/架构一致性）:');
-console.log(`  4. ${pluginModules.filter(m=>m.inL2).length} 个 source=plugin 的专业模块错误挂在 core 静态导航树上`);
+console.log(`  4. ${pluginModules.filter((m) => m.inL2).length} 个 source=plugin 的专业模块错误挂在 core 静态导航树上`);
 console.log('     → 违反: core 模块默认安装，plugin 模块通过市场安装的原则');
 console.log('  5. 插件市场入口过于隐蔽 (System > Plugin > Marketplace)');
 console.log('     → 建议: 在 Sidebar 底部增加「扩展市场 / 获取更多模块」快捷入口');
@@ -407,7 +429,9 @@ console.log('  6. plugin 模块导航权限门槛过高（需要 plugin:marketpl
 console.log('     → 普通用户连插件市场入口都看不到，无法安装专业模块');
 
 console.log('\n🟡 P2 - 中风险（僵尸代码/清理）:');
-console.log(`  7. unified-core routes/ 目录存在 ${backendInfo.commentedModules.size} 个僵尸模块: ${[...backendInfo.commentedModules].join(', ')}`);
+console.log(
+  `  7. unified-core routes/ 目录存在 ${backendInfo.commentedModules.size} 个僵尸模块: ${[...backendInfo.commentedModules].join(', ')}`
+);
 console.log('  8. services.rs 28 个服务清单未同步 V68.1 新增 monitor/plugin-registry');
 console.log('  9. routes/plugin.rs + routes/monitor.rs 仍存在但未被引用');
 

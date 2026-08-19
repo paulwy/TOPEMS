@@ -15,7 +15,7 @@ const PAGES_DIR = path.join(WEB_ROOT, 'pages');
 
 // Parse TSC errors from stdin or hardcoded list
 const errors = [];
-const input = process.argv.slice(2).find(a => !a.startsWith('--'));
+const input = process.argv.slice(2).find((a) => !a.startsWith('--'));
 if (input && fs.existsSync(input)) {
   const lines = fs.readFileSync(input, 'utf8').split('\n');
   for (const line of lines) {
@@ -85,8 +85,8 @@ for (const [filePath, lineNums] of Object.entries(byFile)) {
   }
 
   // Ensure import i18n from '@/i18n' exists
-  const usesI18nT = lines.some(l => /i18n\.t\s*\(/.test(l));
-  const hasI18nImport = lines.some(l => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l));
+  const usesI18nT = lines.some((l) => /i18n\.t\s*\(/.test(l));
+  const hasI18nImport = lines.some((l) => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l));
 
   if (usesI18nT && !hasI18nImport) {
     // Find the last import line that's NOT inside a multi-line import block

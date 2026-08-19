@@ -60,17 +60,17 @@ function classifyEn(enVal, zhVal) {
   if (!ev) return 'empty';
   if (!CJK_RE.test(ev)) return 'ok';
   // 含中文 → 细分类型
-  if (zv && ev === zv) return 'untranslated';       // en === zh，完全没翻译
+  if (zv && ev === zv) return 'untranslated'; // en === zh，完全没翻译
   if (zv && (ev.includes(zv) || zv.includes(ev))) return 'partial_machine'; // 机翻残留
-  if (/[A-Za-z]{2,}/.test(ev) || VAR_RE.test(ev)) return 'mixed_cjk_en';    // 中英混杂
-  if (!/[A-Za-z]/.test(ev)) return 'pure_cjk';       // 纯中文值
-  return 'garbage';                                  // 其他乱码
+  if (/[A-Za-z]{2,}/.test(ev) || VAR_RE.test(ev)) return 'mixed_cjk_en'; // 中英混杂
+  if (!/[A-Za-z]/.test(ev)) return 'pure_cjk'; // 纯中文值
+  return 'garbage'; // 其他乱码
 }
 
 /** 检测混合结构 bug：扁平 key (含点号) 与嵌套对象共存 */
 function detectMixedStructure(ns, enObj) {
   const issues = [];
-  const flatKeys = Object.keys(enObj).filter(k => k.includes('.'));
+  const flatKeys = Object.keys(enObj).filter((k) => k.includes('.'));
   if (flatKeys.length === 0) return issues;
 
   for (const flatKey of flatKeys) {
@@ -86,8 +86,8 @@ function detectMixedStructure(ns, enObj) {
       }
       cur = cur[parts[i]];
     }
-    const nestedExists = found && cur && typeof cur === 'object' && !Array.isArray(cur) &&
-                         (parts[parts.length - 1] in cur);
+    const nestedExists =
+      found && cur && typeof cur === 'object' && !Array.isArray(cur) && parts[parts.length - 1] in cur;
     const nestedVal = nestedExists ? cur[parts[parts.length - 1]] : undefined;
 
     if (nestedExists && typeof nestedVal === 'string' && typeof flatVal === 'string') {
@@ -116,8 +116,8 @@ function main() {
     process.exit(2);
   }
 
-  let nsFiles = fs.readdirSync(EN_DIR).filter(f => f.endsWith('.json'));
-  if (TARGET_NS) nsFiles = nsFiles.filter(f => f.replace('.json', '') === TARGET_NS);
+  let nsFiles = fs.readdirSync(EN_DIR).filter((f) => f.endsWith('.json'));
+  if (TARGET_NS) nsFiles = nsFiles.filter((f) => f.replace('.json', '') === TARGET_NS);
 
   // ── 统计容器 ──
   const summary = {
@@ -125,8 +125,8 @@ function main() {
     fake_en: { total: 0, by_type: {}, by_ns: {}, samples: [] },
     key_mismatch: {
       total: 0,
-      missing_in_en: 0,   // zh 有但 en 没有
-      missing_in_zh: 0,   // en 有但 zh 没有
+      missing_in_en: 0, // zh 有但 en 没有
+      missing_in_zh: 0, // en 有但 zh 没有
       empty_in_en: 0,
       empty_in_zh: 0,
       by_ns: {},
@@ -140,10 +140,17 @@ function main() {
     summary.namespaces_scanned++;
 
     let enObj, zhObj;
-    try { enObj = JSON.parse(fs.readFileSync(path.join(EN_DIR, f), 'utf8')); }
-    catch (e) { console.warn('skip (en parse error):', f); continue; }
-    try { zhObj = JSON.parse(fs.readFileSync(path.join(ZH_DIR, f), 'utf8')); }
-    catch (e) { zhObj = {}; }
+    try {
+      enObj = JSON.parse(fs.readFileSync(path.join(EN_DIR, f), 'utf8'));
+    } catch (e) {
+      console.warn('skip (en parse error):', f);
+      continue;
+    }
+    try {
+      zhObj = JSON.parse(fs.readFileSync(path.join(ZH_DIR, f), 'utf8'));
+    } catch (e) {
+      zhObj = {};
+    }
 
     const enFlat = flatten(enObj);
     const zhFlat = flatten(zhObj);
@@ -264,7 +271,9 @@ function printHumanReadable(s) {
     for (const [t, n] of Object.entries(s.fake_en.by_type).sort((a, b) => b[1] - a[1])) {
       console.log(`     · ${t.padEnd(18)} ${n}`);
     }
-    const nsList = Object.entries(s.fake_en.by_ns).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const nsList = Object.entries(s.fake_en.by_ns)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
     if (nsList.length > 0) {
       console.log('   Top 命名空间:');
       for (const [ns, n] of nsList) console.log(`     · ${ns.padEnd(26)} ${n}`);
@@ -340,55 +349,89 @@ main();
   // Gate Z1: EN missing strict → inline scan
   try {
     const enDir = path.resolve(projectRoot, 'apps', 'web', 'src', 'i18n', 'locales', 'en');
-    let empty = 0, nul = 0;
+    let empty = 0,
+      nul = 0;
     for (const f of fs.readdirSync(enDir)) {
       if (!f.endsWith('.json')) continue;
       const o = JSON.parse(fs.readFileSync(path.join(enDir, f)));
-      (function w(x){
-        if (typeof x === 'string') { if (x === '') empty++; return; }
-        if (x === null) { nul++; return; }
+      (function w(x) {
+        if (typeof x === 'string') {
+          if (x === '') empty++;
+          return;
+        }
+        if (x === null) {
+          nul++;
+          return;
+        }
         if (Array.isArray(x)) return x.forEach(w);
         if (x && typeof x === 'object') for (const k of Object.keys(x)) w(x[k]);
       })(o);
     }
-    const ok = empty + nul === 0; if (!ok) failures++;
-    report.push({ title: 'R12-Z1 · EN missing strict', ok, code: ok?0:1, tail: `empty=${empty} null=${nul} SUM=${empty+nul}` });
-  } catch (e) { failures++; report.push({ title:'R12-Z1 · EN missing', ok:false, code:2, tail: String(e).slice(0,120) }); }
+    const ok = empty + nul === 0;
+    if (!ok) failures++;
+    report.push({
+      title: 'R12-Z1 · EN missing strict',
+      ok,
+      code: ok ? 0 : 1,
+      tail: `empty=${empty} null=${nul} SUM=${empty + nul}`,
+    });
+  } catch (e) {
+    failures++;
+    report.push({ title: 'R12-Z1 · EN missing', ok: false, code: 2, tail: String(e).slice(0, 120) });
+  }
 
   // Gate Z2: Glossary strict (verify-glossary.cjs) → exit 0 required
   (function () {
     try {
       const { spawnSync } = require('child_process');
-      const res = spawnSync(process.execPath, ['scripts/ci/verify-glossary.cjs'],
-        { cwd: projectRoot, encoding: 'utf8', timeout: 60_000 });
-      const ok = (res.status === 0);
+      const res = spawnSync(process.execPath, ['scripts/ci/verify-glossary.cjs'], {
+        cwd: projectRoot,
+        encoding: 'utf8',
+        timeout: 60_000,
+      });
+      const ok = res.status === 0;
       if (!ok) failures++;
       report.push({
         title: 'R12-Z2 · Glossary Top50 strict',
-        ok, code: res.status ?? (res.error ? 3 : 0),
-        tail: (res.stdout||'').split('\n').filter(Boolean).slice(-2).join(' | ') || String(res.error||'').slice(0,100)
+        ok,
+        code: res.status ?? (res.error ? 3 : 0),
+        tail:
+          (res.stdout || '').split('\n').filter(Boolean).slice(-2).join(' | ') || String(res.error || '').slice(0, 100),
       });
-    } catch (e) { failures++; report.push({ title:'R12-Z2 · Glossary', ok:false, code:3, tail: String(e).slice(0,120) }); }
+    } catch (e) {
+      failures++;
+      report.push({ title: 'R12-Z2 · Glossary', ok: false, code: 3, tail: String(e).slice(0, 120) });
+    }
   })();
 
   // Gate Z3: Style Guide Lint HIGH=0 / MEDIUM≤50
   (function () {
     try {
       const { spawnSync } = require('child_process');
-      const res = spawnSync(process.execPath,
+      const res = spawnSync(
+        process.execPath,
         ['scripts/i18n/lint-styleguide.cjs', '--json', '--sample', '0', '--max-high', '0', '--max-medium', '50'],
-        { cwd: projectRoot, encoding: 'utf8', timeout: 120_000 });
+        { cwd: projectRoot, encoding: 'utf8', timeout: 120_000 }
+      );
       let summary = null;
-      try { summary = JSON.parse(res.stdout).summary; } catch (_) {}
+      try {
+        summary = JSON.parse(res.stdout).summary;
+      } catch (_) {}
       const lintExit = res.status ?? (res.error ? 3 : 0);
       const ok = lintExit === 0 && summary && summary.HIGH === 0 && summary.MEDIUM <= 50;
       if (!ok) failures++;
       report.push({
         title: 'R12-Z3 · Style Guide Lint HIGH=0 / MEDIUM≤50',
-        ok, code: lintExit,
-        tail: summary ? `HIGH=${summary.HIGH} MEDIUM=${summary.MEDIUM} LOW=${summary.LOW}` : (res.stderr||res.stdout).slice(0,160)
+        ok,
+        code: lintExit,
+        tail: summary
+          ? `HIGH=${summary.HIGH} MEDIUM=${summary.MEDIUM} LOW=${summary.LOW}`
+          : (res.stderr || res.stdout).slice(0, 160),
       });
-    } catch (e) { failures++; report.push({ title:'R12-Z3 lint', ok:false, code:3, tail: String(e).slice(0,120) }); }
+    } catch (e) {
+      failures++;
+      report.push({ title: 'R12-Z3 lint', ok: false, code: 3, tail: String(e).slice(0, 120) });
+    }
   })();
 
   // Original strict check result (defensive): if --strict flag was used and original checks failed, do not mask — count failures
@@ -413,5 +456,5 @@ main();
   console.log(bar);
 
   const existingFail = process.exitCode || 0;
-  if (!allOk) process.exitCode = Math.min(failures + (existingFail>0?1:0), 99);
+  if (!allOk) process.exitCode = Math.min(failures + (existingFail > 0 ? 1 : 0), 99);
 })();

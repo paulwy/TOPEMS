@@ -43,7 +43,7 @@ for (const f of files) {
       // But we can't just remove all } - we need to match the specific ones
       // Let's do it differently: find {i18n.t('...')} patterns
       const re = /\{i18n\.t\(('[^']*')\)\}/g;
-      line = lines[i].replace(re, "i18n.t($1)");
+      line = lines[i].replace(re, 'i18n.t($1)');
       if (line !== lines[i]) {
         fixed++;
         lines[i] = line;
@@ -51,7 +51,7 @@ for (const f of files) {
       }
       // Also fix {i18n.t('key', {...})} patterns
       const re2 = /\{i18n\.t\(('[^']*'),\s*(\{[^}]+\})\)\}/g;
-      line = lines[i].replace(re2, "i18n.t($1, $2)");
+      line = lines[i].replace(re2, 'i18n.t($1, $2)');
       if (line !== lines[i]) {
         fixed++;
         lines[i] = line;
@@ -94,7 +94,7 @@ for (const f of files) {
 
     // Fix 2: 'i18n.t('key')' -> i18n.t('key') (quotes around i18n.t call)
     const quotedRe = /['"]i18n\.t\(('[^']*')\)['"]/g;
-    const newLine2 = line.replace(quotedRe, "i18n.t($1)");
+    const newLine2 = line.replace(quotedRe, 'i18n.t($1)');
     if (newLine2 !== line) {
       fixed++;
       lines[i] = newLine2;

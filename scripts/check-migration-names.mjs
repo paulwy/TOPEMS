@@ -20,10 +20,10 @@
  * Exit 0 = pass, non-zero = CI should fail.
  */
 
-import { readdirSync, statSync } from "node:fs";
-import { join, basename, extname } from "node:path";
+import { readdirSync, statSync } from 'node:fs';
+import { join, basename, extname } from 'node:path';
 
-const ROOTS = ["svc", "lib"];
+const ROOTS = ['svc', 'lib'];
 
 // --- Regex catalogue --------------------------------------------------------
 // Canonical = 14-digit monotonic timestamp + underscore + kebab/snake summary.
@@ -32,11 +32,11 @@ const ROOTS = ["svc", "lib"];
 //     Short (allowed):  YYYYMMDDHHMMSS_{summary}.sql        → advisory warn
 const RE_CANONICAL_FULL = /^(\d{14})_([A-Za-z0-9]+)_([A-Za-z0-9][A-Za-z0-9_-]*)\.sql$/;
 const RE_CANONICAL_SHORT = /^(\d{14})_([A-Za-z0-9][A-Za-z0-9_-]*)\.sql$/;
-const RE_HIST_12   = /^(\d{12})_([A-Za-z0-9_][A-Za-z0-9_-]*)\.sql$/;
-const RE_HIST_08   = /^(\d{8})_([A-Za-z0-9_][A-Za-z0-9_-]*)\.sql$/;
+const RE_HIST_12 = /^(\d{12})_([A-Za-z0-9_][A-Za-z0-9_-]*)\.sql$/;
+const RE_HIST_08 = /^(\d{8})_([A-Za-z0-9_][A-Za-z0-9_-]*)\.sql$/;
 const RE_FORBIDDEN = /^V\d+_.*\.sql$/;
 
-const strict = process.argv.includes("--strict");
+const strict = process.argv.includes('--strict');
 
 // --- Collect migration SQL files --------------------------------------------
 const all = [];
@@ -44,35 +44,47 @@ function walk(dir) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const p = join(dir, entry.name);
     if (entry.isDirectory()) walk(p);
-    else if (entry.isFile() && extname(entry.name) === ".sql" &&
-             basename(dir) === "migrations") {
+    else if (entry.isFile() && extname(entry.name) === '.sql' && basename(dir) === 'migrations') {
       all.push(p);
     }
   }
 }
 for (const r of ROOTS) {
-  try { statSync(r); walk(r); } catch { /* noop if missing */ }
+  try {
+    statSync(r);
+    walk(r);
+  } catch {
+    /* noop if missing */
+  }
 }
 
 function validTimestamp14(s) {
-  const y = +s.slice(0, 4), m = +s.slice(4, 6), d = +s.slice(6, 8),
-        H = +s.slice(8, 10), M = +s.slice(10, 12), S = +s.slice(12, 14);
+  const y = +s.slice(0, 4),
+    m = +s.slice(4, 6),
+    d = +s.slice(6, 8),
+    H = +s.slice(8, 10),
+    M = +s.slice(10, 12),
+    S = +s.slice(12, 14);
   if (y < 2020 || y > 2100) return false;
   const dt = new Date(Date.UTC(y, m - 1, d, H, M, S));
-  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 &&
-         dt.getUTCDate() === d && dt.getUTCHours() === H &&
-         dt.getUTCMinutes() === M && dt.getUTCSeconds() === S;
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === m - 1 &&
+    dt.getUTCDate() === d &&
+    dt.getUTCHours() === H &&
+    dt.getUTCMinutes() === M &&
+    dt.getUTCSeconds() === S
+  );
 }
 function validTimestamp12(s) {
-  return validTimestamp14(s + "00");
+  return validTimestamp14(s + '00');
 }
 function validTimestamp08(s) {
-  return validTimestamp14(s + "000000");
+  return validTimestamp14(s + '000000');
 }
 
 // --- Classify ---------------------------------------------------------------
-const counts = { canonical_full: 0, canonical_short: 0,
-                 hist12: 0, hist08: 0, forbidden: 0, other: 0 };
+const counts = { canonical_full: 0, canonical_short: 0, hist12: 0, hist08: 0, forbidden: 0, other: 0 };
 const errors = [];
 const warnings = [];
 const badTs = [];
@@ -118,18 +130,28 @@ for (const p of all) {
 // --- Timestamp monotonic per-service check (loose: within a migrations dir) -
 const monoWarn = [];
 for (const r of ROOTS) {
-  try { statSync(r); } catch { continue; }
+  try {
+    statSync(r);
+  } catch {
+    continue;
+  }
   for (const entry of readdirSync(r, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
-    const mg = join(r, entry.name, "migrations");
+    const mg = join(r, entry.name, 'migrations');
     let files;
-    try { files = readdirSync(mg).filter(f => f.endsWith(".sql")).sort(); } catch { continue; }
-    let lastTs = "0".repeat(14);
+    try {
+      files = readdirSync(mg)
+        .filter((f) => f.endsWith('.sql'))
+        .sort();
+    } catch {
+      continue;
+    }
+    let lastTs = '0'.repeat(14);
     for (const f of files) {
       const m = f.match(/^(\d{14})/) || f.match(/^(\d{12})/) || f.match(/^(\d{8})/);
       if (!m) continue;
       let ts = m[1];
-      while (ts.length < 14) ts += "0";
+      while (ts.length < 14) ts += '0';
       if (ts < lastTs) monoWarn.push(`NON-MONOTONIC in ${mg}: ${f} (${ts}) <= previous ${lastTs}`);
       lastTs = ts;
     }
@@ -137,17 +159,17 @@ for (const r of ROOTS) {
 }
 
 // --- Report -----------------------------------------------------------------
-const total = counts.canonical_full + counts.canonical_short +
-              counts.hist12 + counts.hist08 + counts.forbidden + counts.other;
+const total =
+  counts.canonical_full + counts.canonical_short + counts.hist12 + counts.hist08 + counts.forbidden + counts.other;
 console.log(`\
-Migration naming gate (mode: ${strict ? "STRICT" : "default"})
+Migration naming gate (mode: ${strict ? 'STRICT' : 'default'})
 ---------------------------
-Scanned roots      : ${ROOTS.join(", ")}
+Scanned roots      : ${ROOTS.join(', ')}
 Total SQL files    : ${total}
   canonical FULL    (14+topic+summary) : ${counts.canonical_full}
   canonical SHORT   (14+summary only)  : ${counts.canonical_short} (advisory)
-  historical 12-digit                : ${counts.hist12}${strict ? " (strict → ERR)" : " (WARN)"}
-  historical  8-digit                : ${counts.hist08}${strict ? " (strict → ERR)" : " (WARN)"}
+  historical 12-digit                : ${counts.hist12}${strict ? ' (strict → ERR)' : ' (WARN)'}
+  historical  8-digit                : ${counts.hist08}${strict ? ' (strict → ERR)' : ' (WARN)'}
   forbidden  V{NN}_...               : ${counts.forbidden} (ALWAYS ERR)
   other / unmatched                  : ${counts.other} (ALWAYS ERR)
 Invalid timestamps : ${badTs.length}
@@ -156,10 +178,10 @@ Warnings           : ${warnings.length}
 Errors             : ${errors.length}
 `);
 
-for (const w of warnings) console.log("  ⚠️  " + w);
-for (const b of badTs)    console.log("  ❌ " + b);
-for (const m of monoWarn) console.log("  ❌ " + m);
-for (const e of errors)   console.log("  ❌ " + e);
+for (const w of warnings) console.log('  ⚠️  ' + w);
+for (const b of badTs) console.log('  ❌ ' + b);
+for (const m of monoWarn) console.log('  ❌ ' + m);
+for (const e of errors) console.log('  ❌ ' + e);
 
 const fatal = errors.length + badTs.length + monoWarn.length;
 if (fatal > 0) {
@@ -167,11 +189,11 @@ if (fatal > 0) {
   process.exit(1);
 }
 if (strict) {
-  const histHits = warnings.filter(w => /^HIST (12|08)-digit:/.test(w)).length;
+  const histHits = warnings.filter((w) => /^HIST (12|08)-digit:/.test(w)).length;
   if (histHits > 0) {
     console.log(`FAIL (--strict): ${histHits} historical 8/12-digit migration names remain.`);
     process.exit(2);
   }
 }
-console.log(`PASS${strict ? " (strict mode)" : ""}.`);
+console.log(`PASS${strict ? ' (strict mode)' : ''}.`);
 process.exit(0);

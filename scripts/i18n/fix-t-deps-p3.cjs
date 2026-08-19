@@ -53,7 +53,7 @@ for (const relPath of files) {
 
   if (modified) {
     // Ensure i18n import
-    const hasImport = lines.some(l => l.includes("import i18n from '@/i18n'"));
+    const hasImport = lines.some((l) => l.includes("import i18n from '@/i18n'"));
     if (!hasImport) {
       let lastImport = -1;
       for (let i = 0; i < lines.length; i++) {

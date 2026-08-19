@@ -11,13 +11,13 @@
  *
  * Run: node scripts/generate-inventory.mjs
  */
-import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from "node:fs";
-import { join, resolve, basename, dirname } from "node:path";
+import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from 'node:fs';
+import { join, resolve, basename, dirname } from 'node:path';
 
-const ROOT = resolve(import.meta.dirname, "..");
-const SVC_DIR = join(ROOT, "svc");
-const MODULES_DIR = join(ROOT, "apps", "web", "src", "modules");
-const OUT_FILE = join(ROOT, "docs", "architecture", "inventory.md");
+const ROOT = resolve(import.meta.dirname, '..');
+const SVC_DIR = join(ROOT, 'svc');
+const MODULES_DIR = join(ROOT, 'apps', 'web', 'src', 'modules');
+const OUT_FILE = join(ROOT, 'docs', 'architecture', 'inventory.md');
 
 // --- Scan backend services ---
 const services = [];
@@ -25,18 +25,18 @@ if (existsSync(SVC_DIR)) {
   for (const entry of readdirSync(SVC_DIR, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
     const svcPath = join(SVC_DIR, entry.name);
-    const cargoPath = join(svcPath, "Cargo.toml");
+    const cargoPath = join(svcPath, 'Cargo.toml');
     if (!existsSync(cargoPath)) continue;
 
-    const cargo = readFileSync(cargoPath, "utf8");
+    const cargo = readFileSync(cargoPath, 'utf8');
     const nameMatch = cargo.match(/^name\s*=\s*"([^"]+)"/m);
     const pkgName = nameMatch ? nameMatch[1] : entry.name;
 
     // Count migrations
-    const mgDir = join(svcPath, "migrations");
+    const mgDir = join(svcPath, 'migrations');
     let migrationCount = 0;
     if (existsSync(mgDir)) {
-      migrationCount = readdirSync(mgDir).filter(f => f.endsWith(".sql")).length;
+      migrationCount = readdirSync(mgDir).filter((f) => f.endsWith('.sql')).length;
     }
 
     // Count Rust source files
@@ -45,18 +45,19 @@ if (existsSync(SVC_DIR)) {
       try {
         for (const e of readdirSync(dir, { withFileTypes: true })) {
           const p = join(dir, e.name);
-          if (e.isDirectory()) { if (e.name !== "target") countRust(p); }
-          else if (e.name.endsWith(".rs")) rustFileCount++;
+          if (e.isDirectory()) {
+            if (e.name !== 'target') countRust(p);
+          } else if (e.name.endsWith('.rs')) rustFileCount++;
         }
       } catch {}
     }
-    countRust(join(svcPath, "src"));
+    countRust(join(svcPath, 'src'));
 
     // Extract port from main.rs or Cargo.toml
-    const mainPath = join(svcPath, "src", "main.rs");
-    let port = "?";
+    const mainPath = join(svcPath, 'src', 'main.rs');
+    let port = '?';
     if (existsSync(mainPath)) {
-      const mainSrc = readFileSync(mainPath, "utf8");
+      const mainSrc = readFileSync(mainPath, 'utf8');
       const portMatch = mainSrc.match(/port:\s*(\d+)/);
       if (portMatch) port = portMatch[1];
     }
@@ -77,10 +78,10 @@ if (existsSync(MODULES_DIR)) {
   for (const entry of readdirSync(MODULES_DIR, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
     const modPath = join(MODULES_DIR, entry.name);
-    const configPath = join(modPath, "config.ts");
+    const configPath = join(modPath, 'config.ts');
     if (!existsSync(configPath)) continue;
 
-    const config = readFileSync(configPath, "utf8");
+    const config = readFileSync(configPath, 'utf8');
 
     // Extract module name
     const nameMatch = config.match(/name:\s*['"]([^'"]+)['"]/);
@@ -97,7 +98,7 @@ if (existsSync(MODULES_DIR)) {
         for (const e of readdirSync(dir, { withFileTypes: true })) {
           const p = join(dir, e.name);
           if (e.isDirectory()) countTsx(p);
-          else if (e.name.endsWith(".tsx") || e.name.endsWith(".ts")) tsxCount++;
+          else if (e.name.endsWith('.tsx') || e.name.endsWith('.ts')) tsxCount++;
         }
       } catch {}
     }
@@ -128,9 +129,11 @@ let md = `# TOPEMS Module Inventory
 |---|-----------|---------|------|------------|------------|
 `;
 
-services.sort((a, b) => a.dir.localeCompare(b.dir)).forEach((s, i) => {
-  md += `| ${i + 1} | ${s.dir} | ${s.pkgName} | ${s.port} | ${s.migrations} | ${s.rustFiles} |\n`;
-});
+services
+  .sort((a, b) => a.dir.localeCompare(b.dir))
+  .forEach((s, i) => {
+    md += `| ${i + 1} | ${s.dir} | ${s.pkgName} | ${s.port} | ${s.migrations} | ${s.rustFiles} |\n`;
+  });
 
 md += `
 **Totals**: ${services.length} services · ${services.reduce((s, x) => s + x.migrations, 0)} migrations · ${services.reduce((s, x) => s + x.rustFiles, 0)} Rust source files
@@ -143,9 +146,11 @@ md += `
 |---|-----------|-------------|-----------------|-------------------|--------------|
 `;
 
-frontendModules.sort((a, b) => a.dir.localeCompare(b.dir)).forEach((m, i) => {
-  md += `| ${i + 1} | ${m.dir} | ${m.name} | ${m.routes} | ${m.navItems} | ${m.files} |\n`;
-});
+frontendModules
+  .sort((a, b) => a.dir.localeCompare(b.dir))
+  .forEach((m, i) => {
+    md += `| ${i + 1} | ${m.dir} | ${m.name} | ${m.routes} | ${m.navItems} | ${m.files} |\n`;
+  });
 
 md += `
 **Totals**: ${frontendModules.length} modules · ${frontendModules.reduce((s, x) => s + x.routes, 0)} routes · ${frontendModules.reduce((s, x) => s + x.navItems, 0)} navItems · ${frontendModules.reduce((s, x) => s + x.files, 0)} TS/TSX files

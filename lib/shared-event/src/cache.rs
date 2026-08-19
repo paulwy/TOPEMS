@@ -904,6 +904,7 @@ pub struct CacheWarmer {
 }
 
 /// 预热任务定义
+#[allow(clippy::type_complexity)]
 struct WarmupTask {
     /// 任务名称，用于日志和监控
     name: String,

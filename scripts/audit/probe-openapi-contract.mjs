@@ -107,16 +107,7 @@ function normalizeOpenApiPath(path, tag = '') {
   if (path === '/health' || path === '/api/health') return '/api/health';
 
   const service = String(tag || '').toLowerCase();
-  const coreSubmodules = new Set([
-    'iam',
-    'doc',
-    'file',
-    'flow',
-    'monitor',
-    'system',
-    'automation',
-    'migration',
-  ]);
+  const coreSubmodules = new Set(['iam', 'doc', 'file', 'flow', 'monitor', 'system', 'automation', 'migration']);
   const segments = path.split('/').filter(Boolean);
   const first = segments[0] || '';
 
@@ -163,8 +154,17 @@ function walkTs(dir) {
  * are stripped entirely rather than converted to {param} placeholders.
  */
 const NON_PATH_VARS = new Set([
-  'queryString', 'qs', 'params', 'searchParams', 'query', 'search',
-  'filter', 'sort', 'page', 'limit', 'offset',
+  'queryString',
+  'qs',
+  'params',
+  'searchParams',
+  'query',
+  'search',
+  'filter',
+  'sort',
+  'page',
+  'limit',
+  'offset',
 ]);
 
 /**
@@ -395,19 +395,10 @@ function isStubOperationId(opId) {
 }
 
 /** Paths that are deprecated/legacy aliases */
-const DEPRECATED_PATH_PATTERNS = [
-  /^\/analytics\/dashboard/,
-  /^\/analytics\/report/,
-  /^\/analytics\/widget/,
-];
+const DEPRECATED_PATH_PATTERNS = [/^\/analytics\/dashboard/, /^\/analytics\/report/, /^\/analytics\/widget/];
 
 /** Frontend paths that are internal (mock, test, dev) */
-const FRONTEND_INTERNAL_PATTERNS = [
-  /\/mock/i,
-  /\/local/i,
-  /\/test/i,
-  /\/dev\//i,
-];
+const FRONTEND_INTERNAL_PATTERNS = [/\/mock/i, /\/local/i, /\/test/i, /\/dev\//i];
 
 /** Check if a path matches any pattern in a list */
 function matchesAny(path, patterns) {
@@ -463,9 +454,10 @@ function diff(openapiOps, frontendCalls) {
     const feMethods = frontendByPath.get(np);
     if (!feMethods) {
       // Check exemptions
-      const isExempt = matchesAny(np, EXEMPT_UNUSED_PATH_PATTERNS) ||
-                       isStubOperationId(op.operationId) ||
-                       matchesAny(op.path, DEPRECATED_PATH_PATTERNS);
+      const isExempt =
+        matchesAny(np, EXEMPT_UNUSED_PATH_PATTERNS) ||
+        isStubOperationId(op.operationId) ||
+        matchesAny(op.path, DEPRECATED_PATH_PATTERNS);
       if (isExempt) {
         unusedBackendExempt.push({
           operationId: op.operationId,
@@ -473,9 +465,11 @@ function diff(openapiOps, frontendCalls) {
           path: op.path,
           normalizedPath: np,
           tag: op.tag,
-          exemptReason: isStubOperationId(op.operationId) ? 'AI stub' :
-                        matchesAny(op.path, DEPRECATED_PATH_PATTERNS) ? 'deprecated' :
-                        'health/internal',
+          exemptReason: isStubOperationId(op.operationId)
+            ? 'AI stub'
+            : matchesAny(op.path, DEPRECATED_PATH_PATTERNS)
+              ? 'deprecated'
+              : 'health/internal',
         });
       } else {
         unusedBackend.push({
@@ -551,17 +545,15 @@ function diff(openapiOps, frontendCalls) {
 // ---------------------------------------------------------------------------
 
 function generateReport(openapiOps, frontendCalls, diffResult) {
-  const { unusedBackend, unusedBackendExempt, undocumentedFrontend, undocumentedFrontendExempt, methodMismatches } = diffResult;
+  const { unusedBackend, unusedBackendExempt, undocumentedFrontend, undocumentedFrontendExempt, methodMismatches } =
+    diffResult;
 
   // Summary stats
   const totalOpenApiOps = openapiOps.length;
   const totalFrontendCalls = frontendCalls.filter((c) => c.fullPath).length;
-  const uniqueFrontendPaths = new Set(
-    frontendCalls.filter((c) => c.fullPath).map((c) => c.fullPath)
-  ).size;
+  const uniqueFrontendPaths = new Set(frontendCalls.filter((c) => c.fullPath).map((c) => c.fullPath)).size;
   const matchedPaths = totalOpenApiOps - unusedBackend.length - unusedBackendExempt.length;
-  const totalMismatches =
-    undocumentedFrontend.length + methodMismatches.length;
+  const totalMismatches = undocumentedFrontend.length + methodMismatches.length;
 
   // CI rule: mismatch >= 5 -> red
   const isRed = totalMismatches >= 5;
@@ -581,15 +573,11 @@ function generateReport(openapiOps, frontendCalls, diffResult) {
   lines.push(`| 已匹配端点数 | ${matchedPaths} |`);
   lines.push(`| 未使用后端 API (OpenAPI 有/前端无) | ${unusedBackend.length} |`);
   lines.push(`| 未使用后端 API — 已豁免 | ${unusedBackendExempt.length} |`);
-  lines.push(
-    `| 未文档化前端 API (前端有/OpenAPI 无) | ${undocumentedFrontend.length} |`
-  );
+  lines.push(`| 未文档化前端 API (前端有/OpenAPI 无) | ${undocumentedFrontend.length} |`);
   lines.push(`| 未文档化前端 API — 已豁免 | ${undocumentedFrontendExempt.length} |`);
   lines.push(`| 方法不匹配数 | ${methodMismatches.length} |`);
   lines.push(`| **总不匹配数** | **${totalMismatches}** |`);
-  lines.push(
-    `| CI 严重度 | ${isRed ? 'RED (mismatch >= 5)' : totalMismatches > 0 ? 'YELLOW' : 'GREEN'} |`
-  );
+  lines.push(`| CI 严重度 | ${isRed ? 'RED (mismatch >= 5)' : totalMismatches > 0 ? 'YELLOW' : 'GREEN'} |`);
   lines.push('');
 
   // Section 1: Unused backend APIs
@@ -656,9 +644,7 @@ function generateReport(openapiOps, frontendCalls, diffResult) {
     lines.push('| # | 服务名 | 方法 | URL | 文件 | 行号 |');
     lines.push('|---|--------|------|-----|------|------|');
     unknownServices.forEach((item, i) => {
-      lines.push(
-        `| ${i + 1} | ${item.service} | ${item.method} | \`${item.url}\` | ${item.file} | ${item.line} |`
-      );
+      lines.push(`| ${i + 1} | ${item.service} | ${item.method} | \`${item.url}\` | ${item.file} | ${item.line} |`);
     });
     lines.push('');
   }
@@ -672,7 +658,7 @@ function generateReport(openapiOps, frontendCalls, diffResult) {
   lines.push('');
   lines.push('### 路径归一化规则');
   lines.push('1. OpenAPI 路径缺少 `/api/` 前缀的自动补全（如 `/crm/customers` -> `/api/crm/customers`）');
-  lines.push('2. 前端调用通过服务名映射 URL 前缀（如 `apiClient.rd.get(\'/bugs\')` -> `/api/rd/bugs`）');
+  lines.push("2. 前端调用通过服务名映射 URL 前缀（如 `apiClient.rd.get('/bugs')` -> `/api/rd/bugs`）");
   lines.push('3. 模板字面量 `${id}` 转换为 OpenAPI 路径参数 `{id}`');
   lines.push('4. 查询字符串 `?param=value` 在比较时被移除');
   lines.push('');
@@ -709,9 +695,7 @@ function main() {
   console.log(`      -> 发现 ${tsFiles.length} 个 .ts 文件`);
   const frontendCalls = parseFrontendApiFiles(tsFiles);
   const validCalls = frontendCalls.filter((c) => c.fullPath);
-  console.log(
-    `      -> 提取 ${frontendCalls.length} 个 API 调用 (${validCalls.length} 个有效路径)\n`
-  );
+  console.log(`      -> 提取 ${frontendCalls.length} 个 API 调用 (${validCalls.length} 个有效路径)\n`);
 
   // 3. Diff
   console.log('[3/4] 执行差异分析...');
@@ -726,11 +710,7 @@ function main() {
 
   // 4. Generate report
   console.log(`[4/4] 生成报告: ${relative(ROOT, OUTPUT_MD)}`);
-  const { markdown, isRed, totalMismatches } = generateReport(
-    openapiOps,
-    frontendCalls,
-    diffResult
-  );
+  const { markdown, isRed, totalMismatches } = generateReport(openapiOps, frontendCalls, diffResult);
   writeFileSync(OUTPUT_MD, markdown + '\n', 'utf-8');
   console.log(`      -> 报告已写入\n`);
 

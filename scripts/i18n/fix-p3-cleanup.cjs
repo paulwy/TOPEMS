@@ -12,9 +12,7 @@ const path = require('path');
 const WEB_ROOT = path.resolve(__dirname, '../../apps/web/src');
 const args = process.argv.slice(2);
 const modIdx = args.indexOf('--modules');
-const modules = modIdx !== -1 && args[modIdx + 1]
-  ? args[modIdx + 1].split(',')
-  : ['monitor', 'mobile', 'admin'];
+const modules = modIdx !== -1 && args[modIdx + 1] ? args[modIdx + 1].split(',') : ['monitor', 'mobile', 'admin'];
 const verbose = args.includes('--verbose') || true;
 
 function walk(dir) {
@@ -24,7 +22,11 @@ function walk(dir) {
     if (entry.isDirectory()) {
       if (['node_modules', 'dist', 'build', '__tests__'].includes(entry.name)) continue;
       results.push(...walk(path.join(dir, entry.name)));
-    } else if (/\.[mc]?[tj]sx?$/.test(entry.name) && !entry.name.endsWith('.test.ts') && !entry.name.endsWith('.test.tsx')) {
+    } else if (
+      /\.[mc]?[tj]sx?$/.test(entry.name) &&
+      !entry.name.endsWith('.test.ts') &&
+      !entry.name.endsWith('.test.tsx')
+    ) {
       results.push(path.join(dir, entry.name));
     }
   }
@@ -75,7 +77,7 @@ for (const mod of modules) {
     }
 
     // 2. Convert remaining t() to i18n.t() in files without useTranslation
-    const hasHook = lines.some(l => /const\s+\{\s*t\s*\}\s*=\s*useTranslation\(/.test(l));
+    const hasHook = lines.some((l) => /const\s+\{\s*t\s*\}\s*=\s*useTranslation\(/.test(l));
     if (!hasHook) {
       for (let i = 0; i < lines.length; i++) {
         if (lines[i].includes('useTranslation')) continue;
@@ -89,7 +91,11 @@ for (const mod of modules) {
         }
 
         // Fix t in dependency arrays: [t] or [t, ...] or [..., t]
-        if (/\bt\b(?=\s*[,)\]])/.test(lines[i]) && !lines[i].includes('i18n.t') && !lines[i].includes('useTranslation')) {
+        if (
+          /\bt\b(?=\s*[,)\]])/.test(lines[i]) &&
+          !lines[i].includes('i18n.t') &&
+          !lines[i].includes('useTranslation')
+        ) {
           lines[i] = lines[i].replace(/\bt\b(?=\s*[,)\]])/g, 'i18n.t');
           fixCount++;
           modified = true;
@@ -106,7 +112,10 @@ for (const mod of modules) {
         lines[i] = '';
         let endIdx = i;
         for (let j = i + 1; j < lines.length; j++) {
-          if (lines[j].includes('}')) { endIdx = j; break; }
+          if (lines[j].includes('}')) {
+            endIdx = j;
+            break;
+          }
         }
         if (endIdx > i) {
           lines[endIdx] = lines[endIdx] + '\n' + "import i18n from '@/i18n';";
@@ -119,8 +128,8 @@ for (const mod of modules) {
 
     if (modified) {
       // 4. Ensure i18n import exists
-      const usesI18n = lines.some(l => /i18n\.t\s*\(/.test(l) && !/import/.test(l));
-      const hasI18nImport = lines.some(l => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l));
+      const usesI18n = lines.some((l) => /i18n\.t\s*\(/.test(l) && !/import/.test(l));
+      const hasI18nImport = lines.some((l) => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l));
       if (usesI18n && !hasI18nImport) {
         let lastImport = -1;
         for (let i = 0; i < lines.length; i++) {
@@ -136,7 +145,7 @@ for (const mod of modules) {
       if (!hasHook) {
         for (let i = 0; i < lines.length; i++) {
           const l = lines[i];
-          if (l.includes("import { useTranslation }") && l.includes("from 'react-i18next'")) {
+          if (l.includes('import { useTranslation }') && l.includes("from 'react-i18next'")) {
             lines[i] = '';
           } else if (l.includes('useTranslation') && l.trim().startsWith('import')) {
             // Multi-import line: remove useTranslation
@@ -146,7 +155,7 @@ for (const mod of modules) {
       }
 
       // Clean up empty lines
-      const cleaned = lines.filter(l => l !== '');
+      const cleaned = lines.filter((l) => l !== '');
       filesFixed++;
       totalFixes += fixCount;
       fs.writeFileSync(filePath, cleaned.join('\n'), 'utf-8');

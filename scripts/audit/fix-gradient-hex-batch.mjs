@@ -27,9 +27,15 @@ const SRC = join(ROOT, 'apps/web/src');
 const APPLY = process.argv.includes('--apply');
 
 const IGNORED = [
-  '/node_modules/', '/dist/', '/build/', '/coverage/',
-  '/test-results/', '/playwright-report/', '/__tests__/',
-  '.stories.', '/theme/animations/',
+  '/node_modules/',
+  '/dist/',
+  '/build/',
+  '/coverage/',
+  '/test-results/',
+  '/playwright-report/',
+  '/__tests__/',
+  '.stories.',
+  '/theme/animations/',
 ];
 
 const SKIP_FILE_RE =
@@ -39,10 +45,10 @@ const HEX_MAP = {
   '#8b5cf6': 'designTokens.colors.secondary.main',
   '#a78bfa': 'designTokens.colors.secondary.light',
   '#7c3aed': 'designTokens.colors.secondary.dark',
-  '#c4b5fd': 'designTokens.colors.secondary[\'300\']',
-  '#ddd6fe': 'designTokens.colors.secondary[\'200\']',
-  '#ede9fe': 'designTokens.colors.secondary[\'100\']',
-  '#f5f3ff': 'designTokens.colors.secondary[\'50\']',
+  '#c4b5fd': "designTokens.colors.secondary['300']",
+  '#ddd6fe': "designTokens.colors.secondary['200']",
+  '#ede9fe': "designTokens.colors.secondary['100']",
+  '#f5f3ff': "designTokens.colors.secondary['50']",
   '#a855f7': "designTokens.colors.purple['500']",
   '#9333ea': "designTokens.colors.purple['600']",
   '#c084fc': "designTokens.colors.purple['400']",
@@ -106,7 +112,7 @@ function walk(dir) {
   const files = [];
   for (const entry of entries) {
     const full = join(dir, entry);
-    if (IGNORED.some(p => full.includes(p))) continue;
+    if (IGNORED.some((p) => full.includes(p))) continue;
     const st = statSync(full);
     if (st.isDirectory()) files.push(...walk(full));
     else if (/\.(tsx?|jsx?)$/.test(extname(full))) files.push(full);
@@ -196,7 +202,9 @@ for (const f of files) processFile(f);
 
 fileStats.sort((a, b) => b.count - a.count);
 
-console.log(`\n${APPLY ? '✅ Applied' : '🔍 Dry-run'} — ${totalReplacements} replacements across ${fileStats.length} files\n`);
+console.log(
+  `\n${APPLY ? '✅ Applied' : '🔍 Dry-run'} — ${totalReplacements} replacements across ${fileStats.length} files\n`
+);
 for (const { file, count } of fileStats.slice(0, 25)) {
   console.log(`  ${String(count).padStart(4)}  ${file}`);
 }

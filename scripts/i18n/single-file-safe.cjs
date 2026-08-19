@@ -42,14 +42,10 @@ if (!fs.existsSync(ABS_FILE)) {
 const CJK_CHARS = '\u4e00-\u9fff\u3400-\u4dbf\u3300-\u33ff\uf900-\ufaff';
 const CJK_RE = new RegExp(`[${CJK_CHARS}]`);
 
-const WHITELIST_REL = [
-  'utils/ai/ui-recommender.ts',
-  'utils/apiPath.ts',
-  'config/ai-templates.ts',
-];
+const WHITELIST_REL = ['utils/ai/ui-recommender.ts', 'utils/apiPath.ts', 'config/ai-templates.ts'];
 
 function isWhitelisted(relPath) {
-  if (WHITELIST_REL.some(w => relPath.includes(w))) return true;
+  if (WHITELIST_REL.some((w) => relPath.includes(w))) return true;
   if (relPath.startsWith('pages/bi/')) return true;
   const bn = path.basename(relPath).toLowerCase();
   if (bn.includes('mock')) return true;
@@ -62,7 +58,11 @@ if (isWhitelisted(REL_FILE)) {
 }
 
 function loadJson(filepath) {
-  try { return JSON.parse(fs.readFileSync(filepath, 'utf-8')); } catch { return {}; }
+  try {
+    return JSON.parse(fs.readFileSync(filepath, 'utf-8'));
+  } catch {
+    return {};
+  }
 }
 function saveJson(filepath, data) {
   fs.writeFileSync(filepath, JSON.stringify(data, null, 2) + '\n', 'utf-8');
@@ -76,7 +76,8 @@ function fileLabel(filePath) {
 
 function trackContext(lines) {
   const inTypeBlock = new Array(lines.length).fill(false);
-  let depth = 0, typeStart = -1;
+  let depth = 0,
+    typeStart = -1;
   let braceDepth = 0;
   const typeStartRe = /^\s*(export\s+)?(type|interface|enum)\s+\w+\s*(=|\{|<|extends)/;
   for (let i = 0; i < lines.length; i++) {
@@ -89,8 +90,13 @@ function trackContext(lines) {
     if (typeStart !== -1) {
       inTypeBlock[i] = true;
       for (const ch of line) {
-        if (ch === '{' || ch === '(') { depth++; braceDepth++; }
-        else if (ch === '}' || ch === ')') { depth--; braceDepth--; }
+        if (ch === '{' || ch === '(') {
+          depth++;
+          braceDepth++;
+        } else if (ch === '}' || ch === ')') {
+          depth--;
+          braceDepth--;
+        }
       }
       if (typeStartRe.test(line) && line.includes('=') && !line.includes('{') && line.trim().endsWith(';')) {
         typeStart = -1;
@@ -104,7 +110,9 @@ function trackContext(lines) {
   return inTypeBlock;
 }
 
-function hasI18nT(line) { return /i18n\.t\s*\(/.test(line) || /\bt\s*\(\s*['"`]/.test(line); }
+function hasI18nT(line) {
+  return /i18n\.t\s*\(/.test(line) || /\bt\s*\(\s*['"`]/.test(line);
+}
 function isBracketAccess(text, line, idx) {
   const before = line.substring(0, idx).trimEnd();
   return before.endsWith('[');
@@ -132,7 +140,15 @@ function extractJSXAttrSegments(line) {
   while ((m = re.exec(line)) !== null) {
     const text = m[3] || m[4];
     if (!CJK_RE.test(text)) continue;
-    segs.push({ type: 'attr', attr: m[1], quote: m[2][0], full: m[0], text, offset: m.index, end: m.index + m[0].length });
+    segs.push({
+      type: 'attr',
+      attr: m[1],
+      quote: m[2][0],
+      full: m[0],
+      text,
+      offset: m.index,
+      end: m.index + m[0].length,
+    });
   }
   return segs;
 }
@@ -161,14 +177,19 @@ function extractStringSegments(line) {
 
 function generateKey(fl, text, idx) {
   const prefix = `${fl}`;
-  const clean = text.replace(/[${CJK_CHARS}]/g, '').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+  const clean = text
+    .replace(/[${CJK_CHARS}]/g, '')
+    .replace(/[^a-zA-Z0-9_]/g, '')
+    .toLowerCase();
   const hash = text.length <= 20 && clean.length >= 2 ? `${clean}_${idx}` : `k${idx}`;
   return `${prefix}.${hash}`;
 }
 
 function ensureI18nImport(lines) {
-  const usesI18n = lines.some(l => /i18n\.t\s*\(/.test(l) && !l.trim().startsWith('import'));
-  const hasImport = lines.some(l => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l) || /import\s*\{\s*i18n\s*\}/.test(l));
+  const usesI18n = lines.some((l) => /i18n\.t\s*\(/.test(l) && !l.trim().startsWith('import'));
+  const hasImport = lines.some(
+    (l) => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l) || /import\s*\{\s*i18n\s*\}/.test(l)
+  );
   if (usesI18n && !hasImport) {
     let lastImport = -1;
     for (let i = 0; i < lines.length; i++) {
@@ -192,7 +213,9 @@ const zhNsPath = path.join(I18N_DIR, 'zh', `${NS}.json`);
 const enNsPath = path.join(I18N_DIR, 'en', `${NS}.json`);
 const translations = { zh: loadJson(zhNsPath), en: loadJson(enNsPath) };
 
-let keyCounter = 0, replacedCount = 0, modified = false;
+let keyCounter = 0,
+  replacedCount = 0,
+  modified = false;
 const newLines = [...lines];
 const replacedKeys = [];
 
@@ -207,11 +230,11 @@ for (let i = 0; i < lines.length; i++) {
   const segs = [];
   for (const s of extractStringSegments(line)) segs.push(s);
   for (const s of extractJSXAttrSegments(line)) {
-    const overlap = segs.some(x => !(s.end <= x.offset || s.offset >= x.end));
+    const overlap = segs.some((x) => !(s.end <= x.offset || s.offset >= x.end));
     if (!overlap) segs.push(s);
   }
   for (const s of extractJSXTextSegments(line)) {
-    const overlap = segs.some(x => !(s.end <= x.offset || s.offset >= x.end));
+    const overlap = segs.some((x) => !(s.end <= x.offset || s.offset >= x.end));
     if (!overlap) segs.push(s);
   }
   if (segs.length === 0) continue;
@@ -238,7 +261,10 @@ for (let i = 0; i < lines.length; i++) {
     replacedCount++;
     replacedKeys.push(fullKey);
   }
-  if (modLine !== line) { newLines[i] = modLine; modified = true; }
+  if (modLine !== line) {
+    newLines[i] = modLine;
+    modified = true;
+  }
 }
 
 if (modified) ensureI18nImport(newLines);
@@ -249,13 +275,19 @@ if (!dryRun && modified) {
   saveJson(enNsPath, translations.en);
 }
 
-console.log(JSON.stringify({
-  file: REL_FILE,
-  ns: NS,
-  replaced: replacedCount,
-  modified,
-  keys: replacedKeys,
-  zhPath: zhNsPath,
-  enPath: enNsPath,
-  dry: dryRun,
-}, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      file: REL_FILE,
+      ns: NS,
+      replaced: replacedCount,
+      modified,
+      keys: replacedKeys,
+      zhPath: zhNsPath,
+      enPath: enNsPath,
+      dry: dryRun,
+    },
+    null,
+    2
+  )
+);

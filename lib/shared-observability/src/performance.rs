@@ -692,9 +692,7 @@ pub mod v28 {
 
         async fn trigger_alert(&self, service_name: &str, duration_ms: u64, is_n_plus_one: bool) {
             if let (Some(slo), Some(alert)) = (&self.slo_manager, &self.alert_manager) {
-                let severity = if is_n_plus_one {
-                    AlertSeverity::Critical
-                } else if duration_ms > 2000 {
+                let severity = if is_n_plus_one || duration_ms > 2000 {
                     AlertSeverity::Critical
                 } else {
                     AlertSeverity::Warning

@@ -7,9 +7,7 @@ import process from 'node:process';
 const rootDir = process.cwd();
 const scanRoots = ['apps/web/src'];
 const strict = process.argv.includes('--strict');
-const maxFindings = Number(
-  process.argv.find((arg) => arg.startsWith('--max-findings='))?.split('=')[1] ?? 80
-);
+const maxFindings = Number(process.argv.find((arg) => arg.startsWith('--max-findings='))?.split('=')[1] ?? 80);
 
 const ignoredPathParts = [
   '/node_modules/',
@@ -50,7 +48,8 @@ const patterns = [
   {
     id: 'fixed-px-spacing',
     description: '固定 px 间距，优先使用 MUI spacing 数字或 theme.spacing',
-    regex: /(?:\bp\b|\bpx\b|\bpy\b|\bpt\b|\bpr\b|\bpb\b|\bpl\b|\bm\b|\bmx\b|\bmy\b|\bmt\b|\bmr\b|\bmb\b|\bml\b|\bgap\b|\browGap\b|\bcolumnGap\b)\s*:\s*['"]?\d+px['"]?/g,
+    regex:
+      /(?:\bp\b|\bpx\b|\bpy\b|\bpt\b|\bpr\b|\bpb\b|\bpl\b|\bm\b|\bmx\b|\bmy\b|\bmt\b|\bmr\b|\bmb\b|\bml\b|\bgap\b|\browGap\b|\bcolumnGap\b)\s*:\s*['"]?\d+px['"]?/g,
   },
   {
     id: 'box-shadow',
@@ -139,9 +138,7 @@ Object.entries(grouped).forEach(([rule, count]) => {
 if (findings.length > 0) {
   console.log('\nTop findings:');
   findings.slice(0, maxFindings).forEach((finding) => {
-    console.log(
-      `${finding.file}:${finding.line} [${finding.rule}] ${finding.sample} - ${finding.message}`
-    );
+    console.log(`${finding.file}:${finding.line} [${finding.rule}] ${finding.sample} - ${finding.message}`);
   });
   if (findings.length > maxFindings) {
     console.log(`... 还有 ${findings.length - maxFindings} 条，使用 --max-findings=N 查看更多。`);

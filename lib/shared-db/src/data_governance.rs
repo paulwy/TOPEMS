@@ -454,13 +454,17 @@ impl DataMaskingEngine {
                     return "*".repeat(len);
                 }
                 let mut result = String::new();
-                for i in 0..visible_prefix.min(len) {
-                    result.push(chars[i]);
+                for ch in chars.iter().take(visible_prefix.min(len)) {
+                    result.push(*ch);
                 }
                 let masked_count = len.saturating_sub(visible_prefix + visible_suffix);
                 result.push_str(&"*".repeat(masked_count.max(4)));
-                for i in (len.saturating_sub(visible_suffix))..len {
-                    result.push(chars[i]);
+                for ch in chars
+                    .iter()
+                    .skip(len.saturating_sub(visible_suffix))
+                    .take(visible_suffix.min(len))
+                {
+                    result.push(*ch);
                 }
                 result
             }

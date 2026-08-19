@@ -140,6 +140,7 @@ mod tests {
 
     /// 测试用的行类型，满足 `FromRow` 约束
     #[derive(sqlx::FromRow)]
+    #[allow(dead_code)]
     struct TestRow {
         id: Uuid,
     }

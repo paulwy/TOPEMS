@@ -10,6 +10,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::collections::HashMap;
+use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::sync::{Arc, RwLock};
 
 use crate::AppState;
@@ -32,12 +33,12 @@ pub enum VersionStatus {
     Sunset,
 }
 
-impl ToString for VersionStatus {
-    fn to_string(&self) -> String {
+impl Display for VersionStatus {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
-            VersionStatus::Active => "active".to_string(),
-            VersionStatus::Deprecated => "deprecated".to_string(),
-            VersionStatus::Sunset => "sunset".to_string(),
+            VersionStatus::Active => f.write_str("active"),
+            VersionStatus::Deprecated => f.write_str("deprecated"),
+            VersionStatus::Sunset => f.write_str("sunset"),
         }
     }
 }

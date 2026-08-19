@@ -75,6 +75,7 @@ impl SagaInstance {
 ///
 /// `forward_action` 在正向执行时调用，`compensate_action` 在需要补偿时调用。
 /// 两个回调均以 `SagaInstance`（Clone）作为参数，并返回 `BoxFuture<Result<(), SagaError>>`。
+#[allow(clippy::type_complexity)]
 pub struct SagaStepDefinition {
     /// 步骤名称
     pub name: String,

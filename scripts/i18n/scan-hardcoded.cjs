@@ -22,7 +22,7 @@ function walk(dir) {
       if (SKIP_DIRS.includes(entry.name)) continue;
       walk(path.join(dir, entry.name));
     } else if (/\.[mc]?[tj]sx?$/.test(entry.name)) {
-      if (SKIP_EXT.some(ext => entry.name.endsWith(ext))) continue;
+      if (SKIP_EXT.some((ext) => entry.name.endsWith(ext))) continue;
       scanFile(path.join(dir, entry.name));
     }
   }
@@ -42,7 +42,11 @@ function scanFile(filePath) {
     if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')) continue;
     if (trimmed.startsWith('import ')) continue;
 
-    if (line.includes('i18n.t(') || line.includes("i18n.t(") || /\bt\s*\(/.test(line) && !line.includes('const') && !line.includes('function')) {
+    if (
+      line.includes('i18n.t(') ||
+      line.includes('i18n.t(') ||
+      (/\bt\s*\(/.test(line) && !line.includes('const') && !line.includes('function'))
+    ) {
       if (line.match(/\bt\s*\(\s*['"`]/) || line.includes('i18n.t(')) {
         continue;
       }
@@ -72,7 +76,9 @@ for (const [mod, count] of sorted) {
 }
 
 console.log('\n--- Top 30 Sub-modules ---');
-const sortedSub = Object.entries(moduleStats).sort((a, b) => b[1] - a[1]).slice(0, 30);
+const sortedSub = Object.entries(moduleStats)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 30);
 for (const [mod, count] of sortedSub) {
   console.log(`  ${mod}: ${count}`);
 }

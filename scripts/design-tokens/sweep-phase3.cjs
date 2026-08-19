@@ -39,7 +39,7 @@ function walkDir(dir, out = []) {
     if (e.isDirectory()) walkDir(fp, out);
     else if (/\.(ts|tsx|css)$/i.test(fp)) {
       const rel = path.relative(ROOT, fp);
-      if (!EXEMPT_PATTERNS.some(p => p.test(rel))) out.push(fp);
+      if (!EXEMPT_PATTERNS.some((p) => p.test(rel))) out.push(fp);
     }
   }
   return out;
@@ -78,17 +78,22 @@ function extractTokenMap(css) {
 }
 
 function hexDistance(h1, h2) {
-  const p = (h) => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
-  const [r1,g1,b1] = p(h1), [r2,g2,b2] = p(h2);
-  return Math.abs(r1-r2)+Math.abs(g1-g2)+Math.abs(b1-b2);
+  const p = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  const [r1, g1, b1] = p(h1),
+    [r2, g2, b2] = p(h2);
+  return Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2);
 }
 
 function findNearest(hex, existingEntries) {
-  let best = null, bestD = Infinity;
+  let best = null,
+    bestD = Infinity;
   for (const [eHex, eVar] of existingEntries) {
     if (!eVar.startsWith('var(--color-')) continue;
     const d = hexDistance(hex, eHex);
-    if (d < bestD) { bestD = d; best = eVar; }
+    if (d < bestD) {
+      bestD = d;
+      best = eVar;
+    }
   }
   return bestD < 90 ? best : null;
 }
@@ -115,31 +120,43 @@ function buildFullMap(cssContent, phase2Data) {
   const allHexes = new Set();
   for (const c of phase2Data.by_color) allHexes.add(c.hex);
 
-  const existingAsHex = [...existingMap.entries()].filter(([, v]) => v.startsWith('var(--color-')).map(([k, v]) => {
-    const m = /, (#[0-9a-f]{6})\)$/.exec(v);
-    return m ? [normalizeHex(m[1]), v] : [normalizeHex(k), v];
-  });
+  const existingAsHex = [...existingMap.entries()]
+    .filter(([, v]) => v.startsWith('var(--color-'))
+    .map(([k, v]) => {
+      const m = /, (#[0-9a-f]{6})\)$/.exec(v);
+      return m ? [normalizeHex(m[1]), v] : [normalizeHex(k), v];
+    });
 
   const fullMap = new Map(existingMap);
 
   for (const hex6 of allHexes) {
     if (fullMap.has(hex6)) continue;
-    if (hex6 === '#ffffff') { fullMap.set(hex6, cyberWhite); continue; }
-    if (hex6 === '#000000') { fullMap.set(hex6, cyberBlack); continue; }
+    if (hex6 === '#ffffff') {
+      fullMap.set(hex6, cyberWhite);
+      continue;
+    }
+    if (hex6 === '#000000') {
+      fullMap.set(hex6, cyberBlack);
+      continue;
+    }
     const near = findNearest(hex6, existingAsHex);
     if (near) {
       for (const v of buildHexVariants(hex6)) fullMap.set(v, near);
       continue;
     }
-    const r = parseInt(hex6.slice(1,3),16), g = parseInt(hex6.slice(3,5),16), b = parseInt(hex6.slice(5,7),16);
-    let bestFb = null, bestFd = Infinity;
+    const r = parseInt(hex6.slice(1, 3), 16),
+      g = parseInt(hex6.slice(3, 5), 16),
+      b = parseInt(hex6.slice(5, 7), 16);
+    let bestFb = null,
+      bestFd = Infinity;
     for (const fb of NEW_FALLBACK_TOKENS) {
       const d = hexDistance(hex6, fb.hex);
-      if (d < bestFd) { bestFd = d; bestFb = fb; }
+      if (d < bestFd) {
+        bestFd = d;
+        bestFb = fb;
+      }
     }
-    const fallback = bestFb
-      ? `var(${bestFb.name}, ${hex6})`
-      : `var(--color-text-muted, ${hex6})`;
+    const fallback = bestFb ? `var(${bestFb.name}, ${hex6})` : `var(--color-text-muted, ${hex6})`;
     for (const v of buildHexVariants(hex6)) fullMap.set(v, fallback);
   }
 
@@ -170,20 +187,44 @@ function stripComments(src) {
   let state = 'code';
   let quote = null;
   for (let i = 0; i < src.length; i++) {
-    const ch = src[i], nx = src[i + 1];
+    const ch = src[i],
+      nx = src[i + 1];
     if (state === 'code') {
-      if (!quote && (ch === '"' || ch === "'" || ch === '`')) { quote = ch; buf.push(ch); continue; }
-      if (quote && ch === quote && src[i-1] !== '\\') { quote = null; buf.push(ch); continue; }
-      if (!quote && ch === '/' && nx === '*') { state = 'block-comment'; buf.push('ⲬⲬ'); i++; continue; }
-      if (!quote && ch === '/' && nx === '/') { state = 'line-comment'; buf.push('ⲬⲬ'); i++; continue; }
+      if (!quote && (ch === '"' || ch === "'" || ch === '`')) {
+        quote = ch;
+        buf.push(ch);
+        continue;
+      }
+      if (quote && ch === quote && src[i - 1] !== '\\') {
+        quote = null;
+        buf.push(ch);
+        continue;
+      }
+      if (!quote && ch === '/' && nx === '*') {
+        state = 'block-comment';
+        buf.push('ⲬⲬ');
+        i++;
+        continue;
+      }
+      if (!quote && ch === '/' && nx === '/') {
+        state = 'line-comment';
+        buf.push('ⲬⲬ');
+        i++;
+        continue;
+      }
       buf.push(ch);
     } else if (state === 'block-comment') {
-      if (ch === '*' && nx === '/') { state = 'code'; buf.push('ⲬⲬ'); i++; }
-      else if (ch === '\n') buf.push('\n');
+      if (ch === '*' && nx === '/') {
+        state = 'code';
+        buf.push('ⲬⲬ');
+        i++;
+      } else if (ch === '\n') buf.push('\n');
       else buf.push('Ⲭ');
     } else if (state === 'line-comment') {
-      if (ch === '\n') { state = 'code'; buf.push('\n'); }
-      else buf.push('Ⲭ');
+      if (ch === '\n') {
+        state = 'code';
+        buf.push('\n');
+      } else buf.push('Ⲭ');
     }
   }
   return buf.join('');
@@ -255,7 +296,8 @@ function main() {
   const files = [];
   for (const t of TARGET_DIRS) walkDir(t, files);
 
-  let totalFiles = 0, totalChanges = 0;
+  let totalFiles = 0,
+    totalChanges = 0;
   for (const fp of files) {
     const src = fs.readFileSync(fp, 'utf8');
     const { result, changes } = aggressiveReplace(src, fullMap);

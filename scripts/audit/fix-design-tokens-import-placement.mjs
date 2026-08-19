@@ -96,7 +96,10 @@ function findLastImportEnd(lines) {
           for (let k = 0; k < lines[j].length; k++) {
             const c = lines[j][k];
             if (!started) {
-              if (c === '{') { started = true; depth = 1; }
+              if (c === '{') {
+                started = true;
+                depth = 1;
+              }
               continue;
             }
             if (c === '{') depth++;
@@ -141,19 +144,13 @@ for (const file of files) {
   const linesAfterRemove = lines.filter((_, idx) => !misplaced.includes(idx));
 
   // 再判断 remaining content 是否还有 designTokens import（例如其他地方放对的）
-  const hasRemaining = linesAfterRemove.some(
-    (l) => l === BAD_LINE || l === BAD_LINE_ALT || l === BAD_LINE_THEME
-  );
+  const hasRemaining = linesAfterRemove.some((l) => l === BAD_LINE || l === BAD_LINE_ALT || l === BAD_LINE_THEME);
 
   let finalLines = linesAfterRemove;
   if (!hasRemaining) {
     // 在真正的 import 结尾点之后补一个 designTokens import
     const insertAt = findLastImportEnd(linesAfterRemove) + 1;
-    finalLines = [
-      ...linesAfterRemove.slice(0, insertAt),
-      BAD_LINE,
-      ...linesAfterRemove.slice(insertAt),
-    ];
+    finalLines = [...linesAfterRemove.slice(0, insertAt), BAD_LINE, ...linesAfterRemove.slice(insertAt)];
   }
   const newContent = finalLines.join('\n');
   if (newContent !== original) {

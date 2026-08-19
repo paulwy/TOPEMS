@@ -16,11 +16,13 @@ import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import {
-  type BillingRecord,
   crmApi,
   useCrmMock,
-  type BillingAnalyticsData,
-  type Period,
+} from '@/api/crm';
+import type {
+  BillingRecord,
+  BillingAnalyticsData,
+  Period,
 } from '@/api/crm';
 import { billingSchema } from '@/schemas/crm';
 

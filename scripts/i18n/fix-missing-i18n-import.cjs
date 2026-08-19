@@ -17,9 +17,13 @@ function collectFiles(dir) {
     if (entry.isDirectory()) {
       if (['__tests__', 'node_modules', 'test', 'tests', 'dist', 'build'].includes(entry.name)) continue;
       results.push(...collectFiles(fullPath));
-    } else if ((entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) &&
-               !entry.name.endsWith('.test.ts') && !entry.name.endsWith('.test.tsx') &&
-               !entry.name.endsWith('.d.ts') && !entry.name.endsWith('.stories.tsx')) {
+    } else if (
+      (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) &&
+      !entry.name.endsWith('.test.ts') &&
+      !entry.name.endsWith('.test.tsx') &&
+      !entry.name.endsWith('.d.ts') &&
+      !entry.name.endsWith('.stories.tsx')
+    ) {
       results.push(fullPath);
     }
   }
@@ -31,13 +35,12 @@ function fixFile(filePath) {
   const lines = content.split('\n');
 
   // Check if file uses i18n.t() in non-import lines
-  const usesI18n = lines.some(l => /i18n\.t\s*\(/.test(l) && !/import/.test(l));
+  const usesI18n = lines.some((l) => /i18n\.t\s*\(/.test(l) && !/import/.test(l));
   if (!usesI18n) return false;
 
   // Check if import already exists
-  const hasImport = lines.some(l =>
-    /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l) ||
-    /import\s+\{\s*i18n\s*\}/.test(l)
+  const hasImport = lines.some(
+    (l) => /import\s+i18n\s+from\s+['"]@\/i18n['"]/.test(l) || /import\s+\{\s*i18n\s*\}/.test(l)
   );
   if (hasImport) return false;
 
@@ -47,7 +50,14 @@ function fixFile(filePath) {
     const t = lines[i].trim();
     if (t.startsWith('import ')) {
       lastImport = i;
-    } else if (lastImport >= 0 && !t.startsWith('import') && t !== '' && !t.startsWith("'") && !t.startsWith('"') && !t.startsWith('}')) {
+    } else if (
+      lastImport >= 0 &&
+      !t.startsWith('import') &&
+      t !== '' &&
+      !t.startsWith("'") &&
+      !t.startsWith('"') &&
+      !t.startsWith('}')
+    ) {
       break;
     }
   }
