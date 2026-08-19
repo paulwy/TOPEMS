@@ -46,7 +46,7 @@ async fn auth_request(
     token: &str,
     method: &str,
     endpoint: &str,
-    _body: Option<Value>,
+    body: Option<Value>,
 ) -> Result<(u16, Value), String> {
     let url = format!("{}{}", API_URL, endpoint);
     let request = match method {
@@ -56,9 +56,17 @@ async fn auth_request(
         "DELETE" => client.delete(&url),
         _ => return Err(format!("不支持的 HTTP 方法: {}", method)),
     };
-    let response = request
+    let request = request
         .bearer_auth(token)
-        .header("Content-Type", "application/json")
+        .header("Content-Type", "application/json");
+
+    let request = if let Some(ref b) = body {
+        request.json(b)
+    } else {
+        request
+    };
+
+    let response = request
         .send()
         .await
         .map_err(|e| format!("请求失败: {}", e))?;

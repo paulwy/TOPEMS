@@ -17,6 +17,7 @@ mod event_handlers;
 mod handlers;
 mod mes_erp_sync;
 mod mes_qms_integration;
+mod middleware;
 mod models;
 mod modules;
 mod openapi;
