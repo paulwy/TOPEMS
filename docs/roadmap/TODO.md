@@ -7949,7 +7949,7 @@ R5 计数精确下降 2257 → **0**（无 over/under insert，与 dry-run count
 
 # V253 · 4 轨并行：R1/R3 清零 + Frontend 泛型 5 模块落地 + Tauri keystore IPC 暴露 + Perm 矩阵统一 CLI / Mapping 骨架
 
-**版本标记**：V253 · 状态：**已发布** · `commit 3bd1126e518b6fd0b6e552a10383c992bc459969` · `tag V253` · `base: V252` · 发布日期：2026-08-20
+**版本标记**：V253 · 状态：**已发布** · `commit 851c80dba73f06bf8facda48c323287a87520e11` · `tag V253` · `base: V252` · 发布日期：2026-08-20
 **质量门禁基线（V252 → V253）**：
 
 | 门禁 | V252 基线 | V253 目标 | V253 实际 | 状态 |
@@ -8125,7 +8125,7 @@ const crmRoutes: RouteConfigV2[] = [ customerDetailRoute, ... ];
 ## Step 4 · 版本归档
 
 - 提交：`feat(V253): R1=0,R3=0 · 泛型落地5模块 · Tauri keystore IPC · perm矩阵CLI`
-- 归档 tgz：`releases/archives/TOPEMS-V253-3bd1126e5.tar.gz`（由 `.gitignore` `releases/archives/` 排除，不进 git）
+- 归档 tgz：`releases/archives/TOPEMS-V253-851c80dba.tar.gz`（由 `.gitignore` `releases/archives/` 排除，不进 git）
 - Tag：`V253` → push origin main + push tag
 - CI 验收：推送后 GitHub Actions 观察 **cargo-check / tsc / axum-layer-gate / i18n** 全绿
 
