@@ -8188,7 +8188,7 @@ V252 R5 漏网补插（DRY-RUN 发现 · 顺手修）
 
 ### V255 · 2026-08-20 Thu · R2=0 真扫落地 + mapping 12 svc × 107 keys 扩围 + Perm 矩阵脚本统一后半（toolkit ci-report + 老脚本 deprecated + CI 迁移）
 
-**Tag**: `TOPEMS-V255` · Baseline SHA: `ad7b86862` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V255-{FINAL}.tar.gz` (.gitignore 排除)
+**Tag**: `TOPEMS-V255` · Baseline SHA: `ad7b86862` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V255-f4d57e233.tar.gz` (.gitignore 排除)
 
 #### 目标
 并行三轨闭合 V254 后续扩展的前 3 个高优先级项：(1) 将 perm-gate R2 从硬编码占位 "8" 升级为**白名单 8 svc 真实扫描**，同时 8 个核心业务 svc 实接入 shared-auth `require_permission` middleware → R2 真扫=0；(2) `perm-code-mapping.json` 从 finance/qms/pm/mes 4 svc 扩围到 ai/search/crm/lims/wms/ehs/monitor/communication 共 12 svc，生成 107 条 domain 级权限码规则，auto-insert 落地 308 条 rewrite；(3) Perm 脚本统一后半：perm-matrix-toolkit.cjs 新增 `ci-report` 子命令（STRICT/FAIL-ON-WARN/DRY-RUN 三模式 + 严格退出码 + CI JSON）、老 `check-perm-gate.cjs`/`check-permission-matrix.cjs` 改为 deprecated wrapper、`.github/workflows/ci.yml` perm step 迁移到新 toolkit 调用。
