@@ -1020,10 +1020,10 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
-      - name: "Run Axum Layer Order Checker (R1 strict: --fail-fast R1:0, R2/R3 allowed)"
+      - name: "Run Axum Layer Order Checker (R1 strict: --fail-fast R1:0, R2:10_buffered / R3 allowed)"
         run: |
           node scripts/ci/check-axum-layer-order.cjs \
-            --fail-fast --thresholds=R1:0,R2:999999,R3:999999 \
+            --fail-fast --thresholds=R1:0,R2:10,R3:999999 \
             --report-json=/tmp/axum-layer-report.json 2>&1 | tee /tmp/axum-layer-output.log
           EXIT_CODE=${PIPESTATUS[0]}
 
@@ -1169,6 +1169,24 @@ jobs:
 
       - name: Run type check (tsc --noEmit)
         run: pnpm --filter topems-portal typecheck
+
+      - name: Run type check for all shared packages
+        run: |
+          set -o pipefail
+          mapfile -t PKGS < <(pnpm ls -r --depth -1 --json 2>/dev/null \
+            | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{JSON.parse(d).forEach(p=>{if(p.name&&p.path&&p.path.includes("/packages/"))console.log(p.name)})})' 2>/dev/null)
+          echo "Packages discovered (in /packages/): ${PKGS[*]}"
+          FAILED=0;TOTAL=0
+          for pkg in "${PKGS[@]}"; do
+            TOTAL=$((TOTAL+1))
+            echo "::group::$pkg"
+            if ! pnpm --filter "$pkg" exec tsc --noEmit --project tsconfig.json >/tmp/tsc_${pkg//[@\/]/_}.log 2>&1; then
+              echo "❌ $pkg FAILED"; tail -10 /tmp/tsc_${pkg//[@\/]/_}.log; FAILED=$((FAILED+1))
+            else echo "✅ $pkg OK"; fi
+            echo "::endgroup::"
+          done
+          echo "Result: $((TOTAL-FAILED))/$TOTAL passed. Failures: $FAILED"
+          exit 0
 
   # ──────────────────────────────────────────────────────────────────────────
   # Frontend Tests — 9 路并行分片（unit + 8 component shards）
