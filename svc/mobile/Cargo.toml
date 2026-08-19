@@ -24,17 +24,17 @@ bcrypt.workspace = true
 jsonwebtoken.workspace = true
 bytes.workspace = true
 bigdecimal.workspace = true
-topems-shared = { path = "../../lib" }
-topems-shared-event = { path = "../../lib/shared-event" }
-topems-shared-service-client = { path = "../../lib/shared-service-client" }
-topems-shared-core = { path = "../../lib/shared-core" }
-topems-shared-auth = { path = "../../lib/shared-auth" }
-topems-shared-db = { path = "../../lib/shared-db" }
-topems-shared-observability = { path = "../../lib/shared-observability" }
+topems-shared = { workspace = true }
+topems-shared-event = { workspace = true }
+topems-shared-service-client = { workspace = true }
+topems-shared-core = { workspace = true }
+topems-shared-auth = { workspace = true }
+topems-shared-db = { workspace = true }
+topems-shared-observability = { workspace = true }
 
 # OpenAPI 文档
 utoipa.workspace = true
-topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
+topems-shared-bootstrap = { workspace = true }
 axum-prometheus.workspace = true
 prometheus.workspace = true
 

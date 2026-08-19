@@ -1,0 +1,123 @@
+# TOPEMS Scripts Index (V246 baseline)
+## ci/ · Quality Gates (node *.cjs, invoked by CI & pre-commit)
+- apply_clippy_allow_style.cjs
+- check-a11y.cjs
+- check-api-audit.cjs
+- check-api-coverage.cjs
+- check-axum-layer-order.cjs — Axum Layer 顺序检查 M (R1/R2/R3)
+- check-i18n-quality.cjs — i18n R11 样式指南
+- check-i18n.cjs
+- check-icons.cjs
+- check-nav-route.cjs
+- check-permission-matrix.cjs — R1~R7 权限/中间件静态扫描
+- clean-permission-orphans.cjs
+- compare-api-modules.cjs
+- coverage-baseline.sh
+- gen-r12-zp0-z4cover-report.cjs
+- lint-check.sh
+- page-audit.cjs
+- sccache_stats.sh
+- verify-glossary.cjs
+## i18n/ · i18n 同步
+- _list-top-ui.cjs
+- apply_glossary.js
+- apply_llm_translations.js
+- ast-v5-replace.mjs
+- ast-v6-replace.mjs
+- audit_fake_en.js
+- batch-i18n-crossline.cjs
+- batch-i18n-enhanced.cjs
+- batch-i18n-general.cjs
+- batch-i18n-jsx-segments.cjs
+- batch-i18n-replace.cjs
+- batch-i18n-simple-cjk.cjs
+- batch-i18n-v222-safe.cjs
+- batch-i18n-v223.cjs
+- batch-schema-i18n.cjs
+- batch-ts-general.cjs
+- batch_translate.js
+- build_glossary.js
+- check_key_alignment.js
+- classify-remain.cjs
+- comprehensive_fix.js
+- export_remaining_round2.js
+- final_fix.js
+- finance_refine.js
+- fix-cjk-leftover.cjs
+- fix-edge-cases.cjs
+- fix-edge-final.cjs
+- fix-final-manual.cjs
+- fix-imports-p3.cjs
+- fix-jsx-attr-braces.cjs
+- fix-last-mile.cjs
+- fix-mid-import-p3.cjs
+- fix-misplaced-hooks-p3.cjs
+- fix-misplaced-useTranslation.cjs
+- fix-missing-i18n-import.cjs
+- fix-module-level-t-calls.cjs
+- fix-p3-cleanup.cjs
+- fix-remaining.cjs
+- fix-styleguide-high.cjs
+- fix-styleguide-medium.cjs
+- fix-t-deps-p3.cjs
+- fix-t-from-tsc.cjs
+- fix-v223-corruptions.cjs
+- fix-v223-errors.cjs
+- fix-v223-from-diff.cjs
+- fix-v223-tsc-errors.cjs
+- fix_residual.js
+- gen-r13-p4-baseline.cjs
+- glossary.csv
+- hrm_refine.js
+- lint-styleguide.cjs
+- merge_translations.js
+- pipeline-v4.sh
+- precise-targeted-replace.cjs
+- process-file-wrapper.sh
+- process-one.sh
+- scan-hardcoded-precise.cjs
+- scan-hardcoded.cjs
+- scan_remaining.js
+- single-file-safe.cjs
+- single-file-v2.cjs
+- single-file-v3.cjs
+- single-file-v4.cjs
+- styleguide_apply.js
+- sync_flat_nested.js
+- translate_batch1.js
+- translate_batch3.cjs
+- ultimate_fix.js
+## finance/ · 财务域脚本
+- README.md
+- consistency-check.sh
+## deploy/ · 部署相关
+- deploy.sh
+- docker/topems-docker.sh
+- domain-start.sh
+- rollback.sh
+## security/ · 安全相关
+- rls_audit.py
+- rls_audit_result.json
+- rls_fix_handlers.py
+- rls_fix_tables.py
+- rls_fixed_handlers.json
+- rls_fixed_tables.json
+- scan.sh
+- tenant-audit.sh
+## windows/ · Windows 兼容脚本
+- README_WINDOWS.md
+- check-env.ps1
+- ports.ps1
+- topems-standalone.ps1
+- topems.bat
+## tools/ · 工具脚本
+- Cargo.toml
+- README.md
+- hash_password.rs
+- migration-generator/
+## _oneoff/ · 一次性历史脚本（禁止 CI 引用）
+- apply_fixes.py — V24x 前一次性 cargo 错误自动修复
+- parse_errors.py — 错误日志解析
+- fix_mes_errors.py — MES 服务错误专项补丁
+- mes_errors.json — MES 服务错误专项补丁数据
+- README.md

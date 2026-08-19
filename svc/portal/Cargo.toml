@@ -6,10 +6,10 @@ authors.workspace = true
 description = "TOPEMS-PORTAL 统一门户系统"
 
 [dependencies]
-topems-shared = { path = "../../lib" }
-topems-shared-core = { path = "../../lib/shared-core" }
-topems-shared-event = { path = "../../lib/shared-event" }
-topems-shared-auth = { path = "../../lib/shared-auth" }
+topems-shared = { workspace = true }
+topems-shared-core = { workspace = true }
+topems-shared-event = { workspace = true }
+topems-shared-auth = { workspace = true }
 topems-shared-db = { workspace = true }
 topems-shared-observability = { workspace = true }
 axum.workspace = true
@@ -25,7 +25,7 @@ anyhow.workspace = true
 thiserror.workspace = true
 chrono.workspace = true
 reqwest.workspace = true
-topems-shared-service-client = { path = "../../lib/shared-service-client" }
+topems-shared-service-client = { workspace = true }
 async-graphql.workspace = true
 async-graphql-axum.workspace = true
 futures-util.workspace = true
@@ -36,7 +36,7 @@ prometheus.workspace = true
 tower-cookies.workspace = true
 sqlx.workspace = true
 sha2 = "0.10"
-topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
+topems-shared-bootstrap = { workspace = true }
 
 [dev-dependencies]
 tokio-test.workspace = true

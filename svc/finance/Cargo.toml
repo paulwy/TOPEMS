@@ -23,12 +23,12 @@ tracing-subscriber.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
 reqwest.workspace = true
-topems-shared = { path = "../../lib" }
-topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
-topems-shared-event = { path = "../../lib/shared-event" }
-topems-shared-service-client = { path = "../../lib/shared-service-client" }
-topems-shared-core = { path = "../../lib/shared-core" }
-topems-shared-auth = { path = "../../lib/shared-auth" }
+topems-shared = { workspace = true }
+topems-shared-bootstrap = { workspace = true }
+topems-shared-event = { workspace = true }
+topems-shared-service-client = { workspace = true }
+topems-shared-core = { workspace = true }
+topems-shared-auth = { workspace = true }
 utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true

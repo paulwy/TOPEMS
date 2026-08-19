@@ -6940,3 +6940,169 @@ YAML 语法校验：`ruby -ryaml -e "puts YAML.load_file('.github/workflows/ci.y
 - [ ] **Tauri 高价值**：Token 加密存储（tauri-plugin-keystore）、审计日志前端页、broadcast_event 系统通知、CancellationToken、离线冲突、密钥轮换（连续 3 个版本列入后续扩展，优先级提升）
 - [ ] **Dify 端到端**：LLM Provider 配置 + 前端对话页（chat_stream SSE）
 - [ ] **测试基线扩展**：从 `--no-run`（只编译）升级到完整 `cargo test --workspace` 运行通过，尤其 unified-core 集成测试实际发 HTTP 请求的用例
+
+## 🎯 V246 — 架构冗余实修(V246报告 P0/P1)：MES编译归一, shared-*依赖workspace, 前端配置收敛, R7扫描器新增（并行推进 · ✅ 完成）
+
+> 日期：2026-08-19 | 代码改动 45 files（Rust 34 = Cargo.toml 33 + mes/equipment.rs 1 · TS 配置 5 · YAML 1 · 脚本/C & D 新增 5 = 删旧+迁移+MAP+README+check-perm-gate 逻辑扩写）+ 文档 1 file | 验收：`cargo check --workspace` 0 errors · Perm R7=17 WARN 基线对齐 · Axum R1/R2/R3=0 STRONG_PASS · YAML Syntax OK · 根散脚本归零 0 · tsconfig 4 JSON parse OK · eslintrc 双格式去重 2 删除
+
+### A. MES 编译 0 错误 + shared-* 依赖 workspace 归一
+
+**背景（子项①）**：V246 基线 `cargo check --workspace` 唯一 blocker 在 topems-mes equipment 模块：3×MaintenanceRecord 构造（list_maintenances / create_maintenance / update_maintenance_status）中对 sqlx query! 返回的 `Option<NaiveDateTime>` 再次包 Some()，形成 `Option<Option<NaiveDateTime>>` 双层嵌套，传给接受单层 `Option<NaiveDateTime>` 的 `naive_to_utc()` → 触发 E0308 mismatched types；同时 sqlx query! 对 NOT NULL 列推断为 `Option<Uuid>` / `Option<String>`（LEFT JOIN 组合 SQL 导致），结构体字段是 `Uuid` / `String`，赋值时缺失 `.unwrap()` → 18 errors 汇总。
+
+**变更（子项① 1 file）**：
+- [equipment.rs](file:///Users/air/TOPEMS/svc/mes/src/modules/equipment.rs) — 21 处修复，分 3 组 MaintenanceRecord 构造 × 每类 7 条：
+  - 9 条：`naive_to_utc(Some(result.xxx))` → `naive_to_utc(result.xxx)`（去掉外层 Some，因为 xxx 已经是 Option）
+  - 3 条：`equipment_id = r.equipment_id` → `.unwrap()`（NOT NULL 列，LEFT JOIN 推断成 Option 后安全解包）
+  - 3 条：`maintenance_type` → `.unwrap()`（同上）
+  - 3 条：`maintainer` → `.unwrap()`（同上）
+  - 3 条：`equipment_name` — list 组是 LEFT JOIN 原始 String 需 Some() 包裹；create/update 两组是 `Option<String>` 变量直接绑定，类型自动正确
+  - **严格保留**：`end_time: r.end_time.map(|dt| naive_to_utc(Some(dt)))`（dt 是单层 NaiveDateTime，Some 包一层正确，不改动）
+
+**背景（子项②）**：V246 架构冗余报告 P0-R02 指出 topems-shared-* 依赖声明双轨（40 条声明 12 条仍用 `path = "../../lib/shared-xxx"` 形式，未收归 workspace.dependencies 统一版本锁）。path 形式在 `[patch]` / registry 替换场景可能导致「同一 shared crate 被 path + registry 编译两次 → linker duplicate symbol 地狱」。根 [Cargo.toml](file:///Users/air/TOPEMS/Cargo.toml#L164-L179) 164-179 行已定义 8 条子 crate + topems-shared 主 crate 的 workspace.dependencies（path= 形式的 workspace 级锚），svc 层应全部引用 `workspace = true`。
+
+**变更（子项② 33 files）**：
+33 个 `svc/*/Cargo.toml` 全量 svc 目录的 shared-* 声明统一：
+- 纯 path：`topems-shared-core = { path = "../../lib/shared-core" }` → `{ workspace = true }`
+- 带 features：保留原 features 字段，仅 path→workspace=true（扫描到无此场景）
+- 已经是 workspace=true（如 shared-db 多个服务）：不触碰
+覆盖服务：svc/ai · analytics · aps · billing · communication · crm · ehs · erp · feedback · finance · gis · hrm · integration · lims · lowcode · master-data · mes · mobile · monitor · pdm · plugin-registry · pm · portal · qms · rd · scm · search · srm · ticket · tms · unified-core · wms（共 32，加 mes=33，即 workspace.members 全部业务服务 100% 覆盖）
+
+**验收（A 轨）**：
+```
+cargo check --workspace --message-format=short 2>&1 | tail -5
+→ Exit 0 · 0 error: 行
+→ 仅遗留 topems-crm 3 条 unused import warnings（BillingItem/CustomerScore/SalesForecast 三组），非 V246 新增，V247 可 cargo fix 一键清
+grep -E 'topems-shared-[a-z-]+ = \{ path = ' svc/*/Cargo.toml | wc -l → 0（path 形式归零，100% workspace=true）
+```
+
+### B. apps/* tsconfig + eslint 配置收敛（去重）
+
+**背景**：3 个前端 App（web / desktop / mobile）的 tsconfig 中 compilerOptions.paths 各自重复写了 6-12 条 `@topems/*` alias，且 web/mobile 同时存在「flat 格式 eslint.config.js + 旧格式 .eslintrc.json/.eslintrc.js」并存 — 新老双格式互相覆盖导致 lint 结果漂移；tsconfig paths 不合并（TS extends 规则：子级 paths 写了就完全覆盖父级），导致新人加一条 @topems/xxx alias 得改 3 个文件，容易不一致。
+
+**变更（7 files：改 5 + 删 2）**：
+
+1. [tsconfig.base.json](file:///Users/air/TOPEMS/tsconfig.base.json) — 新增 compilerOptions.paths 16 条（3 App 的公共 alias 源头）：
+   - `@topems/tokens/*` → packages/tokens/src/*（精确包）
+   - `@topems/shared-types` + `/*` → packages/shared-types/src
+   - `@topems/shared-constants` + `/*` → packages/shared-constants/src
+   - `@topems/shared-utils/*` → packages/shared-utils/src/*
+   - `@topems/shared-hooks/*` → packages/shared-hooks/src/*
+   - `@topems/shared-components` + `/*` → packages/shared-components/src
+   - 额外加入 lucide-react / react 精确映射（避免个别 App 漏配）
+   - TS6 `baseUrl` 弃用告警：加 ignoreDeprecations: "6.0"
+
+2. 3 App tsconfig 去重：
+   - [apps/web/tsconfig.json](file:///Users/air/TOPEMS/apps/web/tsconfig.json) — 删 paths（全量继承 base 16 条），保留 strict/noUnusedLocals=false/types=@react-three/fiber/include/references 等 App 独有项
+   - [apps/desktop/tsconfig.json](file:///Users/air/TOPEMS/apps/desktop/tsconfig.json) — 删 paths，保留 lib/include/references
+   - [apps/mobile/tsconfig.json](file:///Users/air/TOPEMS/apps/mobile/tsconfig.json) — 删 paths，双继承 `["expo/tsconfig.base", "../../tsconfig.base.json"]`，保留 jsx=react-native/types=jest/include/exclude
+
+3. eslint 旧格式删除（flat 格式已存在）：
+   - 删 [apps/web/.eslintrc.json](file:///Users/air/TOPEMS/apps/web/.eslintrc.json)（新 apps/web/eslint.config.js 已存 flat+storybook+unicorn+jsx-a11y）
+   - 删 [apps/mobile/.eslintrc.js](file:///Users/air/TOPEMS/apps/mobile/.eslintrc.js)（新 apps/mobile/eslint.config.js 已存 @eslint/js+ts+prettier）
+   - desktop 无 eslint 配置 → 不动
+
+**验收（B 轨）**：
+```
+4 JSON parse（node -e JSON.parse 遍历）→ 全部 OK
+tsc --showConfig 合并 paths：web=16 条 / desktop=16 条 / mobile=16 条（全量继承）
+web tsc：原 TS2307 "@topems/tokens 无法解析" 错误消失（路径映射已打通）
+  剩余报错：LucideIcon sx→sx<Box> 类型兼容性、ReactNode 18/19 冲突、Cascader union 过复杂
+  → 均为代码层问题（非配置），>30 errors，按安全红线 5 归入 V247 后续扩展
+desktop tsc：JSON parse OK；代码层 implicit any（themeStore.ts）失败（非配置）
+mobile tsc：Exit=0（依赖/配置正确）✅
+```
+
+### C. Perm-Gate 新增 R7 中间件双轨检测扫描器
+
+**背景（根因 callout）**：
+V246 架构冗余报告 R01 指出 32 svc 有 17 份本地 middleware/tenant.rs 副本，与 `topems-shared-auth` 工厂函数（已在 shared-auth 规范一份）形成「双轨并存」反模式。一旦 shared-auth 的 tenant 工厂函数改 CSP 头或新增 claims 字段，17 份副本需同步 17 次（V243 漏挂 tenant bug 就是因此产生）。Perm-Gate R1-R6 没有对应检测规则，该问题完全静默。本次新增 R7 做 WARN-only 基线扫描，为 V247 收归改造提供「可量化的清单」。
+
+**变更（1 file 逻辑扩写）**：
+- [check-perm-gate.cjs](file:///Users/air/TOPEMS/scripts/ci/check-perm-gate.cjs) — 新增 `scanR7MiddlewareDuplicate()` 独立函数：
+  - 扫描范围：`svc/*` 一级目录（排除 lib/tools/apps）
+  - 命中条件 (AND)：
+    (a) `svc/<name>/src/middleware/tenant.rs` 文件存在（仅检查存在性，避免 grep 函数名漏了定义在 mod.rs 的 async fn 变体）
+    (b) svc/Cargo.toml 内容匹配 `/topems-shared-auth\s*=\s*\{/`（已经声明 shared-auth 工厂函式库依赖 → 技术上可直接 import 工厂函数不用本地副本）
+  - 输出明细：命中 17 条 SVC，每行 `- svc/<name>: middleware/tenant.rs duplicated`
+  - 汇总打印：对齐现有 R1-R6 格式 `  R7:   17 · WARN · service has local middleware/tenant.rs AND uses shared-auth factory (double-track anti-pattern, migrate to shared-auth)`
+  - **WARN-only 设计**：不参与 rules 数组 failCount 聚合，不影响 quality-gate exit code（R7 只警告不阻断，等 V247 17 份副本逐批收归到 shared-auth 后再收紧）
+
+**验收（C 轨）**：
+```
+node scripts/ci/check-perm-gate.cjs 2>&1 | grep -E "^\s+R[1-7]:"
+→ R1: 2 · R2: 8 · R3: 5 · R4: 1 · R5: 3 · R6: 0 · R7: 17 (新增规则与基线对齐 ✅)
+node scripts/ci/check-perm-gate.cjs 2>&1 | grep -cE "^\s+R[1-6]:" → 6（R1~R6 无副作用，保持原样）
+R7 明细命中 17 个 SVC：ai / aps / crm / ehs / gis / hrm / integration / lims / mobile / pdm / pm / portal / qms / rd / srm / tms / wms ✅
+Axum Layer Gate M 基线仍为：R1=0 R2=0 R3=0 STRONG_PASS ✅
+```
+
+### D. 根散脚本归位 + CI 收紧锚点 + V246 文档占位
+
+**子项① 根散脚本归位（5 files 迁移 + 新建 2）**：
+背景：工作区根散落 4 个一次性修复脚本 + 1 个伴随 JSON，不在 scripts/ 目录下、无 pyproject.toml 声明 python 依赖、git diff 根目录噪音大。
+迁移：
+- 移动 apply_fixes.py / parse_errors.py / fix_mes_errors.py / mes_errors.json → `scripts/_oneoff/`（migrate.sh / sync-ports.sh / bundle-check.sh 原本就在 scripts/ 跳过）
+- 新建 [scripts/_oneoff/README.md](file:///Users/air/TOPEMS/scripts/_oneoff/README.md)：一句话声明「一次性历史脚本，禁止 CI 引用」
+- 新建 [scripts/MAP.md](file:///Users/air/TOPEMS/scripts/MAP.md)（123 行）：按 ci / i18n / finance / deploy / security / windows / tools / _oneoff 八大节动态列出所有 `*.cjs / *.js / *.py / *.sh / *.ps1 / *.rs` 脚本，ci/ 区 3 个核心 Gate（perm / axum / i18n）附功能注释。
+验收：根 4 脚本 + JSON 归零，`ls` 匹配数 = **0**；`scripts/_oneoff/` 目录 ≥ 5 条目；MAP.md 非空 123 行 ✅
+
+**子项② CI 收紧锚点（1 file 注释）**：
+背景：V245 后续扩展第 1 条明确「连续 N 次 0 errors 后切换 exit $FAILED」，V245 仍 exit 0 缓冲，本次只加锚点不收紧，避免 CI 一次性炸掉难回滚。
+变更：[.github/workflows/ci.yml](file:///Users/air/TOPEMS/.github/workflows/ci.yml#L1189) 第 1189 行 frontend-typecheck job 的 `exit 0` 上方插入：
+```yaml
+  # V246-CI-tighten-anchor: after N consecutive 0-errors runs change below to: exit $FAILED
+```
+未修改 exit 0 本身（Schema Defense job 另一个 exit 0 是 Rust/Gate，按约定不动）。
+验收：grep 锚点 match 1 行；ruby YAML.load_file Syntax OK ✅
+
+**子项③ V246 文档骨架（1 file，本 Step 5 正在填充）**：
+- 位置：[docs/roadmap/TODO.md](file:///Users/air/TOPEMS/docs/roadmap/TODO.md#L6944) 第 6944 行起（V245 后续扩展 6 条末尾 6942 之后立即插入）
+- 版本顺序验证：6659 V244 → 6797 V245 → 6944 V246（递增正确 ✅）
+
+### 变更文件清单（共 45 files，按语言/功能分组）
+
+**Rust 层（34 files）**：编译依赖归一（33 Cargo.toml）+ MES 编译修复（1 rs）
+- Cargo.toml 33：[ai](file:///Users/air/TOPEMS/svc/ai/Cargo.toml) · [analytics](file:///Users/air/TOPEMS/svc/analytics/Cargo.toml) · [aps](file:///Users/air/TOPEMS/svc/aps/Cargo.toml) · [billing](file:///Users/air/TOPEMS/svc/billing/Cargo.toml) · [communication](file:///Users/air/TOPEMS/svc/communication/Cargo.toml) · [crm](file:///Users/air/TOPEMS/svc/crm/Cargo.toml) · [ehs](file:///Users/air/TOPEMS/svc/ehs/Cargo.toml) · [erp](file:///Users/air/TOPEMS/svc/erp/Cargo.toml) · [feedback](file:///Users/air/TOPEMS/svc/feedback/Cargo.toml) · [finance](file:///Users/air/TOPEMS/svc/finance/Cargo.toml) · [gis](file:///Users/air/TOPEMS/svc/gis/Cargo.toml) · [hrm](file:///Users/air/TOPEMS/svc/hrm/Cargo.toml) · [integration](file:///Users/air/TOPEMS/svc/integration/Cargo.toml) · [lims](file:///Users/air/TOPEMS/svc/lims/Cargo.toml) · [lowcode](file:///Users/air/TOPEMS/svc/lowcode/Cargo.toml) · [master-data](file:///Users/air/TOPEMS/svc/master-data/Cargo.toml) · [mes](file:///Users/air/TOPEMS/svc/mes/Cargo.toml) · [mobile](file:///Users/air/TOPEMS/svc/mobile/Cargo.toml) · [monitor](file:///Users/air/TOPEMS/svc/monitor/Cargo.toml) · [pdm](file:///Users/air/TOPEMS/svc/pdm/Cargo.toml) · [plugin-registry](file:///Users/air/TOPEMS/svc/plugin-registry/Cargo.toml) · [pm](file:///Users/air/TOPEMS/svc/pm/Cargo.toml) · [portal](file:///Users/air/TOPEMS/svc/portal/Cargo.toml) · [qms](file:///Users/air/TOPEMS/svc/qms/Cargo.toml) · [rd](file:///Users/air/TOPEMS/svc/rd/Cargo.toml) · [scm](file:///Users/air/TOPEMS/svc/scm/Cargo.toml) · [search](file:///Users/air/TOPEMS/svc/search/Cargo.toml) · [srm](file:///Users/air/TOPEMS/svc/srm/Cargo.toml) · [ticket](file:///Users/air/TOPEMS/svc/ticket/Cargo.toml) · [tms](file:///Users/air/TOPEMS/svc/tms/Cargo.toml) · [unified-core](file:///Users/air/TOPEMS/svc/unified-core/Cargo.toml) · [wms](file:///Users/air/TOPEMS/svc/wms/Cargo.toml) · 34th [equipment.rs](file:///Users/air/TOPEMS/svc/mes/src/modules/equipment.rs)
+
+**前端配置层（5 files 修改 + 2 删除 = 净 3 增量）**：
+- [tsconfig.base.json](file:///Users/air/TOPEMS/tsconfig.base.json)
+- [apps/web/tsconfig.json](file:///Users/air/TOPEMS/apps/web/tsconfig.json)
+- [apps/desktop/tsconfig.json](file:///Users/air/TOPEMS/apps/desktop/tsconfig.json)
+- [apps/mobile/tsconfig.json](file:///Users/air/TOPEMS/apps/mobile/tsconfig.json)
+- 删除：apps/web/.eslintrc.json · apps/mobile/.eslintrc.js
+
+**Gate / 脚本层（C 轨 1 个脚本扩写 + D 轨 1 个 YAML 注释 + 2 MD 新建 + 5 文件迁移 = 9 项动作）**：
+- [scripts/ci/check-perm-gate.cjs](file:///Users/air/TOPEMS/scripts/ci/check-perm-gate.cjs) — R7 新增
+- [.github/workflows/ci.yml](file:///Users/air/TOPEMS/.github/workflows/ci.yml) — 收紧锚点
+- [scripts/MAP.md](file:///Users/air/TOPEMS/scripts/MAP.md)（新建 · 123 行索引）
+- [scripts/_oneoff/README.md](file:///Users/air/TOPEMS/scripts/_oneoff/README.md)（新建）
+- 迁移：apply_fixes.py / parse_errors.py / fix_mes_errors.py / mes_errors.json → scripts/_oneoff/
+
+**文档层（1 file）**：
+- [docs/roadmap/TODO.md](file:///Users/air/TOPEMS/docs/roadmap/TODO.md) — 本 V246 章节
+
+### 最终验收矩阵
+- [x] **A-cargo-0：** `cargo check --workspace --message-format=short 2>&1 | grep "^error" | wc -l` → 0（Exit 0 ✅，仅 topems-crm 3 unused import warning）
+- [x] **A-shared-dep：** `grep -E 'topems-shared-[a-z-]+ = \{ path = ' svc/*/Cargo.toml | wc -l` → 0（path 形式 100% 归零 ✅）
+- [x] **A-MES：** `cargo check -p topems-mes` → Exit 0（原 18 errors 归零 ✅）
+- [x] **B-JSON：** 4 tsconfig JSON parse → 全部 OK（tsc --showConfig 均继承 16 条 paths ✅）
+- [x] **B-eslint：** web .eslintrc.json + mobile .eslintrc.js → 均已删除（双格式不再并存 ✅）
+- [x] **B-mobile：** `pnpm --filter topems-mobile exec tsc --noEmit` → Exit 0（配置层通过 ✅；web/desktop 代码错误归入后续扩展）
+- [x] **C-R7：** `node scripts/ci/check-perm-gate.cjs | grep -E "^\s+R7:"` → R7=17 WARN（基线命中 ✅）
+- [x] **C-R1..R6 未破坏：** R1..R6 仍 6 行独立打印（与 V245 输出形态一致 ✅）
+- [x] **C-Axum STRONG_PASS：** R1=0, R2=0, R3=0（V245 基线保持 ✅）
+- [x] **D-scripts：** 根散脚本 `ls` 匹配数=0 / scripts/_oneoff/=5 条目 / MAP.md=123 行 ✅
+- [x] **D-YAML：** `ruby YAML.load_file('.github/workflows/ci.yml')` → YAML OK ✅；收紧锚点注释存在（grep 1 行）
+- [x] **D-章节顺序：** grep `^## 🎯 V24` 倒数 3 → V244/V245/V246（严格递增 ✅）
+- [x] **净代码删减：** `git diff --stat HEAD` 汇总：**45 files changed, 223 insertions(+), 1808 deletions(-)**（净减 1585 行，符合去冗余目标 ✅）
+
+### V246 后续扩展（留给 V247+）
+- [ ] **P0-R01 中间件 17 副本收归 shared-auth**：配合 R7 扫描器输出的 17 条 SVC 名单，逐一删除 `middleware/tenant.rs` 本地副本，改用 `topems_shared_auth::tenant_middleware()` 工厂函数；每批 5 个服务，分 3-4 批守绿后合并
+- [ ] **R2 阈值 10→3→0 分阶段**：承接 V245+V246 连续版本，先把 Axum R2 阈值从 10 收紧到 3（ci.yml + pre-commit 同时改），2 个版本无回归再切 0
+- [ ] **Perm Gate Scanner AST 长期解**：SCAN_FRONTEND 从逐行正则升级为 typescript.createSourceFile AST 解析 `requiredPermissions` 数组，彻底消除跨行数组这个格式化陷阱（V245 后续扩展 + V246 连续 2 版列入）
+- [ ] **Web / Desktop tsc 0 基线修复**：V246 去重配置打通 paths 但代码层仍 >30 errors（LucideIcon sx 兼容 / ReactNode 18-19 冲突 / Cascader union / shared-types 缺导出等），V247 按安全红线 5 分 3 类简单错误 → 复杂错误写后续扩展
+- [ ] **topems-crm 3 unused import warnings 清理**：`cargo fix --bin topems-crm -p topems-crm` 一键修（models/mod.rs 三组 BillingItem / CustomerScore / SalesForecast 未使用重导出）
+- [ ] **Tauri 高价值 5 件套**：Token 加密存储（tauri-plugin-keystore）、审计日志前端页、broadcast_event 系统通知、CancellationToken、离线冲突（V244/V245/V246 连续 3 版列入 → 优先级提升，V247 优先起手 A 轨做 keystore）
+- [ ] **测试基线从 --no-run → 完整运行**：`cargo test --workspace` 真实执行，尤其 unified-core 两个测试文件的 auth_request 已修 body 参数，可实际断言 HTTP 响应
+- [ ] **CI 收紧切换：exit 0 → exit $FAILED**：V246 已在 ci.yml 1189 行加锚点注释；当 frontend-typecheck job 连续 N=3 次 CI 绿后，删除 `exit 0` 改为 `exit $FAILED` 阻断回归
+- [ ] **Dify 端到端（V245/V246 保留项）**：LLM Provider 配置 + 前端对话页（chat_stream SSE）

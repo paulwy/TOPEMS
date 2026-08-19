@@ -5,7 +5,7 @@ edition = "2021"
 description = "TOPEMS Feedback Service - 客户反馈管理"
 
 [dependencies]
-topems-shared = { path = "../../lib" }
+topems-shared = { workspace = true }
 axum = { workspace = true }
 chrono = { workspace = true }
 sqlx.workspace = true
@@ -17,7 +17,7 @@ tracing-subscriber = { workspace = true, features = ["env-filter"] }
 tokio = { workspace = true }
 dotenv = "0.15"
 
-topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
+topems-shared-bootstrap = { workspace = true }
 topems-shared-db = { workspace = true }
 topems-shared-service-client = { workspace = true }
 topems-shared-event = { workspace = true }

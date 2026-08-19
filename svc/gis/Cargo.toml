@@ -6,7 +6,7 @@ authors.workspace = true
 description = "TOPEMS GIS - 厂区空间数字化系统"
 
 [dependencies]
-topems-shared = { path = "../../lib" }
+topems-shared = { workspace = true }
 axum.workspace = true
 tokio.workspace = true
 tower-http.workspace = true
@@ -20,7 +20,7 @@ dotenv.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
 sqlx.workspace = true
-topems-shared-event = { path = "../../lib/shared-event" }
+topems-shared-event = { workspace = true }
 axum-prometheus.workspace = true
 prometheus.workspace = true
 csv.workspace = true
@@ -28,7 +28,7 @@ mime_guess.workspace = true
 utoipa.workspace = true
 reqwest = { workspace = true, features = ["json"] }
 futures-util.workspace = true
-topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
+topems-shared-bootstrap = { workspace = true }
 topems-shared-db = { workspace = true }
 topems-shared-service-client = { workspace = true }
 topems-shared-auth = { workspace = true }

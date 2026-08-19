@@ -6,11 +6,11 @@ authors.workspace = true
 description = "TOPEMS System Integration Service"
 
 [dependencies]
-topems-shared = { path = "../../lib" }
-topems-shared-db = { path = "../../lib/shared-db" }
-topems-shared-event = { path = "../../lib/shared-event" }
-topems-shared-core = { path = "../../lib/shared-core" }
-topems-shared-auth = { path = "../../lib/shared-auth" }
+topems-shared = { workspace = true }
+topems-shared-db = { workspace = true }
+topems-shared-event = { workspace = true }
+topems-shared-core = { workspace = true }
+topems-shared-auth = { workspace = true }
 axum.workspace = true
 tokio.workspace = true
 serde.workspace = true
@@ -26,8 +26,8 @@ anyhow.workspace = true
 tower-http.workspace = true
 reqwest.workspace = true
 futures.workspace = true
-topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
-topems-shared-observability = { path = "../../lib/shared-observability" }
+topems-shared-bootstrap = { workspace = true }
+topems-shared-observability = { workspace = true }
 utoipa.workspace = true
 axum-prometheus.workspace = true
 

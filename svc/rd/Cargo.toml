@@ -6,10 +6,10 @@ authors.workspace = true
 description = "TOPEMS-RD 科研研发管理系统"
 
 [dependencies]
-topems-shared = { path = "../../lib" }
-topems-shared-event = { path = "../../lib/shared-event" }
-topems-shared-core = { path = "../../lib/shared-core" }
-topems-shared-auth = { path = "../../lib/shared-auth" }
+topems-shared = { workspace = true }
+topems-shared-event = { workspace = true }
+topems-shared-core = { workspace = true }
+topems-shared-auth = { workspace = true }
 topems-shared-db = { workspace = true }
 axum.workspace = true
 tokio.workspace = true
@@ -26,7 +26,7 @@ thiserror.workspace = true
 anyhow.workspace = true
 bcrypt.workspace = true
 reqwest.workspace = true
-topems-shared-bootstrap = { path = "../../lib/shared-bootstrap" }
+topems-shared-bootstrap = { workspace = true }
 utoipa.workspace = true
 csv.workspace = true
 once_cell.workspace = true
