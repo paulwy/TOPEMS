@@ -7,10 +7,10 @@ import { useTranslation } from 'react-i18next';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { customerSegmentationSchema } from '@/schemas/crm';
-import type {
-  CustomerSegment,
-  CreateSegmentRequest,
-  SegmentCriteria,
+import {
+  type CustomerSegment,
+  type CreateSegmentRequest,
+  type SegmentCriteria,
   crmApi,
   useCrmMock,
   type SegmentationData,
