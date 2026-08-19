@@ -6397,8 +6397,122 @@ Integrity 阈值：`scannedFiles ≥ 20` 且 `foundRouters ≥ 10`，否则 WEAK
 
 ### 后续扩展
 
-- [ ] 将 `scripts/ci/check-axum-layer-order.cjs` 接入 CI pre-commit / ci.yml（作为 Gate M 或 quality-gate 子步骤），默认 DRY-RUN，等 R3 假阳性消除后再 `--fail-fast`
-- [ ] 增强 check-axum-layer-order.cjs：识别 `build_application(ctx, cfg, public_routes, protected_routes, ...)` 模式，自动消除 ehs/lims/pdm/srm 的 R3 假阳性
-- [ ] check-axum-layer-order.cjs 增加对 `build_application` C 模式（重建 application 层）的 auth 叠加扫描
-- [ ] 评估 `cargo fix` 自动修复中可能引入的语义偏差（多为 unused import 删除，风险低，但仍需 review）
+- [x] 将 `scripts/ci/check-axum-layer-order.cjs` 接入 CI pre-commit / ci.yml（作为 Gate M 或 quality-gate 子步骤），默认 DRY-RUN，等 R3 假阳性消除后再 `--fail-fast` — **V242 Gate M 已落地**
+- [x] 增强 check-axum-layer-order.cjs：识别 `build_application(ctx, cfg, public_routes, protected_routes, ...)` 模式，自动消除 ehs/lims/pdm/srm 的 R3 假阳性 — **V242 已落地（R3 从 4 → 0）**
+- [x] check-axum-layer-order.cjs 增加对 `build_application` C 模式（重建 application 层）的 auth 叠加扫描 — **V242 已落地（fileHasGlobalAuth 二次探测）**
+- [x] 评估 `cargo fix` 自动修复中可能引入的语义偏差（多为 unused import 删除，风险低，但仍需 review） — **V242 评估完成（评级 LOW，直接接受）**
+
+## 🎯 V242 — Gate M 接入 + Axum Layer Checker 增强（B/C 模式）+ cargo fix 偏差评估（并行推进 · ✅ 完成）
+
+### 背景
+
+V241 留下 4 条后续扩展，均可无依赖并行推进：
+1. Gate M（axum-layer-gate）接入 CI + pre-commit
+2. build_application 模式 B 识别消除 R3 假阳性
+3. Application 重建模式 C 的全局 auth 叠加扫描
+4. V240 cargo fix 自动修复语义偏差评估
+
+### 4 轨并行成果
+
+#### A. CI Gate M `axum-layer-gate` 接入 + pre-commit 钩子
+
+**ci.yml 改动（[ci.yml](file:///Users/air/TOPEMS/.github/workflows/ci.yml)）：**
+
+| 项目 | 内容 |
+|------|------|
+| 新增 job | `axum-layer-gate` · 显示名 "Axum Layer Order Gate (Gate M · R1 FAIL / R2/R3 WARN)" |
+| 位置 | `menu-health-gate` 之后、`security-scan` 之前 |
+| needs/if | `needs: changes`；`if: rust || ci`（复用 rust + ci paths-filter） |
+| 核心步骤 | `node scripts/ci/check-axum-layer-order.cjs --report-json=/tmp/axum-layer-report.json` |
+| CI 模式 | **DRY-RUN**：末尾显式 `exit 0`，即使 R1 违规也不阻断；输出写入 `$GITHUB_STEP_SUMMARY` 与 JSON 工件 |
+| quality-gate needs | 末尾追加 `axum-layer-gate`（在 `menu-health-gate` 之后、`security-scan` 之前），共 18 项 gates |
+| ci filter 补全 | `changes` job 的 `ci:` paths-filter 补 `scripts/ci/**`（之前只有 `.github/**`） |
+
+**pre-commit 钩子改动：**
+
+- [.husky/pre-commit](file:///Users/air/TOPEMS/.husky/pre-commit) — 新增第 10 节（Perm-Gate 第 9 节之后）：触发条件匹配 `svc/**/*.rs` / `lib/**/*.rs` / `Cargo.*` / `scripts/ci/check-axum-layer-order.cjs`，DRY-RUN 不阻断，退出码仅提示
+- [lefthook.yml](file:///Users/air/TOPEMS/lefthook.yml) — 新增 Gate M 条目：`tags: rust axum layer`，files 正则匹配 rs/toml/lock + checker 脚本本身
+
+#### B + C. check-axum-layer-order.cjs 增强（模式 B + C）
+
+对 [scripts/ci/check-axum-layer-order.cjs](file:///Users/air/TOPEMS/scripts/ci/check-axum-layer-order.cjs) 的修改：
+
+**B. 模式 B（build_application 外层 auth 叠加）豁免：**
+- 新增正则 `build_application\(\s*([^,]+),\s*([^,]+),\s*([A-Za-z_]\w*)\s*,\s*([A-Za-z_]\w*)` 扫描 4 个位置参数
+- 每文件构造 `protectedVarByFile[fileRel].add(protectedArg)` 豁免集
+- 全局 scanner stat 新增 `buildApplicationCalls = N`（当前扫描 = 26）
+
+**C. 模式 C（Application 重建）全局 auth 探测：**
+- 新增 `Application\s*\{` 匹配，之后的 `auth_middleware` 命中记入 `fileHasGlobalAuth[fileRel] = true`
+
+**R3 判定逻辑（RUN_VALIDATORS 改造）：**
+对 `!hasAuth && hasTenant` 的 router 上下文：
+```
+if r.buildAppProtected === true   → dismiss (reason: 'build_application wraps auth globally')
+elseif fileHasGlobalAuth[file]   → dismiss (reason: 'file has global auth_middleware near Application construction')
+else                              → R3 WARN 计入
+```
+
+Dismissed 的 violation 仍然入 warnings 列表，但 `level: 'INFO'` / `dismissed: true`，不计入 `REPORT.summary.R3`。
+
+**结果对比：**
+
+| 指标 | V241 原始 | V242 增强后 |
+|------|-----------|-------------|
+| R1 (FAIL) | 0 | 0 ✅ 无回归 |
+| R2 (WARN) | 6 | 6（auth-only 未变，合理场景） |
+| R3 (WARN) | 4 | **0** ✅（ehs/lims/pdm/srm 4 条全部 dismiss） |
+| buildApplicationCalls | N/A | 26 |
+| Integrity | STRONG_PASS | STRONG_PASS ✅ |
+
+**R3 Dismiss 明细：**
+- svc/ehs/src/main.rs:109 `protected_routes` → build_application wraps auth globally
+- svc/lims/src/main.rs:94 `protected_routes` → build_application wraps auth globally
+- svc/pdm/src/main.rs:88 `protected_routes` → build_application wraps auth globally
+- svc/srm/src/main.rs:104 `protected_routes` → build_application wraps auth globally
+
+#### D. V240 cargo fix 语义偏差评估
+
+**范围**：V239 (`8cf773c29`) → V240 (`ecf3b4103`) 中排除手改核心 11 文件后的 **≈ 50 个 cargo fix 覆盖文件**。
+
+**分类分布：**
+| 类型 | Lint | 估计文件数 | 样例 |
+|------|------|-----------|------|
+| A. Unused Import 删除 | `unused_imports` | ≈20 | 删除 `use serde::Deserialize;`、`use uuid::Uuid;` |
+| B. Unnecessary Mut / Unused Vars | `unused_mut`+`unused_variables` | ≈17 | `let mut x` → `let x`；`body` → `_body` |
+| C. Redundant Pattern 简化 | `clippy::redundant_pattern_matching` | 2 处/1 文件 | `if let X=y {a} else {panic!}` → irrefutable let |
+| D. 格式化/微化简 | 多条 | ≈14 | derive 合并、恒真断言消除、冗余括号删除 |
+| E. 手改溢出：`mod→pub mod` | 非 cargo fix | 3 文件 | billing/feedback/ticket main.rs |
+| F. 手改溢出：路径重命名 | 非 cargo fix | 4 文件 | lib/tests 子 crate 路径对齐 |
+
+**抽样 10 文件深度验证结果**：全部 10/10 验证通过（每个改动都验证了上下文数据流与语义等价性，附带揭示 unified-core `auth_request` body 参数既有无用 bug，但不是 cargo fix 引入）。
+
+**综合评级**：🔵 **LOW（几乎为 NONE）**
+- cargo fix 三类机械修复（unused_import / unused_mut / redundant pattern）基于 rustc 静态名称解析和 clippy MIR 数据流分析，正确性记录极高
+- E/F 类手改溢出版本均为编译期即检查的操作（扩大可见性 + 路径重命名），cargo check 已 0 warning 通过即证明安全
+- **结论：直接接受，无需回滚或重新逐行 review**
+
+### 验收结果
+
+| 检查项 | 命令 | 结果 |
+|--------|------|------|
+| ci.yml YAML 解析（Python） | `import yaml; sorted(d['jobs'].keys())` | ✅ 23 jobs，`axum-layer-gate` 存在，`quality-gate.needs` 含 `axum-layer-gate` 在预期位置 |
+| pre-commit 钩子存在性 | grep Gate M 条目 | ✅ .husky/pre-commit（第 10 节）+ lefthook.yml 均新增 |
+| axum layer checker 脚本 | `node scripts/ci/check-axum-layer-order.cjs` | ✅ R1=0, R2=6, **R3=0**; build_applicationCalls=26; Integrity STRONG_PASS |
+| V240 cargo fix 评估 | 10 文件抽样 + 分类统计 | ✅ 评级 LOW，直接接受 |
+
+### 修改文件清单
+
+- [.github/workflows/ci.yml](file:///Users/air/TOPEMS/.github/workflows/ci.yml) — 新增 axum-layer-gate job (Gate M)；quality-gate needs 扩展；changes job ci filter 补 scripts/ci/**
+- [.husky/pre-commit](file:///Users/air/TOPEMS/.husky/pre-commit) — 新增第 10 节 Axum Layer-Order 钩子（DRY-RUN）
+- [lefthook.yml](file:///Users/air/TOPEMS/lefthook.yml) — 新增 Gate M lefthook 条目
+- [scripts/ci/check-axum-layer-order.cjs](file:///Users/air/TOPEMS/scripts/ci/check-axum-layer-order.cjs) — build_application 模式 B 豁免 + C 模式全局 auth 探测 + R3 dismiss 逻辑 + buildApplicationCalls stat
+- [docs/roadmap/TODO.md](file:///Users/air/TOPEMS/docs/roadmap/TODO.md) — 新增 V242 条目，V241 4 项扩展全部勾选
+
+### 后续扩展
+
+- [ ] 在 CI 中启用 Gate M 的 `--fail-fast`（当前默认 DRY-RUN 显式 exit 0）：将脚本末尾 `exit 0` 替换为 `exit $EXIT_CODE`（注意 DRY_RUN 默认即 exit=0，只有显式 `--fail-fast` 时才会在 R1>0 时 exit≠1；建议先 `--fail-fast --thresholds=R1:0` 上线，R3 已经 0 无需担心假阳性阻断）
+- [ ] 修复 unified-core tests 中 `auth_request(body: Option<Value>)` 被静默丢弃的既有 bug（D 任务抽样 6 号发现）：POST/PUT/DELETE 分支应 `.json(&_body)` 或 `.body(serde_json::to_vec(&_body)?)`
+- [ ] 补文档：将 V240 手改中 billing/feedback/ticket main.rs 的 `mod→pub mod` 和 lib/tests 4 文件路径重命名补充到 V240 修改清单（E/F 类手改溢出，代码无需变更，文档更严谨）
+- [ ] 给 R2 (auth-only 无 tenant) 的 6 条（gis/integration/plugin-registry/portal×2/unified-core）打标签：确认是否真绕过租户隔离（public/system routes），如果是可在脚本内加白名单豁免（类似 build_application 机制），否则真漏洞需要修复
 

@@ -63,6 +63,16 @@ pre-commit:
           node scripts/ci/check-permission-matrix.cjs --dry-run
         fi
 
+    # [Gate M] Axum Layer Order Gate (dry-run)
+    axum-layer:
+      name: Gate M · Axum Layer Order (dry-run, R1 FAIL / R2/R3 WARN)
+      tags: rust axum layer
+      files: (\.(rs|toml|lock)$|^scripts/ci/check-axum-layer-order\.cjs$)
+      run: |
+        if [ -f "scripts/ci/check-axum-layer-order.cjs" ]; then
+          node scripts/ci/check-axum-layer-order.cjs
+        fi
+
     # [Gate H] CRM contract consistency
     crm-contract:
       name: Gate H · CRM Contract Consistency

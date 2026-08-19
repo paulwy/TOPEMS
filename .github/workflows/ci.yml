@@ -139,6 +139,7 @@ jobs:
               - '**/*.md'
             ci:
               - '.github/**'
+              - 'scripts/ci/**'
 
       - name: Decide job execution
         id: decide
@@ -992,6 +993,58 @@ jobs:
           fi
 
   # ──────────────────────────────────────────────────────────────────────────
+  # [V242 NEW Gate M] Axum 中间件层序静态校验（Layer-Order Gate）
+  #
+  # 3 rules:
+  #   R1 = FAIL (层序反序 = tenant_middleware 在 auth_middleware 之后调用 → 500 Missing Claims)
+  #   R2 = WARN (只有 auth，无 tenant — 可能绕过租户隔离)
+  #   R3 = WARN (只有 tenant，无 auth — 对 build_application 模式是假阳性)
+  #
+  # CI 默认 DRY-RUN 不阻断（exit=0 即使 R1>0）；
+  # 等 R3 假阳性消除（build_application 模式识别 + C 模式覆盖）后再启用 --fail-fast。
+  # Integrity WEAK_PASS 仅提示，永不阻断。
+  # ──────────────────────────────────────────────────────────────────────────
+  axum-layer-gate:
+    name: Axum Layer Order Gate (Gate M · R1 FAIL / R2/R3 WARN)
+    needs: changes
+    # rust: lib/** + svc/** + Cargo.*
+    # ci: scripts/ci/** + .github/workflows/**
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Run Axum Layer Order Checker (DRY-RUN)
+        run: |
+          node scripts/ci/check-axum-layer-order.cjs \
+            --report-json=/tmp/axum-layer-report.json 2>&1 | tee /tmp/axum-layer-output.log
+          EXIT_CODE=${PIPESTATUS[0]}
+
+          echo "## Axum Layer Order Gate Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f /tmp/axum-layer-output.log ]; then
+            # 只写入 summary block 部分（含分隔线和结论）
+            awk '/=====/{p=1} p{print}' /tmp/axum-layer-output.log >> $GITHUB_STEP_SUMMARY || true
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f /tmp/axum-layer-report.json ]; then
+            cp /tmp/axum-layer-report.json axum-layer-report-ci.json
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "[Download full JSON report](axum-layer-report-ci.json) · uploaded as workflow artifact below" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo ""
+          echo "Exit code: $EXIT_CODE"
+          # 默认 DRY-RUN，始终 exit 0；后续替换为真正 $EXIT_CODE 启用 fail-fast
+          exit 0
+
+  # ──────────────────────────────────────────────────────────────────────────
   # API 审计门禁（API-Audit-Gate）— P6 (Page→API) + P7 (RBAC 权限码)
   #
   # 3 FAIL 规则（永久 0 容忍，与 project_memory R1/R2/R3 对齐）：
@@ -1447,6 +1500,7 @@ jobs:
       - i18n-quality-gate
       - permission-matrix-gate
       - menu-health-gate
+      - axum-layer-gate
       - security-scan
       - schema-defense-gate
     if: always()
@@ -1473,6 +1527,7 @@ jobs:
           echo "| i18n Quality Gate (R12 · 7-in-1: fake-en / key-align / mixed-structure / glossary / hardcoded / EN-missing / styleguide) | ${{ needs.i18n-quality-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Permission Matrix 3-Way Gate (R1/R2/R3 FAIL × backend×frontend×const) | ${{ needs.permission-matrix-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Menu Health Gate (37 modules · T1/T2/P1/R3 FAIL × Route×NavItem 2-way) | ${{ needs.menu-health-gate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Axum Layer Order Gate (Gate M · R1 FAIL / R2/R3 WARN) | ${{ needs.axum-layer-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
@@ -1492,7 +1547,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Treat "skipped" as acceptable (path-filtered jobs); only fail on failure/cancelled.
-          RESULTS="${{ needs.rust-lint.result }} ${{ needs.fmt-check.result }} ${{ needs.clippy-check.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.security-scan.result }}"
+          RESULTS="${{ needs.rust-lint.result }} ${{ needs.fmt-check.result }} ${{ needs.clippy-check.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.axum-layer-gate.result }} ${{ needs.security-scan.result }}"
 
           FAILED=false
           for result in $RESULTS; do

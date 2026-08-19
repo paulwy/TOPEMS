@@ -329,6 +329,35 @@ else
 fi
 
 # ============================================================
+# 10. Axum 中间件层序校验（Layer-Order Gate · Gate M）— DRY-RUN only
+# ============================================================
+echo ""
+echo "🧱 Checking Axum layer order (Gate M · dry-run)..."
+
+# 触发条件：后端 Rust 文件（lib/ svc/）或 CI 脚本变更
+HAS_RUST_OR_CI_FILES=$(echo "$STAGED_FILES" | grep -E "(^svc/.*\.rs$|^lib/.*\.rs$|^Cargo\.(toml|lock)$|^scripts/ci/check-axum-layer-order\.cjs$)" | head -1)
+
+if [ -n "$HAS_RUST_OR_CI_FILES" ]; then
+  if [ -f "scripts/ci/check-axum-layer-order.cjs" ]; then
+    # Pre-commit: ALWAYS dry-run. Never block (exit=0 always).
+    # CI level will enforce --fail-fast once R3 false positives are eliminated.
+    node scripts/ci/check-axum-layer-order.cjs --report-json=/tmp/.axum-layer-precommit.json
+    AXUM_EXIT=$?
+    if [ $AXUM_EXIT -eq 0 ]; then
+      echo "✅ Axum Layer-Order dry-run passed (Integrity OK)"
+      echo "   提示：R1（层序反序=tenant 在 auth 之后 → 500 Missing Claims）若 ≥1，CI DRY-RUN 也会醒目红榜"
+      echo "   R2（只有 auth 无 tenant）/ R3（只有 tenant 无 auth，build_application 模式假阳性）为 WARN，不阻断"
+    else
+      echo "⚠️  Axum Layer-Order reported exit=$AXUM_EXIT (CI 阶段 DRY-RUN 也始终 exit=0；FAIL 见 Step Summary)"
+    fi
+  else
+    echo "⏭️  Skipped (check-axum-layer-order.cjs not found)"
+  fi
+else
+  echo "⏭️  Skipped (no Rust lib/svc / axum-layer-checker files staged)"
+fi
+
+# ============================================================
 # 总结
 # ============================================================
 echo ""
