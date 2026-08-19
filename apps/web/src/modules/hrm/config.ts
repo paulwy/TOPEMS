@@ -1,5 +1,5 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
@@ -33,6 +33,526 @@ export const HRM_PATHS = {
   settingTrainingPlan: '/hrm/setting/training-plan',
 } as const;
 
+// ---- V257 P0-1：页面级 Props interface（Frontend 泛型收紧 · 3/15 核心模块首批）----
+// 命名规则：<DisplayName> + 'Props'，严格 1:1 对应 lazyWithRetry 第 2 参数 DisplayName
+// 字段策略：template 通用字段（list/pageSize/filters · form/mode/initialValues · detail/id · etc.）+ PATH 动态段参数（:id → id?）
+// 深层字段（filters/initialValues）先宽松 Record<string, unknown>，V257 P1-1 tsc 后细化
+
+export interface HrmDashboardPageProps {
+  /** 统计指标列表（可选）*/
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 时间范围自定义起点（period='custom' 时）*/
+
+  periodStart?: string;
+
+  /** 时间范围自定义终点 */
+
+  periodEnd?: string;
+
+  /** 自动刷新间隔（秒）*/
+
+  refreshIntervalSec?: number;
+}
+
+export interface HrmEmployeePageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface HrmEmployeeCreatePageProps {
+  /** 表单模式 */
+
+  mode?: 'create' | 'edit' | 'clone' | 'view';
+
+  /** 初始值（编辑/克隆时注入）*/
+
+  initialValues?: Record<string, unknown>;
+
+  /** 来源 ID（从列表跳转时带的上一条记录 ID）*/
+
+  sourceId?: string;
+
+  /** 预填充字段（从其他页面跳转带过来的）*/
+
+  prefillFrom?: Record<string, unknown>;
+}
+
+export interface HrmEmployeeDetailPageProps {
+  /** 实体主键 ID（匹配 PATHS.:id）*/
+
+  id?: string;
+
+  /** 实体类型（多态详情页：区分 inspection/issue/audit-plan 等）*/
+
+  entityType?: string;
+
+  /** 是否预览模式（部分详情页只读预览）*/
+
+  previewMode?: boolean;
+
+  /** 版本号（带版本控制的实体）*/
+
+  version?: string | number;
+}
+
+export interface HrmEmployeeEditPageProps {
+  /** 表单模式 */
+
+  mode?: 'create' | 'edit' | 'clone' | 'view';
+
+  /** 初始值（编辑/克隆时注入）*/
+
+  initialValues?: Record<string, unknown>;
+
+  /** 来源 ID（从列表跳转时带的上一条记录 ID）*/
+
+  sourceId?: string;
+
+  /** 预填充字段（从其他页面跳转带过来的）*/
+
+  prefillFrom?: Record<string, unknown>;
+
+  /** 路径参数：:id */
+
+  id?: string;
+}
+
+export interface HrmDepartmentPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface HrmOrganizationPageProps {
+  /** 展开的节点 ID 列表 */
+
+  expandedKeys?: string[];
+
+  /** 选中的节点 ID 列表 */
+
+  selectedKeys?: string[];
+
+  /** 勾选的节点 ID 列表（多选场景）*/
+
+  checkedKeys?: string[];
+
+  /** 根节点父 ID（多租户多根树）*/
+
+  rootParentId?: string;
+}
+
+export interface HrmPositionPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface HrmContractPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface HrmContractDetailPageProps {
+  /** 实体主键 ID（匹配 PATHS.:id）*/
+
+  id?: string;
+
+  /** 实体类型（多态详情页：区分 inspection/issue/audit-plan 等）*/
+
+  entityType?: string;
+
+  /** 是否预览模式（部分详情页只读预览）*/
+
+  previewMode?: boolean;
+
+  /** 版本号（带版本控制的实体）*/
+
+  version?: string | number;
+}
+
+export interface HrmCompanyPageProps {
+  /** 实体主键 ID（匹配 PATHS.:id）*/
+
+  id?: string;
+
+  /** 实体类型（多态详情页：区分 inspection/issue/audit-plan 等）*/
+
+  entityType?: string;
+
+  /** 是否预览模式（部分详情页只读预览）*/
+
+  previewMode?: boolean;
+
+  /** 版本号（带版本控制的实体）*/
+
+  version?: string | number;
+}
+
+export interface HrmAttendancePageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface HrmLeavePageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface HrmPayrollPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface HrmSalaryAdjustmentPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface HrmRecruitmentPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface HrmTrainingPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface HrmPerformancePageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface HrmReportsPageProps {
+  /** 统计维度 */
+
+  dimensions?: string[];
+
+  /** 统计指标 */
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 过滤器 */
+
+  filters?: Record<string, unknown>;
+}
+
+export interface HrmOverviewPageProps {
+  /** 统计指标列表（可选）*/
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 时间范围自定义起点（period='custom' 时）*/
+
+  periodStart?: string;
+
+  /** 时间范围自定义终点 */
+
+  periodEnd?: string;
+
+  /** 自动刷新间隔（秒）*/
+
+  refreshIntervalSec?: number;
+}
+
+export interface AttendanceRulePageProps {
+  /** 当前激活的设置 Tab key */
+
+  activeTab?: string;
+
+  /** 模块级租户 ID（多租户隔离）*/
+
+  tenantId?: string;
+
+  /** 保存后是否自动跳转 */
+
+  redirectOnSave?: string;
+}
+
+export interface PayrollTemplatePageProps {
+  /** 当前激活的设置 Tab key */
+
+  activeTab?: string;
+
+  /** 模块级租户 ID（多租户隔离）*/
+
+  tenantId?: string;
+
+  /** 保存后是否自动跳转 */
+
+  redirectOnSave?: string;
+}
+
+export interface RecruitmentFlowPageProps {
+  /** 当前激活的设置 Tab key */
+
+  activeTab?: string;
+
+  /** 模块级租户 ID（多租户隔离）*/
+
+  tenantId?: string;
+
+  /** 保存后是否自动跳转 */
+
+  redirectOnSave?: string;
+}
+
+export interface TrainingPlanPageProps {
+  /** 当前激活的设置 Tab key */
+
+  activeTab?: string;
+
+  /** 模块级租户 ID（多租户隔离）*/
+
+  tenantId?: string;
+
+  /** 保存后是否自动跳转 */
+
+  redirectOnSave?: string;
+}
 // ---- 路由配置（供路由系统使用） ----
 export const hrmModuleConfig: RouteModuleConfig = {
   code: 'hrm',
@@ -58,7 +578,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'overview',
       requiredPermissions: ['hrm:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<HrmDashboardPageProps>,
     {
       path: HRM_PATHS.employees,
       element: lazyWithRetry(() => import('@/pages/hrm/HrmEmployeePage'), 'HrmEmployeePage'),
@@ -70,7 +590,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['hrm:employee:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<HrmEmployeePageProps>,
     {
       path: HRM_PATHS.employeeCreate,
       element: lazyWithRetry(
@@ -85,7 +605,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['hrm:employee:create'],
       action: 'write',
-    },
+    } as RouteConfigV2<HrmEmployeeCreatePageProps>,
     {
       path: HRM_PATHS.employeeDetail,
       element: lazyWithRetry(
@@ -100,7 +620,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['hrm:employee:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<HrmEmployeeDetailPageProps>,
     {
       path: HRM_PATHS.employeeEdit,
       element: lazyWithRetry(
@@ -115,7 +635,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['hrm:employee:update'],
       action: 'update',
-    },
+    } as RouteConfigV2<HrmEmployeeEditPageProps>,
     {
       path: HRM_PATHS.departments,
       element: lazyWithRetry(() => import('@/pages/hrm/HrmDepartmentPage'), 'HrmDepartmentPage'),
@@ -127,7 +647,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['hrm:department:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<HrmDepartmentPageProps>,
     {
       path: HRM_PATHS.organization,
       element: lazyWithRetry(
@@ -142,7 +662,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['hrm:organization:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<HrmOrganizationPageProps>,
     {
       path: HRM_PATHS.positions,
       element: lazyWithRetry(() => import('@/pages/hrm/HrmPositionPage'), 'HrmPositionPage'),
@@ -154,7 +674,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['hrm:position:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<HrmPositionPageProps>,
     {
       path: HRM_PATHS.contracts,
       element: lazyWithRetry(() => import('@/pages/hrm/HrmContractPage'), 'HrmContractPage'),
@@ -166,7 +686,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['hrm:contract:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<HrmContractPageProps>,
     {
       path: HRM_PATHS.contractDetail,
       element: lazyWithRetry(
@@ -181,7 +701,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['hrm:contract:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<HrmContractDetailPageProps>,
     {
       path: HRM_PATHS.company,
       element: lazyWithRetry(() => import('@/pages/hrm/HrmCompanyPage'), 'HrmCompanyPage'),
@@ -193,7 +713,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['hrm:company:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<HrmCompanyPageProps>,
     {
       path: HRM_PATHS.attendance,
       element: lazyWithRetry(() => import('@/pages/hrm/HrmAttendancePage'), 'HrmAttendancePage'),
@@ -205,7 +725,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['hrm:attendance:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<HrmAttendancePageProps>,
     {
       path: HRM_PATHS.leave,
       element: lazyWithRetry(() => import('@/pages/hrm/HrmLeavePage'), 'HrmLeavePage'),
@@ -217,7 +737,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['hrm:leave:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<HrmLeavePageProps>,
     {
       path: HRM_PATHS.payroll,
       element: lazyWithRetry(() => import('@/pages/hrm/HrmPayrollPage'), 'HrmPayrollPage'),
@@ -229,7 +749,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['hrm:payroll:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<HrmPayrollPageProps>,
     {
       path: HRM_PATHS.salaryAdjustment,
       element: lazyWithRetry(
@@ -244,7 +764,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['hrm:salary_adjustment:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<HrmSalaryAdjustmentPageProps>,
     {
       path: HRM_PATHS.recruitment,
       element: lazyWithRetry(() => import('@/pages/hrm/HrmRecruitmentPage'), 'HrmRecruitmentPage'),
@@ -256,7 +776,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['hrm:recruitment:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<HrmRecruitmentPageProps>,
     {
       path: HRM_PATHS.training,
       element: lazyWithRetry(() => import('@/pages/hrm/HrmTrainingPage'), 'HrmTrainingPage'),
@@ -268,7 +788,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['hrm:training:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<HrmTrainingPageProps>,
     {
       path: HRM_PATHS.performance,
       element: lazyWithRetry(() => import('@/pages/hrm/HrmPerformancePage'), 'HrmPerformancePage'),
@@ -280,7 +800,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['hrm:performance:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<HrmPerformancePageProps>,
     {
       path: HRM_PATHS.reports,
       element: lazyWithRetry(() => import('@/pages/hrm/HrmReportsPage'), 'HrmReportsPage'),
@@ -292,7 +812,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['hrm:report:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<HrmReportsPageProps>,
     {
       path: HRM_PATHS.overview,
       element: lazyWithRetry(() => import('@/pages/hrm/HrmOverviewPage'), 'HrmOverviewPage'),
@@ -304,7 +824,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['hrm:overview:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<HrmOverviewPageProps>,
     {
       path: HRM_PATHS.settingAttendanceRule,
       element: lazyWithRetry(
@@ -319,7 +839,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'setting',
       requiredPermissions: ['hrm:attendance_rule:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<AttendanceRulePageProps>,
     {
       path: HRM_PATHS.settingPayrollTemplate,
       element: lazyWithRetry(
@@ -334,7 +854,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'setting',
       requiredPermissions: ['hrm:payroll_template:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<PayrollTemplatePageProps>,
     {
       path: HRM_PATHS.settingRecruitmentFlow,
       element: lazyWithRetry(
@@ -349,7 +869,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'setting',
       requiredPermissions: ['hrm:recruitment_flow:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<RecruitmentFlowPageProps>,
     {
       path: HRM_PATHS.settingTrainingPlan,
       element: lazyWithRetry(
@@ -364,8 +884,8 @@ export const hrmModuleConfig: RouteModuleConfig = {
       group: 'setting',
       requiredPermissions: ['hrm:training_plan:read'],
       action: 'read',
-    },
-  ],
+    } as RouteConfigV2<TrainingPlanPageProps>,
+  ] as RouteConfigV2<Record<string, unknown>>[],
 };
 
 // ---- 导航配置（供导航注册表使用） ----

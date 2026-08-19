@@ -1,5 +1,5 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
@@ -35,6 +35,510 @@ export const QMS_PATHS = {
   fmeaDetail: '/qms/fmea/:id',
 } as const;
 
+// ---- V257 P0-1：页面级 Props interface（Frontend 泛型收紧 · 3/15 核心模块首批）----
+// 命名规则：<DisplayName> + 'Props'，严格 1:1 对应 lazyWithRetry 第 2 参数 DisplayName
+// 字段策略：template 通用字段（list/pageSize/filters · form/mode/initialValues · detail/id · etc.）+ PATH 动态段参数（:id → id?）
+// 深层字段（filters/initialValues）先宽松 Record<string, unknown>，V257 P1-1 tsc 后细化
+
+export interface QmsDashboardPageProps {
+  /** 统计指标列表（可选）*/
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 时间范围自定义起点（period='custom' 时）*/
+
+  periodStart?: string;
+
+  /** 时间范围自定义终点 */
+
+  periodEnd?: string;
+
+  /** 自动刷新间隔（秒）*/
+
+  refreshIntervalSec?: number;
+}
+
+export interface QmsInspectionPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface QmsQualityControlPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface QmsNonconformancePageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface QmsAuditManagementPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface QmsStandardListPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface QmsStandardDetailPageProps {
+  /** 实体主键 ID（匹配 PATHS.:id）*/
+
+  id?: string;
+
+  /** 实体类型（多态详情页：区分 inspection/issue/audit-plan 等）*/
+
+  entityType?: string;
+
+  /** 是否预览模式（部分详情页只读预览）*/
+
+  previewMode?: boolean;
+
+  /** 版本号（带版本控制的实体）*/
+
+  version?: string | number;
+}
+
+export interface QmsApqpPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface QmsFmeaPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface QmsSpcPageProps {
+  /** 统计维度 */
+
+  dimensions?: string[];
+
+  /** 统计指标 */
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 过滤器 */
+
+  filters?: Record<string, unknown>;
+}
+
+export interface QmsEightDPageProps {
+  /** 分页：当前页码 */
+
+  page?: number;
+
+  /** 分页：每页大小 */
+
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
+
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框）*/
+
+  searchKeyword?: string;
+
+  /** 排序字段 */
+
+  sortBy?: string;
+
+  /** 排序方向 */
+
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface QmsQualityCostPageProps {
+  /** 统计维度 */
+
+  dimensions?: string[];
+
+  /** 统计指标 */
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 过滤器 */
+
+  filters?: Record<string, unknown>;
+}
+
+export interface QmsQualityTrendPageProps {
+  /** 统计维度 */
+
+  dimensions?: string[];
+
+  /** 统计指标 */
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 过滤器 */
+
+  filters?: Record<string, unknown>;
+}
+
+export interface QmsDefectParetoPageProps {
+  /** 统计维度 */
+
+  dimensions?: string[];
+
+  /** 统计指标 */
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 过滤器 */
+
+  filters?: Record<string, unknown>;
+}
+
+export interface QmsCostAnalysisPageProps {
+  /** 统计维度 */
+
+  dimensions?: string[];
+
+  /** 统计指标 */
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 过滤器 */
+
+  filters?: Record<string, unknown>;
+}
+
+export interface QmsSpcControlChartPageProps {
+  /** 统计维度 */
+
+  dimensions?: string[];
+
+  /** 统计指标 */
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 过滤器 */
+
+  filters?: Record<string, unknown>;
+}
+
+export interface QmsFmeaRiskMatrixPageProps {
+  /** 统计维度 */
+
+  dimensions?: string[];
+
+  /** 统计指标 */
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 过滤器 */
+
+  filters?: Record<string, unknown>;
+}
+
+export interface QmsAuditCompliancePageProps {
+  /** 统计维度 */
+
+  dimensions?: string[];
+
+  /** 统计指标 */
+
+  metrics?: string[];
+
+  /** 时间范围 */
+
+  period?: '7d' | '30d' | '90d' | 'custom';
+
+  /** 过滤器 */
+
+  filters?: Record<string, unknown>;
+}
+
+export interface QmsInspectionDetailPageProps {
+  /** 实体主键 ID（匹配 PATHS.:id）*/
+
+  id?: string;
+
+  /** 实体类型（多态详情页：区分 inspection/issue/audit-plan 等）*/
+
+  entityType?: string;
+
+  /** 是否预览模式（部分详情页只读预览）*/
+
+  previewMode?: boolean;
+
+  /** 版本号（带版本控制的实体）*/
+
+  version?: string | number;
+}
+
+export interface QmsIssueDetailPageProps {
+  /** 实体主键 ID（匹配 PATHS.:id）*/
+
+  id?: string;
+
+  /** 实体类型（多态详情页：区分 inspection/issue/audit-plan 等）*/
+
+  entityType?: string;
+
+  /** 是否预览模式（部分详情页只读预览）*/
+
+  previewMode?: boolean;
+
+  /** 版本号（带版本控制的实体）*/
+
+  version?: string | number;
+}
+
+export interface QmsAuditPlanDetailPageProps {
+  /** 实体主键 ID（匹配 PATHS.:id）*/
+
+  id?: string;
+
+  /** 实体类型（多态详情页：区分 inspection/issue/audit-plan 等）*/
+
+  entityType?: string;
+
+  /** 是否预览模式（部分详情页只读预览）*/
+
+  previewMode?: boolean;
+
+  /** 版本号（带版本控制的实体）*/
+
+  version?: string | number;
+}
+
+export interface QmsEightDDetailPageProps {
+  /** 实体主键 ID（匹配 PATHS.:id）*/
+
+  id?: string;
+
+  /** 实体类型（多态详情页：区分 inspection/issue/audit-plan 等）*/
+
+  entityType?: string;
+
+  /** 是否预览模式（部分详情页只读预览）*/
+
+  previewMode?: boolean;
+
+  /** 版本号（带版本控制的实体）*/
+
+  version?: string | number;
+}
+
+export interface QmsApqpProjectDetailPageProps {
+  /** 实体主键 ID（匹配 PATHS.:id）*/
+
+  id?: string;
+
+  /** 实体类型（多态详情页：区分 inspection/issue/audit-plan 等）*/
+
+  entityType?: string;
+
+  /** 是否预览模式（部分详情页只读预览）*/
+
+  previewMode?: boolean;
+
+  /** 版本号（带版本控制的实体）*/
+
+  version?: string | number;
+}
+
+export interface QmsFmeaDetailPageProps {
+  /** 实体主键 ID（匹配 PATHS.:id）*/
+
+  id?: string;
+
+  /** 实体类型（多态详情页：区分 inspection/issue/audit-plan 等）*/
+
+  entityType?: string;
+
+  /** 是否预览模式（部分详情页只读预览）*/
+
+  previewMode?: boolean;
+
+  /** 版本号（带版本控制的实体）*/
+
+  version?: string | number;
+}
 // ---- 路由配置（供路由系统使用） ----
 export const qmsModuleConfig: RouteModuleConfig = {
   code: 'qms',
@@ -60,7 +564,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'overview',
       requiredPermissions: ['qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsDashboardPageProps>,
     {
       path: QMS_PATHS.inspection,
       element: lazyWithRetry(() => import('@/pages/qms/QmsInspectionPage'), 'QmsInspectionPage'),
@@ -72,7 +576,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['qms:inspection:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsInspectionPageProps>,
     {
       path: QMS_PATHS.qualityControl,
       element: lazyWithRetry(
@@ -87,7 +591,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['qms:quality_control:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsQualityControlPageProps>,
     {
       path: QMS_PATHS.nonconformance,
       element: lazyWithRetry(
@@ -102,7 +606,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['qms:nonconformance:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsNonconformancePageProps>,
     {
       path: QMS_PATHS.auditManagement,
       element: lazyWithRetry(
@@ -117,7 +621,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['qms:audit:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsAuditManagementPageProps>,
     {
       path: QMS_PATHS.standards,
       element: lazyWithRetry(
@@ -132,7 +636,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'master',
       requiredPermissions: ['qms:standard:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsStandardListPageProps>,
     {
       path: QMS_PATHS.standardDetail,
       element: lazyWithRetry(
@@ -147,7 +651,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['qms:standard:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsStandardDetailPageProps>,
     {
       path: QMS_PATHS.apqp,
       element: lazyWithRetry(() => import('@/pages/qms/QmsApqpPage'), 'QmsApqpPage'),
@@ -159,7 +663,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['qms:apqp:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsApqpPageProps>,
     {
       path: QMS_PATHS.fmea,
       element: lazyWithRetry(() => import('@/pages/qms/QmsFmeaPage'), 'QmsFmeaPage'),
@@ -171,7 +675,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['qms:fmea:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsFmeaPageProps>,
     {
       path: QMS_PATHS.spc,
       element: lazyWithRetry(() => import('@/pages/qms/QmsSpcPage'), 'QmsSpcPage'),
@@ -183,7 +687,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['qms:spc:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsSpcPageProps>,
     {
       path: QMS_PATHS.eightd,
       element: lazyWithRetry(() => import('@/pages/qms/QmsEightDPage'), 'QmsEightDPage'),
@@ -195,7 +699,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'process',
       requiredPermissions: ['qms:eightd:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsEightDPageProps>,
     {
       path: QMS_PATHS.qualityCost,
       element: lazyWithRetry(() => import('@/pages/qms/QmsQualityCostPage'), 'QmsQualityCostPage'),
@@ -207,7 +711,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['qms:quality_cost:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsQualityCostPageProps>,
     // ---- BI 分析页（6 个） ----
     {
       path: QMS_PATHS.qualityTrend,
@@ -223,7 +727,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['qms:analytics:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsQualityTrendPageProps>,
     {
       path: QMS_PATHS.defectPareto,
       element: lazyWithRetry(
@@ -238,7 +742,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['qms:analytics:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsDefectParetoPageProps>,
     {
       path: QMS_PATHS.costAnalysis,
       element: lazyWithRetry(
@@ -253,7 +757,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['qms:analytics:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsCostAnalysisPageProps>,
     {
       path: QMS_PATHS.spcControlChart,
       element: lazyWithRetry(
@@ -268,7 +772,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['qms:analytics:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsSpcControlChartPageProps>,
     {
       path: QMS_PATHS.fmeaRiskMatrix,
       element: lazyWithRetry(
@@ -283,7 +787,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['qms:analytics:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsFmeaRiskMatrixPageProps>,
     {
       path: QMS_PATHS.auditCompliance,
       element: lazyWithRetry(
@@ -298,7 +802,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'analytics',
       requiredPermissions: ['qms:analytics:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsAuditCompliancePageProps>,
     // ---- 详情页（6 个） ----
     {
       path: QMS_PATHS.inspectionDetail,
@@ -314,7 +818,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['qms:inspection:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsInspectionDetailPageProps>,
     {
       path: QMS_PATHS.issueDetail,
       element: lazyWithRetry(() => import('@/pages/qms/QmsIssueDetailPage'), 'QmsIssueDetailPage'),
@@ -326,7 +830,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['qms:nonconformance:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsIssueDetailPageProps>,
     {
       path: QMS_PATHS.auditPlanDetail,
       element: lazyWithRetry(
@@ -341,7 +845,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['qms:audit:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsAuditPlanDetailPageProps>,
     {
       path: QMS_PATHS.eightDDetail,
       element: lazyWithRetry(
@@ -356,7 +860,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['qms:eightd:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsEightDDetailPageProps>,
     {
       path: QMS_PATHS.apqpDetail,
       element: lazyWithRetry(
@@ -371,7 +875,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['qms:apqp:read', 'qms:dashboard:read'],
       action: 'read',
-    },
+    } as RouteConfigV2<QmsApqpProjectDetailPageProps>,
     {
       path: QMS_PATHS.fmeaDetail,
       element: lazyWithRetry(() => import('@/pages/qms/QmsFmeaDetailPage'), 'QmsFmeaDetailPage'),
@@ -383,8 +887,8 @@ export const qmsModuleConfig: RouteModuleConfig = {
       group: 'business',
       requiredPermissions: ['qms:fmea:read', 'qms:dashboard:read'],
       action: 'read',
-    },
-  ],
+    } as RouteConfigV2<QmsFmeaDetailPageProps>,
+  ] as RouteConfigV2<Record<string, unknown>>[],
 };
 
 // ---- 导航配置（供导航注册表使用） ----
