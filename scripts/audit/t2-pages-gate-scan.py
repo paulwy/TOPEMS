@@ -28,18 +28,20 @@ def is_ineligible_R0(path: Path, src: str) -> list[str]:
     return reasons
 
 def gate_G1(src: str) -> dict:
+    """轻度放宽：≤180L · ≤4 it · ≤2 describe"""
     lines = src.count('\n') + 1
     top_describes = len([m for m in re.finditer(r'^describe\s*\(', src, re.MULTILINE)])
     its = len(re.findall(r'(?<!\.)\bit\s*\(|\btest\s*\(', src))
     skipped = len(re.findall(r'\bit\.skip\s*\(|\bit\.todo\s*\(|\btest\.skip\s*\(|\btest\.todo\s*\(', src))
     real_its = its - skipped
     return {
-        'pass': lines <= 80 and top_describes == 1 and real_its <= 2,
+        'pass': lines <= 180 and top_describes <= 2 and real_its <= 4,
         'metrics': {'lines': lines, 'top_describes': top_describes, 'real_it_blocks': real_its, 'total_it_keyword': its, 'skipped_or_todo': skipped},
-        'fails': ([f'lines={lines}>80'] if lines>80 else []) + ([f'top_describes={top_describes}!=1'] if top_describes!=1 else []) + ([f'real_its={real_its}>2'] if real_its>2 else []),
+        'fails': ([f'lines={lines}>180'] if lines>180 else []) + ([f'top_describes={top_describes}>2'] if top_describes>2 else []) + ([f'real_its={real_its}>4'] if real_its>4 else []),
     }
 
 def gate_G2(src: str) -> dict:
+    """轻度放宽：≤3 expect（全部为存在性/空值类断言即可，仍严格禁止结构/元素/量化/mock调用断言）"""
     expects = len(re.findall(r'\bexpect\s*\(', src))
     forbid_patterns = [
         (r'\.toBeCalled\b|\.toHaveBeenCalled\b|\.toHaveBeenNthCalledWith\b|\bmock\.calls\b', 'mock行为断言'),
@@ -50,17 +52,10 @@ def gate_G2(src: str) -> dict:
     for pat, label in forbid_patterns:
         m = re.search(pat, src)
         if m: forbid_hits.append(f'G2: 检测到{label} ({m.group()})')
-    allowed_1_expect_only = True
-    if expects == 1:
-        m_snap = re.search(r'expect\s*\([^)]*\)\s*\.\s*(toMatchSnapshot|toMatchInlineSnapshot)\s*\(', src)
-        m_txt = re.search(r'expect\s*\(\s*screen\.getByText\s*\([^)]*\)\s*\)\s*\.\s*toBeInTheDocument\s*\(', src)
-        if not (m_snap or m_txt):
-            allowed_1_expect_only = False
-            forbid_hits.append('G2: expect=1 但形式不是允许的toMatchSnapshot/single getByText().toBeInTheDocument')
     return {
-        'pass': expects <= 1 and not forbid_hits and allowed_1_expect_only,
+        'pass': expects <= 3 and not forbid_hits,
         'metrics': {'expect_calls': expects},
-        'fails': ([f'expects={expects}>1'] if expects>1 else []) + forbid_hits,
+        'fails': ([f'expects={expects}>3'] if expects>3 else []) + forbid_hits,
     }
 
 def gate_G3(src: str) -> dict:
@@ -131,7 +126,8 @@ for p in all_pages_tests:
 
 out = {
     'scan_date': '2026-08-20',
-    'scope': 'apps/web/src/pages/** (pages-only, conservative)',
+    'gate_mode': 'lax-G1-G2 (G1:≤180L/≤4it/≤2desc; G2:≤3expect; G3/G4 still strict)',
+    'scope': 'apps/web/src/pages/** (pages-only, LAX-G1G2, G3/G4 unchanged)',
     'total_pages_tests': len(all_pages_tests),
     'g4_pass_total': len(pass_list),
     'pass': sorted(pass_list),
@@ -139,7 +135,7 @@ out = {
     'rejection_reasons': {k: v for k, v in sorted(rejection_reasons.items())},
     'per_file_evidence': {k: v for k, v in sorted(per_file_evidence.items())},
 }
-out_path = ROOT / 'scripts/audit/t2-pages-gate-candidates.json'
+out_path = ROOT / 'scripts/audit/t2-pages-gate-lax-candidates.json'
 out_path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding='utf-8')
 
 print(f"Pages tests scanned: {out['total_pages_tests']}")
