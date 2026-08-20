@@ -3,7 +3,7 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export interface KGNode {
+interface KGNode {
   id: string;
   label: string;
   type: string;
@@ -11,7 +11,7 @@ export interface KGNode {
   degree?: number;
 }
 
-export interface KGEdge {
+interface KGEdge {
   id: string;
   from_node: string;
   to_node: string;
@@ -19,12 +19,12 @@ export interface KGEdge {
   weight?: number;
 }
 
-export interface KGSubgraph {
+interface KGSubgraph {
   nodes: KGNode[];
   edges: KGEdge[];
 }
 
-export interface KGPath {
+interface KGPath {
   from_node: string;
   to_node: string;
   nodes: KGNode[];
@@ -33,12 +33,12 @@ export interface KGPath {
   hops: number;
 }
 
-export interface KGSimilarNode {
+interface KGSimilarNode {
   node: KGNode;
   similarity: number;
 }
 
-export interface KGRecommendation {
+interface KGRecommendation {
   id: string;
   type: string;
   title: string;
@@ -46,7 +46,7 @@ export interface KGRecommendation {
   confidence: number;
 }
 
-export interface KGAsset {
+interface KGAsset {
   id: string;
   name: string;
   type: string;
@@ -59,7 +59,7 @@ export interface KGAsset {
   updated_at: string;
 }
 
-export interface KGInteraction {
+interface KGInteraction {
   id: string;
   user_id: string;
   node_id: string;
@@ -67,14 +67,14 @@ export interface KGInteraction {
   created_at: string;
 }
 
-export interface KGCategory {
+interface KGCategory {
   id: string;
   name: string;
   count: number;
   parent_id?: string;
 }
 
-export interface KGExport {
+interface KGExport {
   format: 'json' | 'graphml' | 'gexf';
   size_bytes: number;
   node_count: number;
@@ -84,26 +84,26 @@ export interface KGExport {
 
 // ============ Request Types ============
 
-export interface AddNodeRequest {
+interface AddNodeRequest {
   label: string;
   type: string;
   properties?: Record<string, unknown>;
 }
 
-export interface AddEdgeRequest {
+interface AddEdgeRequest {
   from_node: string;
   to_node: string;
   relation: string;
   weight?: number;
 }
 
-export interface AddInteractionRequest {
+interface AddInteractionRequest {
   type: 'view' | 'search' | 'bookmark' | 'share' | 'edit';
   node_id: string;
   context?: string;
 }
 
-export interface RegisterAssetRequest {
+interface RegisterAssetRequest {
   name: string;
   type: string;
   description?: string;
@@ -113,7 +113,7 @@ export interface RegisterAssetRequest {
   tags?: string[];
 }
 
-export interface SearchAssetsParams {
+interface SearchAssetsParams {
   query?: string;
   type?: string;
   category?: string;

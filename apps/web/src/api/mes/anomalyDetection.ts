@@ -20,20 +20,20 @@ export interface AnomalyAlert {
   recommendation: string;
 }
 
-export interface EquipmentAnomalyCount {
+interface EquipmentAnomalyCount {
   equipment_id: string;
   equipment_name: string;
   alert_count: number;
   highest_severity: string;
 }
 
-export interface DailyAnomalyCount {
+interface DailyAnomalyCount {
   date: string;
   count: number;
   critical: number;
 }
 
-export interface AnomalySummary {
+interface AnomalySummary {
   total_alerts: number;
   critical_count: number;
   warning_count: number;
@@ -54,7 +54,7 @@ export interface AnomalyRule {
   description: string;
 }
 
-export interface AnomalyQueryParams {
+interface AnomalyQueryParams {
   severity?: string;
   anomaly_type?: string;
   equipment_id?: string;
@@ -69,7 +69,7 @@ export interface UpdateRuleRequest {
   enabled?: boolean;
 }
 
-export interface AnomalyScanResult {
+interface AnomalyScanResult {
   scan_completed: boolean;
   scanned_at: string;
   total_alerts_found: number;

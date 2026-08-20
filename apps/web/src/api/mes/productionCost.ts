@@ -1,6 +1,6 @@
 import { apiClient } from '../client';
 
-export interface CostBreakdownItem {
+interface CostBreakdownItem {
   category: string;
   amount: number;
   percentage: number;
@@ -19,7 +19,7 @@ export interface WorkOrderCostResult {
   produced_qty: number;
 }
 
-export interface WorkOrderCostDetail {
+interface WorkOrderCostDetail {
   work_order_id: string;
   work_order_no: string;
   production_order_no: string;
@@ -32,7 +32,7 @@ export interface WorkOrderCostDetail {
   grand_total: number;
 }
 
-export interface MaterialCostItem {
+interface MaterialCostItem {
   material_id: string;
   material_code: string;
   material_name: string;
@@ -43,7 +43,7 @@ export interface MaterialCostItem {
   batch_no?: string;
 }
 
-export interface LaborCostItem {
+interface LaborCostItem {
   employee_id: string;
   employee_name: string;
   work_center_id: string;
@@ -53,14 +53,14 @@ export interface LaborCostItem {
   amount: number;
 }
 
-export interface OverheadCostItem {
+interface OverheadCostItem {
   cost_type: string;
   description: string;
   amount: number;
   allocation_basis: string;
 }
 
-export interface ProductionOrderCostResult {
+interface ProductionOrderCostResult {
   production_order_id: string;
   production_order_no: string;
   product_id: string;
@@ -72,14 +72,14 @@ export interface ProductionOrderCostResult {
   cost_by_work_order: WorkOrderCostSummary[];
 }
 
-export interface WorkOrderCostSummary {
+interface WorkOrderCostSummary {
   work_order_id: string;
   work_order_no: string;
   cost: number;
   percentage: number;
 }
 
-export interface PeriodCostReport {
+interface PeriodCostReport {
   period_start: string;
   period_end: string;
   total_cost: number;
@@ -88,7 +88,7 @@ export interface PeriodCostReport {
   cost_by_month: MonthlyCostItem[];
 }
 
-export interface ProductCostItem {
+interface ProductCostItem {
   product_id: string;
   product_code: string;
   product_name: string;
@@ -97,14 +97,14 @@ export interface ProductCostItem {
   percentage: number;
 }
 
-export interface WorkshopCostItem {
+interface WorkshopCostItem {
   workshop_id: string;
   workshop_name: string;
   total_cost: number;
   percentage: number;
 }
 
-export interface MonthlyCostItem {
+interface MonthlyCostItem {
   month: string;
   total_cost: number;
   material_cost: number;
@@ -112,7 +112,7 @@ export interface MonthlyCostItem {
   overhead_cost: number;
 }
 
-export interface CostTrendData {
+interface CostTrendData {
   period: string;
   total_cost: number;
   material_cost: number;
@@ -122,7 +122,7 @@ export interface CostTrendData {
   change_rate: number;
 }
 
-export interface CostTrendResponse {
+interface CostTrendResponse {
   start_date: string;
   end_date: string;
   trend_data: CostTrendData[];
@@ -130,7 +130,7 @@ export interface CostTrendResponse {
   avg_change_rate: number;
 }
 
-export interface CostComparisonResponse {
+interface CostComparisonResponse {
   comparison_type: string;
   baseline_total: number;
   comparison_total: number;
@@ -139,7 +139,7 @@ export interface CostComparisonResponse {
   breakdown_comparison: ComparisonBreakdown[];
 }
 
-export interface ComparisonBreakdown {
+interface ComparisonBreakdown {
   category: string;
   baseline_amount: number;
   comparison_amount: number;
@@ -147,7 +147,7 @@ export interface ComparisonBreakdown {
   difference_percent: number;
 }
 
-export interface CostForecastResponse {
+interface CostForecastResponse {
   forecast_period: string;
   forecast_total: number;
   forecast_material: number;

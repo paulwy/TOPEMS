@@ -45,7 +45,7 @@ export interface ProcessRouteStep {
   created_at: string;
 }
 
-export interface AddProcessRouteStepRequest {
+interface AddProcessRouteStepRequest {
   process_id: string;
   sequence: number;
   standard_time?: number;
@@ -53,7 +53,7 @@ export interface AddProcessRouteStepRequest {
   description?: string;
 }
 
-export interface UpdateProcessRouteStepRequest {
+interface UpdateProcessRouteStepRequest {
   sequence?: number;
   standard_time?: number;
   work_station_id?: string;

@@ -26,7 +26,7 @@ export interface DictItem {
   updated_at?: string;
 }
 
-export interface DictTypeCreateRequest {
+interface DictTypeCreateRequest {
   code: string;
   name: string;
   category?: string;
@@ -34,7 +34,7 @@ export interface DictTypeCreateRequest {
   sort_order?: number;
 }
 
-export interface DictItemCreateRequest {
+interface DictItemCreateRequest {
   dict_type_id: string;
   code: string;
   name: string;
@@ -44,7 +44,7 @@ export interface DictItemCreateRequest {
   extra_data?: Record<string, unknown>;
 }
 
-export interface DictItemBatchRequest {
+interface DictItemBatchRequest {
   dict_type_id: string;
   items: Array<DictItemCreateRequest>;
 }

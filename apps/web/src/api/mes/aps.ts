@@ -1,7 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface ApsScheduleRequest {
+interface ApsScheduleRequest {
   order_ids?: string[];
   schedule_start?: string;
   strategy?: 'forward' | 'backward' | 'bidirectional' | 'bottleneck_driven';
@@ -50,14 +50,14 @@ export interface ApsScheduleResult {
   warnings: string[];
 }
 
-export interface ConstraintCheckRequest {
+interface ConstraintCheckRequest {
   order_ids: string[];
   check_materials?: boolean;
   check_equipment?: boolean;
   check_personnel?: boolean;
 }
 
-export interface MaterialConstraint {
+interface MaterialConstraint {
   material_code: string;
   material_name: string;
   required_quantity: number;
@@ -66,7 +66,7 @@ export interface MaterialConstraint {
   status: 'passed' | 'warning' | 'failed';
 }
 
-export interface EquipmentConstraint {
+interface EquipmentConstraint {
   equipment_id: string;
   equipment_name: string;
   required_capability: string;
@@ -75,7 +75,7 @@ export interface EquipmentConstraint {
   status: 'passed' | 'warning' | 'failed';
 }
 
-export interface PersonnelConstraint {
+interface PersonnelConstraint {
   team_id: string;
   team_name: string;
   required_skill: string;
@@ -94,7 +94,7 @@ export interface ConstraintCheckResult {
   suggested_start_time?: string;
 }
 
-export interface SimulateRequest {
+interface SimulateRequest {
   scenario_name: string;
   orders: Array<{
     order_id: string;
@@ -105,7 +105,7 @@ export interface SimulateRequest {
   start_time?: string;
 }
 
-export interface SimulateResult {
+interface SimulateResult {
   scenario_name: string;
   simulated_schedules: ApsScheduleItem[];
   total_makespan_hours: number;
@@ -114,7 +114,7 @@ export interface SimulateResult {
   comparison_with_current?: string;
 }
 
-export interface BottleneckResource {
+interface BottleneckResource {
   resource_id: string;
   resource_name: string;
   resource_type: string;
@@ -123,7 +123,7 @@ export interface BottleneckResource {
   impact_score: number;
 }
 
-export interface ImprovementSuggestion {
+interface ImprovementSuggestion {
   category: string;
   title: string;
   description: string;

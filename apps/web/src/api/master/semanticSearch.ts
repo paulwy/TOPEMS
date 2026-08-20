@@ -3,9 +3,9 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type GraphEntityType = 'node' | 'edge' | 'document' | 'record';
+type GraphEntityType = 'node' | 'edge' | 'document' | 'record';
 
-export interface SemanticNode {
+interface SemanticNode {
   id: string;
   label: string;
   type: GraphEntityType;
@@ -15,7 +15,7 @@ export interface SemanticNode {
   updated_at: string;
 }
 
-export interface SemanticEdge {
+interface SemanticEdge {
   id: string;
   from_id: string;
   to_id: string;
@@ -23,7 +23,7 @@ export interface SemanticEdge {
   weight?: number;
 }
 
-export interface Community {
+interface Community {
   id: string;
   name: string;
   size: number;
@@ -31,13 +31,13 @@ export interface Community {
   modularity?: number;
 }
 
-export interface ShortestPath {
+interface ShortestPath {
   nodes: SemanticNode[];
   edges: SemanticEdge[];
   distance: number;
 }
 
-export interface SemanticSearchResult {
+interface SemanticSearchResult {
   id: string;
   entity_type: string;
   title: string;
@@ -46,14 +46,14 @@ export interface SemanticSearchResult {
   highlights?: string[];
 }
 
-export interface SemanticSearchStats {
+interface SemanticSearchStats {
   indexed_entities: number;
   embeddings_dimension: number;
   last_reindex_at?: string;
   index_size_bytes: number;
 }
 
-export interface SemanticTag {
+interface SemanticTag {
   id: string;
   name: string;
   color?: string;
@@ -61,7 +61,7 @@ export interface SemanticTag {
   usage_count: number;
 }
 
-export interface TagSuggestion {
+interface TagSuggestion {
   name: string;
   confidence: number;
   source: 'rule' | 'ml' | 'cooccurrence';
@@ -82,27 +82,27 @@ export interface AddEdgeRequest {
   weight?: number;
 }
 
-export interface FindPathRequest {
+interface FindPathRequest {
   from_id: string;
   to_id: string;
   max_depth?: number;
 }
 
-export interface IndexEntityRequest {
+interface IndexEntityRequest {
   entity_type: string;
   entity_id: string;
   text: string;
   metadata?: Record<string, unknown>;
 }
 
-export interface SemanticSearchRequest {
+interface SemanticSearchRequest {
   query: string;
   entity_types?: GraphEntityType[];
   limit?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface HybridSearchRequest extends SemanticSearchRequest {
+interface HybridSearchRequest extends SemanticSearchRequest {
   semantic_weight?: number;
   keyword_weight?: number;
 }
@@ -113,13 +113,13 @@ export interface CreateTagRequest {
   description?: string;
 }
 
-export interface ApplyTagRequest {
+interface ApplyTagRequest {
   entity_type: GraphEntityType;
   entity_id: string;
   tag_id: string;
 }
 
-export interface AutoTagRequest {
+interface AutoTagRequest {
   entity_type: GraphEntityType;
   entity_id: string;
   strategy?: 'rule' | 'ml' | 'hybrid';

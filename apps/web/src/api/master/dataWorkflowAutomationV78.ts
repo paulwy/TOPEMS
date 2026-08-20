@@ -4,7 +4,7 @@ import type { ApiResponse } from '../client';
 // ============ Types ============
 
 export type WorkflowStatus = 'draft' | 'active' | 'paused' | 'archived';
-export type WorkflowTriggerType = 'manual' | 'event' | 'schedule' | 'api';
+type WorkflowTriggerType = 'manual' | 'event' | 'schedule' | 'api';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'escalated' | 'cancelled';
 export type ExecutionStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
 export type MappingStatus = 'active' | 'inactive' | 'draft';
@@ -50,7 +50,7 @@ export interface ApprovalRequest {
   comments?: string;
 }
 
-export interface WorkflowExecution {
+interface WorkflowExecution {
   id: string;
   workflow_id: string;
   workflow_version: string;
@@ -66,7 +66,7 @@ export interface WorkflowExecution {
   output_data?: Record<string, unknown>;
 }
 
-export interface WorkflowLog {
+interface WorkflowLog {
   id: string;
   execution_id: string;
   step_id: string;
@@ -77,7 +77,7 @@ export interface WorkflowLog {
   details?: Record<string, unknown>;
 }
 
-export interface WorkflowDashboard {
+interface WorkflowDashboard {
   total_workflows: number;
   active_workflows: number;
   pending_approvals: number;
@@ -88,7 +88,7 @@ export interface WorkflowDashboard {
   recent_executions: WorkflowExecution[];
 }
 
-export interface DataMapping {
+interface DataMapping {
   id: string;
   name: string;
   source_entity: string;
@@ -129,7 +129,7 @@ export interface UpdateWorkflowRequest {
   steps?: Omit<WorkflowStep, 'id'>[];
 }
 
-export interface ListWorkflowsRequest {
+interface ListWorkflowsRequest {
   entity_type?: string;
   status?: WorkflowStatus;
   search?: string;
@@ -146,17 +146,17 @@ export interface CreateApprovalRequest {
   priority?: 'low' | 'normal' | 'high' | 'urgent';
 }
 
-export interface ReviewApprovalRequest {
+interface ReviewApprovalRequest {
   action: 'approve' | 'reject' | 'escalate' | 'cancel';
   comment?: string;
 }
 
-export interface ExecuteWorkflowRequest {
+interface ExecuteWorkflowRequest {
   input_data?: Record<string, unknown>;
   trigger_type?: WorkflowTriggerType;
 }
 
-export interface CreateMappingRequest {
+interface CreateMappingRequest {
   name: string;
   source_entity: string;
   target_entity: string;
@@ -165,7 +165,7 @@ export interface CreateMappingRequest {
   transform_expression?: string;
 }
 
-export interface UpdateMappingRequest {
+interface UpdateMappingRequest {
   name?: string;
   source_entity?: string;
   target_entity?: string;

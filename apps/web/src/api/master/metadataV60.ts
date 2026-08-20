@@ -3,12 +3,12 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type MetadataType = 'table' | 'column' | 'entity' | 'field' | 'document' | 'report';
+type MetadataType = 'table' | 'column' | 'entity' | 'field' | 'document' | 'report';
 export type LifecycleStage =
   'design' | 'development' | 'testing' | 'production' | 'archive' | 'retire';
-export type LifecycleStatus = 'active' | 'completed' | 'cancelled';
+type LifecycleStatus = 'active' | 'completed' | 'cancelled';
 
-export interface MetadataV60 {
+interface MetadataV60 {
   id: string;
   name: string;
   type: MetadataType;
@@ -44,14 +44,14 @@ export interface LineageGraph {
   updated_at: string;
 }
 
-export interface LineagePath {
+interface LineagePath {
   nodes: LineageNode[];
   edges: LineageEdge[];
   length: number;
   confidence: number;
 }
 
-export interface LineageImpact {
+interface LineageImpact {
   entity_id: string;
   entity_name: string;
   downstream_count: number;
@@ -89,7 +89,7 @@ export interface LifecyclePolicy {
   updated_at: string;
 }
 
-export interface LifecycleHistoryEntryV60 {
+interface LifecycleHistoryEntryV60 {
   stage: LifecycleStage;
   action: 'enter' | 'exit' | 'transition';
   from_stage?: LifecycleStage;
@@ -109,7 +109,7 @@ export interface LifecycleDashboard {
 
 // ============ Request Types ============
 
-export interface CreateMetadataRequest {
+interface CreateMetadataRequest {
   name: string;
   type: MetadataType;
   description?: string;
@@ -122,7 +122,7 @@ export interface CreateMetadataRequest {
   owner?: string;
 }
 
-export interface UpdateMetadataRequest {
+interface UpdateMetadataRequest {
   name?: string;
   description?: string;
   attributes?: Array<{
@@ -134,7 +134,7 @@ export interface UpdateMetadataRequest {
   owner?: string;
 }
 
-export interface SearchMetadataParams {
+interface SearchMetadataParams {
   query?: string;
   type?: MetadataType;
   tags?: string[];
@@ -142,24 +142,24 @@ export interface SearchMetadataParams {
   pageSize?: number;
 }
 
-export interface AddAttributeRequest {
+interface AddAttributeRequest {
   key: string;
   value: string;
   type: 'string' | 'number' | 'boolean' | 'json';
 }
 
-export interface AddTagRequest {
+interface AddTagRequest {
   tag: string;
   entity_ids?: string[];
 }
 
-export interface BuildLineageGraphRequest {
+interface BuildLineageGraphRequest {
   entity_ids?: string[];
   depth?: number;
   include_types?: MetadataType[];
 }
 
-export interface GetPathRequest {
+interface GetPathRequest {
   from_id: string;
   to_id: string;
   max_depth?: number;
@@ -171,7 +171,7 @@ export interface TransitionStageRequest {
   performed_by?: string;
 }
 
-export interface CreatePolicyRequest {
+interface CreatePolicyRequest {
   name: string;
   entity_type: MetadataType;
   stages: Array<{
@@ -182,13 +182,13 @@ export interface CreatePolicyRequest {
   }>;
 }
 
-export interface AutoTransitionRequest {
+interface AutoTransitionRequest {
   entity_type?: MetadataType;
   entity_ids?: string[];
   dry_run?: boolean;
 }
 
-export interface BulkTransitionRequest {
+interface BulkTransitionRequest {
   entity_ids: string[];
   to_stage: LifecycleStage;
   reason?: string;

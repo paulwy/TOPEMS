@@ -108,7 +108,7 @@ export interface LeaveApplication {
   updated_at: string;
 }
 
-export interface CreateLeaveRequest {
+interface CreateLeaveRequest {
   leave_type: LeaveType;
   start_date: string;
   end_date: string;

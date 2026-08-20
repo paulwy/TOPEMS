@@ -3,11 +3,11 @@ import type { ApiResponse } from '../client';
 
 // ============ Types ============
 
-export type StandardType = 'coding' | 'naming' | 'classification' | 'unit' | 'data_quality';
-export type StandardStatus = 'active' | 'inactive' | 'draft';
-export type CategoryNodeType = 'category' | 'subcategory' | 'value';
+type StandardType = 'coding' | 'naming' | 'classification' | 'unit' | 'data_quality';
+type StandardStatus = 'active' | 'inactive' | 'draft';
+type CategoryNodeType = 'category' | 'subcategory' | 'value';
 
-export interface DataStandardV63 {
+interface DataStandardV63 {
   id: string;
   name: string;
   code: string;
@@ -25,7 +25,7 @@ export interface DataStandardV63 {
   updated_at: string;
 }
 
-export interface CategoryNode {
+interface CategoryNode {
   id: string;
   code: string;
   name: string;
@@ -40,7 +40,7 @@ export interface CategoryNode {
   updated_at: string;
 }
 
-export interface MappingRule {
+interface MappingRule {
   id: string;
   source_standard_id: string;
   target_standard_id: string;
@@ -52,7 +52,7 @@ export interface MappingRule {
   updated_at: string;
 }
 
-export interface StandardEvaluation {
+interface StandardEvaluation {
   id: string;
   standard_id: string;
   entity_type: string;
@@ -68,7 +68,7 @@ export interface StandardEvaluation {
   evaluator?: string;
 }
 
-export interface StandardDashboardV63 {
+interface StandardDashboardV63 {
   total_standards: number;
   by_type: Array<{ type: StandardType; count: number }>;
   active_standards: number;
@@ -112,7 +112,7 @@ export interface CreateCategoryRequest {
   attributes?: Record<string, string>;
 }
 
-export interface AddMappingRequest {
+interface AddMappingRequest {
   source_standard_id: string;
   target_standard_id: string;
   source_value: string;
@@ -120,7 +120,7 @@ export interface AddMappingRequest {
   confidence?: number;
 }
 
-export interface EvaluateRequest {
+interface EvaluateRequest {
   entity_type: string;
   entity_id: string;
   standard_ids?: string[];
