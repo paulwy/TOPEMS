@@ -7,7 +7,6 @@ import { configApi } from './config';
 import { batchApi } from './batch';
 import { pushConfigApi } from './pushConfig';
 import { imApi } from './im';
-import { mailApi } from './mail';
 import { preferenceApi } from './preference';
 import { deliveryApi } from './delivery';
 import { webhookApi } from './webhook';
@@ -554,17 +553,7 @@ export const notificationApi = {
   getMyScheduled: digestApi.getMyScheduled,
 };
 
-export {
-  templateApi,
-  configApi,
-  batchApi,
-  imApi,
-  mailApi,
-  deliveryApi,
-  channelApi,
-  groupApi,
-  digestApi,
-};
+export { templateApi, configApi, batchApi, imApi, deliveryApi, channelApi, groupApi, digestApi };
 
 export type {
   SendNotificationRequest,

@@ -321,14 +321,14 @@ export function initMFObservability(): void {
 /**
  * 获取最近的 MF 错误事件列表
  */
-export function getMFErrorEvents(): MFErrorEvent[] {
+function getMFErrorEvents(): MFErrorEvent[] {
   return [...recentEvents];
 }
 
 /**
  * 获取 MF 错误统计
  */
-export function getMFErrorStats(): {
+function getMFErrorStats(): {
   total: number;
   byType: Record<string, number>;
   byModule: Record<string, number>;
@@ -359,10 +359,9 @@ export function getMFErrorStats(): {
 /**
  * 清空 MF 错误事件记录
  */
-export function clearMFErrorEvents(): void {
+function clearMFErrorEvents(): void {
   recentEvents = [];
   loadTimings.clear();
 }
 
-export { mfObservabilityPlugin };
 export default { initMFObservability, getMFErrorEvents, getMFErrorStats, clearMFErrorEvents };

@@ -127,10 +127,10 @@ async fn employee_summary(
     .fetch_one(&state.db)
     .await;
 
-    let tenure_result = sqlx::query_scalar::<_, f64>(
+    let tenure_result = sqlx::query_scalar::<_, Option<f64>>(
         r#"
-        SELECT AVG(EXTRACT(DAY FROM CURRENT_DATE - hire_date)) 
-        FROM hrm.employees 
+        SELECT AVG((CURRENT_DATE - hire_date)::DOUBLE PRECISION)
+        FROM hrm.employees
         WHERE hire_date IS NOT NULL AND status = 'active'
         "#,
     )
@@ -187,7 +187,7 @@ async fn employee_summary(
                 "inactive_employees": inactive,
                 "male_count": male,
                 "female_count": female,
-                "avg_tenure_days": avg_tenure.round(),
+                "avg_tenure_days": avg_tenure.unwrap_or(0.0).round(),
                 "new_hires_this_month": new_hires,
                 "terminations_this_month": terminations,
             }),
@@ -439,7 +439,7 @@ async fn attendance_summary(
     let (start_date, end_date) = params.get_date_range();
 
     let total_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1 AND $2"#,
+        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1::DATE AND $2::DATE"#,
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -447,7 +447,7 @@ async fn attendance_summary(
     .await;
 
     let on_time_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1 AND $2 AND status = 'on_time'"#,
+        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1::DATE AND $2::DATE AND status = 'on_time'"#,
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -455,7 +455,7 @@ async fn attendance_summary(
     .await;
 
     let late_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1 AND $2 AND status = 'late'"#,
+        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1::DATE AND $2::DATE AND status = 'late'"#,
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -463,7 +463,7 @@ async fn attendance_summary(
     .await;
 
     let absent_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1 AND $2 AND status = 'absent'"#,
+        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1::DATE AND $2::DATE AND status = 'absent'"#,
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -471,7 +471,7 @@ async fn attendance_summary(
     .await;
 
     let leave_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.leave_records WHERE start_date <= $2 AND end_date >= $1 AND approval_status = 'approved'"#,
+        r#"SELECT COUNT(*) FROM hrm.leave_records WHERE start_date <= $2::DATE AND end_date >= $1::DATE AND approval_status = 'approved'"#,
     )
     .bind(&start_date)
     .bind(&end_date)

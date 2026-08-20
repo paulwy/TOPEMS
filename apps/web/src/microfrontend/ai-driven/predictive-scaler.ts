@@ -145,7 +145,7 @@ interface AccuracyRecord {
 
 // ==================== PredictiveScaler 类 ====================
 
-export class PredictiveScaler {
+class PredictiveScaler {
   private config: PredictiveScalerConfig;
   private metricHistory: Map<string, TimeSeriesPoint[]> = new Map();
   private models: Map<string, ScalingModel> = new Map();
@@ -718,5 +718,5 @@ export class PredictiveScaler {
 
 // ==================== 单例 ====================
 
-export const predictiveScaler = new PredictiveScaler();
+const predictiveScaler = new PredictiveScaler();
 export default predictiveScaler;
