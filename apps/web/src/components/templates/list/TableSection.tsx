@@ -116,7 +116,7 @@ export interface TableSectionProps<T> {
  * 表格区域组件
  * 从 ListPageTemplate 中抽离的表格头/体/汇总行渲染逻辑
  */
-export function TableSection<T>({
+function TableSection<T>({
   data,
   treeTableData,
   loading,

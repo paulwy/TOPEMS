@@ -16,7 +16,7 @@ export function useIsMobile(breakpoint = 768): boolean {
   return isMobile;
 }
 
-export function useDeviceType(): 'mobile' | 'tablet' | 'desktop' {
+function useDeviceType(): 'mobile' | 'tablet' | 'desktop' {
   const [deviceType, setDeviceType] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
 
   const checkDeviceType = useCallback(() => {

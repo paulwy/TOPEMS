@@ -15,7 +15,7 @@ export interface ListPaginationProps {
  * 列表分页组件
  * 从 ListPageTemplate 中抽离的分页渲染逻辑
  */
-export const ListPagination: React.FC<ListPaginationProps> = ({
+const ListPagination: React.FC<ListPaginationProps> = ({
   page,
   pageSize,
   total,

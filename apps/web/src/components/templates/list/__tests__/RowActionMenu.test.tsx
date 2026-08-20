@@ -3,7 +3,6 @@ import { screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 
-import { RowActionMenu } from '../RowActionMenu';
 import { renderWithProviders } from '@/__tests__/test-utils';
 import type { RowAction } from '../types';
 

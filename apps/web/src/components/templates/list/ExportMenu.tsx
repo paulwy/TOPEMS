@@ -22,7 +22,7 @@ export interface ExportMenuProps {
  * 导出菜单组件
  * 从 ListPageTemplate 中抽离的导出菜单 UI
  */
-export const ExportMenu: React.FC<ExportMenuProps> = ({
+const ExportMenu: React.FC<ExportMenuProps> = ({
   anchorEl,
   open,
   onClose,

@@ -153,5 +153,5 @@ const RelatedModuleCardInner: React.FC<RelatedModuleCardProps> = ({
   );
 };
 
-export const RelatedModuleCard = React.memo(RelatedModuleCardInner);
+const RelatedModuleCard = React.memo(RelatedModuleCardInner);
 export default RelatedModuleCard;

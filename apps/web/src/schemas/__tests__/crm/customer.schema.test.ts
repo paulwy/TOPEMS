@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import { customerZodSchema } from '../../crm/customer';
 
 describe('customerSchema contract (before fix)', () => {
   it('rejects object missing required name / customerType', () => {

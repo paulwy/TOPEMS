@@ -3,7 +3,6 @@ import { screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 
-import { ViewModeToggle } from '../ViewModeToggle';
 import { renderWithProviders } from '@/__tests__/test-utils';
 
 describe('ViewModeToggle', () => {

@@ -15,7 +15,7 @@ export interface RowActionMenuProps<T = any> {
  * 行操作下拉菜单
  * 从 ListPageTemplate 中抽离的行操作菜单 UI
  */
-export function RowActionMenu<T = any>({
+function RowActionMenu<T = any>({
   anchorEl,
   open,
   selectedRow,

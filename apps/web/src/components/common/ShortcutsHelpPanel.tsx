@@ -18,7 +18,7 @@ interface ShortcutsHelpPanelProps {
   onClose: () => void;
 }
 
-export const ShortcutsHelpPanel = ({ isOpen, onClose }: ShortcutsHelpPanelProps) => {
+const ShortcutsHelpPanel = ({ isOpen, onClose }: ShortcutsHelpPanelProps) => {
   const groupedShortcuts = getShortcutsByCategory(GLOBAL_SHORTCUTS);
 
   return (

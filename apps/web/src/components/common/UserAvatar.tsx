@@ -80,7 +80,7 @@ const getColorForKey = (key: string) => {
   return fallbackColors[idx];
 };
 
-export const UserAvatar: React.FC<UserAvatarProps> = ({
+const UserAvatar: React.FC<UserAvatarProps> = ({
   name,
   email,
   src,
