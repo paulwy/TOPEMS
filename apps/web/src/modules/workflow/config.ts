@@ -1,10 +1,11 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 WORKFLOW_PATHS.xxx，而非硬编码字符串
+
 export const WORKFLOW_PATHS = {
   root: '/workflow',
   dashboard: '/workflow/dashboard',
@@ -21,6 +22,272 @@ export const WORKFLOW_PATHS = {
   templates: '/workflow/templates',
   settings: '/workflow/settings',
 } as const;
+export interface WorkflowDashboardPageProps {}
+
+export interface WorkflowDefinitionsPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface WorkflowDesignerPageProps {
+  mode?: 'create' | 'edit' | 'view';
+  initialValues?: Record<string, unknown>;
+}
+
+export interface WorkflowVersionHistoryPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface WorkflowInstancesPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface WorkflowInstanceDetailPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface WorkflowApprovalsPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface WorkflowApprovalDetailPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface WorkflowNotificationCenterPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface WorkflowMonitorPageProps {}
+
+export interface WorkflowStatisticsPageProps {}
+
+export interface WorkflowTemplatePageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface WorkflowSettingsPageProps {}
+
+const workflowDashboardRoute: RouteConfigV2<WorkflowDashboardPageProps> = {
+  path: WORKFLOW_PATHS.dashboard,
+  element: lazyWithRetry(
+    () => import('@/pages/workflow/WorkflowDashboardPage'),
+    'WorkflowDashboardPage'
+  ),
+  module: 'workflow',
+  code: 'workflow-dashboard',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  template: 'dashboard',
+  group: 'overview',
+  requiredPermissions: ['workflow:dashboard:read'],
+  action: 'read',
+};
+
+const workflowDefinitionsRoute: RouteConfigV2<WorkflowDefinitionsPageProps> = {
+  path: WORKFLOW_PATHS.definitions,
+  element: lazyWithRetry(
+    () => import('@/pages/workflow/WorkflowDefinitionsPage'),
+    'WorkflowDefinitionsPage'
+  ),
+  module: 'workflow',
+  code: 'workflow-definitions',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['workflow:definition:read', 'workflow:dashboard:read'],
+  action: 'read',
+};
+
+const workflowDesignerRoute: RouteConfigV2<WorkflowDesignerPageProps> = {
+  path: WORKFLOW_PATHS.designer,
+  element: lazyWithRetry(
+    () => import('@/pages/workflow/WorkflowDesignerPage'),
+    'WorkflowDesignerPage'
+  ),
+  module: 'workflow',
+  code: 'workflow-designer',
+  title: i18n.t('shared.config.k4'),
+  titleKey: 'shared.config.k4',
+  template: 'form',
+  group: 'process',
+  requiredPermissions: ['workflow:definition:write', 'workflow:dashboard:write'],
+  action: 'write',
+};
+
+const workflowVersionHistoryRoute: RouteConfigV2<WorkflowVersionHistoryPageProps> = {
+  path: WORKFLOW_PATHS.versionHistory,
+  element: lazyWithRetry(
+    () => import('@/pages/workflow/WorkflowVersionHistoryPage'),
+    'WorkflowVersionHistoryPage'
+  ),
+  module: 'workflow',
+  code: 'workflow-version-history',
+  title: i18n.t('shared.config.k5'),
+  titleKey: 'shared.config.k5',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['workflow:definition:read', 'workflow:dashboard:read'],
+  action: 'read',
+};
+
+const workflowInstancesRoute: RouteConfigV2<WorkflowInstancesPageProps> = {
+  path: WORKFLOW_PATHS.instances,
+  element: lazyWithRetry(
+    () => import('@/pages/workflow/WorkflowInstancesPage'),
+    'WorkflowInstancesPage'
+  ),
+  module: 'workflow',
+  code: 'workflow-instances',
+  title: i18n.t('shared.config.k6'),
+  titleKey: 'shared.config.k6',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['workflow:instance:read', 'workflow:dashboard:read'],
+  action: 'read',
+};
+
+const workflowInstanceDetailRoute: RouteConfigV2<WorkflowInstanceDetailPageProps> = {
+  path: WORKFLOW_PATHS.instanceDetail,
+  element: lazyWithRetry(
+    () => import('@/pages/workflow/WorkflowInstanceDetailPage'),
+    'WorkflowInstanceDetailPage'
+  ),
+  module: 'workflow',
+  code: 'workflow-instance-detail',
+  title: i18n.t('shared.config.k7'),
+  titleKey: 'shared.config.k7',
+  template: 'detail',
+  group: 'process',
+  requiredPermissions: ['workflow:instance:read', 'workflow:dashboard:read'],
+  action: 'read',
+};
+
+const workflowApprovalsRoute: RouteConfigV2<WorkflowApprovalsPageProps> = {
+  path: WORKFLOW_PATHS.approvals,
+  element: lazyWithRetry(
+    () => import('@/pages/workflow/WorkflowApprovalsPage'),
+    'WorkflowApprovalsPage'
+  ),
+  module: 'workflow',
+  code: 'workflow-approvals',
+  title: i18n.t('shared.config.k8'),
+  titleKey: 'shared.config.k8',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['workflow:approval:read', 'workflow:dashboard:read'],
+  action: 'read',
+};
+
+const workflowApprovalDetailRoute: RouteConfigV2<WorkflowApprovalDetailPageProps> = {
+  path: WORKFLOW_PATHS.approvalDetail,
+  element: lazyWithRetry(
+    () => import('@/pages/workflow/WorkflowApprovalDetailPage'),
+    'WorkflowApprovalDetailPage'
+  ),
+  module: 'workflow',
+  code: 'workflow-approval-detail',
+  title: i18n.t('shared.config.k9'),
+  titleKey: 'shared.config.k9',
+  template: 'detail',
+  group: 'business',
+  requiredPermissions: ['workflow:approval:read', 'workflow:dashboard:read'],
+  action: 'read',
+};
+
+const workflowNotificationCenterRoute: RouteConfigV2<WorkflowNotificationCenterPageProps> = {
+  path: WORKFLOW_PATHS.notificationCenter,
+  element: lazyWithRetry(
+    () => import('@/pages/workflow/WorkflowNotificationCenterPage'),
+    'WorkflowNotificationCenterPage'
+  ),
+  module: 'workflow',
+  code: 'workflow-notification-center',
+  title: i18n.t('shared.config.k10'),
+  titleKey: 'shared.config.k10',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['workflow:notification:read', 'workflow:dashboard:read'],
+  action: 'read',
+};
+
+const workflowMonitorRoute: RouteConfigV2<WorkflowMonitorPageProps> = {
+  path: WORKFLOW_PATHS.monitor,
+  element: lazyWithRetry(
+    () => import('@/pages/workflow/WorkflowMonitorPage'),
+    'WorkflowMonitorPage'
+  ),
+  module: 'workflow',
+  code: 'workflow-monitor',
+  title: i18n.t('shared.config.k11'),
+  titleKey: 'shared.config.k11',
+  template: 'stats',
+  group: 'analytics',
+  requiredPermissions: ['workflow:monitor:read', 'workflow:dashboard:read'],
+  action: 'read',
+};
+
+const workflowStatisticsRoute: RouteConfigV2<WorkflowStatisticsPageProps> = {
+  path: WORKFLOW_PATHS.statistics,
+  element: lazyWithRetry(
+    () => import('@/pages/workflow/WorkflowStatisticsPage'),
+    'WorkflowStatisticsPage'
+  ),
+  module: 'workflow',
+  code: 'workflow-statistics',
+  title: i18n.t('shared.config.k12'),
+  titleKey: 'shared.config.k12',
+  template: 'stats',
+  group: 'analytics',
+  requiredPermissions: ['workflow:statistics:read', 'workflow:dashboard:read'],
+  action: 'read',
+};
+
+const workflowTemplateRoute: RouteConfigV2<WorkflowTemplatePageProps> = {
+  path: WORKFLOW_PATHS.templates,
+  element: lazyWithRetry(
+    () => import('@/pages/workflow/WorkflowTemplatePage'),
+    'WorkflowTemplatePage'
+  ),
+  module: 'workflow',
+  code: 'workflow-templates',
+  title: i18n.t('shared.config.k13'),
+  titleKey: 'shared.config.k13',
+  template: 'list',
+  group: 'setting',
+  requiredPermissions: ['workflow:template:read', 'workflow:dashboard:read'],
+  action: 'read',
+};
+
+const workflowSettingsRoute: RouteConfigV2<WorkflowSettingsPageProps> = {
+  path: WORKFLOW_PATHS.settings,
+  element: lazyWithRetry(
+    () => import('@/pages/workflow/WorkflowSettingsPage'),
+    'WorkflowSettingsPage'
+  ),
+  module: 'workflow',
+  code: 'workflow-settings',
+  title: i18n.t('shared.config.k14'),
+  titleKey: 'shared.config.k14',
+  template: 'settings',
+  group: 'setting',
+  requiredPermissions: ['workflow:dashboard:admin'],
+  action: 'admin',
+};
 
 // ---- 路由配置（供路由系统使用） ----
 export const workflowModuleConfig: RouteModuleConfig = {
@@ -36,201 +303,19 @@ export const workflowModuleConfig: RouteModuleConfig = {
   description: i18n.t('shared.config.k1'),
   permission: 'workflow:dashboard:read',
   routes: [
-    {
-      path: WORKFLOW_PATHS.dashboard,
-      element: lazyWithRetry(
-        () => import('@/pages/workflow/WorkflowDashboardPage'),
-        'WorkflowDashboardPage'
-      ),
-      module: 'workflow',
-      code: 'workflow-dashboard',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      template: 'dashboard',
-      group: 'overview',
-      requiredPermissions: ['workflow:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: WORKFLOW_PATHS.definitions,
-      element: lazyWithRetry(
-        () => import('@/pages/workflow/WorkflowDefinitionsPage'),
-        'WorkflowDefinitionsPage'
-      ),
-      module: 'workflow',
-      code: 'workflow-definitions',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['workflow:definition:read', 'workflow:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: WORKFLOW_PATHS.designer,
-      element: lazyWithRetry(
-        () => import('@/pages/workflow/WorkflowDesignerPage'),
-        'WorkflowDesignerPage'
-      ),
-      module: 'workflow',
-      code: 'workflow-designer',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      template: 'form',
-      group: 'process',
-      requiredPermissions: ['workflow:definition:write', 'workflow:dashboard:write'],
-      action: 'write',
-    },
-    {
-      path: WORKFLOW_PATHS.versionHistory,
-      element: lazyWithRetry(
-        () => import('@/pages/workflow/WorkflowVersionHistoryPage'),
-        'WorkflowVersionHistoryPage'
-      ),
-      module: 'workflow',
-      code: 'workflow-version-history',
-      title: i18n.t('shared.config.k5'),
-      titleKey: 'shared.config.k5',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['workflow:definition:read', 'workflow:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: WORKFLOW_PATHS.instances,
-      element: lazyWithRetry(
-        () => import('@/pages/workflow/WorkflowInstancesPage'),
-        'WorkflowInstancesPage'
-      ),
-      module: 'workflow',
-      code: 'workflow-instances',
-      title: i18n.t('shared.config.k6'),
-      titleKey: 'shared.config.k6',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['workflow:instance:read', 'workflow:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: WORKFLOW_PATHS.instanceDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/workflow/WorkflowInstanceDetailPage'),
-        'WorkflowInstanceDetailPage'
-      ),
-      module: 'workflow',
-      code: 'workflow-instance-detail',
-      title: i18n.t('shared.config.k7'),
-      titleKey: 'shared.config.k7',
-      template: 'detail',
-      group: 'process',
-      requiredPermissions: ['workflow:instance:read', 'workflow:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: WORKFLOW_PATHS.approvals,
-      element: lazyWithRetry(
-        () => import('@/pages/workflow/WorkflowApprovalsPage'),
-        'WorkflowApprovalsPage'
-      ),
-      module: 'workflow',
-      code: 'workflow-approvals',
-      title: i18n.t('shared.config.k8'),
-      titleKey: 'shared.config.k8',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['workflow:approval:read', 'workflow:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: WORKFLOW_PATHS.approvalDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/workflow/WorkflowApprovalDetailPage'),
-        'WorkflowApprovalDetailPage'
-      ),
-      module: 'workflow',
-      code: 'workflow-approval-detail',
-      title: i18n.t('shared.config.k9'),
-      titleKey: 'shared.config.k9',
-      template: 'detail',
-      group: 'business',
-      requiredPermissions: ['workflow:approval:read', 'workflow:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: WORKFLOW_PATHS.notificationCenter,
-      element: lazyWithRetry(
-        () => import('@/pages/workflow/WorkflowNotificationCenterPage'),
-        'WorkflowNotificationCenterPage'
-      ),
-      module: 'workflow',
-      code: 'workflow-notification-center',
-      title: i18n.t('shared.config.k10'),
-      titleKey: 'shared.config.k10',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['workflow:notification:read', 'workflow:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: WORKFLOW_PATHS.monitor,
-      element: lazyWithRetry(
-        () => import('@/pages/workflow/WorkflowMonitorPage'),
-        'WorkflowMonitorPage'
-      ),
-      module: 'workflow',
-      code: 'workflow-monitor',
-      title: i18n.t('shared.config.k11'),
-      titleKey: 'shared.config.k11',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['workflow:monitor:read', 'workflow:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: WORKFLOW_PATHS.statistics,
-      element: lazyWithRetry(
-        () => import('@/pages/workflow/WorkflowStatisticsPage'),
-        'WorkflowStatisticsPage'
-      ),
-      module: 'workflow',
-      code: 'workflow-statistics',
-      title: i18n.t('shared.config.k12'),
-      titleKey: 'shared.config.k12',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['workflow:statistics:read', 'workflow:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: WORKFLOW_PATHS.templates,
-      element: lazyWithRetry(
-        () => import('@/pages/workflow/WorkflowTemplatePage'),
-        'WorkflowTemplatePage'
-      ),
-      module: 'workflow',
-      code: 'workflow-templates',
-      title: i18n.t('shared.config.k13'),
-      titleKey: 'shared.config.k13',
-      template: 'list',
-      group: 'setting',
-      requiredPermissions: ['workflow:template:read', 'workflow:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: WORKFLOW_PATHS.settings,
-      element: lazyWithRetry(
-        () => import('@/pages/workflow/WorkflowSettingsPage'),
-        'WorkflowSettingsPage'
-      ),
-      module: 'workflow',
-      code: 'workflow-settings',
-      title: i18n.t('shared.config.k14'),
-      titleKey: 'shared.config.k14',
-      template: 'settings',
-      group: 'setting',
-      requiredPermissions: ['workflow:dashboard:admin'],
-      action: 'admin',
-    },
+    workflowDashboardRoute,
+    workflowDefinitionsRoute,
+    workflowDesignerRoute,
+    workflowVersionHistoryRoute,
+    workflowInstancesRoute,
+    workflowInstanceDetailRoute,
+    workflowApprovalsRoute,
+    workflowApprovalDetailRoute,
+    workflowNotificationCenterRoute,
+    workflowMonitorRoute,
+    workflowStatisticsRoute,
+    workflowTemplateRoute,
+    workflowSettingsRoute,
   ],
 };
 

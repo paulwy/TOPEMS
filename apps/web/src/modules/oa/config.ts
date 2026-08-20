@@ -1,5 +1,5 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
@@ -11,6 +11,98 @@ export const OA_PATHS = {
   meetings: '/oa/meetings',
   vehicles: '/oa/vehicles',
 } as const;
+export interface DashboardPageProps {}
+
+export interface DocumentManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface AnnouncementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface MeetingManagementPageProps {
+  mode?: 'create' | 'edit' | 'view';
+  initialValues?: Record<string, unknown>;
+}
+
+export interface VehicleManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
+  path: OA_PATHS.dashboard,
+  element: lazyWithRetry(() => import('@/pages/oa/DashboardPage'), 'DashboardPage'),
+  module: 'oa',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  code: 'oa-dashboard',
+  requiredPermissions: ['oa:dashboard:read'],
+  action: 'read',
+  template: 'dashboard',
+  group: 'overview',
+};
+
+const documentManagementRoute: RouteConfigV2<DocumentManagementPageProps> = {
+  path: OA_PATHS.documents,
+  element: lazyWithRetry(
+    () => import('@/pages/oa/DocumentManagementPage'),
+    'DocumentManagementPage'
+  ),
+  module: 'oa',
+  code: 'oa-documents',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['oa:document:read'],
+  action: 'read',
+};
+
+const announcementRoute: RouteConfigV2<AnnouncementPageProps> = {
+  path: OA_PATHS.announcements,
+  element: lazyWithRetry(() => import('@/pages/oa/AnnouncementPage'), 'AnnouncementPage'),
+  module: 'oa',
+  code: 'oa-announcements',
+  title: i18n.t('shared.config.k4'),
+  titleKey: 'shared.config.k4',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['oa:announcement:read'],
+  action: 'read',
+};
+
+const meetingManagementRoute: RouteConfigV2<MeetingManagementPageProps> = {
+  path: OA_PATHS.meetings,
+  element: lazyWithRetry(() => import('@/pages/oa/MeetingManagementPage'), 'MeetingManagementPage'),
+  module: 'oa',
+  code: 'oa-meetings',
+  title: i18n.t('shared.config.k5'),
+  titleKey: 'shared.config.k5',
+  template: 'form',
+  group: 'process',
+  requiredPermissions: ['oa:meeting:read'],
+  action: 'read',
+};
+
+const vehicleManagementRoute: RouteConfigV2<VehicleManagementPageProps> = {
+  path: OA_PATHS.vehicles,
+  element: lazyWithRetry(() => import('@/pages/oa/VehicleManagementPage'), 'VehicleManagementPage'),
+  module: 'oa',
+  code: 'oa-vehicles',
+  title: i18n.t('shared.config.k6'),
+  titleKey: 'shared.config.k6',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['oa:vehicle:read'],
+  action: 'read',
+};
 
 export const oaModuleConfig: RouteModuleConfig = {
   code: 'oa',
@@ -25,75 +117,11 @@ export const oaModuleConfig: RouteModuleConfig = {
   description: i18n.t('shared.config.k1'),
   permission: 'oa:documents:read',
   routes: [
-    {
-      path: OA_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/oa/DashboardPage'), 'DashboardPage'),
-      module: 'oa',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      code: 'oa-dashboard',
-      requiredPermissions: ['oa:dashboard:read'],
-      action: 'read',
-      template: 'dashboard',
-      group: 'overview',
-    },
-    {
-      path: OA_PATHS.documents,
-      element: lazyWithRetry(
-        () => import('@/pages/oa/DocumentManagementPage'),
-        'DocumentManagementPage'
-      ),
-      module: 'oa',
-      code: 'oa-documents',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['oa:document:read'],
-      action: 'read',
-    },
-    {
-      path: OA_PATHS.announcements,
-      element: lazyWithRetry(() => import('@/pages/oa/AnnouncementPage'), 'AnnouncementPage'),
-      module: 'oa',
-      code: 'oa-announcements',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['oa:announcement:read'],
-      action: 'read',
-    },
-    {
-      path: OA_PATHS.meetings,
-      element: lazyWithRetry(
-        () => import('@/pages/oa/MeetingManagementPage'),
-        'MeetingManagementPage'
-      ),
-      module: 'oa',
-      code: 'oa-meetings',
-      title: i18n.t('shared.config.k5'),
-      titleKey: 'shared.config.k5',
-      template: 'form',
-      group: 'process',
-      requiredPermissions: ['oa:meeting:read'],
-      action: 'read',
-    },
-    {
-      path: OA_PATHS.vehicles,
-      element: lazyWithRetry(
-        () => import('@/pages/oa/VehicleManagementPage'),
-        'VehicleManagementPage'
-      ),
-      module: 'oa',
-      code: 'oa-vehicles',
-      title: i18n.t('shared.config.k6'),
-      titleKey: 'shared.config.k6',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['oa:vehicle:read'],
-      action: 'read',
-    },
+    dashboardRoute,
+    documentManagementRoute,
+    announcementRoute,
+    meetingManagementRoute,
+    vehicleManagementRoute,
   ],
 };
 
