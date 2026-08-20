@@ -139,33 +139,24 @@ pub(crate) async fn plugin_health_check() -> Json<ServiceHealth> {
 pub(crate) async fn detailed_health(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let db_status = match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
-        Ok(_) => "healthy",
-        Err(_) => "unhealthy",
-    };
-
-    let response = serde_json::json!({
-        "service": "topems-unified-core",
-        "version": "1.0.0",
-        "description": "TOPEMS Unified Core Platform",
-        "modules": {
-            "iam": "active",
-            "flow": "active",
-            "file": "active",
-            "communication": "active",
-            "tenant": "active",
-            "billing": "active",
-            "plugin": "active",
-            "sync": "active"
-        },
-        "status": if db_status == "healthy" { "healthy" } else { "unhealthy" },
-        "timestamp": chrono::Utc::now().to_rfc3339(),
-        "dependencies": [
-            { "name": "postgresql", "status": db_status }
-        ]
+    use topems_shared_bootstrap::build_detailed_health_response;
+    let modules = serde_json::json!({
+        "iam": "active",
+        "flow": "active",
+        "file": "active",
+        "communication": "active",
+        "tenant": "active",
+        "billing": "active",
+        "plugin": "active",
+        "sync": "active"
     });
-
-    Json(ApiResponse::success(response, "Detailed health check"))
+    let extra = serde_json::json!({
+        "description": "TOPEMS Unified Core Platform",
+    });
+    let resp =
+        build_detailed_health_response(&state.pool, "topems-unified-core", modules, "1.0.0", extra)
+            .await;
+    Json(ApiResponse::success(resp, "Detailed health check"))
 }
 
 // ==================== 中间件包装函数 ====================

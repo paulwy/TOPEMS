@@ -3,12 +3,10 @@ use prometheus::{default_registry, Gauge};
 use serde::Serialize;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, check_iam_health, run, Application, ServiceConfig,
+    bootstrap_service, build_application, build_detailed_service_health,
+    build_simple_status_response, run, Application, ServiceConfig,
 };
 use topems_shared_core::config::Config;
-use topems_shared_core::health::DependencyHealth;
-use topems_shared_core::health::HealthStatus;
-use topems_shared_core::health::ServiceHealth;
 use topems_shared_core::response::ApiResponse;
 use utoipa::OpenApi;
 
@@ -151,64 +149,19 @@ async fn main() -> anyhow::Result<()> {
 async fn health_check(
     axum::extract::State(state): axum::extract::State<ApiState>,
 ) -> Json<ApiResponse<String>> {
-    let database_health = check_database_health(&state.db).await;
-    let iam_health = check_iam_health().await;
-
-    let overall_status = if database_health.status == HealthStatus::Healthy
-        && iam_health.status == HealthStatus::Healthy
-    {
-        HealthStatus::Healthy
-    } else if database_health.status == HealthStatus::Unhealthy
-        || iam_health.status == HealthStatus::Unhealthy
-    {
-        HealthStatus::Unhealthy
-    } else {
-        HealthStatus::Degraded
-    };
-
-    let status_str = match overall_status {
-        HealthStatus::Healthy => "healthy".to_string(),
-        HealthStatus::Degraded => "degraded".to_string(),
-        HealthStatus::Unhealthy => "unhealthy".to_string(),
-    };
-
-    Json(ApiResponse::success(status_str, "健康检查"))
+    build_simple_status_response(&state.db).await
 }
 
 async fn health_check_detailed(
     axum::extract::State(state): axum::extract::State<ApiState>,
-) -> Json<ApiResponse<ServiceHealth>> {
-    let dependencies = vec![
-        check_database_health(&state.db).await,
-        check_iam_health().await,
-    ];
-
-    let all_healthy = dependencies
-        .iter()
-        .all(|d| d.status == HealthStatus::Healthy);
-    let any_unhealthy = dependencies
-        .iter()
-        .any(|d| d.status == HealthStatus::Unhealthy);
-
-    let overall_status = if all_healthy {
-        HealthStatus::Healthy
-    } else if any_unhealthy {
-        HealthStatus::Unhealthy
-    } else {
-        HealthStatus::Degraded
-    };
-
-    let message = match overall_status {
-        HealthStatus::Healthy => "所有服务运行正常",
-        HealthStatus::Degraded => "部分服务存在问题",
-        HealthStatus::Unhealthy => "存在关键服务故障",
-    };
-
-    let health = ServiceHealth::healthy_with_message("topems-rd", message)
-        .with_uptime(&state.metrics.get_uptime())
-        .with_dependencies(dependencies);
-
-    Json(ApiResponse::success(health, "详细健康检查"))
+) -> Json<ApiResponse<topems_shared_core::health::ServiceHealth>> {
+    build_detailed_service_health(
+        &state.db,
+        "topems-rd",
+        Some(&state.metrics.get_uptime()),
+        vec![],
+    )
+    .await
 }
 
 #[derive(Serialize, Clone)]
@@ -238,24 +191,6 @@ async fn get_metrics(
     };
 
     Json(ApiResponse::success(metrics, "服务指标"))
-}
-
-async fn check_database_health(pool: &sqlx::PgPool) -> DependencyHealth {
-    match sqlx::query("SELECT 1").execute(pool).await {
-        Ok(_) => DependencyHealth {
-            name: "database".to_string(),
-            status: HealthStatus::Healthy,
-            message: "数据库连接正常".to_string(),
-        },
-        Err(e) => {
-            tracing::error!("数据库健康检查失败: {}", e);
-            DependencyHealth {
-                name: "database".to_string(),
-                status: HealthStatus::Unhealthy,
-                message: format!("数据库连接失败: {}", e),
-            }
-        }
-    }
 }
 
 async fn init_db(pool: &sqlx::PgPool) -> anyhow::Result<()> {

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE work_orders SET deleted_at = NOW()\n        WHERE id = $1 AND status IN ('pending', 'cancelled')\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0b25fb257c4b5a51ecf9d1835088a21cb3906cb779e3e8fb5581fc6e60f1c2e4"
+}

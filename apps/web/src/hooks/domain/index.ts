@@ -11,6 +11,7 @@ export type { UseCrudOptions, UseCrudResult } from '@topems/shared-hooks';
 
 // CrudMutations
 export { useCrudMutations } from '../useCrudMutations';
+export type { UseCrudMutationsOptions } from '../useCrudMutations';
 
 // CrudQueries
 export { useCrudQueries, useModuleQueries, useCrudOperations } from '../useCrudQueries';
@@ -20,12 +21,5 @@ export type {
   CrudOperations,
 } from '../useCrudQueries';
 
-// CrudForm
-
 // ListPageState
 export { useListPageState } from '../useListPageState';
-
-// ModuleData
-
-// ResourceCRUD
-export { useResourceCRUD } from '../useResourceCRUD';

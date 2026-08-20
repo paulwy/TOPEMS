@@ -11,8 +11,8 @@ pub mod generic;
 pub use base_client::BaseServiceClient;
 pub use error::ServiceClientResult;
 // ServiceClientError 已合并到 TopemsError，保留 re-export 以向后兼容
-pub use topems_shared_core::error::TopemsError as ServiceClientError;
 pub use generic::GenericServiceClient;
+pub use topems_shared_core::error::TopemsError as ServiceClientError;
 pub use trait_api::{ServiceApi, TypedServiceClient};
 
 // P0-2 Phase 2: 各服务类型从 api::*_api 导出

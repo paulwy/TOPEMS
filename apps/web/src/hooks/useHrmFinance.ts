@@ -8,26 +8,7 @@ import type { EmployeeFinance, PayrollRecord } from '@/types/hrm-finance';
 import { apiClient } from '@/api/client';
 
 /**
- * 获取员工财务数据
- */
-// D3 fallback: add queryClient inside component/hook
-export const useEmployeeFinance = (employeeId: string) => {
-  return useQuery({
-    queryKey: [...QUERY_KEYS.AD_HOC.EMPLOYEE_FINANCE_BASE, employeeId],
-    queryFn: async () => {
-      const response = await apiClient.hrm.get<{ data: EmployeeFinance }>(
-        `/employees/${employeeId}/finance`
-      );
-      return response.data?.data!;
-    },
-    enabled: !!employeeId,
-
-    staleTime: CACHE_DURATIONS.MEDIUM,
-  });
-};
-
-/**
- * 获取员工财务信息（新接口，兼容旧接口）
+ * 获取员工财务信息
  */
 export const useEmployeeFinanceInfo = (employeeId: string) => {
   return useQuery({

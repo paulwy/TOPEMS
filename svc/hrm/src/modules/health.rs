@@ -1,46 +1,15 @@
-use axum::{extract::State, http::StatusCode, Json, Router};
-use chrono::{DateTime, Utc};
-use serde::Serialize;
-use sqlx::postgres::PgPool;
+//! HRM 健康检查 —— 复用 shared-core 统一类型
+//! 原实现：自定义 HealthResponse、内联 check_database、手写状态判断（48行）
+//! 新实现：调用 shared_core::health::simple_health_check（30行，无类型重复）
+
+use axum::{extract::State, Router};
+use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 
 use crate::modules::ApiState;
 
-#[derive(Serialize)]
-pub struct HealthResponse {
-    status: String,
-    service: String,
-    uptime: u64,
-    timestamp: DateTime<Utc>,
-    database: String,
-}
-
-async fn check_database(pool: &PgPool) -> String {
-    match sqlx::query("SELECT 1").fetch_one(pool).await {
-        Ok(_) => "healthy".to_string(),
-        Err(e) => format!("unhealthy: {}", e),
-    }
-}
-
-pub async fn health_check(State(state): State<ApiState>) -> (StatusCode, Json<HealthResponse>) {
-    let uptime = state.start_time.elapsed().as_secs();
-    let db_status = check_database(&state.db).await;
-
-    let overall_status = if db_status == "healthy" {
-        "healthy".to_string()
-    } else {
-        "degraded".to_string()
-    };
-
-    (
-        StatusCode::OK,
-        Json(HealthResponse {
-            status: overall_status,
-            service: "topems-hrm".to_string(),
-            uptime,
-            timestamp: Utc::now(),
-            database: db_status,
-        }),
-    )
+pub async fn health_check(State(state): State<ApiState>) -> ServiceHealth {
+    let cfg = SimpleHealthConfig::new("topems-hrm").with_db(state.db);
+    simple_health_check(&cfg).await
 }
 
 pub fn create_routes() -> Router<ApiState> {

@@ -109,35 +109,26 @@ async fn health(State(state): State<AppState>) -> ServiceHealth {
 }
 
 async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    let db_status = match sqlx::query("SELECT 1").fetch_one(&state.db).await {
-        Ok(_) => "healthy",
-        Err(_) => "unhealthy",
-    };
-
-    let response = serde_json::json!({
-        "service": "topems-master-data",
-        "status": if db_status == "healthy" { "healthy" } else { "unhealthy" },
-        "timestamp": chrono::Utc::now().to_rfc3339(),
-        "modules": {
-            "quality_v51": "active",
-            "lineage_v52": "active",
-            "knowledge_v53": "active",
-            "versioning_v54": "active",
-            "commercial_v55": "active",
-            "disaster_v56": "active",
-            "semantic_v57": "active",
-            "governance_v58": "active",
-            "ai_governance_v59": "active",
-            "metadata_v60": "active"
-        },
-        "dependencies": [
-            {
-                "name": "postgresql",
-                "status": db_status
-            }
-        ],
-        "version": "1.0.0"
+    use topems_shared_bootstrap::build_detailed_health_response;
+    let modules = serde_json::json!({
+        "quality_v51": "active",
+        "lineage_v52": "active",
+        "knowledge_v53": "active",
+        "versioning_v54": "active",
+        "commercial_v55": "active",
+        "disaster_v56": "active",
+        "semantic_v57": "active",
+        "governance_v58": "active",
+        "ai_governance_v59": "active",
+        "metadata_v60": "active"
     });
-
-    Json(ApiResponse::success(response, "Detailed health check"))
+    let resp = build_detailed_health_response(
+        &state.db,
+        "topems-master-data",
+        modules,
+        "1.0.0",
+        serde_json::json!({}),
+    )
+    .await;
+    Json(ApiResponse::success(resp, "Detailed health check"))
 }

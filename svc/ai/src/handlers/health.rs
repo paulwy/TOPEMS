@@ -5,9 +5,11 @@ use axum::extract::State;
 use axum::Json;
 use reqwest::Client;
 use topems_shared::ApiResponse;
-use topems_shared_core::health::{
-    check_http_health, DependencyHealth, HealthStatus, ServiceHealth,
+use topems_shared_bootstrap::{
+    check_database_health, check_iam_health, health_status_str, overall_health_message,
+    rollup_health_status,
 };
+use topems_shared_core::health::{DependencyHealth, HealthStatus, ServiceHealth};
 
 #[utoipa::path(
     get,
@@ -33,20 +35,11 @@ pub async fn home() -> &'static str {
 )]
 pub async fn health() -> Json<ApiResponse<String>> {
     let iam_health = check_iam_health().await;
-
-    let overall_status = if iam_health.status == HealthStatus::Healthy {
-        HealthStatus::Healthy
-    } else {
-        HealthStatus::Degraded
-    };
-
-    let status_str = match overall_status {
-        HealthStatus::Healthy => "healthy".to_string(),
-        HealthStatus::Degraded => "degraded".to_string(),
-        HealthStatus::Unhealthy => "unhealthy".to_string(),
-    };
-
-    Json(ApiResponse::success(status_str, "健康检查"))
+    let overall_status = rollup_health_status(&[iam_health.status]);
+    Json(ApiResponse::success(
+        health_status_str(&overall_status).to_string(),
+        "健康检查",
+    ))
 }
 
 #[utoipa::path(
@@ -67,78 +60,14 @@ pub async fn health_check_detailed(
         check_ai_service_health().await,
     ];
 
-    let all_healthy = dependencies
-        .iter()
-        .all(|d| d.status == HealthStatus::Healthy);
-    let any_unhealthy = dependencies
-        .iter()
-        .any(|d| d.status == HealthStatus::Unhealthy);
-
-    let overall_status = if all_healthy {
-        HealthStatus::Healthy
-    } else if any_unhealthy {
-        HealthStatus::Unhealthy
-    } else {
-        HealthStatus::Degraded
-    };
-
-    let message = match overall_status {
-        HealthStatus::Healthy => "所有服务运行正常",
-        HealthStatus::Degraded => "部分服务存在问题",
-        HealthStatus::Unhealthy => "存在关键服务故障",
-    };
+    let statuses: Vec<HealthStatus> = dependencies.iter().map(|d| d.status.clone()).collect();
+    let overall_status = rollup_health_status(&statuses);
+    let message = overall_health_message(&overall_status);
 
     let health =
         ServiceHealth::healthy_with_message("topems-ai", message).with_dependencies(dependencies);
 
     Json(ApiResponse::success(health, "详细健康检查"))
-}
-
-async fn check_iam_health() -> DependencyHealth {
-    let iam_url =
-        std::env::var("IAM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
-    let health_url = format!("{}/health", iam_url);
-
-    match check_http_health(&health_url).await {
-        Ok(status) => {
-            let message = match status {
-                HealthStatus::Healthy => "IAM 服务正常",
-                HealthStatus::Degraded => "IAM 服务响应异常",
-                HealthStatus::Unhealthy => "IAM 服务不可用",
-            };
-            DependencyHealth {
-                name: "iam-service".to_string(),
-                status,
-                message: message.to_string(),
-            }
-        }
-        Err(e) => {
-            tracing::warn!("IAM 服务健康检查失败: {}", e);
-            DependencyHealth {
-                name: "iam-service".to_string(),
-                status: HealthStatus::Degraded,
-                message: format!("IAM 服务连接异常: {}", e),
-            }
-        }
-    }
-}
-
-async fn check_database_health(db: &sqlx::PgPool) -> DependencyHealth {
-    match sqlx::query("SELECT 1").execute(db).await {
-        Ok(_) => DependencyHealth {
-            name: "database".to_string(),
-            status: HealthStatus::Healthy,
-            message: "数据库连接正常".to_string(),
-        },
-        Err(e) => {
-            tracing::error!("数据库健康检查失败: {}", e);
-            DependencyHealth {
-                name: "database".to_string(),
-                status: HealthStatus::Unhealthy,
-                message: format!("数据库连接失败: {}", e),
-            }
-        }
-    }
 }
 
 async fn check_ai_service_health() -> DependencyHealth {

@@ -1,0 +1,95 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO material_issues (\n            issue_no, order_id, order_no, bom_id, status,\n            warehouse_id, operator_id, notes, created_at, updated_at\n        ) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8, $8)\n        RETURNING \n            id, issue_no, order_id, order_no, bom_id, status,\n            warehouse_id, operator_id, issue_time, notes,\n            created_at, updated_at\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "issue_no",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "order_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "order_no",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "bom_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
+        "name": "status",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 6,
+        "name": "warehouse_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 7,
+        "name": "operator_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 8,
+        "name": "issue_time",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 9,
+        "name": "notes",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 11,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Uuid",
+        "Varchar",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Timestamp"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "a71d0e2996aca12d19e2f68378f6b8fff40765ab6c0cb509b072a0ff57f589f0"
+}
