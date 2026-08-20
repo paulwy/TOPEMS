@@ -1,10 +1,11 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 ERP_PATHS.xxx，而非硬编码字符串
+
 export const ERP_PATHS = {
   root: '/erp',
   dashboard: '/erp/dashboard',
@@ -31,6 +32,473 @@ export const ERP_PATHS = {
   vehicleRequest: '/erp/vehicle-request',
   financialAnalysis: '/erp/financial-analysis',
 } as const;
+export interface DashboardPageProps {}
+
+export interface VoucherPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface CustomerManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface SupplierManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface InventoryManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface MaterialManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface PurchaseOrderPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface SalesOrderPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface FinancialReportPageProps {}
+
+export interface DictManagementPageProps {}
+
+export interface DatabaseManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface AuditLogPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface OfficeSuppliesPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface VehiclePageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface ReceivablePayablePageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface AssetManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface BudgetManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface BankAccountPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface AccountingManagementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface MeetingRoomPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface AnnouncementPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface VehicleRequestPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface FinancialAnalysisPageProps {}
+
+const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
+  path: ERP_PATHS.dashboard,
+  element: lazyWithRetry(() => import('@/pages/erp/DashboardPage'), 'DashboardPage'),
+  module: 'erp',
+  code: 'erp-dashboard',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  template: 'dashboard',
+  group: 'overview',
+  requiredPermissions: ['erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const voucherRoute: RouteConfigV2<VoucherPageProps> = {
+  path: ERP_PATHS.voucherManagement,
+  element: lazyWithRetry(() => import('@/pages/erp/VoucherPage'), 'VoucherPage'),
+  module: 'erp',
+  code: 'erp-general-ledger',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['erp:general_ledger:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const customerManagementRoute: RouteConfigV2<CustomerManagementPageProps> = {
+  path: ERP_PATHS.customerManagement,
+  element: lazyWithRetry(
+    () => import('@/pages/erp/CustomerManagementPage'),
+    'CustomerManagementPage'
+  ),
+  module: 'erp',
+  code: 'erp-customer-management',
+  title: i18n.t('shared.config.k4'),
+  titleKey: 'shared.config.k4',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['erp:customer:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const supplierManagementRoute: RouteConfigV2<SupplierManagementPageProps> = {
+  path: ERP_PATHS.supplierManagement,
+  element: lazyWithRetry(
+    () => import('@/pages/erp/SupplierManagementPage'),
+    'SupplierManagementPage'
+  ),
+  module: 'erp',
+  code: 'erp-supplier-management',
+  title: i18n.t('shared.config.k5'),
+  titleKey: 'shared.config.k5',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['erp:supplier:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const inventoryManagementRoute: RouteConfigV2<InventoryManagementPageProps> = {
+  path: ERP_PATHS.inventoryManagement,
+  element: lazyWithRetry(
+    () => import('@/pages/erp/InventoryManagementPage'),
+    'InventoryManagementPage'
+  ),
+  module: 'erp',
+  code: 'erp-inventory-management',
+  title: i18n.t('shared.config.k6'),
+  titleKey: 'shared.config.k6',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['erp:inventory:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const materialManagementRoute: RouteConfigV2<MaterialManagementPageProps> = {
+  path: ERP_PATHS.materialManagement,
+  element: lazyWithRetry(
+    () => import('@/pages/erp/MaterialManagementPage'),
+    'MaterialManagementPage'
+  ),
+  module: 'erp',
+  code: 'erp-material-management',
+  title: i18n.t('shared.config.k7'),
+  titleKey: 'shared.config.k7',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['erp:material:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const purchaseOrderRoute: RouteConfigV2<PurchaseOrderPageProps> = {
+  path: ERP_PATHS.purchaseOrder,
+  element: lazyWithRetry(() => import('@/pages/erp/PurchaseOrderPage'), 'PurchaseOrderPage'),
+  module: 'erp',
+  code: 'erp-purchase-order',
+  title: i18n.t('shared.config.k8'),
+  titleKey: 'shared.config.k8',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['erp:purchase_order:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const salesOrderRoute: RouteConfigV2<SalesOrderPageProps> = {
+  path: ERP_PATHS.salesOrder,
+  element: lazyWithRetry(() => import('@/pages/erp/SalesOrderPage'), 'SalesOrderPage'),
+  module: 'erp',
+  code: 'erp-sales-order',
+  title: i18n.t('shared.config.k9'),
+  titleKey: 'shared.config.k9',
+  template: 'list',
+  group: 'process',
+  requiredPermissions: ['erp:sales_order:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const financialReportRoute: RouteConfigV2<FinancialReportPageProps> = {
+  path: ERP_PATHS.financialReport,
+  element: lazyWithRetry(() => import('@/pages/erp/FinancialReportPage'), 'FinancialReportPage'),
+  module: 'erp',
+  code: 'erp-financial-statements',
+  title: i18n.t('shared.config.k10'),
+  titleKey: 'shared.config.k10',
+  template: 'stats',
+  group: 'analytics',
+  requiredPermissions: ['erp:financial_statement:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const dictManagementRoute: RouteConfigV2<DictManagementPageProps> = {
+  path: ERP_PATHS.dictManagement,
+  element: lazyWithRetry(() => import('@/pages/erp/DictManagementPage'), 'DictManagementPage'),
+  module: 'erp',
+  code: 'erp-dictionaries',
+  title: i18n.t('shared.config.k11'),
+  titleKey: 'shared.config.k11',
+  template: 'tree',
+  group: 'setting',
+  requiredPermissions: ['erp:dictionary:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const databaseManagementRoute: RouteConfigV2<DatabaseManagementPageProps> = {
+  path: ERP_PATHS.databaseManagement,
+  element: lazyWithRetry(
+    () => import('@/pages/erp/DatabaseManagementPage'),
+    'DatabaseManagementPage'
+  ),
+  module: 'erp',
+  code: 'erp-database-management',
+  title: i18n.t('shared.config.k12'),
+  titleKey: 'shared.config.k12',
+  template: 'list',
+  group: 'setting',
+  requiredPermissions: ['erp:database:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const auditLogRoute: RouteConfigV2<AuditLogPageProps> = {
+  path: ERP_PATHS.auditLog,
+  element: lazyWithRetry(() => import('@/pages/erp/AuditLogPage'), 'AuditLogPage'),
+  module: 'erp',
+  code: 'erp-audit-log',
+  title: i18n.t('shared.config.k13'),
+  titleKey: 'shared.config.k13',
+  template: 'list',
+  group: 'setting',
+  requiredPermissions: ['erp:audit:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const officeSuppliesRoute: RouteConfigV2<OfficeSuppliesPageProps> = {
+  path: ERP_PATHS.officeSupplies,
+  element: lazyWithRetry(() => import('@/pages/erp/OfficeSuppliesPage'), 'OfficeSuppliesPage'),
+  module: 'erp',
+  code: 'erp-office-supplies',
+  title: i18n.t('shared.config.k14'),
+  titleKey: 'shared.config.k14',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['erp:office_supply:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const vehicleRoute: RouteConfigV2<VehiclePageProps> = {
+  path: ERP_PATHS.vehicleManagement,
+  element: lazyWithRetry(() => import('@/pages/erp/VehiclePage'), 'VehiclePage'),
+  module: 'erp',
+  code: 'erp-vehicle-management',
+  title: i18n.t('shared.config.k15'),
+  titleKey: 'shared.config.k15',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['erp:vehicle:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const receivablePayableRoute: RouteConfigV2<ReceivablePayablePageProps> = {
+  path: ERP_PATHS.receivablePayable,
+  element: lazyWithRetry(
+    () => import('@/pages/erp/ReceivablePayablePage'),
+    'ReceivablePayablePage'
+  ),
+  module: 'erp',
+  code: 'erp-receivable-payable',
+  title: i18n.t('shared.config.k16'),
+  titleKey: 'shared.config.k16',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['erp:receivable_payable:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const assetManagementRoute: RouteConfigV2<AssetManagementPageProps> = {
+  path: ERP_PATHS.assetManagement,
+  element: lazyWithRetry(() => import('@/pages/erp/AssetManagementPage'), 'AssetManagementPage'),
+  module: 'erp',
+  code: 'erp-asset-management',
+  title: i18n.t('shared.config.k17'),
+  titleKey: 'shared.config.k17',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['erp:asset:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const budgetManagementRoute: RouteConfigV2<BudgetManagementPageProps> = {
+  path: ERP_PATHS.budgetManagement,
+  element: lazyWithRetry(() => import('@/pages/erp/BudgetManagementPage'), 'BudgetManagementPage'),
+  module: 'erp',
+  code: 'erp-budget-management',
+  title: i18n.t('shared.config.k18'),
+  titleKey: 'shared.config.k18',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['erp:budget:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const bankAccountRoute: RouteConfigV2<BankAccountPageProps> = {
+  path: ERP_PATHS.bankAccount,
+  element: lazyWithRetry(() => import('@/pages/erp/BankAccountPage'), 'BankAccountPage'),
+  module: 'erp',
+  code: 'erp-bank-account',
+  title: i18n.t('shared.config.k19'),
+  titleKey: 'shared.config.k19',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['erp:bank_account:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const accountingManagementRoute: RouteConfigV2<AccountingManagementPageProps> = {
+  path: ERP_PATHS.accountingManagement,
+  element: lazyWithRetry(
+    () => import('@/pages/erp/AccountingManagementPage'),
+    'AccountingManagementPage'
+  ),
+  module: 'erp',
+  code: 'erp-accounting-management',
+  title: i18n.t('shared.config.k20'),
+  titleKey: 'shared.config.k20',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['erp:accounting_subject:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const meetingRoomRoute: RouteConfigV2<MeetingRoomPageProps> = {
+  path: ERP_PATHS.meetingRoom,
+  element: lazyWithRetry(() => import('@/pages/erp/MeetingRoomPage'), 'MeetingRoomPage'),
+  module: 'erp',
+  code: 'erp-meeting-room',
+  title: i18n.t('shared.config.k21'),
+  titleKey: 'shared.config.k21',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['erp:meeting_room:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const announcementRoute: RouteConfigV2<AnnouncementPageProps> = {
+  path: ERP_PATHS.announcement,
+  element: lazyWithRetry(() => import('@/pages/erp/AnnouncementPage'), 'AnnouncementPage'),
+  module: 'erp',
+  code: 'erp-announcement',
+  title: i18n.t('shared.config.k22'),
+  titleKey: 'shared.config.k22',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['erp:announcement:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const vehicleRequestRoute: RouteConfigV2<VehicleRequestPageProps> = {
+  path: ERP_PATHS.vehicleRequest,
+  element: lazyWithRetry(() => import('@/pages/erp/VehicleRequestPage'), 'VehicleRequestPage'),
+  module: 'erp',
+  code: 'erp-vehicle-request',
+  title: i18n.t('shared.config.k23'),
+  titleKey: 'shared.config.k23',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['erp:vehicle_request:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
+
+const financialAnalysisRoute: RouteConfigV2<FinancialAnalysisPageProps> = {
+  path: ERP_PATHS.financialAnalysis,
+  element: lazyWithRetry(
+    () => import('@/pages/erp/FinancialAnalysisPage'),
+    'FinancialAnalysisPage'
+  ),
+  module: 'erp',
+  code: 'erp-financial-analysis',
+  title: i18n.t('shared.config.k24'),
+  titleKey: 'shared.config.k24',
+  template: 'stats',
+  group: 'analytics',
+  requiredPermissions: ['erp:financial_analysis:read', 'erp:dashboard:read'],
+  action: 'read',
+  tier: 'basic',
+};
 
 // ---- 路由配置（供路由系统使用） ----
 // P34-4: ERP 默认所有路由为 basic 层级；advanced 模块（consolidation/mdm_v49/...）
@@ -49,338 +517,29 @@ export const erpModuleConfig: RouteModuleConfig = {
   permission: 'erp:dashboard:read',
   tier: 'basic',
   routes: [
-    {
-      path: ERP_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/erp/DashboardPage'), 'DashboardPage'),
-      module: 'erp',
-      code: 'erp-dashboard',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      template: 'dashboard',
-      group: 'overview',
-      requiredPermissions: ['erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.voucherManagement,
-      element: lazyWithRetry(() => import('@/pages/erp/VoucherPage'), 'VoucherPage'),
-      module: 'erp',
-      code: 'erp-general-ledger',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['erp:general_ledger:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.customerManagement,
-      element: lazyWithRetry(
-        () => import('@/pages/erp/CustomerManagementPage'),
-        'CustomerManagementPage'
-      ),
-      module: 'erp',
-      code: 'erp-customer-management',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['erp:customer:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.supplierManagement,
-      element: lazyWithRetry(
-        () => import('@/pages/erp/SupplierManagementPage'),
-        'SupplierManagementPage'
-      ),
-      module: 'erp',
-      code: 'erp-supplier-management',
-      title: i18n.t('shared.config.k5'),
-      titleKey: 'shared.config.k5',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['erp:supplier:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.inventoryManagement,
-      element: lazyWithRetry(
-        () => import('@/pages/erp/InventoryManagementPage'),
-        'InventoryManagementPage'
-      ),
-      module: 'erp',
-      code: 'erp-inventory-management',
-      title: i18n.t('shared.config.k6'),
-      titleKey: 'shared.config.k6',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['erp:inventory:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.materialManagement,
-      element: lazyWithRetry(
-        () => import('@/pages/erp/MaterialManagementPage'),
-        'MaterialManagementPage'
-      ),
-      module: 'erp',
-      code: 'erp-material-management',
-      title: i18n.t('shared.config.k7'),
-      titleKey: 'shared.config.k7',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['erp:material:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.purchaseOrder,
-      element: lazyWithRetry(() => import('@/pages/erp/PurchaseOrderPage'), 'PurchaseOrderPage'),
-      module: 'erp',
-      code: 'erp-purchase-order',
-      title: i18n.t('shared.config.k8'),
-      titleKey: 'shared.config.k8',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['erp:purchase_order:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.salesOrder,
-      element: lazyWithRetry(() => import('@/pages/erp/SalesOrderPage'), 'SalesOrderPage'),
-      module: 'erp',
-      code: 'erp-sales-order',
-      title: i18n.t('shared.config.k9'),
-      titleKey: 'shared.config.k9',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['erp:sales_order:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.financialReport,
-      element: lazyWithRetry(
-        () => import('@/pages/erp/FinancialReportPage'),
-        'FinancialReportPage'
-      ),
-      module: 'erp',
-      code: 'erp-financial-statements',
-      title: i18n.t('shared.config.k10'),
-      titleKey: 'shared.config.k10',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['erp:financial_statement:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.dictManagement,
-      element: lazyWithRetry(() => import('@/pages/erp/DictManagementPage'), 'DictManagementPage'),
-      module: 'erp',
-      code: 'erp-dictionaries',
-      title: i18n.t('shared.config.k11'),
-      titleKey: 'shared.config.k11',
-      template: 'tree',
-      group: 'setting',
-      requiredPermissions: ['erp:dictionary:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.databaseManagement,
-      element: lazyWithRetry(
-        () => import('@/pages/erp/DatabaseManagementPage'),
-        'DatabaseManagementPage'
-      ),
-      module: 'erp',
-      code: 'erp-database-management',
-      title: i18n.t('shared.config.k12'),
-      titleKey: 'shared.config.k12',
-      template: 'list',
-      group: 'setting',
-      requiredPermissions: ['erp:database:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.auditLog,
-      element: lazyWithRetry(() => import('@/pages/erp/AuditLogPage'), 'AuditLogPage'),
-      module: 'erp',
-      code: 'erp-audit-log',
-      title: i18n.t('shared.config.k13'),
-      titleKey: 'shared.config.k13',
-      template: 'list',
-      group: 'setting',
-      requiredPermissions: ['erp:audit:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.officeSupplies,
-      element: lazyWithRetry(() => import('@/pages/erp/OfficeSuppliesPage'), 'OfficeSuppliesPage'),
-      module: 'erp',
-      code: 'erp-office-supplies',
-      title: i18n.t('shared.config.k14'),
-      titleKey: 'shared.config.k14',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['erp:office_supply:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.vehicleManagement,
-      element: lazyWithRetry(() => import('@/pages/erp/VehiclePage'), 'VehiclePage'),
-      module: 'erp',
-      code: 'erp-vehicle-management',
-      title: i18n.t('shared.config.k15'),
-      titleKey: 'shared.config.k15',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['erp:vehicle:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.receivablePayable,
-      element: lazyWithRetry(
-        () => import('@/pages/erp/ReceivablePayablePage'),
-        'ReceivablePayablePage'
-      ),
-      module: 'erp',
-      code: 'erp-receivable-payable',
-      title: i18n.t('shared.config.k16'),
-      titleKey: 'shared.config.k16',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['erp:receivable_payable:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.assetManagement,
-      element: lazyWithRetry(
-        () => import('@/pages/erp/AssetManagementPage'),
-        'AssetManagementPage'
-      ),
-      module: 'erp',
-      code: 'erp-asset-management',
-      title: i18n.t('shared.config.k17'),
-      titleKey: 'shared.config.k17',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['erp:asset:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.budgetManagement,
-      element: lazyWithRetry(
-        () => import('@/pages/erp/BudgetManagementPage'),
-        'BudgetManagementPage'
-      ),
-      module: 'erp',
-      code: 'erp-budget-management',
-      title: i18n.t('shared.config.k18'),
-      titleKey: 'shared.config.k18',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['erp:budget:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.bankAccount,
-      element: lazyWithRetry(() => import('@/pages/erp/BankAccountPage'), 'BankAccountPage'),
-      module: 'erp',
-      code: 'erp-bank-account',
-      title: i18n.t('shared.config.k19'),
-      titleKey: 'shared.config.k19',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['erp:bank_account:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.accountingManagement,
-      element: lazyWithRetry(
-        () => import('@/pages/erp/AccountingManagementPage'),
-        'AccountingManagementPage'
-      ),
-      module: 'erp',
-      code: 'erp-accounting-management',
-      title: i18n.t('shared.config.k20'),
-      titleKey: 'shared.config.k20',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['erp:accounting_subject:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.meetingRoom,
-      element: lazyWithRetry(() => import('@/pages/erp/MeetingRoomPage'), 'MeetingRoomPage'),
-      module: 'erp',
-      code: 'erp-meeting-room',
-      title: i18n.t('shared.config.k21'),
-      titleKey: 'shared.config.k21',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['erp:meeting_room:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.announcement,
-      element: lazyWithRetry(() => import('@/pages/erp/AnnouncementPage'), 'AnnouncementPage'),
-      module: 'erp',
-      code: 'erp-announcement',
-      title: i18n.t('shared.config.k22'),
-      titleKey: 'shared.config.k22',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['erp:announcement:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.vehicleRequest,
-      element: lazyWithRetry(() => import('@/pages/erp/VehicleRequestPage'), 'VehicleRequestPage'),
-      module: 'erp',
-      code: 'erp-vehicle-request',
-      title: i18n.t('shared.config.k23'),
-      titleKey: 'shared.config.k23',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['erp:vehicle_request:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
-    {
-      path: ERP_PATHS.financialAnalysis,
-      element: lazyWithRetry(
-        () => import('@/pages/erp/FinancialAnalysisPage'),
-        'FinancialAnalysisPage'
-      ),
-      module: 'erp',
-      code: 'erp-financial-analysis',
-      title: i18n.t('shared.config.k24'),
-      titleKey: 'shared.config.k24',
-      template: 'stats',
-      group: 'analytics',
-      requiredPermissions: ['erp:financial_analysis:read', 'erp:dashboard:read'],
-      action: 'read',
-      tier: 'basic',
-    },
+    dashboardRoute,
+    voucherRoute,
+    customerManagementRoute,
+    supplierManagementRoute,
+    inventoryManagementRoute,
+    materialManagementRoute,
+    purchaseOrderRoute,
+    salesOrderRoute,
+    financialReportRoute,
+    dictManagementRoute,
+    databaseManagementRoute,
+    auditLogRoute,
+    officeSuppliesRoute,
+    vehicleRoute,
+    receivablePayableRoute,
+    assetManagementRoute,
+    budgetManagementRoute,
+    bankAccountRoute,
+    accountingManagementRoute,
+    meetingRoomRoute,
+    announcementRoute,
+    vehicleRequestRoute,
+    financialAnalysisRoute,
   ],
 };
 

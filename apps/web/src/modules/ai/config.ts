@@ -1,10 +1,11 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 AI_PATHS.xxx，而非硬编码字符串
+
 export const AI_PATHS = {
   root: '/ai',
   dashboard: '/ai/dashboard',
@@ -17,6 +18,166 @@ export const AI_PATHS = {
   assistant: '/ai/assistant',
   difyChat: '/ai/dify-chat',
 } as const;
+export interface AiDashboardPageProps {}
+
+export interface AiChatPageProps {
+  mode?: 'create' | 'edit' | 'view';
+  initialValues?: Record<string, unknown>;
+}
+
+export interface AiCodeAssistantPageProps {
+  mode?: 'create' | 'edit' | 'view';
+  initialValues?: Record<string, unknown>;
+}
+
+export interface AiDocumentAnalysisPageProps {
+  mode?: 'create' | 'edit' | 'view';
+  initialValues?: Record<string, unknown>;
+}
+
+export interface AiKnowledgeBasePageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface AiPromptLibraryPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface AiModelSettingsPageProps {}
+
+export interface AiAssistantPageProps {
+  mode?: 'create' | 'edit' | 'view';
+  initialValues?: Record<string, unknown>;
+}
+
+export interface DifyChatPageProps {
+  mode?: 'create' | 'edit' | 'view';
+  initialValues?: Record<string, unknown>;
+}
+
+const aiDashboardRoute: RouteConfigV2<AiDashboardPageProps> = {
+  path: AI_PATHS.dashboard,
+  element: lazyWithRetry(() => import('@/pages/ai/AiDashboardPage'), 'AiDashboardPage'),
+  module: 'ai',
+  code: 'ai-dashboard',
+  title: i18n.t('shared.config.ai_1'),
+  titleKey: 'shared.config.ai_1',
+  template: 'dashboard',
+  group: 'overview',
+  requiredPermissions: ['ai:dashboard:read'],
+  action: 'read',
+};
+
+const aiChatRoute: RouteConfigV2<AiChatPageProps> = {
+  path: AI_PATHS.chat,
+  element: lazyWithRetry(() => import('@/pages/ai/AiChatPage'), 'AiChatPage'),
+  module: 'ai',
+  code: 'ai-chat',
+  title: i18n.t('shared.config.k1'),
+  titleKey: 'shared.config.k1',
+  template: 'form',
+  group: 'process',
+  requiredPermissions: ['ai:chat:read', 'ai:dashboard:read'],
+  action: 'read',
+};
+
+const aiCodeAssistantRoute: RouteConfigV2<AiCodeAssistantPageProps> = {
+  path: AI_PATHS.code,
+  element: lazyWithRetry(() => import('@/pages/ai/AiCodeAssistantPage'), 'AiCodeAssistantPage'),
+  module: 'ai',
+  code: 'ai-code',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  template: 'form',
+  group: 'process',
+  requiredPermissions: ['ai:code:read', 'ai:dashboard:read'],
+  action: 'read',
+};
+
+const aiDocumentAnalysisRoute: RouteConfigV2<AiDocumentAnalysisPageProps> = {
+  path: AI_PATHS.document,
+  element: lazyWithRetry(
+    () => import('@/pages/ai/AiDocumentAnalysisPage'),
+    'AiDocumentAnalysisPage'
+  ),
+  module: 'ai',
+  code: 'ai-document',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  template: 'form',
+  group: 'business',
+  requiredPermissions: ['ai:document:read', 'ai:dashboard:read'],
+  action: 'read',
+};
+
+const aiKnowledgeBaseRoute: RouteConfigV2<AiKnowledgeBasePageProps> = {
+  path: AI_PATHS.knowledge,
+  element: lazyWithRetry(() => import('@/pages/ai/AiKnowledgeBasePage'), 'AiKnowledgeBasePage'),
+  module: 'ai',
+  code: 'ai-knowledge',
+  title: i18n.t('shared.config.k4'),
+  titleKey: 'shared.config.k4',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['ai:knowledge:read', 'ai:dashboard:read'],
+  action: 'read',
+};
+
+const aiPromptLibraryRoute: RouteConfigV2<AiPromptLibraryPageProps> = {
+  path: AI_PATHS.prompts,
+  element: lazyWithRetry(() => import('@/pages/ai/AiPromptLibraryPage'), 'AiPromptLibraryPage'),
+  module: 'ai',
+  code: 'ai-prompts',
+  title: i18n.t('shared.config.k5'),
+  titleKey: 'shared.config.k5',
+  template: 'list',
+  group: 'setting',
+  requiredPermissions: ['ai:prompt:read', 'ai:dashboard:read'],
+  action: 'read',
+};
+
+const aiModelSettingsRoute: RouteConfigV2<AiModelSettingsPageProps> = {
+  path: AI_PATHS.settings,
+  element: lazyWithRetry(() => import('@/pages/ai/AiModelSettingsPage'), 'AiModelSettingsPage'),
+  module: 'ai',
+  code: 'ai-settings',
+  title: i18n.t('shared.config.k6'),
+  titleKey: 'shared.config.k6',
+  template: 'settings',
+  group: 'setting',
+  requiredPermissions: ['ai:dashboard:admin', 'ai:dashboard:write'],
+  action: 'admin',
+};
+
+const aiAssistantRoute: RouteConfigV2<AiAssistantPageProps> = {
+  path: AI_PATHS.assistant,
+  element: lazyWithRetry(() => import('@/pages/ai/AiAssistantPage'), 'AiAssistantPage'),
+  module: 'ai',
+  code: 'ai-assistant',
+  title: i18n.t('shared.config.ai_2'),
+  titleKey: 'shared.config.ai_2',
+  template: 'form',
+  group: 'process',
+  requiredPermissions: ['ai:dashboard:read'],
+  action: 'read',
+};
+
+const difyChatRoute: RouteConfigV2<DifyChatPageProps> = {
+  path: AI_PATHS.difyChat,
+  element: lazyWithRetry(() => import('@/pages/ai/DifyChatPage'), 'DifyChatPage'),
+  module: 'ai',
+  code: 'ai-dify-chat',
+  title: i18n.t('shared.config.ai_dify_chat'),
+  titleKey: 'shared.config.ai_dify_chat',
+  template: 'form',
+  group: 'process',
+  requiredPermissions: ['ai:chat:read', 'ai:dashboard:read'],
+  action: 'read',
+};
 
 // ---- 路由配置（供路由系统使用） ----
 export const aiModuleConfig: RouteModuleConfig = {
@@ -32,117 +193,15 @@ export const aiModuleConfig: RouteModuleConfig = {
   description: i18n.t('shared.config.ai_0'),
   permission: 'ai:dashboard:read',
   routes: [
-    {
-      path: AI_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/ai/AiDashboardPage'), 'AiDashboardPage'),
-      module: 'ai',
-      code: 'ai-dashboard',
-      title: i18n.t('shared.config.ai_1'),
-      titleKey: 'shared.config.ai_1',
-      template: 'dashboard',
-      group: 'overview',
-      requiredPermissions: ['ai:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: AI_PATHS.chat,
-      element: lazyWithRetry(() => import('@/pages/ai/AiChatPage'), 'AiChatPage'),
-      module: 'ai',
-      code: 'ai-chat',
-      title: i18n.t('shared.config.k1'),
-      titleKey: 'shared.config.k1',
-      template: 'form',
-      group: 'process',
-      requiredPermissions: ['ai:chat:read', 'ai:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: AI_PATHS.code,
-      element: lazyWithRetry(() => import('@/pages/ai/AiCodeAssistantPage'), 'AiCodeAssistantPage'),
-      module: 'ai',
-      code: 'ai-code',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      template: 'form',
-      group: 'process',
-      requiredPermissions: ['ai:code:read', 'ai:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: AI_PATHS.document,
-      element: lazyWithRetry(
-        () => import('@/pages/ai/AiDocumentAnalysisPage'),
-        'AiDocumentAnalysisPage'
-      ),
-      module: 'ai',
-      code: 'ai-document',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      template: 'form',
-      group: 'business',
-      requiredPermissions: ['ai:document:read', 'ai:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: AI_PATHS.knowledge,
-      element: lazyWithRetry(() => import('@/pages/ai/AiKnowledgeBasePage'), 'AiKnowledgeBasePage'),
-      module: 'ai',
-      code: 'ai-knowledge',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['ai:knowledge:read', 'ai:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: AI_PATHS.prompts,
-      element: lazyWithRetry(() => import('@/pages/ai/AiPromptLibraryPage'), 'AiPromptLibraryPage'),
-      module: 'ai',
-      code: 'ai-prompts',
-      title: i18n.t('shared.config.k5'),
-      titleKey: 'shared.config.k5',
-      template: 'list',
-      group: 'setting',
-      requiredPermissions: ['ai:prompt:read', 'ai:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: AI_PATHS.settings,
-      element: lazyWithRetry(() => import('@/pages/ai/AiModelSettingsPage'), 'AiModelSettingsPage'),
-      module: 'ai',
-      code: 'ai-settings',
-      title: i18n.t('shared.config.k6'),
-      titleKey: 'shared.config.k6',
-      template: 'settings',
-      group: 'setting',
-      requiredPermissions: ['ai:dashboard:admin', 'ai:dashboard:write'],
-      action: 'admin',
-    },
-    {
-      path: AI_PATHS.assistant,
-      element: lazyWithRetry(() => import('@/pages/ai/AiAssistantPage'), 'AiAssistantPage'),
-      module: 'ai',
-      code: 'ai-assistant',
-      title: i18n.t('shared.config.ai_2'),
-      titleKey: 'shared.config.ai_2',
-      template: 'form',
-      group: 'process',
-      requiredPermissions: ['ai:dashboard:read'],
-      action: 'read',
-    },
-    {
-      path: AI_PATHS.difyChat,
-      element: lazyWithRetry(() => import('@/pages/ai/DifyChatPage'), 'DifyChatPage'),
-      module: 'ai',
-      code: 'ai-dify-chat',
-      title: i18n.t('shared.config.ai_dify_chat'),
-      titleKey: 'shared.config.ai_dify_chat',
-      template: 'form',
-      group: 'process',
-      requiredPermissions: ['ai:chat:read', 'ai:dashboard:read'],
-      action: 'read',
-    },
+    aiDashboardRoute,
+    aiChatRoute,
+    aiCodeAssistantRoute,
+    aiDocumentAnalysisRoute,
+    aiKnowledgeBaseRoute,
+    aiPromptLibraryRoute,
+    aiModelSettingsRoute,
+    aiAssistantRoute,
+    difyChatRoute,
   ],
 };
 

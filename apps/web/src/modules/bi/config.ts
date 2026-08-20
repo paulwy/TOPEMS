@@ -1,10 +1,11 @@
 import { lazyWithRetry } from '@/routes/utils';
-import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 BI_PATHS.xxx，而非硬编码字符串
+
 export const BI_PATHS = {
   root: '/bi',
   dashboard: '/bi/dashboard',
@@ -22,6 +23,222 @@ export const BI_PATHS = {
   dataAnalysis: '/bi/data-analysis',
   gis: '/bi/gis',
 } as const;
+export interface BIDashboardPageProps {}
+
+export interface BIAnalyticsPageProps {}
+
+export interface BIComparisonPageProps {}
+
+export interface BIDataSourcePageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface DatasetPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface BIReportPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface BIVisualizationPageProps {}
+
+export interface ReportBuilderPageProps {
+  mode?: 'create' | 'edit' | 'view';
+  initialValues?: Record<string, unknown>;
+}
+
+export interface BiPermissionPageProps {}
+
+export interface BiIndexPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
+
+export interface BIModuleDetailPageProps {
+  id?: string;
+  entityType?: string;
+}
+
+export interface DataAnalysisPageProps {}
+
+export interface GisPageProps {}
+
+const bIDashboardRoute: RouteConfigV2<BIDashboardPageProps> = {
+  path: BI_PATHS.dashboard,
+  element: lazyWithRetry(() => import('@/pages/bi/BIDashboardPage'), 'BIDashboardPage'),
+  module: 'bi',
+  title: i18n.t('shared.config.bi_0'),
+  titleKey: 'shared.config.bi_0',
+  code: 'bi-dashboard',
+  requiredPermissions: ['bi:dashboard:read'],
+  action: 'read',
+  template: 'dashboard',
+  group: 'overview',
+};
+
+const bIAnalyticsRoute: RouteConfigV2<BIAnalyticsPageProps> = {
+  path: BI_PATHS.analytics,
+  element: lazyWithRetry(() => import('@/pages/bi/BIAnalyticsPage'), 'BIAnalyticsPage'),
+  module: 'bi',
+  title: i18n.t('shared.config.k2'),
+  titleKey: 'shared.config.k2',
+  code: 'bi-analytics',
+  requiredPermissions: ['bi:analytics:read', 'bi:dashboard:read'],
+  action: 'read',
+  template: 'stats',
+  group: 'analytics',
+};
+
+const bIComparisonRoute: RouteConfigV2<BIComparisonPageProps> = {
+  path: BI_PATHS.comparison,
+  element: lazyWithRetry(() => import('@/pages/bi/BIComparisonPage'), 'BIComparisonPage'),
+  module: 'bi',
+  title: i18n.t('shared.config.k3'),
+  titleKey: 'shared.config.k3',
+  code: 'bi-comparison',
+  requiredPermissions: ['bi:comparison:read', 'bi:dashboard:read'],
+  action: 'read',
+  template: 'stats',
+  group: 'analytics',
+};
+
+const bIDataSourceRoute: RouteConfigV2<BIDataSourcePageProps> = {
+  path: BI_PATHS.dataSource,
+  element: lazyWithRetry(() => import('@/pages/bi/BIDataSourcePage'), 'BIDataSourcePage'),
+  module: 'bi',
+  title: i18n.t('shared.config.k4'),
+  titleKey: 'shared.config.k4',
+  code: 'bi-data-source',
+  requiredPermissions: ['bi:data_source:read', 'bi:dashboard:read'],
+  action: 'read',
+  template: 'list',
+  group: 'setting',
+};
+
+const datasetRoute: RouteConfigV2<DatasetPageProps> = {
+  path: BI_PATHS.dataset,
+  element: lazyWithRetry(() => import('@/pages/bi/DatasetPage'), 'DatasetPage'),
+  module: 'bi',
+  title: i18n.t('shared.config.k5'),
+  titleKey: 'shared.config.k5',
+  code: 'bi-dataset',
+  requiredPermissions: ['bi:dataset:read', 'bi:dashboard:read'],
+  action: 'read',
+  template: 'list',
+  group: 'setting',
+};
+
+const bIReportRoute: RouteConfigV2<BIReportPageProps> = {
+  path: BI_PATHS.report,
+  element: lazyWithRetry(() => import('@/pages/bi/BIReportPage'), 'BIReportPage'),
+  module: 'bi',
+  title: i18n.t('shared.config.k6'),
+  titleKey: 'shared.config.k6',
+  code: 'bi-report',
+  requiredPermissions: ['bi:report:read', 'bi:dashboard:read'],
+  action: 'read',
+  template: 'list',
+  group: 'analytics',
+};
+
+const bIVisualizationRoute: RouteConfigV2<BIVisualizationPageProps> = {
+  path: BI_PATHS.visualization,
+  element: lazyWithRetry(() => import('@/pages/bi/BIVisualizationPage'), 'BIVisualizationPage'),
+  module: 'bi',
+  title: i18n.t('shared.config.k7'),
+  titleKey: 'shared.config.k7',
+  code: 'bi-visualization',
+  requiredPermissions: ['bi:visualization:read', 'bi:dashboard:read'],
+  action: 'read',
+  template: 'stats',
+  group: 'analytics',
+};
+
+const reportBuilderRoute: RouteConfigV2<ReportBuilderPageProps> = {
+  path: BI_PATHS.reportBuilder,
+  element: lazyWithRetry(() => import('@/pages/bi/ReportBuilderPage'), 'ReportBuilderPage'),
+  module: 'bi',
+  title: i18n.t('shared.config.k8'),
+  titleKey: 'shared.config.k8',
+  code: 'bi-report-builder',
+  requiredPermissions: ['bi:report:write', 'bi:dashboard:write'],
+  action: 'write',
+  template: 'form',
+  group: 'analytics',
+};
+
+const biPermissionRoute: RouteConfigV2<BiPermissionPageProps> = {
+  path: BI_PATHS.permission,
+  element: lazyWithRetry(() => import('@/pages/bi/BiPermissionPage'), 'BiPermissionPage'),
+  module: 'bi',
+  title: i18n.t('shared.config.k9'),
+  titleKey: 'shared.config.k9',
+  code: 'bi-permission',
+  requiredPermissions: ['bi:dashboard:admin'],
+  action: 'admin',
+  template: 'settings',
+  group: 'setting',
+};
+
+const biIndexRoute: RouteConfigV2<BiIndexPageProps> = {
+  path: BI_PATHS.index,
+  element: lazyWithRetry(() => import('@/pages/bi/BiIndexPage'), 'BiIndexPage'),
+  module: 'bi',
+  title: i18n.t('shared.config.k10'),
+  titleKey: 'shared.config.k10',
+  code: 'bi-index',
+  requiredPermissions: ['bi:index:read', 'bi:dashboard:read'],
+  action: 'read',
+  template: 'list',
+  group: 'setting',
+};
+
+const bIModuleDetailRoute: RouteConfigV2<BIModuleDetailPageProps> = {
+  path: BI_PATHS.moduleDetail,
+  element: lazyWithRetry(() => import('@/pages/bi/BIModuleDetailPage'), 'BIModuleDetailPage'),
+  module: 'bi',
+  title: i18n.t('shared.config.k11'),
+  titleKey: 'shared.config.k11',
+  code: 'bi-module-detail',
+  requiredPermissions: ['bi:dashboard:read'],
+  action: 'read',
+  template: 'detail',
+  group: 'analytics',
+};
+
+const dataAnalysisRoute: RouteConfigV2<DataAnalysisPageProps> = {
+  path: BI_PATHS.dataAnalysis,
+  element: lazyWithRetry(() => import('@/pages/bi/DataAnalysisPage'), 'DataAnalysisPage'),
+  module: 'bi',
+  title: i18n.t('shared.config.k12'),
+  titleKey: 'shared.config.k12',
+  code: 'bi-data-analysis',
+  requiredPermissions: ['bi:analytics:read', 'bi:dashboard:read'],
+  action: 'read',
+  template: 'stats',
+  group: 'analytics',
+};
+
+const gisRoute: RouteConfigV2<GisPageProps> = {
+  path: BI_PATHS.gis,
+  element: lazyWithRetry(() => import('@/pages/bi/GisPage'), 'GisPage'),
+  module: 'bi',
+  title: i18n.t('shared.config.gis_1'),
+  titleKey: 'shared.config.gis_1',
+  code: 'bi-gis',
+  requiredPermissions: ['bi:gis:read', 'bi:dashboard:read'],
+  action: 'read',
+  template: 'stats',
+  group: 'analytics',
+};
 
 // ---- 路由配置（供路由系统使用） ----
 export const biModuleConfig: RouteModuleConfig = {
@@ -38,162 +255,19 @@ export const biModuleConfig: RouteModuleConfig = {
   description: i18n.t('shared.config.k1'),
   permission: 'bi:dashboard:read',
   routes: [
-    {
-      path: BI_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/bi/BIDashboardPage'), 'BIDashboardPage'),
-      module: 'bi',
-      title: i18n.t('shared.config.bi_0'),
-      titleKey: 'shared.config.bi_0',
-      code: 'bi-dashboard',
-      requiredPermissions: ['bi:dashboard:read'],
-      action: 'read',
-      template: 'dashboard',
-      group: 'overview',
-    },
-    {
-      path: BI_PATHS.analytics,
-      element: lazyWithRetry(() => import('@/pages/bi/BIAnalyticsPage'), 'BIAnalyticsPage'),
-      module: 'bi',
-      title: i18n.t('shared.config.k2'),
-      titleKey: 'shared.config.k2',
-      code: 'bi-analytics',
-      requiredPermissions: ['bi:analytics:read', 'bi:dashboard:read'],
-      action: 'read',
-      template: 'stats',
-      group: 'analytics',
-    },
-    {
-      path: BI_PATHS.comparison,
-      element: lazyWithRetry(() => import('@/pages/bi/BIComparisonPage'), 'BIComparisonPage'),
-      module: 'bi',
-      title: i18n.t('shared.config.k3'),
-      titleKey: 'shared.config.k3',
-      code: 'bi-comparison',
-      requiredPermissions: ['bi:comparison:read', 'bi:dashboard:read'],
-      action: 'read',
-      template: 'stats',
-      group: 'analytics',
-    },
-    {
-      path: BI_PATHS.dataSource,
-      element: lazyWithRetry(() => import('@/pages/bi/BIDataSourcePage'), 'BIDataSourcePage'),
-      module: 'bi',
-      title: i18n.t('shared.config.k4'),
-      titleKey: 'shared.config.k4',
-      code: 'bi-data-source',
-      requiredPermissions: ['bi:data_source:read', 'bi:dashboard:read'],
-      action: 'read',
-      template: 'list',
-      group: 'setting',
-    },
-    {
-      path: BI_PATHS.dataset,
-      element: lazyWithRetry(() => import('@/pages/bi/DatasetPage'), 'DatasetPage'),
-      module: 'bi',
-      title: i18n.t('shared.config.k5'),
-      titleKey: 'shared.config.k5',
-      code: 'bi-dataset',
-      requiredPermissions: ['bi:dataset:read', 'bi:dashboard:read'],
-      action: 'read',
-      template: 'list',
-      group: 'setting',
-    },
-    {
-      path: BI_PATHS.report,
-      element: lazyWithRetry(() => import('@/pages/bi/BIReportPage'), 'BIReportPage'),
-      module: 'bi',
-      title: i18n.t('shared.config.k6'),
-      titleKey: 'shared.config.k6',
-      code: 'bi-report',
-      requiredPermissions: ['bi:report:read', 'bi:dashboard:read'],
-      action: 'read',
-      template: 'list',
-      group: 'analytics',
-    },
-    {
-      path: BI_PATHS.visualization,
-      element: lazyWithRetry(() => import('@/pages/bi/BIVisualizationPage'), 'BIVisualizationPage'),
-      module: 'bi',
-      title: i18n.t('shared.config.k7'),
-      titleKey: 'shared.config.k7',
-      code: 'bi-visualization',
-      requiredPermissions: ['bi:visualization:read', 'bi:dashboard:read'],
-      action: 'read',
-      template: 'stats',
-      group: 'analytics',
-    },
-    {
-      path: BI_PATHS.reportBuilder,
-      element: lazyWithRetry(() => import('@/pages/bi/ReportBuilderPage'), 'ReportBuilderPage'),
-      module: 'bi',
-      title: i18n.t('shared.config.k8'),
-      titleKey: 'shared.config.k8',
-      code: 'bi-report-builder',
-      requiredPermissions: ['bi:report:write', 'bi:dashboard:write'],
-      action: 'write',
-      template: 'form',
-      group: 'analytics',
-    },
-    {
-      path: BI_PATHS.permission,
-      element: lazyWithRetry(() => import('@/pages/bi/BiPermissionPage'), 'BiPermissionPage'),
-      module: 'bi',
-      title: i18n.t('shared.config.k9'),
-      titleKey: 'shared.config.k9',
-      code: 'bi-permission',
-      requiredPermissions: ['bi:dashboard:admin'],
-      action: 'admin',
-      template: 'settings',
-      group: 'setting',
-    },
-    {
-      path: BI_PATHS.index,
-      element: lazyWithRetry(() => import('@/pages/bi/BiIndexPage'), 'BiIndexPage'),
-      module: 'bi',
-      title: i18n.t('shared.config.k10'),
-      titleKey: 'shared.config.k10',
-      code: 'bi-index',
-      requiredPermissions: ['bi:index:read', 'bi:dashboard:read'],
-      action: 'read',
-      template: 'list',
-      group: 'setting',
-    },
-    {
-      path: BI_PATHS.moduleDetail,
-      element: lazyWithRetry(() => import('@/pages/bi/BIModuleDetailPage'), 'BIModuleDetailPage'),
-      module: 'bi',
-      title: i18n.t('shared.config.k11'),
-      titleKey: 'shared.config.k11',
-      code: 'bi-module-detail',
-      requiredPermissions: ['bi:dashboard:read'],
-      action: 'read',
-      template: 'detail',
-      group: 'analytics',
-    },
-    {
-      path: BI_PATHS.dataAnalysis,
-      element: lazyWithRetry(() => import('@/pages/bi/DataAnalysisPage'), 'DataAnalysisPage'),
-      module: 'bi',
-      title: i18n.t('shared.config.k12'),
-      titleKey: 'shared.config.k12',
-      code: 'bi-data-analysis',
-      requiredPermissions: ['bi:analytics:read', 'bi:dashboard:read'],
-      action: 'read',
-      template: 'stats',
-      group: 'analytics',
-    },
-    {
-      path: BI_PATHS.gis,
-      element: lazyWithRetry(() => import('@/pages/bi/GisPage'), 'GisPage'),
-      module: 'bi',
-      title: i18n.t('shared.config.gis_1'),
-      titleKey: 'shared.config.gis_1',
-      code: 'bi-gis',
-      requiredPermissions: ['bi:gis:read', 'bi:dashboard:read'],
-      action: 'read',
-      template: 'stats',
-      group: 'analytics',
-    },
+    bIDashboardRoute,
+    bIAnalyticsRoute,
+    bIComparisonRoute,
+    bIDataSourceRoute,
+    datasetRoute,
+    bIReportRoute,
+    bIVisualizationRoute,
+    reportBuilderRoute,
+    biPermissionRoute,
+    biIndexRoute,
+    bIModuleDetailRoute,
+    dataAnalysisRoute,
+    gisRoute,
   ],
 };
 
