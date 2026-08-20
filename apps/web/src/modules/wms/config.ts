@@ -3,39 +3,39 @@ import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
-export interface WmsDashboardPageProps {}
-export interface WarehouseManagementPageProps {
+interface WmsDashboardPageProps {}
+interface WarehouseManagementPageProps {
   warehouseId?: string;
 }
-export interface LocationPageProps {
+interface LocationPageProps {
   warehouseId?: string;
 }
-export interface InboundPageProps {
+interface InboundPageProps {
   status?: string;
 }
-export interface StockInFormProps {
+interface StockInFormProps {
   orderId?: string;
   warehouseId?: string;
   items?: Array<Record<string, unknown>>;
 }
-export interface WmsInboundDetailPageProps {
+interface WmsInboundDetailPageProps {
   id?: string;
 }
-export interface OutboundPageProps {
+interface OutboundPageProps {
   status?: string;
 }
-export interface WmsOutboundDetailPageProps {
+interface WmsOutboundDetailPageProps {
   id?: string;
 }
-export interface InventoryPageProps {
+interface InventoryPageProps {
   warehouseId?: string;
   sku?: string;
 }
 export interface SupplierManagementPageProps {}
-export interface SupplierDetailPageProps {
+interface SupplierDetailPageProps {
   id?: string;
 }
-export interface WmsStockTakeDetailPageProps {
+interface WmsStockTakeDetailPageProps {
   id?: string;
 }
 

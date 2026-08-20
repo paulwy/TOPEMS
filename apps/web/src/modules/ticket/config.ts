@@ -11,7 +11,7 @@ const TICKET_PATHS = {
 
 export interface DashboardPageProps {}
 
-export interface TicketCenterPageProps {
+interface TicketCenterPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;

@@ -15,18 +15,18 @@ export const PLUGIN_PATHS = {
 } as const;
 export interface DashboardPageProps {}
 
-export interface PluginMarketplacePageProps {
+interface PluginMarketplacePageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface PluginUploadPageProps {
+interface PluginUploadPageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface PluginDetailPageProps {
+interface PluginDetailPageProps {
   id?: string;
   entityType?: string;
 }

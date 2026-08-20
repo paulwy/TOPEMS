@@ -54,7 +54,7 @@ export const MES_PATHS = {
 // 字段策略：template 通用字段（list/pageSize/filters · form/mode/initialValues · detail/id · etc.）+ PATH 动态段参数（:id → id?）
 // 深层字段（filters/initialValues）先宽松 Record<string, unknown>，V257 P1-1 tsc 后细化
 
-export interface ProductionDashboardPageProps {
+interface ProductionDashboardPageProps {
   /** 统计指标列表（可选）*/
 
   metrics?: string[];
@@ -76,7 +76,7 @@ export interface ProductionDashboardPageProps {
   refreshIntervalSec?: number;
 }
 
-export interface ProductionOrderManagementPageProps {
+interface ProductionOrderManagementPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -102,7 +102,7 @@ export interface ProductionOrderManagementPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface ProductionOrderDetailPageProps {
+interface ProductionOrderDetailPageProps {
   /** 实体主键 ID（匹配 PATHS.:id）*/
 
   id?: string;
@@ -120,7 +120,7 @@ export interface ProductionOrderDetailPageProps {
   version?: string | number;
 }
 
-export interface WorkOrderPageProps {
+interface WorkOrderPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -190,7 +190,7 @@ interface EquipmentDetailPageProps {
   version?: string | number;
 }
 
-export interface WorkStationPageProps {
+interface WorkStationPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -216,7 +216,7 @@ export interface WorkStationPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface TeamManagementPageProps {
+interface TeamManagementPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -268,7 +268,7 @@ interface MaterialRequirementPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface ProcessRoutePageProps {
+interface ProcessRoutePageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -294,7 +294,7 @@ export interface ProcessRoutePageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface ProcessFlowPageProps {
+interface ProcessFlowPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -320,7 +320,7 @@ export interface ProcessFlowPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface ProductionProcessPageProps {
+interface ProductionProcessPageProps {
   /** 实体主键 ID（匹配 PATHS.:id）*/
 
   id?: string;
@@ -338,7 +338,7 @@ export interface ProductionProcessPageProps {
   version?: string | number;
 }
 
-export interface ProductionSchedulePageProps {
+interface ProductionSchedulePageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -364,7 +364,7 @@ export interface ProductionSchedulePageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface WIPPageProps {
+interface WIPPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -390,7 +390,7 @@ export interface WIPPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface QualityInspectionPageProps {
+interface QualityInspectionPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -416,7 +416,7 @@ export interface QualityInspectionPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface QualityTraceabilityPageProps {
+interface QualityTraceabilityPageProps {
   /** 实体主键 ID（匹配 PATHS.:id）*/
 
   id?: string;
@@ -434,7 +434,7 @@ export interface QualityTraceabilityPageProps {
   version?: string | number;
 }
 
-export interface ProductionKanbanPageProps {
+interface ProductionKanbanPageProps {
   /** 看板列 ID 列表（列顺序）*/
 
   columns?: string[];
@@ -448,7 +448,7 @@ export interface ProductionKanbanPageProps {
   filters?: Record<string, unknown>;
 }
 
-export interface ProductionRecordPageProps {
+interface ProductionRecordPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -474,7 +474,7 @@ export interface ProductionRecordPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface WorkReportPageProps {
+interface WorkReportPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -594,7 +594,7 @@ interface ApsSchedulingPageProps {
   refreshIntervalSec?: number;
 }
 
-export interface ProductionCostPageProps {
+interface ProductionCostPageProps {
   /** 统计指标列表（可选）*/
 
   metrics?: string[];
@@ -844,7 +844,7 @@ interface MesCapacityUtilizationPageProps {
   refreshIntervalSec?: number;
 }
 
-export interface QualityTemplatePageProps {
+interface QualityTemplatePageProps {
   /** 当前激活的设置 Tab key */
 
   activeTab?: string;

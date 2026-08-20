@@ -16,40 +16,40 @@ export const NOTIFICATION_PATHS = {
 } as const;
 // ---- 第一部分：路径常量（唯一真相源） ----
 
-export interface NotificationDashboardPageProps {}
+interface NotificationDashboardPageProps {}
 
-export interface NotificationListPageProps {
+interface NotificationListPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface NotificationArchivePageProps {
+interface NotificationArchivePageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface NotificationDetailPageProps {
+interface NotificationDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface NotificationCenterPageProps {
+interface NotificationCenterPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface NotificationTemplatesPageProps {
+interface NotificationTemplatesPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface NotificationStatsPageProps {}
+interface NotificationStatsPageProps {}
 
-export interface NotificationSettingsPageProps {}
+interface NotificationSettingsPageProps {}
 
 const notificationDashboardRoute: RouteConfigV2<NotificationDashboardPageProps> = {
   path: NOTIFICATION_PATHS.dashboard,

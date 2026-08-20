@@ -14,7 +14,7 @@ export interface DashboardPageProps {
 }
 
 /** ScmPurchaseOrderPage 路由 Props · 模板=list */
-export interface ScmPurchaseOrderPageProps {
+interface ScmPurchaseOrderPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -24,7 +24,7 @@ export interface ScmPurchaseOrderPageProps {
 }
 
 /** PurchaseRequisitionPage 路由 Props · 模板=list */
-export interface PurchaseRequisitionPageProps {
+interface PurchaseRequisitionPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -34,7 +34,7 @@ export interface PurchaseRequisitionPageProps {
 }
 
 /** ScmPurchaseItemPage 路由 Props · 模板=list */
-export interface ScmPurchaseItemPageProps {
+interface ScmPurchaseItemPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -44,7 +44,7 @@ export interface ScmPurchaseItemPageProps {
 }
 
 /** ScmSupplierPage 路由 Props · 模板=list */
-export interface ScmSupplierPageProps {
+interface ScmSupplierPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -54,7 +54,7 @@ export interface ScmSupplierPageProps {
 }
 
 /** SupplierAdmissionPage 路由 Props · 模板=list */
-export interface SupplierAdmissionPageProps {
+interface SupplierAdmissionPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -64,7 +64,7 @@ export interface SupplierAdmissionPageProps {
 }
 
 /** ScmEvaluationPage 路由 Props · 模板=list */
-export interface ScmEvaluationPageProps {
+interface ScmEvaluationPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -74,7 +74,7 @@ export interface ScmEvaluationPageProps {
 }
 
 /** PurchaseContractPage 路由 Props · 模板=list */
-export interface PurchaseContractPageProps {
+interface PurchaseContractPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -84,7 +84,7 @@ export interface PurchaseContractPageProps {
 }
 
 /** ScmDeliveryAppointmentPage 路由 Props · 模板=list */
-export interface ScmDeliveryAppointmentPageProps {
+interface ScmDeliveryAppointmentPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -94,7 +94,7 @@ export interface ScmDeliveryAppointmentPageProps {
 }
 
 /** MrpPlanPage 路由 Props · 模板=list */
-export interface MrpPlanPageProps {
+interface MrpPlanPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -104,7 +104,7 @@ export interface MrpPlanPageProps {
 }
 
 /** MrpSuggestionPage 路由 Props · 模板=list */
-export interface MrpSuggestionPageProps {
+interface MrpSuggestionPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -114,7 +114,7 @@ export interface MrpSuggestionPageProps {
 }
 
 /** ScmOverviewPage 路由 Props · 模板=dashboard */
-export interface ScmOverviewPageProps {
+interface ScmOverviewPageProps {
   /** 仪表盘视图类型 */
   variant?: 'overview' | 'executive';
   /** 看板全局筛选条件 */
@@ -122,7 +122,7 @@ export interface ScmOverviewPageProps {
 }
 
 /** ScmInventoryTurnoverPage 路由 Props · 模板=stats */
-export interface ScmInventoryTurnoverPageProps {
+interface ScmInventoryTurnoverPageProps {
   /** 统计面板展示的指标列表 */
   metrics?: string[];
   /** 统计起止时间 ISO 字符串 */
@@ -130,7 +130,7 @@ export interface ScmInventoryTurnoverPageProps {
 }
 
 /** ScmPriceComparisonPage 路由 Props · 模板=stats */
-export interface ScmPriceComparisonPageProps {
+interface ScmPriceComparisonPageProps {
   /** 统计面板展示的指标列表 */
   metrics?: string[];
   /** 统计起止时间 ISO 字符串 */
@@ -138,7 +138,7 @@ export interface ScmPriceComparisonPageProps {
 }
 
 /** ScmPurchaseContractPage 路由 Props · 模板=list */
-export interface ScmPurchaseContractPageProps {
+interface ScmPurchaseContractPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -148,7 +148,7 @@ export interface ScmPurchaseContractPageProps {
 }
 
 /** SourcingStrategyPage 路由 Props · 模板=settings */
-export interface SourcingStrategyPageProps {
+interface SourcingStrategyPageProps {
   /** 当前定位的设置分组 key */
   section?: string;
   /** 设置面板主题（预留） */
@@ -156,7 +156,7 @@ export interface SourcingStrategyPageProps {
 }
 
 /** QuotaTemplatePage 路由 Props · 模板=settings */
-export interface QuotaTemplatePageProps {
+interface QuotaTemplatePageProps {
   /** 当前定位的设置分组 key */
   section?: string;
   /** 设置面板主题（预留） */
@@ -164,7 +164,7 @@ export interface QuotaTemplatePageProps {
 }
 
 /** PurchaseThresholdPage 路由 Props · 模板=settings */
-export interface PurchaseThresholdPageProps {
+interface PurchaseThresholdPageProps {
   /** 当前定位的设置分组 key */
   section?: string;
   /** 设置面板主题（预留） */
@@ -172,7 +172,7 @@ export interface PurchaseThresholdPageProps {
 }
 
 /** SupplierTierPage 路由 Props · 模板=settings */
-export interface SupplierTierPageProps {
+interface SupplierTierPageProps {
   /** 当前定位的设置分组 key */
   section?: string;
   /** 设置面板主题（预留） */

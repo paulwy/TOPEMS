@@ -3,29 +3,29 @@ import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
-export interface PmDashboardPageProps {}
-export interface PmProjectListPageProps {
+interface PmDashboardPageProps {}
+interface PmProjectListPageProps {
   page?: number;
   pageSize?: number;
   status?: string;
 }
-export interface PmProjectDetailPageProps {
+interface PmProjectDetailPageProps {
   id?: string;
   projectId?: string;
   tab?: string;
 }
-export interface PmProjectCreatePageProps {}
-export interface TaskBoardProps {
+interface PmProjectCreatePageProps {}
+interface TaskBoardProps {
   projectId?: string;
   sprintId?: string;
   filters?: Record<string, unknown>;
 }
-export interface PmContractListPageProps {}
-export interface PmContractDetailPageProps {
+interface PmContractListPageProps {}
+interface PmContractDetailPageProps {
   id?: string;
 }
-export interface PmContractCreatePageProps {}
-export interface ProjectTimelinePageProps {
+interface PmContractCreatePageProps {}
+interface ProjectTimelinePageProps {
   projectId?: string;
 }
 

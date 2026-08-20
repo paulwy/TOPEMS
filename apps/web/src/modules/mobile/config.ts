@@ -24,61 +24,61 @@ export const MOBILE_PATHS = {
   settingsApp: '/mobile/settings-app',
   offlineSync: '/mobile/offline-sync',
 } as const;
-export interface MobileHomePageProps {}
+interface MobileHomePageProps {}
 
-export interface MobileWorkbenchPageProps {}
+interface MobileWorkbenchPageProps {}
 
-export interface MobileAttendancePageProps {
+interface MobileAttendancePageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface MobileTaskListPageProps {
+interface MobileTaskListPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface MobileApprovalPageProps {
+interface MobileApprovalPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface MobileInventoryPageProps {
+interface MobileInventoryPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface MobileQualityPageProps {
+interface MobileQualityPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface MobileProductionPageProps {
+interface MobileProductionPageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface MobileScanPageProps {
+interface MobileScanPageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface MobileNotificationPageProps {
+interface MobileNotificationPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface MobileProfilePageProps {
+interface MobileProfilePageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface MobileSettingsPageProps {}
+interface MobileSettingsPageProps {}
 
 const mobileHomeRoute: RouteConfigV2<MobileHomePageProps> = {
   path: MOBILE_PATHS.home,

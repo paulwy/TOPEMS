@@ -6,7 +6,7 @@ import i18n from '@/i18n';
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 SRM_PATHS.xxx，而非硬编码字符串
 /** SrmDashboardPage 路由 Props · 模板=dashboard */
-export interface SrmDashboardPageProps {
+interface SrmDashboardPageProps {
   /** 仪表盘视图类型 */
   variant?: 'overview' | 'executive';
   /** 看板全局筛选条件 */
@@ -14,7 +14,7 @@ export interface SrmDashboardPageProps {
 }
 
 /** SrmSupplierPage 路由 Props · 模板=list */
-export interface SrmSupplierPageProps {
+interface SrmSupplierPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -24,7 +24,7 @@ export interface SrmSupplierPageProps {
 }
 
 /** SrmSupplierDetailPage 路由 Props · 模板=detail */
-export interface SrmSupplierDetailPageProps {
+interface SrmSupplierDetailPageProps {
   /** 主实体 ID（如凭证号、合同编码） */
   id?: string;
   /** 实体类型标记（用于 detail 模板多态渲染） */
@@ -32,7 +32,7 @@ export interface SrmSupplierDetailPageProps {
 }
 
 /** SrmCategoryPage 路由 Props · 模板=list */
-export interface SrmCategoryPageProps {
+interface SrmCategoryPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -42,7 +42,7 @@ export interface SrmCategoryPageProps {
 }
 
 /** SrmSupplierProductPage 路由 Props · 模板=list */
-export interface SrmSupplierProductPageProps {
+interface SrmSupplierProductPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -52,7 +52,7 @@ export interface SrmSupplierProductPageProps {
 }
 
 /** SrmContractPage 路由 Props · 模板=list */
-export interface SrmContractPageProps {
+interface SrmContractPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -62,7 +62,7 @@ export interface SrmContractPageProps {
 }
 
 /** SrmContractDetailPage 路由 Props · 模板=detail */
-export interface SrmContractDetailPageProps {
+interface SrmContractDetailPageProps {
   /** 主实体 ID（如凭证号、合同编码） */
   id?: string;
   /** 实体类型标记（用于 detail 模板多态渲染） */
@@ -70,7 +70,7 @@ export interface SrmContractDetailPageProps {
 }
 
 /** SrmOrderPage 路由 Props · 模板=list */
-export interface SrmOrderPageProps {
+interface SrmOrderPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -80,7 +80,7 @@ export interface SrmOrderPageProps {
 }
 
 /** SrmEvaluationPage 路由 Props · 模板=list */
-export interface SrmEvaluationPageProps {
+interface SrmEvaluationPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -90,7 +90,7 @@ export interface SrmEvaluationPageProps {
 }
 
 /** SrmPerformancePage 路由 Props · 模板=stats */
-export interface SrmPerformancePageProps {
+interface SrmPerformancePageProps {
   /** 统计面板展示的指标列表 */
   metrics?: string[];
   /** 统计起止时间 ISO 字符串 */
@@ -98,7 +98,7 @@ export interface SrmPerformancePageProps {
 }
 
 /** SrmScoringDimensionPage 路由 Props · 模板=list */
-export interface SrmScoringDimensionPageProps {
+interface SrmScoringDimensionPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -108,7 +108,7 @@ export interface SrmScoringDimensionPageProps {
 }
 
 /** InquiryQuotationPage 路由 Props · 模板=list */
-export interface InquiryQuotationPageProps {
+interface InquiryQuotationPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -118,7 +118,7 @@ export interface InquiryQuotationPageProps {
 }
 
 /** BiddingPage 路由 Props · 模板=list */
-export interface BiddingPageProps {
+interface BiddingPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -128,7 +128,7 @@ export interface BiddingPageProps {
 }
 
 /** SrmFinancePage 路由 Props · 模板=list */
-export interface SrmFinancePageProps {
+interface SrmFinancePageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -138,7 +138,7 @@ export interface SrmFinancePageProps {
 }
 
 /** SupplierPortalPage 路由 Props · 模板=dashboard */
-export interface SupplierPortalPageProps {
+interface SupplierPortalPageProps {
   /** 仪表盘视图类型 */
   variant?: 'overview' | 'executive';
   /** 看板全局筛选条件 */
@@ -146,7 +146,7 @@ export interface SupplierPortalPageProps {
 }
 
 /** SrmQuotationPage 路由 Props · 模板=list */
-export interface SrmQuotationPageProps {
+interface SrmQuotationPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */

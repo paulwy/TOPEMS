@@ -31,119 +31,119 @@ export const RD_PATHS = {
 } as const;
 export interface DashboardPageProps {}
 
-export interface RsOverviewPageProps {}
+interface RsOverviewPageProps {}
 
-export interface RsProjectListPageProps {
+interface RsProjectListPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface RsProjectCreatePageProps {
+interface RsProjectCreatePageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface RsProjectDetailPageProps {
+interface RsProjectDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface RsExperimentListPageProps {
+interface RsExperimentListPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface RsExperimentCreatePageProps {
+interface RsExperimentCreatePageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface RsExperimentDetailPageProps {
+interface RsExperimentDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface RsFormulaListPageProps {
+interface RsFormulaListPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface RsFormulaCreatePageProps {
+interface RsFormulaCreatePageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface RsFormulaDetailPageProps {
+interface RsFormulaDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface RsMaterialListPageProps {
+interface RsMaterialListPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface RsCodePageProps {
+interface RsCodePageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface RsBuildPageProps {
+interface RsBuildPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface RsTestPageProps {
+interface RsTestPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface RsBugPageProps {
+interface RsBugPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface RsReviewPageProps {
+interface RsReviewPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface RsDeployPageProps {
+interface RsDeployPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface RsReleasePageProps {
+interface RsReleasePageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface RsMilestonePageProps {
+interface RsMilestonePageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface RsDocPageProps {
+interface RsDocPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface RsReportPageProps {}
+interface RsReportPageProps {}
 
-export interface RsSettingsPageProps {}
+interface RsSettingsPageProps {}
 
 const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
   path: RD_PATHS.dashboard,

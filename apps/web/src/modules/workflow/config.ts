@@ -22,64 +22,64 @@ export const WORKFLOW_PATHS = {
   templates: '/workflow/templates',
   settings: '/workflow/settings',
 } as const;
-export interface WorkflowDashboardPageProps {}
+interface WorkflowDashboardPageProps {}
 
-export interface WorkflowDefinitionsPageProps {
+interface WorkflowDefinitionsPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface WorkflowDesignerPageProps {
+interface WorkflowDesignerPageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface WorkflowVersionHistoryPageProps {
+interface WorkflowVersionHistoryPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface WorkflowInstancesPageProps {
+interface WorkflowInstancesPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface WorkflowInstanceDetailPageProps {
+interface WorkflowInstanceDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface WorkflowApprovalsPageProps {
+interface WorkflowApprovalsPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface WorkflowApprovalDetailPageProps {
+interface WorkflowApprovalDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface WorkflowNotificationCenterPageProps {
+interface WorkflowNotificationCenterPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface WorkflowMonitorPageProps {}
+interface WorkflowMonitorPageProps {}
 
-export interface WorkflowStatisticsPageProps {}
+interface WorkflowStatisticsPageProps {}
 
-export interface WorkflowTemplatePageProps {
+interface WorkflowTemplatePageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface WorkflowSettingsPageProps {}
+interface WorkflowSettingsPageProps {}
 
 const workflowDashboardRoute: RouteConfigV2<WorkflowDashboardPageProps> = {
   path: WORKFLOW_PATHS.dashboard,

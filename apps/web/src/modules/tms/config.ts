@@ -29,7 +29,7 @@ export const TMS_PATHS = {
   routeDetail: '/tms/routes/:id',
   transportPlanDetail: '/tms/transport-plans/:id',
 } as const;
-export interface TmsDashboardPageProps {}
+interface TmsDashboardPageProps {}
 
 export interface VehicleManagementPageProps {
   page?: number;
@@ -37,68 +37,68 @@ export interface VehicleManagementPageProps {
   filters?: Record<string, unknown>;
 }
 
-export interface DriverManagementPageProps {
+interface DriverManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface CarrierManagementPageProps {
+interface CarrierManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface RouteManagementPageProps {
+interface RouteManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface ShipmentManagementPageProps {
+interface ShipmentManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface ShipmentTrendPageProps {}
+interface ShipmentTrendPageProps {}
 
-export interface VehicleUtilizationPageProps {}
+interface VehicleUtilizationPageProps {}
 
-export interface DriverPerformancePageProps {}
+interface DriverPerformancePageProps {}
 
-export interface CarrierPerformancePageProps {}
+interface CarrierPerformancePageProps {}
 
-export interface RouteEfficiencyPageProps {}
+interface RouteEfficiencyPageProps {}
 
-export interface FreightCostPageProps {}
+interface FreightCostPageProps {}
 
-export interface ShipmentDetailPageProps {
+interface ShipmentDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface VehicleDetailPageProps {
+interface VehicleDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface DriverDetailPageProps {
+interface DriverDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface CarrierDetailPageProps {
+interface CarrierDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface RouteDetailPageProps {
+interface RouteDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface TransportPlanDetailPageProps {
+interface TransportPlanDetailPageProps {
   id?: string;
   entityType?: string;
 }
