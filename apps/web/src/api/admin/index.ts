@@ -27,7 +27,6 @@ import { monitoringApi } from './monitoring';
 import type { SystemSetting, SystemConfig, AuditLog, AuditLogQueryParams } from './types';
 
 export * from './types';
-export { systemSettingApi } from './systemSetting';
 export { auditLogApi } from './auditLog';
 export { permissionAuditApi } from './permissionAudit';
 export { monitoringApi } from './monitoring';

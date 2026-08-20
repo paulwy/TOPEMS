@@ -83,9 +83,7 @@ export type AdaptedQualityIssue = QmsTypes.QualityIssue & {
  * 将生成类型 QualityIssue 转换为手写 Backend 命名的 AdaptedQualityIssue。
  * 生成类型缺少 assigned_to/priority/due_date，这里补 undefined 占位。
  */
-const adaptQualityIssueFromGenerated = (
-  generated: QmsTypes.QualityIssue
-): AdaptedQualityIssue => {
+const adaptQualityIssueFromGenerated = (generated: QmsTypes.QualityIssue): AdaptedQualityIssue => {
   return {
     ...generated,
     assigned_to: undefined,

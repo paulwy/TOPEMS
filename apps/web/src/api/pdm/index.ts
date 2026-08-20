@@ -22,9 +22,6 @@ export { pdmDashboardApi } from './dashboard';
 export { documentApprovalApi } from './documentApproval';
 export { changeNoticeActionApi } from './changeNoticeAction';
 export { workflowApi } from './workflow';
-export { pdmVersionApi } from './pdmVersion';
-export { pdmMaterialApi } from './pdmMaterial';
-export { pdmProductApi } from './pdmProduct';
 
 export type Document = PdmDocument;
 

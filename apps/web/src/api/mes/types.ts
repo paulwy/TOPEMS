@@ -90,9 +90,7 @@ export type AdaptedProductionOrder = Omit<
  *           plan_start_date → planned_start_time, plan_end_date → planned_end_time,
  *           actual_start_date → actual_start_time, actual_end_date → actual_end_time
  */
-const adaptWorkOrderFromGenerated = (
-  generated: MesTypes.WorkOrderResponse
-): AdaptedWorkOrder => {
+const adaptWorkOrderFromGenerated = (generated: MesTypes.WorkOrderResponse): AdaptedWorkOrder => {
   const {
     order_no,
     planned_quantity,

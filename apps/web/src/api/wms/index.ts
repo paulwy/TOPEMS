@@ -28,7 +28,7 @@ import type { ApprovalStartRequest, ApprovalApproveRequest, ApprovalRejectReques
 
 export * from './types';
 
-export { inventoryApi, inventoryAlertsApi, inventoryStatsApi } from './inventory';
+export { inventoryApi } from './inventory';
 export { wmsDashboardApi } from './dashboard';
 export * from './inventory';
 
@@ -41,13 +41,10 @@ export * from './location';
 export { inboundOrderApi } from './inbound';
 export * from './inbound';
 
-export { outboundOrderApi } from './outbound';
 export * from './outbound';
 
-export { wavePickApi } from './wavePick';
 export * from './wavePick';
 
-export { stockTakeApi } from './stocktake';
 export * from './stocktake';
 
 export { cycleCountApi } from './cycleCount';
@@ -56,10 +53,8 @@ export * from './cycleCount';
 export { discrepancyApi } from './discrepancy';
 export * from './discrepancy';
 
-export { transferApi } from './transfer';
 export * from './transfer';
 
-export { smartReplenishmentApi } from './replenishment';
 export * from './replenishment';
 
 export { syncRecordApi, syncApi } from './sync';
@@ -71,10 +66,8 @@ export * from './audit';
 export { batchApi } from './batch';
 export * from './batch';
 
-export { serialNumberApi } from './serialNumber';
 export * from './serialNumber';
 
-export { inventoryAlertApi } from './inventoryAlert';
 export type {
   InventoryAlert,
   AlertSummary,
@@ -86,16 +79,12 @@ export type {
   AlertQueryParams,
 } from './inventoryAlert';
 
-export { inventoryMovementApi } from './inventoryMovement';
 export type {
   InventoryMovement,
   CreateInventoryMovementRequest,
   InventoryMovementQueryParams,
 } from './inventoryMovement';
 
-export { advancedReplenishmentApi } from './smartReplenishment';
-
-export { slottingApi } from './slotting';
 export type {
   SlottingSuggestion,
   SlottingZone,
@@ -104,7 +93,6 @@ export type {
   SlottingStrategy,
 } from './slotting';
 
-export { kittingApi } from './kitting';
 export type {
   KittingOrder,
   BillOfMaterials,
@@ -112,7 +100,6 @@ export type {
   KittingStatus,
 } from './kitting';
 
-export { laborApi } from './labor';
 export type {
   LaborEfficiency,
   ProductivityMetric,
@@ -121,7 +108,6 @@ export type {
   Shift,
 } from './labor';
 
-export { pickingApi } from './picking';
 export type {
   PickingTask,
   PickingTaskLine,
@@ -139,7 +125,6 @@ export type {
   CreatePickingStrategyRequest,
 } from './picking';
 
-export { putawayApi } from './putaway';
 export type {
   PutawayPlan,
   PutawayPlanItem,
@@ -157,7 +142,6 @@ export type {
   CreatePutawayTaskRequest,
 } from './putaway';
 
-export { manifestApi } from './manifest';
 export type {
   Manifest,
   ManifestItem,
@@ -213,7 +197,7 @@ export const wmsApi = {
 //   /wms/stock-takes/${id}/approval/{start,approve,reject}
 //   /wms/transfer-orders/${id}/approval/{start,approve,reject}
 // ============================================================================
-export const wmsApprovalApi = {
+const wmsApprovalApi = {
   inbound: {
     start: (id: string, body: ApprovalStartRequest) =>
       apiClient.post(`/wms/inbound-orders/${id}/approval/start`, body),

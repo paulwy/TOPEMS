@@ -102,9 +102,7 @@ const getEmailLogs = async (
   return apiClient.notification.get<EmailLogListResponse>(`/email/email-logs?${params.toString()}`);
 };
 
-const resendEmail = async (
-  id: string
-): Promise<ApiResponse<{ id: string; status: string }>> => {
+const resendEmail = async (id: string): Promise<ApiResponse<{ id: string; status: string }>> => {
   return apiClient.notification.post<{ id: string; status: string }>(
     `/email/email-logs/${id}/resend`
   );

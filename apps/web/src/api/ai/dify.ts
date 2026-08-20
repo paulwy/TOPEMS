@@ -211,16 +211,10 @@ export const difyApi = {
       rating,
       user,
     };
-    return apiClient.ai.post<DifyFeedbackResult>(
-      `/dify/messages/${message_id}/feedbacks`,
-      payload
-    );
+    return apiClient.ai.post<DifyFeedbackResult>(`/dify/messages/${message_id}/feedbacks`, payload);
   },
 
-  stop: async (
-    message_id: string,
-    user?: string
-  ): Promise<ApiResponse<DifyStopResponse>> => {
+  stop: async (message_id: string, user?: string): Promise<ApiResponse<DifyStopResponse>> => {
     const payload: DifyStopRequest = {
       user,
     };

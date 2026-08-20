@@ -6,10 +6,7 @@ import { companyRelationApi } from './company';
 
 export * from './types';
 
-export { consolidationScopeApi, consolidationScopeCompanyApi } from './scope';
 export { eliminationRuleApi } from './elimination';
-export { internalTransactionApi } from './transaction';
-export { consolidationReportApi } from './report';
 export { companyRelationApi } from './company';
 
 export const consolidationContractApi = {

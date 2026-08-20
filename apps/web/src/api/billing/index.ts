@@ -22,13 +22,7 @@ export type {
 } from './billing';
 
 export { billingApi } from './billing';
-export { invoiceApi } from './invoice';
-export { paymentApi } from './payment';
-export { refundApi } from './refund';
-export { statementApi } from './statement';
 export { dashboardApi } from './dashboard';
-export { taxApi } from './tax';
-export { reminderApi } from './reminder';
 export { batchApi } from './batch';
 
 export type {

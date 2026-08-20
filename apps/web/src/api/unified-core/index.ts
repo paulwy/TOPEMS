@@ -8,7 +8,6 @@ import { businessMetricApi } from './businessMetric';
 
 export { systemApi } from './system';
 export { tenantApi } from './tenant';
-export { unifiedSearchApi } from './search';
 export { iamAuthApi } from './iamAuth';
 export { businessMetricApi } from './businessMetric';
 

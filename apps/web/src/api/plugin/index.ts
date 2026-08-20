@@ -5,15 +5,13 @@ import { pluginApi } from './plugin';
 
 export * from './types';
 
-export { getSuites as SUITES, PLUGIN_SUITE_MAP, getPluginRegistry as PLUGIN_REGISTRY } from './registry';
 export {
-  fetchPluginInfo,
-  fetchAllPluginInfo,
-  checkPluginHealth,
-  checkAllPluginsHealth,
+  getSuites as SUITES,
+  PLUGIN_SUITE_MAP,
+  getPluginRegistry as PLUGIN_REGISTRY,
 } from './registry';
+export { fetchAllPluginInfo, checkAllPluginsHealth } from './registry';
 
-export { marketplaceApi } from './marketplace';
 export { pluginApi } from './plugin';
 
 export const getMarketplaceSummary = marketplaceApi.getSummary;

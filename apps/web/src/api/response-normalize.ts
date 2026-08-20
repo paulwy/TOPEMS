@@ -111,7 +111,7 @@ export function normalizeTotalField(resp: Record<string, unknown>): Record<strin
  *
  * 即使 Vite 没有定义此 env 变量，import.meta.env 访问也是安全的（返回 undefined）。
  */
-export function shouldNormalize(): boolean {
+function shouldNormalize(): boolean {
   try {
     const val = (import.meta as any).env?.V79_NORMALIZE_RESPONSE;
     return val === 'true' || val === true;

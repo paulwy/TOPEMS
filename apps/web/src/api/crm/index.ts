@@ -57,8 +57,6 @@ import { customerSegmentationApi, customerRecommendationApi } from './segmentati
 import { returnsApi } from './returns';
 import { crmAuditApi } from './crmAudit';
 import { salesFunnelApi } from './salesFunnel';
-import { customerProfileApi } from './customerProfile';
-
 export * from './types';
 export { useCrmMock, default as useCrmMockDefault } from './_mock';
 export type {
@@ -85,17 +83,12 @@ export type {
 export { customerApi, tagApi } from './customer';
 export { crmDashboardApi } from './dashboard';
 export { contactApi } from './contact';
-export { opportunityApi } from './opportunity';
 export { interactionApi } from './interaction';
-export { customerScoringApi } from './scoring';
 export { salesForecastApi, forecastApi } from './forecast';
 export { rfmApi } from './rfm';
 export { billingApi } from './billing';
-export { customerSegmentationApi, customerRecommendationApi } from './segmentation';
 export { returnsApi } from './returns';
 export { crmAuditApi } from './crmAudit';
-export { salesFunnelApi } from './salesFunnel';
-export { customerProfileApi } from './customerProfile';
 
 export const crmApi = {
   dashboard: crmDashboardApi,
@@ -114,7 +107,6 @@ export const crmApi = {
   returns: returnsApi,
   audit: crmAuditApi,
   salesFunnel: salesFunnelApi,
-  customerProfile: customerProfileApi,
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.crm.get('/health');

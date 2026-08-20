@@ -24,9 +24,8 @@ import { pmStatisticsApi } from './statistics';
 
 export * from './types';
 
-export { projectApi, phaseApi, milestoneApi, approvalApi } from './project';
-export { memberApi } from './team';
-export { resourceApi, expenseApi } from './resource';
+export { projectApi, approvalApi } from './project';
+export { expenseApi } from './resource';
 export { benefitApi } from './benefit';
 export {
   contractApi,
@@ -36,13 +35,11 @@ export {
   contractTemplateApi,
 } from './contract';
 export { budgetApi, budgetItemApi } from './budget';
-export { riskApi, riskEventApi } from './risk';
-export { qualityCheckApi, defectApi } from './quality';
+export { riskApi } from './risk';
 export { acceptancePlanApi, acceptanceItemApi, acceptanceRecordApi } from './acceptance';
-export { settlementApi, settlementItemApi, settlementAdjustmentApi } from './settlement';
 export { documentApi, documentVersionApi, documentFolderApi } from './document';
-export { reportApi, reportTemplateApi } from './report';
-export { notificationApi, notificationSettingApi, notificationTypeApi } from './notification';
+export { reportApi } from './report';
+export { notificationApi } from './notification';
 export { dashboardApi } from './dashboard';
 export { pmStatisticsApi } from './statistics';
 

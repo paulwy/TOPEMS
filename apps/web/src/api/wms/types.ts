@@ -1065,15 +1065,6 @@ export interface SerialNumberStatistics {
 // ============================================================================
 // FSM 状态枚举常量导出（从 types/wms.ts 重导出）
 // ============================================================================
-export {
-  INBOUND_ORDER_STATES,
-  OUTBOUND_ORDER_STATES,
-  STOCK_TAKE_STATES,
-  TRANSFER_ORDER_STATES,
-  WAVE_PICK_STATES,
-  INVENTORY_MOVEMENT_STATES,
-  SERIAL_NUMBER_STATES,
-} from '@/types/wms';
 
 export type {
   InboundOrderState,

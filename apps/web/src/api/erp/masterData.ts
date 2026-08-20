@@ -815,7 +815,7 @@ const masterDataGraphApi = {
 
 // ==================== V43.0 AC-15: 知识图谱 API 方法 ====================
 
-export const knowledgeGraphApi = {
+const knowledgeGraphApi = {
   async listConcepts(
     params?: ConceptQueryParams
   ): Promise<ApiResponse<PaginatedResponse<Concept>>> {

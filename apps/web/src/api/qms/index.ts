@@ -24,9 +24,7 @@ export * from './adapters';
 export { useQmsMock, default as useQmsMockDefault } from './_mock';
 export type { QmsMockShape } from './_mock';
 
-export { standardApi } from './standard';
 export { inspectionApi } from './inspection';
-export { issueApi } from './issue';
 export { improvementApi } from './improvement';
 export { spcApi } from './spc';
 export { qualityCostApi } from './qualityCost';

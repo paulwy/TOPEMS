@@ -28,27 +28,13 @@ import type { LimsStatistics } from './types';
 export * from './types';
 export * from './utils';
 
-export { sampleApi, lifecycleStageApi } from './sample';
 export { limsDashboardApi } from './dashboard';
-export { processApi, taskApi, recordApi } from './inspection';
-export { instrumentApi, maintenanceApi, instrumentDataApi } from './instrument';
+export { recordApi } from './inspection';
+export { instrumentDataApi } from './instrument';
 export { reagentApi } from './reagent';
 export { barcodeApi, rfidTagApi, printConfigApi } from './barcode';
-export { testMethodApi, methodCategoryApi, methodValidationApi } from './testMethod';
-export {
-  ptPlanApi,
-  ptSampleApi,
-  ptResultApi,
-  ptEvaluationApi,
-  ptCorrectiveActionApi,
-} from './proficiencyTesting';
-export {
-  uncertaintyProjectApi,
-  uncertaintySourceApi,
-  uncertaintyComponentApi,
-} from './uncertainty';
+export { ptPlanApi } from './proficiencyTesting';
 export { collectionTaskApi, parseRuleApi } from './collection';
-export { syncRecordApi } from './sync';
 export { auditLimsApi } from './audit';
 
 export const limsApi = {

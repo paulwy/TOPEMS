@@ -137,7 +137,13 @@ export interface WmsMockShape {
 // 静态选项池
 // ============================================================================
 function getWarehouseNames() {
-  return [i18n.t('shared._mock.k4'), i18n.t('shared._mock.k3'), i18n.t('shared._mock.k2'), i18n.t('shared._mock.k1'), i18n.t('shared._mock.k0')] as const;
+  return [
+    i18n.t('shared._mock.k4'),
+    i18n.t('shared._mock.k3'),
+    i18n.t('shared._mock.k2'),
+    i18n.t('shared._mock.k1'),
+    i18n.t('shared._mock.k0'),
+  ] as const;
 }
 const WAREHOUSE_CODES = ['WH-EAST', 'WH-SOUTH', 'WH-NORTH', 'WH-WEST', 'WH-CENTER'] as const;
 const INBOUND_STATUSES = ['created', 'confirmed', 'received', 'completed', 'cancelled'] as const;
@@ -175,16 +181,40 @@ function getMaterials() {
   ] as const;
 }
 function getSuppliers() {
-  return [i18n.t('shared._mock.k25'), i18n.t('shared._mock.k24'), i18n.t('shared._mock.k23'), i18n.t('shared._mock.k22'), i18n.t('shared._mock.k21')] as const;
+  return [
+    i18n.t('shared._mock.k25'),
+    i18n.t('shared._mock.k24'),
+    i18n.t('shared._mock.k23'),
+    i18n.t('shared._mock.k22'),
+    i18n.t('shared._mock.k21'),
+  ] as const;
 }
 function getCustomers() {
-  return [i18n.t('shared._mock.k30'), i18n.t('shared._mock.k29'), i18n.t('shared._mock.k28'), i18n.t('shared._mock.k27'), i18n.t('shared._mock.k26')] as const;
+  return [
+    i18n.t('shared._mock.k30'),
+    i18n.t('shared._mock.k29'),
+    i18n.t('shared._mock.k28'),
+    i18n.t('shared._mock.k27'),
+    i18n.t('shared._mock.k26'),
+  ] as const;
 }
 function getLocationAreas() {
-  return [i18n.t('shared._mock.k36'), i18n.t('shared._mock.k35'), i18n.t('shared._mock.k34'), i18n.t('shared._mock.k33'), i18n.t('shared._mock.k32'), i18n.t('shared._mock.k31')] as const;
+  return [
+    i18n.t('shared._mock.k36'),
+    i18n.t('shared._mock.k35'),
+    i18n.t('shared._mock.k34'),
+    i18n.t('shared._mock.k33'),
+    i18n.t('shared._mock.k32'),
+    i18n.t('shared._mock.k31'),
+  ] as const;
 }
 function getZones() {
-  return [i18n.t('shared._mock.a_3'), i18n.t('shared._mock.b_2'), i18n.t('shared._mock.c_1'), i18n.t('shared._mock.d_0')] as const;
+  return [
+    i18n.t('shared._mock.a_3'),
+    i18n.t('shared._mock.b_2'),
+    i18n.t('shared._mock.c_1'),
+    i18n.t('shared._mock.d_0'),
+  ] as const;
 }
 
 // ============================================================================
@@ -192,26 +222,28 @@ function getZones() {
 // ============================================================================
 
 function buildWarehouses(rnd: () => number, count: number): WarehouseDto[] {
-  return getWarehouseNames().slice(0, count).map((name, i) => {
-    const createdAt = isoDate(rnd, int(rnd, 90, 365));
-    return {
-      id: uuid(rnd, 'wh-'),
-      tenant_id: 'tenant-demo',
-      code: WAREHOUSE_CODES[i],
-      name,
-      address: `${[i18n.t('shared._mock.k41'), i18n.t('shared._mock.k40'), i18n.t('shared._mock.k39'), i18n.t('shared._mock.k38'), i18n.t('shared._mock.k37')][i]}${i18n.t('shared._mock.xx_4')}${i + 1}${i18n.t('shared._mock.k5')}`,
-      contact: `${i18n.t('shared._mock.k6')}${i + 1}`,
-      phone: `1380000${String(1000 + i).padStart(4, '0')}`,
-      manager: `${i18n.t('shared._mock.k7')}${i + 1}`,
-      status: 'active',
-      total_capacity: 10000 + i * 2000,
-      used_capacity: 6000 + i * 1000,
-      description: `${name}${i18n.t('shared._mock.k8')}${[i18n.t('shared._mock.k46'), i18n.t('shared._mock.k45'), i18n.t('shared._mock.k44'), i18n.t('shared._mock.k43'), i18n.t('shared._mock.k42')][i]}${i18n.t('shared._mock.k9')}`,
-      created_by: 'system',
-      created_at: createdAt,
-      updated_at: isoDate(rnd, int(rnd, 0, 30)),
-    };
-  });
+  return getWarehouseNames()
+    .slice(0, count)
+    .map((name, i) => {
+      const createdAt = isoDate(rnd, int(rnd, 90, 365));
+      return {
+        id: uuid(rnd, 'wh-'),
+        tenant_id: 'tenant-demo',
+        code: WAREHOUSE_CODES[i],
+        name,
+        address: `${[i18n.t('shared._mock.k41'), i18n.t('shared._mock.k40'), i18n.t('shared._mock.k39'), i18n.t('shared._mock.k38'), i18n.t('shared._mock.k37')][i]}${i18n.t('shared._mock.xx_4')}${i + 1}${i18n.t('shared._mock.k5')}`,
+        contact: `${i18n.t('shared._mock.k6')}${i + 1}`,
+        phone: `1380000${String(1000 + i).padStart(4, '0')}`,
+        manager: `${i18n.t('shared._mock.k7')}${i + 1}`,
+        status: 'active',
+        total_capacity: 10000 + i * 2000,
+        used_capacity: 6000 + i * 1000,
+        description: `${name}${i18n.t('shared._mock.k8')}${[i18n.t('shared._mock.k46'), i18n.t('shared._mock.k45'), i18n.t('shared._mock.k44'), i18n.t('shared._mock.k43'), i18n.t('shared._mock.k42')][i]}${i18n.t('shared._mock.k9')}`,
+        created_by: 'system',
+        created_at: createdAt,
+        updated_at: isoDate(rnd, int(rnd, 0, 30)),
+      };
+    });
 }
 
 function buildLocations(
@@ -332,7 +364,13 @@ function buildOutboundOrders(
       created_by: `${i18n.t('shared._mock.k17')}${int(rnd, 1, 10)}`,
       approved_by: rnd() > 0.5 ? `${i18n.t('shared._mock.k18')}${int(rnd, 1, 5)}` : null,
       approved_at: rnd() > 0.5 ? isoDate(rnd, int(rnd, 0, 3)) : null,
-      carrier: pick(rnd, [i18n.t('shared._mock.k58'), i18n.t('shared._mock.k57'), i18n.t('shared._mock.k56'), i18n.t('shared._mock.k55'), i18n.t('shared._mock.k54')]),
+      carrier: pick(rnd, [
+        i18n.t('shared._mock.k58'),
+        i18n.t('shared._mock.k57'),
+        i18n.t('shared._mock.k56'),
+        i18n.t('shared._mock.k55'),
+        i18n.t('shared._mock.k54'),
+      ]),
       tracking_number: rnd() > 0.4 ? `SF${String(int(rnd, 100000000, 999999999))}` : null,
       created_at: created,
       updated_at: isoDate(rnd, int(rnd, 0, 10)),
@@ -376,7 +414,10 @@ function buildStockTakes(
       accuracy_rate: counted === 0 ? 0 : Math.round(((counted - disc) / counted) * 1000) / 10,
       approval_status: rnd() > 0.5 ? pick(rnd, ['pending', 'approved', 'rejected']) : null,
       adjustment_status: rnd() > 0.5 ? pick(rnd, ['none', 'pending', 'done']) : null,
-      remarks: rnd() > 0.6 ? `${pick(rnd, [i18n.t('shared._mock.k61'), i18n.t('shared._mock.k60'), i18n.t('shared._mock.k59')])}${i18n.t('shared._mock.k19')}` : null,
+      remarks:
+        rnd() > 0.6
+          ? `${pick(rnd, [i18n.t('shared._mock.k61'), i18n.t('shared._mock.k60'), i18n.t('shared._mock.k59')])}${i18n.t('shared._mock.k19')}`
+          : null,
       stock_adjusted: rnd() > 0.5,
       created_by: `${i18n.t('shared._mock.k20')}${int(rnd, 1, 10)}`,
       approved_by: rnd() > 0.5 ? `${i18n.t('shared._mock.k21')}${int(rnd, 1, 5)}` : null,
@@ -418,7 +459,12 @@ function buildTransfers(
       total_amount: Math.round(qty * (50 + rnd() * 500) * 100) / 100,
       planned_date: isoDate(rnd, int(rnd, 0, 10)),
       actual_date: rnd() > 0.5 ? isoDate(rnd, int(rnd, 0, 5)) : null,
-      transporter: pick(rnd, [i18n.t('shared._mock.k65'), i18n.t('shared._mock.k64'), i18n.t('shared._mock.k63'), i18n.t('shared._mock.k62')]),
+      transporter: pick(rnd, [
+        i18n.t('shared._mock.k65'),
+        i18n.t('shared._mock.k64'),
+        i18n.t('shared._mock.k63'),
+        i18n.t('shared._mock.k62'),
+      ]),
       tracking_number: rnd() > 0.4 ? `TRK${String(int(rnd, 100000, 999999))}` : null,
       priority: pick(rnd, ['low', 'normal', 'high', 'urgent']),
       remarks: rnd() > 0.6 ? `${from.name} → ${to.name}${i18n.t('shared._mock.k23')}` : null,
@@ -497,8 +543,19 @@ function buildMovements(
       batch_number: rnd() > 0.5 ? `B${String(int(rnd, 1000, 9999))}` : null,
       serial_number: rnd() > 0.7 ? `SN${String(int(rnd, 100000, 999999))}` : null,
       quantity: int(rnd, 1, 500),
-      unit: pick(rnd, [i18n.t('shared._mock.k69'), i18n.t('shared._mock.k68'), i18n.t('shared._mock.k67'), i18n.t('shared._mock.k66')]),
-      reason: pick(rnd, [i18n.t('shared._mock.k74'), i18n.t('shared._mock.k73'), i18n.t('shared._mock.k72'), i18n.t('shared._mock.k71'), i18n.t('shared._mock.k70')]),
+      unit: pick(rnd, [
+        i18n.t('shared._mock.k69'),
+        i18n.t('shared._mock.k68'),
+        i18n.t('shared._mock.k67'),
+        i18n.t('shared._mock.k66'),
+      ]),
+      reason: pick(rnd, [
+        i18n.t('shared._mock.k74'),
+        i18n.t('shared._mock.k73'),
+        i18n.t('shared._mock.k72'),
+        i18n.t('shared._mock.k71'),
+        i18n.t('shared._mock.k70'),
+      ]),
       remarks: rnd() > 0.6 ? i18n.t('shared._mock.k75') : null,
       created_by: `${i18n.t('shared._mock.k31')}${int(rnd, 1, 10)}`,
       approved_by: rnd() > 0.5 ? `${i18n.t('shared._mock.k32')}${int(rnd, 1, 5)}` : null,
@@ -627,7 +684,8 @@ function buildBatches(rnd: () => number, count: number, warehouses: WarehouseDto
       remaining_days: int(rnd, 0, shelfLife),
       unit_price: Math.round((10 + rnd() * 500) * 100) / 100,
       total_value: Math.round(qty * (10 + rnd() * 500) * 100) / 100,
-      remark: rnd() > 0.6 ? `${i18n.t('shared._mock.k38')}${i + 1}${i18n.t('shared._mock.k39')}` : null,
+      remark:
+        rnd() > 0.6 ? `${i18n.t('shared._mock.k38')}${i + 1}${i18n.t('shared._mock.k39')}` : null,
       created_at: isoDate(rnd, int(rnd, 10, 365)),
       updated_at: isoDate(rnd, int(rnd, 0, 30)),
     };
@@ -725,12 +783,14 @@ function buildLocationUtil(rnd: () => number): LocationDatum[] {
 }
 
 function buildFulfillment(rnd: () => number): FulfillmentDatum[] {
-  return getWarehouseNames().slice(0, 4).map((wh) => ({
-    warehouse: wh,
-    onTimeRate: Number((85 + rnd() * 14).toFixed(1)),
-    avgHours: Number((6 + rnd() * 18).toFixed(1)),
-    slaPass: Number((88 + rnd() * 11).toFixed(1)),
-  }));
+  return getWarehouseNames()
+    .slice(0, 4)
+    .map((wh) => ({
+      warehouse: wh,
+      onTimeRate: Number((85 + rnd() * 14).toFixed(1)),
+      avgHours: Number((6 + rnd() * 18).toFixed(1)),
+      slaPass: Number((88 + rnd() * 11).toFixed(1)),
+    }));
 }
 
 // ============================================================================

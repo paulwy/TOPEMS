@@ -10,9 +10,6 @@ import { businessApi } from './business';
 export * from './types';
 
 export { deviceApi } from './device';
-export { pipelineApi } from './pipeline';
-export { storageApi } from './storage';
-export { mapApi } from './map';
 export { businessApi } from './business';
 
 export const gisApi = {
