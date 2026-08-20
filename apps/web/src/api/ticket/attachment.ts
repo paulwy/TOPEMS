@@ -13,7 +13,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface TicketAttachment {
+interface TicketAttachment {
   id: string;
   ticket_id: string;
   tenant_id: string;

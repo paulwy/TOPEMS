@@ -24,7 +24,7 @@ export interface PerformanceStats {
   slow_requests_threshold_ms: number;
 }
 
-export interface WorkflowStat {
+interface WorkflowStat {
   workflow_id: string;
   workflow_name: string;
   instance_count: number;
@@ -32,18 +32,18 @@ export interface WorkflowStat {
   avg_duration: number;
 }
 
-export interface MonthlyData {
+interface MonthlyData {
   month: string;
   instances_started: number;
   instances_completed: number;
   approvals_processed: number;
 }
 
-export interface ConditionValue {
+interface ConditionValue {
   [key: string]: unknown;
 }
 
-export interface Condition {
+interface Condition {
   field: string;
   operator: string;
   value: ConditionValue;
@@ -71,7 +71,7 @@ export interface WorkflowDefinition {
   timeout_action?: string;
 }
 
-export interface WorkflowData {
+interface WorkflowData {
   type?: string;
   scope?: string;
   usageCount?: number;
@@ -108,7 +108,7 @@ export interface UpdateWorkflowRequest {
   isactive?: boolean;
 }
 
-export interface WorkflowInstanceData {
+interface WorkflowInstanceData {
   [key: string]: unknown;
 }
 
@@ -151,7 +151,7 @@ export interface Approval {
   created_at: string;
 }
 
-export interface ApprovalTaskData {
+interface ApprovalTaskData {
   [key: string]: unknown;
 }
 
@@ -179,7 +179,7 @@ export interface ApprovalTask {
   updated_at?: string;
 }
 
-export interface TaskData {
+interface TaskData {
   [key: string]: unknown;
 }
 
@@ -226,7 +226,7 @@ export interface Task {
   updated_at?: string;
 }
 
-export interface TaskStats {
+interface TaskStats {
   todo: number;
   done: number;
   sent: number;
@@ -318,7 +318,7 @@ export interface WorkflowTemplate {
   updated_at?: string;
 }
 
-export interface WorkflowSetting {
+interface WorkflowSetting {
   id: string;
   key: string;
   value: string;
@@ -328,7 +328,7 @@ export interface WorkflowSetting {
   updated_at?: string;
 }
 
-export interface WorkflowHistoryData {
+interface WorkflowHistoryData {
   [key: string]: unknown;
 }
 
@@ -408,13 +408,13 @@ export interface FormField {
   hidden?: boolean;
 }
 
-export interface FormFieldOption {
+interface FormFieldOption {
   label: string;
   value: string | number | boolean;
   disabled?: boolean;
 }
 
-export interface FormFieldValidation {
+interface FormFieldValidation {
   pattern?: string;
   min_length?: number;
   max_length?: number;
@@ -438,7 +438,7 @@ export interface FormDefinition {
   updated_at: string;
 }
 
-export interface FormLayout {
+interface FormLayout {
   type: 'grid' | 'tabs' | 'steps';
   columns?: number;
   groups?: FormGroup[];
@@ -562,7 +562,7 @@ export interface ProcessInstanceDetail extends WorkflowInstance {
   form_data?: Record<string, unknown>;
 }
 
-export interface ProcessNodeStatistics {
+interface ProcessNodeStatistics {
   node_id: string;
   node_name: string;
   total_count: number;
@@ -682,27 +682,27 @@ export interface WorkflowCategory {
   created_at: string;
 }
 
-export interface WorkflowDeployRequest {
+interface WorkflowDeployRequest {
   definition?: WorkflowDefinition;
   version?: string;
   change_description?: string;
 }
 
-export interface WorkflowDeploymentResult {
+interface WorkflowDeploymentResult {
   workflow_id: string;
   version: string;
   deployed_at: string;
   deployed_by: string;
 }
 
-export interface WorkflowExportResult {
+interface WorkflowExportResult {
   workflow_id: string;
   name: string;
   data: string;
   format: 'json' | 'xml' | 'bpmn';
 }
 
-export interface WorkflowImportResult {
+interface WorkflowImportResult {
   workflow_id: string;
   name: string;
   version: string;
@@ -710,7 +710,7 @@ export interface WorkflowImportResult {
 
 // ==================== 流程实例扩展类型 ====================
 
-export interface WorkflowInstanceQueryParams extends ListParams {
+interface WorkflowInstanceQueryParams extends ListParams {
   workflow_id?: string;
   status?: string;
   initiator_id?: string;
@@ -736,19 +736,19 @@ export interface WorkflowInstanceDetail {
   };
 }
 
-export interface WorkflowInstanceCancelRequest {
+interface WorkflowInstanceCancelRequest {
   reason?: string;
   operator_id?: string;
   operator_name?: string;
 }
 
-export interface WorkflowInstanceUrgeRequest {
+interface WorkflowInstanceUrgeRequest {
   task_id?: string;
   message?: string;
   urge_type?: 'normal' | 'urgent' | 'very_urgent';
 }
 
-export interface WorkflowInstanceRecallRequest {
+interface WorkflowInstanceRecallRequest {
   reason?: string;
   operator_id?: string;
   operator_name?: string;

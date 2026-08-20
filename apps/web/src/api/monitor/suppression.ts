@@ -14,7 +14,7 @@ export interface SuppressionRule {
   updated_at: string;
 }
 
-export interface SuppressionCreateRequest {
+interface SuppressionCreateRequest {
   name: string;
   description?: string;
   match_conditions: Record<string, unknown>;

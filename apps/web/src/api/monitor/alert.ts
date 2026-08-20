@@ -106,12 +106,12 @@ export interface AlertTimelinePoint {
   note?: string;
 }
 
-export interface BulkAcknowledgeRequest {
+interface BulkAcknowledgeRequest {
   alert_ids: string[];
   note?: string;
 }
 
-export interface BulkResolveRequest {
+interface BulkResolveRequest {
   alert_ids: string[];
   reason?: string;
 }

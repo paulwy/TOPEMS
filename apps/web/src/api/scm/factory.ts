@@ -2,7 +2,7 @@ import apiClient from '../client';
 import type { ApiResponse, PaginatedResponse, PaginationParams } from '../client';
 import { normalizePageParams } from '@/utils/normalizePageParams';
 
-export interface ScmCrudApi<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
+interface ScmCrudApi<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
   list: (
     params?: PaginationParams & Record<string, unknown>
   ) => Promise<ApiResponse<PaginatedResponse<T>>>;
@@ -12,7 +12,7 @@ export interface ScmCrudApi<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
   delete: (id: string) => Promise<ApiResponse<string>>;
 }
 
-export interface CreateScmCrudApiOptions {
+interface CreateScmCrudApiOptions {
   singularName?: string;
 }
 

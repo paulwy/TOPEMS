@@ -84,7 +84,7 @@ export interface CreateCommentRequest {
   parentId?: string;
 }
 
-export interface UpdateCommentRequest {
+interface UpdateCommentRequest {
   content: string;
 }
 

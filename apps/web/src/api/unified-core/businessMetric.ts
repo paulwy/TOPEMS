@@ -38,7 +38,7 @@ export interface PerformanceReport {
   }>;
 }
 
-export interface Slos {
+interface Slos {
   id?: string;
   name: string;
   target_percentage: number;
@@ -49,7 +49,7 @@ export interface Slos {
   description?: string;
 }
 
-export interface SlosBudget {
+interface SlosBudget {
   total_error_budget: number;
   consumed: number;
   remaining: number;

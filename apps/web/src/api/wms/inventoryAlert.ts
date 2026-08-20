@@ -70,13 +70,13 @@ export interface AlertStatistics {
   alerts_by_material: MaterialAlertCount[];
 }
 
-export interface WarehouseAlertCount {
+interface WarehouseAlertCount {
   warehouse_id?: string;
   warehouse_name?: string;
   alert_count: number;
 }
 
-export interface MaterialAlertCount {
+interface MaterialAlertCount {
   material_code: string;
   material_name: string;
   alert_count: number;
@@ -136,21 +136,21 @@ export interface InventoryAlertRecord {
   updated_at: string;
 }
 
-export interface AlertListResponse {
+interface AlertListResponse {
   alerts: InventoryAlert[];
   total: number;
   page: number;
   page_size: number;
 }
 
-export interface AlertRuleListResponse {
+interface AlertRuleListResponse {
   rules: InventoryAlertRule[];
   total: number;
   page: number;
   page_size: number;
 }
 
-export interface AlertRecordListResponse {
+interface AlertRecordListResponse {
   records: InventoryAlertRecord[];
   total: number;
   page: number;

@@ -11,10 +11,9 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export type MovementType =
-  'putaway' | 'pick' | 'transfer' | 'adjustment' | 'return' | 'scrap' | 'count';
+type MovementType = 'putaway' | 'pick' | 'transfer' | 'adjustment' | 'return' | 'scrap' | 'count';
 
-export type MovementStatus = 'pending' | 'completed' | 'cancelled';
+type MovementStatus = 'pending' | 'completed' | 'cancelled';
 
 export interface InventoryMovement {
   id: string;
@@ -68,7 +67,7 @@ export interface InventoryMovementQueryParams {
   end_date?: string;
 }
 
-export interface InventoryMovementListResponse {
+interface InventoryMovementListResponse {
   items: InventoryMovement[];
   total: number;
   page: number;

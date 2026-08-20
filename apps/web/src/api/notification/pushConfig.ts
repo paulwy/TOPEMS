@@ -35,7 +35,7 @@ export interface PushConfig {
   updated_at: string;
 }
 
-export interface CreatePushConfigRequest {
+interface CreatePushConfigRequest {
   web_push_enabled?: boolean;
   mobile_push_enabled?: boolean;
   email_enabled?: boolean;
@@ -46,7 +46,7 @@ export interface CreatePushConfigRequest {
   timezone?: string;
 }
 
-export interface UpdatePushConfigRequest extends Partial<CreatePushConfigRequest> {}
+interface UpdatePushConfigRequest extends Partial<CreatePushConfigRequest> {}
 
 export interface PushChannel {
   id: string;
@@ -59,14 +59,14 @@ export interface PushChannel {
   updated_at: string;
 }
 
-export interface CreatePushChannelRequest {
+interface CreatePushChannelRequest {
   channel_type: PushChannelType;
   name: string;
   config: Record<string, unknown>;
   status?: PushStatus;
 }
 
-export interface UpdatePushChannelRequest {
+interface UpdatePushChannelRequest {
   name?: string;
   config?: Record<string, unknown>;
   status?: PushStatus;
@@ -86,7 +86,7 @@ export interface PushPreference {
   updated_at: string;
 }
 
-export interface UpdatePushPreferenceRequest {
+interface UpdatePushPreferenceRequest {
   notification_categories?: Record<string, boolean>;
   priority_filter?: number;
   desktop_notification?: boolean;

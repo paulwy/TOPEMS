@@ -29,14 +29,14 @@ export interface UpdateProductRequest {
   status?: string;
 }
 
-export interface ProductQuery {
+interface ProductQuery {
   page?: number;
   page_size?: number;
   search?: string;
   status?: string;
 }
 
-export interface ProductListResponse {
+interface ProductListResponse {
   products: Product[];
   total: number;
   page: number;

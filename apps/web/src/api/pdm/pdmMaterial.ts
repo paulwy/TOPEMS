@@ -29,14 +29,14 @@ export interface UpdateMaterialRequest {
   status?: string;
 }
 
-export interface MaterialQuery {
+interface MaterialQuery {
   page?: number;
   page_size?: number;
   search?: string;
   status?: string;
 }
 
-export interface MaterialListResponse {
+interface MaterialListResponse {
   materials: Material[];
   total: number;
   page: number;

@@ -27,7 +27,7 @@ import { aiAssistantApi } from './aiAssistant';
 import { reportApi } from './report';
 import { approvalEnhancedApi } from './approvalEnhanced';
 
-export interface PatrolRecord {
+interface PatrolRecord {
   id: string;
   title: string;
   description?: string;
@@ -52,7 +52,7 @@ interface CreatePatrolRecordRequest {
   checked_by: string;
 }
 
-export interface ScanRecord {
+interface ScanRecord {
   id: string;
   barcode: string;
   location_lat: number;
@@ -64,7 +64,7 @@ export interface ScanRecord {
   created_at: string;
 }
 
-export interface CreateScanRecordRequest {
+interface CreateScanRecordRequest {
   barcode: string;
   location_lat: number;
   location_lng: number;
@@ -73,7 +73,7 @@ export interface CreateScanRecordRequest {
   operator: string;
 }
 
-export interface PhotoEvidence {
+interface PhotoEvidence {
   id: string;
   title: string;
   description?: string;
@@ -121,7 +121,7 @@ interface CreateAudioRecordingRequest {
   recorded_by: string;
 }
 
-export interface VideoRecording {
+interface VideoRecording {
   id: string;
   title: string;
   description?: string;
@@ -140,7 +140,7 @@ export interface VideoRecording {
   created_at: string;
 }
 
-export interface CreateVideoRecordingRequest {
+interface CreateVideoRecordingRequest {
   title: string;
   description?: string;
   start_location_lat: number;
@@ -151,7 +151,7 @@ export interface CreateVideoRecordingRequest {
   recorded_by: string;
 }
 
-export interface MobileTask {
+interface MobileTask {
   id: string;
   title: string;
   description?: string;
@@ -239,7 +239,7 @@ export interface CreateLeaveRequest {
   reason: string;
 }
 
-export interface PushNotification {
+interface PushNotification {
   id: string;
   title: string;
   content: string;
@@ -267,7 +267,7 @@ export interface PushTemplate {
   status: 'active' | 'draft' | 'disabled';
 }
 
-export interface OfflineSyncStatus {
+interface OfflineSyncStatus {
   last_sync_time?: string;
   pending_records: number;
   total_records: number;
@@ -837,7 +837,7 @@ export type {
   FileType,
 } from './media';
 
-export type { UserProfile, UpdateProfileRequest } from './user';
+export type { UserProfile } from './user';
 
 export type {
   WorkflowInstance,

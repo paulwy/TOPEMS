@@ -34,11 +34,11 @@ export interface ArchivedNotification {
   archived_at: string;
 }
 
-export interface AutoArchiveResponse {
+interface AutoArchiveResponse {
   archived_count: number;
 }
 
-export interface ArchivedListResponse {
+interface ArchivedListResponse {
   notifications: ArchivedNotification[];
   total: number;
   page: number;

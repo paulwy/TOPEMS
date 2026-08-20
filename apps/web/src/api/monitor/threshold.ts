@@ -1,7 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface Threshold {
+interface Threshold {
   id: string;
   metric_name: string;
   metric_code?: string;
@@ -17,7 +17,7 @@ export interface Threshold {
   updated_at: string;
 }
 
-export interface ThresholdEvaluateResult {
+interface ThresholdEvaluateResult {
   metric_name: string;
   current_value: number;
   status: 'normal' | 'warning' | 'critical';

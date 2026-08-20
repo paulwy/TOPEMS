@@ -20,7 +20,7 @@ import apiClient from '../client';
 import type { ApiResponse } from '../client';
 import type { Ticket, TicketListResponse } from './types';
 
-export interface TicketTag {
+interface TicketTag {
   id: string;
   tenant_id: string;
   name: string;

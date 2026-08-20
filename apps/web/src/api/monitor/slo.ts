@@ -100,7 +100,7 @@ export interface SloViolation {
   created_at: string;
 }
 
-export interface CreateSloRequest {
+interface CreateSloRequest {
   name: string;
   description?: string;
   slo_type: SloType;

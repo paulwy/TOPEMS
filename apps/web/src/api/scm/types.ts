@@ -614,7 +614,7 @@ export interface SyncDetailRecord {
 /**
  * 供应商送货预约
  */
-export type DeliveryAppointmentStatus =
+type DeliveryAppointmentStatus =
   'pending' | 'approved' | 'rejected' | 'arrived' | 'completed' | 'cancelled';
 
 export interface SupplierDeliveryAppointment {
@@ -799,7 +799,7 @@ export interface PurchaseRequisition {
   updated_at: string;
 }
 
-export interface PurchaseRequisitionItem {
+interface PurchaseRequisitionItem {
   id: string;
   requisition_id: string;
   line_number: number;
@@ -827,7 +827,7 @@ export interface CreatePurchaseRequisitionRequest {
   items?: CreatePurchaseRequisitionItemRequest[];
 }
 
-export interface CreatePurchaseRequisitionItemRequest {
+interface CreatePurchaseRequisitionItemRequest {
   product_code?: string;
   product_name: string;
   specification?: string;
@@ -880,7 +880,7 @@ export interface PurchaseContract {
   updated_at: string;
 }
 
-export interface PurchaseContractItem {
+interface PurchaseContractItem {
   id: string;
   contract_id: string;
   line_number: number;
@@ -913,7 +913,7 @@ export interface CreatePurchaseContractRequest {
   items?: CreatePurchaseContractItemRequest[];
 }
 
-export interface CreatePurchaseContractItemRequest {
+interface CreatePurchaseContractItemRequest {
   product_code?: string;
   product_name: string;
   specification?: string;
@@ -978,7 +978,7 @@ export interface SupplierAdmission {
   updated_at: string;
 }
 
-export interface SupplierAdmissionAuditItem {
+interface SupplierAdmissionAuditItem {
   id: string;
   admission_id: string;
   audit_item: string;

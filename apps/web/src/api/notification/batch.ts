@@ -93,21 +93,21 @@ export interface BulkArchiveRequest {
   notification_types?: NotificationTypeEnum[];
 }
 
-export interface BulkUnarchiveRequest {
+interface BulkUnarchiveRequest {
   ids: string[];
 }
 
-export interface BulkMarkReadRequest {
+interface BulkMarkReadRequest {
   ids?: string[];
   notification_types?: NotificationTypeEnum[];
   older_than_days?: number;
 }
 
-export interface BulkMarkUnreadRequest {
+interface BulkMarkUnreadRequest {
   ids: string[];
 }
 
-export interface BulkDeleteRequest {
+interface BulkDeleteRequest {
   ids?: string[];
   older_than_days?: number;
   notification_types?: NotificationTypeEnum[];

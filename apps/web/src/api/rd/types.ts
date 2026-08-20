@@ -9,7 +9,7 @@ export interface ProjectConfig {
   [key: string]: unknown;
 }
 
-export interface BenefitTarget {
+interface BenefitTarget {
   [key: string]: unknown;
 }
 
@@ -256,38 +256,38 @@ export interface BatchOperationResult {
   errors: string[];
 }
 
-export interface DashboardProgress {
+interface DashboardProgress {
   current: number;
   total: number;
   percentage: number;
 }
 
-export interface DashboardBudget {
+interface DashboardBudget {
   total: number;
   spent: number;
   remaining: number;
   percentage: number;
 }
 
-export interface DashboardMember {
+interface DashboardMember {
   id: string;
   name: string;
   role: string;
   avatar?: string;
 }
 
-export interface DashboardEquipment {
+interface DashboardEquipment {
   id: string;
   name: string;
   status: string;
   usage_rate?: number;
 }
 
-export interface DashboardBenefit {
+interface DashboardBenefit {
   [key: string]: unknown;
 }
 
-export interface DashboardRisk {
+interface DashboardRisk {
   id: string;
   name: string;
   level: string;
@@ -323,7 +323,7 @@ export interface GanttMilestone {
   status: string;
 }
 
-export interface GanttResourceAssignment {
+interface GanttResourceAssignment {
   task_id: string;
   task_name: string;
   start_date?: string;
@@ -551,7 +551,7 @@ export interface MaterialQueryParams {
 
 export type { Experiment as LegacyExperimentRecord };
 
-export interface CreateExperimentRequestLegacy {
+interface CreateExperimentRequestLegacy {
   project_id: string;
   title: string;
   description: string;
@@ -561,7 +561,7 @@ export interface CreateExperimentRequestLegacy {
   experimenter: string;
 }
 
-export interface UpdateExperimentRequestLegacy {
+interface UpdateExperimentRequestLegacy {
   title?: string;
   description?: string;
   experiment_type?: string;

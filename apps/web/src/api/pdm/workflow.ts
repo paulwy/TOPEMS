@@ -27,7 +27,7 @@ export interface WorkflowInstance {
   created_at: string;
 }
 
-export interface StartWorkflowRequest {
+interface StartWorkflowRequest {
   workflow_id: string;
   business_type?: string;
   business_id?: string;

@@ -23,7 +23,7 @@ export interface Plugin {
   created_at?: string;
 }
 
-export interface PluginPermission {
+interface PluginPermission {
   id: string;
   plugin_code: string;
   permission_code: string;
@@ -74,7 +74,7 @@ export interface TenantInstalledPlugin {
   last_heartbeat?: string;
 }
 
-export interface PluginWithStatus {
+interface PluginWithStatus {
   plugin: Plugin;
   is_owned: boolean;
   tenant_plugin?: TenantPlugin;
@@ -91,7 +91,7 @@ export interface PluginRuntimeInfo {
   permissions: Array<{ code: string; name: string; description: string }>;
 }
 
-export interface PluginRuntimeConfig {
+interface PluginRuntimeConfig {
   port: number;
   health_endpoint: string;
   base_path: string;

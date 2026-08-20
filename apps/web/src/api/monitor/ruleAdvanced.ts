@@ -1,7 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface RuleAdvancedConfig {
+interface RuleAdvancedConfig {
   evaluation_interval_seconds?: number;
   mute_duration_minutes?: number;
   repeat_every_minutes?: number;
@@ -10,7 +10,7 @@ export interface RuleAdvancedConfig {
   severity_map?: Record<string, string>;
 }
 
-export interface RuleEscalationLevel {
+interface RuleEscalationLevel {
   level: number;
   after_minutes: number;
   target_type: 'user' | 'group' | 'webhook' | 'email';
@@ -18,14 +18,14 @@ export interface RuleEscalationLevel {
   severity_override?: string;
 }
 
-export interface RuleRoutingConfig {
+interface RuleRoutingConfig {
   channel: 'email' | 'sms' | 'webhook' | 'in_app' | 'phone';
   target: string;
   template_id?: string;
   enabled: boolean;
 }
 
-export interface RuleScheduledTrigger {
+interface RuleScheduledTrigger {
   cron_expression: string;
   timezone?: string;
   enabled: boolean;

@@ -27,7 +27,7 @@ export interface UserProfile {
   updated_at: string;
 }
 
-export interface UpdateProfileRequest {
+interface UpdateProfileRequest {
   full_name?: string;
   email?: string;
   phone?: string;

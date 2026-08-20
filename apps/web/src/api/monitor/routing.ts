@@ -74,7 +74,7 @@ export interface ScheduledTrigger {
   updated_at: string;
 }
 
-export interface RoutingConfigInput {
+interface RoutingConfigInput {
   channel: RoutingChannel;
   target: string;
   target_type?: 'user' | 'group' | 'webhook';
@@ -84,7 +84,7 @@ export interface RoutingConfigInput {
   conditions?: Record<string, unknown>;
 }
 
-export interface EscalationLevelInput {
+interface EscalationLevelInput {
   level: number;
   after_minutes: number;
   target_type: EscalationTargetType;
@@ -94,7 +94,7 @@ export interface EscalationLevelInput {
   enabled?: boolean;
 }
 
-export interface AdvancedConfigInput {
+interface AdvancedConfigInput {
   evaluation_interval_seconds?: number;
   mute_duration_minutes?: number;
   repeat_every_minutes?: number;

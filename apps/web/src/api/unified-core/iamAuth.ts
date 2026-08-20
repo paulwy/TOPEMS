@@ -1,21 +1,21 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface IamLoginRequest {
+interface IamLoginRequest {
   email: string;
   password: string;
   mfa_code?: string;
   remember?: boolean;
 }
 
-export interface IamRegisterRequest {
+interface IamRegisterRequest {
   email: string;
   password: string;
   name: string;
   phone?: string;
 }
 
-export interface IamUser {
+interface IamUser {
   id: string;
   email: string;
   name: string;
@@ -26,7 +26,7 @@ export interface IamUser {
   created_at?: string;
 }
 
-export interface IamAuthResponse {
+interface IamAuthResponse {
   token: string;
   refresh_token?: string;
   user: IamUser;

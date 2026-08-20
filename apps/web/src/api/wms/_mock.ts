@@ -69,41 +69,41 @@ function uuid(rnd: () => number, prefix: string): string {
 // ============================================================================
 // BI 聚合类型
 // ============================================================================
-export interface TurnoverDatum {
+interface TurnoverDatum {
   warehouse: string;
   month: string;
   turnoverRate: number;
   days: number;
 }
 
-export interface ParetoDatum {
+interface ParetoDatum {
   sku: string;
   amount: number;
   cumulative: number;
 }
 
-export interface FlowDatum {
+interface FlowDatum {
   date: string;
   inboundQty: number;
   outboundQty: number;
   net: number;
 }
 
-export interface AbcCategory {
+interface AbcCategory {
   category: 'A' | 'B' | 'C';
   count: number;
   amount: number;
   percent: number;
 }
 
-export interface LocationDatum {
+interface LocationDatum {
   area: string;
   utilization: number;
   vacancy: number;
   deadStock: number;
 }
 
-export interface FulfillmentDatum {
+interface FulfillmentDatum {
   warehouse: string;
   onTimeRate: number;
   avgHours: number;

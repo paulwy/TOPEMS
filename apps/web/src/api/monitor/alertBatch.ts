@@ -15,7 +15,7 @@ export interface AlertStatistics {
   avg_resolution_time_minutes?: number;
 }
 
-export interface AlertHistoryEntry {
+interface AlertHistoryEntry {
   id: string;
   alert_id: string;
   event_type: 'created' | 'updated' | 'acknowledged' | 'resolved' | 'escalated';

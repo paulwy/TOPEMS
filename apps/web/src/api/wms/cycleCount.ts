@@ -15,7 +15,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface CycleCountConfig {
+interface CycleCountConfig {
   id: string;
   warehouse_id: string;
   warehouse_name?: string;
@@ -31,7 +31,7 @@ export interface CycleCountConfig {
   updated_at: string;
 }
 
-export interface CreateCycleCountConfigRequest {
+interface CreateCycleCountConfigRequest {
   warehouse_id: string;
   location_id?: string;
   material_category?: string;
@@ -39,7 +39,7 @@ export interface CreateCycleCountConfigRequest {
   priority_level?: number;
 }
 
-export interface UpdateCycleCountConfigRequest {
+interface UpdateCycleCountConfigRequest {
   warehouse_id?: string;
   location_id?: string;
   material_category?: string;
@@ -48,7 +48,7 @@ export interface UpdateCycleCountConfigRequest {
   is_active?: boolean;
 }
 
-export interface CycleCountQueryParams {
+interface CycleCountQueryParams {
   page?: number;
   page_size?: number;
   warehouse_id?: string;
