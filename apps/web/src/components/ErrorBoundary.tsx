@@ -763,7 +763,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 export default ErrorBoundary;
 
 // 高阶组件：包装普通组件添加错误边界
-export const withErrorBoundary = <P extends object>(
+const withErrorBoundary = <P extends object>(
   Component: React.ComponentType<P>,
   options?: ErrorBoundaryOptions
 ): React.ComponentType<P> => {
@@ -791,7 +791,7 @@ export const withErrorBoundary = <P extends object>(
 };
 
 // 懒加载组件带错误边界
-export const lazyWithErrorBoundary = <P extends object>(
+const lazyWithErrorBoundary = <P extends object>(
   importFn: () => Promise<{ default: React.ComponentType<P> }>,
   options?: ErrorBoundaryOptions
 ): React.LazyExoticComponent<React.ComponentType<P>> => {
@@ -822,7 +822,7 @@ export const PageErrorBoundary: React.FC<ErrorBoundaryOptions & { children: Reac
 };
 
 // 模块级错误边界 Provider
-export const ModuleErrorBoundary: React.FC<ErrorBoundaryOptions & { children: ReactNode }> = ({
+const ModuleErrorBoundary: React.FC<ErrorBoundaryOptions & { children: ReactNode }> = ({
   children,
   ...options
 }) => {
@@ -837,7 +837,7 @@ export const ModuleErrorBoundary: React.FC<ErrorBoundaryOptions & { children: Re
 };
 
 // 组件级错误边界 HOC
-export const withComponentErrorBoundary = <P extends object>(
+const withComponentErrorBoundary = <P extends object>(
   Component: React.ComponentType<P>,
   options?: Omit<ErrorBoundaryOptions, 'level'>
 ): React.ComponentType<P> => {
@@ -845,7 +845,7 @@ export const withComponentErrorBoundary = <P extends object>(
 };
 
 // Suspense 与错误边界组合
-export const SuspenseWithErrorBoundary: React.FC<{
+const SuspenseWithErrorBoundary: React.FC<{
   children: ReactNode;
   fallback?: ReactNode;
   options?: ErrorBoundaryOptions;
@@ -879,7 +879,7 @@ const DefaultLoading: React.FC = () => (
 );
 
 // 错误历史工具
-export const errorHistory = {
+const errorHistory = {
   get: ErrorHistoryManager.getHistory,
   clear: ErrorHistoryManager.clearHistory,
 };

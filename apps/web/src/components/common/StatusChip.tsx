@@ -22,7 +22,7 @@ export interface StatusChipProps {
   sx?: ChipProps['sx'];
 }
 
-export const DEFAULT_STATUS_MAPPING: Record<
+const DEFAULT_STATUS_MAPPING: Record<
   string,
   Omit<StatusMapping, 'label'> & { labelKey: string }
 > = {

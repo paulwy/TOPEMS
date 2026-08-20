@@ -62,7 +62,7 @@ export const Default: Story = {
   },
 };
 
-export const WithText: Story = {
+const WithText: Story = {
   args: {
     variant: 'text',
     label: '返回列表',
@@ -72,7 +72,7 @@ export const WithText: Story = {
   },
 };
 
-export const Outlined: Story = {
+const Outlined: Story = {
   args: {
     variant: 'outlined',
     label: '返回',
@@ -82,7 +82,7 @@ export const Outlined: Story = {
   },
 };
 
-export const WithCustomLabel: Story = {
+const WithCustomLabel: Story = {
   args: {
     variant: 'text',
     label: '返回订单列表',
@@ -93,7 +93,7 @@ export const WithCustomLabel: Story = {
   },
 };
 
-export const CustomOnBack: Story = {
+const CustomOnBack: Story = {
   args: {
     variant: 'text',
     label: '自定义返回',

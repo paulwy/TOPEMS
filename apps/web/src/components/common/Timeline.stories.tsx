@@ -89,7 +89,7 @@ export const Default: Story = {
   },
 };
 
-export const Horizontal: Story = {
+const Horizontal: Story = {
   args: {
     items: basicItems,
     orientation: 'horizontal',
@@ -103,7 +103,7 @@ export const FilledVariant: Story = {
   },
 };
 
-export const SoftVariant: Story = {
+const SoftVariant: Story = {
   args: {
     items: basicItems,
     variant: 'soft',
@@ -117,7 +117,7 @@ export const OutlinedVariant: Story = {
   },
 };
 
-export const WithStatuses: Story = {
+const WithStatuses: Story = {
   args: {
     items: [
       {
@@ -150,7 +150,7 @@ export const LargeSize: Story = {
   },
 };
 
-export const WithContent: Story = {
+const WithContent: Story = {
   args: {
     items: [
       {
@@ -181,7 +181,7 @@ export const WithContent: Story = {
   },
 };
 
-export const WithLoading: Story = {
+const WithLoading: Story = {
   args: {
     items: [
       { id: '1', title: '已加载步骤', status: 'completed', description: '数据已加载' },

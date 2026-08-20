@@ -75,7 +75,7 @@ export const Default: Story = {
   },
 };
 
-export const SingleSeries: Story = {
+const SingleSeries: Story = {
   args: {
     data: employeeCapabilityData,
     dataKey: 'subject',
@@ -97,7 +97,7 @@ export const MultiSeries: Story = {
   },
 };
 
-export const NoLegend: Story = {
+const NoLegend: Story = {
   args: {
     data: employeeCapabilityData,
     dataKey: 'subject',

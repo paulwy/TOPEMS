@@ -73,35 +73,35 @@ export const Default: Story = {
   },
 };
 
-export const WithImage: Story = {
+const WithImage: Story = {
   args: {
     name: '张三',
     src: 'https://i.pravatar.cc/150?img=1',
   },
 };
 
-export const StatusOnline: Story = {
+const StatusOnline: Story = {
   args: {
     name: '张三',
     status: 'online',
   },
 };
 
-export const StatusOffline: Story = {
+const StatusOffline: Story = {
   args: {
     name: '李四',
     status: 'offline',
   },
 };
 
-export const StatusBusy: Story = {
+const StatusBusy: Story = {
   args: {
     name: '王五',
     status: 'busy',
   },
 };
 
-export const StatusAway: Story = {
+const StatusAway: Story = {
   args: {
     name: '赵六',
     status: 'away',
@@ -131,7 +131,7 @@ export const AllStatuses: Story = {
   ),
 };
 
-export const AllSizes: Story = {
+const AllSizes: Story = {
   render: () => (
     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
       <Avatar
@@ -158,7 +158,7 @@ export const AllSizes: Story = {
   ),
 };
 
-export const AvatarGroupDefault: Story = {
+const AvatarGroupDefault: Story = {
   render: () => (
     <AvatarGroup
       avatars={[
@@ -175,7 +175,7 @@ export const AvatarGroupDefault: Story = {
   ),
 };
 
-export const AvatarGroupSmall: Story = {
+const AvatarGroupSmall: Story = {
   render: () => (
     <AvatarGroup
       avatars={[{ name: '张三' }, { name: '李四' }, { name: '王五' }, { name: '赵六' }]}
@@ -192,7 +192,7 @@ export const WithBadge: Story = {
   },
 };
 
-export const WithBadgeString: Story = {
+const WithBadgeString: Story = {
   args: {
     name: '张三',
     badge: '新',
@@ -200,7 +200,7 @@ export const WithBadgeString: Story = {
   },
 };
 
-export const WithBadgeError: Story = {
+const WithBadgeError: Story = {
   args: {
     name: '张三',
     badge: 99,
@@ -208,7 +208,7 @@ export const WithBadgeError: Story = {
   },
 };
 
-export const WithStatusAndBadge: Story = {
+const WithStatusAndBadge: Story = {
   render: () => (
     <Box sx={{ display: 'flex', gap: 3, alignItems: 'center' }}>
       <Avatar
@@ -226,7 +226,7 @@ export const WithStatusAndBadge: Story = {
   ),
 };
 
-export const SquareVariant: Story = {
+const SquareVariant: Story = {
   render: () => (
     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
       <Avatar
@@ -245,7 +245,7 @@ export const SquareVariant: Story = {
   ),
 };
 
-export const CustomColor: Story = {
+const CustomColor: Story = {
   render: () => (
     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
       <Avatar

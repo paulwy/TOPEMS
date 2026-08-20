@@ -12,7 +12,7 @@ interface AddressbookSidebarProps {
   onDepartmentSelect: (_id: string | null) => void;
 }
 
-export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
+const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
   departments,
   selectedType,
   onTypeSelect,

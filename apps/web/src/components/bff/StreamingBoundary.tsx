@@ -235,7 +235,7 @@ interface StreamingTrackState {
  * </StreamingBoundary>
  * ```
  */
-export const StreamingBoundary: React.FC<StreamingBoundaryProps> = ({
+const StreamingBoundary: React.FC<StreamingBoundaryProps> = ({
   children,
   trackStreaming = true,
   onError,
@@ -440,7 +440,7 @@ export interface StreamingLayerProps {
  * </StreamingLayer>
  * ```
  */
-export const StreamingLayer: React.FC<StreamingLayerProps> = ({
+const StreamingLayer: React.FC<StreamingLayerProps> = ({
   children,
   name,
   priority = 2,

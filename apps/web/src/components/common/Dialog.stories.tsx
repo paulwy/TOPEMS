@@ -72,7 +72,7 @@ export const Default: Story = {
   },
 };
 
-export const WithActions: Story = {
+const WithActions: Story = {
   args: {
     open: true,
     title: '确认操作',
@@ -88,7 +88,7 @@ export const WithActions: Story = {
   },
 };
 
-export const LargeContent: Story = {
+const LargeContent: Story = {
   args: {
     open: true,
     title: '用户详情',
@@ -109,7 +109,7 @@ export const LargeContent: Story = {
   },
 };
 
-export const DangerConfirm: Story = {
+const DangerConfirm: Story = {
   args: {
     open: true,
     title: '删除确认',
@@ -127,7 +127,7 @@ export const DangerConfirm: Story = {
   },
 };
 
-export const Centered: Story = {
+const Centered: Story = {
   args: {
     open: true,
     title: '居中对话框',
@@ -140,7 +140,7 @@ export const Centered: Story = {
   },
 };
 
-export const LoadingConfirm: Story = {
+const LoadingConfirm: Story = {
   args: {
     open: true,
     title: '提交确认',

@@ -115,7 +115,7 @@ export const ReadOnly: Story = {
   },
 };
 
-export const LimitedActions: Story = {
+const LimitedActions: Story = {
   args: {
     schema: employeeSchema,
     apiAdapter: employeeApi,
@@ -124,7 +124,7 @@ export const LimitedActions: Story = {
   },
 };
 
-export const WithBreadcrumbs: Story = {
+const WithBreadcrumbs: Story = {
   args: {
     schema: employeeSchema,
     apiAdapter: employeeApi,

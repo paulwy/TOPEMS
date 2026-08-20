@@ -22,7 +22,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const NumberFieldDefault: Story = {
+const NumberFieldDefault: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: 300 }}>
       <Typography variant='subtitle2'>NumberField - 数字输入</Typography>
@@ -35,7 +35,7 @@ export const NumberFieldDefault: Story = {
   ),
 };
 
-export const CurrencyFieldDefault: Story = {
+const CurrencyFieldDefault: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: 300 }}>
       <Typography variant='subtitle2'>CurrencyField - 货币输入</Typography>
@@ -48,7 +48,7 @@ export const CurrencyFieldDefault: Story = {
   ),
 };
 
-export const PercentFieldDefault: Story = {
+const PercentFieldDefault: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: 300 }}>
       <Typography variant='subtitle2'>PercentField - 百分比输入</Typography>
@@ -61,7 +61,7 @@ export const PercentFieldDefault: Story = {
   ),
 };
 
-export const AllFields: Story = {
+const AllFields: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: 350 }}>
       <Box>

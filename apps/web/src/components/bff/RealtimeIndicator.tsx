@@ -57,7 +57,7 @@ export interface RealtimeIndicatorProps {
 /**
  * BFF 实时状态指示器
  */
-export const RealtimeIndicator: React.FC<RealtimeIndicatorProps> = ({
+const RealtimeIndicator: React.FC<RealtimeIndicatorProps> = ({
   compact = false,
   showCacheVersion = true,
   showSubscriptions = true,

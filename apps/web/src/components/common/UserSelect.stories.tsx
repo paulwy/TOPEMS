@@ -107,7 +107,7 @@ export const Disabled: Story = {
   },
 };
 
-export const NoClear: Story = {
+const NoClear: Story = {
   args: {
     users: sampleUsers,
     allowClear: false,

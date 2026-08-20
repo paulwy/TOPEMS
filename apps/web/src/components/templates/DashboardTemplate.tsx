@@ -955,7 +955,7 @@ export interface DataTableFromSchemaOptions {
   loading?: boolean;
 }
 
-export function dataTableFromSchema(
+function dataTableFromSchema(
   schema: EntitySchema,
   options: DataTableFromSchemaOptions
 ): DataTableConfig {

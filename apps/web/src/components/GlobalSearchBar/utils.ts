@@ -3,10 +3,10 @@ import type { GroupedResults, SearchFilter, SearchFilterOption } from './types';
 import type { Theme } from '@mui/material/styles';
 import i18n from '@/i18n';
 
-export const SEARCH_HISTORY_KEY = 'topems_search_history';
+const SEARCH_HISTORY_KEY = 'topems_search_history';
 export const MAX_HISTORY_ITEMS = 10;
 
-export const serviceLabels: Record<string, string> = {
+const serviceLabels: Record<string, string> = {
   erp: i18n.t('components.utils.erp_0'),
   crm: i18n.t('components.utils.k1'),
   bi: i18n.t('components.utils.k2'),
@@ -36,7 +36,7 @@ export const typeLabels: Record<string, string> = {
   notification: i18n.t('components.utils.k23'),
 };
 
-export const searchSuggestions = [
+const searchSuggestions = [
   i18n.t('components.utils.k24'),
   i18n.t('components.utils.k25'),
   i18n.t('components.utils.k26'),
@@ -78,11 +78,11 @@ export const searchSuggestions = [
   i18n.t('components.utils.k62'),
 ];
 
-export const getServiceLabel = (service: string) => {
+const getServiceLabel = (service: string) => {
   return serviceLabels[service] || service;
 };
 
-export const getServiceColor = (service: string, theme: Theme) => {
+const getServiceColor = (service: string, theme: Theme) => {
   const colors: Record<string, string> = {
     erp: theme.palette.primary.main,
     crm: theme.palette.success.main,
@@ -100,7 +100,7 @@ export const getModuleColor = (module: string, theme: Theme) => {
   return getServiceColor(module, theme);
 };
 
-export const groupResultsByService = (results: SearchResult[]): GroupedResults[] => {
+const groupResultsByService = (results: SearchResult[]): GroupedResults[] => {
   const groups = new Map<string, SearchResult[]>();
   results.forEach((result) => {
     if (!groups.has(result.service)) {
@@ -143,7 +143,7 @@ export const getSearchSuggestions = (query: string, limit = 6): string[] => {
   return searchSuggestions.filter((s) => s.toLowerCase().includes(lowerQuery)).slice(0, limit);
 };
 
-export const fuzzyMatch = (text: string, query: string): boolean => {
+const fuzzyMatch = (text: string, query: string): boolean => {
   if (!query.trim()) return true;
   const lowerText = text.toLowerCase();
   const lowerQuery = query.toLowerCase();

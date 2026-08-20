@@ -7,7 +7,7 @@ interface AddressbookHeaderProps {
   onExport: () => void;
 }
 
-export const AddressbookHeader: React.FC<AddressbookHeaderProps> = ({
+const AddressbookHeader: React.FC<AddressbookHeaderProps> = ({
   searchQuery,
   onSearchChange,
   onExport,

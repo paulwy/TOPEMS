@@ -46,38 +46,38 @@ export const Default: Story = {
   },
 };
 
-export const JustNow: Story = {
+const JustNow: Story = {
   args: {
     date: oneMinuteAgo.toISOString(),
   },
 };
 
-export const HoursAgo: Story = {
+const HoursAgo: Story = {
   args: {
     date: oneHourAgo.toISOString(),
   },
 };
 
-export const DaysAgo: Story = {
+const DaysAgo: Story = {
   args: {
     date: oneDayAgo.toISOString(),
   },
 };
 
-export const WeeksAgo: Story = {
+const WeeksAgo: Story = {
   args: {
     date: oneWeekAgo.toISOString(),
   },
 };
 
-export const WithAbsoluteTime: Story = {
+const WithAbsoluteTime: Story = {
   args: {
     date: oneDayAgo.toISOString(),
     showAbsolute: true,
   },
 };
 
-export const MultipleTimes: Story = {
+const MultipleTimes: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', width: 400 }}>

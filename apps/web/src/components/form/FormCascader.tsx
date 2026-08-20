@@ -18,7 +18,7 @@ interface FormCascaderProps<T extends FieldValues> {
   locale?: CascaderLocale;
 }
 
-export function FormCascader<T extends FieldValues>({
+function FormCascader<T extends FieldValues>({
   name,
   control,
   options,

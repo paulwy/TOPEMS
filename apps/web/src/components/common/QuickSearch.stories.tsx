@@ -61,7 +61,7 @@ export const Default: Story = {
   },
 };
 
-export const WithSuggestions: Story = {
+const WithSuggestions: Story = {
   args: {
     placeholder: '搜索...',
     width: 500,
@@ -69,7 +69,7 @@ export const WithSuggestions: Story = {
   },
 };
 
-export const NoShortcut: Story = {
+const NoShortcut: Story = {
   args: {
     placeholder: '搜索...',
     width: 400,
@@ -93,7 +93,7 @@ export const Disabled: Story = {
   },
 };
 
-export const WithSuggestionsAndHistory: Story = {
+const WithSuggestionsAndHistory: Story = {
   args: {
     placeholder: '全局搜索...',
     width: 500,

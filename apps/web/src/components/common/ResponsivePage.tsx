@@ -6,7 +6,7 @@ export interface ResponsivePageProps {
   mobile: React.ReactNode;
 }
 
-export function ResponsivePage({ desktop, mobile }: ResponsivePageProps): React.ReactNode {
+function ResponsivePage({ desktop, mobile }: ResponsivePageProps): React.ReactNode {
   const isMobile = useIsMobile();
   return isMobile ? mobile : desktop;
 }

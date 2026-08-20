@@ -116,7 +116,7 @@ export const Default: Story = {
   ),
 };
 
-export const MultipleActions: Story = {
+const MultipleActions: Story = {
   render: () => (
     <Box sx={{ maxWidth: 375, margin: '0 auto' }}>
       <Typography

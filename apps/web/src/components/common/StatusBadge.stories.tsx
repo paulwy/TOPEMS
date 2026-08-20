@@ -134,14 +134,14 @@ export const Variants: Story = {
   ),
 };
 
-export const Clickable: Story = {
+const Clickable: Story = {
   args: {
     status: 'pending',
     clickable: true,
   },
 };
 
-export const HRMStatuses: Story = {
+const HRMStatuses: Story = {
   render: () => (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
       <StatusBadge status='employeeactive' />
@@ -152,7 +152,7 @@ export const HRMStatuses: Story = {
   ),
 };
 
-export const AttendanceStatuses: Story = {
+const AttendanceStatuses: Story = {
   render: () => (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
       <StatusBadge status='attendance_normal' />
@@ -164,7 +164,7 @@ export const AttendanceStatuses: Story = {
   ),
 };
 
-export const CustomStatusMap: Story = {
+const CustomStatusMap: Story = {
   args: {
     status: 'custom',
     statusMap: {

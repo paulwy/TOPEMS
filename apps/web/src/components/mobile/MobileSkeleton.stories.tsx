@@ -41,7 +41,7 @@ export const List: Story = {
   },
 };
 
-export const ListWithoutAvatar: Story = {
+const ListWithoutAvatar: Story = {
   args: {
     type: 'list',
     count: 6,

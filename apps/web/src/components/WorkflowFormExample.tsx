@@ -36,7 +36,7 @@ interface WorkflowFormExampleProps {
   initialValues?: Partial<WorkflowFormValues>;
 }
 
-export function WorkflowFormExample({ onSubmit, initialValues }: WorkflowFormExampleProps) {
+function WorkflowFormExample({ onSubmit, initialValues }: WorkflowFormExampleProps) {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const {

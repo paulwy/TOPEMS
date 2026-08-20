@@ -103,7 +103,7 @@ export const Required: Story = {
   },
 };
 
-export const Multiline: Story = {
+const Multiline: Story = {
   args: {
     name: 'description',
     label: '描述信息',

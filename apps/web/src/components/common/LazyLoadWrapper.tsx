@@ -7,7 +7,7 @@ interface LazyLoadWrapperProps {
   skeletonVariant?: 'dashboard' | 'list' | 'form' | 'detail';
 }
 
-export const LazyLoadWrapper: React.FC<LazyLoadWrapperProps> = ({
+const LazyLoadWrapper: React.FC<LazyLoadWrapperProps> = ({
   lazyComponent: LazyComponent,
   skeletonVariant = 'dashboard',
 }) => {

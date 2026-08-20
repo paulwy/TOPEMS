@@ -99,7 +99,7 @@ export const Default: Story = {
   },
 };
 
-export const EmptyComments: Story = {
+const EmptyComments: Story = {
   args: {
     comments: [],
     onAddComment: fn(),
@@ -108,7 +108,7 @@ export const EmptyComments: Story = {
   },
 };
 
-export const NoReply: Story = {
+const NoReply: Story = {
   args: {
     comments: sampleComments,
     allowReply: false,
@@ -117,7 +117,7 @@ export const NoReply: Story = {
   },
 };
 
-export const NoLike: Story = {
+const NoLike: Story = {
   args: {
     comments: sampleComments,
     allowLike: false,
@@ -135,7 +135,7 @@ export const ReadOnly: Story = {
   },
 };
 
-export const SingleComment: Story = {
+const SingleComment: Story = {
   args: {
     comments: [
       {

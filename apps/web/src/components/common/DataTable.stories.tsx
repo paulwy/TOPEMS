@@ -289,7 +289,7 @@ export const Default: Story = {
   },
 };
 
-export const WithSorting: Story = {
+const WithSorting: Story = {
   args: {
     columns: sortableColumns,
     data: sampleUsers,
@@ -302,7 +302,7 @@ export const WithSorting: Story = {
   },
 };
 
-export const WithPagination: Story = {
+const WithPagination: Story = {
   args: {
     columns,
     data: sampleUsers.slice(0, 10),
@@ -334,7 +334,7 @@ export const WithSelection: Story = {
   },
 };
 
-export const WithExpansion: Story = {
+const WithExpansion: Story = {
   args: {
     columns,
     data: sampleUsers.slice(0, 5),
@@ -370,7 +370,7 @@ export const WithExpansion: Story = {
   },
 };
 
-export const WithFiltering: Story = {
+const WithFiltering: Story = {
   args: {
     columns,
     data: sampleUsers,

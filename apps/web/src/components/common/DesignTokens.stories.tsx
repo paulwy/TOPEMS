@@ -788,7 +788,7 @@ export const Colors: Story = {
   render: () => <ColorsComponent />,
 };
 
-export const TypographyDemo: Story = {
+const TypographyDemo: Story = {
   name: '排版系统',
   render: () => <TypographyComponent />,
 };
@@ -803,7 +803,7 @@ export const Shadows: Story = {
   render: () => <ShadowsComponent />,
 };
 
-export const BorderRadius: Story = {
+const BorderRadius: Story = {
   name: '圆角系统',
   render: () => <BorderRadiusComponent />,
 };

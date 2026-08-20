@@ -163,7 +163,7 @@ const Toast = ({ id, title, message, type, duration, removeNotification }: Toast
   );
 };
 
-export function Toaster() {
+function Toaster() {
   const notifications = useNotificationStore((state) => state.notifications);
   const removeNotification = useNotificationStore((state) => state.removeNotification);
 

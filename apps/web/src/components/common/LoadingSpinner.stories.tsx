@@ -28,13 +28,13 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const SpinnerDefault: Story = {
+const SpinnerDefault: Story = {
   args: {
     size: 'md',
   },
 };
 
-export const SpinnerSizes: Story = {
+const SpinnerSizes: Story = {
   render: () => (
     <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
       <LoadingSpinner size='sm' />
@@ -44,7 +44,7 @@ export const SpinnerSizes: Story = {
   ),
 };
 
-export const OverlayWithToggle: Story = {
+const OverlayWithToggle: Story = {
   render: () => {
     const theme = useTheme();
     const [isLoading, setIsLoading] = useState(true);
@@ -81,7 +81,7 @@ export const Skeleton: Story = {
   ),
 };
 
-export const CardSkeleton: Story = {
+const CardSkeleton: Story = {
   render: () => (
     <div
       style={{

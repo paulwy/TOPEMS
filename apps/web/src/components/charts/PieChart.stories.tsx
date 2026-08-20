@@ -58,7 +58,7 @@ export const Default: Story = {
   },
 };
 
-export const CustomColors: Story = {
+const CustomColors: Story = {
   args: {
     data: deviceTypeData,
     title: '设备类型分布',
@@ -71,7 +71,7 @@ export const Minimal: Story = {
   },
 };
 
-export const SmallDataset: Story = {
+const SmallDataset: Story = {
   args: {
     data: [
       { name: '通过', value: 85 },

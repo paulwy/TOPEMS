@@ -78,7 +78,7 @@ export const Default: Story = {
   ),
 };
 
-export const Collapsible: Story = {
+const Collapsible: Story = {
   render: () => (
     <Box sx={{ width: 500 }}>
       <FormFieldGroup
@@ -107,7 +107,7 @@ export const Collapsible: Story = {
   ),
 };
 
-export const MultiColumnGrid: Story = {
+const MultiColumnGrid: Story = {
   render: () => (
     <Box sx={{ width: 700 }}>
       <FormFieldGroup
@@ -149,7 +149,7 @@ export const MultiColumnGrid: Story = {
   ),
 };
 
-export const RequiredMarker: Story = {
+const RequiredMarker: Story = {
   render: () => (
     <Box sx={{ width: 500 }}>
       <FormFieldGroup
@@ -195,7 +195,7 @@ export const WithTooltip: Story = {
   ),
 };
 
-export const MultipleGroups: Story = {
+const MultipleGroups: Story = {
   render: () => (
     <Box sx={{ width: 500, display: 'flex', flexDirection: 'column', gap: 2 }}>
       <FormFieldGroup
@@ -246,7 +246,7 @@ export const MultipleGroups: Story = {
   ),
 };
 
-export const TwoColumnLayout: Story = {
+const TwoColumnLayout: Story = {
   render: () => (
     <Box sx={{ width: 600 }}>
       <FormFieldGroup

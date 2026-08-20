@@ -68,7 +68,7 @@ export const Default: Story = {
   },
 };
 
-export const FirstStep: Story = {
+const FirstStep: Story = {
   args: {
     steps: defaultSteps,
     activeStep: 0,
@@ -110,7 +110,7 @@ export const OutlinedVariant: Story = {
   },
 };
 
-export const GradientVariant: Story = {
+const GradientVariant: Story = {
   args: {
     steps: defaultSteps,
     activeStep: 1,
@@ -118,7 +118,7 @@ export const GradientVariant: Story = {
   },
 };
 
-export const NoDescriptions: Story = {
+const NoDescriptions: Story = {
   args: {
     steps: defaultSteps.map((s) => ({ ...s, description: undefined })),
     activeStep: 1,
@@ -126,7 +126,7 @@ export const NoDescriptions: Story = {
   },
 };
 
-export const ManySteps: Story = {
+const ManySteps: Story = {
   args: {
     steps: [
       { label: '创建订单' },

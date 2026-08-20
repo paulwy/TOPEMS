@@ -103,7 +103,7 @@ export const WithError: Story = {
   },
 };
 
-export const WithClear: Story = {
+const WithClear: Story = {
   args: {
     name: 'department',
     label: '所属部门',
