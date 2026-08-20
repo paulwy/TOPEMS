@@ -26,14 +26,14 @@ import { logger } from '@/utils/logger';
 
 const autoShardLogger = logger.child({ prefix: 'AutoSharding' });
 
-export interface UseAutoShardingOptions extends ShardOptions {
+interface UseAutoShardingOptions extends ShardOptions {
   enabled?: boolean;
   autoDetect?: boolean;
   mergeStrategy?: 'paginated' | 'array' | 'custom';
   customMerge?: (results: unknown[]) => unknown;
 }
 
-export interface UseAutoShardingResult<T = unknown> {
+interface UseAutoShardingResult<T = unknown> {
   data: T | null;
   isLoading: boolean;
   isError: boolean;

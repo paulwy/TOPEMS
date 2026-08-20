@@ -9,7 +9,7 @@ import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 
 const ct = designTokens.colors;
-export interface BiPermissionStatsCardsProps {
+interface BiPermissionStatsCardsProps {
   rowPermissionsCount: number;
   dataPermissionsCount: number;
   enabledRowPermissionsCount: number;

@@ -30,7 +30,7 @@ export interface UsageData {
   requests: number;
 }
 
-export interface ModelUsageData {
+interface ModelUsageData {
   name: string;
   value: number;
 }

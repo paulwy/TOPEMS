@@ -87,7 +87,7 @@ export interface AlertStats {
   last1h: number;
 }
 
-export interface SmartAlertingConfig {
+interface SmartAlertingConfig {
   defaultCooldown: number;
   maxAlerts: number;
   enableCorrelation: boolean;

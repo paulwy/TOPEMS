@@ -50,9 +50,9 @@ export type ComponentType =
 
 export type DataSourceType = 'rest' | 'graphql' | 'websocket' | 'static' | 'database';
 export type FlowNodeType = 'trigger' | 'action' | 'condition' | 'loop' | 'transform' | 'output';
-export type FlowEdgeType = 'default' | 'true' | 'false' | 'error';
-export type CanvasStatus = 'draft' | 'preview' | 'published' | 'archived';
-export type PublishStatus = 'idle' | 'publishing' | 'success' | 'failed';
+type FlowEdgeType = 'default' | 'true' | 'false' | 'error';
+type CanvasStatus = 'draft' | 'preview' | 'published' | 'archived';
+type PublishStatus = 'idle' | 'publishing' | 'success' | 'failed';
 
 export interface CanvasComponent {
   id: string;
@@ -71,7 +71,7 @@ export interface CanvasComponent {
   animations?: AnimationConfig[];
 }
 
-export interface DataBindingConfig {
+interface DataBindingConfig {
   id: string;
   sourceType: DataSourceType;
   endpoint: string;
@@ -83,7 +83,7 @@ export interface DataBindingConfig {
   defaultValue?: unknown;
 }
 
-export interface AnimationConfig {
+interface AnimationConfig {
   trigger: 'mount' | 'hover' | 'click' | 'scroll';
   animation: string;
   duration: number;
@@ -118,7 +118,7 @@ export interface ThemeConfig {
   customTokens?: Record<string, string>;
 }
 
-export interface ColorTokens {
+interface ColorTokens {
   primary: string;
   secondary: string;
   accent: string;
@@ -133,7 +133,7 @@ export interface ColorTokens {
   info: string;
 }
 
-export interface TypographyTokens {
+interface TypographyTokens {
   fontFamily: string;
   h1: { size: string; weight: number; lineHeight: string };
   h2: { size: string; weight: number; lineHeight: string };
@@ -142,7 +142,7 @@ export interface TypographyTokens {
   caption: { size: string; weight: number; lineHeight: string };
 }
 
-export interface SpacingTokens {
+interface SpacingTokens {
   xs: string;
   sm: string;
   md: string;
@@ -164,7 +164,7 @@ export interface DataSourceConfig {
   transformScript?: string;
 }
 
-export interface FlowDefinition {
+interface FlowDefinition {
   id: string;
   name: string;
   description: string;
@@ -188,7 +188,7 @@ export interface FlowNode {
   outputs: string[];
 }
 
-export interface FlowEdge {
+interface FlowEdge {
   id: string;
   source: string;
   target: string;
@@ -197,20 +197,20 @@ export interface FlowEdge {
   condition?: string;
 }
 
-export interface FlowTrigger {
+interface FlowTrigger {
   id: string;
   type: 'event' | 'schedule' | 'webhook' | 'manual';
   config: Record<string, unknown>;
   enabled: boolean;
 }
 
-export interface FlowAction {
+interface FlowAction {
   id: string;
   type: 'api-call' | 'navigate' | 'show-message' | 'update-state' | 'emit-event' | 'custom';
   config: Record<string, unknown>;
 }
 
-export interface TemplateDefinition {
+interface TemplateDefinition {
   id: string;
   name: string;
   description: string;
@@ -228,7 +228,7 @@ export interface TemplateDefinition {
   updated_at: number;
 }
 
-export interface PublishRecord {
+interface PublishRecord {
   id: string;
   pageId: string;
   version: string;

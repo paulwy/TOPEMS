@@ -102,8 +102,8 @@ export const projectSchema = baseEntitySchema.extend({
   budget: fieldAmount().optional(),
 });
 
-export type BaseEntity = z.infer<typeof baseEntitySchema>;
-export type Party = z.infer<typeof partySchema>;
+type BaseEntity = z.infer<typeof baseEntitySchema>;
+type Party = z.infer<typeof partySchema>;
 export type Material = z.infer<typeof materialSchema>;
 export type Order = z.infer<typeof orderSchema>;
 export type Project = z.infer<typeof projectSchema>;

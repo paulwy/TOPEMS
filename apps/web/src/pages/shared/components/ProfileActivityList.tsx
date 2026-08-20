@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme, Box, Typography, Button, CircularProgress } from '@mui/material';
 import type { UseProfileReturn } from '../hooks/useProfile';
 
-export interface ProfileActivityListProps {
+interface ProfileActivityListProps {
   profile: UseProfileReturn;
 }
 

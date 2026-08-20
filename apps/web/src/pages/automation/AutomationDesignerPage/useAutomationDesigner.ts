@@ -15,7 +15,7 @@ import {
 } from './shared';
 import i18n from '@/i18n';
 
-export interface UseAutomationDesignerResult {
+interface UseAutomationDesignerResult {
   rules: AutomationRule[];
   selectedRuleId: string;
   setSelectedRuleId: (id: string) => void;

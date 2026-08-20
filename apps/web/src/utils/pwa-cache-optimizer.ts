@@ -3,10 +3,10 @@
  * 提供智能预缓存、stale-while-revalidate 优化和缓存命中率统计
  */
 
-export type CacheStrategy =
+type CacheStrategy =
   'cacheFirst' | 'networkFirst' | 'staleWhileRevalidate' | 'networkOnly' | 'cacheOnly';
 
-export interface RouteCacheConfig {
+interface RouteCacheConfig {
   /** 缓存名称 */
   cacheName: string;
   /** 缓存策略 */

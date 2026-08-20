@@ -16,9 +16,9 @@
 
 const STORAGE_KEY = 'topems_debug_trace';
 
-export type DebugLevel = 'error' | 'warn' | 'info' | 'debug';
+type DebugLevel = 'error' | 'warn' | 'info' | 'debug';
 
-export interface DebugTraceConfig {
+interface DebugTraceConfig {
   enabled: boolean;
   level: DebugLevel;
   namespaces: string[];
@@ -64,7 +64,7 @@ function clearDebugTrace(): void {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-export interface UseDebugTraceReturn {
+interface UseDebugTraceReturn {
   config: DebugTraceConfig;
   setEnabled: (enabled: boolean) => void;
   setLevel: (level: DebugLevel) => void;

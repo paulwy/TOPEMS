@@ -31,7 +31,7 @@ import {
 import i18n from '@/i18n';
 import { useNotificationStore } from '../store';
 
-export interface UseErpResult<T> {
+interface UseErpResult<T> {
   data: T[];
   loading: boolean;
   error: string | null;

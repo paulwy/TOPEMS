@@ -26,7 +26,7 @@ export interface PluginRoute {
   component: string;
   exact?: boolean;
 }
-export interface PluginMenu {
+interface PluginMenu {
   id: string;
   title: string;
   icon: string;
@@ -45,7 +45,7 @@ export interface PluginInfo {
   lastErrorAt?: Date;
   retryCount?: number;
 }
-export interface PluginLoaderOptions {
+interface PluginLoaderOptions {
   maxSizeBytes?: number;
   timeout?: number;
   maxRetries?: number;
@@ -384,7 +384,7 @@ export const ModuleLoader: React.FC<ModuleLoaderProps> = ({
     </Suspense>
   );
 };
-export interface PluginRouteWrapperProps {
+interface PluginRouteWrapperProps {
   routePath: string;
   component: () => Promise<any>;
   moduleId?: string;
@@ -436,7 +436,7 @@ export const PluginRouteWrapper: React.FC<PluginRouteWrapperProps> = ({
   }
   return null;
 };
-export interface PluginLoaderProviderProps {
+interface PluginLoaderProviderProps {
   children: React.ReactNode;
   plugins?: PluginManifest[];
 }

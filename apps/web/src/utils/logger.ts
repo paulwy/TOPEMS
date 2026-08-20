@@ -8,7 +8,7 @@
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
-export interface LoggerOptions {
+interface LoggerOptions {
   level?: LogLevel;
   enableTimestamp?: boolean;
   enableConsole?: boolean;
@@ -16,7 +16,7 @@ export interface LoggerOptions {
   context?: Record<string, unknown>;
 }
 
-export interface Logger {
+interface Logger {
   debug: (...args: unknown[]) => void;
   info: (...args: unknown[]) => void;
   warn: (...args: unknown[]) => void;

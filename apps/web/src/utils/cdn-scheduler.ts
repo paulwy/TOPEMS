@@ -1,9 +1,9 @@
 import i18n from '@/i18n';
 
-export type ResourceType =
+type ResourceType =
   'script' | 'style' | 'image' | 'font' | 'video' | 'audio' | 'json' | 'other';
 
-export interface CdnProvider {
+interface CdnProvider {
   id: string;
   name: string;
   baseUrl: string;
@@ -16,7 +16,7 @@ export interface CdnProvider {
   bandwidthScore: number;
 }
 
-export interface ResourceMetric {
+interface ResourceMetric {
   url: string;
   resourceType: ResourceType;
   providerId: string;

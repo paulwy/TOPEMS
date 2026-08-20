@@ -23,7 +23,7 @@ import type { ControlFormData } from '../hooks/useEhsHazardDetail';
 
 const ct = designTokens.colors;
 
-export interface EhsHazardControlDialogProps {
+interface EhsHazardControlDialogProps {
   open: boolean;
   controlFormData: ControlFormData;
   setControlFormData: React.Dispatch<React.SetStateAction<ControlFormData>>;

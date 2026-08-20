@@ -3,7 +3,7 @@ import { LOADER_TIMEOUT } from '@topems/shared-constants';
 
 export type ModuleStatus = 'idle' | 'loading' | 'loaded' | 'error';
 
-export interface ModuleLoadingState {
+interface ModuleLoadingState {
   status: ModuleStatus;
   progress: number;
   startTime?: number;
@@ -13,7 +13,7 @@ export interface ModuleLoadingState {
   healthStatus?: 'healthy' | 'unhealthy' | 'unknown';
 }
 
-export interface ModuleLoadingStore {
+interface ModuleLoadingStore {
   modules: Record<string, ModuleLoadingState>;
   totalProgress: number;
 

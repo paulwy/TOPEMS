@@ -13,9 +13,9 @@
 import { useEffect, useState } from 'react';
 import { useThemeStore, type Theme } from '@/store';
 
-export type ResolvedThemeMode = 'light' | 'dark';
+type ResolvedThemeMode = 'light' | 'dark';
 
-export interface UseThemeModeResult {
+interface UseThemeModeResult {
   /** 用户选择的主题（含 'system'） */
   mode: Theme;
   /** 解析后的实际主题（'system' 已根据系统偏好解析为 'light' | 'dark'） */

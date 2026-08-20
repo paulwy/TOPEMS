@@ -60,7 +60,7 @@ export interface AuthState {
   permissions: string[];
 }
 
-export interface LoginCredentials {
+interface LoginCredentials {
   username: string;
   password: string;
 }

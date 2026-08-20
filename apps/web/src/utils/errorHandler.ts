@@ -5,7 +5,7 @@ import i18n from '@/i18n';
  * 统一分类和处理 API 错误，提供用户友好的错误消息。
  */
 
-export type ErrorCategory = 'network' | 'auth' | 'permission' | 'business' | 'server' | 'unknown';
+type ErrorCategory = 'network' | 'auth' | 'permission' | 'business' | 'server' | 'unknown';
 
 export interface AppError {
   category: ErrorCategory;

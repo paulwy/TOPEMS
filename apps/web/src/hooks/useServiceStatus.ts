@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { PLUGIN_TIMEOUT } from '@topems/shared-constants';
 import i18n from '@/i18n';
 
-export interface ServiceInfo {
+interface ServiceInfo {
   key: string;
   name: string;
   port: number;

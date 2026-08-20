@@ -9,7 +9,7 @@ import { StatusBadge } from '@/components/common';
 import { getRiskLabels } from './pmProjectDetail.constants';
 import i18n from '@/i18n';
 
-export interface PmProjectOverviewProps {
+interface PmProjectOverviewProps {
   project: Project | null;
   phases: ProjectPhase[];
   milestones: ProjectMilestone[];

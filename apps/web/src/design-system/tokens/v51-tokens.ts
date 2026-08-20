@@ -464,17 +464,17 @@ const v51SemanticTokens = {
   },
 } as const;
 
-export type V51ColorPalette = typeof v51ColorPalette;
-export type V51Typography = typeof v51Typography;
-export type V51Spacing = typeof v51Spacing;
-export type V51BorderRadius = typeof v51BorderRadius;
-export type V51Shadows = typeof v51Shadows;
-export type V51ZIndex = typeof v51ZIndex;
-export type V51Breakpoints = typeof v51Breakpoints;
-export type V51Motion = typeof v51Motion;
-export type V51SemanticTokens = typeof v51SemanticTokens;
+type V51ColorPalette = typeof v51ColorPalette;
+type V51Typography = typeof v51Typography;
+type V51Spacing = typeof v51Spacing;
+type V51BorderRadius = typeof v51BorderRadius;
+type V51Shadows = typeof v51Shadows;
+type V51ZIndex = typeof v51ZIndex;
+type V51Breakpoints = typeof v51Breakpoints;
+type V51Motion = typeof v51Motion;
+type V51SemanticTokens = typeof v51SemanticTokens;
 
-export interface V51DesignTokens {
+interface V51DesignTokens {
   colors: V51ColorPalette;
   darkColors: typeof v51DarkColorPalette;
   typography: V51Typography;

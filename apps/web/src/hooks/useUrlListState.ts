@@ -28,7 +28,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-export interface UseUrlListStateOptions<
+interface UseUrlListStateOptions<
   TFilters extends Record<string, unknown> = Record<string, unknown>,
 > {
   /** URL 参数名前缀，避免多列表页面参数冲突，默认空 */
@@ -69,7 +69,7 @@ export interface UseUrlListStateOptions<
   resetPageOnSortChange?: boolean;
 }
 
-export interface UseUrlListStateResult<
+interface UseUrlListStateResult<
   TFilters extends Record<string, unknown> = Record<string, unknown>,
 > {
   // 搜索

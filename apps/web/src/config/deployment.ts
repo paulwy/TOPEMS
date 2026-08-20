@@ -6,9 +6,9 @@
 
 import { getEnv } from './runtime';
 
-export type DeploymentMode = 'saas' | 'on-premise';
+type DeploymentMode = 'saas' | 'on-premise';
 
-export interface FeatureFlags {
+interface FeatureFlags {
   /** 配额限制开关 */
   quotaEnabled: boolean;
   /** 计费功能开关 */

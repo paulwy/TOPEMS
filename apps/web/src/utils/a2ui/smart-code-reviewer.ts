@@ -61,7 +61,7 @@ export interface CodeReviewRequest {
   max_issues?: number;
 }
 
-export interface CustomRule {
+interface CustomRule {
   id: string;
   name: string;
   pattern: string | RegExp;
@@ -121,7 +121,7 @@ export interface CodeMetrics {
   todo_count: number;
 }
 
-export interface ReviewScore {
+interface ReviewScore {
   overall: number;
   quality: number;
   security: number;
@@ -131,7 +131,7 @@ export interface ReviewScore {
   grade: 'A' | 'B' | 'C' | 'D' | 'F';
 }
 
-export interface ReviewSummary {
+interface ReviewSummary {
   total_issues: number;
   critical_count: number;
   error_count: number;
@@ -142,7 +142,7 @@ export interface ReviewSummary {
   improvement_potential: number;
 }
 
-export interface ReviewSuggestion {
+interface ReviewSuggestion {
   type: 'refactor' | 'optimize' | 'secure' | 'document' | 'test' | 'style';
   description: string;
   priority: 'high' | 'medium' | 'low';
@@ -151,7 +151,7 @@ export interface ReviewSuggestion {
   example?: string;
 }
 
-export interface DiffReviewResult {
+interface DiffReviewResult {
   added_issues: ReviewIssue[];
   fixed_issues: string[];
   unchanged_issues: ReviewIssue[];
@@ -159,7 +159,7 @@ export interface DiffReviewResult {
   delta_summary: string;
 }
 
-export interface PatternDetection {
+interface PatternDetection {
   pattern_type: string;
   locations: number[];
   confidence: number;

@@ -18,7 +18,7 @@ import i18n from '@/i18n';
 
 // ============ 类型定义 ============
 
-export interface CrudQueriesOptions<T> {
+interface CrudQueriesOptions<T> {
   /** Axios 实例 */
   api: AxiosInstance;
   /** API 基础路径，如 '/api/mes/orders' */
@@ -37,7 +37,7 @@ export interface CrudQueriesOptions<T> {
   transformList?: (response: unknown) => { items: T[]; total: number };
 }
 
-export interface ModuleQueriesOptions<T> {
+interface ModuleQueriesOptions<T> {
   /** 模块 API 对象（必须实现 list/get/create/update/delete） */
   api: {
     list: (

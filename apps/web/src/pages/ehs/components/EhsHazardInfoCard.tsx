@@ -8,11 +8,11 @@ import { useTranslation } from 'react-i18next';
 import { EHSStatusBadge, calculateRiskLevel } from '@/components/ehs';
 import type { Hazard } from '@/api/ehs';
 
-export interface EhsHazardInfoCardProps {
+interface EhsHazardInfoCardProps {
   hazard: Hazard;
 }
 
-export interface HazardInfoCardData {
+interface HazardInfoCardData {
   avatar: React.ReactNode;
   title: string;
   subtitle: React.ReactNode;

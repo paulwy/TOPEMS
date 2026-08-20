@@ -14,7 +14,7 @@ const PREFIX = 'topems_';
 /**
  * 存储接口
  */
-export interface StorageItem<T = any> {
+interface StorageItem<T = any> {
   value: T;
   timestamp: number;
   expires?: number;
@@ -23,7 +23,7 @@ export interface StorageItem<T = any> {
 /**
  * 存储配置
  */
-export interface StorageOptions {
+interface StorageOptions {
   prefix?: string;
   expires?: number;
   serialize?: <T>(value: T) => string;

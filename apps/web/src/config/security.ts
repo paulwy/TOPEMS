@@ -7,7 +7,7 @@ export interface SecurityConfig {
   contentSecurityPolicy: string;
 }
 
-export interface CspConfig {
+interface CspConfig {
   defaultSrc: string[];
   scriptSrc: string[];
   styleSrc: string[];

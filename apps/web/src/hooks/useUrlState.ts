@@ -20,7 +20,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-export type UrlStateSetter<T> = (
+type UrlStateSetter<T> = (
   value: T | ((prev: T) => T),
   options?: { replace?: boolean }
 ) => void;

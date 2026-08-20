@@ -31,7 +31,7 @@ export type {
 } from './useWebSocket';
 export { webSocketService };
 
-export interface WsNotificationConfig {
+interface WsNotificationConfig {
   channel?: string;
   messageType?: string;
   enabled?: boolean;
@@ -69,7 +69,7 @@ export interface UseNotificationWebSocketOptions {
   autoConnect?: boolean;
 }
 
-export interface UseUnifiedWebSocketOptions extends UseWebSocketOptions {
+interface UseUnifiedWebSocketOptions extends UseWebSocketOptions {
   /**
    * 启用通知模式：
    * - 'snackbar': WebSocket消息自动转Snackbar通知（对应 useWebSocketNotifications）
@@ -83,7 +83,7 @@ export interface UseUnifiedWebSocketOptions extends UseWebSocketOptions {
   snackbarOptions?: WsNotificationConfig;
 }
 
-export interface UnifiedNotificationExtensions {
+interface UnifiedNotificationExtensions {
   subscribeNotifications: (handler: (notification: NotificationWsPayload) => void) => () => void;
   markAsRead: (notificationId: string) => void;
   markAllRead: () => void;
@@ -93,7 +93,7 @@ export interface UnifiedNotificationExtensions {
   error: Error | null;
 }
 
-export type UseUnifiedWebSocketResult = ReturnType<typeof useWebSocketBase> & {
+type UseUnifiedWebSocketResult = ReturnType<typeof useWebSocketBase> & {
   notification?: UnifiedNotificationExtensions;
 };
 

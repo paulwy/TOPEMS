@@ -23,7 +23,7 @@ interface ShortcutOption {
   color: string;
 }
 
-export interface ProfileShortcutsProps {
+interface ProfileShortcutsProps {
   profile: UseProfileReturn;
 }
 

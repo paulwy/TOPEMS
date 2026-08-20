@@ -2,7 +2,7 @@ import createLogger from './logger';
 
 const logger = createLogger('Session');
 
-export interface SessionUser {
+interface SessionUser {
   id: string;
   username: string;
   email: string;

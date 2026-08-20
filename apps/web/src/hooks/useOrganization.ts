@@ -9,13 +9,13 @@ import {
 } from '@/api/hrm';
 import { logger } from '@/utils/logger';
 
-export interface OrganizationData {
+interface OrganizationData {
   companies: Company[];
   departments: Department[];
   employees: Employee[];
 }
 
-export interface UseOrganizationReturn {
+interface UseOrganizationReturn {
   companies: Company[];
   departments: Department[];
   employees: Employee[];

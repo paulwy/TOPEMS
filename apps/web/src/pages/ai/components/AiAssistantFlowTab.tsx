@@ -218,7 +218,7 @@ const AnomalyResultView: React.FC<{ result: AnomalyPredictResponse }> = ({ resul
   );
 };
 
-export interface AiAssistantFlowTabProps {
+interface AiAssistantFlowTabProps {
   flowQuery: string;
   setFlowQuery: (v: string) => void;
   flowModule: string;

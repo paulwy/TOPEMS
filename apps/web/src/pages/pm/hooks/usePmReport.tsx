@@ -59,7 +59,7 @@ export interface TimeRangeOption {
   label: string;
   value: string;
 }
-export interface UsePmReportReturn {
+interface UsePmReportReturn {
   selectedPeriod: string;
   setSelectedPeriod: (period: string) => void;
   stats: PmStatistics;

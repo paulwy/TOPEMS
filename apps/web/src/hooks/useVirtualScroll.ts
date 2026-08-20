@@ -24,7 +24,7 @@
  */
 import { useState, useEffect, useRef, useCallback, type RefObject } from 'react';
 
-export interface UseVirtualScrollOptions {
+interface UseVirtualScrollOptions {
   /** Total number of items */
   itemCount: number;
   /** Fixed height of each item in pixels */
@@ -33,7 +33,7 @@ export interface UseVirtualScrollOptions {
   overscan?: number;
 }
 
-export interface UseVirtualScrollResult {
+interface UseVirtualScrollResult {
   /** Ref to attach to the scroll container */
   containerRef: RefObject<HTMLDivElement | null>;
   /** Total height of all items - apply to inner spacer div */

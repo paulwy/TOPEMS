@@ -1,6 +1,6 @@
 import i18n from '@/i18n';
 
-export type AICopilotSource =
+type AICopilotSource =
   'fab' | 'shortcut' | 'selection' | 'dashboard' | 'global-action' | 'mobile-nav';
 
 export type AICopilotIntent =
@@ -18,7 +18,7 @@ export interface AICopilotContext {
   createdAt: string;
 }
 
-export interface AICopilotContextInput {
+interface AICopilotContextInput {
   pathname?: string;
   source: AICopilotSource;
   intent?: AICopilotIntent;

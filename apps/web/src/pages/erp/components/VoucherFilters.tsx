@@ -16,7 +16,7 @@ import {
 import i18n from '@/i18n';
 import type { VoucherManagementReturn } from '../hooks/useVoucherManagement';
 
-export type VoucherFiltersProps = VoucherManagementReturn;
+type VoucherFiltersProps = VoucherManagementReturn;
 const VoucherFilters: React.FC<VoucherFiltersProps> = (vm) => {
   const {
     activeTab,

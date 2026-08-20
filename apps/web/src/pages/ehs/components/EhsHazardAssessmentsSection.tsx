@@ -14,7 +14,7 @@ import type { RiskAssessment } from '@/api/ehs';
 
 const ct = designTokens.colors;
 
-export interface EhsHazardAssessmentsSectionProps {
+interface EhsHazardAssessmentsSectionProps {
   assessments: RiskAssessment[];
 }
 

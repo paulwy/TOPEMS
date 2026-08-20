@@ -14,13 +14,13 @@ export interface Span {
   status: SpanStatus;
 }
 
-export interface SpanEvent {
+interface SpanEvent {
   name: string;
   timestamp: number;
   attributes?: Record<string, string | number | boolean>;
 }
 
-export interface SpanStatus {
+interface SpanStatus {
   code: SpanStatusCode;
   message?: string;
 }
@@ -38,7 +38,7 @@ export interface Trace {
   endTime?: number;
 }
 
-export interface TracingConfig {
+interface TracingConfig {
   enabled: boolean;
   serviceName: string;
   serviceVersion: string;

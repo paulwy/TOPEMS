@@ -92,7 +92,7 @@ const KnowledgeResultView: React.FC<{ result: KnowledgeAskResponse }> = ({ resul
   );
 };
 
-export interface AiAssistantKnowledgeTabProps {
+interface AiAssistantKnowledgeTabProps {
   knowledgeQuestion: string;
   setKnowledgeQuestion: (v: string) => void;
   knowledgeBase: string;

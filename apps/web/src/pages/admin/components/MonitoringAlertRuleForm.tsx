@@ -22,7 +22,7 @@ import type {
   UpdateAlertRuleRequest,
 } from '@/api/admin/monitoring';
 
-export interface MonitoringAlertRuleFormProps {
+interface MonitoringAlertRuleFormProps {
   open: boolean;
   editingRule: AlertRule | null;
   onClose: () => void;

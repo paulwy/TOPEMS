@@ -47,7 +47,7 @@ const SSR_DATA_MARKER = '<!-- SSR:DATA -->';
 const SSR_DATA_GLOBAL = '__SSR_DATA__';
 
 /** 单条流式数据条目 */
-export interface SSRDataEntry {
+interface SSRDataEntry {
   /** 数据 key（用于客户端按 key 取值） */
   key: string;
   /** 数据载荷 */
@@ -59,7 +59,7 @@ export interface SSRDataEntry {
 }
 
 /** 序列化后的 SSR 数据集合 */
-export interface SSRDataCollection {
+interface SSRDataCollection {
   entries: SSRDataEntry[];
   version: string;
   renderedAt: string;
@@ -221,7 +221,7 @@ function escapeRegExp(str: string): string {
 // ==================== StreamingSSRManager ====================
 
 /** 流式渲染选项 */
-export interface StreamingSSROptions {
+interface StreamingSSROptions {
   /** bootstrap 脚本（客户端入口） */
   bootstrapScripts?: string[];
   /** bootstrap 模块（ESM 入口） */
@@ -239,7 +239,7 @@ export interface StreamingSSROptions {
 }
 
 /** StreamingSSRManager 渲染结果 */
-export interface StreamingRenderResult {
+interface StreamingRenderResult {
   /** HTML 片段流（ReadableStream<Uint8Array>） */
   stream: ReadableStream<Uint8Array>;
   /** 注入的 SSR 数据集合 */

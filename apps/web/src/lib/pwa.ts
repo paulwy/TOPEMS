@@ -158,7 +158,7 @@ const isStandalone = (): boolean =>
   (window.navigator as unknown as { standalone?: boolean }).standalone === true;
 
 // V24.0 模块 D: 推送通知 API 封装
-export interface PushSubscriptionOptions {
+interface PushSubscriptionOptions {
   vapidPublicKey: string;
   applicationServerKey?: BufferSource;
 }

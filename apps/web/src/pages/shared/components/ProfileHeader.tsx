@@ -10,7 +10,7 @@ import { Box, Card, CardContent, Typography, Avatar, IconButton } from '@mui/mat
 import type { UseProfileReturn } from '../hooks/useProfile';
 import i18n from '@/i18n';
 
-export interface ProfileHeaderProps {
+interface ProfileHeaderProps {
   profile: UseProfileReturn;
 }
 

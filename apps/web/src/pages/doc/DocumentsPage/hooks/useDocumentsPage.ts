@@ -555,4 +555,4 @@ export const useDocumentsPage = () => {
   };
 };
 
-export type UseDocumentsPageReturn = ReturnType<typeof useDocumentsPage>;
+type UseDocumentsPageReturn = ReturnType<typeof useDocumentsPage>;

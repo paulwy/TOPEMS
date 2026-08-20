@@ -11,7 +11,7 @@ import i18n from '@/i18n';
 // - 生成合规报告
 // ============================================================
 
-export interface LintIssue {
+interface LintIssue {
   id: string;
   category: 'color' | 'spacing' | 'typography' | 'component';
   severity: 'error' | 'warning' | 'info';
@@ -21,7 +21,7 @@ export interface LintIssue {
   line?: number;
 }
 
-export interface LintReport {
+interface LintReport {
   timestamp: string;
   total: number;
   errors: number;
@@ -71,7 +71,7 @@ function contrastRatio(color1: string, color2: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-export interface ColorContrastCheck {
+interface ColorContrastCheck {
   foreground: string;
   background: string;
   minRatio: number;
@@ -310,7 +310,7 @@ const v51Components = [
   'V51Avatar',
 ];
 
-export interface ComponentUsageCheck {
+interface ComponentUsageCheck {
   componentName: string;
   usageCount: number;
   hasSxProp: boolean;

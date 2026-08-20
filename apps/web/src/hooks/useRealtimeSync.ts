@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { webSocketService, type WebSocketMessage } from './useWebSocket';
 
-export interface SyncOptions<T> {
+interface SyncOptions<T> {
   channel: string;
   initialData?: T;
   onDataChange?: (data: T) => void;
@@ -10,14 +10,14 @@ export interface SyncOptions<T> {
   optimisticUpdate?: boolean;
 }
 
-export interface SyncState<T> {
+interface SyncState<T> {
   data: T;
   isSyncing: boolean;
   lastSyncTime: number | null;
   error: string | null;
 }
 
-export interface SyncActions<T> {
+interface SyncActions<T> {
   update: (partial: Partial<T>) => Promise<void>;
   replace: (data: T) => Promise<void>;
   refresh: () => void;
@@ -211,7 +211,7 @@ function useRealtimeSync<T>(options: SyncOptions<T>): SyncState<T> & SyncActions
   };
 }
 
-export interface ListSyncOptions<T> {
+interface ListSyncOptions<T> {
   channel: string;
   initialData?: T[];
   onDataChange?: (data: T[]) => void;
@@ -221,14 +221,14 @@ export interface ListSyncOptions<T> {
   itemIdField?: string;
 }
 
-export interface ListSyncState<T> {
+interface ListSyncState<T> {
   data: T[];
   isSyncing: boolean;
   lastSyncTime: number | null;
   error: string | null;
 }
 
-export interface ListSyncActions<T> {
+interface ListSyncActions<T> {
   add: (item: T) => Promise<void>;
   update: (id: string | number, partial: Partial<T>) => Promise<void>;
   remove: (id: string | number) => Promise<void>;

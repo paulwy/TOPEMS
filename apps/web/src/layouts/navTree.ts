@@ -5,7 +5,7 @@ import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { L1_BUSINESS_DOMAINS, L2_TO_L1_MAP, L2_MODULE_ORDER } from './constants';
 import i18n from '@/i18n';
 
-export interface L1NavNode {
+interface L1NavNode {
   key: string;
   title: string;
   titleKey?: string;
@@ -14,7 +14,7 @@ export interface L1NavNode {
   children: L2NavNode[];
 }
 
-export interface L2NavNode {
+interface L2NavNode {
   key: string;
   title: string;
   titleKey?: string;
@@ -28,7 +28,7 @@ export interface L2NavNode {
   badgeColor?: 'primary' | 'success' | 'warning' | 'error';
 }
 
-export interface NavTreeResult {
+interface NavTreeResult {
   l1Domains: L1NavNode[];
   l1KeysOrder: string[];
 }

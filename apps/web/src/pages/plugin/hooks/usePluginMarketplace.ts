@@ -14,7 +14,7 @@ export type ViewMode = 'grid' | 'list';
 
 type HealthStatus = Record<string, { healthy: boolean; status?: string; latency?: number }>;
 
-export interface UsePluginMarketplaceReturn {
+interface UsePluginMarketplaceReturn {
   plugins: Plugin[];
   filteredPlugins: Plugin[];
   healthStatus: HealthStatus;

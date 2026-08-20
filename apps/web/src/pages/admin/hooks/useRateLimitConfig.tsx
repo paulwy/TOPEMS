@@ -70,7 +70,7 @@ export const DEFAULT_ANTI_REPLAY: AntiReplayConfig = {
   enforce_paths: [],
 };
 
-export interface UseRateLimitConfigReturn {
+interface UseRateLimitConfigReturn {
   config: RateLimitConfig;
   setConfig: React.Dispatch<React.SetStateAction<RateLimitConfig>>;
   antiReplay: AntiReplayConfig;

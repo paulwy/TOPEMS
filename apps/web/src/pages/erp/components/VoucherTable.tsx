@@ -19,7 +19,7 @@ import {
 import i18n from '@/i18n';
 import type { VoucherManagementReturn } from '../hooks/useVoucherManagement';
 
-export type VoucherTableProps = VoucherManagementReturn;
+type VoucherTableProps = VoucherManagementReturn;
 const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
   const {
     loading,

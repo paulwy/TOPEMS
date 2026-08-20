@@ -26,7 +26,7 @@ export interface WebVitalsMetrics {
   inp?: number;
 }
 
-export type WebVitalsCallback = (metrics: WebVitalsMetrics) => void;
+type WebVitalsCallback = (metrics: WebVitalsMetrics) => void;
 
 interface PerformanceEntryWithValue extends PerformanceEntry {
   value?: number;

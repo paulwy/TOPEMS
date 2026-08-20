@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 
-export type NetworkStatus = 'online' | 'offline' | 'unknown';
+type NetworkStatus = 'online' | 'offline' | 'unknown';
 
-export interface NetworkInfo {
+interface NetworkInfo {
   status: NetworkStatus;
   effectiveType?: string;
   downlink?: number;

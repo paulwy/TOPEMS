@@ -145,7 +145,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, on
   );
 };
 
-export interface PluginMarketplaceGridProps {
+interface PluginMarketplaceGridProps {
   plugins: Plugin[];
   healthStatus: HealthStatus;
   viewMode: 'grid' | 'list';

@@ -14,7 +14,7 @@ import {
   getPaginationRowModel,
 } from '@tanstack/react-table';
 
-export interface UseDataTableOptions<TData extends RowData, TValue> {
+interface UseDataTableOptions<TData extends RowData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   initialPageIndex?: number;
@@ -22,7 +22,7 @@ export interface UseDataTableOptions<TData extends RowData, TValue> {
   enablePagination?: boolean;
 }
 
-export interface UseDataTableResult<TData extends RowData, TValue> {
+interface UseDataTableResult<TData extends RowData, TValue> {
   sorting: SortingState;
   setSorting: (sorting: SortingState) => void;
   columnFilters: ColumnFiltersState;

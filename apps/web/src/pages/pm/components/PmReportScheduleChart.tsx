@@ -13,7 +13,7 @@ import {
 import i18n from '@/i18n';
 import type { PmStatistics } from '@/api/pm';
 
-export interface PmReportScheduleChartProps {
+interface PmReportScheduleChartProps {
   stats: PmStatistics;
 }
 const PmReportScheduleChart: React.FC<PmReportScheduleChartProps> = ({ stats }) => {

@@ -7,4 +7,4 @@
 export { useAIHelper } from '../../useAIHelper';
 
 export { useAIContext } from '../../useAIContext';
-export type { AIRecommendation, AIContextState, QuickCommand } from '../../useAIContext';
+export type { AIRecommendation, QuickCommand } from '../../useAIContext';

@@ -1,13 +1,13 @@
 import { logger } from '@/utils/logger';
 
-export type WorkerMessage<T = unknown> = {
+type WorkerMessage<T = unknown> = {
   id: string;
   type: 'execute' | 'result' | 'error';
   payload?: T;
   error?: string;
 };
 
-export type WorkerFn<T = unknown, R = unknown> = (data: T) => R;
+type WorkerFn<T = unknown, R = unknown> = (data: T) => R;
 
 class TaskWorker {
   private worker: Worker;

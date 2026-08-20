@@ -128,9 +128,9 @@ const SERVICE_CODES = {
   help: 'help',
 } as const;
 
-export type ServiceCode = (typeof SERVICE_CODES)[keyof typeof SERVICE_CODES];
+type ServiceCode = (typeof SERVICE_CODES)[keyof typeof SERVICE_CODES];
 
-export interface ApiPathOptions {
+interface ApiPathOptions {
   service: ServiceCode | string;
   path: string;
 }

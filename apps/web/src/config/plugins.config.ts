@@ -23,7 +23,7 @@ export interface RemoteModuleConfig {
   dependencies?: string[];
 }
 
-export interface RemoteModuleEnvConfig {
+interface RemoteModuleEnvConfig {
   [key: string]: {
     url: string;
     enabled: boolean;

@@ -315,7 +315,7 @@ const moduleLoader = new DynamicModuleLoader();
 // Route Wrapper with Module Loading
 // ============================================================================
 
-export interface ModuleRouteWrapperProps {
+interface ModuleRouteWrapperProps {
   routePath: string;
   component: () => Promise<{ default: React.ComponentType<unknown> }>;
   moduleId?: string;

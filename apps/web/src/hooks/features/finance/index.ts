@@ -1,5 +1,4 @@
 // 财务模块聚合导出
-export type { UseErpResult } from '../../useErp';
 
 // 外部 ERP 对接（包含多个 hooks）
 export { useErpConnections } from '../../useExternalErp';

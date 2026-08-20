@@ -12,7 +12,7 @@ import type { Hazard } from '@/api/ehs';
 
 const ct = designTokens.colors;
 
-export interface EhsHazardBasicInfoSectionProps {
+interface EhsHazardBasicInfoSectionProps {
   hazard: Hazard;
 }
 

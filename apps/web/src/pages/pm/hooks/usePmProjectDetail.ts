@@ -10,7 +10,7 @@ import type { Project, ProjectPhase, ProjectMilestone, GanttPhase, GanttMileston
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-export interface UsePmProjectDetailReturn {
+interface UsePmProjectDetailReturn {
   id: string | undefined;
   project: Project | null;
   phases: ProjectPhase[];

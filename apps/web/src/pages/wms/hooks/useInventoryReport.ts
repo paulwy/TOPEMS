@@ -19,7 +19,7 @@ import { useNotificationStore } from '@/store';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-export interface UseInventoryReportReturn {
+interface UseInventoryReportReturn {
   currentTab: number;
   setCurrentTab: (tab: number) => void;
   warehouseFilter: string;

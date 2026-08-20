@@ -13,7 +13,7 @@ const logger = createLogger('PluginContext');
 const FAILURE_THRESHOLD = 2; // 连续 2 次同类失败即停止轮询
 const TRANSIENT_STATUS = new Set([404, 502, 503]);
 
-export interface PluginContextType {
+interface PluginContextType {
   installedPlugins: TenantInstalledPlugin[];
   pluginHealth: Record<string, { healthy: boolean; status?: string; latency?: number }>;
   availablePlugins: Plugin[];

@@ -23,17 +23,17 @@ import i18n from '@/i18n';
 
 export type FrameworkType = 'react' | 'vue' | 'svelte' | 'solid' | 'angular';
 export type UIType = 'mui' | 'antd' | 'element-plus' | 'chakra' | 'tailwind' | 'shadcn';
-export type BuildToolType = 'vite' | 'webpack' | 'rollup' | 'esbuild' | 'turbopack';
-export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
+type BuildToolType = 'vite' | 'webpack' | 'rollup' | 'esbuild' | 'turbopack';
+type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
 export type ProjectStatus =
   'scaffolding' | 'development' | 'building' | 'testing' | 'staging' | 'production' | 'archived';
 export type PipelineStageType =
   'install' | 'build' | 'test' | 'lint' | 'deploy' | 'migrate' | 'custom';
-export type PipelineStageStatus =
+type PipelineStageStatus =
   'pending' | 'running' | 'success' | 'failed' | 'skipped' | 'cancelled';
 export type EnvironmentName = 'development' | 'staging' | 'production' | 'preview';
 
-export interface TechStack {
+interface TechStack {
   framework: FrameworkType;
   ui: UIType;
   buildTool: BuildToolType;
@@ -69,7 +69,7 @@ export interface ProjectConfig {
   buildConfig: Record<string, unknown>;
 }
 
-export interface EnvironmentConfig {
+interface EnvironmentConfig {
   name: EnvironmentName;
   baseUrl: string;
   apiUrl: string;
@@ -78,7 +78,7 @@ export interface EnvironmentConfig {
   secrets: string[];
 }
 
-export interface ProjectHealth {
+interface ProjectHealth {
   score: number;
   issues: HealthIssue[];
   lastChecked: number;
@@ -88,7 +88,7 @@ export interface ProjectHealth {
   testCoverage: number;
 }
 
-export interface HealthIssue {
+interface HealthIssue {
   id: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
   category: 'security' | 'dependency' | 'build' | 'performance' | 'code-quality';
@@ -111,7 +111,7 @@ export interface PipelineStage {
   error?: string;
 }
 
-export interface PipelineStageConfig {
+interface PipelineStageConfig {
   command?: string;
   args?: string[];
   timeout?: number;
@@ -121,7 +121,7 @@ export interface PipelineStageConfig {
   environment?: EnvironmentName;
 }
 
-export interface PipelineArtifact {
+interface PipelineArtifact {
   name: string;
   path: string;
   size: number;
@@ -129,7 +129,7 @@ export interface PipelineArtifact {
   hash: string;
 }
 
-export interface PipelineDefinition {
+interface PipelineDefinition {
   id: string;
   name: string;
   description: string;
@@ -140,7 +140,7 @@ export interface PipelineDefinition {
   updated_at: number;
 }
 
-export interface PipelineTrigger {
+interface PipelineTrigger {
   type: 'push' | 'schedule' | 'manual' | 'webhook';
   config: Record<string, unknown>;
 }

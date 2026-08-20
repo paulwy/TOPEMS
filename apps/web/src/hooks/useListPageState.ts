@@ -30,7 +30,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-export interface UseListPageStateOptions<
+interface UseListPageStateOptions<
   TFilters extends Record<string, unknown> = Record<string, unknown>,
 > {
   /** 初始搜索关键词，默认 '' */
@@ -66,7 +66,7 @@ export interface UseListPageStateOptions<
   resetPageOnSortChange?: boolean;
 }
 
-export interface UseListPageStateResult<
+interface UseListPageStateResult<
   TFilters extends Record<string, unknown> = Record<string, unknown>,
 > {
   // 搜索

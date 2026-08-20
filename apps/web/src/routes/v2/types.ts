@@ -27,7 +27,7 @@ export interface RouteConfig<P = any> {
   action?: 'read' | 'write' | 'update' | 'delete' | 'admin';
 }
 
-export type ModuleTier = 'basic' | 'advanced';
+type ModuleTier = 'basic' | 'advanced';
 
 export interface RouteConfigV2<P = any> {
   path: string;

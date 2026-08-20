@@ -70,7 +70,7 @@ export interface FallbackResult<T = unknown> {
 }
 
 /** 降级动作函数：接收上下文，返回数据或抛出错误 */
-export type FallbackAction<T = unknown> = (context: FallbackContext) => Promise<T> | T;
+type FallbackAction<T = unknown> = (context: FallbackContext) => Promise<T> | T;
 
 // ==================== 降级策略 ====================
 

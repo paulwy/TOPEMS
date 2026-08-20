@@ -23,7 +23,7 @@ import type { UseProfileReturn } from '../hooks/useProfile';
 
 const ct = designTokens.colors;
 
-export interface ProfileSecurityFormProps {
+interface ProfileSecurityFormProps {
   profile: UseProfileReturn;
 }
 

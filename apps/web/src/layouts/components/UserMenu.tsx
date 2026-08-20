@@ -33,7 +33,7 @@ export const extractInitials = (name: string | null | undefined): string => {
   }
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 };
-export interface UserMenuProps {
+interface UserMenuProps {
   user?: UserType | null;
   tenantName?: string;
   onProfileClick?: () => void;

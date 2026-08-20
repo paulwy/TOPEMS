@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { usePlugins } from '@/context/PluginContext';
 import i18n from '@/i18n';
 
-export interface UseModuleDataOptions<T> {
+interface UseModuleDataOptions<T> {
   /** 目标模块 code */
   moduleCode: string;
   /** 数据获取函数（仅在模块已安装时调用） */
@@ -18,7 +18,7 @@ export interface UseModuleDataOptions<T> {
   deps?: unknown[];
 }
 
-export interface UseModuleDataResult<T> {
+interface UseModuleDataResult<T> {
   /** 数据（模块未安装时为 null） */
   data: T | null;
   /** 是否正在加载 */

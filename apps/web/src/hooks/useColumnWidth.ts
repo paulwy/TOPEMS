@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 
-export interface UseColumnWidthOptions {
+interface UseColumnWidthOptions {
   storageKey?: string;
   defaultWidths?: Record<string, number>;
   defaultWidth?: number;
@@ -10,7 +10,7 @@ export interface UseColumnWidthOptions {
   columns?: Array<{ id: string; width?: number | string; minWidth?: number; maxWidth?: number }>;
 }
 
-export interface UseColumnWidthResult {
+interface UseColumnWidthResult {
   columnWidths: Record<string, number>;
   getColumnWidth: (columnId: string) => number;
   setColumnWidth: (columnId: string, width: number) => void;

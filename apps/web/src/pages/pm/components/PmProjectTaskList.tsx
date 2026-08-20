@@ -21,7 +21,7 @@ import i18n from '@/i18n';
 import type { ProjectPhase } from '@/api/pm';
 import { ActionButton, StatusBadge } from '@/components/common';
 
-export interface PmProjectTaskListProps {
+interface PmProjectTaskListProps {
   phases: ProjectPhase[];
   formatDate: (dateStr?: string) => string;
 }

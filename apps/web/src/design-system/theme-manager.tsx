@@ -7,9 +7,9 @@ import { v51DesignTokens, injectV51CSSVariables } from './tokens/v51-tokens';
 // 支持 localStorage 持久化、系统偏好检测、主题过渡
 // ============================================================
 
-export type V51ThemeMode = 'light' | 'dark' | 'system';
+type V51ThemeMode = 'light' | 'dark' | 'system';
 
-export interface V51ThemeConfig {
+interface V51ThemeConfig {
   mode: V51ThemeMode;
   primaryColor: string;
   secondaryColor: string;
@@ -31,7 +31,7 @@ const defaultConfig: V51ThemeConfig = {
   animations: true,
 };
 
-export type ThemeChangeListener = (config: V51ThemeConfig) => void;
+type ThemeChangeListener = (config: V51ThemeConfig) => void;
 
 class ThemeManagerSingleton {
   private config: V51ThemeConfig;
@@ -203,7 +203,7 @@ export const themeManager = new ThemeManagerSingleton();
 // React Context & Hook
 // ============================================================
 
-export interface V51ThemeContextValue {
+interface V51ThemeContextValue {
   theme: V51ThemeConfig;
   setTheme: (config: Partial<V51ThemeConfig>) => void;
   setMode: (mode: V51ThemeMode) => void;

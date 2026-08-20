@@ -6,7 +6,7 @@ import type { Project, ProjectPhase, ProjectMilestone } from '@/api/pm';
 import { getStatusLabels, getRiskLabels } from './pmProjectDetail.constants';
 import i18n from '@/i18n';
 
-export interface PmProjectDetailHeaderProps {
+interface PmProjectDetailHeaderProps {
   project: Project | null;
   phases: ProjectPhase[];
   milestones: ProjectMilestone[];
@@ -15,7 +15,7 @@ export interface PmProjectDetailHeaderProps {
   formatCurrency: (amount?: number) => string;
   t: (key: string) => string;
 }
-export interface PmProjectDetailInfoCard {
+interface PmProjectDetailInfoCard {
   title: string;
   subtitle: string;
   tags: string[];

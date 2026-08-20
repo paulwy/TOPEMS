@@ -13,7 +13,7 @@ import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { User } from '@/api/iam';
 import { authApi } from '@/api/iam';
 
-export interface CreateUserApiAdapterOptions {
+interface CreateUserApiAdapterOptions {
   /** i18n namespace prefix for differentiated error messages */
   i18nPrefix?: 'admin.usermanagementpage' | 'iam.usermanagementpage';
   /** Translation function (from useTranslation) for localized error messages */

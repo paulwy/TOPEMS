@@ -187,7 +187,7 @@ const cyberpunkTokens = {
   },
 } as const;
 
-export type CyberpunkTokens = typeof cyberpunkTokens;
+type CyberpunkTokens = typeof cyberpunkTokens;
 
 /**
  * 赛博朋克主题的语义化 Token
@@ -252,4 +252,4 @@ const cyberpunkSemanticTokens = {
   },
 } as const;
 
-export type CyberpunkSemanticTokens = typeof cyberpunkSemanticTokens;
+type CyberpunkSemanticTokens = typeof cyberpunkSemanticTokens;

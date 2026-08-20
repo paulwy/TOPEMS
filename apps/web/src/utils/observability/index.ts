@@ -1,6 +1,6 @@
 export { SpanStatusCode } from './e2e-tracing';
 
-export type { Span, SpanEvent, SpanStatus, Trace, TracingConfig } from './e2e-tracing';
+export type { Span, Trace } from './e2e-tracing';
 
 export type {
   ReplaySession,

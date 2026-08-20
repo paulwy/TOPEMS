@@ -6,7 +6,7 @@ import type { Plugin } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
 import { useNotificationStore } from '@/store';
 
-export interface PluginInstallProgressProps {
+interface PluginInstallProgressProps {
   plugin: Plugin;
   size?: 'small' | 'medium' | 'large';
   fullWidth?: boolean;

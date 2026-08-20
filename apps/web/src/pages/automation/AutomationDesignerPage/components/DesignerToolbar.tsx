@@ -35,7 +35,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
-export interface DesignerToolbarProps {
+interface DesignerToolbarProps {
   mode: DesignerMode;
   setMode: (m: DesignerMode) => void;
   loading: boolean;

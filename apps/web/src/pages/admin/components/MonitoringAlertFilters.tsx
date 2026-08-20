@@ -6,7 +6,7 @@ import { Box, TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/
 import { Search } from 'lucide-react';
 import i18n from '@/i18n';
 
-export interface MonitoringAlertFiltersProps {
+interface MonitoringAlertFiltersProps {
   searchQuery: string;
   filterLevel: string;
   filterStatus: string;

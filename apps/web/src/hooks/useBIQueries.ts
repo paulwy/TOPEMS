@@ -145,7 +145,7 @@ function useBILaboratory(): UseQueryResult<LaboratoryAnalytics | null> {
 
 // ============ 聚合查询 hooks ============
 
-export interface UseBIAllAnalyticsResult {
+interface UseBIAllAnalyticsResult {
   summary: SummaryDashboard | null;
   development: DevelopmentAnalytics | null;
   quality: QualityAnalytics | null;

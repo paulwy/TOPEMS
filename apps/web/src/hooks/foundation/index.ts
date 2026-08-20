@@ -18,7 +18,6 @@ export type {
 
 // CountUp
 export { useCountUp, countUpEasings } from '../useCountUp';
-export type { UseCountUpOptions } from '../useCountUp';
 
 // Responsive
 export { useResponsive } from '../useResponsive';
@@ -32,23 +31,18 @@ export { useTouchFeedback, useSwipeGesture } from '../useTouchFeedback';
 export type { TouchFeedbackOptions, TouchRipple } from '../useTouchFeedback';
 
 // VirtualScroll
-export type { UseVirtualScrollOptions, UseVirtualScrollResult } from '../useVirtualScroll';
 
 // UrlState
 export { useUrlState } from '../useUrlState';
-export type { UrlStateSetter } from '../useUrlState';
 
 // UrlListState
 export { useUrlListState } from '../useUrlListState';
-export type { UseUrlListStateOptions, UseUrlListStateResult } from '../useUrlListState';
 
 // ColumnConfig
 export { useColumnConfig } from '../useColumnConfig';
-export type { UseColumnConfigOptions, UseColumnConfigResult } from '../useColumnConfig';
 
 // ColumnWidth
 export { useColumnWidth } from '../useColumnWidth';
-export type { UseColumnWidthOptions, UseColumnWidthResult } from '../useColumnWidth';
 
 // Web Vitals (V26.0)
-export type { WebVitalsMetrics, WebVitalsCallback } from './useWebVitals';
+export type { WebVitalsMetrics } from './useWebVitals';

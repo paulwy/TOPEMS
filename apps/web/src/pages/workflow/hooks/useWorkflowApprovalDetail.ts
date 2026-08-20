@@ -12,7 +12,7 @@ interface ApprovalDetails {
   approval: Approval;
   records: ApprovalRecord[];
 }
-export interface UseWorkflowApprovalDetailReturn {
+interface UseWorkflowApprovalDetailReturn {
   approval: Approval | null;
   records: ApprovalRecord[];
   loading: boolean;
