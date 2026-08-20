@@ -355,6 +355,13 @@ impl Validator {
     }
 }
 
+/// 归一化业务编号：去首尾空白、转大写、移除内部空白字符。
+///
+/// 供各服务的 `normalize_*_code` 函数复用，消除重复模板代码。
+pub fn normalize_code(code: &str) -> String {
+    code.trim().to_uppercase().replace([' ', '\t', '\n'], "")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

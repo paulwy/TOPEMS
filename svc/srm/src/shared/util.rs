@@ -120,16 +120,13 @@ pub fn normalize_quotation_no(s: &str) -> String {
 ///
 /// 规则：未知状态拒绝；自转移拒绝；终态拒绝；必须在 `SUPPLIER_TRANSITIONS` 中。
 pub fn is_valid_supplier_status_transition(from: &str, to: &str) -> bool {
-    if !SUPPLIER_STATES.contains(&from) || !SUPPLIER_STATES.contains(&to) {
-        return false;
-    }
-    if SUPPLIER_TERMINAL.contains(&from) {
-        return false;
-    }
-    if from == to {
-        return false;
-    }
-    SUPPLIER_TRANSITIONS.contains(&(from, to))
+    topems_shared_core::is_valid_transition(
+        from,
+        to,
+        SUPPLIER_TRANSITIONS,
+        SUPPLIER_TERMINAL,
+        SUPPLIER_STATES,
+    )
 }
 
 /// 计算招标综合评分

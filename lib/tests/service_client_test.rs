@@ -160,8 +160,8 @@ async fn test_service_client_error_http_request_error() {
 
     assert!(result.is_err());
     match result {
-        Err(ServiceClientError::HttpRequestError(_)) => {}
-        _ => panic!("Expected HttpRequestError"),
+        Err(ServiceClientError::HttpRequest(_)) => {}
+        _ => panic!("Expected HttpRequest"),
     }
 }
 

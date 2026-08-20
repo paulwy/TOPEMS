@@ -8,12 +8,7 @@ import {
   OutlinedInput,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
-
-interface FormSelectOption {
-  value: string | number;
-  label: string;
-  disabled?: boolean;
-}
+import type { SelectOption as FormSelectOption } from '@topems/shared-types';
 
 interface FormSelectProps {
   name?: string;

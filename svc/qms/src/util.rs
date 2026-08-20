@@ -117,16 +117,7 @@ const NCR_TRANSITIONS: &[(&str, &str)] = &[
 ];
 
 pub fn is_valid_ncr_status_transition(from: &str, to: &str) -> bool {
-    if !NCR_STATES.contains(&from) || !NCR_STATES.contains(&to) {
-        return false;
-    }
-    if NCR_TERMINAL.contains(&from) {
-        return false;
-    }
-    if from == to {
-        return false;
-    }
-    NCR_TRANSITIONS.contains(&(from, to))
+    topems_shared_core::is_valid_transition(from, to, NCR_TRANSITIONS, NCR_TERMINAL, NCR_STATES)
 }
 
 pub fn is_valid_inspection_status_transition(from: &str, to: &str) -> bool {

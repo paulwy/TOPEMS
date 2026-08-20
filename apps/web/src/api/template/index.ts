@@ -1,5 +1,6 @@
 import apiClient from '../client';
 import type { ApiResponse, PaginationParams as BasePaginationParams } from '../client';
+import type { SelectOption } from '@topems/shared-types';
 
 import { templateVersionApi } from './version';
 import type {
@@ -37,12 +38,6 @@ export type TemplateType = 'workflow' | 'document' | 'form' | 'report' | 'notifi
 
 type VariableType =
   'string' | 'number' | 'date' | 'select' | 'multiselect' | 'lookup' | 'user' | 'now' | 'context';
-
-interface SelectOption {
-  value: string;
-  label: string;
-  disabled?: boolean;
-}
 
 export interface TemplateVariable {
   key: string;

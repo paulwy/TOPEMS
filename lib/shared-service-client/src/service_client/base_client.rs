@@ -1,4 +1,5 @@
-use super::error::{ServiceClientError, ServiceClientResult};
+use super::error::ServiceClientResult;
+use topems_shared_core::error::TopemsError;
 use opentelemetry::global;
 use reqwest::{Client, RequestBuilder};
 use serde::{de::DeserializeOwned, Serialize};
@@ -27,7 +28,7 @@ impl BaseServiceClient {
 
         // 验证 URL 有效性
         if base_url.is_empty() {
-            return Err(ServiceClientError::InvalidUrl(
+            return Err(TopemsError::InvalidUrl(
                 "Base URL cannot be empty".into(),
             ));
         }
@@ -35,8 +36,7 @@ impl BaseServiceClient {
         let client = Client::builder()
             .timeout(Duration::from_secs(30))
             .connect_timeout(Duration::from_secs(5))
-            .build()
-            .map_err(ServiceClientError::HttpRequestError)?;
+            .build()?;
 
         Ok(Self {
             client,
@@ -98,8 +98,7 @@ impl BaseServiceClient {
         let response = self
             .apply_headers(request)
             .send()
-            .await
-            .map_err(ServiceClientError::HttpRequestError)?;
+            .await?;
 
         let status_code = response.status().as_u16();
 
@@ -109,7 +108,7 @@ impl BaseServiceClient {
                 .await
                 .unwrap_or_else(|_| "Unknown error".into());
 
-            return Err(ServiceClientError::ServiceError {
+            return Err(TopemsError::ServiceError {
                 status_code,
                 message: error_message,
             });
@@ -117,8 +116,7 @@ impl BaseServiceClient {
 
         let result = response
             .json::<T>()
-            .await
-            .map_err(ServiceClientError::HttpRequestError)?;
+            .await?;
 
         Ok(result)
     }
@@ -129,8 +127,7 @@ impl BaseServiceClient {
             .client
             .get(&url)
             .send()
-            .await
-            .map_err(ServiceClientError::HttpRequestError)?;
+            .await?;
 
         if !response.status().is_success() {
             let status_code = response.status().as_u16();
@@ -139,7 +136,7 @@ impl BaseServiceClient {
                 .await
                 .unwrap_or_else(|_| "Unknown error".into());
 
-            return Err(ServiceClientError::ServiceError {
+            return Err(TopemsError::ServiceError {
                 status_code,
                 message: error_message,
             });
@@ -225,7 +222,7 @@ mod tests {
     fn new_with_empty_url_returns_invalid_url_error() {
         let result = BaseServiceClient::new("");
         match result {
-            Err(ServiceClientError::InvalidUrl(msg)) => {
+            Err(TopemsError::InvalidUrl(msg)) => {
                 assert_eq!(msg, "Base URL cannot be empty");
             }
             Err(other) => panic!("Expected InvalidUrl, got {:?}", other),

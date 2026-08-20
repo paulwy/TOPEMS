@@ -149,16 +149,13 @@ pub fn normalize_hazard_code(s: &str) -> String {
 ///
 /// 规则：未知状态拒绝；自转移拒绝；终态拒绝；必须在 `INSPECTION_TRANSITIONS` 中。
 pub fn is_valid_inspection_status_transition(from: &str, to: &str) -> bool {
-    if !INSPECTION_STATES.contains(&from) || !INSPECTION_STATES.contains(&to) {
-        return false;
-    }
-    if INSPECTION_TERMINAL.contains(&from) {
-        return false;
-    }
-    if from == to {
-        return false;
-    }
-    INSPECTION_TRANSITIONS.contains(&(from, to))
+    topems_shared_core::is_valid_transition(
+        from,
+        to,
+        INSPECTION_TRANSITIONS,
+        INSPECTION_TERMINAL,
+        INSPECTION_STATES,
+    )
 }
 
 /// 计算 LEC 风险分值（FMEA RPN 风格）

@@ -9,7 +9,7 @@ pub fn validate_resource_id(id: &str) -> bool {
 }
 
 pub fn normalize_code(code: &str) -> String {
-    code.trim().to_uppercase().replace([' ', '\t', '\n'], "")
+    topems_shared_core::normalize_code(code)
 }
 
 pub fn calc_duration_minutes(start: NaiveDateTime, end: NaiveDateTime) -> Option<i64> {

@@ -17,7 +17,7 @@ pub fn validate_experiment_code(code: &str) -> bool {
 
 /// 归一化实验编号：去首尾空白、转大写、移除内部所有空白字符。
 pub fn normalize_experiment_code(code: &str) -> String {
-    code.trim().to_uppercase().replace([' ', '\t', '\n'], "")
+    topems_shared_core::normalize_code(code)
 }
 
 /// 校验实验状态是否属于合法枚举值。
@@ -90,7 +90,7 @@ pub fn is_valid_formula_status(status: &str) -> bool {
 
 /// 归一化配方编号：去首尾空白、转大写、移除内部空白。
 pub fn normalize_formula_code(code: &str) -> String {
-    code.trim().to_uppercase().replace([' ', '\t', '\n'], "")
+    topems_shared_core::normalize_code(code)
 }
 
 /// 根据各阶段 `(progress, weight)` 计算项目加权进度（0-100）。

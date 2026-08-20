@@ -9,7 +9,9 @@ pub mod error;
 pub mod generic;
 
 pub use base_client::BaseServiceClient;
-pub use error::{ServiceClientError, ServiceClientResult};
+pub use error::ServiceClientResult;
+// ServiceClientError 已合并到 TopemsError，保留 re-export 以向后兼容
+pub use topems_shared_core::error::TopemsError as ServiceClientError;
 pub use generic::GenericServiceClient;
 pub use trait_api::{ServiceApi, TypedServiceClient};
 

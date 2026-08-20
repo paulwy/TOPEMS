@@ -98,16 +98,13 @@ pub fn calc_tax_amount(subtotal: f64, tax_rate: f64) -> f64 {
 ///
 /// 规则：未知状态拒绝；自转移拒绝；终态拒绝；必须在 `INVOICE_TRANSITIONS` 中。
 pub fn is_valid_invoice_status_transition(from: &str, to: &str) -> bool {
-    if !INVOICE_STATES.contains(&from) || !INVOICE_STATES.contains(&to) {
-        return false;
-    }
-    if INVOICE_TERMINAL.contains(&from) {
-        return false;
-    }
-    if from == to {
-        return false;
-    }
-    INVOICE_TRANSITIONS.contains(&(from, to))
+    topems_shared_core::is_valid_transition(
+        from,
+        to,
+        INVOICE_TRANSITIONS,
+        INVOICE_TERMINAL,
+        INVOICE_STATES,
+    )
 }
 
 /// 计算行项小计

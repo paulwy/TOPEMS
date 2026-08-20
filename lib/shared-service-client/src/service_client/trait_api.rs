@@ -27,8 +27,9 @@
 //! ```
 
 use super::base_client::BaseServiceClient;
-use super::error::{ServiceClientError, ServiceClientResult};
+use super::error::ServiceClientResult;
 use serde::{de::DeserializeOwned, Serialize};
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 /// 服务 API trait — 所有服务 API 定义的基础。
@@ -217,7 +218,7 @@ impl<T: ServiceApi> TypedServiceClient<T> {
     pub async fn get_and_unwrap<R: DeserializeOwned>(&self, path: &str) -> ServiceClientResult<R> {
         let resp: ApiResponse<R> = self.inner.get(path).await?;
         resp.data.ok_or_else(|| {
-            ServiceClientError::ConfigError("API response missing `data` field".into())
+            TopemsError::Config("API response missing `data` field".into())
         })
     }
 
@@ -229,7 +230,7 @@ impl<T: ServiceApi> TypedServiceClient<T> {
     ) -> ServiceClientResult<R> {
         let resp: ApiResponse<R> = self.inner.post(path, body).await?;
         resp.data.ok_or_else(|| {
-            ServiceClientError::ConfigError("API response missing `data` field".into())
+            TopemsError::Config("API response missing `data` field".into())
         })
     }
 
@@ -241,7 +242,7 @@ impl<T: ServiceApi> TypedServiceClient<T> {
     ) -> ServiceClientResult<R> {
         let resp: ApiResponse<R> = self.inner.put(path, body).await?;
         resp.data.ok_or_else(|| {
-            ServiceClientError::ConfigError("API response missing `data` field".into())
+            TopemsError::Config("API response missing `data` field".into())
         })
     }
 

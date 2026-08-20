@@ -7,6 +7,7 @@ export type {
   PaginatedResult,
   QueryParams,
   BatchOperationResult,
+  SelectOption,
 } from './common';
 
 export type {

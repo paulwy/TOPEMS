@@ -26,6 +26,7 @@ import {
   RefreshCw,
   Columns3,
 } from 'lucide-react';
+import { ErrorEmptyState } from '@topems/shared-components';
 import type { BreadcrumbItem } from './PageHeader';
 import { PageHeader } from './PageHeader';
 
@@ -756,14 +757,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
     if (error) {
       return (
         <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Paper sx={{ p: 4, borderRadius: 3 }}>
-            <Typography
-              variant='body1'
-              color='error'
-            >
-              {error}
-            </Typography>
-          </Paper>
+          <ErrorEmptyState error={error} />
         </Box>
       );
     }
