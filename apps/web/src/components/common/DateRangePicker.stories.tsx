@@ -48,7 +48,7 @@ export const Default: Story = {
   },
 };
 
-export const SameDay: Story = {
+const SameDay: Story = {
   args: {
     startDate: '2024-06-15',
     endDate: '2024-06-15',
@@ -56,7 +56,7 @@ export const SameDay: Story = {
   },
 };
 
-export const MediumSize: Story = {
+const MediumSize: Story = {
   args: {
     startDate: '2024-03-01',
     endDate: '2024-06-30',
@@ -65,7 +65,7 @@ export const MediumSize: Story = {
   },
 };
 
-export const WithoutPresets: Story = {
+const WithoutPresets: Story = {
   args: {
     startDate: '2024-01-01',
     endDate: '2024-12-31',
@@ -83,7 +83,7 @@ export const Disabled: Story = {
   },
 };
 
-export const CustomPresets: Story = {
+const CustomPresets: Story = {
   args: {
     startDate: '2024-01-01',
     endDate: '2024-03-31',

@@ -90,7 +90,7 @@ export const Default: Story = {
   },
 };
 
-export const WithHeader: Story = {
+const WithHeader: Story = {
   args: {
     children: <SampleContent />,
     header: (
@@ -139,7 +139,7 @@ export const Loading: Story = {
   },
 };
 
-export const WithCustomWidth: Story = {
+const WithCustomWidth: Story = {
   args: {
     children: <SampleContent />,
     title: '窄布局页面',
@@ -147,7 +147,7 @@ export const WithCustomWidth: Story = {
   },
 };
 
-export const WithBackgroundColor: Story = {
+const WithBackgroundColor: Story = {
   args: {
     children: <SampleContent />,
     title: '自定义背景色',

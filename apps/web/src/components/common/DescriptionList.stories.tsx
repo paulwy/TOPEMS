@@ -61,7 +61,7 @@ export const Default: Story = {
   },
 };
 
-export const VerticalLayout: Story = {
+const VerticalLayout: Story = {
   args: {
     items: basicItems,
     direction: 'vertical',
@@ -69,7 +69,7 @@ export const VerticalLayout: Story = {
   },
 };
 
-export const GridLayout: Story = {
+const GridLayout: Story = {
   args: {
     items: [
       { label: '姓名', value: '张三' },
@@ -86,7 +86,7 @@ export const GridLayout: Story = {
   },
 };
 
-export const WithCopyableItems: Story = {
+const WithCopyableItems: Story = {
   args: {
     items: [
       { label: 'API Key', value: 'sk-abc123def456ghi789', copyable: true },
@@ -98,7 +98,7 @@ export const WithCopyableItems: Story = {
   },
 };
 
-export const WithTooltips: Story = {
+const WithTooltips: Story = {
   args: {
     items: [
       { label: '订单编号', value: 'ORD-20240315-0001', tooltip: '系统自动生成的唯一订单标识' },
@@ -110,7 +110,7 @@ export const WithTooltips: Story = {
   },
 };
 
-export const LoadingSkeleton: Story = {
+const LoadingSkeleton: Story = {
   args: {
     items: [
       { label: '姓名', value: '', loading: true },
@@ -123,7 +123,7 @@ export const LoadingSkeleton: Story = {
   },
 };
 
-export const WithDivider: Story = {
+const WithDivider: Story = {
   args: {
     items: [
       { label: '基本信息', value: '张三 / 技术研发部', span: 'full' },

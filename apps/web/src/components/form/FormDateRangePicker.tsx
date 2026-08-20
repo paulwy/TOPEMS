@@ -22,7 +22,7 @@ interface FormDateRangePickerProps<T extends FieldValues> {
   locale?: DateRangePickerLocale;
 }
 
-export function FormDateRangePicker<T extends FieldValues>({
+function FormDateRangePicker<T extends FieldValues>({
   name,
   control,
   placeholder,

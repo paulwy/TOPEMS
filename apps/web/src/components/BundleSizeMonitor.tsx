@@ -64,7 +64,7 @@ const _getTypeLabel = (type: BundleEntry['type']): string => {
   return labels[type];
 };
 
-export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
+const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
   threshold = 1024 * 1024 * 2,
   enabled = process.env.NODE_ENV === 'development',
 }) => {

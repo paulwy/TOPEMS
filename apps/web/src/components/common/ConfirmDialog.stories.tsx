@@ -90,7 +90,7 @@ export const Default: Story = {
   },
 };
 
-export const Danger: Story = {
+const Danger: Story = {
   args: {
     isOpen: true,
     title: '确认删除',
@@ -144,7 +144,7 @@ export const Info: Story = {
   },
 };
 
-export const WithCustomContent: Story = {
+const WithCustomContent: Story = {
   args: {
     isOpen: true,
     title: '导出数据',
@@ -176,7 +176,7 @@ export const WithCustomContent: Story = {
   },
 };
 
-export const WithCustomButtons: Story = {
+const WithCustomButtons: Story = {
   args: {
     isOpen: true,
     title: '请选择操作',
@@ -216,7 +216,7 @@ export const LargeSize: Story = {
 
 // ============ Additional requested stories ============
 
-export const Destructive: Story = {
+const Destructive: Story = {
   name: 'Destructive (Delete)',
   args: {
     isOpen: true,
@@ -229,7 +229,7 @@ export const Destructive: Story = {
   },
 };
 
-export const AsyncAction: Story = {
+const AsyncAction: Story = {
   name: 'Async Action (Loading)',
   args: {
     isOpen: true,
@@ -248,7 +248,7 @@ export const AsyncAction: Story = {
   },
 };
 
-export const AlertDialogStory: Story = {
+const AlertDialogStory: Story = {
   name: 'AlertDialog',
   args: {
     isOpen: true,
@@ -260,7 +260,7 @@ export const AlertDialogStory: Story = {
   },
 };
 
-export const ErrorDialogStory: Story = {
+const ErrorDialogStory: Story = {
   name: 'ErrorDialog',
   args: {
     isOpen: true,

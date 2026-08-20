@@ -96,7 +96,7 @@ export const Multiple: Story = {
   },
 };
 
-export const FlatDepartments: Story = {
+const FlatDepartments: Story = {
   args: {
     departments: [
       { id: '1', name: '研发部' },

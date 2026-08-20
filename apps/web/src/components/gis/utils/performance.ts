@@ -13,7 +13,7 @@ import { useMemo, useRef } from 'react';
  * 轨迹简化 - Douglas-Peucker 算法
  * 用于减少轨迹点数量以提高渲染性能
  */
-export function simplifyTrack(
+function simplifyTrack(
   points: Array<{ lat: number; lng: number; timestamp?: number }>,
   tolerance: number = 0.0001
 ): Array<{ lat: number; lng: number; timestamp?: number }> {
@@ -89,7 +89,7 @@ function toRad(deg: number): number {
 /**
  * 计算轨迹总长度（米）
  */
-export function calculateTrackLength(points: Array<{ lat: number; lng: number }>): number {
+function calculateTrackLength(points: Array<{ lat: number; lng: number }>): number {
   if (points.length < 2) return 0;
 
   let total = 0;
@@ -139,7 +139,7 @@ export function throttle<T extends (...args: unknown[]) => void>(
  * 虚拟列表范围计算
  * 用于大型列表的按需渲染
  */
-export function getVirtualRange(
+function getVirtualRange(
   scrollTop: number,
   itemHeight: number,
   containerHeight: number,
@@ -188,7 +188,7 @@ export async function batchProcess<T, R>(
  * 缓存计算结果
  * 用于缓存 expensive 的计算
  */
-export class MemoCache<K, V> {
+class MemoCache<K, V> {
   private cache = new Map<K, V>();
   private maxSize: number;
 
@@ -221,7 +221,7 @@ export class MemoCache<K, V> {
 /**
  * useMemoizedTrack - 用于缓存轨迹计算的 Hook
  */
-export function useMemoizedTrack<T extends { lat: number; lng: number }>(
+function useMemoizedTrack<T extends { lat: number; lng: number }>(
   points: T[],
   tolerance: number = 0.0001
 ) {
@@ -254,7 +254,7 @@ export function useThrottledCallback<T extends (...args: unknown[]) => void>(
 /**
  * 瓦片加载优化 - 预加载周围瓦片
  */
-export function preloadAdjacentTiles(
+function preloadAdjacentTiles(
   centerTile: { z: number; x: number; y: number },
   getTileUrl: (z: number, x: number, y: number) => string,
   preloadLevels: number[] = [1, 2]
@@ -278,7 +278,7 @@ export function preloadAdjacentTiles(
 /**
  * 批量预加载图片
  */
-export function preloadImages(urls: string[]): Promise<void> {
+function preloadImages(urls: string[]): Promise<void> {
   return Promise.all(
     urls.map(
       (url) =>

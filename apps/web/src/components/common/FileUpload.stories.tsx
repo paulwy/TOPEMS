@@ -54,7 +54,7 @@ export const Default: Story = {
   },
 };
 
-export const WithFileRestrictions: Story = {
+const WithFileRestrictions: Story = {
   args: {
     maxCount: 3,
     maxSize: 5,
@@ -73,7 +73,7 @@ export const LargeUploadArea: Story = {
   },
 };
 
-export const SingleFile: Story = {
+const SingleFile: Story = {
   args: {
     maxCount: 1,
     maxSize: 10,

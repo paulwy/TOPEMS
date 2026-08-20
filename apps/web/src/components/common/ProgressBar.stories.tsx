@@ -66,7 +66,7 @@ export const Default: Story = {
   },
 };
 
-export const LinearVariants: Story = {
+const LinearVariants: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
       <ProgressBar
@@ -93,7 +93,7 @@ export const LinearVariants: Story = {
   ),
 };
 
-export const Circular: Story = {
+const Circular: Story = {
   render: () => (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px' }}>
       <ProgressBar
@@ -125,7 +125,7 @@ export const Circular: Story = {
   ),
 };
 
-export const Segmented: Story = {
+const Segmented: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
       <ProgressBar
@@ -147,7 +147,7 @@ export const Segmented: Story = {
   ),
 };
 
-export const WithLabel: Story = {
+const WithLabel: Story = {
   args: {
     value: 75,
     label: '上传进度',
@@ -155,7 +155,7 @@ export const WithLabel: Story = {
   },
 };
 
-export const Animated: Story = {
+const Animated: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
       <ProgressBar
@@ -178,7 +178,7 @@ export const Animated: Story = {
   ),
 };
 
-export const Striped: Story = {
+const Striped: Story = {
   args: {
     value: 65,
     striped: true,

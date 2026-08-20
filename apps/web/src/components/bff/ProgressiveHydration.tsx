@@ -92,7 +92,7 @@ function notifyHydrationListeners(): void {
 /**
  * 记录水合状态（供 PerformancePanel 统计）
  */
-export function recordHydration(record: HydrationRecord): void {
+function recordHydration(record: HydrationRecord): void {
   hydrationRecords.unshift(record);
   if (hydrationRecords.length > MAX_HYDRATION_RECORDS) {
     hydrationRecords.pop();
@@ -423,7 +423,7 @@ const PRIORITY_WEIGHT: Record<HydrationPriority, number> = {
  * 按优先级分批调度水合任务，避免一次性水合导致主线程阻塞。
  * high 优先级立即执行，medium/low 在空闲时间分批执行。
  */
-export class HydrationScheduler {
+class HydrationScheduler {
   private tasks: HydrationTask[] = [];
   private running = false;
   private batchSize = 3;
@@ -490,7 +490,7 @@ let globalScheduler: HydrationScheduler | null = null;
 /**
  * 获取全局水合调度器
  */
-export function getHydrationScheduler(): HydrationScheduler {
+function getHydrationScheduler(): HydrationScheduler {
   if (!globalScheduler) {
     globalScheduler = new HydrationScheduler();
   }

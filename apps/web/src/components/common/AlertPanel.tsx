@@ -27,7 +27,7 @@ const filterOptions = [
   { value: 'info', label: i18n.t('shared.alert_panel.k4') },
 ];
 
-export const AlertPanel = ({ alerts, onAlertClick }: AlertPanelProps) => {
+const AlertPanel = ({ alerts, onAlertClick }: AlertPanelProps) => {
   const theme = useTheme();
   const [isExpanded, setIsExpanded] = useState(true);
   const [filter, setFilter] = useState('all');

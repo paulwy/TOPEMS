@@ -29,7 +29,7 @@ interface CustomTooltipProps {
   payload?: TooltipPayload[];
 }
 
-export const CustomTooltipPolar: React.FC<CustomTooltipProps> = ({ active, payload }) => {
+const CustomTooltipPolar: React.FC<CustomTooltipProps> = ({ active, payload }) => {
   if (active && payload && payload.length) {
     return (
       <div

@@ -43,7 +43,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const CreateMode: Story = {
+const CreateMode: Story = {
   args: {
     title: '创建用户',
     fields: baseFields,
@@ -56,7 +56,7 @@ export const CreateMode: Story = {
   },
 };
 
-export const EditMode: Story = {
+const EditMode: Story = {
   args: {
     title: '编辑用户',
     mode: 'edit',
@@ -98,7 +98,7 @@ export const ViewMode: Story = {
   },
 };
 
-export const SingleColumn: Story = {
+const SingleColumn: Story = {
   args: {
     title: '单行表单',
     colCount: 1,
@@ -109,7 +109,7 @@ export const SingleColumn: Story = {
   },
 };
 
-export const AsyncAutocomplete: Story = {
+const AsyncAutocomplete: Story = {
   args: {
     title: '异步选项加载',
     colCount: 1,
@@ -133,7 +133,7 @@ export const AsyncAutocomplete: Story = {
   },
 };
 
-export const FormSections: Story = {
+const FormSections: Story = {
   args: {
     title: '分组表单',
     colCount: 2,

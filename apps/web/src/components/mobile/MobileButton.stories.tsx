@@ -153,7 +153,7 @@ export const Colors: Story = {
   ),
 };
 
-export const FullWidth: Story = {
+const FullWidth: Story = {
   render: () => (
     <Box sx={{ maxWidth: 375, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
       <MobileButton

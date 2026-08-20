@@ -76,7 +76,7 @@ export const Default: Story = {
   ),
 };
 
-export const ManyPages: Story = {
+const ManyPages: Story = {
   render: (args) => (
     <Template
       {...args}
@@ -87,7 +87,7 @@ export const ManyPages: Story = {
   ),
 };
 
-export const FirstPage: Story = {
+const FirstPage: Story = {
   render: (args) => (
     <Template
       {...args}
@@ -98,7 +98,7 @@ export const FirstPage: Story = {
   ),
 };
 
-export const LastPage: Story = {
+const LastPage: Story = {
   render: (args) => (
     <Template
       {...args}
@@ -109,7 +109,7 @@ export const LastPage: Story = {
   ),
 };
 
-export const WithoutPageSizeSelector: Story = {
+const WithoutPageSizeSelector: Story = {
   render: (args) => (
     <Template
       {...args}
@@ -121,7 +121,7 @@ export const WithoutPageSizeSelector: Story = {
   ),
 };
 
-export const WithoutTotal: Story = {
+const WithoutTotal: Story = {
   render: (args) => (
     <Template
       {...args}
@@ -132,7 +132,7 @@ export const WithoutTotal: Story = {
   ),
 };
 
-export const SmallDataSet: Story = {
+const SmallDataSet: Story = {
   render: (args) => (
     <Template
       {...args}

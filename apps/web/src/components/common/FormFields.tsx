@@ -186,7 +186,7 @@ interface FormDateFieldProps<T extends FieldValues> {
   size?: 'small' | 'medium';
 }
 
-export function FormDateField<T extends FieldValues>({
+function FormDateField<T extends FieldValues>({
   name,
   control,
   label,

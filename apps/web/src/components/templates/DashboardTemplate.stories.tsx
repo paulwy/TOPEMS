@@ -208,14 +208,14 @@ export const Loading: Story = {
   },
 };
 
-export const StatsOnly: Story = {
+const StatsOnly: Story = {
   args: {
     title: '关键指标概览',
     stats: mockStats,
   },
 };
 
-export const StatsWithProgress: Story = {
+const StatsWithProgress: Story = {
   args: {
     title: '生产进度看板',
     stats: [

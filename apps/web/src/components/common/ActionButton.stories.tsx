@@ -68,7 +68,7 @@ export const Default: Story = {
   },
 };
 
-export const AllVariants: Story = {
+const AllVariants: Story = {
   render: () => (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
       <ActionButton
@@ -110,7 +110,7 @@ export const WithIcon: Story = {
   },
 };
 
-export const IconEnd: Story = {
+const IconEnd: Story = {
   args: {
     label: '下一步',
     icon: <Download size={18} />,

@@ -109,7 +109,7 @@ export const Compact: Story = {
   },
 };
 
-export const Comfortable: Story = {
+const Comfortable: Story = {
   args: {
     data: sampleData,
     density: 'comfortable',
@@ -117,7 +117,7 @@ export const Comfortable: Story = {
   },
 };
 
-export const FileSystem: Story = {
+const FileSystem: Story = {
   args: {
     data: fileSystemData,
     expanded: ['src', 'components'],
@@ -130,7 +130,7 @@ export const FileSystem: Story = {
   ),
 };
 
-export const WithDisabledNode: Story = {
+const WithDisabledNode: Story = {
   args: {
     data: [
       { id: '1', label: '可操作节点' },
@@ -141,7 +141,7 @@ export const WithDisabledNode: Story = {
   },
 };
 
-export const FlatList: Story = {
+const FlatList: Story = {
   args: {
     data: [
       { id: '1', label: '项目文档' },

@@ -149,7 +149,7 @@ export const Default: Story = {
   ),
 };
 
-export const AllPresets: Story = {
+const AllPresets: Story = {
   parameters: {
     layout: 'fullscreen',
   },
@@ -207,7 +207,7 @@ export const AllPresets: Story = {
   ),
 };
 
-export const SwitcherInContext: Story = {
+const SwitcherInContext: Story = {
   parameters: {
     layout: 'fullscreen',
   },
@@ -271,7 +271,7 @@ export const SwitcherInContext: Story = {
   ),
 };
 
-export const ColorPaletteGrid: Story = {
+const ColorPaletteGrid: Story = {
   parameters: {
     layout: 'fullscreen',
   },

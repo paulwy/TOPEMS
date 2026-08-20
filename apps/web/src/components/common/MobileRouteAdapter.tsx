@@ -8,7 +8,7 @@ interface MobileRouteAdapterProps {
   children: React.ReactNode;
 }
 
-export const MobileRouteAdapter: React.FC<MobileRouteAdapterProps> = ({
+const MobileRouteAdapter: React.FC<MobileRouteAdapterProps> = ({
   desktopPath,
   mobilePath,
   children,

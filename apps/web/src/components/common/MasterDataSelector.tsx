@@ -45,7 +45,7 @@ export interface MasterDataSelectorProps {
   showStatus?: boolean;
 }
 
-export const MasterDataSelector: React.FC<MasterDataSelectorProps> = ({
+const MasterDataSelector: React.FC<MasterDataSelectorProps> = ({
   domain,
   value,
   onChange,

@@ -1382,7 +1382,7 @@ interface FinancialReportsViewerProps {
   period: string;
 }
 
-export function FinancialReportsViewer({ orgId, period }: FinancialReportsViewerProps) {
+function FinancialReportsViewer({ orgId, period }: FinancialReportsViewerProps) {
   const [activeReport, setActiveReport] = useState<'balance' | 'income' | 'cash'>('balance');
 
   const { data: balanceSheet, isPending: balanceLoading } = useQuery({

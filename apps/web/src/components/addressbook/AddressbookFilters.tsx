@@ -6,7 +6,7 @@ interface AddressbookFiltersProps {
   statusFilter: string;
   onStatusChange: (_status: string) => void;
 }
-export const AddressbookFilters: React.FC<AddressbookFiltersProps> = ({
+const AddressbookFilters: React.FC<AddressbookFiltersProps> = ({
   statusFilter,
   onStatusChange,
 }) => {

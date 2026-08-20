@@ -70,7 +70,7 @@ export const Default: Story = {
   },
 };
 
-export const NoAction: Story = {
+const NoAction: Story = {
   args: {
     title: '暂无通知',
     description: '您目前没有任何新通知',
@@ -101,7 +101,7 @@ export const Compact: Story = {
   },
 };
 
-export const SearchEmpty: Story = {
+const SearchEmpty: Story = {
   render: () => (
     <SearchEmptyState
       keyword='React'
@@ -110,7 +110,7 @@ export const SearchEmpty: Story = {
   ),
 };
 
-export const ListEmpty: Story = {
+const ListEmpty: Story = {
   render: () => (
     <ListEmptyState
       title='列表为空'
@@ -121,11 +121,11 @@ export const ListEmpty: Story = {
   ),
 };
 
-export const PermissionEmpty: Story = {
+const PermissionEmpty: Story = {
   render: () => <PermissionEmptyState onRequest={fn()} />,
 };
 
-export const ErrorEmpty: Story = {
+const ErrorEmpty: Story = {
   render: () => (
     <ErrorEmptyState
       error='网络连接超时，请检查网络后重试'
@@ -134,7 +134,7 @@ export const ErrorEmpty: Story = {
   ),
 };
 
-export const EmojiVariant: Story = {
+const EmojiVariant: Story = {
   args: {
     title: '做得好！',
     description: '所有任务已完成',
@@ -142,7 +142,7 @@ export const EmojiVariant: Story = {
   },
 };
 
-export const LeftAligned: Story = {
+const LeftAligned: Story = {
   args: {
     title: '左侧对齐的空状态',
     description: '这是一个左对齐的空状态示例',

@@ -64,7 +64,7 @@ export const Info: Story = {
   },
 };
 
-export const Expandable: Story = {
+const Expandable: Story = {
   args: {
     level: 'warning',
     title: '检测到异常',
@@ -74,7 +74,7 @@ export const Expandable: Story = {
   },
 };
 
-export const InlineMode: Story = {
+const InlineMode: Story = {
   render: () => (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
       <AlertCard level='success' message='已自动保存' displayMode='inline' size='sm' />
@@ -85,7 +85,7 @@ export const InlineMode: Story = {
   ),
 };
 
-export const PresetComponents: Story = {
+const PresetComponents: Story = {
   render: () => (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <SuccessAlertCard title='发布完成' message='v2.3.1 已成功部署到生产环境。' />

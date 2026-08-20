@@ -242,13 +242,13 @@ export const Default: Story = {
   },
 };
 
-export const WithGroups: Story = {
+const WithGroups: Story = {
   args: {
     groups: groupedCommandGroups,
   },
 };
 
-export const WithIcons: Story = {
+const WithIcons: Story = {
   args: {
     commands: commandsWithIcons,
   },

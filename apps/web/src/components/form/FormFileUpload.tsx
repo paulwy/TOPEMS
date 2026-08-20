@@ -19,7 +19,7 @@ interface FormFileUploadProps<T extends FieldValues> {
   locale?: FileUploadLocale;
 }
 
-export function FormFileUpload<T extends FieldValues>({
+function FormFileUpload<T extends FieldValues>({
   name,
   control,
   accept,

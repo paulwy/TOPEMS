@@ -710,42 +710,42 @@ export const PieChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) =>
   />
 );
 
-export const AreaChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
+const AreaChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
   <ChartComponent
     type='area'
     {...props}
   />
 );
 
-export const RadarChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
+const RadarChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
   <ChartComponent
     type='radar'
     {...props}
   />
 );
 
-export const ScatterChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
+const ScatterChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
   <ChartComponent
     type='scatter'
     {...props}
   />
 );
 
-export const ComposedChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
+const ComposedChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
   <ChartComponent
     type='composed'
     {...props}
   />
 );
 
-export const HistogramChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
+const HistogramChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
   <ChartComponent
     type='histogram'
     {...props}
   />
 );
 
-export const GaugeChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
+const GaugeChartComponent: React.FC<Omit<ChartConfig, 'type'>> = (props) => (
   <ChartComponent
     type='gauge'
     {...props}

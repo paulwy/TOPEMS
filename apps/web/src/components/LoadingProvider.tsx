@@ -207,7 +207,6 @@ const SkeletonTable: React.FC<{ rows?: number; columns?: number }> = memo(
 );
 SkeletonTable.displayName = 'SkeletonTable';
 
-export { SkeletonText, SkeletonCard, SkeletonTable };
 
 // ============================================================================
 // Progress Components

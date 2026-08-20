@@ -15,7 +15,7 @@ interface DraggableWindowProps {
   onResize: (width: number, height: number) => void;
 }
 
-export const DraggableWindow: React.FC<DraggableWindowProps> = ({
+const DraggableWindow: React.FC<DraggableWindowProps> = ({
   window: windowState,
   onActivate,
   onMinimize,

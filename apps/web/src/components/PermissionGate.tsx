@@ -86,7 +86,7 @@ interface RoleGateProps {
   loading?: boolean;
 }
 
-export const RoleGate: React.FC<RoleGateProps> = ({
+const RoleGate: React.FC<RoleGateProps> = ({
   children,
   role,
   requireAll = false,
@@ -233,7 +233,7 @@ interface AdminGateProps {
   loading?: boolean;
 }
 
-export const AdminGate: React.FC<AdminGateProps> = ({
+const AdminGate: React.FC<AdminGateProps> = ({
   children,
   fallback = null,
   showDisabled = false,
@@ -289,7 +289,7 @@ interface SuperuserGateProps {
   loading?: boolean;
 }
 
-export const SuperuserGate: React.FC<SuperuserGateProps> = ({
+const SuperuserGate: React.FC<SuperuserGateProps> = ({
   children,
   fallback = null,
   showDisabled = false,
@@ -365,7 +365,7 @@ const roleConfig: Record<
   Guest: { variant: 'outline', icon: Eye, label: i18n.t('components.permission_gate.k11') },
 };
 
-export const RoleBadge: React.FC<RoleBadgeProps> = ({ role }) => {
+const RoleBadge: React.FC<RoleBadgeProps> = ({ role }) => {
   const config = roleConfig[role] || {
     variant: 'outline' as const,
     icon: Shield,
@@ -400,7 +400,7 @@ interface PermissionBadgeProps {
   size?: 'sm' | 'md';
 }
 
-export const PermissionBadge: React.FC<PermissionBadgeProps> = ({ permission, size = 'sm' }) => {
+const PermissionBadge: React.FC<PermissionBadgeProps> = ({ permission, size = 'sm' }) => {
   const [module, action] = permission.split(':');
 
   const actionColors: Record<string, { bg: string; text: string }> = {

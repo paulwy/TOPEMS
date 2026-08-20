@@ -162,7 +162,7 @@ export async function getTileCacheInfo(): Promise<{
 /**
  * 导出为可使用的离线瓦片提供器 (用于 Leaflet 等地图库)
  */
-export function createOfflineTileProvider(
+function createOfflineTileProvider(
   source: string,
   _getTile: (source: string, z: number, x: number, y: number) => Promise<string | null>
 ) {

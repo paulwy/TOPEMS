@@ -88,7 +88,7 @@ export const Default: Story = {
   },
 };
 
-export const Collapsed: Story = {
+const Collapsed: Story = {
   args: {
     filters: sampleFilters,
     collapsible: true,
@@ -96,7 +96,7 @@ export const Collapsed: Story = {
   },
 };
 
-export const WithActiveFilters: Story = {
+const WithActiveFilters: Story = {
   args: {
     filters: sampleFilters.map((f) => {
       if (f.id === 'keyword') return { ...f, value: 'React' };
@@ -107,14 +107,14 @@ export const WithActiveFilters: Story = {
   },
 };
 
-export const Dense: Story = {
+const Dense: Story = {
   args: {
     filters: sampleFilters,
     dense: true,
   },
 };
 
-export const WithMultiselect: Story = {
+const WithMultiselect: Story = {
   args: {
     filters: [
       {
@@ -149,7 +149,7 @@ export const WithMultiselect: Story = {
   },
 };
 
-export const WithDateRange: Story = {
+const WithDateRange: Story = {
   args: {
     filters: [
       {
@@ -178,7 +178,7 @@ export const WithDateRange: Story = {
   },
 };
 
-export const NotCollapsible: Story = {
+const NotCollapsible: Story = {
   args: {
     filters: [
       {
@@ -208,7 +208,7 @@ export const FilledVariant: Story = {
   },
 };
 
-export const StandardVariant: Story = {
+const StandardVariant: Story = {
   args: {
     filters: sampleFilters,
     variant: 'standard',

@@ -8,7 +8,7 @@ interface ContactDetailModalProps {
   onClose: () => void;
 }
 
-export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact, onClose }) => {
+const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact, onClose }) => {
   if (!contact) return null;
 
   const getIcon = () => {

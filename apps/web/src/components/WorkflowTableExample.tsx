@@ -8,7 +8,7 @@ import { workflowApi, type Workflow } from '@/api/workflow';
 import { logger } from '@/utils/logger';
 import i18n from '@/i18n';
 
-export function WorkflowTableExample() {
+function WorkflowTableExample() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<Workflow[]>([]);
   const [error, setError] = useState<string | null>(null);

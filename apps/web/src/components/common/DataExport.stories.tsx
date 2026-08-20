@@ -96,7 +96,7 @@ export const Default: Story = {
   },
 };
 
-export const CustomFileName: Story = {
+const CustomFileName: Story = {
   args: {
     data: sampleData,
     fields: sampleFields,
@@ -105,7 +105,7 @@ export const CustomFileName: Story = {
   },
 };
 
-export const ExcelOnly: Story = {
+const ExcelOnly: Story = {
   args: {
     data: sampleData,
     fields: sampleFields,
@@ -113,7 +113,7 @@ export const ExcelOnly: Story = {
   },
 };
 
-export const NoFieldSelection: Story = {
+const NoFieldSelection: Story = {
   args: {
     data: sampleData,
     fields: sampleFields,
@@ -129,7 +129,7 @@ export const Disabled: Story = {
   },
 };
 
-export const LargeDataset: Story = {
+const LargeDataset: Story = {
   args: {
     data: Array.from({ length: 100 }, (_, i) => ({
       name: `员工${i + 1}`,

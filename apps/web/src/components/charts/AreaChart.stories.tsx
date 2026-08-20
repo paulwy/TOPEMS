@@ -98,7 +98,7 @@ export const MultiSeries: Story = {
   },
 };
 
-export const Dashed: Story = {
+const Dashed: Story = {
   args: {
     xKey: 'month',
     yKeys: [{ key: 'revenue', name: '营收（万元）', color: '#E86452' }],
@@ -109,7 +109,7 @@ export const Dashed: Story = {
   },
 };
 
-export const DenseData: Story = {
+const DenseData: Story = {
   args: {
     xKey: 'day',
     yKeys: [{ key: 'visits', name: '日访问量', color: '#6DC8EC' }],

@@ -185,7 +185,7 @@ interface PermissionRouteProps {
   fallbackComponent?: ReactNode;
 }
 
-export const PermissionRoute: React.FC<PermissionRouteProps> = ({
+const PermissionRoute: React.FC<PermissionRouteProps> = ({
   children,
   module,
   action = 'read',

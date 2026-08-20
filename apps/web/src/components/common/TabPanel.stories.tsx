@@ -68,7 +68,7 @@ export const LoadingState: Story = {
   },
 };
 
-export const EmptyMessage: Story = {
+const EmptyMessage: Story = {
   args: {
     value: 0,
     index: 0,
@@ -76,7 +76,7 @@ export const EmptyMessage: Story = {
   },
 };
 
-export const WithTabsIntegration: Story = {
+const WithTabsIntegration: Story = {
   render: () => {
     const TabPanelWrapper = () => {
       const [value, setValue] = useState(0);
@@ -144,7 +144,7 @@ export const WithTabsIntegration: Story = {
   },
 };
 
-export const MixedStates: Story = {
+const MixedStates: Story = {
   render: () => {
     const MixedWrapper = () => {
       const [value, setValue] = useState(0);

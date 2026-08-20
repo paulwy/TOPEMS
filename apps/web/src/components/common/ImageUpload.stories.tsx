@@ -53,7 +53,7 @@ export const Default: Story = {
   },
 };
 
-export const SingleImage: Story = {
+const SingleImage: Story = {
   args: {
     maxCount: 1,
     maxSize: 2,
@@ -61,7 +61,7 @@ export const SingleImage: Story = {
   },
 };
 
-export const WithoutCrop: Story = {
+const WithoutCrop: Story = {
   args: {
     maxCount: 6,
     maxSize: 5,

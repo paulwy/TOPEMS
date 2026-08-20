@@ -207,7 +207,7 @@ export const Default: Story = {
   },
 };
 
-export const WithRowNumbers: Story = {
+const WithRowNumbers: Story = {
   args: {
     title: '生产工单列表',
     columns: [

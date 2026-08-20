@@ -111,7 +111,7 @@ export const WithBadge: Story = {
   ),
 };
 
-export const WithoutIcon: Story = {
+const WithoutIcon: Story = {
   render: () => (
     <Box sx={{ maxWidth: 375, margin: '0 auto' }}>
       <MobileCard
@@ -143,7 +143,7 @@ export const WithoutIcon: Story = {
   ),
 };
 
-export const ListStyle: Story = {
+const ListStyle: Story = {
   render: () => (
     <Box sx={{ maxWidth: 375, margin: '0 auto' }}>
       {[
