@@ -4,7 +4,7 @@ import type { PaginatedResponse } from './types';
 
 // ===== 类型定义 =====
 
-export interface DrillPlan {
+interface DrillPlan {
   id: string;
   plan_no: string;
   title: string;
@@ -46,7 +46,7 @@ export interface DrillRecord {
   tenant_id?: string;
 }
 
-export interface DrillEvaluation {
+interface DrillEvaluation {
   id: string;
   drill_id: string;
   evaluator?: string;
@@ -62,7 +62,7 @@ export interface DrillEvaluation {
   tenant_id?: string;
 }
 
-export interface DrillProblem {
+interface DrillProblem {
   id: string;
   drill_id: string;
   description: string;
@@ -80,13 +80,13 @@ export interface DrillProblem {
   tenant_id?: string;
 }
 
-export interface DrillDetail {
+interface DrillDetail {
   record: DrillRecord;
   evaluation?: DrillEvaluation;
   problems: DrillProblem[];
 }
 
-export interface DrillStatistics {
+interface DrillStatistics {
   total_drills: number;
   planned_count: number;
   completed_count: number;
@@ -99,12 +99,12 @@ export interface DrillStatistics {
   tenant_id?: string;
 }
 
-export interface DrillType {
+interface DrillType {
   code: string;
   name: string;
 }
 
-export interface DrillPlanListQuery {
+interface DrillPlanListQuery {
   page?: number;
   pagesize?: number;
   status?: string;
@@ -113,7 +113,7 @@ export interface DrillPlanListQuery {
   keyword?: string;
 }
 
-export interface DrillRecordListQuery {
+interface DrillRecordListQuery {
   page?: number;
   pagesize?: number;
   status?: string;
@@ -135,7 +135,7 @@ interface CreateDrillPlanRequest {
   related_plan_id?: string;
 }
 
-export interface UpdateDrillPlanRequest {
+interface UpdateDrillPlanRequest {
   title?: string;
   description?: string;
   drill_type?: string;
@@ -162,7 +162,7 @@ export interface CreateDrillRecordRequest {
   recorder?: string;
 }
 
-export interface UpdateDrillRecordRequest {
+interface UpdateDrillRecordRequest {
   title?: string;
   drill_type?: string;
   location?: string;
@@ -196,7 +196,7 @@ interface CreateDrillProblemRequest {
   rectification_measures?: string;
 }
 
-export interface UpdateDrillProblemRequest {
+interface UpdateDrillProblemRequest {
   description?: string;
   category?: string;
   severity?: string;

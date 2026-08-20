@@ -8,7 +8,7 @@ import type {
   UpdateProductionProgressRequest,
 } from './types';
 
-export interface ProductionOrderListResponse {
+interface ProductionOrderListResponse {
   orders: ProductionOrder[];
   total: number;
 }

@@ -129,7 +129,7 @@
       "v55Automation": {
         "tooltip": "V55.0 全栈自动化 CI/CD",
         "label": "V55 AI自动化",
-        "sublabel": "CI/CD · 部署"
+        "sublabel": "持续集成·部署"
       },
       "v56Ops": {
         "tooltip": "V56.0 平台智能运维",
@@ -179,7 +179,7 @@
       "v60Quality": {
         "tooltip": "V60.0 AI质量",
         "label": "V60 质量",
-        "sublabel": "测试·性能·UX"
+        "sublabel": "测试·性能·体验"
       }
     }
   }

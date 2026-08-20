@@ -18,7 +18,7 @@ export interface Vehicle {
   updated_at: string;
 }
 
-export interface VehicleListResponse {
+interface VehicleListResponse {
   items: Vehicle[];
   total: number;
 }
@@ -60,19 +60,19 @@ export interface VehicleRequest {
   updated_at: string;
 }
 
-export interface VehicleRequestListResponse {
+interface VehicleRequestListResponse {
   items: VehicleRequest[];
   total: number;
 }
 
-export interface CreateVehicleRequestPayload {
+interface CreateVehicleRequestPayload {
   vehicle_id: string;
   purpose?: string;
   start_date?: string;
   end_date?: string;
 }
 
-export interface UpdateVehicleRequestPayload {
+interface UpdateVehicleRequestPayload {
   purpose?: string;
   start_date?: string;
   end_date?: string;

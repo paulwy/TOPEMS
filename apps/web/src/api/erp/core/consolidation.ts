@@ -13,7 +13,7 @@ export interface ConsolidationScope {
   updated_at: string;
 }
 
-export interface ConsolidationScopeCompany {
+interface ConsolidationScopeCompany {
   id: string;
   scope_id: string;
   company_id: string;
@@ -151,52 +151,52 @@ export interface GenerateReportRequest {
   period: string;
 }
 
-export interface SubmitReportRequest {
+interface SubmitReportRequest {
   comment?: string;
 }
 
-export interface ApproveReportRequest {
+interface ApproveReportRequest {
   comment?: string;
 }
 
-export interface ScopeListResponse {
+interface ScopeListResponse {
   items: ConsolidationScope[];
   total: number;
 }
 
-export interface ScopeCompanyListResponse {
+interface ScopeCompanyListResponse {
   items: ConsolidationScopeCompany[];
   total: number;
 }
 
-export interface EliminationRuleListResponse {
+interface EliminationRuleListResponse {
   items: EliminationRule[];
   total: number;
 }
 
-export interface InternalTransactionListResponse {
+interface InternalTransactionListResponse {
   items: InternalTransaction[];
   total: number;
 }
 
-export interface ReportListResponse {
+interface ReportListResponse {
   items: ConsolidationReport[];
   total: number;
 }
 
-export interface ReportLineListResponse {
+interface ReportLineListResponse {
   items: ConsolidationReportLine[];
   total: number;
 }
 
-export interface CompanyRelationListResponse {
+interface CompanyRelationListResponse {
   items: CompanyRelation[];
   total: number;
 }
 
 // ============ Query Types ============
 
-export interface ScopeQueryParams extends PaginationParams {
+interface ScopeQueryParams extends PaginationParams {
   period?: string;
   status?: string;
 }

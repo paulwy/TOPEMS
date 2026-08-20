@@ -27,7 +27,7 @@ export interface MasterDataRef {
   destroyed_by?: string;
 }
 
-export interface AuditTrailEntry {
+interface AuditTrailEntry {
   id: string;
   master_data_id: string;
   action: string;
@@ -39,12 +39,12 @@ export interface AuditTrailEntry {
   timestamp: string;
 }
 
-export interface DataLineage {
+interface DataLineage {
   master_data_id: string;
   refs: DataLineageRef[];
 }
 
-export interface DataLineageRef {
+interface DataLineageRef {
   target_service: string;
   target_entity_type: string;
   target_entity_id: string;
@@ -77,7 +77,7 @@ export interface QualityRule {
   updated_at: string;
 }
 
-export interface GovernanceDashboard {
+interface GovernanceDashboard {
   total_refs: number;
   active_refs: number;
   archived_refs: number;
@@ -87,17 +87,17 @@ export interface GovernanceDashboard {
   sync_lag_avg: number;
 }
 
-export interface MasterDataRefListResponse {
+interface MasterDataRefListResponse {
   items: MasterDataRef[];
   total: number;
 }
 
-export interface QualityRuleListResponse {
+interface QualityRuleListResponse {
   items: QualityRule[];
   total: number;
 }
 
-export interface SyncJob {
+interface SyncJob {
   id: string;
   job_type: string;
   source_service: string;
@@ -110,12 +110,12 @@ export interface SyncJob {
   created_at: string;
 }
 
-export interface SyncJobListResponse {
+interface SyncJobListResponse {
   items: SyncJob[];
   total: number;
 }
 
-export interface QualityTicket {
+interface QualityTicket {
   id: string;
   title: string;
   domain: string;
@@ -129,14 +129,14 @@ export interface QualityTicket {
   updated_at: string;
 }
 
-export interface QualityTicketListResponse {
+interface QualityTicketListResponse {
   items: QualityTicket[];
   total: number;
 }
 
 // ============ Request Types ============
 
-export interface RecordAuditEventRequest {
+interface RecordAuditEventRequest {
   master_data_id: string;
   action: string;
   field?: string;
@@ -145,7 +145,7 @@ export interface RecordAuditEventRequest {
   source_service: string;
 }
 
-export interface CreateQualityRuleRequest {
+interface CreateQualityRuleRequest {
   code: string;
   name: string;
   domain: string;
@@ -155,7 +155,7 @@ export interface CreateQualityRuleRequest {
   description?: string;
 }
 
-export interface UpdateQualityRuleRequest {
+interface UpdateQualityRuleRequest {
   name?: string;
   expression?: string;
   severity?: string;
@@ -163,18 +163,18 @@ export interface UpdateQualityRuleRequest {
   enabled?: boolean;
 }
 
-export interface DetectConflictsRequest {
+interface DetectConflictsRequest {
   master_data_ids: string[];
 }
 
-export interface CreateSyncJobRequest {
+interface CreateSyncJobRequest {
   job_type: string;
   source_service: string;
   target_service: string;
   config?: Record<string, unknown>;
 }
 
-export interface CreateQualityTicketRequest {
+interface CreateQualityTicketRequest {
   title: string;
   domain: string;
   ticket_type: string;
@@ -183,20 +183,20 @@ export interface CreateQualityTicketRequest {
   description?: string;
 }
 
-export interface CreateDataDomainRequest {
+interface CreateDataDomainRequest {
   name: string;
   code: string;
   description?: string;
   owner?: string;
 }
 
-export interface UpdateDataDomainRequest {
+interface UpdateDataDomainRequest {
   name?: string;
   description?: string;
   owner?: string;
 }
 
-export interface SetOwnershipMatrixRequest {
+interface SetOwnershipMatrixRequest {
   owners: Array<{
     entity_type: string;
     owner: string;
@@ -204,15 +204,15 @@ export interface SetOwnershipMatrixRequest {
   }>;
 }
 
-export interface ArchiveRequest {
+interface ArchiveRequest {
   archive_reason?: string;
 }
 
-export interface RestoreRequest {
+interface RestoreRequest {
   restore_reason?: string;
 }
 
-export interface ScheduleDestructionRequest {
+interface ScheduleDestructionRequest {
   destroy_reason: string;
   destroy_scheduled_at?: string;
 }
@@ -223,21 +223,21 @@ export interface RollbackRequest {
 
 // ============ Query Types ============
 
-export interface MasterDataRefQueryParams extends PaginationParams {
+interface MasterDataRefQueryParams extends PaginationParams {
   domain?: string;
 }
 
-export interface ConflictQueryParams extends PaginationParams {
+interface ConflictQueryParams extends PaginationParams {
   status?: string;
   domain?: string;
 }
 
-export interface SyncJobQueryParams extends PaginationParams {
+interface SyncJobQueryParams extends PaginationParams {
   job_type?: string;
   status?: string;
 }
 
-export interface QualityTicketQueryParams extends PaginationParams {
+interface QualityTicketQueryParams extends PaginationParams {
   domain?: string;
   status?: string;
   priority?: string;

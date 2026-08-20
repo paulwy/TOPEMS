@@ -67,7 +67,7 @@ const DevPanels: React.FC = () => {
         aria-hidden='true'
         style={{
           width: '100%',
-          height: 240,
+          height: 320,
           flexShrink: 0,
           pointerEvents: 'none',
         }}

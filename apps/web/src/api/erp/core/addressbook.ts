@@ -2,7 +2,7 @@ import apiClient from '../../client';
 import type { ApiResponse } from '../../client';
 import type { PaginationParams } from './types';
 
-export interface AddressContact {
+interface AddressContact {
   id: string;
   name: string;
   phone?: string;
@@ -15,12 +15,12 @@ export interface AddressContact {
   updated_at: string;
 }
 
-export interface AddressContactListResponse {
+interface AddressContactListResponse {
   contacts: AddressContact[];
   total: number;
 }
 
-export interface DepartmentTreeNode {
+interface DepartmentTreeNode {
   id: string;
   name: string;
   parent_id?: string;

@@ -4,7 +4,7 @@ import type { PaginationParams } from './types';
 
 // ============ Types ============
 
-export interface HrmDashboard {
+interface HrmDashboard {
   total_employees: number;
   active_employees: number;
   departments_count: number;
@@ -12,7 +12,7 @@ export interface HrmDashboard {
   recent_leave_requests: number;
 }
 
-export interface HrmEmployee {
+interface HrmEmployee {
   id: string;
   user_id?: string;
   employee_no: string;
@@ -28,7 +28,7 @@ export interface HrmEmployee {
   updated_at: string;
 }
 
-export interface HrmDepartment {
+interface HrmDepartment {
   id: string;
   name: string;
   parent_id?: string;
@@ -38,11 +38,11 @@ export interface HrmDepartment {
   updated_at: string;
 }
 
-export interface HrmDepartmentTreeNode extends HrmDepartment {
+interface HrmDepartmentTreeNode extends HrmDepartment {
   children?: HrmDepartmentTreeNode[];
 }
 
-export interface HrmCompany {
+interface HrmCompany {
   id: string;
   name: string;
   code: string;
@@ -51,7 +51,7 @@ export interface HrmCompany {
   updated_at: string;
 }
 
-export interface HrmPosition {
+interface HrmPosition {
   id: string;
   name: string;
   department_id?: string;
@@ -61,7 +61,7 @@ export interface HrmPosition {
   updated_at: string;
 }
 
-export interface HrmPayroll {
+interface HrmPayroll {
   id: string;
   employee_id: string;
   employee_name: string;
@@ -75,7 +75,7 @@ export interface HrmPayroll {
   updated_at: string;
 }
 
-export interface HrmAttendance {
+interface HrmAttendance {
   id: string;
   employee_id: string;
   employee_name: string;
@@ -88,51 +88,51 @@ export interface HrmAttendance {
   updated_at: string;
 }
 
-export interface HrmEmployeeListResponse {
+interface HrmEmployeeListResponse {
   items: HrmEmployee[];
   total: number;
 }
 
-export interface HrmDepartmentListResponse {
+interface HrmDepartmentListResponse {
   items: HrmDepartment[];
   total: number;
 }
 
-export interface HrmCompanyListResponse {
+interface HrmCompanyListResponse {
   items: HrmCompany[];
   total: number;
 }
 
-export interface HrmPositionListResponse {
+interface HrmPositionListResponse {
   items: HrmPosition[];
   total: number;
 }
 
-export interface HrmPayrollListResponse {
+interface HrmPayrollListResponse {
   items: HrmPayroll[];
   total: number;
 }
 
-export interface HrmAttendanceListResponse {
+interface HrmAttendanceListResponse {
   items: HrmAttendance[];
   total: number;
 }
 
 // ============ Query Types ============
 
-export interface HrmEmployeeQueryParams extends PaginationParams {
+interface HrmEmployeeQueryParams extends PaginationParams {
   department_id?: string;
   status?: string;
   search?: string;
 }
 
-export interface HrmPayrollQueryParams extends PaginationParams {
+interface HrmPayrollQueryParams extends PaginationParams {
   period?: string;
   employee_id?: string;
   status?: string;
 }
 
-export interface HrmAttendanceQueryParams extends PaginationParams {
+interface HrmAttendanceQueryParams extends PaginationParams {
   employee_id?: string;
   start_date?: string;
   end_date?: string;

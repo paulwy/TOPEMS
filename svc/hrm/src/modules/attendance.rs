@@ -258,12 +258,12 @@ async fn create_attendance(
     let result = sqlx::query_as::<_, AttendanceRecord>(
         r#"
         INSERT INTO hrm.attendance_records (
-            id, organization_id, employee_id, date, check_in_time, check_out_time,
+            id, organization_id, tenant_id, employee_id, date, check_in_time, check_out_time,
             status, work_hours, notes, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5::TIME, $6::TIME, $7, $8, $9, $10, $11)
-        RETURNING id, organization_id AS tenant_id, employee_id, date,
+        ) VALUES ($1, $2, $2, $3, $4, $5::TIME, $6::TIME, $7, $8, $9, $10, $11)
+        RETURNING id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
                   check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
-                  status, work_hours, notes, created_at, updated_at
+                  status, work_hours::float8 AS work_hours, notes, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -397,12 +397,12 @@ async fn update_attendance(
     let result = sqlx::query_as::<_, AttendanceRecord>(
         r#"
         UPDATE hrm.attendance_records SET
-            check_in_time = $2, check_out_time = $3, status = $4,
+            check_in_time = $2::TIME, check_out_time = $3::TIME, status = $4,
             work_hours = $5, notes = $6, updated_at = $7
         WHERE id = $1 AND deleted_at IS NULL
-        RETURNING id, organization_id AS tenant_id, employee_id, date,
+        RETURNING id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
                   check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
-                  status, work_hours, notes, created_at, updated_at
+                  status, work_hours::float8 AS work_hours, notes, created_at, updated_at
         "#,
     )
     .bind(id)

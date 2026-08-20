@@ -22,7 +22,7 @@ export interface CreateOpeningBalanceRequest {
   credit_balance: number;
 }
 
-export interface UpdateOpeningBalanceRequest {
+interface UpdateOpeningBalanceRequest {
   debit_balance?: number;
   credit_balance?: number;
 }
@@ -32,12 +32,12 @@ export interface CarryForwardRequest {
   to_period: string;
 }
 
-export interface OpeningBalanceListResponse {
+interface OpeningBalanceListResponse {
   items: OpeningBalance[];
   total: number;
 }
 
-export interface OpeningBalanceQueryParams extends PaginationParams {
+interface OpeningBalanceQueryParams extends PaginationParams {
   company_id?: string;
   period?: string;
   subject_code?: string;

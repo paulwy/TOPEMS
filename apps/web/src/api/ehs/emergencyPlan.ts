@@ -2,7 +2,7 @@ import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
 import type { PaginatedResponse } from './types';
 
-export interface EmergencyPlanItem {
+interface EmergencyPlanItem {
   id: string;
   plan_no: string;
   title: string;
@@ -25,7 +25,7 @@ export interface EmergencyPlanItem {
   updated_at?: string;
 }
 
-export interface PlanSupply {
+interface PlanSupply {
   id: string;
   plan_id: string;
   name: string;
@@ -38,7 +38,7 @@ export interface PlanSupply {
   created_at?: string;
 }
 
-export interface PlanVersion {
+interface PlanVersion {
   id: string;
   plan_id: string;
   version: string;
@@ -48,7 +48,7 @@ export interface PlanVersion {
   content?: string;
 }
 
-export interface PlanApproval {
+interface PlanApproval {
   id: string;
   plan_id: string;
   approver?: string;
@@ -59,27 +59,27 @@ export interface PlanApproval {
   order_num: number;
 }
 
-export interface PlanDetail {
+interface PlanDetail {
   plan: EmergencyPlanItem;
   supplies: PlanSupply[];
   versions: PlanVersion[];
   approvals: PlanApproval[];
 }
 
-export interface PlanCategory {
+interface PlanCategory {
   code: string;
   name: string;
   icon: string;
 }
 
-export interface PlanListQuery {
+interface PlanListQuery {
   page?: number;
   page_size?: number;
   status?: string;
   category?: string;
 }
 
-export interface CreatePlanRequest {
+interface CreatePlanRequest {
   title: string;
   description?: string;
   category: string;
@@ -93,7 +93,7 @@ export interface CreatePlanRequest {
   expiry_date?: string;
 }
 
-export interface UpdatePlanRequest {
+interface UpdatePlanRequest {
   title?: string;
   description?: string;
   category?: string;
@@ -108,7 +108,7 @@ export interface UpdatePlanRequest {
   expiry_date?: string;
 }
 
-export interface CreateSupplyRequest {
+interface CreateSupplyRequest {
   name: string;
   specification?: string;
   quantity: number;
@@ -118,12 +118,12 @@ export interface CreateSupplyRequest {
   remarks?: string;
 }
 
-export interface SubmitApprovalRequest {
+interface SubmitApprovalRequest {
   approvers?: string[];
   remarks?: string;
 }
 
-export interface ApprovePlanRequest {
+interface ApprovePlanRequest {
   opinion?: string;
   result: string;
 }

@@ -24,7 +24,7 @@ export interface TableDetail {
   row_count: number | null;
 }
 
-export interface TableListParams {
+interface TableListParams {
   schema?: string;
   search?: string;
 }
@@ -42,13 +42,13 @@ export interface DbChange {
   backup_data?: unknown;
 }
 
-export interface DbChangeListParams {
+interface DbChangeListParams {
   page?: number;
   page_size?: number;
   table_name?: string;
 }
 
-export interface PaginatedDbChanges {
+interface PaginatedDbChanges {
   items: DbChange[];
   total: number;
   page: number;

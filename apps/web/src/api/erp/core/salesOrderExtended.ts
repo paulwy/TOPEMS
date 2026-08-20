@@ -2,25 +2,25 @@ import apiClient from '../../client';
 import type { ApiResponse } from '../../client';
 import type { SalesOrder, CreateSalesOrderRequest, UpdateSalesOrderRequest } from './types';
 
-export interface BulkApproveRequest {
+interface BulkApproveRequest {
   ids: string[];
 }
 
-export interface BulkShipRequest {
+interface BulkShipRequest {
   ids: string[];
   ship_date?: string;
 }
 
-export interface BulkCompleteRequest {
+interface BulkCompleteRequest {
   ids: string[];
 }
 
-export interface BulkCancelRequest {
+interface BulkCancelRequest {
   ids: string[];
   reason?: string;
 }
 
-export interface SalesOrderStatsResponse {
+interface SalesOrderStatsResponse {
   total: number;
   byStatus: Array<{ status: string; count: number }>;
   byCustomer: Array<{ customer_id: string; customer_name: string; total: number }>;

@@ -2,7 +2,7 @@ import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
 import type { PaginatedResponse } from './types';
 
-export interface SafetyTrainingItem {
+interface SafetyTrainingItem {
   id: string;
   training_no: string;
   title: string;
@@ -16,7 +16,7 @@ export interface SafetyTrainingItem {
   updated_at?: string;
 }
 
-export interface SafetyTrainingListQuery {
+interface SafetyTrainingListQuery {
   page?: number;
   page_size?: number;
   status?: string;
@@ -25,7 +25,7 @@ export interface SafetyTrainingListQuery {
   keyword?: string;
 }
 
-export interface CreateSafetyTrainingRequest {
+interface CreateSafetyTrainingRequest {
   title: string;
   content?: string;
   trainer?: string;
@@ -35,7 +35,7 @@ export interface CreateSafetyTrainingRequest {
   status?: string;
 }
 
-export interface UpdateSafetyTrainingRequest {
+interface UpdateSafetyTrainingRequest {
   title?: string;
   content?: string;
   trainer?: string;
@@ -45,7 +45,7 @@ export interface UpdateSafetyTrainingRequest {
   status?: string;
 }
 
-export interface SafetyTrainingStatistics {
+interface SafetyTrainingStatistics {
   total_trainings: number;
   scheduled_count: number;
   completed_count: number;

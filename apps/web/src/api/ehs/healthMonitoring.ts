@@ -2,7 +2,7 @@ import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
 import type { PaginatedResponse } from './types';
 
-export interface HealthRecordItem {
+interface HealthRecordItem {
   id: string;
   record_no: string;
   employee_name?: string;
@@ -17,7 +17,7 @@ export interface HealthRecordItem {
   updated_at?: string;
 }
 
-export interface HealthMonitoringQuery {
+interface HealthMonitoringQuery {
   page?: number;
   page_size?: number;
   status?: string;
@@ -48,7 +48,7 @@ export interface UpdateHealthRecordRequest {
   remarks?: string;
 }
 
-export interface HealthStatistics {
+interface HealthStatistics {
   total_records: number;
   normal_count: number;
   abnormal_count: number;

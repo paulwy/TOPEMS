@@ -10,7 +10,7 @@ export interface SearchResult {
   type_name: string;
 }
 
-export interface GlobalSearchParams {
+interface GlobalSearchParams {
   query: string;
   limit?: number;
 }

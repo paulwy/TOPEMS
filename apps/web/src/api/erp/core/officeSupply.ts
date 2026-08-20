@@ -15,12 +15,12 @@ export interface OfficeSupply {
   updated_at: string;
 }
 
-export interface OfficeSupplyListResponse {
+interface OfficeSupplyListResponse {
   items: OfficeSupply[];
   total: number;
 }
 
-export interface CreateOfficeSupplyRequest {
+interface CreateOfficeSupplyRequest {
   name: string;
   category: string;
   quantity: number;
@@ -30,7 +30,7 @@ export interface CreateOfficeSupplyRequest {
   status?: string;
 }
 
-export interface UpdateOfficeSupplyRequest {
+interface UpdateOfficeSupplyRequest {
   name?: string;
   category?: string;
   quantity?: number;
