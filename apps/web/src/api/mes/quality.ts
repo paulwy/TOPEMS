@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import type { ApiResponse } from '../client';
+import type { ApiResponse, PaginationParams as BasePaginationParams } from '../client';
 
 export interface QualityInspection {
   id: string;
@@ -145,10 +145,7 @@ export interface CreateQualityStandardRequest {
   description?: string;
 }
 
-export interface PaginationParams {
-  page?: number;
-  pagesize?: number;
-  search?: string;
+export interface PaginationParams extends BasePaginationParams {
   status?: string;
 }
 

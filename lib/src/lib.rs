@@ -49,13 +49,7 @@ pub use topems_shared_event::event;
 
 // --- shared-service-client 基础模块 ---
 pub use topems_shared_service_client::service_client;
-pub use topems_shared_service_client::service_client::{
-    create_ai_client, create_bi_client, create_communication_client, create_doc_client,
-    create_ehs_client, create_generic_client, create_gis_client, create_integration_client,
-    create_lims_client, create_lowcode_client, create_master_data_client, create_mobile_client,
-    create_pdm_client, create_pm_client, create_portal_client, create_rd_client, create_scm_client,
-    create_srm_client,
-};
+pub use topems_shared_service_client::service_client::create_generic_client;
 
 // --- shared-ai 基础模块 ---
 pub use topems_shared_ai::embedding;

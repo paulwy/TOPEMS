@@ -208,6 +208,7 @@ pub mod cors;
 pub mod crud;
 pub mod error;
 pub mod feature_flag;
+pub mod fsm;
 pub mod health;
 pub mod hrm;
 pub mod id;
@@ -250,6 +251,7 @@ pub use error::{Result, TopemsError};
 pub use feature_flag::{
     FeatureCondition, FeatureContext, FeatureFlag, FeatureFlagService, FeatureState,
 };
+pub use fsm::{check_pair, validate_status, FsmError};
 pub use health::{
     build_health_response, check_http_health, create_health_router, create_metrics_router,
     metrics_middleware, simple_health_check, standard_health_check, DependencyHealth,

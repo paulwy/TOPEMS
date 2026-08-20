@@ -261,5 +261,5 @@ pub use saga::{
 pub use service_discovery::{
     ConsulDiscoveryClient, ConsulServiceRegistrar, LocalServiceRegistry, PortalServiceAggregator,
     ServiceCategory, ServiceDiscoveryClient, ServiceHealthStatus, ServiceInfo, ServiceInstance,
-    ServiceRegistryStatus, SmartServiceClient,
+    ServiceRegistryStatus,
 };

@@ -1,3 +1,5 @@
+import type { PaginationParams as BasePaginationParams } from '../client';
+
 // TMS 运输管理系统 - 类型定义
 
 // ==================== 审批相关类型 ====================
@@ -128,10 +130,7 @@ export type CreateShipmentRequest = Omit<
 >;
 export type UpdateShipmentRequest = Partial<CreateShipmentRequest>;
 
-export interface PaginationParams {
-  page?: number;
-  pageSize?: number;
-  search?: string;
+export interface PaginationParams extends BasePaginationParams {
   status?: string;
   tenant_id?: string;
 }

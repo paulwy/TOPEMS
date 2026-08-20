@@ -14,6 +14,7 @@ pub mod file_api;
 pub mod finance_api;
 pub mod hrm_api;
 pub mod iam_api;
+pub mod macro_client_apis;
 pub mod mes_api;
 pub mod monitor_api;
 pub mod notification_api;

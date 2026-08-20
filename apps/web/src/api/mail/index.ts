@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import type { ApiResponse } from '../client';
+import type { ApiResponse, PaginationParams as BasePaginationParams } from '../client';
 import i18n from '@/i18n';
 
 export interface Email {
@@ -56,10 +56,7 @@ export interface SendEmailWithTemplateRequest {
   priority?: string;
 }
 
-export interface PaginationParams {
-  page?: number;
-  pagesize?: number;
-  search?: string;
+export interface PaginationParams extends BasePaginationParams {
   status?: string;
   priority?: string;
   category?: string;

@@ -204,22 +204,7 @@ pub use service_client::error::{ServiceClientError, ServiceClientResult};
 pub use service_client::generic::GenericServiceClient;
 pub use service_client::trait_api::{ServiceApi, TypedServiceClient};
 
-// 各业务服务客户端 re-export
-pub use service_client::ai_client::AiServiceClient;
-pub use service_client::bi_client::BiServiceClient;
-pub use service_client::doc_client::DocServiceClient;
-pub use service_client::ehs_client::EhsServiceClient;
-pub use service_client::gis_client::GisServiceClient;
-pub use service_client::integration_client::IntegrationServiceClient;
-pub use service_client::lims_client::LimsServiceClient;
-pub use service_client::mobile_client::MobileServiceClient;
-pub use service_client::pdm_client::PdmServiceClient;
-pub use service_client::pm_client::PmServiceClient;
-pub use service_client::portal_client::PortalServiceClient;
-pub use service_client::rd_client::RdServiceClient;
-pub use service_client::scm_client::ScmServiceClient;
-pub use service_client::srm_client::SrmServiceClient;
-// P0-2 Phase 2: 各服务类型从 api::*_api 导出
+// P0-2 Phase 2 + P2-2: 所有服务类型统一从 api::*_api 导出
 pub use service_client::api::erp_api::{ErpApi, ErpAsset};
 pub use service_client::api::finance_api::FinanceApi;
 pub use service_client::api::hrm_api::{
@@ -236,6 +221,11 @@ pub use service_client::api::workflow_api::{
     CreateInstanceRequest, TaskActionRequest, TaskStats, WorkflowApi, WorkflowInstance,
     WorkflowStatistics, WorkflowTask,
 };
+// P2-2: 从宏模式客户端迁移的 17 个 Api 元数据
+pub use service_client::api::macro_client_apis::{
+    AiApi, BiApi, CommunicationApi, DocApi, EhsApi, GisApi, IntegrationApi, LimsApi, LowcodeApi,
+    MasterDataApi, MobileApi, PdmApi, PmApi, PortalApi, RdApi, ScmApi, SrmApi,
+};
 
 // notification 模块 re-export
 pub use notification::{
@@ -246,16 +236,8 @@ pub use notification::{
 };
 
 // 工厂函数 re-export
-// P0-2: 已删除 create_billing/crm/feedback/search/ticket/mes/qms_client（零引用）
-// P0-2 Phase 2: 已删除 create_wms/erp/finance/monitor/hrm/iam/notification_client（迁移到 TypedServiceClient<XxxApi>）
-pub use service_client::{
-    create_ai_client, create_bi_client, create_communication_client, create_doc_client,
-    create_ehs_client, create_generic_client, create_gis_client, create_integration_client,
-    create_lims_client, create_lowcode_client, create_master_data_client, create_mobile_client,
-    create_pdm_client, create_pm_client, create_portal_client, create_rd_client, create_scm_client,
-    create_srm_client,
-};
+// P0-2 + P2-2: 所有 *_client 工厂函数已删除，统一使用 TypedServiceClient<XxxApi>::from_env_default()
+pub use service_client::create_generic_client;
 
 // 宏通过 #[macro_export] 自动导出到 crate 根：
-// - define_service_client!
 // - define_service_api!

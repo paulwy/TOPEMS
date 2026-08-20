@@ -1,9 +1,10 @@
 use topems_shared_service_client::service_client::{
-    create_ai_client, create_bi_client, create_doc_client, create_ehs_client,
-    create_generic_client, create_gis_client, create_integration_client, create_lims_client,
-    create_mobile_client, create_pdm_client, create_pm_client, create_portal_client,
-    create_rd_client, create_scm_client, create_srm_client, BaseServiceClient, ErpApi, FinanceApi,
-    HrmApi, IamApi, MonitorApi, NotificationApi, ServiceClientError, TypedServiceClient, WmsApi,
+    create_generic_client, BaseServiceClient, ServiceClientError, TypedServiceClient,
+};
+use topems_shared_service_client::{
+    AiApi, BiApi, DocApi, EhsApi, ErpApi, FinanceApi, GisApi, HrmApi, IamApi, IntegrationApi,
+    LimsApi, MobileApi, MonitorApi, NotificationApi, PdmApi, PmApi, PortalApi, RdApi, ScmApi,
+    SrmApi, WmsApi,
 };
 
 #[test]
@@ -201,13 +202,13 @@ fn test_create_wms_client_returns_client() {
 
 #[test]
 fn test_create_scm_client_returns_client() {
-    let result = create_scm_client();
+    let result = TypedServiceClient::<ScmApi>::from_env_default();
     validate_client_result(result);
 }
 
 #[test]
 fn test_create_pm_client_returns_client() {
-    let result = create_pm_client();
+    let result = TypedServiceClient::<PmApi>::from_env_default();
     validate_client_result(result);
 }
 
@@ -219,61 +220,61 @@ fn test_create_finance_client_returns_client() {
 
 #[test]
 fn test_create_doc_client_returns_client() {
-    let result = create_doc_client();
+    let result = TypedServiceClient::<DocApi>::from_env_default();
     validate_client_result(result);
 }
 
 #[test]
 fn test_create_ai_client_returns_client() {
-    let result = create_ai_client();
+    let result = TypedServiceClient::<AiApi>::from_env_default();
     validate_client_result(result);
 }
 
 #[test]
 fn test_create_pdm_client_returns_client() {
-    let result = create_pdm_client();
+    let result = TypedServiceClient::<PdmApi>::from_env_default();
     validate_client_result(result);
 }
 
 #[test]
 fn test_create_srm_client_returns_client() {
-    let result = create_srm_client();
+    let result = TypedServiceClient::<SrmApi>::from_env_default();
     validate_client_result(result);
 }
 
 #[test]
 fn test_create_lims_client_returns_client() {
-    let result = create_lims_client();
+    let result = TypedServiceClient::<LimsApi>::from_env_default();
     validate_client_result(result);
 }
 
 #[test]
 fn test_create_ehs_client_returns_client() {
-    let result = create_ehs_client();
+    let result = TypedServiceClient::<EhsApi>::from_env_default();
     validate_client_result(result);
 }
 
 #[test]
 fn test_create_rd_client_returns_client() {
-    let result = create_rd_client();
+    let result = TypedServiceClient::<RdApi>::from_env_default();
     validate_client_result(result);
 }
 
 #[test]
 fn test_create_bi_client_returns_client() {
-    let result = create_bi_client();
+    let result = TypedServiceClient::<BiApi>::from_env_default();
     validate_client_result(result);
 }
 
 #[test]
 fn test_create_mobile_client_returns_client() {
-    let result = create_mobile_client();
+    let result = TypedServiceClient::<MobileApi>::from_env_default();
     validate_client_result(result);
 }
 
 #[test]
 fn test_create_portal_client_returns_client() {
-    let result = create_portal_client();
+    let result = TypedServiceClient::<PortalApi>::from_env_default();
     validate_client_result(result);
 }
 
@@ -285,13 +286,13 @@ fn test_create_monitor_client_returns_client() {
 
 #[test]
 fn test_create_gis_client_returns_client() {
-    let result = create_gis_client();
+    let result = TypedServiceClient::<GisApi>::from_env_default();
     validate_client_result(result);
 }
 
 #[test]
 fn test_create_integration_client_returns_client() {
-    let result = create_integration_client();
+    let result = TypedServiceClient::<IntegrationApi>::from_env_default();
     validate_client_result(result);
 }
 

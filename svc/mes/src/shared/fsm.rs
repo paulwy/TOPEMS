@@ -5,16 +5,11 @@
 //! WIP:             in_progress → transferred → completed
 //!
 //! `released` 是历史遗留值（与 in_progress 等价），保留兼容。
+//!
+//! `FsmError` / `validate_status` / `check_pair` 已提取至 `topems_shared_core::fsm`。
 
-#[derive(Debug, thiserror::Error, PartialEq)]
-pub enum FsmError {
-    #[error("state '{0}' is terminal and cannot transition")]
-    TerminalState(String),
-    #[error("invalid transition: {from} -> {to}")]
-    InvalidTransition { from: String, to: String },
-    #[error("unknown status: {0}")]
-    UnknownStatus(String),
-}
+// 重导出公共 FSM 基础类型，保持 `use crate::shared::fsm::{...}` 调用方无需改动
+pub use topems_shared_core::fsm::{check_pair, FsmError};
 
 const PRODUCTION_ORDER_STATES: &[&str] = &[
     "draft",
@@ -32,36 +27,6 @@ const WORK_ORDER_TERMINAL: &[&str] = &["completed", "cancelled"];
 
 const WIP_STATES: &[&str] = &["in_progress", "transferred", "completed"];
 const WIP_TERMINAL: &[&str] = &["completed"];
-
-fn validate_status(status: &str, allowed: &[&str]) -> Result<(), FsmError> {
-    if allowed.contains(&status) {
-        Ok(())
-    } else {
-        Err(FsmError::UnknownStatus(status.to_string()))
-    }
-}
-
-fn check_pair(
-    from: &str,
-    to: &str,
-    allowed_pairs: &[(&str, &str)],
-    terminal: &[&str],
-    all_states: &[&str],
-) -> Result<(), FsmError> {
-    validate_status(from, all_states)?;
-    validate_status(to, all_states)?;
-    if terminal.contains(&from) {
-        return Err(FsmError::TerminalState(from.to_string()));
-    }
-    if allowed_pairs.contains(&(from, to)) {
-        Ok(())
-    } else {
-        Err(FsmError::InvalidTransition {
-            from: from.to_string(),
-            to: to.to_string(),
-        })
-    }
-}
 
 pub fn production_order_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
     // released 等价于 in_progress（历史值兼容）
