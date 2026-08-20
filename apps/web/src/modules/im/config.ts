@@ -13,7 +13,7 @@ export const IM_PATHS = {
 } as const;
 export interface DashboardPageProps {}
 
-export interface MailPageProps {
+interface MailPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;

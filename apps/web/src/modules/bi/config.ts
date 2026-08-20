@@ -23,53 +23,53 @@ export const BI_PATHS = {
   dataAnalysis: '/bi/data-analysis',
   gis: '/bi/gis',
 } as const;
-export interface BIDashboardPageProps {}
+interface BIDashboardPageProps {}
 
-export interface BIAnalyticsPageProps {}
+interface BIAnalyticsPageProps {}
 
-export interface BIComparisonPageProps {}
+interface BIComparisonPageProps {}
 
-export interface BIDataSourcePageProps {
+interface BIDataSourcePageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface DatasetPageProps {
+interface DatasetPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface BIReportPageProps {
+interface BIReportPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface BIVisualizationPageProps {}
+interface BIVisualizationPageProps {}
 
-export interface ReportBuilderPageProps {
+interface ReportBuilderPageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface BiPermissionPageProps {}
+interface BiPermissionPageProps {}
 
-export interface BiIndexPageProps {
+interface BiIndexPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface BIModuleDetailPageProps {
+interface BIModuleDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface DataAnalysisPageProps {}
+interface DataAnalysisPageProps {}
 
-export interface GisPageProps {}
+interface GisPageProps {}
 
 const bIDashboardRoute: RouteConfigV2<BIDashboardPageProps> = {
   path: BI_PATHS.dashboard,

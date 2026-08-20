@@ -24,85 +24,85 @@ export const EHS_PATHS = {
   incidentReport: '/ehs/incident-report',
   dashboard: '/ehs/dashboard',
 } as const;
-export interface EhsCheckPageProps {
+interface EhsCheckPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface EhsHazardPageProps {
+interface EhsHazardPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface EhsHazardDetailPageProps {
+interface EhsHazardDetailPageProps {
   id?: string;
   entityType?: string;
 }
 
-export interface EhsAccidentPageProps {
+interface EhsAccidentPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface EhsPlanPageProps {
+interface EhsPlanPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface CompliancePageProps {
+interface CompliancePageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface EnvironmentPageProps {}
+interface EnvironmentPageProps {}
 
-export interface TrainingPageProps {
+interface TrainingPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface EhsOccupationalDiseasePageProps {
+interface EhsOccupationalDiseasePageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface HealthManagementPageProps {
+interface HealthManagementPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface EhsHazardousMaterialPageProps {
+interface EhsHazardousMaterialPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface EmergencyPageProps {
+interface EmergencyPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface EhsDrillPageProps {
+interface EhsDrillPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface EhsIncidentReportPageProps {
+interface EhsIncidentReportPageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface EhsDashboardPageProps {}
+interface EhsDashboardPageProps {}
 
 const ehsCheckRoute: RouteConfigV2<EhsCheckPageProps> = {
   path: EHS_PATHS.check,

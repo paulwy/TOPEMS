@@ -17,27 +17,27 @@ export const DOC_PATHS = {
 } as const;
 export interface DashboardPageProps {}
 
-export interface DocumentListPageProps {
+interface DocumentListPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface DocumentsPageProps {
+interface DocumentsPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface DocumentCenterPageProps {
+interface DocumentCenterPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface KnowledgeBasePageProps {}
+interface KnowledgeBasePageProps {}
 
-export interface FileDetailPageProps {
+interface FileDetailPageProps {
   id?: string;
   entityType?: string;
 }

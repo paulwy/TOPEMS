@@ -14,23 +14,23 @@ const LOWCODE_PATHS = {
 
 export interface DashboardPageProps {}
 
-export interface AppListPageProps {
+interface AppListPageProps {
   page?: number;
   pageSize?: number;
   filters?: Record<string, unknown>;
 }
 
-export interface FormDesignPageProps {
+interface FormDesignPageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface PageDesignPageProps {
+interface PageDesignPageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }
 
-export interface WorkflowConfigPageProps {
+interface WorkflowConfigPageProps {
   mode?: 'create' | 'edit' | 'view';
   initialValues?: Record<string, unknown>;
 }

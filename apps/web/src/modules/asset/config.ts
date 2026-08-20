@@ -12,7 +12,7 @@ export interface DashboardPageProps {
 }
 
 /** AssetListPage 路由 Props · 模板=list */
-export interface AssetListPageProps {
+interface AssetListPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -22,7 +22,7 @@ export interface AssetListPageProps {
 }
 
 /** CategoryManagementPage 路由 Props · 模板=list */
-export interface CategoryManagementPageProps {
+interface CategoryManagementPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -32,7 +32,7 @@ export interface CategoryManagementPageProps {
 }
 
 /** DepreciationPage 路由 Props · 模板=form */
-export interface DepreciationPageProps {
+interface DepreciationPageProps {
   /** 表单三态：新建 / 编辑 / 只读 */
   mode?: 'create' | 'edit' | 'view';
   /** 表单回填初始值 */
@@ -40,7 +40,7 @@ export interface DepreciationPageProps {
 }
 
 /** TransferPage 路由 Props · 模板=form */
-export interface TransferPageProps {
+interface TransferPageProps {
   /** 表单三态：新建 / 编辑 / 只读 */
   mode?: 'create' | 'edit' | 'view';
   /** 表单回填初始值 */

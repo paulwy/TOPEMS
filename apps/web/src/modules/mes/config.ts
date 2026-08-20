@@ -146,7 +146,7 @@ export interface WorkOrderPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface EquipmentManagementPageProps {
+interface EquipmentManagementPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -172,7 +172,7 @@ export interface EquipmentManagementPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface EquipmentDetailPageProps {
+interface EquipmentDetailPageProps {
   /** 实体主键 ID（匹配 PATHS.:id）*/
 
   id?: string;
@@ -242,7 +242,7 @@ export interface TeamManagementPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface MaterialRequirementPageProps {
+interface MaterialRequirementPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -500,7 +500,7 @@ export interface WorkReportPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface EquipmentOEEPageProps {
+interface EquipmentOEEPageProps {
   /** 统计维度 */
 
   dimensions?: string[];
@@ -518,7 +518,7 @@ export interface EquipmentOEEPageProps {
   filters?: Record<string, unknown>;
 }
 
-export interface MaterialBOMPageProps {
+interface MaterialBOMPageProps {
   /** 展开的节点 ID 列表 */
 
   expandedKeys?: string[];
@@ -536,7 +536,7 @@ export interface MaterialBOMPageProps {
   rootParentId?: string;
 }
 
-export interface MaterialIssuePageProps {
+interface MaterialIssuePageProps {
   /** 表单模式 */
 
   mode?: 'create' | 'edit' | 'clone' | 'view';
@@ -554,7 +554,7 @@ export interface MaterialIssuePageProps {
   prefillFrom?: Record<string, unknown>;
 }
 
-export interface MaterialReturnPageProps {
+interface MaterialReturnPageProps {
   /** 表单模式 */
 
   mode?: 'create' | 'edit' | 'clone' | 'view';
@@ -572,7 +572,7 @@ export interface MaterialReturnPageProps {
   prefillFrom?: Record<string, unknown>;
 }
 
-export interface ApsSchedulingPageProps {
+interface ApsSchedulingPageProps {
   /** 统计指标列表（可选）*/
 
   metrics?: string[];
@@ -616,7 +616,7 @@ export interface ProductionCostPageProps {
   refreshIntervalSec?: number;
 }
 
-export interface EnergyManagementPageProps {
+interface EnergyManagementPageProps {
   /** 统计指标列表（可选）*/
 
   metrics?: string[];
@@ -638,7 +638,7 @@ export interface EnergyManagementPageProps {
   refreshIntervalSec?: number;
 }
 
-export interface AnomalyDetectionPageProps {
+interface AnomalyDetectionPageProps {
   /** 统计指标列表（可选）*/
 
   metrics?: string[];
@@ -660,7 +660,7 @@ export interface AnomalyDetectionPageProps {
   refreshIntervalSec?: number;
 }
 
-export interface MesWorkOrderPageProps {
+interface MesWorkOrderPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -686,7 +686,7 @@ export interface MesWorkOrderPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface MesQualityPageProps {
+interface MesQualityPageProps {
   /** 分页：当前页码 */
 
   page?: number;
@@ -712,7 +712,7 @@ export interface MesQualityPageProps {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface MesOeeDashboardPageProps {
+interface MesOeeDashboardPageProps {
   /** 统计指标列表（可选）*/
 
   metrics?: string[];
@@ -734,7 +734,7 @@ export interface MesOeeDashboardPageProps {
   refreshIntervalSec?: number;
 }
 
-export interface MesDeliveryAnalyticsPageProps {
+interface MesDeliveryAnalyticsPageProps {
   /** 统计指标列表（可选）*/
 
   metrics?: string[];
@@ -756,7 +756,7 @@ export interface MesDeliveryAnalyticsPageProps {
   refreshIntervalSec?: number;
 }
 
-export interface MesQualityParetoPageProps {
+interface MesQualityParetoPageProps {
   /** 统计指标列表（可选）*/
 
   metrics?: string[];
@@ -778,7 +778,7 @@ export interface MesQualityParetoPageProps {
   refreshIntervalSec?: number;
 }
 
-export interface MesEquipmentMtbfPageProps {
+interface MesEquipmentMtbfPageProps {
   /** 统计指标列表（可选）*/
 
   metrics?: string[];
@@ -800,7 +800,7 @@ export interface MesEquipmentMtbfPageProps {
   refreshIntervalSec?: number;
 }
 
-export interface MesEnergyCostPageProps {
+interface MesEnergyCostPageProps {
   /** 统计指标列表（可选）*/
 
   metrics?: string[];
@@ -822,7 +822,7 @@ export interface MesEnergyCostPageProps {
   refreshIntervalSec?: number;
 }
 
-export interface MesCapacityUtilizationPageProps {
+interface MesCapacityUtilizationPageProps {
   /** 统计指标列表（可选）*/
 
   metrics?: string[];
@@ -858,7 +858,7 @@ export interface QualityTemplatePageProps {
   redirectOnSave?: string;
 }
 
-export interface BomVersionPolicyPageProps {
+interface BomVersionPolicyPageProps {
   /** 当前激活的设置 Tab key */
 
   activeTab?: string;
@@ -872,7 +872,7 @@ export interface BomVersionPolicyPageProps {
   redirectOnSave?: string;
 }
 
-export interface ApsConfigPageProps {
+interface ApsConfigPageProps {
   /** 当前激活的设置 Tab key */
 
   activeTab?: string;
@@ -886,7 +886,7 @@ export interface ApsConfigPageProps {
   redirectOnSave?: string;
 }
 
-export interface EquipmentThresholdPageProps {
+interface EquipmentThresholdPageProps {
   /** 当前激活的设置 Tab key */
 
   activeTab?: string;

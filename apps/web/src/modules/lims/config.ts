@@ -6,7 +6,7 @@ import i18n from '@/i18n';
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 LIMS_PATHS.xxx，而非硬编码字符串
 /** LimsSamplePage 路由 Props · 模板=list */
-export interface LimsSamplePageProps {
+interface LimsSamplePageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -16,7 +16,7 @@ export interface LimsSamplePageProps {
 }
 
 /** LimsSampleDetailPage 路由 Props · 模板=detail */
-export interface LimsSampleDetailPageProps {
+interface LimsSampleDetailPageProps {
   /** 主实体 ID（如订单号、设备编码） */
   id?: string;
   /** 实体类型标记（用于 detail 模板多态渲染） */
@@ -24,7 +24,7 @@ export interface LimsSampleDetailPageProps {
 }
 
 /** SampleReceivePage 路由 Props · 模板=form */
-export interface SampleReceivePageProps {
+interface SampleReceivePageProps {
   /** 表单三态：新建 / 编辑 / 只读 */
   mode?: 'create' | 'edit' | 'view';
   /** 表单回填初始值 */
@@ -32,7 +32,7 @@ export interface SampleReceivePageProps {
 }
 
 /** LimsTaskPage 路由 Props · 模板=list */
-export interface LimsTaskPageProps {
+interface LimsTaskPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -42,7 +42,7 @@ export interface LimsTaskPageProps {
 }
 
 /** LimsTaskDetailPage 路由 Props · 模板=detail */
-export interface LimsTaskDetailPageProps {
+interface LimsTaskDetailPageProps {
   /** 主实体 ID（如订单号、设备编码） */
   id?: string;
   /** 实体类型标记（用于 detail 模板多态渲染） */
@@ -50,7 +50,7 @@ export interface LimsTaskDetailPageProps {
 }
 
 /** InspectionTaskPage 路由 Props · 模板=list */
-export interface InspectionTaskPageProps {
+interface InspectionTaskPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -60,7 +60,7 @@ export interface InspectionTaskPageProps {
 }
 
 /** LimsProcessPage 路由 Props · 模板=list */
-export interface LimsProcessPageProps {
+interface LimsProcessPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -70,7 +70,7 @@ export interface LimsProcessPageProps {
 }
 
 /** LimsInstrumentPage 路由 Props · 模板=list */
-export interface LimsInstrumentPageProps {
+interface LimsInstrumentPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -80,7 +80,7 @@ export interface LimsInstrumentPageProps {
 }
 
 /** LimsInstrumentDetailPage 路由 Props · 模板=detail */
-export interface LimsInstrumentDetailPageProps {
+interface LimsInstrumentDetailPageProps {
   /** 主实体 ID（如订单号、设备编码） */
   id?: string;
   /** 实体类型标记（用于 detail 模板多态渲染） */
@@ -88,7 +88,7 @@ export interface LimsInstrumentDetailPageProps {
 }
 
 /** LimsInstrumentDataPage 路由 Props · 模板=detail */
-export interface LimsInstrumentDataPageProps {
+interface LimsInstrumentDataPageProps {
   /** 主实体 ID（如订单号、设备编码） */
   id?: string;
   /** 实体类型标记（用于 detail 模板多态渲染） */
@@ -96,7 +96,7 @@ export interface LimsInstrumentDataPageProps {
 }
 
 /** LimsInstrumentMaintenancePage 路由 Props · 模板=form */
-export interface LimsInstrumentMaintenancePageProps {
+interface LimsInstrumentMaintenancePageProps {
   /** 表单三态：新建 / 编辑 / 只读 */
   mode?: 'create' | 'edit' | 'view';
   /** 表单回填初始值 */
@@ -104,7 +104,7 @@ export interface LimsInstrumentMaintenancePageProps {
 }
 
 /** ReagentPage 路由 Props · 模板=list */
-export interface ReagentPageProps {
+interface ReagentPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -114,7 +114,7 @@ export interface ReagentPageProps {
 }
 
 /** LimsTestMethodPage 路由 Props · 模板=list */
-export interface LimsTestMethodPageProps {
+interface LimsTestMethodPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -124,7 +124,7 @@ export interface LimsTestMethodPageProps {
 }
 
 /** BarcodePage 路由 Props · 模板=list */
-export interface BarcodePageProps {
+interface BarcodePageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -134,7 +134,7 @@ export interface BarcodePageProps {
 }
 
 /** LimsUncertaintyPage 路由 Props · 模板=stats */
-export interface LimsUncertaintyPageProps {
+interface LimsUncertaintyPageProps {
   /** 统计面板展示的指标列表 */
   metrics?: string[];
   /** 统计起止时间 ISO 字符串 */
@@ -142,7 +142,7 @@ export interface LimsUncertaintyPageProps {
 }
 
 /** InspectionResultPage 路由 Props · 模板=detail */
-export interface InspectionResultPageProps {
+interface InspectionResultPageProps {
   /** 主实体 ID（如订单号、设备编码） */
   id?: string;
   /** 实体类型标记（用于 detail 模板多态渲染） */
@@ -150,7 +150,7 @@ export interface InspectionResultPageProps {
 }
 
 /** LimsProficiencyTestingPage 路由 Props · 模板=list */
-export interface LimsProficiencyTestingPageProps {
+interface LimsProficiencyTestingPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */
@@ -160,7 +160,7 @@ export interface LimsProficiencyTestingPageProps {
 }
 
 /** LimsDashboardPage 路由 Props · 模板=dashboard */
-export interface LimsDashboardPageProps {
+interface LimsDashboardPageProps {
   /** 仪表盘视图类型 */
   variant?: 'overview' | 'executive';
   /** 看板全局筛选条件 */
