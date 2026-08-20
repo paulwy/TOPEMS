@@ -40,7 +40,7 @@ export interface UseInventoryReportReturn {
   formatNumber: (num: number) => string;
 }
 
-export const useInventoryReport = (): UseInventoryReportReturn => {
+const useInventoryReport = (): UseInventoryReportReturn => {
   const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
   const [currentTab, setCurrentTab] = useState(0);

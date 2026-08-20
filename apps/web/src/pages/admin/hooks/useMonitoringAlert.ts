@@ -60,7 +60,7 @@ export interface UseMonitoringAlertReturn {
   refetchHealth: () => void;
 }
 const PER_PAGE = 20;
-export function useMonitoringAlert(): UseMonitoringAlertReturn {
+function useMonitoringAlert(): UseMonitoringAlertReturn {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
   // State

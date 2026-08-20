@@ -50,7 +50,7 @@ const featureFlagsCache: Map<string, boolean> = new Map();
  * @param context - 上下文（可选，默认从 auth state 获取）
  * @returns FeatureFlagResult
  */
-export function useFeatureFlag(key: string, context?: FeatureFlagContext): FeatureFlagResult {
+function useFeatureFlag(key: string, context?: FeatureFlagContext): FeatureFlagResult {
   const { data, isPending, error } = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.FEATURE_FLAGS_BASE, key],
     queryFn: () => checkFeatureFlag(key, context),
@@ -68,10 +68,7 @@ export function useFeatureFlag(key: string, context?: FeatureFlagContext): Featu
 /**
  * 批量检查多个特性开关
  */
-export function useFeatureFlags(
-  keys: string[],
-  context?: FeatureFlagContext
-): Record<string, boolean> {
+function useFeatureFlags(keys: string[], context?: FeatureFlagContext): Record<string, boolean> {
   const { data } = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.FEATURE_FLAGS_BATCH_BASE, keys.join(',')],
     queryFn: () => checkFeatureFlagsBatch(keys, context),

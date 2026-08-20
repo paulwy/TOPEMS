@@ -5,22 +5,6 @@
  */
 
 // ERP 主数据（包含 useAssets/useExpenses/useBudgets 等多个 hooks）
-export {
-  useAssets,
-  useExpenses,
-  useBudgets,
-  useReceivables,
-  usePayables,
-  useAccountingSubjects,
-  useVouchers,
-  useOfficeSupplies,
-  useMeetingRooms,
-  useMeetingBookings,
-  useVehicles,
-  useVehicleRequests,
-  useAnnouncements,
-  useFinanceReports,
-} from '../../useErp';
 export type { UseErpResult } from '../../useErp';
 
 // 外部 ERP 对接（包含多个 hooks）
@@ -59,14 +43,8 @@ export {
 
 // 基础财务（账户/科目/期初余额等）
 export {
-  useAccounts,
   useAccountTree,
-  useAccount,
-  useAccountBalances,
   useOpeningBalances,
-  useCreateAccount,
-  useUpdateAccount,
-  useDeleteAccount,
   useSetOpeningBalance,
   useCarryForwardOpeningBalance,
 } from '../../useFinance';
@@ -97,45 +75,12 @@ export {
 } from '../../useCrmFinance';
 
 // HRM 财务（员工薪资等）
-export {
-  useEmployeeFinance,
-  useEmployeeFinanceInfo,
-  useUpdateEmployeeFinanceInfo,
-  useEmployeePayrolls,
-  useDepartmentPayrollSummary,
-  usePayrollPeriods,
-} from '../../useHrmFinance';
+export { useEmployeeFinanceInfo, useUpdateEmployeeFinanceInfo } from '../../useHrmFinance';
 
 // PM 财务（项目财务等）
-export {
-  useProjectFinance,
-  useProjectBudgetItems,
-  useProjectCostPerformance,
-} from '../../usePmFinance';
 
 // 凭证模板
-export {
-  useVoucherTemplates,
-  useVoucherTemplate,
-  useCreateVoucherTemplate,
-  useUpdateVoucherTemplate,
-  useDeleteVoucherTemplate,
-  useCopyVoucherTemplate,
-  useSetDefaultVoucherTemplate,
-  useToggleVoucherTemplate,
-  usePreviewGeneratedVouchers,
-  useGenerateVoucherFromSource,
-  useBatchGenerateVouchers,
-  useAutoGenerateVouchers,
-  useRegenerateReversedVoucher,
-  useMatchVoucherTemplate,
-  useVoucherTemplateUsageStats,
-  useGenerationRules,
-  useCreateGenerationRule,
-  useUpdateGenerationRule,
-  useDeleteGenerationRule,
-  useToggleGenerationRule,
-} from '../../useVoucherTemplate';
+export { useVoucherTemplate } from '../../useVoucherTemplate';
 
 // 合并报表
 export {

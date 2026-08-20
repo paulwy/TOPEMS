@@ -6,13 +6,11 @@
  */
 
 // Debounce - 来自 shared-hooks
-export { useDebounce, useDebouncedValue, useDebouncedCallback } from '@topems/shared-hooks';
+export { useDebounce } from '@topems/shared-hooks';
 
 // Throttle
-export { useThrottle, useThrottledValue, useThrottledCallback } from '../useThrottle';
 
 // IntersectionObserver
-export { useIntersectionObserver, useInView } from '../useIntersectionObserver';
 export type {
   UseIntersectionObserverOptions,
   UseIntersectionObserverResult,
@@ -30,11 +28,10 @@ export type { Breakpoint } from '../useResponsive';
 export { useIsMobile } from '../useIsMobile';
 
 // TouchFeedback
-export { useTouchFeedback, useSwipeGesture, useDoubleTap } from '../useTouchFeedback';
+export { useTouchFeedback, useSwipeGesture } from '../useTouchFeedback';
 export type { TouchFeedbackOptions, TouchRipple } from '../useTouchFeedback';
 
 // VirtualScroll
-export { useVirtualScroll } from '../useVirtualScroll';
 export type { UseVirtualScrollOptions, UseVirtualScrollResult } from '../useVirtualScroll';
 
 // UrlState
@@ -54,5 +51,4 @@ export { useColumnWidth } from '../useColumnWidth';
 export type { UseColumnWidthOptions, UseColumnWidthResult } from '../useColumnWidth';
 
 // Web Vitals (V26.0)
-export { useWebVitals, getWebVitalsSnapshot } from './useWebVitals';
 export type { WebVitalsMetrics, WebVitalsCallback } from './useWebVitals';

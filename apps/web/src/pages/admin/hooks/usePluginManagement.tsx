@@ -24,7 +24,7 @@ export interface MarketplacePlugin {
   permissions: Array<{ code: string; name: string }>;
 }
 export type UninstallTier = 'disable' | 'uninstall' | 'delete';
-export const getPluginDisplayNames = (t: (key: string) => string): Record<string, string> => ({
+const getPluginDisplayNames = (t: (key: string) => string): Record<string, string> => ({
   workflow: i18n.t('admin.plugin_management.workflow_engine'),
   erp: i18n.t('admin.plugin_management.enterprise_resource_planning'),
   hrm: i18n.t('admin.plugin_management.human_resource_management'),

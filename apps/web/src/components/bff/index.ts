@@ -24,13 +24,7 @@ export { BffFormPage } from './BffFormPage';
 export type { BffFormPageProps, BffFormField, BffFormSection } from './BffFormPage';
 
 // 重新导出 hooks 方便组件同目录引入
-export {
-  useBffListPage,
-  useBffDetailPage,
-  useBffFormPage,
-  useBffCrud,
-  useAutoSharding,
-} from '@/hooks/bff';
+export { useBffListPage, useBffCrud, useAutoSharding } from '@/hooks/bff';
 export type {
   UseBffListPageOptions,
   UseBffListPageResult,

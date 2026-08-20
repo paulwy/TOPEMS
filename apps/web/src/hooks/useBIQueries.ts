@@ -91,7 +91,7 @@ function extractData<T>(response: StandardResponse<T> | T | undefined): T | null
 /**
  * 获取 BI 汇总看板数据
  */
-export function useBISummary(): UseQueryResult<SummaryDashboard | null> {
+function useBISummary(): UseQueryResult<SummaryDashboard | null> {
   return useQuery<SummaryDashboard | null>({
     queryKey: BI_QUERY_KEYS.summary,
     queryFn: async () => extractData<SummaryDashboard>(await fetchSummaryDashboard()),
@@ -102,7 +102,7 @@ export function useBISummary(): UseQueryResult<SummaryDashboard | null> {
 /**
  * 获取研发分析数据
  */
-export function useBIDevelopment(): UseQueryResult<DevelopmentAnalytics | null> {
+function useBIDevelopment(): UseQueryResult<DevelopmentAnalytics | null> {
   return useQuery<DevelopmentAnalytics | null>({
     queryKey: BI_QUERY_KEYS.development,
     queryFn: async () => extractData<DevelopmentAnalytics>(await fetchDevelopmentAnalytics()),
@@ -113,7 +113,7 @@ export function useBIDevelopment(): UseQueryResult<DevelopmentAnalytics | null> 
 /**
  * 获取质量分析数据
  */
-export function useBIQuality(): UseQueryResult<QualityAnalytics | null> {
+function useBIQuality(): UseQueryResult<QualityAnalytics | null> {
   return useQuery<QualityAnalytics | null>({
     queryKey: BI_QUERY_KEYS.quality,
     queryFn: async () => extractData<QualityAnalytics>(await fetchQualityAnalytics()),
@@ -124,7 +124,7 @@ export function useBIQuality(): UseQueryResult<QualityAnalytics | null> {
 /**
  * 获取生产分析数据
  */
-export function useBIProduction(): UseQueryResult<ProductionAnalytics | null> {
+function useBIProduction(): UseQueryResult<ProductionAnalytics | null> {
   return useQuery<ProductionAnalytics | null>({
     queryKey: BI_QUERY_KEYS.production,
     queryFn: async () => extractData<ProductionAnalytics>(await fetchProductionAnalytics()),
@@ -135,7 +135,7 @@ export function useBIProduction(): UseQueryResult<ProductionAnalytics | null> {
 /**
  * 获取实验室分析数据
  */
-export function useBILaboratory(): UseQueryResult<LaboratoryAnalytics | null> {
+function useBILaboratory(): UseQueryResult<LaboratoryAnalytics | null> {
   return useQuery<LaboratoryAnalytics | null>({
     queryKey: BI_QUERY_KEYS.laboratory,
     queryFn: async () => extractData<LaboratoryAnalytics>(await fetchLaboratoryAnalytics()),
@@ -274,7 +274,7 @@ function useBIAllAnalytics(options: { enabled?: boolean } = {}): UseBIAllAnalyti
  *
  * 替代原 `useBILoading()`：只要任一 BI 查询在加载中就返回 true。
  */
-export function useBILoading(): boolean {
+function useBILoading(): boolean {
   const summary = useBISummary();
   const development = useBIDevelopment();
   const quality = useBIQuality();
@@ -294,7 +294,7 @@ export function useBILoading(): boolean {
  *
  * 替代原 `useBIError()`：返回第一个出错的查询的错误信息。
  */
-export function useBIError(): string | null {
+function useBIError(): string | null {
   const summary = useBISummary();
   const development = useBIDevelopment();
   const quality = useBIQuality();

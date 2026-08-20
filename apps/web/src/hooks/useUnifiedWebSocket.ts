@@ -29,7 +29,7 @@ export type {
   UseWebSocketOptions,
   SubscriptionConfig,
 } from './useWebSocket';
-export { webSocketService, useWebSocketSubscription, useWebSocketConnection };
+export { webSocketService };
 
 export interface WsNotificationConfig {
   channel?: string;
@@ -105,9 +105,7 @@ export type UseUnifiedWebSocketResult = ReturnType<typeof useWebSocketBase> & {
  * ./useWebSocket 的 useWebSocket，仅保留通知中心 / Snackbar 扩展等
  * useUnifiedWebSocket 特有的业务逻辑。
  */
-function useUnifiedWebSocket(
-  options: UseUnifiedWebSocketOptions = {}
-): UseUnifiedWebSocketResult {
+function useUnifiedWebSocket(options: UseUnifiedWebSocketOptions = {}): UseUnifiedWebSocketResult {
   const { notifications, notificationOptions, snackbarOptions, ...baseOptions } = options;
   const baseResult = useWebSocketBase(baseOptions);
 
@@ -322,7 +320,7 @@ function useUnifiedWebSocket(
   } as UseUnifiedWebSocketResult;
 }
 
-export function useWebSocketNotifications(config: WsNotificationConfig): void {
+function useWebSocketNotifications(config: WsNotificationConfig): void {
   const {
     channel = 'notifications',
     messageType,
@@ -365,7 +363,7 @@ export function useWebSocketNotifications(config: WsNotificationConfig): void {
   }, [channel, messageType, enabled, getTitle, getMessage, getType, duration]);
 }
 
-export function useWebSocketNotificationChannel(
+function useWebSocketNotificationChannel(
   channel: string = 'notifications',
   enabled: boolean = true
 ): void {
@@ -386,7 +384,7 @@ export function useWebSocketNotificationChannel(
   });
 }
 
-export function useWebSocketAlertChannel(enabled: boolean = true): void {
+function useWebSocketAlertChannel(enabled: boolean = true): void {
   useWebSocketNotifications({
     channel: 'alerts',
     enabled,

@@ -34,7 +34,7 @@ export interface UseWorkflowApprovalDetailReturn {
   processing: boolean;
   delegateLoading: boolean;
 }
-export const useWorkflowApprovalDetail = (): UseWorkflowApprovalDetailReturn => {
+const useWorkflowApprovalDetail = (): UseWorkflowApprovalDetailReturn => {
   const { id } = useParams<{ id: string }>();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const user = useAuthStore((state) => state.user);

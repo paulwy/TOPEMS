@@ -53,7 +53,7 @@ interface AuditLog {
   created_at: string;
 }
 
-export const useDashboardData = () => {
+const useDashboardData = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { user, isAuthenticated, hasPermission } = useAuth();
@@ -105,9 +105,8 @@ export const useDashboardData = () => {
               data: {
                 total_inspections: mockData?.inspections?.length ?? 0,
                 active_standards:
-                  mockData?.standards?.filter(
-                    (s: { status: string }) => s.status === 'active'
-                  ).length ?? 0,
+                  mockData?.standards?.filter((s: { status: string }) => s.status === 'active')
+                    .length ?? 0,
               },
             })
           : qmsApi.getStatistics(),
