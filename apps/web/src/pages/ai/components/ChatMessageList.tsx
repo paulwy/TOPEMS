@@ -16,7 +16,7 @@ export interface ChatMessageListProps {
   onCopy: (content: string, id: string) => void;
 }
 
-export const ChatMessageList: React.FC<ChatMessageListProps> = ({
+const ChatMessageList: React.FC<ChatMessageListProps> = ({
   messages,
   isTyping,
   copiedId,

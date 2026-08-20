@@ -12,7 +12,7 @@ import i18n from '@/i18n';
 interface AttendanceRecordsTabProps {
   records: AttendanceRecord[];
 }
-export const AttendanceRecordsTab: React.FC<AttendanceRecordsTabProps> = ({ records }) => {
+const AttendanceRecordsTab: React.FC<AttendanceRecordsTabProps> = ({ records }) => {
   const getStatusLabel = (status: string) => {
     const map: Record<string, string> = {
       normal: i18n.t('mobile.attendance.status.normal'),

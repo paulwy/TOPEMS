@@ -25,7 +25,7 @@ export interface PmProjectDetailInfoCard {
  * Build DetailPageTemplate infoCard data (project name/status/progress/leader etc.)
  * Pure function: receives `t` from the caller to avoid module-level i18n.t() calls.
  */
-export const buildPmProjectDetailHeader = ({
+const buildPmProjectDetailHeader = ({
   project,
   phases,
   milestones,

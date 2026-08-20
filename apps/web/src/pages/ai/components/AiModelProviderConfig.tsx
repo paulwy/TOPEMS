@@ -24,7 +24,7 @@ import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
 
-export const AiModelProviderConfig: React.FC = () => {
+const AiModelProviderConfig: React.FC = () => {
   const { t } = useTranslation();
 
   return (

@@ -28,7 +28,7 @@ export interface MonitoringAlertRuleFormProps {
   onClose: () => void;
   onSave: (params: { id?: string; data: CreateAlertRuleRequest | UpdateAlertRuleRequest }) => void;
 }
-export const MonitoringAlertRuleForm: React.FC<MonitoringAlertRuleFormProps> = ({
+const MonitoringAlertRuleForm: React.FC<MonitoringAlertRuleFormProps> = ({
   open,
   editingRule,
   onClose,

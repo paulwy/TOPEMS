@@ -152,7 +152,7 @@ export interface PluginMarketplaceGridProps {
   onViewDetails: (plugin: Plugin) => void;
 }
 
-export const PluginMarketplaceGrid: React.FC<PluginMarketplaceGridProps> = ({
+const PluginMarketplaceGrid: React.FC<PluginMarketplaceGridProps> = ({
   plugins,
   healthStatus,
   viewMode,

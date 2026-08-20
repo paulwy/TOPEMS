@@ -16,7 +16,7 @@ interface RateLimitDimensionCardProps {
     value: number
   ) => void;
 }
-export const RateLimitDimensionCard: React.FC<RateLimitDimensionCardProps> = ({
+const RateLimitDimensionCard: React.FC<RateLimitDimensionCardProps> = ({
   dimKey,
   title,
   icon,

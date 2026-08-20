@@ -98,7 +98,7 @@ export const TabPanel: React.FC<TabPanelProps> = (props) => {
  * when only the empty/placeholder copy is needed. Currently unused by the
  * page but exported for future filter-auxiliary text.
  */
-export const InventoryReportFilterHint: React.FC<{ text: string }> = ({ text }) => (
+const InventoryReportFilterHint: React.FC<{ text: string }> = ({ text }) => (
   <Typography
     variant='caption'
     color='text.secondary'

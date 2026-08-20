@@ -14,7 +14,7 @@ export interface MonitoringAlertFiltersProps {
   onLevelChange: (level: string) => void;
   onStatusChange: (status: string) => void;
 }
-export const MonitoringAlertFilters: React.FC<MonitoringAlertFiltersProps> = ({
+const MonitoringAlertFilters: React.FC<MonitoringAlertFiltersProps> = ({
   searchQuery,
   filterLevel,
   filterStatus,

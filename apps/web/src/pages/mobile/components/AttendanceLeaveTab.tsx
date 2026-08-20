@@ -13,10 +13,7 @@ interface AttendanceLeaveTabProps {
   leaves: LeaveApplication[];
   onOpenLeaveDialog: () => void;
 }
-export const AttendanceLeaveTab: React.FC<AttendanceLeaveTabProps> = ({
-  leaves,
-  onOpenLeaveDialog,
-}) => {
+const AttendanceLeaveTab: React.FC<AttendanceLeaveTabProps> = ({ leaves, onOpenLeaveDialog }) => {
   const theme = useTheme();
   const getLeaveTypeLabel = (type: string) => {
     const map: Record<string, string> = {

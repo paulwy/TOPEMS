@@ -27,7 +27,7 @@ export interface ProfileShortcutsProps {
   profile: UseProfileReturn;
 }
 
-export const ProfileShortcuts: React.FC<ProfileShortcutsProps> = ({ profile }) => {
+const ProfileShortcuts: React.FC<ProfileShortcutsProps> = ({ profile }) => {
   const { t } = useTranslation();
   const { shortcuts, handleShortcutToggle } = profile;
 

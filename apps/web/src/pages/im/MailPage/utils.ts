@@ -25,4 +25,4 @@ const validateJson = (jsonString: string): boolean => {
   }
 };
 
-export { validateEmail, validateEmailList, validateJson };
+export { validateEmailList, validateJson };

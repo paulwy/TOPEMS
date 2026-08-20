@@ -31,7 +31,7 @@ const getStatusIcon = (status: string) => {
       return <ClipboardCheck style={{ width: 20, height: 20 }} />;
   }
 };
-export const MobileQualityTaskList: React.FC<MobileQualityTaskListProps> = ({
+const MobileQualityTaskList: React.FC<MobileQualityTaskListProps> = ({
   filteredTasks,
   getTypeLabel,
   getStatusLabel,

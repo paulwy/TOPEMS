@@ -11,7 +11,7 @@ interface MobileQualitySearchBarProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
 }
-export const MobileQualitySearchBar: React.FC<MobileQualitySearchBarProps> = ({
+const MobileQualitySearchBar: React.FC<MobileQualitySearchBarProps> = ({
   searchQuery,
   onSearchChange,
 }) => {

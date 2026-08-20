@@ -247,7 +247,7 @@ export const InventoryReportValueByWarehouseTable: React.FC<
  * Convenience wrapper that renders the empty-state placeholder used across
  * the chart / summary regions when no data is available.
  */
-export const InventoryReportEmptyState: React.FC<{ colSpan?: number }> = ({ colSpan = 12 }) => {
+const InventoryReportEmptyState: React.FC<{ colSpan?: number }> = ({ colSpan = 12 }) => {
   const { t } = useTranslation();
   return (
     <Grid

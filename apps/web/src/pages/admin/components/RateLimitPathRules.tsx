@@ -33,7 +33,7 @@ interface RateLimitPathRulesProps {
   onAddPath: () => void;
   onRemovePath: (path: string) => void;
 }
-export const RateLimitPathRules: React.FC<RateLimitPathRulesProps> = ({
+const RateLimitPathRules: React.FC<RateLimitPathRulesProps> = ({
   path_rules,
   newPath,
   setNewPath,
