@@ -14,8 +14,8 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "typecheck": "tsc --noEmit",
+    "build": "node --stack-size=8192 --max-old-space-size=8192 ./node_modules/typescript/lib/tsc.js && vite build",
+    "typecheck": "node --stack-size=8192 --max-old-space-size=8192 ./node_modules/typescript/lib/tsc.js --noEmit",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
