@@ -35,7 +35,7 @@ import { wmsNavConfig } from '@/modules/wms/config';
 import { workflowNavConfig } from '@/modules/workflow/config';
 import type { ModuleNavConfig } from '../types';
 
-export const coreModuleNavConfigs: ModuleNavConfig[] = [
+const coreModuleNavConfigs: ModuleNavConfig[] = [
   adminNavConfig,
   automationNavConfig,
   iamNavConfig,

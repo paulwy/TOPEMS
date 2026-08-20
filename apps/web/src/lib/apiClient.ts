@@ -21,11 +21,11 @@ export type { ApiResponse, PaginatedResponse, PaginationParams } from '@/api/cli
 export type { RequestOptions, PaginatedRequestParams } from '@/api/client';
 
 // Re-export request utilities
-export { handleResponse, safeRequest, paginatedRequest, handleRequestError } from '@/api/client';
+export { safeRequest, paginatedRequest } from '@/api/client';
 
 // Re-export the underlying multi-service client
 export { apiClient } from '@/api/client';
-export { downloadBlob, createBaseAxiosClient } from '@/api/client';
+export { downloadBlob } from '@/api/client';
 
 // Re-export react-query integration
 export { queryClient, QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';

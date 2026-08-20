@@ -49,7 +49,7 @@ export interface ModuleTheme {
   color: string;
 }
 
-export function getModuleThemes(): Record<string, ModuleTheme> {
+function getModuleThemes(): Record<string, ModuleTheme> {
   return {
   iam: {
     code: 'iam',
@@ -243,11 +243,11 @@ export function getModuleThemes(): Record<string, ModuleTheme> {
   };
 }
 
-export function getModuleTheme(moduleCode: string): ModuleTheme | undefined {
+function getModuleTheme(moduleCode: string): ModuleTheme | undefined {
   return getModuleThemes()[moduleCode.toLowerCase()];
 }
 
-export function getModuleThemeFromPath(pathname: string): ModuleTheme | undefined {
+function getModuleThemeFromPath(pathname: string): ModuleTheme | undefined {
   const pathParts = pathname.split('/').filter(Boolean);
   if (pathParts.length === 0) return undefined;
   return getModuleTheme(pathParts[0]);
